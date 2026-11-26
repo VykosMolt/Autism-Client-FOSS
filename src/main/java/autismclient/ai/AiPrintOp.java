@@ -1048,7 +1048,7 @@ final class AiPrintOp implements AiOperation {
          if (this.init_Minecraft.player == this.init_LocalPlayer
             && this.init_Minecraft.player != null
             && this.init_Minecraft.player.getInventory().getSelectedSlot() != this.sync_I) {
-            autismclient.util.InventorySlotHelper.init_V(this.init_Minecraft, this.sync_I);
+            autismclient.util.InventorySlotHelper.selectHotbarSlot(this.init_Minecraft, this.sync_I);
          }
       }
    }

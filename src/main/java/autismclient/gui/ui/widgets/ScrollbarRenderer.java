@@ -33,7 +33,7 @@ public final class ScrollbarRenderer {
             context.init_GuiGraphicsExtract(),
             autismclient.gui.f.NetHelper.init(trackX, track.write(), trackWidth, track.sync()),
             (trackWidth + 1) / 2,
-            context.init_TableIndex().init_JsonUtil().put
+            context.init_TableIndex().colors().divider
          );
          autismclient.gui.f.NetHelper thumb = metrics.load();
          float activeT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(track), hovered || dragging);

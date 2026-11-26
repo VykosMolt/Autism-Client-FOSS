@@ -20,7 +20,7 @@ public abstract class AutismClickableWidgetMixin {
       at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/components/AbstractWidget;isHovered:Z", shift = Shift.AFTER)
    )
    private void autism$suppressHoverWhenOverlayBlocks(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-      if (OverlayManager.init_bk().load(mouseX, mouseY)) {
+      if (OverlayManager.getInstance().isMouseOverCached(mouseX, mouseY)) {
          this.isHovered = false;
       }
    }

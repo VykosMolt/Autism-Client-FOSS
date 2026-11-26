@@ -19,8 +19,8 @@ public class GamemodeCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.init_Str() + "gamemode <survival|creative|adventure|spectator>");
-         AutismClientMessaging.sendPrefixed("§7Client-side only: " + autismclient.commands.CommandManager.init_Str() + "fakegm");
+         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.getPrefix() + "gamemode <survival|creative|adventure|spectator>");
+         AutismClientMessaging.sendPrefixed("§7Client-side only: " + autismclient.commands.CommandManager.getPrefix() + "fakegm");
          return 1;
       });
       root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("mode", StringArgumentType.word()).suggests(autismclient.commands.CommandSuggestions::put).executes(ctx -> {
@@ -34,7 +34,7 @@ public class GamemodeCommand extends Command {
 
          AutismClientMessaging.sendPrefixed("§cUnknown mode: §f" + mode);
          if ("reset".equals(mode) || "r".equals(mode)) {
-            AutismClientMessaging.sendPrefixed("§7Reset only applies to the fake mode: §f" + autismclient.commands.CommandManager.init_Str() + "fakegm reset");
+            AutismClientMessaging.sendPrefixed("§7Reset only applies to the fake mode: §f" + autismclient.commands.CommandManager.getPrefix() + "fakegm reset");
          }
 
          return 1;

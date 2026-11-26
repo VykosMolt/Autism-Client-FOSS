@@ -144,7 +144,7 @@ public class DropCommand extends Command {
    }
 
    private static void init_V_3() {
-      String prefix = autismclient.commands.CommandManager.init_Str();
+      String prefix = autismclient.commands.CommandManager.getPrefix();
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "drop hand");
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "drop fullinventory");
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "drop <amount> [item_id]");
@@ -182,7 +182,7 @@ public class DropCommand extends Command {
       for (int inventorySlot = 0; inventorySlot < 36; inventorySlot++) {
          ItemStack stack = mc.player.getInventory().getItem(inventorySlot);
          if (!stack.isEmpty()) {
-            int handlerSlot = InventorySlotHelper.load_I(mc, inventorySlot);
+            int handlerSlot = InventorySlotHelper.toScreenSlot(mc, inventorySlot);
             if (handlerSlot >= 0) {
                int stackCount = stack.getCount();
                if (InventoryDropHelper.init(mc, handlerSlot, 0) > 0) {
@@ -267,7 +267,7 @@ public class DropCommand extends Command {
          ItemStack stack = mc.player.getInventory().getItem(inventorySlot);
          if (!stack.isEmpty() && stack.getItem() == item) {
             int amount = Math.min(remaining, stack.getCount());
-            int handlerSlot = InventorySlotHelper.load_I(mc, inventorySlot);
+            int handlerSlot = InventorySlotHelper.toScreenSlot(mc, inventorySlot);
             if (handlerSlot >= 0 && InventoryDropHelper.init(mc, handlerSlot, amount) != 0) {
                dropped += amount;
                remaining -= amount;

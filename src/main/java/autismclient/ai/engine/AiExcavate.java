@@ -824,7 +824,7 @@ public final class AiExcavate {
                   this.init_Minecraft.options.keySprint,
                   this.init_Minecraft.options.keyShift
                )) {
-                  key.setDown(KeyMappingControl.init(key).autism$physicalForBody());
+                  key.setDown(KeyMappingControl.of(key).autism$physicalForBody());
                }
             }
 

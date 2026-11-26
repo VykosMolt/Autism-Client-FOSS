@@ -146,9 +146,9 @@ public final class SchematicWorkspace {
    public static void load_V() {
       if (close_Z()) {
          SchematicWorkspace workspace = init_cV();
-         OverlayManager manager = OverlayManager.init_bk();
+         OverlayManager manager = OverlayManager.getInstance();
          SchematicLibraryOverlay window = workspace.init_SchematicLibraryOv;
-         if (window != null && window.sync_Z() && manager.init_List().contains(window) && !manager.load_Z(window)) {
+         if (window != null && window.sync_Z() && manager.getOverlays().contains(window) && !manager.isHidden(window)) {
             window.init_V_Z(false);
          } else {
             workspace.init_SchematicLibraryOv();
@@ -160,7 +160,7 @@ public final class SchematicWorkspace {
       if (close_Z()) {
          if (init_cV == null || init_cV.init_SchematicLibraryOv == null) {
             OverlayBounds saved = autismclient.util.AutismSessionState.init_ck().init_cH_Str("schematic-library");
-            if (saved == null || !saved.init_Z) {
+            if (saved == null || !saved.visible) {
                return;
             }
 
@@ -169,9 +169,9 @@ public final class SchematicWorkspace {
          }
 
          if (init_cV.init_SchematicLibraryOv.sync_Z()) {
-            OverlayManager manager = OverlayManager.init_bk();
-            manager.init_V(init_cV.init_SchematicLibraryOv);
-            manager.init_V_cX_Z(init_cV.init_SchematicLibraryOv, false);
+            OverlayManager manager = OverlayManager.getInstance();
+            manager.register(init_cV.init_SchematicLibraryOv);
+            manager.setHidden(init_cV.init_SchematicLibraryOv, false);
          }
       }
    }
@@ -214,16 +214,16 @@ public final class SchematicWorkspace {
          this.init_SchematicLibraryOv = new SchematicLibraryOverlay(this);
       }
 
-      OverlayManager manager = OverlayManager.init_bk();
+      OverlayManager manager = OverlayManager.getInstance();
       if (this.init_Minecraft.gui.screen() == null) {
          autismclient.util.OverlayScreenController.init_V(this.init_Minecraft, new autismclient.gui.screens.AutismOverlaysScreen(this.init_SchematicLibraryOv, null, false, false));
       }
 
-      manager.init_V(this.init_SchematicLibraryOv);
-      manager.init_V_cX_Z(this.init_SchematicLibraryOv, false);
+      manager.register(this.init_SchematicLibraryOv);
+      manager.setHidden(this.init_SchematicLibraryOv, false);
       this.init_SchematicLibraryOv.init_V_Z(true);
       this.init_SchematicLibraryOv.write_V_Z(false);
-      manager.update_V(this.init_SchematicLibraryOv);
+      manager.bringToFront(this.init_SchematicLibraryOv);
       return this.init_SchematicLibraryOv;
    }
 

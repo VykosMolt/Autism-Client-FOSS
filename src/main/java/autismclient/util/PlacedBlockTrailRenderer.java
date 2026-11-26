@@ -114,7 +114,7 @@ public final class PlacedBlockTrailRenderer {
                   Minecraft mc = Minecraft.getInstance();
                   if (mc != null && mc.level != null) {
                      long now = System.nanoTime();
-                     int accent = ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.ACCENT);
+                     int accent = ThemePaletteManager.recolor(-50373, ThemePaletteManager.ColorRole.ACCENT);
                      Vec3 origin = context.levelState().cameraRenderState.pos;
                      context.submitNodeCollector()
                         .submitCustomGeometry(

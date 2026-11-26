@@ -194,7 +194,7 @@ public final class NameScrapeController {
          Minecraft mc = Minecraft.getInstance();
          if (graphics != null && mc != null && mc.font != null) {
             autismclient.gui.f.SyncManager ctx = autismclient.gui.f.UiHelper.init(graphics, mc.font, -1, -1);
-            autismclient.gui.ui.UiColorScheme colors = ctx.init_TableIndex().init_JsonUtil();
+            autismclient.gui.ui.UiColorScheme colors = ctx.init_TableIndex().colors();
             int names = read_I;
             char spin = init_CArr[(int)(System.currentTimeMillis() / 120L % init_CArr.length)];
             int width = 244;
@@ -202,16 +202,16 @@ public final class NameScrapeController {
             int pad = 9;
             int x = Math.max(4, (cA.init_I() - width) / 2);
             int y = 6;
-            autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, width, height), colors.sync, colors.run);
+            autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, width, height), colors.popupSurface, colors.borderStrong);
             String title = (load_Z ? "|| " : spin + " ") + (load_Z ? "Namescrape paused" : "Scraping names");
             int target = init_I();
             String count = init_Str(names) + (target > 0 ? " / " + init_Str(target) : "");
-            ctx.init_PoolEntry().init_V_GuiGraphicsExtract_2(graphics, title, x + pad, y + 6, colors.prev);
-            int cw = ctx.init_PoolEntry().init(count);
-            ctx.init_PoolEntry().init_V_GuiGraphicsExtract_2(graphics, count, x + width - pad - cw, y + 6, colors.valid);
+            ctx.init_PoolEntry().draw(graphics, title, x + pad, y + 6, colors.textPrimary);
+            int cw = ctx.init_PoolEntry().measureWidth(count);
+            ctx.init_PoolEntry().draw(graphics, count, x + width - pad - cw, y + 6, colors.textSecondary);
             autismclient.gui.ui.widgets.ProgressBarRenderer.init(ctx, autismclient.gui.f.NetHelper.init(x + pad, y + 20, width - pad * 2, 8), init_D());
             String status = init_Str != null && !init_Str.isBlank() ? init_Str : "Starting...";
-            ctx.init_PoolEntry().init_V_GuiGraphicsExtract_2(graphics, init(ctx, status, width - pad * 2), x + pad, y + 33, colors.valid);
+            ctx.init_PoolEntry().draw(graphics, init(ctx, status, width - pad * 2), x + pad, y + 33, colors.textSecondary);
          }
       }
    }
@@ -242,15 +242,15 @@ public final class NameScrapeController {
    }
 
    private static String init(autismclient.gui.f.SyncManager ctx, String text, int maxWidth) {
-      if (ctx.init_PoolEntry().init(text) <= maxWidth) {
+      if (ctx.init_PoolEntry().measureWidth(text) <= maxWidth) {
          return text;
       }
 
       String ellipsis = "...";
-      int limit = maxWidth - ctx.init_PoolEntry().init(ellipsis);
+      int limit = maxWidth - ctx.init_PoolEntry().measureWidth(ellipsis);
       StringBuilder sb = new StringBuilder();
 
-      for (int i = 0; i < text.length() && ctx.init_PoolEntry().init(sb.toString() + text.charAt(i)) <= limit; i++) {
+      for (int i = 0; i < text.length() && ctx.init_PoolEntry().measureWidth(sb.toString() + text.charAt(i)) <= limit; i++) {
          sb.append(text.charAt(i));
       }
 

@@ -45,8 +45,8 @@ final class MacroPickerPopup {
    void init(SyncManager context) {
       this.init_PoolEntry = context.init_PoolEntry();
       UiTheme theme = context.init_TableIndex();
-      this.read_I = UiDensityMetrics.init(12);
-      int controlH = UiDensityMetrics.init(13);
+      this.read_I = UiDensityMetrics.scaledHeight(12);
+      int controlH = UiDensityMetrics.scaledHeight(13);
       int pad = 3;
       int width = Math.min(Math.max(this.init_NetHelper.update(), ModulesMenuController.init_I_I(150)), Math.max(120, context.init_I() - 8));
       int rows = Math.max(1, Math.min(8, Math.max(this.init_List.size(), 1)));
@@ -63,7 +63,7 @@ final class MacroPickerPopup {
       this.write = NetHelper.init(x + pad, this.read_NetHelper.load() + 2, half, controlH);
       this.update = NetHelper.init(this.write.init() + 2, this.read_NetHelper.load() + 2, width - pad * 2 - 2 - half, controlH);
       this.sync = NetHelper.init(x + pad, this.update.load() + 2, width - pad * 2, listH);
-      PacketUtil.init(context, this.load_NetHelper, theme.init_JsonUtil().sync, theme.init_JsonUtil().run);
+      PacketUtil.init(context, this.load_NetHelper, theme.colors().popupSurface, theme.colors().borderStrong);
       TextFieldRenderer.init(
          context,
          this.read_NetHelper,
@@ -73,7 +73,7 @@ final class MacroPickerPopup {
          this.init_StreamUtil.init_I,
          this.init_StreamUtil.init_I(),
          this.init_StreamUtil.load_I(),
-         this.init_StreamUtil.init(this.read_NetHelper.update() - 8, fragment -> this.init_PoolEntry.init(this.init_StreamUtil.init_Str, fragment))
+         this.init_StreamUtil.init(this.read_NetHelper.update() - 8, fragment -> this.init_PoolEntry.measureFragmentWidth(this.init_StreamUtil.init_Str, fragment))
       );
       autismclient.gui.f.b.CachePool.init(
          context, this.write, "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, this.write.init_Z(context.read(), context.write()), false
@@ -96,13 +96,13 @@ final class MacroPickerPopup {
                }
 
                context.init_PoolEntry()
-                  .load(
+                  .drawFitted(
                      context.init_GuiGraphicsExtract(),
                      name,
                      row.read() + 5,
-                     context.init_PoolEntry().init_I(row),
+                     context.init_PoolEntry().centerTextY(row),
                      row.update() - 10,
-                     theme.init_JsonUtil().prev
+                     theme.colors().textPrimary
                   );
             }
 
@@ -111,11 +111,11 @@ final class MacroPickerPopup {
 
          if (this.init_List.isEmpty()) {
             context.init_PoolEntry()
-               .load(
+               .drawCentered(
                   context.init_GuiGraphicsExtract(),
                   "No macros",
                   NetHelper.init(this.sync.read(), this.sync.write(), this.sync.update(), this.read_I),
-                  theme.init_JsonUtil().valid
+                  theme.colors().textSecondary
                );
          }
       } finally {
@@ -186,7 +186,7 @@ final class MacroPickerPopup {
             .init_I_F(
                mouseX,
                this.read_NetHelper.read() + 4 - this.init_StreamUtil.read_I(),
-               fragment -> this.init_PoolEntry.init(this.init_StreamUtil.init_Str, fragment)
+               fragment -> this.init_PoolEntry.measureFragmentWidth(this.init_StreamUtil.init_Str, fragment)
             );
    }
 

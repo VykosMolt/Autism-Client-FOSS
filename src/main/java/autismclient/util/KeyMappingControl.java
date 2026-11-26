@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.Window;
 import net.minecraft.client.KeyMapping;
 
 public interface KeyMappingControl {
-   static KeyMappingControl init(KeyMapping mapping) {
+   static KeyMappingControl of(KeyMapping mapping) {
       return (KeyMappingControl)mapping;
    }
 

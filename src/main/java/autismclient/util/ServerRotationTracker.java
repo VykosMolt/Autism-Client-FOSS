@@ -107,7 +107,7 @@ public final class ServerRotationTracker {
          boolean freecam = autismclient.modules.FreecamController.init_Z();
          boolean hidden = autismclient.modules.aD.init_Z();
          if (thirdPerson && !freecam && !hidden) {
-            boolean silentOwner = minecraft.player != null && SilentMovementCoordinator.init_ce_DataUtil(minecraft.player) != null;
+            boolean silentOwner = minecraft.player != null && SilentMovementCoordinator.getRenderRotation(minecraft.player) != null;
             if (silentOwner) {
                ServerRotationTracker.Angles rotation = init_ch_DataUtil_ch_StreamUtil(init_ch_StreamUtil, partialTick, AutismSessionState.init_ck().state_I());
                if (rotation != null) {

@@ -254,8 +254,8 @@ final class TriggerBotModule extends Module {
    private static double init_D_Vec3_AABB_2(Vec3 eyes, AABB box) {
       Vec3 to = box.getCenter().subtract(eyes);
       double distance = Math.max(1.0E-6, to.length());
-      RotationMath.Rotation look = RotationMath.init(MC.player);
-      Vec3 view = Vec3.directionFromRotation(look.load(), look.init());
+      RotationMath.Rotation look = RotationMath.ofPlayer(MC.player);
+      Vec3 view = Vec3.directionFromRotation(look.pitch(), look.yaw());
       double angle = Math.toDegrees(Math.acos(Math.max(-1.0, Math.min(1.0, view.dot(to) / distance))));
       double radius = Math.toDegrees(Math.atan2(0.5 * Math.hypot(box.getXsize(), box.getYsize()), distance));
       return Math.max(0.0, angle - radius);
@@ -268,7 +268,7 @@ final class TriggerBotModule extends Module {
          || MC.gui.screen() != null
          || ScaffoldModule.read_Z_12()
          || ScaffoldModule.update_Z_5()
-         || SilentMovementCoordinator.init_ce_DataUtil() != null
+         || SilentMovementCoordinator.activeRotation() != null
          || ScaffoldModule.flush_Z_5()
          || f.load()
          || AutoTotemModule.init_Z_6()
@@ -311,9 +311,9 @@ final class TriggerBotModule extends Module {
    }
 
    private LivingEntity init_LivingEntity_D_D(double distance, double grow) {
-      RotationMath.Rotation look = RotationMath.init(MC.player);
+      RotationMath.Rotation look = RotationMath.ofPlayer(MC.player);
       Vec3 eyes = MC.player.getEyePosition();
-      Vec3 end = eyes.add(Vec3.directionFromRotation(look.load(), look.init()).scale(distance));
+      Vec3 end = eyes.add(Vec3.directionFromRotation(look.pitch(), look.yaw()).scale(distance));
       LivingEntity best = null;
       double bestDistance = 1.7976931348623157E308;
 
@@ -443,8 +443,8 @@ final class TriggerBotModule extends Module {
       ValueRange reaction = ValueRange.parse(this.value(timed ? "reaction" : "legacy-reaction"), init_ValueRange);
       double trait = Math.abs(this.init_am.init_D() * 1000.0);
       double bias = 0.92 + 0.16 * (trait - Math.floor(trait));
-      RotationMath.Rotation toTarget = RotationMath.init(target.getBoundingBox().getCenter(), MC.player.getEyePosition());
-      float angle = RotationMath.init_F(RotationMath.init(MC.player), toTarget);
+      RotationMath.Rotation toTarget = RotationMath.lookAt(target.getBoundingBox().getCenter(), MC.player.getEyePosition());
+      float angle = RotationMath.angularDistance(RotationMath.ofPlayer(MC.player), toTarget);
       return autismclient.util.clicker.ReactionDelayModel.init(this.init_Random, reaction.min(), reaction.max(), bias, angle);
    }
 

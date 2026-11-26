@@ -178,7 +178,7 @@ public final class ScrollableListView {
    public void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, int borderColor, int fillColor) {
       this.poll = borderColor;
       autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(this.init_I, this.load, this.read, this.write), fillColor);
-      autismclient.gui.ui.UiClipStack.init_HashUtil().init(ctx, autismclient.gui.f.NetHelper.init(this.push, this.pop, this.tick - this.push, this.run - this.pop));
+      autismclient.gui.ui.UiClipStack.getInstance().push(ctx, autismclient.gui.f.NetHelper.init(this.push, this.pop, this.tick - this.push, this.run - this.pop));
    }
 
    public void init(GuiGraphicsExtractor ctx, Font textRenderer, List<? extends ScrollableListView.Inner_CachePool> rows, ScrollableListView.Inner_StreamUtil renderer) {
@@ -209,7 +209,7 @@ public final class ScrollableListView {
    }
 
    public void init(GuiGraphicsExtractor ctx) {
-      autismclient.gui.ui.UiClipStack.init_HashUtil().init(ctx);
+      autismclient.gui.ui.UiClipStack.getInstance().pop(ctx);
       autismclient.gui.f.PacketUtil.load(ctx, autismclient.gui.f.NetHelper.init(this.init_I, this.load, this.read, this.write), this.poll);
    }
 
@@ -219,11 +219,11 @@ public final class ScrollableListView {
          int trackY = this.load + 2;
          int trackWidth = this.sync;
          int trackHeight = this.write - 4;
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
             this.flush, this.get(), trackX, trackY, trackWidth, trackHeight, this.close
          );
-         boolean hovered = metrics.init(mouseX, mouseY);
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(ctx, metrics, hovered, this.init_Z);
+         boolean hovered = metrics.containsTrack(mouseX, mouseY);
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, metrics, hovered, this.init_Z);
       }
    }
 
@@ -248,15 +248,15 @@ public final class ScrollableListView {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil();
          if (metrics == null) {
             return false;
-         } else if (metrics.load(mouseX, mouseY)) {
+         } else if (metrics.containsThumb(mouseX, mouseY)) {
             this.init_Z = true;
-            this.open = (int)Math.round(mouseY) - metrics.update();
+            this.open = (int)Math.round(mouseY) - metrics.thumbY();
             return true;
-         } else if (metrics.init(mouseX, mouseY)) {
-            int newScroll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(metrics, mouseY, this.open);
+         } else if (metrics.containsTrack(mouseX, mouseY)) {
+            int newScroll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, mouseY, this.open);
             this.load_V(this.read_I(newScroll));
             this.init_Z = true;
-            this.open = metrics.sync() / 2;
+            this.open = metrics.thumbHeight() / 2;
             return true;
          } else {
             return false;
@@ -273,7 +273,7 @@ public final class ScrollableListView {
       if (this.init_Z) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil();
          if (metrics != null) {
-            int newScroll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(metrics, mouseY, this.open);
+            int newScroll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, mouseY, this.open);
             this.load_V(this.read_I(newScroll));
          }
       }
@@ -292,7 +292,7 @@ public final class ScrollableListView {
       int trackY = this.load + 2;
       int trackWidth = this.sync;
       int trackHeight = this.write - 4;
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(this.flush, this.get(), trackX, trackY, trackWidth, trackHeight, this.close);
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(this.flush, this.get(), trackX, trackY, trackWidth, trackHeight, this.close);
    }
 
    public boolean init_Z() {
@@ -301,7 +301,7 @@ public final class ScrollableListView {
 
    public boolean load(double mouseX, double mouseY) {
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil();
-      return metrics != null && metrics.init(mouseX, mouseY);
+      return metrics != null && metrics.containsTrack(mouseX, mouseY);
    }
 
    public interface Inner_CachePool {

@@ -1102,7 +1102,7 @@ public final class LeafDupeModule extends Module {
    private String write_Str_2() {
       if (aD.init_Z()) {
          return "Paused";
-      } else if (MC.gui.screen() != null || OverlayManager.init_bk().update_Z()) {
+      } else if (MC.gui.screen() != null || OverlayManager.getInstance().hasFocusedTextInput()) {
          return "GUI open";
       } else if (!MC.mouseHandler.isMouseGrabbed()) {
          return "Cursor released";
@@ -1192,7 +1192,7 @@ public final class LeafDupeModule extends Module {
 
    private boolean load_Z_I_4(int slot) {
       if (slot >= 0 && slot <= 8 && MC.player != null) {
-         autismclient.util.InventorySlotHelper.init_V(MC, slot);
+         autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
          return MC.player.getInventory().getSelectedSlot() == slot;
       } else {
          return false;

@@ -56,7 +56,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
                }
 
                if (this.silentSwitch && mc.player.getInventory().getSelectedSlot() != originalSlot) {
-                  autismclient.util.InventorySlotHelper.init_V(mc, originalSlot);
+                  autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, originalSlot);
                }
             }
          }
@@ -101,18 +101,18 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    private static void init(Minecraft mc, MacroItemTarget target) {
       if (target != null && (target.init_Z() || target.update())) {
          if (target.update()) {
-            autismclient.util.InventorySlotHelper.init(mc, target, mc.player.getInventory().getSelectedSlot());
+            autismclient.util.InventorySlotHelper.ensureItemInHotbar(mc, target, mc.player.getInventory().getSelectedSlot());
          } else {
             int visibleSlot = target.init_I;
             if (visibleSlot >= 0 && visibleSlot <= 8) {
-               autismclient.util.InventorySlotHelper.init_V(mc, visibleSlot);
+               autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, visibleSlot);
             } else {
-               int handlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, visibleSlot);
+               int handlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, visibleSlot);
                if (handlerSlot >= 0) {
                   int hotbarSlot = mc.player.getInventory().getSelectedSlot();
-                  int hotbarHandlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, hotbarSlot);
+                  int hotbarHandlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, hotbarSlot);
                   if (hotbarHandlerSlot >= 0) {
-                     autismclient.util.InventorySlotHelper.write(mc, handlerSlot, hotbarHandlerSlot);
+                     autismclient.util.InventorySlotHelper.swapScreenSlots(mc, handlerSlot, hotbarHandlerSlot);
                   }
                }
             }

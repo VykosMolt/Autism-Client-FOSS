@@ -38,24 +38,24 @@ public final class OverlaySuiteController {
          this.init_AutismMacroEditorO.poll_V_5();
       }
 
-      OverlayManager manager = OverlayManager.init_bk();
-      manager.load_V();
-      manager.init_V(this.init_AutismLANSyncOverl);
-      manager.init_V(this.init_AutismMacroListOve);
-      manager.init_V(this.init_AutismQueueEditorO);
-      manager.init_V(this.init_AutismCustomFilter);
+      OverlayManager manager = OverlayManager.getInstance();
+      manager.clearNonPersistent();
+      manager.register(this.init_AutismLANSyncOverl);
+      manager.register(this.init_AutismMacroListOve);
+      manager.register(this.init_AutismQueueEditorO);
+      manager.register(this.init_AutismCustomFilter);
       if (this.init_AutismCustomFilter_2 != null) {
-         manager.init_V(this.init_AutismCustomFilter_2);
+         manager.register(this.init_AutismCustomFilter_2);
       }
 
       if (this.init_AutismMacroEditorO != null) {
-         manager.init_V(this.init_AutismMacroEditorO);
+         manager.register(this.init_AutismMacroEditorO);
       }
 
-      manager.init_V(ActionEditorOverlay.init_ActionEditorOverla_2());
+      manager.register(ActionEditorOverlay.init_ActionEditorOverla_2());
       AutismItemNbtInspectOverlay itemNbtInspectOverlay = AutismItemNbtInspectOverlay.init_AutismItemNbtInspe_Font(font);
       if (itemNbtInspectOverlay != null) {
-         manager.init_V(itemNbtInspectOverlay);
+         manager.register(itemNbtInspectOverlay);
       }
 
       autismclient.modules.ModuleRuntimeManager autismModule = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
@@ -66,7 +66,7 @@ public final class OverlaySuiteController {
 
       this.init_AutismKeybindOverl = new AutismKeybindOverlay();
       this.init_AutismKeybindOverl.b__V();
-      manager.init_V(this.init_AutismKeybindOverl);
+      manager.register(this.init_AutismKeybindOverl);
       this.init_AutismLauncherOver = new AutismLauncherOverlay(
          this.init_AutismMacroListOve,
          null,
@@ -85,7 +85,7 @@ public final class OverlaySuiteController {
          }
 
          if (this.init_AutismPacketLogger != null) {
-            manager.init_V(this.init_AutismPacketLogger);
+            manager.register(this.init_AutismPacketLogger);
          }
 
          return this.init_AutismPacketLogger;
@@ -96,7 +96,7 @@ public final class OverlaySuiteController {
          }
 
          if (this.init_AutismServerInfoOv != null) {
-            manager.init_V(this.init_AutismServerInfoOv);
+            manager.register(this.init_AutismServerInfoOv);
          }
 
          return this.init_AutismServerInfoOv;
@@ -106,7 +106,7 @@ public final class OverlaySuiteController {
          if (this.init_AutismPacketLogger != null) {
             this.init_AutismPacketLogger.flush_V_13();
             if (this.init_AutismPacketLogger.sync_Z()) {
-               manager.init_V(this.init_AutismPacketLogger);
+               manager.register(this.init_AutismPacketLogger);
             }
          }
       }
@@ -116,7 +116,7 @@ public final class OverlaySuiteController {
          if (this.init_AutismServerInfoOv != null) {
             this.init_AutismServerInfoOv.update_V_21();
             if (this.init_AutismServerInfoOv.sync_Z()) {
-               manager.init_V(this.init_AutismServerInfoOv);
+               manager.register(this.init_AutismServerInfoOv);
             }
          }
       }
@@ -124,12 +124,12 @@ public final class OverlaySuiteController {
       if (!AutismLiteVariant.enabled() && autismModule != null) {
          AutismOverlay profilesOverlay = autismModule.load_cX();
          if (profilesOverlay != null && profilesOverlay.sync_Z()) {
-            manager.init_V(profilesOverlay);
+            manager.register(profilesOverlay);
          }
       }
 
       this.init_AutismLauncherOver.b__V();
-      manager.init_V(this.init_AutismLauncherOver);
+      manager.register(this.init_AutismLauncherOver);
    }
 
    public static OverlaySuiteController init(Font font) {
@@ -181,6 +181,6 @@ public final class OverlaySuiteController {
          this.init_AutismServerInfoOv.write_V_24();
       }
 
-      OverlayManager.init_bk().load_V();
+      OverlayManager.getInstance().clearNonPersistent();
    }
 }

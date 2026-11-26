@@ -368,8 +368,8 @@ final class AiMlg {
                      .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(6));
                   BlockPlacementPlanner.PlacementPlan candidate = BlockPlacementPlanner.init_U_CachePool(request);
                   if (candidate != null) {
-                     player.setYRot(candidate.init_U_DataUtil().load().init());
-                     player.setXRot(candidate.init_U_DataUtil().load().load());
+                     player.setYRot(candidate.init_U_DataUtil().load().yaw());
+                     player.setXRot(candidate.init_U_DataUtil().load().pitch());
                      this.init_Minecraft.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, candidate.init_BlockHitResult());
                   } else {
                      Vec3 hitPos = Vec3.atCenterOf(forecast.support()).add(0.0, 0.5, 0.0);

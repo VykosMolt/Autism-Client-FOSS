@@ -75,7 +75,7 @@ public final class AiToolsScreen extends Screen {
          int sh = cA.load_I();
          autismclient.gui.f.SyncManager ctx = autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my);
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), -1610021111);
-         String toolsCommand = autismclient.commands.CommandManager.init_Str() + "tools";
+         String toolsCommand = autismclient.commands.CommandManager.getPrefix() + "tools";
          String title = "AI TOOLS  ·  " + toolsCommand + " defaults";
          String help = "Read when a " + toolsCommand + " op starts; Esc discards, Done saves.";
          int margin = 6;
@@ -93,7 +93,7 @@ public final class AiToolsScreen extends Screen {
          int x = panel.read() + pad;
          int y = autismclient.gui.f.b.BufferHelper.init_I(ctx, panel, title) + 2;
          int w = panel.update() - pad * 2;
-         autismclient.gui.ui.UiColorScheme colors = ctx.init_TableIndex().init_JsonUtil();
+         autismclient.gui.ui.UiColorScheme colors = ctx.init_TableIndex().colors();
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, rowH);
          this.init(ctx, this.init_NetHelper, "Pathfinding strategy", this.init_RefQueue, this.init_AiToolSettings.strategy, mx, my);
          y += rowStep;
@@ -131,10 +131,10 @@ public final class AiToolsScreen extends Screen {
          y += sectionGap;
          String reluctanceLabel = "Dig reluctance (per block)";
          String reluctanceValue = this.init_AiToolSettings.digReluctance + "t";
-         int reluctanceTextY = ctx.init_PoolEntry().init_I(autismclient.gui.f.NetHelper.init(x, y, w, labelH));
-         int reluctanceValueW = ctx.init_PoolEntry().init(reluctanceValue);
-         ctx.init_PoolEntry().load(graphics, reluctanceLabel, x, reluctanceTextY, Math.max(1, w - reluctanceValueW - sectionGap), colors.valid);
-         ctx.init_PoolEntry().load(graphics, reluctanceValue, x + w - reluctanceValueW, reluctanceTextY, reluctanceValueW, colors.prev);
+         int reluctanceTextY = ctx.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(x, y, w, labelH));
+         int reluctanceValueW = ctx.init_PoolEntry().measureWidth(reluctanceValue);
+         ctx.init_PoolEntry().drawFitted(graphics, reluctanceLabel, x, reluctanceTextY, Math.max(1, w - reluctanceValueW - sectionGap), colors.textSecondary);
+         ctx.init_PoolEntry().drawFitted(graphics, reluctanceValue, x + w - reluctanceValueW, reluctanceTextY, reluctanceValueW, colors.textPrimary);
          y += labelH;
          this.write_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, 12);
          autismclient.gui.ui.widgets.SliderRenderer.init(
@@ -155,10 +155,10 @@ public final class AiToolsScreen extends Screen {
          y += sectionGap;
          String timeoutLabel = "Default timeout";
          String timeoutValue = this.init_AiToolSettings.timeoutSeconds + "s";
-         int timeoutTextY = ctx.init_PoolEntry().init_I(autismclient.gui.f.NetHelper.init(x, y, w, labelH));
-         int valueW = ctx.init_PoolEntry().init(timeoutValue);
-         ctx.init_PoolEntry().load(graphics, timeoutLabel, x, timeoutTextY, Math.max(1, w - valueW - sectionGap), colors.valid);
-         ctx.init_PoolEntry().load(graphics, timeoutValue, x + w - valueW, timeoutTextY, valueW, colors.prev);
+         int timeoutTextY = ctx.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(x, y, w, labelH));
+         int valueW = ctx.init_PoolEntry().measureWidth(timeoutValue);
+         ctx.init_PoolEntry().drawFitted(graphics, timeoutLabel, x, timeoutTextY, Math.max(1, w - valueW - sectionGap), colors.textSecondary);
+         ctx.init_PoolEntry().drawFitted(graphics, timeoutValue, x + w - valueW, timeoutTextY, valueW, colors.textPrimary);
          y += labelH;
          this.read_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, 12);
          autismclient.gui.ui.widgets.SliderRenderer.init(
@@ -171,7 +171,7 @@ public final class AiToolsScreen extends Screen {
          this.load_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, rowH);
          this.init(ctx, this.load_NetHelper, "Chat verbosity", this.load_RefQueue, this.init_AiToolSettings.verbosity, mx, my);
          y += rowH + sectionGap;
-         ctx.init_PoolEntry().load(graphics, help, x, ctx.init_PoolEntry().init_I(autismclient.gui.f.NetHelper.init(x, y, w, labelH)), w, colors.valid);
+         ctx.init_PoolEntry().drawFitted(graphics, help, x, ctx.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(x, y, w, labelH)), w, colors.textSecondary);
          int ctrlH = this.read();
          int footerY = panel.load() - pad - ctrlH;
          int bw = (w - 2) / 2;
@@ -187,15 +187,15 @@ public final class AiToolsScreen extends Screen {
    }
 
    private int init_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int load_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
    private int read() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int write() {
@@ -227,14 +227,14 @@ public final class AiToolsScreen extends Screen {
    }
 
    private int init(autismclient.gui.f.SyncManager ctx, String title, String help) {
-      int widest = ctx.init_PoolEntry().init(help);
-      widest = Math.max(widest, ctx.init_PoolEntry().init(title) + 20);
+      int widest = ctx.init_PoolEntry().measureWidth(help);
+      widest = Math.max(widest, ctx.init_PoolEntry().measureWidth(title) + 20);
 
       for (String label : init_StrArr) {
-         widest = Math.max(widest, ctx.init_PoolEntry().init(label) + 40);
+         widest = Math.max(widest, ctx.init_PoolEntry().measureWidth(label) + 40);
       }
 
-      widest = Math.max(widest, ctx.init_PoolEntry().init("Pathfinding strategy") + 96 + 8);
+      widest = Math.max(widest, ctx.init_PoolEntry().measureWidth("Pathfinding strategy") + 96 + 8);
       return Math.max(200, Math.min(300, widest + 8 + 2));
    }
 
@@ -247,11 +247,11 @@ public final class AiToolsScreen extends Screen {
       int mx,
       int my
    ) {
-      autismclient.gui.ui.UiColorScheme colors = ctx.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = ctx.init_TableIndex().colors();
       autismclient.gui.f.NetHelper control = autismclient.gui.f.NetHelper.init(row.init() - 96, row.write(), 96, row.sync());
       ctx.init_PoolEntry()
-         .load(
-            ctx.init_GuiGraphicsExtract(), label, row.read() + 1, ctx.init_PoolEntry().init_I(row), Math.max(1, control.read() - row.read() - 8), colors.prev
+         .drawFitted(
+            ctx.init_GuiGraphicsExtract(), label, row.read() + 1, ctx.init_PoolEntry().centerTextY(row), Math.max(1, control.read() - row.read() - 8), colors.textPrimary
          );
       dropdown.init_V_NetHelper(control);
       autismclient.gui.ui.widgets.DropdownMenu.init_V_SyncManager(ctx, control, selected, control.init_Z(mx, my), dropdown.init_Z_2());

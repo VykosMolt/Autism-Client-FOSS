@@ -24,7 +24,7 @@ public final class TextFieldRenderer {
       int selectionEnd
    ) {
       String value = text == null ? "" : text;
-      int scroll = focused ? init(value, cursor, bounds.update() - 8, fragment -> context.init_PoolEntry().init(value, fragment)) : 0;
+      int scroll = focused ? init(value, cursor, bounds.update() - 8, fragment -> context.init_PoolEntry().measureFragmentWidth(value, fragment)) : 0;
       init(context, bounds, value, placeholder, focused, cursor, selectionStart, selectionEnd, scroll);
    }
 
@@ -39,14 +39,14 @@ public final class TextFieldRenderer {
       int selectionEnd,
       int scrollOffset
    ) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
-      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 3, focused ? colors.tick : colors.pop, focused ? colors.clear : colors.get);
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
+      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 3, focused ? colors.inputSurfaceFocused : colors.inputSurface, focused ? colors.accent : colors.borderSubtle);
       String value = text == null ? "" : text;
-      ToIntFunction<String> widths = fragment -> context.init_PoolEntry().init(value, fragment);
+      ToIntFunction<String> widths = fragment -> context.init_PoolEntry().measureFragmentWidth(value, fragment);
       String shown = value.isEmpty() ? placeholder : value;
       int scroll = focused ? Math.max(0, scrollOffset) : 0;
       int textX = bounds.read() + 4 - scroll;
-      int textY = context.init_PoolEntry().init_I(bounds);
+      int textY = context.init_PoolEntry().centerTextY(bounds);
       context.init_GuiGraphicsExtract().enableScissor(bounds.read() + 3, bounds.write() + 1, bounds.init() - 3, bounds.load() - 1);
 
       try {
@@ -58,17 +58,17 @@ public final class TextFieldRenderer {
             autismclient.gui.f.PacketUtil.init(
                context.init_GuiGraphicsExtract(),
                autismclient.gui.f.NetHelper.init(selectX, bounds.write() + 3, selectW, Math.max(1, bounds.sync() - 6)),
-               ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.ColorRole.ACCENT)
+               ThemePaletteManager.recolor(1728006730, ThemePaletteManager.ColorRole.ACCENT)
             );
          }
 
          context.init_PoolEntry()
-            .init_V_GuiGraphicsExtract_2(context.init_GuiGraphicsExtract(), shown, textX, textY, value.isEmpty() ? colors.valid : colors.prev);
+            .draw(context.init_GuiGraphicsExtract(), shown, textX, textY, value.isEmpty() ? colors.textSecondary : colors.textPrimary);
          if (focused) {
             String before = value.substring(0, Utf16TextCursor.init_I(value, cursor));
             int caret = Math.min(bounds.init() - 3, textX + widths.applyAsInt(before));
             autismclient.gui.f.PacketUtil.init(
-               context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(caret, bounds.write() + 3, 1, Math.max(1, bounds.sync() - 6)), colors.prev
+               context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(caret, bounds.write() + 3, 1, Math.max(1, bounds.sync() - 6)), colors.textPrimary
             );
          }
       } finally {

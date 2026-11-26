@@ -460,7 +460,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    public static ActionEditorOverlay init_ActionEditorOverla_2() {
       if (init_ActionEditorOverla_4 == null) {
          init_ActionEditorOverla_4 = new ActionEditorOverlay(init_Minecraft.font);
-         OverlayManager.init_bk().init_V(init_ActionEditorOverla_4);
+         OverlayManager.getInstance().register(init_ActionEditorOverla_4);
       }
 
       return init_ActionEditorOverla_4;
@@ -1134,7 +1134,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int maxH = Math.max(minH, cA.load_I() * 4 / 5);
       this.f_c_I = Math.max(minH, Math.min(maxH, desiredH));
       this.write_Z = true;
-      OverlayManager.init_bk().update_V(this);
+      OverlayManager.getInstance().bringToFront(this);
    }
 
    public void init_V_H(PayloadAction action) {
@@ -1182,7 +1182,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       this.fill();
-      OverlayManager.init_bk().update_V(this);
+      OverlayManager.getInstance().bringToFront(this);
       return true;
    }
 
@@ -1271,13 +1271,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    @Override
    public void init_V_cH(OverlayBounds b) {
-      OverlayBounds c = this.init_cH_cX_cH(this, b);
-      this.bind = c.init_I;
-      this.f_a_I = c.load_I;
-      this.f_b_I = c.read;
-      this.f_c_I = c.write;
-      this.write_Z = c.init_Z;
-      this.load_Z = c.load_Z;
+      OverlayBounds c = this.clampToScreen(this, b);
+      this.bind = c.x;
+      this.f_a_I = c.y;
+      this.f_b_I = c.width;
+      this.f_c_I = c.height;
+      this.write_Z = c.visible;
+      this.load_Z = c.collapsed;
    }
 
    @Override
@@ -1298,7 +1298,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          && mx < this.bind + this.f_b_I
          && my >= this.f_a_I
          && my < this.f_a_I + 14
-         && !this.read_Z_D_2(mx, my, this.init_cH());
+         && !this.isOverHeader(mx, my, this.init_cH());
    }
 
    @Override
@@ -1371,8 +1371,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return "";
       }
 
-      int handlerSlot = autismclient.util.InventorySlotHelper.load(init_Minecraft, slot);
-      int visibleSlot = handlerSlot >= 0 ? autismclient.util.InventorySlotHelper.init_I(init_Minecraft, handlerSlot) : -1;
+      int handlerSlot = autismclient.util.InventorySlotHelper.findSlotIndex(init_Minecraft, slot);
+      int visibleSlot = handlerSlot >= 0 ? autismclient.util.InventorySlotHelper.toVisibleSlot(init_Minecraft, handlerSlot) : -1;
       String slotText = visibleSlot >= 0 ? String.valueOf(visibleSlot) : "Handler " + handlerSlot;
       String slotDetail = "Handler " + handlerSlot;
       String itemText = !registryId.isEmpty() ? registryId : (!itemName.isEmpty() ? itemName : "Empty slot");
@@ -1404,7 +1404,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    public boolean init_Z_Slot(Slot slot, String itemName, String registryId, boolean slotMode) {
       this.variableWarningStale = true;
-      int visibleSlot = slot != null ? autismclient.util.InventorySlotHelper.init_I(init_Minecraft, slot) : -1;
+      int visibleSlot = slot != null ? autismclient.util.InventorySlotHelper.toVisibleSlot(init_Minecraft, slot) : -1;
       MacroItemTarget capturedTarget = this.init_ArrayUtil_Slot(slot, itemName, registryId, visibleSlot);
       if (this.init_StreamUtil.init_Z() && (!itemName.isEmpty() || visibleSlot >= 0)) {
          boolean useSlot = slotMode && visibleSlot >= 0;
@@ -1596,18 +1596,18 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             this.f_c_I = Math.max(minH, Math.min(maxH, neededH));
          }
 
-         OverlayBounds clamped = this.init_cH_cX_cH(this, new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z));
-         this.bind = clamped.init_I;
-         this.f_a_I = clamped.load_I;
-         this.f_b_I = clamped.read;
-         this.f_c_I = clamped.write;
+         OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z));
+         this.bind = clamped.x;
+         this.f_a_I = clamped.y;
+         this.f_b_I = clamped.width;
+         this.f_c_I = clamped.height;
          String title = this.start_Str();
          OverlayBounds bounds = this.init_cH();
-         this.init_V_GuiGraphicsExtract_6(context, mouseX, mouseY, bounds, title, this.load_Z, this.update_Z);
-         boolean clipBody = this.init_Z_GuiGraphicsExtract(context, bounds, this.load_Z);
+         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.load_Z, this.update_Z);
+         boolean clipBody = this.beginBodyClip(context, bounds, this.load_Z);
          if (clipBody) {
             try {
-               int frameH = this.load_I_cH_Z(bounds, false);
+               int frameH = this.renderedHeight(bounds, false);
                int bodyTop = this.f_a_I + 14;
                int bodyBtm = this.f_a_I + frameH;
                if (bodyBtm > bodyTop + 1) {
@@ -1618,11 +1618,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   autismclient.gui.ui.widgets.DropdownWidget.load(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
                }
             } finally {
-               this.init_V_GuiGraphicsExtract_Z(context, true);
+               this.endBodyClip(context, true);
             }
          }
 
-         this.init_V_GuiGraphicsExtract_14(context, bounds, this.load_Z, this.update_Z);
+         this.renderInactiveDim(context, bounds, this.load_Z, this.update_Z);
          if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
             context.nextStratum();
             autismclient.gui.ui.widgets.DropdownWidget.read(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
@@ -1658,13 +1658,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int sbReserve = needsScroll ? 6 : 0;
          int x = this.bind + 4;
          int w = this.f_b_I - 8 - sbReserve;
-         UiClipStack.init_HashUtil()
-            .init(context, autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), Math.max(0, contentBtm - bodyTop)));
+         UiClipStack.getInstance()
+            .push(context, autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), Math.max(0, contentBtm - bodyTop)));
 
          try {
             this.open(context, x, bodyTop - this.f_e_I, w, mouseX, mouseY, delta);
          } finally {
-            UiClipStack.init_HashUtil().init(context);
+            UiClipStack.getInstance().pop(context);
          }
 
          if (needsScroll) {
@@ -1763,12 +1763,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), contentAreaH);
             this.init_NetHelper = clip;
             int firstBodyHit = this.valid_List.size();
-            UiClipStack.init_HashUtil().init(context, clip);
+            UiClipStack.getInstance().push(context, clip);
 
             try {
                this.state(context, x, bodyTop - this.f_e_I, w, mouseX, mouseY, delta);
             } finally {
-               UiClipStack.init_HashUtil().init(context);
+               UiClipStack.getInstance().pop(context);
             }
 
             this.init_V_I_NetHelper(firstBodyHit, clip);
@@ -1799,12 +1799,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), contentAreaH);
             this.init_NetHelper = clip;
             int firstBodyHit = this.valid_List.size();
-            UiClipStack.init_HashUtil().init(context, clip);
+            UiClipStack.getInstance().push(context, clip);
 
             try {
                this.buffer(context, x, bodyTop - this.f_e_I, w, mouseX, mouseY, delta);
             } finally {
-               UiClipStack.init_HashUtil().init(context);
+               UiClipStack.getInstance().pop(context);
             }
 
             this.init_V_I_NetHelper(firstBodyHit, clip);
@@ -1831,12 +1831,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), contentAreaH);
             this.init_NetHelper = clip;
             int firstBodyHit = this.valid_List.size();
-            UiClipStack.init_HashUtil().init(context, clip);
+            UiClipStack.getInstance().push(context, clip);
 
             try {
                this.set(context, x, bodyTop - this.f_e_I, w, mouseX, mouseY, delta);
             } finally {
-               UiClipStack.init_HashUtil().init(context);
+               UiClipStack.getInstance().pop(context);
             }
 
             this.init_V_I_NetHelper(firstBodyHit, clip);
@@ -1884,8 +1884,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             int sbReserve = needsScroll ? 6 : 0;
             int x = this.bind + 4;
             int w = this.f_b_I - 8 - sbReserve;
-            UiClipStack.init_HashUtil()
-               .init(context, autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), Math.max(0, contentBtm - bodyTop)));
+            UiClipStack.getInstance()
+               .push(context, autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), Math.max(0, contentBtm - bodyTop)));
 
             try {
                int y = bodyTop + 4 - this.f_e_I;
@@ -1971,7 +1971,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   this.update_V(context, x, y, w, mouseX, mouseY);
                }
             } finally {
-               UiClipStack.init_HashUtil().init(context);
+               UiClipStack.getInstance().pop(context);
             }
 
             if (needsScroll) {
@@ -6042,19 +6042,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int var10000;
       switch (variant == null ? OverlayActionButton.ButtonTone.SECONDARY : variant) {
          case SUCCESS:
-            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-13248397, ThemePaletteManager.ColorRole.SUCCESS);
+            var10000 = ThemePaletteManager.recolor(-13248397, ThemePaletteManager.ColorRole.SUCCESS);
             break;
          case DANGER:
-            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.DANGER);
+            var10000 = ThemePaletteManager.recolor(-50373, ThemePaletteManager.ColorRole.DANGER);
             break;
          case PRIMARY:
          case FILTER_ON:
-            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.ColorRole.BUTTON);
+            var10000 = ThemePaletteManager.recolor(-42149, ThemePaletteManager.ColorRole.BUTTON);
             break;
          case GHOST:
          case FILTER_OFF:
          case SECONDARY:
-            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.OUTLINE);
+            var10000 = ThemePaletteManager.recolor(-50373, ThemePaletteManager.ColorRole.OUTLINE);
             break;
          default:
             throw new MatchException(null, null);
@@ -6804,7 +6804,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.init_CharEncoder.init_Identifier_l(l.read),
          numberColor,
          x + 8,
-         UiLayoutMath.init(y, h, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush()),
+         UiLayoutMath.centerTextY(y, h, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush()),
          false
       );
       String role = condition ? "COND" : "ACT";
@@ -6817,7 +6817,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.init_CharEncoder.init_Identifier_l(l.load),
          roleColor,
          roleX,
-         UiLayoutMath.init(y, h, this.init_CharEncoder.init_I_l(l.load), this.init_CharEncoder.flush()),
+         UiLayoutMath.centerTextY(y, h, this.init_CharEncoder.init_I_l(l.load), this.init_CharEncoder.flush()),
          false
       );
       String label = this.open_Str(step).replaceFirst("^(COND|ACT)\\s+", "");
@@ -6830,7 +6830,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.init_CharEncoder.init_Identifier_l(l.read),
          -1,
          labelX,
-         UiLayoutMath.init(y, h, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush()),
+         UiLayoutMath.centerTextY(y, h, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush()),
          false
       );
    }
@@ -7905,7 +7905,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int cbX = x + w - capBtnW2;
       int headerTextW = Math.max(24, cbX - x - 4);
       String headerLabel = autismclient.gui.f.b.k.init(this.init_Font, "Available Blocks", headerTextW, font, UiColorPalette.parse());
-      int headerTextY = UiLayoutMath.init(cy, headerH, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush());
+      int headerTextY = UiLayoutMath.centerTextY(cy, headerH, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush());
       this.init_ByteReader_GuiGraphicsExtract(
          ctx, cbX, cy, capBtnW2, capBtnH2, field.captureMode(), false, true, mx, my, () -> this.init_V_FieldDef_List(field, sel)
       );
@@ -7960,7 +7960,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int tick_I() {
-      return this.init_Str_2.isBlank() ? 0 : UiDensityMetrics.init(12);
+      return this.init_Str_2.isBlank() ? 0 : UiDensityMetrics.scaledHeight(12);
    }
 
    private int run_I() {
@@ -8001,7 +8001,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                font,
                -38037,
                this.bind + Math.max(4, (this.f_b_I - this.init_I_Identifier_Str(font, text)) / 2),
-               UiLayoutMath.init(footerY + 2, warnH, this.init_I_Identifier(font), this.init_CharEncoder.flush()),
+               UiLayoutMath.centerTextY(footerY + 2, warnH, this.init_I_Identifier(font), this.init_CharEncoder.flush()),
                false
             );
          }
@@ -8164,7 +8164,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.level();
       this.poll_List = new ArrayList<>();
 
-      for (AutismOverlay o : OverlayManager.init_bk().init_List()) {
+      for (AutismOverlay o : OverlayManager.getInstance().getOverlays()) {
          if (o != this && o.sync_Z()) {
             o.a__V();
             this.poll_List.add(o);
@@ -8203,10 +8203,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void flags() {
       if (this.poll_List != null) {
-         OverlayManager manager = OverlayManager.init_bk();
+         OverlayManager manager = OverlayManager.getInstance();
 
          for (AutismOverlay overlay : this.poll_List) {
-            manager.init_V(overlay);
+            manager.register(overlay);
             overlay.init_V_Z(true);
             overlay.a__V();
          }
@@ -8237,7 +8237,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.sync_Z = false;
       this.valid_List.clear();
       this.size_List.clear();
-      OverlayManager.init_bk().update_V(this);
+      OverlayManager.getInstance().bringToFront(this);
       if (this.open_Z) {
          Screen restore = this.load_Screen;
          init_Minecraft.execute(() -> {
@@ -9090,7 +9090,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int imy = (int)my;
       if (!this.sync_List.isEmpty()) {
          if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(this.sync_List, mx, my, button)) {
-            OverlayManager.init_bk().update_V(this);
+            OverlayManager.getInstance().bringToFront(this);
             return true;
          }
 
@@ -9099,7 +9099,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      if (this.write(mx, my, this.init_cH())) {
+      if (this.isOverHeaderDragArea(mx, my, this.init_cH())) {
          this.set(false);
          return true;
       }
@@ -9108,7 +9108,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.update_Z = true;
          this.load_D = mx - this.bind;
          this.read_D = my - this.f_a_I;
-         OverlayManager.init_bk().update_V(this);
+         OverlayManager.getInstance().bringToFront(this);
          return true;
       }
 
@@ -9120,7 +9120,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      OverlayManager.init_bk().update_V(this);
+      OverlayManager.getInstance().bringToFront(this);
       MouseButtonEvent click = new MouseButtonEvent(imx, imy, Compat263.newGlfwMouseButtonInfo(button, 0));
       boolean bodyInputAllowed = this.init_NetHelper == null || this.init_NetHelper.init_Z(imx, imy);
       ThemedTextInputBox focused = null;
@@ -9323,9 +9323,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.update_Z) {
          this.bind = (int)(mx - this.load_D);
          this.f_a_I = (int)(my - this.read_D);
-         OverlayBounds c = this.init_cH_cX(this);
-         this.bind = c.init_I;
-         this.f_a_I = c.load_I;
+         OverlayBounds c = this.clampCurrentBounds(this);
+         this.bind = c.x;
+         this.f_a_I = c.y;
          return true;
       }
 
@@ -10106,11 +10106,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int minH = this.push_I_2();
       int maxH = Math.max(minH, cA.load_I() * 4 / 5);
       this.f_c_I = Math.max(minH, Math.min(maxH, neededH));
-      OverlayBounds clamped = this.init_cH_cX_cH(this, new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z));
-      this.bind = clamped.init_I;
-      this.f_a_I = clamped.load_I;
-      this.f_b_I = clamped.read;
-      this.f_c_I = clamped.write;
+      OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z));
+      this.bind = clamped.x;
+      this.f_a_I = clamped.y;
+      this.f_b_I = clamped.width;
+      this.f_c_I = clamped.height;
    }
 
    private void update_V(int index) {
@@ -10457,7 +10457,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             : load_ArrayUtil_ArrayUtil(this.init_ArrayUtil_Slot(slot, itemName, registryId, visibleSlot));
          if (!captured.update()) {
             String mode = this.tick_Str("mode");
-            boolean playerInventorySlot = autismclient.util.InventorySlotHelper.init_Z(init_Minecraft, slot);
+            boolean playerInventorySlot = autismclient.util.InventorySlotHelper.isPlayerInventorySlot(init_Minecraft, slot);
             if ("LOOT".equals(mode) && playerInventorySlot) {
                return new ActionEditorOverlay.Inner_DataUtil(false, "Loot slot numbers must be chest/GUI slots - pick an item to add it by name", -38037);
             }
@@ -11036,7 +11036,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
 
             this.init_V_Z_Z(false, false);
-            OverlayManager.init_bk().update_V(this);
+            OverlayManager.getInstance().bringToFront(this);
          }));
       }
    }
@@ -11077,7 +11077,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
 
             this.init_V_Z_Z(false, false);
-            OverlayManager.init_bk().update_V(this);
+            OverlayManager.getInstance().bringToFront(this);
          }));
       }
    }
@@ -14637,7 +14637,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
 
             this.init_V_Z_Z(false, false);
-            OverlayManager.init_bk().update_V(this);
+            OverlayManager.getInstance().bringToFront(this);
          }));
       }
    }
@@ -15834,7 +15834,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor ctx, String text, int x, int y, int maxW, Identifier font) {
       String trimmed = autismclient.gui.f.b.k.init(this.init_Font, text, maxW - 4, font, -1);
       autismclient.gui.f.b.k.init(
-         ctx, this.init_Font, trimmed, font, UiColorPalette.scan(), x, UiLayoutMath.init(y, 14, this.init_I_Identifier(font), this.init_CharEncoder.flush()), false
+         ctx, this.init_Font, trimmed, font, UiColorPalette.scan(), x, UiLayoutMath.centerTextY(y, 14, this.init_I_Identifier(font), this.init_CharEncoder.flush()), false
       );
    }
 
@@ -15855,7 +15855,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int write_I(String label) {
-      return UiDensityMetrics.load(this.read_I(label));
+      return UiDensityMetrics.buttonWidthForText(this.read_I(label));
    }
 
    private int init_I_StreamUtil(CaptureMode mode, String idleLabel, String capturingLabel) {
@@ -15938,9 +15938,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (totalCount > visibleCount) {
          int viewPixels = Math.max(1, Math.min(trackH, visibleCount * itemH));
          int contentPixels = Math.max(0, totalCount * itemH);
-         ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(contentPixels, viewPixels, trackX, trackY, 5, trackH, scrollOffset);
+         ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.compute(contentPixels, viewPixels, trackX, trackY, 5, trackH, scrollOffset);
          boolean sbDragging = this.init_IntConsumer != null;
-         ScrollbarMetricsHelper.init(ctx, metrics, metrics.init(mouseX, mouseY), sbDragging);
+         ScrollbarMetricsHelper.render(ctx, metrics, metrics.containsTrack(mouseX, mouseY), sbDragging);
       }
    }
 

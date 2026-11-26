@@ -277,10 +277,10 @@ public abstract class AutismClientConnectionMixin {
             yaw = f.init(yaw);
             pitch = f.load(pitch);
          } else {
-            RotationMath.Rotation rotation = SilentMovementCoordinator.load(Minecraft.getInstance().player);
+            RotationMath.Rotation rotation = SilentMovementCoordinator.getHeadRenderRotation(Minecraft.getInstance().player);
             if (rotation != null) {
-               yaw = rotation.init();
-               pitch = rotation.load();
+               yaw = rotation.yaw();
+               pitch = rotation.pitch();
             }
          }
 

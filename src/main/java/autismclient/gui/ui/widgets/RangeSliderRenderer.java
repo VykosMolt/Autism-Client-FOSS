@@ -11,7 +11,7 @@ public final class RangeSliderRenderer {
    public static void init(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, double minRatio, double maxRatio, boolean hovered, int activeThumb
    ) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       minRatio = init(minRatio);
       maxRatio = init(maxRatio);
       if (maxRatio < minRatio) {
@@ -21,7 +21,7 @@ public final class RangeSliderRenderer {
       }
 
       int radius = 3;
-      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, colors.pop, colors.set);
+      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, colors.inputSurface, colors.borderControl);
       autismclient.gui.f.NetHelper track = init(bounds);
       int trackRadius = track.sync() / 2;
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), track, trackRadius, -869256388);
@@ -29,7 +29,7 @@ public final class RangeSliderRenderer {
       int highX = init(track, maxRatio);
       if (highX > lowX) {
          autismclient.gui.f.PacketUtil.load(
-            context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(lowX, track.write(), highX - lowX, track.sync()), trackRadius, colors.clear
+            context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(lowX, track.write(), highX - lowX, track.sync()), trackRadius, colors.accent
          );
       }
 
@@ -45,11 +45,11 @@ public final class RangeSliderRenderer {
    }
 
    private static void init_V_SyncManager(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int centerX, boolean lit) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       float r = Math.max(1.5F, bounds.sync() / 2.0F - 2.0F);
       float cx = Math.max(bounds.read() + 2 + r, Math.min(bounds.init() - 2 - r, centerX));
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract(
-         context.init_GuiGraphicsExtract(), cx, bounds.write() + bounds.sync() / 2.0F, r, lit ? colors.prev : colors.valid
+         context.init_GuiGraphicsExtract(), cx, bounds.write() + bounds.sync() / 2.0F, r, lit ? colors.textPrimary : colors.textSecondary
       );
    }
 

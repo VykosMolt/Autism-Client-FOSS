@@ -666,8 +666,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
          }
 
          this.init_V_GuiGraphicsExtract_2(graphics, refreshStatus, importStatus);
-         autismclient.gui.ui.UiClipStack.init_HashUtil()
-            .init(
+         autismclient.gui.ui.UiClipStack.getInstance()
+            .push(
                graphics,
                autismclient.gui.f.NetHelper.init(this.cache(), this.valid(), Math.max(0, this.state() - this.cache()), Math.max(0, this.size() - this.valid()))
             );
@@ -677,7 +677,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
                this.init_V_GuiGraphicsExtract(graphics, row, virtualMouseX, virtualMouseY);
             }
          } finally {
-            autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics);
+            autismclient.gui.ui.UiClipStack.getInstance().pop(graphics);
          }
 
          if (total == 0) {
@@ -708,7 +708,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
 
          if (!this.init_Z()) {
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I(this.load_List().size());
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(graphics, scrollbar, scrollbar.init(virtualMouseX, virtualMouseY), this.init_Z);
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, scrollbar, scrollbar.containsTrack(virtualMouseX, virtualMouseY), this.init_Z);
          }
 
          super.extractRenderState(graphics, virtualMouseX, virtualMouseY, delta);
@@ -815,13 +815,13 @@ public class ProxiesScreen extends VirtualScaledScreen {
          }
 
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I(this.load_List().size());
-         if (scrollbar.init_Z() && scrollbar.init(virtualEvent.x(), virtualEvent.y())) {
+         if (scrollbar.isScrollable() && scrollbar.containsTrack(virtualEvent.x(), virtualEvent.y())) {
             this.init_Z = true;
-            this.sync_I = scrollbar.load(virtualEvent.x(), virtualEvent.y())
-               ? Math.max(0, (int)Math.round(virtualEvent.y()) - scrollbar.update())
-               : scrollbar.sync() / 2;
-            this.update_I = load(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.flush());
-            this.init_CacheEntry.load(this.update_I, scrollbar.flush());
+            this.sync_I = scrollbar.containsThumb(virtualEvent.x(), virtualEvent.y())
+               ? Math.max(0, (int)Math.round(virtualEvent.y()) - scrollbar.thumbY())
+               : scrollbar.thumbHeight() / 2;
+            this.update_I = load(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.maxScroll());
+            this.init_CacheEntry.load(this.update_I, scrollbar.maxScroll());
             this.load_V();
             this.set_V();
             return true;
@@ -888,8 +888,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
       MouseButtonEvent virtualEvent = init_MouseButtonEvent_MouseButtonEvent(event);
       if (this.init_Z) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I(this.load_List().size());
-         this.update_I = load(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.flush());
-         this.init_CacheEntry.load(this.update_I, scrollbar.flush());
+         this.update_I = load(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.maxScroll());
+         this.init_CacheEntry.load(this.update_I, scrollbar.maxScroll());
          this.load_V();
          return true;
       } else {
@@ -1123,11 +1123,11 @@ public class ProxiesScreen extends VirtualScaledScreen {
    }
 
    private int read_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int write_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int update_I() {
@@ -1139,7 +1139,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
    }
 
    private int init_I_I_I(int top, int height) {
-      return autismclient.gui.f.UiHelper.init(this.font).init_I(autismclient.gui.f.NetHelper.init(0, top, 1, height));
+      return autismclient.gui.f.UiHelper.init(this.font).centerTextY(autismclient.gui.f.NetHelper.init(0, top, 1, height));
    }
 
    private int init_I_Str(String text) {
@@ -1246,7 +1246,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       int maxScroll = this.init_I_I(rows);
       this.update_I = load(this.update_I, maxScroll);
       this.init_CacheEntry.load(this.update_I, maxScroll);
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(contentPixels, this.data(), this.value(), trackY, 6, trackHeight, this.update_I);
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, this.data(), this.value(), trackY, 6, trackHeight, this.update_I);
    }
 
    private int value() {
@@ -1358,7 +1358,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
    }
 
    private int load_I_Str(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.load(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean center) {
@@ -1391,11 +1391,11 @@ public class ProxiesScreen extends VirtualScaledScreen {
    }
 
    private static int load_I_I(int argb) {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(argb, ThemePaletteManager.ColorRole.OUTLINE);
+      return ThemePaletteManager.recolor(argb, ThemePaletteManager.ColorRole.OUTLINE);
    }
 
    private static int read_I_I(int argb) {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(argb, ThemePaletteManager.ColorRole.SUCCESS);
+      return ThemePaletteManager.recolor(argb, ThemePaletteManager.ColorRole.SUCCESS);
    }
 
    private enum Inner_DataUtil {

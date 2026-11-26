@@ -144,8 +144,8 @@ final class AiScaffoldWalk {
 
                float prevYaw = mc.player.getYRot();
                float prevPitch = mc.player.getXRot();
-               mc.player.setYRot(candidate.init_U_DataUtil().load().init());
-               mc.player.setXRot(candidate.init_U_DataUtil().load().load());
+               mc.player.setYRot(candidate.init_U_DataUtil().load().yaw());
+               mc.player.setXRot(candidate.init_U_DataUtil().load().pitch());
                autismclient.ai.engine.AiCameraTurn.putAt(mc.player, prevYaw, prevPitch);
                this.write_Z = true;
                mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, candidate.init_BlockHitResult());

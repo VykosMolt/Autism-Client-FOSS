@@ -36,7 +36,7 @@ public abstract class AutismScaffoldInputMixin extends ClientInput {
       }
 
       Input scaffold = ScaffoldModule.init_Input_ClientInput_Input_4(this, original);
-      Input aura = SilentMovementCoordinator.init(this, scaffold);
+      Input aura = SilentMovementCoordinator.rewriteMovementInput(this, scaffold);
       if (!AutismLiteVariant.enabled()) {
          aura = DangerModule.init_Input_Input_4(aura);
       }

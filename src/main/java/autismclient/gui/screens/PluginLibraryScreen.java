@@ -399,7 +399,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    }
 
    private int init_I_Str_11(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.load(k.init(this.font, label, init_Identifier(), 0));
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, init_Identifier(), 0));
    }
 
    private int write() {
@@ -471,8 +471,8 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          String header = this.init_MapStore_DataUtil == PluginLibraryScreen.Inner_DataUtil.BY_SERVER ? "Servers you have scanned" : "Plugin -> servers running it";
          this.init(graphics, header, this.reset() + 4, this.init_I_I_I_5(this.clear() + 4, 12), GuiColorPalette.close, this.start() - 8);
          String queryLower = this.init_Str.toLowerCase(Locale.ROOT);
-         autismclient.gui.ui.UiClipStack.init_HashUtil()
-            .init(
+         autismclient.gui.ui.UiClipStack.getInstance()
+            .push(
                graphics,
                autismclient.gui.f.NetHelper.init(this.size(), this.next(), Math.max(0, this.data() - this.size()), Math.max(0, this.prev() - this.next()))
             );
@@ -488,7 +488,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                }
             }
          } finally {
-            autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics);
+            autismclient.gui.ui.UiClipStack.getInstance().pop(graphics);
          }
 
          for (autismclient.gui.ui.widgets.OverlayActionButton b : this.init_List) {
@@ -497,7 +497,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
          if (!this.init_Z_6()) {
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics sb = this.init_PoolEntry_DataUtil_I_3(this.write_List.size());
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(graphics, sb, sb.init(mx, my), this.init_Z);
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, sb, sb.containsTrack(mx, my), this.init_Z);
          }
 
          super.extractRenderState(graphics, mx, my, delta);
@@ -583,10 +583,10 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       double my = ve.y();
       if (Compat263.mouseEventGlfwButton(ve) == 0 && !this.init_Z_6()) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics sb = this.init_PoolEntry_DataUtil_I_3(this.write_List.size());
-         if (sb.init_Z() && sb.init(mx, my)) {
+         if (sb.isScrollable() && sb.containsTrack(mx, my)) {
             this.init_Z = true;
-            this.sync = sb.load(mx, my) ? (int)Math.round(my) - sb.update() : sb.sync() / 2;
-            this.update = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(sb, my, this.sync);
+            this.sync = sb.containsThumb(mx, my) ? (int)Math.round(my) - sb.thumbY() : sb.thumbHeight() / 2;
+            this.update = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(sb, my, this.sync);
             this.load_V_13();
             return true;
          }
@@ -625,7 +625,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       MouseButtonEvent ve = init_MouseButtonEvent_MouseButtonEvent(event);
       if (this.init_Z) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics sb = this.init_PoolEntry_DataUtil_I_3(this.write_List.size());
-         this.update = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(sb, ve.y(), this.sync);
+         this.update = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(sb, ve.y(), this.sync);
          this.load_V_13();
          return true;
       } else {
@@ -668,11 +668,11 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    }
 
    private int sync() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int flush() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int close() {
@@ -684,7 +684,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    }
 
    private int init_I_I_I_5(int top, int height) {
-      return autismclient.gui.f.UiHelper.init(this.font).init_I(autismclient.gui.f.NetHelper.init(0, top, 1, height));
+      return autismclient.gui.f.UiHelper.init(this.font).centerTextY(autismclient.gui.f.NetHelper.init(0, top, 1, height));
    }
 
    private int poll() {
@@ -774,7 +774,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_I_3(int rowCount) {
       int contentPixels = Math.max(0, rowCount * this.close() - 2);
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(contentPixels, this.valid(), this.value(), this.next(), 6, this.valid(), this.update);
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, this.valid(), this.value(), this.next(), 6, this.valid(), this.update);
    }
 
    private boolean init_Z_6() {

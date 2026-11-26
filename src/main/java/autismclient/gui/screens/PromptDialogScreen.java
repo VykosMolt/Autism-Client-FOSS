@@ -89,10 +89,10 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
          int top = p.write() + 17 + 7;
 
          for (int i = 0; i < this.init_List.size(); i++) {
-            String line = ui.init_PoolEntry().init_Str(this.init_List.get(i), p.update() - 14);
+            String line = ui.init_PoolEntry().trimToWidth(this.init_List.get(i), p.update() - 14);
             ui.init_PoolEntry()
-               .init_V_GuiGraphicsExtract_2(
-                  g, line, p.read() + 7, top + 12 * i, i == 0 ? ui.init_TableIndex().init_JsonUtil().prev : ui.init_TableIndex().init_JsonUtil().valid
+               .draw(
+                  g, line, p.read() + 7, top + 12 * i, i == 0 ? ui.init_TableIndex().colors().textPrimary : ui.init_TableIndex().colors().textSecondary
                );
          }
 

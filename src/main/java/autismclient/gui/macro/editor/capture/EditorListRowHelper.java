@@ -88,7 +88,7 @@ public final class EditorListRowHelper {
             var10000 = selected ? -5398 : -29556;
             break;
          case NORMAL:
-            var10000 = selected ? ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.ColorRole.TEXT) : -1;
+            var10000 = selected ? ThemePaletteManager.recolor(-2828, ThemePaletteManager.ColorRole.TEXT) : -1;
             break;
          default:
             throw new MatchException(null, null);

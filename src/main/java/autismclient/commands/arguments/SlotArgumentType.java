@@ -87,7 +87,7 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
       Set<String> values = new LinkedHashSet<>();
       if (menu != null) {
          for (int handlerSlot = 0; handlerSlot < menu.slots.size(); handlerSlot++) {
-            int visible = InventorySlotHelper.init_I(mc, handlerSlot);
+            int visible = InventorySlotHelper.toVisibleSlot(mc, handlerSlot);
             values.add(init_Str_I(visible));
             values.add(String.valueOf(visible));
          }

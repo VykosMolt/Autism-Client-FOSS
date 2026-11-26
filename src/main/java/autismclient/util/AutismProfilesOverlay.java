@@ -31,7 +31,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
       this.load(false);
       this.init_V_Z(!this.init_Z);
       if (this.init_Z) {
-         OverlayManager.init_bk().update_V(this);
+         OverlayManager.getInstance().bringToFront(this);
       }
    }
 
@@ -121,20 +121,20 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
             int want = this.init_StreamUtil.init(this.read_I - 2) + 14 + 1;
             int maxH = Math.min(cA.load_I() - 16, 380);
             this.write = Math.max(this.load_I(), Math.min(want, maxH));
-            OverlayBounds bounds = this.init_cH_cX(this);
-            this.init_I_2 = bounds.init_I;
-            this.load_I = bounds.load_I;
-            this.read_I = bounds.read;
-            this.write = bounds.write;
+            OverlayBounds bounds = this.clampCurrentBounds(this);
+            this.init_I_2 = bounds.x;
+            this.load_I = bounds.y;
+            this.read_I = bounds.width;
+            this.write = bounds.height;
             autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(ctx, this.init_Font, mx, my).init_SyncManager();
-            this.init_V_SyncManager_10(context, this.init_cH(), "Profiles Library", this.load_Z, this.write_Z);
-            if (this.init_Z && !this.init_Z_Z(this.load_Z)) {
-               boolean clipped = this.init_Z_GuiGraphicsExtract(ctx, this.init_cH(), this.load_Z);
+            this.renderWindowFrame(context, this.init_cH(), "Profiles Library", this.load_Z, this.write_Z);
+            if (this.init_Z && !this.isVisuallyCollapsed(this.load_Z)) {
+               boolean clipped = this.beginBodyClip(ctx, this.init_cH(), this.load_Z);
 
                try {
                   this.init_V_SyncManager_2(context, 14, delta);
                } finally {
-                  this.init_V_GuiGraphicsExtract_Z(ctx, clipped);
+                  this.endBodyClip(ctx, clipped);
                }
             }
          }
@@ -146,8 +146,8 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
       int sh = cA.load_I();
       autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), -1073741824);
       int margin = 6;
-      int headerHeight = autismclient.gui.ui.UiDensityMetrics.init(14);
-      int availableHeight = Math.max(1, sh - autismclient.gui.ui.UiDensityMetrics.init(44));
+      int headerHeight = autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
+      int availableHeight = Math.max(1, sh - autismclient.gui.ui.UiDensityMetrics.scaledHeight(44));
       this.read_I = Math.max(1, Math.min(sw - margin * 2, this.init_StreamUtil.init_I() + 2));
       this.write = Math.min(availableHeight, this.init_StreamUtil.init(this.read_I - 2) + headerHeight + 1);
       this.init_I_2 = (sw - this.read_I) / 2;
@@ -172,12 +172,12 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
    private void init_V_SyncManager_2(autismclient.gui.f.SyncManager context, int headerHeight, float delta) {
       autismclient.gui.f.NetHelper body = autismclient.gui.f.NetHelper.init(this.init_I_2, this.load_I, this.read_I, this.write).load(1, headerHeight, 1, 1);
       if (body.update() != 0 && body.sync() != 0) {
-         autismclient.gui.ui.UiClipStack.init_HashUtil().init(context.init_GuiGraphicsExtract(), body);
+         autismclient.gui.ui.UiClipStack.getInstance().push(context.init_GuiGraphicsExtract(), body);
 
          try {
             this.init_StreamUtil.init_V_SyncManager(context, body, delta);
          } finally {
-            autismclient.gui.ui.UiClipStack.init_HashUtil().init(context.init_GuiGraphicsExtract());
+            autismclient.gui.ui.UiClipStack.getInstance().pop(context.init_GuiGraphicsExtract());
          }
       }
    }
@@ -188,7 +188,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
          return false;
       } else {
          OverlayBounds bounds = this.init_cH();
-         if (!this.update_Z && this.write(mx, my, bounds)) {
+         if (!this.update_Z && this.isOverHeaderDragArea(mx, my, bounds)) {
             this.init_V_Z(false);
             this.write_Z = false;
             return true;
@@ -219,11 +219,11 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
    @Override
    public boolean init_Z_D(double mx, double my, int button, double dx, double dy) {
       if (this.write_Z) {
-         OverlayBounds c = this.init_cH_cX_cH(
+         OverlayBounds c = this.clampToScreen(
             this, new OverlayBounds((int)Math.round(mx - this.init_D), (int)Math.round(my - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z)
          );
-         this.init_I_2 = c.init_I;
-         this.load_I = c.load_I;
+         this.init_I_2 = c.x;
+         this.load_I = c.y;
          return true;
       } else {
          return this.load_Z ? false : this.init_StreamUtil.init_Z_I((int)Math.round(mx), (int)Math.round(my), button, dx, dy);

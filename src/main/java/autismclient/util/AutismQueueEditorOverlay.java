@@ -84,13 +84,13 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    @Override
    public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
-         OverlayBounds clamped = this.init_cH_cX_cH(this, bounds);
-         this.flush_I = clamped.init_I;
-         this.close_I = clamped.load_I;
-         this.open_I = clamped.read;
-         this.poll_I = clamped.write;
-         this.sync_Z = clamped.init_Z;
-         this.update_Z = clamped.load_Z;
+         OverlayBounds clamped = this.clampToScreen(this, bounds);
+         this.flush_I = clamped.x;
+         this.close_I = clamped.y;
+         this.open_I = clamped.width;
+         this.poll_I = clamped.height;
+         this.sync_Z = clamped.visible;
+         this.update_Z = clamped.collapsed;
       }
    }
 
@@ -104,7 +104,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       if (visible) {
          this.push = 0;
          this.init_CacheEntry.load(0, 0);
-         OverlayManager.init_bk().update_V(this);
+         OverlayManager.getInstance().bringToFront(this);
       }
 
       this.update_V_20();
@@ -154,7 +154,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       List<AutismSessionState.DelayedPacket> displayQueue = this.init_List.isEmpty() ? this.init_List_12() : this.init_List;
       int panelHeight = this.update_Z
          ? 14
-         : this.init_cH_cX_cH(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
+         : this.clampToScreen(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).height;
       return mouseX >= this.flush_I && mouseX <= this.flush_I + this.open_I && mouseY >= this.close_I && mouseY <= this.close_I + panelHeight;
    }
 
@@ -169,7 +169,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          && mouseX <= this.flush_I + this.open_I
          && mouseY >= this.close_I
          && mouseY <= this.close_I + 14
-         && !this.read_Z_D_2(mouseX, mouseY, bounds);
+         && !this.isOverHeader(mouseX, mouseY, bounds);
    }
 
    public void update_V_20() {
@@ -222,7 +222,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int load(int panelHeight) {
-      return this.sync_I(Math.max(0, this.init_I(panelHeight) - 2), this.start_I_14());
+      return this.alignHeightToStep(Math.max(0, this.init_I(panelHeight) - 2), this.start_I_14());
    }
 
    private int set_I_19() {
@@ -237,7 +237,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       int visibleHeight = this.load(panelHeight);
       int contentHeight = this.init_List.size() * this.start_I_14();
       int maxScroll = Math.max(0, contentHeight - visibleHeight);
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
          contentHeight,
          Math.max(1, visibleHeight),
          this.tick_I_21() + this.run_I_21() - 5,
@@ -441,7 +441,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                this.push = rowBottom - visibleHeight;
             }
 
-            this.push = this.init_I_I_3(this.push, this.start_I_14(), maxScroll);
+            this.push = this.quantizeScrollOffset(this.push, this.start_I_14(), maxScroll);
          }
       }
    }
@@ -459,13 +459,13 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          }
 
          AutismSessionState.DelayedPacket selectedPacket = this.init_ck_CachePool(this.init_List);
-         OverlayBounds clamped = this.init_cH_cX_cH(
+         OverlayBounds clamped = this.clampToScreen(
             this, new OverlayBounds(this.flush_I, this.close_I, this.init_I_I_I(this.open_I, this.init_I()), this.init_I(this.init_List), this.sync_Z, this.update_Z)
          );
-         this.flush_I = clamped.init_I;
-         this.close_I = clamped.load_I;
-         this.open_I = clamped.read;
-         int panelHeight = clamped.write;
+         this.flush_I = clamped.x;
+         this.close_I = clamped.y;
+         this.open_I = clamped.width;
+         int panelHeight = clamped.height;
          this.poll_I = panelHeight;
          if (!this.update_Z && this.close_Z) {
             this.init_V_List_3(this.init_List, selectedPacket, panelHeight);
@@ -477,11 +477,11 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          this.load_Str = null;
          String title = "Queue (" + this.init_List.size() + ")";
          OverlayBounds bounds = new OverlayBounds(this.flush_I, this.close_I, this.open_I, panelHeight, this.sync_Z, this.update_Z);
-         this.init_V_GuiGraphicsExtract_6(context, mouseX, mouseY, bounds, title, this.update_Z, this.write_Z);
+         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.update_Z, this.write_Z);
          this.init_V_GuiGraphicsExtract_13(context, mouseX, mouseY, bounds);
-         boolean clipBody = this.init_Z_GuiGraphicsExtract(context, bounds, this.update_Z);
+         boolean clipBody = this.beginBodyClip(context, bounds, this.update_Z);
          if (!clipBody) {
-            this.init_V_GuiGraphicsExtract_14(context, bounds, this.update_Z, this.write_Z);
+            this.renderInactiveDim(context, bounds, this.update_Z, this.write_Z);
          } else {
             try {
                int gap = this.value();
@@ -782,14 +782,14 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                      "Queue empty",
                      ThemedTextHelper.TextTone.MUTED,
                      this.flush_I + 10,
-                     UiLayoutMath.init(this.push_I_23(), this.start_I_14(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
+                     UiLayoutMath.centerTextY(this.push_I_23(), this.start_I_14(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
                      false
                   );
                } else {
                   int visibleHeight = this.load(panelHeight);
                   int totalContentHeight = this.init_List.size() * this.start_I_14();
                   int maxScroll = Math.max(0, totalContentHeight - visibleHeight);
-                  this.push = this.init_I_I_3(this.push, this.start_I_14(), maxScroll);
+                  this.push = this.quantizeScrollOffset(this.push, this.start_I_14(), maxScroll);
                   this.init_CacheEntry.init_V_I_I(this.push, maxScroll);
                   int drawScroll = this.init_CacheEntry.init_I_F_I(delta, maxScroll);
                   int contentStartY = this.push_I_23();
@@ -801,9 +801,9 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   int clipBottom = this.read(panelHeight);
                   autismclient.gui.ui.widgets.ListRowRenderer.init(context, listX, listY, listWidth, listHeight, selectedPacket != null);
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil(panelHeight);
-                  int listContentWidth = this.init_I(scrollbarMetrics.init_Z());
-                  autismclient.gui.ui.UiClipStack.init_HashUtil()
-                     .init(context, autismclient.gui.f.NetHelper.init(listX + 1, clipTop, Math.max(0, listWidth - 2), Math.max(0, clipBottom - clipTop)));
+                  int listContentWidth = this.init_I(scrollbarMetrics.isScrollable());
+                  autismclient.gui.ui.UiClipStack.getInstance()
+                     .push(context, autismclient.gui.f.NetHelper.init(listX + 1, clipTop, Math.max(0, listWidth - 2), Math.max(0, clipBottom - clipTop)));
                   int baseY = contentStartY - drawScroll;
                   int groupColorIndex = 0;
                   int lastDelay = -2147483648;
@@ -863,7 +863,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                               textColor
                            )
                            : label;
-                        int rowTextY = UiLayoutMath.init(
+                        int rowTextY = UiLayoutMath.centerTextY(
                            rowY, this.start_I_14(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush()
                         );
                         autismclient.gui.f.b.k.init(
@@ -924,12 +924,12 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                      }
                   }
 
-                  autismclient.gui.ui.UiClipStack.init_HashUtil().init(context);
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(context, scrollbarMetrics, scrollbarMetrics.init(mouseX, mouseY), this.poll_Z);
+                  autismclient.gui.ui.UiClipStack.getInstance().pop(context);
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(context, scrollbarMetrics, scrollbarMetrics.containsTrack(mouseX, mouseY), this.poll_Z);
                }
             } finally {
-               this.init_V_GuiGraphicsExtract_Z(context, clipBody);
-               this.init_V_GuiGraphicsExtract_14(context, bounds, this.update_Z, this.write_Z);
+               this.endBodyClip(context, clipBody);
+               this.renderInactiveDim(context, bounds, this.update_Z, this.write_Z);
             }
 
             if (!this.update_Z && this.load_Str != null) {
@@ -950,13 +950,13 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       List<AutismSessionState.DelayedPacket> displayQueue = this.init_List.isEmpty() ? this.init_List_12() : this.init_List;
       int panelHeight = this.update_Z
          ? 14
-         : this.init_cH_cX_cH(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
+         : this.clampToScreen(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).height;
       if (button == 0 && mouseX >= this.flush_I && mouseX <= this.flush_I + this.open_I && mouseY >= this.close_I && mouseY <= this.close_I + 14) {
          OverlayBounds bounds = new OverlayBounds(this.flush_I, this.close_I, this.open_I, panelHeight, this.sync_Z, this.update_Z);
          if (this.load_Z_D_2(mouseX, mouseY, bounds)) {
             this.pop_V();
             return true;
-         } else if (this.write(mouseX, mouseY, bounds)) {
+         } else if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
             this.init_V_Z(false);
             return true;
          } else {
@@ -980,11 +980,11 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          }
 
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil(panelHeight);
-         if (button == 0 && scrollbarMetrics.init_Z() && scrollbarMetrics.init(mouseX, mouseY)) {
+         if (button == 0 && scrollbarMetrics.isScrollable() && scrollbarMetrics.containsTrack(mouseX, mouseY)) {
             this.poll_Z = true;
-            this.tick = scrollbarMetrics.load(mouseX, mouseY) ? (int)Math.round(mouseY) - scrollbarMetrics.update() : scrollbarMetrics.sync() / 2;
-            this.push = this.init_I_I_3(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(scrollbarMetrics, mouseY, this.tick), this.start_I_14(), scrollbarMetrics.flush());
-            this.init_CacheEntry.load(this.push, scrollbarMetrics.flush());
+            this.tick = scrollbarMetrics.containsThumb(mouseX, mouseY) ? (int)Math.round(mouseY) - scrollbarMetrics.thumbY() : scrollbarMetrics.thumbHeight() / 2;
+            this.push = this.quantizeScrollOffset(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, mouseY, this.tick), this.start_I_14(), scrollbarMetrics.maxScroll());
+            this.init_CacheEntry.load(this.push, scrollbarMetrics.maxScroll());
             return true;
          }
 
@@ -1031,20 +1031,20 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    @Override
    public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (this.write_Z && button == 0) {
-         OverlayBounds nextBounds = this.init_cH_cX_cH(
+         OverlayBounds nextBounds = this.clampToScreen(
             this, new OverlayBounds((int)(mouseX - this.init_D), (int)(mouseY - this.load_D), this.open_I, this.poll_I, this.sync_Z, this.update_Z)
          );
-         this.flush_I = nextBounds.init_I;
-         this.close_I = nextBounds.load_I;
+         this.flush_I = nextBounds.x;
+         this.close_I = nextBounds.y;
          return true;
       } else if (this.poll_Z && button == 0) {
          List<AutismSessionState.DelayedPacket> displayQueue = this.init_List.isEmpty() ? this.init_List_12() : this.init_List;
          int panelHeight = this.update_Z
             ? 14
-            : this.init_cH_cX_cH(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
+            : this.clampToScreen(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).height;
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil(panelHeight);
-         this.push = this.init_I_I_3(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(scrollbarMetrics, mouseY, this.tick), this.start_I_14(), scrollbarMetrics.flush());
-         this.init_CacheEntry.load(this.push, scrollbarMetrics.flush());
+         this.push = this.quantizeScrollOffset(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, mouseY, this.tick), this.start_I_14(), scrollbarMetrics.maxScroll());
+         this.init_CacheEntry.load(this.push, scrollbarMetrics.maxScroll());
          return true;
       } else {
          return false;
@@ -1069,14 +1069,14 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
       if (this.sync_Z && !this.update_Z && this.init_Z_D_D(mouseX, mouseY)) {
          List<AutismSessionState.DelayedPacket> displayQueue = this.init_List.isEmpty() ? this.init_List_12() : this.init_List;
-         int panelHeight = this.init_cH_cX_cH(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
+         int panelHeight = this.clampToScreen(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).height;
          int visibleHeight = this.load(panelHeight);
          int maxScroll = Math.max(0, displayQueue.size() * this.start_I_14() - visibleHeight);
          if (maxScroll <= 0) {
             return false;
          }
 
-         this.push = this.init_I_I_3(this.push - (int)(Math.signum(amount) * this.start_I_14()), this.start_I_14(), maxScroll);
+         this.push = this.quantizeScrollOffset(this.push - (int)(Math.signum(amount) * this.start_I_14()), this.start_I_14(), maxScroll);
          return true;
       } else {
          return false;
@@ -1166,7 +1166,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int start_I_14() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int stop() {
@@ -1174,7 +1174,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int next() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int prev() {

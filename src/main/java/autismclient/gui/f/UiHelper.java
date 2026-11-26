@@ -22,7 +22,7 @@ public final class UiHelper {
    }
 
    public static void init() {
-      init_TableIndex.init_V();
+      init_TableIndex.refresh();
       GuiColorPalette.init();
    }
 

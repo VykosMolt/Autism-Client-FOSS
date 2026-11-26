@@ -22,7 +22,7 @@ public class HelpCommand extends Command {
       root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("command", StringArgumentType.word()).suggests((ctx, builder) -> {
          String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-         for (Command command : autismclient.commands.CommandManager.init_List()) {
+         for (Command command : autismclient.commands.CommandManager.getCommands()) {
             if (command.name().toLowerCase(Locale.ROOT).startsWith(remaining)) {
                builder.suggest(command.name());
             }
@@ -37,13 +37,13 @@ public class HelpCommand extends Command {
          return builder.buildFuture();
       }).executes(ctx -> {
          String name = StringArgumentType.getString(ctx, "command");
-         Command cmd = autismclient.commands.CommandManager.init_Command(name);
+         Command cmd = autismclient.commands.CommandManager.getCommand(name);
          if (cmd == null) {
             AutismClientMessaging.sendPrefixed("§cNo such command: §f" + name);
             return 1;
          }
 
-         String prefix = autismclient.commands.CommandManager.init_Str();
+         String prefix = autismclient.commands.CommandManager.getPrefix();
          AutismClientMessaging.sendPrefixed("§b" + prefix + cmd.name() + " §7" + cmd.description());
          if (cmd.aliases().length > 0) {
             AutismClientMessaging.sendPrefixed("§7aliases: §f" + String.join(", ", cmd.aliases()));
@@ -54,9 +54,9 @@ public class HelpCommand extends Command {
    }
 
    private static void init() {
-      String prefix = autismclient.commands.CommandManager.init_Str();
+      String prefix = autismclient.commands.CommandManager.getPrefix();
 
-      for (Command c : autismclient.commands.CommandManager.init_List()) {
+      for (Command c : autismclient.commands.CommandManager.getCommands()) {
          AutismClientMessaging.sendPrefixed("§b" + prefix + c.name() + "§7 - " + c.description());
       }
    }

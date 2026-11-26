@@ -115,11 +115,11 @@ public final class CommandSuggestions {
          return builder.buildFuture();
       }
 
-      String prefix = CommandManager.init_Str();
+      String prefix = CommandManager.getPrefix();
       String lower = remaining.toLowerCase(Locale.ROOT);
 
-      for (Command command : CommandManager.init_List()) {
-         String line = prefix + CommandManager.init_Str(command);
+      for (Command command : CommandManager.getCommands()) {
+         String line = prefix + CommandManager.getPrimaryName(command);
          if (line.toLowerCase(Locale.ROOT).startsWith(lower)) {
             builder.suggest(line);
          }

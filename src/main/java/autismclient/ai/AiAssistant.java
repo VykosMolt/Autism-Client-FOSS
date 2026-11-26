@@ -66,16 +66,16 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    public void load_V() {
       if (this.init_AiAssistantOverlay != null && this.init_AiAssistantOverlay.sync_Z()) {
-         OverlayManager.init_bk().init_V(this.init_AiAssistantOverlay);
+         OverlayManager.getInstance().register(this.init_AiAssistantOverlay);
       }
    }
 
    public void read() {
-      OverlayManager manager = OverlayManager.init_bk();
+      OverlayManager manager = OverlayManager.getInstance();
       if (this.init_AiAssistantOverlay != null
          && this.init_AiAssistantOverlay.sync_Z()
-         && manager.init_List().contains(this.init_AiAssistantOverlay)
-         && !manager.load_Z(this.init_AiAssistantOverlay)) {
+         && manager.getOverlays().contains(this.init_AiAssistantOverlay)
+         && !manager.isHidden(this.init_AiAssistantOverlay)) {
          this.init_AiAssistantOverlay.init_V_Z(false);
       } else {
          this.write_V();
@@ -88,12 +88,12 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
             this.init_AiAssistantOverlay = new AiAssistantOverlay(AiService.init_cc());
          }
 
-         OverlayManager manager = OverlayManager.init_bk();
-         manager.init_V(this.init_AiAssistantOverlay);
-         manager.init_V_cX_Z(this.init_AiAssistantOverlay, false);
+         OverlayManager manager = OverlayManager.getInstance();
+         manager.register(this.init_AiAssistantOverlay);
+         manager.setHidden(this.init_AiAssistantOverlay, false);
          this.init_AiAssistantOverlay.init_V_Z(true);
          this.init_AiAssistantOverlay.write_V_Z(false);
-         manager.update_V(this.init_AiAssistantOverlay);
+         manager.bringToFront(this.init_AiAssistantOverlay);
          if (init_Minecraft.gui.screen() == null) {
             init_Minecraft.gui.setScreen(new autismclient.gui.screens.AutismOverlaysScreen(this.init_AiAssistantOverlay, null, false, false));
          }
@@ -165,7 +165,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
       if (this.init_AiAssistantOverlay != null
          && this.init_AiAssistantOverlay.sync_Z()
          && init_Minecraft.gui.screen() != null
-         && OverlayManager.init_bk().init_List().contains(this.init_AiAssistantOverlay)) {
+         && OverlayManager.getInstance().getOverlays().contains(this.init_AiAssistantOverlay)) {
          this.init_AiAssistantOverlay.push_V();
          init_Minecraft.gui.setScreen(null);
       }
@@ -196,6 +196,6 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    @Override
    public boolean load_Z_23() {
-      return autismclient.ai.engine.AiSilentAim.init(autismclient.util.SilentRotationManager.init_Z(), true, autismclient.util.SilentMovementCoordinator.init_Z());
+      return autismclient.ai.engine.AiSilentAim.init(autismclient.util.SilentRotationManager.init_Z(), true, autismclient.util.SilentMovementCoordinator.isSafeWalkActive());
    }
 }

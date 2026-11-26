@@ -21,7 +21,7 @@ public class GhostBlockCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         String prefix = autismclient.commands.CommandManager.init_Str();
+         String prefix = autismclient.commands.CommandManager.getPrefix();
          AutismClientMessaging.sendPrefixed("§eUsage: " + prefix + "ghostblock <toggle|reset|creative|block>");
          AutismClientMessaging.sendPrefixed("§7" + prefix + "ghostblock toggle §8- §7toggle the module");
          AutismClientMessaging.sendPrefixed("§7" + prefix + "ghostblock reset §8- §7remove all ghost blocks");

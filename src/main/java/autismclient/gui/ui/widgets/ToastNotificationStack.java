@@ -97,11 +97,11 @@ public final class ToastNotificationStack {
                float ageMs = Math.max(0.0F, (float)(nowNanos - toast.init_J()) / 1000000.0F);
                float alpha = Math.min(init_F_F(ageMs / this.read_F), init_F_F(((float)this.load_J - ageMs) / this.write_F));
                if (!(alpha <= 0.001F)) {
-                  List<String> lines = context.init_PoolEntry().init_List(toast.init_Str(), maxTextWidth);
+                  List<String> lines = context.init_PoolEntry().wrapLines(toast.init_Str(), maxTextWidth);
                   int widest = 0;
 
                   for (String line : lines) {
-                     widest = Math.max(widest, context.init_PoolEntry().init(line));
+                     widest = Math.max(widest, context.init_PoolEntry().measureWidth(line));
                   }
 
                   int toastWidth = Math.min(maxToastWidth, Math.max(Math.min(48, maxToastWidth), widest + padX * 2));
@@ -112,8 +112,8 @@ public final class ToastNotificationStack {
                   float eased = 1.0F - (1.0F - slide) * (1.0F - slide) * (1.0F - slide);
                   int drawY = y - Math.round((1.0F - eased) * (toastHeight + this.sync + 2));
                   autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, toastWidth, toastHeight);
-                  autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
-                  int fill = init(colors.update & 16777215, toast.init_I(), 0.22F);
+                  autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
+                  int fill = init(colors.windowSurface & 16777215, toast.init_I(), 0.22F);
                   autismclient.gui.f.PacketUtil.load(
                      context.init_GuiGraphicsExtract(),
                      bounds,
@@ -121,13 +121,13 @@ public final class ToastNotificationStack {
                      autismclient.gui.f.PacketUtil.init(-704643072 | fill, alpha),
                      autismclient.gui.f.PacketUtil.init(toast.init_I(), alpha)
                   );
-                  int textColor = autismclient.gui.f.PacketUtil.init(colors.prev, alpha);
+                  int textColor = autismclient.gui.f.PacketUtil.init(colors.textPrimary, alpha);
                   int textTop = drawY + Math.max(2, (toastHeight - textBlockHeight + 1) / 2 + 1);
 
                   for (int li = 0; li < lines.size(); li++) {
                      String line = lines.get(li);
-                     int lineX = drawX + Math.max(padX, (toastWidth - context.init_PoolEntry().init(line)) / 2);
-                     context.init_PoolEntry().init_V_GuiGraphicsExtract_2(context.init_GuiGraphicsExtract(), line, lineX, textTop + li * lineHeight, textColor);
+                     int lineX = drawX + Math.max(padX, (toastWidth - context.init_PoolEntry().measureWidth(line)) / 2);
+                     context.init_PoolEntry().draw(context.init_GuiGraphicsExtract(), line, lineX, textTop + li * lineHeight, textColor);
                   }
 
                   y += toastHeight + this.sync;

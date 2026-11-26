@@ -132,27 +132,27 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
       boolean centered,
       boolean enabled
    ) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       int radius = 3;
-      int fill = open && enabled ? colors.tick : colors.pop;
-      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, fill, open && enabled ? colors.clear : colors.set);
+      int fill = open && enabled ? colors.inputSurfaceFocused : colors.inputSurface;
+      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, fill, open && enabled ? colors.accent : colors.borderControl);
       float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered && enabled);
       if (hoverT > 0.001F) {
          autismclient.gui.f.PacketUtil.load(
-            context.init_GuiGraphicsExtract(), bounds.init(1), Math.max(1, radius - 1), autismclient.gui.f.PacketUtil.init(colors.add, hoverT)
+            context.init_GuiGraphicsExtract(), bounds.init(1), Math.max(1, radius - 1), autismclient.gui.f.PacketUtil.init(colors.innerHighlight, hoverT)
          );
       }
 
-      int textColor = enabled ? colors.prev : colors.size;
+      int textColor = enabled ? colors.textPrimary : colors.textMuted;
       if (centered) {
-         context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), label, bounds, textColor);
+         context.init_PoolEntry().drawCentered(context.init_GuiGraphicsExtract(), label, bounds, textColor);
       } else {
          context.init_PoolEntry()
-            .load(
+            .drawFitted(
                context.init_GuiGraphicsExtract(),
                label,
                bounds.read() + 5,
-               context.init_PoolEntry().init_I(bounds),
+               context.init_PoolEntry().centerTextY(bounds),
                Math.max(1, bounds.update() - 18),
                textColor
             );
@@ -176,15 +176,15 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
          this.read_I = this.init_I(context.load_I(), rowHeight);
          int width = this.init_I(context);
          this.init(context.init_I(), context.load_I(), rowHeight, width);
-         autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+         autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
          float progress = this.init_J == 0L ? 1.0F : Math.max(0.0F, Math.min(1.0F, (float)(System.nanoTime() - this.init_J) / 1.6E8F));
          float fade = 1.0F - (1.0F - progress) * (1.0F - progress) * (1.0F - progress);
          int radius = 5;
          autismclient.gui.f.PacketUtil.load(
-            context.init_GuiGraphicsExtract(), this.load_NetHelper, radius, autismclient.gui.f.PacketUtil.init(colors.get, fade)
+            context.init_GuiGraphicsExtract(), this.load_NetHelper, radius, autismclient.gui.f.PacketUtil.init(colors.borderSubtle, fade)
          );
          autismclient.gui.f.PacketUtil.load(
-            context.init_GuiGraphicsExtract(), this.load_NetHelper.init(1), Math.max(1, radius - 1), autismclient.gui.f.PacketUtil.init(colors.sync, fade)
+            context.init_GuiGraphicsExtract(), this.load_NetHelper.init(1), Math.max(1, radius - 1), autismclient.gui.f.PacketUtil.init(colors.popupSurface, fade)
          );
          int contentWidth = this.init_List.size() > this.read_I ? this.load_NetHelper.update() - 6 - 3 : this.load_NetHelper.update() - 2;
 
@@ -203,27 +203,27 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
             float hoverT = autismclient.gui.ui.HoverTransitionCache.init("dropdown:" + option, hovered);
             autismclient.gui.f.NetHelper pill = autismclient.gui.f.NetHelper.init(row.read() + 2, row.write(), Math.max(1, row.update() - 4), row.sync());
             if (active) {
-               autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), pill, 4, autismclient.gui.f.PacketUtil.init(colors.start, fade));
+               autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), pill, 4, autismclient.gui.f.PacketUtil.init(colors.accentSoft, fade));
             } else if (hoverT > 0.001F) {
                autismclient.gui.f.PacketUtil.load(
-                  context.init_GuiGraphicsExtract(), pill, 4, autismclient.gui.f.PacketUtil.init(autismclient.gui.f.PacketUtil.init(colors.add, hoverT), fade)
+                  context.init_GuiGraphicsExtract(), pill, 4, autismclient.gui.f.PacketUtil.init(autismclient.gui.f.PacketUtil.init(colors.innerHighlight, hoverT), fade)
                );
             }
 
             context.init_PoolEntry()
-               .load(
+               .drawFitted(
                   context.init_GuiGraphicsExtract(),
                   option,
                   row.read() + 4,
-                  context.init_PoolEntry().init_I(row),
+                  context.init_PoolEntry().centerTextY(row),
                   Math.max(1, row.update() - 18),
-                  autismclient.gui.f.PacketUtil.init(colors.prev, fade)
+                  autismclient.gui.f.PacketUtil.init(colors.textPrimary, fade)
                );
             if (active) {
                autismclient.gui.f.PacketUtil.update(
                   context.init_GuiGraphicsExtract(),
                   autismclient.gui.f.NetHelper.init(row.init() - 11, row.write() + Math.max(0, (row.sync() - 8) / 2), 8, 8),
-                  autismclient.gui.f.PacketUtil.init(colors.clear, fade)
+                  autismclient.gui.f.PacketUtil.init(colors.accent, fade)
                );
             }
          }
@@ -336,7 +336,7 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
       int width = Math.max(1, this.init_NetHelper.update());
 
       for (String option : this.init_List) {
-         width = Math.max(width, context.init_PoolEntry().init(option) + chrome);
+         width = Math.max(width, context.init_PoolEntry().measureWidth(option) + chrome);
       }
 
       this.update = Math.min(width, Math.max(1, context.init_I() - 8));
@@ -380,7 +380,7 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
    }
 
    private static int load_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
    private int read_I() {

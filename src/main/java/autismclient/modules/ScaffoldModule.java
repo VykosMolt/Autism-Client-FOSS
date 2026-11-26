@@ -1158,7 +1158,7 @@ public final class ScaffoldModule extends Module {
 
    private float read_F() {
       if (this.c_Z() && this.load_I_8() == -1) {
-         return this.load_ce_DataUtil != null ? this.load_ce_DataUtil.init() : MC.player.getYRot();
+         return this.load_ce_DataUtil != null ? this.load_ce_DataUtil.yaw() : MC.player.getYRot();
       }
 
       float requested = read_F_F(this.load_F_2());
@@ -1364,7 +1364,7 @@ public final class ScaffoldModule extends Module {
                return false;
             }
 
-            ScaffoldModule.PlannedPlacement target = new ScaffoldModule.PlannedPlacement(neighbour, cell, side.getOpposite(), hit, RotationMath.init(hitPos, eye), cell.getY());
+            ScaffoldModule.PlannedPlacement target = new ScaffoldModule.PlannedPlacement(neighbour, cell, side.getOpposite(), hit, RotationMath.lookAt(hitPos, eye), cell.getY());
             return this.init_Z_aI_TableIndex_3(target, hand, stack);
          } else {
             return false;
@@ -1499,7 +1499,7 @@ public final class ScaffoldModule extends Module {
                      }
 
                      this.write_V_aI_TableIndex(target);
-                     this.f_c_F = target.init_ce_DataUtil().load();
+                     this.f_c_F = target.init_ce_DataUtil().pitch();
                      ScaffoldModule.WireClickRotation wireClick = this.init_aI_TextFormat();
                      RotationMath.Rotation clickRotation = wireClick == null ? null : wireClick.load();
                      boolean rayLands = clickRotation != null && this.load_Z_aI_TableIndex_ce_DataUtil(target, clickRotation);
@@ -1542,7 +1542,7 @@ public final class ScaffoldModule extends Module {
                         }
 
                         if (clickRotation != null) {
-                           float emittedPitch = clickRotation.load();
+                           float emittedPitch = clickRotation.pitch();
                            if (!read_Z_F(emittedPitch)) {
                               this.add_Str = "pveto-" + (int)emittedPitch;
                               this.init_V_Str_aI_TableIndex("pitch-veto", target);
@@ -1556,15 +1556,15 @@ public final class ScaffoldModule extends Module {
                                  this.f_bY_I = 0;
                               }
 
-                              float yawResidual = this.load_I_8() == -1 ? 0.0F / 0.0F : update_F_F_F(this.load_F_2(), clickRotation.init());
+                              float yawResidual = this.load_I_8() == -1 ? 0.0F / 0.0F : update_F_F_F(this.load_F_2(), clickRotation.yaw());
                               this.add_Str = "yawoff-" + (Float.isNaN(yawResidual) ? "?" : String.format(Locale.ROOT, "%.1f", yawResidual));
                               this.init_V_Str_aI_TableIndex("yaw-veto", target);
                               return;
                            }
 
                            this.f_bY_I = 0;
-                           float goalErr = Math.abs(Mth.wrapDegrees(target.init_ce_DataUtil().init() - clickRotation.init()));
-                           if (target.init_Direction().getAxis().isHorizontal() && init_Z_F_F(target.init_ce_DataUtil().init(), clickRotation.init())) {
+                           float goalErr = Math.abs(Mth.wrapDegrees(target.init_ce_DataUtil().yaw() - clickRotation.yaw()));
+                           if (target.init_Direction().getAxis().isHorizontal() && init_Z_F_F(target.init_ce_DataUtil().yaw(), clickRotation.yaw())) {
                               boolean closing = update_Z_F_F(goalErr, this.f_m_F);
                               this.f_m_F = goalErr;
                               this.f_bZ_I = closing ? 0 : this.f_bZ_I + 1;
@@ -1584,7 +1584,7 @@ public final class ScaffoldModule extends Module {
                            this.f_m_F = 0.0F / 0.0F;
                            float clickPitchStep = wireClick.init_ce_DataUtil() == null
                               ? 0.0F
-                              : Math.abs(clickRotation.load() - wireClick.init_ce_DataUtil().load());
+                              : Math.abs(clickRotation.pitch() - wireClick.init_ce_DataUtil().pitch());
                            boolean descending = !MC.player.onGround() && MC.player.getDeltaMovement().y < 0.0;
                            if (!this.block_Z() && !descending && clickPitchStep > 10.0F) {
                               this.add_Str = "pstep-" + (int)clickPitchStep;
@@ -1955,8 +1955,8 @@ public final class ScaffoldModule extends Module {
          && target.init_BlockPos().equals(this.pop_BlockPos)
          && target.init_Direction() == this.init_Direction) {
          this.start_Str = "miss-direct";
-         RotationMath.Rotation direct = RotationMath.init(target.init_BlockHitResult().getLocation(), MC.player.getEyePosition());
-         return new RotationMath.Rotation(direct.init(), load_F_F_2(direct.load()));
+         RotationMath.Rotation direct = RotationMath.lookAt(target.init_BlockHitResult().getLocation(), MC.player.getEyePosition());
+         return new RotationMath.Rotation(direct.yaw(), load_F_F_2(direct.pitch()));
       } else {
          return target.init_ce_DataUtil();
       }
@@ -1983,7 +1983,7 @@ public final class ScaffoldModule extends Module {
          && MC.player != null
          && init_Z_Vec3_7(MC.player.getEyePosition(), this.init_BlockHitResult.getLocation(), target.init_BlockPos(), target.init_Direction());
       boolean blank = this.init_BlockHitResult == null;
-      boolean aimArrived = clickRotation == null || !init_Z_F_F(target.init_ce_DataUtil().init(), clickRotation.init());
+      boolean aimArrived = clickRotation == null || !init_Z_F_F(target.init_ce_DataUtil().yaw(), clickRotation.yaw());
       boolean pastAndBlank = blank && MC.player != null && this.sync(target) && aimArrived;
       if (occluded || pastAndBlank) {
          if (++this.f_ar_I >= 2) {
@@ -2014,7 +2014,7 @@ public final class ScaffoldModule extends Module {
 
    private boolean init_Z_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (MC.player != null && !target.init_Direction().getAxis().isVertical()) {
-         float yaw = target.init_ce_DataUtil().init();
+         float yaw = target.init_ce_DataUtil().yaw();
          Vec3 lead = this.load_Vec3();
          if (lead.horizontalDistanceSqr() < 1.0E-4 && this.init_aI_HashUtil != null) {
             lead = new Vec3(this.init_aI_HashUtil.load().x, 0.0, this.init_aI_HashUtil.load().z).normalize().scale(0.05);
@@ -2340,7 +2340,7 @@ public final class ScaffoldModule extends Module {
 
             booked.add(target.load());
             long limit = init_J_Z(
-               load_Z_List(booked), init_Z_F_3(clickRotation == null ? MC.player.getYRot() : clickRotation.init()), this.tick_Z_4(), this.push_Z_2()
+               load_Z_List(booked), init_Z_F_3(clickRotation == null ? MC.player.getYRot() : clickRotation.yaw()), this.tick_Z_4(), this.push_Z_2()
             );
             long floor = init_J_J(limit) + this.f_aj_I;
             this.f_bT_I = init_I_J_J(elapsed, floor);
@@ -2399,7 +2399,7 @@ public final class ScaffoldModule extends Module {
             return false;
          }
 
-         float pitch = clickRotation == null ? MC.player.getXRot() : clickRotation.load();
+         float pitch = clickRotation == null ? MC.player.getXRot() : clickRotation.pitch();
          List<BlockPos> cells = new ArrayList<>(this.sync_ArrayDeque.size() + 1);
          if (candidate < 5000L) {
             cells.addAll(this.sync_ArrayDeque);
@@ -2544,7 +2544,7 @@ public final class ScaffoldModule extends Module {
 
       Vec3 eye = MC.player.getEyePosition();
       Vec3 velocity = MC.player.getDeltaMovement();
-      float yaw = target.init_ce_DataUtil().init();
+      float yaw = target.init_ce_DataUtil().yaw();
 
       for (int step = 1; step <= 2; step++) {
          Vec3 projected = eye.add(velocity.scale(step));
@@ -3343,8 +3343,8 @@ public final class ScaffoldModule extends Module {
          int gap = this.f_av_I == -2147483648 ? -1 : tick - this.f_av_I;
          this.f_av_I = tick;
          RotationMath.Rotation click = this.update_ce_DataUtil;
-         float yawOff = click == null ? 0.0F / 0.0F : Mth.wrapDegrees(click.init() - this.init_F_4());
-         float residual = click != null && this.load_I_8() != -1 ? update_F_F_F(this.load_F_2(), click.init()) : 0.0F / 0.0F;
+         float yawOff = click == null ? 0.0F / 0.0F : Mth.wrapDegrees(click.yaw() - this.init_F_4());
+         float residual = click != null && this.load_I_8() != -1 ? update_F_F_F(this.load_F_2(), click.yaw()) : 0.0F / 0.0F;
          return String.format(
             Locale.ROOT,
             "hit=%.3f,%.3f,%.3f face=%s gap=%d yawoff=%.1f res=%.1f",
@@ -3366,8 +3366,8 @@ public final class ScaffoldModule extends Module {
          return "d=--,-- sum=--";
       }
 
-      float yaw = this.load_ce_DataUtil.init();
-      float pitch = this.load_ce_DataUtil.load();
+      float yaw = this.load_ce_DataUtil.yaw();
+      float pitch = this.load_ce_DataUtil.pitch();
       float dYaw = Float.isNaN(this.mark_F) ? 0.0F : Mth.wrapDegrees(yaw - this.mark_F);
       float dPitch = Float.isNaN(this.scan_F) ? 0.0F : pitch - this.scan_F;
       this.mark_F = yaw;
@@ -3394,7 +3394,7 @@ public final class ScaffoldModule extends Module {
          this.f_by_I,
          dt,
          sent,
-         this.load_ce_DataUtil == null ? 0.0F / 0.0F : this.load_ce_DataUtil.load(),
+         this.load_ce_DataUtil == null ? 0.0F / 0.0F : this.load_ce_DataUtil.pitch(),
          rawDelta
       );
    }
@@ -3721,7 +3721,7 @@ public final class ScaffoldModule extends Module {
    private void init_V_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (MC.player != null && target != null) {
          Vec3 eye = MC.player.getEyePosition();
-         float yaw = this.load_ce_DataUtil != null ? this.load_ce_DataUtil.init() : MC.player.getYRot();
+         float yaw = this.load_ce_DataUtil != null ? this.load_ce_DataUtil.yaw() : MC.player.getYRot();
          float demand = init_F_Vec3(eye, target.init_BlockPos(), target.init_Direction(), yaw);
          double xing = init_D_Vec3_3(eye, target.init_BlockPos(), target.init_Direction(), yaw);
          this.tick_Str = String.format(
@@ -3926,7 +3926,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private static String init_Str_ce_DataUtil(RotationMath.Rotation rotation) {
-      return rotation == null ? "null" : String.format(Locale.ROOT, "%.1f,%.1f", rotation.init(), rotation.load());
+      return rotation == null ? "null" : String.format(Locale.ROOT, "%.1f,%.1f", rotation.yaw(), rotation.pitch());
    }
 
    private static String read_Str_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
@@ -3964,26 +3964,26 @@ public final class ScaffoldModule extends Module {
       this.sync_Z = false;
       this.f_bG_I = 0;
       if (this.flush_ce_DataUtil == null) {
-         this.flush_ce_DataUtil = RotationMath.init(MC.player);
+         this.flush_ce_DataUtil = RotationMath.ofPlayer(MC.player);
          this.init_dg.init_V_J(this.init_Random.nextLong());
          this.read_ce_DataUtil = null;
          this.pool_F = 0.0F;
       }
 
-      double gcd = RotationMath.init();
+      double gcd = RotationMath.gcdStep();
       this.flush_ce_DataUtil = init_ce_DataUtil_dg(
          this.init_dg,
          this.flush_ce_DataUtil,
-         RotationMath.init(goal.init(), this.flush_ce_DataUtil.init()),
-         holdPitch ? 0.0F : Mth.clamp(goal.load(), -90.0F, 90.0F) - this.flush_ce_DataUtil.load(),
+         RotationMath.angleDelta(goal.yaw(), this.flush_ce_DataUtil.yaw()),
+         holdPitch ? 0.0F : Mth.clamp(goal.pitch(), -90.0F, 90.0F) - this.flush_ce_DataUtil.pitch(),
          this.init_F_ce_DataUtil(goal),
          gcd,
          init_F_Z_F(this.block_Z(), 18.0F),
          init_F_Z_F(this.block_Z(), 20.0F)
       );
-      float previousPitch = this.load_ce_DataUtil == null ? 0.0F / 0.0F : this.load_ce_DataUtil.load();
+      float previousPitch = this.load_ce_DataUtil == null ? 0.0F / 0.0F : this.load_ce_DataUtil.pitch();
       this.load_ce_DataUtil = init_ce_DataUtil_ce_DataUtil(this.flush_ce_DataUtil, this.load_ce_DataUtil, gcd, this.write_I_5(), this.f_b_F);
-      this.f_a_F = Float.isNaN(previousPitch) ? 0.0F : Math.abs(this.load_ce_DataUtil.load() - previousPitch);
+      this.f_a_F = Float.isNaN(previousPitch) ? 0.0F : Math.abs(this.load_ce_DataUtil.pitch() - previousPitch);
       this.f_v_I = 5;
       this.f_y_I = tick;
       return this.load_ce_DataUtil;
@@ -3991,7 +3991,7 @@ public final class ScaffoldModule extends Module {
 
    static RotationMath.Rotation init_ce_DataUtil_dg(SmoothRotationIntegrator smoother, RotationMath.Rotation current, RotationMath.Rotation goal, float directionChange, double gcd) {
       return init_ce_DataUtil_dg(
-         smoother, current, RotationMath.init(goal.init(), current.init()), Mth.clamp(goal.load(), -90.0F, 90.0F) - current.load(), directionChange, gcd
+         smoother, current, RotationMath.angleDelta(goal.yaw(), current.yaw()), Mth.clamp(goal.pitch(), -90.0F, 90.0F) - current.pitch(), directionChange, gcd
       );
    }
 
@@ -4007,7 +4007,7 @@ public final class ScaffoldModule extends Module {
             init_J_J(load_J_J(step.init(), maxYawStep, gcd), yawError, gcd), init_J_J(load_J_J(step.load(), maxPitchStep, gcd), pitchError, gcd)
          )
          .init(gcd);
-      return new RotationMath.Rotation(Mth.wrapDegrees(current.init() + delta.init()), Mth.clamp(current.load() + delta.load(), -90.0F, 90.0F));
+      return new RotationMath.Rotation(Mth.wrapDegrees(current.yaw() + delta.yaw()), Mth.clamp(current.pitch() + delta.pitch(), -90.0F, 90.0F));
    }
 
    static long init_J_J(long counts, float error, double gcd) {
@@ -4028,7 +4028,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private float init_F_ce_DataUtil(RotationMath.Rotation goal) {
-      float change = this.read_ce_DataUtil == null ? 0.0F : Math.min(1.0F, RotationMath.load(this.read_ce_DataUtil, goal) / 45.0F);
+      float change = this.read_ce_DataUtil == null ? 0.0F : Math.min(1.0F, RotationMath.vectorAngleDegrees(this.read_ce_DataUtil, goal) / 45.0F);
       this.read_ce_DataUtil = goal;
       this.pool_F = this.pool_F * 0.65F + change * 0.35F;
       return this.pool_F;
@@ -4081,10 +4081,10 @@ public final class ScaffoldModule extends Module {
          return null;
       }
 
-      float previousYaw = previousEmitted == null ? 0.0F / 0.0F : previousEmitted.init();
-      float candidate = Mth.wrapDegrees((float)(raw.init() + ditherCounts * gcd));
-      int prefer = previousEmitted == null ? 0 : (int)Math.signum(RotationMath.init(raw.init(), previousYaw));
-      return new RotationMath.Rotation(init_F_F_2(candidate, gcd, prefer, previousYaw, lastPlaceYaw), init_F_F_D(Mth.clamp(raw.load(), -90.0F, 90.0F), gcd));
+      float previousYaw = previousEmitted == null ? 0.0F / 0.0F : previousEmitted.yaw();
+      float candidate = Mth.wrapDegrees((float)(raw.yaw() + ditherCounts * gcd));
+      int prefer = previousEmitted == null ? 0 : (int)Math.signum(RotationMath.angleDelta(raw.yaw(), previousYaw));
+      return new RotationMath.Rotation(init_F_F_2(candidate, gcd, prefer, previousYaw, lastPlaceYaw), init_F_F_D(Mth.clamp(raw.pitch(), -90.0F, 90.0F), gcd));
    }
 
    private int write_I_5() {
@@ -4116,7 +4116,7 @@ public final class ScaffoldModule extends Module {
 
    static float init_F_ch_CachePool(ServerRotationTracker.RotationSnapshot snapshot) {
       ScaffoldModule.WireClickRotation wire = init_aI_TextFormat_ch_CachePool(snapshot);
-      return wire == null ? 0.0F / 0.0F : Math.abs(wire.load().load() - wire.init_ce_DataUtil().load());
+      return wire == null ? 0.0F / 0.0F : Math.abs(wire.load().pitch() - wire.init_ce_DataUtil().pitch());
    }
 
    private String pop_Str() {
@@ -4374,14 +4374,14 @@ public final class ScaffoldModule extends Module {
                this.flush_ce_DataUtil = this.load_ce_DataUtil;
             }
 
-            RotationMath.Rotation camera = RotationMath.init(MC.player);
-            double gcd = RotationMath.init();
+            RotationMath.Rotation camera = RotationMath.ofPlayer(MC.player);
+            double gcd = RotationMath.gcdStep();
             float debt = init_F_F_F(f_l_F, MC.player.getYRot());
-            float pitchDelta = camera.load() - this.flush_ce_DataUtil.load();
+            float pitchDelta = camera.pitch() - this.flush_ce_DataUtil.pitch();
             float yawCap = this.f_bG_I == 0 ? 20.0F : 37.0F;
             float pitchCap = this.f_bG_I == 0 ? 20.0F : 37.0F;
             if (autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
-               this.load_ce_DataUtil = RotationMath.init(this.load_ce_DataUtil, camera, 95.0F, 95.0F, gcd);
+               this.load_ce_DataUtil = RotationMath.stepQuantized(this.load_ce_DataUtil, camera, 95.0F, 95.0F, gcd);
                autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, this.load_ce_DataUtil);
                this.flush_ce_DataUtil = this.load_ce_DataUtil;
             } else {
@@ -4618,7 +4618,7 @@ public final class ScaffoldModule extends Module {
       float previousAnchor = this.flags_F;
       this.data_V();
       if (hadCourse) {
-         float lookDeviation = Math.abs(RotationMath.init(this.flags_F, lookYaw));
+         float lookDeviation = Math.abs(RotationMath.angleDelta(this.flags_F, lookYaw));
          if (lookDeviation > 45.0F) {
             float snapped = write_F_F(lookYaw);
             this.flags_F = Mth.wrapDegrees(snapped);
@@ -4656,7 +4656,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void init_V_LocalPlayer(LocalPlayer player) {
-      float deviation = Math.abs(RotationMath.init(this.flags_F, this.init_F_LocalPlayer(player)));
+      float deviation = Math.abs(RotationMath.angleDelta(this.flags_F, this.init_F_LocalPlayer(player)));
       this.f_R_I = init_I_I_F(this.f_R_I, deviation);
    }
 
@@ -4953,7 +4953,7 @@ public final class ScaffoldModule extends Module {
       boolean settled = !load_Z_Input(recovery)
          && this.write_ce_DataUtil != null
          && init_Z_F(
-            this.write_ce_DataUtil.init(),
+            this.write_ce_DataUtil.yaw(),
             this.write_F(),
             velocity.x * forward.x + velocity.z * forward.z,
             velocity.x * left.x + velocity.z * left.z,
@@ -5143,11 +5143,11 @@ public final class ScaffoldModule extends Module {
          && !this.start_Z()
          && !this.task_Z) {
          Input forward = new Input(true, false, false, false, false, false, false);
-         Input keys = init_Input_Input_2(forward, this.flags_F, this.load_ce_DataUtil.init());
+         Input keys = init_Input_Input_2(forward, this.flags_F, this.load_ce_DataUtil.yaw());
          Vec3 local = new Vec3(init_F_Z_Z(keys.left(), keys.right()), 0.0, init_F_Z_Z(keys.forward(), keys.backward())).normalize();
          double speed = player.getAttributeValue(Attributes.MOVEMENT_SPEED) / (player.isSprinting() ? 1.3 : 1.0);
          double acceleration = load_D_D_D(speed, this.init_D_BlockPos_2(support));
-         float yaw = this.load_ce_DataUtil.init() * 0.017453292F;
+         float yaw = this.load_ce_DataUtil.yaw() * 0.017453292F;
          Vec3 force = new Vec3(local.x * Mth.cos(yaw) - local.z * Mth.sin(yaw), 0.0, local.z * Mth.cos(yaw) + local.x * Mth.sin(yaw)).scale(acceleration);
          Vec3 velocity = new Vec3(player.getDeltaMovement().x, 0.0, player.getDeltaMovement().z);
          Vec3 step = velocity.add(force);
@@ -5331,7 +5331,7 @@ public final class ScaffoldModule extends Module {
    }
 
    static boolean write_Z_F_F(float course, float yaw) {
-      return Float.isFinite(course) && Float.isFinite(yaw) && Math.abs(RotationMath.init(course + 180.0F, yaw)) <= 1.0F;
+      return Float.isFinite(course) && Float.isFinite(yaw) && Math.abs(RotationMath.angleDelta(course + 180.0F, yaw)) <= 1.0F;
    }
 
    private void close_V_LocalPlayer_BlockPos(LocalPlayer player, BlockPos support) {
@@ -5981,7 +5981,7 @@ public final class ScaffoldModule extends Module {
                                  cell.immutable(),
                                  face,
                                  new BlockHitResult(aim, face, support, false),
-                                 RotationMath.init(aim, player.getEyePosition()),
+                                 RotationMath.lookAt(aim, player.getEyePosition()),
                                  blockY
                               ),
                               false
@@ -6673,7 +6673,7 @@ public final class ScaffoldModule extends Module {
                next.immutable(),
                direction,
                new BlockHitResult(aim, direction, support, false),
-               RotationMath.init(aim, player.getEyePosition()),
+               RotationMath.lookAt(aim, player.getEyePosition()),
                support.getY()
             );
             return new ScaffoldModule.LivePlacement(target, false);
@@ -6704,7 +6704,7 @@ public final class ScaffoldModule extends Module {
             raised.immutable(),
             Direction.UP,
             new BlockHitResult(aim, Direction.UP, support, false),
-            RotationMath.init(aim, player.getEyePosition()),
+            RotationMath.lookAt(aim, player.getEyePosition()),
             box.maxY - 0.1 * box.getYsize()
          );
          return new ScaffoldModule.LivePlacement(target, true);
@@ -6756,7 +6756,7 @@ public final class ScaffoldModule extends Module {
 
                   Vec3 aim = this.init_Vec3_BlockPos_Direction(support, direction);
                   ScaffoldModule.PlannedPlacement target = new ScaffoldModule.PlannedPlacement(
-                     support, cell, direction, new BlockHitResult(aim, direction, support, false), RotationMath.init(aim, player.getEyePosition()), support.getY()
+                     support, cell, direction, new BlockHitResult(aim, direction, support, false), RotationMath.lookAt(aim, player.getEyePosition()), support.getY()
                   );
                   ScaffoldModule.LivePlacement placement = new ScaffoldModule.LivePlacement(target, false);
                   this.init_aI_DataPipe = placement;
@@ -6907,7 +6907,7 @@ public final class ScaffoldModule extends Module {
          Vec3 next = eye.add(this.init_Vec3_LocalPlayer(MC.player, MC.player.getBoundingBox(), motion));
          double reach = MC.player.blockInteractionRange() - 0.035;
          if (ClutchBlockPlanner.init_Z_Vec3_2(
-            next, Vec3.directionFromRotation(target.init_ce_DataUtil().load(), target.init_ce_DataUtil().init()), target.load(), target.init_Direction(), reach
+            next, Vec3.directionFromRotation(target.init_ce_DataUtil().pitch(), target.init_ce_DataUtil().yaw()), target.load(), target.init_Direction(), reach
          )) {
             return target;
          }
@@ -6923,15 +6923,15 @@ public final class ScaffoldModule extends Module {
             target.load(),
             target.init_Direction(),
             reach,
-            from.init(),
-            from.load(),
-            RotationMath.init(),
+            from.yaw(),
+            from.pitch(),
+            RotationMath.gcdStep(),
             0.02
          )) {
-            RotationMath.Rotation rotation = new RotationMath.Rotation(from.init() + Mth.wrapDegrees(counts.init() - from.init()), counts.load());
-            if (!(Math.abs(Mth.wrapDegrees(rotation.init() - from.init())) > cap)
-               && !(Math.abs(rotation.load() - from.load()) > cap)
-               && !(Math.abs(rotation.load()) > 89.5)) {
+            RotationMath.Rotation rotation = new RotationMath.Rotation(from.yaw() + Mth.wrapDegrees(counts.init() - from.yaw()), counts.load());
+            if (!(Math.abs(Mth.wrapDegrees(rotation.yaw() - from.yaw())) > cap)
+               && !(Math.abs(rotation.pitch() - from.pitch()) > cap)
+               && !(Math.abs(rotation.pitch()) > 89.5)) {
                BlockHitResult ray = init_BlockHitResult_Vec3(eye, rotation, reach, MC.level, MC.player);
                if (ray != null
                   && ray.getBlockPos().equals(target.init_BlockPos())
@@ -7072,8 +7072,8 @@ public final class ScaffoldModule extends Module {
          && face != null
          && Double.isFinite(reach)
          && !(reach <= 0.035)
-         && Float.isFinite(rotation.init())
-         && Float.isFinite(rotation.load())) {
+         && Float.isFinite(rotation.yaw())
+         && Float.isFinite(rotation.pitch())) {
          BlockHitResult ray = init_BlockHitResult_Vec3(eye, rotation, reach - 0.035, MC.level, MC.player);
          return ray != null && ray.getBlockPos().equals(support) && ray.getDirection() == face && this.init_Z_BlockHitResult_3(ray);
       } else {
@@ -7087,14 +7087,14 @@ public final class ScaffoldModule extends Module {
          && support != null
          && Double.isFinite(reach)
          && !(reach <= 0.0)
-         && Float.isFinite(rotation.init())
-         && Float.isFinite(rotation.load())) {
+         && Float.isFinite(rotation.yaw())
+         && Float.isFinite(rotation.pitch())) {
          AABB box = new AABB(support);
          if (box.contains(eye)) {
             return true;
          }
 
-         Vec3 end = eye.add(Vec3.directionFromRotation(rotation.load(), rotation.init()).scale(reach));
+         Vec3 end = eye.add(Vec3.directionFromRotation(rotation.pitch(), rotation.yaw()).scale(reach));
          return box.clip(eye, end).isPresent();
       } else {
          return false;
@@ -7172,7 +7172,7 @@ public final class ScaffoldModule extends Module {
                && carried.getBlockPos().equals(target.init_BlockPos())
                && carried.getDirection() == target.init_Direction()
                && this.init_Z_BlockHitResult_3(carried)
-               && (!this.size_Z() || Math.abs(RotationMath.init(current.init(), this.flags_F)) >= this.init_D_8() - 1.0)) {
+               && (!this.size_Z() || Math.abs(RotationMath.angleDelta(current.yaw(), this.flags_F)) >= this.init_D_8() - 1.0)) {
                return new ScaffoldModule.LivePlacement(
                   new ScaffoldModule.PlannedPlacement(target.init_BlockPos(), target.load(), target.init_Direction(), carried, current, target.init_D()),
                   placement.init_Z()
@@ -7193,7 +7193,7 @@ public final class ScaffoldModule extends Module {
                }
             }
 
-            RotationMath.Rotation rotation = RotationMath.init(point, eye);
+            RotationMath.Rotation rotation = RotationMath.lookAt(point, eye);
             if (placement.init_Z() && this.size_Z()) {
                rotation = this.init_ce_DataUtil_BlockPos(target.init_BlockPos(), target.init_Direction(), eye, this.poll_ce_DataUtil(), rotation);
                if (rotation == null) {
@@ -7229,7 +7229,7 @@ public final class ScaffoldModule extends Module {
                   return null;
                }
 
-               RotationMath.Rotation fixed = this.init_ce_DataUtil_BlockPos(target.init_BlockPos(), target.init_Direction(), eye, current, RotationMath.init(top, eye));
+               RotationMath.Rotation fixed = this.init_ce_DataUtil_BlockPos(target.init_BlockPos(), target.init_Direction(), eye, current, RotationMath.lookAt(top, eye));
                if (fixed == null) {
                   return null;
                }
@@ -7259,7 +7259,7 @@ public final class ScaffoldModule extends Module {
                            0.0F
                         );
                         if (!(eye.distanceToSqr(point) > reach * reach + 1.0E-7)) {
-                           RotationMath.Rotation rotation = RotationMath.init(point, eye);
+                           RotationMath.Rotation rotation = RotationMath.lookAt(point, eye);
                            BlockHitResult ray = init_BlockHitResult_Vec3(eye, rotation, reach, MC.level, player);
                            if (ray != null && ray.getBlockPos().equals(target.init_BlockPos()) && ray.getDirection() == target.init_Direction()) {
                               double cost = init_D_ce_DataUtil_ce_DataUtil(current, rotation) + Math.abs(offset) * 4.0 + eye.distanceTo(point) * 0.015;
@@ -7347,7 +7347,7 @@ public final class ScaffoldModule extends Module {
    private ScaffoldModule.PlannedPlacement init_aI_TableIndex_aI_TableIndex_Vec3(ScaffoldModule.PlannedPlacement live, Vec3 eye) {
       this.update_Z = false;
       RotationMath.Rotation proposed = this.init_aM()
-         .init(this.poll_ce_DataUtil(), live.init_ce_DataUtil(), false, this.init_RangeSetting.get(), RotationMath.init(), AutismSessionState.init_ck().state_I());
+         .init(this.poll_ce_DataUtil(), live.init_ce_DataUtil(), false, this.init_RangeSetting.get(), RotationMath.gcdStep(), AutismSessionState.init_ck().state_I());
       ScaffoldModule.PlannedPlacement endpoint = new ScaffoldModule.PlannedPlacement(
          live.init_BlockPos(), live.load(), live.init_Direction(), live.init_BlockHitResult(), proposed, live.init_D()
       );
@@ -7365,14 +7365,14 @@ public final class ScaffoldModule extends Module {
    private ScaffoldModule.PlannedPlacement init_aI_TableIndex_aI_TableIndex(ScaffoldModule.PlannedPlacement live, float cap, Vec3 eye, boolean continuous) {
       RotationMath.Rotation from = this.poll_ce_DataUtil();
       RotationMath.Rotation stepped = continuous
-         ? RotationMath.load(from, live.init_ce_DataUtil(), cap, cap, RotationMath.init())
-         : load_ce_DataUtil_ce_DataUtil(from, live.init_ce_DataUtil(), cap, cap, RotationMath.init());
+         ? RotationMath.stepQuantizedUnwrapped(from, live.init_ce_DataUtil(), cap, cap, RotationMath.gcdStep())
+         : load_ce_DataUtil_ce_DataUtil(from, live.init_ce_DataUtil(), cap, cap, RotationMath.gcdStep());
       BlockHitResult ray = init_BlockHitResult_Vec3(eye, stepped, MC.player.blockInteractionRange(), MC.level, MC.player);
       if (ray != null && ray.getBlockPos().equals(live.init_BlockPos()) && ray.getDirection() == live.init_Direction() && this.init_Z_BlockHitResult_3(ray)) {
          return new ScaffoldModule.PlannedPlacement(live.init_BlockPos(), live.load(), live.init_Direction(), ray, stepped, live.init_D());
       }
 
-      double gcd = read_D_D(RotationMath.init());
+      double gcd = read_D_D(RotationMath.gcdStep());
 
       for (int radius = 1; radius <= 3; radius++) {
          for (int yawCounts = -radius; yawCounts <= radius; yawCounts++) {
@@ -7398,10 +7398,10 @@ public final class ScaffoldModule extends Module {
       ScaffoldModule.PlannedPlacement live, RotationMath.Rotation from, RotationMath.Rotation base, int yawCounts, int pitchCounts, double gcd, float cap, Vec3 eye
    ) {
       RotationMath.Rotation candidate = new RotationMath.Rotation(
-         base.init() + (float)(yawCounts * gcd), Mth.clamp(base.load() + (float)(pitchCounts * gcd), -90.0F, 90.0F)
+         base.yaw() + (float)(yawCounts * gcd), Mth.clamp(base.pitch() + (float)(pitchCounts * gcd), -90.0F, 90.0F)
       );
-      float yawDelta = Math.abs(candidate.init() - from.init());
-      float pitchDelta = Math.abs(candidate.load() - from.load());
+      float yawDelta = Math.abs(candidate.yaw() - from.yaw());
+      float pitchDelta = Math.abs(candidate.pitch() - from.pitch());
       double countSlack = gcd * 0.501;
       if (!(yawDelta > cap + countSlack) && !(pitchDelta > cap + countSlack)) {
          BlockHitResult ray = init_BlockHitResult_Vec3(eye, candidate, MC.player.blockInteractionRange(), MC.level, MC.player);
@@ -8384,7 +8384,7 @@ public final class ScaffoldModule extends Module {
                            : (
                               this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.FORWARD
                                  ? this.init_aM().read(this.init_RangeSetting.get())
-                                 : this.init_aM().init(this.init_RangeSetting.get(), this.poll_ce_DataUtil(), this.update_ce_DataUtil(), RotationMath.init())
+                                 : this.init_aM().init(this.init_RangeSetting.get(), this.poll_ce_DataUtil(), this.update_ce_DataUtil(), RotationMath.gcdStep())
                            )
                      );
                   Predicate<BlockPos> solid = cell -> this.load_Z_BlockState_BlockPos(MC.level.getBlockState(cell), cell);
@@ -9109,15 +9109,15 @@ public final class ScaffoldModule extends Module {
          return current;
       }
 
-      RotationMath.Rotation stepped = RotationMath.init(current, goal, yawCap, pitchCap);
+      RotationMath.Rotation stepped = RotationMath.stepToward(current, goal, yawCap, pitchCap);
       if (gcd <= 0.0) {
          return stepped;
       }
 
-      float yawDiff = RotationMath.init(stepped.init(), current.init());
-      float pitchDiff = RotationMath.init(stepped.load(), current.load());
-      float yaw = current.init() + (float)(Math.round(yawDiff / gcd) * gcd);
-      float pitch = current.load() + (float)(Math.round(pitchDiff / gcd) * gcd);
+      float yawDiff = RotationMath.angleDelta(stepped.yaw(), current.yaw());
+      float pitchDiff = RotationMath.angleDelta(stepped.pitch(), current.pitch());
+      float yaw = current.yaw() + (float)(Math.round(yawDiff / gcd) * gcd);
+      float pitch = current.pitch() + (float)(Math.round(pitchDiff / gcd) * gcd);
       return new RotationMath.Rotation(yaw, Mth.clamp(pitch, -90.0F, 90.0F));
    }
 
@@ -9129,7 +9129,7 @@ public final class ScaffoldModule extends Module {
       if (current == null) {
          return goal;
       } else {
-         return goal == null ? current : RotationMath.init(current, goal, yawCap, pitchCap, gcd);
+         return goal == null ? current : RotationMath.stepQuantized(current, goal, yawCap, pitchCap, gcd);
       }
    }
 
@@ -9142,7 +9142,7 @@ public final class ScaffoldModule extends Module {
          return false;
       }
 
-      if (Math.abs(RotationMath.init(anchorYaw, smoothedYaw)) > 1.0F) {
+      if (Math.abs(RotationMath.angleDelta(anchorYaw, smoothedYaw)) > 1.0F) {
          return false;
       }
 
@@ -9298,8 +9298,8 @@ public final class ScaffoldModule extends Module {
    private RotationMath.Rotation init_ce_DataUtil_ce_DataUtil_F(RotationMath.Rotation goal, float cap) {
       RotationMath.Rotation planned = this.init_aI_CacheEntry != null && this.init_aI_CacheEntry.init_I() == AutismSessionState.init_ck().state_I()
          ? this.init_aI_CacheEntry.init_aI_DataPipe().init_aI_TableIndex().init_ce_DataUtil()
-         : this.init_aM().init(this.poll_ce_DataUtil(), goal, this.update_Z, this.init_RangeSetting.get(), RotationMath.init(), AutismSessionState.init_ck().state_I());
-      this.write_ce_DataUtil = RotationMath.init(this.poll_ce_DataUtil(), planned, cap, cap, RotationMath.init());
+         : this.init_aM().init(this.poll_ce_DataUtil(), goal, this.update_Z, this.init_RangeSetting.get(), RotationMath.gcdStep(), AutismSessionState.init_ck().state_I());
+      this.write_ce_DataUtil = RotationMath.stepQuantized(this.poll_ce_DataUtil(), planned, cap, cap, RotationMath.gcdStep());
       this.init_aM().init(this.write_ce_DataUtil, AutismSessionState.init_ck().state_I());
       this.f_U_I = AutismSessionState.init_ck().state_I();
       autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, this.write_ce_DataUtil);
@@ -9628,7 +9628,7 @@ public final class ScaffoldModule extends Module {
                this.poll_ce_DataUtil(),
                target.init_ce_DataUtil(),
                this.flags_F,
-               RotationMath.init(),
+               RotationMath.gcdStep(),
                player.blockInteractionRange() - 0.035
             );
             if (carry != null && this.init_Z_Vec3(eye, carry, target.init_BlockPos(), target.init_Direction(), player.blockInteractionRange())) {
@@ -9659,7 +9659,7 @@ public final class ScaffoldModule extends Module {
             && quantized.init_Direction().getAxis().isHorizontal()) {
             boolean stable = init_Z_F(
                this.flags_F,
-               quantized.init_ce_DataUtil().init(),
+               quantized.init_ce_DataUtil().yaw(),
                0.0196 * (player.isCrouching() ? 0.3 : 1.0),
                force -> {
                   Vec3 actual = this.init_Vec3_LocalPlayer(player, player.getBoundingBox(), player.getDeltaMovement().add(force));
@@ -9695,21 +9695,21 @@ public final class ScaffoldModule extends Module {
       }
 
       AABB box = new AABB(support);
-      Vec3 ray = Vec3.directionFromRotation(normal.load(), normal.init()).scale(reach);
+      Vec3 ray = Vec3.directionFromRotation(normal.pitch(), normal.yaw()).scale(reach);
       if (init_Z_Vec3_3(box.clip(eye, eye.add(ray)).orElse(null), box, face) && init_Z_Vec3_3(box.clip(nextEye, nextEye.add(ray)).orElse(null), box, face)) {
          return null;
       }
 
-      double side = RotationMath.init(normal.init(), course);
+      double side = RotationMath.angleDelta(normal.yaw(), course);
       RotationMath.Rotation best = null;
       double cost = 1.0 / 0.0;
 
       for (ClutchBlockPlanner.Inner_StreamUtil counts : ClutchBlockPlanner.init_List_Vec3_2(
-         eye, nextEye, ClutchBlockPlanner.init(support, face), support, face, support, face, reach, from.init(), from.load(), gcd, 0.02
+         eye, nextEye, ClutchBlockPlanner.init(support, face), support, face, support, face, reach, from.yaw(), from.pitch(), gcd, 0.02
       )) {
-         RotationMath.Rotation look = new RotationMath.Rotation(from.init() + RotationMath.init(counts.init(), from.init()), counts.load());
-         if (!(side * RotationMath.init(look.init(), course) <= 0.0)) {
-            double travel = Math.hypot(RotationMath.init(look.init(), from.init()), look.load() - from.load());
+         RotationMath.Rotation look = new RotationMath.Rotation(from.yaw() + RotationMath.angleDelta(counts.init(), from.yaw()), counts.load());
+         if (!(side * RotationMath.angleDelta(look.yaw(), course) <= 0.0)) {
+            double travel = Math.hypot(RotationMath.angleDelta(look.yaw(), from.yaw()), look.pitch() - from.pitch());
             if (travel < cost) {
                best = look;
                cost = travel;
@@ -9747,8 +9747,8 @@ public final class ScaffoldModule extends Module {
          && written != null
          && preparedTick < currentTick
          && writtenTick < currentTick
-         && Math.abs(RotationMath.init(prepared.init(), written.init())) <= 0.002F
-         && Math.abs(prepared.load() - written.load()) <= 0.002F;
+         && Math.abs(RotationMath.angleDelta(prepared.yaw(), written.yaw())) <= 0.002F
+         && Math.abs(prepared.pitch() - written.pitch()) <= 0.002F;
    }
 
    static double init_D_Vec3_6(Vec3 from, Vec3 to, Vec3 eye, Direction side) {
@@ -9891,7 +9891,7 @@ public final class ScaffoldModule extends Module {
                   && carried.getBlockPos().equals(support)
                   && carried.getDirection() == Direction.UP
                   && this.init_Z_BlockHitResult_3(carried)
-                  && (!this.valid_Z() || Math.abs(RotationMath.init(current.init(), this.flags_F)) >= 171.0F);
+                  && (!this.valid_Z() || Math.abs(RotationMath.angleDelta(current.yaw(), this.flags_F)) >= 171.0F);
                RotationMath.Rotation rotation = holds
                   ? current
                   : (
@@ -9902,9 +9902,9 @@ public final class ScaffoldModule extends Module {
                            this.init_Direction(),
                            eye,
                            following,
-                           RotationMath.init(point, eye),
+                           RotationMath.lookAt(point, eye),
                            this.poll_ce_DataUtil(),
-                           RotationMath.init(),
+                           RotationMath.gcdStep(),
                            player.blockInteractionRange() - 0.035,
                            this.init_aI_DataPipe != null
                               && support.equals(this.init_aI_DataPipe.init_aI_TableIndex().init_BlockPos())
@@ -9912,11 +9912,11 @@ public final class ScaffoldModule extends Module {
                         )
                   );
                if (!holds && point != null && this.valid_Z()) {
-                  rotation = this.init_ce_DataUtil_BlockPos(support, Direction.UP, eye, current, RotationMath.init(point, eye));
+                  rotation = this.init_ce_DataUtil_BlockPos(support, Direction.UP, eye, current, RotationMath.lookAt(point, eye));
                }
 
                if (rotation != null) {
-                  if (this.f_A_I <= 1 && !init_Z_F(this.flags_F, current.init(), rotation.init(), this.f_I_I, RotationMath.init())) {
+                  if (this.f_A_I <= 1 && !init_Z_F(this.flags_F, current.yaw(), rotation.yaw(), this.f_I_I, RotationMath.gcdStep())) {
                      deferredPastArc = true;
                   } else {
                      BlockHitResult ray = init_BlockHitResult_Vec3(eye, rotation, player.blockInteractionRange() - 0.035, MC.level, player);
@@ -9947,7 +9947,7 @@ public final class ScaffoldModule extends Module {
       }
 
       double tolerance = Double.isFinite(gcd) && gcd > 0.0 ? gcd * 1.01 : 0.1515;
-      return Math.abs(RotationMath.init(target, course)) <= Math.abs(RotationMath.init(current, course)) + tolerance;
+      return Math.abs(RotationMath.angleDelta(target, course)) <= Math.abs(RotationMath.angleDelta(current, course)) + tolerance;
    }
 
    private boolean valid_Z() {
@@ -9963,8 +9963,8 @@ public final class ScaffoldModule extends Module {
    }
 
    private RotationMath.Rotation init_ce_DataUtil_BlockPos(BlockPos support, Direction face, Vec3 eye, RotationMath.Rotation from, RotationMath.Rotation normal) {
-      double side = RotationMath.init(normal.init(), this.flags_F);
-      double prior = RotationMath.init(from.init(), this.flags_F);
+      double side = RotationMath.angleDelta(normal.yaw(), this.flags_F);
+      double prior = RotationMath.angleDelta(from.yaw(), this.flags_F);
       double rear = Math.max(this.init_D_8(), prior * side > 0.0 ? Math.abs(prior) : 0.0);
       if (this.write_BlockPos != null && this.clear_Z) {
          return init_ce_DataUtil_AABB(
@@ -9975,7 +9975,7 @@ public final class ScaffoldModule extends Module {
             this.flags_F,
             side,
             rear,
-            RotationMath.init(),
+            RotationMath.gcdStep(),
             MC.player.blockInteractionRange() - 0.035,
             look -> this.init_Z_Vec3(eye, look, support, face, MC.player.blockInteractionRange())
          );
@@ -9988,7 +9988,7 @@ public final class ScaffoldModule extends Module {
          eye,
          from,
          yaw,
-         RotationMath.init(),
+         RotationMath.gcdStep(),
          MC.player.blockInteractionRange() - 0.035,
          look -> this.init_Z_Vec3(eye, look, support, face, MC.player.blockInteractionRange())
       );
@@ -10044,8 +10044,8 @@ public final class ScaffoldModule extends Module {
          return null;
       }
 
-      RotationMath.Rotation bearing = load_ce_DataUtil_ce_DataUtil(from, new RotationMath.Rotation(yaw, from.load()), 180.0F, 180.0F, gcd);
-      Vec3 horizontal = Vec3.directionFromRotation(0.0F, bearing.init());
+      RotationMath.Rotation bearing = load_ce_DataUtil_ce_DataUtil(from, new RotationMath.Rotation(yaw, from.pitch()), 180.0F, 180.0F, gcd);
+      Vec3 horizontal = Vec3.directionFromRotation(0.0F, bearing.yaw());
       List<Vec3> points = new ArrayList<>();
       if (face.getAxis().isHorizontal()) {
          Vec3 normal = Vec3.atLowerCornerOf(face.getUnitVec3i());
@@ -10085,11 +10085,11 @@ public final class ScaffoldModule extends Module {
       double cost = 1.0 / 0.0;
 
       for (Vec3 point : points) {
-         RotationMath.Rotation desired = new RotationMath.Rotation(bearing.init(), RotationMath.init(point, eye).load());
+         RotationMath.Rotation desired = new RotationMath.Rotation(bearing.yaw(), RotationMath.lookAt(point, eye).pitch());
          RotationMath.Rotation look = load_ce_DataUtil_ce_DataUtil(from, desired, 180.0F, 180.0F, gcd);
-         Vec3 hit = box.clip(eye, eye.add(Vec3.directionFromRotation(look.load(), look.init()).scale(reach))).orElse(null);
+         Vec3 hit = box.clip(eye, eye.add(Vec3.directionFromRotation(look.pitch(), look.yaw()).scale(reach))).orElse(null);
          if (init_Z_Vec3_3(hit, box, face) && valid.test(look)) {
-            double travel = Math.hypot(RotationMath.init(look.init(), from.init()), look.load() - from.load());
+            double travel = Math.hypot(RotationMath.angleDelta(look.yaw(), from.yaw()), look.pitch() - from.pitch());
             if (travel < cost) {
                cost = travel;
                best = look;
@@ -10105,7 +10105,7 @@ public final class ScaffoldModule extends Module {
    ) {
       if (support != null && forward != null && !forward.getAxis().isVertical() && eye != null) {
          Vec3 point = init_Vec3_AABB(new AABB(support), eye, Vec3.atLowerCornerOf(forward.getUnitVec3i()));
-         return point == null ? null : init_ce_DataUtil_BlockPos(support, forward, eye, nextEye, RotationMath.init(point, eye), from, gcd, reach);
+         return point == null ? null : init_ce_DataUtil_BlockPos(support, forward, eye, nextEye, RotationMath.lookAt(point, eye), from, gcd, reach);
       } else {
          return null;
       }
@@ -10328,20 +10328,20 @@ public final class ScaffoldModule extends Module {
                Vec3 point = new Vec3(
                   support.getX() + (side.getAxis() == Axis.X ? axis : lane), box.maxY, support.getZ() + (side.getAxis() == Axis.Z ? axis : lane)
                );
-               RotationMath.Rotation rotation = load_ce_DataUtil_ce_DataUtil(from, RotationMath.init(point, eye), 180.0F, 180.0F, read_D_D(gcd));
+               RotationMath.Rotation rotation = load_ce_DataUtil_ce_DataUtil(from, RotationMath.lookAt(point, eye), 180.0F, 180.0F, read_D_D(gcd));
                float courseYaw = side.toYRot();
-               double normalSide = RotationMath.init(normal.init(), courseYaw);
-               double candidateSide = RotationMath.init(rotation.init(), courseYaw);
+               double normalSide = RotationMath.angleDelta(normal.yaw(), courseYaw);
+               double candidateSide = RotationMath.angleDelta(rotation.yaw(), courseYaw);
                if (!(normalSide * candidateSide <= 0.0)) {
-                  double yaw = Math.abs(RotationMath.init(rotation.init(), normal.init()));
-                  double pitch = Math.abs(rotation.load() - normal.load());
+                  double yaw = Math.abs(RotationMath.angleDelta(rotation.yaw(), normal.yaw()));
+                  double pitch = Math.abs(rotation.pitch() - normal.pitch());
                   if (!(yaw > 18.0) && !(pitch > 24.0)) {
-                     Vec3 look = Vec3.directionFromRotation(rotation.load(), rotation.init()).scale(reach);
+                     Vec3 look = Vec3.directionFromRotation(rotation.pitch(), rotation.yaw()).scale(reach);
                      Vec3 topHit = box.clip(eye, eye.add(look)).orElse(null);
                      Vec3 sideHit = box.clip(nextEye, nextEye.add(look)).orElse(null);
                      if (init_Z_Vec3_3(topHit, box, Direction.UP)) {
                         boolean carries = nextSideRequired && init_Z_Vec3_3(sideHit, box, side);
-                        double candidate = Math.hypot(RotationMath.init(rotation.init(), from.init()), rotation.load() - from.load());
+                        double candidate = Math.hypot(RotationMath.angleDelta(rotation.yaw(), from.yaw()), rotation.pitch() - from.pitch());
                         if (best == null || carries && !bestCarries || carries == bestCarries && candidate < cost) {
                            best = rotation;
                            cost = candidate;
@@ -10432,8 +10432,8 @@ public final class ScaffoldModule extends Module {
 
    private boolean data_Z() {
       return this.count_Z()
-         ? this.write_ce_DataUtil != null && write_Z_F_F(this.flags_F, this.write_ce_DataUtil.init())
-         : this.write_ce_DataUtil != null && Math.abs(RotationMath.init(this.write_F(), this.write_ce_DataUtil.init())) <= 2.0F;
+         ? this.write_ce_DataUtil != null && write_Z_F_F(this.flags_F, this.write_ce_DataUtil.yaw())
+         : this.write_ce_DataUtil != null && Math.abs(RotationMath.angleDelta(this.write_F(), this.write_ce_DataUtil.yaw())) <= 2.0F;
    }
 
    static int init_I_Z_2(boolean turnPending) {
@@ -10458,7 +10458,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private static boolean init_Z_KeyMapping(KeyMapping mapping) {
-      return mapping != null && autismclient.util.KeyMappingControl.init(mapping).autism$isActuallyDown();
+      return mapping != null && autismclient.util.KeyMappingControl.of(mapping).autism$isActuallyDown();
    }
 
    private void frame_V() {
@@ -10619,7 +10619,7 @@ public final class ScaffoldModule extends Module {
    public boolean onPacketSend(Packet<?> packet) {
       if (packet instanceof ServerboundMovePlayerPacket movement && movement.hasRotation()) {
          RotationMath.Rotation base = this.poll_ce_DataUtil();
-         this.init_ce_DataUtil = new RotationMath.Rotation(movement.getYRot(base.init()), movement.getXRot(base.load()));
+         this.init_ce_DataUtil = new RotationMath.Rotation(movement.getYRot(base.yaw()), movement.getXRot(base.pitch()));
       }
 
       return false;
@@ -10803,7 +10803,7 @@ public final class ScaffoldModule extends Module {
          RotationMath.Rotation actualClick = writtenWire == null ? null : writtenWire.load();
          if (this.flags_Z()) {
             this.set_J = written.init_J();
-            this.init_V_BlockPos_2(queued.init_BlockPos(), queued.load(), written.init_Direction(), actualClick == null ? 0.0F / 0.0F : actualClick.load());
+            this.init_V_BlockPos_2(queued.init_BlockPos(), queued.load(), written.init_Direction(), actualClick == null ? 0.0F / 0.0F : actualClick.pitch());
          }
 
          ScaffoldModule.PlannedPlacement pending = this.read_aI_TableIndex;
@@ -10829,7 +10829,7 @@ public final class ScaffoldModule extends Module {
                this.write_Str = "sent";
                this.fill_Z = true;
                if (actualClick != null) {
-                  this.f_b_F = actualClick.init();
+                  this.f_b_F = actualClick.yaw();
                }
 
                this.drain_V();
@@ -11364,7 +11364,7 @@ public final class ScaffoldModule extends Module {
                      : (
                         geometricBrake && init_Z_Vec3_Vec3(MC.player.getDeltaMovement(), brakeLane)
                            ? init_Input_Input_4(
-                              emitted, MC.player.getDeltaMovement(), scaffold.load_ce_DataUtil == null ? MC.player.getYRot() : scaffold.load_ce_DataUtil.init()
+                              emitted, MC.player.getDeltaMovement(), scaffold.load_ce_DataUtil == null ? MC.player.getYRot() : scaffold.load_ce_DataUtil.yaw()
                            )
                            : write_Input_Input(emitted)
                      );
@@ -11376,7 +11376,7 @@ public final class ScaffoldModule extends Module {
                }
 
                if (MC.player.onGround() && !emitted.jump() && !emitted.shift()) {
-                  float yaw = scaffold.load_ce_DataUtil == null ? MC.player.getYRot() : scaffold.load_ce_DataUtil.init();
+                  float yaw = scaffold.load_ce_DataUtil == null ? MC.player.getYRot() : scaffold.load_ce_DataUtil.yaw();
                   BlockPos frictionCell = BlockPos.containing(MC.player.getX(), MC.player.getY() - 0.5, MC.player.getZ());
                   double friction = MC.level.getBlockState(frictionCell).getBlock().getFriction();
                   Vec3 nextStep = init_Vec3_Vec3(
@@ -12435,7 +12435,7 @@ public final class ScaffoldModule extends Module {
       if (tick != f_bS_I) {
          f_bS_I = tick;
          float anchor = Float.isNaN(f_l_F) ? vanillaYaw : f_l_F;
-         f_l_F = rotation == null ? vanillaYaw : read_F_F_F(anchor, rotation.init());
+         f_l_F = rotation == null ? vanillaYaw : read_F_F_F(anchor, rotation.yaw());
       }
 
       return f_l_F;
@@ -12447,7 +12447,7 @@ public final class ScaffoldModule extends Module {
 
    public static float load_F_LocalPlayer_F(LocalPlayer player, float vanillaPitch) {
       RotationMath.Rotation rotation = load_ce_DataUtil_LocalPlayer(player);
-      return rotation == null ? vanillaPitch : rotation.load();
+      return rotation == null ? vanillaPitch : rotation.pitch();
    }
 
    public static Vec3 init_Vec3_LivingEntity_Vec3_2(LivingEntity entity, Vec3 vanillaImpulse) {
@@ -12456,19 +12456,19 @@ public final class ScaffoldModule extends Module {
          return vanillaImpulse;
       }
 
-      float sent = MC != null && entity == MC.player ? init_F_LocalPlayer_F(MC.player, rotation.init()) : rotation.init();
+      float sent = MC != null && entity == MC.player ? init_F_LocalPlayer_F(MC.player, rotation.yaw()) : rotation.yaw();
       float yaw = sent * 0.017453292F;
       return new Vec3(-Mth.sin(yaw) * 0.2F, vanillaImpulse.y, Mth.cos(yaw) * 0.2F);
    }
 
    public static float init_F_LivingEntity_F(LivingEntity entity, float vanillaPitch) {
       RotationMath.Rotation rotation = init_ce_DataUtil_LivingEntity(entity);
-      return rotation == null ? vanillaPitch : rotation.load();
+      return rotation == null ? vanillaPitch : rotation.pitch();
    }
 
    public static Vec3 load_Vec3_LivingEntity_Vec3(LivingEntity entity, Vec3 vanillaLook) {
       RotationMath.Rotation rotation = init_ce_DataUtil_LivingEntity(entity);
-      return rotation == null ? vanillaLook : Vec3.directionFromRotation(rotation.load(), rotation.init());
+      return rotation == null ? vanillaLook : Vec3.directionFromRotation(rotation.pitch(), rotation.yaw());
    }
 
    private static RotationMath.Rotation init_ce_DataUtil_LivingEntity(LivingEntity entity) {
@@ -12523,14 +12523,14 @@ public final class ScaffoldModule extends Module {
          return null;
       }
 
-      float yaw = Float.isNaN(f_l_F) ? active.init() : read_F_F_F(f_l_F, active.init());
-      return new RotationMath.Rotation(yaw, active.load());
+      float yaw = Float.isNaN(f_l_F) ? active.yaw() : read_F_F_F(f_l_F, active.yaw());
+      return new RotationMath.Rotation(yaw, active.pitch());
    }
 
    public static Vec3 init_Vec3_LocalPlayer_Vec3(LocalPlayer player, Vec3 original) {
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && !scaffold.pool_Z()) {
          RotationMath.Rotation rotation = load_ce_DataUtil_LocalPlayer(player);
-         return rotation == null ? original : Vec3.directionFromRotation(rotation.load(), rotation.init());
+         return rotation == null ? original : Vec3.directionFromRotation(rotation.pitch(), rotation.yaw());
       } else {
          return original;
       }
@@ -12599,7 +12599,7 @@ public final class ScaffoldModule extends Module {
    public static void init_V_ce_DataUtil_3(RotationMath.Rotation rotation) {
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && rotation != null) {
          scaffold.load_ce_DataUtil = rotation;
-         f_l_F = rotation.init();
+         f_l_F = rotation.yaw();
          f_bS_I = -2147483648;
          scaffold.f_v_I = 5;
          scaffold.flush_ce_DataUtil = rotation;
@@ -12866,7 +12866,7 @@ public final class ScaffoldModule extends Module {
          ScaffoldModule.PlannedPlacement next = this.read_aI_TableIndex != null ? this.read_aI_TableIndex : this.load_aI_TableIndex;
          if (next != null
             && this.load_ce_DataUtil != null
-            && !init_Z_Direction(next.init_Direction(), this.load_ce_DataUtil.load(), next.init_ce_DataUtil().load(), this.chunk_F, sinceLast)) {
+            && !init_Z_Direction(next.init_Direction(), this.load_ce_DataUtil.pitch(), next.init_ce_DataUtil().pitch(), this.chunk_F, sinceLast)) {
             return false;
          }
 
@@ -13144,10 +13144,10 @@ public final class ScaffoldModule extends Module {
          }
 
          if (this.pool_Z()) {
-            return this.load_Input_Input(input, MC.player.getYRot(), this.load_ce_DataUtil.init());
+            return this.load_Input_Input(input, MC.player.getYRot(), this.load_ce_DataUtil.yaw());
          }
 
-         Input result = init_Input_Input_2(input, MC.player.getYRot(), this.load_ce_DataUtil.init());
+         Input result = init_Input_Input_2(input, MC.player.getYRot(), this.load_ce_DataUtil.yaw());
          if (result != null && !result.forward() && load_Z_Input(input)) {
             this.f_aP_I = AutismSessionState.init_ck().state_I();
          }
@@ -13249,7 +13249,7 @@ public final class ScaffoldModule extends Module {
 
    private Input close(Input input) {
       int tick = AutismSessionState.init_ck().state_I();
-      Input result = this.init_bb.load(input, MC.player.getYRot(), this.load_ce_DataUtil.init(), tick);
+      Input result = this.init_bb.load(input, MC.player.getYRot(), this.load_ce_DataUtil.yaw(), tick);
       if (result == null) {
          return null;
       }
@@ -13270,7 +13270,7 @@ public final class ScaffoldModule extends Module {
       if (this.chunk_Z() && this.load_ce_DataUtil != null && this.f_v_I > 0) {
          float forward = init_F_Z_Z(input.forward(), input.backward());
          float sideways = init_F_Z_Z(input.left(), input.right());
-         float emitted = this.load_ce_DataUtil.init();
+         float emitted = this.load_ce_DataUtil.yaw();
          this.poll_Str = "cam";
          this.table_F = 0.0F;
          this.f_t_Z = false;
@@ -13412,13 +13412,13 @@ public final class ScaffoldModule extends Module {
             }
 
             int tick = AutismSessionState.init_ck().state_I();
-            if (this.f_x_I != tick || !Float.isFinite(this.index_F) || Math.abs(Mth.wrapDegrees(this.index_F - this.load_ce_DataUtil.init())) > 0.001F) {
-               float nextYaw = this.init_aM().init(this.load_ce_DataUtil, this.init_RangeSetting.get(), RotationMath.init());
-               boolean turning = Math.abs(Mth.wrapDegrees(nextYaw - this.load_ce_DataUtil.init())) > 4.0F
-                  || Float.isFinite(this.index_F) && Math.abs(Mth.wrapDegrees(this.index_F - this.load_ce_DataUtil.init())) > 4.0F;
+            if (this.f_x_I != tick || !Float.isFinite(this.index_F) || Math.abs(Mth.wrapDegrees(this.index_F - this.load_ce_DataUtil.yaw())) > 0.001F) {
+               float nextYaw = this.init_aM().init(this.load_ce_DataUtil, this.init_RangeSetting.get(), RotationMath.gcdStep());
+               boolean turning = Math.abs(Mth.wrapDegrees(nextYaw - this.load_ce_DataUtil.yaw())) > 4.0F
+                  || Float.isFinite(this.index_F) && Math.abs(Mth.wrapDegrees(this.index_F - this.load_ce_DataUtil.yaw())) > 4.0F;
                ScaffoldModule.StrafeTickBudget next = init_aI_ClassCache_F(
                   controlCourse,
-                  this.load_ce_DataUtil.init(),
+                  this.load_ce_DataUtil.yaw(),
                   nextYaw,
                   error,
                   velocity,
@@ -13429,7 +13429,7 @@ public final class ScaffoldModule extends Module {
                );
                this.f_P_I = next.init();
                this.f_Q_I = next.load();
-               this.index_F = this.load_ce_DataUtil.init();
+               this.index_F = this.load_ce_DataUtil.yaw();
                this.f_x_I = tick;
             }
 
@@ -13440,10 +13440,10 @@ public final class ScaffoldModule extends Module {
                this.parse_V();
                this.state_V();
                this.f_aQ_I = 0;
-               return init_Input_Input_2(input, courseYaw, this.load_ce_DataUtil.init());
+               return init_Input_Input_2(input, courseYaw, this.load_ce_DataUtil.yaw());
             } else {
                this.init_V_F(courseYaw);
-               return this.load_Input_Input(input, courseYaw, this.load_ce_DataUtil.init());
+               return this.load_Input_Input(input, courseYaw, this.load_ce_DataUtil.yaw());
             }
          }
       } else {
@@ -13934,7 +13934,7 @@ public final class ScaffoldModule extends Module {
       if (Float.isNaN(pitch)) {
          BlockPos cell = BlockPos.containing(MC.player.position());
          Vec3 point = new Vec3(cell.getX() + 0.5, cell.getY(), cell.getZ() + 0.5);
-         pitch = RotationMath.init(point, MC.player.getEyePosition()).load();
+         pitch = RotationMath.lookAt(point, MC.player.getEyePosition()).pitch();
       }
 
       return new RotationMath.Rotation(yaw, load_F_F_2(pitch));
@@ -14361,7 +14361,7 @@ public final class ScaffoldModule extends Module {
          }
 
          Vec3 at = lead == null ? eye : eye.add(lead.scale(2.0));
-         return read_Z_Vec3(at, leg.load(), face, leg.init_ce_DataUtil().init());
+         return read_Z_Vec3(at, leg.load(), face, leg.init_ce_DataUtil().yaw());
       } else {
          return false;
       }
@@ -14385,7 +14385,7 @@ public final class ScaffoldModule extends Module {
 
    static boolean init_Z_aI_TableIndex_4(ScaffoldModule.PlannedPlacement leg, Vec3 eye, Vec3 lead) {
       if (leg != null && eye != null && leg.init_Direction().getAxis().isHorizontal()) {
-         float yaw = leg.init_ce_DataUtil().init();
+         float yaw = leg.init_ce_DataUtil().yaw();
 
          for (int step = 0; step <= 2; step++) {
             Vec3 at = lead == null ? eye : eye.add(lead.scale(step));
@@ -14508,7 +14508,7 @@ public final class ScaffoldModule extends Module {
          int stampAge = load_I_I_I(AutismSessionState.init_ck().state_I(), this.f_ak_I);
          boolean stampFresh = this.tick_BlockPos != null && stampAge >= 0 && stampAge <= 8;
          boolean windowAlive = this.init_Z_aI_TableIndex(target)
-            || load_Z_Vec3(MC.player.getEyePosition(), target.init_BlockPos(), target.init_Direction(), target.init_ce_DataUtil().init(), true);
+            || load_Z_Vec3(MC.player.getEyePosition(), target.init_BlockPos(), target.init_Direction(), target.init_ce_DataUtil().yaw(), true);
          if (init_Z_Z(
             MC.player.onGround(),
             MC.player.getDeltaMovement().y < 0.0,
@@ -14899,7 +14899,7 @@ public final class ScaffoldModule extends Module {
                if (replanned.init_Direction().getAxis().isHorizontal() && MC.player != null) {
                   boolean bandExit = init_Z_Vec3_2(MC.player.getEyePosition(), replanned.init_BlockPos(), replanned.init_Direction());
                   boolean outOfReach = update_Z_F(
-                     init_F_Vec3(MC.player.getEyePosition(), replanned.init_BlockPos(), replanned.init_Direction(), replanned.init_ce_DataUtil().init())
+                     init_F_Vec3(MC.player.getEyePosition(), replanned.init_BlockPos(), replanned.init_Direction(), replanned.init_ce_DataUtil().yaw())
                   );
                   if (this.f_aI_I != tick) {
                      this.f_aI_I = tick;
@@ -14949,7 +14949,7 @@ public final class ScaffoldModule extends Module {
 
    private boolean init_Z_ce_DataUtil(RotationMath.Rotation rotation) {
       if (rotation != null && this.load_I_8() != -1) {
-         return this.f_ai_I < 1 && !this.h_Z() ? Math.abs(update_F_F_F(this.load_F_2(), rotation.init())) > 12.0F : false;
+         return this.f_ai_I < 1 && !this.h_Z() ? Math.abs(update_F_F_F(this.load_F_2(), rotation.yaw())) > 12.0F : false;
       } else {
          return false;
       }
@@ -14957,7 +14957,7 @@ public final class ScaffoldModule extends Module {
 
    private boolean pop(ScaffoldModule.PlannedPlacement target) {
       return target != null && MC.player != null && target.init_Direction().getAxis().isHorizontal()
-         ? update_Z_F(init_F_Vec3(MC.player.getEyePosition(), target.init_BlockPos(), target.init_Direction(), target.init_ce_DataUtil().init()))
+         ? update_Z_F(init_F_Vec3(MC.player.getEyePosition(), target.init_BlockPos(), target.init_Direction(), target.init_ce_DataUtil().yaw()))
          : false;
    }
 
@@ -15395,12 +15395,12 @@ public final class ScaffoldModule extends Module {
                         facePins = false;
                      }
 
-                     RotationMath.Rotation faceRotation = RotationMath.init(faceCenter, aimEye);
+                     RotationMath.Rotation faceRotation = RotationMath.lookAt(faceCenter, aimEye);
                      double faceAngle = init_D_ce_DataUtil_ce_DataUtil(from, faceRotation);
                      if (this.flags_Z()
                         && face.getAxis().isHorizontal()
                         && aimPosition.y > supportPos.getY() + 1.0 + 1.0
-                        && this.load_Z_Vec3(aimEye, supportPos, face, faceRotation.init())) {
+                        && this.load_Z_Vec3(aimEye, supportPos, face, faceRotation.yaw())) {
                         this.reset_Str = "pitch-cap(" + face + ")";
                         this.load_StringBuilder.append(faceCode).append(":pc ");
                      } else if (init_Z_Z_2(facePins, faceAngle, bestFacePins, bestFaceAngle)) {
@@ -15424,7 +15424,7 @@ public final class ScaffoldModule extends Module {
                            } else {
                               if (requireExactVisibility) {
                                  Vec3 candidatePoint = point.add(supportPos.getX(), supportPos.getY(), supportPos.getZ());
-                                 RotationMath.Rotation visibleRotation = RotationMath.init(candidatePoint, aimEye);
+                                 RotationMath.Rotation visibleRotation = RotationMath.lookAt(candidatePoint, aimEye);
                                  BlockHitResult visibleHit = this.init_BlockHitResult_ce_DataUtil_D(visibleRotation, visibilityReach);
                                  if (visibleHit == null || !visibleHit.getBlockPos().equals(supportPos) || visibleHit.getDirection() != face) {
                                     this.reset_Str = "visibility(" + face + ")";
@@ -15517,9 +15517,9 @@ public final class ScaffoldModule extends Module {
                }
 
                this.start_Str = "air-direct";
-               rotation = this.init_ce_DataUtil_ce_DataUtil_Vec3(RotationMath.init(worldPoint, MC.player.getEyePosition()), worldPoint);
+               rotation = this.init_ce_DataUtil_ce_DataUtil_Vec3(RotationMath.lookAt(worldPoint, MC.player.getEyePosition()), worldPoint);
                double bearingRun = Math.hypot(worldPoint.x - MC.player.getEyePosition().x, worldPoint.z - MC.player.getEyePosition().z);
-               float chosen = bestPlan.init_Direction().getAxis().isHorizontal() && bearingRun >= 0.75 ? this.sync(rotation.init()) : pinYaw;
+               float chosen = bestPlan.init_Direction().getAxis().isHorizontal() && bearingRun >= 0.75 ? this.sync(rotation.yaw()) : pinYaw;
                if (this.load_I_8() != -1) {
                   float landing = load_F_Vec3(
                      MC.player.getEyePosition(), this.load_Vec3(), bestPlan.init_BlockPos(), bestPlan.init_Direction(), chosen, this.load_F_2()
@@ -15535,12 +15535,12 @@ public final class ScaffoldModule extends Module {
                      this.start_Str = "air-flip";
                      float flipPitch = init_F_Vec3(airEye, MC.player.getEyePosition(), bestPlan.init_BlockPos(), bestPlan.init_Direction(), chosen, 89.5F);
                      if (!Float.isNaN(flipPitch)) {
-                        rotation = new RotationMath.Rotation(rotation.init(), flipPitch);
+                        rotation = new RotationMath.Rotation(rotation.yaw(), flipPitch);
                      }
                   }
                }
 
-               rotation = new RotationMath.Rotation(chosen, rotation.load());
+               rotation = new RotationMath.Rotation(chosen, rotation.pitch());
             }
          } else if (this.flags_Z() && MC.player != null && bestPlan.init_Direction().getAxis().isHorizontal()) {
             Vec3 leadEye = pinEye == null ? MC.player.getEyePosition().add(this.load_Vec3()) : pinEye;
@@ -15554,8 +15554,8 @@ public final class ScaffoldModule extends Module {
 
             if (!postured) {
                Vec3 goalEye = this.init_Vec3_BlockPos(bestPlan.init_BlockPos(), bestPlan.init_Direction(), selectionEye, laneDirection);
-               RotationMath.Rotation pointGoal = RotationMath.init(worldPoint, goalEye);
-               goalYaw = this.sync(this.init_ce_DataUtil_ce_DataUtil_Vec3(pointGoal, worldPoint).init());
+               RotationMath.Rotation pointGoal = RotationMath.lookAt(worldPoint, goalEye);
+               goalYaw = this.sync(this.init_ce_DataUtil_ce_DataUtil_Vec3(pointGoal, worldPoint).yaw());
             }
 
             rotation = new RotationMath.Rotation(
@@ -15570,7 +15570,7 @@ public final class ScaffoldModule extends Module {
             );
          } else {
             Vec3 goalEye = this.init_Vec3_BlockPos(bestPlan.init_BlockPos(), bestPlan.init_Direction(), selectionEye, laneDirection);
-            rotation = RotationMath.init(worldPoint, goalEye);
+            rotation = RotationMath.lookAt(worldPoint, goalEye);
             rotation = this.init_ce_DataUtil_ce_DataUtil_Vec3(rotation, worldPoint);
             if (goalPinnedFace != null) {
                float postureYaw = this.read_F();
@@ -15585,10 +15585,10 @@ public final class ScaffoldModule extends Module {
                   this.start_Str = MC.player.onGround() ? "lead-top" : "air-top";
                   rotation = new RotationMath.Rotation(postureYaw, topPitch);
                } else {
-                  rotation = new RotationMath.Rotation(postureYaw, rotation.load());
+                  rotation = new RotationMath.Rotation(postureYaw, rotation.pitch());
                }
             } else {
-               rotation = new RotationMath.Rotation(this.sync(rotation.init()), rotation.load());
+               rotation = new RotationMath.Rotation(this.sync(rotation.yaw()), rotation.pitch());
             }
          }
 
@@ -15596,11 +15596,11 @@ public final class ScaffoldModule extends Module {
             Vec3 clampEye = MC.player.getEyePosition();
             Vec3 clampLead = clampEye.add(this.load_Vec3());
             double[] window = MC.player.onGround()
-               ? init_DArr_Vec3_2(clampEye, clampLead, bestPlan.init_BlockPos(), bestPlan.init_Direction(), rotation.init())
-               : init_DArr_Vec3_2(clampLead, clampEye, bestPlan.init_BlockPos(), bestPlan.init_Direction(), rotation.init());
+               ? init_DArr_Vec3_2(clampEye, clampLead, bestPlan.init_BlockPos(), bestPlan.init_Direction(), rotation.yaw())
+               : init_DArr_Vec3_2(clampLead, clampEye, bestPlan.init_BlockPos(), bestPlan.init_Direction(), rotation.yaw());
             Vec3 publishedEye = update_Vec3;
             if (window != null && publishedEye != null) {
-               double[] published = init_DArr_Vec3_2(publishedEye, bestPlan.init_BlockPos(), bestPlan.init_Direction(), rotation.init());
+               double[] published = init_DArr_Vec3_2(publishedEye, bestPlan.init_BlockPos(), bestPlan.init_Direction(), rotation.yaw());
                if (published != null && Math.max(window[0], published[0]) <= Math.min(window[1], published[1])) {
                   window = new double[]{Math.max(window[0], published[0]), Math.min(window[1], published[1]), window[2]};
                }
@@ -15608,19 +15608,19 @@ public final class ScaffoldModule extends Module {
 
             double windowLow = window == null ? 0.0 / 0.0 : window[0];
             double windowHigh = window == null ? 0.0 / 0.0 : window[1];
-            float goalPitch = init_F_F(rotation.load(), windowLow, windowHigh);
+            float goalPitch = init_F_F(rotation.pitch(), windowLow, windowHigh);
             float dodged = this.init_F_F(
                goalPitch,
                windowLow,
                bestPlan.init_Direction(),
                MC.player.onGround() ? clampEye : clampLead,
                this.load_Vec3(),
-               rotation.init(),
+               rotation.yaw(),
                bestPlan.init_BlockPos()
             );
             double flickHigh = dodged < goalPitch ? (Double.isNaN(windowHigh) ? dodged : Math.min(windowHigh, dodged)) : windowHigh;
             goalPitch = this.init_F_F(dodged, windowLow, flickHigh, bestPlan.init_Direction(), candidate.immutable());
-            rotation = new RotationMath.Rotation(rotation.init(), goalPitch);
+            rotation = new RotationMath.Rotation(rotation.yaw(), goalPitch);
          }
 
          BlockHitResult plannedHit = new BlockHitResult(worldPoint, bestPlan.init_Direction(), bestPlan.init_BlockPos(), false);
@@ -15991,8 +15991,8 @@ public final class ScaffoldModule extends Module {
    private RotationMath.Rotation init_ce_DataUtil_ce_DataUtil_Vec3(RotationMath.Rotation pushGoal, Vec3 worldPoint) {
       if (this.flags_Z() && MC.player != null && !MC.player.onGround()) {
          Vec3 eye = MC.player.getEyePosition();
-         RotationMath.Rotation direct = RotationMath.init(worldPoint, eye);
-         RotationMath.Rotation predicted = RotationMath.init(worldPoint, eye.add(MC.player.getDeltaMovement()));
+         RotationMath.Rotation direct = RotationMath.lookAt(worldPoint, eye);
+         RotationMath.Rotation predicted = RotationMath.lookAt(worldPoint, eye.add(MC.player.getDeltaMovement()));
          return init_ce_DataUtil_ce_DataUtil(pushGoal, direct, predicted);
       } else {
          return pushGoal;
@@ -16000,9 +16000,9 @@ public final class ScaffoldModule extends Module {
    }
 
    static RotationMath.Rotation init_ce_DataUtil_ce_DataUtil(RotationMath.Rotation pushGoal, RotationMath.Rotation direct, RotationMath.Rotation predicted) {
-      return Math.abs(RotationMath.init(predicted.init(), pushGoal.init())) > 100.0F
+      return Math.abs(RotationMath.angleDelta(predicted.yaw(), pushGoal.yaw())) > 100.0F
          ? pushGoal
-         : new RotationMath.Rotation(predicted.init(), Math.min(predicted.load(), 90.0F));
+         : new RotationMath.Rotation(predicted.yaw(), Math.min(predicted.pitch(), 90.0F));
    }
 
    private boolean init_Z_aI_TableIndex_3(ScaffoldModule.PlannedPlacement target, InteractionHand hand, ItemStack stack) {
@@ -16115,14 +16115,14 @@ public final class ScaffoldModule extends Module {
          MC.getConnection()
             .send(
                new PosRot(
-                  MC.player.getX(), MC.player.getY(), MC.player.getZ(), rotation.init(), rotation.load(), MC.player.onGround(), MC.player.horizontalCollision
+                  MC.player.getX(), MC.player.getY(), MC.player.getZ(), rotation.yaw(), rotation.pitch(), MC.player.onGround(), MC.player.horizontalCollision
                )
             );
       }
    }
 
    private static boolean init_Z_ce_DataUtil_ce_DataUtil_4(RotationMath.Rotation first, RotationMath.Rotation second) {
-      return first != null && second != null && Float.compare(first.init(), second.init()) == 0 && Float.compare(first.load(), second.load()) == 0;
+      return first != null && second != null && Float.compare(first.yaw(), second.yaw()) == 0 && Float.compare(first.pitch(), second.pitch()) == 0;
    }
 
    private BlockHitResult init_BlockHitResult_ce_DataUtil_D(RotationMath.Rotation rotation, double reach) {
@@ -16570,7 +16570,7 @@ public final class ScaffoldModule extends Module {
       if (this.init_ce_DataUtil != null) {
          return this.init_ce_DataUtil;
       } else {
-         return MC != null && MC.player != null ? RotationMath.init(MC.player) : new RotationMath.Rotation(0.0F, 0.0F);
+         return MC != null && MC.player != null ? RotationMath.ofPlayer(MC.player) : new RotationMath.Rotation(0.0F, 0.0F);
       }
    }
 
@@ -16580,7 +16580,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private static Vec3 init_Vec3_ce_DataUtil(RotationMath.Rotation rotation) {
-      return Vec3.directionFromRotation(rotation.load(), rotation.init());
+      return Vec3.directionFromRotation(rotation.pitch(), rotation.yaw());
    }
 
    private ScaffoldModule.MotionVectorPair init_aI_HashUtil_Input(Input input) {
@@ -17985,7 +17985,7 @@ public final class ScaffoldModule extends Module {
       this.f_l_I = -1;
       this.f_m_I = 0;
       this.write_Z = false;
-      this.init_ce_DataUtil = MC != null && MC.player != null ? RotationMath.init(MC.player) : null;
+      this.init_ce_DataUtil = MC != null && MC.player != null ? RotationMath.ofPlayer(MC.player) : null;
       this.load_V_18();
       this.read_V_12();
       this.load_aI_TableIndex = null;

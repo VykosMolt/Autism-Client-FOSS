@@ -22,10 +22,10 @@ public final class IconButtonRenderer {
    ) {
       if (graphics != null && font != null && bounds != null && bounds.update() > 0 && bounds.sync() > 0) {
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, font, -10000, -10000);
-         autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+         autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
          int radius = init(bounds);
-         int fill = danger ? ThemePaletteManager.init_I_I_ct_DataUtil(-868936937, ThemePaletteManager.ColorRole.DANGER) : -1156179423;
-         autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, fill, danger ? colors.data : colors.set);
+         int fill = danger ? ThemePaletteManager.recolor(-868936937, ThemePaletteManager.ColorRole.DANGER) : -1156179423;
+         autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, fill, danger ? colors.danger : colors.borderControl);
          float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered && active);
          if (hoverT > 0.001F) {
             autismclient.gui.f.PacketUtil.load(graphics, bounds.init(1), Math.max(1, radius - 1), (int)(32.0F * hoverT) << 24 | 16777215);
@@ -35,7 +35,7 @@ public final class IconButtonRenderer {
             autismclient.gui.f.PacketUtil.load(graphics, bounds.init(1), Math.max(1, radius - 1), 1711276032);
          }
 
-         int color = active ? colors.prev : colors.size;
+         int color = active ? colors.textPrimary : colors.textMuted;
          if ("X".equals(symbol)) {
             autismclient.gui.f.PacketUtil.read(graphics, bounds.init(3), color);
          } else if ("^".equals(symbol) || "v".equals(symbol)) {
@@ -47,7 +47,7 @@ public final class IconButtonRenderer {
             }
          } else if (!"+".equals(symbol) && !"-".equals(symbol)) {
             String glyph = symbol == null ? "" : symbol;
-            context.init_PoolEntry().load(graphics, glyph, bounds, color);
+            context.init_PoolEntry().drawCentered(graphics, glyph, bounds, color);
          } else {
             autismclient.gui.f.NetHelper glyph = init(bounds, 3);
             GuiIconAtlas.init(graphics, "+".equals(symbol) ? GuiIconAtlas.pop : GuiIconAtlas.tick, glyph.read(), glyph.write(), glyph.update(), glyph.sync(), color);
@@ -76,10 +76,10 @@ public final class IconButtonRenderer {
    ) {
       if (graphics != null && font != null && bounds != null && bounds.update() > 0 && bounds.sync() > 0) {
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, font, -10000, -10000);
-         autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+         autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
          int radius = init(bounds);
          int fill = danger ? -799925730 : -1156179423;
-         int borderColor = danger ? -1947062 : colors.set;
+         int borderColor = danger ? -1947062 : colors.borderControl;
          autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, fill, borderColor);
          float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered && active);
          if (hoverT > 0.001F) {
@@ -105,7 +105,7 @@ public final class IconButtonRenderer {
       if (graphics != null && font != null && bounds != null && !(alpha <= 0.001F)) {
          int resolved = autismclient.gui.f.PacketUtil.init(color, alpha);
          String glyph = symbol == null ? "" : symbol;
-         autismclient.gui.f.UiHelper.init(graphics, font, -10000, -10000).init_PoolEntry().load(graphics, glyph, bounds, resolved);
+         autismclient.gui.f.UiHelper.init(graphics, font, -10000, -10000).init_PoolEntry().drawCentered(graphics, glyph, bounds, resolved);
       }
    }
 

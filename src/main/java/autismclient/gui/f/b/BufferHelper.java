@@ -10,33 +10,33 @@ public final class BufferHelper {
    }
 
    public static void init_V(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String title) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
-      autismclient.gui.f.PacketUtil.read(context.init_GuiGraphicsExtract(), bounds, 5, colors.open, colors.get);
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
+      autismclient.gui.f.PacketUtil.read(context.init_GuiGraphicsExtract(), bounds, 5, colors.cardSurface, colors.borderSubtle);
       if (title != null && !title.isBlank()) {
          autismclient.gui.f.NetHelper header = init(bounds);
          context.init_PoolEntry()
-            .load(
+            .drawFitted(
                context.init_GuiGraphicsExtract(),
                title,
                bounds.read() + 5,
-               context.init_PoolEntry().init_I(header),
+               context.init_PoolEntry().centerTextY(header),
                Math.max(1, bounds.update() - 10),
-               colors.valid
+               colors.textSecondary
             );
          int lineY = header.load();
          autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract_2(
-            context.init_GuiGraphicsExtract(), bounds.read() + 4, lineY, Math.max(1, bounds.update() - 8), colors.put
+            context.init_GuiGraphicsExtract(), bounds.read() + 4, lineY, Math.max(1, bounds.update() - 8), colors.divider
          );
       }
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String key, boolean active, boolean hovered) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       float hover = autismclient.gui.ui.HoverTransitionCache.init(key, hovered);
-      int fill = UiLayoutMath.init_I_I(colors.open, colors.push, hover);
+      int fill = UiLayoutMath.lerpColor(colors.cardSurface, colors.cardSurfaceElevated, hover);
       if (active) {
-         fill = UiLayoutMath.init_I_I(fill, colors.stop, 0.09F);
-         int rim = UiLayoutMath.init_I_I(fill, colors.stop, 0.65F);
+         fill = UiLayoutMath.lerpColor(fill, colors.success, 0.09F);
+         int rim = UiLayoutMath.lerpColor(fill, colors.success, 0.65F);
          autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 5, fill, rim);
       } else {
          autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 5, fill);
@@ -44,13 +44,13 @@ public final class BufferHelper {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, float alpha) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       autismclient.gui.f.PacketUtil.read(
          context.init_GuiGraphicsExtract(),
          bounds,
          5,
-         autismclient.gui.f.PacketUtil.init(colors.open, alpha),
-         autismclient.gui.f.PacketUtil.init(colors.get, alpha)
+         autismclient.gui.f.PacketUtil.init(colors.cardSurface, alpha),
+         autismclient.gui.f.PacketUtil.init(colors.borderSubtle, alpha)
       );
    }
 
@@ -59,6 +59,6 @@ public final class BufferHelper {
    }
 
    private static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper bounds) {
-      return autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write(), bounds.update(), autismclient.gui.ui.UiDensityMetrics.init(14));
+      return autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write(), bounds.update(), autismclient.gui.ui.UiDensityMetrics.scaledHeight(14));
    }
 }

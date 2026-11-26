@@ -16,7 +16,7 @@ public final class ResizeGripRenderer {
    }
 
    public static boolean init(OverlayBounds b, double mx, double my) {
-      return b != null && init(b.init_I, b.load_I, b.read, b.write, mx, my);
+      return b != null && init(b.x, b.y, b.width, b.height, mx, my);
    }
 
    public static boolean init(autismclient.gui.f.NetHelper b, double mx, double my) {
@@ -29,7 +29,7 @@ public final class ResizeGripRenderer {
 
    public static void init(GuiGraphicsExtractor graphics, autismclient.gui.ui.UiColorScheme colors, OverlayBounds b, boolean hover, boolean active) {
       if (b != null) {
-         init(graphics, colors, b.init_I, b.load_I, b.read, b.write, hover, active);
+         init(graphics, colors, b.x, b.y, b.width, b.height, hover, active);
       }
    }
 
@@ -41,7 +41,7 @@ public final class ResizeGripRenderer {
 
    private static void init(GuiGraphicsExtractor graphics, autismclient.gui.ui.UiColorScheme colors, int x, int y, int w, int h, boolean hover, boolean active) {
       if (graphics != null && w > 20 && h > 20) {
-         int color = active ? colors.clear : (hover ? colors.prev : colors.valid & 16777215 | -1946157056);
+         int color = active ? colors.accent : (hover ? colors.textPrimary : colors.textSecondary & 16777215 | -1946157056);
          float cx = x + w - 4.5F;
          float cy = y + h - 4.5F;
 

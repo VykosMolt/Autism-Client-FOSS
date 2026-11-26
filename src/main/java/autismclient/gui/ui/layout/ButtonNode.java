@@ -188,14 +188,14 @@ public class ButtonNode extends LayoutNode {
       int scaledHorizontalPadding = context.init_CharEncoder().load(this.init_I);
       int scaledIconSize = context.init_CharEncoder().load(this.write_I);
       int scaledIconGap = context.init_CharEncoder().load(this.update_I);
-      float fittedWidth = UiLayoutMath.init_F_Font(
+      float fittedWidth = UiLayoutMath.measurePaddedWidthFloat(
          context.init_Font(), this.init_Str, font, context.init_CharEncoder().load(l.read), scaledHorizontalPadding, this.sync_F, this.flush
       );
       if (this.init_Identifier != null) {
          fittedWidth += scaledIconSize + scaledIconGap;
       }
 
-      return this.close > 0.0F ? UiLayoutMath.init_F_F(Math.max(this.close, fittedWidth), this.sync_F, this.flush) : UiLayoutMath.init_F_F(fittedWidth, this.sync_F, this.flush);
+      return this.close > 0.0F ? UiLayoutMath.clamp(Math.max(this.close, fittedWidth), this.sync_F, this.flush) : UiLayoutMath.clamp(fittedWidth, this.sync_F, this.flush);
    }
 
    @Override

@@ -176,7 +176,7 @@ public final class TotemHitModule extends Module {
    private boolean init(int slot) {
       if (!autismclient.util.InventorySlotArbiter.init(slot, "totem-hit") && autismclient.util.InventorySlotArbiter.write_Z("totem-hit")) {
          try {
-            autismclient.util.InventorySlotHelper.init_V(MC, slot);
+            autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
          } finally {
             autismclient.util.InventorySlotArbiter.read_V("totem-hit");
          }

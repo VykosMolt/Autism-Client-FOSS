@@ -209,7 +209,7 @@ public final class AiBreakBlock {
          void init() {
             if (this.load_Z) {
                this.load_Z = false;
-               this.init_Minecraft.options.keyShift.setDown(KeyMappingControl.init(this.init_Minecraft.options.keyShift).autism$physicalForBody());
+               this.init_Minecraft.options.keyShift.setDown(KeyMappingControl.of(this.init_Minecraft.options.keyShift).autism$physicalForBody());
             }
          }
 

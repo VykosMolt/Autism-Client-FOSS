@@ -103,24 +103,24 @@ public final class ColorPickerPopup {
          int hueY = hueStrip.write() + Math.round((1.0F - this.init_F) * (hueStrip.sync() - 1));
          autismclient.gui.f.NetHelper hueMarker = autismclient.gui.f.NetHelper.init(hueStrip.read() - 1, hueY - 1, hueStrip.update() + 2, 3);
          autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), hueMarker, 1, -16777216);
-         autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), hueMarker.init(1), 0, context.init_TableIndex().init_JsonUtil().prev);
+         autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), hueMarker.init(1), 0, context.init_TableIndex().colors().textPrimary);
          autismclient.gui.f.NetHelper current = autismclient.gui.f.NetHelper.init(this.init_NetHelper.read() + 135, this.init_NetHelper.write() + 19, 38, 20);
          autismclient.gui.f.NetHelper draft = autismclient.gui.f.NetHelper.init(this.init_NetHelper.read() + 135 + 44, this.init_NetHelper.write() + 19, 38, 20);
          this.init_V_SyncManager(context, current, this.put);
          this.init_V_SyncManager(context, draft, this.read_I());
          context.init_PoolEntry()
-            .load(
+            .drawCentered(
                context.init_GuiGraphicsExtract(),
                "Old",
                autismclient.gui.f.NetHelper.init(current.read(), current.load() + 2, current.update(), 10),
-               context.init_TableIndex().init_JsonUtil().valid
+               context.init_TableIndex().colors().textSecondary
             );
          context.init_PoolEntry()
-            .load(
+            .drawCentered(
                context.init_GuiGraphicsExtract(),
                "New",
                autismclient.gui.f.NetHelper.init(draft.read(), draft.load() + 2, draft.update(), 10),
-               context.init_TableIndex().init_JsonUtil().valid
+               context.init_TableIndex().colors().textSecondary
             );
          this.init_V_SyncManager(context, this.write_NetHelper(), "R", this.write_I(), -43691);
          this.init_V_SyncManager(context, this.update_NetHelper(), "G", this.update_I(), -11149961);
@@ -128,8 +128,8 @@ public final class ColorPickerPopup {
          autismclient.gui.f.NetHelper hex = this.flush_NetHelper();
          TextFieldRenderer.init(context, hex, this.init_Str, "RRGGBB", this.load_Z, this.reset, this.init_I(), this.load_I());
          context.init_PoolEntry()
-            .load(
-               context.init_GuiGraphicsExtract(), "#", hex.read() - 9, context.init_PoolEntry().init_I(hex), 8, context.init_TableIndex().init_JsonUtil().valid
+            .drawFitted(
+               context.init_GuiGraphicsExtract(), "#", hex.read() - 9, context.init_PoolEntry().centerTextY(hex), 8, context.init_TableIndex().colors().textSecondary
             );
          CachePool.init(context, this.close(), "Save", CachePool.Inner_DataUtil.write, this.close().init_Z(context.read(), context.write()), false);
          CachePool.init(context, this.open(), "Reset", CachePool.Inner_DataUtil.init, this.open().init_Z(context.read(), context.write()), false);
@@ -334,7 +334,7 @@ public final class ColorPickerPopup {
       int previousWidth = 0;
 
       for (int i = 1; i <= this.init_Str.length(); i++) {
-         int width = text.init(this.init_Str, this.init_Str.substring(0, i));
+         int width = text.measureFragmentWidth(this.init_Str, this.init_Str.substring(0, i));
          if (local < (previousWidth + width) / 2.0F) {
             return i - 1;
          }
@@ -489,16 +489,16 @@ public final class ColorPickerPopup {
          context.init_GuiGraphicsExtract(),
          autismclient.gui.f.NetHelper.init(area.read() - 1, area.write() - 1, area.update() + 2, area.sync() + 2),
          5,
-         context.init_TableIndex().init_JsonUtil().get
+         context.init_TableIndex().colors().borderSubtle
       );
    }
 
    private void init_V_SyncManager(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, int value, int accent) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       context.init_PoolEntry()
-         .load(context.init_GuiGraphicsExtract(), label, autismclient.gui.f.NetHelper.init(bounds.read() - 15, bounds.write(), 12, bounds.sync()), colors.valid);
+         .drawCentered(context.init_GuiGraphicsExtract(), label, autismclient.gui.f.NetHelper.init(bounds.read() - 15, bounds.write(), 12, bounds.sync()), colors.textSecondary);
       int radius = Math.min(3, bounds.sync() / 2);
-      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, colors.pop, colors.set);
+      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, colors.inputSurface, colors.borderControl);
       int fillW = Math.max(0, Math.round((bounds.update() - 2) * (value / 255.0F)));
       if (fillW > 0) {
          autismclient.gui.f.PacketUtil.load(
@@ -514,12 +514,12 @@ public final class ColorPickerPopup {
          context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(knobX, bounds.write() + 2, 2, Math.max(1, bounds.sync() - 4)), 1, -1
       );
       context.init_PoolEntry()
-         .load(context.init_GuiGraphicsExtract(), Integer.toString(value), bounds.init() + 5, context.init_PoolEntry().init_I(bounds), 24, colors.prev);
+         .drawFitted(context.init_GuiGraphicsExtract(), Integer.toString(value), bounds.init() + 5, context.init_PoolEntry().centerTextY(bounds), 24, colors.textPrimary);
    }
 
    private void init_V_SyncManager(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int color) {
       autismclient.gui.f.PacketUtil.load(
-         context.init_GuiGraphicsExtract(), bounds, 3, 0xFF000000 | color & 16777215, context.init_TableIndex().init_JsonUtil().get
+         context.init_GuiGraphicsExtract(), bounds, 3, 0xFF000000 | color & 16777215, context.init_TableIndex().colors().borderSubtle
       );
    }
 

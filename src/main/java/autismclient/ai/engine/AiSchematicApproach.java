@@ -1142,7 +1142,7 @@ public final class AiSchematicApproach implements AiOperation {
                   );
                   BlockPlacementPlanner.AimSample aim = BlockPlacementPlanner.init(clipped, request, null);
                   if (aim != null) {
-                     Vec3 end = eye.add(Vec3.directionFromRotation(aim.load().load(), aim.load().init()).scale(reach));
+                     Vec3 end = eye.add(Vec3.directionFromRotation(aim.load().pitch(), aim.load().yaw()).scale(reach));
                      BlockHitResult hit = view.clip(
                         new ClipContext(eye, end, net.minecraft.world.level.ClipContext.Block.OUTLINE, Fluid.NONE, this.init_Minecraft.player)
                      );

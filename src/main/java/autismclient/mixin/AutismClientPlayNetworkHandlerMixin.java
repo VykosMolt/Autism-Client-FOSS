@@ -467,8 +467,8 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
             this.autism$viewYawO = mc.player.yRotO;
             this.autism$viewPitchO = mc.player.xRotO;
             this.autism$viewCaptured = true;
-            mc.player.setYRot(wire.init());
-            mc.player.setXRot(wire.load());
+            mc.player.setYRot(wire.yaw());
+            mc.player.setXRot(wire.pitch());
          }
       }
    }
@@ -579,11 +579,11 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          && !aD.read_Z()
          && message != null
          && message.length() > 256
-         && (autismclient.commands.CommandManager.load() || !autismclient.commands.CommandManager.init_Z(message))) {
+         && (autismclient.commands.CommandManager.isBypassingIntercept() || !autismclient.commands.CommandManager.hasCommandPrefix(message))) {
          ClientPacketListener self = (ClientPacketListener)(Object)this;
 
          for (int i = 0; i < message.length(); i += 256) {
-            autismclient.commands.CommandManager.init(self, message.substring(i, Math.min(message.length(), i + 256)));
+            autismclient.commands.CommandManager.sendChatRaw(self, message.substring(i, Math.min(message.length(), i + 256)));
          }
 
          ci.cancel();
@@ -593,27 +593,27 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "sendChat", at = @At("HEAD"), cancellable = true)
    private void autism$dispatchAutismCommand(String message, CallbackInfo ci) {
       try {
-         if (autismclient.commands.CommandManager.load()) {
+         if (autismclient.commands.CommandManager.isBypassingIntercept()) {
             return;
          }
 
-         if (!autismclient.commands.CommandManager.init_Z(message)) {
+         if (!autismclient.commands.CommandManager.hasCommandPrefix(message)) {
             return;
          }
 
-         if (autismclient.commands.CommandManager.load_Z(message)) {
+         if (autismclient.commands.CommandManager.shouldSuppressInHiddenMode(message)) {
             ci.cancel();
             return;
          }
 
-         String body = autismclient.commands.CommandManager.init_Str(message);
+         String body = autismclient.commands.CommandManager.stripPrefix(message);
          if (body.isBlank()) {
             ci.cancel();
             return;
          }
 
          AutismClientMessaging.rememberRecentChat(message);
-         autismclient.commands.CommandManager.read(body);
+         autismclient.commands.CommandManager.execute(body);
          ci.cancel();
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("[Commands] sendChat interception failed for '{}'", message, t);

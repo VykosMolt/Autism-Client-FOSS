@@ -2022,9 +2022,9 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             return null;
          }
 
-         RotationMath.Rotation var11 = RotationMath.init(var10, var15);
-         float var12 = Math.abs(var11.load()) > 70.0F ? var1.getYRot() : var11.init();
-         Vec3 var13 = var1.getEyePosition().add(Vec3.directionFromRotation(var11.load(), var12).scale(Math.max(2.0, var10.distanceTo(var15))));
+         RotationMath.Rotation var11 = RotationMath.lookAt(var10, var15);
+         float var12 = Math.abs(var11.pitch()) > 70.0F ? var1.getYRot() : var11.yaw();
+         Vec3 var13 = var1.getEyePosition().add(Vec3.directionFromRotation(var11.pitch(), var12).scale(Math.max(2.0, var10.distanceTo(var15))));
          float var14 = AiDigLine.load(var13.subtract(var1.getEyePosition()));
          if (Math.abs(var14) > 70.0F) {
             var13 = var1.getEyePosition().add(Vec3.directionFromRotation(var14, var1.getYRot()).scale(3.0));

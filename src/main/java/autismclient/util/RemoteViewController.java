@@ -58,7 +58,7 @@ public final class RemoteViewController {
          init_ClientLevel = mc.level;
          mc.options.setCameraType(CameraType.FIRST_PERSON);
          mc.setCameraEntity(player);
-         return new RemoteViewController.Inner_DataUtil(true, "Viewing " + init_Str + ". Use " + autismclient.commands.CommandManager.init_Str() + "rv stop to leave.");
+         return new RemoteViewController.Inner_DataUtil(true, "Viewing " + init_Str + ". Use " + autismclient.commands.CommandManager.getPrefix() + "rv stop to leave.");
       } else {
          return new RemoteViewController.Inner_DataUtil(false, "Join a world first.");
       }

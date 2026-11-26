@@ -19,7 +19,7 @@ public class HClipCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         String prefix = autismclient.commands.CommandManager.init_Str();
+         String prefix = autismclient.commands.CommandManager.getPrefix();
          AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "hclip <blocks>");
          AutismClientMessaging.sendPrefixed("§7Modes: §fdefault, forward, back, padding, single, custom (paper alias still works)");
          AutismClientMessaging.sendPrefixed("§7Examples: §f" + prefix + "hclip forward §7or §f" + prefix + "hclip custom -25 10 20 true true true");

@@ -541,7 +541,7 @@ public class MacroWaitRegistry {
                MacroItemTarget entryTarget = e.init_ArrayUtil();
                if (e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE && entryTarget != null && entryTarget.init_Z()) {
                   int slotNum = entryTarget.init_I;
-                  int handlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, slotNum);
+                  int handlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, slotNum);
                   if (handler != null && handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
                      ItemStack s = handler.slots.get(handlerSlot).getItem();
                      initialNames.put(i, init(s));
@@ -843,7 +843,7 @@ public class MacroWaitRegistry {
             if (handler == null) {
                return e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY;
             } else {
-               int handlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, slotNum);
+               int handlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, slotNum);
                if (handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
                   ItemStack stack = handler.slots.get(handlerSlot).getItem();
                   return this.init(stack, entryTarget, slotNum, e, entryIdx);
@@ -855,7 +855,7 @@ public class MacroWaitRegistry {
             if (handler != null) {
                for (Slot s : handler.slots) {
                   if (s != null && !s.getItem().isEmpty()) {
-                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, s.index);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, s.index);
                      if (!entryTarget.update() || entryTarget.init_Z_ItemStack_I(s.getItem(), visibleSlot)) {
                         return false;
                      }
@@ -876,7 +876,7 @@ public class MacroWaitRegistry {
                for (Slot s : handler.slots) {
                   if (s != null && !s.getItem().isEmpty()) {
                      ItemStack stack = s.getItem();
-                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, s.index);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, s.index);
                      if ((!entryTarget.update() || entryTarget.init_Z_ItemStack_I(stack, visibleSlot))
                         && this.init(stack, entryTarget, visibleSlot, e, entryIdx)) {
                         return true;
@@ -1584,7 +1584,7 @@ public class MacroWaitRegistry {
 
             for (Slot slot : handler.slots) {
                if (slot != null && !slot.getItem().isEmpty()) {
-                  int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+                  int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
                   if (this.init_ArrayUtil.init_Z_ItemStack_I(slot.getItem(), visibleSlot)) {
                      return true;
                   }

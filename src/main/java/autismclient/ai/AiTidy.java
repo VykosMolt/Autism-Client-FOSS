@@ -594,7 +594,7 @@ final class AiTidy {
    }
 
    private static int init(Minecraft mc, int inventorySlot) {
-      int handler = autismclient.util.InventorySlotHelper.load_I(mc, inventorySlot);
+      int handler = autismclient.util.InventorySlotHelper.toScreenSlot(mc, inventorySlot);
       if (handler < 0) {
          throw new IllegalStateException("Inventory slot " + inventorySlot + " has no menu slot");
       } else {

@@ -1178,7 +1178,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               if (!this.update_Z) {
                                  RotationMath.Rotation aim = autismclient.util.SilentRotationManager.init_ce_DataUtil();
                                  if (aim == null) {
-                                    aim = RotationMath.init(MC.player);
+                                    aim = RotationMath.ofPlayer(MC.player);
                                  }
 
                                  autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, aim);
@@ -1776,7 +1776,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    private ClutchFallPhysics.Inner_ConfigStore load_i_ConfigStore() {
       Input input = this.init_Input_2();
       autismclient.ai.engine.AiPhysics.MoveInput pressed = new autismclient.ai.engine.AiPhysics.MoveInput(
-         (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0), (input.left() ? 1 : 0) - (input.right() ? 1 : 0), false, false, true, SilentMovementCoordinator.init_F(MC.player)
+         (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0), (input.left() ? 1 : 0) - (input.right() ? 1 : 0), false, false, true, SilentMovementCoordinator.getMovementYaw(MC.player)
       );
       return ClutchFallPhysics.init_i_ConfigStore_NodeWalker_StreamU(
          autismclient.ai.engine.AiPhysics.MotionState.of(MC.player),
@@ -1790,7 +1790,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    private Vec3 init_Vec3_7() {
       return this.init_Z
          ? init_Vec3_Input_F(this.init_Input_2(), MC.player.getYRot())
-         : init_Vec3_Input_F(MC.player.input.keyPresses, SilentMovementCoordinator.init_F(MC.player, MC.player.getYRot()));
+         : init_Vec3_Input_F(MC.player.input.keyPresses, SilentMovementCoordinator.getEntityYaw(MC.player, MC.player.getYRot()));
    }
 
    private static Vec3 init_Vec3_Input_F(Input input, float keyYaw) {
@@ -1884,7 +1884,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             Vec3 eye = forecast.load().isEmpty()
                ? ClutchModule.Inner_BufferHelper.init(bodies, eyeHeight, this.load_I_k_NetHelper(link))
                : forecast.load().get(Mth.clamp(this.load_I_k_NetHelper(link), 0, forecast.load().size() - 1));
-            float angle = RotationMath.load(from, ClutchModule.Inner_BufferHelper.init_ce_DataUtil_Vec3_k_NetHelper(eye, link));
+            float angle = RotationMath.vectorAngleDegrees(from, ClutchModule.Inner_BufferHelper.init_ce_DataUtil_Vec3_k_NetHelper(eye, link));
             return Math.max(0.0F, angle / this.init_I_k_NetHelper(link) - 25.0F) * 0.04;
          };
          ClutchBlockPlanner.Inner_JsonUtil plan = null;
@@ -2179,10 +2179,10 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    private RotationMath.Rotation init_ce_DataUtil_6() {
       RotationMath.Rotation look = "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) ? autismclient.util.SilentRotationManager.init_ce_DataUtil() : null;
       if (look == null) {
-         look = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
+         look = SilentMovementCoordinator.getRenderRotation(MC.player);
       }
 
-      return look != null ? look : RotationMath.init(MC.player);
+      return look != null ? look : RotationMath.ofPlayer(MC.player);
    }
 
    private int init_I_k_NetHelper(ClutchBlockPlanner.Inner_NetHelper link) {
@@ -2255,7 +2255,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private BlockHitResult init_BlockHitResult_Vec3(Vec3 eye, RotationMath.Rotation rotation, double reach) {
       HitResult result = MC.level
-         .clip(new ClipContext(eye, eye.add(Vec3.directionFromRotation(rotation.load(), rotation.init()).scale(reach)), Block.OUTLINE, Fluid.NONE, MC.player));
+         .clip(new ClipContext(eye, eye.add(Vec3.directionFromRotation(rotation.pitch(), rotation.yaw()).scale(reach)), Block.OUTLINE, Fluid.NONE, MC.player));
       return result instanceof BlockHitResult hit && result.getType() == Type.BLOCK ? hit : null;
    }
 
@@ -2318,7 +2318,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             Vec3 eye = MC.player.getEyePosition();
             HitResult found = MC.level
                .clip(
-                  new ClipContext(eye, eye.add(Vec3.directionFromRotation(rotation.load(), rotation.init()).scale(reach)), Block.OUTLINE, Fluid.NONE, MC.player)
+                  new ClipContext(eye, eye.add(Vec3.directionFromRotation(rotation.pitch(), rotation.yaw()).scale(reach)), Block.OUTLINE, Fluid.NONE, MC.player)
                );
             if (!(
                found instanceof BlockHitResult hit
@@ -2436,7 +2436,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          && !MC.player.hasEffect(MobEffects.SLOW_FALLING);
       if (!moving
          && ClutchBlockPlanner.init_Z_Vec3_2(
-            next, Vec3.directionFromRotation(rotation.load(), rotation.init()), candidatePlan.init_BlockPos, candidatePlan.init_Direction, reach
+            next, Vec3.directionFromRotation(rotation.pitch(), rotation.yaw()), candidatePlan.init_BlockPos, candidatePlan.init_Direction, reach
          )) {
          return null;
       }
@@ -2466,7 +2466,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       List<RotationMath.Rotation> goals = new ArrayList<>();
 
       for (Vec3 point : points) {
-         goals.add(RotationMath.init_ce_DataUtil(RotationMath.init(point, eye), rotation));
+         goals.add(RotationMath.applyGcd(RotationMath.lookAt(point, eye), rotation));
       }
 
       if (this.state == 4) {
@@ -2479,9 +2479,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                candidatePlan.init_BlockPos,
                candidatePlan.init_Direction,
                reach,
-               rotation.init(),
-               rotation.load(),
-               RotationMath.init(),
+               rotation.yaw(),
+               rotation.pitch(),
+               RotationMath.gcdStep(),
                margin,
                yaw -> this.init_i_DataUtil_I_F(lead, (float)yaw)
             )
@@ -2494,9 +2494,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                candidatePlan.init_BlockPos,
                candidatePlan.init_Direction,
                reach,
-               rotation.init(),
-               rotation.load(),
-               RotationMath.init(),
+               rotation.yaw(),
+               rotation.pitch(),
+               RotationMath.gcdStep(),
                margin
             );
 
@@ -2506,18 +2506,18 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       }
 
       for (RotationMath.Rotation goal : goals) {
-         ClutchFallPhysics.Inner_DataUtil window = moving ? this.init_i_DataUtil_I_F(lead, goal.init()) : null;
+         ClutchFallPhysics.Inner_DataUtil window = moving ? this.init_i_DataUtil_I_F(lead, goal.yaw()) : null;
          Vec3 clickEye = window == null ? eye : window.init_Vec3();
          Vec3 nextEye = window == null ? next : window.load();
          if (window == null || MC.level.noCollision(MC.player, window.init_AABB().deflate(1.0E-5))) {
-            Vec3 point = clickEye.add(Vec3.directionFromRotation(goal.load(), goal.init()));
-            if (!(Math.abs(goal.load()) > 89.5)
+            Vec3 point = clickEye.add(Vec3.directionFromRotation(goal.pitch(), goal.yaw()));
+            if (!(Math.abs(goal.pitch()) > 89.5)
                && (
                   wireEye == null
                      || ClutchFallPhysics.init_Z_BlockHitResult(this.init_BlockHitResult_Vec3(wireEye, goal, reach), option.load_BlockPos(), option.init_Direction())
                )
                && ClutchBlockPlanner.init_Z_Vec3_2(
-                  nextEye, Vec3.directionFromRotation(goal.load(), goal.init()), candidatePlan.init_BlockPos, candidatePlan.init_Direction, reach
+                  nextEye, Vec3.directionFromRotation(goal.pitch(), goal.yaw()), candidatePlan.init_BlockPos, candidatePlan.init_Direction, reach
                )) {
                autismclient.util.BlockPlacementPlanner.Query request = new autismclient.util.BlockPlacementPlanner.Query(candidatePlan.init_BlockPos, clickEye, reach, placement)
                   .init_U_StateCache_ce_DataUtil(rotation)
@@ -2527,7 +2527,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                   .load(margin)
                   .init_U_StateCache_U_StreamUtil(budget);
                autismclient.util.BlockPlacementPlanner.AimSample aim = new autismclient.util.BlockPlacementPlanner.AimSample(
-                  point, goal, goal, clickEye.distanceTo(point), RotationMath.load(rotation, goal), autismclient.util.BlockPlacementPlanner.SamplePoint.NEAREST
+                  point, goal, goal, clickEye.distanceTo(point), RotationMath.vectorAngleDegrees(rotation, goal), autismclient.util.BlockPlacementPlanner.SamplePoint.NEAREST
                );
                autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(option, aim, request, null);
                if (candidate != null
@@ -2544,7 +2544,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                   )
                   && ClutchBlockPlanner.init_Z_Vec3_2(
                      nextEye,
-                     Vec3.directionFromRotation(candidate.init_U_DataUtil().init_ce_DataUtil().load(), candidate.init_U_DataUtil().init_ce_DataUtil().init()),
+                     Vec3.directionFromRotation(candidate.init_U_DataUtil().init_ce_DataUtil().pitch(), candidate.init_U_DataUtil().init_ce_DataUtil().yaw()),
                      candidatePlan.init_BlockPos,
                      candidatePlan.init_Direction,
                      reach
@@ -2591,7 +2591,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       }
 
       if (this.pop_Z_3() && MC.player.onGround() && (!input.shift() || input.jump()) && !put() && this.set()) {
-         Vec3 wish = init_Vec3_Input_F(input, SilentMovementCoordinator.init_F(MC.player));
+         Vec3 wish = init_Vec3_Input_F(input, SilentMovementCoordinator.getMovementYaw(MC.player));
          Vec3 motion = MC.player.getDeltaMovement();
          AABB body = MC.player.getBoundingBox();
          Vec3 centre = body.getCenter();
@@ -2650,7 +2650,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          true,
          sprint,
          input.shift(),
-         SilentMovementCoordinator.init_F(MC.player)
+         SilentMovementCoordinator.getMovementYaw(MC.player)
       );
       autismclient.ai.engine.AiPhysics.PhysicsWorld world = autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player);
       boolean unsafe = this.init_Z_NodeWalker_StreamU(start, pressed, world);
@@ -2704,7 +2704,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private Input load_Input_Input_2(Input input) {
-      float keyYaw = SilentMovementCoordinator.init_F(MC.player);
+      float keyYaw = SilentMovementCoordinator.getMovementYaw(MC.player);
       Vec3 motion = MC.player.getDeltaMovement();
       Vec3 wish = init_Vec3_Input_F(input, keyYaw);
       boolean stocked = this.sync_I_2() >= 0;
@@ -2782,10 +2782,10 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          if (clutch != null && MC.player != null && (clutch.isEnabled() || clutch.init_Z)) {
             ClutchModule.Inner_ConfigStore old = clutch.init_j_ConfigStore;
             Vec3 fallback = old == null ? MC.player.position() : old.init_Vec3;
-            RotationMath.Rotation oldAim = old == null ? RotationMath.init(MC.player) : old.init_ce_DataUtil;
+            RotationMath.Rotation oldAim = old == null ? RotationMath.ofPlayer(MC.player) : old.init_ce_DataUtil;
             clutch.init_j_ConfigStore = new ClutchModule.Inner_ConfigStore(
                new Vec3(move.getX(fallback.x), move.getY(fallback.y), move.getZ(fallback.z)),
-               new RotationMath.Rotation(move.getYRot(oldAim.init()), move.getXRot(oldAim.load())),
+               new RotationMath.Rotation(move.getYRot(oldAim.yaw()), move.getXRot(oldAim.pitch())),
                MC.player.getEyeHeight(),
                clutch.read_I_9()
             );
@@ -2834,11 +2834,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                this.load_V_Z_3(bridge);
             } else {
                if (bridge && "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && this.get < 20) {
-                  RotationMath.Rotation goal = resume != null ? resume : RotationMath.init(MC.player);
+                  RotationMath.Rotation goal = resume != null ? resume : RotationMath.ofPlayer(MC.player);
                   autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, goal);
                   autismclient.util.SilentRotationManager.init_V_Str_4(this.id(), MC.player, Math.max(1, Math.min(8, 19 - this.get)));
                   RotationMath.Rotation end = autismclient.util.SilentRotationManager.init_ce_DataUtil();
-                  if (end != null && RotationMath.load(end, goal) > 1.0F) {
+                  if (end != null && RotationMath.vectorAngleDegrees(end, goal) > 1.0F) {
                      this.load_Str = "Handing back";
                      return;
                   }
@@ -2861,7 +2861,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       boolean ours = "clutch".equals(autismclient.util.SilentRotationManager.init_Str());
       if (bridge && end != null) {
          if (ours) {
-            float offset = ScaffoldModule.load_F_F_F(end.init(), MC.player.getYRot());
+            float offset = ScaffoldModule.load_F_F_F(end.yaw(), MC.player.getYRot());
             if (offset != 0.0F && Float.isFinite(offset)) {
                MC.player.setYRot(MC.player.getYRot() + offset);
                MC.player.yRotO += offset;
@@ -3020,8 +3020,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
       static RotationMath.Rotation init_ce_DataUtil_Vec3_k_NetHelper(Vec3 eye, ClutchBlockPlanner.Inner_NetHelper link) {
          BlockPos support = link.load_BlockPos();
-         RotationMath.Rotation goal = RotationMath.init(ClutchBlockPlanner.init_Vec3_Vec3(eye, support.getX(), support.getY(), support.getZ(), link.init_Direction()), eye);
-         return new RotationMath.Rotation(goal.init(), Mth.clamp(goal.load(), -89.5F, 89.5F));
+         RotationMath.Rotation goal = RotationMath.lookAt(ClutchBlockPlanner.init_Vec3_Vec3(eye, support.getX(), support.getY(), support.getZ(), link.init_Direction()), eye);
+         return new RotationMath.Rotation(goal.yaw(), Mth.clamp(goal.pitch(), -89.5F, 89.5F));
       }
    }
 

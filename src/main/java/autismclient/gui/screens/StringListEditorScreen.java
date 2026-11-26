@@ -61,7 +61,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    private boolean load_Z;
 
    private static int read_I_6() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public StringListEditorScreen(Screen parent, Module module, Setting<?, ?> option) {
@@ -268,12 +268,12 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          List<String> suggestions = this.update_List();
          if (!suggestions.isEmpty()) {
             int visible = Math.min(5, suggestions.size());
-            int rowH = autismclient.gui.ui.UiDensityMetrics.init(12);
+            int rowH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
             int popupH = visible * rowH + 2;
             int popupY = Math.max(4, fieldY - popupH - 2);
             int popupW = Math.min(fieldW, 170);
             int popupX = fieldX;
-            this.init(graphics, popupX, popupY, popupW, popupH, 5, -301397749, ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.OUTLINE));
+            this.init(graphics, popupX, popupY, popupW, popupH, 5, -301397749, ThemePaletteManager.recolor(-50373, ThemePaletteManager.ColorRole.OUTLINE));
             int start = Math.max(0, Math.min(this.tick - visible + 1, suggestions.size() - visible));
 
             for (int i = 0; i < visible; i++) {
@@ -326,10 +326,10 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       }
 
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil_3();
-      if (metrics.init_Z() && metrics.init(mx, my)) {
+      if (metrics.isScrollable() && metrics.containsTrack(mx, my)) {
          this.init_Z = true;
-         this.push = metrics.load(mx, my) ? my - metrics.update() : metrics.sync() / 2;
-         this.poll = this.init_I_I_6(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(metrics, my, this.push));
+         this.push = metrics.containsThumb(mx, my) ? my - metrics.thumbY() : metrics.thumbHeight() / 2;
+         this.poll = this.init_I_I_6(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, my, this.push));
          return true;
       }
 
@@ -409,7 +409,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       }
 
       this.poll = this.poll + (scrollY < 0.0 ? this.close_I_3() : -this.close_I_3());
-      this.poll = this.init(this.poll, 0, this.init_PoolEntry_DataUtil_3().flush());
+      this.poll = this.init(this.poll, 0, this.init_PoolEntry_DataUtil_3().maxScroll());
       return true;
    }
 
@@ -441,7 +441,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          return true;
       }
 
-      this.poll = this.init_I_I_6(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(this.init_PoolEntry_DataUtil_3(), my, this.push));
+      this.poll = this.init_I_I_6(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_3(), my, this.push));
       return true;
    }
 
@@ -1034,19 +1034,19 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    }
 
    private int init_I_Str_8(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.load(autismclient.gui.f.b.k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(autismclient.gui.f.b.k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
    }
 
    private int sync_I_4() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int flush_I_4() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int close_I_3() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int open_I_2() {
@@ -1070,7 +1070,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    }
 
    private int init_I_I_I_4(int boxY, int boxH) {
-      return UiLayoutMath.init(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
+      return UiLayoutMath.centerTextY(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
    }
 
    private String read_Str() {
@@ -1139,7 +1139,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    }
 
    private void open_V_2() {
-      this.poll = this.init(this.poll, 0, this.init_PoolEntry_DataUtil_3().flush());
+      this.poll = this.init(this.poll, 0, this.init_PoolEntry_DataUtil_3().maxScroll());
    }
 
    private int init_I_I_6(int offset) {

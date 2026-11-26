@@ -173,9 +173,9 @@ public final class ClientInteractionOverride {
             read_Str = null;
             CombatAttackDispatcher.load();
             if (close && init_Minecraft != null && init_Minecraft.options != null) {
-               KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$simulatePress(false);
+               KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
                ((AutismKeyMappingAccessor)init_Minecraft.options.keyAttack).autism$setClickCount(0);
-               KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$resetPressedState();
+               KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
                close = false;
             }
          }
@@ -312,7 +312,7 @@ public final class ClientInteractionOverride {
          && init_Minecraft.player == player
          && init_Minecraft.gameMode != null
          && init_Minecraft.getConnection() != null
-         && (init_Minecraft.options == null || !KeyMappingControl.init(init_Minecraft.options.keyUse).autism$physicalForBody())
+         && (init_Minecraft.options == null || !KeyMappingControl.of(init_Minecraft.options.keyUse).autism$physicalForBody())
          && (!player.isUsingItem() || player.getUsedItemHand() == hand && ItemStack.isSameItem(player.getUseItem(), item))) {
          init_Minecraft.gameMode.releaseUsingItem(player);
       }
@@ -332,11 +332,11 @@ public final class ClientInteractionOverride {
          boolean attackOwned = read_Z || VirtualInputDispatcher.init_Z_Z(false) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.init_Z_Z(false);
          boolean useOwned = load_Z || VirtualInputDispatcher.init_Z_Z(true) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.init_Z_Z(true);
          if (!attackOwned) {
-            KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$resetPressedState();
+            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
          }
 
          if (!useOwned) {
-            KeyMappingControl.init(init_Minecraft.options.keyUse).autism$resetPressedState();
+            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
          }
       }
    }
@@ -358,14 +358,14 @@ public final class ClientInteractionOverride {
       write_BlockHitResult = null;
       if (init_Minecraft != null && init_Minecraft.options != null) {
          if (read_Z) {
-            KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$simulatePress(false);
-            KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$resetPressedState();
+            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
+            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
             read_Z = false;
          }
 
          if (load_Z) {
-            KeyMappingControl.init(init_Minecraft.options.keyUse).autism$simulatePress(false);
-            KeyMappingControl.init(init_Minecraft.options.keyUse).autism$resetPressedState();
+            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(false);
+            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
             load_Z = false;
          }
 
@@ -463,16 +463,16 @@ public final class ClientInteractionOverride {
       read_V();
       if (init_Minecraft != null && init_Minecraft.options != null) {
          if (flush) {
-            KeyMappingControl.init(init_Minecraft.options.keyUse).autism$simulatePress(false);
+            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(false);
             ((AutismKeyMappingAccessor)init_Minecraft.options.keyUse).autism$setClickCount(0);
-            KeyMappingControl.init(init_Minecraft.options.keyUse).autism$resetPressedState();
+            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
             flush = false;
          }
 
          if (close) {
-            KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$simulatePress(false);
+            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
             ((AutismKeyMappingAccessor)init_Minecraft.options.keyAttack).autism$setClickCount(0);
-            KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$resetPressedState();
+            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
             close = false;
          }
       }
@@ -619,11 +619,11 @@ public final class ClientInteractionOverride {
                init_Minecraft.hitResult = attackHit;
                close_V();
                init(init_Minecraft.options.keyUse, true);
-               KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$simulatePress(true);
+               KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(true);
 
                for (int i = 1; i < attackClicks; i++) {
-                  KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$simulatePress(false);
-                  KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$simulatePress(true);
+                  KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
+                  KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(true);
                }
 
                load_I = attackClicks - 1;
@@ -635,9 +635,9 @@ public final class ClientInteractionOverride {
                init_Minecraft.hitResult = missHit;
                close_V();
                init(init_Minecraft.options.keyUse, true);
-               KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$simulatePress(true);
+               KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(true);
                if (tap) {
-                  KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$simulatePress(false);
+                  KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
                }
 
                close = true;
@@ -645,14 +645,14 @@ public final class ClientInteractionOverride {
             } else if (useHit != null) {
                if (useLook != null) {
                   PlacementTickStamp.init_V();
-                  init_Minecraft.player.setYRot(useLook.init());
-                  init_Minecraft.player.setXRot(useLook.load());
+                  init_Minecraft.player.setYRot(useLook.yaw());
+                  init_Minecraft.player.setXRot(useLook.pitch());
                }
 
                init_Minecraft.hitResult = useHit;
                close_V();
                init(init_Minecraft.options.keyAttack, false);
-               KeyMappingControl.init(init_Minecraft.options.keyUse).autism$simulatePress(true);
+               KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(true);
                flush = true;
                update_Z = true;
             } else if (holdAttackRay != null) {
@@ -660,8 +660,8 @@ public final class ClientInteractionOverride {
                close_V();
                init(init_Minecraft.options.keyUse, true);
                if (!read_Z) {
-                  KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$simulatePress(false);
-                  KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$simulatePress(true);
+                  KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
+                  KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(true);
                   read_Z = true;
                   sync = true;
                }
@@ -671,8 +671,8 @@ public final class ClientInteractionOverride {
                close_V();
                init(init_Minecraft.options.keyAttack, false);
                if (!load_Z) {
-                  KeyMappingControl.init(init_Minecraft.options.keyUse).autism$simulatePress(false);
-                  KeyMappingControl.init(init_Minecraft.options.keyUse).autism$simulatePress(true);
+                  KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(false);
+                  KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(true);
                   load_Z = true;
                }
 
@@ -687,7 +687,7 @@ public final class ClientInteractionOverride {
    }
 
    private static void init(KeyMapping key, boolean use) {
-      KeyMappingControl.init(key).autism$simulatePress(false);
+      KeyMappingControl.of(key).autism$simulatePress(false);
       if (use) {
          open = true;
       } else {
@@ -724,26 +724,26 @@ public final class ClientInteractionOverride {
 
       if (init_Minecraft != null && init_Minecraft.options != null) {
          if (flush) {
-            KeyMappingControl.init(init_Minecraft.options.keyUse).autism$simulatePress(false);
+            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$simulatePress(false);
             ((AutismKeyMappingAccessor)init_Minecraft.options.keyUse).autism$setClickCount(0);
-            KeyMappingControl.init(init_Minecraft.options.keyUse).autism$resetPressedState();
+            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
             flush = false;
          }
 
          if (close) {
-            KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$simulatePress(false);
+            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$simulatePress(false);
             ((AutismKeyMappingAccessor)init_Minecraft.options.keyAttack).autism$setClickCount(0);
-            KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$resetPressedState();
+            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
             close = false;
          }
 
          if (open) {
-            KeyMappingControl.init(init_Minecraft.options.keyUse).autism$resetPressedState();
+            KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
             open = false;
          }
 
          if (poll) {
-            KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$resetPressedState();
+            KeyMappingControl.of(init_Minecraft.options.keyAttack).autism$resetPressedState();
             poll = false;
          }
 

@@ -405,6 +405,6 @@ public final class AiCommand extends Command {
    }
 
    private static String load_Str_2() {
-      return autismclient.commands.CommandManager.init_Str();
+      return autismclient.commands.CommandManager.getPrefix();
    }
 }

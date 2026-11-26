@@ -494,7 +494,7 @@ final class AiDodge {
                      this.init_Minecraft.options.keyRight,
                      this.init_Minecraft.options.keySprint
                   )) {
-                     key.setDown(autismclient.util.KeyMappingControl.init(key).autism$physicalForBody());
+                     key.setDown(autismclient.util.KeyMappingControl.of(key).autism$physicalForBody());
                   }
                }
             }
@@ -502,7 +502,7 @@ final class AiDodge {
             void read() {
                if (this.init_Minecraft.options != null && this.load_Z) {
                   this.load_Z = false;
-                  this.init_Minecraft.options.keyAttack.setDown(autismclient.util.KeyMappingControl.init(this.init_Minecraft.options.keyAttack).autism$physicalForBody());
+                  this.init_Minecraft.options.keyAttack.setDown(autismclient.util.KeyMappingControl.of(this.init_Minecraft.options.keyAttack).autism$physicalForBody());
                }
             }
 

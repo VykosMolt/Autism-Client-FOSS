@@ -204,7 +204,7 @@ public final class VirtualInputDispatcher {
       }
 
       if (init_Minecraft != null && init_Minecraft.options != null && init_Minecraft.options.keyUse != null) {
-         KeyMappingControl.init(init_Minecraft.options.keyUse).autism$resetPressedState();
+         KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
       }
    }
 
@@ -237,7 +237,7 @@ public final class VirtualInputDispatcher {
                init(mapping, false);
             }
 
-            KeyMappingControl.init(mapping).autism$resetPressedState();
+            KeyMappingControl.of(mapping).autism$resetPressedState();
          }
 
          return false;
@@ -429,7 +429,7 @@ public final class VirtualInputDispatcher {
          while (mapping.consumeClick()) {
          }
 
-         KeyMappingControl.init(mapping).autism$resetPressedState();
+         KeyMappingControl.of(mapping).autism$resetPressedState();
       }
    }
 
@@ -446,7 +446,7 @@ public final class VirtualInputDispatcher {
 
    private static void init(KeyMapping mapping, boolean pressed) {
       if (mapping != null) {
-         KeyMappingControl.init(mapping).autism$simulatePress(pressed);
+         KeyMappingControl.of(mapping).autism$simulatePress(pressed);
       }
    }
 

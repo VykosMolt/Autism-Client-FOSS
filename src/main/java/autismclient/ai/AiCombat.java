@@ -2671,7 +2671,7 @@ final class AiCombat {
 
                   this.init_DataUtil.init_V();
                   if (mc.level == this.init_Obj && mc.player == this.init_LocalPlayer && mc.player.getInventory().getSelectedSlot() != this.init_I) {
-                     autismclient.util.InventorySlotHelper.init_V(mc, this.init_I);
+                     autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.init_I);
                   }
                }
             }

@@ -146,7 +146,7 @@ public final class cA {
          config.save();
 
          try {
-            OverlayManager.init_bk().flush();
+            OverlayManager.getInstance().reclampAll();
          } catch (Throwable var6) {
          }
       }

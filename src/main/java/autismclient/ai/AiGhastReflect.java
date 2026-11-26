@@ -892,7 +892,7 @@ final class AiGhastReflect {
          this.init_Minecraft.options.keyRight,
          this.init_Minecraft.options.keySprint
       )) {
-         key.setDown(autismclient.util.KeyMappingControl.init(key).autism$physicalForBody());
+         key.setDown(autismclient.util.KeyMappingControl.of(key).autism$physicalForBody());
       }
    }
 

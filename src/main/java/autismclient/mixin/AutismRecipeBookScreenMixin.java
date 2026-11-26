@@ -24,8 +24,8 @@ public abstract class AutismRecipeBookScreenMixin {
    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
    private void autism$handleOverlayClick(MouseButtonEvent click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
       if (this.autism$isActive()) {
-         OverlayManager manager = OverlayManager.init_bk();
-         if (manager.init_Z_D_2(click.x(), click.y(), Compat263.mouseEventGlfwButton(click))) {
+         OverlayManager manager = OverlayManager.getInstance();
+         if (manager.mouseClicked(click.x(), click.y(), Compat263.mouseEventGlfwButton(click))) {
             cir.setReturnValue(true);
          }
       }
@@ -33,21 +33,21 @@ public abstract class AutismRecipeBookScreenMixin {
 
    @Inject(method = "mouseDragged", at = @At("HEAD"), cancellable = true)
    private void autism$handleOverlayDrag(MouseButtonEvent click, double deltaX, double deltaY, CallbackInfoReturnable<Boolean> cir) {
-      if (this.autism$isActive() && OverlayManager.init_bk().init(click.x(), click.y(), Compat263.mouseEventGlfwButton(click), deltaX, deltaY)) {
+      if (this.autism$isActive() && OverlayManager.getInstance().mouseDragged(click.x(), click.y(), Compat263.mouseEventGlfwButton(click), deltaX, deltaY)) {
          cir.setReturnValue(true);
       }
    }
 
    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
    private void autism$handleOverlayKeys(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
-      if (this.autism$isActive() && OverlayManager.init_bk().init_Z_I(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
+      if (this.autism$isActive() && OverlayManager.getInstance().keyPressed(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
          cir.setReturnValue(true);
       }
    }
 
    @Inject(method = "charTyped", at = @At("HEAD"), cancellable = true)
    private void autism$handleOverlayChars(CharacterEvent input, CallbackInfoReturnable<Boolean> cir) {
-      if (this.autism$isActive() && OverlayManager.init_bk().init_Z_C_I((char)input.codepoint(), 0)) {
+      if (this.autism$isActive() && OverlayManager.getInstance().charTyped((char)input.codepoint(), 0)) {
          cir.setReturnValue(true);
       }
    }

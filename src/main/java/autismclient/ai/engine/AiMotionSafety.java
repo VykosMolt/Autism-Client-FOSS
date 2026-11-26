@@ -51,7 +51,7 @@ public final class AiMotionSafety {
             var0.options.keySprint,
             var0.options.keyShift
          )) {
-            var2.setDown(KeyMappingControl.init(var2).autism$physicalForBody());
+            var2.setDown(KeyMappingControl.of(var2).autism$physicalForBody());
          }
       }
    }

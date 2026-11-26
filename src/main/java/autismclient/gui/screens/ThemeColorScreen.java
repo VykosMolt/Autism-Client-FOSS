@@ -170,16 +170,16 @@ public class ThemeColorScreen extends Screen {
    }
 
    private void load_V() {
-      this.init_ct_StreamUtil = ThemePaletteManager.CompiledPalette.init_ct_StreamUtil_AutismConfig_Theme(this.init_AutismConfig_Theme);
-      this.init_TableIndex.init_JsonUtil().init(this.init_ct_StreamUtil);
-      this.load_TableIndex.init_JsonUtil().init(this.init_ct_StreamUtil);
-      this.load_TableIndex.init_JsonUtil().clear = this.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.TOGGLE);
-      autismclient.gui.ui.UiColorScheme colors = this.init_TableIndex.init_JsonUtil();
-      colors.flush = UiLayoutMath.init_I_I(colors.flush, this.init_I_I_ct_DataUtil(1493121851, ThemePaletteManager.ColorRole.HEADER), 0.08F);
-      colors.load = UiLayoutMath.init_I_I(colors.load, this.init_I_I_ct_DataUtil(-930144476, ThemePaletteManager.ColorRole.BUTTON), 0.12F);
-      colors.read = UiLayoutMath.init_I_I(colors.read, this.init_I_I_ct_DataUtil(-721460124, ThemePaletteManager.ColorRole.HOVER), 0.12F);
-      colors.get = UiLayoutMath.init_I_I(colors.get, this.init_I_I_ct_DataUtil(1023370340, ThemePaletteManager.ColorRole.OUTLINE), 0.15F);
-      colors.set = UiLayoutMath.init_I_I(colors.set, this.init_I_I_ct_DataUtil(1291805796, ThemePaletteManager.ColorRole.OUTLINE), 0.15F);
+      this.init_ct_StreamUtil = ThemePaletteManager.CompiledPalette.compile(this.init_AutismConfig_Theme);
+      this.init_TableIndex.colors().applyPalette(this.init_ct_StreamUtil);
+      this.load_TableIndex.colors().applyPalette(this.init_ct_StreamUtil);
+      this.load_TableIndex.colors().accent = this.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.TOGGLE);
+      autismclient.gui.ui.UiColorScheme colors = this.init_TableIndex.colors();
+      colors.headerSurface = UiLayoutMath.lerpColor(colors.headerSurface, this.init_I_I_ct_DataUtil(1493121851, ThemePaletteManager.ColorRole.HEADER), 0.08F);
+      colors.buttonSurface = UiLayoutMath.lerpColor(colors.buttonSurface, this.init_I_I_ct_DataUtil(-930144476, ThemePaletteManager.ColorRole.BUTTON), 0.12F);
+      colors.buttonSurfaceHover = UiLayoutMath.lerpColor(colors.buttonSurfaceHover, this.init_I_I_ct_DataUtil(-721460124, ThemePaletteManager.ColorRole.HOVER), 0.12F);
+      colors.borderSubtle = UiLayoutMath.lerpColor(colors.borderSubtle, this.init_I_I_ct_DataUtil(1023370340, ThemePaletteManager.ColorRole.OUTLINE), 0.15F);
+      colors.borderControl = UiLayoutMath.lerpColor(colors.borderControl, this.init_I_I_ct_DataUtil(1291805796, ThemePaletteManager.ColorRole.OUTLINE), 0.15F);
    }
 
    private autismclient.gui.f.SyncManager init(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -214,7 +214,7 @@ public class ThemeColorScreen extends Screen {
          int sw = cA.init_I();
          int sh = cA.load_I();
          autismclient.gui.f.SyncManager ctx = this.init(graphics, mx, my);
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), ctx.init_TableIndex().init_JsonUtil().init);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), ctx.init_TableIndex().colors().backdropScrim);
          int margin = 6;
          int contentW = sw - margin * 2;
          int contentH = sh - margin * 2;
@@ -238,19 +238,19 @@ public class ThemeColorScreen extends Screen {
    }
 
    private int init_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int load_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int read_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
    private int write_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int update_I() {
@@ -263,7 +263,7 @@ public class ThemeColorScreen extends Screen {
 
    private void init(autismclient.gui.f.SyncManager ctx, autismclient.gui.f.NetHelper area, int mx, int my) {
       GuiGraphicsExtractor g = ctx.init_GuiGraphicsExtract();
-      autismclient.gui.f.PacketUtil.read(g, area, 8, ctx.init_TableIndex().init_JsonUtil().update, ctx.init_TableIndex().init_JsonUtil().get);
+      autismclient.gui.f.PacketUtil.read(g, area, 8, ctx.init_TableIndex().colors().windowSurface, ctx.init_TableIndex().colors().borderSubtle);
       int x = area.read() + 4;
       int y = area.write() + 4;
       int innerW = area.update() - 8;
@@ -282,7 +282,7 @@ public class ThemeColorScreen extends Screen {
          autismclient.gui.f.a.DataUtil.load,
          this.init_I_I(-4743522),
          x,
-         UiLayoutMath.init(y, this.read_I(), k.init(autismclient.gui.f.a.DataUtil.load), 1)
+         UiLayoutMath.centerTextY(y, this.read_I(), k.init(autismclient.gui.f.a.DataUtil.load), 1)
       );
       y += this.read_I();
       this.init_List.clear();
@@ -318,13 +318,13 @@ public class ThemeColorScreen extends Screen {
             rb,
             3,
             sel
-               ? UiLayoutMath.init_I_I(ctx.init_TableIndex().init_JsonUtil().open, ctx.init_TableIndex().init_JsonUtil().clear, 0.12F)
-               : (over ? ctx.init_TableIndex().init_JsonUtil().push : ctx.init_TableIndex().init_JsonUtil().open),
-            sel ? ctx.init_TableIndex().init_JsonUtil().clear : ctx.init_TableIndex().init_JsonUtil().get
+               ? UiLayoutMath.lerpColor(ctx.init_TableIndex().colors().cardSurface, ctx.init_TableIndex().colors().accent, 0.12F)
+               : (over ? ctx.init_TableIndex().colors().cardSurfaceElevated : ctx.init_TableIndex().colors().cardSurface),
+            sel ? ctx.init_TableIndex().colors().accent : ctx.init_TableIndex().colors().borderSubtle
          );
          autismclient.gui.f.NetHelper swatch = autismclient.gui.f.NetHelper.init(rb.read() + 3, rb.write() + 2, 20, rb.sync() - 4);
-         autismclient.gui.f.PacketUtil.load(g, swatch, 2, 0xFF000000 | c.init_IntSupplier().getAsInt() & 16777215, ctx.init_TableIndex().init_JsonUtil().get);
-         int textY = UiLayoutMath.init(rb.write(), rb.sync(), k.init(autismclient.gui.f.a.DataUtil.init), 1);
+         autismclient.gui.f.PacketUtil.load(g, swatch, 2, 0xFF000000 | c.init_IntSupplier().getAsInt() & 16777215, ctx.init_TableIndex().colors().borderSubtle);
+         int textY = UiLayoutMath.centerTextY(rb.write(), rb.sync(), k.init(autismclient.gui.f.a.DataUtil.init), 1);
          this.init(g, c.init_Str(), autismclient.gui.f.a.DataUtil.init, sel ? this.init_I_I(-791321) : this.init_I_I(-4743522), swatch.init() + 4 + 1, textY);
          String hex = init_Str_I(c.init_IntSupplier().getAsInt());
          int hexW = k.init(this.font, hex, autismclient.gui.f.a.DataUtil.init, -4743522);
@@ -374,7 +374,7 @@ public class ThemeColorScreen extends Screen {
    }
 
    private int flush() {
-      return autismclient.gui.ui.UiDensityMetrics.init(18);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(18);
    }
 
    private int close() {
@@ -383,7 +383,7 @@ public class ThemeColorScreen extends Screen {
 
    private void init(autismclient.gui.f.SyncManager ctx, autismclient.gui.f.NetHelper area, ThemeColorScreen.Inner_BufferHelper layout) {
       GuiGraphicsExtractor g = ctx.init_GuiGraphicsExtract();
-      autismclient.gui.f.PacketUtil.read(g, area, 8, ctx.init_TableIndex().init_JsonUtil().update, ctx.init_TableIndex().init_JsonUtil().get);
+      autismclient.gui.f.PacketUtil.read(g, area, 8, ctx.init_TableIndex().colors().windowSurface, ctx.init_TableIndex().colors().borderSubtle);
       int x = area.read() + 4;
       int y = area.write() + 4;
       int innerW = area.update() - 8;
@@ -391,7 +391,7 @@ public class ThemeColorScreen extends Screen {
       y += this.init_I();
       int barH = this.flush();
       autismclient.gui.f.PacketUtil.read(
-         g, autismclient.gui.f.NetHelper.init(x, y, innerW, barH), 5, ctx.init_TableIndex().init_JsonUtil().flush, ctx.init_TableIndex().init_JsonUtil().get
+         g, autismclient.gui.f.NetHelper.init(x, y, innerW, barH), 5, ctx.init_TableIndex().colors().headerSurface, ctx.init_TableIndex().colors().borderSubtle
       );
       if (this.read_cu_CachePool != null) {
          this.read_cu_CachePool.init_V_ct_StreamUtil(this.init_ct_StreamUtil);
@@ -491,7 +491,7 @@ public class ThemeColorScreen extends Screen {
 
       if (y + ctrlH <= contentLimit) {
          int btnTextW = k.init(this.font, "Button", autismclient.gui.f.a.DataUtil.init, -791321);
-         int btnW = autismclient.gui.ui.UiDensityMetrics.load(btnTextW);
+         int btnW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(btnTextW);
          autismclient.gui.f.NetHelper btn = autismclient.gui.f.NetHelper.init(x, y, btnW, ctrlH);
          autismclient.gui.f.SyncManager sample = this.init(g, -1, -1);
          autismclient.gui.f.b.CachePool.init(sample, btn, "Button", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, false, false);
@@ -547,7 +547,7 @@ public class ThemeColorScreen extends Screen {
    }
 
    private int open() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int poll() {
@@ -555,14 +555,14 @@ public class ThemeColorScreen extends Screen {
    }
 
    private int init(int boxY, int boxH, Identifier fontId) {
-      return UiLayoutMath.init(boxY, boxH, k.init(fontId), 1);
+      return UiLayoutMath.centerTextY(boxY, boxH, k.init(fontId), 1);
    }
 
    private int init(GuiGraphicsExtractor g, int x, int y, int w, String name, String keybind, boolean on, boolean selected, boolean hovered) {
       int h = this.open();
       autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(x, y, w, h);
-      autismclient.gui.ui.UiColorScheme colors = this.init_TableIndex.init_JsonUtil();
-      int fill = selected ? UiLayoutMath.init_I_I(colors.open, this.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.TOGGLE), 0.12F) : (hovered ? colors.push : colors.open);
+      autismclient.gui.ui.UiColorScheme colors = this.init_TableIndex.colors();
+      int fill = selected ? UiLayoutMath.lerpColor(colors.cardSurface, this.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.TOGGLE), 0.12F) : (hovered ? colors.cardSurfaceElevated : colors.cardSurface);
       autismclient.gui.f.PacketUtil.load(g, row, 3, fill);
       if (selected) {
          autismclient.gui.f.PacketUtil.load(g, row, 3, 0, this.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.TOGGLE));
@@ -570,7 +570,7 @@ public class ThemeColorScreen extends Screen {
 
       int ty = this.init(y, h, autismclient.gui.f.a.DataUtil.init);
       String label = name + (keybind != null && !keybind.isEmpty() ? " [" + keybind + "]" : "");
-      this.init(g, -1, -1).init_PoolEntry().read(g, label, x + 8, ty, Math.max(1, w - 30 - 16), on ? colors.prev : colors.valid);
+      this.init(g, -1, -1).init_PoolEntry().drawEllipsized(g, label, x + 8, ty, Math.max(1, w - 30 - 16), on ? colors.textPrimary : colors.textSecondary);
       this.init(g, x + w - 30 - 4, y, h, on);
       return y + h + 2;
    }
@@ -617,7 +617,7 @@ public class ThemeColorScreen extends Screen {
    }
 
    private int init_I_Str(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.load(k.init(this.font, label, autismclient.gui.f.a.DataUtil.init, 0));
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, autismclient.gui.f.a.DataUtil.init, 0));
    }
 
    private void init(GuiGraphicsExtractor g, int x, int y, int w, int h, String label, int color) {
@@ -625,7 +625,7 @@ public class ThemeColorScreen extends Screen {
    }
 
    private int init_I_I_ct_DataUtil(int color, ThemePaletteManager.ColorRole ch) {
-      return ThemePaletteManager.init_I_I_2(color, ch, this.init_ct_StreamUtil);
+      return ThemePaletteManager.recolorWithPalette(color, ch, this.init_ct_StreamUtil);
    }
 
    private int init_I_I(int color) {
@@ -769,7 +769,7 @@ public class ThemeColorScreen extends Screen {
    private void init_V_Z(boolean advanced) {
       if (this.init_AutismConfig_Theme.advanced != advanced) {
          if (advanced) {
-            int defaultMaster = ThemePaletteManager.init_IArr[ThemePaletteManager.ColorRole.ACCENT.ordinal()];
+            int defaultMaster = ThemePaletteManager.DEFAULT_COLORS[ThemePaletteManager.ColorRole.ACCENT.ordinal()];
             boolean masterChanged = (this.init_AutismConfig_Theme.master & 16777215) != (defaultMaster & 16777215)
                || (this.init_AutismConfig_Theme.master >>> 24 & 0xFF) != 255;
             if (masterChanged) {
@@ -782,14 +782,14 @@ public class ThemeColorScreen extends Screen {
                this.init_AutismConfig_Theme.backdrop = this.init_AutismConfig_Theme.master;
                this.init_AutismConfig_Theme.danger = this.init_AutismConfig_Theme.master;
             } else {
-               this.init_AutismConfig_Theme.accent = ThemePaletteManager.init_IArr[ThemePaletteManager.ColorRole.ACCENT.ordinal()];
-               this.init_AutismConfig_Theme.button = ThemePaletteManager.init_IArr[ThemePaletteManager.ColorRole.BUTTON.ordinal()];
-               this.init_AutismConfig_Theme.outline = ThemePaletteManager.init_IArr[ThemePaletteManager.ColorRole.OUTLINE.ordinal()];
-               this.init_AutismConfig_Theme.header = ThemePaletteManager.init_IArr[ThemePaletteManager.ColorRole.HEADER.ordinal()];
-               this.init_AutismConfig_Theme.toggle = ThemePaletteManager.init_IArr[ThemePaletteManager.ColorRole.TOGGLE.ordinal()];
-               this.init_AutismConfig_Theme.hover = ThemePaletteManager.init_IArr[ThemePaletteManager.ColorRole.HOVER.ordinal()];
-               this.init_AutismConfig_Theme.backdrop = ThemePaletteManager.init_IArr[ThemePaletteManager.ColorRole.BACKDROP.ordinal()];
-               this.init_AutismConfig_Theme.danger = ThemePaletteManager.init_IArr[ThemePaletteManager.ColorRole.DANGER.ordinal()];
+               this.init_AutismConfig_Theme.accent = ThemePaletteManager.DEFAULT_COLORS[ThemePaletteManager.ColorRole.ACCENT.ordinal()];
+               this.init_AutismConfig_Theme.button = ThemePaletteManager.DEFAULT_COLORS[ThemePaletteManager.ColorRole.BUTTON.ordinal()];
+               this.init_AutismConfig_Theme.outline = ThemePaletteManager.DEFAULT_COLORS[ThemePaletteManager.ColorRole.OUTLINE.ordinal()];
+               this.init_AutismConfig_Theme.header = ThemePaletteManager.DEFAULT_COLORS[ThemePaletteManager.ColorRole.HEADER.ordinal()];
+               this.init_AutismConfig_Theme.toggle = ThemePaletteManager.DEFAULT_COLORS[ThemePaletteManager.ColorRole.TOGGLE.ordinal()];
+               this.init_AutismConfig_Theme.hover = ThemePaletteManager.DEFAULT_COLORS[ThemePaletteManager.ColorRole.HOVER.ordinal()];
+               this.init_AutismConfig_Theme.backdrop = ThemePaletteManager.DEFAULT_COLORS[ThemePaletteManager.ColorRole.BACKDROP.ordinal()];
+               this.init_AutismConfig_Theme.danger = ThemePaletteManager.DEFAULT_COLORS[ThemePaletteManager.ColorRole.DANGER.ordinal()];
             }
          }
 
@@ -812,7 +812,7 @@ public class ThemeColorScreen extends Screen {
 
    private void update_V() {
       init_V_AutismConfig_Theme_AutismConfig_Theme(this.init_AutismConfig_Theme, this.init_AutismConfig.themeColors);
-      ThemePaletteManager.init_V();
+      ThemePaletteManager.reload();
       Runnable saved = autismclient.gui.ThemeApplyProgressOverlay.init("Saving config");
       autismclient.util.BackgroundTaskExecutor.init_Future_Str_Runnable("theme-config-save", () -> {
          try {
@@ -901,7 +901,7 @@ public class ThemeColorScreen extends Screen {
       }
 
       private static int init_I() {
-         return Math.max(36, autismclient.gui.ui.UiDensityMetrics.init(13) * 2 + 2);
+         return Math.max(36, autismclient.gui.ui.UiDensityMetrics.scaledHeight(13) * 2 + 2);
       }
 
       private static int read(boolean alpha) {
@@ -909,7 +909,7 @@ public class ThemeColorScreen extends Screen {
       }
 
       private int init(int color, ThemePaletteManager.ColorRole ch) {
-         return ThemePaletteManager.init_I_I_2(color, ch, this.init_ct_StreamUtil);
+         return ThemePaletteManager.recolorWithPalette(color, ch, this.init_ct_StreamUtil);
       }
 
       void init_V_I(int argb) {
@@ -934,7 +934,7 @@ public class ThemeColorScreen extends Screen {
 
       private void init_V() {
          if (this.init_k == null) {
-            this.init_k = new autismclient.util.ThemedTextInputBox(init_Minecraft(), init_Minecraft().font, 0, 0, 20, autismclient.gui.ui.UiDensityMetrics.init(13), false);
+            this.init_k = new autismclient.util.ThemedTextInputBox(init_Minecraft(), init_Minecraft().font, 0, 0, 20, autismclient.gui.ui.UiDensityMetrics.scaledHeight(13), false);
             this.init_k.load(6);
             this.init_k.load(next -> next.chars().allMatch(ch -> init_Z_C((char)ch)));
             this.init_k.init_V_Consumer(value -> this.sync());
@@ -979,23 +979,23 @@ public class ThemeColorScreen extends Screen {
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(area.read(), area.write(), 130, svH);
          this.load_NetHelper = autismclient.gui.f.NetHelper.init(this.init_NetHelper.init() + 6, area.write(), 14, svH);
          ThemeColorScreen.Inner_StreamUtil.init(this.init_F).init(g2, this.init_NetHelper);
-         autismclient.gui.f.PacketUtil.load(g2, this.init_NetHelper, ctx.init_TableIndex().init_JsonUtil().get);
+         autismclient.gui.f.PacketUtil.load(g2, this.init_NetHelper, ctx.init_TableIndex().colors().borderSubtle);
          int cx = this.init_NetHelper.read() + Math.round(this.load_F * (this.init_NetHelper.update() - 1));
          int cy = this.init_NetHelper.write() + Math.round((1.0F - this.read_F) * (this.init_NetHelper.sync() - 1));
          autismclient.gui.f.PacketUtil.load(g2, autismclient.gui.f.NetHelper.init(cx - 4, cy - 4, 8, 8), 4, 0, -1342177280);
          autismclient.gui.f.PacketUtil.load(g2, autismclient.gui.f.NetHelper.init(cx - 3, cy - 3, 6, 6), 3, 0, -1);
          ThemeColorScreen.Inner_StreamUtil.init_CacheEntry_StreamU().init(g2, this.load_NetHelper);
-         autismclient.gui.f.PacketUtil.load(g2, this.load_NetHelper, ctx.init_TableIndex().init_JsonUtil().get);
+         autismclient.gui.f.PacketUtil.load(g2, this.load_NetHelper, ctx.init_TableIndex().colors().borderSubtle);
          int hy = this.load_NetHelper.write() + Math.round((1.0F - this.init_F) * (this.load_NetHelper.sync() - 1));
          autismclient.gui.f.PacketUtil.load(
             g2, autismclient.gui.f.NetHelper.init(this.load_NetHelper.read() - 1, hy - 1, this.load_NetHelper.update() + 2, 3), 1, 0, -1
          );
          int rx = this.load_NetHelper.init() + 6;
          int rw = Math.max(58, area.init() - rx);
-         int ctrlH = autismclient.gui.ui.UiDensityMetrics.init(13);
+         int ctrlH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
          autismclient.gui.f.NetHelper swatch = autismclient.gui.f.NetHelper.init(rx, area.write(), rw, ctrlH);
          autismclient.gui.f.PacketUtil.load(g2, swatch, 3, -12961222);
-         autismclient.gui.f.PacketUtil.load(g2, swatch, 3, this.load_I(), ctx.init_TableIndex().init_JsonUtil().get);
+         autismclient.gui.f.PacketUtil.load(g2, swatch, 3, this.load_I(), ctx.init_TableIndex().colors().borderSubtle);
          this.flush_NetHelper = autismclient.gui.f.NetHelper.init(rx, swatch.load() + 2, rw, ctrlH);
          this.init_V();
          this.init_k.read(this.flush_NetHelper.read());
@@ -1030,13 +1030,13 @@ public class ThemeColorScreen extends Screen {
             b2.write() + 1,
             false
          );
-         int originalAccent = context.init_TableIndex().init_JsonUtil().clear;
-         context.init_TableIndex().init_JsonUtil().clear = accent;
+         int originalAccent = context.init_TableIndex().colors().accent;
+         context.init_TableIndex().colors().accent = accent;
 
          try {
             autismclient.gui.ui.widgets.SliderRenderer.init(context, b2, value / 255.0, b2.init_Z(context.read(), context.write()));
          } finally {
-            context.init_TableIndex().init_JsonUtil().clear = originalAccent;
+            context.init_TableIndex().colors().accent = originalAccent;
          }
 
          k.init(

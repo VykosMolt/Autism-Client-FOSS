@@ -148,8 +148,8 @@ public final class AiPacePlayback {
 
       AiPhysics.MoveInput var11 = var10.applied();
       if (var2 != null && var1.onGround() && !var11.jump() && !var11.sneak()) {
-         RotationMath.Rotation var12 = RotationMath.init(var2, var1.getEyePosition());
-         AiPhysics.MoveInput var13 = putAt_TokenCore_CacheHel_TokenCore_CacheHel_F(var11, var12.init());
+         RotationMath.Rotation var12 = RotationMath.lookAt(var2, var1.getEyePosition());
+         AiPhysics.MoveInput var13 = putAt_TokenCore_CacheHel_TokenCore_CacheHel_F(var11, var12.yaw());
          AiPhysics.MotionState var14 = var7 != null ? AiPhysics.fill(var9, var13, var7) : null;
          boolean var15 = var14 == null
             || var14.onGround()
@@ -159,7 +159,7 @@ public final class AiPacePlayback {
                && (var5 == null || var5.test(BlockPos.containing(var14.x(), var14.y() + 1.0E-4, var14.z())))
                && this.putAt_Z_TokenCore_TaskStat(var7, var14, this.store - 1, var5);
          if (var15) {
-            putAt_V_LocalPlayer(var1, var13, var12.load());
+            putAt_V_LocalPlayer(var1, var13, var12.pitch());
             if (var3 != null) {
                var3.run();
             }
@@ -169,7 +169,7 @@ public final class AiPacePlayback {
       }
 
       float var16 = var4 != null && this.putAt_TextPool_IoHelper.putAt_Z() && this.putAt_TextPool_IoHelper.flowTemp() - this.store <= 4
-         ? RotationMath.init(var4, var1.getEyePosition()).load()
+         ? RotationMath.lookAt(var4, var1.getEyePosition()).pitch()
          : this.putAt_F_LocalPlayer(var1);
       putAt_V_LocalPlayer(var1, var11, var16);
       return AiPacePlayback.Inner_JsonCache.putAt_TableUtil_JsonCach;
@@ -2032,7 +2032,7 @@ public final class AiPacePlayback {
       AiFallGuard.load();
       float var4 = var0.getYRot();
       float var5 = var0.getXRot();
-      RotationMath.init_V_LocalPlayer(var0, new RotationMath.Rotation(var1.yaw(), var2), false);
+      RotationMath.applyToPlayer(var0, new RotationMath.Rotation(var1.yaw(), var2), false);
       AiCameraTurn.putAt(var0, var4, var5);
       var3.options.keyUp.setDown(var1.forward() > 0.0);
       var3.options.keyDown.setDown(var1.forward() < 0.0);

@@ -23,8 +23,8 @@ public final class MouseMovementRouter {
 
    public static void init_V_ba_StreamUtil_4(MouseMovementRouter.Inner_StreamUtil source, RotationMath.Rotation current, RotationMath.Rotation target) {
       if (current != null && target != null) {
-         float yawDelta = RotationMath.init(target.init(), current.init());
-         float pitchDelta = Mth.clamp(target.load(), -90.0F, 90.0F) - Mth.clamp(current.load(), -90.0F, 90.0F);
+         float yawDelta = RotationMath.angleDelta(target.yaw(), current.yaw());
+         float pitchDelta = Mth.clamp(target.pitch(), -90.0F, 90.0F) - Mth.clamp(current.pitch(), -90.0F, 90.0F);
          init_V_ba_StreamUtil_2(source, yawDelta, pitchDelta);
       }
    }
@@ -37,7 +37,7 @@ public final class MouseMovementRouter {
       if (!read()) {
          init_V(source);
       } else {
-         double degreesPerRawInput = RotationMath.load();
+         double degreesPerRawInput = RotationMath.mouseGcd();
          if (!(degreesPerRawInput <= 1.0E-8) && Double.isFinite(degreesPerRawInput)) {
             double rawX = yawDelta / degreesPerRawInput;
             double rawY = pitchDelta / degreesPerRawInput;

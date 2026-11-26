@@ -669,14 +669,14 @@ public final class AiBlockDigger {
          if (var15 > 0) {
             Vec3 var5 = this.putAt_Minecraft.player.getEyePosition();
             Vec3 var6 = this.putAt_Vec3_BlockPos_BlockHitResult(var1, var2);
-            RotationMath.Rotation var7 = RotationMath.init(this.putAt_Minecraft.player);
-            RotationMath.Rotation var8 = RotationMath.init(var6, var5);
-            float var9 = Mth.wrapDegrees(var8.init() - var7.init());
-            float var10 = var8.load() - var7.load();
+            RotationMath.Rotation var7 = RotationMath.ofPlayer(this.putAt_Minecraft.player);
+            RotationMath.Rotation var8 = RotationMath.lookAt(var6, var5);
+            float var9 = Mth.wrapDegrees(var8.yaw() - var7.yaw());
+            float var10 = var8.pitch() - var7.pitch();
             if (!(Math.abs(var9) + Math.abs(var10) < 0.5F)) {
                float var11 = 1.0F / (var15 + 1);
-               RotationMath.Rotation var12 = new RotationMath.Rotation(var7.init() + var9 * var11, var7.load() + var10 * var11);
-               Vec3 var13 = Vec3.directionFromRotation(var12.load(), var12.init());
+               RotationMath.Rotation var12 = new RotationMath.Rotation(var7.yaw() + var9 * var11, var7.pitch() + var10 * var11);
+               Vec3 var13 = Vec3.directionFromRotation(var12.pitch(), var12.yaw());
                BlockHitResult var14 = this.putAt_Minecraft
                   .level
                   .clip(

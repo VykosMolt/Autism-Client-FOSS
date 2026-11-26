@@ -147,11 +147,11 @@ public final class ThemeApplyProgressOverlay extends Overlay {
       int px = (width - panelW) / 2;
       int py = (height - panelH) / 2;
       SyncManager context = UiHelper.init(graphics, mc.font, mouseX, mouseY);
-      int textColor = context.init_TableIndex().init_JsonUtil().prev;
+      int textColor = context.init_TableIndex().colors().textPrimary;
       BufferHelper.init(context, NetHelper.init(px, py, panelW, panelH));
-      this.init_PoolEntry.load(graphics, title, NetHelper.init(px, py + pad, panelW, lineH), textColor);
+      this.init_PoolEntry.drawCentered(graphics, title, NetHelper.init(px, py + pad, panelW, lineH), textColor);
       if (!label.isBlank()) {
-         this.init_PoolEntry.load(graphics, label, NetHelper.init(px, py + pad + lineH, panelW, lineH), context.init_TableIndex().init_JsonUtil().valid);
+         this.init_PoolEntry.drawCentered(graphics, label, NetHelper.init(px, py + pad + lineH, panelW, lineH), context.init_TableIndex().colors().textSecondary);
       }
 
       int barX = px + pad * 2;

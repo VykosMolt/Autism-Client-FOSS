@@ -44,8 +44,8 @@ public final class HandNoClipModule extends Module {
          && mc.level != null
          && !aD.read_Z()
          && !FreecamController.init_Z()
-         && !SilentMovementCoordinator.init_Z()
-         && SilentMovementCoordinator.init_ce_DataUtil() == null
+         && !SilentMovementCoordinator.isSafeWalkActive()
+         && SilentMovementCoordinator.activeRotation() == null
          && al.init_Module_Str("hand-no-clip") instanceof HandNoClipModule module
          && module.isEnabled()
          && module.bool(attack ? "break" : "place")) {

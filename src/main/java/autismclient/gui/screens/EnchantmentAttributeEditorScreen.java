@@ -92,8 +92,8 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
          int sh = this.load_I();
          int margin = 6;
          int pad = 4;
-         int headerH = autismclient.gui.ui.UiDensityMetrics.init(14);
-         int ctrlH = autismclient.gui.ui.UiDensityMetrics.init(13);
+         int headerH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
+         int ctrlH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
          int w = Math.min(540, Math.max(300, sw - margin * 2));
          int h = Math.min(318, Math.max(188, sh - margin * 2));
          int x = Math.max(margin, (sw - w) / 2);
@@ -109,12 +109,12 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
          );
          this.init_NetHelper = autismclient.gui.ui.widgets.DialogFrameRenderer.init(panel, headerH);
          int tipY = y + headerH + 2;
-         List<String> tipLines = ui.init_PoolEntry().init_List(this.init_ConfigStore_DataUt.load_Str, Math.max(1, w - pad * 2));
+         List<String> tipLines = ui.init_PoolEntry().wrapLines(this.init_ConfigStore_DataUt.load_Str, Math.max(1, w - pad * 2));
          int tipLineCount = Math.min(2, tipLines.size());
          int lineH = 9;
 
          for (int i = 0; i < tipLineCount; i++) {
-            ui.init_PoolEntry().init_V_GuiGraphicsExtract_2(graphics, tipLines.get(i), x + pad, tipY + i * lineH, ui.init_TableIndex().init_JsonUtil().valid);
+            ui.init_PoolEntry().draw(graphics, tipLines.get(i), x + pad, tipY + i * lineH, ui.init_TableIndex().colors().textSecondary);
          }
 
          int searchY = tipY + Math.max(1, tipLineCount) * lineH + 2;
@@ -140,9 +140,9 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
 
          this.init_V_SyncManager(ui, mx, my);
          this.load(ui, mx, my);
-         int rawW = autismclient.gui.ui.UiDensityMetrics.load(ui.init_PoolEntry().init("Raw"));
-         int saveW = autismclient.gui.ui.UiDensityMetrics.load(ui.init_PoolEntry().init("Save"));
-         int cancelW = autismclient.gui.ui.UiDensityMetrics.load(ui.init_PoolEntry().init("Cancel"));
+         int rawW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ui.init_PoolEntry().measureWidth("Raw"));
+         int saveW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ui.init_PoolEntry().measureWidth("Save"));
+         int cancelW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ui.init_PoolEntry().measureWidth("Cancel"));
          this.write_NetHelper = autismclient.gui.f.NetHelper.init(x + pad, footerY, rawW, ctrlH);
          this.read_NetHelper = autismclient.gui.f.NetHelper.init(x + w - pad - cancelW, footerY, cancelW, ctrlH);
          this.load_NetHelper = autismclient.gui.f.NetHelper.init(this.read_NetHelper.read() - 2 - saveW, footerY, saveW, ctrlH);
@@ -162,21 +162,21 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
 
    private void init_V_SyncManager(autismclient.gui.f.SyncManager ui, int mx, int my) {
       autismclient.gui.f.PacketUtil.load(
-         ui.init_GuiGraphicsExtract(), this.close, 5, ui.init_TableIndex().init_JsonUtil().sync, ui.init_TableIndex().init_JsonUtil().get
+         ui.init_GuiGraphicsExtract(), this.close, 5, ui.init_TableIndex().colors().popupSurface, ui.init_TableIndex().colors().borderSubtle
       );
       int pad = 4;
-      int titleH = autismclient.gui.ui.UiDensityMetrics.init(12);
+      int titleH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
       int headerH = 2 + titleH;
-      int rowH = autismclient.gui.ui.UiDensityMetrics.init(12);
+      int rowH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
       autismclient.gui.f.NetHelper title = autismclient.gui.f.NetHelper.init(this.close.read(), this.close.write() + 2, this.close.update(), titleH);
       ui.init_PoolEntry()
-         .load(
+         .drawFitted(
             ui.init_GuiGraphicsExtract(),
             "Available",
             title.read() + pad,
-            ui.init_PoolEntry().init_I(title),
+            ui.init_PoolEntry().centerTextY(title),
             title.update() - pad * 2,
-            ui.init_TableIndex().init_JsonUtil().valid
+            ui.init_TableIndex().colors().textSecondary
          );
       this.update_List.clear();
       int visible = Math.max(1, (this.close.sync() - headerH - 2) / rowH);
@@ -193,16 +193,16 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
             this.close.read() + 1, this.close.write() + headerH + row * rowH, this.close.update() - 2, rowH
          );
          autismclient.gui.f.PacketUtil.init(
-            ui.init_GuiGraphicsExtract(), bounds, bounds.init_Z(mx, my) ? ui.init_TableIndex().init_JsonUtil().push : ui.init_TableIndex().init_JsonUtil().open
+            ui.init_GuiGraphicsExtract(), bounds, bounds.init_Z(mx, my) ? ui.init_TableIndex().colors().cardSurfaceElevated : ui.init_TableIndex().colors().cardSurface
          );
          ui.init_PoolEntry()
-            .load(
+            .drawFitted(
                ui.init_GuiGraphicsExtract(),
                entry.load,
                bounds.read() + pad,
-               ui.init_PoolEntry().init_I(bounds),
+               ui.init_PoolEntry().centerTextY(bounds),
                bounds.update() - pad * 2,
-               ui.init_TableIndex().init_JsonUtil().prev
+               ui.init_TableIndex().colors().textPrimary
             );
          this.update_List.add(new EnchantmentAttributeEditorScreen.Inner_CachePool(bounds, index));
       }
@@ -210,26 +210,26 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
 
    private void load(autismclient.gui.f.SyncManager ui, int mx, int my) {
       autismclient.gui.f.PacketUtil.load(
-         ui.init_GuiGraphicsExtract(), this.open, 5, ui.init_TableIndex().init_JsonUtil().sync, ui.init_TableIndex().init_JsonUtil().get
+         ui.init_GuiGraphicsExtract(), this.open, 5, ui.init_TableIndex().colors().popupSurface, ui.init_TableIndex().colors().borderSubtle
       );
       int pad = 4;
       int gap = 2;
-      int ctrlH = autismclient.gui.ui.UiDensityMetrics.init(13);
+      int ctrlH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
       int step = ctrlH + gap;
       int x = this.open.read() + pad;
       int w = this.open.update() - pad * 2;
       int top = this.open.write() + pad;
       int controlsH;
       if (this.init_ConfigStore_DataUt == EnchantmentAttributeEditorScreen.Inner_DataUtil.ENCHANTMENTS) {
-         int labelW = ui.init_PoolEntry().init("Level");
+         int labelW = ui.init_PoolEntry().measureWidth("Level");
          ui.init_PoolEntry()
-            .load(
+            .drawFitted(
                ui.init_GuiGraphicsExtract(),
                "Level",
                x,
-               ui.init_PoolEntry().init_I(autismclient.gui.f.NetHelper.init(x, top, labelW, ctrlH)),
+               ui.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(x, top, labelW, ctrlH)),
                labelW + 1,
-               ui.init_TableIndex().init_JsonUtil().valid
+               ui.init_TableIndex().colors().textSecondary
             );
          int fieldX = x + labelW + 4;
          this.load_BitSetUtil.init_TableIndex_F(fieldX, top, Math.max(42, x + w - fieldX), ctrlH);
@@ -238,15 +238,15 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
          this.flush = init_NetHelper();
          controlsH = pad + step;
       } else {
-         int labelW = ui.init_PoolEntry().init("Amount");
+         int labelW = ui.init_PoolEntry().measureWidth("Amount");
          ui.init_PoolEntry()
-            .load(
+            .drawFitted(
                ui.init_GuiGraphicsExtract(),
                "Amount",
                x,
-               ui.init_PoolEntry().init_I(autismclient.gui.f.NetHelper.init(x, top, labelW, ctrlH)),
+               ui.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(x, top, labelW, ctrlH)),
                labelW + 1,
-               ui.init_TableIndex().init_JsonUtil().valid
+               ui.init_TableIndex().colors().textSecondary
             );
          int fieldX = x + labelW + 4;
          this.read_BitSetUtil.init_TableIndex_F(fieldX, top, Math.max(38, x + w - fieldX), ctrlH);
@@ -275,19 +275,19 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
          this.update_NetHelper.init_Z(mx, my),
          false
       );
-      int labelH = autismclient.gui.ui.UiDensityMetrics.init(12);
+      int labelH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
       int listY = this.update_NetHelper.load() + 4;
       ui.init_PoolEntry()
-         .load(
+         .drawFitted(
             ui.init_GuiGraphicsExtract(),
             "Current entries",
             x,
-            ui.init_PoolEntry().init_I(autismclient.gui.f.NetHelper.init(x, listY, w, labelH)),
+            ui.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(x, listY, w, labelH)),
             w,
-            ui.init_TableIndex().init_JsonUtil().valid
+            ui.init_TableIndex().colors().textSecondary
          );
       listY += labelH;
-      int rowH = autismclient.gui.ui.UiDensityMetrics.init(14);
+      int rowH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
       int listH = Math.max(rowH, this.open.load() - listY - 2);
       this.sync_List.clear();
       int visible = Math.max(1, listH / rowH);
@@ -307,18 +307,18 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
             ui.init_GuiGraphicsExtract(),
             bounds,
             selected
-               ? ui.init_TableIndex().init_JsonUtil().start
-               : (bounds.init_Z(mx, my) ? ui.init_TableIndex().init_JsonUtil().push : ui.init_TableIndex().init_JsonUtil().open)
+               ? ui.init_TableIndex().colors().accentSoft
+               : (bounds.init_Z(mx, my) ? ui.init_TableIndex().colors().cardSurfaceElevated : ui.init_TableIndex().colors().cardSurface)
          );
          autismclient.gui.f.NetHelper remove = autismclient.gui.f.NetHelper.init(bounds.init() - gap - delW, bounds.write() + 1, delW, delH);
          ui.init_PoolEntry()
-            .load(
+            .drawFitted(
                ui.init_GuiGraphicsExtract(),
                this.read_List.get(index),
                bounds.read() + pad,
-               ui.init_PoolEntry().init_I(bounds),
+               ui.init_PoolEntry().centerTextY(bounds),
                Math.max(1, remove.read() - gap - bounds.read() - pad),
-               ui.init_TableIndex().init_JsonUtil().prev
+               ui.init_TableIndex().colors().textPrimary
             );
          autismclient.gui.ui.widgets.ListRowRenderer.load(ui.init_GuiGraphicsExtract(), remove.read(), remove.write(), remove.update(), remove.sync(), remove.init_Z(mx, my));
          this.sync_List.add(new EnchantmentAttributeEditorScreen.Inner_CachePool(bounds, index, remove));

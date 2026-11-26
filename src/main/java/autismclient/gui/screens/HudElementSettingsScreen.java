@@ -59,11 +59,11 @@ public class HudElementSettingsScreen extends Screen {
    private int put;
 
    private static int init_I() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    private static int init_I_I(int argb) {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(argb, ThemePaletteManager.ColorRole.ACCENT);
+      return ThemePaletteManager.recolor(argb, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public HudElementSettingsScreen(Screen parent, String id) {
@@ -107,20 +107,20 @@ public class HudElementSettingsScreen extends Screen {
          int hoverX = menuOpen ? -2147483648 : mx;
          int hoverY = menuOpen ? -2147483648 : my;
          this.init_List.clear();
-         autismclient.gui.ui.UiClipStack.init_HashUtil()
-            .init(graphics, autismclient.gui.f.NetHelper.init(x + 2, bodyTop, Math.max(0, w - 9), Math.max(0, bodyBottom - bodyTop)));
+         autismclient.gui.ui.UiClipStack.getInstance()
+            .push(graphics, autismclient.gui.f.NetHelper.init(x + 2, bodyTop, Math.max(0, w - 9), Math.max(0, bodyBottom - bodyTop)));
 
          try {
             this.init(graphics, rows, this.sync(panel), bodyTop - this.tick, this.flush(panel), hoverX, hoverY, bodyTop, bodyBottom);
             autismclient.gui.ui.widgets.DropdownWidget.load(graphics, this.font, this.init_List, mx, my);
          } finally {
-            autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics);
+            autismclient.gui.ui.UiClipStack.getInstance().pop(graphics);
          }
 
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
             contentH, viewH, x + w - 6, bodyTop, 4, viewH, this.tick
          );
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(graphics, metrics, metrics.init(hoverX, hoverY), this.init_Z);
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, metrics.containsTrack(hoverX, hoverY), this.init_Z);
          int footerY = this.update(panel);
          int ctrlH = this.update();
          this.init(graphics, "Back", x + 4, footerY, this.init_I_Str("Back"), ctrlH, hoverX, hoverY, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY);
@@ -173,7 +173,7 @@ public class HudElementSettingsScreen extends Screen {
 
    private void init(GuiGraphicsExtractor graphics, String label, int x, int y, int w) {
       int boxY = y + 2;
-      int boxH = autismclient.gui.ui.UiDensityMetrics.init(12);
+      int boxH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
       autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, boxY, w, boxH, init_I_I(1142492176));
       autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, boxY, w, init_I_I(1720655652));
       autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, boxY + boxH - 1, w, init_I_I(1720655652));
@@ -315,7 +315,7 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private int load(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.load(autismclient.gui.f.b.k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(autismclient.gui.f.b.k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
    }
 
    private static String init_Str_Str(String path) {
@@ -350,8 +350,8 @@ public class HudElementSettingsScreen extends Screen {
       this.get = this.init(this.get, 0, this.load_I());
       autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), 1140850688);
       this.init(graphics, x, y, w, h, this.write_I(), "Hidden Modules", mx, my);
-      autismclient.gui.ui.UiClipStack.init_HashUtil()
-         .init(graphics, autismclient.gui.f.NetHelper.init(x + 2, viewTop, Math.max(0, w - 4), Math.max(0, viewBottom - viewTop)));
+      autismclient.gui.ui.UiClipStack.getInstance()
+         .push(graphics, autismclient.gui.f.NetHelper.init(x + 2, viewTop, Math.max(0, w - 4), Math.max(0, viewBottom - viewTop)));
 
       try {
          List<String> hidden = this.read_List();
@@ -371,7 +371,7 @@ public class HudElementSettingsScreen extends Screen {
             cy += rowStep;
          }
       } finally {
-         autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics);
+         autismclient.gui.ui.UiClipStack.getInstance().pop(graphics);
       }
    }
 
@@ -422,13 +422,13 @@ public class HudElementSettingsScreen extends Screen {
          int bodyTop = this.load(panel);
          int bodyBottom = this.read(panel);
          int viewH = this.write(panel);
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
             this.init_I_List(this.init_List()), viewH, x + w - 6, bodyTop, 4, viewH, this.tick
          );
-         if (metrics.init_Z() && metrics.init(mx, my)) {
+         if (metrics.isScrollable() && metrics.containsTrack(mx, my)) {
             this.init_Z = true;
-            this.run = metrics.load(mx, my) ? my - metrics.update() : metrics.sync() / 2;
-            this.tick = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(metrics, my, this.run);
+            this.run = metrics.containsThumb(mx, my) ? my - metrics.thumbY() : metrics.thumbHeight() / 2;
+            this.tick = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, my, this.run);
             return true;
          }
 
@@ -538,10 +538,10 @@ public class HudElementSettingsScreen extends Screen {
          int[] panel = this.init_IArr();
          int bodyTop = this.load(panel);
          int viewH = this.write(panel);
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
             this.init_I_List(this.init_List()), viewH, panel[0] + panel[2] - 6, bodyTop, 4, viewH, this.tick
          );
-         this.tick = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(metrics, my, this.run);
+         this.tick = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, my, this.run);
          return true;
       }
    }
@@ -1148,11 +1148,11 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private int write_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int update() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int sync() {
@@ -1160,7 +1160,7 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private int flush() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int close() {
@@ -1172,7 +1172,7 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private int poll() {
-      return autismclient.gui.ui.UiDensityMetrics.init(12) + 4;
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12) + 4;
    }
 
    private int load(int[] panel) {
@@ -1201,7 +1201,7 @@ public class HudElementSettingsScreen extends Screen {
 
    private int push() {
       List<HudElementSettingsScreen.Inner_StreamUtil> rows = this.init_List();
-      int scaleKey = Math.round(autismclient.gui.sdf.MsdfTextRenderer.init_F() * 100.0F);
+      int scaleKey = Math.round(autismclient.gui.sdf.MsdfTextRenderer.fontScale() * 100.0F);
       if (rows != this.load_List || scaleKey != this.set) {
          int widest = 0;
 
@@ -1228,7 +1228,7 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private int init_I_I_I(int boxY, int boxH) {
-      return UiLayoutMath.init(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
+      return UiLayoutMath.centerTextY(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
    }
 
    private boolean init_Z_Str(String key) {

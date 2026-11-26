@@ -446,7 +446,7 @@ public final class aP {
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, Minecraft.getInstance().font, 0, 0);
       aP.Inner_DataUtil text = init_aP_DataUtil();
       int targetWidth = init_aP.init_aR instanceof AiNavigationSelection
-         ? Math.max(ui.init_PoolEntry().init(text.message()), ui.init_PoolEntry().init(text.detail())) + 24
+         ? Math.max(ui.init_PoolEntry().measureWidth(text.message()), ui.init_PoolEntry().measureWidth(text.detail())) + 24
          : 380;
       int width = Math.max(1, Math.min(targetWidth, ui.init_I() - 16));
       return autismclient.gui.f.NetHelper.init(8, 8, width, autismclient.gui.ui.widgets.StatusToastCardRenderer.init(ui, width, text.message(), text.detail()));
@@ -498,7 +498,7 @@ public final class aP {
          Minecraft mc = Minecraft.getInstance();
          if (mode.init_JsonObject != null) {
             if (!mode.write) {
-               autismclient.util.KeyMappingControl.init(mc.options.keyUp).autism$simulatePress(false);
+               autismclient.util.KeyMappingControl.of(mc.options.keyUp).autism$simulatePress(false);
                mode.init_JsonObject.addProperty("movementControl", mc.player.position().distanceTo(mode.init_Vec3) > 0.005);
                mode.write = true;
             }
@@ -550,7 +550,7 @@ public final class aP {
             float pitch = mc.player.getXRot();
             mc.player.turn(12.0, -3.0);
             mode.init_Vec3 = mc.player.position();
-            autismclient.util.KeyMappingControl.init(mc.options.keyUp).autism$simulatePress(true);
+            autismclient.util.KeyMappingControl.of(mc.options.keyUp).autism$simulatePress(true);
             mode.init_JsonObject = AiJson.init_JsonObject_ObjArr(
                "moved",
                moved,

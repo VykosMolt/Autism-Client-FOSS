@@ -41,7 +41,7 @@ public final class GuiMovementPassThrough {
          } else if (!init_Z()) {
             load_V();
             return false;
-         } else if (OverlayManager.init_bk().update_Z()) {
+         } else if (OverlayManager.getInstance().hasFocusedTextInput()) {
             load_V();
             return false;
          } else if (init_Minecraft != null && init_Minecraft.options != null) {
@@ -88,7 +88,7 @@ public final class GuiMovementPassThrough {
       if (init_Minecraft != null && init_Minecraft.options != null) {
          if (autismclient.modules.AutoTotemModule.init_Z_6()) {
             load_V();
-         } else if (OverlayManager.init_bk().update_Z()
+         } else if (OverlayManager.getInstance().hasFocusedTextInput()
             || init_Minecraft.gui.screen() instanceof ChatScreen
             || init_Minecraft.gui.screen() instanceof AbstractSignEditScreen
             || init_Minecraft.gui.screen() instanceof BookEditScreen
@@ -127,7 +127,7 @@ public final class GuiMovementPassThrough {
 
    private static void init(KeyMapping binding) {
       if (binding != null && !autismclient.modules.FreecamController.init_Z_KeyMapping(binding)) {
-         boolean physical = KeyMappingControl.init(binding).autism$isActuallyDown();
+         boolean physical = KeyMappingControl.of(binding).autism$isActuallyDown();
          boolean pressed = physical || binding == init_Minecraft.options.keyShift && autismclient.modules.al.tick_Z();
          binding.setDown(pressed);
          if (physical) {
@@ -183,7 +183,7 @@ public final class GuiMovementPassThrough {
          return false;
       }
 
-      if (OverlayManager.init_bk().update_Z()) {
+      if (OverlayManager.getInstance().hasFocusedTextInput()) {
          load_V();
          return false;
       }

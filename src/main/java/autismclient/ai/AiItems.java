@@ -521,7 +521,7 @@ public final class AiItems {
          return -1;
       } else {
          int destination = load();
-         if (!autismclient.util.InventorySlotHelper.init(mc, inventory, destination)) {
+         if (!autismclient.util.InventorySlotHelper.swapToHotbar(mc, inventory, destination)) {
             return -1;
          } else {
             return target.matches(mc.player.getInventory().getItem(destination)) ? destination : -1;
@@ -533,7 +533,7 @@ public final class AiItems {
       Minecraft mc = Minecraft.getInstance();
       int slot = load(target);
       if (slot >= 0 && mc.player != null) {
-         autismclient.util.InventorySlotHelper.init_V(mc, slot);
+         autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, slot);
          return slot;
       } else {
          return -1;
@@ -551,7 +551,7 @@ public final class AiItems {
       }
 
       int slot = init(target, 36);
-      return slot < 0 ? false : autismclient.util.InventorySlotHelper.init_Z(mc, slot);
+      return slot < 0 ? false : autismclient.util.InventorySlotHelper.swapToOffhand(mc, slot);
    }
 
    static int load() {
@@ -690,14 +690,14 @@ public final class AiItems {
       if (mc.player != null && slot >= 0 && slot < 36) {
          if (slot >= 9) {
             int destination = load();
-            if (!autismclient.util.InventorySlotHelper.init(mc, slot, destination)) {
+            if (!autismclient.util.InventorySlotHelper.swapToHotbar(mc, slot, destination)) {
                return -1;
             }
 
             slot = destination;
          }
 
-         autismclient.util.InventorySlotHelper.init_V(mc, slot);
+         autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, slot);
          return slot;
       } else {
          return -1;

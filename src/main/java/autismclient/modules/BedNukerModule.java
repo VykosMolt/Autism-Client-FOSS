@@ -158,7 +158,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             try {
                m.read_V_10();
                m.read_I = -1;
-               autismclient.util.InventorySlotHelper.init_V(MC, slot);
+               autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
                m.init_V_20();
                return true;
             } finally {
@@ -243,7 +243,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
 
    @Override
    public boolean load_Z_23() {
-      return !SilentMovementCoordinator.init_Z() && (autismclient.util.SilentRotationManager.init_Z() || this.isEnabled() && this.init_I == this.init_I_14());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.init_Z() || this.isEnabled() && this.init_I == this.init_I_14());
    }
 
    private boolean poll() {
@@ -264,7 +264,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          && !f.load()
          && MC.gui.screen() == null
          && MC.gui.overlay() == null
-         && !SilentMovementCoordinator.init_Z()
+         && !SilentMovementCoordinator.isSafeWalkActive()
          && !ScaffoldModule.update_Z_5()
          && !ClutchModule.init_Z_49()
          && !DangerModule.sync_Z_12()
@@ -420,8 +420,8 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                ? BedMiningEstimator.init(this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_BlockPos(), this.init_DataPipe_BufferHel.init_Vec3(), 0.0F, nextEye)
                : tracking;
             Vec3 point = follow != null && follow.init_Vec3() != null ? follow.init_Vec3() : this.init_DataPipe_BufferHel.init_Vec3();
-            RotationMath.Rotation goal = RotationMath.init(point, nextEye);
-            double turn = RotationMath.init_F(at == null ? RotationMath.init(MC.player) : at, goal);
+            RotationMath.Rotation goal = RotationMath.lookAt(point, nextEye);
+            double turn = RotationMath.angularDistance(at == null ? RotationMath.ofPlayer(MC.player) : at, goal);
             double finish = this.init_D_6()
                + Math.ceil(Math.max(0.0, turn - 2.0) / 20.0)
                + Math.max(this.init_ValueSink.load(System.nanoTime()), Math.max(0, mining.autism$getDestroyDelay()));
@@ -451,7 +451,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                               this.write_I = MC.player.getInventory().getSelectedSlot();
                            }
 
-                           autismclient.util.InventorySlotHelper.init_V(MC, slot);
+                           autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
                            this.load_I = this.init_I_14();
                            this.update = slot;
                            this.init_ItemStack = MC.player.getMainHandItem().copy();
@@ -481,7 +481,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                   boolean continuing = current != null && this.init_Z && current.equals(this.load_BlockPos);
                   if (continuing && slot == MC.player.getInventory().getSelectedSlot()) {
                      BlockHitResult visible = this.init_BlockHitResult_ce_DataUtil_2(
-                        RotationMath.init(this.init_DataPipe_BufferHel.init_Vec3(), MC.player.getEyePosition())
+                        RotationMath.lookAt(this.init_DataPipe_BufferHel.init_Vec3(), MC.player.getEyePosition())
                      );
                      if (this.init_Z_BlockHitResult_2(visible)) {
                         this.init_BlockHitResult = visible;
@@ -518,7 +518,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             MC.options.keyJump.isDown(),
             MC.player.isSprinting(),
             MC.options.keyShift.isDown(),
-            SilentMovementCoordinator.init_F(MC.player)
+            SilentMovementCoordinator.getMovementYaw(MC.player)
          );
          return BedTargetAimSolver.init(
             state, input, autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player), MC.player.getEyeHeight()
@@ -533,7 +533,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       return MC.level
          .clip(
             new ClipContext(
-               eye, eye.add(Vec3.directionFromRotation(aim.load(), aim.init()).scale(MC.player.blockInteractionRange())), Block.OUTLINE, Fluid.NONE, MC.player
+               eye, eye.add(Vec3.directionFromRotation(aim.pitch(), aim.yaw()).scale(MC.player.blockInteractionRange())), Block.OUTLINE, Fluid.NONE, MC.player
             )
          );
    }

@@ -47,7 +47,7 @@ public class ServerCommand extends Command {
       if (overlay == null) {
          AutismClientMessaging.sendPrefixed("§cServer overlay unavailable.");
       } else {
-         OverlayManager.init_bk().init_V(overlay);
+         OverlayManager.getInstance().register(overlay);
          if (pluginsTab) {
             overlay.clear_V_8();
          } else {

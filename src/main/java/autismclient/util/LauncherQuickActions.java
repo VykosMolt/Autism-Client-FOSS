@@ -87,14 +87,14 @@ public final class LauncherQuickActions {
             message = last.trim();
          }
 
-         if (autismclient.commands.CommandManager.init_Z(message)) {
-            if (autismclient.commands.CommandManager.load_Z(message)) {
+         if (autismclient.commands.CommandManager.hasCommandPrefix(message)) {
+            if (autismclient.commands.CommandManager.shouldSuppressInHiddenMode(message)) {
                return "";
             }
 
-            String body = autismclient.commands.CommandManager.init_Str(message);
+            String body = autismclient.commands.CommandManager.stripPrefix(message);
             if (!body.isBlank()) {
-               autismclient.commands.CommandManager.read(body);
+               autismclient.commands.CommandManager.execute(body);
             }
          } else {
             if (init_Minecraft.getConnection() == null) {
@@ -156,7 +156,7 @@ public final class LauncherQuickActions {
          if (init_Minecraft.gui.screen() instanceof AbstractContainerScreen<?> handledScreen) {
             Slot focused = ((AutismHandledScreenAccessor)handledScreen).getFocusedSlot();
             if (focused != null) {
-               slot = Integer.toString(InventorySlotHelper.init_I(init_Minecraft, focused.index));
+               slot = Integer.toString(InventorySlotHelper.toVisibleSlot(init_Minecraft, focused.index));
             }
          }
       }
@@ -165,14 +165,14 @@ public final class LauncherQuickActions {
    }
 
    public static int init_I() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int[] init_IArr() {
       return new int[]{
-         ThemePaletteManager.init_I_I_ct_DataUtil(-46518, ThemePaletteManager.ColorRole.ACCENT),
-         ThemePaletteManager.init_I_I_ct_DataUtil(-791321, ThemePaletteManager.ColorRole.TEXT),
-         ThemePaletteManager.init_I_I_ct_DataUtil(-7350273, ThemePaletteManager.ColorRole.ACCENT)
+         ThemePaletteManager.recolor(-46518, ThemePaletteManager.ColorRole.ACCENT),
+         ThemePaletteManager.recolor(-791321, ThemePaletteManager.ColorRole.TEXT),
+         ThemePaletteManager.recolor(-7350273, ThemePaletteManager.ColorRole.ACCENT)
       };
    }
 }

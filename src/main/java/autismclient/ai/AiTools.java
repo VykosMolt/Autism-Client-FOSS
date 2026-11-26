@@ -3145,10 +3145,10 @@ final class AiTools {
                }
 
                if (id.startsWith("command:")) {
-                  Command command = autismclient.commands.CommandManager.init_Command(id.substring(8));
+                  Command command = autismclient.commands.CommandManager.getCommand(id.substring(8));
                   if (command != null) {
-                     current.addProperty("prefix", autismclient.commands.CommandManager.init_Str());
-                     current.add("forms", AiJson.init.toJsonTree(autismclient.commands.CommandManager.init_List(command)));
+                     current.addProperty("prefix", autismclient.commands.CommandManager.getPrefix());
+                     current.add("forms", AiJson.init.toJsonTree(autismclient.commands.CommandManager.getUsageForms(command)));
                   }
                }
 

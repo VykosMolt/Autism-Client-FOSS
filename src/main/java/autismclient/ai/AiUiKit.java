@@ -40,7 +40,7 @@ final class AiUiKit {
       this.write = pointerBlocked ? -10000 : mouseX;
       this.update = pointerBlocked ? -10000 : mouseY;
       this.init_SyncManager = autismclient.gui.f.UiHelper.init(graphics, this.init_Font, this.write, this.update);
-      this.init_JsonUtil = this.init_SyncManager.init_TableIndex().init_JsonUtil();
+      this.init_JsonUtil = this.init_SyncManager.init_TableIndex().colors();
       this.init_SyncManager_2 = new autismclient.gui.ui.layout.LayoutContext(
          graphics, this.init_Font, autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(2.0F), this.init_CharEncoder, this.write, this.update, delta
       );
@@ -55,27 +55,27 @@ final class AiUiKit {
    }
 
    static int init_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    static int load_I() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    static int read() {
-      return autismclient.gui.ui.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
    static int write() {
-      return autismclient.gui.ui.UiDensityMetrics.init(10);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(10);
    }
 
    int init_I_Str(String text) {
-      return this.init_SyncManager.init_PoolEntry().init(text);
+      return this.init_SyncManager.init_PoolEntry().measureWidth(text);
    }
 
    int load(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.load(this.init_I_Str(label));
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(this.init_I_Str(label));
    }
 
    static autismclient.gui.f.NetHelper init_NetHelper_NetHelper_NetHelper(autismclient.gui.f.NetHelper a, autismclient.gui.f.NetHelper b) {
@@ -89,12 +89,12 @@ final class AiUiKit {
    void init_V_NetHelper(autismclient.gui.f.NetHelper bounds) {
       autismclient.gui.f.NetHelper clip = this.init_ArrayDeque.isEmpty() ? bounds : init_NetHelper_NetHelper_NetHelper(this.init_ArrayDeque.peek(), bounds);
       this.init_ArrayDeque.push(clip);
-      UiClipStack.init_HashUtil().init(this.init_GuiGraphicsExtract, clip);
+      UiClipStack.getInstance().push(this.init_GuiGraphicsExtract, clip);
    }
 
    void init_V() {
       this.init_ArrayDeque.pop();
-      UiClipStack.init_HashUtil().init(this.init_GuiGraphicsExtract);
+      UiClipStack.getInstance().pop(this.init_GuiGraphicsExtract);
    }
 
    private autismclient.gui.f.NetHelper init_NetHelper_NetHelper(autismclient.gui.f.NetHelper bounds) {
@@ -132,7 +132,7 @@ final class AiUiKit {
 
    void init_V_cE_StreamUtil(AiUiKit.Inner_StreamUtil scroll) {
       this.load_List.add(new AiUiKit.Inner_CachePool(scroll.init_NetHelper(), scroll));
-      if (scroll.init_PoolEntry_DataUtil != null && scroll.init_PoolEntry_DataUtil.init_Z()) {
+      if (scroll.init_PoolEntry_DataUtil != null && scroll.init_PoolEntry_DataUtil.isScrollable()) {
          this.read_List.add(scroll);
       }
    }
@@ -143,8 +143,8 @@ final class AiUiKit {
 
    void load(AiUiKit.Inner_StreamUtil scroll) {
       if (scroll.init_PoolEntry_DataUtil != null) {
-         ScrollbarMetricsHelper.init(
-            this.init_GuiGraphicsExtract, scroll.init_PoolEntry_DataUtil, scroll.init_PoolEntry_DataUtil.init(this.write, this.update), scroll.init_Z()
+         ScrollbarMetricsHelper.render(
+            this.init_GuiGraphicsExtract, scroll.init_PoolEntry_DataUtil, scroll.init_PoolEntry_DataUtil.containsTrack(this.write, this.update), scroll.init_Z()
          );
       }
    }
@@ -184,7 +184,7 @@ final class AiUiKit {
       autismclient.gui.ui.widgets.IconButtonRenderer.init(this.init_GuiGraphicsExtract, this.init_Font, bounds, icon, this.init_Z_NetHelper(bounds), true, danger);
       if (selected) {
          int radius = Math.min(3, Math.max(2, Math.min(bounds.update(), bounds.sync()) / 3));
-         PacketUtil.load(this.init_GuiGraphicsExtract, bounds, radius, PacketUtil.init(this.init_JsonUtil.clear, 0.14F), this.init_JsonUtil.clear);
+         PacketUtil.load(this.init_GuiGraphicsExtract, bounds, radius, PacketUtil.init(this.init_JsonUtil.accent, 0.14F), this.init_JsonUtil.accent);
       }
 
       this.init_V_NetHelper(bounds, action, null, tip);
@@ -196,15 +196,15 @@ final class AiUiKit {
    }
 
    void init_V_Str(String text, int x, int y, int color) {
-      this.init_SyncManager.init_PoolEntry().init_V_GuiGraphicsExtract_2(this.init_GuiGraphicsExtract, text, x, y, color);
+      this.init_SyncManager.init_PoolEntry().draw(this.init_GuiGraphicsExtract, text, x, y, color);
    }
 
    void init_V_Str_2(String text, int x, int y, int maxWidth, int color) {
-      this.init_SyncManager.init_PoolEntry().read(this.init_GuiGraphicsExtract, text, x, y, maxWidth, color);
+      this.init_SyncManager.init_PoolEntry().drawEllipsized(this.init_GuiGraphicsExtract, text, x, y, maxWidth, color);
    }
 
    void init_V_Str_3(String text, autismclient.gui.f.NetHelper row, int x, int maxWidth, int color) {
-      this.init_SyncManager.init_PoolEntry().read(this.init_GuiGraphicsExtract, text, x, this.init_SyncManager.init_PoolEntry().init_I(row), maxWidth, color);
+      this.init_SyncManager.init_PoolEntry().drawEllipsized(this.init_GuiGraphicsExtract, text, x, this.init_SyncManager.init_PoolEntry().centerTextY(row), maxWidth, color);
    }
 
    String init_Str_Str_I(String text, int maxWidth) {
@@ -238,8 +238,8 @@ final class AiUiKit {
 
       for (int i = this.read_List.size() - 1; i >= 0 && button == 0; i--) {
          AiUiKit.Inner_StreamUtil s = this.read_List.get(i);
-         if (s.init_PoolEntry_DataUtil.init(x, y)) {
-            s.write = s.init_PoolEntry_DataUtil.load(x, y) ? iy - s.init_PoolEntry_DataUtil.update() : s.init_PoolEntry_DataUtil.sync() / 2;
+         if (s.init_PoolEntry_DataUtil.containsTrack(x, y)) {
+            s.write = s.init_PoolEntry_DataUtil.containsThumb(x, y) ? iy - s.init_PoolEntry_DataUtil.thumbY() : s.init_PoolEntry_DataUtil.thumbHeight() / 2;
             this.init_cE_StreamUtil = s;
             this.init_Z_D(y);
             return true;
@@ -290,7 +290,7 @@ final class AiUiKit {
          return false;
       }
 
-      this.init_cE_StreamUtil.init_I = ScrollbarMetricsHelper.init(this.init_cE_StreamUtil.init_PoolEntry_DataUtil, y, this.init_cE_StreamUtil.write);
+      this.init_cE_StreamUtil.init_I = ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_cE_StreamUtil.init_PoolEntry_DataUtil, y, this.init_cE_StreamUtil.write);
       this.init_cE_StreamUtil.init_Z = this.init_cE_StreamUtil.init_I >= this.init_cE_StreamUtil.init_I();
       return true;
    }
@@ -344,17 +344,17 @@ final class AiUiKit {
    }
 
    static float init_F_I(int style) {
-      float body = autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.sdf.MsdfFontFace.BODY);
+      float body = autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(autismclient.gui.sdf.MsdfFontFace.BODY);
       return (style & 16) != 0 ? body * 1.15F : body;
    }
 
    void init_V_Str(String text, float x, int y, int style, int color) {
       if (!text.isEmpty()) {
          autismclient.gui.sdf.MsdfFontFace face = init_ConfigStore_I(style);
-         if (autismclient.gui.sdf.MsdfTextRenderer.init(face, text)) {
+         if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, text)) {
             float size = init_F_I(style);
-            autismclient.gui.sdf.MsdfTextRenderer.init(
-               this.init_GuiGraphicsExtract, face, text, x, autismclient.gui.sdf.MsdfTextRenderer.init(face, y, size), size, color, false
+            autismclient.gui.sdf.MsdfTextRenderer.draw(
+               this.init_GuiGraphicsExtract, face, text, x, autismclient.gui.sdf.MsdfTextRenderer.alignToVanillaTop(face, y, size), size, color, false
             );
          } else {
             this.init_GuiGraphicsExtract.text(this.init_Font, text, Math.round(x), y, color, false);
@@ -373,7 +373,7 @@ final class AiUiKit {
          public int init(String text, int start, int end, int style) {
             String part = text.substring(start, end);
             autismclient.gui.sdf.MsdfFontFace face = AiUiKit.init_ConfigStore_I(style);
-            if (autismclient.gui.sdf.MsdfTextRenderer.init(face, part)) {
+            if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, part)) {
                autismclient.gui.sdf.MsdfFontAtlas msdf = face.init_StreamUtil();
                if (msdf != null) {
                   return (int)Math.ceil(msdf.init(part, AiUiKit.init_F_I(style)) - 1.0E-4);
@@ -442,7 +442,7 @@ final class AiUiKit {
          this.load = content;
          this.read = viewport.sync();
          this.init_I = this.init_Z ? this.init_I() : Math.max(0, Math.min(this.init_I, this.init_I()));
-         this.init_PoolEntry_DataUtil = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+         this.init_PoolEntry_DataUtil = ScrollbarMetricsHelper.compute(
             content, this.read, viewport.init() - 6, viewport.write(), 6, viewport.sync(), this.init_I
          );
       }

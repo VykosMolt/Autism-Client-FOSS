@@ -95,9 +95,9 @@ public final class BedEspOverlayRenderer {
             int rowHeight = Math.max(
                12,
                (int)Math.ceil(
-                     autismclient.gui.sdf.MsdfTextRenderer.load(
+                     autismclient.gui.sdf.MsdfTextRenderer.glyphBoxHeight(
                         autismclient.gui.sdf.MsdfFontFace.BODY,
-                        autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.sdf.MsdfFontFace.BODY)
+                        autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(autismclient.gui.sdf.MsdfFontFace.BODY)
                      )
                   )
                   + 2
@@ -113,15 +113,15 @@ public final class BedEspOverlayRenderer {
                      String name = bed.init_DyeColor().getName().replace('_', ' ');
                      name = Character.toUpperCase(name.charAt(0)) + name.substring(1) + " Bed";
                      String time = bed.init_Str().isEmpty() ? String.format(Locale.ROOT, "%.1fs", bed.init_D() / 20.0) : bed.init_Str();
-                     int width = ui.init_PoolEntry().init(name) + 8 + ui.init_PoolEntry().init(time);
+                     int width = ui.init_PoolEntry().measureWidth(name) + 8 + ui.init_PoolEntry().measureWidth(time);
                      float[] widths = new float[1 + bed.init_List().size()];
                      widths[0] = width + 4;
 
                      for (int i = 0; i < bed.init_List().size(); i++) {
                         BedEspModule.Inner_StreamUtil material = bed.init_List().get(i);
-                        widths[i + 1] = ui.init_PoolEntry().init(material.init_Str())
+                        widths[i + 1] = ui.init_PoolEntry().measureWidth(material.init_Str())
                            + 3
-                           + ui.init_PoolEntry().init("x" + material.init_I())
+                           + ui.init_PoolEntry().measureWidth("x" + material.init_I())
                            + (material.init_ItemStack().isEmpty() ? 0 : 4 + iconSize)
                            + 4;
                      }
@@ -135,13 +135,13 @@ public final class BedEspOverlayRenderer {
                         graphics.pose().scale(scale, scale);
                         graphics.pose().translate(0.0F, -height - 2);
                         int text = autismclient.gui.f.PacketUtil.init(-1, alpha);
-                        int count = autismclient.gui.f.PacketUtil.init(init(ui.init_TableIndex().init_JsonUtil().clear), alpha);
+                        int count = autismclient.gui.f.PacketUtil.init(init(ui.init_TableIndex().colors().accent), alpha);
                         int background = autismclient.gui.f.PacketUtil.init(-1879048192, alpha);
                         autismclient.gui.f.PacketUtil.init(graphics, 0.0F, 0.0F, widths, rowHeight, rowHeight / 2.0F, background);
                         graphics.pose().pushMatrix();
                         try {
                            graphics.pose().translate(-width * 0.5F, 0.0F);
-                           int y = ui.init_PoolEntry().init_I(autismclient.gui.f.NetHelper.init(0, 0, width, rowHeight));
+                           int y = ui.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(0, 0, width, rowHeight));
                            autismclient.gui.f.b.k.init(
                               graphics,
                               init_Minecraft.font,
@@ -158,7 +158,7 @@ public final class BedEspOverlayRenderer {
                               time,
                               autismclient.gui.f.a.DataUtil.init,
                               autismclient.gui.f.PacketUtil.init(-2039584, alpha),
-                              width - ui.init_PoolEntry().init(time),
+                              width - ui.init_PoolEntry().measureWidth(time),
                               y,
                               true
                            );
@@ -169,22 +169,22 @@ public final class BedEspOverlayRenderer {
 
                         for (BedEspModule.Inner_StreamUtil material : bed.init_List()) {
                            String amount = "x" + material.init_I();
-                           int rowWidth = ui.init_PoolEntry().init(material.init_Str())
+                           int rowWidth = ui.init_PoolEntry().measureWidth(material.init_Str())
                               + 3
-                              + ui.init_PoolEntry().init(amount)
+                              + ui.init_PoolEntry().measureWidth(amount)
                               + (material.init_ItemStack().isEmpty() ? 0 : 4 + iconSize);
                            graphics.pose().pushMatrix();
                            try {
                               graphics.pose().translate(-rowWidth * 0.5F, 0.0F);
-                              int y = ui.init_PoolEntry().init_I(autismclient.gui.f.NetHelper.init(0, row, rowWidth, rowHeight));
+                              int y = ui.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(0, row, rowWidth, rowHeight));
                               autismclient.gui.f.b.k.init(graphics, init_Minecraft.font, material.init_Str(), autismclient.gui.f.a.DataUtil.init, text, 0, y, true);
-                              int x = ui.init_PoolEntry().init(material.init_Str()) + 3;
+                              int x = ui.init_PoolEntry().measureWidth(material.init_Str()) + 3;
                               autismclient.gui.f.b.k.init(graphics, init_Minecraft.font, amount, autismclient.gui.f.a.DataUtil.init, count, x, y, true);
                               if (!material.init_ItemStack().isEmpty()) {
                                  init(
                                     graphics,
                                     material.init_ItemStack(),
-                                    x + ui.init_PoolEntry().init(amount) + 4,
+                                    x + ui.init_PoolEntry().measureWidth(amount) + 4,
                                     row + (rowHeight - iconSize) / 2,
                                     iconSize,
                                     alpha

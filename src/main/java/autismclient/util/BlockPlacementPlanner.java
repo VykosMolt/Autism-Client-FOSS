@@ -117,7 +117,7 @@ public final class BlockPlacementPlanner {
    }
 
    public static double init_D() {
-      return 89.5 - RotationStreamPlanner.init_D_D(RotationMath.init()) - 0.01;
+      return 89.5 - RotationStreamPlanner.init_D_D(RotationMath.gcdStep()) - 0.01;
    }
 
    public static void init(BlockPlacementPlanner.Query request, List<BlockPlacementPlanner.SupportCandidate> out) {
@@ -252,7 +252,7 @@ public final class BlockPlacementPlanner {
 
    private static float init(BlockPlacementPlanner.SupportCandidate option, Vec3 eye, RotationMath.Rotation from) {
       Vec3 centre = init_Vec3(option.init_AABB(), option.init_Direction());
-      return RotationMath.init_F(from, RotationMath.init(centre, eye));
+      return RotationMath.angularDistance(from, RotationMath.lookAt(centre, eye));
    }
 
    private static int init(Direction[] order, Direction face) {
@@ -308,15 +308,15 @@ public final class BlockPlacementPlanner {
                tier = BlockPlacementPlanner.SamplePoint.NEAREST;
             }
 
-            RotationMath.Rotation goal = RotationMath.init(point, eye);
-            if (Math.abs(goal.load()) > request.load_D()) {
+            RotationMath.Rotation goal = RotationMath.lookAt(point, eye);
+            if (Math.abs(goal.pitch()) > request.load_D()) {
                Vec3 flat = init_Vec3_AABB(rect, face, eye, BlockPlacementPlanner.SamplePoint.FLATTEST, request.read_D);
                if (flat == null || eye.distanceToSqr(flat) > reachSq) {
                   return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.PAST_PITCH_CAP, request, face);
                }
 
-               goal = RotationMath.init(flat, eye);
-               if (Math.abs(goal.load()) > request.load_D()) {
+               goal = RotationMath.lookAt(flat, eye);
+               if (Math.abs(goal.pitch()) > request.load_D()) {
                   return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.PAST_PITCH_CAP, request, face);
                }
 
@@ -325,14 +325,14 @@ public final class BlockPlacementPlanner {
             }
 
             if (face.getAxis().isHorizontal() && request.load_Vec3() != null) {
-               double[] window = init(eye, request.load_Vec3(), rect, face, goal.init(), request.read_D);
+               double[] window = init(eye, request.load_Vec3(), rect, face, goal.yaw(), request.read_D);
                if (window != null) {
-                  float pitch = (float)Mth.clamp(goal.load(), window[0], window[1]);
+                  float pitch = (float)Mth.clamp(goal.pitch(), window[0], window[1]);
                   if (Math.abs(pitch) > request.load_D()) {
                      return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.PAST_PITCH_CAP, request, face);
                   }
 
-                  goal = new RotationMath.Rotation(goal.init(), pitch);
+                  goal = new RotationMath.Rotation(goal.yaw(), pitch);
                }
             }
 
@@ -341,8 +341,8 @@ public final class BlockPlacementPlanner {
             }
 
             RotationMath.Rotation from = init_ce_DataUtil(request);
-            RotationMath.Rotation emitted = request.write() ? RotationMath.init_ce_DataUtil(goal, from == null ? goal : from) : goal;
-            float turn = from == null ? 0.0F : RotationMath.init_F(from, goal);
+            RotationMath.Rotation emitted = request.write() ? RotationMath.applyGcd(goal, from == null ? goal : from) : goal;
+            float turn = from == null ? 0.0F : RotationMath.angularDistance(from, goal);
             return new BlockPlacementPlanner.AimSample(point, goal, emitted, eye.distanceTo(point), turn, tier);
          } else {
             return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.NOT_A_SUPPORT, request, face);
@@ -454,7 +454,7 @@ public final class BlockPlacementPlanner {
    }
 
    public static double init(double distance) {
-      double band = RotationStreamPlanner.init_D_D(RotationMath.init());
+      double band = RotationStreamPlanner.init_D_D(RotationMath.gcdStep());
       return Math.max(0.12, Math.abs(distance) * Math.tan(Math.toRadians(band)));
    }
 
@@ -596,7 +596,7 @@ public final class BlockPlacementPlanner {
                         cast,
                         cast,
                         eye.distanceTo(hit.getLocation()),
-                        init_ce_DataUtil(request) == null ? 0.0F : RotationMath.init_F(init_ce_DataUtil(request), cast),
+                        init_ce_DataUtil(request) == null ? 0.0F : RotationMath.angularDistance(init_ce_DataUtil(request), cast),
                         aim.init_U_UiHelper()
                      );
                      return new BlockPlacementPlanner.PlacementPlan(found, landed, hit, substituted, init(found, landed));
@@ -620,20 +620,20 @@ public final class BlockPlacementPlanner {
 
    private static RotationMath.Rotation init_ce_DataUtil_Vec3(Vec3 point, RotationMath.Rotation cast, Vec3 eye, double reachSq, BlockPlacementPlanner.Query request) {
       if (point != null && !(eye.distanceToSqr(point) > reachSq)) {
-         RotationMath.Rotation next = RotationMath.init(point, eye);
-         if (Math.abs(next.load()) > request.load_D()) {
+         RotationMath.Rotation next = RotationMath.lookAt(point, eye);
+         if (Math.abs(next.pitch()) > request.load_D()) {
             return null;
          }
 
          if (request.write()) {
             RotationMath.Rotation from = init_ce_DataUtil(request);
-            next = RotationMath.init_ce_DataUtil(next, from == null ? next : from);
-            if (Math.abs(next.load()) > request.load_D()) {
+            next = RotationMath.applyGcd(next, from == null ? next : from);
+            if (Math.abs(next.pitch()) > request.load_D()) {
                return null;
             }
          }
 
-         return Float.compare(next.init(), cast.init()) == 0 && Float.compare(next.load(), cast.load()) == 0 ? null : next;
+         return Float.compare(next.yaw(), cast.yaw()) == 0 && Float.compare(next.pitch(), cast.pitch()) == 0 ? null : next;
       } else {
          return null;
       }
@@ -729,7 +729,7 @@ public final class BlockPlacementPlanner {
       BlockPlacementPlanner.PlacementPlan candidate, RotationMath.Rotation wire, Vec3 eye, double reach, BlockPlacementPlanner.Query request
    ) {
       if (candidate != null && wire != null && eye != null && request != null) {
-         if (Math.abs(wire.load()) > 89.5F) {
+         if (Math.abs(wire.pitch()) > 89.5F) {
             return null;
          }
 
@@ -1216,8 +1216,8 @@ public final class BlockPlacementPlanner {
    }
 
    private static Vec3 init(RotationMath.Rotation rotation) {
-      float yaw = -rotation.init() * 0.017453292F;
-      float pitch = -rotation.load() * 0.017453292F;
+      float yaw = -rotation.yaw() * 0.017453292F;
+      float pitch = -rotation.pitch() * 0.017453292F;
       float cosPitch = Mth.cos(pitch);
       return new Vec3(Mth.sin(yaw) * cosPitch, Mth.sin(pitch), Mth.cos(yaw) * cosPitch);
    }

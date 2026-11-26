@@ -23,7 +23,7 @@ public final class ScrollOffsetController {
       if (metrics == null) {
          this.load(0, 0);
       } else {
-         this.init_V_I_I(ScrollbarMetricsHelper.init(metrics, mouseY, grabOffset), metrics.flush());
+         this.init_V_I_I(ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, mouseY, grabOffset), metrics.maxScroll());
       }
    }
 
@@ -31,9 +31,9 @@ public final class ScrollOffsetController {
       if (metrics == null) {
          this.load(0, 0);
       } else {
-         int rawScroll = ScrollbarMetricsHelper.init(metrics, mouseY, grabOffset);
+         int rawScroll = ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, mouseY, grabOffset);
          int steppedScroll = rawScroll / stepSize * stepSize;
-         this.init_V_I_I(steppedScroll, metrics.flush());
+         this.init_V_I_I(steppedScroll, metrics.maxScroll());
       }
    }
 

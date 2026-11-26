@@ -170,7 +170,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    private AutismPacketLoggerOverlay init_AutismPacketLogger() {
       AutismPacketLoggerOverlay overlay = this.init_Supplier == null ? this.init_AutismPacketLogger : this.init_Supplier.get();
       if (overlay != null) {
-         OverlayManager.init_bk().init_V(overlay);
+         OverlayManager.getInstance().register(overlay);
       }
 
       return overlay;
@@ -179,7 +179,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    private AutismServerInfoOverlay init_AutismServerInfoOv() {
       AutismServerInfoOverlay overlay = this.load_Supplier == null ? this.init_AutismServerInfoOv : this.load_Supplier.get();
       if (overlay != null) {
-         OverlayManager.init_bk().init_V(overlay);
+         OverlayManager.getInstance().register(overlay);
       }
 
       return overlay;
@@ -200,7 +200,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
                   this.init_AutismMacroListOve.init_V_Z(false);
                }
 
-               OverlayManager.init_bk().update_V(macroEditorOverlay);
+               OverlayManager.getInstance().bringToFront(macroEditorOverlay);
             } else if (this.init_AutismMacroListOve != null) {
                this.init_V_cX(this.init_AutismMacroListOve);
             }
@@ -358,16 +358,16 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
    private void init_V_cX(AutismOverlay overlay) {
       if (overlay != null) {
-         OverlayManager manager = OverlayManager.init_bk();
-         boolean wasRegistered = manager.init_List().contains(overlay);
-         manager.init_V(overlay);
-         manager.init_V_cX_Z(overlay, false);
+         OverlayManager manager = OverlayManager.getInstance();
+         boolean wasRegistered = manager.getOverlays().contains(overlay);
+         manager.register(overlay);
+         manager.setHidden(overlay, false);
          if (!wasRegistered && overlay.sync_Z()) {
-            manager.update_V(overlay);
+            manager.bringToFront(overlay);
          } else {
             overlay.init_V_Z(!overlay.sync_Z());
             if (overlay.sync_Z()) {
-               manager.update_V(overlay);
+               manager.bringToFront(overlay);
             }
          }
       }
@@ -445,13 +445,13 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.init_cH_cH_2(bounds);
-         this.stop = clamped.init_I;
-         this.next = clamped.load_I;
-         this.prev = clamped.read;
-         this.valid = clamped.write;
-         this.flush_Z = clamped.init_Z;
+         this.stop = clamped.x;
+         this.next = clamped.y;
+         this.prev = clamped.width;
+         this.valid = clamped.height;
+         this.flush_Z = clamped.visible;
          if (this.init_DataUtil != null) {
-            this.init_DataUtil.load_DataUtil(!clamped.load_Z);
+            this.init_DataUtil.load_DataUtil(!clamped.collapsed);
          }
       }
    }
@@ -461,9 +461,9 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       AutismSessionState.init_ck().init_V_Str_cH(this.init_Str(), this.init_cH());
       AutismConfig config = AutismConfig.getGlobal();
       AutismConfig.ModuleCategoryLayout layout = config.moduleCategoryLayouts.computeIfAbsent("MAIN_MENU", ignored -> new AutismConfig.ModuleCategoryLayout());
-      OverlayBounds trueGeometry = OverlayManager.init_bk().init(this.init_Str());
-      int saveX = trueGeometry != null ? trueGeometry.init_I : this.stop;
-      int saveY = trueGeometry != null ? trueGeometry.load_I : this.next;
+      OverlayBounds trueGeometry = OverlayManager.getInstance().getStashedBounds(this.init_Str());
+      int saveX = trueGeometry != null ? trueGeometry.x : this.stop;
+      int saveY = trueGeometry != null ? trueGeometry.y : this.next;
       if (layout.f_x_I != saveX || layout.f_y_I != saveY || layout.collapsed != this.flush_Z()) {
          layout.f_x_I = saveX;
          layout.f_y_I = saveY;
@@ -475,8 +475,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    @Override
    public void b__V() {
       OverlayBounds saved = AutismSessionState.init_ck().init_cH_Str(this.init_Str());
-      boolean savedVisible = saved == null || saved.init_Z;
-      boolean savedCollapsed = saved != null && saved.load_Z;
+      boolean savedVisible = saved == null || saved.visible;
+      boolean savedCollapsed = saved != null && saved.collapsed;
       AutismConfig config = AutismConfig.getGlobal();
       AutismConfig.ModuleCategoryLayout layout = config.moduleCategoryLayouts.get("MAIN_MENU");
       if (layout == null) {
@@ -532,10 +532,10 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          OverlayBounds clamped = this.init_cH_cH_2(
             new OverlayBounds(this.stop, this.next, this.prev, this.valid, this.flush_Z, this.init_DataUtil != null && !this.init_DataUtil.init_Z_3())
          );
-         this.stop = clamped.init_I;
-         this.next = clamped.load_I;
-         this.prev = clamped.read;
-         this.valid = clamped.write;
+         this.stop = clamped.x;
+         this.next = clamped.y;
+         this.prev = clamped.width;
+         this.valid = clamped.height;
          this.init_StateCache.init_StateCache(true);
          this.init_StateCache.init_TableIndex_F(this.stop, this.next, this.prev, this.valid);
          this.init_TextFormat.init(context, mouseX, mouseY, delta);
@@ -596,8 +596,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             this.init_DataUtil != null && !this.init_DataUtil.init_Z_3()
          )
       );
-      this.stop = clamped.init_I;
-      this.next = clamped.load_I;
+      this.stop = clamped.x;
+      this.next = clamped.y;
       this.open_Z = this.open_Z
          || Math.abs(uiMouseX - this.write_F) >= 3.0F
          || Math.abs(uiMouseY - this.update_F) >= 3.0F
@@ -724,13 +724,13 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       int viewportH = Math.round(viewport.load());
       int availableW = Math.max(1, viewportW - margin * 2);
       int availableH = Math.max(this.prev(), viewportH - margin * 2);
-      int width = Math.max(Math.min(this.init_I(), availableW), Math.min(bounds.read, availableW));
-      int minHeight = bounds.load_Z ? this.prev() : this.load_I();
-      int height = Math.max(Math.min(minHeight, availableH), Math.min(bounds.write, availableH));
-      int renderedHeight = bounds.load_Z ? this.prev() : height;
-      int x = Math.max(margin, Math.min(bounds.init_I, Math.max(margin, viewportW - margin - width)));
-      int y = Math.max(margin, Math.min(bounds.load_I, Math.max(margin, viewportH - margin - renderedHeight)));
-      return new OverlayBounds(x, y, width, height, bounds.init_Z, bounds.load_Z);
+      int width = Math.max(Math.min(this.init_I(), availableW), Math.min(bounds.width, availableW));
+      int minHeight = bounds.collapsed ? this.prev() : this.load_I();
+      int height = Math.max(Math.min(minHeight, availableH), Math.min(bounds.height, availableH));
+      int renderedHeight = bounds.collapsed ? this.prev() : height;
+      int x = Math.max(margin, Math.min(bounds.x, Math.max(margin, viewportW - margin - width)));
+      int y = Math.max(margin, Math.min(bounds.y, Math.max(margin, viewportH - margin - renderedHeight)));
+      return new OverlayBounds(x, y, width, height, bounds.visible, bounds.collapsed);
    }
 
    private int push_I_13() {
@@ -860,7 +860,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    private int set_I_9() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int put_I_3() {
@@ -892,7 +892,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    private int prev() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int valid() {
@@ -900,7 +900,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    private int size() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int data() {

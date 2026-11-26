@@ -680,7 +680,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
 
       boolean enabled = this.isEnabled();
-      return !SilentMovementCoordinator.init_Z() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.push());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.push());
    }
 
    private static boolean auditBeforeDeadline(boolean active, long deadline) {
@@ -753,7 +753,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !BlinkPacketManager.load_Z()
-         && !SilentMovementCoordinator.init_Z()
+         && !SilentMovementCoordinator.isSafeWalkActive()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20();
@@ -970,7 +970,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                return;
             }
 
-            RotationMath.Rotation outgoing = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
+            RotationMath.Rotation outgoing = SilentMovementCoordinator.getRenderRotation(MC.player);
             if (outgoing == null || !init_Z_ce_DataUtil_ce_DataUtil_5(outgoing, wire)) {
                if (destroy != null) {
                   this.load_Str = "outgoing";
@@ -1010,7 +1010,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    private static boolean init_Z_ce_DataUtil_ce_DataUtil_5(RotationMath.Rotation first, RotationMath.Rotation second) {
-      return Math.abs(RotationMath.init(first.init(), second.init())) <= 0.05F && Math.abs(first.load() - second.load()) <= 0.05F;
+      return Math.abs(RotationMath.angleDelta(first.yaw(), second.yaw())) <= 0.05F && Math.abs(first.pitch() - second.pitch()) <= 0.05F;
    }
 
    private boolean init_Z_LivingEntity_4(LivingEntity enemy) {
@@ -1036,7 +1036,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
    private RotationMath.Rotation load_ce_DataUtil_5() {
       RotationMath.Rotation wire = this.init_ce_DataUtil_7();
-      return wire != null ? wire : RotationMath.init(MC.player);
+      return wire != null ? wire : RotationMath.ofPlayer(MC.player);
    }
 
    private boolean init_Z_Z_4(boolean destroy) {
@@ -1204,7 +1204,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             var10000 = autismclient.util.ExplosionDamageCalculator.init_D_LivingEntity(entity);
             break;
          case "FOV":
-            var10000 = RotationMath.load(RotationMath.init(MC.player), RotationMath.init(entity.getBoundingBox().getCenter(), eye));
+            var10000 = RotationMath.vectorAngleDegrees(RotationMath.ofPlayer(MC.player), RotationMath.lookAt(entity.getBoundingBox().getCenter(), eye));
             break;
          default:
             var10000 = distanceSq;
@@ -1322,7 +1322,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       RotationMath.Rotation wire = this.load_ce_DataUtil_5();
       AABB box = crystal.getBoundingBox();
       if (autismclient.util.HitboxRayHelper.init(
-            box, eye, Vec3.directionFromRotation(wire.load(), wire.init()), range, pointx -> this.init_Z_Vec3_Vec3_3(eye, pointx)
+            box, eye, Vec3.directionFromRotation(wire.pitch(), wire.yaw()), range, pointx -> this.init_Z_Vec3_Vec3_3(eye, pointx)
          )
          != null) {
          return wire;
@@ -1331,13 +1331,13 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       RotationMath.Rotation best = null;
       float bestDelta = 3.4028235E38F;
       Vec3 nearest = autismclient.util.HitboxRayHelper.init(box, eye);
-      RotationMath.Rotation nearAim = RotationMath.init(nearest, eye);
+      RotationMath.Rotation nearAim = RotationMath.lookAt(nearest, eye);
       if (autismclient.util.HitboxRayHelper.init(
-            box, eye, Vec3.directionFromRotation(nearAim.load(), nearAim.init()), range, pointx -> this.init_Z_Vec3_Vec3_3(eye, pointx)
+            box, eye, Vec3.directionFromRotation(nearAim.pitch(), nearAim.yaw()), range, pointx -> this.init_Z_Vec3_Vec3_3(eye, pointx)
          )
          != null) {
          best = nearAim;
-         bestDelta = RotationMath.load(nearAim, wire);
+         bestDelta = RotationMath.vectorAngleDegrees(nearAim, wire);
       }
 
       for (double fx : init_DArr) {
@@ -1346,8 +1346,8 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                Vec3 point = new Vec3(Mth.lerp(fx, box.minX, box.maxX), Mth.lerp(fy, box.minY, box.maxY), Mth.lerp(fz, box.minZ, box.maxZ));
                double distance = eye.distanceTo(point);
                if (!(distance > range) && !this.init_Z_Vec3_Vec3_3(eye, point)) {
-                  RotationMath.Rotation rotation = RotationMath.init(point, eye);
-                  float delta = RotationMath.load(rotation, wire);
+                  RotationMath.Rotation rotation = RotationMath.lookAt(point, eye);
+                  float delta = RotationMath.vectorAngleDegrees(rotation, wire);
                   if (delta < bestDelta) {
                      bestDelta = delta;
                      best = rotation;
@@ -1370,7 +1370,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
 
       Vec3 eye = MC.player.getEyePosition();
-      Vec3 look = Vec3.directionFromRotation(wire.load(), wire.init());
+      Vec3 look = Vec3.directionFromRotation(wire.pitch(), wire.yaw());
       Vec3 hit = autismclient.util.HitboxRayHelper.init(
          plan.init_EndCrystal().getBoundingBox(), eye, look, plan.init_D(), point -> this.init_Z_Vec3_Vec3_3(eye, point)
       );
@@ -1523,7 +1523,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             autismclient.util.BlockPlacementPlanner.SupportCandidate option = new autismclient.util.BlockPlacementPlanner.SupportCandidate(
                cell, support, face, 1, state, rect, init_D_AABB_Direction_2(rect, face), autismclient.util.BlockPlacementPlanner.init(rect, face, eye), requiresSneak, intent
             );
-            double turn = RotationMath.load(RotationMath.init(autismclient.util.BlockPlacementPlanner.init_Vec3(rect, face), eye), wire);
+            double turn = RotationMath.vectorAngleDegrees(RotationMath.lookAt(autismclient.util.BlockPlacementPlanner.init_Vec3(rect, face), eye), wire);
             keyed.add(new CrystalAuraModule.Inner_SyncManager(option, turn));
          }
       }
@@ -2760,7 +2760,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          }
 
          try {
-            autismclient.util.InventorySlotHelper.init_V(MC, slot);
+            autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
             this.update_J = System.nanoTime() + this.integer("switch-delay") * 1000000L;
             this.auditHasUpdateDeadline = true;
          } finally {

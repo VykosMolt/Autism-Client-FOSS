@@ -105,12 +105,12 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.add = Math.max(8, Math.round((viewport.init() - this.reset) / 2.0F));
       this.clear = Math.max(8, Math.round((viewport.load() - this.start) / 2.0F));
       OverlayBounds clamped = this.init_cH(new OverlayBounds(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z));
-      this.add = clamped.init_I;
-      this.clear = clamped.load_I;
-      this.reset = clamped.read;
-      this.start = clamped.write;
+      this.add = clamped.x;
+      this.clear = clamped.y;
+      this.reset = clamped.width;
+      this.start = clamped.height;
       this.init_CharEncoder_3.write(true);
-      OverlayManager.init_bk().init(this);
+      OverlayManager.getInstance().bringOwnerToFront(this);
    }
 
    public void load_V_3() {
@@ -215,10 +215,10 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.init_CharEncoder_3.sync(this.init_Z_F_F(uiMouseX, uiMouseY));
       this.start = Math.max(this.init_CharEncoder_2.load(), Math.round(this.init_CharEncoder_3.init_F_SyncManager_F(metrics, this.reset)));
       OverlayBounds clamped = this.init_cH(new OverlayBounds(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z));
-      this.add = clamped.init_I;
-      this.clear = clamped.load_I;
-      this.reset = clamped.read;
-      this.start = clamped.write;
+      this.add = clamped.x;
+      this.clear = clamped.y;
+      this.reset = clamped.width;
+      this.start = clamped.height;
       this.init_CharEncoder_3.init_TableIndex_F(this.add, this.clear, this.reset, this.start);
       this.init_TextFormat.init(context, mouseX, mouseY, delta);
       context.nextStratum();
@@ -226,7 +226,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          try {
             this.init_V_GuiGraphicsExtract(context, uiMouseX, uiMouseY);
          } finally {
-            UiClipStack.init_HashUtil().init(context);
+            UiClipStack.getInstance().pop(context);
          }
       }
    }
@@ -281,7 +281,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       String trimmed = k.init(
          this.init_Font, label, Math.max(1, width - 10), this.init_CharEncoder_2.init_Identifier_l(l.read), this.init_CharEncoder_2.load(l.read)
       );
-      int textY = UiLayoutMath.init(y, 14, this.init_CharEncoder_2.init_I_l(l.read), this.init_CharEncoder_2.flush());
+      int textY = UiLayoutMath.centerTextY(y, 14, this.init_CharEncoder_2.init_I_l(l.read), this.init_CharEncoder_2.flush());
       k.init(context, this.init_Font, trimmed, this.init_CharEncoder_2.init_Identifier_l(l.read), this.init_CharEncoder_2.load(l.read), x + 6, textY, false);
       PanelSurfaceHelper.init(context, x + 4, y + 14 - 1, width - 8, UiColorPalette.mark());
    }
@@ -396,8 +396,8 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          }
 
          OverlayBounds clamped = this.init_cH(new OverlayBounds(nextX, nextY, this.reset, this.start, this.write_Z, this.update_Z));
-         this.add = clamped.init_I;
-         this.clear = clamped.load_I;
+         this.add = clamped.x;
+         this.clear = clamped.y;
          return true;
       } else if (!this.update_Z && this.init_EventBus != null && this.init_EventBus.init_Z()) {
          this.init_EventBus.init_V_D_D(uiMouseX, uiMouseY);
@@ -502,12 +502,12 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.init_cH(bounds);
-         this.add = clamped.init_I;
-         this.clear = clamped.load_I;
-         this.reset = clamped.read;
-         this.start = clamped.write;
-         this.write_Z = clamped.init_Z;
-         this.update_Z = clamped.load_Z;
+         this.add = clamped.x;
+         this.clear = clamped.y;
+         this.reset = clamped.width;
+         this.start = clamped.height;
+         this.write_Z = clamped.visible;
+         this.update_Z = clamped.collapsed;
          this.init_CharEncoder_3.write(!this.update_Z);
       }
    }
@@ -548,13 +548,13 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       int viewportH = Math.round(viewport.load());
       int availableW = Math.max(1, viewportW - margin * 2);
       int availableH = Math.max(this.init_CharEncoder_2.load(), viewportH - margin * 2);
-      int width = Math.max(Math.min(160, availableW), Math.min(layout.read, availableW));
-      int minHeight = layout.load_Z ? this.init_CharEncoder_2.load() : this.init_CharEncoder_2.load() + 20;
-      int height = Math.max(Math.min(minHeight, availableH), Math.min(layout.write, availableH));
-      int renderedHeight = layout.load_Z ? this.init_CharEncoder_2.load() : height;
-      int x = Math.max(margin, Math.min(layout.init_I, Math.max(margin, viewportW - margin - width)));
-      int y = Math.max(margin, Math.min(layout.load_I, Math.max(margin, viewportH - margin - renderedHeight)));
-      return new OverlayBounds(x, y, width, height, layout.init_Z, layout.load_Z);
+      int width = Math.max(Math.min(160, availableW), Math.min(layout.width, availableW));
+      int minHeight = layout.collapsed ? this.init_CharEncoder_2.load() : this.init_CharEncoder_2.load() + 20;
+      int height = Math.max(Math.min(minHeight, availableH), Math.min(layout.height, availableH));
+      int renderedHeight = layout.collapsed ? this.init_CharEncoder_2.load() : height;
+      int x = Math.max(margin, Math.min(layout.x, Math.max(margin, viewportW - margin - width)));
+      int y = Math.max(margin, Math.min(layout.y, Math.max(margin, viewportH - margin - renderedHeight)));
+      return new OverlayBounds(x, y, width, height, layout.visible, layout.collapsed);
    }
 
    public record Inner_DataUtil(String init, String load, String read, String write) {

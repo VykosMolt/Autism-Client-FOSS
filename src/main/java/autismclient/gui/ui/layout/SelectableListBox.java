@@ -162,7 +162,7 @@ public final class SelectableListBox<T> {
 
          int availableWidth = bounds.read - 12;
          int textX = bounds.init + 6;
-         int textY = UiLayoutMath.init(bounds.load, bounds.write, 9, 0);
+         int textY = UiLayoutMath.centerTextY(bounds.load, bounds.write, 9, 0);
          String label = this.init_Function.apply(item);
          if (label != null && !label.isEmpty()) {
             int reservedWidth = 0;

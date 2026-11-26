@@ -224,7 +224,7 @@ public class AutismMinecraftClientMixin {
                if (down && !wasDown) {
                   String cmd = entry.getValue();
                   if (cmd != null && !cmd.isBlank()) {
-                     autismclient.commands.CommandManager.read(cmd);
+                     autismclient.commands.CommandManager.execute(cmd);
                   }
                }
             }

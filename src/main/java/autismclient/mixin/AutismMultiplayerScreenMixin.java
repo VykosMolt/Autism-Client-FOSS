@@ -265,7 +265,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
    @Unique
    private int autism$hugWidth(String label) {
-      return UiDensityMetrics.load(this.font.width(label));
+      return UiDensityMetrics.buttonWidthForText(this.font.width(label));
    }
 
    @Unique

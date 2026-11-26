@@ -47,7 +47,7 @@ public final class OverlayActionButton {
 
       String label = ThemedTextHelper.init(message == null ? "" : message.getString());
       Identifier font = init_Identifier_I(height);
-      int measured = UiLayoutMath.init_I_Font(renderer, label, font, init_CharEncoder.load(l.read), 4, requestedWidth, 2147483647);
+      int measured = UiLayoutMath.measurePaddedWidth(renderer, label, font, init_CharEncoder.load(l.read), 4, requestedWidth, 2147483647);
       return Math.max(requestedWidth, measured);
    }
 
@@ -198,7 +198,7 @@ public final class OverlayActionButton {
 
             if (!button.init_Z && !Boolean.TRUE.equals(button.load_Boolean)) {
                int radius = 3;
-               autismclient.gui.f.PacketUtil.load(context, bounds, radius, ThemePaletteManager.init_I_I_ct_DataUtil(-2009060816, ThemePaletteManager.ColorRole.OUTLINE));
+               autismclient.gui.f.PacketUtil.load(context, bounds, radius, ThemePaletteManager.recolor(-2009060816, ThemePaletteManager.ColorRole.OUTLINE));
                autismclient.gui.f.PacketUtil.load(context, bounds.init(1), Math.max(1, radius - 1), 1711276032);
             }
          }

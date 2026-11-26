@@ -321,16 +321,16 @@ public class ItemAction implements MacroAction, GuiWaitAware {
                } else {
                   int slotToUse;
                   if (configuredEntrySlot >= 0 && !entryName.isEmpty()) {
-                     int resolvedSlot = autismclient.util.InventorySlotHelper.read_I(mc, configuredEntrySlot);
+                     int resolvedSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, configuredEntrySlot);
                      if (resolvedSlot < 0) {
                         continue;
                      }
 
                      slotToUse = this.init(handler, entryTarget, resolvedSlot);
                   } else if (configuredEntrySlot >= 0) {
-                     slotToUse = autismclient.util.InventorySlotHelper.read_I(mc, configuredEntrySlot);
+                     slotToUse = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, configuredEntrySlot);
                   } else if (this.useSlot && this.targetSlot >= 0) {
-                     int configuredSlot = autismclient.util.InventorySlotHelper.read_I(mc, this.targetSlot);
+                     int configuredSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, this.targetSlot);
                      if (configuredSlot < 0) {
                         continue;
                      }
@@ -358,7 +358,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             return out;
          }
 
-         int resolvedTargetSlot = autismclient.util.InventorySlotHelper.read_I(mc, this.targetSlot);
+         int resolvedTargetSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, this.targetSlot);
          if (resolvedTargetSlot < 0) {
             return out;
          }
@@ -479,13 +479,13 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       for (Slot slot : handler.slots) {
          if (slot != null && !slot.getItem().isEmpty()) {
             if (playerInventoryOnly != null) {
-               boolean isPlayerInventory = autismclient.util.InventorySlotHelper.init_Z(init_Minecraft, slot);
+               boolean isPlayerInventory = autismclient.util.InventorySlotHelper.isPlayerInventorySlot(init_Minecraft, slot);
                if (playerInventoryOnly != isPlayerInventory) {
                   continue;
                }
             }
 
-            int visibleSlot = autismclient.util.InventorySlotHelper.init_I(init_Minecraft, slot.index);
+            int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(init_Minecraft, slot.index);
             int score = target.init_I_ItemStack_I(slot.getItem(), visibleSlot);
             if (score >= 0) {
                int count = slot.getItem().getCount();
@@ -528,7 +528,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             return requiredSlot;
          }
 
-         int visibleSlot = autismclient.util.InventorySlotHelper.init_I(init_Minecraft, requiredSlot);
+         int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(init_Minecraft, requiredSlot);
          return target.init_Z_ItemStack_I(slot.getItem(), visibleSlot) ? requiredSlot : -1;
       } else {
          return -1;

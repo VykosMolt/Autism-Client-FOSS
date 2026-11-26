@@ -5,10 +5,10 @@ public final class ProgressBarRenderer {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, double progress) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       progress = Math.max(0.0, Math.min(1.0, progress));
       int radius = bounds.sync() / 2;
-      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, colors.pop, colors.get);
+      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, colors.inputSurface, colors.borderSubtle);
       int innerW = Math.max(0, bounds.update() - 2);
       int fillW = Math.max(0, Math.min(innerW, (int)Math.round(innerW * progress)));
       if (fillW > 0) {
@@ -16,7 +16,7 @@ public final class ProgressBarRenderer {
             context.init_GuiGraphicsExtract(),
             autismclient.gui.f.NetHelper.init(bounds.read() + 1, bounds.write() + 1, fillW, Math.max(0, bounds.sync() - 2)),
             Math.max(1, radius - 1),
-            init(colors.clear, colors.stop, progress)
+            init(colors.accent, colors.success, progress)
          );
       }
    }

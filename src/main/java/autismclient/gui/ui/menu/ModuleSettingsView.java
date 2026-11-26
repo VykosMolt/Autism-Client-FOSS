@@ -113,8 +113,8 @@ final class ModuleSettingsView {
          NetHelper listArea = NetHelper.init(content.read(), content.write() + headerH, content.update(), content.sync() - headerH);
          if (!module.settingsHint().isBlank()) {
             context.init_PoolEntry()
-               .init_V_GuiGraphicsExtract_2(
-                  context.init_GuiGraphicsExtract(), module.settingsHint(), listArea.read() + 5, listArea.write() + 3, theme.init_JsonUtil().valid
+               .draw(
+                  context.init_GuiGraphicsExtract(), module.settingsHint(), listArea.read() + 5, listArea.write() + 3, theme.colors().textSecondary
                );
             int hintH = this.load_I_Module(module);
             listArea = NetHelper.init(listArea.read(), listArea.write() + hintH, listArea.update(), Math.max(0, listArea.sync() - hintH));
@@ -166,7 +166,7 @@ final class ModuleSettingsView {
 
    private void load(SyncManager context, NetHelper content, Module module, float frameSeconds) {
       int pad = 8;
-      int controlH = UiDensityMetrics.init(13);
+      int controlH = UiDensityMetrics.scaledHeight(13);
       int rowH = controlH + 8;
       int x = content.read() + pad;
       int contentHeight = this.init_I_Module(module);
@@ -177,7 +177,7 @@ final class ModuleSettingsView {
 
       try {
          if (!this.init_Z) {
-            NetHelper back = NetHelper.init(x, y, UiDensityMetrics.load(context.init_PoolEntry().init("Back")), controlH);
+            NetHelper back = NetHelper.init(x, y, UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Back")), controlH);
             autismclient.gui.f.b.CachePool.init(
                context, back, "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, back.init_Z(context.read(), context.write()), false
             );
@@ -188,8 +188,8 @@ final class ModuleSettingsView {
          if (module.hasActivationToggle()) {
             NetHelper row = NetHelper.init(x, y, w, rowH);
             context.init_PoolEntry()
-               .init_V_GuiGraphicsExtract_2(
-                  context.init_GuiGraphicsExtract(), "Enabled", x, context.init_PoolEntry().init_I(row), context.init_TableIndex().init_JsonUtil().prev
+               .draw(
+                  context.init_GuiGraphicsExtract(), "Enabled", x, context.init_PoolEntry().centerTextY(row), context.init_TableIndex().colors().textPrimary
                );
             NetHelper toggle = ModulesMenuController.init_NetHelper_NetHelper_I(row, row.init());
             ToggleSwitchRenderer.init(context, toggle, module.isEnabled(), toggle.init_Z(context.read(), context.write()), "settings-toggle:" + module.id());
@@ -199,12 +199,12 @@ final class ModuleSettingsView {
 
          NetHelper row = NetHelper.init(x, y, w, rowH);
          context.init_PoolEntry()
-            .init_V_GuiGraphicsExtract_2(
-               context.init_GuiGraphicsExtract(), "Keybind", x, context.init_PoolEntry().init_I(row), context.init_TableIndex().init_JsonUtil().prev
+            .draw(
+               context.init_GuiGraphicsExtract(), "Keybind", x, context.init_PoolEntry().centerTextY(row), context.init_TableIndex().colors().textPrimary
             );
          boolean listening = this.init_ConfigStore.init_Z_Module(module);
          String label = listening ? "Press a key" : (module.keybind() == -1 ? "Unbound" : ValueSink.init_Str(module.keybind()));
-         int bindW = Math.min(Math.max(70, UiDensityMetrics.load(context.init_PoolEntry().init(label))), Math.max(1, w / 2));
+         int bindW = Math.min(Math.max(70, UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth(label))), Math.max(1, w / 2));
          NetHelper bind = NetHelper.init(row.init() - bindW, y + 4, bindW, controlH);
          autismclient.gui.f.b.CachePool.init(
             context,
@@ -217,8 +217,8 @@ final class ModuleSettingsView {
          this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.BIND_MODULE, bind, module, null, "", -1);
          y += rowH + 4;
          String hint = listening ? "Esc, Backspace or Delete clears the bind" : "Click the keybind to change it";
-         context.init_PoolEntry().read(context.init_GuiGraphicsExtract(), hint, x, y, w, context.init_TableIndex().init_JsonUtil().valid);
-         y += UiDensityMetrics.init(12) + 8;
+         context.init_PoolEntry().drawEllipsized(context.init_GuiGraphicsExtract(), hint, x, y, w, context.init_TableIndex().colors().textSecondary);
+         y += UiDensityMetrics.scaledHeight(12) + 8;
          NetHelper macro = NetHelper.init(x, y, w, controlH);
          autismclient.gui.f.b.CachePool.init(
             context, macro, "Create toggle macro", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, macro.init_Z(context.read(), context.write()), false
@@ -234,9 +234,9 @@ final class ModuleSettingsView {
    private void init_V_SyncManager_3(SyncManager context, NetHelper content, Module module, UiTheme theme) {
       int headerH = this.init_I();
       NetHelper strip = NetHelper.init(content.read(), content.write(), content.update(), headerH - 1);
-      int controlH = UiDensityMetrics.init(13);
+      int controlH = UiDensityMetrics.scaledHeight(13);
       int controlY = strip.write() + Math.max(0, (strip.sync() - controlH) / 2);
-      NetHelper back = NetHelper.init(content.read() + 3, controlY, UiDensityMetrics.load(context.init_PoolEntry().init("Back")), controlH);
+      NetHelper back = NetHelper.init(content.read() + 3, controlY, UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Back")), controlH);
       autismclient.gui.f.b.CachePool.init(
          context, back, "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, back.init_Z(context.read(), context.write()), false
       );
@@ -245,10 +245,10 @@ final class ModuleSettingsView {
       int right = pill.read() - 4;
       NetHelper bind = NetHelper.init(right - 34, controlY, 34, controlH);
       right = bind.read() - 2;
-      int resetW = UiDensityMetrics.load(context.init_PoolEntry().init("Reset"));
+      int resetW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Reset"));
       NetHelper reset = NetHelper.init(right - resetW, controlY, resetW, controlH);
       right = reset.read() - 2;
-      int macroW = UiDensityMetrics.load(context.init_PoolEntry().init("+Macro"));
+      int macroW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("+Macro"));
       NetHelper macro = NetHelper.init(right - macroW, controlY, macroW, controlH);
       autismclient.gui.f.b.CachePool.init(
          context, macro, "+Macro", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, macro.init_Z(context.read(), context.write()), false
@@ -266,29 +266,29 @@ final class ModuleSettingsView {
 
       this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.TOGGLE_MODULE, pill, module, null, "", -1);
       PacketUtil.init_V_GuiGraphicsExtract_2(
-         context.init_GuiGraphicsExtract(), content.read(), content.write() + headerH - 1, content.update(), theme.init_JsonUtil().put
+         context.init_GuiGraphicsExtract(), content.read(), content.write() + headerH - 1, content.update(), theme.colors().divider
       );
    }
 
    private int init_I() {
-      return UiDensityMetrics.init(13) + (this.init_Z ? 10 : 3);
+      return UiDensityMetrics.scaledHeight(13) + (this.init_Z ? 10 : 3);
    }
 
    private void load(SyncManager context, NetHelper content, Module module, UiTheme theme) {
       int headerH = this.init_I();
-      int controlH = UiDensityMetrics.init(13);
+      int controlH = UiDensityMetrics.scaledHeight(13);
       int gap = 2;
       int y = content.write() + 5;
       int x = content.read() + 5;
       int right = content.init() - 5;
-      int macroW = UiDensityMetrics.load(context.init_PoolEntry().init("Macro"));
-      int resetW = UiDensityMetrics.load(context.init_PoolEntry().init("Reset"));
+      int macroW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Macro"));
+      int resetW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Reset"));
       NetHelper macro = NetHelper.init(right - macroW, y, macroW, controlH);
       NetHelper reset = NetHelper.init(macro.read() - gap - resetW, y, resetW, controlH);
       int actionsLeft = reset.read() - gap;
       if (module.hasActivationToggle()) {
          boolean on = module.isEnabled();
-         int stateW = UiDensityMetrics.load(context.init_PoolEntry().init("Disabled"));
+         int stateW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Disabled"));
          NetHelper active = NetHelper.init(x, y, stateW, controlH);
          autismclient.gui.f.b.CachePool.init(
             context,
@@ -304,7 +304,7 @@ final class ModuleSettingsView {
 
       boolean binding = this.init_ConfigStore.init_Z_Module(module);
       String bindLabel = binding ? "Press key" : "Bind " + ValueSink.init_Str(module.keybind());
-      int bindW = Math.max(1, Math.min(actionsLeft - x, UiDensityMetrics.load(context.init_PoolEntry().init(bindLabel))));
+      int bindW = Math.max(1, Math.min(actionsLeft - x, UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth(bindLabel))));
       NetHelper bind = NetHelper.init(x, y, bindW, controlH);
       autismclient.gui.f.b.CachePool.init(
          context, bind, bindLabel, autismclient.gui.f.b.CachePool.Inner_DataUtil.init, bind.init_Z(context.read(), context.write()), binding
@@ -319,12 +319,12 @@ final class ModuleSettingsView {
       );
       this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.MACRO_MODULE, macro, module, null, "", -1);
       PacketUtil.init_V_GuiGraphicsExtract_2(
-         context.init_GuiGraphicsExtract(), content.read(), content.write() + headerH - 1, content.update(), theme.init_JsonUtil().put
+         context.init_GuiGraphicsExtract(), content.read(), content.write() + headerH - 1, content.update(), theme.colors().divider
       );
    }
 
    private static int load() {
-      return UiDensityMetrics.init(12);
+      return UiDensityMetrics.scaledHeight(12);
    }
 
    private List<ModuleSettingsView.Inner_StreamUtil> init_List_Module(Module module) {
@@ -367,16 +367,16 @@ final class ModuleSettingsView {
 
    int init_I_Module(Module module) {
       if (!this.init_Z_Module(module)) {
-         int controlH = UiDensityMetrics.init(13);
+         int controlH = UiDensityMetrics.scaledHeight(13);
          int rows = 1 + (module.hasActivationToggle() ? 1 : 0) + (this.init_Z ? 0 : 1);
-         return 24 + rows * (controlH + 8) + UiDensityMetrics.init(12) + controlH;
+         return 24 + rows * (controlH + 8) + UiDensityMetrics.scaledHeight(12) + controlH;
       } else {
          return this.init_I() + this.load_I_Module(module) + this.init_I_List(this.init_List_Module(module)) + 4;
       }
    }
 
    private int load_I_Module(Module module) {
-      return module.settingsHint().isBlank() ? 0 : UiDensityMetrics.init(12) + 6;
+      return module.settingsHint().isBlank() ? 0 : UiDensityMetrics.scaledHeight(12) + 6;
    }
 
    private int init_I_List(List<ModuleSettingsView.Inner_StreamUtil> rows) {
@@ -400,7 +400,7 @@ final class ModuleSettingsView {
    }
 
    private int init_I_Setting(Setting<?, ?> option) {
-      int row = UiDensityMetrics.init(14);
+      int row = UiDensityMetrics.scaledHeight(14);
       if (!this.init_Z) {
          return row;
       } else {
@@ -412,10 +412,10 @@ final class ModuleSettingsView {
       UiTheme theme = context.init_TableIndex();
       boolean hovered = bounds.init_Z(context.read(), context.write());
       float hoverT = autismclient.gui.ui.HoverTransitionCache.init("set:" + module.id() + ":" + option.id(), hovered);
-      int rowFill = ModulesMenuController.init_I_I(theme.init_JsonUtil().open, theme.init_JsonUtil().push, hoverT);
+      int rowFill = ModulesMenuController.init_I_I(theme.colors().cardSurface, theme.colors().cardSurfaceElevated, hoverT);
       if (this.init_Z) {
          PacketUtil.load(
-            context.init_GuiGraphicsExtract(), bounds, 4, rowFill, ModulesMenuController.init_I_I(theme.init_JsonUtil().put, theme.init_JsonUtil().get, hoverT)
+            context.init_GuiGraphicsExtract(), bounds, 4, rowFill, ModulesMenuController.init_I_I(theme.colors().divider, theme.colors().borderSubtle, hoverT)
          );
       } else {
          PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 4, rowFill);
@@ -427,7 +427,7 @@ final class ModuleSettingsView {
          && option.displayMode() != DisplayMode.FILE_PICKER
          && option.displayMode() != DisplayMode.READONLY_SUMMARY
          && option.displayMode() != DisplayMode.RANGE_SLIDER;
-      int controlH = this.init_Z ? Math.min(UiDensityMetrics.init(13), bounds.sync() - 2) : Math.max(11, bounds.sync() - 2);
+      int controlH = this.init_Z ? Math.min(UiDensityMetrics.scaledHeight(13), bounds.sync() - 2) : Math.max(11, bounds.sync() - 2);
       int controlW = macroDisplay
          ? Math.min(ModulesMenuController.init_I_I(170), Math.max(ModulesMenuController.init_I_I(120), bounds.update() / 2))
          : (
@@ -445,18 +445,18 @@ final class ModuleSettingsView {
       String tip = init_Str_Setting(option);
       boolean described = this.init_Z && !tip.isBlank();
       if (option.kind() == Kind.ENTITY_TYPE_LIST && option.displayMode() == DisplayMode.DEFAULT) {
-         int labelTextW = Math.max(context.init_PoolEntry().init(option.label()), described ? context.init_PoolEntry().init(tip) : 0);
+         int labelTextW = Math.max(context.init_PoolEntry().measureWidth(option.label()), described ? context.init_PoolEntry().measureWidth(tip) : 0);
          int summaryX = Math.min(control.read(), labelX + labelTextW + 4);
          control = NetHelper.init(summaryX, control.write(), control.init() - summaryX, control.sync());
          labelW = Math.max(1, summaryX - 4 - labelX);
       }
 
       if (described) {
-         context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), option.label(), labelX, bounds.write() + 4, labelW, theme.init_JsonUtil().prev);
-         context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), tip, labelX, bounds.write() + 15, labelW, theme.init_JsonUtil().valid);
+         context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), option.label(), labelX, bounds.write() + 4, labelW, theme.colors().textPrimary);
+         context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), tip, labelX, bounds.write() + 15, labelW, theme.colors().textSecondary);
       } else {
          context.init_PoolEntry()
-            .load(context.init_GuiGraphicsExtract(), option.label(), labelX, context.init_PoolEntry().init_I(bounds), labelW, theme.init_JsonUtil().prev);
+            .drawFitted(context.init_GuiGraphicsExtract(), option.label(), labelX, context.init_PoolEntry().centerTextY(bounds), labelW, theme.colors().textPrimary);
       }
 
       if (hovered && !tip.isBlank()) {
@@ -507,7 +507,7 @@ final class ModuleSettingsView {
             case ENTITY_TYPE_LIST:
             case SOUND_EVENT_LIST:
             case STORAGE_LIST: {
-               int editW = UiDensityMetrics.load(context.init_PoolEntry().init("Edit"));
+               int editW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Edit"));
                NetHelper edit = NetHelper.init(control.init() - editW, control.write(), editW, control.sync());
                NetHelper value = NetHelper.init(control.read(), control.write(), Math.max(1, control.update() - editW - 4), control.sync());
                this.update(context, module, option, value);
@@ -518,7 +518,7 @@ final class ModuleSettingsView {
                break;
             }
             case PACKET_LIST: {
-               int pickW = UiDensityMetrics.load(context.init_PoolEntry().init("Pick"));
+               int pickW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Pick"));
                NetHelper edit = NetHelper.init(control.init() - pickW, control.write(), pickW, control.sync());
                NetHelper value = NetHelper.init(control.read(), control.write(), Math.max(1, control.update() - pickW - 4), control.sync());
                this.update(context, module, option, value);
@@ -531,8 +531,8 @@ final class ModuleSettingsView {
             case KEYBIND:
                Font font = this.init_ConfigStore.init_ConfigStore_Buffer().init_Font();
                String bindName = ValueSink.init_Str(ModulesMenuController.init_I_Str_I(module.value(option.id()), -1));
-               int bindW = UiDensityMetrics.load(k.init(font, bindName, autismclient.gui.f.a.DataUtil.init, 0));
-               int clearW = UiDensityMetrics.load(k.init(font, "Clear", autismclient.gui.f.a.DataUtil.init, 0));
+               int bindW = UiDensityMetrics.buttonWidthForText(k.init(font, bindName, autismclient.gui.f.a.DataUtil.init, 0));
+               int clearW = UiDensityMetrics.buttonWidthForText(k.init(font, "Clear", autismclient.gui.f.a.DataUtil.init, 0));
                NetHelper clear = NetHelper.init(control.init() - clearW, control.write(), clearW, control.sync());
                int bindX = Math.max(control.read(), clear.read() - 2 - bindW);
                NetHelper bind = NetHelper.init(bindX, control.write(), Math.max(1, clear.read() - 2 - bindX), control.sync());
@@ -575,9 +575,9 @@ final class ModuleSettingsView {
             ? ModulesMenuController.init_I_Str_I(module.value(option.id()), ModulesMenuController.init_I_Str_I(option.defaultValue(), 0))
             : ModulesMenuController.init_D_Str_D(module.value(option.id()), ModulesMenuController.init_D_Str_D(option.defaultValue(), 0.0));
          String unit = option.unit(current);
-         int unitWidth = unit.isEmpty() ? 0 : context.init_PoolEntry().init(unit);
+         int unitWidth = unit.isEmpty() ? 0 : context.init_PoolEntry().measureWidth(unit);
          int reservedUnitWidth = Math.max(
-            unitWidth, Math.max(context.init_PoolEntry().init(option.unit(option.sliderMin())), context.init_PoolEntry().init(option.unit(option.sliderMax())))
+            unitWidth, Math.max(context.init_PoolEntry().measureWidth(option.unit(option.sliderMin())), context.init_PoolEntry().measureWidth(option.unit(option.sliderMax())))
          );
          int unitSpace = reservedUnitWidth == 0 ? 0 : reservedUnitWidth + 3;
          int valueW = ModulesMenuController.init_I_I(34);
@@ -589,13 +589,13 @@ final class ModuleSettingsView {
          this.init(context, value, module, option, "");
          if (!unit.isEmpty()) {
             context.init_PoolEntry()
-               .init(
+               .drawTrimmed(
                   context.init_GuiGraphicsExtract(),
                   unit,
                   value.init() + 3,
-                  context.init_PoolEntry().init_I(value),
+                  context.init_PoolEntry().centerTextY(value),
                   unitWidth,
-                  context.init_TableIndex().init_JsonUtil().prev
+                  context.init_TableIndex().colors().textPrimary
                );
          }
 
@@ -621,7 +621,7 @@ final class ModuleSettingsView {
          focused ? this.init_ConfigStore.init_StreamUtil_2.init_I() : -1,
          focused ? this.init_ConfigStore.init_StreamUtil_2.load_I() : -1,
          focused
-            ? this.init_ConfigStore.init_StreamUtil_2.init(Math.max(1, bounds.update() - 8), fragment -> context.init_PoolEntry().init(shown, fragment))
+            ? this.init_ConfigStore.init_StreamUtil_2.init(Math.max(1, bounds.update() - 8), fragment -> context.init_PoolEntry().measureFragmentWidth(shown, fragment))
             : 0
       );
    }
@@ -639,35 +639,35 @@ final class ModuleSettingsView {
          context, slider, RangeSliderRenderer.init(range.min(), lo, hi), RangeSliderRenderer.init(range.max(), lo, hi), slider.init_Z(context.read(), context.write()), -1
       );
       context.init_PoolEntry()
-         .init(
+         .drawTrimmed(
             context.init_GuiGraphicsExtract(),
             label,
             value.read(),
-            context.init_PoolEntry().init_I(value),
+            context.init_PoolEntry().centerTextY(value),
             value.update(),
-            context.init_TableIndex().init_JsonUtil().prev
+            context.init_TableIndex().colors().textPrimary
          );
       this.init_ConfigStore.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.RANGE_SLIDER, slider, module, option, "", -1);
    }
 
    private void write(SyncManager context, Module module, Setting<?, ?> option, NetHelper control) {
       UiTheme theme = context.init_TableIndex();
-      int pickW = UiDensityMetrics.load(context.init_PoolEntry().init("Pick"));
+      int pickW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Pick"));
       NetHelper pick = NetHelper.init(control.init() - pickW, control.write(), pickW, control.sync());
       NetHelper value = NetHelper.init(control.read(), control.write(), Math.max(1, control.update() - pickW - 4), control.sync());
       int color = ModulesMenuController.load_I_Str_I(module.value(option.id()), ModulesMenuController.load_I_Str_I(option.defaultValue(), -1));
-      PacketUtil.load(context.init_GuiGraphicsExtract(), value, 4, theme.init_JsonUtil().pop, theme.init_JsonUtil().get);
+      PacketUtil.load(context.init_GuiGraphicsExtract(), value, 4, theme.colors().inputSurface, theme.colors().borderSubtle);
       NetHelper swatch = NetHelper.init(value.read() + 3, value.write() + 2, 14, Math.max(1, value.sync() - 4));
-      PacketUtil.load(context.init_GuiGraphicsExtract(), swatch, 2, color | 0xFF000000, theme.init_JsonUtil().get);
+      PacketUtil.load(context.init_GuiGraphicsExtract(), swatch, 2, color | 0xFF000000, theme.colors().borderSubtle);
       String rgb = String.format(Locale.ROOT, "#%06X", color & 16777215);
       context.init_PoolEntry()
-         .load(
+         .drawFitted(
             context.init_GuiGraphicsExtract(),
             rgb,
             swatch.init() + 5,
-            context.init_PoolEntry().init_I(value),
+            context.init_PoolEntry().centerTextY(value),
             Math.max(1, value.init() - swatch.init() - 8),
-            theme.init_JsonUtil().prev
+            theme.colors().textPrimary
          );
       autismclient.gui.f.b.CachePool.init(
          context, pick, "Pick", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, pick.init_Z(context.read(), context.write()), false
@@ -685,7 +685,7 @@ final class ModuleSettingsView {
       autismclient.gui.f.b.CachePool.Inner_DataUtil tone,
       ModulesMenuController.Inner_CachePool hitType
    ) {
-      int buttonW = UiDensityMetrics.load(context.init_PoolEntry().init(buttonText));
+      int buttonW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth(buttonText));
       NetHelper button = NetHelper.init(control.init() - buttonW, control.write(), buttonW, control.sync());
       NetHelper value = NetHelper.init(control.read(), control.write(), Math.max(1, control.update() - buttonW - 4), control.sync());
       this.update(context, module, option, value);
@@ -702,24 +702,24 @@ final class ModuleSettingsView {
       int availableWidth = Math.max(1, bounds.update() - 4);
       if (option.kind() == Kind.ENTITY_TYPE_LIST) {
          ModuleSettingsView.Inner_DataUtil entities = this.init_BufferHelper_DataU_Str(module.value(option.id()));
-         if (entities.init_I() > 1 && context.init_PoolEntry().init(shown) > availableWidth) {
+         if (entities.init_I() > 1 && context.init_PoolEntry().measureWidth(shown) > availableWidth) {
             shown = entities.init_I() + " entries";
          }
       }
 
       int textX = bounds.read() + 2;
       if (option.kind() == Kind.ENTITY_TYPE_LIST) {
-         textX += Math.max(0, availableWidth - context.init_PoolEntry().init(shown));
+         textX += Math.max(0, availableWidth - context.init_PoolEntry().measureWidth(shown));
       }
 
       context.init_PoolEntry()
-         .load(
+         .drawFitted(
             context.init_GuiGraphicsExtract(),
             shown,
             textX,
-            context.init_PoolEntry().init_I(bounds),
+            context.init_PoolEntry().centerTextY(bounds),
             availableWidth,
-            empty ? theme.init_JsonUtil().valid : theme.init_JsonUtil().prev
+            empty ? theme.colors().textSecondary : theme.colors().textPrimary
          );
       if (bounds.init_Z(context.read(), context.write()) && summary != null && !summary.isBlank()) {
          this.init_ConfigStore.write(summary);

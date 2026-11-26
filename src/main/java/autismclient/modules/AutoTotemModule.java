@@ -599,8 +599,8 @@ public final class AutoTotemModule extends Module {
 
             return switched;
          } else {
-            int from = autismclient.util.InventorySlotHelper.load_I(MC, fromSlot);
-            int offhand = autismclient.util.InventorySlotHelper.load_I(MC, 40);
+            int from = autismclient.util.InventorySlotHelper.toScreenSlot(MC, fromSlot);
+            int offhand = autismclient.util.InventorySlotHelper.toScreenSlot(MC, 40);
             if (from < 0 || offhand < 0) {
                return false;
             }
@@ -760,7 +760,7 @@ public final class AutoTotemModule extends Module {
          this.flush_V();
          return true;
       } else {
-         int handlerSlot = autismclient.util.InventorySlotHelper.load_I(MC, this.run == 1 ? 40 : this.pop);
+         int handlerSlot = autismclient.util.InventorySlotHelper.toScreenSlot(MC, this.run == 1 ? 40 : this.pop);
          return handlerSlot < 0 ? false : autismclient.util.ContainerClickExecutor.init(MC, handlerSlot, 0, ContainerInput.PICKUP);
       }
    }
@@ -798,7 +798,7 @@ public final class AutoTotemModule extends Module {
             }
          }
       } else if (MC.player != null && MC.player.containerMenu == MC.player.inventoryMenu && !MC.player.containerMenu.getCarried().isEmpty()) {
-         int from = autismclient.util.InventorySlotHelper.load_I(MC, this.pop);
+         int from = autismclient.util.InventorySlotHelper.toScreenSlot(MC, this.pop);
          if (from >= 0 && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             try {
                autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);
@@ -960,13 +960,13 @@ public final class AutoTotemModule extends Module {
    }
 
    private static boolean load_Z_I(int fromSlot) {
-      int handlerSlot = autismclient.util.InventorySlotHelper.load_I(MC, fromSlot);
+      int handlerSlot = autismclient.util.InventorySlotHelper.toScreenSlot(MC, fromSlot);
       return handlerSlot < 0 ? false : autismclient.util.ContainerClickExecutor.init(MC, handlerSlot, 40, ContainerInput.SWAP);
    }
 
    private static boolean read(int fromSlot) {
-      int from = autismclient.util.InventorySlotHelper.load_I(MC, fromSlot);
-      int offhand = autismclient.util.InventorySlotHelper.load_I(MC, 40);
+      int from = autismclient.util.InventorySlotHelper.toScreenSlot(MC, fromSlot);
+      int offhand = autismclient.util.InventorySlotHelper.toScreenSlot(MC, 40);
       if (from >= 0 && offhand >= 0) {
          boolean offhandHadItem = !MC.player.getOffhandItem().isEmpty();
          boolean ok = autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);

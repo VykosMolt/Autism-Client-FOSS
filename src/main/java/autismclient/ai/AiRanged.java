@@ -257,7 +257,7 @@ final class AiRanged {
                   point = point.add(motion.scale(flight));
                }
 
-               float yaw = autismclient.util.RotationMath.init(point, mc.player.getEyePosition()).init();
+               float yaw = autismclient.util.RotationMath.lookAt(point, mc.player.getEyePosition()).yaw();
                Vec3 inherited = autismclient.modules.ProjectileBallistics.init(mc.player);
                float best = 0.0F / 0.0F;
 
@@ -383,7 +383,7 @@ final class AiRanged {
                }
 
                if (this.init_ce_DataUtil != null) {
-                  out.add("arc", AiJson.init_JsonObject_ObjArr("yaw", this.init_ce_DataUtil.init(), "pitch", this.init_ce_DataUtil.load()));
+                  out.add("arc", AiJson.init_JsonObject_ObjArr("yaw", this.init_ce_DataUtil.yaw(), "pitch", this.init_ce_DataUtil.pitch()));
                }
 
                return out;
@@ -416,7 +416,7 @@ final class AiRanged {
                   this.init_V_21();
                   this.init_DataUtil.init_V();
                   if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.init_I) {
-                     autismclient.util.InventorySlotHelper.init_V(mc, this.init_I);
+                     autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.init_I);
                   }
                }
             }

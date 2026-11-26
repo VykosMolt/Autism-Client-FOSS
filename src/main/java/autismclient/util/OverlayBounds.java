@@ -1,22 +1,22 @@
 package autismclient.util;
 
 public class OverlayBounds {
-   public int init_I;
-   public int load_I;
-   public int read;
-   public int write;
-   public boolean init_Z;
-   public boolean load_Z;
+   public int x;
+   public int y;
+   public int width;
+   public int height;
+   public boolean visible;
+   public boolean collapsed;
 
    public OverlayBounds() {
    }
 
    public OverlayBounds(int x, int y, int width, int height, boolean visible, boolean collapsed) {
-      this.init_I = x;
-      this.load_I = y;
-      this.read = width;
-      this.write = height;
-      this.init_Z = visible;
-      this.load_Z = collapsed;
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
+      this.visible = visible;
+      this.collapsed = collapsed;
    }
 }

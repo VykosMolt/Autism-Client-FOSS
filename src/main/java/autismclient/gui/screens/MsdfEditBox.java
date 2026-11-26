@@ -50,14 +50,14 @@ public class MsdfEditBox extends EditBox {
       String value = this.getValue();
       return !this.load
          && acc.autism$formatters().isEmpty()
-         && (value.isEmpty() || autismclient.gui.sdf.MsdfTextRenderer.init(autismclient.gui.sdf.MsdfFontFace.BODY, value));
+         && (value.isEmpty() || autismclient.gui.sdf.MsdfTextRenderer.canRender(autismclient.gui.sdf.MsdfFontFace.BODY, value));
    }
 
    private float init(String text) {
-      return autismclient.gui.sdf.MsdfTextRenderer.init_F(
+      return autismclient.gui.sdf.MsdfTextRenderer.measureWidthFloat(
          autismclient.gui.sdf.MsdfFontFace.BODY,
          text,
-         autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.sdf.MsdfFontFace.BODY)
+         autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(autismclient.gui.sdf.MsdfFontFace.BODY)
       );
    }
 
@@ -155,16 +155,16 @@ public class MsdfEditBox extends EditBox {
             String value = this.getValue();
             this.init_V();
             autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, MsdfEditBox.Inner_DataUtil.init(), mouseX, mouseY);
-            autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+            autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
             autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.BODY;
-            float size = autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(face);
+            float size = autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face);
             if (this.isBordered()) {
                autismclient.gui.f.PacketUtil.load(
                   graphics,
                   autismclient.gui.f.NetHelper.init(this.getX(), this.getY(), this.getWidth(), this.getHeight()),
                   3,
-                  this.isFocused() ? colors.tick : colors.pop,
-                  this.isActive() ? (this.isFocused() ? colors.clear : colors.set) : colors.get
+                  this.isFocused() ? colors.inputSurfaceFocused : colors.inputSurface,
+                  this.isActive() ? (this.isFocused() ? colors.accent : colors.borderControl) : colors.borderSubtle
                );
             }
 
@@ -176,10 +176,10 @@ public class MsdfEditBox extends EditBox {
                this.init_J = Util.getMillis();
             }
 
-            int textColor = acc.autism$isEditable() ? colors.prev : colors.size;
+            int textColor = acc.autism$isEditable() ? colors.textPrimary : colors.textMuted;
             float drawX = this.init_F() - this.init_F;
-            float textY = autismclient.gui.sdf.MsdfTextRenderer.init(face, this.getY(), this.getHeight(), size);
-            float textTop = autismclient.gui.sdf.MsdfTextRenderer.init(face, textY, size);
+            float textY = autismclient.gui.sdf.MsdfTextRenderer.centerVertically(face, this.getY(), this.getHeight(), size);
+            float textTop = autismclient.gui.sdf.MsdfTextRenderer.alignToVanillaTop(face, textY, size);
             float cursorX = drawX + this.init(value.substring(0, cursor));
             int padding = this.isBordered() ? 4 : 0;
             int clipLeft = this.getX() + padding;
@@ -193,16 +193,16 @@ public class MsdfEditBox extends EditBox {
                   float highlightX = drawX + this.init(value.substring(0, highlight));
                   int left = Math.round(Math.min(cursorX, highlightX));
                   int right = Math.round(Math.max(cursorX, highlightX));
-                  graphics.fill(left, selectionTop, Math.max(left + 1, right), selectionBottom, autismclient.gui.f.PacketUtil.init(colors.clear, 0.35F));
+                  graphics.fill(left, selectionTop, Math.max(left + 1, right), selectionBottom, autismclient.gui.f.PacketUtil.init(colors.accent, 0.35F));
                }
 
-               autismclient.gui.sdf.MsdfTextRenderer.init(graphics, face, value, drawX, textTop, size, textColor, false);
+               autismclient.gui.sdf.MsdfTextRenderer.draw(graphics, face, value, drawX, textTop, size, textColor, false);
                if (value.isEmpty() && acc.autism$hint() != null && !this.isFocused()) {
-                  graphics.text(MsdfEditBox.Inner_DataUtil.init(), acc.autism$hint(), Math.round(this.init_F()), Math.round(textY), colors.size);
+                  graphics.text(MsdfEditBox.Inner_DataUtil.init(), acc.autism$hint(), Math.round(this.init_F()), Math.round(textY), colors.textMuted);
                }
 
                if (cursor == value.length() && value.length() < acc.autism$maxLength() && acc.autism$suggestion() != null) {
-                  context.init_PoolEntry().init_V_GuiGraphicsExtract_2(graphics, acc.autism$suggestion(), Math.round(cursorX), Math.round(textY), colors.size);
+                  context.init_PoolEntry().draw(graphics, acc.autism$suggestion(), Math.round(cursorX), Math.round(textY), colors.textMuted);
                }
 
                long blinkStart = Math.max(this.init_J, acc.autism$focusedTime());

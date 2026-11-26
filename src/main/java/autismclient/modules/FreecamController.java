@@ -318,7 +318,7 @@ public final class FreecamController {
    }
 
    private static boolean read(KeyMapping mapping) {
-      return mapping != null && autismclient.util.KeyMappingControl.init(mapping).autism$isActuallyDown();
+      return mapping != null && autismclient.util.KeyMappingControl.of(mapping).autism$isActuallyDown();
    }
 
    private static void load_V() {

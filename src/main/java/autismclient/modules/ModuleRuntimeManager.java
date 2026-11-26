@@ -146,7 +146,7 @@ public final class ModuleRuntimeManager {
          this.init("applyRuntimeDefaults", () -> this.init_AutismConfig.applyRuntimeDefaults());
          AutismConfig.setGlobal(this.init_AutismConfig);
          if (!AutismLiteVariant.enabled()) {
-            this.init("themeWarm", () -> ThemePaletteManager.init_ct_StreamUtil());
+            this.init("themeWarm", () -> ThemePaletteManager.getPalette());
          }
 
          this.init("moduleRegistry", () -> al.init_V_AutismConfig(this.init_AutismConfig));
@@ -225,7 +225,7 @@ public final class ModuleRuntimeManager {
          autismclient.util.PacketCaptureState.load(this);
          autismclient.util.AutismHudManager.init_V();
          if (themeChanged) {
-            ThemePaletteManager.init_V();
+            ThemePaletteManager.reload();
          }
 
          boolean panicNow = aD.init_Z();
@@ -1579,7 +1579,7 @@ public final class ModuleRuntimeManager {
          return false;
       }
 
-      OverlayManager.init_bk().init_V(overlay);
+      OverlayManager.getInstance().register(overlay);
       overlay.close_V_12();
       return true;
    }
@@ -1638,10 +1638,10 @@ public final class ModuleRuntimeManager {
       }
 
       ((AutismProfilesOverlay)overlay).update_V_19();
-      OverlayManager manager = OverlayManager.init_bk();
-      manager.init_V(overlay);
-      manager.update_V(overlay);
-      manager.write_V(overlay);
+      OverlayManager manager = OverlayManager.getInstance();
+      manager.register(overlay);
+      manager.bringToFront(overlay);
+      manager.markClosing(overlay);
       return true;
    }
 
@@ -1976,7 +1976,7 @@ public final class ModuleRuntimeManager {
    }
 
    private boolean frame() {
-      return OverlayManager.init_bk().update_Z();
+      return OverlayManager.getInstance().hasFocusedTextInput();
    }
 
    private boolean init_Z_I(int bindCode) {

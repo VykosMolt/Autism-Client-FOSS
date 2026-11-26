@@ -62,7 +62,7 @@ public abstract class AutismTitleScreenSupportMixin extends Screen {
          if (mod != null) {
             AutismOverlay overlay = mod.load_cX();
             if (overlay != null) {
-               OverlayManager.init_bk().init_V(overlay);
+               OverlayManager.getInstance().register(overlay);
                if (overlay instanceof AutismProfilesOverlay pf) {
                   pf.load(true);
                }

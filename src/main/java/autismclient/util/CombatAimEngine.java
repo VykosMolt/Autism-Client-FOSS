@@ -866,15 +866,15 @@ public final class CombatAimEngine {
       }
 
       public double[] init(RotationMath.Rotation at, RotationMath.Rotation goal, float maxYaw, float maxPitch, double scale) {
-         double yaw = at.init() + CombatAimEngine.flush(goal.init() - at.init());
-         double pitch = goal.load();
+         double yaw = at.yaw() + CombatAimEngine.flush(goal.yaw() - at.yaw());
+         double pitch = goal.pitch();
          if (this.update == 0.0 || scale != this.close || Math.abs(CombatAimEngine.flush(yaw - this.read)) > 12.0 || Math.abs(pitch - this.write) > 12.0) {
             if (this.init_q == null) {
                this.init_q = CombatAimEngine.init_q();
             }
 
-            this.init_D = at.init();
-            this.load = at.load();
+            this.init_D = at.yaw();
+            this.load = at.pitch();
             this.read = yaw;
             this.write = pitch;
             this.close = scale;
@@ -893,7 +893,7 @@ public final class CombatAimEngine {
          double progress = CombatAimEngine.update(t);
          double nextYaw = this.init_D + CombatAimEngine.flush(yaw - this.init_D) * progress;
          double nextPitch = this.load + (pitch - this.load) * progress + Math.sin(3.141592653589793 * t) * this.flush * 0.25;
-         return new double[]{CombatAimEngine.flush(nextYaw - at.init()), nextPitch - at.load()};
+         return new double[]{CombatAimEngine.flush(nextYaw - at.yaw()), nextPitch - at.pitch()};
       }
    }
 

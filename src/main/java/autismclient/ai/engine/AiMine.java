@@ -749,7 +749,7 @@ public final class AiMine {
                } else {
                   if (decision instanceof ToolUpkeep.Inner_DataUtil.Inner_CachePool swap) {
                      int selected = this.init_Minecraft.player.getInventory().getSelectedSlot();
-                     if (InventorySlotHelper.init(this.init_Minecraft, swap.backpackSlot(), selected)) {
+                     if (InventorySlotHelper.swapToHotbar(this.init_Minecraft, swap.backpackSlot(), selected)) {
                         this.init_V(selected);
                         return null;
                      }
@@ -893,7 +893,7 @@ public final class AiMine {
                         this.init_Minecraft.options.keySprint,
                         this.init_Minecraft.options.keyShift
                      )) {
-                        key.setDown(KeyMappingControl.init(key).autism$physicalForBody());
+                        key.setDown(KeyMappingControl.of(key).autism$physicalForBody());
                      }
                   }
 

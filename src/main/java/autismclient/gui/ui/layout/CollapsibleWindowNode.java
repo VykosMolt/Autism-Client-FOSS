@@ -112,8 +112,8 @@ public class CollapsibleWindowNode extends LayoutContainer {
          return false;
       }
 
-      autismclient.gui.ui.UiClipStack.init_HashUtil()
-         .init(
+      autismclient.gui.ui.UiClipStack.getInstance()
+         .push(
             graphics,
             autismclient.gui.f.NetHelper.init(
                Math.round(this.init_F), Math.round(this.load_F) + this.read_I, Math.round(this.read_F), this.write_I - this.read_I
@@ -198,11 +198,11 @@ public class CollapsibleWindowNode extends LayoutContainer {
    private void init(LayoutContext context, int bodyX, int bodyY, int bodyW, int bodyH) {
       if (this.poll && !(this.init_F_2() <= 0.0F) && bodyH > 0) {
          int inset = 2;
-         this.init_PoolEntry_DataUtil = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I(
+         this.init_PoolEntry_DataUtil = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.computeFloat(
             Math.round(this.close_F), Math.round(this.sync_F), bodyX + bodyW - 6 - inset, bodyY + inset, 6, Math.max(1, bodyH - inset * 2), this.flush_F
          );
-         boolean hovered = this.init_PoolEntry_DataUtil.init(context.init_F(), context.load());
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(context.init_GuiGraphicsExtract(), this.init_PoolEntry_DataUtil, hovered, this.push);
+         boolean hovered = this.init_PoolEntry_DataUtil.containsTrack(context.init_F(), context.load());
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(context.init_GuiGraphicsExtract(), this.init_PoolEntry_DataUtil, hovered, this.push);
       } else {
          this.init_PoolEntry_DataUtil = null;
       }

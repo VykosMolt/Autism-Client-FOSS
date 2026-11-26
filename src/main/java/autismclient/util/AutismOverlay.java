@@ -22,7 +22,7 @@ public interface AutismOverlay {
    void init_V_Z(boolean var1);
 
    default boolean a__Z() {
-      return OverlayManager.init_bk().init_Z(this);
+      return OverlayManager.getInstance().isClosing(this);
    }
 
    boolean init_Z_D_D(double var1, double var3);
@@ -96,7 +96,7 @@ public interface AutismOverlay {
 
    default void init_V_I_I(int width, int height) {
       OverlayBounds b = this.init_cH();
-      this.init_V_cH(new OverlayBounds(b.init_I, b.load_I, Math.max(this.init_I(), width), Math.max(this.load_I(), height), b.init_Z, b.load_Z));
+      this.init_V_cH(new OverlayBounds(b.x, b.y, Math.max(this.init_I(), width), Math.max(this.load_I(), height), b.visible, b.collapsed));
    }
 
    default void tick_V() {

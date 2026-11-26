@@ -57,12 +57,12 @@ public final class UiLayerHost {
                }
 
                first = false;
-               UiClipStack.init_HashUtil().load(context.init_GuiGraphicsExtract());
+               UiClipStack.getInstance().clear(context.init_GuiGraphicsExtract());
 
                try {
                   component.init_V_SyncManager(context);
                } finally {
-                  UiClipStack.init_HashUtil().load(context.init_GuiGraphicsExtract());
+                  UiClipStack.getInstance().clear(context.init_GuiGraphicsExtract());
                }
             }
          }

@@ -18,7 +18,7 @@ public final class ClickSlotCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(context -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "click-slot <slot> [click] [times]");
+         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.getPrefix() + "click-slot <slot> [click] [times]");
          return 1;
       });
       RequiredArgumentBuilder<AutismCommandSource, Integer> slot = (RequiredArgumentBuilder<AutismCommandSource, Integer>)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument(
@@ -33,7 +33,7 @@ public final class ClickSlotCommand extends Command {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.containerMenu != null) {
          int visibleSlot = autismclient.commands.arguments.SlotArgumentType.init(context, "slot");
-         int handlerSlot = InventorySlotHelper.load_I(mc, visibleSlot);
+         int handlerSlot = InventorySlotHelper.toScreenSlot(mc, visibleSlot);
          return SlotClickCommandHelper.init(handlerSlot, spec, times, autismclient.commands.arguments.SlotArgumentType.init_Str_I(visibleSlot));
       } else {
          AutismClientMessaging.sendPrefixed("§cNo active inventory or GUI.");

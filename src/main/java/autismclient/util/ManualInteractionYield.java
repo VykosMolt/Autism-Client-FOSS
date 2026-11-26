@@ -54,7 +54,7 @@ public final class ManualInteractionYield {
    }
 
    private static boolean read() {
-      return SilentMovementCoordinator.init_ce_DataUtil() != null && SilentRotationManager.init_Z();
+      return SilentMovementCoordinator.activeRotation() != null && SilentRotationManager.init_Z();
    }
 
    public static void init_V(Minecraft mc) {
@@ -94,7 +94,7 @@ public final class ManualInteractionYield {
    public static HitResult init(Minecraft mc, HitResult silentPick) {
       if (mc == null || !(mc.player != null && silentPick instanceof BlockHitResult blockPick) || blockPick.getType() != Type.BLOCK) {
          return silentPick;
-      } else if (!SilentMovementCoordinator.init_Z() && SilentMovementCoordinator.init_ce_DataUtil() != null) {
+      } else if (!SilentMovementCoordinator.isSafeWalkActive() && SilentMovementCoordinator.activeRotation() != null) {
          BlockHitResult camera = init_BlockHitResult(mc);
          if (camera != null && camera.getBlockPos().equals(blockPick.getBlockPos())) {
             return silentPick;
@@ -118,8 +118,8 @@ public final class ManualInteractionYield {
                   destroying = false;
                }
 
-               boolean attackDown = KeyMappingControl.init(mc.options.keyAttack).autism$isActuallyDown();
-               boolean useDown = KeyMappingControl.init(mc.options.keyUse).autism$isActuallyDown();
+               boolean attackDown = KeyMappingControl.of(mc.options.keyAttack).autism$isActuallyDown();
+               boolean useDown = KeyMappingControl.of(mc.options.keyUse).autism$isActuallyDown();
                BlockHitResult camera = !attackDown && !useDown ? null : init_BlockHitResult(mc);
                if (attackDown && camera != null) {
                   if (camera.getBlockPos().equals(init_BlockPos)) {

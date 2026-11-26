@@ -31,13 +31,13 @@ public final class IconHeaderNode extends LayoutNode {
 
    @Override
    public float init_F_SyncManager(LayoutContext context) {
-      int textWidth = autismclient.gui.f.UiHelper.init(context.init_Font()).init(this.init_Str);
+      int textWidth = autismclient.gui.f.UiHelper.init(context.init_Font()).measureWidth(this.init_Str);
       return textWidth + (this.init_Identifier != null ? this.init_I + this.load_I : 0);
    }
 
    @Override
    public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      return this.write_Z ? autismclient.gui.ui.UiDensityMetrics.init(14) : Math.max(11, this.init_I + 1);
+      return this.write_Z ? autismclient.gui.ui.UiDensityMetrics.scaledHeight(14) : Math.max(11, this.init_I + 1);
    }
 
    @Override
@@ -64,12 +64,12 @@ public final class IconHeaderNode extends LayoutNode {
             }
 
             autismclient.gui.f.UiHelper.init(context.init_Font())
-               .init_V_GuiGraphicsExtract_2(
+               .draw(
                   context.init_GuiGraphicsExtract(),
                   this.init_Str,
                   contentX,
                   drawY + Math.max(1, (drawH - 9) / 2),
-                  context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-791321, ThemePaletteManager.ColorRole.TEXT))
+                  context.init_I_I(ThemePaletteManager.recolor(-791321, ThemePaletteManager.ColorRole.TEXT))
                );
          }
       }

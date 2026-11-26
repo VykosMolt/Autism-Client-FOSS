@@ -35,16 +35,16 @@ public final class k {
    public static int init(Font renderer, String value, Identifier fontId, int color) {
       String safe = value == null ? "" : value;
       autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(fontId);
-      return autismclient.gui.sdf.MsdfTextRenderer.init(face, safe)
-         ? autismclient.gui.sdf.MsdfTextRenderer.init_I(face, safe, autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(face))
+      return autismclient.gui.sdf.MsdfTextRenderer.canRender(face, safe)
+         ? autismclient.gui.sdf.MsdfTextRenderer.measureWidth(face, safe, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face))
          : renderer.width(safe);
    }
 
    public static int init(Font renderer, String value, String fragment, Identifier fontId, int color) {
       String safe = fragment == null ? "" : fragment;
       autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(fontId);
-      return autismclient.gui.sdf.MsdfTextRenderer.init(face, value == null ? "" : value)
-         ? autismclient.gui.sdf.MsdfTextRenderer.init_I(face, safe, autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(face))
+      return autismclient.gui.sdf.MsdfTextRenderer.canRender(face, value == null ? "" : value)
+         ? autismclient.gui.sdf.MsdfTextRenderer.measureWidth(face, safe, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face))
          : renderer.width(safe);
    }
 
@@ -54,7 +54,7 @@ public final class k {
 
    public static String init(Font renderer, String value, int maxWidth, Identifier fontId, int color) {
       String safeValue = value == null ? "" : value;
-      k.Inner_DataUtil key = new k.Inner_DataUtil(safeValue, maxWidth, fontId, autismclient.gui.sdf.MsdfTextRenderer.init_I());
+      k.Inner_DataUtil key = new k.Inner_DataUtil(safeValue, maxWidth, fontId, autismclient.gui.sdf.MsdfTextRenderer.cacheGeneration());
       String cached = init_Map.get(key);
       if (cached != null) {
          return cached;
@@ -72,8 +72,8 @@ public final class k {
 
       autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(fontId);
       String trimmed;
-      if (autismclient.gui.sdf.MsdfTextRenderer.init(face, safeValue)) {
-         trimmed = autismclient.gui.sdf.MsdfTextRenderer.init(face, safeValue, autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(face), allowedWidth);
+      if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, safeValue)) {
+         trimmed = autismclient.gui.sdf.MsdfTextRenderer.trimToWidth(face, safeValue, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face), allowedWidth);
       } else {
          trimmed = renderer.plainSubstrByWidth(safeValue, Math.max(0, allowedWidth));
       }
@@ -90,8 +90,8 @@ public final class k {
          }
 
          autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(fontId);
-         if (autismclient.gui.sdf.MsdfTextRenderer.init(face, safeValue)) {
-            return autismclient.gui.sdf.MsdfTextRenderer.load(face, safeValue, autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(face), maxWidth);
+         if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, safeValue)) {
+            return autismclient.gui.sdf.MsdfTextRenderer.ellipsize(face, safeValue, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face), maxWidth);
          }
 
          String ellipsis = "...";
@@ -115,9 +115,9 @@ public final class k {
    public static void init(GuiGraphicsExtractor context, Font renderer, String value, Identifier fontId, int color, int x, int y, boolean shadow) {
       String safe = value == null ? "" : value;
       autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(fontId);
-      if (autismclient.gui.sdf.MsdfTextRenderer.init(face, safe)) {
-         float size = autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(face);
-         autismclient.gui.sdf.MsdfTextRenderer.init(context, face, safe, x, autismclient.gui.sdf.MsdfTextRenderer.init(face, y, size), size, color, shadow);
+      if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, safe)) {
+         float size = autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face);
+         autismclient.gui.sdf.MsdfTextRenderer.draw(context, face, safe, x, autismclient.gui.sdf.MsdfTextRenderer.alignToVanillaTop(face, y, size), size, color, shadow);
       } else {
          context.text(renderer, safe, x, y, color, shadow);
       }
@@ -157,7 +157,7 @@ public final class k {
    public static void init_V() {
       init_Map.clear();
       load++;
-      autismclient.gui.sdf.MsdfTextRenderer.init_V();
+      autismclient.gui.sdf.MsdfTextRenderer.invalidateCaches();
    }
 
    private record Inner_DataUtil(String init_Str, int init_I, Identifier init_Identifier, int load) {

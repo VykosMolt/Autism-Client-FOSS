@@ -45,7 +45,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    protected void pop_V() {
       this.read_Z = !this.read_Z;
       AutismSessionState.init_ck().init_V_Str_Z(this.init_Str(), this.read_Z);
-      OverlayManager.init_bk().load_V(this);
+      OverlayManager.getInstance().refreshRenderLayer(this);
       this.a__V();
    }
 
@@ -60,7 +60,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    }
 
    protected autismclient.gui.f.NetHelper init_NetHelper_cH(OverlayBounds bounds) {
-      autismclient.gui.f.NetHelper window = autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, 14);
+      autismclient.gui.f.NetHelper window = autismclient.gui.f.NetHelper.init(bounds.x, bounds.y, bounds.width, 14);
       autismclient.gui.f.NetHelper bar = autismclient.gui.ui.widgets.WindowHeaderHelper.init(window, 14);
       autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.WindowHeaderHelper.load(window, 14);
       int size = Math.min(12, Math.max(9, 10));
@@ -78,9 +78,9 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
          autismclient.gui.f.NetHelper pin = this.init_NetHelper_cH(bounds);
          autismclient.gui.ui.UiColorScheme colors = autismclient.gui.f.UiHelper.init(context, Minecraft.getInstance().font, mouseX, mouseY)
             .init_TableIndex()
-            .init_JsonUtil();
+            .colors();
          boolean hovered = pin.init_Z(mouseX, mouseY);
-         int color = this.read_Z ? colors.clear : (hovered ? colors.prev : colors.valid);
+         int color = this.read_Z ? colors.accent : (hovered ? colors.textPrimary : colors.textSecondary);
          GuiIconAtlas.init(context, GuiIconAtlas.add, pin.read(), pin.write(), pin.update(), pin.sync(), color);
       }
    }
@@ -130,17 +130,17 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    @Override
    public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
-         OverlayBounds c = this.init_cH_cX_cH(this, bounds);
-         this.init_I_2 = c.init_I;
-         this.load_I = c.load_I;
-         this.read_I = c.read;
-         this.write = c.write;
-         this.init_Z = c.init_Z;
-         if (this.load_Z != c.load_Z) {
-            this.sync_V_Z(c.load_Z);
+         OverlayBounds c = this.clampToScreen(this, bounds);
+         this.init_I_2 = c.x;
+         this.load_I = c.y;
+         this.read_I = c.width;
+         this.write = c.height;
+         this.init_Z = c.visible;
+         if (this.load_Z != c.collapsed) {
+            this.snapCollapseState(c.collapsed);
          }
 
-         this.load_Z = c.load_Z;
+         this.load_Z = c.collapsed;
       }
    }
 
@@ -190,10 +190,10 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
          int screenH = cA.load_I();
          int minW = this.flush_I();
          int minH = this.a__I();
-         int w = OverlayWindowSizeStore.read(width, minW, screenW > 0 ? screenW - 4 - b.init_I : width);
-         int h = OverlayWindowSizeStore.read(height, minH, screenH > 0 ? screenH - 4 - b.load_I : height);
-         OverlayBounds clamped = init_cH_cH(new OverlayBounds(b.init_I, b.load_I, w, h, b.init_Z, b.load_Z), minW, minH, screenW, screenH);
-         this.init_do().init(clamped.read, clamped.write);
+         int w = OverlayWindowSizeStore.read(width, minW, screenW > 0 ? screenW - 4 - b.x : width);
+         int h = OverlayWindowSizeStore.read(height, minH, screenH > 0 ? screenH - 4 - b.y : height);
+         OverlayBounds clamped = clampBounds(new OverlayBounds(b.x, b.y, w, h, b.visible, b.collapsed), minW, minH, screenW, screenH);
+         this.init_do().init(clamped.width, clamped.height);
          this.init_V_cH(clamped);
          this.c_();
       }
@@ -218,8 +218,8 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    }
 
    @Override
-   protected boolean read_Z_D_2(double mouseX, double mouseY, OverlayBounds bounds) {
-      return super.read_Z_D_2(mouseX, mouseY, bounds) || this.load_Z_D_2(mouseX, mouseY, bounds);
+   protected boolean isOverHeader(double mouseX, double mouseY, OverlayBounds bounds) {
+      return super.isOverHeader(mouseX, mouseY, bounds) || this.load_Z_D_2(mouseX, mouseY, bounds);
    }
 
    @Override
@@ -238,7 +238,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
       if (!this.init_Z) {
          return false;
       } else if (!(mx < this.init_I_2) && !(mx > this.init_I_2 + this.read_I)) {
-         return !(my < this.load_I) && !(my > this.load_I + 14) ? !this.read_Z_D_2(mx, my, this.init_cH()) : false;
+         return !(my < this.load_I) && !(my > this.load_I + 14) ? !this.isOverHeader(mx, my, this.init_cH()) : false;
       } else {
          return false;
       }

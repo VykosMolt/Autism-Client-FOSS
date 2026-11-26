@@ -153,7 +153,7 @@ public final class AutismClientMessaging {
 
                ChatComponent chat = MC.gui.hud.getChat();
                chat.addRecentChat(line);
-               if (autismclient.commands.CommandManager.init_Z(line)) {
+               if (autismclient.commands.CommandManager.hasCommandPrefix(line)) {
                   CommandHistory history = ((AutismChatComponentAccessor)chat).autism$getCommandHistory();
                   if (history != null) {
                      history.addCommand(line);

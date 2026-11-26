@@ -24,7 +24,7 @@ public class GiveCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.init_Str() + "give <item> [count]");
+         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.getPrefix() + "give <item> [count]");
          return 1;
       });
       root.then(
@@ -59,7 +59,7 @@ public class GiveCommand extends Command {
       }
 
       if (words.isEmpty()) {
-         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.init_Str() + "give <item> [count]");
+         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.getPrefix() + "give <item> [count]");
          return 1;
       } else {
          return init(String.join("_", words), count);

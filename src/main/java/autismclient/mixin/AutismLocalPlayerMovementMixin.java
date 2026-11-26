@@ -58,12 +58,12 @@ public class AutismLocalPlayerMovementMixin {
       LocalPlayer player = (LocalPlayer)(Object)this;
       float fastExp = f.init(player, original);
       float scaffold = ScaffoldModule.init_F_LocalPlayer_F(player, fastExp);
-      float yaw = SilentMovementCoordinator.init(player, scaffold);
+      float yaw = SilentMovementCoordinator.getPlayerYaw(player, scaffold);
       if (!AutismLiteVariant.enabled()) {
          yaw = LeafDupeModule.init_F_LocalPlayer_F_2(player, yaw);
       }
 
-      SilentMovementCoordinator.init(yaw);
+      SilentMovementCoordinator.setCameraYaw(yaw);
       return yaw;
    }
 
@@ -72,12 +72,12 @@ public class AutismLocalPlayerMovementMixin {
       LocalPlayer player = (LocalPlayer)(Object)this;
       float fastExp = f.load(player, original);
       float scaffold = ScaffoldModule.load_F_LocalPlayer_F(player, fastExp);
-      float pitch = SilentMovementCoordinator.load(player, scaffold);
+      float pitch = SilentMovementCoordinator.getPlayerPitch(player, scaffold);
       if (!AutismLiteVariant.enabled()) {
          pitch = LeafDupeModule.load_F_LocalPlayer_F_2(player, pitch);
       }
 
-      SilentMovementCoordinator.load(pitch);
+      SilentMovementCoordinator.setCameraPitch(pitch);
       return pitch;
    }
 
@@ -160,7 +160,7 @@ public class AutismLocalPlayerMovementMixin {
             LeafDupeModule.load_V_LocalPlayer_2((LocalPlayer)(Object)this);
          }
 
-         SilentMovementCoordinator.init(Minecraft.getInstance());
+         SilentMovementCoordinator.captureDebugTelemetry(Minecraft.getInstance());
          if (!AutismLiteVariant.enabled()) {
             KBDisplacementModule.init_V_21();
          }

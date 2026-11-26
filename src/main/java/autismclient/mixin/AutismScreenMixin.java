@@ -56,13 +56,13 @@ public abstract class AutismScreenMixin {
             }
 
             if (this.autism$queueEditorOverlay != null) {
-               OverlayManager.init_bk().init_V(this.autism$queueEditorOverlay);
+               OverlayManager.getInstance().register(this.autism$queueEditorOverlay);
             }
          } else {
             Font textRenderer = ((AutismScreenAccessor)(Object)this).getFont();
             this.autism$queueEditorOverlay = new AutismQueueEditorOverlay(textRenderer);
             this.autism$queueEditorOverlay.sync_V_17();
-            OverlayManager.init_bk().init_V(this.autism$queueEditorOverlay);
+            OverlayManager.getInstance().register(this.autism$queueEditorOverlay);
             this.autism$lecternInitialized = true;
          }
       }
@@ -120,8 +120,8 @@ public abstract class AutismScreenMixin {
       }
 
       if (screen instanceof LecternScreen) {
-         OverlayManager.init_bk().read_V(this.autism$queueEditorOverlay);
-         OverlayManager.init_bk().read_V(this.autism$packetLoggerOverlay);
+         OverlayManager.getInstance().unregister(this.autism$queueEditorOverlay);
+         OverlayManager.getInstance().unregister(this.autism$packetLoggerOverlay);
       }
    }
 

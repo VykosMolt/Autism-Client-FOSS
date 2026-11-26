@@ -53,7 +53,7 @@ public final class ScreenOverlayHost {
          ScreenEvents.afterExtract(screen).register((scrn, drawContext, mouseX, mouseY, tickDelta) -> {
             if (this.isActive()) {
                try {
-                  OverlayManager.init_bk().init(drawContext, mouseX, mouseY, tickDelta);
+                  OverlayManager.getInstance().render(drawContext, mouseX, mouseY, tickDelta);
                } catch (Throwable ignored) {
                }
             }
@@ -67,7 +67,7 @@ public final class ScreenOverlayHost {
             }
          });
          if (this.isActive() && !OverlayScreenController.read_Z()) {
-            if (!this.overlaysInitialized || !OverlayManager.init_bk().init_Z()) {
+            if (!this.overlaysInitialized || !OverlayManager.getInstance().hasOverlays()) {
                try {
                   this.buildOverlays(font);
                   this.overlaysInitialized = true;
@@ -82,7 +82,7 @@ public final class ScreenOverlayHost {
          this.overlaysInitialized = true;
          ScreenEvents.afterExtract(screen).register((scrn, drawContext, mouseX, mouseY, tickDelta) -> {
             if (this.isActive()) {
-               OverlayManager.init_bk().init(drawContext, mouseX, mouseY, tickDelta);
+               OverlayManager.getInstance().render(drawContext, mouseX, mouseY, tickDelta);
             }
          });
       }
@@ -113,30 +113,30 @@ public final class ScreenOverlayHost {
          }
       }
 
-      OverlayManager manager = OverlayManager.init_bk();
-      manager.load_V();
-      manager.init_V(this.lanSyncOverlay);
-      manager.init_V(this.macroListOverlay);
-      manager.init_V(this.queueEditorOverlay);
-      manager.init_V(this.customFilterOverlay);
+      OverlayManager manager = OverlayManager.getInstance();
+      manager.clearNonPersistent();
+      manager.register(this.lanSyncOverlay);
+      manager.register(this.macroListOverlay);
+      manager.register(this.queueEditorOverlay);
+      manager.register(this.customFilterOverlay);
       if (this.customFilterPresetOverlay != null) {
-         manager.init_V(this.customFilterPresetOverlay);
+         manager.register(this.customFilterPresetOverlay);
       }
 
       if (this.macroEditorOverlay != null) {
-         manager.init_V(this.macroEditorOverlay);
+         manager.register(this.macroEditorOverlay);
       }
 
       if (this.dialogMode) {
          ActionEditorOverlay actionEditor = ActionEditorOverlay.init_ActionEditorOverla_2();
          actionEditor.load_V_Z(inWorld);
-         manager.init_V(actionEditor);
+         manager.register(actionEditor);
       }
 
       ModuleRuntimeManager autismModule = ModuleRuntimeManager.init_PoolEntry();
       this.keybindOverlay = new AutismKeybindOverlay();
       this.keybindOverlay.b__V();
-      manager.init_V(this.keybindOverlay);
+      manager.register(this.keybindOverlay);
       this.launcherOverlay = new AutismLauncherOverlay(
          this.macroListOverlay, null, this.lanSyncOverlay, this.queueEditorOverlay, this.packetLoggerOverlay, this.customFilterOverlay
       );
@@ -150,7 +150,7 @@ public final class ScreenOverlayHost {
          }
 
          if (this.packetLoggerOverlay != null) {
-            manager.init_V(this.packetLoggerOverlay);
+            manager.register(this.packetLoggerOverlay);
          }
 
          return this.packetLoggerOverlay;
@@ -164,7 +164,7 @@ public final class ScreenOverlayHost {
          }
 
          if (this.serverInfoOverlay != null) {
-            manager.init_V(this.serverInfoOverlay);
+            manager.register(this.serverInfoOverlay);
          }
 
          return this.serverInfoOverlay;
@@ -175,7 +175,7 @@ public final class ScreenOverlayHost {
          if (this.packetLoggerOverlay != null) {
             this.packetLoggerOverlay.flush_V_13();
             if (this.packetLoggerOverlay.sync_Z()) {
-               manager.init_V(this.packetLoggerOverlay);
+               manager.register(this.packetLoggerOverlay);
             }
          }
       }
@@ -186,7 +186,7 @@ public final class ScreenOverlayHost {
          if (this.serverInfoOverlay != null) {
             this.serverInfoOverlay.update_V_21();
             if (this.serverInfoOverlay.sync_Z()) {
-               manager.init_V(this.serverInfoOverlay);
+               manager.register(this.serverInfoOverlay);
             }
          }
       }
@@ -195,7 +195,7 @@ public final class ScreenOverlayHost {
          ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
          AutismOverlay profilesOverlay = mod == null ? null : mod.load_cX();
          if (profilesOverlay != null && profilesOverlay.sync_Z()) {
-            manager.init_V(profilesOverlay);
+            manager.register(profilesOverlay);
          }
       }
 
@@ -204,24 +204,24 @@ public final class ScreenOverlayHost {
          this.launcherOverlay.init_V_Z(true);
       }
 
-      manager.init_V(this.launcherOverlay);
+      manager.register(this.launcherOverlay);
    }
 
    public void onBookRemoved() {
       if ((this.overlaysInitialized || this.isActive()) && !OverlayScreenController.read_Z()) {
          this.overlaysInitialized = false;
          this.persistOverlays();
-         OverlayManager.init_bk().load_V();
+         OverlayManager.getInstance().clearNonPersistent();
       }
    }
 
    private void saveDialogOverlays() {
       if (this.isActive() && !OverlayScreenController.read_Z()) {
          try {
-            OverlayManager.init_bk().close();
+            OverlayManager.getInstance().restoreStashedIfFits();
             this.persistOverlays();
          } finally {
-            OverlayManager.init_bk().load_V();
+            OverlayManager.getInstance().clearNonPersistent();
          }
       }
    }
@@ -269,26 +269,26 @@ public final class ScreenOverlayHost {
    }
 
    public boolean mouseClicked(MouseButtonEvent click) {
-      return this.isActive() && OverlayManager.init_bk().init_Z_D_2(click.x(), click.y(), Compat263.mouseEventGlfwButton(click));
+      return this.isActive() && OverlayManager.getInstance().mouseClicked(click.x(), click.y(), Compat263.mouseEventGlfwButton(click));
    }
 
    public boolean mouseReleased(MouseButtonEvent click) {
-      return this.isActive() && OverlayManager.init_bk().load(click.x(), click.y(), Compat263.mouseEventGlfwButton(click));
+      return this.isActive() && OverlayManager.getInstance().mouseReleased(click.x(), click.y(), Compat263.mouseEventGlfwButton(click));
    }
 
    public boolean mouseDragged(MouseButtonEvent click, double deltaX, double deltaY) {
-      return this.isActive() && OverlayManager.init_bk().init(click.x(), click.y(), Compat263.mouseEventGlfwButton(click), deltaX, deltaY);
+      return this.isActive() && OverlayManager.getInstance().mouseDragged(click.x(), click.y(), Compat263.mouseEventGlfwButton(click), deltaX, deltaY);
    }
 
    public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {
-      return this.isActive() && OverlayManager.init_bk().init_Z_D(mouseX, mouseY, verticalAmount);
+      return this.isActive() && OverlayManager.getInstance().mouseScrolled(mouseX, mouseY, verticalAmount);
    }
 
    public boolean keyPressed(KeyEvent input) {
-      return this.isActive() && OverlayManager.init_bk().init_Z_I(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input));
+      return this.isActive() && OverlayManager.getInstance().keyPressed(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input));
    }
 
    public boolean charTyped(CharacterEvent input) {
-      return this.isActive() && OverlayManager.init_bk().init_Z_C_I((char)input.codepoint(), 0);
+      return this.isActive() && OverlayManager.getInstance().charTyped((char)input.codepoint(), 0);
    }
 }

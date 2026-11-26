@@ -149,15 +149,15 @@ public final class BlockBreakSpeedHelper {
       }
 
       if (best < 9) {
-         InventorySlotHelper.init_V(mc, best);
+         InventorySlotHelper.selectHotbarSlot(mc, best);
          return true;
       }
 
-      if (!InventorySlotHelper.read(mc, best, selected)) {
+      if (!InventorySlotHelper.swapPlayerSlots(mc, best, selected)) {
          return false;
       }
 
-      InventorySlotHelper.init_V(mc, selected);
+      InventorySlotHelper.selectHotbarSlot(mc, selected);
       return true;
    }
 }

@@ -17,7 +17,7 @@ public final class ChangeSlotCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(context -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "change-slot <1-9>");
+         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.getPrefix() + "change-slot <1-9>");
          return 1;
       });
       root.then(
@@ -34,7 +34,7 @@ public final class ChangeSlotCommand extends Command {
    private static int init(int oneBasedSlot) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.getConnection() != null) {
-         InventorySlotHelper.init_V(mc, oneBasedSlot - 1);
+         InventorySlotHelper.selectHotbarSlot(mc, oneBasedSlot - 1);
          AutismClientMessaging.sendPrefixed("§aSelected hotbar slot §f" + oneBasedSlot + "§a.");
          return 1;
       } else {

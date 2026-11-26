@@ -235,7 +235,7 @@ public final class AutismSessionState {
 
    public synchronized OverlayBounds init_cH_Str(String id) {
       OverlayBounds layout = this.init_Map.get(id);
-      return layout == null ? null : new OverlayBounds(layout.init_I, layout.load_I, layout.read, layout.write, layout.init_Z, layout.load_Z);
+      return layout == null ? null : new OverlayBounds(layout.x, layout.y, layout.width, layout.height, layout.visible, layout.collapsed);
    }
 
    public boolean init_Z_Str(String id) {
@@ -254,12 +254,12 @@ public final class AutismSessionState {
 
    public synchronized void init_V_Str_cH(String id, OverlayBounds layout) {
       if (id != null && !id.isEmpty() && layout != null) {
-         OverlayBounds trueGeometry = OverlayManager.init_bk().init(id);
+         OverlayBounds trueGeometry = OverlayManager.getInstance().getStashedBounds(id);
          if (trueGeometry != null) {
-            layout = new OverlayBounds(trueGeometry.init_I, trueGeometry.load_I, trueGeometry.read, trueGeometry.write, layout.init_Z, layout.load_Z);
+            layout = new OverlayBounds(trueGeometry.x, trueGeometry.y, trueGeometry.width, trueGeometry.height, layout.visible, layout.collapsed);
          }
 
-         this.init_Map.put(id, new OverlayBounds(layout.init_I, layout.load_I, layout.read, layout.write, layout.init_Z, layout.load_Z));
+         this.init_Map.put(id, new OverlayBounds(layout.x, layout.y, layout.width, layout.height, layout.visible, layout.collapsed));
       }
    }
 

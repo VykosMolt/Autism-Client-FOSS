@@ -366,7 +366,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    @Override
    public boolean load_Z_23() {
       boolean enabled = this.isEnabled();
-      return !SilentMovementCoordinator.init_Z() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.flush_Z_2());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.flush_Z_2());
    }
 
    private boolean flush_Z_2() {
@@ -390,7 +390,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          && (!MC.player.isUsingItem() || KillAuraModule.read_Z_14())
          && (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49() && !DangerModule.sync_Z_12())
          && !MC.player.isHandsBusy()
-         && !SilentMovementCoordinator.init_Z()
+         && !SilentMovementCoordinator.isSafeWalkActive()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20();
@@ -431,7 +431,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             ItemStack material = slot < 0 ? ItemStack.EMPTY : MC.player.getInventory().getItem(slot);
             ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
             RotationMath.Rotation wireRotation = wire.init_Z() ? new RotationMath.Rotation(wire.read(), wire.write()) : null;
-            RotationMath.Rotation from = wireRotation != null ? wireRotation : RotationMath.init(MC.player);
+            RotationMath.Rotation from = wireRotation != null ? wireRotation : RotationMath.ofPlayer(MC.player);
             this.read_V_5();
             this.init_V_ItemStack(material);
             slot = this.init_I == 0 ? -1 : this.init_IArr[this.init_I];
@@ -1185,8 +1185,8 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private boolean init_Z_ListPool_StreamUti_ce_DataUtil(BedDefenderModule.Inner_StreamUtil plan, RotationMath.Rotation wire) {
-      double band = autismclient.util.RotationStreamPlanner.init_D_D(RotationMath.init());
-      if (RotationMath.init_F(wire, plan.init_ce_DataUtil()) > band * 2.0) {
+      double band = autismclient.util.RotationStreamPlanner.init_D_D(RotationMath.gcdStep());
+      if (RotationMath.angularDistance(wire, plan.init_ce_DataUtil()) > band * 2.0) {
          return false;
       }
 
@@ -1360,7 +1360,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
                this.next = index + 1 == size ? 0 : index + 1;
                if (plan != null && (stall == null || stall.load <= 0 || !stall.init_List.contains(plan.init_U_BufferHelper()))) {
-                  float angle = RotationMath.init_F(from, plan.init_ce_DataUtil());
+                  float angle = RotationMath.angularDistance(from, plan.init_ce_DataUtil());
                   if (best == null || rank != bestRank || init_Z_Z(plan.init_Direction() == Direction.UP, angle, best, bestAngle)) {
                      best = plan;
                      bestAngle = angle;
@@ -1387,7 +1387,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                for (autismclient.util.BlockPlacementPlanner.PlacementPlan candidate : this.close_Map.getOrDefault(cell, List.of())) {
                   if (stall == null || stall.load <= 0 || !stall.init_List.contains(candidate.init_U_TaskQueue().init_U_BufferHelper())) {
                      BedDefenderModule.Inner_StreamUtil alternative = new BedDefenderModule.Inner_StreamUtil(cell, candidate.init_U_TaskQueue().init_U_BufferHelper(), candidate);
-                     if (earlier == null || RotationMath.init_F(from, alternative.init_ce_DataUtil()) < RotationMath.init_F(from, earlier.init_ce_DataUtil())) {
+                     if (earlier == null || RotationMath.angularDistance(from, alternative.init_ce_DataUtil()) < RotationMath.angularDistance(from, earlier.init_ce_DataUtil())) {
                         earlier = alternative;
                      }
                   }
@@ -1479,8 +1479,8 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             }
 
             if (!(request.init_Vec3().distanceToSqr(point) > request.init_D() * request.init_D())) {
-               RotationMath.Rotation goal = RotationMath.init(point, request.init_Vec3());
-               if (!(Math.abs(goal.load()) > request.load_D())) {
+               RotationMath.Rotation goal = RotationMath.lookAt(point, request.init_Vec3());
+               if (!(Math.abs(goal.pitch()) > request.load_D())) {
                   if (request.init_U_StreamUtil() != null && !request.init_U_StreamUtil().init_Z()) {
                      if (request.init_U_StreamUtil() != this.init_U_StreamUtil) {
                         this.flush_Map.put(option, index);
@@ -1490,8 +1490,8 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                      return null;
                   }
 
-                  RotationMath.Rotation emitted = RotationMath.init_ce_DataUtil(goal, request.init_ce_DataUtil() == null ? goal : request.init_ce_DataUtil());
-                  if (!(Math.abs(emitted.load()) > request.load_D())) {
+                  RotationMath.Rotation emitted = RotationMath.applyGcd(goal, request.init_ce_DataUtil() == null ? goal : request.init_ce_DataUtil());
+                  if (!(Math.abs(emitted.pitch()) > request.load_D())) {
                      BlockHitResult hit = autismclient.util.BlockPlacementPlanner.init_BlockHitResult_Vec3(request.init_Vec3(), emitted, request.init_D(), MC.level, MC.player);
                      if (hit != null) {
                         BlockState state = MC.level.getBlockState(hit.getBlockPos());
@@ -1516,7 +1516,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                                  emitted,
                                  emitted,
                                  request.init_Vec3().distanceTo(hit.getLocation()),
-                                 request.init_ce_DataUtil() == null ? 0.0F : RotationMath.init_F(request.init_ce_DataUtil(), emitted),
+                                 request.init_ce_DataUtil() == null ? 0.0F : RotationMath.angularDistance(request.init_ce_DataUtil(), emitted),
                                  autismclient.util.BlockPlacementPlanner.SamplePoint.ESCAPE
                               );
                               refusal[0] = autismclient.util.BlockPlacementPlanner.RejectReason.NONE;
@@ -1743,7 +1743,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                this.reset = selected;
             }
 
-            autismclient.util.InventorySlotHelper.init_V(MC, slot);
+            autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
             this.start = slot;
          } finally {
             autismclient.util.InventorySlotArbiter.read_V(this.id());
@@ -1763,7 +1763,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             boolean fighting = al.init_Module_Str("kill-aura") instanceof KillAuraModule aura && aura.isEnabled();
             if ((++this.stop >= 6 || fighting) && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                try {
-                  autismclient.util.InventorySlotHelper.init_V(MC, this.reset);
+                  autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, this.reset);
                   this.reset = -1;
                   this.start = -1;
                   this.stop = 0;

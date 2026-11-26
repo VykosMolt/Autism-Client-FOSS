@@ -50,8 +50,8 @@ public final class RotationStreamPlanner {
    public static void init_V_ap_TaskQueue_ce_DataUtil(RotationStreamPlanner.Inner_TaskQueue s, RotationMath.Rotation from) {
       Objects.requireNonNull(s, "stream");
       Objects.requireNonNull(from, "from");
-      s.init_D = from.init();
-      s.load_D = from.load();
+      s.init_D = from.yaw();
+      s.load_D = from.pitch();
       s.read_D = 0.0;
       s.write_D = 0.0;
       s.init_I = 0;
@@ -59,8 +59,8 @@ public final class RotationStreamPlanner {
       s.read_F = 0.0F;
       s.init_ap_BufferHelper = null;
       s.load_ap_BufferHelper = null;
-      s.sync = from.init();
-      s.flush = from.load();
+      s.sync = from.yaw();
+      s.flush = from.pitch();
       s.init_Z = true;
    }
 
@@ -84,8 +84,8 @@ public final class RotationStreamPlanner {
       Objects.requireNonNull(s, "stream");
       Objects.requireNonNull(at, "at");
       double g = gcd > 0.0 ? gcd : 0.15;
-      s.init_D = at.init();
-      s.load_D = at.load();
+      s.init_D = at.yaw();
+      s.load_D = at.pitch();
       s.read_D = Math.abs(lastStepYaw);
       s.write_D = Math.abs(lastStepPitch);
       s.init_I = (int)Math.round(s.read_D / g);
@@ -93,8 +93,8 @@ public final class RotationStreamPlanner {
       s.read_F = (float)s.read_D;
       s.init_ap_BufferHelper = null;
       s.load_ap_BufferHelper = null;
-      s.sync = at.init();
-      s.flush = at.load();
+      s.sync = at.yaw();
+      s.flush = at.pitch();
       s.init_Z = true;
    }
 
@@ -130,13 +130,13 @@ public final class RotationStreamPlanner {
          rolls = s.init_ap_BufferHelper;
       }
 
-      s.sync = goal.init();
-      s.flush = goal.load();
+      s.sync = goal.yaw();
+      s.flush = goal.pitch();
       s.update = profile == RotationStreamPlanner.Inner_StreamUtil.STANDARD ? init_D_D_Random(s.update, s.init_Random) : 1.0;
       s.read_I = init_I_I_Random(s.read_I, s.init_Random);
       s.write_I = init_I_I_Random(s.write_I, s.init_Random);
-      double effectiveYaw = goal.init() + (applyGoalOffset ? rolls.update : 0.0);
-      double effectivePitch = read(goal.load() + (applyGoalOffset ? rolls.sync : 0.0));
+      double effectiveYaw = goal.yaw() + (applyGoalOffset ? rolls.update : 0.0);
+      double effectivePitch = read(goal.pitch() + (applyGoalOffset ? rolls.sync : 0.0));
       RotationStreamPlanner.Inner_DataUtil yawAxis = new RotationStreamPlanner.Inner_DataUtil(load_D(effectiveYaw - s.init_D), maxYawStep, g, s.read_D, rolls.write, 0.0 / 0.0);
       RotationStreamPlanner.Inner_DataUtil pitchAxis = new RotationStreamPlanner.Inner_DataUtil(effectivePitch - s.load_D, maxPitchStep, g, s.write_D, rolls.write, s.load_D);
       int kYaw = init_I_ap_DataUtil(yawAxis, s.init_I, rolls.init_D, rolls.read * s.update, s.init_Random, s.read_I);
@@ -402,8 +402,8 @@ public final class RotationStreamPlanner {
       rolls.write = profile.update_D + profile.sync_D * random.nextDouble();
       rolls.update = init_D_Random(random);
       rolls.sync = init_D_Random(random);
-      rolls.flush = goal.init();
-      rolls.close = goal.load();
+      rolls.flush = goal.yaw();
+      rolls.close = goal.pitch();
       return rolls;
    }
 
@@ -421,8 +421,8 @@ public final class RotationStreamPlanner {
          return true;
       }
 
-      double dYaw = load_D(goal.init() - s.init_ap_BufferHelper.flush);
-      double dPitch = goal.load() - s.init_ap_BufferHelper.close;
+      double dYaw = load_D(goal.yaw() - s.init_ap_BufferHelper.flush);
+      double dPitch = goal.pitch() - s.init_ap_BufferHelper.close;
       return Math.max(Math.abs(dYaw), Math.abs(dPitch)) > 4.0;
    }
 

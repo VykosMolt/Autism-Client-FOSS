@@ -674,9 +674,9 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
 
          for (Slot candidate : mc.player.containerMenu.slots) {
             if (candidate != null && !candidate.getItem().isEmpty()) {
-               boolean playerSlot = autismclient.util.InventorySlotHelper.init_Z(mc, candidate);
+               boolean playerSlot = autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, candidate);
                if (playerOnly == playerSlot) {
-                  int visible = autismclient.util.InventorySlotHelper.init_I(mc, candidate.index);
+                  int visible = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, candidate.index);
                   if ((this.slot < 0 || this.slot == visible || this.slot == candidate.index)
                      && (filter == null || !filter.update() || filter.init_I_ItemStack_I(candidate.getItem(), visible) >= 0)) {
                      return this.init_TaskQueue_DataUtil_ItemStack_I(candidate.getItem(), visible);

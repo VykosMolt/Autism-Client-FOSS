@@ -106,14 +106,14 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
             autismclient.gui.f.NetHelper.init(x, this.push(), panelW, this.reset()),
             5,
             -401402080,
-            ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.update, ThemePaletteManager.ColorRole.OUTLINE)
+            ThemePaletteManager.recolor(GuiColorPalette.update, ThemePaletteManager.ColorRole.OUTLINE)
          );
          autismclient.gui.f.PacketUtil.load(
             graphics,
             autismclient.gui.f.NetHelper.init(this.start(), this.stop(), this.next(), this.valid()),
             5,
             -1206840035,
-            ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.update, ThemePaletteManager.ColorRole.OUTLINE)
+            ThemePaletteManager.recolor(GuiColorPalette.update, ThemePaletteManager.ColorRole.OUTLINE)
          );
          int titleX = this.open() + this.init_I_Str_3("Back") + 4;
          autismclient.gui.f.b.k.init(
@@ -352,7 +352,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
             }
          }
 
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(graphics, scrollbar, scrollbar.init(mouseX, mouseY), this.load_Z);
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, scrollbar, scrollbar.containsTrack(mouseX, mouseY), this.load_Z);
       }
    }
 
@@ -388,12 +388,12 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          bounds,
          4,
          selected
-            ? ThemePaletteManager.init_I_I_ct_DataUtil(976607347, ThemePaletteManager.ColorRole.SUCCESS)
-            : (hovered ? ThemePaletteManager.init_I_I_ct_DataUtil(606804509, ThemePaletteManager.ColorRole.ACCENT) : 403771667)
+            ? ThemePaletteManager.recolor(976607347, ThemePaletteManager.ColorRole.SUCCESS)
+            : (hovered ? ThemePaletteManager.recolor(606804509, ThemePaletteManager.ColorRole.ACCENT) : 403771667)
       );
       if (selected) {
          autismclient.gui.f.PacketUtil.load(
-            graphics, bounds.load(1, 1, 1, 1), 3, ThemePaletteManager.init_I_I_ct_DataUtil(hovered ? 1463146611 : 976607347, ThemePaletteManager.ColorRole.SUCCESS)
+            graphics, bounds.load(1, 1, 1, 1), 3, ThemePaletteManager.recolor(hovered ? 1463146611 : 976607347, ThemePaletteManager.ColorRole.SUCCESS)
          );
          autismclient.gui.f.PacketUtil.load(
             graphics, autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write() + 2, 2, bounds.sync() - 4), 1, GuiColorPalette.open
@@ -414,10 +414,10 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
       if (Compat263.mouseEventGlfwButton(event) == 0) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_2();
-         if (scrollbar.init_Z() && scrollbar.init(event.x(), event.y())) {
+         if (scrollbar.isScrollable() && scrollbar.containsTrack(event.x(), event.y())) {
             this.load_Z = true;
-            this.write = scrollbar.load(event.x(), event.y()) ? Math.max(0, (int)Math.round(event.y()) - scrollbar.update()) : scrollbar.sync() / 2;
-            this.init_V_I_2(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(scrollbar, event.y(), this.write));
+            this.write = scrollbar.containsThumb(event.x(), event.y()) ? Math.max(0, (int)Math.round(event.y()) - scrollbar.thumbY()) : scrollbar.thumbHeight() / 2;
+            this.init_V_I_2(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, event.y(), this.write));
             if (this.init_k != null) {
                this.init_k.push(false);
             }
@@ -478,7 +478,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       if (autismclient.gui.ui.widgets.DropdownWidget.load(this.read_List, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
          return true;
       } else if (this.load_Z) {
-         this.init_V_I_2(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(this.init_PoolEntry_DataUtil_2(), event.y(), this.write));
+         this.init_V_I_2(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_2(), event.y(), this.write));
          return true;
       } else {
          return this.init_k != null && this.init_k.init(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), dx, dy);
@@ -577,7 +577,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    private void init_V_aM_2(AutismMacro macro) {
       AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
-      OverlayManager.init_bk().init_V_cX_cX_DataUtil(editor, AutismOverlay.RenderLayer.HOST_SCREEN);
+      OverlayManager.getInstance().register(editor, AutismOverlay.RenderLayer.HOST_SCREEN);
       editor.init_V_aM_Consumer_2(macro, saved -> {
          if (saved != null && saved.init_Str != null && !saved.init_Str.isBlank()) {
             JoinMacroController.init_V(saved.init_Str);
@@ -616,11 +616,11 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private int init_I_Str_3(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.load(autismclient.gui.f.b.k.init(this.font, label, autismclient.gui.f.a.DataUtil.init, 0));
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(autismclient.gui.f.b.k.init(this.font, label, autismclient.gui.f.a.DataUtil.init, 0));
    }
 
    private int init_I_I_I_2(int top, int height) {
-      return autismclient.gui.f.UiHelper.init(this.font).init_I(autismclient.gui.f.NetHelper.init(0, top, 1, height));
+      return autismclient.gui.f.UiHelper.init(this.font).centerTextY(autismclient.gui.f.NetHelper.init(0, top, 1, height));
    }
 
    private int read_I_2() {
@@ -634,11 +634,11 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private int write_I_2() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int update_I_2() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int sync() {
@@ -744,7 +744,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    private int init_I_PoolEntry_DataUtil(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar) {
       int right = this.start() + this.next() - 4;
-      return scrollbar.init_Z() ? this.cache() - 2 : right;
+      return scrollbar.isScrollable() ? this.cache() - 2 : right;
    }
 
    private int cache() {
@@ -757,7 +757,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       int trackH = Math.max(1, this.data() * pitch - 2);
       int contentPixels = Math.max(0, this.init_List.size() * pitch);
       int viewPixels = Math.max(1, this.data() * pitch);
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(contentPixels, viewPixels, this.cache(), trackY, 6, trackH, this.read_I * pitch);
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, viewPixels, this.cache(), trackY, 6, trackH, this.read_I * pitch);
    }
 
    private void init_V_I_2(int scrollPixels) {

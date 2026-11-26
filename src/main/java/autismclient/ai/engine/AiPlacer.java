@@ -134,7 +134,7 @@ public final class AiPlacer {
             return this.init("The server swapped a different portable container stack");
          }
 
-         InventorySlotHelper.init_V(mc, this.flush);
+         InventorySlotHelper.selectHotbarSlot(mc, this.flush);
          return AiPlacer.PlaceStatus.WORKING;
       } else {
          if (!AutismLiteVariant.enabled()) {
@@ -197,7 +197,7 @@ public final class AiPlacer {
                }
 
                if (mc.player.getInventory().getSelectedSlot() != slot) {
-                  InventorySlotHelper.init_V(mc, slot);
+                  InventorySlotHelper.selectHotbarSlot(mc, slot);
                   return AiPlacer.PlaceStatus.WORKING;
                }
             } else {

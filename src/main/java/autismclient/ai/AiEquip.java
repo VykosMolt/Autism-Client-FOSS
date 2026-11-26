@@ -123,7 +123,7 @@ final class AiEquip {
                            }
 
                            this.init_J = AiServerEvidence.load_J_I(mc.player.inventoryMenu.containerId);
-                           int menuSlot = autismclient.util.InventorySlotHelper.load_I(mc, source);
+                           int menuSlot = autismclient.util.InventorySlotHelper.toScreenSlot(mc, source);
                            this.init_Z = menuSlot >= 0;
                            if (this.init_Z) {
                               AiContainerTransactions.init(mc.player.inventoryMenu.containerId, menuSlot, 40, ContainerInput.SWAP);
@@ -235,11 +235,11 @@ final class AiEquip {
                      this.init_ItemStack = mc.player.getInventory().getItem(source).copy();
                      this.init_I = source < 9 ? source : AiItems.load();
                      if (source < 9) {
-                        autismclient.util.InventorySlotHelper.init_V(mc, this.init_I);
+                        autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.init_I);
                         return this.init(AiOperation.Status.SUCCEEDED, "Holding " + AiEquip.load());
                      }
 
-                     int menuSlot = autismclient.util.InventorySlotHelper.load_I(mc, source);
+                     int menuSlot = autismclient.util.InventorySlotHelper.toScreenSlot(mc, source);
                      if (menuSlot < 0) {
                         return this.init(AiOperation.Status.FAILED, "Could not resolve the equipment's inventory slot");
                      }
@@ -256,7 +256,7 @@ final class AiEquip {
                      return this.init(AiOperation.Status.FAILED, "Server did not apply the expected hotbar swap; no repeat click issued");
                   }
 
-                  autismclient.util.InventorySlotHelper.init_V(mc, this.init_I);
+                  autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.init_I);
                   return this.init(AiOperation.Status.SUCCEEDED, "Holding " + AiEquip.load());
                } else {
                   return ++this.load_I > 40
@@ -473,7 +473,7 @@ final class AiEquip {
          }
 
          int init(autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate) {
-            return autismclient.util.InventorySlotHelper.load_I(mc, candidate.init_I());
+            return autismclient.util.InventorySlotHelper.toScreenSlot(mc, candidate.init_I());
          }
 
          AiOperation.Result init(String message) {

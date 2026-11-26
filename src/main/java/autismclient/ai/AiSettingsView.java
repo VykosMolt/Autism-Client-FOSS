@@ -578,7 +578,7 @@ final class AiSettingsView {
 
          y += ctrl + 2;
          if (this.read_Z) {
-            kit.init_V_Str_2("Runs in the client. Instant, free, no API.", x + 5, y + 1, w - 10, kit.init_JsonUtil.valid);
+            kit.init_V_Str_2("Runs in the client. Instant, free, no API.", x + 5, y + 1, w - 10, kit.init_JsonUtil.textSecondary);
             y += AiUiKit.write();
             autismclient.gui.ui.widgets.DropdownWidget.load(kit.init_GuiGraphicsExtract, kit.init_Font, List.of(this.init_SyncManager), kit.write, kit.update);
             y += 4;
@@ -614,7 +614,7 @@ final class AiSettingsView {
          y += ctrl + 2;
          String status = this.init_av.load() ? "Scanning models..." : this.read_Str;
          if (!status.isBlank()) {
-            kit.init_V_Str_2(status, x + 5, y + 1, w - 10, this.init_Z ? kit.init_JsonUtil.data : kit.init_JsonUtil.valid);
+            kit.init_V_Str_2(status, x + 5, y + 1, w - 10, this.init_Z ? kit.init_JsonUtil.danger : kit.init_JsonUtil.textSecondary);
             y += AiUiKit.write() + 2;
          }
 
@@ -638,7 +638,7 @@ final class AiSettingsView {
          }
 
          int opacity = this.write_I >= 0 && (this.update_Z || now < this.flush_J) ? this.write_I : AiVisualization.load(live.ghostOpacity);
-         kit.init_V_Str_3("Ghost opacity: " + opacity + "%", autismclient.gui.f.NetHelper.init(x, y, w, ctrl), x + 5, w, kit.init_JsonUtil.prev);
+         kit.init_V_Str_3("Ghost opacity: " + opacity + "%", autismclient.gui.f.NetHelper.init(x, y, w, ctrl), x + 5, w, kit.init_JsonUtil.textPrimary);
          y += ctrl + 2;
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, ctrl);
          if (kit.load_Z(this.init_NetHelper)) {
@@ -689,7 +689,7 @@ final class AiSettingsView {
             y = this.init_I_cE(kit, flag, live, x, y, w, now);
          }
 
-         kit.init_V_Str_2("Off = legit human movement only", x + 5, y + 1, w - 10, kit.init_JsonUtil.valid);
+         kit.init_V_Str_2("Off = legit human movement only", x + 5, y + 1, w - 10, kit.init_JsonUtil.textSecondary);
          y += AiUiKit.write() + 2;
       }
 
@@ -719,14 +719,14 @@ final class AiSettingsView {
          }
 
          autismclient.gui.f.NetHelper stopRow = autismclient.gui.f.NetHelper.init(x, y, w, ctrl);
-         kit.init_V_Str_3("Stop key", stopRow, x + 5, labelW - 5, kit.init_JsonUtil.prev);
+         kit.init_V_Str_3("Stop key", stopRow, x + 5, labelW - 5, kit.init_JsonUtil.textPrimary);
          autismclient.gui.f.NetHelper bind = autismclient.gui.f.NetHelper.init(x + labelW, y, Math.max(34, kit.load("F10") + 10), ctrl);
          autismclient.gui.ui.widgets.KeybindButtonRenderer.init(kit.init_SyncManager, bind, this.init_I_AiSettings_J(live, now), this.write_Z, kit.init_Z_NetHelper(bind));
          kit.init_V_NetHelper(bind, () -> this.write_Z = !this.write_Z, null, this.write_Z ? "Press a key, Esc cancels" : "Emergency stop key");
          y += ctrl + 2;
          if (!this.read_Z) {
             y = this.init_I_cE(kit, init_cf_DataUtil, live, x, y, w, now);
-            kit.init_V_Str_2("Scripts can read and change anything on this PC", x + 5, y + 1, w - 10, kit.init_JsonUtil.data);
+            kit.init_V_Str_2("Scripts can read and change anything on this PC", x + 5, y + 1, w - 10, kit.init_JsonUtil.danger);
             y += AiUiKit.write() + 2;
          }
 
@@ -763,7 +763,7 @@ final class AiSettingsView {
 
    private autismclient.gui.f.NetHelper init(AiUiKit kit, String label, int x, int y, int w, int labelW) {
       autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(x, y, w, AiUiKit.init_I());
-      kit.init_V_Str_3(label, row, x + 5, labelW - 5, kit.init_JsonUtil.prev);
+      kit.init_V_Str_3(label, row, x + 5, labelW - 5, kit.init_JsonUtil.textPrimary);
       return autismclient.gui.f.NetHelper.init(x + labelW, y, Math.max(20, w - labelW), AiUiKit.init_I());
    }
 
@@ -773,7 +773,7 @@ final class AiSettingsView {
    }
 
    private int init(AiUiKit kit, AiSettingsView.Inner_CachePool section, int x, int y, int w) {
-      autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, w, autismclient.gui.ui.UiDensityMetrics.init(12));
+      autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, w, autismclient.gui.ui.UiDensityMetrics.scaledHeight(12));
       boolean folded = this.init_EnumSet.contains(section);
       autismclient.gui.ui.widgets.GroupHeaderRenderer.init(kit.init_SyncManager, bounds, section.init_Str, folded, kit.init_Z_NetHelper(bounds));
       kit.init_V_NetHelper_Runnable(bounds, () -> {
@@ -858,10 +858,10 @@ final class AiSettingsView {
       int color;
       if (!this.update_Str.isEmpty()) {
          text = this.update_Str;
-         color = kit.init_JsonUtil.data;
+         color = kit.init_JsonUtil.danger;
       } else if (this.read_Z) {
          text = live.builtIn ? "Built-In: no API, no tokens" : "Save to use Built-In";
-         color = live.builtIn ? kit.init_JsonUtil.stop : kit.init_JsonUtil.valid;
+         color = live.builtIn ? kit.init_JsonUtil.success : kit.init_JsonUtil.textSecondary;
       } else {
          String var10000;
          switch (this.init_cF.init_cc_BufferHelper) {
@@ -885,16 +885,16 @@ final class AiSettingsView {
          int var16;
          switch (this.init_cF.init_cc_BufferHelper) {
             case OK:
-               var16 = kit.init_JsonUtil.stop;
+               var16 = kit.init_JsonUtil.success;
                break;
             case FAILED:
-               var16 = kit.init_JsonUtil.data;
+               var16 = kit.init_JsonUtil.danger;
                break;
             case TESTING:
-               var16 = kit.init_JsonUtil.valid;
+               var16 = kit.init_JsonUtil.textSecondary;
                break;
             case UNKNOWN:
-               var16 = this.init_cF.read_Z ? kit.init_JsonUtil.valid : -14249;
+               var16 = this.init_cF.read_Z ? kit.init_JsonUtil.textSecondary : -14249;
                break;
             default:
                throw new MatchException(null, null);

@@ -49,7 +49,7 @@ public final class AntiWebModule extends Module {
                Input keys = player.input.keyPresses;
                double y = Boolean.compare(keys.jump(), keys.shift()) * this.decimal("vertical-speed");
                Vec3 flight = AutismEntityAccessor.autism$getInputVector(
-                  new Vec3(input.x, 0.0, input.y), (float)this.decimal("horizontal-speed"), SilentMovementCoordinator.init(player, player.getYRot())
+                  new Vec3(input.x, 0.0, input.y), (float)this.decimal("horizontal-speed"), SilentMovementCoordinator.getPlayerYaw(player, player.getYRot())
                );
                return new Vec3(flight.x, y, flight.z);
             }

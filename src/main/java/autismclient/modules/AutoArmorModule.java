@@ -428,7 +428,7 @@ public final class AutoArmorModule extends Module {
    }
 
    private int init(autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate) {
-      return autismclient.util.InventorySlotHelper.load_I(MC, candidate.init_I());
+      return autismclient.util.InventorySlotHelper.toScreenSlot(MC, candidate.init_I());
    }
 
    private autismclient.util.ArmorEvaluationHelper.Inner_DataUtil init_TaskTimer_DataUtil() {

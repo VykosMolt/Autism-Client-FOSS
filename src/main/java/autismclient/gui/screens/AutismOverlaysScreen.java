@@ -76,8 +76,8 @@ public class AutismOverlaysScreen extends Screen {
             }
 
             if (this.init_cX != null) {
-               OverlayManager.init_bk().init_V(this.init_cX);
-               OverlayManager.init_bk().update_V(this.init_cX);
+               OverlayManager.getInstance().register(this.init_cX);
+               OverlayManager.getInstance().bringToFront(this.init_cX);
             }
          }
       }
@@ -85,7 +85,7 @@ public class AutismOverlaysScreen extends Screen {
       if (this.write) {
          this.write = false;
          if (this.init_cX != null && this.init_cX.sync_Z()) {
-            OverlayManager.init_bk().write_V(this.init_cX);
+            OverlayManager.getInstance().markClosing(this.init_cX);
          }
       }
    }
@@ -119,7 +119,7 @@ public class AutismOverlaysScreen extends Screen {
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.width, this.height), -1072689136);
       }
 
-      OverlayManager.init_bk().init(graphics, mouseX, mouseY, delta);
+      OverlayManager.getInstance().render(graphics, mouseX, mouseY, delta);
       if (this.init_Z && this.font != null) {
          autismclient.gui.f.NetHelper back = this.init_NetHelper();
          boolean hovered = this.init((double)mouseX, (double)mouseY);
@@ -150,23 +150,23 @@ public class AutismOverlaysScreen extends Screen {
          this.load();
          return true;
       } else {
-         return OverlayManager.init_bk().init_Z_D_2(event.x(), event.y(), Compat263.mouseEventGlfwButton(event));
+         return OverlayManager.getInstance().mouseClicked(event.x(), event.y(), Compat263.mouseEventGlfwButton(event));
       }
    }
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      return OverlayManager.init_bk().load(event.x(), event.y(), Compat263.mouseEventGlfwButton(event));
+      return OverlayManager.getInstance().mouseReleased(event.x(), event.y(), Compat263.mouseEventGlfwButton(event));
    }
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-      return OverlayManager.init_bk().init(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), dx, dy);
+      return OverlayManager.getInstance().mouseDragged(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), dx, dy);
    }
 
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-      return OverlayManager.init_bk().init_Z_D(mouseX, mouseY, scrollY);
+      return OverlayManager.getInstance().mouseScrolled(mouseX, mouseY, scrollY);
    }
 
    @Override
@@ -176,10 +176,10 @@ public class AutismOverlaysScreen extends Screen {
          && this.minecraft.options.keyInventory != null
          && this.minecraft.options.keyInventory.matches(input);
       boolean closeKey = Compat263.keyEventGlfwKey(input) == 256 || inventoryKey;
-      if (closeKey && this.minecraft != null && !OverlayManager.init_bk().update_Z()) {
+      if (closeKey && this.minecraft != null && !OverlayManager.getInstance().hasFocusedTextInput()) {
          this.load();
          return true;
-      } else if (OverlayManager.init_bk().init_Z_I(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
+      } else if (OverlayManager.getInstance().keyPressed(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
          return true;
       } else if (closeKey && this.minecraft != null) {
          this.load();
@@ -191,7 +191,7 @@ public class AutismOverlaysScreen extends Screen {
 
    @Override
    public boolean charTyped(CharacterEvent input) {
-      return OverlayManager.init_bk().init_Z_C_I((char)input.codepoint(), 0);
+      return OverlayManager.getInstance().charTyped((char)input.codepoint(), 0);
    }
 
    private void load() {
@@ -201,7 +201,7 @@ public class AutismOverlaysScreen extends Screen {
 
       if (this.load_Z) {
          if (this.init_cX != null) {
-            OverlayManager.init_bk().read_V(this.init_cX);
+            OverlayManager.getInstance().unregister(this.init_cX);
          }
 
          AutismItemNbtInspectOverlay.load_V_8();

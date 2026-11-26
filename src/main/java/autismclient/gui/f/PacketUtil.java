@@ -84,7 +84,7 @@ public final class PacketUtil {
       if (context.init_Z()) {
          load(context.init_GuiGraphicsExtract(), bounds, 5, fill, border);
       } else {
-         init_V_GuiGraphicsExtract_3(context.init_GuiGraphicsExtract(), bounds, fill, border, context.init_TableIndex().init_JsonUtil().clear);
+         init_V_GuiGraphicsExtract_3(context.init_GuiGraphicsExtract(), bounds, fill, border, context.init_TableIndex().colors().accent);
       }
    }
 
@@ -130,9 +130,9 @@ public final class PacketUtil {
 
    public static void read(GuiGraphicsExtractor graphics, NetHelper bounds, int radius, int fill, int border) {
       if (bounds.update() > 0 && bounds.sync() > 0) {
-         int topFill = UiLayoutMath.init_I_I(fill, fill & 0xFF000000 | 16777215, 0.045F);
-         int bottomFill = UiLayoutMath.init_I_I(fill, fill & 0xFF000000, 0.025F);
-         int topBorder = UiLayoutMath.init_I_I(border, border & 0xFF000000 | 16777215, 0.28F);
+         int topFill = UiLayoutMath.lerpColor(fill, fill & 0xFF000000 | 16777215, 0.045F);
+         int bottomFill = UiLayoutMath.lerpColor(fill, fill & 0xFF000000, 0.025F);
+         int topBorder = UiLayoutMath.lerpColor(border, border & 0xFF000000 | 16777215, 0.28F);
          topBorder = Math.min(255, Math.round((border >>> 24) * 1.4F)) << 24 | topBorder & 16777215;
          int bottomBorder = init(border, 0.55F);
          autismclient.gui.sdf.SdfShapeRenderer.init_V_GuiGraphicsExtract(

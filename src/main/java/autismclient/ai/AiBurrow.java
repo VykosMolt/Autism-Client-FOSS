@@ -1136,7 +1136,7 @@ final class AiBurrow {
 
             void init_V_8() {
                for (KeyMapping key : List.of(mc.options.keyUp, mc.options.keyDown, mc.options.keyLeft, mc.options.keyRight)) {
-                  key.setDown(autismclient.util.KeyMappingControl.init(key).autism$physicalForBody());
+                  key.setDown(autismclient.util.KeyMappingControl.of(key).autism$physicalForBody());
                }
             }
 
@@ -1178,7 +1178,7 @@ final class AiBurrow {
                   this.init_DataPipe.init_V();
                   this.init_UtilCore.init_V();
                   if (this.sync_Z) {
-                     mc.options.keyJump.setDown(autismclient.util.KeyMappingControl.init(mc.options.keyJump).autism$physicalForBody());
+                     mc.options.keyJump.setDown(autismclient.util.KeyMappingControl.of(mc.options.keyJump).autism$physicalForBody());
                      this.sync_Z = false;
                   }
 

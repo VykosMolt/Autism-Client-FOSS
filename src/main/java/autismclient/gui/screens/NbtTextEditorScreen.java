@@ -80,8 +80,8 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          int sh = this.load_I();
          int margin = 6;
          int pad = 4;
-         int headerH = autismclient.gui.ui.UiDensityMetrics.init(14);
-         int ctrlH = autismclient.gui.ui.UiDensityMetrics.init(13);
+         int headerH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
+         int ctrlH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
          int w = Math.min(430, Math.max(180, sw - margin * 2));
          int h = Math.min(286, Math.max(130, sh - margin * 2));
          int x = Math.max(margin, (sw - w) / 2);
@@ -97,12 +97,12 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          int footerHeight = pad * 2 + footerRows * ctrlH + (footerRows - 1) * 2;
          int footerTop = y + h - footerHeight;
          int tipY = y + headerH + 2;
-         List<String> tipLines = ui.init_PoolEntry().init_List(this.init_BufferHelper_DataU.load_Str, Math.max(1, w - pad * 2));
+         List<String> tipLines = ui.init_PoolEntry().wrapLines(this.init_BufferHelper_DataU.load_Str, Math.max(1, w - pad * 2));
          int maxTipLines = Math.min(2, tipLines.size());
          int lineH = 9;
 
          for (int i = 0; i < maxTipLines; i++) {
-            ui.init_PoolEntry().init_V_GuiGraphicsExtract_2(graphics, tipLines.get(i), x + pad, tipY + i * lineH, ui.init_TableIndex().init_JsonUtil().valid);
+            ui.init_PoolEntry().draw(graphics, tipLines.get(i), x + pad, tipY + i * lineH, ui.init_TableIndex().colors().textSecondary);
          }
 
          int editorY = tipY + Math.max(1, maxTipLines) * lineH + 2;
@@ -112,8 +112,8 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          this.init_SyncManager = new autismclient.gui.ui.layout.LayoutContext(graphics, this.font, viewport, init_CharEncoder, mx, my, delta);
          this.init_BitSetUtil.init_V_SyncManager(this.init_SyncManager);
          int buttonY = footerTop + pad;
-         int saveW = autismclient.gui.ui.UiDensityMetrics.load(ui.init_PoolEntry().init("Save"));
-         int cancelW = autismclient.gui.ui.UiDensityMetrics.load(ui.init_PoolEntry().init("Cancel"));
+         int saveW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ui.init_PoolEntry().measureWidth("Save"));
+         int cancelW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ui.init_PoolEntry().measureWidth("Cancel"));
          int cancelX = x + w - pad - cancelW;
          int saveX = cancelX - 2 - saveW;
          if (this.init_BufferHelper_DataU == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT) {
@@ -135,15 +135,15 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
                ? this.init_BitSetUtil.init_Str().length() + " / 1,048,576 chars  •  Ctrl+S save  •  Ctrl+Shift+F format"
                : this.init_Str;
             ui.init_PoolEntry()
-               .load(
+               .drawFitted(
                   graphics,
                   status,
                   x + pad,
-                  ui.init_PoolEntry().init_I(autismclient.gui.f.NetHelper.init(x, buttonY, w, ctrlH)),
+                  ui.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(x, buttonY, w, ctrlH)),
                   Math.max(1, saveX - 4 - x - pad),
                   this.init_Str.isBlank()
-                     ? ui.init_TableIndex().init_JsonUtil().valid
-                     : (this.init_Z ? ui.init_TableIndex().init_JsonUtil().stop : ui.init_TableIndex().init_JsonUtil().data)
+                     ? ui.init_TableIndex().colors().textSecondary
+                     : (this.init_Z ? ui.init_TableIndex().colors().success : ui.init_TableIndex().colors().danger)
                );
          } else {
             this.write = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);

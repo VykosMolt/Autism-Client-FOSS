@@ -130,7 +130,7 @@ public class AutismSettingsScreen extends Screen {
          this.tick = this.init_I(this.tick);
          boolean needsBar = this.get > this.init_NetHelper.sync();
          int rowW = this.init_NetHelper.update() - (needsBar ? 6 : 0);
-         UiClipStack.init_HashUtil().init(graphics, this.init_NetHelper);
+         UiClipStack.getInstance().push(graphics, this.init_NetHelper);
 
          try {
             for (int i = 0; i < rows.size(); i++) {
@@ -142,7 +142,7 @@ public class AutismSettingsScreen extends Screen {
                }
             }
          } finally {
-            UiClipStack.init_HashUtil().init(graphics);
+            UiClipStack.getInstance().pop(graphics);
          }
 
          if (needsBar) {
@@ -321,7 +321,7 @@ public class AutismSettingsScreen extends Screen {
    }
 
    private int init(int argb, ThemePaletteManager.ColorRole ch) {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(argb, ch);
+      return ThemePaletteManager.recolor(argb, ch);
    }
 
    private int init_I() {
@@ -341,11 +341,11 @@ public class AutismSettingsScreen extends Screen {
 
    private void init(GuiGraphicsExtractor g, String text, Identifier fontId, int color, NetHelper area) {
       int tw = k.init(this.font, text, fontId, color);
-      this.init(g, text, fontId, color, area.read() + (area.update() - tw) / 2, this.init_SyncManager.init_PoolEntry().init_I(area));
+      this.init(g, text, fontId, color, area.read() + (area.update() - tw) / 2, this.init_SyncManager.init_PoolEntry().centerTextY(area));
    }
 
    private int init(NetHelper rb) {
-      return this.init_SyncManager.init_PoolEntry().init_I(rb);
+      return this.init_SyncManager.init_PoolEntry().centerTextY(rb);
    }
 
    private int init(String label) {

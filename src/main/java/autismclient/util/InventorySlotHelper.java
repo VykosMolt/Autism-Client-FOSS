@@ -8,23 +8,23 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public final class InventorySlotHelper {
-   public static final int init = 41;
-   public static final int load = 100;
+   public static final int PLAYER_SLOT_COUNT = 41;
+   public static final int CONTAINER_SLOT_BASE = 100;
 
    private InventorySlotHelper() {
    }
 
-   public static void init_V(Minecraft mc, int slot) {
+   public static void selectHotbarSlot(Minecraft mc, int slot) {
       if (!autismclient.modules.aD.read_Z()) {
-         read_V(mc, slot);
+         selectHotbarSlotInternal(mc, slot);
       }
    }
 
-   public static void load_V(Minecraft mc, int slot) {
-      read_V(mc, slot);
+   public static void selectHotbarSlotForce(Minecraft mc, int slot) {
+      selectHotbarSlotInternal(mc, slot);
    }
 
-   private static void read_V(Minecraft mc, int slot) {
+   private static void selectHotbarSlotInternal(Minecraft mc, int slot) {
       if (mc != null && mc.player != null && mc.gameMode != null && mc.getConnection() != null) {
          int clampedSlot = Math.max(0, Math.min(8, slot));
          if (mc.player.getInventory().getSelectedSlot() != clampedSlot) {
@@ -34,15 +34,15 @@ public final class InventorySlotHelper {
       }
    }
 
-   public static boolean init(Minecraft mc, int inventorySlot, int hotbarSlot) {
-      return autismclient.modules.aD.read_Z() ? false : update(mc, inventorySlot, hotbarSlot);
+   public static boolean swapToHotbar(Minecraft mc, int inventorySlot, int hotbarSlot) {
+      return autismclient.modules.aD.read_Z() ? false : swapToHotbarInternal(mc, inventorySlot, hotbarSlot);
    }
 
-   public static boolean load(Minecraft mc, int inventorySlot, int hotbarSlot) {
-      return update(mc, inventorySlot, hotbarSlot);
+   public static boolean swapToHotbarForce(Minecraft mc, int inventorySlot, int hotbarSlot) {
+      return swapToHotbarInternal(mc, inventorySlot, hotbarSlot);
    }
 
-   private static boolean update(Minecraft mc, int inventorySlot, int hotbarSlot) {
+   private static boolean swapToHotbarInternal(Minecraft mc, int inventorySlot, int hotbarSlot) {
       if (mc == null || mc.player == null || mc.gameMode == null) {
          return false;
       }
@@ -55,7 +55,7 @@ public final class InventorySlotHelper {
          return false;
       }
 
-      int sourceHandlerSlot = load_I(mc, inventorySlot);
+      int sourceHandlerSlot = toScreenSlot(mc, inventorySlot);
       if (sourceHandlerSlot < 0) {
          return false;
       }
@@ -64,7 +64,7 @@ public final class InventorySlotHelper {
       return true;
    }
 
-   public static boolean init_Z(Minecraft mc, int inventorySlot) {
+   public static boolean swapToOffhand(Minecraft mc, int inventorySlot) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }
@@ -81,7 +81,7 @@ public final class InventorySlotHelper {
          return false;
       }
 
-      int handlerSlot = load_I(mc, inventorySlot);
+      int handlerSlot = toScreenSlot(mc, inventorySlot);
       if (handlerSlot < 0) {
          return false;
       }
@@ -90,7 +90,7 @@ public final class InventorySlotHelper {
       return true;
    }
 
-   public static boolean read(Minecraft mc, int fromSlot, int toSlot) {
+   public static boolean swapPlayerSlots(Minecraft mc, int fromSlot, int toSlot) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }
@@ -111,16 +111,16 @@ public final class InventorySlotHelper {
          return false;
       }
 
-      int fromScreenSlot = load_I(mc, fromSlot);
-      int toScreenSlot = load_I(mc, toSlot);
-      return fromScreenSlot >= 0 && toScreenSlot >= 0 ? write(mc, fromScreenSlot, toScreenSlot) : false;
+      int fromScreenSlot = toScreenSlot(mc, fromSlot);
+      int toScreenSlot = toScreenSlot(mc, toSlot);
+      return fromScreenSlot >= 0 && toScreenSlot >= 0 ? swapScreenSlots(mc, fromScreenSlot, toScreenSlot) : false;
    }
 
-   public static int init(Minecraft mc, String itemName) {
-      return init(mc, autismclient.util.macro.MacroItemTarget.update(itemName));
+   public static int findInventorySlot(Minecraft mc, String itemName) {
+      return findInventorySlot(mc, autismclient.util.macro.MacroItemTarget.update(itemName));
    }
 
-   public static int init(Minecraft mc, autismclient.util.macro.MacroItemTarget target) {
+   public static int findInventorySlot(Minecraft mc, autismclient.util.macro.MacroItemTarget target) {
       if (mc != null && mc.player != null && target != null && target.update()) {
          int bestSlot = -1;
          int bestScore = -1;
@@ -140,11 +140,11 @@ public final class InventorySlotHelper {
       }
    }
 
-   public static int load(Minecraft mc, String itemName) {
-      return load(mc, autismclient.util.macro.MacroItemTarget.update(itemName));
+   public static int findVisibleSlot(Minecraft mc, String itemName) {
+      return findVisibleSlot(mc, autismclient.util.macro.MacroItemTarget.update(itemName));
    }
 
-   public static int load(Minecraft mc, autismclient.util.macro.MacroItemTarget target) {
+   public static int findVisibleSlot(Minecraft mc, autismclient.util.macro.MacroItemTarget target) {
       if (mc != null && mc.player != null && target != null && target.update()) {
          int bestSlot = -1;
          int bestScore = -1;
@@ -153,7 +153,7 @@ public final class InventorySlotHelper {
             for (int i = 0; i < handler.slots.size(); i++) {
                Slot slot = handler.slots.get(i);
                if (slot != null) {
-                  int visibleSlot = init_I(mc, i);
+                  int visibleSlot = toVisibleSlot(mc, i);
                   int score = target.init_I_ItemStack_I(slot.getItem(), visibleSlot);
                   if (score > bestScore) {
                      bestScore = score;
@@ -163,17 +163,17 @@ public final class InventorySlotHelper {
             }
          }
 
-         return bestScore >= 0 ? bestSlot : init(mc, target);
+         return bestScore >= 0 ? bestSlot : findInventorySlot(mc, target);
       } else {
          return -1;
       }
    }
 
-   public static int init(Minecraft mc, String itemName, int preferredHotbarSlot) {
-      return init(mc, autismclient.util.macro.MacroItemTarget.update(itemName), preferredHotbarSlot);
+   public static int ensureItemInHotbar(Minecraft mc, String itemName, int preferredHotbarSlot) {
+      return ensureItemInHotbar(mc, autismclient.util.macro.MacroItemTarget.update(itemName), preferredHotbarSlot);
    }
 
-   public static int init(Minecraft mc, autismclient.util.macro.MacroItemTarget target, int preferredHotbarSlot) {
+   public static int ensureItemInHotbar(Minecraft mc, autismclient.util.macro.MacroItemTarget target, int preferredHotbarSlot) {
       if (mc != null && mc.player != null && target != null && target.update()) {
          int bestHotbarSlot = -1;
          int bestHotbarScore = -1;
@@ -187,7 +187,7 @@ public final class InventorySlotHelper {
          }
 
          if (bestHotbarScore >= 0) {
-            init_V(mc, bestHotbarSlot);
+            selectHotbarSlot(mc, bestHotbarSlot);
             return bestHotbarSlot;
          }
 
@@ -207,23 +207,23 @@ public final class InventorySlotHelper {
          }
 
          int targetHotbarSlot = Math.max(0, Math.min(8, preferredHotbarSlot));
-         if (!init(mc, bestInventorySlot, targetHotbarSlot)) {
+         if (!swapToHotbar(mc, bestInventorySlot, targetHotbarSlot)) {
             return -1;
          }
 
-         init_V(mc, targetHotbarSlot);
+         selectHotbarSlot(mc, targetHotbarSlot);
          return targetHotbarSlot;
       } else {
          return -1;
       }
    }
 
-   public static int init_I(Minecraft mc, int handlerSlotId) {
+   public static int toVisibleSlot(Minecraft mc, int handlerSlotId) {
       if (mc != null && mc.player != null && mc.player.containerMenu != null) {
          AbstractContainerMenu handler = mc.player.containerMenu;
          if (handlerSlotId >= 0 && handlerSlotId < handler.slots.size()) {
             Slot slot = handler.slots.get(handlerSlotId);
-            int playerSlot = read(mc, slot);
+            int playerSlot = playerInventoryIndex(mc, slot);
             if (playerSlot >= 0) {
                return playerSlot;
             }
@@ -232,7 +232,7 @@ public final class InventorySlotHelper {
 
             for (int i = 0; i < handler.slots.size(); i++) {
                Slot currentSlot = handler.slots.get(i);
-               if (currentSlot != null && !init_Z(mc, currentSlot)) {
+               if (currentSlot != null && !isPlayerInventorySlot(mc, currentSlot)) {
                   if (i == handlerSlotId) {
                      return 100 + extraOrdinal;
                   }
@@ -250,17 +250,17 @@ public final class InventorySlotHelper {
       }
    }
 
-   public static int init_I(Minecraft mc, Slot slot) {
-      int handlerSlotId = load(mc, slot);
-      return handlerSlotId >= 0 ? init_I(mc, handlerSlotId) : -1;
+   public static int toVisibleSlot(Minecraft mc, Slot slot) {
+      int handlerSlotId = findSlotIndex(mc, slot);
+      return handlerSlotId >= 0 ? toVisibleSlot(mc, handlerSlotId) : -1;
    }
 
-   public static int load_I(Minecraft mc, int userVisibleSlot) {
+   public static int toScreenSlot(Minecraft mc, int userVisibleSlot) {
       if (mc != null && mc.player != null && mc.player.containerMenu != null) {
          AbstractContainerMenu handler = mc.player.containerMenu;
          if (userVisibleSlot >= 0 && userVisibleSlot < mc.player.getInventory().getContainerSize()) {
             for (int i = 0; i < handler.slots.size(); i++) {
-               if (read(mc, handler.slots.get(i)) == userVisibleSlot) {
+               if (playerInventoryIndex(mc, handler.slots.get(i)) == userVisibleSlot) {
                   return i;
                }
             }
@@ -271,7 +271,7 @@ public final class InventorySlotHelper {
 
             for (int i = 0; i < handler.slots.size(); i++) {
                Slot slot = handler.slots.get(i);
-               if (slot != null && !init_Z(mc, slot)) {
+               if (slot != null && !isPlayerInventorySlot(mc, slot)) {
                   if (extraOrdinal == 0) {
                      return i;
                   }
@@ -287,15 +287,15 @@ public final class InventorySlotHelper {
       }
    }
 
-   public static int read_I(Minecraft mc, int configuredSlot) {
-      return load_I(mc, configuredSlot);
+   public static int resolveConfiguredSlot(Minecraft mc, int configuredSlot) {
+      return toScreenSlot(mc, configuredSlot);
    }
 
-   public static boolean init_Z(Minecraft mc, Slot slot) {
-      return read(mc, slot) >= 0;
+   public static boolean isPlayerInventorySlot(Minecraft mc, Slot slot) {
+      return playerInventoryIndex(mc, slot) >= 0;
    }
 
-   public static int load(Minecraft mc, Slot targetSlot) {
+   public static int findSlotIndex(Minecraft mc, Slot targetSlot) {
       if (mc != null && mc.player != null && mc.player.containerMenu != null && targetSlot != null) {
          AbstractContainerMenu handler = mc.player.containerMenu;
 
@@ -311,7 +311,7 @@ public final class InventorySlotHelper {
       }
    }
 
-   public static boolean write(Minecraft mc, int fromScreenSlot, int toScreenSlot) {
+   public static boolean swapScreenSlots(Minecraft mc, int fromScreenSlot, int toScreenSlot) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }
@@ -348,7 +348,7 @@ public final class InventorySlotHelper {
       return true;
    }
 
-   private static int read(Minecraft mc, Slot slot) {
+   private static int playerInventoryIndex(Minecraft mc, Slot slot) {
       if (mc != null && mc.player != null && slot != null && slot.container == mc.player.getInventory()) {
          int index = slot.getContainerSlot();
          return index >= 0 && index < mc.player.getInventory().getContainerSize() ? index : -1;

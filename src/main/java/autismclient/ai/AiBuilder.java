@@ -4279,7 +4279,7 @@ final class AiBuilder {
                                                 }
 
                                                 String itemId = BuiltInRegistries.ITEM.getKey(item).toString();
-                                                if (autismclient.util.InventorySlotHelper.init(mc, MacroItemTarget.write(itemId), mc.player.getInventory().getSelectedSlot()) < 0) {
+                                                if (autismclient.util.InventorySlotHelper.ensureItemInHotbar(mc, MacroItemTarget.write(itemId), mc.player.getInventory().getSelectedSlot()) < 0) {
                                                    if (schematic && ++this.node <= 20) {
                                                       autismclient.ai.engine.AiMotionSafety.putAt_V();
                                                       return this.init_AiOperation_Result_5("Awaiting material: selecting " + itemId);
@@ -4402,18 +4402,18 @@ final class AiBuilder {
                                                 }
 
                                                 if (!Float.isNaN(this.init_F)) {
-                                                   autismclient.util.RotationMath.Rotation hitRotation = autismclient.util.RotationMath.init(
+                                                   autismclient.util.RotationMath.Rotation hitRotation = autismclient.util.RotationMath.lookAt(
                                                       hit.getLocation(), mc.player.getEyePosition()
                                                    );
                                                    float goalYaw = Math.abs(
-                                                            autismclient.util.RotationMath.init_F(
-                                                               hitRotation, new autismclient.util.RotationMath.Rotation(this.init_F, hitRotation.load())
+                                                            autismclient.util.RotationMath.angularDistance(
+                                                               hitRotation, new autismclient.util.RotationMath.Rotation(this.init_F, hitRotation.pitch())
                                                             )
                                                          )
                                                          <= this.read_D
-                                                      ? hitRotation.init()
+                                                      ? hitRotation.yaw()
                                                       : this.init_F;
-                                                   this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Rotation(goalYaw, hitRotation.load()));
+                                                   this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Rotation(goalYaw, hitRotation.pitch()));
                                                    this.init_DataUtil.load_V();
                                                 } else {
                                                    AiGameOperations.init(this.init_DataUtil, hit.getLocation());
@@ -4423,8 +4423,8 @@ final class AiBuilder {
                                                    || autismclient.ai.engine.AiAim.init_Direction_BlockPos(hit.getBlockPos()) != hitFace
                                                    || !Float.isNaN(this.init_F)
                                                       && Math.abs(
-                                                            autismclient.util.RotationMath.init_F(
-                                                               autismclient.util.RotationMath.init(mc.player),
+                                                            autismclient.util.RotationMath.angularDistance(
+                                                               autismclient.util.RotationMath.ofPlayer(mc.player),
                                                                new autismclient.util.RotationMath.Rotation(this.init_F, mc.player.getXRot())
                                                             )
                                                          )
@@ -7100,7 +7100,7 @@ final class AiBuilder {
                         return false;
                      }
 
-                     if (autismclient.util.InventorySlotHelper.init(
+                     if (autismclient.util.InventorySlotHelper.ensureItemInHotbar(
                            mc, MacroItemTarget.write(BuiltInRegistries.ITEM.getKey(item).toString()), mc.player.getInventory().getSelectedSlot()
                         )
                         < 0) {
@@ -8172,7 +8172,7 @@ final class AiBuilder {
                   this.clear_Z = true;
                   autismclient.ai.engine.AiMotionSafety.putAt_V();
                   if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.load_I) {
-                     autismclient.util.InventorySlotHelper.init_V(mc, this.load_I);
+                     autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.load_I);
                   }
                }
             }

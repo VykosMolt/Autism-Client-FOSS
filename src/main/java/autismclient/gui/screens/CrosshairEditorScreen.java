@@ -119,8 +119,8 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       int h = Math.max(1, Math.min(344, sh - 12));
       int x = (sw - w) / 2;
       int y = (sh - h) / 2;
-      int header = autismclient.gui.ui.UiDensityMetrics.init(14);
-      int ctl = autismclient.gui.ui.UiDensityMetrics.init(13);
+      int header = autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
+      int ctl = autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
       int gap = 2;
       int rowY = y + header + 6;
       int cx = x + 6 + this.init_I_Str_13("Resolution") + 4;
@@ -191,7 +191,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
             )
          );
       ty += (tools.length + 2) / 2 * (ctl + gap) - gap + 6;
-      int rowText = autismclient.gui.ui.UiDensityMetrics.init(12);
+      int rowText = autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
       this.add = ty;
       ty += rowText;
       int brushW = (84 - gap * 3) / 4;
@@ -239,9 +239,9 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
       int sx = x + w - 6 - 128;
       int inner = 120;
-      int titleH = autismclient.gui.ui.UiDensityMetrics.init(14);
+      int titleH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
       int swatch = (inner - gap * 7) / 8;
-      int colorH = titleH + 2 + 16 + 4 + swatch * 2 + gap + 4 + autismclient.gui.ui.UiDensityMetrics.init(12) + 11 + 4;
+      int colorH = titleH + 2 + 16 + 4 + swatch * 2 + gap + 4 + autismclient.gui.ui.UiDensityMetrics.scaledHeight(12) + 11 + 4;
       autismclient.gui.f.NetHelper colorCard = autismclient.gui.f.NetHelper.init(sx, bodyTop, 128, colorH);
       this.init(colorCard, "Color");
       int iy = bodyTop + titleH + 2;
@@ -271,7 +271,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
             );
       }
 
-      iy += swatch * 2 + gap + 4 + autismclient.gui.ui.UiDensityMetrics.init(12);
+      iy += swatch * 2 + gap + 4 + autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
       autismclient.gui.f.NetHelper opacityBounds = autismclient.gui.f.NetHelper.init(sx + 4, iy, inner, 11);
       autismclient.gui.f.NetHelper preview = null;
       int previewTop = colorCard.load() + 6;
@@ -348,7 +348,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    }
 
    private int init_I_Str_13(String text) {
-      return autismclient.gui.f.UiHelper.init(this.font).init(text);
+      return autismclient.gui.f.UiHelper.init(this.font).measureWidth(text);
    }
 
    @Override
@@ -362,7 +362,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(
             graphics, this.font, this.init_NetHelper_2 == null ? mx : -10000, this.init_NetHelper_2 == null ? my : -10000
          );
-         autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+         autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
          autismclient.gui.f.NetHelper window = layout.init_NetHelper();
          autismclient.gui.ui.widgets.DialogFrameRenderer.init(
             context,
@@ -377,13 +377,13 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          }
 
          int rowY = window.write() + layout.init_I() + 6;
-         int ctl = autismclient.gui.ui.UiDensityMetrics.init(13);
+         int ctl = autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
          context.init_PoolEntry()
-            .init_V_GuiGraphicsExtract_2(
-               graphics, "Resolution", window.read() + 6, context.init_PoolEntry().init_I(autismclient.gui.f.NetHelper.init(0, rowY, 1, ctl)), colors.valid
+            .draw(
+               graphics, "Resolution", window.read() + 6, context.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(0, rowY, 1, ctl)), colors.textSecondary
             );
-         context.init_PoolEntry().init_V_GuiGraphicsExtract_2(graphics, "Brush", window.read() + 6, this.add, colors.valid);
-         context.init_PoolEntry().init_V_GuiGraphicsExtract_2(graphics, "Start From", window.read() + 6, this.clear, colors.valid);
+         context.init_PoolEntry().draw(graphics, "Brush", window.read() + 6, this.add, colors.textSecondary);
+         context.init_PoolEntry().draw(graphics, "Start From", window.read() + 6, this.clear, colors.textSecondary);
          this.init(context, layout, mx, my);
          CrosshairEditorScreen.Inner_DataUtil hovered = null;
 
@@ -407,8 +407,8 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
          autismclient.gui.f.NetHelper opacityBounds = layout.read();
          context.init_PoolEntry()
-            .init_V_GuiGraphicsExtract_2(
-               graphics, "Opacity " + this.pop + "%", opacityBounds.read(), opacityBounds.write() - autismclient.gui.ui.UiDensityMetrics.init(12) + 1, colors.valid
+            .draw(
+               graphics, "Opacity " + this.pop + "%", opacityBounds.read(), opacityBounds.write() - autismclient.gui.ui.UiDensityMetrics.scaledHeight(12) + 1, colors.textSecondary
             );
          autismclient.gui.ui.widgets.SliderRenderer.init(
             context,
@@ -418,7 +418,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          );
          String status = this.stop >= 0 ? this.init_NetHelper_ConfigSt.read_Str + "   " + this.stop + ", " + this.next : this.init_NetHelper_ConfigSt.read_Str;
          context.init_PoolEntry()
-            .load(graphics, status, layout.update().read(), context.init_PoolEntry().init_I(layout.update()), layout.update().update(), colors.valid);
+            .drawFitted(graphics, status, layout.update().read(), context.init_PoolEntry().centerTextY(layout.update()), layout.update().update(), colors.textSecondary);
          if (layout.write() != null) {
             this.init(context, layout.write());
          }
@@ -442,10 +442,10 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
    private void init(autismclient.gui.f.SyncManager context, CrosshairEditorScreen.Inner_CachePool layout, int mx, int my) {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       autismclient.gui.f.NetHelper canvas = layout.load_NetHelper();
       int cell = layout.load_I();
-      autismclient.gui.f.PacketUtil.load(graphics, canvas.init(-3), 5, colors.pop, colors.get);
+      autismclient.gui.f.PacketUtil.load(graphics, canvas.init(-3), 5, colors.inputSurface, colors.borderSubtle);
       int tile = Math.max(cell, canvas.update() / 8);
 
       for (int ty = 0; ty * tile < canvas.sync(); ty++) {
@@ -486,7 +486,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       }
 
       if (this.write_Z) {
-         int guide = colors.clear & 16777215 | -2147483648;
+         int guide = colors.accent & 16777215 | -2147483648;
          autismclient.gui.f.PacketUtil.load(graphics, canvas.read() + canvas.update() / 2, canvas.write(), canvas.sync(), guide);
          autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract_2(graphics, canvas.read(), canvas.write() + canvas.sync() / 2, canvas.update(), guide);
       }
@@ -522,7 +522,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
    private void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int argb, boolean selected, boolean hovered) {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       int half = Math.max(1, bounds.sync() / 2);
 
       for (int ty = 0; ty * half < bounds.sync(); ty++) {
@@ -537,7 +537,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          }
       }
 
-      int border = selected ? colors.clear : (hovered ? colors.prev : colors.set);
+      int border = selected ? colors.accent : (hovered ? colors.textPrimary : colors.borderControl);
       autismclient.gui.f.PacketUtil.load(graphics, bounds, 3, argb, border);
    }
 

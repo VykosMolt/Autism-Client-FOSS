@@ -219,7 +219,7 @@ public final class DataUtil {
          init(addonId, report, "events", () -> AddonEvents.unregisterAddon(addonId));
          init(addonId, report, "hud", () -> HudElements.unregisterAddon(addonId));
          init(addonId, report, "modules", () -> al.init_V_Str(addonId));
-         init(addonId, report, "commands", () -> autismclient.commands.CommandManager.init_V(addonId));
+         init(addonId, report, "commands", () -> autismclient.commands.CommandManager.unregisterAddonCommands(addonId));
          if (report != null && completionNote != null && !completionNote.isBlank()) {
             report.update(completionNote);
          }

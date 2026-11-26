@@ -687,8 +687,8 @@ public final class am {
          return true;
       }
 
-      OverlayManager overlays = OverlayManager.init_bk();
-      return overlays.init_Z() && overlays.load_Z();
+      OverlayManager overlays = OverlayManager.getInstance();
+      return overlays.hasOverlays() && overlays.isActive();
    }
 
    private static boolean init_Z_am_StreamUtil_Entity(am.Inner_StreamUtil snapshot, Entity entity) {

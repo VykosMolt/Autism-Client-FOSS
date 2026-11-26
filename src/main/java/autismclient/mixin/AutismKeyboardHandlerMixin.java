@@ -36,7 +36,7 @@ public class AutismKeyboardHandlerMixin {
                if (mc.gui.screen() != null) {
                   autism$lastScreenSeenMs = System.currentTimeMillis();
                } else if (System.currentTimeMillis() - autism$lastScreenSeenMs >= 250L && Compat263.keyEventGlfwModifiers(event) == 0) {
-                  String prefix = CommandManager.init_Str();
+                  String prefix = CommandManager.getPrefix();
                   if (prefix != null
                      && prefix.length() == 1
                      && !"/".equals(prefix)
@@ -118,7 +118,7 @@ public class AutismKeyboardHandlerMixin {
          if (mc.gui.screen() != null) {
             autism$lastScreenSeenMs = System.currentTimeMillis();
          } else if (System.currentTimeMillis() - autism$lastScreenSeenMs >= 250L) {
-            String prefix = CommandManager.init_Str();
+            String prefix = CommandManager.getPrefix();
             if (prefix != null && prefix.length() == 1 && !"/".equals(prefix) && event.codepoint() == prefix.charAt(0)) {
                mc.gui.setScreen(new ChatScreen(prefix, false));
                autism$lastScreenSeenMs = System.currentTimeMillis();

@@ -48,8 +48,8 @@ public final class ThemeTextureRecolorer {
          return null;
       }
 
-      ThemePaletteManager.CompiledPalette st = ThemePaletteManager.init_ct_StreamUtil();
-      if (!st.init_Z_ct_DataUtil(ch)) {
+      ThemePaletteManager.CompiledPalette st = ThemePaletteManager.getPalette();
+      if (!st.isModified(ch)) {
          return source;
       }
 
@@ -101,7 +101,7 @@ public final class ThemeTextureRecolorer {
                NativeImage recolored = null;
 
                try (NativeImage src = NativeImage.read(png)) {
-                  recolored = src.mappedCopy(argb -> ThemePaletteManager.init_I_I(argb, targetHue, targetSat));
+                  recolored = src.mappedCopy(argb -> ThemePaletteManager.recolorBackdropPixel(argb, targetHue, targetSat));
                } catch (Throwable t) {
                   AutismClientAddon.LOG.warn("Skybox recolor failed for {}", source, t);
                }
@@ -135,7 +135,7 @@ public final class ThemeTextureRecolorer {
       int generation = init_I;
 
       try (NativeImage src = NativeImage.read(png)) {
-         NativeImage recolored = src.mappedCopy(argb -> ThemePaletteManager.load(argb, ch, st));
+         NativeImage recolored = src.mappedCopy(argb -> ThemePaletteManager.recolorTexturePixel(argb, ch, st));
          Identifier id = write(source);
          init_Minecraft.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), recolored, FilterMode.LINEAR));
          init_Map.put(source, new ThemeTextureRecolorer.Inner_BufferHelper(id, generation));
@@ -158,7 +158,7 @@ public final class ThemeTextureRecolorer {
                NativeImage recolored = null;
 
                try (NativeImage src = NativeImage.read(png)) {
-                  recolored = src.mappedCopy(argb -> ThemePaletteManager.load(argb, ch, st));
+                  recolored = src.mappedCopy(argb -> ThemePaletteManager.recolorTexturePixel(argb, ch, st));
                } catch (Throwable t) {
                   AutismClientAddon.LOG.warn("Theme recolor failed for {} (backing off this theme generation)", source, t);
                }
@@ -281,8 +281,8 @@ public final class ThemeTextureRecolorer {
    }
 
    public static Identifier load(Identifier original) {
-      ThemePaletteManager.CompiledPalette st = ThemePaletteManager.init_ct_StreamUtil();
-      if (!st.init_Z_ct_DataUtil(ThemePaletteManager.ColorRole.BACKDROP)) {
+      ThemePaletteManager.CompiledPalette st = ThemePaletteManager.getPalette();
+      if (!st.isModified(ThemePaletteManager.ColorRole.BACKDROP)) {
          return original;
       }
 
@@ -323,7 +323,7 @@ public final class ThemeTextureRecolorer {
          NativeImage recolored = null;
 
          try (NativeImage src = NativeImage.read(png)) {
-            recolored = src.mappedCopy(argb -> ThemePaletteManager.load(argb, ThemePaletteManager.ColorRole.BACKDROP, st));
+            recolored = src.mappedCopy(argb -> ThemePaletteManager.recolorTexturePixel(argb, ThemePaletteManager.ColorRole.BACKDROP, st));
          } catch (Throwable tx) {
             AutismClientAddon.LOG.warn("Failed to build themed panorama overlay", tx);
          }
@@ -356,8 +356,8 @@ public final class ThemeTextureRecolorer {
       read_Map.clear();
       load_Z = false;
       init_AbstractTexture = null;
-      ThemePaletteManager.CompiledPalette st = ThemePaletteManager.init_ct_StreamUtil();
-      if (st.init_Z_ct_DataUtil(ThemePaletteManager.ColorRole.BACKDROP)) {
+      ThemePaletteManager.CompiledPalette st = ThemePaletteManager.getPalette();
+      if (st.isModified(ThemePaletteManager.ColorRole.BACKDROP)) {
          load_Z = true;
          init(st, autismclient.gui.ThemeApplyProgressOverlay.init("Recoloring backdrop"));
       }
@@ -479,12 +479,12 @@ public final class ThemeTextureRecolorer {
       }
 
       private static int init_I_ct_StreamUtil(ThemePaletteManager.CompiledPalette st) {
-         int sig = Float.floatToIntBits(st.init_F_ct_DataUtil(ThemePaletteManager.ColorRole.BACKDROP)) * 31 + Float.floatToIntBits(st.load_F(ThemePaletteManager.ColorRole.BACKDROP));
+         int sig = Float.floatToIntBits(st.hue(ThemePaletteManager.ColorRole.BACKDROP)) * 31 + Float.floatToIntBits(st.saturation(ThemePaletteManager.ColorRole.BACKDROP));
          return sig == 0 ? 1 : sig;
       }
 
       public void init_V_ct_StreamUtil(ThemePaletteManager.CompiledPalette st) {
-         int sig = this.init_ct_DataUtil == ThemePaletteManager.ColorRole.BACKDROP ? init_I_ct_StreamUtil(st) : st.load_I(this.init_ct_DataUtil);
+         int sig = this.init_ct_DataUtil == ThemePaletteManager.ColorRole.BACKDROP ? init_I_ct_StreamUtil(st) : st.roleSignature(this.init_ct_DataUtil);
          if (sig != this.init_I) {
             this.init_I = sig;
             synchronized (this.init_Obj) {
@@ -525,10 +525,10 @@ public final class ThemeTextureRecolorer {
                for (int y = 0; y < h; y++) {
                   for (int x = 0; x < w; x++) {
                      out[y * w + x] = this.init_ct_DataUtil == ThemePaletteManager.ColorRole.BACKDROP
-                        ? ThemePaletteManager.init_I_I(
-                           this.init_NativeImage.getPixel(x, y), st.init_F_ct_DataUtil(ThemePaletteManager.ColorRole.BACKDROP), st.load_F(ThemePaletteManager.ColorRole.BACKDROP)
+                        ? ThemePaletteManager.recolorBackdropPixel(
+                           this.init_NativeImage.getPixel(x, y), st.hue(ThemePaletteManager.ColorRole.BACKDROP), st.saturation(ThemePaletteManager.ColorRole.BACKDROP)
                         )
-                        : ThemePaletteManager.load(this.init_NativeImage.getPixel(x, y), this.init_ct_DataUtil, st);
+                        : ThemePaletteManager.recolorTexturePixel(this.init_NativeImage.getPixel(x, y), this.init_ct_DataUtil, st);
                   }
                }
 
@@ -607,16 +607,16 @@ public final class ThemeTextureRecolorer {
       public TextureContents loadContents(ResourceManager resourceManager) throws IOException {
          TextureContents contents = super.loadContents(resourceManager);
          ThemeTextureRecolorer.init_Z = true;
-         ThemePaletteManager.CompiledPalette st = ThemePaletteManager.init_ct_StreamUtil();
-         float hue = st.init_F_ct_DataUtil(ThemePaletteManager.ColorRole.BACKDROP);
-         float sat = st.load_F(ThemePaletteManager.ColorRole.BACKDROP);
+         ThemePaletteManager.CompiledPalette st = ThemePaletteManager.getPalette();
+         float hue = st.hue(ThemePaletteManager.ColorRole.BACKDROP);
+         float sat = st.saturation(ThemePaletteManager.ColorRole.BACKDROP);
          NativeImage img = contents.image();
          int changed = 0;
 
          for (int y = 0; y < img.getHeight(); y++) {
             for (int x = 0; x < img.getWidth(); x++) {
                int before = img.getPixel(x, y);
-               int after = ThemePaletteManager.init_I_I(before, hue, sat);
+               int after = ThemePaletteManager.recolorBackdropPixel(before, hue, sat);
                if (before != after) {
                   img.setPixel(x, y, after);
                   changed++;

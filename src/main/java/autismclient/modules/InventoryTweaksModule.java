@@ -326,7 +326,7 @@ public final class InventoryTweaksModule extends Module {
    }
 
    private List<Slot> init_List_Slot_AbstractContainerM(Slot focusedSlot, AbstractContainerMenu handler) {
-      boolean focusedPlayer = autismclient.util.InventorySlotHelper.init_Z(init_Minecraft, focusedSlot);
+      boolean focusedPlayer = autismclient.util.InventorySlotHelper.isPlayerInventorySlot(init_Minecraft, focusedSlot);
       List<Slot> slots = new ArrayList<>();
 
       for (Slot slot : handler.slots) {
@@ -763,7 +763,7 @@ public final class InventoryTweaksModule extends Module {
          }
 
          InventoryTweaksModule.Inner_CachePool action = this.init_List.get(this.read++);
-         autismclient.util.InventorySlotHelper.write(InventoryTweaksModule.init_Minecraft, action.init(), action.load());
+         autismclient.util.InventorySlotHelper.swapScreenSlots(InventoryTweaksModule.init_Minecraft, action.init(), action.load());
          this.write = this.load;
          return this.read < this.init_List.size() || this.write > 0;
       }

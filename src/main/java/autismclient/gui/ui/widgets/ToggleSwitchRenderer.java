@@ -27,7 +27,7 @@ public final class ToggleSwitchRenderer {
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, float progress, boolean hovered) {
       float eased = progress * progress * (3.0F - 2.0F * progress);
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
-      int track = init(-12961216, context.init_TableIndex().init_JsonUtil().clear, eased);
+      int track = init(-12961216, context.init_TableIndex().colors().accent, eased);
       if (hovered) {
          track = init(track, 0.12F);
       }
@@ -43,20 +43,20 @@ public final class ToggleSwitchRenderer {
    public static void init(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean enabled, boolean hovered, String animationKey
    ) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       int pillW = Math.min(26, Math.max(20, bounds.sync() * 2 - 4));
       int pillH = Math.min(12, Math.max(9, bounds.sync() - 6));
       autismclient.gui.f.NetHelper pill = autismclient.gui.f.NetHelper.init(
          bounds.init() - pillW - 2, bounds.write() + Math.max(0, (bounds.sync() - pillH) / 2), pillW, pillH
       );
       context.init_PoolEntry()
-         .load(
+         .drawFitted(
             context.init_GuiGraphicsExtract(),
             label == null ? "" : label,
             bounds.read() + 5,
-            context.init_PoolEntry().init_I(bounds),
+            context.init_PoolEntry().centerTextY(bounds),
             Math.max(1, pill.read() - bounds.read() - 9),
-            enabled ? colors.prev : colors.valid
+            enabled ? colors.textPrimary : colors.textSecondary
          );
       init(context, pill, enabled, hovered, animationKey);
    }

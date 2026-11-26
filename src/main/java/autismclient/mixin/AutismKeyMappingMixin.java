@@ -72,7 +72,7 @@ public abstract class AutismKeyMappingMixin implements KeyMappingControl {
          if (mappings != null) {
             for (KeyMapping mapping : mappings) {
                if (!FreecamController.init_Z_KeyMapping(mapping)) {
-                  KeyMappingControl.init(mapping).autism$countClick();
+                  KeyMappingControl.of(mapping).autism$countClick();
                }
             }
          }
@@ -87,7 +87,7 @@ public abstract class AutismKeyMappingMixin implements KeyMappingControl {
          Window window = Minecraft.getInstance().getWindow();
 
          for (KeyMapping mapping : ALL.values()) {
-            KeyMappingControl.init(mapping).autism$refocus(window);
+            KeyMappingControl.of(mapping).autism$refocus(window);
          }
 
          ci.cancel();

@@ -59,95 +59,95 @@ import java.util.Map.Entry;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 
 public final class CommandManager {
-   private static final boolean init_Z = false;
-   private static final CommandDispatcher<AutismCommandSource> init_CommandDispatcher = new CommandDispatcher<>();
-   private static final List<Command> init_List = new ArrayList<>();
-   private static final Map<String, Command> init_Map = new LinkedHashMap<>();
-   private static final Map<String, String> load_Map = new LinkedHashMap<>();
-   private static final Map<Command, String> read = new IdentityHashMap<>();
-   private static final Map<Command, String> write = new IdentityHashMap<>();
-   private static final Set<String> init_Set = new HashSet<>();
-   private static final List<String> load_List = List.of(".", ",", ";", ":", "'", "\"", "\\", "|", "-", "_", "+", "=", "*", "#", "@", "!", "$", "%", "&", "~");
-   private static boolean load_Z = false;
-   private static int init_I;
-   private static final ThreadLocal<Boolean> init_ThreadLocal = ThreadLocal.withInitial(() -> false);
+   private static final boolean DEBUG_DISPATCH = false;
+   private static final CommandDispatcher<AutismCommandSource> DISPATCHER = new CommandDispatcher<>();
+   private static final List<Command> COMMANDS = new ArrayList<>();
+   private static final Map<String, Command> COMMAND_BY_NAME = new LinkedHashMap<>();
+   private static final Map<String, String> ADDON_BY_NAME = new LinkedHashMap<>();
+   private static final Map<Command, String> ADDON_BY_COMMAND = new IdentityHashMap<>();
+   private static final Map<Command, String> PRIMARY_NAME_BY_COMMAND = new IdentityHashMap<>();
+   private static final Set<String> REMOVED_ADDON_NAMES = new HashSet<>();
+   private static final List<String> FALLBACK_PREFIXES = List.of(".", ",", ";", ":", "'", "\"", "\\", "|", "-", "_", "+", "=", "*", "#", "@", "!", "$", "%", "&", "~");
+   private static boolean initialized = false;
+   private static int registryVersion;
+   private static final ThreadLocal<Boolean> BYPASS_INTERCEPT = ThreadLocal.withInitial(() -> false);
 
    private CommandManager() {
    }
 
-   public static synchronized void init_V() {
-      if (!load_Z) {
-         load_Z = true;
-         init_V(new MacroCommand());
-         init_V(new SyncCommand());
-         init_V(new DelayCommand());
-         init_V(new SendCommand());
-         init_V(new VClipCommand());
-         init_V(new HClipCommand());
-         init_V(new TpCommand());
-         init_V(new CopyPosCommand());
-         init_V(new NbtCommand());
-         init_V(new ServerCommand());
-         init_V(new PluginsCommand());
-         init_V(new PrefixCommand());
-         init_V(new CommandsCommand());
-         init_V(new HelpCommand());
-         init_V(new autismclient.commands.impl.BindsCommand());
-         init_V(new autismclient.commands.impl.BindCommand());
-         init_V(new ClearCommand());
-         init_V(new DismountCommand());
-         init_V(new DisconnectCommand());
-         init_V(new SayCommand());
-         init_V(new DropCommand());
-         init_V(new ChangeSlotCommand());
-         init_V(new ClickSlotCommand());
-         init_V(new ClickItemCommand());
-         init_V(new GiveCommand());
-         init_V(new DamageCommand());
+   public static synchronized void initialize() {
+      if (!initialized) {
+         initialized = true;
+         registerBuiltIn(new MacroCommand());
+         registerBuiltIn(new SyncCommand());
+         registerBuiltIn(new DelayCommand());
+         registerBuiltIn(new SendCommand());
+         registerBuiltIn(new VClipCommand());
+         registerBuiltIn(new HClipCommand());
+         registerBuiltIn(new TpCommand());
+         registerBuiltIn(new CopyPosCommand());
+         registerBuiltIn(new NbtCommand());
+         registerBuiltIn(new ServerCommand());
+         registerBuiltIn(new PluginsCommand());
+         registerBuiltIn(new PrefixCommand());
+         registerBuiltIn(new CommandsCommand());
+         registerBuiltIn(new HelpCommand());
+         registerBuiltIn(new autismclient.commands.impl.BindsCommand());
+         registerBuiltIn(new autismclient.commands.impl.BindCommand());
+         registerBuiltIn(new ClearCommand());
+         registerBuiltIn(new DismountCommand());
+         registerBuiltIn(new DisconnectCommand());
+         registerBuiltIn(new SayCommand());
+         registerBuiltIn(new DropCommand());
+         registerBuiltIn(new ChangeSlotCommand());
+         registerBuiltIn(new ClickSlotCommand());
+         registerBuiltIn(new ClickItemCommand());
+         registerBuiltIn(new GiveCommand());
+         registerBuiltIn(new DamageCommand());
          if (!AutismLiteVariant.enabled()) {
-            init_V(new ToolsCommand());
-            init_V(new autismclient.commands.impl.AiCommand());
-            init_V(new ToggleCommand());
-            init_V(new ModulesCommand());
-            init_V(new OreSimCommand());
-            init_V(new GhostBlockCommand());
-            init_V(new FriendCommand());
-            init_V(new WaypointsCommand());
-            init_V(new GamemodeCommand());
-            init_V(new FakeGmCommand());
-            init_V(new XCarryCommand());
-            init_V(new RemoteViewCommand());
-            init_V(new NameScrapeCommand());
+            registerBuiltIn(new ToolsCommand());
+            registerBuiltIn(new autismclient.commands.impl.AiCommand());
+            registerBuiltIn(new ToggleCommand());
+            registerBuiltIn(new ModulesCommand());
+            registerBuiltIn(new OreSimCommand());
+            registerBuiltIn(new GhostBlockCommand());
+            registerBuiltIn(new FriendCommand());
+            registerBuiltIn(new WaypointsCommand());
+            registerBuiltIn(new GamemodeCommand());
+            registerBuiltIn(new FakeGmCommand());
+            registerBuiltIn(new XCarryCommand());
+            registerBuiltIn(new RemoteViewCommand());
+            registerBuiltIn(new NameScrapeCommand());
          }
       }
    }
 
-   private static void init_V(Command command) {
-      init(command, command.name(), true);
+   private static void registerBuiltIn(Command command) {
+      registerInternal(command, command.name(), true);
    }
 
-   private static List<String> init(Command command, String primaryName, boolean registerAliases) {
+   private static List<String> registerInternal(Command command, String primaryName, boolean registerAliases) {
       List<String> registeredNames = new ArrayList<>();
-      init_I++;
-      init_List.add(command);
-      write.put(command, primaryName);
+      registryVersion++;
+      COMMANDS.add(command);
+      PRIMARY_NAME_BY_COMMAND.put(command, primaryName);
       LiteralArgumentBuilder<AutismCommandSource> primary = LiteralArgumentBuilder.literal(primaryName);
       command.build(primary);
-      init_CommandDispatcher.register(primary);
-      init_Map.put(primaryName.toLowerCase(Locale.ROOT), command);
-      init_Set.remove(primaryName.toLowerCase(Locale.ROOT));
+      DISPATCHER.register(primary);
+      COMMAND_BY_NAME.put(primaryName.toLowerCase(Locale.ROOT), command);
+      REMOVED_ADDON_NAMES.remove(primaryName.toLowerCase(Locale.ROOT));
       registeredNames.add(primaryName.toLowerCase(Locale.ROOT));
       if (!registerAliases) {
          return registeredNames;
       }
 
       for (String alias : command.aliases()) {
-         if (alias != null && !alias.isBlank() && !init_Map.containsKey(alias.toLowerCase(Locale.ROOT))) {
+         if (alias != null && !alias.isBlank() && !COMMAND_BY_NAME.containsKey(alias.toLowerCase(Locale.ROOT))) {
             LiteralArgumentBuilder<AutismCommandSource> aliasBuilder = LiteralArgumentBuilder.literal(alias);
             command.build(aliasBuilder);
-            init_CommandDispatcher.register(aliasBuilder);
-            init_Map.put(alias.toLowerCase(Locale.ROOT), command);
-            init_Set.remove(alias.toLowerCase(Locale.ROOT));
+            DISPATCHER.register(aliasBuilder);
+            COMMAND_BY_NAME.put(alias.toLowerCase(Locale.ROOT), command);
+            REMOVED_ADDON_NAMES.remove(alias.toLowerCase(Locale.ROOT));
             registeredNames.add(alias.toLowerCase(Locale.ROOT));
          }
       }
@@ -155,11 +155,11 @@ public final class CommandManager {
       return registeredNames;
    }
 
-   public static synchronized void init_V(Command command, String addonId) {
-      init_AddonRegistrationR(command, addonId);
+   public static synchronized void registerAddonCommand(Command command, String addonId) {
+      registerAddonCommandChecked(command, addonId);
    }
 
-   public static synchronized AddonRegistrationResult init_AddonRegistrationR(Command command, String addonId) {
+   public static synchronized AddonRegistrationResult registerAddonCommandChecked(Command command, String addonId) {
       if (command == null) {
          return AddonRegistrationResult.rejected("command", "", "command was null");
       }
@@ -167,7 +167,7 @@ public final class CommandManager {
       if (addonId != null && !addonId.isBlank()) {
          String name = command.name();
          if (name != null && !name.isBlank()) {
-            boolean collision = init_Map.containsKey(name.toLowerCase(Locale.ROOT));
+            boolean collision = COMMAND_BY_NAME.containsKey(name.toLowerCase(Locale.ROOT));
             List<String> registered;
             if (collision) {
                String namespaced = (addonId != null && !addonId.isBlank() ? addonId : "addon") + ":" + name;
@@ -178,56 +178,56 @@ public final class CommandManager {
                      addonId,
                      namespaced
                   );
-               registered = init(command, namespaced, false);
+               registered = registerInternal(command, namespaced, false);
             } else {
-               registered = init(command, name, true);
+               registered = registerInternal(command, name, true);
             }
 
-            read.put(command, addonId);
+            ADDON_BY_COMMAND.put(command, addonId);
 
             for (String registeredName : registered) {
-               load_Map.put(registeredName, addonId);
+               ADDON_BY_NAME.put(registeredName, addonId);
             }
 
             String id = registered.isEmpty() ? name : registered.get(0);
             autismclient.b.DataUtil.init_V("command", id);
             return AddonRegistrationResult.accepted("command", id);
          } else {
-            return init(addonId, "", "blank command name");
+            return rejectAddonCommand(addonId, "", "blank command name");
          }
       } else {
-         return init(addonId, "", "registration outside an addon lifecycle - register from onInitialize() or onRegisterCategories()");
+         return rejectAddonCommand(addonId, "", "registration outside an addon lifecycle - register from onInitialize() or onRegisterCategories()");
       }
    }
 
-   private static AddonRegistrationResult init(String addonId, String id, String reason) {
+   private static AddonRegistrationResult rejectAddonCommand(String addonId, String id, String reason) {
       AutismClientAddon.LOG.warn("[Commands] Rejecting addon command '{}': {}", id, reason);
       autismclient.b.DataUtil.init(addonId, "command", id, reason);
       return AddonRegistrationResult.rejected("command", id, reason);
    }
 
-   public static synchronized void init_V(String addonId) {
+   public static synchronized void unregisterAddonCommands(String addonId) {
       if (addonId != null && !addonId.isBlank()) {
          List<String> removeNames = new ArrayList<>();
 
-         for (Entry<String, String> owner : load_Map.entrySet()) {
+         for (Entry<String, String> owner : ADDON_BY_NAME.entrySet()) {
             if (addonId.equals(owner.getValue())) {
                removeNames.add(owner.getKey());
             }
          }
 
          for (String name : removeNames) {
-            init_Map.remove(name);
-            load_Map.remove(name);
-            init_Set.add(name);
+            COMMAND_BY_NAME.remove(name);
+            ADDON_BY_NAME.remove(name);
+            REMOVED_ADDON_NAMES.add(name);
             auditRemoveRootLiteral(name);
          }
 
-         init_List.removeIf(command -> addonId.equals(read.get(command)));
-         write.keySet().removeIf(command -> addonId.equals(read.get(command)));
-         read.entrySet().removeIf(entry -> addonId.equals(entry.getValue()));
+         COMMANDS.removeIf(command -> addonId.equals(ADDON_BY_COMMAND.get(command)));
+         PRIMARY_NAME_BY_COMMAND.keySet().removeIf(command -> addonId.equals(ADDON_BY_COMMAND.get(command)));
+         ADDON_BY_COMMAND.entrySet().removeIf(entry -> addonId.equals(entry.getValue()));
          if (!removeNames.isEmpty()) {
-            init_I++;
+            registryVersion++;
          }
       }
    }
@@ -239,7 +239,7 @@ public final class CommandManager {
       }
 
       try {
-         Object root = init_CommandDispatcher.getRoot();
+         Object root = DISPATCHER.getRoot();
          java.lang.reflect.Field childrenField = CommandNode.class.getDeclaredField("children");
          childrenField.setAccessible(true);
          Map<String, ?> children = (Map<String, ?>)childrenField.get(root);
@@ -258,30 +258,30 @@ public final class CommandManager {
       }
    }
 
-   public static CommandDispatcher<AutismCommandSource> init_CommandDispatcher() {
-      return init_CommandDispatcher;
+   public static CommandDispatcher<AutismCommandSource> getDispatcher() {
+      return DISPATCHER;
    }
 
-   public static int init_I() {
-      return init_I;
+   public static int getRegistryVersion() {
+      return registryVersion;
    }
 
-   public static List<Command> init_List() {
-      return Collections.unmodifiableList(init_List);
+   public static List<Command> getCommands() {
+      return Collections.unmodifiableList(COMMANDS);
    }
 
-   public static synchronized String init_Str(Command command) {
-      String name = write.get(command);
+   public static synchronized String getPrimaryName(Command command) {
+      String name = PRIMARY_NAME_BY_COMMAND.get(command);
       return name == null ? command.name() : name;
    }
 
-   public static synchronized List<String> init_List(Command command) {
-      String name = init_Str(command);
-      CommandNode<AutismCommandSource> node = init_CommandDispatcher.getRoot().getChild(name);
-      return node == null ? List.of(name) : init(node, name);
+   public static synchronized List<String> getUsageForms(Command command) {
+      String name = getPrimaryName(command);
+      CommandNode<AutismCommandSource> node = DISPATCHER.getRoot().getChild(name);
+      return node == null ? List.of(name) : collectUsageForms(node, name);
    }
 
-   public static List<String> init(CommandNode<AutismCommandSource> node, String name) {
+   public static List<String> collectUsageForms(CommandNode<AutismCommandSource> node, String name) {
       List<String> forms = new ArrayList<>();
 
       for (String usage : new CommandDispatcher<AutismCommandSource>().getAllUsage(node, AutismCommandSource.INSTANCE, false)) {
@@ -295,50 +295,50 @@ public final class CommandManager {
       return forms;
    }
 
-   public static Command init_Command(String nameOrAlias) {
-      return nameOrAlias == null ? null : init_Map.get(nameOrAlias.trim().toLowerCase(Locale.ROOT));
+   public static Command getCommand(String nameOrAlias) {
+      return nameOrAlias == null ? null : COMMAND_BY_NAME.get(nameOrAlias.trim().toLowerCase(Locale.ROOT));
    }
 
-   public static String init_Str() {
+   public static String getPrefix() {
       return CommandPrefixHelper.init_Str();
    }
 
-   public static boolean init_Z(String message) {
+   public static boolean hasCommandPrefix(String message) {
       if (message != null && !message.isBlank()) {
          String trimmed = message.trim();
-         String prefix = init_Str();
+         String prefix = getPrefix();
          return !prefix.isEmpty() && trimmed.startsWith(prefix);
       } else {
          return false;
       }
    }
 
-   public static boolean init_Z() {
+   public static boolean isHiddenMode() {
       return aD.read_Z();
    }
 
-   public static boolean load_Z(String message) {
-      return init_Z() && write(message);
+   public static boolean shouldSuppressInHiddenMode(String message) {
+      return isHiddenMode() && looksLikeClientCommand(message);
    }
 
-   private static boolean write(String message) {
+   private static boolean looksLikeClientCommand(String message) {
       if (message != null && !message.isBlank()) {
          String trimmed = message.trim();
          if ("^toggleautism".equalsIgnoreCase(trimmed)) {
             return true;
          }
 
-         String prefix = init_Str();
+         String prefix = getPrefix();
          if (!prefix.isEmpty() && trimmed.startsWith(prefix)) {
             return true;
          }
 
-         for (String fallback : load_List) {
+         for (String fallback : FALLBACK_PREFIXES) {
             if (fallback != null && !fallback.isEmpty() && !fallback.equals(prefix) && trimmed.startsWith(fallback)) {
                String body = trimmed.substring(fallback.length()).trim();
                if (!body.isEmpty()) {
-                  String first = load_Str(body).toLowerCase(Locale.ROOT);
-                  if (init_Map.containsKey(first) || init_Set.contains(first)) {
+                  String first = extractFirstToken(body).toLowerCase(Locale.ROOT);
+                  if (COMMAND_BY_NAME.containsKey(first) || REMOVED_ADDON_NAMES.contains(first)) {
                      return true;
                   }
                }
@@ -351,36 +351,36 @@ public final class CommandManager {
       }
    }
 
-   public static String init_Str(String message) {
-      if (!init_Z(message)) {
+   public static String stripPrefix(String message) {
+      if (!hasCommandPrefix(message)) {
          return "";
       }
 
       String trimmed = message.trim();
-      int prefixLength = init_Str().length();
+      int prefixLength = getPrefix().length();
       return trimmed.length() <= prefixLength ? "" : trimmed.substring(prefixLength).trim();
    }
 
-   public static boolean load() {
-      return init_ThreadLocal.get();
+   public static boolean isBypassingIntercept() {
+      return BYPASS_INTERCEPT.get();
    }
 
-   public static void init(ClientPacketListener conn, String message) {
-      init_ThreadLocal.set(true);
+   public static void sendChatRaw(ClientPacketListener conn, String message) {
+      BYPASS_INTERCEPT.set(true);
 
       try {
          conn.sendChat(message);
       } finally {
-         init_ThreadLocal.remove();
+         BYPASS_INTERCEPT.remove();
       }
    }
 
-   public static boolean read(String body) {
-      return init_DataUtil_DataUtil(body).init_Z();
+   public static boolean execute(String body) {
+      return dispatch(body).isHandled();
    }
 
-   public static CommandManager.Inner_DataUtil init_DataUtil_DataUtil(String body) {
-      if (init_Z()) {
+   public static CommandManager.Inner_DataUtil dispatch(String body) {
+      if (isHiddenMode()) {
          return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.BLOCKED, "Client commands are blocked while the client is hidden (panic mode)");
       }
 
@@ -398,20 +398,20 @@ public final class CommandManager {
          return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.EMPTY, "");
       }
 
-      if (init_Set.contains(load_Str(trimmed).toLowerCase(Locale.ROOT))) {
-         init(trimmed, CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand().create());
-         return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.UNKNOWN_COMMAND, "Unknown command: " + load_Str(trimmed) + " (its add-on is disabled)");
+      if (REMOVED_ADDON_NAMES.contains(extractFirstToken(trimmed).toLowerCase(Locale.ROOT))) {
+         reportSyntaxError(trimmed, CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand().create());
+         return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.UNKNOWN_COMMAND, "Unknown command: " + extractFirstToken(trimmed) + " (its add-on is disabled)");
       }
 
       try {
-         init_CommandDispatcher.execute(trimmed, AutismCommandSource.INSTANCE);
+         DISPATCHER.execute(trimmed, AutismCommandSource.INSTANCE);
          return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.EXECUTED, "");
       } catch (CommandSyntaxException e) {
-         init(trimmed, e);
+         reportSyntaxError(trimmed, e);
          String message = e.getMessage() != null && !e.getMessage().isBlank() ? e.getMessage() : "Incomplete or invalid command";
-         boolean unknown = init_Command(load_Str(trimmed)) == null;
+         boolean unknown = getCommand(extractFirstToken(trimmed)) == null;
          return new CommandManager.Inner_DataUtil(
-            unknown ? CommandManager.Inner_StreamUtil.UNKNOWN_COMMAND : CommandManager.Inner_StreamUtil.SYNTAX_ERROR, unknown ? "Unknown command: " + load_Str(trimmed) : message
+            unknown ? CommandManager.Inner_StreamUtil.UNKNOWN_COMMAND : CommandManager.Inner_StreamUtil.SYNTAX_ERROR, unknown ? "Unknown command: " + extractFirstToken(trimmed) : message
          );
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("[Commands] dispatch failed for '{}'", trimmed, t);
@@ -421,10 +421,10 @@ public final class CommandManager {
       }
    }
 
-   private static void init(String body, CommandSyntaxException e) {
-      String first = load_Str(body);
-      Command command = init_Command(first);
-      String prefix = init_Str();
+   private static void reportSyntaxError(String body, CommandSyntaxException e) {
+      String first = extractFirstToken(body);
+      Command command = getCommand(first);
+      String prefix = getPrefix();
       if (command == null) {
          AutismClientMessaging.sendPrefixed("§cUnknown AUTISM command: §f" + first);
          AutismClientMessaging.sendPrefixed("§7Use §f" + prefix + "commands §7or §f" + prefix + "help§7.");
@@ -439,7 +439,7 @@ public final class CommandManager {
       }
    }
 
-   private static String load_Str(String body) {
+   private static String extractFirstToken(String body) {
       if (body == null) {
          return "";
       }
@@ -453,9 +453,9 @@ public final class CommandManager {
       return space < 0 ? trimmed : trimmed.substring(0, space);
    }
 
-   public record Inner_DataUtil(CommandManager.Inner_StreamUtil init_DataUtil_StreamUti, String init_Str) {
-      public boolean init_Z() {
-         return this.init_DataUtil_StreamUti != CommandManager.Inner_StreamUtil.EMPTY;
+   public record Inner_DataUtil(CommandManager.Inner_StreamUtil status, String message) {
+      public boolean isHandled() {
+         return this.status != CommandManager.Inner_StreamUtil.EMPTY;
       }
    }
 

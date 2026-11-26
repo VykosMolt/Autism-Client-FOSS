@@ -5,20 +5,20 @@ public final class PillBadgeRenderer {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean selected, boolean hovered) {
-      init(context, bounds, label, context.init_TableIndex().init_JsonUtil().clear, selected, hovered);
+      init(context, bounds, label, context.init_TableIndex().colors().accent, selected, hovered);
    }
 
    public static void init(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, int accentColor, boolean selected, boolean hovered
    ) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered);
-      int border = selected ? accentColor : colors.set;
-      int fill = selected ? init(accentColor, 0.12F) : init(colors.open, colors.push, hoverT);
+      int border = selected ? accentColor : colors.borderControl;
+      int fill = selected ? init(accentColor, 0.12F) : init(colors.cardSurface, colors.cardSurfaceElevated, hoverT);
       int radius = bounds.sync() / 2;
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, fill, border);
-      int text = !selected && !hovered ? colors.valid : colors.prev;
-      context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), label == null ? "" : label, bounds, text);
+      int text = !selected && !hovered ? colors.textSecondary : colors.textPrimary;
+      context.init_PoolEntry().drawCentered(context.init_GuiGraphicsExtract(), label == null ? "" : label, bounds, text);
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label) {

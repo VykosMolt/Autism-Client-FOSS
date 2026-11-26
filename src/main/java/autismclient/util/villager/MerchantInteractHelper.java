@@ -53,11 +53,11 @@ public final class MerchantInteractHelper {
 
    public static boolean init(Minecraft mc, Vec3 point) {
       if (mc.player != null && mc.getConnection() != null) {
-         RotationMath.Rotation current = RotationMath.init(mc.player);
-         RotationMath.Rotation goal = RotationMath.init(point, mc.player.getEyePosition());
-         RotationMath.Rotation next = RotationMath.init_ce_DataUtil(RotationMath.init(current, goal, 30.0F, 30.0F), current);
-         RotationMath.init_V_LocalPlayer(mc.player, next, false);
-         if (RotationMath.init_F(next, goal) > 3.0F) {
+         RotationMath.Rotation current = RotationMath.ofPlayer(mc.player);
+         RotationMath.Rotation goal = RotationMath.lookAt(point, mc.player.getEyePosition());
+         RotationMath.Rotation next = RotationMath.applyGcd(RotationMath.stepToward(current, goal, 30.0F, 30.0F), current);
+         RotationMath.applyToPlayer(mc.player, next, false);
+         if (RotationMath.angularDistance(next, goal) > 3.0F) {
             return false;
          }
 

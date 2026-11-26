@@ -46,7 +46,7 @@ public final class SilentMiningCoordinator {
    }
 
    public static boolean init(String requester, RotationMath.Rotation current, RotationMath.Rotation target) {
-      return "bed-nuker".equals(requester) && current != null && target != null && RotationMath.init_F(current, target) <= 0.05F;
+      return "bed-nuker".equals(requester) && current != null && target != null && RotationMath.angularDistance(current, target) <= 0.05F;
    }
 
    public static boolean init(String requester, RotationMath.Rotation current, RotationMath.Rotation target, RotationStreamPlanner.Inner_TaskQueue stream) {
@@ -54,7 +54,7 @@ public final class SilentMiningCoordinator {
          return false;
       }
 
-      RotationStreamPlanner.init_V_ap_TaskQueue_3(stream, current, 0.0, 0.0, RotationMath.init());
+      RotationStreamPlanner.init_V_ap_TaskQueue_3(stream, current, 0.0, 0.0, RotationMath.gcdStep());
       return true;
    }
 

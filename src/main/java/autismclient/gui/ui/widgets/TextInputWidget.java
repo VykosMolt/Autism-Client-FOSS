@@ -400,7 +400,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    @Override
    public float init_F_SyncManager(autismclient.gui.ui.layout.LayoutContext context) {
       if (this.open_F > 0.0F) {
-         return UiLayoutMath.init_F_F(this.open_F, this.flush_F, this.close_F);
+         return UiLayoutMath.clamp(this.open_F, this.flush_F, this.close_F);
       }
 
       String sample = this.init_Str.isEmpty() ? this.load_Str : this.init_Str;
@@ -410,7 +410,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
 
       Identifier font = this.init_Identifier_SyncManager(context);
       int color = context.init_CharEncoder().load(this.init_l);
-      return UiLayoutMath.init_F_Font(context.init_Font(), sample, font, color, context.init_CharEncoder().load(this.read_I + 2), this.flush_F, this.close_F);
+      return UiLayoutMath.measurePaddedWidthFloat(context.init_Font(), sample, font, color, context.init_CharEncoder().load(this.read_I + 2), this.flush_F, this.close_F);
    }
 
    @Override
@@ -455,7 +455,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          }
 
          if (this.write_Z && this.sync_Z && hover > 0.0F && !this.close_Z) {
-            int hoverTint = ThemePaletteManager.init_I_I_ct_DataUtil((int)(hover * 14.0F) << 24 | 16723759, ThemePaletteManager.ColorRole.ACCENT);
+            int hoverTint = ThemePaletteManager.recolor((int)(hover * 14.0F) << 24 | 16723759, ThemePaletteManager.ColorRole.ACCENT);
             autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), fieldBounds.init(1), Math.max(0, radius - 1), context.init_I_I(hoverTint));
          }
 
@@ -466,7 +466,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                context.init_GuiGraphicsExtract(),
                fieldBounds.init(1),
                Math.max(0, radius - 1),
-               context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(318716731, ThemePaletteManager.ColorRole.ACCENT))
+               context.init_I_I(ThemePaletteManager.recolor(318716731, ThemePaletteManager.ColorRole.ACCENT))
             );
          }
 
@@ -496,11 +496,11 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                         drawY + contentInset,
                         textX + 1,
                         drawY + contentInset + fontHeight,
-                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.ColorRole.TEXT))
+                        context.init_I_I(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
                      );
                }
             } else {
-               int textY = UiLayoutMath.init(drawY, drawH, fontHeight, textYOffsetPx);
+               int textY = UiLayoutMath.centerTextY(drawY, drawH, fontHeight, textYOffsetPx);
                String displayPlaceholder = k.init(context.init_Font(), this.load_Str, innerW, font, placeholderColor);
                k.init(context.init_GuiGraphicsExtract(), context.init_Font(), displayPlaceholder, font, context.init_I_I(placeholderColor), textX, textY, false);
                if (this.close_Z && this.flush_Z()) {
@@ -510,7 +510,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                         drawY + contentInset,
                         textX + 1,
                         drawY + drawH - contentInset,
-                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.ColorRole.TEXT))
+                        context.init_I_I(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
                      );
                }
             }
@@ -543,7 +543,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                               lineY - 1,
                               selectionX + selectionW,
                               lineY + fontHeight + lineSpacing,
-                              context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.ColorRole.ACCENT))
+                              context.init_I_I(ThemePaletteManager.recolor(1728006730, ThemePaletteManager.ColorRole.ACCENT))
                            );
                      }
                   }
@@ -585,14 +585,14 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                         caretY - 1,
                         caretX + 1,
                         caretY + fontHeight + lineSpacing,
-                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.ColorRole.TEXT))
+                        context.init_I_I(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
                      );
                }
             }
 
             this.init_V_SyncManager(context, drawX, drawY, drawW, drawH, lineHeight, visibleLineCount, wrappedLines.size());
          } else {
-            int textY = UiLayoutMath.init(drawY, drawH, fontHeight, textYOffsetPx);
+            int textY = UiLayoutMath.centerTextY(drawY, drawH, fontHeight, textYOffsetPx);
             int visibleEnd = this.init_I_Font_2(context.init_Font(), font, bodyColor, innerW, richMetrics);
             int selectionStart = Math.min(this.close_I, this.open_I);
             int selectionEnd = Math.max(this.close_I, this.open_I);
@@ -608,7 +608,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                         drawY + 2,
                         selectionX + selectionW,
                         drawY + drawH - 2,
-                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.ColorRole.ACCENT))
+                        context.init_I_I(ThemePaletteManager.recolor(1728006730, ThemePaletteManager.ColorRole.ACCENT))
                      );
                }
             }
@@ -649,7 +649,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                      drawY + contentInset,
                      caretX + 1,
                      drawY + drawH - contentInset,
-                     context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.ColorRole.TEXT))
+                     context.init_I_I(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
                   );
             }
          }
@@ -780,7 +780,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    ) {
       int maxStart = Math.max(0, wrappedLineCount - visibleLineCount);
       if (maxStart > 0) {
-         ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+         ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.compute(
             Math.max(lineHeight, wrappedLineCount * lineHeight),
             Math.max(lineHeight, visibleLineCount * lineHeight),
             drawX + drawW - 5,
@@ -789,17 +789,17 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
             Math.max(1, drawH - 4),
             this.push_I * lineHeight
          );
-         ScrollbarMetricsHelper.init(context.init_GuiGraphicsExtract(), metrics, metrics.init(context.init_F(), context.load()), this.open_Z);
+         ScrollbarMetricsHelper.render(context.init_GuiGraphicsExtract(), metrics, metrics.containsTrack(context.init_F(), context.load()), this.open_Z);
       }
    }
 
    private boolean init_Z_SyncManager(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY) {
       TextInputWidget.Inner_DataUtil info = this.init_BitSetUtil_DataUti_SyncManager(context);
-      if (info != null && info.init_PoolEntry_DataUtil().init_Z() && info.init_PoolEntry_DataUtil().init(mouseX, mouseY)) {
+      if (info != null && info.init_PoolEntry_DataUtil().isScrollable() && info.init_PoolEntry_DataUtil().containsTrack(mouseX, mouseY)) {
          this.open_Z = true;
-         this.pop_I = info.init_PoolEntry_DataUtil().load(mouseX, mouseY)
-            ? Math.max(0, Math.round(mouseY) - info.init_PoolEntry_DataUtil().update())
-            : info.init_PoolEntry_DataUtil().sync() / 2;
+         this.pop_I = info.init_PoolEntry_DataUtil().containsThumb(mouseX, mouseY)
+            ? Math.max(0, Math.round(mouseY) - info.init_PoolEntry_DataUtil().thumbY())
+            : info.init_PoolEntry_DataUtil().thumbHeight() / 2;
          this.init_V_SyncManager_F(context, mouseY);
          return true;
       } else {
@@ -809,8 +809,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
 
    private void init_V_SyncManager_F(autismclient.gui.ui.layout.LayoutContext context, float mouseY) {
       TextInputWidget.Inner_DataUtil info = this.init_BitSetUtil_DataUti_SyncManager(context);
-      if (info != null && info.init_PoolEntry_DataUtil().init_Z()) {
-         int pixels = ScrollbarMetricsHelper.init(info.init_PoolEntry_DataUtil(), mouseY, this.pop_I);
+      if (info != null && info.init_PoolEntry_DataUtil().isScrollable()) {
+         int pixels = ScrollbarMetricsHelper.scrollOffsetForMouseY(info.init_PoolEntry_DataUtil(), mouseY, this.pop_I);
          this.push_I = Math.max(0, Math.min(info.load(), Math.round((float)pixels / Math.max(1, info.init_I()))));
          this.poll_Z = true;
       }
@@ -831,7 +831,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       int lineHeight = context.init_CharEncoder().init_I_l(this.init_l) + context.init_CharEncoder().load(1);
       int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.init_CharEncoder().load(6)) / lineHeight);
       int maxStart = Math.max(0, wrappedLines.size() - visibleLineCount);
-      ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+      ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.compute(
          Math.max(lineHeight, wrappedLines.size() * lineHeight),
          Math.max(lineHeight, visibleLineCount * lineHeight),
          Math.round(this.init_F + this.read_F) - 5,
@@ -1163,7 +1163,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    private List<String> load(Font renderer, Identifier font, int color, String text, int availableWidth) {
       if (text != null && !text.isEmpty()) {
          int safeWidth = Math.max(1, availableWidth);
-         int reloadGeneration = autismclient.gui.sdf.MsdfTextRenderer.init_I();
+         int reloadGeneration = autismclient.gui.sdf.MsdfTextRenderer.cacheGeneration();
          if (Objects.equals(text, this.load_Str)
             && Objects.equals(this.update_Str, text)
             && this.read_Font == renderer
@@ -1290,7 +1290,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    private void init_V_Font(Font renderer, Identifier font, int color, TextInputWidget.Inner_StreamUtil richMetrics) {
-      int reloadGeneration = autismclient.gui.sdf.MsdfTextRenderer.init_I();
+      int reloadGeneration = autismclient.gui.sdf.MsdfTextRenderer.cacheGeneration();
       if (this.sync_J != this.write_J
          || this.flush_J != this.update_J
          || this.init_Font != renderer
@@ -1300,7 +1300,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          || this.load_BitSetUtil_StreamU != richMetrics
          || this.init_IArr.length != this.init_Str.length() + 1) {
          autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(font);
-         this.put_Z = richMetrics == null && autismclient.gui.sdf.MsdfTextRenderer.init(face, this.init_Str.replace("\n", ""));
+         this.put_Z = richMetrics == null && autismclient.gui.sdf.MsdfTextRenderer.canRender(face, this.init_Str.replace("\n", ""));
          this.init_IArr = Utf16TextCursor.init(
             this.init_Str,
             (text, start, end) -> {
@@ -1310,7 +1310,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                }
 
                if (this.put_Z) {
-                  return autismclient.gui.sdf.MsdfTextRenderer.init_F(face, glyph, autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(face));
+                  return autismclient.gui.sdf.MsdfTextRenderer.measureWidthFloat(face, glyph, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face));
                }
 
                if (richMetrics == null) {
@@ -1416,7 +1416,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics
    ) {
       int safeWidth = Math.max(1, availableWidth);
-      int reloadGeneration = autismclient.gui.sdf.MsdfTextRenderer.init_I();
+      int reloadGeneration = autismclient.gui.sdf.MsdfTextRenderer.cacheGeneration();
       if (this.close_J == this.write_J
          && this.open_J == this.update_J
          && this.load_Font == renderer

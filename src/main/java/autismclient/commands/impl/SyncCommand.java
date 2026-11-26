@@ -20,7 +20,7 @@ public final class SyncCommand extends Command {
       root.executes(context -> init());
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("send").executes(context -> {
-               AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "sync send <message or /command>");
+               AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.getPrefix() + "sync send <message or /command>");
                return 1;
             }))
             .then(
@@ -30,7 +30,7 @@ public final class SyncCommand extends Command {
       );
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("macro").executes(context -> {
-               AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "sync macro <name>");
+               AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.getPrefix() + "sync macro <name>");
                return 1;
             }))
             .then(
@@ -41,7 +41,7 @@ public final class SyncCommand extends Command {
    }
 
    private static int init() {
-      String prefix = autismclient.commands.CommandManager.init_Str();
+      String prefix = autismclient.commands.CommandManager.getPrefix();
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "sync send <message or /command>");
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "sync macro <name>");
       return 1;

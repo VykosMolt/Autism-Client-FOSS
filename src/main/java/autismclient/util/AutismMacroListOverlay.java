@@ -255,7 +255,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    private int init_I_Str_5(String label) {
       return this.init_Font == null
          ? 24
-         : autismclient.gui.ui.UiDensityMetrics.load(
+         : autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
             autismclient.gui.f.b.k.init(
                this.init_Font,
                label,
@@ -382,14 +382,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.init_cH_cH_3(
-            new OverlayBounds(bounds.init_I, bounds.load_I, Math.max(this.run_I_13(), bounds.read), bounds.write, bounds.init_Z, bounds.load_Z)
+            new OverlayBounds(bounds.x, bounds.y, Math.max(this.run_I_13(), bounds.width), bounds.height, bounds.visible, bounds.collapsed)
          );
-         this.tick_I = clamped.init_I;
-         this.run_I = clamped.load_I;
-         this.get_I = clamped.read;
-         this.put_I = clamped.write;
-         this.update_Z = clamped.init_Z;
-         this.sync_Z = clamped.load_Z;
+         this.tick_I = clamped.x;
+         this.run_I = clamped.y;
+         this.get_I = clamped.width;
+         this.put_I = clamped.height;
+         this.update_Z = clamped.visible;
+         this.sync_Z = clamped.collapsed;
       }
    }
 
@@ -398,7 +398,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       if (visible && this.init_AutismMacroEditorO != null && this.init_AutismMacroEditorO.sync_Z()) {
          this.update_Z = false;
          this.write_V_13();
-         OverlayManager.init_bk().update_V(this.init_AutismMacroEditorO);
+         OverlayManager.getInstance().bringToFront(this.init_AutismMacroEditorO);
       } else {
          this.update_Z = visible;
          if (!visible) {
@@ -411,7 +411,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          } else {
             this.clear_Z = true;
             this.init_CharEncoder_2.read_CharEncoder(!this.sync_Z);
-            OverlayManager.init_bk().update_V(this);
+            OverlayManager.getInstance().bringToFront(this);
          }
 
          this.write_V_13();
@@ -525,7 +525,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
          float uiMouseX = viewport.init_F_D(mouseX);
          float uiMouseY = viewport.load(mouseY);
-         boolean active = OverlayManager.init_bk().update_Z(this) || OverlayManager.init_bk().write_Z(this);
+         boolean active = OverlayManager.getInstance().isFocused(this) || OverlayManager.getInstance().isTopmost(this);
          boolean headerHovered = this.init_Z_F_F_4(uiMouseX, uiMouseY);
          autismclient.gui.ui.layout.LayoutContext metrics = new autismclient.gui.ui.layout.LayoutContext(
             context, init_Minecraft.font, viewport, this.init_CharEncoder, uiMouseX, uiMouseY, delta
@@ -551,10 +551,10 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
 
          this.put_I = Math.max(this.init_CharEncoder.load(), this.put_I);
          OverlayBounds clamped = this.init_cH_cH_3(new OverlayBounds(this.tick_I, this.run_I, this.get_I, this.put_I, this.update_Z, this.sync_Z));
-         this.tick_I = clamped.init_I;
-         this.run_I = clamped.load_I;
-         this.get_I = clamped.read;
-         this.put_I = clamped.write;
+         this.tick_I = clamped.x;
+         this.run_I = clamped.y;
+         this.get_I = clamped.width;
+         this.put_I = clamped.height;
          this.init_CharEncoder_2.init_TableIndex_F(this.tick_I, this.run_I, this.get_I, this.put_I);
          this.init_PoolEntry
             .init(
@@ -567,7 +567,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             try {
                this.init_V_GuiGraphicsExtract_4(context, viewport, uiMouseX, uiMouseY, delta, active);
             } finally {
-               autismclient.gui.ui.UiClipStack.init_HashUtil().init(context);
+               autismclient.gui.ui.UiClipStack.getInstance().pop(context);
             }
          } else {
             this.read_List.clear();
@@ -705,7 +705,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    private void init_V_GuiGraphicsExtract_6(
       GuiGraphicsExtractor context, autismclient.gui.ui.layout.LayoutContext rowContext, AutismMacroListOverlay.Inner_StreamUtil item, int x, int y, int width
    ) {
-      int textY = UiLayoutMath.init(y, this.get_I_11(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.load), this.init_CharEncoder.flush());
+      int textY = UiLayoutMath.centerTextY(y, this.get_I_11(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.load), this.init_CharEncoder.flush());
       autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, x + this.buffer(), y + this.get_I_11() - 2, width - this.buffer() * 2, rowContext.init_I_I(1124073471));
       autismclient.gui.f.b.k.init(
          context,
@@ -752,16 +752,16 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       boolean selectedRow = localRow && this.init_LinkedHashSet.contains(MacroNameNormalizer.init(item.init_aM.init_Str));
       if (selectedRow && !draggedRow) {
          autismclient.gui.ui.widgets.PanelSurfaceHelper.init(
-            context, x, y, width, this.get_I_11(), rowContext.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(1715082778, ThemePaletteManager.ColorRole.ACCENT))
+            context, x, y, width, this.get_I_11(), rowContext.init_I_I(ThemePaletteManager.recolor(1715082778, ThemePaletteManager.ColorRole.ACCENT))
          );
          autismclient.gui.f.PacketUtil.load(
             context,
             autismclient.gui.f.NetHelper.init(x, y, width, this.get_I_11()),
-            rowContext.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.ColorRole.OUTLINE))
+            rowContext.init_I_I(ThemePaletteManager.recolor(-42149, ThemePaletteManager.ColorRole.OUTLINE))
          );
       } else if (hovered && !draggedRow) {
          autismclient.gui.ui.widgets.PanelSurfaceHelper.init(
-            context, x, y, width, this.get_I_11(), rowContext.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(452938314, ThemePaletteManager.ColorRole.ACCENT))
+            context, x, y, width, this.get_I_11(), rowContext.init_I_I(ThemePaletteManager.recolor(452938314, ThemePaletteManager.ColorRole.ACCENT))
          );
       }
 
@@ -782,7 +782,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       if (item.init_AutismMacroListOve == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO) {
          boolean running = init_Z_Str_4(item.init_aM.init_Str);
          int dotColor = running ? rowContext.init_I_I(-13379224) : rowContext.init_I_I(-10132123);
-         int dotTop = y + UiLayoutMath.load(0, this.get_I_11(), this.entry());
+         int dotTop = y + UiLayoutMath.centerStart(0, this.get_I_11(), this.entry());
          autismclient.gui.ui.widgets.PanelSurfaceHelper.read(context, textLeft, dotTop, this.entry(), this.entry(), dotColor);
          textLeft += this.entry() + this.queue();
       }
@@ -828,7 +828,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
 
       int primaryColor = var37;
       int secondaryColor = rowContext.init_I_I(this.init_CharEncoder.load(autismclient.gui.f.b.l.write));
-      int textY = UiLayoutMath.init(y, this.get_I_11(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
+      int textY = UiLayoutMath.centerTextY(y, this.get_I_11(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
       if (item.init_AutismMacroListOve == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO) {
          int secondaryWidth = autismclient.gui.f.b.k.init(
             this.init_Font, secondaryText, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), secondaryColor
@@ -1227,9 +1227,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             Math.round(this.init_BitSetUtil_2.write_F()),
             Math.round(this.init_BitSetUtil_2.update_F())
          );
-         if (metrics.init_Z() && metrics.init(uiMouseX, uiMouseY)) {
+         if (metrics.isScrollable() && metrics.containsTrack(uiMouseX, uiMouseY)) {
             this.open_Z = true;
-            this.clear_I = metrics.load(uiMouseX, uiMouseY) ? Math.round(uiMouseY) - metrics.update() : metrics.sync() / 2;
+            this.clear_I = metrics.containsThumb(uiMouseX, uiMouseY) ? Math.round(uiMouseY) - metrics.thumbY() : metrics.thumbHeight() / 2;
             this.init_CacheEntry.init_V_PoolEntry_DataUtil(metrics, uiMouseY, this.clear_I);
             return true;
          }
@@ -1368,8 +1368,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          int nextX = Math.round(uiMouseX - this.load_F);
          int nextY = Math.round(uiMouseY - this.read_F);
          OverlayBounds clamped = this.init_cH_cH_3(new OverlayBounds(nextX, nextY, this.get_I, this.put_I, this.update_Z, this.sync_Z));
-         this.tick_I = clamped.init_I;
-         this.run_I = clamped.load_I;
+         this.tick_I = clamped.x;
+         this.run_I = clamped.y;
          return true;
       }
 
@@ -1588,7 +1588,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          autismclient.gui.f.PacketUtil.load(
             graphics,
             autismclient.gui.f.NetHelper.init(x, y, bounds.update(), this.get_I_11()),
-            context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.ColorRole.OUTLINE))
+            context.init_I_I(ThemePaletteManager.recolor(-42149, ThemePaletteManager.ColorRole.OUTLINE))
          );
       }
 
@@ -1659,7 +1659,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          if (anchor != null) {
             int menuWidth = Math.max(
                56,
-               UiLayoutMath.init(
+               UiLayoutMath.maxTextWidth(
                      this.init_Font,
                      this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
                      this.init_CharEncoder.load(autismclient.gui.f.b.l.read),
@@ -1696,7 +1696,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          List<String> labels = folders.stream().map(f -> f.isEmpty() ? "Unfiled" : "Folder: " + f).toList();
          int menuWidth = Math.max(
             56,
-            UiLayoutMath.init(
+            UiLayoutMath.maxTextWidth(
                   this.init_Font,
                   this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
                   this.init_CharEncoder.load(autismclient.gui.f.b.l.read),
@@ -2500,7 +2500,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, width, this.get_I_11());
             autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(context, this.init_Font, 0, 0);
             autismclient.gui.ui.widgets.GroupHeaderRenderer.load(ui, bounds, folder.init_cY_DataUtil.init_Str(), folder.init_cY_DataUtil.load_Z(), true);
-            autismclient.gui.f.PacketUtil.load(context, bounds, ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.ColorRole.OUTLINE));
+            autismclient.gui.f.PacketUtil.load(context, bounds, ThemePaletteManager.recolor(-42149, ThemePaletteManager.ColorRole.OUTLINE));
          } finally {
             autismclient.gui.ui.UiAlphaStack.init_V();
          }
@@ -2508,12 +2508,12 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_GuiGraphicsExtract_7(GuiGraphicsExtractor context, AutismMacro macro, int x, int y, int width, float alpha) {
-      int fill = autismclient.gui.ui.layout.LayoutContext.init(ThemePaletteManager.init_I_I_ct_DataUtil(1715082778, ThemePaletteManager.ColorRole.ACCENT), alpha * 0.85F);
-      int edge = autismclient.gui.ui.layout.LayoutContext.init(ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.ColorRole.OUTLINE), alpha * 0.85F);
+      int fill = autismclient.gui.ui.layout.LayoutContext.init(ThemePaletteManager.recolor(1715082778, ThemePaletteManager.ColorRole.ACCENT), alpha * 0.85F);
+      int edge = autismclient.gui.ui.layout.LayoutContext.init(ThemePaletteManager.recolor(-42149, ThemePaletteManager.ColorRole.OUTLINE), alpha * 0.85F);
       autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, x, y, width, this.get_I_11(), fill);
       autismclient.gui.f.PacketUtil.load(context, autismclient.gui.f.NetHelper.init(x, y, width, this.get_I_11()), edge);
       int textLeft = x + this.state() + (macro.read != null && !macro.read.isEmpty() ? 10 : 0) + this.entry() + this.queue();
-      int textY = UiLayoutMath.init(y, this.get_I_11(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
+      int textY = UiLayoutMath.centerTextY(y, this.get_I_11(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
       int color = autismclient.gui.ui.layout.LayoutContext.init(this.init_CharEncoder.load(autismclient.gui.f.b.l.read), alpha * 0.85F);
       String label = autismclient.gui.f.b.k.init(
          this.init_Font,
@@ -2570,13 +2570,13 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       int viewportH = Math.round(viewport.load());
       int availableW = Math.max(1, viewportW - margin * 2);
       int availableH = Math.max(this.init_CharEncoder.load(), viewportH - margin * 2);
-      int width = Math.max(Math.min(this.init_I(), availableW), Math.min(bounds.read, availableW));
-      int minHeight = bounds.load_Z ? this.init_CharEncoder.load() : this.load_I();
-      int height = Math.max(Math.min(minHeight, availableH), Math.min(bounds.write, availableH));
-      int renderedHeight = bounds.load_Z ? this.init_CharEncoder.load() : height;
-      int x = Math.max(margin, Math.min(bounds.init_I, Math.max(margin, viewportW - margin - width)));
-      int y = Math.max(margin, Math.min(bounds.load_I, Math.max(margin, viewportH - margin - renderedHeight)));
-      return new OverlayBounds(x, y, width, height, bounds.init_Z, bounds.load_Z);
+      int width = Math.max(Math.min(this.init_I(), availableW), Math.min(bounds.width, availableW));
+      int minHeight = bounds.collapsed ? this.init_CharEncoder.load() : this.load_I();
+      int height = Math.max(Math.min(minHeight, availableH), Math.min(bounds.height, availableH));
+      int renderedHeight = bounds.collapsed ? this.init_CharEncoder.load() : height;
+      int x = Math.max(margin, Math.min(bounds.x, Math.max(margin, viewportW - margin - width)));
+      int y = Math.max(margin, Math.min(bounds.y, Math.max(margin, viewportH - margin - renderedHeight)));
+      return new OverlayBounds(x, y, width, height, bounds.visible, bounds.collapsed);
    }
 
    private boolean init_Z_F(float x, float y, float width, float height, float mouseX, float mouseY) {
@@ -2588,7 +2588,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private int get_I_11() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14) + 2;
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14) + 2;
    }
 
    private int set_I_11() {
@@ -2609,7 +2609,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private int reset_I_4() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int start_I_10() {
@@ -2617,7 +2617,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private int stop_I_4() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int next_I_4() {
@@ -2633,7 +2633,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private int size_I_2() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13) - 1;
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13) - 1;
    }
 
    private int data_I_2() {

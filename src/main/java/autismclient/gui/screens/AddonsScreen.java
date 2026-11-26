@@ -171,7 +171,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
    }
 
    private int init_I_Str_4(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.load(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
    }
 
    private int read_I_3() {
@@ -244,7 +244,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
          }
 
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(graphics, scrollbar, scrollbar.init(mx, my), this.load_Z);
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, scrollbar, scrollbar.containsTrack(mx, my), this.load_Z);
          super.extractRenderState(graphics, mx, my, delta);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
@@ -401,11 +401,11 @@ public final class AddonsScreen extends VirtualScaledScreen {
       }
 
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
-      if (scrollbar.init_Z() && scrollbar.init(virtual.x(), virtual.y())) {
+      if (scrollbar.isScrollable() && scrollbar.containsTrack(virtual.x(), virtual.y())) {
          this.load_Z = true;
-         this.sync = scrollbar.load(virtual.x(), virtual.y()) ? Math.max(0, (int)Math.round(virtual.y()) - scrollbar.update()) : scrollbar.sync() / 2;
-         this.write_I = init_I_I(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.flush());
-         this.init_CacheEntry.load(this.write_I, scrollbar.flush());
+         this.sync = scrollbar.containsThumb(virtual.x(), virtual.y()) ? Math.max(0, (int)Math.round(virtual.y()) - scrollbar.thumbY()) : scrollbar.thumbHeight() / 2;
+         this.write_I = init_I_I(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.maxScroll());
+         this.init_CacheEntry.load(this.write_I, scrollbar.maxScroll());
          return true;
       } else {
          autismclient.b.DataUtil.StreamUtil row = this.init_DataUtil_StreamUti_D_D(virtual.x(), virtual.y());
@@ -435,8 +435,8 @@ public final class AddonsScreen extends VirtualScaledScreen {
       MouseButtonEvent virtual = init_MouseButtonEvent_MouseButtonEvent(event);
       if (this.load_Z) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
-         this.write_I = init_I_I(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.flush());
-         this.init_CacheEntry.load(this.write_I, scrollbar.flush());
+         this.write_I = init_I_I(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.maxScroll());
+         this.init_CacheEntry.load(this.write_I, scrollbar.maxScroll());
          return true;
       } else {
          return super.mouseDragged(virtual, cA.init_D_D(dx), cA.init_D_D(dy));
@@ -604,7 +604,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_I_2(int rows) {
       int view = Math.max(1, this.stop() - this.start());
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
          this.load_I_I_2(rows), view, this.size(), this.start(), 6, this.stop() - this.start(), this.write_I
       );
    }
@@ -660,15 +660,15 @@ public final class AddonsScreen extends VirtualScaledScreen {
    }
 
    private int init_I_I_I_3(int top, int height) {
-      return autismclient.gui.f.UiHelper.init(this.font).init_I(autismclient.gui.f.NetHelper.init(0, top, 1, height));
+      return autismclient.gui.f.UiHelper.init(this.font).centerTextY(autismclient.gui.f.NetHelper.init(0, top, 1, height));
    }
 
    private int sync_I_2() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int flush_I_2() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int close_I_2() {

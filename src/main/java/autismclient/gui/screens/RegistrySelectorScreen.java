@@ -77,7 +77,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    private int run;
 
    private static int read_I_10() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public RegistrySelectorScreen(Screen parent, Module module, Setting<?, ?> option) {
@@ -133,7 +133,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int listH = pane.flush();
       this.init(graphics, x, y, w, pane.update(), 5, -1442248437, init_CharEncoder.set());
       this.load(graphics, title, x + 4, this.init_I_I_I_6(y + 2, this.open()), -791321, w - 8);
-      autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics, autismclient.gui.f.NetHelper.init(x + 1, listTop, Math.max(0, w - 2), Math.max(0, listH)));
+      autismclient.gui.ui.UiClipStack.getInstance().push(graphics, autismclient.gui.f.NetHelper.init(x + 1, listTop, Math.max(0, w - 2), Math.max(0, listH)));
 
       try {
          if (available) {
@@ -142,11 +142,11 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
             this.load(graphics, x + 3, listTop, w - 12, listH, mx, my);
          }
       } finally {
-         autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics);
+         autismclient.gui.ui.UiClipStack.getInstance().pop(graphics);
       }
 
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init(available, x, listTop, w, listH);
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(graphics, metrics, metrics.init(mx, my), available ? this.init_Z : this.load_Z);
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, metrics.containsTrack(mx, my), available ? this.init_Z : this.load_Z);
    }
 
    private void init(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int mx, int my) {
@@ -230,7 +230,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int actionY = y + (rowH - 1 - actionW) / 2;
       int textMax = actionX - 4 - textX;
       int textY = this.init_I_I_I_6(y, rowH - 1);
-      this.load(graphics, label, textX, textY, invalid ? ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.DANGER) : -791321, textMax);
+      this.load(graphics, label, textX, textY, invalid ? ThemePaletteManager.recolor(-50373, ThemePaletteManager.ColorRole.DANGER) : -791321, textMax);
       if (!id.equals(label)) {
          int labelW = Math.min(textMax, autismclient.gui.f.b.k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
          int idX = textX + labelW + 4;
@@ -283,18 +283,18 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
 
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics availableMetrics = this.init_PoolEntry_DataUtil_Z(true);
-      if (availableMetrics.init_Z() && availableMetrics.init(mx, my)) {
+      if (availableMetrics.isScrollable() && availableMetrics.containsTrack(mx, my)) {
          this.init_Z = true;
-         this.pop = availableMetrics.load(mx, my) ? my - availableMetrics.update() : availableMetrics.sync() / 2;
-         this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(availableMetrics, my, this.pop);
+         this.pop = availableMetrics.containsThumb(mx, my) ? my - availableMetrics.thumbY() : availableMetrics.thumbHeight() / 2;
+         this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(availableMetrics, my, this.pop);
          return true;
       }
 
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics selectedMetrics = this.init_PoolEntry_DataUtil_Z(false);
-      if (selectedMetrics.init_Z() && selectedMetrics.init(mx, my)) {
+      if (selectedMetrics.isScrollable() && selectedMetrics.containsTrack(mx, my)) {
          this.load_Z = true;
-         this.pop = selectedMetrics.load(mx, my) ? my - selectedMetrics.update() : selectedMetrics.sync() / 2;
-         this.push = this.init_I_I_10(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(selectedMetrics, my, this.pop));
+         this.pop = selectedMetrics.containsThumb(mx, my) ? my - selectedMetrics.thumbY() : selectedMetrics.thumbHeight() / 2;
+         this.push = this.init_I_I_10(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(selectedMetrics, my, this.pop));
          return true;
       }
 
@@ -337,10 +337,10 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       if (this.init_Z) {
-         this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(this.init_PoolEntry_DataUtil_Z(true), my, this.pop);
+         this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_Z(true), my, this.pop);
          return true;
       } else if (this.load_Z) {
-         this.push = this.init_I_I_10(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(this.init_PoolEntry_DataUtil_Z(false), my, this.pop));
+         this.push = this.init_I_I_10(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_Z(false), my, this.pop));
          return true;
       } else {
          return this.init_k != null && this.init_k.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
@@ -362,8 +362,8 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          this.push += amount;
       }
 
-      this.poll = this.init(this.poll, 0, this.init_PoolEntry_DataUtil_Z(true).flush());
-      this.push = this.init(this.push, 0, this.init_PoolEntry_DataUtil_Z(false).flush());
+      this.poll = this.init(this.poll, 0, this.init_PoolEntry_DataUtil_Z(true).maxScroll());
+      this.push = this.init(this.push, 0, this.init_PoolEntry_DataUtil_Z(false).maxScroll());
       return true;
    }
 
@@ -1009,7 +1009,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init(boolean available, int paneX, int listTop, int paneW, int listH) {
       int contentH = available ? this.init_I_List_3(this.init_List_8()) : this.write();
       int scroll = available ? this.poll : this.push;
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(contentH, Math.max(1, listH), paneX + paneW - 6, listTop, 4, Math.max(1, listH), scroll);
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentH, Math.max(1, listH), paneX + paneW - 6, listTop, 4, Math.max(1, listH), scroll);
    }
 
    private int init_I_List_3(List<RegistrySelectorScreen.Inner_DataUtil> rows) {
@@ -1073,11 +1073,11 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private int sync() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int flush() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int close() {
@@ -1085,24 +1085,24 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private int open() {
-      return autismclient.gui.ui.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
    private int poll() {
-      return autismclient.gui.ui.UiDensityMetrics.init(18);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(18);
    }
 
    private int push() {
-      return autismclient.gui.ui.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
    private int init_I_I_I_6(int boxY, int boxH) {
-      return UiLayoutMath.init(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
+      return UiLayoutMath.centerTextY(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
    }
 
    private void read_V_10() {
-      this.poll = this.init(this.poll, 0, this.init_PoolEntry_DataUtil_Z(true).flush());
-      this.push = this.init(this.push, 0, this.init_PoolEntry_DataUtil_Z(false).flush());
+      this.poll = this.init(this.poll, 0, this.init_PoolEntry_DataUtil_Z(true).maxScroll());
+      this.push = this.init(this.push, 0, this.init_PoolEntry_DataUtil_Z(false).maxScroll());
    }
 
    private int init_I_I_10(int offset) {

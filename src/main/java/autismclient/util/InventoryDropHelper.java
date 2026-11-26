@@ -51,7 +51,7 @@ public final class InventoryDropHelper {
       } else if (mc == null || mc.player == null) {
          return 0;
       } else if (inventorySlotId >= 0 && inventorySlotId < 36) {
-         int handlerSlotId = InventorySlotHelper.load_I(mc, inventorySlotId);
+         int handlerSlotId = InventorySlotHelper.toScreenSlot(mc, inventorySlotId);
          return init(mc, handlerSlotId, count);
       } else {
          return 0;

@@ -61,14 +61,14 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
    @Override
    public autismclient.gui.f.NetHelper init_NetHelper() {
       OverlayBounds bounds = this.init_cX.init_cH();
-      return autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, bounds.load_Z ? OverlayLayoutBase.open_I() : bounds.write);
+      return autismclient.gui.f.NetHelper.init(bounds.x, bounds.y, bounds.width, bounds.collapsed ? OverlayLayoutBase.headerHeight() : bounds.height);
    }
 
    @Override
    public void init_V_NetHelper(autismclient.gui.f.NetHelper bounds) {
       if (bounds != null) {
          OverlayBounds current = this.init_cX.init_cH();
-         this.init_cX.init_V_cH(new OverlayBounds(bounds.read(), bounds.write(), bounds.update(), bounds.sync(), current.init_Z, current.load_Z));
+         this.init_cX.init_V_cH(new OverlayBounds(bounds.read(), bounds.write(), bounds.update(), bounds.sync(), current.visible, current.collapsed));
       }
    }
 
@@ -86,7 +86,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
             long perfStart = bK.load_J();
             autismclient.gui.f.NetHelper b = this.init_NetHelper();
             GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
-            int scissorDepth = autismclient.gui.ui.UiClipStack.init_HashUtil().init_I();
+            int scissorDepth = autismclient.gui.ui.UiClipStack.getInstance().depth();
 
             try {
                this.init_CharEncoder.init(graphics, b, this.write, () -> this.init(context, block));
@@ -97,7 +97,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
                   AutismClientAddon.LOG.warn("[Overlay] {} failed to draw (visible={})", this.init_cX.init_Str(), visible, t);
                }
             } finally {
-               autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics, scissorDepth);
+               autismclient.gui.ui.UiClipStack.getInstance().popToDepth(graphics, scissorDepth);
             }
 
             if (perfStart != 0L) {
@@ -111,18 +111,18 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
       int mouseX = block ? -10000 : context.read();
       int mouseY = block ? -10000 : context.write();
-      boolean clip = this.init_cX instanceof OverlayLayoutBase window && window.add_Z() && window.poll_I() > 0;
+      boolean clip = this.init_cX instanceof OverlayLayoutBase window && window.isCollapseAnimating() && window.lastAnimatedHeight() > 0;
       if (clip) {
          OverlayBounds bounds = this.init_cX.init_cH();
-         autismclient.gui.ui.UiClipStack.init_HashUtil()
-            .init(graphics, autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, ((OverlayLayoutBase)this.init_cX).poll_I()));
+         autismclient.gui.ui.UiClipStack.getInstance()
+            .push(graphics, autismclient.gui.f.NetHelper.init(bounds.x, bounds.y, bounds.width, ((OverlayLayoutBase)this.init_cX).lastAnimatedHeight()));
       }
 
       try {
          this.init_cX.init_V_GuiGraphicsExtract_15(graphics, mouseX, mouseY, context.init_F());
       } finally {
          if (clip) {
-            autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics);
+            autismclient.gui.ui.UiClipStack.getInstance().pop(graphics);
          }
       }
 
@@ -130,11 +130,11 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
    }
 
    private void init_V_SyncManager(autismclient.gui.f.SyncManager context, int mouseX, int mouseY) {
-      if (this.init_cX.read_Z() && this.init_cX.sync_Z() && !this.init_cX.flush_Z() && !(this.init_cX instanceof OverlayLayoutBase window && window.add_Z())) {
+      if (this.init_cX.read_Z() && this.init_cX.sync_Z() && !this.init_cX.flush_Z() && !(this.init_cX instanceof OverlayLayoutBase window && window.isCollapseAnimating())) {
          OverlayBounds bounds = this.init_cX.init_cH();
-         boolean active = OverlayManager.init_bk().read_Z(this.init_cX);
+         boolean active = OverlayManager.getInstance().isResizing(this.init_cX);
          boolean hover = !active && ResizeGripRenderer.init(bounds, mouseX, mouseY);
-         ResizeGripRenderer.init(context.init_GuiGraphicsExtract(), context.init_TableIndex().init_JsonUtil(), bounds, hover, active);
+         ResizeGripRenderer.init(context.init_GuiGraphicsExtract(), context.init_TableIndex().colors(), bounds, hover, active);
          if (hover || active) {
             ResizeGripRenderer.init(context.init_GuiGraphicsExtract());
          }

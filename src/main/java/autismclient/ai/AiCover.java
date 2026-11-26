@@ -551,7 +551,7 @@ final class AiCover {
             boolean init_Z(Entity mob) {
                int slot = AiItems.read();
                if (slot >= 0 && mc.player.getInventory().getSelectedSlot() != slot) {
-                  autismclient.util.InventorySlotHelper.init_V(mc, slot);
+                  autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, slot);
                }
 
                this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(mob));

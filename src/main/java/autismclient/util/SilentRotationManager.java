@@ -98,17 +98,17 @@ public final class SilentRotationManager {
          return false;
       }
 
-      if (rotation != null && Float.isFinite(rotation.init()) && Float.isFinite(rotation.load())) {
+      if (rotation != null && Float.isFinite(rotation.yaw()) && Float.isFinite(rotation.pitch())) {
          init_V_Str("kill-aura", 10, rotation);
          if ("kill-aura".equals(push_Str) && "kill-aura".equals(pop_Str)) {
             ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
             float yaw = ServerRotationTracker.init_F();
             RotationMath.Rotation from = wire.init_Z() ? new RotationMath.Rotation(Float.isFinite(yaw) ? yaw : wire.read(), wire.write()) : rotation;
-            init_ce_DataUtil = RotationMath.init_ce_DataUtil(rotation, from);
+            init_ce_DataUtil = RotationMath.applyGcd(rotation, from);
             load_ce_DataUtil = init_ce_DataUtil;
             set = AutismSessionState.init_ck().state_I();
             load_Z = false;
-            RotationStreamPlanner.init_V_ap_TaskQueue_3(init_ap_TaskQueue, init_ce_DataUtil, 0.0, 0.0, RotationMath.init());
+            RotationStreamPlanner.init_V_ap_TaskQueue_3(init_ap_TaskQueue, init_ce_DataUtil, 0.0, 0.0, RotationMath.gcdStep());
             return true;
          } else {
             return false;
@@ -131,12 +131,12 @@ public final class SilentRotationManager {
             return false;
          }
 
-         init_ce_DataUtil = RotationMath.init_ce_DataUtil(rotation, from);
+         init_ce_DataUtil = RotationMath.applyGcd(rotation, from);
          load_ce_DataUtil = init_ce_DataUtil;
          set = AutismSessionState.init_ck().state_I();
          load_Z = false;
          RotationStreamPlanner.init_V_ap_TaskQueue_3(
-            init_ap_TaskQueue, init_ce_DataUtil, RotationMath.init(init_ce_DataUtil.init(), from.init()), init_ce_DataUtil.load() - from.load(), RotationMath.init()
+            init_ap_TaskQueue, init_ce_DataUtil, RotationMath.angleDelta(init_ce_DataUtil.yaw(), from.yaw()), init_ce_DataUtil.pitch() - from.pitch(), RotationMath.gcdStep()
          );
          return true;
       } else {
@@ -171,7 +171,7 @@ public final class SilentRotationManager {
 
    private static RotationMath.Rotation init_ce_DataUtil_F_F(float maxYawStep, float maxPitchStep) {
       double[] last = RotationStreamPlanner.init_DArr_ap_TaskQueue(init_ap_TaskQueue);
-      double count = RotationMath.init();
+      double count = RotationMath.gcdStep();
       maxYawStep = (float)Math.max(maxYawStep, last[0] - 18.0 + count);
       maxPitchStep = (float)Math.max(maxPitchStep, last[1] - 18.0 + count);
       maxPitchStep = (float)Math.min(maxPitchStep, last[1] + 18.0);
@@ -179,7 +179,7 @@ public final class SilentRotationManager {
       double[] want = init_aD_DataUtil.step(at, maxYawStep, maxPitchStep);
       load_Z = true;
       stop = -1073741824;
-      return RotationStreamPlanner.init(init_ap_TaskQueue, want[0], want[1], maxYawStep, maxPitchStep, RotationMath.init(), write_D, 18.0, CombatAimEngine.init_Z_DArr(want), "kill-aura".equals(get_Str));
+      return RotationStreamPlanner.init(init_ap_TaskQueue, want[0], want[1], maxYawStep, maxPitchStep, RotationMath.gcdStep(), write_D, 18.0, CombatAimEngine.init_Z_DArr(want), "kill-aura".equals(get_Str));
    }
 
    public static void init_V_F_F(float exactYaw, float exactClosestYaw) {
@@ -201,8 +201,8 @@ public final class SilentRotationManager {
       stop = tick;
       load_Z = true;
       RotationMath.Rotation at = RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(init_ap_TaskQueue);
-      double[] want = init_an.init(goal.init(), goal.load(), at.init(), at.load(), tolerance, maxYawStep, maxPitchStep, true);
-      return RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(init_ap_TaskQueue, want[0], want[1], maxYawStep, maxPitchStep, RotationMath.init(), 18.0);
+      double[] want = init_an.init(goal.yaw(), goal.pitch(), at.yaw(), at.pitch(), tolerance, maxYawStep, maxPitchStep, true);
+      return RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(init_ap_TaskQueue, want[0], want[1], maxYawStep, maxPitchStep, RotationMath.gcdStep(), 18.0);
    }
 
    public static double[] init_DArr() {
@@ -221,9 +221,9 @@ public final class SilentRotationManager {
             yaw = wire.read();
          }
 
-         if (init_ce_DataUtil == null || !(Math.abs(RotationMath.init(init_ce_DataUtil.init(), yaw)) < 0.2) || !(Math.abs(init_ce_DataUtil.load() - wire.write()) < 0.2)) {
+         if (init_ce_DataUtil == null || !(Math.abs(RotationMath.angleDelta(init_ce_DataUtil.yaw(), yaw)) < 0.2) || !(Math.abs(init_ce_DataUtil.pitch() - wire.write()) < 0.2)) {
             init_ce_DataUtil = new RotationMath.Rotation(yaw, wire.write());
-            RotationStreamPlanner.init_V_ap_TaskQueue_3(init_ap_TaskQueue, init_ce_DataUtil, RotationMath.init(wire.read(), wire.init_F()), wire.write() - wire.load(), RotationMath.init());
+            RotationStreamPlanner.init_V_ap_TaskQueue_3(init_ap_TaskQueue, init_ce_DataUtil, RotationMath.angleDelta(wire.read(), wire.init_F()), wire.write() - wire.load(), RotationMath.gcdStep());
          }
       }
    }
@@ -298,10 +298,10 @@ public final class SilentRotationManager {
          if (set != tick) {
             init_V();
             if (init_ce_DataUtil == null) {
-               init_ce_DataUtil = RotationMath.init(player);
+               init_ce_DataUtil = RotationMath.ofPlayer(player);
             }
 
-            init_ce_DataUtil = RotationMath.init(init_ce_DataUtil, load_ce_DataUtil, step, step, RotationMath.init());
+            init_ce_DataUtil = RotationMath.stepQuantized(init_ce_DataUtil, load_ce_DataUtil, step, step, RotationMath.gcdStep());
             RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(init_ap_TaskQueue, init_ce_DataUtil);
             load_Z = false;
             set = tick;
@@ -332,7 +332,7 @@ public final class SilentRotationManager {
          if (set != tick) {
             init_V();
             if (init_ce_DataUtil == null) {
-               init_ce_DataUtil = RotationMath.init(player);
+               init_ce_DataUtil = RotationMath.ofPlayer(player);
             }
 
             if (!RotationStreamPlanner.init_Z_ap_TaskQueue(init_ap_TaskQueue)) {
@@ -340,12 +340,12 @@ public final class SilentRotationManager {
             }
 
             double remaining = Math.max(
-               Math.abs(RotationMath.init(load_ce_DataUtil.init(), init_ce_DataUtil.init())), Math.abs(load_ce_DataUtil.load() - init_ce_DataUtil.load())
+               Math.abs(RotationMath.angleDelta(load_ce_DataUtil.yaw(), init_ce_DataUtil.yaw())), Math.abs(load_ce_DataUtil.pitch() - init_ce_DataUtil.pitch())
             );
             SilentRotationManager.Inner_StreamUtil urgency = init_aD_StreamUtil_D_I(remaining, ticksLeft);
-            double gcd = RotationMath.init();
+            double gcd = RotationMath.gcdStep();
             if (urgency.init_Z()) {
-               init_ce_DataUtil = RotationMath.init(init_ce_DataUtil, load_ce_DataUtil, urgency.init_F(), urgency.init_F(), gcd);
+               init_ce_DataUtil = RotationMath.stepQuantized(init_ce_DataUtil, load_ce_DataUtil, urgency.init_F(), urgency.init_F(), gcd);
                RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(init_ap_TaskQueue, init_ce_DataUtil);
             } else {
                init_ce_DataUtil = RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue_2(
@@ -383,16 +383,16 @@ public final class SilentRotationManager {
          int tick = AutismSessionState.init_ck().state_I();
          if (tick != set) {
             set = tick;
-            RotationMath.Rotation playerRotation = RotationMath.init(player);
+            RotationMath.Rotation playerRotation = RotationMath.ofPlayer(player);
             if (load_ce_DataUtil != null && put > 0) {
                boolean visible = autismclient.modules.al.init_Module_Str(ownerId) instanceof SilentMovementCoordinator.Participant aimOwner && aimOwner.update_Z_9();
                if (visible
                   && load_Z()
                   && !pinQuiet
                   && init_ce_DataUtil != null
-                  && (playerRotation.init() != init_ce_DataUtil.init() || playerRotation.load() != init_ce_DataUtil.load())) {
+                  && (playerRotation.yaw() != init_ce_DataUtil.yaw() || playerRotation.pitch() != init_ce_DataUtil.pitch())) {
                   init_ce_DataUtil = playerRotation;
-                  RotationStreamPlanner.init_V_ap_TaskQueue_3(init_ap_TaskQueue, playerRotation, 0.0, 0.0, RotationMath.init());
+                  RotationStreamPlanner.init_V_ap_TaskQueue_3(init_ap_TaskQueue, playerRotation, 0.0, 0.0, RotationMath.gcdStep());
                }
 
                if (!RotationStreamPlanner.init_Z_ap_TaskQueue(init_ap_TaskQueue)) {
@@ -411,8 +411,8 @@ public final class SilentRotationManager {
                   || init_ce_DataUtil == null
                   || (AutismLiteVariant.enabled() || !SilentMiningCoordinator.init(ownerId, init_ce_DataUtil, load_ce_DataUtil, init_ap_TaskQueue))
                      && (
-                        !(Math.abs(RotationMath.init(init_ce_DataUtil.init(), load_ce_DataUtil.init())) <= 0.05F)
-                           || !(Math.abs(init_ce_DataUtil.load() - load_ce_DataUtil.load()) <= 0.05F)
+                        !(Math.abs(RotationMath.angleDelta(init_ce_DataUtil.yaw(), load_ce_DataUtil.yaw())) <= 0.05F)
+                           || !(Math.abs(init_ce_DataUtil.pitch() - load_ce_DataUtil.pitch()) <= 0.05F)
                      )) {
                   if (load(ownerId, tick)) {
                      init_ce_DataUtil = init_ce_DataUtil_F_F(maxYawStep, maxPitchStep);
@@ -421,7 +421,7 @@ public final class SilentRotationManager {
                   } else {
                      load_Z = false;
                      init_ce_DataUtil = RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue_2(
-                        init_ap_TaskQueue, load_ce_DataUtil, maxYawStep, maxPitchStep, RotationMath.init(), false, profile
+                        init_ap_TaskQueue, load_ce_DataUtil, maxYawStep, maxPitchStep, RotationMath.gcdStep(), false, profile
                      );
                   }
 
@@ -443,22 +443,22 @@ public final class SilentRotationManager {
                      clear = reset;
                   }
 
-                  float cameraDelta = Float.isNaN(flush_F) ? 0.0F : RotationMath.load(playerRotation, new RotationMath.Rotation(flush_F, close_F));
-                  flush_F = playerRotation.init();
-                  close_F = playerRotation.load();
-                  boolean releaseNow = init_Z_F_F(RotationMath.load(init_ce_DataUtil, playerRotation), cameraDelta);
+                  float cameraDelta = Float.isNaN(flush_F) ? 0.0F : RotationMath.vectorAngleDegrees(playerRotation, new RotationMath.Rotation(flush_F, close_F));
+                  flush_F = playerRotation.yaw();
+                  close_F = playerRotation.pitch();
+                  boolean releaseNow = init_Z_F_F(RotationMath.vectorAngleDegrees(init_ce_DataUtil, playerRotation), cameraDelta);
                   RotationMath.Rotation next = releaseNow
                      ? playerRotation
                      : (
                         load_Z && RotationStreamPlanner.init_Z_ap_TaskQueue(init_ap_TaskQueue)
                            ? init_ce_DataUtil_ce_DataUtil(playerRotation, sync_F, sync_F, 2.5, tick, true)
-                           : RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(init_ap_TaskQueue, playerRotation, sync_F, sync_F, RotationMath.init(), false)
+                           : RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(init_ap_TaskQueue, playerRotation, sync_F, sync_F, RotationMath.gcdStep(), false)
                      );
                   clear--;
-                  if (!releaseNow && !(RotationMath.load(next, playerRotation) <= 2.0F) && clear > 0) {
+                  if (!releaseNow && !(RotationMath.vectorAngleDegrees(next, playerRotation) <= 2.0F) && clear > 0) {
                      init_ce_DataUtil = next;
                   } else {
-                     float fixedYaw = init_ce_DataUtil.init() + RotationMath.init(player.getYRot(), init_ce_DataUtil.init());
+                     float fixedYaw = init_ce_DataUtil.yaw() + RotationMath.angleDelta(player.getYRot(), init_ce_DataUtil.yaw());
                      player.setYRot(fixedYaw);
                      player.yBob = fixedYaw;
                      player.yBobO = fixedYaw;
@@ -473,8 +473,8 @@ public final class SilentRotationManager {
    private static void init_V_LocalPlayer_Z(LocalPlayer player, boolean visible) {
       run_Str = visible && init_ce_DataUtil != null ? push_Str : null;
       if (run_Str != null) {
-         player.setYRot(init_ce_DataUtil.init());
-         player.setXRot(init_ce_DataUtil.load());
+         player.setYRot(init_ce_DataUtil.yaw());
+         player.setXRot(init_ce_DataUtil.pitch());
       }
    }
 

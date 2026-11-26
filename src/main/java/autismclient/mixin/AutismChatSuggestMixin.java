@@ -107,11 +107,11 @@ public abstract class AutismChatSuggestMixin {
 
          ci.cancel();
       } else {
-         int prefixLen = CommandManager.init_Str().length();
+         int prefixLen = CommandManager.getPrefix().length();
          StringReader reader = new StringReader(value);
          reader.setCursor(prefixLen);
          int cursor = Math.max(prefixLen, Math.min(this.input.getCursorPosition(), value.length()));
-         int commandRevision = CommandManager.init_I();
+         int commandRevision = CommandManager.getRegistryVersion();
          int moduleRevision = al.init_I();
          long macroRevision = MacroLibraryManager.init_aN().init_J();
          Minecraft minecraft = Minecraft.getInstance();
@@ -125,7 +125,7 @@ public abstract class AutismChatSuggestMixin {
             || menu != this.autism$cachedMenu
             || menuRevision != this.autism$cachedMenuRevision
             || !this.autism$owningSuggestions && this.pendingSuggestions == null) {
-            ParseResults<AutismCommandSource> parse = CommandManager.init_CommandDispatcher().parse(reader, AutismCommandSource.INSTANCE);
+            ParseResults<AutismCommandSource> parse = CommandManager.getDispatcher().parse(reader, AutismCommandSource.INSTANCE);
             @SuppressWarnings("unchecked")
             ParseResults<ClientSuggestionProvider> widgetParse = (ParseResults)parse;
             this.currentParse = widgetParse;
@@ -139,7 +139,7 @@ public abstract class AutismChatSuggestMixin {
                this.autism$clearActiveSuggestions();
                this.autism$rememberSuggestionKey(value, cursor, commandRevision, moduleRevision, macroRevision, menu, menuRevision);
                String inputSnapshot = value;
-               CompletableFuture<Suggestions> future = CommandManager.init_CommandDispatcher().getCompletionSuggestions(parse, cursor);
+               CompletableFuture<Suggestions> future = CommandManager.getDispatcher().getCompletionSuggestions(parse, cursor);
                this.pendingSuggestions = future;
                future.thenAccept(result -> {
                   Runnable apply = () -> {
@@ -186,7 +186,7 @@ public abstract class AutismChatSuggestMixin {
 
    @Unique
    private static boolean autism$isAutismCommandInput(String value) {
-      return !CommandManager.init_Z() && CommandManager.init_Z(value);
+      return !CommandManager.isHiddenMode() && CommandManager.hasCommandPrefix(value);
    }
 
    @Unique

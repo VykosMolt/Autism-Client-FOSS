@@ -350,7 +350,7 @@ final class AiFieldWork {
                   if (ray != null && ray.getBlockPos().equals(best)) {
                      if (bestBreak) {
                         if (this.read_Z && mc.player.getInventory().getItem(this.load_I).is(this.init_Item)) {
-                           autismclient.util.InventorySlotHelper.init_V(mc, this.load_I);
+                           autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.load_I);
                         }
 
                         long ground = best.below().asLong();
@@ -531,7 +531,7 @@ final class AiFieldWork {
                if (!(mc.player.getMainHandItem().getItem() instanceof BlockItem)) {
                   return true;
                } else {
-                  return !autismclient.util.InventorySlotHelper.init_Z(mc, mc.player.getInventory().getSelectedSlot()) ? false : seed.matches(mc.player.getMainHandItem());
+                  return !autismclient.util.InventorySlotHelper.swapToOffhand(mc, mc.player.getInventory().getSelectedSlot()) ? false : seed.matches(mc.player.getMainHandItem());
                }
             } else {
                return AiItems.read(seed) >= 0 && seed.matches(mc.player.getMainHandItem());

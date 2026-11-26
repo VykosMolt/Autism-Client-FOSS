@@ -101,7 +101,7 @@ public final class InfoCardRenderer {
 
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract_2(context, x + 1, y + 1, width - 2, 620756991);
       int padX = 6;
-      int titleY = UiLayoutMath.init(y, headerHeight, init_CharEncoder.init_I_l(l.load), init_CharEncoder.flush());
+      int titleY = UiLayoutMath.centerTextY(y, headerHeight, init_CharEncoder.init_I_l(l.load), init_CharEncoder.flush());
       k.init(context, textRenderer, title, init_CharEncoder.init_Identifier_l(l.load), init_CharEncoder.load(l.read), x + padX, titleY, false);
       int rowY = y + headerHeight + 3;
 
@@ -113,7 +113,7 @@ public final class InfoCardRenderer {
             row.init_Identifier(),
             row.init_I(),
             x + padX,
-            UiLayoutMath.init(rowY, rowHeight, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush()),
+            UiLayoutMath.centerTextY(rowY, rowHeight, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush()),
             false
          );
          rowY += rowHeight;

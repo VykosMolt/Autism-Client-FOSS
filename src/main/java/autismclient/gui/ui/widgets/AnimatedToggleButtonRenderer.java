@@ -37,16 +37,16 @@ public final class AnimatedToggleButtonRenderer {
    }
 
    private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, float progress) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       float p = init_F_F(progress);
-      int fill = UiLayoutMath.init_I_I(colors.load, colors.stop, 0.22F * p);
-      int border = UiLayoutMath.init_I_I(colors.set, colors.stop, p);
+      int fill = UiLayoutMath.lerpColor(colors.buttonSurface, colors.success, 0.22F * p);
+      int border = UiLayoutMath.lerpColor(colors.borderControl, colors.success, p);
       float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered);
-      fill = UiLayoutMath.init_I_I(fill, colors.read, hoverT * 0.6F);
-      border = UiLayoutMath.init_I_I(border, p > 0.5F ? colors.stop : colors.run, hoverT * 0.65F);
+      fill = UiLayoutMath.lerpColor(fill, colors.buttonSurfaceHover, hoverT * 0.6F);
+      border = UiLayoutMath.lerpColor(border, p > 0.5F ? colors.success : colors.borderStrong, hoverT * 0.65F);
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 3, fill, border);
       if (label != null && !label.isEmpty()) {
-         context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), label, bounds, colors.prev);
+         context.init_PoolEntry().drawCentered(context.init_GuiGraphicsExtract(), label, bounds, colors.textPrimary);
       }
    }
 

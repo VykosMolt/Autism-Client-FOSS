@@ -92,14 +92,14 @@ public final class CombatInteractionController {
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !autismclient.util.g.PkgCls_a.init_Z())
          && !f.load()
-         && !SilentMovementCoordinator.init_Z()
+         && !SilentMovementCoordinator.isSafeWalkActive()
          && !autismclient.modules.BlinkPacketManager.init_Z()
          && !autismclient.modules.AutoTotemModule.init_Z_6()
          && !autismclient.modules.AutoArmorModule.init_Z_20();
    }
 
    private static boolean read_Z(Minecraft mc) {
-      return mc.options != null && KeyMappingControl.init(mc.options.keyUse).autism$physicalForBody();
+      return mc.options != null && KeyMappingControl.of(mc.options.keyUse).autism$physicalForBody();
    }
 
    private static AutismKeyMappingAccessor init_AutismKeyMappingAc(Minecraft mc) {
@@ -184,17 +184,17 @@ public final class CombatInteractionController {
                   return false;
                }
 
-               if (!flush && !update_Z && RotationMath.init_F(load_ce_DataUtil, RotationMath.init(init_LocalPlayer)) > 8.0F) {
+               if (!flush && !update_Z && RotationMath.angularDistance(load_ce_DataUtil, RotationMath.ofPlayer(init_LocalPlayer)) > 8.0F) {
                   update_V(mc);
                   return false;
                }
 
                if (init_LocalPlayer.isUsingItem() && !update_Z) {
-                  load_ce_DataUtil = RotationMath.init(init_LocalPlayer);
+                  load_ce_DataUtil = RotationMath.ofPlayer(init_LocalPlayer);
                   init_HitResult = null;
                   read_ce_DataUtil = load_ce_DataUtil;
                } else if (init_HitResult != null && init_HitResult.getType() != Type.MISS) {
-                  read_ce_DataUtil = RotationMath.init(init_Vec3(), init_LocalPlayer.getEyePosition());
+                  read_ce_DataUtil = RotationMath.lookAt(init_Vec3(), init_LocalPlayer.getEyePosition());
                }
 
                ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
@@ -262,8 +262,8 @@ public final class CombatInteractionController {
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
       return init_ce_DataUtil != null
          && wire.init_Z()
-         && Math.abs(RotationMath.init(wire.read(), init_ce_DataUtil.init())) < 0.001F
-         && Math.abs(wire.write() - init_ce_DataUtil.load()) < 0.001F
+         && Math.abs(RotationMath.angleDelta(wire.read(), init_ce_DataUtil.yaw())) < 0.001F
+         && Math.abs(wire.write() - init_ce_DataUtil.pitch()) < 0.001F
          && AutismSessionState.init_ck().state_I() > read_I;
    }
 
@@ -311,7 +311,7 @@ public final class CombatInteractionController {
                      key.autism$setClickCount(1);
                   }
                } else {
-                  KeyMappingControl.init(mc.options.keyUse).autism$simulatePress(mc.player.isUsingItem());
+                  KeyMappingControl.of(mc.options.keyUse).autism$simulatePress(mc.player.isUsingItem());
                   key.autism$setClickCount(0);
                   write_Z = true;
                }
@@ -322,7 +322,7 @@ public final class CombatInteractionController {
 
    public static void load_V(Minecraft mc) {
       if (write_Z && mc.options != null) {
-         KeyMappingControl.init(mc.options.keyUse).autism$resetPressedState();
+         KeyMappingControl.of(mc.options.keyUse).autism$resetPressedState();
       }
 
       write_Z = false;
@@ -354,8 +354,8 @@ public final class CombatInteractionController {
                CombatInteractionController.Inner_DataUtil frame = new CombatInteractionController.Inner_DataUtil(
                   init_LocalPlayer, mc.hitResult, init_LocalPlayer.getYRot(), init_LocalPlayer.getXRot()
                );
-               init_LocalPlayer.setYRot(init_ce_DataUtil.init());
-               init_LocalPlayer.setXRot(init_ce_DataUtil.load());
+               init_LocalPlayer.setYRot(init_ce_DataUtil.yaw());
+               init_LocalPlayer.setXRot(init_ce_DataUtil.pitch());
                mc.hitResult = hit;
                read_Z = true;
                init_Z = false;
@@ -391,7 +391,7 @@ public final class CombatInteractionController {
    }
 
    private static void read_V(Minecraft mc) {
-      load_ce_DataUtil = RotationMath.init(init_LocalPlayer);
+      load_ce_DataUtil = RotationMath.ofPlayer(init_LocalPlayer);
       init_HitResult = init_LocalPlayer.isUsingItem() ? null : init_HitResult(mc, load_ce_DataUtil);
       init_Vec3 = init_HitResult == null
          ? null
@@ -422,7 +422,7 @@ public final class CombatInteractionController {
             Vec3 eye = init_LocalPlayer.getEyePosition();
             Vec3 point = init_Vec3();
             double reach = init_HitResult.getType() == Type.BLOCK ? init_LocalPlayer.blockInteractionRange() : init_LocalPlayer.entityInteractionRange();
-            return point != null && !(eye.distanceToSqr(point) > (reach - 0.035) * (reach - 0.035)) ? init(init_HitResult(mc, RotationMath.init(point, eye))) : false;
+            return point != null && !(eye.distanceToSqr(point) > (reach - 0.035) * (reach - 0.035)) ? init(init_HitResult(mc, RotationMath.lookAt(point, eye))) : false;
          }
       } else {
          return true;
@@ -449,7 +449,7 @@ public final class CombatInteractionController {
       } else {
          return init_HitResult != null && init_HitResult.getType() != Type.MISS
             ? init(init_HitResult(mc, at))
-            : RotationMath.init_F(read_ce_DataUtil, at) <= Math.max(0.2, RotationMath.init() * 1.5) && (init_HitResult == null || init_HitResult(mc, at).getType() == Type.MISS);
+            : RotationMath.angularDistance(read_ce_DataUtil, at) <= Math.max(0.2, RotationMath.gcdStep() * 1.5) && (init_HitResult == null || init_HitResult(mc, at).getType() == Type.MISS);
       }
    }
 
@@ -457,7 +457,7 @@ public final class CombatInteractionController {
       Vec3 eye = init_LocalPlayer.getEyePosition();
       Vec3 point = init_HitResult != null && init_HitResult.getType() != Type.MISS
          ? init_Vec3()
-         : eye.add(Vec3.directionFromRotation(read_ce_DataUtil.load(), read_ce_DataUtil.init()).scale(3.0));
+         : eye.add(Vec3.directionFromRotation(read_ce_DataUtil.pitch(), read_ce_DataUtil.yaw()).scale(3.0));
       AABB box = init_HitResult instanceof EntityHitResult entity
          ? entity.getEntity().getBoundingBox()
          : (
@@ -466,8 +466,8 @@ public final class CombatInteractionController {
                : new AABB(point, point).inflate(0.1)
          );
       init_q_DataUtil.init_q_DataUtil_Vec3_2(eye, box, point);
-      init_q_DataUtil.init_D = read_ce_DataUtil.init();
-      init_q_DataUtil.load_D = read_ce_DataUtil.load();
+      init_q_DataUtil.init_D = read_ce_DataUtil.yaw();
+      init_q_DataUtil.load_D = read_ce_DataUtil.pitch();
       init_q_DataUtil.read_D = Math.max(0.25, Math.min(2.5, init_q_DataUtil.read_D));
       init_q_DataUtil.write_D = init_q_DataUtil.update_D = Math.max(0.25, Math.min(1.5, init_q_DataUtil.read_D));
       init_q_DataUtil.read_Z = false;
@@ -479,7 +479,7 @@ public final class CombatInteractionController {
       init_q_DataUtil.sync_D = 0.0;
       init_q_DataUtil.init_I = 0;
       init_q_DataUtil.init_Z = false;
-      init_q_DataUtil.poll_D = RotationMath.init();
+      init_q_DataUtil.poll_D = RotationMath.gcdStep();
       init_q_DataUtil.push_D = 18.0;
       init_q_DataUtil.push_Z = false;
       init_q_DataUtil.pop_Z = LegacyCombatDetector.init(init_LocalPlayer);
@@ -500,7 +500,7 @@ public final class CombatInteractionController {
    }
 
    private static RotationMath.Rotation init_ce_DataUtil(Minecraft mc) {
-      RotationMath.Rotation camera = RotationMath.init(mc.player);
+      RotationMath.Rotation camera = RotationMath.ofPlayer(mc.player);
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
       if (!wire.init_Z()) {
          return camera;
@@ -508,20 +508,20 @@ public final class CombatInteractionController {
 
       float yaw = ServerRotationTracker.init_F();
       RotationMath.Rotation from = new RotationMath.Rotation(Float.isFinite(yaw) ? yaw : wire.read(), wire.write());
-      RotationMath.Rotation rounded = RotationMath.init_ce_DataUtil(camera, from);
+      RotationMath.Rotation rounded = RotationMath.applyGcd(camera, from);
       if (load(mc, rounded)) {
          return rounded;
       }
 
       RotationMath.Rotation best = rounded;
       double bestDistance = 1.0 / 0.0;
-      float step = (float)RotationMath.init();
+      float step = (float)RotationMath.gcdStep();
 
       for (int x = -1; x <= 1; x++) {
          for (int y = -1; y <= 1; y++) {
             if (x != 0 || y != 0) {
-               RotationMath.Rotation candidate = RotationMath.init_ce_DataUtil(new RotationMath.Rotation(rounded.init() + x * step, rounded.load() + y * step), from);
-               double distance = RotationMath.init_F(camera, candidate);
+               RotationMath.Rotation candidate = RotationMath.applyGcd(new RotationMath.Rotation(rounded.yaw() + x * step, rounded.pitch() + y * step), from);
+               double distance = RotationMath.angularDistance(camera, candidate);
                if (distance < bestDistance && load(mc, candidate)) {
                   best = candidate;
                   bestDistance = distance;
@@ -534,7 +534,7 @@ public final class CombatInteractionController {
    }
 
    private static boolean load(Minecraft mc, RotationMath.Rotation at) {
-      HitResult wanted = init_HitResult(mc, RotationMath.init(mc.player));
+      HitResult wanted = init_HitResult(mc, RotationMath.ofPlayer(mc.player));
       HitResult actual = init_HitResult(mc, at);
       if (wanted.getType() != actual.getType()) {
          return false;
@@ -543,13 +543,13 @@ public final class CombatInteractionController {
       } else {
          return wanted instanceof EntityHitResult a && actual instanceof EntityHitResult b
             ? a.getEntity() == b.getEntity() && !a.getEntity().isRemoved()
-            : RotationMath.init_F(at, RotationMath.init(mc.player)) <= Math.max(0.15, RotationMath.init());
+            : RotationMath.angularDistance(at, RotationMath.ofPlayer(mc.player)) <= Math.max(0.15, RotationMath.gcdStep());
       }
    }
 
    private static HitResult init_HitResult(Minecraft mc, RotationMath.Rotation at) {
       Vec3 eye = mc.player.getEyePosition();
-      Vec3 look = Vec3.directionFromRotation(at.load(), at.init());
+      Vec3 look = Vec3.directionFromRotation(at.pitch(), at.yaw());
       double blockReach = mc.player.blockInteractionRange();
       double entityReach = mc.player.entityInteractionRange();
       double reach = Math.max(blockReach, entityReach);

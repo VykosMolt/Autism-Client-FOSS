@@ -18,37 +18,37 @@ final class AiClientCommand {
    }
 
    static AiOperation init(String name, JsonObject args) {
-      Command command = autismclient.commands.CommandManager.init_Command(name);
+      Command command = autismclient.commands.CommandManager.getCommand(name);
       if (command == null) {
          throw new IllegalArgumentException("Client command '" + name + "' is not registered");
       }
 
-      String prefix = autismclient.commands.CommandManager.init_Str();
+      String prefix = autismclient.commands.CommandManager.getPrefix();
       String line = init(init(args), name, Arrays.asList(command.aliases()), prefix, word -> {
-         Command other = autismclient.commands.CommandManager.init_Command(word);
-         return other != null && other != command ? autismclient.commands.CommandManager.init_Str(other) : null;
+         Command other = autismclient.commands.CommandManager.getCommand(word);
+         return other != null && other != command ? autismclient.commands.CommandManager.getPrimaryName(other) : null;
       });
       List<String> raw = new ArrayList<>();
 
       autismclient.commands.CommandManager.Inner_DataUtil dispatch;
       try (AutismClientMessaging.Inner_DataUtil ignored = AutismClientMessaging.capture(raw)) {
-         dispatch = autismclient.commands.CommandManager.init_DataUtil_DataUtil(line);
+         dispatch = autismclient.commands.CommandManager.dispatch(line);
       }
 
-      List<String> forms = autismclient.commands.CommandManager.init_List(command);
+      List<String> forms = autismclient.commands.CommandManager.getUsageForms(command);
       String typed = prefix + line;
       JsonObject data = AiJson.init_JsonObject_ObjArr(
-         "command", name, "body", line, "typed", typed, "dispatch", dispatch.init_DataUtil_StreamUti().name(), "replies", init(raw), "forms", forms
+         "command", name, "body", line, "typed", typed, "dispatch", dispatch.status().name(), "replies", init(raw), "forms", forms
       );
       AiOperation var10000;
-      switch (dispatch.init_DataUtil_StreamUti()) {
+      switch (dispatch.status()) {
          case EXECUTED:
             String refusal = init(raw, "error");
             if (refusal != null) {
                var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Client command " + typed + " refused: " + refusal, data);
             } else {
                String said = raw.isEmpty()
-                  ? "Client command " + typed + " executed" + (dispatch.init_Str().isEmpty() ? "" : " (" + dispatch.init_Str() + ")")
+                  ? "Client command " + typed + " executed" + (dispatch.message().isEmpty() ? "" : " (" + dispatch.message() + ")")
                   : "Client command " + typed + " executed: " + load(raw.get(0));
                var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, said, data);
             }
@@ -58,15 +58,15 @@ final class AiClientCommand {
             var10000 = AiGameOperations.init(
                AiOperation.Status.FAILED,
                AiFailure.EXECUTION_FAILED,
-               "Client command " + typed + " did not parse: " + dispatch.init_Str() + ". Accepted forms: " + String.join(" | ", forms),
+               "Client command " + typed + " did not parse: " + dispatch.message() + ". Accepted forms: " + String.join(" | ", forms),
                data
             );
             break;
          case BLOCKED:
-            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.IMPOSSIBLE_STATE, dispatch.init_Str(), data);
+            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.IMPOSSIBLE_STATE, dispatch.message(), data);
             break;
          case ERROR:
-            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Client command " + typed + " threw: " + dispatch.init_Str(), data);
+            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Client command " + typed + " threw: " + dispatch.message(), data);
             break;
          case EMPTY:
             var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Empty command line", data);

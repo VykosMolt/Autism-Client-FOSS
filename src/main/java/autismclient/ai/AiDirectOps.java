@@ -693,7 +693,7 @@ public final class AiDirectOps {
          Minecraft mc = Minecraft.getInstance();
          if (mc.options != null) {
             for (KeyMapping key : List.of(mc.options.keyAttack, mc.options.keyUse)) {
-               key.setDown(autismclient.util.KeyMappingControl.init(key).autism$physicalForBody());
+               key.setDown(autismclient.util.KeyMappingControl.of(key).autism$physicalForBody());
             }
          }
       }
@@ -778,7 +778,7 @@ public final class AiDirectOps {
    }
 
    static String load_Str() {
-      return autismclient.commands.CommandManager.init_Str() + "tools";
+      return autismclient.commands.CommandManager.getPrefix() + "tools";
    }
 
    private static String write_Str() {

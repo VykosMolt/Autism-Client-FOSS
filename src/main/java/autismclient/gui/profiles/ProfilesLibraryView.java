@@ -70,7 +70,7 @@ public final class ProfilesLibraryView {
    }
 
    public int init_I() {
-      return Math.round(320.0F * Math.max(1.0F, MsdfTextRenderer.init_F()));
+      return Math.round(320.0F * Math.max(1.0F, MsdfTextRenderer.fontScale()));
    }
 
    public int init(int width) {
@@ -84,7 +84,7 @@ public final class ProfilesLibraryView {
    }
 
    public void init_V_SyncManager(autismclient.gui.f.SyncManager ctx, NetHelper area, float delta) {
-      this.init_JsonUtil = ctx.init_TableIndex().init_JsonUtil();
+      this.init_JsonUtil = ctx.init_TableIndex().colors();
       this.init_NetHelper = area;
       this.init_F = delta;
       this.sync = ctx.read();
@@ -144,13 +144,13 @@ public final class ProfilesLibraryView {
          this.init(ctx, NetHelper.init(bar.read(), bar.write(), backW, bar.sync()), "Library", null, CachePool.Inner_DataUtil.load, this::read_V);
          int x = bar.read() + backW + 4;
          ctx.init_PoolEntry()
-            .read(
+            .drawEllipsized(
                ctx.init_GuiGraphicsExtract(),
                profile.displayName,
                x,
-               ctx.init_PoolEntry().init_I(bar),
+               ctx.init_PoolEntry().centerTextY(bar),
                right - x,
-               profile.id.equals(this.init_bV.init_Str()) ? this.init_JsonUtil.stop : this.init_JsonUtil.prev
+               profile.id.equals(this.init_bV.init_Str()) ? this.init_JsonUtil.success : this.init_JsonUtil.textPrimary
             );
       } else {
          int newW = init_I_SyncManager_Str(ctx, "New profile") + 16;
@@ -181,7 +181,7 @@ public final class ProfilesLibraryView {
       int top = this.load_NetHelper.write() - this.write_I;
       this.read_NetHelper = this.load_NetHelper;
       autismclient.gui.f.SyncManager content = this.load_NetHelper.init_Z(ctx.read(), ctx.write()) ? ctx : ctx.load_SyncManager();
-      UiClipStack.init_HashUtil().init(ctx.init_GuiGraphicsExtract(), this.load_NetHelper);
+      UiClipStack.getInstance().push(ctx.init_GuiGraphicsExtract(), this.load_NetHelper);
 
       try {
          if (profile == null) {
@@ -190,12 +190,12 @@ public final class ProfilesLibraryView {
             this.init_V_SyncManager(content, profile, this.load_NetHelper.read(), top, w);
          }
       } finally {
-         UiClipStack.init_HashUtil().init(ctx.init_GuiGraphicsExtract());
+         UiClipStack.getInstance().pop(ctx.init_GuiGraphicsExtract());
       }
 
       if (maxScroll > 0) {
          int gutter = 6;
-         ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+         ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.compute(
             contentH,
             this.load_NetHelper.sync(),
             this.load_NetHelper.init() - gutter,
@@ -204,7 +204,7 @@ public final class ProfilesLibraryView {
             this.load_NetHelper.sync(),
             this.write_I
          );
-         ScrollbarMetricsHelper.init(ctx.init_GuiGraphicsExtract(), metrics, metrics.init(ctx.read(), ctx.write()), this.update_Z);
+         ScrollbarMetricsHelper.render(ctx.init_GuiGraphicsExtract(), metrics, metrics.containsTrack(ctx.read(), ctx.write()), this.update_Z);
          if (this.write_Z) {
             this.init_PoolEntry_DataUtil = metrics;
          }
@@ -240,7 +240,7 @@ public final class ProfilesLibraryView {
 
    private void init(autismclient.gui.f.SyncManager ctx, List<AutismProfile> profiles, int x, int y, int w, int cols) {
       if (profiles.isEmpty()) {
-         ctx.init_PoolEntry().load(ctx.init_GuiGraphicsExtract(), "No matching profiles", NetHelper.init(x, y + 4, w, sync_I()), this.init_JsonUtil.valid);
+         ctx.init_PoolEntry().drawCentered(ctx.init_GuiGraphicsExtract(), "No matching profiles", NetHelper.init(x, y + 4, w, sync_I()), this.init_JsonUtil.textSecondary);
       } else {
          String activeId = this.init_bV.init_Str();
          int cardW = (w - (cols - 1) * 4) / cols;
@@ -278,20 +278,20 @@ public final class ProfilesLibraryView {
                   );
                int tx = card.read() + iconSize + 8;
                String activeLabel = "Active";
-               int badgeW = active ? ctx.init_PoolEntry().init(activeLabel) + 4 : 0;
+               int badgeW = active ? ctx.init_PoolEntry().measureWidth(activeLabel) + 4 : 0;
                int textY = card.write() + (cardH - 2 * write_I()) / 2;
                if (active) {
                   ctx.init_PoolEntry()
-                     .init_V_GuiGraphicsExtract_2(ctx.init_GuiGraphicsExtract(), activeLabel, card.init() - badgeW, textY, this.init_JsonUtil.stop);
+                     .draw(ctx.init_GuiGraphicsExtract(), activeLabel, card.init() - badgeW, textY, this.init_JsonUtil.success);
                }
 
-               ctx.init_PoolEntry().read(ctx.init_GuiGraphicsExtract(), profile.displayName, tx, textY, card.init() - 4 - badgeW - tx, this.init_JsonUtil.prev);
+               ctx.init_PoolEntry().drawEllipsized(ctx.init_GuiGraphicsExtract(), profile.displayName, tx, textY, card.init() - 4 - badgeW - tx, this.init_JsonUtil.textPrimary);
                String subtitle = init_Str_Str_ServerData(pattern, server);
                if (patterns.size() > 1) {
                   subtitle = subtitle + "  +" + (patterns.size() - 1);
                }
 
-               ctx.init_PoolEntry().read(ctx.init_GuiGraphicsExtract(), subtitle, tx, textY + write_I(), card.init() - 4 - tx, this.init_JsonUtil.valid);
+               ctx.init_PoolEntry().drawEllipsized(ctx.init_GuiGraphicsExtract(), subtitle, tx, textY + write_I(), card.init() - 4 - tx, this.init_JsonUtil.textSecondary);
                this.init_V_NetHelper_Runnable(card, () -> this.init(profile));
             }
          }
@@ -326,7 +326,7 @@ public final class ProfilesLibraryView {
       cy += 2;
       String serverHeading = "Auto-apply on servers";
       ctx.init_PoolEntry()
-         .read(ctx.init_GuiGraphicsExtract(), serverHeading, x, ctx.init_PoolEntry().init_I(NetHelper.init(x, cy, w, sync_I())), w, this.init_JsonUtil.valid);
+         .drawEllipsized(ctx.init_GuiGraphicsExtract(), serverHeading, x, ctx.init_PoolEntry().centerTextY(NetHelper.init(x, cy, w, sync_I())), w, this.init_JsonUtil.textSecondary);
       cy += sync_I() + 2;
       int useW = init_I_SyncManager_Str(ctx, "Use current");
       int addW = init_I_SyncManager_Str(ctx, "Add");
@@ -336,13 +336,13 @@ public final class ProfilesLibraryView {
       this.init(ctx, NetHelper.init(x + w - useW, cy, useW, update_I()), "Use current", null, CachePool.Inner_DataUtil.load, this::flush_V);
       cy += update_I() + 4;
       if (p.serverPatterns.isEmpty()) {
-         this.init(ctx, "No server rules", x, cy, w, this.init_JsonUtil.valid);
+         this.init(ctx, "No server rules", x, cy, w, this.init_JsonUtil.textSecondary);
       } else {
          for (String pattern : p.serverPatterns) {
             NetHelper rule = NetHelper.init(x, cy, w, sync_I());
             cy += sync_I() + 2;
             if (rule.load() > this.load_NetHelper.write() && rule.write() < this.load_NetHelper.load()) {
-               PacketUtil.load(ctx.init_GuiGraphicsExtract(), rule, 3, this.init_JsonUtil.open);
+               PacketUtil.load(ctx.init_GuiGraphicsExtract(), rule, 3, this.init_JsonUtil.cardSurface);
                ServerData server = this.init_DataUtil.init_ServerData_Str(pattern);
                int iconSize = sync_I() - 4;
                this.init_DataUtil.init(ctx, server, autismclient.gui.f.a.DataUtil.push, rule.read() + 4, rule.write() + 2, iconSize);
@@ -353,7 +353,7 @@ public final class ProfilesLibraryView {
                   label = server.name + "  |  " + label;
                }
 
-               this.init(ctx, label, tx, rule.write(), remove.read() - tx - 4, this.init_JsonUtil.prev);
+               this.init(ctx, label, tx, rule.write(), remove.read() - tx - 4, this.init_JsonUtil.textPrimary);
                IconButtonRenderer.init(
                   ctx.init_GuiGraphicsExtract(), this.init_Font, remove, GuiIconAtlas.init_Identifier, this.init_Z_SyncManager_NetHelper(ctx, remove), true, true
                );
@@ -399,7 +399,7 @@ public final class ProfilesLibraryView {
       NetHelper inner = box.init(6);
       int x = inner.read();
       int w = inner.update();
-      this.init(ctx, title, x, inner.write(), w, this.init_JsonUtil.prev);
+      this.init(ctx, title, x, inner.write(), w, this.init_JsonUtil.textPrimary);
       int cy = inner.write() + sync_I() + 4;
       this.init_V_SyncManager_3(ctx, this.load_BitSetUtil, NetHelper.init(x, cy, w, update_I()));
       cy += update_I() + 4;
@@ -421,10 +421,10 @@ public final class ProfilesLibraryView {
       NetHelper box = this.init_NetHelper_I_I(240, read_I());
       this.init_V_SyncManager_NetHelper(ctx, box);
       NetHelper inner = box.init(6);
-      this.init(ctx, "Unsaved changes", inner.read(), inner.write(), inner.update(), this.init_JsonUtil.prev);
+      this.init(ctx, "Unsaved changes", inner.read(), inner.write(), inner.update(), this.init_JsonUtil.textPrimary);
       AutismProfile active = this.init_bV.init_AutismProfile();
       String name = active == null ? "the active profile" : active.displayName;
-      this.init(ctx, "Save " + name + " before switching?", inner.read(), inner.write() + sync_I(), inner.update(), this.init_JsonUtil.valid);
+      this.init(ctx, "Save " + name + " before switching?", inner.read(), inner.write() + sync_I(), inner.update(), this.init_JsonUtil.textSecondary);
       int cy = inner.write() + sync_I() * 2 + 4;
       int w = (inner.update() - 8) / 3;
       this.init(ctx, NetHelper.init(inner.read(), cy, w, update_I()), "Save", null, CachePool.Inner_DataUtil.write, () -> this.init(true));
@@ -440,7 +440,7 @@ public final class ProfilesLibraryView {
    }
 
    private NetHelper init_NetHelper_I_I(int idealWidth, int height) {
-      int w = Math.min(this.init_NetHelper.update() - 8, Math.round(idealWidth * Math.max(1.0F, MsdfTextRenderer.init_F())));
+      int w = Math.min(this.init_NetHelper.update() - 8, Math.round(idealWidth * Math.max(1.0F, MsdfTextRenderer.fontScale())));
       return NetHelper.init(
          this.init_NetHelper.read() + (this.init_NetHelper.update() - w) / 2,
          this.init_NetHelper.write() + Math.max(0, (this.init_NetHelper.sync() - height) / 2),
@@ -450,7 +450,7 @@ public final class ProfilesLibraryView {
    }
 
    private void init_V_SyncManager_NetHelper(autismclient.gui.f.SyncManager ctx, NetHelper box) {
-      PacketUtil.load(ctx.init_GuiGraphicsExtract(), box, 8, this.init_JsonUtil.sync, this.init_JsonUtil.run);
+      PacketUtil.load(ctx.init_GuiGraphicsExtract(), box, 8, this.init_JsonUtil.popupSurface, this.init_JsonUtil.borderStrong);
    }
 
    private static int init_I_I_I(int count, int cols) {
@@ -488,15 +488,15 @@ public final class ProfilesLibraryView {
    }
 
    private static int write_I() {
-      return UiDensityMetrics.init(12);
+      return UiDensityMetrics.scaledHeight(12);
    }
 
    private static int update_I() {
-      return UiDensityMetrics.init(13);
+      return UiDensityMetrics.scaledHeight(13);
    }
 
    private static int sync_I() {
-      return UiDensityMetrics.init(14);
+      return UiDensityMetrics.scaledHeight(14);
    }
 
    private static int flush_I() {
@@ -504,7 +504,7 @@ public final class ProfilesLibraryView {
    }
 
    private static int init_I_SyncManager_Str(autismclient.gui.f.SyncManager ctx, String label) {
-      return UiDensityMetrics.load(ctx.init_PoolEntry().init(label));
+      return UiDensityMetrics.buttonWidthForText(ctx.init_PoolEntry().measureWidth(label));
    }
 
    private void init(AutismProfile profile) {
@@ -678,10 +678,10 @@ public final class ProfilesLibraryView {
             return true;
          }
 
-         if (this.init_PoolEntry_DataUtil != null && !this.init_Z() && this.init_PoolEntry_DataUtil.init(mx, my)) {
+         if (this.init_PoolEntry_DataUtil != null && !this.init_Z() && this.init_PoolEntry_DataUtil.containsTrack(mx, my)) {
             this.update_Z = true;
-            this.update_I = this.init_PoolEntry_DataUtil.load(mx, my) ? my - this.init_PoolEntry_DataUtil.update() : this.init_PoolEntry_DataUtil.sync() / 2;
-            this.write_I = ScrollbarMetricsHelper.init(this.init_PoolEntry_DataUtil, my, this.update_I);
+            this.update_I = this.init_PoolEntry_DataUtil.containsThumb(mx, my) ? my - this.init_PoolEntry_DataUtil.thumbY() : this.init_PoolEntry_DataUtil.thumbHeight() / 2;
+            this.write_I = ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil, my, this.update_I);
             this.load_V();
             return true;
          }
@@ -735,7 +735,7 @@ public final class ProfilesLibraryView {
 
    public boolean init_Z_I(int mx, int my, int button, double dx, double dy) {
       if (this.update_Z && this.init_PoolEntry_DataUtil != null) {
-         this.write_I = ScrollbarMetricsHelper.init(this.init_PoolEntry_DataUtil, my, this.update_I);
+         this.write_I = ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil, my, this.update_I);
          return true;
       }
 
@@ -755,7 +755,7 @@ public final class ProfilesLibraryView {
          return true;
       } else if (this.init_PoolEntry_DataUtil != null && this.load_NetHelper.init_Z(mx, my)) {
          int pitch = this.init_Str == null ? flush_I() : sync_I() + 2;
-         this.write_I = Math.clamp(this.write_I - (int)Math.round(amount * pitch), 0, this.init_PoolEntry_DataUtil.flush());
+         this.write_I = Math.clamp(this.write_I - (int)Math.round(amount * pitch), 0, this.init_PoolEntry_DataUtil.maxScroll());
          return true;
       } else {
          return false;
@@ -857,14 +857,14 @@ public final class ProfilesLibraryView {
    private int init(autismclient.gui.f.SyncManager ctx, int x, int y, int w, String label, boolean value, Runnable action) {
       NetHelper row = NetHelper.init(x, y, w, sync_I());
       boolean hovered = this.init_Z_SyncManager_NetHelper(ctx, row);
-      PacketUtil.load(ctx.init_GuiGraphicsExtract(), row, 3, hovered ? this.init_JsonUtil.push : this.init_JsonUtil.open);
+      PacketUtil.load(ctx.init_GuiGraphicsExtract(), row, 3, hovered ? this.init_JsonUtil.cardSurfaceElevated : this.init_JsonUtil.cardSurface);
       ToggleSwitchRenderer.init(ctx, row, label, value, hovered, "profiles:" + label);
       this.init_V_NetHelper_Runnable(row, action);
       return row.load() + 2;
    }
 
    private void init(autismclient.gui.f.SyncManager ctx, String text, int x, int y, int w, int color) {
-      ctx.init_PoolEntry().read(ctx.init_GuiGraphicsExtract(), text, x, ctx.init_PoolEntry().init_I(NetHelper.init(x, y, w, sync_I())), w, color);
+      ctx.init_PoolEntry().drawEllipsized(ctx.init_GuiGraphicsExtract(), text, x, ctx.init_PoolEntry().centerTextY(NetHelper.init(x, y, w, sync_I())), w, color);
    }
 
    private boolean init_Z_SyncManager_NetHelper(autismclient.gui.f.SyncManager ctx, NetHelper box) {

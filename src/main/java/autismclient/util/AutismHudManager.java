@@ -614,7 +614,7 @@ public final class AutismHudManager {
    ) {
       long perf = bK.load_J();
       init_V();
-      autismclient.gui.sdf.MsdfTextRenderer.init_V_Z(!init_Z());
+      autismclient.gui.sdf.MsdfTextRenderer.setForceVanilla(!init_Z());
       init_V_Font_Z(font, editor);
       load_List = !editor && occluders != null && !occluders.isEmpty() ? occluders : List.of();
 
@@ -652,7 +652,7 @@ public final class AutismHudManager {
       } finally {
          load_List = List.of();
          write_List = null;
-         autismclient.gui.sdf.MsdfTextRenderer.init_V_Z(false);
+         autismclient.gui.sdf.MsdfTextRenderer.setForceVanilla(false);
          sync_V();
          bK.init("hud.render", perf);
       }
@@ -676,7 +676,7 @@ public final class AutismHudManager {
          init_V();
          AutismConfig.HudElementState state = init_AutismConfig_HudEl_Str(id);
          if (state.enabled && (!"anti_vanish".equals(id) || autismclient.modules.AntiVanishModule.init_Z_19())) {
-            autismclient.gui.sdf.MsdfTextRenderer.init_V_Z(!init_Z());
+            autismclient.gui.sdf.MsdfTextRenderer.setForceVanilla(!init_Z());
             init_V_Font_Z(font, false);
 
             try {
@@ -690,7 +690,7 @@ public final class AutismHudManager {
                init_V_GuiGraphicsExtract_7(context, font, id, state, cached, false, false, false, 0);
             } finally {
                write_List = null;
-               autismclient.gui.sdf.MsdfTextRenderer.init_V_Z(false);
+               autismclient.gui.sdf.MsdfTextRenderer.setForceVanilla(false);
                sync_V();
             }
 
@@ -960,7 +960,7 @@ public final class AutismHudManager {
       int moduleRev = autismclient.modules.al.init_I();
       int hudElsRev = HudElements.revision();
       int configId = System.identityHashCode(AutismConfig.getGlobal());
-      int themeRev = ThemePaletteManager.init_I();
+      int themeRev = ThemePaletteManager.generation();
       write_Z = screenW != run_I
          || screenH != get_I
          || playerId != set_I
@@ -1055,7 +1055,7 @@ public final class AutismHudManager {
          activeRevision,
          moduleRevision,
          System.identityHashCode(font),
-         ThemePaletteManager.init_I()
+         ThemePaletteManager.generation()
       );
    }
 
@@ -1709,9 +1709,9 @@ public final class AutismHudManager {
    }
 
    private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int x, int y) {
-      int fill = ThemePaletteManager.init_I_I_ct_DataUtil(538579477, ThemePaletteManager.ColorRole.BACKDROP);
-      int lit = ThemePaletteManager.init_I_I_ct_DataUtil(1435577909, ThemePaletteManager.ColorRole.OUTLINE);
-      int shade = ThemePaletteManager.init_I_I_ct_DataUtil(1427835662, ThemePaletteManager.ColorRole.BACKDROP);
+      int fill = ThemePaletteManager.recolor(538579477, ThemePaletteManager.ColorRole.BACKDROP);
+      int lit = ThemePaletteManager.recolor(1435577909, ThemePaletteManager.ColorRole.OUTLINE);
+      int shade = ThemePaletteManager.recolor(1427835662, ThemePaletteManager.ColorRole.BACKDROP);
       autismclient.gui.f.b.k.init(context, x, y, x + 18, y + 18, fill);
       autismclient.gui.f.b.k.init(context, x, y, x + 18, y + 1, lit);
       autismclient.gui.f.b.k.init(context, x, y + 17, x + 18, y + 18, shade);
@@ -1755,7 +1755,7 @@ public final class AutismHudManager {
             int baseColor = init_I_I(style.push(), style.poll(), face);
             int textColor = init_I_I_F(baseColor, alpha * (0.18F + (float)presence * 0.82F));
             int tw = init_IArr[i];
-            int halo = init_I_I_F(ThemePaletteManager.init_I_I_ct_DataUtil(942148882, ThemePaletteManager.ColorRole.BACKDROP), alpha * (float)face);
+            int halo = init_I_I_F(ThemePaletteManager.recolor(942148882, ThemePaletteManager.ColorRole.BACKDROP), alpha * (float)face);
             if (face > 0.0) {
                int haloTop = fullHeightHighlight ? y : y + 2;
                int haloBottom = fullHeightHighlight ? y + stripH : y + stripH - 2;
@@ -1856,7 +1856,7 @@ public final class AutismHudManager {
    }
 
    private static boolean init_Z_KeyMapping(KeyMapping mapping) {
-      return mapping != null && KeyMappingControl.init(mapping).autism$isActuallyDown();
+      return mapping != null && KeyMappingControl.of(mapping).autism$isActuallyDown();
    }
 
    private static void init(GuiGraphicsExtractor context, Font font, int x, int y, int w, int h, float fill, int idle, int active, int text, float alpha) {
@@ -3323,7 +3323,7 @@ public final class AutismHudManager {
    private static int load_I_Str_2(String id, String key, int fallback) {
       if (!init_Z_Str_Str(id, "use-custom-colors")) {
          int themed = init_I_Str_I(load_Str(id, key), fallback);
-         return ThemePaletteManager.init_I_I_ct_DataUtil(themed, init_ct_DataUtil_Str(key));
+         return ThemePaletteManager.recolor(themed, init_ct_DataUtil_Str(key));
       } else {
          return init_I_Str_I(init_Str_Str_Str(id, key), fallback);
       }
@@ -3358,7 +3358,7 @@ public final class AutismHudManager {
    }
 
    private static int init_I_Z(boolean selected) {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(selected ? 942280982 : 571675672, ThemePaletteManager.ColorRole.BACKDROP);
+      return ThemePaletteManager.recolor(selected ? 942280982 : 571675672, ThemePaletteManager.ColorRole.BACKDROP);
    }
 
    private static int init_I_I_F(int color, float alpha) {

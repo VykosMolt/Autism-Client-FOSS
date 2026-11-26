@@ -244,7 +244,7 @@ final class AiChatView {
          autismclient.gui.f.NetHelper.init(activity.read(), activity.write(), activity.update(), line),
          activity.read(),
          activity.update(),
-         kit.init_JsonUtil.valid
+         kit.init_JsonUtil.textSecondary
       );
       kit.init_V_NetHelper_Str(autismclient.gui.f.NetHelper.init(activity.read(), activity.write(), activity.update(), line), progress);
       int y = activity.write() + line;
@@ -344,13 +344,13 @@ final class AiChatView {
                AiService.TranscriptEntry message = block.message();
                Runnable toggle = null;
                if (block.kind() == AiTranscriptLayout.Inner_CachePool.USER) {
-                  PacketUtil.load(kit.init_GuiGraphicsExtract, bounds, 3, colors.open);
+                  PacketUtil.load(kit.init_GuiGraphicsExtract, bounds, 3, colors.cardSurface);
                } else if (block.kind() == AiTranscriptLayout.Inner_CachePool.TOOL && !message.detail().isBlank()) {
                   boolean expanded = block.expanded();
                   toggle = () -> this.init_V_cc_JsonUtil_Z(message, expanded);
                   autismclient.gui.f.NetHelper head = autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write(), bounds.update(), m.tool());
                   if (kit.init_Z_NetHelper(head)) {
-                     PacketUtil.load(kit.init_GuiGraphicsExtract, head, 3, colors.add);
+                     PacketUtil.load(kit.init_GuiGraphicsExtract, head, 3, colors.innerHighlight);
                   }
                }
 
@@ -373,19 +373,19 @@ final class AiChatView {
                         kit.init_V_Str("You", v.read() + 4, y, -10497050);
                      }
 
-                     kit.init_V_Str(line.text(), x, y, colors.prev);
+                     kit.init_V_Str(line.text(), x, y, colors.textPrimary);
                      break;
                   case ASSISTANT:
                      this.init_V_cE_2(kit, line, v.read(), x, y, contentW);
                      break;
                   case SYSTEM:
-                     kit.init_V_Str(line.text(), x, y, colors.valid);
+                     kit.init_V_Str(line.text(), x, y, colors.textSecondary);
                      break;
                   case ERROR:
-                     kit.init_V_Str(line.text(), x, y, colors.data);
+                     kit.init_V_Str(line.text(), x, y, colors.danger);
                      break;
                   case SUCCESS:
-                     kit.init_V_Str(line.text(), x, y, colors.stop);
+                     kit.init_V_Str(line.text(), x, y, colors.success);
                      break;
                   case WARNING:
                      kit.init_V_Str(line.text(), x, y, -14249);
@@ -397,24 +397,24 @@ final class AiChatView {
                            kit.init_GuiGraphicsExtract,
                            autismclient.gui.f.NetHelper.init(v.read() + 2, y + (line.height() - 8) / 2, 8, 8),
                            line.expanded(),
-                           colors.valid
+                           colors.textSecondary
                         );
                      }
 
                      int nameX = v.read() + 13;
                      int room = contentW - 13;
                      int nameW = Math.min(kit.init_I_Str(line.text()), room * 3 / 5);
-                     kit.init_V_Str_3(line.text(), row, nameX, nameW, colors.prev);
+                     kit.init_V_Str_3(line.text(), row, nameX, nameW, colors.textPrimary);
                      if (!line.secondary().isEmpty()) {
                         kit.init_V_Str_3(line.secondary(), row, nameX + nameW + 6, room - nameW - 6, this.init_I_cE_cc_JsonUtil(kit, line.message()));
                      }
                      break;
                   case TOOL_DETAIL:
-                     PacketUtil.load(kit.init_GuiGraphicsExtract, x - 5, y, line.height(), colors.put);
-                     kit.init_V_Str(line.text(), x, y, colors.valid);
+                     PacketUtil.load(kit.init_GuiGraphicsExtract, x - 5, y, line.height(), colors.divider);
+                     kit.init_V_Str(line.text(), x, y, colors.textSecondary);
                      break;
                   case MORE:
-                     kit.init_V_Str(line.text(), x, y, colors.size);
+                     kit.init_V_Str(line.text(), x, y, colors.textMuted);
                }
             }
 
@@ -429,7 +429,7 @@ final class AiChatView {
    }
 
    static int load_I() {
-      return autismclient.gui.sdf.MsdfTextRenderer.init_I() * 31 + Float.floatToIntBits(autismclient.gui.sdf.MsdfTextRenderer.init_F());
+      return autismclient.gui.sdf.MsdfTextRenderer.cacheGeneration() * 31 + Float.floatToIntBits(autismclient.gui.sdf.MsdfTextRenderer.fontScale());
    }
 
    private int init_I_cE_cc_JsonUtil(AiUiKit kit, AiService.TranscriptEntry message) {
@@ -442,7 +442,7 @@ final class AiChatView {
          case "FAILED":
          case "ERROR":
          case "TIMED_OUT":
-            var10000 = kit.init_JsonUtil.data;
+            var10000 = kit.init_JsonUtil.danger;
             break;
          case "UNCERTAIN":
          case "INTERRUPTED":
@@ -451,7 +451,7 @@ final class AiChatView {
             var10000 = -14249;
             break;
          default:
-            var10000 = kit.init_JsonUtil.valid;
+            var10000 = kit.init_JsonUtil.textSecondary;
       }
 
       return var10000;
@@ -460,46 +460,46 @@ final class AiChatView {
    private void init_V_cE_2(AiUiKit kit, AiTranscriptLayout.Inner_BufferHelper line, int left, int x, int y, int contentW) {
       autismclient.gui.ui.UiColorScheme colors = kit.init_JsonUtil;
       if (line.spans() == null) {
-         kit.init_V_Str(line.text(), x, y, colors.prev);
+         kit.init_V_Str(line.text(), x, y, colors.textPrimary);
       } else {
          int h = line.height();
          boolean first = (line.flags() & 1) != 0;
          boolean last = (line.flags() & 2) != 0;
          switch (line.deco()) {
             case RULE:
-               PacketUtil.init_V_GuiGraphicsExtract_2(kit.init_GuiGraphicsExtract, left, y + h / 2, contentW, colors.put);
+               PacketUtil.init_V_GuiGraphicsExtract_2(kit.init_GuiGraphicsExtract, left, y + h / 2, contentW, colors.divider);
                return;
             case CODE:
                int top = y - (first ? 3 : 0);
                int bottom = y + h + (last ? 3 : 0);
-               PacketUtil.init(kit.init_GuiGraphicsExtract, autismclient.gui.f.NetHelper.init(left, top, contentW, bottom - top), colors.open);
+               PacketUtil.init(kit.init_GuiGraphicsExtract, autismclient.gui.f.NetHelper.init(left, top, contentW, bottom - top), colors.cardSurface);
                break;
             case QUOTE:
-               PacketUtil.load(kit.init_GuiGraphicsExtract, left + 2, y, h, colors.get);
+               PacketUtil.load(kit.init_GuiGraphicsExtract, left + 2, y, h, colors.borderSubtle);
                break;
             case BULLET:
                if (first) {
-                  kit.init_V_I(x - 5, y + h / 2, 1.5F, colors.valid);
+                  kit.init_V_I(x - 5, y + h / 2, 1.5F, colors.textSecondary);
                }
                break;
             case NUMBERED:
                if (!line.marker().isEmpty()) {
-                  kit.init_V_Str(line.marker(), x - kit.init_I_Str(line.marker()) - 4, y, colors.valid);
+                  kit.init_V_Str(line.marker(), x - kit.init_I_Str(line.marker()) - 4, y, colors.textSecondary);
                }
          }
 
          int textY = line.deco() == AiTranscriptLayout.Inner_StreamUtil.HEADING ? y + 1 : y;
-         int base = line.deco() == AiTranscriptLayout.Inner_StreamUtil.QUOTE ? colors.valid : colors.prev;
+         int base = line.deco() == AiTranscriptLayout.Inner_StreamUtil.QUOTE ? colors.textSecondary : colors.textPrimary;
          float cx = x;
 
          for (AiTranscriptLayout.Inner_JsonUtil span : line.spans()) {
             int style = span.style();
             int color = base;
             if ((style & 4) != 0 && line.deco() != AiTranscriptLayout.Inner_StreamUtil.CODE) {
-               PacketUtil.load(kit.init_GuiGraphicsExtract, autismclient.gui.f.NetHelper.init(Math.round(cx) - 1, y, span.width() + 2, h), 2, colors.add);
+               PacketUtil.load(kit.init_GuiGraphicsExtract, autismclient.gui.f.NetHelper.init(Math.round(cx) - 1, y, span.width() + 2, h), 2, colors.innerHighlight);
                color = -10497050;
             } else if ((style & 8) != 0) {
-               color = colors.clear;
+               color = colors.accent;
             }
 
             kit.init_V_Str(span.text(), cx, textY, style, color);
@@ -519,7 +519,7 @@ final class AiChatView {
       String label = !progress.isEmpty() && !progress.equalsIgnoreCase("thinking")
          ? kit.init_Str_Str_I(progress, room - kit.init_I_Str(" - " + seconds)) + " - " + seconds
          : "Thinking " + seconds;
-      kit.init_V_Str_2(label, x + 11, y + 1, room, kit.init_JsonUtil.valid);
+      kit.init_V_Str_2(label, x + 11, y + 1, room, kit.init_JsonUtil.textSecondary);
    }
 
    private void init_V_cE_NetHelper(AiUiKit kit, autismclient.gui.f.NetHelper v) {
@@ -534,7 +534,7 @@ final class AiChatView {
          );
          autismclient.gui.f.b.BufferHelper.init_V(kit.init_SyncManager, card, title);
          int y = autismclient.gui.f.b.BufferHelper.init_I(kit.init_SyncManager, card, title) + 1;
-         kit.init_V_Str_2("Add an API key to get started.", card.read() + 5, y, card.update() - 10, colors.valid);
+         kit.init_V_Str_2("Add an API key to get started.", card.read() + 5, y, card.update() - 10, colors.textSecondary);
          y += AiUiKit.write() + 2;
          kit.init_V_NetHelper_2(
             autismclient.gui.f.NetHelper.init(card.read() + 5, y, kit.load("Open settings"), ctrl),
@@ -548,11 +548,11 @@ final class AiChatView {
          int w = v.update() - 8;
          kit.init_V_NetHelper(v);
          kit.init_V_Str_2(
-            this.init_cF.init_AiSettings.builtIn ? "Pick an action below." : "Ask a question or give the assistant a task.", x, y, w, colors.valid
+            this.init_cF.init_AiSettings.builtIn ? "Pick an action below." : "Ask a question or give the assistant a task.", x, y, w, colors.textSecondary
          );
          y += AiUiKit.write() + 2 + 2;
          kit.init_V_Str_2(
-            autismclient.util.ValueSink.init_Str(this.init_cF.init_AiSettings.emergencyKey) + " stops the assistant at any time.", x, y, w, colors.size
+            autismclient.util.ValueSink.init_Str(this.init_cF.init_AiSettings.emergencyKey) + " stops the assistant at any time.", x, y, w, colors.textMuted
          );
          kit.init_V();
       }
@@ -588,7 +588,7 @@ final class AiChatView {
       if (lines > 0) {
          int epoch = load_I();
          if (this.update_I != w || this.sync_I != epoch || !this.read_Str.equals(this.load_Str)) {
-            this.init_List = kit.init_SyncManager.init_PoolEntry().init_List(this.load_Str, w);
+            this.init_List = kit.init_SyncManager.init_PoolEntry().wrapLines(this.load_Str, w);
             this.update_I = w;
             this.sync_I = epoch;
             this.read_Str = this.load_Str;
@@ -597,7 +597,7 @@ final class AiChatView {
          List<String> wrapped = this.init_List;
 
          for (int i = 0; i < Math.min(lines, wrapped.size()); i++) {
-            kit.init_V_Str_2(wrapped.get(i), x, y + i * AiUiKit.write(), w, kit.init_JsonUtil.valid);
+            kit.init_V_Str_2(wrapped.get(i), x, y + i * AiUiKit.write(), w, kit.init_JsonUtil.textSecondary);
          }
 
          y += lines * AiUiKit.write();
@@ -630,7 +630,7 @@ final class AiChatView {
    private List<String> init_List_cE(AiUiKit kit, AiService.UserPromptQuestion q, int w) {
       int epoch = load_I();
       if (this.flush != w || this.close != epoch || !this.write_Str.equals(q.text())) {
-         this.read_List = kit.init_SyncManager.init_PoolEntry().init_List(AiUiKit.init_Str_Str(q.text()), Math.max(20, w));
+         this.read_List = kit.init_SyncManager.init_PoolEntry().wrapLines(AiUiKit.init_Str_Str(q.text()), Math.max(20, w));
          this.flush = w;
          this.close = epoch;
          this.write_Str = q.text();
@@ -652,20 +652,20 @@ final class AiChatView {
       for (int i = 0; i < shown; i++) {
          String text = wrapped.get(i);
          if (i == shown - 1 && wrapped.size() > shown) {
-            text = kit.init_SyncManager.init_PoolEntry().load(text + " ...", w);
+            text = kit.init_SyncManager.init_PoolEntry().ellipsize(text + " ...", w);
          }
 
-         kit.init_V_Str_2(text, x, y + i * AiUiKit.write(), w, kit.init_JsonUtil.prev);
+         kit.init_V_Str_2(text, x, y + i * AiUiKit.write(), w, kit.init_JsonUtil.textPrimary);
       }
 
       y += shown * AiUiKit.write() + 2;
       int ctrl = AiUiKit.init_I();
       if (q.options().isEmpty()) {
-         kit.init_V_Str_2("Type your answer below and press Send.", x, y + 1, w, kit.init_JsonUtil.valid);
+         kit.init_V_Str_2("Type your answer below and press Send.", x, y + 1, w, kit.init_JsonUtil.textSecondary);
       } else {
          for (int i = 0; i < q.options().size(); i++) {
             String option = q.options().get(i);
-            String label = kit.init_SyncManager.init_PoolEntry().load(i + 1 + ". " + option, w - 12);
+            String label = kit.init_SyncManager.init_PoolEntry().ellipsize(i + 1 + ". " + option, w - 12);
             kit.init_V_NetHelper(
                autismclient.gui.f.NetHelper.init(x, y, w, ctrl),
                label,
@@ -727,8 +727,8 @@ final class AiChatView {
 
       for (String[] row : rows) {
          autismclient.gui.f.NetHelper r = autismclient.gui.f.NetHelper.init(x, y, w, AiUiKit.read());
-         kit.init_V_Str_3(row[0], r, x, labelW - 4, kit.init_JsonUtil.valid);
-         kit.init_V_Str_3(row[1], r, x + labelW, w - labelW, kit.init_JsonUtil.prev);
+         kit.init_V_Str_3(row[0], r, x, labelW - 4, kit.init_JsonUtil.textSecondary);
+         kit.init_V_Str_3(row[1], r, x + labelW, w - labelW, kit.init_JsonUtil.textPrimary);
          if (kit.init_Z_NetHelper(r) && kit.init_I_Str(row[1]) > w - labelW) {
             kit.init_V_NetHelper_Str(r, row[1]);
          }
@@ -862,7 +862,7 @@ final class AiChatView {
       boolean on = this.read_Z();
       String label = on ? "Plan" : "Act";
       autismclient.gui.f.NetHelper chip = autismclient.gui.f.NetHelper.init(x, s.write() + (s.sync() - AiUiKit.read()) / 2, kit.init_I_Str(label) + 10, AiUiKit.read());
-      autismclient.gui.ui.widgets.PillBadgeRenderer.init(kit.init_SyncManager, chip, label, on ? -14249 : kit.init_JsonUtil.clear, on, kit.init_Z_NetHelper(chip));
+      autismclient.gui.ui.widgets.PillBadgeRenderer.init(kit.init_SyncManager, chip, label, on ? -14249 : kit.init_JsonUtil.accent, on, kit.init_Z_NetHelper(chip));
       kit.init_V_NetHelper(
          chip,
          this::init_V,
@@ -956,7 +956,7 @@ final class AiChatView {
       kit.init_V_I(x + 3, s.write() + s.sync() / 2, 2.5F, this.init_I_cE(kit));
       x += 10;
       String label = this.read_Str();
-      kit.init_V_Str_3(label, s, x, limit - x, colors.prev);
+      kit.init_V_Str_3(label, s, x, limit - x, colors.textPrimary);
       x += kit.init_I_Str(label) + 8;
       if (limit - x > 60 && !this.init_cF.init_AiSettings.builtIn) {
          this.load_V_cE(kit, s, x);
@@ -971,7 +971,7 @@ final class AiChatView {
       AiService.TokenUsage u = this.init_cF.init_cc_ByteReader;
       if (this.init_cF.init_AiSettings.builtIn) {
          if (!this.init_cF.init_Str.isBlank() && x < limit) {
-            kit.init_V_Str_3(this.init_cF.init_Str, s, x, limit - x, colors.valid);
+            kit.init_V_Str_3(this.init_cF.init_Str, s, x, limit - x, colors.textSecondary);
          }
 
          x = limit;
@@ -980,20 +980,20 @@ final class AiChatView {
       if (u.lastPromptTokens() > 0L && u.contextWindow() > 0 && x < limit) {
          String ctx = "ctx " + AiUiKit.init_Str_J(u.lastPromptTokens()) + " / " + AiUiKit.init_Str_J(u.contextWindow());
          boolean tight = u.lastPromptTokens() > u.contextWindow() * 0.7;
-         kit.init_V_Str_3(ctx, s, x, limit - x, tight ? -14249 : colors.valid);
+         kit.init_V_Str_3(ctx, s, x, limit - x, tight ? -14249 : colors.textSecondary);
          x += kit.init_I_Str(ctx) + 8;
       }
 
       long prompt = u.inputTokens() + u.cachedInputTokens() + u.cacheWriteTokens();
       if (u.cachedInputTokens() > 0L && prompt > 0L && x < limit) {
          String cache = "cache " + Math.round(100.0 * u.cachedInputTokens() / prompt) + "%";
-         kit.init_V_Str_3(cache, s, x, limit - x, colors.valid);
+         kit.init_V_Str_3(cache, s, x, limit - x, colors.textSecondary);
          x += kit.init_I_Str(cache) + 8;
       }
 
       if (u.requests() > 0L && x < limit) {
          String req = u.requests() + " req";
-         kit.init_V_Str_3(req, s, x, limit - x, colors.valid);
+         kit.init_V_Str_3(req, s, x, limit - x, colors.textSecondary);
       }
 
       autismclient.gui.f.NetHelper hit = autismclient.gui.f.NetHelper.init(s.read(), s.write(), Math.max(1, limit - s.read()), s.sync());
@@ -1063,14 +1063,14 @@ final class AiChatView {
             break;
          case "COMPLETED":
          case "ANSWERED":
-            var10000 = kit.init_JsonUtil.stop;
+            var10000 = kit.init_JsonUtil.success;
             break;
          case "BLOCKED":
          case "FAILED":
-            var10000 = kit.init_JsonUtil.data;
+            var10000 = kit.init_JsonUtil.danger;
             break;
          default:
-            var10000 = kit.init_JsonUtil.size;
+            var10000 = kit.init_JsonUtil.textMuted;
       }
 
       return var10000;

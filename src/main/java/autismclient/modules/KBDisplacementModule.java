@@ -282,7 +282,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                               m.integer("max-turn"), m.integer("fall-height"), m.bool("void-only"), side, m.integer("radius")
                            );
                            long started = System.nanoTime();
-                           plan = KnockbackThrowPlanner.init(input, yaw, RotationMath.init(), settings, m.init_W_BufferHelper_LivingEntity(target, grounded, server), terrain);
+                           plan = KnockbackThrowPlanner.init(input, yaw, RotationMath.gcdStep(), settings, m.init_W_BufferHelper_LivingEntity(target, grounded, server), terrain);
                            m.init_V_J_W_NetHelper(System.nanoTime() - started, plan);
                         } catch (RuntimeException ignored) {
                            m.init_V_Str_2("error");
@@ -296,7 +296,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                         } else {
                            double reach = autismclient.util.AttackReachHelper.init_D(MC.player) - 0.06;
                            Vec3 nextEye = terrain.init_Vec3_F(plan.init_F()).add(0.0, MC.player.getEyeHeight(), 0.0);
-                           float inputYaw = SilentMovementCoordinator.init_F(MC.player);
+                           float inputYaw = SilentMovementCoordinator.getMovementYaw(MC.player);
                            if (!(target.getBoundingBox().move(init_Vec3_LivingEntity_2(target)).distanceToSqr(nextEye) > reach * reach)
                               && autismclient.util.SilentRotationManager.load(new RotationMath.Rotation(plan.init_F(), terrain.init_F))) {
                               m.init_V_Str_2("redirect");
@@ -540,8 +540,8 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
    private void init_V_Z_5(boolean displaced) {
       boolean context = this.sync_Z_5();
-      float wireYaw = SilentMovementCoordinator.init_F();
-      float wirePitch = SilentMovementCoordinator.load_F();
+      float wireYaw = SilentMovementCoordinator.getCameraYaw();
+      float wirePitch = SilentMovementCoordinator.getCameraPitch();
       if (!Float.isFinite(wireYaw) || !Float.isFinite(wirePitch)) {
          wireYaw = this.load_F;
          wirePitch = this.read_F;
@@ -609,7 +609,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
    @Override
    public boolean load_Z_23() {
-      return !SilentMovementCoordinator.init_Z() && read_Z_11() && (this.init_T.init_Z() || this.update_I == AutismSessionState.init_ck().state_I() || autismclient.util.SilentRotationManager.init_Z());
+      return !SilentMovementCoordinator.isSafeWalkActive() && read_Z_11() && (this.init_T.init_Z() || this.update_I == AutismSessionState.init_ck().state_I() || autismclient.util.SilentRotationManager.init_Z());
    }
 
    private boolean sync_Z_5() {
@@ -713,7 +713,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                KnockbackThrowPlanner.init(
                   input,
                   MC.player.getYRot(),
-                  RotationMath.init(),
+                  RotationMath.gcdStep(),
                   new KnockbackThrowPlanner.Inner_StateCache(100.0, 3.0, false, 0, radius),
                   new KnockbackThrowPlanner.Inner_BufferHelper(counter, new Vec3[0]),
                   new KBDisplacementModule.Inner_CachePool(MC.level, MC.player, MC.player.getXRot())
@@ -786,7 +786,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
       if (ClutchModule.init_Z_49()
          || DangerModule.sync_Z_12()
-         || SilentMovementCoordinator.init_Z()
+         || SilentMovementCoordinator.isSafeWalkActive()
          || BedNukerModule.init_Z_23()
          || AutoTotemModule.init_Z_6()
          || AutoArmorModule.init_Z_20()
@@ -794,7 +794,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          return false;
       }
 
-      if (SilentMovementCoordinator.init_ce_DataUtil() != null && !QueuedAttackBuffer.init_Z_Str(autismclient.util.SilentRotationManager.init_Str())) {
+      if (SilentMovementCoordinator.activeRotation() != null && !QueuedAttackBuffer.init_Z_Str(autismclient.util.SilentRotationManager.init_Str())) {
          return false;
       }
 
@@ -934,7 +934,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          this.init_LivingEntity = target;
          this.init_F = pitch;
          this.init_CollisionContext = CollisionContext.of(target);
-         this.load_F = SilentMovementCoordinator.init_F(Module.MC.player);
+         this.load_F = SilentMovementCoordinator.getMovementYaw(Module.MC.player);
          this.init_I = level.getMinY();
          this.load_I = level.getMaxY();
       }
@@ -954,7 +954,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                      o.keyShift.isDown(),
                      o.keySprint.isDown()
                   );
-                  Input keys = SilentMovementCoordinator.init(raw, this.load_F, yaw);
+                  Input keys = SilentMovementCoordinator.correctInputForYaw(raw, this.load_F, yaw);
                   boolean sprint = keys.forward() && !keys.backward() && (Module.MC.player.isSprinting() || MovementModuleHooks.init(raw.sprint(), false));
                   double speed = Module.MC.player.getAttributeValue(Attributes.MOVEMENT_SPEED);
                   if (sprint != Module.MC.player.isSprinting()) {
@@ -1014,7 +1014,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
             o.keyUp.isDown(), o.keyDown.isDown(), o.keyLeft.isDown(), o.keyRight.isDown(), o.keyJump.isDown(), o.keyShift.isDown(), o.keySprint.isDown()
          );
          if (raw.forward() && !raw.backward()) {
-            Input keys = SilentMovementCoordinator.init(raw, this.load_F, yaw);
+            Input keys = SilentMovementCoordinator.correctInputForYaw(raw, this.load_F, yaw);
             return keys.forward() && !keys.backward() && Math.abs(Mth.wrapDegrees(yaw - this.load_F)) <= 62.0;
          } else {
             return Math.abs(Mth.wrapDegrees(yaw - this.load_F)) <= 62.0;

@@ -67,7 +67,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
 
    public boolean load_Z() {
       KeyMapping mapping = this.init_KeyMapping();
-      return mapping != null && !mapping.isUnbound() && KeyMappingControl.init(mapping).autism$isActuallyDown();
+      return mapping != null && !mapping.isUnbound() && KeyMappingControl.of(mapping).autism$isActuallyDown();
    }
 
    @Override
@@ -75,7 +75,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       if (!this.load_Z && read_Z()) {
          KeyMapping mapping = this.init_KeyMapping();
          if (mapping != null && !mapping.isUnbound()) {
-            KeyMappingControl.init(mapping).autism$simulatePress(true);
+            KeyMappingControl.of(mapping).autism$simulatePress(true);
             this.update = System.nanoTime();
             this.load_Z = true;
             if (!this.init_Z) {
@@ -103,7 +103,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
          this.load_J = -9223372036854775808L;
          KeyMapping mapping = this.init_KeyMapping();
          if (mapping != null) {
-            KeyMappingControl bridge = KeyMappingControl.init(mapping);
+            KeyMappingControl bridge = KeyMappingControl.of(mapping);
             if (!read_Z()) {
                bridge.autism$resetPressedState();
             } else if (!this.read_Z && bridge.autism$isActuallyDown()) {
@@ -192,7 +192,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       KeyMapping mapping = this.init_KeyMapping();
       if (mapping != null) {
          for (int i = 0; i < this.load_I; i++) {
-            KeyMappingControl.init(mapping).autism$countClick();
+            KeyMappingControl.of(mapping).autism$countClick();
          }
       }
 

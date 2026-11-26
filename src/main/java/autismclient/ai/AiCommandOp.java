@@ -42,13 +42,13 @@ public final class AiCommandOp {
       if (send.startsWith(".")) {
          String line = send.substring(1).trim();
          int space = line.indexOf(32);
-         Command known = autismclient.commands.CommandManager.init_Command(space < 0 ? line : line.substring(0, space));
+         Command known = autismclient.commands.CommandManager.getCommand(space < 0 ? line : line.substring(0, space));
          throw new IllegalArgumentException(
             "'.'-prefixed input is a client-side command, not a server command; "
                + (
                   known == null
                      ? "use the matching command:* capability instead"
-                     : "perform command:" + autismclient.commands.CommandManager.init_Str(known) + " with body \"" + line + "\" instead"
+                     : "perform command:" + autismclient.commands.CommandManager.getPrimaryName(known) + " with body \"" + line + "\" instead"
                )
          );
       }

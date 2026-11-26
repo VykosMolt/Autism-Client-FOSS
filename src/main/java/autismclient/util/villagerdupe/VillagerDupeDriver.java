@@ -343,7 +343,7 @@ public final class VillagerDupeDriver {
                into = inventory.getSelectedSlot();
             }
 
-            if (!this.load_Z() || !InventorySlotHelper.init(mc, from, into)) {
+            if (!this.load_Z() || !InventorySlotHelper.swapToHotbar(mc, from, into)) {
                return VillagerDupeDriver.ConfigStore.BUSY;
             }
 
@@ -355,7 +355,7 @@ public final class VillagerDupeDriver {
                return VillagerDupeDriver.ConfigStore.BUSY;
             }
 
-            InventorySlotHelper.init_V(mc, slot);
+            InventorySlotHelper.selectHotbarSlot(mc, slot);
             if (inventory.getSelectedSlot() != slot) {
                return VillagerDupeDriver.ConfigStore.BUSY;
             }
@@ -380,7 +380,7 @@ public final class VillagerDupeDriver {
          int slot = init_I_LocalPlayer_Z(player, player.hasInfiniteMaterials());
          if (slot < 0) {
             return VillagerDupeDriver.ConfigStore.EMERALD_IN_OFFHAND;
-         } else if (this.load_Z() && InventorySlotHelper.init_Z(mc, slot)) {
+         } else if (this.load_Z() && InventorySlotHelper.swapToOffhand(mc, slot)) {
             this.load_V_LocalPlayer(player);
             return VillagerDupeDriver.ConfigStore.BUSY;
          } else {
@@ -449,7 +449,7 @@ public final class VillagerDupeDriver {
          int slot = init_I_LocalPlayer_Z(player, creative);
          if (slot < 0) {
             return VillagerDupeDriver.ConfigStore.NO_SHEARS;
-         } else if (this.load_Z() && InventorySlotHelper.init_Z(mc, slot)) {
+         } else if (this.load_Z() && InventorySlotHelper.swapToOffhand(mc, slot)) {
             this.load_V_LocalPlayer(player);
             return player.getOffhandItem().is(Items.SHEARS) ? null : VillagerDupeDriver.ConfigStore.BUSY;
          } else {
@@ -558,7 +558,7 @@ public final class VillagerDupeDriver {
          if (away >= 0 && this.load_Z()) {
             int from = inventory.getSelectedSlot();
             boolean empty = inventory.getItem(away).isEmpty();
-            InventorySlotHelper.init_V(mc, away);
+            InventorySlotHelper.selectHotbarSlot(mc, away);
             if (inventory.getSelectedSlot() == away) {
                this.pop = now;
                this.close = from;

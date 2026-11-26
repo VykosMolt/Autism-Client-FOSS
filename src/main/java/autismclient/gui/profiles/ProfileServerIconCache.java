@@ -70,7 +70,7 @@ final class ProfileServerIconCache {
       if (texture != null) {
          context.init_GuiGraphicsExtract().blit(texture, x, y, x + size, y + size, 0.0F, 1.0F, 0.0F, 1.0F);
       } else {
-         GuiIconAtlas.init(context.init_GuiGraphicsExtract(), fallback, x, y, size, context.init_TableIndex().init_JsonUtil().valid);
+         GuiIconAtlas.init(context.init_GuiGraphicsExtract(), fallback, x, y, size, context.init_TableIndex().colors().textSecondary);
       }
    }
 

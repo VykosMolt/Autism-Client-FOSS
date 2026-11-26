@@ -48,7 +48,7 @@ public final class MacroAimController {
          } else if (target.init_BlockPos() != null) {
             return init(mc, eyes, target.init_BlockPos());
          } else {
-            return target.init_Vec3() == null ? null : RotationMath.init(target.init_Vec3(), eyes);
+            return target.init_Vec3() == null ? null : RotationMath.lookAt(target.init_Vec3(), eyes);
          }
       } else {
          return null;
@@ -66,7 +66,7 @@ public final class MacroAimController {
          if (!(distanceSq > reachSq) && !(distanceSq >= bestDistanceSq)) {
             BlockHitResult hit = mc.level.clip(new ClipContext(eyes, point, Block.OUTLINE, Fluid.NONE, mc.player));
             if (hit != null && hit.getType() == Type.BLOCK && hit.getBlockPos().equals(pos)) {
-               best = RotationMath.init(point, eyes);
+               best = RotationMath.lookAt(point, eyes);
                bestDistanceSq = distanceSq;
             }
          }
@@ -81,7 +81,7 @@ public final class MacroAimController {
       if (!(box.getXsize() <= 0.0) && !(box.getYsize() <= 0.0) && !(box.getZsize() <= 0.0)) {
          for (Vec3 point : init(box)) {
             if (!(eyes.distanceToSqr(point) > reachSq) && init(mc, eyes, point)) {
-               return RotationMath.init(point, eyes);
+               return RotationMath.lookAt(point, eyes);
             }
          }
 
@@ -130,17 +130,17 @@ public final class MacroAimController {
 
    public static float init(LocalPlayer player, float vanillaYaw) {
       RotationMath.Rotation rotation = init(player);
-      return rotation == null ? vanillaYaw : rotation.init();
+      return rotation == null ? vanillaYaw : rotation.yaw();
    }
 
    public static float load(LocalPlayer player, float vanillaPitch) {
       RotationMath.Rotation rotation = init(player);
-      return rotation == null ? vanillaPitch : rotation.load();
+      return rotation == null ? vanillaPitch : rotation.pitch();
    }
 
    public static Vec3 init(LocalPlayer player, Vec3 vanillaVector) {
       RotationMath.Rotation rotation = init(player);
-      return rotation == null ? vanillaVector : Vec3.directionFromRotation(rotation.load(), rotation.init());
+      return rotation == null ? vanillaVector : Vec3.directionFromRotation(rotation.pitch(), rotation.yaw());
    }
 
    private static RotationMath.Rotation init(LocalPlayer player) {

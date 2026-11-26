@@ -83,7 +83,7 @@ public final class WaypointsCommand extends Command {
 
    private int init() {
       AutismClientMessaging.sendPrefixed(
-         "§eUsage: " + autismclient.commands.CommandManager.init_Str() + "wp [x y z] | gui | del <name> | clear  §7(coordinates accept ~ and ~N)"
+         "§eUsage: " + autismclient.commands.CommandManager.getPrefix() + "wp [x y z] | gui | del <name> | clear  §7(coordinates accept ~ and ~N)"
       );
       return 1;
    }

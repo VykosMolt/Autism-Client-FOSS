@@ -1,23 +1,23 @@
 package autismclient.gui.ui;
 
 public final class UiTheme {
-   private final UiColorScheme init_JsonUtil = new UiColorScheme();
-   private final UiSpacingMetrics init_IoWorker = new UiSpacingMetrics();
-   private final UiTypographyMetrics init_BitSetUtil = new UiTypographyMetrics();
+   private final UiColorScheme colors = new UiColorScheme();
+   private final UiSpacingMetrics spacing = new UiSpacingMetrics();
+   private final UiTypographyMetrics typography = new UiTypographyMetrics();
 
-   public UiColorScheme init_JsonUtil() {
-      return this.init_JsonUtil;
+   public UiColorScheme colors() {
+      return this.colors;
    }
 
-   public void init_V() {
-      this.init_JsonUtil.init();
+   public void refresh() {
+      this.colors.refresh();
    }
 
-   public UiSpacingMetrics init_IoWorker() {
-      return this.init_IoWorker;
+   public UiSpacingMetrics spacing() {
+      return this.spacing;
    }
 
-   public UiTypographyMetrics init_BitSetUtil() {
-      return this.init_BitSetUtil;
+   public UiTypographyMetrics typography() {
+      return this.typography;
    }
 }

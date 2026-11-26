@@ -17,12 +17,12 @@ public final class UiDensityMetrics {
    private UiDensityMetrics() {
    }
 
-   public static int init(int base) {
-      float scale = autismclient.gui.sdf.MsdfTextRenderer.init_F();
+   public static int scaledHeight(int base) {
+      float scale = autismclient.gui.sdf.MsdfTextRenderer.fontScale();
       return scale <= 1.0F ? base : base + (int)Math.ceil(10.8F * (scale - 1.0F));
    }
 
-   public static int load(int textWidth) {
+   public static int buttonWidthForText(int textWidth) {
       return Math.max(24, textWidth + 10);
    }
 }

@@ -1403,19 +1403,19 @@ public final class AiVisualization {
 
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(g, Minecraft.getInstance().font, 0, 0);
       AiTaskStatus.Inner_StreamUtil status = load_cG_DataUtil.status;
-      next = AiTaskStatus.init(status, ui.init_PoolEntry()::init, 2147483647);
-      int width = AiTaskStatus.init(status, ui.init_PoolEntry()::init, Math.min(ui.init_I() - 16, 360));
+      next = AiTaskStatus.init(status, ui.init_PoolEntry()::measureWidth, 2147483647);
+      int width = AiTaskStatus.init(status, ui.init_PoolEntry()::measureWidth, Math.min(ui.init_I() - 16, 360));
       stop = width;
       int height = autismclient.gui.ui.widgets.StatusToastCardRenderer.init(ui, width, status.bannerActivity(), status.bannerDetail(), status.percent());
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(8, 8, width, height);
 
-      for (AutismOverlay overlay : OverlayManager.init_bk().init_List()) {
+      for (AutismOverlay overlay : OverlayManager.getInstance().getOverlays()) {
          if (overlay.sync_Z() && overlay.init_Str().equals("ai-assistant")) {
             OverlayBounds window = overlay.init_cH();
-            if (bounds.read() < window.init_I + window.read
-               && bounds.init() > window.init_I
-               && bounds.write() < window.load_I + window.write
-               && bounds.load() > window.load_I) {
+            if (bounds.read() < window.x + window.width
+               && bounds.init() > window.x
+               && bounds.write() < window.y + window.height
+               && bounds.load() > window.y) {
                bounds = autismclient.gui.f.NetHelper.init(Math.max(8, ui.init_I() - width - 8), 8, width, height);
             }
          }
@@ -1432,7 +1432,7 @@ public final class AiVisualization {
          autismclient.gui.f.NetHelper b = init_NetHelper(g);
          AiTaskStatus.Inner_StreamUtil status = load_cG_DataUtil.status;
          autismclient.gui.ui.widgets.StatusToastCardRenderer.init(
-            ui, b, status.title(), status.bannerActivity(), status.bannerDetail(), ui.init_TableIndex().init_JsonUtil().prev, status.percent()
+            ui, b, status.title(), status.bannerActivity(), status.bannerDetail(), ui.init_TableIndex().colors().textPrimary, status.percent()
          );
       }
    }

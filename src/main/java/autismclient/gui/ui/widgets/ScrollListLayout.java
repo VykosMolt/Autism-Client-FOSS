@@ -54,7 +54,7 @@ public final class ScrollListLayout {
       int contentHeight = Math.max(0, rowCount) * safeRowStep;
       int maxScroll = Math.max(0, contentHeight - viewHeight);
       int clampedScroll = Math.max(0, Math.min(scrollOffset, maxScroll));
-      ScrollbarMetricsHelper.Metrics scrollbar = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+      ScrollbarMetricsHelper.Metrics scrollbar = ScrollbarMetricsHelper.compute(
          contentHeight,
          viewHeight,
          x + safeWidth - Math.max(1, scrollbarRightInset),
@@ -63,7 +63,7 @@ public final class ScrollListLayout {
          Math.max(1, safeHeight - safeInset * 2),
          clampedScroll
       );
-      int contentWidth = Math.max(1, safeWidth - safeInset * 2 - (scrollbar.init_Z() ? Math.max(0, scrollbarGutter) : 0));
+      int contentWidth = Math.max(1, safeWidth - safeInset * 2 - (scrollbar.isScrollable() ? Math.max(0, scrollbarGutter) : 0));
       return new ScrollListLayout.ListLayout(
          x, y, safeWidth, safeHeight, safeRowHeight, safeRowStep, viewHeight, contentHeight, maxScroll, clampedScroll, contentWidth, safeInset, scrollbar
       );
@@ -123,7 +123,7 @@ public final class ScrollListLayout {
       }
 
       public void init(GuiGraphicsExtractor graphics, double mouseX, double mouseY, boolean dragging) {
-         ScrollbarMetricsHelper.init(graphics, this.init_PoolEntry_DataUtil, this.init_PoolEntry_DataUtil.init(mouseX, mouseY), dragging);
+         ScrollbarMetricsHelper.render(graphics, this.init_PoolEntry_DataUtil, this.init_PoolEntry_DataUtil.containsTrack(mouseX, mouseY), dragging);
       }
    }
 }

@@ -17,7 +17,7 @@ public class SayCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.init_Str() + "say <message>");
+         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.getPrefix() + "say <message>");
          return 1;
       });
       root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("message", StringArgumentType.greedyString()).executes(ctx -> {
@@ -31,7 +31,7 @@ public class SayCommand extends Command {
          if (msg.startsWith("/")) {
             conn.sendCommand(msg.substring(1));
          } else {
-            autismclient.commands.CommandManager.init(conn, msg);
+            autismclient.commands.CommandManager.sendChatRaw(conn, msg);
          }
 
          return 1;

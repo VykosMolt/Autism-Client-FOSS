@@ -3427,7 +3427,7 @@ public class MacroExecutor {
       if (mc != null && mc.player != null && replacement != null) {
          int slot = replacement.init();
          if (slot >= 0 && slot < 9) {
-            autismclient.util.InventorySlotHelper.init_V(mc, slot);
+            autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, slot);
             session.init_I = slot;
             session.load_I = slot;
             return true;
@@ -3435,11 +3435,11 @@ public class MacroExecutor {
 
          if (slot >= 9 && slot < 36) {
             int target = Math.max(0, Math.min(8, session.load_I));
-            if (!autismclient.util.InventorySlotHelper.read(mc, slot, target)) {
+            if (!autismclient.util.InventorySlotHelper.swapPlayerSlots(mc, slot, target)) {
                return false;
             }
 
-            autismclient.util.InventorySlotHelper.init_V(mc, target);
+            autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, target);
             session.init_I = target;
             session.load_I = target;
             return true;
@@ -3936,7 +3936,7 @@ public class MacroExecutor {
          if (mc.player.containerMenu != null) {
             for (Slot slot : mc.player.containerMenu.slots) {
                if (slot != null && !slot.getItem().isEmpty()) {
-                  int visible = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+                  int visible = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
                   if (target.init_I_ItemStack_I(slot.getItem(), visible) >= 0) {
                      return init_l_ItemStack_I(slot.getItem(), visible);
                   }
@@ -7506,18 +7506,18 @@ public class MacroExecutor {
 
          for (int slot = 0; slot < 9; slot++) {
             if (mc.player.getInventory().getItem(slot).is(ItemTags.PICKAXES)) {
-               autismclient.util.InventorySlotHelper.init_V(mc, slot);
+               autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, slot);
                return true;
             }
          }
 
          for (int slot = 9; slot < 36; slot++) {
             if (mc.player.getInventory().getItem(slot).is(ItemTags.PICKAXES)) {
-               if (!autismclient.util.InventorySlotHelper.read(mc, slot, preferred)) {
+               if (!autismclient.util.InventorySlotHelper.swapPlayerSlots(mc, slot, preferred)) {
                   return false;
                }
 
-               autismclient.util.InventorySlotHelper.init_V(mc, preferred);
+               autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, preferred);
                return true;
             }
          }
@@ -8314,7 +8314,7 @@ public class MacroExecutor {
 
    private static boolean init_Z_Minecraft(Minecraft mc, int slotId, MacroItemTarget target) {
       if (mc.player != null && mc.player.containerMenu != null) {
-         int handlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, slotId);
+         int handlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, slotId);
          if (handlerSlot >= 0 && handlerSlot < mc.player.containerMenu.slots.size()) {
             Slot slot = mc.player.containerMenu.slots.get(handlerSlot);
             if (slot != null && !slot.getItem().isEmpty()) {
@@ -8337,7 +8337,7 @@ public class MacroExecutor {
 
    private static boolean init_Z_Minecraft_I(Minecraft mc, int slotId) {
       if (mc.player != null && mc.player.containerMenu != null) {
-         int handlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, slotId);
+         int handlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, slotId);
          if (handlerSlot >= 0 && handlerSlot < mc.player.containerMenu.slots.size()) {
             Slot slot = mc.player.containerMenu.slots.get(handlerSlot);
             return slot != null && !slot.getItem().isEmpty();

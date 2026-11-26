@@ -108,7 +108,7 @@ final class AiSessionsDrawer {
          this.init_cE_StreamUtil.init(list, rows.size() * step);
          kit.init_V_cE_StreamUtil(this.init_cE_StreamUtil);
          if (rows.isEmpty()) {
-            kit.init_V_Str_2(sessions.isEmpty() ? "No chats yet" : "No matches", list.read() + 4, list.write() + 3, list.update() - 8, kit.init_JsonUtil.valid);
+            kit.init_V_Str_2(sessions.isEmpty() ? "No chats yet" : "No matches", list.read() + 4, list.write() + 3, list.update() - 8, kit.init_JsonUtil.textSecondary);
          } else {
             kit.init_V_NetHelper(list);
             int rowW = list.update() - (this.init_cE_StreamUtil.init_I() > 0 ? 7 : 0);
@@ -135,9 +135,9 @@ final class AiSessionsDrawer {
       boolean hovered = kit.init_Z_NetHelper(row);
       boolean armed = id.equals(this.load_Str);
       if (active) {
-         PacketUtil.load(kit.init_GuiGraphicsExtract, row, 3, PacketUtil.init(colors.clear, 0.16F));
+         PacketUtil.load(kit.init_GuiGraphicsExtract, row, 3, PacketUtil.init(colors.accent, 0.16F));
       } else if (hovered) {
-         PacketUtil.load(kit.init_GuiGraphicsExtract, row, 3, colors.push);
+         PacketUtil.load(kit.init_GuiGraphicsExtract, row, 3, colors.cardSurfaceElevated);
       }
 
       kit.init_V_NetHelper(row, () -> this.init_V_Str(id), () -> this.init_AiAssistantOverlay.init(id), null);
@@ -153,7 +153,7 @@ final class AiSessionsDrawer {
          if (!hovered && !armed) {
             String age = AiUiKit.init_Str_J_J(meta.lastActiveAt(), now);
             int ageW = kit.init_I_Str(age);
-            kit.init_V_Str_3(age, row, right - ageW, ageW, colors.size);
+            kit.init_V_Str_3(age, row, right - ageW, ageW, colors.textMuted);
             right -= ageW + 4;
          } else {
             autismclient.gui.f.NetHelper trash = autismclient.gui.f.NetHelper.init(row.init() - icon - 1, row.write() + 1, icon, icon);
@@ -161,7 +161,7 @@ final class AiSessionsDrawer {
             right = trash.read() - 3;
          }
 
-         kit.init_V_Str_3(init_Str_cd_StreamUtil(meta), row, textX, Math.max(1, right - textX), active ? colors.prev : colors.valid);
+         kit.init_V_Str_3(init_Str_cd_StreamUtil(meta), row, textX, Math.max(1, right - textX), active ? colors.textPrimary : colors.textSecondary);
       }
    }
 

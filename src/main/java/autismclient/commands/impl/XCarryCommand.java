@@ -22,7 +22,7 @@ public class XCarryCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         String prefix = autismclient.commands.CommandManager.init_Str();
+         String prefix = autismclient.commands.CommandManager.getPrefix();
          AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "xcarry <slot>");
          AutismClientMessaging.sendPrefixed("§7Slots: §fcraft1§7..§fcraft5§7, §fhelmet§7, §fchestplate§7, §fleggings§7, §fboots§7, §foffhand§7, §fcursor§7.");
          return 1;

@@ -8,8 +8,8 @@ public final class DialogFrameRenderer {
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int headerHeight, String title, boolean headerHovered) {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
-      autismclient.gui.f.PacketUtil.read(graphics, bounds, 8, colors.update, colors.get);
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
+      autismclient.gui.f.PacketUtil.read(graphics, bounds, 8, colors.windowSurface, colors.borderSubtle);
       WindowHeaderHelper.init(context, bounds, headerHeight, title, false, false, true, headerHovered, true, 4, 4);
    }
 

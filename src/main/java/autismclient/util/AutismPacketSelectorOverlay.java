@@ -229,14 +229,14 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.pop = Math.max(8, Math.round((viewport.init() - this.run) / 2.0F));
       this.tick = Math.max(8, Math.round((viewport.load() - this.get) / 2.0F));
       OverlayBounds clamped = this.init_cH_cH_4(new OverlayBounds(this.pop, this.tick, this.run, this.get, this.write_Z, this.update_Z));
-      this.pop = clamped.init_I;
-      this.tick = clamped.load_I;
-      this.run = clamped.read;
-      this.get = clamped.write;
+      this.pop = clamped.x;
+      this.tick = clamped.y;
+      this.run = clamped.width;
+      this.get = clamped.height;
       this.init_BitSetUtil.init_BitSetUtil_Str("");
       this.init_BitSetUtil.init_V_Z(true);
       this.init_CharEncoder_3.write(true);
-      OverlayManager.init_bk().init(this);
+      OverlayManager.getInstance().bringOwnerToFront(this);
    }
 
    public void write_V_21() {
@@ -302,10 +302,10 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.get = Math.round(this.init_CharEncoder_3.init_F_SyncManager_F(metrics, this.run));
       this.get = Math.max(this.init_CharEncoder_2.load(), this.get);
       OverlayBounds clamped = this.init_cH_cH_4(new OverlayBounds(this.pop, this.tick, this.run, this.get, this.write_Z, this.update_Z));
-      this.pop = clamped.init_I;
-      this.tick = clamped.load_I;
-      this.run = clamped.read;
-      this.get = clamped.write;
+      this.pop = clamped.x;
+      this.tick = clamped.y;
+      this.run = clamped.width;
+      this.get = clamped.height;
       this.init_CharEncoder_3.init_TableIndex_F(this.pop, this.tick, this.run, this.get);
       this.init_TextFormat.init(context, mouseX, mouseY, delta);
       context.nextStratum();
@@ -313,7 +313,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
          try {
             this.init_V_GuiGraphicsExtract_10(context, viewport, uiMouseX, uiMouseY, delta);
          } finally {
-            autismclient.gui.ui.UiClipStack.init_HashUtil().init(context);
+            autismclient.gui.ui.UiClipStack.getInstance().pop(context);
          }
       }
    }
@@ -365,7 +365,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       String trimmed = autismclient.gui.f.b.k.init(
          this.init_Font, name, textWidth, this.init_CharEncoder_2.init_Identifier_l(autismclient.gui.f.b.l.read), color
       );
-      int textY = UiLayoutMath.init(y, this.pop_I_22(), this.init_CharEncoder_2.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder_2.flush());
+      int textY = UiLayoutMath.centerTextY(y, this.pop_I_22(), this.init_CharEncoder_2.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder_2.flush());
       autismclient.gui.f.b.k.init(
          context, this.init_Font, trimmed, this.init_CharEncoder_2.init_Identifier_l(autismclient.gui.f.b.l.read), color, x + 6, textY, false
       );
@@ -528,8 +528,8 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
          int nextX = Math.round(uiMouseX - this.load_F);
          int nextY = Math.round(uiMouseY - this.read_F);
          OverlayBounds clamped = this.init_cH_cH_4(new OverlayBounds(nextX, nextY, this.run, this.get, this.write_Z, this.update_Z));
-         this.pop = clamped.init_I;
-         this.tick = clamped.load_I;
+         this.pop = clamped.x;
+         this.tick = clamped.y;
          return true;
       } else if (!this.update_Z
          && this.init_Z_F_2(
@@ -644,12 +644,12 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.init_cH_cH_4(bounds);
-         this.pop = clamped.init_I;
-         this.tick = clamped.load_I;
-         this.run = clamped.read;
-         this.get = clamped.write;
-         this.write_Z = clamped.init_Z;
-         this.update_Z = clamped.load_Z;
+         this.pop = clamped.x;
+         this.tick = clamped.y;
+         this.run = clamped.width;
+         this.get = clamped.height;
+         this.write_Z = clamped.visible;
+         this.update_Z = clamped.collapsed;
          this.init_CharEncoder_3.write(!this.update_Z);
       }
    }
@@ -734,13 +734,13 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       int viewportH = Math.round(viewport.load());
       int availableW = Math.max(1, viewportW - margin * 2);
       int availableH = Math.max(this.init_CharEncoder_2.load(), viewportH - margin * 2);
-      int width = Math.max(Math.min(this.push_I_22(), availableW), Math.min(bounds.read, availableW));
-      int minHeight = bounds.load_Z ? this.init_CharEncoder_2.load() : this.init_CharEncoder_2.load() + 20;
-      int height = Math.max(Math.min(minHeight, availableH), Math.min(bounds.write, availableH));
-      int renderedHeight = bounds.load_Z ? this.init_CharEncoder_2.load() : height;
-      int x = Math.max(margin, Math.min(bounds.init_I, Math.max(margin, viewportW - margin - width)));
-      int y = Math.max(margin, Math.min(bounds.load_I, Math.max(margin, viewportH - margin - renderedHeight)));
-      return new OverlayBounds(x, y, width, height, bounds.init_Z, bounds.load_Z);
+      int width = Math.max(Math.min(this.push_I_22(), availableW), Math.min(bounds.width, availableW));
+      int minHeight = bounds.collapsed ? this.init_CharEncoder_2.load() : this.init_CharEncoder_2.load() + 20;
+      int height = Math.max(Math.min(minHeight, availableH), Math.min(bounds.height, availableH));
+      int renderedHeight = bounds.collapsed ? this.init_CharEncoder_2.load() : height;
+      int x = Math.max(margin, Math.min(bounds.x, Math.max(margin, viewportW - margin - width)));
+      int y = Math.max(margin, Math.min(bounds.y, Math.max(margin, viewportH - margin - renderedHeight)));
+      return new OverlayBounds(x, y, width, height, bounds.visible, bounds.collapsed);
    }
 
    private boolean init_Z_F_2(float x, float y, float width, float height, float mouseX, float mouseY) {
@@ -752,7 +752,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private int pop_I_22() {
-      return autismclient.gui.ui.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
    private int tick_I_20() {
@@ -768,7 +768,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private int set_I_18() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int put() {

@@ -60,8 +60,8 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    public void init_V_bu_JsonUtil(PacketInspectorEngine.InspectionReport inspection, AutismPacketLoggerOverlay.LoggedPacketEntry sourceEntry, int anchorX, int anchorY) {
       if (inspection != null) {
-         OverlayManager manager = OverlayManager.init_bk();
-         manager.init_V(this);
+         OverlayManager manager = OverlayManager.getInstance();
+         manager.register(this);
          this.open_V_9();
          this.update_V_15();
          this.init_bu_JsonUtil = inspection;
@@ -79,14 +79,14 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          }
 
          this.read_V_I_I_3(anchorX, anchorY);
-         manager.update_V(this);
+         manager.bringToFront(this);
       }
    }
 
    public void init_V_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry sourceEntry, int anchorX, int anchorY) {
       if (sourceEntry != null) {
-         OverlayManager manager = OverlayManager.init_bk();
-         manager.init_V(this);
+         OverlayManager manager = OverlayManager.getInstance();
+         manager.register(this);
          this.open_V_9();
          this.update_V_15();
          this.init_AutismPacketLogger = sourceEntry;
@@ -100,7 +100,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          this.sync_V_13();
          this.init_bu_JsonUtil = this.init_bu_JsonUtil();
          this.read_V_I_I_3(anchorX, anchorY);
-         manager.update_V(this);
+         manager.bringToFront(this);
       }
    }
 
@@ -200,10 +200,10 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          this.flush_V_12();
          OverlayBounds bounds = this.init_cH();
          String title = this.init_bu_JsonUtil == null ? "Packet Inspect" : this.init_bu_JsonUtil.init_Str();
-         this.init_V_GuiGraphicsExtract_6(context, mouseX, mouseY, bounds, title, this.update_Z, this.sync_Z);
-         boolean clipBody = this.init_Z_GuiGraphicsExtract(context, bounds, this.update_Z);
+         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.update_Z, this.sync_Z);
+         boolean clipBody = this.beginBodyClip(context, bounds, this.update_Z);
          if (!clipBody) {
-            this.init_V_GuiGraphicsExtract_14(context, bounds, this.update_Z, this.sync_Z);
+            this.renderInactiveDim(context, bounds, this.update_Z, this.sync_Z);
          } else {
             try {
                int listX = this.open + this.put();
@@ -227,7 +227,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                int innerWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.init(listWidth, this.add_I_12());
                int innerHeight = listHeight - this.add_I_12() * 2;
                int lineH = this.valid();
-               if (!OverlayManager.init_bk().update_Z(this) && !OverlayManager.init_bk().write_Z(this)) {
+               if (!OverlayManager.getInstance().isFocused(this) && !OverlayManager.getInstance().isTopmost(this)) {
                   boolean var32 = false;
                } else {
                   boolean footerY = true;
@@ -268,7 +268,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                                  context,
                                  ln,
                                  innerX,
-                                 UiLayoutMath.init(bnd.load, lineH, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush())
+                                 UiLayoutMath.centerTextY(bnd.load, lineH, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush())
                               );
                            }
                         );
@@ -287,7 +287,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                   this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
                   this.init_CharEncoder.load(autismclient.gui.f.b.l.write),
                   this.open + this.put() + 5,
-                  UiLayoutMath.init(footerY, this.reset(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
+                  UiLayoutMath.centerTextY(footerY, this.reset(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
                   false
                );
 
@@ -321,8 +321,8 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                   );
                }
             } finally {
-               this.init_V_GuiGraphicsExtract_Z(context, clipBody);
-               this.init_V_GuiGraphicsExtract_14(context, bounds, this.update_Z, this.sync_Z);
+               this.endBodyClip(context, clipBody);
+               this.renderInactiveDim(context, bounds, this.update_Z, this.sync_Z);
             }
          }
       }
@@ -496,7 +496,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
       OverlayBounds bounds = this.init_cH();
       if (button == 0 && mouseY >= this.poll && mouseY <= this.poll + 14 && mouseX >= this.open && mouseX <= this.open + this.push) {
-         if (this.write(mouseX, mouseY, bounds)) {
+         if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
             this.write_V_17();
             return true;
          } else {
@@ -643,7 +643,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             && mouseX <= this.open + this.push
             && mouseY >= this.poll
             && mouseY <= this.poll + 14
-            && !this.read_Z_D_2(mouseX, mouseY, this.init_cH());
+            && !this.isOverHeader(mouseX, mouseY, this.init_cH());
    }
 
    @Override
@@ -682,14 +682,14 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    @Override
    public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
-         OverlayBounds clamped = this.init_cH_cX_cH(this, bounds);
-         boolean sizeChanged = this.push != clamped.read || this.pop != clamped.write;
-         this.open = clamped.init_I;
-         this.poll = clamped.load_I;
-         this.push = clamped.read;
-         this.pop = clamped.write;
-         this.write_Z = clamped.init_Z;
-         this.update_Z = clamped.load_Z;
+         OverlayBounds clamped = this.clampToScreen(this, bounds);
+         boolean sizeChanged = this.push != clamped.width || this.pop != clamped.height;
+         this.open = clamped.x;
+         this.poll = clamped.y;
+         this.push = clamped.width;
+         this.pop = clamped.height;
+         this.write_Z = clamped.visible;
+         this.update_Z = clamped.collapsed;
          if (sizeChanged) {
             this.flush_Z = true;
          }
@@ -1057,7 +1057,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    private int init_I(AutismPacketInspectOverlay.Inner_StreamUtil action) {
       return Math.min(
          68,
-         autismclient.gui.ui.UiDensityMetrics.load(
+         autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
             autismclient.gui.f.b.k.init(this.init_Font, action.init_Str, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), 0)
          )
       );
@@ -1102,7 +1102,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int reset() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int start_I_11() {
@@ -1122,7 +1122,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int valid() {
-      return Math.max(autismclient.gui.ui.UiDensityMetrics.init(12), this.init_CharEncoder.init_I_l_I(autismclient.gui.f.b.l.read, 2));
+      return Math.max(autismclient.gui.ui.UiDensityMetrics.scaledHeight(12), this.init_CharEncoder.init_I_l_I(autismclient.gui.f.b.l.read, 2));
    }
 
    private int size() {

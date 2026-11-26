@@ -349,8 +349,8 @@ public final class AiBlockMine {
 
    static double init(RotationMath.Rotation facing, Vec3 eye, BlockPos target) {
       Vec3 centre = Vec3.atCenterOf(target);
-      RotationMath.Rotation look = RotationMath.init(centre, eye);
-      double turn = Math.abs(Mth.wrapDegrees(look.init() - facing.init())) + Math.abs(look.load() - facing.load());
+      RotationMath.Rotation look = RotationMath.lookAt(centre, eye);
+      double turn = Math.abs(Mth.wrapDegrees(look.yaw() - facing.yaw())) + Math.abs(look.pitch() - facing.pitch());
       return turn + 8.0 * Math.sqrt(centre.distanceToSqr(eye));
    }
 
@@ -2677,7 +2677,7 @@ public final class AiBlockMine {
                }
 
                BlockPos over = mc.player.blockPosition().above(2);
-               RotationMath.Rotation facing = RotationMath.init(mc.player);
+               RotationMath.Rotation facing = RotationMath.ofPlayer(mc.player);
                BlockPos best = null;
                this.push_BlockPos = null;
                double bestScore = 1.7976931348623157E308;
@@ -2698,8 +2698,8 @@ public final class AiBlockMine {
                      && (end == null || end.equals(feet) || !AiBlockMine.init(end, t, treeMode && this.write_Set.contains(t.asLong())))
                      && AiBlockMine.init(feet, t, treeMode && this.write_Set.contains(t.asLong()))) {
                      if (moving) {
-                        float yaw = RotationMath.init(Vec3.atCenterOf(t), eye).init();
-                        if (Math.abs(Mth.wrapDegrees(yaw - facing.init())) > 70.0F) {
+                        float yaw = RotationMath.lookAt(Vec3.atCenterOf(t), eye).yaw();
+                        if (Math.abs(Mth.wrapDegrees(yaw - facing.yaw())) > 70.0F) {
                            continue;
                         }
                      }

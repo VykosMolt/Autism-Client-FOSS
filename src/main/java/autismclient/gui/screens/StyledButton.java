@@ -36,7 +36,7 @@ public class StyledButton extends Button {
    protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
       Font font = Minecraft.getInstance().font;
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(this.getX(), this.getY(), this.getWidth(), this.getHeight());
-      autismclient.gui.f.PacketUtil.init(graphics, bounds, ThemePaletteManager.init_I_I_ct_DataUtil(-15594737, ThemePaletteManager.ColorRole.BUTTON));
+      autismclient.gui.f.PacketUtil.init(graphics, bounds, ThemePaletteManager.recolor(-15594737, ThemePaletteManager.ColorRole.BUTTON));
       boolean hovered = this.active
          && mouseX >= this.getX()
          && mouseX < this.getX() + this.getWidth()

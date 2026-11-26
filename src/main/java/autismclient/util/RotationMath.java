@@ -9,11 +9,11 @@ public final class RotationMath {
    private RotationMath() {
    }
 
-   public static RotationMath.Rotation init(LocalPlayer player) {
+   public static RotationMath.Rotation ofPlayer(LocalPlayer player) {
       return new RotationMath.Rotation(player.getYRot(), player.getXRot());
    }
 
-   public static RotationMath.Rotation init(Vec3 point, Vec3 from) {
+   public static RotationMath.Rotation lookAt(Vec3 point, Vec3 from) {
       Vec3 diff = point.subtract(from);
       double horiz = Math.sqrt(diff.x * diff.x + diff.z * diff.z);
       float yaw = (float)(Math.toDegrees(Math.atan2(diff.z, diff.x)) - 90.0);
@@ -21,9 +21,9 @@ public final class RotationMath {
       return new RotationMath.Rotation(Mth.wrapDegrees(yaw), Mth.clamp(Mth.wrapDegrees(pitch), -90.0F, 90.0F));
    }
 
-   public static RotationMath.Rotation init(RotationMath.Rotation current, RotationMath.Rotation target, float horizontalFactor, float verticalFactor) {
-      float yawDiff = init(target.init, current.init);
-      float pitchDiff = init(target.load, current.load);
+   public static RotationMath.Rotation stepToward(RotationMath.Rotation current, RotationMath.Rotation target, float horizontalFactor, float verticalFactor) {
+      float yawDiff = angleDelta(target.yaw, current.yaw);
+      float pitchDiff = angleDelta(target.pitch, current.pitch);
       double length = Math.sqrt(yawDiff * yawDiff + pitchDiff * pitchDiff);
       if (length < 1.0E-9) {
          return target;
@@ -31,30 +31,30 @@ public final class RotationMath {
 
       float yawStep = Math.abs((float)(yawDiff / length)) * horizontalFactor;
       float pitchStep = Math.abs((float)(pitchDiff / length)) * verticalFactor;
-      return new RotationMath.Rotation(current.init + Mth.clamp(yawDiff, -yawStep, yawStep), current.load + Mth.clamp(pitchDiff, -pitchStep, pitchStep));
+      return new RotationMath.Rotation(current.yaw + Mth.clamp(yawDiff, -yawStep, yawStep), current.pitch + Mth.clamp(pitchDiff, -pitchStep, pitchStep));
    }
 
-   public static RotationMath.Rotation init_ce_DataUtil_ce_DataUtil(RotationMath.Rotation current, RotationMath.Rotation target, float factor) {
+   public static RotationMath.Rotation lerp(RotationMath.Rotation current, RotationMath.Rotation target, float factor) {
       float t = Mth.clamp(factor, 0.0F, 1.0F);
       return new RotationMath.Rotation(
-         current.init + init(target.init, current.init) * t, Mth.clamp(current.load + init(target.load, current.load) * t, -90.0F, 90.0F)
+         current.yaw + angleDelta(target.yaw, current.yaw) * t, Mth.clamp(current.pitch + angleDelta(target.pitch, current.pitch) * t, -90.0F, 90.0F)
       );
    }
 
-   public static RotationMath.Rotation init_ce_DataUtil(RotationMath.Rotation rotation, RotationMath.Rotation current) {
-      double gcd = load();
+   public static RotationMath.Rotation applyGcd(RotationMath.Rotation rotation, RotationMath.Rotation current) {
+      double gcd = mouseGcd();
       if (gcd <= 0.0) {
          return rotation;
       }
 
-      float yawDiff = init(rotation.init, current.init);
-      float pitchDiff = init(rotation.load, current.load);
-      float yaw = current.init + (float)(Math.round(yawDiff / gcd) * gcd);
-      float pitch = current.load + (float)(Math.round(pitchDiff / gcd) * gcd);
+      float yawDiff = angleDelta(rotation.yaw, current.yaw);
+      float pitchDiff = angleDelta(rotation.pitch, current.pitch);
+      float yaw = current.yaw + (float)(Math.round(yawDiff / gcd) * gcd);
+      float pitch = current.pitch + (float)(Math.round(pitchDiff / gcd) * gcd);
       return new RotationMath.Rotation(yaw, Mth.clamp(pitch, -90.0F, 90.0F));
    }
 
-   public static RotationMath.Rotation init(RotationMath.Rotation current, RotationMath.Rotation goal, float yawBudget, float pitchBudget, double gcd) {
+   public static RotationMath.Rotation stepQuantized(RotationMath.Rotation current, RotationMath.Rotation goal, float yawBudget, float pitchBudget, double gcd) {
       if (current == null) {
          return goal;
       }
@@ -65,12 +65,12 @@ public final class RotationMath {
 
       double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
       return new RotationMath.Rotation(
-         current.init() + init_F_D(init(goal.init(), current.init()), yawBudget, quantum),
-         Mth.clamp(current.load() + init_F_D(goal.load() - current.load(), pitchBudget, quantum), -90.0F, 90.0F)
+         current.yaw() + quantizeStep(angleDelta(goal.yaw(), current.yaw()), yawBudget, quantum),
+         Mth.clamp(current.pitch() + quantizeStep(goal.pitch() - current.pitch(), pitchBudget, quantum), -90.0F, 90.0F)
       );
    }
 
-   public static RotationMath.Rotation load(RotationMath.Rotation current, RotationMath.Rotation goal, float yawBudget, float pitchBudget, double gcd) {
+   public static RotationMath.Rotation stepQuantizedUnwrapped(RotationMath.Rotation current, RotationMath.Rotation goal, float yawBudget, float pitchBudget, double gcd) {
       if (current == null) {
          return goal;
       }
@@ -81,12 +81,12 @@ public final class RotationMath {
 
       double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
       return new RotationMath.Rotation(
-         current.init() + init_F_D(goal.init() - current.init(), yawBudget, quantum),
-         Mth.clamp(current.load() + init_F_D(goal.load() - current.load(), pitchBudget, quantum), -90.0F, 90.0F)
+         current.yaw() + quantizeStep(goal.yaw() - current.yaw(), yawBudget, quantum),
+         Mth.clamp(current.pitch() + quantizeStep(goal.pitch() - current.pitch(), pitchBudget, quantum), -90.0F, 90.0F)
       );
    }
 
-   private static float init_F_D(double delta, float budget, double quantum) {
+   private static float quantizeStep(double delta, float budget, double quantum) {
       if (Double.isFinite(delta) && Float.isFinite(budget) && !(budget <= 0.0F)) {
          long maximum = (long)Math.floor(budget / quantum + 1.0E-9);
          long counts = Math.max(-maximum, Math.min(maximum, Math.round(delta / quantum)));
@@ -96,11 +96,11 @@ public final class RotationMath {
       }
    }
 
-   public static double init() {
-      return load();
+   public static double gcdStep() {
+      return mouseGcd();
    }
 
-   public static double load() {
+   public static double mouseGcd() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.options != null) {
          double f = mc.options.sensitivity().get() * 0.6 + 0.2;
@@ -111,27 +111,27 @@ public final class RotationMath {
       }
    }
 
-   public static float init(float target, float current) {
+   public static float angleDelta(float target, float current) {
       return Mth.wrapDegrees(target - current);
    }
 
-   public static float init_F(RotationMath.Rotation current, RotationMath.Rotation target) {
-      float yaw = init(target.init, current.init);
-      float pitch = init(target.load, current.load);
+   public static float angularDistance(RotationMath.Rotation current, RotationMath.Rotation target) {
+      float yaw = angleDelta(target.yaw, current.yaw);
+      float pitch = angleDelta(target.pitch, current.pitch);
       return (float)Math.min(180.0, Math.sqrt(yaw * yaw + pitch * pitch));
    }
 
-   public static float load(RotationMath.Rotation a, RotationMath.Rotation b) {
-      Vec3 first = Vec3.directionFromRotation(a.load(), a.init());
-      Vec3 second = Vec3.directionFromRotation(b.load(), b.init());
+   public static float vectorAngleDegrees(RotationMath.Rotation a, RotationMath.Rotation b) {
+      Vec3 first = Vec3.directionFromRotation(a.pitch(), a.yaw());
+      Vec3 second = Vec3.directionFromRotation(b.pitch(), b.yaw());
       double cosine = Mth.clamp(first.dot(second), -1.0, 1.0);
       return (float)Math.toDegrees(Math.acos(cosine));
    }
 
-   public static void init_V_LocalPlayer(LocalPlayer player, RotationMath.Rotation rotation, boolean syncPrevious) {
+   public static void applyToPlayer(LocalPlayer player, RotationMath.Rotation rotation, boolean syncPrevious) {
       if (player != null && rotation != null) {
-         float yaw = Mth.wrapDegrees(rotation.init);
-         float pitch = Mth.clamp(rotation.load, -90.0F, 90.0F);
+         float yaw = Mth.wrapDegrees(rotation.yaw);
+         float pitch = Mth.clamp(rotation.pitch, -90.0F, 90.0F);
          if (syncPrevious) {
             player.yRotO = yaw;
             player.xRotO = pitch;
@@ -149,6 +149,6 @@ public final class RotationMath {
       }
    }
 
-   public record Rotation(float init, float load) {
+   public record Rotation(float yaw, float pitch) {
    }
 }

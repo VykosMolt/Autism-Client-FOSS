@@ -85,7 +85,7 @@ public abstract class AutismInGameHudMixin {
          boolean aiPlan = !AutismLiteVariant.enabled() && MC.gui.screen() == null && AiVisualization.load_Z();
          boolean portalGuide = !AutismLiteVariant.enabled() && EndPortalRenderer.load();
          if (macroFrameWork || activity.init(hudWork) || aiPlan || portalGuide) {
-            UiClipStack.init_HashUtil().load(context);
+            UiClipStack.getInstance().clear(context);
             if (macroFrameWork) {
                MacroExecutor.init_V_F(1.0F);
             }
@@ -125,8 +125,8 @@ public abstract class AutismInGameHudMixin {
                   serverInfoOverlay = ModuleRuntimeManager.init_PoolEntry().load_AutismServerInfoOv();
                   serverProbeBannerVisible = serverInfoOverlay != null && serverInfoOverlay.run_Z_5();
                   if (activity.init(256L)) {
-                     overlayManager = OverlayManager.init_bk();
-                     overlayVisible = overlayManager.load_Z();
+                     overlayManager = OverlayManager.getInstance();
+                     overlayVisible = overlayManager.isActive();
                   }
                }
 
@@ -287,7 +287,7 @@ public abstract class AutismInGameHudMixin {
                         long perfStart = bK.load_J();
 
                         try {
-                           overlayManager.init(context, -1, -1, 0.0F);
+                           overlayManager.render(context, -1, -1, 0.0F);
                         } catch (Throwable t) {
                            this.autism$logRenderError("overlays", t);
                         }
@@ -361,7 +361,7 @@ public abstract class AutismInGameHudMixin {
 
       int sw = cA.init_I();
       autismclient.gui.ui.UiTextRenderer text = UiHelper.init(MC.font);
-      int boxWidth = Math.min(sw - 16, Math.max(270, Math.max(text.init(title), Math.max(text.init(line1), line2.isEmpty() ? 0 : text.init(line2))) + 18));
+      int boxWidth = Math.min(sw - 16, Math.max(270, Math.max(text.measureWidth(title), Math.max(text.measureWidth(line1), line2.isEmpty() ? 0 : text.measureWidth(line2))) + 18));
       int height = StatusToastCardRenderer.init(UiHelper.init(graphics, MC.font, 0, 0), boxWidth, line1, line2);
       return new HudBannerSpec((sw - boxWidth) / 2, 0, boxWidth, height, title, line1, line2);
    }
@@ -377,7 +377,7 @@ public abstract class AutismInGameHudMixin {
       String line2 = PayloadStudyTracker.read();
       int sw = cA.init_I();
       autismclient.gui.ui.UiTextRenderer text = UiHelper.init(MC.font);
-      int boxWidth = Math.min(sw - 16, Math.max(276, Math.max(text.init(title), Math.max(text.init(line1), text.init(line2))) + 18));
+      int boxWidth = Math.min(sw - 16, Math.max(276, Math.max(text.measureWidth(title), Math.max(text.measureWidth(line1), text.measureWidth(line2))) + 18));
       int height = StatusToastCardRenderer.init(UiHelper.init(graphics, MC.font, 0, 0), boxWidth, line1, line2);
       return new HudBannerSpec((sw - boxWidth) / 2, Math.max(0, topOffset), boxWidth, height, title, line1, line2);
    }

@@ -268,7 +268,7 @@ final class AiClientConfig {
                      colors.advanced = true;
                   }
 
-                  autismclient.util.ThemePaletteManager.init_V();
+                  autismclient.util.ThemePaletteManager.reload();
                   cfg.save();
                   JsonObject out = init(colors);
                   out.addProperty("changed", changed);
@@ -282,7 +282,7 @@ final class AiClientConfig {
                }
 
                colors.advanced = false;
-               autismclient.util.ThemePaletteManager.init_V();
+               autismclient.util.ThemePaletteManager.reload();
                cfg.save();
                return init(colors);
             default:
@@ -407,7 +407,7 @@ final class AiClientConfig {
          colors.addProperty(channel, init(init(c, channel)));
       }
 
-      return AiJson.init_JsonObject_ObjArr("advanced", c.advanced, "customized", autismclient.util.ThemePaletteManager.init_Z(), "colors", colors);
+      return AiJson.init_JsonObject_ObjArr("advanced", c.advanced, "customized", autismclient.util.ThemePaletteManager.isCustomActive(), "colors", colors);
    }
 
    static JsonObject read(JsonObject args) {

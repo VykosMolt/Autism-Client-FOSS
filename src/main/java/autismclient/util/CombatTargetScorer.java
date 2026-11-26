@@ -11,7 +11,7 @@ public final class CombatTargetScorer {
 
    public static double init(LivingEntity target, Player player, RotationMath.Rotation look) {
       Vec3 eyes = player.getEyePosition();
-      double angle = RotationMath.load(look, RotationMath.init(target.getBoundingBox().getCenter(), eyes));
+      double angle = RotationMath.vectorAngleDegrees(look, RotationMath.lookAt(target.getBoundingBox().getCenter(), eyes));
       double distance = Math.sqrt(target.getBoundingBox().inflate(target.getPickRadius()).distanceToSqr(eyes));
       double score = angle / 40.0 + distance / 1.5;
       if (!(target instanceof Player)) {

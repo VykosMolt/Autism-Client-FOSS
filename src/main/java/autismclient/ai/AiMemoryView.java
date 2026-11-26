@@ -96,7 +96,7 @@ final class AiMemoryView {
          this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(area.read(), area.write(), Math.max(40, area.update() - countW - 8), ctrl)
       );
       kit.init_V_Str_3(
-         count, autismclient.gui.f.NetHelper.init(area.init() - countW - 2, area.write(), countW + 2, ctrl), area.init() - countW - 2, countW + 2, colors.valid
+         count, autismclient.gui.f.NetHelper.init(area.init() - countW - 2, area.write(), countW + 2, ctrl), area.init() - countW - 2, countW + 2, colors.textSecondary
       );
       autismclient.gui.f.NetHelper footer = autismclient.gui.f.NetHelper.init(area.read(), area.load() - ctrl, area.update(), ctrl);
       int top = area.write() + ctrl + 2;
@@ -130,7 +130,7 @@ final class AiMemoryView {
       kit.init_V_cE_StreamUtil(this.init_cE_StreamUtil);
       if (this.init_List.isEmpty()) {
          kit.init_V_Str_2(
-            this.init_BitSetUtil.init_Str().isBlank() ? "Nothing remembered yet" : "No matches", v.read() + 4, v.write() + 3, v.update() - 8, colors.valid
+            this.init_BitSetUtil.init_Str().isBlank() ? "Nothing remembered yet" : "No matches", v.read() + 4, v.write() + 3, v.update() - 8, colors.textSecondary
          );
       } else {
          kit.init_V_NetHelper(v);
@@ -168,7 +168,7 @@ final class AiMemoryView {
       int epoch = AiChatView.load_I();
       AiMemoryView.Inner_StreamUtil wrap = this.init_Map.get(entry.memory().id());
       if (wrap == null || wrap.width() != textW || wrap.epoch() != epoch || !wrap.text().equals(entry.text())) {
-         wrap = new AiMemoryView.Inner_StreamUtil(entry.text(), textW, epoch, kit.init_SyncManager.init_PoolEntry().init_List(entry.text(), textW));
+         wrap = new AiMemoryView.Inner_StreamUtil(entry.text(), textW, epoch, kit.init_SyncManager.init_PoolEntry().wrapLines(entry.text(), textW));
          this.init_Map.put(entry.memory().id(), wrap);
       }
 
@@ -185,7 +185,7 @@ final class AiMemoryView {
       boolean hovered = kit.init_Z_NetHelper(row);
       boolean armed = id.equals(this.read_Str);
       if (hovered || this.init_Set.contains(id)) {
-         PacketUtil.load(kit.init_GuiGraphicsExtract, row, 3, colors.push);
+         PacketUtil.load(kit.init_GuiGraphicsExtract, row, 3, colors.cardSurfaceElevated);
       }
 
       kit.init_V_NetHelper(row, () -> {
@@ -223,7 +223,7 @@ final class AiMemoryView {
          if (!hovered && !armed) {
             String age = AiUiKit.init_Str_J_J(memory.timestamp(), now);
             int ageW = kit.init_I_Str(age);
-            kit.init_V_Str_3(age, head, right - ageW, ageW, colors.size);
+            kit.init_V_Str_3(age, head, right - ageW, ageW, colors.textMuted);
             right -= ageW + 4;
          } else {
             autismclient.gui.f.NetHelper trash = autismclient.gui.f.NetHelper.init(row.init() - icon - 1, row.write() + 1, icon, icon);
@@ -234,17 +234,17 @@ final class AiMemoryView {
          }
 
          if (!this.init_Set.contains(id)) {
-            kit.init_V_Str_3(entry.text(), head, x, Math.max(1, right - x), colors.prev);
+            kit.init_V_Str_3(entry.text(), head, x, Math.max(1, right - x), colors.textPrimary);
          } else {
             List<String> lines = this.init_List_cE(kit, entry, textW);
-            int ty = kit.init_SyncManager.init_PoolEntry().init_I(head);
+            int ty = kit.init_SyncManager.init_PoolEntry().centerTextY(head);
 
             for (int i = 0; i < lines.size(); i++) {
-               kit.init_V_Str_2(lines.get(i), x, ty, textW, colors.prev);
+               kit.init_V_Str_2(lines.get(i), x, ty, textW, colors.textPrimary);
                ty += AiUiKit.write();
             }
 
-            kit.init_V_Str_2(memory.scope(), x, ty, textW, colors.size);
+            kit.init_V_Str_2(memory.scope(), x, ty, textW, colors.textMuted);
          }
       }
    }
@@ -278,10 +278,10 @@ final class AiMemoryView {
             var10000 = -10497050;
             break;
          case WORLD:
-            var10000 = kit.init_JsonUtil.stop;
+            var10000 = kit.init_JsonUtil.success;
             break;
          case PROCEDURE:
-            var10000 = kit.init_JsonUtil.clear;
+            var10000 = kit.init_JsonUtil.accent;
             break;
          case HYPOTHESIS:
             var10000 = -14249;

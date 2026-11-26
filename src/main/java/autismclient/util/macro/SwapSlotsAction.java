@@ -30,7 +30,7 @@ public class SwapSlotsAction implements MacroAction {
                return;
             }
 
-            resolvedFrom = autismclient.util.InventorySlotHelper.load(mc, target);
+            resolvedFrom = autismclient.util.InventorySlotHelper.findVisibleSlot(mc, target);
             if (resolvedFrom == -1) {
                return;
             }
@@ -46,16 +46,16 @@ public class SwapSlotsAction implements MacroAction {
                return;
             }
 
-            resolvedTo = autismclient.util.InventorySlotHelper.load(mc, target);
+            resolvedTo = autismclient.util.InventorySlotHelper.findVisibleSlot(mc, target);
             if (resolvedTo == -1) {
                return;
             }
          }
 
-         int fromHandlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, resolvedFrom);
-         int toHandlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, resolvedTo);
+         int fromHandlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, resolvedFrom);
+         int toHandlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, resolvedTo);
          if (fromHandlerSlot >= 0 && toHandlerSlot >= 0) {
-            autismclient.util.InventorySlotHelper.write(mc, fromHandlerSlot, toHandlerSlot);
+            autismclient.util.InventorySlotHelper.swapScreenSlots(mc, fromHandlerSlot, toHandlerSlot);
          }
       }
    }

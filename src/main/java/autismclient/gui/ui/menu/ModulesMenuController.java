@@ -311,7 +311,7 @@ public final class ModulesMenuController {
       }
 
       int x = area.read() + area.update() / 4;
-      int y = area.write() + UiDensityMetrics.init(13) + 12;
+      int y = area.write() + UiDensityMetrics.scaledHeight(13) + 12;
       this.init_Z_I_2(x, y, 0);
       this.load_Z_I(x, y, 0);
    }
@@ -439,10 +439,10 @@ public final class ModulesMenuController {
       SyncManager context = this.load_Z() ? popupContext.load_SyncManager() : popupContext;
       this.load_NetHelper = null;
       UiTheme theme = context.init_TableIndex();
-      this.put = UiDensityMetrics.init(14) + 3;
-      this.clear = UiDensityMetrics.init(14);
-      this.reset = UiDensityMetrics.init(14) + 1;
-      this.start = UiDensityMetrics.init(13);
+      this.put = UiDensityMetrics.scaledHeight(14) + 3;
+      this.clear = UiDensityMetrics.scaledHeight(14);
+      this.reset = UiDensityMetrics.scaledHeight(14) + 1;
+      this.start = UiDensityMetrics.scaledHeight(13);
       this.init_BufferHelper.init_V_Z(this.write_Z());
       float settingsProgress = this.init_Module != null && !this.sync_Z ? 1.0F : 0.0F;
       if (this.sync_Z && settingsProgress <= 0.001F) {
@@ -487,7 +487,7 @@ public final class ModulesMenuController {
          this.get = init_I_I_2(this.get, 4, Math.max(4, width - w - 4));
          this.set = init_I_I_2(this.set, 4, Math.max(4, height - h - 4));
          NetHelper window = NetHelper.init(this.get, this.set, w, h);
-         PacketUtil.init_V_SyncManager(context, window, 8, theme.init_JsonUtil().update, theme.init_JsonUtil().get);
+         PacketUtil.init_V_SyncManager(context, window, 8, theme.colors().windowSurface, theme.colors().borderSubtle);
          NetHelper header = WindowHeaderHelper.init(window, this.put);
          TitleBarRenderer.init(context, header, h <= this.put + 1, this.load_Z);
          this.init_V_ConfigStore_CacheP(
@@ -518,7 +518,7 @@ public final class ModulesMenuController {
       SyncManager context, SyncManager popupContext, NetHelper rail, NetHelper content, NetHelper body, List<Module> modules, float frameSeconds, float delta
    ) {
       this.read(context, rail);
-      PacketUtil.load(context.init_GuiGraphicsExtract(), rail.init(), body.write(), body.sync(), context.init_TableIndex().init_JsonUtil().put);
+      PacketUtil.load(context.init_GuiGraphicsExtract(), rail.init(), body.write(), body.sync(), context.init_TableIndex().colors().divider);
       if (this.init_Module != null) {
          this.init_V_SyncManager_NetHelper(context, content);
 
@@ -565,7 +565,7 @@ public final class ModulesMenuController {
          return true;
       }
 
-      if (OverlayManager.init_bk().write_Z()) {
+      if (OverlayManager.getInstance().isDraggingOrResizing()) {
          return true;
       }
 
@@ -574,7 +574,7 @@ public final class ModulesMenuController {
    }
 
    private void load_V_SyncManager_NetHelper(SyncManager context, NetHelper window) {
-      UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      UiColorScheme colors = context.init_TableIndex().colors();
       String title = this.init_Module != null
          ? this.init_Module.name()
          : (
@@ -583,7 +583,7 @@ public final class ModulesMenuController {
                : (this.update_Z() ? "Main Menu" : (!this.push_Str.isBlank() ? "Search results" : (this.init_ae() != null ? this.init_ae().load() : "Modules")))
          );
       NetHelper bar = NetHelper.init(window.read(), window.write(), window.update(), this.put);
-      int controlH = UiDensityMetrics.init(13);
+      int controlH = UiDensityMetrics.scaledHeight(13);
       int controlY = window.write() + Math.max(1, (this.put - controlH) / 2);
       NetHelper close = NetHelper.init(window.init() - 3 - controlH, controlY, controlH, controlH);
       int titleX = window.read() + this.add + 4 + 2;
@@ -595,11 +595,11 @@ public final class ModulesMenuController {
          this.init_V_SyncManager_Str(context, this.init_Module == null ? "Search modules" : "Search settings");
       }
 
-      int titleY = context.init_PoolEntry().init_I(bar);
-      context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), "AUTISM", window.read() + 4 + 3, titleY, this.add - 8, colors.valid);
-      context.init_PoolEntry().read(context.init_GuiGraphicsExtract(), title, titleX, titleY, titleEnd - titleX, colors.prev);
+      int titleY = context.init_PoolEntry().centerTextY(bar);
+      context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), "AUTISM", window.read() + 4 + 3, titleY, this.add - 8, colors.textSecondary);
+      context.init_PoolEntry().drawEllipsized(context.init_GuiGraphicsExtract(), title, titleX, titleY, titleEnd - titleX, colors.textPrimary);
       float closeT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(close), close.init_Z(context.read(), context.write()));
-      PacketUtil.read(context.init_GuiGraphicsExtract(), close.init(2), init_I_I(colors.valid, colors.data, closeT));
+      PacketUtil.read(context.init_GuiGraphicsExtract(), close.init(2), init_I_I(colors.textSecondary, colors.danger, closeT));
       this.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.CLOSE, close, null, null, "", -1);
    }
 
@@ -617,7 +617,7 @@ public final class ModulesMenuController {
             }
          }
 
-         PacketUtil.init_V_GuiGraphicsExtract_2(context.init_GuiGraphicsExtract(), x + 2, y + 1, w - 4, context.init_TableIndex().init_JsonUtil().put);
+         PacketUtil.init_V_GuiGraphicsExtract_2(context.init_GuiGraphicsExtract(), x + 2, y + 1, w - 4, context.init_TableIndex().colors().divider);
          y += 4;
          this.init_V_SyncManager_2(context, NetHelper.init(x, y, w, this.clear), "Profiles", "\u0000profiles");
          y += this.clear + 1;
@@ -633,23 +633,23 @@ public final class ModulesMenuController {
          && (this.init_Deque.peek() == null || this.init_Deque.peek().init_Z(context.read(), context.write()));
       float hoverT = autismclient.gui.ui.HoverTransitionCache.init("rail:" + key, hovered);
       float selectT = autismclient.gui.ui.ToggleTransitionCache.init("railsel:" + key, selected);
-      UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      UiColorScheme colors = context.init_TableIndex().colors();
       if (hoverT > 0.001F || selectT > 0.001F) {
-         int fill = init_I_I(PacketUtil.init(colors.push, hoverT), colors.start, selectT);
+         int fill = init_I_I(PacketUtil.init(colors.cardSurfaceElevated, hoverT), colors.accentSoft, selectT);
          if (selectT > 0.001F) {
-            PacketUtil.load(context.init_GuiGraphicsExtract(), row, 3, fill, PacketUtil.init(colors.clear, selectT * 0.65F));
+            PacketUtil.load(context.init_GuiGraphicsExtract(), row, 3, fill, PacketUtil.init(colors.accent, selectT * 0.65F));
          } else {
             PacketUtil.load(context.init_GuiGraphicsExtract(), row, 3, fill);
          }
       }
 
-      int textColor = !selected && !hovered ? colors.valid : colors.prev;
+      int textColor = !selected && !hovered ? colors.textSecondary : colors.textPrimary;
       int iconSize = Math.min(12, row.sync() - 2);
       int iconX = row.read() + 5;
       int iconY = row.write() + (row.sync() - iconSize) / 2;
       GuiIconAtlas.init(context.init_GuiGraphicsExtract(), init_Identifier_Str(key), iconX, iconY, iconSize, textColor);
       int labelX = iconX + iconSize + 5;
-      context.init_PoolEntry().read(context.init_GuiGraphicsExtract(), label, labelX, context.init_PoolEntry().init_I(row), row.init() - 5 - labelX, textColor);
+      context.init_PoolEntry().drawEllipsized(context.init_GuiGraphicsExtract(), label, labelX, context.init_PoolEntry().centerTextY(row), row.init() - 5 - labelX, textColor);
       this.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.RAIL_ITEM, row, null, null, key, -1);
    }
 
@@ -725,11 +725,11 @@ public final class ModulesMenuController {
 
          if (modules.isEmpty() && !this.push_Str.isBlank()) {
             context.init_PoolEntry()
-               .load(
+               .drawCentered(
                   context.init_GuiGraphicsExtract(),
                   "No matching modules",
                   NetHelper.init(content.read(), content.write() + 4, content.update(), this.clear),
-                  context.init_TableIndex().init_JsonUtil().valid
+                  context.init_TableIndex().colors().textSecondary
                );
          }
       } finally {
@@ -754,23 +754,23 @@ public final class ModulesMenuController {
       int bindH = Math.max(13, row.sync() - 4);
       NetHelper bindButton = NetHelper.init(tail - 4 - 34, row.write() + (row.sync() - bindH) / 2, 34, bindH);
       int labelMax = Math.max(1, bindButton.read() - row.read() - 9);
-      int nameColor = module.isEnabled() ? theme.init_JsonUtil().stop : theme.init_JsonUtil().prev;
+      int nameColor = module.isEnabled() ? theme.colors().success : theme.colors().textPrimary;
       if (!this.push_Str.isBlank()) {
-         this.init(context, label, row.read() + 5, context.init_PoolEntry().init_I(row), labelMax, nameColor, this.push_Str.trim());
+         this.init(context, label, row.read() + 5, context.init_PoolEntry().centerTextY(row), labelMax, nameColor, this.push_Str.trim());
       } else {
-         context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), label, row.read() + 5, context.init_PoolEntry().init_I(row), labelMax, nameColor);
+         context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), label, row.read() + 5, context.init_PoolEntry().centerTextY(row), labelMax, nameColor);
       }
 
       String description = module.description();
       NetHelper descriptionLine = NetHelper.init(card.read() + 5, row.load(), card.update() - 10, card.load() - 4 - row.load());
       context.init_PoolEntry()
-         .read(
+         .drawEllipsized(
             context.init_GuiGraphicsExtract(),
             description,
             card.read() + 5,
-            context.init_PoolEntry().init_I(descriptionLine),
+            context.init_PoolEntry().centerTextY(descriptionLine),
             descriptionLine.update(),
-            theme.init_JsonUtil().valid
+            theme.colors().textSecondary
          );
       this.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.MODULE, card, module, null, "", -1);
       KeybindButtonRenderer.init(context, bindButton, module.keybind(), this.load_Module == module, bindButton.init_Z(context.read(), context.write()));
@@ -793,7 +793,7 @@ public final class ModulesMenuController {
          this.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.MODULE_SETTINGS, settings, module, null, "", -1);
       }
 
-      if (hovered && description != null && context.init_PoolEntry().init(description) > card.update() - 10) {
+      if (hovered && description != null && context.init_PoolEntry().measureWidth(description) > card.update() - 10) {
          this.init_Str = description;
       }
    }
@@ -881,7 +881,7 @@ public final class ModulesMenuController {
    }
 
    private int init_I_SyncManager_3(SyncManager context, String label, Identifier icon, int x, int y, int w) {
-      int labelH = UiDensityMetrics.init(14);
+      int labelH = UiDensityMetrics.scaledHeight(14);
       if (context != null) {
          ConnectedButtonRenderer.init(context, NetHelper.init(x, y, w, labelH), label, icon);
       }
@@ -982,12 +982,12 @@ public final class ModulesMenuController {
          }
       }
 
-      int widest = Math.max(pair * 2, context.init_PoolEntry().init("Main Menu") + 11 + 3 + 16);
+      int widest = Math.max(pair * 2, context.init_PoolEntry().measureWidth("Main Menu") + 11 + 3 + 16);
       return Math.max(120, widest) + 2;
    }
 
    private static int init_I_SyncManager(SyncManager context, String label, boolean icon) {
-      return context.init_PoolEntry().init(label) + 10 + 2 + (icon ? 13 : 0);
+      return context.init_PoolEntry().measureWidth(label) + 10 + 2 + (icon ? 13 : 0);
    }
 
    public boolean init_Z_I_2(int mx, int my, int button) {
@@ -1613,7 +1613,7 @@ public final class ModulesMenuController {
          return true;
       }
 
-      boolean typeToSearch = this.write_Z() ? (chr >= 'a' && chr <= 'z' || chr >= 'A' && chr <= 'Z') && !OverlayManager.init_bk().load_Z() : chr >= ' ' && chr != 127;
+      boolean typeToSearch = this.write_Z() ? (chr >= 'a' && chr <= 'z' || chr >= 'A' && chr <= 'Z') && !OverlayManager.getInstance().isActive() : chr >= ' ' && chr != 127;
       if (typeToSearch && this.init_Module == null) {
          this.load_V_I(-1);
          if (this.load_StreamUtil != null) {
@@ -1863,18 +1863,18 @@ public final class ModulesMenuController {
       String needle = query == null ? "" : query.toLowerCase(Locale.ROOT);
       int match = needle.isEmpty() ? -1 : safe.toLowerCase(Locale.ROOT).indexOf(needle);
       if (match < 0) {
-         context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), safe, x, y, maxWidth, color);
+         context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), safe, x, y, maxWidth, color);
       } else {
-         int accent = context.init_TableIndex().init_JsonUtil().clear;
+         int accent = context.init_TableIndex().colors().accent;
          String before = safe.substring(0, match);
          String hit = safe.substring(match, match + needle.length());
          String after = safe.substring(match + needle.length());
          int used = 0;
-         context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), before, x, y, maxWidth, color);
-         used += context.init_PoolEntry().init(before);
-         context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), hit, x + used, y, Math.max(1, maxWidth - used), accent);
-         used += context.init_PoolEntry().init(hit);
-         context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), after, x + used, y, Math.max(1, maxWidth - used), color);
+         context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), before, x, y, maxWidth, color);
+         used += context.init_PoolEntry().measureWidth(before);
+         context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), hit, x + used, y, Math.max(1, maxWidth - used), accent);
+         used += context.init_PoolEntry().measureWidth(hit);
+         context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), after, x + used, y, Math.max(1, maxWidth - used), color);
       }
    }
 
@@ -1965,11 +1965,11 @@ public final class ModulesMenuController {
    }
 
    private int load_I_SyncManager(SyncManager context) {
-      int widest = Math.max(context.init_PoolEntry().init("Main Menu"), context.init_PoolEntry().init("Profiles"));
+      int widest = Math.max(context.init_PoolEntry().measureWidth("Main Menu"), context.init_PoolEntry().measureWidth("Profiles"));
 
       for (ae category : ae.init_List()) {
          if (!init_List_ae(category).isEmpty()) {
-            widest = Math.max(widest, context.init_PoolEntry().init(category.load()));
+            widest = Math.max(widest, context.init_PoolEntry().measureWidth(category.load()));
          }
       }
 
@@ -1977,7 +1977,7 @@ public final class ModulesMenuController {
    }
 
    static int init_I_I(int px) {
-      return Math.round(px * Math.max(1.0F, autismclient.gui.sdf.MsdfTextRenderer.init_F()));
+      return Math.round(px * Math.max(1.0F, autismclient.gui.sdf.MsdfTextRenderer.fontScale()));
    }
 
    static NetHelper init_NetHelper_NetHelper_I(NetHelper row, int right) {
@@ -1992,11 +1992,11 @@ public final class ModulesMenuController {
 
    private int read_I() {
       int descriptionHeight = (int)Math.ceil(
-         autismclient.gui.sdf.MsdfTextRenderer.init(
-            autismclient.gui.sdf.MsdfFontFace.BODY, autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.sdf.MsdfFontFace.BODY)
+         autismclient.gui.sdf.MsdfTextRenderer.lineHeight(
+            autismclient.gui.sdf.MsdfFontFace.BODY, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(autismclient.gui.sdf.MsdfFontFace.BODY)
          )
       );
-      return 1 + this.reset + Math.max(UiDensityMetrics.init(12), descriptionHeight) + 4 + 4;
+      return 1 + this.reset + Math.max(UiDensityMetrics.scaledHeight(12), descriptionHeight) + 4 + 4;
    }
 
    private int init_I_I_I(int count, int columns) {
@@ -2078,7 +2078,7 @@ public final class ModulesMenuController {
       this.tick();
       int rise = 0;
       if (this.init_Module != null) {
-         PacketUtil.init(base.init_GuiGraphicsExtract(), NetHelper.init(0, 0, this.stop, this.next), base.init_TableIndex().init_JsonUtil().init);
+         PacketUtil.init(base.init_GuiGraphicsExtract(), NetHelper.init(0, 0, this.stop, this.next), base.init_TableIndex().colors().backdropScrim);
          this.read_V_SyncManager(base, frameSeconds, rise);
       } else {
          SyncManager blocked = null;
@@ -2162,8 +2162,8 @@ public final class ModulesMenuController {
       NetHelper grip = NetHelper.init(bounds.read() + 6, bounds.load() - 4, Math.max(1, bounds.update() - 12), 4);
       boolean active = id.equals(this.open_Str);
       boolean hover = !active && grip.init_Z(context.read(), context.write());
-      UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
-      int color = active ? colors.clear : (hover ? colors.prev : colors.valid & 16777215 | 1929379840);
+      UiColorScheme colors = context.init_TableIndex().colors();
+      int color = active ? colors.accent : (hover ? colors.textPrimary : colors.textSecondary & 16777215 | 1929379840);
       int pillW = Math.min(20, Math.max(8, bounds.update() / 5));
       PacketUtil.load(context.init_GuiGraphicsExtract(), NetHelper.init(bounds.read() + (bounds.update() - pillW) / 2, bounds.load() - 2, pillW, 3), 1, color);
       if (hover || active) {
@@ -2284,13 +2284,13 @@ public final class ModulesMenuController {
                   if (results.isEmpty()) {
                      NetHelper row = NetHelper.init(list.read() + 2, y, list.update() - 4, this.reset);
                      context.init_PoolEntry()
-                        .load(
+                        .drawFitted(
                            context.init_GuiGraphicsExtract(),
                            "No matches",
                            row.read() + 6,
-                           context.init_PoolEntry().init_I(row),
+                           context.init_PoolEntry().centerTextY(row),
                            Math.max(1, row.update() - 12),
-                           context.init_TableIndex().init_JsonUtil().valid
+                           context.init_TableIndex().colors().textSecondary
                         );
                   }
 
@@ -2319,9 +2319,9 @@ public final class ModulesMenuController {
       boolean hovered = row.init_Z(context.read(), context.write());
       float hoverT = autismclient.gui.ui.HoverTransitionCache.init("cmod:" + module.id(), hovered);
       float onT = autismclient.gui.ui.ToggleTransitionCache.init("modon:" + module.id(), module.isEnabled());
-      PacketUtil.load(context.init_GuiGraphicsExtract(), row, 4, init_I_I(theme.init_JsonUtil().open, theme.init_JsonUtil().push, hoverT));
+      PacketUtil.load(context.init_GuiGraphicsExtract(), row, 4, init_I_I(theme.colors().cardSurface, theme.colors().cardSurfaceElevated, hoverT));
       if (onT > 0.001F) {
-         int accent = theme.init_JsonUtil().clear;
+         int accent = theme.colors().accent;
          PacketUtil.load(context.init_GuiGraphicsExtract(), row, 4, PacketUtil.init(accent, (0.16F + 0.06F * hoverT) * onT));
          PacketUtil.load(context.init_GuiGraphicsExtract(), row, 4, 0, PacketUtil.init(accent, 0.85F * onT));
       }
@@ -2335,11 +2335,11 @@ public final class ModulesMenuController {
       NetHelper bindButton = NetHelper.init(tail - 34, row.write() + (row.sync() - bindH) / 2, 34, bindH);
       boolean showBind = row.update() >= init_I_I(110);
       int labelMax = Math.max(1, (showBind ? bindButton.read() : tail) - row.read() - 9);
-      int nameColor = module.isEnabled() ? theme.init_JsonUtil().prev : theme.init_JsonUtil().valid;
+      int nameColor = module.isEnabled() ? theme.colors().textPrimary : theme.colors().textSecondary;
       if (highlightQuery && !this.push_Str.isBlank()) {
-         this.init(context, label, row.read() + 6, context.init_PoolEntry().init_I(row), labelMax, nameColor, this.push_Str.trim());
+         this.init(context, label, row.read() + 6, context.init_PoolEntry().centerTextY(row), labelMax, nameColor, this.push_Str.trim());
       } else {
-         context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), label, row.read() + 6, context.init_PoolEntry().init_I(row), labelMax, nameColor);
+         context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), label, row.read() + 6, context.init_PoolEntry().centerTextY(row), labelMax, nameColor);
       }
 
       this.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.MODULE, row, module, null, "", -1);
@@ -2397,7 +2397,7 @@ public final class ModulesMenuController {
       Module module = this.init_Module;
       AutismConfig.ModuleCategoryLayout layout = this.init_AutismConfig_Modul_Str("settings-window");
       boolean searchable = this.init_BufferHelper.init_Z_Module(module);
-      int searchStrip = searchable ? UiDensityMetrics.init(13) + 8 : 0;
+      int searchStrip = searchable ? UiDensityMetrics.scaledHeight(13) + 8 : 0;
       int maxW = Math.max(160, this.stop - 8);
       int w = Math.min(init_I_I((searchable ? 360 : 250) + (module instanceof CrosshairModule ? 140 : 0)), maxW);
       int maxBody = Math.max(60, this.next - 12 - this.put);
@@ -2416,7 +2416,7 @@ public final class ModulesMenuController {
 
          try {
             if (searchable) {
-               this.read_NetHelper = NetHelper.init(viewport.read() + 4, viewport.write() + 4, viewport.update() - 8, UiDensityMetrics.init(13));
+               this.read_NetHelper = NetHelper.init(viewport.read() + 4, viewport.write() + 4, viewport.update() - 8, UiDensityMetrics.scaledHeight(13));
                this.load_V_SyncManager(context);
             }
 
@@ -2482,7 +2482,7 @@ public final class ModulesMenuController {
          searchFocused ? this.load_StreamUtil.init_I() : -1,
          searchFocused ? this.load_StreamUtil.load_I() : -1,
          searchFocused
-            ? this.load_StreamUtil.init(Math.max(1, this.read_NetHelper.update() - 8), fragment -> context.init_PoolEntry().init(shown, fragment))
+            ? this.load_StreamUtil.init(Math.max(1, this.read_NetHelper.update() - 8), fragment -> context.init_PoolEntry().measureFragmentWidth(shown, fragment))
             : 0
       );
       this.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.TEXT_FIELD, this.read_NetHelper, null, null, "search", -1);

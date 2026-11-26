@@ -40,7 +40,7 @@ public class ContainerClickSequenceAction implements MacroAction {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.player != null && mc.gameMode != null && mc.player.containerMenu != null) {
          int handlerSlot = this.containerSource != ContainerClickSequenceAction.Inner_DataUtil.CURRENT && this.containerSource != ContainerClickSequenceAction.Inner_DataUtil.PLAYER_INVENTORY
             ? visibleSlot
-            : autismclient.util.InventorySlotHelper.load_I(mc, visibleSlot);
+            : autismclient.util.InventorySlotHelper.toScreenSlot(mc, visibleSlot);
          if (handlerSlot < 0) {
             return false;
          }

@@ -18,7 +18,7 @@ public final class PanelLayoutMath {
 
    public static int init(Font renderer, autismclient.gui.f.b.CharEncoder theme, l tone, String label, int horizontalPadding, int minWidth, int maxWidth) {
       return renderer != null && theme != null
-         ? UiLayoutMath.init_I_Font(
+         ? UiLayoutMath.measurePaddedWidth(
             renderer,
             label == null ? "" : label,
             theme.init_Identifier_l(tone == null ? l.read : tone),

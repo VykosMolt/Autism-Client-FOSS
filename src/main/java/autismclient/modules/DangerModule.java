@@ -425,10 +425,10 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                      MC.player.entityInteractionRange() - 0.025,
                      40
                   );
-                  double yawDifference = RotationMath.init(goal.init(), (float)yaw);
-                  double pitchDifference = goal.load() - pitch;
-                  float step = FireballInterceptMath.init(yawDifference, pitchDifference, strike, threat.init_D, RotationMath.init());
-                  int turn = FireballInterceptMath.init(yawDifference, pitchDifference, step, RotationMath.init());
+                  double yawDifference = RotationMath.angleDelta(goal.yaw(), (float)yaw);
+                  double pitchDifference = goal.pitch() - pitch;
+                  float step = FireballInterceptMath.init(yawDifference, pitchDifference, strike, threat.init_D, RotationMath.gcdStep());
+                  int turn = FireballInterceptMath.init(yawDifference, pitchDifference, step, RotationMath.gcdStep());
                   boolean current = this.init_Z && !this.load_Z && this.init_Entity == ball;
                   if (this.init_Z_I_D_2(turn, strike)) {
                      int start = this.get() ? turn : Math.max(turn, init_I_D_D(yawDifference, pitchDifference));
@@ -474,7 +474,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   this.init_ce_DataUtil = this.load_ce_DataUtil;
                   RotationMath.Rotation from = autismclient.util.SilentRotationManager.init_ce_DataUtil();
                   if (from == null) {
-                     from = RotationMath.init(MC.player);
+                     from = RotationMath.ofPlayer(MC.player);
                   }
 
                   double strike = FireballInterceptMath.init_D_Vec3(
@@ -489,7 +489,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   );
                   if (this.get()) {
                      autismclient.util.SilentRotationManager.init_V_LocalPlayer_F(
-                        MC.player, FireballInterceptMath.init(RotationMath.init(goal.init(), from.init()), goal.load() - from.load(), strike, best.init_D, RotationMath.init())
+                        MC.player, FireballInterceptMath.init(RotationMath.angleDelta(goal.yaw(), from.yaw()), goal.pitch() - from.pitch(), strike, best.init_D, RotationMath.gcdStep())
                      );
                   } else {
                      double deadline = (strike >= 0.0 ? Math.min(strike, best.init_D) : best.init_D) - 2.0;
@@ -551,7 +551,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          ? shooter.getBoundingBox().getCenter().add(shooter.getDeltaMovement().scale(Math.min(10.0, shooter.distanceTo(ball) / 1.5))).subtract(box.getCenter())
          : ball.getDeltaMovement().scale(-1.0);
       FireballInterceptMath.Inner_DataUtil aim = FireballInterceptMath.init(eye, this.init_Vec3_8(), box, ball.getDeltaMovement(), outgoing, MC.player.entityInteractionRange() - 0.025);
-      return RotationMath.init(aim.load(), aim.init());
+      return RotationMath.lookAt(aim.load(), aim.init());
    }
 
    private Vec3 init_Vec3_8() {
@@ -932,11 +932,11 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
             if (rotation != null
                && wire.init_Z()
-               && !(Math.abs(RotationMath.init(rotation.init(), wire.read())) > 0.15)
-               && !(Math.abs(rotation.load() - wire.write()) > 0.15)) {
+               && !(Math.abs(RotationMath.angleDelta(rotation.yaw(), wire.read())) > 0.15)
+               && !(Math.abs(rotation.pitch() - wire.write()) > 0.15)) {
                Vec3 eye = MC.player.getEyePosition();
                double reach = MC.player.entityInteractionRange() - 0.025;
-               Vec3 direction = Vec3.directionFromRotation(rotation.load(), rotation.init());
+               Vec3 direction = Vec3.directionFromRotation(rotation.pitch(), rotation.yaw());
                Optional<Vec3> hit = this.init_Entity.getBoundingBox().clip(eye, eye.add(direction.scale(reach)));
                if (this.init_Entity.getBoundingBox().contains(eye)) {
                   hit = Optional.of(eye);
@@ -960,8 +960,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                      float cameraPitch = MC.player.getXRot();
 
                      try {
-                        MC.player.setYRot(rotation.init());
-                        MC.player.setXRot(rotation.load());
+                        MC.player.setYRot(rotation.yaw());
+                        MC.player.setXRot(rotation.pitch());
                         MC.gameMode.attack(MC.player, this.init_Entity);
                      } finally {
                         MC.player.setYRot(cameraYaw);
@@ -1010,11 +1010,11 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                RotationMath.Rotation bridgeResume = ScaffoldModule.read_ce_DataUtil();
                Module scaffold = al.init_Module_Str("scaffold");
                if (bridgeResume != null || scaffold != null && scaffold.isEnabled()) {
-                  RotationMath.Rotation resume = bridgeResume != null ? bridgeResume : RotationMath.init(MC.player);
+                  RotationMath.Rotation resume = bridgeResume != null ? bridgeResume : RotationMath.ofPlayer(MC.player);
                   autismclient.util.SilentRotationManager.init_V_Str(this.id(), 40, resume);
-                  autismclient.util.SilentRotationManager.init_V_LocalPlayer_F(MC.player, (float)(180.0 + RotationMath.init()));
+                  autismclient.util.SilentRotationManager.init_V_LocalPlayer_F(MC.player, (float)(180.0 + RotationMath.gcdStep()));
                   RotationMath.Rotation endpoint = autismclient.util.SilentRotationManager.init_ce_DataUtil();
-                  if (endpoint != null && RotationMath.load(endpoint, resume) <= 1.0F) {
+                  if (endpoint != null && RotationMath.vectorAngleDegrees(endpoint, resume) <= 1.0F) {
                      if (bridgeResume != null) {
                         ScaffoldModule.init_V_ce_DataUtil_3(endpoint);
                      }
@@ -1054,7 +1054,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          float progress = (AutismSessionState.init_ck().state_I() - danger.push + partialTick) / 2.0F;
          if (danger.read_ce_DataUtil != null && !(progress >= 1.0F) && !(progress < 0.0F)) {
             progress = progress * progress * (3.0F - 2.0F * progress);
-            return RotationMath.init_ce_DataUtil_ce_DataUtil(danger.read_ce_DataUtil, new RotationMath.Rotation(MC.player.getYRot(), MC.player.getXRot()), progress);
+            return RotationMath.lerp(danger.read_ce_DataUtil, new RotationMath.Rotation(MC.player.getYRot(), MC.player.getXRot()), progress);
          } else {
             return null;
          }
@@ -1063,7 +1063,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       } else {
          return danger.init_ce_DataUtil == null
             ? danger.load_ce_DataUtil
-            : RotationMath.init_ce_DataUtil_ce_DataUtil(danger.init_ce_DataUtil, danger.load_ce_DataUtil, partialTick);
+            : RotationMath.lerp(danger.init_ce_DataUtil, danger.load_ce_DataUtil, partialTick);
       }
    }
 

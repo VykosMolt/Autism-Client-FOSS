@@ -7,34 +7,34 @@ public final class GroupHeaderRenderer {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String title, boolean collapsed, boolean hovered) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
-      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 3, colors.open);
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
+      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 3, colors.cardSurface);
       init(context, bounds, hovered);
-      TitleBarRenderer.init(context, autismclient.gui.f.NetHelper.init(bounds.read() + 5, bounds.write() + Math.max(0, (bounds.sync() - 8) / 2), 8, 8), collapsed, colors.prev);
+      TitleBarRenderer.init(context, autismclient.gui.f.NetHelper.init(bounds.read() + 5, bounds.write() + Math.max(0, (bounds.sync() - 8) / 2), 8, 8), collapsed, colors.textPrimary);
       context.init_PoolEntry()
-         .load(
+         .drawFitted(
             context.init_GuiGraphicsExtract(),
             init(title).toUpperCase(Locale.ROOT),
             bounds.read() + 17,
-            context.init_PoolEntry().init_I(bounds),
+            context.init_PoolEntry().centerTextY(bounds),
             Math.max(1, bounds.update() - 22),
-            colors.valid
+            colors.textSecondary
          );
    }
 
    public static void load(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String title, boolean collapsed, boolean hovered) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
-      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 3, colors.open);
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
+      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 3, colors.cardSurface);
       init(context, bounds, hovered);
-      TitleBarRenderer.init(context, autismclient.gui.f.NetHelper.init(bounds.read() + 5, bounds.write() + Math.max(0, (bounds.sync() - 8) / 2), 8, 8), collapsed, colors.prev);
+      TitleBarRenderer.init(context, autismclient.gui.f.NetHelper.init(bounds.read() + 5, bounds.write() + Math.max(0, (bounds.sync() - 8) / 2), 8, 8), collapsed, colors.textPrimary);
       context.init_PoolEntry()
-         .load(
+         .drawFitted(
             context.init_GuiGraphicsExtract(),
             init(title),
             bounds.read() + 18,
-            context.init_PoolEntry().init_I(bounds),
+            context.init_PoolEntry().centerTextY(bounds),
             Math.max(1, bounds.update() - 22),
-            colors.prev
+            colors.textPrimary
          );
    }
 

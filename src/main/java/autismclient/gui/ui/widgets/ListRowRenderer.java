@@ -34,7 +34,7 @@ public final class ListRowRenderer {
       GuiGraphicsExtractor context, Font textRenderer, String label, boolean enabled, int listX, int listWidth, int headerY, int mouseX, int mouseY
    ) {
       int buttonHeight = 13;
-      int buttonWidth = autismclient.gui.ui.UiDensityMetrics.load(
+      int buttonWidth = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
          k.init(textRenderer, label, init_CharEncoder.init_Identifier_l(l.read), init_CharEncoder.load(l.read))
       );
       int buttonX = listX + listWidth - buttonWidth - 2;
@@ -47,7 +47,7 @@ public final class ListRowRenderer {
 
    public static void init(GuiGraphicsExtractor context, Font textRenderer, String text, int x, int y, int width) {
       String trimmed = k.init(textRenderer, text, Math.max(1, width - 10), init_CharEncoder.init_Identifier_l(l.write), init_CharEncoder.load(l.write));
-      int textY = UiLayoutMath.init(y, 14, init_CharEncoder.init_I_l(l.write), init_CharEncoder.flush());
+      int textY = UiLayoutMath.centerTextY(y, 14, init_CharEncoder.init_I_l(l.write), init_CharEncoder.flush());
       k.init(context, textRenderer, trimmed, init_CharEncoder.init_Identifier_l(l.write), init_CharEncoder.load(l.write), x + 6, textY, false);
    }
 
@@ -90,7 +90,7 @@ public final class ListRowRenderer {
       int var10000;
       switch (tone) {
          case NORMAL:
-            var10000 = selected ? ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.ColorRole.TEXT) : init_CharEncoder.load(l.read);
+            var10000 = selected ? ThemePaletteManager.recolor(-2828, ThemePaletteManager.ColorRole.TEXT) : init_CharEncoder.load(l.read);
             break;
          case READY:
             var10000 = selected ? -1507344 : -6426438;
@@ -99,10 +99,10 @@ public final class ListRowRenderer {
             var10000 = selected ? -3104 : -14726;
             break;
          case MISSING:
-            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(selected ? -4884 : -20561, ThemePaletteManager.ColorRole.DANGER);
+            var10000 = ThemePaletteManager.recolor(selected ? -4884 : -20561, ThemePaletteManager.ColorRole.DANGER);
             break;
          case DANGER:
-            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(selected ? -5398 : -29556, ThemePaletteManager.ColorRole.DANGER);
+            var10000 = ThemePaletteManager.recolor(selected ? -5398 : -29556, ThemePaletteManager.ColorRole.DANGER);
             break;
          default:
             throw new MatchException(null, null);
@@ -152,7 +152,7 @@ public final class ListRowRenderer {
       }
 
       int textWidth = Math.max(1, x + width - rightInset - textX);
-      int textY = UiLayoutMath.init(y, height, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
+      int textY = UiLayoutMath.centerTextY(y, height, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
       if (useMinecraftText) {
          List<FormattedCharSequence> wrapped = textRenderer.split(label == null ? Component.empty() : label, textWidth);
          FormattedCharSequence line = wrapped.isEmpty() ? Component.empty().getVisualOrderText() : wrapped.get(0);

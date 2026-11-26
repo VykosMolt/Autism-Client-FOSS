@@ -268,15 +268,15 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          this.write = this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.CAPTURE
             ? Math.min(auto, sync_I())
             : this.load_I_I_I(auto, this.a__I());
-         OverlayBounds clamped = this.init_cH_cX(this);
-         this.init_I_2 = clamped.init_I;
-         this.load_I = clamped.load_I;
-         this.read_I = clamped.read;
-         this.write = clamped.write;
+         OverlayBounds clamped = this.clampCurrentBounds(this);
+         this.init_I_2 = clamped.x;
+         this.load_I = clamped.y;
+         this.read_I = clamped.width;
+         this.write = clamped.height;
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(this.init_I_2, this.load_I, this.read_I, this.write);
-         this.init_V_GuiGraphicsExtract_6(graphics, mx, my, this.init_cH(), "Schematic Library", this.load_Z, this.update_Z);
-         if (!this.init_Z_Z(this.load_Z) && this.init_NetHelper.update() >= 190 && this.init_NetHelper.sync() >= 27) {
-            boolean clipped = this.init_Z_GuiGraphicsExtract(graphics, this.init_cH(), this.load_Z);
+         this.renderWindowFrame(graphics, mx, my, this.init_cH(), "Schematic Library", this.load_Z, this.update_Z);
+         if (!this.isVisuallyCollapsed(this.load_Z) && this.init_NetHelper.update() >= 190 && this.init_NetHelper.sync() >= 27) {
+            boolean clipped = this.beginBodyClip(graphics, this.init_cH(), this.load_Z);
 
             try {
                int width = this.init_NetHelper.update();
@@ -289,7 +289,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
                for (SchematicLibraryOverlay.Inner_ConfigStore value : SchematicLibraryOverlay.Inner_ConfigStore.values()) {
                   String label = names[value.ordinal()];
-                  int tabWidth = Math.min((tabs.update() - 9) / 4, ui.init_PoolEntry().init(label) + 12);
+                  int tabWidth = Math.min((tabs.update() - 9) / 4, ui.init_PoolEntry().measureWidth(label) + 12);
                   autismclient.gui.f.NetHelper at = autismclient.gui.f.NetHelper.init(tabX, tabs.write(), tabWidth, 13);
                   autismclient.gui.ui.widgets.TabStripRenderer.init(ui, at, label, value == this.init_SchematicLibraryOv_2);
                   this.init_List.add(new SchematicLibraryOverlay.Inner_BufferHelper(at, () -> this.init_V_SchematicLibraryOv(value)));
@@ -317,8 +317,8 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                if (this.init_cV.load_Z()) {
                   int buildY = bottom + 6 + 13;
                   String label = "Stop Build";
-                  int buttonWidth = ui.init_PoolEntry().init(label) + 12;
-                  this.init_V_SyncManager_5(ui, this.init_cV.init_Str(), x, buildY + 2, w - buttonWidth - 3, ui.init_TableIndex().init_JsonUtil().valid);
+                  int buttonWidth = ui.init_PoolEntry().measureWidth(label) + 12;
+                  this.init_V_SyncManager_5(ui, this.init_cV.init_Str(), x, buildY + 2, w - buttonWidth - 3, ui.init_TableIndex().colors().textSecondary);
                   this.init_V_SyncManager_2(
                      ui,
                      autismclient.gui.f.NetHelper.init(x + w - buttonWidth, buildY, buttonWidth, 13),
@@ -334,17 +334,17 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                   SchematicRecording recording = this.init_cV.activeRecording();
                   String statusText = recording != null && !recording.putAt_Z ? recording.putAt_Str() : this.init_cV.load_Str();
                   String pctText = progress + "%";
-                  int pctWidth = ui.init_PoolEntry().init(pctText);
+                  int pctWidth = ui.init_PoolEntry().measureWidth(pctText);
                   int barWidth = Math.min(90, w / 3);
                   int progressY = this.init_NetHelper.load() - 4 - 7;
                   int pctX = this.init_NetHelper.init() - 10 - 3 - pctWidth;
                   int barX = pctX - 3 - barWidth;
-                  this.init_V_SyncManager_5(ui, statusText, x, progressY - 1, barX - x - 3, ui.init_TableIndex().init_JsonUtil().valid);
+                  this.init_V_SyncManager_5(ui, statusText, x, progressY - 1, barX - x - 3, ui.init_TableIndex().colors().textSecondary);
                   autismclient.gui.ui.widgets.ProgressBarRenderer.init(ui, autismclient.gui.f.NetHelper.init(barX, progressY + 2, barWidth, 4), progress / 100.0);
-                  this.init_V_SyncManager_5(ui, pctText, pctX, progressY - 1, pctWidth, ui.init_TableIndex().init_JsonUtil().prev);
+                  this.init_V_SyncManager_5(ui, pctText, pctX, progressY - 1, pctWidth, ui.init_TableIndex().colors().textPrimary);
                }
             } finally {
-               this.init_V_GuiGraphicsExtract_Z(graphics, clipped);
+               this.endBodyClip(graphics, clipped);
             }
 
             autismclient.gui.ui.widgets.DropdownMenu var231 = this.init_RefQueue();
@@ -357,9 +357,9 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    private void init_V_SyncManager(autismclient.gui.f.SyncManager ui, int x, int y, int width, int bottom, float delta) {
-      int refreshWidth = ui.init_PoolEntry().init("Refresh") + 10;
-      int sortWidth = Math.min(74, ui.init_PoolEntry().init(this.init_SchematicLibraryOv.init_Str) + 18);
-      int filterWidth = Math.min(63, ui.init_PoolEntry().init(this.init_SchematicLibraryOv_3.init_Str) + 18);
+      int refreshWidth = ui.init_PoolEntry().measureWidth("Refresh") + 10;
+      int sortWidth = Math.min(74, ui.init_PoolEntry().measureWidth(this.init_SchematicLibraryOv.init_Str) + 18);
+      int filterWidth = Math.min(63, ui.init_PoolEntry().measureWidth(this.init_SchematicLibraryOv_3.init_Str) + 18);
       int refreshX = x + width - refreshWidth;
       int sortX = refreshX - 3 - sortWidth;
       int filterX = sortX - 3 - filterWidth;
@@ -526,8 +526,8 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       }
 
       if (local) {
-         int airWidth = Math.min(width / 2, ui.init_PoolEntry().init("Paste air") + 37);
-         int entityWidth = Math.min(width - airWidth - 3, ui.init_PoolEntry().init("Entities") + 37);
+         int airWidth = Math.min(width / 2, ui.init_PoolEntry().measureWidth("Paste air") + 37);
+         int entityWidth = Math.min(width - airWidth - 3, ui.init_PoolEntry().measureWidth("Entities") + 37);
          this.init_V_SyncManager_4(
             ui,
             autismclient.gui.f.NetHelper.init(x, listBottom + 3, airWidth, 14),
@@ -690,7 +690,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
       this.init_V_SyncManager_4(
          ui,
-         autismclient.gui.f.NetHelper.init(x, row2Y + step, Math.min(width, ui.init_PoolEntry().init("Capture entities") + 37), 14),
+         autismclient.gui.f.NetHelper.init(x, row2Y + step, Math.min(width, ui.init_PoolEntry().measureWidth("Capture entities") + 37), 14),
          "Capture entities",
          this.flush_Z,
          !busy,
@@ -745,10 +745,10 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
    private void init_V_SyncManager_3(autismclient.gui.f.SyncManager ui, int x, int y, int width, List<SchematicLibraryOverlay.Inner_DataUtil> actions) {
       int available = width - (actions.size() - 1) * 3;
-      int total = actions.stream().mapToInt(actionx -> ui.init_PoolEntry().init(actionx.label()) + 10).sum();
+      int total = actions.stream().mapToInt(actionx -> ui.init_PoolEntry().measureWidth(actionx.label()) + 10).sum();
 
       for (SchematicLibraryOverlay.Inner_DataUtil action : actions) {
-         int natural = ui.init_PoolEntry().init(action.label()) + 10;
+         int natural = ui.init_PoolEntry().measureWidth(action.label()) + 10;
          int buttonWidth = Math.max(1, total <= available ? natural : natural * available / total);
          this.init_V_SyncManager_2(ui, autismclient.gui.f.NetHelper.init(x, y, buttonWidth, 13), action.label(), action.tone(), action.enabled(), action.run());
          x += buttonWidth + 3;
@@ -817,14 +817,14 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       autismclient.gui.f.SyncManager ui, autismclient.gui.f.NetHelper bounds, String title, String detail, boolean selected, Runnable run
    ) {
       boolean hovered = this.load_NetHelper.init_Z(ui.read(), ui.write()) && bounds.init_Z(ui.read(), ui.write());
-      autismclient.gui.ui.UiColorScheme colors = ui.init_TableIndex().init_JsonUtil();
-      PacketUtil.load(ui.init_GuiGraphicsExtract(), bounds, 3, selected ? colors.push : (hovered ? colors.poll : colors.open));
+      autismclient.gui.ui.UiColorScheme colors = ui.init_TableIndex().colors();
+      PacketUtil.load(ui.init_GuiGraphicsExtract(), bounds, 3, selected ? colors.cardSurfaceElevated : (hovered ? colors.cardSurfaceHover : colors.cardSurface));
       if (selected) {
-         PacketUtil.load(ui.init_GuiGraphicsExtract(), bounds, 3, 0, colors.start);
+         PacketUtil.load(ui.init_GuiGraphicsExtract(), bounds, 3, 0, colors.accentSoft);
       }
 
-      this.init_V_SyncManager_5(ui, title, bounds.read() + 4, bounds.write() + 1, bounds.update() - 8, colors.prev);
-      this.init_V_SyncManager_5(ui, detail, bounds.read() + 4, bounds.write() + 11, bounds.update() - 8, colors.valid);
+      this.init_V_SyncManager_5(ui, title, bounds.read() + 4, bounds.write() + 1, bounds.update() - 8, colors.textPrimary);
+      this.init_V_SyncManager_5(ui, detail, bounds.read() + 4, bounds.write() + 11, bounds.update() - 8, colors.textSecondary);
       int top = Math.max(bounds.write(), this.init_TextFormat_DataUti.load() + this.init_TextFormat_DataUti.pop());
       int end = Math.min(bounds.load(), this.init_TextFormat_DataUti.load() + this.init_TextFormat_DataUti.pop() + this.init_TextFormat_DataUti.flush());
       if (end > top) {
@@ -860,7 +860,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             return true;
          }
 
-         if (this.write(mx, my, this.init_cH())) {
+         if (this.isOverHeaderDragArea(mx, my, this.init_cH())) {
             this.init_V_Z(false);
             return true;
          }
@@ -898,10 +898,10 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
          this.push_V();
          if (this.init_TextFormat_DataUti != null
-            && this.init_TextFormat_DataUti.init_PoolEntry_DataUtil().init_Z()
-            && this.init_TextFormat_DataUti.init_PoolEntry_DataUtil().init(x, y)) {
+            && this.init_TextFormat_DataUti.init_PoolEntry_DataUtil().isScrollable()
+            && this.init_TextFormat_DataUti.init_PoolEntry_DataUtil().containsTrack(x, y)) {
             ScrollbarMetricsHelper.Metrics bar = this.init_TextFormat_DataUti.init_PoolEntry_DataUtil();
-            this.run = bar.load(x, y) ? y - bar.update() : bar.sync() / 2;
+            this.run = bar.containsThumb(x, y) ? y - bar.thumbY() : bar.thumbHeight() / 2;
             this.init_CacheEntry.init_V_PoolEntry_DataUtil(bar, y, this.run);
             this.write_Z = true;
             return true;
@@ -938,9 +938,9 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    @Override
    public boolean init_Z_D(double x, double y, int button, double dx, double dy) {
       if (this.update_Z) {
-         OverlayBounds clamped = this.init_cH_cX_cH(this, new OverlayBounds((int)(x - this.init_D), (int)(y - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z));
-         this.init_I_2 = clamped.init_I;
-         this.load_I = clamped.load_I;
+         OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds((int)(x - this.init_D), (int)(y - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z));
+         this.init_I_2 = clamped.x;
+         this.load_I = clamped.y;
          return true;
       } else {
          autismclient.gui.ui.widgets.DropdownMenu menu = this.init_RefQueue();

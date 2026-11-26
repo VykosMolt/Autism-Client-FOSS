@@ -11,19 +11,19 @@ import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.Vec3;
 
 public final class SilentMovementCoordinator {
-   private static final MovementInputFixer init_bb = new MovementInputFixer();
-   private static final MovementInputFixer load_bb = new MovementInputFixer();
-   private static final MovementInputFixer read_bb = new MovementInputFixer();
-   private static volatile float init_F = 0.0F / 0.0F;
-   private static volatile int init_I = -2147483648;
-   private static volatile float[] init_FArr = new float[0];
-   private static volatile float load_F = 0.0F / 0.0F;
-   private static volatile float read_F = 0.0F / 0.0F;
+   private static final MovementInputFixer combatMoveFixer = new MovementInputFixer();
+   private static final MovementInputFixer bedNukerMoveFixer = new MovementInputFixer();
+   private static final MovementInputFixer clutchMoveFixer = new MovementInputFixer();
+   private static volatile float lastMoveYaw = 0.0F / 0.0F;
+   private static volatile int lastMoveTick = -2147483648;
+   private static volatile float[] debugTelemetry = new float[0];
+   private static volatile float lastCameraYaw = 0.0F / 0.0F;
+   private static volatile float lastCameraPitch = 0.0F / 0.0F;
 
    private SilentMovementCoordinator() {
    }
 
-   public static boolean init_Z() {
+   public static boolean isSafeWalkActive() {
       if (!AutismLiteVariant.enabled() && ClutchModule.init_Z_49()) {
          return true;
       } else {
@@ -33,7 +33,7 @@ public final class SilentMovementCoordinator {
       }
    }
 
-   public static RotationMath.Rotation init_ce_DataUtil() {
+   public static RotationMath.Rotation activeRotation() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null) {
          RotationMath.Rotation rotation = SilentRotationManager.init_ce_DataUtil();
@@ -49,10 +49,10 @@ public final class SilentMovementCoordinator {
       }
    }
 
-   public static Input init(ClientInput source, Input input) {
+   public static Input rewriteMovementInput(ClientInput source, Input input) {
       Minecraft mc = Minecraft.getInstance();
       if (input != null && mc != null && mc.player != null && mc.player.input == source) {
-         RotationMath.Rotation rotation = init_ce_DataUtil();
+         RotationMath.Rotation rotation = activeRotation();
          if (rotation == null) {
             return input;
          }
@@ -61,57 +61,57 @@ public final class SilentMovementCoordinator {
             return input;
          }
 
-         if (SilentRotationManager.load_Z() || init(rotation)) {
-            init_bb.init();
-            load_bb.init();
+         if (SilentRotationManager.load_Z() || shouldUseFreeLookRotation(rotation)) {
+            combatMoveFixer.init();
+            bedNukerMoveFixer.init();
             return input;
          }
 
          if (!AutismLiteVariant.enabled() && "kb-displacement".equals(SilentRotationManager.init_Str())) {
-            return init_bb.load(input, autismclient.modules.KBDisplacementModule.init_F_F_2(mc.player.getYRot()), rotation.init(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+            return combatMoveFixer.load(input, autismclient.modules.KBDisplacementModule.init_F_F_2(mc.player.getYRot()), rotation.yaw(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
          }
 
          String aimOwner = SilentRotationManager.init_Str();
          if ("kill-aura".equals(aimOwner)) {
             if (!AutismLiteVariant.enabled()) {
-               Input course = autismclient.modules.KBDisplacementModule.init_Input_Input(input, mc.player.getYRot(), rotation.init());
+               Input course = autismclient.modules.KBDisplacementModule.init_Input_Input(input, mc.player.getYRot(), rotation.yaw());
                if (course != null) {
                   return course;
                }
             }
 
-            return init_bb.load(input, mc.player.getYRot(), rotation.init(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+            return combatMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
          } else if (!"crystal-aura".equals(aimOwner) && !"anchor-aura".equals(aimOwner)) {
-            init_bb.init();
+            combatMoveFixer.init();
             if ("bed-nuker".equals(SilentRotationManager.init_Str())) {
-               return load_bb.load(input, mc.player.getYRot(), rotation.init(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+               return bedNukerMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
             }
 
-            load_bb.init();
-            if (load_Z()) {
-               return read_bb.load(input, mc.player.getYRot(), rotation.init(), AutismSessionState.init_ck().state_I());
+            bedNukerMoveFixer.init();
+            if (isClutchMoveFixActive()) {
+               return clutchMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.init_ck().state_I());
             }
 
-            read_bb.init();
-            return autismclient.modules.ScaffoldModule.init_Input_Input_2(input, mc.player.getYRot(), rotation.init());
+            clutchMoveFixer.init();
+            return autismclient.modules.ScaffoldModule.init_Input_Input_2(input, mc.player.getYRot(), rotation.yaw());
          } else {
-            return init_bb.load(input, mc.player.getYRot(), rotation.init(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+            return combatMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
          }
       } else {
          return input;
       }
    }
 
-   public static Input init(Input input, float referenceYaw, float yaw) {
+   public static Input correctInputForYaw(Input input, float referenceYaw, float yaw) {
       Minecraft mc = Minecraft.getInstance();
-      return init_bb.init(input, referenceYaw, yaw, AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc == null ? null : mc.player));
+      return combatMoveFixer.init(input, referenceYaw, yaw, AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc == null ? null : mc.player));
    }
 
-   private static boolean load_Z() {
+   private static boolean isClutchMoveFixActive() {
       return AutismLiteVariant.enabled() ? false : "clutch".equals(SilentRotationManager.init_Str()) && !ClutchModule.sync_Z_10();
    }
 
-   private static boolean init(RotationMath.Rotation rotation) {
+   private static boolean shouldUseFreeLookRotation(RotationMath.Rotation rotation) {
       return rotation == null
             || !(
                autismclient.modules.al.init_Module_Str(SilentRotationManager.init_Str()) instanceof SilentMovementCoordinator.Participant owner
@@ -124,107 +124,107 @@ public final class SilentMovementCoordinator {
          : AutismLiteVariant.enabled() || !ClutchModule.sync_Z_10();
    }
 
-   public static float init_F(LocalPlayer player) {
-      RotationMath.Rotation rotation = init(player);
-      return init(rotation) ? rotation.init() : player.getYRot();
+   public static float getMovementYaw(LocalPlayer player) {
+      RotationMath.Rotation rotation = activeRotationFor(player);
+      return shouldUseFreeLookRotation(rotation) ? rotation.yaw() : player.getYRot();
    }
 
-   public static float init_F(Entity entity, float vanillaYaw) {
-      RotationMath.Rotation rotation = init(entity);
-      return rotation == null ? vanillaYaw : rotation.init();
+   public static float getEntityYaw(Entity entity, float vanillaYaw) {
+      RotationMath.Rotation rotation = activeRotationFor(entity);
+      return rotation == null ? vanillaYaw : rotation.yaw();
    }
 
-   public static float init(LocalPlayer player, float vanillaYaw) {
-      return init_F(player, vanillaYaw);
+   public static float getPlayerYaw(LocalPlayer player, float vanillaYaw) {
+      return getEntityYaw(player, vanillaYaw);
    }
 
-   public static float load(LocalPlayer player, float vanillaPitch) {
-      RotationMath.Rotation rotation = init(player);
-      return rotation == null ? vanillaPitch : rotation.load();
+   public static float getPlayerPitch(LocalPlayer player, float vanillaPitch) {
+      RotationMath.Rotation rotation = activeRotationFor(player);
+      return rotation == null ? vanillaPitch : rotation.pitch();
    }
 
-   public static Vec3 init(LocalPlayer player, Vec3 vanillaVector) {
-      RotationMath.Rotation rotation = init(player);
-      return rotation == null ? vanillaVector : Vec3.directionFromRotation(rotation.load(), rotation.init());
+   public static Vec3 getPlayerLookVector(LocalPlayer player, Vec3 vanillaVector) {
+      RotationMath.Rotation rotation = activeRotationFor(player);
+      return rotation == null ? vanillaVector : Vec3.directionFromRotation(rotation.pitch(), rotation.yaw());
    }
 
-   public static Vec3 init(LivingEntity entity, Vec3 vanillaImpulse) {
-      RotationMath.Rotation rotation = init(entity);
+   public static Vec3 getJumpImpulse(LivingEntity entity, Vec3 vanillaImpulse) {
+      RotationMath.Rotation rotation = activeRotationFor(entity);
       if (rotation == null) {
          return vanillaImpulse;
       }
 
-      float yaw = rotation.init() * 0.017453292F;
+      float yaw = rotation.yaw() * 0.017453292F;
       return new Vec3(-Mth.sin(yaw) * 0.2F, vanillaImpulse.y, Mth.cos(yaw) * 0.2F);
    }
 
-   public static float init(LivingEntity entity, float vanillaPitch) {
-      RotationMath.Rotation rotation = init(entity);
-      return rotation == null ? vanillaPitch : rotation.load();
+   public static float getEntityPitch(LivingEntity entity, float vanillaPitch) {
+      RotationMath.Rotation rotation = activeRotationFor(entity);
+      return rotation == null ? vanillaPitch : rotation.pitch();
    }
 
-   public static Vec3 load(LivingEntity entity, Vec3 vanillaLook) {
-      RotationMath.Rotation rotation = init(entity);
-      return rotation == null ? vanillaLook : Vec3.directionFromRotation(rotation.load(), rotation.init());
+   public static Vec3 getEntityLookVector(LivingEntity entity, Vec3 vanillaLook) {
+      RotationMath.Rotation rotation = activeRotationFor(entity);
+      return rotation == null ? vanillaLook : Vec3.directionFromRotation(rotation.pitch(), rotation.yaw());
    }
 
-   private static RotationMath.Rotation init(Entity entity) {
+   private static RotationMath.Rotation activeRotationFor(Entity entity) {
       Minecraft mc = Minecraft.getInstance();
-      return entity != null && mc != null && entity == mc.player ? init_ce_DataUtil() : null;
+      return entity != null && mc != null && entity == mc.player ? activeRotation() : null;
    }
 
-   public static void init_V(Entity entity, float yaw) {
+   public static void recordMovementYaw(Entity entity, float yaw) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && entity == mc.player) {
-         init_F = yaw;
-         init_I = AutismSessionState.init_ck().state_I();
+         lastMoveYaw = yaw;
+         lastMoveTick = AutismSessionState.init_ck().state_I();
       }
    }
 
-   public static void init(float yaw) {
-      load_F = yaw;
+   public static void setCameraYaw(float yaw) {
+      lastCameraYaw = yaw;
    }
 
-   public static void load(float pitch) {
-      read_F = pitch;
+   public static void setCameraPitch(float pitch) {
+      lastCameraPitch = pitch;
    }
 
-   public static float init_F() {
-      return load_F;
+   public static float getCameraYaw() {
+      return lastCameraYaw;
    }
 
-   public static float load_F() {
-      return read_F;
+   public static float getCameraPitch() {
+      return lastCameraPitch;
    }
 
-   public static void init(Minecraft mc) {
+   public static void captureDebugTelemetry(Minecraft mc) {
       if (mc != null && mc.player != null) {
-         RotationMath.Rotation live = init_ce_DataUtil();
+         RotationMath.Rotation live = activeRotation();
          double wireYaw = ServerRotationTracker.init_ch_CachePool().init_Z() ? ServerRotationTracker.init_ch_CachePool().read() : 0.0 / 0.0;
-         init_FArr = new float[]{init_F, (float)wireYaw, live == null ? 0.0F / 0.0F : live.init(), init_I, load_F};
+         debugTelemetry = new float[]{lastMoveYaw, (float)wireYaw, live == null ? 0.0F / 0.0F : live.yaw(), lastMoveTick, lastCameraYaw};
       }
    }
 
-   public static float[] init_FArr() {
-      return (float[])init_FArr.clone();
+   public static float[] getDebugTelemetry() {
+      return (float[])debugTelemetry.clone();
    }
 
-   public static RotationMath.Rotation init_ce_DataUtil(LocalPlayer player) {
+   public static RotationMath.Rotation getRenderRotation(LocalPlayer player) {
       Minecraft mc = Minecraft.getInstance();
       if (player == null || mc == null || player != mc.player) {
          return null;
       }
 
       if (!AutismLiteVariant.enabled() && ClutchModule.close_Z_8()) {
-         return init_ce_DataUtil();
+         return activeRotation();
       }
 
       RotationMath.Rotation scaffold = autismclient.modules.ScaffoldModule.init_ce_DataUtil_3();
-      return scaffold != null ? scaffold : init_ce_DataUtil();
+      return scaffold != null ? scaffold : activeRotation();
    }
 
-   public static RotationMath.Rotation load(LocalPlayer player) {
-      return init_ce_DataUtil(player);
+   public static RotationMath.Rotation getHeadRenderRotation(LocalPlayer player) {
+      return getRenderRotation(player);
    }
 
    public interface Participant {

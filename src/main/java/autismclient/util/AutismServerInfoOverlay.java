@@ -807,7 +807,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    public static boolean poll_Z_16() {
       OverlayBounds layout = AutismSessionState.init_ck().init_cH_Str("autism-serverinfo");
-      return layout != null && layout.init_Z;
+      return layout != null && layout.visible;
    }
 
    private void init_V_I_9(int tabIdx) {
@@ -907,13 +907,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.init_V_Str_9("TPS:", tps, null);
       List<String> detectedAcs = this.init_List_13();
       if (this.tick_Z) {
-         this.init_V_Str_9("AntiCheats:", "Scanning...", ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.ColorRole.DANGER));
+         this.init_V_Str_9("AntiCheats:", "Scanning...", ThemePaletteManager.recolor(-48060, ThemePaletteManager.ColorRole.DANGER));
       } else if (!this.pop_Z) {
-         this.init_V_Str_9("AntiCheats:", "Probe Plugins First", ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.ColorRole.DANGER));
+         this.init_V_Str_9("AntiCheats:", "Probe Plugins First", ThemePaletteManager.recolor(-48060, ThemePaletteManager.ColorRole.DANGER));
       } else if (detectedAcs.isEmpty()) {
          this.init_V_Str_9("AntiCheats:", "None detected", null);
       } else {
-         this.init_V_Str_9("AntiCheats:", String.join(", ", detectedAcs), ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.ColorRole.DANGER));
+         this.init_V_Str_9("AntiCheats:", String.join(", ", detectedAcs), ThemePaletteManager.recolor(-48060, ThemePaletteManager.ColorRole.DANGER));
       }
 
       this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(this.init_PacketUtil);
@@ -1233,10 +1233,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void entry_V_2() {
       OverlayBounds clamped = this.init_cH_cH_5(new OverlayBounds(this.poll_I, this.push_I, this.pop_I, this.run_I, this.write_Z, this.update_Z));
-      this.poll_I = clamped.init_I;
-      this.push_I = clamped.load_I;
-      this.pop_I = clamped.read;
-      this.run_I = clamped.write;
+      this.poll_I = clamped.x;
+      this.push_I = clamped.y;
+      this.pop_I = clamped.width;
+      this.run_I = clamped.height;
    }
 
    private void node_V_2() {
@@ -4527,7 +4527,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.write_Z = v;
       if (v) {
          this.init_CharEncoder_2.write(!this.update_Z);
-         OverlayManager.init_bk().update_V(this);
+         OverlayManager.getInstance().bringToFront(this);
          this.frame_V_2();
          if (this.start == 0) {
             this.count_V_2();
@@ -4622,12 +4622,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    public void init_V_cH(OverlayBounds b) {
       if (b != null) {
          OverlayBounds clamped = this.init_cH_cH_5(b);
-         this.poll_I = clamped.init_I;
-         this.push_I = clamped.load_I;
-         this.pop_I = clamped.read;
-         this.run_I = clamped.write;
-         this.write_Z = clamped.init_Z;
-         this.update_Z = clamped.load_Z;
+         this.poll_I = clamped.x;
+         this.push_I = clamped.y;
+         this.pop_I = clamped.width;
+         this.run_I = clamped.height;
+         this.write_Z = clamped.visible;
+         this.update_Z = clamped.collapsed;
          this.init_CharEncoder_2.write(!this.update_Z);
          this.flags_V_2();
       }
@@ -4676,7 +4676,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mx);
       float uiMouseY = viewport.load(my);
-      boolean active = OverlayManager.init_bk().update_Z(this) || OverlayManager.init_bk().write_Z(this);
+      boolean active = OverlayManager.getInstance().isFocused(this) || OverlayManager.getInstance().isTopmost(this);
       boolean headerHovered = this.init_Z_F_F_6(uiMouseX, uiMouseY);
       autismclient.gui.ui.layout.LayoutContext metrics = new autismclient.gui.ui.layout.LayoutContext(
          ctx, this.init_Font, viewport, this.init_CharEncoder, uiMouseX, uiMouseY, delta
@@ -4699,10 +4699,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       this.pop_I = this.pop_I_24();
       OverlayBounds clamped = this.init_cH_cH_5(new OverlayBounds(this.poll_I, this.push_I, this.pop_I, this.run_I, this.write_Z, this.update_Z));
-      this.poll_I = clamped.init_I;
-      this.push_I = clamped.load_I;
-      this.pop_I = clamped.read;
-      this.run_I = clamped.write;
+      this.poll_I = clamped.x;
+      this.push_I = clamped.y;
+      this.pop_I = clamped.width;
+      this.run_I = clamped.height;
       this.init_CharEncoder_2.init_TableIndex_F(this.poll_I, this.push_I, this.pop_I, this.run_I);
       this.init_TextFormat.init(ctx, mx, my, delta);
       if (this.init_CharEncoder_2.init(ctx)) {
@@ -4712,7 +4712,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                this.init_V_GuiGraphicsExtract_11(ctx, viewport, uiMouseX, uiMouseY, delta);
             }
          } finally {
-            autismclient.gui.ui.UiClipStack.init_HashUtil().init(ctx);
+            autismclient.gui.ui.UiClipStack.getInstance().pop(ctx);
          }
       }
    }
@@ -4772,25 +4772,25 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             List<AutismServerInfoOverlay.DetailRow> rows = this.init_List_Str_I(this.init_BitSetUtil.init_Str(), rowContentW);
             int estimatedContentHeight = this.load(rows);
             int maxScroll = Math.max(0, estimatedContentHeight - innerViewH);
-            int quantizedTarget = this.init_I_I_3(this.init_CacheEntry.init(), this.o(), maxScroll);
+            int quantizedTarget = this.quantizeScrollOffset(this.init_CacheEntry.init(), this.o(), maxScroll);
             this.init_CacheEntry.init_V_I_I(quantizedTarget, maxScroll);
-            int visualScroll = this.init_I_I_3(this.init_CacheEntry.init_I_F_I(delta, maxScroll), this.o(), maxScroll);
+            int visualScroll = this.quantizeScrollOffset(this.init_CacheEntry.init_I_F_I(delta, maxScroll), this.o(), maxScroll);
             this.value = estimatedContentHeight;
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.load_PoolEntry_DataUtil_I(x, listTop, rowW, viewH);
-            int scrolledRowContentW = Math.max(48, clipRight - clipLeft - (scrollbarMetrics.init_Z() ? 10 : 0));
+            int scrolledRowContentW = Math.max(48, clipRight - clipLeft - (scrollbarMetrics.isScrollable() ? 10 : 0));
             if (scrolledRowContentW != rowContentW) {
                rowContentW = scrolledRowContentW;
                rows = this.init_List_Str_I(this.init_BitSetUtil.init_Str(), rowContentW);
                estimatedContentHeight = this.load(rows);
                maxScroll = Math.max(0, estimatedContentHeight - innerViewH);
-               quantizedTarget = this.init_I_I_3(this.init_CacheEntry.init(), this.o(), maxScroll);
+               quantizedTarget = this.quantizeScrollOffset(this.init_CacheEntry.init(), this.o(), maxScroll);
                this.init_CacheEntry.init_V_I_I(quantizedTarget, maxScroll);
-               visualScroll = this.init_I_I_3(this.init_CacheEntry.init_I_F_I(0.0F, maxScroll), this.o(), maxScroll);
+               visualScroll = this.quantizeScrollOffset(this.init_CacheEntry.init_I_F_I(0.0F, maxScroll), this.o(), maxScroll);
                this.value = estimatedContentHeight;
                scrollbarMetrics = this.load_PoolEntry_DataUtil_I(x, listTop, rowW, viewH);
             }
 
-            boolean active = OverlayManager.init_bk().update_Z(this) || OverlayManager.init_bk().write_Z(this);
+            boolean active = OverlayManager.getInstance().isFocused(this) || OverlayManager.getInstance().isTopmost(this);
             viewport.init_V_GuiGraphicsExtract(ctx);
 
             try {
@@ -4810,7 +4810,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      if (row.init()) {
                         if (rowVisible) {
                            autismclient.gui.ui.widgets.PanelSurfaceHelper.load(ctx, clipLeft, rowTop, clipRight - clipLeft, rowBottom - rowTop);
-                           int headerTextY = UiLayoutMath.init(
+                           int headerTextY = UiLayoutMath.centerTextY(
                               rowY, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()
                            );
                            autismclient.gui.f.b.k.init(
@@ -4832,7 +4832,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                            autismclient.gui.ui.widgets.PanelSurfaceHelper.init(ctx, clipLeft, rowTop, rowContentW, rowBottom - rowTop, hovered, selected);
                         }
 
-                        int rowTextY = UiLayoutMath.init(rowY, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
+                        int rowTextY = UiLayoutMath.centerTextY(rowY, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
                         if (rowVisible && !standaloneCommandHint) {
                            int arrowColor = !hovered && !selected
                               ? this.init_CharEncoder.load(autismclient.gui.f.b.l.write)
@@ -4847,7 +4847,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
                         boolean isAnticheat = row.load != null && update_Set.contains(row.load.toLowerCase(Locale.ROOT));
                         int nameColor = isAnticheat
-                           ? ThemePaletteManager.init_I_I_ct_DataUtil(-43691, ThemePaletteManager.ColorRole.DANGER)
+                           ? ThemePaletteManager.recolor(-43691, ThemePaletteManager.ColorRole.DANGER)
                            : this.init_I_AutismServerInfoOv_Z(row.init_AutismServerInfoOv, hovered);
                         String label = isAnticheat ? "! " + row.load : row.load;
                         int labelX = clipLeft + (standaloneCommandHint ? 5 : 13);
@@ -4861,7 +4861,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                            );
                            int countX = clipLeft + rowContentW - cw - 4;
                            labelMaxWidth = Math.max(36, countX - labelX - 4);
-                           int countTextY = UiLayoutMath.init(
+                           int countTextY = UiLayoutMath.centerTextY(
                               rowY, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()
                            );
                            if (rowVisible) {
@@ -4911,7 +4911,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                                     this.push_V();
                                     this.init_List.clear();
                                     String fullCmd = hintCommand.startsWith("/") ? hintCommand : "/" + hintCommand;
-                                    OverlayManager.init_bk().init_V_cX_Z(this, true);
+                                    OverlayManager.getInstance().setHidden(this, true);
                                     init_Minecraft.gui.setScreen(new ChatScreen(fullCmd, false));
                                  }));
                            }
@@ -4940,7 +4940,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                               this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
                               textColor
                            );
-                           int detailTextY = UiLayoutMath.init(
+                           int detailTextY = UiLayoutMath.centerTextY(
                               rowY, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()
                            );
                            autismclient.gui.f.b.k.init(
@@ -4967,7 +4967,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                                        this.init_List.clear();
                                        if (commandRow) {
                                           String fullCmd = actionValue.startsWith("/") ? actionValue : "/" + actionValue;
-                                          OverlayManager.init_bk().init_V_cX_Z(this, true);
+                                          OverlayManager.getInstance().setHidden(this, true);
                                           init_Minecraft.gui.setScreen(new ChatScreen(fullCmd, false));
                                        } else {
                                           this.write_V_3(actionValue);
@@ -4987,7 +4987,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   viewport.read(ctx);
                }
 
-               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(ctx, scrollbarMetrics, scrollbarMetrics.init(uiMouseX, uiMouseY), this.open_Z);
+               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, scrollbarMetrics, scrollbarMetrics.containsTrack(uiMouseX, uiMouseY), this.open_Z);
             } finally {
                viewport.load(ctx);
             }
@@ -5036,14 +5036,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics load_PoolEntry_DataUtil_I(int x, int y, int width, int height) {
       int innerHeight = this.load_I_2(height);
       int maxScroll = Math.max(0, this.value - innerHeight);
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
          this.value,
          Math.max(1, innerHeight),
          x + width - 5,
          y + 1,
          3,
          Math.max(1, innerHeight),
-         this.init_I_I_3(this.init_CacheEntry.init_I_F_I(0.0F, maxScroll), this.o(), maxScroll)
+         this.quantizeScrollOffset(this.init_CacheEntry.init_I_F_I(0.0F, maxScroll), this.o(), maxScroll)
       );
    }
 
@@ -5291,7 +5291,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             action.payloadProvenance = "serverInfoChannel";
             ActionEditorOverlay editor = ActionEditorOverlay.init_ActionEditorOverla_2();
             editor.init_V_H(action);
-            OverlayManager.init_bk().update_V(editor);
+            OverlayManager.getInstance().bringToFront(editor);
          }
       }
    }
@@ -5364,11 +5364,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int index_I_2() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int count_I_2() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int flags_I_2() {
@@ -5376,7 +5376,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int level_I_2() {
-      return Math.max(autismclient.gui.ui.UiDensityMetrics.init(13), this.init_CharEncoder.update());
+      return Math.max(autismclient.gui.ui.UiDensityMetrics.scaledHeight(13), this.init_CharEncoder.update());
    }
 
    private int init_I_StrArr_2(String... labels) {
@@ -5410,11 +5410,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int table_I_2() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int store_I_2() {
-      return autismclient.gui.ui.UiDensityMetrics.init(16);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(16);
    }
 
    private int drain_I_2() {
@@ -5474,7 +5474,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int h() {
-      return autismclient.gui.ui.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
    private int i() {
@@ -5516,7 +5516,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int load_I_2(int viewHeight) {
-      return Math.max(0, this.sync_I(Math.max(0, viewHeight - 2), this.o()));
+      return Math.max(0, this.alignHeightToStep(Math.max(0, viewHeight - 2), this.o()));
    }
 
    private OverlayBounds init_cH_cH_5(OverlayBounds bounds) {
@@ -5527,13 +5527,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       int availableWidth = Math.max(1, viewportWidth - margin * 2);
       int availableHeight = Math.max(this.init_CharEncoder.load(), viewportHeight - margin * 2);
       int minWidth = Math.min(this.init_I(), availableWidth);
-      int width = Math.max(minWidth, Math.min(bounds.read, availableWidth));
-      int minHeight = bounds.load_Z ? this.init_CharEncoder.load() : Math.min(this.load_I(), availableHeight);
-      int height = Math.max(minHeight, Math.min(bounds.write, availableHeight));
-      int renderedHeight = bounds.load_Z ? this.init_CharEncoder.load() : height;
-      int x = Math.max(margin, Math.min(bounds.init_I, Math.max(margin, viewportWidth - margin - width)));
-      int y = Math.max(margin, Math.min(bounds.load_I, Math.max(margin, viewportHeight - margin - renderedHeight)));
-      return new OverlayBounds(x, y, width, height, bounds.init_Z, bounds.load_Z);
+      int width = Math.max(minWidth, Math.min(bounds.width, availableWidth));
+      int minHeight = bounds.collapsed ? this.init_CharEncoder.load() : Math.min(this.load_I(), availableHeight);
+      int height = Math.max(minHeight, Math.min(bounds.height, availableHeight));
+      int renderedHeight = bounds.collapsed ? this.init_CharEncoder.load() : height;
+      int x = Math.max(margin, Math.min(bounds.x, Math.max(margin, viewportWidth - margin - width)));
+      int y = Math.max(margin, Math.min(bounds.y, Math.max(margin, viewportHeight - margin - renderedHeight)));
+      return new OverlayBounds(x, y, width, height, bounds.visible, bounds.collapsed);
    }
 
    private String load(ServerData entry) {
@@ -6615,9 +6615,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             Math.round(this.init_BitSetUtil_2.write_F()),
             this.init_I_BitSetUtil(this.init_BitSetUtil_2)
          );
-         if (scrollbarMetrics.init_Z() && scrollbarMetrics.init(uiMouseX, uiMouseY)) {
+         if (scrollbarMetrics.isScrollable() && scrollbarMetrics.containsTrack(uiMouseX, uiMouseY)) {
             this.open_Z = true;
-            this.clear_I = Math.max(0, Math.round(uiMouseY) - scrollbarMetrics.update());
+            this.clear_I = Math.max(0, Math.round(uiMouseY) - scrollbarMetrics.thumbY());
             this.init_CacheEntry.init(scrollbarMetrics, Math.round(uiMouseY), this.clear_I, this.o());
             this.write_V_24();
             return true;
@@ -6682,8 +6682,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       OverlayBounds clamped = this.init_cH_cH_5(
          new OverlayBounds(Math.round(uiMouseX - (float)this.init_D), Math.round(uiMouseY - (float)this.load_D), this.pop_I, this.run_I, this.write_Z, this.update_Z)
       );
-      this.poll_I = clamped.init_I;
-      this.push_I = clamped.load_I;
+      this.poll_I = clamped.x;
+      this.push_I = clamped.y;
       this.close_Z = this.close_Z
          || Math.abs(uiMouseX - this.load_F) >= 3.0F
          || Math.abs(uiMouseY - this.read_F) >= 3.0F
@@ -7079,7 +7079,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       @Override
       public float init_F_SyncManager_F(autismclient.gui.ui.layout.LayoutContext context, float availableWidth) {
-         return Math.max(autismclient.gui.ui.UiDensityMetrics.init(13), context.init_CharEncoder().update());
+         return Math.max(autismclient.gui.ui.UiDensityMetrics.scaledHeight(13), context.init_CharEncoder().update());
       }
 
       @Override

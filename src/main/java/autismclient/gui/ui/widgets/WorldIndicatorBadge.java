@@ -92,7 +92,7 @@ public final class WorldIndicatorBadge {
                graphics,
                autismclient.gui.f.NetHelper.init(0, 0, size.init, size.load),
                3,
-               ui.init_TableIndex().init_JsonUtil().update,
+               ui.init_TableIndex().colors().windowSurface,
                color & 16777215 | -1879048192
             );
             if (arrow) {
@@ -121,7 +121,7 @@ public final class WorldIndicatorBadge {
                int textX = iconX + 20;
                int textWidth = Math.max(0, size.init - textX - 3);
                ui.init_PoolEntry()
-                  .init(graphics, caption, autismclient.gui.f.NetHelper.init(textX, 0, textWidth, size.load), ui.init_TableIndex().init_JsonUtil().prev);
+                  .drawEllipsizedInBounds(graphics, caption, autismclient.gui.f.NetHelper.init(textX, 0, textWidth, size.load), ui.init_TableIndex().colors().textPrimary);
             }
          } finally {
             graphics.pose().popMatrix();

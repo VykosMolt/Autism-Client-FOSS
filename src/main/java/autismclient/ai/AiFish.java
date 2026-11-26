@@ -187,7 +187,7 @@ final class AiFish {
                   }
 
                   if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.init_I) {
-                     autismclient.util.InventorySlotHelper.init_V(mc, this.init_I);
+                     autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.init_I);
                   }
                }
             }

@@ -307,12 +307,12 @@ final class AiActionMenu {
          title,
          title.read(),
          title.update(),
-         kit.init_JsonUtil.prev
+         kit.init_JsonUtil.textPrimary
       );
       int top = title.load() + 2;
       if (this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.HOME) {
          autismclient.gui.f.NetHelper trail = autismclient.gui.f.NetHelper.init(area.read(), top, area.update(), line);
-         kit.init_V_Str_3("Choose action  /  Choose target  /  Options  /  Review", trail, trail.read(), trail.update(), kit.init_JsonUtil.valid);
+         kit.init_V_Str_3("Choose action  /  Choose target  /  Options  /  Review", trail, trail.read(), trail.update(), kit.init_JsonUtil.textSecondary);
          top += line + 2;
       }
 
@@ -347,7 +347,7 @@ final class AiActionMenu {
                   body.read(), listTop, Math.max(0, body.update() - clearW - selectedW - 4), h
                );
                String text = this.read_Map.isEmpty() ? "Click blocks to select them" : this.read_Map.size() + " selected: " + this.read_Str();
-               kit.init_V_Str_3(text, summary, summary.read(), summary.update(), kit.init_JsonUtil.valid);
+               kit.init_V_Str_3(text, summary, summary.read(), summary.update(), kit.init_JsonUtil.textSecondary);
                kit.init_V_NetHelper_Str(summary, text);
                kit.init_V_NetHelper_2(
                   autismclient.gui.f.NetHelper.init(body.init() - clearW - selectedW - 2, listTop, selectedW, h),
@@ -405,7 +405,7 @@ final class AiActionMenu {
                      )
                )
          );
-      kit.init_V_Str_3(noteText, note, note.read(), note.update(), this.read_Str.isEmpty() ? kit.init_JsonUtil.valid : kit.init_JsonUtil.data);
+      kit.init_V_Str_3(noteText, note, note.read(), note.update(), this.read_Str.isEmpty() ? kit.init_JsonUtil.textSecondary : kit.init_JsonUtil.danger);
       kit.init_V_NetHelper_Str(note, noteText);
       if (this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.HOME) {
          int w = kit.load("Back");
@@ -500,7 +500,7 @@ final class AiActionMenu {
                autismclient.gui.f.NetHelper.init(b.read(), b.write() + AiUiKit.init_I(), b.update(), AiUiKit.write() + 4),
                b.read() + 3,
                b.update() - 6,
-               kit.init_JsonUtil.valid
+               kit.init_JsonUtil.textSecondary
             );
          }
       }
@@ -522,11 +522,11 @@ final class AiActionMenu {
          autismclient.gui.f.NetHelper.init(x, y, w, line),
          x,
          w,
-         kit.init_JsonUtil.prev
+         kit.init_JsonUtil.textPrimary
       );
       y += line + 2;
       if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z) {
-         kit.init_V_Str_3("Crop: " + this.read_Str(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.prev);
+         kit.init_V_Str_3("Crop: " + this.read_Str(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textPrimary);
          int var23 = y + line + 2;
          kit.init_V_NetHelper_2(
             autismclient.gui.f.NetHelper.init(x, var23, w, h),
@@ -566,7 +566,7 @@ final class AiActionMenu {
             autismclient.gui.f.NetHelper.init(x, var25, w, line),
             x,
             w,
-            kit.init_JsonUtil.valid
+            kit.init_JsonUtil.textSecondary
          );
          y = var25 + line + 2;
          kit.init_V_Str_3(
@@ -574,17 +574,17 @@ final class AiActionMenu {
             autismclient.gui.f.NetHelper.init(x, y, w, line),
             x,
             w,
-            kit.init_JsonUtil.valid
+            kit.init_JsonUtil.textSecondary
          );
       } else if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD && this.init_bW != null) {
-         kit.init_V_Str_3(this.init_bW.write_Str_2(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.valid);
+         kit.init_V_Str_3(this.init_bW.write_Str_2(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textSecondary);
          y += line;
          kit.init_V_Str_3(
             "Size " + this.init_bW.update_Str() + " / origin " + this.load_Str(),
             autismclient.gui.f.NetHelper.init(x, y, w, line),
             x,
             w,
-            kit.init_JsonUtil.valid
+            kit.init_JsonUtil.textSecondary
          );
          y += line + 2;
          int half = (w - 2) / 2;
@@ -608,7 +608,7 @@ final class AiActionMenu {
          );
          int var18 = y + h + 2;
          kit.init_V_Str_3(
-            "Compare edits within 24 blocks. All four rotations.", autismclient.gui.f.NetHelper.init(x, var18, w, line), x, w, kit.init_JsonUtil.valid
+            "Compare edits within 24 blocks. All four rotations.", autismclient.gui.f.NetHelper.init(x, var18, w, line), x, w, kit.init_JsonUtil.textSecondary
          );
          int var19 = var18 + line + 2;
          kit.init_V_NetHelper_2(
@@ -640,10 +640,10 @@ final class AiActionMenu {
          );
          int var22 = var21 + h + 2;
          autismclient.gui.f.NetHelper flyHint = autismclient.gui.f.NetHelper.init(x, var22, w, line);
-         kit.init_V_Str_3(this.init_bW.load_Str_2(), flyHint, x, w, kit.init_JsonUtil.valid);
+         kit.init_V_Str_3(this.init_bW.load_Str_2(), flyHint, x, w, kit.init_JsonUtil.textSecondary);
          kit.init_V_NetHelper_Str(flyHint, this.init_bW.load_Str_2());
          y = var22 + line + 2;
-         kit.init_V_Str_3("Get missing materials before starting this build.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.valid);
+         kit.init_V_Str_3("Get missing materials before starting this build.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textSecondary);
       } else if (this.init_StreamUtil_DataUti.init_Z) {
          kit.init_V_Str_3(
             (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE ? "Default per block" : "Amount")
@@ -653,7 +653,7 @@ final class AiActionMenu {
             autismclient.gui.f.NetHelper.init(x, y, w, line),
             x,
             w,
-            kit.init_JsonUtil.valid
+            kit.init_JsonUtil.textSecondary
          );
          y += line;
          this.load_BitSetUtil.load_BitSetUtil_Str(this.init_StreamUtil_CachePo == null ? "Auto" : this.write_Str());
@@ -675,7 +675,7 @@ final class AiActionMenu {
          y += h + 2;
          if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.GET) {
             kit.init_V_Str_3(
-               "Always collect the requested amount in addition to inventory.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.valid
+               "Always collect the requested amount in addition to inventory.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textSecondary
             );
          } else if (this.read_Z()) {
             kit.init_V_NetHelper_2(
@@ -693,23 +693,23 @@ final class AiActionMenu {
                autismclient.gui.f.NetHelper.init(x, y, w, line),
                x,
                w,
-               kit.init_JsonUtil.valid
+               kit.init_JsonUtil.textSecondary
             );
          }
       } else {
-         kit.init_V_Str_3(this.init_StreamUtil_DataUti.write_Str, autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.valid);
+         kit.init_V_Str_3(this.init_StreamUtil_DataUti.write_Str, autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textSecondary);
       }
 
       if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE) {
          y += line + 2;
-         kit.init_V_Str_3("Individual amounts (optional)", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.valid);
+         kit.init_V_Str_3("Individual amounts (optional)", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textSecondary);
          y += line + 2;
          int fieldW = Math.min(88, w / 3);
 
          for (Entry<String, AiActionMenu.Inner_CachePool> entry : this.read_Map.entrySet()) {
             autismclient.gui.ui.widgets.TextInputWidget field = this.init_BitSetUtil_Str(entry.getKey());
             field.load_BitSetUtil_Str(this.load_BitSetUtil.init_Str().isBlank() ? this.write_Str() : this.load_BitSetUtil.init_Str());
-            kit.init_V_Str_3(entry.getValue().label(), autismclient.gui.f.NetHelper.init(x, y, w - fieldW - 2, h), x, w - fieldW - 2, kit.init_JsonUtil.prev);
+            kit.init_V_Str_3(entry.getValue().label(), autismclient.gui.f.NetHelper.init(x, y, w - fieldW - 2, h), x, w - fieldW - 2, kit.init_JsonUtil.textPrimary);
             kit.init_V_BitSetUtil_NetHelper(field, autismclient.gui.f.NetHelper.init(x + w - fieldW, y, fieldW, h));
             y += h + 2;
          }
@@ -791,7 +791,7 @@ final class AiActionMenu {
       y -= this.read_cE_StreamUtil.init_I;
 
       for (String text : lines) {
-         kit.init_V_Str_3(text, autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.prev);
+         kit.init_V_Str_3(text, autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textPrimary);
          kit.init_V_NetHelper_Str(autismclient.gui.f.NetHelper.init(x, y, w, line), text);
          y += line;
       }
@@ -897,7 +897,7 @@ final class AiActionMenu {
                   this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                      ? this.read_Map.containsKey(this.init_Str_StreamUtil_CachePo(row))
                      : i == this.read_I,
-                  kit.init_JsonUtil.prev,
+                  kit.init_JsonUtil.textPrimary,
                   false
                );
                int index = i;

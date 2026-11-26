@@ -63,8 +63,8 @@ public abstract class AutismCameraMixin {
          }
 
          if (rotation != null) {
-            args.set(0, rotation.init());
-            args.set(1, rotation.load());
+            args.set(0, rotation.yaw());
+            args.set(1, rotation.pitch());
          }
       }
    }

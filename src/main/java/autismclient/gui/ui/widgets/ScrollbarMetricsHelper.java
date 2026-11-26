@@ -4,18 +4,18 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public final class ScrollbarMetricsHelper {
-   public static final int init = 6;
+   public static final int TRACK_WIDTH = 6;
 
    private ScrollbarMetricsHelper() {
    }
 
-   public static ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_I_2(
+   public static ScrollbarMetricsHelper.Metrics compute(
       int contentPixels, int viewPixels, int trackX, int trackY, int trackWidth, int trackHeight, int scrollOffset
    ) {
-      return init_PoolEntry_DataUtil_I(contentPixels, viewPixels, trackX, trackY, trackWidth, trackHeight, scrollOffset);
+      return computeFloat(contentPixels, viewPixels, trackX, trackY, trackWidth, trackHeight, scrollOffset);
    }
 
-   public static ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_I(
+   public static ScrollbarMetricsHelper.Metrics computeFloat(
       int contentPixels, int viewPixels, int trackX, int trackY, int trackWidth, int trackHeight, float scrollOffset
    ) {
       int right = trackX + trackWidth;
@@ -38,14 +38,14 @@ public final class ScrollbarMetricsHelper {
       }
    }
 
-   public static void init(GuiGraphicsExtractor context, ScrollbarMetricsHelper.Metrics metrics, boolean hovered, boolean dragging) {
-      if (metrics != null && metrics.init_Z()) {
+   public static void render(GuiGraphicsExtractor context, ScrollbarMetricsHelper.Metrics metrics, boolean hovered, boolean dragging) {
+      if (metrics != null && metrics.isScrollable()) {
          ScrollbarRenderer.init(
             autismclient.gui.f.UiHelper.init(context, Minecraft.getInstance().font, -1, -1),
             new ScrollbarRenderer.ScrollbarBounds(
-               autismclient.gui.f.NetHelper.init(metrics.init_I(), metrics.load(), metrics.read(), metrics.write()),
-               autismclient.gui.f.NetHelper.init(metrics.init_I(), metrics.update(), metrics.read(), metrics.sync()),
-               metrics.flush()
+               autismclient.gui.f.NetHelper.init(metrics.trackX(), metrics.trackY(), metrics.trackWidth(), metrics.trackHeight()),
+               autismclient.gui.f.NetHelper.init(metrics.trackX(), metrics.thumbY(), metrics.trackWidth(), metrics.thumbHeight()),
+               metrics.maxScroll()
             ),
             hovered,
             dragging
@@ -53,33 +53,33 @@ public final class ScrollbarMetricsHelper {
       }
    }
 
-   public static int init(ScrollbarMetricsHelper.Metrics metrics, double mouseY, int grabOffset) {
-      if (metrics != null && metrics.init_Z()) {
-         int travel = Math.max(1, metrics.write() - metrics.sync());
+   public static int scrollOffsetForMouseY(ScrollbarMetricsHelper.Metrics metrics, double mouseY, int grabOffset) {
+      if (metrics != null && metrics.isScrollable()) {
+         int travel = Math.max(1, metrics.trackHeight() - metrics.thumbHeight());
          int thumbTop = (int)Math.round(mouseY) - grabOffset;
-         thumbTop = Math.max(metrics.load(), Math.min(metrics.load() + travel, thumbTop));
-         float progress = (float)(thumbTop - metrics.load()) / travel;
-         return Math.max(0, Math.min(metrics.flush(), Math.round(progress * metrics.flush())));
+         thumbTop = Math.max(metrics.trackY(), Math.min(metrics.trackY() + travel, thumbTop));
+         float progress = (float)(thumbTop - metrics.trackY()) / travel;
+         return Math.max(0, Math.min(metrics.maxScroll(), Math.round(progress * metrics.maxScroll())));
       } else {
          return 0;
       }
    }
 
-   public record Metrics(int init, int load, int read, int write, int update, int sync, int flush) {
-      public boolean init_Z() {
-         return this.flush > 0;
+   public record Metrics(int trackX, int trackY, int trackWidth, int trackHeight, int thumbY, int thumbHeight, int maxScroll) {
+      public boolean isScrollable() {
+         return this.maxScroll > 0;
       }
 
-      public boolean init(double mouseX, double mouseY) {
-         return mouseX >= this.init && mouseX < this.init + this.read && mouseY >= this.load && mouseY < this.load + this.write;
+      public boolean containsTrack(double mouseX, double mouseY) {
+         return mouseX >= this.trackX && mouseX < this.trackX + this.trackWidth && mouseY >= this.trackY && mouseY < this.trackY + this.trackHeight;
       }
 
-      public boolean load(double mouseX, double mouseY) {
-         return this.init_Z() && mouseX >= this.init && mouseX < this.init + this.read && mouseY >= this.update && mouseY < this.update + this.sync;
+      public boolean containsThumb(double mouseX, double mouseY) {
+         return this.isScrollable() && mouseX >= this.trackX && mouseX < this.trackX + this.trackWidth && mouseY >= this.thumbY && mouseY < this.thumbY + this.thumbHeight;
       }
 
-      public int init_I() {
-         return this.init;
+      public int trackX() {
+         return this.trackX;
       }
    }
 }

@@ -140,7 +140,7 @@ public final class EndPortalRenderer {
       }
 
       autismclient.gui.ui.widgets.WorldIndicatorBadge.Inner_StreamUtil size = autismclient.gui.ui.widgets.WorldIndicatorBadge.init(
-         ui.init_PoolEntry().init(label), 9, !label.isEmpty(), target != null
+         ui.init_PoolEntry().measureWidth(label), 9, !label.isEmpty(), target != null
       );
       autismclient.gui.ui.widgets.WorldIndicatorBadge.Inner_DataUtil placement;
       if (target == null) {

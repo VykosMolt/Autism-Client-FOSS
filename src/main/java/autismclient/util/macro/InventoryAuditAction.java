@@ -205,10 +205,10 @@ public class InventoryAuditAction implements MacroAction {
             Set<Integer> firedSlots = new HashSet<>();
 
             for (int visibleSlot : targetSlots) {
-               int handlerSlot = autismclient.util.InventorySlotHelper.load_I(mc, visibleSlot);
+               int handlerSlot = autismclient.util.InventorySlotHelper.toScreenSlot(mc, visibleSlot);
                if (handlerSlot >= 0 && handlerSlot < handler.slots.size() && firedSlots.add(handlerSlot)) {
                   Slot slot = handler.slots.get(handlerSlot);
-                  if (slot != null && !autismclient.util.InventorySlotHelper.init_Z(mc, slot)) {
+                  if (slot != null && !autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot)) {
                      ItemStack stack = slot.getItem();
                      if (stack != null && !stack.isEmpty()) {
                         slotCount++;
@@ -223,10 +223,10 @@ public class InventoryAuditAction implements MacroAction {
             for (int i = 0; i < handler.slots.size(); i++) {
                if (!firedSlots.contains(i)) {
                   Slot slot = handler.slots.get(i);
-                  if (slot != null && !autismclient.util.InventorySlotHelper.init_Z(mc, slot)) {
+                  if (slot != null && !autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot)) {
                      ItemStack stack = slot.getItem();
                      if (stack != null && !stack.isEmpty()) {
-                        int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+                        int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
                         if (this.init_Z_ItemStack_I(stack, visibleSlot)) {
                            firedSlots.add(i);
                            slotCount++;
@@ -332,10 +332,10 @@ public class InventoryAuditAction implements MacroAction {
 
             for (int i = 0; i < handler.slots.size(); i++) {
                Slot slot = handler.slots.get(i);
-               if (slot != null && !autismclient.util.InventorySlotHelper.init_Z(mc, slot)) {
+               if (slot != null && !autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot)) {
                   ItemStack stack = slot.getItem();
                   if (stack != null && !stack.isEmpty()) {
-                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
                      if (this.init_Z_ItemStack_I(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
                         slotCount++;
                         items.merge(this.init_Str_ItemStack(stack), stack.getCount(), Integer::sum);
@@ -463,10 +463,10 @@ public class InventoryAuditAction implements MacroAction {
 
             for (int i = 0; i < handler.slots.size() && hotbarSlot <= 8; i++) {
                Slot slot = handler.slots.get(i);
-               if (slot != null && !autismclient.util.InventorySlotHelper.init_Z(mc, slot)) {
+               if (slot != null && !autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot)) {
                   ItemStack stack = slot.getItem();
                   if (stack != null && !stack.isEmpty()) {
-                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
                      if (this.init_Z_ItemStack_I(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
                         slotCount++;
                         items.merge(this.init_Str_ItemStack(stack), stack.getCount(), Integer::sum);
@@ -796,10 +796,10 @@ public class InventoryAuditAction implements MacroAction {
 
             for (int i = 0; i < handler.slots.size(); i++) {
                Slot slot = handler.slots.get(i);
-               if (slot != null && !autismclient.util.InventorySlotHelper.init_Z(mc, slot)) {
+               if (slot != null && !autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot)) {
                   ItemStack stack = slot.getItem();
                   if (stack != null && !stack.isEmpty()) {
-                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
                      if (this.init_Z_ItemStack_I(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
                         slotCount++;
                         items.merge(this.init_Str_ItemStack(stack), stack.getCount(), Integer::sum);
@@ -839,10 +839,10 @@ public class InventoryAuditAction implements MacroAction {
 
             for (int i = 0; i < handler.slots.size() && hotbarSlot <= 8; i++) {
                Slot slot = handler.slots.get(i);
-               if (slot != null && !autismclient.util.InventorySlotHelper.init_Z(mc, slot)) {
+               if (slot != null && !autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot)) {
                   ItemStack stack = slot.getItem();
                   if (stack != null && !stack.isEmpty()) {
-                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
                      if (this.init_Z_ItemStack_I(stack, visibleSlot) && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
                         slotCount++;
                         items.merge(this.init_Str_ItemStack(stack), stack.getCount(), Integer::sum);
@@ -881,10 +881,10 @@ public class InventoryAuditAction implements MacroAction {
 
             for (int i = 0; i < handler.slots.size(); i++) {
                Slot slot = handler.slots.get(i);
-               if (slot != null && !autismclient.util.InventorySlotHelper.init_Z(mc, slot)) {
+               if (slot != null && !autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot)) {
                   ItemStack stack = slot.getItem();
                   if (stack != null && !stack.isEmpty()) {
-                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
                      if (this.init_Z_ItemStack_I(stack, visibleSlot) && this.init(mc, handler, i, 1, ContainerInput.THROW)) {
                         slotCount++;
                         items.merge(this.init_Str_ItemStack(stack), stack.getCount(), Integer::sum);
@@ -913,7 +913,7 @@ public class InventoryAuditAction implements MacroAction {
 
       if (slotId >= 0 && slotId < handler.slots.size()) {
          Slot slot = handler.slots.get(slotId);
-         if (slot != null && !autismclient.util.InventorySlotHelper.init_Z(mc, slot)) {
+         if (slot != null && !autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot)) {
             ItemStack beforeSlot = slot.getItem().copy();
             if (beforeSlot.isEmpty()) {
                return false;
@@ -950,7 +950,7 @@ public class InventoryAuditAction implements MacroAction {
 
       if (slotId >= 0 && slotId < handler.slots.size()) {
          Slot slot = handler.slots.get(slotId);
-         if (slot != null && autismclient.util.InventorySlotHelper.init_Z(mc, slot)) {
+         if (slot != null && autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot)) {
             ItemStack beforeSlot = slot.getItem().copy();
             if (beforeSlot.isEmpty()) {
                return false;
@@ -1053,7 +1053,7 @@ public class InventoryAuditAction implements MacroAction {
 
                for (Slot slot : handler.slots) {
                   if (slot != null) {
-                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
                      if (this.init_Z_I(visibleSlot)) {
                         slots.put(
                            visibleSlot, new InventoryAuditAction.Inner_TaskQueue(visibleSlot, this.init_Str_I(visibleSlot), this.init_ItemStack_ItemStack(slot.getItem()))
@@ -1123,10 +1123,10 @@ public class InventoryAuditAction implements MacroAction {
                            }
 
                            Slot slot = handler.slots.get(i);
-                           if (slot != null && autismclient.util.InventorySlotHelper.init_Z(mc, slot)) {
+                           if (slot != null && autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot)) {
                               ItemStack stack = slot.getItem();
                               if (stack != null && !stack.isEmpty()) {
-                                 int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+                                 int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
                                  if (this.init_Z_I(visibleSlot)
                                     && targetItemsToTransfer.containsKey(this.init_Str_ItemStack(stack))
                                     && this.load(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
@@ -1183,10 +1183,10 @@ public class InventoryAuditAction implements MacroAction {
                         }
 
                         Slot slot = handler.slots.get(i);
-                        if (slot != null && !autismclient.util.InventorySlotHelper.init_Z(mc, slot)) {
+                        if (slot != null && !autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot)) {
                            ItemStack stack = slot.getItem();
                            if (stack != null && !stack.isEmpty()) {
-                              int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+                              int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
                               if (this.init_Z_ItemStack_I(stack, visibleSlot)
                                  && targetItemsToExtract.containsKey(this.init_Str_ItemStack(stack))
                                  && this.init(mc, handler, i, 0, ContainerInput.QUICK_MOVE)) {
@@ -1240,7 +1240,7 @@ public class InventoryAuditAction implements MacroAction {
 
       for (Slot slot : handler.slots) {
          if (slot != null) {
-            int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
+            int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
             slots.putIfAbsent(
                visibleSlot, new InventoryAuditAction.Inner_TaskQueue(visibleSlot, this.init_Str_I(visibleSlot), this.init_ItemStack_ItemStack(slot.getItem()))
             );

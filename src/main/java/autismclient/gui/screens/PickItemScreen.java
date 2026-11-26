@@ -50,7 +50,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
    private List<PickItemScreen.Inner_DataUtil> read_List = List.of();
 
    private static int read() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public PickItemScreen(Screen parent, String selectedId, Consumer<String> onPick) {
@@ -94,16 +94,16 @@ public final class PickItemScreen extends VirtualScaledScreen {
          int listH = list.sync();
          autismclient.gui.f.PacketUtil.load(graphics, list, 5, -1442248437, init_CharEncoder.set());
          autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(listX + 1, listY + 1, Math.max(1, listW - 8), Math.max(1, listH - 2));
-         autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics, clip);
+         autismclient.gui.ui.UiClipStack.getInstance().push(graphics, clip);
 
          try {
             this.init(graphics, listX + 3, listY + 3, listW - 9, Math.max(1, listH - 6), mx, my);
          } finally {
-            autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics);
+            autismclient.gui.ui.UiClipStack.getInstance().pop(graphics);
          }
 
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil(listX, listY, listW, listH);
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(graphics, metrics, metrics.init(mx, my), this.init_Z);
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, metrics.containsTrack(mx, my), this.init_Z);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
@@ -181,10 +181,10 @@ public final class PickItemScreen extends VirtualScaledScreen {
       }
 
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil_7();
-      if (metrics.init_Z() && metrics.init(mx, my)) {
+      if (metrics.isScrollable() && metrics.containsTrack(mx, my)) {
          this.init_Z = true;
-         this.tick = metrics.load(mx, my) ? my - metrics.update() : metrics.sync() / 2;
-         this.pop = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(metrics, my, this.tick);
+         this.tick = metrics.containsThumb(mx, my) ? my - metrics.thumbY() : metrics.thumbHeight() / 2;
+         this.pop = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, my, this.tick);
          return true;
       }
 
@@ -221,7 +221,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       if (this.init_Z) {
-         this.pop = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(this.init_PoolEntry_DataUtil_7(), my, this.tick);
+         this.pop = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_7(), my, this.tick);
          return true;
       } else {
          return this.init_k != null && this.init_k.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
@@ -231,7 +231,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
       int amount = scrollY < 0.0 ? this.sync() : -this.sync();
-      this.pop = init(this.pop + amount, 0, this.init_PoolEntry_DataUtil_7().flush());
+      this.pop = init(this.pop + amount, 0, this.init_PoolEntry_DataUtil_7().maxScroll());
       return true;
    }
 
@@ -340,19 +340,19 @@ public final class PickItemScreen extends VirtualScaledScreen {
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil(int listX, int listY, int listW, int listH) {
       int viewH = Math.max(1, listH - 6);
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(this.close(), viewH, listX + listW - 6, listY + 1, 4, Math.max(1, listH - 2), this.pop);
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(this.close(), viewH, listX + listW - 6, listY + 1, 4, Math.max(1, listH - 2), this.pop);
    }
 
    private int write() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int update() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int sync() {
-      return autismclient.gui.ui.UiDensityMetrics.init(18);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(18);
    }
 
    private int flush() {
@@ -370,7 +370,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
    }
 
    private int init_I_5(int boxY, int boxH) {
-      return UiLayoutMath.init(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
+      return UiLayoutMath.centerTextY(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
    }
 
    private int open() {

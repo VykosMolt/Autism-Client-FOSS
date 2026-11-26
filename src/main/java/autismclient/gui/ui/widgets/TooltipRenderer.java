@@ -23,11 +23,11 @@ public final class TooltipRenderer {
          int availableW = Math.max(1, context.init_I() - 8);
          int availableH = Math.max(1, context.load_I() - 8);
          int maxTextWidth = Math.max(1, Math.min(Math.max(32, preferredMaxWidth), Math.max(1, availableW - 8)));
-         List<String> lines = context.init_PoolEntry().init_List(text, maxTextWidth);
+         List<String> lines = context.init_PoolEntry().wrapLines(text, maxTextWidth);
          int maxLineWidth = 0;
 
          for (String line : lines) {
-            maxLineWidth = Math.max(maxLineWidth, context.init_PoolEntry().init(line));
+            maxLineWidth = Math.max(maxLineWidth, context.init_PoolEntry().measureWidth(line));
          }
 
          int w = Math.min(availableW, Math.max(1, maxLineWidth + 8));
@@ -46,16 +46,16 @@ public final class TooltipRenderer {
          autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(
             init(x, 4, Math.max(4, context.init_I() - 4 - w)), init(y, 4, Math.max(4, context.load_I() - 4 - h)), w, h
          );
-         autismclient.gui.f.PacketUtil.init(context, bounds, context.init_TableIndex().init_JsonUtil().sync, context.init_TableIndex().init_JsonUtil().get);
+         autismclient.gui.f.PacketUtil.init(context, bounds, context.init_TableIndex().colors().popupSurface, context.init_TableIndex().colors().borderSubtle);
 
          for (int i = 0; i < maxLines; i++) {
             context.init_PoolEntry()
-               .init_V_GuiGraphicsExtract_2(
+               .draw(
                   context.init_GuiGraphicsExtract(),
                   lines.get(i),
                   bounds.read() + 4,
                   bounds.write() + 3 + i * lineHeight,
-                  context.init_TableIndex().init_JsonUtil().prev
+                  context.init_TableIndex().colors().textPrimary
                );
          }
       }

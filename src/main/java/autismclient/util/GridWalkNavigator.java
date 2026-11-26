@@ -505,7 +505,7 @@ public final class GridWalkNavigator {
       if (down) {
          key.setDown(true);
       } else {
-         KeyMappingControl.init(key).autism$resetPressedState();
+         KeyMappingControl.of(key).autism$resetPressedState();
       }
    }
 

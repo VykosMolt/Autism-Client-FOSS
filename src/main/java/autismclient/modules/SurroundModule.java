@@ -190,7 +190,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    @Override
    public boolean load_Z_23() {
       boolean enabled = this.isEnabled();
-      return !SilentMovementCoordinator.init_Z() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.read_Z_13());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.read_Z_13());
    }
 
    private boolean read_Z_13() {
@@ -209,7 +209,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          && !MC.player.isSpectator()
          && !MC.player.isUsingItem()
          && !MC.player.isHandsBusy()
-         && !SilentMovementCoordinator.init_Z()
+         && !SilentMovementCoordinator.isSafeWalkActive()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20();
@@ -393,7 +393,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       float best = 3.4028235E38F;
 
       for (int i = 0; i < load_DirectionArr.length; i++) {
-         float turn = Math.abs(RotationMath.init(load_DirectionArr[i].toYRot(), fromYaw));
+         float turn = Math.abs(RotationMath.angleDelta(load_DirectionArr[i].toYRot(), fromYaw));
          if (turn < best) {
             best = turn;
             start = i;
@@ -481,7 +481,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          } else if (!this.init_List.isEmpty() && slot >= 0) {
             ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
             RotationMath.Rotation wireRotation = wire.init_Z() ? new RotationMath.Rotation(wire.read(), wire.write()) : null;
-            RotationMath.Rotation from = wireRotation != null ? wireRotation : RotationMath.init(MC.player);
+            RotationMath.Rotation from = wireRotation != null ? wireRotation : RotationMath.ofPlayer(MC.player);
             ItemStack material = MC.player.getInventory().getItem(slot);
             SurroundModule.Inner_StreamUtil plan = this.init_aK_StreamUtil_ce_DataUtil(from, material, null);
             if (plan == null) {
@@ -501,8 +501,8 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
                }
 
                if (fire && aimed) {
-                  RotationMath.Rotation outgoing = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
-                  if (outgoing != null && !(Math.abs(outgoing.load() - wireRotation.load()) > 0.05F)) {
+                  RotationMath.Rotation outgoing = SilentMovementCoordinator.getRenderRotation(MC.player);
+                  if (outgoing != null && !(Math.abs(outgoing.pitch() - wireRotation.pitch()) > 0.05F)) {
                      this.init(plan, hit);
                   }
                } else if (!slotReady) {
@@ -711,7 +711,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
                this.close_I = selected;
             }
 
-            autismclient.util.InventorySlotHelper.init_V(MC, slot);
+            autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
             this.open = slot;
          } finally {
             autismclient.util.InventorySlotArbiter.read_V(this.id());
@@ -729,7 +729,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
             this.open = -1;
          } else if (++this.poll >= 6 && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             try {
-               autismclient.util.InventorySlotHelper.init_V(MC, this.close_I);
+               autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, this.close_I);
                this.close_I = -1;
                this.open = -1;
                this.poll = 0;

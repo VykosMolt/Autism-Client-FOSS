@@ -15,7 +15,7 @@ public class BindCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         String prefix = autismclient.commands.CommandManager.init_Str();
+         String prefix = autismclient.commands.CommandManager.getPrefix();
          AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "bind <key> <command>");
          AutismClientMessaging.sendPrefixed("§7Example: §f" + prefix + "bind G " + prefix + "macro myMacro");
          return 1;

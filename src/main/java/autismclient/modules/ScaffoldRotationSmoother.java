@@ -88,13 +88,13 @@ final class ScaffoldRotationSmoother {
    int init(ValueRange band, RotationMath.Rotation from, RotationMath.Rotation target, double gcd) {
       if (this.init_Z && this.update_Z && from != null && target != null) {
          double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
-         RotationMath.Rotation endpoint = new RotationMath.Rotation(from.init() + RotationMath.init(target.init(), from.init()), target.load());
+         RotationMath.Rotation endpoint = new RotationMath.Rotation(from.yaw() + RotationMath.angleDelta(target.yaw(), from.yaw()), target.pitch());
          if (this.init(from, endpoint, band, quantum)) {
             return 1;
          }
 
          double limit = this.init(band, true) * 2.0F - quantum;
-         if (Math.abs(RotationMath.init(target.init(), from.init())) <= limit && Math.abs(target.load() - from.load()) <= limit) {
+         if (Math.abs(RotationMath.angleDelta(target.yaw(), from.yaw())) <= limit && Math.abs(target.pitch() - from.pitch()) <= limit) {
             return 2;
          }
       }
@@ -125,11 +125,11 @@ final class ScaffoldRotationSmoother {
       }
 
       if (this.load_Z && this.read_ce_DataUtil != null) {
-         float shift = 360.0F * Math.round((from.init() - this.read_ce_DataUtil.init()) / 360.0F);
+         float shift = 360.0F * Math.round((from.yaw() - this.read_ce_DataUtil.yaw()) / 360.0F);
          if (shift != 0.0F) {
-            this.init_ce_DataUtil = new RotationMath.Rotation(this.init_ce_DataUtil.init() + shift, this.init_ce_DataUtil.load());
+            this.init_ce_DataUtil = new RotationMath.Rotation(this.init_ce_DataUtil.yaw() + shift, this.init_ce_DataUtil.pitch());
             if (this.load_ce_DataUtil != null) {
-               this.load_ce_DataUtil = new RotationMath.Rotation(this.load_ce_DataUtil.init() + shift, this.load_ce_DataUtil.load());
+               this.load_ce_DataUtil = new RotationMath.Rotation(this.load_ce_DataUtil.yaw() + shift, this.load_ce_DataUtil.pitch());
             }
 
             this.close += shift;
@@ -141,12 +141,12 @@ final class ScaffoldRotationSmoother {
          && this.read_Z
          && isReturn
          && this.load_ce_DataUtil != null
-         && Math.abs(RotationMath.init(target.init(), this.load_ce_DataUtil.init())) > 45.0F;
+         && Math.abs(RotationMath.angleDelta(target.yaw(), this.load_ce_DataUtil.yaw())) > 45.0F;
       if (changedCourse) {
          this.init_ce_DataUtil = from;
          this.read_D = 0.0;
          this.write_D = init_D_D(this.load_D);
-         this.close = from.init() + RotationMath.init(target.init(), from.init());
+         this.close = from.yaw() + RotationMath.angleDelta(target.yaw(), from.yaw());
       }
 
       if (!this.load_Z || this.read_Z != isReturn) {
@@ -154,11 +154,11 @@ final class ScaffoldRotationSmoother {
          this.read_Z = isReturn;
          this.init_ce_DataUtil = from;
          if (!isReturn) {
-            this.close = from.init();
+            this.close = from.yaw();
             this.write_Z = true;
          }
 
-         this.open = isReturn && this.write_Z ? this.init_D_ce_DataUtil(target) : from.init() + RotationMath.init(target.init(), from.init());
+         this.open = isReturn && this.write_Z ? this.init_D_ce_DataUtil(target) : from.yaw() + RotationMath.angleDelta(target.yaw(), from.yaw());
          this.read_D = 0.0;
          this.write_D = init_D_D(isReturn ? this.load_D : this.init_D);
          this.update_D = Math.max(0.84, Math.min(1.08, this.init_am.close() + 0.06 * this.init_Random.nextGaussian()));
@@ -168,14 +168,14 @@ final class ScaffoldRotationSmoother {
       if (isReturn && this.write_Z) {
          this.open = this.init_D_ce_DataUtil(target);
       } else {
-         this.open = this.open + RotationMath.init(target.init(), (float)this.open);
+         this.open = this.open + RotationMath.angleDelta(target.yaw(), (float)this.open);
       }
 
-      this.load_ce_DataUtil = new RotationMath.Rotation((float)this.open, target.load());
+      this.load_ce_DataUtil = new RotationMath.Rotation((float)this.open, target.pitch());
       if (this.update_Z
          && this.read_D == 0.0
-         && Math.abs(this.load_ce_DataUtil.init() - this.init_ce_DataUtil.init()) <= this.init(band, isReturn) * 2.0F - gcd
-         && Math.abs(this.load_ce_DataUtil.load() - this.init_ce_DataUtil.load()) <= this.init(band, isReturn) * 2.0F - gcd) {
+         && Math.abs(this.load_ce_DataUtil.yaw() - this.init_ce_DataUtil.yaw()) <= this.init(band, isReturn) * 2.0F - gcd
+         && Math.abs(this.load_ce_DataUtil.pitch() - this.init_ce_DataUtil.pitch()) <= this.init(band, isReturn) * 2.0F - gcd) {
          this.write_D = 2.0;
       }
 
@@ -186,7 +186,7 @@ final class ScaffoldRotationSmoother {
       if (this.update_Z) {
          double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
          double limit = Math.max(quantum, Math.floor(this.init(band, isReturn) / quantum) * quantum);
-         double remaining = Math.max(Math.abs(this.load_ce_DataUtil.init() - from.init()), Math.abs(this.load_ce_DataUtil.load() - from.load()));
+         double remaining = Math.max(Math.abs(this.load_ce_DataUtil.yaw() - from.yaw()), Math.abs(this.load_ce_DataUtil.pitch() - from.pitch()));
          int needed = Math.max(0, (int)Math.ceil((remaining - quantum * 0.501) / limit));
          this.write_D = Math.max(this.write_D, this.read_D + needed);
       }
@@ -197,37 +197,37 @@ final class ScaffoldRotationSmoother {
    }
 
    private double init_D_ce_DataUtil(RotationMath.Rotation target) {
-      double courseChange = RotationMath.init(target.init(), (float)this.close);
-      return Math.abs(courseChange) <= 45.0 ? this.close + courseChange : this.init_ce_DataUtil.init() + RotationMath.init(target.init(), this.init_ce_DataUtil.init());
+      double courseChange = RotationMath.angleDelta(target.yaw(), (float)this.close);
+      return Math.abs(courseChange) <= 45.0 ? this.close + courseChange : this.init_ce_DataUtil.yaw() + RotationMath.angleDelta(target.yaw(), this.init_ce_DataUtil.yaw());
    }
 
    private boolean init(RotationMath.Rotation from, RotationMath.Rotation target, ValueRange band, double gcd) {
       double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
       long limit = (long)Math.floor(this.init(band, true) / quantum + 1.0E-9);
-      return Math.abs(Math.round((target.init() - from.init()) / quantum)) <= limit && Math.abs(Math.round((target.load() - from.load()) / quantum)) <= limit;
+      return Math.abs(Math.round((target.yaw() - from.yaw()) / quantum)) <= limit && Math.abs(Math.round((target.pitch() - from.pitch()) / quantum)) <= limit;
    }
 
    private RotationMath.Rotation init(RotationMath.Rotation from, double time, ValueRange band, double gcd) {
       double s = Math.min(1.0, time / this.write_D);
       double progress = autismclient.util.HumanizedAimStepper.init_D_D(Math.pow(s, this.update_D));
-      double yaw = this.load_ce_DataUtil.init() - this.init_ce_DataUtil.init();
-      double pitch = this.load_ce_DataUtil.load() - this.init_ce_DataUtil.load();
+      double yaw = this.load_ce_DataUtil.yaw() - this.init_ce_DataUtil.yaw();
+      double pitch = this.load_ce_DataUtil.pitch() - this.init_ce_DataUtil.pitch();
       double distance = Math.hypot(yaw, pitch);
       double bend = s >= 1.0
          ? 0.0
          : Math.sin(3.141592653589793 * s) * Math.min(1.5, distance * Math.abs(this.sync)) * Math.signum(this.sync) * (this.write_D - 1.0);
       RotationMath.Rotation desired = new RotationMath.Rotation(
-         (float)(this.init_ce_DataUtil.init() + yaw * progress - (distance > 0.001 ? pitch / distance * bend : 0.0)),
-         (float)(this.init_ce_DataUtil.load() + pitch * progress + (distance > 0.001 ? yaw / distance * bend : 0.0))
+         (float)(this.init_ce_DataUtil.yaw() + yaw * progress - (distance > 0.001 ? pitch / distance * bend : 0.0)),
+         (float)(this.init_ce_DataUtil.pitch() + pitch * progress + (distance > 0.001 ? yaw / distance * bend : 0.0))
       );
       double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
       double interval = Math.floor(this.init_F_ValueRange(band) / quantum + 1.0E-9) * quantum;
       double reserve = Math.max(0.0, Math.ceil(this.write_D - time - 1.0E-9)) * Math.max(0.0, interval - quantum * 0.5);
       desired = new RotationMath.Rotation(
-         (float)Math.max(this.load_ce_DataUtil.init() - reserve, Math.min(this.load_ce_DataUtil.init() + reserve, desired.init())),
-         (float)Math.max(this.load_ce_DataUtil.load() - reserve, Math.min(this.load_ce_DataUtil.load() + reserve, desired.load()))
+         (float)Math.max(this.load_ce_DataUtil.yaw() - reserve, Math.min(this.load_ce_DataUtil.yaw() + reserve, desired.yaw())),
+         (float)Math.max(this.load_ce_DataUtil.pitch() - reserve, Math.min(this.load_ce_DataUtil.pitch() + reserve, desired.pitch()))
       );
-      return RotationMath.load(from, desired, this.init_F_ValueRange(band), this.init_F_ValueRange(band), gcd);
+      return RotationMath.stepQuantizedUnwrapped(from, desired, this.init_F_ValueRange(band), this.init_F_ValueRange(band), gcd);
    }
 
    void init(RotationMath.Rotation rotation, int tick) {
@@ -240,14 +240,14 @@ final class ScaffoldRotationSmoother {
       if (this.read_Z
          && this.read_D >= this.write_D
          && this.load_ce_DataUtil != null
-         && Math.abs(rotation.init() - this.load_ce_DataUtil.init()) < 1.0F
-         && Math.abs(rotation.load() - this.load_ce_DataUtil.load()) < 1.0F) {
+         && Math.abs(rotation.yaw() - this.load_ce_DataUtil.yaw()) < 1.0F
+         && Math.abs(rotation.pitch() - this.load_ce_DataUtil.pitch()) < 1.0F) {
          this.write_Z = false;
       }
    }
 
    float init(RotationMath.Rotation from, ValueRange band, double gcd) {
-      return this.load_Z && this.load_ce_DataUtil != null ? this.init(from, Math.min(this.write_D, this.read_D + 1.0), band, gcd).init() : from.init();
+      return this.load_Z && this.load_ce_DataUtil != null ? this.init(from, Math.min(this.write_D, this.read_D + 1.0), band, gcd).yaw() : from.yaw();
    }
 
    int init_I() {

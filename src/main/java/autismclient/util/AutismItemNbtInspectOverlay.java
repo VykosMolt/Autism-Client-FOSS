@@ -48,7 +48,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    public static void load_V_8() {
       if (init_AutismItemNbtInspe != null) {
          init_AutismItemNbtInspe.init_V_Z(false);
-         OverlayManager.init_bk().read_V(init_AutismItemNbtInspe);
+         OverlayManager.getInstance().unregister(init_AutismItemNbtInspe);
       }
    }
 
@@ -91,8 +91,8 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
    public void init_V_az_StreamUtil(ItemNbtInspector.Inner_StreamUtil inspection, int anchorX, int anchorY) {
       if (inspection != null) {
-         OverlayManager manager = OverlayManager.init_bk();
-         manager.init_V(this);
+         OverlayManager manager = OverlayManager.getInstance();
+         manager.register(this);
          this.init_az_StreamUtil = inspection;
          this.sync_Z = false;
          this.init_Z = true;
@@ -107,7 +107,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          this.init_V_cH(
             new OverlayBounds(Math.max(8, Math.min(anchorX, screenW - width - 8)), Math.max(8, Math.min(anchorY, screenH - height - 8)), width, height, true, false)
          );
-         manager.update_V(this);
+         manager.bringToFront(this);
       }
    }
 
@@ -133,7 +133,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       this.write_Z = true;
       if (!this.set_Z()) {
          OverlayBounds b = this.init_cH();
-         this.init_V_cH(new OverlayBounds(b.init_I, b.load_I, this.push_I_10(), this.pop_I_10(), b.init_Z, b.load_Z));
+         this.init_V_cH(new OverlayBounds(b.x, b.y, this.push_I_10(), this.pop_I_10(), b.visible, b.collapsed));
       }
    }
 
@@ -148,10 +148,10 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       if (this.init_Z || this.a__Z()) {
          OverlayBounds bounds = this.init_cH();
          String title = this.init_az_StreamUtil == null ? "NBT Inspector" : this.init_az_StreamUtil.init_Str();
-         this.init_V_GuiGraphicsExtract_6(context, mouseX, mouseY, bounds, title, this.load_Z, this.flush_Z);
-         boolean clipped = this.init_Z_GuiGraphicsExtract(context, bounds, this.load_Z);
+         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.load_Z, this.flush_Z);
+         boolean clipped = this.beginBodyClip(context, bounds, this.load_Z);
          if (!clipped) {
-            this.init_V_GuiGraphicsExtract_14(context, bounds, this.load_Z, this.flush_Z);
+            this.renderInactiveDim(context, bounds, this.load_Z, this.flush_Z);
          } else {
             try {
                if (this.init_az_StreamUtil != null) {
@@ -197,7 +197,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   try {
                      this.init_EventBus.init_V_GuiGraphicsExtract_3(context, this.init_List.size(), (idx, bnd) -> {
                         AutismItemNbtInspectOverlay.Inner_StreamUtil line = this.init_List.get(idx);
-                        int y = UiLayoutMath.init(bnd.load, lineH, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
+                        int y = UiLayoutMath.centerTextY(bnd.load, lineH, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
                         this.init_V_GuiGraphicsExtract_3(context, line, textX, y);
                      });
                   } finally {
@@ -212,7 +212,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                      this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
                      this.init_CharEncoder.load(autismclient.gui.f.b.l.write),
                      this.init_I_2 + this.set_I_6() + 2,
-                     UiLayoutMath.init(footerY, this.clear(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
+                     UiLayoutMath.centerTextY(footerY, this.clear(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
                      false
                   );
 
@@ -244,8 +244,8 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   this.read_I - this.set_I_6() * 2
                );
             } finally {
-               this.init_V_GuiGraphicsExtract_Z(context, clipped);
-               this.init_V_GuiGraphicsExtract_14(context, bounds, this.load_Z, this.flush_Z);
+               this.endBodyClip(context, clipped);
+               this.renderInactiveDim(context, bounds, this.load_Z, this.flush_Z);
             }
 
             return;
@@ -261,7 +261,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
       OverlayBounds bounds = this.init_cH();
       if (button == 0 && mouseY >= this.load_I && mouseY <= this.load_I + 14 && mouseX >= this.init_I_2 && mouseX <= this.init_I_2 + this.read_I) {
-         if (this.write(mouseX, mouseY, bounds)) {
+         if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
             this.read_V_4();
             return true;
          } else {
@@ -388,7 +388,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
             && mouseX <= this.init_I_2 + this.read_I
             && mouseY >= this.load_I
             && mouseY <= this.load_I + 14
-            && !this.read_Z_D_2(mouseX, mouseY, this.init_cH());
+            && !this.isOverHeader(mouseX, mouseY, this.init_cH());
    }
 
    @Override
@@ -812,7 +812,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int write(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.load(
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
          autismclient.gui.f.b.k.init(
             this.init_Font,
             label,
@@ -836,7 +836,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int clear() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int reset() {
@@ -844,7 +844,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int start_I_6() {
-      return autismclient.gui.ui.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
    private int stop() {

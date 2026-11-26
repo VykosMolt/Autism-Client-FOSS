@@ -39,7 +39,7 @@ public final class KeyValueLabelNode extends LayoutNode {
 
    @Override
    public float init_F_SyncManager(LayoutContext context) {
-      return autismclient.gui.f.UiHelper.init(context.init_Font()).init(this.init_Str + this.load_Str);
+      return autismclient.gui.f.UiHelper.init(context.init_Font()).measureWidth(this.init_Str + this.load_Str);
    }
 
    @Override
@@ -55,9 +55,9 @@ public final class KeyValueLabelNode extends LayoutNode {
          int drawY = Math.round(this.load_F) + Math.max(1, (Math.round(this.write) - 9) / 2);
          String safeKey = this.init_Str == null ? "" : this.init_Str;
          String safeValue = this.load_Str == null ? "" : this.load_Str;
-         text.init_V_GuiGraphicsExtract_2(context.init_GuiGraphicsExtract(), safeKey, drawX, drawY, context.init_I_I(this.init_I));
-         int keyWidth = text.init(safeKey);
-         text.load(
+         text.draw(context.init_GuiGraphicsExtract(), safeKey, drawX, drawY, context.init_I_I(this.init_I));
+         int keyWidth = text.measureWidth(safeKey);
+         text.drawFitted(
             context.init_GuiGraphicsExtract(),
             safeValue,
             drawX + keyWidth,

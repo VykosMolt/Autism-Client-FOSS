@@ -471,7 +471,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    @Override
    public boolean load_Z_23() {
       boolean enabled = this.isEnabled();
-      return !SilentMovementCoordinator.init_Z() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.flush());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.flush());
    }
 
    private boolean sync() {
@@ -512,7 +512,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !BlinkPacketManager.load_Z()
-         && !SilentMovementCoordinator.init_Z()
+         && !SilentMovementCoordinator.isSafeWalkActive()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20();
@@ -660,7 +660,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             return;
          }
 
-         RotationMath.Rotation outgoing = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
+         RotationMath.Rotation outgoing = SilentMovementCoordinator.getRenderRotation(MC.player);
          if (outgoing == null || !init_Z_ce_DataUtil_ce_DataUtil(outgoing, wire)) {
             return;
          }
@@ -675,7 +675,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private static boolean init_Z_ce_DataUtil_ce_DataUtil(RotationMath.Rotation first, RotationMath.Rotation second) {
-      return Math.abs(RotationMath.init(first.init(), second.init())) <= 0.05F && Math.abs(first.load() - second.load()) <= 0.05F;
+      return Math.abs(RotationMath.angleDelta(first.yaw(), second.yaw())) <= 0.05F && Math.abs(first.pitch() - second.pitch()) <= 0.05F;
    }
 
    private void load_V_2() {
@@ -699,7 +699,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private RotationMath.Rotation load_ce_DataUtil() {
       RotationMath.Rotation wire = this.init_ce_DataUtil();
-      return wire != null ? wire : RotationMath.init(MC.player);
+      return wire != null ? wire : RotationMath.ofPlayer(MC.player);
    }
 
    private boolean init_Z_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore step) {
@@ -1656,7 +1656,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             var10000 = autismclient.util.ExplosionDamageCalculator.init_D_LivingEntity(entity);
             break;
          case "FOV":
-            var10000 = RotationMath.load(RotationMath.init(MC.player), RotationMath.init(entity.getBoundingBox().getCenter(), eye));
+            var10000 = RotationMath.vectorAngleDegrees(RotationMath.ofPlayer(MC.player), RotationMath.lookAt(entity.getBoundingBox().getCenter(), eye));
             break;
          default:
             var10000 = distanceSq;
@@ -2274,7 +2274,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             }
 
             try {
-               autismclient.util.InventorySlotHelper.init_V(MC, slot);
+               autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
                this.read_J = System.nanoTime() + this.integer("switch-delay") * 1000000L;
             } finally {
                autismclient.util.InventorySlotArbiter.read_V("anchor-aura");

@@ -21,9 +21,9 @@ public class SendCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "send <packetName> [field=value ...]");
+         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.getPrefix() + "send <packetName> [field=value ...]");
          AutismClientMessaging.sendPrefixed("§7Tip: press Tab after the space to search C2S packet classes.");
-         AutismClientMessaging.sendPrefixed("§7Example: §f" + autismclient.commands.CommandManager.init_Str() + "send ServerboundSetCarriedItemPacket slot=0");
+         AutismClientMessaging.sendPrefixed("§7Example: §f" + autismclient.commands.CommandManager.getPrefix() + "send ServerboundSetCarriedItemPacket slot=0");
          return 1;
       });
       root.then(

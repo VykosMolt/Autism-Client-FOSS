@@ -100,7 +100,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       boolean next = !this.write_Z;
       this.write_Z = next;
       this.init_cc.init_V_Consumer(s -> s.pinned = next);
-      OverlayManager.init_bk().init_V_cX_cX_DataUtil(this, next ? AutismOverlay.RenderLayer.BACKGROUND_STATUS : AutismOverlay.RenderLayer.HOST_SCREEN);
+      OverlayManager.getInstance().register(this, next ? AutismOverlay.RenderLayer.BACKGROUND_STATUS : AutismOverlay.RenderLayer.HOST_SCREEN);
       if (!next && Minecraft.getInstance().gui.screen() == null) {
          this.init_V_Z(false);
       }
@@ -288,13 +288,13 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             }
          }
 
-         OverlayBounds bounds = this.init_cH_cX(this);
-         this.init_I_2 = bounds.init_I;
-         this.load_I = bounds.load_I;
-         this.read_I = bounds.read;
-         this.write = bounds.write;
-         this.init_V_GuiGraphicsExtract_6(graphics, mx, my, this.init_cH(), "AI Assistant", this.load_Z, this.sync_Z);
-         if (!this.init_Z_Z(this.load_Z)) {
+         OverlayBounds bounds = this.clampCurrentBounds(this);
+         this.init_I_2 = bounds.x;
+         this.load_I = bounds.y;
+         this.read_I = bounds.width;
+         this.write = bounds.height;
+         this.renderWindowFrame(graphics, mx, my, this.init_cH(), "AI Assistant", this.load_Z, this.sync_Z);
+         if (!this.isVisuallyCollapsed(this.load_Z)) {
             long now = System.currentTimeMillis();
             this.init_cF.init(now, this.init_ce.init_Z);
             this.load_V_I_I(mx, my);
@@ -306,7 +306,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             );
             autismclient.gui.f.NetHelper toolbar = autismclient.gui.f.NetHelper.init(content.read(), content.write(), content.update(), AiUiKit.init_I());
             int divider = toolbar.load() + 2;
-            PacketUtil.init_V_GuiGraphicsExtract_2(graphics, content.read(), divider, content.update(), this.init_cE.init_JsonUtil.put);
+            PacketUtil.init_V_GuiGraphicsExtract_2(graphics, content.read(), divider, content.update(), this.init_cE.init_JsonUtil.divider);
             autismclient.gui.f.NetHelper area = autismclient.gui.f.NetHelper.init(
                content.read(), divider + 1 + 2, content.update(), Math.max(0, content.load() - divider - 1 - 2)
             );
@@ -386,7 +386,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             String label = init_Map.getOrDefault(level, level);
             autismclient.gui.f.NetHelper chip = autismclient.gui.f.NetHelper.init(cx, bar.write(), this.init_cE.init_I_Str(label) + 10, h);
             autismclient.gui.ui.widgets.PillBadgeRenderer.init(
-               this.init_cE.init_SyncManager, chip, label, colors.clear, level.equals(this.init_cF.sync_Str), this.init_cE.init_Z_NetHelper(chip)
+               this.init_cE.init_SyncManager, chip, label, colors.accent, level.equals(this.init_cF.sync_Str), this.init_cE.init_Z_NetHelper(chip)
             );
             this.init_cE.init_V_NetHelper(chip, () -> this.read(level), null, "Reasoning effort");
             cx += chip.update() + 2;
@@ -403,7 +403,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
                title,
                title.read() + 4,
                title.update() - 8,
-               colors.prev
+               colors.textPrimary
             );
       } else {
          if (this.update_Z && !this.init_BitSetUtil.load_Z()) {
@@ -414,11 +414,11 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             this.init_cE.init_V_BitSetUtil_NetHelper(this.init_BitSetUtil, title);
          } else {
             if (this.init_cE.init_Z_NetHelper(title)) {
-               PacketUtil.load(this.init_cE.init_GuiGraphicsExtract, title, 3, colors.push);
+               PacketUtil.load(this.init_cE.init_GuiGraphicsExtract, title, 3, colors.cardSurfaceElevated);
             }
 
             String text = this.load_Str();
-            this.init_cE.init_V_Str_3(text, title, title.read() + 4, title.update() - 8, text.equals("New chat") ? colors.valid : colors.prev);
+            this.init_cE.init_V_Str_3(text, title, title.read() + 4, title.update() - 8, text.equals("New chat") ? colors.textSecondary : colors.textPrimary);
             this.init_cE.init_V_NetHelper(title, this::add_V, null, "Click to rename");
          }
       }
@@ -440,7 +440,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             return true;
          }
 
-         if (this.write(x, y, this.init_cH())) {
+         if (this.isOverHeaderDragArea(x, y, this.init_cH())) {
             this.init_V_Z(false);
             return true;
          }

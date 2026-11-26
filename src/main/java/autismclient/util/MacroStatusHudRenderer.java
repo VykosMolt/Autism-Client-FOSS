@@ -139,7 +139,7 @@ public final class MacroStatusHudRenderer {
    }
 
    private static boolean init(boolean runsMatch, int current, int total, int scroll, int visibleRows, int panelWidth, long now) {
-      boolean layoutChanged = !runsMatch || sync != total || close != visibleRows || open != panelWidth || poll != ThemePaletteManager.init_I();
+      boolean layoutChanged = !runsMatch || sync != total || close != visibleRows || open != panelWidth || poll != ThemePaletteManager.generation();
       if (layoutChanged) {
          return true;
       } else if (init_List.isEmpty()) {
@@ -150,7 +150,7 @@ public final class MacroStatusHudRenderer {
    }
 
    private static int init_I() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-9448565, ThemePaletteManager.ColorRole.ACCENT);
+      return ThemePaletteManager.recolor(-9448565, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    private static void init(Font textRenderer, List<MacroExecutor.ActiveRunSnapshot> runs, int rowsPerRun, int panelWidth, long now) {
@@ -221,7 +221,7 @@ public final class MacroStatusHudRenderer {
       flush = init(primaryCurrent, primaryTotal, rowsPerRun);
       close = init(primaryTotal, rowsPerRun);
       open = panelWidth;
-      poll = ThemePaletteManager.init_I();
+      poll = ThemePaletteManager.generation();
       init_Str = runs.size() == 1 ? primary.init_Str() : runs.size() + " macros";
       load_Str = autismclient.gui.f.b.k.init(textRenderer, runs.size() == 1 ? "MACRO" : "MACROS", contentWidth, read_Identifier, read_I);
       init_List = rows;

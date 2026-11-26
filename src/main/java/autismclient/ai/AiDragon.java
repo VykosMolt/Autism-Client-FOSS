@@ -2421,7 +2421,7 @@ final class AiDragon {
             void init_V_32() {
                int slot = AiItems.read();
                if (slot >= 0 && mc.player.getInventory().getSelectedSlot() != slot) {
-                  autismclient.util.InventorySlotHelper.init_V(mc, slot);
+                  autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, slot);
                }
             }
 

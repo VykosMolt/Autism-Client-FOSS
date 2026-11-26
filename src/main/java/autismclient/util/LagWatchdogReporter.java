@@ -163,7 +163,7 @@ public final class LagWatchdogReporter {
                + autismclient.modules.aD.init_Z();
          }
       );
-      init(sb, "overlays", () -> OverlayManager.init_bk().init_Str());
+      init(sb, "overlays", () -> OverlayManager.getInstance().debugSummary());
       init(sb, "packetLogger", () -> {
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          AutismPacketLoggerOverlay logger = module == null ? null : module.load_AutismPacketLogger();

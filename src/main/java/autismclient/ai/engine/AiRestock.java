@@ -291,7 +291,7 @@ public final class AiRestock {
          @Override
          public boolean init(int backpackSlot, int hotbarSlot) {
             if (mc.player != null && !aD.read_Z()) {
-               int slot = InventorySlotHelper.load_I(mc, backpackSlot);
+               int slot = InventorySlotHelper.toScreenSlot(mc, backpackSlot);
                if (slot < 0) {
                   return false;
                }

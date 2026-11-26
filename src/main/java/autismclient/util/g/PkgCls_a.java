@@ -1370,12 +1370,12 @@ public final class PkgCls_a {
 
    private static void read(Minecraft mc) {
       if (mc != null && mc.options != null) {
-         KeyMappingControl.init(mc.options.keyUp).autism$resetPressedState();
-         KeyMappingControl.init(mc.options.keyDown).autism$resetPressedState();
-         KeyMappingControl.init(mc.options.keyLeft).autism$resetPressedState();
-         KeyMappingControl.init(mc.options.keyRight).autism$resetPressedState();
-         KeyMappingControl.init(mc.options.keyJump).autism$resetPressedState();
-         KeyMappingControl.init(mc.options.keyShift).autism$resetPressedState();
+         KeyMappingControl.of(mc.options.keyUp).autism$resetPressedState();
+         KeyMappingControl.of(mc.options.keyDown).autism$resetPressedState();
+         KeyMappingControl.of(mc.options.keyLeft).autism$resetPressedState();
+         KeyMappingControl.of(mc.options.keyRight).autism$resetPressedState();
+         KeyMappingControl.of(mc.options.keyJump).autism$resetPressedState();
+         KeyMappingControl.of(mc.options.keyShift).autism$resetPressedState();
       }
    }
 

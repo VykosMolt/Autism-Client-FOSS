@@ -53,11 +53,11 @@ public final class LayoutViewport {
       int top = (int)Math.floor(Math.min(y1, y2));
       int right = (int)Math.ceil(Math.max(x1, x2));
       int bottom = (int)Math.ceil(Math.max(y1, y2));
-      autismclient.gui.ui.UiClipStack.init_HashUtil()
-         .init(context, autismclient.gui.f.NetHelper.init(left, top, Math.max(0, right - left), Math.max(0, bottom - top)));
+      autismclient.gui.ui.UiClipStack.getInstance()
+         .push(context, autismclient.gui.f.NetHelper.init(left, top, Math.max(0, right - left), Math.max(0, bottom - top)));
    }
 
    public void read(GuiGraphicsExtractor context) {
-      autismclient.gui.ui.UiClipStack.init_HashUtil().init(context);
+      autismclient.gui.ui.UiClipStack.getInstance().pop(context);
    }
 }

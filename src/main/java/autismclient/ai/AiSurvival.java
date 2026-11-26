@@ -299,7 +299,7 @@ final class AiSurvival {
                   this.read_Z = true;
                   this.init_DataUtil.init_V();
                   if (this.init_Minecraft.options != null) {
-                     this.init_Minecraft.options.keyUse.setDown(autismclient.util.KeyMappingControl.init(this.init_Minecraft.options.keyUse).autism$physicalForBody());
+                     this.init_Minecraft.options.keyUse.setDown(autismclient.util.KeyMappingControl.of(this.init_Minecraft.options.keyUse).autism$physicalForBody());
                   }
 
                   if (this.init_Minecraft.player == this.load_Obj && this.init_Minecraft.level == this.init_Obj) {

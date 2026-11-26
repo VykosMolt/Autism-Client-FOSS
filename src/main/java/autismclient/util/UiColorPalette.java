@@ -38,19 +38,19 @@ public class UiColorPalette {
    }
 
    public static int init() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.ColorRole.ACCENT);
+      return ThemePaletteManager.recolor(-5093304, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int load() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(1722959944, ThemePaletteManager.ColorRole.ACCENT);
+      return ThemePaletteManager.recolor(1722959944, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int read() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.ColorRole.ACCENT);
+      return ThemePaletteManager.recolor(-5093304, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int write() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-7522248, ThemePaletteManager.ColorRole.ACCENT);
+      return ThemePaletteManager.recolor(-7522248, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int update() {
@@ -82,7 +82,7 @@ public class UiColorPalette {
    }
 
    public static int pop() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(1715151911, ThemePaletteManager.ColorRole.OUTLINE);
+      return ThemePaletteManager.recolor(1715151911, ThemePaletteManager.ColorRole.OUTLINE);
    }
 
    public static int tick() {
@@ -102,11 +102,11 @@ public class UiColorPalette {
    }
 
    public static int put() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.ColorRole.ACCENT);
+      return ThemePaletteManager.recolor(-5093304, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int add() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-6388344, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-6388344, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int clear() {
@@ -114,7 +114,7 @@ public class UiColorPalette {
    }
 
    public static int reset() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-3361096, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-3361096, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int start() {
@@ -130,11 +130,11 @@ public class UiColorPalette {
    }
 
    public static int prev() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-1938838, ThemePaletteManager.ColorRole.DANGER);
+      return ThemePaletteManager.recolor(-1938838, ThemePaletteManager.ColorRole.DANGER);
    }
 
    public static int valid() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-1938838, ThemePaletteManager.ColorRole.DANGER);
+      return ThemePaletteManager.recolor(-1938838, ThemePaletteManager.ColorRole.DANGER);
    }
 
    public static int size() {
@@ -142,11 +142,11 @@ public class UiColorPalette {
    }
 
    public static int data() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-11018872, ThemePaletteManager.ColorRole.SUCCESS);
+      return ThemePaletteManager.recolor(-11018872, ThemePaletteManager.ColorRole.SUCCESS);
    }
 
    public static int value() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-11018872, ThemePaletteManager.ColorRole.SUCCESS);
+      return ThemePaletteManager.recolor(-11018872, ThemePaletteManager.ColorRole.SUCCESS);
    }
 
    public static int cache() {
@@ -202,15 +202,15 @@ public class UiColorPalette {
    }
 
    public static int block() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-10035062, ThemePaletteManager.ColorRole.TOGGLE);
+      return ThemePaletteManager.recolor(-10035062, ThemePaletteManager.ColorRole.TOGGLE);
    }
 
    public static int chunk() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-12531347, ThemePaletteManager.ColorRole.TOGGLE);
+      return ThemePaletteManager.recolor(-12531347, ThemePaletteManager.ColorRole.TOGGLE);
    }
 
    public static int table() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-2828, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int init(boolean c2s, int rowIndex, boolean hovered) {
@@ -256,23 +256,23 @@ public class UiColorPalette {
    }
 
    public static int scan() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-791058, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-791058, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int parse() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-3361096, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-3361096, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int bind() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-6388344, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-6388344, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int a() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-6388344, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-6388344, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int b() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-791058, ThemePaletteManager.ColorRole.TEXT);
+      return ThemePaletteManager.recolor(-791058, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int c() {
@@ -304,11 +304,11 @@ public class UiColorPalette {
    }
 
    public static int j() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.ColorRole.ACCENT);
+      return ThemePaletteManager.recolor(-5093304, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int k() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-7522248, ThemePaletteManager.ColorRole.ACCENT);
+      return ThemePaletteManager.recolor(-7522248, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int l() {

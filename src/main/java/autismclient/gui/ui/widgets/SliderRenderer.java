@@ -5,10 +5,10 @@ public final class SliderRenderer {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, double ratio, boolean hovered) {
-      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       ratio = Math.max(0.0, Math.min(1.0, ratio));
       int radius = 3;
-      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, colors.pop, colors.set);
+      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, colors.inputSurface, colors.borderControl);
       autismclient.gui.f.NetHelper track = bounds.load(3, Math.max(4, bounds.sync() / 2 - 1), 3, Math.max(4, bounds.sync() / 2 - 1));
       if (track.sync() <= 0) {
          track = autismclient.gui.f.NetHelper.init(bounds.read() + 3, bounds.write() + bounds.sync() / 2, Math.max(1, bounds.update() - 6), 1);
@@ -18,7 +18,7 @@ public final class SliderRenderer {
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), track, trackRadius, -869256388);
       int fillW = (int)Math.round(track.update() * ratio);
       autismclient.gui.f.PacketUtil.load(
-         context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(track.read(), track.write(), fillW, track.sync()), trackRadius, colors.clear
+         context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(track.read(), track.write(), fillW, track.sync()), trackRadius, colors.accent
       );
       float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered);
       if (hoverT > 0.001F) {
@@ -30,7 +30,7 @@ public final class SliderRenderer {
       float knobR = Math.max(1.5F, bounds.sync() / 2.0F - 2.0F);
       float knobCx = Math.max(bounds.read() + 2 + knobR, Math.min(bounds.init() - 2 - knobR, track.read() + fillW));
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract(
-         context.init_GuiGraphicsExtract(), knobCx, bounds.write() + bounds.sync() / 2.0F, knobR, init_I_I(colors.valid, colors.prev, hoverT)
+         context.init_GuiGraphicsExtract(), knobCx, bounds.write() + bounds.sync() / 2.0F, knobR, init_I_I(colors.textSecondary, colors.textPrimary, hoverT)
       );
    }
 

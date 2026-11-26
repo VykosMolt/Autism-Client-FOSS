@@ -328,15 +328,15 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private int read_I_5() {
-      return autismclient.gui.ui.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int write() {
-      return autismclient.gui.ui.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
    private int update() {
-      return autismclient.gui.ui.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
    private int sync() {
@@ -364,7 +364,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private int init_I_2(int top, int height) {
-      return autismclient.gui.f.UiHelper.init(this.font).init_I(autismclient.gui.f.NetHelper.init(0, top, 1, height));
+      return autismclient.gui.f.UiHelper.init(this.font).centerTextY(autismclient.gui.f.NetHelper.init(0, top, 1, height));
    }
 
    private int close() {
@@ -446,7 +446,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private int init_I_Str_6(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.load(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
    }
 
    private int load(String text) {

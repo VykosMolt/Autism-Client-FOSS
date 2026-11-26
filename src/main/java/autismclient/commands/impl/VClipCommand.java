@@ -20,7 +20,7 @@ public class VClipCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         String prefix = autismclient.commands.CommandManager.init_Str();
+         String prefix = autismclient.commands.CommandManager.getPrefix();
          AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "vclip <blocks>");
          AutismClientMessaging.sendPrefixed("§7Modes: §fdefault, top, bottom, paper, single, custom");
          AutismClientMessaging.sendPrefixed("§7Examples: §f" + prefix + "vclip top §7or §f" + prefix + "vclip custom -25 10 20 true true");

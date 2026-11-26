@@ -151,7 +151,7 @@ public final class aD {
    private static void write_V() {
       read_V();
       autismclient.util.bi.init_V();
-      OverlayManager.init_bk().update_V();
+      OverlayManager.getInstance().closeAll();
       autismclient.util.BlockPreviewRenderer.load();
       PayloadStudyTracker.init_V();
       PayloadSubscriptionManager.load();

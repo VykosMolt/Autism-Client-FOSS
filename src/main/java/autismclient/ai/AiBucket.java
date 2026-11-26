@@ -143,7 +143,7 @@ final class AiBucket {
                      return this.init(AiOperation.Status.FAILED, "No visible source face within reach at " + this.init_BlockPos.toShortString());
                   }
 
-                  this.init_DataUtil.init_V_ce_DataUtil(autismclient.util.RotationMath.init(point, mc.player.getEyePosition()));
+                  this.init_DataUtil.init_V_ce_DataUtil(autismclient.util.RotationMath.lookAt(point, mc.player.getEyePosition()));
                   this.init_DataUtil.load_V();
                   if (++this.load_I > 60) {
                      return this.init(AiOperation.Status.FAILED, "Could not aim at " + this.init_BlockPos.toShortString());

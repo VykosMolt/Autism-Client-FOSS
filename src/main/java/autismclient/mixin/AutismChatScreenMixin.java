@@ -42,7 +42,7 @@ public abstract class AutismChatScreenMixin {
       if (message != null) {
          String trimmed = message.trim();
          if (!trimmed.isEmpty()) {
-            if (!"^toggleautism".equalsIgnoreCase(trimmed) && CommandManager.load_Z(trimmed)) {
+            if (!"^toggleautism".equalsIgnoreCase(trimmed) && CommandManager.shouldSuppressInHiddenMode(trimmed)) {
                ci.cancel();
             } else if ("^toggleautism".equalsIgnoreCase(trimmed)) {
                if (AuditHideOff.disable()) {

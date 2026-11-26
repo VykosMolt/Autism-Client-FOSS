@@ -82,7 +82,7 @@ public class LabelNode extends LayoutNode {
             context.init_CharEncoder().init_Identifier_l(this.init_l),
             context.init_I_I(context.init_CharEncoder().load(this.init_l)),
             Math.round(this.init_F),
-            UiLayoutMath.init(Math.round(this.load_F), Math.round(this.write), context.init_CharEncoder().init_I_l(this.init_l), context.init_CharEncoder().flush()),
+            UiLayoutMath.centerTextY(Math.round(this.load_F), Math.round(this.write), context.init_CharEncoder().init_I_l(this.init_l), context.init_CharEncoder().flush()),
             this.write_Z
          );
       }

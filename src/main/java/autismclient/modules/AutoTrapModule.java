@@ -181,7 +181,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
    @Override
    public boolean load_Z_23() {
-      return SilentMovementCoordinator.init_Z() ? false : autismclient.util.SilentRotationManager.init_Z() || this.isEnabled() && this.init_Z_14();
+      return SilentMovementCoordinator.isSafeWalkActive() ? false : autismclient.util.SilentRotationManager.init_Z() || this.isEnabled() && this.init_Z_14();
    }
 
    @Override
@@ -255,7 +255,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return false;
       } else if (!MC.player.isAlive() || MC.player.isSpectator()) {
          return false;
-      } else if (SilentMovementCoordinator.init_Z() || ScaffoldModule.update_Z_5()) {
+      } else if (SilentMovementCoordinator.isSafeWalkActive() || ScaffoldModule.update_Z_5()) {
          return false;
       } else if (!MC.player.isUsingItem() && !MC.player.isHandsBusy()) {
          return MC.gui != null && MC.gui.screen() == null && MC.gui.overlay() == null ? !AutoTotemModule.init_Z_6() && !AutoArmorModule.init_Z_20() : false;
@@ -418,8 +418,8 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      RotationMath.Rotation rotation = RotationMath.init(Vec3.atCenterOf(cell), eye);
-      return Math.abs(rotation.load()) > autismclient.util.BlockPlacementPlanner.init_D()
+      RotationMath.Rotation rotation = RotationMath.lookAt(Vec3.atCenterOf(cell), eye);
+      return Math.abs(rotation.pitch()) > autismclient.util.BlockPlacementPlanner.init_D()
          ? null
          : new AutoTrapModule.Inner_BufferHelper(false, source.init_I(), new AABB(cell), source.load(), source.init_InteractionHand(), rotation, true);
    }
@@ -640,8 +640,8 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    }
 
    private float init_F_Entity_Vec3(Entity entity, Vec3 eyes) {
-      RotationMath.Rotation toCenter = RotationMath.init(entity.getBoundingBox().getCenter(), eyes);
-      return RotationMath.load(RotationMath.init(MC.player), toCenter);
+      RotationMath.Rotation toCenter = RotationMath.lookAt(entity.getBoundingBox().getCenter(), eyes);
+      return RotationMath.vectorAngleDegrees(RotationMath.ofPlayer(MC.player), toCenter);
    }
 
    private void read_V_6() {
@@ -937,7 +937,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
       autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
          new autismclient.util.BlockPlacementPlanner.Query(cell, eye, reach, this.init_U_NetHelper_ItemStack_InteractionHand(material, hand))
-            .init_U_StateCache_ce_DataUtil(RotationMath.init(MC.player))
+            .init_U_StateCache_ce_DataUtil(RotationMath.ofPlayer(MC.player))
             .init_U_StateCache_D(autismclient.util.BlockPlacementPlanner.init_D())
             .init_U_StateCache_Z(MC.player.isSecondaryUseActive())
             .load(false)
@@ -1011,11 +1011,11 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       RotationMath.Rotation wireRotation = new RotationMath.Rotation(wire.read(), wire.write());
-      if (!init_Z_F(wireRotation.load())) {
+      if (!init_Z_F(wireRotation.pitch())) {
          return null;
       }
 
-      RotationMath.Rotation silent = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
+      RotationMath.Rotation silent = SilentMovementCoordinator.getRenderRotation(MC.player);
       if (silent != null && !init_Z_ce_DataUtil_ce_DataUtil_2(silent, wireRotation)) {
          return null;
       }
@@ -1121,7 +1121,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
    private BlockHitResult init_BlockHitResult_ce_DataUtil(RotationMath.Rotation rotation) {
       Vec3 eye = MC.player.getEyePosition();
-      Vec3 end = eye.add(Vec3.directionFromRotation(rotation.load(), rotation.init()).scale(this.init_D_3()));
+      Vec3 end = eye.add(Vec3.directionFromRotation(rotation.pitch(), rotation.yaw()).scale(this.init_D_3()));
       HitResult result = MC.level
          .clip(new ClipContext(eye, end, net.minecraft.world.level.ClipContext.Block.OUTLINE, Fluid.SOURCE_ONLY, CollisionContext.of(MC.player)));
       return result instanceof BlockHitResult hit && result.getType() == Type.BLOCK ? hit : null;
@@ -1206,7 +1206,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
                this.next = selected;
             }
 
-            autismclient.util.InventorySlotHelper.init_V(MC, slot);
+            autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
          } finally {
             autismclient.util.InventorySlotArbiter.read_V(this.id());
          }
@@ -1227,7 +1227,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    }
 
    private static boolean init_Z_ce_DataUtil_ce_DataUtil_2(RotationMath.Rotation first, RotationMath.Rotation second) {
-      return Math.abs(RotationMath.init(first.init(), second.init())) <= 0.05F && Math.abs(first.load() - second.load()) <= 0.05F;
+      return Math.abs(RotationMath.angleDelta(first.yaw(), second.yaw())) <= 0.05F && Math.abs(first.pitch() - second.pitch()) <= 0.05F;
    }
 
    private void write_V_6() {

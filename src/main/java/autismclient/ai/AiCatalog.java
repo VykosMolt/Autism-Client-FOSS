@@ -41,7 +41,7 @@ public final class AiCatalog {
    public void init_V() {
       long source = Objects.hash(
          autismclient.modules.al.init_I(),
-         autismclient.commands.CommandManager.init_I(),
+         autismclient.commands.CommandManager.getRegistryVersion(),
          AiCapabilities.revision(),
          AiSourceKnowledge.init_Str(),
          MacroActionRegistry.entries().stream().map(ex -> ex.typeId()).toList(),
@@ -151,8 +151,8 @@ public final class AiCatalog {
             }
          }
 
-         for (Command command : autismclient.commands.CommandManager.init_List()) {
-            init(entries, init(command, autismclient.commands.CommandManager.init_Str(command), autismclient.commands.CommandManager.init_List(command)), "{}");
+         for (Command command : autismclient.commands.CommandManager.getCommands()) {
+            init(entries, init(command, autismclient.commands.CommandManager.getPrimaryName(command), autismclient.commands.CommandManager.getUsageForms(command)), "{}");
          }
 
          for (String id : CustomMenuAdapterRegistry.ids()) {
@@ -353,9 +353,9 @@ public final class AiCatalog {
             dependency = AiSourceKnowledge.load(module.getClass());
          }
       } else if (d.id().startsWith("command:")) {
-         dependency = autismclient.commands.CommandManager.init_List()
+         dependency = autismclient.commands.CommandManager.getCommands()
             .stream()
-            .filter(c -> d.id().equals("command:" + autismclient.commands.CommandManager.init_Str(c)))
+            .filter(c -> d.id().equals("command:" + autismclient.commands.CommandManager.getPrimaryName(c)))
             .map(c -> AiSourceKnowledge.load(c.getClass()))
             .findFirst()
             .orElse("");

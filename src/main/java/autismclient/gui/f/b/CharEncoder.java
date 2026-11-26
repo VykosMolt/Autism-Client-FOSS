@@ -19,16 +19,16 @@ public final class CharEncoder {
    private int open = -2147483648;
 
    private static int init_I_I_ct_DataUtil(int color, ThemePaletteManager.ColorRole channel) {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(color, channel);
+      return ThemePaletteManager.recolor(color, channel);
    }
 
    private autismclient.gui.ui.UiColorScheme init_JsonUtil() {
-      int generation = ThemePaletteManager.init_I();
+      int generation = ThemePaletteManager.generation();
       if (this.init_JsonUtil == null) {
          this.init_JsonUtil = new autismclient.gui.ui.UiColorScheme();
          this.open = generation;
       } else if (this.open != generation) {
-         this.init_JsonUtil.init();
+         this.init_JsonUtil.refresh();
          this.open = generation;
       }
 
@@ -203,24 +203,24 @@ public final class CharEncoder {
 
    private int init_I_I(int rgb, int alpha, float tint) {
       int accent = init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.ACCENT);
-      int tinted = UiLayoutMath.init_I_I(0xFF000000 | rgb & 16777215, 0xFF000000 | accent & 16777215, tint);
+      int tinted = UiLayoutMath.lerpColor(0xFF000000 | rgb & 16777215, 0xFF000000 | accent & 16777215, tint);
       return alpha << 24 | tinted & 16777215;
    }
 
    public int poll() {
-      return this.init_JsonUtil().update;
+      return this.init_JsonUtil().windowSurface;
    }
 
    public int push() {
-      return UiLayoutMath.init_I_I(this.init_JsonUtil().update, -736814558, 0.16F);
+      return UiLayoutMath.lerpColor(this.init_JsonUtil().windowSurface, -736814558, 0.16F);
    }
 
    public int pop() {
-      return this.init_JsonUtil().flush;
+      return this.init_JsonUtil().headerSurface;
    }
 
    public int tick() {
-      return autismclient.gui.f.PacketUtil.init(this.init_JsonUtil().flush, 0.8F);
+      return autismclient.gui.f.PacketUtil.init(this.init_JsonUtil().headerSurface, 0.8F);
    }
 
    public int run() {
@@ -228,15 +228,15 @@ public final class CharEncoder {
    }
 
    public int get() {
-      return this.init_JsonUtil().run;
+      return this.init_JsonUtil().borderStrong;
    }
 
    public int set() {
-      return this.init_JsonUtil().get;
+      return this.init_JsonUtil().borderSubtle;
    }
 
    public int put() {
-      return this.init_JsonUtil().add;
+      return this.init_JsonUtil().innerHighlight;
    }
 
    public int add() {
@@ -253,13 +253,13 @@ public final class CharEncoder {
          case PRIMARY:
          case DANGER:
          case SUCCESS:
-            var10000 = UiLayoutMath.init_I_I(this.init_JsonUtil().load, this.flush(variant), 0.2F);
+            var10000 = UiLayoutMath.lerpColor(this.init_JsonUtil().buttonSurface, this.flush(variant), 0.2F);
             break;
          case SECONDARY:
-            var10000 = this.init_JsonUtil().load;
+            var10000 = this.init_JsonUtil().buttonSurface;
             break;
          case GHOST:
-            var10000 = this.init_JsonUtil().open;
+            var10000 = this.init_JsonUtil().cardSurface;
             break;
          default:
             throw new MatchException(null, null);
@@ -275,14 +275,14 @@ public final class CharEncoder {
             var10000 = init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.BUTTON);
             break;
          case DANGER:
-            var10000 = this.init_JsonUtil().data;
+            var10000 = this.init_JsonUtil().danger;
             break;
          case SUCCESS:
-            var10000 = this.init_JsonUtil().stop;
+            var10000 = this.init_JsonUtil().success;
             break;
          case SECONDARY:
          case GHOST:
-            var10000 = this.init_JsonUtil().set;
+            var10000 = this.init_JsonUtil().borderControl;
             break;
          default:
             throw new MatchException(null, null);
@@ -301,13 +301,13 @@ public final class CharEncoder {
          case PRIMARY:
          case DANGER:
          case SUCCESS:
-            var10000 = UiLayoutMath.init_I_I(this.init_JsonUtil().load, this.flush(variant), 0.07F);
+            var10000 = UiLayoutMath.lerpColor(this.init_JsonUtil().buttonSurface, this.flush(variant), 0.07F);
             break;
          case SECONDARY:
-            var10000 = this.init_JsonUtil().load;
+            var10000 = this.init_JsonUtil().buttonSurface;
             break;
          case GHOST:
-            var10000 = this.init_JsonUtil().open;
+            var10000 = this.init_JsonUtil().cardSurface;
             break;
          default:
             throw new MatchException(null, null);
@@ -326,7 +326,7 @@ public final class CharEncoder {
             break;
          case SECONDARY:
          case GHOST:
-            var10000 = this.init_JsonUtil().set;
+            var10000 = this.init_JsonUtil().borderControl;
             break;
          default:
             throw new MatchException(null, null);
@@ -341,11 +341,11 @@ public final class CharEncoder {
          case PRIMARY:
          case DANGER:
          case SUCCESS:
-            var10000 = UiLayoutMath.init_I_I(this.close(variant), this.flush(variant), 0.5F);
+            var10000 = UiLayoutMath.lerpColor(this.close(variant), this.flush(variant), 0.5F);
             break;
          case SECONDARY:
          case GHOST:
-            var10000 = autismclient.gui.f.PacketUtil.init(this.init_JsonUtil().set, 0.75F);
+            var10000 = autismclient.gui.f.PacketUtil.init(this.init_JsonUtil().borderControl, 0.75F);
             break;
          default:
             throw new MatchException(null, null);
@@ -360,11 +360,11 @@ public final class CharEncoder {
          case PRIMARY:
          case DANGER:
          case SUCCESS:
-            var10000 = UiLayoutMath.init_I_I(this.flush(variant), -1, 0.18F);
+            var10000 = UiLayoutMath.lerpColor(this.flush(variant), -1, 0.18F);
             break;
          case SECONDARY:
          case GHOST:
-            var10000 = this.init_JsonUtil().run;
+            var10000 = this.init_JsonUtil().borderStrong;
             break;
          default:
             throw new MatchException(null, null);
@@ -505,19 +505,19 @@ public final class CharEncoder {
    }
 
    public int reset() {
-      return this.init_JsonUtil().pop;
+      return this.init_JsonUtil().inputSurface;
    }
 
    public int start() {
-      return this.init_JsonUtil().tick;
+      return this.init_JsonUtil().inputSurfaceFocused;
    }
 
    public int stop() {
-      return this.init_JsonUtil().open;
+      return this.init_JsonUtil().cardSurface;
    }
 
    public int next() {
-      return this.init_JsonUtil().push;
+      return this.init_JsonUtil().cardSurfaceElevated;
    }
 
    public int prev() {

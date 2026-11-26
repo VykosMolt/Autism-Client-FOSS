@@ -572,6 +572,6 @@ public final class ToolsCommand extends Command {
    }
 
    private static String load_Str() {
-      return autismclient.commands.CommandManager.init_Str();
+      return autismclient.commands.CommandManager.getPrefix();
    }
 }

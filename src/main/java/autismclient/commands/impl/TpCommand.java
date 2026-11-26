@@ -110,7 +110,7 @@ public final class TpCommand extends Command {
    private static void init_V(String result) {
       String text = result != null && !result.isBlank()
          ? result
-         : "Usage: " + autismclient.commands.CommandManager.init_Str() + "tp <x> <y> <z> [maxPackets] [pauseMs]";
+         : "Usage: " + autismclient.commands.CommandManager.getPrefix() + "tp <x> <y> <z> [maxPackets] [pauseMs]";
       String color = !text.startsWith("TP started") && !text.startsWith("TP defaults")
          ? (!text.startsWith("Usage") && !text.startsWith("No active") ? "§7" : "§e")
          : "§a";

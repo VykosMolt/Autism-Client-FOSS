@@ -146,7 +146,7 @@ public final class AutismClientMod implements ClientModInitializer {
 
       KillAuraHitMarkerRenderer.init_V();
       HoleEspModule.init_V_12();
-      autismclient.commands.CommandManager.init_V();
+      autismclient.commands.CommandManager.initialize();
       if (!AutismLiteVariant.enabled()) {
          AiDirectOps.init_V();
          AiMacroTools.init_V();
@@ -284,7 +284,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("cfg.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.init(listener), null));
          runSafe("cfg.hideOverlays", () -> {
             if (!OverlayScreenController.load_Z()) {
-               OverlayManager.init_bk().sync_V();
+               OverlayManager.getInstance().minimizeAll();
             }
          });
          runSafe("cfg.onGameLeft", () -> ModuleRuntimeManager.init_PoolEntry().write_V());
@@ -320,7 +320,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("leave.lanSync", () -> LanSyncManager.init_aE().sync_V());
          runSafe("leave.hideOverlays", () -> {
             if (!OverlayScreenController.load_Z()) {
-               OverlayManager.init_bk().sync_V();
+               OverlayManager.getInstance().minimizeAll();
             }
          });
          runSafe("leave.joinMacro", JoinMacroController::write);
