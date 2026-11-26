@@ -28,8 +28,8 @@ public final class VanillaKnownPacksManager extends KnownPacksManager {
       this.init_Map = knownPacks.build();
    }
 
-   public static boolean init(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
-      return context == null || context.init_BufferHelper_Cache() != ConnectionPrivacyRegistry.Inner_CachePool.MODDED || !ConnectionPrivacyRegistry.init_Z(context);
+   public static boolean init(ConnectionPrivacyRegistry.ConnectionSession context) {
+      return context == null || context.init_BufferHelper_Cache() != ConnectionPrivacyRegistry.PrivacyMode.MODDED || !ConnectionPrivacyRegistry.init_Z(context);
    }
 
    @Override

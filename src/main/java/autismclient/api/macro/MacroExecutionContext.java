@@ -40,7 +40,7 @@ public interface MacroExecutionContext {
 
    Map<String, MacroVarValue> variables();
 
-   MacroTemplateResolver.Inner_CachePool resolveTemplate(String var1);
+   MacroTemplateResolver.ResolveResult resolveTemplate(String var1);
 
    default void captureResult(String name, MacroVarValue value) {
       this.setVariable(name, value);
@@ -53,7 +53,7 @@ public interface MacroExecutionContext {
    }
 
    default Optional<Integer> resolveInt(String template) {
-      MacroTemplateResolver.Inner_CachePool resolved = this.resolveTemplate(template);
+      MacroTemplateResolver.ResolveResult resolved = this.resolveTemplate(template);
       if (!resolved.init_Z()) {
          return Optional.empty();
       }
@@ -66,7 +66,7 @@ public interface MacroExecutionContext {
    }
 
    default Optional<Double> resolveDouble(String template) {
-      MacroTemplateResolver.Inner_CachePool resolved = this.resolveTemplate(template);
+      MacroTemplateResolver.ResolveResult resolved = this.resolveTemplate(template);
       if (!resolved.init_Z()) {
          return Optional.empty();
       }
@@ -83,7 +83,7 @@ public interface MacroExecutionContext {
          return Optional.empty();
       }
 
-      MacroTemplateResolver.Inner_CachePool resolved = this.resolveTemplate(template);
+      MacroTemplateResolver.ResolveResult resolved = this.resolveTemplate(template);
       if (!resolved.init_Z()) {
          return Optional.empty();
       }

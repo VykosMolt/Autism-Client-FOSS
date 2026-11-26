@@ -79,7 +79,7 @@ public final class AiShapes {
       }
    }
 
-   public static short init_S_ClassCache_FileCac(AiPathfinder.Inner_FileCache probe) {
+   public static short init_S_ClassCache_FileCac(AiPathfinder.CellInfo probe) {
       return probe == null ? -1 : init(probe.loaded(), probe.passable(), probe.top16());
    }
 

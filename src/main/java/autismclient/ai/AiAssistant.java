@@ -9,7 +9,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 
-public final class AiAssistant implements autismclient.util.SilentMovementCoordinator.Inner_DataUtil {
+public final class AiAssistant implements autismclient.util.SilentMovementCoordinator.Participant {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final AiAssistant init_ConfigStore = new AiAssistant();
    private boolean init_Z;

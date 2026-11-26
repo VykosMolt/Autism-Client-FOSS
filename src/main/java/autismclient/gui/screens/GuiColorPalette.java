@@ -18,12 +18,12 @@ public final class GuiColorPalette {
    }
 
    public static void init() {
-      update = ThemePaletteManager.init_I_I_ct_DataUtil(-9547177, ThemePaletteManager.Inner_DataUtil.OUTLINE);
-      sync = ThemePaletteManager.init_I_I_ct_DataUtil(-12588930, ThemePaletteManager.Inner_DataUtil.SUCCESS);
-      flush = ThemePaletteManager.init_I_I_ct_DataUtil(-854534, ThemePaletteManager.Inner_DataUtil.TEXT);
-      close = ThemePaletteManager.init_I_I_ct_DataUtil(-6774093, ThemePaletteManager.Inner_DataUtil.TEXT);
-      open = ThemePaletteManager.init_I_I_ct_DataUtil(-13248397, ThemePaletteManager.Inner_DataUtil.SUCCESS);
-      poll = ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.Inner_DataUtil.DANGER);
+      update = ThemePaletteManager.init_I_I_ct_DataUtil(-9547177, ThemePaletteManager.ColorRole.OUTLINE);
+      sync = ThemePaletteManager.init_I_I_ct_DataUtil(-12588930, ThemePaletteManager.ColorRole.SUCCESS);
+      flush = ThemePaletteManager.init_I_I_ct_DataUtil(-854534, ThemePaletteManager.ColorRole.TEXT);
+      close = ThemePaletteManager.init_I_I_ct_DataUtil(-6774093, ThemePaletteManager.ColorRole.TEXT);
+      open = ThemePaletteManager.init_I_I_ct_DataUtil(-13248397, ThemePaletteManager.ColorRole.SUCCESS);
+      poll = ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.ColorRole.DANGER);
    }
 
    static {

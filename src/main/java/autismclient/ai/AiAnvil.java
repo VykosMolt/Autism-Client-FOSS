@@ -261,14 +261,14 @@ final class AiAnvil {
                      this.read_I = 0;
                   }
 
-                  autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                      this.init_BlockPos = this.init_DataPipe.init_BlockPos();
                      this.init_Z = false;
                      return this.init("Anvil placed");
                   }
 
-                  if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.read_I <= 100) {
+                  if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.read_I <= 100) {
                      return this.init("Placing an anvil");
                   }
 
@@ -409,7 +409,7 @@ final class AiAnvil {
       if (spec.isBlank()) {
          throw new IllegalArgumentException(arg + " is required");
       } else {
-         AiItems.Inner_DataUtil target = AiItems.load_af_DataUtil(spec);
+         AiItems.ItemSpec target = AiItems.load_af_DataUtil(spec);
          if (target.items().size() != 1) {
             throw new IllegalArgumentException(arg + " must resolve to a single item id, got " + target.items().size() + " from \"" + spec + "\"");
          } else {

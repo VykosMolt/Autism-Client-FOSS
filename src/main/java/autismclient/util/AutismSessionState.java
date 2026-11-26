@@ -52,21 +52,21 @@ public final class AutismSessionState {
    private volatile boolean push_Z = false;
    private final Set<Class<? extends Packet<?>>> load_Set = ConcurrentHashMap.newKeySet();
    private final Set<Class<? extends Packet<?>>> read_Set = ConcurrentHashMap.newKeySet();
-   private final List<AutismSessionState.Inner_CachePool> init_List = new CopyOnWriteArrayList<>();
+   private final List<AutismSessionState.DelayedPacket> init_List = new CopyOnWriteArrayList<>();
    private volatile boolean pop_Z = false;
    private volatile int init_I = 1;
-   private final List<AutismSessionState.Inner_CachePool> load_List = new CopyOnWriteArrayList<>();
-   private final List<AutismSessionState.Inner_CachePool> read_List = new CopyOnWriteArrayList<>();
-   private final List<AutismSessionState.Inner_CachePool> write_List = new CopyOnWriteArrayList<>();
+   private final List<AutismSessionState.DelayedPacket> load_List = new CopyOnWriteArrayList<>();
+   private final List<AutismSessionState.DelayedPacket> read_List = new CopyOnWriteArrayList<>();
+   private final List<AutismSessionState.DelayedPacket> write_List = new CopyOnWriteArrayList<>();
    private final AtomicInteger init_AtomicInteger = new AtomicInteger();
    private int load_I = 0;
    private volatile ClientPacketListener init_ClientPacketListen = null;
    private int read_I = 0;
    private boolean tick_Z = false;
    private static final int write_I = 32;
-   private final Deque<AutismSessionState.Inner_ConfigStore> init_Deque = new ArrayDeque<>(32);
-   private volatile AutismSessionState.Inner_DataUtil init_ck_DataUtil = AutismSessionState.Inner_DataUtil.TICKS;
-   private AutismSessionState.Inner_DataUtil load_ck_DataUtil = AutismSessionState.Inner_DataUtil.TICKS;
+   private final Deque<AutismSessionState.TimingMeasurement> init_Deque = new ArrayDeque<>(32);
+   private volatile AutismSessionState.DelayUnit init_ck_DataUtil = AutismSessionState.DelayUnit.TICKS;
+   private AutismSessionState.DelayUnit load_ck_DataUtil = AutismSessionState.DelayUnit.TICKS;
    private long init_J = 0L;
    private int update_I = 0;
    private long load_J = -1L;
@@ -129,7 +129,7 @@ public final class AutismSessionState {
    private volatile boolean prev_Z = false;
    private volatile int node = 0;
    private Runnable init_Runnable = null;
-   private final List<AutismSessionState.Inner_CachePool> sync_List = new ArrayList<>();
+   private final List<AutismSessionState.DelayedPacket> sync_List = new ArrayList<>();
    private volatile boolean valid_Z = false;
    private volatile long read_J = -1L;
    private volatile int task = -1;
@@ -138,7 +138,7 @@ public final class AutismSessionState {
    private volatile long write_J = -1L;
    private final Map<String, OverlayBounds> init_Map = new HashMap<>();
    private final Set<String> write_Set = ConcurrentHashMap.newKeySet();
-   private final Map<String, AutismSessionState.Inner_TaskQueue> load_Map = new HashMap<>();
+   private final Map<String, AutismSessionState.PluginScanResult> load_Map = new HashMap<>();
    private final List<String> flush_List = new ArrayList<>();
    private String set_Str = "";
    private static final boolean size_Z = Boolean.getBoolean("autism.payload.trace");
@@ -155,7 +155,7 @@ public final class AutismSessionState {
    private volatile boolean buffer_Z = false;
    private volatile boolean entry_Z = false;
 
-   public synchronized void init_V_ck_ConfigStore(AutismSessionState.Inner_ConfigStore sample) {
+   public synchronized void init_V_ck_ConfigStore(AutismSessionState.TimingMeasurement sample) {
       if (sample != null) {
          this.init_Deque.addFirst(sample);
 
@@ -165,12 +165,12 @@ public final class AutismSessionState {
       }
    }
 
-   public synchronized AutismSessionState.Inner_ConfigStore init_ck_ConfigStore_Str(String label) {
+   public synchronized AutismSessionState.TimingMeasurement init_ck_ConfigStore_Str(String label) {
       if (label == null) {
          return this.init_Deque.isEmpty() ? null : this.init_Deque.peekFirst();
       }
 
-      for (AutismSessionState.Inner_ConfigStore s : this.init_Deque) {
+      for (AutismSessionState.TimingMeasurement s : this.init_Deque) {
          if (label.equals(s.init_Str)) {
             return s;
          }
@@ -179,11 +179,11 @@ public final class AutismSessionState {
       return null;
    }
 
-   public synchronized List<AutismSessionState.Inner_ConfigStore> init_List_I(int n) {
-      List<AutismSessionState.Inner_ConfigStore> out = new ArrayList<>(Math.min(n, this.init_Deque.size()));
+   public synchronized List<AutismSessionState.TimingMeasurement> init_List_I(int n) {
+      List<AutismSessionState.TimingMeasurement> out = new ArrayList<>(Math.min(n, this.init_Deque.size()));
       int i = 0;
 
-      for (AutismSessionState.Inner_ConfigStore s : this.init_Deque) {
+      for (AutismSessionState.TimingMeasurement s : this.init_Deque) {
          if (i++ >= n) {
             break;
          }
@@ -286,17 +286,17 @@ public final class AutismSessionState {
       this.set_Str = overlayId == null ? "" : overlayId.trim();
    }
 
-   public synchronized AutismSessionState.Inner_TaskQueue init_ck_TaskQueue_Str(String address) {
+   public synchronized AutismSessionState.PluginScanResult init_ck_TaskQueue_Str(String address) {
       return this.init_ck_TaskQueue_Str_Str(address, "");
    }
 
-   public synchronized AutismSessionState.Inner_TaskQueue init_ck_TaskQueue_Str_Str(String address, String contextSignature) {
+   public synchronized AutismSessionState.PluginScanResult init_ck_TaskQueue_Str_Str(String address, String contextSignature) {
       String key = init_Str_Str_Str(address, contextSignature);
       if (key.isEmpty()) {
          return null;
       }
 
-      AutismSessionState.Inner_TaskQueue scan = this.load_Map.get(key);
+      AutismSessionState.PluginScanResult scan = this.load_Map.get(key);
       return scan == null ? null : scan.init_ck_TaskQueue();
    }
 
@@ -315,7 +315,7 @@ public final class AutismSessionState {
       String normalizedContext = read_Str_Str(contextSignature);
       String key = init_Str_Str_Str(normalizedAddress, normalizedContext);
       if (!key.isEmpty()) {
-         this.load_Map.put(key, new AutismSessionState.Inner_TaskQueue(normalizedAddress, normalizedContext, plugins, pluginCommands, pluginEvidence));
+         this.load_Map.put(key, new AutismSessionState.PluginScanResult(normalizedAddress, normalizedContext, plugins, pluginCommands, pluginEvidence));
       }
    }
 
@@ -471,7 +471,7 @@ public final class AutismSessionState {
       }
    }
 
-   public synchronized List<AutismSessionState.Inner_CachePool> load_List() {
+   public synchronized List<AutismSessionState.DelayedPacket> load_List() {
       return new ArrayList<>(this.init_List);
    }
 
@@ -479,19 +479,19 @@ public final class AutismSessionState {
       return this.init_AtomicInteger.get();
    }
 
-   public synchronized AutismSessionState.Inner_StreamUtil init_ck_StreamUtil_Z_I(boolean sending, int maxLines) {
-      List<AutismSessionState.Inner_CachePool> source = sending ? this.load_List : this.init_List;
+   public synchronized AutismSessionState.DelayQueueSnapshot init_ck_StreamUtil_Z_I(boolean sending, int maxLines) {
+      List<AutismSessionState.DelayedPacket> source = sending ? this.load_List : this.init_List;
       int totalCount = source.size();
       if (totalCount != 0 && maxLines > 0) {
          int limit = Math.min(totalCount, maxLines);
-         ArrayList<AutismSessionState.Inner_CachePool> visiblePackets = new ArrayList<>(limit);
+         ArrayList<AutismSessionState.DelayedPacket> visiblePackets = new ArrayList<>(limit);
 
-         for (AutismSessionState.Inner_CachePool packet : source) {
+         for (AutismSessionState.DelayedPacket packet : source) {
             if (packet != null && packet.init_Packet != null) {
                int insertAt = visiblePackets.size();
 
                for (int i = 0; i < visiblePackets.size(); i++) {
-                  AutismSessionState.Inner_CachePool existing = visiblePackets.get(i);
+                  AutismSessionState.DelayedPacket existing = visiblePackets.get(i);
                   int byDelay = Integer.compare(existing.load_I(), packet.load_I());
                   if (byDelay > 0 || byDelay == 0 && existing.init_I() > packet.init_I()) {
                      insertAt = i;
@@ -510,9 +510,9 @@ public final class AutismSessionState {
             }
          }
 
-         return new AutismSessionState.Inner_StreamUtil(visiblePackets, totalCount);
+         return new AutismSessionState.DelayQueueSnapshot(visiblePackets, totalCount);
       } else {
-         return new AutismSessionState.Inner_StreamUtil(List.of(), totalCount);
+         return new AutismSessionState.DelayQueueSnapshot(List.of(), totalCount);
       }
    }
 
@@ -520,7 +520,7 @@ public final class AutismSessionState {
       return !this.init_List.isEmpty();
    }
 
-   public synchronized void load_V_List(List<AutismSessionState.Inner_CachePool> packets) {
+   public synchronized void load_V_List(List<AutismSessionState.DelayedPacket> packets) {
       this.init_List.clear();
       if (packets != null && !packets.isEmpty()) {
          this.init_List.addAll(this.init_List_List(packets));
@@ -543,7 +543,7 @@ public final class AutismSessionState {
    private void pop_V() {
       if (this.init_List.isEmpty() && this.load_List.isEmpty()) {
          this.tick_V();
-         AutismSessionState.Inner_CachePool.load_V();
+         AutismSessionState.DelayedPacket.load_V();
       }
    }
 
@@ -559,7 +559,7 @@ public final class AutismSessionState {
       }
    }
 
-   private void write(List<AutismSessionState.Inner_CachePool> queue) {
+   private void write(List<AutismSessionState.DelayedPacket> queue) {
       this.write_List.clear();
       if (queue != null && !queue.isEmpty()) {
          this.write_List.addAll(this.init_List_List(queue));
@@ -590,18 +590,18 @@ public final class AutismSessionState {
       return this.init_ClientPacketListen != null && !this.load_List.isEmpty();
    }
 
-   private int init_I_ck_DataUtil(AutismSessionState.Inner_DataUtil mode) {
-      if (mode == AutismSessionState.Inner_DataUtil.MS) {
+   private int init_I_ck_DataUtil(AutismSessionState.DelayUnit mode) {
+      if (mode == AutismSessionState.DelayUnit.MS) {
          return this.init_J <= 0L ? 0 : (int)Math.max(0L, (System.nanoTime() - this.init_J) / 1000000L);
       } else {
          return Math.max(0, this.pool - this.update_I);
       }
    }
 
-   private int init_I_List(List<AutismSessionState.Inner_CachePool> queue) {
+   private int init_I_List(List<AutismSessionState.DelayedPacket> queue) {
       int maxDelay = 0;
       if (queue != null && !queue.isEmpty()) {
-         for (AutismSessionState.Inner_CachePool qp : queue) {
+         for (AutismSessionState.DelayedPacket qp : queue) {
             if (qp != null && !qp.load_Z()) {
                maxDelay = Math.max(maxDelay, qp.load_I());
             }
@@ -613,12 +613,12 @@ public final class AutismSessionState {
       }
    }
 
-   private void init_V_List_ck_CachePool(List<AutismSessionState.Inner_CachePool> queue, AutismSessionState.Inner_CachePool packet) {
+   private void init_V_List_ck_CachePool(List<AutismSessionState.DelayedPacket> queue, AutismSessionState.DelayedPacket packet) {
       if (queue != null && packet != null) {
          int insertAt = queue.size();
 
          for (int i = 0; i < queue.size(); i++) {
-            AutismSessionState.Inner_CachePool existing = queue.get(i);
+            AutismSessionState.DelayedPacket existing = queue.get(i);
             if (existing != null) {
                int byDelay = Integer.compare(existing.load_I(), packet.load_I());
                if (byDelay > 0 || byDelay == 0 && existing.init_I() > packet.init_I()) {
@@ -645,7 +645,7 @@ public final class AutismSessionState {
    }
 
    private int buffer_I() {
-      if (this.load_ck_DataUtil == AutismSessionState.Inner_DataUtil.MS) {
+      if (this.load_ck_DataUtil == AutismSessionState.DelayUnit.MS) {
          long now = System.nanoTime();
          long reference = this.load_J > 0L ? this.load_J : this.init_J;
          int delta = reference > 0L ? (int)Math.max(0L, (now - reference) / 1000000L) : 0;
@@ -680,19 +680,19 @@ public final class AutismSessionState {
    }
 
    public synchronized void init_V_Packet(Packet<?> packet) {
-      this.init_V_Packet_ck_BufferHelper(packet, AutismSessionState.Inner_BufferHelper.REGENERATE);
+      this.init_V_Packet_ck_BufferHelper(packet, AutismSessionState.ReplayMode.REGENERATE);
    }
 
    public synchronized void load_V_Packet(Packet<?> packet) {
-      this.init_V_Packet_ck_BufferHelper(packet, AutismSessionState.Inner_BufferHelper.EXACT);
+      this.init_V_Packet_ck_BufferHelper(packet, AutismSessionState.ReplayMode.EXACT);
    }
 
-   public synchronized void init_V_Packet_ck_BufferHelper(Packet<?> packet, AutismSessionState.Inner_BufferHelper replayMode) {
+   public synchronized void init_V_Packet_ck_BufferHelper(Packet<?> packet, AutismSessionState.ReplayMode replayMode) {
       if (!autismclient.modules.aD.read_Z() && packet != null) {
-         AutismSessionState.Inner_BufferHelper mode = this.init_ck_BufferHelper_Packet_ck_BufferHelper(packet, replayMode);
+         AutismSessionState.ReplayMode mode = this.init_ck_BufferHelper_Packet_ck_BufferHelper(packet, replayMode);
          if (this.store()) {
             int activeDelay = this.valid_Z ? this.buffer_I() : this.queue_I();
-            AutismSessionState.Inner_CachePool queuedPacket = new AutismSessionState.Inner_CachePool(packet, activeDelay, mode);
+            AutismSessionState.DelayedPacket queuedPacket = new AutismSessionState.DelayedPacket(packet, activeDelay, mode);
             this.init_V_List_ck_CachePool(this.load_List, queuedPacket);
             this.init_V_List_ck_CachePool(this.read_List, queuedPacket);
             this.read_I++;
@@ -706,7 +706,7 @@ public final class AutismSessionState {
                this.tick_V();
             }
 
-            if (this.init_ck_DataUtil == AutismSessionState.Inner_DataUtil.TICKS) {
+            if (this.init_ck_DataUtil == AutismSessionState.DelayUnit.TICKS) {
                int tick = this.pool;
                if (this.task < 0) {
                   this.task = tick;
@@ -727,17 +727,17 @@ public final class AutismSessionState {
             delay = this.init_List.size() * this.init_I;
          }
 
-         this.init_List.add(new AutismSessionState.Inner_CachePool(packet, delay, mode));
+         this.init_List.add(new AutismSessionState.DelayedPacket(packet, delay, mode));
          this.set_V();
       }
    }
 
-   private AutismSessionState.Inner_BufferHelper init_ck_BufferHelper_Packet_ck_BufferHelper(Packet<?> packet, AutismSessionState.Inner_BufferHelper replayMode) {
-      AutismSessionState.Inner_BufferHelper mode = replayMode == null ? AutismSessionState.Inner_BufferHelper.REGENERATE : replayMode;
-      return mode == AutismSessionState.Inner_BufferHelper.REGENERATE
+   private AutismSessionState.ReplayMode init_ck_BufferHelper_Packet_ck_BufferHelper(Packet<?> packet, AutismSessionState.ReplayMode replayMode) {
+      AutismSessionState.ReplayMode mode = replayMode == null ? AutismSessionState.ReplayMode.REGENERATE : replayMode;
+      return mode == AutismSessionState.ReplayMode.REGENERATE
             && packet instanceof ServerboundContainerClosePacket closePacket
             && this.init_Z_I(this.init_I_ServerboundContain(closePacket))
-         ? AutismSessionState.Inner_BufferHelper.EXACT
+         ? AutismSessionState.ReplayMode.EXACT
          : mode;
    }
 
@@ -782,13 +782,13 @@ public final class AutismSessionState {
    }
 
    private boolean init_Z_I(int containerId) {
-      for (AutismSessionState.Inner_CachePool queuedPacket : this.init_List) {
+      for (AutismSessionState.DelayedPacket queuedPacket : this.init_List) {
          if (this.init_Z_ck_CachePool_I(queuedPacket, containerId)) {
             return true;
          }
       }
 
-      for (AutismSessionState.Inner_CachePool queuedPacket : this.load_List) {
+      for (AutismSessionState.DelayedPacket queuedPacket : this.load_List) {
          if (this.init_Z_ck_CachePool_I(queuedPacket, containerId)) {
             return true;
          }
@@ -797,7 +797,7 @@ public final class AutismSessionState {
       return false;
    }
 
-   private boolean init_Z_ck_CachePool_I(AutismSessionState.Inner_CachePool queuedPacket, int containerId) {
+   private boolean init_Z_ck_CachePool_I(AutismSessionState.DelayedPacket queuedPacket, int containerId) {
       return queuedPacket != null
          && queuedPacket.init_Z()
          && queuedPacket.init_Packet instanceof ServerboundContainerClickPacket clickPacket
@@ -861,7 +861,7 @@ public final class AutismSessionState {
             this.run_Z = true;
 
             try {
-               for (AutismSessionState.Inner_CachePool qp : this.init_List) {
+               for (AutismSessionState.DelayedPacket qp : this.init_List) {
                   if (PacketTypeRegistry.load().contains(qp.init_Packet.getClass())) {
                      Packet<?> packetToSend = this.init_Packet_ck_CachePool(qp);
                      if (packetToSend != null) {
@@ -875,7 +875,7 @@ public final class AutismSessionState {
                this.run_Z = false;
             }
 
-            AutismSessionState.Inner_CachePool.load_V();
+            AutismSessionState.DelayedPacket.load_V();
          }
       }
 
@@ -911,7 +911,7 @@ public final class AutismSessionState {
          this.run_Z = true;
 
          try {
-            for (AutismSessionState.Inner_CachePool qp : this.init_List) {
+            for (AutismSessionState.DelayedPacket qp : this.init_List) {
                if (PacketTypeRegistry.load().contains(qp.init_Packet.getClass())) {
                   Packet<?> packetToSend = this.init_Packet_ck_CachePool(qp);
                   if (packetToSend != null) {
@@ -934,20 +934,20 @@ public final class AutismSessionState {
 
    public synchronized void load_V() {
       if (!this.init_List.isEmpty()) {
-         List<AutismSessionState.Inner_CachePool> newPackets = new ArrayList<>(this.init_List.size());
+         List<AutismSessionState.DelayedPacket> newPackets = new ArrayList<>(this.init_List.size());
          int skipped = 0;
          int deferredClickSlot = 0;
 
-         for (AutismSessionState.Inner_CachePool qp : this.init_List) {
+         for (AutismSessionState.DelayedPacket qp : this.init_List) {
             if (qp.init_Packet instanceof ServerboundContainerClickPacket) {
-               newPackets.add(new AutismSessionState.Inner_CachePool(qp.init_Packet, qp.load, qp.init_I, qp.init_ck_BufferHelper));
+               newPackets.add(new AutismSessionState.DelayedPacket(qp.init_Packet, qp.load, qp.init_I, qp.init_ck_BufferHelper));
                deferredClickSlot++;
             } else if (qp.init_Z()) {
-               newPackets.add(new AutismSessionState.Inner_CachePool(qp.init_Packet, qp.load, qp.init_I, qp.init_ck_BufferHelper));
+               newPackets.add(new AutismSessionState.DelayedPacket(qp.init_Packet, qp.load, qp.init_I, qp.init_ck_BufferHelper));
             } else {
                Packet<?> regenerated = PacketRegenerator.init(qp.init_Packet);
                if (regenerated != null) {
-                  newPackets.add(new AutismSessionState.Inner_CachePool(regenerated, qp.load, qp.init_I, qp.init_ck_BufferHelper));
+                  newPackets.add(new AutismSessionState.DelayedPacket(regenerated, qp.load, qp.init_I, qp.init_ck_BufferHelper));
                } else {
                   skipped++;
                }
@@ -978,11 +978,11 @@ public final class AutismSessionState {
          this.init_ClientPacketListen = null;
          this.set_V();
       } else if (!this.load_List.isEmpty() && this.init_ClientPacketListen != null) {
-         List<AutismSessionState.Inner_CachePool> toRemove = new ArrayList<>();
+         List<AutismSessionState.DelayedPacket> toRemove = new ArrayList<>();
 
-         for (AutismSessionState.Inner_CachePool qp : this.load_List) {
+         for (AutismSessionState.DelayedPacket qp : this.load_List) {
             boolean shouldSend;
-            if (this.load_ck_DataUtil == AutismSessionState.Inner_DataUtil.MS) {
+            if (this.load_ck_DataUtil == AutismSessionState.DelayUnit.MS) {
                long elapsedMs = (System.nanoTime() - this.init_J) / 1000000L;
                shouldSend = elapsedMs >= qp.load_I() && !qp.load_Z();
             } else {
@@ -1031,7 +1031,7 @@ public final class AutismSessionState {
             this.get_V();
             if (this.init_List.isEmpty()) {
                this.tick_V();
-               AutismSessionState.Inner_CachePool.load_V();
+               AutismSessionState.DelayedPacket.load_V();
             }
 
             if (completionMessage == null || completionMessage.isBlank()) {
@@ -1082,7 +1082,7 @@ public final class AutismSessionState {
       return message;
    }
 
-   public synchronized List<AutismSessionState.Inner_CachePool> read_List() {
+   public synchronized List<AutismSessionState.DelayedPacket> read_List() {
       return new ArrayList<>(this.load_List);
    }
 
@@ -1090,14 +1090,14 @@ public final class AutismSessionState {
       return !this.load_List.isEmpty();
    }
 
-   public synchronized List<AutismSessionState.Inner_CachePool> write_List() {
+   public synchronized List<AutismSessionState.DelayedPacket> write_List() {
       return new ArrayList<>(this.read_List);
    }
 
    public synchronized int write_I() {
       if (!this.load_List.isEmpty()) {
          int count = this.load_List.size() + this.init_List.size();
-         List<AutismSessionState.Inner_CachePool> combined = new ArrayList<>(this.load_List.size() + this.init_List.size());
+         List<AutismSessionState.DelayedPacket> combined = new ArrayList<>(this.load_List.size() + this.init_List.size());
          combined.addAll(this.load_List);
          combined.addAll(this.init_List);
          this.write(combined);
@@ -1113,7 +1113,7 @@ public final class AutismSessionState {
       }
    }
 
-   public synchronized void init_V_ck_CachePool(AutismSessionState.Inner_CachePool packet) {
+   public synchronized void init_V_ck_CachePool(AutismSessionState.DelayedPacket packet) {
       if (packet != null) {
          this.read_List.remove(packet);
          boolean removedFromStaggered = this.load_List.remove(packet);
@@ -1124,7 +1124,7 @@ public final class AutismSessionState {
          if (!removedFromStaggered) {
             this.init_List.remove(packet);
             if (!this.init_List.isEmpty()) {
-               List<AutismSessionState.Inner_CachePool> rebuilt = this.init_List_List(this.init_List);
+               List<AutismSessionState.DelayedPacket> rebuilt = this.init_List_List(this.init_List);
                this.init_List.clear();
                this.init_List.addAll(rebuilt);
             }
@@ -1135,7 +1135,7 @@ public final class AutismSessionState {
       }
    }
 
-   public synchronized void init_V_ck_CachePool_I(AutismSessionState.Inner_CachePool packet, int newDelay) {
+   public synchronized void init_V_ck_CachePool_I(AutismSessionState.DelayedPacket packet, int newDelay) {
       if (packet != null) {
          packet.init(newDelay);
          this.set_V();
@@ -1144,7 +1144,7 @@ public final class AutismSessionState {
 
    public synchronized void write_V() {
       if (this.init_List.size() >= 2) {
-         List<AutismSessionState.Inner_CachePool> ordered = new ArrayList<>(this.init_List);
+         List<AutismSessionState.DelayedPacket> ordered = new ArrayList<>(this.init_List);
          ordered.sort((a, b) -> {
             int byDelay = Integer.compare(a.load_I(), b.load_I());
             return byDelay != 0 ? byDelay : Integer.compare(a.init_I(), b.init_I());
@@ -1155,12 +1155,12 @@ public final class AutismSessionState {
       }
    }
 
-   private List<AutismSessionState.Inner_CachePool> init_List_List(List<AutismSessionState.Inner_CachePool> source) {
-      List<AutismSessionState.Inner_CachePool> rebuilt = new ArrayList<>();
+   private List<AutismSessionState.DelayedPacket> init_List_List(List<AutismSessionState.DelayedPacket> source) {
+      List<AutismSessionState.DelayedPacket> rebuilt = new ArrayList<>();
       if (source != null && !source.isEmpty()) {
-         List<AutismSessionState.Inner_CachePool> ordered = new ArrayList<>();
+         List<AutismSessionState.DelayedPacket> ordered = new ArrayList<>();
 
-         for (AutismSessionState.Inner_CachePool qp : source) {
+         for (AutismSessionState.DelayedPacket qp : source) {
             if (qp != null && qp.init_Packet != null) {
                ordered.add(qp);
             }
@@ -1170,10 +1170,10 @@ public final class AutismSessionState {
             int byDelay = Integer.compare(a.load_I(), b.load_I());
             return byDelay != 0 ? byDelay : Integer.compare(a.init_I(), b.init_I());
          });
-         AutismSessionState.Inner_CachePool.load_V();
+         AutismSessionState.DelayedPacket.load_V();
 
-         for (AutismSessionState.Inner_CachePool qp : ordered) {
-            rebuilt.add(new AutismSessionState.Inner_CachePool(qp.init_Packet, qp.load_I(), qp.init_ck_BufferHelper()));
+         for (AutismSessionState.DelayedPacket qp : ordered) {
+            rebuilt.add(new AutismSessionState.DelayedPacket(qp.init_Packet, qp.load_I(), qp.init_ck_BufferHelper()));
          }
 
          return rebuilt;
@@ -1182,7 +1182,7 @@ public final class AutismSessionState {
       }
    }
 
-   private Packet<?> init_Packet_ck_CachePool(AutismSessionState.Inner_CachePool queuedPacket) {
+   private Packet<?> init_Packet_ck_CachePool(AutismSessionState.DelayedPacket queuedPacket) {
       if (queuedPacket != null && queuedPacket.init_Packet != null) {
          return queuedPacket.init_Z() ? queuedPacket.init_Packet : PacketRegenerator.init(queuedPacket.init_Packet);
       } else {
@@ -1220,14 +1220,14 @@ public final class AutismSessionState {
       this.init_ClientPacketListen = null;
       this.load_I = 0;
       this.read_I = 0;
-      AutismSessionState.Inner_CachePool.load_V();
+      AutismSessionState.DelayedPacket.load_V();
       this.tick_Z = false;
       this.init_J = 0L;
       this.update_I = 0;
       this.load_J = -1L;
       this.sync_I = -1;
       this.flush_I = 0;
-      this.load_ck_DataUtil = AutismSessionState.Inner_DataUtil.TICKS;
+      this.load_ck_DataUtil = AutismSessionState.DelayUnit.TICKS;
       this.read_J = -1L;
       this.task = -1;
       this.set_V();
@@ -1319,20 +1319,20 @@ public final class AutismSessionState {
       this.init_I = Math.max(1, Math.min(40, delay));
    }
 
-   public AutismSessionState.Inner_DataUtil init_ck_DataUtil() {
+   public AutismSessionState.DelayUnit init_ck_DataUtil() {
       return this.init_ck_DataUtil;
    }
 
-   public synchronized AutismSessionState.Inner_DataUtil load_ck_DataUtil() {
+   public synchronized AutismSessionState.DelayUnit load_ck_DataUtil() {
       return this.store() ? this.load_ck_DataUtil : this.init_ck_DataUtil;
    }
 
-   public void init_V_ck_DataUtil(AutismSessionState.Inner_DataUtil mode) {
+   public void init_V_ck_DataUtil(AutismSessionState.DelayUnit mode) {
       this.init_ck_DataUtil = mode;
    }
 
    public void flush_V() {
-      this.init_ck_DataUtil = this.init_ck_DataUtil == AutismSessionState.Inner_DataUtil.TICKS ? AutismSessionState.Inner_DataUtil.MS : AutismSessionState.Inner_DataUtil.TICKS;
+      this.init_ck_DataUtil = this.init_ck_DataUtil == AutismSessionState.DelayUnit.TICKS ? AutismSessionState.DelayUnit.MS : AutismSessionState.DelayUnit.TICKS;
    }
 
    public boolean stop_Z() {
@@ -1763,13 +1763,13 @@ public final class AutismSessionState {
 
          if (this.node == 2) {
             this.sync_List.clear();
-            this.sync_List.add(new AutismSessionState.Inner_CachePool(packet, 0));
+            this.sync_List.add(new AutismSessionState.DelayedPacket(packet, 0));
             this.put_V();
          }
       }
    }
 
-   public List<AutismSessionState.Inner_CachePool> sync_List() {
+   public List<AutismSessionState.DelayedPacket> sync_List() {
       return new ArrayList<>(this.sync_List);
    }
 
@@ -2020,41 +2020,41 @@ public final class AutismSessionState {
       this.entry_Z = active;
    }
 
-   public enum Inner_BufferHelper {
+   public enum ReplayMode {
       REGENERATE,
       EXACT;
    }
 
-   public static class Inner_CachePool {
+   public static class DelayedPacket {
       private static final AtomicInteger init_AtomicInteger = new AtomicInteger(1);
       public final Packet<?> init_Packet;
       public final int init_I;
-      private volatile AutismSessionState.Inner_BufferHelper init_ck_BufferHelper;
+      private volatile AutismSessionState.ReplayMode init_ck_BufferHelper;
       private volatile int load;
       private volatile boolean init_Z;
 
-      public Inner_CachePool(Packet<?> packet, int delay) {
-         this(packet, delay, AutismSessionState.Inner_BufferHelper.REGENERATE);
+      public DelayedPacket(Packet<?> packet, int delay) {
+         this(packet, delay, AutismSessionState.ReplayMode.REGENERATE);
       }
 
-      public Inner_CachePool(Packet<?> packet, int delay, AutismSessionState.Inner_BufferHelper replayMode) {
+      public DelayedPacket(Packet<?> packet, int delay, AutismSessionState.ReplayMode replayMode) {
          this.init_Packet = packet;
          this.init_I = init_AtomicInteger.getAndIncrement();
          this.load = delay;
          this.init_Z = false;
-         this.init_ck_BufferHelper = replayMode == null ? AutismSessionState.Inner_BufferHelper.REGENERATE : replayMode;
+         this.init_ck_BufferHelper = replayMode == null ? AutismSessionState.ReplayMode.REGENERATE : replayMode;
       }
 
-      public Inner_CachePool(Packet<?> packet, int delay, int existingId) {
-         this(packet, delay, existingId, AutismSessionState.Inner_BufferHelper.REGENERATE);
+      public DelayedPacket(Packet<?> packet, int delay, int existingId) {
+         this(packet, delay, existingId, AutismSessionState.ReplayMode.REGENERATE);
       }
 
-      public Inner_CachePool(Packet<?> packet, int delay, int existingId, AutismSessionState.Inner_BufferHelper replayMode) {
+      public DelayedPacket(Packet<?> packet, int delay, int existingId, AutismSessionState.ReplayMode replayMode) {
          this.init_Packet = packet;
          this.init_I = existingId;
          this.load = delay;
          this.init_Z = false;
-         this.init_ck_BufferHelper = replayMode == null ? AutismSessionState.Inner_BufferHelper.REGENERATE : replayMode;
+         this.init_ck_BufferHelper = replayMode == null ? AutismSessionState.ReplayMode.REGENERATE : replayMode;
       }
 
       public int init_I() {
@@ -2065,12 +2065,12 @@ public final class AutismSessionState {
          return this.load;
       }
 
-      public AutismSessionState.Inner_BufferHelper init_ck_BufferHelper() {
+      public AutismSessionState.ReplayMode init_ck_BufferHelper() {
          return this.init_ck_BufferHelper;
       }
 
       public boolean init_Z() {
-         return this.init_ck_BufferHelper == AutismSessionState.Inner_BufferHelper.EXACT;
+         return this.init_ck_BufferHelper == AutismSessionState.ReplayMode.EXACT;
       }
 
       public synchronized void init(int newDelay) {
@@ -2079,9 +2079,9 @@ public final class AutismSessionState {
          }
       }
 
-      public synchronized void init(AutismSessionState.Inner_BufferHelper mode) {
+      public synchronized void init(AutismSessionState.ReplayMode mode) {
          if (!this.init_Z) {
-            this.init_ck_BufferHelper = mode == null ? AutismSessionState.Inner_BufferHelper.REGENERATE : mode;
+            this.init_ck_BufferHelper = mode == null ? AutismSessionState.ReplayMode.REGENERATE : mode;
          }
       }
 
@@ -2098,14 +2098,14 @@ public final class AutismSessionState {
       }
    }
 
-   public static final class Inner_ConfigStore {
+   public static final class TimingMeasurement {
       public final String init_Str;
       public final long init_J;
       public final String load_Str;
       public final String read;
       public final long load_J;
 
-      public Inner_ConfigStore(String label, long deltaMs, String startEvent, String endEvent, long capturedAtMs) {
+      public TimingMeasurement(String label, long deltaMs, String startEvent, String endEvent, long capturedAtMs) {
          this.init_Str = label == null ? "" : label;
          this.init_J = deltaMs;
          this.load_Str = startEvent == null ? "" : startEvent;
@@ -2114,22 +2114,22 @@ public final class AutismSessionState {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum DelayUnit {
       TICKS,
       MS;
    }
 
-   public record Inner_StreamUtil(List<AutismSessionState.Inner_CachePool> init_List, int init_I) {
+   public record DelayQueueSnapshot(List<AutismSessionState.DelayedPacket> init_List, int init_I) {
    }
 
-   public static final class Inner_TaskQueue {
+   public static final class PluginScanResult {
       private final String init_Str;
       private final String load_Str;
       private final List<String> init_List;
       private final Map<String, List<String>> init_Map;
       private final Map<String, String> load_Map;
 
-      private Inner_TaskQueue(
+      private PluginScanResult(
          String address, String contextSignature, List<String> plugins, Map<String, List<String>> pluginCommands, Map<String, String> pluginEvidence
       ) {
          this.init_Str = address;
@@ -2159,8 +2159,8 @@ public final class AutismSessionState {
          return load(this.load_Map);
       }
 
-      private AutismSessionState.Inner_TaskQueue init_ck_TaskQueue() {
-         return new AutismSessionState.Inner_TaskQueue(this.init_Str, this.load_Str, this.init_List, this.init_Map, this.load_Map);
+      private AutismSessionState.PluginScanResult init_ck_TaskQueue() {
+         return new AutismSessionState.PluginScanResult(this.init_Str, this.load_Str, this.init_List, this.init_Map, this.load_Map);
       }
 
       private static Map<String, List<String>> init(Map<String, List<String>> source) {

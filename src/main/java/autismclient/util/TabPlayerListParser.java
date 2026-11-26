@@ -22,8 +22,8 @@ public final class TabPlayerListParser {
    private TabPlayerListParser() {
    }
 
-   public static List<TabPlayerListParser.Inner_StreamUtil> init(Minecraft mc) {
-      Map<String, TabPlayerListParser.Inner_StreamUtil> byName = new LinkedHashMap<>();
+   public static List<TabPlayerListParser.ParsedPlayer> init(Minecraft mc) {
+      Map<String, TabPlayerListParser.ParsedPlayer> byName = new LinkedHashMap<>();
       if (mc == null) {
          return new ArrayList<>();
       }
@@ -34,7 +34,7 @@ public final class TabPlayerListParser {
       if (connection != null) {
          for (PlayerInfo info : connection.getOnlinePlayers()) {
             if (info != null) {
-               TabPlayerListParser.Inner_DataUtil parsed = init_bO_DataUtil(info.getTabListDisplayName());
+               TabPlayerListParser.RawEntry parsed = init_bO_DataUtil(info.getTabListDisplayName());
                if (parsed != null && init_Z(parsed.init_Str(), self)) {
                   init(byName, parsed.init_Str(), parsed.load(), parsed.init_Component());
                }
@@ -64,13 +64,13 @@ public final class TabPlayerListParser {
       }
 
       init(byName);
-      List<TabPlayerListParser.Inner_StreamUtil> result = new ArrayList<>(byName.values());
+      List<TabPlayerListParser.ParsedPlayer> result = new ArrayList<>(byName.values());
       result.sort((a, b) -> a.init_Str().compareToIgnoreCase(b.init_Str()));
       return result;
    }
 
-   private static void init(Map<String, TabPlayerListParser.Inner_StreamUtil> byName) {
-      if (!byName.isEmpty() && !byName.values().stream().allMatch(TabPlayerListParser.Inner_StreamUtil::init_Z)) {
+   private static void init(Map<String, TabPlayerListParser.ParsedPlayer> byName) {
+      if (!byName.isEmpty() && !byName.values().stream().allMatch(TabPlayerListParser.ParsedPlayer::init_Z)) {
          List<String> keys = new ArrayList<>(byName.keySet());
          keys.sort((a, b) -> Integer.compare(b.length(), a.length()));
 
@@ -83,13 +83,13 @@ public final class TabPlayerListParser {
                   String lowerHeader = header.toLowerCase(Locale.ROOT);
 
                   for (String key : keys) {
-                     TabPlayerListParser.Inner_StreamUtil player = byName.get(key);
+                     TabPlayerListParser.ParsedPlayer player = byName.get(key);
                      if (player != null && !player.init_Z()) {
                         int nameIdx = lowerHeader.indexOf(key);
                         if (nameIdx > 0) {
                            String rank = read_Str(header.substring(0, nameIdx));
                            if (!rank.isBlank()) {
-                              byName.put(key, new TabPlayerListParser.Inner_StreamUtil(player.init_Str(), rank, null));
+                              byName.put(key, new TabPlayerListParser.ParsedPlayer(player.init_Str(), rank, null));
                               break;
                            }
                         }
@@ -144,17 +144,17 @@ public final class TabPlayerListParser {
       return lower.matches("(slot|npc|line|spacer|empty|blank|grid|hud|tab|frame|fill)_?-?\\d+") || lower.matches("[#.\\-_ ]*\\d{1,4}[#.\\-_ ]*");
    }
 
-   private static void init(Map<String, TabPlayerListParser.Inner_StreamUtil> byName, String name, String prefix, Component prefixComponent) {
+   private static void init(Map<String, TabPlayerListParser.ParsedPlayer> byName, String name, String prefix, Component prefixComponent) {
       String key = name.toLowerCase(Locale.ROOT);
-      TabPlayerListParser.Inner_StreamUtil existing = byName.get(key);
+      TabPlayerListParser.ParsedPlayer existing = byName.get(key);
       if (existing == null) {
-         byName.put(key, new TabPlayerListParser.Inner_StreamUtil(name, prefix, prefixComponent));
+         byName.put(key, new TabPlayerListParser.ParsedPlayer(name, prefix, prefixComponent));
       } else if (!existing.init_Z() && prefix != null && !prefix.isBlank()) {
-         byName.put(key, new TabPlayerListParser.Inner_StreamUtil(existing.init_Str(), prefix, prefixComponent));
+         byName.put(key, new TabPlayerListParser.ParsedPlayer(existing.init_Str(), prefix, prefixComponent));
       }
    }
 
-   private static TabPlayerListParser.Inner_DataUtil init_bO_DataUtil(Component display) {
+   private static TabPlayerListParser.RawEntry init_bO_DataUtil(Component display) {
       if (display == null) {
          return null;
       }
@@ -170,7 +170,7 @@ public final class TabPlayerListParser {
       }
 
       String name = load_Str(text);
-      return !name.isBlank() && load_Z(name) && !read_Z(name) ? new TabPlayerListParser.Inner_DataUtil(name, rank, init_MutableComponent(display)) : null;
+      return !name.isBlank() && load_Z(name) && !read_Z(name) ? new TabPlayerListParser.RawEntry(name, rank, init_MutableComponent(display)) : null;
    }
 
    private static MutableComponent init_MutableComponent(Component display) {
@@ -330,10 +330,10 @@ public final class TabPlayerListParser {
       return out.toString().trim();
    }
 
-   private record Inner_DataUtil(String init_Str, String load, Component init_Component) {
+   private record RawEntry(String init_Str, String load, Component init_Component) {
    }
 
-   public record Inner_StreamUtil(String init_Str, String load, Component init_Component) {
+   public record ParsedPlayer(String init_Str, String load, Component init_Component) {
       public boolean init_Z() {
          return this.load != null && !this.load.isBlank();
       }

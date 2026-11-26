@@ -62,14 +62,14 @@ public final class SchematicDecodeCheck {
       );
       Path overlapFile = write("overlap.litematic", overlap);
       Set<String> build = new TreeSet<>();
-      for (AiBuilder.Inner_StreamUtil c : AiSchematic.init_bP_BufferHelper(overlapFile, BlockPos.ZERO, 0, "none", false, 2097152).blueprint().cells()) {
+      for (AiBuilder.CellSpec c : AiSchematic.init_bP_BufferHelper(overlapFile, BlockPos.ZERO, 0, "none", false, 2097152).blueprint().cells()) {
          build.add(c.dx() + "," + c.dy() + "," + c.dz() + "=" + c.block());
       }
 
       SchematicDocument.Inner_StreamUtil shown = SchematicDocument.init_cQ_Path(overlapFile).init_cQ_StreamUtil_I(0, "none", v -> {});
       Set<String> preview = new TreeSet<>();
       BlockPos min = shown.nonAirMinimum();
-      for (AiBuilder.Inner_StreamUtil c : shown.cells()) {
+      for (AiBuilder.CellSpec c : shown.cells()) {
          preview.add((c.dx() - min.getX()) + "," + (c.dy() - min.getY()) + "," + (c.dz() - min.getZ()) + "=" + c.block());
       }
 

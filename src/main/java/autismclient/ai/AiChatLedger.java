@@ -35,7 +35,7 @@ public final class AiChatLedger {
       "chat", "say", "msg", "team_msg", "emote", "say_command", "msg_command", "team_msg_command", "emote_command", "whisper"
    );
    private static final Object init_Obj = new Object();
-   private static final Deque<AiChatLedger.Inner_StreamUtil> init_Deque = new ArrayDeque<>();
+   private static final Deque<AiChatLedger.ChatEntry> init_Deque = new ArrayDeque<>();
    private static long init_J;
 
    private AiChatLedger() {
@@ -48,7 +48,7 @@ public final class AiChatLedger {
    public static void init(Component component, String source, String sender) {
       if (component != null) {
          String text = init(component.getString(), 2048);
-         List<AiChatLedger.Inner_DataUtil> clicks = new ArrayList<>();
+         List<AiChatLedger.ClickAction> clicks = new ArrayList<>();
          String hover = init(component, clicks);
          if (!text.isBlank() || !clicks.isEmpty()) {
             String candidate = sender == null ? "" : sender.trim();
@@ -59,7 +59,7 @@ public final class AiChatLedger {
             String resolvedSource = source == null ? "SERVER" : source;
             String resolvedSender = candidate;
             synchronized (init_Obj) {
-               init_Deque.addFirst(new AiChatLedger.Inner_StreamUtil(System.currentTimeMillis(), ++init_J, resolvedSource, resolvedSender, text, clicks, hover));
+               init_Deque.addFirst(new AiChatLedger.ChatEntry(System.currentTimeMillis(), ++init_J, resolvedSource, resolvedSender, text, clicks, hover));
 
                while (init_Deque.size() > 64) {
                   init_Deque.removeLast();
@@ -117,11 +117,11 @@ public final class AiChatLedger {
       return "";
    }
 
-   public static List<AiChatLedger.Inner_StreamUtil> init_List(int n) {
+   public static List<AiChatLedger.ChatEntry> init_List(int n) {
       synchronized (init_Obj) {
-         List<AiChatLedger.Inner_StreamUtil> out = new ArrayList<>(Math.min(n, init_Deque.size()));
+         List<AiChatLedger.ChatEntry> out = new ArrayList<>(Math.min(n, init_Deque.size()));
 
-         for (AiChatLedger.Inner_StreamUtil entry : init_Deque) {
+         for (AiChatLedger.ChatEntry entry : init_Deque) {
             if (out.size() >= n) {
                break;
             }
@@ -133,12 +133,12 @@ public final class AiChatLedger {
       }
    }
 
-   public static AiChatLedger.Inner_StreamUtil init_TokenStore_StreamU(int index) {
+   public static AiChatLedger.ChatEntry init_TokenStore_StreamU(int index) {
       synchronized (init_Obj) {
          if (index >= 0 && index < init_Deque.size()) {
             int i = 0;
 
-            for (AiChatLedger.Inner_StreamUtil entry : init_Deque) {
+            for (AiChatLedger.ChatEntry entry : init_Deque) {
                if (i++ == index) {
                   return entry;
                }
@@ -179,8 +179,8 @@ public final class AiChatLedger {
       return text == null ? "" : text.substring(0, Math.min(max, text.length()));
    }
 
-   private static String init(Component root, List<AiChatLedger.Inner_DataUtil> out) {
-      Set<AiChatLedger.Inner_DataUtil> seen = new LinkedHashSet<>();
+   private static String init(Component root, List<AiChatLedger.ClickAction> out) {
+      Set<AiChatLedger.ClickAction> seen = new LinkedHashSet<>();
       String hover = "";
       Deque<Component> queue = new ArrayDeque<>();
       Deque<Style> inherited = new ArrayDeque<>();
@@ -191,7 +191,7 @@ public final class AiChatLedger {
       while (!queue.isEmpty() && nodes++ < 256 && seen.size() < 16) {
          Component node = queue.poll();
          Style style = node.getStyle().applyTo(inherited.poll());
-         AiChatLedger.Inner_DataUtil action = init(style.getClickEvent());
+         AiChatLedger.ClickAction action = init(style.getClickEvent());
          if (action != null && !action.value().isBlank()) {
             seen.add(action);
          }
@@ -219,23 +219,23 @@ public final class AiChatLedger {
       return hover;
    }
 
-   private static AiChatLedger.Inner_DataUtil init(ClickEvent event) {
+   private static AiChatLedger.ClickAction init(ClickEvent event) {
       if (event instanceof RunCommand run) {
-         return new AiChatLedger.Inner_DataUtil("RUN_COMMAND", run.command());
+         return new AiChatLedger.ClickAction("RUN_COMMAND", run.command());
       } else if (event instanceof SuggestCommand suggest) {
-         return new AiChatLedger.Inner_DataUtil("SUGGEST_COMMAND", suggest.command());
+         return new AiChatLedger.ClickAction("SUGGEST_COMMAND", suggest.command());
       } else if (event instanceof OpenUrl url) {
-         return new AiChatLedger.Inner_DataUtil("OPEN_URL", url.uri() == null ? "" : url.uri().toString());
+         return new AiChatLedger.ClickAction("OPEN_URL", url.uri() == null ? "" : url.uri().toString());
       } else {
-         return event instanceof CopyToClipboard copy ? new AiChatLedger.Inner_DataUtil("COPY_TO_CLIPBOARD", copy.value()) : null;
+         return event instanceof CopyToClipboard copy ? new AiChatLedger.ClickAction("COPY_TO_CLIPBOARD", copy.value()) : null;
       }
    }
 
-   public record Inner_DataUtil(String action, String value) {
+   public record ClickAction(String action, String value) {
    }
 
-   public record Inner_StreamUtil(long at, long revision, String source, String sender, String text, List<AiChatLedger.Inner_DataUtil> clicks, String hoverText) {
-      public Inner_StreamUtil {
+   public record ChatEntry(long at, long revision, String source, String sender, String text, List<AiChatLedger.ClickAction> clicks, String hoverText) {
+      public ChatEntry {
          clicks = List.copyOf(clicks);
       }
    }

@@ -132,12 +132,12 @@ final class AiScaffoldWalk {
 
             boolean read(BlockPos cell) {
                ItemStack stack = mc.player.getInventory().getItem(mc.player.getInventory().getSelectedSlot());
-               BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(
+               BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(
                      cell, mc.player.getEyePosition(), Math.max(4.5, mc.player.blockInteractionRange()), BlockPlacementPlanner.init(stack, mc.player, InteractionHand.MAIN_HAND)
                   )
                   .init_U_StateCache_Z(mc.player.isShiftKeyDown())
-                  .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(6));
-               BlockPlacementPlanner.Inner_CachePool candidate = BlockPlacementPlanner.init_U_CachePool(request);
+                  .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(6));
+               BlockPlacementPlanner.PlacementPlan candidate = BlockPlacementPlanner.init_U_CachePool(request);
                if (candidate == null) {
                   return false;
                }

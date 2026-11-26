@@ -907,13 +907,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.init_V_Str_9("TPS:", tps, null);
       List<String> detectedAcs = this.init_List_13();
       if (this.tick_Z) {
-         this.init_V_Str_9("AntiCheats:", "Scanning...", ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.Inner_DataUtil.DANGER));
+         this.init_V_Str_9("AntiCheats:", "Scanning...", ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.ColorRole.DANGER));
       } else if (!this.pop_Z) {
-         this.init_V_Str_9("AntiCheats:", "Probe Plugins First", ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.Inner_DataUtil.DANGER));
+         this.init_V_Str_9("AntiCheats:", "Probe Plugins First", ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.ColorRole.DANGER));
       } else if (detectedAcs.isEmpty()) {
          this.init_V_Str_9("AntiCheats:", "None detected", null);
       } else {
-         this.init_V_Str_9("AntiCheats:", String.join(", ", detectedAcs), ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.Inner_DataUtil.DANGER));
+         this.init_V_Str_9("AntiCheats:", String.join(", ", detectedAcs), ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.ColorRole.DANGER));
       }
 
       this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(this.init_PacketUtil);
@@ -922,7 +922,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.init_CharEncoder_2
          .init_PacketUtil()
          .init_TableIndex_TableIndex(
-            new autismclient.gui.ui.layout.ButtonNode("Copy Report", autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY, this::d_V_2)
+            new autismclient.gui.ui.layout.ButtonNode("Copy Report", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::d_V_2)
                .load_ByteReader_I(this.count_I_2())
          );
    }
@@ -981,7 +981,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          .init_PacketUtil()
          .init_TableIndex_TableIndex(new autismclient.gui.ui.layout.LabelNode("If you get kicked increase the delay.", autismclient.gui.f.b.l.write));
       autismclient.gui.ui.layout.ButtonNode startProbe = new autismclient.gui.ui.layout.ButtonNode(
-         this.sync_Z ? "Join a Server to Probe" : "Start Probing", autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY, this::mark_V_2
+         this.sync_Z ? "Join a Server to Probe" : "Start Probing", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::mark_V_2
       );
       startProbe.load_ByteReader_I(this.count_I_2());
       startProbe.read_TableIndex_Z(!this.sync_Z);
@@ -989,7 +989,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (!this.load_List.isEmpty()) {
          this.init_CharEncoder_2
             .init_PacketUtil()
-            .init_TableIndex_TableIndex(new autismclient.gui.ui.layout.ButtonNode("Back to Results", autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY, () -> {
+            .init_TableIndex_TableIndex(new autismclient.gui.ui.layout.ButtonNode("Back to Results", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
                this.put_Z = false;
                this.pop_Z = true;
                this.tick_Z = false;
@@ -1047,11 +1047,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(this.init_BitSetUtil);
       autismclient.gui.ui.layout.StretchRowLayout buttons = new autismclient.gui.ui.layout.StretchRowLayout().init(this.flags_I_2());
       buttons.init_TableIndex_TableIndex(
-         new autismclient.gui.ui.layout.ButtonNode("Rescan", autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY, () -> this.queue_V_2())
+         new autismclient.gui.ui.layout.ButtonNode("Rescan", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> this.queue_V_2())
             .load_ByteReader_I(this.count_I_2())
       );
       buttons.init_TableIndex_TableIndex(
-         new autismclient.gui.ui.layout.ButtonNode("Copy Plugins", autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY, this::e_V_2)
+         new autismclient.gui.ui.layout.ButtonNode("Copy Plugins", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::e_V_2)
             .load_ByteReader_I(this.count_I_2())
       );
       this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(buttons);
@@ -1082,7 +1082,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       boolean autoOn = AutismConfig.getGlobal().autoProbePlugins;
       return new autismclient.gui.ui.layout.ButtonNode(
             "Auto Probe: " + (autoOn ? "ON" : "OFF"),
-            autoOn ? autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SUCCESS : autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY,
+            autoOn ? autismclient.gui.ui.layout.ButtonNode.Variant.SUCCESS : autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY,
             this::state_V_2
          )
          .load_ByteReader_I(this.count_I_2());
@@ -4776,7 +4776,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             this.init_CacheEntry.init_V_I_I(quantizedTarget, maxScroll);
             int visualScroll = this.init_I_I_3(this.init_CacheEntry.init_I_F_I(delta, maxScroll), this.o(), maxScroll);
             this.value = estimatedContentHeight;
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.load_PoolEntry_DataUtil_I(x, listTop, rowW, viewH);
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.load_PoolEntry_DataUtil_I(x, listTop, rowW, viewH);
             int scrolledRowContentW = Math.max(48, clipRight - clipLeft - (scrollbarMetrics.init_Z() ? 10 : 0));
             if (scrolledRowContentW != rowContentW) {
                rowContentW = scrolledRowContentW;
@@ -4847,7 +4847,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
                         boolean isAnticheat = row.load != null && update_Set.contains(row.load.toLowerCase(Locale.ROOT));
                         int nameColor = isAnticheat
-                           ? ThemePaletteManager.init_I_I_ct_DataUtil(-43691, ThemePaletteManager.Inner_DataUtil.DANGER)
+                           ? ThemePaletteManager.init_I_I_ct_DataUtil(-43691, ThemePaletteManager.ColorRole.DANGER)
                            : this.init_I_AutismServerInfoOv_Z(row.init_AutismServerInfoOv, hovered);
                         String label = isAnticheat ? "! " + row.load : row.load;
                         int labelX = clipLeft + (standaloneCommandHint ? 5 : 13);
@@ -5033,7 +5033,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          && row.load.startsWith("/");
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil load_PoolEntry_DataUtil_I(int x, int y, int width, int height) {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics load_PoolEntry_DataUtil_I(int x, int y, int width, int height) {
       int innerHeight = this.load_I_2(height);
       int maxScroll = Math.max(0, this.value - innerHeight);
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
@@ -6609,7 +6609,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       if (this.start == 1 && this.pop_Z && !this.tick_Z) {
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.load_PoolEntry_DataUtil_I(
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.load_PoolEntry_DataUtil_I(
             Math.round(this.init_BitSetUtil_2.load_F()),
             Math.round(this.init_BitSetUtil_2.read_F()),
             Math.round(this.init_BitSetUtil_2.write_F()),
@@ -6662,7 +6662,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (this.open_Z && button == 0) {
          autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
          float uiMouseY = viewport.load(my);
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.load_PoolEntry_DataUtil_I(
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.load_PoolEntry_DataUtil_I(
             Math.round(this.init_BitSetUtil_2.load_F()),
             Math.round(this.init_BitSetUtil_2.read_F()),
             Math.round(this.init_BitSetUtil_2.write_F()),

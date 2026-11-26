@@ -225,7 +225,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                         button.read(),
                         this.clear(),
                         button.init_Str(),
-                        button.init_Z() ? autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
+                        button.init_Z() ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                         true,
                         mouseX,
                         mouseY

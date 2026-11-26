@@ -19,7 +19,7 @@ final class AiTravelFar {
    }
 
    static AiOperation init(BlockPos target, double radius, boolean groundTarget, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds) {
-      return init(target, radius, groundTarget, allowDig, allowPillar, allowBridge, timeoutSeconds, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST);
+      return init(target, radius, groundTarget, allowDig, allowPillar, allowBridge, timeoutSeconds, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST);
    }
 
    static AiOperation init(
@@ -30,7 +30,7 @@ final class AiTravelFar {
       final boolean allowPillar,
       final boolean allowBridge,
       int timeoutSeconds,
-      final autismclient.ai.engine.AiPathfinder.Inner_IoWorker strategy
+      final autismclient.ai.engine.AiPathfinder.RouteStrategy strategy
    ) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {

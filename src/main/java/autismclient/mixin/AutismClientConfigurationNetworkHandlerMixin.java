@@ -51,7 +51,7 @@ public abstract class AutismClientConfigurationNetworkHandlerMixin {
 
          if (client != null && client.isSameThread()) {
             ClientConfigurationPacketListenerImpl listener = (ClientConfigurationPacketListenerImpl)(Object)this;
-            ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init(listener);
+            ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(listener);
             if (VanillaKnownPacksManager.init(context)) {
                if (!(this.knownPacks instanceof VanillaKnownPacksManager)) {
                   this.knownPacks = new VanillaKnownPacksManager();

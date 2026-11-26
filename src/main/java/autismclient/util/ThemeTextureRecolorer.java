@@ -43,12 +43,12 @@ public final class ThemeTextureRecolorer {
    private ThemeTextureRecolorer() {
    }
 
-   public static Identifier init(Identifier source, ThemePaletteManager.Inner_DataUtil ch) {
+   public static Identifier init(Identifier source, ThemePaletteManager.ColorRole ch) {
       if (source == null) {
          return null;
       }
 
-      ThemePaletteManager.Inner_StreamUtil st = ThemePaletteManager.init_ct_StreamUtil();
+      ThemePaletteManager.CompiledPalette st = ThemePaletteManager.init_ct_StreamUtil();
       if (!st.init_Z_ct_DataUtil(ch)) {
          return source;
       }
@@ -126,7 +126,7 @@ public final class ThemeTextureRecolorer {
       );
    }
 
-   private static Identifier init_Identifier(Identifier source, ThemePaletteManager.Inner_DataUtil ch, ThemePaletteManager.Inner_StreamUtil st) {
+   private static Identifier init_Identifier(Identifier source, ThemePaletteManager.ColorRole ch, ThemePaletteManager.CompiledPalette st) {
       byte[] png = init_BArr(source);
       if (png == null) {
          return null;
@@ -147,7 +147,7 @@ public final class ThemeTextureRecolorer {
       }
    }
 
-   private static void init_V(Identifier source, ThemePaletteManager.Inner_DataUtil ch, ThemePaletteManager.Inner_StreamUtil st) {
+   private static void init_V(Identifier source, ThemePaletteManager.ColorRole ch, ThemePaletteManager.CompiledPalette st) {
       if (load_Set.add(source)) {
          int generation = init_I;
          byte[] png = init_BArr(source);
@@ -281,8 +281,8 @@ public final class ThemeTextureRecolorer {
    }
 
    public static Identifier load(Identifier original) {
-      ThemePaletteManager.Inner_StreamUtil st = ThemePaletteManager.init_ct_StreamUtil();
-      if (!st.init_Z_ct_DataUtil(ThemePaletteManager.Inner_DataUtil.BACKDROP)) {
+      ThemePaletteManager.CompiledPalette st = ThemePaletteManager.init_ct_StreamUtil();
+      if (!st.init_Z_ct_DataUtil(ThemePaletteManager.ColorRole.BACKDROP)) {
          return original;
       }
 
@@ -298,7 +298,7 @@ public final class ThemeTextureRecolorer {
       return original;
    }
 
-   private static void init(ThemePaletteManager.Inner_StreamUtil st, Runnable jobDone) {
+   private static void init(ThemePaletteManager.CompiledPalette st, Runnable jobDone) {
       int generation = init_I;
 
       byte[] png;
@@ -323,7 +323,7 @@ public final class ThemeTextureRecolorer {
          NativeImage recolored = null;
 
          try (NativeImage src = NativeImage.read(png)) {
-            recolored = src.mappedCopy(argb -> ThemePaletteManager.load(argb, ThemePaletteManager.Inner_DataUtil.BACKDROP, st));
+            recolored = src.mappedCopy(argb -> ThemePaletteManager.load(argb, ThemePaletteManager.ColorRole.BACKDROP, st));
          } catch (Throwable tx) {
             AutismClientAddon.LOG.warn("Failed to build themed panorama overlay", tx);
          }
@@ -356,8 +356,8 @@ public final class ThemeTextureRecolorer {
       read_Map.clear();
       load_Z = false;
       init_AbstractTexture = null;
-      ThemePaletteManager.Inner_StreamUtil st = ThemePaletteManager.init_ct_StreamUtil();
-      if (st.init_Z_ct_DataUtil(ThemePaletteManager.Inner_DataUtil.BACKDROP)) {
+      ThemePaletteManager.CompiledPalette st = ThemePaletteManager.init_ct_StreamUtil();
+      if (st.init_Z_ct_DataUtil(ThemePaletteManager.ColorRole.BACKDROP)) {
          load_Z = true;
          init(st, autismclient.gui.ThemeApplyProgressOverlay.init("Recoloring backdrop"));
       }
@@ -365,7 +365,7 @@ public final class ThemeTextureRecolorer {
       init_V();
    }
 
-   public static ThemeTextureRecolorer.Inner_CachePool init(Identifier source, ThemePaletteManager.Inner_DataUtil channel, int maxDim) {
+   public static ThemeTextureRecolorer.Inner_CachePool init(Identifier source, ThemePaletteManager.ColorRole channel, int maxDim) {
       try {
          TextureContents contents = TextureContents.load(init_Minecraft.getResourceManager(), source);
          NativeImage full = contents.image();
@@ -448,7 +448,7 @@ public final class ThemeTextureRecolorer {
    }
 
    public static final class Inner_CachePool implements AutoCloseable {
-      private final ThemePaletteManager.Inner_DataUtil init_ct_DataUtil;
+      private final ThemePaletteManager.ColorRole init_ct_DataUtil;
       private final NativeImage init_NativeImage;
       private final ThemeTextureRecolorer.Inner_StreamUtil init_cu_StreamUtil;
       private final Identifier init_Identifier;
@@ -457,9 +457,9 @@ public final class ThemeTextureRecolorer {
       private boolean init_Z;
       private boolean load;
       private boolean read;
-      private ThemePaletteManager.Inner_StreamUtil init_ct_StreamUtil;
+      private ThemePaletteManager.CompiledPalette init_ct_StreamUtil;
 
-      private Inner_CachePool(ThemePaletteManager.Inner_DataUtil channel, NativeImage source, ThemeTextureRecolorer.Inner_StreamUtil texture, Identifier id) {
+      private Inner_CachePool(ThemePaletteManager.ColorRole channel, NativeImage source, ThemeTextureRecolorer.Inner_StreamUtil texture, Identifier id) {
          this.init_ct_DataUtil = channel;
          this.init_NativeImage = source;
          this.init_cu_StreamUtil = texture;
@@ -478,13 +478,13 @@ public final class ThemeTextureRecolorer {
          return this.init_NativeImage.getHeight();
       }
 
-      private static int init_I_ct_StreamUtil(ThemePaletteManager.Inner_StreamUtil st) {
-         int sig = Float.floatToIntBits(st.init_F_ct_DataUtil(ThemePaletteManager.Inner_DataUtil.BACKDROP)) * 31 + Float.floatToIntBits(st.load_F(ThemePaletteManager.Inner_DataUtil.BACKDROP));
+      private static int init_I_ct_StreamUtil(ThemePaletteManager.CompiledPalette st) {
+         int sig = Float.floatToIntBits(st.init_F_ct_DataUtil(ThemePaletteManager.ColorRole.BACKDROP)) * 31 + Float.floatToIntBits(st.load_F(ThemePaletteManager.ColorRole.BACKDROP));
          return sig == 0 ? 1 : sig;
       }
 
-      public void init_V_ct_StreamUtil(ThemePaletteManager.Inner_StreamUtil st) {
-         int sig = this.init_ct_DataUtil == ThemePaletteManager.Inner_DataUtil.BACKDROP ? init_I_ct_StreamUtil(st) : st.load_I(this.init_ct_DataUtil);
+      public void init_V_ct_StreamUtil(ThemePaletteManager.CompiledPalette st) {
+         int sig = this.init_ct_DataUtil == ThemePaletteManager.ColorRole.BACKDROP ? init_I_ct_StreamUtil(st) : st.load_I(this.init_ct_DataUtil);
          if (sig != this.init_I) {
             this.init_I = sig;
             synchronized (this.init_Obj) {
@@ -507,7 +507,7 @@ public final class ThemeTextureRecolorer {
       private void init_V() {
          try {
             while (true) {
-               ThemePaletteManager.Inner_StreamUtil st;
+               ThemePaletteManager.CompiledPalette st;
                synchronized (this.init_Obj) {
                   if (this.init_Z || this.init_ct_StreamUtil == null) {
                      this.load = false;
@@ -524,9 +524,9 @@ public final class ThemeTextureRecolorer {
 
                for (int y = 0; y < h; y++) {
                   for (int x = 0; x < w; x++) {
-                     out[y * w + x] = this.init_ct_DataUtil == ThemePaletteManager.Inner_DataUtil.BACKDROP
+                     out[y * w + x] = this.init_ct_DataUtil == ThemePaletteManager.ColorRole.BACKDROP
                         ? ThemePaletteManager.init_I_I(
-                           this.init_NativeImage.getPixel(x, y), st.init_F_ct_DataUtil(ThemePaletteManager.Inner_DataUtil.BACKDROP), st.load_F(ThemePaletteManager.Inner_DataUtil.BACKDROP)
+                           this.init_NativeImage.getPixel(x, y), st.init_F_ct_DataUtil(ThemePaletteManager.ColorRole.BACKDROP), st.load_F(ThemePaletteManager.ColorRole.BACKDROP)
                         )
                         : ThemePaletteManager.load(this.init_NativeImage.getPixel(x, y), this.init_ct_DataUtil, st);
                   }
@@ -607,9 +607,9 @@ public final class ThemeTextureRecolorer {
       public TextureContents loadContents(ResourceManager resourceManager) throws IOException {
          TextureContents contents = super.loadContents(resourceManager);
          ThemeTextureRecolorer.init_Z = true;
-         ThemePaletteManager.Inner_StreamUtil st = ThemePaletteManager.init_ct_StreamUtil();
-         float hue = st.init_F_ct_DataUtil(ThemePaletteManager.Inner_DataUtil.BACKDROP);
-         float sat = st.load_F(ThemePaletteManager.Inner_DataUtil.BACKDROP);
+         ThemePaletteManager.CompiledPalette st = ThemePaletteManager.init_ct_StreamUtil();
+         float hue = st.init_F_ct_DataUtil(ThemePaletteManager.ColorRole.BACKDROP);
+         float sat = st.load_F(ThemePaletteManager.ColorRole.BACKDROP);
          NativeImage img = contents.image();
          int changed = 0;
 

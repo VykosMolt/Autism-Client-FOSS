@@ -416,20 +416,20 @@ public final class AiDirectOps {
                         "incoming projectile"
                      );
                   } else if (a.init_AiOperation.canInterruptNow()) {
-                     AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+                     AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
                      boolean movingPast = AiGuard.init(mc, mc.player.getDeltaMovement());
                      boolean unsafeMeal = a.init_Str.equals("game:eat") && AiSurvival.init_Entity(mc) != null;
                      if (unsafeMeal || !movingPast && vitals.hostilesNear() > 0 && (vitals.underAttack() || a.init_Str.equals("game:eat"))) {
                         AiOperation defense = a.init_Str.equals("game:eat")
                            ? AiSurvival.init_AiOperation(mc)
-                           : AiGuard.init_AiOperation_X_CachePool(AiGuard.Inner_CachePool.standard(), vitals, 15);
+                           : AiGuard.init_AiOperation_X_CachePool(AiGuard.GuardPolicy.standard(), vitals, 15);
                         if (defense != null) {
                            init(
                               a,
                               defense,
                               "combat",
                               AiFailure.THREAT_INTERRUPT,
-                              a.init_Str.equals("game:eat") ? "nearby enemy prevents a safe meal" : AiGuard.init_Str(AiGuard.Inner_CachePool.standard(), vitals)
+                              a.init_Str.equals("game:eat") ? "nearby enemy prevents a safe meal" : AiGuard.init_Str(AiGuard.GuardPolicy.standard(), vitals)
                            );
                         }
                      } else if (!a.init_Str.equals("game:eat") && vitals.food() <= 6 && vitals.hasFood() && vitals.hostilesNear() == 0) {

@@ -244,8 +244,8 @@ final class AiNetherEntry {
       return sites.isEmpty() ? null : sites.get(Math.min(attemptIndex, sites.size() - 1));
    }
 
-   static boolean init_Z_X_DataUtil(AiGuard.Inner_DataUtil action, boolean hasEdibleFood, boolean containerOpen, boolean screenOpen) {
-      return action == AiGuard.Inner_DataUtil.EAT && (!hasEdibleFood || containerOpen || screenOpen);
+   static boolean init_Z_X_DataUtil(AiGuard.GuardAction action, boolean hasEdibleFood, boolean containerOpen, boolean screenOpen) {
+      return action == AiGuard.GuardAction.EAT && (!hasEdibleFood || containerOpen || screenOpen);
    }
 
    static int init_I(int seconds) {
@@ -408,8 +408,8 @@ final class AiNetherEntry {
          final int bedsTarget = Math.max(0, Math.min(8, AiJson.init_I_JsonObject(args, "beds", 2)));
          final int minIron = Math.max(1, Math.min(16, AiJson.init_I_JsonObject(args, "minIron", 4)));
          final int timeoutSeconds = init_I(AiJson.init_I_JsonObject(args, "timeoutSeconds", 1800));
-         final AiItems.Inner_DataUtil logTarget = AiItems.init_af_DataUtil("log");
-         final AiItems.Inner_DataUtil bedTarget = AiItems.init_af_DataUtil("bed");
+         final AiItems.ItemSpec logTarget = AiItems.init_af_DataUtil("log");
+         final AiItems.ItemSpec bedTarget = AiItems.init_af_DataUtil("bed");
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final long load_J = System.currentTimeMillis();
@@ -417,7 +417,7 @@ final class AiNetherEntry {
             final Object init_Obj = mc.getConnection();
             final UUID init_UUID = mc.player == null ? null : mc.player.getUUID();
             final long read_J = AiServerEvidence.load_J();
-            final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard();
+            final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard();
             final JsonArray init_JsonArray = new JsonArray();
             final List<Entry<String, Integer>> init_List = new ArrayList<>();
             final JsonArray load_JsonArray = new JsonArray();
@@ -650,8 +650,8 @@ final class AiNetherEntry {
                      return null;
                   }
 
-                  AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
-                  AiGuard.Inner_StreamUtil decision = AiGuard.init_X_StreamUtil(this.init_X_CachePool, vitals);
+                  AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
+                  AiGuard.GuardDecision decision = AiGuard.init_X_StreamUtil(this.init_X_CachePool, vitals);
                   if (AiNetherEntry.init_Z_X_DataUtil(
                      decision.action(), AiSurvival.init(mc.player.getInventory()) >= 0, mc.player.containerMenu != mc.player.inventoryMenu, mc.gui.screen() != null
                   )) {
@@ -1487,7 +1487,7 @@ final class AiNetherEntry {
                               true,
                               true,
                               this.load_I(240),
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                              autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                               true,
                               2.0,
                               new AiNetherRun.Inner_NetHelper(this.update_BlockPos.getX(), this.update_BlockPos.getZ(), 8)
@@ -1838,7 +1838,7 @@ final class AiNetherEntry {
                      this.load_Str = "game:goto";
                      this.init(AiNetherEntry.init_JsonObject_Str("game:goto", "STARTED", "", null));
                      this.init_AiOperation = AiGoto.init(
-                        lit, 3.0, true, true, true, this.read_I(240), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true, 2.0
+                        lit, 3.0, true, true, true, this.read_I(240), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true, 2.0
                      );
                      return this.write("Back to the portal built at " + lit.toShortString());
                   }
@@ -2044,7 +2044,7 @@ final class AiNetherEntry {
                if (this.init_AiOperation == null) {
                   this.load_Str = "game:goto";
                   this.init(AiNetherEntry.init_JsonObject_Str("game:goto", "STARTED", "", null));
-                  this.init_AiOperation = AiGoto.init(target, 3.0, true, true, true, this.load_I(cap), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST);
+                  this.init_AiOperation = AiGoto.init(target, 3.0, true, true, true, this.load_I(cap), autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST);
                }
 
                return this.poll_AiOperation_Result();
@@ -2253,11 +2253,11 @@ final class AiNetherEntry {
                            true,
                            true,
                            this.read_I(240),
-                           autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
+                           autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                            true,
                            2.0,
                            AiGoto.read(
-                              autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(begun, 3.0), AiDimension.init_Set(begun, AiDimension.init_Direction)
+                              autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(begun, 3.0), AiDimension.init_Set(begun, AiDimension.init_Direction)
                            )
                         );
                      }

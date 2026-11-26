@@ -24,7 +24,7 @@ public final class IconButtonRenderer {
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, font, -10000, -10000);
          autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
          int radius = init(bounds);
-         int fill = danger ? ThemePaletteManager.init_I_I_ct_DataUtil(-868936937, ThemePaletteManager.Inner_DataUtil.DANGER) : -1156179423;
+         int fill = danger ? ThemePaletteManager.init_I_I_ct_DataUtil(-868936937, ThemePaletteManager.ColorRole.DANGER) : -1156179423;
          autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, fill, danger ? colors.data : colors.set);
          float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered && active);
          if (hoverT > 0.001F) {

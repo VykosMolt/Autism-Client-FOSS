@@ -227,14 +227,14 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
             .init_StreamUtil(false);
          settingsPages.init_TableIndex_Z(true);
          settingsPages.init_TableIndex_TableIndex(
-            new autismclient.gui.ui.layout.ButtonNode("Theme Color", autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.PRIMARY, this::update_V_7)
+            new autismclient.gui.ui.layout.ButtonNode("Theme Color", autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY, this::update_V_7)
                .read_ByteReader_Z(true)
                .init_ByteReader_Z(true)
                .init_ByteReader_MethodUtil_DataUti(autismclient.gui.ui.widgets.ConnectedButtonRenderer.load)
                .load_ByteReader_I(this.state())
          );
          settingsPages.init_TableIndex_TableIndex(
-            new autismclient.gui.ui.layout.ButtonNode("Profiles", autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.PRIMARY, this::sync_V_6)
+            new autismclient.gui.ui.layout.ButtonNode("Profiles", autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY, this::sync_V_6)
                .read_ByteReader_Z(true)
                .init_ByteReader_Z(true)
                .init_ByteReader_MethodUtil_DataUti(autismclient.gui.ui.widgets.ConnectedButtonRenderer.read)
@@ -256,7 +256,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
             ((AutismProfilesOverlay)profiles).load(false);
             profiles.init_V_Z(true);
             OverlayManager manager = OverlayManager.init_bk();
-            manager.init_V_cX_cX_DataUtil(profiles, AutismOverlay.Inner_DataUtil.HOST_SCREEN);
+            manager.init_V_cX_cX_DataUtil(profiles, AutismOverlay.RenderLayer.HOST_SCREEN);
             manager.update_V(profiles);
          }
       }
@@ -414,7 +414,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          this.init_V_I_4(ValueSink.init_I(button));
          return true;
       } else {
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil bodyBar = this.init_CharEncoder_2.init_PoolEntry_DataUtil();
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics bodyBar = this.init_CharEncoder_2.init_PoolEntry_DataUtil();
          if (button == 0 && bodyBar != null && bodyBar.init(uiMouseX, uiMouseY)) {
             this.sync_Z = true;
             this.init_CharEncoder_2.init_V(true);
@@ -485,7 +485,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
 
       if (!this.write_Z) {
          if (this.sync_Z) {
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil bodyBar = this.init_CharEncoder_2.init_PoolEntry_DataUtil();
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics bodyBar = this.init_CharEncoder_2.init_PoolEntry_DataUtil();
             if (bodyBar != null) {
                this.init_CharEncoder_2.init(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(bodyBar, this.init_TextFormat.init_RingBuffer().load(mouseY), this.reset));
             }
@@ -931,7 +931,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
 
       private autismclient.gui.ui.layout.ButtonNode init(String label, String style, int width) {
-         return new autismclient.gui.ui.layout.ButtonNode(label, autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY, () -> {
+         return new autismclient.gui.ui.layout.ButtonNode(label, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             AutismKeybindOverlay.this.init_AutismConfig().moduleMenuStyle = style;
             AutismKeybindOverlay.this.init_AutismConfig().save();
          }).read_ByteReader_F(width).init_ByteReader_F(width).load_ByteReader_F(width).init_ByteReader_I(5).load_ByteReader_I(AutismKeybindOverlay.queue());
@@ -947,11 +947,11 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          boolean csgo = "CSGO".equals(AutismKeybindOverlay.this.init_AutismConfig().moduleMenuStyle);
          this.init_ByteReader
             .init_ByteReader_ByteReader_StreamU(
-               csgo ? autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY : autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.PRIMARY
+               csgo ? autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY : autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY
             );
          this.load_ByteReader
             .init_ByteReader_ByteReader_StreamU(
-               csgo ? autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.PRIMARY : autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY
+               csgo ? autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY : autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY
             );
          super.init_V_SyncManager(context);
          if (this.init_Z_F_F(context.init_F(), context.load())) {
@@ -971,7 +971,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       private Inner_DataUtil() {
          super(
             new autismclient.gui.ui.layout.LabelNode("Font Scale", autismclient.gui.f.b.l.read).load_PoolEntry(true),
-            new autismclient.gui.ui.layout.ButtonNode("1x", autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY, null)
+            new autismclient.gui.ui.layout.ButtonNode("1x", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, null)
                .read_ByteReader_F(AutismKeybindOverlay.this.value())
                .init_ByteReader_F(AutismKeybindOverlay.this.value())
                .load_ByteReader_F(AutismKeybindOverlay.this.value())
@@ -1026,7 +1026,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          this.init_ByteReader.init_ByteReader_Str(scale == 1.0 ? "1x" : String.format(Locale.ROOT, "%.2fx", scale).replaceAll("0+x$", "x"));
          this.init_ByteReader
             .init_ByteReader_ByteReader_StreamU(
-               scale != 1.0 ? autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.PRIMARY : autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY
+               scale != 1.0 ? autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY : autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY
             );
          super.init_V_SyncManager(context);
          if (this.init_PoolEntry.init_Z_F_F(context.init_F(), context.load())) {
@@ -1057,7 +1057,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       private Inner_JsonUtil(String label, String tooltip, BooleanSupplier getter, Consumer<Boolean> setter) {
          super(
             new autismclient.gui.ui.layout.LabelNode(label, autismclient.gui.f.b.l.read).load_PoolEntry(true),
-            new autismclient.gui.ui.layout.ButtonNode("OFF", autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY, null)
+            new autismclient.gui.ui.layout.ButtonNode("OFF", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, null)
                .load_ByteReader_Z(true)
                .read_ByteReader_F(22.0F)
                .init_ByteReader_F(22.0F)
@@ -1124,7 +1124,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       private Inner_NetHelper() {
          super(
             new autismclient.gui.ui.layout.LabelNode("Overlay Scale", autismclient.gui.f.b.l.read).load_PoolEntry(true),
-            new autismclient.gui.ui.layout.ButtonNode("1x", autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY, null)
+            new autismclient.gui.ui.layout.ButtonNode("1x", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, null)
                .read_ByteReader_F(AutismKeybindOverlay.this.value())
                .init_ByteReader_F(AutismKeybindOverlay.this.value())
                .load_ByteReader_F(AutismKeybindOverlay.this.value())
@@ -1163,7 +1163,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          this.init_ByteReader.init_ByteReader_Str(cA.init_Str_D(scale));
          this.init_ByteReader
             .init_ByteReader_ByteReader_StreamU(
-               scale > 1.0 ? autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.PRIMARY : autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY
+               scale > 1.0 ? autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY : autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY
             );
          super.init_V_SyncManager(context);
          if (this.init_PoolEntry.init_Z_F_F(context.init_F(), context.load())) {

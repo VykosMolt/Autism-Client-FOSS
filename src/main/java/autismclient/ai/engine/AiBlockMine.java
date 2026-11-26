@@ -347,9 +347,9 @@ public final class AiBlockMine {
       return out;
    }
 
-   static double init(RotationMath.Inner_DataUtil facing, Vec3 eye, BlockPos target) {
+   static double init(RotationMath.Rotation facing, Vec3 eye, BlockPos target) {
       Vec3 centre = Vec3.atCenterOf(target);
-      RotationMath.Inner_DataUtil look = RotationMath.init(centre, eye);
+      RotationMath.Rotation look = RotationMath.init(centre, eye);
       double turn = Math.abs(Mth.wrapDegrees(look.init() - facing.init())) + Math.abs(look.load() - facing.load());
       return turn + 8.0 * Math.sqrt(centre.distanceToSqr(eye));
    }
@@ -578,7 +578,7 @@ public final class AiBlockMine {
                : null;
             final Set<Long> flush_Set = new HashSet<>();
             final Set<Long> close_Set = new LinkedHashSet<>();
-            AiGoto.Inner_CachePool init_HashUtil_CachePool;
+            AiGoto.GotoOp init_HashUtil_CachePool;
             AiBlockMine.Inner_TaskQueue init_BufferHelper_TaskQ;
             AiBlockMine.Inner_TaskQueue load_BufferHelper_TaskQ;
             BlockPos read_BlockPos;
@@ -608,7 +608,7 @@ public final class AiBlockMine {
             int pop_I;
             long load_J;
             long read_J;
-            AiPathfinder.Inner_JsonUtil init_ClassCache_JsonUti;
+            AiPathfinder.PathGoal init_ClassCache_JsonUti;
             AiBlockMine.Inner_BufferHelper init_BufferHelper_Buffe;
             AiBlockMine.Inner_StreamUtil init_BufferHelper_Strea;
             BlockPos flush_BlockPos;
@@ -1039,12 +1039,12 @@ public final class AiBlockMine {
                            || held > 0 && this.push_I >= Math.max(1, held - this.load_I_6())
                            || this.init_Z(drops) && !this.write_Z_3();
                         if (this.update_BlockPos != null) {
-                           AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                           if (status == AiPlacer.Inner_DataUtil.WORKING) {
+                           AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                           if (status == AiPlacer.PlaceStatus.WORKING) {
                               return this.init_AiOperation_Result_6("Blocking the water next to " + this.sync_BlockPos.toShortString());
                            }
 
-                           if (status == AiPlacer.Inner_DataUtil.FAILED) {
+                           if (status == AiPlacer.PlaceStatus.FAILED) {
                               this.init(this.sync_BlockPos, "could not block the water beside it (" + this.init_DataPipe.init_Str() + ")");
                            }
 
@@ -1659,7 +1659,7 @@ public final class AiBlockMine {
                }
             }
 
-            AiOperation.Result init(AiPathfinder.Inner_JsonUtil goal, String message) {
+            AiOperation.Result init(AiPathfinder.PathGoal goal, String message) {
                if (this.init_FieldCache.load_Z() && goal instanceof AiBlockMine.Inner_TaskQueue t && !t.init_List.isEmpty()) {
                   this.init_V_3(t.init_List.getFirst());
                }
@@ -2677,7 +2677,7 @@ public final class AiBlockMine {
                }
 
                BlockPos over = mc.player.blockPosition().above(2);
-               RotationMath.Inner_DataUtil facing = RotationMath.init(mc.player);
+               RotationMath.Rotation facing = RotationMath.init(mc.player);
                BlockPos best = null;
                this.push_BlockPos = null;
                double bestScore = 1.7976931348623157E308;
@@ -3060,7 +3060,7 @@ public final class AiBlockMine {
                   return false;
                }
 
-               if (AiPathfinder.Inner_StreamUtil.init_Z_BlockGetter_BlockPos(mc.level, pos)) {
+               if (AiPathfinder.LiveGridView.init_Z_BlockGetter_BlockPos(mc.level, pos)) {
                   return false;
                }
 
@@ -3317,7 +3317,7 @@ public final class AiBlockMine {
                                  && !AiEditLedger.init_Z(p)
                                  && AiBlockInteraction.init(mc, p) != null
                                  && !this.init_Set.contains(p.asLong())
-                                 && AiPathfinder.Inner_StreamUtil.init_Z_ClientLevel_BlockPos(mc.level, p)
+                                 && AiPathfinder.LiveGridView.init_Z_ClientLevel_BlockPos(mc.level, p)
                                  && (best == null || dx * dz == 0)) {
                                  best = p;
                               }
@@ -3651,7 +3651,7 @@ public final class AiBlockMine {
       return out;
    }
 
-   static final class Inner_BufferHelper implements AiPathfinder.Inner_JsonUtil {
+   static final class Inner_BufferHelper implements AiPathfinder.PathGoal {
       final BlockPos init_BlockPos;
       final int init_I;
       final BlockPos load;
@@ -3733,7 +3733,7 @@ public final class AiBlockMine {
       }
    }
 
-   static final class Inner_DataUtil implements AiPathfinder.Inner_JsonUtil {
+   static final class Inner_DataUtil implements AiPathfinder.PathGoal {
       final Set<Long> init_Set = new HashSet<>();
       final List<BlockPos> init_List;
 
@@ -3760,14 +3760,14 @@ public final class AiBlockMine {
                dy = 0;
             }
 
-            best = Math.min(best, AiPathfinder.Inner_CachePool.init_D_I(p.getX() - x, dy, p.getZ() - z));
+            best = Math.min(best, AiPathfinder.MoveCosts.init_D_I(p.getX() - x, dy, p.getZ() - z));
          }
 
          return best;
       }
    }
 
-   static final class Inner_StreamUtil implements AiPathfinder.Inner_JsonUtil {
+   static final class Inner_StreamUtil implements AiPathfinder.PathGoal {
       final int init_I;
       final BlockPos init_BlockPos;
       final double init_D;
@@ -3815,7 +3815,7 @@ public final class AiBlockMine {
       }
    }
 
-   static final class Inner_TaskQueue implements AiPathfinder.Inner_JsonUtil {
+   static final class Inner_TaskQueue implements AiPathfinder.PathGoal {
       final Set<Long> init_Set = new HashSet<>();
       final Set<Long> load_Set;
       final List<BlockPos> init_List;
@@ -3882,7 +3882,7 @@ public final class AiBlockMine {
       }
 
       @Override
-      public boolean init_Z_I(int x, int y, int z, AiPathfinder.Inner_StateCache planned) {
+      public boolean init_Z_I(int x, int y, int z, AiPathfinder.GridView planned) {
          if (!this.isInGoal(x, y, z)) {
             return false;
          }
@@ -3907,7 +3907,7 @@ public final class AiBlockMine {
          for (BlockPos p : this.init_List) {
             int dy = p.getY() - y;
             dy = dy >= 0 && dy <= this.init_I ? 0 : (dy > this.init_I ? dy - this.init_I : dy);
-            best = Math.min(best, AiPathfinder.Inner_CachePool.init_D_I(p.getX() - x, dy, p.getZ() - z));
+            best = Math.min(best, AiPathfinder.MoveCosts.init_D_I(p.getX() - x, dy, p.getZ() - z));
          }
 
          for (Vec3 item : this.load_List) {

@@ -37,7 +37,7 @@ final class AiRecover {
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final Map<String, Integer> init_Map = this.init_Map_3();
-            final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard();
+            final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard();
             AiOperation init_AiOperation;
             AiOperation load_AiOperation;
             String init_Str = "";
@@ -158,7 +158,7 @@ final class AiRecover {
                   this.load_AiOperation = null;
                   return this.init("Resuming recovery after " + this.init_Str);
                } else {
-                  AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+                  AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
                   AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.init_I_24());
                   if (action == null) {
                      return null;

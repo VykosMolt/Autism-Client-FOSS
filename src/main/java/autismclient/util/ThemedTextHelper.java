@@ -17,7 +17,7 @@ public final class ThemedTextHelper {
    private ThemedTextHelper() {
    }
 
-   public static int init_I(ThemedTextHelper.Inner_DataUtil tone) {
+   public static int init_I(ThemedTextHelper.TextTone tone) {
       int var10000;
       switch (tone) {
          case TITLE:
@@ -38,12 +38,12 @@ public final class ThemedTextHelper {
       return var10000;
    }
 
-   public static MutableComponent init(String value, ThemedTextHelper.Inner_DataUtil tone) {
+   public static MutableComponent init(String value, ThemedTextHelper.TextTone tone) {
       return Component.literal(value == null ? "" : value).setStyle(init_Style(tone));
    }
 
    public static MutableComponent init(String value, int color) {
-      Identifier fontId = init_Identifier(ThemedTextHelper.Inner_DataUtil.BODY);
+      Identifier fontId = init_Identifier(ThemedTextHelper.TextTone.BODY);
       return Component.literal(value == null ? "" : value).setStyle(Style.EMPTY.withFont(init(fontId)).withColor(color));
    }
 
@@ -73,20 +73,20 @@ public final class ThemedTextHelper {
          : "";
    }
 
-   public static Style init_Style(ThemedTextHelper.Inner_DataUtil tone) {
+   public static Style init_Style(ThemedTextHelper.TextTone tone) {
       int color = init_I(tone);
       return Style.EMPTY.withFont(init(init_Identifier(tone))).withColor(color);
    }
 
-   public static int init(Font renderer, String value, ThemedTextHelper.Inner_DataUtil tone) {
+   public static int init(Font renderer, String value, ThemedTextHelper.TextTone tone) {
       return autismclient.gui.f.b.k.init(renderer, value, init_Identifier(tone), init_I(tone));
    }
 
-   public static String init(Font renderer, String value, int maxWidth, ThemedTextHelper.Inner_DataUtil tone) {
+   public static String init(Font renderer, String value, int maxWidth, ThemedTextHelper.TextTone tone) {
       return autismclient.gui.f.b.k.init(renderer, value, maxWidth, init_Identifier(tone), init_I(tone));
    }
 
-   public static void init(GuiGraphicsExtractor context, Font renderer, String value, ThemedTextHelper.Inner_DataUtil tone, int x, int y, boolean shadow) {
+   public static void init(GuiGraphicsExtractor context, Font renderer, String value, ThemedTextHelper.TextTone tone, int x, int y, boolean shadow) {
       autismclient.gui.f.b.k.init(context, renderer, value, init_Identifier(tone), init_I(tone), x, y, shadow);
    }
 
@@ -94,7 +94,7 @@ public final class ThemedTextHelper {
       autismclient.gui.f.b.k.init(context, renderer, value, autismclient.gui.f.a.DataUtil.init, color, x, y, shadow);
    }
 
-   private static Identifier init_Identifier(ThemedTextHelper.Inner_DataUtil tone) {
+   private static Identifier init_Identifier(ThemedTextHelper.TextTone tone) {
       Identifier var10000;
       switch (tone) {
          case TITLE:
@@ -119,7 +119,7 @@ public final class ThemedTextHelper {
       return init.computeIfAbsent(fontId, Resource::new);
    }
 
-   public enum Inner_DataUtil {
+   public enum TextTone {
       TITLE,
       LABEL,
       BODY,

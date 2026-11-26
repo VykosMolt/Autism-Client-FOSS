@@ -14,13 +14,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
+final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    private static final int flowState = 65536;
    private static final int flowTemp = 4096;
    private static final int readEx_I = 4096;
    private static final int value_I = 4096;
-   private final AiPathfinder.Inner_StateCache putAt_FileStore_TextStor;
-   private final AiPathfinder.Inner_RenderState.Inner_CachePool putAt_FileStore_IoHelper;
+   private final AiPathfinder.GridView putAt_FileStore_TextStor;
+   private final AiPathfinder.MoveGenerator.CachedGrid putAt_FileStore_IoHelper;
    private double putAt_D;
    private static final AABB[] putAt_AABBArr = new AABB[0];
    private final AABB[][] putAt_AABBArr2 = new AABB[4096][];
@@ -68,7 +68,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
 
    @Override
    public double putAt_D() {
-      return this.putAt_FileStore_IoHelper == null ? AiPhysics.Inner_CachePool.super.putAt_D() : this.putAt_FileStore_IoHelper.putAt_FileStore_RingUtil.putAt_D;
+      return this.putAt_FileStore_IoHelper == null ? AiPhysics.PhysicsWorld.super.putAt_D() : this.putAt_FileStore_IoHelper.putAt_FileStore_RingUtil.putAt_D;
    }
 
    @Override
@@ -84,7 +84,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
       return this.putAt_FileStore_IoHelper != null && this.putAt_FileStore_IoHelper.fill_Z;
    }
 
-   AiPlannerWorld(AiPathfinder.Inner_StateCache var1, AiPathfinder.Inner_RenderState.Inner_CachePool var2) {
+   AiPlannerWorld(AiPathfinder.GridView var1, AiPathfinder.MoveGenerator.CachedGrid var2) {
       this.putAt_FileStore_TextStor = var1;
       this.putAt_FileStore_IoHelper = var2;
       this.putAt_D = var2 == null ? var1.movementSpeed() : var2.putAt_D;
@@ -232,7 +232,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
       }
 
       if (var40.length >= 64) {
-         Vec3 var44 = AiPhysics.Inner_CachePool.super.putAt_Vec3_Vec3(
+         Vec3 var44 = AiPhysics.PhysicsWorld.super.putAt_Vec3_Vec3(
             new Vec3(var2, var4, var6), new AABB(var8, var10, var12, var14, var16, var18), new AABB(var20, var22, var24, var26, var28, var30)
          );
          var1[0] = var44.x;
@@ -453,7 +453,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
          && this.putAt_FileStore_IoHelper.putAt_FileStore_PacketHe.cellsToBreak().contains(new BlockPos(var1, var2, var3))) {
          return 0;
       } else {
-         AiPathfinder.Inner_FileCache var4 = this.putAt_FileStore_TextStor.probe(var1, var2, var3);
+         AiPathfinder.CellInfo var4 = this.putAt_FileStore_TextStor.probe(var1, var2, var3);
          if (var4 == null) {
             return 0;
          } else {
@@ -465,7 +465,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
    @Override
    public boolean state(int var1, int var2, int var3) {
       if (this.putAt_FileStore_IoHelper == null) {
-         AiPathfinder.Inner_FileCache var9 = this.putAt_FileStore_TextStor.probe(var1, var2, var3);
+         AiPathfinder.CellInfo var9 = this.putAt_FileStore_TextStor.probe(var1, var2, var3);
          return var9 != null && var9.climbable();
       }
 
@@ -484,7 +484,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
          return var7 != 0;
       }
 
-      AiPathfinder.Inner_FileCache var8 = this.putAt_FileStore_TextStor.probe(var1, var2, var3);
+      AiPathfinder.CellInfo var8 = this.putAt_FileStore_TextStor.probe(var1, var2, var3);
       if (var8 != null && var8.loaded()) {
          this.prevEx_JArr[var6] = var4;
          this.fill_BArr[var6] = (byte)(var8.climbable() ? 1 : 0);
@@ -502,7 +502,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
          return var6 != 0;
       }
 
-      AiPathfinder.Inner_FileCache var7 = this.putAt_FileStore_IoHelper == null
+      AiPathfinder.CellInfo var7 = this.putAt_FileStore_IoHelper == null
          ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
          : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
       if (this.putAt_FileStore_IoHelper != null && var7 != null && var7.loaded()) {
@@ -525,7 +525,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
          return var6 != 0;
       }
 
-      AiPathfinder.Inner_FileCache var7 = this.putAt_FileStore_IoHelper == null
+      AiPathfinder.CellInfo var7 = this.putAt_FileStore_IoHelper == null
          ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
          : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
       if (var7 != null && var7.loaded()) {
@@ -553,7 +553,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
          return var6 != 0;
       }
 
-      AiPathfinder.Inner_FileCache var7 = this.putAt_FileStore_IoHelper == null
+      AiPathfinder.CellInfo var7 = this.putAt_FileStore_IoHelper == null
          ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
          : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
       if (var7 != null && var7.loaded()) {
@@ -576,7 +576,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
    @Override
    public boolean prev(int var1, int var2, int var3) {
       this.putAt_V_2();
-      AiPathfinder.Inner_FileCache var4 = this.putAt_FileStore_IoHelper == null
+      AiPathfinder.CellInfo var4 = this.putAt_FileStore_IoHelper == null
          ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
          : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
       if (var4 != null && var4.loaded()) {
@@ -590,7 +590,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
    @Override
    public boolean readEx_Z(int var1, int var2, int var3) {
       this.putAt_V_2();
-      AiPathfinder.Inner_FileCache var4 = this.putAt_FileStore_IoHelper == null
+      AiPathfinder.CellInfo var4 = this.putAt_FileStore_IoHelper == null
          ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
          : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
       if (var4 != null && var4.loaded()) {
@@ -604,7 +604,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
    @Override
    public boolean value_Z(int var1, int var2, int var3) {
       this.putAt_V_2();
-      AiPathfinder.Inner_FileCache var4 = this.putAt_FileStore_IoHelper == null
+      AiPathfinder.CellInfo var4 = this.putAt_FileStore_IoHelper == null
          ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
          : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
       return var4 != null && var4.loaded() && var4.pressurePlate();
@@ -635,7 +635,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
       for (int var16 = var1; var16 <= var4; var16++) {
          for (int var17 = var2; var17 <= var5; var17++) {
             for (int var18 = var3; var18 <= var6; var18++) {
-               AiPathfinder.Inner_FileCache var19 = this.putAt_FileStore_IoHelper.probe(var16, var17, var18);
+               AiPathfinder.CellInfo var19 = this.putAt_FileStore_IoHelper.probe(var16, var17, var18);
                if (!var19.loaded() || var19.hazardFeet() || var19.thorny() || var19.feetTrigger()) {
                   return false;
                }
@@ -728,7 +728,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
             return 1;
          }
 
-         if (var4.type() == AiPathfinder.Inner_SyncManager.DOOR
+         if (var4.type() == AiPathfinder.MoveType.DOOR
             && var1 == var4.to().getX()
             && var3 == var4.to().getZ()
             && var2 >= var4.to().getY()
@@ -879,7 +879,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
       }
 
       byte var7 = this.putAt_FileStore_TextStor.putAt_B_I(var1, var2, var3);
-      AiPathfinder.Inner_FileCache var8 = this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
+      AiPathfinder.CellInfo var8 = this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
       if (var8 != null && var8.loaded()) {
          this.value_JArr[var6] = var4;
          this.putAt_BArr[var6] = var7;

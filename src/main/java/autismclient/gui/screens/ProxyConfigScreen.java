@@ -102,7 +102,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
                   autismclient.gui.ui.widgets.OverlayActionButton.init(
                         panelX + 4, footerY, backWidth, ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.init_Screen)
                      )
-                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY)
+                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
                );
             int defaultsWidth = this.init_I_Str_6("Defaults");
             this.init_List
@@ -110,7 +110,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
                   autismclient.gui.ui.widgets.OverlayActionButton.init(
                         panelX + panelW - 4 - defaultsWidth, footerY, defaultsWidth, ctl, Component.literal("Defaults"), b -> this.read_V_5()
                      )
-                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY)
+                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
                );
          }
 
@@ -153,7 +153,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
                      }
                   )
                   .init_ByteReader_ByteReader_StreamU(
-                     enabled ? autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.DANGER
+                     enabled ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER
                   )
                   .init_ByteReader_Z(enabled)
                   .init_ByteReader_Str("proxy-config:" + label)

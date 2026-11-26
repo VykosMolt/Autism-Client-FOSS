@@ -59,7 +59,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class KBDisplacementModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
+public final class KBDisplacementModule extends Module implements SilentMovementCoordinator.Participant {
    private int init_I = -2147483648;
    private boolean init_Z;
    private long init_J;
@@ -231,7 +231,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                int fallback = m.init_I_15();
                if (m.init_I != tick && m.write_I != tick && !m.init_Y.init_Z(target.getId(), tick, fallback) && !WTappingModule.load()) {
                   m.init_I = tick;
-                  ServerRotationTracker.Inner_CachePool before = ServerRotationTracker.init_ch_CachePool();
+                  ServerRotationTracker.RotationSnapshot before = ServerRotationTracker.init_ch_CachePool();
                   float yaw = ServerRotationTracker.init_F();
                   float pitch = before.write();
                   if (before.init_Z() && Float.isFinite(yaw) && Float.isFinite(pitch)) {
@@ -298,7 +298,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                            Vec3 nextEye = terrain.init_Vec3_F(plan.init_F()).add(0.0, MC.player.getEyeHeight(), 0.0);
                            float inputYaw = SilentMovementCoordinator.init_F(MC.player);
                            if (!(target.getBoundingBox().move(init_Vec3_LivingEntity_2(target)).distanceToSqr(nextEye) > reach * reach)
-                              && autismclient.util.SilentRotationManager.load(new RotationMath.Inner_DataUtil(plan.init_F(), terrain.init_F))) {
+                              && autismclient.util.SilentRotationManager.load(new RotationMath.Rotation(plan.init_F(), terrain.init_F))) {
                               m.init_V_Str_2("redirect");
                               m.load_ClientLevel = level;
                               m.init_ClientPacketListen = MC.getConnection();
@@ -575,7 +575,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                }
             );
          this.close += queued - count;
-         if (flank && count > 0 && autismclient.util.SilentRotationManager.load(new RotationMath.Inner_DataUtil(this.update_F, this.sync_F))) {
+         if (flank && count > 0 && autismclient.util.SilentRotationManager.load(new RotationMath.Rotation(this.update_F, this.sync_F))) {
             this.update_I = AutismSessionState.init_ck().state_I();
          }
 

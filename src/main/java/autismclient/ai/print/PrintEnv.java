@@ -64,9 +64,9 @@ public interface PrintEnv {
    default void init_V_LongConsumer(LongConsumer changed) {
    }
 
-   AiPhysics.Inner_StreamUtil init_NodeWalker_StreamU();
+   AiPhysics.MotionState init_NodeWalker_StreamU();
 
-   AiPhysics.Inner_CachePool init_NodeWalker_CachePo();
+   AiPhysics.PhysicsWorld init_NodeWalker_CachePo();
 
    float init_F();
 
@@ -182,7 +182,7 @@ public interface PrintEnv {
    }
 
    default Vec3 read_Vec3() {
-      AiPhysics.Inner_StreamUtil b = this.init_NodeWalker_StreamU();
+      AiPhysics.MotionState b = this.init_NodeWalker_StreamU();
       return new Vec3(b.x(), b.y() + this.init_D(), b.z());
    }
 

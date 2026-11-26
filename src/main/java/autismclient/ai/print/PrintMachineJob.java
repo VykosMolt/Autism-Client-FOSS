@@ -21,11 +21,11 @@ public interface PrintMachineJob {
 
    boolean matchesSource(BlockState var1);
 
-   PrintMachineJob.Inner_DataUtil prepare();
+   PrintMachineJob.JobStatus prepare();
 
    boolean beginDispatch();
 
-   PrintMachineJob.Inner_DataUtil poll_BitSetUtil_DataUti();
+   PrintMachineJob.JobStatus poll_BitSetUtil_DataUti();
 
    void cancel();
 
@@ -65,8 +65,8 @@ public interface PrintMachineJob {
       return true;
    }
 
-   default PrintMachineJob.Inner_DataUtil init_BitSetUtil_DataUti() {
-      return PrintMachineJob.Inner_DataUtil.SUCCEEDED;
+   default PrintMachineJob.JobStatus init_BitSetUtil_DataUti() {
+      return PrintMachineJob.JobStatus.SUCCEEDED;
    }
 
    default int load_I() {
@@ -139,7 +139,7 @@ public interface PrintMachineJob {
       return List.of();
    }
 
-   enum Inner_DataUtil {
+   enum JobStatus {
       PREPARING,
       READY,
       SENT,

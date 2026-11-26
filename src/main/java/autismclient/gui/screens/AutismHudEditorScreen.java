@@ -56,11 +56,11 @@ public class AutismHudEditorScreen extends Screen {
    private int next;
 
    private static int init_I() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    private static int load() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.ACCENT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public AutismHudEditorScreen(Screen parent) {
@@ -192,10 +192,10 @@ public class AutismHudEditorScreen extends Screen {
       }
 
       autismclient.gui.f.PacketUtil.init(
-         graphics, autismclient.gui.f.NetHelper.init(sw / 2, 0, 1, sh), ThemePaletteManager.init_I_I_ct_DataUtil(1157577531, ThemePaletteManager.Inner_DataUtil.ACCENT)
+         graphics, autismclient.gui.f.NetHelper.init(sw / 2, 0, 1, sh), ThemePaletteManager.init_I_I_ct_DataUtil(1157577531, ThemePaletteManager.ColorRole.ACCENT)
       );
       autismclient.gui.f.PacketUtil.init(
-         graphics, autismclient.gui.f.NetHelper.init(0, sh / 2, sw, 1), ThemePaletteManager.init_I_I_ct_DataUtil(1157577531, ThemePaletteManager.Inner_DataUtil.ACCENT)
+         graphics, autismclient.gui.f.NetHelper.init(0, sh / 2, sw, 1), ThemePaletteManager.init_I_I_ct_DataUtil(1157577531, ThemePaletteManager.ColorRole.ACCENT)
       );
    }
 
@@ -246,7 +246,7 @@ public class AutismHudEditorScreen extends Screen {
          4,
          p.sync
       );
-      int underline = ThemePaletteManager.init_I_I_ct_DataUtil(1728002875, ThemePaletteManager.Inner_DataUtil.ACCENT);
+      int underline = ThemePaletteManager.init_I_I_ct_DataUtil(1728002875, ThemePaletteManager.ColorRole.ACCENT);
 
       for (int col = 0; col < init_StrArr2.length; col++) {
          int colX = p.init + p.poll + col * (p.update + p.open);
@@ -497,13 +497,13 @@ public class AutismHudEditorScreen extends Screen {
    private void read(GuiGraphicsExtractor graphics, int sw, int sh) {
       if (this.init_Integer != null) {
          autismclient.gui.f.PacketUtil.init(
-            graphics, autismclient.gui.f.NetHelper.init(this.init_Integer, 0, 1, sh), ThemePaletteManager.init_I_I_ct_DataUtil(-1426113733, ThemePaletteManager.Inner_DataUtil.ACCENT)
+            graphics, autismclient.gui.f.NetHelper.init(this.init_Integer, 0, 1, sh), ThemePaletteManager.init_I_I_ct_DataUtil(-1426113733, ThemePaletteManager.ColorRole.ACCENT)
          );
       }
 
       if (this.load_Integer != null) {
          autismclient.gui.f.PacketUtil.init(
-            graphics, autismclient.gui.f.NetHelper.init(0, this.load_Integer, sw, 1), ThemePaletteManager.init_I_I_ct_DataUtil(-1426113733, ThemePaletteManager.Inner_DataUtil.ACCENT)
+            graphics, autismclient.gui.f.NetHelper.init(0, this.load_Integer, sw, 1), ThemePaletteManager.init_I_I_ct_DataUtil(-1426113733, ThemePaletteManager.ColorRole.ACCENT)
          );
       }
    }

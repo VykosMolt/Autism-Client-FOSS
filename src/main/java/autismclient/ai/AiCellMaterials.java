@@ -31,11 +31,11 @@ final class AiCellMaterials {
    private AiCellMaterials() {
    }
 
-   static List<AiCellMaterials.Inner_CachePool> init(AiBuilder.Inner_StreamUtil cell) {
+   static List<AiCellMaterials.Inner_CachePool> init(AiBuilder.CellSpec cell) {
       return init(cell, null, false);
    }
 
-   static List<AiCellMaterials.Inner_CachePool> init(AiBuilder.Inner_StreamUtil cell, BlockState live, boolean waterAbove) {
+   static List<AiCellMaterials.Inner_CachePool> init(AiBuilder.CellSpec cell, BlockState live, boolean waterAbove) {
       if (!AiBuilder.read_Z(cell) && (live == null || !AiBuilder.update(cell, live))) {
          if (!"upper".equals(cell.properties().get("half")) && !"head".equals(cell.properties().get("part"))) {
             ArrayList<AiCellMaterials.Inner_CachePool> out = new ArrayList<>();
@@ -180,17 +180,17 @@ final class AiCellMaterials {
       }
    }
 
-   static List<AiCellMaterials.Inner_CachePool> init(List<AiBuilder.Inner_StreamUtil> cells, BlockPos origin, LevelReader world) {
+   static List<AiCellMaterials.Inner_CachePool> init(List<AiBuilder.CellSpec> cells, BlockPos origin, LevelReader world) {
       HashSet<Long> sourceCells = new HashSet<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          sourceCells.add(origin.offset(cell.dx(), cell.dy(), cell.dz()).asLong());
       }
 
       ArrayList<AiCellMaterials.Inner_CachePool> out = new ArrayList<>();
       HashSet<BlockPos> foundations = new HashSet<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          if (!AiBuilder.read_Z(cell)) {
             BlockPos target = origin.offset(cell.dx(), cell.dy(), cell.dz());
             BlockState live = world.getBlockState(target);
@@ -236,7 +236,7 @@ final class AiCellMaterials {
       return out;
    }
 
-   private static void init(AiBuilder.Inner_StreamUtil cell, BlockState live, List<AiCellMaterials.Inner_CachePool> out) {
+   private static void init(AiBuilder.CellSpec cell, BlockState live, List<AiCellMaterials.Inner_CachePool> out) {
       boolean present = live != null && live.getBlock() instanceof AbstractCauldronBlock;
       if (!present) {
          init(out, AiCellMaterials.Inner_DataUtil.PLACE, Items.CAULDRON, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
@@ -273,14 +273,14 @@ final class AiCellMaterials {
       }
    }
 
-   private static boolean init(AiBuilder.Inner_StreamUtil cell, BlockState live, Block block) {
+   private static boolean init(AiBuilder.CellSpec cell, BlockState live, Block block) {
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          String key = entry.getKey();
          if (!key.equals("waterlogged") && !AiBuilder.read(block, key)) {
             Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(key);
             if (property != null && !AiBuilder.init(block, key, String.valueOf(live.getValue(property)), entry.getValue())) {
-               AiBuilder.Inner_TaskQueue strategy = AiBuilder.init_TableIndex_TaskQue(block, key);
-               if (strategy != AiBuilder.Inner_TaskQueue.POST_INTERACT && strategy != AiBuilder.Inner_TaskQueue.FLUID_INTERACT) {
+               AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(block, key);
+               if (strategy != AiBuilder.OrientationKind.POST_INTERACT && strategy != AiBuilder.OrientationKind.FLUID_INTERACT) {
                   return true;
                }
             }
@@ -290,7 +290,7 @@ final class AiCellMaterials {
       return false;
    }
 
-   private static void init(AiBuilder.Inner_StreamUtil cell, BlockState live, Block block, boolean same, List<AiCellMaterials.Inner_CachePool> out) {
+   private static void init(AiBuilder.CellSpec cell, BlockState live, Block block, boolean same, List<AiCellMaterials.Inner_CachePool> out) {
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          Item needed = AiBuilder.init_Item(block, entry.getKey());
          if (needed != null) {
@@ -324,7 +324,7 @@ final class AiCellMaterials {
       }
    }
 
-   private static void load(AiBuilder.Inner_StreamUtil cell, BlockState live, Block block, boolean same, List<AiCellMaterials.Inner_CachePool> out) {
+   private static void load(AiBuilder.CellSpec cell, BlockState live, Block block, boolean same, List<AiCellMaterials.Inner_CachePool> out) {
       if (cell.properties().containsKey("waterlogged") && block.defaultBlockState().hasProperty(BlockStateProperties.WATERLOGGED)) {
          boolean wanted = Boolean.parseBoolean(cell.properties().get("waterlogged"));
          boolean current = (same ? live : block.defaultBlockState()).getValue(BlockStateProperties.WATERLOGGED);

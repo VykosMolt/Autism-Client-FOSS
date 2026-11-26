@@ -58,7 +58,7 @@ public final class TextFieldRenderer {
             autismclient.gui.f.PacketUtil.init(
                context.init_GuiGraphicsExtract(),
                autismclient.gui.f.NetHelper.init(selectX, bounds.write() + 3, selectW, Math.max(1, bounds.sync() - 6)),
-               ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.Inner_DataUtil.ACCENT)
+               ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.ColorRole.ACCENT)
             );
          }
 

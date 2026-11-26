@@ -59,7 +59,7 @@ final class AiCover {
             final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().init_DataPipe();
             final Set<Long> init_Set = new HashSet<>();
             final Set<Integer> load_Set = new HashSet<>();
-            AiGoto.Inner_CachePool init_HashUtil_CachePool;
+            AiGoto.GotoOp init_HashUtil_CachePool;
             Vec3 init_Vec3;
             BlockPos init_BlockPos;
             int load_I;
@@ -79,7 +79,7 @@ final class AiCover {
             boolean update_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
             }
 
             @Override
@@ -311,11 +311,11 @@ final class AiCover {
                               false,
                               false,
                               20,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                              autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                               false,
                               2.0,
                               new autismclient.ai.engine.CoverGoal(stances),
-                              new AiGoto.Inner_BufferHelper(true, true, 3, !mc.player.isInWater(), true, true),
+                              new AiGoto.GotoOptions(true, true, 3, !mc.player.isInWater(), true, true),
                               false
                            );
                         }
@@ -407,13 +407,13 @@ final class AiCover {
 
             AiOperation.Result init_AiOperation_Result_37() {
                this.init_V_29();
-               autismclient.ai.engine.AiPlacer.Inner_DataUtil s = this.init_DataPipe.init_DataPipe_DataUtil();
-               if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.WORKING) {
+               autismclient.ai.engine.AiPlacer.PlaceStatus s = this.init_DataPipe.init_DataPipe_DataUtil();
+               if (s == autismclient.ai.engine.AiPlacer.PlaceStatus.WORKING) {
                   return this.init("Putting a block between the " + this.init_Str + " and me");
                }
 
                this.init_Z = false;
-               if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+               if (s == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                   this.write_I++;
                   AutismClientAddon.LOG
                      .info("[AI] cover: shield block at {} against the {}", this.init_DataPipe.init_BlockPos().toShortString(), this.init_Str);

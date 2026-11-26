@@ -38,8 +38,8 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    }
 
    @Override
-   public AutismOverlay.Inner_DataUtil init_cX_DataUtil() {
-      return this.read_Z ? AutismOverlay.Inner_DataUtil.BACKGROUND_STATUS : AutismOverlay.super.init_cX_DataUtil();
+   public AutismOverlay.RenderLayer init_cX_DataUtil() {
+      return this.read_Z ? AutismOverlay.RenderLayer.BACKGROUND_STATUS : AutismOverlay.super.init_cX_DataUtil();
    }
 
    protected void pop_V() {

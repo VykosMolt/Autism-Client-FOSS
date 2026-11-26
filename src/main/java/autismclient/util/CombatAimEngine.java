@@ -865,7 +865,7 @@ public final class CombatAimEngine {
          this.update = 0.0;
       }
 
-      public double[] init(RotationMath.Inner_DataUtil at, RotationMath.Inner_DataUtil goal, float maxYaw, float maxPitch, double scale) {
+      public double[] init(RotationMath.Rotation at, RotationMath.Rotation goal, float maxYaw, float maxPitch, double scale) {
          double yaw = at.init() + CombatAimEngine.flush(goal.init() - at.init());
          double pitch = goal.load();
          if (this.update == 0.0 || scale != this.close || Math.abs(CombatAimEngine.flush(yaw - this.read)) > 12.0 || Math.abs(pitch - this.write) > 12.0) {

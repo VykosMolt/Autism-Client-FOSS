@@ -38,17 +38,17 @@ final class AiHopperClockPlan {
    private AiHopperClockPlan() {
    }
 
-   static List<autismclient.ai.print.PrintClockSpec> init(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.Inner_DataUtil> contents) {
+   static List<autismclient.ai.print.PrintClockSpec> init(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.ContainerPlan> contents) {
       return init(states, contents, at -> true);
    }
 
-   static List<autismclient.ai.print.PrintClockSpec> init(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.Inner_DataUtil> contents, Predicate<BlockPos> covered) {
-      HashMap<BlockPos, AiSchematicMachinePlan.Inner_DataUtil> byPosition = new HashMap<>();
+   static List<autismclient.ai.print.PrintClockSpec> init(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.ContainerPlan> contents, Predicate<BlockPos> covered) {
+      HashMap<BlockPos, AiSchematicMachinePlan.ContainerPlan> byPosition = new HashMap<>();
       contents.forEach(c -> byPosition.put(c.position(), c));
       ArrayList<autismclient.ai.print.PrintClockSpec> found = new ArrayList<>();
       HashSet<BlockPos> used = new HashSet<>();
 
-      for (AiSchematicMachinePlan.Inner_DataUtil entry : contents) {
+      for (AiSchematicMachinePlan.ContainerPlan entry : contents) {
          AiBuilder.init();
          BlockPos a = entry.position();
          BlockState source = states.get(a);
@@ -57,7 +57,7 @@ final class AiHopperClockPlan {
             if (direction.getAxis().isHorizontal()) {
                BlockPos b = a.relative(direction);
                BlockState second = states.get(b);
-               AiSchematicMachinePlan.Inner_DataUtil saved = byPosition.get(b);
+               AiSchematicMachinePlan.ContainerPlan saved = byPosition.get(b);
                if (saved != null
                   && !used.contains(b)
                   && second != null

@@ -190,13 +190,13 @@ final class SchematicDocument {
    }
 
    SchematicDocument.Inner_StreamUtil init_cQ_StreamUtil_I(int rotation, String mirror, IntConsumer progress) {
-      ArrayList<AiBuilder.Inner_StreamUtil> cells = new ArrayList<>();
+      ArrayList<AiBuilder.CellSpec> cells = new ArrayList<>();
       long count = 0L;
       long done = 0L;
       int minX = 2147483647;
       int minY = minX;
       int minZ = minX;
-      IdentityHashMap<BlockState, AiBuilder.Inner_StreamUtil> cache = new IdentityHashMap<>();
+      IdentityHashMap<BlockState, AiBuilder.CellSpec> cache = new IdentityHashMap<>();
 
       for (SchematicDocument.Inner_CachePool r : this.init_List) {
          for (int i = 0; i < r.flush; i++) {
@@ -229,10 +229,10 @@ final class SchematicDocument {
                         throw new IllegalArgumentException("Too many exposed blocks for a hologram; single-player Paste is still available");
                      }
 
-                     AiBuilder.Inner_StreamUtil template = cache.computeIfAbsent(
+                     AiBuilder.CellSpec template = cache.computeIfAbsent(
                         s, k -> init_TableIndex_StreamU_BlockState(init_BlockState_BlockState(k, rotation, mirror))
                      );
-                     cells.add(new AiBuilder.Inner_StreamUtil(at.getX(), at.getY(), at.getZ(), template.block(), template.properties()));
+                     cells.add(new AiBuilder.CellSpec(at.getX(), at.getY(), at.getZ(), template.block(), template.properties()));
                   }
                }
             }
@@ -339,14 +339,14 @@ final class SchematicDocument {
       return mirrored.rotate(r);
    }
 
-   static AiBuilder.Inner_StreamUtil init_TableIndex_StreamU_BlockState(BlockState state) {
+   static AiBuilder.CellSpec init_TableIndex_StreamU_BlockState(BlockState state) {
       TreeMap<String, String> properties = new TreeMap<>();
 
       for (Property<?> p : state.getProperties()) {
          properties.put(p.getName(), init_Str_BlockState_Property(state, p));
       }
 
-      return new AiBuilder.Inner_StreamUtil(0, 0, 0, BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString(), Map.copyOf(properties));
+      return new AiBuilder.CellSpec(0, 0, 0, BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString(), Map.copyOf(properties));
    }
 
    private static <T extends Comparable<T>> String init_Str_BlockState_Property(BlockState state, Property<T> property) {
@@ -384,7 +384,7 @@ final class SchematicDocument {
          IdentityHashMap<BlockState, Integer> lookup = new IdentityHashMap<>();
          lookup.put(palette.get(0), 0);
 
-         for (AiBuilder.Inner_StreamUtil c : decoded.cells()) {
+         for (AiBuilder.CellSpec c : decoded.cells()) {
             BlockState s = AiBuilder.init_BlockState(c);
             int id = lookup.computeIfAbsent(s, k -> {
                palette.add(k);
@@ -432,7 +432,7 @@ final class SchematicDocument {
 
                for (int i = 0; i < palette.length; i++) {
                   AiSchematic.Inner_ConfigStore parsed = AiSchematic.init(entries.getCompoundOrEmpty(i), dataVersion, version < 4 || dataVersion < 1631, "region " + name);
-                  palette[i] = AiBuilder.init_BlockState(new AiBuilder.Inner_StreamUtil(0, 0, 0, parsed.block(), parsed.properties()));
+                  palette[i] = AiBuilder.init_BlockState(new AiBuilder.CellSpec(0, 0, 0, parsed.block(), parsed.properties()));
                }
 
                regions.add(
@@ -490,7 +490,7 @@ final class SchematicDocument {
 
                AiSchematic.Inner_ConfigStore parsed = AiSchematic.init_bP_ConfigStore_Str_I(state, dataVersion);
                ids.put(id, palette.size());
-               palette.add(AiBuilder.init_BlockState(new AiBuilder.Inner_StreamUtil(0, 0, 0, parsed.block(), parsed.properties())));
+               palette.add(AiBuilder.init_BlockState(new AiBuilder.CellSpec(0, 0, 0, parsed.block(), parsed.properties())));
             }
 
             byte[] raw = blockData.getByteArray("Data")
@@ -696,6 +696,6 @@ final class SchematicDocument {
    record Inner_DataUtil(BlockPos position, CompoundTag data) {
    }
 
-   record Inner_StreamUtil(List<AiBuilder.Inner_StreamUtil> cells, BlockPos nonAirMinimum, long blocks) {
+   record Inner_StreamUtil(List<AiBuilder.CellSpec> cells, BlockPos nonAirMinimum, long blocks) {
    }
 }

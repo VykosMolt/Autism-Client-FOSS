@@ -86,7 +86,7 @@ public final class AiBackfill {
                scanned++;
                BlockPos cell = iterator.next();
                Vec3 center = Vec3.atCenterOf(cell);
-               AiPathfinder.Inner_FileCache probe = this.init_ClassCache_FileCac(cell);
+               AiPathfinder.CellInfo probe = this.init_ClassCache_FileCac(cell);
                boolean open = probe.passable() && !probe.water() && !probe.lava();
                if (open && this.init_Z(cell)) {
                   double distanceSqr = center.distanceToSqr(pos);
@@ -227,7 +227,7 @@ public final class AiBackfill {
       return false;
    }
 
-   private AiPathfinder.Inner_FileCache init_ClassCache_FileCac(BlockPos cell) {
-      return AiPathfinder.Inner_StreamUtil.init_ClassCache_FileCac_Minecraft(this.init_Minecraft, this.init_Minecraft.level, cell, init_ItemStackArr);
+   private AiPathfinder.CellInfo init_ClassCache_FileCac(BlockPos cell) {
+      return AiPathfinder.LiveGridView.init_ClassCache_FileCac_Minecraft(this.init_Minecraft, this.init_Minecraft.level, cell, init_ItemStackArr);
    }
 }

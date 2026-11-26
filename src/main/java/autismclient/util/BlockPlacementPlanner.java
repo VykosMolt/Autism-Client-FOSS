@@ -75,7 +75,7 @@ public final class BlockPlacementPlanner {
    private static final double update_D = 0.06;
    private static final AABB[] init_AABBArr = new AABB[0];
    private static final int update_I = 48;
-   private static final BlockPlacementPlanner.Inner_SyncManager[] init_U_SyncManagerArr = new BlockPlacementPlanner.Inner_SyncManager[48];
+   private static final BlockPlacementPlanner.CandidateCache[] init_U_SyncManagerArr = new BlockPlacementPlanner.CandidateCache[48];
    private static int sync;
    private static final int flush = 8;
    private static final BlockPos[] init_BlockPosArr = new BlockPos[8];
@@ -88,7 +88,7 @@ public final class BlockPlacementPlanner {
    private BlockPlacementPlanner() {
    }
 
-   public static BlockPlacementPlanner.Inner_NetHelper init(ItemStack stack, Player player, InteractionHand hand) {
+   public static BlockPlacementPlanner.HitValidator init(ItemStack stack, Player player, InteractionHand hand) {
       return (hit, cell) -> {
          if (hit == null || cell == null || player == null) {
             return false;
@@ -101,7 +101,7 @@ public final class BlockPlacementPlanner {
       };
    }
 
-   public static BlockPlacementPlanner.Inner_NetHelper init(BlockPos support, EnumSet<Direction> allowedFaces) {
+   public static BlockPlacementPlanner.HitValidator init(BlockPos support, EnumSet<Direction> allowedFaces) {
       BlockPos anchor = support == null ? null : support.immutable();
       return (hit, cell) -> {
          if (hit != null && anchor != null && cell != null) {
@@ -120,7 +120,7 @@ public final class BlockPlacementPlanner {
       return 89.5 - RotationStreamPlanner.init_D_D(RotationMath.init()) - 0.01;
    }
 
-   public static void init(BlockPlacementPlanner.Inner_StateCache request, List<BlockPlacementPlanner.Inner_TaskQueue> out) {
+   public static void init(BlockPlacementPlanner.Query request, List<BlockPlacementPlanner.SupportCandidate> out) {
       if (request != null && out != null && request.init_BlockPos() != null) {
          Level level = init_Level();
          if (level != null) {
@@ -140,11 +140,11 @@ public final class BlockPlacementPlanner {
                            boolean requiresSneak = init_Z(state, support);
                            boolean sneaking = request.init_Z() || requiresSneak && request.load_Z();
                            if ((own || load(state, support, sneaking)) && (!own || !init(state, support, sneaking))) {
-                              BlockPlacementPlanner.Inner_BufferHelper intent = new BlockPlacementPlanner.Inner_BufferHelper(support, face);
+                              BlockPlacementPlanner.SupportFace intent = new BlockPlacementPlanner.SupportFace(support, face);
                               if (request.init_Predicate() == null || !request.init_Predicate().test(intent)) {
                                  for (AABB rect : init_AABBArr_BlockState(state, support, face, request.init_I())) {
                                     out.add(
-                                       new BlockPlacementPlanner.Inner_TaskQueue(
+                                       new BlockPlacementPlanner.SupportCandidate(
                                           cell,
                                           support,
                                           face,
@@ -171,7 +171,7 @@ public final class BlockPlacementPlanner {
       }
    }
 
-   public static void init(List<BlockPos> cells, BlockPlacementPlanner.Inner_StateCache template, List<BlockPlacementPlanner.Inner_TaskQueue> out) {
+   public static void init(List<BlockPos> cells, BlockPlacementPlanner.Query template, List<BlockPlacementPlanner.SupportCandidate> out) {
       if (cells != null && template != null && out != null) {
          BlockPos held = template.init_BlockPos();
 
@@ -210,12 +210,12 @@ public final class BlockPlacementPlanner {
       return key ^ key >>> 33;
    }
 
-   private static void init(List<BlockPlacementPlanner.Inner_TaskQueue> out, int start, BlockPlacementPlanner.Inner_StateCache request) {
+   private static void init(List<BlockPlacementPlanner.SupportCandidate> out, int start, BlockPlacementPlanner.Query request) {
       int size = out.size();
       if (size - start >= 2) {
-         List<BlockPlacementPlanner.Inner_TaskQueue> segment = new ArrayList<>(out.subList(start, size));
+         List<BlockPlacementPlanner.SupportCandidate> segment = new ArrayList<>(out.subList(start, size));
          Vec3 eye = request.init_Vec3();
-         RotationMath.Inner_DataUtil from = request.init_ce_DataUtil();
+         RotationMath.Rotation from = request.init_ce_DataUtil();
          Direction[] order = request.init_DirectionArr();
          segment.sort((left, right) -> {
             boolean leftUp = left.init_Direction() == Direction.UP;
@@ -250,7 +250,7 @@ public final class BlockPlacementPlanner {
       }
    }
 
-   private static float init(BlockPlacementPlanner.Inner_TaskQueue option, Vec3 eye, RotationMath.Inner_DataUtil from) {
+   private static float init(BlockPlacementPlanner.SupportCandidate option, Vec3 eye, RotationMath.Rotation from) {
       Vec3 centre = init_Vec3(option.init_AABB(), option.init_Direction());
       return RotationMath.init_F(from, RotationMath.init(centre, eye));
    }
@@ -265,63 +265,63 @@ public final class BlockPlacementPlanner {
       return order.length;
    }
 
-   public static BlockPlacementPlanner.Inner_DataUtil init(BlockPlacementPlanner.Inner_TaskQueue option, BlockPlacementPlanner.Inner_StateCache request, BlockPlacementPlanner.Inner_JsonUtil[] refusal) {
-      init(refusal, BlockPlacementPlanner.Inner_JsonUtil.NONE);
+   public static BlockPlacementPlanner.AimSample init(BlockPlacementPlanner.SupportCandidate option, BlockPlacementPlanner.Query request, BlockPlacementPlanner.RejectReason[] refusal) {
+      init(refusal, BlockPlacementPlanner.RejectReason.NONE);
       if (option != null && request != null) {
          Level level = init_Level();
          Direction face = option.init_Direction();
          if (level == null) {
-            return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.NOT_A_SUPPORT, request, face);
+            return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.NOT_A_SUPPORT, request, face);
          }
 
          BlockPos support = option.load_BlockPos();
          BlockState state = level.getBlockState(support);
          if (state != option.init_BlockState()) {
-            return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.NOT_A_SUPPORT, request, face);
+            return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.NOT_A_SUPPORT, request, face);
          }
 
          if (request.init_Predicate() != null && request.init_Predicate().test(option.init_U_BufferHelper())) {
-            return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.BANNED, request, face);
+            return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.BANNED, request, face);
          }
 
          boolean sneaking = request.init_Z() || option.init_Z() && request.load_Z();
          if (request.init_U_NetHelper() != null && request.init_U_NetHelper().init(state, support, sneaking)) {
             Vec3 eye = request.init_Vec3();
             if (init_Z_Vec3(eye, support, face, level)) {
-               return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.SELF_OCCLUDED, request, face);
+               return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.SELF_OCCLUDED, request, face);
             }
 
             AABB rect = option.init_AABB();
             Vec3 point = init_Vec3_AABB_2(rect, face, eye, init_ce_DataUtil(request), request.read_D);
             if (point == null) {
-               return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.BEHIND_PLANE, request, face);
+               return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.BEHIND_PLANE, request, face);
             }
 
-            BlockPlacementPlanner.Inner_UiHelper tier = BlockPlacementPlanner.Inner_UiHelper.CENTRE;
+            BlockPlacementPlanner.SamplePoint tier = BlockPlacementPlanner.SamplePoint.CENTRE;
             double reachSq = request.init_D() * request.init_D();
             if (eye.distanceToSqr(point) > reachSq) {
-               point = init_Vec3_AABB(rect, face, eye, BlockPlacementPlanner.Inner_UiHelper.NEAREST, request.read_D);
+               point = init_Vec3_AABB(rect, face, eye, BlockPlacementPlanner.SamplePoint.NEAREST, request.read_D);
                if (point == null || eye.distanceToSqr(point) > reachSq) {
-                  return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.OUT_OF_REACH, request, face);
+                  return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.OUT_OF_REACH, request, face);
                }
 
-               tier = BlockPlacementPlanner.Inner_UiHelper.NEAREST;
+               tier = BlockPlacementPlanner.SamplePoint.NEAREST;
             }
 
-            RotationMath.Inner_DataUtil goal = RotationMath.init(point, eye);
+            RotationMath.Rotation goal = RotationMath.init(point, eye);
             if (Math.abs(goal.load()) > request.load_D()) {
-               Vec3 flat = init_Vec3_AABB(rect, face, eye, BlockPlacementPlanner.Inner_UiHelper.FLATTEST, request.read_D);
+               Vec3 flat = init_Vec3_AABB(rect, face, eye, BlockPlacementPlanner.SamplePoint.FLATTEST, request.read_D);
                if (flat == null || eye.distanceToSqr(flat) > reachSq) {
-                  return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.PAST_PITCH_CAP, request, face);
+                  return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.PAST_PITCH_CAP, request, face);
                }
 
                goal = RotationMath.init(flat, eye);
                if (Math.abs(goal.load()) > request.load_D()) {
-                  return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.PAST_PITCH_CAP, request, face);
+                  return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.PAST_PITCH_CAP, request, face);
                }
 
                point = flat;
-               tier = BlockPlacementPlanner.Inner_UiHelper.FLATTEST;
+               tier = BlockPlacementPlanner.SamplePoint.FLATTEST;
             }
 
             if (face.getAxis().isHorizontal() && request.load_Vec3() != null) {
@@ -329,34 +329,34 @@ public final class BlockPlacementPlanner {
                if (window != null) {
                   float pitch = (float)Mth.clamp(goal.load(), window[0], window[1]);
                   if (Math.abs(pitch) > request.load_D()) {
-                     return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.PAST_PITCH_CAP, request, face);
+                     return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.PAST_PITCH_CAP, request, face);
                   }
 
-                  goal = new RotationMath.Inner_DataUtil(goal.init(), pitch);
+                  goal = new RotationMath.Rotation(goal.init(), pitch);
                }
             }
 
             if (!request.init_U_NetHelper().lands(new BlockHitResult(point, face, support, false), request.init_BlockPos())) {
-               return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.NOT_A_SUPPORT, request, face);
+               return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.NOT_A_SUPPORT, request, face);
             }
 
-            RotationMath.Inner_DataUtil from = init_ce_DataUtil(request);
-            RotationMath.Inner_DataUtil emitted = request.write() ? RotationMath.init_ce_DataUtil(goal, from == null ? goal : from) : goal;
+            RotationMath.Rotation from = init_ce_DataUtil(request);
+            RotationMath.Rotation emitted = request.write() ? RotationMath.init_ce_DataUtil(goal, from == null ? goal : from) : goal;
             float turn = from == null ? 0.0F : RotationMath.init_F(from, goal);
-            return new BlockPlacementPlanner.Inner_DataUtil(point, goal, emitted, eye.distanceTo(point), turn, tier);
+            return new BlockPlacementPlanner.AimSample(point, goal, emitted, eye.distanceTo(point), turn, tier);
          } else {
-            return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.NOT_A_SUPPORT, request, face);
+            return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.NOT_A_SUPPORT, request, face);
          }
       } else {
-         return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.NOT_A_SUPPORT, request, null);
+         return init_U_DataUtil_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.NOT_A_SUPPORT, request, null);
       }
    }
 
-   public static Vec3 init_Vec3_AABB_2(AABB rect, Direction face, Vec3 eye, RotationMath.Inner_DataUtil from) {
+   public static Vec3 init_Vec3_AABB_2(AABB rect, Direction face, Vec3 eye, RotationMath.Rotation from) {
       return init_Vec3_AABB_2(rect, face, eye, from, 1.0 / 0.0);
    }
 
-   private static Vec3 init_Vec3_AABB_2(AABB rect, Direction face, Vec3 eye, RotationMath.Inner_DataUtil from, double marginCap) {
+   private static Vec3 init_Vec3_AABB_2(AABB rect, Direction face, Vec3 eye, RotationMath.Rotation from, double marginCap) {
       if (rect != null && face != null && eye != null) {
          Axis normal = face.getAxis();
          double plane = init_D(rect, face);
@@ -393,11 +393,11 @@ public final class BlockPlacementPlanner {
       }
    }
 
-   public static Vec3 init_Vec3_AABB(AABB rect, Direction face, Vec3 eye, BlockPlacementPlanner.Inner_UiHelper tier) {
+   public static Vec3 init_Vec3_AABB(AABB rect, Direction face, Vec3 eye, BlockPlacementPlanner.SamplePoint tier) {
       return init_Vec3_AABB(rect, face, eye, tier, 1.0 / 0.0);
    }
 
-   public static Vec3 init_Vec3_AABB(AABB rect, Direction face, Vec3 eye, BlockPlacementPlanner.Inner_UiHelper tier, double marginCap) {
+   public static Vec3 init_Vec3_AABB(AABB rect, Direction face, Vec3 eye, BlockPlacementPlanner.SamplePoint tier, double marginCap) {
       if (rect != null && face != null && eye != null) {
          Axis normal = face.getAxis();
          double plane = init_D(rect, face);
@@ -408,8 +408,8 @@ public final class BlockPlacementPlanner {
          Axis first = init(normal, true);
          Axis second = init(normal, false);
          double margin = Math.min(init(eye.distanceTo(init_Vec3(rect, face))), Math.max(0.03, marginCap));
-         boolean centred = tier == BlockPlacementPlanner.Inner_UiHelper.CENTRE;
-         boolean away = tier == BlockPlacementPlanner.Inner_UiHelper.FLATTEST || tier == BlockPlacementPlanner.Inner_UiHelper.ESCAPE;
+         boolean centred = tier == BlockPlacementPlanner.SamplePoint.CENTRE;
+         boolean away = tier == BlockPlacementPlanner.SamplePoint.FLATTEST || tier == BlockPlacementPlanner.SamplePoint.ESCAPE;
          return init_Vec3_Direction_Axis(
             normal,
             plane,
@@ -528,10 +528,10 @@ public final class BlockPlacementPlanner {
       return new double[]{low, high, primary[2]};
    }
 
-   public static BlockPlacementPlanner.Inner_CachePool init_U_CachePool_U_TaskQueue(
-      BlockPlacementPlanner.Inner_TaskQueue option, BlockPlacementPlanner.Inner_DataUtil aim, BlockPlacementPlanner.Inner_StateCache request, BlockPlacementPlanner.Inner_JsonUtil[] refusal
+   public static BlockPlacementPlanner.PlacementPlan init_U_CachePool_U_TaskQueue(
+      BlockPlacementPlanner.SupportCandidate option, BlockPlacementPlanner.AimSample aim, BlockPlacementPlanner.Query request, BlockPlacementPlanner.RejectReason[] refusal
    ) {
-      init(refusal, BlockPlacementPlanner.Inner_JsonUtil.NONE);
+      init(refusal, BlockPlacementPlanner.RejectReason.NONE);
       if (option != null && aim != null && request != null) {
          Level level = init_Level();
          Player player = init_Player();
@@ -541,12 +541,12 @@ public final class BlockPlacementPlanner {
             double reach = request.init_D();
             double reachSq = reach * reach;
             boolean sneaking = request.init_Z() || option.init_Z() && request.load_Z();
-            RotationMath.Inner_DataUtil cast = request.write() ? aim.load() : aim.init_ce_DataUtil();
+            RotationMath.Rotation cast = request.write() ? aim.load() : aim.init_ce_DataUtil();
             boolean escaped = false;
 
             for (int rung = 0; rung < 4; rung++) {
                if (request.init_U_StreamUtil() != null && !request.init_U_StreamUtil().init_Z()) {
-                  return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET, request, face);
+                  return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.NO_BUDGET, request, face);
                }
 
                BlockHitResult hit = init_BlockHitResult_Vec3(eye, cast, reach, level, player);
@@ -570,28 +570,28 @@ public final class BlockPlacementPlanner {
                   }
 
                   if (escaped) {
-                     return init_U_CachePool_U_JsonUtilArr(refusal, hit == null ? BlockPlacementPlanner.Inner_JsonUtil.RAY_MISSED : BlockPlacementPlanner.Inner_JsonUtil.RAY_WRONG_CELL, request, face);
+                     return init_U_CachePool_U_JsonUtilArr(refusal, hit == null ? BlockPlacementPlanner.RejectReason.RAY_MISSED : BlockPlacementPlanner.RejectReason.RAY_WRONG_CELL, request, face);
                   }
 
                   escaped = true;
                   cast = init_ce_DataUtil_Vec3(
-                     init_Vec3_AABB(option.init_AABB(), face, eye, BlockPlacementPlanner.Inner_UiHelper.ESCAPE, request.read_D), cast, eye, reachSq, request
+                     init_Vec3_AABB(option.init_AABB(), face, eye, BlockPlacementPlanner.SamplePoint.ESCAPE, request.read_D), cast, eye, reachSq, request
                   );
                   if (cast == null) {
-                     return init_U_CachePool_U_JsonUtilArr(refusal, hit == null ? BlockPlacementPlanner.Inner_JsonUtil.RAY_MISSED : BlockPlacementPlanner.Inner_JsonUtil.RAY_WRONG_CELL, request, face);
+                     return init_U_CachePool_U_JsonUtilArr(refusal, hit == null ? BlockPlacementPlanner.RejectReason.RAY_MISSED : BlockPlacementPlanner.RejectReason.RAY_WRONG_CELL, request, face);
                   }
                } else {
-                  BlockPlacementPlanner.Inner_ConfigStore landing = init_U_ConfigStore(hitState, hitPos, hit);
+                  BlockPlacementPlanner.FaceBounds landing = init_U_ConfigStore(hitState, hitPos, hit);
                   if (landing == null) {
-                     return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.RAY_MISSED, request, face);
+                     return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.RAY_MISSED, request, face);
                   }
 
                   AABB hitRect = landing.init_AABB();
                   Direction hitFace = landing.init_Direction();
                   if (init_Z_AABB_2(hitRect, hitFace, hit.getLocation(), request.init_D_D(eye.distanceTo(hit.getLocation())))) {
                      boolean substituted = !hitPos.equals(option.load_BlockPos()) || hitFace != face;
-                     BlockPlacementPlanner.Inner_TaskQueue found = substituted ? init(option, hitPos, hitFace, hitState, hitRect, eye, request) : option;
-                     BlockPlacementPlanner.Inner_DataUtil landed = new BlockPlacementPlanner.Inner_DataUtil(
+                     BlockPlacementPlanner.SupportCandidate found = substituted ? init(option, hitPos, hitFace, hitState, hitRect, eye, request) : option;
+                     BlockPlacementPlanner.AimSample landed = new BlockPlacementPlanner.AimSample(
                         hit.getLocation(),
                         cast,
                         cast,
@@ -599,34 +599,34 @@ public final class BlockPlacementPlanner {
                         init_ce_DataUtil(request) == null ? 0.0F : RotationMath.init_F(init_ce_DataUtil(request), cast),
                         aim.init_U_UiHelper()
                      );
-                     return new BlockPlacementPlanner.Inner_CachePool(found, landed, hit, substituted, init(found, landed));
+                     return new BlockPlacementPlanner.PlacementPlan(found, landed, hit, substituted, init(found, landed));
                   }
 
                   cast = init_ce_DataUtil_Vec3(init_Vec3_AABB_2(hitRect, hitFace, eye, cast, request.read_D), cast, eye, reachSq, request);
                   if (cast == null) {
-                     return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.RAY_MISSED, request, face);
+                     return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.RAY_MISSED, request, face);
                   }
                }
             }
 
-            return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.RAY_MISSED, request, face);
+            return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.RAY_MISSED, request, face);
          } else {
-            return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.RAY_MISSED, request, face);
+            return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.RAY_MISSED, request, face);
          }
       } else {
-         return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.Inner_JsonUtil.RAY_MISSED, request, null);
+         return init_U_CachePool_U_JsonUtilArr(refusal, BlockPlacementPlanner.RejectReason.RAY_MISSED, request, null);
       }
    }
 
-   private static RotationMath.Inner_DataUtil init_ce_DataUtil_Vec3(Vec3 point, RotationMath.Inner_DataUtil cast, Vec3 eye, double reachSq, BlockPlacementPlanner.Inner_StateCache request) {
+   private static RotationMath.Rotation init_ce_DataUtil_Vec3(Vec3 point, RotationMath.Rotation cast, Vec3 eye, double reachSq, BlockPlacementPlanner.Query request) {
       if (point != null && !(eye.distanceToSqr(point) > reachSq)) {
-         RotationMath.Inner_DataUtil next = RotationMath.init(point, eye);
+         RotationMath.Rotation next = RotationMath.init(point, eye);
          if (Math.abs(next.load()) > request.load_D()) {
             return null;
          }
 
          if (request.write()) {
-            RotationMath.Inner_DataUtil from = init_ce_DataUtil(request);
+            RotationMath.Rotation from = init_ce_DataUtil(request);
             next = RotationMath.init_ce_DataUtil(next, from == null ? next : from);
             if (Math.abs(next.load()) > request.load_D()) {
                return null;
@@ -639,11 +639,11 @@ public final class BlockPlacementPlanner {
       }
    }
 
-   private static BlockPlacementPlanner.Inner_TaskQueue init(
-      BlockPlacementPlanner.Inner_TaskQueue option, BlockPos support, Direction face, BlockState state, AABB rect, Vec3 eye, BlockPlacementPlanner.Inner_StateCache request
+   private static BlockPlacementPlanner.SupportCandidate init(
+      BlockPlacementPlanner.SupportCandidate option, BlockPos support, Direction face, BlockState state, AABB rect, Vec3 eye, BlockPlacementPlanner.Query request
    ) {
       AABB flat = init_AABB(rect, face);
-      return new BlockPlacementPlanner.Inner_TaskQueue(
+      return new BlockPlacementPlanner.SupportCandidate(
          option.init_BlockPos(),
          support.immutable(),
          face,
@@ -653,31 +653,31 @@ public final class BlockPlacementPlanner {
          load(flat, face),
          init(flat, face, eye),
          init_Z(state, support),
-         new BlockPlacementPlanner.Inner_BufferHelper(support, face)
+         new BlockPlacementPlanner.SupportFace(support, face)
       );
    }
 
-   private static double init(BlockPlacementPlanner.Inner_TaskQueue option, BlockPlacementPlanner.Inner_DataUtil aim) {
+   private static double init(BlockPlacementPlanner.SupportCandidate option, BlockPlacementPlanner.AimSample aim) {
       return (option.init_Direction() == Direction.UP ? 4.0 : 0.0) + option.init_D() + option.load_D() - aim.init_F() / 180.0;
    }
 
-   public static BlockPlacementPlanner.Inner_CachePool init_U_CachePool(BlockPlacementPlanner.Inner_StateCache request) {
-      return init(request, (BlockPlacementPlanner.Inner_JsonUtil[])null);
+   public static BlockPlacementPlanner.PlacementPlan init_U_CachePool(BlockPlacementPlanner.Query request) {
+      return init(request, (BlockPlacementPlanner.RejectReason[])null);
    }
 
-   public static BlockPlacementPlanner.Inner_CachePool init(BlockPlacementPlanner.Inner_StateCache request, BlockPlacementPlanner.Inner_JsonUtil[] outcome) {
-      init(outcome, BlockPlacementPlanner.Inner_JsonUtil.NONE);
+   public static BlockPlacementPlanner.PlacementPlan init(BlockPlacementPlanner.Query request, BlockPlacementPlanner.RejectReason[] outcome) {
+      init(outcome, BlockPlacementPlanner.RejectReason.NONE);
       if (request != null && request.init_BlockPos() != null) {
          Level level = init_Level();
          if (level == null) {
             return null;
          }
 
-         BlockPlacementPlanner.Inner_SyncManager slot = init_U_SyncManager(request, level);
-         List<BlockPlacementPlanner.Inner_TaskQueue> found = slot.init_List;
+         BlockPlacementPlanner.CandidateCache slot = init_U_SyncManager(request, level);
+         List<BlockPlacementPlanner.SupportCandidate> found = slot.init_List;
          int size = found.size();
          if (size == 0) {
-            init(outcome, BlockPlacementPlanner.Inner_JsonUtil.NOT_A_SUPPORT);
+            init(outcome, BlockPlacementPlanner.RejectReason.NOT_A_SUPPORT);
             return null;
          }
 
@@ -685,8 +685,8 @@ public final class BlockPlacementPlanner {
             slot.init_I = 0;
          }
 
-         BlockPlacementPlanner.Inner_JsonUtil[] refusal = new BlockPlacementPlanner.Inner_JsonUtil[1];
-         BlockPlacementPlanner.Inner_JsonUtil last = BlockPlacementPlanner.Inner_JsonUtil.NOT_A_SUPPORT;
+         BlockPlacementPlanner.RejectReason[] refusal = new BlockPlacementPlanner.RejectReason[1];
+         BlockPlacementPlanner.RejectReason last = BlockPlacementPlanner.RejectReason.NOT_A_SUPPORT;
          int start = slot.init_I;
 
          for (int step = 0; step < size; step++) {
@@ -695,16 +695,16 @@ public final class BlockPlacementPlanner {
                index -= size;
             }
 
-            BlockPlacementPlanner.Inner_TaskQueue option = found.get(index);
-            BlockPlacementPlanner.Inner_DataUtil aim = init(option, request, refusal);
+            BlockPlacementPlanner.SupportCandidate option = found.get(index);
+            BlockPlacementPlanner.AimSample aim = init(option, request, refusal);
             if (aim == null) {
                last = refusal[0];
                slot.init_I = index + 1 == size ? 0 : index + 1;
             } else {
-               BlockPlacementPlanner.Inner_CachePool candidate = init_U_CachePool_U_TaskQueue(option, aim, request, refusal);
-               if (refusal[0] == BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET) {
+               BlockPlacementPlanner.PlacementPlan candidate = init_U_CachePool_U_TaskQueue(option, aim, request, refusal);
+               if (refusal[0] == BlockPlacementPlanner.RejectReason.NO_BUDGET) {
                   slot.init_I = index;
-                  init(outcome, BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET);
+                  init(outcome, BlockPlacementPlanner.RejectReason.NO_BUDGET);
                   return null;
                }
 
@@ -726,7 +726,7 @@ public final class BlockPlacementPlanner {
    }
 
    public static BlockHitResult init_BlockHitResult_U_CachePool(
-      BlockPlacementPlanner.Inner_CachePool candidate, RotationMath.Inner_DataUtil wire, Vec3 eye, double reach, BlockPlacementPlanner.Inner_StateCache request
+      BlockPlacementPlanner.PlacementPlan candidate, RotationMath.Rotation wire, Vec3 eye, double reach, BlockPlacementPlanner.Query request
    ) {
       if (candidate != null && wire != null && eye != null && request != null) {
          if (Math.abs(wire.load()) > 89.5F) {
@@ -747,7 +747,7 @@ public final class BlockPlacementPlanner {
                } else if (!request.init_U_NetHelper().lands(hit, candidate.init_U_TaskQueue().init_BlockPos())) {
                   return null;
                } else {
-                  BlockPlacementPlanner.Inner_TaskQueue plan = candidate.init_U_TaskQueue();
+                  BlockPlacementPlanner.SupportCandidate plan = candidate.init_U_TaskQueue();
                   if (hitPos.equals(plan.load_BlockPos())
                      && hit.getDirection() == plan.init_Direction()
                      && init_Z_AABB_2(plan.init_AABB(), plan.init_Direction(), hit.getLocation(), 0.0)) {
@@ -803,11 +803,11 @@ public final class BlockPlacementPlanner {
    }
 
    public static AABB init_AABB(BlockState state, BlockPos pos, BlockHitResult hit) {
-      BlockPlacementPlanner.Inner_ConfigStore landing = init_U_ConfigStore(state, pos, hit);
+      BlockPlacementPlanner.FaceBounds landing = init_U_ConfigStore(state, pos, hit);
       return landing == null ? null : landing.init_AABB();
    }
 
-   public static BlockPlacementPlanner.Inner_ConfigStore init_U_ConfigStore(BlockState state, BlockPos pos, BlockHitResult hit) {
+   public static BlockPlacementPlanner.FaceBounds init_U_ConfigStore(BlockState state, BlockPos pos, BlockHitResult hit) {
       if (state != null && pos != null && hit != null) {
          Vec3 point = hit.getLocation();
          Direction reported = hit.getDirection();
@@ -815,14 +815,14 @@ public final class BlockPlacementPlanner {
 
          for (AABB box : boxes) {
             if (init_Z_AABB_2(box, reported, point, 0.0)) {
-               return new BlockPlacementPlanner.Inner_ConfigStore(box, reported);
+               return new BlockPlacementPlanner.FaceBounds(box, reported);
             }
          }
 
          for (AABB box : boxes) {
             for (Direction face : init_DirectionArr) {
                if (face != reported && init_Z_AABB_2(box, face, point, 0.0)) {
-                  return new BlockPlacementPlanner.Inner_ConfigStore(box, face);
+                  return new BlockPlacementPlanner.FaceBounds(box, face);
                }
             }
          }
@@ -914,7 +914,7 @@ public final class BlockPlacementPlanner {
       }
    }
 
-   public static BlockHitResult init_BlockHitResult_Vec3(Vec3 eye, RotationMath.Inner_DataUtil rotation, double reach, Level level, Entity entity) {
+   public static BlockHitResult init_BlockHitResult_Vec3(Vec3 eye, RotationMath.Rotation rotation, double reach, Level level, Entity entity) {
       if (eye != null && rotation != null && level != null) {
          Vec3 end = eye.add(init(rotation).scale(reach));
          HitResult result = level.clip(
@@ -997,25 +997,25 @@ public final class BlockPlacementPlanner {
       }
    }
 
-   private static BlockPlacementPlanner.Inner_SyncManager init_U_SyncManager(BlockPlacementPlanner.Inner_StateCache request, Level level) {
+   private static BlockPlacementPlanner.CandidateCache init_U_SyncManager(BlockPlacementPlanner.Query request, Level level) {
       long key = init_J(request, level);
 
       for (int i = 0; i < 48; i++) {
-         BlockPlacementPlanner.Inner_SyncManager slot = init_U_SyncManagerArr[i];
+         BlockPlacementPlanner.CandidateCache slot = init_U_SyncManagerArr[i];
          if (slot != null && slot.init_Z && slot.init_J == key) {
             return slot;
          }
       }
 
-      BlockPlacementPlanner.Inner_SyncManager slot = init_U_SyncManagerArr[sync];
+      BlockPlacementPlanner.CandidateCache slot = init_U_SyncManagerArr[sync];
       if (slot == null) {
-         slot = init_U_SyncManagerArr[sync] = new BlockPlacementPlanner.Inner_SyncManager();
+         slot = init_U_SyncManagerArr[sync] = new BlockPlacementPlanner.CandidateCache();
       }
 
       sync = (sync + 1) % 48;
       slot.init_List.clear();
       slot.init_I = 0;
-      Predicate<BlockPlacementPlanner.Inner_BufferHelper> held = request.init_Predicate();
+      Predicate<BlockPlacementPlanner.SupportFace> held = request.init_Predicate();
       request.init_U_StateCache_Predicate(null);
       init(request, slot.init_List);
       request.init_U_StateCache_Predicate(held);
@@ -1024,7 +1024,7 @@ public final class BlockPlacementPlanner {
       return slot;
    }
 
-   private static long init_J(BlockPlacementPlanner.Inner_StateCache request, Level level) {
+   private static long init_J(BlockPlacementPlanner.Query request, Level level) {
       long key = init(request.init_BlockPos(), level, new MutableBlockPos());
       key = key * 31L + System.identityHashCode(level);
 
@@ -1215,20 +1215,20 @@ public final class BlockPlacementPlanner {
       return init_Z;
    }
 
-   private static Vec3 init(RotationMath.Inner_DataUtil rotation) {
+   private static Vec3 init(RotationMath.Rotation rotation) {
       float yaw = -rotation.init() * 0.017453292F;
       float pitch = -rotation.load() * 0.017453292F;
       float cosPitch = Mth.cos(pitch);
       return new Vec3(Mth.sin(yaw) * cosPitch, Mth.sin(pitch), Mth.cos(yaw) * cosPitch);
    }
 
-   private static RotationMath.Inner_DataUtil init_ce_DataUtil(BlockPlacementPlanner.Inner_StateCache request) {
+   private static RotationMath.Rotation init_ce_DataUtil(BlockPlacementPlanner.Query request) {
       if (request.init_ce_DataUtil() != null) {
          return request.init_ce_DataUtil();
       }
 
       Player player = init_Player();
-      return player == null ? null : new RotationMath.Inner_DataUtil(player.getYRot(), player.getXRot());
+      return player == null ? null : new RotationMath.Rotation(player.getYRot(), player.getXRot());
    }
 
    private static Level init_Level() {
@@ -1241,29 +1241,29 @@ public final class BlockPlacementPlanner {
       return mc == null ? null : mc.player;
    }
 
-   private static void init(BlockPlacementPlanner.Inner_JsonUtil[] refusal, BlockPlacementPlanner.Inner_JsonUtil value) {
+   private static void init(BlockPlacementPlanner.RejectReason[] refusal, BlockPlacementPlanner.RejectReason value) {
       if (refusal != null && refusal.length > 0) {
          refusal[0] = value;
       }
    }
 
-   private static BlockPlacementPlanner.Inner_DataUtil init_U_DataUtil_U_JsonUtilArr(
-      BlockPlacementPlanner.Inner_JsonUtil[] refusal, BlockPlacementPlanner.Inner_JsonUtil reason, BlockPlacementPlanner.Inner_StateCache request, Direction face
+   private static BlockPlacementPlanner.AimSample init_U_DataUtil_U_JsonUtilArr(
+      BlockPlacementPlanner.RejectReason[] refusal, BlockPlacementPlanner.RejectReason reason, BlockPlacementPlanner.Query request, Direction face
    ) {
       init(refusal, reason);
       init(request, face, reason);
       return null;
    }
 
-   private static BlockPlacementPlanner.Inner_CachePool init_U_CachePool_U_JsonUtilArr(
-      BlockPlacementPlanner.Inner_JsonUtil[] refusal, BlockPlacementPlanner.Inner_JsonUtil reason, BlockPlacementPlanner.Inner_StateCache request, Direction face
+   private static BlockPlacementPlanner.PlacementPlan init_U_CachePool_U_JsonUtilArr(
+      BlockPlacementPlanner.RejectReason[] refusal, BlockPlacementPlanner.RejectReason reason, BlockPlacementPlanner.Query request, Direction face
    ) {
       init(refusal, reason);
       init(request, face, reason);
       return null;
    }
 
-   private static void init(BlockPlacementPlanner.Inner_StateCache request, Direction face, BlockPlacementPlanner.Inner_JsonUtil reason) {
+   private static void init(BlockPlacementPlanner.Query request, Direction face, BlockPlacementPlanner.RejectReason reason) {
       if (request != null && face != null) {
          StringBuilder trace = request.init_StringBuilder();
          if (trace != null && trace.length() < 96) {
@@ -1276,26 +1276,26 @@ public final class BlockPlacementPlanner {
       }
    }
 
-   public record Inner_BufferHelper(BlockPos init_BlockPos, Direction init_Direction) {
-      public Inner_BufferHelper {
+   public record SupportFace(BlockPos init_BlockPos, Direction init_Direction) {
+      public SupportFace {
          init_BlockPos = init_BlockPos == null ? null : init_BlockPos.immutable();
       }
    }
 
-   public record Inner_CachePool(
-      BlockPlacementPlanner.Inner_TaskQueue init_U_TaskQueue, BlockPlacementPlanner.Inner_DataUtil init_U_DataUtil, BlockHitResult init_BlockHitResult, boolean init_Z, double init_D
+   public record PlacementPlan(
+      BlockPlacementPlanner.SupportCandidate init_U_TaskQueue, BlockPlacementPlanner.AimSample init_U_DataUtil, BlockHitResult init_BlockHitResult, boolean init_Z, double init_D
    ) {
    }
 
-   public record Inner_ConfigStore(AABB init_AABB, Direction init_Direction) {
+   public record FaceBounds(AABB init_AABB, Direction init_Direction) {
    }
 
-   public record Inner_DataUtil(
-      Vec3 init_Vec3, RotationMath.Inner_DataUtil init_ce_DataUtil, RotationMath.Inner_DataUtil load, double init_D, float init_F, BlockPlacementPlanner.Inner_UiHelper init_U_UiHelper
+   public record AimSample(
+      Vec3 init_Vec3, RotationMath.Rotation init_ce_DataUtil, RotationMath.Rotation load, double init_D, float init_F, BlockPlacementPlanner.SamplePoint init_U_UiHelper
    ) {
    }
 
-   public enum Inner_JsonUtil {
+   public enum RejectReason {
       NONE("ok"),
       NOT_A_SUPPORT("ns"),
       SELF_OCCLUDED("so"),
@@ -1310,7 +1310,7 @@ public final class BlockPlacementPlanner {
 
       private final String init_Str;
 
-      Inner_JsonUtil(String code) {
+      RejectReason(String code) {
          this.init_Str = code;
       }
 
@@ -1319,7 +1319,7 @@ public final class BlockPlacementPlanner {
       }
    }
 
-   public interface Inner_NetHelper {
+   public interface HitValidator {
       boolean lands(BlockHitResult var1, BlockPos var2);
 
       default boolean init(BlockState state, BlockPos pos, boolean sneaking) {
@@ -1327,12 +1327,12 @@ public final class BlockPlacementPlanner {
       }
    }
 
-   public static final class Inner_StateCache {
+   public static final class Query {
       private BlockPos init_BlockPos;
       private final Vec3 init_Vec3;
       private final double init_D;
-      private BlockPlacementPlanner.Inner_NetHelper init_U_NetHelper;
-      private RotationMath.Inner_DataUtil init_ce_DataUtil;
+      private BlockPlacementPlanner.HitValidator init_U_NetHelper;
+      private RotationMath.Rotation init_ce_DataUtil;
       private double load_D = BlockPlacementPlanner.init_D();
       private boolean init_Z;
       private boolean load_Z;
@@ -1340,14 +1340,14 @@ public final class BlockPlacementPlanner {
       private EnumSet<Direction> init_EnumSet;
       private boolean read_Z;
       private Vec3 load_Vec3;
-      private Predicate<BlockPlacementPlanner.Inner_BufferHelper> init_Predicate;
-      private BlockPlacementPlanner.Inner_StreamUtil init_U_StreamUtil;
+      private Predicate<BlockPlacementPlanner.SupportFace> init_Predicate;
+      private BlockPlacementPlanner.RayBudget init_U_StreamUtil;
       private int init_I;
       private boolean write;
       private double read_D;
       private StringBuilder init_StringBuilder;
 
-      public Inner_StateCache(BlockPos cell, Vec3 eye, double reach, BlockPlacementPlanner.Inner_NetHelper placement) {
+      public Query(BlockPos cell, Vec3 eye, double reach, BlockPlacementPlanner.HitValidator placement) {
          this.init_DirectionArr = BlockPlacementPlanner.init_DirectionArr;
          this.read_Z = true;
          this.init_I = 3;
@@ -1359,77 +1359,77 @@ public final class BlockPlacementPlanner {
          this.init_U_NetHelper = placement;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_BlockPos(BlockPos cell) {
+      public BlockPlacementPlanner.Query init_U_StateCache_BlockPos(BlockPos cell) {
          this.init_BlockPos = cell == null ? null : cell.immutable();
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_U_NetHelper(BlockPlacementPlanner.Inner_NetHelper placement) {
+      public BlockPlacementPlanner.Query init_U_StateCache_U_NetHelper(BlockPlacementPlanner.HitValidator placement) {
          this.init_U_NetHelper = placement;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_ce_DataUtil(RotationMath.Inner_DataUtil from) {
+      public BlockPlacementPlanner.Query init_U_StateCache_ce_DataUtil(RotationMath.Rotation from) {
          this.init_ce_DataUtil = from;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_D(double degrees) {
+      public BlockPlacementPlanner.Query init_U_StateCache_D(double degrees) {
          this.load_D = degrees;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_Z(boolean sneaking) {
+      public BlockPlacementPlanner.Query init_U_StateCache_Z(boolean sneaking) {
          this.init_Z = sneaking;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache load(boolean allowed) {
+      public BlockPlacementPlanner.Query load(boolean allowed) {
          this.load_Z = allowed;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_DirectionArr(Direction[] order) {
+      public BlockPlacementPlanner.Query init_U_StateCache_DirectionArr(Direction[] order) {
          this.init_DirectionArr = order != null && order.length != 0 ? order : BlockPlacementPlanner.init_DirectionArr;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_EnumSet(EnumSet<Direction> faces) {
+      public BlockPlacementPlanner.Query init_U_StateCache_EnumSet(EnumSet<Direction> faces) {
          this.init_EnumSet = faces;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache read(boolean allow) {
+      public BlockPlacementPlanner.Query read(boolean allow) {
          this.read_Z = allow;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_Vec3(Vec3 leadEye) {
+      public BlockPlacementPlanner.Query init_U_StateCache_Vec3(Vec3 leadEye) {
          this.load_Vec3 = leadEye;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_Predicate(Predicate<BlockPlacementPlanner.Inner_BufferHelper> banned) {
+      public BlockPlacementPlanner.Query init_U_StateCache_Predicate(Predicate<BlockPlacementPlanner.SupportFace> banned) {
          this.init_Predicate = banned;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_U_StreamUtil(BlockPlacementPlanner.Inner_StreamUtil budget) {
+      public BlockPlacementPlanner.Query init_U_StateCache_U_StreamUtil(BlockPlacementPlanner.RayBudget budget) {
          this.init_U_StreamUtil = budget;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_I(int max) {
+      public BlockPlacementPlanner.Query init_U_StateCache_I(int max) {
          this.init_I = Math.max(1, max);
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache write(boolean quantize) {
+      public BlockPlacementPlanner.Query write(boolean quantize) {
          this.write = quantize;
          return this;
       }
 
-      public BlockPlacementPlanner.Inner_StateCache load(double cap) {
+      public BlockPlacementPlanner.Query load(double cap) {
          this.read_D = Double.isNaN(cap) ? 1.0 / 0.0 : Math.max(0.0, cap);
          return this;
       }
@@ -1438,7 +1438,7 @@ public final class BlockPlacementPlanner {
          return Math.min(BlockPlacementPlanner.init(distance), this.read_D);
       }
 
-      public BlockPlacementPlanner.Inner_StateCache init_U_StateCache_StringBuilder(StringBuilder trace) {
+      public BlockPlacementPlanner.Query init_U_StateCache_StringBuilder(StringBuilder trace) {
          this.init_StringBuilder = trace;
          return this;
       }
@@ -1455,11 +1455,11 @@ public final class BlockPlacementPlanner {
          return this.init_D;
       }
 
-      public BlockPlacementPlanner.Inner_NetHelper init_U_NetHelper() {
+      public BlockPlacementPlanner.HitValidator init_U_NetHelper() {
          return this.init_U_NetHelper;
       }
 
-      public RotationMath.Inner_DataUtil init_ce_DataUtil() {
+      public RotationMath.Rotation init_ce_DataUtil() {
          return this.init_ce_DataUtil;
       }
 
@@ -1491,11 +1491,11 @@ public final class BlockPlacementPlanner {
          return this.load_Vec3;
       }
 
-      public Predicate<BlockPlacementPlanner.Inner_BufferHelper> init_Predicate() {
+      public Predicate<BlockPlacementPlanner.SupportFace> init_Predicate() {
          return this.init_Predicate;
       }
 
-      public BlockPlacementPlanner.Inner_StreamUtil init_U_StreamUtil() {
+      public BlockPlacementPlanner.RayBudget init_U_StreamUtil() {
          return this.init_U_StreamUtil;
       }
 
@@ -1512,10 +1512,10 @@ public final class BlockPlacementPlanner {
       }
    }
 
-   public static final class Inner_StreamUtil {
+   public static final class RayBudget {
       private int init;
 
-      public Inner_StreamUtil(int rays) {
+      public RayBudget(int rays) {
          this.init = Math.max(0, rays);
       }
 
@@ -1537,14 +1537,14 @@ public final class BlockPlacementPlanner {
       }
    }
 
-   private static final class Inner_SyncManager {
-      private final List<BlockPlacementPlanner.Inner_TaskQueue> init_List = new ArrayList<>();
+   private static final class CandidateCache {
+      private final List<BlockPlacementPlanner.SupportCandidate> init_List = new ArrayList<>();
       private long init_J;
       private boolean init_Z;
       private int init_I;
    }
 
-   public record Inner_TaskQueue(
+   public record SupportCandidate(
       BlockPos init_BlockPos,
       BlockPos load_BlockPos,
       Direction init_Direction,
@@ -1554,11 +1554,11 @@ public final class BlockPlacementPlanner {
       double init_D,
       double load_D,
       boolean init_Z,
-      BlockPlacementPlanner.Inner_BufferHelper init_U_BufferHelper
+      BlockPlacementPlanner.SupportFace init_U_BufferHelper
    ) {
    }
 
-   public enum Inner_UiHelper {
+   public enum SamplePoint {
       CENTRE,
       NEAREST,
       FLATTEST,

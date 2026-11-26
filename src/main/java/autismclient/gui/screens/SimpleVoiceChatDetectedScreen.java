@@ -105,14 +105,14 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
          int innerW = cardW - 12;
          int x = cardX + 6;
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(cardX, cardY, cardW, cardH), -234223092);
-         init_V_GuiGraphicsExtract(graphics, cardX, cardY, cardW, cardH, ThemePaletteManager.init_I_I_ct_DataUtil(-46518, ThemePaletteManager.Inner_DataUtil.OUTLINE), 2);
+         init_V_GuiGraphicsExtract(graphics, cardX, cardY, cardW, cardH, ThemePaletteManager.init_I_I_ct_DataUtil(-46518, ThemePaletteManager.ColorRole.OUTLINE), 2);
          int y = cardY + 6;
          this.init_V_GuiGraphicsExtract_2(
-            graphics, "Simple Voice Chat detected", init_Identifier, ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.Inner_DataUtil.TEXT), x, innerW, y
+            graphics, "Simple Voice Chat detected", init_Identifier, ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.ColorRole.TEXT), x, innerW, y
          );
          y += k.init(init_Identifier) + 4;
          autismclient.gui.f.PacketUtil.init(
-            graphics, autismclient.gui.f.NetHelper.init(x, y, innerW, 1), ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.Inner_DataUtil.OUTLINE)
+            graphics, autismclient.gui.f.NetHelper.init(x, y, innerW, 1), ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.ColorRole.OUTLINE)
          );
          y += 5;
          int lineH = this.load_I();
@@ -120,7 +120,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
          List<List<String>> linesBySection = this.init_List(innerW);
 
          for (int i = 0; i < init_StrArr2.length; i++) {
-            k.init(graphics, this.font, init_StrArr2[i][0], load_Identifier, ThemePaletteManager.init_I_I_ct_DataUtil(-45747, ThemePaletteManager.Inner_DataUtil.ACCENT), x, y, false);
+            k.init(graphics, this.font, init_StrArr2[i][0], load_Identifier, ThemePaletteManager.init_I_I_ct_DataUtil(-45747, ThemePaletteManager.ColorRole.ACCENT), x, y, false);
             y += lineH;
 
             for (String line : linesBySection.get(i)) {

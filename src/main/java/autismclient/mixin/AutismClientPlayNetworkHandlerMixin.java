@@ -460,7 +460,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    private void autism$captureView() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null) {
-         RotationMath.Inner_DataUtil wire = ScaffoldModule.load_ce_DataUtil_3();
+         RotationMath.Rotation wire = ScaffoldModule.load_ce_DataUtil_3();
          if (wire != null) {
             this.autism$viewYaw = mc.player.getYRot();
             this.autism$viewPitch = mc.player.getXRot();

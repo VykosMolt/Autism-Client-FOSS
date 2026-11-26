@@ -3986,7 +3986,7 @@ public final class AiService {
          Set<String> inputs = new LinkedHashSet<>();
 
          for (Item cooked : AiItems.load_af_DataUtil(spec).items()) {
-            for (autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan : autismclient.util.AutoCraftingEngine.load(mc, cooked)) {
+            for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.load(mc, cooked)) {
                for (Item input : plan.init_List()) {
                   inputs.add(BuiltInRegistries.ITEM.getKey(input).toString());
                }
@@ -4031,7 +4031,7 @@ public final class AiService {
          String id = item.contains(":") ? item : "minecraft:" + item;
          int count = Math.max(1, AiJson.init_I_JsonObject(step.arguments(), "count", 1));
          return this.init_Obj_J_Supplier(gen, () -> {
-            AiCraftPlanner.Inner_CachePool plan = AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), id, count);
+            AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), id, count);
             return plan.complete() && (!plan.requiresTable() || AiCraft.init_Z());
          });
       } catch (InterruptedException e) {
@@ -5519,7 +5519,7 @@ public final class AiService {
       }
 
       @Override
-      public List<AiChatLedger.Inner_StreamUtil> init(int max) {
+      public List<AiChatLedger.ChatEntry> init(int max) {
          return AiChatLedger.init_List(max);
       }
 

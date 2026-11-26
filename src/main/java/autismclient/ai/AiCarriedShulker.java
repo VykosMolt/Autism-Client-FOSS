@@ -530,7 +530,7 @@ final class AiCarriedShulker implements AiOperation {
                   && !floor.hasBlockEntity()
                   && !floor.isSignalSource()
                   && !floor.is(BlockTags.LEAVES)
-                  && !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(floor)
+                  && !autismclient.ai.engine.AiPathfinder.LiveGridView.read(floor)
                   && floor.getBlock().getBounceRestitution() == 0.0F
                   && floor.getBlock().getFriction() > 0.0F
                   && floor.getBlock().getFriction() <= 0.6F
@@ -559,12 +559,12 @@ final class AiCarriedShulker implements AiOperation {
       return box.offset(Math.clamp(Mth.floor(drop.x) - box.getX(), -2, 2), 0, Math.clamp(Mth.floor(drop.z) - box.getZ(), -2, 2));
    }
 
-   static autismclient.ai.engine.AiPathfinder.Inner_JsonUtil init_ClassCache_JsonUti_BlockPos_BlockPos(final BlockPos box, BlockPos target) {
-      final autismclient.ai.engine.AiPathfinder.Inner_JsonUtil near = autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(target, 0.6);
-      final Set<autismclient.ai.engine.AiPathfinder.Inner_SyncManager> walks = Set.copyOf(
-         EnumSet.complementOf(EnumSet.of(autismclient.ai.engine.AiPathfinder.Inner_SyncManager.WALK, autismclient.ai.engine.AiPathfinder.Inner_SyncManager.WALK_DIAGONAL))
+   static autismclient.ai.engine.AiPathfinder.PathGoal init_ClassCache_JsonUti_BlockPos_BlockPos(final BlockPos box, BlockPos target) {
+      final autismclient.ai.engine.AiPathfinder.PathGoal near = autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(target, 0.6);
+      final Set<autismclient.ai.engine.AiPathfinder.MoveType> walks = Set.copyOf(
+         EnumSet.complementOf(EnumSet.of(autismclient.ai.engine.AiPathfinder.MoveType.WALK, autismclient.ai.engine.AiPathfinder.MoveType.WALK_DIAGONAL))
       );
-      return new autismclient.ai.engine.AiPathfinder.Inner_JsonUtil() {
+      return new autismclient.ai.engine.AiPathfinder.PathGoal() {
          @Override
          public boolean isInGoal(int x, int y, int z) {
             return near.isInGoal(x, y, z);
@@ -581,7 +581,7 @@ final class AiCarriedShulker implements AiOperation {
          }
 
          @Override
-         public Set<autismclient.ai.engine.AiPathfinder.Inner_SyncManager> init_Set() {
+         public Set<autismclient.ai.engine.AiPathfinder.MoveType> init_Set() {
             return walks;
          }
       };
@@ -840,11 +840,11 @@ final class AiCarriedShulker implements AiOperation {
                      false,
                      false,
                      25,
-                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                     autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                      false,
                      2.0,
                      init_ClassCache_JsonUti_BlockPos_BlockPos(this.init_BlockPos, target),
-                     new AiGoto.Inner_BufferHelper(false, false, 0, true, false, false)
+                     new AiGoto.GotoOptions(false, false, 0, true, false, false)
                   );
                   return this.init_AiOperation_Result_Str("Walking inside the safe area to the observed stock shulker");
                }
@@ -890,11 +890,11 @@ final class AiCarriedShulker implements AiOperation {
                         false,
                         false,
                         25,
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                        autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                         false,
                         2.0,
-                        AiGoto.read(autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(stance, 0.6), this.init_Set),
-                        new AiGoto.Inner_BufferHelper(false, false, 0, true, false, false)
+                        AiGoto.read(autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(stance, 0.6), this.init_Set),
+                        new AiGoto.GotoOptions(false, false, 0, true, false, false)
                      );
                      this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.APPROACH;
                      return this.init_AiOperation_Result_Str("Moving to an existing flat area before placing the stock shulker");
@@ -935,13 +935,13 @@ final class AiCarriedShulker implements AiOperation {
                this.init_Set
             )
             && this.init_Z_BlockPos(this.init_BlockPos)) {
-         autismclient.ai.engine.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
+         autismclient.ai.engine.AiPlacer.PlaceStatus placed = this.init_DataPipe.init_DataPipe_DataUtil();
          this.init_Z = this.init_Z | this.init_DataPipe.init_Z();
-         if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED) {
+         if (placed == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED) {
             return this.init_AiOperation_Result_AiOperation_Status_Str(
                this.init_Z ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, this.init_DataPipe.init_Str()
             );
-         } else if (placed != autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+         } else if (placed != autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
             return this.init_AiOperation_Result_Str("Placing the selected stock shulker");
          } else {
             this.init_BlockState = this.init_Minecraft.level.getBlockState(this.init_BlockPos);

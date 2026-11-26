@@ -178,7 +178,7 @@ public final class PackUrlValidator {
       }
    }
 
-   public static String init_Str_BufferHelper_Buffe(ConnectionPrivacyRegistry.Inner_BufferHelper endpoint) throws IOException {
+   public static String init_Str_BufferHelper_Buffe(ConnectionPrivacyRegistry.ServerEndpoint endpoint) throws IOException {
       Objects.requireNonNull(endpoint, "endpoint");
       String host = endpoint.init_Str();
       if (host != null && !host.isBlank() && !init_Z_Str(host) && host.indexOf(37) < 0) {

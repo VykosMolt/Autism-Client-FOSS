@@ -183,21 +183,21 @@ final class AiSchematic {
          return List.of();
       }
 
-      AiBuilder.Inner_StreamUtil origin = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
-         new AiBuilder.Inner_StreamUtil(0, 0, 0, "minecraft:stone"), rotation, mirror
+      AiBuilder.CellSpec origin = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+         new AiBuilder.CellSpec(0, 0, 0, "minecraft:stone"), rotation, mirror
       );
       ArrayList<AiSchematic.Inner_StreamUtil> out = new ArrayList<>();
 
       for (AiSchematic.Inner_StreamUtil frame : decoded.itemFrames()) {
          BlockPos c = frame.cell();
-         AiBuilder.Inner_StreamUtil moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
-            new AiBuilder.Inner_StreamUtil(c.getX(), c.getY(), c.getZ(), "minecraft:stone"), rotation, mirror
+         AiBuilder.CellSpec moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+            new AiBuilder.CellSpec(c.getX(), c.getY(), c.getZ(), "minecraft:stone"), rotation, mirror
          );
          Direction facing = frame.facing();
          int turned = frame.rotation();
          if (facing.getAxis().isHorizontal()) {
-            AiBuilder.Inner_StreamUtil step = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
-               new AiBuilder.Inner_StreamUtil(facing.getStepX(), 0, facing.getStepZ(), "minecraft:stone"), rotation, mirror
+            AiBuilder.CellSpec step = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+               new AiBuilder.CellSpec(facing.getStepX(), 0, facing.getStepZ(), "minecraft:stone"), rotation, mirror
             );
             int sx = step.dx() - origin.dx();
             int sz = step.dz() - origin.dz();
@@ -290,15 +290,15 @@ final class AiSchematic {
       throw new IllegalArgumentException("No schematic named \"" + clean + "\" in " + schematicsDir + " (tried " + String.join(", ", candidates) + ")");
    }
 
-   static AiBuilder.Inner_DataUtil init(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown) {
+   static AiBuilder.Blueprint init(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown) {
       return init_TableIndex_DataUti(file, origin, rotation, mirror, skipUnknown, 2097152);
    }
 
-   static AiBuilder.Inner_DataUtil init_TableIndex_DataUti(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells) {
+   static AiBuilder.Blueprint init_TableIndex_DataUti(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells) {
       return init_bP_BufferHelper(file, origin, rotation, mirror, skipUnknown, maxCells).blueprint();
    }
 
-   static AiBuilder.Inner_DataUtil init_TableIndex_DataUti(
+   static AiBuilder.Blueprint init_TableIndex_DataUti(
       Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells, int maxOffset
    ) {
       return init_bP_BufferHelper(file, origin, rotation, mirror, skipUnknown, maxCells, maxOffset).blueprint();
@@ -310,7 +310,7 @@ final class AiSchematic {
       return loaded;
    }
 
-   static void init(List<AiBuilder.Inner_StreamUtil> cells) {
+   static void init(List<AiBuilder.CellSpec> cells) {
       if (!cells.isEmpty()) {
          int minX = 2147483647;
          int minY = minX;
@@ -319,7 +319,7 @@ final class AiSchematic {
          int maxY = maxX;
          int maxZ = maxX;
 
-         for (AiBuilder.Inner_StreamUtil cell : cells) {
+         for (AiBuilder.CellSpec cell : cells) {
             minX = Math.min(minX, cell.dx());
             maxX = Math.max(maxX, cell.dx());
             minY = Math.min(minY, cell.dy());
@@ -349,14 +349,14 @@ final class AiSchematic {
 
    static AiSchematic.Inner_BufferHelper init_bP_BufferHelper(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells, int maxOffset) {
       AiSchematic.Inner_DataUtil decoded = init_bP_DataUtil_Path_Z(file, skipUnknown);
-      List<AiBuilder.Inner_StreamUtil> cells = AiBuilder.init_List_List_2(decoded.cells(), rotation, mirror);
+      List<AiBuilder.CellSpec> cells = AiBuilder.init_List_List_2(decoded.cells(), rotation, mirror);
       if (cells.isEmpty()) {
          throw new IllegalArgumentException("Schematic contains no blocks to build");
       }
 
       BlockPos minimum = AiBuilder.init_BlockPos(cells);
       return new AiSchematic.Inner_BufferHelper(
-         new AiBuilder.Inner_DataUtil(origin, AiBuilder.init(cells, maxCells, maxOffset, minimum)),
+         new AiBuilder.Blueprint(origin, AiBuilder.init(cells, maxCells, maxOffset, minimum)),
          init_Map(decoded, rotation, mirror, minimum),
          decoded.entities(),
          load_Map(decoded, rotation, mirror, minimum),
@@ -480,7 +480,7 @@ final class AiSchematic {
          byte[] blockData = blocks.getByteArray(version == 3 ? "Data" : "BlockData")
             .orElseThrow(() -> new IllegalArgumentException("Sponge schematic has no BlockData array"));
          int volume = init(width, height, length);
-         List<AiBuilder.Inner_StreamUtil> cells = new ArrayList<>();
+         List<AiBuilder.CellSpec> cells = new ArrayList<>();
          int air = 0;
          int cursor = 0;
          int index = 0;
@@ -521,7 +521,7 @@ final class AiSchematic {
                         throw new IllegalArgumentException("Schematic exceeds 2097152 non-air cells");
                      }
 
-                     cells.add(new AiBuilder.Inner_StreamUtil(offset[0] + x, offset[1] + y, offset[2] + z, state.block(), state.properties()));
+                     cells.add(new AiBuilder.CellSpec(offset[0] + x, offset[1] + y, offset[2] + z, state.block(), state.properties()));
                   }
 
                   index++;
@@ -773,8 +773,8 @@ final class AiSchematic {
 
       for (Entry<Long, String> entry : decoded.signText().entrySet()) {
          BlockPos at = BlockPos.of(entry.getKey());
-         AiBuilder.Inner_StreamUtil moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
-            new AiBuilder.Inner_StreamUtil(at.getX(), at.getY(), at.getZ(), "minecraft:stone"), rotation, mirror
+         AiBuilder.CellSpec moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+            new AiBuilder.CellSpec(at.getX(), at.getY(), at.getZ(), "minecraft:stone"), rotation, mirror
          );
          out.put(BlockPos.asLong(moved.dx() - minX, moved.dy() - minY, moved.dz() - minZ), entry.getValue());
       }
@@ -800,8 +800,8 @@ final class AiSchematic {
 
       for (Entry<Long, ListTag> entry : decoded.containerContents().entrySet()) {
          BlockPos at = BlockPos.of(entry.getKey());
-         AiBuilder.Inner_StreamUtil moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
-            new AiBuilder.Inner_StreamUtil(at.getX(), at.getY(), at.getZ(), "minecraft:stone"), rotation, mirror
+         AiBuilder.CellSpec moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+            new AiBuilder.CellSpec(at.getX(), at.getY(), at.getZ(), "minecraft:stone"), rotation, mirror
          );
          out.put(BlockPos.asLong(moved.dx() - minX, moved.dy() - minY, moved.dz() - minZ), entry.getValue().copy());
       }
@@ -877,8 +877,8 @@ final class AiSchematic {
             dz = oldX;
          }
 
-         AiBuilder.Inner_StreamUtil moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
-            new AiBuilder.Inner_StreamUtil(rail.getX(), rail.getY(), rail.getZ(), "minecraft:stone"), rotation, mirror
+         AiBuilder.CellSpec moved = AiBuilder.init_TableIndex_StreamU_TableIndex_StreamU(
+            new AiBuilder.CellSpec(rail.getX(), rail.getY(), rail.getZ(), "minecraft:stone"), rotation, mirror
          );
          out.add(new AiSchematic.Inner_TaskQueue(vehicle.id(), new Vec3(moved.dx() - minX + 0.5 + dx, pos.y - minY, moved.dz() - minZ + 0.5 + dz)));
       }
@@ -913,9 +913,9 @@ final class AiSchematic {
       int offsetX = root.getIntOr("WEOffsetX", 0);
       int offsetY = root.getIntOr("WEOffsetY", 0);
       int offsetZ = root.getIntOr("WEOffsetZ", 0);
-      List<AiBuilder.Inner_StreamUtil> cells = new ArrayList<>();
+      List<AiBuilder.CellSpec> cells = new ArrayList<>();
       Set<Integer> unmapped = new LinkedHashSet<>();
-      Map<Integer, AiBuilder.Inner_StreamUtil> mapped = new HashMap<>();
+      Map<Integer, AiBuilder.CellSpec> mapped = new HashMap<>();
       int air = 0;
       int unknownCells = 0;
 
@@ -934,7 +934,7 @@ final class AiSchematic {
             int z = rest / width;
             int x = rest % width;
             int key = id << 8 | meta;
-            AiBuilder.Inner_StreamUtil template = mapped.get(key);
+            AiBuilder.CellSpec template = mapped.get(key);
             if (template == null) {
                AiSchematic.Inner_CachePool state = init_bP_CachePool_I_I(id, meta);
                if (state == null) {
@@ -948,13 +948,13 @@ final class AiSchematic {
                   continue;
                }
 
-               template = new AiBuilder.Inner_StreamUtil(
+               template = new AiBuilder.CellSpec(
                   0, 0, 0, state.block(), init(state.block(), state.properties(), "legacy id " + id + ":" + meta, false)
                );
                mapped.put(key, template);
             }
 
-            cells.add(new AiBuilder.Inner_StreamUtil(offsetX + x, offsetY + y, offsetZ + z, template.block(), template.properties()));
+            cells.add(new AiBuilder.CellSpec(offsetX + x, offsetY + y, offsetZ + z, template.block(), template.properties()));
             if (cells.size() > 2097152) {
                throw new IllegalArgumentException("Schematic exceeds 2097152 non-air cells");
             }
@@ -1009,7 +1009,7 @@ final class AiSchematic {
             throw new IllegalArgumentException("Litematic has no regions");
          }
 
-         List<AiBuilder.Inner_StreamUtil> cells = new ArrayList<>();
+         List<AiBuilder.CellSpec> cells = new ArrayList<>();
          HashMap<Long, String> signText = new HashMap<>();
          HashMap<Long, ListTag> contents = new HashMap<>();
          TreeMap<String, Integer> entities = new TreeMap<>();
@@ -1143,7 +1143,7 @@ final class AiSchematic {
                         throw new IllegalArgumentException("Schematic exceeds 2097152 non-air cells");
                      }
 
-                     cells.add(new AiBuilder.Inner_StreamUtil(minX + x, minY + y, minZ + z, state.block(), state.properties()));
+                     cells.add(new AiBuilder.CellSpec(minX + x, minY + y, minZ + z, state.block(), state.properties()));
                   }
                }
             }
@@ -2270,7 +2270,7 @@ final class AiSchematic {
    }
 
    record Inner_BufferHelper(
-      AiBuilder.Inner_DataUtil blueprint,
+      AiBuilder.Blueprint blueprint,
       Map<Long, String> signText,
       Map<String, Integer> entities,
       Map<Long, ListTag> containerContents,
@@ -2278,7 +2278,7 @@ final class AiSchematic {
       List<AiSchematic.Inner_StreamUtil> itemFrames
    ) {
       Inner_BufferHelper(
-         AiBuilder.Inner_DataUtil blueprint,
+         AiBuilder.Blueprint blueprint,
          Map<Long, String> signText,
          Map<String, Integer> entities,
          Map<Long, ListTag> containerContents,
@@ -2287,7 +2287,7 @@ final class AiSchematic {
          this(blueprint, signText, entities, containerContents, railVehicles, List.of());
       }
 
-      Inner_BufferHelper(AiBuilder.Inner_DataUtil blueprint, Map<Long, String> signText, Map<String, Integer> entities, Map<Long, ListTag> containerContents) {
+      Inner_BufferHelper(AiBuilder.Blueprint blueprint, Map<Long, String> signText, Map<String, Integer> entities, Map<Long, ListTag> containerContents) {
          this(blueprint, signText, entities, containerContents, List.of());
       }
    }
@@ -2299,7 +2299,7 @@ final class AiSchematic {
    }
 
    record Inner_DataUtil(
-      List<AiBuilder.Inner_StreamUtil> cells,
+      List<AiBuilder.CellSpec> cells,
       Set<Integer> unmapped,
       int airCells,
       String format,
@@ -2310,7 +2310,7 @@ final class AiSchematic {
       List<AiSchematic.Inner_StreamUtil> itemFrames
    ) {
       Inner_DataUtil(
-         List<AiBuilder.Inner_StreamUtil> cells,
+         List<AiBuilder.CellSpec> cells,
          Set<Integer> unmapped,
          int airCells,
          String format,
@@ -2323,7 +2323,7 @@ final class AiSchematic {
       }
 
       Inner_DataUtil(
-         List<AiBuilder.Inner_StreamUtil> cells,
+         List<AiBuilder.CellSpec> cells,
          Set<Integer> unmapped,
          int airCells,
          String format,
@@ -2335,16 +2335,16 @@ final class AiSchematic {
       }
 
       Inner_DataUtil(
-         List<AiBuilder.Inner_StreamUtil> cells, Set<Integer> unmapped, int airCells, String format, Map<Long, String> signText, Map<String, Integer> entities
+         List<AiBuilder.CellSpec> cells, Set<Integer> unmapped, int airCells, String format, Map<Long, String> signText, Map<String, Integer> entities
       ) {
          this(cells, unmapped, airCells, format, signText, entities, Map.of());
       }
 
-      Inner_DataUtil(List<AiBuilder.Inner_StreamUtil> cells, Set<Integer> unmapped, int airCells, String format) {
+      Inner_DataUtil(List<AiBuilder.CellSpec> cells, Set<Integer> unmapped, int airCells, String format) {
          this(cells, unmapped, airCells, format, Map.of(), Map.of());
       }
 
-      Inner_DataUtil(List<AiBuilder.Inner_StreamUtil> cells, Set<Integer> unmapped, int airCells, String format, Map<Long, String> signText) {
+      Inner_DataUtil(List<AiBuilder.CellSpec> cells, Set<Integer> unmapped, int airCells, String format, Map<Long, String> signText) {
          this(cells, unmapped, airCells, format, signText, Map.of());
       }
    }

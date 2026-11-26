@@ -17,7 +17,7 @@ public final class ButtonDrawHelper {
       int width,
       int height,
       String label,
-      OverlayActionButton.Inner_StreamUtil variant,
+      OverlayActionButton.ButtonTone variant,
       boolean enabled,
       int mouseX,
       int mouseY
@@ -33,7 +33,7 @@ public final class ButtonDrawHelper {
       int width,
       int height,
       String label,
-      OverlayActionButton.Inner_StreamUtil variant,
+      OverlayActionButton.ButtonTone variant,
       boolean enabled,
       l tone,
       int mouseX,
@@ -69,7 +69,7 @@ public final class ButtonDrawHelper {
    ) {
       OverlayActionButton button = OverlayActionButton.init(x, y, width, height, Component.literal(label), ignored -> {});
       button.read(width);
-      button.init_ByteReader_ByteReader_StreamU(state ? OverlayActionButton.Inner_StreamUtil.SUCCESS : OverlayActionButton.Inner_StreamUtil.DANGER);
+      button.init_ByteReader_ByteReader_StreamU(state ? OverlayActionButton.ButtonTone.SUCCESS : OverlayActionButton.ButtonTone.DANGER);
       button.init_ByteReader_Z(state).init_ByteReader_Str(animationKey);
       button.init_Z = enabled;
       OverlayActionButton.init(graphics, font, button, mouseX, mouseY);
@@ -78,6 +78,6 @@ public final class ButtonDrawHelper {
    public static void init(
       GuiGraphicsExtractor graphics, Font font, int x, int y, int width, int height, String label, boolean selected, int mouseX, int mouseY
    ) {
-      init(graphics, font, x, y, width, height, label, selected ? OverlayActionButton.Inner_StreamUtil.PRIMARY : OverlayActionButton.Inner_StreamUtil.GHOST, true, mouseX, mouseY);
+      init(graphics, font, x, y, width, height, label, selected ? OverlayActionButton.ButtonTone.PRIMARY : OverlayActionButton.ButtonTone.GHOST, true, mouseX, mouseY);
    }
 }

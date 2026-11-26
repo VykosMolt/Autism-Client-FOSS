@@ -165,9 +165,9 @@ public final class AiMiningPreparation {
 
                float hardness = state.getBlock().defaultDestroyTime();
                double before = autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, current, state, hardness);
-               AiCraftPlanner.Inner_StreamUtil graph = AiCraft.init_g_StreamUtil();
+               AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
                Item chosen = null;
-               AiCraftPlanner.Inner_CachePool chosenPlan = null;
+               AiCraftPlanner.CraftPlan chosenPlan = null;
                int chosenLogs = 0;
                double bestSaving = 0.0;
                boolean tableHeld = AiCraft.load() || AiCraft.init_I("minecraft:crafting_table") > 0;
@@ -191,7 +191,7 @@ public final class AiMiningPreparation {
                      double after = autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, upgraded, state, hardness);
                      if (!(after >= before)) {
                         String toolId = BuiltInRegistries.ITEM.getKey(tool).toString();
-                        AiCraftPlanner.Inner_CachePool plan = null;
+                        AiCraftPlanner.CraftPlan plan = null;
                         int logs = 0;
                         int cobble = 0;
 
@@ -377,7 +377,7 @@ public final class AiMiningPreparation {
    }
 
    static AiMiningPreparation.Inner_DataUtil init(
-      AiCraftPlanner.Inner_StreamUtil graph,
+      AiCraftPlanner.RecipeGraph graph,
       boolean tableHeld,
       String log,
       Set<String> goalLogs,
@@ -392,7 +392,7 @@ public final class AiMiningPreparation {
       AiMiningPreparation.Inner_DataUtil best = null;
       if (remaining > 0 && !(after >= before) && axeUses > 0 && Double.isFinite(before)) {
          for (int extra = 0; extra <= Math.min(3, Math.max(0, nearbyLogs)) && (extra <= 0 || !log.isEmpty()); extra++) {
-            AiCraftPlanner.Inner_CachePool plan = init(graph, "minecraft:wooden_axe", tableHeld, log, extra);
+            AiCraftPlanner.CraftPlan plan = init(graph, "minecraft:wooden_axe", tableHeld, log, extra);
             if (plan.complete()
                && !plan.steps()
                   .stream()
@@ -401,7 +401,7 @@ public final class AiMiningPreparation {
                   )) {
                long consumed = 0L;
 
-               for (AiCraftPlanner.Inner_TaskQueue step : plan.steps()) {
+               for (AiCraftPlanner.CraftStep step : plan.steps()) {
                   for (List<String> slot : step.recipe().inputs()) {
                      if (slot.stream().anyMatch(goalLogs::contains)) {
                         consumed += step.crafts();
@@ -502,7 +502,7 @@ public final class AiMiningPreparation {
             }
          }
 
-         AiCraftPlanner.Inner_StreamUtil graph = AiCraft.init_g_StreamUtil();
+         AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
          boolean tableHeld = AiCraft.load() || AiCraft.init_I("minecraft:crafting_table") > 0;
          if (!AiCraft.load() && AiCraft.init_BlockPos() == null) {
             return null;
@@ -760,15 +760,15 @@ public final class AiMiningPreparation {
       return true;
    }
 
-   static AiCraftPlanner.Inner_CachePool init(final AiCraftPlanner.Inner_StreamUtil graph, final String tool, final boolean tableHeld, final String log, final int extraLogs) {
+   static AiCraftPlanner.CraftPlan init(final AiCraftPlanner.RecipeGraph graph, final String tool, final boolean tableHeld, final String log, final int extraLogs) {
       String root = "autism:prepared_mining_tool";
       return AiCraftPlanner.init(
-         new AiCraftPlanner.Inner_StreamUtil() {
+         new AiCraftPlanner.RecipeGraph() {
             @Override
-            public List<AiCraftPlanner.Inner_BufferHelper> init_List(String id) {
+            public List<AiCraftPlanner.RecipeSpec> init_List(String id) {
                return id.equals("autism:prepared_mining_tool")
                   ? List.of(
-                     new AiCraftPlanner.Inner_BufferHelper(
+                     new AiCraftPlanner.RecipeSpec(
                         "autism:prepared_mining_tool",
                         "autism:prepared_mining_tool",
                         1,
@@ -804,6 +804,6 @@ public final class AiMiningPreparation {
       );
    }
 
-   record Inner_DataUtil(AiCraftPlanner.Inner_CachePool plan, int extraLogs, int consumedGoalLogs, int remainingAfterCraft, double savingTicks) {
+   record Inner_DataUtil(AiCraftPlanner.CraftPlan plan, int extraLogs, int consumedGoalLogs, int remainingAfterCraft, double savingTicks) {
    }
 }

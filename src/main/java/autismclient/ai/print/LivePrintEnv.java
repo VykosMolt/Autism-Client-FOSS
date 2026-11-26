@@ -313,12 +313,12 @@ public final class LivePrintEnv implements PrintEnv {
    }
 
    @Override
-   public AiPhysics.Inner_StreamUtil init_NodeWalker_StreamU() {
-      return AiPhysics.Inner_StreamUtil.of(this.init_LocalPlayer());
+   public AiPhysics.MotionState init_NodeWalker_StreamU() {
+      return AiPhysics.MotionState.of(this.init_LocalPlayer());
    }
 
    @Override
-   public AiPhysics.Inner_CachePool init_NodeWalker_CachePo() {
+   public AiPhysics.PhysicsWorld init_NodeWalker_CachePo() {
       return AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(this.init_Minecraft.level, this.init_LocalPlayer());
    }
 
@@ -344,19 +344,19 @@ public final class LivePrintEnv implements PrintEnv {
 
    @Override
    public Vec3 init_Vec3() {
-      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
       return wire.init_Vec3() != null ? wire.init_Vec3() : this.init_LocalPlayer().position();
    }
 
    @Override
    public float write_F() {
-      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
       return wire.init_Z() && Float.isFinite(wire.read()) ? wire.read() : this.init_LocalPlayer().getYRot();
    }
 
    @Override
    public float update_F() {
-      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
       return wire.init_Z() && Float.isFinite(wire.write()) ? wire.write() : this.init_LocalPlayer().getXRot();
    }
 

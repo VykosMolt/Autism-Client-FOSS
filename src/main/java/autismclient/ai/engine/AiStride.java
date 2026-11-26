@@ -24,13 +24,13 @@ final class AiStride {
       return (long)var0 << 32 ^ var1 & 4294967295L;
    }
 
-   static boolean putAt(AiPhysics.Inner_StreamUtil var0, LongPredicate var1, AiPhysics.Inner_CachePool var2) {
-      AiPhysics.Inner_StreamUtil var3 = var0;
+   static boolean putAt(AiPhysics.MotionState var0, LongPredicate var1, AiPhysics.PhysicsWorld var2) {
+      AiPhysics.MotionState var3 = var0;
       double var4 = var0.y();
-      AiPhysics.Inner_DataUtil var6 = new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, false, 0.0F);
+      AiPhysics.MoveInput var6 = new AiPhysics.MoveInput(0.0, 0.0, false, false, false, 0.0F);
 
       for (int var7 = 0; var7 < 8; var7++) {
-         AiPhysics.Inner_StreamUtil var8 = AiPhysics.putAt(var3, var6, var2);
+         AiPhysics.MotionState var8 = AiPhysics.putAt(var3, var6, var2);
          if (AiPhysics.putAt_Z(var2, var3, var8)) {
             return false;
          }
@@ -49,13 +49,13 @@ final class AiStride {
    }
 
    static boolean putAt_Z_TokenCore_TableCac_2(
-      AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_DataUtil var1, double var2, LongPredicate var4, AiPhysics.Inner_CachePool var5
+      AiPhysics.MotionState var0, AiPhysics.MoveInput var1, double var2, LongPredicate var4, AiPhysics.PhysicsWorld var5
    ) {
-      AiPhysics.Inner_StreamUtil var6 = var0;
-      AiPhysics.Inner_DataUtil var7 = var1.withJump(false);
+      AiPhysics.MotionState var6 = var0;
+      AiPhysics.MoveInput var7 = var1.withJump(false);
 
       for (int var8 = 0; var8 < 8; var8++) {
-         AiPhysics.Inner_StreamUtil var9 = AiPhysics.putAt(var6, var7, var5);
+         AiPhysics.MotionState var9 = AiPhysics.putAt(var6, var7, var5);
          if (AiPhysics.putAt_Z(var5, var6, var9)) {
             return false;
          }
@@ -74,11 +74,11 @@ final class AiStride {
    }
 
    static boolean putAt_Z_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var0,
+      AiPhysics.MotionState var0,
       double var1,
       LongPredicate var3,
-      AiPhysics.Inner_CachePool var4,
-      Function<AiPhysics.Inner_StreamUtil, AiPhysics.Inner_DataUtil> var5
+      AiPhysics.PhysicsWorld var4,
+      Function<AiPhysics.MotionState, AiPhysics.MoveInput> var5
    ) {
       if (!var0.onGround()) {
          return false;
@@ -88,13 +88,13 @@ final class AiStride {
       int var8 = 0;
 
       while (var8 < 8) {
-         AiPhysics.Inner_StreamUtil var9 = AiPhysics.putAt(var0, AiPhysics.Inner_DataUtil.NONE, var4);
+         AiPhysics.MotionState var9 = AiPhysics.putAt(var0, AiPhysics.MoveInput.NONE, var4);
          if (AiGroundContinuity.putAt(var4, var0, var9, var6) && !AiPhysics.putAt_Z(var4, var0, var9)) {
             if (var9.onGround()) {
                var6 = var9.y();
             }
 
-            AiPhysics.Inner_DataUtil var10 = (AiPhysics.Inner_DataUtil)var5.apply(var9);
+            AiPhysics.MoveInput var10 = (AiPhysics.MoveInput)var5.apply(var9);
             if (putAt_I_TokenCore_TableCac(var9, var10, 0, var1, var3, var4) <= 0 && putAt_I_TokenCore_TableCac(var9, var10, 1, var1, var3, var4) <= 0) {
                var0 = var9;
                var8++;
@@ -110,14 +110,14 @@ final class AiStride {
       return false;
    }
 
-   static AiStride.Inner_TableCache putAt(AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_DataUtil var1, boolean var2, AiPhysics.Inner_CachePool var3) {
-      AiPhysics.Inner_StreamUtil var4 = var0;
+   static AiStride.Inner_TableCache putAt(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, boolean var2, AiPhysics.PhysicsWorld var3) {
+      AiPhysics.MotionState var4 = var0;
       boolean var5 = false;
       boolean var6 = false;
       boolean var7 = !var0.onGround();
 
       for (int var8 = 1; var8 <= 30; var8++) {
-         AiPhysics.Inner_StreamUtil var9 = AiPhysics.putAt(var4, var1.withJump(var2 && var8 == 1), var3);
+         AiPhysics.MotionState var9 = AiPhysics.putAt(var4, var1.withJump(var2 && var8 == 1), var3);
          if (AiPhysics.putAt_Z(var3, var4, var9)) {
             return new AiStride.Inner_TableCache(null, var8, var5, var6);
          }
@@ -135,9 +135,9 @@ final class AiStride {
       return new AiStride.Inner_TableCache(null, 30, var5, var6);
    }
 
-   static AiStride.Inner_TableCache putAt(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_DataUtil var2) {
+   static AiStride.Inner_TableCache putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2) {
       if (var1.jumpDelay() <= 1 && var1.onGround()) {
-         AiPhysics.Inner_StreamUtil var3 = AiPhysics.putAt(var1, var2.withJump(true), var0);
+         AiPhysics.MotionState var3 = AiPhysics.putAt(var1, var2.withJump(true), var0);
          if (var3.verticalCollision() && !var3.onGround() && !var3.horizontalCollision() && !AiPhysics.fill(var0, var1, var3)) {
             AiStride.Inner_TableCache var4 = putAt(var1, var2, true, var0);
             return var4.down()
@@ -158,13 +158,13 @@ final class AiStride {
    }
 
    static boolean putAt_Z_TokenCore_TableCac_3(
-      AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_DataUtil var1, float var2, AiStride.Inner_TableCache var3, AiPhysics.Inner_CachePool var4
+      AiPhysics.MotionState var0, AiPhysics.MoveInput var1, float var2, AiStride.Inner_TableCache var3, AiPhysics.PhysicsWorld var4
    ) {
       if (!var3.down()) {
          return false;
       }
 
-      AiPhysics.Inner_StreamUtil var5 = var0;
+      AiPhysics.MotionState var5 = var0;
 
       for (int var6 = 0; var6 < var3.ticks(); var6++) {
          var5 = AiPhysics.putAt(var5, var1.withJump(false), var4);
@@ -179,21 +179,21 @@ final class AiStride {
    }
 
    static int putAt_I_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_DataUtil var1, int var2, double var3, LongPredicate var5, AiPhysics.Inner_CachePool var6
+      AiPhysics.MotionState var0, AiPhysics.MoveInput var1, int var2, double var3, LongPredicate var5, AiPhysics.PhysicsWorld var6
    ) {
       return putAt_UiCore_TaskState_TokenCore_TableCac(var0, var1, var2, var3, var5, var6).ticks();
    }
 
    static AiStride.Inner_StreamUtil putAt_UiCore_TaskState_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_DataUtil var1, int var2, double var3, LongPredicate var5, AiPhysics.Inner_CachePool var6
+      AiPhysics.MotionState var0, AiPhysics.MoveInput var1, int var2, double var3, LongPredicate var5, AiPhysics.PhysicsWorld var6
    ) {
-      AiPhysics.Inner_StreamUtil var7 = var0;
+      AiPhysics.MotionState var7 = var0;
       boolean var8 = false;
       boolean var9 = false;
 
       for (int var10 = 1; var10 <= 30; var10++) {
          boolean var11 = !var8 && var10 > var2 && var7.onGround();
-         AiPhysics.Inner_StreamUtil var12 = AiPhysics.putAt(var7, var1.withJump(var11), var6);
+         AiPhysics.MotionState var12 = AiPhysics.putAt(var7, var1.withJump(var11), var6);
          if (AiPhysics.putAt_Z(var6, var7, var12)) {
             return new AiStride.Inner_StreamUtil(-2, var9);
          }
@@ -219,23 +219,23 @@ final class AiStride {
       return var0 >= 0 && (var1 < 0 || var0 <= var1);
    }
 
-   static AiPhysics.Inner_DataUtil putAt_TokenCore_CacheHel_TokenCore_TaskStat(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, BlockPos var2, double var3, float var5, boolean var6
+   static AiPhysics.MoveInput putAt_TokenCore_CacheHel_TokenCore_TaskStat(
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5, boolean var6
    ) {
       double var7 = Math.hypot(var2.getX() + 0.5 - var1.x(), var2.getZ() + 0.5 - var1.z());
       if (AiJumpSolver.putAt(var1) && var1.pose() == 0 && !(var7 > 2.75) && !(var3 - var1.y() > 1.125) && !(var1.y() > var3 + 0.02)) {
          float var9 = AiPhysics.putAt_F_D(var1.x(), var1.z(), var2.getX() + 0.5, var2.getZ() + 0.5);
-         AiPhysics.Inner_DataUtil var10 = null;
+         AiPhysics.MoveInput var10 = null;
          int var11 = 10;
 
          for (float var15 : new float[]{var5, var9, var9 - 15.0F, var9 + 15.0F, Math.round(var9 / 90.0F) * 90.0F}) {
             if (!(Math.abs(Mth.wrapDegrees(var15 - var9)) > 55.0F)) {
                for (boolean var19 : new boolean[]{var6, false}) {
-                  AiPhysics.Inner_DataUtil var20 = AiPhysics.Inner_DataUtil.run(var15, var19);
-                  AiPhysics.Inner_StreamUtil var21 = var1;
+                  AiPhysics.MoveInput var20 = AiPhysics.MoveInput.run(var15, var19);
+                  AiPhysics.MotionState var21 = var1;
 
                   for (int var22 = 1; var22 < var11; var22++) {
-                     AiPhysics.Inner_StreamUtil var23 = AiPhysics.putAt(var21, var20, var0);
+                     AiPhysics.MotionState var23 = AiPhysics.putAt(var21, var20, var0);
                      if (!var23.onGround()
                         || var23.y() < var21.y() - 0.02
                         || var23.y() > var3 + 0.02
@@ -268,13 +268,13 @@ final class AiStride {
    }
 
    static AiStride.Inner_JsonCache putAt_UiCore_JsonCache_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var0, BlockPos var1, double var2, LongPredicate var4, AiPhysics.Inner_CachePool var5
+      AiPhysics.MotionState var0, BlockPos var1, double var2, LongPredicate var4, AiPhysics.PhysicsWorld var5
    ) {
       return putAt_UiCore_JsonCache_TokenCore_TableCac(var0, var1, var2, var4, var5, false);
    }
 
    static AiStride.Inner_JsonCache putAt_UiCore_JsonCache_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var0, BlockPos var1, double var2, LongPredicate var4, AiPhysics.Inner_CachePool var5, boolean var6
+      AiPhysics.MotionState var0, BlockPos var1, double var2, LongPredicate var4, AiPhysics.PhysicsWorld var5, boolean var6
    ) {
       if (var0.onGround() && var0.pose() == 0 && var0.jumpDelay() <= 1 && !(var2 - var0.y() <= 0.6) && !(var2 - var0.y() > 1.25)) {
          double var7 = var1.getX() + 0.5 - var0.x();
@@ -286,13 +286,13 @@ final class AiStride {
             AiStride.Inner_JsonCache var16 = null;
 
             for (int var20 : putAt_IArr) {
-               AiPhysics.Inner_DataUtil var21 = AiPhysics.Inner_DataUtil.run(var15 + var20, true);
+               AiPhysics.MoveInput var21 = AiPhysics.MoveInput.run(var15 + var20, true);
 
                for (int var22 = 0; var22 < 3; var22++) {
                   AiStride.Inner_JsonCache var23 = new AiStride.Inner_JsonCache(null, var21, var22 == 0, var22 == 2 ? 2 : 0, 0, 0.0);
                   AiStride.Inner_TableCache var24 = putAt(var0, var23, 0, var2, var4, var5, var6);
                   if (var24 != null) {
-                     AiPhysics.Inner_StreamUtil var25 = var24.at();
+                     AiPhysics.MotionState var25 = var24.at();
                      double var26 = (var25.vx() * var7 + var25.vz() * var9) / var13;
                      if (var16 == null || var24.ticks() < var16.ticks() || var24.ticks() == var16.ticks() && var26 > var16.exitSpeed() + 0.015) {
                         var16 = new AiStride.Inner_JsonCache(null, var21, var23.boost(), var23.coast(), var24.ticks(), var26, var6);
@@ -314,13 +314,13 @@ final class AiStride {
       }
    }
 
-   static AiStride.Inner_JsonCache fill(AiPhysics.Inner_StreamUtil var0, BlockPos var1, double var2, LongPredicate var4, AiPhysics.Inner_CachePool var5) {
+   static AiStride.Inner_JsonCache fill(AiPhysics.MotionState var0, BlockPos var1, double var2, LongPredicate var4, AiPhysics.PhysicsWorld var5) {
       if (!(var0.speed() < 0.06) && var0.onGround() && var0.pose() == 0) {
          float var6 = AiPhysics.putAt_F_D(0.0, 0.0, var0.vx(), var0.vz());
 
          for (float var10 : new float[]{var6, var6 - 25.0F, var6 + 25.0F}) {
-            AiPhysics.Inner_DataUtil var11 = new AiPhysics.Inner_DataUtil(-1.0, 0.0, false, false, false, var10);
-            AiPhysics.Inner_StreamUtil var12 = AiPhysics.putAt(var0, var11, var5);
+            AiPhysics.MoveInput var11 = new AiPhysics.MoveInput(-1.0, 0.0, false, false, false, var10);
+            AiPhysics.MotionState var12 = AiPhysics.putAt(var0, var11, var5);
             if (var12.onGround()
                && !(Math.abs(var12.y() - var0.y()) > 0.02)
                && !var12.horizontalCollision()
@@ -341,16 +341,16 @@ final class AiStride {
    }
 
    static AiStride.Inner_TableCache putAt_UiCore_TableCache_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var0, AiStride.Inner_JsonCache var1, int var2, double var3, LongPredicate var5, AiPhysics.Inner_CachePool var6
+      AiPhysics.MotionState var0, AiStride.Inner_JsonCache var1, int var2, double var3, LongPredicate var5, AiPhysics.PhysicsWorld var6
    ) {
       return putAt(var0, var1, var2, var3, var5, var6, false);
    }
 
    static AiStride.Inner_TableCache putAt(
-      AiPhysics.Inner_StreamUtil var0, AiStride.Inner_JsonCache var1, int var2, double var3, LongPredicate var5, AiPhysics.Inner_CachePool var6, boolean var7
+      AiPhysics.MotionState var0, AiStride.Inner_JsonCache var1, int var2, double var3, LongPredicate var5, AiPhysics.PhysicsWorld var6, boolean var7
    ) {
       for (int var8 = var2; var8 < 14; var8++) {
-         AiPhysics.Inner_StreamUtil var9 = AiPhysics.putAt(var0, var1.input(var8), var6);
+         AiPhysics.MotionState var9 = AiPhysics.putAt(var0, var1.input(var8), var6);
          if (var9.horizontalCollision() && !var7 || AiPhysics.fill(var6, var0, var9) || AiJumpSolver.putAt(var6, var9)) {
             return null;
          }
@@ -370,15 +370,15 @@ final class AiStride {
    }
 
    static AiStride.Inner_DataUtil putAt(
-      AiPhysics.Inner_StreamUtil var0,
-      AiPhysics.Inner_DataUtil var1,
-      AiPhysics.Inner_DataUtil var2,
-      AiPhysics.Inner_DataUtil var3,
+      AiPhysics.MotionState var0,
+      AiPhysics.MoveInput var1,
+      AiPhysics.MoveInput var2,
+      AiPhysics.MoveInput var3,
       LongPredicate var4,
       boolean var5,
       double var6,
       double var8,
-      AiPhysics.Inner_CachePool var10
+      AiPhysics.PhysicsWorld var10
    ) {
       AiStride.Inner_DataUtil var11 = null;
       double var12 = 1.7976931348623157E308;
@@ -386,7 +386,7 @@ final class AiStride {
       double var15 = 1.7976931348623157E308;
 
       for (AiStride.Inner_DataUtil var20 : AiStride.Inner_DataUtil.values()) {
-         AiPhysics.Inner_DataUtil var21 = var20 == AiStride.Inner_DataUtil.GO
+         AiPhysics.MoveInput var21 = var20 == AiStride.Inner_DataUtil.GO
             ? var1
             : (var20 == AiStride.Inner_DataUtil.NONE ? var2 : var3);
          AiStride.Inner_TableCache var22 = putAt(var0, var21, false, var10);
@@ -420,13 +420,13 @@ final class AiStride {
    }
 
    record Inner_JsonCache(
-      AiPhysics.Inner_DataUtil setup, AiPhysics.Inner_DataUtil drive, boolean boost, int coast, int ticks, double exitSpeed, boolean touching
+      AiPhysics.MoveInput setup, AiPhysics.MoveInput drive, boolean boost, int coast, int ticks, double exitSpeed, boolean touching
    ) {
-      Inner_JsonCache(AiPhysics.Inner_DataUtil var1, AiPhysics.Inner_DataUtil var2, boolean var3, int var4, int var5, double var6) {
+      Inner_JsonCache(AiPhysics.MoveInput var1, AiPhysics.MoveInput var2, boolean var3, int var4, int var5, double var6) {
          this(var1, var2, var3, var4, var5, var6, false);
       }
 
-      AiPhysics.Inner_DataUtil input(int var1) {
+      AiPhysics.MoveInput input(int var1) {
          if (this.setup != null) {
             if (var1 == 0) {
                return this.setup;
@@ -436,14 +436,14 @@ final class AiStride {
          }
 
          if (var1 == 0) {
-            return new AiPhysics.Inner_DataUtil(this.drive.forward(), this.drive.strafe(), true, this.boost, false, this.drive.yaw());
+            return new AiPhysics.MoveInput(this.drive.forward(), this.drive.strafe(), true, this.boost, false, this.drive.yaw());
          } else {
-            return var1 <= this.coast ? AiPhysics.Inner_DataUtil.NONE.withYaw(this.drive.yaw()) : this.drive;
+            return var1 <= this.coast ? AiPhysics.MoveInput.NONE.withYaw(this.drive.yaw()) : this.drive;
          }
       }
    }
 
-   record Inner_TableCache(AiPhysics.Inner_StreamUtil at, int ticks, boolean wall, boolean ceiling) {
+   record Inner_TableCache(AiPhysics.MotionState at, int ticks, boolean wall, boolean ceiling) {
       boolean down() {
          return this.at != null;
       }

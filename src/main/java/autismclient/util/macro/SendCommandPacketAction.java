@@ -10,7 +10,7 @@ public class SendCommandPacketAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.getConnection() != null) {
-         MacroTemplateResolver.Inner_CachePool resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.command, mc);
+         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.command, mc);
          if (resolution.init_Z()) {
             String normalized = resolution.init_Str().trim();
             if (this.stripLeadingSlash && normalized.startsWith("/")) {

@@ -136,7 +136,7 @@ public final class StorageEspCatalog {
                   for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
                      LevelChunk chunk = chunks.getChunk(playerChunkX + dx, playerChunkZ + dz, ChunkStatus.FULL, false);
                      if (chunk != null) {
-                        for (EspChunkWorker.Inner_CachePool entry : EspChunkWorker.write
+                        for (EspChunkWorker.EspBox entry : EspChunkWorker.write
                            .init(chunk, gameTime, stamp, (scanned, out) -> init(level, scanned, blockTargets, colors, hideMask, out))) {
                            Vec3 trace = entry.init_Vec3();
                            if (!(init(playerPos, trace.x, trace.y, trace.z) > maxDistSq)) {
@@ -177,7 +177,7 @@ public final class StorageEspCatalog {
    }
 
    private static void init(
-      ClientLevel level, LevelChunk chunk, List<StorageEspCatalog.Inner_BufferHelper> blockTargets, StorageEspCatalog.Inner_StreamUtil colors, long hideMask, List<EspChunkWorker.Inner_CachePool> out
+      ClientLevel level, LevelChunk chunk, List<StorageEspCatalog.Inner_BufferHelper> blockTargets, StorageEspCatalog.Inner_StreamUtil colors, long hideMask, List<EspChunkWorker.EspBox> out
    ) {
       Map<Integer, Long> sectionStructures = hideMask == 0L ? Map.of() : new HashMap<>();
 
@@ -185,7 +185,7 @@ public final class StorageEspCatalog {
          BlockPos pos = entry.getKey();
          BlockEntity be = entry.getValue();
          if (pos != null && be != null && init(be, blockTargets) != null && !StructureStorageFilter.init_Z_LevelChunk(chunk, pos, hideMask, sectionStructures)) {
-            out.add(new EspChunkWorker.Inner_CachePool(init(level, pos), new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), init(colors, be)));
+            out.add(new EspChunkWorker.EspBox(init(level, pos), new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), init(colors, be)));
          }
       }
    }

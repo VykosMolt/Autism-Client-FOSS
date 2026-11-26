@@ -87,11 +87,11 @@ final class AiCraft {
                long read_J;
                long write_J;
                long update;
-               AiCraftPlanner.Inner_CachePool init_g_CachePool;
+               AiCraftPlanner.CraftPlan init_g_CachePool;
                int init_I;
                int load_I;
                AiStationPlacer init_cn;
-               CompletableFuture<autismclient.util.AutoCraftingEngine.Inner_CachePool> init_CompletableFuture;
+               CompletableFuture<autismclient.util.AutoCraftingEngine.CraftResult> init_CompletableFuture;
                volatile Thread init_Thread;
                AiOperation init_AiOperation;
                AiOperation load_AiOperation;
@@ -182,7 +182,7 @@ final class AiCraft {
                               return this.init(this.init_Str);
                            }
 
-                           autismclient.util.AutoCraftingEngine.Inner_CachePool result = this.init_J_CachePool();
+                           autismclient.util.AutoCraftingEngine.CraftResult result = this.init_J_CachePool();
                            if (result == null) {
                               return this.init(AiOperation.Status.UNCERTAIN, "Craft worker result is unknown; reobserve inventory before retrying");
                            }
@@ -221,7 +221,7 @@ final class AiCraft {
                               return this.init(AiOperation.Status.UNCERTAIN, result.init_Str);
                            }
 
-                           if (result.init_J_CachePool_DataUt == autismclient.util.AutoCraftingEngine.Inner_CachePool.Inner_DataUtil.INVENTORY_FULL) {
+                           if (result.init_J_CachePool_DataUt == autismclient.util.AutoCraftingEngine.CraftResult.FailureReason.INVENTORY_FULL) {
                               AiOperation.Result rejection = AiOperation.Result.failed(
                                  AiFailure.INVENTORY_FULL,
                                  result.init_Str,
@@ -274,7 +274,7 @@ final class AiCraft {
                               return this.init(legResult.message());
                            }
 
-                           AiCraftPlanner.Inner_TaskQueue step = this.init_g_CachePool.steps().get(this.init_I);
+                           AiCraftPlanner.CraftStep step = this.init_g_CachePool.steps().get(this.init_I);
                            this.init_AiOperation = null;
                            this.init_List
                               .add(
@@ -313,7 +313,7 @@ final class AiCraft {
                               if (!this.init_g_CachePool.complete()) {
                                  StringBuilder inputs = new StringBuilder();
 
-                                 for (AiCraftPlanner.Inner_BufferHelper recipe : AiCraft.init_g_StreamUtil().init_List(outputId)) {
+                                 for (AiCraftPlanner.RecipeSpec recipe : AiCraft.init_g_StreamUtil().init_List(outputId)) {
                                     inputs.append(recipe.key()).append(recipe.inputs()).append(' ');
                                  }
 
@@ -327,7 +327,7 @@ final class AiCraft {
                               }
 
                               if (this.init_g_CachePool.requiresTable() && !AiCraft.load() && AiCraft.init_I("minecraft:crafting_table") <= 0) {
-                                 AiCraftPlanner.Inner_CachePool table = AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), "minecraft:crafting_table", 1);
+                                 AiCraftPlanner.CraftPlan table = AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), "minecraft:crafting_table", 1);
                                  if (table.complete() && !table.requiresTable() && !table.steps().isEmpty()) {
                                     this.init_g_CachePool = table;
                                     return this.init("Crafting a crafting table first (" + outputId + " needs a 3x3 grid)");
@@ -357,7 +357,7 @@ final class AiCraft {
                               }
                            }
 
-                           AiCraftPlanner.Inner_TaskQueue step = this.init_g_CachePool.steps().get(this.init_I);
+                           AiCraftPlanner.CraftStep step = this.init_g_CachePool.steps().get(this.init_I);
                            this.write_J = System.nanoTime();
                            if (step.recipe().stonecutting()) {
                               this.init_AiOperation = AiCraft.init(step, (int)Math.max(5L, (this.init_J - System.nanoTime()) / 1000000000L));
@@ -372,7 +372,7 @@ final class AiCraft {
                                  + "/"
                                  + this.init_g_CachePool.steps().size()
                                  + ")";
-                              CompletableFuture<autismclient.util.AutoCraftingEngine.Inner_CachePool> future = new CompletableFuture<>();
+                              CompletableFuture<autismclient.util.AutoCraftingEngine.CraftResult> future = new CompletableFuture<>();
                               this.init_CompletableFuture = future;
                               String recipeKey = step.recipe().key();
                               int produced = step.produced();
@@ -382,7 +382,7 @@ final class AiCraft {
 
                                  try {
                                     if (this.init_Z) {
-                                       future.complete(autismclient.util.AutoCraftingEngine.Inner_CachePool.init("Craft cancelled"));
+                                       future.complete(autismclient.util.AutoCraftingEngine.CraftResult.init("Craft cancelled"));
                                        return;
                                     }
 
@@ -481,7 +481,7 @@ final class AiCraft {
                   }
                }
 
-               autismclient.util.AutoCraftingEngine.Inner_CachePool init_J_CachePool() {
+               autismclient.util.AutoCraftingEngine.CraftResult init_J_CachePool() {
                   try {
                      return this.init_CompletableFuture.join();
                   } catch (RuntimeException e) {
@@ -525,7 +525,7 @@ final class AiCraft {
                   if (this.init_g_CachePool != null) {
                      JsonArray steps = new JsonArray();
 
-                     for (AiCraftPlanner.Inner_TaskQueue step : this.init_g_CachePool.steps()) {
+                     for (AiCraftPlanner.CraftStep step : this.init_g_CachePool.steps()) {
                         steps.add(
                            AiJson.init_JsonObject_ObjArr(
                               "recipe",
@@ -637,7 +637,7 @@ final class AiCraft {
                         worker.interrupt();
                      }
 
-                     CompletableFuture<autismclient.util.AutoCraftingEngine.Inner_CachePool> pending = this.init_CompletableFuture;
+                     CompletableFuture<autismclient.util.AutoCraftingEngine.CraftResult> pending = this.init_CompletableFuture;
                      this.init_CompletableFuture = null;
                      if (pending != null && !pending.isDone()) {
                         pending.cancel(true);
@@ -669,7 +669,7 @@ final class AiCraft {
       }
    }
 
-   private static AiOperation init(AiCraftPlanner.Inner_TaskQueue step, final int timeoutSeconds) {
+   private static AiOperation init(AiCraftPlanner.CraftStep step, final int timeoutSeconds) {
       final Minecraft mc = Minecraft.getInstance();
       final String outputId = step.recipe().output();
       final List<String> accepted = step.recipe().inputs().isEmpty() ? List.of() : step.recipe().inputs().get(0);
@@ -921,14 +921,14 @@ final class AiCraft {
       };
    }
 
-   static AiCraftPlanner.Inner_StreamUtil init_g_StreamUtil() {
+   static AiCraftPlanner.RecipeGraph init_g_StreamUtil() {
       Minecraft mc = Minecraft.getInstance();
-      final Map<String, List<AiCraftPlanner.Inner_BufferHelper>> byOutput = new HashMap<>();
+      final Map<String, List<AiCraftPlanner.RecipeSpec>> byOutput = new HashMap<>();
 
-      for (autismclient.util.AutoCraftingEngine.Inner_EventBus plan : autismclient.util.AutoCraftingEngine.load_List(mc)) {
+      for (autismclient.util.AutoCraftingEngine.ResolvedRecipe plan : autismclient.util.AutoCraftingEngine.load_List(mc)) {
          List<List<String>> inputs = new ArrayList<>(plan.init_List().size());
 
-         for (autismclient.util.AutoCraftingEngine.Inner_UiHelper ingredient : plan.init_List()) {
+         for (autismclient.util.AutoCraftingEngine.IngredientSlot ingredient : plan.init_List()) {
             List<String> accepts = new ArrayList<>(ingredient.init().size());
 
             for (Item item : ingredient.init()) {
@@ -940,10 +940,10 @@ final class AiCraft {
 
          String outputId = BuiltInRegistries.ITEM.getKey(plan.init_Item()).toString();
          byOutput.computeIfAbsent(outputId, id -> new ArrayList<>())
-            .add(new AiCraftPlanner.Inner_BufferHelper(plan.init_Str(), outputId, plan.init_I(), plan.init_Z(), inputs));
+            .add(new AiCraftPlanner.RecipeSpec(plan.init_Str(), outputId, plan.init_I(), plan.init_Z(), inputs));
       }
 
-      for (autismclient.util.AutoCraftingEngine.Inner_FileCache plan : autismclient.util.AutoCraftingEngine.write(mc)) {
+      for (autismclient.util.AutoCraftingEngine.StationRecipe plan : autismclient.util.AutoCraftingEngine.write(mc)) {
          List<String> accepts = new ArrayList<>(plan.init_List().size());
 
          for (Item item : plan.init_List()) {
@@ -952,13 +952,13 @@ final class AiCraft {
 
          String outputId = BuiltInRegistries.ITEM.getKey(plan.init_Item()).toString();
          byOutput.computeIfAbsent(outputId, id -> new ArrayList<>())
-            .add(new AiCraftPlanner.Inner_BufferHelper(plan.init_Str(), outputId, plan.init_I(), false, List.of(List.copyOf(accepts)), plan.load()));
+            .add(new AiCraftPlanner.RecipeSpec(plan.init_Str(), outputId, plan.init_I(), false, List.of(List.copyOf(accepts)), plan.load()));
       }
 
       final Map<String, Integer> counts = new HashMap<>();
-      return AiObtain.init(new AiCraftPlanner.Inner_StreamUtil() {
+      return AiObtain.init(new AiCraftPlanner.RecipeGraph() {
          @Override
-         public List<AiCraftPlanner.Inner_BufferHelper> init_List(String itemId) {
+         public List<AiCraftPlanner.RecipeSpec> init_List(String itemId) {
             return byOutput.getOrDefault(itemId, List.of());
          }
 
@@ -1170,14 +1170,14 @@ final class AiCraft {
    }
 
    private static Item init_Item(String spec) {
-      AiItems.Inner_DataUtil target = AiItems.load_af_DataUtil(spec);
+      AiItems.ItemSpec target = AiItems.load_af_DataUtil(spec);
       if (target.items().size() == 1) {
          return target.items().iterator().next();
       }
 
       Minecraft mc = Minecraft.getInstance();
 
-      for (autismclient.util.AutoCraftingEngine.Inner_TaskQueue option : autismclient.util.AutoCraftingEngine.init_List(mc)) {
+      for (autismclient.util.AutoCraftingEngine.CraftOption option : autismclient.util.AutoCraftingEngine.init_List(mc)) {
          if (option.read_Z && target.items().contains(option.init_ItemStack.getItem())) {
             return option.init_ItemStack.getItem();
          }

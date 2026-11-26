@@ -100,7 +100,7 @@ public final class RemoteViewCommand extends Command {
    private static CompletableFuture<Suggestions> init(CommandContext<AutismCommandSource> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (TabPlayerListParser.Inner_StreamUtil player : TabPlayerListParser.init(Minecraft.getInstance())) {
+      for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(Minecraft.getInstance())) {
          if (player.init_Str().toLowerCase(Locale.ROOT).startsWith(remaining)) {
             builder.suggest(player.init_Str());
          }

@@ -70,7 +70,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
             autismclient.gui.ui.widgets.OverlayActionButton.init(
                   this.write_I_3(), this.pop(), this.read_I_3(), ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.init_Screen)
                )
-               .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY)
+               .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
          );
       autismclient.b.DataUtil.StreamUtil selected = this.init_DataUtil_StreamUti();
       int gap = 2;
@@ -91,13 +91,13 @@ public final class AddonsScreen extends VirtualScaledScreen {
          this.init_List
             .add(
                autismclient.gui.ui.widgets.OverlayActionButton.init(x, y, copyIdW, ctl, Component.literal("Copy ID"), b -> this.write_V_3())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
             );
          x += copyIdW + gap;
          this.init_List
             .add(
                autismclient.gui.ui.widgets.OverlayActionButton.init(x, y, copyReportW, ctl, Component.literal("Copy Report"), b -> this.update_V_3())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
             );
          x += copyReportW + gap;
          toggle = autismclient.gui.ui.widgets.OverlayActionButton.init(x, y, toggleW, ctl, Component.literal(toggleLabel), b -> this.sync_V_2());
@@ -105,7 +105,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
          this.init_List
             .add(
                autismclient.gui.ui.widgets.OverlayActionButton.init(x, y, modsFolderW, ctl, Component.literal("Mods Folder"), b -> this.flush_V_2())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.PRIMARY)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY)
             );
       } else {
          int halfW = (areaW - gap) / 2;
@@ -116,7 +116,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
          this.init_List
             .add(
                autismclient.gui.ui.widgets.OverlayActionButton.init(btnLeft, row1Y, row1Fits ? copyIdW : halfW, ctl, Component.literal("Copy ID"), b -> this.write_V_3())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
             );
          this.init_List
             .add(
@@ -128,7 +128,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
                      Component.literal("Copy Report"),
                      b -> this.update_V_3()
                   )
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
             );
          toggle = autismclient.gui.ui.widgets.OverlayActionButton.init(btnLeft, row2Y, row2Fits ? toggleW : halfW, ctl, Component.literal(toggleLabel), b -> this.sync_V_2());
          this.init_List
@@ -141,12 +141,12 @@ public final class AddonsScreen extends VirtualScaledScreen {
                      Component.literal("Mods Folder"),
                      b -> this.flush_V_2()
                   )
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.PRIMARY)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY)
             );
       }
 
       toggle.init_ByteReader_ByteReader_StreamU(
-         disabledRestart ? autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.DANGER
+         disabledRestart ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER
       );
       toggle.init_Z = selected != null;
       this.init_List.add(toggle);
@@ -243,7 +243,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
             autismclient.gui.ui.widgets.OverlayActionButton.init(graphics, this.font, button, mx, my);
          }
 
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(graphics, scrollbar, scrollbar.init(mx, my), this.load_Z);
          super.extractRenderState(graphics, mx, my, delta);
       } finally {
@@ -400,7 +400,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
          }
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
       if (scrollbar.init_Z() && scrollbar.init(virtual.x(), virtual.y())) {
          this.load_Z = true;
          this.sync = scrollbar.load(virtual.x(), virtual.y()) ? Math.max(0, (int)Math.round(virtual.y()) - scrollbar.update()) : scrollbar.sync() / 2;
@@ -434,7 +434,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       MouseButtonEvent virtual = init_MouseButtonEvent_MouseButtonEvent(event);
       if (this.load_Z) {
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
          this.write_I = init_I_I(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.flush());
          this.init_CacheEntry.load(this.write_I, scrollbar.flush());
          return true;
@@ -602,7 +602,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
       return "addon v" + addon + " / host v" + report.read_I();
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_I_2(int rows) {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_I_2(int rows) {
       int view = Math.max(1, this.stop() - this.start());
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
          this.load_I_I_2(rows), view, this.size(), this.start(), 6, this.stop() - this.start(), this.write_I

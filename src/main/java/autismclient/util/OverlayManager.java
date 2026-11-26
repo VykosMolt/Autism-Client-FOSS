@@ -25,7 +25,7 @@ public class OverlayManager {
    private final List<AutismOverlay> init_List = new CopyOnWriteArrayList<>();
    private final List<AutismOverlay> load_List = new ArrayList<>();
    private final Map<AutismOverlay, autismclient.gui.ui.widgets.OverlayWindowLayerAdapter> init_Map = new IdentityHashMap<>();
-   private final Map<AutismOverlay, AutismOverlay.Inner_DataUtil> load_Map = new IdentityHashMap<>();
+   private final Map<AutismOverlay, AutismOverlay.RenderLayer> load_Map = new IdentityHashMap<>();
    private final Set<String> init_Set = new HashSet<>();
    private final Set<AutismOverlay> load_Set = Collections.newSetFromMap(new IdentityHashMap<>());
    private boolean init_Z = true;
@@ -118,7 +118,7 @@ public class OverlayManager {
       }
    }
 
-   public void init_V_cX_cX_DataUtil(AutismOverlay overlay, AutismOverlay.Inner_DataUtil scope) {
+   public void init_V_cX_cX_DataUtil(AutismOverlay overlay, AutismOverlay.RenderLayer scope) {
       if (overlay != null) {
          this.sync_V(overlay);
          if (!this.init_List.contains(overlay)) {
@@ -336,23 +336,23 @@ public class OverlayManager {
       return !OverlayScreenController.init_Z() && overlay != null && overlay.sync_Z() && !this.load_Z(overlay) && this.load(overlay, screen);
    }
 
-   private AutismOverlay.Inner_DataUtil init_cX_DataUtil(AutismOverlay overlay) {
+   private AutismOverlay.RenderLayer init_cX_DataUtil(AutismOverlay overlay) {
       Minecraft mc = Minecraft.getInstance();
       Screen screen = mc == null ? null : mc.gui.screen();
-      if (overlay != null && overlay.init_cX_DataUtil() == AutismOverlay.Inner_DataUtil.BACKGROUND_STATUS) {
-         return AutismOverlay.Inner_DataUtil.BACKGROUND_STATUS;
+      if (overlay != null && overlay.init_cX_DataUtil() == AutismOverlay.RenderLayer.BACKGROUND_STATUS) {
+         return AutismOverlay.RenderLayer.BACKGROUND_STATUS;
       } else if (!AutismLiteVariant.enabled() && screen instanceof autismclient.gui.screens.AutismModulesScreen) {
-         return AutismOverlay.Inner_DataUtil.MODULE_MENU;
+         return AutismOverlay.RenderLayer.MODULE_MENU;
       } else if (!(screen instanceof autismclient.gui.screens.AutismOverlaysScreen) && screen != null && !(screen instanceof ChatScreen)) {
-         return AutismOverlay.Inner_DataUtil.CONTAINER_GUI;
+         return AutismOverlay.RenderLayer.CONTAINER_GUI;
       } else {
-         return overlay == null ? AutismOverlay.Inner_DataUtil.HOST_SCREEN : overlay.init_cX_DataUtil();
+         return overlay == null ? AutismOverlay.RenderLayer.HOST_SCREEN : overlay.init_cX_DataUtil();
       }
    }
 
    private boolean load(AutismOverlay overlay, Screen screen) {
-      AutismOverlay.Inner_DataUtil scope = this.load_Map.getOrDefault(overlay, overlay == null ? AutismOverlay.Inner_DataUtil.HOST_SCREEN : overlay.init_cX_DataUtil());
-      if (scope == AutismOverlay.Inner_DataUtil.BACKGROUND_STATUS) {
+      AutismOverlay.RenderLayer scope = this.load_Map.getOrDefault(overlay, overlay == null ? AutismOverlay.RenderLayer.HOST_SCREEN : overlay.init_cX_DataUtil());
+      if (scope == AutismOverlay.RenderLayer.BACKGROUND_STATUS) {
          return true;
       }
 
@@ -432,7 +432,7 @@ public class OverlayManager {
       this.init_Set.clear();
 
       for (AutismOverlay overlay : this.init_List) {
-         if (overlay != null && this.load_Map.getOrDefault(overlay, overlay.init_cX_DataUtil()) != AutismOverlay.Inner_DataUtil.BACKGROUND_STATUS) {
+         if (overlay != null && this.load_Map.getOrDefault(overlay, overlay.init_cX_DataUtil()) != AutismOverlay.RenderLayer.BACKGROUND_STATUS) {
             if (overlay.sync_Z()) {
                if (rememberWindows && overlay.update_Z()) {
                   this.init_V_cX_Z(overlay, true);
@@ -458,7 +458,7 @@ public class OverlayManager {
 
    public boolean read_Z() {
       for (AutismOverlay overlay : this.init_List) {
-         if (overlay != null && overlay.sync_Z() && !this.load_Z(overlay) && !this.flush_Z(overlay) && overlay.init_cX_DataUtil() != AutismOverlay.Inner_DataUtil.BACKGROUND_STATUS) {
+         if (overlay != null && overlay.sync_Z() && !this.load_Z(overlay) && !this.flush_Z(overlay) && overlay.init_cX_DataUtil() != AutismOverlay.RenderLayer.BACKGROUND_STATUS) {
             return true;
          }
       }

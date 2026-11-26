@@ -8,7 +8,7 @@ import net.minecraft.resources.Identifier;
 
 public class ButtonNode extends LayoutNode {
    private String init_Str;
-   private ButtonNode.Inner_StreamUtil init_ByteReader_StreamU;
+   private ButtonNode.Variant init_ByteReader_StreamU;
    private Runnable init_Runnable;
    private float sync_F = 24.0F;
    private float flush = 3.4028235E38F;
@@ -19,7 +19,7 @@ public class ButtonNode extends LayoutNode {
    private Identifier init_Identifier;
    private int write_I = 10;
    private int update_I = 4;
-   private ButtonNode.Inner_DataUtil init_ByteReader_DataUti = ButtonNode.Inner_DataUtil.CENTER;
+   private ButtonNode.TextAlign init_ByteReader_DataUti = ButtonNode.TextAlign.CENTER;
    private l init_l = l.read;
    private boolean write_Z;
    private boolean update_Z;
@@ -32,9 +32,9 @@ public class ButtonNode extends LayoutNode {
       return theme.init_Identifier_l(this.init_l);
    }
 
-   public ButtonNode(String text, ButtonNode.Inner_StreamUtil variant, Runnable onPress) {
+   public ButtonNode(String text, ButtonNode.Variant variant, Runnable onPress) {
       this.init_Str = text == null ? "" : text;
-      this.init_ByteReader_StreamU = variant == null ? ButtonNode.Inner_StreamUtil.SECONDARY : variant;
+      this.init_ByteReader_StreamU = variant == null ? ButtonNode.Variant.SECONDARY : variant;
       this.init_Runnable = onPress;
       this.write = 13.0F;
    }
@@ -49,8 +49,8 @@ public class ButtonNode extends LayoutNode {
       return this;
    }
 
-   public ButtonNode init_ByteReader_ByteReader_StreamU(ButtonNode.Inner_StreamUtil variant) {
-      this.init_ByteReader_StreamU = variant == null ? ButtonNode.Inner_StreamUtil.SECONDARY : variant;
+   public ButtonNode init_ByteReader_ByteReader_StreamU(ButtonNode.Variant variant) {
+      this.init_ByteReader_StreamU = variant == null ? ButtonNode.Variant.SECONDARY : variant;
       return this;
    }
 
@@ -142,8 +142,8 @@ public class ButtonNode extends LayoutNode {
       return this;
    }
 
-   public ButtonNode init_ByteReader_ByteReader_DataUti(ButtonNode.Inner_DataUtil contentAlignment) {
-      this.init_ByteReader_DataUti = contentAlignment == null ? ButtonNode.Inner_DataUtil.CENTER : contentAlignment;
+   public ButtonNode init_ByteReader_ByteReader_DataUti(ButtonNode.TextAlign contentAlignment) {
+      this.init_ByteReader_DataUti = contentAlignment == null ? ButtonNode.TextAlign.CENTER : contentAlignment;
       return this;
    }
 
@@ -244,7 +244,7 @@ public class ButtonNode extends LayoutNode {
       );
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH);
       if (this.update_Z) {
-         float target = this.init_ByteReader_StreamU == ButtonNode.Inner_StreamUtil.SUCCESS ? 1.0F : 0.0F;
+         float target = this.init_ByteReader_StreamU == ButtonNode.Variant.SUCCESS ? 1.0F : 0.0F;
          if (!this.sync_Z) {
             this.open = target;
             this.sync_Z = true;
@@ -274,7 +274,7 @@ public class ButtonNode extends LayoutNode {
       return init_CachePool_DataUtil_ByteReader_StreamU(this.init_ByteReader_StreamU);
    }
 
-   public static autismclient.gui.f.b.CachePool.Inner_DataUtil init_CachePool_DataUtil_ByteReader_StreamU(ButtonNode.Inner_StreamUtil variant) {
+   public static autismclient.gui.f.b.CachePool.Inner_DataUtil init_CachePool_DataUtil_ByteReader_StreamU(ButtonNode.Variant variant) {
       autismclient.gui.f.b.CachePool.Inner_DataUtil var10000;
       switch (variant) {
          case PRIMARY:
@@ -322,12 +322,12 @@ public class ButtonNode extends LayoutNode {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum TextAlign {
       CENTER,
       START;
    }
 
-   public enum Inner_StreamUtil {
+   public enum Variant {
       PRIMARY,
       SECONDARY,
       GHOST,

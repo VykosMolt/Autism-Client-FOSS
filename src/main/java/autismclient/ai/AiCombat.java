@@ -90,10 +90,10 @@ final class AiCombat {
       return holding ? reach - 0.03 : reach * 0.92;
    }
 
-   static AiProjectiles.Inner_StreamUtil init_by_StreamUtil(Minecraft mc) {
-      AiProjectiles.Inner_StreamUtil best = null;
+   static AiProjectiles.IncomingProjectile init_by_StreamUtil(Minecraft mc) {
+      AiProjectiles.IncomingProjectile best = null;
 
-      for (AiProjectiles.Inner_StreamUtil t : AiProjectiles.init(mc)) {
+      for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(mc)) {
          if (AiProjectiles.init(t) && (best == null || t.secondsToClosest() < best.secondsToClosest())) {
             best = t;
          }
@@ -102,10 +102,10 @@ final class AiCombat {
       return best;
    }
 
-   static AiProjectiles.Inner_StreamUtil load(Minecraft mc) {
-      AiProjectiles.Inner_StreamUtil best = null;
+   static AiProjectiles.IncomingProjectile load(Minecraft mc) {
+      AiProjectiles.IncomingProjectile best = null;
 
-      for (AiProjectiles.Inner_StreamUtil shot : AiProjectiles.init(mc)) {
+      for (AiProjectiles.IncomingProjectile shot : AiProjectiles.init(mc)) {
          if (AiProjectiles.init(shot)
             && AiDefense.init(mc, mc.level.getEntity(shot.entityId()))
             && AiDefense.init(mc, init(shot))
@@ -117,14 +117,14 @@ final class AiCombat {
       return best;
    }
 
-   static int init(AiProjectiles.Inner_StreamUtil t) {
+   static int init(AiProjectiles.IncomingProjectile t) {
       return (int)Math.ceil(t.secondsToClosest() * 20.0);
    }
 
    static Vec3 init_Vec3_Minecraft_Vec3(Minecraft mc, Vec3 preferred) {
-      List<AiProjectiles.Inner_StreamUtil> threats = new ArrayList<>();
+      List<AiProjectiles.IncomingProjectile> threats = new ArrayList<>();
 
-      for (AiProjectiles.Inner_StreamUtil shot : AiProjectiles.init(mc)) {
+      for (AiProjectiles.IncomingProjectile shot : AiProjectiles.init(mc)) {
          if (AiProjectiles.init(shot) && AiDefense.init(mc, mc.level.getEntity(shot.entityId())) && AiDefense.init(mc, init(shot))) {
             threats.add(shot);
          }
@@ -136,11 +136,11 @@ final class AiCombat {
          return preferred != null ? preferred : keep;
       }
 
-      threats.sort(Comparator.comparingDouble(AiProjectiles.Inner_StreamUtil::secondsToClosest).thenComparingInt(AiProjectiles.Inner_StreamUtil::entityId));
+      threats.sort(Comparator.comparingDouble(AiProjectiles.IncomingProjectile::secondsToClosest).thenComparingInt(AiProjectiles.IncomingProjectile::entityId));
       int window = Math.max(8, init(threats.getFirst()));
       List<Float> yaws = new ArrayList<>();
 
-      for (AiProjectiles.Inner_StreamUtil shot : threats) {
+      for (AiProjectiles.IncomingProjectile shot : threats) {
          if (init(shot) <= window) {
             yaws.add(init_F_Minecraft(mc, shot.x(), shot.z()));
          }
@@ -155,14 +155,14 @@ final class AiCombat {
       return (float)Math.toDegrees(Math.atan2(-(x - mc.player.getX()), z - mc.player.getZ()));
    }
 
-   static boolean init_Z_Minecraft(Minecraft mc, AiProjectiles.Inner_StreamUtil t, float yaw) {
+   static boolean init_Z_Minecraft(Minecraft mc, AiProjectiles.IncomingProjectile t, float yaw) {
       double dx = t.x() - mc.player.getX();
       double dz = t.z() - mc.player.getZ();
       return dx * dx + dz * dz < 1.0E-4 ? true : Math.abs(Mth.wrapDegrees(init_F_Minecraft(mc, t.x(), t.z()) - yaw)) <= 70.0;
    }
 
-   static boolean init_Z_Minecraft_2(Minecraft mc, List<AiProjectiles.Inner_StreamUtil> ts, float yaw) {
-      for (AiProjectiles.Inner_StreamUtil t : ts) {
+   static boolean init_Z_Minecraft_2(Minecraft mc, List<AiProjectiles.IncomingProjectile> ts, float yaw) {
+      for (AiProjectiles.IncomingProjectile t : ts) {
          if (!init_Z_Minecraft(mc, t, yaw)) {
             return false;
          }
@@ -239,7 +239,7 @@ final class AiCombat {
          boolean init_Z;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
          }
 
          @Override
@@ -254,7 +254,7 @@ final class AiCombat {
 
             boolean hasShield = AiDefense.init_Z(mc);
             Entity shooter = !hasShield ? null : (AiThreats.init_Z() ? AiCombat.init_Entity(mc) : AiThreats.init(mc, 12));
-            AiProjectiles.Inner_StreamUtil coming = hasShield && !AiThreats.init_Z() ? AiCombat.load(mc) : null;
+            AiProjectiles.IncomingProjectile coming = hasShield && !AiThreats.init_Z() ? AiCombat.load(mc) : null;
             if (coming != null) {
                this.init_DataUtil
                   .init_V_Vec3(AiCombat.init_Vec3_Minecraft_Vec3(mc, shooter == null ? null : autismclient.ai.engine.AiAim.load_Vec3_Entity(shooter)));
@@ -487,7 +487,7 @@ final class AiCombat {
       }
    }
 
-   private static AiItems.Inner_DataUtil init() {
+   private static AiItems.ItemSpec init() {
       return AiItems.load_af_DataUtil("minecraft:shield");
    }
 
@@ -543,7 +543,7 @@ final class AiCombat {
          final boolean untilClear = AiJson.init_Z_JsonObject(args, "untilClear", false);
          final int eatBelow = Math.max(0, Math.min(20, AiJson.init_I_JsonObject(args, "eatBelow", 0)));
          final String healWith = AiJson.init_Str_JsonObject(args, "healWith", "");
-         final AiItems.Inner_DataUtil healTarget = healWith.isBlank() ? null : AiItems.load_af_DataUtil(healWith);
+         final AiItems.ItemSpec healTarget = healWith.isBlank() ? null : AiItems.load_af_DataUtil(healWith);
          final AiCombat.Inner_CachePool priority = AiCombat.Inner_CachePool.init(AiJson.init_Str_JsonObject(args, "priority", "nearest"));
          AiService service = AiService.load_cc();
          final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
@@ -626,7 +626,7 @@ final class AiCombat {
             final Map<UUID, Long> init_Map;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
                this.init_DataUtil.init_V_Z(silentAim);
                this.load_F = this.init_F;
                if (useShield && !AiDefense.init_Z(mc)) {
@@ -726,7 +726,7 @@ final class AiCombat {
                   }
 
                   if (!AiThreats.init_Z() && this.canInterruptNow() && autismclient.ai.engine.AiMotionSafety.fill_Z()) {
-                     AiProjectiles.Inner_StreamUtil shot = AiCombat.init_by_StreamUtil(mc);
+                     AiProjectiles.IncomingProjectile shot = AiCombat.init_by_StreamUtil(mc);
                      if (shot != null && AiCombat.init(shot) <= 8 && (!AiDefense.init(mc, mc.level.getEntity(shot.entityId())) || !AiDefense.init(mc, AiCombat.init(shot)))) {
                         this.flush();
                         this.close();
@@ -900,7 +900,7 @@ final class AiCombat {
                         return this.load("Backing out of creeper blast range");
                      } else {
                         if (!AiThreats.init_Z() && AiDefense.init_Z(mc)) {
-                           AiProjectiles.Inner_StreamUtil coming = AiCombat.load(mc);
+                           AiProjectiles.IncomingProjectile coming = AiCombat.load(mc);
                            int in = coming == null ? 2147483647 : AiCombat.init(coming);
                            boolean raised = mc.player.isUsingItem() && mc.player.getUseItem().is(Items.SHIELD);
                            if (coming != null && in <= 8 && (raised || in >= 5)) {
@@ -1037,7 +1037,7 @@ final class AiCombat {
                            this.close();
                            boolean hasShield = AiDefense.init_Z(mc);
                            Entity shooter = hasShield ? (AiThreats.init_Z() ? AiCombat.init_Entity(mc) : AiThreats.init(mc, 12)) : null;
-                           AiProjectiles.Inner_StreamUtil coming = hasShield && !AiThreats.init_Z() ? AiCombat.load(mc) : null;
+                           AiProjectiles.IncomingProjectile coming = hasShield && !AiThreats.init_Z() ? AiCombat.load(mc) : null;
                            if (coming != null) {
                               this.init_DataUtil
                                  .init_V_Vec3(
@@ -1441,7 +1441,7 @@ final class AiCombat {
                   if (this.init_AiOperation == null) {
                      this.close_Z = obstructed;
                      this.init_AiOperation = AiGoto.init(
-                        goalCell, obstructed ? 1.2 : 2.0, true, true, true, 8, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST
+                        goalCell, obstructed ? 1.2 : 2.0, true, true, true, 8, autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST
                      );
                      this.flush_Z = false;
                   }
@@ -1919,7 +1919,7 @@ final class AiCombat {
             }
 
             boolean sync_Z() {
-               for (AiProjectiles.Inner_StreamUtil shot : AiProjectiles.init(mc)) {
+               for (AiProjectiles.IncomingProjectile shot : AiProjectiles.init(mc)) {
                   if (AiProjectiles.init(shot) && AiDefense.init(mc, mc.level.getEntity(shot.entityId())) && AiDefense.init(mc, AiCombat.init(shot))) {
                      return true;
                   }
@@ -2512,13 +2512,13 @@ final class AiCombat {
                      mc.options.keyShift.setDown(true);
                   }
 
-                  autismclient.ai.engine.AiPlacer.Inner_DataUtil s = this.init_DataPipe_2.init_DataPipe_DataUtil();
-                  if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.WORKING) {
+                  autismclient.ai.engine.AiPlacer.PlaceStatus s = this.init_DataPipe_2.init_DataPipe_DataUtil();
+                  if (s == autismclient.ai.engine.AiPlacer.PlaceStatus.WORKING) {
                      return this.load("Shielding the pillar from the " + BuiltInRegistries.ENTITY_TYPE.getKey(shooter.getType()).getPath());
                   }
 
                   this.pop_Z = false;
-                  if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+                  if (s == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                      this.prev++;
                      this.reset = 0;
                      this.init_Vec3 = null;

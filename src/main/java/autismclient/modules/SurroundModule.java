@@ -43,7 +43,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
-public final class SurroundModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
+public final class SurroundModule extends Module implements SilentMovementCoordinator.Participant {
    private static final Direction[] init_DirectionArr = new Direction[]{Direction.DOWN, Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH};
    private static final Direction[] load_DirectionArr = new Direction[]{Direction.WEST, Direction.NORTH, Direction.EAST, Direction.SOUTH};
    private static final float init_F = 600.0F;
@@ -69,7 +69,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    private boolean load_Z;
    private int sync_I = -2147483648;
    private int flush_I = -2147483648;
-   private final autismclient.util.BlockPlacementPlanner.Inner_StreamUtil init_U_StreamUtil = new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(4);
+   private final autismclient.util.BlockPlacementPlanner.RayBudget init_U_StreamUtil = new autismclient.util.BlockPlacementPlanner.RayBudget(4);
    private int close_I = -1;
    private int open = -1;
    private int poll;
@@ -387,7 +387,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          return init_DirectionArr;
       }
 
-      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
       float fromYaw = wire.init_Z() ? wire.read() : MC.player.getYRot();
       int start = 0;
       float best = 3.4028235E38F;
@@ -479,9 +479,9 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          } else if (BlinkPacketManager.load_Z()) {
             this.load_V_19();
          } else if (!this.init_List.isEmpty() && slot >= 0) {
-            ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
-            RotationMath.Inner_DataUtil wireRotation = wire.init_Z() ? new RotationMath.Inner_DataUtil(wire.read(), wire.write()) : null;
-            RotationMath.Inner_DataUtil from = wireRotation != null ? wireRotation : RotationMath.init(MC.player);
+            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
+            RotationMath.Rotation wireRotation = wire.init_Z() ? new RotationMath.Rotation(wire.read(), wire.write()) : null;
+            RotationMath.Rotation from = wireRotation != null ? wireRotation : RotationMath.init(MC.player);
             ItemStack material = MC.player.getInventory().getItem(slot);
             SurroundModule.Inner_StreamUtil plan = this.init_aK_StreamUtil_ce_DataUtil(from, material, null);
             if (plan == null) {
@@ -501,7 +501,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
                }
 
                if (fire && aimed) {
-                  RotationMath.Inner_DataUtil outgoing = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
+                  RotationMath.Rotation outgoing = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
                   if (outgoing != null && !(Math.abs(outgoing.load() - wireRotation.load()) > 0.05F)) {
                      this.init(plan, hit);
                   }
@@ -516,7 +516,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private boolean init(RotationMath.Inner_DataUtil goal, boolean holdPitch) {
+   private boolean init(RotationMath.Rotation goal, boolean holdPitch) {
       autismclient.util.SilentRotationManager.init_V_Str(this.id(), 25, goal);
       this.flush_I = AutismSessionState.init_ck().state_I();
       if (!this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
@@ -569,13 +569,13 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       return var10000;
    }
 
-   private SurroundModule.Inner_StreamUtil init_aK_StreamUtil_ce_DataUtil(RotationMath.Inner_DataUtil from, ItemStack material, BlockPos skip) {
+   private SurroundModule.Inner_StreamUtil init_aK_StreamUtil_ce_DataUtil(RotationMath.Rotation from, ItemStack material, BlockPos skip) {
       double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
       Vec3 eye = MC.player.getEyePosition();
       AABB playerBox = MC.player.getBoundingBox();
       Vec3 delta = MC.player.getDeltaMovement();
       BlockState placed = material.getItem() instanceof BlockItem blockItem ? blockItem.getBlock().defaultBlockState() : null;
-      autismclient.util.BlockPlacementPlanner.Inner_StateCache request = new autismclient.util.BlockPlacementPlanner.Inner_StateCache(
+      autismclient.util.BlockPlacementPlanner.Query request = new autismclient.util.BlockPlacementPlanner.Query(
             null, eye, reach, autismclient.util.BlockPlacementPlanner.init(material, MC.player, InteractionHand.MAIN_HAND)
          )
          .init_U_StateCache_ce_DataUtil(from)
@@ -586,7 +586,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       for (BlockPos cell : this.init_List) {
          if (!cell.equals(skip) && !this.init(cell, placed, playerBox, delta)) {
             this.init_U_StreamUtil.init(4);
-            autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(request.init_U_StateCache_BlockPos(cell));
+            autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(request.init_U_StateCache_BlockPos(cell));
             if (candidate != null) {
                return new SurroundModule.Inner_StreamUtil(cell, candidate);
             }
@@ -607,10 +607,10 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private BlockHitResult init(SurroundModule.Inner_StreamUtil plan, RotationMath.Inner_DataUtil rotation) {
+   private BlockHitResult init(SurroundModule.Inner_StreamUtil plan, RotationMath.Rotation rotation) {
       double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
       Vec3 eye = MC.player.getEyePosition();
-      autismclient.util.BlockPlacementPlanner.Inner_StateCache gate = new autismclient.util.BlockPlacementPlanner.Inner_StateCache(
+      autismclient.util.BlockPlacementPlanner.Query gate = new autismclient.util.BlockPlacementPlanner.Query(
             plan.init_BlockPos(),
             eye,
             reach,
@@ -776,8 +776,8 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    private record Inner_DataUtil(long init_J, int init_I, long load) {
    }
 
-   private record Inner_StreamUtil(BlockPos init_BlockPos, autismclient.util.BlockPlacementPlanner.Inner_CachePool init_U_CachePool) {
-      RotationMath.Inner_DataUtil init_ce_DataUtil() {
+   private record Inner_StreamUtil(BlockPos init_BlockPos, autismclient.util.BlockPlacementPlanner.PlacementPlan init_U_CachePool) {
+      RotationMath.Rotation init_ce_DataUtil() {
          return this.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil();
       }
    }

@@ -244,7 +244,7 @@ public final class PacketInspectorEngine {
    ) {
       String title = entry.load_Str + " [" + entry.init_Str + "]";
       PacketInspectorEngine.Inner_ConfigStore builder = new PacketInspectorEngine.Inner_ConfigStore(title);
-      AutismPayloadSupport.Inner_StreamUtil payloadSnapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
+      AutismPayloadSupport.PayloadEntry payloadSnapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
       builder.init("Meta", UiColorPalette.index());
       builder.load("Name: " + entry.load_Str, UiColorPalette.task());
       builder.load("Direction: " + entry.init_Str, init_I_Str(entry.init_Str));
@@ -362,7 +362,7 @@ public final class PacketInspectorEngine {
       try {
          String title = entry == null ? "Payload Analyzer" : entry.load_Str + " Analyzer";
          PacketInspectorEngine.Inner_ConfigStore builder = new PacketInspectorEngine.Inner_ConfigStore(title);
-         AutismPayloadSupport.Inner_StreamUtil snapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
+         AutismPayloadSupport.PayloadEntry snapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
          builder.init("Analyzer", UiColorPalette.cache());
          if (snapshot == null) {
             builder.load("No payload snapshot is available for this packet.", UiColorPalette.valid());
@@ -395,7 +395,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   public static PacketInspectorEngine.Inner_SyncManager init_bu_SyncManager_AutismPayloadSuppo(AutismPayloadSupport.Inner_StreamUtil snapshot) {
+   public static PacketInspectorEngine.Inner_SyncManager init_bu_SyncManager_AutismPayloadSuppo(AutismPayloadSupport.PayloadEntry snapshot) {
       String channel = snapshot == null ? "payload" : init_Str_Str_Str(snapshot.load_Str(), "payload");
       return new PacketInspectorEngine.Inner_SyncManager(
          false, false, 0.02, "Preparing " + channel, List.of(new PacketInspectorEngine.Inner_TaskQueue("Decoder Status: preparing automatic payload analysis", UiColorPalette.parse()))
@@ -414,7 +414,7 @@ public final class PacketInspectorEngine {
    }
 
    public static PacketInspectorEngine.Inner_SyncManager init_bu_SyncManager_AutismPayloadSuppo_Consumer(
-      AutismPayloadSupport.Inner_StreamUtil snapshot, Consumer<PacketInspectorEngine.Inner_SyncManager> progressSink
+      AutismPayloadSupport.PayloadEntry snapshot, Consumer<PacketInspectorEngine.Inner_SyncManager> progressSink
    ) {
       if (snapshot == null) {
          PacketInspectorEngine.Inner_SyncManager empty = new PacketInspectorEngine.Inner_SyncManager(
@@ -482,7 +482,7 @@ public final class PacketInspectorEngine {
       return packetSpecific.init_Z() ? packetSpecific : load_bu_FileCache_Packet_bu_ConfigStore(packet, builder);
    }
 
-   private static boolean init_Z_AutismPayloadSuppo_bu_ConfigStore(AutismPayloadSupport.Inner_StreamUtil snapshot, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static boolean init_Z_AutismPayloadSuppo_bu_ConfigStore(AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.Inner_ConfigStore builder) {
       if (snapshot == null) {
          return false;
       }
@@ -566,7 +566,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PayloadChannelFilterManager.Inner_StreamUtil init_bB_StreamUtil_AutismPayloadSuppo(AutismPayloadSupport.Inner_StreamUtil snapshot) {
+   private static PayloadChannelFilterManager.Inner_StreamUtil init_bB_StreamUtil_AutismPayloadSuppo(AutismPayloadSupport.PayloadEntry snapshot) {
       if (snapshot == null) {
          return null;
       }
@@ -773,7 +773,7 @@ public final class PacketInspectorEngine {
          complete = complete && broadKnown.load();
       }
 
-      AutismPayloadSupport.Inner_StreamUtil payloadSnapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
+      AutismPayloadSupport.PayloadEntry payloadSnapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
       if (payloadSnapshot != null) {
          wrote = true;
          builder.load("Channel: " + payloadSnapshot.load_Str(), UiColorPalette.scan());
@@ -810,7 +810,7 @@ public final class PacketInspectorEngine {
    }
 
    private static boolean init_Z_AutismPayloadSuppo(
-      AutismPayloadSupport.Inner_StreamUtil snapshot, PacketInspectorEngine.Inner_ConfigStore builder, PacketInspectorEngine.Inner_SyncManager payloadAnalysis
+      AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.Inner_ConfigStore builder, PacketInspectorEngine.Inner_SyncManager payloadAnalysis
    ) {
       if (payloadAnalysis == null) {
          return init_Z_AutismPayloadSuppo_2(snapshot, builder, (Consumer<PacketInspectorEngine.Inner_SyncManager>)null);
@@ -824,7 +824,7 @@ public final class PacketInspectorEngine {
    }
 
    private static boolean init_Z_AutismPayloadSuppo_2(
-      AutismPayloadSupport.Inner_StreamUtil snapshot, PacketInspectorEngine.Inner_ConfigStore builder, Consumer<PacketInspectorEngine.Inner_SyncManager> progressSink
+      AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.Inner_ConfigStore builder, Consumer<PacketInspectorEngine.Inner_SyncManager> progressSink
    ) {
       if (snapshot == null) {
          return false;
@@ -1074,7 +1074,7 @@ public final class PacketInspectorEngine {
    }
 
    private static PacketInspectorEngine.Inner_BufferHelper init_bu_BufferHelper_AutismPayloadSuppo(
-      AutismPayloadSupport.Inner_StreamUtil snapshot, byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder
+      AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder
    ) {
       if (snapshot == null) {
          return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
@@ -1255,7 +1255,7 @@ public final class PacketInspectorEngine {
    }
 
    private static PacketInspectorEngine.Inner_BufferHelper load_bu_BufferHelper_AutismPayloadSuppo(
-      AutismPayloadSupport.Inner_StreamUtil snapshot, byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder
+      AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder
    ) {
       PacketInspectorEngine.Inner_CachePool kind = init_bu_CachePool_BArr(raw);
       if (kind == PacketInspectorEngine.Inner_CachePool.NONE) {
@@ -1296,7 +1296,7 @@ public final class PacketInspectorEngine {
       }
 
       if (load_Z_Str(channel)) {
-         AutismPayloadSupport.Inner_StreamUtil nestedSnapshot = new AutismPayloadSupport.Inner_StreamUtil(
+         AutismPayloadSupport.PayloadEntry nestedSnapshot = new AutismPayloadSupport.PayloadEntry(
             "", channel, bytes, bytes.length, null, "", false, false, "", "", -1, ""
          );
          boolean register = init_Z_AutismPayloadSuppo_3(nestedSnapshot, bytes, builder);
@@ -1744,7 +1744,7 @@ public final class PacketInspectorEngine {
       return version >= 1 && version <= 7;
    }
 
-   private static boolean init_Z_AutismPayloadSuppo_3(AutismPayloadSupport.Inner_StreamUtil snapshot, byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static boolean init_Z_AutismPayloadSuppo_3(AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
       List<String> nullSeparated = init_List_BArr_I(raw, 48);
       List<String> identifiers = sync(raw, 48);
       LinkedHashSet<String> channels = new LinkedHashSet<>();

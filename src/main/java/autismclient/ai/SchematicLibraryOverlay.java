@@ -45,7 +45,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    private autismclient.util.ThemedTextInputBox init_k;
    private autismclient.gui.f.NetHelper init_NetHelper;
    private autismclient.gui.f.NetHelper load_NetHelper;
-   private autismclient.gui.ui.widgets.ScrollListLayout.Inner_DataUtil init_TextFormat_DataUti;
+   private autismclient.gui.ui.widgets.ScrollListLayout.ListLayout init_TextFormat_DataUti;
    private boolean write_Z;
    private boolean update_Z;
    private boolean sync_Z = true;
@@ -900,7 +900,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          if (this.init_TextFormat_DataUti != null
             && this.init_TextFormat_DataUti.init_PoolEntry_DataUtil().init_Z()
             && this.init_TextFormat_DataUti.init_PoolEntry_DataUtil().init(x, y)) {
-            ScrollbarMetricsHelper.Inner_DataUtil bar = this.init_TextFormat_DataUti.init_PoolEntry_DataUtil();
+            ScrollbarMetricsHelper.Metrics bar = this.init_TextFormat_DataUti.init_PoolEntry_DataUtil();
             this.run = bar.load(x, y) ? y - bar.update() : bar.sync() / 2;
             this.init_CacheEntry.init_V_PoolEntry_DataUtil(bar, y, this.run);
             this.write_Z = true;

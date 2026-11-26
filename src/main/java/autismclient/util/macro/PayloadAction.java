@@ -34,7 +34,7 @@ public class PayloadAction implements MacroAction {
       if (!autismclient.modules.aD.read_Z() && this.init) {
          if (mc != null && mc.getConnection() != null) {
             try {
-               MacroTemplateResolver.Inner_CachePool channelResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.channel, mc);
+               MacroTemplateResolver.ResolveResult channelResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.channel, mc);
                if (!channelResolution.init_Z() || channelResolution.init_Str().isBlank()) {
                   return;
                }
@@ -42,7 +42,7 @@ public class PayloadAction implements MacroAction {
                String resolvedChannel = channelResolution.init_Str().trim();
                String resolvedPayloadData = this.payloadData;
                if (MacroTemplateResolver.init_Z(this.payloadData)) {
-                  MacroTemplateResolver.Inner_CachePool payloadResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.payloadData, mc);
+                  MacroTemplateResolver.ResolveResult payloadResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.payloadData, mc);
                   if (!payloadResolution.init_Z()) {
                      return;
                   }

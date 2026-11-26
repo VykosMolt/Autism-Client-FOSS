@@ -96,11 +96,11 @@ public final class AiParkourFallWarning {
          float var8 = 0.0F;
 
          for (AiPathfinder.UiHelper var10 : var1) {
-            if (var10.type() != AiPathfinder.Inner_SyncManager.CLIMB_1) {
+            if (var10.type() != AiPathfinder.MoveType.CLIMB_1) {
                BlockState var11 = var0.level.getBlockState(var10.to().below());
                BlockState var12 = var0.level.getBlockState(var10.to());
                boolean var13 = var12.is(BlockTags.CLIMBABLE)
-                  || var12.getBlock() instanceof TrapDoorBlock && AiPathfinder.Inner_StreamUtil.putAt_Z_BlockState_BlockState(var12, var11);
+                  || var12.getBlock() instanceof TrapDoorBlock && AiPathfinder.LiveGridView.putAt_Z_BlockState_BlockState(var12, var11);
                if (!putAt(
                   var13,
                   !var12.getFluidState().isEmpty(),
@@ -116,19 +116,19 @@ public final class AiParkourFallWarning {
                   if (var10.jump() != null) {
                      AiJumpManeuver var21 = var10.jump().maneuver();
                      if (var21 == null) {
-                        if (var10.type() == AiPathfinder.Inner_SyncManager.SLIME_BOUNCE) {
+                        if (var10.type() == AiPathfinder.MoveType.SLIME_BOUNCE) {
                            continue;
                         }
 
                         var19 += 1.253;
                      } else {
                         var var22 = var21.inputs();
-                        AiPhysics.Inner_StreamUtil var23 = var21.start();
+                        AiPhysics.MotionState var23 = var21.start();
                         var19 = var23.y();
                         boolean var24 = false;
 
                         for (int var25 = 0; var25 < var22.size(); var25++) {
-                           var23 = AiPhysics.fill(var23, (AiPhysics.Inner_DataUtil)var22.get(var25), var7);
+                           var23 = AiPhysics.fill(var23, (AiPhysics.MoveInput)var22.get(var25), var7);
                            int var26 = (int)Math.floor(var23.x());
                            int var27 = (int)Math.floor(var23.y());
                            int var28 = (int)Math.floor(var23.z());

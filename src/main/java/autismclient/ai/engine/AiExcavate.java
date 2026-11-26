@@ -479,7 +479,7 @@ public final class AiExcavate {
                   }
 
                   BlockPos cell = this.init_ByteReader_StreamU.init_BlockPos();
-                  AiPathfinder.Inner_FileCache probe = this.init_ClassCache_FileCac(cell);
+                  AiPathfinder.CellInfo probe = this.init_ClassCache_FileCac(cell);
                   if (!probe.loaded()) {
                      this.init_ByteReader_StreamU.init(cell);
                   } else if (!this.init_BlockState(cell).isAir()) {
@@ -492,11 +492,11 @@ public final class AiExcavate {
                      } else if (!(this.init_BlockState(cell).getDestroySpeed(this.init_Minecraft.level, cell) < 0.0F)
                         && !this.init_BlockState(cell).hasBlockEntity()
                         && this.init_BlockState(cell).getFluidState().isEmpty()
-                        && AiPathfinder.Inner_StreamUtil.init_Z_ClientLevel_BlockPos(this.init_Minecraft.level, cell)) {
+                        && AiPathfinder.LiveGridView.init_Z_ClientLevel_BlockPos(this.init_Minecraft.level, cell)) {
                         BlockState cellState = this.init_BlockState(cell);
                         if (!this.init_Minecraft.player.hasInfiniteMaterials()
-                           && AiPathfinder.Inner_StreamUtil.init_Z_Z_Z(
-                              cellState.requiresCorrectToolForDrops(), AiPathfinder.Inner_StreamUtil.init_Z_Minecraft(this.init_Minecraft, cellState, 36)
+                           && AiPathfinder.LiveGridView.init_Z_Z_Z(
+                              cellState.requiresCorrectToolForDrops(), AiPathfinder.LiveGridView.init_Z_Minecraft(this.init_Minecraft, cellState, 36)
                            )) {
                            if (this.init_ByteReader_ConfigS != null) {
                               return this.init("A block requires a harvesting tool that is not carried", AiFailure.UNBREAKABLE_OBSTACLE);
@@ -675,8 +675,8 @@ public final class AiExcavate {
          this.close = 0;
       }
 
-      AiPathfinder.Inner_FileCache init_ClassCache_FileCac(BlockPos pos) {
-         return AiPathfinder.Inner_StreamUtil.init_ClassCache_FileCac_Minecraft(this.init_Minecraft, this.init_Minecraft.level, pos, this.init_ItemStackArr);
+      AiPathfinder.CellInfo init_ClassCache_FileCac(BlockPos pos) {
+         return AiPathfinder.LiveGridView.init_ClassCache_FileCac_Minecraft(this.init_Minecraft, this.init_Minecraft.level, pos, this.init_ItemStackArr);
       }
 
       BlockState init_BlockState(BlockPos pos) {

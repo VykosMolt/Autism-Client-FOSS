@@ -47,7 +47,7 @@ final class AiPrintPreparation implements AiOperation {
    private final BlockPos init_BlockPos = this.init_Minecraft.player.blockPosition().immutable();
    private final Path init_Path;
    private final BlockPos load_BlockPos;
-   private final AiBuilder.Inner_ConfigStore init_TableIndex_ConfigS;
+   private final AiBuilder.BuildOptions init_TableIndex_ConfigS;
    private final boolean init_Z;
    private final boolean load_Z;
    private final long load_J;
@@ -73,7 +73,7 @@ final class AiPrintPreparation implements AiOperation {
    private int write_I;
    private JsonArray init_JsonArray = new JsonArray();
 
-   AiPrintPreparation(JsonObject args, AiBuilder.Inner_ConfigStore power) {
+   AiPrintPreparation(JsonObject args, AiBuilder.BuildOptions power) {
       if (!args.has("blocks") && !args.has("blueprint")) {
          AiPrintSupply.init_V_TableIndex_ConfigS(power);
          this.init_TableIndex_ConfigS = power;
@@ -95,7 +95,7 @@ final class AiPrintPreparation implements AiOperation {
          this.init_Path, this.load_BlockPos, this.init_TableIndex_ConfigS.rotation(), this.init_TableIndex_ConfigS.mirror(), this.init_Z, 2097152
       );
       AiBuilder.init();
-      AiBuilder.Inner_DataUtil blueprint = this.init_TableIndex_ConfigS.layers()
+      AiBuilder.Blueprint blueprint = this.init_TableIndex_ConfigS.layers()
          ? AiBuilder.init_TableIndex_DataUti_TableIndex_DataUti(
             loaded.blueprint(), this.init_TableIndex_ConfigS.layerStart(), this.init_TableIndex_ConfigS.layerHeight()
          )
@@ -117,7 +117,7 @@ final class AiPrintPreparation implements AiOperation {
    }
 
    private AiPrintPreparation.Inner_ConfigStore init(AiPrintPreparation.Inner_DataUtil input, Map<Long, BlockState> snapshot) throws IOException {
-      AiBuilder.Inner_DataUtil blueprint = AiBuilder.init(input.blueprint(), snapshot);
+      AiBuilder.Blueprint blueprint = AiBuilder.init(input.blueprint(), snapshot);
       init_V_TableIndex_DataUti(blueprint);
       AiBuilder.init();
       AiSchematicReadiness.Inner_DataUtil buildable = AiSchematicReadiness.init_bX_DataUtil(blueprint, 16, snapshot);
@@ -126,13 +126,13 @@ final class AiPrintPreparation implements AiOperation {
       List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.init(blueprint));
       autismclient.ai.print.PrintCore.ao geometry = autismclient.ai.print.PrintCore.init_UiHelper_ao_List_Runnable(targets, AiBuilder::init);
       AiBuilder.init();
-      AiBuilder.Inner_DataUtil construction = AiBuilder.load_TableIndex_DataUti(blueprint);
+      AiBuilder.Blueprint construction = AiBuilder.load_TableIndex_DataUti(blueprint);
       AiPrintPreparation.Inner_JsonUtil source = AiPrintPreparation.Inner_JsonUtil.of(blueprint);
       if (!input.stamp().equals(AiPrintPreparation.Inner_StateCache.read(this.init_Path))) {
          throw new IOException("Schematic changed during preparation; start the build again");
       }
 
-      AiBuilder.Inner_ConfigStore power = input.power().withMachine(input.power().machine().init(blueprint));
+      AiBuilder.BuildOptions power = input.power().withMachine(input.power().machine().init(blueprint));
       return new AiPrintPreparation.Inner_ConfigStore(
          blueprint,
          construction,
@@ -146,7 +146,7 @@ final class AiPrintPreparation implements AiOperation {
       );
    }
 
-   static void init_V_TableIndex_DataUti(AiBuilder.Inner_DataUtil blueprint) {
+   static void init_V_TableIndex_DataUti(AiBuilder.Blueprint blueprint) {
       if (blueprint.cells().isEmpty()) {
          throw new IllegalArgumentException("The selected schematic layers contain no buildable cells");
       }
@@ -260,7 +260,7 @@ final class AiPrintPreparation implements AiOperation {
                      this.write_I = this.init_bg_ConfigStore.skipped();
 
                      for (AiSchematicReadiness.Inner_StreamUtil issue : this.init_bg_ConfigStore.audit().issues()) {
-                        AiBuilder.Inner_StreamUtil cell = issue.cell();
+                        AiBuilder.CellSpec cell = issue.cell();
                         this.init_JsonArray
                            .add(
                               AiJson.init_JsonObject_ObjArr(
@@ -539,13 +539,13 @@ final class AiPrintPreparation implements AiOperation {
    }
 
    static final class Inner_CachePool {
-      final AiBuilder.Inner_DataUtil init_TableIndex_DataUti;
+      final AiBuilder.Blueprint init_TableIndex_DataUti;
       final Set<Long> init_Set;
       final Set<BlockPos> load = new HashSet<>();
       private final Map<AiPrintPreparation.Inner_CachePool.Inner_DataUtil, AiCellMaterials.Inner_CachePool> init_Map = new LinkedHashMap<>();
       int init_I;
 
-      Inner_CachePool(AiBuilder.Inner_DataUtil blueprint, Set<Long> source) {
+      Inner_CachePool(AiBuilder.Blueprint blueprint, Set<Long> source) {
          this.init_TableIndex_DataUti = blueprint;
          this.init_Set = source;
       }
@@ -559,7 +559,7 @@ final class AiPrintPreparation implements AiOperation {
          int end = Math.min(this.init_TableIndex_DataUti.cells().size(), this.init_I + Math.max(1, limit));
 
          while (this.init_I < end && (this.init_I == first || System.nanoTime() < deadline)) {
-            AiBuilder.Inner_StreamUtil cell = this.init_TableIndex_DataUti.cells().get(this.init_I++);
+            AiBuilder.CellSpec cell = this.init_TableIndex_DataUti.cells().get(this.init_I++);
             if (!AiBuilder.read_Z(cell)) {
                BlockPos at = this.init_TableIndex_DataUti.origin().offset(cell.dx(), cell.dy(), cell.dz());
                BlockState live = world.getBlockState(at);
@@ -608,30 +608,30 @@ final class AiPrintPreparation implements AiOperation {
    }
 
    record Inner_ConfigStore(
-      AiBuilder.Inner_DataUtil blueprint,
-      AiBuilder.Inner_DataUtil stockPlan,
-      AiBuilder.Inner_ConfigStore power,
+      AiBuilder.Blueprint blueprint,
+      AiBuilder.Blueprint stockPlan,
+      AiBuilder.BuildOptions power,
       AiSchematicReadiness.Inner_TaskQueue audit,
       int skipped,
       List<autismclient.ai.print.PrintTarget> targets,
       AiPrintPreparation.Inner_JsonUtil source,
-      AiSchematicMachinePlan.Inner_StreamUtil nativeActions,
+      AiSchematicMachinePlan.MachineSpec nativeActions,
       autismclient.ai.print.PrintCore.ao geometry
    ) {
    }
 
-   record Inner_DataUtil(AiBuilder.Inner_DataUtil blueprint, AiBuilder.Inner_ConfigStore power, List<BlockPos> leafNeighbors, AiPrintPreparation.Inner_StateCache stamp) {
+   record Inner_DataUtil(AiBuilder.Blueprint blueprint, AiBuilder.BuildOptions power, List<BlockPos> leafNeighbors, AiPrintPreparation.Inner_StateCache stamp) {
    }
 
    record Inner_JsonUtil(Set<Long> keys, int minX, int maxX, int minZ, int maxZ) {
-      static AiPrintPreparation.Inner_JsonUtil of(AiBuilder.Inner_DataUtil blueprint) {
+      static AiPrintPreparation.Inner_JsonUtil of(AiBuilder.Blueprint blueprint) {
          HashSet<Long> keys = new HashSet<>();
          int minX = 2147483647;
          int maxX = -2147483648;
          int minZ = minX;
          int maxZ = maxX;
 
-         for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+         for (AiBuilder.CellSpec cell : blueprint.cells()) {
             AiBuilder.init();
             BlockPos at = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
             keys.add(at.asLong());

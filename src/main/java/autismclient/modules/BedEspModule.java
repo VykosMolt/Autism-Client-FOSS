@@ -131,7 +131,7 @@ public final class BedEspModule extends Module {
       return init_Set.contains(block);
    }
 
-   static List<EspChunkWorker.Inner_CachePool> init_List_LevelChunk(LevelChunk chunk) {
+   static List<EspChunkWorker.EspBox> init_List_LevelChunk(LevelChunk chunk) {
       return EspChunkWorker.load
          .init(
             chunk,
@@ -150,7 +150,7 @@ public final class BedEspModule extends Module {
                                  BlockPos p = new BlockPos(
                                     c.getPos().getMinBlockX() + x, (c.getSectionYFromSectionIndex(section) << 4) + y, c.getPos().getMinBlockZ() + z
                                  );
-                                 out.add(new EspChunkWorker.Inner_CachePool(new AABB(p), Vec3.atCenterOf(p), 0));
+                                 out.add(new EspChunkWorker.EspBox(new AABB(p), Vec3.atCenterOf(p), 0));
                                  if (out.size() >= 128) {
                                     return;
                                  }
@@ -285,7 +285,7 @@ public final class BedEspModule extends Module {
                if (Math.max(Math.abs(dx), Math.abs(dz)) == r) {
                   LevelChunk chunk = MC.level.getChunkSource().getChunk(cx + dx, cz + dz, ChunkStatus.FULL, false);
                   if (chunk != null) {
-                     for (EspChunkWorker.Inner_CachePool entry : init_List_LevelChunk(chunk)) {
+                     for (EspChunkWorker.EspBox entry : init_List_LevelChunk(chunk)) {
                         BlockPos p = BlockPos.containing(entry.init_Vec3());
                         BlockState s = MC.level.getBlockState(p);
                         if (s.getBlock() instanceof BedBlock) {

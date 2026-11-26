@@ -43,7 +43,7 @@ final class AiProjectiles {
    static final double pop = 1.2;
    static final double tick = 2.5;
    static final int init_I = 1;
-   private static List<AiProjectiles.Inner_StreamUtil> init_List = List.of();
+   private static List<AiProjectiles.IncomingProjectile> init_List = List.of();
    private static LocalPlayer init_LocalPlayer;
    private static Object init_Obj;
    private static int load_I = -2;
@@ -76,7 +76,7 @@ final class AiProjectiles {
       }
    }
 
-   static List<AiProjectiles.Inner_StreamUtil> init(Minecraft mc) {
+   static List<AiProjectiles.IncomingProjectile> init(Minecraft mc) {
       try {
          if (mc.player != null && mc.level != null) {
             int now = autismclient.util.AutismSessionState.init_ck().state_I();
@@ -85,7 +85,7 @@ final class AiProjectiles {
             }
 
             Vec3 eye = mc.player.getEyePosition();
-            List<AiProjectiles.Inner_StreamUtil> out = new ArrayList<>();
+            List<AiProjectiles.IncomingProjectile> out = new ArrayList<>();
 
             for (Entity entity : mc.level.entitiesForRendering()) {
                if (init_Z(entity)
@@ -94,9 +94,9 @@ final class AiProjectiles {
                   Vec3 velocity = entity.getDeltaMovement();
                   if (!(velocity.lengthSqr() < 1.0E-6)) {
                      double gravity = init_D(entity);
-                     AiProjectiles.Inner_DataUtil prediction = init(mc, entity, mc.player.getBoundingBox(), 0);
+                     AiProjectiles.ApproachMetrics prediction = init(mc, entity, mc.player.getBoundingBox(), 0);
                      out.add(
-                        new AiProjectiles.Inner_StreamUtil(
+                        new AiProjectiles.IncomingProjectile(
                            entity.getId(),
                            BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString(),
                            entity.getX(),
@@ -114,7 +114,7 @@ final class AiProjectiles {
                }
             }
 
-            List<AiProjectiles.Inner_StreamUtil> result = List.copyOf(out);
+            List<AiProjectiles.IncomingProjectile> result = List.copyOf(out);
             init_List = result;
             init_LocalPlayer = mc.player;
             init_Obj = mc.level;
@@ -128,7 +128,7 @@ final class AiProjectiles {
       }
    }
 
-   static AiProjectiles.Inner_DataUtil init(Minecraft mc, Entity projectile, AABB destination, int travelTicks) {
+   static AiProjectiles.ApproachMetrics init(Minecraft mc, Entity projectile, AABB destination, int travelTicks) {
       double gravity = init_D(projectile);
       Vec3 position = projectile.position();
       Vec3 velocity = projectile.getDeltaMovement();
@@ -183,7 +183,7 @@ final class AiProjectiles {
          position = next;
       }
 
-      return new AiProjectiles.Inner_DataUtil(best, bestTick / 20.0);
+      return new AiProjectiles.ApproachMetrics(best, bestTick / 20.0);
    }
 
    private static double init(AABB box, Vec3 start, Vec3 end) {
@@ -238,11 +238,11 @@ final class AiProjectiles {
       return var10000;
    }
 
-   static AiProjectiles.Inner_DataUtil init_by_DataUtil(Vec3 pos, Vec3 vel, double gravity, Vec3 target, double maxSeconds) {
+   static AiProjectiles.ApproachMetrics init_by_DataUtil(Vec3 pos, Vec3 vel, double gravity, Vec3 target, double maxSeconds) {
       return init(pos, vel, gravity, 0.0, target, maxSeconds);
    }
 
-   static AiProjectiles.Inner_DataUtil init(Vec3 pos, Vec3 vel, double gravity, double accel, Vec3 target, double maxSeconds) {
+   static AiProjectiles.ApproachMetrics init(Vec3 pos, Vec3 vel, double gravity, double accel, Vec3 target, double maxSeconds) {
       int ticks = (int)Math.min(100.0, Math.ceil(Math.max(0.0, maxSeconds) * 20.0));
       double drag = gravity > 0.0 ? 0.99 : 1.0;
       double x = pos.x;
@@ -302,16 +302,16 @@ final class AiProjectiles {
       if (bestTick == 0) {
          return null;
       } else {
-         return bestTick == ticks && approachingAtHorizon ? null : new AiProjectiles.Inner_DataUtil(best, bestTick / 20.0);
+         return bestTick == ticks && approachingAtHorizon ? null : new AiProjectiles.ApproachMetrics(best, bestTick / 20.0);
       }
    }
 
-   static boolean init(AiProjectiles.Inner_StreamUtil t) {
+   static boolean init(AiProjectiles.IncomingProjectile t) {
       return t.secondsToClosest() >= 0.0 && t.secondsToClosest() <= 2.5 && t.closestApproach() <= 1.2;
    }
 
-   static boolean init(List<AiProjectiles.Inner_StreamUtil> scan) {
-      for (AiProjectiles.Inner_StreamUtil t : scan) {
+   static boolean init(List<AiProjectiles.IncomingProjectile> scan) {
+      for (AiProjectiles.IncomingProjectile t : scan) {
          if (init(t)) {
             return false;
          }
@@ -333,8 +333,8 @@ final class AiProjectiles {
 
    static int init_I(Vec3 projPos, Vec3 projVel, double gravity, Vec3 playerEye, double secondsAvailable) {
       double shift = Math.min(2.0, 5.6 * Math.max(0.0, secondsAvailable));
-      AiProjectiles.Inner_DataUtil left = init_by_DataUtil(projPos, projVel, gravity, playerEye.add(init(projVel, 1).scale(shift)), 2.5);
-      AiProjectiles.Inner_DataUtil right = init_by_DataUtil(projPos, projVel, gravity, playerEye.add(init(projVel, -1).scale(shift)), 2.5);
+      AiProjectiles.ApproachMetrics left = init_by_DataUtil(projPos, projVel, gravity, playerEye.add(init(projVel, 1).scale(shift)), 2.5);
+      AiProjectiles.ApproachMetrics right = init_by_DataUtil(projPos, projVel, gravity, playerEye.add(init(projVel, -1).scale(shift)), 2.5);
       double l = left == null ? 1.7976931348623157E308 : left.closestApproach();
       double r = right == null ? 1.7976931348623157E308 : right.closestApproach();
       if (l != r) {
@@ -355,10 +355,10 @@ final class AiProjectiles {
       return v * v;
    }
 
-   record Inner_DataUtil(double closestApproach, double secondsToClosest) {
+   record ApproachMetrics(double closestApproach, double secondsToClosest) {
    }
 
-   record Inner_StreamUtil(
+   record IncomingProjectile(
       int entityId, String type, double x, double y, double z, double vx, double vy, double vz, double gravity, double closestApproach, double secondsToClosest
    ) {
    }

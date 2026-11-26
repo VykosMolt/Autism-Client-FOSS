@@ -30,7 +30,7 @@ public final class AiSeek {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          int timeoutSeconds = Math.max(5, Math.min(900, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180)));
-         return new AiSeek.Inner_ConfigStore(timeoutSeconds, AiPathfinder.Inner_IoWorker.init(AiJson.init_Str_JsonObject(args, "strategy", "fastest")));
+         return new AiSeek.Inner_ConfigStore(timeoutSeconds, AiPathfinder.RouteStrategy.init(AiJson.init_Str_JsonObject(args, "strategy", "fastest")));
       } else {
          throw new IllegalArgumentException("Surface travel requires a connected living player");
       }
@@ -41,7 +41,7 @@ public final class AiSeek {
       if (client.player != null && client.level != null) {
          int timeoutSeconds = Math.max(5, Math.min(900, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180)));
          Integer maxY = args.has("maxY") ? AiJson.init_I_JsonObject(args, "maxY", 0) : null;
-         return new AiSeek.Inner_StreamUtil(timeoutSeconds, AiPathfinder.Inner_IoWorker.init(AiJson.init_Str_JsonObject(args, "strategy", "fastest")), maxY);
+         return new AiSeek.Inner_StreamUtil(timeoutSeconds, AiPathfinder.RouteStrategy.init(AiJson.init_Str_JsonObject(args, "strategy", "fastest")), maxY);
       } else {
          throw new IllegalArgumentException("Cave travel requires a connected living player");
       }
@@ -79,12 +79,12 @@ public final class AiSeek {
       }
    }
 
-   private static AiPathfinder.Inner_FileCache init_ClassCache_FileCac(Minecraft mc, BlockPos p) {
-      return AiPathfinder.Inner_StreamUtil.init_ClassCache_FileCac_Minecraft(mc, mc.level, p, init_ItemStackArr);
+   private static AiPathfinder.CellInfo init_ClassCache_FileCac(Minecraft mc, BlockPos p) {
+      return AiPathfinder.LiveGridView.init_ClassCache_FileCac_Minecraft(mc, mc.level, p, init_ItemStackArr);
    }
 
    private static boolean init_Z(Minecraft mc, BlockPos feet) {
-      return AiPathfinder.Inner_RenderState.init_Z_ClassCache_FileCac(
+      return AiPathfinder.MoveGenerator.init_Z_ClassCache_FileCac(
          init_ClassCache_FileCac(mc, feet), init_ClassCache_FileCac(mc, feet.above()), init_ClassCache_FileCac(mc, feet.below())
       );
    }
@@ -92,7 +92,7 @@ public final class AiSeek {
    private abstract static class Inner_BufferHelper implements AiOperation {
       final Minecraft init_Minecraft = Minecraft.getInstance();
       final long init_J;
-      final AiPathfinder.Inner_IoWorker init_ClassCache_IoWorke;
+      final AiPathfinder.RouteStrategy init_ClassCache_IoWorke;
       final AiSeek.Inner_CachePool init_d_CachePool;
       final int init_I;
       BlockPos init_BlockPos;
@@ -102,7 +102,7 @@ public final class AiSeek {
       boolean init_Z;
       static final int write = 3;
 
-      Inner_BufferHelper(int timeoutSeconds, AiPathfinder.Inner_IoWorker strategy, int maxRadius, int columnsPerTick) {
+      Inner_BufferHelper(int timeoutSeconds, AiPathfinder.RouteStrategy strategy, int maxRadius, int columnsPerTick) {
          this.init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
          this.init_ClassCache_IoWorke = strategy;
          this.init_d_CachePool = new AiSeek.Inner_CachePool(this.init_Minecraft.player.blockPosition(), maxRadius);
@@ -295,7 +295,7 @@ public final class AiSeek {
       static final int sync = 16;
       final boolean load_Z;
 
-      Inner_ConfigStore(int timeoutSeconds, AiPathfinder.Inner_IoWorker strategy) {
+      Inner_ConfigStore(int timeoutSeconds, AiPathfinder.RouteStrategy strategy) {
          super(timeoutSeconds, strategy, 96, 256);
          BlockPos origin = this.init_d_CachePool.init_BlockPos;
          this.load_Z = this.init_Minecraft.level.getHeight(Types.MOTION_BLOCKING, origin.getX(), origin.getZ()) - origin.getY() <= 12;
@@ -341,7 +341,7 @@ public final class AiSeek {
    private static final class Inner_StreamUtil extends AiSeek.Inner_BufferHelper {
       private final int update;
 
-      Inner_StreamUtil(int timeoutSeconds, AiPathfinder.Inner_IoWorker strategy, Integer maxY) {
+      Inner_StreamUtil(int timeoutSeconds, AiPathfinder.RouteStrategy strategy, Integer maxY) {
          super(timeoutSeconds, strategy, 64, 8);
          this.update = maxY != null ? maxY : this.init_d_CachePool.init_BlockPos.getY() + 8;
       }
@@ -354,14 +354,14 @@ public final class AiSeek {
 
          for (int y = yTop; y >= yBottom; y--) {
             BlockPos cell = new BlockPos(column.getX(), y, column.getZ());
-            AiPathfinder.Inner_FileCache feet = AiSeek.init_ClassCache_FileCac(this.init_Minecraft, cell);
+            AiPathfinder.CellInfo feet = AiSeek.init_ClassCache_FileCac(this.init_Minecraft, cell);
             if (feet.loaded()
                && feet.passable()
                && !feet.water()
                && !feet.lava()
                && !feet.hazardFeet()
                && AiSeek.init_ClassCache_FileCac(this.init_Minecraft, cell.above()).passable()) {
-               AiPathfinder.Inner_FileCache floor = AiSeek.init_ClassCache_FileCac(this.init_Minecraft, cell.below());
+               AiPathfinder.CellInfo floor = AiSeek.init_ClassCache_FileCac(this.init_Minecraft, cell.below());
                if (!floor.passable()
                   && !floor.hazardFloor()
                   && !floor.lava()
@@ -388,7 +388,7 @@ public final class AiSeek {
       }
 
       boolean init(int x, int y, int z) {
-         AiPathfinder.Inner_FileCache probe = AiSeek.init_ClassCache_FileCac(this.init_Minecraft, new BlockPos(x, y, z));
+         AiPathfinder.CellInfo probe = AiSeek.init_ClassCache_FileCac(this.init_Minecraft, new BlockPos(x, y, z));
          return probe.loaded() && probe.passable() && !probe.water() && !probe.lava();
       }
 

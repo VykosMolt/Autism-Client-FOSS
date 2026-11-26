@@ -34,19 +34,19 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 
-public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
+public final class PlacementGoal implements AiPathfinder.PathGoal {
    private final BlockPos init_BlockPos;
    private final Item init_Item;
    private final double init_D;
    private final double load_D;
-   private final AiPathfinder.Inner_StateCache init_ClassCache_StateCa;
+   private final AiPathfinder.GridView init_ClassCache_StateCa;
    private final AABB init_AABB;
    private final Set<Long> init_Set;
-   private final AiPathfinder.Inner_JsonUtil init_ClassCache_JsonUti;
+   private final AiPathfinder.PathGoal init_ClassCache_JsonUti;
    private final Set<Long> load_Set;
-   private final PlacementGoal.Inner_DataUtil init_u_DataUtil;
+   private final PlacementGoal.PlaceConstraint init_u_DataUtil;
    private Set<Long> read;
-   private Map<Long, PlacementGoal.Inner_StreamUtil> init_Map;
+   private Map<Long, PlacementGoal.ClickGeometry> init_Map;
    private boolean init_Z = true;
    private final List<PlacementGoal> init_List;
 
@@ -62,7 +62,7 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       this(target, item, reach, eyeHeight, workVolume, protectedCells, null);
    }
 
-   public PlacementGoal(BlockPos target, Item item, double reach, double eyeHeight, AABB workVolume, Set<Long> protectedCells, PlacementGoal.Inner_DataUtil constraint) {
+   public PlacementGoal(BlockPos target, Item item, double reach, double eyeHeight, AABB workVolume, Set<Long> protectedCells, PlacementGoal.PlaceConstraint constraint) {
       this(target, item, reach, eyeHeight, null, ConcurrentHashMap.newKeySet(), workVolume, protectedCells, constraint, List.of());
    }
 
@@ -71,11 +71,11 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       Item item,
       double reach,
       double eyeHeight,
-      AiPathfinder.Inner_StateCache grid,
+      AiPathfinder.GridView grid,
       Set<Long> rejected,
       AABB workVolume,
       Set<Long> protectedCells,
-      PlacementGoal.Inner_DataUtil constraint,
+      PlacementGoal.PlaceConstraint constraint,
       List<PlacementGoal> alternatives
    ) {
       this.init_BlockPos = target.immutable();
@@ -92,7 +92,7 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
    }
 
    @Override
-   public AiPathfinder.Inner_JsonUtil init(AiPathfinder.Inner_StateCache grid) {
+   public AiPathfinder.PathGoal init(AiPathfinder.GridView grid) {
       ArrayList<PlacementGoal> bound = new ArrayList<>(this.init_List.size());
 
       for (PlacementGoal alternative : this.init_List) {
@@ -136,7 +136,7 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       return result;
    }
 
-   PlacementGoal init(Map<Long, PlacementGoal.Inner_StreamUtil> placements) {
+   PlacementGoal init(Map<Long, PlacementGoal.ClickGeometry> placements) {
       if (AutismLiteVariant.enabled()) {
          throw new IllegalStateException();
       }
@@ -169,11 +169,11 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       return result;
    }
 
-   public static PlacementGoal init(List<PlacementGoal.Inner_CachePool> targets, double reach, double eyeHeight, AABB workVolume, Set<Long> protectedCells) {
+   public static PlacementGoal init(List<PlacementGoal.PlacementRequest> targets, double reach, double eyeHeight, AABB workVolume, Set<Long> protectedCells) {
       return init(targets, reach, eyeHeight, workVolume, protectedCells, Set.of());
    }
 
-   public static PlacementGoal init(List<PlacementGoal.Inner_CachePool> targets, double reach, double eyeHeight, AABB workVolume, Set<Long> protectedCells, Set<Long> avoid) {
+   public static PlacementGoal init(List<PlacementGoal.PlacementRequest> targets, double reach, double eyeHeight, AABB workVolume, Set<Long> protectedCells, Set<Long> avoid) {
       if (AutismLiteVariant.enabled()) {
          throw new IllegalStateException();
       }
@@ -187,11 +187,11 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       ArrayList<PlacementGoal> alternatives = new ArrayList<>(targets.size() - 1);
 
       for (int i = 1; i < targets.size(); i++) {
-         PlacementGoal.Inner_CachePool t = targets.get(i);
+         PlacementGoal.PlacementRequest t = targets.get(i);
          alternatives.add(new PlacementGoal(t.pos(), t.item(), reach, eyeHeight, null, rejected, workVolume, protectedCells, t.constraint(), List.of()));
       }
 
-      PlacementGoal.Inner_CachePool first = targets.getFirst();
+      PlacementGoal.PlacementRequest first = targets.getFirst();
       return new PlacementGoal(first.pos(), first.item(), reach, eyeHeight, null, rejected, workVolume, protectedCells, first.constraint(), List.copyOf(alternatives));
    }
 
@@ -274,7 +274,7 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
 
          for (long stance : this.read) {
             if (!this.init_Set.contains(stance)) {
-               best = Math.min(best, AiPathfinder.Inner_CachePool.load(BlockPos.getX(stance) - x, BlockPos.getY(stance) - y, BlockPos.getZ(stance) - z));
+               best = Math.min(best, AiPathfinder.MoveCosts.load(BlockPos.getX(stance) - x, BlockPos.getY(stance) - y, BlockPos.getZ(stance) - z));
             }
          }
 
@@ -322,12 +322,12 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
    }
 
    @Override
-   public boolean init_Z_I(int x, int y, int z, AiPathfinder.Inner_StateCache grid) {
+   public boolean init_Z_I(int x, int y, int z, AiPathfinder.GridView grid) {
       long feet = BlockPos.asLong(x, y, z);
       if (grid != null && !this.init_Set.contains(feet) && (this.read == null || this.read.contains(feet))) {
          if (this.init_Map != null) {
-            PlacementGoal.Inner_StreamUtil proof = this.init_Map.get(feet);
-            AiPathfinder.Inner_FileCache floor = grid.init_ClassCache_FileCac_I(x, y - 1, z);
+            PlacementGoal.ClickGeometry proof = this.init_Map.get(feet);
+            AiPathfinder.CellInfo floor = grid.init_ClassCache_FileCac_I(x, y - 1, z);
             if (proof != null && floor != null && floor.loaded()) {
                double offset = floor.passable() ? 0.0 : floor.top16() / 16.0 - 1.0;
                if (Math.abs(offset - proof.floorOffset()) > 0.001) {
@@ -357,9 +357,9 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       }
    }
 
-   private boolean load(int x, int y, int z, AiPathfinder.Inner_StateCache grid) {
+   private boolean load(int x, int y, int z, AiPathfinder.GridView grid) {
       if (!(Math.abs(x - this.init_BlockPos.getX()) > this.init_D + 1.5) && !(Math.abs(z - this.init_BlockPos.getZ()) > this.init_D + 1.5)) {
-         AiPathfinder.Inner_FileCache floor = grid.init_ClassCache_FileCac_I(x, y - 1, z);
+         AiPathfinder.CellInfo floor = grid.init_ClassCache_FileCac_I(x, y - 1, z);
          double actualEyeHeight = floor != null && !floor.passable() ? this.load_D - 1.0 + floor.top16() / 16.0 : this.load_D;
          double feetOffset = actualEyeHeight - this.load_D;
          if (this.init_u_DataUtil != null && this.init_u_DataUtil.crouchForLook()) {
@@ -393,7 +393,7 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
          for (Direction face : Direction.values()) {
             if (this.init_u_DataUtil == null || this.init_u_DataUtil.acceptsFace(face.getOpposite())) {
                BlockPos support = this.init_BlockPos.relative(face);
-               AiPathfinder.Inner_FileCache p = grid.init_ClassCache_FileCac_I(support.getX(), support.getY(), support.getZ());
+               AiPathfinder.CellInfo p = grid.init_ClassCache_FileCac_I(support.getX(), support.getY(), support.getZ());
                if (p != null && p.loaded() && !p.lava()) {
                   double dot = (x + 0.5 - this.init_BlockPos.getX() - 0.5) * face.getStepX()
                      + (y + actualEyeHeight - this.init_BlockPos.getY() - 0.5) * face.getStepY()
@@ -515,7 +515,7 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
             }
          }
 
-         BlockPlacementPlanner.Inner_CachePool hit = init(mc, this.init_BlockPos, this.init_Item, this.init_u_DataUtil, 72);
+         BlockPlacementPlanner.PlacementPlan hit = init(mc, this.init_BlockPos, this.init_Item, this.init_u_DataUtil, 72);
          if (hit != null && this.init_Item instanceof BlockItem blockItem) {
             BlockState state = blockItem.getBlock()
                .getStateForPlacement(
@@ -545,7 +545,7 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       }
    }
 
-   public static BlockPlacementPlanner.Inner_CachePool init(Minecraft mc, BlockPos target, Item item, PlacementGoal.Inner_DataUtil constraint, int rays) {
+   public static BlockPlacementPlanner.PlacementPlan init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, int rays) {
       return init(
          mc,
          target,
@@ -558,18 +558,18 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       );
    }
 
-   public static boolean init_Z_Minecraft(Minecraft mc, BlockPos target, Item item, PlacementGoal.Inner_DataUtil constraint) {
+   public static boolean init_Z_Minecraft(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint) {
       return !AutismLiteVariant.enabled()
          ? AiPlacementContext.init(item, constraint, target, mc.level::getBlockState)
          : constraint != null && constraint.crouchForLook();
    }
 
-   public static double init(Minecraft mc, BlockPos target, Item item, PlacementGoal.Inner_DataUtil constraint, boolean future) {
+   public static double init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, boolean future) {
       double standing = future ? mc.player.getEyeHeight(Pose.STANDING) : mc.player.getEyeHeight();
       return init_Z_Minecraft(mc, target, item, constraint) ? Math.min(standing, mc.player.getEyeHeight(Pose.CROUCHING)) : standing;
    }
 
-   private static Vec3 init(Minecraft mc, BlockPos target, Item item, PlacementGoal.Inner_DataUtil constraint, Vec3 feet, boolean future) {
+   private static Vec3 init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 feet, boolean future) {
       return feet.add(0.0, init(mc, target, item, constraint, future), 0.0);
    }
 
@@ -577,12 +577,12 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       return AutismLiteVariant.enabled() ? new BlockPlaceContext(player, InteractionHand.MAIN_HAND, stack, hit) : new AiPlacementContext(player, stack, hit, eye);
    }
 
-   public static BlockPlacementPlanner.Inner_CachePool init(Minecraft mc, BlockPos target, Item item, PlacementGoal.Inner_DataUtil constraint, Vec3 feet, int rays) {
+   public static BlockPlacementPlanner.PlacementPlan init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 feet, int rays) {
       AABB body = new AABB(feet.x - 0.3, feet.y, feet.z - 0.3, feet.x + 0.3, feet.y + 1.8, feet.z + 0.3);
       return init(mc, target, item, constraint, init(mc, target, item, constraint, feet, true), body, mc.player.blockInteractionRange() - 0.25, rays);
    }
 
-   private static BlockPlacementPlanner.Inner_CachePool init(Minecraft mc, BlockPos target, Item item, PlacementGoal.Inner_DataUtil constraint, Vec3 eye, AABB body, double reach, int rays) {
+   private static BlockPlacementPlanner.PlacementPlan init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 eye, AABB body, double reach, int rays) {
       if (constraint != null && constraint.placedShape() != null) {
          for (AABB box : AiShapes.init_List_S(constraint.placedShape())) {
             if (box.move(target.getX(), target.getY(), target.getZ()).intersects(body)) {
@@ -591,14 +591,14 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
          }
       }
 
-      BlockPlacementPlanner.Inner_NetHelper placement = (hit, cell) -> init(mc, cell, item, constraint, eye, body, hit);
-      BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(target, eye, reach, placement)
+      BlockPlacementPlanner.HitValidator placement = (hit, cell) -> init(mc, cell, item, constraint, eye, body, hit);
+      BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(target, eye, reach, placement)
          .init_U_StateCache_Z(mc.player.isShiftKeyDown())
          .load(constraint != null)
-         .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(rays));
+         .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(rays));
       if (constraint != null) {
          if (constraint.clickYaw() != null) {
-            request.init_U_StateCache_ce_DataUtil(new RotationMath.Inner_DataUtil(constraint.clickYaw(), mc.player.getXRot()));
+            request.init_U_StateCache_ce_DataUtil(new RotationMath.Rotation(constraint.clickYaw(), mc.player.getXRot()));
          }
 
          EnumSet<Direction> faces = EnumSet.noneOf(Direction.class);
@@ -613,11 +613,11 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       }
 
       if (constraint != null && (constraint.highHalf() != null || constraint.crouchForLook())) {
-         ArrayList<BlockPlacementPlanner.Inner_TaskQueue> options = new ArrayList<>();
+         ArrayList<BlockPlacementPlanner.SupportCandidate> options = new ArrayList<>();
          BlockPlacementPlanner.init(request, options);
-         BlockPlacementPlanner.Inner_JsonUtil[] refusal = new BlockPlacementPlanner.Inner_JsonUtil[1];
+         BlockPlacementPlanner.RejectReason[] refusal = new BlockPlacementPlanner.RejectReason[1];
 
-         for (BlockPlacementPlanner.Inner_TaskQueue option : options) {
+         for (BlockPlacementPlanner.SupportCandidate option : options) {
             AABB rect = constraint.highHalf() == null
                ? option.init_AABB()
                : init_AABB_AABB(option.init_AABB(), option.init_Direction(), option.load_BlockPos().getY(), constraint.highHalf());
@@ -626,7 +626,7 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
             }
 
             if (rect != null) {
-               BlockPlacementPlanner.Inner_TaskQueue clipped = new BlockPlacementPlanner.Inner_TaskQueue(
+               BlockPlacementPlanner.SupportCandidate clipped = new BlockPlacementPlanner.SupportCandidate(
                   option.init_BlockPos(),
                   option.load_BlockPos(),
                   option.init_Direction(),
@@ -638,14 +638,14 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
                   option.init_Z(),
                   option.init_U_BufferHelper()
                );
-               BlockPlacementPlanner.Inner_DataUtil aim = BlockPlacementPlanner.init(clipped, request, refusal);
+               BlockPlacementPlanner.AimSample aim = BlockPlacementPlanner.init(clipped, request, refusal);
                if (aim != null) {
-                  BlockPlacementPlanner.Inner_CachePool candidate = BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(clipped, aim, request, refusal);
+                  BlockPlacementPlanner.PlacementPlan candidate = BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(clipped, aim, request, refusal);
                   if (candidate != null) {
                      return candidate;
                   }
 
-                  if (refusal[0] == BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET) {
+                  if (refusal[0] == BlockPlacementPlanner.RejectReason.NO_BUDGET) {
                      break;
                   }
                }
@@ -658,7 +658,7 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       }
    }
 
-   static boolean init(Minecraft mc, BlockPos target, Item item, PlacementGoal.Inner_DataUtil constraint, Vec3 eye, AABB body, BlockHitResult hit) {
+   static boolean init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 eye, AABB body, BlockHitResult hit) {
       if (hit == null || target == null) {
          return false;
       } else if (!(item instanceof BlockItem blockItem)) {
@@ -722,13 +722,13 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       }
    }
 
-   public record Inner_CachePool(BlockPos pos, Item item, PlacementGoal.Inner_DataUtil constraint, BlockState requested) {
-      public Inner_CachePool(BlockPos pos, Item item, PlacementGoal.Inner_DataUtil constraint) {
+   public record PlacementRequest(BlockPos pos, Item item, PlacementGoal.PlaceConstraint constraint, BlockState requested) {
+      public PlacementRequest(BlockPos pos, Item item, PlacementGoal.PlaceConstraint constraint) {
          this(pos, item, constraint, null);
       }
    }
 
-   public record Inner_DataUtil(
+   public record PlaceConstraint(
       Direction clickFace,
       Direction playerFacing,
       Axis axis,
@@ -739,21 +739,21 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       Float yaw,
       double yawTolerance
    ) {
-      public Inner_DataUtil(
+      public PlaceConstraint(
          Direction clickFace, Direction playerFacing, Axis axis, Boolean highHalf, boolean fullDirection, Direction horizontalFace, Short placedShape
       ) {
          this(clickFace, playerFacing, axis, highHalf, fullDirection, horizontalFace, placedShape, null, 35.0);
       }
 
-      public Inner_DataUtil(Direction clickFace, Direction playerFacing, Axis axis, Boolean highHalf, boolean fullDirection, Direction horizontalFace) {
+      public PlaceConstraint(Direction clickFace, Direction playerFacing, Axis axis, Boolean highHalf, boolean fullDirection, Direction horizontalFace) {
          this(clickFace, playerFacing, axis, highHalf, fullDirection, horizontalFace, null);
       }
 
-      public Inner_DataUtil(Direction clickFace, Direction playerFacing, Axis axis, Boolean highHalf) {
+      public PlaceConstraint(Direction clickFace, Direction playerFacing, Axis axis, Boolean highHalf) {
          this(clickFace, playerFacing, axis, highHalf, false, null);
       }
 
-      public Inner_DataUtil(Direction clickFace, Direction playerFacing, Axis axis, Boolean highHalf, boolean fullDirection) {
+      public PlaceConstraint(Direction clickFace, Direction playerFacing, Axis axis, Boolean highHalf, boolean fullDirection) {
          this(clickFace, playerFacing, axis, highHalf, fullDirection, null);
       }
 
@@ -805,8 +805,8 @@ public final class PlacementGoal implements AiPathfinder.Inner_JsonUtil {
       }
    }
 
-   record Inner_StreamUtil(BlockPos support, Vec3 point, Direction face, double floorOffset, double eyeHeight) {
-      Inner_StreamUtil {
+   record ClickGeometry(BlockPos support, Vec3 point, Direction face, double floorOffset, double eyeHeight) {
+      ClickGeometry {
          support = support.immutable();
       }
    }

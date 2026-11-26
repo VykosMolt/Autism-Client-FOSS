@@ -24,7 +24,7 @@ public class WaitEntityTargetAction implements MacroAction {
 
    public boolean init(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
-         MacroTemplateResolver.Inner_CachePool entityResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.entityId, mc);
+         MacroTemplateResolver.ResolveResult entityResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.entityId, mc);
          if (!entityResolution.init_Z()) {
             return false;
          }

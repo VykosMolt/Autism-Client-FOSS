@@ -60,9 +60,9 @@ public final class ExplosionDamageCalculator {
    private static final int load_I = 256;
    private static final long init_J = -1L;
    private static final Object init_Obj = new Object();
-   private static final Map<ExplosionDamageCalculator.Inner_DataUtil, Double> init_Map = new LinkedHashMap<ExplosionDamageCalculator.Inner_DataUtil, Double>(256, 1.0F, true) {
+   private static final Map<ExplosionDamageCalculator.EntitySample, Double> init_Map = new LinkedHashMap<ExplosionDamageCalculator.EntitySample, Double>(256, 1.0F, true) {
       @Override
-      protected boolean removeEldestEntry(Entry<ExplosionDamageCalculator.Inner_DataUtil, Double> eldest) {
+      protected boolean removeEldestEntry(Entry<ExplosionDamageCalculator.EntitySample, Double> eldest) {
          return this.size() > 256;
       }
    };
@@ -80,14 +80,14 @@ public final class ExplosionDamageCalculator {
    }
 
    public static double init_D_LivingEntity(LivingEntity target, Vec3 explosionPos, float power) {
-      return init_D(target, explosionPos, power, ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool);
+      return init_D(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
    }
 
-   public static double init_D(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
-      return init(target, explosionPos, power, options == null ? ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool : options, true);
+   public static double init_D(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      return init(target, explosionPos, power, options == null ? ExplosionDamageCalculator.SimOptions.init_S_CachePool : options, true);
    }
 
-   private static double init(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options, boolean sampleExposure) {
+   private static double init(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options, boolean sampleExposure) {
       if (target != null && explosionPos != null && power > 0.0F) {
          Level level = target.level();
          if (level != null && !init_Z_LivingEntity(target)) {
@@ -114,7 +114,7 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   private static double init_D_LivingEntity_2(LivingEntity target, Vec3 explosionPos, ExplosionDamageCalculator.Inner_CachePool options) {
+   private static double init_D_LivingEntity_2(LivingEntity target, Vec3 explosionPos, ExplosionDamageCalculator.SimOptions options) {
       AABB box = options.init_AABB();
       if (box == null) {
          return target.distanceToSqr(explosionPos);
@@ -127,24 +127,24 @@ public final class ExplosionDamageCalculator {
    }
 
    public static double init_D_Vec3_F(Vec3 explosionPos, float power) {
-      return init_D_Vec3(explosionPos, power, ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool);
+      return init_D_Vec3(explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
    }
 
-   public static double init_D_Vec3(Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static double init_D_Vec3(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       return init_D(Minecraft.getInstance().player, explosionPos, power, options);
    }
 
    public static boolean init_Z_LivingEntity_2(LivingEntity target, Vec3 explosionPos, float power) {
-      return init_Z(target, explosionPos, power, ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool);
+      return init_Z(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
    }
 
-   public static boolean init_Z(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static boolean init_Z(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       double health = init_D_LivingEntity(target);
       return health <= 0.0 ? false : init_D(target, explosionPos, power, options) >= health;
    }
 
    public static boolean init_Z_Vec3_F(Vec3 explosionPos, float power) {
-      return init_Z(Minecraft.getInstance().player, explosionPos, power, ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool);
+      return init_Z(Minecraft.getInstance().player, explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
    }
 
    public static double init_D_LivingEntity(LivingEntity target) {
@@ -159,11 +159,11 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   public static boolean load_Z(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static boolean load_Z(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       return init_Z_LivingEntity(target, init_D(target, explosionPos, power, options), options);
    }
 
-   public static boolean init_Z_LivingEntity(LivingEntity target, double predictedDamage, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static boolean init_Z_LivingEntity(LivingEntity target, double predictedDamage, ExplosionDamageCalculator.SimOptions options) {
       if (target != null && predictedDamage > 0.0) {
          double health = init_D_LivingEntity(target);
          if (health <= 0.0) {
@@ -176,7 +176,7 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   public static boolean init_Z_Vec3(Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static boolean init_Z_Vec3(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       return init_Z_D(init_D_Vec3(explosionPos, power, options));
    }
 
@@ -195,51 +195,51 @@ public final class ExplosionDamageCalculator {
       return player == null ? false : player.getMainHandItem().is(Items.TOTEM_OF_UNDYING) || player.getOffhandItem().is(Items.TOTEM_OF_UNDYING);
    }
 
-   public static ExplosionDamageCalculator.Inner_StreamUtil init_S_StreamUtil(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static ExplosionDamageCalculator.SafetyResult init_S_StreamUtil(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       return init_S_StreamUtil_S_BufferHelper(init_S_BufferHelper(target, explosionPos, power, options), target, options);
    }
 
-   public static ExplosionDamageCalculator.Inner_StreamUtil load_S_StreamUtil(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static ExplosionDamageCalculator.SafetyResult load_S_StreamUtil(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       return init_S_StreamUtil_S_BufferHelper(load_S_BufferHelper(target, explosionPos, power, options), target, options);
    }
 
-   public static ExplosionDamageCalculator.Inner_StreamUtil init_S_StreamUtil_S_BufferHelper(ExplosionDamageCalculator.Inner_BufferHelper ranking, LivingEntity target, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static ExplosionDamageCalculator.SafetyResult init_S_StreamUtil_S_BufferHelper(ExplosionDamageCalculator.DamagePair ranking, LivingEntity target, ExplosionDamageCalculator.SimOptions options) {
       return ranking == null
-         ? new ExplosionDamageCalculator.Inner_StreamUtil(false, false, 0.0, 0.0)
-         : new ExplosionDamageCalculator.Inner_StreamUtil(init_Z_LivingEntity(target, ranking.load(), options), init_Z_D(ranking.read()), ranking.load(), ranking.read());
+         ? new ExplosionDamageCalculator.SafetyResult(false, false, 0.0, 0.0)
+         : new ExplosionDamageCalculator.SafetyResult(init_Z_LivingEntity(target, ranking.load(), options), init_Z_D(ranking.read()), ranking.load(), ranking.read());
    }
 
-   public static ExplosionDamageCalculator.Inner_BufferHelper init_S_BufferHelper_LivingEntity(LivingEntity target, Vec3 explosionPos, float power) {
-      return init_S_BufferHelper(target, explosionPos, power, ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool);
+   public static ExplosionDamageCalculator.DamagePair init_S_BufferHelper_LivingEntity(LivingEntity target, Vec3 explosionPos, float power) {
+      return init_S_BufferHelper(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
    }
 
-   public static ExplosionDamageCalculator.Inner_BufferHelper init_S_BufferHelper(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static ExplosionDamageCalculator.DamagePair init_S_BufferHelper(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       double targetDamage = init_D(target, explosionPos, power, options);
       LocalPlayer player = Minecraft.getInstance().player;
       double self = target == player ? targetDamage : init_D(player, explosionPos, power, options);
-      return new ExplosionDamageCalculator.Inner_BufferHelper(targetDamage, self);
+      return new ExplosionDamageCalculator.DamagePair(targetDamage, self);
    }
 
    public static double load(LivingEntity target, Vec3 explosionPos, float power) {
-      return load_D(target, explosionPos, power, ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool);
+      return load_D(target, explosionPos, power, ExplosionDamageCalculator.SimOptions.init_S_CachePool);
    }
 
-   public static double load_D(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
-      return init(target, explosionPos, power, options == null ? ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool : options, false);
+   public static double load_D(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
+      return init(target, explosionPos, power, options == null ? ExplosionDamageCalculator.SimOptions.init_S_CachePool : options, false);
    }
 
-   public static double load(Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static double load(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       return load_D(Minecraft.getInstance().player, explosionPos, power, options);
    }
 
-   public static ExplosionDamageCalculator.Inner_ConfigStore init_S_ConfigStore() {
+   public static ExplosionDamageCalculator.SimScope init_S_ConfigStore() {
       Minecraft mc = Minecraft.getInstance();
       Level level = mc.level;
       int tick = init_I_Minecraft(mc);
       synchronized (init_Obj) {
          load_J = init_AtomicLong.incrementAndGet();
          init_V_Level_I(level, tick);
-         return new ExplosionDamageCalculator.Inner_ConfigStore(load_J);
+         return new ExplosionDamageCalculator.SimScope(load_J);
       }
    }
 
@@ -256,9 +256,9 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   public static double read(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static double read(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       if (target != null && explosionPos != null && power > 0.0F) {
-         ExplosionDamageCalculator.Inner_CachePool opts = options == null ? ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool : options;
+         ExplosionDamageCalculator.SimOptions opts = options == null ? ExplosionDamageCalculator.SimOptions.init_S_CachePool : options;
          Minecraft mc = Minecraft.getInstance();
          Level level = mc.level;
          long generation;
@@ -279,7 +279,7 @@ public final class ExplosionDamageCalculator {
             return init_D(target, explosionPos, power, opts);
          }
 
-         ExplosionDamageCalculator.Inner_DataUtil key = new ExplosionDamageCalculator.Inner_DataUtil(target, target.getBoundingBox(), explosionPos, power, opts, init_J_LivingEntity(target));
+         ExplosionDamageCalculator.EntitySample key = new ExplosionDamageCalculator.EntitySample(target, target.getBoundingBox(), explosionPos, power, opts, init_J_LivingEntity(target));
          synchronized (init_Obj) {
             if (read_J != generation) {
                return init_D(target, explosionPos, power, opts);
@@ -324,15 +324,15 @@ public final class ExplosionDamageCalculator {
       read_I = tick;
    }
 
-   public static double read(Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static double read(Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       return read(Minecraft.getInstance().player, explosionPos, power, options);
    }
 
-   public static ExplosionDamageCalculator.Inner_BufferHelper load_S_BufferHelper(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static ExplosionDamageCalculator.DamagePair load_S_BufferHelper(LivingEntity target, Vec3 explosionPos, float power, ExplosionDamageCalculator.SimOptions options) {
       double targetDamage = read(target, explosionPos, power, options);
       LocalPlayer player = Minecraft.getInstance().player;
       double self = target == player ? targetDamage : read(player, explosionPos, power, options);
-      return new ExplosionDamageCalculator.Inner_BufferHelper(targetDamage, self);
+      return new ExplosionDamageCalculator.DamagePair(targetDamage, self);
    }
 
    public static void init_V() {
@@ -345,7 +345,7 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   private static boolean init_Z_S_DataUtil_LivingEntity(ExplosionDamageCalculator.Inner_DataUtil key, LivingEntity target) {
+   private static boolean init_Z_S_DataUtil_LivingEntity(ExplosionDamageCalculator.EntitySample key, LivingEntity target) {
       return !key.init_AABB().equals(target.getBoundingBox()) ? true : key.init_J() != init_J_LivingEntity(target);
    }
 
@@ -387,14 +387,14 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   public static float init_F_LivingEntity_2(LivingEntity target, Vec3 explosionPos, ExplosionDamageCalculator.Inner_CachePool options) {
+   public static float init_F_LivingEntity_2(LivingEntity target, Vec3 explosionPos, ExplosionDamageCalculator.SimOptions options) {
       if (target != null && explosionPos != null) {
          Level level = target.level();
          if (level == null) {
             return 0.0F;
          }
 
-         ExplosionDamageCalculator.Inner_CachePool opts = options == null ? ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool : options;
+         ExplosionDamageCalculator.SimOptions opts = options == null ? ExplosionDamageCalculator.SimOptions.init_S_CachePool : options;
          if (!opts.init_Z()) {
             return ServerExplosion.getSeenPercent(explosionPos, target);
          }
@@ -435,7 +435,7 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   private static BlockHitResult init_BlockHitResult_Level(Level level, ClipContext context, ExplosionDamageCalculator.Inner_CachePool options) {
+   private static BlockHitResult init_BlockHitResult_Level(Level level, ClipContext context, ExplosionDamageCalculator.SimOptions options) {
       List<BlockPos> exclude = options.init_List();
       BlockPos include = options.init_BlockPos();
       Float maxBlastResistance = options.init_Float();
@@ -633,7 +633,7 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   public record Inner_BufferHelper(double init, double load) {
+   public record DamagePair(double init, double load) {
       public double init_D() {
          return this.init - this.load;
       }
@@ -655,41 +655,41 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   public record Inner_CachePool(
+   public record SimOptions(
       List<BlockPos> init_List, BlockPos init_BlockPos, Float init_Float, AABB init_AABB, DamageSource init_DamageSource, boolean init_Z
    ) {
-      public static final ExplosionDamageCalculator.Inner_CachePool init_S_CachePool = new ExplosionDamageCalculator.Inner_CachePool(List.of(), null, null, null, null, true);
+      public static final ExplosionDamageCalculator.SimOptions init_S_CachePool = new ExplosionDamageCalculator.SimOptions(List.of(), null, null, null, null, true);
 
-      public Inner_CachePool {
+      public SimOptions {
          init_List = init_List == null ? List.of() : List.copyOf(init_List);
       }
 
-      public ExplosionDamageCalculator.Inner_CachePool init(List<BlockPos> positions) {
-         return new ExplosionDamageCalculator.Inner_CachePool(positions, this.init_BlockPos, this.init_Float, this.init_AABB, this.init_DamageSource, this.init_Z);
+      public ExplosionDamageCalculator.SimOptions init(List<BlockPos> positions) {
+         return new ExplosionDamageCalculator.SimOptions(positions, this.init_BlockPos, this.init_Float, this.init_AABB, this.init_DamageSource, this.init_Z);
       }
 
-      public ExplosionDamageCalculator.Inner_CachePool init(BlockPos pos) {
-         return new ExplosionDamageCalculator.Inner_CachePool(this.init_List, pos, this.init_Float, this.init_AABB, this.init_DamageSource, this.init_Z);
+      public ExplosionDamageCalculator.SimOptions init(BlockPos pos) {
+         return new ExplosionDamageCalculator.SimOptions(this.init_List, pos, this.init_Float, this.init_AABB, this.init_DamageSource, this.init_Z);
       }
 
-      public ExplosionDamageCalculator.Inner_CachePool init(Float resistance) {
-         return new ExplosionDamageCalculator.Inner_CachePool(this.init_List, this.init_BlockPos, resistance, this.init_AABB, this.init_DamageSource, this.init_Z);
+      public ExplosionDamageCalculator.SimOptions init(Float resistance) {
+         return new ExplosionDamageCalculator.SimOptions(this.init_List, this.init_BlockPos, resistance, this.init_AABB, this.init_DamageSource, this.init_Z);
       }
 
-      public ExplosionDamageCalculator.Inner_CachePool init(boolean terrain) {
+      public ExplosionDamageCalculator.SimOptions init(boolean terrain) {
          return this.init(terrain ? 9.0F : null);
       }
 
-      public ExplosionDamageCalculator.Inner_CachePool init(AABB box) {
-         return new ExplosionDamageCalculator.Inner_CachePool(this.init_List, this.init_BlockPos, this.init_Float, box, this.init_DamageSource, this.init_Z);
+      public ExplosionDamageCalculator.SimOptions init(AABB box) {
+         return new ExplosionDamageCalculator.SimOptions(this.init_List, this.init_BlockPos, this.init_Float, box, this.init_DamageSource, this.init_Z);
       }
 
-      public ExplosionDamageCalculator.Inner_CachePool init(DamageSource source) {
-         return new ExplosionDamageCalculator.Inner_CachePool(this.init_List, this.init_BlockPos, this.init_Float, this.init_AABB, source, this.init_Z);
+      public ExplosionDamageCalculator.SimOptions init(DamageSource source) {
+         return new ExplosionDamageCalculator.SimOptions(this.init_List, this.init_BlockPos, this.init_Float, this.init_AABB, source, this.init_Z);
       }
 
-      public ExplosionDamageCalculator.Inner_CachePool load(boolean estimate) {
-         return new ExplosionDamageCalculator.Inner_CachePool(this.init_List, this.init_BlockPos, this.init_Float, this.init_AABB, this.init_DamageSource, estimate);
+      public ExplosionDamageCalculator.SimOptions load(boolean estimate) {
+         return new ExplosionDamageCalculator.SimOptions(this.init_List, this.init_BlockPos, this.init_Float, this.init_AABB, this.init_DamageSource, estimate);
       }
 
       public boolean init_Z() {
@@ -701,10 +701,10 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   public static final class Inner_ConfigStore implements AutoCloseable {
+   public static final class SimScope implements AutoCloseable {
       private final long init;
 
-      private Inner_ConfigStore(long id) {
+      private SimScope(long id) {
          this.init = id;
       }
 
@@ -714,10 +714,10 @@ public final class ExplosionDamageCalculator {
       }
    }
 
-   private record Inner_DataUtil(LivingEntity init_LivingEntity, AABB init_AABB, Vec3 init_Vec3, float init_F, ExplosionDamageCalculator.Inner_CachePool init_S_CachePool, long init_J) {
+   private record EntitySample(LivingEntity init_LivingEntity, AABB init_AABB, Vec3 init_Vec3, float init_F, ExplosionDamageCalculator.SimOptions init_S_CachePool, long init_J) {
    }
 
-   public record Inner_StreamUtil(boolean init_Z, boolean load_Z, double init_D, double load_D) {
+   public record SafetyResult(boolean init_Z, boolean load_Z, double init_D, double load_D) {
       public boolean init_Z() {
          return this.init_Z && !this.load_Z;
       }

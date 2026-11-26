@@ -54,7 +54,7 @@ final class AiPrintSupply {
    private static final Direction[] init_DirectionArr = Direction.values();
    private final Minecraft init_Minecraft = Minecraft.getInstance();
    private final AiPrintSupply.Inner_CachePool init_bj_CachePool;
-   private final Map<Long, AiBuilder.Inner_StreamUtil> init_Map;
+   private final Map<Long, AiBuilder.CellSpec> init_Map;
    private final AiPrintSupply.Inner_TaskQueue init_bj_TaskQueue = new AiPrintSupply.Inner_TaskQueue();
    private List<BlockPos> init_List;
    private int read;
@@ -70,17 +70,17 @@ final class AiPrintSupply {
       return this.write;
    }
 
-   static void init_V_TableIndex_ConfigS(AiBuilder.Inner_ConfigStore power) {
+   static void init_V_TableIndex_ConfigS(AiBuilder.BuildOptions power) {
       if (!power.substitutes().isEmpty()) {
          throw new IllegalArgumentException("The schematic printer requires exact materials; remove substitutes or use the legacy builder");
       }
    }
 
-   AiPrintSupply(AiBuilder.Inner_DataUtil blueprint) {
+   AiPrintSupply(AiBuilder.Blueprint blueprint) {
       this(blueprint, false);
    }
 
-   AiPrintSupply(AiBuilder.Inner_DataUtil blueprint, boolean clearTerrain) {
+   AiPrintSupply(AiBuilder.Blueprint blueprint, boolean clearTerrain) {
       ClientLevel world = this.init_Minecraft.level;
       this.init_bj_CachePool = new AiPrintSupply.Inner_CachePool(
          blueprint,
@@ -505,7 +505,7 @@ final class AiPrintSupply {
                   this.init_Z = true;
                }
             } else if (this.init_I < this.init_bj_CachePool.init_TableIndex_DataUti.cells().size() && this.load_I + this.read < 576) {
-               AiBuilder.Inner_StreamUtil cell = this.init_bj_CachePool.init_TableIndex_DataUti.cells().get(this.init_I++);
+               AiBuilder.CellSpec cell = this.init_bj_CachePool.init_TableIndex_DataUti.cells().get(this.init_I++);
                BlockPos p = this.init_bj_CachePool.init_BlockPos_TableIndex_StreamU(cell);
                BlockState live = this.init_bj_CachePool.init_Predicate.test(p) ? this.init_bj_CachePool.init_BlockState_BlockPos(p) : null;
                if (live == null || !AiBuilder.update(cell, live)) {
@@ -537,10 +537,10 @@ final class AiPrintSupply {
 
    static final class Inner_CachePool {
       static final int init_I = 32;
-      final AiBuilder.Inner_DataUtil init_TableIndex_DataUti;
+      final AiBuilder.Blueprint init_TableIndex_DataUti;
       final LevelReader init_LevelReader;
       final Predicate<BlockPos> init_Predicate;
-      final Map<Long, AiBuilder.Inner_StreamUtil> init_Map = new AiPrintSupply.Inner_ConfigStore<>();
+      final Map<Long, AiBuilder.CellSpec> init_Map = new AiPrintSupply.Inner_ConfigStore<>();
       final Set<Long> init_Set = AiPrintSupply.load_Set();
       final Set<Long> load_Set = AiPrintSupply.load_Set();
       final Set<Long> read_Set = AiPrintSupply.load_Set();
@@ -621,7 +621,7 @@ final class AiPrintSupply {
       private BlockPos init_BlockPos;
       private AuditBuilderHull auditHull;
 
-      Inner_CachePool(AiBuilder.Inner_DataUtil blueprint, LevelReader world, Predicate<BlockPos> loaded, BlockPos initialCenter, boolean clearTerrain) {
+      Inner_CachePool(AiBuilder.Blueprint blueprint, LevelReader world, Predicate<BlockPos> loaded, BlockPos initialCenter, boolean clearTerrain) {
          this.init_TableIndex_DataUti = blueprint;
          this.init_LevelReader = world;
          this.init_Predicate = loaded;
@@ -663,7 +663,7 @@ final class AiPrintSupply {
             this.push++;
             if (!this.load()) {
                if (this.load_I < this.init_TableIndex_DataUti.cells().size()) {
-                  AiBuilder.Inner_StreamUtil cell = this.init_TableIndex_DataUti.cells().get(this.load_I++);
+                  AiBuilder.CellSpec cell = this.init_TableIndex_DataUti.cells().get(this.load_I++);
                   BlockPos p = this.init_BlockPos_TableIndex_StreamU(cell);
                   this.init_Map.put(p.asLong(), cell);
                   this.load_Set.add(p.asLong());
@@ -703,7 +703,7 @@ final class AiPrintSupply {
          }
       }
 
-      BlockPos init_BlockPos_TableIndex_StreamU(AiBuilder.Inner_StreamUtil cell) {
+      BlockPos init_BlockPos_TableIndex_StreamU(AiBuilder.CellSpec cell) {
          return this.init_TableIndex_DataUti.origin().offset(cell.dx(), cell.dy(), cell.dz());
       }
 

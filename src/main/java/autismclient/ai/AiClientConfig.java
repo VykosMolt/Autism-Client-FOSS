@@ -544,7 +544,7 @@ final class AiClientConfig {
                   throw new IllegalArgumentException("mode must be TICKS or MS");
                }
 
-               shared.init_V_ck_DataUtil(autismclient.util.AutismSessionState.Inner_DataUtil.valueOf(mode));
+               shared.init_V_ck_DataUtil(autismclient.util.AutismSessionState.DelayUnit.valueOf(mode));
                break;
             default:
                throw new IllegalArgumentException("Unknown action '" + action + "'; use state, send, delay, flush, clear or delayMode");

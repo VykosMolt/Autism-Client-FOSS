@@ -177,7 +177,7 @@ final class BedProximityTracker {
             for (int dz = -radius; dz <= radius; dz++) {
                LevelChunk chunk = mc.level.getChunkSource().getChunk(cx + dx, cz + dz, ChunkStatus.FULL, false);
                if (chunk != null) {
-                  for (EspChunkWorker.Inner_CachePool entry : init_List_LevelChunk_J(chunk, mc.level.getGameTime())) {
+                  for (EspChunkWorker.EspBox entry : init_List_LevelChunk_J(chunk, mc.level.getGameTime())) {
                      BlockPos at = BlockPos.containing(entry.init_Vec3());
                      BlockState state = mc.level.getBlockState(at);
                      if (state.getBlock() instanceof BedBlock block && block.getColor() == this.init_DyeColor) {
@@ -195,7 +195,7 @@ final class BedProximityTracker {
       }
    }
 
-   static List<EspChunkWorker.Inner_CachePool> init_List_LevelChunk_J(LevelChunk chunk, long time) {
+   static List<EspChunkWorker.EspBox> init_List_LevelChunk_J(LevelChunk chunk, long time) {
       return EspChunkWorker.load
          .init(
             chunk,
@@ -214,7 +214,7 @@ final class BedProximityTracker {
                                  BlockPos at = new BlockPos(
                                     c.getPos().getMinBlockX() + x, (c.getSectionYFromSectionIndex(section) << 4) + y, c.getPos().getMinBlockZ() + z
                                  );
-                                 out.add(new EspChunkWorker.Inner_CachePool(new AABB(at), Vec3.atCenterOf(at), 0));
+                                 out.add(new EspChunkWorker.EspBox(new AABB(at), Vec3.atCenterOf(at), 0));
                                  if (out.size() >= 128) {
                                     return;
                                  }

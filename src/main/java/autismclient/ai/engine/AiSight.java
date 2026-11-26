@@ -305,7 +305,7 @@ public final class AiSight {
       }
    }
 
-   public static AiPathfinder.Inner_PoolEntry init(BlockGetter level, List<Vec3> shooterEyes) {
+   public static AiPathfinder.ThreatField init(BlockGetter level, List<Vec3> shooterEyes) {
       List<Double> charges = new ArrayList<>();
 
       for (int i = 0; i < shooterEyes.size(); i++) {
@@ -315,11 +315,11 @@ public final class AiSight {
       return init(level, shooterEyes, charges);
    }
 
-   public static AiPathfinder.Inner_PoolEntry init(BlockGetter level, List<Vec3> shooterEyes, List<Double> shooterCharges) {
+   public static AiPathfinder.ThreatField init(BlockGetter level, List<Vec3> shooterEyes, List<Double> shooterCharges) {
       List<Vec3> eyes = List.copyOf(shooterEyes);
       List<Double> charges = List.copyOf(shooterCharges);
       if (eyes.isEmpty()) {
-         return AiPathfinder.Inner_PoolEntry.write;
+         return AiPathfinder.ThreatField.write;
       }
 
       Map<Long, Double> memo = new ConcurrentHashMap<>();

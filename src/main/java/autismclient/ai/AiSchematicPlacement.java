@@ -43,8 +43,8 @@ final class AiSchematicPlacement extends AiPlacementSession {
    private static boolean init_Z;
    private final ClientLevel init_ClientLevel;
    private final String init_Str;
-   private List<AiBuilder.Inner_StreamUtil> init_List = List.of();
-   private List<AiBuilder.Inner_StreamUtil> load_List = List.of();
+   private List<AiBuilder.CellSpec> init_List = List.of();
+   private List<AiBuilder.CellSpec> load_List = List.of();
    private BlockPos init_BlockPos;
    private int init_I;
    private int load_I;
@@ -67,15 +67,15 @@ final class AiSchematicPlacement extends AiPlacementSession {
    private boolean close;
    private double init_D = 6.0;
    private Vec3 init_Vec3;
-   private List<AiBuilder.Inner_StreamUtil> write_List;
+   private List<AiBuilder.CellSpec> write_List;
    private int read_I;
    private int write_I;
    private int update_I;
-   private final AiLatestTransform<AiSchematicPlacement.Inner_StreamUtil, List<AiBuilder.Inner_StreamUtil>> init_aj = new AiLatestTransform<>(
+   private final AiLatestTransform<AiSchematicPlacement.Inner_StreamUtil, List<AiBuilder.CellSpec>> init_aj = new AiLatestTransform<>(
       ForkJoinPool.commonPool(),
       action -> Minecraft.getInstance().execute(action),
       request -> AiBuilder.init_TableIndex_DataUti(
-            new AiBuilder.Inner_DataUtil(
+            new AiBuilder.Blueprint(
                BlockPos.ZERO, AiBuilder.init_List_List(AiBuilder.init_List_List_2(request.from(), request.turn(), request.flip()), 2097152, 4096)
             )
          )
@@ -122,8 +122,8 @@ final class AiSchematicPlacement extends AiPlacementSession {
                      long modified = Files.getLastModifiedTime(path).toMillis();
                      AiSchematic.Inner_BufferHelper schematic = AiSchematic.init_bP_BufferHelper(path, BlockPos.ZERO, 0, "none", false, 2097152);
                      if (Files.size(path) == size && Files.getLastModifiedTime(path).toMillis() == modified) {
-                        AiBuilder.Inner_DataUtil survival = AiBuilder.init_TableIndex_DataUti(
-                           new AiBuilder.Inner_DataUtil(BlockPos.ZERO, AiBuilder.init_List_List(schematic.blueprint().cells(), 2097152, 4096))
+                        AiBuilder.Blueprint survival = AiBuilder.init_TableIndex_DataUti(
+                           new AiBuilder.Blueprint(BlockPos.ZERO, AiBuilder.init_List_List(schematic.blueprint().cells(), 2097152, 4096))
                         );
                         String impossible = AiSchematicReadiness.init(AiSchematicReadiness.init_bX_TaskQueue(survival, 1, null));
                         return new AiSchematicPlacement.Inner_DataUtil(path, size, modified, schematic.blueprint().cells(), schematic.entities(), impossible);
@@ -483,7 +483,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       this.init_aj.init(new AiSchematicPlacement.Inner_StreamUtil(this.init_List, this.init_I, this.load_Str));
    }
 
-   private void init_V_List_Throwable(List<AiBuilder.Inner_StreamUtil> result, Throwable failure) {
+   private void init_V_List_Throwable(List<AiBuilder.CellSpec> result, Throwable failure) {
       if (!this.read_Z && Minecraft.getInstance().level == this.init_ClientLevel) {
          if (failure != null) {
             this.write_Z = true;
@@ -519,7 +519,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       if (this.write_List != this.load_List) {
          this.read_I = this.write_I = this.update_I = 0;
 
-         for (AiBuilder.Inner_StreamUtil c : this.load_List) {
+         for (AiBuilder.CellSpec c : this.load_List) {
             this.read_I = Math.max(this.read_I, c.dx() + 1);
             this.write_I = Math.max(this.write_I, c.dy() + 1);
             this.update_I = Math.max(this.update_I, c.dz() + 1);
@@ -555,14 +555,14 @@ final class AiSchematicPlacement extends AiPlacementSession {
             this.init_aQ_CachePool = null;
             this.init_aQ = null;
             this.update_Z = true;
-            CompletableFuture.<List<List<AiBuilder.Inner_StreamUtil>>>supplyAsync(
+            CompletableFuture.<List<List<AiBuilder.CellSpec>>>supplyAsync(
                   () -> {
-                     List<List<AiBuilder.Inner_StreamUtil>> variants = new ArrayList<>();
+                     List<List<AiBuilder.CellSpec>> variants = new ArrayList<>();
 
                      for (int turn = 0; turn < 360; turn += 90) {
                         variants.add(
                            AiBuilder.init_TableIndex_DataUti(
-                                 new AiBuilder.Inner_DataUtil(
+                                 new AiBuilder.Blueprint(
                                     BlockPos.ZERO, AiBuilder.init(AiBuilder.init_List_List_2(this.init_List, turn, selectedMirror), 2097152)
                                  )
                               )
@@ -587,11 +587,11 @@ final class AiSchematicPlacement extends AiPlacementSession {
       }
    }
 
-   private void init_V_BlockPos_List(BlockPos player, List<List<AiBuilder.Inner_StreamUtil>> variants) {
+   private void init_V_BlockPos_List(BlockPos player, List<List<AiBuilder.CellSpec>> variants) {
       List<AiPlacementSearch.Inner_DataUtil> sites = new ArrayList<>();
 
       for (int turn = 0; turn < 360; turn += 90) {
-         List<AiBuilder.Inner_StreamUtil> transformed = variants.get(turn / 90);
+         List<AiBuilder.CellSpec> transformed = variants.get(turn / 90);
 
          for (int dx = -24; dx <= 24; dx += 4) {
             for (int dz = -24; dz <= 24; dz += 4) {
@@ -649,7 +649,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    private AiPlacementSearch.Inner_ConfigStore init_aQ_ConfigStore() {
       return new AiPlacementSearch.Inner_ConfigStore() {
          @Override
-         public AiPlacementSearch.Inner_StreamUtil init_aQ_StreamUtil(BlockPos p, AiBuilder.Inner_StreamUtil cell) {
+         public AiPlacementSearch.Inner_StreamUtil init_aQ_StreamUtil(BlockPos p, AiBuilder.CellSpec cell) {
             if (AiTerrain.init(AiSchematicPlacement.this.init_ClientLevel, p)
                && !AiSchematicPlacement.this.init_ClientLevel.isOutsideBuildHeight(p)
                && AiSchematicPlacement.this.init_ClientLevel.getWorldBorder().isWithinBounds(p)) {
@@ -675,7 +675,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
          }
 
          @Override
-         public boolean init_Z(BlockPos p, AiBuilder.Inner_StreamUtil cell) {
+         public boolean init_Z(BlockPos p, AiBuilder.CellSpec cell) {
             BlockState below = AiSchematicPlacement.this.init_ClientLevel.getBlockState(p.below());
             return cell.dy() == 0
                && below.getCollisionShape(AiSchematicPlacement.this.init_ClientLevel, p.below()).isEmpty()
@@ -702,7 +702,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
          if (Files.size(this.init_Path) == this.init_J && Files.getLastModifiedTime(this.init_Path).toMillis() == this.load_J) {
             AiPlacementSearch.Inner_ConfigStore view = this.init_aQ_ConfigStore();
 
-            for (AiBuilder.Inner_StreamUtil cell : this.load_List) {
+            for (AiBuilder.CellSpec cell : this.load_List) {
                if (view.init_aQ_StreamUtil(this.init_BlockPos.offset(cell.dx(), cell.dy(), cell.dz()), cell) == AiPlacementSearch.Inner_StreamUtil.UNSAFE) {
                   return "Placement overlaps protected blocks, fluids or unloaded terrain. Move the preview.";
                }
@@ -775,11 +775,11 @@ final class AiSchematicPlacement extends AiPlacementSession {
       );
       out.add("Temporary support blocks may also be needed.");
       TreeMap<String, Integer> gaps = new TreeMap<>();
-      HashMap<AiBuilder.Inner_StreamUtil, List<String>> checked = new HashMap<>();
+      HashMap<AiBuilder.CellSpec, List<String>> checked = new HashMap<>();
       int contents = 0;
 
-      for (AiBuilder.Inner_StreamUtil cell : this.load_List) {
-         AiBuilder.Inner_StreamUtil key = new AiBuilder.Inner_StreamUtil(0, 0, 0, cell.block(), cell.properties());
+      for (AiBuilder.CellSpec cell : this.load_List) {
+         AiBuilder.CellSpec key = new AiBuilder.CellSpec(0, 0, 0, cell.block(), cell.properties());
 
          for (String gap : checked.computeIfAbsent(key, AiBuilder::init_List)) {
             gaps.merge(cell.block().replace("minecraft:", "") + " " + gap, 1, Integer::sum);
@@ -829,7 +829,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    }
 
    static int init_I_Inventory_Str(Inventory inventory, String itemSpec) {
-      AiItems.Inner_DataUtil target = AiItems.load_af_DataUtil(itemSpec);
+      AiItems.ItemSpec target = AiItems.load_af_DataUtil(itemSpec);
       int count = 0;
 
       for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
@@ -858,19 +858,19 @@ final class AiSchematicPlacement extends AiPlacementSession {
       return var10000;
    }
 
-   static Map<Item, Integer> init_Map_List(List<AiBuilder.Inner_StreamUtil> cells) {
+   static Map<Item, Integer> init_Map_List(List<AiBuilder.CellSpec> cells) {
       ArrayList<AiCellMaterials.Inner_CachePool> plans = new ArrayList<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          plans.addAll(AiSchematicActions.load_List(cell));
       }
 
       return AiCellMaterials.init_Map(plans);
    }
 
-   private record Inner_DataUtil(Path path, long size, long modified, List<AiBuilder.Inner_StreamUtil> cells, Map<String, Integer> entities, String impossible) {
+   private record Inner_DataUtil(Path path, long size, long modified, List<AiBuilder.CellSpec> cells, Map<String, Integer> entities, String impossible) {
    }
 
-   private record Inner_StreamUtil(List<AiBuilder.Inner_StreamUtil> from, int turn, String flip) {
+   private record Inner_StreamUtil(List<AiBuilder.CellSpec> from, int turn, String flip) {
    }
 }

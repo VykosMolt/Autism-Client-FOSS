@@ -183,7 +183,7 @@ final class AiStronghold {
                   }
                };
                this.init_Y = new AiGuardLayer(
-                  AiGuard.Inner_CachePool.standard()
+                  AiGuard.GuardPolicy.standard()
                      .keeping(List.of("minecraft:blaze_rod", "minecraft:blaze_powder", "minecraft:ender_pearl", "minecraft:ender_eye")),
                   "stronghold"
                );
@@ -608,11 +608,11 @@ final class AiStronghold {
                               true,
                               true,
                               60,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                              autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                               true,
                               2.0,
                               new AiNetherRun.Inner_NetHelper(x, z, 6),
-                              AiGoto.Inner_BufferHelper.DEFAULT
+                              AiGoto.GotoOptions.DEFAULT
                            )
                         );
                      }
@@ -666,11 +666,11 @@ final class AiStronghold {
                               true,
                               true,
                               60,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                              autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                               true,
                               2.0,
                               null,
-                              AiGoto.Inner_BufferHelper.DEFAULT
+                              AiGoto.GotoOptions.DEFAULT
                            )
                         );
                      }
@@ -685,11 +685,11 @@ final class AiStronghold {
                               true,
                               true,
                               120,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                              autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                               true,
                               2.0,
                               null,
-                              AiGoto.Inner_BufferHelper.DEFAULT
+                              AiGoto.GotoOptions.DEFAULT
                            )
                         );
                      }
@@ -745,11 +745,11 @@ final class AiStronghold {
                                     true,
                                     true,
                                     60,
-                                    autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                                    autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                                     true,
                                     2.0,
                                     new AiNetherRun.Inner_NetHelper(x, z, 6),
-                                    AiGoto.Inner_BufferHelper.DEFAULT
+                                    AiGoto.GotoOptions.DEFAULT
                                  )
                               );
                            } else {
@@ -793,12 +793,12 @@ final class AiStronghold {
                                           true,
                                           300,
                                           this.push % 2 == 1
-                                             ? autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST
-                                             : autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                                             ? autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST
+                                             : autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                                           true,
                                           2.0,
                                           null,
-                                          AiGoto.Inner_BufferHelper.DEFAULT
+                                          AiGoto.GotoOptions.DEFAULT
                                        )
                                     );
                                  }
@@ -826,11 +826,11 @@ final class AiStronghold {
                                              true,
                                              true,
                                              60,
-                                             autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                                             autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                                              true,
                                              2.0,
                                              null,
-                                             AiGoto.Inner_BufferHelper.DEFAULT
+                                             AiGoto.GotoOptions.DEFAULT
                                           )
                                        );
                                     }
@@ -903,11 +903,11 @@ final class AiStronghold {
                                              true,
                                              true,
                                              60,
-                                             autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                                             autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                                              true,
                                              2.0,
                                              new AiNetherRun.Inner_NetHelper(x, z, 6),
-                                             AiGoto.Inner_BufferHelper.DEFAULT
+                                             AiGoto.GotoOptions.DEFAULT
                                           )
                                        );
                                     }
@@ -986,7 +986,7 @@ final class AiStronghold {
 
                            int tx = (int)Math.floor(at.x + this.load_Vec3.x * 160.0);
                            int tz = (int)Math.floor(at.z + this.load_Vec3.z * 160.0);
-                           AiGoto.Inner_BufferHelper dry = new AiGoto.Inner_BufferHelper(true, true, 3, !this.read_Z, true, true);
+                           AiGoto.GotoOptions dry = new AiGoto.GotoOptions(true, true, 3, !this.read_Z, true, true);
                            this.read_Z = false;
                            return this.init(
                               "follow the bearing toward " + tx + ", " + tz,
@@ -1034,7 +1034,7 @@ final class AiStronghold {
                this.update_I++;
                if (!this.flush_Z) {
                   float pitch = AiStronghold.init_FArr[Math.min(AiStronghold.init_FArr.length - 1, (this.update_I - 1) / 6)];
-                  this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Inner_DataUtil(mc.player.getYRot(), pitch));
+                  this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Rotation(mc.player.getYRot(), pitch));
                   this.init_DataUtil.load_V();
                   boolean clear = mc.hitResult == null
                      || mc.hitResult.getType() != Type.BLOCK

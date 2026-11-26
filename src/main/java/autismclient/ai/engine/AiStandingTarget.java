@@ -59,7 +59,7 @@ public final class AiStandingTarget {
       ClientLevel level = mc.level;
       if (!level.isOutsideBuildHeight(pos) && level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) {
          BlockState state = level.getBlockState(pos);
-         if (AiPathfinder.Inner_StreamUtil.read(state)) {
+         if (AiPathfinder.LiveGridView.read(state)) {
             return null;
          }
 
@@ -117,7 +117,7 @@ public final class AiStandingTarget {
 
       for (BlockPos cell : BlockPos.betweenClosed(BlockPos.containing(body.minX, body.minY, body.minZ), BlockPos.containing(body.maxX, body.maxY, body.maxZ))) {
          BlockState state = level.getBlockState(cell);
-         if (AiPathfinder.Inner_StreamUtil.load(state) || state.is(Blocks.POWDER_SNOW)) {
+         if (AiPathfinder.LiveGridView.load(state) || state.is(Blocks.POWDER_SNOW)) {
             return false;
          }
       }

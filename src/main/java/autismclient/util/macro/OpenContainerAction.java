@@ -36,15 +36,15 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    }
 
    @Override
-   public AimTargetAction.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
+   public AimTargetAction.AimTarget init_M_DataUtil_Minecraft(Minecraft mc) {
       if (this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK) {
-         return AimTargetAction.Inner_DataUtil.init(this.blockPos);
+         return AimTargetAction.AimTarget.init(this.blockPos);
       } else {
          autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.LAST_TARGET ? AutismSessionState.init_ck().init_E() : this.init_E_2();
          if (target == null) {
             return null;
          } else {
-            return target.init_Z() ? AimTargetAction.Inner_DataUtil.init(target.init_BlockPos()) : AimTargetAction.Inner_DataUtil.init(target.init_Entity_Minecraft(mc));
+            return target.init_Z() ? AimTargetAction.AimTarget.init(target.init_BlockPos()) : AimTargetAction.AimTarget.init(target.init_Entity_Minecraft(mc));
          }
       }
    }

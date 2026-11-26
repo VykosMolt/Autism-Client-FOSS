@@ -81,7 +81,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    ) throws IOException {
       super(Objects.requireNonNull(url, "url"));
       this.init_UiHelper_BufferHel = Objects.requireNonNull(snapshot, "snapshot");
-      ConnectionPrivacyRegistry.Inner_ConfigStore connectionProxy = snapshot.init_BufferHelper_Confi();
+      ConnectionPrivacyRegistry.ProxyEndpoint connectionProxy = snapshot.init_BufferHelper_Confi();
       this.init_Proxy = connectionProxy == null
          ? (proxy == null ? Proxy.NO_PROXY : proxy)
          : new Proxy(Type.SOCKS, InetSocketAddress.createUnresolved(connectionProxy.init_Str(), connectionProxy.init_I()));
@@ -523,7 +523,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    private void init(Socket socket, PackUrlValidator.Inner_CachePool target, PackUrlValidator.Inner_BufferHelper route) throws IOException {
       OutputStream output = socket.getOutputStream();
       InputStream input = this.init_InputStream_Socket(socket);
-      ConnectionPrivacyRegistry.Inner_ConfigStore frozen = this.init_UiHelper_BufferHel.init_BufferHelper_Confi();
+      ConnectionPrivacyRegistry.ProxyEndpoint frozen = this.init_UiHelper_BufferHel.init_BufferHelper_Confi();
       if (frozen == null
          || route.init_Z()
             && frozen.init_I() == route.init_TextFormat_CachePo().init_I()

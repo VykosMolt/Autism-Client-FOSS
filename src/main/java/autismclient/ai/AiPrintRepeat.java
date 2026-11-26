@@ -14,8 +14,8 @@ import net.minecraft.world.level.GameType;
 final class AiPrintRepeat implements AiOperation {
    private static final int push = 32;
    final Minecraft init_Minecraft = Minecraft.getInstance();
-   final AiBuilder.Inner_DataUtil init_TableIndex_DataUti;
-   final AiBuilder.Inner_ConfigStore init_TableIndex_ConfigS;
+   final AiBuilder.Blueprint init_TableIndex_DataUti;
+   final AiBuilder.BuildOptions init_TableIndex_ConfigS;
    final boolean init_Z;
    final long init_J;
    int init_I;
@@ -31,7 +31,7 @@ final class AiPrintRepeat implements AiOperation {
    final Object init_Obj;
    final Object load_Obj;
    List<autismclient.ai.print.PrintTarget> init_List;
-   AiSchematicMachinePlan.Inner_StreamUtil init_bV_StreamUtil;
+   AiSchematicMachinePlan.MachineSpec init_bV_StreamUtil;
    autismclient.ai.print.PrintCore.ao init_UiHelper_ao;
    final Provider init_HolderLookup_Provi;
    BlockPos init_BlockPos;
@@ -49,13 +49,13 @@ final class AiPrintRepeat implements AiOperation {
    final JsonArray load_JsonArray = new JsonArray();
 
    AiPrintRepeat(
-      AiBuilder.Inner_DataUtil base,
-      AiBuilder.Inner_ConfigStore power,
+      AiBuilder.Blueprint base,
+      AiBuilder.BuildOptions power,
       boolean verify,
       int timeoutSeconds,
       List<autismclient.ai.print.PrintTarget> firstTargets,
       BlockPos knownStock,
-      AiSchematicMachinePlan.Inner_StreamUtil firstActions,
+      AiSchematicMachinePlan.MachineSpec firstActions,
       autismclient.ai.print.PrintCore.ao firstGeometry
    ) {
       this.init_TableIndex_DataUti = base;
@@ -107,7 +107,7 @@ final class AiPrintRepeat implements AiOperation {
             this.init_I++;
          }
 
-         AiBuilder.Inner_NetHelper repeat = this.init_TableIndex_ConfigS.repeat();
+         AiBuilder.RepeatSpec repeat = this.init_TableIndex_ConfigS.repeat();
          return repeat.count() >= 0 && this.init_I > repeat.count()
             ? this.init_AiOperation_Result_AiOperation_Status_Str_9(AiOperation.Status.SUCCEEDED, "Built " + this.init_I + " copies")
             : this.init_AiOperation_Result_27();
@@ -117,7 +117,7 @@ final class AiPrintRepeat implements AiOperation {
    }
 
    private AiOperation.Result init_AiOperation_Result_27() {
-      AiBuilder.Inner_DataUtil shifted = new AiBuilder.Inner_DataUtil(
+      AiBuilder.Blueprint shifted = new AiBuilder.Blueprint(
          this.init_TableIndex_DataUti
             .origin()
             .offset(
@@ -250,7 +250,7 @@ final class AiPrintRepeat implements AiOperation {
    }
 
    JsonObject init_JsonObject_44() {
-      AiBuilder.Inner_NetHelper repeat = this.init_TableIndex_ConfigS.repeat();
+      AiBuilder.RepeatSpec repeat = this.init_TableIndex_ConfigS.repeat();
       return AiJson.init_JsonObject_ObjArr(
          "copies",
          this.init_I,
@@ -408,11 +408,11 @@ final class AiPrintRepeat implements AiOperation {
    }
 
    private record Inner_DataUtil(
-      AiBuilder.Inner_DataUtil blueprint,
-      AiBuilder.Inner_DataUtil stockPlan,
+      AiBuilder.Blueprint blueprint,
+      AiBuilder.Blueprint stockPlan,
       List<autismclient.ai.print.PrintTarget> targets,
       AiPrintPreparation.Inner_JsonUtil source,
-      AiSchematicMachinePlan.Inner_StreamUtil actions,
+      AiSchematicMachinePlan.MachineSpec actions,
       autismclient.ai.print.PrintCore.ao geometry
    ) {
    }

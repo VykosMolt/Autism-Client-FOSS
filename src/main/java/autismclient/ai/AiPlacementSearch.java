@@ -10,7 +10,7 @@ final class AiPlacementSearch {
    private final List<AiPlacementSearch.Inner_DataUtil> init_List;
    private final AiPlacementSearch.Inner_ConfigStore init_aQ_ConfigStore;
    private final boolean init_Z;
-   private final Map<List<AiBuilder.Inner_StreamUtil>, AiPlacementSearch.Inner_BufferHelper> init_Map = new IdentityHashMap<>();
+   private final Map<List<AiBuilder.CellSpec>, AiPlacementSearch.Inner_BufferHelper> init_Map = new IdentityHashMap<>();
    private int init_I;
    private int load_I;
    private int read;
@@ -22,7 +22,7 @@ final class AiPlacementSearch {
    private int open;
    private int poll;
    private int push;
-   private Map<Long, AiBuilder.Inner_StreamUtil> load_Map;
+   private Map<Long, AiBuilder.CellSpec> load_Map;
    private AiPlacementSearch.Inner_CachePool init_aQ_CachePool;
    private boolean load_Z;
    private long init_J;
@@ -44,12 +44,12 @@ final class AiPlacementSearch {
             AiPlacementSearch.Inner_DataUtil c = this.init_List.get(this.init_I);
             AiPlacementSearch.Inner_BufferHelper template = this.init_Map.get(c.cells());
             if (template == null) {
-               Map<Long, AiBuilder.Inner_StreamUtil> map = new HashMap<>();
+               Map<Long, AiBuilder.CellSpec> map = new HashMap<>();
                int w = 0;
                int h = 0;
                int d = 0;
 
-               for (AiBuilder.Inner_StreamUtil cell : c.cells()) {
+               for (AiBuilder.CellSpec cell : c.cells()) {
                   map.put(init(cell.dx(), cell.dy(), cell.dz()), cell);
                   w = Math.max(w, cell.dx() + 1);
                   h = Math.max(h, cell.dy() + 1);
@@ -72,7 +72,7 @@ final class AiPlacementSearch {
          }
 
          AiPlacementSearch.Inner_DataUtil candidate = this.init_List.get(this.init_I);
-         AiBuilder.Inner_StreamUtil cell = this.load_Map.get(init(this.load_I, this.read, this.write));
+         AiBuilder.CellSpec cell = this.load_Map.get(init(this.load_I, this.read, this.write));
          BlockPos pos = candidate.origin().offset(this.load_I, this.read, this.write);
          AiPlacementSearch.Inner_StreamUtil edit = this.init_aQ_ConfigStore.init_aQ_StreamUtil(pos, cell);
          this.init_J++;
@@ -149,7 +149,7 @@ final class AiPlacementSearch {
       return this.init_J;
    }
 
-   private record Inner_BufferHelper(Map<Long, AiBuilder.Inner_StreamUtil> cells, int width, int height, int depth) {
+   private record Inner_BufferHelper(Map<Long, AiBuilder.CellSpec> cells, int width, int height, int depth) {
    }
 
    record Inner_CachePool(AiPlacementSearch.Inner_DataUtil candidate, int place, int remove, int support, int matched) implements Comparable<AiPlacementSearch.Inner_CachePool> {
@@ -164,12 +164,12 @@ final class AiPlacementSearch {
    }
 
    interface Inner_ConfigStore {
-      AiPlacementSearch.Inner_StreamUtil init_aQ_StreamUtil(BlockPos var1, AiBuilder.Inner_StreamUtil var2);
+      AiPlacementSearch.Inner_StreamUtil init_aQ_StreamUtil(BlockPos var1, AiBuilder.CellSpec var2);
 
-      boolean init_Z(BlockPos var1, AiBuilder.Inner_StreamUtil var2);
+      boolean init_Z(BlockPos var1, AiBuilder.CellSpec var2);
    }
 
-   record Inner_DataUtil(BlockPos origin, int rotation, List<AiBuilder.Inner_StreamUtil> cells, double distance) {
+   record Inner_DataUtil(BlockPos origin, int rotation, List<AiBuilder.CellSpec> cells, double distance) {
    }
 
    enum Inner_StreamUtil {

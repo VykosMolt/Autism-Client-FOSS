@@ -35,12 +35,12 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.getConnection() != null) {
          BlockPos pos = this.init_BlockPos_Minecraft(mc);
          if (pos != null) {
-            MacroTemplateResolver.Inner_CachePool resolvedLine1 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line1, mc);
-            MacroTemplateResolver.Inner_CachePool resolvedLine2 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line2, mc);
-            MacroTemplateResolver.Inner_CachePool resolvedLine3 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line3, mc);
-            MacroTemplateResolver.Inner_CachePool resolvedLine4 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line4, mc);
+            MacroTemplateResolver.ResolveResult resolvedLine1 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line1, mc);
+            MacroTemplateResolver.ResolveResult resolvedLine2 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line2, mc);
+            MacroTemplateResolver.ResolveResult resolvedLine3 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line3, mc);
+            MacroTemplateResolver.ResolveResult resolvedLine4 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line4, mc);
             if (MacroVariableContext.init_Z_Str_j_CachePoolArr("Edit sign", resolvedLine1, resolvedLine2, resolvedLine3, resolvedLine4)) {
-               MacroTemplateResolver.Inner_CachePool resolvedCommand = MacroTemplateResolver.Inner_CachePool.init("");
+               MacroTemplateResolver.ResolveResult resolvedCommand = MacroTemplateResolver.ResolveResult.init("");
                if (this.sendCommandAfter && this.commandAfter != null && !this.commandAfter.isBlank()) {
                   resolvedCommand = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.commandAfter, mc);
                   if (!MacroVariableContext.init_Z_Str_j_CachePoolArr("Edit sign command", resolvedCommand)) {

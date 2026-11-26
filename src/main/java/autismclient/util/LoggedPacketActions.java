@@ -43,7 +43,7 @@ public final class LoggedPacketActions {
    }
 
    private static boolean tick(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
-      AutismPayloadSupport.Inner_StreamUtil snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(entry);
+      AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(entry);
       if (snapshot != null && snapshot.load_Str() != null && !snapshot.load_Str().isBlank()) {
          byte[] rawBytes = snapshot.init_BArr();
          if (!AutismPayloadSupport.init_Z(snapshot.load_Str(), rawBytes, snapshot.update())) {
@@ -112,7 +112,7 @@ public final class LoggedPacketActions {
             action.waitForGuiBefore = false;
             action.waitForGuiAfter = false;
             action.guiName = "";
-            action.packets.add(new AutismSessionState.Inner_CachePool(entry.init_Packet, 0, AutismSessionState.Inner_BufferHelper.EXACT));
+            action.packets.add(new AutismSessionState.DelayedPacket(entry.init_Packet, 0, AutismSessionState.ReplayMode.EXACT));
             macroEditor.init_V_MacroAction_2(action);
             OverlayManager.init_bk().update_V(macroEditor);
             AutismClientMessaging.sendPrefixed("Added send action: " + entry.load_Str);

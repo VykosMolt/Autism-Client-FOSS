@@ -32,7 +32,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-final class AiLiveWorld implements AiPhysics.Inner_CachePool {
+final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    private final ClientLevel putAt_ClientLevel;
    private double putAt_D = 4.0;
    private final CollisionContext putAt_CollisionContext;
@@ -168,8 +168,8 @@ final class AiLiveWorld implements AiPhysics.Inner_CachePool {
 
       BlockState var7 = this.putAt_ClientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3));
       boolean var8 = AiEnvironmentHazards.init(this.putAt_ClientLevel, this.putAt_BlockPos_MutableBl)
-         || AiPathfinder.Inner_StreamUtil.fill(var7)
-         || AiPathfinder.Inner_StreamUtil.prevEx(var7)
+         || AiPathfinder.LiveGridView.fill(var7)
+         || AiPathfinder.LiveGridView.prevEx(var7)
          || var7.getBlock() instanceof SweetBerryBushBlock;
       this.readEx.put(var4, (byte)(var8 ? 2 : 1));
       return var8;
@@ -185,7 +185,7 @@ final class AiLiveWorld implements AiPhysics.Inner_CachePool {
 
       BlockState var7 = this.putAt_ClientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3));
       boolean var8 = AiEnvironmentHazards.init(this.putAt_ClientLevel, this.putAt_BlockPos_MutableBl)
-         || AiPathfinder.Inner_StreamUtil.fill(var7)
+         || AiPathfinder.LiveGridView.fill(var7)
          || var7.getBlock() instanceof SweetBerryBushBlock
          || var7.is(Blocks.CACTUS);
       this.value.put(var4, (byte)(var8 ? 2 : 1));
@@ -200,7 +200,7 @@ final class AiLiveWorld implements AiPhysics.Inner_CachePool {
          return var6 == 2;
       }
 
-      boolean var7 = AiPathfinder.Inner_StreamUtil.prevEx(this.putAt_ClientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3)));
+      boolean var7 = AiPathfinder.LiveGridView.prevEx(this.putAt_ClientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3)));
       this.prevEx.put(var4, (byte)(var7 ? 2 : 1));
       return var7;
    }
@@ -213,7 +213,7 @@ final class AiLiveWorld implements AiPhysics.Inner_CachePool {
          return var6 == 2;
       }
 
-      boolean var7 = AiPathfinder.Inner_StreamUtil.readEx(this.putAt_ClientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3)));
+      boolean var7 = AiPathfinder.LiveGridView.readEx(this.putAt_ClientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3)));
       this.prev.put(var4, (byte)(var7 ? 2 : 1));
       return var7;
    }
@@ -226,7 +226,7 @@ final class AiLiveWorld implements AiPhysics.Inner_CachePool {
          return var6 == 2;
       }
 
-      boolean var7 = AiPathfinder.Inner_StreamUtil.value(this.putAt_ClientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3)));
+      boolean var7 = AiPathfinder.LiveGridView.value(this.putAt_ClientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3)));
       this.chunkAt.put(var4, (byte)(var7 ? 2 : 1));
       return var7;
    }
@@ -349,11 +349,11 @@ final class AiLiveWorld implements AiPhysics.Inner_CachePool {
    @Override
    public boolean state(int var1, int var2, int var3) {
       BlockState var4 = this.putAt_ClientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3));
-      return AiPathfinder.Inner_StreamUtil.putAt_Z_BlockState(var4)
+      return AiPathfinder.LiveGridView.putAt_Z_BlockState(var4)
          ? true
          : var4.getBlock() instanceof TrapDoorBlock
             && var2 > this.putAt_ClientLevel.getMinY()
-            && AiPathfinder.Inner_StreamUtil.putAt_Z_BlockState_BlockState(
+            && AiPathfinder.LiveGridView.putAt_Z_BlockState_BlockState(
                var4, this.putAt_ClientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2 - 1, var3))
             );
    }

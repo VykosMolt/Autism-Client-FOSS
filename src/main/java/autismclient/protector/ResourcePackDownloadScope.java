@@ -36,7 +36,7 @@ public final class ResourcePackDownloadScope {
    private static final ThreadLocal<ResourcePackDownloadScope.Inner_BufferHelper> load_ThreadLocal = new ThreadLocal<>();
    private static final Object init_Obj = new Object();
    private static final Map<BatchConfig, ResourcePackDownloadScope.Inner_StreamUtil> init_Map = new IdentityHashMap<>();
-   private static final Map<ConnectionPrivacyRegistry.Inner_StreamUtil, UUID> load_Map = new WeakHashMap<>();
+   private static final Map<ConnectionPrivacyRegistry.ConnectionSession, UUID> load_Map = new WeakHashMap<>();
    private static final ReentrantLock[] init_ReentrantLockArr = new ReentrantLock[256];
    private static boolean init_Z;
    private static final ThreadLocal<ResourcePackDownloadScope.Inner_ConfigStore> read;
@@ -46,7 +46,7 @@ public final class ResourcePackDownloadScope {
 
    public static ResourcePackDownloadScope.Inner_BufferHelper init_UiHelper_BufferHel(ServerPackManager manager) throws IOException {
       Objects.requireNonNull(manager, "manager");
-      ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init(manager);
+      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(manager);
       if (context != null
          && context.init_BufferHelper_DataU() != null
          && context.init_BufferHelper_DataU().init_UUID() != null
@@ -81,7 +81,7 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   static String init(ConnectionPrivacyRegistry.Inner_StreamUtil context, boolean integrated) throws IOException {
+   static String init(ConnectionPrivacyRegistry.ConnectionSession context, boolean integrated) throws IOException {
       return integrated && context.read() ? "integrated:" + context.init_J() : PackUrlValidator.init_Str_BufferHelper_Buffe(context.init_BufferHelper_Buffe());
    }
 
@@ -285,7 +285,7 @@ public final class ResourcePackDownloadScope {
             snapshot.load_V();
          }
 
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init(manager);
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(manager);
          if (context != null) {
             ConnectionPrivacyRegistry.load_Z(context);
          }
@@ -307,10 +307,10 @@ public final class ResourcePackDownloadScope {
       Objects.requireNonNull(hashFunction, "hashFunction");
       snapshot.init_V();
       String scopeHash = init(snapshot.init_Str(), snapshot.load_Str());
-      String mode = snapshot.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.VANILLA ? "vanilla-neutral-v1" : "modded-full-v1";
-      ResourcePackSessionTracker.Inner_BufferHelper session = ResourcePackSessionTracker.init_FileCache_BufferHe(snapshot.init_BufferHelper_Strea());
-      ResourcePackSessionTracker.Inner_DataUtil policy = ResourcePackSessionTracker.init_FileCache_DataUtil(session, packId);
-      String protection = policy == ResourcePackSessionTracker.Inner_DataUtil.ISOLATED ? "isolated-v1" : "full-v1";
+      String mode = snapshot.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA ? "vanilla-neutral-v1" : "modded-full-v1";
+      ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init_FileCache_BufferHe(snapshot.init_BufferHelper_Strea());
+      ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.init_FileCache_DataUtil(session, packId);
+      String protection = policy == ResourcePackSessionTracker.PackPolicy.ISOLATED ? "isolated-v1" : "full-v1";
       Path base = cacheDir.normalize();
       Path result = base.resolve("autism-v2")
          .resolve(snapshot.init_UUID().toString())
@@ -400,7 +400,7 @@ public final class ResourcePackDownloadScope {
    }
 
    public static final class Inner_BufferHelper {
-      private final ConnectionPrivacyRegistry.Inner_StreamUtil init_BufferHelper_Strea;
+      private final ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea;
       private final long init_J;
       private final ServerPackManager init_ServerPackManager;
       private final PacketListener init_PacketListener;
@@ -410,16 +410,16 @@ public final class ResourcePackDownloadScope {
       private final SocketAddress init_SocketAddress;
       private final String load_Str;
       private final UUID load_UUID;
-      private final ConnectionPrivacyRegistry.Inner_CachePool init_BufferHelper_Cache;
+      private final ConnectionPrivacyRegistry.PrivacyMode init_BufferHelper_Cache;
       private final net.minecraft.client.multiplayer.ServerData.Type init_ServerData_Type;
       private final boolean init_Z;
       private final boolean load_Z;
-      private final ConnectionPrivacyRegistry.Inner_ConfigStore init_BufferHelper_Confi;
+      private final ConnectionPrivacyRegistry.ProxyEndpoint init_BufferHelper_Confi;
       private final Set<Socket> init_Set = Collections.newSetFromMap(new IdentityHashMap<>());
       private volatile boolean read;
 
       private Inner_BufferHelper(
-         ConnectionPrivacyRegistry.Inner_StreamUtil context,
+         ConnectionPrivacyRegistry.ConnectionSession context,
          ServerPackManager manager,
          UUID accountId,
          String origin,
@@ -445,7 +445,7 @@ public final class ResourcePackDownloadScope {
          this.init_BufferHelper_Confi = context.init_BufferHelper_Confi();
       }
 
-      public ConnectionPrivacyRegistry.Inner_StreamUtil init_BufferHelper_Strea() {
+      public ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea() {
          return this.init_BufferHelper_Strea;
       }
 
@@ -481,11 +481,11 @@ public final class ResourcePackDownloadScope {
          return this.load_Str;
       }
 
-      public ConnectionPrivacyRegistry.Inner_CachePool init_BufferHelper_Cache() {
+      public ConnectionPrivacyRegistry.PrivacyMode init_BufferHelper_Cache() {
          return this.init_BufferHelper_Cache;
       }
 
-      public ConnectionPrivacyRegistry.Inner_ConfigStore init_BufferHelper_Confi() {
+      public ConnectionPrivacyRegistry.ProxyEndpoint init_BufferHelper_Confi() {
          return this.init_BufferHelper_Confi;
       }
 

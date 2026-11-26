@@ -17,9 +17,9 @@ public final class AiChatOps {
       int actionIndex = AiJson.init_I_JsonObject(args, "actionIndex", 0);
       int size = AiChatLedger.init_I();
       if (index >= 0 && index < size) {
-         AiChatLedger.Inner_StreamUtil entry = AiChatLedger.init_TokenStore_StreamU(index);
+         AiChatLedger.ChatEntry entry = AiChatLedger.init_TokenStore_StreamU(index);
          if (actionIndex >= 0 && actionIndex < entry.clicks().size()) {
-            AiChatLedger.Inner_DataUtil action = entry.clicks().get(actionIndex);
+            AiChatLedger.ClickAction action = entry.clicks().get(actionIndex);
             AiOperation var10000;
             switch (action.action()) {
                case "RUN_COMMAND":
@@ -137,7 +137,7 @@ public final class AiChatOps {
    private static JsonArray init(long baseline) {
       JsonArray out = new JsonArray();
 
-      for (AiChatLedger.Inner_StreamUtil entry : AiChatLedger.init_List(4)) {
+      for (AiChatLedger.ChatEntry entry : AiChatLedger.init_List(4)) {
          if (entry.revision() > baseline) {
             out.add(AiJson.init_JsonObject_ObjArr("source", entry.source(), "sender", entry.sender(), "text", entry.text()));
          }

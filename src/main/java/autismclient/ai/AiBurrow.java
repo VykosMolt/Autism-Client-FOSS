@@ -594,14 +594,14 @@ final class AiBurrow {
                      this.sync_Z = true;
                   }
 
-                  autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.WORKING) {
+                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.WORKING) {
                      return this.init("Closing shelter walls and roof");
                   } else {
                      boolean pending = this.init_DataPipe.load_Z();
                      this.init_DataPipe.init_V();
                      this.init_Z = false;
-                     if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+                     if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                         this.flush_Z |= pending;
                         return this.init(AiOperation.Status.FAILED, "Shelter placement failed: " + this.init_DataPipe.init_Str());
                      } else {

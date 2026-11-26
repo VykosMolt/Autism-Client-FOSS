@@ -94,7 +94,7 @@ public final class WeaponDamageCalculator {
       }
    }
 
-   public static boolean init(Vec3 source, float power, ExplosionDamageCalculator.Inner_CachePool options, double maximum) {
+   public static boolean init(Vec3 source, float power, ExplosionDamageCalculator.SimOptions options, double maximum) {
       Minecraft mc = Minecraft.getInstance();
 
       for (Player friend : mc.level.players()) {

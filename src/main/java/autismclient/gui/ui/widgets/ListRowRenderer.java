@@ -41,7 +41,7 @@ public final class ListRowRenderer {
       int buttonY = headerY + Math.max(0, (init_CharEncoder.init_I_l_I(l.load, 1) - buttonHeight) / 2) - 1;
       OverlayActionButton button = OverlayActionButton.init(buttonX, buttonY, buttonWidth, buttonHeight, Component.literal(label), b -> {});
       button.init_Z = enabled;
-      button.init_ByteReader_ByteReader_StreamU(enabled ? OverlayActionButton.Inner_StreamUtil.SECONDARY : OverlayActionButton.Inner_StreamUtil.GHOST);
+      button.init_ByteReader_ByteReader_StreamU(enabled ? OverlayActionButton.ButtonTone.SECONDARY : OverlayActionButton.ButtonTone.GHOST);
       OverlayActionButton.init(context, textRenderer, button, mouseX, mouseY);
    }
 
@@ -61,7 +61,7 @@ public final class ListRowRenderer {
       int height,
       boolean hovered,
       boolean selected,
-      ListRowRenderer.Inner_DataUtil tone
+      ListRowRenderer.RowTone tone
    ) {
       init(context, textRenderer, Component.literal(label == null ? "" : label), x, y, width, height, hovered, selected, tone, false);
    }
@@ -76,7 +76,7 @@ public final class ListRowRenderer {
       int height,
       boolean hovered,
       boolean selected,
-      ListRowRenderer.Inner_DataUtil tone,
+      ListRowRenderer.RowTone tone,
       boolean useMinecraftText
    ) {
       if (selected) {
@@ -90,7 +90,7 @@ public final class ListRowRenderer {
       int var10000;
       switch (tone) {
          case NORMAL:
-            var10000 = selected ? ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.Inner_DataUtil.TEXT) : init_CharEncoder.load(l.read);
+            var10000 = selected ? ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.ColorRole.TEXT) : init_CharEncoder.load(l.read);
             break;
          case READY:
             var10000 = selected ? -1507344 : -6426438;
@@ -99,10 +99,10 @@ public final class ListRowRenderer {
             var10000 = selected ? -3104 : -14726;
             break;
          case MISSING:
-            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(selected ? -4884 : -20561, ThemePaletteManager.Inner_DataUtil.DANGER);
+            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(selected ? -4884 : -20561, ThemePaletteManager.ColorRole.DANGER);
             break;
          case DANGER:
-            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(selected ? -5398 : -29556, ThemePaletteManager.Inner_DataUtil.DANGER);
+            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(selected ? -5398 : -29556, ThemePaletteManager.ColorRole.DANGER);
             break;
          default:
             throw new MatchException(null, null);
@@ -190,7 +190,7 @@ public final class ListRowRenderer {
       IconButtonRenderer.init(context, IconButtonRenderer.init(), autismclient.gui.f.NetHelper.init(x, y, width, height), symbol, hovered, true, danger);
    }
 
-   public enum Inner_DataUtil {
+   public enum RowTone {
       NORMAL,
       READY,
       WARNING,

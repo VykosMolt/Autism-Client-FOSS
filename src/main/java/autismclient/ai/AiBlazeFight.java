@@ -324,7 +324,7 @@ final class AiBlazeFight {
          long read_J;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
             if (AiJson.init_Z_JsonObject(args, "useShield", false) && !AiDefense.init_Z(mc)) {
                AiItems.init_Z(AiItems.load_af_DataUtil("minecraft:shield"));
             }
@@ -689,7 +689,7 @@ final class AiBlazeFight {
                                  return this.init("Building up to the blaze");
                               }
 
-                              AiProjectiles.Inner_StreamUtil coming = AiCombat.init_by_StreamUtil(mc);
+                              AiProjectiles.IncomingProjectile coming = AiCombat.init_by_StreamUtil(mc);
                               boolean hasShield = AiDefense.init_Z(mc);
                               double gap = Math.sqrt(box.distanceToSqr(eye));
                               boolean inReach = gap <= reach;
@@ -771,9 +771,9 @@ final class AiBlazeFight {
                                  }
                               }
 
-                              AiProjectiles.Inner_StreamUtil dodge = null;
+                              AiProjectiles.IncomingProjectile dodge = null;
 
-                              for (AiProjectiles.Inner_StreamUtil t : AiProjectiles.init(mc)) {
+                              for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(mc)) {
                                  if (AiProjectiles.init(t) && AiCombat.init(t) <= 20 && (dodge == null || AiCombat.init(t) < AiCombat.init(dodge))) {
                                     dodge = t;
                                  }
@@ -949,7 +949,7 @@ final class AiBlazeFight {
                                  );
                               }
 
-                              AiProjectiles.Inner_StreamUtil onTheWay = AiDefense.init_Z(mc) ? AiCombat.load(mc) : null;
+                              AiProjectiles.IncomingProjectile onTheWay = AiDefense.init_Z(mc) ? AiCombat.load(mc) : null;
                               if (onTheWay == null
                                  || !AiDefense.init(mc, mc.level.getEntity(onTheWay.entityId()))
                                  || !AiDefense.init(mc, AiCombat.init(onTheWay))
@@ -1018,11 +1018,11 @@ final class AiBlazeFight {
                                        true,
                                        true,
                                        20,
-                                       autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                                       autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                                        true,
                                        2.0,
                                        goal,
-                                       AiGoto.Inner_BufferHelper.DEFAULT
+                                       AiGoto.GotoOptions.DEFAULT
                                     );
                                  }
 
@@ -1530,7 +1530,7 @@ final class AiBlazeFight {
             return best;
          }
 
-         int init(AiProjectiles.Inner_StreamUtil t) {
+         int init(AiProjectiles.IncomingProjectile t) {
             double vx = t.vx();
             double vz = t.vz();
             double v = Math.hypot(vx, vz);
@@ -1854,10 +1854,10 @@ final class AiBlazeFight {
       };
    }
 
-   static List<AiProjectiles.Inner_StreamUtil> init_List(Minecraft mc) {
-      List<AiProjectiles.Inner_StreamUtil> out = new ArrayList<>();
+   static List<AiProjectiles.IncomingProjectile> init_List(Minecraft mc) {
+      List<AiProjectiles.IncomingProjectile> out = new ArrayList<>();
 
-      for (AiProjectiles.Inner_StreamUtil t : AiProjectiles.init(mc)) {
+      for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(mc)) {
          if (AiProjectiles.init(t)) {
             out.add(t);
          }

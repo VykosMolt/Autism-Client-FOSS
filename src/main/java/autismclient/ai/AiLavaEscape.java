@@ -256,7 +256,7 @@ final class AiLavaEscape {
          boolean write_Z;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
          }
 
          @Override
@@ -276,14 +276,14 @@ final class AiLavaEscape {
 
                BlockPos at = mc.player.blockPosition();
                if (this.read_Z) {
-                  autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                      this.init_DataPipe.init_V();
                      this.read_Z = false;
                      this.write_Z = true;
                      this.load_Z = false;
                   } else {
-                     if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.write_I < 12) {
+                     if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.write_I < 12) {
                         return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Placing a lava refuge", new JsonObject());
                      }
 

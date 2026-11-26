@@ -10,8 +10,8 @@ public final class ResourcePackPushValidator {
    private ResourcePackPushValidator() {
    }
 
-   public static ResourcePackSessionTracker.Inner_DataUtil init(ConnectionPrivacyRegistry.Inner_CachePool mode, boolean sharedBypass, boolean serializedBypass) {
-      return serializedBypass ? ResourcePackSessionTracker.Inner_DataUtil.ISOLATED : ResourcePackSessionTracker.Inner_DataUtil.FULL;
+   public static ResourcePackSessionTracker.PackPolicy init(ConnectionPrivacyRegistry.PrivacyMode mode, boolean sharedBypass, boolean serializedBypass) {
+      return serializedBypass ? ResourcePackSessionTracker.PackPolicy.ISOLATED : ResourcePackSessionTracker.PackPolicy.FULL;
    }
 
    public static ResourcePackPushValidator.Inner_StreamUtil init(ClientboundResourcePackPushPacket packet, boolean forceDeny, boolean bypass) {

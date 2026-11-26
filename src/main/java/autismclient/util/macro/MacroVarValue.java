@@ -8,38 +8,38 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class MacroVarValue {
-   private final MacroVarValue.Inner_DataUtil init_l_DataUtil;
+   private final MacroVarValue.ValueType init_l_DataUtil;
    private final String init_Str;
    private final Map<String, MacroVarValue> init_Map;
 
-   private MacroVarValue(MacroVarValue.Inner_DataUtil kind, String value, Map<String, MacroVarValue> properties) {
-      this.init_l_DataUtil = kind == null ? MacroVarValue.Inner_DataUtil.TEXT : kind;
+   private MacroVarValue(MacroVarValue.ValueType kind, String value, Map<String, MacroVarValue> properties) {
+      this.init_l_DataUtil = kind == null ? MacroVarValue.ValueType.TEXT : kind;
       this.init_Str = init_Str_Str(value);
       this.init_Map = properties != null && !properties.isEmpty() ? Collections.unmodifiableMap(new LinkedHashMap<>(properties)) : Map.of();
    }
 
    public static MacroVarValue init_l_Obj(Object value) {
-      return new MacroVarValue(MacroVarValue.Inner_DataUtil.TEXT, value == null ? "" : String.valueOf(value), Map.of());
+      return new MacroVarValue(MacroVarValue.ValueType.TEXT, value == null ? "" : String.valueOf(value), Map.of());
    }
 
    public static MacroVarValue init_l_Number(Number value) {
       String rendered = value == null ? "0" : new BigDecimal(value.toString()).stripTrailingZeros().toPlainString();
-      return new MacroVarValue(MacroVarValue.Inner_DataUtil.NUMBER, rendered, Map.of());
+      return new MacroVarValue(MacroVarValue.ValueType.NUMBER, rendered, Map.of());
    }
 
    public static MacroVarValue init_l_Str(String value) {
-      return new MacroVarValue(MacroVarValue.Inner_DataUtil.IDENTIFIER, value, Map.of());
+      return new MacroVarValue(MacroVarValue.ValueType.IDENTIFIER, value, Map.of());
    }
 
    public static MacroVarValue init_l_I(int value) {
-      return new MacroVarValue(MacroVarValue.Inner_DataUtil.SLOT, Integer.toString(value), Map.of());
+      return new MacroVarValue(MacroVarValue.ValueType.SLOT, Integer.toString(value), Map.of());
    }
 
-   public static MacroVarValue init(MacroVarValue.Inner_DataUtil kind, String value, Map<String, MacroVarValue> properties) {
+   public static MacroVarValue init(MacroVarValue.ValueType kind, String value, Map<String, MacroVarValue> properties) {
       return new MacroVarValue(kind, value, properties);
    }
 
-   public MacroVarValue.Inner_DataUtil init_l_DataUtil() {
+   public MacroVarValue.ValueType init_l_DataUtil() {
       return this.init_l_DataUtil;
    }
 
@@ -101,7 +101,7 @@ public final class MacroVarValue {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum ValueType {
       TEXT,
       NUMBER,
       BOOLEAN,

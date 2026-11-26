@@ -49,7 +49,7 @@ public final class CustomMenuAction implements MacroAction {
                if (withSecrets == null) {
                   throw new IllegalStateException("Missing form value");
                } else {
-                  MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(withSecrets, mc);
+                  MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(withSecrets, mc);
                   if (!resolved.init_Z()) {
                      throw new IllegalStateException("Missing macro value");
                   } else {

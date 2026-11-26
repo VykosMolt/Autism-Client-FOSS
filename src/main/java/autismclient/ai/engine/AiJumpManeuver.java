@@ -15,7 +15,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 
 public record AiJumpManeuver(
-   List<AiPhysics.Inner_DataUtil> inputs, AiPhysics.Inner_StreamUtil start, AiPhysics.Inner_StreamUtil landing, double margin, int takeoffTick
+   List<AiPhysics.MoveInput> inputs, AiPhysics.MotionState start, AiPhysics.MotionState landing, double margin, int takeoffTick
 ) {
    public static final double BACKUP = 4.0;
    private static final int RUN_TICKS = 48;
@@ -36,7 +36,7 @@ public record AiJumpManeuver(
    private static final ThreadLocal<AiJumpManeuver.Inner_CachePool> FLIGHT_WORKSPACE = ThreadLocal.withInitial(AiJumpManeuver.Inner_CachePool::new);
 
    public AiJumpManeuver(
-      List<AiPhysics.Inner_DataUtil> inputs, AiPhysics.Inner_StreamUtil start, AiPhysics.Inner_StreamUtil landing, double margin, int takeoffTick
+      List<AiPhysics.MoveInput> inputs, AiPhysics.MotionState start, AiPhysics.MotionState landing, double margin, int takeoffTick
    ) {
       inputs = List.copyOf(inputs);
       this.inputs = inputs;
@@ -46,11 +46,11 @@ public record AiJumpManeuver(
       this.takeoffTick = takeoffTick;
    }
 
-   static AiPhysics.Inner_DataUtil settleInput(AiPhysics.Inner_StreamUtil var0, float var1) {
+   static AiPhysics.MoveInput settleInput(AiPhysics.MotionState var0, float var1) {
       return settleInput(null, var0, var1);
    }
 
-   static AiPhysics.Inner_DataUtil settleInput(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, float var2) {
+   static AiPhysics.MoveInput settleInput(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2) {
       double var3 = var1.speed();
       double var5 = 0.0;
       double var7 = 0.0;
@@ -67,15 +67,15 @@ public record AiJumpManeuver(
 
       boolean var18 = true;
       if (var0 != null && var1.onGround()) {
-         AiPhysics.Inner_DataUtil var11 = new AiPhysics.Inner_DataUtil(var5, var7, false, false, false, var2);
-         AiPhysics.Inner_StreamUtil var19 = var1;
+         AiPhysics.MoveInput var11 = new AiPhysics.MoveInput(var5, var7, false, false, false, var2);
+         AiPhysics.MotionState var19 = var1;
          boolean var13 = true;
 
          for (int var20 = 0; var20 < (var9 ? 22 : 8); var20++) {
-            AiPhysics.Inner_DataUtil var15 = var19.speed() > (var9 ? 0.024 : 0.03)
+            AiPhysics.MoveInput var15 = var19.speed() > (var9 ? 0.024 : 0.03)
                ? var11
-               : new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, false, var2);
-            AiPhysics.Inner_StreamUtil var16 = AiPhysics.putAt(var19, var15, var0);
+               : new AiPhysics.MoveInput(0.0, 0.0, false, false, false, var2);
+            AiPhysics.MotionState var16 = AiPhysics.putAt(var19, var15, var0);
             if (AiPhysics.fill(var0, var19, var16) || !var16.onGround() || !AiGroundContinuity.putAt(var16.y(), var1.y())) {
                var13 = false;
                break;
@@ -83,7 +83,7 @@ public record AiJumpManeuver(
 
             var19 = var16;
             if (var19.speed() <= 0.02) {
-               AiPhysics.Inner_StreamUtil var17 = AiPhysics.putAt(var19, AiPhysics.Inner_DataUtil.NONE, var0);
+               AiPhysics.MotionState var17 = AiPhysics.putAt(var19, AiPhysics.MoveInput.NONE, var0);
                var13 = var17.onGround() && AiGroundContinuity.putAt(var17.y(), var1.y());
                break;
             }
@@ -94,11 +94,11 @@ public record AiJumpManeuver(
          }
       }
 
-      return new AiPhysics.Inner_DataUtil(var5, var7, false, false, var18, var2);
+      return new AiPhysics.MoveInput(var5, var7, false, false, var18, var2);
    }
 
-   static List<AiPhysics.Inner_DataUtil> crossRunwayObstacle(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2
+   static List<AiPhysics.MoveInput> crossRunwayObstacle(
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2
    ) {
       if (var1.onGround() && !(Math.abs(var1.y() - var2.y()) > 0.02)) {
          double var3 = var2.x() - var1.x();
@@ -118,12 +118,12 @@ public record AiJumpManeuver(
             for (double var14 : new double[]{0.75, -0.75, 1.0, -1.0, 1.3, -1.3}) {
                double var16 = Math.abs(var3) < Math.abs(var5) ? var14 : 0.0;
                double var18 = Math.abs(var3) < Math.abs(var5) ? 0.0 : var14;
-               AiPhysics.Inner_StreamUtil var20 = AiPhysics.Inner_StreamUtil.standing(var1.x() + var16, var1.y(), var1.z() + var18);
-               AiPhysics.Inner_StreamUtil var21 = AiPhysics.Inner_StreamUtil.standing(var2.x() + var16, var2.y(), var2.z() + var18);
+               AiPhysics.MotionState var20 = AiPhysics.MotionState.standing(var1.x() + var16, var1.y(), var1.z() + var18);
+               AiPhysics.MotionState var21 = AiPhysics.MotionState.standing(var2.x() + var16, var2.y(), var2.z() + var18);
                if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var20.x(), var20.y(), var20.z())
                   && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var21.x(), var21.y(), var21.z())) {
                   ArrayList var22 = new ArrayList();
-                  AiPhysics.Inner_StreamUtil var23 = walkToRunway(var0, var1, var20, var22);
+                  AiPhysics.MotionState var23 = walkToRunway(var0, var1, var20, var22);
                   if (var23 != null && (var10.isEmpty() || var22.size() + 5 < var10.size())) {
                      var var24 = hopOntoRunway(var0, var23, var2);
                      if (!var24.isEmpty() && (var10.isEmpty() || var22.size() + var24.size() < var10.size())) {
@@ -134,9 +134,9 @@ public record AiJumpManeuver(
 
                      var var29 = hopOntoRunway(var0, var23, var21);
                      if (!var29.isEmpty()) {
-                        AiPhysics.Inner_StreamUtil var26 = var23;
+                        AiPhysics.MotionState var26 = var23;
 
-                        for (AiPhysics.Inner_DataUtil var28 : var29) {
+                        for (AiPhysics.MoveInput var28 : var29) {
                            var26 = AiPhysics.putAt(var26, var28, var0);
                         }
 
@@ -158,8 +158,8 @@ public record AiJumpManeuver(
       }
    }
 
-   private static AiPhysics.Inner_StreamUtil walkToRunway(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2, List<AiPhysics.Inner_DataUtil> var3
+   private static AiPhysics.MotionState walkToRunway(
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2, List<AiPhysics.MoveInput> var3
    ) {
       float var4 = AiPhysics.putAt_F_D(var1.x(), var1.z(), var2.x(), var2.z());
       double var5 = Math.toRadians(var4);
@@ -174,8 +174,8 @@ public record AiJumpManeuver(
          double var12 = (var2.x() - var1.x()) * var7 + (var2.z() - var1.z()) * var9;
          double var14 = (var1.vx() * var7 + var1.vz() * var9) * 1.4;
          double var16 = Math.abs(var12 - var14) <= 0.07 ? 0.0 : Math.signum(var12 - var14);
-         AiPhysics.Inner_DataUtil var18 = new AiPhysics.Inner_DataUtil(var16, 0.0, false, false, false, var4);
-         AiPhysics.Inner_StreamUtil var19 = AiPhysics.putAt(var1, var18, var0);
+         AiPhysics.MoveInput var18 = new AiPhysics.MoveInput(var16, 0.0, false, false, false, var4);
+         AiPhysics.MotionState var19 = AiPhysics.putAt(var1, var18, var0);
          if (var19.equals(var1) || !AiGroundContinuity.putAt(var19.y(), var2.y()) || !var19.onGround() || AiPhysics.fill(var0, var1, var19)) {
             return null;
          }
@@ -187,28 +187,28 @@ public record AiJumpManeuver(
       return null;
    }
 
-   private static List<AiPhysics.Inner_DataUtil> hopOntoRunway(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2
+   private static List<AiPhysics.MoveInput> hopOntoRunway(
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2
    ) {
       float var3 = AiPhysics.putAt_F_D(var1.x(), var1.z(), var2.x(), var2.z());
       List var4 = List.of();
 
       for (float var8 : new float[]{var3, Math.round(var3 / 90.0F) * 90.0F}) {
-         AiPhysics.Inner_DataUtil var9 = AiPhysics.Inner_DataUtil.NONE.withYaw(var8);
-         AiPhysics.Inner_DataUtil var10 = AiPhysics.Inner_DataUtil.run(var8, false);
+         AiPhysics.MoveInput var9 = AiPhysics.MoveInput.NONE.withYaw(var8);
+         AiPhysics.MoveInput var10 = AiPhysics.MoveInput.run(var8, false);
 
          for (int var11 = 2; var11 <= 5; var11++) {
-            AiPhysics.Inner_StreamUtil var12 = var1;
+            AiPhysics.MotionState var12 = var1;
 
             for (int var13 = 0; var13 < var11; var13++) {
                var12 = AiPhysics.putAt(var12, var9.withJump(var13 == 0), var0);
             }
 
             if (!AiPhysics.fill(var0, var1, var12) && !var12.onGround()) {
-               AiPhysics.Inner_StreamUtil var22 = var12;
+               AiPhysics.MotionState var22 = var12;
 
                for (int var14 = 1; var14 <= 10; var14++) {
-                  AiPhysics.Inner_StreamUtil var15 = AiPhysics.putAt(var22, var10, var0);
+                  AiPhysics.MotionState var15 = AiPhysics.putAt(var22, var10, var0);
                   if (AiPhysics.fill(var0, var22, var15) || var15.y() < var2.y() - 0.04) {
                      break;
                   }
@@ -226,11 +226,11 @@ public record AiJumpManeuver(
                            var17.add(var10);
                         }
 
-                        AiPhysics.Inner_StreamUtil var24 = var22;
+                        AiPhysics.MotionState var24 = var22;
 
                         for (int var19 = 0; var19 < 12; var19++) {
-                           AiPhysics.Inner_DataUtil var20 = var19 < var16 ? new AiPhysics.Inner_DataUtil(-1.0, 0.0, false, false, false, var8) : var9;
-                           AiPhysics.Inner_StreamUtil var21 = AiPhysics.putAt(var24, var20, var0);
+                           AiPhysics.MoveInput var20 = var19 < var16 ? new AiPhysics.MoveInput(-1.0, 0.0, false, false, false, var8) : var9;
+                           AiPhysics.MotionState var21 = AiPhysics.putAt(var24, var20, var0);
                            if (var21.y() < var2.y() - 0.04 || AiPhysics.fill(var0, var24, var21)) {
                               break;
                            }
@@ -259,10 +259,10 @@ public record AiJumpManeuver(
    }
 
    static boolean runwayCrossingStillSafe(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, List<AiPhysics.Inner_DataUtil> var2, int var3, AiPhysics.Inner_StreamUtil var4
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, List<AiPhysics.MoveInput> var2, int var3, AiPhysics.MotionState var4
    ) {
       for (int var5 = var3; var5 < var2.size(); var5++) {
-         AiPhysics.Inner_StreamUtil var6 = AiPhysics.putAt(var1, (AiPhysics.Inner_DataUtil)var2.get(var5), var0);
+         AiPhysics.MotionState var6 = AiPhysics.putAt(var1, (AiPhysics.MoveInput)var2.get(var5), var0);
          if (var6.y() < var4.y() - 0.04 || AiPhysics.fill(var0, var1, var6)) {
             return false;
          }
@@ -273,19 +273,19 @@ public record AiJumpManeuver(
       return onRunway(var0, var1, var4);
    }
 
-   static List<AiPhysics.Inner_DataUtil> finishRunwayCrossing(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2
+   static List<AiPhysics.MoveInput> finishRunwayCrossing(
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2
    ) {
       if (!var1.onGround() && !(var1.y() < var2.y() - 0.02)) {
          float var3 = AiPhysics.putAt_F_D(var1.x(), var1.z(), var2.x(), var2.z());
 
          for (int var7 : new int[]{0, 1, -1}) {
-            AiPhysics.Inner_DataUtil var8 = new AiPhysics.Inner_DataUtil(var7, 0.0, false, false, false, var3);
-            AiPhysics.Inner_StreamUtil var9 = var1;
-            ArrayList<AiPhysics.Inner_DataUtil> var10 = new ArrayList<>();
+            AiPhysics.MoveInput var8 = new AiPhysics.MoveInput(var7, 0.0, false, false, false, var3);
+            AiPhysics.MotionState var9 = var1;
+            ArrayList<AiPhysics.MoveInput> var10 = new ArrayList<>();
 
             for (int var11 = 0; var11 < 10; var11++) {
-               AiPhysics.Inner_StreamUtil var12 = AiPhysics.putAt(var9, var8, var0);
+               AiPhysics.MotionState var12 = AiPhysics.putAt(var9, var8, var0);
                if (var12.y() < var2.y() - 0.02 || AiPhysics.fill(var0, var9, var12)) {
                   break;
                }
@@ -309,13 +309,13 @@ public record AiJumpManeuver(
       }
    }
 
-   private static boolean onRunway(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2) {
+   private static boolean onRunway(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
       if (var1.onGround()
          && !(Math.abs(var1.y() - var2.y()) > 0.02)
          && !(var1.speed() > 0.075)
          && !(Math.hypot(var1.x() - var2.x(), var1.z() - var2.z()) > 0.22)) {
          for (int var3 = 0; var3 < 2; var3++) {
-            var1 = AiPhysics.putAt(var1, AiPhysics.Inner_DataUtil.NONE, var0);
+            var1 = AiPhysics.putAt(var1, AiPhysics.MoveInput.NONE, var0);
             if (!var1.onGround() || Math.abs(var1.y() - var2.y()) > 0.02) {
                return false;
             }
@@ -331,8 +331,8 @@ public record AiJumpManeuver(
       return new AiJumpManeuver(this.inputs, shifted(this.start, var1, var2, var3), shifted(this.landing, var1, var2, var3), this.margin, this.takeoffTick);
    }
 
-   private static AiPhysics.Inner_StreamUtil shifted(AiPhysics.Inner_StreamUtil var0, int var1, int var2, int var3) {
-      return new AiPhysics.Inner_StreamUtil(
+   private static AiPhysics.MotionState shifted(AiPhysics.MotionState var0, int var1, int var2, int var3) {
+      return new AiPhysics.MotionState(
          var0.x() + var1,
          var0.y() + var2,
          var0.z() + var3,
@@ -350,13 +350,13 @@ public record AiJumpManeuver(
       );
    }
 
-   public double replay(AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, int var3, BlockPos var4, double var5) {
+   public double replay(AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2, int var3, BlockPos var4, double var5) {
       return this.replay(var1, var2, var3, var4, var5, -1, null);
    }
 
-   boolean provesStandingRelease(AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, int var3, BlockPos var4, double var5) {
+   boolean provesStandingRelease(AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2, int var3, BlockPos var4, double var5) {
       if (var2.pose() == 3 && !this.inputs.get(var3).sneak() && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var1, var2.x(), var2.y(), var2.z())) {
-         AiPhysics.Inner_StreamUtil var7 = new AiPhysics.Inner_StreamUtil(
+         AiPhysics.MotionState var7 = new AiPhysics.MotionState(
             var2.x(),
             var2.y(),
             var2.z(),
@@ -379,7 +379,7 @@ public record AiJumpManeuver(
    }
 
    private double replay(
-      AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, int var3, BlockPos var4, double var5, int var7, AiPhysics.Inner_DataUtil var8
+      AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2, int var3, BlockPos var4, double var5, int var7, AiPhysics.MoveInput var8
    ) {
       if (AiJumpSolver.putAt(var1, var2)) {
          return -1.0;
@@ -388,7 +388,7 @@ public record AiJumpManeuver(
       double var9 = var2.y();
 
       for (int var11 = var3; var11 < this.inputs.size(); var11++) {
-         AiPhysics.Inner_StreamUtil var12 = AiPhysics.putAt(var2, var11 == var7 ? var8 : this.inputs.get(var11), var1);
+         AiPhysics.MotionState var12 = AiPhysics.putAt(var2, var11 == var7 ? var8 : this.inputs.get(var11), var1);
          if (AiPhysics.fill(var1, var2, var12) || AiJumpSolver.putAt(var1, var12) || var12.y() < var5 - 4.0) {
             return -1.0;
          }
@@ -410,19 +410,19 @@ public record AiJumpManeuver(
          : -1.0;
    }
 
-   AiJumpManeuver fitFlight(AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, int var3, BlockPos var4, double var5) {
+   AiJumpManeuver fitFlight(AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2, int var3, BlockPos var4, double var5) {
       int var7 = Math.min(var3 + 4, this.inputs.size() - 1);
       double var8 = -0.04;
-      AiPhysics.Inner_DataUtil var10 = null;
+      AiPhysics.MoveInput var10 = null;
       int var11 = -1;
 
       for (int var12 = var3; var12 < var7; var12++) {
-         AiPhysics.Inner_DataUtil var13 = this.inputs.get(var12);
+         AiPhysics.MoveInput var13 = this.inputs.get(var12);
          if (!var13.jump() && !var13.sneak()) {
             for (int var14 = -1; var14 <= 1; var14++) {
                for (int var15 = -1; var15 <= 1; var15++) {
                   if (var14 != var13.forward() || var15 != var13.strafe()) {
-                     AiPhysics.Inner_DataUtil var16 = new AiPhysics.Inner_DataUtil(var14, var15, false, var14 > 0 && var13.sprint(), false, var13.yaw());
+                     AiPhysics.MoveInput var16 = new AiPhysics.MoveInput(var14, var15, false, var14 > 0 && var13.sprint(), false, var13.yaw());
                      double var17 = this.replay(var1, var2, var3, var4, var5, var12, var16);
                      if (!(var17 < var8)) {
                         var8 = var17;
@@ -441,18 +441,18 @@ public record AiJumpManeuver(
 
       var var19 = new ArrayList<>(this.inputs.subList(var3, this.inputs.size()));
       var19.set(var11 - var3, var10);
-      AiPhysics.Inner_StreamUtil var20 = var2;
+      AiPhysics.MotionState var20 = var2;
 
-      for (AiPhysics.Inner_DataUtil var22 : var19) {
+      for (AiPhysics.MoveInput var22 : var19) {
          var20 = AiPhysics.putAt(var20, var22, var1);
       }
 
       return new AiJumpManeuver(var19, var2, var20, var8, 0);
    }
 
-   static boolean coastsIntoLanding(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, BlockPos var2, double var3, float var5) {
+   static boolean coastsIntoLanding(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5) {
       for (int var6 = 0; var6 < 4 && var1.speed() > 0.01; var6++) {
-         AiPhysics.Inner_StreamUtil var7 = AiPhysics.putAt(var1, AiPhysics.Inner_DataUtil.NONE, var0);
+         AiPhysics.MotionState var7 = AiPhysics.putAt(var1, AiPhysics.MoveInput.NONE, var0);
          if (!AiJumpSolver.putAt(var7) || Math.abs(var7.y() - var3) > 0.02 || AiPhysics.fill(var0, var1, var7)) {
             return false;
          }
@@ -469,13 +469,13 @@ public record AiJumpManeuver(
       return false;
    }
 
-   AiJumpManeuver joinRunUp(AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, BlockPos var3, double var4) {
+   AiJumpManeuver joinRunUp(AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2, BlockPos var3, double var4) {
       if (var2.onGround() && var2.pose() == 0 && !(Math.abs(var2.y() - this.start.y()) > 0.02) && !(var2.speed() < 0.075)) {
-         ArrayList<AiPhysics.Inner_StreamUtil> var6 = new ArrayList<>();
+         ArrayList<AiPhysics.MotionState> var6 = new ArrayList<>();
          var6.add(this.start);
 
          for (int var7 = 0; var7 < Math.min(this.takeoffTick, 5); var7++) {
-            var6.add(AiPhysics.putAt((AiPhysics.Inner_StreamUtil)var6.getLast(), this.inputs.get(var7), var1));
+            var6.add(AiPhysics.putAt((AiPhysics.MotionState)var6.getLast(), this.inputs.get(var7), var1));
          }
 
          List var26 = List.of(new AiJumpManeuver.Inner_TaskQueue(var2, List.of(), 0.0));
@@ -486,7 +486,7 @@ public record AiJumpManeuver(
 
             for (AiJumpManeuver.Inner_TaskQueue var12 : (Iterable<AiJumpManeuver.Inner_TaskQueue>)(Iterable<?>)(var26)) {
                for (int var13 = var6.size() - 1; var13 >= 0; var13--) {
-                  if (!(nearPhase(var12.state(), (AiPhysics.Inner_StreamUtil)var6.get(var13)) > 0.48)) {
+                  if (!(nearPhase(var12.state(), (AiPhysics.MotionState)var6.get(var13)) > 0.48)) {
                      int var14 = var12.prefix().size() + this.inputs.size() - var13;
                      if (var8 == null || var14 < var8.inputs().size()) {
                         double var15 = this.replay(var1, var12.state(), var13, var3, var4);
@@ -504,8 +504,8 @@ public record AiJumpManeuver(
 
                   for (float var30 : new float[]{0.0F, -25.0F, 25.0F, -50.0F, 50.0F}) {
                      for (int var18 = -1; var18 <= 1; var18++) {
-                        AiPhysics.Inner_DataUtil var19 = new AiPhysics.Inner_DataUtil(1.0, var18, false, true, false, var27 + var30);
-                        AiPhysics.Inner_StreamUtil var20 = AiPhysics.putAt(var12.state(), var19, var1);
+                        AiPhysics.MoveInput var19 = new AiPhysics.MoveInput(1.0, var18, false, true, false, var27 + var30);
+                        AiPhysics.MotionState var20 = AiPhysics.putAt(var12.state(), var19, var1);
                         if (var20.onGround()
                            && AiGroundContinuity.putAt(var20.y(), var2.y())
                            && !var20.horizontalCollision()
@@ -514,7 +514,7 @@ public record AiJumpManeuver(
                            var21.add(var19);
                            double var22 = 1.0 / 0.0;
 
-                           for (AiPhysics.Inner_StreamUtil var25 : var6) {
+                           for (AiPhysics.MotionState var25 : var6) {
                               var22 = Math.min(var22, nearPhase(var20, var25));
                            }
 
@@ -535,11 +535,11 @@ public record AiJumpManeuver(
       }
    }
 
-   private static double nearPhase(AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_StreamUtil var1) {
+   private static double nearPhase(AiPhysics.MotionState var0, AiPhysics.MotionState var1) {
       return Math.hypot(var0.x() - var1.x(), var0.z() - var1.z()) + 0.8 * Math.hypot(var0.vx() - var1.vx(), var0.vz() - var1.vz());
    }
 
-   AiJumpManeuver fitApproach(AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, BlockPos var3, double var4, float var6) {
+   AiJumpManeuver fitApproach(AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2, BlockPos var3, double var4, float var6) {
       if (var2.onGround() && !(Math.abs(var2.y() - this.start.y()) > 0.02) && !(Math.hypot(var2.x() - this.start.x(), var2.z() - this.start.z()) > 0.35)) {
          List var7 = List.of(new AiJumpManeuver.Inner_TaskQueue(var2, List.of(), 0.0));
          float[] var8 = new float[]{0.0F, -3.0F, 3.0F, -8.0F, 8.0F, -16.0F, 16.0F};
@@ -553,8 +553,8 @@ public record AiJumpManeuver(
                      for (int var18 = -1; var18 <= 1; var18++) {
                         for (float var22 : var8) {
                            if (var17 != 0 || var18 != 0 || var22 == 0.0F) {
-                              AiPhysics.Inner_DataUtil var23 = new AiPhysics.Inner_DataUtil(var17, var18, false, false, var16, var6 + var22);
-                              AiPhysics.Inner_StreamUtil var24 = AiPhysics.putAt(var12.state(), var23, var1);
+                              AiPhysics.MoveInput var23 = new AiPhysics.MoveInput(var17, var18, false, false, var16, var6 + var22);
+                              AiPhysics.MotionState var24 = AiPhysics.putAt(var12.state(), var23, var1);
                               if (var24.onGround()
                                  && !(Math.abs(var24.y() - var2.y()) > 0.02)
                                  && !AiPhysics.fill(var1, var12.state(), var24)
@@ -602,30 +602,30 @@ public record AiJumpManeuver(
    }
 
    private AiJumpManeuver withApproach(
-      AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, AiPhysics.Inner_StreamUtil var3, List<AiPhysics.Inner_DataUtil> var4, double var5
+      AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2, AiPhysics.MotionState var3, List<AiPhysics.MoveInput> var4, double var5
    ) {
       var var7 = new ArrayList<>(var4);
       var7.addAll(this.inputs);
 
-      for (AiPhysics.Inner_DataUtil var9 : this.inputs) {
+      for (AiPhysics.MoveInput var9 : this.inputs) {
          var3 = AiPhysics.putAt(var3, var9, var1);
       }
 
       return new AiJumpManeuver(var7, var2, var3, var5, this.takeoffTick + var4.size());
    }
 
-   static AiJumpSolver.Inner_StateCache solve(AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7) {
+   static AiJumpSolver.JumpPlan solve(AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7) {
       return solve(var0, var1, var2, var4, var5, var7, true, false);
    }
 
-   static AiJumpSolver.Inner_StateCache solve(
-      AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, boolean var8, boolean var9
+   static AiJumpSolver.JumpPlan solve(
+      AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, boolean var8, boolean var9
    ) {
       return solve(var0, var1, var2, var4, var5, var7, var8, var9, null);
    }
 
-   static AiJumpSolver.Inner_StateCache solve(
-      AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, boolean var8, boolean var9, int[] var10
+   static AiJumpSolver.JumpPlan solve(
+      AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, boolean var8, boolean var9, int[] var10
    ) {
       double var11 = var1.getX() + 0.5;
       double var13 = var1.getZ() + 0.5;
@@ -633,13 +633,13 @@ public record AiJumpManeuver(
       var var16 = headings(var15);
       if (var8) {
          if (!AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var11, var2, var13)) {
-            AiJumpSolver.Inner_StateCache var17 = narrowExit(var0, var1, var2, var4, var5, var7, var9);
+            AiJumpSolver.JumpPlan var17 = narrowExit(var0, var1, var2, var4, var5, var7, var9);
             if (var17 != null) {
                return var17;
             }
          }
 
-         AiJumpSolver.Inner_StateCache var41 = offsetExit(var0, var1, var2, var4, var5, var7, var15);
+         AiJumpSolver.JumpPlan var41 = offsetExit(var0, var1, var2, var4, var5, var7, var15);
          if (var41 != null) {
             return var41;
          }
@@ -647,7 +647,7 @@ public record AiJumpManeuver(
          if (var2 - var5 >= 1.5
             && Math.hypot(var4.getX() - var1.getX(), var4.getZ() - var1.getZ()) >= 4.0
             && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var11, var2, var13)) {
-            AiPhysics.Inner_StreamUtil var18 = AiPhysics.Inner_StreamUtil.standing(var11, var2, var13);
+            AiPhysics.MotionState var18 = AiPhysics.MotionState.standing(var11, var2, var13);
 
             for (float var22 : new float[]{35.0F, -35.0F, 37.5F, -37.5F}) {
                float var23 = var15 + var22;
@@ -659,7 +659,7 @@ public record AiJumpManeuver(
          }
       }
 
-      AiJumpSolver.Inner_StateCache var42 = null;
+      AiJumpSolver.JumpPlan var42 = null;
       boolean var43 = AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var11, var2, var13);
       List var44 = null;
       if (!var43 && var8) {
@@ -677,12 +677,12 @@ public record AiJumpManeuver(
             double[] var52 = var8 && var51 > 0.8 ? new double[]{0.0, 0.6, var51} : (var51 > 0.3 ? new double[]{0.0, var51} : new double[]{0.0});
 
             for (double var55 : var52) {
-               AiPhysics.Inner_StreamUtil var56 = new AiPhysics.Inner_StreamUtil(
+               AiPhysics.MotionState var56 = new AiPhysics.MotionState(
                   var11 - var50 * var55, var2, var13 - var26 * var55, 0.0, -0.0784, 0.0, true, 0, false, false
                );
                AiJumpManeuver var37 = search(var0, var56, var1, var4, var5, var48, var7, var9, var9 ? COMMON_RELEASES : (var10 == null ? RELEASES : var10));
                if (var37 != null) {
-                  AiJumpSolver.Inner_StateCache var57 = plan(var37, var48, var7, var55);
+                  AiJumpSolver.JumpPlan var57 = plan(var37, var48, var7, var55);
                   if (var42 == null || var37.margin() > var42.margin()) {
                      var42 = var57;
                   }
@@ -693,17 +693,17 @@ public record AiJumpManeuver(
                }
             }
          } else if (var44 != null) {
-            for (AiJumpSolver.Inner_SyncManager var29 : (Iterable<AiJumpSolver.Inner_SyncManager>)(Iterable<?>)(var44)) {
+            for (AiJumpSolver.Point2D var29 : (Iterable<AiJumpSolver.Point2D>)(Iterable<?>)(var44)) {
                double var30 = backRoom(var0, var29.x(), var29.z(), var2, var50, var26);
                double[] var32 = var30 > 0.3 ? new double[]{0.0, var30} : new double[]{0.0};
 
                for (double var36 : var32) {
-                  AiPhysics.Inner_StreamUtil var38 = new AiPhysics.Inner_StreamUtil(
+                  AiPhysics.MotionState var38 = new AiPhysics.MotionState(
                      var29.x() - var50 * var36, var2, var29.z() - var26 * var36, 0.0, -0.0784, 0.0, true, 0, false, false
                   );
                   AiJumpManeuver var39 = search(var0, var38, var1, var4, var5, var48, var7, var9, var9 ? COMMON_RELEASES : (var10 == null ? RELEASES : var10));
                   if (var39 != null) {
-                     AiJumpSolver.Inner_StateCache var40 = plan(var39, var48, var7, Math.hypot(var38.x() - var11, var38.z() - var13));
+                     AiJumpSolver.JumpPlan var40 = plan(var39, var48, var7, Math.hypot(var38.x() - var11, var38.z() - var13));
                      if (var42 == null || var39.margin() > var42.margin()) {
                         var42 = var40;
                      }
@@ -726,7 +726,7 @@ public record AiJumpManeuver(
       }
 
       if (var5 - var2 > 0.6 && Math.hypot(var4.getX() - var1.getX(), var4.getZ() - var1.getZ()) >= 3.5) {
-         AiJumpSolver.Inner_StateCache var47 = risingOffsetExit(var0, var1, var2, var4, var5, var7, var15);
+         AiJumpSolver.JumpPlan var47 = risingOffsetExit(var0, var1, var2, var4, var5, var7, var15);
          if (var47 != null) {
             return var47;
          }
@@ -735,16 +735,16 @@ public record AiJumpManeuver(
       return solveAroundWall(var0, var1, var2, var4, var5, var7, var15, var16, var9);
    }
 
-   private static AiJumpSolver.Inner_StateCache offsetExit(
-      AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, float var8
+   private static AiJumpSolver.JumpPlan offsetExit(
+      AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, float var8
    ) {
       float var9 = Math.round(var8 / 90.0F) * 90.0F;
       float var10 = Mth.wrapDegrees(var8 - var9);
       if (!(Math.abs(var10) < 8.0F) && !(Math.abs(var10) > 40.0F)) {
          int var11 = var10 < 0.0F ? 1 : -1;
-         AiPhysics.Inner_StreamUtil var12 = AiPhysics.Inner_StreamUtil.standing(var1.getX() + 0.5, var2, var1.getZ() + 0.5);
-         AiPhysics.Inner_StreamUtil var13 = var12;
-         ArrayList<AiPhysics.Inner_DataUtil> var14 = new ArrayList<>();
+         AiPhysics.MotionState var12 = AiPhysics.MotionState.standing(var1.getX() + 0.5, var2, var1.getZ() + 0.5);
+         AiPhysics.MotionState var13 = var12;
+         ArrayList<AiPhysics.MoveInput> var14 = new ArrayList<>();
 
          for (int var15 = 0; var15 <= 3; var15++) {
             AiJumpManeuver.Inner_ConfigStore var16 = prepareLaunch(var0, var13, var9, var9, var7);
@@ -759,8 +759,8 @@ public record AiJumpManeuver(
                }
             }
 
-            AiPhysics.Inner_DataUtil var26 = AiPhysics.Inner_DataUtil.run(var9, var7);
-            AiPhysics.Inner_StreamUtil var27 = AiPhysics.putAt(var13, var26, var0);
+            AiPhysics.MoveInput var26 = AiPhysics.MoveInput.run(var9, var7);
+            AiPhysics.MotionState var27 = AiPhysics.putAt(var13, var26, var0);
             if (!var27.onGround() || var27.horizontalCollision() || AiPhysics.fill(var0, var13, var27)) {
                break;
             }
@@ -775,8 +775,8 @@ public record AiJumpManeuver(
       }
    }
 
-   private static AiJumpSolver.Inner_StateCache narrowExit(
-      AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, boolean var8
+   private static AiJumpSolver.JumpPlan narrowExit(
+      AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, boolean var8
    ) {
       var var9 = new ArrayList<>(AiJumpSolver.putAt_List_TokenCore_TaskStat(var0, var1, var2));
       boolean var10 = var5 > var2 + 0.6;
@@ -791,7 +791,7 @@ public record AiJumpManeuver(
                      double var29 = var1.getX() + 0.5 + (var24 == 0 ? var25 : var27);
                      double var31 = var1.getZ() + 0.5 + (var24 == 0 ? var27 : var25);
                      if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var29, var2, var31)) {
-                        var9.add(new AiJumpSolver.Inner_SyncManager(var29, var31));
+                        var9.add(new AiJumpSolver.Point2D(var29, var31));
                      }
                   }
                }
@@ -807,20 +807,20 @@ public record AiJumpManeuver(
       int[] var47 = var8 ? COMMON_NARROW_DELAYS : NARROW_DELAYS;
       AiJumpManeuver.Inner_CachePool var48 = new AiJumpManeuver.Inner_CachePool(128);
 
-      for (AiJumpSolver.Inner_SyncManager var50 : var8 ? AiJumpSolver.putAt(var9) : var9) {
+      for (AiJumpSolver.Point2D var50 : var8 ? AiJumpSolver.putAt(var9) : var9) {
          if (Thread.currentThread().isInterrupted()) {
             return null;
          }
 
-         AiPhysics.Inner_StreamUtil var51 = AiPhysics.Inner_StreamUtil.standing(var50.x(), var2, var50.z());
+         AiPhysics.MotionState var51 = AiPhysics.MotionState.standing(var50.x(), var2, var50.z());
          float var52 = AiPhysics.putAt_F_D(var51.x(), var51.z(), var4.getX() + 0.5, var4.getZ() + 0.5);
 
          for (float var56 : var46) {
             float var57 = Math.round(var52 + var56);
             int var58 = var56 < 0.0F ? -1 : 1;
-            AiPhysics.Inner_StreamUtil var59 = var51;
-            ArrayList<AiPhysics.Inner_DataUtil> var26 = new ArrayList<>();
-            AiPhysics.Inner_DataUtil var60 = AiPhysics.Inner_DataUtil.run(var57, var7);
+            AiPhysics.MotionState var59 = var51;
+            ArrayList<AiPhysics.MoveInput> var26 = new ArrayList<>();
+            AiPhysics.MoveInput var60 = AiPhysics.MoveInput.run(var57, var7);
 
             for (int var28 = 0; var28 <= (var11 ? 4 : 0); var28++) {
                for (boolean var32 : var10 && var7 ? new boolean[]{true, false} : new boolean[]{var7}) {
@@ -844,7 +844,7 @@ public record AiJumpManeuver(
                   }
                }
 
-               AiPhysics.Inner_StreamUtil var62 = AiPhysics.putAt(var59, var60, var0);
+               AiPhysics.MotionState var62 = AiPhysics.putAt(var59, var60, var0);
                if (!var62.onGround() || var62.horizontalCollision() || Math.abs(var62.y() - var2) > 0.02 || AiPhysics.fill(var0, var59, var62)) {
                   break;
                }
@@ -858,7 +858,7 @@ public record AiJumpManeuver(
       return var7 && var5 >= var2 - 1.5 && var1.distSqr(var4) >= 9.0 ? AiPanelWrapJump.putAt(var0, var1, var2, var4, var5) : null;
    }
 
-   private static void addPanelEdges(AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, List<AiJumpSolver.Inner_SyncManager> var4) {
+   private static void addPanelEdges(AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, List<AiJumpSolver.Point2D> var4) {
       double var5 = var1.getX();
       double var7 = var1.getZ();
       AABB var9 = new AABB(var5, var2 - 0.02, var7, var5 + 1.0, var2 - 0.001, var7 + 1.0);
@@ -880,7 +880,7 @@ public record AiJumpManeuver(
                               double var38 = var12 == 0 ? var31 : var21 + var36;
                               double var40 = var12 == 0 ? var21 + var36 : var31;
                               if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var38, var2, var40)) {
-                                 var4.add(new AiJumpSolver.Inner_SyncManager(var38, var40));
+                                 var4.add(new AiJumpSolver.Point2D(var38, var40));
                               }
                            }
                         }
@@ -892,10 +892,10 @@ public record AiJumpManeuver(
       }
    }
 
-   private static AiJumpSolver.Inner_StateCache plan(AiJumpManeuver var0, float var1, boolean var2, double var3) {
-      AiPhysics.Inner_StreamUtil var5 = var0.start();
-      AiPhysics.Inner_StreamUtil var6 = var0.landing();
-      return new AiJumpSolver.Inner_StateCache(
+   private static AiJumpSolver.JumpPlan plan(AiJumpManeuver var0, float var1, boolean var2, double var3) {
+      AiPhysics.MotionState var5 = var0.start();
+      AiPhysics.MotionState var6 = var0.landing();
+      return new AiJumpSolver.JumpPlan(
          var1,
          var0.takeoffTick(),
          var2,
@@ -914,8 +914,8 @@ public record AiJumpManeuver(
       );
    }
 
-   static AiJumpSolver.Inner_StateCache roofedLanding(
-      AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, boolean var8
+   static AiJumpSolver.JumpPlan roofedLanding(
+      AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, boolean var8
    ) {
       double[] var9 = var8 ? new double[]{var2 - 0.5, var2} : new double[]{var2};
       double[] var10 = new double[]{0.0, -0.38, 0.38, -0.2, 0.2};
@@ -924,8 +924,8 @@ public record AiJumpManeuver(
       if (!AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var11, var5, var13)) {
          var var15 = AiJumpSolver.putAt_List_TokenCore_TaskStat(var0, var4, var5);
          if (!var15.isEmpty()) {
-            var11 = ((AiJumpSolver.Inner_SyncManager)var15.getFirst()).x();
-            var13 = ((AiJumpSolver.Inner_SyncManager)var15.getFirst()).z();
+            var11 = ((AiJumpSolver.Point2D)var15.getFirst()).x();
+            var13 = ((AiJumpSolver.Point2D)var15.getFirst()).z();
          }
       }
 
@@ -939,19 +939,19 @@ public record AiJumpManeuver(
                double var30 = var1.getX() + 0.5 + var23;
                double var32 = var1.getZ() + 0.5 + var28;
                if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var30, var18, var32)) {
-                  AiPhysics.Inner_StreamUtil var34 = AiPhysics.Inner_StreamUtil.standing(var30, var18, var32);
+                  AiPhysics.MotionState var34 = AiPhysics.MotionState.standing(var30, var18, var32);
                   float var35 = AiPhysics.putAt_F_D(var30, var32, var11, var13);
 
                   for (float var39 : new float[]{0.0F, -6.0F, 6.0F, -15.0F, 15.0F}) {
-                     AiPhysics.Inner_DataUtil var40 = AiPhysics.Inner_DataUtil.run(var35 + var39, var7);
-                     AiPhysics.Inner_StreamUtil var41 = var34;
-                     ArrayList<AiPhysics.Inner_DataUtil> var42 = new ArrayList<>();
+                     AiPhysics.MoveInput var40 = AiPhysics.MoveInput.run(var35 + var39, var7);
+                     AiPhysics.MotionState var41 = var34;
+                     ArrayList<AiPhysics.MoveInput> var42 = new ArrayList<>();
 
                      for (int var43 = 0; var43 <= 6; var43++) {
                         for (int var44 = 0; var44 < 6; var44++) {
                            boolean var45 = var44 == 5;
                            boolean var46 = var44 >= 4;
-                           AiPhysics.Inner_StreamUtil var47 = var41;
+                           AiPhysics.MotionState var47 = var41;
                            var var48 = new ArrayList<>(var42);
                            float var49 = var40.yaw();
                            byte var50 = 0;
@@ -984,14 +984,14 @@ public record AiJumpManeuver(
                                  var49 += Mth.clamp(Mth.wrapDegrees(var53 - var49), -30.0F, 30.0F);
                               }
 
-                              AiPhysics.Inner_DataUtil var63 = var51 == 0
-                                 ? new AiPhysics.Inner_DataUtil(1.0, 0.0, true, !var52 && var7, var52, var49)
+                              AiPhysics.MoveInput var63 = var51 == 0
+                                 ? new AiPhysics.MoveInput(1.0, 0.0, true, !var52 && var7, var52, var49)
                                  : (
                                     var52
-                                       ? new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, true, var49)
-                                       : new AiPhysics.Inner_DataUtil(1.0, 0.0, false, var7, false, var49)
+                                       ? new AiPhysics.MoveInput(1.0, 0.0, false, false, true, var49)
+                                       : new AiPhysics.MoveInput(1.0, 0.0, false, var7, false, var49)
                                  );
-                              AiPhysics.Inner_StreamUtil var54 = AiPhysics.putAt(var47, var63, var0);
+                              AiPhysics.MotionState var54 = AiPhysics.putAt(var47, var63, var0);
                               if (AiPhysics.fill(var0, var47, var54) || AiJumpSolver.putAt(var0, var54)) {
                                  break;
                               }
@@ -1021,7 +1021,7 @@ public record AiJumpManeuver(
                                  double var64 = Math.max(0.0, Math.max(var4.getX() - var54.x(), var54.x() - (var4.getX() + 1)));
                                  double var65 = Math.max(0.0, Math.max(var4.getZ() - var54.z(), var54.z() - (var4.getZ() + 1)));
                                  if (Math.hypot(var64, var65) <= 0.45) {
-                                    AiJumpSolver.Inner_StateCache var60 = settleRoofedTouchdown(
+                                    AiJumpSolver.JumpPlan var60 = settleRoofedTouchdown(
                                        var0, var34, var48, var54, var4, var5, var11, var13, var49, var40.yaw(), var7, var43, Math.hypot(var23, var28), var50
                                     );
                                     if (var60 != null) {
@@ -1035,7 +1035,7 @@ public record AiJumpManeuver(
                            }
                         }
 
-                        AiPhysics.Inner_StreamUtil var62 = AiPhysics.putAt(var41, var40, var0);
+                        AiPhysics.MotionState var62 = AiPhysics.putAt(var41, var40, var0);
                         if (!var62.onGround() || Math.abs(var62.y() - var18) > 0.02 || AiPhysics.fill(var0, var41, var62)) {
                            break;
                         }
@@ -1052,11 +1052,11 @@ public record AiJumpManeuver(
       return null;
    }
 
-   private static AiJumpSolver.Inner_StateCache settleRoofedTouchdown(
-      AiPhysics.Inner_CachePool var0,
-      AiPhysics.Inner_StreamUtil var1,
-      List<AiPhysics.Inner_DataUtil> var2,
-      AiPhysics.Inner_StreamUtil var3,
+   private static AiJumpSolver.JumpPlan settleRoofedTouchdown(
+      AiPhysics.PhysicsWorld var0,
+      AiPhysics.MotionState var1,
+      List<AiPhysics.MoveInput> var2,
+      AiPhysics.MotionState var3,
       BlockPos var4,
       double var5,
       double var7,
@@ -1069,7 +1069,7 @@ public record AiJumpManeuver(
       int var17
    ) {
       for (int var18 = 0; var18 < 4; var18++) {
-         AiPhysics.Inner_StreamUtil var19 = var3;
+         AiPhysics.MotionState var19 = var3;
          ArrayList var20 = new ArrayList(var2.size() + 4);
          var20.addAll(var2);
          float var21 = var11;
@@ -1079,27 +1079,27 @@ public record AiJumpManeuver(
             float var24 = AiPhysics.putAt_F_D(var19.x(), var19.z(), var7, var9);
             var21 += Mth.clamp(Mth.wrapDegrees(var24 - var21), -30.0F, 30.0F);
             boolean var25 = (int)Math.floor(var19.x()) == var4.getX() && (int)Math.floor(var19.z()) == var4.getZ();
-            AiPhysics.Inner_DataUtil var10000;
+            AiPhysics.MoveInput var10000;
             switch (var18) {
                case 0:
                   var10000 = var25
-                     ? new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, true, var21)
-                     : new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, true, var21);
+                     ? new AiPhysics.MoveInput(0.0, 0.0, false, false, true, var21)
+                     : new AiPhysics.MoveInput(1.0, 0.0, false, false, true, var21);
                   break;
                case 1:
-                  var10000 = AiPhysics.Inner_DataUtil.NONE.withYaw(var21);
+                  var10000 = AiPhysics.MoveInput.NONE.withYaw(var21);
                   break;
                case 2:
-                  var10000 = new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, true, var21);
+                  var10000 = new AiPhysics.MoveInput(0.0, 0.0, false, false, true, var21);
                   break;
                default:
                   var10000 = var25
-                     ? new AiPhysics.Inner_DataUtil(-1.0, 0.0, false, false, true, var21)
-                     : new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var21);
+                     ? new AiPhysics.MoveInput(-1.0, 0.0, false, false, true, var21)
+                     : new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var21);
             }
 
-            AiPhysics.Inner_DataUtil var26 = var10000;
-            AiPhysics.Inner_StreamUtil var27 = AiPhysics.putAt(var19, var26, var0);
+            AiPhysics.MoveInput var26 = var10000;
+            AiPhysics.MotionState var27 = AiPhysics.putAt(var19, var26, var0);
             if (!AiJumpSolver.putAt(var27) || Math.abs(var27.y() - var5) > 0.02 || AiPhysics.fill(var0, var19, var27) || AiJumpSolver.putAt(var0, var27)) {
                break;
             }
@@ -1126,7 +1126,7 @@ public record AiJumpManeuver(
       return null;
    }
 
-   static AiJumpSolver.Inner_StateCache cornerDeparture(AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7) {
+   static AiJumpSolver.JumpPlan cornerDeparture(AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7) {
       double var8 = var1.getX() + 0.5;
       double var10 = var1.getZ() + 0.5;
       float var12 = AiPhysics.putAt_F_D(var8, var10, var4.getX() + 0.5, var4.getZ() + 0.5);
@@ -1137,28 +1137,28 @@ public record AiJumpManeuver(
          double var19 = Math.toRadians(var18);
 
          for (double var24 : new double[]{0.68, 0.59, 0.5}) {
-            AiPhysics.Inner_StreamUtil var26 = AiPhysics.Inner_StreamUtil.standing(var8 - Math.sin(var19) * var24, var2, var10 + Math.cos(var19) * var24);
+            AiPhysics.MotionState var26 = AiPhysics.MotionState.standing(var8 - Math.sin(var19) * var24, var2, var10 + Math.cos(var19) * var24);
             if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var26.x(), var2, var26.z())) {
                for (float var30 : new float[]{0.0F, -6.0F, 6.0F}) {
-                  AiPhysics.Inner_DataUtil var31 = AiPhysics.Inner_DataUtil.run(var18 + var30, var7);
-                  AiPhysics.Inner_StreamUtil var32 = AiPhysics.putAt(var26, var31, var0);
+                  AiPhysics.MoveInput var31 = AiPhysics.MoveInput.run(var18 + var30, var7);
+                  AiPhysics.MotionState var32 = AiPhysics.putAt(var26, var31, var0);
                   if (var32.onGround() && !AiPhysics.fill(var0, var26, var32)) {
                      float var33 = AiPhysics.putAt_F_D(var32.x(), var32.z(), var4.getX() + 0.5, var4.getZ() + 0.5);
 
                      for (float var37 : new float[]{0.0F, -15.0F, 15.0F, -25.0F, 25.0F}) {
-                        AiPhysics.Inner_DataUtil var38 = AiPhysics.Inner_DataUtil.jump(var33 + var37, var7);
-                        AiPhysics.Inner_DataUtil var39 = AiPhysics.Inner_DataUtil.run(var33, var7);
-                        AiPhysics.Inner_StreamUtil var40 = AiPhysics.putAt(var32, var38, var0);
+                        AiPhysics.MoveInput var38 = AiPhysics.MoveInput.jump(var33 + var37, var7);
+                        AiPhysics.MoveInput var39 = AiPhysics.MoveInput.run(var33, var7);
+                        AiPhysics.MotionState var40 = AiPhysics.putAt(var32, var38, var0);
                         if (!var40.onGround() && !(var40.y() <= var32.y()) && !AiPhysics.fill(var0, var32, var40)) {
                            for (double var44 : new double[]{0.2, 0.45, 0.7}) {
-                              AiPhysics.Inner_StreamUtil var46 = var40;
+                              AiPhysics.MotionState var46 = var40;
                               var var47 = new ArrayList<>(List.of(var31, var38));
 
                               for (int var48 = 0; var48 < 16; var48++) {
-                                 AiPhysics.Inner_DataUtil var49 = var46.vy() < 0.0 && var46.y() <= var5 + var44
-                                    ? new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, true, var33)
+                                 AiPhysics.MoveInput var49 = var46.vy() < 0.0 && var46.y() <= var5 + var44
+                                    ? new AiPhysics.MoveInput(1.0, 0.0, false, false, true, var33)
                                     : var39;
-                                 AiPhysics.Inner_StreamUtil var50 = AiPhysics.putAt(var46, var49, var0);
+                                 AiPhysics.MotionState var50 = AiPhysics.putAt(var46, var49, var0);
                                  if (AiPhysics.fill(var0, var46, var50) || var50.y() < var5 - 0.55) {
                                     break;
                                  }
@@ -1193,8 +1193,8 @@ public record AiJumpManeuver(
          if (!AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var63, var5, var64)) {
             var var65 = AiJumpSolver.putAt_List_TokenCore_TaskStat(var0, var4, var5);
             if (!var65.isEmpty()) {
-               var63 = ((AiJumpSolver.Inner_SyncManager)var65.getFirst()).x();
-               var64 = ((AiJumpSolver.Inner_SyncManager)var65.getFirst()).z();
+               var63 = ((AiJumpSolver.Point2D)var65.getFirst()).x();
+               var64 = ((AiJumpSolver.Point2D)var65.getFirst()).z();
             }
          }
 
@@ -1210,27 +1210,27 @@ public record AiJumpManeuver(
                   double var102 = var8 - Math.sin(var76) * var87 - Math.sin(var78) * var97;
                   double var105 = var10 + Math.cos(var76) * var87 + Math.cos(var78) * var97;
                   if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var102, var2, var105)) {
-                     var66.add(new AiJumpSolver.Inner_SyncManager(var102, var105));
+                     var66.add(new AiJumpSolver.Point2D(var102, var105));
                   }
                }
             }
          }
 
-         for (AiJumpSolver.Inner_SyncManager var69 : AiJumpSolver.putAt(var66)) {
-            AiPhysics.Inner_StreamUtil var71 = AiPhysics.Inner_StreamUtil.standing(var69.x(), var2, var69.z());
+         for (AiJumpSolver.Point2D var69 : AiJumpSolver.putAt(var66)) {
+            AiPhysics.MotionState var71 = AiPhysics.MotionState.standing(var69.x(), var2, var69.z());
 
             for (int var25 : new int[]{1, -1}) {
                for (float var84 : new float[]{15.0F, 30.0F, 45.0F, 60.0F, 75.0F, 90.0F, 105.0F}) {
                   float var86 = var13 + var25 * var84;
 
                   for (int var88 = 0; var88 <= 2; var88++) {
-                     AiPhysics.Inner_StreamUtil var89 = var71;
-                     ArrayList<AiPhysics.Inner_DataUtil> var91 = new ArrayList<>();
+                     AiPhysics.MotionState var89 = var71;
+                     ArrayList<AiPhysics.MoveInput> var91 = new ArrayList<>();
                      boolean var93 = true;
 
                      for (int var95 = 0; var95 < var88; var95++) {
-                        AiPhysics.Inner_DataUtil var98 = new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var86);
-                        AiPhysics.Inner_StreamUtil var100 = AiPhysics.putAt(var89, var98, var0);
+                        AiPhysics.MoveInput var98 = new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var86);
+                        AiPhysics.MotionState var100 = AiPhysics.putAt(var89, var98, var0);
                         if (!var100.onGround() || Math.abs(var100.y() - var2) > 0.02 || AiPhysics.fill(var0, var89, var100)) {
                            var93 = false;
                            break;
@@ -1243,12 +1243,12 @@ public record AiJumpManeuver(
                      if (var93) {
                         for (boolean var103 : var7 ? new boolean[]{true, false} : new boolean[]{false}) {
                            for (boolean var108 : new boolean[]{false, true}) {
-                              AiPhysics.Inner_DataUtil var109 = new AiPhysics.Inner_DataUtil(1.0, 0.0, true, var103 && !var108, var108, var86);
-                              AiPhysics.Inner_StreamUtil var110 = AiPhysics.putAt(var89, var109, var0);
+                              AiPhysics.MoveInput var109 = new AiPhysics.MoveInput(1.0, 0.0, true, var103 && !var108, var108, var86);
+                              AiPhysics.MotionState var110 = AiPhysics.putAt(var89, var109, var0);
                               if (!var110.onGround() && !(var110.y() <= var2 + 0.15) && !AiPhysics.fill(var0, var89, var110)) {
                                  for (int var113 : new int[]{0, 1, 2, 3}) {
                                     for (boolean var117 : new boolean[]{false, true}) {
-                                       AiPhysics.Inner_StreamUtil var118 = var110;
+                                       AiPhysics.MotionState var118 = var110;
                                        var var54 = new ArrayList<>(var91);
                                        var54.add(var109);
                                        float var55 = var86;
@@ -1256,8 +1256,8 @@ public record AiJumpManeuver(
                                        for (int var56 = 1; var56 <= 16; var56++) {
                                           float var57 = var56 <= var113 ? var86 : AiPhysics.putAt_F_D(var118.x(), var118.z(), var63, var64);
                                           var55 += Mth.clamp(Mth.wrapDegrees(var57 - var55), -30.0F, 30.0F);
-                                          AiPhysics.Inner_DataUtil var58 = new AiPhysics.Inner_DataUtil(1.0, 0.0, false, !var117 && var7, var117, var55);
-                                          AiPhysics.Inner_StreamUtil var59 = AiPhysics.putAt(var118, var58, var0);
+                                          AiPhysics.MoveInput var58 = new AiPhysics.MoveInput(1.0, 0.0, false, !var117 && var7, var117, var55);
+                                          AiPhysics.MotionState var59 = AiPhysics.putAt(var118, var58, var0);
                                           if (AiPhysics.fill(var0, var118, var59) || var59.y() < var2 - 0.55) {
                                              break;
                                           }
@@ -1294,12 +1294,12 @@ public record AiJumpManeuver(
       return null;
    }
 
-   static AiJumpSolver.Inner_StateCache lowClearance(
-      AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, boolean var8, boolean var9
+   static AiJumpSolver.JumpPlan lowClearance(
+      AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, boolean var8, boolean var9
    ) {
       double var10 = var1.getX() + 0.5;
       double var12 = var1.getZ() + 0.5;
-      AiPhysics.Inner_StreamUtil var14 = new AiPhysics.Inner_StreamUtil(
+      AiPhysics.MotionState var14 = new AiPhysics.MotionState(
          var10, var2, var12, 0.0, -0.0784, 0.0, true, 0, false, false, -9223372036854775808L, false, var7 ? 1 : 0
       );
       if (!var0.collisions(var14.box(false)).isEmpty()) {
@@ -1310,12 +1310,12 @@ public record AiJumpManeuver(
 
       for (float var19 : new float[]{0.0F, -10.0F, 10.0F}) {
          float var20 = var15 + var19;
-         ArrayList<AiPhysics.Inner_DataUtil> var21 = new ArrayList<>();
-         AiPhysics.Inner_StreamUtil var22 = var14;
+         ArrayList<AiPhysics.MoveInput> var21 = new ArrayList<>();
+         AiPhysics.MotionState var22 = var14;
 
          for (int var23 = 0; var23 < 36; var23++) {
-            AiPhysics.Inner_DataUtil var24 = new AiPhysics.Inner_DataUtil(var8 && var23 == 0 ? 0.0 : 1.0, 0.0, false, !var8 && var9, var8, var20);
-            AiPhysics.Inner_StreamUtil var25 = AiPhysics.putAt(var22, var24, var0);
+            AiPhysics.MoveInput var24 = new AiPhysics.MoveInput(var8 && var23 == 0 ? 0.0 : 1.0, 0.0, false, !var8 && var9, var8, var20);
+            AiPhysics.MotionState var25 = AiPhysics.putAt(var22, var24, var0);
             if (AiPhysics.fill(var0, var22, var25) || AiJumpSolver.putAt(var0, var25) || var25.y() < var5 - 0.6) {
                break;
             }
@@ -1337,8 +1337,8 @@ public record AiJumpManeuver(
       return null;
    }
 
-   private static AiJumpSolver.Inner_StateCache risingOffsetExit(
-      AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, float var8
+   private static AiJumpSolver.JumpPlan risingOffsetExit(
+      AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, float var8
    ) {
       if (!var7) {
          return null;
@@ -1357,13 +1357,13 @@ public record AiJumpManeuver(
                double var28 = var1.getX() + 0.5 - var14 * var26 + var16 * var21 * var11;
                double var30 = var1.getZ() + 0.5 - var16 * var26 - var14 * var21 * var11;
                if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var28, var2, var30)) {
-                  AiPhysics.Inner_StreamUtil var32 = AiPhysics.Inner_StreamUtil.standing(var28, var2, var30);
+                  AiPhysics.MotionState var32 = AiPhysics.MotionState.standing(var28, var2, var30);
 
                   for (float var36 : new float[]{15.0F, 12.0F, 18.0F}) {
                      float var37 = Math.round(var8) + var11 * var36;
-                     AiPhysics.Inner_DataUtil var38 = AiPhysics.Inner_DataUtil.run(var37, true);
-                     AiPhysics.Inner_StreamUtil var39 = var32;
-                     ArrayList<AiPhysics.Inner_DataUtil> var40 = new ArrayList<>();
+                     AiPhysics.MoveInput var38 = AiPhysics.MoveInput.run(var37, true);
+                     AiPhysics.MotionState var39 = var32;
+                     ArrayList<AiPhysics.MoveInput> var40 = new ArrayList<>();
 
                      for (int var41 = 0; var41 <= 9; var41++) {
                         if (var39.speed() >= 0.13) {
@@ -1380,7 +1380,7 @@ public record AiJumpManeuver(
                            }
                         }
 
-                        AiPhysics.Inner_StreamUtil var52 = AiPhysics.putAt(var39, var38, var0);
+                        AiPhysics.MotionState var52 = AiPhysics.putAt(var39, var38, var0);
                         if (!var52.onGround() || var52.horizontalCollision() || Math.abs(var52.y() - var2) > 0.02 || AiPhysics.fill(var0, var39, var52)) {
                            break;
                         }
@@ -1399,8 +1399,8 @@ public record AiJumpManeuver(
       }
    }
 
-   private static AiJumpSolver.Inner_StateCache solveAroundWall(
-      AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, float var8, List<Float> var9, boolean var10
+   private static AiJumpSolver.JumpPlan solveAroundWall(
+      AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, float var8, List<Float> var9, boolean var10
    ) {
       double var11 = Math.toRadians(var8);
       double var13 = -Math.sin(var11);
@@ -1425,7 +1425,7 @@ public record AiJumpManeuver(
             double var34 = var19 - var15 * var30 - var13 * var25;
             if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var32, var2, var34)
                && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, (var32 + var17) * 0.5, var2, (var34 + var19) * 0.5)) {
-               AiPhysics.Inner_StreamUtil var36 = AiPhysics.Inner_StreamUtil.standing(var32, var2, var34);
+               AiPhysics.MotionState var36 = AiPhysics.MotionState.standing(var32, var2, var34);
 
                for (float var38 : var9) {
                   AiJumpManeuver var39 = search(var0, var36, var1, var4, var5, var38, var7, var10);
@@ -1441,9 +1441,9 @@ public record AiJumpManeuver(
    }
 
    private static AiJumpManeuver recordFlight(
-      AiPhysics.Inner_StreamUtil var0,
-      AiPhysics.Inner_StreamUtil var1,
-      AiPhysics.Inner_DataUtil var2,
+      AiPhysics.MotionState var0,
+      AiPhysics.MotionState var1,
+      AiPhysics.MoveInput var2,
       AiJumpManeuver.Inner_StreamUtil var3,
       double var4,
       int var6
@@ -1464,7 +1464,7 @@ public record AiJumpManeuver(
       ArrayList var7 = new ArrayList(var5);
 
       for (AiJumpManeuver.Inner_StreamUtil var9 : var0) {
-         AiPhysics.Inner_StreamUtil var10 = var9.state();
+         AiPhysics.MotionState var10 = var9.state();
          long var11 = (Math.round((var10.x() - var1) * 40.0) & 511L) << 21
             | (Math.round((var10.z() - var3) * 40.0) & 511L) << 12
             | (Math.round(var10.vx() * 80.0) & 63L) << 6
@@ -1481,8 +1481,8 @@ public record AiJumpManeuver(
       return var7;
    }
 
-   private static AiJumpSolver.Inner_StateCache shoulderJump(
-      AiPhysics.Inner_CachePool var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, float var8
+   private static AiJumpSolver.JumpPlan shoulderJump(
+      AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, boolean var7, float var8
    ) {
       double var9 = Math.toRadians(var8);
       double var11 = -Math.sin(var9);
@@ -1502,16 +1502,16 @@ public record AiJumpManeuver(
                double var39 = var17 - var13 * var35 - var11 * var30;
                if (AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var37, var2, var39)
                   && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, (var37 + var15) * 0.5, var2, (var39 + var17) * 0.5)) {
-                  AiPhysics.Inner_StreamUtil var41 = AiPhysics.Inner_StreamUtil.standing(var37, var2, var39);
+                  AiPhysics.MotionState var41 = AiPhysics.MotionState.standing(var37, var2, var39);
 
                   for (float var45 : new float[]{7.0F, 12.0F, 20.0F, 30.0F, 42.0F}) {
                      float var46 = var8 - (float)Math.copySign(var45, var30);
-                     AiPhysics.Inner_StreamUtil var47 = var41;
+                     AiPhysics.MotionState var47 = var41;
                      AiJumpManeuver.Inner_StreamUtil var48 = null;
 
                      for (int var49 = 0; var49 <= 3; var49++) {
-                        AiPhysics.Inner_DataUtil var50 = AiPhysics.Inner_DataUtil.jump(var46, var26);
-                        AiPhysics.Inner_StreamUtil var51 = AiPhysics.putAt(var47, var50, var0);
+                        AiPhysics.MoveInput var50 = AiPhysics.MoveInput.jump(var46, var26);
+                        AiPhysics.MotionState var51 = AiPhysics.putAt(var47, var50, var0);
                         if (!var51.onGround() && !AiPhysics.fill(var0, var47, var51)) {
                            AiJumpManeuver var52 = steerAroundWall(
                               var0, var41, new AiJumpManeuver.Inner_StreamUtil(var51, var50, var48, false, 0.0), var1, var4, var5, var46, var26, var30, var49
@@ -1525,8 +1525,8 @@ public record AiJumpManeuver(
                            break;
                         }
 
-                        AiPhysics.Inner_DataUtil var54 = AiPhysics.Inner_DataUtil.run(var46, var26);
-                        AiPhysics.Inner_StreamUtil var53 = AiPhysics.putAt(var47, var54, var0);
+                        AiPhysics.MoveInput var54 = AiPhysics.MoveInput.run(var46, var26);
+                        AiPhysics.MotionState var53 = AiPhysics.putAt(var47, var54, var0);
                         if (!var53.onGround() || var53.horizontalCollision() || AiPhysics.fill(var0, var47, var53)) {
                            break;
                         }
@@ -1544,8 +1544,8 @@ public record AiJumpManeuver(
    }
 
    private static AiJumpManeuver steerAroundWall(
-      AiPhysics.Inner_CachePool var0,
-      AiPhysics.Inner_StreamUtil var1,
+      AiPhysics.PhysicsWorld var0,
+      AiPhysics.MotionState var1,
       AiJumpManeuver.Inner_StreamUtil var2,
       BlockPos var3,
       BlockPos var4,
@@ -1619,10 +1619,10 @@ public record AiJumpManeuver(
          for (AiJumpManeuver.Inner_StreamUtil var45 : (Iterable<AiJumpManeuver.Inner_StreamUtil>)(Iterable<?>)(var12)) {
             for (int var69 = -1; var69 <= 1; var69++) {
                for (int var47 = -1; var47 <= 1; var47++) {
-                  AiPhysics.Inner_DataUtil var70 = new AiPhysics.Inner_DataUtil(
+                  AiPhysics.MoveInput var70 = new AiPhysics.MoveInput(
                      var69, var47, false, var8 && var69 > 0 && !var45.state().onGround(), false, var7
                   );
-                  AiPhysics.Inner_StreamUtil var71 = AiPhysics.putAt(var45.state(), var70, var0);
+                  AiPhysics.MotionState var71 = AiPhysics.putAt(var45.state(), var70, var0);
                   if (!(var71.y() < var5 - 0.08) && !AiPhysics.fill(var0, var45.state(), var71) && !AiJumpSolver.putAt(var0, var71)) {
                      if (AiJumpSolver.putAt(var71)) {
                         if (Math.abs(var71.y() - var5) > 0.02) {
@@ -1663,12 +1663,12 @@ public record AiJumpManeuver(
       return null;
    }
 
-   static AiJumpManeuver live(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, BlockPos var2, BlockPos var3, double var4, float var6, boolean var7) {
+   static AiJumpManeuver live(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, BlockPos var3, double var4, float var6, boolean var7) {
       return search(var0, var1, var2, var3, var4, var6, var7, false, RECOVERY_RELEASES);
    }
 
-   static AiJumpSolver.Inner_StateCache livePlan(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, BlockPos var2, BlockPos var3, double var4, float var6, boolean var7
+   static AiJumpSolver.JumpPlan livePlan(
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, BlockPos var3, double var4, float var6, boolean var7
    ) {
       AiJumpManeuver var8 = live(var0, var1, BlockPos.containing(var1.x(), var1.y(), var1.z()), var3, var4, var6, var7);
       return var8 == null ? null : plan(var8, var6, var7, 0.0);
@@ -1688,12 +1688,12 @@ public record AiJumpManeuver(
       return var1;
    }
 
-   private static double backRoom(AiPhysics.Inner_CachePool var0, double var1, double var3, double var5, double var7, double var9) {
+   private static double backRoom(AiPhysics.PhysicsWorld var0, double var1, double var3, double var5, double var7, double var9) {
       double var11 = 0.0;
 
       for (double var13 = 0.1; var13 <= 4.000001 && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var0, var1 - var7 * var13, var5, var3 - var9 * var13); var13 += 0.1) {
-         AiPhysics.Inner_StreamUtil var15 = new AiPhysics.Inner_StreamUtil(var1 - var7 * var11, var5, var3 - var9 * var11, 0.0, 0.0, 0.0, true, 0, false, false);
-         AiPhysics.Inner_StreamUtil var16 = new AiPhysics.Inner_StreamUtil(var1 - var7 * var13, var5, var3 - var9 * var13, 0.0, 0.0, 0.0, true, 0, false, false);
+         AiPhysics.MotionState var15 = new AiPhysics.MotionState(var1 - var7 * var11, var5, var3 - var9 * var11, 0.0, 0.0, 0.0, true, 0, false, false);
+         AiPhysics.MotionState var16 = new AiPhysics.MotionState(var1 - var7 * var13, var5, var3 - var9 * var13, 0.0, 0.0, 0.0, true, 0, false, false);
          if (AiPhysics.fill(var0, var15, var16)) {
             break;
          }
@@ -1705,13 +1705,13 @@ public record AiJumpManeuver(
    }
 
    private static AiJumpManeuver search(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, BlockPos var2, BlockPos var3, double var4, float var6, boolean var7, boolean var8
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, BlockPos var3, double var4, float var6, boolean var7, boolean var8
    ) {
       int[] var9 = var8 ? COMMON_RELEASES : RELEASES;
       return search(var0, var1, var2, var3, var4, var6, var7, var8, var9);
    }
 
-   static double maxFlightReach(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, double var2, boolean var4) {
+   static double maxFlightReach(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, double var2, boolean var4) {
       double var5 = var1.y();
       double var7 = Math.max(0.42, var1.vy());
 
@@ -1745,8 +1745,8 @@ public record AiJumpManeuver(
    }
 
    private static AiJumpManeuver search(
-      AiPhysics.Inner_CachePool var0,
-      AiPhysics.Inner_StreamUtil var1,
+      AiPhysics.PhysicsWorld var0,
+      AiPhysics.MotionState var1,
       BlockPos var2,
       BlockPos var3,
       double var4,
@@ -1779,8 +1779,8 @@ public record AiJumpManeuver(
       }
 
       for (boolean var37 : var7 ? new boolean[]{false, true} : new boolean[]{false}) {
-         AiPhysics.Inner_StreamUtil var38 = var1;
-         ArrayList<AiPhysics.Inner_DataUtil> var39 = new ArrayList<>();
+         AiPhysics.MotionState var38 = var1;
+         ArrayList<AiPhysics.MoveInput> var39 = new ArrayList<>();
 
          for (int var40 = 0; var40 <= 48; var40++) {
             if (Thread.currentThread().isInterrupted()) {
@@ -1853,8 +1853,8 @@ public record AiJumpManeuver(
                break;
             }
 
-            AiPhysics.Inner_DataUtil var78 = new AiPhysics.Inner_DataUtil(1.0, 0.0, var37 && var38.onGround(), var7, false, var6);
-            AiPhysics.Inner_StreamUtil var42 = AiPhysics.putAt(var38, var78, var0);
+            AiPhysics.MoveInput var78 = new AiPhysics.MoveInput(1.0, 0.0, var37 && var38.onGround(), var7, false, var6);
+            AiPhysics.MotionState var42 = AiPhysics.putAt(var38, var78, var0);
             if (AiPhysics.fill(var0, var38, var42)
                || AiJumpSolver.putAt(var0, var42)
                || var42.y() < var1.y() - 0.02
@@ -1871,20 +1871,20 @@ public record AiJumpManeuver(
       return var10;
    }
 
-   private static AiJumpManeuver.Inner_ConfigStore prepareLaunch(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, float var2, float var3, boolean var4) {
+   private static AiJumpManeuver.Inner_ConfigStore prepareLaunch(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, float var3, boolean var4) {
       if (AiJumpSolver.putAt(var0, var1)) {
          return null;
       }
 
-      ArrayList<AiPhysics.Inner_DataUtil> var5 = new ArrayList<>();
-      AiPhysics.Inner_StreamUtil var6 = var1;
+      ArrayList<AiPhysics.MoveInput> var5 = new ArrayList<>();
+      AiPhysics.MotionState var6 = var1;
       float var7 = var2;
       if (Math.abs(Mth.wrapDegrees(var3 - var2)) > 60.0F) {
          for (int var8 = 0; Math.abs(Mth.wrapDegrees(var3 - var7)) > 1.0F && var8 < 8; var8++) {
             float var9 = var6.speed() > 0.03 ? var7 : var3;
-            float var10 = var7 + AiAim.init_F_F_DataUtil_DataUtil(Mth.wrapDegrees(var9 - var7), AiAim.Inner_DataUtil.FLOW);
-            AiPhysics.Inner_DataUtil var11 = settleInput(var0, var6, var9).withYaw(var10);
-            AiPhysics.Inner_StreamUtil var12 = AiPhysics.putAt(var6, var11, var0);
+            float var10 = var7 + AiAim.init_F_F_DataUtil_DataUtil(Mth.wrapDegrees(var9 - var7), AiAim.AimProfile.FLOW);
+            AiPhysics.MoveInput var11 = settleInput(var0, var6, var9).withYaw(var10);
+            AiPhysics.MotionState var12 = AiPhysics.putAt(var6, var11, var0);
             if (AiPhysics.fill(var0, var6, var12) || AiJumpSolver.putAt(var0, var12) || !var12.onGround() || Math.abs(var12.y() - var1.y()) > 0.02) {
                return null;
             }
@@ -1899,8 +1899,8 @@ public record AiJumpManeuver(
          }
       }
 
-      AiPhysics.Inner_DataUtil var13 = AiPhysics.Inner_DataUtil.jump(var3, var4);
-      AiPhysics.Inner_StreamUtil var14 = AiPhysics.putAt(var6, var13, var0);
+      AiPhysics.MoveInput var13 = AiPhysics.MoveInput.jump(var3, var4);
+      AiPhysics.MotionState var14 = AiPhysics.putAt(var6, var13, var0);
       if (!AiPhysics.fill(var0, var6, var14) && !AiJumpSolver.putAt(var0, var14) && !AiJumpSolver.putAt(var14)) {
          var5.add(var13);
          return new AiJumpManeuver.Inner_ConfigStore(var14, var5, Math.max(var14.y(), var1.y()), var3);
@@ -1910,9 +1910,9 @@ public record AiJumpManeuver(
    }
 
    private static AiJumpManeuver flight(
-      AiPhysics.Inner_CachePool var0,
-      AiPhysics.Inner_StreamUtil var1,
-      List<AiPhysics.Inner_DataUtil> var2,
+      AiPhysics.PhysicsWorld var0,
+      AiPhysics.MotionState var1,
+      List<AiPhysics.MoveInput> var2,
       BlockPos var3,
       double var4,
       AiJumpManeuver.Inner_ConfigStore var6,
@@ -1927,9 +1927,9 @@ public record AiJumpManeuver(
    }
 
    private static AiJumpManeuver flight(
-      AiPhysics.Inner_CachePool var0,
-      AiPhysics.Inner_StreamUtil var1,
-      List<AiPhysics.Inner_DataUtil> var2,
+      AiPhysics.PhysicsWorld var0,
+      AiPhysics.MotionState var1,
+      List<AiPhysics.MoveInput> var2,
       BlockPos var3,
       double var4,
       AiJumpManeuver.Inner_ConfigStore var6,
@@ -1945,9 +1945,9 @@ public record AiJumpManeuver(
    }
 
    private static AiJumpManeuver flight(
-      AiPhysics.Inner_CachePool var0,
-      AiPhysics.Inner_StreamUtil var1,
-      List<AiPhysics.Inner_DataUtil> var2,
+      AiPhysics.PhysicsWorld var0,
+      AiPhysics.MotionState var1,
+      List<AiPhysics.MoveInput> var2,
       BlockPos var3,
       double var4,
       AiJumpManeuver.Inner_ConfigStore var6,
@@ -1976,9 +1976,9 @@ public record AiJumpManeuver(
    }
 
    private static AiJumpManeuver simulateFlight(
-      AiPhysics.Inner_CachePool var0,
-      AiPhysics.Inner_StreamUtil var1,
-      List<AiPhysics.Inner_DataUtil> var2,
+      AiPhysics.PhysicsWorld var0,
+      AiPhysics.MotionState var1,
+      List<AiPhysics.MoveInput> var2,
       BlockPos var3,
       double var4,
       AiJumpManeuver.Inner_ConfigStore var6,
@@ -1993,7 +1993,7 @@ public record AiJumpManeuver(
       AiJumpManeuver.Inner_CachePool var15,
       boolean var16
    ) {
-      AiPhysics.Inner_StreamUtil var17 = var6.state();
+      AiPhysics.MotionState var17 = var6.state();
       double var18 = var6.peak();
       float var20 = var6.yaw();
       int var21 = 0;
@@ -2019,8 +2019,8 @@ public record AiJumpManeuver(
             var20 += Mth.clamp(Mth.wrapDegrees(var7 - var20), -30.0F, 30.0F);
          }
 
-         AiPhysics.Inner_DataUtil var24 = flightInput(var38, var20, var8, var10, var11, var12);
-         AiPhysics.Inner_StreamUtil var25 = var15 != null && var38 <= 8 ? var15.putAt(var0, var17, var24, var4) : flightStep(var0, var17, var24, var4);
+         AiPhysics.MoveInput var24 = flightInput(var38, var20, var8, var10, var11, var12);
+         AiPhysics.MotionState var25 = var15 != null && var38 <= 8 ? var15.putAt(var0, var17, var24, var4) : flightStep(var0, var17, var24, var4);
          if (var25 == null) {
             if (var14) {
                var13.putAt_Z = true;
@@ -2094,11 +2094,11 @@ public record AiJumpManeuver(
                }
 
                if (AiJumpSolver.putAt_D_TokenCore_TaskStat(var0, var17.x(), var17.z(), var3, var4) < -0.04) {
-                  AiPhysics.Inner_DataUtil var45 = new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, false, var20);
-                  AiPhysics.Inner_StreamUtil var31 = var17;
+                  AiPhysics.MoveInput var45 = new AiPhysics.MoveInput(0.0, 0.0, false, false, false, var20);
+                  AiPhysics.MotionState var31 = var17;
 
                   for (int var48 = 1; var48 <= 6; var48++) {
-                     AiPhysics.Inner_StreamUtil var33 = AiPhysics.putAt(var31, var45, var0);
+                     AiPhysics.MotionState var33 = AiPhysics.putAt(var31, var45, var0);
                      if (!AiJumpSolver.putAt(var33) || Math.abs(var33.y() - var4) > 0.02 || AiPhysics.fill(var0, var31, var33)) {
                         break;
                      }
@@ -2119,8 +2119,8 @@ public record AiJumpManeuver(
                for (int var46 = 0; var46 < 10 && AiJumpSolver.putAt_D_TokenCore_TaskStat(var0, var17.x(), var17.z(), var3, var4) < -0.04; var46++) {
                   float var47 = AiPhysics.putAt_F_D(var17.x(), var17.z(), var3.getX() + 0.5, var3.getZ() + 0.5);
                   var20 += Mth.clamp(Mth.wrapDegrees(var47 - var20), -30.0F, 30.0F);
-                  AiPhysics.Inner_DataUtil var49 = new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var20);
-                  AiPhysics.Inner_StreamUtil var50 = AiPhysics.putAt(var17, var49, var0);
+                  AiPhysics.MoveInput var49 = new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var20);
+                  AiPhysics.MotionState var50 = AiPhysics.putAt(var17, var49, var0);
                   if (!AiJumpSolver.putAt(var50) || Math.abs(var50.y() - var4) > 0.02 || AiPhysics.fill(var0, var17, var50) || AiJumpSolver.putAt(var0, var50)) {
                      return null;
                   }
@@ -2151,27 +2151,27 @@ public record AiJumpManeuver(
       return null;
    }
 
-   private static AiPhysics.Inner_DataUtil flightInput(int var0, float var1, boolean var2, int var3, int var4, int var5) {
+   private static AiPhysics.MoveInput flightInput(int var0, float var1, boolean var2, int var3, int var4, int var5) {
       boolean var6 = var0 <= var3;
-      return new AiPhysics.Inner_DataUtil(var6 ? 1.0 : 0.0, var0 > var5 ? var4 : 0.0, false, var6 && var2, false, var1);
+      return new AiPhysics.MoveInput(var6 ? 1.0 : 0.0, var0 > var5 ? var4 : 0.0, false, var6 && var2, false, var1);
    }
 
-   private static AiPhysics.Inner_StreamUtil flightStep(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_DataUtil var2, double var3
+   private static AiPhysics.MotionState flightStep(
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2, double var3
    ) {
-      AiPhysics.Inner_StreamUtil var5 = AiPhysics.putAt(var1, var2, var0);
+      AiPhysics.MotionState var5 = AiPhysics.putAt(var1, var2, var0);
       return !(var5.y() < var3 - 4.0) && !AiPhysics.fill(var0, var1, var5) && !AiJumpSolver.putAt(var0, var5) ? var5 : null;
    }
 
-   private record Inner_ConfigStore(AiPhysics.Inner_StreamUtil state, List<AiPhysics.Inner_DataUtil> controls, double peak, float yaw) {
+   private record Inner_ConfigStore(AiPhysics.MotionState state, List<AiPhysics.MoveInput> controls, double peak, float yaw) {
    }
 
-   private record Inner_DataUtil(AiPhysics.Inner_StreamUtil state, float yaw, double peak) {
+   private record Inner_DataUtil(AiPhysics.MotionState state, float yaw, double peak) {
    }
 
    private static final class Inner_CachePool {
-      private final AiPhysics.Inner_StreamUtil[] putAt_TokenCore_TableCacArr;
-      private final AiPhysics.Inner_StreamUtil[] fill;
+      private final AiPhysics.MotionState[] putAt_TokenCore_TableCacArr;
+      private final AiPhysics.MotionState[] fill;
       private final long[] putAt_JArr;
       private final int[] putAt_IArr;
       private int flowState = 1;
@@ -2181,8 +2181,8 @@ public record AiJumpManeuver(
       }
 
       Inner_CachePool(int var1) {
-         this.putAt_TokenCore_TableCacArr = new AiPhysics.Inner_StreamUtil[var1];
-         this.fill = new AiPhysics.Inner_StreamUtil[var1];
+         this.putAt_TokenCore_TableCacArr = new AiPhysics.MotionState[var1];
+         this.fill = new AiPhysics.MotionState[var1];
          this.putAt_JArr = new long[var1];
          this.putAt_IArr = new int[var1];
       }
@@ -2194,7 +2194,7 @@ public record AiJumpManeuver(
          }
       }
 
-      AiPhysics.Inner_StreamUtil putAt(AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, AiPhysics.Inner_DataUtil var3, double var4) {
+      AiPhysics.MotionState putAt(AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2, AiPhysics.MoveInput var3, double var4) {
          long var6 = (long)Float.floatToIntBits(var3.yaw()) << 8 | (long)(var3.strafe() + 1.0) << 2 | (var3.forward() > 0.0 ? 2 : 0) | (var3.sprint() ? 1 : 0);
          long var8 = Double.doubleToRawLongBits(var2.x())
             ^ Long.rotateLeft(Double.doubleToRawLongBits(var2.y()), 19)
@@ -2205,7 +2205,7 @@ public record AiJumpManeuver(
             return this.fill[var12];
          }
 
-         AiPhysics.Inner_StreamUtil var13 = AiJumpManeuver.flightStep(var1, var2, var3, var4);
+         AiPhysics.MotionState var13 = AiJumpManeuver.flightStep(var1, var2, var3, var4);
          this.putAt_TokenCore_TableCacArr[var12] = var2;
          this.fill[var12] = var13;
          this.putAt_JArr[var12] = var6;
@@ -2214,11 +2214,11 @@ public record AiJumpManeuver(
       }
    }
 
-   private record Inner_TaskQueue(AiPhysics.Inner_StreamUtil state, List<AiPhysics.Inner_DataUtil> prefix, double distance) {
+   private record Inner_TaskQueue(AiPhysics.MotionState state, List<AiPhysics.MoveInput> prefix, double distance) {
    }
 
    private record Inner_StreamUtil(
-      AiPhysics.Inner_StreamUtil state, AiPhysics.Inner_DataUtil input, AiJumpManeuver.Inner_StreamUtil parent, boolean cleared, double distance
+      AiPhysics.MotionState state, AiPhysics.MoveInput input, AiJumpManeuver.Inner_StreamUtil parent, boolean cleared, double distance
    ) {
    }
 

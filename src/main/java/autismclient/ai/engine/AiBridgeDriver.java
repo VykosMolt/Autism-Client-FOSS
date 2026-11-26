@@ -63,7 +63,7 @@ public final class AiBridgeDriver {
    }
 
    public static AiBridger.Inner_ConfigStore init_JsonUtil_ConfigSto_Z(boolean telly, AiBridger.Inner_CachePool lane, LocalPlayer player, int blocks) {
-      if (telly && player.getFoodData().getFoodLevel() > 6 && blocks >= lane.length() && !AiPathfinder.Inner_CachePool.init()) {
+      if (telly && player.getFoodData().getFoodLevel() > 6 && blocks >= lane.length() && !AiPathfinder.MoveCosts.init()) {
          ClientLevel level = Minecraft.getInstance().level;
 
          for (int i = 0; i <= lane.length(); i++) {
@@ -111,13 +111,13 @@ public final class AiBridgeDriver {
 
       this.init_BitSetUtil.init_V();
       AiBridger.Inner_DataUtil currentRot = new AiBridger.Inner_DataUtil(player.getYRot(), player.getXRot());
-      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
       AiBridger.Inner_DataUtil wireRot = autismclient.ai.AiClientTick.init()
          ? (wire.init_Z() ? new AiBridger.Inner_DataUtil(wire.read(), wire.write()) : null)
          : currentRot;
       AiBridger.Inner_StreamUtil cmd = this.init_JsonUtil
          .putAt(
-            AiPhysics.Inner_StreamUtil.of(player),
+            AiPhysics.MotionState.of(player),
             currentRot,
             wireRot,
             player.getEyeHeight() < 1.5F,
@@ -128,8 +128,8 @@ public final class AiBridgeDriver {
          return AiBridgeDriver.Inner_DataUtil.DONE;
       }
 
-      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.TELLY);
-      this.init_DataUtil.init_V_ce_DataUtil(new RotationMath.Inner_DataUtil(cmd.yaw(), cmd.pitch()));
+      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.AimProfile.TELLY);
+      this.init_DataUtil.init_V_ce_DataUtil(new RotationMath.Rotation(cmd.yaw(), cmd.pitch()));
       boolean failedPlace = false;
       if (cmd.place() > 0 && slot >= 0) {
          BlockPos cell = new BlockPos(lane.cellX(cmd.place()), lane.floorY(), lane.cellZ(cmd.place()));

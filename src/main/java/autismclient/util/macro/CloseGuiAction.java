@@ -19,7 +19,7 @@ public class CloseGuiAction implements MacroAction {
       if (mc.player != null && mc.gui.screen() != null) {
          boolean matchGui = true;
          if (!this.guiName.isEmpty()) {
-            MacroTemplateResolver.Inner_CachePool gui = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiName, mc);
+            MacroTemplateResolver.ResolveResult gui = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiName, mc);
             if (!gui.init_Z()) {
                return;
             }

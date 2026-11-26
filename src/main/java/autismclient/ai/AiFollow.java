@@ -48,7 +48,7 @@ final class AiFollow {
             boolean init_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.CALM);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.CALM);
                this.init_DataUtil.init_V_Z(silentAim);
             }
 

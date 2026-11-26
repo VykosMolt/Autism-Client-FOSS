@@ -85,7 +85,7 @@ public final class AiMine {
             );
             final AiBackfill init_StreamUtil = backfill ? new AiBackfill(this.init_Minecraft) : null;
             final int load_I = this.load_I_9();
-            final AiPathfinder.Inner_StreamUtil init_ClassCache_StreamU = new AiPathfinder.Inner_StreamUtil(
+            final AiPathfinder.LiveGridView init_ClassCache_StreamU = new AiPathfinder.LiveGridView(
                this.init_Minecraft,
                this.init_Minecraft.player.blockPosition(),
                this.init_Minecraft.player.blockPosition(),
@@ -590,7 +590,7 @@ public final class AiMine {
                         }
                      }
 
-                     AiPathfinder.Inner_DataUtil routeCapabilities = new AiPathfinder.Inner_DataUtil(true, true, true, sprint, constructionBlocks > 0)
+                     AiPathfinder.PathOptions routeCapabilities = new AiPathfinder.PathOptions(true, true, true, sprint, constructionBlocks > 0)
                         .withConstructionBlocks(constructionBlocks);
                      this.init_FutureTask = new FutureTask<>(
                         () -> MiningTargetSearch.init(this.init_ClassCache_StreamU, from, choices, routeCapabilities, reach, eye, this.read_J)

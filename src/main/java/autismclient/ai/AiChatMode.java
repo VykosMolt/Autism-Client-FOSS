@@ -74,11 +74,11 @@ final class AiChatMode {
          this.load_J = this.read_J = 0L;
          this.write_J = 0L;
          this.update_J = 0L;
-         List<AiChatLedger.Inner_StreamUtil> recent = this.init_FieldCache_BufferH.init(12);
-         List<AiChatLedger.Inner_StreamUtil> oldestFirst = new ArrayList<>(recent);
+         List<AiChatLedger.ChatEntry> recent = this.init_FieldCache_BufferH.init(12);
+         List<AiChatLedger.ChatEntry> oldestFirst = new ArrayList<>(recent);
          Collections.reverse(oldestFirst);
 
-         for (AiChatLedger.Inner_StreamUtil entry : oldestFirst) {
+         for (AiChatLedger.ChatEntry entry : oldestFirst) {
             AiChatPolicy.Inner_StreamUtil line = AiChatPolicy.init(entry, this.init_FieldCache_BufferH.init_Str());
             if (line != null) {
                this.init_Deque.addLast(line);
@@ -135,7 +135,7 @@ final class AiChatMode {
             this.load("Chat mode stopped: no connection");
          } else {
             long revision = this.init_FieldCache_BufferH.load_J();
-            List<AiChatLedger.Inner_StreamUtil> latest = this.init_FieldCache_BufferH.init(64);
+            List<AiChatLedger.ChatEntry> latest = this.init_FieldCache_BufferH.init(64);
             synchronized (this) {
                if (!this.init_Z) {
                   return;
@@ -145,18 +145,18 @@ final class AiChatMode {
                   this.init_J = revision;
                }
 
-               List<AiChatLedger.Inner_StreamUtil> fresh = new ArrayList<>();
+               List<AiChatLedger.ChatEntry> fresh = new ArrayList<>();
 
-               for (AiChatLedger.Inner_StreamUtil entry : latest) {
+               for (AiChatLedger.ChatEntry entry : latest) {
                   if (entry != null && entry.revision() > this.init_J) {
                      fresh.add(entry);
                   }
                }
 
-               fresh.sort(Comparator.comparingLong(AiChatLedger.Inner_StreamUtil::revision));
+               fresh.sort(Comparator.comparingLong(AiChatLedger.ChatEntry::revision));
                String self = this.init_FieldCache_BufferH.init_Str();
 
-               for (AiChatLedger.Inner_StreamUtil entry : fresh) {
+               for (AiChatLedger.ChatEntry entry : fresh) {
                   this.init_J = Math.max(this.init_J, entry.revision());
                   AiChatPolicy.Inner_StreamUtil line = AiChatPolicy.init(entry, self, this.init_PathHelper_DataUti);
                   if (line != null && (!AiChatPolicy.init(entry).isEmpty() || !this.init_Z_Str(line.text()))) {
@@ -526,7 +526,7 @@ final class AiChatMode {
 
    private boolean init_Z_PathHelper_StreamU(AiChatPolicy.Inner_StreamUtil line) {
       return AiChatPolicy.init(
-            new AiChatLedger.Inner_StreamUtil(0L, line.revision(), line.source(), line.sender(), line.text(), List.of(), ""),
+            new AiChatLedger.ChatEntry(0L, line.revision(), line.source(), line.sender(), line.text(), List.of(), ""),
             this.init_FieldCache_BufferH.init_Str(),
             this.init_PathHelper_DataUti
          )
@@ -583,7 +583,7 @@ final class AiChatMode {
 
       long load_J();
 
-      List<AiChatLedger.Inner_StreamUtil> init(int var1);
+      List<AiChatLedger.ChatEntry> init(int var1);
 
       void init(String var1);
 

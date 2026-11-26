@@ -9,19 +9,19 @@ public final class RotationMath {
    private RotationMath() {
    }
 
-   public static RotationMath.Inner_DataUtil init(LocalPlayer player) {
-      return new RotationMath.Inner_DataUtil(player.getYRot(), player.getXRot());
+   public static RotationMath.Rotation init(LocalPlayer player) {
+      return new RotationMath.Rotation(player.getYRot(), player.getXRot());
    }
 
-   public static RotationMath.Inner_DataUtil init(Vec3 point, Vec3 from) {
+   public static RotationMath.Rotation init(Vec3 point, Vec3 from) {
       Vec3 diff = point.subtract(from);
       double horiz = Math.sqrt(diff.x * diff.x + diff.z * diff.z);
       float yaw = (float)(Math.toDegrees(Math.atan2(diff.z, diff.x)) - 90.0);
       float pitch = (float)(-Math.toDegrees(Math.atan2(diff.y, horiz)));
-      return new RotationMath.Inner_DataUtil(Mth.wrapDegrees(yaw), Mth.clamp(Mth.wrapDegrees(pitch), -90.0F, 90.0F));
+      return new RotationMath.Rotation(Mth.wrapDegrees(yaw), Mth.clamp(Mth.wrapDegrees(pitch), -90.0F, 90.0F));
    }
 
-   public static RotationMath.Inner_DataUtil init(RotationMath.Inner_DataUtil current, RotationMath.Inner_DataUtil target, float horizontalFactor, float verticalFactor) {
+   public static RotationMath.Rotation init(RotationMath.Rotation current, RotationMath.Rotation target, float horizontalFactor, float verticalFactor) {
       float yawDiff = init(target.init, current.init);
       float pitchDiff = init(target.load, current.load);
       double length = Math.sqrt(yawDiff * yawDiff + pitchDiff * pitchDiff);
@@ -31,17 +31,17 @@ public final class RotationMath {
 
       float yawStep = Math.abs((float)(yawDiff / length)) * horizontalFactor;
       float pitchStep = Math.abs((float)(pitchDiff / length)) * verticalFactor;
-      return new RotationMath.Inner_DataUtil(current.init + Mth.clamp(yawDiff, -yawStep, yawStep), current.load + Mth.clamp(pitchDiff, -pitchStep, pitchStep));
+      return new RotationMath.Rotation(current.init + Mth.clamp(yawDiff, -yawStep, yawStep), current.load + Mth.clamp(pitchDiff, -pitchStep, pitchStep));
    }
 
-   public static RotationMath.Inner_DataUtil init_ce_DataUtil_ce_DataUtil(RotationMath.Inner_DataUtil current, RotationMath.Inner_DataUtil target, float factor) {
+   public static RotationMath.Rotation init_ce_DataUtil_ce_DataUtil(RotationMath.Rotation current, RotationMath.Rotation target, float factor) {
       float t = Mth.clamp(factor, 0.0F, 1.0F);
-      return new RotationMath.Inner_DataUtil(
+      return new RotationMath.Rotation(
          current.init + init(target.init, current.init) * t, Mth.clamp(current.load + init(target.load, current.load) * t, -90.0F, 90.0F)
       );
    }
 
-   public static RotationMath.Inner_DataUtil init_ce_DataUtil(RotationMath.Inner_DataUtil rotation, RotationMath.Inner_DataUtil current) {
+   public static RotationMath.Rotation init_ce_DataUtil(RotationMath.Rotation rotation, RotationMath.Rotation current) {
       double gcd = load();
       if (gcd <= 0.0) {
          return rotation;
@@ -51,10 +51,10 @@ public final class RotationMath {
       float pitchDiff = init(rotation.load, current.load);
       float yaw = current.init + (float)(Math.round(yawDiff / gcd) * gcd);
       float pitch = current.load + (float)(Math.round(pitchDiff / gcd) * gcd);
-      return new RotationMath.Inner_DataUtil(yaw, Mth.clamp(pitch, -90.0F, 90.0F));
+      return new RotationMath.Rotation(yaw, Mth.clamp(pitch, -90.0F, 90.0F));
    }
 
-   public static RotationMath.Inner_DataUtil init(RotationMath.Inner_DataUtil current, RotationMath.Inner_DataUtil goal, float yawBudget, float pitchBudget, double gcd) {
+   public static RotationMath.Rotation init(RotationMath.Rotation current, RotationMath.Rotation goal, float yawBudget, float pitchBudget, double gcd) {
       if (current == null) {
          return goal;
       }
@@ -64,13 +64,13 @@ public final class RotationMath {
       }
 
       double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
-      return new RotationMath.Inner_DataUtil(
+      return new RotationMath.Rotation(
          current.init() + init_F_D(init(goal.init(), current.init()), yawBudget, quantum),
          Mth.clamp(current.load() + init_F_D(goal.load() - current.load(), pitchBudget, quantum), -90.0F, 90.0F)
       );
    }
 
-   public static RotationMath.Inner_DataUtil load(RotationMath.Inner_DataUtil current, RotationMath.Inner_DataUtil goal, float yawBudget, float pitchBudget, double gcd) {
+   public static RotationMath.Rotation load(RotationMath.Rotation current, RotationMath.Rotation goal, float yawBudget, float pitchBudget, double gcd) {
       if (current == null) {
          return goal;
       }
@@ -80,7 +80,7 @@ public final class RotationMath {
       }
 
       double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
-      return new RotationMath.Inner_DataUtil(
+      return new RotationMath.Rotation(
          current.init() + init_F_D(goal.init() - current.init(), yawBudget, quantum),
          Mth.clamp(current.load() + init_F_D(goal.load() - current.load(), pitchBudget, quantum), -90.0F, 90.0F)
       );
@@ -115,20 +115,20 @@ public final class RotationMath {
       return Mth.wrapDegrees(target - current);
    }
 
-   public static float init_F(RotationMath.Inner_DataUtil current, RotationMath.Inner_DataUtil target) {
+   public static float init_F(RotationMath.Rotation current, RotationMath.Rotation target) {
       float yaw = init(target.init, current.init);
       float pitch = init(target.load, current.load);
       return (float)Math.min(180.0, Math.sqrt(yaw * yaw + pitch * pitch));
    }
 
-   public static float load(RotationMath.Inner_DataUtil a, RotationMath.Inner_DataUtil b) {
+   public static float load(RotationMath.Rotation a, RotationMath.Rotation b) {
       Vec3 first = Vec3.directionFromRotation(a.load(), a.init());
       Vec3 second = Vec3.directionFromRotation(b.load(), b.init());
       double cosine = Mth.clamp(first.dot(second), -1.0, 1.0);
       return (float)Math.toDegrees(Math.acos(cosine));
    }
 
-   public static void init_V_LocalPlayer(LocalPlayer player, RotationMath.Inner_DataUtil rotation, boolean syncPrevious) {
+   public static void init_V_LocalPlayer(LocalPlayer player, RotationMath.Rotation rotation, boolean syncPrevious) {
       if (player != null && rotation != null) {
          float yaw = Mth.wrapDegrees(rotation.init);
          float pitch = Mth.clamp(rotation.load, -90.0F, 90.0F);
@@ -149,6 +149,6 @@ public final class RotationMath {
       }
    }
 
-   public record Inner_DataUtil(float init, float load) {
+   public record Rotation(float init, float load) {
    }
 }

@@ -206,7 +206,7 @@ public final class AiDragonZones {
       }
    }
 
-   public static autismclient.ai.engine.AiPathfinder.Inner_PoolEntry init_ClassCache_PoolEnt(Minecraft mc) {
+   public static autismclient.ai.engine.AiPathfinder.ThreatField init_ClassCache_PoolEnt(Minecraft mc) {
       AiDragonZones.Inner_DataUtil zones = init_r_DataUtil(mc);
       List<double[]> clouds = new ArrayList<>(AiDragon.init_List(mc));
       double[] breath = init_DArr(mc);
@@ -214,7 +214,7 @@ public final class AiDragonZones {
          clouds.add(breath);
       }
 
-      return zones.isEmpty() && clouds.isEmpty() ? autismclient.ai.engine.AiPathfinder.Inner_PoolEntry.write : (x, y, z) -> {
+      return zones.isEmpty() && clouds.isEmpty() ? autismclient.ai.engine.AiPathfinder.ThreatField.write : (x, y, z) -> {
          if (zones.hits(init_AABB_I(x, y, z), 1.0)) {
             return 400.0;
          }
@@ -257,7 +257,7 @@ public final class AiDragonZones {
             }
          }
 
-         return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, false, false, false, 6, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true));
+         return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, false, false, false, 6, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
       } else {
          return null;
       }

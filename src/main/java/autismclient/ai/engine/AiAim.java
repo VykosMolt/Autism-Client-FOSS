@@ -36,11 +36,11 @@ public final class AiAim {
    private static final double load_D = 1.0;
    private static final double read_D = 64.0;
    static final float init_F = 7.0F;
-   private RotationMath.Inner_DataUtil init_ce_DataUtil;
+   private RotationMath.Rotation init_ce_DataUtil;
    private static volatile String init_Str = "";
    private Vec3 init_Vec3;
    private int init_I = -1;
-   private AiAim.Inner_DataUtil init_DataUtil_DataUtil = AiAim.Inner_DataUtil.NORMAL;
+   private AiAim.AimProfile init_DataUtil_DataUtil = AiAim.AimProfile.NORMAL;
    private int load_I;
    private boolean init_Z;
    static final double init_D = 0.4;
@@ -58,13 +58,13 @@ public final class AiAim {
       return this;
    }
 
-   public void init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil value) {
+   public void init_V_DataUtil_DataUtil(AiAim.AimProfile value) {
       if (value != null) {
          this.init_DataUtil_DataUtil = value;
       }
    }
 
-   public AiAim.Inner_DataUtil init_DataUtil_DataUtil() {
+   public AiAim.AimProfile init_DataUtil_DataUtil() {
       return this.init_DataUtil_DataUtil;
    }
 
@@ -72,9 +72,9 @@ public final class AiAim {
       LocalPlayer player = Minecraft.getInstance().player;
       if (player != null && point != null) {
          Vec3 eye = player.getEyePosition();
-         RotationMath.Inner_DataUtil rotation = RotationMath.init(point, eye);
+         RotationMath.Rotation rotation = RotationMath.init(point, eye);
          if (init_Z_Vec3(point.subtract(eye))) {
-            RotationMath.Inner_DataUtil kept = new RotationMath.Inner_DataUtil(this.init_ce_DataUtil != null ? this.init_ce_DataUtil.init() : player.getYRot(), rotation.load());
+            RotationMath.Rotation kept = new RotationMath.Rotation(this.init_ce_DataUtil != null ? this.init_ce_DataUtil.init() : player.getYRot(), rotation.load());
             if (init(player, eye, kept, point)) {
                rotation = kept;
             }
@@ -85,7 +85,7 @@ public final class AiAim {
       }
    }
 
-   private static boolean init(LocalPlayer player, Vec3 eye, RotationMath.Inner_DataUtil kept, Vec3 point) {
+   private static boolean init(LocalPlayer player, Vec3 eye, RotationMath.Rotation kept, Vec3 point) {
       ClientLevel level = Minecraft.getInstance().level;
       if (level == null) {
          return true;
@@ -112,7 +112,7 @@ public final class AiAim {
       return vertical > 0.4 && (horizontal < 0.4 || horizontal < vertical / 2.75);
    }
 
-   public void init_V_ce_DataUtil(RotationMath.Inner_DataUtil rotation) {
+   public void init_V_ce_DataUtil(RotationMath.Rotation rotation) {
       if (rotation != null) {
          this.init_Vec3 = null;
          if (this.init_ce_DataUtil == null || RotationMath.init_F(this.init_ce_DataUtil, rotation) > 1.0E-4) {
@@ -123,7 +123,7 @@ public final class AiAim {
       }
    }
 
-   public RotationMath.Inner_DataUtil init_ce_DataUtil() {
+   public RotationMath.Rotation init_ce_DataUtil() {
       return this.init_ce_DataUtil;
    }
 
@@ -148,10 +148,10 @@ public final class AiAim {
       return !(abs <= 3.0F) && !(cap >= 180.0F) ? Math.copySign(Math.min(cap, Math.max(3.0F, abs * 0.5F)), remaining) : remaining;
    }
 
-   static float init_F_F_DataUtil_DataUtil(float remaining, AiAim.Inner_DataUtil speed) {
+   static float init_F_F_DataUtil_DataUtil(float remaining, AiAim.AimProfile speed) {
       if (speed.init_Z) {
          return Math.max(-speed.read_F, Math.min(speed.read_F, remaining));
-      } else if (speed == AiAim.Inner_DataUtil.FLOW) {
+      } else if (speed == AiAim.AimProfile.FLOW) {
          float abs = Math.abs(remaining);
          return abs <= 12.0F ? remaining : Math.copySign(Math.min(speed.read_F, Math.max(12.0F, abs * 0.65F)), remaining);
       } else {
@@ -176,7 +176,7 @@ public final class AiAim {
       LocalPlayer player = Minecraft.getInstance().player;
       if (player != null && this.init_ce_DataUtil != null && (this.init_Z || this.read_I != player.tickCount && write != player.tickCount)) {
          if (!this.init_Z) {
-            RotationMath.Inner_DataUtil target = this.init_ce_DataUtil_LocalPlayer_ce_DataUtil(player, this.init_ce_DataUtil);
+            RotationMath.Rotation target = this.init_ce_DataUtil_LocalPlayer_ce_DataUtil(player, this.init_ce_DataUtil);
             init_Str = String.format(
                Locale.ROOT,
                "aim@%x speed %s goal %.0f/%.0f%s%s",
@@ -191,7 +191,7 @@ public final class AiAim {
             float prevPitch = player.getXRot();
             float yaw = prevYaw + init_F_F_DataUtil_DataUtil(Mth.wrapDegrees(target.init() - prevYaw), this.init_DataUtil_DataUtil);
             float pitch = prevPitch + init_F_F_DataUtil_DataUtil(target.load() - prevPitch, this.init_DataUtil_DataUtil);
-            RotationMath.Inner_DataUtil stepped = new RotationMath.Inner_DataUtil(yaw, pitch);
+            RotationMath.Rotation stepped = new RotationMath.Rotation(yaw, pitch);
             if (Minecraft.getInstance().level != null) {
                stepped = this.init_ce_DataUtil_Minecraft_ce_DataUtil(Minecraft.getInstance(), stepped);
             }
@@ -207,40 +207,40 @@ public final class AiAim {
             SilentRotationManager.init(
                "ai-assistant", player, this.init_DataUtil_DataUtil.init_F, this.init_DataUtil_DataUtil.load_F, this.init_DataUtil_DataUtil.init_ap_StreamUtil
             );
-            RotationMath.Inner_DataUtil packetRotation = SilentMovementCoordinator.init_ce_DataUtil();
+            RotationMath.Rotation packetRotation = SilentMovementCoordinator.init_ce_DataUtil();
             this.load_I = packetRotation != null && RotationMath.init_F(packetRotation, this.init_ce_DataUtil) <= 1.0 ? this.load_I + 1 : 0;
          }
       }
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_LocalPlayer_ce_DataUtil(LocalPlayer player, RotationMath.Inner_DataUtil rotation) {
+   private RotationMath.Rotation init_ce_DataUtil_LocalPlayer_ce_DataUtil(LocalPlayer player, RotationMath.Rotation rotation) {
       Minecraft mc = Minecraft.getInstance();
       return mc.level != null && this.init_ce_DataUtil != null ? this.init_ce_DataUtil_Minecraft_ce_DataUtil(mc, rotation) : rotation;
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Inner_DataUtil rotation) {
+   private RotationMath.Rotation init_ce_DataUtil_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Rotation rotation) {
       if (!this.init_Z_Minecraft_ce_DataUtil(mc, rotation)) {
          return rotation;
       }
 
       for (float dip : new float[]{8.0F, 14.0F, 20.0F}) {
-         RotationMath.Inner_DataUtil candidate = new RotationMath.Inner_DataUtil(rotation.init(), Math.min(90.0F, rotation.load() + dip));
+         RotationMath.Rotation candidate = new RotationMath.Rotation(rotation.init(), Math.min(90.0F, rotation.load() + dip));
          if (!this.init_Z_Minecraft_ce_DataUtil(mc, candidate)) {
             return candidate;
          }
       }
 
       for (float side : new float[]{7.0F, -7.0F, 14.0F, -14.0F}) {
-         RotationMath.Inner_DataUtil candidate = new RotationMath.Inner_DataUtil(rotation.init() + side, rotation.load());
+         RotationMath.Rotation candidate = new RotationMath.Rotation(rotation.init() + side, rotation.load());
          if (!this.init_Z_Minecraft_ce_DataUtil(mc, candidate)) {
             return candidate;
          }
       }
 
-      return new RotationMath.Inner_DataUtil(rotation.init() + 7.0F, rotation.load());
+      return new RotationMath.Rotation(rotation.init() + 7.0F, rotation.load());
    }
 
-   private boolean init_Z_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Inner_DataUtil rotation) {
+   private boolean init_Z_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Rotation rotation) {
       Vec3 view = Vec3.directionFromRotation(rotation.load(), rotation.init()).normalize();
       Vec3 eye = mc.player.getEyePosition();
 
@@ -258,7 +258,7 @@ public final class AiAim {
       return false;
    }
 
-   private static Entity init_Entity_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Inner_DataUtil rotation) {
+   private static Entity init_Entity_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Rotation rotation) {
       Vec3 view = Vec3.directionFromRotation(rotation.load(), rotation.init()).normalize();
       Vec3 eye = mc.player.getEyePosition();
 
@@ -333,7 +333,7 @@ public final class AiAim {
       } else if (!this.init_Z) {
          return init_Z_Entity(target);
       } else {
-         RotationMath.Inner_DataUtil rotation = SilentMovementCoordinator.init_ce_DataUtil();
+         RotationMath.Rotation rotation = SilentMovementCoordinator.init_ce_DataUtil();
          if (rotation == null) {
             return false;
          } else {
@@ -357,7 +357,7 @@ public final class AiAim {
       if (player == null) {
          return Vec3.ZERO;
       } else if (!AutismLiteVariant.enabled() && autismclient.ai.AiClientTick.init()) {
-         ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+         ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
          return !wire.init_Z() ? Vec3.ZERO : Vec3.directionFromRotation(wire.write(), wire.read());
       } else {
          return player.getLookAngle();
@@ -521,11 +521,11 @@ public final class AiAim {
       return points.get(order[0]);
    }
 
-   public static float init_F_DataUtil_DataUtil(AiAim.Inner_DataUtil speed) {
+   public static float init_F_DataUtil_DataUtil(AiAim.AimProfile speed) {
       return speed.init_F;
    }
 
-   public enum Inner_DataUtil {
+   public enum AimProfile {
       CALM(28.0F, 28.0F, 22.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
       FLOW(54.0F, 54.0F, 38.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
       NORMAL(45.0F, 45.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
@@ -540,11 +540,11 @@ public final class AiAim {
       final RotationStreamPlanner.Inner_StreamUtil init_ap_StreamUtil;
       final boolean init_Z;
 
-      Inner_DataUtil(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.Inner_StreamUtil profile) {
+      AimProfile(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.Inner_StreamUtil profile) {
          this(yawCap, pitchCap, cameraCap, profile, false);
       }
 
-      Inner_DataUtil(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.Inner_StreamUtil profile, boolean linear) {
+      AimProfile(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.Inner_StreamUtil profile, boolean linear) {
          this.init_F = yawCap;
          this.load_F = pitchCap;
          this.read_F = cameraCap;

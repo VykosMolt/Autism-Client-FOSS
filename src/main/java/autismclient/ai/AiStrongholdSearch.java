@@ -140,11 +140,11 @@ final class AiStrongholdSearch {
                   true,
                   false,
                   Math.min(90, Math.max(15, (int)((this.init_J - System.nanoTime()) / 1000000000L))),
-                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                  autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                   true,
                   2.0,
                   null,
-                  AiGoto.Inner_BufferHelper.DEFAULT
+                  AiGoto.GotoOptions.DEFAULT
                );
                return AiGameOperations.init_AiOperation_Result(
                   AiOperation.Status.RUNNING, "Following observed stronghold frontier " + this.init_BlockPos.toShortString(), this.init_JsonObject_54()

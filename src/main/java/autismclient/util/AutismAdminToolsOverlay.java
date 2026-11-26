@@ -233,7 +233,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
 
       if (this.start > body.sync()) {
          autismclient.gui.f.NetHelper track = autismclient.gui.f.NetHelper.init(body.init() - 6, body.write(), 6, body.sync());
-         autismclient.gui.ui.widgets.ScrollbarRenderer.Inner_DataUtil metrics = autismclient.gui.ui.widgets.ScrollbarRenderer.init(track, this.start, body.sync(), this.reset);
+         autismclient.gui.ui.widgets.ScrollbarRenderer.ScrollbarBounds metrics = autismclient.gui.ui.widgets.ScrollbarRenderer.init(track, this.start, body.sync(), this.reset);
          autismclient.gui.ui.widgets.ScrollbarRenderer.init_V_SyncManager(context, metrics, this.update_Z);
          this.init_List.add(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.SCROLLBAR, track, null, ""));
       }
@@ -1229,7 +1229,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                      this.init_V_f_DataUtil_AutismAdminToolsOv(module, hit);
                      return true;
                   case SCROLLBAR:
-                     autismclient.gui.ui.widgets.ScrollbarRenderer.Inner_DataUtil metrics = this.init_UtilCore_DataUtil_2();
+                     autismclient.gui.ui.widgets.ScrollbarRenderer.ScrollbarBounds metrics = this.init_UtilCore_DataUtil_2();
                      if (metrics != null && metrics.init_I() > 0) {
                         this.stop = metrics.load().init_Z((int)mouseX, (int)mouseY) ? (int)mouseY - metrics.load().write() : metrics.load().sync() / 2;
                         this.update_Z = true;
@@ -1547,7 +1547,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       }
 
       if (this.update_Z) {
-         autismclient.gui.ui.widgets.ScrollbarRenderer.Inner_DataUtil metrics = this.init_UtilCore_DataUtil_2();
+         autismclient.gui.ui.widgets.ScrollbarRenderer.ScrollbarBounds metrics = this.init_UtilCore_DataUtil_2();
          if (metrics != null) {
             this.reset = autismclient.gui.ui.widgets.ScrollbarRenderer.init_I_UtilCore_DataUtil(metrics, (int)mouseY, this.stop);
          }
@@ -1868,7 +1868,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarRenderer.Inner_DataUtil init_UtilCore_DataUtil_2() {
+   private autismclient.gui.ui.widgets.ScrollbarRenderer.ScrollbarBounds init_UtilCore_DataUtil_2() {
       autismclient.gui.f.NetHelper body = this.init_NetHelper();
       if (this.start <= body.sync()) {
          return null;

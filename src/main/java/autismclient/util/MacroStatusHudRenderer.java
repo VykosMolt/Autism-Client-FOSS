@@ -150,7 +150,7 @@ public final class MacroStatusHudRenderer {
    }
 
    private static int init_I() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-9448565, ThemePaletteManager.Inner_DataUtil.ACCENT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-9448565, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    private static void init(Font textRenderer, List<MacroExecutor.Inner_UiHelper> runs, int rowsPerRun, int panelWidth, long now) {

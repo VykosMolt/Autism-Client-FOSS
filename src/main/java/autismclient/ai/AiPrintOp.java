@@ -42,8 +42,8 @@ final class AiPrintOp implements AiOperation {
    private final LocalPlayer init_LocalPlayer = this.init_Minecraft.player;
    private final autismclient.ai.print.PrintCore init_UiHelper;
    private final List<autismclient.ai.print.PrintTarget> init_List;
-   private final AiBuilder.Inner_DataUtil init_TableIndex_DataUti;
-   private final AiBuilder.Inner_ConfigStore init_TableIndex_ConfigS;
+   private final AiBuilder.Blueprint init_TableIndex_DataUti;
+   private final AiBuilder.BuildOptions init_TableIndex_ConfigS;
    private final AiPrintSupply init_bj;
    private AiOperation init_AiOperation;
    private AiScaffold.Inner_StreamUtil init_a_StreamUtil;
@@ -64,7 +64,7 @@ final class AiPrintOp implements AiOperation {
    private JsonObject init_JsonObject;
    private boolean update_Z;
    private boolean sync_Z;
-   private final AiGuardLayer init_Y = new AiGuardLayer(new AiGuard.Inner_CachePool(true, true, true, 16.0F, 7.0F, 14), "schematic printer");
+   private final AiGuardLayer init_Y = new AiGuardLayer(new AiGuard.GuardPolicy(true, true, true, 16.0F, 7.0F, 14), "schematic printer");
    private boolean flush_Z;
    private final long init_J = System.nanoTime();
    private final long load_J;
@@ -88,11 +88,11 @@ final class AiPrintOp implements AiOperation {
       this.init_bj.init_V_BlockPos(position);
    }
 
-   AiPrintOp(AiBuilder.Inner_DataUtil blueprint, int timeoutSeconds, AiBuilder.Inner_ConfigStore power) {
+   AiPrintOp(AiBuilder.Blueprint blueprint, int timeoutSeconds, AiBuilder.BuildOptions power) {
       this(blueprint, timeoutSeconds, power, AiPrintRules.init(blueprint));
    }
 
-   AiPrintOp(AiBuilder.Inner_DataUtil blueprint, int timeoutSeconds, AiBuilder.Inner_ConfigStore power, List<autismclient.ai.print.PrintTarget> preparedTargets) {
+   AiPrintOp(AiBuilder.Blueprint blueprint, int timeoutSeconds, AiBuilder.BuildOptions power, List<autismclient.ai.print.PrintTarget> preparedTargets) {
       this(
          blueprint,
          timeoutSeconds,
@@ -103,21 +103,21 @@ final class AiPrintOp implements AiOperation {
    }
 
    AiPrintOp(
-      AiBuilder.Inner_DataUtil blueprint,
+      AiBuilder.Blueprint blueprint,
       int timeoutSeconds,
-      AiBuilder.Inner_ConfigStore power,
+      AiBuilder.BuildOptions power,
       List<autismclient.ai.print.PrintTarget> preparedTargets,
-      AiSchematicMachinePlan.Inner_StreamUtil actions
+      AiSchematicMachinePlan.MachineSpec actions
    ) {
       this(blueprint, timeoutSeconds, power, preparedTargets, actions, null);
    }
 
    AiPrintOp(
-      AiBuilder.Inner_DataUtil blueprint,
+      AiBuilder.Blueprint blueprint,
       int timeoutSeconds,
-      AiBuilder.Inner_ConfigStore power,
+      AiBuilder.BuildOptions power,
       List<autismclient.ai.print.PrintTarget> preparedTargets,
-      AiSchematicMachinePlan.Inner_StreamUtil actions,
+      AiSchematicMachinePlan.MachineSpec actions,
       autismclient.ai.print.PrintCore.ao geometry
    ) {
       AiPrintSupply.init_V_TableIndex_ConfigS(power);
@@ -134,7 +134,7 @@ final class AiPrintOp implements AiOperation {
       this.init_UiHelper.load_V_List(actions.frames());
       this.init_UiHelper.init_V_Map(actions.outcomes());
 
-      for (AiSchematicMachinePlan.Inner_DataUtil saved : actions.containers()) {
+      for (AiSchematicMachinePlan.ContainerPlan saved : actions.containers()) {
          this.init_UiHelper.init_V_BitSetUtil(new AiPrintContainer(this.init_DataUtil, saved));
       }
 
@@ -337,7 +337,7 @@ final class AiPrintOp implements AiOperation {
             && !this.init_UiHelper.flush_Z()
             && this.init_Minecraft.player.getFoodData().getFoodLevel() <= 14
             && !this.init_UiHelper.close_Z()) {
-            AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+            AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
             if (vitals.hasFood() && vitals.hostilesNear() == 0 && AiSurvival.init_Z(vitals.food())) {
                return this.load("Settling before a meal");
             }
@@ -755,8 +755,8 @@ final class AiPrintOp implements AiOperation {
    }
 
    private AiOperation.Result sync_AiOperation_Result_3() {
-      autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(3000000000L);
-      autismclient.ai.engine.AiPathfinder.Inner_CachePool.load_V_J(3000000000L);
+      autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(3000000000L);
+      autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(3000000000L);
       AiOperation.Result result = this.init_AiOperation.tick();
       this.init_JsonObject = AiJson.init_JsonObject_Str(result.dataJson());
       if (!result.terminal()) {
@@ -1038,8 +1038,8 @@ final class AiPrintOp implements AiOperation {
          this.init_Y.init_V();
          this.sync_Z = this.sync_Z | this.init_Y.read();
          this.read_V_8();
-         autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(0L);
-         autismclient.ai.engine.AiPathfinder.Inner_CachePool.load_V_J(0L);
+         autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
+         autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(0L);
          autismclient.ai.engine.AiRoutePolicy.putAt_V();
          AiServerEvidence.load_V_Consumer(this.init_Consumer);
          AiServerEvidence.load_V_LongConsumer(this.init_LongConsumer);

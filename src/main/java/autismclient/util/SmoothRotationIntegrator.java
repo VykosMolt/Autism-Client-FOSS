@@ -288,10 +288,10 @@ public final class SmoothRotationIntegrator {
    }
 
    public record Inner_DataUtil(long init, long load) {
-      public RotationMath.Inner_DataUtil init(double degreesPerCount) {
+      public RotationMath.Rotation init(double degreesPerCount) {
          return Double.isFinite(degreesPerCount) && !(degreesPerCount <= 0.0)
-            ? new RotationMath.Inner_DataUtil((float)(this.init * degreesPerCount), (float)(this.load * degreesPerCount))
-            : new RotationMath.Inner_DataUtil(0.0F, 0.0F);
+            ? new RotationMath.Rotation((float)(this.init * degreesPerCount), (float)(this.load * degreesPerCount))
+            : new RotationMath.Rotation(0.0F, 0.0F);
       }
    }
 }

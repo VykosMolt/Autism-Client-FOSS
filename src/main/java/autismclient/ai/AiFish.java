@@ -53,7 +53,7 @@ final class AiFish {
          }
 
          final String spec = AiJson.init_Str_JsonObject(args, "item", "");
-         final AiItems.Inner_DataUtil wanted = spec.isBlank() ? null : AiItems.load_af_DataUtil(spec);
+         final AiItems.ItemSpec wanted = spec.isBlank() ? null : AiItems.load_af_DataUtil(spec);
          int count = Math.max(1, Math.min(2304, AiJson.init_I_JsonObject(args, "count", 1)));
          boolean additional = AiJson.init_Z_JsonObject(args, "additional", false);
          final int timeoutSeconds = Math.max(30, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));

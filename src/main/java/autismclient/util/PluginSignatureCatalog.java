@@ -210,7 +210,7 @@ public final class PluginSignatureCatalog {
       return !init_Set.contains(namespace);
    }
 
-   public static synchronized boolean init(String serverAddress, String brand, AutismPayloadSupport.Inner_StreamUtil snapshot) {
+   public static synchronized boolean init(String serverAddress, String brand, AutismPayloadSupport.PayloadEntry snapshot) {
       if (snapshot == null) {
          return false;
       }

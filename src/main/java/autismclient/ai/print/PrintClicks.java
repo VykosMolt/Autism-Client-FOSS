@@ -96,7 +96,7 @@ final class PrintClicks {
       }
    }
 
-   static boolean init(PrintTarget target, PlacementGoal.Inner_DataUtil constraint) {
+   static boolean init(PrintTarget target, PlacementGoal.PlaceConstraint constraint) {
       BlockState state = target.wanted();
       return PrintCore.sync_Z_BlockState(state)
          || state.getBlock() instanceof HopperBlock
@@ -132,13 +132,13 @@ final class PrintClicks {
       return state != PrintView.init_BlockState && !state.isAir() && !state.canBeReplaced();
    }
 
-   private static boolean init(BlockState wanted, Direction face, PlacementGoal.@Nullable Inner_DataUtil constraint) {
+   private static boolean init(BlockState wanted, Direction face, PlacementGoal.@Nullable PlaceConstraint constraint) {
       return wanted.getBlock() instanceof MultifaceBlock && !MultifaceBlock.hasFace(wanted, face.getOpposite())
          ? false
          : init(wanted, face) && (constraint == null || constraint.acceptsFace(face));
    }
 
-   static boolean init_Z_ArrayUtil_2(PrintView view, PrintTarget target, PlacementGoal.@Nullable Inner_DataUtil constraint, @Nullable BlockPos requiredSupport) {
+   static boolean init_Z_ArrayUtil_2(PrintView view, PrintTarget target, PlacementGoal.@Nullable PlaceConstraint constraint, @Nullable BlockPos requiredSupport) {
       if (!load(view.getBlockState(target.pos()))) {
          return false;
       }
@@ -269,7 +269,7 @@ final class PrintClicks {
       boolean exact,
       PrintClicks.Inner_DataUtil budget,
       double reach,
-      PlacementGoal.@Nullable Inner_DataUtil constraint
+      PlacementGoal.@Nullable PlaceConstraint constraint
    ) {
       if (!budget.init() && load(view.getBlockState(target.pos()))) {
          boolean compact = crouch && !env.flush();
@@ -318,7 +318,7 @@ final class PrintClicks {
       }
    }
 
-   static boolean init(PlacementGoal.Inner_DataUtil c, Direction face, Vec3 eye, Vec3 hit, BlockPos support) {
+   static boolean init(PlacementGoal.PlaceConstraint c, Direction face, Vec3 eye, Vec3 hit, BlockPos support) {
       if (c == null) {
          return true;
       }
@@ -353,7 +353,7 @@ final class PrintClicks {
       boolean exact,
       PrintClicks.Inner_DataUtil budget,
       double reach,
-      PlacementGoal.Inner_DataUtil constraint
+      PlacementGoal.PlaceConstraint constraint
    ) {
       return init(view, env, rules, target, item, mode, feet, crouch, exact, budget, reach, constraint, null);
    }
@@ -370,7 +370,7 @@ final class PrintClicks {
       boolean exact,
       PrintClicks.Inner_DataUtil budget,
       double reach,
-      PlacementGoal.Inner_DataUtil constraint,
+      PlacementGoal.PlaceConstraint constraint,
       @Nullable BlockPos requiredSupport
    ) {
       return init(view, env, rules, target, item, mode, feet, crouch, exact, budget, reach, constraint, requiredSupport, env.flush());
@@ -387,7 +387,7 @@ final class PrintClicks {
       boolean crouch,
       PrintClicks.Inner_DataUtil budget,
       double reach,
-      PlacementGoal.Inner_DataUtil constraint,
+      PlacementGoal.PlaceConstraint constraint,
       @Nullable BlockPos requiredSupport
    ) {
       PrintClicks.Inner_StreamUtil click = init(view, env, rules, target, item, mode, feet, crouch, false, budget, reach, constraint, requiredSupport, false);
@@ -420,7 +420,7 @@ final class PrintClicks {
       boolean exact,
       PrintClicks.Inner_DataUtil budget,
       double reach,
-      PlacementGoal.Inner_DataUtil constraint,
+      PlacementGoal.PlaceConstraint constraint,
       @Nullable BlockPos requiredSupport,
       boolean flightPose
    ) {
@@ -720,7 +720,7 @@ final class PrintClicks {
       boolean exact,
       PrintClicks.Inner_DataUtil budget,
       double reach,
-      PlacementGoal.Inner_DataUtil constraint
+      PlacementGoal.PlaceConstraint constraint
    ) {
       return init_ConfigStore_Stream_ArrayUtil_2(view, env, rules, target, feet, exact, budget, reach, constraint, null);
    }
@@ -734,7 +734,7 @@ final class PrintClicks {
       boolean exact,
       PrintClicks.Inner_DataUtil budget,
       double reach,
-      PlacementGoal.Inner_DataUtil constraint,
+      PlacementGoal.PlaceConstraint constraint,
       @Nullable BlockPos support
    ) {
       PrintClicks.Inner_StreamUtil click = init(

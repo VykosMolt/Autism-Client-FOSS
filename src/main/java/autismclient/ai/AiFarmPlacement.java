@@ -265,17 +265,17 @@ final class AiFarmPlacement extends AiPlacementSession {
    }
 
    private void write_V() {
-      List<AiBuilder.Inner_StreamUtil> cells;
+      List<AiBuilder.CellSpec> cells;
       BlockPos origin;
       if (!this.load_Z) {
          origin = this.write;
-         cells = List.of(new AiBuilder.Inner_StreamUtil(0, 0, 0, AiFarmArea.read(this.load_Str)));
+         cells = List.of(new AiBuilder.CellSpec(0, 0, 0, AiFarmArea.read(this.load_Str)));
       } else {
          AiFarmArea.Inner_DataUtil area = this.init_C_DataUtil();
          origin = area.origin();
          cells = new ArrayList<>();
          if (!area.validate(this.load_Str).isEmpty()) {
-            cells.add(new AiBuilder.Inner_StreamUtil(0, 0, 0, AiFarmArea.read(this.load_Str)));
+            cells.add(new AiBuilder.CellSpec(0, 0, 0, AiFarmArea.read(this.load_Str)));
             AiVisualization.load(this);
             AiVisualization.init(this, origin, cells, 0, true);
             return;
@@ -286,7 +286,7 @@ final class AiFarmPlacement extends AiPlacementSession {
          for (int x = 0; x < area.width(); x++) {
             for (int z = 0; z < area.length(); z++) {
                boolean water = layout.water(x, z);
-               cells.add(new AiBuilder.Inner_StreamUtil(x, 0, z, water ? "minecraft:water" : AiFarmArea.read(this.load_Str)));
+               cells.add(new AiBuilder.CellSpec(x, 0, z, water ? "minecraft:water" : AiFarmArea.read(this.load_Str)));
             }
          }
       }

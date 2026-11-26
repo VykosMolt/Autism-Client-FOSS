@@ -58,7 +58,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
    private List<AutismWaypoints.Waypoint> read_List = List.of();
 
    private static int read_I_17() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public WaypointsScreen(Screen parent) {
@@ -114,7 +114,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
             fieldY,
             addW,
             ctl,
-            autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS,
+            autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
             WaypointsScreen.Inner_StreamUtil.ADD,
             "",
             mx,
@@ -131,7 +131,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
 
          int listY = this.tick_I_15();
          int listH = this.run();
-         autismclient.gui.ui.widgets.ScrollListLayout.Inner_DataUtil listLayout = this.init_TextFormat_DataUti(listY, listH);
+         autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.init_TextFormat_DataUti(listY, listH);
          this.load(graphics, fieldX, listY, panelW - 8, listH, -1442248437, init_CharEncoder.set());
          listLayout.init(graphics);
 
@@ -147,7 +147,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, autismclient.gui.ui.widgets.ScrollListLayout.Inner_DataUtil layout, float delta, int mx, int my) {
+   private void init(GuiGraphicsExtractor graphics, autismclient.gui.ui.widgets.ScrollListLayout.ListLayout layout, float delta, int mx, int my) {
       List<AutismWaypoints.Waypoint> rows = this.init_List_14();
       this.get = this.init_I_I_4(this.get, 0, layout.open());
       int x = layout.init_I() + layout.pop();
@@ -171,7 +171,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
                autismclient.gui.f.PacketUtil.load(
                   graphics,
                   autismclient.gui.f.NetHelper.init(swatchX, swatchY, 18, 10),
-                  !swatchOver && !waypoint.name().equals(this.load_Str) ? init_CharEncoder.set() : ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.OUTLINE)
+                  !swatchOver && !waypoint.name().equals(this.load_Str) ? init_CharEncoder.set() : ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.OUTLINE)
                );
                int nameX = swatchX + 18 + 4;
                ThemedTextInputBox nameField = this.init_Map.get(waypoint.name());
@@ -240,7 +240,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       int y,
       int w,
       int h,
-      autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant,
+      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant,
       WaypointsScreen.Inner_StreamUtil type,
       String value,
       int mx,
@@ -273,7 +273,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
          this.write_V_15();
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_8();
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil_8();
       if (metrics.init_Z() && metrics.init(mx, my)) {
          this.init_Z = true;
          this.set = metrics.load(mx, my) ? my - metrics.update() : metrics.sync() / 2;
@@ -763,18 +763,18 @@ public class WaypointsScreen extends VirtualScaledScreen {
       return Math.max(1, this.set() + this.add() - 4 - this.tick_I_15());
    }
 
-   private autismclient.gui.ui.widgets.ScrollListLayout.Inner_DataUtil init_TextFormat_DataUti(int listY, int listH) {
+   private autismclient.gui.ui.widgets.ScrollListLayout.ListLayout init_TextFormat_DataUti(int listY, int listH) {
       return autismclient.gui.ui.widgets.ScrollListLayout.init(
          this.get() + 4, listY, this.put() - 8, listH, this.init_List_14().size(), this.close_I_7(), this.open_I_6(), this.get, 4, 8, 2, 6, false
       );
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_8() {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_8() {
       return this.init_TextFormat_DataUti(this.tick_I_15(), this.run()).init_PoolEntry_DataUtil();
    }
 
    private boolean init_Z(int mx, int my) {
-      autismclient.gui.ui.widgets.ScrollListLayout.Inner_DataUtil listLayout = this.init_TextFormat_DataUti(this.tick_I_15(), this.run());
+      autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.init_TextFormat_DataUti(this.tick_I_15(), this.run());
       return mx >= listLayout.init_I() + listLayout.pop()
          && mx < listLayout.init_I() + listLayout.pop() + listLayout.push()
          && my >= listLayout.load() + listLayout.pop()
@@ -814,7 +814,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
 
    private void load(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int fill, int border) {
       autismclient.gui.f.PacketUtil.init(
-         graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), fill, ThemePaletteManager.init_I_I_ct_DataUtil(-1721357268, ThemePaletteManager.Inner_DataUtil.OUTLINE)
+         graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), fill, ThemePaletteManager.init_I_I_ct_DataUtil(-1721357268, ThemePaletteManager.ColorRole.OUTLINE)
       );
    }
 

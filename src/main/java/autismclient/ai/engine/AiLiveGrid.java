@@ -40,7 +40,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
+public final class AiLiveGrid implements AiPathfinder.GridView {
    static final int flowState = 6;
    private final Minecraft putAt_Minecraft;
    private final boolean putAt_Z;
@@ -98,13 +98,13 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
    }
 
    @Override
-   public AiPathfinder.Inner_FileCache probe(int var1, int var2, int var3) {
+   public AiPathfinder.CellInfo probe(int var1, int var2, int var3) {
       if (var2 < this.fill) {
-         return AiPathfinder.Inner_FileCache.UNLOADED;
+         return AiPathfinder.CellInfo.UNLOADED;
       }
 
       if (var2 > this.readEx) {
-         return AiPathfinder.Inner_FileCache.air();
+         return AiPathfinder.CellInfo.air();
       }
 
       BlockState var4 = this.putAt_BlockState(var1, var2, var3);
@@ -114,10 +114,10 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
 
       AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
       if (var5 == null) {
-         return AiPathfinder.Inner_FileCache.UNLOADED;
+         return AiPathfinder.CellInfo.UNLOADED;
       }
 
-      AiPathfinder.Inner_FileCache var6 = !var5.diggableKind() ? var5.probe() : putAt(var5.probe(), this.putAt(var4, var5, var1, var2, var3));
+      AiPathfinder.CellInfo var6 = !var5.diggableKind() ? var5.probe() : putAt(var5.probe(), this.putAt(var4, var5, var1, var2, var3));
       if (var5.falling() && var2 - 1 >= this.fill) {
          BlockState var7 = this.putAt_BlockState(var1, var2 - 1, var3);
          if (var7 != null && FallingBlock.isFree(var7)) {
@@ -127,7 +127,7 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
 
       if (!var6.climbable() && var4.getBlock() instanceof TrapDoorBlock && var2 - 1 >= this.fill) {
          BlockState var8 = this.putAt_BlockState(var1, var2 - 1, var3);
-         if (AiPathfinder.Inner_StreamUtil.putAt_Z_BlockState_BlockState(var4, var8)) {
+         if (AiPathfinder.LiveGridView.putAt_Z_BlockState_BlockState(var4, var8)) {
             var6 = fill(var6);
          }
       }
@@ -136,7 +136,7 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
    }
 
    @Override
-   public AiPathfinder.Inner_IoCodec putAt_FileStore_IoCodec_I(int var1, int var2, int var3, boolean var4) {
+   public AiPathfinder.CellOccupancy putAt_FileStore_IoCodec_I(int var1, int var2, int var3, boolean var4) {
       if (this.putAt_ClientLevel.getChunkSource().getChunk(var1 >> 4, var3 >> 4, ChunkStatus.FULL, false) instanceof LevelChunk var6) {
          long var7 = 0L;
          int var9 = Math.max(var2, this.fill);
@@ -166,23 +166,23 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
                var14 = var16 + 1;
             }
 
-            return new AiPathfinder.Inner_IoCodec(var7, false);
+            return new AiPathfinder.CellOccupancy(var7, false);
          } catch (RuntimeException var19) {
-            return AiPathfinder.Inner_StateCache.super.putAt_FileStore_IoCodec_I(var1, var2, var3, var4);
+            return AiPathfinder.GridView.super.putAt_FileStore_IoCodec_I(var1, var2, var3, var4);
          }
       } else {
          return !var4 && this.putAt_PacketHelper != null
-            ? AiPathfinder.Inner_StateCache.super.putAt_FileStore_IoCodec_I(var1, var2, var3, false)
-            : new AiPathfinder.Inner_IoCodec(0L, false);
+            ? AiPathfinder.GridView.super.putAt_FileStore_IoCodec_I(var1, var2, var3, false)
+            : new AiPathfinder.CellOccupancy(0L, false);
       }
    }
 
-   static AiPathfinder.Inner_FileCache putAt(AiPathfinder.Inner_FileCache var0, boolean var1) {
+   static AiPathfinder.CellInfo putAt(AiPathfinder.CellInfo var0, boolean var1) {
       return var1 && !var0.hazardFeet() ? var0.withHazards(true, var0.hazardFloor()) : var0;
    }
 
-   static AiPathfinder.Inner_FileCache putAt_FileStore_BitCache_FileStore_BitCache(AiPathfinder.Inner_FileCache var0) {
-      return new AiPathfinder.Inner_FileCache(
+   static AiPathfinder.CellInfo putAt_FileStore_BitCache_FileStore_BitCache(AiPathfinder.CellInfo var0) {
+      return new AiPathfinder.CellInfo(
          var0.loaded(),
          var0.passable(),
          var0.top16(),
@@ -209,8 +209,8 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
       );
    }
 
-   static AiPathfinder.Inner_FileCache fill(AiPathfinder.Inner_FileCache var0) {
-      return new AiPathfinder.Inner_FileCache(
+   static AiPathfinder.CellInfo fill(AiPathfinder.CellInfo var0) {
+      return new AiPathfinder.CellInfo(
          var0.loaded(),
          true,
          0,
@@ -327,15 +327,15 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
       }
    }
 
-   private AiPathfinder.Inner_FileCache putAt_FileStore_BitCache(int var1, int var2, int var3) {
-      return this.putAt_PacketHelper == null ? AiPathfinder.Inner_FileCache.UNLOADED : this.putAt_PacketHelper.init_ClassCache_FileCac_I(var1, var2, var3);
+   private AiPathfinder.CellInfo putAt_FileStore_BitCache(int var1, int var2, int var3) {
+      return this.putAt_PacketHelper == null ? AiPathfinder.CellInfo.UNLOADED : this.putAt_PacketHelper.init_ClassCache_FileCac_I(var1, var2, var3);
    }
 
    private double putAt(BlockState var1, AiLiveGrid.Inner_StreamUtil var2, int var3, int var4, int var5) {
       AiLiveGrid.Inner_DataUtil var6 = this.putAt_PoolStore_CacheHel;
       if (var2.requiresTool()
          && !var6.putAt_ByteWorker_CacheHe.creative()
-         && !var6.fill.computeIfAbsent(var1, var1x -> AiPathfinder.Inner_StreamUtil.putAt_Z_BlockState_ItemStackArr(var1x, var6.putAt_ItemStackArr))) {
+         && !var6.fill.computeIfAbsent(var1, var1x -> AiPathfinder.LiveGridView.putAt_Z_BlockState_ItemStackArr(var1x, var6.putAt_ItemStackArr))) {
          return 1.0 / 0.0;
       }
 
@@ -343,7 +343,7 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
          if (!this.putAt_Z || !var1.is(Blocks.NETHER_GOLD_ORE) && !var1.is(Blocks.GILDED_BLACKSTONE)) {
             if ((var1.is(Blocks.ICE) || var1.is(Blocks.FROSTED_ICE)) && !this.putAt_Z) {
                BlockState var7 = this.putAt_BlockState(var3, var4 - 1, var5);
-               if (var7 == null || AiPathfinder.Inner_StreamUtil.putAt_Z_Z(true, var7.isSolid(), var7.liquid(), false)) {
+               if (var7 == null || AiPathfinder.LiveGridView.putAt_Z_Z(true, var7.isSolid(), var7.liquid(), false)) {
                   return 1.0 / 0.0;
                }
             }
@@ -398,8 +398,8 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
          .computeIfAbsent(
             var2,
             var3x -> var1.putAt_BiPredicate == null
-               ? AiPathfinder.Inner_StreamUtil.putAt(this.putAt_Minecraft, var3x, var3.hardness(), var1.putAt_ItemStackArr, var1.putAt_ByteWorker_CacheHe)
-               : AiPathfinder.Inner_StreamUtil.putAt(
+               ? AiPathfinder.LiveGridView.putAt(this.putAt_Minecraft, var3x, var3.hardness(), var1.putAt_ItemStackArr, var1.putAt_ByteWorker_CacheHe)
+               : AiPathfinder.LiveGridView.putAt(
                   this.putAt_Minecraft, var3x, var3.hardness(), var1.putAt_ItemStackArr, var1.putAt_ByteWorker_CacheHe, var1.putAt_BiPredicate
                )
          );
@@ -468,8 +468,8 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
       return var5 != null && var5.falling();
    }
 
-   static AiPathfinder.Inner_FileCache putAt(AiPathfinder.Inner_FileCache var0, double var1) {
-      return new AiPathfinder.Inner_FileCache(
+   static AiPathfinder.CellInfo putAt(AiPathfinder.CellInfo var0, double var1) {
+      return new AiPathfinder.CellInfo(
          var0.loaded(),
          var0.passable(),
          var0.top16(),
@@ -519,7 +519,7 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
       try {
          if (var0.isAir()) {
             return new AiLiveGrid.Inner_StreamUtil(
-               AiPathfinder.Inner_FileCache.air(), (short)0, (short)0, AiSurface.NORMAL.init(), 0.0F, false, false, false, false, false, false
+               AiPathfinder.CellInfo.air(), (short)0, (short)0, AiSurface.NORMAL.init(), 0.0F, false, false, false, false, false, false
             );
          }
 
@@ -543,21 +543,21 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
             }
          }
 
-         boolean var9 = AiPathfinder.Inner_StreamUtil.putAt_Z_BlockState(var0);
+         boolean var9 = AiPathfinder.LiveGridView.putAt_Z_BlockState(var0);
          if (var9 && !(var4 instanceof ScaffoldingBlock)) {
             var7 = true;
          }
 
          int var10 = var7 ? 0 : (int)Math.round(var6.max(Axis.Y) * 16.0);
-         boolean var11 = AiPathfinder.Inner_StreamUtil.fill(var0);
-         boolean var12 = AiPathfinder.Inner_StreamUtil.readEx(var0);
-         boolean var13 = AiPathfinder.Inner_StreamUtil.value(var0);
+         boolean var11 = AiPathfinder.LiveGridView.fill(var0);
+         boolean var12 = AiPathfinder.LiveGridView.readEx(var0);
+         boolean var13 = AiPathfinder.LiveGridView.value(var0);
          boolean var14 = var0.is(Blocks.SWEET_BERRY_BUSH);
-         boolean var15 = AiPathfinder.Inner_StreamUtil.prevEx(var0);
-         boolean var16 = !var15 && !var7 && !AiPathfinder.Inner_StreamUtil.putAt_Z_VoxelShape(var6);
-         boolean var17 = AiPathfinder.Inner_StreamUtil.prev(var0);
+         boolean var15 = AiPathfinder.LiveGridView.prevEx(var0);
+         boolean var16 = !var15 && !var7 && !AiPathfinder.LiveGridView.putAt_Z_VoxelShape(var6);
+         boolean var17 = AiPathfinder.LiveGridView.prev(var0);
          String var18 = BuiltInRegistries.BLOCK.getKey(var4).getPath();
-         int var19 = Math.round(AiPathfinder.Inner_StreamUtil.putAt_F_Str_Z(var18, var2) * 10.0F);
+         int var19 = Math.round(AiPathfinder.LiveGridView.putAt_F_Str_Z(var18, var2) * 10.0F);
          boolean var20 = var4 instanceof FallingBlock;
          boolean var21 = var4 instanceof SlabBlock || var4 instanceof StairBlock;
          boolean var22 = var4 instanceof FarmlandBlock;
@@ -565,7 +565,7 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
          boolean var24 = var0.is(Blocks.SOUL_SAND);
          float var25 = var0.getDestroySpeed(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
          boolean var26 = (!var7 || var4 instanceof WebBlock) && var1.isEmpty() && var25 >= 0.0F && !var0.hasBlockEntity();
-         AiPathfinder.Inner_FileCache var27 = new AiPathfinder.Inner_FileCache(
+         AiPathfinder.CellInfo var27 = new AiPathfinder.CellInfo(
             true,
             var7,
             var10,
@@ -582,7 +582,7 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
             var22,
             var23,
             false,
-            AiPathfinder.Inner_CachePool.putAt_I_Str(var18),
+            AiPathfinder.MoveCosts.putAt_I_Str(var18),
             var24,
             var14,
             var17,
@@ -591,7 +591,7 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
             var13
          );
          if (var7 && !var2 && !var3 && !var9 && !var11 && !var12 && !var13 && !var14 && !var17 && var10 == 0 && var19 == 10) {
-            var27 = AiPathfinder.Inner_FileCache.air();
+            var27 = AiPathfinder.CellInfo.air();
          }
 
          short var28 = var6.isEmpty() ? 0 : (var6 == Shapes.block() ? 1 : AiShapes.init_S_List(var6.toAabbs()));
@@ -608,7 +608,7 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
             var20,
             var26,
             var0.requiresCorrectToolForDrops(),
-            AiPathfinder.Inner_StreamUtil.chunkAt(var0),
+            AiPathfinder.LiveGridView.chunkAt(var0),
             AiChunkMemory.init(var18)
          );
       } catch (RuntimeException var33) {
@@ -735,7 +735,7 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
                   BlockState var15 = var2.getBlockState(var11);
                   AiLiveGrid.Inner_StreamUtil var16 = putAt_PoolStore_TableCac_BlockState(var15);
                   if (var16 != null) {
-                     AiPathfinder.Inner_FileCache var17 = var16.probe();
+                     AiPathfinder.CellInfo var17 = var16.probe();
                      byte var18 = 1;
                      if (var17.passable()) {
                         var18 |= 2;
@@ -795,7 +795,7 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
    }
 
    record Inner_StreamUtil(
-      AiPathfinder.Inner_FileCache probe,
+      AiPathfinder.CellInfo probe,
       short shape,
       short outlineShape,
       byte surface,

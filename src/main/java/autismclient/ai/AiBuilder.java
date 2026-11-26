@@ -237,19 +237,19 @@ final class AiBuilder {
       "minecraft:short_grass", "minecraft:tall_grass", "minecraft:short_dry_grass", "minecraft:tall_dry_grass", "minecraft:fern", "minecraft:large_fern"
    );
 
-   static Path init_Path(AiBuilder.Inner_DataUtil blueprint) {
+   static Path init_Path(AiBuilder.Blueprint blueprint) {
       Minecraft mc = Minecraft.getInstance();
-      List<AiBuilder.Inner_StreamUtil> cells = blueprint.cells()
+      List<AiBuilder.CellSpec> cells = blueprint.cells()
          .stream()
          .sorted(
-            Comparator.comparingInt(AiBuilder.Inner_StreamUtil::dy)
-               .thenComparingInt(AiBuilder.Inner_StreamUtil::dx)
-               .thenComparingInt(AiBuilder.Inner_StreamUtil::dz)
+            Comparator.comparingInt(AiBuilder.CellSpec::dy)
+               .thenComparingInt(AiBuilder.CellSpec::dx)
+               .thenComparingInt(AiBuilder.CellSpec::dz)
          )
          .toList();
       StringBuilder identity = new StringBuilder(blueprint.origin().toShortString());
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          identity.append('|')
             .append(cell.dx())
             .append(',')
@@ -296,12 +296,12 @@ final class AiBuilder {
    }
 
    static List<BlockPos> init(
-      List<BlockPos> committed, List<AiBuilder.Inner_StreamUtil> order, int cursor, BlockPos origin, Map<Long, AiBuilder.Inner_StreamUtil> wantedCells
+      List<BlockPos> committed, List<AiBuilder.CellSpec> order, int cursor, BlockPos origin, Map<Long, AiBuilder.CellSpec> wantedCells
    ) {
       Set<Long> unprocessed = new HashSet<>();
 
       for (int i = cursor; i < Math.min(order.size(), cursor + 192); i++) {
-         AiBuilder.Inner_StreamUtil cell = order.get(i);
+         AiBuilder.CellSpec cell = order.get(i);
          unprocessed.add(origin.offset(cell.dx(), cell.dy(), cell.dz()).asLong());
       }
 
@@ -333,17 +333,17 @@ final class AiBuilder {
    }
 
    static int init(
-      List<AiBuilder.Inner_StreamUtil> order,
-      List<AiBuilder.Inner_StreamUtil> deferred,
+      List<AiBuilder.CellSpec> order,
+      List<AiBuilder.CellSpec> deferred,
       List<String> reasons,
       int cursor,
       BlockPos origin,
-      AiBuilder.Inner_StreamUtil cell,
+      AiBuilder.CellSpec cell,
       BlockPos pos,
       String reason
    ) {
       for (int i = cursor; i < order.size(); i++) {
-         AiBuilder.Inner_StreamUtil candidate = order.get(i);
+         AiBuilder.CellSpec candidate = order.get(i);
          if (candidate.equals(cell) && origin.offset(candidate.dx(), candidate.dy(), candidate.dz()).equals(pos)) {
             order.remove(i);
             deferred.add(cell);
@@ -363,7 +363,7 @@ final class AiBuilder {
       return expectedSupport.equals(actualSupport) && expectedFace == actualFace;
    }
 
-   static AiBuilder.Inner_ConfigStore init_TableIndex_ConfigS(JsonObject args) {
+   static AiBuilder.BuildOptions init_TableIndex_ConfigS(JsonObject args) {
       int rotation = AiJson.init_I_JsonObject(args, "rotation", 0);
       if (rotation != 0 && rotation != 90 && rotation != 180 && rotation != 270) {
          throw new IllegalArgumentException("rotation must be 0, 90, 180 or 270 (clockwise seen from above), got " + rotation);
@@ -392,7 +392,7 @@ final class AiBuilder {
          skipFailed = AiJson.init_Z_JsonObject(layers, "skipFailed", false);
       }
 
-      AiBuilder.Inner_NetHelper repeat = null;
+      AiBuilder.RepeatSpec repeat = null;
       if (args.has("repeat") && !args.get("repeat").isJsonNull()) {
          if (!args.get("repeat").isJsonObject()) {
             throw new IllegalArgumentException("repeat must be a {dx,dy,dz, count} object");
@@ -419,13 +419,13 @@ final class AiBuilder {
             throw new IllegalArgumentException("repeat.count must be -1 or 0..4096");
          }
 
-         repeat = new AiBuilder.Inner_NetHelper(rdx, rdy, rdz, count);
+         repeat = new AiBuilder.RepeatSpec(rdx, rdy, rdz, count);
       }
 
       Map<String, List<String>> substitutes = init_Map(args);
       boolean clearTerrain = AiJson.init_Z_JsonObject(args, "clearTerrain", false);
       boolean shulkerStock = AiJson.init_Z_JsonObject(args, "shulkerStock", true);
-      return new AiBuilder.Inner_ConfigStore(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, clearTerrain, shulkerStock)
+      return new AiBuilder.BuildOptions(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, clearTerrain, shulkerStock)
          .withAssumeFly(AiJson.init_Z_JsonObject(args, "assumeFly", false));
    }
 
@@ -496,21 +496,21 @@ final class AiBuilder {
       }
    }
 
-   static List<AiBuilder.Inner_StreamUtil> init_List_List_2(List<AiBuilder.Inner_StreamUtil> cells, int rotation, String mirror) {
+   static List<AiBuilder.CellSpec> init_List_List_2(List<AiBuilder.CellSpec> cells, int rotation, String mirror) {
       if (rotation == 0 && mirror.equals("none")) {
          return cells;
       }
 
-      List<AiBuilder.Inner_StreamUtil> out = new ArrayList<>(cells.size());
+      List<AiBuilder.CellSpec> out = new ArrayList<>(cells.size());
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          out.add(init_TableIndex_StreamU_TableIndex_StreamU(cell, rotation, mirror));
       }
 
       return out;
    }
 
-   static AiBuilder.Inner_StreamUtil init_TableIndex_StreamU_TableIndex_StreamU(AiBuilder.Inner_StreamUtil cell, int rotation, String mirror) {
+   static AiBuilder.CellSpec init_TableIndex_StreamU_TableIndex_StreamU(AiBuilder.CellSpec cell, int rotation, String mirror) {
       int dx = cell.dx();
       int dz = cell.dz();
       if (mirror.equals("x")) {
@@ -528,7 +528,7 @@ final class AiBuilder {
       }
 
       if (cell.properties().isEmpty()) {
-         return new AiBuilder.Inner_StreamUtil(dx, cell.dy(), dz, cell.block(), cell.properties());
+         return new AiBuilder.CellSpec(dx, cell.dy(), dz, cell.block(), cell.properties());
       }
 
       BlockState var10000 = init_BlockState(cell);
@@ -587,7 +587,7 @@ final class AiBuilder {
          props.put(key, property == null ? entry.getValue() : String.valueOf(state.getValue(property)).toLowerCase(Locale.ROOT));
       }
 
-      return new AiBuilder.Inner_StreamUtil(dx, cell.dy(), dz, cell.block(), Map.copyOf(props));
+      return new AiBuilder.CellSpec(dx, cell.dy(), dz, cell.block(), Map.copyOf(props));
    }
 
    static String init(String facing) {
@@ -645,20 +645,20 @@ final class AiBuilder {
       }
    }
 
-   static List<AiBuilder.Inner_StreamUtil> init(List<AiBuilder.Inner_StreamUtil> cells, int maxCells) {
+   static List<AiBuilder.CellSpec> init(List<AiBuilder.CellSpec> cells, int maxCells) {
       return init_List_List(cells, maxCells, 256);
    }
 
-   static List<AiBuilder.Inner_StreamUtil> init_List_List(List<AiBuilder.Inner_StreamUtil> cells, int maxCells, int maxOffset) {
+   static List<AiBuilder.CellSpec> init_List_List(List<AiBuilder.CellSpec> cells, int maxCells, int maxOffset) {
       return cells.isEmpty() ? List.of() : init(cells, maxCells, maxOffset, init_BlockPos(cells));
    }
 
-   static BlockPos init_BlockPos(List<AiBuilder.Inner_StreamUtil> cells) {
+   static BlockPos init_BlockPos(List<AiBuilder.CellSpec> cells) {
       int x = 2147483647;
       int y = 2147483647;
       int z = 2147483647;
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          x = Math.min(x, cell.dx());
          y = Math.min(y, cell.dy());
          z = Math.min(z, cell.dz());
@@ -667,13 +667,13 @@ final class AiBuilder {
       return new BlockPos(x, y, z);
    }
 
-   static List<AiBuilder.Inner_StreamUtil> init(List<AiBuilder.Inner_StreamUtil> cells, int maxCells, int maxOffset, BlockPos minimum) {
+   static List<AiBuilder.CellSpec> init(List<AiBuilder.CellSpec> cells, int maxCells, int maxOffset, BlockPos minimum) {
       int minX = minimum.getX();
       int minY = minimum.getY();
       int minZ = minimum.getZ();
-      Map<Long, AiBuilder.Inner_StreamUtil> unique = new LinkedHashMap<>();
+      Map<Long, AiBuilder.CellSpec> unique = new LinkedHashMap<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          int dx = cell.dx() - minX;
          int dy = cell.dy() - minY;
          int dz = cell.dz() - minZ;
@@ -698,28 +698,28 @@ final class AiBuilder {
          throw new IllegalArgumentException("blueprint has " + unique.size() + " cells; the limit for this source is " + maxCells);
       }
 
-      List<AiBuilder.Inner_StreamUtil> out = new ArrayList<>(unique.size());
+      List<AiBuilder.CellSpec> out = new ArrayList<>(unique.size());
 
-      for (AiBuilder.Inner_StreamUtil cell : unique.values()) {
-         out.add(new AiBuilder.Inner_StreamUtil(cell.dx() - minX, cell.dy() - minY, cell.dz() - minZ, cell.block(), cell.properties()));
+      for (AiBuilder.CellSpec cell : unique.values()) {
+         out.add(new AiBuilder.CellSpec(cell.dx() - minX, cell.dy() - minY, cell.dz() - minZ, cell.block(), cell.properties()));
       }
 
       return List.copyOf(out);
    }
 
-   static AiBuilder.Inner_DataUtil init_TableIndex_DataUti_TableIndex_DataUti(AiBuilder.Inner_DataUtil blueprint, int start, int height) {
-      List<AiBuilder.Inner_StreamUtil> kept = new ArrayList<>(blueprint.cells().size());
+   static AiBuilder.Blueprint init_TableIndex_DataUti_TableIndex_DataUti(AiBuilder.Blueprint blueprint, int start, int height) {
+      List<AiBuilder.CellSpec> kept = new ArrayList<>(blueprint.cells().size());
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          if (cell.dy() >= start && cell.dy() < start + height) {
             kept.add(cell);
          }
       }
 
-      return new AiBuilder.Inner_DataUtil(blueprint.origin(), List.copyOf(kept));
+      return new AiBuilder.Blueprint(blueprint.origin(), List.copyOf(kept));
    }
 
-   static AiBuilder.Inner_DataUtil init(JsonObject args, BlockPos fallbackOrigin) {
+   static AiBuilder.Blueprint init(JsonObject args, BlockPos fallbackOrigin) {
       JsonObject source = args;
       if (args.has("blueprint")) {
          String raw = AiJson.init_Str_JsonObject(args, "blueprint", "");
@@ -737,7 +737,7 @@ final class AiBuilder {
             throw new IllegalArgumentException("blueprint has " + blocks.size() + " cells; the limit is 4096");
          }
 
-         List<AiBuilder.Inner_StreamUtil> cells = new ArrayList<>(blocks.size());
+         List<AiBuilder.CellSpec> cells = new ArrayList<>(blocks.size());
          Set<Long> seen = new HashSet<>();
          int i = 0;
 
@@ -765,7 +765,7 @@ final class AiBuilder {
                      throw new IllegalArgumentException(context + " duplicates the cell at " + dx + "," + dy + "," + dz);
                   }
 
-                  cells.add(new AiBuilder.Inner_StreamUtil(dx, dy, dz, block, properties));
+                  cells.add(new AiBuilder.CellSpec(dx, dy, dz, block, properties));
                   i++;
                   continue;
                }
@@ -776,7 +776,7 @@ final class AiBuilder {
             throw new IllegalArgumentException(context + " offsets must be within +/-256: " + dx + "," + dy + "," + dz);
          }
 
-         return new AiBuilder.Inner_DataUtil(origin, List.copyOf(cells));
+         return new AiBuilder.Blueprint(origin, List.copyOf(cells));
       } else {
          throw new IllegalArgumentException("blocks must be an array of {dx,dy,dz,block} objects");
       }
@@ -891,29 +891,29 @@ final class AiBuilder {
       }
    }
 
-   static AiBuilder.Inner_TaskQueue init_TableIndex_TaskQue(Block block, String property) {
+   static AiBuilder.OrientationKind init_TableIndex_TaskQue(Block block, String property) {
       if (block instanceof MultifaceBlock && Direction.byName(property) != null) {
-         return AiBuilder.Inner_TaskQueue.POST_INTERACT;
+         return AiBuilder.OrientationKind.POST_INTERACT;
       }
 
       if (property.equals("rotation") && init(block, 0) != null) {
-         return AiBuilder.Inner_TaskQueue.PLAYER_ROTATION;
+         return AiBuilder.OrientationKind.PLAYER_ROTATION;
       }
 
       if (property.equals("orientation") && block instanceof CrafterBlock) {
-         return AiBuilder.Inner_TaskQueue.PLAYER_ORIENTATION;
+         return AiBuilder.OrientationKind.PLAYER_ORIENTATION;
       }
 
       if (property.equals("type") && block instanceof ChestBlock) {
-         return AiBuilder.Inner_TaskQueue.CHEST_PAIR;
+         return AiBuilder.OrientationKind.CHEST_PAIR;
       }
 
       if (property.equals("note") && block instanceof NoteBlock) {
-         return AiBuilder.Inner_TaskQueue.POST_INTERACT;
+         return AiBuilder.OrientationKind.POST_INTERACT;
       }
 
       if (property.equals("facing") && init(block)) {
-         return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
+         return AiBuilder.OrientationKind.FACE_DERIVED;
       }
 
       if (!property.equals("facing")
@@ -934,94 +934,94 @@ final class AiBuilder {
                && !(block instanceof SegmentableBlock)) {
             if (!property.equals("axis") || !(block instanceof InfestedRotatedPillarBlock) && !(block instanceof CreakingHeartBlock)) {
                if (property.equals("attachment") && block instanceof BellBlock) {
-                  return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
+                  return AiBuilder.OrientationKind.FACE_DERIVED;
                }
 
                if (init_Item(block, property) != null || init_Z(block, property)) {
-                  return AiBuilder.Inner_TaskQueue.POST_INTERACT;
+                  return AiBuilder.OrientationKind.POST_INTERACT;
                }
 
                if (property.equals("inverted") && block instanceof DaylightDetectorBlock) {
-                  return AiBuilder.Inner_TaskQueue.POST_INTERACT;
+                  return AiBuilder.OrientationKind.POST_INTERACT;
                }
 
                if (property.equals("waterlogged")
                   && block.defaultBlockState().hasProperty(BlockStateProperties.WATERLOGGED)
                   && block instanceof LiquidBlockContainer) {
-                  return AiBuilder.Inner_TaskQueue.FLUID_INTERACT;
+                  return AiBuilder.OrientationKind.FLUID_INTERACT;
                }
 
                if (property.equals("face") && block instanceof FaceAttachedHorizontalDirectionalBlock) {
-                  return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
+                  return AiBuilder.OrientationKind.FACE_DERIVED;
                }
 
                if (block instanceof DoorBlock && property.equals("hinge")) {
-                  return AiBuilder.Inner_TaskQueue.CLICK_POSITION;
+                  return AiBuilder.OrientationKind.CLICK_POSITION;
                }
 
                if (block instanceof LanternBlock && property.equals("hanging")) {
-                  return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
+                  return AiBuilder.OrientationKind.FACE_DERIVED;
                }
 
                if (property.equals("axis") && block instanceof RotatedPillarBlock) {
-                  return AiBuilder.Inner_TaskQueue.FACE_AXIS;
+                  return AiBuilder.OrientationKind.FACE_AXIS;
                }
 
                if ((!(block instanceof SlabBlock) || !property.equals("type"))
                   && (!(block instanceof StairBlock) && !(block instanceof TrapDoorBlock) || !property.equals("half"))) {
                   if (property.equals("facing")) {
                      if (block instanceof AnvilBlock) {
-                        return AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE;
+                        return AiBuilder.OrientationKind.PLAYER_FACING_CLOCKWISE;
                      }
 
                      if (block instanceof BarrelBlock || block instanceof DispenserBlock || block instanceof PistonBaseBlock) {
-                        return AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION_OPPOSITE;
+                        return AiBuilder.OrientationKind.PLAYER_DIRECTION_OPPOSITE;
                      }
 
                      if (block instanceof ObserverBlock) {
-                        return AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION;
+                        return AiBuilder.OrientationKind.PLAYER_DIRECTION;
                      }
 
                      if (block instanceof HopperBlock || block instanceof ShulkerBoxBlock) {
-                        return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
+                        return AiBuilder.OrientationKind.FACE_DERIVED;
                      }
 
                      if (write(block) || block instanceof FaceAttachedHorizontalDirectionalBlock) {
-                        return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
+                        return AiBuilder.OrientationKind.FACE_DERIVED;
                      }
 
                      if (block instanceof StairBlock || block instanceof BedBlock || block instanceof DoorBlock || block instanceof FenceGateBlock) {
-                        return AiBuilder.Inner_TaskQueue.PLAYER_FACING;
+                        return AiBuilder.OrientationKind.PLAYER_FACING;
                      }
 
                      if (block instanceof TrapDoorBlock
                         || block instanceof HorizontalDirectionalBlock
                         || block instanceof AbstractFurnaceBlock
                         || block instanceof AbstractChestBlock) {
-                        return AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE;
+                        return AiBuilder.OrientationKind.PLAYER_FACING_OPPOSITE;
                      }
                   }
 
                   if (property.equals("open") && (block instanceof DoorBlock || block instanceof TrapDoorBlock || block instanceof FenceGateBlock)) {
-                     return load(block) ? AiBuilder.Inner_TaskQueue.POWER_STATE : AiBuilder.Inner_TaskQueue.POST_INTERACT;
+                     return load(block) ? AiBuilder.OrientationKind.POWER_STATE : AiBuilder.OrientationKind.POST_INTERACT;
                   } else if (property.equals("powered") && block instanceof LeverBlock) {
-                     return AiBuilder.Inner_TaskQueue.POST_INTERACT;
+                     return AiBuilder.OrientationKind.POST_INTERACT;
                   } else {
                      return property.equals("delay") && block instanceof RepeaterBlock || property.equals("mode") && block instanceof ComparatorBlock
-                        ? AiBuilder.Inner_TaskQueue.POST_INTERACT
-                        : AiBuilder.Inner_TaskQueue.UNSUPPORTED;
+                        ? AiBuilder.OrientationKind.POST_INTERACT
+                        : AiBuilder.OrientationKind.UNSUPPORTED;
                   }
                } else {
-                  return AiBuilder.Inner_TaskQueue.CLICK_HEIGHT;
+                  return AiBuilder.OrientationKind.CLICK_HEIGHT;
                }
             } else {
-               return AiBuilder.Inner_TaskQueue.FACE_AXIS;
+               return AiBuilder.OrientationKind.FACE_AXIS;
             }
          } else {
-            return AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE;
+            return AiBuilder.OrientationKind.PLAYER_FACING_OPPOSITE;
          }
       } else {
-         return AiBuilder.Inner_TaskQueue.PLAYER_FACING;
+         return AiBuilder.OrientationKind.PLAYER_FACING;
       }
    }
 
@@ -1043,7 +1043,7 @@ final class AiBuilder {
          || block instanceof WallSkullBlock;
    }
 
-   static boolean init(Block block, AiBuilder.Inner_StreamUtil cell) {
+   static boolean init(Block block, AiBuilder.CellSpec cell) {
       if (write(block)) {
          return true;
       }
@@ -1056,14 +1056,14 @@ final class AiBuilder {
       return face == null || face.equalsIgnoreCase("wall");
    }
 
-   static AiBuilder.Inner_TaskQueue init_TableIndex_TaskQue(AiBuilder.Inner_StreamUtil cell, Block block) {
-      AiBuilder.Inner_TaskQueue strategy = init_TableIndex_TaskQue(block, "facing");
-      return strategy == AiBuilder.Inner_TaskQueue.FACE_DERIVED && block instanceof FaceAttachedHorizontalDirectionalBlock && !init(block, cell)
-         ? AiBuilder.Inner_TaskQueue.PLAYER_FACING
+   static AiBuilder.OrientationKind init_TableIndex_TaskQue(AiBuilder.CellSpec cell, Block block) {
+      AiBuilder.OrientationKind strategy = init_TableIndex_TaskQue(block, "facing");
+      return strategy == AiBuilder.OrientationKind.FACE_DERIVED && block instanceof FaceAttachedHorizontalDirectionalBlock && !init(block, cell)
+         ? AiBuilder.OrientationKind.PLAYER_FACING
          : strategy;
    }
 
-   static List<String> init_List(AiBuilder.Inner_StreamUtil cell) {
+   static List<String> init_List(AiBuilder.CellSpec cell) {
       if (read_Z(cell)) {
          return List.of();
       }
@@ -1086,8 +1086,8 @@ final class AiBuilder {
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          String key = entry.getKey();
          if (!read(block, key)) {
-            AiBuilder.Inner_TaskQueue strategy = key.equals("facing") ? init_TableIndex_TaskQue(cell, block) : init_TableIndex_TaskQue(block, key);
-            if (strategy == AiBuilder.Inner_TaskQueue.UNSUPPORTED
+            AiBuilder.OrientationKind strategy = key.equals("facing") ? init_TableIndex_TaskQue(cell, block) : init_TableIndex_TaskQue(block, key);
+            if (strategy == AiBuilder.OrientationKind.UNSUPPORTED
                && (!(block instanceof LeavesBlock) || !key.equals("persistent") || !entry.getValue().equals("true"))) {
                Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)block.getStateDefinition().getProperty(key);
                if (property == null || !String.valueOf(block.defaultBlockState().getValue(property)).equalsIgnoreCase(entry.getValue())) {
@@ -1104,7 +1104,7 @@ final class AiBuilder {
       return autismclient.ai.engine.AiPistonPower.init(level, pos, facing);
    }
 
-   static boolean init_Z_Level(Level level, BlockPos pos, AiBuilder.Inner_StreamUtil cell) {
+   static boolean init_Z_Level(Level level, BlockPos pos, AiBuilder.CellSpec cell) {
       if (init_Block(cell) instanceof RedstoneWallTorchBlock) {
          Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
          return facing == null ? false : !level.hasSignal(pos.relative(facing.getOpposite()), facing.getOpposite());
@@ -1113,7 +1113,7 @@ final class AiBuilder {
       }
    }
 
-   static Direction init_Direction(AiBuilder.Inner_StreamUtil cell) {
+   static Direction init_Direction(AiBuilder.CellSpec cell) {
       String type = cell.properties().get("type");
       Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
       if (facing != null && facing.getAxis().isHorizontal() && type != null && !type.equals("single")) {
@@ -1123,7 +1123,7 @@ final class AiBuilder {
       }
    }
 
-   static boolean init_Z_TableIndex_StreamU(AiBuilder.Inner_StreamUtil cell, BlockPos pos, BlockGetter world) {
+   static boolean init_Z_TableIndex_StreamU(AiBuilder.CellSpec cell, BlockPos pos, BlockGetter world) {
       Direction side = init_Direction(cell);
       if (side == null) {
          return false;
@@ -1135,7 +1135,7 @@ final class AiBuilder {
          && partner.getValue(ChestBlock.TYPE) == ChestType.SINGLE;
    }
 
-   static autismclient.ai.engine.PlacementGoal.Inner_DataUtil init(AiBuilder.Inner_StreamUtil cell, Block block, BlockPos pos, BlockGetter world) {
+   static autismclient.ai.engine.PlacementGoal.PlaceConstraint init(AiBuilder.CellSpec cell, Block block, BlockPos pos, BlockGetter world) {
       Direction clickFace = null;
       Direction look = null;
       Float yaw = null;
@@ -1155,11 +1155,11 @@ final class AiBuilder {
          }
       }
 
-      AiBuilder.Inner_TaskQueue strategy = init_TableIndex_TaskQue(cell, block);
+      AiBuilder.OrientationKind strategy = init_TableIndex_TaskQue(cell, block);
       boolean pairing = block instanceof ChestBlock && init_Z_TableIndex_StreamU(cell, pos, world);
       if (pairing) {
          clickFace = init_Direction(cell).getOpposite();
-         strategy = AiBuilder.Inner_TaskQueue.UNSUPPORTED;
+         strategy = AiBuilder.OrientationKind.UNSUPPORTED;
       } else if (block instanceof ChestBlock) {
          BlockState below = world.getBlockState(pos.below());
          if (!below.getCollisionShape(world, pos.below()).isEmpty()) {
@@ -1167,29 +1167,29 @@ final class AiBuilder {
          }
       }
 
-      if (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING
-         || strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE
-         || strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE
-         || strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION
-         || strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION_OPPOSITE) {
+      if (strategy == AiBuilder.OrientationKind.PLAYER_FACING
+         || strategy == AiBuilder.OrientationKind.PLAYER_FACING_OPPOSITE
+         || strategy == AiBuilder.OrientationKind.PLAYER_FACING_CLOCKWISE
+         || strategy == AiBuilder.OrientationKind.PLAYER_DIRECTION
+         || strategy == AiBuilder.OrientationKind.PLAYER_DIRECTION_OPPOSITE) {
          look = Direction.byName(cell.properties().getOrDefault("facing", "north"));
-         if (look != null && strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE) {
+         if (look != null && strategy == AiBuilder.OrientationKind.PLAYER_FACING_CLOCKWISE) {
             look = look.getCounterClockWise();
-         } else if (look != null && strategy != AiBuilder.Inner_TaskQueue.PLAYER_FACING && strategy != AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION) {
+         } else if (look != null && strategy != AiBuilder.OrientationKind.PLAYER_FACING && strategy != AiBuilder.OrientationKind.PLAYER_DIRECTION) {
             look = look.getOpposite();
          }
       }
 
-      boolean fullDirection = strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION_OPPOSITE || strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION;
+      boolean fullDirection = strategy == AiBuilder.OrientationKind.PLAYER_DIRECTION_OPPOSITE || strategy == AiBuilder.OrientationKind.PLAYER_DIRECTION;
       String rotation = cell.properties().get("rotation");
-      if (rotation != null && init_TableIndex_TaskQue(block, "rotation") == AiBuilder.Inner_TaskQueue.PLAYER_ROTATION) {
+      if (rotation != null && init_TableIndex_TaskQue(block, "rotation") == AiBuilder.OrientationKind.PLAYER_ROTATION) {
          yaw = init(block, Integer.parseInt(rotation));
          tolerance = 8.0;
          look = Direction.fromYRot(yaw.floatValue());
       }
 
       String orientation = cell.properties().get("orientation");
-      if (orientation != null && init_TableIndex_TaskQue(block, "orientation") == AiBuilder.Inner_TaskQueue.PLAYER_ORIENTATION) {
+      if (orientation != null && init_TableIndex_TaskQue(block, "orientation") == AiBuilder.OrientationKind.PLAYER_ORIENTATION) {
          String[] parts = orientation.split("_");
          Direction front = Direction.byName(parts[0]);
          Direction top = parts.length > 1 ? Direction.byName(parts[1]) : null;
@@ -1222,7 +1222,7 @@ final class AiBuilder {
       Axis axis = block instanceof RotatedPillarBlock && cell.properties().containsKey("axis")
          ? Axis.valueOf(cell.properties().get("axis").toUpperCase(Locale.ROOT))
          : null;
-      return new autismclient.ai.engine.PlacementGoal.Inner_DataUtil(
+      return new autismclient.ai.engine.PlacementGoal.PlaceConstraint(
          clickFace,
          look,
          axis,
@@ -1254,7 +1254,7 @@ final class AiBuilder {
       }
    }
 
-   static Direction load_Direction(AiBuilder.Inner_StreamUtil cell) {
+   static Direction load_Direction(AiBuilder.CellSpec cell) {
       Direction var10000;
       switch ((String)cell.properties().getOrDefault("face", "wall")) {
          case "floor":
@@ -1270,23 +1270,23 @@ final class AiBuilder {
       return var10000;
    }
 
-   static boolean init_Z(AiBuilder.Inner_StreamUtil cell) {
+   static boolean init_Z(AiBuilder.CellSpec cell) {
       return "double".equalsIgnoreCase(cell.properties().get("type"))
          && BuiltInRegistries.BLOCK.getOptional(Identifier.parse(cell.block())).map(b -> b instanceof SlabBlock).orElse(false);
    }
 
-   static Boolean init_Boolean(AiBuilder.Inner_StreamUtil cell, Block target) {
+   static Boolean init_Boolean(AiBuilder.CellSpec cell, Block target) {
       if (init_Z(cell)) {
          return false;
       }
 
       String type = cell.properties().get("type");
-      if (type != null && !init_Z(cell) && init_TableIndex_TaskQue(target, "type") == AiBuilder.Inner_TaskQueue.CLICK_HEIGHT) {
+      if (type != null && !init_Z(cell) && init_TableIndex_TaskQue(target, "type") == AiBuilder.OrientationKind.CLICK_HEIGHT) {
          return type.equalsIgnoreCase("top");
       }
 
       String half = cell.properties().get("half");
-      return half != null && init_TableIndex_TaskQue(target, "half") == AiBuilder.Inner_TaskQueue.CLICK_HEIGHT ? half.equalsIgnoreCase("top") : null;
+      return half != null && init_TableIndex_TaskQue(target, "half") == AiBuilder.OrientationKind.CLICK_HEIGHT ? half.equalsIgnoreCase("top") : null;
    }
 
    static boolean init(Boolean requestedHigh, Direction face) {
@@ -1297,7 +1297,7 @@ final class AiBuilder {
       }
    }
 
-   static int init_I(AiBuilder.Inner_StreamUtil cell) {
+   static int init_I(AiBuilder.CellSpec cell) {
       if (!"upper".equals(cell.properties().get("half")) && !"head".equals(cell.properties().get("part"))) {
          Block block = BuiltInRegistries.BLOCK.getOptional(Identifier.parse(cell.block())).orElse(null);
          if (block != null) {
@@ -1443,14 +1443,14 @@ final class AiBuilder {
       }
    }
 
-   static boolean init_Z(AiBuilder.Inner_StreamUtil cell, BlockState live) {
+   static boolean init_Z(AiBuilder.CellSpec cell, BlockState live) {
       return live.getBlock() instanceof ChestBlock
          && live.getValue(ChestBlock.TYPE) == ChestType.SINGLE
          && cell.properties().containsKey("type")
          && !"single".equals(cell.properties().get("type"));
    }
 
-   static boolean load(AiBuilder.Inner_StreamUtil cell, BlockState live) {
+   static boolean load(AiBuilder.CellSpec cell, BlockState live) {
       if (!BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString().equals(cell.block())) {
          return false;
       }
@@ -1471,7 +1471,7 @@ final class AiBuilder {
       return differs;
    }
 
-   static boolean read(AiBuilder.Inner_StreamUtil cell, BlockState live) {
+   static boolean read(AiBuilder.CellSpec cell, BlockState live) {
       if (close(cell, live)) {
          return true;
       }
@@ -1492,7 +1492,7 @@ final class AiBuilder {
       return true;
    }
 
-   static boolean init_Z_TableIndex_StreamU_4(AiBuilder.Inner_StreamUtil wanted, BlockState live, boolean ownedScaffold) {
+   static boolean init_Z_TableIndex_StreamU_4(AiBuilder.CellSpec wanted, BlockState live, boolean ownedScaffold) {
       return !live.isAir() && (!ownedScaffold || wanted == null || read(wanted, live));
    }
 
@@ -1500,7 +1500,7 @@ final class AiBuilder {
       return recovery && !live.hasBlockEntity() && live.getFluidState().isEmpty() && (breach || columnBottom != null && y >= columnBottom);
    }
 
-   static boolean write(AiBuilder.Inner_StreamUtil cell, BlockState live) {
+   static boolean write(AiBuilder.CellSpec cell, BlockState live) {
       if (!BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString().equals(cell.block())) {
          return false;
       }
@@ -1525,7 +1525,7 @@ final class AiBuilder {
       return true;
    }
 
-   static boolean init_Z_TableIndex_StreamU_3(AiBuilder.Inner_StreamUtil cell, BlockState live, Map<String, List<String>> substitutes) {
+   static boolean init_Z_TableIndex_StreamU_3(AiBuilder.CellSpec cell, BlockState live, Map<String, List<String>> substitutes) {
       if (write(cell, live)) {
          return true;
       }
@@ -1551,12 +1551,12 @@ final class AiBuilder {
       }
    }
 
-   private static boolean close(AiBuilder.Inner_StreamUtil cell, BlockState live) {
+   private static boolean close(AiBuilder.CellSpec cell, BlockState live) {
       return (cell.block().equals("minecraft:dirt") && cell.properties().isEmpty() || cell.block().equals("minecraft:grass_block"))
          && (live.is(Blocks.DIRT) || live.is(Blocks.GRASS_BLOCK));
    }
 
-   static boolean update(AiBuilder.Inner_StreamUtil cell, BlockState live) {
+   static boolean update(AiBuilder.CellSpec cell, BlockState live) {
       if (close(cell, live)) {
          return true;
       }
@@ -1593,27 +1593,27 @@ final class AiBuilder {
       }
    }
 
-   static boolean sync(AiBuilder.Inner_StreamUtil cell, BlockState live) {
+   static boolean sync(AiBuilder.CellSpec cell, BlockState live) {
       return init_TableIndex_CachePo(cell, live).matches();
    }
 
-   static AiBuilder.Inner_CachePool init_TableIndex_CachePo(AiBuilder.Inner_StreamUtil cell, BlockState live) {
+   static AiBuilder.MatchResult init_TableIndex_CachePo(AiBuilder.CellSpec cell, BlockState live) {
       BlockState expected = init_BlockState(cell);
       if (cell.block().equals("minecraft:dirt") && cell.properties().isEmpty() && live.is(Blocks.GRASS_BLOCK)) {
-         return AiBuilder.Inner_CachePool.MATCH;
+         return AiBuilder.MatchResult.MATCH;
       }
 
       Fluid fluid = init_Fluid(cell);
       if (load_Z(cell)) {
          return live.getFluidState().getType().isSame(fluid) && !live.getFluidState().isSource()
-            ? AiBuilder.Inner_CachePool.MATCH
-            : new AiBuilder.Inner_CachePool(false, "fluid expected=flowing " + cell.block() + " actual=" + live.getFluidState());
+            ? AiBuilder.MatchResult.MATCH
+            : new AiBuilder.MatchResult(false, "fluid expected=flowing " + cell.block() + " actual=" + live.getFluidState());
       }
 
       if (fluid != null && "0".equals(cell.properties().getOrDefault("level", "0"))) {
          return live.getFluidState().getType().isSame(fluid) && live.getFluidState().isSource()
-            ? AiBuilder.Inner_CachePool.MATCH
-            : new AiBuilder.Inner_CachePool(false, "fluid expected=source " + cell.block() + " actual=" + live.getFluidState());
+            ? AiBuilder.MatchResult.MATCH
+            : new AiBuilder.MatchResult(false, "fluid expected=source " + cell.block() + " actual=" + live.getFluidState());
       }
 
       if ((!cell.block().equals("minecraft:torchflower_crop") || !live.is(Blocks.TORCHFLOWER))
@@ -1621,7 +1621,7 @@ final class AiBuilder {
          && (!cell.block().equals("minecraft:pumpkin_stem") || !live.is(Blocks.ATTACHED_PUMPKIN_STEM))) {
          if (live.getBlock() != expected.getBlock()) {
             String actual = BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString();
-            return new AiBuilder.Inner_CachePool(false, "block expected=" + cell.block() + " actual=" + actual);
+            return new AiBuilder.MatchResult(false, "block expected=" + cell.block() + " actual=" + actual);
          }
 
          for (Property<?> property : expected.getBlock().getStateDefinition().getProperties()) {
@@ -1632,22 +1632,22 @@ final class AiBuilder {
                String wanted = String.valueOf(expected.getValue(property));
                String actual = String.valueOf(live.getValue(property));
                if (!wanted.equals(actual)) {
-                  return new AiBuilder.Inner_CachePool(false, name + " expected=" + wanted + " actual=" + actual);
+                  return new AiBuilder.MatchResult(false, name + " expected=" + wanted + " actual=" + actual);
                }
             }
          }
 
-         return AiBuilder.Inner_CachePool.MATCH;
+         return AiBuilder.MatchResult.MATCH;
       } else {
-         return AiBuilder.Inner_CachePool.MATCH;
+         return AiBuilder.MatchResult.MATCH;
       }
    }
 
-   static boolean load_Z(AiBuilder.Inner_StreamUtil cell) {
+   static boolean load_Z(AiBuilder.CellSpec cell) {
       return init_Fluid(cell) != null && !"0".equals(cell.properties().getOrDefault("level", "0"));
    }
 
-   static Fluid init_Fluid(AiBuilder.Inner_StreamUtil cell) {
+   static Fluid init_Fluid(AiBuilder.CellSpec cell) {
       FlowingFluid var10000;
       switch (cell.block()) {
          case "minecraft:water":
@@ -1663,23 +1663,23 @@ final class AiBuilder {
       return var10000;
    }
 
-   static boolean read_Z(AiBuilder.Inner_StreamUtil cell) {
+   static boolean read_Z(AiBuilder.CellSpec cell) {
       return cell.block().equals("minecraft:piston_head") || cell.block().equals("minecraft:moving_piston");
    }
 
-   static boolean flush(AiBuilder.Inner_StreamUtil cell, BlockState live) {
-      if (init_TableIndex_TaskQue(live.getBlock(), "waterlogged") == AiBuilder.Inner_TaskQueue.FLUID_INTERACT
+   static boolean flush(AiBuilder.CellSpec cell, BlockState live) {
+      if (init_TableIndex_TaskQue(live.getBlock(), "waterlogged") == AiBuilder.OrientationKind.FLUID_INTERACT
          && cell.properties().containsKey("waterlogged")
          && !String.valueOf(live.getValue(BlockStateProperties.WATERLOGGED)).equals(cell.properties().get("waterlogged"))) {
          LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
          properties.remove("waterlogged");
-         return read(new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties), live);
+         return read(new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties), live);
       } else {
          return false;
       }
    }
 
-   private static boolean init(AiBuilder.Inner_StreamUtil cell, BlockState live, Map<String, List<String>> substitutes, boolean schematic) {
+   private static boolean init(AiBuilder.CellSpec cell, BlockState live, Map<String, List<String>> substitutes, boolean schematic) {
       return schematic && update(cell, live) || init_Z_TableIndex_StreamU_3(cell, live, substitutes);
    }
 
@@ -1687,36 +1687,36 @@ final class AiBuilder {
       return (long)(dx + 256) << 42 | (long)(dy + 256) << 21 | dz + 256;
    }
 
-   static List<AiBuilder.Inner_StreamUtil> init_List(AiBuilder.Inner_DataUtil blueprint) {
-      List<AiBuilder.Inner_StreamUtil> cells = blueprint.cells();
+   static List<AiBuilder.CellSpec> init_List(AiBuilder.Blueprint blueprint) {
+      List<AiBuilder.CellSpec> cells = blueprint.cells();
       Set<Long> present = new HashSet<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          present.add(init_J_I(cell.dx(), cell.dy(), cell.dz()));
       }
 
       Map<Long, Integer> depth = new HashMap<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          init_I_TableIndex_StreamU(cell, present, depth);
       }
 
-      List<AiBuilder.Inner_StreamUtil> ordered = new ArrayList<>(cells);
+      List<AiBuilder.CellSpec> ordered = new ArrayList<>(cells);
       ordered.sort(
-         Comparator.comparingInt(AiBuilder.Inner_StreamUtil::dy)
+         Comparator.comparingInt(AiBuilder.CellSpec::dy)
             .thenComparingInt(cellx -> depth.get(init_J_I(cellx.dx(), cellx.dy(), cellx.dz())))
             .thenComparingLong(cellx -> (long)cellx.dx() * cellx.dx() + (long)cellx.dy() * cellx.dy() + (long)cellx.dz() * cellx.dz())
-            .thenComparingInt(AiBuilder.Inner_StreamUtil::dx)
-            .thenComparingInt(AiBuilder.Inner_StreamUtil::dz)
-            .thenComparing(AiBuilder.Inner_StreamUtil::block)
+            .thenComparingInt(AiBuilder.CellSpec::dx)
+            .thenComparingInt(AiBuilder.CellSpec::dz)
+            .thenComparing(AiBuilder.CellSpec::block)
       );
       return ordered;
    }
 
-   static List<AiBuilder.Inner_StreamUtil> load_List(AiBuilder.Inner_DataUtil blueprint) {
-      ArrayList<AiBuilder.Inner_StreamUtil> ordered = new ArrayList<>(blueprint.cells());
+   static List<AiBuilder.CellSpec> load_List(AiBuilder.Blueprint blueprint) {
+      ArrayList<AiBuilder.CellSpec> ordered = new ArrayList<>(blueprint.cells());
       ordered.sort(
-         Comparator.comparingInt(AiBuilder.Inner_StreamUtil::dy)
+         Comparator.comparingInt(AiBuilder.CellSpec::dy)
             .thenComparingInt(
                cellx -> {
                   Block block = init_Block(cellx);
@@ -1731,9 +1731,9 @@ final class AiBuilder {
                   }
                }
             )
-            .thenComparingInt(AiBuilder.Inner_StreamUtil::dz)
+            .thenComparingInt(AiBuilder.CellSpec::dz)
             .thenComparingInt(cellx -> (cellx.dz() & 1) == 0 ? cellx.dx() : -cellx.dx())
-            .thenComparing(AiBuilder.Inner_StreamUtil::block)
+            .thenComparing(AiBuilder.CellSpec::block)
       );
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.level != null) {
@@ -1741,22 +1741,22 @@ final class AiBuilder {
       }
 
       ordered = new ArrayList<>(init_List(ordered));
-      HashMap<Long, AiBuilder.Inner_StreamUtil> crops = new HashMap<>();
+      HashMap<Long, AiBuilder.CellSpec> crops = new HashMap<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : ordered) {
+      for (AiBuilder.CellSpec cell : ordered) {
          if (init_Block(cell) instanceof CropBlock) {
             crops.put(init_J_I(cell.dx(), cell.dy(), cell.dz()), cell);
          }
       }
 
-      ArrayList<AiBuilder.Inner_StreamUtil> seeded = new ArrayList<>(ordered.size());
-      HashSet<AiBuilder.Inner_StreamUtil> moved = new HashSet<>();
+      ArrayList<AiBuilder.CellSpec> seeded = new ArrayList<>(ordered.size());
+      HashSet<AiBuilder.CellSpec> moved = new HashSet<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : ordered) {
+      for (AiBuilder.CellSpec cell : ordered) {
          if (!moved.contains(cell)) {
             seeded.add(cell);
             if (cell.block().equals("minecraft:farmland")) {
-               AiBuilder.Inner_StreamUtil crop = crops.get(init_J_I(cell.dx(), cell.dy() + 1, cell.dz()));
+               AiBuilder.CellSpec crop = crops.get(init_J_I(cell.dx(), cell.dy() + 1, cell.dz()));
                if (crop != null) {
                   seeded.add(crop);
                   moved.add(crop);
@@ -1768,7 +1768,7 @@ final class AiBuilder {
       return load(seeded);
    }
 
-   static List<AiBuilder.Inner_StreamUtil> init_List(List<AiBuilder.Inner_StreamUtil> ordered) {
+   static List<AiBuilder.CellSpec> init_List(List<AiBuilder.CellSpec> ordered) {
       int n = ordered.size();
       if (n < 2) {
          return ordered;
@@ -1778,17 +1778,17 @@ final class AiBuilder {
       int bottom = 2147483647;
 
       for (int i = 0; i < n; i++) {
-         AiBuilder.Inner_StreamUtil cell = ordered.get(i);
+         AiBuilder.CellSpec cell = ordered.get(i);
          index.put(init_J_I(cell.dx(), cell.dy(), cell.dz()), i);
          bottom = Math.min(bottom, cell.dy());
       }
 
       Direction[] looks = new Direction[n];
-      HashMap<AiBuilder.Inner_StreamUtil, Direction> looked = new HashMap<>();
+      HashMap<AiBuilder.CellSpec, Direction> looked = new HashMap<>();
 
       for (int i = 0; i < n; i++) {
-         AiBuilder.Inner_StreamUtil cell = ordered.get(i);
-         looks[i] = looked.computeIfAbsent(new AiBuilder.Inner_StreamUtil(0, 0, 0, cell.block(), cell.properties()), AiBuilder::read_Direction);
+         AiBuilder.CellSpec cell = ordered.get(i);
+         looks[i] = looked.computeIfAbsent(new AiBuilder.CellSpec(0, 0, 0, cell.block(), cell.properties()), AiBuilder::read_Direction);
       }
 
       double[] key = new double[n];
@@ -1806,7 +1806,7 @@ final class AiBuilder {
          for (int i = 0; i < n; i++) {
             Direction look = looks[i];
             if (look != null) {
-               AiBuilder.Inner_StreamUtil part = ordered.get(i);
+               AiBuilder.CellSpec part = ordered.get(i);
                Integer blocker = index.get(init_J_I(part.dx() - look.getStepX(), part.dy(), part.dz() - look.getStepZ()));
                if (blocker != null
                   && !moved[blocker]
@@ -1848,7 +1848,7 @@ final class AiBuilder {
       }
 
       Arrays.sort(order, Comparator.comparingDouble(ix -> key[ix]));
-      ArrayList<AiBuilder.Inner_StreamUtil> out = new ArrayList<>(n);
+      ArrayList<AiBuilder.CellSpec> out = new ArrayList<>(n);
 
       for (Integer i : order) {
          out.add(ordered.get(i));
@@ -1857,11 +1857,11 @@ final class AiBuilder {
       return out;
    }
 
-   static Direction read_Direction(AiBuilder.Inner_StreamUtil cell) {
+   static Direction read_Direction(AiBuilder.CellSpec cell) {
       Block block = init_Block(cell);
       if (block != Blocks.AIR && init_Fluid(cell) == null) {
          try {
-            autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint = init(cell, block, BlockPos.ZERO, EmptyBlockGetter.INSTANCE);
+            autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = init(cell, block, BlockPos.ZERO, EmptyBlockGetter.INSTANCE);
             Direction look = constraint.playerFacing();
             return look != null && look.getAxis().isHorizontal() ? look : null;
          } catch (RuntimeException e) {
@@ -1872,20 +1872,20 @@ final class AiBuilder {
       }
    }
 
-   static List<AiBuilder.Inner_StreamUtil> load(List<AiBuilder.Inner_StreamUtil> ordered) {
+   static List<AiBuilder.CellSpec> load(List<AiBuilder.CellSpec> ordered) {
       HashMap<Long, Integer> index = new HashMap<>();
 
       for (int i = 0; i < ordered.size(); i++) {
-         AiBuilder.Inner_StreamUtil cell = ordered.get(i);
+         AiBuilder.CellSpec cell = ordered.get(i);
          index.put(init_J_I(cell.dx(), cell.dy(), cell.dz()), i);
       }
 
-      HashMap<Integer, List<AiBuilder.Inner_StreamUtil>> after = new HashMap<>();
+      HashMap<Integer, List<AiBuilder.CellSpec>> after = new HashMap<>();
       HashSet<Integer> water = new HashSet<>();
       int[][] sides = new int[][]{{0, -1, 0}, {1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1}};
 
       for (int i = 0; i < ordered.size(); i++) {
-         AiBuilder.Inner_StreamUtil cell = ordered.get(i);
+         AiBuilder.CellSpec cell = ordered.get(i);
          if (init_Fluid(cell) != null) {
             int last = -1;
 
@@ -1909,7 +1909,7 @@ final class AiBuilder {
          return ordered;
       }
 
-      ArrayList<AiBuilder.Inner_StreamUtil> out = new ArrayList<>(ordered.size());
+      ArrayList<AiBuilder.CellSpec> out = new ArrayList<>(ordered.size());
       out.addAll(after.getOrDefault(-1, List.of()));
 
       for (int i = 0; i < ordered.size(); i++) {
@@ -1924,8 +1924,8 @@ final class AiBuilder {
       return out;
    }
 
-   static List<AiBuilder.Inner_StreamUtil> init_List_TableIndex_DataUti(
-      AiBuilder.Inner_DataUtil blueprint, List<AiBuilder.Inner_StreamUtil> ordered, Predicate<BlockPos> observedSupport
+   static List<AiBuilder.CellSpec> init_List_TableIndex_DataUti(
+      AiBuilder.Blueprint blueprint, List<AiBuilder.CellSpec> ordered, Predicate<BlockPos> observedSupport
    ) {
       Map<Long, Integer> index = new HashMap<>();
       BlockPos[] positions = new BlockPos[ordered.size()];
@@ -1935,7 +1935,7 @@ final class AiBuilder {
       PriorityQueue<Integer> ready = new PriorityQueue<>();
 
       for (int i = 0; i < ordered.size(); i++) {
-         AiBuilder.Inner_StreamUtil cell = ordered.get(i);
+         AiBuilder.CellSpec cell = ordered.get(i);
          Block block = init_Block(cell);
          positions[i] = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
          index.put(positions[i].asLong(), i);
@@ -1967,7 +1967,7 @@ final class AiBuilder {
          }
       }
 
-      ArrayList<AiBuilder.Inner_StreamUtil> frontier = new ArrayList<>(ordered.size());
+      ArrayList<AiBuilder.CellSpec> frontier = new ArrayList<>(ordered.size());
 
       while (!ready.isEmpty()) {
          int i = ready.remove();
@@ -1995,7 +1995,7 @@ final class AiBuilder {
       return frontier;
    }
 
-   static boolean init_Z_TableIndex_StreamU_2(AiBuilder.Inner_StreamUtil cell, Block block, Direction supportDirection) {
+   static boolean init_Z_TableIndex_StreamU_2(AiBuilder.CellSpec cell, Block block, Direction supportDirection) {
       if (block instanceof ShulkerBoxBlock && cell.properties().containsKey("facing")) {
          Direction facing = Direction.byName(cell.properties().get("facing"));
          return facing != null && supportDirection == facing.getOpposite();
@@ -2040,7 +2040,7 @@ final class AiBuilder {
       }
    }
 
-   private static int init_I_TableIndex_StreamU(AiBuilder.Inner_StreamUtil cell, Set<Long> present, Map<Long, Integer> memo) {
+   private static int init_I_TableIndex_StreamU(AiBuilder.CellSpec cell, Set<Long> present, Map<Long, Integer> memo) {
       List<Long> chain = new ArrayList<>();
       int x = cell.dx();
       int y = cell.dy();
@@ -2071,15 +2071,15 @@ final class AiBuilder {
       return memo.get(init_J_I(cell.dx(), cell.dy(), cell.dz()));
    }
 
-   static JsonObject init(AiBuilder.Inner_DataUtil blueprint, Inventory inventory) {
+   static JsonObject init(AiBuilder.Blueprint blueprint, Inventory inventory) {
       return init_JsonObject_TableIndex_DataUti(blueprint, inventory, Map.of());
    }
 
-   static JsonObject init_JsonObject_TableIndex_DataUti(AiBuilder.Inner_DataUtil blueprint, Inventory inventory, Map<String, List<String>> substitutes) {
+   static JsonObject init_JsonObject_TableIndex_DataUti(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes) {
       return init(blueprint, inventory, substitutes, false);
    }
 
-   static JsonObject init(AiBuilder.Inner_DataUtil blueprint, Inventory inventory, Map<String, List<String>> substitutes, boolean schematic) {
+   static JsonObject init(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes, boolean schematic) {
       Map<Item, Integer> available = new HashMap<>();
 
       for (int i = 0; i < inventory.getContainerSize(); i++) {
@@ -2092,7 +2092,7 @@ final class AiBuilder {
       Map<String, Integer> required = new TreeMap<>();
       Map<String, List<Item>> pooled = new TreeMap<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          Block block = BuiltInRegistries.BLOCK
             .getOptional(Identifier.parse(cell.block()))
             .orElseThrow(() -> new IllegalArgumentException("Unknown block id: " + cell.block()));
@@ -2139,13 +2139,13 @@ final class AiBuilder {
       );
    }
 
-   static AiOperation init_AiOperation(AiBuilder.Inner_DataUtil blueprint) {
+   static AiOperation init_AiOperation(AiBuilder.Blueprint blueprint) {
       int reportLimit = 16;
       AiSchematicReadiness.Inner_TaskQueue audit = AiSchematicReadiness.init(blueprint, reportLimit);
       return init(blueprint, audit);
    }
 
-   static AiOperation init(AiBuilder.Inner_DataUtil blueprint, AiSchematicReadiness.Inner_TaskQueue audit) {
+   static AiOperation init(AiBuilder.Blueprint blueprint, AiSchematicReadiness.Inner_TaskQueue audit) {
       if (audit.ready()) {
          return null;
       }
@@ -2154,7 +2154,7 @@ final class AiBuilder {
       JsonArray reported = new JsonArray();
 
       for (AiSchematicReadiness.Inner_StreamUtil issue : issues) {
-         AiBuilder.Inner_StreamUtil cell = issue.cell();
+         AiBuilder.CellSpec cell = issue.cell();
          JsonObject properties = new JsonObject();
          cell.properties().forEach(properties::addProperty);
          reported.add(
@@ -2178,7 +2178,7 @@ final class AiBuilder {
       }
 
       AiSchematicReadiness.Inner_StreamUtil first = issues.getFirst();
-      AiBuilder.Inner_StreamUtil cell = first.cell();
+      AiBuilder.CellSpec cell = first.cell();
       boolean contextOnly = audit.issues().stream().allMatch(issue -> issue.kind() == AiSchematicReadiness.Inner_CachePool.MISSING_CONTEXT);
       String message = (contextOnly ? "Cannot build here: " : "Cannot build this schematic as saved: ")
          + "schematic readiness audit found "
@@ -2220,11 +2220,11 @@ final class AiBuilder {
       );
    }
 
-   static JsonObject load(AiBuilder.Inner_DataUtil blueprint, Inventory inventory, Map<String, List<String>> substitutes) {
+   static JsonObject load(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes) {
       ArrayList<AiCellMaterials.Inner_CachePool> plans = new ArrayList<>();
       Map<String, Set<String>> alternatives = new TreeMap<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          List<AiCellMaterials.Inner_CachePool> cellPlans = AiSchematicActions.load_List(cell);
          plans.addAll(cellPlans);
          init(cell, cellPlans, substitutes, alternatives);
@@ -2233,14 +2233,14 @@ final class AiBuilder {
       return init_JsonObject_Iterable_3(plans, inventory, alternatives);
    }
 
-   static JsonObject init(AiBuilder.Inner_DataUtil blueprint, Inventory inventory, Map<String, List<String>> substitutes, LevelReader world) {
-      ArrayList<AiBuilder.Inner_StreamUtil> auditCells = new ArrayList<>(blueprint.cells().size());
+   static JsonObject init(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes, LevelReader world) {
+      ArrayList<AiBuilder.CellSpec> auditCells = new ArrayList<>(blueprint.cells().size());
       Map<String, Set<String>> alternatives = new TreeMap<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          BlockPos target = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
          BlockState live = world.getBlockState(target);
-         AiBuilder.Inner_StreamUtil planned = init_Z_TableIndex_StreamU_3(cell, live, substitutes) && !update(cell, live)
+         AiBuilder.CellSpec planned = init_Z_TableIndex_StreamU_3(cell, live, substitutes) && !update(cell, live)
             ? init_TableIndex_StreamU(cell, live)
             : cell;
          auditCells.add(planned);
@@ -2254,14 +2254,14 @@ final class AiBuilder {
       return init_JsonObject_Iterable_3(plans, inventory, alternatives);
    }
 
-   private static AiBuilder.Inner_StreamUtil init_TableIndex_StreamU(AiBuilder.Inner_StreamUtil cell, BlockState live) {
+   private static AiBuilder.CellSpec init_TableIndex_StreamU(AiBuilder.CellSpec cell, BlockState live) {
       Map<String, String> properties = new LinkedHashMap<>();
       live.getValues().forEach(value -> properties.put(value.property().getName(), value.valueName()));
-      return new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString(), properties);
+      return new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString(), properties);
    }
 
    private static void init(
-      AiBuilder.Inner_StreamUtil cell,
+      AiBuilder.CellSpec cell,
       Iterable<AiCellMaterials.Inner_CachePool> plans,
       Map<String, List<String>> substitutes,
       Map<String, Set<String>> alternatives
@@ -2330,7 +2330,7 @@ final class AiBuilder {
          stockNodes.put(candidate, stockBase + stockIndex++);
       }
 
-      AiBuilder.Inner_BufferHelper flow = new AiBuilder.Inner_BufferHelper(sink + 1);
+      AiBuilder.FlowGraph flow = new AiBuilder.FlowGraph(sink + 1);
       int[] sourceEdges = new int[required.size()];
       int requirementIndex = 0;
 
@@ -2365,23 +2365,23 @@ final class AiBuilder {
       return missing;
    }
 
-   private static Block init_Block(AiBuilder.Inner_StreamUtil cell) {
+   private static Block init_Block(AiBuilder.CellSpec cell) {
       return BuiltInRegistries.BLOCK
          .getOptional(Identifier.parse(cell.block()))
          .orElseThrow(() -> new IllegalArgumentException("Unknown block id: " + cell.block()));
    }
 
-   static AiBuilder.Inner_StreamUtil init_TableIndex_StreamU(AiBuilder.Inner_StreamUtil cell) {
+   static AiBuilder.CellSpec init_TableIndex_StreamU(AiBuilder.CellSpec cell) {
       if (cell.block().endsWith("_leaves") && "false".equals(cell.properties().get("persistent"))) {
          LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
          properties.put("persistent", "true");
-         return new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties);
+         return new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties);
       } else {
          return cell;
       }
    }
 
-   static BlockState init_BlockState(AiBuilder.Inner_StreamUtil cell) {
+   static BlockState init_BlockState(AiBuilder.CellSpec cell) {
       BlockState state = init_Block(cell).defaultBlockState();
 
       for (Entry<String, String> entry : cell.properties().entrySet()) {
@@ -2398,70 +2398,70 @@ final class AiBuilder {
       return state.setValue(property, property.getValue(value).orElseThrow());
    }
 
-   static boolean init(AiBuilder.Inner_StreamUtil cell, BlockPos pos, AABB body, BlockGetter world) {
+   static boolean init(AiBuilder.CellSpec cell, BlockPos pos, AABB body, BlockGetter world) {
       return Shapes.joinIsNotEmpty(
          init_BlockState(cell).getCollisionShape(world, pos).move(pos.getX(), pos.getY(), pos.getZ()), Shapes.create(body), BooleanOp.AND
       );
    }
 
-   static AiBuilder.Inner_DataUtil init_TableIndex_DataUti(AiBuilder.Inner_DataUtil blueprint) {
+   static AiBuilder.Blueprint init_TableIndex_DataUti(AiBuilder.Blueprint blueprint) {
       Minecraft mc = Minecraft.getInstance();
       ClientLevel world = mc == null ? null : mc.level;
       return init(blueprint, pos -> world != null && AiTerrain.init(world, pos) ? world.getBlockState(pos) : Blocks.AIR.defaultBlockState());
    }
 
-   static AiBuilder.Inner_DataUtil init(AiBuilder.Inner_DataUtil blueprint, Map<Long, BlockState> leafSnapshot) {
+   static AiBuilder.Blueprint init(AiBuilder.Blueprint blueprint, Map<Long, BlockState> leafSnapshot) {
       return init(blueprint, pos -> leafSnapshot.getOrDefault(pos.asLong(), Blocks.AIR.defaultBlockState()));
    }
 
-   private static AiBuilder.Inner_DataUtil init(AiBuilder.Inner_DataUtil blueprint, Function<BlockPos, BlockState> externalState) {
-      HashMap<Long, AiBuilder.Inner_StreamUtil> source = new HashMap<>();
+   private static AiBuilder.Blueprint init(AiBuilder.Blueprint blueprint, Function<BlockPos, BlockState> externalState) {
+      HashMap<Long, AiBuilder.CellSpec> source = new HashMap<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          init();
          if (!update(cell) && !read_Z(cell)) {
             source.put(init_J_I(cell.dx(), cell.dy(), cell.dz()), cell);
          }
       }
 
-      Map<AiBuilder.Inner_StreamUtil, Integer> leafDistances = init_Map_List(
+      Map<AiBuilder.CellSpec, Integer> leafDistances = init_Map_List(
          blueprint.cells(),
          cellx -> LeavesBlock.getOptionalDistanceAt(init_BlockState(cellx)).orElse(7) == 0,
          cellx -> init(source, blueprint.origin(), cellx, externalState)
       );
-      ArrayList<AiBuilder.Inner_StreamUtil> cells = new ArrayList<>(blueprint.cells().size());
+      ArrayList<AiBuilder.CellSpec> cells = new ArrayList<>(blueprint.cells().size());
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          init();
          if (!update(cell) && !read_Z(cell)) {
-            AiBuilder.Inner_StreamUtil adjusted = init_TableIndex_StreamU(cell);
+            AiBuilder.CellSpec adjusted = init_TableIndex_StreamU(cell);
             if (cell.block().equals("minecraft:attached_melon_stem") || cell.block().equals("minecraft:attached_pumpkin_stem")) {
                LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
                properties.remove("facing");
-               adjusted = new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), cell.block().replace("attached_", ""), properties);
+               adjusted = new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block().replace("attached_", ""), properties);
             }
 
             Block plant = init_Block(adjusted);
             if (flush(plant)) {
                LinkedHashMap<String, String> properties = new LinkedHashMap<>(adjusted.properties());
                properties.remove("age");
-               adjusted = new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), adjusted.block(), properties);
+               adjusted = new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), adjusted.block(), properties);
             }
 
             Integer distance = leafDistances.get(cell);
             if (distance != null) {
                LinkedHashMap<String, String> properties = new LinkedHashMap<>(adjusted.properties());
                properties.put("distance", Integer.toString(distance));
-               adjusted = new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties);
+               adjusted = new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties);
             }
 
-            AiBuilder.Inner_StreamUtil above = source.get(init_J_I(cell.dx(), cell.dy() + 1, cell.dz()));
+            AiBuilder.CellSpec above = source.get(init_J_I(cell.dx(), cell.dy() + 1, cell.dz()));
             if (cell.block().equals("minecraft:grass_block")) {
-               adjusted = new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), "minecraft:dirt");
+               adjusted = new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), "minecraft:dirt");
             }
 
             if (cell.block().equals("minecraft:seagrass") || cell.block().equals("minecraft:tall_seagrass") || cell.block().equals("minecraft:bubble_column")) {
-               adjusted = new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), "minecraft:water", Map.of("level", "0"));
+               adjusted = new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), "minecraft:water", Map.of("level", "0"));
             }
 
             if (cell.block().equals("minecraft:farmland") || cell.block().equals("minecraft:dirt_path")) {
@@ -2471,7 +2471,7 @@ final class AiBuilder {
                   for (int dx = -4; dx <= 4 && !water; dx++) {
                      for (int dz = -4; dz <= 4 && !water; dz++) {
                         for (int dy = 0; dy <= 1 && !water; dy++) {
-                           AiBuilder.Inner_StreamUtil neighbour = source.get(init_J_I(cell.dx() + dx, cell.dy() + dy, cell.dz() + dz));
+                           AiBuilder.CellSpec neighbour = source.get(init_J_I(cell.dx() + dx, cell.dy() + dy, cell.dz() + dz));
                            water = neighbour != null && init_BlockState(neighbour).getFluidState().is(FluidTags.WATER);
                         }
                      }
@@ -2485,13 +2485,13 @@ final class AiBuilder {
          }
       }
 
-      return new AiBuilder.Inner_DataUtil(blueprint.origin(), List.copyOf(cells));
+      return new AiBuilder.Blueprint(blueprint.origin(), List.copyOf(cells));
    }
 
-   static List<BlockPos> read(AiBuilder.Inner_DataUtil blueprint) {
+   static List<BlockPos> read(AiBuilder.Blueprint blueprint) {
       HashSet<Long> source = new HashSet<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          init();
          if (!update(cell) && !read_Z(cell)) {
             source.add(init_J_I(cell.dx(), cell.dy(), cell.dz()));
@@ -2500,7 +2500,7 @@ final class AiBuilder {
 
       LinkedHashSet<BlockPos> neighbors = new LinkedHashSet<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          init();
          if (init_Block(cell) instanceof LeavesBlock) {
             for (Direction direction : Direction.values()) {
@@ -2523,7 +2523,7 @@ final class AiBuilder {
       }
    }
 
-   static boolean write(AiBuilder.Inner_StreamUtil cell) {
+   static boolean write(AiBuilder.CellSpec cell) {
       return init_Set.contains(cell.block());
    }
 
@@ -2536,19 +2536,19 @@ final class AiBuilder {
          || plant instanceof SweetBerryBushBlock;
    }
 
-   static boolean update(AiBuilder.Inner_StreamUtil cell) {
+   static boolean update(AiBuilder.CellSpec cell) {
       return write(cell) || cell.block().equals("minecraft:pitcher_crop") && "upper".equals(cell.properties().get("half"));
    }
 
-   static Map<AiBuilder.Inner_StreamUtil, Integer> init_Map_List(
-      List<AiBuilder.Inner_StreamUtil> cells, Predicate<AiBuilder.Inner_StreamUtil> log, ToIntFunction<AiBuilder.Inner_StreamUtil> surrounding
+   static Map<AiBuilder.CellSpec, Integer> init_Map_List(
+      List<AiBuilder.CellSpec> cells, Predicate<AiBuilder.CellSpec> log, ToIntFunction<AiBuilder.CellSpec> surrounding
    ) {
-      HashMap<Long, AiBuilder.Inner_StreamUtil> source = new HashMap<>();
-      HashMap<Long, AiBuilder.Inner_StreamUtil> leaves = new HashMap<>();
-      HashMap<AiBuilder.Inner_StreamUtil, Integer> distances = new HashMap<>();
-      ArrayDeque<AiBuilder.Inner_StreamUtil> queue = new ArrayDeque<>();
+      HashMap<Long, AiBuilder.CellSpec> source = new HashMap<>();
+      HashMap<Long, AiBuilder.CellSpec> leaves = new HashMap<>();
+      HashMap<AiBuilder.CellSpec, Integer> distances = new HashMap<>();
+      ArrayDeque<AiBuilder.CellSpec> queue = new ArrayDeque<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          init();
          source.put(init_J_I(cell.dx(), cell.dy(), cell.dz()), cell);
          if (init_Block(cell) instanceof LeavesBlock) {
@@ -2556,12 +2556,12 @@ final class AiBuilder {
          }
       }
 
-      for (AiBuilder.Inner_StreamUtil cell : leaves.values()) {
+      for (AiBuilder.CellSpec cell : leaves.values()) {
          init();
          int distance = Math.clamp(surrounding.applyAsInt(cell), 1, 7);
 
          for (Direction direction : Direction.values()) {
-            AiBuilder.Inner_StreamUtil neighbor = source.get(
+            AiBuilder.CellSpec neighbor = source.get(
                init_J_I(cell.dx() + direction.getStepX(), cell.dy() + direction.getStepY(), cell.dz() + direction.getStepZ())
             );
             if (neighbor != null && log.test(neighbor)) {
@@ -2578,11 +2578,11 @@ final class AiBuilder {
 
       while (!queue.isEmpty()) {
          init();
-         AiBuilder.Inner_StreamUtil cell = queue.removeFirst();
+         AiBuilder.CellSpec cell = queue.removeFirst();
          int next = distances.get(cell) + 1;
          if (next < 7) {
             for (Direction direction : Direction.values()) {
-               AiBuilder.Inner_StreamUtil neighbor = leaves.get(
+               AiBuilder.CellSpec neighbor = leaves.get(
                   init_J_I(cell.dx() + direction.getStepX(), cell.dy() + direction.getStepY(), cell.dz() + direction.getStepZ())
                );
                if (neighbor != null && next < distances.get(neighbor)) {
@@ -2597,7 +2597,7 @@ final class AiBuilder {
    }
 
    private static int init(
-      Map<Long, AiBuilder.Inner_StreamUtil> source, BlockPos origin, AiBuilder.Inner_StreamUtil cell, Function<BlockPos, BlockState> externalState
+      Map<Long, AiBuilder.CellSpec> source, BlockPos origin, AiBuilder.CellSpec cell, Function<BlockPos, BlockState> externalState
    ) {
       int distance = 7;
 
@@ -2615,32 +2615,32 @@ final class AiBuilder {
       return distance;
    }
 
-   static AiBuilder.Inner_StreamUtil init(
-      AiBuilder.Inner_StreamUtil cell, boolean solidAbove, boolean maintainsFarmland, boolean fenceGateAbove, boolean nearWater
+   static AiBuilder.CellSpec init(
+      AiBuilder.CellSpec cell, boolean solidAbove, boolean maintainsFarmland, boolean fenceGateAbove, boolean nearWater
    ) {
       if (cell.block().equals("minecraft:dirt_path")) {
-         return solidAbove && !fenceGateAbove ? new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), "minecraft:dirt") : cell;
+         return solidAbove && !fenceGateAbove ? new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), "minecraft:dirt") : cell;
       } else if (!cell.block().equals("minecraft:farmland")) {
          return cell;
       } else if ((!solidAbove || maintainsFarmland) && (nearWater || maintainsFarmland)) {
          LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
          properties.put("moisture", nearWater ? "7" : "0");
-         return new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties);
+         return new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties);
       } else {
-         return new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), "minecraft:dirt");
+         return new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), "minecraft:dirt");
       }
    }
 
    static AiOperation init_AiOperation(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && mc.player.isAlive()) {
-         AiBuilder.Inner_ConfigStore power = init_TableIndex_ConfigS(args);
+         AiBuilder.BuildOptions power = init_TableIndex_ConfigS(args);
          if (!AutismLiteVariant.enabled() && args.has("schematic") && !args.get("schematic").isJsonNull()) {
             return new AiPrintPreparation(args, power);
          }
 
          AiSchematic.Inner_BufferHelper decodedSchematic = null;
-         AiBuilder.Inner_DataUtil blueprint;
+         AiBuilder.Blueprint blueprint;
          if (args.has("schematic") && !args.get("schematic").isJsonNull()) {
             if (args.has("blocks") || args.has("blueprint")) {
                throw new IllegalArgumentException("schematic is mutually exclusive with blocks/blueprint; pass one source");
@@ -2668,7 +2668,7 @@ final class AiBuilder {
          } else {
             blueprint = init(args, mc.player.blockPosition());
             if (power.rotation() != 0 || !power.mirror().equals("none")) {
-               blueprint = new AiBuilder.Inner_DataUtil(blueprint.origin(), init_List_List_2(blueprint.cells(), power.rotation(), power.mirror()));
+               blueprint = new AiBuilder.Blueprint(blueprint.origin(), init_List_List_2(blueprint.cells(), power.rotation(), power.mirror()));
             }
          }
 
@@ -2699,7 +2699,7 @@ final class AiBuilder {
                );
          }
 
-         AiBuilder.Inner_DataUtil stockPlan = schematic ? load_TableIndex_DataUti(blueprint) : blueprint;
+         AiBuilder.Blueprint stockPlan = schematic ? load_TableIndex_DataUti(blueprint) : blueprint;
          boolean creativeSupply = schematic && mc.gameMode != null && mc.gameMode.getPlayerMode() == GameType.CREATIVE && mc.player.getAbilities().instabuild;
          JsonObject missing = creativeSupply
             ? new JsonObject()
@@ -2736,14 +2736,14 @@ final class AiBuilder {
          boolean verify = AiJson.init_Z_JsonObject(args, "verify", true);
          int timeoutSeconds = AiJson.init_I_JsonObject(args, "timeoutSeconds", 600);
          return power.repeat() != null
-            ? new AiBuilder.Inner_JsonUtil(blueprint, power, verify, timeoutSeconds)
+            ? new AiBuilder.BuildOp(blueprint, power, verify, timeoutSeconds)
             : init(blueprint, verify, timeoutSeconds, power, schematic);
       } else {
          throw new IllegalArgumentException("Building requires a connected living player");
       }
    }
 
-   private static boolean init_Z(AiBuilder.Inner_DataUtil blueprint) {
+   private static boolean init_Z(AiBuilder.Blueprint blueprint) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          BlockPos center = mc.player.blockPosition();
@@ -2753,7 +2753,7 @@ final class AiBuilder {
          int maxX = -2147483648;
          int maxZ = -2147483648;
 
-         for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+         for (AiBuilder.CellSpec cell : blueprint.cells()) {
             BlockPos at = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
             source.add(at.asLong());
             minX = Math.min(minX, at.getX());
@@ -2783,42 +2783,42 @@ final class AiBuilder {
       }
    }
 
-   static AiBuilder.Inner_DataUtil init_TableIndex_DataUti_TableIndex_DataUti_2(
-      AiBuilder.Inner_DataUtil blueprint, Map<String, List<String>> substitutes, Function<BlockPos, BlockState> state
+   static AiBuilder.Blueprint init_TableIndex_DataUti_TableIndex_DataUti_2(
+      AiBuilder.Blueprint blueprint, Map<String, List<String>> substitutes, Function<BlockPos, BlockState> state
    ) {
-      ArrayList<AiBuilder.Inner_StreamUtil> remaining = new ArrayList<>();
+      ArrayList<AiBuilder.CellSpec> remaining = new ArrayList<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          BlockState live = state.apply(blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()));
          if (!init(cell, live, substitutes, true) && !flush(cell, live)) {
             if (init_Z(cell) && live.getBlock() == init_Block(cell)) {
                LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
                properties.put("type", "bottom");
-               remaining.add(new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties));
+               remaining.add(new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties));
             } else {
                remaining.add(cell);
             }
          }
       }
 
-      return new AiBuilder.Inner_DataUtil(blueprint.origin(), List.copyOf(remaining));
+      return new AiBuilder.Blueprint(blueprint.origin(), List.copyOf(remaining));
    }
 
-   static AiBuilder.Inner_DataUtil load_TableIndex_DataUti(AiBuilder.Inner_DataUtil blueprint) {
-      ArrayList<AiBuilder.Inner_StreamUtil> cells = new ArrayList<>(blueprint.cells().size());
+   static AiBuilder.Blueprint load_TableIndex_DataUti(AiBuilder.Blueprint blueprint) {
+      ArrayList<AiBuilder.CellSpec> cells = new ArrayList<>(blueprint.cells().size());
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          init();
          if (cell.block().equals("minecraft:lever") && "true".equals(cell.properties().get("powered"))) {
             LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
             properties.remove("powered");
-            cells.add(new AiBuilder.Inner_StreamUtil(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties));
+            cells.add(new AiBuilder.CellSpec(cell.dx(), cell.dy(), cell.dz(), cell.block(), properties));
          } else {
             cells.add(cell);
          }
       }
 
-      return new AiBuilder.Inner_DataUtil(blueprint.origin(), List.copyOf(cells));
+      return new AiBuilder.Blueprint(blueprint.origin(), List.copyOf(cells));
    }
 
    private static AiOperation init(final JsonObject args, final JsonObject missing) {
@@ -2908,25 +2908,25 @@ final class AiBuilder {
       };
    }
 
-   static AiOperation init_AiOperation_TableIndex_DataUti(AiBuilder.Inner_DataUtil blueprint, boolean verify, int timeoutSeconds) {
-      return init(blueprint, verify, timeoutSeconds, AiBuilder.Inner_ConfigStore.DEFAULT);
+   static AiOperation init_AiOperation_TableIndex_DataUti(AiBuilder.Blueprint blueprint, boolean verify, int timeoutSeconds) {
+      return init(blueprint, verify, timeoutSeconds, AiBuilder.BuildOptions.DEFAULT);
    }
 
-   static AiOperation init(AiBuilder.Inner_DataUtil blueprint, boolean verify, int timeoutSeconds, AiBuilder.Inner_ConfigStore power) {
+   static AiOperation init(AiBuilder.Blueprint blueprint, boolean verify, int timeoutSeconds, AiBuilder.BuildOptions power) {
       return init(blueprint, verify, timeoutSeconds, power, false);
    }
 
    private static AiOperation init(
-      AiBuilder.Inner_DataUtil blueprint, boolean verify, int timeoutSeconds, AiBuilder.Inner_ConfigStore power, boolean schematic
+      AiBuilder.Blueprint blueprint, boolean verify, int timeoutSeconds, AiBuilder.BuildOptions power, boolean schematic
    ) {
       return init(blueprint, verify, timeoutSeconds, power, schematic, Set.of());
    }
 
-   static List<AiBuilder.Inner_StreamUtil> read(List<AiBuilder.Inner_StreamUtil> order) {
-      ArrayList<AiBuilder.Inner_StreamUtil> plain = new ArrayList<>();
-      ArrayList<AiBuilder.Inner_StreamUtil> mechanisms = new ArrayList<>();
+   static List<AiBuilder.CellSpec> read(List<AiBuilder.CellSpec> order) {
+      ArrayList<AiBuilder.CellSpec> plain = new ArrayList<>();
+      ArrayList<AiBuilder.CellSpec> mechanisms = new ArrayList<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : order) {
+      for (AiBuilder.CellSpec cell : order) {
          (load(cell.block()) ? mechanisms : plain).add(cell);
       }
 
@@ -2966,29 +2966,29 @@ final class AiBuilder {
       return var10000;
    }
 
-   static AiOperation init(AiBuilder.Inner_DataUtil blueprint, Set<Long> protectedCells) {
-      return init(blueprint, true, 60, AiBuilder.Inner_ConfigStore.DEFAULT, true, protectedCells, false);
+   static AiOperation init(AiBuilder.Blueprint blueprint, Set<Long> protectedCells) {
+      return init(blueprint, true, 60, AiBuilder.BuildOptions.DEFAULT, true, protectedCells, false);
    }
 
-   static AiOperation init(AiBuilder.Inner_DataUtil blueprint, int timeoutSeconds) {
-      return init(blueprint, true, timeoutSeconds, AiBuilder.Inner_ConfigStore.DEFAULT, true);
+   static AiOperation init(AiBuilder.Blueprint blueprint, int timeoutSeconds) {
+      return init(blueprint, true, timeoutSeconds, AiBuilder.BuildOptions.DEFAULT, true);
    }
 
-   static AiOperation load(AiBuilder.Inner_DataUtil blueprint, Set<Long> protectedCells) {
-      return init(blueprint, true, 60, AiBuilder.Inner_ConfigStore.DEFAULT, true, protectedCells, false, true);
+   static AiOperation load(AiBuilder.Blueprint blueprint, Set<Long> protectedCells) {
+      return init(blueprint, true, 60, AiBuilder.BuildOptions.DEFAULT, true, protectedCells, false, true);
    }
 
    private static AiOperation init(
-      AiBuilder.Inner_DataUtil blueprint, boolean verify, int timeoutSeconds, AiBuilder.Inner_ConfigStore power, boolean schematic, Set<Long> protectedCells
+      AiBuilder.Blueprint blueprint, boolean verify, int timeoutSeconds, AiBuilder.BuildOptions power, boolean schematic, Set<Long> protectedCells
    ) {
       return init(blueprint, verify, timeoutSeconds, power, schematic, protectedCells, schematic);
    }
 
    private static AiOperation init(
-      AiBuilder.Inner_DataUtil blueprint,
+      AiBuilder.Blueprint blueprint,
       boolean verify,
       int timeoutSeconds,
-      AiBuilder.Inner_ConfigStore power,
+      AiBuilder.BuildOptions power,
       boolean schematic,
       Set<Long> protectedCells,
       boolean scaffoldingOwner
@@ -2997,10 +2997,10 @@ final class AiBuilder {
    }
 
    private static AiOperation init(
-      final AiBuilder.Inner_DataUtil blueprint,
+      final AiBuilder.Blueprint blueprint,
       final boolean verify,
       final int timeoutSeconds,
-      final AiBuilder.Inner_ConfigStore power,
+      final AiBuilder.BuildOptions power,
       final boolean schematic,
       final Set<Long> protectedCells,
       final boolean scaffoldingOwner,
@@ -3009,7 +3009,7 @@ final class AiBuilder {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && mc.player.isAlive()) {
          if (schematic && scaffoldingOwner) {
-            List<AiBuilder.Inner_StreamUtil> controls = blueprint.cells()
+            List<AiBuilder.CellSpec> controls = blueprint.cells()
                .stream()
                .filter(cellx -> cellx.block().equals("minecraft:lever") && "true".equals(cellx.properties().get("powered")))
                .toList();
@@ -3017,11 +3017,11 @@ final class AiBuilder {
                HashSet<Long> keep = new HashSet<>(protectedCells);
                HashSet<Long> closedDoors = new HashSet<>();
 
-               for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+               for (AiBuilder.CellSpec cell : blueprint.cells()) {
                   keep.add(blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()).asLong());
                }
 
-               for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+               for (AiBuilder.CellSpec cell : blueprint.cells()) {
                   if ("false".equals(cell.properties().get("open"))) {
                      closedDoors.add(blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()).asLong());
                   }
@@ -3051,14 +3051,14 @@ final class AiBuilder {
          }
 
          return new AiOperation() {
-            final List<AiBuilder.Inner_StreamUtil> init_List = schematic ? AiBuilder.read(AiBuilder.load_List(blueprint)) : AiBuilder.init_List(blueprint);
+            final List<AiBuilder.CellSpec> init_List = schematic ? AiBuilder.read(AiBuilder.load_List(blueprint)) : AiBuilder.init_List(blueprint);
             final AABB init_AABB = new AABB(
-               blueprint.origin().getX() + this.init_List.stream().mapToInt(AiBuilder.Inner_StreamUtil::dx).min().orElse(0),
-               blueprint.origin().getY() + this.init_List.stream().mapToInt(AiBuilder.Inner_StreamUtil::dy).min().orElse(0),
-               blueprint.origin().getZ() + this.init_List.stream().mapToInt(AiBuilder.Inner_StreamUtil::dz).min().orElse(0),
-               blueprint.origin().getX() + this.init_List.stream().mapToInt(AiBuilder.Inner_StreamUtil::dx).max().orElse(0) + 1,
-               blueprint.origin().getY() + this.init_List.stream().mapToInt(AiBuilder.Inner_StreamUtil::dy).max().orElse(0) + 1,
-               blueprint.origin().getZ() + this.init_List.stream().mapToInt(AiBuilder.Inner_StreamUtil::dz).max().orElse(0) + 1
+               blueprint.origin().getX() + this.init_List.stream().mapToInt(AiBuilder.CellSpec::dx).min().orElse(0),
+               blueprint.origin().getY() + this.init_List.stream().mapToInt(AiBuilder.CellSpec::dy).min().orElse(0),
+               blueprint.origin().getZ() + this.init_List.stream().mapToInt(AiBuilder.CellSpec::dz).min().orElse(0),
+               blueprint.origin().getX() + this.init_List.stream().mapToInt(AiBuilder.CellSpec::dx).max().orElse(0) + 1,
+               blueprint.origin().getY() + this.init_List.stream().mapToInt(AiBuilder.CellSpec::dy).max().orElse(0) + 1,
+               blueprint.origin().getZ() + this.init_List.stream().mapToInt(AiBuilder.CellSpec::dz).max().orElse(0) + 1
             );
             final int init_I = power.skipFailed() ? 1 : 3;
             final long init_J = System.nanoTime() + Math.max(1L, Math.min(schematic ? 2592000L : 3600L, timeoutSeconds)) * 1000000000L;
@@ -3075,17 +3075,17 @@ final class AiBuilder {
             int update_I;
             int sync_I;
             int flush_I;
-            List<autismclient.ai.engine.PlacementGoal.Inner_CachePool> read_List;
+            List<autismclient.ai.engine.PlacementGoal.PlacementRequest> read_List;
             Set<BlockPos> init_Set = Set.of();
             List<BlockPos> write_List = List.of();
             final Set<Long> load_Set = new HashSet<>();
-            AiBuilder.Inner_StreamUtil init_TableIndex_StreamU;
-            AiBuilder.Inner_StreamUtil load_TableIndex_StreamU;
-            final AiBuilder.Inner_SyncManager init_TableIndex_SyncMan = new AiBuilder.Inner_SyncManager();
-            final AiBuilder.Inner_StateCache init_TableIndex_StateCa = new AiBuilder.Inner_StateCache();
+            AiBuilder.CellSpec init_TableIndex_StreamU;
+            AiBuilder.CellSpec load_TableIndex_StreamU;
+            final AiBuilder.ReadyQueue init_TableIndex_SyncMan = new AiBuilder.ReadyQueue();
+            final AiBuilder.PlaceAckTracker init_TableIndex_StateCa = new AiBuilder.PlaceAckTracker();
             final Map<Long, Integer> init_Map = new HashMap<>();
             final Set<Long> read_Set = new HashSet<>();
-            BlockPlacementPlanner.Inner_CachePool init_U_CachePool;
+            BlockPlacementPlanner.PlacementPlan init_U_CachePool;
             Predicate<AABB> init_Predicate;
             int close_I;
             int open_I;
@@ -3114,9 +3114,9 @@ final class AiBuilder {
             BlockPos load_BlockPos;
             Block init_Block;
             long read_J;
-            AiBuilder.Inner_StreamUtil read_TableIndex_StreamU;
+            AiBuilder.CellSpec read_TableIndex_StreamU;
             Vec3 load_Vec3;
-            BlockPlacementPlanner.Inner_CachePool load_U_CachePool;
+            BlockPlacementPlanner.PlacementPlan load_U_CachePool;
             int start_I;
             final JsonArray init_JsonArray = new JsonArray();
             final Set<String> sync_Set = new HashSet<>();
@@ -3146,11 +3146,11 @@ final class AiBuilder {
             final Set<Long> flush_Set = new HashSet<>();
             AiOperation update_AiOperation;
             boolean update_Z;
-            final List<AiBuilder.Inner_StreamUtil> update_List = new ArrayList<>();
+            final List<AiBuilder.CellSpec> update_List = new ArrayList<>();
             int flags;
             boolean sync_Z;
             final Set<Long> close_Set = new HashSet<>(this.init_List.stream().map(c -> blueprint.origin().offset(c.dx(), c.dy(), c.dz()).asLong()).toList());
-            final Map<Long, AiBuilder.Inner_StreamUtil> load_Map;
+            final Map<Long, AiBuilder.CellSpec> load_Map;
             final Set<Long> open_Set;
             boolean flush_Z;
             final boolean close_Z;
@@ -3207,7 +3207,7 @@ final class AiBuilder {
             int mark;
             int scan;
             int parse;
-            final List<AiBuilder.Inner_StreamUtil> open_List;
+            final List<AiBuilder.CellSpec> open_List;
             final List<String> poll_List;
             int bind;
             boolean clear_Z;
@@ -3220,12 +3220,12 @@ final class AiBuilder {
             Set<Long> clear_Set;
             Set<Long> reset_Set;
             int f_d_I;
-            final Set<AiBuilder.Inner_StreamUtil> start_Set;
+            final Set<AiBuilder.CellSpec> start_Set;
             int f_e_I;
             BlockPos update_BlockPos;
             Set<Long> stop_Set;
-            final Map<AiBuilder.Inner_StreamUtil, Integer> open_Map;
-            final Map<AiBuilder.Inner_StreamUtil, Integer> poll_Map;
+            final Map<AiBuilder.CellSpec, Integer> open_Map;
+            final Map<AiBuilder.CellSpec, Integer> poll_Map;
             BlockPos sync_BlockPos;
             AiOperation pop_AiOperation;
             int f_f_I;
@@ -3238,13 +3238,13 @@ final class AiBuilder {
                this.close_Set.addAll(protectedCells);
                this.load_Map = new HashMap<>();
 
-               for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+               for (AiBuilder.CellSpec cell : blueprint.cells()) {
                   this.load_Map.put(blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()).asLong(), cell);
                }
 
                this.open_Set = new HashSet<>();
 
-               for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+               for (AiBuilder.CellSpec cell : blueprint.cells()) {
                   BlockPos at = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                   Block block = AiBuilder.init_Block(cell);
                   BlockState requested = AiBuilder.init_BlockState(cell);
@@ -3262,7 +3262,7 @@ final class AiBuilder {
 
                this.flush_Z = schematic;
                this.close_Z = scaffoldingOwner;
-               this.init_Y = this.close_Z ? new AiGuardLayer(new AiGuard.Inner_CachePool(true, true, true, 16.0F, 7.0F, 14), "schematic construction") : null;
+               this.init_Y = this.close_Z ? new AiGuardLayer(new AiGuard.GuardPolicy(true, true, true, 16.0F, 7.0F, 14), "schematic construction") : null;
                if (this.init_Y != null) {
                   AiGuard.init_V();
                }
@@ -3272,7 +3272,7 @@ final class AiBuilder {
                this.push_Set = new HashSet<>();
                this.pop_Set = new HashSet<>();
                this.tick_Set = new HashSet<>();
-               this.frame = blueprint.cells().stream().mapToInt(AiBuilder.Inner_StreamUtil::dy).min().orElse(0) - 1;
+               this.frame = blueprint.cells().stream().mapToInt(AiBuilder.CellSpec::dy).min().orElse(0) - 1;
                this.open_Z = true;
                this.poll_Z = !this.close_Z || !power.clearTerrain();
                this.init_a_StreamUtil = this.close_Z ? AiScaffold.init(AiBuilder.init_Path(blueprint), List.of()) : null;
@@ -3312,13 +3312,13 @@ final class AiBuilder {
             void init_V_10() {
                autismclient.ai.engine.AiRestock.init(Map.of());
                autismclient.ai.engine.AiRoutePolicy.putAt(Set.of());
-               autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(0L);
-               autismclient.ai.engine.AiPathfinder.Inner_CachePool.load_V_J(0L);
+               autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
+               autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(0L);
                if (schematic) {
                   autismclient.ai.engine.AiRoutePolicy.putAt_V();
                }
 
-               autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_Set(Set.of());
+               autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_Set(Set.of());
             }
 
             void load_V_4() {
@@ -3326,7 +3326,7 @@ final class AiBuilder {
                   this.f_d_I = blueprint.cells().size() / 8192;
                   HashMap<Item, Integer> counts = new HashMap<>();
 
-                  for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+                  for (AiBuilder.CellSpec cell : blueprint.cells()) {
                      BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                      if (!AiBuilder.init(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
                         Item item = schematic && cell.block().equals("minecraft:grass_block") ? Items.DIRT : AiBuilder.init_Block(cell).asItem();
@@ -3340,7 +3340,7 @@ final class AiBuilder {
                   this.close_Map = Map.copyOf(counts);
                   HashSet<Long> closed = new HashSet<>();
 
-                  for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+                  for (AiBuilder.CellSpec cell : blueprint.cells()) {
                      if ("false".equals(cell.properties().get("open"))
                         && AiBuilder.init_Block(cell).defaultBlockState().hasProperty(BlockStateProperties.OPEN)) {
                         closed.add(blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()).asLong());
@@ -3364,9 +3364,9 @@ final class AiBuilder {
 
                autismclient.ai.engine.AiRestock.init(this.close_Map);
                autismclient.ai.engine.AiRoutePolicy.putAt(this.clear_Set);
-               autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(3000000000L);
+               autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(3000000000L);
                if (schematic) {
-                  autismclient.ai.engine.AiPathfinder.Inner_CachePool.load_V_J(3000000000L);
+                  autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(3000000000L);
                }
 
                if (schematic) {
@@ -3374,7 +3374,7 @@ final class AiBuilder {
                }
 
                if (schematic && this.reset_Set != null) {
-                  autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_Set(this.reset_Set);
+                  autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_Set(this.reset_Set);
                }
             }
 
@@ -3388,7 +3388,7 @@ final class AiBuilder {
                   && mc.player.onGround()
                   && mc.player.getDeltaMovement().horizontalDistanceSqr() > 4.0E-4) {
                   BlockPos floor = autismclient.ai.engine.AiStance.init(mc).below();
-                  AiBuilder.Inner_StreamUtil source = this.load_Map.get(floor.asLong());
+                  AiBuilder.CellSpec source = this.load_Map.get(floor.asLong());
                   if (source != null && AiBuilder.init(source, mc.level.getBlockState(floor), power.substitutes(), true)) {
                      this.pop_I++;
                   }
@@ -3603,7 +3603,7 @@ final class AiBuilder {
                         )
                       {
                         if (r.status() == AiOperation.Status.SUCCEEDED) {
-                           AiBuilder.Inner_StreamUtil finished = this.init_List.get(this.data);
+                           AiBuilder.CellSpec finished = this.init_List.get(this.data);
                            if (AiBuilder.init_Fluid(finished) != null || finished.properties().containsKey("waterlogged")) {
                               this.load_J = mc.player.tickCount;
                            }
@@ -3710,16 +3710,16 @@ final class AiBuilder {
                            } else {
                               BlockPos feet = autismclient.ai.engine.AiStance.init(mc);
                               List<BlockPos> positions = this.load_b_DataUtil.init_List_BlockPos(feet);
-                              ArrayList<AiBuilder.Inner_StreamUtil> scheduled = new ArrayList<>();
+                              ArrayList<AiBuilder.CellSpec> scheduled = new ArrayList<>();
 
                               for (BlockPos at : positions) {
-                                 AiBuilder.Inner_StreamUtil wanted = this.load_Map.get(at.asLong());
+                                 AiBuilder.CellSpec wanted = this.load_Map.get(at.asLong());
                                  if (wanted != null && !AiBuilder.init(wanted, mc.level.getBlockState(at), power.substitutes(), true)) {
                                     scheduled.add(wanted);
                                  }
                               }
 
-                              AiBuilder.Inner_StreamUtil previous = this.data < this.init_List.size() ? this.init_List.get(this.data) : null;
+                              AiBuilder.CellSpec previous = this.data < this.init_List.size() ? this.init_List.get(this.data) : null;
                               AiSchematicApproach.Inner_DataUtil.init_V_List(this.init_List, this.data, scheduled);
                               if (this.data < this.init_List.size() && !this.init_List.get(this.data).equals(previous)) {
                                  this.sync();
@@ -3855,11 +3855,11 @@ final class AiBuilder {
                               true,
                               false,
                               20,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
+                              autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                               true,
                               2.0,
                               AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
-                                 autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(stance, 0.25),
+                                 autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(stance, 0.25),
                                  keep,
                                  blueprint.origin().getY() - 2
                               )
@@ -3876,7 +3876,7 @@ final class AiBuilder {
                         while (
                            this.data < this.init_List.size() && evaluated < 64 && placements < 4 && this.load_BlockPos == null && this.init_AiOperation == null
                         ) {
-                           AiBuilder.Inner_StreamUtil cell = this.init_List.get(this.data);
+                           AiBuilder.CellSpec cell = this.init_List.get(this.data);
                            evaluated++;
                            BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                            BlockState live = mc.level.getBlockState(pos);
@@ -3896,7 +3896,7 @@ final class AiBuilder {
                                  int swap = -1;
 
                                  for (int j = this.data + 1; j < Math.min(this.init_List.size(), this.data + 96); j++) {
-                                    AiBuilder.Inner_StreamUtil next = this.init_List.get(j);
+                                    AiBuilder.CellSpec next = this.init_List.get(j);
                                     if (next.dy() == cell.dy()) {
                                        BlockPos at = blueprint.origin().offset(next.dx(), next.dy(), next.dz());
                                        if (!AiBuilder.init(next, mc.level.getBlockState(at), power.substitutes(), schematic)
@@ -3908,7 +3908,7 @@ final class AiBuilder {
                                  }
 
                                  if (swap > 0) {
-                                    AiBuilder.Inner_StreamUtil nearby = this.init_List.remove(swap);
+                                    AiBuilder.CellSpec nearby = this.init_List.remove(swap);
                                     this.init_List.add(this.data, nearby);
                                     this.value = this.init_Map.getOrDefault(this.load_BlockPos().asLong(), 0);
                                     this.load_U_CachePool = null;
@@ -3947,7 +3947,7 @@ final class AiBuilder {
                                     && this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.init_Block(cell)).crouchForLook()
                                     && mc.level.getBlockState(pos.above()).getCollisionShape(mc.level, pos.above()).isEmpty()
                                     && mc.level.getBlockState(pos).canBeReplaced()) {
-                                    AiBuilder.Inner_StreamUtil above = this.load_Map.get(pos.above().asLong());
+                                    AiBuilder.CellSpec above = this.load_Map.get(pos.above().asLong());
                                     if (above != null
                                        && Block.isShapeFullBlock(AiBuilder.init_BlockState(above).getCollisionShape(mc.level, pos.above()))
                                        && this.poll_Map.getOrDefault(cell, 0) < 4) {
@@ -3967,7 +3967,7 @@ final class AiBuilder {
                                     if (foundation != null) {
                                        this.read_BlockPos = foundation;
                                        this.init_AiOperation = AiBuilder.init(
-                                          new AiBuilder.Inner_DataUtil(foundation, List.of(new AiBuilder.Inner_StreamUtil(0, 0, 0, "minecraft:dirt"))),
+                                          new AiBuilder.Blueprint(foundation, List.of(new AiBuilder.CellSpec(0, 0, 0, "minecraft:dirt"))),
                                           this.init_Set_2()
                                        );
                                        return this.init_AiOperation_Result_5("Restoring the source cell's permanent foundation");
@@ -3979,7 +3979,7 @@ final class AiBuilder {
                                           boolean later = false;
 
                                           for (int j = this.data + 1; j < this.init_List.size(); j++) {
-                                             AiBuilder.Inner_StreamUtil next = this.init_List.get(j);
+                                             AiBuilder.CellSpec next = this.init_List.get(j);
                                              if (blueprint.origin().offset(next.dx(), next.dy(), next.dz()).equals(dependency)) {
                                                 later = true;
                                                 break;
@@ -4005,7 +4005,7 @@ final class AiBuilder {
 
                                              for (Direction side : Direction.values()) {
                                                 BlockPos neighbor = pos.relative(side);
-                                                AiBuilder.Inner_StreamUtil wanted = this.load_Map.get(neighbor.asLong());
+                                                AiBuilder.CellSpec wanted = this.load_Map.get(neighbor.asLong());
                                                 if (wanted != null
                                                    && (AiBuilder.init_Fluid(wanted) != null || "true".equals(wanted.properties().get("waterlogged")))) {
                                                    plannedWater.add(neighbor);
@@ -4092,7 +4092,7 @@ final class AiBuilder {
                                        if (property != null
                                           && !String.valueOf(live.getValue(property)).equals(entry.getValue())
                                           && !AiBuilder.read(live.getBlock(), entry.getKey())
-                                          && AiBuilder.init_TableIndex_TaskQue(live.getBlock(), entry.getKey()) != AiBuilder.Inner_TaskQueue.POST_INTERACT) {
+                                          && AiBuilder.init_TableIndex_TaskQue(live.getBlock(), entry.getKey()) != AiBuilder.OrientationKind.POST_INTERACT) {
                                           toggleOnly = false;
                                        }
                                     }
@@ -4315,7 +4315,7 @@ final class AiBuilder {
                                                 }
 
                                                 for (Entry<String, String> entry : cell.properties().entrySet()) {
-                                                   if (AiBuilder.init_TableIndex_TaskQue(target, entry.getKey()) == AiBuilder.Inner_TaskQueue.UNSUPPORTED
+                                                   if (AiBuilder.init_TableIndex_TaskQue(target, entry.getKey()) == AiBuilder.OrientationKind.UNSUPPORTED
                                                       && (
                                                          !(target instanceof LeavesBlock)
                                                             || !entry.getKey().equals("persistent")
@@ -4339,13 +4339,13 @@ final class AiBuilder {
                                                 } else {
                                                    Vec3 eye = mc.player.getEyePosition();
                                                    double reach = mc.player.blockInteractionRange();
-                                                   BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(
+                                                   BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(
                                                          pos, eye, reach, BlockPlacementPlanner.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND)
                                                       )
                                                       .init_U_StateCache_Z(mc.player.isShiftKeyDown())
                                                       .load(schematic)
-                                                      .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(4));
-                                                   BlockPlacementPlanner.Inner_CachePool candidate = this.load_U_CachePool != null
+                                                      .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(4));
+                                                   BlockPlacementPlanner.PlacementPlan candidate = this.load_U_CachePool != null
                                                       ? this.load_U_CachePool
                                                       : (
                                                          schematic
@@ -4360,8 +4360,8 @@ final class AiBuilder {
                                                    }
 
                                                    if (!AiBuilder.init(AiBuilder.init_Boolean(cell, target), candidate.init_BlockHitResult().getDirection())) {
-                                                      BlockPlacementPlanner.Inner_CachePool side = BlockPlacementPlanner.init_U_CachePool(
-                                                         new BlockPlacementPlanner.Inner_StateCache(
+                                                      BlockPlacementPlanner.PlacementPlan side = BlockPlacementPlanner.init_U_CachePool(
+                                                         new BlockPlacementPlanner.Query(
                                                                pos, eye, reach, BlockPlacementPlanner.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND)
                                                             )
                                                             .init_U_StateCache_Z(mc.player.isShiftKeyDown())
@@ -4369,7 +4369,7 @@ final class AiBuilder {
                                                             .init_U_StateCache_EnumSet(
                                                                EnumSet.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)
                                                             )
-                                                            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(4))
+                                                            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(4))
                                                       );
                                                       if (side != null) {
                                                          candidate = side;
@@ -4402,18 +4402,18 @@ final class AiBuilder {
                                                 }
 
                                                 if (!Float.isNaN(this.init_F)) {
-                                                   autismclient.util.RotationMath.Inner_DataUtil hitRotation = autismclient.util.RotationMath.init(
+                                                   autismclient.util.RotationMath.Rotation hitRotation = autismclient.util.RotationMath.init(
                                                       hit.getLocation(), mc.player.getEyePosition()
                                                    );
                                                    float goalYaw = Math.abs(
                                                             autismclient.util.RotationMath.init_F(
-                                                               hitRotation, new autismclient.util.RotationMath.Inner_DataUtil(this.init_F, hitRotation.load())
+                                                               hitRotation, new autismclient.util.RotationMath.Rotation(this.init_F, hitRotation.load())
                                                             )
                                                          )
                                                          <= this.read_D
                                                       ? hitRotation.init()
                                                       : this.init_F;
-                                                   this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Inner_DataUtil(goalYaw, hitRotation.load()));
+                                                   this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Rotation(goalYaw, hitRotation.load()));
                                                    this.init_DataUtil.load_V();
                                                 } else {
                                                    AiGameOperations.init(this.init_DataUtil, hit.getLocation());
@@ -4425,7 +4425,7 @@ final class AiBuilder {
                                                       && Math.abs(
                                                             autismclient.util.RotationMath.init_F(
                                                                autismclient.util.RotationMath.init(mc.player),
-                                                               new autismclient.util.RotationMath.Inner_DataUtil(this.init_F, mc.player.getXRot())
+                                                               new autismclient.util.RotationMath.Rotation(this.init_F, mc.player.getXRot())
                                                             )
                                                          )
                                                          > this.read_D
@@ -4451,8 +4451,8 @@ final class AiBuilder {
 
                                                       if (!Float.isNaN(this.init_F)) {
                                                          for (Entry<String, String> entry : cell.properties().entrySet()) {
-                                                            AiBuilder.Inner_TaskQueue strategy = AiBuilder.init_TableIndex_TaskQue(target, entry.getKey());
-                                                            if (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING || strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE) {
+                                                            AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(target, entry.getKey());
+                                                            if (strategy == AiBuilder.OrientationKind.PLAYER_FACING || strategy == AiBuilder.OrientationKind.PLAYER_FACING_OPPOSITE) {
                                                                this.init(cell, pos, entry, "player facing could not be aligned with the support ray");
                                                             }
                                                          }
@@ -4489,14 +4489,14 @@ final class AiBuilder {
                                                    boolean stateMatches = predicted != null;
                                                    if (predicted != null) {
                                                       for (Entry<String, String> entry : cell.properties().entrySet()) {
-                                                         AiBuilder.Inner_TaskQueue strategy = AiBuilder.init_TableIndex_TaskQue(target, entry.getKey());
-                                                         if (strategy != AiBuilder.Inner_TaskQueue.UNSUPPORTED
-                                                            && strategy != AiBuilder.Inner_TaskQueue.POST_INTERACT
-                                                            && strategy != AiBuilder.Inner_TaskQueue.FLUID_INTERACT
+                                                         AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(target, entry.getKey());
+                                                         if (strategy != AiBuilder.OrientationKind.UNSUPPORTED
+                                                            && strategy != AiBuilder.OrientationKind.POST_INTERACT
+                                                            && strategy != AiBuilder.OrientationKind.FLUID_INTERACT
                                                             && !AiBuilder.read(target, entry.getKey())
                                                             && (!AiBuilder.init_Z(cell) || upgrade || !entry.getKey().equals("type"))
                                                             && (
-                                                               strategy != AiBuilder.Inner_TaskQueue.CHEST_PAIR
+                                                               strategy != AiBuilder.OrientationKind.CHEST_PAIR
                                                                   || !AiBuilder.init_Z(cell, predicted)
                                                                   || AiBuilder.init_Z_TableIndex_StreamU(cell, pos, mc.level)
                                                             )) {
@@ -4628,7 +4628,7 @@ final class AiBuilder {
                         int audited = 0;
 
                         while (this.flags < this.init_List.size() && audited++ < (schematic ? 128 : 2147483647)) {
-                           AiBuilder.Inner_StreamUtil audit = this.init_List.get(this.flags++);
+                           AiBuilder.CellSpec audit = this.init_List.get(this.flags++);
                            BlockPos auditPos = blueprint.origin().offset(audit.dx(), audit.dy(), audit.dz());
                            BlockState auditLive = mc.level.getBlockState(auditPos);
                            if (AiBuilder.init(audit, auditLive, power.substitutes(), schematic)) {
@@ -4658,7 +4658,7 @@ final class AiBuilder {
                         if (!this.update_List.isEmpty()) {
                            TreeMap<String, Integer> why = new TreeMap<>();
 
-                           for (AiBuilder.Inner_StreamUtil repair : this.update_List) {
+                           for (AiBuilder.CellSpec repair : this.update_List) {
                               BlockState live = mc.level.getBlockState(blueprint.origin().offset(repair.dx(), repair.dy(), repair.dz()));
                               why.merge(
                                  repair.block().replace("minecraft:", "") + " <- " + BuiltInRegistries.BLOCK.getKey(live.getBlock()).getPath(), 1, Integer::sum
@@ -4735,7 +4735,7 @@ final class AiBuilder {
                               return this.init_AiOperation_Result_5("Door closed; verifying the schematic again");
                            } else {
                               if (schematic && this.close_Z) {
-                                 for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+                                 for (AiBuilder.CellSpec cell : blueprint.cells()) {
                                     if ("false".equals(cell.properties().get("open")) && !"upper".equals(cell.properties().get("half"))) {
                                        BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                                        BlockState live = mc.level.getBlockState(pos);
@@ -5005,10 +5005,10 @@ final class AiBuilder {
                         BlockPos stance = null;
                         double distance = 1.7976931348623157E308;
 
-                        for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+                        for (AiBuilder.CellSpec cell : blueprint.cells()) {
                            BlockPos floor = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                            BlockState state = mc.level.getBlockState(floor);
-                           if (Block.isShapeFullBlock(state.getCollisionShape(mc.level, floor)) && !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(state)) {
+                           if (Block.isShapeFullBlock(state.getCollisionShape(mc.level, floor)) && !autismclient.ai.engine.AiPathfinder.LiveGridView.read(state)) {
                               BlockPos feet = floor.above();
                               if (!this.get_Set.contains(feet.asLong()) && !(Math.abs(feet.getY() - mc.player.getY()) > 2.0)) {
                                  AABB body = mc.player.getBoundingBox().move(Vec3.atBottomCenterOf(feet).subtract(mc.player.position()));
@@ -5042,7 +5042,7 @@ final class AiBuilder {
                   if (!this.pop_Z) {
                      this.pop_Z = true;
                      if (this.close_Set.isEmpty()) {
-                        for (AiBuilder.Inner_StreamUtil c : this.init_List) {
+                        for (AiBuilder.CellSpec c : this.init_List) {
                            this.close_Set.add(blueprint.origin().offset(c.dx(), c.dy(), c.dz()).asLong());
                         }
                      }
@@ -5235,7 +5235,7 @@ final class AiBuilder {
                   if (mc.level.getBlockState(feet).getCollisionShape(mc.level, feet).isEmpty()
                      && mc.level.getBlockState(feet.above()).getCollisionShape(mc.level, feet.above()).isEmpty()) {
                      BlockState below = mc.level.getBlockState(feet.below());
-                     if (Block.isShapeFullBlock(below.getCollisionShape(mc.level, feet.below())) && !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(below)) {
+                     if (Block.isShapeFullBlock(below.getCollisionShape(mc.level, feet.below())) && !autismclient.ai.engine.AiPathfinder.LiveGridView.read(below)) {
                         AABB body = mc.player.getBoundingBox().move(Vec3.atBottomCenterOf(feet).subtract(mc.player.position()));
                         if (mc.level.noCollision(mc.player, body) && !(mc.player.position().distanceToSqr(Vec3.atCenterOf(candidate)) > 20.25)) {
                            return feet;
@@ -5272,8 +5272,8 @@ final class AiBuilder {
                         BlockPos floor = new BlockPos(x, y, z);
                         if (!floor.equals(removed)) {
                            BlockState state = mc.level.getBlockState(floor);
-                           if (!autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(state)
-                              && !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.load(state)
+                           if (!autismclient.ai.engine.AiPathfinder.LiveGridView.read(state)
+                              && !autismclient.ai.engine.AiPathfinder.LiveGridView.load(state)
                               && state.getFluidState().isEmpty()) {
                               for (AABB local : state.getCollisionShape(mc.level, floor).toAabbs()) {
                                  AABB box = local.move(x, y, z);
@@ -5340,7 +5340,7 @@ final class AiBuilder {
                         && Block.isShapeFullBlock(state.getCollisionShape(mc.level, ceiling))) {
                         int roof = ceiling.getY();
 
-                        for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+                        for (AiBuilder.CellSpec cell : blueprint.cells()) {
                            BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                            BlockState live = mc.level.getBlockState(pos);
                            if (pos.getX() == worker.getX() && pos.getZ() == worker.getZ() && !live.getCollisionShape(mc.level, pos).isEmpty()) {
@@ -5358,11 +5358,11 @@ final class AiBuilder {
                            true,
                            false,
                            30,
-                           autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
+                           autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                            true,
                            2.0,
                            AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
-                              autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(exit, 0.25),
+                              autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(exit, 0.25),
                               this.load_Set(),
                               blueprint.origin().getY()
                            )
@@ -5392,11 +5392,11 @@ final class AiBuilder {
                         false,
                         false,
                         20,
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
+                        autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                         true,
                         2.0,
                         AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
-                           autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(doorExit, 0.25),
+                           autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(doorExit, 0.25),
                            this.load_Set(),
                            blueprint.origin().getY()
                         )
@@ -5449,7 +5449,7 @@ final class AiBuilder {
 
             AiOperation init_AiOperation() {
                if (this.close_Set.isEmpty()) {
-                  for (AiBuilder.Inner_StreamUtil c : this.init_List) {
+                  for (AiBuilder.CellSpec c : this.init_List) {
                      this.close_Set.add(blueprint.origin().offset(c.dx(), c.dy(), c.dz()).asLong());
                   }
                }
@@ -5611,7 +5611,7 @@ final class AiBuilder {
                return null;
             }
 
-            boolean init_Z_TableIndex_StreamU_BlockPos(AiBuilder.Inner_StreamUtil cell, BlockPos pos) {
+            boolean init_Z_TableIndex_StreamU_BlockPos(AiBuilder.CellSpec cell, BlockPos pos) {
                if (!AiSchematicActions.init_Z(cell) && !AiBuilder.init_Z(cell)) {
                   Block block = AiBuilder.init_Block(cell);
                   Item item = cell.block().equals("minecraft:grass_block") ? Items.DIRT : block.asItem();
@@ -5638,7 +5638,7 @@ final class AiBuilder {
                }
             }
 
-            boolean load_Z(AiBuilder.Inner_StreamUtil cell, BlockPos pos) {
+            boolean load_Z(AiBuilder.CellSpec cell, BlockPos pos) {
                if (this.load_Str(cell, pos) != null) {
                   return true;
                }
@@ -5661,7 +5661,7 @@ final class AiBuilder {
                this.update();
             }
 
-            void init_V_TableIndex_StreamU_Str(AiBuilder.Inner_StreamUtil cell, String reason) {
+            void init_V_TableIndex_StreamU_Str(AiBuilder.CellSpec cell, String reason) {
                if (this.start_Set.add(cell)) {
                   if (this.load_List.size() < 32) {
                      this.load_List.add(AiJson.init_JsonObject_ObjArr("dx", cell.dx(), "dy", cell.dy(), "dz", cell.dz(), "block", cell.block(), "reason", reason));
@@ -5739,7 +5739,7 @@ final class AiBuilder {
             void read_V_2() {
                if (!schematic) {
                   for (int i = 0; i < this.data && i < this.init_List.size(); i++) {
-                     AiBuilder.Inner_StreamUtil cell = this.init_List.get(i);
+                     AiBuilder.CellSpec cell = this.init_List.get(i);
                      BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                      if (!AiBuilder.init(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)
                         && !this.open_List.contains(cell)
@@ -5751,7 +5751,7 @@ final class AiBuilder {
                }
             }
 
-            boolean init_Z(AiBuilder.Inner_StreamUtil cell) {
+            boolean init_Z(AiBuilder.CellSpec cell) {
                for (JsonObject entry : this.load_List) {
                   JsonObject object = entry.getAsJsonObject();
                   if (object.get("dx").getAsInt() == cell.dx() && object.get("dy").getAsInt() == cell.dy() && object.get("dz").getAsInt() == cell.dz()) {
@@ -5803,7 +5803,7 @@ final class AiBuilder {
                }
 
                if (this.close_Z && this.data < this.init_List.size()) {
-                  AiBuilder.Inner_StreamUtil completed = this.init_List.get(this.data);
+                  AiBuilder.CellSpec completed = this.init_List.get(this.data);
                   BlockPos pos = blueprint.origin().offset(completed.dx(), completed.dy(), completed.dz());
                   if (AiBuilder.init(completed, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
                      AiScaffold.init_V(pos);
@@ -5918,7 +5918,7 @@ final class AiBuilder {
                   } else {
                      Integer opening = this.read_Map.get(BlockPos.asLong(pos.getX(), 0, pos.getZ()));
                      if (!AiBuilder.init(recovery, this.push_Set.contains(key), opening, pos.getY(), live)) {
-                        AiBuilder.Inner_StreamUtil wantedHere = this.load_Map.get(key);
+                        AiBuilder.CellSpec wantedHere = this.load_Map.get(key);
                         boolean stray = schematic && wantedHere != null && !live.hasBlockEntity() && AiSchematicActions.load(live) && !AiBuilder.read(wantedHere, live);
                         if (AiBuilder.init_Z_TableIndex_StreamU_4(this.load_Map.get(key), live, stray || AiScaffold.init(this.init_Block(pos), live.getBlock()))) {
                            keep.add(key);
@@ -5942,7 +5942,7 @@ final class AiBuilder {
                this.init_V_BlockPos_Z(target, false);
             }
 
-            String init_Str_TableIndex_StreamU_BlockPos(AiBuilder.Inner_StreamUtil cell, BlockPos pos) {
+            String init_Str_TableIndex_StreamU_BlockPos(AiBuilder.CellSpec cell, BlockPos pos) {
                this.sync_BlockPos = null;
                Block target = AiBuilder.init_Block(cell);
                ClientLevel level = mc.level;
@@ -5957,7 +5957,7 @@ final class AiBuilder {
                      return null;
                   } else {
                      BlockPos watched = pos.relative(facing);
-                     AiBuilder.Inner_StreamUtil wanted = this.load_Map.get(watched.asLong());
+                     AiBuilder.CellSpec wanted = this.load_Map.get(watched.asLong());
                      if (wanted != null
                         && Block.isShapeFullBlock(AiBuilder.init_BlockState(wanted).getCollisionShape(level, watched))
                         && !AiBuilder.read(wanted, level.getBlockState(watched))) {
@@ -5971,7 +5971,7 @@ final class AiBuilder {
                   if (this.init(target)) {
                      for (Direction direction : Direction.values()) {
                         BlockPos observer = pos.relative(direction);
-                        AiBuilder.Inner_StreamUtil wanted = this.load_Map.get(observer.asLong());
+                        AiBuilder.CellSpec wanted = this.load_Map.get(observer.asLong());
                         if (wanted != null
                            && AiBuilder.init_Block(wanted) instanceof ObserverBlock
                            && Direction.byName(wanted.properties().getOrDefault("facing", "north")) == direction) {
@@ -5981,7 +5981,7 @@ final class AiBuilder {
                               watched, watched.north(), watched.south(), watched.east(), watched.west(), watched.above(), watched.below()
                            )) {
                               if (!near.equals(observer) && !near.equals(pos)) {
-                                 AiBuilder.Inner_StreamUtil around = this.load_Map.get(near.asLong());
+                                 AiBuilder.CellSpec around = this.load_Map.get(near.asLong());
                                  if (around != null && !AiBuilder.read(around, level.getBlockState(near))) {
                                     this.sync_BlockPos = near;
                                     return "a part an observer powers waits until the observer's view is finished";
@@ -5996,7 +5996,7 @@ final class AiBuilder {
                }
             }
 
-            String load_Str(AiBuilder.Inner_StreamUtil cell, BlockPos pos) {
+            String load_Str(AiBuilder.CellSpec cell, BlockPos pos) {
                Block target = AiBuilder.init_Block(cell);
                ClientLevel level = mc.level;
                if (target instanceof RedstoneTorchBlock && "false".equals(cell.properties().get("lit")) && AiBuilder.init_Z_Level(level, pos, cell)) {
@@ -6023,11 +6023,11 @@ final class AiBuilder {
                   || target instanceof FenceGateBlock;
             }
 
-            boolean init_Z_TableIndex_StreamU_Str(AiBuilder.Inner_StreamUtil cell, String reason) {
+            boolean init_Z_TableIndex_StreamU_Str(AiBuilder.CellSpec cell, String reason) {
                int after = -1;
                if (this.sync_BlockPos != null) {
                   for (int j = this.data + 1; j < this.init_List.size(); j++) {
-                     AiBuilder.Inner_StreamUtil next = this.init_List.get(j);
+                     AiBuilder.CellSpec next = this.init_List.get(j);
                      if (blueprint.origin().offset(next.dx(), next.dy(), next.dz()).equals(this.sync_BlockPos)) {
                         after = j;
                         break;
@@ -6058,7 +6058,7 @@ final class AiBuilder {
                return true;
             }
 
-            boolean init_Z_TableIndex_StreamU(AiBuilder.Inner_StreamUtil cell, BlockPos pos, Block targetBlock) {
+            boolean init_Z_TableIndex_StreamU(AiBuilder.CellSpec cell, BlockPos pos, Block targetBlock) {
                if (this.open_Map.getOrDefault(cell, 0) >= 2) {
                   return false;
                }
@@ -6074,7 +6074,7 @@ final class AiBuilder {
                int after = -1;
 
                for (int j = this.data + 1; j < this.init_List.size() && after < 0; j++) {
-                  AiBuilder.Inner_StreamUtil next = this.init_List.get(j);
+                  AiBuilder.CellSpec next = this.init_List.get(j);
                   if (supports.contains(blueprint.origin().offset(next.dx(), next.dy(), next.dz()).asLong())) {
                      after = j;
                   }
@@ -6104,7 +6104,7 @@ final class AiBuilder {
                   if (!state.isAir() && state.getFluidState().isEmpty() && !state.hasBlockEntity() && !(state.getDestroySpeed(mc.level, cell) < 0.0F)) {
                      VoxelShape shape = state.getCollisionShape(mc.level, cell);
                      if (!shape.isEmpty() && shape.bounds().move(cell).intersects(body)) {
-                        AiBuilder.Inner_StreamUtil wanted = this.load_Map.get(cell.asLong());
+                        AiBuilder.CellSpec wanted = this.load_Map.get(cell.asLong());
                         if ((wanted == null || !AiBuilder.read(wanted, state)) && (AiSchematicActions.load(state) || wanted != null)) {
                            return cell.immutable();
                         }
@@ -6143,7 +6143,7 @@ final class AiBuilder {
                   final ArrayList<BlockPos> placedInRoom = new ArrayList<>();
 
                   for (long key : room) {
-                     AiBuilder.Inner_StreamUtil cell = this.load_Map.get(key);
+                     AiBuilder.CellSpec cell = this.load_Map.get(key);
                      BlockPos p = BlockPos.of(key);
                      if (cell != null && AiBuilder.read(cell, mc.level.getBlockState(p))) {
                         placedInRoom.add(p);
@@ -6202,7 +6202,7 @@ final class AiBuilder {
                });
             }
 
-            boolean read(AiBuilder.Inner_StreamUtil cell, BlockPos target) {
+            boolean read(AiBuilder.CellSpec cell, BlockPos target) {
                if (!this.init_AABB.inflate(1.0).contains(mc.player.position())) {
                   return false;
                }
@@ -6275,7 +6275,7 @@ final class AiBuilder {
                }
 
                final AABB box = this.init_AABB;
-               var outside = new autismclient.ai.engine.AiPathfinder.Inner_JsonUtil() {
+               var outside = new autismclient.ai.engine.AiPathfinder.PathGoal() {
                   @Override
                   public boolean isInGoal(int x, int y, int z) {
                      return !box.contains(x + 0.5, y + 0.5, z + 0.5) && !box.contains(x + 0.5, y + 1.5, z + 0.5);
@@ -6302,7 +6302,7 @@ final class AiBuilder {
                   true,
                   false,
                   30,
-                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
+                  autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                   true,
                   2.0,
                   AiGoto.read(outside, keep)
@@ -6345,7 +6345,7 @@ final class AiBuilder {
             }
 
             void init_V_BlockPos_Z(BlockPos target, boolean cleanup) {
-               AiBuilder.Inner_StreamUtil wantedTarget = this.load_Map.get(target.asLong());
+               AiBuilder.CellSpec wantedTarget = this.load_Map.get(target.asLong());
                if ((cleanup || wantedTarget != null && !AiBuilder.read(wantedTarget, mc.level.getBlockState(target)))
                   && this.load_BlockPos(target.above()) != null) {
                   if (!cleanup) {
@@ -6362,7 +6362,7 @@ final class AiBuilder {
 
                   for (Direction direction : List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)) {
                      BlockPos candidate = target.relative(direction);
-                     AiBuilder.Inner_StreamUtil wanted = this.load_Map.get(candidate.asLong());
+                     AiBuilder.CellSpec wanted = this.load_Map.get(candidate.asLong());
                      BlockState live = mc.level.getBlockState(candidate);
                      if (wanted != null
                         && !live.hasBlockEntity()
@@ -6409,20 +6409,20 @@ final class AiBuilder {
                return ceiling;
             }
 
-            boolean write(AiBuilder.Inner_StreamUtil cell, BlockPos pos) {
+            boolean write(AiBuilder.CellSpec cell, BlockPos pos) {
                Block block = AiBuilder.init_Block(cell);
                Set<Long> protectedNow = this.init_Set_2();
                ArrayList<Direction> directions = new ArrayList<>(
                   List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.DOWN, Direction.UP)
                );
                Direction look = this.init_Direction(cell.properties().getOrDefault("facing", ""));
-               AiBuilder.Inner_TaskQueue strategy = AiBuilder.init_TableIndex_TaskQue(block, "facing");
+               AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(block, "facing");
                if (look != null) {
-                  if (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE) {
+                  if (strategy == AiBuilder.OrientationKind.PLAYER_FACING_OPPOSITE) {
                      look = look.getOpposite();
-                  } else if (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE) {
+                  } else if (strategy == AiBuilder.OrientationKind.PLAYER_FACING_CLOCKWISE) {
                      look = look.getCounterClockWise();
-                  } else if (strategy == AiBuilder.Inner_TaskQueue.FACE_DERIVED) {
+                  } else if (strategy == AiBuilder.OrientationKind.FACE_DERIVED) {
                      look = look.getOpposite();
                   }
 
@@ -6449,7 +6449,7 @@ final class AiBuilder {
                return false;
             }
 
-            boolean update(AiBuilder.Inner_StreamUtil cell, BlockPos pos) {
+            boolean update(AiBuilder.CellSpec cell, BlockPos pos) {
                BlockPos ceiling = pos.above();
                if (this.next_Set.contains(pos.asLong())) {
                   return false;
@@ -6483,7 +6483,7 @@ final class AiBuilder {
                }
             }
 
-            boolean sync(AiBuilder.Inner_StreamUtil cell, BlockPos pos) {
+            boolean sync(AiBuilder.CellSpec cell, BlockPos pos) {
                if (this.push(pos)) {
                   return true;
                }
@@ -6494,7 +6494,7 @@ final class AiBuilder {
 
                this.tick_Z = true;
                Set<Long> protectedNow = this.init_Set_2();
-               autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint = this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.init_Block(cell));
+               autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.init_Block(cell));
                Item item = AiBuilder.init_Block(cell).asItem();
                if (item != Items.AIR && this.init(item) != 0) {
                   Direction side = constraint.playerFacing() == null ? constraint.clickFace() : constraint.playerFacing().getOpposite();
@@ -6517,7 +6517,7 @@ final class AiBuilder {
                               && (!protectedNow.contains(feet.below().asLong()) || !floorShape.isEmpty() && !(Math.abs(floorShape.max(Axis.Y) - 1.0) > 0.001))) {
                               Vec3 position = Vec3.atBottomCenterOf(feet);
                               if (mc.level.noCollision(mc.player, mc.player.getBoundingBox().move(position.subtract(mc.player.position())))) {
-                                 BlockPlacementPlanner.Inner_CachePool proved = autismclient.ai.engine.PlacementGoal.init(mc, pos, item, constraint, position, 48);
+                                 BlockPlacementPlanner.PlacementPlan proved = autismclient.ai.engine.PlacementGoal.init(mc, pos, item, constraint, position, 48);
                                  if (proved != null
                                     && (
                                        !floorShape.isEmpty()
@@ -6572,11 +6572,11 @@ final class AiBuilder {
                      true,
                      true,
                      60,
-                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
+                     autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                      true,
                      2.0,
                      AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
-                        autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(best, 0.35), protectedNow, blueprint.origin().getY()
+                        autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(best, 0.35), protectedNow, blueprint.origin().getY()
                      )
                   );
                   return true;
@@ -6597,12 +6597,12 @@ final class AiBuilder {
                   double score = 1.0 / 0.0;
 
                   for (int pass = 0; pass < 2; pass++) {
-                     List<AiBuilder.Inner_StreamUtil> source = pass == 0 ? this.init_List : this.open_List;
+                     List<AiBuilder.CellSpec> source = pass == 0 ? this.init_List : this.open_List;
                      int start = pass == 0 ? this.data + 1 : Math.max(0, source.size() - 192);
                      int end = pass == 0 ? Math.min(source.size(), this.data + 192) : source.size();
 
                      for (int i = start; i < end; i++) {
-                        AiBuilder.Inner_StreamUtil candidate = source.get(i);
+                        AiBuilder.CellSpec candidate = source.get(i);
                         BlockPos pos = blueprint.origin().offset(candidate.dx(), candidate.dy(), candidate.dz());
                         if (!pos.equals(target)
                            && pos.getY() >= worker.getY() - 1
@@ -6635,7 +6635,7 @@ final class AiBuilder {
                      return false;
                   }
 
-                  AiBuilder.Inner_StreamUtil step;
+                  AiBuilder.CellSpec step;
                   if (fromDeferred) {
                      step = this.open_List.remove(best);
                      this.poll_List.remove(best);
@@ -6652,7 +6652,7 @@ final class AiBuilder {
                }
             }
 
-            boolean load(AiBuilder.Inner_StreamUtil cell) {
+            boolean load(AiBuilder.CellSpec cell) {
                if (this.data < this.init_List.size() && this.push(this.load_BlockPos())) {
                   return true;
                }
@@ -6670,7 +6670,7 @@ final class AiBuilder {
                }
             }
 
-            BlockHitResult init(AiBuilder.Inner_StreamUtil cell, BlockPos pos, Block target, BlockHitResult hit) {
+            BlockHitResult init(AiBuilder.CellSpec cell, BlockPos pos, Block target, BlockHitResult hit) {
                this.init_F = 0.0F / 0.0F;
                this.read_D = 40.0;
                if (cell.properties().isEmpty()) {
@@ -6734,12 +6734,12 @@ final class AiBuilder {
 
                Boolean high = null;
                String type = cell.properties().get("type");
-               if (type != null && AiBuilder.init_TableIndex_TaskQue(target, "type") == AiBuilder.Inner_TaskQueue.CLICK_HEIGHT) {
+               if (type != null && AiBuilder.init_TableIndex_TaskQue(target, "type") == AiBuilder.OrientationKind.CLICK_HEIGHT) {
                   high = !AiBuilder.init_Z(cell) && type.equalsIgnoreCase("top");
                }
 
                String half = cell.properties().get("half");
-               if (half != null && AiBuilder.init_TableIndex_TaskQue(target, "half") == AiBuilder.Inner_TaskQueue.CLICK_HEIGHT) {
+               if (half != null && AiBuilder.init_TableIndex_TaskQue(target, "half") == AiBuilder.OrientationKind.CLICK_HEIGHT) {
                   high = half.equalsIgnoreCase("top");
                }
 
@@ -6757,32 +6757,32 @@ final class AiBuilder {
                }
 
                if (facingProp != null && !pairing) {
-                  AiBuilder.Inner_TaskQueue strategy = AiBuilder.init_TableIndex_TaskQue(cell, target);
-                  if (strategy == AiBuilder.Inner_TaskQueue.FACE_DERIVED
+                  AiBuilder.OrientationKind strategy = AiBuilder.init_TableIndex_TaskQue(cell, target);
+                  if (strategy == AiBuilder.OrientationKind.FACE_DERIVED
                      && !AiBuilder.init(target, cell)
                      && !(target instanceof HopperBlock)
                      && !AiBuilder.init(target)) {
-                     strategy = AiBuilder.Inner_TaskQueue.PLAYER_FACING;
+                     strategy = AiBuilder.OrientationKind.PLAYER_FACING;
                   }
 
-                  if (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING
-                     || strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE
-                     || strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE
-                     || strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION
-                     || strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION_OPPOSITE) {
+                  if (strategy == AiBuilder.OrientationKind.PLAYER_FACING
+                     || strategy == AiBuilder.OrientationKind.PLAYER_FACING_OPPOSITE
+                     || strategy == AiBuilder.OrientationKind.PLAYER_FACING_CLOCKWISE
+                     || strategy == AiBuilder.OrientationKind.PLAYER_DIRECTION
+                     || strategy == AiBuilder.OrientationKind.PLAYER_DIRECTION_OPPOSITE) {
                      Direction wanted = Direction.byName(facingProp.toLowerCase(Locale.ROOT));
                      if (wanted == null) {
                         this.init(cell, pos, Map.entry("facing", facingProp), "not a horizontal direction");
                      } else if (wanted.getAxis().isHorizontal()) {
-                        this.init_F = (strategy != AiBuilder.Inner_TaskQueue.PLAYER_FACING && strategy != AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION
-                              ? (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE ? wanted.getCounterClockWise() : wanted.getOpposite())
+                        this.init_F = (strategy != AiBuilder.OrientationKind.PLAYER_FACING && strategy != AiBuilder.OrientationKind.PLAYER_DIRECTION
+                              ? (strategy == AiBuilder.OrientationKind.PLAYER_FACING_CLOCKWISE ? wanted.getCounterClockWise() : wanted.getOpposite())
                               : wanted)
                            .toYRot();
                      }
                   }
                }
 
-               autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint = this.init_u_DataUtil_TableIndex_StreamU_Block(cell, target);
+               autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = this.init_u_DataUtil_TableIndex_StreamU_Block(cell, target);
                if (constraint.yaw() != null) {
                   this.init_F = constraint.yaw();
                   this.read_D = constraint.yawTolerance();
@@ -6855,7 +6855,7 @@ final class AiBuilder {
                return var10000;
             }
 
-            boolean init_Z_TableIndex_StreamU_2(AiBuilder.Inner_StreamUtil cell, BlockPos pos, BlockState live) {
+            boolean init_Z_TableIndex_StreamU_2(AiBuilder.CellSpec cell, BlockPos pos, BlockState live) {
                if (AiBuilder.init_Z(cell) && live.getBlock() instanceof SlabBlock && live.getValue(SlabBlock.TYPE) != SlabType.DOUBLE) {
                   this.load_BlockPos = null;
                   this.load_Vec3 = null;
@@ -6892,7 +6892,7 @@ final class AiBuilder {
                   }
 
                   Entry<String, String> entry = (Entry<String, String>)mismatch.next();
-                  if (AiBuilder.init_TableIndex_TaskQue(this.init_Block, entry.getKey()) == AiBuilder.Inner_TaskQueue.POST_INTERACT) {
+                  if (AiBuilder.init_TableIndex_TaskQue(this.init_Block, entry.getKey()) == AiBuilder.OrientationKind.POST_INTERACT) {
                      open = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(entry.getKey());
                      if (open != null && !String.valueOf(live.getValue(open)).equalsIgnoreCase(entry.getValue())) {
                         cycling = !entry.getKey().equals("open") && !entry.getKey().equals("powered");
@@ -6967,7 +6967,7 @@ final class AiBuilder {
                return false;
             }
 
-            String init_Str_TableIndex_StreamU(AiBuilder.Inner_StreamUtil cell, BlockPos pos, BlockState live) {
+            String init_Str_TableIndex_StreamU(AiBuilder.CellSpec cell, BlockPos pos, BlockState live) {
                for (Entry<String, String> entry : cell.properties().entrySet()) {
                   if (!AiBuilder.read(live.getBlock(), entry.getKey())
                      && (
@@ -6993,7 +6993,7 @@ final class AiBuilder {
                return null;
             }
 
-            void init(AiBuilder.Inner_StreamUtil cell, BlockPos pos, Entry<String, String> property, String reason) {
+            void init(AiBuilder.CellSpec cell, BlockPos pos, Entry<String, String> property, String reason) {
                if (!AiBuilder.read(AiBuilder.init_Block(cell), property.getKey()) && this.sync_Set.add(property.getKey()) && this.init_JsonArray.size() < 32) {
                   this.init_JsonArray
                      .add(
@@ -7005,11 +7005,11 @@ final class AiBuilder {
             }
 
             BlockPos load_BlockPos() {
-               AiBuilder.Inner_StreamUtil cell = this.init_List.get(this.data);
+               AiBuilder.CellSpec cell = this.init_List.get(this.data);
                return blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
             }
 
-            boolean flush(AiBuilder.Inner_StreamUtil cell, BlockPos pos) {
+            boolean flush(AiBuilder.CellSpec cell, BlockPos pos) {
                Block target = AiBuilder.init_Block(cell);
                return cell.properties().isEmpty()
                   && target.asItem() != Items.AIR
@@ -7017,7 +7017,7 @@ final class AiBuilder {
                   && !this.init(target)
                   && !target.defaultBlockState().hasBlockEntity()
                   && !target.defaultBlockState().isSignalSource()
-                  && !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(target.defaultBlockState())
+                  && !autismclient.ai.engine.AiPathfinder.LiveGridView.read(target.defaultBlockState())
                   && Block.isShapeFullBlock(AiBuilder.init_BlockState(cell).getCollisionShape(mc.level, pos));
             }
 
@@ -7059,7 +7059,7 @@ final class AiBuilder {
                      if (!tried.add(pos.asLong())) {
                         this.init_TableIndex_SyncMan.load(pos);
                      } else {
-                        AiBuilder.Inner_StreamUtil cell = this.load_Map.get(pos.asLong());
+                        AiBuilder.CellSpec cell = this.load_Map.get(pos.asLong());
                         if (cell == null) {
                            this.init_TableIndex_SyncMan.load(pos);
                         } else {
@@ -7080,7 +7080,7 @@ final class AiBuilder {
                }
             }
 
-            boolean init(AiBuilder.Inner_StreamUtil cell, BlockPos pos, AiSchematicApproach.Inner_DataUtil job, Predicate<AABB> clear) {
+            boolean init(AiBuilder.CellSpec cell, BlockPos pos, AiSchematicApproach.Inner_DataUtil job, Predicate<AABB> clear) {
                if (job.read(pos)
                   && this.flush(cell, pos)
                   && AiTerrain.init(mc.level, pos)
@@ -7093,7 +7093,7 @@ final class AiBuilder {
                   Item item = AiBuilder.init_Block(cell).asItem();
                   if (this.init(item) != 0
                      && !autismclient.ai.engine.PlacementGoal.init_Z_Minecraft(mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.init_Block(cell)))) {
-                     BlockPlacementPlanner.Inner_CachePool candidate = autismclient.ai.engine.PlacementGoal.init(
+                     BlockPlacementPlanner.PlacementPlan candidate = autismclient.ai.engine.PlacementGoal.init(
                         mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.init_Block(cell)), 32
                      );
                      if (candidate == null || this.read(cell, pos)) {
@@ -7126,7 +7126,7 @@ final class AiBuilder {
                   && !(mc.player.getDeltaMovement().horizontalDistanceSqr() < 4.0E-4)) {
                   BlockPos pos = blueprint.origin()
                      .offset(this.init_TableIndex_StreamU.dx(), this.init_TableIndex_StreamU.dy(), this.init_TableIndex_StreamU.dz());
-                  AiBuilder.Inner_StreamUtil cell = this.load_Map.get(pos.asLong());
+                  AiBuilder.CellSpec cell = this.load_Map.get(pos.asLong());
                   AiSchematicApproach.Inner_DataUtil job = this.load_b_DataUtil != null ? this.load_b_DataUtil : this.read_b_DataUtil;
                   if (cell != null && job != null && pos.equals(this.init_TableIndex_SyncMan.load()) && this.init(cell, pos, job, this.init_Predicate)) {
                      BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
@@ -7168,15 +7168,15 @@ final class AiBuilder {
             void close() {
                BlockPos pos = this.init_TableIndex_StateCa.init_BlockPos();
                if (pos != null) {
-                  AiBuilder.Inner_StreamUtil cell = this.load_TableIndex_StreamU;
-                  AiBuilder.Inner_StateCache.Inner_DataUtil outcome = this.init_TableIndex_StateCa
+                  AiBuilder.CellSpec cell = this.load_TableIndex_StreamU;
+                  AiBuilder.PlaceAckTracker.AckState outcome = this.init_TableIndex_StateCa
                      .init(
                         AiServerEvidence.init_J_BlockPos(pos),
                         AiBuilder.init(cell, mc.level.getBlockState(pos), power.substitutes(), true),
                         autismclient.util.villager.BlockChangeAckTracker.init_Z(mc.level, this.init_TableIndex_StateCa.init_I()),
                         mc.player.tickCount
                      );
-                  if (outcome == AiBuilder.Inner_StateCache.Inner_DataUtil.CONFIRMED) {
+                  if (outcome == AiBuilder.PlaceAckTracker.AckState.CONFIRMED) {
                      if (this.write_Set.add(pos.asLong())) {
                         this.state++;
                         this.close_I++;
@@ -7185,7 +7185,7 @@ final class AiBuilder {
                      AiScaffold.init_V(pos);
                      this.load_TableIndex_StreamU = null;
                      this.init_Map.remove(pos.asLong());
-                  } else if (outcome == AiBuilder.Inner_StateCache.Inner_DataUtil.RETRY) {
+                  } else if (outcome == AiBuilder.PlaceAckTracker.AckState.RETRY) {
                      this.load_TableIndex_StreamU = null;
                      this.poll_I++;
                      this.init_V_TableIndex_StreamU_BlockPos(cell, pos);
@@ -7193,7 +7193,7 @@ final class AiBuilder {
                }
             }
 
-            void init_V_TableIndex_StreamU_BlockPos(AiBuilder.Inner_StreamUtil cell, BlockPos pos) {
+            void init_V_TableIndex_StreamU_BlockPos(AiBuilder.CellSpec cell, BlockPos pos) {
                this.init_TableIndex_StreamU = null;
                this.init_U_CachePool = null;
                if (!AiBuilder.init_Z_Map(this.init_Map, pos, this.init_I)) {
@@ -7256,8 +7256,8 @@ final class AiBuilder {
                               }
                            }
 
-                           AiBuilder.Inner_StreamUtil cell = this.init_List.get(this.data);
-                           autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint = this.init_u_DataUtil_TableIndex_StreamU_Block(cell, block);
+                           AiBuilder.CellSpec cell = this.init_List.get(this.data);
+                           autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = this.init_u_DataUtil_TableIndex_StreamU_Block(cell, block);
                            if (this.pop(pos)) {
                               return;
                            }
@@ -7282,11 +7282,11 @@ final class AiBuilder {
                                  false,
                                  false,
                                  10,
-                                 autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
+                                 autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                                  true,
                                  2.0,
                                  AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
-                                    autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(pos, 0.45), this.init_Set_2(), pos.getY()
+                                    autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(pos, 0.45), this.init_Set_2(), pos.getY()
                                  )
                               );
                               return;
@@ -7336,7 +7336,7 @@ final class AiBuilder {
                                     this.init_b_DataUtil = null;
                                  }
 
-                                 List<autismclient.ai.engine.PlacementGoal.Inner_CachePool> targets = this.init(cell, pos, block, constraint);
+                                 List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets = this.init(cell, pos, block, constraint);
                                  this.load_b_DataUtil = new AiSchematicApproach.Inner_DataUtil(
                                     targets, this.init_AABB, batchKeep, this.init_Set_TableIndex_StreamU_BlockPos(cell, pos), this.init(targets)
                                  );
@@ -7361,7 +7361,7 @@ final class AiBuilder {
                }
             }
 
-            Set<Long> init_Set_TableIndex_StreamU_BlockPos(AiBuilder.Inner_StreamUtil cell, BlockPos pos) {
+            Set<Long> init_Set_TableIndex_StreamU_BlockPos(AiBuilder.CellSpec cell, BlockPos pos) {
                HashSet<Long> avoid = new HashSet<>(this.sync_Map.getOrDefault(pos.asLong(), Set.of()));
                avoid.addAll(this.load_Set);
                if (!AiBuilder.init_BlockState(cell).getCollisionShape(mc.level, pos).isEmpty()) {
@@ -7372,14 +7372,14 @@ final class AiBuilder {
                return avoid;
             }
 
-            List<autismclient.ai.engine.PlacementGoal.Inner_CachePool> init(
-               AiBuilder.Inner_StreamUtil cell, BlockPos pos, Block block, autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint
+            List<autismclient.ai.engine.PlacementGoal.PlacementRequest> init(
+               AiBuilder.CellSpec cell, BlockPos pos, Block block, autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint
             ) {
-               ArrayList<autismclient.ai.engine.PlacementGoal.Inner_CachePool> batch = new ArrayList<>();
-               batch.add(new autismclient.ai.engine.PlacementGoal.Inner_CachePool(pos, block.asItem(), constraint, AiBuilder.init_BlockState(cell)));
+               ArrayList<autismclient.ai.engine.PlacementGoal.PlacementRequest> batch = new ArrayList<>();
+               batch.add(new autismclient.ai.engine.PlacementGoal.PlacementRequest(pos, block.asItem(), constraint, AiBuilder.init_BlockState(cell)));
 
                for (int j = this.data + 1; j < this.init_List.size() && j < this.data + 192; j++) {
-                  AiBuilder.Inner_StreamUtil next = this.init_List.get(j);
+                  AiBuilder.CellSpec next = this.init_List.get(j);
                   if (next.dy() == cell.dy() && !AiSchematicActions.init_Z(next) && !AiBuilder.init_Z(next)) {
                      Block nextBlock = AiBuilder.init_Block(next);
                      Item item = next.block().equals("minecraft:grass_block") ? Items.DIRT : nextBlock.asItem();
@@ -7403,7 +7403,7 @@ final class AiBuilder {
 
                            if (supported) {
                               batch.add(
-                                 new autismclient.ai.engine.PlacementGoal.Inner_CachePool(
+                                 new autismclient.ai.engine.PlacementGoal.PlacementRequest(
                                     at, item, this.init_u_DataUtil_TableIndex_StreamU_Block(next, nextBlock), AiBuilder.init_BlockState(next)
                                  )
                               );
@@ -7416,13 +7416,13 @@ final class AiBuilder {
                return AiSchematicApproach.Inner_DataUtil.init_List_List_Vec3(batch, mc.player.position());
             }
 
-            boolean read(AiBuilder.Inner_StreamUtil currentCell) {
+            boolean read(AiBuilder.CellSpec currentCell) {
                if (this.init_b_DataUtil == null) {
                   return false;
                }
 
                for (int i = this.data; i < this.init_List.size() && i < this.data + 192; i++) {
-                  AiBuilder.Inner_StreamUtil next = this.init_List.get(i);
+                  AiBuilder.CellSpec next = this.init_List.get(i);
                   if (next.dy() == currentCell.dy()) {
                      BlockPos at = blueprint.origin().offset(next.dx(), next.dy(), next.dz());
                      if (this.init_b_DataUtil.init_Z_BlockPos(at) && !AiBuilder.init(next, mc.level.getBlockState(at), power.substitutes(), true)) {
@@ -7456,9 +7456,9 @@ final class AiBuilder {
                      int end = Math.min(this.init_List.size(), this.update_I + 192);
 
                      while (this.sync_I < end && System.nanoTime() < stop) {
-                        AiBuilder.Inner_StreamUtil next = this.init_List.get(this.sync_I++);
+                        AiBuilder.CellSpec next = this.init_List.get(this.sync_I++);
                         if (this.flush_I == -2147483648 || next.dy() == this.flush_I) {
-                           autismclient.ai.engine.PlacementGoal.Inner_CachePool target = this.init_u_CachePool_TableIndex_StreamU_Set(next, this.init_Set);
+                           autismclient.ai.engine.PlacementGoal.PlacementRequest target = this.init_u_CachePool_TableIndex_StreamU_Set(next, this.init_Set);
                            if (target != null && !this.read_List.stream().anyMatch(t -> t.pos().equals(target.pos()))) {
                               this.flush_I = next.dy();
                               this.read_List.add(target);
@@ -7468,9 +7468,9 @@ final class AiBuilder {
 
                      if (this.sync_I >= end) {
                         if (!this.read_List.isEmpty()) {
-                           List<autismclient.ai.engine.PlacementGoal.Inner_CachePool> targets = AiSchematicApproach.Inner_DataUtil.init_List_List_Vec3(this.read_List, this.init_Vec3_3());
-                           autismclient.ai.engine.PlacementGoal.Inner_CachePool first = targets.getFirst();
-                           AiBuilder.Inner_StreamUtil wanted = this.load_Map.get(first.pos().asLong());
+                           List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets = AiSchematicApproach.Inner_DataUtil.init_List_List_Vec3(this.read_List, this.init_Vec3_3());
+                           autismclient.ai.engine.PlacementGoal.PlacementRequest first = targets.getFirst();
+                           AiBuilder.CellSpec wanted = this.load_Map.get(first.pos().asLong());
                            this.init_b_DataUtil = new AiSchematicApproach.Inner_DataUtil(
                               targets,
                               this.init_AABB,
@@ -7508,13 +7508,13 @@ final class AiBuilder {
                   : (this.read_b_DataUtil != null ? this.read_b_DataUtil.init_Vec3() : mc.player.position());
             }
 
-            BlockPos init(List<autismclient.ai.engine.PlacementGoal.Inner_CachePool> targets) {
-               Set<BlockPos> selected = targets.stream().map(autismclient.ai.engine.PlacementGoal.Inner_CachePool::pos).collect(Collectors.toSet());
+            BlockPos init(List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets) {
+               Set<BlockPos> selected = targets.stream().map(autismclient.ai.engine.PlacementGoal.PlacementRequest::pos).collect(Collectors.toSet());
                BlockPos best = null;
                double distance = 1.0 / 0.0;
 
                for (int i = this.data; i < this.init_List.size() && i < this.data + 192; i++) {
-                  autismclient.ai.engine.PlacementGoal.Inner_CachePool next = this.init_u_CachePool_TableIndex_StreamU_Set(this.init_List.get(i), selected);
+                  autismclient.ai.engine.PlacementGoal.PlacementRequest next = this.init_u_CachePool_TableIndex_StreamU_Set(this.init_List.get(i), selected);
                   if (next != null) {
                      double near = targets.stream().mapToDouble(target -> target.pos().distSqr(next.pos())).min().orElse(1.0 / 0.0);
                      if (near < distance) {
@@ -7527,7 +7527,7 @@ final class AiBuilder {
                return best;
             }
 
-            autismclient.ai.engine.PlacementGoal.Inner_CachePool init_u_CachePool_TableIndex_StreamU_Set(AiBuilder.Inner_StreamUtil cell, Set<BlockPos> omit) {
+            autismclient.ai.engine.PlacementGoal.PlacementRequest init_u_CachePool_TableIndex_StreamU_Set(AiBuilder.CellSpec cell, Set<BlockPos> omit) {
                BlockPos at = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                if (!omit.contains(at) && !at.equals(this.load_BlockPos) && !AiSchematicActions.init_Z(cell) && !AiBuilder.init_Z(cell) && AiTerrain.init(mc.level, at)) {
                   BlockState live = mc.level.getBlockState(at);
@@ -7541,7 +7541,7 @@ final class AiBuilder {
                         && AiBuilder.init_BlockState(cell).canSurvive(mc.level, at)
                         && AiSchematicActions.init_BlockPos_TableIndex_StreamU(cell, at, mc.level, this.load_Map) == null
                         && !this.load_Z(cell, at)
-                     ? new autismclient.ai.engine.PlacementGoal.Inner_CachePool(
+                     ? new autismclient.ai.engine.PlacementGoal.PlacementRequest(
                         at, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, target), AiBuilder.init_BlockState(cell)
                      )
                      : null;
@@ -7550,7 +7550,7 @@ final class AiBuilder {
                }
             }
 
-            boolean close(AiBuilder.Inner_StreamUtil cell, BlockPos pos) {
+            boolean close(AiBuilder.CellSpec cell, BlockPos pos) {
                if (schematic && !this.get_Z) {
                   AiOperation lean = AiSchematicActions.init(cell, pos, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, AiBuilder.init_Block(cell)));
                   if (lean == null) {
@@ -7670,7 +7670,7 @@ final class AiBuilder {
                }
             }
 
-            autismclient.ai.engine.PlacementGoal.Inner_DataUtil init_u_DataUtil_TableIndex_StreamU_Block(AiBuilder.Inner_StreamUtil cell, Block block) {
+            autismclient.ai.engine.PlacementGoal.PlaceConstraint init_u_DataUtil_TableIndex_StreamU_Block(AiBuilder.CellSpec cell, Block block) {
                return AiBuilder.init(cell, block, blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()), mc.level);
             }
 
@@ -7688,7 +7688,7 @@ final class AiBuilder {
                return count;
             }
 
-            AiOperation init_AiOperation(AiBuilder.Inner_StreamUtil currentCell) {
+            AiOperation init_AiOperation(AiBuilder.CellSpec currentCell) {
                if (this.write_AiOperation == null && power.shulkerStock() && mc.level != null && mc.player != null) {
                   List<String> candidates = currentCell.block().equals("minecraft:grass_block")
                      ? List.of("minecraft:dirt")
@@ -7762,11 +7762,11 @@ final class AiBuilder {
                }
             }
 
-            int init_I_Item_TableIndex_StreamU(Item item, AiBuilder.Inner_StreamUtil currentCell) {
+            int init_I_Item_TableIndex_StreamU(Item item, AiBuilder.CellSpec currentCell) {
                int need = 0;
 
                for (int i = this.data; i < this.init_List.size() && need < 576; i++) {
-                  AiBuilder.Inner_StreamUtil cell = this.init_List.get(i);
+                  AiBuilder.CellSpec cell = this.init_List.get(i);
                   List<String> ids = cell.block().equals("minecraft:grass_block") ? List.of("minecraft:dirt") : power.candidates(cell.block());
                   boolean uses = false;
                   Iterator var8 = ids.iterator();
@@ -7803,7 +7803,7 @@ final class AiBuilder {
                int remaining = 0;
 
                for (int i = this.data; i < this.init_List.size() && remaining < 64 && nextMaterials.size() < 20; i++) {
-                  AiBuilder.Inner_StreamUtil cell = this.init_List.get(i);
+                  AiBuilder.CellSpec cell = this.init_List.get(i);
                   BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                   if (!AiBuilder.init(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
                      remaining++;
@@ -7818,7 +7818,7 @@ final class AiBuilder {
 
                int repairs = 0;
 
-               for (AiBuilder.Inner_StreamUtil cell : this.open_List) {
+               for (AiBuilder.CellSpec cell : this.open_List) {
                   if (nextMaterials.size() >= 24 || repairs++ >= 64) {
                      break;
                   }
@@ -7922,7 +7922,7 @@ final class AiBuilder {
                data.add(
                   "missing",
                   AiBuilder.init(
-                     new AiBuilder.Inner_DataUtil(blueprint.origin(), this.init_List.subList(this.data, this.init_List.size())),
+                     new AiBuilder.Blueprint(blueprint.origin(), this.init_List.subList(this.data, this.init_List.size())),
                      mc.player.getInventory(),
                      power.substitutes(),
                      schematic
@@ -8182,12 +8182,12 @@ final class AiBuilder {
       }
    }
 
-   private static final class Inner_BufferHelper {
-      private final List<List<AiBuilder.Inner_BufferHelper.Inner_DataUtil>> init_List = new ArrayList<>();
+   private static final class FlowGraph {
+      private final List<List<AiBuilder.FlowGraph.FlowEdge>> init_List = new ArrayList<>();
       private final int[] init_IArr;
       private final int[] load;
 
-      private Inner_BufferHelper(int size) {
+      private FlowGraph(int size) {
          this.init_IArr = new int[size];
          this.load = new int[size];
 
@@ -8198,8 +8198,8 @@ final class AiBuilder {
 
       private int init(int from, int to, int capacity) {
          int index = this.init_List.get(from).size();
-         this.init_List.get(from).add(new AiBuilder.Inner_BufferHelper.Inner_DataUtil(to, this.init_List.get(to).size(), capacity));
-         this.init_List.get(to).add(new AiBuilder.Inner_BufferHelper.Inner_DataUtil(from, index, 0));
+         this.init_List.get(from).add(new AiBuilder.FlowGraph.FlowEdge(to, this.init_List.get(to).size(), capacity));
+         this.init_List.get(to).add(new AiBuilder.FlowGraph.FlowEdge(from, index, 0));
          return index;
       }
 
@@ -8225,7 +8225,7 @@ final class AiBuilder {
          while (!queue.isEmpty()) {
             int at = queue.removeFirst();
 
-            for (AiBuilder.Inner_BufferHelper.Inner_DataUtil edge : this.init_List.get(at)) {
+            for (AiBuilder.FlowGraph.FlowEdge edge : this.init_List.get(at)) {
                if (edge.read != 0 && this.init_IArr[edge.init] < 0) {
                   this.init_IArr[edge.init] = this.init_IArr[at] + 1;
                   queue.addLast(edge.init);
@@ -8241,8 +8241,8 @@ final class AiBuilder {
             return amount;
          }
 
-         for (List<AiBuilder.Inner_BufferHelper.Inner_DataUtil> outgoing = this.init_List.get(at); this.load[at] < outgoing.size(); this.load[at]++) {
-            AiBuilder.Inner_BufferHelper.Inner_DataUtil edge = outgoing.get(this.load[at]);
+         for (List<AiBuilder.FlowGraph.FlowEdge> outgoing = this.init_List.get(at); this.load[at] < outgoing.size(); this.load[at]++) {
+            AiBuilder.FlowGraph.FlowEdge edge = outgoing.get(this.load[at]);
             if (edge.read > 0 && this.init_IArr[edge.init] == this.init_IArr[at] + 1) {
                int pushed = this.load(edge.init, sink, Math.min(amount, edge.read));
                if (pushed > 0) {
@@ -8256,12 +8256,12 @@ final class AiBuilder {
          return 0;
       }
 
-      private static final class Inner_DataUtil {
+      private static final class FlowEdge {
          private final int init;
          private final int load;
          private int read;
 
-         private Inner_DataUtil(int to, int reverse, int remaining) {
+         private FlowEdge(int to, int reverse, int remaining) {
             this.init = to;
             this.load = reverse;
             this.read = remaining;
@@ -8269,39 +8269,39 @@ final class AiBuilder {
       }
    }
 
-   record Inner_CachePool(boolean matches, String difference) {
-      private static final AiBuilder.Inner_CachePool MATCH = new AiBuilder.Inner_CachePool(true, "");
+   record MatchResult(boolean matches, String difference) {
+      private static final AiBuilder.MatchResult MATCH = new AiBuilder.MatchResult(true, "");
    }
 
-   record Inner_ConfigStore(
+   record BuildOptions(
       int rotation,
       String mirror,
       int layerStart,
       int layerHeight,
       boolean skipFailed,
       Map<String, List<String>> substitutes,
-      AiBuilder.Inner_NetHelper repeat,
+      AiBuilder.RepeatSpec repeat,
       boolean clearTerrain,
       boolean shulkerStock,
       Map<Long, String> signText,
       AiSchematicMachinePlan machine,
       boolean assumeFly
    ) {
-      static final AiBuilder.Inner_ConfigStore DEFAULT = new AiBuilder.Inner_ConfigStore(0, "none", 0, -1, false, Map.of(), null, false, true);
+      static final AiBuilder.BuildOptions DEFAULT = new AiBuilder.BuildOptions(0, "none", 0, -1, false, Map.of(), null, false, true);
 
-      Inner_ConfigStore {
+      BuildOptions {
          signText = Map.copyOf(signText);
          Objects.requireNonNull(machine);
       }
 
-      Inner_ConfigStore(
+      BuildOptions(
          int rotation,
          String mirror,
          int layerStart,
          int layerHeight,
          boolean skipFailed,
          Map<String, List<String>> substitutes,
-         AiBuilder.Inner_NetHelper repeat,
+         AiBuilder.RepeatSpec repeat,
          boolean clearTerrain,
          boolean shulkerStock,
          Map<Long, String> signText,
@@ -8310,14 +8310,14 @@ final class AiBuilder {
          this(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, clearTerrain, shulkerStock, signText, machine, false);
       }
 
-      Inner_ConfigStore(
+      BuildOptions(
          int rotation,
          String mirror,
          int layerStart,
          int layerHeight,
          boolean skipFailed,
          Map<String, List<String>> substitutes,
-         AiBuilder.Inner_NetHelper repeat,
+         AiBuilder.RepeatSpec repeat,
          boolean clearTerrain,
          boolean shulkerStock,
          Map<Long, String> signText
@@ -8325,47 +8325,47 @@ final class AiBuilder {
          this(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, clearTerrain, shulkerStock, signText, AiSchematicMachinePlan.init_bV);
       }
 
-      Inner_ConfigStore(
+      BuildOptions(
          int rotation,
          String mirror,
          int layerStart,
          int layerHeight,
          boolean skipFailed,
          Map<String, List<String>> substitutes,
-         AiBuilder.Inner_NetHelper repeat,
+         AiBuilder.RepeatSpec repeat,
          boolean clearTerrain
       ) {
          this(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, clearTerrain, true);
       }
 
-      Inner_ConfigStore(
+      BuildOptions(
          int rotation,
          String mirror,
          int layerStart,
          int layerHeight,
          boolean skipFailed,
          Map<String, List<String>> substitutes,
-         AiBuilder.Inner_NetHelper repeat,
+         AiBuilder.RepeatSpec repeat,
          boolean clearTerrain,
          boolean shulkerStock
       ) {
          this(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, clearTerrain, shulkerStock, Map.of());
       }
 
-      Inner_ConfigStore(
+      BuildOptions(
          int rotation,
          String mirror,
          int layerStart,
          int layerHeight,
          boolean skipFailed,
          Map<String, List<String>> substitutes,
-         AiBuilder.Inner_NetHelper repeat
+         AiBuilder.RepeatSpec repeat
       ) {
          this(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, false, true);
       }
 
-      AiBuilder.Inner_ConfigStore withSignText(Map<Long, String> text) {
-         return new AiBuilder.Inner_ConfigStore(
+      AiBuilder.BuildOptions withSignText(Map<Long, String> text) {
+         return new AiBuilder.BuildOptions(
             this.rotation,
             this.mirror,
             this.layerStart,
@@ -8381,8 +8381,8 @@ final class AiBuilder {
          );
       }
 
-      AiBuilder.Inner_ConfigStore withMachine(AiSchematicMachinePlan value) {
-         return new AiBuilder.Inner_ConfigStore(
+      AiBuilder.BuildOptions withMachine(AiSchematicMachinePlan value) {
+         return new AiBuilder.BuildOptions(
             this.rotation,
             this.mirror,
             this.layerStart,
@@ -8398,8 +8398,8 @@ final class AiBuilder {
          );
       }
 
-      AiBuilder.Inner_ConfigStore withAssumeFly(boolean value) {
-         return new AiBuilder.Inner_ConfigStore(
+      AiBuilder.BuildOptions withAssumeFly(boolean value) {
+         return new AiBuilder.BuildOptions(
             this.rotation,
             this.mirror,
             this.layerStart,
@@ -8432,13 +8432,13 @@ final class AiBuilder {
       }
    }
 
-   record Inner_DataUtil(BlockPos origin, List<AiBuilder.Inner_StreamUtil> cells) {
+   record Blueprint(BlockPos origin, List<AiBuilder.CellSpec> cells) {
    }
 
-   private static final class Inner_JsonUtil implements AiOperation {
+   private static final class BuildOp implements AiOperation {
       final Minecraft init_Minecraft = Minecraft.getInstance();
-      final AiBuilder.Inner_DataUtil init_TableIndex_DataUti;
-      final AiBuilder.Inner_ConfigStore init_TableIndex_ConfigS;
+      final AiBuilder.Blueprint init_TableIndex_DataUti;
+      final AiBuilder.BuildOptions init_TableIndex_ConfigS;
       final boolean init_Z;
       final long init_J;
       int init_I;
@@ -8449,7 +8449,7 @@ final class AiBuilder {
       AiOperation init_AiOperation;
       boolean load_Z;
 
-      Inner_JsonUtil(AiBuilder.Inner_DataUtil base, AiBuilder.Inner_ConfigStore power, boolean verify, int timeoutSeconds) {
+      BuildOp(AiBuilder.Blueprint base, AiBuilder.BuildOptions power, boolean verify, int timeoutSeconds) {
          this.init_TableIndex_DataUti = base;
          this.init_TableIndex_ConfigS = power;
          this.init_Z = verify;
@@ -8498,12 +8498,12 @@ final class AiBuilder {
                this.init_I++;
             }
 
-            AiBuilder.Inner_NetHelper repeat = this.init_TableIndex_ConfigS.repeat();
+            AiBuilder.RepeatSpec repeat = this.init_TableIndex_ConfigS.repeat();
             if (repeat.count() >= 0 && this.init_I > repeat.count()) {
                return this.init(AiOperation.Status.SUCCEEDED, "Built " + this.init_I + " copies");
             }
 
-            AiBuilder.Inner_DataUtil shifted = new AiBuilder.Inner_DataUtil(
+            AiBuilder.Blueprint shifted = new AiBuilder.Blueprint(
                this.init_TableIndex_DataUti.origin().offset(repeat.dx() * this.init_I, repeat.dy() * this.init_I, repeat.dz() * this.init_I),
                this.init_TableIndex_DataUti.cells()
             );
@@ -8538,7 +8538,7 @@ final class AiBuilder {
       }
 
       JsonObject init_JsonObject_19() {
-         AiBuilder.Inner_NetHelper repeat = this.init_TableIndex_ConfigS.repeat();
+         AiBuilder.RepeatSpec repeat = this.init_TableIndex_ConfigS.repeat();
          return AiJson.init_JsonObject_ObjArr(
             "copies",
             this.init_I,
@@ -8582,10 +8582,10 @@ final class AiBuilder {
       }
    }
 
-   record Inner_NetHelper(int dx, int dy, int dz, int count) {
+   record RepeatSpec(int dx, int dy, int dz, int count) {
    }
 
-   static final class Inner_StateCache {
+   static final class PlaceAckTracker {
       private BlockPos init_BlockPos;
       private long init_J;
       private int init_I;
@@ -8610,29 +8610,29 @@ final class AiBuilder {
          this.load = sentTick;
       }
 
-      AiBuilder.Inner_StateCache.Inner_DataUtil init(long currentRevision, boolean satisfied, boolean acknowledged, int nowTick) {
+      AiBuilder.PlaceAckTracker.AckState init(long currentRevision, boolean satisfied, boolean acknowledged, int nowTick) {
          if (this.init_BlockPos == null) {
-            return AiBuilder.Inner_StateCache.Inner_DataUtil.IDLE;
+            return AiBuilder.PlaceAckTracker.AckState.IDLE;
          }
 
          if (satisfied) {
             if (currentRevision <= this.init_J) {
-               return AiBuilder.Inner_StateCache.Inner_DataUtil.WAITING;
+               return AiBuilder.PlaceAckTracker.AckState.WAITING;
             }
 
             this.init_BlockPos = null;
-            return AiBuilder.Inner_StateCache.Inner_DataUtil.CONFIRMED;
+            return AiBuilder.PlaceAckTracker.AckState.CONFIRMED;
          } else {
             if (nowTick - this.load < 4 || currentRevision <= this.init_J && !acknowledged) {
-               return AiBuilder.Inner_StateCache.Inner_DataUtil.WAITING;
+               return AiBuilder.PlaceAckTracker.AckState.WAITING;
             }
 
             this.init_BlockPos = null;
-            return AiBuilder.Inner_StateCache.Inner_DataUtil.RETRY;
+            return AiBuilder.PlaceAckTracker.AckState.RETRY;
          }
       }
 
-      enum Inner_DataUtil {
+      enum AckState {
          IDLE,
          WAITING,
          CONFIRMED,
@@ -8640,13 +8640,13 @@ final class AiBuilder {
       }
    }
 
-   record Inner_StreamUtil(int dx, int dy, int dz, String block, Map<String, String> properties) {
-      Inner_StreamUtil(int dx, int dy, int dz, String block) {
+   record CellSpec(int dx, int dy, int dz, String block, Map<String, String> properties) {
+      CellSpec(int dx, int dy, int dz, String block) {
          this(dx, dy, dz, block, Map.of());
       }
    }
 
-   static final class Inner_SyncManager {
+   static final class ReadyQueue {
       private final ArrayDeque<BlockPos> init_ArrayDeque = new ArrayDeque<>();
       private final Set<Long> init_Set = new HashSet<>();
       private final Set<Long> load_Set = new HashSet<>();
@@ -8756,7 +8756,7 @@ final class AiBuilder {
       }
    }
 
-   enum Inner_TaskQueue {
+   enum OrientationKind {
       FACE_AXIS,
       CLICK_HEIGHT,
       CLICK_POSITION,

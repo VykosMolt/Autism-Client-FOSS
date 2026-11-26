@@ -34,7 +34,7 @@ final class AiSchematicBatchPlan {
          return 1.0 / 0.0;
       }
 
-      double travel = AiPathfinder.Inner_CachePool.load(feet.getX() - Mth.floor(worker.x), feet.getY() - Mth.floor(worker.y), feet.getZ() - Mth.floor(worker.z));
+      double travel = AiPathfinder.MoveCosts.load(feet.getX() - Mth.floor(worker.x), feet.getY() - Mth.floor(worker.y), feet.getZ() - Mth.floor(worker.z));
       return (24.0 + travel + supports * 64.0 + clearance * 24.0) / useful;
    }
 
@@ -509,7 +509,7 @@ final class AiSchematicBatchPlan {
       }
 
       private static double init_D_BlockPos_BlockPos(BlockPos from, BlockPos to) {
-         return AiPathfinder.Inner_CachePool.load(to.getX() - from.getX(), to.getY() - from.getY(), to.getZ() - from.getZ());
+         return AiPathfinder.MoveCosts.load(to.getX() - from.getX(), to.getY() - from.getY(), to.getZ() - from.getZ());
       }
 
       private record Inner_DataUtil(long done, int at, long visitedLow, long visitedHigh) {

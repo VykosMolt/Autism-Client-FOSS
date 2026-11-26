@@ -33,16 +33,16 @@ public final class SilentMovementCoordinator {
       }
    }
 
-   public static RotationMath.Inner_DataUtil init_ce_DataUtil() {
+   public static RotationMath.Rotation init_ce_DataUtil() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null) {
-         RotationMath.Inner_DataUtil rotation = SilentRotationManager.init_ce_DataUtil();
+         RotationMath.Rotation rotation = SilentRotationManager.init_ce_DataUtil();
          if (rotation == null) {
             return null;
          } else if (!AutismLiteVariant.enabled() && "ai-assistant".equals(SilentRotationManager.init_Str())) {
             return autismclient.ai.AiAssistant.init_ConfigStore().load_Z_23() ? rotation : null;
          } else {
-            return autismclient.modules.al.init_Module_Str(SilentRotationManager.init_Str()) instanceof SilentMovementCoordinator.Inner_DataUtil owner && owner.load_Z_23() ? rotation : null;
+            return autismclient.modules.al.init_Module_Str(SilentRotationManager.init_Str()) instanceof SilentMovementCoordinator.Participant owner && owner.load_Z_23() ? rotation : null;
          }
       } else {
          return null;
@@ -52,7 +52,7 @@ public final class SilentMovementCoordinator {
    public static Input init(ClientInput source, Input input) {
       Minecraft mc = Minecraft.getInstance();
       if (input != null && mc != null && mc.player != null && mc.player.input == source) {
-         RotationMath.Inner_DataUtil rotation = init_ce_DataUtil();
+         RotationMath.Rotation rotation = init_ce_DataUtil();
          if (rotation == null) {
             return input;
          }
@@ -111,10 +111,10 @@ public final class SilentMovementCoordinator {
       return AutismLiteVariant.enabled() ? false : "clutch".equals(SilentRotationManager.init_Str()) && !ClutchModule.sync_Z_10();
    }
 
-   private static boolean init(RotationMath.Inner_DataUtil rotation) {
+   private static boolean init(RotationMath.Rotation rotation) {
       return rotation == null
             || !(
-               autismclient.modules.al.init_Module_Str(SilentRotationManager.init_Str()) instanceof SilentMovementCoordinator.Inner_DataUtil owner
+               autismclient.modules.al.init_Module_Str(SilentRotationManager.init_Str()) instanceof SilentMovementCoordinator.Participant owner
                   && !owner.write_Z_10()
                   && !SilentRotationManager.init_Z()
                   && !autismclient.modules.FreecamController.write()
@@ -125,12 +125,12 @@ public final class SilentMovementCoordinator {
    }
 
    public static float init_F(LocalPlayer player) {
-      RotationMath.Inner_DataUtil rotation = init(player);
+      RotationMath.Rotation rotation = init(player);
       return init(rotation) ? rotation.init() : player.getYRot();
    }
 
    public static float init_F(Entity entity, float vanillaYaw) {
-      RotationMath.Inner_DataUtil rotation = init(entity);
+      RotationMath.Rotation rotation = init(entity);
       return rotation == null ? vanillaYaw : rotation.init();
    }
 
@@ -139,17 +139,17 @@ public final class SilentMovementCoordinator {
    }
 
    public static float load(LocalPlayer player, float vanillaPitch) {
-      RotationMath.Inner_DataUtil rotation = init(player);
+      RotationMath.Rotation rotation = init(player);
       return rotation == null ? vanillaPitch : rotation.load();
    }
 
    public static Vec3 init(LocalPlayer player, Vec3 vanillaVector) {
-      RotationMath.Inner_DataUtil rotation = init(player);
+      RotationMath.Rotation rotation = init(player);
       return rotation == null ? vanillaVector : Vec3.directionFromRotation(rotation.load(), rotation.init());
    }
 
    public static Vec3 init(LivingEntity entity, Vec3 vanillaImpulse) {
-      RotationMath.Inner_DataUtil rotation = init(entity);
+      RotationMath.Rotation rotation = init(entity);
       if (rotation == null) {
          return vanillaImpulse;
       }
@@ -159,16 +159,16 @@ public final class SilentMovementCoordinator {
    }
 
    public static float init(LivingEntity entity, float vanillaPitch) {
-      RotationMath.Inner_DataUtil rotation = init(entity);
+      RotationMath.Rotation rotation = init(entity);
       return rotation == null ? vanillaPitch : rotation.load();
    }
 
    public static Vec3 load(LivingEntity entity, Vec3 vanillaLook) {
-      RotationMath.Inner_DataUtil rotation = init(entity);
+      RotationMath.Rotation rotation = init(entity);
       return rotation == null ? vanillaLook : Vec3.directionFromRotation(rotation.load(), rotation.init());
    }
 
-   private static RotationMath.Inner_DataUtil init(Entity entity) {
+   private static RotationMath.Rotation init(Entity entity) {
       Minecraft mc = Minecraft.getInstance();
       return entity != null && mc != null && entity == mc.player ? init_ce_DataUtil() : null;
    }
@@ -199,7 +199,7 @@ public final class SilentMovementCoordinator {
 
    public static void init(Minecraft mc) {
       if (mc != null && mc.player != null) {
-         RotationMath.Inner_DataUtil live = init_ce_DataUtil();
+         RotationMath.Rotation live = init_ce_DataUtil();
          double wireYaw = ServerRotationTracker.init_ch_CachePool().init_Z() ? ServerRotationTracker.init_ch_CachePool().read() : 0.0 / 0.0;
          init_FArr = new float[]{init_F, (float)wireYaw, live == null ? 0.0F / 0.0F : live.init(), init_I, load_F};
       }
@@ -209,7 +209,7 @@ public final class SilentMovementCoordinator {
       return (float[])init_FArr.clone();
    }
 
-   public static RotationMath.Inner_DataUtil init_ce_DataUtil(LocalPlayer player) {
+   public static RotationMath.Rotation init_ce_DataUtil(LocalPlayer player) {
       Minecraft mc = Minecraft.getInstance();
       if (player == null || mc == null || player != mc.player) {
          return null;
@@ -219,15 +219,15 @@ public final class SilentMovementCoordinator {
          return init_ce_DataUtil();
       }
 
-      RotationMath.Inner_DataUtil scaffold = autismclient.modules.ScaffoldModule.init_ce_DataUtil_3();
+      RotationMath.Rotation scaffold = autismclient.modules.ScaffoldModule.init_ce_DataUtil_3();
       return scaffold != null ? scaffold : init_ce_DataUtil();
    }
 
-   public static RotationMath.Inner_DataUtil load(LocalPlayer player) {
+   public static RotationMath.Rotation load(LocalPlayer player) {
       return init_ce_DataUtil(player);
    }
 
-   public interface Inner_DataUtil {
+   public interface Participant {
       boolean load_Z_23();
 
       default boolean write_Z_10() {

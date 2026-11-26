@@ -1506,9 +1506,9 @@ public final class PrintView implements SignalGetter {
       return this.init_BlockHitResult_Vec3_Vec3(eye, to);
    }
 
-   public AiPhysics.Inner_CachePool init_NodeWalker_CachePo() {
+   public AiPhysics.PhysicsWorld init_NodeWalker_CachePo() {
       final PrintView view = this;
-      return new AiPhysics.Inner_CachePool() {
+      return new AiPhysics.PhysicsWorld() {
          private final Long2ObjectOpenHashMap<List<AABB>> init = new Long2ObjectOpenHashMap<>();
 
          private List<AABB> init_List_2(int x, int y, int z) {

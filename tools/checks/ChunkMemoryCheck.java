@@ -65,9 +65,9 @@ public class ChunkMemoryCheck {
       synchronized (field(m, "init_Obj")) {
          memory.clear();
       }
-      check(m.init_ClassCache_FileCac_I(0, 60, 0) == AiPathfinder.Inner_FileCache.UNLOADED, "first query misses");
+      check(m.init_ClassCache_FileCac_I(0, 60, 0) == AiPathfinder.CellInfo.UNLOADED, "first query misses");
       drain(m);
-      check(m.init_ClassCache_FileCac_I(0, 60, 0) == AiPathfinder.Inner_FileCache.CACHED_SOLID, "region file is read back on a miss");
+      check(m.init_ClassCache_FileCac_I(0, 60, 0) == AiPathfinder.CellInfo.CACHED_SOLID, "region file is read back on a miss");
       check(read.contains(AiGridRevisions.init_J(0, 0)), "successful read is recorded");
 
       // (b) a corrupt region is moved aside and marked read, so it is read once.

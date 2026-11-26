@@ -3,11 +3,11 @@ package autismclient.protector;
 public interface PacketOriginDuck {
    void autism$setFromPacket();
 
-   default void autism$setFromPacket(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   default void autism$setFromPacket(ConnectionPrivacyRegistry.ConnectionSession context) {
       this.autism$setFromPacket();
    }
 
-   default ConnectionPrivacyRegistry.Inner_StreamUtil autism$packetOrigin() {
+   default ConnectionPrivacyRegistry.ConnectionSession autism$packetOrigin() {
       return null;
    }
 

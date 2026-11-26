@@ -38,19 +38,19 @@ public class UiColorPalette {
    }
 
    public static int init() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.Inner_DataUtil.ACCENT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int load() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(1722959944, ThemePaletteManager.Inner_DataUtil.ACCENT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(1722959944, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int read() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.Inner_DataUtil.ACCENT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int write() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-7522248, ThemePaletteManager.Inner_DataUtil.ACCENT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-7522248, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int update() {
@@ -82,11 +82,11 @@ public class UiColorPalette {
    }
 
    public static int pop() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(1715151911, ThemePaletteManager.Inner_DataUtil.OUTLINE);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(1715151911, ThemePaletteManager.ColorRole.OUTLINE);
    }
 
    public static int tick() {
-      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY);
+      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY);
    }
 
    public static int run() {
@@ -102,11 +102,11 @@ public class UiColorPalette {
    }
 
    public static int put() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.Inner_DataUtil.ACCENT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int add() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-6388344, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-6388344, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int clear() {
@@ -114,7 +114,7 @@ public class UiColorPalette {
    }
 
    public static int reset() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-3361096, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-3361096, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int start() {
@@ -130,23 +130,23 @@ public class UiColorPalette {
    }
 
    public static int prev() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-1938838, ThemePaletteManager.Inner_DataUtil.DANGER);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-1938838, ThemePaletteManager.ColorRole.DANGER);
    }
 
    public static int valid() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-1938838, ThemePaletteManager.Inner_DataUtil.DANGER);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-1938838, ThemePaletteManager.ColorRole.DANGER);
    }
 
    public static int size() {
-      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SUCCESS);
+      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.ui.layout.ButtonNode.Variant.SUCCESS);
    }
 
    public static int data() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-11018872, ThemePaletteManager.Inner_DataUtil.SUCCESS);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-11018872, ThemePaletteManager.ColorRole.SUCCESS);
    }
 
    public static int value() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-11018872, ThemePaletteManager.Inner_DataUtil.SUCCESS);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-11018872, ThemePaletteManager.ColorRole.SUCCESS);
    }
 
    public static int cache() {
@@ -202,15 +202,15 @@ public class UiColorPalette {
    }
 
    public static int block() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-10035062, ThemePaletteManager.Inner_DataUtil.TOGGLE);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-10035062, ThemePaletteManager.ColorRole.TOGGLE);
    }
 
    public static int chunk() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-12531347, ThemePaletteManager.Inner_DataUtil.TOGGLE);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-12531347, ThemePaletteManager.ColorRole.TOGGLE);
    }
 
    public static int table() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int init(boolean c2s, int rowIndex, boolean hovered) {
@@ -256,23 +256,23 @@ public class UiColorPalette {
    }
 
    public static int scan() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-791058, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-791058, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int parse() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-3361096, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-3361096, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int bind() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-6388344, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-6388344, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int a() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-6388344, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-6388344, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int b() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-791058, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-791058, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int c() {
@@ -304,11 +304,11 @@ public class UiColorPalette {
    }
 
    public static int j() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.Inner_DataUtil.ACCENT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-5093304, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int k() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-7522248, ThemePaletteManager.Inner_DataUtil.ACCENT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-7522248, ThemePaletteManager.ColorRole.ACCENT);
    }
 
    public static int l() {

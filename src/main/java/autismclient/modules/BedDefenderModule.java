@@ -69,7 +69,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
-public final class BedDefenderModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
+public final class BedDefenderModule extends Module implements SilentMovementCoordinator.Participant {
    static final String init_Str = Arrays.stream(DyeColor.values()).map(color -> "minecraft:" + color.getName() + "_wool").collect(Collectors.joining("|"));
    static final String load_Str = "minecraft:end_stone|" + init_Str + "|minecraft:oak_planks|minecraft:obsidian";
    private List<BedDefenderModule.Inner_CachePool> init_List = List.of();
@@ -87,7 +87,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    private final Map<String, Set<Block>> load_Map = new HashMap<>();
    private final Map<BlockPos, Set<BlockPos>> read_Map = new HashMap<>();
    private final Map<BlockPos, List<Vec3>> write_Map = new HashMap<>();
-   private final autismclient.util.BlockPlacementPlanner.Inner_StreamUtil init_U_StreamUtil = new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(48);
+   private final autismclient.util.BlockPlacementPlanner.RayBudget init_U_StreamUtil = new autismclient.util.BlockPlacementPlanner.RayBudget(48);
    private static final float init_F = 55.0F;
    private static final double init_D = 1.0;
    private static final int load_I = 6;
@@ -121,19 +121,19 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    private int start = -1;
    private int stop;
    private final KillAuraModule.Inner_JsonUtil init_aa_JsonUtil = new KillAuraModule.Inner_JsonUtil();
-   private final List<autismclient.util.BlockPlacementPlanner.Inner_TaskQueue> write_List = new ArrayList<>();
+   private final List<autismclient.util.BlockPlacementPlanner.SupportCandidate> write_List = new ArrayList<>();
    private int[] load_IArr = new int[0];
    private int next;
    private long init_J;
    private long load_J;
    private boolean load_Z;
-   private final Map<autismclient.util.BlockPlacementPlanner.Inner_TaskQueue, List<Vec3>> sync_Map = new HashMap<>();
-   private final Map<autismclient.util.BlockPlacementPlanner.Inner_TaskQueue, Integer> flush_Map = new HashMap<>();
-   private final Map<BlockPos, List<autismclient.util.BlockPlacementPlanner.Inner_CachePool>> close_Map = new HashMap<>();
+   private final Map<autismclient.util.BlockPlacementPlanner.SupportCandidate, List<Vec3>> sync_Map = new HashMap<>();
+   private final Map<autismclient.util.BlockPlacementPlanner.SupportCandidate, Integer> flush_Map = new HashMap<>();
+   private final Map<BlockPos, List<autismclient.util.BlockPlacementPlanner.PlacementPlan>> close_Map = new HashMap<>();
    private int prev;
    private BedDefenderModule.Inner_StreamUtil[] init_ListPool_StreamUtiArr = new BedDefenderModule.Inner_StreamUtil[0];
    private int[] read_IArr = new int[0];
-   private final autismclient.util.BlockPlacementPlanner.Inner_StreamUtil load_U_StreamUtil = new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(16);
+   private final autismclient.util.BlockPlacementPlanner.RayBudget load_U_StreamUtil = new autismclient.util.BlockPlacementPlanner.RayBudget(16);
    private int valid = -2147483648;
    private boolean read_Z;
    private final Map<BlockPos, Boolean> open_Map = new LinkedHashMap<>();
@@ -429,9 +429,9 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             this.init_DyeColor = this.init_DyeColor();
             int slot = this.init_I_I(0);
             ItemStack material = slot < 0 ? ItemStack.EMPTY : MC.player.getInventory().getItem(slot);
-            ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
-            RotationMath.Inner_DataUtil wireRotation = wire.init_Z() ? new RotationMath.Inner_DataUtil(wire.read(), wire.write()) : null;
-            RotationMath.Inner_DataUtil from = wireRotation != null ? wireRotation : RotationMath.init(MC.player);
+            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
+            RotationMath.Rotation wireRotation = wire.init_Z() ? new RotationMath.Rotation(wire.read(), wire.write()) : null;
+            RotationMath.Rotation from = wireRotation != null ? wireRotation : RotationMath.init(MC.player);
             this.read_V_5();
             this.init_V_ItemStack(material);
             slot = this.init_I == 0 ? -1 : this.init_IArr[this.init_I];
@@ -446,7 +446,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       }
    }
 
-   private void init_V_ce_DataUtil_ItemStack(RotationMath.Inner_DataUtil from, ItemStack material) {
+   private void init_V_ce_DataUtil_ItemStack(RotationMath.Rotation from, ItemStack material) {
       this.read_Map.clear();
       this.write_Map.clear();
       this.close_Map.clear();
@@ -455,34 +455,34 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          surveyOrder.sort(Comparator.<BlockPos>comparingDouble(p -> p.distToCenterSqr(MC.player.getEyePosition())).reversed());
          Set<BlockPos> considered = new LinkedHashSet<>(surveyOrder.subList(0, Math.min(64, surveyOrder.size())));
          Map<BlockPos, List<Vec3>> rays = this.write_Map;
-         Map<BlockPos, List<autismclient.util.BlockPlacementPlanner.Inner_TaskQueue>> buckets = new LinkedHashMap<>();
+         Map<BlockPos, List<autismclient.util.BlockPlacementPlanner.SupportCandidate>> buckets = new LinkedHashMap<>();
 
          for (BlockPos cell : considered) {
             buckets.put(cell, new ArrayList<>());
          }
 
-         for (autismclient.util.BlockPlacementPlanner.Inner_TaskQueue option : this.write_List) {
+         for (autismclient.util.BlockPlacementPlanner.SupportCandidate option : this.write_List) {
             if (considered.contains(option.init_BlockPos())) {
                buckets.get(option.init_BlockPos()).add(option);
             }
          }
 
          this.init_U_StreamUtil.init(48);
-         autismclient.util.BlockPlacementPlanner.Inner_StateCache request = this.init_U_StateCache_ce_DataUtil(from, material, this.tick_Z_2() || this.pop(), null)
+         autismclient.util.BlockPlacementPlanner.Query request = this.init_U_StateCache_ce_DataUtil(from, material, this.tick_Z_2() || this.pop(), null)
             .init_U_StateCache_U_StreamUtil(this.init_U_StreamUtil);
          boolean more = true;
 
          for (int offset = 0; more && this.init_U_StreamUtil.init_I() > 0; offset++) {
             more = false;
 
-            for (Entry<BlockPos, List<autismclient.util.BlockPlacementPlanner.Inner_TaskQueue>> entry : buckets.entrySet()) {
+            for (Entry<BlockPos, List<autismclient.util.BlockPlacementPlanner.SupportCandidate>> entry : buckets.entrySet()) {
                if (offset < entry.getValue().size()) {
                   more = true;
                   List<Vec3> points = rays.computeIfAbsent(entry.getKey(), ignored -> new ArrayList<>());
                   if (points.size() < 4) {
-                     autismclient.util.BlockPlacementPlanner.Inner_TaskQueue option = entry.getValue().get(offset);
-                     autismclient.util.BlockPlacementPlanner.Inner_DataUtil aim = autismclient.util.BlockPlacementPlanner.init(option, request.init_U_StateCache_BlockPos(option.init_BlockPos()), null);
-                     autismclient.util.BlockPlacementPlanner.Inner_CachePool confirmed = this.init_U_CachePool_U_TaskQueue(option, aim, request, null);
+                     autismclient.util.BlockPlacementPlanner.SupportCandidate option = entry.getValue().get(offset);
+                     autismclient.util.BlockPlacementPlanner.AimSample aim = autismclient.util.BlockPlacementPlanner.init(option, request.init_U_StateCache_BlockPos(option.init_BlockPos()), null);
+                     autismclient.util.BlockPlacementPlanner.PlacementPlan confirmed = this.init_U_CachePool_U_TaskQueue(option, aim, request, null);
                      if (confirmed != null) {
                         points.add(confirmed.init_BlockHitResult().getLocation());
                         this.close_Map.computeIfAbsent(entry.getKey(), ignored -> new ArrayList<>()).add(confirmed);
@@ -525,8 +525,8 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                   }
 
                   if (!stillVisible && examined) {
-                     for (Entry<BlockPos, List<autismclient.util.BlockPlacementPlanner.Inner_TaskQueue>> entry : buckets.entrySet()) {
-                        if (!entry.getKey().equals(victim) && entry.getValue().stream().anyMatch(autismclient.util.BlockPlacementPlanner.Inner_TaskQueue::init_Z)) {
+                     for (Entry<BlockPos, List<autismclient.util.BlockPlacementPlanner.SupportCandidate>> entry : buckets.entrySet()) {
+                        if (!entry.getKey().equals(victim) && entry.getValue().stream().anyMatch(autismclient.util.BlockPlacementPlanner.SupportCandidate::init_Z)) {
                            postureBefore.computeIfAbsent(entry.getKey(), ignored -> new HashSet<>()).add(victim);
                         }
                      }
@@ -1106,7 +1106,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       return best;
    }
 
-   private void init_V_I(int slot, ItemStack material, RotationMath.Inner_DataUtil wireRotation, RotationMath.Inner_DataUtil from) {
+   private void init_V_I(int slot, ItemStack material, RotationMath.Rotation wireRotation, RotationMath.Rotation from) {
       if (!this.close_Z_2()) {
          this.load_V_7();
       } else if (this.open_Z()) {
@@ -1173,7 +1173,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       }
    }
 
-   private boolean init_Z_ce_DataUtil_Z(RotationMath.Inner_DataUtil goal, boolean holdPitch) {
+   private boolean init_Z_ce_DataUtil_Z(RotationMath.Rotation goal, boolean holdPitch) {
       autismclient.util.SilentRotationManager.init_V_Str(this.id(), 30, goal);
       this.add = AutismSessionState.init_ck().state_I();
       if (!this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
@@ -1184,7 +1184,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       return true;
    }
 
-   private boolean init_Z_ListPool_StreamUti_ce_DataUtil(BedDefenderModule.Inner_StreamUtil plan, RotationMath.Inner_DataUtil wire) {
+   private boolean init_Z_ListPool_StreamUti_ce_DataUtil(BedDefenderModule.Inner_StreamUtil plan, RotationMath.Rotation wire) {
       double band = autismclient.util.RotationStreamPlanner.init_D_D(RotationMath.init());
       if (RotationMath.init_F(wire, plan.init_ce_DataUtil()) > band * 2.0) {
          return false;
@@ -1208,7 +1208,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
       stall.init_I = 0;
       stall.load = 60;
-      autismclient.util.BlockPlacementPlanner.Inner_BufferHelper refusal = plan.init_U_BufferHelper();
+      autismclient.util.BlockPlacementPlanner.SupportFace refusal = plan.init_U_BufferHelper();
       if (!stall.init_List.contains(refusal)) {
          stall.init_List.add(refusal);
       }
@@ -1244,7 +1244,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       }
    }
 
-   private void load(RotationMath.Inner_DataUtil from, ItemStack material) {
+   private void load(RotationMath.Rotation from, ItemStack material) {
       long key = autismclient.util.BlockPlacementPlanner.init(this.read_List, MC.level);
       if (this.load_Z && key == this.init_J) {
          long ranks = this.init_J_3();
@@ -1260,7 +1260,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          this.flush_Map.clear();
          this.sync_Map.clear();
          this.next = 0;
-         autismclient.util.BlockPlacementPlanner.Inner_StateCache template = this.init_U_StateCache_ce_DataUtil(from, material, this.tick_Z_2(), null);
+         autismclient.util.BlockPlacementPlanner.Query template = this.init_U_StateCache_ce_DataUtil(from, material, this.tick_Z_2(), null);
          int[] ranks = new int[Math.min(4096, Math.max(16, this.read_List.size() * 8))];
          int count = 0;
 
@@ -1311,7 +1311,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       }
    }
 
-   private BedDefenderModule.Inner_StreamUtil init_ListPool_StreamUti_ce_DataUtil(RotationMath.Inner_DataUtil from, ItemStack material, BlockPos skip, boolean sneaking) {
+   private BedDefenderModule.Inner_StreamUtil init_ListPool_StreamUti_ce_DataUtil(RotationMath.Rotation from, ItemStack material, BlockPos skip, boolean sneaking) {
       int size = this.write_List.size();
       if (size == 0) {
          return null;
@@ -1326,8 +1326,8 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       BlockState placed = material.getItem() instanceof BlockItem blockItem ? blockItem.getBlock().defaultBlockState() : null;
       int tick = AutismSessionState.init_ck().state_I();
       StringBuilder trace = null;
-      autismclient.util.BlockPlacementPlanner.Inner_StateCache request = this.init_U_StateCache_ce_DataUtil(from, material, sneaking, trace);
-      autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[] refusal = new autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[1];
+      autismclient.util.BlockPlacementPlanner.Query request = this.init_U_StateCache_ce_DataUtil(from, material, sneaking, trace);
+      autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
       BedDefenderModule.Inner_StreamUtil best = null;
       float bestAngle = 3.4028235E38F;
       int bestRank = 2147483647;
@@ -1335,13 +1335,13 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
       for (int step = 0; step < size; step++) {
          int index = (start + step) % size;
-         autismclient.util.BlockPlacementPlanner.Inner_TaskQueue option = this.write_List.get(index);
+         autismclient.util.BlockPlacementPlanner.SupportCandidate option = this.write_List.get(index);
          BlockPos cell = option.init_BlockPos();
          int rank = index < this.load_IArr.length ? this.load_IArr[index] : 2147483647;
          if (!cell.equals(skip) && rank <= bestRank && !this.init_Z_BlockPos_2(cell, placed, playerBox, delta)) {
             BedDefenderModule.Inner_DataUtil stall = this.update_Map.get(cell);
             if (stall != null && stall.load > 0 && stall.init_List.contains(option.init_U_BufferHelper())) {
-               init_V_StringBuilder(trace, option.init_Direction(), autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.BANNED);
+               init_V_StringBuilder(trace, option.init_Direction(), autismclient.util.BlockPlacementPlanner.RejectReason.BANNED);
                this.next = index + 1 == size ? 0 : index + 1;
             } else {
                BedDefenderModule.Inner_StreamUtil plan;
@@ -1384,7 +1384,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             if (!cell.equals(skip) && !this.init_Z_BlockPos_2(cell, placed, playerBox, delta)) {
                BedDefenderModule.Inner_DataUtil stall = this.update_Map.get(cell);
 
-               for (autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate : this.close_Map.getOrDefault(cell, List.of())) {
+               for (autismclient.util.BlockPlacementPlanner.PlacementPlan candidate : this.close_Map.getOrDefault(cell, List.of())) {
                   if (stall == null || stall.load <= 0 || !stall.init_List.contains(candidate.init_U_TaskQueue().init_U_BufferHelper())) {
                      BedDefenderModule.Inner_StreamUtil alternative = new BedDefenderModule.Inner_StreamUtil(cell, candidate.init_U_TaskQueue().init_U_BufferHelper(), candidate);
                      if (earlier == null || RotationMath.init_F(from, alternative.init_ce_DataUtil()) < RotationMath.init_F(from, earlier.init_ce_DataUtil())) {
@@ -1406,17 +1406,17 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private BedDefenderModule.Inner_StreamUtil init_ListPool_StreamUti_U_TaskQueue(
-      autismclient.util.BlockPlacementPlanner.Inner_TaskQueue option, autismclient.util.BlockPlacementPlanner.Inner_StateCache request, autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[] refusal
+      autismclient.util.BlockPlacementPlanner.SupportCandidate option, autismclient.util.BlockPlacementPlanner.Query request, autismclient.util.BlockPlacementPlanner.RejectReason[] refusal
    ) {
       this.read_Z = false;
-      autismclient.util.BlockPlacementPlanner.Inner_DataUtil aim = autismclient.util.BlockPlacementPlanner.init(option, request.init_U_StateCache_BlockPos(option.init_BlockPos()), refusal);
+      autismclient.util.BlockPlacementPlanner.AimSample aim = autismclient.util.BlockPlacementPlanner.init(option, request.init_U_StateCache_BlockPos(option.init_BlockPos()), refusal);
       if (aim != null
-         || refusal[0] != autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.NOT_A_SUPPORT
-            && refusal[0] != autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.SELF_OCCLUDED
-            && refusal[0] != autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.BEHIND_PLANE) {
-         autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = this.init_U_CachePool_U_TaskQueue(option, aim, request, refusal);
+         || refusal[0] != autismclient.util.BlockPlacementPlanner.RejectReason.NOT_A_SUPPORT
+            && refusal[0] != autismclient.util.BlockPlacementPlanner.RejectReason.SELF_OCCLUDED
+            && refusal[0] != autismclient.util.BlockPlacementPlanner.RejectReason.BEHIND_PLANE) {
+         autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = this.init_U_CachePool_U_TaskQueue(option, aim, request, refusal);
          if (candidate == null) {
-            this.read_Z = refusal[0] == autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET;
+            this.read_Z = refusal[0] == autismclient.util.BlockPlacementPlanner.RejectReason.NO_BUDGET;
             return null;
          } else {
             return new BedDefenderModule.Inner_StreamUtil(option.init_BlockPos(), candidate.init_U_TaskQueue().init_U_BufferHelper(), candidate);
@@ -1426,19 +1426,19 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       }
    }
 
-   private autismclient.util.BlockPlacementPlanner.Inner_CachePool init_U_CachePool_U_TaskQueue(
-      autismclient.util.BlockPlacementPlanner.Inner_TaskQueue option,
-      autismclient.util.BlockPlacementPlanner.Inner_DataUtil aim,
-      autismclient.util.BlockPlacementPlanner.Inner_StateCache request,
-      autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[] outcome
+   private autismclient.util.BlockPlacementPlanner.PlacementPlan init_U_CachePool_U_TaskQueue(
+      autismclient.util.BlockPlacementPlanner.SupportCandidate option,
+      autismclient.util.BlockPlacementPlanner.AimSample aim,
+      autismclient.util.BlockPlacementPlanner.Query request,
+      autismclient.util.BlockPlacementPlanner.RejectReason[] outcome
    ) {
       if (AutismLiteVariant.enabled()) {
          return autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(option, aim, request, outcome);
       }
 
-      autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[] refusal = outcome == null ? new autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[1] : outcome;
-      autismclient.util.BlockPlacementPlanner.Inner_CachePool found = aim == null ? null : autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(option, aim, request, refusal);
-      if (found == null && refusal[0] != autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET) {
+      autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = outcome == null ? new autismclient.util.BlockPlacementPlanner.RejectReason[1] : outcome;
+      autismclient.util.BlockPlacementPlanner.PlacementPlan found = aim == null ? null : autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(option, aim, request, refusal);
+      if (found == null && refusal[0] != autismclient.util.BlockPlacementPlanner.RejectReason.NO_BUDGET) {
          List<Vec3> points;
          if (request.init_U_StreamUtil() == this.init_U_StreamUtil) {
             ArrayList<Vec3> samples = new ArrayList<>();
@@ -1459,7 +1459,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             points = this.sync_Map.get(option);
             if (points == null) {
                if (this.prev >= 4) {
-                  refusal[0] = autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET;
+                  refusal[0] = autismclient.util.BlockPlacementPlanner.RejectReason.NO_BUDGET;
                   return null;
                }
 
@@ -1479,27 +1479,27 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             }
 
             if (!(request.init_Vec3().distanceToSqr(point) > request.init_D() * request.init_D())) {
-               RotationMath.Inner_DataUtil goal = RotationMath.init(point, request.init_Vec3());
+               RotationMath.Rotation goal = RotationMath.init(point, request.init_Vec3());
                if (!(Math.abs(goal.load()) > request.load_D())) {
                   if (request.init_U_StreamUtil() != null && !request.init_U_StreamUtil().init_Z()) {
                      if (request.init_U_StreamUtil() != this.init_U_StreamUtil) {
                         this.flush_Map.put(option, index);
                      }
 
-                     refusal[0] = autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET;
+                     refusal[0] = autismclient.util.BlockPlacementPlanner.RejectReason.NO_BUDGET;
                      return null;
                   }
 
-                  RotationMath.Inner_DataUtil emitted = RotationMath.init_ce_DataUtil(goal, request.init_ce_DataUtil() == null ? goal : request.init_ce_DataUtil());
+                  RotationMath.Rotation emitted = RotationMath.init_ce_DataUtil(goal, request.init_ce_DataUtil() == null ? goal : request.init_ce_DataUtil());
                   if (!(Math.abs(emitted.load()) > request.load_D())) {
                      BlockHitResult hit = autismclient.util.BlockPlacementPlanner.init_BlockHitResult_Vec3(request.init_Vec3(), emitted, request.init_D(), MC.level, MC.player);
                      if (hit != null) {
                         BlockState state = MC.level.getBlockState(hit.getBlockPos());
                         boolean sneak = request.init_Z() || option.init_Z() && request.load_Z();
                         if (request.init_U_NetHelper().init(state, hit.getBlockPos(), sneak) && request.init_U_NetHelper().lands(hit, option.init_BlockPos())) {
-                           autismclient.util.BlockPlacementPlanner.Inner_ConfigStore landing = autismclient.util.BlockPlacementPlanner.init_U_ConfigStore(state, hit.getBlockPos(), hit);
+                           autismclient.util.BlockPlacementPlanner.FaceBounds landing = autismclient.util.BlockPlacementPlanner.init_U_ConfigStore(state, hit.getBlockPos(), hit);
                            if (landing != null) {
-                              autismclient.util.BlockPlacementPlanner.Inner_TaskQueue actual = new autismclient.util.BlockPlacementPlanner.Inner_TaskQueue(
+                              autismclient.util.BlockPlacementPlanner.SupportCandidate actual = new autismclient.util.BlockPlacementPlanner.SupportCandidate(
                                  option.init_BlockPos(),
                                  hit.getBlockPos(),
                                  landing.init_Direction(),
@@ -1509,18 +1509,18 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                                  option.init_D(),
                                  option.load_D(),
                                  autismclient.util.BlockPlacementPlanner.init_Z(state, hit.getBlockPos()),
-                                 new autismclient.util.BlockPlacementPlanner.Inner_BufferHelper(hit.getBlockPos(), landing.init_Direction())
+                                 new autismclient.util.BlockPlacementPlanner.SupportFace(hit.getBlockPos(), landing.init_Direction())
                               );
-                              autismclient.util.BlockPlacementPlanner.Inner_DataUtil landed = new autismclient.util.BlockPlacementPlanner.Inner_DataUtil(
+                              autismclient.util.BlockPlacementPlanner.AimSample landed = new autismclient.util.BlockPlacementPlanner.AimSample(
                                  hit.getLocation(),
                                  emitted,
                                  emitted,
                                  request.init_Vec3().distanceTo(hit.getLocation()),
                                  request.init_ce_DataUtil() == null ? 0.0F : RotationMath.init_F(request.init_ce_DataUtil(), emitted),
-                                 autismclient.util.BlockPlacementPlanner.Inner_UiHelper.ESCAPE
+                                 autismclient.util.BlockPlacementPlanner.SamplePoint.ESCAPE
                               );
-                              refusal[0] = autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.NONE;
-                              return new autismclient.util.BlockPlacementPlanner.Inner_CachePool(
+                              refusal[0] = autismclient.util.BlockPlacementPlanner.RejectReason.NONE;
+                              return new autismclient.util.BlockPlacementPlanner.PlacementPlan(
                                  actual, landed, hit, !hit.getBlockPos().equals(option.load_BlockPos()), landed.init_F()
                               );
                            }
@@ -1531,14 +1531,14 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             }
          }
 
-         refusal[0] = autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.RAY_MISSED;
+         refusal[0] = autismclient.util.BlockPlacementPlanner.RejectReason.RAY_MISSED;
          return null;
       } else {
          return found;
       }
    }
 
-   private List<Vec3> init_List_U_TaskQueue(autismclient.util.BlockPlacementPlanner.Inner_TaskQueue option, autismclient.util.BlockPlacementPlanner.Inner_StateCache request, Vec3 preferred) {
+   private List<Vec3> init_List_U_TaskQueue(autismclient.util.BlockPlacementPlanner.SupportCandidate option, autismclient.util.BlockPlacementPlanner.Query request, Vec3 preferred) {
       if (AutismLiteVariant.enabled()) {
          return List.of();
       }
@@ -1563,9 +1563,9 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       return FaceVisibilitySolver.init(request.init_Vec3(), option.init_AABB(), option.init_Direction(), blockers, preferred);
    }
 
-   private autismclient.util.BlockPlacementPlanner.Inner_StateCache init_U_StateCache_ce_DataUtil(RotationMath.Inner_DataUtil from, ItemStack material, boolean sneaking, StringBuilder trace) {
+   private autismclient.util.BlockPlacementPlanner.Query init_U_StateCache_ce_DataUtil(RotationMath.Rotation from, ItemStack material, boolean sneaking, StringBuilder trace) {
       Vec3 eye = MC.player.getEyePosition();
-      return new autismclient.util.BlockPlacementPlanner.Inner_StateCache(
+      return new autismclient.util.BlockPlacementPlanner.Query(
             null, eye, MC.player.blockInteractionRange(), autismclient.util.BlockPlacementPlanner.init(material, MC.player, InteractionHand.MAIN_HAND)
          )
          .init_U_StateCache_ce_DataUtil(from)
@@ -1607,7 +1607,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       return up != bestUp ? up : angle < bestAngle;
    }
 
-   private static void init_V_StringBuilder(StringBuilder trace, Direction face, autismclient.util.BlockPlacementPlanner.Inner_JsonUtil reason) {
+   private static void init_V_StringBuilder(StringBuilder trace, Direction face, autismclient.util.BlockPlacementPlanner.RejectReason reason) {
       if (trace != null && trace.length() < 96) {
          if (trace.length() > 0) {
             trace.append(' ');
@@ -1627,9 +1627,9 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          : false;
    }
 
-   private BlockHitResult init_BlockHitResult_ListPool_StreamUti(BedDefenderModule.Inner_StreamUtil plan, RotationMath.Inner_DataUtil rotation, boolean sneaking) {
+   private BlockHitResult init_BlockHitResult_ListPool_StreamUti(BedDefenderModule.Inner_StreamUtil plan, RotationMath.Rotation rotation, boolean sneaking) {
       ItemStack held = MC.player.getItemInHand(InteractionHand.MAIN_HAND);
-      autismclient.util.BlockPlacementPlanner.Inner_StateCache gate = this.init_U_StateCache_ce_DataUtil(rotation, held, sneaking, null)
+      autismclient.util.BlockPlacementPlanner.Query gate = this.init_U_StateCache_ce_DataUtil(rotation, held, sneaking, null)
          .init_U_StateCache_BlockPos(plan.init_BlockPos());
       return autismclient.util.BlockPlacementPlanner.init_BlockHitResult_U_CachePool(
          plan.init_U_CachePool(), rotation, MC.player.getEyePosition(), MC.player.blockInteractionRange(), gate
@@ -1872,20 +1872,20 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       private int init_I;
       private int load;
       private int read;
-      private final List<autismclient.util.BlockPlacementPlanner.Inner_BufferHelper> init_List = new ArrayList<>();
+      private final List<autismclient.util.BlockPlacementPlanner.SupportFace> init_List = new ArrayList<>();
    }
 
    private record Inner_NetHelper(BlockPos init_BlockPos, boolean init_Z) {
    }
 
    private record Inner_StreamUtil(
-      BlockPos init_BlockPos, autismclient.util.BlockPlacementPlanner.Inner_BufferHelper init_U_BufferHelper, autismclient.util.BlockPlacementPlanner.Inner_CachePool init_U_CachePool
+      BlockPos init_BlockPos, autismclient.util.BlockPlacementPlanner.SupportFace init_U_BufferHelper, autismclient.util.BlockPlacementPlanner.PlacementPlan init_U_CachePool
    ) {
       Direction init_Direction() {
          return this.init_U_CachePool.init_U_TaskQueue().init_Direction();
       }
 
-      RotationMath.Inner_DataUtil init_ce_DataUtil() {
+      RotationMath.Rotation init_ce_DataUtil() {
          return this.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil();
       }
 

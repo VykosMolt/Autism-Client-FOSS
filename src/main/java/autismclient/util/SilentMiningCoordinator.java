@@ -45,11 +45,11 @@ public final class SilentMiningCoordinator {
       init_Str = null;
    }
 
-   public static boolean init(String requester, RotationMath.Inner_DataUtil current, RotationMath.Inner_DataUtil target) {
+   public static boolean init(String requester, RotationMath.Rotation current, RotationMath.Rotation target) {
       return "bed-nuker".equals(requester) && current != null && target != null && RotationMath.init_F(current, target) <= 0.05F;
    }
 
-   public static boolean init(String requester, RotationMath.Inner_DataUtil current, RotationMath.Inner_DataUtil target, RotationStreamPlanner.Inner_TaskQueue stream) {
+   public static boolean init(String requester, RotationMath.Rotation current, RotationMath.Rotation target, RotationStreamPlanner.Inner_TaskQueue stream) {
       if (!init(requester, current, target)) {
          return false;
       }

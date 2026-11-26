@@ -87,8 +87,8 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
    }
 
    @Override
-   public AutismOverlay.Inner_DataUtil init_cX_DataUtil() {
-      return AutismOverlay.Inner_DataUtil.HOST_SCREEN;
+   public AutismOverlay.RenderLayer init_cX_DataUtil() {
+      return AutismOverlay.RenderLayer.HOST_SCREEN;
    }
 
    @Override

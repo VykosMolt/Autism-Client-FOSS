@@ -194,7 +194,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private autismclient.gui.ui.widgets.OverlayActionButton init(
-      int x, int y, int w, int h, String label, autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant, boolean enabled, Runnable action
+      int x, int y, int w, int h, String label, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant, boolean enabled, Runnable action
    ) {
       return this.init(x, y, w, h, label, variant, enabled, action, null);
    }
@@ -205,7 +205,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int w,
       int h,
       String label,
-      autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant,
+      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant,
       boolean enabled,
       Runnable action,
       Runnable secondaryAction
@@ -228,7 +228,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int w,
       int h,
       String label,
-      autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant,
+      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant,
       boolean enabled,
       int mouseX,
       int mouseY
@@ -264,7 +264,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int h,
       String label,
       Identifier iconId,
-      autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant,
+      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant,
       boolean enabled,
       int mouseX,
       int mouseY
@@ -580,7 +580,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return this.get_I_10() + this.set_I_10() - 4;
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_4() {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_4() {
       this.clear_V_4();
       int listHeight = this.clear_I_4();
       int viewHeight = Math.max(1, this.reset_I_3());
@@ -2139,7 +2139,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return autismclient.gui.ui.widgets.WindowHeaderHelper.load(autismclient.gui.f.NetHelper.init(this.B(), this.C(), this.x(), this.A()), 16);
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil load_PoolEntry_DataUtil_2() {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics load_PoolEntry_DataUtil_2() {
       int pickerX = this.B();
       int pickerY = this.C();
       int pickerW = this.x();
@@ -5107,7 +5107,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                   autismclient.gui.ui.UiClipStack.init_HashUtil().init(context);
                }
 
-               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil var531 = this.init_PoolEntry_DataUtil_4();
+               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics var531 = this.init_PoolEntry_DataUtil_4();
                autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(context, var531, var531.init(panelMouseX, panelMouseY), this.pool == 1);
                this.load_Str = null;
                boolean macroCurrentlyRunning = this.state_Z();
@@ -5116,13 +5116,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                   int[] b = this.load_List.get(ix);
                   boolean enabled = this.update_List.get(ix);
                   String lbl = ix == this.put_I ? this.init_Str_Z_3(macroCurrentlyRunning) : this.init_List.get(ix);
-                  autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant = autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY;
+                  autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant = autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY;
                   if (ix == this.put_I) {
                      variant = macroCurrentlyRunning
-                        ? autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.DANGER
-                        : autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS;
+                        ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER
+                        : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS;
                   } else if ("Save".equals(lbl)) {
-                     variant = autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS;
+                     variant = autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS;
                   }
 
                   if (ix == this.put_I) {
@@ -5280,7 +5280,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int bodyIndent = groupBody ? 10 : 0;
       boolean hoverRow = interactive && mouseX >= rowLeft - 1 && mouseX <= rowRight + 1 && mouseY >= actionY && mouseY < actionY + this.mark_I();
       boolean selectedRow = interactive && this.read_Z(actionIndex);
-      int bgColor = selectedRow ? ThemePaletteManager.init_I_I_ct_DataUtil(1715082778, ThemePaletteManager.Inner_DataUtil.ACCENT) : (hoverRow ? UiColorPalette.level() : UiColorPalette.flags());
+      int bgColor = selectedRow ? ThemePaletteManager.init_I_I_ct_DataUtil(1715082778, ThemePaletteManager.ColorRole.ACCENT) : (hoverRow ? UiColorPalette.level() : UiColorPalette.flags());
       autismclient.gui.ui.widgets.PanelSurfaceHelper.init(
          context, rowLeft, actionY + 1, rowRight - rowLeft, this.mark_I() - 2, autismclient.gui.ui.layout.LayoutContext.init(bgColor, alpha)
       );
@@ -5305,7 +5305,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          autismclient.gui.f.PacketUtil.load(
             context,
             autismclient.gui.f.NetHelper.init(rowLeft, actionY + 1, rowRight - rowLeft, this.mark_I() - 2),
-            autismclient.gui.ui.layout.LayoutContext.init(ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.Inner_DataUtil.OUTLINE), alpha)
+            autismclient.gui.ui.layout.LayoutContext.init(ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.ColorRole.OUTLINE), alpha)
          );
       }
 
@@ -5590,7 +5590,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.UiClipStack.init_HashUtil().init(context);
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil var33 = this.load_PoolEntry_DataUtil_2();
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics var33 = this.load_PoolEntry_DataUtil_2();
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(context, var33, var33.init(mouseX, mouseY), this.pool == 2);
    }
 
@@ -5633,7 +5633,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.read_k.push(false);
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil stepPickerScrollbar = this.load_PoolEntry_DataUtil_2();
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics stepPickerScrollbar = this.load_PoolEntry_DataUtil_2();
       if (stepPickerScrollbar.init_Z() && stepPickerScrollbar.init((int)mouseX, (int)mouseY)) {
          this.pool = 2;
          boolean onThumb = mouseY >= stepPickerScrollbar.update() && mouseY < stepPickerScrollbar.update() + stepPickerScrollbar.sync();
@@ -5760,11 +5760,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                boolean enabled = this.update_List.get(i);
                boolean macroCurrentlyRunning = this.state_Z();
                String label = i == this.put_I ? this.init_Str_Z_3(macroCurrentlyRunning) : this.init_List.get(i);
-               autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant = autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY;
+               autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant = autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY;
                if (i == this.put_I) {
                   variant = macroCurrentlyRunning
-                     ? autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.DANGER
-                     : autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS;
+                     ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER
+                     : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS;
                }
 
                Runnable secondary = i < this.write_List.size() ? this.write_List.get(i) : null;
@@ -5777,7 +5777,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          int listY = this.run_I_12();
          int listHeight = this.clear_I_4();
          if (mouseY >= listY && mouseY <= listY + listHeight && mouseX >= this.get_I_10() && mouseX <= this.get_I_10() + this.set_I_10()) {
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil stepListScrollbar = this.init_PoolEntry_DataUtil_4();
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics stepListScrollbar = this.init_PoolEntry_DataUtil_4();
             if (button == 0 && stepListScrollbar.init_Z() && stepListScrollbar.init((int)mouseX, (int)mouseY)) {
                this.set_V_5();
                this.pool = 1;
@@ -6481,7 +6481,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (this.pool == 1) {
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_4();
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil_4();
          this.clear_I = this.init_I_I_3(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(metrics, (int)mouseY, this.index), this.mark_I(), metrics.flush());
          return true;
       }

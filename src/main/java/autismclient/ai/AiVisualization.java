@@ -314,14 +314,14 @@ public final class AiVisualization {
       }
    }
 
-   private static boolean isAirMove(autismclient.ai.engine.AiPathfinder.Inner_SyncManager type) {
-      return type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP
-         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.SPRINT_JUMP
-         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_2
-         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_3
-         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND
-         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.LADDER_JUMP
-         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.SLIME_BOUNCE;
+   private static boolean isAirMove(autismclient.ai.engine.AiPathfinder.MoveType type) {
+      return type == autismclient.ai.engine.AiPathfinder.MoveType.JUMP
+         || type == autismclient.ai.engine.AiPathfinder.MoveType.SPRINT_JUMP
+         || type == autismclient.ai.engine.AiPathfinder.MoveType.JUMP_GAP_2
+         || type == autismclient.ai.engine.AiPathfinder.MoveType.JUMP_GAP_3
+         || type == autismclient.ai.engine.AiPathfinder.MoveType.PARKOUR_ASCEND
+         || type == autismclient.ai.engine.AiPathfinder.MoveType.LADDER_JUMP
+         || type == autismclient.ai.engine.AiPathfinder.MoveType.SLIME_BOUNCE;
    }
 
    static void buildPathVisuals(
@@ -403,14 +403,14 @@ public final class AiVisualization {
          int endIdx = Math.min(total, startIdx + 220);
          ArrayList<Vec3> points = new ArrayList<>(Math.min(220, endIdx - startIdx));
          ArrayList<Boolean> airFlags = new ArrayList<>(Math.min(220, endIdx - startIdx));
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil prev = script.putAt_TokenCore_TableCac_I(startIdx);
+         autismclient.ai.engine.AiPhysics.MotionState prev = script.putAt_TokenCore_TableCac_I(startIdx);
          if (prev != null) {
             points.add(new Vec3(prev.x(), prev.y() + (prev.onGround() ? 0.06 : 0.04), prev.z()));
             int airTicks = prev.onGround() ? 0 : 1;
             int skipped = 0;
 
             for (int i = startIdx + 1; i < endIdx; i++) {
-               autismclient.ai.engine.AiPhysics.Inner_StreamUtil cur = script.putAt_TokenCore_TableCac_I(i);
+               autismclient.ai.engine.AiPhysics.MotionState cur = script.putAt_TokenCore_TableCac_I(i);
                if (cur == null) {
                   break;
                }
@@ -675,11 +675,11 @@ public final class AiVisualization {
       return new AiVisualization.Inner_StreamUtil(p.immutable(), state, active ? -610078735 : 1885197528, false, true, active);
    }
 
-   static void init(Object owner, BlockPos origin, List<AiBuilder.Inner_StreamUtil> cells, int cursor, boolean preview) {
+   static void init(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview) {
       init(owner, origin, cells, cursor, preview, preview);
    }
 
-   static void init_V_Obj_2(Object owner, BlockPos origin, List<AiBuilder.Inner_StreamUtil> cells, Predicate<BlockPos> hiddenSolid) {
+   static void init_V_Obj_2(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, Predicate<BlockPos> hiddenSolid) {
       AiVisualization.Inner_CachePool l = init_cG_CachePool(owner);
       if (l != null) {
          l.init_Predicate = hiddenSolid;
@@ -694,7 +694,7 @@ public final class AiVisualization {
       }
    }
 
-   static void init(Object owner, BlockPos origin, List<AiBuilder.Inner_StreamUtil> cells, int cursor, boolean preview, boolean fullPlan) {
+   static void init(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview, boolean fullPlan) {
       AiVisualization.Inner_CachePool l = init_cG_CachePool(owner);
       if (l != null && init_AiSettings.visualizeGhosts && l.init_J - l.load_J >= 200000000L) {
          l.load_J = l.init_J;
@@ -714,7 +714,7 @@ public final class AiVisualization {
             int y = 0;
             int z = 0;
 
-            for (AiBuilder.Inner_StreamUtil cell : cells) {
+            for (AiBuilder.CellSpec cell : cells) {
                x = Math.max(x, cell.dx() + 1);
                y = Math.max(y, cell.dy() + 1);
                z = Math.max(z, cell.dz() + 1);
@@ -725,7 +725,7 @@ public final class AiVisualization {
                : new AABB(origin.getX(), origin.getY(), origin.getZ(), origin.getX() + x, origin.getY() + y, origin.getZ() + z);
 
             for (int i = fullPlan ? 0 : Math.max(0, cursor - 32); i < cells.size() && out.size() < cap; i += stride) {
-               AiBuilder.Inner_StreamUtil c = cells.get(i);
+               AiBuilder.CellSpec c = cells.get(i);
                BlockPos at = origin.offset(c.dx(), c.dy(), c.dz());
                boolean loaded = AiTerrain.init(l.init_ClientLevel, at);
                BlockState live = loaded ? l.init_ClientLevel.getBlockState(at) : Blocks.AIR.defaultBlockState();
@@ -747,7 +747,7 @@ public final class AiVisualization {
       }
    }
 
-   private static void init(AiVisualization.Inner_CachePool l, BlockPos origin, List<AiBuilder.Inner_StreamUtil> cells, int cursor, boolean preview) {
+   private static void init(AiVisualization.Inner_CachePool l, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview) {
       if (l.init_aT == null || !l.init_aT.init(origin, cells, preview)) {
          l.init();
          l.init_aT = new AiPlanMesh(origin, cells, preview, l.init_Predicate);

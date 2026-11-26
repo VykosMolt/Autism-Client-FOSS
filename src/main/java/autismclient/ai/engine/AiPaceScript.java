@@ -39,20 +39,20 @@ public final class AiPaceScript {
    static final double prev_D = 0.12;
    private static final ConcurrentHashMap<Long, Double> putAt_ConcurrentHashMap = new ConcurrentHashMap<>();
    static final double chunkAt_D = 4.0;
-   static final Set<AiPathfinder.Inner_SyncManager> putAt_Set = EnumSet.of(
-      AiPathfinder.Inner_SyncManager.JUMP,
-      AiPathfinder.Inner_SyncManager.SPRINT_JUMP,
-      AiPathfinder.Inner_SyncManager.JUMP_GAP_2,
-      AiPathfinder.Inner_SyncManager.JUMP_GAP_3,
-      AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND,
-      AiPathfinder.Inner_SyncManager.LADDER_JUMP
+   static final Set<AiPathfinder.MoveType> putAt_Set = EnumSet.of(
+      AiPathfinder.MoveType.JUMP,
+      AiPathfinder.MoveType.SPRINT_JUMP,
+      AiPathfinder.MoveType.JUMP_GAP_2,
+      AiPathfinder.MoveType.JUMP_GAP_3,
+      AiPathfinder.MoveType.PARKOUR_ASCEND,
+      AiPathfinder.MoveType.LADDER_JUMP
    );
-   static final Set<AiPathfinder.Inner_SyncManager> fill_Set = EnumSet.of(
-      AiPathfinder.Inner_SyncManager.WALK,
-      AiPathfinder.Inner_SyncManager.WALK_DIAGONAL,
-      AiPathfinder.Inner_SyncManager.SPRINT,
-      AiPathfinder.Inner_SyncManager.SPRINT_DIAGONAL,
-      AiPathfinder.Inner_SyncManager.SPRINT_JUMP
+   static final Set<AiPathfinder.MoveType> fill_Set = EnumSet.of(
+      AiPathfinder.MoveType.WALK,
+      AiPathfinder.MoveType.WALK_DIAGONAL,
+      AiPathfinder.MoveType.SPRINT,
+      AiPathfinder.MoveType.SPRINT_DIAGONAL,
+      AiPathfinder.MoveType.SPRINT_JUMP
    );
    private static final int value_I = 0;
    private static final int prevEx_I = 1;
@@ -136,7 +136,7 @@ public final class AiPaceScript {
          return putAt_ConcurrentHashMap.computeIfAbsent(
             var4,
             var4x -> {
-               AiPhysics.Inner_CachePool var5 = new AiPhysics.Inner_CachePool() {
+               AiPhysics.PhysicsWorld var5 = new AiPhysics.PhysicsWorld() {
                   @Override
                   public double movementSpeed() {
                      return var0;
@@ -153,17 +153,17 @@ public final class AiPaceScript {
                         : List.of();
                   }
                };
-               AiPhysics.Inner_StreamUtil var6 = AiPhysics.Inner_StreamUtil.standing(0.5, 64.0, 0.5);
-               AiPhysics.Inner_StreamUtil var7 = var6;
+               AiPhysics.MotionState var6 = AiPhysics.MotionState.standing(0.5, 64.0, 0.5);
+               AiPhysics.MotionState var7 = var6;
 
                for (int var8 = 0; var8 < 80; var8++) {
-                  var7 = AiPhysics.putAt(var7, AiPhysics.Inner_DataUtil.run(0.0F, var3), var5);
+                  var7 = AiPhysics.putAt(var7, AiPhysics.MoveInput.run(0.0F, var3), var5);
                }
 
                double var17 = var7.z();
 
                for (int var10 = 0; var10 < 80; var10++) {
-                  var7 = AiPhysics.putAt(var7, AiPhysics.Inner_DataUtil.run(0.0F, var3), var5);
+                  var7 = AiPhysics.putAt(var7, AiPhysics.MoveInput.run(0.0F, var3), var5);
                }
 
                double var18 = (var7.z() - var17) / 80.0;
@@ -171,11 +171,11 @@ public final class AiPaceScript {
                   return Math.max(0.1, var18 + 5.0E-4);
                }
 
-               AiPhysics.Inner_StreamUtil var12 = var6;
+               AiPhysics.MotionState var12 = var6;
 
                for (int var13 = 0; var13 < 120; var13++) {
                   var12 = AiPhysics.putAt(
-                     var12, var12.onGround() ? AiPhysics.Inner_DataUtil.jump(0.0F, var3) : AiPhysics.Inner_DataUtil.run(0.0F, var3), var5
+                     var12, var12.onGround() ? AiPhysics.MoveInput.jump(0.0F, var3) : AiPhysics.MoveInput.run(0.0F, var3), var5
                   );
                }
 
@@ -183,7 +183,7 @@ public final class AiPaceScript {
 
                for (int var15 = 0; var15 < 120; var15++) {
                   var12 = AiPhysics.putAt(
-                     var12, var12.onGround() ? AiPhysics.Inner_DataUtil.jump(0.0F, var3) : AiPhysics.Inner_DataUtil.run(0.0F, var3), var5
+                     var12, var12.onGround() ? AiPhysics.MoveInput.jump(0.0F, var3) : AiPhysics.MoveInput.run(0.0F, var3), var5
                   );
                }
 
@@ -196,7 +196,7 @@ public final class AiPaceScript {
       }
    }
 
-   static AiPhysics.Inner_CachePool putAt(AiPhysics.Inner_CachePool var0, double var1) {
+   static AiPhysics.PhysicsWorld putAt(AiPhysics.PhysicsWorld var0, double var1) {
       if (!Double.isFinite(var1) || var1 <= 0.0 || Math.abs(var0.movementSpeed() - var1) <= 1.0E-9) {
          return var0;
       } else if (var0 instanceof AiPlannerWorld var3) {
@@ -207,16 +207,16 @@ public final class AiPaceScript {
       }
    }
 
-   static AiPhysics.Inner_CachePool fill(AiPhysics.Inner_CachePool var0, double var1) {
+   static AiPhysics.PhysicsWorld fill(AiPhysics.PhysicsWorld var0, double var1) {
       return Double.isFinite(var1) && !(var1 <= 0.0) && !(Math.abs(var0.movementSpeed() - var1) <= 1.0E-9) ? new AiPaceScript.Inner_EventBus(var0, var1) : var0;
    }
 
-   private static AiPhysics.Inner_CachePool putAt_TokenCore_TaskStat_TokenCore_TaskStat(AiPhysics.Inner_CachePool var0, int var1, AiPaceScript.Inner_BitCache var2) {
+   private static AiPhysics.PhysicsWorld putAt_TokenCore_TaskStat_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, int var1, AiPaceScript.Inner_BitCache var2) {
       return var2 != null && var2.hasTransition() ? putAt(var0, var2.speedFor(var1)) : var0;
    }
 
    public static AiPaceScript.Inner_IoPool putAt_TextPool_IoPool_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var0, float var1, AiPaceScript.Inner_JsonCache var2, int var3, int var4
+      AiPhysics.MotionState var0, float var1, AiPaceScript.Inner_JsonCache var2, int var3, int var4
    ) {
       int var5 = Math.clamp(var4, 0, var2.segments() - 1);
       double var6 = var2.cum()[Math.clamp(var4, 0, var2.x().length - 1)];
@@ -227,7 +227,7 @@ public final class AiPaceScript {
       return new AiPaceScript.Inner_IoPool(var0, var1, var5, var3, var6);
    }
 
-   public static AiPaceScript.Inner_IoPool fill(AiPhysics.Inner_StreamUtil var0, float var1, AiPaceScript.Inner_JsonCache var2, int var3, int var4) {
+   public static AiPaceScript.Inner_IoPool fill(AiPhysics.MotionState var0, float var1, AiPaceScript.Inner_JsonCache var2, int var3, int var4) {
       AiPaceScript.Inner_BitCore var5 = putAt_TextPool_BitCore_TokenCore_TableCac(var0, Math.max(0, var4), var2, 1.7976931348623157E308);
       if (var5.seg() >= 0 && !(var5.dist() > 3.0)) {
          double var6 = var5.progress();
@@ -263,8 +263,8 @@ public final class AiPaceScript {
    }
 
    public static AiPaceScript.Inner_PacketHelper putAt(
-      AiPhysics.Inner_CachePool var0,
-      AiPhysics.Inner_StreamUtil var1,
+      AiPhysics.PhysicsWorld var0,
+      AiPhysics.MotionState var1,
       float var2,
       AiPaceScript.Inner_JsonCache var3,
       AiPaceScript.Inner_TextState var4,
@@ -282,7 +282,7 @@ public final class AiPaceScript {
    }
 
    public static AiPaceScript.Inner_PacketHelper putAt_TextPool_PacketHel_TokenCore_TaskStat(
-      AiPhysics.Inner_CachePool var0,
+      AiPhysics.PhysicsWorld var0,
       AiPaceScript.Inner_IoPool var1,
       AiPaceScript.Inner_JsonCache var2,
       AiPaceScript.Inner_TextState var3,
@@ -296,7 +296,7 @@ public final class AiPaceScript {
    }
 
    public static AiPaceScript.Inner_PacketHelper putAt(
-      Supplier<AiPhysics.Inner_CachePool> var0,
+      Supplier<AiPhysics.PhysicsWorld> var0,
       AiPaceScript.Inner_IoPool var1,
       AiPaceScript.Inner_JsonCache var2,
       AiPaceScript.Inner_TextState var3,
@@ -307,7 +307,7 @@ public final class AiPaceScript {
    }
 
    public static AiPaceScript.Inner_PacketHelper putAt_TextPool_PacketHel_Supplier(
-      Supplier<AiPhysics.Inner_CachePool> var0,
+      Supplier<AiPhysics.PhysicsWorld> var0,
       AiPaceScript.Inner_IoPool var1,
       AiPaceScript.Inner_JsonCache var2,
       AiPaceScript.Inner_TextState var3,
@@ -318,15 +318,15 @@ public final class AiPaceScript {
       return putAt_TextPool_PacketHel_TextPool_HashEntry(new AiPaceScript.Inner_HashEntry(var0), var1, var2, var3, var4, var5, var6);
    }
 
-   public static Supplier<AiPhysics.Inner_CachePool> putAt_Supplier_FileStore_TextStor_2(AiPathfinder.Inner_StateCache var0, double var1, boolean var3) {
-      return putAt_Supplier_FileStore_TextStor(var0, var1, var3 ? AiPathfinder.Inner_NetHelper.PARKOUR_NO_DAMAGE : AiPathfinder.Inner_NetHelper.PARKOUR_SAFE);
+   public static Supplier<AiPhysics.PhysicsWorld> putAt_Supplier_FileStore_TextStor_2(AiPathfinder.GridView var0, double var1, boolean var3) {
+      return putAt_Supplier_FileStore_TextStor(var0, var1, var3 ? AiPathfinder.FallPolicy.PARKOUR_NO_DAMAGE : AiPathfinder.FallPolicy.PARKOUR_SAFE);
    }
 
-   public static Supplier<AiPhysics.Inner_CachePool> putAt_Supplier_FileStore_TextStor(
-      AiPathfinder.Inner_StateCache var0, double var1, AiPathfinder.Inner_NetHelper var3
+   public static Supplier<AiPhysics.PhysicsWorld> putAt_Supplier_FileStore_TextStor(
+      AiPathfinder.GridView var0, double var1, AiPathfinder.FallPolicy var3
    ) {
       return () -> {
-         AiPathfinder.Inner_RenderState.Inner_CachePool var4 = new AiPathfinder.Inner_RenderState.Inner_CachePool(var0, 16384, var1);
+         AiPathfinder.MoveGenerator.CachedGrid var4 = new AiPathfinder.MoveGenerator.CachedGrid(var0, 16384, var1);
          var4.putAt_FileStore_RingUtil = var3;
          return var4.putAt_RefQueue();
       };
@@ -363,7 +363,7 @@ public final class AiPaceScript {
       if (var2.plateGoal() && var1.touched() < var8) {
          var6.putAt_V_BlockPosArr(Arrays.copyOfRange(var2.checkpoints(), var1.touched(), var8));
       } else if (!var2.plateGoal() && var1.touched() < var8) {
-         AiPhysics.Inner_CachePool var16 = var0.putAt_TokenCore_TaskStat();
+         AiPhysics.PhysicsWorld var16 = var0.putAt_TokenCore_TaskStat();
 
          try {
             BlockPos var17 = var2.checkpoints()[var8 - 1];
@@ -378,7 +378,7 @@ public final class AiPaceScript {
       boolean var80 = var3.weight() > 1.05;
       boolean var81 = var4 != null && var4.hasTransition();
       if (var80 && !var81 && var15 == 0 && !var2.plateGoal() && var8 == 1 && var2.length() <= 120.0 && (var5 == null || !var5.getAsBoolean())) {
-         AiPhysics.Inner_CachePool var18 = var0.putAt_TokenCore_TaskStat();
+         AiPhysics.PhysicsWorld var18 = var0.putAt_TokenCore_TaskStat();
 
          boolean var19;
          try {
@@ -394,7 +394,7 @@ public final class AiPaceScript {
          }
       }
 
-      AiPhysics.Inner_CachePool var82 = var0.putAt_TokenCore_TaskStat();
+      AiPhysics.PhysicsWorld var82 = var0.putAt_TokenCore_TaskStat();
 
       boolean var83;
       try {
@@ -413,8 +413,8 @@ public final class AiPaceScript {
          0.0,
          0.0,
          null,
-         new AiPhysics.Inner_DataUtil[0],
-         new AiPhysics.Inner_StreamUtil[0],
+         new AiPhysics.MoveInput[0],
+         new AiPhysics.MotionState[0],
          null
       );
       var20.putAt_Z = var83;
@@ -530,7 +530,7 @@ public final class AiPaceScript {
 
          var9 += var38;
          if (AiNavDebug.init_Z()) {
-            AiPhysics.Inner_StreamUtil var95 = var44.putAt_TokenCore_TableCac;
+            AiPhysics.MotionState var95 = var44.putAt_TokenCore_TableCac;
             String var98 = String.format(
                Locale.ROOT,
                "parkourwr window%s from %.1f (tick %d, %.2f %.2f %.2f) to %.1f: %s after %d nodes%s",
@@ -642,8 +642,8 @@ public final class AiPaceScript {
                var96.fill_D,
                var96.readEx_D,
                null,
-               new AiPhysics.Inner_DataUtil[0],
-               new AiPhysics.Inner_StreamUtil[0],
+               new AiPhysics.MoveInput[0],
+               new AiPhysics.MotionState[0],
                null
             );
             var20.putAt_Z = var96.putAt_Z;
@@ -689,12 +689,12 @@ public final class AiPaceScript {
       int[] var91 = new int[var8];
       Arrays.fill(var91, -1);
       int var92 = var1.touched();
-      AiPhysics.Inner_CachePool var93 = var0.putAt_TokenCore_TaskStat();
+      AiPhysics.PhysicsWorld var93 = var0.putAt_TokenCore_TaskStat();
 
       try {
          for (int var94 = 0; var94 < var90.size() && var92 < var91.length; var94++) {
             if (putAt_Z_TokenCore_TaskStat_4(
-               var93, (AiPhysics.Inner_StreamUtil)var90.get(var94), var2.checkpoints()[var92], var2.plateGoal(), var2.centerGoal()
+               var93, (AiPhysics.MotionState)var90.get(var94), var2.checkpoints()[var92], var2.plateGoal(), var2.centerGoal()
             )) {
                var91[var92++] = var94 + 1;
             }
@@ -732,27 +732,27 @@ public final class AiPaceScript {
    }
 
    public static AiPaceScript.Inner_JsonCache putAt(
-      AiPathfinder.Inner_StateCache var0, AiPhysics.Inner_StreamUtil var1, List<BlockPos> var2, double var3, boolean var5, BooleanSupplier var6
+      AiPathfinder.GridView var0, AiPhysics.MotionState var1, List<BlockPos> var2, double var3, boolean var5, BooleanSupplier var6
    ) {
       return putAt_TextPool_JsonCache_FileStore_TextStor(var0, var1, var2, var3, var3, var5, var6);
    }
 
    public static AiPaceScript.Inner_JsonCache putAt_TextPool_JsonCache_FileStore_TextStor(
-      AiPathfinder.Inner_StateCache var0, AiPhysics.Inner_StreamUtil var1, List<BlockPos> var2, double var3, double var5, boolean var7, BooleanSupplier var8
+      AiPathfinder.GridView var0, AiPhysics.MotionState var1, List<BlockPos> var2, double var3, double var5, boolean var7, BooleanSupplier var8
    ) {
       AiPaceScript.Inner_TokenCodec var9 = putAt_TextPool_TokenCode_FileStore_TextStor(var0, var1, var2, var3, var5, var7, var8);
       return var9 == null ? null : var9.guide();
    }
 
    public static AiPaceScript.Inner_TokenCodec putAt_TextPool_TokenCode_FileStore_TextStor(
-      AiPathfinder.Inner_StateCache var0, AiPhysics.Inner_StreamUtil var1, List<BlockPos> var2, double var3, double var5, boolean var7, BooleanSupplier var8
+      AiPathfinder.GridView var0, AiPhysics.MotionState var1, List<BlockPos> var2, double var3, double var5, boolean var7, BooleanSupplier var8
    ) {
-      AiPathfinder.Inner_NetHelper var9 = var7 ? AiPathfinder.Inner_NetHelper.PARKOUR_NO_DAMAGE : AiPathfinder.Inner_NetHelper.PARKOUR_SAFE;
-      AiPathfinder.Inner_DataUtil var10 = new AiPathfinder.Inner_DataUtil(
-            false, false, false, true, false, true, AiPathfinder.Inner_IoWorker.FASTEST, AiPathfinder.Inner_PoolEntry.value
+      AiPathfinder.FallPolicy var9 = var7 ? AiPathfinder.FallPolicy.PARKOUR_NO_DAMAGE : AiPathfinder.FallPolicy.PARKOUR_SAFE;
+      AiPathfinder.PathOptions var10 = new AiPathfinder.PathOptions(
+            false, false, false, true, false, true, AiPathfinder.RouteStrategy.FASTEST, AiPathfinder.ThreatField.value
          )
          .withFallPolicy(var9);
-      AiPathfinder.Inner_RenderState.Inner_CachePool var11 = new AiPathfinder.Inner_RenderState.Inner_CachePool(var0, 50000, var5);
+      AiPathfinder.MoveGenerator.CachedGrid var11 = new AiPathfinder.MoveGenerator.CachedGrid(var0, 50000, var5);
       var11.putAt_FileStore_RingUtil = var9;
       ArrayList<double[]> var12 = new ArrayList<>();
       ArrayList var13 = new ArrayList();
@@ -769,7 +769,7 @@ public final class AiPaceScript {
       }
 
       int var21 = var2.size();
-      AiPathfinder.Inner_PacketUtil[] var22 = new AiPathfinder.Inner_PacketUtil[var21];
+      AiPathfinder.PathResult[] var22 = new AiPathfinder.PathResult[var21];
       AtomicBoolean var23 = new AtomicBoolean(false);
       BooleanSupplier var24 = () -> var23.get() || var8.getAsBoolean();
       if (var21 == 1) {
@@ -804,7 +804,7 @@ public final class AiPaceScript {
             var40.add(
                putAt_ExecutorService.submit(
                   () -> {
-                     AiPathfinder.Inner_PacketUtil var13x = putAt(var0, var28, var29, var30, var10, var24);
+                     AiPathfinder.PathResult var13x = putAt(var0, var28, var29, var30, var10, var24);
                      var22[var27] = var13x;
                      if (var13x == null) {
                         if (!var24.getAsBoolean()) {
@@ -850,7 +850,7 @@ public final class AiPaceScript {
             throw new IllegalStateException("parkourwr leg plan failed", var39.getCause());
          }
 
-         for (AiPathfinder.Inner_PacketUtil var58 : var22) {
+         for (AiPathfinder.PathResult var58 : var22) {
             if (var58 == null) {
                return null;
             }
@@ -860,21 +860,21 @@ public final class AiPaceScript {
       ArrayList var41 = new ArrayList();
 
       for (int var44 = 0; var44 < var21; var44++) {
-         AiPathfinder.Inner_PacketUtil var49 = var22[var44];
+         AiPathfinder.PathResult var49 = var22[var44];
          var41.addAll(var49.movements());
 
          for (AiPathfinder.UiHelper var59 : var49.movements()) {
             BlockPos var62 = var59.to();
             int var31 = var12.size();
-            AiJumpSolver.Inner_StateCache var32 = var59.jump();
+            AiJumpSolver.JumpPlan var32 = var59.jump();
             double var33 = var11.putAt_FileStore_BitCache_BlockPos(var62).climbable()
                ? var62.getY()
-               : AiPathfinder.Inner_RenderState.putAt(var62.getY(), var11.putAt_FileStore_BitCache_BlockPos(var62.below()));
+               : AiPathfinder.MoveGenerator.putAt(var62.getY(), var11.putAt_FileStore_BitCache_BlockPos(var62.below()));
             double var35 = var32 != null && !var11.putAt_FileStore_BitCache_BlockPos(var62).climbable() && Math.abs(var32.landY() - var33) > 0.25
                ? var32.landY()
                : var33;
             AiPaceScript.Inner_JsonCache.add(var12, var62.getX() + 0.5, var35, var62.getZ() + 0.5, putAt_Set.contains(var59.type()));
-            if (var59.type() == AiPathfinder.Inner_SyncManager.SLIME_BOUNCE) {
+            if (var59.type() == AiPathfinder.MoveType.SLIME_BOUNCE) {
                for (int var37 = var31; var37 < var12.size(); var37++) {
                   var16.add(var37);
                }
@@ -885,7 +885,7 @@ public final class AiPaceScript {
                   && !var11.putAt_FileStore_BitCache_BlockPos(var62).climbable()
                   && !var11.putAt_FileStore_BitCache_BlockPos(var62.below()).passable()
             );
-            boolean var65 = var59.type() == AiPathfinder.Inner_SyncManager.SLIME_BOUNCE;
+            boolean var65 = var59.type() == AiPathfinder.MoveType.SLIME_BOUNCE;
             var18.add(
                var32 == null
                   ? null
@@ -895,7 +895,7 @@ public final class AiPaceScript {
                         : (
                            var32.maneuver() == null
                                  || var11.putAt_FileStore_BitCache_BlockPos(var62).climbable()
-                                    && (var59.type() != AiPathfinder.Inner_SyncManager.LADDER_JUMP || var11.putAt_S_I(var62.getX(), var62.getY(), var62.getZ()) != 0)
+                                    && (var59.type() != AiPathfinder.MoveType.LADDER_JUMP || var11.putAt_S_I(var62.getX(), var62.getY(), var62.getZ()) != 0)
                               ? null
                               : new AiPaceScript.Inner_JsonEntry(
                                  false,
@@ -958,7 +958,7 @@ public final class AiPaceScript {
       return new AiPaceScript.Inner_TokenCodec(var61, List.copyOf(var41));
    }
 
-   static BlockPos putAt_BlockPos_FileStore_IoHelper(AiPathfinder.Inner_RenderState.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, BlockPos var2) {
+   static BlockPos putAt_BlockPos_FileStore_IoHelper(AiPathfinder.MoveGenerator.CachedGrid var0, AiPhysics.MotionState var1, BlockPos var2) {
       if (!var1.onGround()) {
          return var2;
       }
@@ -967,20 +967,20 @@ public final class AiPaceScript {
       int var4 = (int)Math.floor(var1.z());
       int var5 = (int)Math.ceil(var1.y() - 0.001);
       BlockPos var6 = new BlockPos(var3, var5 - 2, var4);
-      AiPathfinder.Inner_FileCache var7 = var0.putAt_FileStore_BitCache_BlockPos(var6);
-      if (!var7.passable() && var7.top16() > 16 && Math.abs(AiPathfinder.Inner_RenderState.putAt(var5 - 1, var7) - var1.y()) <= 0.05) {
+      AiPathfinder.CellInfo var7 = var0.putAt_FileStore_BitCache_BlockPos(var6);
+      if (!var7.passable() && var7.top16() > 16 && Math.abs(AiPathfinder.MoveGenerator.putAt(var5 - 1, var7) - var1.y()) <= 0.05) {
          BlockPos var8 = var6.above();
-         AiPathfinder.Inner_FileCache var9 = var0.putAt_FileStore_BitCache_BlockPos(var8);
-         AiPathfinder.Inner_FileCache var10 = var0.putAt_FileStore_BitCache_BlockPos(var8.above());
+         AiPathfinder.CellInfo var9 = var0.putAt_FileStore_BitCache_BlockPos(var8);
+         AiPathfinder.CellInfo var10 = var0.putAt_FileStore_BitCache_BlockPos(var8.above());
          if ((var9.passable() || var9.climbable()) && !var9.feetTrigger() && var10.passable()) {
             return var8;
          }
       }
 
       BlockPos var28 = new BlockPos(var3, var5, var4);
-      AiPathfinder.Inner_FileCache var29 = var0.putAt_FileStore_BitCache_BlockPos(var28);
-      AiPathfinder.Inner_FileCache var30 = var0.putAt_FileStore_BitCache_BlockPos(var28.above());
-      AiPathfinder.Inner_FileCache var11 = var0.putAt_FileStore_BitCache_BlockPos(var28.below());
+      AiPathfinder.CellInfo var29 = var0.putAt_FileStore_BitCache_BlockPos(var28);
+      AiPathfinder.CellInfo var30 = var0.putAt_FileStore_BitCache_BlockPos(var28.above());
+      AiPathfinder.CellInfo var11 = var0.putAt_FileStore_BitCache_BlockPos(var28.below());
       if (!var29.climbable()
          && (!var29.passable() || !var30.passable() && (var11.passable() || var11.top16() <= 0 || var11.top16() > 3) || var11.passable() || var29.feetTrigger())
          )
@@ -992,13 +992,13 @@ public final class AiPaceScript {
          for (int var17 = (int)Math.floor(var1.x() - var12); var17 <= (int)Math.floor(var1.x() + var12); var17++) {
             for (int var18 = (int)Math.floor(var1.z() - var12); var18 <= (int)Math.floor(var1.z() + var12); var18++) {
                BlockPos var19 = new BlockPos(var17, var5, var18);
-               AiPathfinder.Inner_FileCache var20 = var0.putAt_FileStore_BitCache_BlockPos(var19.below());
+               AiPathfinder.CellInfo var20 = var0.putAt_FileStore_BitCache_BlockPos(var19.below());
                if (!var20.passable()) {
-                  boolean var21 = Math.abs(AiPathfinder.Inner_RenderState.putAt(var5, var20) - var1.y()) <= 0.05
+                  boolean var21 = Math.abs(AiPathfinder.MoveGenerator.putAt(var5, var20) - var1.y()) <= 0.05
                      || var20.slabStair() && var1.y() >= var19.getY() - 1.0 && var1.y() <= var19.getY() + 0.05;
                   if (var21) {
-                     AiPathfinder.Inner_FileCache var22 = var0.putAt_FileStore_BitCache_BlockPos(var19);
-                     AiPathfinder.Inner_FileCache var23 = var0.putAt_FileStore_BitCache_BlockPos(var19.above());
+                     AiPathfinder.CellInfo var22 = var0.putAt_FileStore_BitCache_BlockPos(var19);
+                     AiPathfinder.CellInfo var23 = var0.putAt_FileStore_BitCache_BlockPos(var19.above());
                      if (var22.passable() && (var23.passable() || var20.top16() > 0 && var20.top16() <= 3) && !var22.feetTrigger()) {
                         double var24 = fill_D_D(var17 + 0.5 - var1.x()) + fill_D_D(var18 + 0.5 - var1.z());
                         if (var24 < var15) {
@@ -1010,11 +1010,11 @@ public final class AiPaceScript {
                }
 
                BlockPos var35 = new BlockPos(var17, var5 - 2, var18);
-               AiPathfinder.Inner_FileCache var36 = var0.putAt_FileStore_BitCache_BlockPos(var35);
-               if (!var36.passable() && var36.top16() > 16 && Math.abs(AiPathfinder.Inner_RenderState.putAt(var5 - 1, var36) - var1.y()) <= 0.05) {
+               AiPathfinder.CellInfo var36 = var0.putAt_FileStore_BitCache_BlockPos(var35);
+               if (!var36.passable() && var36.top16() > 16 && Math.abs(AiPathfinder.MoveGenerator.putAt(var5 - 1, var36) - var1.y()) <= 0.05) {
                   BlockPos var37 = var35.above();
-                  AiPathfinder.Inner_FileCache var38 = var0.putAt_FileStore_BitCache_BlockPos(var37);
-                  AiPathfinder.Inner_FileCache var25 = var0.putAt_FileStore_BitCache_BlockPos(var37.above());
+                  AiPathfinder.CellInfo var38 = var0.putAt_FileStore_BitCache_BlockPos(var37);
+                  AiPathfinder.CellInfo var25 = var0.putAt_FileStore_BitCache_BlockPos(var37.above());
                   if (var38.passable() && var25.passable() && !var38.feetTrigger()) {
                      double var26 = fill_D_D(var17 + 0.5 - var1.x()) + fill_D_D(var18 + 0.5 - var1.z());
                      if (var26 < var15) {
@@ -1032,9 +1032,9 @@ public final class AiPaceScript {
 
          if (var5 > (int)Math.floor(var1.y())) {
             BlockPos var31 = var28.below();
-            AiPathfinder.Inner_FileCache var32 = var0.putAt_FileStore_BitCache_BlockPos(var31);
-            AiPathfinder.Inner_FileCache var33 = var0.putAt_FileStore_BitCache_BlockPos(var31.above());
-            AiPathfinder.Inner_FileCache var34 = var0.putAt_FileStore_BitCache_BlockPos(var31.below());
+            AiPathfinder.CellInfo var32 = var0.putAt_FileStore_BitCache_BlockPos(var31);
+            AiPathfinder.CellInfo var33 = var0.putAt_FileStore_BitCache_BlockPos(var31.above());
+            AiPathfinder.CellInfo var34 = var0.putAt_FileStore_BitCache_BlockPos(var31.below());
             if (var32.passable() && var33.passable() && !var34.passable() && !var32.feetTrigger()) {
                return var31;
             }
@@ -1046,18 +1046,18 @@ public final class AiPaceScript {
       }
    }
 
-   private static BlockPos putAt(AiPathfinder.Inner_RenderState.Inner_CachePool var0, BlockPos var1) {
-      AiPathfinder.Inner_FileCache var2 = var0.putAt_FileStore_BitCache_BlockPos(var1);
+   private static BlockPos putAt(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1) {
+      AiPathfinder.CellInfo var2 = var0.putAt_FileStore_BitCache_BlockPos(var1);
       if (var2.loaded() && !var2.passable() && var2.top16() > 0 && var2.top16() < 16 && !var2.door() && !var2.hazardFloor() && !var2.lava()) {
-         AiPathfinder.Inner_FileCache var3 = var0.putAt_FileStore_BitCache_BlockPos(var1.above());
+         AiPathfinder.CellInfo var3 = var0.putAt_FileStore_BitCache_BlockPos(var1.above());
          if (var3.loaded() && var3.passable() && !var3.feetTrigger()) {
             return var1.above();
          }
       }
 
       if (var2.loaded() && var2.passable() && !var2.water() && !var2.climbable()) {
-         AiPathfinder.Inner_FileCache var5 = var0.putAt_FileStore_BitCache_BlockPos(var1.below());
-         AiPathfinder.Inner_FileCache var4 = var0.putAt_FileStore_BitCache_BlockPos(var1.below(2));
+         AiPathfinder.CellInfo var5 = var0.putAt_FileStore_BitCache_BlockPos(var1.below());
+         AiPathfinder.CellInfo var4 = var0.putAt_FileStore_BitCache_BlockPos(var1.below(2));
          if (var5.loaded()
             && var5.passable()
             && !var5.feetTrigger()
@@ -1065,7 +1065,7 @@ public final class AiPaceScript {
             && !var4.passable()
             && !var4.hazardFloor()
             && !var4.lava()
-            && AiPathfinder.Inner_RenderState.putAt_Z_FileStore_BitCache(var5, var2, var4)) {
+            && AiPathfinder.MoveGenerator.putAt_Z_FileStore_BitCache(var5, var2, var4)) {
             return var1.below();
          }
       }
@@ -1073,17 +1073,17 @@ public final class AiPaceScript {
       return var1;
    }
 
-   private static AiPathfinder.Inner_PacketUtil putAt(
-      AiPathfinder.Inner_StateCache var0, final BlockPos var1, BlockPos var2, double var3, AiPathfinder.Inner_DataUtil var5, BooleanSupplier var6
+   private static AiPathfinder.PathResult putAt(
+      AiPathfinder.GridView var0, final BlockPos var1, BlockPos var2, double var3, AiPathfinder.PathOptions var5, BooleanSupplier var6
    ) {
       if (var6.getAsBoolean()) {
          return null;
       }
 
-      AiPathfinder.Inner_BufferHelper var7 = new AiPathfinder.Inner_BufferHelper(var0, true, var3, false);
+      AiPathfinder.RouteBlacklist var7 = new AiPathfinder.RouteBlacklist(var0, true, var3, false);
 
       try {
-         var7.putAt_V_BlockPos_2(var1, AiPathfinder.Inner_JsonUtil.putAt_FileStore_TokenCod_BlockPos(var2, 0.6, true), var5);
+         var7.putAt_V_BlockPos_2(var1, AiPathfinder.PathGoal.putAt_FileStore_TokenCod_BlockPos(var2, 0.6, true), var5);
 
          while (!var7.fill(50000000L)) {
             if (var6.getAsBoolean()) {
@@ -1092,7 +1092,7 @@ public final class AiPaceScript {
          }
 
          if (!var6.getAsBoolean() && var7.putAt_Str() == null) {
-            var7.putAt(new AiPathfinder.Inner_TaskQueue() {
+            var7.putAt(new AiPathfinder.SearchTask() {
                @Override
                public boolean putAt_Z() {
                   return false;
@@ -1108,7 +1108,7 @@ public final class AiPaceScript {
                   return var1;
                }
             });
-            AiPathfinder.Inner_PacketUtil var8 = var7.putAt_FileStore_StreamSt();
+            AiPathfinder.PathResult var8 = var7.putAt_FileStore_StreamSt();
             return var8 != null && var8.reachesGoal() ? var8 : null;
          } else {
             return null;
@@ -1118,7 +1118,7 @@ public final class AiPaceScript {
       }
    }
 
-   private static List<BlockPos> putAt_List_FileStore_IoHelper(AiPathfinder.Inner_RenderState.Inner_CachePool var0, BlockPos var1, BlockPos var2) {
+   private static List<BlockPos> putAt_List_FileStore_IoHelper(AiPathfinder.MoveGenerator.CachedGrid var0, BlockPos var1, BlockPos var2) {
       if (var1.getY() != var2.getY()) {
          return null;
       }
@@ -1177,14 +1177,14 @@ public final class AiPaceScript {
    }
 
    public static AiPaceScript.Inner_JsonCache putAt(
-      AiPathfinder.Inner_StateCache var0, AiPhysics.Inner_StreamUtil var1, List<AiPathfinder.UiHelper> var2, double var3, boolean var5, boolean var6
+      AiPathfinder.GridView var0, AiPhysics.MotionState var1, List<AiPathfinder.UiHelper> var2, double var3, boolean var5, boolean var6
    ) {
       return putAt_TextPool_JsonCache_FileStore_TextStor_2(var0, var1, var2, var3, var5, var6, false);
    }
 
    public static AiPaceScript.Inner_JsonCache putAt_TextPool_JsonCache_FileStore_TextStor_2(
-      AiPathfinder.Inner_StateCache var0,
-      AiPhysics.Inner_StreamUtil var1,
+      AiPathfinder.GridView var0,
+      AiPhysics.MotionState var1,
       List<AiPathfinder.UiHelper> var2,
       double var3,
       boolean var5,
@@ -1192,7 +1192,7 @@ public final class AiPaceScript {
       boolean var7
    ) {
       if (var2 != null && !var2.isEmpty()) {
-         AiPathfinder.Inner_RenderState.Inner_CachePool var8 = new AiPathfinder.Inner_RenderState.Inner_CachePool(var0, 8192, var3);
+         AiPathfinder.MoveGenerator.CachedGrid var8 = new AiPathfinder.MoveGenerator.CachedGrid(var0, 8192, var3);
          ArrayList var9 = new ArrayList(var2.size() + 2);
          ArrayList var10 = new ArrayList(var2.size());
          ArrayList<BlockPos> var11 = new ArrayList<>(var2.size());
@@ -1211,15 +1211,15 @@ public final class AiPaceScript {
          for (AiPathfinder.UiHelper var17 : var2) {
             BlockPos var18 = var17.to();
             int var19 = var9.size();
-            AiJumpSolver.Inner_StateCache var20 = var17.jump();
+            AiJumpSolver.JumpPlan var20 = var17.jump();
             double var21 = var8.putAt_FileStore_BitCache_BlockPos(var18).climbable()
                ? var18.getY()
-               : AiPathfinder.Inner_RenderState.putAt(var18.getY(), var8.putAt_FileStore_BitCache_BlockPos(var18.below()));
+               : AiPathfinder.MoveGenerator.putAt(var18.getY(), var8.putAt_FileStore_BitCache_BlockPos(var18.below()));
             double var23 = var20 != null && !var8.putAt_FileStore_BitCache_BlockPos(var18).climbable() && Math.abs(var20.landY() - var21) > 0.25
                ? var20.landY()
                : var21;
             AiPaceScript.Inner_JsonCache.add(var9, var18.getX() + 0.5, var23, var18.getZ() + 0.5, putAt_Set.contains(var17.type()));
-            if (var17.type() == AiPathfinder.Inner_SyncManager.SLIME_BOUNCE) {
+            if (var17.type() == AiPathfinder.MoveType.SLIME_BOUNCE) {
                for (int var25 = var19; var25 < var9.size(); var25++) {
                   var12.add(var25);
                }
@@ -1230,7 +1230,7 @@ public final class AiPaceScript {
                   && !var8.putAt_FileStore_BitCache_BlockPos(var18).climbable()
                   && !var8.putAt_FileStore_BitCache_BlockPos(var18.below()).passable()
             );
-            boolean var36 = var17.type() == AiPathfinder.Inner_SyncManager.SLIME_BOUNCE;
+            boolean var36 = var17.type() == AiPathfinder.MoveType.SLIME_BOUNCE;
             var14.add(
                var20 == null
                   ? null
@@ -1240,7 +1240,7 @@ public final class AiPaceScript {
                         : (
                            var20.maneuver() == null
                                  || var8.putAt_FileStore_BitCache_BlockPos(var18).climbable()
-                                    && (var17.type() != AiPathfinder.Inner_SyncManager.LADDER_JUMP || var8.putAt_S_I(var18.getX(), var18.getY(), var18.getZ()) != 0)
+                                    && (var17.type() != AiPathfinder.MoveType.LADDER_JUMP || var8.putAt_S_I(var18.getX(), var18.getY(), var18.getZ()) != 0)
                               ? null
                               : new AiPaceScript.Inner_JsonEntry(
                                  false,
@@ -1302,7 +1302,7 @@ public final class AiPaceScript {
       }
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat_2(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2) {
+   static boolean putAt_Z_TokenCore_TaskStat_2(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
       double var3 = 0.2999999;
       return !var0.putAt_Z_D(var2.x() - var3, var2.y() + 1.0E-7, var2.z() - var3, var2.x() + var3, var2.y() + 1.8 - 1.0E-7, var2.z() + var3)
          ? false
@@ -1315,10 +1315,10 @@ public final class AiPaceScript {
       return var2;
    }
 
-   static AiPhysics.Inner_DataUtil putAt(float var0, AiPhysics.Inner_StreamUtil var1) {
+   static AiPhysics.MoveInput putAt(float var0, AiPhysics.MotionState var1) {
       double var2 = Math.hypot(var1.vx(), var1.vz());
       if (var2 < 0.001) {
-         return AiPhysics.Inner_DataUtil.NONE.withYaw(var0);
+         return AiPhysics.MoveInput.NONE.withYaw(var0);
       }
 
       double var4 = Math.toRadians(var0);
@@ -1344,7 +1344,7 @@ public final class AiPaceScript {
          }
       }
 
-      return new AiPhysics.Inner_DataUtil(var10, var11, false, false, false, var0);
+      return new AiPhysics.MoveInput(var10, var11, false, false, false, var0);
    }
 
    private static boolean putAt_Z_TextPool_TaskState(AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_TaskState var1, int var2, double var3) {
@@ -1352,7 +1352,7 @@ public final class AiPaceScript {
    }
 
    private static List<AiPaceScript.Inner_TaskState> putAt(
-      AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPaceScript.Inner_TextState var2, AiPhysics.Inner_CachePool var3, LongAdder var4, boolean var5
+      AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPaceScript.Inner_TextState var2, AiPhysics.PhysicsWorld var3, LongAdder var4, boolean var5
    ) {
       return putAt_List_TextPool_TaskState(var0, var1, var2, var3, var4, var5, null, AiPaceScript.Inner_HashPool.UNBOUNDED);
    }
@@ -1361,7 +1361,7 @@ public final class AiPaceScript {
       AiPaceScript.Inner_TaskState var0,
       AiPaceScript.Inner_JsonCache var1,
       AiPaceScript.Inner_TextState var2,
-      AiPhysics.Inner_CachePool var3,
+      AiPhysics.PhysicsWorld var3,
       LongAdder var4,
       boolean var5,
       AiPaceScript.Inner_RingUtil var6,
@@ -1389,7 +1389,7 @@ public final class AiPaceScript {
       boolean var21 = fill(var0, var1, var3);
       boolean var22 = !var0.putAt_TokenCore_TableCac.onGround() || var0.putAt_Z;
       boolean var23 = var22 && (var2.allowHops() || var14);
-      AiPhysics.Inner_CachePool var24 = putAt_TokenCore_TaskStat_TokenCore_TaskStat(var3, var0.flowTemp, var7.speedProfile());
+      AiPhysics.PhysicsWorld var24 = putAt_TokenCore_TaskStat_TokenCore_TaskStat(var3, var0.flowTemp, var7.speedProfile());
       if (var0.putAt_TokenCore_TableCac.onGround()
          && !var13
          && (!var0.putAt_Z || var0.putAt_TextPool_TaskState == null && prevEx(var24, var0.putAt_TokenCore_TableCac))) {
@@ -1476,23 +1476,23 @@ public final class AiPaceScript {
       return var8;
    }
 
-   private static List<AiPhysics.Inner_DataUtil> putAt_List_TextPool_TaskState_2(
-      AiPaceScript.Inner_TaskState var0, List<AiPhysics.Inner_DataUtil> var1, float var2
+   private static List<AiPhysics.MoveInput> putAt_List_TextPool_TaskState_2(
+      AiPaceScript.Inner_TaskState var0, List<AiPhysics.MoveInput> var1, float var2
    ) {
       if (var1 != null && !var1.isEmpty() && var0.putAt_TokenCore_TableCac.onGround() && !(var0.putAt_TokenCore_TableCac.speed() >= 0.02) && !(var2 <= 0.0F)) {
-         float var3 = ((AiPhysics.Inner_DataUtil)var1.getFirst()).yaw();
+         float var3 = ((AiPhysics.MoveInput)var1.getFirst()).yaw();
          float var4 = Math.abs(Mth.wrapDegrees(var3 - var0.putAt_F));
          if (var4 <= var2 + 0.001F) {
             return var1;
          }
 
          int var5 = Math.min(8, (int)Math.ceil((var4 - var2) / var2));
-         ArrayList<AiPhysics.Inner_DataUtil> var6 = new ArrayList<>(var5 + var1.size());
+         ArrayList<AiPhysics.MoveInput> var6 = new ArrayList<>(var5 + var1.size());
          float var7 = var0.putAt_F;
 
          for (int var8 = 0; var8 < var5; var8++) {
             var7 = putAt_F_F(var7, var3, var2);
-            var6.add(AiPhysics.Inner_DataUtil.NONE.withYaw(var7));
+            var6.add(AiPhysics.MoveInput.NONE.withYaw(var7));
          }
 
          var6.addAll(var1);
@@ -1502,7 +1502,7 @@ public final class AiPaceScript {
       }
    }
 
-   private static boolean prevEx(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1) {
+   private static boolean prevEx(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
       if (!var1.onGround()) {
          return false;
       } else {
@@ -1516,14 +1516,14 @@ public final class AiPaceScript {
       AiPaceScript.Inner_TaskState var0,
       AiPaceScript.Inner_JsonCache var1,
       AiPaceScript.Inner_TextState var2,
-      AiPhysics.Inner_CachePool var3,
-      AiPhysics.Inner_CachePool var4,
+      AiPhysics.PhysicsWorld var3,
+      AiPhysics.PhysicsWorld var4,
       LongAdder var5,
       AiPaceScript.Inner_TableCache var6,
       List<AiPaceScript.Inner_TaskState> var7,
       AiPaceScript.Inner_HashPool var8
    ) {
-      AiPhysics.Inner_StreamUtil var9 = var0.putAt_TokenCore_TableCac;
+      AiPhysics.MotionState var9 = var0.putAt_TokenCore_TableCac;
       double var10 = 0.299999;
       double var12 = 0.0 / 0.0;
       double var14 = 0.0 / 0.0;
@@ -1549,14 +1549,14 @@ public final class AiPaceScript {
       if (!Double.isNaN(var12) && !(var16 < 0.0016)) {
          float var33 = var2.maxTurn();
          float var34 = var0.putAt_F;
-         AiPhysics.Inner_StreamUtil var35 = var9;
-         ArrayList<AiPhysics.Inner_DataUtil> var21 = new ArrayList<>(24);
+         AiPhysics.MotionState var35 = var9;
+         ArrayList<AiPhysics.MoveInput> var21 = new ArrayList<>(24);
          float var36 = AiPhysics.putAt_F_D(var35.x(), var35.z(), var12, var14);
 
          for (int var23 = 0; var23 < 12 && Math.abs(Mth.wrapDegrees(var36 - var34)) > var33 + 0.001F; var23++) {
             var34 = putAt_F_F(var34, var36, var33);
-            AiPhysics.Inner_DataUtil var40 = var35.speed() > 0.01 ? putAt(var34, var35) : AiPhysics.Inner_DataUtil.NONE.withYaw(var34);
-            AiPhysics.Inner_StreamUtil var41 = AiPhysics.fill(var35, var40, var4);
+            AiPhysics.MoveInput var40 = var35.speed() > 0.01 ? putAt(var34, var35) : AiPhysics.MoveInput.NONE.withYaw(var34);
+            AiPhysics.MotionState var41 = AiPhysics.fill(var35, var40, var4);
             if (!var41.onGround() || Math.abs(var41.y() - var9.y()) > 1.0E-4) {
                return;
             }
@@ -1573,10 +1573,10 @@ public final class AiPaceScript {
          for (int var27 = 0; var27 < 16 && var25 > 0.2; var27++) {
             var36 = AiPhysics.putAt_F_D(var35.x(), var35.z(), var12, var14);
             var34 = putAt_F_F(var34, var36, var33);
-            AiPhysics.Inner_DataUtil var28 = new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var34);
-            AiPhysics.Inner_StreamUtil var29 = AiPhysics.fill(var35, var28, var4);
+            AiPhysics.MoveInput var28 = new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var34);
+            AiPhysics.MotionState var29 = AiPhysics.fill(var35, var28, var4);
             if (!var29.onGround() || Math.abs(var29.y() - var9.y()) > 1.0E-4) {
-               var28 = new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, true, var34);
+               var28 = new AiPhysics.MoveInput(1.0, 0.0, false, false, true, var34);
                var29 = AiPhysics.fill(var35, var28, var4);
                if (!var29.onGround() || Math.abs(var29.y() - var9.y()) > 1.0E-4) {
                   break;
@@ -1615,8 +1615,8 @@ public final class AiPaceScript {
 
          if (!var21.isEmpty()) {
             for (int var42 = 0; var42 < 8 && var35.speed() >= 0.015; var42++) {
-               AiPhysics.Inner_DataUtil var44 = var35.speed() > 0.03 ? putAt(var34, var35) : AiPhysics.Inner_DataUtil.NONE.withYaw(var34);
-               AiPhysics.Inner_StreamUtil var45 = AiPhysics.fill(var35, var44, var4);
+               AiPhysics.MoveInput var44 = var35.speed() > 0.03 ? putAt(var34, var35) : AiPhysics.MoveInput.NONE.withYaw(var34);
+               AiPhysics.MotionState var45 = AiPhysics.fill(var35, var44, var4);
                if (!var45.onGround() || Math.abs(var45.y() - var9.y()) > 1.0E-4) {
                   break;
                }
@@ -1643,7 +1643,7 @@ public final class AiPaceScript {
       boolean var4,
       AiPaceScript.Inner_JsonCache var5,
       AiPaceScript.Inner_TextState var6,
-      AiPhysics.Inner_CachePool var7,
+      AiPhysics.PhysicsWorld var7,
       LongAdder var8,
       AiPaceScript.Inner_TableCache var9,
       List<AiPaceScript.Inner_TaskState> var10,
@@ -1877,7 +1877,7 @@ public final class AiPaceScript {
       }
    }
 
-   private static boolean putAt_Z_TextPool_TaskState(AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPhysics.Inner_CachePool var2) {
+   private static boolean putAt_Z_TextPool_TaskState(AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPhysics.PhysicsWorld var2) {
       if (fill(var2, var0.putAt_TokenCore_TableCac)) {
          return true;
       }
@@ -1917,8 +1917,8 @@ public final class AiPaceScript {
       return false;
    }
 
-   private static boolean fill(AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPhysics.Inner_CachePool var2) {
-      AiPhysics.Inner_StreamUtil var3 = var0.putAt_TokenCore_TableCac;
+   private static boolean fill(AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPhysics.PhysicsWorld var2) {
+      AiPhysics.MotionState var3 = var0.putAt_TokenCore_TableCac;
       if (var3.onGround() && !(var3.vy() > 0.1) && !fill(var2, var3)) {
          int[] var4 = var1.cellPoint();
          int var5 = 0;
@@ -1959,7 +1959,7 @@ public final class AiPaceScript {
       AiPaceScript.Inner_RingBuffer var1,
       AiPaceScript.Inner_JsonCache var2,
       AiPaceScript.Inner_TextState var3,
-      AiPhysics.Inner_CachePool var4,
+      AiPhysics.PhysicsWorld var4,
       LongAdder var5,
       AiPaceScript.Inner_TableCache var6,
       List<AiPaceScript.Inner_TaskState> var7,
@@ -1986,7 +1986,7 @@ public final class AiPaceScript {
       int var3,
       AiPaceScript.Inner_JsonCache var4,
       AiPaceScript.Inner_TextState var5,
-      AiPhysics.Inner_CachePool var6,
+      AiPhysics.PhysicsWorld var6,
       LongAdder var7,
       AiPaceScript.Inner_TableCache var8,
       List<AiPaceScript.Inner_TaskState> var9,
@@ -2007,15 +2007,15 @@ public final class AiPaceScript {
    }
 
    private static List<AiPaceScript.Inner_TextStore> putAt_List_TextPool_TaskState(
-      AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPhysics.Inner_CachePool var2
+      AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPhysics.PhysicsWorld var2
    ) {
       return putAt(var0, var1, var2, null, false, 180.0F);
    }
 
    private static List<AiPaceScript.Inner_TextStore> putAt(
-      AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPhysics.Inner_CachePool var2, AiPaceScript.Inner_RingUtil var3, boolean var4, float var5
+      AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPhysics.PhysicsWorld var2, AiPaceScript.Inner_RingUtil var3, boolean var4, float var5
    ) {
-      AiPhysics.Inner_StreamUtil var6 = var0.putAt_TokenCore_TableCac;
+      AiPhysics.MotionState var6 = var0.putAt_TokenCore_TableCac;
       boolean var7 = fill(var2, var6);
       if (var7 || var6.onGround() && !(var6.vy() > 0.1)) {
          ArrayList var8 = null;
@@ -2077,7 +2077,7 @@ public final class AiPaceScript {
                            if (var38 != null) {
                               var19 = var38;
                            } else if (var3 == null || var3.putAt_AtomicIntegerArr[var28].getAndIncrement() < 16) {
-                              AiJumpSolver.Inner_StateCache var25 = var29
+                              AiJumpSolver.JumpPlan var25 = var29
                                  ? AiLadderJump.putAt_IoUtil_TextState_TokenCore_TaskStat_2(var2, var6, var14, var18, var13.sprint())
                                  : AiLadderJump.putAt_IoUtil_TextState_TokenCore_TaskStat(var2, var6, var13.yaw(), var18, var13.surface());
                               if (var25 != null && var25.maneuver() != null) {
@@ -2105,7 +2105,7 @@ public final class AiPaceScript {
                            if (var36 != null) {
                               var19 = var36;
                            } else if (var3 == null || var3.putAt_AtomicIntegerArr[var28].getAndIncrement() < 16) {
-                              AiJumpSolver.Inner_StateCache var39 = AiLadderJump.putAt_IoUtil_TextState_TokenCore_TaskStat(var2, var6, var18, var13.sprint());
+                              AiJumpSolver.JumpPlan var39 = AiLadderJump.putAt_IoUtil_TextState_TokenCore_TaskStat(var2, var6, var18, var13.sprint());
                               if (var39 != null && var39.maneuver() != null) {
                                  var19 = var39.maneuver().inputs();
                               }
@@ -2146,7 +2146,7 @@ public final class AiPaceScript {
                                                 : var3.fill_AtomicIntegerArr[var28].getAndIncrement() < 64
                                           )
                                     )) {
-                                    AiJumpSolver.Inner_StateCache var27 = AiWallJump.putAt(var2, var6, var14, var13.wallTargets(), var35, var5);
+                                    AiJumpSolver.JumpPlan var27 = AiWallJump.putAt(var2, var6, var14, var13.wallTargets(), var35, var5);
                                     if (var27 != null) {
                                        var33 = var27.maneuver();
                                     }
@@ -2217,7 +2217,7 @@ public final class AiPaceScript {
       }
    }
 
-   private static boolean putAt_Z_TokenCore_TaskStat_3(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, BlockPos var2) {
+   private static boolean putAt_Z_TokenCore_TaskStat_3(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2) {
       boolean var3 = fill(var0, var1);
       BlockPos var4 = BlockPos.containing(var1.x(), var3 ? var1.y() : Math.ceil(var1.y() - 1.0E-6), var1.z());
       return var4.equals(var2) || var3 && AiSlimeBounce.putAt(var0, var4, var2);
@@ -2240,7 +2240,7 @@ public final class AiPaceScript {
          for (int var20 = 0; var20 < var8.length; var20++) {
             int var11 = var20;
             var19.add(putAt_ExecutorService.submit(() -> {
-               AiPhysics.Inner_CachePool var10x = var3.putAt_TokenCore_TaskStat();
+               AiPhysics.PhysicsWorld var10x = var3.putAt_TokenCore_TaskStat();
 
                try {
                   var8[var11] = putAt_List_TextPool_TaskState((AiPaceScript.Inner_TaskState)var0.get(var11), var1, var2, var10x, var4, var5, var6, var7);
@@ -2267,7 +2267,7 @@ public final class AiPaceScript {
 
          return Arrays.asList(var8);
       } else {
-         AiPhysics.Inner_CachePool var9 = var3.putAt_TokenCore_TaskStat();
+         AiPhysics.PhysicsWorld var9 = var3.putAt_TokenCore_TaskStat();
 
          try {
             for (int var10 = 0; var10 < var8.length; var10++) {
@@ -2290,7 +2290,7 @@ public final class AiPaceScript {
       int[] var5,
       AiPaceScript.Inner_JsonCache var6,
       AiPaceScript.Inner_TextState var7,
-      AiPhysics.Inner_CachePool var8,
+      AiPhysics.PhysicsWorld var8,
       LongAdder var9,
       AiPaceScript.Inner_TableCache var10,
       List<AiPaceScript.Inner_TaskState> var11,
@@ -2298,7 +2298,7 @@ public final class AiPaceScript {
       AiPaceScript.Inner_HashPool var13
    ) {
       int var14 = var4 == 0 ? 0 : 2;
-      AiPhysics.Inner_StreamUtil var15 = var0.putAt_TokenCore_TableCac;
+      AiPhysics.MotionState var15 = var0.putAt_TokenCore_TableCac;
       float var16 = var0.putAt_F;
       float var17 = var16;
       int var18 = var0.flowState;
@@ -2318,7 +2318,7 @@ public final class AiPaceScript {
       boolean var38 = false;
       int var39 = 0;
       int var40 = var0.value_I;
-      AiPhysics.Inner_StreamUtil var41 = var0.putAt_TokenCore_TableCac;
+      AiPhysics.MotionState var41 = var0.putAt_TokenCore_TableCac;
       var10.putAt_Z = false;
       var10.fill_Z = false;
       var10.flowState = 0;
@@ -2374,26 +2374,26 @@ public final class AiPaceScript {
             }
 
             boolean var45 = var7.allowSprint();
-            AiPhysics.Inner_DataUtil var58;
+            AiPhysics.MoveInput var58;
             if (!var43) {
                var16 = putAt_F_F(var16, var1, var7.maxTurn());
                if (var4 == 0) {
-                  var58 = new AiPhysics.Inner_DataUtil(1.0, var2, var3, var45, false, var16);
+                  var58 = new AiPhysics.MoveInput(1.0, var2, var3, var45, false, var16);
                } else {
-                  AiPhysics.Inner_DataUtil var10000;
+                  AiPhysics.MoveInput var10000;
                   switch (var4) {
                      case 1:
                         var10000 = var3
-                           ? new AiPhysics.Inner_DataUtil(0.0, 0.0, true, false, putAt_Z_TokenCore_TaskStat_4(var8, var15, var36), var16)
-                           : AiPhysics.Inner_DataUtil.NONE.withYaw(var16);
+                           ? new AiPhysics.MoveInput(0.0, 0.0, true, false, putAt_Z_TokenCore_TaskStat_4(var8, var15, var36), var16)
+                           : AiPhysics.MoveInput.NONE.withYaw(var16);
                         break;
                      case 3:
-                        var10000 = new AiPhysics.Inner_DataUtil(1.0, var2, false, false, true, var16);
+                        var10000 = new AiPhysics.MoveInput(1.0, var2, false, false, true, var16);
                         break;
                      default:
-                        AiPhysics.Inner_DataUtil var46 = putAt(var16, var15);
+                        AiPhysics.MoveInput var46 = putAt(var16, var15);
                         var10000 = var3
-                           ? new AiPhysics.Inner_DataUtil(
+                           ? new AiPhysics.MoveInput(
                               var46.forward(), var46.strafe(), true, false, putAt_Z_TokenCore_TaskStat_4(var8, var15, var36), var16
                            )
                            : var46;
@@ -2409,13 +2409,13 @@ public final class AiPaceScript {
                   var10.fill_Z = true;
                }
 
-               var58 = var14 != 2 ? new AiPhysics.Inner_DataUtil(1.0, 0.0, false, var45, false, var16) : AiPhysics.Inner_DataUtil.NONE.withYaw(var16);
+               var58 = var14 != 2 ? new AiPhysics.MoveInput(1.0, 0.0, false, var45, false, var16) : AiPhysics.MoveInput.NONE.withYaw(var16);
             }
 
             var25 += Math.abs(Mth.wrapDegrees(var16 - var17));
             var17 = var16;
-            AiPhysics.Inner_CachePool var60 = putAt_TokenCore_TaskStat_TokenCore_TaskStat(var8, var19, var13.speedProfile());
-            AiPhysics.Inner_StreamUtil var47 = AiPhysics.fill(var15, var58, var60);
+            AiPhysics.PhysicsWorld var60 = putAt_TokenCore_TaskStat_TokenCore_TaskStat(var8, var19, var13.speedProfile());
+            AiPhysics.MotionState var47 = AiPhysics.fill(var15, var58, var60);
             var9.increment();
             var40 = var58.sneak() ? var40 + 1 : 0;
             if (var40 < 3 && var47.pose() != 0 && putAt_Z_TokenCore_TaskStat_2(var8, var15, var47)) {
@@ -2541,7 +2541,7 @@ public final class AiPaceScript {
       AiPaceScript.Inner_RingBuffer var1,
       AiPaceScript.Inner_JsonCache var2,
       AiPaceScript.Inner_TextState var3,
-      AiPhysics.Inner_CachePool var4,
+      AiPhysics.PhysicsWorld var4,
       LongAdder var5,
       AiPaceScript.Inner_TableCache var6,
       AiPaceScript.Inner_HashPool var7
@@ -2558,7 +2558,7 @@ public final class AiPaceScript {
       int var5,
       AiPaceScript.Inner_JsonCache var6,
       AiPaceScript.Inner_TextState var7,
-      AiPhysics.Inner_CachePool var8,
+      AiPhysics.PhysicsWorld var8,
       LongAdder var9,
       AiPaceScript.Inner_TableCache var10,
       AiPaceScript.Inner_HashPool var11
@@ -2574,8 +2574,8 @@ public final class AiPaceScript {
       int var20 = var6.checkpoints().length;
       double var21 = var11.bestGoalF();
       boolean var44 = !var0.putAt_Z && var3 == 0;
-      AiPhysics.Inner_StreamUtil var23;
-      AiPhysics.Inner_StreamUtil var24;
+      AiPhysics.MotionState var23;
+      AiPhysics.MotionState var24;
       float var25;
       float var26;
       int var27;
@@ -2666,16 +2666,16 @@ public final class AiPaceScript {
             }
 
             boolean var50 = var7.allowSprint();
-            AiPhysics.Inner_DataUtil var49;
+            AiPhysics.MoveInput var49;
             if (var1.keys() != null) {
                var var51 = var1.keys();
                if (!var48 && var47 >= var51.size()) {
                   break label323;
                }
 
-               AiPhysics.Inner_DataUtil var52 = var47 < var51.size()
-                  ? (AiPhysics.Inner_DataUtil)var51.get(var47)
-                  : ((AiPhysics.Inner_DataUtil)var51.getLast()).withJump(false);
+               AiPhysics.MoveInput var52 = var47 < var51.size()
+                  ? (AiPhysics.MoveInput)var51.get(var47)
+                  : ((AiPhysics.MoveInput)var51.getLast()).withJump(false);
                var25 = putAt_F_F(var25, var52.yaw(), var7.maxTurn());
                var49 = var52.withYaw(var25);
                if (var48) {
@@ -2701,20 +2701,20 @@ public final class AiPaceScript {
                }
 
                if ((!var18 || var47 != 0) && var1.ground() != 0) {
-                  AiPhysics.Inner_DataUtil var10000;
+                  AiPhysics.MoveInput var10000;
                   switch (var1.ground()) {
                      case 1:
                         var10000 = var19
-                           ? new AiPhysics.Inner_DataUtil(0.0, 0.0, true, false, putAt_Z_TokenCore_TaskStat_4(var8, var23, var43), var25)
-                           : AiPhysics.Inner_DataUtil.NONE.withYaw(var25);
+                           ? new AiPhysics.MoveInput(0.0, 0.0, true, false, putAt_Z_TokenCore_TaskStat_4(var8, var23, var43), var25)
+                           : AiPhysics.MoveInput.NONE.withYaw(var25);
                         break;
                      case 3:
-                        var10000 = new AiPhysics.Inner_DataUtil(1.0, var16, false, false, true, var25);
+                        var10000 = new AiPhysics.MoveInput(1.0, var16, false, false, true, var25);
                         break;
                      default:
-                        AiPhysics.Inner_DataUtil var63 = putAt(var25, var23);
+                        AiPhysics.MoveInput var63 = putAt(var25, var23);
                         var10000 = var19
-                           ? new AiPhysics.Inner_DataUtil(
+                           ? new AiPhysics.MoveInput(
                               var63.forward(), var63.strafe(), true, false, putAt_Z_TokenCore_TaskStat_4(var8, var23, var43), var25
                            )
                            : var63;
@@ -2722,7 +2722,7 @@ public final class AiPaceScript {
 
                   var49 = var10000;
                } else {
-                  var49 = new AiPhysics.Inner_DataUtil(1.0, var16, var18 && var47 == 0 || var19, var50, false, var25);
+                  var49 = new AiPhysics.MoveInput(1.0, var16, var18 && var47 == 0 || var19, var50, false, var25);
                }
             } else {
                if (!var42 && var4 != null && var4.flowTemp < 0) {
@@ -2745,22 +2745,22 @@ public final class AiPaceScript {
                }
 
                boolean var64 = var14 != 2 && (var15 == 0 || var30 <= var15);
-               AiPhysics.Inner_DataUtil var67;
+               AiPhysics.MoveInput var67;
                if (var64) {
-                  var67 = new AiPhysics.Inner_DataUtil(1.0, var1.airStrafe(), false, var50, false, var25);
+                  var67 = new AiPhysics.MoveInput(1.0, var1.airStrafe(), false, var50, false, var25);
                } else {
                   switch (var1.after()) {
                      case 1:
                         var67 = putAt(var25, var23);
                         break;
                      case 2:
-                        var67 = new AiPhysics.Inner_DataUtil(0.0, 1.0, false, false, false, var25);
+                        var67 = new AiPhysics.MoveInput(0.0, 1.0, false, false, false, var25);
                         break;
                      case 3:
-                        var67 = new AiPhysics.Inner_DataUtil(0.0, -1.0, false, false, false, var25);
+                        var67 = new AiPhysics.MoveInput(0.0, -1.0, false, false, false, var25);
                         break;
                      default:
-                        var67 = AiPhysics.Inner_DataUtil.NONE.withYaw(var25);
+                        var67 = AiPhysics.MoveInput.NONE.withYaw(var25);
                   }
                }
 
@@ -2768,16 +2768,16 @@ public final class AiPaceScript {
                if (var23.onGround() && var23.vy() > 0.1) {
                   var10.fill_Z = true;
                   if (var1.bounceJump()) {
-                     var49 = new AiPhysics.Inner_DataUtil(1.0, var49.strafe(), true, var50, false, var25);
+                     var49 = new AiPhysics.MoveInput(1.0, var49.strafe(), true, var50, false, var25);
                   }
                }
             }
 
             var34 += Math.abs(Mth.wrapDegrees(var25 - var26));
             var26 = var25;
-            AiPhysics.Inner_CachePool var65 = putAt_TokenCore_TaskStat_TokenCore_TaskStat(var8, var28, var11.speedProfile());
+            AiPhysics.PhysicsWorld var65 = putAt_TokenCore_TaskStat_TokenCore_TaskStat(var8, var28, var11.speedProfile());
             double var66 = var65.movementSpeed();
-            AiPhysics.Inner_StreamUtil var54 = AiPhysics.fill(var23, var49, var65);
+            AiPhysics.MotionState var54 = AiPhysics.fill(var23, var49, var65);
             var9.increment();
             var31 = var49.sneak() ? var31 + 1 : 0;
             if (var31 < 3 && var54.pose() != 0 && putAt_Z_TokenCore_TaskStat_2(var8, var23, var54)) {
@@ -2897,7 +2897,7 @@ public final class AiPaceScript {
 
    private static AiPaceScript.Inner_TaskState putAt(
       AiPaceScript.Inner_TaskState var0,
-      AiPhysics.Inner_StreamUtil var1,
+      AiPhysics.MotionState var1,
       boolean var2,
       float var3,
       int var4,
@@ -2907,7 +2907,7 @@ public final class AiPaceScript {
       double var10,
       double var12,
       boolean var14,
-      AiPhysics.Inner_StreamUtil var15,
+      AiPhysics.MotionState var15,
       int var16,
       boolean var17,
       int var18,
@@ -2917,7 +2917,7 @@ public final class AiPaceScript {
       int var22,
       AiPaceScript.Inner_JsonCache var23,
       AiPaceScript.Inner_TextState var24,
-      AiPhysics.Inner_CachePool var25,
+      AiPhysics.PhysicsWorld var25,
       AiPaceScript.Inner_HashPool var26
    ) {
       int var27 = var23.checkpoints().length;
@@ -2967,8 +2967,8 @@ public final class AiPaceScript {
             return null;
          }
 
-         AiPhysics.Inner_DataUtil[] var43 = new AiPhysics.Inner_DataUtil[var22];
-         AiPhysics.Inner_StreamUtil[] var44 = new AiPhysics.Inner_StreamUtil[var22];
+         AiPhysics.MoveInput[] var43 = new AiPhysics.MoveInput[var22];
+         AiPhysics.MotionState[] var44 = new AiPhysics.MotionState[var22];
          boolean var45 = var26.speedProfile() != null && var26.speedProfile().hasTransition();
          double[] var46 = var45 ? new double[var22] : null;
          if (var19 != null && var20 > 0) {
@@ -3003,19 +3003,19 @@ public final class AiPaceScript {
       return var0 + Math.clamp(Mth.wrapDegrees(var1 - var0), -var2, var2);
    }
 
-   public static boolean putAt(AiPhysics.Inner_StreamUtil var0, BlockPos var1) {
+   public static boolean putAt(AiPhysics.MotionState var0, BlockPos var1) {
       return putAt_Z_TokenCore_TableCac(var0, var1, 0.0, 0.0);
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat_4(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, BlockPos var2, boolean var3) {
+   static boolean putAt_Z_TokenCore_TaskStat_4(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, boolean var3) {
       return putAt(var0, var1, putAt(var0, var1), var2, var3, false);
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat_4(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, BlockPos var2, boolean var3, boolean var4) {
+   static boolean putAt_Z_TokenCore_TaskStat_4(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, boolean var3, boolean var4) {
       return putAt(var0, var1, putAt(var0, var1), var2, var3, var4);
    }
 
-   private static boolean putAt(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, boolean var2, BlockPos var3, boolean var4, boolean var5) {
+   private static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, boolean var2, BlockPos var3, boolean var4, boolean var5) {
       if (var4) {
          return putAt_Z_TokenCore_TableCac(var1, var3, 0.14, 0.05);
       }
@@ -3037,15 +3037,15 @@ public final class AiPaceScript {
       }
    }
 
-   static double putAt_D_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var0) {
+   static double putAt_D_TokenCore_TableCac(AiPhysics.MotionState var0) {
       return var0.pose() == 2 ? 0.6 : (var0.pose() != 0 ? 1.5 : 1.8);
    }
 
-   static boolean putAt_Z_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var0, BlockPos var1, double var2) {
+   static boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var0, BlockPos var1, double var2) {
       return putAt_Z_TokenCore_TableCac(var0, var1, var2, Math.min(var2, 0.05));
    }
 
-   static boolean putAt_Z_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var0, BlockPos var1, double var2, double var4) {
+   static boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var0, BlockPos var1, double var2, double var4) {
       double var6 = 0.3;
       double var8 = 0.125 + var2;
       return var0.x() + var6 > var1.getX() + var8
@@ -3056,15 +3056,15 @@ public final class AiPaceScript {
          && var0.y() + putAt_D_TokenCore_TableCac(var0) > var1.getY() + var4;
    }
 
-   static boolean putAt(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1) {
+   static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
       return var1.onGround() && var1.vy() <= 0.1 || fill(var0, var1);
    }
 
-   static boolean fill(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1) {
+   static boolean fill(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
       return var0.state((int)Math.floor(var1.x()), (int)Math.floor(var1.y()), (int)Math.floor(var1.z()));
    }
 
-   private static boolean putAt_Z_TokenCore_TaskStat_4(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, boolean var2) {
+   private static boolean putAt_Z_TokenCore_TaskStat_4(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, boolean var2) {
       if (var2 && !(var1.vy() >= 0.0)) {
          int var3 = (int)Math.floor(var1.y());
          return var1.y() - var3 < 0.22 && !var0.state((int)Math.floor(var1.x()), var3 - 1, (int)Math.floor(var1.z()));
@@ -3074,7 +3074,7 @@ public final class AiPaceScript {
    }
 
    static AiPaceScript.Inner_BitCore putAt_TextPool_BitCore_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var0, int var1, AiPaceScript.Inner_JsonCache var2, double var3
+      AiPhysics.MotionState var0, int var1, AiPaceScript.Inner_JsonCache var2, double var3
    ) {
       AiPaceScript.Inner_TableCache var5 = new AiPaceScript.Inner_TableCache();
       putAt_V_TokenCore_TableCac(var0, var1, var2, var3, var5);
@@ -3082,7 +3082,7 @@ public final class AiPaceScript {
    }
 
    private static void putAt_V_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var0, int var1, AiPaceScript.Inner_JsonCache var2, double var3, AiPaceScript.Inner_TableCache var5
+      AiPhysics.MotionState var0, int var1, AiPaceScript.Inner_JsonCache var2, double var3, AiPaceScript.Inner_TableCache var5
    ) {
       int var6 = -1;
       double var7 = 1.7976931348623157E308;
@@ -3157,15 +3157,15 @@ public final class AiPaceScript {
       var5.readEx_D = var13;
    }
 
-   public static float putAt_F_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var0, AiPaceScript.Inner_JsonCache var1, float var2) {
+   public static float putAt_F_TokenCore_TableCac(AiPhysics.MotionState var0, AiPaceScript.Inner_JsonCache var1, float var2) {
       return fill(var0, 0.0, var1, var2);
    }
 
-   public static float putAt_F_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var0, double var1, AiPaceScript.Inner_JsonCache var3, float var4) {
+   public static float putAt_F_TokenCore_TableCac(AiPhysics.MotionState var0, double var1, AiPaceScript.Inner_JsonCache var3, float var4) {
       return fill(var0, var1, var3, var4);
    }
 
-   private static float fill(AiPhysics.Inner_StreamUtil var0, double var1, AiPaceScript.Inner_JsonCache var3, float var4) {
+   private static float fill(AiPhysics.MotionState var0, double var1, AiPaceScript.Inner_JsonCache var3, float var4) {
       double var5 = var3.clampLookAtReversal(var1, var1 + 2.5);
       float var7 = var3.yawAt(var0.x(), var0.z(), var5);
       if (!Float.isNaN(var7)) {
@@ -3177,14 +3177,14 @@ public final class AiPaceScript {
       return Float.isNaN(var7) ? var4 : var7;
    }
 
-   static boolean readEx(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1) {
+   static boolean readEx(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
       return putAt_Z_TokenCore_TaskStat(var0, var1, 0.06);
    }
 
    private static boolean putAt(
-      AiPhysics.Inner_CachePool var0,
-      AiPhysics.Inner_StreamUtil var1,
-      AiPhysics.Inner_StreamUtil var2,
+      AiPhysics.PhysicsWorld var0,
+      AiPhysics.MotionState var1,
+      AiPhysics.MotionState var2,
       boolean var3,
       boolean var4,
       AiPaceScript.Inner_TableCache var5
@@ -3235,7 +3235,7 @@ public final class AiPaceScript {
       return false;
    }
 
-   private static boolean putAt_Z_AABBArr(AABB[] var0, int var1, AiPhysics.Inner_StreamUtil var2, double var3) {
+   private static boolean putAt_Z_AABBArr(AABB[] var0, int var1, AiPhysics.MotionState var2, double var3) {
       double var5 = 0.3;
       double var7 = var2.y() + 0.001;
       double var9 = var2.y() + var3 - 0.001;
@@ -3247,7 +3247,7 @@ public final class AiPaceScript {
       return !putAt_Z_AABBArr(var0, var1, var2.x() - var5 - var11, var7, var2.z() - var5 - var11, var2.x() + var5 + var11, var9, var2.z() + var5 + var11);
    }
 
-   private static boolean putAt_Z_AABBArr(AABB[] var0, int var1, AiPhysics.Inner_StreamUtil var2, AiPhysics.Inner_StreamUtil var3, double var4) {
+   private static boolean putAt_Z_AABBArr(AABB[] var0, int var1, AiPhysics.MotionState var2, AiPhysics.MotionState var3, double var4) {
       if (var2.onGround() && var3.onGround() && var3.y() > var2.y() + 1.0E-6) {
          return false;
       } else {
@@ -3325,7 +3325,7 @@ public final class AiPaceScript {
       return false;
    }
 
-   static boolean value(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1) {
+   static boolean value(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
       double var2 = 0.3;
       double var4 = var1.y() + 0.001;
       double var6 = var1.y() + putAt_D_TokenCore_TableCac(var1) - 0.001;
@@ -3337,12 +3337,12 @@ public final class AiPaceScript {
       return !var0.putAt_Z_D(var1.x() - var2 - var8, var4, var1.z() - var2 - var8, var1.x() + var2 + var8, var6, var1.z() + var2 + var8);
    }
 
-   static boolean fill(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2) {
+   static boolean fill(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
       return putAt_Z_TokenCore_TaskStat(var0, var1.x(), var2.y(), var1.z(), 0.002);
    }
 
    private static boolean putAt(
-      AiPhysics.Inner_CachePool var0, boolean var1, AiPhysics.Inner_StreamUtil var2, AiPhysics.Inner_StreamUtil var3, boolean var4, boolean var5
+      AiPhysics.PhysicsWorld var0, boolean var1, AiPhysics.MotionState var2, AiPhysics.MotionState var3, boolean var4, boolean var5
    ) {
       if (var1 && !var4 && !var5) {
          if (!var2.onGround() || !var3.onGround() || Math.abs(var3.y() - var2.y()) > 1.0E-6) {
@@ -3355,12 +3355,12 @@ public final class AiPaceScript {
       }
    }
 
-   static boolean readEx(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2) {
+   static boolean readEx(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
       return putAt_Z_TokenCore_TaskStat_3(var0, var1, var2, fill(var0, var1), fill(var0, var2));
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat_3(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2, boolean var3, boolean var4
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2, boolean var3, boolean var4
    ) {
       if (!var3 && !var4) {
          if (!var2.onGround()) {
@@ -3431,13 +3431,13 @@ public final class AiPaceScript {
    }
 
    static boolean putAt_Z_TokenCore_TaskStat_2(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_DataUtil var2, AiPhysics.Inner_StreamUtil var3
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2, AiPhysics.MotionState var3
    ) {
       return var3.horizontalCollision() && !fill(var0, var1) ? fill(var0, var1, var2, var3) : false;
    }
 
    private static boolean fill(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_DataUtil var2, AiPhysics.Inner_StreamUtil var3
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2, AiPhysics.MotionState var3
    ) {
       if (!var3.horizontalCollision()) {
          return false;
@@ -3452,12 +3452,12 @@ public final class AiPaceScript {
          boolean var18 = var3.vx() == 0.0 && Math.abs(var14) > 1.0E-6;
          boolean var19 = var3.vz() == 0.0 && Math.abs(var16) > 1.0E-6;
          if (var19 && !var18) {
-            AiPhysics.Inner_StreamUtil var21 = AiPhysics.fill(
+            AiPhysics.MotionState var21 = AiPhysics.fill(
                putAt_TokenCore_TableCac_TokenCore_TableCac(var1, var1.x(), var1.z() + Math.copySign(0.002, var16)), var2, var0
             );
             return Math.abs(var21.x() - var1.x() - var4) > 0.01;
          } else if (var18 && !var19) {
-            AiPhysics.Inner_StreamUtil var20 = AiPhysics.fill(
+            AiPhysics.MotionState var20 = AiPhysics.fill(
                putAt_TokenCore_TableCac_TokenCore_TableCac(var1, var1.x() + Math.copySign(0.002, var14), var1.z()), var2, var0
             );
             return Math.abs(var20.z() - var1.z() - var6) > 0.01;
@@ -3467,7 +3467,7 @@ public final class AiPaceScript {
       }
    }
 
-   static boolean value(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2) {
+   static boolean value(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
       if (!fill(var0, var1) && !fill(var0, var2)) {
          if (var1.onGround() && var2.onGround() && var2.y() > var1.y() + 1.0E-6) {
             return false;
@@ -3497,7 +3497,7 @@ public final class AiPaceScript {
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat_3(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2, double var3
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2, double var3
    ) {
       if (var1.onGround() && var2.onGround() && var2.y() > var1.y() + 1.0E-6) {
          return false;
@@ -3528,7 +3528,7 @@ public final class AiPaceScript {
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat_2(
-      AiPhysics.Inner_CachePool var0, boolean var1, double var2, double var4, double var6, double var8, double var10
+      AiPhysics.PhysicsWorld var0, boolean var1, double var2, double var4, double var6, double var8, double var10
    ) {
       double var12 = var6 - var4;
       if (Math.abs(var12) < 1.0E-9) {
@@ -3548,7 +3548,7 @@ public final class AiPaceScript {
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat(
-      AiPhysics.Inner_CachePool var0, boolean var1, double var2, double var4, double var6, double var8, double var10, double var12
+      AiPhysics.PhysicsWorld var0, boolean var1, double var2, double var4, double var6, double var8, double var10, double var12
    ) {
       double var14 = 0.3;
       double var16 = Math.min(var4, var6) - var14 + 1.0E-6;
@@ -3574,8 +3574,8 @@ public final class AiPaceScript {
       return false;
    }
 
-   private static AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var0, double var1, double var3) {
-      return new AiPhysics.Inner_StreamUtil(
+   private static AiPhysics.MotionState putAt_TokenCore_TableCac_TokenCore_TableCac(AiPhysics.MotionState var0, double var1, double var3) {
+      return new AiPhysics.MotionState(
          var1,
          var0.y(),
          var3,
@@ -3593,17 +3593,17 @@ public final class AiPaceScript {
       );
    }
 
-   private static boolean fill(AiPhysics.Inner_CachePool var0, boolean var1, double var2, double var4, double var6, double var8, double var10, double var12) {
+   private static boolean fill(AiPhysics.PhysicsWorld var0, boolean var1, double var2, double var4, double var6, double var8, double var10, double var12) {
       double var14 = Math.min(var2, var4);
       double var16 = Math.max(var2, var4);
       return var1 ? var0.putAt_Z_D(var14, var10, var6 - var8, var16, var12, var6 + var8) : var0.putAt_Z_D(var6 - var8, var10, var14, var6 + var8, var12, var16);
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, double var2) {
+   static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, double var2) {
       return putAt_Z_TokenCore_TaskStat(var0, var1.x(), var1.y(), var1.z(), var2);
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.Inner_CachePool var0, double var1, double var3, double var5, double var7) {
+   static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, double var1, double var3, double var5, double var7) {
       double var9 = 0.3 - var7;
       return var0.putAt_Z_D(var1 - var9, var3 - 0.02, var5 - var9, var1 + var9, var3 - 1.0E-4, var5 + var9);
    }
@@ -3612,7 +3612,7 @@ public final class AiPaceScript {
       return putAt_J_TokenCore_TableCac(var0.putAt_TokenCore_TableCac, var0.putAt_F, var0.flowTemp);
    }
 
-   private static long putAt_J_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var0, float var1, int var2) {
+   private static long putAt_J_TokenCore_TableCac(AiPhysics.MotionState var0, float var1, int var2) {
       long var3 = Math.round(var0.x() * 4.0);
       var3 = var3 * 31L + Math.round(var0.y() * 4.0);
       var3 = var3 * 31L + Math.round(var0.z() * 4.0);
@@ -3624,13 +3624,13 @@ public final class AiPaceScript {
    }
 
    public static boolean putAt_Z_TokenCore_TaskStat_2(
-      AiPhysics.Inner_CachePool var0, AiPaceScript.Inner_IoPool var1, AiPaceScript.Inner_JsonCache var2, AiPaceScript.Inner_TextState var3, AiPaceScript.Inner_IoHelper var4
+      AiPhysics.PhysicsWorld var0, AiPaceScript.Inner_IoPool var1, AiPaceScript.Inner_JsonCache var2, AiPaceScript.Inner_TextState var3, AiPaceScript.Inner_IoHelper var4
    ) {
       return putAt(var0, var1, var2, var3, var4, null);
    }
 
    private static boolean putAt(
-      AiPhysics.Inner_CachePool var0,
+      AiPhysics.PhysicsWorld var0,
       AiPaceScript.Inner_IoPool var1,
       AiPaceScript.Inner_JsonCache var2,
       AiPaceScript.Inner_TextState var3,
@@ -3658,7 +3658,7 @@ public final class AiPaceScript {
          ArrayList var13 = new ArrayList(Math.min(var11, 64));
          ArrayList var14 = new ArrayList(Math.min(var11, 64));
          ArrayList var15 = new ArrayList(Math.min(var11, 64));
-         AiPhysics.Inner_StreamUtil var16 = var1.state();
+         AiPhysics.MotionState var16 = var1.state();
          float var17 = var1.yaw();
          int var18 = var1.seg();
          double var19 = var1.progress();
@@ -3678,35 +3678,35 @@ public final class AiPaceScript {
             double var31 = var2.length() - var19;
             float var33 = putAt_F_TokenCore_TableCac(var16, var19, var31, var23, var62, var65, var2, var17);
             float var34 = putAt_F_F(var17, var33, var3.maxTurn());
-            AiPhysics.Inner_DataUtil var35 = null;
-            AiPhysics.Inner_StreamUtil var36 = null;
+            AiPhysics.MoveInput var35 = null;
+            AiPhysics.MotionState var36 = null;
             boolean var37 = false;
             int var38 = var18;
             double var39 = var19;
             double var41 = 0.0;
             if (var23) {
                double[] var67 = var2.at(Math.min(var2.length(), var19 + 1.2));
-               AiPhysics.Inner_DataUtil[] var69;
+               AiPhysics.MoveInput[] var69;
                if (var67[1] > var16.y() + 0.12) {
                   boolean var72 = AiLadderJump.putAt(var0, BlockPos.containing(var16.x(), var16.y(), var16.z()));
-                  AiPhysics.Inner_DataUtil var75 = new AiPhysics.Inner_DataUtil(
+                  AiPhysics.MoveInput var75 = new AiPhysics.MoveInput(
                      0.0, 0.0, true, false, putAt_Z_TokenCore_TaskStat_4(var0, var16, true), var34
                   );
-                  AiPhysics.Inner_DataUtil var77 = new AiPhysics.Inner_DataUtil(1.0, 0.0, true, false, false, var34);
-                  var69 = var72 ? new AiPhysics.Inner_DataUtil[]{var75, var77} : new AiPhysics.Inner_DataUtil[]{var77, var75};
+                  AiPhysics.MoveInput var77 = new AiPhysics.MoveInput(1.0, 0.0, true, false, false, var34);
+                  var69 = var72 ? new AiPhysics.MoveInput[]{var75, var77} : new AiPhysics.MoveInput[]{var77, var75};
                } else if (var67[1] < var16.y() - 0.25) {
-                  var69 = new AiPhysics.Inner_DataUtil[]{
-                     AiPhysics.Inner_DataUtil.NONE.withYaw(var34), new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var34)
+                  var69 = new AiPhysics.MoveInput[]{
+                     AiPhysics.MoveInput.NONE.withYaw(var34), new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var34)
                   };
                } else {
-                  var69 = new AiPhysics.Inner_DataUtil[]{
-                     new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, true, var34),
-                     new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var34)
+                  var69 = new AiPhysics.MoveInput[]{
+                     new AiPhysics.MoveInput(1.0, 0.0, false, false, true, var34),
+                     new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var34)
                   };
                }
 
-               for (AiPhysics.Inner_DataUtil var80 : var69) {
-                  AiPhysics.Inner_StreamUtil var82 = putAt_TokenCore_TableCac_TokenCore_TaskStat(
+               for (AiPhysics.MoveInput var80 : var69) {
+                  AiPhysics.MotionState var82 = putAt_TokenCore_TableCac_TokenCore_TaskStat(
                      var0, var16, var80, var23, var25, var18, var19, var26, var2, var3, var12, var5
                   );
                   if (var82 != null) {
@@ -3723,23 +3723,23 @@ public final class AiPaceScript {
                double var66 = Math.hypot(var16.x() - var62, var16.z() - var65);
                boolean var71 = false;
                double var74 = 1.0 / 0.0;
-               AiPhysics.Inner_DataUtil[] var79 = var3.allowSprint() && var66 > 0.45
-                  ? new AiPhysics.Inner_DataUtil[]{
-                     new AiPhysics.Inner_DataUtil(1.0, 0.0, false, true, false, var34),
-                     new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var34),
-                     new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, true, var34),
+               AiPhysics.MoveInput[] var79 = var3.allowSprint() && var66 > 0.45
+                  ? new AiPhysics.MoveInput[]{
+                     new AiPhysics.MoveInput(1.0, 0.0, false, true, false, var34),
+                     new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var34),
+                     new AiPhysics.MoveInput(1.0, 0.0, false, false, true, var34),
                      putAt(var34, var16),
-                     AiPhysics.Inner_DataUtil.NONE.withYaw(var34)
+                     AiPhysics.MoveInput.NONE.withYaw(var34)
                   }
-                  : new AiPhysics.Inner_DataUtil[]{
-                     new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var34),
-                     new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, true, var34),
+                  : new AiPhysics.MoveInput[]{
+                     new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var34),
+                     new AiPhysics.MoveInput(1.0, 0.0, false, false, true, var34),
                      putAt(var34, var16),
-                     AiPhysics.Inner_DataUtil.NONE.withYaw(var34)
+                     AiPhysics.MoveInput.NONE.withYaw(var34)
                   };
 
-               for (AiPhysics.Inner_DataUtil var88 : var79) {
-                  AiPhysics.Inner_StreamUtil var90 = putAt_TokenCore_TableCac_TokenCore_TaskStat(
+               for (AiPhysics.MoveInput var88 : var79) {
+                  AiPhysics.MotionState var90 = putAt_TokenCore_TableCac_TokenCore_TaskStat(
                      var0, var16, var88, false, var25, var18, var19, var26, var2, var3, var12, var5
                   );
                   if (var90 != null) {
@@ -3774,41 +3774,41 @@ public final class AiPaceScript {
                   && var31 > 4.0
                   && var43 <= 14.0F
                   && putAt_Z_TokenCore_TaskStat(var0, var16, var19, var2);
-               AiPhysics.Inner_DataUtil[] var49;
+               AiPhysics.MoveInput[] var49;
                if (var47) {
                   var49 = var45
-                     ? new AiPhysics.Inner_DataUtil[]{
-                        new AiPhysics.Inner_DataUtil(1.0, 0.0, true, true, false, var34),
-                        new AiPhysics.Inner_DataUtil(1.0, 0.0, true, false, false, var34),
-                        new AiPhysics.Inner_DataUtil(1.0, 0.0, false, true, false, var34),
-                        new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var34)
+                     ? new AiPhysics.MoveInput[]{
+                        new AiPhysics.MoveInput(1.0, 0.0, true, true, false, var34),
+                        new AiPhysics.MoveInput(1.0, 0.0, true, false, false, var34),
+                        new AiPhysics.MoveInput(1.0, 0.0, false, true, false, var34),
+                        new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var34)
                      }
-                     : new AiPhysics.Inner_DataUtil[]{
-                        new AiPhysics.Inner_DataUtil(1.0, 0.0, true, false, false, var34),
-                        new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var34)
+                     : new AiPhysics.MoveInput[]{
+                        new AiPhysics.MoveInput(1.0, 0.0, true, false, false, var34),
+                        new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var34)
                      };
                } else if (var48) {
-                  var49 = new AiPhysics.Inner_DataUtil[]{
-                     new AiPhysics.Inner_DataUtil(1.0, 0.0, true, true, false, var34),
-                     new AiPhysics.Inner_DataUtil(1.0, 0.0, false, true, false, var34),
-                     new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var34)
+                  var49 = new AiPhysics.MoveInput[]{
+                     new AiPhysics.MoveInput(1.0, 0.0, true, true, false, var34),
+                     new AiPhysics.MoveInput(1.0, 0.0, false, true, false, var34),
+                     new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var34)
                   };
                } else {
                   var49 = var45
-                     ? new AiPhysics.Inner_DataUtil[]{
-                        new AiPhysics.Inner_DataUtil(1.0, 0.0, false, true, false, var34),
-                        new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var34)
+                     ? new AiPhysics.MoveInput[]{
+                        new AiPhysics.MoveInput(1.0, 0.0, false, true, false, var34),
+                        new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var34)
                      }
-                     : new AiPhysics.Inner_DataUtil[]{new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var34)};
+                     : new AiPhysics.MoveInput[]{new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var34)};
                }
 
-               AiPhysics.Inner_DataUtil[] var50 = var49;
+               AiPhysics.MoveInput[] var50 = var49;
                int var51 = var50.length;
                int var52 = 0;
 
                while (var52 < var51) {
-                  AiPhysics.Inner_DataUtil var53;
-                  AiPhysics.Inner_StreamUtil var54;
+                  AiPhysics.MoveInput var53;
+                  AiPhysics.MotionState var54;
                   label290: {
                      var53 = var50[var52];
                      var54 = putAt_TokenCore_TableCac_TokenCore_TaskStat(var0, var16, var53, false, var25, var18, var19, var26, var2, var3, var12, var5);
@@ -3817,8 +3817,8 @@ public final class AiPaceScript {
                            break label290;
                         }
 
-                        AiPhysics.Inner_DataUtil var55 = new AiPhysics.Inner_DataUtil(1.0, 0.0, true, var53.sprint(), false, var34);
-                        AiPhysics.Inner_StreamUtil var56 = putAt_TokenCore_TableCac_TokenCore_TaskStat(
+                        AiPhysics.MoveInput var55 = new AiPhysics.MoveInput(1.0, 0.0, true, var53.sprint(), false, var34);
+                        AiPhysics.MotionState var56 = putAt_TokenCore_TableCac_TokenCore_TaskStat(
                            var0, var16, var55, false, var25, var18, var19, var26, var2, var3, var12, var5
                         );
                         if (var56 != null && !var56.horizontalCollision()) {
@@ -3853,8 +3853,8 @@ public final class AiPaceScript {
                if (var35 == null) {
                   for (float var89 : new float[]{-18.0F, 18.0F}) {
                      float var91 = putAt_F_F(var17, var33 + var89, var3.maxTurn());
-                     AiPhysics.Inner_DataUtil var93 = new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var91);
-                     AiPhysics.Inner_StreamUtil var95 = putAt_TokenCore_TableCac_TokenCore_TaskStat(
+                     AiPhysics.MoveInput var93 = new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var91);
+                     AiPhysics.MotionState var95 = putAt_TokenCore_TableCac_TokenCore_TaskStat(
                         var0, var16, var93, false, var25, var18, var19, var26, var2, var3, var12, var5
                      );
                      if (var95 != null) {
@@ -3920,10 +3920,10 @@ public final class AiPaceScript {
       }
    }
 
-   private static AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac_TokenCore_TaskStat(
-      AiPhysics.Inner_CachePool var0,
-      AiPhysics.Inner_StreamUtil var1,
-      AiPhysics.Inner_DataUtil var2,
+   private static AiPhysics.MotionState putAt_TokenCore_TableCac_TokenCore_TaskStat(
+      AiPhysics.PhysicsWorld var0,
+      AiPhysics.MotionState var1,
+      AiPhysics.MoveInput var2,
       boolean var3,
       int var4,
       int var5,
@@ -3934,7 +3934,7 @@ public final class AiPaceScript {
       AiPaceScript.Inner_TableCache var12,
       LongAdder var13
    ) {
-      AiPhysics.Inner_StreamUtil var14 = AiPhysics.fill(var1, var2, var0);
+      AiPhysics.MotionState var14 = AiPhysics.fill(var1, var2, var0);
       if (var13 != null) {
          var13.increment();
       }
@@ -3975,7 +3975,7 @@ public final class AiPaceScript {
    }
 
    private static float putAt_F_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var0, double var1, double var3, boolean var5, double var6, double var8, AiPaceScript.Inner_JsonCache var10, float var11
+      AiPhysics.MotionState var0, double var1, double var3, boolean var5, double var6, double var8, AiPaceScript.Inner_JsonCache var10, float var11
    ) {
       if (!var5 && var3 <= 2.2) {
          double var16 = var6 - var0.x();
@@ -3993,7 +3993,7 @@ public final class AiPaceScript {
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, float var2, boolean var3, int var4, double var5, AiPaceScript.Inner_JsonCache var7
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, int var4, double var5, AiPaceScript.Inner_JsonCache var7
    ) {
       double var8 = var1.y();
       double var10 = Math.hypot(var1.vx(), var1.vz());
@@ -4026,7 +4026,7 @@ public final class AiPaceScript {
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, double var2, AiPaceScript.Inner_JsonCache var4
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, double var2, AiPaceScript.Inner_JsonCache var4
    ) {
       double[] var5 = var4.at(var2 + 1.8);
       double[] var6 = var4.at(var2 + 4.2);
@@ -4074,11 +4074,11 @@ public final class AiPaceScript {
    public record Inner_CacheHelper(BlockPos target, int point, boolean checkpoint) {
    }
 
-   private static final class Inner_EventBus implements AiPhysics.Inner_CachePool {
-      private final AiPhysics.Inner_CachePool putAt_TokenCore_TaskStat;
+   private static final class Inner_EventBus implements AiPhysics.PhysicsWorld {
+      private final AiPhysics.PhysicsWorld putAt_TokenCore_TaskStat;
       private final double putAt_D;
 
-      Inner_EventBus(AiPhysics.Inner_CachePool var1, double var2) {
+      Inner_EventBus(AiPhysics.PhysicsWorld var1, double var2) {
          this.putAt_TokenCore_TaskStat = var1;
          this.putAt_D = var2;
       }
@@ -4226,14 +4226,14 @@ public final class AiPaceScript {
    }
 
    static final class Inner_HashEntry {
-      private final Supplier<AiPhysics.Inner_CachePool> putAt_Supplier;
-      private final ConcurrentLinkedQueue<AiPhysics.Inner_CachePool> putAt_ConcurrentLinkedQu = new ConcurrentLinkedQueue<>();
+      private final Supplier<AiPhysics.PhysicsWorld> putAt_Supplier;
+      private final ConcurrentLinkedQueue<AiPhysics.PhysicsWorld> putAt_ConcurrentLinkedQu = new ConcurrentLinkedQueue<>();
 
-      Inner_HashEntry(Supplier<AiPhysics.Inner_CachePool> var1) {
+      Inner_HashEntry(Supplier<AiPhysics.PhysicsWorld> var1) {
          this.putAt_Supplier = var1;
       }
 
-      static AiPaceScript.Inner_HashEntry putAt_TextPool_HashEntry_TokenCore_TaskStat(AiPhysics.Inner_CachePool var0) {
+      static AiPaceScript.Inner_HashEntry putAt_TextPool_HashEntry_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0) {
          AiPaceScript.Inner_HashEntry var1 = new AiPaceScript.Inner_HashEntry(null);
          var1.putAt_ConcurrentLinkedQu.add(var0);
          return var1;
@@ -4243,12 +4243,12 @@ public final class AiPaceScript {
          return this.putAt_Supplier != null && AiPaceScript.getTo > 1;
       }
 
-      AiPhysics.Inner_CachePool putAt_TokenCore_TaskStat() {
-         AiPhysics.Inner_CachePool var1 = this.putAt_ConcurrentLinkedQu.poll();
+      AiPhysics.PhysicsWorld putAt_TokenCore_TaskStat() {
+         AiPhysics.PhysicsWorld var1 = this.putAt_ConcurrentLinkedQu.poll();
          return var1 != null ? var1 : this.putAt_Supplier.get();
       }
 
-      void putAt_V_TokenCore_TaskStat(AiPhysics.Inner_CachePool var1) {
+      void putAt_V_TokenCore_TaskStat(AiPhysics.PhysicsWorld var1) {
          this.putAt_ConcurrentLinkedQu.add(var1);
       }
    }
@@ -4258,8 +4258,8 @@ public final class AiPaceScript {
    }
 
    public static final class Inner_IoHelper {
-      private final List<AiPhysics.Inner_DataUtil> putAt_List = new CopyOnWriteArrayList<>();
-      private final List<AiPhysics.Inner_StreamUtil> fill_List = new CopyOnWriteArrayList<>();
+      private final List<AiPhysics.MoveInput> putAt_List = new CopyOnWriteArrayList<>();
+      private final List<AiPhysics.MotionState> fill_List = new CopyOnWriteArrayList<>();
       private final List<Integer> readEx = new CopyOnWriteArrayList<>();
       private final List<Double> value = new CopyOnWriteArrayList<>();
       private volatile int flowState;
@@ -4270,11 +4270,11 @@ public final class AiPaceScript {
       private volatile AiPaceScript.Inner_StreamState putAt_TextPool_StreamSta;
       private volatile BlockPos[] putAt_BlockPosArr;
 
-      synchronized void putAt(List<AiPhysics.Inner_DataUtil> var1, List<AiPhysics.Inner_StreamUtil> var2, List<Integer> var3) {
+      synchronized void putAt(List<AiPhysics.MoveInput> var1, List<AiPhysics.MotionState> var2, List<Integer> var3) {
          this.putAt(var1, var2, var3, null);
       }
 
-      synchronized void putAt(List<AiPhysics.Inner_DataUtil> var1, List<AiPhysics.Inner_StreamUtil> var2, List<Integer> var3, List<Double> var4) {
+      synchronized void putAt(List<AiPhysics.MoveInput> var1, List<AiPhysics.MotionState> var2, List<Integer> var3, List<Double> var4) {
          this.putAt_List.addAll(var1);
          this.fill_List.addAll(var2);
          this.readEx.addAll(var3);
@@ -4325,7 +4325,7 @@ public final class AiPaceScript {
          return -1;
       }
 
-      public synchronized AiPhysics.Inner_DataUtil putAt_TokenCore_CacheHel_I(int var1) {
+      public synchronized AiPhysics.MoveInput putAt_TokenCore_CacheHel_I(int var1) {
          if (var1 >= this.flowState) {
             return null;
          }
@@ -4334,7 +4334,7 @@ public final class AiPaceScript {
          return this.putAt_List.get(var1);
       }
 
-      public synchronized AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac_I(int var1) {
+      public synchronized AiPhysics.MotionState putAt_TokenCore_TableCac_I(int var1) {
          return var1 >= 0 && var1 < this.flowState ? this.fill_List.get(var1) : null;
       }
 
@@ -4374,11 +4374,11 @@ public final class AiPaceScript {
          return this.flowState;
       }
 
-      public AiPhysics.Inner_DataUtil fill_TokenCore_CacheHel(int var1) {
+      public AiPhysics.MoveInput fill_TokenCore_CacheHel(int var1) {
          return this.putAt_List.get(var1);
       }
 
-      public AiPhysics.Inner_StreamUtil fill_TokenCore_TableCac(int var1) {
+      public AiPhysics.MotionState fill_TokenCore_TableCac(int var1) {
          return this.fill_List.get(var1);
       }
 
@@ -4390,17 +4390,17 @@ public final class AiPaceScript {
          return this.fill_Z;
       }
 
-      List<AiPhysics.Inner_DataUtil> putAt_List() {
+      List<AiPhysics.MoveInput> putAt_List() {
          return this.putAt_List;
       }
 
-      List<AiPhysics.Inner_StreamUtil> fill_List() {
+      List<AiPhysics.MotionState> fill_List() {
          return this.fill_List;
       }
    }
 
-   public record Inner_IoPool(AiPhysics.Inner_StreamUtil state, float yaw, int seg, int touched, double progress) {
-      public static AiPaceScript.Inner_IoPool of(AiPhysics.Inner_StreamUtil var0, float var1) {
+   public record Inner_IoPool(AiPhysics.MotionState state, float yaw, int seg, int touched, double progress) {
+      public static AiPaceScript.Inner_IoPool of(AiPhysics.MotionState var0, float var1) {
          return new AiPaceScript.Inner_IoPool(var0, var1, 0, 0, 0.0);
       }
    }
@@ -4826,8 +4826,8 @@ public final class AiPaceScript {
    }
 
    public record Inner_PacketHelper(
-      List<AiPhysics.Inner_DataUtil> inputs,
-      List<AiPhysics.Inner_StreamUtil> states,
+      List<AiPhysics.MoveInput> inputs,
+      List<AiPhysics.MotionState> states,
       int[] checkpointTicks,
       boolean complete,
       int expanded,
@@ -4852,7 +4852,7 @@ public final class AiPaceScript {
       int airStrafe,
       int after,
       boolean bounceJump,
-      List<AiPhysics.Inner_DataUtil> keys
+      List<AiPhysics.MoveInput> keys
    ) {
       Inner_RingBuffer(float var1, int var2, boolean var3, int var4, int var5, int var6, int var7) {
          this(var1, var2, var3, var4, var5, var6, var7, false, 0, 0, 0, false, null);
@@ -4884,17 +4884,17 @@ public final class AiPaceScript {
          );
       }
 
-      static AiPaceScript.Inner_RingBuffer keyed(List<AiPhysics.Inner_DataUtil> var0) {
-         return new AiPaceScript.Inner_RingBuffer(((AiPhysics.Inner_DataUtil)var0.getFirst()).yaw(), 0, false, 0, 0, 0, 0, false, 0, 0, 0, false, var0);
+      static AiPaceScript.Inner_RingBuffer keyed(List<AiPhysics.MoveInput> var0) {
+         return new AiPaceScript.Inner_RingBuffer(((AiPhysics.MoveInput)var0.getFirst()).yaw(), 0, false, 0, 0, 0, 0, false, 0, 0, 0, false, var0);
       }
    }
 
    private static final class Inner_RingUtil {
-      private static final List<AiPhysics.Inner_DataUtil> putAt_List = List.of();
+      private static final List<AiPhysics.MoveInput> putAt_List = List.of();
       private static final int flowState = 16;
       private static final int flowTemp = 32;
       private static final int readEx_I = 128;
-      private final ConcurrentHashMap<Long, List<AiPhysics.Inner_DataUtil>> putAt_ConcurrentHashMap = new ConcurrentHashMap<>();
+      private final ConcurrentHashMap<Long, List<AiPhysics.MoveInput>> putAt_ConcurrentHashMap = new ConcurrentHashMap<>();
       private final AtomicInteger[] putAt_AtomicIntegerArr;
       private final AtomicInteger[] fill_AtomicIntegerArr;
       private final AtomicInteger[] readEx_AtomicIntegerArr;
@@ -4911,7 +4911,7 @@ public final class AiPaceScript {
          }
       }
 
-      static long putAt(int var0, AiPhysics.Inner_StreamUtil var1, double var2) {
+      static long putAt(int var0, AiPhysics.MotionState var1, double var2) {
          long var4 = var0;
          var4 = var4 * 31L + Math.round(var1.x() * 8.0);
          var4 = var4 * 31L + Math.round(var1.y() * 4.0);
@@ -4927,8 +4927,8 @@ public final class AiPaceScript {
    }
 
    private static final class Inner_SyncPool {
-      final AiPhysics.Inner_DataUtil[] putAt_TokenCore_CacheHelArr = new AiPhysics.Inner_DataUtil[120];
-      final AiPhysics.Inner_StreamUtil[] putAt_TokenCore_TableCacArr = new AiPhysics.Inner_StreamUtil[120];
+      final AiPhysics.MoveInput[] putAt_TokenCore_CacheHelArr = new AiPhysics.MoveInput[120];
+      final AiPhysics.MotionState[] putAt_TokenCore_TableCacArr = new AiPhysics.MotionState[120];
       final double[] putAt_DArr = new double[120];
       final float[] putAt_FArr = new float[121];
       final int[] putAt_IArr = new int[121];
@@ -5005,8 +5005,8 @@ public final class AiPaceScript {
 
       void putAt(
          int var1,
-         AiPhysics.Inner_DataUtil var2,
-         AiPhysics.Inner_StreamUtil var3,
+         AiPhysics.MoveInput var2,
+         AiPhysics.MotionState var3,
          double var4,
          float var6,
          int var7,
@@ -5045,7 +5045,7 @@ public final class AiPaceScript {
          this.flowState = var1;
       }
 
-      void putAt(int var1, int var2, AiPhysics.Inner_StreamUtil var3, double var4, AiPaceScript.Inner_JsonCache var6, float var7, float var8) {
+      void putAt(int var1, int var2, AiPhysics.MotionState var3, double var4, AiPaceScript.Inner_JsonCache var6, float var7, float var8) {
          if (var1 == 1) {
             boolean var9 = var2 <= 3 ? (this.putAt_J & 7L) == 0L : (var2 <= 6 ? (this.putAt_J & 56L) == 0L : (this.putAt_J & -64L) == 0L);
             if (var9 && Float.compare(AiPaceScript.putAt_F_F(var7, AiPaceScript.fill(var3, var4, var6, var7), var8), var7) != 0) {
@@ -5061,8 +5061,8 @@ public final class AiPaceScript {
    }
 
    private static final class Inner_TableCache {
-      final AiPhysics.Inner_DataUtil[] putAt_TokenCore_CacheHelArr = new AiPhysics.Inner_DataUtil[120];
-      final AiPhysics.Inner_StreamUtil[] putAt_TokenCore_TableCacArr = new AiPhysics.Inner_StreamUtil[120];
+      final AiPhysics.MoveInput[] putAt_TokenCore_CacheHelArr = new AiPhysics.MoveInput[120];
+      final AiPhysics.MotionState[] putAt_TokenCore_TableCacArr = new AiPhysics.MotionState[120];
       final double[] putAt_DArr = new double[120];
       final AiPaceScript.Inner_SyncPool putAt_TextPool_SyncPool = new AiPaceScript.Inner_SyncPool();
       final AiPaceScript.Inner_SyncPool fill_TextPool_SyncPool = new AiPaceScript.Inner_SyncPool();
@@ -5078,7 +5078,7 @@ public final class AiPaceScript {
    }
 
    private static final class Inner_TaskState {
-      final AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac;
+      final AiPhysics.MotionState putAt_TokenCore_TableCac;
       final float putAt_F;
       final int flowState;
       final int flowTemp;
@@ -5094,8 +5094,8 @@ public final class AiPaceScript {
       double prevEx;
       long putAt_J;
       final AiPaceScript.Inner_TaskState putAt_TextPool_TaskState;
-      final AiPhysics.Inner_DataUtil[] putAt_TokenCore_CacheHelArr;
-      final AiPhysics.Inner_StreamUtil[] putAt_TokenCore_TableCacArr;
+      final AiPhysics.MoveInput[] putAt_TokenCore_CacheHelArr;
+      final AiPhysics.MotionState[] putAt_TokenCore_TableCacArr;
       final double[] putAt_DArr;
 
       int putAt() {
@@ -5103,7 +5103,7 @@ public final class AiPaceScript {
       }
 
       Inner_TaskState(
-         AiPhysics.Inner_StreamUtil var1,
+         AiPhysics.MotionState var1,
          float var2,
          int var3,
          int var4,
@@ -5112,8 +5112,8 @@ public final class AiPaceScript {
          double var8,
          double var10,
          AiPaceScript.Inner_TaskState var12,
-         AiPhysics.Inner_DataUtil[] var13,
-         AiPhysics.Inner_StreamUtil[] var14,
+         AiPhysics.MoveInput[] var13,
+         AiPhysics.MotionState[] var14,
          double[] var15
       ) {
          this.putAt_TokenCore_TableCac = var1;
@@ -5167,7 +5167,7 @@ public final class AiPaceScript {
       }
    }
 
-   private record Inner_TextStore(List<AiPhysics.Inner_DataUtil> keys, BlockPos target) {
+   private record Inner_TextStore(List<AiPhysics.MoveInput> keys, BlockPos target) {
    }
 
    public record Inner_TokenCodec(AiPaceScript.Inner_JsonCache guide, List<AiPathfinder.UiHelper> movements) {

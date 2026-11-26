@@ -38,12 +38,12 @@ public final class PatternCaptureMatcher {
    private PatternCaptureMatcher() {
    }
 
-   public static Optional<PatternCaptureMatcher.Inner_StreamUtil> init(PatternCaptureMatcher.Inner_DataUtil mode, String pattern, String candidate) {
+   public static Optional<PatternCaptureMatcher.CaptureResult> init(PatternCaptureMatcher.MatchMode mode, String pattern, String candidate) {
       if (candidate == null) {
          return Optional.empty();
       }
 
-      PatternCaptureMatcher.Inner_DataUtil effective = mode == null ? PatternCaptureMatcher.Inner_DataUtil.MATCH : mode;
+      PatternCaptureMatcher.MatchMode effective = mode == null ? PatternCaptureMatcher.MatchMode.MATCH : mode;
       Optional var10000;
       switch (effective) {
          case MATCH:
@@ -62,10 +62,10 @@ public final class PatternCaptureMatcher {
       return var10000;
    }
 
-   public static Set<String> init(PatternCaptureMatcher.Inner_DataUtil mode, String pattern) {
-      Pattern parser = mode == PatternCaptureMatcher.Inner_DataUtil.REGEX ? load_Pattern : init_Pattern;
+   public static Set<String> init(PatternCaptureMatcher.MatchMode mode, String pattern) {
+      Pattern parser = mode == PatternCaptureMatcher.MatchMode.REGEX ? load_Pattern : init_Pattern;
       String source = pattern == null ? "" : pattern;
-      if (mode != PatternCaptureMatcher.Inner_DataUtil.REGEX) {
+      if (mode != PatternCaptureMatcher.MatchMode.REGEX) {
          source = init_Str(source);
       }
 
@@ -79,11 +79,11 @@ public final class PatternCaptureMatcher {
       return names;
    }
 
-   private static Optional<PatternCaptureMatcher.Inner_StreamUtil> init(String sourcePattern, String sourceCandidate) {
+   private static Optional<PatternCaptureMatcher.CaptureResult> init(String sourcePattern, String sourceCandidate) {
       String capturePattern = init_Str(sourcePattern == null ? "" : sourcePattern.trim());
       String candidate = load(sourceCandidate);
       if (capturePattern.isEmpty()) {
-         return Optional.of(new PatternCaptureMatcher.Inner_StreamUtil(candidate, Map.of()));
+         return Optional.of(new PatternCaptureMatcher.CaptureResult(candidate, Map.of()));
       }
 
       Matcher tokenMatcher = init_Pattern.matcher(capturePattern);
@@ -131,19 +131,19 @@ public final class PatternCaptureMatcher {
             values.put(name, MacroVarValue.init_l_Obj(value));
          }
 
-         return Optional.of(new PatternCaptureMatcher.Inner_StreamUtil(matcher.group(), values));
+         return Optional.of(new PatternCaptureMatcher.CaptureResult(matcher.group(), values));
       } catch (IllegalArgumentException ignored) {
          return Optional.empty();
       }
    }
 
-   private static Optional<PatternCaptureMatcher.Inner_StreamUtil> load(String sourcePattern, String sourceCandidate) {
+   private static Optional<PatternCaptureMatcher.CaptureResult> load(String sourcePattern, String sourceCandidate) {
       String regex = sourcePattern == null ? "" : sourcePattern;
       if (regex.isBlank()) {
-         return Optional.of(new PatternCaptureMatcher.Inner_StreamUtil(sourceCandidate, Map.of()));
+         return Optional.of(new PatternCaptureMatcher.CaptureResult(sourceCandidate, Map.of()));
       }
 
-      List<String> names = new ArrayList<>(init(PatternCaptureMatcher.Inner_DataUtil.REGEX, regex));
+      List<String> names = new ArrayList<>(init(PatternCaptureMatcher.MatchMode.REGEX, regex));
 
       try {
          Matcher matcher = init_Pattern(regex).matcher(sourceCandidate);
@@ -160,7 +160,7 @@ public final class PatternCaptureMatcher {
             }
          }
 
-         return Optional.of(new PatternCaptureMatcher.Inner_StreamUtil(matcher.group(), values));
+         return Optional.of(new PatternCaptureMatcher.CaptureResult(matcher.group(), values));
       } catch (IllegalArgumentException ignored) {
          return Optional.empty();
       }
@@ -198,14 +198,14 @@ public final class PatternCaptureMatcher {
       return value == null ? "" : read.matcher(value.replace('\n', ' ').replace('\r', ' ')).replaceAll(" ").trim();
    }
 
-   public enum Inner_DataUtil {
+   public enum MatchMode {
       MATCH,
       CAPTURE,
       REGEX;
    }
 
-   public record Inner_StreamUtil(String init_Str, Map<String, MacroVarValue> init_Map) {
-      public Inner_StreamUtil {
+   public record CaptureResult(String init_Str, Map<String, MacroVarValue> init_Map) {
+      public CaptureResult {
          init_Str = init_Str == null ? "" : init_Str;
          init_Map = init_Map == null ? Map.of() : Map.copyOf(init_Map);
       }

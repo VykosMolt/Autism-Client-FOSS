@@ -1091,7 +1091,7 @@ public final class LeafDupeModule extends Module {
    }
 
    private float load_F_4() {
-      ServerRotationTracker.Inner_CachePool written = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot written = ServerRotationTracker.init_ch_CachePool();
       return written.init_Z() ? written.write() : ((AutismLocalPlayerAccessor)MC.player).autism$getLastSentPitch();
    }
 

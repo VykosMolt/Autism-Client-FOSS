@@ -23,24 +23,24 @@ import net.minecraft.network.protocol.PacketFlow;
 public final class ConnectionPrivacyRegistry {
    static final int init_I = 1024;
    private static final Object init_Obj = new Object();
-   private static final Map<Connection, ConnectionPrivacyRegistry.Inner_StreamUtil> init_Map = new IdentityHashMap<>();
-   private static final Map<PacketListener, ConnectionPrivacyRegistry.Inner_StreamUtil> load = new IdentityHashMap<>();
+   private static final Map<Connection, ConnectionPrivacyRegistry.ConnectionSession> init_Map = new IdentityHashMap<>();
+   private static final Map<PacketListener, ConnectionPrivacyRegistry.ConnectionSession> load = new IdentityHashMap<>();
    private static final AtomicLong init_AtomicLong = new AtomicLong();
 
    private ConnectionPrivacyRegistry() {
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init(Connection connection, ConnectionPrivacyRegistry.Inner_CachePool mode, boolean multi, SocketAddress peerAddress) {
+   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, ConnectionPrivacyRegistry.PrivacyMode mode, boolean multi, SocketAddress peerAddress) {
       Objects.requireNonNull(connection, "connection");
       Objects.requireNonNull(mode, "mode");
       if (peerAddress instanceof LocalAddress || connection.isMemoryConnection() || connection.getReceiving() == PacketFlow.SERVERBOUND) {
-         mode = ConnectionPrivacyRegistry.Inner_CachePool.MODDED;
+         mode = ConnectionPrivacyRegistry.PrivacyMode.MODDED;
       }
 
       List<Socket> retired = List.of();
-      ConnectionPrivacyRegistry.Inner_StreamUtil created;
+      ConnectionPrivacyRegistry.ConnectionSession created;
       synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil existing = init_Map.get(connection);
+         ConnectionPrivacyRegistry.ConnectionSession existing = init_Map.get(connection);
          if (existing != null) {
             if (existing.read) {
                if (peerAddress instanceof LocalAddress) {
@@ -57,7 +57,7 @@ public final class ConnectionPrivacyRegistry {
             throw new IllegalStateException("Connection privacy registry is full (1024)");
          }
 
-         created = new ConnectionPrivacyRegistry.Inner_StreamUtil(init_AtomicLong.incrementAndGet(), mode, multi, connection, peerAddress);
+         created = new ConnectionPrivacyRegistry.ConnectionSession(init_AtomicLong.incrementAndGet(), mode, multi, connection, peerAddress);
          if (created.read()) {
             created.init_ServerData_Type = Type.OTHER;
          }
@@ -69,37 +69,37 @@ public final class ConnectionPrivacyRegistry {
       return created;
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init_BufferHelper_Strea(Connection connection) {
+   public static ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea(Connection connection) {
       if (connection == null) {
          return null;
       }
 
       synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = init_Map.get(connection);
+         ConnectionPrivacyRegistry.ConnectionSession context = init_Map.get(connection);
          return context != null && context.read ? context : null;
       }
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init(PacketListener listener) {
+   public static ConnectionPrivacyRegistry.ConnectionSession init(PacketListener listener) {
       if (listener == null) {
          return null;
       }
 
       synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = load.get(listener);
+         ConnectionPrivacyRegistry.ConnectionSession context = load.get(listener);
          return context != null && context.read ? context : null;
       }
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init(ServerPackManager manager) {
+   public static ConnectionPrivacyRegistry.ConnectionSession init(ServerPackManager manager) {
       if (manager == null) {
          return null;
       }
 
       synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil found = null;
+         ConnectionPrivacyRegistry.ConnectionSession found = null;
 
-         for (ConnectionPrivacyRegistry.Inner_StreamUtil context : init_Map.values()) {
+         for (ConnectionPrivacyRegistry.ConnectionSession context : init_Map.values()) {
             if (context.read && context.init_ServerPackManager == manager) {
                if (found != null) {
                   return null;
@@ -113,13 +113,13 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil load(Connection connection) {
+   public static ConnectionPrivacyRegistry.ConnectionSession load(Connection connection) {
       synchronized (init_Obj) {
          return read(connection);
       }
    }
 
-   public static boolean init_Z(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   public static boolean init_Z(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context != null && context.read) {
          synchronized (init_Obj) {
             return context.read && init_Map.get(context.init_Connection) == context;
@@ -130,7 +130,7 @@ public final class ConnectionPrivacyRegistry {
    }
 
    public static boolean init(
-      ConnectionPrivacyRegistry.Inner_StreamUtil context, long lifecycleId, ServerPackManager manager, PacketListener listener, long downloadGeneration
+      ConnectionPrivacyRegistry.ConnectionSession context, long lifecycleId, ServerPackManager manager, PacketListener listener, long downloadGeneration
    ) {
       if (context != null && context.read) {
          synchronized (init_Obj) {
@@ -146,18 +146,18 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init(Connection connection, String host, int port, Type serverKind, ServerPackManager manager) {
-      ConnectionPrivacyRegistry.Inner_StreamUtil context = init(connection, host, port);
+   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, String host, int port, Type serverKind, ServerPackManager manager) {
+      ConnectionPrivacyRegistry.ConnectionSession context = init(connection, host, port);
       init(connection, serverKind);
       init(connection, manager);
       return context;
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init(Connection connection, String host, int port) {
-      ConnectionPrivacyRegistry.Inner_BufferHelper endpoint = new ConnectionPrivacyRegistry.Inner_BufferHelper(host, port);
+   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, String host, int port) {
+      ConnectionPrivacyRegistry.ServerEndpoint endpoint = new ConnectionPrivacyRegistry.ServerEndpoint(host, port);
       synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = read(connection);
-         ConnectionPrivacyRegistry.Inner_BufferHelper existing = context.init_BufferHelper_Buffe;
+         ConnectionPrivacyRegistry.ConnectionSession context = read(connection);
+         ConnectionPrivacyRegistry.ServerEndpoint existing = context.init_BufferHelper_Buffe;
          if (existing == null) {
             context.init_BufferHelper_Buffe = endpoint;
          } else if (!existing.equals(endpoint)) {
@@ -168,11 +168,11 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init(Connection connection, Type serverKind) {
+   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, Type serverKind) {
       Objects.requireNonNull(serverKind, "serverKind");
       List<Socket> retired = List.of();
       boolean conflict = false;
-      ConnectionPrivacyRegistry.Inner_StreamUtil context;
+      ConnectionPrivacyRegistry.ConnectionSession context;
       synchronized (init_Obj) {
          context = read(connection);
          Type existing = context.init_ServerData_Type;
@@ -192,17 +192,17 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init(Connection connection, ServerPackManager manager) {
+   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, ServerPackManager manager) {
       Objects.requireNonNull(manager, "manager");
       List<Socket> retired = List.of();
       boolean conflict = false;
-      ConnectionPrivacyRegistry.Inner_StreamUtil context;
+      ConnectionPrivacyRegistry.ConnectionSession context;
       synchronized (init_Obj) {
          context = read(connection);
          ServerPackManager existing = context.init_ServerPackManager;
-         ConnectionPrivacyRegistry.Inner_StreamUtil previousOwner = null;
+         ConnectionPrivacyRegistry.ConnectionSession previousOwner = null;
 
-         for (ConnectionPrivacyRegistry.Inner_StreamUtil candidate : init_Map.values()) {
+         for (ConnectionPrivacyRegistry.ConnectionSession candidate : init_Map.values()) {
             if (candidate != context && candidate.read && candidate.init_ServerPackManager == manager) {
                if (previousOwner != null) {
                   throw new IllegalStateException("Pack manager has multiple connection owners");
@@ -238,11 +238,11 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init(Connection connection, UUID profileId, String username) {
-      ConnectionPrivacyRegistry.Inner_DataUtil account = new ConnectionPrivacyRegistry.Inner_DataUtil(profileId, username);
+   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, UUID profileId, String username) {
+      ConnectionPrivacyRegistry.AccountIdentity account = new ConnectionPrivacyRegistry.AccountIdentity(profileId, username);
       synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = read(connection);
-         ConnectionPrivacyRegistry.Inner_DataUtil existing = context.init_BufferHelper_DataU;
+         ConnectionPrivacyRegistry.ConnectionSession context = read(connection);
+         ConnectionPrivacyRegistry.AccountIdentity existing = context.init_BufferHelper_DataU;
          if (existing == null) {
             context.init_BufferHelper_DataU = account;
          } else if (!existing.equals(account)) {
@@ -253,11 +253,11 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static void init(Connection connection, ConnectionPrivacyRegistry.Inner_ConfigStore route) {
+   public static void init(Connection connection, ConnectionPrivacyRegistry.ProxyEndpoint route) {
       List<Socket> retired = List.of();
       boolean conflict = false;
       synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = read(connection);
+         ConnectionPrivacyRegistry.ConnectionSession context = read(connection);
          if (!context.load_Z) {
             context.init_BufferHelper_Confi = route;
             context.load_Z = true;
@@ -274,9 +274,9 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init(Connection connection, PacketListener listener) {
+   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, PacketListener listener) {
       Objects.requireNonNull(listener, "listener");
-      ConnectionPrivacyRegistry.Inner_StreamUtil context;
+      ConnectionPrivacyRegistry.ConnectionSession context;
       List<Socket> retired;
       synchronized (init_Obj) {
          context = read(connection);
@@ -285,7 +285,7 @@ public final class ConnectionPrivacyRegistry {
             return context;
          }
 
-         ConnectionPrivacyRegistry.Inner_StreamUtil owner = load.get(listener);
+         ConnectionPrivacyRegistry.ConnectionSession owner = load.get(listener);
          if (owner != null && owner != context) {
             throw new IllegalStateException("Packet listener is already bound to another connection lifecycle");
          }
@@ -303,7 +303,7 @@ public final class ConnectionPrivacyRegistry {
       return context;
    }
 
-   public static void init(ConnectionPrivacyRegistry.Inner_StreamUtil context, long downloadGeneration, Socket socket) throws IOException {
+   public static void init(ConnectionPrivacyRegistry.ConnectionSession context, long downloadGeneration, Socket socket) throws IOException {
       Objects.requireNonNull(socket, "socket");
       synchronized (init_Obj) {
          if (!init(context, context.init_J(), context.init_ServerPackManager, context.init_PacketListener, downloadGeneration)) {
@@ -314,7 +314,7 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static void init(ConnectionPrivacyRegistry.Inner_StreamUtil context, Socket socket) {
+   public static void init(ConnectionPrivacyRegistry.ConnectionSession context, Socket socket) {
       if (context != null && socket != null) {
          synchronized (init_Obj) {
             context.init_Set.remove(socket);
@@ -322,7 +322,7 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static boolean load_Z(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   public static boolean load_Z(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context == null) {
          return false;
       }
@@ -347,7 +347,7 @@ public final class ConnectionPrivacyRegistry {
 
       List<Socket> retired;
       synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = init_Map.get(connection);
+         ConnectionPrivacyRegistry.ConnectionSession context = init_Map.get(connection);
          if (context == null) {
             return false;
          }
@@ -359,7 +359,7 @@ public final class ConnectionPrivacyRegistry {
       return true;
    }
 
-   public static boolean read_Z(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   public static boolean read_Z(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context == null) {
          return false;
       }
@@ -377,9 +377,9 @@ public final class ConnectionPrivacyRegistry {
       return true;
    }
 
-   private static ConnectionPrivacyRegistry.Inner_StreamUtil read(Connection connection) {
+   private static ConnectionPrivacyRegistry.ConnectionSession read(Connection connection) {
       Objects.requireNonNull(connection, "connection");
-      ConnectionPrivacyRegistry.Inner_StreamUtil context = init_Map.get(connection);
+      ConnectionPrivacyRegistry.ConnectionSession context = init_Map.get(connection);
       if (context != null && context.read) {
          return context;
       } else {
@@ -387,12 +387,12 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   private static List<Socket> init_List(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   private static List<Socket> init_List(ConnectionPrivacyRegistry.ConnectionSession context) {
       context.load_J++;
       return read_List(context);
    }
 
-   private static List<Socket> load_List(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   private static List<Socket> load_List(ConnectionPrivacyRegistry.ConnectionSession context) {
       init_Map.remove(context.init_Connection, context);
       PacketListener listener = context.init_PacketListener;
       if (listener != null) {
@@ -405,7 +405,7 @@ public final class ConnectionPrivacyRegistry {
       return read_List(context);
    }
 
-   private static List<Socket> read_List(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   private static List<Socket> read_List(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context.init_Set.isEmpty()) {
          return List.of();
       }
@@ -427,7 +427,7 @@ public final class ConnectionPrivacyRegistry {
    public static void init() {
       List<Socket> sockets = new ArrayList<>();
       synchronized (init_Obj) {
-         for (ConnectionPrivacyRegistry.Inner_StreamUtil context : init_Map.values()) {
+         for (ConnectionPrivacyRegistry.ConnectionSession context : init_Map.values()) {
             context.init_PacketListener = null;
             context.read = false;
             context.load_J++;
@@ -441,8 +441,8 @@ public final class ConnectionPrivacyRegistry {
       init(sockets);
    }
 
-   public record Inner_BufferHelper(String init_Str, int init_I) {
-      public Inner_BufferHelper(String init_Str, int init_I) {
+   public record ServerEndpoint(String init_Str, int init_I) {
+      public ServerEndpoint(String init_Str, int init_I) {
          Objects.requireNonNull(init_Str, "host");
          if (init_I >= 0 && init_I <= 65535) {
             this.init_Str = init_Str;
@@ -453,13 +453,13 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public enum Inner_CachePool {
+   public enum PrivacyMode {
       VANILLA,
       MODDED;
    }
 
-   public record Inner_ConfigStore(ProxyProtocolType init_bZ, String init_Str, int init_I, String load, String read) {
-      public Inner_ConfigStore(ProxyProtocolType init_bZ, String init_Str, int init_I, String load, String read) {
+   public record ProxyEndpoint(ProxyProtocolType init_bZ, String init_Str, int init_I, String load, String read) {
+      public ProxyEndpoint(ProxyProtocolType init_bZ, String init_Str, int init_I, String load, String read) {
          Objects.requireNonNull(init_bZ, "type");
          if (init_Str != null && !init_Str.isBlank() && init_I >= 1 && init_I <= 65535) {
             load = load == null ? "" : load;
@@ -480,33 +480,33 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public record Inner_DataUtil(UUID init_UUID, String init_Str) {
-      public Inner_DataUtil {
+   public record AccountIdentity(UUID init_UUID, String init_Str) {
+      public AccountIdentity {
          if (init_UUID == null && init_Str == null) {
             throw new IllegalArgumentException("An account name or profile id is required");
          }
       }
    }
 
-   public static final class Inner_StreamUtil {
+   public static final class ConnectionSession {
       private final long init_J;
-      private final ConnectionPrivacyRegistry.Inner_CachePool init_BufferHelper_Cache;
+      private final ConnectionPrivacyRegistry.PrivacyMode init_BufferHelper_Cache;
       private final boolean init_Z;
       private final Connection init_Connection;
       private final SocketAddress init_SocketAddress;
       private final Set<Socket> init_Set = Collections.newSetFromMap(new IdentityHashMap<>());
-      private volatile ConnectionPrivacyRegistry.Inner_BufferHelper init_BufferHelper_Buffe;
-      private volatile ConnectionPrivacyRegistry.Inner_DataUtil init_BufferHelper_DataU;
+      private volatile ConnectionPrivacyRegistry.ServerEndpoint init_BufferHelper_Buffe;
+      private volatile ConnectionPrivacyRegistry.AccountIdentity init_BufferHelper_DataU;
       private volatile PacketListener init_PacketListener;
       private volatile Type init_ServerData_Type;
       private volatile ServerPackManager init_ServerPackManager;
-      private volatile ConnectionPrivacyRegistry.Inner_ConfigStore init_BufferHelper_Confi;
+      private volatile ConnectionPrivacyRegistry.ProxyEndpoint init_BufferHelper_Confi;
       private boolean load_Z;
       private volatile long load_J;
       private volatile boolean read = true;
       private volatile boolean write;
 
-      private Inner_StreamUtil(long lifecycleId, ConnectionPrivacyRegistry.Inner_CachePool mode, boolean multi, Connection connection, SocketAddress peerAddress) {
+      private ConnectionSession(long lifecycleId, ConnectionPrivacyRegistry.PrivacyMode mode, boolean multi, Connection connection, SocketAddress peerAddress) {
          this.init_J = lifecycleId;
          this.init_BufferHelper_Cache = mode;
          this.init_Z = multi;
@@ -519,8 +519,8 @@ public final class ConnectionPrivacyRegistry {
          return this.init_J;
       }
 
-      public ConnectionPrivacyRegistry.Inner_CachePool init_BufferHelper_Cache() {
-         return this.read() ? ConnectionPrivacyRegistry.Inner_CachePool.MODDED : this.init_BufferHelper_Cache;
+      public ConnectionPrivacyRegistry.PrivacyMode init_BufferHelper_Cache() {
+         return this.read() ? ConnectionPrivacyRegistry.PrivacyMode.MODDED : this.init_BufferHelper_Cache;
       }
 
       public boolean init_Z() {
@@ -535,11 +535,11 @@ public final class ConnectionPrivacyRegistry {
          return this.init_SocketAddress == null && this.read() ? this.init_Connection.getRemoteAddress() : this.init_SocketAddress;
       }
 
-      public ConnectionPrivacyRegistry.Inner_BufferHelper init_BufferHelper_Buffe() {
+      public ConnectionPrivacyRegistry.ServerEndpoint init_BufferHelper_Buffe() {
          return this.init_BufferHelper_Buffe;
       }
 
-      public ConnectionPrivacyRegistry.Inner_DataUtil init_BufferHelper_DataU() {
+      public ConnectionPrivacyRegistry.AccountIdentity init_BufferHelper_DataU() {
          return this.init_BufferHelper_DataU;
       }
 
@@ -555,7 +555,7 @@ public final class ConnectionPrivacyRegistry {
          return this.init_ServerPackManager;
       }
 
-      public ConnectionPrivacyRegistry.Inner_ConfigStore init_BufferHelper_Confi() {
+      public ConnectionPrivacyRegistry.ProxyEndpoint init_BufferHelper_Confi() {
          return this.init_BufferHelper_Confi;
       }
 

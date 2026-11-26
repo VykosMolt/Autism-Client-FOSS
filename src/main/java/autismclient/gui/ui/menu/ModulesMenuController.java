@@ -166,7 +166,7 @@ public final class ModulesMenuController {
    private String pop_Str;
    private int task;
    String init_Str;
-   private final Map<String, ScrollbarRenderer.Inner_DataUtil> flush_Map = new HashMap<>();
+   private final Map<String, ScrollbarRenderer.ScrollbarBounds> flush_Map = new HashMap<>();
    private Map<String, Integer> close_Map;
    private boolean poll_Z;
 
@@ -1237,7 +1237,7 @@ public final class ModulesMenuController {
                      this.init_V_Module_2(hit.init_Module, hit.init_Setting, "-1");
                      return true;
                   case SCROLLBAR:
-                     ScrollbarRenderer.Inner_DataUtil metrics = this.init_UtilCore_DataUtil_Str(hit.init_Str);
+                     ScrollbarRenderer.ScrollbarBounds metrics = this.init_UtilCore_DataUtil_Str(hit.init_Str);
                      if (metrics != null && metrics.init_I() > 0) {
                         this.task = metrics.load(mx, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
                         this.pop_Str = hit.init_Str;
@@ -1369,7 +1369,7 @@ public final class ModulesMenuController {
          }
 
          if (this.pop_Str != null) {
-            ScrollbarRenderer.Inner_DataUtil metrics = this.init_UtilCore_DataUtil_Str(this.pop_Str);
+            ScrollbarRenderer.ScrollbarBounds metrics = this.init_UtilCore_DataUtil_Str(this.pop_Str);
             if (metrics != null) {
                this.init_V_Str_F(this.pop_Str, ScrollbarRenderer.init_I_UtilCore_DataUtil(metrics, my, this.task));
             }
@@ -2038,7 +2038,7 @@ public final class ModulesMenuController {
       int[] metrics = load_Map.get(key);
       if (metrics != null && metrics[1] > 0) {
          NetHelper track = NetHelper.init(viewport.init() - 4, viewport.write() + 2, 3, viewport.sync() - 4);
-         ScrollbarRenderer.Inner_DataUtil m = ScrollbarRenderer.init(track, contentHeight, viewport.sync(), scroll);
+         ScrollbarRenderer.ScrollbarBounds m = ScrollbarRenderer.init(track, contentHeight, viewport.sync(), scroll);
          this.init_V_Str_UtilCore_DataUtil(key, m);
          boolean hovered = m.init(context.read(), context.write());
          ScrollbarRenderer.init(context, m, hovered, key.equals(this.pop_Str));
@@ -2050,11 +2050,11 @@ public final class ModulesMenuController {
       return this.node;
    }
 
-   private void init_V_Str_UtilCore_DataUtil(String key, ScrollbarRenderer.Inner_DataUtil metrics) {
+   private void init_V_Str_UtilCore_DataUtil(String key, ScrollbarRenderer.ScrollbarBounds metrics) {
       this.flush_Map.put(key, metrics);
    }
 
-   private ScrollbarRenderer.Inner_DataUtil init_UtilCore_DataUtil_Str(String key) {
+   private ScrollbarRenderer.ScrollbarBounds init_UtilCore_DataUtil_Str(String key) {
       return this.flush_Map.get(key);
    }
 

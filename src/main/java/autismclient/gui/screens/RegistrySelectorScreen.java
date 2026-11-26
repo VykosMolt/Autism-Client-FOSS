@@ -77,7 +77,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    private int run;
 
    private static int read_I_10() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public RegistrySelectorScreen(Screen parent, Module module, Setting<?, ?> option) {
@@ -145,7 +145,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics);
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init(available, x, listTop, w, listH);
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init(available, x, listTop, w, listH);
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(graphics, metrics, metrics.init(mx, my), available ? this.init_Z : this.load_Z);
    }
 
@@ -230,7 +230,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int actionY = y + (rowH - 1 - actionW) / 2;
       int textMax = actionX - 4 - textX;
       int textY = this.init_I_I_I_6(y, rowH - 1);
-      this.load(graphics, label, textX, textY, invalid ? ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.DANGER) : -791321, textMax);
+      this.load(graphics, label, textX, textY, invalid ? ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.DANGER) : -791321, textMax);
       if (!id.equals(label)) {
          int labelW = Math.min(textMax, autismclient.gui.f.b.k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
          int idX = textX + labelW + 4;
@@ -282,7 +282,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          return true;
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil availableMetrics = this.init_PoolEntry_DataUtil_Z(true);
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics availableMetrics = this.init_PoolEntry_DataUtil_Z(true);
       if (availableMetrics.init_Z() && availableMetrics.init(mx, my)) {
          this.init_Z = true;
          this.pop = availableMetrics.load(mx, my) ? my - availableMetrics.update() : availableMetrics.sync() / 2;
@@ -290,7 +290,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          return true;
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil selectedMetrics = this.init_PoolEntry_DataUtil_Z(false);
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics selectedMetrics = this.init_PoolEntry_DataUtil_Z(false);
       if (selectedMetrics.init_Z() && selectedMetrics.init(mx, my)) {
          this.load_Z = true;
          this.pop = selectedMetrics.load(mx, my) ? my - selectedMetrics.update() : selectedMetrics.sync() / 2;
@@ -1001,12 +1001,12 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return id == null ? "" : id.toString().toLowerCase(Locale.ROOT);
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_Z(boolean available) {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_Z(boolean available) {
       RegistrySelectorScreen.Inner_BufferHelper pane = this.init_NodeWalker_BufferH();
       return this.init(available, available ? pane.init() : pane.load(), pane.sync(), pane.write(), pane.flush());
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init(boolean available, int paneX, int listTop, int paneW, int listH) {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init(boolean available, int paneX, int listTop, int paneW, int listH) {
       int contentH = available ? this.init_I_List_3(this.init_List_8()) : this.write();
       int scroll = available ? this.poll : this.push;
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(contentH, Math.max(1, listH), paneX + paneW - 6, listTop, 4, Math.max(1, listH), scroll);

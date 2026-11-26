@@ -58,7 +58,7 @@ public final class CombatAimSpeedController {
       this.init(enemy, tick, LatencyTickWindow.init_I_I(latencyMs) + 2);
    }
 
-   public void init(String owner, int priority, LocalPlayer player, Object enemy, double speed, RotationMath.Inner_DataUtil goal, boolean pin) {
+   public void init(String owner, int priority, LocalPlayer player, Object enemy, double speed, RotationMath.Rotation goal, boolean pin) {
       if (!owner.equals(SilentRotationManager.init_Str()) || SilentRotationManager.init_Z()) {
          this.init_V();
       }
@@ -78,9 +78,9 @@ public final class CombatAimSpeedController {
       }
    }
 
-   public boolean init(String owner, int priority, LocalPlayer player, Object enemy, RotationMath.Inner_DataUtil wire) {
+   public boolean init(String owner, int priority, LocalPlayer player, Object enemy, RotationMath.Rotation wire) {
       if (wire != null && this.init(enemy, AutismSessionState.init_ck().state_I()) && owner.equals(SilentRotationManager.init_Str()) && !SilentRotationManager.init_Z()) {
-         RotationMath.Inner_DataUtil current = SilentRotationManager.init_ce_DataUtil();
+         RotationMath.Rotation current = SilentRotationManager.init_ce_DataUtil();
          if (current == null || !SilentRotationManager.load_Z() || player.getYRot() == current.init() && player.getXRot() == current.load()) {
             SilentRotationManager.init_V_Str(owner, priority, current == null ? wire : current);
             SilentRotationManager.init_V_Str_5(owner, player, true);

@@ -36,9 +36,9 @@ public final class AiItems {
    private static final Map<String, List<String>> init_Map = new LinkedHashMap<>();
    private static final Set<String> init_Set = Set.of("food", "fuel");
    private static final int init_I = 32;
-   private static final Map<String, AiItems.Inner_DataUtil> load_Map = new LinkedHashMap<String, AiItems.Inner_DataUtil>(16, 0.75F, true) {
+   private static final Map<String, AiItems.ItemSpec> load_Map = new LinkedHashMap<String, AiItems.ItemSpec>(16, 0.75F, true) {
       @Override
-      protected boolean removeEldestEntry(Entry<String, AiItems.Inner_DataUtil> eldest) {
+      protected boolean removeEldestEntry(Entry<String, AiItems.ItemSpec> eldest) {
          return this.size() > 32;
       }
    };
@@ -216,7 +216,7 @@ public final class AiItems {
    private AiItems() {
    }
 
-   public static AiItems.Inner_DataUtil init_af_DataUtil(String spec) {
+   public static AiItems.ItemSpec init_af_DataUtil(String spec) {
       String clean = init_Str(spec);
       if (clean.isEmpty()) {
          throw new IllegalArgumentException("An item or block spec is required");
@@ -229,7 +229,7 @@ public final class AiItems {
          init_Obj = level;
       }
 
-      AiItems.Inner_DataUtil memoized = load_Map.get(clean);
+      AiItems.ItemSpec memoized = load_Map.get(clean);
       if (memoized != null) {
          return memoized;
       }
@@ -257,7 +257,7 @@ public final class AiItems {
          );
       }
 
-      AiItems.Inner_DataUtil target = new AiItems.Inner_DataUtil(clean, items, blocks);
+      AiItems.ItemSpec target = new AiItems.ItemSpec(clean, items, blocks);
       if (!usedFallback[0]) {
          load_Map.put(clean, target);
       }
@@ -290,8 +290,8 @@ public final class AiItems {
       return List.copyOf(init_Map.keySet());
    }
 
-   public static AiItems.Inner_DataUtil load_af_DataUtil(String spec) {
-      AiItems.Inner_DataUtil target = init_af_DataUtil(spec);
+   public static AiItems.ItemSpec load_af_DataUtil(String spec) {
+      AiItems.ItemSpec target = init_af_DataUtil(spec);
       if (target.items().isEmpty()) {
          throw new IllegalArgumentException("'" + spec + "' names blocks but no obtainable item");
       } else {
@@ -299,8 +299,8 @@ public final class AiItems {
       }
    }
 
-   public static AiItems.Inner_DataUtil read_af_DataUtil(String spec) {
-      AiItems.Inner_DataUtil target = init_af_DataUtil(spec);
+   public static AiItems.ItemSpec read_af_DataUtil(String spec) {
+      AiItems.ItemSpec target = init_af_DataUtil(spec);
       if (target.blocks().isEmpty()) {
          throw new IllegalArgumentException("'" + spec + "' names items but no placeable or mineable block");
       } else {
@@ -441,7 +441,7 @@ public final class AiItems {
       return near.isEmpty() ? "" : " (did you mean " + String.join(", ", near) + "?)";
    }
 
-   public static int init_I(AiItems.Inner_DataUtil target) {
+   public static int init_I(AiItems.ItemSpec target) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return 0;
@@ -476,7 +476,7 @@ public final class AiItems {
       return free;
    }
 
-   public static int init(AiItems.Inner_DataUtil target, int limit) {
+   public static int init(AiItems.ItemSpec target, int limit) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return -1;
@@ -497,7 +497,7 @@ public final class AiItems {
       return stack != null && !stack.isEmpty() && !stack.has(DataComponents.CUSTOM_NAME) && stack.getEnchantments().isEmpty();
    }
 
-   public static int load(AiItems.Inner_DataUtil target) {
+   public static int load(AiItems.ItemSpec target) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return -1;
@@ -529,7 +529,7 @@ public final class AiItems {
       }
    }
 
-   public static int read(AiItems.Inner_DataUtil target) {
+   public static int read(AiItems.ItemSpec target) {
       Minecraft mc = Minecraft.getInstance();
       int slot = load(target);
       if (slot >= 0 && mc.player != null) {
@@ -540,7 +540,7 @@ public final class AiItems {
       }
    }
 
-   public static boolean init_Z(AiItems.Inner_DataUtil target) {
+   public static boolean init_Z(AiItems.ItemSpec target) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return false;
@@ -665,8 +665,8 @@ public final class AiItems {
          return -1;
       }
 
-      AiItems.Inner_DataUtil swords = init_af_DataUtil("#minecraft:swords");
-      AiItems.Inner_DataUtil axes = init_af_DataUtil("#minecraft:axes");
+      AiItems.ItemSpec swords = init_af_DataUtil("#minecraft:swords");
+      AiItems.ItemSpec axes = init_af_DataUtil("#minecraft:axes");
       int best = -1;
       double bestDamage = -1.0;
 
@@ -932,8 +932,8 @@ public final class AiItems {
       );
    }
 
-   public record Inner_DataUtil(String spec, Set<Item> items, Set<Block> blocks) {
-      public Inner_DataUtil {
+   public record ItemSpec(String spec, Set<Item> items, Set<Block> blocks) {
+      public ItemSpec {
          items = Set.copyOf(items);
          blocks = Set.copyOf(blocks);
       }

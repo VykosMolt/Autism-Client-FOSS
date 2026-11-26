@@ -203,32 +203,32 @@ final class AiGuard {
       }
    }
 
-   static AiGuard.Inner_StreamUtil init_X_StreamUtil(AiGuard.Inner_CachePool policy, AiGuard.Inner_BufferHelper vitals) {
+   static AiGuard.GuardDecision init_X_StreamUtil(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals) {
       boolean threatened = vitals.hostilesNear() > 0 && (vitals.underAttack() || vitals.health() <= policy.engageHealth());
       if (threatened && vitals.health() <= policy.fleeHealth()) {
          if (policy.flee()) {
-            return new AiGuard.Inner_StreamUtil(AiGuard.Inner_DataUtil.FLEE, "health " + (int)vitals.health() + " with " + vitals.hostilesNear() + " hostile(s) near");
+            return new AiGuard.GuardDecision(AiGuard.GuardAction.FLEE, "health " + (int)vitals.health() + " with " + vitals.hostilesNear() + " hostile(s) near");
          } else {
             return policy.fight() && vitals.hasWeapon()
-               ? new AiGuard.Inner_StreamUtil(AiGuard.Inner_DataUtil.FIGHT, "cornered at health " + (int)vitals.health())
-               : AiGuard.Inner_StreamUtil.NONE;
+               ? new AiGuard.GuardDecision(AiGuard.GuardAction.FIGHT, "cornered at health " + (int)vitals.health())
+               : AiGuard.GuardDecision.NONE;
          }
       } else if (threatened && policy.flee() && load(vitals) && !init_Z(vitals)) {
-         return new AiGuard.Inner_StreamUtil(AiGuard.Inner_DataUtil.FLEE, vitals.hostilesNear() + " hostiles at health " + (int)vitals.health() + ": outnumbered");
+         return new AiGuard.GuardDecision(AiGuard.GuardAction.FLEE, vitals.hostilesNear() + " hostiles at health " + (int)vitals.health() + ": outnumbered");
       } else if (threatened && policy.fight() && vitals.hasWeapon()) {
-         return new AiGuard.Inner_StreamUtil(AiGuard.Inner_DataUtil.FIGHT, vitals.hostilesNear() + " hostile(s) within 7 blocks");
+         return new AiGuard.GuardDecision(AiGuard.GuardAction.FIGHT, vitals.hostilesNear() + " hostile(s) within 7 blocks");
       } else if (threatened && policy.flee()) {
-         return new AiGuard.Inner_StreamUtil(AiGuard.Inner_DataUtil.FLEE, "under attack with nothing to fight back with");
+         return new AiGuard.GuardDecision(AiGuard.GuardAction.FLEE, "under attack with nothing to fight back with");
       } else if (policy.eat() && vitals.hasFood() && vitals.food() <= policy.eatFood() && vitals.hostilesNear() == 0 && AiSurvival.init_Z(vitals.food())) {
-         return new AiGuard.Inner_StreamUtil(AiGuard.Inner_DataUtil.EAT, "food " + vitals.food() + "/20");
+         return new AiGuard.GuardDecision(AiGuard.GuardAction.EAT, "food " + vitals.food() + "/20");
       } else {
          return policy.tidy() && vitals.freeSlots() == 0 && vitals.hostilesNear() == 0
-            ? new AiGuard.Inner_StreamUtil(AiGuard.Inner_DataUtil.TIDY, "inventory full")
-            : AiGuard.Inner_StreamUtil.NONE;
+            ? new AiGuard.GuardDecision(AiGuard.GuardAction.TIDY, "inventory full")
+            : AiGuard.GuardDecision.NONE;
       }
    }
 
-   static boolean init_Z(AiGuard.Inner_BufferHelper vitals) {
+   static boolean init_Z(AiGuard.StatusSnapshot vitals) {
       Minecraft mc = Minecraft.getInstance();
       return !AiThreats.init_Z() && mc != null && mc.player != null ? mc.player.getArmorValue() >= 12 && vitals.health() >= 12.0F && vitals.hostilesNear() < 5 : false;
    }
@@ -248,11 +248,11 @@ final class AiGuard {
       }
    }
 
-   static boolean load(AiGuard.Inner_BufferHelper vitals) {
+   static boolean load(AiGuard.StatusSnapshot vitals) {
       return vitals.hostilesNear() >= 3 || vitals.hostilesNear() >= 2 && vitals.health() < 14.0F;
    }
 
-   static String init_Str(AiGuard.Inner_BufferHelper vitals) {
+   static String init_Str(AiGuard.StatusSnapshot vitals) {
       if (vitals.food() <= 6 && !vitals.hasFood()) {
          return "starving with no food in inventory";
       } else if (vitals.health() <= 7.0F && !vitals.hasFood()) {
@@ -414,7 +414,7 @@ final class AiGuard {
       }
    }
 
-   static AiGuard.Inner_BufferHelper init_X_BufferHelper() {
+   static AiGuard.StatusSnapshot init_X_BufferHelper() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          init(mc);
@@ -549,7 +549,7 @@ final class AiGuard {
          close_D = nearestCreeper;
          open_Z = skeletonSeen;
          init_Str = kinds.toString() + (ranged > 0 ? " +" + ranged + " shooting" : "");
-         return new AiGuard.Inner_BufferHelper(
+         return new AiGuard.StatusSnapshot(
             mc.player.getHealth(),
             mc.player.getMaxHealth(),
             mc.player.getFoodData().getFoodLevel(),
@@ -561,7 +561,7 @@ final class AiGuard {
             load_I()
          );
       } else {
-         return new AiGuard.Inner_BufferHelper(0.0F, 20.0F, 20, 0, false, false, false, 0);
+         return new AiGuard.StatusSnapshot(0.0F, 20.0F, 20, 0, false, false, false, 0);
       }
    }
 
@@ -685,12 +685,12 @@ final class AiGuard {
       }
    }
 
-   static AiOperation init_AiOperation_X_CachePool(AiGuard.Inner_CachePool policy, AiGuard.Inner_BufferHelper vitals, int budgetSeconds) {
+   static AiOperation init_AiOperation_X_CachePool(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals, int budgetSeconds) {
       read_Z = false;
-      AiGuard.Inner_StreamUtil decision = init_X_StreamUtil(policy, vitals);
-      AiGuard.Inner_DataUtil action = decision.action();
+      AiGuard.GuardDecision decision = init_X_StreamUtil(policy, vitals);
+      AiGuard.GuardAction action = decision.action();
       boolean blockedRetreat = flush_J != 0L && System.nanoTime() - flush_J < 10000000000L;
-      if (action == AiGuard.Inner_DataUtil.NONE && policy.flee() && blockedRetreat) {
+      if (action == AiGuard.GuardAction.NONE && policy.flee() && blockedRetreat) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null && mc.level != null) {
             for (Entity entity : mc.level.entitiesForRendering()) {
@@ -700,26 +700,26 @@ final class AiGuard {
                   && Math.abs(entity.getY() - mc.player.getY()) <= 3.0
                   && entity.distanceToSqr(mc.player) <= 441.0
                   && mc.player.hasLineOfSight(entity)) {
-                  action = AiGuard.Inner_DataUtil.FLEE;
+                  action = AiGuard.GuardAction.FLEE;
                   break;
                }
             }
          }
       }
 
-      if (action == AiGuard.Inner_DataUtil.FLEE
+      if (action == AiGuard.GuardAction.FLEE
          && "under attack with nothing to fight back with".equals(decision.reason())
          && policy.fight()
          && vitals.health() >= 8.0F
          && sync_Z()) {
-         action = AiGuard.Inner_DataUtil.FIGHT;
+         action = AiGuard.GuardAction.FIGHT;
       }
 
-      if (action == AiGuard.Inner_DataUtil.FIGHT && policy.flee() && sync_J != 0L && System.nanoTime() - sync_J < 10000000000L) {
-         action = AiGuard.Inner_DataUtil.FLEE;
+      if (action == AiGuard.GuardAction.FIGHT && policy.flee() && sync_J != 0L && System.nanoTime() - sync_J < 10000000000L) {
+         action = AiGuard.GuardAction.FLEE;
       }
 
-      if ((action == AiGuard.Inner_DataUtil.FIGHT || action == AiGuard.Inner_DataUtil.FLEE)
+      if ((action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE)
          && sync_I > 0
          && vitals.hostilesNear() == sync_I
          && !close_Z
@@ -731,7 +731,7 @@ final class AiGuard {
 
       int blocks = init_I();
       boolean perchBackoff = poll_J != 0L && System.nanoTime() - poll_J < 10000000000L;
-      if (action != AiGuard.Inner_DataUtil.NONE && action != AiGuard.Inner_DataUtil.EAT && action != AiGuard.Inner_DataUtil.TIDY) {
+      if (action != AiGuard.GuardAction.NONE && action != AiGuard.GuardAction.EAT && action != AiGuard.GuardAction.TIDY) {
          AutismClientAddon.LOG
             .info(
                "[AI] guard: {} ({}) seeing {}, health {}, {} blocks, underground {}, zombies only {}{}{}{}",
@@ -748,7 +748,7 @@ final class AiGuard {
             );
       }
 
-      if (action != AiGuard.Inner_DataUtil.FIGHT && action != AiGuard.Inner_DataUtil.FLEE
+      if (action != AiGuard.GuardAction.FIGHT && action != AiGuard.GuardAction.FLEE
          || !sync_Z
          || !flush_Z && vitals.hostilesNear() < 2 && !(vitals.health() < 16.0F) && !load_Z()
          || blocks < 3
@@ -757,7 +757,7 @@ final class AiGuard {
          || !AiThreats.init_Z() && !flush_Z && Minecraft.getInstance().player.getArmorValue() >= 12 && !(vitals.health() < 12.0F)) {
          write_Z = false;
          load_Z = false;
-         if ((action == AiGuard.Inner_DataUtil.FIGHT || action == AiGuard.Inner_DataUtil.FLEE) && !AiThreats.init_Z() && vitals.health() <= 12.0F) {
+         if ((action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE) && !AiThreats.init_Z() && vitals.health() <= 12.0F) {
             AiOperation ward = init_AiOperation();
             if (ward != null) {
                init_Z = false;
@@ -772,7 +772,7 @@ final class AiGuard {
             && sync_I >= 1
             && vitals.health() < 14.0F
             && (close_J == 0L || System.nanoTime() - close_J >= 10000000000L);
-         if ((action == AiGuard.Inner_DataUtil.FIGHT || action == AiGuard.Inner_DataUtil.FLEE) && sync_I > 0 && !close_Z && !striking && !swarmed) {
+         if ((action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE) && sync_I > 0 && !close_Z && !striking && !swarmed) {
             boolean coverBackoff = open_J != 0L && System.nanoTime() - open_J < 10000000000L;
             boolean hunt = init_I(flush_I) >= 1
                && !AiCombat.init(init_Entity())
@@ -831,7 +831,7 @@ final class AiGuard {
 
          boolean lavaBeside = close_Z && !AiThreats.init_Z() && init_Z(5);
          boolean armouredCreeper = close_Z && vitals.hostilesNear() <= 1 && vitals.hasWeapon() && vitals.health() >= 16.0F && init_Z(vitals) && !lavaBeside;
-         if (close_Z && !armouredCreeper && (action == AiGuard.Inner_DataUtil.FIGHT || action == AiGuard.Inner_DataUtil.FLEE)) {
+         if (close_Z && !armouredCreeper && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE)) {
             long now = System.nanoTime();
             init_List.removeIf(t -> now - t > 60000000000L);
             if (init_List.size() >= 3 && vitals.hostilesNear() <= 1 && vitals.hasWeapon() && vitals.health() >= 16.0F && !lavaBeside) {
@@ -842,23 +842,23 @@ final class AiGuard {
             }
          }
 
-         if (action == AiGuard.Inner_DataUtil.FIGHT && close_Z && policy.flee() && !armouredCreeper) {
-            action = AiGuard.Inner_DataUtil.FLEE;
+         if (action == AiGuard.GuardAction.FIGHT && close_Z && policy.flee() && !armouredCreeper) {
+            action = AiGuard.GuardAction.FLEE;
          }
 
-         if (!AiThreats.init_Z() && (action == AiGuard.Inner_DataUtil.FIGHT || action == AiGuard.Inner_DataUtil.NONE) && read_Z()) {
-            action = policy.flee() ? AiGuard.Inner_DataUtil.FLEE : action;
+         if (!AiThreats.init_Z() && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.NONE) && read_Z()) {
+            action = policy.flee() ? AiGuard.GuardAction.FLEE : action;
          }
 
-         boolean hide = action == AiGuard.Inner_DataUtil.FLEE && (load_Z() || blockedRetreat)
-            || action == AiGuard.Inner_DataUtil.FIGHT && load_Z() && (sync_I > 0 || open_Z || vitals.hostilesNear() >= 2 || vitals.health() < 12.0F)
+         boolean hide = action == AiGuard.GuardAction.FLEE && (load_Z() || blockedRetreat)
+            || action == AiGuard.GuardAction.FIGHT && load_Z() && (sync_I > 0 || open_Z || vitals.hostilesNear() >= 2 || vitals.health() < 12.0F)
             || !AiThreats.init_Z()
-               && (action == AiGuard.Inner_DataUtil.FIGHT || action == AiGuard.Inner_DataUtil.FLEE)
+               && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE)
                && vitals.hostilesNear() >= 3
                && sync_I >= 1
                && vitals.health() < 14.0F;
          if (!hide
-            && (action == AiGuard.Inner_DataUtil.FIGHT || action == AiGuard.Inner_DataUtil.FLEE)
+            && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE)
             && Minecraft.getInstance().level != null
             && Minecraft.getInstance().level.dimension() == Level.END
             && (vitals.health() <= Math.max(policy.fleeHealth(), 10.0F) || vitals.hostilesNear() >= 2 && vitals.health() < 16.0F)) {
@@ -871,22 +871,22 @@ final class AiGuard {
 
          if (hide && !AiThreats.init_Z() && flush()) {
             hide = false;
-            if (action == AiGuard.Inner_DataUtil.FLEE || action == AiGuard.Inner_DataUtil.NONE) {
-               action = AiGuard.Inner_DataUtil.FIGHT;
+            if (action == AiGuard.GuardAction.FLEE || action == AiGuard.GuardAction.NONE) {
+               action = AiGuard.GuardAction.FIGHT;
             }
          }
 
          if (hide && close_Z && close_D < 8.0) {
             hide = false;
             if (blockedRetreat && vitals.hasWeapon()) {
-               action = AiGuard.Inner_DataUtil.FIGHT;
+               action = AiGuard.GuardAction.FIGHT;
             }
          }
 
          if (hide && Minecraft.getInstance().player.isInWater()) {
             hide = false;
             if (policy.flee()) {
-               action = AiGuard.Inner_DataUtil.FLEE;
+               action = AiGuard.GuardAction.FLEE;
             }
          }
 
@@ -909,7 +909,7 @@ final class AiGuard {
             );
          }
 
-         read_Z = action == AiGuard.Inner_DataUtil.FLEE;
+         read_Z = action == AiGuard.GuardAction.FLEE;
          AiOperation var10000;
          switch (action) {
             case NONE:
@@ -1039,13 +1039,13 @@ final class AiGuard {
       }
    }
 
-   static boolean init(AiGuard.Inner_CachePool policy, AiGuard.Inner_BufferHelper vitals, boolean upClose, boolean approachable, int ranged) {
+   static boolean init(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals, boolean upClose, boolean approachable, int ranged) {
       return policy.fight()
          && vitals.hasWeapon()
          && (upClose && (ranged <= 1 || vitals.health() >= 14.0F) || approachable && ranged == 1 && vitals.hostilesNear() == ranged && vitals.health() >= 8.0F);
    }
 
-   private static AiOperation init(AiGuard.Inner_CachePool policy) {
+   private static AiOperation init(AiGuard.GuardPolicy policy) {
       long now = System.nanoTime();
       if (pop != 0L && now - pop < 60000000000L) {
          return null;
@@ -1057,11 +1057,11 @@ final class AiGuard {
       return AiTidy.init(AiJson.init_JsonObject_ObjArr("action", "drop", "freeSlots", 4, "keep", keep));
    }
 
-   static String init_Str(AiGuard.Inner_CachePool policy, AiGuard.Inner_BufferHelper vitals) {
+   static String init_Str(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals) {
       return init_X_StreamUtil(policy, vitals).reason();
    }
 
-   static JsonObject init_JsonObject_X_BufferHelper(AiGuard.Inner_BufferHelper vitals, int interruptions, String lastReason) {
+   static JsonObject init_JsonObject_X_BufferHelper(AiGuard.StatusSnapshot vitals, int interruptions, String lastReason) {
       JsonObject out = AiJson.init_JsonObject_ObjArr(
          "health",
          vitals.health(),
@@ -1138,7 +1138,7 @@ final class AiGuard {
       }
 
       try {
-         AiItems.Inner_DataUtil target = AiItems.load_af_DataUtil(spec);
+         AiItems.ItemSpec target = AiItems.load_af_DataUtil(spec);
          return !target.items().isEmpty() && AiItems.init_af_DataUtil("food").items().containsAll(target.items());
       } catch (RuntimeException unresolvable) {
          return false;
@@ -1206,43 +1206,43 @@ final class AiGuard {
       return mc.player != null && AiSurvival.init(mc.player.getInventory()) >= 0;
    }
 
-   record Inner_BufferHelper(
+   record StatusSnapshot(
       float health, float maxHealth, int food, int hostilesNear, boolean underAttack, boolean hasFood, boolean hasWeapon, int freeSlots, int worstToolUses
    ) {
-      Inner_BufferHelper(float health, float maxHealth, int food, int hostilesNear, boolean underAttack, boolean hasFood, boolean hasWeapon, int freeSlots) {
+      StatusSnapshot(float health, float maxHealth, int food, int hostilesNear, boolean underAttack, boolean hasFood, boolean hasWeapon, int freeSlots) {
          this(health, maxHealth, food, hostilesNear, underAttack, hasFood, hasWeapon, freeSlots, 2147483647);
       }
    }
 
-   record Inner_CachePool(boolean fight, boolean flee, boolean eat, float engageHealth, float fleeHealth, int eatFood, boolean tidy, Set<String> keep) {
-      Inner_CachePool(boolean fight, boolean flee, boolean eat, float engageHealth, float fleeHealth, int eatFood) {
+   record GuardPolicy(boolean fight, boolean flee, boolean eat, float engageHealth, float fleeHealth, int eatFood, boolean tidy, Set<String> keep) {
+      GuardPolicy(boolean fight, boolean flee, boolean eat, float engageHealth, float fleeHealth, int eatFood) {
          this(fight, flee, eat, engageHealth, fleeHealth, eatFood, false, Set.of());
       }
 
-      static AiGuard.Inner_CachePool standard() {
-         return new AiGuard.Inner_CachePool(true, true, true, 16.0F, 7.0F, 14, true, Set.of());
+      static AiGuard.GuardPolicy standard() {
+         return new AiGuard.GuardPolicy(true, true, true, 16.0F, 7.0F, 14, true, Set.of());
       }
 
-      AiGuard.Inner_CachePool withoutFlee() {
-         return new AiGuard.Inner_CachePool(this.fight, false, this.eat, this.engageHealth, this.fleeHealth, this.eatFood, this.tidy, this.keep);
+      AiGuard.GuardPolicy withoutFlee() {
+         return new AiGuard.GuardPolicy(this.fight, false, this.eat, this.engageHealth, this.fleeHealth, this.eatFood, this.tidy, this.keep);
       }
 
-      AiGuard.Inner_CachePool withoutCombat() {
-         return new AiGuard.Inner_CachePool(false, this.flee, this.eat, this.engageHealth, this.fleeHealth, this.eatFood, this.tidy, this.keep);
+      AiGuard.GuardPolicy withoutCombat() {
+         return new AiGuard.GuardPolicy(false, this.flee, this.eat, this.engageHealth, this.fleeHealth, this.eatFood, this.tidy, this.keep);
       }
 
-      AiGuard.Inner_CachePool withoutMaintenance() {
-         return new AiGuard.Inner_CachePool(this.fight, this.flee, false, this.engageHealth, this.fleeHealth, this.eatFood, false, this.keep);
+      AiGuard.GuardPolicy withoutMaintenance() {
+         return new AiGuard.GuardPolicy(this.fight, this.flee, false, this.engageHealth, this.fleeHealth, this.eatFood, false, this.keep);
       }
 
-      AiGuard.Inner_CachePool keeping(Collection<String> ids) {
+      AiGuard.GuardPolicy keeping(Collection<String> ids) {
          Set<String> all = new LinkedHashSet<>(this.keep);
          all.addAll(ids);
-         return new AiGuard.Inner_CachePool(this.fight, this.flee, this.eat, this.engageHealth, this.fleeHealth, this.eatFood, this.tidy, Set.copyOf(all));
+         return new AiGuard.GuardPolicy(this.fight, this.flee, this.eat, this.engageHealth, this.fleeHealth, this.eatFood, this.tidy, Set.copyOf(all));
       }
    }
 
-   enum Inner_DataUtil {
+   enum GuardAction {
       NONE,
       FIGHT,
       FLEE,
@@ -1250,7 +1250,7 @@ final class AiGuard {
       TIDY;
    }
 
-   record Inner_StreamUtil(AiGuard.Inner_DataUtil action, String reason) {
-      static final AiGuard.Inner_StreamUtil NONE = new AiGuard.Inner_StreamUtil(AiGuard.Inner_DataUtil.NONE, "");
+   record GuardDecision(AiGuard.GuardAction action, String reason) {
+      static final AiGuard.GuardDecision NONE = new AiGuard.GuardDecision(AiGuard.GuardAction.NONE, "");
    }
 }

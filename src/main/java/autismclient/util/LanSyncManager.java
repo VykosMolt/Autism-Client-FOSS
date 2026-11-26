@@ -2205,8 +2205,8 @@ public class LanSyncManager {
             return;
          }
 
-         AutismSessionState.Inner_CachePool.load_V();
-         List<AutismSessionState.Inner_CachePool> receivedQueue = MacroClipboardCodec.init_List(queueData);
+         AutismSessionState.DelayedPacket.load_V();
+         List<AutismSessionState.DelayedPacket> receivedQueue = MacroClipboardCodec.init_List(queueData);
          if (receivedQueue == null || receivedQueue.isEmpty()) {
             AutismClientMessaging.sendPrefixed("§cReceived empty queue");
             return;

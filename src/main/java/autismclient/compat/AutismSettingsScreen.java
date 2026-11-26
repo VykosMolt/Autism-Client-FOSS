@@ -117,8 +117,8 @@ public class AutismSettingsScreen extends Screen {
          NetHelper panel = NetHelper.init(px, py, panelW, panelH);
          PacketUtil.load(graphics, panel, 5, -435549684, this.init_I());
          NetHelper header = NetHelper.init(px, py, panelW, 14);
-         PacketUtil.read(graphics, NetHelper.init(px + 1, py + 1, panelW - 2, 13), 4, this.init(858003997, ThemePaletteManager.Inner_DataUtil.HEADER));
-         this.init(graphics, "AUTISM Client Settings", autismclient.gui.f.a.DataUtil.read, this.init(-791321, ThemePaletteManager.Inner_DataUtil.TEXT), header);
+         PacketUtil.read(graphics, NetHelper.init(px + 1, py + 1, panelW - 2, 13), 4, this.init(858003997, ThemePaletteManager.ColorRole.HEADER));
+         this.init(graphics, "AUTISM Client Settings", autismclient.gui.f.a.DataUtil.read, this.init(-791321, ThemePaletteManager.ColorRole.TEXT), header);
          NetHelper footer = NetHelper.init(px, panel.load() - 17, panelW, 17);
          NetHelper done = NetHelper.init(px + 4, footer.write(), panelW - 8, 13);
          this.init(graphics, done, "Done", done.init_Z(mx, my), true);
@@ -146,7 +146,7 @@ public class AutismSettingsScreen extends Screen {
          }
 
          if (needsBar) {
-            ScrollbarRenderer.Inner_DataUtil metrics = this.init_UtilCore_DataUtil();
+            ScrollbarRenderer.ScrollbarBounds metrics = this.init_UtilCore_DataUtil();
             ScrollbarRenderer.init(this.init_SyncManager, metrics, metrics.init(mx, my), this.init_Z);
             this.init_V_NetHelper(metrics.init_NetHelper(), () -> this.init(metrics, my), null);
          }
@@ -213,14 +213,14 @@ public class AutismSettingsScreen extends Screen {
       return (g, rb, mx, my, clickable) -> {
          boolean on = getter.get();
          boolean hover = clickable && rb.init_Z(mx, my);
-         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ThemePaletteManager.Inner_DataUtil.BUTTON) : 639113758, this.init(1717972012, ThemePaletteManager.Inner_DataUtil.OUTLINE));
-         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
+         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ThemePaletteManager.ColorRole.BUTTON) : 639113758, this.init(1717972012, ThemePaletteManager.ColorRole.OUTLINE));
+         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.ColorRole.TEXT), rb.read() + 6, this.init(rb));
          NetHelper tog = NetHelper.init(rb.init() - 26, rb.write() + 2, 22, rb.sync() - 4);
          PacketUtil.load(
-            g, tog, 4, on ? this.init(-1474094563, ThemePaletteManager.Inner_DataUtil.TOGGLE) : 1074926358, on ? this.init(-39836, ThemePaletteManager.Inner_DataUtil.TOGGLE) : 1716936038
+            g, tog, 4, on ? this.init(-1474094563, ThemePaletteManager.ColorRole.TOGGLE) : 1074926358, on ? this.init(-39836, ThemePaletteManager.ColorRole.TOGGLE) : 1716936038
          );
          int knobX = on ? tog.init() - 10 : tog.read() + 2;
-         PacketUtil.init(g, NetHelper.init(knobX, tog.write() + 2, 8, tog.sync() - 4), on ? this.init(-50373, ThemePaletteManager.Inner_DataUtil.TOGGLE) : -7697782);
+         PacketUtil.init(g, NetHelper.init(knobX, tog.write() + 2, 8, tog.sync() - 4), on ? this.init(-50373, ThemePaletteManager.ColorRole.TOGGLE) : -7697782);
          if (clickable) {
             this.init_V_NetHelper(rb, () -> setter.accept(!getter.get()), null);
          }
@@ -231,10 +231,10 @@ public class AutismSettingsScreen extends Screen {
       this.set = Math.max(this.set, this.init(label));
       return (g, rb, mx, my, clickable) -> {
          boolean hover = clickable && rb.init_Z(mx, my);
-         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ThemePaletteManager.Inner_DataUtil.BUTTON) : 639113758, this.init(1717972012, ThemePaletteManager.Inner_DataUtil.OUTLINE));
-         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
+         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ThemePaletteManager.ColorRole.BUTTON) : 639113758, this.init(1717972012, ThemePaletteManager.ColorRole.OUTLINE));
+         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.ColorRole.TEXT), rb.read() + 6, this.init(rb));
          int vw = k.init(this.font, value, autismclient.gui.f.a.DataUtil.init, -4743522);
-         this.init(g, value, autismclient.gui.f.a.DataUtil.init, this.init(-39836, ThemePaletteManager.Inner_DataUtil.ACCENT), rb.init() - vw - 6, this.init(rb));
+         this.init(g, value, autismclient.gui.f.a.DataUtil.init, this.init(-39836, ThemePaletteManager.ColorRole.ACCENT), rb.init() - vw - 6, this.init(rb));
          if (clickable) {
             this.init_V_NetHelper(rb, onLeft, onRight);
          }
@@ -250,8 +250,8 @@ public class AutismSettingsScreen extends Screen {
       }
 
       return (g, rb, mx, my, clickable) -> {
-         PacketUtil.load(g, rb, 4, 639113758, this.init(1717972012, ThemePaletteManager.Inner_DataUtil.OUTLINE));
-         this.init(g, "Command Prefix", autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
+         PacketUtil.load(g, rb, 4, 639113758, this.init(1717972012, ThemePaletteManager.ColorRole.OUTLINE));
+         this.init(g, "Command Prefix", autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.ColorRole.TEXT), rb.read() + 6, this.init(rb));
          int ctrlW = Math.min(110, rb.update() / 2);
          NetHelper ctrl = NetHelper.init(rb.init() - ctrlW - 2, rb.write() + 1, ctrlW, rb.sync() - 2);
          this.init_RefQueue.init_V_NetHelper(ctrl);
@@ -278,13 +278,13 @@ public class AutismSettingsScreen extends Screen {
             g,
             rb,
             4,
-            active ? this.init(1428429341, ThemePaletteManager.Inner_DataUtil.ACCENT) : (hover ? this.init(1075845661, ThemePaletteManager.Inner_DataUtil.BUTTON) : 639113758),
-            active ? this.init(-39836, ThemePaletteManager.Inner_DataUtil.ACCENT) : this.init(1717972012, ThemePaletteManager.Inner_DataUtil.OUTLINE)
+            active ? this.init(1428429341, ThemePaletteManager.ColorRole.ACCENT) : (hover ? this.init(1075845661, ThemePaletteManager.ColorRole.BUTTON) : 639113758),
+            active ? this.init(-39836, ThemePaletteManager.ColorRole.ACCENT) : this.init(1717972012, ThemePaletteManager.ColorRole.OUTLINE)
          );
-         this.init(g, k.init_Str(), autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
+         this.init(g, k.init_Str(), autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.ColorRole.TEXT), rb.read() + 6, this.init(rb));
          String v = active ? "press a key..." : ValueSink.init_Str(k.init_IntSupplier().getAsInt());
          int vw = autismclient.gui.f.b.k.init(this.font, v, autismclient.gui.f.a.DataUtil.init, -4743522);
-         this.init(g, v, autismclient.gui.f.a.DataUtil.init, this.init(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT), rb.init() - vw - 6, this.init(rb));
+         this.init(g, v, autismclient.gui.f.a.DataUtil.init, this.init(-4743522, ThemePaletteManager.ColorRole.TEXT), rb.init() - vw - 6, this.init(rb));
          if (clickable) {
             this.init_V_NetHelper(rb, () -> this.init_V(idx), null);
          }
@@ -309,23 +309,23 @@ public class AutismSettingsScreen extends Screen {
       return Math.max(0, Math.min(value, max));
    }
 
-   private ScrollbarRenderer.Inner_DataUtil init_UtilCore_DataUtil() {
+   private ScrollbarRenderer.ScrollbarBounds init_UtilCore_DataUtil() {
       NetHelper track = NetHelper.init(this.init_NetHelper.init() - 6, this.init_NetHelper.write(), 6, this.init_NetHelper.sync());
       return ScrollbarRenderer.init(track, this.get, this.init_NetHelper.sync(), this.tick);
    }
 
-   private void init(ScrollbarRenderer.Inner_DataUtil metrics, int my) {
+   private void init(ScrollbarRenderer.ScrollbarBounds metrics, int my) {
       this.init_Z = true;
       this.run = metrics.load(metrics.init_NetHelper().read() + 1, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
       this.tick = this.init_I(ScrollbarRenderer.init_I_UtilCore_DataUtil(metrics, my, this.run));
    }
 
-   private int init(int argb, ThemePaletteManager.Inner_DataUtil ch) {
+   private int init(int argb, ThemePaletteManager.ColorRole ch) {
       return ThemePaletteManager.init_I_I_ct_DataUtil(argb, ch);
    }
 
    private int init_I() {
-      return this.init(-5035221, ThemePaletteManager.Inner_DataUtil.OUTLINE);
+      return this.init(-5035221, ThemePaletteManager.ColorRole.OUTLINE);
    }
 
    private void init(GuiGraphicsExtractor g, NetHelper b, String label, boolean hover, boolean primary) {

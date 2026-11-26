@@ -506,7 +506,7 @@ public final class MacroItemTarget {
          if (trimmed.matches("\\{[A-Za-z_][A-Za-z0-9_.-]{0,63}}")) {
             String name = trimmed.substring(1, trimmed.length() - 1);
             Optional<MacroVarValue> value = MacroVariableContext.init_Optional_Str(name);
-            if (value.isPresent() && value.get().init_l_DataUtil() == MacroVarValue.Inner_DataUtil.ITEM) {
+            if (value.isPresent() && value.get().init_l_DataUtil() == MacroVarValue.ValueType.ITEM) {
                MacroVarValue item = value.get();
                MacroItemTarget resolved = new MacroItemTarget();
                resolved.init_I = item.init_Optional_Str("slot").map(v -> init_I_Str_I(v.init_Str(), this.init_I)).orElse(this.init_I);
@@ -517,7 +517,7 @@ public final class MacroItemTarget {
             }
          }
 
-         MacroTemplateResolver.Inner_CachePool resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(source, mc);
+         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(source, mc);
          if (resolution.init_Z() && !resolution.init_Str().isBlank()) {
             MacroItemTarget resolved = update(resolution.init_Str());
             if (this.init_Z()) {

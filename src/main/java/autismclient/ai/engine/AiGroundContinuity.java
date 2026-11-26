@@ -8,7 +8,7 @@ final class AiGroundContinuity {
       return Math.abs(var0 - var2) <= 0.062501;
    }
 
-   static boolean putAt(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2) {
+   static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
       if (!var2.onGround()) {
          return false;
       } else {
@@ -21,7 +21,7 @@ final class AiGroundContinuity {
       }
    }
 
-   static boolean putAt(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2, double var3) {
+   static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2, double var3) {
       if (var2.y() < var3 - 1.0625) {
          return false;
       } else {

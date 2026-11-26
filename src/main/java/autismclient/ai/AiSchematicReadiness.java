@@ -46,7 +46,7 @@ final class AiSchematicReadiness {
    static String init(AiSchematicReadiness.Inner_TaskQueue report) {
       if (!report.ready() && !report.issues().isEmpty()) {
          AiSchematicReadiness.Inner_StreamUtil first = report.issues().getFirst();
-         AiBuilder.Inner_StreamUtil cell = first.cell();
+         AiBuilder.CellSpec cell = first.cell();
          String block = cell.block().startsWith("minecraft:") ? cell.block().substring("minecraft:".length()) : cell.block();
          String var10000;
          switch (first.kind()) {
@@ -105,27 +105,27 @@ final class AiSchematicReadiness {
       }
    }
 
-   static List<AiSchematicReadiness.Inner_StreamUtil> init(AiBuilder.Inner_DataUtil blueprint) {
+   static List<AiSchematicReadiness.Inner_StreamUtil> init(AiBuilder.Blueprint blueprint) {
       return init(blueprint, 2147483647).issues();
    }
 
-   static AiSchematicReadiness.Inner_TaskQueue init(AiBuilder.Inner_DataUtil blueprint, int exampleLimit) {
+   static AiSchematicReadiness.Inner_TaskQueue init(AiBuilder.Blueprint blueprint, int exampleLimit) {
       return init_bX_TaskQueue(blueprint, exampleLimit, null);
    }
 
-   static AiSchematicReadiness.Inner_TaskQueue init_bX_TaskQueue(AiBuilder.Inner_DataUtil blueprint, int exampleLimit, Map<Long, BlockState> context) {
+   static AiSchematicReadiness.Inner_TaskQueue init_bX_TaskQueue(AiBuilder.Blueprint blueprint, int exampleLimit, Map<Long, BlockState> context) {
       return init(blueprint, exampleLimit, context, null);
    }
 
-   static AiSchematicReadiness.Inner_DataUtil init_bX_DataUtil(AiBuilder.Inner_DataUtil requested, int exampleLimit, Map<Long, BlockState> context) {
-      AiBuilder.Inner_DataUtil blueprint = requested;
+   static AiSchematicReadiness.Inner_DataUtil init_bX_DataUtil(AiBuilder.Blueprint requested, int exampleLimit, Map<Long, BlockState> context) {
+      AiBuilder.Blueprint blueprint = requested;
       LongOpenHashSet omitted = new LongOpenHashSet();
       ArrayList<AiSchematicReadiness.Inner_StreamUtil> examples = new ArrayList<>();
       long issueCount = 0L;
       int distinctStates = 0;
       Map<Long, BlockState> observed = context;
 
-      ArrayList<AiBuilder.Inner_StreamUtil> kept;
+      ArrayList<AiBuilder.CellSpec> kept;
       do {
          AiBuilder.init();
          omitted.clear();
@@ -146,7 +146,7 @@ final class AiSchematicReadiness {
 
          kept = new ArrayList<>(blueprint.cells().size() - omitted.size());
 
-         for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+         for (AiBuilder.CellSpec cell : blueprint.cells()) {
             AiBuilder.init();
             if (omitted.contains(init(cell.dx(), cell.dy(), cell.dz()))) {
                observed.putIfAbsent(blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()).asLong(), Blocks.AIR.defaultBlockState());
@@ -155,13 +155,13 @@ final class AiSchematicReadiness {
             }
          }
 
-         blueprint = new AiBuilder.Inner_DataUtil(blueprint.origin(), List.copyOf(kept));
+         blueprint = new AiBuilder.Blueprint(blueprint.origin(), List.copyOf(kept));
       } while (!kept.isEmpty());
 
       return new AiSchematicReadiness.Inner_DataUtil(blueprint, requested.cells().size() - blueprint.cells().size(), new AiSchematicReadiness.Inner_TaskQueue(issueCount, examples, distinctStates));
    }
 
-   private static AiSchematicReadiness.Inner_TaskQueue init(AiBuilder.Inner_DataUtil blueprint, int exampleLimit, Map<Long, BlockState> context, LongSet omitted) {
+   private static AiSchematicReadiness.Inner_TaskQueue init(AiBuilder.Blueprint blueprint, int exampleLimit, Map<Long, BlockState> context, LongSet omitted) {
       if (exampleLimit < 0) {
          throw new IllegalArgumentException("negative readiness example limit");
       }
@@ -169,10 +169,10 @@ final class AiSchematicReadiness {
       ArrayList<AiSchematicReadiness.Inner_StreamUtil> issues = new ArrayList<>();
       HashMap<AiSchematicReadiness.Inner_NetHelper, List<AiSchematicReadiness.Inner_ConfigStore>> states = new HashMap<>();
       HashMap<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> pairPlans = new HashMap<>();
-      Long2ObjectOpenHashMap<AiBuilder.Inner_StreamUtil> partners = init(blueprint, pairPlans);
+      Long2ObjectOpenHashMap<AiBuilder.CellSpec> partners = init(blueprint, pairPlans);
       long issueCount = 0L;
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          AiBuilder.init();
          List<AiSchematicReadiness.Inner_ConfigStore> problems = states.computeIfAbsent(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()), ignored -> init_List(cell));
          issueCount += problems.size();
@@ -191,7 +191,7 @@ final class AiSchematicReadiness {
          AiSchematicReadiness.Inner_BufferHelper pair = init(cell, pairPlans);
          if (pair != null) {
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz()).relative(pair.direction());
-            AiBuilder.Inner_StreamUtil partner = partners.get(AiBuilder.init_J_I(at.getX(), at.getY(), at.getZ()));
+            AiBuilder.CellSpec partner = partners.get(AiBuilder.init_J_I(at.getX(), at.getY(), at.getZ()));
             BlockState actual = partner == null
                ? (context == null ? null : context.get(blueprint.origin().offset(at).asLong()))
                : AiBuilder.init_BlockState(partner);
@@ -226,14 +226,14 @@ final class AiSchematicReadiness {
    }
 
    private static long init(
-      AiBuilder.Inner_DataUtil blueprint,
+      AiBuilder.Blueprint blueprint,
       Map<Long, BlockState> context,
       Map<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> pairPlans,
       int exampleLimit,
       List<AiSchematicReadiness.Inner_StreamUtil> issues,
       LongSet omitted
    ) {
-      List<AiBuilder.Inner_StreamUtil> cells = blueprint.cells();
+      List<AiBuilder.CellSpec> cells = blueprint.cells();
       if (cells.isEmpty()) {
          return 0L;
       }
@@ -247,9 +247,9 @@ final class AiSchematicReadiness {
       int maxY = -2147483648;
       int maxZ = -2147483648;
       HashMap<BlockState, Boolean> needs = new HashMap<>();
-      ArrayList<AiBuilder.Inner_StreamUtil> checked = new ArrayList<>();
+      ArrayList<AiBuilder.CellSpec> checked = new ArrayList<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          AiBuilder.init();
          BlockState state = resolved.computeIfAbsent(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()), ignored -> AiBuilder.init_BlockState(cell));
          placed.put(init(cell.dx(), cell.dy(), cell.dz()), state);
@@ -264,7 +264,7 @@ final class AiSchematicReadiness {
          }
       }
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          BlockState state = resolved.get(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()));
          if (state.getBlock() instanceof PistonBaseBlock && state.getValue(PistonBaseBlock.EXTENDED)) {
             Direction facing = state.getValue(PistonBaseBlock.FACING);
@@ -309,7 +309,7 @@ final class AiSchematicReadiness {
       LevelReader reader = init(finished);
       long count = 0L;
 
-      for (AiBuilder.Inner_StreamUtil cell : checked) {
+      for (AiBuilder.CellSpec cell : checked) {
          AiBuilder.init();
          AiSchematicReadiness.Inner_BufferHelper plan = init(cell, pairPlans);
          if (plan == null || !plan.needsExisting()) {
@@ -353,7 +353,7 @@ final class AiSchematicReadiness {
    }
 
    private static long init(
-      List<AiBuilder.Inner_StreamUtil> cells,
+      List<AiBuilder.CellSpec> cells,
       Map<AiSchematicReadiness.Inner_NetHelper, BlockState> resolved,
       Long2ObjectOpenHashMap<BlockState> placed,
       int x0,
@@ -373,7 +373,7 @@ final class AiSchematicReadiness {
       LongArrayList component = omitted == null ? null : new LongArrayList();
       long count = 0L;
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          AiBuilder.init();
          FluidState fluid = resolved.get(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties())).getFluidState();
          long start = init(cell.dx(), cell.dy(), cell.dz());
@@ -453,8 +453,8 @@ final class AiSchematicReadiness {
       return count;
    }
 
-   static List<BlockPos> load(AiBuilder.Inner_DataUtil blueprint) {
-      List<AiBuilder.Inner_StreamUtil> cells = blueprint.cells();
+   static List<BlockPos> load(AiBuilder.Blueprint blueprint) {
+      List<AiBuilder.CellSpec> cells = blueprint.cells();
       HashMap<AiSchematicReadiness.Inner_NetHelper, BlockState> states = new HashMap<>();
       Long2ObjectOpenHashMap<BlockState> placed = new Long2ObjectOpenHashMap<>();
       int minX = 2147483647;
@@ -464,7 +464,7 @@ final class AiSchematicReadiness {
       int maxY = -2147483648;
       int maxZ = -2147483648;
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          AiBuilder.init();
          minX = Math.min(minX, cell.dx());
          maxX = Math.max(maxX, cell.dx());
@@ -630,12 +630,12 @@ final class AiSchematicReadiness {
       });
    }
 
-   private static Long2ObjectOpenHashMap<AiBuilder.Inner_StreamUtil> init(
-      AiBuilder.Inner_DataUtil blueprint, Map<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> plans
+   private static Long2ObjectOpenHashMap<AiBuilder.CellSpec> init(
+      AiBuilder.Blueprint blueprint, Map<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> plans
    ) {
-      Long2ObjectOpenHashMap<AiBuilder.Inner_StreamUtil> required = new Long2ObjectOpenHashMap<>();
+      Long2ObjectOpenHashMap<AiBuilder.CellSpec> required = new Long2ObjectOpenHashMap<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          AiBuilder.init();
          AiSchematicReadiness.Inner_BufferHelper pair = init(cell, plans);
          if (pair != null) {
@@ -645,7 +645,7 @@ final class AiSchematicReadiness {
       }
 
       if (!required.isEmpty()) {
-         for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+         for (AiBuilder.CellSpec cell : blueprint.cells()) {
             AiBuilder.init();
             long key = AiBuilder.init_J_I(cell.dx(), cell.dy(), cell.dz());
             if (required.containsKey(key)) {
@@ -657,12 +657,12 @@ final class AiSchematicReadiness {
       return required;
    }
 
-   static List<BlockPos> read(AiBuilder.Inner_DataUtil blueprint) {
+   static List<BlockPos> read(AiBuilder.Blueprint blueprint) {
       HashMap<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> plans = new HashMap<>();
-      Long2ObjectOpenHashMap<AiBuilder.Inner_StreamUtil> partners = init(blueprint, plans);
+      Long2ObjectOpenHashMap<AiBuilder.CellSpec> partners = init(blueprint, plans);
       LinkedHashSet<BlockPos> positions = new LinkedHashSet<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          AiBuilder.init();
          AiSchematicReadiness.Inner_BufferHelper pair = init(cell, plans);
          if (pair != null && pair.needsExisting()) {
@@ -676,7 +676,7 @@ final class AiSchematicReadiness {
       return List.copyOf(positions);
    }
 
-   private static AiSchematicReadiness.Inner_BufferHelper init(AiBuilder.Inner_StreamUtil cell, Map<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> plans) {
+   private static AiSchematicReadiness.Inner_BufferHelper init(AiBuilder.CellSpec cell, Map<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> plans) {
       return plans.computeIfAbsent(
             new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()),
             ignored -> {
@@ -717,7 +717,7 @@ final class AiSchematicReadiness {
       }
    }
 
-   private static List<AiSchematicReadiness.Inner_ConfigStore> init_List(AiBuilder.Inner_StreamUtil cell) {
+   private static List<AiSchematicReadiness.Inner_ConfigStore> init_List(AiBuilder.CellSpec cell) {
       ArrayList<AiSchematicReadiness.Inner_ConfigStore> problems = new ArrayList<>();
 
       for (String gap : AiBuilder.init_List(cell)) {
@@ -731,7 +731,7 @@ final class AiSchematicReadiness {
       return List.copyOf(problems);
    }
 
-   private static boolean init_Z(AiBuilder.Inner_StreamUtil cell) {
+   private static boolean init_Z(AiBuilder.CellSpec cell) {
       return AiBuilder.read_Z(cell)
          || AiBuilder.load_Z(cell)
          || "upper".equals(cell.properties().get("half"))
@@ -754,7 +754,7 @@ final class AiSchematicReadiness {
    private record Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool kind, String detail) {
    }
 
-   record Inner_DataUtil(AiBuilder.Inner_DataUtil blueprint, int skipped, AiSchematicReadiness.Inner_TaskQueue report) {
+   record Inner_DataUtil(AiBuilder.Blueprint blueprint, int skipped, AiSchematicReadiness.Inner_TaskQueue report) {
    }
 
    private static final class Inner_JsonUtil extends RuntimeException {
@@ -766,7 +766,7 @@ final class AiSchematicReadiness {
    private record Inner_NetHelper(String block, Map<String, String> properties) {
    }
 
-   record Inner_StreamUtil(AiSchematicReadiness.Inner_CachePool kind, AiBuilder.Inner_StreamUtil cell, String detail) {
+   record Inner_StreamUtil(AiSchematicReadiness.Inner_CachePool kind, AiBuilder.CellSpec cell, String detail) {
       @Override
       public String toString() {
          return this.kind

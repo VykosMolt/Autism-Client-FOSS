@@ -456,7 +456,7 @@ final class AiFarm {
             }
 
             boolean init_Z(String itemId) {
-               AiItems.Inner_DataUtil wanted = AiItems.load_af_DataUtil(itemId);
+               AiItems.ItemSpec wanted = AiItems.load_af_DataUtil(itemId);
                Inventory inventory = this.init_Minecraft.player.getInventory();
 
                for (int slot = 0; slot < 36; slot++) {

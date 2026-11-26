@@ -148,7 +148,7 @@ public class RowLayout extends LayoutContainer {
                   drawY,
                   underlineX + underlineWidth,
                   drawY + context.init_CharEncoder().load(1),
-                  ThemePaletteManager.init_I_I_ct_DataUtil(this.load_I, ThemePaletteManager.Inner_DataUtil.ACCENT)
+                  ThemePaletteManager.init_I_I_ct_DataUtil(this.load_I, ThemePaletteManager.ColorRole.ACCENT)
                );
          }
       }

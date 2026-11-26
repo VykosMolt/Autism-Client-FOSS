@@ -61,7 +61,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
-public final class CrystalAuraModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
+public final class CrystalAuraModule extends Module implements SilentMovementCoordinator.Participant {
    public static final String init_Str = "crystal-aura";
    private static final float init_F = 6.0F;
    private static final double init_D = 2.0;
@@ -89,7 +89,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    private static final int tick = 2;
    private static final int run = 40;
    private static final int get = 16;
-   private autismclient.util.ExplosionDamageCalculator.Inner_CachePool init_S_CachePool;
+   private autismclient.util.ExplosionDamageCalculator.SimOptions init_S_CachePool;
    private static final EnumSet<Direction> init_EnumSet = EnumSet.allOf(Direction.class);
    private static final double[] init_DArr = new double[]{0.3, 0.5, 0.7};
    private static final int set = 4;
@@ -173,7 +173,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
    public CrystalAuraModule() {
       super("crystal-aura", "CrystalAura", ae.init_ae, "Places and detonates end crystals.");
-      this.init_S_CachePool = autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(true);
+      this.init_S_CachePool = autismclient.util.ExplosionDamageCalculator.SimOptions.init_S_CachePool.init(true);
       this.init_Random = new Random();
       this.load_Str = "";
       this.reset = -2147483648;
@@ -831,7 +831,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             return;
          }
 
-         this.init_S_CachePool = autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(this.bool("terrain"));
+         this.init_S_CachePool = autismclient.util.ExplosionDamageCalculator.SimOptions.init_S_CachePool.init(this.bool("terrain"));
          if (this.flush_BlockPos != null) {
             if (MC.level.getBlockState(this.flush_BlockPos) != autismclient.util.ServerVerifiedBlockState.init(MC.level, this.flush_BlockPos)) {
                if (!this.init_Z_LivingEntity_4(enemy)) {
@@ -850,8 +850,8 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          CrystalAuraModule.Inner_TaskQueue defend = null;
 
          CrystalAuraModule.Inner_ConfigStore destroy;
-         try (autismclient.util.ExplosionDamageCalculator.Inner_ConfigStore pass = autismclient.util.ExplosionDamageCalculator.init_S_ConfigStore()) {
-            defend = this.init_t_TaskQueue_U_StreamUtil_Z(new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(48), true);
+         try (autismclient.util.ExplosionDamageCalculator.SimScope pass = autismclient.util.ExplosionDamageCalculator.init_S_ConfigStore()) {
+            defend = this.init_t_TaskQueue_U_StreamUtil_Z(new autismclient.util.BlockPlacementPlanner.RayBudget(48), true);
             if (defend != null) {
                this.read_V_22();
                table = AutismSessionState.init_ck().state_I();
@@ -865,7 +865,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             }
 
             if (destroy == null && defend == null) {
-               autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget = new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(48);
+               autismclient.util.BlockPlacementPlanner.RayBudget budget = new autismclient.util.BlockPlacementPlanner.RayBudget(48);
                if (this.read(enemy)) {
                   obsidian = this.init_t_TaskQueue_U_StreamUtil(budget);
                } else if (this.update(enemy)) {
@@ -941,8 +941,8 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                this.write_V_21();
             }
 
-            RotationMath.Inner_DataUtil wire = this.init_ce_DataUtil_7();
-            RotationMath.Inner_DataUtil goal = destroy != null
+            RotationMath.Rotation wire = this.init_ce_DataUtil_7();
+            RotationMath.Rotation goal = destroy != null
                ? destroy.init_ce_DataUtil()
                : (
                   place != null
@@ -970,7 +970,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                return;
             }
 
-            RotationMath.Inner_DataUtil outgoing = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
+            RotationMath.Rotation outgoing = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
             if (outgoing == null || !init_Z_ce_DataUtil_ce_DataUtil_5(outgoing, wire)) {
                if (destroy != null) {
                   this.load_Str = "outgoing";
@@ -1009,7 +1009,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   private static boolean init_Z_ce_DataUtil_ce_DataUtil_5(RotationMath.Inner_DataUtil first, RotationMath.Inner_DataUtil second) {
+   private static boolean init_Z_ce_DataUtil_ce_DataUtil_5(RotationMath.Rotation first, RotationMath.Rotation second) {
       return Math.abs(RotationMath.init(first.init(), second.init())) <= 0.05F && Math.abs(first.load() - second.load()) <= 0.05F;
    }
 
@@ -1029,13 +1029,13 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_7() {
-      ServerRotationTracker.Inner_CachePool snapshot = ServerRotationTracker.init_ch_CachePool();
-      return !snapshot.init_Z() ? null : new RotationMath.Inner_DataUtil(snapshot.read(), snapshot.write());
+   private RotationMath.Rotation init_ce_DataUtil_7() {
+      ServerRotationTracker.RotationSnapshot snapshot = ServerRotationTracker.init_ch_CachePool();
+      return !snapshot.init_Z() ? null : new RotationMath.Rotation(snapshot.read(), snapshot.write());
    }
 
-   private RotationMath.Inner_DataUtil load_ce_DataUtil_5() {
-      RotationMath.Inner_DataUtil wire = this.init_ce_DataUtil_7();
+   private RotationMath.Rotation load_ce_DataUtil_5() {
+      RotationMath.Rotation wire = this.init_ce_DataUtil_7();
       return wire != null ? wire : RotationMath.init(MC.player);
    }
 
@@ -1289,7 +1289,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          if (!this.load_FileCache.init(crystal, tick)
             && (!"Aimed".equals(this.choice("aim-mode")) || this.init_HitResult instanceof EntityHitResult aimed && aimed.getEntity() == crystal)
             && !(init_D_AABB_Vec3_3(crystal.getBoundingBox(), eye) > rangeSq)) {
-            autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank = this.init_S_BufferHelper_LivingEntity(enemy, crystal.position(), blastTarget);
+            autismclient.util.ExplosionDamageCalculator.DamagePair rank = this.init_S_BufferHelper_LivingEntity(enemy, crystal.position(), blastTarget);
             if (this.init_Z_LivingEntity_S_BufferHelper(enemy, rank) && this.init_Z_Vec3_4(crystal.position())) {
                choices.add(new CrystalAuraModule.Inner_BufferHelper(crystal, rank));
             }
@@ -1308,7 +1308,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             break;
          }
 
-         RotationMath.Inner_DataUtil goal = this.init_ce_DataUtil_EndCrystal_D(choice.init_EndCrystal(), range);
+         RotationMath.Rotation goal = this.init_ce_DataUtil_EndCrystal_D(choice.init_EndCrystal(), range);
          if (goal != null) {
             return new CrystalAuraModule.Inner_ConfigStore(choice.init_EndCrystal(), goal, range);
          }
@@ -1317,9 +1317,9 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return null;
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_EndCrystal_D(EndCrystal crystal, double range) {
+   private RotationMath.Rotation init_ce_DataUtil_EndCrystal_D(EndCrystal crystal, double range) {
       Vec3 eye = MC.player.getEyePosition();
-      RotationMath.Inner_DataUtil wire = this.load_ce_DataUtil_5();
+      RotationMath.Rotation wire = this.load_ce_DataUtil_5();
       AABB box = crystal.getBoundingBox();
       if (autismclient.util.HitboxRayHelper.init(
             box, eye, Vec3.directionFromRotation(wire.load(), wire.init()), range, pointx -> this.init_Z_Vec3_Vec3_3(eye, pointx)
@@ -1328,10 +1328,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          return wire;
       }
 
-      RotationMath.Inner_DataUtil best = null;
+      RotationMath.Rotation best = null;
       float bestDelta = 3.4028235E38F;
       Vec3 nearest = autismclient.util.HitboxRayHelper.init(box, eye);
-      RotationMath.Inner_DataUtil nearAim = RotationMath.init(nearest, eye);
+      RotationMath.Rotation nearAim = RotationMath.init(nearest, eye);
       if (autismclient.util.HitboxRayHelper.init(
             box, eye, Vec3.directionFromRotation(nearAim.load(), nearAim.init()), range, pointx -> this.init_Z_Vec3_Vec3_3(eye, pointx)
          )
@@ -1346,7 +1346,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                Vec3 point = new Vec3(Mth.lerp(fx, box.minX, box.maxX), Mth.lerp(fy, box.minY, box.maxY), Mth.lerp(fz, box.minZ, box.maxZ));
                double distance = eye.distanceTo(point);
                if (!(distance > range) && !this.init_Z_Vec3_Vec3_3(eye, point)) {
-                  RotationMath.Inner_DataUtil rotation = RotationMath.init(point, eye);
+                  RotationMath.Rotation rotation = RotationMath.init(point, eye);
                   float delta = RotationMath.load(rotation, wire);
                   if (delta < bestDelta) {
                      bestDelta = delta;
@@ -1360,7 +1360,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return best;
    }
 
-   private Vec3 init_Vec3_t_ConfigStore_ce_DataUtil(CrystalAuraModule.Inner_ConfigStore plan, RotationMath.Inner_DataUtil wire) {
+   private Vec3 init_Vec3_t_ConfigStore_ce_DataUtil(CrystalAuraModule.Inner_ConfigStore plan, RotationMath.Rotation wire) {
       if (!plan.init_EndCrystal().isAlive()) {
          return null;
       }
@@ -1433,7 +1433,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   private CrystalAuraModule.Inner_NetHelper init_t_NetHelper_LivingEntity_U_StreamUtil(LivingEntity enemy, autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget) {
+   private CrystalAuraModule.Inner_NetHelper init_t_NetHelper_LivingEntity_U_StreamUtil(LivingEntity enemy, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
       if (!this.bool("place")) {
          return null;
       }
@@ -1454,15 +1454,15 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
 
       Vec3 eye = player.getEyePosition();
-      RotationMath.Inner_DataUtil wire = this.load_ce_DataUtil_5();
-      autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[] refusal = new autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[1];
+      RotationMath.Rotation wire = this.load_ce_DataUtil_5();
+      autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
       List<CrystalAuraModule.Inner_JsonUtil> entries = new ArrayList<>();
-      List<autismclient.util.BlockPlacementPlanner.Inner_TaskQueue> scan = new ArrayList<>();
+      List<autismclient.util.BlockPlacementPlanner.SupportCandidate> scan = new ArrayList<>();
 
       for (BlockPos support : supports) {
          BlockPos cell = support.above();
          BlockState state = MC.level.getBlockState(support);
-         autismclient.util.BlockPlacementPlanner.Inner_StateCache request = new autismclient.util.BlockPlacementPlanner.Inner_StateCache(
+         autismclient.util.BlockPlacementPlanner.Query request = new autismclient.util.BlockPlacementPlanner.Query(
                cell, eye, range, autismclient.util.BlockPlacementPlanner.init(support, init_EnumSet)
             )
             .init_U_StateCache_ce_DataUtil(wire)
@@ -1471,7 +1471,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          scan.clear();
          this.init(support, state, cell, eye, wire, scan);
 
-         for (autismclient.util.BlockPlacementPlanner.Inner_TaskQueue option : scan) {
+         for (autismclient.util.BlockPlacementPlanner.SupportCandidate option : scan) {
             entries.add(new CrystalAuraModule.Inner_JsonUtil(support, request, option));
          }
       }
@@ -1486,9 +1486,9 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       for (int step = 0; step < size; step++) {
          int index = (start + step) % size;
          CrystalAuraModule.Inner_JsonUtil entry = entries.get(index);
-         autismclient.util.BlockPlacementPlanner.Inner_DataUtil aim = autismclient.util.BlockPlacementPlanner.init(entry.init_U_TaskQueue(), entry.init_U_StateCache(), refusal);
+         autismclient.util.BlockPlacementPlanner.AimSample aim = autismclient.util.BlockPlacementPlanner.init(entry.init_U_TaskQueue(), entry.init_U_StateCache(), refusal);
          if (aim != null) {
-            autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(
+            autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(
                entry.init_U_TaskQueue(), aim, entry.init_U_StateCache(), refusal
             );
             if (candidate != null) {
@@ -1501,7 +1501,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                return new CrystalAuraModule.Inner_NetHelper(chosen, hand, range, candidate, entry.init_U_StateCache(), chosenDamage);
             }
 
-            if (refusal[0] == autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET) {
+            if (refusal[0] == autismclient.util.BlockPlacementPlanner.RejectReason.NO_BUDGET) {
                this.size = index;
                return null;
             }
@@ -1512,15 +1512,15 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return null;
    }
 
-   private void init(BlockPos support, BlockState state, BlockPos cell, Vec3 eye, RotationMath.Inner_DataUtil wire, List<autismclient.util.BlockPlacementPlanner.Inner_TaskQueue> out) {
+   private void init(BlockPos support, BlockState state, BlockPos cell, Vec3 eye, RotationMath.Rotation wire, List<autismclient.util.BlockPlacementPlanner.SupportCandidate> out) {
       boolean requiresSneak = autismclient.util.BlockPlacementPlanner.init_Z(state, support);
       List<CrystalAuraModule.Inner_SyncManager> keyed = new ArrayList<>();
 
       for (Direction face : autismclient.util.BlockPlacementPlanner.init_DirectionArr) {
-         autismclient.util.BlockPlacementPlanner.Inner_BufferHelper intent = new autismclient.util.BlockPlacementPlanner.Inner_BufferHelper(support, face);
+         autismclient.util.BlockPlacementPlanner.SupportFace intent = new autismclient.util.BlockPlacementPlanner.SupportFace(support, face);
 
          for (AABB rect : autismclient.util.BlockPlacementPlanner.init_AABBArr_BlockState(state, support, face, 3)) {
-            autismclient.util.BlockPlacementPlanner.Inner_TaskQueue option = new autismclient.util.BlockPlacementPlanner.Inner_TaskQueue(
+            autismclient.util.BlockPlacementPlanner.SupportCandidate option = new autismclient.util.BlockPlacementPlanner.SupportCandidate(
                cell, support, face, 1, state, rect, init_D_AABB_Direction_2(rect, face), autismclient.util.BlockPlacementPlanner.init(rect, face, eye), requiresSneak, intent
             );
             double turn = RotationMath.load(RotationMath.init(autismclient.util.BlockPlacementPlanner.init_Vec3(rect, face), eye), wire);
@@ -1566,7 +1566,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       double rangeSq = range * range;
       AABB nextBox = player.getBoundingBox().move(player.getDeltaMovement());
       AABB blastTarget = this.init_AABB_LivingEntity(enemy, this.read_I_10(), 1.5);
-      autismclient.util.ExplosionDamageCalculator.Inner_CachePool targetOptions = this.init_S_CachePool.init(blastTarget);
+      autismclient.util.ExplosionDamageCalculator.SimOptions targetOptions = this.init_S_CachePool.init(blastTarget);
       List<CrystalAuraModule.Inner_DataUtil> candidates = new ArrayList<>();
       MutableBlockPos cursor = new MutableBlockPos();
 
@@ -1604,7 +1604,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
          if (this.init_Z_Vec3_9(eye, candidate.init_BlockPos(), candidate.init_Vec3())) {
             evaluated++;
-            autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank = this.init_S_BufferHelper_LivingEntity(enemy, candidate.init_Vec3(), blastTarget);
+            autismclient.util.ExplosionDamageCalculator.DamagePair rank = this.init_S_BufferHelper_LivingEntity(enemy, candidate.init_Vec3(), blastTarget);
             if (!this.init_Z_LivingEntity_S_BufferHelper(enemy, rank)) {
                if (this.bool("defend") && this.load_List.size() < 4 && rank.load() >= floor && rank.read() > this.decimal("max-self-damage")) {
                   this.load_List.add(new CrystalAuraModule.Inner_StateCache(candidate.init_BlockPos(), rank, candidate.load()));
@@ -1759,7 +1759,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return dx * dx + dy * dy + dz * dz <= radius * radius;
    }
 
-   private BlockHitResult init_BlockHitResult_t_NetHelper_ce_DataUtil(CrystalAuraModule.Inner_NetHelper plan, RotationMath.Inner_DataUtil wire) {
+   private BlockHitResult init_BlockHitResult_t_NetHelper_ce_DataUtil(CrystalAuraModule.Inner_NetHelper plan, RotationMath.Rotation wire) {
       if (plan.init_InteractionHand() == null) {
          return null;
       } else if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.load_Z()) {
@@ -1835,7 +1835,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          : hitResult instanceof EntityHitResult && "crystal-aura".equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.read_Z();
    }
 
-   private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_LivingEntity(LivingEntity enemy, autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget, double rivalDamage) {
+   private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_LivingEntity(LivingEntity enemy, autismclient.util.BlockPlacementPlanner.RayBudget budget, double rivalDamage) {
       LocalPlayer player = MC.player;
       double range = player.blockInteractionRange();
       if (range <= 0.0) {
@@ -1857,9 +1857,9 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       double rangeSq = range * range;
       AABB nextBox = player.getBoundingBox().move(player.getDeltaMovement());
       AABB blastTarget = this.init_AABB_LivingEntity(enemy, this.read_I_10(), 1.5);
-      autismclient.util.ExplosionDamageCalculator.Inner_CachePool targetOptions = this.init_S_CachePool.init(blastTarget);
+      autismclient.util.ExplosionDamageCalculator.SimOptions targetOptions = this.init_S_CachePool.init(blastTarget);
       BlockState obsidianState = Blocks.OBSIDIAN.defaultBlockState();
-      List<autismclient.util.BlockPlacementPlanner.Inner_TaskQueue> supportFaces = new ArrayList<>();
+      List<autismclient.util.BlockPlacementPlanner.SupportCandidate> supportFaces = new ArrayList<>();
       AABB solidNextBox = autismclient.util.PlayerMotionEnvelope.init(player);
       List<CrystalAuraModule.Inner_DataUtil> candidates = new ArrayList<>();
       MutableBlockPos cursor = new MutableBlockPos();
@@ -1871,7 +1871,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             if (this.read(cursor)) {
                double supportBound = autismclient.util.ExplosionDamageCalculator.load_D(enemy, source, 6.0F, targetOptions);
                if (supportBound >= floor && this.init_Z_BlockPos_AABB_3(cursor, nextBox) && this.init_Z_Vec3_9(eye, cursor, source)) {
-                  autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper supportRank = this.init_S_BufferHelper_LivingEntity(enemy, source, blastTarget);
+                  autismclient.util.ExplosionDamageCalculator.DamagePair supportRank = this.init_S_BufferHelper_LivingEntity(enemy, source, blastTarget);
                   if (this.init_Z_LivingEntity_S_BufferHelper(enemy, supportRank)) {
                      rivalDamage = Math.max(rivalDamage, supportRank.load());
                   }
@@ -1911,7 +1911,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          }
 
          evaluated++;
-         autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank = autismclient.util.TargetLeadDamageEstimator.init(
+         autismclient.util.ExplosionDamageCalculator.DamagePair rank = autismclient.util.TargetLeadDamageEstimator.init(
             enemy, candidate.init_Vec3(), 6.0F, this.init_S_CachePool.init(candidate.init_BlockPos()), blastTarget
          );
          if (this.init_Z_LivingEntity_S_BufferHelper(enemy, rank) && this.init_Z_Vec3_4(candidate.init_Vec3())) {
@@ -1938,20 +1938,20 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          return null;
       }
 
-      RotationMath.Inner_DataUtil wire = this.load_ce_DataUtil_5();
-      autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[] refusal = new autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[1];
+      RotationMath.Rotation wire = this.load_ce_DataUtil_5();
+      autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
       int limit = Math.min(4, accepted.size());
 
       for (int i = 0; i < limit; i++) {
          BlockPos cell = accepted.get(i).init_BlockPos();
-         autismclient.util.BlockPlacementPlanner.Inner_StateCache request = this.init(cell, material, hand, range, eye, wire).init_U_StateCache_U_StreamUtil(budget);
-         autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init(request, refusal);
+         autismclient.util.BlockPlacementPlanner.Query request = this.init(cell, material, hand, range, eye, wire).init_U_StateCache_U_StreamUtil(budget);
+         autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init(request, refusal);
          if (candidate != null) {
             InteractionHand resolved = offhand ? InteractionHand.OFF_HAND : this.init_InteractionHand_I_2(slot);
             return new CrystalAuraModule.Inner_TaskQueue(cell, resolved, range, candidate, accepted.get(i).init_S_BufferHelper().load(), slot);
          }
 
-         if (refusal[0] == autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET) {
+         if (refusal[0] == autismclient.util.BlockPlacementPlanner.RejectReason.NO_BUDGET) {
             return null;
          }
 
@@ -1965,8 +1965,8 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return builderDamage >= rivalDamage + 5.0 && builderDamage >= rivalDamage * 2.0;
    }
 
-   private autismclient.util.BlockPlacementPlanner.Inner_StateCache init(BlockPos cell, ItemStack stack, InteractionHand hand, double range, Vec3 eye, RotationMath.Inner_DataUtil wire) {
-      return new autismclient.util.BlockPlacementPlanner.Inner_StateCache(cell, eye, range, autismclient.util.BlockPlacementPlanner.init(stack, MC.player, hand))
+   private autismclient.util.BlockPlacementPlanner.Query init(BlockPos cell, ItemStack stack, InteractionHand hand, double range, Vec3 eye, RotationMath.Rotation wire) {
+      return new autismclient.util.BlockPlacementPlanner.Query(cell, eye, range, autismclient.util.BlockPlacementPlanner.init(stack, MC.player, hand))
          .init_U_StateCache_ce_DataUtil(wire)
          .init_U_StateCache_D(autismclient.util.BlockPlacementPlanner.init_D())
          .init_U_StateCache_Vec3(eye.add(MC.player.getDeltaMovement()))
@@ -1974,7 +1974,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          .load(false);
    }
 
-   private BlockHitResult init_BlockHitResult_t_TaskQueue_ce_DataUtil(CrystalAuraModule.Inner_TaskQueue plan, RotationMath.Inner_DataUtil wire) {
+   private BlockHitResult init_BlockHitResult_t_TaskQueue_ce_DataUtil(CrystalAuraModule.Inner_TaskQueue plan, RotationMath.Rotation wire) {
       if (!AutismLiteVariant.enabled() && BacktrackModule.init_Z_AABB_2(new AABB(plan.init_BlockPos()))) {
          return null;
       }
@@ -2120,7 +2120,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_U_StreamUtil_Z(autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget, boolean imminentOnly) {
+   private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_U_StreamUtil_Z(autismclient.util.BlockPlacementPlanner.RayBudget budget, boolean imminentOnly) {
       if (!this.bool("defend")) {
          return null;
       }
@@ -2215,7 +2215,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_LivingEntity_U_StreamUtil(LivingEntity enemy, autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget) {
+   private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_LivingEntity_U_StreamUtil(LivingEntity enemy, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
       if (this.bool("defend")
          && this.bool("place")
          && this.put()
@@ -2269,8 +2269,8 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                      break;
                   }
 
-                  autismclient.util.ExplosionDamageCalculator.Inner_CachePool covered = this.init_S_CachePool.init(cell);
-                  autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank = autismclient.util.TargetLeadDamageEstimator.init(enemy, source, 6.0F, covered, targetBox);
+                  autismclient.util.ExplosionDamageCalculator.SimOptions covered = this.init_S_CachePool.init(cell);
+                  autismclient.util.ExplosionDamageCalculator.DamagePair rank = autismclient.util.TargetLeadDamageEstimator.init(enemy, source, 6.0F, covered, targetBox);
                   if (this.init_Z_LivingEntity_S_BufferHelper(enemy, rank)
                      && autismclient.util.BlastShieldPosFinder.init(
                         support.init_S_BufferHelper().load(),
@@ -2318,22 +2318,22 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    private CrystalAuraModule.Inner_TaskQueue init(
-      List<CrystalAuraModule.Inner_StreamUtil> cells, ItemStack material, InteractionHand hand, int slot, double range, Vec3 eye, autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget
+      List<CrystalAuraModule.Inner_StreamUtil> cells, ItemStack material, InteractionHand hand, int slot, double range, Vec3 eye, autismclient.util.BlockPlacementPlanner.RayBudget budget
    ) {
-      autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[] refusal = new autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[1];
+      autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
       int limit = Math.min(4, cells.size());
 
       for (int i = 0; i < limit; i++) {
          CrystalAuraModule.Inner_StreamUtil cell = cells.get(i);
-         autismclient.util.BlockPlacementPlanner.Inner_StateCache request = this.init(cell.init_BlockPos(), material, hand, range, eye, this.load_ce_DataUtil_5())
+         autismclient.util.BlockPlacementPlanner.Query request = this.init(cell.init_BlockPos(), material, hand, range, eye, this.load_ce_DataUtil_5())
             .init_U_StateCache_U_StreamUtil(budget);
-         autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init(request, refusal);
+         autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init(request, refusal);
          if (candidate != null) {
             InteractionHand resolved = hand == InteractionHand.OFF_HAND ? hand : this.init_InteractionHand_I_Z(slot, true);
             return new CrystalAuraModule.Inner_TaskQueue(cell.init_BlockPos(), resolved, range, candidate, cell.init_D(), slot);
          }
 
-         if (refusal[0] == autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET) {
+         if (refusal[0] == autismclient.util.BlockPlacementPlanner.RejectReason.NO_BUDGET) {
             return null;
          }
 
@@ -2395,7 +2395,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             Boolean works = MC.level.environmentAttributes().getValue(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS, cursor);
             if (!Boolean.TRUE.equals(works)) {
                BlockPos cell = cursor.immutable();
-               autismclient.util.ExplosionDamageCalculator.Inner_CachePool blast = this.init_S_CachePool.init(List.of(cell));
+               autismclient.util.ExplosionDamageCalculator.SimOptions blast = this.init_S_CachePool.init(List.of(cell));
                Vec3 source = Vec3.atCenterOf(cell);
                double bound = autismclient.util.ExplosionDamageCalculator.load(source, 5.0F, blast);
                if (bound > maximum) {
@@ -2550,7 +2550,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          : !autismclient.util.InventorySlotArbiter.init(this.data, "crystal-aura") && init_Z_ItemStack_10(player.getInventory().getItem(this.data));
    }
 
-   private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_U_StreamUtil(autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget) {
+   private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_U_StreamUtil(autismclient.util.BlockPlacementPlanner.RayBudget budget) {
       LocalPlayer player = MC.player;
       double range = player.blockInteractionRange();
       if (range <= 0.0) {
@@ -2561,12 +2561,12 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       boolean offhand = this.data < 0;
       InteractionHand hand = offhand ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
       ItemStack material = offhand ? player.getOffhandItem() : player.getInventory().getItem(this.data);
-      autismclient.util.BlockPlacementPlanner.Inner_StateCache request = this.init(this.load_BlockPos, material, hand, range, eye, this.load_ce_DataUtil_5())
+      autismclient.util.BlockPlacementPlanner.Query request = this.init(this.load_BlockPos, material, hand, range, eye, this.load_ce_DataUtil_5())
          .init_U_StateCache_U_StreamUtil(budget);
-      autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[] refusal = new autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[1];
-      autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init(request, refusal);
+      autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
+      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init(request, refusal);
       if (candidate == null) {
-         if (refusal[0] != autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET) {
+         if (refusal[0] != autismclient.util.BlockPlacementPlanner.RejectReason.NO_BUDGET) {
             this.load_BlockPos = null;
          }
 
@@ -2588,7 +2588,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          && this.put()
          && this.read(this.read_BlockPos)
          && this.init_Z_BlockPos_AABB_3(this.read_BlockPos, MC.player.getBoundingBox().move(MC.player.getDeltaMovement()))) {
-         autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank = this.init_S_BufferHelper_LivingEntity(
+         autismclient.util.ExplosionDamageCalculator.DamagePair rank = this.init_S_BufferHelper_LivingEntity(
             enemy,
             new Vec3(this.read_BlockPos.getX() + 0.5, this.read_BlockPos.getY() + 1.0, this.read_BlockPos.getZ() + 0.5),
             this.init_AABB_LivingEntity(enemy, this.read_I_10(), 1.5)
@@ -2606,7 +2606,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   private CrystalAuraModule.Inner_NetHelper load(LivingEntity enemy, autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget) {
+   private CrystalAuraModule.Inner_NetHelper load(LivingEntity enemy, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
       LocalPlayer player = MC.player;
       double range = player.blockInteractionRange();
       if (range <= 0.0) {
@@ -2614,24 +2614,24 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
 
       Vec3 eye = player.getEyePosition();
-      RotationMath.Inner_DataUtil wire = this.load_ce_DataUtil_5();
+      RotationMath.Rotation wire = this.load_ce_DataUtil_5();
       BlockPos support = this.read_BlockPos;
       BlockPos cell = support.above();
       BlockState state = MC.level.getBlockState(support);
-      autismclient.util.BlockPlacementPlanner.Inner_StateCache request = new autismclient.util.BlockPlacementPlanner.Inner_StateCache(cell, eye, range, autismclient.util.BlockPlacementPlanner.init(support, init_EnumSet))
+      autismclient.util.BlockPlacementPlanner.Query request = new autismclient.util.BlockPlacementPlanner.Query(cell, eye, range, autismclient.util.BlockPlacementPlanner.init(support, init_EnumSet))
          .init_U_StateCache_ce_DataUtil(wire)
          .init_U_StateCache_Vec3(eye.add(player.getDeltaMovement()))
          .init_U_StateCache_U_StreamUtil(budget);
-      List<autismclient.util.BlockPlacementPlanner.Inner_TaskQueue> scan = new ArrayList<>();
+      List<autismclient.util.BlockPlacementPlanner.SupportCandidate> scan = new ArrayList<>();
       this.init(support, state, cell, eye, wire, scan);
-      autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[] refusal = new autismclient.util.BlockPlacementPlanner.Inner_JsonUtil[1];
+      autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
       int start = this.init_HashUtil.init(scan, optionx -> optionx);
 
       for (int step = 0; step < scan.size(); step++) {
-         autismclient.util.BlockPlacementPlanner.Inner_TaskQueue option = scan.get((start + step) % scan.size());
-         autismclient.util.BlockPlacementPlanner.Inner_DataUtil aim = autismclient.util.BlockPlacementPlanner.init(option, request, refusal);
+         autismclient.util.BlockPlacementPlanner.SupportCandidate option = scan.get((start + step) % scan.size());
+         autismclient.util.BlockPlacementPlanner.AimSample aim = autismclient.util.BlockPlacementPlanner.init(option, request, refusal);
          if (aim != null) {
-            autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(option, aim, request, refusal);
+            autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(option, aim, request, refusal);
             if (candidate != null) {
                this.init_HashUtil.init();
                InteractionHand hand = this.init_InteractionHand_5();
@@ -2640,7 +2640,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                return new CrystalAuraModule.Inner_NetHelper(support, hand, range, candidate, request, damage);
             }
 
-            if (refusal[0] == autismclient.util.BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET) {
+            if (refusal[0] == autismclient.util.BlockPlacementPlanner.RejectReason.NO_BUDGET) {
                this.init_HashUtil.init(option);
                return null;
             }
@@ -2820,11 +2820,11 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return this.init_TableIndex.init_AABB_LivingEntity(enemy, AutismSessionState.init_ck().state_I(), horizonTicks, maxLead);
    }
 
-   private autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper init_S_BufferHelper_LivingEntity(LivingEntity enemy, Vec3 source, AABB targetBox) {
+   private autismclient.util.ExplosionDamageCalculator.DamagePair init_S_BufferHelper_LivingEntity(LivingEntity enemy, Vec3 source, AABB targetBox) {
       return autismclient.util.TargetLeadDamageEstimator.init(enemy, source, 6.0F, this.init_S_CachePool, targetBox);
    }
 
-   private boolean init_Z_LivingEntity_S_BufferHelper(LivingEntity enemy, autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank) {
+   private boolean init_Z_LivingEntity_S_BufferHelper(LivingEntity enemy, autismclient.util.ExplosionDamageCalculator.DamagePair rank) {
       return autismclient.util.ExplosionDamageCalculator.init_Z_D(rank.read())
          ? false
          : autismclient.util.WeaponDamageCalculator.init(rank.load(), rank.read(), this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"));
@@ -2843,7 +2843,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          && this.init_Z_Vec3_4(source);
    }
 
-   private boolean init_Z_S_BufferHelper_S_BufferHelper(autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper candidate, autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper incumbent) {
+   private boolean init_Z_S_BufferHelper_S_BufferHelper(autismclient.util.ExplosionDamageCalculator.DamagePair candidate, autismclient.util.ExplosionDamageCalculator.DamagePair incumbent) {
       int byTarget = Double.compare(candidate.load(), incumbent.load());
       return byTarget != 0 ? byTarget > 0 : candidate.read() < incumbent.read();
    }
@@ -2932,20 +2932,20 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return update_F;
    }
 
-   private record Inner_BufferHelper(EndCrystal init_EndCrystal, autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper init_S_BufferHelper) {
+   private record Inner_BufferHelper(EndCrystal init_EndCrystal, autismclient.util.ExplosionDamageCalculator.DamagePair init_S_BufferHelper) {
    }
 
-   private record Inner_CachePool(Vec3 init_Vec3, float init_F, autismclient.util.ExplosionDamageCalculator.Inner_CachePool init_S_CachePool, double init_D) {
+   private record Inner_CachePool(Vec3 init_Vec3, float init_F, autismclient.util.ExplosionDamageCalculator.SimOptions init_S_CachePool, double init_D) {
    }
 
-   private record Inner_ConfigStore(EndCrystal init_EndCrystal, RotationMath.Inner_DataUtil init_ce_DataUtil, double init_D) {
+   private record Inner_ConfigStore(EndCrystal init_EndCrystal, RotationMath.Rotation init_ce_DataUtil, double init_D) {
    }
 
    private record Inner_DataUtil(BlockPos init_BlockPos, Vec3 init_Vec3, double init_D, double load) {
    }
 
    private record Inner_JsonUtil(
-      BlockPos init_BlockPos, autismclient.util.BlockPlacementPlanner.Inner_StateCache init_U_StateCache, autismclient.util.BlockPlacementPlanner.Inner_TaskQueue init_U_TaskQueue
+      BlockPos init_BlockPos, autismclient.util.BlockPlacementPlanner.Query init_U_StateCache, autismclient.util.BlockPlacementPlanner.SupportCandidate init_U_TaskQueue
    ) {
    }
 
@@ -2953,26 +2953,26 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       BlockPos init_BlockPos,
       InteractionHand init_InteractionHand,
       double init_D,
-      autismclient.util.BlockPlacementPlanner.Inner_CachePool init_U_CachePool,
-      autismclient.util.BlockPlacementPlanner.Inner_StateCache init_U_StateCache,
+      autismclient.util.BlockPlacementPlanner.PlacementPlan init_U_CachePool,
+      autismclient.util.BlockPlacementPlanner.Query init_U_StateCache,
       double load
    ) {
    }
 
-   private record Inner_StateCache(BlockPos init_BlockPos, autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper init_S_BufferHelper, double init_D) {
+   private record Inner_StateCache(BlockPos init_BlockPos, autismclient.util.ExplosionDamageCalculator.DamagePair init_S_BufferHelper, double init_D) {
    }
 
    private record Inner_StreamUtil(BlockPos init_BlockPos, double init_D) {
    }
 
-   private record Inner_SyncManager(autismclient.util.BlockPlacementPlanner.Inner_TaskQueue init_U_TaskQueue, double init_D) {
+   private record Inner_SyncManager(autismclient.util.BlockPlacementPlanner.SupportCandidate init_U_TaskQueue, double init_D) {
    }
 
    private record Inner_TaskQueue(
       BlockPos init_BlockPos,
       InteractionHand init_InteractionHand,
       double init_D,
-      autismclient.util.BlockPlacementPlanner.Inner_CachePool init_U_CachePool,
+      autismclient.util.BlockPlacementPlanner.PlacementPlan init_U_CachePool,
       double load,
       int init_I
    ) {

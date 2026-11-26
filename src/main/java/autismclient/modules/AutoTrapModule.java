@@ -55,7 +55,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class AutoTrapModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
+public final class AutoTrapModule extends Module implements SilentMovementCoordinator.Participant {
    private static final double init_D = 10.0;
    private static final int init_I = 25;
    private static final int load_I = 10;
@@ -207,7 +207,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
                AutoTrapModule.Inner_BufferHelper plan = this.init_PathHelper_BufferH;
                boolean holdingForAura = plan != null && this.sync();
                if (plan != null && !holdingForAura) {
-                  RotationMath.Inner_DataUtil placed = this.init_ce_DataUtil_PathHelper_BufferH(plan);
+                  RotationMath.Rotation placed = this.init_ce_DataUtil_PathHelper_BufferH(plan);
                   if (placed != null) {
                      this.clear = 0;
                      this.get = 0;
@@ -283,11 +283,11 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return this.id().equals(autismclient.util.SilentRotationManager.init_Str());
    }
 
-   private void init_V_ce_DataUtil(RotationMath.Inner_DataUtil goal) {
+   private void init_V_ce_DataUtil(RotationMath.Rotation goal) {
       this.init_V_ce_DataUtil_Z(goal, false);
    }
 
-   private void init_V_ce_DataUtil_Z(RotationMath.Inner_DataUtil goal, boolean pinQuiet) {
+   private void init_V_ce_DataUtil_Z(RotationMath.Rotation goal, boolean pinQuiet) {
       if (goal != null) {
          autismclient.util.SilentRotationManager.init_V_Str(this.id(), 15, goal);
       } else if (this.read_Z_6()) {
@@ -418,7 +418,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      RotationMath.Inner_DataUtil rotation = RotationMath.init(Vec3.atCenterOf(cell), eye);
+      RotationMath.Rotation rotation = RotationMath.init(Vec3.atCenterOf(cell), eye);
       return Math.abs(rotation.load()) > autismclient.util.BlockPlacementPlanner.init_D()
          ? null
          : new AutoTrapModule.Inner_BufferHelper(false, source.init_I(), new AABB(cell), source.load(), source.init_InteractionHand(), rotation, true);
@@ -476,7 +476,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
                   Vec3 velocity = target.position().subtract(target.oldPosition());
 
                   for (BlockPos offset : this.init(trapPos, dimensions, velocity, mustBeOnGround, web, trapBlocks, eye)) {
-                     RotationMath.Inner_DataUtil rotation = this.init(origin.offset(offset), placedState, eye, reach, slot.init_ItemStack(), slot.init_InteractionHand());
+                     RotationMath.Rotation rotation = this.init(origin.offset(offset), placedState, eye, reach, slot.init_ItemStack(), slot.init_InteractionHand());
                      if (rotation != null) {
                         this.set = target.getId();
                         return new AutoTrapModule.Inner_BufferHelper(
@@ -640,7 +640,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    }
 
    private float init_F_Entity_Vec3(Entity entity, Vec3 eyes) {
-      RotationMath.Inner_DataUtil toCenter = RotationMath.init(entity.getBoundingBox().getCenter(), eyes);
+      RotationMath.Rotation toCenter = RotationMath.init(entity.getBoundingBox().getCenter(), eyes);
       return RotationMath.load(RotationMath.init(MC.player), toCenter);
    }
 
@@ -913,7 +913,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return box.intersects(unit) ? box.intersect(unit).getSize() : 0.0;
    }
 
-   private RotationMath.Inner_DataUtil init(BlockPos cell, BlockState placedState, Vec3 eye, double reach, ItemStack material, InteractionHand hand) {
+   private RotationMath.Rotation init(BlockPos cell, BlockState placedState, Vec3 eye, double reach, ItemStack material, InteractionHand hand) {
       if (MC.level.isOutsideBuildHeight(cell)) {
          return null;
       }
@@ -935,18 +935,18 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
-         new autismclient.util.BlockPlacementPlanner.Inner_StateCache(cell, eye, reach, this.init_U_NetHelper_ItemStack_InteractionHand(material, hand))
+      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
+         new autismclient.util.BlockPlacementPlanner.Query(cell, eye, reach, this.init_U_NetHelper_ItemStack_InteractionHand(material, hand))
             .init_U_StateCache_ce_DataUtil(RotationMath.init(MC.player))
             .init_U_StateCache_D(autismclient.util.BlockPlacementPlanner.init_D())
             .init_U_StateCache_Z(MC.player.isSecondaryUseActive())
             .load(false)
-            .init_U_StateCache_U_StreamUtil(new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(48))
+            .init_U_StateCache_U_StreamUtil(new autismclient.util.BlockPlacementPlanner.RayBudget(48))
       );
       return candidate == null ? null : candidate.init_U_DataUtil().init_ce_DataUtil();
    }
 
-   private autismclient.util.BlockPlacementPlanner.Inner_NetHelper init_U_NetHelper_ItemStack_InteractionHand(ItemStack material, InteractionHand hand) {
+   private autismclient.util.BlockPlacementPlanner.HitValidator init_U_NetHelper_ItemStack_InteractionHand(ItemStack material, InteractionHand hand) {
       return material.getItem() instanceof BlockItem
          ? autismclient.util.BlockPlacementPlanner.init(material, MC.player, hand)
          : (hit, target) -> hit.getBlockPos().relative(hit.getDirection()).equals(target);
@@ -975,7 +975,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return ScaffoldModule.read_Z_F(Math.abs(pitch));
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_PathHelper_BufferH(AutoTrapModule.Inner_BufferHelper plan) {
+   private RotationMath.Rotation init_ce_DataUtil_PathHelper_BufferH(AutoTrapModule.Inner_BufferHelper plan) {
       int tick = AutismSessionState.init_ck().state_I();
       if (tick == this.start) {
          return null;
@@ -1005,17 +1005,17 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
       if (!wire.init_Z()) {
          return null;
       }
 
-      RotationMath.Inner_DataUtil wireRotation = new RotationMath.Inner_DataUtil(wire.read(), wire.write());
+      RotationMath.Rotation wireRotation = new RotationMath.Rotation(wire.read(), wire.write());
       if (!init_Z_F(wireRotation.load())) {
          return null;
       }
 
-      RotationMath.Inner_DataUtil silent = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
+      RotationMath.Rotation silent = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
       if (silent != null && !init_Z_ce_DataUtil_ce_DataUtil_2(silent, wireRotation)) {
          return null;
       }
@@ -1080,7 +1080,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return wireRotation;
    }
 
-   private RotationMath.Inner_DataUtil init(AutoTrapModule.Inner_BufferHelper plan, int tick, RotationMath.Inner_DataUtil wireRotation) {
+   private RotationMath.Rotation init(AutoTrapModule.Inner_BufferHelper plan, int tick, RotationMath.Rotation wireRotation) {
       AutoTrapModule.Inner_CachePool source = this.init_PathHelper_CachePo;
       if (source == null) {
          return null;
@@ -1119,7 +1119,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return !this.init(plan, ray, stack) ? null : wireRotation;
    }
 
-   private BlockHitResult init_BlockHitResult_ce_DataUtil(RotationMath.Inner_DataUtil rotation) {
+   private BlockHitResult init_BlockHitResult_ce_DataUtil(RotationMath.Rotation rotation) {
       Vec3 eye = MC.player.getEyePosition();
       Vec3 end = eye.add(Vec3.directionFromRotation(rotation.load(), rotation.init()).scale(this.init_D_3()));
       HitResult result = MC.level
@@ -1226,7 +1226,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private static boolean init_Z_ce_DataUtil_ce_DataUtil_2(RotationMath.Inner_DataUtil first, RotationMath.Inner_DataUtil second) {
+   private static boolean init_Z_ce_DataUtil_ce_DataUtil_2(RotationMath.Rotation first, RotationMath.Rotation second) {
       return Math.abs(RotationMath.init(first.init(), second.init())) <= 0.05F && Math.abs(first.load() - second.load()) <= 0.05F;
    }
 
@@ -1260,7 +1260,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    }
 
    private record Inner_BufferHelper(
-      boolean init_Z, int init_I, AABB init_AABB, int load_I, InteractionHand init_InteractionHand, RotationMath.Inner_DataUtil init_ce_DataUtil, boolean load_Z
+      boolean init_Z, int init_I, AABB init_AABB, int load_I, InteractionHand init_InteractionHand, RotationMath.Rotation init_ce_DataUtil, boolean load_Z
    ) {
    }
 

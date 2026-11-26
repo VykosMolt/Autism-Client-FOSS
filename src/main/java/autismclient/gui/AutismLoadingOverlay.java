@@ -148,7 +148,7 @@ public class AutismLoadingOverlay extends LoadingOverlay {
       int y = centerY - drawH / 2;
       int color = ARGB.white(alpha);
       graphics.blit(
-         RenderPipelines.GUI_TEXTURED, ThemeTextureRecolorer.init(init_Identifier, ThemePaletteManager.Inner_DataUtil.ACCENT), x, y, 0.0F, 0.0F, drawW, drawH, 2106, 1297, 2106, 1297, color
+         RenderPipelines.GUI_TEXTURED, ThemeTextureRecolorer.init(init_Identifier, ThemePaletteManager.ColorRole.ACCENT), x, y, 0.0F, 0.0F, drawW, drawH, 2106, 1297, 2106, 1297, color
       );
    }
 
@@ -168,7 +168,7 @@ public class AutismLoadingOverlay extends LoadingOverlay {
       int y1 = barY + 5;
       int barWidth = Mth.ceil((x1 - x0 - 2) * this.init_F);
       int alpha = Math.round(barFade * 255.0F);
-      int barColor = ThemePaletteManager.init_I_I_ct_DataUtil(ARGB.color(alpha, 236, 32, 39), ThemePaletteManager.Inner_DataUtil.ACCENT);
+      int barColor = ThemePaletteManager.init_I_I_ct_DataUtil(ARGB.color(alpha, 236, 32, 39), ThemePaletteManager.ColorRole.ACCENT);
       if (barWidth > 0) {
          PacketUtil.init(graphics, NetHelper.init(x0 + 2, y0 + 2, barWidth, y1 - y0 - 4), barColor);
       }

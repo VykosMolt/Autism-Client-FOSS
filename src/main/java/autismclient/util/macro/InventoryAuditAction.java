@@ -72,7 +72,7 @@ public class InventoryAuditAction implements MacroAction {
 
    public void init_V_Minecraft_2(Minecraft mc) throws InterruptedException {
       if (mc != null && mc.player != null) {
-         MacroTemplateResolver.Inner_CachePool commandResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.init_Str_2(), mc);
+         MacroTemplateResolver.ResolveResult commandResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.init_Str_2(), mc);
          if (commandResolution.init_Z()) {
             String cmd = commandResolution.init_Str().trim();
             if (!cmd.isBlank()) {

@@ -40,7 +40,7 @@ final class AiPlanMesh implements AutoCloseable {
    int load_I;
    int read_I;
    private boolean init_Z;
-   final List<AiBuilder.Inner_StreamUtil> init_List;
+   final List<AiBuilder.CellSpec> init_List;
    private final boolean load_Z;
    private final Predicate<BlockPos> init_Predicate;
    private final BlockState[] init_BlockStateArr;
@@ -66,11 +66,11 @@ final class AiPlanMesh implements AutoCloseable {
    private long write_J = -1L;
    private int tick;
 
-   AiPlanMesh(BlockPos origin, List<AiBuilder.Inner_StreamUtil> cells, boolean preview) {
+   AiPlanMesh(BlockPos origin, List<AiBuilder.CellSpec> cells, boolean preview) {
       this(origin, cells, preview, null);
    }
 
-   AiPlanMesh(BlockPos origin, List<AiBuilder.Inner_StreamUtil> cells, boolean preview, Predicate<BlockPos> hiddenSolid) {
+   AiPlanMesh(BlockPos origin, List<AiBuilder.CellSpec> cells, boolean preview, Predicate<BlockPos> hiddenSolid) {
       this.init_BlockPos = origin.immutable();
       this.init_List = cells;
       this.load_Z = preview;
@@ -116,7 +116,7 @@ final class AiPlanMesh implements AutoCloseable {
       return count;
    }
 
-   boolean init(BlockPos origin, List<AiBuilder.Inner_StreamUtil> cells, boolean preview) {
+   boolean init(BlockPos origin, List<AiBuilder.CellSpec> cells, boolean preview) {
       return !this.read_Z && this.init_List == cells && (preview || this.init_BlockPos.equals(origin)) && this.load_Z == preview;
    }
 
@@ -149,7 +149,7 @@ final class AiPlanMesh implements AutoCloseable {
    }
 
    BlockPos init_BlockPos_I(int i) {
-      AiBuilder.Inner_StreamUtil cell = this.init_List.get(i);
+      AiBuilder.CellSpec cell = this.init_List.get(i);
       return this.init_BlockPos.offset(cell.dx(), cell.dy(), cell.dz());
    }
 
@@ -233,7 +233,7 @@ final class AiPlanMesh implements AutoCloseable {
             for (int k = 0; k < budget; k++) {
                int i = this.push;
                this.push = (this.push + 1) % n;
-               AiBuilder.Inner_StreamUtil cell = this.init_List.get(i);
+               AiBuilder.CellSpec cell = this.init_List.get(i);
                BlockPos at = this.init_BlockPos.offset(cell.dx(), cell.dy(), cell.dz());
                boolean loaded = AiTerrain.init(world, at);
                BlockState live = loaded ? world.getBlockState(at) : Blocks.AIR.defaultBlockState();
@@ -529,7 +529,7 @@ final class AiPlanMesh implements AutoCloseable {
    }
 
    private final class Inner_CachePool {
-      final Map<AiBuilder.Inner_StreamUtil, BlockState> init_Map = new HashMap<>();
+      final Map<AiBuilder.CellSpec, BlockState> init_Map = new HashMap<>();
       final TreeMap<Long, IntArrayList> init_TreeMap = new TreeMap<>();
       Iterator<Entry<Long, IntArrayList>> init_Iterator;
       int init_I;
@@ -537,8 +537,8 @@ final class AiPlanMesh implements AutoCloseable {
       void init() {
          if (this.init_I < AiPlanMesh.this.init_List.size()) {
             int i = this.init_I++;
-            AiBuilder.Inner_StreamUtil cell = AiPlanMesh.this.init_List.get(i);
-            AiBuilder.Inner_StreamUtil key = new AiBuilder.Inner_StreamUtil(0, 0, 0, cell.block(), cell.properties());
+            AiBuilder.CellSpec cell = AiPlanMesh.this.init_List.get(i);
+            AiBuilder.CellSpec key = new AiBuilder.CellSpec(0, 0, 0, cell.block(), cell.properties());
             AiPlanMesh.this.init_BlockStateArr[i] = this.init_Map.computeIfAbsent(key, AiBuilder::init_BlockState);
             AiPlanMesh.this.init_ZArr[i] = AiPlanMesh.this.init_BlockStateArr[i].isSolidRender();
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz());
@@ -585,7 +585,7 @@ final class AiPlanMesh implements AutoCloseable {
       }
 
       double init(int i) {
-         AiBuilder.Inner_StreamUtil cell = AiPlanMesh.this.init_List.get(i);
+         AiBuilder.CellSpec cell = AiPlanMesh.this.init_List.get(i);
          double dx = AiPlanMesh.this.init_BlockPos.getX() + cell.dx() + 0.5 - this.init_Vec3.x;
          double dy = AiPlanMesh.this.init_BlockPos.getY() + cell.dy() + 0.5 - this.init_Vec3.y;
          double dz = AiPlanMesh.this.init_BlockPos.getZ() + cell.dz() + 0.5 - this.init_Vec3.z;

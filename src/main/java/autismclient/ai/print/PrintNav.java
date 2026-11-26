@@ -113,7 +113,7 @@ final class PrintNav {
          return false;
       }
 
-      AiPhysics.Inner_StreamUtil from = AiPhysics.Inner_StreamUtil.standing(x + 0.5, h, z + 0.5);
+      AiPhysics.MotionState from = AiPhysics.MotionState.standing(x + 0.5, h, z + 0.5);
       float yaw = AiPhysics.init_F_D(x + 0.5, z + 0.5, nx + 0.5, nz + 0.5);
       autismclient.ai.engine.AiJumpSolver.UiHelper jump = autismclient.ai.engine.AiJumpSolver.init_TableIndex_UiHelpe_NodeWalker_CachePo(
          view.init_NodeWalker_CachePo(), from, yaw, false, new BlockPos(nx, PrintView.init_I_D(h2), nz), h2, 6

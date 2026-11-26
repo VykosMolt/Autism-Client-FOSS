@@ -32,8 +32,8 @@ public final class SilentRotationManager {
    public static final String open_Str = "auto-farm";
    public static final String poll_Str = "ai-assistant";
    private static final RotationStreamPlanner.Inner_TaskQueue init_ap_TaskQueue = new RotationStreamPlanner.Inner_TaskQueue();
-   private static RotationMath.Inner_DataUtil init_ce_DataUtil = null;
-   private static RotationMath.Inner_DataUtil load_ce_DataUtil = null;
+   private static RotationMath.Rotation init_ce_DataUtil = null;
+   private static RotationMath.Rotation load_ce_DataUtil = null;
    private static String push_Str = null;
    private static String pop_Str = null;
    private static int run_I = -2147483648;
@@ -69,11 +69,11 @@ public final class SilentRotationManager {
    private SilentRotationManager() {
    }
 
-   public static void init_V(RotationMath.Inner_DataUtil rotation) {
+   public static void init_V(RotationMath.Rotation rotation) {
       init_V_Str("kill-aura", 10, rotation);
    }
 
-   public static void init_V_Str(String ownerId, int priority, RotationMath.Inner_DataUtil rotation) {
+   public static void init_V_Str(String ownerId, int priority, RotationMath.Rotation rotation) {
       if (ownerId != null && rotation != null) {
          int tick = AutismSessionState.init_ck().state_I();
          if (tick != get_I) {
@@ -93,7 +93,7 @@ public final class SilentRotationManager {
       }
    }
 
-   public static boolean init_Z(RotationMath.Inner_DataUtil rotation) {
+   public static boolean init_Z(RotationMath.Rotation rotation) {
       if (AutismLiteVariant.enabled()) {
          return false;
       }
@@ -101,9 +101,9 @@ public final class SilentRotationManager {
       if (rotation != null && Float.isFinite(rotation.init()) && Float.isFinite(rotation.load())) {
          init_V_Str("kill-aura", 10, rotation);
          if ("kill-aura".equals(push_Str) && "kill-aura".equals(pop_Str)) {
-            ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
             float yaw = ServerRotationTracker.init_F();
-            RotationMath.Inner_DataUtil from = wire.init_Z() ? new RotationMath.Inner_DataUtil(Float.isFinite(yaw) ? yaw : wire.read(), wire.write()) : rotation;
+            RotationMath.Rotation from = wire.init_Z() ? new RotationMath.Rotation(Float.isFinite(yaw) ? yaw : wire.read(), wire.write()) : rotation;
             init_ce_DataUtil = RotationMath.init_ce_DataUtil(rotation, from);
             load_ce_DataUtil = init_ce_DataUtil;
             set = AutismSessionState.init_ck().state_I();
@@ -118,14 +118,14 @@ public final class SilentRotationManager {
       }
    }
 
-   public static boolean load(RotationMath.Inner_DataUtil rotation) {
+   public static boolean load(RotationMath.Rotation rotation) {
       if (!AutismLiteVariant.enabled() && rotation != null) {
-         ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+         ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
          if (!wire.init_Z()) {
             return false;
          }
 
-         RotationMath.Inner_DataUtil from = new RotationMath.Inner_DataUtil(ServerRotationTracker.init_F(), wire.write());
+         RotationMath.Rotation from = new RotationMath.Rotation(ServerRotationTracker.init_F(), wire.write());
          init_V_Str("kb-displacement", 11, rotation);
          if (!"kb-displacement".equals(push_Str)) {
             return false;
@@ -169,13 +169,13 @@ public final class SilentRotationManager {
       return init_aD_DataUtil != null && ownerId != null && ownerId.equals(get_Str) && prev == tick;
    }
 
-   private static RotationMath.Inner_DataUtil init_ce_DataUtil_F_F(float maxYawStep, float maxPitchStep) {
+   private static RotationMath.Rotation init_ce_DataUtil_F_F(float maxYawStep, float maxPitchStep) {
       double[] last = RotationStreamPlanner.init_DArr_ap_TaskQueue(init_ap_TaskQueue);
       double count = RotationMath.init();
       maxYawStep = (float)Math.max(maxYawStep, last[0] - 18.0 + count);
       maxPitchStep = (float)Math.max(maxPitchStep, last[1] - 18.0 + count);
       maxPitchStep = (float)Math.min(maxPitchStep, last[1] + 18.0);
-      RotationMath.Inner_DataUtil at = RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(init_ap_TaskQueue);
+      RotationMath.Rotation at = RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(init_ap_TaskQueue);
       double[] want = init_aD_DataUtil.step(at, maxYawStep, maxPitchStep);
       load_Z = true;
       stop = -1073741824;
@@ -186,8 +186,8 @@ public final class SilentRotationManager {
       RotationStreamPlanner.init_V_ap_TaskQueue(init_ap_TaskQueue, exactYaw, exactClosestYaw);
    }
 
-   private static RotationMath.Inner_DataUtil init_ce_DataUtil_ce_DataUtil(
-      RotationMath.Inner_DataUtil goal, float maxYawStep, float maxPitchStep, double tolerance, int tick, boolean handBack
+   private static RotationMath.Rotation init_ce_DataUtil_ce_DataUtil(
+      RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double tolerance, int tick, boolean handBack
    ) {
       if (init_an == null) {
          init_an = HumanizedAimStepper.init_an();
@@ -200,7 +200,7 @@ public final class SilentRotationManager {
       init_an.init_V_Z(handBack);
       stop = tick;
       load_Z = true;
-      RotationMath.Inner_DataUtil at = RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(init_ap_TaskQueue);
+      RotationMath.Rotation at = RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(init_ap_TaskQueue);
       double[] want = init_an.init(goal.init(), goal.load(), at.init(), at.load(), tolerance, maxYawStep, maxPitchStep, true);
       return RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(init_ap_TaskQueue, want[0], want[1], maxYawStep, maxPitchStep, RotationMath.init(), 18.0);
    }
@@ -214,7 +214,7 @@ public final class SilentRotationManager {
    }
 
    public static void init_V() {
-      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
       if (wire.init_Z()) {
          float yaw = ServerRotationTracker.init_F();
          if (!Float.isFinite(yaw)) {
@@ -222,7 +222,7 @@ public final class SilentRotationManager {
          }
 
          if (init_ce_DataUtil == null || !(Math.abs(RotationMath.init(init_ce_DataUtil.init(), yaw)) < 0.2) || !(Math.abs(init_ce_DataUtil.load() - wire.write()) < 0.2)) {
-            init_ce_DataUtil = new RotationMath.Inner_DataUtil(yaw, wire.write());
+            init_ce_DataUtil = new RotationMath.Rotation(yaw, wire.write());
             RotationStreamPlanner.init_V_ap_TaskQueue_3(init_ap_TaskQueue, init_ce_DataUtil, RotationMath.init(wire.read(), wire.init_F()), wire.write() - wire.load(), RotationMath.init());
          }
       }
@@ -284,7 +284,7 @@ public final class SilentRotationManager {
       return init_ce_DataUtil != null;
    }
 
-   public static RotationMath.Inner_DataUtil init_ce_DataUtil() {
+   public static RotationMath.Rotation init_ce_DataUtil() {
       return init_ce_DataUtil;
    }
 
@@ -383,9 +383,9 @@ public final class SilentRotationManager {
          int tick = AutismSessionState.init_ck().state_I();
          if (tick != set) {
             set = tick;
-            RotationMath.Inner_DataUtil playerRotation = RotationMath.init(player);
+            RotationMath.Rotation playerRotation = RotationMath.init(player);
             if (load_ce_DataUtil != null && put > 0) {
-               boolean visible = autismclient.modules.al.init_Module_Str(ownerId) instanceof SilentMovementCoordinator.Inner_DataUtil aimOwner && aimOwner.update_Z_9();
+               boolean visible = autismclient.modules.al.init_Module_Str(ownerId) instanceof SilentMovementCoordinator.Participant aimOwner && aimOwner.update_Z_9();
                if (visible
                   && load_Z()
                   && !pinQuiet
@@ -396,11 +396,11 @@ public final class SilentRotationManager {
                }
 
                if (!RotationStreamPlanner.init_Z_ap_TaskQueue(init_ap_TaskQueue)) {
-                  RotationMath.Inner_DataUtil seedFrom = init_ce_DataUtil;
+                  RotationMath.Rotation seedFrom = init_ce_DataUtil;
                   if (seedFrom == null) {
-                     ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+                     ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
                      float wireYaw = ServerRotationTracker.init_F();
-                     seedFrom = wire.init_Z() ? new RotationMath.Inner_DataUtil(Float.isFinite(wireYaw) ? wireYaw : wire.read(), wire.write()) : playerRotation;
+                     seedFrom = wire.init_Z() ? new RotationMath.Rotation(Float.isFinite(wireYaw) ? wireYaw : wire.read(), wire.write()) : playerRotation;
                   }
 
                   RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(init_ap_TaskQueue, seedFrom);
@@ -443,11 +443,11 @@ public final class SilentRotationManager {
                      clear = reset;
                   }
 
-                  float cameraDelta = Float.isNaN(flush_F) ? 0.0F : RotationMath.load(playerRotation, new RotationMath.Inner_DataUtil(flush_F, close_F));
+                  float cameraDelta = Float.isNaN(flush_F) ? 0.0F : RotationMath.load(playerRotation, new RotationMath.Rotation(flush_F, close_F));
                   flush_F = playerRotation.init();
                   close_F = playerRotation.load();
                   boolean releaseNow = init_Z_F_F(RotationMath.load(init_ce_DataUtil, playerRotation), cameraDelta);
-                  RotationMath.Inner_DataUtil next = releaseNow
+                  RotationMath.Rotation next = releaseNow
                      ? playerRotation
                      : (
                         load_Z && RotationStreamPlanner.init_Z_ap_TaskQueue(init_ap_TaskQueue)
@@ -479,7 +479,7 @@ public final class SilentRotationManager {
    }
 
    public interface Inner_DataUtil {
-      double[] step(RotationMath.Inner_DataUtil var1, float var2, float var3);
+      double[] step(RotationMath.Rotation var1, float var2, float var3);
    }
 
    public record Inner_StreamUtil(RotationStreamPlanner.Inner_StreamUtil init_ap_StreamUtil, float init_F, boolean init_Z) {

@@ -84,27 +84,27 @@ public final class AutoCraftingEngine {
    private static final Object init_Obj = new Object();
    private static WeakReference<Object> init_WeakReference = new WeakReference<>(null);
    private static int load_I = -1;
-   private static final Map<Long, AutoCraftingEngine.Inner_TextFormat> load_Map = new HashMap<>();
+   private static final Map<Long, AutoCraftingEngine.CatalogIndex> load_Map = new HashMap<>();
    private static List<RecipeCatalogLoader.Inner_StreamUtil> init_List;
-   private static List<AutoCraftingEngine.Inner_EventBus> load_List = List.of();
-   private static Map<Item, List<AutoCraftingEngine.Inner_EventBus>> read_Map = Map.of();
+   private static List<AutoCraftingEngine.ResolvedRecipe> load_List = List.of();
+   private static Map<Item, List<AutoCraftingEngine.ResolvedRecipe>> read_Map = Map.of();
    private static List<RecipeCatalogLoader.Inner_StreamUtil> read_List;
    private static int read_I = -1;
    private static List<RecipeCatalogLoader.Inner_DataUtil> write_List;
-   private static List<AutoCraftingEngine.Inner_StreamUtil> update_List = List.of();
-   private static Map<Item, List<AutoCraftingEngine.Inner_StreamUtil>> write_Map = Map.of();
-   private static List<AutoCraftingEngine.Inner_FileCache> sync = List.of();
-   private static Map<Item, List<AutoCraftingEngine.Inner_FileCache>> update_Map = Map.of();
+   private static List<AutoCraftingEngine.SmeltRecipe> update_List = List.of();
+   private static Map<Item, List<AutoCraftingEngine.SmeltRecipe>> write_Map = Map.of();
+   private static List<AutoCraftingEngine.StationRecipe> sync = List.of();
+   private static Map<Item, List<AutoCraftingEngine.StationRecipe>> update_Map = Map.of();
    private static Object load_Obj;
 
    private AutoCraftingEngine() {
    }
 
-   public static AutoCraftingEngine.Inner_BufferHelper init_J_BufferHelper(Minecraft mc) {
+   public static AutoCraftingEngine.CraftContext init_J_BufferHelper(Minecraft mc) {
       return init(mc, false);
    }
 
-   public static AutoCraftingEngine.Inner_BufferHelper init(Minecraft mc, boolean forExecution) {
+   public static AutoCraftingEngine.CraftContext init(Minecraft mc, boolean forExecution) {
       return mc != null && mc.player != null && mc.level != null ? init(mc, forExecution ? RecipeCatalogLoader.init_List(mc) : RecipeCatalogLoader.read(mc)) : null;
    }
 
@@ -112,7 +112,7 @@ public final class AutoCraftingEngine {
       RecipeCatalogLoader.init_V(mc);
    }
 
-   private static AutoCraftingEngine.Inner_BufferHelper init(Minecraft mc, List<RecipeCatalogLoader.Inner_StreamUtil> recipes) {
+   private static AutoCraftingEngine.CraftContext init(Minecraft mc, List<RecipeCatalogLoader.Inner_StreamUtil> recipes) {
       if (mc != null && mc.player != null && mc.level != null) {
          AbstractCraftingMenu activeCrafting = mc.player.containerMenu instanceof AbstractCraftingMenu handler ? handler : null;
          Inventory playerInventory = mc.player.getInventory();
@@ -125,7 +125,7 @@ public final class AutoCraftingEngine {
 
          boolean hasActive = activeCrafting != null;
          boolean activeIsPlayer = hasActive && init_Z(mc, activeCrafting);
-         return new AutoCraftingEngine.Inner_BufferHelper(
+         return new AutoCraftingEngine.CraftContext(
             inventoryStacks,
             hasActive,
             activeIsPlayer,
@@ -146,11 +146,11 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static List<AutoCraftingEngine.Inner_TaskQueue> init_List(Minecraft mc) {
+   public static List<AutoCraftingEngine.CraftOption> init_List(Minecraft mc) {
       return init(load_J_BufferHelper(mc));
    }
 
-   public static AutoCraftingEngine.Inner_SyncManager init(String recipeKey, int recipeId) {
+   public static AutoCraftingEngine.RecipeMatcher init(String recipeKey, int recipeId) {
       String key = recipeKey == null ? "" : recipeKey;
       int syncedIndex = init(key);
       return (recipe, synced) -> !key.isBlank() && key.equalsIgnoreCase(recipe.init_Str)
@@ -170,35 +170,35 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static List<AutoCraftingEngine.Inner_TaskQueue> init(AutoCraftingEngine.Inner_BufferHelper snap) {
+   public static List<AutoCraftingEngine.CraftOption> init(AutoCraftingEngine.CraftContext snap) {
       return init(snap, null);
    }
 
-   public static List<AutoCraftingEngine.Inner_TaskQueue> init(AutoCraftingEngine.Inner_BufferHelper snap, AutoCraftingEngine.Inner_SyncManager filter) {
+   public static List<AutoCraftingEngine.CraftOption> init(AutoCraftingEngine.CraftContext snap, AutoCraftingEngine.RecipeMatcher filter) {
       if (snap == null) {
          return List.of();
       }
 
       long perfStart = bK.init_J();
-      List<AutoCraftingEngine.Inner_RenderState> contexts = new ArrayList<>();
+      List<AutoCraftingEngine.MenuSnapshot> contexts = new ArrayList<>();
       if (snap.init_Z) {
-         contexts.add(init(snap, snap.load_Z ? AutoCraftingEngine.Inner_ConfigStore.PLAYER_2X2 : AutoCraftingEngine.Inner_ConfigStore.TABLE_3X3, snap.init_I, snap.load_I, snap.load_List));
+         contexts.add(init(snap, snap.load_Z ? AutoCraftingEngine.GridSource.PLAYER_2X2 : AutoCraftingEngine.GridSource.TABLE_3X3, snap.init_I, snap.load_I, snap.load_List));
          if (snap.load_Z) {
-            contexts.add(init(snap, AutoCraftingEngine.Inner_ConfigStore.TABLE_3X3, 3, 3, List.of()));
+            contexts.add(init(snap, AutoCraftingEngine.GridSource.TABLE_3X3, 3, 3, List.of()));
          }
       } else {
-         contexts.add(init(snap, AutoCraftingEngine.Inner_ConfigStore.TABLE_3X3, 3, 3, List.of()));
+         contexts.add(init(snap, AutoCraftingEngine.GridSource.TABLE_3X3, 3, 3, List.of()));
       }
 
       List<ItemStack> bag = init(snap.init_List);
-      Map<String, AutoCraftingEngine.Inner_TaskQueue> optionsByKey = new HashMap<>();
+      Map<String, AutoCraftingEngine.CraftOption> optionsByKey = new HashMap<>();
       List<RecipeCatalogLoader.Inner_StreamUtil> localRecipes = snap.write != null
          ? snap.write
          : RecipeCatalogLoader.init_List(snap.init_RegistryAccess, snap.init_FeatureFlagSet, snap.init_ContextMap);
 
-      for (AutoCraftingEngine.Inner_RenderState context : contexts) {
+      for (AutoCraftingEngine.MenuSnapshot context : contexts) {
          List<RecipeCatalogLoader.Inner_StreamUtil> candidates = init(localRecipes, context.load_List);
-         AutoCraftingEngine.Inner_NetHelper materials = new AutoCraftingEngine.Inner_NetHelper(bag, context.init_List);
+         AutoCraftingEngine.ItemInventoryCount materials = new AutoCraftingEngine.ItemInventoryCount(bag, context.init_List);
 
          for (RecipeCatalogLoader.Inner_StreamUtil localRecipe : candidates) {
             if (localRecipe.init(context.init_I, context.load_I) && !localRecipe.init_ItemStack.isEmpty()) {
@@ -206,7 +206,7 @@ public final class AutoCraftingEngine {
                if (filter == null || filter.test(localRecipe, syncedEntry)) {
                   int maxCraftsByMaterials = materials.init(localRecipe);
                   int maxCraftsByStorage = init(localRecipe, context.init_List, bag, maxCraftsByMaterials);
-                  AutoCraftingEngine.Inner_TaskQueue option = new AutoCraftingEngine.Inner_TaskQueue(
+                  AutoCraftingEngine.CraftOption option = new AutoCraftingEngine.CraftOption(
                      localRecipe, syncedEntry, maxCraftsByMaterials, maxCraftsByStorage, context.init_J_ConfigStore
                   );
                   init(optionsByKey, option);
@@ -215,10 +215,10 @@ public final class AutoCraftingEngine {
          }
       }
 
-      List<AutoCraftingEngine.Inner_TaskQueue> options = new ArrayList<>(optionsByKey.values());
+      List<AutoCraftingEngine.CraftOption> options = new ArrayList<>(optionsByKey.values());
       options.sort(
-         Comparator.<AutoCraftingEngine.Inner_TaskQueue, Boolean>comparing(optionx -> !optionx.read_Z)
-            .thenComparing(optionx -> optionx.init_J_ConfigStore != AutoCraftingEngine.Inner_ConfigStore.PLAYER_2X2)
+         Comparator.<AutoCraftingEngine.CraftOption, Boolean>comparing(optionx -> !optionx.read_Z)
+            .thenComparing(optionx -> optionx.init_J_ConfigStore != AutoCraftingEngine.GridSource.PLAYER_2X2)
             .thenComparing(optionx -> -optionx.update)
             .thenComparing(optionx -> optionx.load_Str, String.CASE_INSENSITIVE_ORDER)
             .thenComparing(optionx -> optionx.init_Str, String.CASE_INSENSITIVE_ORDER)
@@ -243,9 +243,9 @@ public final class AutoCraftingEngine {
       return bag;
    }
 
-   private static AutoCraftingEngine.Inner_RenderState init(AutoCraftingEngine.Inner_BufferHelper snap, AutoCraftingEngine.Inner_ConfigStore source, int gridWidth, int gridHeight, List<ItemStack> inputStacks) {
-      AutoCraftingEngine.Inner_TextFormat resolution = init(snap, gridWidth, gridHeight);
-      return new AutoCraftingEngine.Inner_RenderState(source, gridWidth, gridHeight, inputStacks, resolution.init_Map, resolution.init_List);
+   private static AutoCraftingEngine.MenuSnapshot init(AutoCraftingEngine.CraftContext snap, AutoCraftingEngine.GridSource source, int gridWidth, int gridHeight, List<ItemStack> inputStacks) {
+      AutoCraftingEngine.CatalogIndex resolution = init(snap, gridWidth, gridHeight);
+      return new AutoCraftingEngine.MenuSnapshot(source, gridWidth, gridHeight, inputStacks, resolution.init_Map, resolution.init_List);
    }
 
    private static boolean init_Z(Minecraft mc, AbstractCraftingMenu craftingHandler) {
@@ -274,10 +274,10 @@ public final class AutoCraftingEngine {
       return inputStacks;
    }
 
-   private static void init(Map<String, AutoCraftingEngine.Inner_TaskQueue> optionsByKey, AutoCraftingEngine.Inner_TaskQueue candidate) {
+   private static void init(Map<String, AutoCraftingEngine.CraftOption> optionsByKey, AutoCraftingEngine.CraftOption candidate) {
       if (candidate != null && candidate.init_Str != null && !candidate.init_Str.isBlank()) {
          String mergeKey = candidate.init_Str;
-         AutoCraftingEngine.Inner_TaskQueue existing = optionsByKey.get(mergeKey);
+         AutoCraftingEngine.CraftOption existing = optionsByKey.get(mergeKey);
          if (existing == null) {
             optionsByKey.put(mergeKey, candidate);
          } else {
@@ -287,7 +287,7 @@ public final class AutoCraftingEngine {
             } else if (candidate.read_Z != existing.read_Z) {
                preferCandidate = candidate.read_Z;
             } else if (candidate.init_J_ConfigStore != existing.init_J_ConfigStore) {
-               preferCandidate = candidate.init_J_ConfigStore == AutoCraftingEngine.Inner_ConfigStore.PLAYER_2X2;
+               preferCandidate = candidate.init_J_ConfigStore == AutoCraftingEngine.GridSource.PLAYER_2X2;
             } else if (candidate.update != existing.update) {
                preferCandidate = candidate.update > existing.update;
             } else if (!existing.init() && candidate.init()) {
@@ -329,7 +329,7 @@ public final class AutoCraftingEngine {
       return merged;
    }
 
-   private static AutoCraftingEngine.Inner_BufferHelper load_J_BufferHelper(Minecraft mc) {
+   private static AutoCraftingEngine.CraftContext load_J_BufferHelper(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
          return init(mc, () -> init(mc, RecipeCatalogLoader.init_List(mc)));
       } else {
@@ -337,19 +337,19 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static AutoCraftingEngine.Inner_TaskQueue init(Minecraft mc, int recipeId) {
+   public static AutoCraftingEngine.CraftOption init(Minecraft mc, int recipeId) {
       return init(init(load_J_BufferHelper(mc), init("", recipeId)), "", recipeId);
    }
 
-   public static AutoCraftingEngine.Inner_TaskQueue init(Minecraft mc, String recipeKey) {
+   public static AutoCraftingEngine.CraftOption init(Minecraft mc, String recipeKey) {
       return recipeKey != null && !recipeKey.isBlank() ? init(init(load_J_BufferHelper(mc), init(recipeKey, -1)), recipeKey, -1) : null;
    }
 
-   public static AutoCraftingEngine.Inner_TaskQueue init_J_TaskQueue(Minecraft mc, ItemStack output) {
+   public static AutoCraftingEngine.CraftOption init_J_TaskQueue(Minecraft mc, ItemStack output) {
       if (output != null && !output.isEmpty()) {
-         AutoCraftingEngine.Inner_TaskQueue best = null;
+         AutoCraftingEngine.CraftOption best = null;
 
-         for (AutoCraftingEngine.Inner_TaskQueue option : init_List(mc)) {
+         for (AutoCraftingEngine.CraftOption option : init_List(mc)) {
             if (init(option.init_ItemStack, output)) {
                if (best == null) {
                   best = option;
@@ -386,7 +386,7 @@ public final class AutoCraftingEngine {
       return init(safeOutput, desiredAmount) * safeOutput;
    }
 
-   public static int init(AutoCraftingEngine.Inner_TaskQueue option, int desiredAmount) {
+   public static int init(AutoCraftingEngine.CraftOption option, int desiredAmount) {
       if (option == null) {
          return load(1, desiredAmount);
       }
@@ -395,7 +395,7 @@ public final class AutoCraftingEngine {
       return Math.max(0, desiredCrafts * Math.max(1, option.init_ItemStack.getCount()));
    }
 
-   public static int init(AutoCraftingEngine.Inner_TaskQueue option, int desiredAmount, boolean useMaxAmount) {
+   public static int init(AutoCraftingEngine.CraftOption option, int desiredAmount, boolean useMaxAmount) {
       if (option == null) {
          return useMaxAmount ? 0 : Math.max(1, desiredAmount);
       } else {
@@ -403,7 +403,7 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static String init_Str(AutoCraftingEngine.Inner_TaskQueue option) {
+   public static String init_Str(AutoCraftingEngine.CraftOption option) {
       if (option == null) {
          return "No recipe";
       } else if (option.read_Z) {
@@ -422,7 +422,7 @@ public final class AutoCraftingEngine {
          if (!(mc.player.containerMenu instanceof AbstractCraftingMenu craftingHandler)) {
             return List.of();
          } else {
-            AutoCraftingEngine.Inner_TaskQueue option = init(mc, recipeKey, recipeId);
+            AutoCraftingEngine.CraftOption option = init(mc, recipeKey, recipeId);
             if (option != null && option.update > 0) {
                int wantCrafts = Math.min(option.update, init(option.init_ItemStack.getCount(), desiredAmount));
                if (wantCrafts <= 0) {
@@ -497,11 +497,11 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static AutoCraftingEngine.Inner_CachePool init_J_CachePool(Minecraft mc, int recipeId, int desiredAmount) {
+   public static AutoCraftingEngine.CraftResult init_J_CachePool(Minecraft mc, int recipeId, int desiredAmount) {
       return init_J_CachePool(mc, null, recipeId, desiredAmount);
    }
 
-   public static AutoCraftingEngine.Inner_CachePool init(Minecraft mc, String recipeKey, int recipeId, int desiredAmount, Executor clientDispatch) {
+   public static AutoCraftingEngine.CraftResult init(Minecraft mc, String recipeKey, int recipeId, int desiredAmount, Executor clientDispatch) {
       Executor previous = init_ThreadLocal.get();
       init_ThreadLocal.set(Objects.requireNonNull(clientDispatch));
 
@@ -516,23 +516,23 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static AutoCraftingEngine.Inner_CachePool init_J_CachePool(Minecraft mc, String recipeKey, int recipeId, int desiredAmount) {
+   public static AutoCraftingEngine.CraftResult init_J_CachePool(Minecraft mc, String recipeKey, int recipeId, int desiredAmount) {
       if (mc == null || mc.player == null || mc.getConnection() == null || mc.gameMode == null) {
-         return AutoCraftingEngine.Inner_CachePool.init("No network connection.");
+         return AutoCraftingEngine.CraftResult.init("No network connection.");
       }
 
       if (autismclient.modules.aD.read_Z()) {
-         return AutoCraftingEngine.Inner_CachePool.init("Crafting is unavailable right now.");
+         return AutoCraftingEngine.CraftResult.init("Crafting is unavailable right now.");
       }
 
       boolean onClient = mc.isSameThread();
-      AutoCraftingEngine.Inner_TaskQueue requestedOption = init(mc, recipeKey, recipeId);
-      AutoCraftingEngine.Inner_CachePool rejected = init_J_CachePool(requestedOption);
+      AutoCraftingEngine.CraftOption requestedOption = init(mc, recipeKey, recipeId);
+      AutoCraftingEngine.CraftResult rejected = init_J_CachePool(requestedOption);
       if (rejected != null) {
          return rejected;
       }
 
-      AutoCraftingEngine.Inner_StateCache preparedContext = init(mc, requestedOption, onClient);
+      AutoCraftingEngine.OpenMenuSession preparedContext = init(mc, requestedOption, onClient);
       if (preparedContext != null && preparedContext.init_AbstractCraftingMe != null) {
          try {
             return init(mc, preparedContext.init_AbstractCraftingMe, requestedOption, desiredAmount, onClient);
@@ -540,25 +540,25 @@ public final class AutoCraftingEngine {
             init(mc, preparedContext);
          }
       } else {
-         return requestedOption.init_J_ConfigStore != AutoCraftingEngine.Inner_ConfigStore.TABLE_3X3 && requestedOption.init_aK_StreamUtil.init(2, 2)
-            ? AutoCraftingEngine.Inner_CachePool.init("Open your inventory or a crafting screen first.")
-            : AutoCraftingEngine.Inner_CachePool.init("No reachable crafting table is available.");
+         return requestedOption.init_J_ConfigStore != AutoCraftingEngine.GridSource.TABLE_3X3 && requestedOption.init_aK_StreamUtil.init(2, 2)
+            ? AutoCraftingEngine.CraftResult.init("Open your inventory or a crafting screen first.")
+            : AutoCraftingEngine.CraftResult.init("No reachable crafting table is available.");
       }
    }
 
-   public static AutoCraftingEngine.Inner_CachePool init_J_CachePool(AutoCraftingEngine.Inner_TaskQueue option) {
+   public static AutoCraftingEngine.CraftResult init_J_CachePool(AutoCraftingEngine.CraftOption option) {
       if (option == null) {
-         return AutoCraftingEngine.Inner_CachePool.init("That recipe is not available right now.");
+         return AutoCraftingEngine.CraftResult.init("That recipe is not available right now.");
       } else if (option.read_Z && option.update > 0) {
          return null;
       } else {
          return option.init_Z && !option.load_Z
-            ? AutoCraftingEngine.Inner_CachePool.load("No room in the inventory for " + option.load_Str + ".")
-            : AutoCraftingEngine.Inner_CachePool.init("Missing materials for " + option.load_Str + ".");
+            ? AutoCraftingEngine.CraftResult.load("No room in the inventory for " + option.load_Str + ".")
+            : AutoCraftingEngine.CraftResult.init("Missing materials for " + option.load_Str + ".");
       }
    }
 
-   private static AutoCraftingEngine.Inner_CachePool init(Minecraft mc, AbstractCraftingMenu menu, AutoCraftingEngine.Inner_TaskQueue option, int desiredAmount, boolean onClient) {
+   private static AutoCraftingEngine.CraftResult init(Minecraft mc, AbstractCraftingMenu menu, AutoCraftingEngine.CraftOption option, int desiredAmount, boolean onClient) {
       long started = System.nanoTime();
       int perCraft = Math.max(1, option.init_ItemStack.getCount());
       int wantCrafts = Math.min(option.update, init(perCraft, desiredAmount));
@@ -566,7 +566,7 @@ public final class AutoCraftingEngine {
       CraftingClickPlanner.Inner_NetHelper spec = CraftingClickPlanner.Inner_NetHelper.init_I_NetHelper_aK_StreamUtil(option.init_aK_StreamUtil);
       Integer before = init(mc, () -> init_I(mc, option.init_ItemStack));
       if (before == null) {
-         return AutoCraftingEngine.Inner_CachePool.init("The client did not respond.");
+         return AutoCraftingEngine.CraftResult.init("The client did not respond.");
       }
 
       int crafts = 0;
@@ -592,7 +592,7 @@ public final class AutoCraftingEngine {
          }
 
          int left = wantCrafts - crafts;
-         AutoCraftingEngine.Inner_JsonUtil run = init(mc, () -> init(mc, menu, spec, left));
+         AutoCraftingEngine.PlannedCraft run = init(mc, () -> init(mc, menu, spec, left));
          if (run == null) {
             failure = "The client did not respond; dispatched work may have changed inventory.";
             uncertain = true;
@@ -608,20 +608,20 @@ public final class AutoCraftingEngine {
          if (onClient) {
             crafts += run.init_I_ConfigStore().load_I();
          } else {
-            AutoCraftingEngine.Inner_DataUtil confirm = init(mc, menu, run);
-            if (confirm == AutoCraftingEngine.Inner_DataUtil.CONFIRMED) {
+            AutoCraftingEngine.SyncStatus confirm = init(mc, menu, run);
+            if (confirm == AutoCraftingEngine.SyncStatus.CONFIRMED) {
                crafts += run.init_I_ConfigStore().load_I();
             } else {
-               if (confirm != AutoCraftingEngine.Inner_DataUtil.INTERRUPTED && confirm != AutoCraftingEngine.Inner_DataUtil.UNCONFIRMED && confirm != AutoCraftingEngine.Inner_DataUtil.CLOSED) {
+               if (confirm != AutoCraftingEngine.SyncStatus.INTERRUPTED && confirm != AutoCraftingEngine.SyncStatus.UNCONFIRMED && confirm != AutoCraftingEngine.SyncStatus.CLOSED) {
                   Integer now = init(mc, () -> init_I(mc, option.init_ItemStack));
                   int expected = (crafts + run.init_I_ConfigStore().load_I()) * perCraft;
-                  if (confirm == AutoCraftingEngine.Inner_DataUtil.MISMATCH && now != null && now - before >= expected) {
+                  if (confirm == AutoCraftingEngine.SyncStatus.MISMATCH && now != null && now - before >= expected) {
                      crafts += run.init_I_ConfigStore().load_I();
                      continue;
                   }
 
-                  failure = confirm == AutoCraftingEngine.Inner_DataUtil.CLOSED ? "The crafting screen closed." : "The server did not accept the craft.";
-                  if (confirm == AutoCraftingEngine.Inner_DataUtil.MISMATCH) {
+                  failure = confirm == AutoCraftingEngine.SyncStatus.CLOSED ? "The crafting screen closed." : "The server did not accept the craft.";
+                  if (confirm == AutoCraftingEngine.SyncStatus.MISMATCH) {
                      init_V(mc, menu);
                   }
                   break;
@@ -653,46 +653,46 @@ public final class AutoCraftingEngine {
          init_Str.isEmpty() ? "" : ", last confirmed on " + init_Str
       );
       if (uncertain) {
-         return AutoCraftingEngine.Inner_CachePool.load(failure, crafts * perCraft);
+         return AutoCraftingEngine.CraftResult.load(failure, crafts * perCraft);
       } else if (crafted <= 0) {
-         return AutoCraftingEngine.Inner_CachePool.init(failure != null ? failure : "Craft failed.");
+         return AutoCraftingEngine.CraftResult.init(failure != null ? failure : "Craft failed.");
       } else {
          return crafted < roundedTarget
-            ? AutoCraftingEngine.Inner_CachePool.init("Crafted " + crafted + "/" + roundedTarget + " " + option.load_Str + "." + (failure == null ? "" : " " + failure), crafted)
-            : AutoCraftingEngine.Inner_CachePool.init("Crafted " + crafted + " " + option.load_Str + ".", crafted);
+            ? AutoCraftingEngine.CraftResult.init("Crafted " + crafted + "/" + roundedTarget + " " + option.load_Str + "." + (failure == null ? "" : " " + failure), crafted)
+            : AutoCraftingEngine.CraftResult.init("Crafted " + crafted + " " + option.load_Str + ".", crafted);
       }
    }
 
-   private static AutoCraftingEngine.Inner_JsonUtil init(Minecraft mc, AbstractCraftingMenu menu, CraftingClickPlanner.Inner_NetHelper spec, int crafts) {
+   private static AutoCraftingEngine.PlannedCraft init(Minecraft mc, AbstractCraftingMenu menu, CraftingClickPlanner.Inner_NetHelper spec, int crafts) {
       if (mc.player == null || mc.gameMode == null) {
-         return AutoCraftingEngine.Inner_JsonUtil.init("No player.");
+         return AutoCraftingEngine.PlannedCraft.init("No player.");
       }
 
       if (autismclient.modules.aD.read_Z()) {
-         return AutoCraftingEngine.Inner_JsonUtil.init("Crafting is unavailable right now.");
+         return AutoCraftingEngine.PlannedCraft.init("Crafting is unavailable right now.");
       }
 
       if (mc.player.containerMenu != menu) {
-         return AutoCraftingEngine.Inner_JsonUtil.init("The crafting screen closed.");
+         return AutoCraftingEngine.PlannedCraft.init("The crafting screen closed.");
       }
 
       CraftingClickPlanner.Inner_CachePool layout = init_I_CachePool(mc, menu);
       if (layout == null) {
-         return AutoCraftingEngine.Inner_JsonUtil.init("This crafting screen is not supported.");
+         return AutoCraftingEngine.PlannedCraft.init("This crafting screen is not supported.");
       }
 
       CraftingClickPlanner.Inner_BufferHelper outcome = CraftingClickPlanner.init_I_BufferHelper(
          layout, init((AbstractContainerMenu)menu), menu.getCarried(), spec, crafts, mc.player.getInventory().getSelectedSlot()
       );
       if (outcome.init_I_ConfigStore() == null) {
-         return AutoCraftingEngine.Inner_JsonUtil.init(outcome.init_Str());
+         return AutoCraftingEngine.PlannedCraft.init(outcome.init_Str());
       }
 
       ItemStack[] initial = init((AbstractContainerMenu)menu);
       int stateBefore = menu.getStateId();
       long contentBefore = init_J(menu.containerId);
       init(mc, menu, layout, outcome.init_I_ConfigStore());
-      return new AutoCraftingEngine.Inner_JsonUtil(outcome.init_I_ConfigStore(), layout, initial, stateBefore, contentBefore, null);
+      return new AutoCraftingEngine.PlannedCraft(outcome.init_I_ConfigStore(), layout, initial, stateBefore, contentBefore, null);
    }
 
    private static void init(Minecraft mc, AbstractCraftingMenu menu, CraftingClickPlanner.Inner_CachePool layout, CraftingClickPlanner.Inner_ConfigStore phase) {
@@ -747,7 +747,7 @@ public final class AutoCraftingEngine {
       }
    }
 
-   private static AutoCraftingEngine.Inner_DataUtil init(Minecraft mc, AbstractCraftingMenu menu, AutoCraftingEngine.Inner_JsonUtil run) {
+   private static AutoCraftingEngine.SyncStatus init(Minecraft mc, AbstractCraftingMenu menu, AutoCraftingEngine.PlannedCraft run) {
       long deadline = System.nanoTime() + init_J(mc) * 1000000L;
       int stale = run.init_I_ConfigStore().init_List().size();
       long[] last = new long[]{-1L, -9223372036854775808L, System.nanoTime()};
@@ -755,10 +755,10 @@ public final class AutoCraftingEngine {
 
       while (System.nanoTime() < deadline) {
          if (Thread.currentThread().isInterrupted()) {
-            return AutoCraftingEngine.Inner_DataUtil.INTERRUPTED;
+            return AutoCraftingEngine.SyncStatus.INTERRUPTED;
          }
 
-         AutoCraftingEngine.Inner_DataUtil state = init(mc, () -> {
+         AutoCraftingEngine.SyncStatus state = init(mc, () -> {
             if (mc.player != null && mc.player.containerMenu == menu) {
                long packets = init_J(menu.containerId) - run.init_J();
                int stateId = menu.getStateId();
@@ -776,13 +776,13 @@ public final class AutoCraftingEngine {
                   boolean matches = init(menu, run);
                   if (matches && allAnswers) {
                      init_Str = "answers " + packets + "/" + stale + " in " + (now - started) / 1000000L + " ms";
-                     return AutoCraftingEngine.Inner_DataUtil.CONFIRMED;
+                     return AutoCraftingEngine.SyncStatus.CONFIRMED;
                   } else {
-                     return !matches && allAnswers && now - last[2] > 300000000L ? AutoCraftingEngine.Inner_DataUtil.MISMATCH : null;
+                     return !matches && allAnswers && now - last[2] > 300000000L ? AutoCraftingEngine.SyncStatus.MISMATCH : null;
                   }
                }
             } else {
-               return AutoCraftingEngine.Inner_DataUtil.CLOSED;
+               return AutoCraftingEngine.SyncStatus.CLOSED;
             }
          });
          if (state != null) {
@@ -790,10 +790,10 @@ public final class AutoCraftingEngine {
          }
       }
 
-      return AutoCraftingEngine.Inner_DataUtil.UNCONFIRMED;
+      return AutoCraftingEngine.SyncStatus.UNCONFIRMED;
    }
 
-   private static boolean init(AbstractCraftingMenu menu, AutoCraftingEngine.Inner_JsonUtil run) {
+   private static boolean init(AbstractCraftingMenu menu, AutoCraftingEngine.PlannedCraft run) {
       ItemStack[] planned = run.init_I_ConfigStore().init_ItemStackArr();
       ItemStack[] initial = run.init_ItemStackArr();
       CraftingClickPlanner.Inner_CachePool layout = run.init_I_CachePool();
@@ -811,7 +811,7 @@ public final class AutoCraftingEngine {
    }
 
    private static void init_V(Minecraft mc, AbstractCraftingMenu menu) {
-      AutoCraftingEngine.Inner_JsonUtil run = init(mc, () -> {
+      AutoCraftingEngine.PlannedCraft run = init(mc, () -> {
          if (mc.player != null && mc.gameMode != null && mc.player.containerMenu == menu) {
             CraftingClickPlanner.Inner_CachePool layout = init_I_CachePool(mc, menu);
             if (layout == null) {
@@ -827,7 +827,7 @@ public final class AutoCraftingEngine {
             int stateBefore = menu.getStateId();
             long contentBefore = init_J(menu.containerId);
             init(mc, menu, layout, phase);
-            return new AutoCraftingEngine.Inner_JsonUtil(phase, layout, initial, stateBefore, contentBefore, null);
+            return new AutoCraftingEngine.PlannedCraft(phase, layout, initial, stateBefore, contentBefore, null);
          } else {
             return null;
          }
@@ -931,19 +931,19 @@ public final class AutoCraftingEngine {
       }
    }
 
-   private static AutoCraftingEngine.Inner_TaskQueue init(Minecraft mc, String recipeKey, int recipeId) {
+   private static AutoCraftingEngine.CraftOption init(Minecraft mc, String recipeKey, int recipeId) {
       String key = recipeKey == null ? "" : recipeKey;
       return init(init(load_J_BufferHelper(mc), init(key, recipeId)), key, recipeId);
    }
 
-   private static AutoCraftingEngine.Inner_StateCache init(Minecraft mc, AutoCraftingEngine.Inner_TaskQueue option, boolean onClient) {
+   private static AutoCraftingEngine.OpenMenuSession init(Minecraft mc, AutoCraftingEngine.CraftOption option, boolean onClient) {
       if (mc != null && mc.player != null && option != null) {
          AbstractContainerMenu current = init(mc, () -> mc.player == null ? null : mc.player.containerMenu);
          if (current instanceof CraftingMenu tableMenu && option.init_aK_StreamUtil.init(tableMenu.getGridWidth(), tableMenu.getGridHeight())) {
-            return new AutoCraftingEngine.Inner_StateCache(tableMenu, false, null);
+            return new AutoCraftingEngine.OpenMenuSession(tableMenu, false, null);
          } else if (option.init_aK_StreamUtil.init(2, 2)) {
             if (current == mc.player.inventoryMenu) {
-               return new AutoCraftingEngine.Inner_StateCache(mc.player.inventoryMenu, false, null);
+               return new AutoCraftingEngine.OpenMenuSession(mc.player.inventoryMenu, false, null);
             }
 
             Boolean closed = init(mc, () -> {
@@ -957,7 +957,7 @@ public final class AutoCraftingEngine {
 
                return mc.player.containerMenu == mc.player.inventoryMenu;
             });
-            return Boolean.TRUE.equals(closed) ? new AutoCraftingEngine.Inner_StateCache(mc.player.inventoryMenu, false, null) : null;
+            return Boolean.TRUE.equals(closed) ? new AutoCraftingEngine.OpenMenuSession(mc.player.inventoryMenu, false, null) : null;
          } else {
             if (onClient) {
                return null;
@@ -995,7 +995,7 @@ public final class AutoCraftingEngine {
                   () -> mc.player != null && mc.player.containerMenu instanceof CraftingMenu menu && menu != previous && menu.getStateId() > 0 ? menu : null
                );
                if (table != null) {
-                  return new AutoCraftingEngine.Inner_StateCache(table, true, restoreScreen);
+                  return new AutoCraftingEngine.OpenMenuSession(table, true, restoreScreen);
                }
             }
 
@@ -1006,7 +1006,7 @@ public final class AutoCraftingEngine {
       }
    }
 
-   private static void init(Minecraft mc, AutoCraftingEngine.Inner_StateCache context) {
+   private static void init(Minecraft mc, AutoCraftingEngine.OpenMenuSession context) {
       if (mc != null && mc.player != null && context != null && context.init_Z) {
          init(mc, () -> {
             if (mc.player == null) {
@@ -1121,7 +1121,7 @@ public final class AutoCraftingEngine {
       }
    }
 
-   private static AutoCraftingEngine.Inner_TextFormat init(AutoCraftingEngine.Inner_BufferHelper snap, int gridWidth, int gridHeight) {
+   private static AutoCraftingEngine.CatalogIndex init(AutoCraftingEngine.CraftContext snap, int gridWidth, int gridHeight) {
       long gridKey = (long)gridWidth << 16 | gridHeight & 65535L;
       synchronized (init_Obj) {
          if (init_WeakReference.get() != snap.init_Obj || load_I != snap.read_List.size()) {
@@ -1130,7 +1130,7 @@ public final class AutoCraftingEngine {
             load_I = snap.read_List.size();
          }
 
-         AutoCraftingEngine.Inner_TextFormat cached = load_Map.get(gridKey);
+         AutoCraftingEngine.CatalogIndex cached = load_Map.get(gridKey);
          if (cached != null) {
             return cached;
          }
@@ -1144,14 +1144,14 @@ public final class AutoCraftingEngine {
             }
          }
 
-         AutoCraftingEngine.Inner_TextFormat fresh = init(supported, snap.init_ContextMap, snap.init_FeatureFlagSet);
+         AutoCraftingEngine.CatalogIndex fresh = init(supported, snap.init_ContextMap, snap.init_FeatureFlagSet);
          bK.load("craft.syncedResolve", perfStart, 100000000L);
          load_Map.put(gridKey, fresh);
          return fresh;
       }
    }
 
-   static AutoCraftingEngine.Inner_TextFormat init(List<RecipeDisplayEntry> entries, ContextMap params, FeatureFlagSet enabledFeatures) {
+   static AutoCraftingEngine.CatalogIndex init(List<RecipeDisplayEntry> entries, ContextMap params, FeatureFlagSet enabledFeatures) {
       List<RecipeCatalogLoader.Inner_StreamUtil> recipes = new ArrayList<>();
       Map<String, RecipeDisplayEntry> bySignature = new HashMap<>();
       if (entries != null && params != null) {
@@ -1172,9 +1172,9 @@ public final class AutoCraftingEngine {
             }
          }
 
-         return new AutoCraftingEngine.Inner_TextFormat(recipes, bySignature);
+         return new AutoCraftingEngine.CatalogIndex(recipes, bySignature);
       } else {
-         return new AutoCraftingEngine.Inner_TextFormat(recipes, bySignature);
+         return new AutoCraftingEngine.CatalogIndex(recipes, bySignature);
       }
    }
 
@@ -1377,7 +1377,7 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static List<AutoCraftingEngine.Inner_TaskQueue> init(List<AutoCraftingEngine.Inner_TaskQueue> all, String query) {
+   public static List<AutoCraftingEngine.CraftOption> init(List<AutoCraftingEngine.CraftOption> all, String query) {
       if (query != null && !query.isBlank()) {
          String lower = query.toLowerCase();
          return all.stream().filter(o -> o.write_Str.contains(lower)).toList();
@@ -1386,7 +1386,7 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static AutoCraftingEngine.Inner_TaskQueue init(List<AutoCraftingEngine.Inner_TaskQueue> recipes, String recipeKey, int recipeId) {
+   public static AutoCraftingEngine.CraftOption init(List<AutoCraftingEngine.CraftOption> recipes, String recipeKey, int recipeId) {
       if (recipes == null) {
          return null;
       }
@@ -1394,13 +1394,13 @@ public final class AutoCraftingEngine {
       String key = recipeKey == null ? "" : recipeKey;
       int syncedIndex = init(key);
 
-      for (AutoCraftingEngine.Inner_TaskQueue option : recipes) {
+      for (AutoCraftingEngine.CraftOption option : recipes) {
          if (!key.isBlank() && key.equalsIgnoreCase(option.init_Str)) {
             return option;
          }
       }
 
-      for (AutoCraftingEngine.Inner_TaskQueue option : recipes) {
+      for (AutoCraftingEngine.CraftOption option : recipes) {
          if (syncedIndex >= 0 && option.load_I == syncedIndex) {
             return option;
          }
@@ -1430,7 +1430,7 @@ public final class AutoCraftingEngine {
       return read_List;
    }
 
-   public static synchronized List<AutoCraftingEngine.Inner_EventBus> load_List(Minecraft mc) {
+   public static synchronized List<AutoCraftingEngine.ResolvedRecipe> load_List(Minecraft mc) {
       if (mc != null && mc.level != null) {
          List<RecipeCatalogLoader.Inner_StreamUtil> source = update(mc);
          if (source == init_List) {
@@ -1438,18 +1438,18 @@ public final class AutoCraftingEngine {
          }
 
          ContextMap slotContext = SlotDisplayContext.fromLevel(mc.level);
-         List<AutoCraftingEngine.Inner_EventBus> plans = new ArrayList<>();
-         Map<Item, List<AutoCraftingEngine.Inner_EventBus>> byOutput = new HashMap<>();
+         List<AutoCraftingEngine.ResolvedRecipe> plans = new ArrayList<>();
+         Map<Item, List<AutoCraftingEngine.ResolvedRecipe>> byOutput = new HashMap<>();
 
          for (RecipeCatalogLoader.Inner_StreamUtil recipe : source) {
-            AutoCraftingEngine.Inner_EventBus plan = init(recipe, slotContext);
+            AutoCraftingEngine.ResolvedRecipe plan = init(recipe, slotContext);
             if (plan != null) {
                plans.add(plan);
                byOutput.computeIfAbsent(plan.init_Item(), item -> new ArrayList<>()).add(plan);
             }
          }
 
-         for (List<AutoCraftingEngine.Inner_EventBus> group : byOutput.values()) {
+         for (List<AutoCraftingEngine.ResolvedRecipe> group : byOutput.values()) {
             group.sort(Comparator.comparingInt(planx -> planx.init_List().size()));
          }
 
@@ -1466,7 +1466,7 @@ public final class AutoCraftingEngine {
       JsonObject out = new JsonObject();
       if (mc != null && mc.level != null) {
          RecipeCatalogLoader.Inner_CachePool snapshot = RecipeCatalogLoader.init_aK_CachePool(mc);
-         List<AutoCraftingEngine.Inner_EventBus> plans = load_List(mc);
+         List<AutoCraftingEngine.ResolvedRecipe> plans = load_List(mc);
          List<RecipeDisplayEntry> synced = new ArrayList<>(init_Collection(mc));
          FeatureFlagSet features = mc.getConnection() != null ? mc.getConnection().enabledFeatures() : mc.level.enabledFeatures();
          int syncedDerived = init(synced, SlotDisplayContext.fromLevel(mc.level), features).init_List.size();
@@ -1485,7 +1485,7 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static List<AutoCraftingEngine.Inner_EventBus> init(Minecraft mc, Item output) {
+   public static List<AutoCraftingEngine.ResolvedRecipe> init(Minecraft mc, Item output) {
       if (output == null) {
          return List.of();
       }
@@ -1494,17 +1494,17 @@ public final class AutoCraftingEngine {
       return read_Map.getOrDefault(output, List.of());
    }
 
-   public static synchronized List<AutoCraftingEngine.Inner_StreamUtil> read(Minecraft mc) {
+   public static synchronized List<AutoCraftingEngine.SmeltRecipe> read(Minecraft mc) {
       List<RecipeCatalogLoader.Inner_DataUtil> source = RecipeCatalogLoader.load_List(mc);
       if (source == write_List) {
          return update_List;
       }
 
-      List<AutoCraftingEngine.Inner_StreamUtil> plans = new ArrayList<>();
-      Map<Item, List<AutoCraftingEngine.Inner_StreamUtil>> byOutput = new HashMap<>();
+      List<AutoCraftingEngine.SmeltRecipe> plans = new ArrayList<>();
+      Map<Item, List<AutoCraftingEngine.SmeltRecipe>> byOutput = new HashMap<>();
 
       for (RecipeCatalogLoader.Inner_DataUtil recipe : source) {
-         AutoCraftingEngine.Inner_StreamUtil plan = new AutoCraftingEngine.Inner_StreamUtil(
+         AutoCraftingEngine.SmeltRecipe plan = new AutoCraftingEngine.SmeltRecipe(
             recipe.init_Str(),
             recipe.init_List(),
             recipe.init_ItemStack().getItem(),
@@ -1516,7 +1516,7 @@ public final class AutoCraftingEngine {
          byOutput.computeIfAbsent(plan.init_Item(), item -> new ArrayList<>()).add(plan);
       }
 
-      for (List<AutoCraftingEngine.Inner_StreamUtil> group : byOutput.values()) {
+      for (List<AutoCraftingEngine.SmeltRecipe> group : byOutput.values()) {
          group.sort(Comparator.comparingInt(planx -> "minecraft:furnace".equals(planx.load_Str()) ? 0 : 1));
       }
 
@@ -1526,7 +1526,7 @@ public final class AutoCraftingEngine {
       return update_List;
    }
 
-   public static List<AutoCraftingEngine.Inner_StreamUtil> load(Minecraft mc, Item output) {
+   public static List<AutoCraftingEngine.SmeltRecipe> load(Minecraft mc, Item output) {
       if (output == null) {
          return List.of();
       }
@@ -1535,7 +1535,7 @@ public final class AutoCraftingEngine {
       return write_Map.getOrDefault(output, List.of());
    }
 
-   public static synchronized List<AutoCraftingEngine.Inner_FileCache> write(Minecraft mc) {
+   public static synchronized List<AutoCraftingEngine.StationRecipe> write(Minecraft mc) {
       if (mc != null && mc.level != null) {
          RecipeAccess access = mc.level.recipeAccess();
          if (access == load_Obj) {
@@ -1543,8 +1543,8 @@ public final class AutoCraftingEngine {
          }
 
          ContextMap slotContext = SlotDisplayContext.fromLevel(mc.level);
-         List<AutoCraftingEngine.Inner_FileCache> plans = new ArrayList<>();
-         Map<Item, List<AutoCraftingEngine.Inner_FileCache>> byOutput = new HashMap<>();
+         List<AutoCraftingEngine.StationRecipe> plans = new ArrayList<>();
+         Map<Item, List<AutoCraftingEngine.StationRecipe>> byOutput = new HashMap<>();
 
          for (Object raw : access.stonecutterRecipes().entries()) {
             SingleInputEntry entry = (SingleInputEntry)raw;
@@ -1565,7 +1565,7 @@ public final class AutoCraftingEngine {
                      key = ((Holder<?>)used.get()).unwrapKey().map(k -> k.identifier().toString()).orElse("unknown");
                   }
 
-                  AutoCraftingEngine.Inner_FileCache plan = new AutoCraftingEngine.Inner_FileCache(key, inputs, result.getItem(), Math.max(1, result.getCount()), "minecraft:stonecutter");
+                  AutoCraftingEngine.StationRecipe plan = new AutoCraftingEngine.StationRecipe(key, inputs, result.getItem(), Math.max(1, result.getCount()), "minecraft:stonecutter");
                   plans.add(plan);
                   byOutput.computeIfAbsent(plan.init_Item(), item -> new ArrayList<>()).add(plan);
                }
@@ -1581,7 +1581,7 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static List<AutoCraftingEngine.Inner_FileCache> read(Minecraft mc, Item output) {
+   public static List<AutoCraftingEngine.StationRecipe> read(Minecraft mc, Item output) {
       if (output == null) {
          return List.of();
       }
@@ -1590,9 +1590,9 @@ public final class AutoCraftingEngine {
       return update_Map.getOrDefault(output, List.of());
    }
 
-   static AutoCraftingEngine.Inner_EventBus init(RecipeCatalogLoader.Inner_StreamUtil recipe, ContextMap slotContext) {
+   static AutoCraftingEngine.ResolvedRecipe init(RecipeCatalogLoader.Inner_StreamUtil recipe, ContextMap slotContext) {
       if (recipe != null && !recipe.init_ItemStack.isEmpty() && !recipe.load_List.isEmpty()) {
-         List<AutoCraftingEngine.Inner_UiHelper> inputs = new ArrayList<>(recipe.load_List.size());
+         List<AutoCraftingEngine.IngredientSlot> inputs = new ArrayList<>(recipe.load_List.size());
 
          for (Ingredient ingredient : recipe.load_List) {
             if (ingredient == null || ingredient.isEmpty()) {
@@ -1611,10 +1611,10 @@ public final class AutoCraftingEngine {
                return null;
             }
 
-            inputs.add(new AutoCraftingEngine.Inner_UiHelper(accepts));
+            inputs.add(new AutoCraftingEngine.IngredientSlot(accepts));
          }
 
-         return new AutoCraftingEngine.Inner_EventBus(
+         return new AutoCraftingEngine.ResolvedRecipe(
             recipe.init_Str, recipe.init_ItemStack.getItem(), Math.max(1, recipe.init_ItemStack.getCount()), !recipe.init(2, 2), inputs
          );
       } else {
@@ -1622,7 +1622,7 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static final class Inner_BufferHelper {
+   public static final class CraftContext {
       final List<ItemStack> init_List;
       final boolean init_Z;
       final boolean load_Z;
@@ -1638,7 +1638,7 @@ public final class AutoCraftingEngine {
       final int read_I;
       public final Object init_Obj;
 
-      Inner_BufferHelper(
+      CraftContext(
          List<ItemStack> inventoryStacks,
          boolean hasActiveCraftingMenu,
          boolean activeIsPlayerMenu,
@@ -1671,22 +1671,22 @@ public final class AutoCraftingEngine {
       }
    }
 
-   public static final class Inner_CachePool {
+   public static final class CraftResult {
       public final boolean init_Z;
       public final boolean load;
       public final String init_Str;
       public final int init_I;
-      public final AutoCraftingEngine.Inner_CachePool.Inner_DataUtil init_J_CachePool_DataUt;
+      public final AutoCraftingEngine.CraftResult.FailureReason init_J_CachePool_DataUt;
 
-      private Inner_CachePool(boolean success, String message, int craftedAmount) {
+      private CraftResult(boolean success, String message, int craftedAmount) {
          this(success, false, message, craftedAmount);
       }
 
-      private Inner_CachePool(boolean success, boolean uncertain, String message, int craftedAmount) {
-         this(success, uncertain, message, craftedAmount, AutoCraftingEngine.Inner_CachePool.Inner_DataUtil.NONE);
+      private CraftResult(boolean success, boolean uncertain, String message, int craftedAmount) {
+         this(success, uncertain, message, craftedAmount, AutoCraftingEngine.CraftResult.FailureReason.NONE);
       }
 
-      private Inner_CachePool(boolean success, boolean uncertain, String message, int craftedAmount, AutoCraftingEngine.Inner_CachePool.Inner_DataUtil rejection) {
+      private CraftResult(boolean success, boolean uncertain, String message, int craftedAmount, AutoCraftingEngine.CraftResult.FailureReason rejection) {
          this.init_Z = success;
          this.load = uncertain;
          this.init_Str = message;
@@ -1694,34 +1694,34 @@ public final class AutoCraftingEngine {
          this.init_J_CachePool_DataUt = rejection;
       }
 
-      public static AutoCraftingEngine.Inner_CachePool init(String message, int craftedAmount) {
-         return new AutoCraftingEngine.Inner_CachePool(true, message, craftedAmount);
+      public static AutoCraftingEngine.CraftResult init(String message, int craftedAmount) {
+         return new AutoCraftingEngine.CraftResult(true, message, craftedAmount);
       }
 
-      public static AutoCraftingEngine.Inner_CachePool init(String message) {
-         return new AutoCraftingEngine.Inner_CachePool(false, message, 0);
+      public static AutoCraftingEngine.CraftResult init(String message) {
+         return new AutoCraftingEngine.CraftResult(false, message, 0);
       }
 
-      public static AutoCraftingEngine.Inner_CachePool load(String message, int confirmedAmount) {
-         return new AutoCraftingEngine.Inner_CachePool(false, true, message, confirmedAmount);
+      public static AutoCraftingEngine.CraftResult load(String message, int confirmedAmount) {
+         return new AutoCraftingEngine.CraftResult(false, true, message, confirmedAmount);
       }
 
-      public static AutoCraftingEngine.Inner_CachePool load(String message) {
-         return new AutoCraftingEngine.Inner_CachePool(false, false, message, 0, AutoCraftingEngine.Inner_CachePool.Inner_DataUtil.INVENTORY_FULL);
+      public static AutoCraftingEngine.CraftResult load(String message) {
+         return new AutoCraftingEngine.CraftResult(false, false, message, 0, AutoCraftingEngine.CraftResult.FailureReason.INVENTORY_FULL);
       }
 
-      public enum Inner_DataUtil {
+      public enum FailureReason {
          NONE,
          INVENTORY_FULL;
       }
    }
 
-   public enum Inner_ConfigStore {
+   public enum GridSource {
       PLAYER_2X2,
       TABLE_3X3;
    }
 
-   private enum Inner_DataUtil {
+   private enum SyncStatus {
       CONFIRMED,
       MISMATCH,
       CLOSED,
@@ -1729,30 +1729,30 @@ public final class AutoCraftingEngine {
       UNCONFIRMED;
    }
 
-   public record Inner_EventBus(String init_Str, Item init_Item, int init_I, boolean init_Z, List<AutoCraftingEngine.Inner_UiHelper> init_List) {
-      public Inner_EventBus {
+   public record ResolvedRecipe(String init_Str, Item init_Item, int init_I, boolean init_Z, List<AutoCraftingEngine.IngredientSlot> init_List) {
+      public ResolvedRecipe {
          init_List = List.copyOf(init_List);
       }
    }
 
-   public record Inner_FileCache(String init_Str, List<Item> init_List, Item init_Item, int init_I, String load) {
-      public Inner_FileCache {
+   public record StationRecipe(String init_Str, List<Item> init_List, Item init_Item, int init_I, String load) {
+      public StationRecipe {
          init_List = List.copyOf(init_List);
       }
    }
 
-   private record Inner_JsonUtil(
+   private record PlannedCraft(
       CraftingClickPlanner.Inner_ConfigStore init_I_ConfigStore, CraftingClickPlanner.Inner_CachePool init_I_CachePool, ItemStack[] init_ItemStackArr, int init_I, long init_J, String init_Str
    ) {
-      static AutoCraftingEngine.Inner_JsonUtil init(String failure) {
-         return new AutoCraftingEngine.Inner_JsonUtil(null, null, null, 0, 0L, failure);
+      static AutoCraftingEngine.PlannedCraft init(String failure) {
+         return new AutoCraftingEngine.PlannedCraft(null, null, null, 0, 0L, failure);
       }
    }
 
-   private static final class Inner_NetHelper {
+   private static final class ItemInventoryCount {
       private final Map<Holder<Item>, Integer> init = new HashMap<>();
 
-      Inner_NetHelper(List<ItemStack> bag, List<ItemStack> grid) {
+      ItemInventoryCount(List<ItemStack> bag, List<ItemStack> grid) {
          this.init(bag);
          this.init(grid);
       }
@@ -1800,16 +1800,16 @@ public final class AutoCraftingEngine {
       }
    }
 
-   private static final class Inner_RenderState {
-      private final AutoCraftingEngine.Inner_ConfigStore init_J_ConfigStore;
+   private static final class MenuSnapshot {
+      private final AutoCraftingEngine.GridSource init_J_ConfigStore;
       private final int init_I;
       private final int load_I;
       private final List<ItemStack> init_List;
       private final Map<String, RecipeDisplayEntry> init_Map;
       private final List<RecipeCatalogLoader.Inner_StreamUtil> load_List;
 
-      private Inner_RenderState(
-         AutoCraftingEngine.Inner_ConfigStore source,
+      private MenuSnapshot(
+         AutoCraftingEngine.GridSource source,
          int gridWidth,
          int gridHeight,
          List<ItemStack> inputStacks,
@@ -1825,33 +1825,33 @@ public final class AutoCraftingEngine {
       }
    }
 
-   private static final class Inner_StateCache {
+   private static final class OpenMenuSession {
       private final AbstractCraftingMenu init_AbstractCraftingMe;
       private final boolean init_Z;
       private final Screen init_Screen;
 
-      private Inner_StateCache(AbstractCraftingMenu handler, boolean closeAfter, Screen restoreScreen) {
+      private OpenMenuSession(AbstractCraftingMenu handler, boolean closeAfter, Screen restoreScreen) {
          this.init_AbstractCraftingMe = handler;
          this.init_Z = closeAfter;
          this.init_Screen = restoreScreen;
       }
    }
 
-   public record Inner_StreamUtil(String init_Str, List<Item> init_List, Item init_Item, int init_I, String load_Str, int load_I) {
-      public Inner_StreamUtil(String recipeKey, List<Item> inputs, Item output, int outputCount, String station) {
+   public record SmeltRecipe(String init_Str, List<Item> init_List, Item init_Item, int init_I, String load_Str, int load_I) {
+      public SmeltRecipe(String recipeKey, List<Item> inputs, Item output, int outputCount, String station) {
          this(recipeKey, inputs, output, outputCount, station, "minecraft:furnace".equals(station) ? 200 : 100);
       }
 
-      public Inner_StreamUtil {
+      public SmeltRecipe {
          init_List = List.copyOf(init_List);
       }
    }
 
-   public interface Inner_SyncManager {
+   public interface RecipeMatcher {
       boolean test(RecipeCatalogLoader.Inner_StreamUtil var1, RecipeDisplayEntry var2);
    }
 
-   public static final class Inner_TaskQueue {
+   public static final class CraftOption {
       public final String init_Str;
       public final int init_I;
       public final int load_I;
@@ -1869,10 +1869,10 @@ public final class AutoCraftingEngine {
       public final boolean read_Z;
       public final int update;
       public final int sync;
-      public final AutoCraftingEngine.Inner_ConfigStore init_J_ConfigStore;
+      public final AutoCraftingEngine.GridSource init_J_ConfigStore;
 
-      public Inner_TaskQueue(
-         RecipeCatalogLoader.Inner_StreamUtil localRecipe, RecipeDisplayEntry syncedEntry, int maxCraftsByMaterials, int maxCraftsByStorage, AutoCraftingEngine.Inner_ConfigStore craftSource
+      public CraftOption(
+         RecipeCatalogLoader.Inner_StreamUtil localRecipe, RecipeDisplayEntry syncedEntry, int maxCraftsByMaterials, int maxCraftsByStorage, AutoCraftingEngine.GridSource craftSource
       ) {
          this.init_aK_StreamUtil = localRecipe;
          this.init_RecipeDisplayEntry = syncedEntry;
@@ -1889,7 +1889,7 @@ public final class AutoCraftingEngine {
          this.update = Math.max(0, Math.min(this.read_I, this.write_I));
          this.read_Z = this.update > 0;
          this.sync = this.update * Math.max(1, this.init_ItemStack.getCount());
-         this.init_J_ConfigStore = craftSource == null ? AutoCraftingEngine.Inner_ConfigStore.PLAYER_2X2 : craftSource;
+         this.init_J_ConfigStore = craftSource == null ? AutoCraftingEngine.GridSource.PLAYER_2X2 : craftSource;
          Identifier id = this.init_ItemStack.getItem() == null ? null : BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem());
          this.read_Str = id == null ? "" : id.toString();
          this.write_Str = (this.load_Str + " " + this.read_Str + " " + this.init_Str).toLowerCase();
@@ -1900,18 +1900,18 @@ public final class AutoCraftingEngine {
       }
    }
 
-   static final class Inner_TextFormat {
+   static final class CatalogIndex {
       final List<RecipeCatalogLoader.Inner_StreamUtil> init_List;
       final Map<String, RecipeDisplayEntry> init_Map;
 
-      Inner_TextFormat(List<RecipeCatalogLoader.Inner_StreamUtil> recipes, Map<String, RecipeDisplayEntry> bySignature) {
+      CatalogIndex(List<RecipeCatalogLoader.Inner_StreamUtil> recipes, Map<String, RecipeDisplayEntry> bySignature) {
          this.init_List = recipes;
          this.init_Map = bySignature;
       }
    }
 
-   public record Inner_UiHelper(List<Item> init) {
-      public Inner_UiHelper {
+   public record IngredientSlot(List<Item> init) {
+      public IngredientSlot {
          init = List.copyOf(init);
       }
 

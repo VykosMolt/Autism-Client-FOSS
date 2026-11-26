@@ -92,7 +92,7 @@ public final class DynamicBindingManager {
       }
 
       for (Entry<String, String> binding : init(action).entrySet()) {
-         MacroTemplateResolver.Inner_CachePool resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(binding.getValue(), mc);
+         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(binding.getValue(), mc);
          if (!resolution.init_Z()) {
             return false;
          }
@@ -256,7 +256,7 @@ public final class DynamicBindingManager {
          return fallback;
       }
 
-      MacroTemplateResolver.Inner_CachePool resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(template, mc);
+      MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(template, mc);
       if (!resolution.init_Z()) {
          throw new DynamicBindingManager.Inner_DataUtil();
       }
@@ -279,7 +279,7 @@ public final class DynamicBindingManager {
          return fallback;
       }
 
-      MacroTemplateResolver.Inner_CachePool resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(template, mc);
+      MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(template, mc);
       if (!resolution.init_Z()) {
          throw new DynamicBindingManager.Inner_DataUtil();
       }

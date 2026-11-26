@@ -1533,7 +1533,7 @@ public final class AutismHudManager {
    private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int x, int y, int width, int height, float alpha) {
       context.blit(
          RenderPipelines.GUI_TEXTURED,
-         ThemeTextureRecolorer.init(init_Identifier, ThemePaletteManager.Inner_DataUtil.ACCENT),
+         ThemeTextureRecolorer.init(init_Identifier, ThemePaletteManager.ColorRole.ACCENT),
          x,
          y,
          0.0F,
@@ -1709,9 +1709,9 @@ public final class AutismHudManager {
    }
 
    private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int x, int y) {
-      int fill = ThemePaletteManager.init_I_I_ct_DataUtil(538579477, ThemePaletteManager.Inner_DataUtil.BACKDROP);
-      int lit = ThemePaletteManager.init_I_I_ct_DataUtil(1435577909, ThemePaletteManager.Inner_DataUtil.OUTLINE);
-      int shade = ThemePaletteManager.init_I_I_ct_DataUtil(1427835662, ThemePaletteManager.Inner_DataUtil.BACKDROP);
+      int fill = ThemePaletteManager.init_I_I_ct_DataUtil(538579477, ThemePaletteManager.ColorRole.BACKDROP);
+      int lit = ThemePaletteManager.init_I_I_ct_DataUtil(1435577909, ThemePaletteManager.ColorRole.OUTLINE);
+      int shade = ThemePaletteManager.init_I_I_ct_DataUtil(1427835662, ThemePaletteManager.ColorRole.BACKDROP);
       autismclient.gui.f.b.k.init(context, x, y, x + 18, y + 18, fill);
       autismclient.gui.f.b.k.init(context, x, y, x + 18, y + 1, lit);
       autismclient.gui.f.b.k.init(context, x, y + 17, x + 18, y + 18, shade);
@@ -1755,7 +1755,7 @@ public final class AutismHudManager {
             int baseColor = init_I_I(style.push(), style.poll(), face);
             int textColor = init_I_I_F(baseColor, alpha * (0.18F + (float)presence * 0.82F));
             int tw = init_IArr[i];
-            int halo = init_I_I_F(ThemePaletteManager.init_I_I_ct_DataUtil(942148882, ThemePaletteManager.Inner_DataUtil.BACKDROP), alpha * (float)face);
+            int halo = init_I_I_F(ThemePaletteManager.init_I_I_ct_DataUtil(942148882, ThemePaletteManager.ColorRole.BACKDROP), alpha * (float)face);
             if (face > 0.0) {
                int haloTop = fullHeightHighlight ? y : y + 2;
                int haloBottom = fullHeightHighlight ? y + stripH : y + stripH - 2;
@@ -3329,36 +3329,36 @@ public final class AutismHudManager {
       }
    }
 
-   private static ThemePaletteManager.Inner_DataUtil init_ct_DataUtil_Str(String key) {
+   private static ThemePaletteManager.ColorRole init_ct_DataUtil_Str(String key) {
       if (key == null) {
-         return ThemePaletteManager.Inner_DataUtil.ACCENT;
+         return ThemePaletteManager.ColorRole.ACCENT;
       }
 
-      ThemePaletteManager.Inner_DataUtil var10000;
+      ThemePaletteManager.ColorRole var10000;
       switch (key) {
          case "outline-color":
-            var10000 = ThemePaletteManager.Inner_DataUtil.OUTLINE;
+            var10000 = ThemePaletteManager.ColorRole.OUTLINE;
             break;
          case "label-color":
          case "value-color":
          case "text-color":
          case "module-info-color":
          case "keystroke-text-color":
-            var10000 = ThemePaletteManager.Inner_DataUtil.TEXT;
+            var10000 = ThemePaletteManager.ColorRole.TEXT;
             break;
          case "background-color":
          case "keystroke-idle-color":
-            var10000 = ThemePaletteManager.Inner_DataUtil.BACKDROP;
+            var10000 = ThemePaletteManager.ColorRole.BACKDROP;
             break;
          default:
-            var10000 = ThemePaletteManager.Inner_DataUtil.ACCENT;
+            var10000 = ThemePaletteManager.ColorRole.ACCENT;
       }
 
       return var10000;
    }
 
    private static int init_I_Z(boolean selected) {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(selected ? 942280982 : 571675672, ThemePaletteManager.Inner_DataUtil.BACKDROP);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(selected ? 942280982 : 571675672, ThemePaletteManager.ColorRole.BACKDROP);
    }
 
    private static int init_I_I_F(int color, float alpha) {

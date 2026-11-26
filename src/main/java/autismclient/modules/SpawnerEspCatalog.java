@@ -113,7 +113,7 @@ public final class SpawnerEspCatalog {
                for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
                   LevelChunk chunk = chunks.getChunk(playerChunkX + dx, playerChunkZ + dz, ChunkStatus.FULL, false);
                   if (chunk != null) {
-                     for (EspChunkWorker.Inner_CachePool entry : EspChunkWorker.sync.init(chunk, gameTime, stamp, (scanned, out) -> init(level, scanned, module, listValue, out))) {
+                     for (EspChunkWorker.EspBox entry : EspChunkWorker.sync.init(chunk, gameTime, stamp, (scanned, out) -> init(level, scanned, module, listValue, out))) {
                         Vec3 trace = entry.init_Vec3();
                         if (!(init(playerPos, trace.x, trace.y, trace.z) > maxDistSq)) {
                            if (boxEmit != null) {
@@ -132,7 +132,7 @@ public final class SpawnerEspCatalog {
       }
    }
 
-   private static void init(ClientLevel level, LevelChunk chunk, Module module, String listValue, List<EspChunkWorker.Inner_CachePool> out) {
+   private static void init(ClientLevel level, LevelChunk chunk, Module module, String listValue, List<EspChunkWorker.EspBox> out) {
       for (Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
          if (out.size() >= 512) {
             break;
@@ -153,7 +153,7 @@ public final class SpawnerEspCatalog {
             }
 
             if (mobId != null && init_Z(module, mobId)) {
-               out.add(new EspChunkWorker.Inner_CachePool(init(level, pos), new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), init_I(module, mobId)));
+               out.add(new EspChunkWorker.EspBox(init(level, pos), new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), init_I(module, mobId)));
             }
          }
       }

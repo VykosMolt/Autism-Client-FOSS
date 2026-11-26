@@ -11,10 +11,10 @@ public final class MiningTargetSearch {
    }
 
    public static MiningTargetSearch.Inner_StreamUtil init(
-      AiPathfinder.Inner_StateCache grid,
+      AiPathfinder.GridView grid,
       BlockPos start,
       List<MiningTargetSearch.Inner_DataUtil> candidates,
-      AiPathfinder.Inner_DataUtil caps,
+      AiPathfinder.PathOptions caps,
       double reach,
       double eyeHeight,
       long deadline
@@ -29,7 +29,7 @@ public final class MiningTargetSearch {
       for (MiningTargetSearch.Inner_DataUtil candidate : ordered) {
          if (!(init(start, candidate, reach, eyeHeight) >= bestCost)) {
             if (!Thread.currentThread().isInterrupted() && System.nanoTime() < deadline) {
-               AiPathfinder.Inner_JsonUtil goal = new InteractionGoal(candidate.cell, reach, eyeHeight).init(grid);
+               AiPathfinder.PathGoal goal = new InteractionGoal(candidate.cell, reach, eyeHeight).init(grid);
                BlockPos from = start;
                double cost = candidate.miningTicks;
                int constructionRemaining = caps.constructionBlocks();
@@ -41,7 +41,7 @@ public final class MiningTargetSearch {
                      continue label74;
                   }
 
-                  AiPathfinder.Inner_TextFormat search = new AiPathfinder.Inner_TextFormat(
+                  AiPathfinder.SearchSession search = new AiPathfinder.SearchSession(
                      grid, from, goal, caps.withConstructionBlocks(constructionRemaining), Set.of()
                   );
                   boolean finished = false;
@@ -53,7 +53,7 @@ public final class MiningTargetSearch {
                      return new MiningTargetSearch.Inner_StreamUtil(best, bestCost, pending, true);
                   }
 
-                  AiPathfinder.Inner_PacketUtil path = search.init_ClassCache_PacketU();
+                  AiPathfinder.PathResult path = search.init_ClassCache_PacketU();
                   pending |= path.hitPending();
                   if (path.movements().isEmpty()) {
                      continue label74;

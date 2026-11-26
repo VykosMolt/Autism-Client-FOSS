@@ -147,7 +147,7 @@ final class AiEndRun {
          }
       }
 
-      return best == null ? null : AiGuard.init(AiGoto.init(best, 0.45, false, false, false, 5, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true));
+      return best == null ? null : AiGuard.init(AiGoto.init(best, 0.45, false, false, false, 5, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
    }
 
    static AiOperation init(final Minecraft mc, final BlockPos portal) {
@@ -227,7 +227,7 @@ final class AiEndRun {
             final UUID init_UUID = mc.player.getUUID();
             final long load_J = AiServerEvidence.load_J();
             final JsonArray init_JsonArray = new JsonArray();
-            final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.Inner_CachePool.standard().withoutFlee(), "end");
+            final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.GuardPolicy.standard().withoutFlee(), "end");
             AiOperation init_AiOperation;
             AiOperation.Result init_AiOperation_Result;
             JsonObject init_JsonObject;
@@ -298,7 +298,7 @@ final class AiEndRun {
                            return this.init(this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN, "Out of time in the End");
                         }
 
-                        autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(5000000000L);
+                        autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(5000000000L);
                         autismclient.ai.engine.AiMotionSafety.putAt_V_F_J(25.0F, 5000000000L);
                         if (mc.player.onGround() && mc.player.tickCount % 40 == 0) {
                            AiMlg.init(mc.player, Items.WATER_BUCKET);
@@ -420,7 +420,7 @@ final class AiEndRun {
                   this.write_J = System.nanoTime() + 3000000000L;
                   return this.init(
                      "to the heal spot at " + this.read_BlockPos.toShortString(),
-                     AiGuard.init(AiGoto.init(this.read_BlockPos, 0.6, true, true, true, 40, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST, true))
+                     AiGuard.init(AiGoto.init(this.read_BlockPos, 0.6, true, true, true, 40, autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST, true))
                   );
                } else if (mc.player.getFoodData().getFoodLevel() < 20 && AiSurvival.init(mc.player.getInventory()) >= 0) {
                   return this.init("eat before the fight", AiSurvival.init(AiJson.init_JsonObject_ObjArr("food", 20, "timeoutSeconds", 20)));
@@ -532,11 +532,11 @@ final class AiEndRun {
                         true,
                         true,
                         120,
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
+                        autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                         true,
                         2.0,
                         null,
-                        AiGoto.Inner_BufferHelper.DEFAULT
+                        AiGoto.GotoOptions.DEFAULT
                      )
                   );
                }
@@ -573,11 +573,11 @@ final class AiEndRun {
                         true,
                         true,
                         300,
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
+                        autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                         true,
                         2.0,
                         new AiNetherRun.Inner_NetHelper(fx, fz, 24),
-                        AiGoto.Inner_BufferHelper.DEFAULT
+                        AiGoto.GotoOptions.DEFAULT
                      )
                   );
                }
@@ -700,7 +700,7 @@ final class AiEndRun {
                this.init_Z = this.init_Z | (pending || AiJson.init_Z_JsonObject(AiRunResources.init_JsonObject(result.dataJson()), "reobserveBeforeResuming", false));
                this.init_V_33();
                this.init_Y.init_V();
-               autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(0L);
+               autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
                return result;
             }
 
@@ -719,7 +719,7 @@ final class AiEndRun {
                this.init_Z = this.init_Z | this.requiresReconciliationAfterEmergency();
                this.init_V_33();
                this.init_Y.init_V();
-               autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(0L);
+               autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
             }
          };
       } else {

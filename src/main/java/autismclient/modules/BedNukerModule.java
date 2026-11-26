@@ -28,7 +28,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
-public final class BedNukerModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
+public final class BedNukerModule extends Module implements SilentMovementCoordinator.Participant {
    private BedBreachRouteSolver.Inner_BufferHelper init_DataPipe_BufferHel;
    private final MineBreakPaceGuard init_ValueSink = new MineBreakPaceGuard();
    private BlockPos init_BlockPos;
@@ -372,7 +372,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                for (int cz = playerPos.getZ() - radius >> 4; cz <= playerPos.getZ() + radius >> 4; cz++) {
                   LevelChunk chunk = MC.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
                   if (chunk != null) {
-                     for (EspChunkWorker.Inner_CachePool entry : BedEspModule.init_List_LevelChunk(chunk)) {
+                     for (EspChunkWorker.EspBox entry : BedEspModule.init_List_LevelChunk(chunk)) {
                         BlockPos p = BlockPos.containing(entry.init_Vec3());
                         if (!(new AABB(p).distanceToSqr(MC.player.getEyePosition()) > (double)radius * radius)) {
                            BlockState state = MC.level.getBlockState(p);
@@ -415,12 +415,12 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          } else {
             double budget = KillAuraModule.init_D_9();
             boolean critical = MC.player.getHealth() + MC.player.getAbsorptionAmount() <= 6.0F;
-            RotationMath.Inner_DataUtil at = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+            RotationMath.Rotation at = autismclient.util.SilentRotationManager.init_ce_DataUtil();
             BedMiningEstimator.Inner_StreamUtil follow = tracking == null
                ? BedMiningEstimator.init(this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_BlockPos(), this.init_DataPipe_BufferHel.init_Vec3(), 0.0F, nextEye)
                : tracking;
             Vec3 point = follow != null && follow.init_Vec3() != null ? follow.init_Vec3() : this.init_DataPipe_BufferHel.init_Vec3();
-            RotationMath.Inner_DataUtil goal = RotationMath.init(point, nextEye);
+            RotationMath.Rotation goal = RotationMath.init(point, nextEye);
             double turn = RotationMath.init_F(at == null ? RotationMath.init(MC.player) : at, goal);
             double finish = this.init_D_6()
                + Math.ceil(Math.max(0.0, turn - 2.0) / 20.0)
@@ -465,10 +465,10 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                      this.read_I = -1;
                   }
 
-                  ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+                  ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
                   BlockHitResult hit = null;
                   if (wire.init_Z() && this.load_I != this.init_I_14() && slot == MC.player.getInventory().getSelectedSlot()) {
-                     RotationMath.Inner_DataUtil written = new RotationMath.Inner_DataUtil(wire.read(), wire.write());
+                     RotationMath.Rotation written = new RotationMath.Rotation(wire.read(), wire.write());
                      BlockHitResult before = this.init_BlockHitResult_ce_DataUtil_2(written);
                      this.write_Z = this.init_Z_BlockHitResult_2(before);
                      if (this.write_Z) {
@@ -511,8 +511,8 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
 
    private Vec3 init_Vec3_2() {
       if (!MC.player.isInWater() && !MC.player.isInLava() && !MC.player.getAbilities().flying && !MC.player.isFallFlying()) {
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil state = autismclient.ai.engine.AiPhysics.Inner_StreamUtil.of(MC.player);
-         autismclient.ai.engine.AiPhysics.Inner_DataUtil input = new autismclient.ai.engine.AiPhysics.Inner_DataUtil(
+         autismclient.ai.engine.AiPhysics.MotionState state = autismclient.ai.engine.AiPhysics.MotionState.of(MC.player);
+         autismclient.ai.engine.AiPhysics.MoveInput input = new autismclient.ai.engine.AiPhysics.MoveInput(
             (MC.options.keyUp.isDown() ? 1 : 0) - (MC.options.keyDown.isDown() ? 1 : 0),
             (MC.options.keyLeft.isDown() ? 1 : 0) - (MC.options.keyRight.isDown() ? 1 : 0),
             MC.options.keyJump.isDown(),
@@ -528,7 +528,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private BlockHitResult init_BlockHitResult_ce_DataUtil_2(RotationMath.Inner_DataUtil aim) {
+   private BlockHitResult init_BlockHitResult_ce_DataUtil_2(RotationMath.Rotation aim) {
       Vec3 eye = MC.player.getEyePosition();
       return MC.level
          .clip(

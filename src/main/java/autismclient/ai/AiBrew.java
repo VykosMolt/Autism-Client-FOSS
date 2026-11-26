@@ -50,7 +50,7 @@ final class AiBrew {
             throw new IllegalArgumentException("ingredient is required (e.g. nether_wart, blaze_powder)");
          }
 
-         final AiItems.Inner_DataUtil ingredient = AiItems.load_af_DataUtil(ingredientSpec);
+         final AiItems.ItemSpec ingredient = AiItems.load_af_DataUtil(ingredientSpec);
          if (ingredient.items().size() != 1) {
             throw new IllegalArgumentException(
                "ingredient must resolve to a single item id, got " + ingredient.items().size() + " from \"" + ingredientSpec + "\""
@@ -378,14 +378,14 @@ final class AiBrew {
                      this.load_I = 0;
                   }
 
-                  autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                      this.init_BlockPos = this.init_DataPipe.init_BlockPos();
                      this.init_Z = false;
                      return this.init("Brewing stand placed");
                   }
 
-                  if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.load_I <= 100) {
+                  if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.load_I <= 100) {
                      return this.init("Placing a brewing stand");
                   }
 

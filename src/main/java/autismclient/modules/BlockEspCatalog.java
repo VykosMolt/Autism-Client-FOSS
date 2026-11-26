@@ -165,7 +165,7 @@ final class BlockEspCatalog {
                   if (!(init(playerPos, chunkX, chunkZ) > maxDistSq)) {
                      LevelChunk chunk = chunks.getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
                      if (chunk != null) {
-                        List<EspChunkWorker.Inner_CachePool> entries = cache.initAsync(
+                        List<EspChunkWorker.EspBox> entries = cache.initAsync(
                            chunk, gameTime, stamp, (scanned, out) -> init(level, scanned, targets, colors, playerBlockY, out)
                         );
                         if (entries.size() > 1) {
@@ -173,7 +173,7 @@ final class BlockEspCatalog {
                            entries.sort(Comparator.comparingDouble(e -> init_D_Vec3(playerPos, e.init_Vec3().x, e.init_Vec3().y, e.init_Vec3().z)));
                         }
 
-                        for (EspChunkWorker.Inner_CachePool entry : entries) {
+                        for (EspChunkWorker.EspBox entry : entries) {
                            if (emitted >= maxTargets) {
                               break;
                            }
@@ -207,7 +207,7 @@ final class BlockEspCatalog {
       return dx * dx + dz * dz;
    }
 
-   private static void init(ClientLevel level, LevelChunk chunk, Set<Block> targets, Map<Block, Integer> colors, int playerBlockY, List<EspChunkWorker.Inner_CachePool> out) {
+   private static void init(ClientLevel level, LevelChunk chunk, Set<Block> targets, Map<Block, Integer> colors, int playerBlockY, List<EspChunkWorker.EspBox> out) {
       LevelChunkSection[] sections = chunk.getSections();
       int minX = chunk.getPos().getMinBlockX();
       int minZ = chunk.getPos().getMinBlockZ();
@@ -252,7 +252,7 @@ final class BlockEspCatalog {
                         if (targets.contains(state.getBlock())) {
                            mutable.set(x, y, z);
                            out.add(
-                              new EspChunkWorker.Inner_CachePool(
+                              new EspChunkWorker.EspBox(
                                  init(mutable, state), new Vec3(x + 0.5, y + 0.5, z + 0.5), colors.getOrDefault(state.getBlock(), -855688389)
                               )
                            );

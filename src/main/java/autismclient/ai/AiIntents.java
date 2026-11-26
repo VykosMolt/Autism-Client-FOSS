@@ -764,7 +764,7 @@ final class AiIntents {
 
    static String read(String words) {
       try {
-         AiItems.Inner_DataUtil target = AiItems.load_af_DataUtil(words.replace(' ', '_'));
+         AiItems.ItemSpec target = AiItems.load_af_DataUtil(words.replace(' ', '_'));
          if (target.items().size() == 1) {
             return BuiltInRegistries.ITEM.getKey(target.items().iterator().next()).toString();
          } else {
@@ -839,7 +839,7 @@ final class AiIntents {
 
    private static String open(String words) {
       try {
-         AiItems.Inner_DataUtil target = AiItems.read_af_DataUtil(words.replace(' ', '_'));
+         AiItems.ItemSpec target = AiItems.read_af_DataUtil(words.replace(' ', '_'));
          if (target.blocks().size() == 1) {
             return BuiltInRegistries.BLOCK.getKey(target.blocks().iterator().next()).toString();
          } else {

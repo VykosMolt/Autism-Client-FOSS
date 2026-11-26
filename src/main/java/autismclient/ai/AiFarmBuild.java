@@ -938,19 +938,19 @@ final class AiFarmBuild {
          }
 
          AiOperation.Result close() {
-            List<AiBuilder.Inner_StreamUtil> cells = this.init_List_2();
+            List<AiBuilder.CellSpec> cells = this.init_List_2();
             if (cells.isEmpty()) {
                this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.FIELD : (this.init_D_ConfigStore.pool() ? AiFarmBuild.Inner_CachePool.POOL_FILL : AiFarmBuild.Inner_CachePool.CENTER_FILL);
                return this.init_AiOperation_Result_3("Ground already level");
             } else {
-               this.init_AiOperation = AiBuilder.init(new AiBuilder.Inner_DataUtil(BlockPos.ZERO, cells), 900);
+               this.init_AiOperation = AiBuilder.init(new AiBuilder.Blueprint(BlockPos.ZERO, cells), 900);
                return this.init_AiOperation_Result_3("Levelling " + cells.size() + " cells with " + AiFarmArea.load(this.init_Str));
             }
          }
 
-         List<AiBuilder.Inner_StreamUtil> init_List_2() {
+         List<AiBuilder.CellSpec> init_List_2() {
             int g = this.init_D_ConfigStore.ground();
-            Map<Long, AiBuilder.Inner_StreamUtil> out = new LinkedHashMap<>();
+            Map<Long, AiBuilder.CellSpec> out = new LinkedHashMap<>();
             List<BlockPos> top = new ArrayList<>(this.init_D_ConfigStore.interior());
             top.addAll(this.init_D_ConfigStore.ring());
 
@@ -970,7 +970,7 @@ final class AiFarmBuild {
                         ? s.is(Blocks.SOUL_SAND)
                         : s.is(Blocks.GRASS_BLOCK) || s.is(Blocks.DIRT) || s.is(Blocks.DIRT_PATH) || s.is(Blocks.FARMLAND);
                      if (!correct && !s.hasBlockEntity()) {
-                        out.put(c.asLong(), new AiBuilder.Inner_StreamUtil(c.getX(), c.getY(), c.getZ(), AiFarmArea.load(this.init_Str)));
+                        out.put(c.asLong(), new AiBuilder.CellSpec(c.getX(), c.getY(), c.getZ(), AiFarmArea.load(this.init_Str)));
                      }
                   }
                }
@@ -999,12 +999,12 @@ final class AiFarmBuild {
             return new ArrayList<>(out.values());
          }
 
-         void init(Map<Long, AiBuilder.Inner_StreamUtil> out, BlockPos p, boolean below) {
+         void init(Map<Long, AiBuilder.CellSpec> out, BlockPos p, boolean below) {
             BlockState state = mc.level.getBlockState(p);
             if ((!AiSchematicActions.read(state) || state.getFluidState().isSource())
                && (state.getCollisionShape(mc.level, p).isEmpty() || !state.getFluidState().isEmpty())
                && (!below || this.init_Z_2(p))) {
-               out.put(p.asLong(), new AiBuilder.Inner_StreamUtil(p.getX(), p.getY(), p.getZ(), AiFarmArea.load(this.init_Str)));
+               out.put(p.asLong(), new AiBuilder.CellSpec(p.getX(), p.getY(), p.getZ(), AiFarmArea.load(this.init_Str)));
             }
          }
 
@@ -1188,10 +1188,10 @@ final class AiFarmBuild {
                return this.init_AiOperation_Result_3("Source in place");
             }
 
-            Map<Long, AiBuilder.Inner_StreamUtil> shape = new HashMap<>();
+            Map<Long, AiBuilder.CellSpec> shape = new HashMap<>();
 
             for (Direction d : new Direction[]{Direction.DOWN, Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST}) {
-               shape.put(c.relative(d).asLong(), new AiBuilder.Inner_StreamUtil(0, 0, 0, "minecraft:dirt"));
+               shape.put(c.relative(d).asLong(), new AiBuilder.CellSpec(0, 0, 0, "minecraft:dirt"));
             }
 
             String leak = AiSchematicActions.init(c, mc.level, shape);
@@ -1218,7 +1218,7 @@ final class AiFarmBuild {
                   return this.init_AiOperation_Result_3("No slab");
                } else {
                   this.init_AiOperation = AiBuilder.init(
-                     new AiBuilder.Inner_DataUtil(c, List.of(new AiBuilder.Inner_StreamUtil(0, 0, 0, slab, Map.of("type", "bottom", "waterlogged", "true")))),
+                     new AiBuilder.Blueprint(c, List.of(new AiBuilder.CellSpec(0, 0, 0, slab, Map.of("type", "bottom", "waterlogged", "true")))),
                      60
                   );
                   return this.init_AiOperation_Result_3("Covering the source with a slab");
@@ -1491,16 +1491,16 @@ final class AiFarmBuild {
             return null;
          }
 
-         Map<Long, AiBuilder.Inner_StreamUtil> init_Map() {
-            Map<Long, AiBuilder.Inner_StreamUtil> shape = new HashMap<>();
+         Map<Long, AiBuilder.CellSpec> init_Map() {
+            Map<Long, AiBuilder.CellSpec> shape = new HashMap<>();
 
             for (BlockPos w : this.init_D_ConfigStore.poolWalls()) {
-               shape.put(w.asLong(), new AiBuilder.Inner_StreamUtil(0, 0, 0, "minecraft:dirt"));
+               shape.put(w.asLong(), new AiBuilder.CellSpec(0, 0, 0, "minecraft:dirt"));
             }
 
             for (BlockPos c : this.init_D_ConfigStore.poolCells()) {
-               shape.put(c.asLong(), new AiBuilder.Inner_StreamUtil(0, 0, 0, "minecraft:water"));
-               shape.put(c.below().asLong(), new AiBuilder.Inner_StreamUtil(0, 0, 0, "minecraft:dirt"));
+               shape.put(c.asLong(), new AiBuilder.CellSpec(0, 0, 0, "minecraft:water"));
+               shape.put(c.below().asLong(), new AiBuilder.CellSpec(0, 0, 0, "minecraft:dirt"));
             }
 
             return shape;

@@ -165,7 +165,7 @@ final class AiFieldWork {
          final Set<Long> load_Set;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.CALM);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.CALM);
             this.init_Map = new HashMap<>();
             this.load_Map = new HashMap<>();
             this.load_I = mc.player.getInventory().getSelectedSlot();
@@ -268,7 +268,7 @@ final class AiFieldWork {
                   }
                }
 
-               AiItems.Inner_DataUtil seed = seedItem == null ? null : AiItems.load_af_DataUtil(seedItem);
+               AiItems.ItemSpec seed = seedItem == null ? null : AiItems.load_af_DataUtil(seedItem);
                boolean seedAvailable = seed != null && AiGameState.init_I_Str(seedItem) > 0;
                Vec3 eye = mc.player.getEyePosition();
                double reach = mc.player.blockInteractionRange() - 0.15;
@@ -282,7 +282,7 @@ final class AiFieldWork {
                boolean fixedRow = this.init_Z && this.read_I % 2 == 1;
                if (fixedRow && !this.load_Z) {
                   float yaw = Math.abs(heading.x) > Math.abs(heading.z) ? 0.0F : 90.0F;
-                  this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Inner_DataUtil(yaw, 80.0F));
+                  this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Rotation(yaw, 80.0F));
                   this.load_Z = true;
                }
 
@@ -518,7 +518,7 @@ final class AiFieldWork {
             }
          }
 
-         boolean init(AiItems.Inner_DataUtil seed) {
+         boolean init(AiItems.ItemSpec seed) {
             if (seed == null) {
                return false;
             }
@@ -564,7 +564,7 @@ final class AiFieldWork {
          }
 
          boolean init_Z_2(String itemId) {
-            AiItems.Inner_DataUtil wanted = AiItems.load_af_DataUtil(itemId);
+            AiItems.ItemSpec wanted = AiItems.load_af_DataUtil(itemId);
             Inventory inventory = mc.player.getInventory();
 
             for (int slot = 0; slot < 36; slot++) {
@@ -752,7 +752,7 @@ final class AiFieldWork {
                this.init_Set.add(p.asLong());
             }
 
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
             this.init_I = 1;
             this.open = -1;
             this.load_Set = new HashSet<>();
@@ -1060,7 +1060,7 @@ final class AiFieldWork {
          }
 
          boolean init_Z_3() {
-            AiItems.Inner_DataUtil seed = AiItems.load_af_DataUtil(seedItem);
+            AiItems.ItemSpec seed = AiItems.load_af_DataUtil(seedItem);
             if (crop == Blocks.NETHER_WART) {
                if (seed.matches(mc.player.getMainHandItem()) || seed.matches(mc.player.getOffhandItem())) {
                   return true;

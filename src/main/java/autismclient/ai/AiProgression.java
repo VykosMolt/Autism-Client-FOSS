@@ -236,10 +236,10 @@ final class AiProgression {
       return init_Map(AiCraft.init_g_StreamUtil(), goals);
    }
 
-   static Map<String, Integer> init_Map(final AiCraftPlanner.Inner_StreamUtil live, Map<String, Integer> goals) {
-      AiCraftPlanner.Inner_StreamUtil raw = new AiCraftPlanner.Inner_StreamUtil() {
+   static Map<String, Integer> init_Map(final AiCraftPlanner.RecipeGraph live, Map<String, Integer> goals) {
+      AiCraftPlanner.RecipeGraph raw = new AiCraftPlanner.RecipeGraph() {
          @Override
-         public List<AiCraftPlanner.Inner_BufferHelper> init_List(String id) {
+         public List<AiCraftPlanner.RecipeSpec> init_List(String id) {
             return AiProgression.init_Set.contains(id) ? List.of() : live.init_List(id);
          }
 
@@ -280,7 +280,7 @@ final class AiProgression {
       return out;
    }
 
-   static AiProgression.Inner_DataUtil init(AiCraftPlanner.Inner_StreamUtil live, Map<String, Integer> kit, String main, int target) {
+   static AiProgression.Inner_DataUtil init(AiCraftPlanner.RecipeGraph live, Map<String, Integer> kit, String main, int target) {
       Map<String, Integer> goals = new LinkedHashMap<>(kit);
       if (!init_List.contains(main) && !init_Set.contains(main)) {
          goals.merge(main, target, Math::max);
@@ -289,14 +289,14 @@ final class AiProgression {
       return init_bx_DataUtil(live, goals);
    }
 
-   static AiProgression.Inner_DataUtil init_bx_DataUtil(final AiCraftPlanner.Inner_StreamUtil live, Map<String, Integer> goals) {
-      AiCraftPlanner.Inner_StreamUtil raw = new AiCraftPlanner.Inner_StreamUtil() {
+   static AiProgression.Inner_DataUtil init_bx_DataUtil(final AiCraftPlanner.RecipeGraph live, Map<String, Integer> goals) {
+      AiCraftPlanner.RecipeGraph raw = new AiCraftPlanner.RecipeGraph() {
          boolean load_Z(String id) {
             return AiProgression.init_Set.contains(id) || AiProgression.read(id) || id.equals("minecraft:stick");
          }
 
          @Override
-         public List<AiCraftPlanner.Inner_BufferHelper> init_List(String id) {
+         public List<AiCraftPlanner.RecipeSpec> init_List(String id) {
             return this.load_Z(id) ? List.of() : live.init_List(id);
          }
 
@@ -320,7 +320,7 @@ final class AiProgression {
 
       for (Entry<String, Integer> goal : goals.entrySet()) {
          if (live.init_I(goal.getKey()) < goal.getValue()) {
-            AiCraftPlanner.Inner_CachePool plan = AiCraftPlanner.init(raw, goal.getKey(), goal.getValue());
+            AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(raw, goal.getKey(), goal.getValue());
             if (plan.missing().containsKey(goal.getKey())) {
                return null;
             }
@@ -352,10 +352,10 @@ final class AiProgression {
          int held = AiCraft.init_I(itemId);
          return held >= goal ? Map.of() : Map.of(itemId, goal - held);
       } else {
-         final AiCraftPlanner.Inner_StreamUtil live = AiCraft.init_g_StreamUtil();
-         AiCraftPlanner.Inner_StreamUtil leaves = new AiCraftPlanner.Inner_StreamUtil() {
+         final AiCraftPlanner.RecipeGraph live = AiCraft.init_g_StreamUtil();
+         AiCraftPlanner.RecipeGraph leaves = new AiCraftPlanner.RecipeGraph() {
             @Override
-            public List<AiCraftPlanner.Inner_BufferHelper> init_List(String id) {
+            public List<AiCraftPlanner.RecipeSpec> init_List(String id) {
                return AiProgression.init_Set.contains(id) ? List.of() : live.init_List(id);
             }
 
@@ -577,7 +577,7 @@ final class AiProgression {
          final JsonArray init_JsonArray = new JsonArray();
          JsonObject init_JsonObject = new JsonObject();
          final Map<String, Integer> init_Map = new HashMap<>();
-         final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard().keeping(AiProgression.init(itemId, kit.keySet()));
+         final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard().keeping(AiProgression.init(itemId, kit.keySet()));
          AiOperation init_AiOperation;
          AiOperation load_AiOperation;
          String write_Str = "";
@@ -1455,7 +1455,7 @@ final class AiProgression {
                }
 
                boolean table = AiCraft.load() || AiCraft.init_I("minecraft:crafting_table") > 0;
-               AiCraftPlanner.Inner_CachePool plan = AiMiningPreparation.init(AiCraft.init_g_StreamUtil(), itemId, table, "", 0);
+               AiCraftPlanner.CraftPlan plan = AiMiningPreparation.init(AiCraft.init_g_StreamUtil(), itemId, table, "", 0);
                int firstPick = Math.max(0, 3 - AiCraft.init_I("minecraft:diamond"));
                boolean affordable = plan.complete()
                   || plan.missing().size() == 1
@@ -2255,14 +2255,14 @@ final class AiProgression {
                AutismClientAddon.LOG.info("[AI] ladder for {}: guard {} after {}: {}", itemId, r.status(), this.sync_Str, AiProgression.load_Str(r.message()));
                return this.load_AiOperation_Result_2("Back to the ladder after " + this.sync_Str);
             } else if (autismclient.ai.engine.AiMotionSafety.fill_Z() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())) {
-               AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+               AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
                AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.load_I_12());
                if (action == null) {
                   return null;
                }
 
                this.poll_Z = AiGuard.read_Z;
-               this.open_Z = !this.poll_Z && AiGuard.init_X_StreamUtil(this.init_X_CachePool, vitals).action() == AiGuard.Inner_DataUtil.FIGHT;
+               this.open_Z = !this.poll_Z && AiGuard.init_X_StreamUtil(this.init_X_CachePool, vitals).action() == AiGuard.GuardAction.FIGHT;
                this.sync_Str = AiGuard.init_Str(this.init_X_CachePool, vitals);
                AutismClientAddon.LOG.info("[AI] ladder for {}: guard steps in ({}, health {})", itemId, this.sync_Str, (int)vitals.health());
                if (this.init_AiOperation != null) {

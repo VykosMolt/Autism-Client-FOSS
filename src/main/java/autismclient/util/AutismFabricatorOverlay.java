@@ -82,12 +82,12 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private String init_Str_2 = "";
    private ChatFormatting init_ChatFormatting = ChatFormatting.GRAY;
    private long init_J = 0L;
-   private final List<AutoCraftingEngine.Inner_TaskQueue> flush_List = new ArrayList<>();
-   private List<AutoCraftingEngine.Inner_TaskQueue> close_List = new ArrayList<>();
+   private final List<AutoCraftingEngine.CraftOption> flush_List = new ArrayList<>();
+   private List<AutoCraftingEngine.CraftOption> close_List = new ArrayList<>();
    private int valid = 0;
    private int size = 0;
    private final autismclient.gui.ui.widgets.ScrollOffsetController init_CacheEntry = new autismclient.gui.ui.widgets.ScrollOffsetController();
-   private AutoCraftingEngine.Inner_TaskQueue init_J_TaskQueue = null;
+   private AutoCraftingEngine.CraftOption init_J_TaskQueue = null;
    private ItemStack init_ItemStack = ItemStack.EMPTY;
    private final List<autismclient.util.macro.CraftAction.Inner_DataUtil> open_List = new ArrayList<>();
    private int data = -1;
@@ -337,7 +337,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       int w,
       int h,
       String label,
-      autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant,
+      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant,
       boolean enabled,
       int mouseX,
       int mouseY
@@ -701,7 +701,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             int planListY = this.buffer();
             int listY = this.count();
             if (button == 0) {
-               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil craftPlanScrollbar = this.init_PoolEntry_DataUtil();
+               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics craftPlanScrollbar = this.init_PoolEntry_DataUtil();
                if (craftPlanScrollbar.init_Z() && craftPlanScrollbar.init((int)mouseX, (int)mouseY)) {
                   this.state = 1;
                   this.queue = Math.max(0, (int)mouseY - craftPlanScrollbar.update());
@@ -711,7 +711,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   return true;
                }
 
-               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil craftListScrollbar = this.load_PoolEntry_DataUtil();
+               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics craftListScrollbar = this.load_PoolEntry_DataUtil();
                if (craftListScrollbar.init_Z() && craftListScrollbar.init((int)mouseX, (int)mouseY)) {
                   this.state = 2;
                   this.queue = Math.max(0, (int)mouseY - craftListScrollbar.update());
@@ -1032,14 +1032,14 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    private void flush_V_5() {
       long perfStart = bK.init_J();
-      AutoCraftingEngine.Inner_BufferHelper snapshot = AutoCraftingEngine.init_J_BufferHelper(init_Minecraft);
+      AutoCraftingEngine.CraftContext snapshot = AutoCraftingEngine.init_J_BufferHelper(init_Minecraft);
       bK.load("craft.snapshot", perfStart, 5000000L);
       if (snapshot != null) {
          long generation = this.init_AtomicLong.incrementAndGet();
          this.close_Z = true;
          init_ExecutorService.execute(() -> {
             try {
-               List<AutoCraftingEngine.Inner_TaskQueue> options = AutoCraftingEngine.init(snapshot);
+               List<AutoCraftingEngine.CraftOption> options = AutoCraftingEngine.init(snapshot);
                this.init_AtomicReference.set(new AutismFabricatorOverlay.Inner_StreamUtil(generation, snapshot.init_Obj, options));
             } catch (Throwable t) {
                AutismClientAddon.LOG.warn("[Autism] craft recipe scan failed", t);
@@ -1050,12 +1050,12 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_List_2(List<AutoCraftingEngine.Inner_TaskQueue> options) {
+   private void init_V_List_2(List<AutoCraftingEngine.CraftOption> options) {
       this.flush_List.clear();
       this.flush_List.addAll(options);
       this.valid = 0;
 
-      for (AutoCraftingEngine.Inner_TaskQueue option : this.flush_List) {
+      for (AutoCraftingEngine.CraftOption option : this.flush_List) {
          if (option.read_Z) {
             this.valid++;
          }
@@ -1107,7 +1107,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    private void close_V_5() {
       if (this.init_J_TaskQueue != null) {
-         for (AutoCraftingEngine.Inner_TaskQueue option : this.flush_List) {
+         for (AutoCraftingEngine.CraftOption option : this.flush_List) {
             if (!option.init_Str.isBlank() && option.init_Str.equalsIgnoreCase(this.init_J_TaskQueue.init_Str)
                || option.init_I >= 0 && option.init_I == this.init_J_TaskQueue.init_I
                || option.load_I >= 0 && option.load_I == this.init_J_TaskQueue.load_I) {
@@ -1138,7 +1138,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         for (AutoCraftingEngine.Inner_TaskQueue option : this.flush_List) {
+         for (AutoCraftingEngine.CraftOption option : this.flush_List) {
             if (!this.sync_Str.isBlank() && this.sync_Str.equalsIgnoreCase(option.init_Str)
                || this.task >= 0 && option.init_I == this.task
                || this.task >= 0 && option.load_I == this.task) {
@@ -1178,7 +1178,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       return Math.max(40, this.level() - (this.load_PoolEntry_DataUtil().init_Z() ? 8 : 0));
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil() {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil() {
       int listX = this.flags();
       int listY = this.buffer();
       int listWidth = this.level();
@@ -1189,7 +1189,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       );
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil load_PoolEntry_DataUtil() {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics load_PoolEntry_DataUtil() {
       int listX = this.flags();
       int listY = this.count();
       int listWidth = this.level();
@@ -1200,12 +1200,12 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       );
    }
 
-   private int init_I_PoolEntry_DataUtil(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics, int mouseY, int grabOffset, int rowHeight, int maxScrollRows) {
+   private int init_I_PoolEntry_DataUtil(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics, int mouseY, int grabOffset, int rowHeight, int maxScrollRows) {
       int pixelScroll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(metrics, mouseY, grabOffset);
       return Math.max(0, Math.min(maxScrollRows, Math.round((float)pixelScroll / rowHeight)));
    }
 
-   private void init_V_J_TaskQueue(AutoCraftingEngine.Inner_TaskQueue option) {
+   private void init_V_J_TaskQueue(AutoCraftingEngine.CraftOption option) {
       if (option != null) {
          this.init_J_TaskQueue = option;
          this.init_ItemStack = option.init_ItemStack.copy();
@@ -1221,7 +1221,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             "Selected craft: "
                + option.load_Str
                + " | "
-               + (option.init_J_ConfigStore == AutoCraftingEngine.Inner_ConfigStore.TABLE_3X3 ? "Table" : "2x2")
+               + (option.init_J_ConfigStore == AutoCraftingEngine.GridSource.TABLE_3X3 ? "Table" : "2x2")
                + " | "
                + AutoCraftingEngine.init_Str(option),
             option.read_Z ? ChatFormatting.GREEN : ChatFormatting.RED
@@ -1239,7 +1239,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       this.sync_Str = "";
    }
 
-   private AutoCraftingEngine.Inner_TaskQueue init_J_TaskQueue_SyncManager_DataUt(autismclient.util.macro.CraftAction.Inner_DataUtil entry) {
+   private AutoCraftingEngine.CraftOption init_J_TaskQueue_SyncManager_DataUt(autismclient.util.macro.CraftAction.Inner_DataUtil entry) {
       return entry == null ? null : AutoCraftingEngine.init(this.flush_List, entry.init_Str, entry.init_I);
    }
 
@@ -1268,7 +1268,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                this.read_k.open(!this.push_Z);
             }
 
-            AutoCraftingEngine.Inner_TaskQueue option = this.init_J_TaskQueue_SyncManager_DataUt(entry);
+            AutoCraftingEngine.CraftOption option = this.init_J_TaskQueue_SyncManager_DataUt(entry);
             if (option != null) {
                this.init_V_J_TaskQueue(option);
             } else {
@@ -1366,7 +1366,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    private Component init_Component_SyncManager_DataUt(autismclient.util.macro.CraftAction.Inner_DataUtil entry) {
       if (entry != null && entry.init_Z()) {
-         AutoCraftingEngine.Inner_TaskQueue option = this.init_J_TaskQueue_SyncManager_DataUt(entry);
+         AutoCraftingEngine.CraftOption option = this.init_J_TaskQueue_SyncManager_DataUt(entry);
          String amount = entry.init_Z ? "Max" : "x" + Math.max(1, entry.read_I);
          Component resultName = option != null ? option.init_ItemStack.getHoverName().copy() : Component.literal(entry.load_Str);
          return Component.empty()
@@ -1460,7 +1460,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                int labelX = this.get + 4;
                int fieldX = this.run_I_5();
                int fieldWidth = this.get_I_5();
-               ThemedTextHelper.init(context, init_Minecraft.font, "Action", ThemedTextHelper.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.reset_I_2()), false);
+               ThemedTextHelper.init(context, init_Minecraft.font, "Action", ThemedTextHelper.TextTone.MUTED, labelX, this.init_I_I_4(this.reset_I_2()), false);
                if (this.init_SyncManager == null) {
                   this.init_SyncManager = new autismclient.gui.ui.widgets.DropdownWidget(
                      fieldX, this.reset_I_2(), fieldWidth, push_I_7(), this.load_List, this.next, idx -> {
@@ -1486,8 +1486,8 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                }
 
                if (this.pop_Z_3()) {
-                  ThemedTextHelper.init(context, init_Minecraft.font, "Slot", ThemedTextHelper.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.start_I_5()), false);
-                  ThemedTextHelper.init(context, init_Minecraft.font, "Item", ThemedTextHelper.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.stop_I_2()), false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, "Slot", ThemedTextHelper.TextTone.MUTED, labelX, this.init_I_I_4(this.start_I_5()), false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, "Item", ThemedTextHelper.TextTone.MUTED, labelX, this.init_I_I_4(this.stop_I_2()), false);
                }
 
                if (this.push_Z_4()) {
@@ -1496,7 +1496,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                         context,
                         init_Minecraft.font,
                         this.run_Z_2() ? "Drop Mode" : "Click",
-                        ThemedTextHelper.Inner_DataUtil.MUTED,
+                        ThemedTextHelper.TextTone.MUTED,
                         labelX,
                         this.init_I_I_4(this.next_I_2()),
                         false
@@ -1541,7 +1541,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                      }
                   }
 
-                  ThemedTextHelper.init(context, init_Minecraft.font, this.read_Str_4(), ThemedTextHelper.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.prev_I()), false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, this.read_Str_4(), ThemedTextHelper.TextTone.MUTED, labelX, this.init_I_I_4(this.prev_I()), false);
                } else {
                   this.sync_V_5();
                   int listX = this.flags();
@@ -1581,7 +1581,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                            12,
                            hovered,
                            selected,
-                           autismclient.gui.ui.widgets.ListRowRenderer.Inner_DataUtil.NORMAL,
+                           autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL,
                            true
                         );
                         boolean removeHovered = mouseX >= listX + planContentWidth - 16
@@ -1595,10 +1595,10 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                      autismclient.gui.ui.UiClipStack.init_HashUtil().init(context);
                   }
 
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil craftPlanScrollbar = this.init_PoolEntry_DataUtil();
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics craftPlanScrollbar = this.init_PoolEntry_DataUtil();
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(context, craftPlanScrollbar, craftPlanScrollbar.init(mouseX, mouseY), this.state == 1);
                   if (this.init_ItemStack.isEmpty()) {
-                     ThemedTextHelper.init(context, init_Minecraft.font, "Recipe: none selected", ThemedTextHelper.Inner_DataUtil.MUTED, listX, this.entry(), false);
+                     ThemedTextHelper.init(context, init_Minecraft.font, "Recipe: none selected", ThemedTextHelper.TextTone.MUTED, listX, this.entry(), false);
                   } else {
                      Component summaryText = Component.empty()
                         .append(this.init_ItemStack.getHoverName().copy())
@@ -1612,7 +1612,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                      ThemedTextHelper.init(context, init_Minecraft.font, summaryText.getString(), UiColorPalette.a(), listX, this.entry(), false);
                   }
 
-                  ThemedTextHelper.init(context, init_Minecraft.font, "Amount", ThemedTextHelper.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.size()), false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, "Amount", ThemedTextHelper.TextTone.MUTED, labelX, this.init_I_I_4(this.size()), false);
                   this.init(context, this.cache(), this.size(), this.data(), push_I_7(), "Use Max", this.push_Z, "fabricator:use-max", mouseX, mouseY);
                   autismclient.gui.ui.widgets.ListRowRenderer.init(context, init_Minecraft.font, "Recipes", listX, this.node());
                   int listY = this.count();
@@ -1640,7 +1640,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                      int rowY = listY - drawRecipeScroll % this.close_I;
 
                      for (int index = startIndex; index < this.close_List.size() && rowY < listY + this.open_I; rowY += this.close_I) {
-                        AutoCraftingEngine.Inner_TaskQueue option = this.close_List.get(index);
+                        AutoCraftingEngine.CraftOption option = this.close_List.get(index);
                         boolean hovered = mouseX >= listX && mouseX <= listX + recipeContentWidth && mouseY >= rowY && mouseY < rowY + this.close_I;
                         boolean selected = this.init_J_TaskQueue != null && option.init_Str.equalsIgnoreCase(this.init_J_TaskQueue.init_Str);
                         Component richLabel = Component.empty()
@@ -1656,7 +1656,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                            this.close_I,
                            hovered,
                            selected,
-                           option.read_Z ? autismclient.gui.ui.widgets.ListRowRenderer.Inner_DataUtil.READY : autismclient.gui.ui.widgets.ListRowRenderer.Inner_DataUtil.MISSING,
+                           option.read_Z ? autismclient.gui.ui.widgets.ListRowRenderer.RowTone.READY : autismclient.gui.ui.widgets.ListRowRenderer.RowTone.MISSING,
                            true
                         );
                         autismclient.gui.ui.widgets.ListRowRenderer.init(context, listX + 2, rowY + this.close_I - 1, recipeContentWidth - 2);
@@ -1665,12 +1665,12 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   }
 
                   autismclient.gui.ui.UiClipStack.init_HashUtil().init(context);
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil craftListScrollbar = this.load_PoolEntry_DataUtil();
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics craftListScrollbar = this.load_PoolEntry_DataUtil();
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(context, craftListScrollbar, craftListScrollbar.init(mouseX, mouseY), this.state == 2);
                   String recipeCountLine = ThemedTextHelper.init(
-                     init_Minecraft.font, this.valid + " ready / " + this.flush_List.size() + " total", listWidth, ThemedTextHelper.Inner_DataUtil.MUTED
+                     init_Minecraft.font, this.valid + " ready / " + this.flush_List.size() + " total", listWidth, ThemedTextHelper.TextTone.MUTED
                   );
-                  ThemedTextHelper.init(context, init_Minecraft.font, recipeCountLine, ThemedTextHelper.Inner_DataUtil.MUTED, listX, listY + this.open_I + 2, false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, recipeCountLine, ThemedTextHelper.TextTone.MUTED, listX, listY + this.open_I + 2, false);
                }
 
                int btnY = this.set_I_5();
@@ -1679,11 +1679,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                int bw = (btnArea - gap * 2) / 3;
                int bx = this.get + 4;
                String sendLabel = this.poll_Z_5() ? (this.poll_Z ? "Crafting..." : "Craft") : "Send";
-               this.init(context, bx, btnY, bw, this.reset, sendLabel, autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mouseX, mouseY);
+               this.init(context, bx, btnY, bw, this.reset, sendLabel, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mouseX, mouseY);
                bx += bw + gap;
-               this.init(context, bx, btnY, bw, this.reset, "Queue", autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mouseX, mouseY);
+               this.init(context, bx, btnY, bw, this.reset, "Queue", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mouseX, mouseY);
                bx += bw + gap;
-               this.init(context, bx, btnY, bw, this.reset, "Macro", autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mouseX, mouseY);
+               this.init(context, bx, btnY, bw, this.reset, "Macro", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mouseX, mouseY);
                int infoWidth = this.put - 8;
                int statusY = this.put_I_2();
                if (statusY + 9 < btnY) {
@@ -1723,7 +1723,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                      break;
                   }
 
-                  ThemedTextHelper.init(context, init_Minecraft.font, actionLines.get(i), ThemedTextHelper.Inner_DataUtil.MUTED, this.get + 4, lineY, false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, actionLines.get(i), ThemedTextHelper.TextTone.MUTED, this.get + 4, lineY, false);
                }
 
                if (!this.sync_List.isEmpty()) {
@@ -2126,22 +2126,22 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          } else {
             this.poll_Z = true;
             Thread craftThread = new Thread(() -> {
-               AutoCraftingEngine.Inner_CachePool result = null;
+               AutoCraftingEngine.CraftResult result = null;
 
                for (autismclient.util.macro.CraftAction.Inner_DataUtil entryx : entries) {
-                  AutoCraftingEngine.Inner_TaskQueue optionx = AutoCraftingEngine.init(init_Minecraft, entryx.init_Str);
+                  AutoCraftingEngine.CraftOption optionx = AutoCraftingEngine.init(init_Minecraft, entryx.init_Str);
                   if (optionx == null) {
                      optionx = AutoCraftingEngine.init(init_Minecraft, entryx.init_I);
                   }
 
                   if (optionx == null) {
-                     result = AutoCraftingEngine.Inner_CachePool.init("Recipe not found: " + entryx.load_Str);
+                     result = AutoCraftingEngine.CraftResult.init("Recipe not found: " + entryx.load_Str);
                      break;
                   }
 
                   int desiredAmountx = AutoCraftingEngine.init(optionx, entryx.read_I, entryx.init_Z);
                   if (desiredAmountx <= 0) {
-                     result = AutoCraftingEngine.Inner_CachePool.init("No space or materials for " + entryx.load_Str + ".");
+                     result = AutoCraftingEngine.CraftResult.init("No space or materials for " + entryx.load_Str + ".");
                      break;
                   }
 
@@ -2152,7 +2152,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                }
 
                this.poll_Z = false;
-               AutoCraftingEngine.Inner_CachePool finalResult = result;
+               AutoCraftingEngine.CraftResult finalResult = result;
                if (finalResult != null && !finalResult.init_Z) {
                   init_Minecraft.execute(() -> {
                      this.init_V_Str_ChatFormatting(finalResult.init_Str, ChatFormatting.RED);
@@ -2167,7 +2167,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          int queuedClicks = 0;
 
          for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : entries) {
-            AutoCraftingEngine.Inner_TaskQueue option = AutoCraftingEngine.init(init_Minecraft, entry.init_Str);
+            AutoCraftingEngine.CraftOption option = AutoCraftingEngine.init(init_Minecraft, entry.init_Str);
             if (option == null) {
                option = AutoCraftingEngine.init(init_Minecraft, entry.init_I);
             }
@@ -2189,7 +2189,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
             List<Packet<?>> packets = AutoCraftingEngine.init_List(init_Minecraft, entry.init_Str, entry.init_I, desiredAmount);
             if (packets.isEmpty()) {
-               String msg = option.init_J_ConfigStore == AutoCraftingEngine.Inner_ConfigStore.TABLE_3X3
+               String msg = option.init_J_ConfigStore == AutoCraftingEngine.GridSource.TABLE_3X3
                      && (init_Minecraft.player == null || !(init_Minecraft.player.containerMenu instanceof CraftingMenu))
                   ? "Open a crafting table to queue " + entry.load_Str + "."
                   : "Could not plan " + entry.load_Str + " from this inventory.";
@@ -2267,7 +2267,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             return planInfo + " | Recipe: none selected";
          }
 
-         String source = this.init_J_TaskQueue != null && this.init_J_TaskQueue.init_J_ConfigStore == AutoCraftingEngine.Inner_ConfigStore.TABLE_3X3 ? "Table" : "2x2";
+         String source = this.init_J_TaskQueue != null && this.init_J_TaskQueue.init_J_ConfigStore == AutoCraftingEngine.GridSource.TABLE_3X3 ? "Table" : "2x2";
          String availability = this.init_J_TaskQueue != null ? AutoCraftingEngine.init_Str(this.init_J_TaskQueue) : "Unavailable";
          String amountMode = this.push_Z ? "Max" : "x" + Math.max(1, this.store());
          return planInfo + " | Recipe: " + this.init_ItemStack.getHoverName().getString() + " | " + source + " | " + availability + " | " + amountMode;
@@ -2637,9 +2637,9 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private static final class Inner_StreamUtil {
       final long init_J;
       final Object init_Obj;
-      final List<AutoCraftingEngine.Inner_TaskQueue> init_List;
+      final List<AutoCraftingEngine.CraftOption> init_List;
 
-      Inner_StreamUtil(long generation, Object connection, List<AutoCraftingEngine.Inner_TaskQueue> options) {
+      Inner_StreamUtil(long generation, Object connection, List<AutoCraftingEngine.CraftOption> options) {
          this.init_J = generation;
          this.init_Obj = connection;
          this.init_List = options;

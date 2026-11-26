@@ -11,7 +11,7 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
    public WaitGuiTypeAction.Inner_DataUtil waitMode = WaitGuiTypeAction.Inner_DataUtil.OPEN;
    public String guiType = "ANY";
    public String title = "";
-   public PatternCaptureMatcher.Inner_DataUtil matchMode = PatternCaptureMatcher.Inner_DataUtil.MATCH;
+   public PatternCaptureMatcher.MatchMode matchMode = PatternCaptureMatcher.MatchMode.MATCH;
    public String saveAs = "";
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
@@ -34,8 +34,8 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
          Screen screen = mc.gui.screen();
          String actual = screen.getTitle() == null ? "" : screen.getTitle().getString();
          Map<String, MacroVarValue> values = new LinkedHashMap<>();
-         if (this.matchMode == PatternCaptureMatcher.Inner_DataUtil.MATCH) {
-            MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.title, mc);
+         if (this.matchMode == PatternCaptureMatcher.MatchMode.MATCH) {
+            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.title, mc);
             if (!resolved.init_Z()) {
                return Optional.empty();
             }
@@ -44,7 +44,7 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
                return Optional.empty();
             }
          } else {
-            Optional<PatternCaptureMatcher.Inner_StreamUtil> result = PatternCaptureMatcher.init(this.matchMode, this.title, actual);
+            Optional<PatternCaptureMatcher.CaptureResult> result = PatternCaptureMatcher.init(this.matchMode, this.title, actual);
             if (result.isEmpty()) {
                return Optional.empty();
             }
@@ -53,7 +53,7 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
          }
 
          if (this.saveAs != null && !this.saveAs.isBlank()) {
-            values.put(this.saveAs, MacroVarValue.init(MacroVarValue.Inner_DataUtil.GUI, actual, Map.of("title", MacroVarValue.init_l_Obj(actual), "type", MacroVarValue.init_l_Obj(GuiScreenMatcher.init_Str(screen)))));
+            values.put(this.saveAs, MacroVarValue.init(MacroVarValue.ValueType.GUI, actual, Map.of("title", MacroVarValue.init_l_Obj(actual), "type", MacroVarValue.init_l_Obj(GuiScreenMatcher.init_Str(screen)))));
          }
 
          return Optional.of(values);
@@ -69,7 +69,7 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
       tag.putString("waitMode", this.waitMode.name());
       tag.putString("guiType", this.guiType);
       tag.putString("title", this.title);
-      tag.putString("matchMode", (this.matchMode == null ? PatternCaptureMatcher.Inner_DataUtil.MATCH : this.matchMode).name());
+      tag.putString("matchMode", (this.matchMode == null ? PatternCaptureMatcher.MatchMode.MATCH : this.matchMode).name());
       tag.putString("saveAs", this.saveAs == null ? "" : this.saveAs);
       tag.putInt("timeoutMs", this.timeoutMs);
       ListenDuringPreviousSerializer.init(tag, this);
@@ -81,7 +81,7 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
       this.waitMode = MacroNbtCodecHelper.init(WaitGuiTypeAction.Inner_DataUtil.class, tag.getStringOr("waitMode", "OPEN"), WaitGuiTypeAction.Inner_DataUtil.OPEN);
       this.guiType = tag.getStringOr("guiType", "ANY");
       this.title = tag.getStringOr("title", "");
-      this.matchMode = MacroNbtCodecHelper.init(PatternCaptureMatcher.Inner_DataUtil.class, tag.getStringOr("matchMode", "MATCH"), PatternCaptureMatcher.Inner_DataUtil.MATCH);
+      this.matchMode = MacroNbtCodecHelper.init(PatternCaptureMatcher.MatchMode.class, tag.getStringOr("matchMode", "MATCH"), PatternCaptureMatcher.MatchMode.MATCH);
       this.saveAs = tag.getStringOr("saveAs", "");
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
       ListenDuringPreviousSerializer.load(tag, this);

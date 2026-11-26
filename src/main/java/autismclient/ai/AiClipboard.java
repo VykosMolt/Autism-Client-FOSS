@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.Block;
 
 final class AiClipboard {
    private static final int init_I = 32;
-   private static final Map<String, List<AiBuilder.Inner_StreamUtil>> init_Map = new LinkedHashMap<>();
+   private static final Map<String, List<AiBuilder.CellSpec>> init_Map = new LinkedHashMap<>();
 
    private AiClipboard() {
    }
@@ -37,11 +37,11 @@ final class AiClipboard {
       }
    }
 
-   static synchronized void init(String name, List<AiBuilder.Inner_StreamUtil> cells) {
+   static synchronized void init(String name, List<AiBuilder.CellSpec> cells) {
       init(name, cells, init());
    }
 
-   static synchronized void init(String name, List<AiBuilder.Inner_StreamUtil> cells, Path directory) {
+   static synchronized void init(String name, List<AiBuilder.CellSpec> cells, Path directory) {
       init_Map.remove(name);
       init_Map.put(name, cells);
 
@@ -56,12 +56,12 @@ final class AiClipboard {
       }
    }
 
-   static synchronized List<AiBuilder.Inner_StreamUtil> init_List(String name) {
+   static synchronized List<AiBuilder.CellSpec> init_List(String name) {
       return init(name, init());
    }
 
-   static synchronized List<AiBuilder.Inner_StreamUtil> init(String name, Path directory) {
-      List<AiBuilder.Inner_StreamUtil> cells = init_Map.get(name);
+   static synchronized List<AiBuilder.CellSpec> init(String name, Path directory) {
+      List<AiBuilder.CellSpec> cells = init_Map.get(name);
       if (cells != null) {
          return cells;
       }
@@ -103,10 +103,10 @@ final class AiClipboard {
       return names.isEmpty() ? "(none)" : String.join(", ", names);
    }
 
-   static JsonObject init(List<AiBuilder.Inner_StreamUtil> cells) {
+   static JsonObject init(List<AiBuilder.CellSpec> cells) {
       JsonArray array = new JsonArray();
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          JsonObject entry = AiJson.init_JsonObject_ObjArr("dx", cell.dx(), "dy", cell.dy(), "dz", cell.dz(), "block", cell.block());
          if (!cell.properties().isEmpty()) {
             JsonObject properties = new JsonObject();
@@ -120,7 +120,7 @@ final class AiClipboard {
       return AiJson.init_JsonObject_ObjArr("version", 1, "cells", array);
    }
 
-   static List<AiBuilder.Inner_StreamUtil> init(JsonObject root) {
+   static List<AiBuilder.CellSpec> init(JsonObject root) {
       if (AiJson.init_I_JsonObject(root, "version", 0) != 1) {
          throw new IllegalArgumentException("Unsupported clipboard version");
       }
@@ -131,7 +131,7 @@ final class AiClipboard {
             throw new IllegalArgumentException("Clipboard has " + array.size() + " cells; the limit is 4096");
          }
 
-         List<AiBuilder.Inner_StreamUtil> cells = new ArrayList<>(array.size());
+         List<AiBuilder.CellSpec> cells = new ArrayList<>(array.size());
 
          for (int i = 0; i < array.size(); i++) {
             JsonObject entry = array.get(i).getAsJsonObject();
@@ -150,7 +150,7 @@ final class AiClipboard {
                throw new IllegalArgumentException(context + " names an unknown block id: " + block);
             }
 
-            cells.add(new AiBuilder.Inner_StreamUtil(dx, dy, dz, block, AiBuilder.init_Map_JsonObject(entry, context, blockObj)));
+            cells.add(new AiBuilder.CellSpec(dx, dy, dz, block, AiBuilder.init_Map_JsonObject(entry, context, blockObj)));
          }
 
          return List.copyOf(cells);

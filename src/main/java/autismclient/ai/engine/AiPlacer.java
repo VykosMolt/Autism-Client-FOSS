@@ -34,22 +34,22 @@ public final class AiPlacer {
    private ItemStack init_ItemStack = ItemStack.EMPTY;
    private int flush = -1;
    private AiContainerTransactions.Inner_DataUtil init_b_DataUtil;
-   private BlockPlacementPlanner.Inner_CachePool init_U_CachePool;
+   private BlockPlacementPlanner.PlacementPlan init_U_CachePool;
    private int close;
    private int open;
    private boolean init_Z;
    private long init_J;
    private String init_Str = "";
    static final int load = 1024;
-   private BlockPlacementPlanner.Inner_JsonUtil init_U_JsonUtil;
+   private BlockPlacementPlanner.RejectReason init_U_JsonUtil;
 
    public AiPlacer() {
-      this.init_U_JsonUtil = BlockPlacementPlanner.Inner_JsonUtil.NONE;
-      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.NORMAL);
+      this.init_U_JsonUtil = BlockPlacementPlanner.RejectReason.NONE;
+      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.AimProfile.NORMAL);
    }
 
    public AiPlacer init_DataPipe() {
-      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.FAST);
+      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.AimProfile.FAST);
       return this;
    }
 
@@ -67,7 +67,7 @@ public final class AiPlacer {
       this.init_Z = false;
       this.init_J = target == null ? 0L : AiServerEvidence.init_J_BlockPos(target);
       this.init_Str = "";
-      this.init_U_JsonUtil = BlockPlacementPlanner.Inner_JsonUtil.NONE;
+      this.init_U_JsonUtil = BlockPlacementPlanner.RejectReason.NONE;
       this.init_DataUtil.init_V();
    }
 
@@ -109,7 +109,7 @@ public final class AiPlacer {
       return this.init_Str;
    }
 
-   public AiPlacer.Inner_DataUtil init_DataPipe_DataUtil() {
+   public AiPlacer.PlaceStatus init_DataPipe_DataUtil() {
       Minecraft mc = Minecraft.getInstance();
       if (this.init_BlockPos == null || mc.player == null || mc.level == null) {
          return this.init("No placement target");
@@ -122,7 +122,7 @@ public final class AiPlacer {
       if (this.init_b_DataUtil != null) {
          AiContainerTransactions.Inner_StreamUtil state = this.init_b_DataUtil.load(mc.player.containerMenu, System.nanoTime());
          if (state == AiContainerTransactions.Inner_StreamUtil.WAITING) {
-            return AiPlacer.Inner_DataUtil.WORKING;
+            return AiPlacer.PlaceStatus.WORKING;
          }
 
          if (state == AiContainerTransactions.Inner_StreamUtil.UNCERTAIN) {
@@ -135,7 +135,7 @@ public final class AiPlacer {
          }
 
          InventorySlotHelper.init_V(mc, this.flush);
-         return AiPlacer.Inner_DataUtil.WORKING;
+         return AiPlacer.PlaceStatus.WORKING;
       } else {
          if (!AutismLiteVariant.enabled()) {
             AiVisualization.init(this, this.init_BlockPos, this.init_Block.defaultBlockState());
@@ -165,7 +165,7 @@ public final class AiPlacer {
 
             if (!this.init_ItemStack.isEmpty()) {
                if (this.init_Z) {
-                  return AiPlacer.Inner_DataUtil.WORKING;
+                  return AiPlacer.PlaceStatus.WORKING;
                }
 
                if (!mc.player.containerMenu.getCarried().isEmpty()) {
@@ -193,15 +193,15 @@ public final class AiPlacer {
                      return this.init("Could not start the portable container swap");
                   }
 
-                  return AiPlacer.Inner_DataUtil.WORKING;
+                  return AiPlacer.PlaceStatus.WORKING;
                }
 
                if (mc.player.getInventory().getSelectedSlot() != slot) {
                   InventorySlotHelper.init_V(mc, slot);
-                  return AiPlacer.Inner_DataUtil.WORKING;
+                  return AiPlacer.PlaceStatus.WORKING;
                }
             } else {
-               AiItems.Inner_DataUtil held = AiItems.init_af_DataUtil(BuiltInRegistries.ITEM.getKey(this.init_Item).toString());
+               AiItems.ItemSpec held = AiItems.init_af_DataUtil(BuiltInRegistries.ITEM.getKey(this.init_Item).toString());
                if (AiItems.read(held) < 0) {
                   return this.init("No " + BuiltInRegistries.ITEM.getKey(this.init_Item) + " in inventory");
                }
@@ -212,7 +212,7 @@ public final class AiPlacer {
                if (this.init_U_CachePool == null) {
                   return ++this.sync >= 12 && !this.init_Z
                      ? this.init("No reachable support face for " + this.init_BlockPos.toShortString() + " (" + this.init_U_JsonUtil + ")")
-                     : AiPlacer.Inner_DataUtil.WORKING;
+                     : AiPlacer.PlaceStatus.WORKING;
                }
 
                this.sync = 0;
@@ -221,7 +221,7 @@ public final class AiPlacer {
             this.init_DataUtil.init_V_Vec3(this.init_U_CachePool.init_U_DataUtil().init_Vec3());
             this.init_DataUtil.load_V();
             if (!AiAim.init_Z_BlockPos(this.init_U_CachePool.init_BlockHitResult().getBlockPos())) {
-               return AiPlacer.Inner_DataUtil.WORKING;
+               return AiPlacer.PlaceStatus.WORKING;
             }
 
             BlockHitResult ray = AiAim.init_BlockHitResult();
@@ -234,21 +234,21 @@ public final class AiPlacer {
             Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
             this.init_Z = true;
             this.init_U_CachePool = null;
-            return AiPlacer.Inner_DataUtil.WORKING;
+            return AiPlacer.PlaceStatus.WORKING;
          } else {
             if (!this.init_ItemStack.isEmpty() && !this.init_Z) {
                return this.init("Another block occupied the portable container's cell");
             }
 
             if (++this.open < 2 || this.init_Z && AiServerEvidence.init_J_BlockPos(this.init_BlockPos) <= this.init_J) {
-               return ++this.close > 80 ? this.init("Placement was not confirmed by the server") : AiPlacer.Inner_DataUtil.WORKING;
+               return ++this.close > 80 ? this.init("Placement was not confirmed by the server") : AiPlacer.PlaceStatus.WORKING;
             }
 
             if (this.init_Z && !this.init_Block.defaultBlockState().hasBlockEntity() && this.init_Block != Blocks.CRAFTING_TABLE) {
                AiEditLedger.write_V(this.init_BlockPos);
             }
 
-            return AiPlacer.Inner_DataUtil.PLACED;
+            return AiPlacer.PlaceStatus.PLACED;
          }
       }
    }
@@ -258,18 +258,18 @@ public final class AiPlacer {
       this.init_BlockPos = null;
    }
 
-   private BlockPlacementPlanner.Inner_CachePool init(Minecraft mc) {
+   private BlockPlacementPlanner.PlacementPlan init(Minecraft mc) {
       Vec3 eye = mc.player.getEyePosition();
       double reach = mc.player.blockInteractionRange();
-      BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(
+      BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(
             this.init_BlockPos,
             eye,
             reach,
             BlockPlacementPlanner.init(this.init_ItemStack.isEmpty() ? new ItemStack(this.init_Item) : this.init_ItemStack.copy(), mc.player, InteractionHand.MAIN_HAND)
          )
-         .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(48));
-      BlockPlacementPlanner.Inner_JsonUtil[] refusal = new BlockPlacementPlanner.Inner_JsonUtil[1];
-      BlockPlacementPlanner.Inner_CachePool best = BlockPlacementPlanner.init(request, refusal);
+         .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(48));
+      BlockPlacementPlanner.RejectReason[] refusal = new BlockPlacementPlanner.RejectReason[1];
+      BlockPlacementPlanner.PlacementPlan best = BlockPlacementPlanner.init(request, refusal);
       if (best == null && refusal[0] != null) {
          this.init_U_JsonUtil = refusal[0];
       }
@@ -305,22 +305,22 @@ public final class AiPlacer {
    public static boolean init_Z_BlockPos_Item(BlockPos target, Item placeable) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && target != null && placeable instanceof BlockItem) {
-         BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(
+         BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(
                target, mc.player.getEyePosition(), mc.player.blockInteractionRange(), BlockPlacementPlanner.init(new ItemStack(placeable), mc.player, InteractionHand.MAIN_HAND)
             )
-            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(1024));
+            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(1024));
          return BlockPlacementPlanner.init_U_CachePool(request) != null;
       } else {
          return false;
       }
    }
 
-   private AiPlacer.Inner_DataUtil init(String reason) {
+   private AiPlacer.PlaceStatus init(String reason) {
       this.init_Str = reason;
-      return AiPlacer.Inner_DataUtil.FAILED;
+      return AiPlacer.PlaceStatus.FAILED;
    }
 
-   public enum Inner_DataUtil {
+   public enum PlaceStatus {
       WORKING,
       PLACED,
       FAILED;

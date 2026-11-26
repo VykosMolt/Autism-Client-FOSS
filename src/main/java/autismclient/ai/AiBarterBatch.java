@@ -52,7 +52,7 @@ final class AiBarterBatch {
             final int init_I = mc.player.getInventory().getSelectedSlot();
             final long init_J = System.nanoTime() + seconds * 1000000000L;
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.Inner_CachePool.standard().withoutFlee().keeping(List.of("minecraft:gold_ingot", "minecraft:ender_pearl")), "barter");
+            final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.GuardPolicy.standard().withoutFlee().keeping(List.of("minecraft:gold_ingot", "minecraft:ender_pearl")), "barter");
             final Map<UUID, AiBarterBatch.Inner_CachePool> init_Map = new LinkedHashMap<>();
             final Set<UUID> init_Set = new HashSet<>();
             final Map<String, Integer> load_Map = AiBarterBatch.init();

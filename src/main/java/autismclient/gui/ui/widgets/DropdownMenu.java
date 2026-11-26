@@ -17,7 +17,7 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
    private long init_J;
    private boolean load_Z;
    private int write_I;
-   private ScrollbarRenderer.Inner_DataUtil init_UtilCore_DataUtil;
+   private ScrollbarRenderer.ScrollbarBounds init_UtilCore_DataUtil;
    private boolean read_Z = true;
    private int update = 1;
    private int sync = -1;

@@ -81,7 +81,7 @@ public class ReportAction implements MacroAction {
                      if (this.stashToSharedState) {
                         AutismSessionState.init_ck()
                            .init_V_ck_ConfigStore(
-                              new AutismSessionState.Inner_ConfigStore(this.init_Str_3(), deltaMs, this.load_Str_2(), this.read_Str(), System.currentTimeMillis())
+                              new AutismSessionState.TimingMeasurement(this.init_Str_3(), deltaMs, this.load_Str_2(), this.read_Str(), System.currentTimeMillis())
                            );
                      }
                   }

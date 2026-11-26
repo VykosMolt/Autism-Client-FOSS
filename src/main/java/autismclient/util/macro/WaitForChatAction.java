@@ -8,7 +8,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
    public String pattern = "";
    public String patternJson = "";
    public boolean useRegex = false;
-   public PatternCaptureMatcher.Inner_DataUtil matchMode = PatternCaptureMatcher.Inner_DataUtil.MATCH;
+   public PatternCaptureMatcher.MatchMode matchMode = PatternCaptureMatcher.MatchMode.MATCH;
    public String saveAs = "";
    public int fuzzyPercent = 100;
    public boolean serverMessageOnly = false;
@@ -68,11 +68,11 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
       }
 
       this.matchMode = MacroNbtCodecHelper.init(
-         PatternCaptureMatcher.Inner_DataUtil.class,
+         PatternCaptureMatcher.MatchMode.class,
          tag.getStringOr("matchMode", this.useRegex ? "REGEX" : "MATCH"),
-         this.useRegex ? PatternCaptureMatcher.Inner_DataUtil.REGEX : PatternCaptureMatcher.Inner_DataUtil.MATCH
+         this.useRegex ? PatternCaptureMatcher.MatchMode.REGEX : PatternCaptureMatcher.MatchMode.MATCH
       );
-      this.useRegex = this.matchMode == PatternCaptureMatcher.Inner_DataUtil.REGEX;
+      this.useRegex = this.matchMode == PatternCaptureMatcher.MatchMode.REGEX;
       this.saveAs = tag.getStringOr("saveAs", "");
       if (tag.contains("fuzzyPercent")) {
          this.fuzzyPercent = init_I_I_8(tag.getIntOr("fuzzyPercent", 100));
@@ -106,7 +106,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
    @Override
    public String getDisplayName() {
       String desc = this.pattern.isEmpty() ? "Any Chat" : this.pattern;
-      if (this.init_UtilCore_DataUtil() == PatternCaptureMatcher.Inner_DataUtil.MATCH) {
+      if (this.init_UtilCore_DataUtil() == PatternCaptureMatcher.MatchMode.MATCH) {
          desc = desc + " (~" + init_I_I_8(this.fuzzyPercent) + "%)";
       } else {
          desc = desc + " [" + this.init_UtilCore_DataUtil().name().toLowerCase(Locale.ROOT) + "]";
@@ -170,11 +170,11 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
       return Math.max(40, Math.min(100, snapped));
    }
 
-   public PatternCaptureMatcher.Inner_DataUtil init_UtilCore_DataUtil() {
+   public PatternCaptureMatcher.MatchMode init_UtilCore_DataUtil() {
       if (this.matchMode == null) {
-         return this.useRegex ? PatternCaptureMatcher.Inner_DataUtil.REGEX : PatternCaptureMatcher.Inner_DataUtil.MATCH;
+         return this.useRegex ? PatternCaptureMatcher.MatchMode.REGEX : PatternCaptureMatcher.MatchMode.MATCH;
       } else {
-         return this.useRegex && this.matchMode == PatternCaptureMatcher.Inner_DataUtil.MATCH ? PatternCaptureMatcher.Inner_DataUtil.REGEX : this.matchMode;
+         return this.useRegex && this.matchMode == PatternCaptureMatcher.MatchMode.MATCH ? PatternCaptureMatcher.MatchMode.REGEX : this.matchMode;
       }
    }
 }

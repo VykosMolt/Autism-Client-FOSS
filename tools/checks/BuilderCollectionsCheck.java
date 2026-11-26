@@ -48,9 +48,9 @@ public class BuilderCollectionsCheck {
             throw new UnsupportedOperationException(method.getName());
          }
       });
-      AiPrintSupply.Inner_CachePool prep = new AiPrintSupply.Inner_CachePool(new AiBuilder.Inner_DataUtil(BlockPos.ZERO, List.of()), world, p -> true, BlockPos.ZERO, false);
+      AiPrintSupply.Inner_CachePool prep = new AiPrintSupply.Inner_CachePool(new AiBuilder.Blueprint(BlockPos.ZERO, List.of()), world, p -> true, BlockPos.ZERO, false);
       BlockPos candidate = new BlockPos(3, 64, 3);
-      prep.init_Map.put(candidate.above().asLong(), new AiBuilder.Inner_StreamUtil(3, 65, 3, "minecraft:torch"));
+      prep.init_Map.put(candidate.above().asLong(), new AiBuilder.CellSpec(3, 65, 3, "minecraft:torch"));
       boolean[] result = new boolean[]{true};
       Thread t = new Thread(() -> result[0] = prep.init_Z_BlockPos(candidate));
       t.setDaemon(true);

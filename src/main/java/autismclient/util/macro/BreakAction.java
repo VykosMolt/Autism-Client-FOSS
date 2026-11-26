@@ -44,8 +44,8 @@ public class BreakAction implements PacketOrderAware, AimTargetAction, MacroActi
    }
 
    @Override
-   public AimTargetAction.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
-      return AimTargetAction.Inner_DataUtil.init(this.blockPos);
+   public AimTargetAction.AimTarget init_M_DataUtil_Minecraft(Minecraft mc) {
+      return AimTargetAction.AimTarget.init(this.blockPos);
    }
 
    @Override

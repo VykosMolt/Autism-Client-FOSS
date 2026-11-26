@@ -272,14 +272,14 @@ final class AiSmith {
                      this.load_I = 0;
                   }
 
-                  autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                      this.init_BlockPos = this.init_DataPipe.init_BlockPos();
                      this.init_Z = false;
                      return this.init("Smithing table placed");
                   }
 
-                  if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.load_I <= 100) {
+                  if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.load_I <= 100) {
                      return this.init("Placing a smithing table");
                   }
 
@@ -419,7 +419,7 @@ final class AiSmith {
       if (spec.isBlank()) {
          throw new IllegalArgumentException(arg + " is required");
       } else {
-         AiItems.Inner_DataUtil target = AiItems.load_af_DataUtil(spec);
+         AiItems.ItemSpec target = AiItems.load_af_DataUtil(spec);
          if (target.items().size() != 1) {
             throw new IllegalArgumentException(arg + " must resolve to a single item id, got " + target.items().size() + " from \"" + spec + "\"");
          } else {

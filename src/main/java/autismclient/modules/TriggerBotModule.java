@@ -254,7 +254,7 @@ final class TriggerBotModule extends Module {
    private static double init_D_Vec3_AABB_2(Vec3 eyes, AABB box) {
       Vec3 to = box.getCenter().subtract(eyes);
       double distance = Math.max(1.0E-6, to.length());
-      RotationMath.Inner_DataUtil look = RotationMath.init(MC.player);
+      RotationMath.Rotation look = RotationMath.init(MC.player);
       Vec3 view = Vec3.directionFromRotation(look.load(), look.init());
       double angle = Math.toDegrees(Math.acos(Math.max(-1.0, Math.min(1.0, view.dot(to) / distance))));
       double radius = Math.toDegrees(Math.atan2(0.5 * Math.hypot(box.getXsize(), box.getYsize()), distance));
@@ -311,7 +311,7 @@ final class TriggerBotModule extends Module {
    }
 
    private LivingEntity init_LivingEntity_D_D(double distance, double grow) {
-      RotationMath.Inner_DataUtil look = RotationMath.init(MC.player);
+      RotationMath.Rotation look = RotationMath.init(MC.player);
       Vec3 eyes = MC.player.getEyePosition();
       Vec3 end = eyes.add(Vec3.directionFromRotation(look.load(), look.init()).scale(distance));
       LivingEntity best = null;
@@ -443,7 +443,7 @@ final class TriggerBotModule extends Module {
       ValueRange reaction = ValueRange.parse(this.value(timed ? "reaction" : "legacy-reaction"), init_ValueRange);
       double trait = Math.abs(this.init_am.init_D() * 1000.0);
       double bias = 0.92 + 0.16 * (trait - Math.floor(trait));
-      RotationMath.Inner_DataUtil toTarget = RotationMath.init(target.getBoundingBox().getCenter(), MC.player.getEyePosition());
+      RotationMath.Rotation toTarget = RotationMath.init(target.getBoundingBox().getCenter(), MC.player.getEyePosition());
       float angle = RotationMath.init_F(RotationMath.init(MC.player), toTarget);
       return autismclient.util.clicker.ReactionDelayModel.init(this.init_Random, reaction.min(), reaction.max(), bias, angle);
    }

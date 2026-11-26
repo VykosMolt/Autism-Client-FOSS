@@ -83,7 +83,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class ClutchModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
+public final class ClutchModule extends Module implements SilentMovementCoordinator.Participant {
    private static final int init_I = 8;
    private static final int load_I = 8;
    private static final int read_I = 20;
@@ -1176,7 +1176,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               }
 
                               if (!this.update_Z) {
-                                 RotationMath.Inner_DataUtil aim = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                                 RotationMath.Rotation aim = autismclient.util.SilentRotationManager.init_ce_DataUtil();
                                  if (aim == null) {
                                     aim = RotationMath.init(MC.player);
                                  }
@@ -1316,7 +1316,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                                        this.init_j_DataUtil.init_U_CachePool.init_U_TaskQueue().load_BlockPos(),
                                        reach
                                     )) {
-                                    autismclient.util.BlockPlacementPlanner.Inner_CachePool carry = this.init_U_CachePool_j_DataUtil(
+                                    autismclient.util.BlockPlacementPlanner.PlacementPlan carry = this.init_U_CachePool_j_DataUtil(
                                        this.init_j_DataUtil, this.init_j_DataUtil.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil(), previousEye, reach
                                     );
                                     if (carry != null) {
@@ -1736,7 +1736,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_Z(boolean axis, int mode, boolean start, List<VoxelShape> extra, int placementTick) {
       return ClutchFallPhysics.init(
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil.of(MC.player),
+         autismclient.ai.engine.AiPhysics.MotionState.of(MC.player),
          MC.options.keyShift.isDown() ? 64 : (!start && this.read_I_9() != this.queue ? 0 : 1),
          MC.player.getYRot(),
          this.init_D_13(),
@@ -1775,11 +1775,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private ClutchFallPhysics.Inner_ConfigStore load_i_ConfigStore() {
       Input input = this.init_Input_2();
-      autismclient.ai.engine.AiPhysics.Inner_DataUtil pressed = new autismclient.ai.engine.AiPhysics.Inner_DataUtil(
+      autismclient.ai.engine.AiPhysics.MoveInput pressed = new autismclient.ai.engine.AiPhysics.MoveInput(
          (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0), (input.left() ? 1 : 0) - (input.right() ? 1 : 0), false, false, true, SilentMovementCoordinator.init_F(MC.player)
       );
       return ClutchFallPhysics.init_i_ConfigStore_NodeWalker_StreamU(
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil.of(MC.player),
+         autismclient.ai.engine.AiPhysics.MotionState.of(MC.player),
          pressed,
          autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player),
          this.init_D_13(),
@@ -1879,7 +1879,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
          double eyeHeight = MC.player.getEyeHeight();
          double range = MC.player.blockInteractionRange() - 0.03;
-         RotationMath.Inner_DataUtil from = this.init_ce_DataUtil_6();
+         RotationMath.Rotation from = this.init_ce_DataUtil_6();
          ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> turnCost = link -> {
             Vec3 eye = forecast.load().isEmpty()
                ? ClutchModule.Inner_BufferHelper.init(bodies, eyeHeight, this.load_I_k_NetHelper(link))
@@ -2176,8 +2176,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       }
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_6() {
-      RotationMath.Inner_DataUtil look = "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) ? autismclient.util.SilentRotationManager.init_ce_DataUtil() : null;
+   private RotationMath.Rotation init_ce_DataUtil_6() {
+      RotationMath.Rotation look = "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) ? autismclient.util.SilentRotationManager.init_ce_DataUtil() : null;
       if (look == null) {
          look = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
       }
@@ -2197,14 +2197,14 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       ItemStack stack = MC.player.getInventory().getItem(slot);
       int at = route.init_k_JsonUtil().read() ? link.init_I() : this.load_I_k_NetHelper(link);
       double reach = MC.player.blockInteractionRange() - 0.03;
-      autismclient.util.BlockPlacementPlanner.Inner_NetHelper placement = autismclient.util.BlockPlacementPlanner.init(stack, MC.player, InteractionHand.MAIN_HAND);
-      RotationMath.Inner_DataUtil from = this.init_ce_DataUtil_6();
-      autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget = new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(24);
+      autismclient.util.BlockPlacementPlanner.HitValidator placement = autismclient.util.BlockPlacementPlanner.init(stack, MC.player, InteractionHand.MAIN_HAND);
+      RotationMath.Rotation from = this.init_ce_DataUtil_6();
+      autismclient.util.BlockPlacementPlanner.RayBudget budget = new autismclient.util.BlockPlacementPlanner.RayBudget(24);
       boolean sneaking = MC.player.isSecondaryUseActive();
       Vec3 eye = this.close_Z ? MC.player.getEyePosition() : route.init(at);
       Vec3 leadEye = !this.close_Z && !route.init_k_JsonUtil().init_Z_2() && !route.init_k_JsonUtil().read() ? route.init(at + 1) : eye;
-      autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
-         new autismclient.util.BlockPlacementPlanner.Inner_StateCache(link.init_BlockPos(), eye, reach, placement)
+      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
+         new autismclient.util.BlockPlacementPlanner.Query(link.init_BlockPos(), eye, reach, placement)
             .init_U_StateCache_ce_DataUtil(from)
             .init_U_StateCache_Vec3(leadEye)
             .init_U_StateCache_EnumSet(EnumSet.of(link.init_Direction()))
@@ -2217,7 +2217,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       );
       if (candidate == null) {
          candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
-            new autismclient.util.BlockPlacementPlanner.Inner_StateCache(link.init_BlockPos(), eye, reach, placement)
+            new autismclient.util.BlockPlacementPlanner.Query(link.init_BlockPos(), eye, reach, placement)
                .init_U_StateCache_ce_DataUtil(from)
                .init_U_StateCache_Vec3(leadEye)
                .init_U_StateCache_D(89.5)
@@ -2240,7 +2240,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          link.init_BlockPos(), candidate, link.load_I(), slot, route.init_k_JsonUtil().init_Z_2(), route.init_Z(), nextFace, route.init_k_JsonUtil().read()
       );
       if (nextFace != null && !prepared.read) {
-         autismclient.util.BlockPlacementPlanner.Inner_CachePool carried = this.init(
+         autismclient.util.BlockPlacementPlanner.PlacementPlan carried = this.init(
             prepared, candidate.init_U_DataUtil().init_ce_DataUtil(), eye, route.init(at + 1), null, reach, at
          );
          if (carried != null) {
@@ -2253,7 +2253,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       return prepared;
    }
 
-   private BlockHitResult init_BlockHitResult_Vec3(Vec3 eye, RotationMath.Inner_DataUtil rotation, double reach) {
+   private BlockHitResult init_BlockHitResult_Vec3(Vec3 eye, RotationMath.Rotation rotation, double reach) {
       HitResult result = MC.level
          .clip(new ClipContext(eye, eye.add(Vec3.directionFromRotation(rotation.load(), rotation.init()).scale(reach)), Block.OUTLINE, Fluid.NONE, MC.player));
       return result instanceof BlockHitResult hit && result.getType() == Type.BLOCK ? hit : null;
@@ -2267,7 +2267,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          && this.init_j_ConfigStore != null
          && this.init_j_ConfigStore.init_I < this.read_I_9()
          && !BlinkPacketManager.load_Z()) {
-         RotationMath.Inner_DataUtil rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+         RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
          if (rotation == null) {
             return this.init_Z_Str_3("No rotation");
          }
@@ -2290,7 +2290,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             return this.init_Z_Str_3("Moving body enters placement");
          }
 
-         autismclient.util.BlockPlacementPlanner.Inner_CachePool carry = this.init_j_DataUtil.read
+         autismclient.util.BlockPlacementPlanner.PlacementPlan carry = this.init_j_DataUtil.read
             ? null
             : this.init_U_CachePool_j_DataUtil(this.init_j_DataUtil, rotation, wireEye, reach);
          if (carry != null) {
@@ -2402,8 +2402,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       }
    }
 
-   private autismclient.util.BlockPlacementPlanner.Inner_CachePool init_U_CachePool_j_DataUtil(
-      ClutchModule.Inner_DataUtil candidatePlan, RotationMath.Inner_DataUtil rotation, Vec3 wireEye, double reach
+   private autismclient.util.BlockPlacementPlanner.PlacementPlan init_U_CachePool_j_DataUtil(
+      ClutchModule.Inner_DataUtil candidatePlan, RotationMath.Rotation rotation, Vec3 wireEye, double reach
    ) {
       Vec3 eye = MC.player.getEyePosition();
       Vec3 next = this.read_Vec3 != null ? this.read_Vec3 : eye.add(MC.player.getDeltaMovement());
@@ -2423,8 +2423,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       );
    }
 
-   private autismclient.util.BlockPlacementPlanner.Inner_CachePool init(
-      ClutchModule.Inner_DataUtil candidatePlan, RotationMath.Inner_DataUtil rotation, Vec3 eye, Vec3 next, Vec3 wireEye, double reach, int lead
+   private autismclient.util.BlockPlacementPlanner.PlacementPlan init(
+      ClutchModule.Inner_DataUtil candidatePlan, RotationMath.Rotation rotation, Vec3 eye, Vec3 next, Vec3 wireEye, double reach, int lead
    ) {
       boolean moving = this.state == 4
          && lead <= 1
@@ -2441,11 +2441,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          return null;
       }
 
-      autismclient.util.BlockPlacementPlanner.Inner_TaskQueue option = candidatePlan.init_U_CachePool.init_U_TaskQueue();
+      autismclient.util.BlockPlacementPlanner.SupportCandidate option = candidatePlan.init_U_CachePool.init_U_TaskQueue();
       AABB rect = option.init_AABB();
       double margin = this.state == 4 ? 1.0E-5 : 0.02;
-      autismclient.util.BlockPlacementPlanner.Inner_NetHelper placement = autismclient.util.BlockPlacementPlanner.init(MC.player.getMainHandItem(), MC.player, InteractionHand.MAIN_HAND);
-      autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget = new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(8);
+      autismclient.util.BlockPlacementPlanner.HitValidator placement = autismclient.util.BlockPlacementPlanner.init(MC.player.getMainHandItem(), MC.player, InteractionHand.MAIN_HAND);
+      autismclient.util.BlockPlacementPlanner.RayBudget budget = new autismclient.util.BlockPlacementPlanner.RayBudget(8);
       List<Vec3> points = new ArrayList<>(ClutchBlockPlanner.init_List_Vec3(eye, next, rect, candidatePlan.init_BlockPos, candidatePlan.init_Direction, margin));
 
       for (double a : ClutchBlockPlanner.init_DArr) {
@@ -2463,7 +2463,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          }
       }
 
-      List<RotationMath.Inner_DataUtil> goals = new ArrayList<>();
+      List<RotationMath.Rotation> goals = new ArrayList<>();
 
       for (Vec3 point : points) {
          goals.add(RotationMath.init_ce_DataUtil(RotationMath.init(point, eye), rotation));
@@ -2501,11 +2501,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             );
 
          for (int i = counts.size() - 1; i >= 0; i--) {
-            goals.addFirst(new RotationMath.Inner_DataUtil(counts.get(i).init(), counts.get(i).load()));
+            goals.addFirst(new RotationMath.Rotation(counts.get(i).init(), counts.get(i).load()));
          }
       }
 
-      for (RotationMath.Inner_DataUtil goal : goals) {
+      for (RotationMath.Rotation goal : goals) {
          ClutchFallPhysics.Inner_DataUtil window = moving ? this.init_i_DataUtil_I_F(lead, goal.init()) : null;
          Vec3 clickEye = window == null ? eye : window.init_Vec3();
          Vec3 nextEye = window == null ? next : window.load();
@@ -2519,17 +2519,17 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                && ClutchBlockPlanner.init_Z_Vec3_2(
                   nextEye, Vec3.directionFromRotation(goal.load(), goal.init()), candidatePlan.init_BlockPos, candidatePlan.init_Direction, reach
                )) {
-               autismclient.util.BlockPlacementPlanner.Inner_StateCache request = new autismclient.util.BlockPlacementPlanner.Inner_StateCache(candidatePlan.init_BlockPos, clickEye, reach, placement)
+               autismclient.util.BlockPlacementPlanner.Query request = new autismclient.util.BlockPlacementPlanner.Query(candidatePlan.init_BlockPos, clickEye, reach, placement)
                   .init_U_StateCache_ce_DataUtil(rotation)
                   .init_U_StateCache_D(89.5)
                   .init_U_StateCache_Z(MC.player.isSecondaryUseActive())
                   .load(false)
                   .load(margin)
                   .init_U_StateCache_U_StreamUtil(budget);
-               autismclient.util.BlockPlacementPlanner.Inner_DataUtil aim = new autismclient.util.BlockPlacementPlanner.Inner_DataUtil(
-                  point, goal, goal, clickEye.distanceTo(point), RotationMath.load(rotation, goal), autismclient.util.BlockPlacementPlanner.Inner_UiHelper.NEAREST
+               autismclient.util.BlockPlacementPlanner.AimSample aim = new autismclient.util.BlockPlacementPlanner.AimSample(
+                  point, goal, goal, clickEye.distanceTo(point), RotationMath.load(rotation, goal), autismclient.util.BlockPlacementPlanner.SamplePoint.NEAREST
                );
-               autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(option, aim, request, null);
+               autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(option, aim, request, null);
                if (candidate != null
                   && (!moving || candidate.init_U_DataUtil().init_ce_DataUtil().equals(goal))
                   && candidate.init_U_TaskQueue().load_BlockPos().equals(option.load_BlockPos())
@@ -2634,7 +2634,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private boolean load_Z_Input_2(Input input) {
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil start = autismclient.ai.engine.AiPhysics.Inner_StreamUtil.of(MC.player);
+      autismclient.ai.engine.AiPhysics.MotionState start = autismclient.ai.engine.AiPhysics.MotionState.of(MC.player);
       if (start.jumpDelay() > 1) {
          return false;
       }
@@ -2644,7 +2644,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          sprint = module.init(false, false);
       }
 
-      autismclient.ai.engine.AiPhysics.Inner_DataUtil pressed = new autismclient.ai.engine.AiPhysics.Inner_DataUtil(
+      autismclient.ai.engine.AiPhysics.MoveInput pressed = new autismclient.ai.engine.AiPhysics.MoveInput(
          (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0),
          (input.left() ? 1 : 0) - (input.right() ? 1 : 0),
          true,
@@ -2652,7 +2652,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          input.shift(),
          SilentMovementCoordinator.init_F(MC.player)
       );
-      autismclient.ai.engine.AiPhysics.Inner_CachePool world = autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player);
+      autismclient.ai.engine.AiPhysics.PhysicsWorld world = autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player);
       boolean unsafe = this.init_Z_NodeWalker_StreamU(start, pressed, world);
       if (!unsafe && !input.shift() && start.pose() != 0) {
          unsafe = this.init_Z_NodeWalker_StreamU(ClutchFallPhysics.init_NodeWalker_StreamU_NodeWalker_StreamU(start), pressed, world);
@@ -2666,9 +2666,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private boolean init_Z_NodeWalker_StreamU(
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil start,
-      autismclient.ai.engine.AiPhysics.Inner_DataUtil pressed,
-      autismclient.ai.engine.AiPhysics.Inner_CachePool world
+      autismclient.ai.engine.AiPhysics.MotionState start,
+      autismclient.ai.engine.AiPhysics.MoveInput pressed,
+      autismclient.ai.engine.AiPhysics.PhysicsWorld world
    ) {
       ClutchFallPhysics.Inner_ConfigStore intended = ClutchFallPhysics.init(start, pressed, world, this.init_D_13(), null, this::init_i_BufferHelper_AABB);
       if (intended.init_Z() && !intended.init_List().isEmpty()) {
@@ -2782,10 +2782,10 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          if (clutch != null && MC.player != null && (clutch.isEnabled() || clutch.init_Z)) {
             ClutchModule.Inner_ConfigStore old = clutch.init_j_ConfigStore;
             Vec3 fallback = old == null ? MC.player.position() : old.init_Vec3;
-            RotationMath.Inner_DataUtil oldAim = old == null ? RotationMath.init(MC.player) : old.init_ce_DataUtil;
+            RotationMath.Rotation oldAim = old == null ? RotationMath.init(MC.player) : old.init_ce_DataUtil;
             clutch.init_j_ConfigStore = new ClutchModule.Inner_ConfigStore(
                new Vec3(move.getX(fallback.x), move.getY(fallback.y), move.getZ(fallback.z)),
-               new RotationMath.Inner_DataUtil(move.getYRot(oldAim.init()), move.getXRot(oldAim.load())),
+               new RotationMath.Rotation(move.getYRot(oldAim.init()), move.getXRot(oldAim.load())),
                MC.player.getEyeHeight(),
                clutch.read_I_9()
             );
@@ -2828,16 +2828,16 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             }
 
             this.get++;
-            RotationMath.Inner_DataUtil resume = ScaffoldModule.read_ce_DataUtil();
+            RotationMath.Rotation resume = ScaffoldModule.read_ce_DataUtil();
             boolean bridge = this.valid();
             if (this.update_Z) {
                this.load_V_Z_3(bridge);
             } else {
                if (bridge && "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && this.get < 20) {
-                  RotationMath.Inner_DataUtil goal = resume != null ? resume : RotationMath.init(MC.player);
+                  RotationMath.Rotation goal = resume != null ? resume : RotationMath.init(MC.player);
                   autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, goal);
                   autismclient.util.SilentRotationManager.init_V_Str_4(this.id(), MC.player, Math.max(1, Math.min(8, 19 - this.get)));
-                  RotationMath.Inner_DataUtil end = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                  RotationMath.Rotation end = autismclient.util.SilentRotationManager.init_ce_DataUtil();
                   if (end != null && RotationMath.load(end, goal) > 1.0F) {
                      this.load_Str = "Handing back";
                      return;
@@ -2857,7 +2857,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private void load_V_Z_3(boolean bridge) {
-      RotationMath.Inner_DataUtil end = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+      RotationMath.Rotation end = autismclient.util.SilentRotationManager.init_ce_DataUtil();
       boolean ours = "clutch".equals(autismclient.util.SilentRotationManager.init_Str());
       if (bridge && end != null) {
          if (ours) {
@@ -3005,7 +3005,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          return this.load.isEmpty() ? init(this.init_List, this.init_D, tick) : this.load.get(Mth.clamp(tick, 0, this.load.size() - 1));
       }
 
-      RotationMath.Inner_DataUtil init_ce_DataUtil_k_NetHelper_I(ClutchBlockPlanner.Inner_NetHelper link, int tick) {
+      RotationMath.Rotation init_ce_DataUtil_k_NetHelper_I(ClutchBlockPlanner.Inner_NetHelper link, int tick) {
          return init_ce_DataUtil_Vec3_k_NetHelper(this.init(tick), link);
       }
 
@@ -3014,26 +3014,26 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          return new Vec3((body.minX + body.maxX) * 0.5, body.minY + eyeHeight, (body.minZ + body.maxZ) * 0.5);
       }
 
-      static RotationMath.Inner_DataUtil init(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.Inner_NetHelper link, int tick) {
+      static RotationMath.Rotation init(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.Inner_NetHelper link, int tick) {
          return init_ce_DataUtil_Vec3_k_NetHelper(init(bodies, eyeHeight, tick), link);
       }
 
-      static RotationMath.Inner_DataUtil init_ce_DataUtil_Vec3_k_NetHelper(Vec3 eye, ClutchBlockPlanner.Inner_NetHelper link) {
+      static RotationMath.Rotation init_ce_DataUtil_Vec3_k_NetHelper(Vec3 eye, ClutchBlockPlanner.Inner_NetHelper link) {
          BlockPos support = link.load_BlockPos();
-         RotationMath.Inner_DataUtil goal = RotationMath.init(ClutchBlockPlanner.init_Vec3_Vec3(eye, support.getX(), support.getY(), support.getZ(), link.init_Direction()), eye);
-         return new RotationMath.Inner_DataUtil(goal.init(), Mth.clamp(goal.load(), -89.5F, 89.5F));
+         RotationMath.Rotation goal = RotationMath.init(ClutchBlockPlanner.init_Vec3_Vec3(eye, support.getX(), support.getY(), support.getZ(), link.init_Direction()), eye);
+         return new RotationMath.Rotation(goal.init(), Mth.clamp(goal.load(), -89.5F, 89.5F));
       }
    }
 
    private record Inner_CachePool(int init_I, ClutchFallPhysics.Inner_StreamUtil init_i_StreamUtil, boolean init_Z, boolean load_Z, Vec3 init_Vec3, Vec3 load_Vec3, int load_I) {
    }
 
-   private record Inner_ConfigStore(Vec3 init_Vec3, RotationMath.Inner_DataUtil init_ce_DataUtil, double init_D, int init_I) {
+   private record Inner_ConfigStore(Vec3 init_Vec3, RotationMath.Rotation init_ce_DataUtil, double init_D, int init_I) {
    }
 
    private record Inner_DataUtil(
       BlockPos init_BlockPos,
-      autismclient.util.BlockPlacementPlanner.Inner_CachePool init_U_CachePool,
+      autismclient.util.BlockPlacementPlanner.PlacementPlan init_U_CachePool,
       int init_I,
       int load_I,
       boolean init_Z,

@@ -129,9 +129,9 @@ final class ClutchFallPhysics {
    }
 
    static ClutchFallPhysics.Inner_ConfigStore init(
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil start,
-      autismclient.ai.engine.AiPhysics.Inner_DataUtil pressed,
-      autismclient.ai.engine.AiPhysics.Inner_CachePool world,
+      autismclient.ai.engine.AiPhysics.MotionState start,
+      autismclient.ai.engine.AiPhysics.MoveInput pressed,
+      autismclient.ai.engine.AiPhysics.PhysicsWorld world,
       double maxDrop,
       Boolean axis,
       ClutchFallPhysics.Inner_JsonUtil medium
@@ -140,9 +140,9 @@ final class ClutchFallPhysics {
    }
 
    static ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_NodeWalker_StreamU(
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil start,
-      autismclient.ai.engine.AiPhysics.Inner_DataUtil pressed,
-      autismclient.ai.engine.AiPhysics.Inner_CachePool world,
+      autismclient.ai.engine.AiPhysics.MotionState start,
+      autismclient.ai.engine.AiPhysics.MoveInput pressed,
+      autismclient.ai.engine.AiPhysics.PhysicsWorld world,
       double maxDrop,
       ClutchFallPhysics.Inner_JsonUtil medium
    ) {
@@ -150,28 +150,28 @@ final class ClutchFallPhysics {
    }
 
    private static ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_NodeWalker_StreamU_2(
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil start,
-      autismclient.ai.engine.AiPhysics.Inner_DataUtil pressed,
-      autismclient.ai.engine.AiPhysics.Inner_CachePool world,
+      autismclient.ai.engine.AiPhysics.MotionState start,
+      autismclient.ai.engine.AiPhysics.MoveInput pressed,
+      autismclient.ai.engine.AiPhysics.PhysicsWorld world,
       double maxDrop,
       Boolean axis,
       ClutchFallPhysics.Inner_JsonUtil medium,
       boolean jump
    ) {
       List<ClutchFallPhysics.Inner_UiHelper> steps = new ArrayList<>(32);
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil state = start;
+      autismclient.ai.engine.AiPhysics.MotionState state = start;
       boolean airborne = false;
       double fallen = 0.0;
       int edge = 2147483647;
 
       for (int tick = 1; tick <= 32; tick++) {
-         autismclient.ai.engine.AiPhysics.Inner_DataUtil input = pressed.withJump(jump && tick == 1);
+         autismclient.ai.engine.AiPhysics.MoveInput input = pressed.withJump(jump && tick == 1);
          if (tick > 1 && axis != null) {
             Vec3 wanted = init_Vec3_Vec3_Z(new Vec3(state.vx(), state.vy(), state.vz()), axis);
             double yaw = Math.toRadians(pressed.yaw());
             double forward = wanted.z * Math.cos(yaw) - wanted.x * Math.sin(yaw);
             double side = wanted.x * Math.cos(yaw) + wanted.z * Math.sin(yaw);
-            input = new autismclient.ai.engine.AiPhysics.Inner_DataUtil(
+            input = new autismclient.ai.engine.AiPhysics.MoveInput(
                Math.abs(forward) > 0.08 ? Math.signum(forward) : 0.0, Math.abs(side) > 0.08 ? Math.signum(side) : 0.0, false, false, false, pressed.yaw()
             );
          }
@@ -212,8 +212,8 @@ final class ClutchFallPhysics {
       return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), jump || airborne, edge);
    }
 
-   static autismclient.ai.engine.AiPhysics.Inner_StreamUtil init_NodeWalker_StreamU_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.Inner_StreamUtil s) {
-      return new autismclient.ai.engine.AiPhysics.Inner_StreamUtil(
+   static autismclient.ai.engine.AiPhysics.MotionState init_NodeWalker_StreamU_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.MotionState s) {
+      return new autismclient.ai.engine.AiPhysics.MotionState(
          s.x(),
          s.y(),
          s.z(),
@@ -232,11 +232,11 @@ final class ClutchFallPhysics {
    }
 
    static ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_NodeWalker_StreamU(
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil start,
+      autismclient.ai.engine.AiPhysics.MotionState start,
       int sneakTicks,
       float yaw,
       double maxDrop,
-      autismclient.ai.engine.AiPhysics.Inner_CachePool world,
+      autismclient.ai.engine.AiPhysics.PhysicsWorld world,
       ClutchFallPhysics.Inner_SyncManager steering,
       ClutchFallPhysics.Inner_JsonUtil medium
    ) {
@@ -244,11 +244,11 @@ final class ClutchFallPhysics {
    }
 
    static ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_NodeWalker_StreamU(
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil start,
+      autismclient.ai.engine.AiPhysics.MotionState start,
       int sneakTicks,
       float yaw,
       double maxDrop,
-      autismclient.ai.engine.AiPhysics.Inner_CachePool world,
+      autismclient.ai.engine.AiPhysics.PhysicsWorld world,
       ClutchFallPhysics.Inner_SyncManager steering,
       ClutchFallPhysics.Inner_JsonUtil medium,
       List<AABB> extra,
@@ -258,11 +258,11 @@ final class ClutchFallPhysics {
    }
 
    static ClutchFallPhysics.Inner_ConfigStore init(
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil start,
+      autismclient.ai.engine.AiPhysics.MotionState start,
       int sneakTicks,
       float yaw,
       double maxDrop,
-      final autismclient.ai.engine.AiPhysics.Inner_CachePool world,
+      final autismclient.ai.engine.AiPhysics.PhysicsWorld world,
       ClutchFallPhysics.Inner_SyncManager steering,
       ClutchFallPhysics.Inner_JsonUtil medium,
       final List<AABB> extra,
@@ -271,14 +271,14 @@ final class ClutchFallPhysics {
    ) {
       List<ClutchFallPhysics.Inner_UiHelper> steps = new ArrayList<>(64);
       List<Vec3> eyes = new ArrayList<>(65);
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil state = start;
+      autismclient.ai.engine.AiPhysics.MotionState state = start;
       eyes.add(init_Vec3_NodeWalker_StreamU(state));
       int edge = 2147483647;
       boolean exceeded = false;
       double fallen = Math.max(0.0, fallenSoFar);
       double allowed = Math.max(0.5, Math.min(maxDrop, 12.0));
       final int[] at = new int[]{0};
-      autismclient.ai.engine.AiPhysics.Inner_CachePool collisionWorld = extra.isEmpty() ? world : new autismclient.ai.engine.AiPhysics.Inner_CachePool() {
+      autismclient.ai.engine.AiPhysics.PhysicsWorld collisionWorld = extra.isEmpty() ? world : new autismclient.ai.engine.AiPhysics.PhysicsWorld() {
          @Override
          public List<AABB> init_List(AABB query) {
             List<AABB> base = world.init_List(query);
@@ -370,7 +370,7 @@ final class ClutchFallPhysics {
          double angle = Math.toRadians(yaw);
          double forward = wanted.z * Math.cos(angle) - wanted.x * Math.sin(angle);
          double side = wanted.x * Math.cos(angle) + wanted.z * Math.sin(angle);
-         autismclient.ai.engine.AiPhysics.Inner_DataUtil keys = new autismclient.ai.engine.AiPhysics.Inner_DataUtil(
+         autismclient.ai.engine.AiPhysics.MoveInput keys = new autismclient.ai.engine.AiPhysics.MoveInput(
             Math.abs(forward) > 0.08 ? Math.signum(forward) : 0.0, Math.abs(side) > 0.08 ? Math.signum(side) : 0.0, false, false, tick <= sneakTicks, yaw
          );
          double previousY = state.y();
@@ -408,7 +408,7 @@ final class ClutchFallPhysics {
       return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), true, edge, List.copyOf(eyes));
    }
 
-   private static Vec3 init_Vec3_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.Inner_StreamUtil state) {
+   private static Vec3 init_Vec3_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.MotionState state) {
       return state.position().add(0.0, state.pose() == 0 ? 1.62 : (state.pose() == 2 ? 0.4 : 1.27), 0.0);
    }
 
@@ -668,14 +668,14 @@ final class ClutchFallPhysics {
    }
 
    private static boolean init_Z_NodeWalker_StreamU(
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil start, autismclient.ai.engine.AiPhysics.Inner_CachePool world, double allowed, ClutchFallPhysics.Inner_JsonUtil medium
+      autismclient.ai.engine.AiPhysics.MotionState start, autismclient.ai.engine.AiPhysics.PhysicsWorld world, double allowed, ClutchFallPhysics.Inner_JsonUtil medium
    ) {
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil state = start;
+      autismclient.ai.engine.AiPhysics.MotionState state = start;
       double fallen = 0.0;
 
       for (int tick = 0; tick < 64; tick++) {
          double before = state.y();
-         state = autismclient.ai.engine.AiPhysics.load(state, autismclient.ai.engine.AiPhysics.Inner_DataUtil.NONE, world);
+         state = autismclient.ai.engine.AiPhysics.load(state, autismclient.ai.engine.AiPhysics.MoveInput.NONE, world);
          AABB body = state.box(false);
          ClutchFallPhysics.Inner_BufferHelper contact = medium == null ? ClutchFallPhysics.Inner_BufferHelper.NONE : medium.at(body);
          if (contact == ClutchFallPhysics.Inner_BufferHelper.HAZARD) {

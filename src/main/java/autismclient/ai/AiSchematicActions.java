@@ -91,9 +91,9 @@ final class AiSchematicActions {
       return seen;
    }
 
-   static BlockPos init(LevelReader world, BlockPos ceiling, Map<Long, AiBuilder.Inner_StreamUtil> source) {
+   static BlockPos init(LevelReader world, BlockPos ceiling, Map<Long, AiBuilder.CellSpec> source) {
       BlockPos below = ceiling.below();
-      AiBuilder.Inner_StreamUtil cell = source.get(below.asLong());
+      AiBuilder.CellSpec cell = source.get(below.asLong());
       if (cell != null && AiBuilder.init_BlockState(cell).getBlock() instanceof BedBlock && !AiBuilder.read(cell, world.getBlockState(below))) {
          Direction facing = Direction.byName(cell.properties().getOrDefault("facing", "north"));
          if (facing != null && facing.getAxis().isHorizontal()) {
@@ -135,7 +135,7 @@ final class AiSchematicActions {
       });
    }
 
-   static BlockPos init_BlockPos_TableIndex_StreamU_2(AiBuilder.Inner_StreamUtil cell, BlockPos target, LevelReader world, Set<Long> sourceCells) {
+   static BlockPos init_BlockPos_TableIndex_StreamU_2(AiBuilder.CellSpec cell, BlockPos target, LevelReader world, Set<Long> sourceCells) {
       BlockState requested = AiBuilder.init_BlockState(cell);
       if (requested.canSurvive(world, target)) {
          return null;
@@ -151,13 +151,13 @@ final class AiSchematicActions {
    }
 
    static BlockPos init_BlockPos_TableIndex_StreamU(
-      AiBuilder.Inner_StreamUtil cell, BlockPos target, LevelReader world, Map<Long, AiBuilder.Inner_StreamUtil> source
+      AiBuilder.CellSpec cell, BlockPos target, LevelReader world, Map<Long, AiBuilder.CellSpec> source
    ) {
       BlockState requested = AiBuilder.init_BlockState(cell);
       if (requested.canSurvive(world, target)) {
          for (Direction direction : Direction.values()) {
             BlockPos neighbour = target.relative(direction);
-            AiBuilder.Inner_StreamUtil wanted = source.get(neighbour.asLong());
+            AiBuilder.CellSpec wanted = source.get(neighbour.asLong());
             if (wanted != null
                && !AiBuilder.read(wanted, world.getBlockState(neighbour))
                && !requested.canSurvive(init(world, neighbour, Blocks.AIR.defaultBlockState()), target)) {
@@ -169,7 +169,7 @@ final class AiSchematicActions {
       } else {
          for (Direction direction : Direction.values()) {
             BlockPos neighbour = target.relative(direction);
-            AiBuilder.Inner_StreamUtil wanted = source.get(neighbour.asLong());
+            AiBuilder.CellSpec wanted = source.get(neighbour.asLong());
             if (wanted != null && requested.canSurvive(init(world, neighbour, AiBuilder.init_BlockState(wanted)), target)) {
                return neighbour;
             }
@@ -184,8 +184,8 @@ final class AiSchematicActions {
          BlockPos pos = new BlockPos(bottom.getX(), y, bottom.getZ());
          BlockState state = world.getBlockState(pos);
          if (!state.getFluidState().isEmpty()
-            || autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.load(state)
-            || autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(state)
+            || autismclient.ai.engine.AiPathfinder.LiveGridView.load(state)
+            || autismclient.ai.engine.AiPathfinder.LiveGridView.read(state)
             || y >= bottom.getY() && (state.hasBlockEntity() || state.getDestroySpeed(world, pos) < 0.0F)) {
             return false;
          }
@@ -194,17 +194,17 @@ final class AiSchematicActions {
       return true;
    }
 
-   static boolean init(BlockPos candidate, Map<Long, AiBuilder.Inner_StreamUtil> source, LevelReader world) {
+   static boolean init(BlockPos candidate, Map<Long, AiBuilder.CellSpec> source, LevelReader world) {
       return init_Z_BlockPos(candidate, source, world, null);
    }
 
-   static boolean init_Z_BlockPos(BlockPos candidate, Map<Long, AiBuilder.Inner_StreamUtil> source, LevelReader world, BlockPos ignore) {
+   static boolean init_Z_BlockPos(BlockPos candidate, Map<Long, AiBuilder.CellSpec> source, LevelReader world, BlockPos ignore) {
       LevelReader removed = null;
 
       for (Direction direction : Direction.values()) {
          BlockPos dependent = candidate.relative(direction);
          if (!dependent.equals(ignore)) {
-            AiBuilder.Inner_StreamUtil cell = source.get(dependent.asLong());
+            AiBuilder.CellSpec cell = source.get(dependent.asLong());
             if (cell != null) {
                BlockState requested = AiBuilder.init_BlockState(cell);
                if (direction == Direction.UP && requested.getBlock() instanceof FallingBlock) {
@@ -330,7 +330,7 @@ final class AiSchematicActions {
       };
    }
 
-   static AiOperation init(final AiBuilder.Inner_StreamUtil cell, final BlockPos target, final autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint) {
+   static AiOperation init(final AiBuilder.CellSpec cell, final BlockPos target, final autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player.onGround()
          && !(Math.abs(mc.player.getY() - target.getY() - 1.0) > 1.0E-5)
@@ -413,26 +413,26 @@ final class AiSchematicActions {
       }
    }
 
-   static List<BlockPos> init(AiBuilder.Inner_DataUtil blueprint) {
-      return init(blueprint, blueprint.cells().stream().mapToInt(AiBuilder.Inner_StreamUtil::dy).max().orElse(0));
+   static List<BlockPos> init(AiBuilder.Blueprint blueprint) {
+      return init(blueprint, blueprint.cells().stream().mapToInt(AiBuilder.CellSpec::dy).max().orElse(0));
    }
 
-   static List<BlockPos> init(AiBuilder.Inner_DataUtil blueprint, int highestWorkDy) {
-      List<AiBuilder.Inner_StreamUtil> cells = blueprint.cells();
+   static List<BlockPos> init(AiBuilder.Blueprint blueprint, int highestWorkDy) {
+      List<AiBuilder.CellSpec> cells = blueprint.cells();
       if (cells.isEmpty()) {
          return List.of();
       }
 
-      int bottom = cells.stream().mapToInt(AiBuilder.Inner_StreamUtil::dy).min().orElse(0);
-      int height = Math.min(highestWorkDy, cells.stream().mapToInt(AiBuilder.Inner_StreamUtil::dy).max().orElse(0)) - bottom + 1;
+      int bottom = cells.stream().mapToInt(AiBuilder.CellSpec::dy).min().orElse(0);
+      int height = Math.min(highestWorkDy, cells.stream().mapToInt(AiBuilder.CellSpec::dy).max().orElse(0)) - bottom + 1;
       if (height < 6) {
          return List.of();
       }
 
-      int left = cells.stream().mapToInt(AiBuilder.Inner_StreamUtil::dx).min().orElse(0) - 3;
-      int right = cells.stream().mapToInt(AiBuilder.Inner_StreamUtil::dx).max().orElse(0) + 3;
-      int front = cells.stream().mapToInt(AiBuilder.Inner_StreamUtil::dz).min().orElse(0) - 3;
-      int back = cells.stream().mapToInt(AiBuilder.Inner_StreamUtil::dz).max().orElse(0) + 3;
+      int left = cells.stream().mapToInt(AiBuilder.CellSpec::dx).min().orElse(0) - 3;
+      int right = cells.stream().mapToInt(AiBuilder.CellSpec::dx).max().orElse(0) + 3;
+      int front = cells.stream().mapToInt(AiBuilder.CellSpec::dz).min().orElse(0) - 3;
+      int back = cells.stream().mapToInt(AiBuilder.CellSpec::dz).max().orElse(0) + 3;
       ArrayList<BlockPos> result = new ArrayList<>();
       int x = left;
       int z = front;
@@ -466,14 +466,14 @@ final class AiSchematicActions {
       return List.copyOf(result);
    }
 
-   static AiOperation init(AiBuilder.Inner_DataUtil blueprint, Set<Long> protectedCells, Set<Long> owned) {
+   static AiOperation init(AiBuilder.Blueprint blueprint, Set<Long> protectedCells, Set<Long> owned) {
       return init_AiOperation_TableIndex_DataUti(
-         blueprint, protectedCells, owned, blueprint.cells().stream().mapToInt(AiBuilder.Inner_StreamUtil::dy).max().orElse(0)
+         blueprint, protectedCells, owned, blueprint.cells().stream().mapToInt(AiBuilder.CellSpec::dy).max().orElse(0)
       );
    }
 
    static AiOperation init_AiOperation_TableIndex_DataUti(
-      final AiBuilder.Inner_DataUtil blueprint, final Set<Long> protectedCells, final Set<Long> owned, int highestWorkDy
+      final AiBuilder.Blueprint blueprint, final Set<Long> protectedCells, final Set<Long> owned, int highestWorkDy
    ) {
       final Minecraft mc = Minecraft.getInstance();
       final List<BlockPos> steps = init(blueprint, highestWorkDy);
@@ -654,11 +654,11 @@ final class AiSchematicActions {
                   false,
                   false,
                   30,
-                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
+                  autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                   true,
                   2.0,
                   AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
-                     autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(feet, 0.25), keep, blueprint.origin().getY()
+                     autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(feet, 0.25), keep, blueprint.origin().getY()
                   )
                );
             }
@@ -667,7 +667,7 @@ final class AiSchematicActions {
                BlockState state = mc.level.getBlockState(pos);
                if (state.canBeReplaced() && state.getFluidState().isEmpty()) {
                   final AiOperation build = AiBuilder.load(
-                     new AiBuilder.Inner_DataUtil(pos, List.of(new AiBuilder.Inner_StreamUtil(0, 0, 0, "minecraft:dirt"))), keep
+                     new AiBuilder.Blueprint(pos, List.of(new AiBuilder.CellSpec(0, 0, 0, "minecraft:dirt"))), keep
                   );
                   return new AiOperation() {
                      @Override
@@ -741,7 +741,7 @@ final class AiSchematicActions {
          };
    }
 
-   static String init(BlockPos target, BlockGetter world, Map<Long, AiBuilder.Inner_StreamUtil> wanted) {
+   static String init(BlockPos target, BlockGetter world, Map<Long, AiBuilder.CellSpec> wanted) {
       HashSet<Long> seen = new HashSet<>();
       ArrayDeque<long[]> queue = new ArrayDeque<>();
       seen.add(target.asLong());
@@ -757,7 +757,7 @@ final class AiSchematicActions {
             if (down || node[1] < 7L) {
                BlockPos next = at.relative(direction);
                if (seen.add(next.asLong())) {
-                  AiBuilder.Inner_StreamUtil cell = wanted.get(next.asLong());
+                  AiBuilder.CellSpec cell = wanted.get(next.asLong());
                   if (cell != null) {
                      BlockState live = world.getBlockState(next);
                      if (!read(live)) {
@@ -844,14 +844,14 @@ final class AiSchematicActions {
       return true;
    }
 
-   static List<BlockPos> init(AiBuilder.Inner_DataUtil blueprint, Map<Long, AiBuilder.Inner_StreamUtil> wanted, BlockGetter world) {
+   static List<BlockPos> init(AiBuilder.Blueprint blueprint, Map<Long, AiBuilder.CellSpec> wanted, BlockGetter world) {
       return init_List_TableIndex_DataUti(blueprint, wanted, world, AiSchematicActions::init);
    }
 
-   static List<BlockPos> load(AiBuilder.Inner_DataUtil blueprint, Map<Long, AiBuilder.Inner_StreamUtil> wanted, BlockGetter world) {
+   static List<BlockPos> load(AiBuilder.Blueprint blueprint, Map<Long, AiBuilder.CellSpec> wanted, BlockGetter world) {
       LinkedHashSet<BlockPos> out = new LinkedHashSet<>();
 
-      for (AiBuilder.Inner_StreamUtil cell : blueprint.cells()) {
+      for (AiBuilder.CellSpec cell : blueprint.cells()) {
          Block block = AiBuilder.init_BlockState(cell).getBlock();
          if (block instanceof WallBlock || block instanceof FenceBlock || block instanceof IronBarsBlock) {
             BlockPos at = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
@@ -881,9 +881,9 @@ final class AiSchematicActions {
    }
 
    static List<BlockPos> init_List_TableIndex_DataUti(
-      AiBuilder.Inner_DataUtil blueprint, Map<Long, AiBuilder.Inner_StreamUtil> wanted, BlockGetter world, Predicate<BlockState> clearable
+      AiBuilder.Blueprint blueprint, Map<Long, AiBuilder.CellSpec> wanted, BlockGetter world, Predicate<BlockState> clearable
    ) {
-      List<AiBuilder.Inner_StreamUtil> cells = blueprint.cells();
+      List<AiBuilder.CellSpec> cells = blueprint.cells();
       if (cells.isEmpty()) {
          return List.of();
       }
@@ -895,7 +895,7 @@ final class AiSchematicActions {
       int maxY = -2147483648;
       int maxZ = -2147483648;
 
-      for (AiBuilder.Inner_StreamUtil c : cells) {
+      for (AiBuilder.CellSpec c : cells) {
          minX = Math.min(minX, c.dx());
          minY = Math.min(minY, c.dy());
          minZ = Math.min(minZ, c.dz());
@@ -939,7 +939,7 @@ final class AiSchematicActions {
       }
    }
 
-   static boolean init_Z(AiBuilder.Inner_StreamUtil cell) {
+   static boolean init_Z(AiBuilder.CellSpec cell) {
       String id = cell.block();
       return id.equals("minecraft:farmland")
          || id.equals("minecraft:dirt_path")
@@ -951,21 +951,21 @@ final class AiSchematicActions {
          || load_Z(cell);
    }
 
-   static boolean load_Z(AiBuilder.Inner_StreamUtil cell) {
+   static boolean load_Z(AiBuilder.CellSpec cell) {
       return cell.block().equals("minecraft:composter") && !"0".equals(cell.properties().getOrDefault("level", "0"));
    }
 
-   static boolean read_Z(AiBuilder.Inner_StreamUtil cell) {
+   static boolean read_Z(AiBuilder.CellSpec cell) {
       return "head".equals(cell.properties().get("part")) && cell.block().endsWith("_bed");
    }
 
-   static boolean write(AiBuilder.Inner_StreamUtil cell) {
+   static boolean write(AiBuilder.CellSpec cell) {
       return cell.block().equals("minecraft:water_cauldron")
          || cell.block().equals("minecraft:lava_cauldron")
          || cell.block().equals("minecraft:powder_snow_cauldron");
    }
 
-   static Item init_Item(AiBuilder.Inner_StreamUtil cell) {
+   static Item init_Item(AiBuilder.CellSpec cell) {
       Item var10000;
       switch (cell.block()) {
          case "minecraft:lava_cauldron":
@@ -981,7 +981,7 @@ final class AiSchematicActions {
       return var10000;
    }
 
-   static boolean init_Z(AiBuilder.Inner_StreamUtil cell, BlockState live) {
+   static boolean init_Z(AiBuilder.CellSpec cell, BlockState live) {
       if (write(cell) && live != null) {
          Block wantedBlock = BuiltInRegistries.BLOCK.getValue(Identifier.parse(cell.block()));
          if (live.getBlock() != wantedBlock) {
@@ -1001,7 +1001,7 @@ final class AiSchematicActions {
       }
    }
 
-   static List<String> init_List(AiBuilder.Inner_StreamUtil cell) {
+   static List<String> init_List(AiBuilder.CellSpec cell) {
       String id = cell.block();
       if (AiBuilder.init_Fluid(cell) != null || id.equals("minecraft:farmland") || id.equals("minecraft:dirt_path") || read_Z(cell)) {
          return List.of();
@@ -1028,14 +1028,14 @@ final class AiSchematicActions {
       return block instanceof FlowerPotBlock pot ? pot.getPotted().asItem() : Items.AIR;
    }
 
-   static String init_Str(AiBuilder.Inner_StreamUtil cell, BlockState live) {
+   static String init_Str(AiBuilder.CellSpec cell, BlockState live) {
       if (!BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString().equals(cell.block())) {
          return null;
       }
 
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          String name = entry.getKey();
-         if (AiBuilder.init_TableIndex_TaskQue(live.getBlock(), name) == AiBuilder.Inner_TaskQueue.POST_INTERACT) {
+         if (AiBuilder.init_TableIndex_TaskQue(live.getBlock(), name) == AiBuilder.OrientationKind.POST_INTERACT) {
             Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(name);
             if (property != null) {
                String actual = String.valueOf(live.getValue(property));
@@ -1075,7 +1075,7 @@ final class AiSchematicActions {
       return null;
    }
 
-   static AiOperation init(final AiBuilder.Inner_StreamUtil cell, final BlockPos target, final Set<Long> protectedCells) {
+   static AiOperation init(final AiBuilder.CellSpec cell, final BlockPos target, final Set<Long> protectedCells) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          AiOperation init_AiOperation;
@@ -1170,21 +1170,21 @@ final class AiSchematicActions {
       };
    }
 
-   static List<AiCellMaterials.Inner_CachePool> load_List(AiBuilder.Inner_StreamUtil cell) {
+   static List<AiCellMaterials.Inner_CachePool> load_List(AiBuilder.CellSpec cell) {
       return AiCellMaterials.init(cell);
    }
 
-   static List<AiCellMaterials.Inner_CachePool> init(AiBuilder.Inner_StreamUtil cell, BlockPos target) {
+   static List<AiCellMaterials.Inner_CachePool> init(AiBuilder.CellSpec cell, BlockPos target) {
       Minecraft mc = Minecraft.getInstance();
       boolean waterAbove = mc.level.getFluidState(target.above()).is(FluidTags.WATER);
       return AiCellMaterials.init(cell, mc.level.getBlockState(target), waterAbove);
    }
 
-   static List<Item> read_List(AiBuilder.Inner_StreamUtil cell) {
+   static List<Item> read_List(AiBuilder.CellSpec cell) {
       return init(load_List(cell));
    }
 
-   static List<Item> load(AiBuilder.Inner_StreamUtil cell, BlockPos target) {
+   static List<Item> load(AiBuilder.CellSpec cell, BlockPos target) {
       return init(init(cell, target));
    }
 
@@ -1192,7 +1192,7 @@ final class AiSchematicActions {
       return requirements.stream().map(AiCellMaterials.Inner_CachePool::item).distinct().toList();
    }
 
-   static AiOperation load(final AiBuilder.Inner_StreamUtil cell, final BlockPos target, Set<Long> shared) {
+   static AiOperation load(final AiBuilder.CellSpec cell, final BlockPos target, Set<Long> shared) {
       final Minecraft mc = Minecraft.getInstance();
       final HashSet<Long> protectedCells = new HashSet<>(shared);
       return new AiOperation() {
@@ -1273,7 +1273,7 @@ final class AiSchematicActions {
                            props.put("part", "foot");
                            protectedCells.add(foot.asLong());
                            this.init_AiOperation = AiBuilder.init(
-                              new AiBuilder.Inner_DataUtil(foot, List.of(new AiBuilder.Inner_StreamUtil(0, 0, 0, id, props))), protectedCells
+                              new AiBuilder.Blueprint(foot, List.of(new AiBuilder.CellSpec(0, 0, 0, id, props))), protectedCells
                            );
                            return this.init_AiOperation_Result_11("Placing the bed's foot, which makes its head");
                         } else if ((!footState.hasBlockEntity() || footState.getBlock() instanceof BedBlock) && footState.getFluidState().isEmpty()) {
@@ -1340,7 +1340,7 @@ final class AiSchematicActions {
                            props.put("half", "lower");
                            protectedCells.add(root.asLong());
                            this.init_AiOperation = AiBuilder.init(
-                              new AiBuilder.Inner_DataUtil(root, List.of(new AiBuilder.Inner_StreamUtil(0, 0, 0, id, props))), protectedCells
+                              new AiBuilder.Blueprint(root, List.of(new AiBuilder.CellSpec(0, 0, 0, id, props))), protectedCells
                            );
                            return this.init_AiOperation_Result_11("Placing the lower half to create the requested upper half");
                         }
@@ -1415,11 +1415,11 @@ final class AiSchematicActions {
                                     false,
                                     false,
                                     15,
-                                    autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
+                                    autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                                     true,
                                     2.0,
                                     AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
-                                       autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(above, 0.45),
+                                       autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(above, 0.45),
                                        protectedCells,
                                        target.getY()
                                     )
@@ -1504,7 +1504,7 @@ final class AiSchematicActions {
          }
 
          AiOperation init(BlockPos pos, String id) {
-            return AiBuilder.init(new AiBuilder.Inner_DataUtil(pos, List.of(new AiBuilder.Inner_StreamUtil(0, 0, 0, id))), protectedCells);
+            return AiBuilder.init(new AiBuilder.Blueprint(pos, List.of(new AiBuilder.CellSpec(0, 0, 0, id))), protectedCells);
          }
 
          AiOperation init_AiOperation(String action) {
@@ -1596,11 +1596,11 @@ final class AiSchematicActions {
 
    static AiOperation init_AiOperation_BlockPos(final BlockPos support, final BlockPos target, final Set<Long> protectedCells, int minimumDigY) {
       final Minecraft mc = Minecraft.getInstance();
-      autismclient.ai.engine.AiPathfinder.Inner_JsonUtil goal = AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
-         autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(support.above(), 0.6), protectedCells, minimumDigY
+      autismclient.ai.engine.AiPathfinder.PathGoal goal = AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
+         autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(support.above(), 0.6), protectedCells, minimumDigY
       );
       final Supplier<AiOperation> climb = () -> AiGoto.init(
-         support.above(), 0.6, true, true, true, 120, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true, 2.0, goal
+         support.above(), 0.6, true, true, true, 120, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true, 2.0, goal
       );
       return new AiOperation() {
          AiOperation init_AiOperation;
@@ -1674,7 +1674,7 @@ final class AiSchematicActions {
 
                if (mc.level.getBlockState(support).getCollisionShape(mc.level, support).isEmpty()) {
                   this.init_AiOperation = AiBuilder.init(
-                     new AiBuilder.Inner_DataUtil(support, List.of(new AiBuilder.Inner_StreamUtil(0, 0, 0, "minecraft:dirt"))), protectedCells
+                     new AiBuilder.Blueprint(support, List.of(new AiBuilder.CellSpec(0, 0, 0, "minecraft:dirt"))), protectedCells
                   );
                   this.write = true;
                   return this.init("Placing the temporary support");

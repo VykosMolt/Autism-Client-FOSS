@@ -10,19 +10,19 @@ public interface AimTargetAction {
 
    void init_V_Z(boolean var1);
 
-   AimTargetAction.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft var1);
+   AimTargetAction.AimTarget init_M_DataUtil_Minecraft(Minecraft var1);
 
-   record Inner_DataUtil(BlockPos init_BlockPos, Entity init_Entity, Vec3 init_Vec3) {
-      public static AimTargetAction.Inner_DataUtil init(BlockPos pos) {
-         return pos == null ? null : new AimTargetAction.Inner_DataUtil(pos, null, null);
+   record AimTarget(BlockPos init_BlockPos, Entity init_Entity, Vec3 init_Vec3) {
+      public static AimTargetAction.AimTarget init(BlockPos pos) {
+         return pos == null ? null : new AimTargetAction.AimTarget(pos, null, null);
       }
 
-      public static AimTargetAction.Inner_DataUtil init(Entity entity) {
-         return entity == null ? null : new AimTargetAction.Inner_DataUtil(null, entity, null);
+      public static AimTargetAction.AimTarget init(Entity entity) {
+         return entity == null ? null : new AimTargetAction.AimTarget(null, entity, null);
       }
 
-      public static AimTargetAction.Inner_DataUtil init(Vec3 point) {
-         return point == null ? null : new AimTargetAction.Inner_DataUtil(null, null, point);
+      public static AimTargetAction.AimTarget init(Vec3 point) {
+         return point == null ? null : new AimTargetAction.AimTarget(null, null, point);
       }
    }
 }

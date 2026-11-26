@@ -26,7 +26,7 @@ public final class PackTranslationPolicyResolver {
       try {
          ProtectorFeatureFlags.init_V();
          Object policyIdentity = null;
-         ConnectionPrivacyRegistry.Inner_CachePool mode = null;
+         ConnectionPrivacyRegistry.PrivacyMode mode = null;
          boolean stable = false;
 
          for (int attempt = 0; attempt < 4; attempt++) {
@@ -51,7 +51,7 @@ public final class PackTranslationPolicyResolver {
       Supplier<ResourceManager> currentManager,
       Supplier<PacketListener> currentListener,
       Object policyIdentity,
-      ConnectionPrivacyRegistry.Inner_CachePool mode
+      ConnectionPrivacyRegistry.PrivacyMode mode
    ) {
       return load(resourceManager, currentManager, currentListener, policyIdentity, mode);
    }
@@ -61,7 +61,7 @@ public final class PackTranslationPolicyResolver {
       Supplier<ResourceManager> currentManager,
       Supplier<PacketListener> currentListener,
       Object policyIdentity,
-      ConnectionPrivacyRegistry.Inner_CachePool mode
+      ConnectionPrivacyRegistry.PrivacyMode mode
    ) {
       try {
          Objects.requireNonNull(resourceManager, "resourceManager");
@@ -82,9 +82,9 @@ public final class PackTranslationPolicyResolver {
          }
 
          PacketListener listener = currentListener.get();
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init(listener);
-         ConnectionPrivacyRegistry.Inner_CachePool effectiveMode = context == null ? mode : context.init_BufferHelper_Cache();
-         ResourcePackSessionTracker.Inner_BufferHelper session = ResourcePackSessionTracker.init_FileCache_BufferHe(context);
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(listener);
+         ConnectionPrivacyRegistry.PrivacyMode effectiveMode = context == null ? mode : context.init_BufferHelper_Cache();
+         ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init_FileCache_BufferHe(context);
          IdentityHashMap<PackResources, PackTranslationPolicyResolver.Inner_BufferHelper> serverBindings = new IdentityHashMap<>();
 
          for (PackResources pack : selectedPacks) {
@@ -132,7 +132,7 @@ public final class PackTranslationPolicyResolver {
       }
    }
 
-   public static boolean init(ResourceManager resourceManager, PackResources pack, String sourcePackId, ConnectionPrivacyRegistry.Inner_StreamUtil origin) {
+   public static boolean init(ResourceManager resourceManager, PackResources pack, String sourcePackId, ConnectionPrivacyRegistry.ConnectionSession origin) {
       PackTranslationPolicyResolver.Inner_DataUtil current = init.get();
       return origin != null && current instanceof PackTranslationPolicyResolver.Inner_CachePool scope && scope.init_BufferHelper_Strea == origin
          ? init(resourceManager, pack, sourcePackId) && init.get() == current
@@ -161,20 +161,20 @@ public final class PackTranslationPolicyResolver {
       return minecraft == null ? null : minecraft.getConnection();
    }
 
-   private static ConnectionPrivacyRegistry.Inner_CachePool init(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   private static ConnectionPrivacyRegistry.PrivacyMode init(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context != null) {
          return context.init_BufferHelper_Cache();
       } else {
-         return ProtectorFeatureFlags.sync() ? ConnectionPrivacyRegistry.Inner_CachePool.VANILLA : ConnectionPrivacyRegistry.Inner_CachePool.MODDED;
+         return ProtectorFeatureFlags.sync() ? ConnectionPrivacyRegistry.PrivacyMode.VANILLA : ConnectionPrivacyRegistry.PrivacyMode.MODDED;
       }
    }
 
    private record Inner_BufferHelper(
-      ConnectionPrivacyRegistry.Inner_StreamUtil init_BufferHelper_Strea,
+      ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea,
       long init_J,
       PacketListener init_PacketListener,
-      ConnectionPrivacyRegistry.Inner_BufferHelper init_BufferHelper_Buffe,
-      ResourcePackSessionTracker.Inner_BufferHelper init_FileCache_BufferHe,
+      ConnectionPrivacyRegistry.ServerEndpoint init_BufferHelper_Buffe,
+      ResourcePackSessionTracker.PackSession init_FileCache_BufferHe,
       ServerPackSelectionRegistry.Inner_StreamUtil init_CharEncoder_Stream
    ) {
    }
@@ -184,12 +184,12 @@ public final class PackTranslationPolicyResolver {
       private final Supplier<ResourceManager> init_Supplier;
       private final Supplier<PacketListener> load_Supplier;
       private final Object init_Obj;
-      private final ConnectionPrivacyRegistry.Inner_CachePool init_BufferHelper_Cache;
+      private final ConnectionPrivacyRegistry.PrivacyMode init_BufferHelper_Cache;
       private final List<PackResources> init_List;
       private final IdentityHashMap<PackResources, String> init_IdentityHashMap;
       private final IdentityHashMap<PackResources, PackTranslationPolicyResolver.Inner_BufferHelper> load_IdentityHashMap;
       private final PacketListener init_PacketListener;
-      private final ConnectionPrivacyRegistry.Inner_StreamUtil init_BufferHelper_Strea;
+      private final ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea;
       private volatile boolean init_Z;
 
       private Inner_CachePool(
@@ -197,12 +197,12 @@ public final class PackTranslationPolicyResolver {
          Supplier<ResourceManager> currentManager,
          Supplier<PacketListener> currentListener,
          Object policyIdentity,
-         ConnectionPrivacyRegistry.Inner_CachePool mode,
+         ConnectionPrivacyRegistry.PrivacyMode mode,
          List<PackResources> selectedPacks,
          IdentityHashMap<PackResources, String> packIds,
          IdentityHashMap<PackResources, PackTranslationPolicyResolver.Inner_BufferHelper> serverBindings,
          PacketListener capturedListener,
-         ConnectionPrivacyRegistry.Inner_StreamUtil capturedContext
+         ConnectionPrivacyRegistry.ConnectionSession capturedContext
       ) {
          this.init_ResourceManager = buildingManager;
          this.init_Supplier = currentManager;
@@ -244,14 +244,14 @@ public final class PackTranslationPolicyResolver {
                   return this.load();
                }
 
-               ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init(listener);
+               ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(listener);
                if (context != this.init_BufferHelper_Strea) {
                   return this.load();
                }
 
                if (PackTranslationPolicyResolver.init(context) == this.init_BufferHelper_Cache && this.init_Obj == ProtectorFeatureFlags.init_Obj()) {
                   PackTranslationPolicyResolver.Inner_BufferHelper server = this.load_IdentityHashMap.get(pack);
-                  if (this.init_BufferHelper_Cache == ConnectionPrivacyRegistry.Inner_CachePool.VANILLA && server == null) {
+                  if (this.init_BufferHelper_Cache == ConnectionPrivacyRegistry.PrivacyMode.VANILLA && server == null) {
                      return false;
                   } else if (!this.init()) {
                      return this.load();
@@ -296,12 +296,12 @@ public final class PackTranslationPolicyResolver {
       }
 
       private boolean init(PackTranslationPolicyResolver.Inner_BufferHelper server, PackResources pack) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = server.init_BufferHelper_Strea();
+         ConnectionPrivacyRegistry.ConnectionSession context = server.init_BufferHelper_Strea();
          if (ConnectionPrivacyRegistry.init_Z(context)
             && context.init_J() == server.init_J()
             && context.init_PacketListener() == server.init_PacketListener()
             && Objects.equals(context.init_BufferHelper_Buffe(), server.init_BufferHelper_Buffe())) {
-            ResourcePackSessionTracker.Inner_BufferHelper session = server.init_FileCache_BufferHe();
+            ResourcePackSessionTracker.PackSession session = server.init_FileCache_BufferHe();
             if (ResourcePackSessionTracker.init_FileCache_BufferHe(context) == session && ResourcePackSessionTracker.init_Z(session)) {
                ServerPackSelectionRegistry.Inner_StreamUtil captured = server.init_CharEncoder_Stream();
                return captured.equals(ServerPackSelectionRegistry.init_CharEncoder_Stream(session, pack));

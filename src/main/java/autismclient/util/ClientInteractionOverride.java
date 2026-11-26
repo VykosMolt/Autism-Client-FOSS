@@ -26,7 +26,7 @@ public final class ClientInteractionOverride {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static BlockHitResult init_BlockHitResult;
    private static InteractionHand init_InteractionHand;
-   private static RotationMath.Inner_DataUtil init_ce_DataUtil;
+   private static RotationMath.Rotation init_ce_DataUtil;
    private static EntityHitResult init_EntityHitResult;
    private static String init_Str;
    private static String load_Str;
@@ -81,7 +81,7 @@ public final class ClientInteractionOverride {
       }
    }
 
-   public static boolean init(BlockHitResult hit, InteractionHand hand, RotationMath.Inner_DataUtil look) {
+   public static boolean init(BlockHitResult hit, InteractionHand hand, RotationMath.Rotation look) {
       if (look != null && init(hit, hand)) {
          init_ce_DataUtil = look;
          return true;
@@ -570,7 +570,7 @@ public final class ClientInteractionOverride {
          }
 
          BlockHitResult useHit = init_BlockHitResult;
-         RotationMath.Inner_DataUtil useLook = init_ce_DataUtil;
+         RotationMath.Rotation useLook = init_ce_DataUtil;
          EntityHitResult attackHit = init_EntityHitResult;
          if (!AutismLiteVariant.enabled()) {
             CombatAttackDispatcher.init_V(attackHit == null ? null : attackHit.getEntity());
@@ -599,7 +599,7 @@ public final class ClientInteractionOverride {
             read_BlockHitResult = null;
             load_InteractionHand = null;
             write_Str = null;
-            ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
             if (!AutismLiteVariant.enabled() && "kill-aura".equals(read_Str) && attackHit != null) {
                attackHit = autismclient.modules.KillAuraModule.init_EntityHitResult_EntityHitResult_ch_CachePool(attackHit, wire);
                if (attackHit == null) {

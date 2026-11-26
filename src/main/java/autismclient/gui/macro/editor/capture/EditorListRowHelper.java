@@ -70,11 +70,11 @@ public final class EditorListRowHelper {
       NetHelper bounds,
       boolean hovered,
       boolean selected,
-      ListRowRenderer.Inner_DataUtil tone,
+      ListRowRenderer.RowTone tone,
       boolean minecraftText
    ) {
       int var10000;
-      switch (tone == null ? ListRowRenderer.Inner_DataUtil.NORMAL : tone) {
+      switch (tone == null ? ListRowRenderer.RowTone.NORMAL : tone) {
          case READY:
             var10000 = selected ? -1507344 : -6426438;
             break;
@@ -88,7 +88,7 @@ public final class EditorListRowHelper {
             var10000 = selected ? -5398 : -29556;
             break;
          case NORMAL:
-            var10000 = selected ? ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.Inner_DataUtil.TEXT) : -1;
+            var10000 = selected ? ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.ColorRole.TEXT) : -1;
             break;
          default:
             throw new MatchException(null, null);
@@ -118,7 +118,7 @@ public final class EditorListRowHelper {
       NetHelper bounds,
       boolean hovered,
       boolean selected,
-      ListRowRenderer.Inner_DataUtil tone,
+      ListRowRenderer.RowTone tone,
       boolean minecraftText
    ) {
       init(graphics, font, label, ItemStack.EMPTY, bounds, hovered, selected, tone, minecraftText);

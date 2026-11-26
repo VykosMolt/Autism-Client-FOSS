@@ -31,7 +31,7 @@ final class AiParallelSmelt implements AiOperation {
    private final long init_J;
    private final List<BlockPos> init_List = new ArrayList<>();
    private final JsonArray init_JsonArray = new JsonArray();
-   private final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.Inner_CachePool.standard(), "smelt");
+   private final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.GuardPolicy.standard(), "smelt");
    private List<Integer> load_List = List.of();
    private final List<Integer> read_List = new ArrayList<>();
    private AiOperation init_AiOperation;

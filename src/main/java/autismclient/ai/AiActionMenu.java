@@ -1563,7 +1563,7 @@ final class AiActionMenu {
       String value = key == null ? null : AiJson.init_Str_JsonObject(args, key, null);
       if (value != null) {
          try {
-            AiItems.Inner_DataUtil target = AiItems.init_af_DataUtil(value);
+            AiItems.ItemSpec target = AiItems.init_af_DataUtil(value);
             args.addProperty(key, String.join(",", target.itemIds()) + "|" + String.join(",", target.blockIds()));
          } catch (RuntimeException var5) {
          }
@@ -1850,7 +1850,7 @@ final class AiActionMenu {
       ItemStack icon = ItemStack.EMPTY;
 
       try {
-         AiItems.Inner_DataUtil target = AiItems.init_af_DataUtil(family);
+         AiItems.ItemSpec target = AiItems.init_af_DataUtil(family);
          if (!target.items().isEmpty()) {
             icon = autismclient.util.DisplayItemStackFactory.init_ItemStack(target.items().iterator().next());
          }

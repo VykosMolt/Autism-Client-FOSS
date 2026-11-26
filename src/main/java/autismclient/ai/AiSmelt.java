@@ -122,7 +122,7 @@ final class AiSmelt {
          String outputSpec = AiJson.init_Str_JsonObject(args, "item", "");
          int requested = AiJson.init_I_JsonObject(args, "count", 1);
          if (requested >= 1 && requested <= 2304) {
-            AiItems.Inner_DataUtil outputTarget = AiItems.load_af_DataUtil(outputSpec);
+            AiItems.ItemSpec outputTarget = AiItems.load_af_DataUtil(outputSpec);
             if (!AiJson.init_Z_JsonObject(args, "additional", false) && AiItems.init_I(outputTarget) >= requested) {
                return AiGameOperations.init_AiOperation(
                   AiOperation.Status.SUCCEEDED,
@@ -186,7 +186,7 @@ final class AiSmelt {
                final LocalPlayer init_LocalPlayer = mc.player;
                final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
                final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
-               final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.Inner_CachePool.standard(), "smelt");
+               final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.GuardPolicy.standard(), "smelt");
                AiStationPlacer init_cn;
                AiOperation init_AiOperation;
                AiOperation load_AiOperation;
@@ -797,16 +797,16 @@ final class AiSmelt {
       return BuiltInRegistries.ITEM.getOptional(Identifier.parse(id)).orElseThrow(() -> new IllegalArgumentException("Unknown item " + id));
    }
 
-   static AiSmelt.Inner_CachePool init(Minecraft mc, AiItems.Inner_DataUtil outputTarget, String inputSpec, String fuelSpec, int items) {
+   static AiSmelt.Inner_CachePool init(Minecraft mc, AiItems.ItemSpec outputTarget, String inputSpec, String fuelSpec, int items) {
       List<String> tried = new ArrayList<>();
 
-      record Inner_DataUtil(Item output, autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan, Item input, int stationTier) {
+      record Inner_DataUtil(Item output, autismclient.util.AutoCraftingEngine.SmeltRecipe plan, Item input, int stationTier) {
       }
 
       List<Inner_DataUtil> viable = new ArrayList<>();
 
       for (Item output : outputTarget.items()) {
-         for (autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
+         for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
             tried.add(plan.init_Str());
             Item input = init(plan, inputSpec);
             if (input != null) {
@@ -868,9 +868,9 @@ final class AiSmelt {
          .anyMatch(p -> AiGameState.init_I_Str(p.load_Str()) > 0 || init_Z(mc, p.load_Str()));
    }
 
-   private static Item init(autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan, String inputSpec) {
+   private static Item init(autismclient.util.AutoCraftingEngine.SmeltRecipe plan, String inputSpec) {
       if (!inputSpec.isBlank()) {
-         AiItems.Inner_DataUtil requested = AiItems.load_af_DataUtil(inputSpec);
+         AiItems.ItemSpec requested = AiItems.load_af_DataUtil(inputSpec);
 
          for (Item candidate : plan.init_List()) {
             if (requested.items().contains(candidate)) {
@@ -905,7 +905,7 @@ final class AiSmelt {
       }
 
       if (!fuelSpec.isBlank()) {
-         AiItems.Inner_DataUtil requested = AiItems.load_af_DataUtil(fuelSpec);
+         AiItems.ItemSpec requested = AiItems.load_af_DataUtil(fuelSpec);
          return init(
             requested.items(),
             candidate -> Math.max(0, AiGameState.load(BuiltInRegistries.ITEM.getKey(candidate).toString()) - AiRunResources.load(candidate)),
@@ -1029,7 +1029,7 @@ final class AiSmelt {
    static JsonArray init(Minecraft mc, Item output) {
       JsonArray out = new JsonArray();
 
-      for (autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
+      for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
          JsonArray inputs = new JsonArray();
 
          for (Item input : plan.init_List()) {

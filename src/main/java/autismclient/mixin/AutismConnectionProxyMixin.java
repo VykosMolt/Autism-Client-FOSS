@@ -26,10 +26,10 @@ public abstract class AutismConnectionProxyMixin {
       Connection connection = (Connection)(Object)this;
       if (connection.getReceiving() == PacketFlow.CLIENTBOUND && !(pipeline.channel() instanceof LocalChannel)) {
          ProxyListManager manager = ProxyListManager.init_bY();
-         ConnectionPrivacyRegistry.Inner_ConfigStore route;
+         ConnectionPrivacyRegistry.ProxyEndpoint route;
          synchronized (manager) {
             bW main = manager.init_bW();
-            route = main == null ? null : new ConnectionPrivacyRegistry.Inner_ConfigStore(main.init_bZ, main.read, main.init_I, main.write, main.update);
+            route = main == null ? null : new ConnectionPrivacyRegistry.ProxyEndpoint(main.init_bZ, main.read, main.init_I, main.write, main.update);
          }
 
          ConnectionPrivacyRegistry.init(connection, route);

@@ -214,7 +214,7 @@ final class AiDragon {
          }
       }
 
-      return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, true, true, false, 6, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true));
+      return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, true, true, false, 6, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
    }
 
    static boolean init_Z(double x, double z, List<double[]> clouds) {
@@ -294,7 +294,7 @@ final class AiDragon {
             final long load_J = AiServerEvidence.load_J();
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final AiDragon.Inner_StreamUtil init_q_StreamUtil = new AiDragon.Inner_StreamUtil();
-            final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard().withoutFlee();
+            final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard().withoutFlee();
             boolean init_Z;
             AiOperation init_AiOperation;
             AiOperation load_AiOperation;
@@ -371,7 +371,7 @@ final class AiDragon {
             String write_Str = "";
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.CALM);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.CALM);
                this.init_DataUtil.init_V_Z(silentAim);
             }
 
@@ -611,7 +611,7 @@ final class AiDragon {
                      }
 
                      this.load_V_15();
-                     this.sync_AiOperation = AiGoto.init(best, 0.8, false, false, false, 5, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true);
+                     this.sync_AiOperation = AiGoto.init(best, 0.8, false, false, false, 5, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true);
                      AiSpeedrun.init_V_Str_ObjArr(
                         "[AI] dragon: charging at the player ({} off its line); stepping to {}", String.format(Locale.ROOT, "%.1f", off), best.toShortString()
                      );
@@ -717,7 +717,7 @@ final class AiDragon {
                   this.load_AiOperation = null;
                   return this.init("Resuming after " + this.load_Str);
                } else {
-                  AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+                  AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
                   if (!this.canInterruptNow()) {
                      return null;
                   }
@@ -800,7 +800,7 @@ final class AiDragon {
                } else {
                   boolean threat = false;
 
-                  for (AiProjectiles.Inner_StreamUtil tracked : AiProjectiles.init(mc)) {
+                  for (AiProjectiles.IncomingProjectile tracked : AiProjectiles.init(mc)) {
                      if (AiProjectiles.init(tracked)) {
                         threat = true;
                         break;
@@ -1027,7 +1027,7 @@ final class AiDragon {
                         }
 
                         this.init_AiOperation = AiGoto.init(
-                           near, 1.5, false, true, true, this.init(20), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true
+                           near, 1.5, false, true, true, this.init(20), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
                         this.sync_Z = true;
                      }
@@ -1124,7 +1124,7 @@ final class AiDragon {
 
                      if (this.close_BlockPos != null && mc.player.position().distanceToSqr(Vec3.atBottomCenterOf(this.close_BlockPos)) > 0.48999999999999994) {
                         this.init_AiOperation = AiGoto.init(
-                           this.close_BlockPos, 0.3, false, true, true, this.init(15), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true
+                           this.close_BlockPos, 0.3, false, true, true, this.init(15), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
                         this.update_Z = true;
                      } else {
@@ -1287,7 +1287,7 @@ final class AiDragon {
 
                if (this.init_AiOperation == null) {
                   this.init_AiOperation = AiGoto.init(
-                     this.read_BlockPos, 0.8, false, true, true, this.init(30), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true
+                     this.read_BlockPos, 0.8, false, true, true, this.init(30), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                   );
                }
 
@@ -1439,7 +1439,7 @@ final class AiDragon {
                   }
 
                   this.init_AiOperation = AiGoto.init(
-                     support.above(), 0.8, false, true, true, this.init(20), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true
+                     support.above(), 0.8, false, true, true, this.init(20), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                   );
                }
 
@@ -1520,7 +1520,7 @@ final class AiDragon {
                      Vec3 blast = Vec3.atCenterOf(head);
                      BlockState state = mc.level.getBlockState(head);
                      BlockPos foot = head.relative(state.getValue(BedBlock.FACING).getOpposite());
-                     autismclient.util.ExplosionDamageCalculator.Inner_CachePool options = autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool
+                     autismclient.util.ExplosionDamageCalculator.SimOptions options = autismclient.util.ExplosionDamageCalculator.SimOptions.init_S_CachePool
                         .init(List.of(head, foot))
                         .init(autismclient.util.ExplosionDamageCalculator.load(mc.level, blast));
                      this.init_D = autismclient.util.ExplosionDamageCalculator.init_D(mc.player, blast, 5.0F, options);
@@ -1668,7 +1668,7 @@ final class AiDragon {
                      BlockPos out = this.init(danger, zones);
                      if (out != null) {
                         this.init_AiOperation = AiGuard.init(
-                           AiGoto.init(out, 0.35, false, false, false, this.init(8), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true)
+                           AiGoto.init(out, 0.35, false, false, false, this.init(8), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true)
                         );
                         this.get = 2;
                      }
@@ -1678,7 +1678,7 @@ final class AiDragon {
                      BlockPos near = this.sync_BlockPos();
                      if (near != null && Math.hypot(mc.player.getX() - (near.getX() + 0.5), mc.player.getZ() - (near.getZ() + 0.5)) > 2.5) {
                         this.init_AiOperation = AiGoto.init(
-                           near, 0.8, false, false, false, this.init(10), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true
+                           near, 0.8, false, false, false, this.init(10), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
                         this.get = 3;
                      }
@@ -1729,7 +1729,7 @@ final class AiDragon {
                   if (!there && (!inReach || !mc.player.onGround())) {
                      if (this.init_AiOperation == null) {
                         this.init_AiOperation = AiGoto.init(
-                           this.flush_BlockPos, 0.3, false, false, false, this.init(10), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true
+                           this.flush_BlockPos, 0.3, false, false, false, this.init(10), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
                         this.get = 1;
                      }
@@ -1896,7 +1896,7 @@ final class AiDragon {
                      }
 
                      this.init_AiOperation = AiGoto.init(
-                        support.above(), 1.5, false, true, true, this.init(30), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true
+                        support.above(), 1.5, false, true, true, this.init(30), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                      );
                   }
 

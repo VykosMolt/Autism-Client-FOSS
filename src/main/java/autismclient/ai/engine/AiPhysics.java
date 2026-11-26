@@ -40,25 +40,25 @@ public final class AiPhysics {
    private static final double nextBy = 1.0E-7;
    public static final int prev_I = 1;
    public static final int chunkAt_I = 2;
-   private static final ThreadLocal<AiPhysics.Inner_JsonCache> putAt_ThreadLocal = ThreadLocal.withInitial(AiPhysics.Inner_JsonCache::new);
+   private static final ThreadLocal<AiPhysics.ScratchBuffers> putAt_ThreadLocal = ThreadLocal.withInitial(AiPhysics.ScratchBuffers::new);
    private static final double dataEx = Math.cos(0.13962633907794952);
 
    private AiPhysics() {
    }
 
-   public static AiPhysics.Inner_CachePool putAt_TokenCore_TaskStat_ClientLevel_Entity(ClientLevel var0, Entity var1) {
+   public static AiPhysics.PhysicsWorld putAt_TokenCore_TaskStat_ClientLevel_Entity(ClientLevel var0, Entity var1) {
       return new AiLiveWorld(var0, var1);
    }
 
-   static boolean putAt_Z(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2) {
+   static boolean putAt_Z(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
       return putAt_Z_TokenCore_TaskStat(var0, var1, var2, false);
    }
 
-   static boolean fill(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2) {
+   static boolean fill(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
       return putAt_Z_TokenCore_TaskStat(var0, var1, var2, true);
    }
 
-   static int[] putAt_IArr(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2) {
+   static int[] putAt_IArr(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
       double var3 = 0.33999999999999997;
       double var5 = Math.min(var1.x(), var2.x()) - var3;
       double var7 = Math.max(var1.x(), var2.x()) + var3;
@@ -110,7 +110,7 @@ public final class AiPhysics {
       return null;
    }
 
-   private static boolean putAt_Z_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var0, int var1, int var2, int var3) {
+   private static boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var0, int var1, int var2, int var3) {
       return var1 >= (int)Math.floor(var0.x() - 0.04)
          && var1 <= (int)Math.floor(var0.x() + 0.04 - 1.0E-5)
          && var3 >= (int)Math.floor(var0.z() - 0.04)
@@ -119,7 +119,7 @@ public final class AiPhysics {
          && var2 <= (int)Math.floor(var0.y() + 0.06 - 1.0E-5);
    }
 
-   private static boolean fill(AiPhysics.Inner_StreamUtil var0, int var1, int var2, int var3) {
+   private static boolean fill(AiPhysics.MotionState var0, int var1, int var2, int var3) {
       double var4 = 0.33999999999999997;
       return var1 >= (int)Math.floor(var0.x() - var4)
          && var1 <= (int)Math.floor(var0.x() + var4 - 1.0E-5)
@@ -129,7 +129,7 @@ public final class AiPhysics {
          && var2 <= (int)Math.floor(var0.y() + 1.8 - 1.0E-5);
    }
 
-   private static boolean readEx(AiPhysics.Inner_StreamUtil var0, int var1, int var2, int var3) {
+   private static boolean readEx(AiPhysics.MotionState var0, int var1, int var2, int var3) {
       double var4 = 0.33999999999999997;
       return var1 >= (int)Math.floor(var0.x() - var4)
          && var1 <= (int)Math.floor(var0.x() + var4 - 1.0E-5)
@@ -140,7 +140,7 @@ public final class AiPhysics {
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat(
-      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2, boolean var3
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2, boolean var3
    ) {
       double var4 = 0.33999999999999997;
       double var6 = Math.min(var1.x(), var2.x()) - var4;
@@ -210,20 +210,20 @@ public final class AiPhysics {
       return var0 == 1 ? 0.05 : (var0 == 2 ? 0.75 : 1.0);
    }
 
-   public static AiPhysics.Inner_StreamUtil putAt(AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_DataUtil var1, AiPhysics.Inner_CachePool var2) {
+   public static AiPhysics.MotionState putAt(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, AiPhysics.PhysicsWorld var2) {
       return putAt_TokenCore_TableCac_TokenCore_TableCac(var0, var1, var2, true, false);
    }
 
-   static AiPhysics.Inner_StreamUtil fill(AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_DataUtil var1, AiPhysics.Inner_CachePool var2) {
+   static AiPhysics.MotionState fill(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, AiPhysics.PhysicsWorld var2) {
       return putAt_TokenCore_TableCac_TokenCore_TableCac(var0, var1, var2, true, true);
    }
 
-   public static AiPhysics.Inner_StreamUtil readEx(AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_DataUtil var1, AiPhysics.Inner_CachePool var2) {
+   public static AiPhysics.MotionState readEx(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, AiPhysics.PhysicsWorld var2) {
       return putAt_TokenCore_TableCac_TokenCore_TableCac(var0, var1, var2, false, false);
    }
 
-   private static AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_DataUtil var1, AiPhysics.Inner_CachePool var2, boolean var3, boolean var4
+   private static AiPhysics.MotionState putAt_TokenCore_TableCac_TokenCore_TableCac(
+      AiPhysics.MotionState var0, AiPhysics.MoveInput var1, AiPhysics.PhysicsWorld var2, boolean var3, boolean var4
    ) {
       double var5 = 0.3;
       double var7 = var0.pose() == 2 ? 0.6 : (var0.pose() != 0 ? 1.5 : 1.8);
@@ -330,7 +330,7 @@ public final class AiPhysics {
          var60 = var115.fill_DArr;
          var61 = var115.putAt_FArr;
       } else {
-         AiPhysics.Inner_JsonCache var62 = putAt_ThreadLocal.get();
+         AiPhysics.ScratchBuffers var62 = putAt_ThreadLocal.get();
          var116 = var62.putAt_DArr;
          var60 = var62.fill;
          var61 = var62.putAt_FArr;
@@ -461,14 +461,14 @@ public final class AiPhysics {
          var124 = putAt_I_TokenCore_TaskStat(var2, var1, var79, var124, var92, var72, var96, var94, var98, var100);
       }
 
-      return new AiPhysics.Inner_StreamUtil(
+      return new AiPhysics.MotionState(
          var70, var72, var74, var24, var26, var28, var79, var23, var76 || var77, var78, var80, (var76 || var77) && !putAt(var1, var64, var68), var124, var123
       );
    }
 
    private static int putAt_I_TokenCore_TaskStat(
-      AiPhysics.Inner_CachePool var0,
-      AiPhysics.Inner_DataUtil var1,
+      AiPhysics.PhysicsWorld var0,
+      AiPhysics.MoveInput var1,
       boolean var2,
       int var3,
       double var4,
@@ -499,11 +499,11 @@ public final class AiPhysics {
       return false;
    }
 
-   static boolean putAt_Z_TokenCore_CacheHel_Vec3(AiPhysics.Inner_DataUtil var0, Vec3 var1) {
+   static boolean putAt_Z_TokenCore_CacheHel_Vec3(AiPhysics.MoveInput var0, Vec3 var1) {
       return putAt(var0, var1.x, var1.z);
    }
 
-   private static boolean putAt(AiPhysics.Inner_DataUtil var0, double var1, double var3) {
+   private static boolean putAt(AiPhysics.MoveInput var0, double var1, double var3) {
       float var5 = var0.yaw() * 0.017453292F;
       double var6 = Math.sin(var5);
       double var8 = Math.cos(var5);
@@ -527,11 +527,11 @@ public final class AiPhysics {
       return var0 == -9223372036854775808L ? (int)Math.floor(var2) : BlockPos.getZ(var0);
    }
 
-   static long putAt_J_AABB(AABB var0, double var1, double var3, double var5, AiPhysics.Inner_CachePool var7) {
+   static long putAt_J_AABB(AABB var0, double var1, double var3, double var5, AiPhysics.PhysicsWorld var7) {
       return putAt(var0.minX, var0.minY, var0.minZ, var0.maxX, var0.maxZ, var1, var3, var5, var7);
    }
 
-   static long putAt(double var0, double var2, double var4, double var6, double var8, double var10, double var12, double var14, AiPhysics.Inner_CachePool var16) {
+   static long putAt(double var0, double var2, double var4, double var6, double var8, double var10, double var12, double var14, AiPhysics.PhysicsWorld var16) {
       return var16.putAt(var0, var2 - 1.0E-6, var4, var6, var2, var8, var10, var12, var14);
    }
 
@@ -577,7 +577,7 @@ public final class AiPhysics {
       return Math.abs(var2 - var0) < 1.0E-5;
    }
 
-   static Vec3 putAt_Vec3_Vec3(Vec3 var0, AABB var1, boolean var2, AiPhysics.Inner_CachePool var3) {
+   static Vec3 putAt_Vec3_Vec3(Vec3 var0, AABB var1, boolean var2, AiPhysics.PhysicsWorld var3) {
       if (var0.lengthSqr() == 0.0) {
          return var0;
       }
@@ -591,7 +591,7 @@ public final class AiPhysics {
          var6 = var4.fill_DArr;
          var7 = var4.putAt_FArr;
       } else {
-         AiPhysics.Inner_JsonCache var8 = putAt_ThreadLocal.get();
+         AiPhysics.ScratchBuffers var8 = putAt_ThreadLocal.get();
          var9 = var8.putAt_DArr;
          var6 = var8.fill;
          var7 = var8.putAt_FArr;
@@ -616,7 +616,7 @@ public final class AiPhysics {
       double var18,
       double var20,
       boolean var22,
-      AiPhysics.Inner_CachePool var23
+      AiPhysics.PhysicsWorld var23
    ) {
       if (var4 == 0.0 && var6 == 0.0 && var8 == 0.0) {
          var0[0] = 0.0;
@@ -1001,7 +1001,7 @@ public final class AiPhysics {
    }
 
    private static void putAt_V_DArr(
-      double[] var0, double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, AiPhysics.Inner_CachePool var17
+      double[] var0, double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, AiPhysics.PhysicsWorld var17
    ) {
       while (var1 != 0.0 && !putAt(var7 + var1, var9, var11, var13 + var1, var15, var17)) {
          var1 = putAt_D_D(var1);
@@ -1025,16 +1025,16 @@ public final class AiPhysics {
       return Math.abs(var0) <= 0.05 ? 0.0 : var0 - Math.copySign(0.05, var0);
    }
 
-   private static boolean putAt(double var0, double var2, double var4, double var6, double var8, AiPhysics.Inner_CachePool var10) {
+   private static boolean putAt(double var0, double var2, double var4, double var6, double var8, AiPhysics.PhysicsWorld var10) {
       return var10.putAt_Z_D(var0 + 1.0E-7, var2 - 0.6 - 1.0E-7, var4 + 1.0E-7, var6 - 1.0E-7, var2, var8 - 1.0E-7);
    }
 
-   public static List<AiPhysics.Inner_StreamUtil> putAt(AiPhysics.Inner_StreamUtil var0, List<AiPhysics.Inner_DataUtil> var1, AiPhysics.Inner_CachePool var2) {
+   public static List<AiPhysics.MotionState> putAt(AiPhysics.MotionState var0, List<AiPhysics.MoveInput> var1, AiPhysics.PhysicsWorld var2) {
       ArrayList var3 = new ArrayList(var1.size() + 1);
       var3.add(var0);
-      AiPhysics.Inner_StreamUtil var4 = var0;
+      AiPhysics.MotionState var4 = var0;
 
-      for (AiPhysics.Inner_DataUtil var6 : var1) {
+      for (AiPhysics.MoveInput var6 : var1) {
          var4 = putAt(var4, var6, var2);
          var3.add(var4);
       }
@@ -1046,37 +1046,37 @@ public final class AiPhysics {
       return (float)(Math.toDegrees(Math.atan2(var6 - var2, var4 - var0)) - 90.0);
    }
 
-   public record Inner_DataUtil(double forward, double strafe, boolean jump, boolean sprint, boolean sneak, float yaw) {
-      public static final AiPhysics.Inner_DataUtil NONE = new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, false, 0.0F);
+   public record MoveInput(double forward, double strafe, boolean jump, boolean sprint, boolean sneak, float yaw) {
+      public static final AiPhysics.MoveInput NONE = new AiPhysics.MoveInput(0.0, 0.0, false, false, false, 0.0F);
 
-      public static AiPhysics.Inner_DataUtil run(float var0, boolean var1) {
-         return new AiPhysics.Inner_DataUtil(1.0, 0.0, false, var1, false, var0);
+      public static AiPhysics.MoveInput run(float var0, boolean var1) {
+         return new AiPhysics.MoveInput(1.0, 0.0, false, var1, false, var0);
       }
 
-      public static AiPhysics.Inner_DataUtil jump(float var0, boolean var1) {
-         return new AiPhysics.Inner_DataUtil(1.0, 0.0, true, var1, false, var0);
+      public static AiPhysics.MoveInput jump(float var0, boolean var1) {
+         return new AiPhysics.MoveInput(1.0, 0.0, true, var1, false, var0);
       }
 
-      public AiPhysics.Inner_DataUtil withStrafe(double var1) {
-         return new AiPhysics.Inner_DataUtil(this.forward, var1, this.jump, this.sprint, this.sneak, this.yaw);
+      public AiPhysics.MoveInput withStrafe(double var1) {
+         return new AiPhysics.MoveInput(this.forward, var1, this.jump, this.sprint, this.sneak, this.yaw);
       }
 
-      public AiPhysics.Inner_DataUtil withJump(boolean var1) {
-         return new AiPhysics.Inner_DataUtil(this.forward, this.strafe, var1, this.sprint, this.sneak, this.yaw);
+      public AiPhysics.MoveInput withJump(boolean var1) {
+         return new AiPhysics.MoveInput(this.forward, this.strafe, var1, this.sprint, this.sneak, this.yaw);
       }
 
-      public AiPhysics.Inner_DataUtil withYaw(float var1) {
-         return new AiPhysics.Inner_DataUtil(this.forward, this.strafe, this.jump, this.sprint, this.sneak, var1);
+      public AiPhysics.MoveInput withYaw(float var1) {
+         return new AiPhysics.MoveInput(this.forward, this.strafe, this.jump, this.sprint, this.sneak, var1);
       }
    }
 
-   private static final class Inner_JsonCache {
+   private static final class ScratchBuffers {
       final double[] putAt_DArr = new double[3];
       final double[] fill = new double[3];
       final float[] putAt_FArr = new float[16];
    }
 
-   public record Inner_StreamUtil(
+   public record MotionState(
       double x,
       double y,
       double z,
@@ -1095,7 +1095,7 @@ public final class AiPhysics {
       public static final long NO_SUPPORT = -9223372036854775808L;
       public static final double RESTING_VY = -0.0784;
 
-      public Inner_StreamUtil(
+      public MotionState(
          double var1,
          double var3,
          double var5,
@@ -1113,19 +1113,19 @@ public final class AiPhysics {
          this(var1, var3, var5, var7, var9, var11, var13, var14, var15, var16, var17, var19, var20, 0);
       }
 
-      public Inner_StreamUtil(
+      public MotionState(
          double var1, double var3, double var5, double var7, double var9, double var11, boolean var13, int var14, boolean var15, boolean var16
       ) {
          this(var1, var3, var5, var7, var9, var11, var13, var14, var15, var16, -9223372036854775808L, false, 0);
       }
 
-      public Inner_StreamUtil(
+      public MotionState(
          double var1, double var3, double var5, double var7, double var9, double var11, boolean var13, int var14, boolean var15, boolean var16, long var17
       ) {
          this(var1, var3, var5, var7, var9, var11, var13, var14, var15, var16, var17, false, 0);
       }
 
-      public Inner_StreamUtil(
+      public MotionState(
          double var1,
          double var3,
          double var5,
@@ -1142,7 +1142,7 @@ public final class AiPhysics {
          this(var1, var3, var5, var7, var9, var11, var13, var14, var15, var16, var17, var19, 0);
       }
 
-      public static AiPhysics.Inner_StreamUtil of(Entity var0) {
+      public static AiPhysics.MotionState of(Entity var0) {
          Vec3 var1 = var0.getDeltaMovement();
          boolean var2 = var0.getPose() == Pose.SWIMMING && !var0.isInWater();
          int var3;
@@ -1159,7 +1159,7 @@ public final class AiPhysics {
 
          int var8 = var0 instanceof AutismLivingEntityAccessor var9 ? var9.autism$getNoJumpDelay() : 0;
          long var10 = var0.mainSupportingBlockPos.map(BlockPos::asLong).orElse(-9223372036854775808L);
-         return new AiPhysics.Inner_StreamUtil(
+         return new AiPhysics.MotionState(
             var0.getX(),
             var0.getY(),
             var0.getZ(),
@@ -1214,8 +1214,8 @@ public final class AiPhysics {
          return var3;
       }
 
-      public AiPhysics.Inner_StreamUtil atRest() {
-         return new AiPhysics.Inner_StreamUtil(
+      public AiPhysics.MotionState atRest() {
+         return new AiPhysics.MotionState(
             this.x, this.y, this.z, 0.0, -0.0784, 0.0, true, 0, false, false, -9223372036854775808L, false, this.pose, this.stuck
          );
       }
@@ -1224,8 +1224,8 @@ public final class AiPhysics {
          return this.pose == 2;
       }
 
-      public static AiPhysics.Inner_StreamUtil standing(double var0, double var2, double var4) {
-         return new AiPhysics.Inner_StreamUtil(var0, var2, var4, 0.0, -0.0784, 0.0, true, 0, false, false, -9223372036854775808L);
+      public static AiPhysics.MotionState standing(double var0, double var2, double var4) {
+         return new AiPhysics.MotionState(var0, var2, var4, 0.0, -0.0784, 0.0, true, 0, false, false, -9223372036854775808L);
       }
 
       public Vec3 position() {
@@ -1242,7 +1242,7 @@ public final class AiPhysics {
       }
    }
 
-   public interface Inner_CachePool {
+   public interface PhysicsWorld {
       // 5.3 external ABI defaults (overridden by modules/i.java and ai/b/ArrayUtil.java)
       default double init_D() { return 4.0; }
       default double load() { return 0.1; }
@@ -1391,19 +1391,19 @@ public final class AiPhysics {
    }
 
    // 5.3 external ABI bridges
-   public static AiPhysics.Inner_CachePool init_NodeWalker_CachePo_ClientLevel_Entity(ClientLevel level, Entity body) {
+   public static AiPhysics.PhysicsWorld init_NodeWalker_CachePo_ClientLevel_Entity(ClientLevel level, Entity body) {
       return putAt_TokenCore_TaskStat_ClientLevel_Entity(level, body);
    }
 
-   public static AiPhysics.Inner_StreamUtil init(AiPhysics.Inner_StreamUtil s, AiPhysics.Inner_DataUtil in, AiPhysics.Inner_CachePool world) {
+   public static AiPhysics.MotionState init(AiPhysics.MotionState s, AiPhysics.MoveInput in, AiPhysics.PhysicsWorld world) {
       return putAt(s, in, world);
    }
 
-   public static AiPhysics.Inner_StreamUtil load(AiPhysics.Inner_StreamUtil s, AiPhysics.Inner_DataUtil in, AiPhysics.Inner_CachePool world) {
+   public static AiPhysics.MotionState load(AiPhysics.MotionState s, AiPhysics.MoveInput in, AiPhysics.PhysicsWorld world) {
       return readEx(s, in, world);
    }
 
-   public static List<AiPhysics.Inner_StreamUtil> init(AiPhysics.Inner_StreamUtil start, List<AiPhysics.Inner_DataUtil> inputs, AiPhysics.Inner_CachePool world) {
+   public static List<AiPhysics.MotionState> init(AiPhysics.MotionState start, List<AiPhysics.MoveInput> inputs, AiPhysics.PhysicsWorld world) {
       return putAt(start, inputs, world);
    }
 
@@ -1411,7 +1411,7 @@ public final class AiPhysics {
       return putAt_F_D(fromX, fromZ, toX, toZ);
    }
 
-   static boolean init_Z(AiPhysics.Inner_CachePool world, AiPhysics.Inner_StreamUtil from, AiPhysics.Inner_StreamUtil to) {
+   static boolean init_Z(AiPhysics.PhysicsWorld world, AiPhysics.MotionState from, AiPhysics.MotionState to) {
       return putAt_Z(world, from, to);
    }
 }

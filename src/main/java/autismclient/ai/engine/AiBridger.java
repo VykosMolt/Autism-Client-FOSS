@@ -48,7 +48,7 @@ public final class AiBridger {
       this.putAt_TextStore_BitCore = var1;
    }
 
-   public int putAt_I_TokenCore_TaskStat(AiPhysics.Inner_CachePool var1) {
+   public int putAt_I_TokenCore_TaskStat(AiPhysics.PhysicsWorld var1) {
       for (int var2 = 1; var2 <= this.putAt_TextStore_JsonCach.length(); var2++) {
          if (!putAt_Z_TokenCore_TaskStat(
             var1, this.putAt_TextStore_JsonCach.cellX(var2), this.putAt_TextStore_JsonCach.floorY(), this.putAt_TextStore_JsonCach.cellZ(var2)
@@ -60,7 +60,7 @@ public final class AiBridger {
       return this.putAt_TextStore_JsonCach.length() + 1;
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.Inner_CachePool var0, int var1, int var2, int var3) {
+   static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, int var1, int var2, int var3) {
       AABB var4 = new AABB(var1, var2, var3, var1 + 1, var2 + 1, var3 + 1).deflate(1.0E-4);
 
       for (AABB var6 : var0.collisions(var4)) {
@@ -73,23 +73,23 @@ public final class AiBridger {
    }
 
    public AiBridger.Inner_StreamUtil putAt_TextStore_TableCac_TokenCore_TableCac_2(
-      AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.Inner_CachePool var4
+      AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.PhysicsWorld var4
    ) {
       return this.putAt_TextStore_TableCac_TokenCore_TableCac_2(var1, var2, var3, var4, true);
    }
 
    public AiBridger.Inner_StreamUtil putAt_TextStore_TableCac_TokenCore_TableCac_2(
-      AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.Inner_CachePool var4, boolean var5
+      AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.PhysicsWorld var4, boolean var5
    ) {
       return this.putAt(var1, var2, var2, var3, var4, var5);
    }
 
    AiBridger.Inner_StreamUtil putAt(
-      AiPhysics.Inner_StreamUtil var1,
+      AiPhysics.MotionState var1,
       AiBridger.Inner_DataUtil var2,
       AiBridger.Inner_DataUtil var3,
       boolean var4,
-      AiPhysics.Inner_CachePool var5,
+      AiPhysics.PhysicsWorld var5,
       boolean var6
    ) {
       this.value_Z = var6;
@@ -104,7 +104,7 @@ public final class AiBridger {
    }
 
    private AiBridger.Inner_StreamUtil putAt_TextStore_TableCac_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, AiBridger.Inner_DataUtil var3, boolean var4, AiPhysics.Inner_CachePool var5
+      AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiBridger.Inner_DataUtil var3, boolean var4, AiPhysics.PhysicsWorld var5
    ) {
       int var6 = this.putAt_I_TokenCore_TaskStat(var5);
       double var7 = this.putAt_TextStore_JsonCach.along(var1.x(), var1.z());
@@ -131,7 +131,7 @@ public final class AiBridger {
                }
 
                AiBridger.Inner_StreamUtil var11 = this.putAt_TextStore_TableCac_TokenCore_TableCac(var1, var10, false);
-               AiPhysics.Inner_StreamUtil var12 = AiPhysics.putAt(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var11, var10), var5);
+               AiPhysics.MotionState var12 = AiPhysics.putAt(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var11, var10), var5);
                if (putAt_Z_TokenCore_TableCac_2(var12, var5, this.putAt_TextStore_JsonCach.floorY())
                   && (this.putAt_Z_TokenCore_TableCac(var12, var10, var5) || this.value(var12, var10, var5))) {
                   return var11;
@@ -159,7 +159,7 @@ public final class AiBridger {
    }
 
    private AiBridger.Inner_StreamUtil putAt_TextStore_TableCac_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, AiPhysics.Inner_CachePool var3, double var4
+      AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3, double var4
    ) {
       int var6 = this.putAt_TextStore_JsonCach.length();
       boolean var7 = !this.putAt_Z
@@ -186,7 +186,7 @@ public final class AiBridger {
 
             for (int var15 = -1; var15 <= 1; var15++) {
                for (int var16 = -1; var16 <= 1; var16++) {
-                  AiPhysics.Inner_StreamUtil var17 = AiPhysics.putAt(var1, new AiPhysics.Inner_DataUtil(var15, var16, false, false, true, var2.yaw()), var3);
+                  AiPhysics.MotionState var17 = AiPhysics.putAt(var1, new AiPhysics.MoveInput(var15, var16, false, false, true, var2.yaw()), var3);
                   double var18 = var17.vx() * var17.vx() + var17.vz() * var17.vz();
                   if (var18 < var13
                      && this.putAt_TextStore_JsonCach.along(var17.x(), var17.z()) >= var6
@@ -206,9 +206,9 @@ public final class AiBridger {
       }
    }
 
-   private boolean prevEx(AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, AiPhysics.Inner_CachePool var3) {
+   private boolean prevEx(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
       for (int var4 = 0; var4 < 30; var4++) {
-         var1 = AiPhysics.putAt(var1, AiPhysics.Inner_DataUtil.NONE, var3);
+         var1 = AiPhysics.putAt(var1, AiPhysics.MoveInput.NONE, var3);
          if (var1.y() < this.putAt_TextStore_JsonCach.floorY() + 1 - 0.01) {
             return false;
          }
@@ -222,18 +222,18 @@ public final class AiBridger {
    }
 
    private AiBridger.Inner_StreamUtil putAt_TextStore_TableCac_TokenCore_TableCac(
-      AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, boolean var3
+      AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3
    ) {
       int[] var4 = this.putAt_IArr_F(var2.yaw(), var1, this.putAt_TextStore_JsonCach.yaw());
       return new AiBridger.Inner_StreamUtil(this.putAt_TextStore_JsonCach.yaw(), 25.0F, var4[0], var4[1], var3, var4[0] > 0, false, -1, false);
    }
 
    private AiBridger.Inner_StreamUtil putAt(
-      AiPhysics.Inner_StreamUtil var1,
+      AiPhysics.MotionState var1,
       AiBridger.Inner_DataUtil var2,
       AiBridger.Inner_DataUtil var3,
       boolean var4,
-      AiPhysics.Inner_CachePool var5,
+      AiPhysics.PhysicsWorld var5,
       int var6
    ) {
       float var7 = this.putAt_TextStore_JsonCach.yaw();
@@ -255,11 +255,11 @@ public final class AiBridger {
    }
 
    private AiBridger.Inner_StreamUtil fill(
-      AiPhysics.Inner_StreamUtil var1,
+      AiPhysics.MotionState var1,
       AiBridger.Inner_DataUtil var2,
       AiBridger.Inner_DataUtil var3,
       boolean var4,
-      AiPhysics.Inner_CachePool var5,
+      AiPhysics.PhysicsWorld var5,
       int var6
    ) {
       double var7 = var6 <= this.putAt_TextStore_JsonCach.length() ? this.putAt_D_TokenCore_TaskStat_I(var5, var6) : 0.0 / 0.0;
@@ -271,7 +271,7 @@ public final class AiBridger {
       if (!Double.isNaN(var7)
          && var9 < 0
          && !putAt_Z_TokenCore_TableCac_2(
-            AiPhysics.putAt(var1, new AiPhysics.Inner_DataUtil(var13[0], var13[1], false, false, true, var12.yaw()), var5),
+            AiPhysics.putAt(var1, new AiPhysics.MoveInput(var13[0], var13[1], false, false, true, var12.yaw()), var5),
             var5,
             this.putAt_TextStore_JsonCach.floorY()
          )) {
@@ -279,8 +279,8 @@ public final class AiBridger {
       }
 
       boolean var14 = false;
-      if (var9 < 0 || AiPathfinder.Inner_CachePool.putAt()) {
-         AiPhysics.Inner_StreamUtil var15 = AiPhysics.putAt(var1, new AiPhysics.Inner_DataUtil(var13[0], var13[1], false, false, false, var12.yaw()), var5);
+      if (var9 < 0 || AiPathfinder.MoveCosts.putAt()) {
+         AiPhysics.MotionState var15 = AiPhysics.putAt(var1, new AiPhysics.MoveInput(var13[0], var13[1], false, false, false, var12.yaw()), var5);
          var14 = !putAt_Z_TokenCore_TableCac_2(var15, var5, this.putAt_TextStore_JsonCach.floorY());
       }
 
@@ -288,18 +288,18 @@ public final class AiBridger {
    }
 
    private float[] putAt(
-      AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.Inner_CachePool var4, int var5, double var6, boolean var8
+      AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.PhysicsWorld var4, int var5, double var6, boolean var8
    ) {
       float[] var9 = Double.isNaN(var6) ? this.putAt_FArr_TokenCore_TableCac(var1, var3, var5) : this.putAt_FArr_TokenCore_TableCac(var1, var3, var5, var6);
       AiBridger.Inner_DataUtil var10 = var2.stepToward(var9[0], var9[1]);
       int[] var11 = this.putAt_IArr_F(var10.yaw(), var1, this.putAt_TextStore_JsonCach.yaw());
-      AiPhysics.Inner_StreamUtil var12 = AiPhysics.putAt(
-         var1, new AiPhysics.Inner_DataUtil(var11[0], var11[1], false, var8 && var11[0] > 0, false, var10.yaw()), var4
+      AiPhysics.MotionState var12 = AiPhysics.putAt(
+         var1, new AiPhysics.MoveInput(var11[0], var11[1], false, var8 && var11[0] > 0, false, var10.yaw()), var4
       );
       return Double.isNaN(var6) ? this.putAt_FArr_TokenCore_TableCac(var12, var3, var5) : this.putAt_FArr_TokenCore_TableCac(var12, var3, var5, var6);
    }
 
-   float[] putAt_FArr_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var1, boolean var2, int var3) {
+   float[] putAt_FArr_TokenCore_TableCac(AiPhysics.MotionState var1, boolean var2, int var3) {
       double var4 = var1.y() + (var2 ? 1.27 : 1.62);
       double var6 = this.putAt_TextStore_JsonCach.lateral(var1.x(), var1.z());
       double var8 = Math.max(-0.35, Math.min(0.35, var6));
@@ -315,7 +315,7 @@ public final class AiBridger {
       return new float[]{var14, Math.min(89.5F, var15)};
    }
 
-   float[] putAt_FArr_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var1, boolean var2, int var3, double var4) {
+   float[] putAt_FArr_TokenCore_TableCac(AiPhysics.MotionState var1, boolean var2, int var3, double var4) {
       double var6 = var1.y() + (var2 ? 1.27 : 1.62);
       double var8 = this.putAt_TextStore_JsonCach.cellX(var3) + 0.5;
       double var10 = this.putAt_TextStore_JsonCach.cellZ(var3) + 0.5;
@@ -324,7 +324,7 @@ public final class AiBridger {
       return new float[]{var12, Math.min(89.5F, var13)};
    }
 
-   boolean putAt_Z_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.Inner_CachePool var4, int var5) {
+   boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.PhysicsWorld var4, int var5) {
       if (this.value_Z && var2 != null) {
          Vec3 var6 = new Vec3(var1.x(), var1.y() + (var3 ? 1.27 : 1.62), var1.z());
          int[] var7 = putAt_IArr_TokenCore_TaskStat(var4, var6, var2.yaw(), var2.pitch(), 4.5);
@@ -348,21 +348,21 @@ public final class AiBridger {
       }
    }
 
-   boolean putAt_Z_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, AiPhysics.Inner_CachePool var3) {
+   boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
       AiBridger.Inner_StreamUtil var4 = this.putAt_TextStore_TableCac_TokenCore_TableCac(var1, var2, true);
-      AiPhysics.Inner_StreamUtil var5 = AiPhysics.putAt(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var4, var2), var3);
+      AiPhysics.MotionState var5 = AiPhysics.putAt(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var4, var2), var3);
       return this.putAt_Z_TokenCore_TableCac(var5, var2, false, var3);
    }
 
-   boolean fill(AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, AiPhysics.Inner_CachePool var3) {
+   boolean fill(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
       float var4 = this.putAt_TextStore_JsonCach.yaw();
       AiBridger.Inner_DataUtil var5 = var2;
-      AiPhysics.Inner_StreamUtil var6 = var1;
+      AiPhysics.MotionState var6 = var1;
 
       for (int var7 = 0; var7 < 30; var7++) {
          var5 = var5.stepToward(var4, 25.0F);
          int[] var8 = this.putAt_IArr_F(var5.yaw(), var6, var4);
-         var6 = AiPhysics.putAt(var6, new AiPhysics.Inner_DataUtil(var8[0], var8[1], false, var8[0] > 0, false, var5.yaw()), var3);
+         var6 = AiPhysics.putAt(var6, new AiPhysics.MoveInput(var8[0], var8[1], false, var8[0] > 0, false, var5.yaw()), var3);
          if (var6.onGround()) {
             return this.putAt_Z_TokenCore_TableCac_TokenCore_TaskStat(var6, var3) && this.value(var6, var5, var3);
          }
@@ -375,10 +375,10 @@ public final class AiBridger {
       return false;
    }
 
-   boolean readEx(AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, AiPhysics.Inner_CachePool var3) {
+   boolean readEx(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
       float var4 = this.putAt_TextStore_JsonCach.yaw();
       AiBridger.Inner_DataUtil var5 = var2;
-      AiPhysics.Inner_StreamUtil var6 = var1;
+      AiPhysics.MotionState var6 = var1;
 
       for (int var7 = 0; var7 < 6; var7++) {
          var5 = var5.stepToward(var4, 25.0F);
@@ -387,7 +387,7 @@ public final class AiBridger {
          }
 
          int[] var8 = this.putAt_IArr_F(var5.yaw(), var6, var4);
-         var6 = AiPhysics.putAt(var6, new AiPhysics.Inner_DataUtil(var8[0], var8[1], false, var8[0] > 0, false, var5.yaw()), var3);
+         var6 = AiPhysics.putAt(var6, new AiPhysics.MoveInput(var8[0], var8[1], false, var8[0] > 0, false, var5.yaw()), var3);
          if (!putAt_Z_TokenCore_TableCac_2(var6, var3, this.putAt_TextStore_JsonCach.floorY())) {
             return false;
          }
@@ -396,11 +396,11 @@ public final class AiBridger {
       return false;
    }
 
-   boolean value(AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, AiPhysics.Inner_CachePool var3) {
-      AiPhysics.Inner_StreamUtil var4 = var1;
+   boolean value(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
+      AiPhysics.MotionState var4 = var1;
 
       for (int var5 = 0; var5 < 8; var5++) {
-         var4 = AiPhysics.putAt(var4, new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, true, var2.yaw()), var3);
+         var4 = AiPhysics.putAt(var4, new AiPhysics.MoveInput(0.0, 0.0, false, false, true, var2.yaw()), var3);
          if (!putAt_Z_TokenCore_TableCac_2(var4, var3, this.putAt_TextStore_JsonCach.floorY())) {
             return false;
          }
@@ -409,7 +409,7 @@ public final class AiBridger {
       return true;
    }
 
-   private boolean putAt_Z_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.Inner_CachePool var4) {
+   private boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.PhysicsWorld var4) {
       AiBridger.Inner_BufferHelper var5 = new AiBridger.Inner_BufferHelper(var4);
       AiBridger var6 = new AiBridger(this.putAt_TextStore_JsonCach, this.putAt_TextStore_BitCore, this.putAt_Z);
       var6.readEx_Z = this.readEx_Z;
@@ -441,7 +441,7 @@ public final class AiBridger {
       return false;
    }
 
-   private boolean putAt_Z_TokenCore_TableCac_TokenCore_TaskStat(AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_CachePool var2) {
+   private boolean putAt_Z_TokenCore_TableCac_TokenCore_TaskStat(AiPhysics.MotionState var1, AiPhysics.PhysicsWorld var2) {
       if (var1.onGround() && !(var1.y() < this.putAt_TextStore_JsonCach.floorY() + 1 - 0.01)) {
          int var3 = this.putAt_I_TokenCore_TaskStat(var2);
          double var4 = this.putAt_TextStore_JsonCach.along(var1.x(), var1.z());
@@ -457,7 +457,7 @@ public final class AiBridger {
       }
    }
 
-   private static boolean putAt_Z_TokenCore_TableCac_2(AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_CachePool var1, int var2) {
+   private static boolean putAt_Z_TokenCore_TableCac_2(AiPhysics.MotionState var0, AiPhysics.PhysicsWorld var1, int var2) {
       if (!(var0.y() < var2 + 1 - 0.01) && var0.onGround()) {
          AABB var3 = var0.box(false);
          AABB var4 = new AABB(var3.minX, var3.minY - 0.6, var3.minZ, var3.maxX, var3.minY, var3.maxZ);
@@ -474,7 +474,7 @@ public final class AiBridger {
       }
    }
 
-   double putAt_D_TokenCore_TaskStat_I(AiPhysics.Inner_CachePool var1, int var2) {
+   double putAt_D_TokenCore_TaskStat_I(AiPhysics.PhysicsWorld var1, int var2) {
       int var3 = this.putAt_TextStore_JsonCach.cellX(var2);
       int var4 = this.putAt_TextStore_JsonCach.floorY();
       int var5 = this.putAt_TextStore_JsonCach.cellZ(var2);
@@ -490,7 +490,7 @@ public final class AiBridger {
       return var7;
    }
 
-   int[] putAt_IArr_F(float var1, AiPhysics.Inner_StreamUtil var2, float var3) {
+   int[] putAt_IArr_F(float var1, AiPhysics.MotionState var2, float var3) {
       double var4 = this.putAt_TextStore_JsonCach.lateral(var2.x(), var2.z());
       double var6 = Math.toRadians(var3);
       double var8 = -Math.sin(var6);
@@ -516,10 +516,10 @@ public final class AiBridger {
       return new int[]{var22 > var28 ? 1 : (var22 < -var28 ? -1 : 0), var24 > var28 ? 1 : (var24 < -var28 ? -1 : 0)};
    }
 
-   static AiPhysics.Inner_DataUtil putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(
+   static AiPhysics.MoveInput putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(
       AiBridger.Inner_StreamUtil var0, AiBridger.Inner_DataUtil var1
    ) {
-      return new AiPhysics.Inner_DataUtil(var0.forward(), var0.left(), var0.jump(), var0.sprint(), var0.sneak(), var1.yaw());
+      return new AiPhysics.MoveInput(var0.forward(), var0.left(), var0.jump(), var0.sprint(), var0.sneak(), var1.yaw());
    }
 
    static boolean putAt_Z_F_F(float var0, float var1) {
@@ -543,7 +543,7 @@ public final class AiBridger {
       return Math.max(-var1, Math.min(var1, var0));
    }
 
-   static boolean fill(AiPhysics.Inner_CachePool var0, int var1, int var2, int var3) {
+   static boolean fill(AiPhysics.PhysicsWorld var0, int var1, int var2, int var3) {
       AABB var4 = new AABB(var1, var2, var3, var1 + 1, var2 + 1, var3 + 1).deflate(1.0E-4);
 
       for (AABB var6 : var0.collisions(var4)) {
@@ -555,7 +555,7 @@ public final class AiBridger {
       return false;
    }
 
-   static int[] putAt_IArr_TokenCore_TaskStat(AiPhysics.Inner_CachePool var0, Vec3 var1, float var2, float var3, double var4) {
+   static int[] putAt_IArr_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, Vec3 var1, float var2, float var3, double var4) {
       double var6 = Math.toRadians(var2);
       double var8 = Math.toRadians(var3);
       double var10 = -Math.sin(var6) * Math.cos(var8);
@@ -699,11 +699,11 @@ public final class AiBridger {
       }
    }
 
-   static final class Inner_BufferHelper implements AiPhysics.Inner_CachePool {
-      private final AiPhysics.Inner_CachePool putAt_TokenCore_TaskStat;
+   static final class Inner_BufferHelper implements AiPhysics.PhysicsWorld {
+      private final AiPhysics.PhysicsWorld putAt_TokenCore_TaskStat;
       private final List<AABB> putAt_List = new ArrayList<>();
 
-      Inner_BufferHelper(AiPhysics.Inner_CachePool var1) {
+      Inner_BufferHelper(AiPhysics.PhysicsWorld var1) {
          this.putAt_TokenCore_TaskStat = var1;
       }
 
@@ -774,11 +774,11 @@ public final class AiBridger {
    public AiBridger.Inner_CachePool init_JsonUtil_CachePool() { return this.putAt_TextStore_JsonCach(); }
    public AiBridger.Inner_ConfigStore init_JsonUtil_ConfigSto() { return this.putAt_TextStore_BitCore(); }
    public void init_V_JsonUtil_ConfigSto(AiBridger.Inner_ConfigStore value) { this.putAt_V_TextStore_BitCore(value); }
-   public int init_I_NodeWalker_CachePo(AiPhysics.Inner_CachePool world) { return this.putAt_I_TokenCore_TaskStat(world); }
-   public AiBridger.Inner_StreamUtil init_JsonUtil_StreamUti_NodeWalker_StreamU_2(AiPhysics.Inner_StreamUtil s, AiBridger.Inner_DataUtil r, boolean sneaking, AiPhysics.Inner_CachePool world) {
+   public int init_I_NodeWalker_CachePo(AiPhysics.PhysicsWorld world) { return this.putAt_I_TokenCore_TaskStat(world); }
+   public AiBridger.Inner_StreamUtil init_JsonUtil_StreamUti_NodeWalker_StreamU_2(AiPhysics.MotionState s, AiBridger.Inner_DataUtil r, boolean sneaking, AiPhysics.PhysicsWorld world) {
       return this.putAt_TextStore_TableCac_TokenCore_TableCac_2(s, r, sneaking, world);
    }
-   public AiBridger.Inner_StreamUtil init_JsonUtil_StreamUti_NodeWalker_StreamU_2(AiPhysics.Inner_StreamUtil s, AiBridger.Inner_DataUtil r, boolean sneaking, AiPhysics.Inner_CachePool world, boolean forceSneak) {
+   public AiBridger.Inner_StreamUtil init_JsonUtil_StreamUti_NodeWalker_StreamU_2(AiPhysics.MotionState s, AiBridger.Inner_DataUtil r, boolean sneaking, AiPhysics.PhysicsWorld world, boolean forceSneak) {
       return this.putAt_TextStore_TableCac_TokenCore_TableCac_2(s, r, sneaking, world, forceSneak);
    }
 }

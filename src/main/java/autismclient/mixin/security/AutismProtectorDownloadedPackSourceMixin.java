@@ -49,7 +49,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
    @Unique
    private PackDownloader autism$scopedDownloader;
    @Unique
-   private ResourcePackSessionTracker.Inner_BufferHelper autism$downloaderSession;
+   private ResourcePackSessionTracker.PackSession autism$downloaderSession;
    @Unique
    private final java.util.concurrent.ConcurrentHashMap<UUID, java.util.concurrent.CopyOnWriteArrayList<java.util.function.BiConsumer<UUID, FinalResult>>> autism$waitCallbacks = new java.util.concurrent.ConcurrentHashMap<>();
    @Unique
@@ -72,10 +72,10 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
 
    @Inject(method = "configureForServerControl", at = @At("HEAD"))
    private void autism$registerPackSession(Connection connection, PackPromptStatus promptStatus, CallbackInfo ci) {
-      ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
+      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
       if (context != null) {
-         ResourcePackSessionTracker.Inner_BufferHelper contextSession = ResourcePackSessionTracker.init_FileCache_BufferHe(context);
-         ResourcePackSessionTracker.Inner_BufferHelper sourceSession = ResourcePackSessionTracker.init(this);
+         ResourcePackSessionTracker.PackSession contextSession = ResourcePackSessionTracker.init_FileCache_BufferHe(context);
+         ResourcePackSessionTracker.PackSession sourceSession = ResourcePackSessionTracker.init(this);
          ResourcePackSessionTracker.init_V(contextSession);
          if (sourceSession != null && sourceSession != contextSession) {
             ResourcePackSessionTracker.load_V(sourceSession);
@@ -87,13 +87,13 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
 
          this.autism$restoreDownloader();
          ConnectionPrivacyRegistry.init(connection, this.manager);
-         ResourcePackSessionTracker.Inner_BufferHelper session = ResourcePackSessionTracker.init(context, this, this.manager, this::autism$recoverAfterDisconnect);
+         ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init(context, this, this.manager, this::autism$recoverAfterDisconnect);
          this.autism$installDownloader(session);
       }
    }
 
    @Unique
-   private void autism$installDownloader(ResourcePackSessionTracker.Inner_BufferHelper session) {
+   private void autism$installDownloader(ResourcePackSessionTracker.PackSession session) {
       AutismServerPackManagerAccessor accessor = (AutismServerPackManagerAccessor)(Object)this.manager;
       PackDownloader current = accessor.autism$downloader();
       if (session != this.autism$downloaderSession || current != this.autism$scopedDownloader) {
@@ -130,7 +130,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
 
    @Inject(method = "createPackResponseSender", at = @At("RETURN"), cancellable = true)
    private static void autism$scopePackResponses(Connection connection, CallbackInfoReturnable<PackLoadFeedback> cir) {
-      ResourcePackSessionTracker.Inner_BufferHelper session = ResourcePackSessionTracker.init_FileCache_BufferHe(ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection));
+      ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init_FileCache_BufferHe(ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection));
       if (session != null) {
          cir.setReturnValue(IsolatedPackDownloader.init(session, cir.getReturnValue()));
       }
@@ -138,10 +138,10 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
 
    @Inject(method = "waitForPackFeedback", at = @At("HEAD"), cancellable = true)
    private void autism$scopedPackWait(final UUID packId, CallbackInfoReturnable<CompletableFuture<Void>> cir) {
-      final ResourcePackSessionTracker.Inner_BufferHelper session = ResourcePackSessionTracker.init(this);
+      final ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init(this);
       final long generation = ResourcePackSessionTracker.init_J(session, packId);
-      ResourcePackSessionTracker.Inner_DataUtil policy = ResourcePackSessionTracker.init_FileCache_DataUtil(session, packId);
-      if (policy != null && policy != ResourcePackSessionTracker.Inner_DataUtil.FULL && ResourcePackSessionTracker.init_Z(session, packId, generation)) {
+      ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.init_FileCache_DataUtil(session, packId);
+      if (policy != null && policy != ResourcePackSessionTracker.PackPolicy.FULL && ResourcePackSessionTracker.init_Z(session, packId, generation)) {
          final CompletableFuture<Void> future = new CompletableFuture<>();
          @SuppressWarnings("unchecked")
          final java.util.function.BiConsumer<UUID, FinalResult>[] callbackRef = new java.util.function.BiConsumer[1];

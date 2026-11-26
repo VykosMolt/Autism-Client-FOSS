@@ -50,7 +50,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
    private List<PickItemScreen.Inner_DataUtil> read_List = List.of();
 
    private static int read() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public PickItemScreen(Screen parent, String selectedId, Consumer<String> onPick) {
@@ -102,7 +102,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
             autismclient.gui.ui.UiClipStack.init_HashUtil().init(graphics);
          }
 
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil(listX, listY, listW, listH);
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil(listX, listY, listW, listH);
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(graphics, metrics, metrics.init(mx, my), this.init_Z);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
@@ -180,7 +180,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
          return true;
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_7();
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil_7();
       if (metrics.init_Z() && metrics.init(mx, my)) {
          this.init_Z = true;
          this.tick = metrics.load(mx, my) ? my - metrics.update() : metrics.sync() / 2;
@@ -333,12 +333,12 @@ public final class PickItemScreen extends VirtualScaledScreen {
       return List.copyOf(out);
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_7() {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_7() {
       autismclient.gui.f.NetHelper list = this.init_NetHelper_5();
       return this.init_PoolEntry_DataUtil(list.read(), list.write(), list.update(), list.sync());
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil(int listX, int listY, int listW, int listH) {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil(int listX, int listY, int listW, int listH) {
       int viewH = Math.max(1, listH - 6);
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(this.close(), viewH, listX + listW - 6, listY + 1, 4, Math.max(1, listH - 2), this.pop);
    }

@@ -9,12 +9,12 @@ import net.minecraft.resources.ResourceKey;
 public final class RegistryCompatGuard {
    private static final int init_I = 64;
    private static final ThreadLocal<RegistryCompatGuard.Inner_DataUtil> init_ThreadLocal = new ThreadLocal<>();
-   private static final ThreadLocal<ConnectionPrivacyRegistry.Inner_StreamUtil> load = new ThreadLocal<>();
+   private static final ThreadLocal<ConnectionPrivacyRegistry.ConnectionSession> load = new ThreadLocal<>();
 
    private RegistryCompatGuard() {
    }
 
-   public static void init_V(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   public static void init_V(ConnectionPrivacyRegistry.ConnectionSession context) {
       load.set(context);
    }
 
@@ -22,8 +22,8 @@ public final class RegistryCompatGuard {
       load.remove();
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init_BufferHelper_Strea() {
-      ConnectionPrivacyRegistry.Inner_StreamUtil context = load.get();
+   public static ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea() {
+      ConnectionPrivacyRegistry.ConnectionSession context = load.get();
       if (context == null || context.read()) {
          return null;
       }
@@ -36,7 +36,7 @@ public final class RegistryCompatGuard {
       return null;
    }
 
-   public static void load(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   public static void load(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (init_Z(context)) {
          RegistryCompatGuard.Inner_DataUtil state = init_ThreadLocal.get();
          if (state == null) {
@@ -48,11 +48,11 @@ public final class RegistryCompatGuard {
       }
    }
 
-   private static boolean init_Z(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   private static boolean init_Z(ConnectionPrivacyRegistry.ConnectionSession context) {
       return context != null
          && !context.read()
          && ConnectionPrivacyRegistry.init_Z(context)
-         && (context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.MODDED || autismclient.compat.via.ViaFabricPlusBridge.init_Z(context.init_Connection()));
+         && (context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED || autismclient.compat.via.ViaFabricPlusBridge.init_Z(context.init_Connection()));
    }
 
    public static void load() {

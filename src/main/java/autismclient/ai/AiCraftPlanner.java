@@ -18,28 +18,28 @@ public final class AiCraftPlanner {
    private AiCraftPlanner() {
    }
 
-   public static AiCraftPlanner.Inner_CachePool init(AiCraftPlanner.Inner_StreamUtil graph, String itemId, int quantity) {
+   public static AiCraftPlanner.CraftPlan init(AiCraftPlanner.RecipeGraph graph, String itemId, int quantity) {
       int held = Math.max(0, graph.init_I(itemId));
       if (quantity > 0 && held < quantity) {
-         AiCraftPlanner.Inner_ConfigStore state = new AiCraftPlanner.Inner_ConfigStore(graph);
+         AiCraftPlanner.StockLedger state = new AiCraftPlanner.StockLedger(graph);
          state.init_Map.put(itemId, held);
-         List<AiCraftPlanner.Inner_TaskQueue> steps = new ArrayList<>();
+         List<AiCraftPlanner.CraftStep> steps = new ArrayList<>();
          Map<String, Integer> missing = new LinkedHashMap<>();
          state.init(itemId, quantity, steps, missing, new HashSet<>(), 0);
-         return new AiCraftPlanner.Inner_CachePool(init_List(steps), missing, held, quantity);
+         return new AiCraftPlanner.CraftPlan(init_List(steps), missing, held, quantity);
       } else {
-         return new AiCraftPlanner.Inner_CachePool(List.of(), Map.of(), held, quantity);
+         return new AiCraftPlanner.CraftPlan(List.of(), Map.of(), held, quantity);
       }
    }
 
-   static List<AiCraftPlanner.Inner_TaskQueue> init_List(List<AiCraftPlanner.Inner_TaskQueue> steps) {
-      List<AiCraftPlanner.Inner_TaskQueue> out = new ArrayList<>();
+   static List<AiCraftPlanner.CraftStep> init_List(List<AiCraftPlanner.CraftStep> steps) {
+      List<AiCraftPlanner.CraftStep> out = new ArrayList<>();
 
-      for (AiCraftPlanner.Inner_TaskQueue step : steps) {
+      for (AiCraftPlanner.CraftStep step : steps) {
          int at = -1;
 
          for (int j = out.size() - 1; j >= 0; j--) {
-            AiCraftPlanner.Inner_TaskQueue earlier = out.get(j);
+            AiCraftPlanner.CraftStep earlier = out.get(j);
             if (earlier.recipe().key().equals(step.recipe().key())) {
                at = j;
                break;
@@ -53,14 +53,14 @@ public final class AiCraftPlanner {
          if (at < 0) {
             out.add(step);
          } else {
-            out.set(at, new AiCraftPlanner.Inner_TaskQueue(out.get(at).recipe(), out.get(at).crafts() + step.crafts()));
+            out.set(at, new AiCraftPlanner.CraftStep(out.get(at).recipe(), out.get(at).crafts() + step.crafts()));
          }
       }
 
       return out;
    }
 
-   private static boolean init(AiCraftPlanner.Inner_BufferHelper recipe, String itemId) {
+   private static boolean init(AiCraftPlanner.RecipeSpec recipe, String itemId) {
       for (List<String> slot : recipe.inputs()) {
          if (slot.contains(itemId)) {
             return true;
@@ -70,17 +70,17 @@ public final class AiCraftPlanner {
       return false;
    }
 
-   private static int init_I(List<AiCraftPlanner.Inner_TaskQueue> steps) {
+   private static int init_I(List<AiCraftPlanner.CraftStep> steps) {
       int cost = 0;
 
-      for (AiCraftPlanner.Inner_TaskQueue step : init_List(steps)) {
+      for (AiCraftPlanner.CraftStep step : init_List(steps)) {
          cost += 10 + step.crafts() + (step.recipe().stonecutting() ? 20 : 0);
       }
 
       return cost;
    }
 
-   private static Map<List<String>, Integer> init(AiCraftPlanner.Inner_BufferHelper recipe) {
+   private static Map<List<String>, Integer> init(AiCraftPlanner.RecipeSpec recipe) {
       Map<List<String>, Integer> grouped = new LinkedHashMap<>();
 
       for (List<String> slot : recipe.inputs()) {
@@ -90,18 +90,18 @@ public final class AiCraftPlanner {
       return grouped;
    }
 
-   private static List<AiCraftPlanner.Inner_BufferHelper> load(List<AiCraftPlanner.Inner_BufferHelper> recipes) {
-      List<AiCraftPlanner.Inner_BufferHelper> copy = new ArrayList<>(recipes);
-      copy.sort(Comparator.<AiCraftPlanner.Inner_BufferHelper>comparingInt(recipe -> init(recipe).size()).thenComparingInt(recipe -> recipe.inputs().size()));
+   private static List<AiCraftPlanner.RecipeSpec> load(List<AiCraftPlanner.RecipeSpec> recipes) {
+      List<AiCraftPlanner.RecipeSpec> copy = new ArrayList<>(recipes);
+      copy.sort(Comparator.<AiCraftPlanner.RecipeSpec>comparingInt(recipe -> init(recipe).size()).thenComparingInt(recipe -> recipe.inputs().size()));
       return copy;
    }
 
-   public record Inner_BufferHelper(String key, String output, int outputCount, boolean requiresTable, List<List<String>> inputs, String station) {
-      public Inner_BufferHelper(String key, String output, int outputCount, boolean requiresTable, List<List<String>> inputs) {
+   public record RecipeSpec(String key, String output, int outputCount, boolean requiresTable, List<List<String>> inputs, String station) {
+      public RecipeSpec(String key, String output, int outputCount, boolean requiresTable, List<List<String>> inputs) {
          this(key, output, outputCount, requiresTable, inputs, "");
       }
 
-      public Inner_BufferHelper {
+      public RecipeSpec {
          inputs = List.copyOf(inputs);
          station = station == null ? "" : station;
       }
@@ -111,8 +111,8 @@ public final class AiCraftPlanner {
       }
    }
 
-   public record Inner_CachePool(List<AiCraftPlanner.Inner_TaskQueue> steps, Map<String, Integer> missing, int alreadyHeld, int target) {
-      public Inner_CachePool {
+   public record CraftPlan(List<AiCraftPlanner.CraftStep> steps, Map<String, Integer> missing, int alreadyHeld, int target) {
+      public CraftPlan {
          steps = List.copyOf(steps);
          missing = Map.copyOf(missing);
       }
@@ -126,7 +126,7 @@ public final class AiCraftPlanner {
       }
 
       public boolean requiresTable() {
-         for (AiCraftPlanner.Inner_TaskQueue step : this.steps) {
+         for (AiCraftPlanner.CraftStep step : this.steps) {
             if (step.recipe().requiresTable()) {
                return true;
             }
@@ -136,11 +136,11 @@ public final class AiCraftPlanner {
       }
    }
 
-   private static final class Inner_ConfigStore {
-      private final AiCraftPlanner.Inner_StreamUtil init_g_StreamUtil;
+   private static final class StockLedger {
+      private final AiCraftPlanner.RecipeGraph init_g_StreamUtil;
       private final Map<String, Integer> init_Map = new HashMap<>();
 
-      Inner_ConfigStore(AiCraftPlanner.Inner_StreamUtil graph) {
+      StockLedger(AiCraftPlanner.RecipeGraph graph) {
          this.init_g_StreamUtil = graph;
       }
 
@@ -156,7 +156,7 @@ public final class AiCraftPlanner {
          this.init_Map.put(itemId, this.init_I(itemId) + amount);
       }
 
-      int init(String itemId, int need, List<AiCraftPlanner.Inner_TaskQueue> steps, Map<String, Integer> missing, Set<String> active, int depth) {
+      int init(String itemId, int need, List<AiCraftPlanner.CraftStep> steps, Map<String, Integer> missing, Set<String> active, int depth) {
          if (need <= 0) {
             return 0;
          }
@@ -172,21 +172,21 @@ public final class AiCraftPlanner {
          }
 
          if (depth < 8 && steps.size() < 256 && active.add(itemId)) {
-            AiCraftPlanner.Inner_DataUtil best = null;
-            AiCraftPlanner.Inner_DataUtil complete = null;
+            AiCraftPlanner.PlanBranch best = null;
+            AiCraftPlanner.PlanBranch complete = null;
 
             try {
-               for (AiCraftPlanner.Inner_BufferHelper recipe : AiCraftPlanner.load(this.init_g_StreamUtil.init_List(itemId))) {
+               for (AiCraftPlanner.RecipeSpec recipe : AiCraftPlanner.load(this.init_g_StreamUtil.init_List(itemId))) {
                   int perCraft = Math.max(1, recipe.outputCount());
                   int crafts = (need + perCraft - 1) / perCraft;
-                  List<AiCraftPlanner.Inner_TaskQueue> attemptSteps = new ArrayList<>();
+                  List<AiCraftPlanner.CraftStep> attemptSteps = new ArrayList<>();
                   Map<String, Integer> attemptMissing = new LinkedHashMap<>();
                   Map<String, Integer> snapshot = new HashMap<>(this.init_Map);
                   int shortfall = this.init(recipe, crafts, attemptSteps, attemptMissing, active, depth);
                   if (shortfall == 0) {
-                     attemptSteps.add(new AiCraftPlanner.Inner_TaskQueue(recipe, crafts));
+                     attemptSteps.add(new AiCraftPlanner.CraftStep(recipe, crafts));
                      this.load(itemId, crafts * perCraft - need);
-                     AiCraftPlanner.Inner_DataUtil candidate = new AiCraftPlanner.Inner_DataUtil(0, attemptSteps, Map.of(), new HashMap<>(this.init_Map));
+                     AiCraftPlanner.PlanBranch candidate = new AiCraftPlanner.PlanBranch(0, attemptSteps, Map.of(), new HashMap<>(this.init_Map));
                      if (complete == null || AiCraftPlanner.init_I(candidate.steps()) < AiCraftPlanner.init_I(complete.steps())) {
                         complete = candidate;
                      }
@@ -207,7 +207,7 @@ public final class AiCraftPlanner {
                               || shortfall < best.shortfall()
                               || shortfall == best.shortfall() && this.init(attemptMissing) < this.init(best.missing())
                         )) {
-                        best = new AiCraftPlanner.Inner_DataUtil(shortfall, attemptSteps, attemptMissing, new HashMap<>(this.init_Map));
+                        best = new AiCraftPlanner.PlanBranch(shortfall, attemptSteps, attemptMissing, new HashMap<>(this.init_Map));
                      }
 
                      this.init_Map.clear();
@@ -249,7 +249,7 @@ public final class AiCraftPlanner {
          return cost;
       }
 
-      private int init(AiCraftPlanner.Inner_BufferHelper recipe, int crafts, List<AiCraftPlanner.Inner_TaskQueue> steps, Map<String, Integer> missing, Set<String> active, int depth) {
+      private int init(AiCraftPlanner.RecipeSpec recipe, int crafts, List<AiCraftPlanner.CraftStep> steps, Map<String, Integer> missing, Set<String> active, int depth) {
          int shortfall = 0;
          Iterator var8 = AiCraftPlanner.init(recipe).entrySet().iterator();
 
@@ -384,7 +384,7 @@ public final class AiCraftPlanner {
       }
 
       private boolean init_Z(String itemId) {
-         for (AiCraftPlanner.Inner_BufferHelper recipe : this.init_g_StreamUtil.init_List(itemId)) {
+         for (AiCraftPlanner.RecipeSpec recipe : this.init_g_StreamUtil.init_List(itemId)) {
             boolean covered = !recipe.inputs().isEmpty();
 
             for (List<String> slot : recipe.inputs()) {
@@ -412,11 +412,11 @@ public final class AiCraftPlanner {
       }
    }
 
-   private record Inner_DataUtil(int shortfall, List<AiCraftPlanner.Inner_TaskQueue> steps, Map<String, Integer> missing, Map<String, Integer> stock) {
+   private record PlanBranch(int shortfall, List<AiCraftPlanner.CraftStep> steps, Map<String, Integer> missing, Map<String, Integer> stock) {
    }
 
-   public interface Inner_StreamUtil {
-      List<AiCraftPlanner.Inner_BufferHelper> init_List(String var1);
+   public interface RecipeGraph {
+      List<AiCraftPlanner.RecipeSpec> init_List(String var1);
 
       int init_I(String var1);
 
@@ -437,7 +437,7 @@ public final class AiCraftPlanner {
       }
    }
 
-   public record Inner_TaskQueue(AiCraftPlanner.Inner_BufferHelper recipe, int crafts) {
+   public record CraftStep(AiCraftPlanner.RecipeSpec recipe, int crafts) {
       public int produced() {
          return this.crafts * Math.max(1, this.recipe.outputCount());
       }

@@ -25,7 +25,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements PacketOrigi
    @Unique
    private boolean autism$fromPacket;
    @Unique
-   private ConnectionPrivacyRegistry.Inner_StreamUtil autism$packetOrigin;
+   private ConnectionPrivacyRegistry.ConnectionSession autism$packetOrigin;
    @Unique
    private Component autism$displaySource;
    @Unique
@@ -37,7 +37,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements PacketOrigi
    }
 
    @Override
-   public void autism$setFromPacket(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   public void autism$setFromPacket(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (!this.autism$fromPacket) {
          this.autism$packetOrigin = context;
       }
@@ -46,7 +46,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements PacketOrigi
    }
 
    @Override
-   public ConnectionPrivacyRegistry.Inner_StreamUtil autism$packetOrigin() {
+   public ConnectionPrivacyRegistry.ConnectionSession autism$packetOrigin() {
       return this.autism$packetOrigin;
    }
 
@@ -58,7 +58,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements PacketOrigi
    @WrapOperation(method = "getNestedComponent", at = @At(value = "INVOKE", target = "Ljava/util/function/Supplier;get()Ljava/lang/Object;"))
    private Object autism$tagResolvedKeybind(Supplier<?> supplier, Operation<Object> original) {
       if (this.autism$fromPacket
-         && (this.autism$packetOrigin == null || this.autism$packetOrigin.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.VANILLA)
+         && (this.autism$packetOrigin == null || this.autism$packetOrigin.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA)
          && !ModNamespaceCatalog.init_Z(this.name)) {
          Component replacement = Component.translatable(this.name);
          PacketComponentOriginTracker.init(replacement, this.autism$packetOrigin);

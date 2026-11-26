@@ -54,7 +54,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
    @Inject(method = "handleResourcePackPush", at = @At("HEAD"), cancellable = true)
    private void yang$onResourcePackSend(ClientboundResourcePackPushPacket packet, CallbackInfo ci) {
       if (!aD.read_Z() && this.minecraft.isSameThread()) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(this.connection);
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(this.connection);
          if (context != null) {
             AutismSessionState shared = AutismSessionState.init_ck();
             ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
@@ -67,15 +67,15 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
                serializedBypass = false;
             }
 
-            autismclient.protector.ResourcePackSessionTracker.Inner_DataUtil selectedPolicy = ResourcePackPushValidator.init(context.init_BufferHelper_Cache(), sharedBypass, serializedBypass);
+            autismclient.protector.ResourcePackSessionTracker.PackPolicy selectedPolicy = ResourcePackPushValidator.init(context.init_BufferHelper_Cache(), sharedBypass, serializedBypass);
             ResourcePackPushValidator.Inner_StreamUtil verdict = ResourcePackPushValidator.init(packet, forceDeny, selectedPolicy != null);
             if (verdict.init_RefQueue_DataUtil() != ResourcePackPushValidator.Inner_DataUtil.PASS) {
                if (verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.INVALID_URL) {
                   this.send(new ServerboundResourcePackPacket(packet.id(), Action.INVALID_URL));
                   ci.cancel();
                } else if (verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.BYPASS_SUCCESS || verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.DECLINE) {
-                  autismclient.protector.ResourcePackSessionTracker.Inner_DataUtil policy = verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.DECLINE
-                     ? autismclient.protector.ResourcePackSessionTracker.Inner_DataUtil.DECLINE
+                  autismclient.protector.ResourcePackSessionTracker.PackPolicy policy = verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.DECLINE
+                     ? autismclient.protector.ResourcePackSessionTracker.PackPolicy.DECLINE
                      : selectedPolicy;
 
                   URL url;

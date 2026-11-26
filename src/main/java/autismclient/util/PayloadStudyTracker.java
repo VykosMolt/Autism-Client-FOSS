@@ -121,7 +121,7 @@ public final class PayloadStudyTracker {
       PacketCaptureState.write();
    }
 
-   public static synchronized boolean init_Z(AutismPayloadSupport.Inner_StreamUtil snapshot) {
+   public static synchronized boolean init_Z(AutismPayloadSupport.PayloadEntry snapshot) {
       if (init_Z && snapshot != null) {
          String channel = PayloadRegistrationManager.init_Str_Str(snapshot.load_Str());
          if (channel.isBlank()) {
@@ -252,7 +252,7 @@ public final class PayloadStudyTracker {
       return learned;
    }
 
-   private static String init_Str(AutismPayloadSupport.Inner_StreamUtil snapshot) {
+   private static String init_Str(AutismPayloadSupport.PayloadEntry snapshot) {
       byte[] bytes = snapshot.init_BArr();
       return (snapshot.init_Str() == null ? "" : snapshot.init_Str())
          + "|"

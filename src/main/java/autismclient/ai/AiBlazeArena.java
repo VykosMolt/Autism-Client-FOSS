@@ -230,11 +230,11 @@ final class AiBlazeArena implements AiOperation {
                   false,
                   false,
                   3,
-                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                  autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                   false,
                   0.0,
                   null,
-                  new AiGoto.Inner_BufferHelper(false, false, 1, true, false, false)
+                  new AiGoto.GotoOptions(false, false, 1, true, false, false)
                );
             }
 
@@ -292,9 +292,9 @@ final class AiBlazeArena implements AiOperation {
                this.init_Z = true;
             }
 
-            autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-            if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.WORKING) {
-               if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+            autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+            if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.WORKING) {
+               if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                   this.update++;
                } else {
                   this.sync++;
@@ -308,7 +308,7 @@ final class AiBlazeArena implements AiOperation {
                         "result",
                         status,
                         "reason",
-                        status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED ? this.init_DataPipe.init_Str() : "server block change confirmed",
+                        status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED ? this.init_DataPipe.init_Str() : "server block change confirmed",
                         "body",
                         this.init_Minecraft.player.position().toString(),
                         "eyeY",

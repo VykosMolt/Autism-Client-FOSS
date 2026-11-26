@@ -51,7 +51,7 @@ public final class ProfilesLibraryView {
    private boolean write_Z;
    private int read_I;
    private int write_I;
-   private ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil;
+   private ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil;
    private boolean update_Z;
    private int update_I;
    private int sync;
@@ -195,7 +195,7 @@ public final class ProfilesLibraryView {
 
       if (maxScroll > 0) {
          int gutter = 6;
-         ScrollbarMetricsHelper.Inner_DataUtil metrics = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+         ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
             contentH,
             this.load_NetHelper.sync(),
             this.load_NetHelper.init() - gutter,

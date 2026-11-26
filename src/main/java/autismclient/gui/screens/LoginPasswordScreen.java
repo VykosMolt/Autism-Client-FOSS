@@ -233,17 +233,17 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
 
       try {
          autismclient.gui.f.PacketUtil.init(
-            graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), ThemePaletteManager.init_I_I_ct_DataUtil(-15987181, ThemePaletteManager.Inner_DataUtil.BACKDROP)
+            graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), ThemePaletteManager.init_I_I_ct_DataUtil(-15987181, ThemePaletteManager.ColorRole.BACKDROP)
          );
          LoginPasswordScreen.Layout l = this.computeLayout();
-         int border = ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.update, ThemePaletteManager.Inner_DataUtil.OUTLINE);
-         int textColor = ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.flush, ThemePaletteManager.Inner_DataUtil.TEXT);
-         int muted = ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.close, ThemePaletteManager.Inner_DataUtil.TEXT);
+         int border = ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.update, ThemePaletteManager.ColorRole.OUTLINE);
+         int textColor = ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.flush, ThemePaletteManager.ColorRole.TEXT);
+         int muted = ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.close, ThemePaletteManager.ColorRole.TEXT);
          autismclient.gui.f.PacketUtil.load(
             graphics,
             autismclient.gui.f.NetHelper.init(l.x(), l.y(), l.w(), l.h()),
             5,
-            ThemePaletteManager.init_I_I_ct_DataUtil(-401402080, ThemePaletteManager.Inner_DataUtil.BUTTON),
+            ThemePaletteManager.init_I_I_ct_DataUtil(-401402080, ThemePaletteManager.ColorRole.BUTTON),
             border
          );
          int titleY = this.init_I_I_I_10(l.y() + 6, this.write_I_14());

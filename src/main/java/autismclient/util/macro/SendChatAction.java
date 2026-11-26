@@ -49,7 +49,7 @@ public class SendChatAction implements MacroAction, GuiWaitAware {
    @Override
    public void execute(Minecraft mc) {
       if (!autismclient.modules.aD.read_Z() && this.message != null && !this.message.isEmpty() && mc.getConnection() != null) {
-         MacroTemplateResolver.Inner_CachePool resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.message, mc);
+         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.message, mc);
          if (MacroVariableContext.init_Z_Str_j_CachePoolArr("Send chat", resolution)) {
             String resolved = resolution.init_Str();
             if (resolved.startsWith("/") && resolved.length() > 1) {

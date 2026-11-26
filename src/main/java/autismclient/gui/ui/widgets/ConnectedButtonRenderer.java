@@ -31,13 +31,13 @@ public final class ConnectedButtonRenderer {
       int var10000;
       switch (tone) {
          case read:
-            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-870181350, ThemePaletteManager.Inner_DataUtil.BUTTON);
+            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-870181350, ThemePaletteManager.ColorRole.BUTTON);
             break;
          case write:
-            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-871354339, ThemePaletteManager.Inner_DataUtil.SUCCESS);
+            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-871354339, ThemePaletteManager.ColorRole.SUCCESS);
             break;
          case update:
-            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-868936937, ThemePaletteManager.Inner_DataUtil.DANGER);
+            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-868936937, ThemePaletteManager.ColorRole.DANGER);
             break;
          case init:
          case load:
@@ -100,7 +100,7 @@ public final class ConnectedButtonRenderer {
          int iconX = bounds.read() + Math.max(3, (pill.read() - 4 - bounds.read() - groupW) / 2);
          int iconY = bounds.write() + Math.max(1, (bounds.sync() - iconSize) / 2);
          context.init_GuiGraphicsExtract()
-            .blit(ThemeTextureRecolorer.init(icon, ThemePaletteManager.Inner_DataUtil.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
+            .blit(ThemeTextureRecolorer.init(icon, ThemePaletteManager.ColorRole.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
          context.init_PoolEntry()
             .load(
                context.init_GuiGraphicsExtract(),
@@ -209,7 +209,7 @@ public final class ConnectedButtonRenderer {
          int iconX = bounds.read() + 5;
          int iconY = bounds.write() + Math.max(1, (bounds.sync() - iconSize) / 2);
          context.init_GuiGraphicsExtract()
-            .blit(ThemeTextureRecolorer.init(icon, ThemePaletteManager.Inner_DataUtil.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
+            .blit(ThemeTextureRecolorer.init(icon, ThemePaletteManager.ColorRole.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
          int textX = iconX + iconSize + 4;
          context.init_PoolEntry()
             .load(context.init_GuiGraphicsExtract(), label, textX, context.init_PoolEntry().init_I(bounds), Math.max(1, bounds.init() - textX - 4), color);

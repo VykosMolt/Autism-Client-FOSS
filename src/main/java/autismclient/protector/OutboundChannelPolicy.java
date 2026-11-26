@@ -16,7 +16,7 @@ import net.minecraft.network.protocol.login.ServerboundCustomQueryAnswerPacket;
 public final class OutboundChannelPolicy {
    private static final int init_I = 256;
    private static final int load_I = 1024;
-   private static final Map<ConnectionPrivacyRegistry.Inner_StreamUtil, Set<ServerboundCustomQueryAnswerPacket>> init_Map = new IdentityHashMap<>();
+   private static final Map<ConnectionPrivacyRegistry.ConnectionSession, Set<ServerboundCustomQueryAnswerPacket>> init_Map = new IdentityHashMap<>();
    private static final OutboundChannelPolicy.Inner_DataUtil init_ConfigStore_DataUt = new OutboundChannelPolicy.Inner_DataUtil(
       OutboundChannelPolicy.Inner_DataUtil.Inner_DataUtil_2.PASS, null
    );
@@ -31,7 +31,7 @@ public final class OutboundChannelPolicy {
       if (!(packet instanceof ServerboundCustomPayloadPacket) && !(packet instanceof ServerboundCustomQueryAnswerPacket)) {
          return init_ConfigStore_DataUt;
       } else {
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
          if (context == null) {
             return load_ConfigStore_DataUt;
          } else if (context.read()) {
@@ -54,14 +54,14 @@ public final class OutboundChannelPolicy {
       return init_Z(ConnectionPrivacyRegistry.init(listener));
    }
 
-   private static boolean init_Z(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
-      return context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.MODDED;
+   private static boolean init_Z(ConnectionPrivacyRegistry.ConnectionSession context) {
+      return context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED;
    }
 
    public static void init(Connection connection, ServerboundCustomQueryAnswerPacket answer) {
       if (connection != null && answer != null) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
-         if (context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.VANILLA) {
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
+         if (context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA) {
             try {
                if (answer.payload() != null) {
                   return;
@@ -95,7 +95,7 @@ public final class OutboundChannelPolicy {
       }
    }
 
-   public static void init_V(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   public static void init_V(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context != null) {
          synchronized (init_Map) {
             init_Map.remove(context);
@@ -115,7 +115,7 @@ public final class OutboundChannelPolicy {
       }
    }
 
-   private static OutboundChannelPolicy.Inner_DataUtil init(Connection connection, ConnectionPrivacyRegistry.Inner_StreamUtil context, ServerboundCustomPayloadPacket packet) {
+   private static OutboundChannelPolicy.Inner_DataUtil init(Connection connection, ConnectionPrivacyRegistry.ConnectionSession context, ServerboundCustomPayloadPacket packet) {
       CustomPacketPayload payload;
       try {
          payload = packet.payload();
@@ -123,7 +123,7 @@ public final class OutboundChannelPolicy {
          return load_ConfigStore_DataUt;
       }
 
-      if (context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.VANILLA) {
+      if (context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA) {
          return payload instanceof BrandPayload ? init(new ServerboundCustomPayloadPacket(new BrandPayload("vanilla"))) : load_ConfigStore_DataUt;
       }
 
@@ -146,8 +146,8 @@ public final class OutboundChannelPolicy {
       return var10000;
    }
 
-   private static OutboundChannelPolicy.Inner_DataUtil init(ConnectionPrivacyRegistry.Inner_StreamUtil context, ServerboundCustomQueryAnswerPacket answer) {
-      if (context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.MODDED) {
+   private static OutboundChannelPolicy.Inner_DataUtil init(ConnectionPrivacyRegistry.ConnectionSession context, ServerboundCustomQueryAnswerPacket answer) {
+      if (context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED) {
          return init_ConfigStore_DataUt;
       }
 

@@ -25,7 +25,7 @@ public final class AiPlacementContext extends BlockPlaceContext {
    private final float read;
    private final boolean init_Z;
 
-   static boolean init(Item item, PlacementGoal.Inner_DataUtil constraint, BlockPos target, Function<BlockPos, BlockState> states) {
+   static boolean init(Item item, PlacementGoal.PlaceConstraint constraint, BlockPos target, Function<BlockPos, BlockState> states) {
       if (constraint == null) {
          return false;
       }

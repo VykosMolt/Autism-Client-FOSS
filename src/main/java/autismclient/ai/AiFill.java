@@ -210,10 +210,10 @@ final class AiFill {
          int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
          Minecraft mc = Minecraft.getInstance();
          String blockId = BuiltInRegistries.BLOCK.getKey(block).toString();
-         List<AiBuilder.Inner_StreamUtil> cells = new ArrayList<>();
+         List<AiBuilder.CellSpec> cells = new ArrayList<>();
 
          for (BlockPos pos : init(box, shape, axis)) {
-            AiBuilder.Inner_StreamUtil cell = new AiBuilder.Inner_StreamUtil(
+            AiBuilder.CellSpec cell = new AiBuilder.CellSpec(
                pos.getX() - box.minX(), pos.getY() - box.minY(), pos.getZ() - box.minZ(), blockId, properties
             );
             if (!AiBuilder.write(cell, mc.level.getBlockState(pos))) {
@@ -221,7 +221,7 @@ final class AiFill {
             }
          }
 
-         AiBuilder.Inner_DataUtil blueprint = new AiBuilder.Inner_DataUtil(new BlockPos(box.minX(), box.minY(), box.minZ()), cells);
+         AiBuilder.Blueprint blueprint = new AiBuilder.Blueprint(new BlockPos(box.minX(), box.minY(), box.minZ()), cells);
          JsonObject missing = AiBuilder.init(blueprint, mc.player.getInventory());
          return missing.size() > 0
             ? AiGameOperations.init(
@@ -245,7 +245,7 @@ final class AiFill {
          }
 
          String name = AiClipboard.init_Str(AiJson.init_Str_JsonObject(args, "name", ""));
-         List<AiBuilder.Inner_StreamUtil> cells = init(box, Minecraft.getInstance().level);
+         List<AiBuilder.CellSpec> cells = init(box, Minecraft.getInstance().level);
          AiClipboard.init(name, List.copyOf(cells));
          return AiGameOperations.init_AiOperation(
             AiOperation.Status.SUCCEEDED,
@@ -257,8 +257,8 @@ final class AiFill {
       }
    }
 
-   private static List<AiBuilder.Inner_StreamUtil> init(AiFill.Inner_DataUtil box, ClientLevel level) {
-      List<AiBuilder.Inner_StreamUtil> cells = new ArrayList<>();
+   private static List<AiBuilder.CellSpec> init(AiFill.Inner_DataUtil box, ClientLevel level) {
+      List<AiBuilder.CellSpec> cells = new ArrayList<>();
       int unloaded = 0;
 
       for (int y = box.minY(); y <= box.maxY(); y++) {
@@ -276,7 +276,7 @@ final class AiFill {
                   }
 
                   cells.add(
-                     new AiBuilder.Inner_StreamUtil(
+                     new AiBuilder.CellSpec(
                         x - box.minX(), y - box.minY(), z - box.minZ(), BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString(), Map.copyOf(properties)
                      )
                   );
@@ -296,8 +296,8 @@ final class AiFill {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          String name = AiClipboard.init_Str(AiJson.init_Str_JsonObject(args, "name", ""));
-         List<AiBuilder.Inner_StreamUtil> stored = AiClipboard.init_List(name);
-         AiBuilder.Inner_ConfigStore power = AiBuilder.init_TableIndex_ConfigS(args);
+         List<AiBuilder.CellSpec> stored = AiClipboard.init_List(name);
+         AiBuilder.BuildOptions power = AiBuilder.init_TableIndex_ConfigS(args);
          if (power.repeat() == null && !power.layers() && power.substitutes().isEmpty()) {
             boolean air = AiJson.init_Z_JsonObject(args, "air", false);
             Minecraft mc = Minecraft.getInstance();
@@ -306,11 +306,11 @@ final class AiFill {
                origin = AiGameOperations.init_BlockPos(args);
             }
 
-            List<AiBuilder.Inner_StreamUtil> transformed = AiBuilder.init(AiBuilder.init_List_List_2(stored, power.rotation(), power.mirror()), 4096);
-            List<AiBuilder.Inner_StreamUtil> place = new ArrayList<>();
+            List<AiBuilder.CellSpec> transformed = AiBuilder.init(AiBuilder.init_List_List_2(stored, power.rotation(), power.mirror()), 4096);
+            List<AiBuilder.CellSpec> place = new ArrayList<>();
             List<BlockPos> clearCells = new ArrayList<>();
 
-            for (AiBuilder.Inner_StreamUtil cell : transformed) {
+            for (AiBuilder.CellSpec cell : transformed) {
                boolean airCell = cell.block().equals("minecraft:air") || cell.block().equals("minecraft:cave_air") || cell.block().equals("minecraft:void_air");
                if (!airCell) {
                   place.add(cell);
@@ -322,7 +322,7 @@ final class AiFill {
                }
             }
 
-            AiBuilder.Inner_DataUtil blueprint = new AiBuilder.Inner_DataUtil(origin, List.copyOf(place));
+            AiBuilder.Blueprint blueprint = new AiBuilder.Blueprint(origin, List.copyOf(place));
             JsonObject missing = AiBuilder.init(blueprint, mc.player.getInventory());
             if (missing.size() > 0) {
                return AiGameOperations.init(
@@ -472,7 +472,7 @@ final class AiFill {
       return new AiFill.Inner_StreamUtil(new AiFill.Inner_DataUtil(minX, lo, minZ, maxX, hi, maxZ), clamped);
    }
 
-   static AiFill.Inner_CachePool init(List<AiBuilder.Inner_StreamUtil> cells, String action, int[] step, int amount, int maxCells) {
+   static AiFill.Inner_CachePool init(List<AiBuilder.CellSpec> cells, String action, int[] step, int amount, int maxCells) {
       int minX = 2147483647;
       int minY = 2147483647;
       int minZ = 2147483647;
@@ -480,7 +480,7 @@ final class AiFill {
       int maxY = -2147483648;
       int maxZ = -2147483648;
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          minX = Math.min(minX, cell.dx());
          maxX = Math.max(maxX, cell.dx());
          minY = Math.min(minY, cell.dy());
@@ -493,16 +493,16 @@ final class AiFill {
          throw new IllegalArgumentException("The clipboard is empty; nothing to transform");
       }
 
-      List<AiBuilder.Inner_StreamUtil> out = new ArrayList<>(cells);
+      List<AiBuilder.CellSpec> out = new ArrayList<>(cells);
       boolean clamped = false;
       if (action.equals("expand")) {
-         List<AiBuilder.Inner_StreamUtil> grown = new ArrayList<>();
+         List<AiBuilder.CellSpec> grown = new ArrayList<>();
 
-         for (AiBuilder.Inner_StreamUtil cell : cells) {
+         for (AiBuilder.CellSpec cell : cells) {
             if (init(cell, step, minX, minY, minZ, maxX, maxY, maxZ)) {
                for (int i = 1; i <= amount; i++) {
                   grown.add(
-                     new AiBuilder.Inner_StreamUtil(cell.dx() + step[0] * i, cell.dy() + step[1] * i, cell.dz() + step[2] * i, cell.block(), cell.properties())
+                     new AiBuilder.CellSpec(cell.dx() + step[0] * i, cell.dy() + step[1] * i, cell.dz() + step[2] * i, cell.block(), cell.properties())
                   );
                }
             }
@@ -530,7 +530,7 @@ final class AiFill {
       return new AiFill.Inner_CachePool(AiBuilder.init(out, maxCells), clamped);
    }
 
-   private static boolean init(AiBuilder.Inner_StreamUtil cell, int[] step, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+   private static boolean init(AiBuilder.CellSpec cell, int[] step, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
       if (step[0] > 0) {
          return cell.dx() == maxX;
       } else if (step[0] < 0) {
@@ -546,7 +546,7 @@ final class AiFill {
       }
    }
 
-   private static boolean init(AiBuilder.Inner_StreamUtil cell, int[] step, int layers, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+   private static boolean init(AiBuilder.CellSpec cell, int[] step, int layers, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
       if (step[0] > 0) {
          return cell.dx() > maxX - layers;
       } else if (step[0] < 0) {
@@ -562,7 +562,7 @@ final class AiFill {
       }
    }
 
-   private static int[] init(List<AiBuilder.Inner_StreamUtil> cells) {
+   private static int[] init(List<AiBuilder.CellSpec> cells) {
       int minX = 0;
       int minY = 0;
       int minZ = 0;
@@ -571,7 +571,7 @@ final class AiFill {
       int maxZ = 0;
       boolean first = true;
 
-      for (AiBuilder.Inner_StreamUtil cell : cells) {
+      for (AiBuilder.CellSpec cell : cells) {
          if (first) {
             minX = maxX = cell.dx();
             minY = maxY = cell.dy();
@@ -666,7 +666,7 @@ final class AiFill {
                }
 
                String name = AiClipboard.init_Str(store);
-               List<AiBuilder.Inner_StreamUtil> cells = init(out, client.level);
+               List<AiBuilder.CellSpec> cells = init(out, client.level);
                AiClipboard.init(name, List.copyOf(cells));
                data.addProperty("name", name);
                data.addProperty("cells", cells.size());
@@ -734,12 +734,12 @@ final class AiFill {
          int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
          Minecraft mc = Minecraft.getInstance();
          String toId = BuiltInRegistries.BLOCK.getKey(to).toString();
-         List<AiBuilder.Inner_StreamUtil> cells = new ArrayList<>();
+         List<AiBuilder.CellSpec> cells = new ArrayList<>();
          List<BlockPos> digCells = new ArrayList<>();
 
          for (BlockPos pos : init(box, false)) {
             BlockState live = mc.level.getBlockState(pos);
-            AiBuilder.Inner_StreamUtil cell = new AiBuilder.Inner_StreamUtil(
+            AiBuilder.CellSpec cell = new AiBuilder.CellSpec(
                pos.getX() - box.minX(), pos.getY() - box.minY(), pos.getZ() - box.minZ(), toId, properties
             );
             if (!AiBuilder.write(cell, live) && init_Z(from, BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString())) {
@@ -748,7 +748,7 @@ final class AiFill {
             }
          }
 
-         AiBuilder.Inner_DataUtil blueprint = new AiBuilder.Inner_DataUtil(new BlockPos(box.minX(), box.minY(), box.minZ()), cells);
+         AiBuilder.Blueprint blueprint = new AiBuilder.Blueprint(new BlockPos(box.minX(), box.minY(), box.minZ()), cells);
          JsonObject missing = AiBuilder.init(blueprint, mc.player.getInventory());
          return missing.size() > 0
             ? AiGameOperations.init(
@@ -767,7 +767,7 @@ final class AiFill {
       if (spec.isBlank()) {
          throw new IllegalArgumentException(arg + " is required");
       } else {
-         AiItems.Inner_DataUtil target = AiItems.read_af_DataUtil(spec);
+         AiItems.ItemSpec target = AiItems.read_af_DataUtil(spec);
          if (target.blocks().size() != 1) {
             throw new IllegalArgumentException(
                arg + " must resolve to a single block id, got " + target.blocks().size() + " from \"" + spec + "\"; use a full registry id"
@@ -781,7 +781,7 @@ final class AiFill {
    private static final class Inner_BufferHelper implements AiOperation {
       final Minecraft init_Minecraft = Minecraft.getInstance();
       final List<BlockPos> init_List;
-      final AiBuilder.Inner_DataUtil init_TableIndex_DataUti;
+      final AiBuilder.Blueprint init_TableIndex_DataUti;
       final long init_J;
       AiOperation init_AiOperation;
       final JsonArray init_JsonArray = new JsonArray();
@@ -793,7 +793,7 @@ final class AiFill {
       AiOperation load_AiOperation;
       boolean init_Z;
 
-      Inner_BufferHelper(List<BlockPos> digCells, AiBuilder.Inner_DataUtil blueprint, int timeoutSeconds) {
+      Inner_BufferHelper(List<BlockPos> digCells, AiBuilder.Blueprint blueprint, int timeoutSeconds) {
          this.init_List = digCells;
          this.init_TableIndex_DataUti = blueprint;
          this.init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -834,14 +834,14 @@ final class AiFill {
 
                while (this.init_I < this.init_List.size()) {
                   BlockPos cell = this.init_List.get(this.init_I++);
-                  autismclient.ai.engine.AiPathfinder.Inner_FileCache probe = autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.init_ClassCache_FileCac_Minecraft(
+                  autismclient.ai.engine.AiPathfinder.CellInfo probe = autismclient.ai.engine.AiPathfinder.LiveGridView.init_ClassCache_FileCac_Minecraft(
                      this.init_Minecraft, this.init_Minecraft.level, cell, new ItemStack[9]
                   );
                   if (!probe.loaded()) {
                      this.init(cell, "WORLD_UNKNOWN");
                   } else if (!this.init_Minecraft.level.getBlockState(cell).isAir()) {
                      if (!autismclient.ai.engine.AiExcavate.init(
-                        (x, y, z) -> autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.init_ClassCache_FileCac_Minecraft(
+                        (x, y, z) -> autismclient.ai.engine.AiPathfinder.LiveGridView.init_ClassCache_FileCac_Minecraft(
                               this.init_Minecraft, this.init_Minecraft.level, new BlockPos(x, y, z), new ItemStack[9]
                            )
                            .lava(),
@@ -960,7 +960,7 @@ final class AiFill {
       }
    }
 
-   record Inner_CachePool(List<AiBuilder.Inner_StreamUtil> cells, boolean clamped) {
+   record Inner_CachePool(List<AiBuilder.CellSpec> cells, boolean clamped) {
    }
 
    record Inner_DataUtil(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {

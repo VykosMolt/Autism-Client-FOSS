@@ -30,12 +30,12 @@ final class AiFurnaceReturn implements AiOperation {
       this.init_Str = reason;
    }
 
-   static autismclient.ai.engine.AiPathfinder.Inner_JsonUtil init(
-      final autismclient.ai.engine.AiPathfinder.Inner_JsonUtil interaction, final BlockPos station, final BlockPos origin, final boolean repairs
+   static autismclient.ai.engine.AiPathfinder.PathGoal init(
+      final autismclient.ai.engine.AiPathfinder.PathGoal interaction, final BlockPos station, final BlockPos origin, final boolean repairs
    ) {
-      return new autismclient.ai.engine.AiPathfinder.Inner_JsonUtil() {
+      return new autismclient.ai.engine.AiPathfinder.PathGoal() {
          @Override
-         public autismclient.ai.engine.AiPathfinder.Inner_JsonUtil init(autismclient.ai.engine.AiPathfinder.Inner_StateCache grid) {
+         public autismclient.ai.engine.AiPathfinder.PathGoal init(autismclient.ai.engine.AiPathfinder.GridView grid) {
             return AiFurnaceReturn.init(interaction.init(grid), station, origin, repairs);
          }
 
@@ -45,7 +45,7 @@ final class AiFurnaceReturn implements AiOperation {
          }
 
          @Override
-         public boolean init_Z_I(int x, int y, int z, autismclient.ai.engine.AiPathfinder.Inner_StateCache grid) {
+         public boolean init_Z_I(int x, int y, int z, autismclient.ai.engine.AiPathfinder.GridView grid) {
             return interaction.init_Z_I(x, y, z, grid);
          }
 
@@ -75,14 +75,14 @@ final class AiFurnaceReturn implements AiOperation {
          }
 
          @Override
-         public Set<autismclient.ai.engine.AiPathfinder.Inner_SyncManager> init_Set() {
+         public Set<autismclient.ai.engine.AiPathfinder.MoveType> init_Set() {
             return Set.of(
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.DIG_DOWN_1,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_2,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_3,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.SPRINT_JUMP
+               autismclient.ai.engine.AiPathfinder.MoveType.DIG_DOWN_1,
+               autismclient.ai.engine.AiPathfinder.MoveType.JUMP,
+               autismclient.ai.engine.AiPathfinder.MoveType.JUMP_GAP_2,
+               autismclient.ai.engine.AiPathfinder.MoveType.JUMP_GAP_3,
+               autismclient.ai.engine.AiPathfinder.MoveType.PARKOUR_ASCEND,
+               autismclient.ai.engine.AiPathfinder.MoveType.SPRINT_JUMP
             );
          }
       };
@@ -125,7 +125,7 @@ final class AiFurnaceReturn implements AiOperation {
       }
 
       if (this.init_AiOperation == null) {
-         autismclient.ai.engine.AiPathfinder.Inner_JsonUtil interaction = new autismclient.ai.engine.InteractionGoal(
+         autismclient.ai.engine.AiPathfinder.PathGoal interaction = new autismclient.ai.engine.InteractionGoal(
             this.init_BlockPos, Math.max(1.5, this.init_Minecraft.player.blockInteractionRange() - 0.25), this.init_Minecraft.player.getEyeHeight()
          );
          this.init_AiOperation = AiGoto.init(
@@ -135,11 +135,11 @@ final class AiFurnaceReturn implements AiOperation {
             this.init_Z,
             this.init_Z,
             this.init_Z ? 25 : 12,
-            autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+            autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
             true,
             2.0,
             init(interaction, this.init_BlockPos, this.load_BlockPos, this.init_Z),
-            new AiGoto.Inner_BufferHelper(false, false, 1, true, true, true)
+            new AiGoto.GotoOptions(false, false, 1, true, true, true)
          );
          this.init_I++;
       }

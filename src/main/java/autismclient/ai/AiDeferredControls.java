@@ -9,8 +9,8 @@ import java.util.function.LongSupplier;
 
 final class AiDeferredControls implements AiOperation {
    private final AiOperation init_AiOperation;
-   private final List<AiBuilder.Inner_StreamUtil> init_List;
-   private final Function<AiBuilder.Inner_StreamUtil, AiOperation> init_Function;
+   private final List<AiBuilder.CellSpec> init_List;
+   private final Function<AiBuilder.CellSpec, AiOperation> init_Function;
    private final Consumer<AiDeferredControls> init_Consumer;
    private final Consumer<AiDeferredControls> load_Consumer;
    private final LongSupplier init_LongSupplier;
@@ -22,8 +22,8 @@ final class AiDeferredControls implements AiOperation {
 
    AiDeferredControls(
       AiOperation construction,
-      List<AiBuilder.Inner_StreamUtil> controls,
-      Function<AiBuilder.Inner_StreamUtil, AiOperation> activate,
+      List<AiBuilder.CellSpec> controls,
+      Function<AiBuilder.CellSpec, AiOperation> activate,
       long deadline,
       LongSupplier clock,
       Consumer<AiDeferredControls> visual,

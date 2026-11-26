@@ -50,7 +50,7 @@ public final class CaptureButtonRenderer {
          Component.literal(init(resolvedMode, capturing, idleLabel, capturingLabel)),
          ignored -> resolvedAction.run()
       );
-      button.init_ByteReader_ByteReader_StreamU(capturing ? OverlayActionButton.Inner_StreamUtil.SUCCESS : OverlayActionButton.Inner_StreamUtil.PRIMARY);
+      button.init_ByteReader_ByteReader_StreamU(capturing ? OverlayActionButton.ButtonTone.SUCCESS : OverlayActionButton.ButtonTone.PRIMARY);
       button.init_Z = active;
       OverlayActionButton.init(graphics, font, button, mouseX, mouseY);
       return button;

@@ -22,7 +22,7 @@ public abstract class AutismProtectorTranslatableContentsMixin implements Packet
    @Unique
    private boolean autism$fromPacket;
    @Unique
-   private ConnectionPrivacyRegistry.Inner_StreamUtil autism$packetOrigin;
+   private ConnectionPrivacyRegistry.ConnectionSession autism$packetOrigin;
    @Unique
    private boolean autism$silent;
    @Unique
@@ -34,7 +34,7 @@ public abstract class AutismProtectorTranslatableContentsMixin implements Packet
    }
 
    @Override
-   public void autism$setFromPacket(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   public void autism$setFromPacket(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (!this.autism$fromPacket) {
          this.autism$packetOrigin = context;
       }
@@ -44,7 +44,7 @@ public abstract class AutismProtectorTranslatableContentsMixin implements Packet
    }
 
    @Override
-   public ConnectionPrivacyRegistry.Inner_StreamUtil autism$packetOrigin() {
+   public ConnectionPrivacyRegistry.ConnectionSession autism$packetOrigin() {
       return this.autism$packetOrigin;
    }
 
@@ -81,8 +81,8 @@ public abstract class AutismProtectorTranslatableContentsMixin implements Packet
       if (!this.autism$fromPacket) {
          return "\u0000__autism_allow__";
       } else {
-         ConnectionPrivacyRegistry.Inner_StreamUtil origin = this.autism$packetOrigin;
-         if (origin != null && origin.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.MODDED && !ProtectorFeatureFlags.close() && !PacketComponentOriginTracker.init_Z()) {
+         ConnectionPrivacyRegistry.ConnectionSession origin = this.autism$packetOrigin;
+         if (origin != null && origin.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED && !ProtectorFeatureFlags.close() && !PacketComponentOriginTracker.init_Z()) {
             return "\u0000__autism_allow__";
          } else {
             return origin != null && !origin.init_Z() && ConnectionPrivacyRegistry.init_Z(origin) && origin.init_Connection().isMemoryConnection()

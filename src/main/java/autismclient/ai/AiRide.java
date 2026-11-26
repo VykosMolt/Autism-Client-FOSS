@@ -199,7 +199,7 @@ final class AiRide {
                      );
                   }
 
-                  this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.CALM);
+                  this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.CALM);
                   this.init_DataUtil.init_V_Vec3(new Vec3(target.x, riding.getEyeY(), target.z));
                   this.init_DataUtil.load_V();
                   mc.options.keyUp.setDown(true);
@@ -241,7 +241,7 @@ final class AiRide {
                }
 
                Item init_Item_3() {
-                  AiItems.Inner_DataUtil boats = AiItems.init_af_DataUtil("boat");
+                  AiItems.ItemSpec boats = AiItems.init_af_DataUtil("boat");
 
                   for (Item item : boats.items()) {
                      if (AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(item).toString()) > 0) {

@@ -123,10 +123,10 @@ final class AiGameState {
          state.add("recentServerMessages", AiJson.init.toJsonTree(AiServerEvidence.init_List_I(6)));
          JsonArray chatLines = new JsonArray();
 
-         for (AiChatLedger.Inner_StreamUtil entry : AiChatLedger.init_List(8)) {
+         for (AiChatLedger.ChatEntry entry : AiChatLedger.init_List(8)) {
             JsonArray actions = new JsonArray();
 
-            for (AiChatLedger.Inner_DataUtil click : entry.clicks()) {
+            for (AiChatLedger.ClickAction click : entry.clicks()) {
                actions.add(AiJson.init_JsonObject_ObjArr("action", click.action(), "value", click.value()));
             }
 
@@ -205,7 +205,7 @@ final class AiGameState {
          state.add("entities", entities);
          JsonArray projectiles = new JsonArray();
 
-         for (AiProjectiles.Inner_StreamUtil tracked : AiProjectiles.init(mc)) {
+         for (AiProjectiles.IncomingProjectile tracked : AiProjectiles.init(mc)) {
             if (projectiles.size() < 16) {
                projectiles.add(
                   AiJson.init_JsonObject_ObjArr(

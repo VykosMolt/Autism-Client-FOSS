@@ -22,7 +22,7 @@ public final class PacketDecodeOriginStack {
       return init.get().init_I != 0;
    }
 
-   public static void init(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   public static void init(ConnectionPrivacyRegistry.ConnectionSession context) {
       PacketDecodeOriginStack.Inner_DataUtil state = init.get();
       if (state.init_I == state.init_BufferHelper_StreaArr.length) {
          state.init_BufferHelper_StreaArr = Arrays.copyOf(state.init_BufferHelper_StreaArr, state.init_I * 2);
@@ -31,7 +31,7 @@ public final class PacketDecodeOriginStack {
       state.init_BufferHelper_StreaArr[state.init_I++] = context;
    }
 
-   public static ConnectionPrivacyRegistry.Inner_StreamUtil init_BufferHelper_Strea() {
+   public static ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea() {
       PacketDecodeOriginStack.Inner_DataUtil state = init.get();
       return state.init_I == 0 ? null : state.init_BufferHelper_StreaArr[state.init_I - 1];
    }
@@ -49,6 +49,6 @@ public final class PacketDecodeOriginStack {
 
    private static final class Inner_DataUtil {
       private int init_I;
-      private ConnectionPrivacyRegistry.Inner_StreamUtil[] init_BufferHelper_StreaArr = new ConnectionPrivacyRegistry.Inner_StreamUtil[4];
+      private ConnectionPrivacyRegistry.ConnectionSession[] init_BufferHelper_StreaArr = new ConnectionPrivacyRegistry.ConnectionSession[4];
    }
 }

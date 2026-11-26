@@ -7,13 +7,13 @@ public final class ScrollListLayout {
    private ScrollListLayout() {
    }
 
-   public static ScrollListLayout.Inner_DataUtil init(
+   public static ScrollListLayout.ListLayout init(
       int x, int y, int width, int height, int rowCount, int rowHeight, int rowStep, int scrollOffset, int scrollbarWidth, int scrollbarGutter
    ) {
       return init(x, y, width, height, rowCount, rowHeight, rowStep, scrollOffset, scrollbarWidth, scrollbarGutter, 2, 5, true);
    }
 
-   public static ScrollListLayout.Inner_DataUtil init(
+   public static ScrollListLayout.ListLayout init(
       int x,
       int y,
       int width,
@@ -29,7 +29,7 @@ public final class ScrollListLayout {
       return init(x, y, width, height, rowCount, rowHeight, rowStep, scrollOffset, scrollbarWidth, scrollbarGutter, contentInset, 5, true);
    }
 
-   public static ScrollListLayout.Inner_DataUtil init(
+   public static ScrollListLayout.ListLayout init(
       int x,
       int y,
       int width,
@@ -54,7 +54,7 @@ public final class ScrollListLayout {
       int contentHeight = Math.max(0, rowCount) * safeRowStep;
       int maxScroll = Math.max(0, contentHeight - viewHeight);
       int clampedScroll = Math.max(0, Math.min(scrollOffset, maxScroll));
-      ScrollbarMetricsHelper.Inner_DataUtil scrollbar = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+      ScrollbarMetricsHelper.Metrics scrollbar = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
          contentHeight,
          viewHeight,
          x + safeWidth - Math.max(1, scrollbarRightInset),
@@ -64,7 +64,7 @@ public final class ScrollListLayout {
          clampedScroll
       );
       int contentWidth = Math.max(1, safeWidth - safeInset * 2 - (scrollbar.init_Z() ? Math.max(0, scrollbarGutter) : 0));
-      return new ScrollListLayout.Inner_DataUtil(
+      return new ScrollListLayout.ListLayout(
          x, y, safeWidth, safeHeight, safeRowHeight, safeRowStep, viewHeight, contentHeight, maxScroll, clampedScroll, contentWidth, safeInset, scrollbar
       );
    }
@@ -80,7 +80,7 @@ public final class ScrollListLayout {
       }
    }
 
-   public record Inner_DataUtil(
+   public record ListLayout(
       int init_I,
       int load,
       int read,
@@ -93,7 +93,7 @@ public final class ScrollListLayout {
       int poll,
       int push,
       int pop,
-      ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil
+      ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil
    ) {
       public void init(GuiGraphicsExtractor graphics, boolean focused) {
          ListRowRenderer.init(graphics, this.init_I, this.load, this.read, this.write, focused);

@@ -57,12 +57,12 @@ public class MacroClipboardCodec {
    private static final long init_J = 8388608L;
    private static volatile Set<String> init_Set;
 
-   public static void init_V(List<AutismSessionState.Inner_CachePool> queue) {
+   public static void init_V(List<AutismSessionState.DelayedPacket> queue) {
       try {
          CompoundTag rootTag = new CompoundTag();
          ListTag packetList = new ListTag();
 
-         for (AutismSessionState.Inner_CachePool qp : queue) {
+         for (AutismSessionState.DelayedPacket qp : queue) {
             CompoundTag packetTag = init(qp);
             if (packetTag != null) {
                packetList.add(packetTag);
@@ -473,7 +473,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static List<AutismSessionState.Inner_CachePool> read() {
+   public static List<AutismSessionState.DelayedPacket> read() {
       try {
          String base64 = Minecraft.getInstance().keyboardHandler.getClipboard();
          if (base64 != null && !base64.trim().isEmpty()) {
@@ -487,11 +487,11 @@ public class MacroClipboardCodec {
             }
 
             ListTag packetList = (ListTag)rootTag.get("packets");
-            List<AutismSessionState.Inner_CachePool> queue = new ArrayList<>();
+            List<AutismSessionState.DelayedPacket> queue = new ArrayList<>();
 
             for (int i = 0; i < packetList.size(); i++) {
                CompoundTag packetTag = (CompoundTag)packetList.get(i);
-               AutismSessionState.Inner_CachePool qp = init_ck_CachePool(packetTag);
+               AutismSessionState.DelayedPacket qp = init_ck_CachePool(packetTag);
                if (qp != null) {
                   queue.add(qp);
                }
@@ -519,13 +519,13 @@ public class MacroClipboardCodec {
                ListTag list = (ListTag)tag.get("packets");
                if (list != null && !list.isEmpty()) {
                   CompoundTag packetTag = (CompoundTag)list.get(0);
-                  AutismSessionState.Inner_CachePool qp = init_ck_CachePool(packetTag);
+                  AutismSessionState.DelayedPacket qp = init_ck_CachePool(packetTag);
                   return qp != null ? qp.init_Packet : null;
                } else {
                   return null;
                }
             } else if (tag.contains("packet")) {
-               AutismSessionState.Inner_CachePool qp = init_ck_CachePool(tag);
+               AutismSessionState.DelayedPacket qp = init_ck_CachePool(tag);
                return qp != null ? qp.init_Packet : null;
             } else {
                return init_Packet(tag);
@@ -539,7 +539,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static CompoundTag init(AutismSessionState.Inner_CachePool qp) {
+   public static CompoundTag init(AutismSessionState.DelayedPacket qp) {
       try {
          CompoundTag tag = new CompoundTag();
          tag.putInt("delay", qp.load_I());
@@ -558,23 +558,23 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static AutismSessionState.Inner_CachePool init_ck_CachePool(CompoundTag tag) {
+   public static AutismSessionState.DelayedPacket init_ck_CachePool(CompoundTag tag) {
       try {
          int delay = tag.getIntOr("delay", 0);
          int id = tag.getIntOr("id", 0);
-         AutismSessionState.Inner_BufferHelper replayMode = AutismSessionState.Inner_BufferHelper.REGENERATE;
+         AutismSessionState.ReplayMode replayMode = AutismSessionState.ReplayMode.REGENERATE;
          if (tag.contains("replayMode")) {
             try {
-               replayMode = AutismSessionState.Inner_BufferHelper.valueOf(tag.getStringOr("replayMode", "REGENERATE"));
+               replayMode = AutismSessionState.ReplayMode.valueOf(tag.getStringOr("replayMode", "REGENERATE"));
             } catch (IllegalArgumentException ignored) {
-               replayMode = AutismSessionState.Inner_BufferHelper.REGENERATE;
+               replayMode = AutismSessionState.ReplayMode.REGENERATE;
             }
          }
 
          CompoundTag packetData = tag.getCompound("packet").orElse(new CompoundTag());
          Packet<?> packet = init_Packet(packetData);
          if (packet != null) {
-            return id > 0 ? new AutismSessionState.Inner_CachePool(packet, delay, id, replayMode) : new AutismSessionState.Inner_CachePool(packet, delay, replayMode);
+            return id > 0 ? new AutismSessionState.DelayedPacket(packet, delay, id, replayMode) : new AutismSessionState.DelayedPacket(packet, delay, replayMode);
          } else {
             return null;
          }
@@ -595,7 +595,7 @@ public class MacroClipboardCodec {
 
       if (packet instanceof ServerboundCustomPayloadPacket) {
          tag.putBoolean("customPayloadPacket", true);
-         AutismPayloadSupport.Inner_StreamUtil snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, "C2S");
+         AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, "C2S");
          if (snapshot != null) {
             tag.putString("payloadChannel", snapshot.load_Str());
             tag.putByteArray("payloadBytes", snapshot.init_BArr());
@@ -1276,12 +1276,12 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static String init_Str(List<AutismSessionState.Inner_CachePool> queue) {
+   public static String init_Str(List<AutismSessionState.DelayedPacket> queue) {
       try {
          CompoundTag rootTag = new CompoundTag();
          ListTag packetList = new ListTag();
 
-         for (AutismSessionState.Inner_CachePool qp : queue) {
+         for (AutismSessionState.DelayedPacket qp : queue) {
             CompoundTag packetTag = init(qp);
             if (packetTag != null) {
                packetList.add(packetTag);
@@ -1299,17 +1299,17 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static List<AutismSessionState.Inner_CachePool> init_List(String base64) {
+   public static List<AutismSessionState.DelayedPacket> init_List(String base64) {
       try {
          byte[] compressed = Base64.getDecoder().decode(base64);
          ByteArrayInputStream inputStream = new ByteArrayInputStream(compressed);
          CompoundTag rootTag = NbtIo.readCompressed(inputStream, init_NbtAccounter());
          ListTag packetList = rootTag.getList("packets").orElse(new ListTag());
-         List<AutismSessionState.Inner_CachePool> queue = new ArrayList<>();
+         List<AutismSessionState.DelayedPacket> queue = new ArrayList<>();
 
          for (int i = 0; i < packetList.size(); i++) {
             CompoundTag packetTag = (CompoundTag)packetList.get(i);
-            AutismSessionState.Inner_CachePool qp = init_ck_CachePool(packetTag);
+            AutismSessionState.DelayedPacket qp = init_ck_CachePool(packetTag);
             if (qp != null) {
                queue.add(qp);
             }

@@ -71,7 +71,7 @@ final class AiEquip {
                   throw new IllegalArgumentException("tool needs forBlock, the block the tool is for");
                }
 
-               AiItems.Inner_DataUtil block = AiItems.read_af_DataUtil(blockSpec);
+               AiItems.ItemSpec block = AiItems.read_af_DataUtil(blockSpec);
                BlockState state = block.blocks().iterator().next().defaultBlockState();
                return init(AiItems.init(state, 36), "tool for " + blockSpec);
             } else {
@@ -94,7 +94,7 @@ final class AiEquip {
       }
    }
 
-   private static AiOperation init(final AiItems.Inner_DataUtil target, final String what) {
+   private static AiOperation init(final AiItems.ItemSpec target, final String what) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          long init_J = -1L;
@@ -198,11 +198,11 @@ final class AiEquip {
       return init(slot, null, description);
    }
 
-   private static AiOperation load(AiItems.Inner_DataUtil target, String description) {
+   private static AiOperation load(AiItems.ItemSpec target, String description) {
       return init(-1, target, description);
    }
 
-   private static AiOperation init(final int plannedSlot, final AiItems.Inner_DataUtil target, final String description) {
+   private static AiOperation init(final int plannedSlot, final AiItems.ItemSpec target, final String description) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          final Object init_Obj = mc.level;
@@ -298,7 +298,7 @@ final class AiEquip {
       final boolean hotbarSwap = module == null || !"false".equals(module.value("hotbar"));
       boolean saveArmor = module != null && "true".equals(module.value("save-armor"));
       final int threshold = Math.max(saveArmor ? init(module) : -2147483648, AiRunResources.load_Z() ? 32 : -2147483648);
-      final AiItems.Inner_DataUtil prefer = preferSpec.isEmpty() ? null : init_af_DataUtil(preferSpec);
+      final AiItems.ItemSpec prefer = preferSpec.isEmpty() ? null : init_af_DataUtil(preferSpec);
       return new AiOperation() {
          final String init_Str = AiEquip.read();
          final Object init_Obj = mc.level;
@@ -503,7 +503,7 @@ final class AiEquip {
    }
 
    static Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> init(
-      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> byType, AiItems.Inner_DataUtil prefer
+      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> byType, AiItems.ItemSpec prefer
    ) {
       Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> matching = new EnumMap<>(EquipmentSlot.class);
 
@@ -525,7 +525,7 @@ final class AiEquip {
    }
 
    static Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> init(
-      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> byType, int threshold, AiItems.Inner_DataUtil prefer
+      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> byType, int threshold, AiItems.ItemSpec prefer
    ) {
       Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = autismclient.util.ArmorEvaluationHelper.init_Map_Map_I(byType, threshold);
       if (prefer != null) {
@@ -535,7 +535,7 @@ final class AiEquip {
       return best;
    }
 
-   static AiItems.Inner_DataUtil init_af_DataUtil(String spec) {
+   static AiItems.ItemSpec init_af_DataUtil(String spec) {
       if (spec.contains(",")) {
          Set<Item> items = new LinkedHashSet<>();
          Set<Block> blocks = new LinkedHashSet<>();
@@ -545,12 +545,12 @@ final class AiEquip {
                throw new IllegalArgumentException("prefer list contains an empty item specification");
             }
 
-            AiItems.Inner_DataUtil target = init_af_DataUtil(part.trim());
+            AiItems.ItemSpec target = init_af_DataUtil(part.trim());
             items.addAll(target.items());
             blocks.addAll(target.blocks());
          }
 
-         return new AiItems.Inner_DataUtil(spec, Set.copyOf(items), Set.copyOf(blocks));
+         return new AiItems.ItemSpec(spec, Set.copyOf(items), Set.copyOf(blocks));
       } else {
          String clean = spec.trim().toLowerCase(Locale.ROOT);
          if (!clean.endsWith("*")) {
@@ -574,7 +574,7 @@ final class AiEquip {
             if (items.isEmpty()) {
                throw new IllegalArgumentException("prefer wildcard '" + spec + "' matches no item");
             } else {
-               return new AiItems.Inner_DataUtil(clean, items, Set.of());
+               return new AiItems.ItemSpec(clean, items, Set.of());
             }
          } else {
             throw new IllegalArgumentException("prefer wildcard needs a minecraft path prefix, like golden_*");

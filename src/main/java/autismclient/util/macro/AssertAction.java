@@ -26,7 +26,7 @@ public class AssertAction implements MacroAction {
       if (!this.init(mc)) {
          String out;
          if (this.message != null && !this.message.isBlank()) {
-            MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.message, mc);
+            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.message, mc);
             if (!resolved.init_Z()) {
                return;
             }
@@ -48,9 +48,9 @@ public class AssertAction implements MacroAction {
          return false;
       }
 
-      MacroTemplateResolver.Inner_CachePool itemResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.itemName, mc);
-      MacroTemplateResolver.Inner_CachePool entityResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.entityId, mc);
-      MacroTemplateResolver.Inner_CachePool guiResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiType, mc);
+      MacroTemplateResolver.ResolveResult itemResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.itemName, mc);
+      MacroTemplateResolver.ResolveResult entityResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.entityId, mc);
+      MacroTemplateResolver.ResolveResult guiResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiType, mc);
       if (itemResolution.init_Z() && entityResolution.init_Z() && guiResolution.init_Z()) {
          boolean var10000;
          switch (this.check) {

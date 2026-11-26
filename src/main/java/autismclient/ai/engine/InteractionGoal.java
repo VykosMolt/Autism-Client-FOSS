@@ -9,11 +9,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public final class InteractionGoal implements AiPathfinder.Inner_JsonUtil {
+public final class InteractionGoal implements AiPathfinder.PathGoal {
    private final BlockPos init_BlockPos;
    private final double init_D;
    private final double load;
-   private final AiPathfinder.Inner_StateCache init_ClassCache_StateCa;
+   private final AiPathfinder.GridView init_ClassCache_StateCa;
    private final Direction init_Direction;
    private final boolean init_Z;
    private final Set<Long> init_Set;
@@ -26,7 +26,7 @@ public final class InteractionGoal implements AiPathfinder.Inner_JsonUtil {
       this(target, reach, eyeHeight, null, ConcurrentHashMap.newKeySet(), requiredFace, false);
    }
 
-   private InteractionGoal(BlockPos target, double reach, double eyeHeight, AiPathfinder.Inner_StateCache grid, Set<Long> rejected, Direction requiredFace, boolean safeRemoval) {
+   private InteractionGoal(BlockPos target, double reach, double eyeHeight, AiPathfinder.GridView grid, Set<Long> rejected, Direction requiredFace, boolean safeRemoval) {
       if (Double.isFinite(reach) && !(reach <= 0.0) && Double.isFinite(eyeHeight)) {
          this.init_BlockPos = target.immutable();
          this.init_D = reach;
@@ -74,7 +74,7 @@ public final class InteractionGoal implements AiPathfinder.Inner_JsonUtil {
    }
 
    @Override
-   public AiPathfinder.Inner_JsonUtil init(AiPathfinder.Inner_StateCache grid) {
+   public AiPathfinder.PathGoal init(AiPathfinder.GridView grid) {
       return new InteractionGoal(this.init_BlockPos, this.init_D, this.load, grid, this.init_Set, this.init_Direction, this.init_Z);
    }
 
@@ -103,7 +103,7 @@ public final class InteractionGoal implements AiPathfinder.Inner_JsonUtil {
    }
 
    @Override
-   public boolean init_Z_I(int x, int y, int z, AiPathfinder.Inner_StateCache planned) {
+   public boolean init_Z_I(int x, int y, int z, AiPathfinder.GridView planned) {
       if (this.init_Direction == null
          && x == this.init_BlockPos.getX()
          && z == this.init_BlockPos.getZ()
@@ -173,7 +173,7 @@ public final class InteractionGoal implements AiPathfinder.Inner_JsonUtil {
    }
 
    static boolean init(
-      AiPathfinder.Inner_StateCache grid, BlockPos target, int x, int y, int z, double eyeHeight, double targetX, double targetY, double targetZ, double reach
+      AiPathfinder.GridView grid, BlockPos target, int x, int y, int z, double eyeHeight, double targetX, double targetY, double targetZ, double reach
    ) {
       double dx = targetX - x - 0.5;
       double dy = targetY - y - eyeHeight;
@@ -195,7 +195,7 @@ public final class InteractionGoal implements AiPathfinder.Inner_JsonUtil {
                }
 
                if (bx != x || bz != z || by != y && by != y + 1) {
-                  AiPathfinder.Inner_FileCache p = grid.init_ClassCache_FileCac_I(bx, by, bz);
+                  AiPathfinder.CellInfo p = grid.init_ClassCache_FileCac_I(bx, by, bz);
                   if (p == null || !p.loaded() || !p.passable() || p.lava()) {
                      return false;
                   }
@@ -210,13 +210,13 @@ public final class InteractionGoal implements AiPathfinder.Inner_JsonUtil {
    }
 
    static boolean load(
-      AiPathfinder.Inner_StateCache grid, BlockPos target, int x, int y, int z, double eyeHeight, double targetX, double targetY, double targetZ, double reach
+      AiPathfinder.GridView grid, BlockPos target, int x, int y, int z, double eyeHeight, double targetX, double targetY, double targetZ, double reach
    ) {
       return init(grid, target, x, y, z, eyeHeight, targetX, targetY, targetZ, reach, null, null);
    }
 
    static boolean init(
-      AiPathfinder.Inner_StateCache grid,
+      AiPathfinder.GridView grid,
       BlockPos target,
       int x,
       int y,
@@ -301,7 +301,7 @@ public final class InteractionGoal implements AiPathfinder.Inner_JsonUtil {
             return first != null && firstFace == requiredFace && (highHalf == null || !requiredFace.getAxis().isHorizontal() || highHalf == first.y - by > 0.5);
          }
 
-         AiPathfinder.Inner_FileCache probe = grid.init_ClassCache_FileCac_I(bx, by, bz);
+         AiPathfinder.CellInfo probe = grid.init_ClassCache_FileCac_I(bx, by, bz);
          if (probe == null || !probe.loaded() || probe.lava()) {
             return false;
          }

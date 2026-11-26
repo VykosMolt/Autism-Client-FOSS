@@ -673,7 +673,7 @@ public final class PayloadChannelFilterManager {
       return defaults;
    }
 
-   public PayloadChannelFilterManager.Inner_StreamUtil init_bB_StreamUtil_AutismPayloadSuppo_Str(AutismPayloadSupport.Inner_StreamUtil snapshot, String packetDirection) {
+   public PayloadChannelFilterManager.Inner_StreamUtil init_bB_StreamUtil_AutismPayloadSuppo_Str(AutismPayloadSupport.PayloadEntry snapshot, String packetDirection) {
       return snapshot != null && snapshot.load_Str() != null && !snapshot.load_Str().isBlank()
          ? this.init_bB_StreamUtil_Str_Str(snapshot.load_Str(), packetDirection)
          : null;
@@ -695,7 +695,7 @@ public final class PayloadChannelFilterManager {
       return null;
    }
 
-   public String init_Str_AutismPayloadSuppo_Str(AutismPayloadSupport.Inner_StreamUtil snapshot, String packetDirection) {
+   public String init_Str_AutismPayloadSuppo_Str(AutismPayloadSupport.PayloadEntry snapshot, String packetDirection) {
       PayloadChannelFilterManager.Inner_StreamUtil match = this.init_bB_StreamUtil_AutismPayloadSuppo_Str(snapshot, packetDirection);
       return match == null ? "" : match.init_Str();
    }

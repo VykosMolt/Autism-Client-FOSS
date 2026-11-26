@@ -76,7 +76,7 @@ public final class AiSchematicApproach implements AiOperation {
       }
    }
 
-   AiSchematicApproach(List<PlacementGoal.Inner_CachePool> targets, int seconds, AABB volume, Set<Long> protectedCells, Set<Long> avoid) {
+   AiSchematicApproach(List<PlacementGoal.PlacementRequest> targets, int seconds, AABB volume, Set<Long> protectedCells, Set<Long> avoid) {
       this(new AiSchematicApproach.Inner_DataUtil(targets, volume, protectedCells, avoid), seconds, protectedCells, avoid);
    }
 
@@ -142,10 +142,10 @@ public final class AiSchematicApproach implements AiOperation {
 
                AiSchematicBatchPlan.Inner_ConfigStore scheduled = this.init_b_DataUtil.init_c_ConfigStore();
                if (scheduled != null) {
-                  Map<Long, PlacementGoal.Inner_StreamUtil> proofs = this.init_b_DataUtil.init_Map_c_ConfigStore(scheduled, this.init_Set, this.load_Set);
+                  Map<Long, PlacementGoal.ClickGeometry> proofs = this.init_b_DataUtil.init_Map_c_ConfigStore(scheduled, this.init_Set, this.load_Set);
                   if (!proofs.isEmpty()) {
                      AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station = this.init_b_DataUtil.update.get(scheduled.station());
-                     PlacementGoal.Inner_CachePool next = scheduled.jobs()
+                     PlacementGoal.PlacementRequest next = scheduled.jobs()
                         .stream()
                         .map(i -> this.init_b_DataUtil.init_List.get(i))
                         .filter(this.init_b_DataUtil::init_Z_u_CachePool)
@@ -162,7 +162,7 @@ public final class AiSchematicApproach implements AiOperation {
                         .init(proofs);
                      boolean edits = !station.probe.load_Z;
                      int seconds = Math.max(1, (int)Math.ceil((this.init_J - System.nanoTime()) / 1.0E9));
-                     AiGoto.Inner_BufferHelper options = new AiGoto.Inner_BufferHelper(true, this.init_Function == null, 3, false, true, true);
+                     AiGoto.GotoOptions options = new AiGoto.GotoOptions(true, this.init_Function == null, 3, false, true, true);
                      this.init_AiOperation = AiGoto.init(
                         station.probe.init_BlockPos,
                         0.6,
@@ -170,7 +170,7 @@ public final class AiSchematicApproach implements AiOperation {
                         edits,
                         edits,
                         seconds,
-                        AiPathfinder.Inner_IoWorker.FASTEST,
+                        AiPathfinder.RouteStrategy.FASTEST,
                         true,
                         2.0,
                         edits ? goal : goal.init_u(),
@@ -275,7 +275,7 @@ public final class AiSchematicApproach implements AiOperation {
    public static final class Inner_DataUtil {
       private final Minecraft init_Minecraft = Minecraft.getInstance();
       private final ClientLevel init_ClientLevel;
-      private final List<PlacementGoal.Inner_CachePool> init_List;
+      private final List<PlacementGoal.PlacementRequest> init_List;
       private final PlacementGoal init_u;
       private final AABB init_AABB;
       private final List<BlockPos> load_List;
@@ -302,11 +302,11 @@ public final class AiSchematicApproach implements AiOperation {
       private Vec3 load_Vec3;
       private boolean write_Z;
 
-      public Inner_DataUtil(List<PlacementGoal.Inner_CachePool> targets, AABB volume, Set<Long> keep, Set<Long> avoid) {
+      public Inner_DataUtil(List<PlacementGoal.PlacementRequest> targets, AABB volume, Set<Long> keep, Set<Long> avoid) {
          this(targets, volume, keep, avoid, null);
       }
 
-      public Inner_DataUtil(List<PlacementGoal.Inner_CachePool> targets, AABB volume, Set<Long> keep, Set<Long> avoid, BlockPos continuation) {
+      public Inner_DataUtil(List<PlacementGoal.PlacementRequest> targets, AABB volume, Set<Long> keep, Set<Long> avoid, BlockPos continuation) {
          if (AutismLiteVariant.enabled()) {
             throw new IllegalStateException();
          }
@@ -316,7 +316,7 @@ public final class AiSchematicApproach implements AiOperation {
             this.init_AABB = volume;
             this.init_BlockPos = continuation;
             this.init_ClientLevel = this.init_Minecraft.level;
-            this.init_Set = targets.stream().map(PlacementGoal.Inner_CachePool::pos).collect(Collectors.toUnmodifiableSet());
+            this.init_Set = targets.stream().map(PlacementGoal.PlacementRequest::pos).collect(Collectors.toUnmodifiableSet());
             this.init_D = this.init_Minecraft.player.getEyeHeight(Pose.STANDING);
             if (this.init_Minecraft.player.onGround()) {
                this.load_Set.add(AiStance.init(this.init_Minecraft));
@@ -326,7 +326,7 @@ public final class AiSchematicApproach implements AiOperation {
             Set<BlockPos> unique = new HashSet<>();
             int radius = (int)Math.ceil(this.init_Minecraft.player.blockInteractionRange());
 
-            for (PlacementGoal.Inner_CachePool target : targets) {
+            for (PlacementGoal.PlacementRequest target : targets) {
                for (int dx = -radius; dx <= radius; dx++) {
                   for (int dy = -radius - 1; dy <= radius - 1; dy++) {
                      for (int dz = -radius; dz <= radius; dz++) {
@@ -409,8 +409,8 @@ public final class AiSchematicApproach implements AiOperation {
          this.read_Set = Collections.unmodifiableSet(cells);
       }
 
-      public static List<PlacementGoal.Inner_CachePool> init_List_List_Vec3(List<PlacementGoal.Inner_CachePool> candidates, Vec3 start) {
-         return AiSchematicBatchPlan.init(candidates, start, PlacementGoal.Inner_CachePool::pos);
+      public static List<PlacementGoal.PlacementRequest> init_List_List_Vec3(List<PlacementGoal.PlacementRequest> candidates, Vec3 start) {
+         return AiSchematicBatchPlan.init(candidates, start, PlacementGoal.PlacementRequest::pos);
       }
 
       public AiOperation init_AiOperation_I(int seconds, Set<Long> keep, Set<Long> avoid) {
@@ -586,13 +586,13 @@ public final class AiSchematicApproach implements AiOperation {
          }
 
          BlockState floor = this.init_ClientLevel.getBlockState(feet.below());
-         if (AiPathfinder.Inner_StreamUtil.read(floor)) {
+         if (AiPathfinder.LiveGridView.read(floor)) {
             return null;
          }
 
          for (BlockPos occupied : List.of(feet, feet.above())) {
             BlockState state = this.init_ClientLevel.getBlockState(occupied);
-            if (AiPathfinder.Inner_StreamUtil.load(state) || AiPathfinder.Inner_StreamUtil.read(state) || state.getFluidState().is(FluidTags.LAVA)) {
+            if (AiPathfinder.LiveGridView.load(state) || AiPathfinder.LiveGridView.read(state) || state.getFluidState().is(FluidTags.LAVA)) {
                return null;
             }
          }
@@ -603,12 +603,12 @@ public final class AiSchematicApproach implements AiOperation {
          BlockState futureFloor = null;
          if (!supported && floor.canBeReplaced() && floor.getFluidState().isEmpty()) {
             for (int i = 0; i < this.init_List.size(); i++) {
-               PlacementGoal.Inner_CachePool source = this.init_List.get(i);
+               PlacementGoal.PlacementRequest source = this.init_List.get(i);
                if (source.pos().equals(feet.below())
                   && source.requested() != null
                   && this.init_Z_u_CachePool(source)
                   && !(source.requested().getBlock() instanceof FallingBlock)
-                  && !AiPathfinder.Inner_StreamUtil.read(source.requested())
+                  && !AiPathfinder.LiveGridView.read(source.requested())
                   && Block.isShapeFullBlock(source.requested().getCollisionShape(this.init_ClientLevel, source.pos()))) {
                   foundationJob = i;
                   futureFloor = source.requested();
@@ -652,8 +652,8 @@ public final class AiSchematicApproach implements AiOperation {
                         || state.hasBlockEntity()
                         || !state.getFluidState().isEmpty()
                         || state.getDestroySpeed(this.init_ClientLevel, cell) < 0.0F
-                        || AiPathfinder.Inner_StreamUtil.load(state)
-                        || AiPathfinder.Inner_StreamUtil.read(state)) {
+                        || AiPathfinder.LiveGridView.load(state)
+                        || AiPathfinder.LiveGridView.read(state)) {
                         return null;
                      }
 
@@ -683,7 +683,7 @@ public final class AiSchematicApproach implements AiOperation {
 
       private void init_V_b_DataUtil_DataUti_I(AiSchematicApproach.Inner_DataUtil.Inner_DataUtil_2 probe, int targetIndex) {
          if (targetIndex != probe.init_I) {
-            PlacementGoal.Inner_CachePool target = this.init_List.get(targetIndex);
+            PlacementGoal.PlacementRequest target = this.init_List.get(targetIndex);
             if (this.init_Z_u_CachePool(target)
                && (
                   target.requested() == null
@@ -693,7 +693,7 @@ public final class AiSchematicApproach implements AiOperation {
                   probe.init_Vec3.add(0.0, this.init_D, 0.0).distanceToSqr(Vec3.atCenterOf(target.pos()))
                      > Math.pow(this.init_Minecraft.player.blockInteractionRange() + 0.9, 2.0)
                )) {
-               BlockPlacementPlanner.Inner_CachePool hit = probe.init_LevelReader == null
+               BlockPlacementPlanner.PlacementPlan hit = probe.init_LevelReader == null
                   ? PlacementGoal.init(this.init_Minecraft, target.pos(), target.item(), target.constraint(), probe.init_Vec3, 32)
                   : this.init(target, probe.init_Vec3, probe.init_AABB, probe.init_Set, probe.init_LevelReader);
                if (hit != null) {
@@ -705,7 +705,7 @@ public final class AiSchematicApproach implements AiOperation {
                      probe.init_Map
                         .put(
                            targetIndex,
-                           new PlacementGoal.Inner_StreamUtil(
+                           new PlacementGoal.ClickGeometry(
                               hit.init_BlockHitResult().getBlockPos(),
                               hit.init_BlockHitResult().getLocation(),
                               hit.init_BlockHitResult().getDirection(),
@@ -730,13 +730,13 @@ public final class AiSchematicApproach implements AiOperation {
             }
 
             for (int i = 0; i < this.init_List.size(); i++) {
-               PlacementGoal.Inner_CachePool target = this.init_List.get(i);
+               PlacementGoal.PlacementRequest target = this.init_List.get(i);
                if (target.requested() != null) {
                   VoxelShape shape = target.requested().getShape(this.init_ClientLevel, target.pos());
 
                   for (int j : probe.init_Map.keySet()) {
                      if (i != j) {
-                        PlacementGoal.Inner_StreamUtil proof = probe.init_Map.get(j);
+                        PlacementGoal.ClickGeometry proof = probe.init_Map.get(j);
                         if (!proof.support().equals(target.pos())) {
                            Vec3 eye = Vec3.atBottomCenterOf(probe.init_BlockPos).add(0.0, proof.eyeHeight(), 0.0);
 
@@ -758,7 +758,7 @@ public final class AiSchematicApproach implements AiOperation {
             observed.put(probe.init_BlockPos.below(), this.init_ClientLevel.getBlockState(probe.init_BlockPos.below()));
 
             for (int i : probe.init_Map.keySet()) {
-               PlacementGoal.Inner_StreamUtil proof = probe.init_Map.get(i);
+               PlacementGoal.ClickGeometry proof = probe.init_Map.get(i);
                BlockPos support = proof.support();
                observed.put(support, this.init_ClientLevel.getBlockState(support));
                Vec3 eye = Vec3.atBottomCenterOf(probe.init_BlockPos).add(0.0, proof.eyeHeight(), 0.0);
@@ -823,12 +823,12 @@ public final class AiSchematicApproach implements AiOperation {
          }
       }
 
-      private boolean init_Z_u_CachePool(PlacementGoal.Inner_CachePool target) {
+      private boolean init_Z_u_CachePool(PlacementGoal.PlacementRequest target) {
          BlockState live = this.init_ClientLevel.getBlockState(target.pos());
          return live.canBeReplaced() && live.getFluidState().isEmpty();
       }
 
-      private List<PlacementGoal.Inner_CachePool> init_List() {
+      private List<PlacementGoal.PlacementRequest> init_List() {
          return this.init_List.stream().filter(this::init_Z_u_CachePool).toList();
       }
 
@@ -853,7 +853,7 @@ public final class AiSchematicApproach implements AiOperation {
          )) {
             if (!station.probe.init_Set.contains(cell)) {
                BlockState state = this.init_ClientLevel.getBlockState(cell);
-               if (AiPathfinder.Inner_StreamUtil.load(state) || AiPathfinder.Inner_StreamUtil.read(state)) {
+               if (AiPathfinder.LiveGridView.load(state) || AiPathfinder.LiveGridView.read(state)) {
                   return false;
                }
 
@@ -869,7 +869,7 @@ public final class AiSchematicApproach implements AiOperation {
             && this.init_ClientLevel.getEntityCollisions(this.init_Minecraft.player, station.probe.init_AABB).isEmpty();
       }
 
-      private Map<Long, PlacementGoal.Inner_StreamUtil> init_Map_Z(boolean edits, boolean preferred, Set<Long> keep, Set<Long> avoid) {
+      private Map<Long, PlacementGoal.ClickGeometry> init_Map_Z(boolean edits, boolean preferred, Set<Long> keep, Set<Long> avoid) {
          ArrayList<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil> stations = new ArrayList<>(this.read_List);
          if (edits) {
             stations.addAll(this.write_List);
@@ -880,7 +880,7 @@ public final class AiSchematicApproach implements AiOperation {
             Comparator.<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil>comparingDouble(s -> s.score(this.init_Minecraft.player.position()))
                .thenComparingLong(s -> s.probe.init_BlockPos.asLong())
          );
-         LinkedHashMap<Long, PlacementGoal.Inner_StreamUtil> result = new LinkedHashMap<>();
+         LinkedHashMap<Long, PlacementGoal.ClickGeometry> result = new LinkedHashMap<>();
 
          for (AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station : stations) {
             if (preferred && result.size() >= 4) {
@@ -1009,7 +1009,7 @@ public final class AiSchematicApproach implements AiOperation {
          }
       }
 
-      private Map<Long, PlacementGoal.Inner_StreamUtil> init_Map_c_ConfigStore(AiSchematicBatchPlan.Inner_ConfigStore stop, Set<Long> keep, Set<Long> avoid) {
+      private Map<Long, PlacementGoal.ClickGeometry> init_Map_c_ConfigStore(AiSchematicBatchPlan.Inner_ConfigStore stop, Set<Long> keep, Set<Long> avoid) {
          AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station = this.update.get(stop.station());
          if (avoid.contains(station.probe.init_BlockPos.asLong())) {
             return Map.of();
@@ -1031,12 +1031,12 @@ public final class AiSchematicApproach implements AiOperation {
          if (fresh != null
             && !(Math.abs(fresh.init_D - station.probe.init_D) > 0.001)
             && !fresh.init_Set.stream().anyMatch(cellx -> keep.contains(cellx.asLong()))) {
-            PlacementGoal.Inner_StreamUtil first = null;
+            PlacementGoal.ClickGeometry first = null;
 
             for (int i : stop.jobs()) {
                if (this.init_Z_u_CachePool(this.init_List.get(i))) {
                   this.init_V_b_DataUtil_DataUti_I(fresh, i);
-                  PlacementGoal.Inner_StreamUtil proof = fresh.init_Map.get(i);
+                  PlacementGoal.ClickGeometry proof = fresh.init_Map.get(i);
                   if (proof == null) {
                      return Map.of();
                   }
@@ -1079,8 +1079,8 @@ public final class AiSchematicApproach implements AiOperation {
          return false;
       }
 
-      private BlockPlacementPlanner.Inner_CachePool init(PlacementGoal.Inner_CachePool target, Vec3 position, AABB body, Set<BlockPos> clear, LevelReader view) {
-         PlacementGoal.Inner_DataUtil constraint = target.constraint();
+      private BlockPlacementPlanner.PlacementPlan init(PlacementGoal.PlacementRequest target, Vec3 position, AABB body, Set<BlockPos> clear, LevelReader view) {
+         PlacementGoal.PlaceConstraint constraint = target.constraint();
          if (target.requested() != null && !target.requested().canSurvive(view, target.pos())) {
             return null;
          }
@@ -1096,9 +1096,9 @@ public final class AiSchematicApproach implements AiOperation {
          double height = PlacementGoal.init(this.init_Minecraft, target.pos(), target.item(), constraint, true);
          Vec3 eye = position.add(0.0, height, 0.0);
          double reach = this.init_Minecraft.player.blockInteractionRange() - 0.25;
-         BlockPlacementPlanner.Inner_NetHelper placement = (hitx, cell) -> !clear.contains(hitx.getBlockPos())
+         BlockPlacementPlanner.HitValidator placement = (hitx, cell) -> !clear.contains(hitx.getBlockPos())
             && PlacementGoal.init(this.init_Minecraft, cell, target.item(), constraint, eye, body, hitx);
-         BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(target.pos(), eye, reach, placement).load(true);
+         BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(target.pos(), eye, reach, placement).load(true);
          if (constraint != null) {
             EnumSet<Direction> faces = EnumSet.noneOf(Direction.class);
 
@@ -1110,15 +1110,15 @@ public final class AiSchematicApproach implements AiOperation {
 
             request.init_U_StateCache_EnumSet(faces);
             if (constraint.clickYaw() != null) {
-               request.init_U_StateCache_ce_DataUtil(new RotationMath.Inner_DataUtil(constraint.clickYaw(), 0.0F));
+               request.init_U_StateCache_ce_DataUtil(new RotationMath.Rotation(constraint.clickYaw(), 0.0F));
             }
          }
 
-         ArrayList<BlockPlacementPlanner.Inner_TaskQueue> options = new ArrayList<>();
+         ArrayList<BlockPlacementPlanner.SupportCandidate> options = new ArrayList<>();
          BlockPlacementPlanner.init(request, options);
          int rays = 0;
 
-         for (BlockPlacementPlanner.Inner_TaskQueue option : options) {
+         for (BlockPlacementPlanner.SupportCandidate option : options) {
             if (!clear.contains(option.load_BlockPos())) {
                AABB rect = constraint != null && constraint.highHalf() != null
                   ? PlacementGoal.init_AABB_AABB(option.init_AABB(), option.init_Direction(), option.load_BlockPos().getY(), constraint.highHalf())
@@ -1128,7 +1128,7 @@ public final class AiSchematicApproach implements AiOperation {
                }
 
                if (rect != null) {
-                  BlockPlacementPlanner.Inner_TaskQueue clipped = new BlockPlacementPlanner.Inner_TaskQueue(
+                  BlockPlacementPlanner.SupportCandidate clipped = new BlockPlacementPlanner.SupportCandidate(
                      option.init_BlockPos(),
                      option.load_BlockPos(),
                      option.init_Direction(),
@@ -1140,7 +1140,7 @@ public final class AiSchematicApproach implements AiOperation {
                      option.init_Z(),
                      option.init_U_BufferHelper()
                   );
-                  BlockPlacementPlanner.Inner_DataUtil aim = BlockPlacementPlanner.init(clipped, request, null);
+                  BlockPlacementPlanner.AimSample aim = BlockPlacementPlanner.init(clipped, request, null);
                   if (aim != null) {
                      Vec3 end = eye.add(Vec3.directionFromRotation(aim.load().load(), aim.load().init()).scale(reach));
                      BlockHitResult hit = view.clip(
@@ -1149,7 +1149,7 @@ public final class AiSchematicApproach implements AiOperation {
                      if (hit.getType() == Type.BLOCK
                         && placement.lands(hit, target.pos())
                         && placement.init(view.getBlockState(hit.getBlockPos()), hit.getBlockPos(), true)) {
-                        return new BlockPlacementPlanner.Inner_CachePool(clipped, aim, hit, false, 0.0);
+                        return new BlockPlacementPlanner.PlacementPlan(clipped, aim, hit, false, 0.0);
                      }
 
                      if (++rays >= 32) {
@@ -1228,7 +1228,7 @@ public final class AiSchematicApproach implements AiOperation {
          final boolean load_Z;
          final double init_D;
          final int init_I;
-         final Map<Integer, PlacementGoal.Inner_StreamUtil> init_Map = new LinkedHashMap<>();
+         final Map<Integer, PlacementGoal.ClickGeometry> init_Map = new LinkedHashMap<>();
          int load_I;
 
          Inner_DataUtil_2(

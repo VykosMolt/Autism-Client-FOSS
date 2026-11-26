@@ -782,16 +782,16 @@ public final class PrintCore {
       this.init_IntOpenHashSet.add(i);
    }
 
-   autismclient.ai.engine.PlacementGoal.Inner_DataUtil init_u_DataUtil_I(int i) {
+   autismclient.ai.engine.PlacementGoal.PlaceConstraint init_u_DataUtil_I(int i) {
       Block block = this.init_ListPoolArr[i].wanted().getBlock();
       if (!(block instanceof ChestBlock) && !block.hasDynamicShape()) {
          Object c = this.read_Int2ObjectOpenHash.get(i);
          if (c == null) {
-            autismclient.ai.engine.PlacementGoal.Inner_DataUtil made = AiPrintRules.init_u_DataUtil_ListPool_BlockGetter(this.init_ListPoolArr[i], this.init_ArrayUtil);
+            autismclient.ai.engine.PlacementGoal.PlaceConstraint made = AiPrintRules.init_u_DataUtil_ListPool_BlockGetter(this.init_ListPoolArr[i], this.init_ArrayUtil);
             this.read_Int2ObjectOpenHash.put(i, made == null ? init_Obj : made);
             return made;
          } else {
-            return c == init_Obj ? null : (autismclient.ai.engine.PlacementGoal.Inner_DataUtil)c;
+            return c == init_Obj ? null : (autismclient.ai.engine.PlacementGoal.PlaceConstraint)c;
          }
       } else {
          return AiPrintRules.init_u_DataUtil_ListPool_BlockGetter(this.init_ListPoolArr[i], this.init_ArrayUtil);
@@ -799,7 +799,7 @@ public final class PrintCore {
    }
 
    boolean init_Z_I(int i) {
-      autismclient.ai.engine.PlacementGoal.Inner_DataUtil con = this.init_u_DataUtil_I(i);
+      autismclient.ai.engine.PlacementGoal.PlaceConstraint con = this.init_u_DataUtil_I(i);
       return con != null && con.fullDirection() && con.playerFacing() != null;
    }
 
@@ -1855,7 +1855,7 @@ public final class PrintCore {
       PrintMachineJob pending = this.load_BitSetUtil != null ? this.load_BitSetUtil : (this.read_Z() ? this.write_BitSetUtil : null);
       if (pending != null) {
          pending.cancel();
-         this.data_Z = this.data_Z | (pending.poll_BitSetUtil_DataUti() == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN || pending.close());
+         this.data_Z = this.data_Z | (pending.poll_BitSetUtil_DataUti() == autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN || pending.close());
          this.load_BitSetUtil = null;
          this.init_BitSetUtil = null;
       }
@@ -2022,7 +2022,7 @@ public final class PrintCore {
    }
 
    public boolean close_Z() {
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
       return this.node_Z && !this.sync_Z() && !this.init_EventBus.poll() && body.onGround() && body.vy() <= 0.01 && body.vy() >= -0.1 && body.speed() < 0.05;
    }
 
@@ -2431,7 +2431,7 @@ public final class PrintCore {
          this.init_ArrayUtil.update_V();
       }
 
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil observedBody = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState observedBody = this.init_EventBus.init_NodeWalker_StreamU();
       this.read_D = !observedBody.onGround() && Double.isFinite(this.read_D) ? Math.max(this.read_D, observedBody.y()) : observedBody.y();
       this.update_D = !observedBody.onGround() && !this.init_EventBus.poll() && Double.isFinite(this.update_D)
          ? Math.max(this.update_D, observedBody.y())
@@ -2470,14 +2470,14 @@ public final class PrintCore {
 
       this.write_V();
       if (this.load_BitSetUtil != null) {
-         autismclient.ai.print.PrintMachineJob.Inner_DataUtil result = this.load_BitSetUtil.poll_BitSetUtil_DataUti();
-         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SENT) {
+         autismclient.ai.print.PrintMachineJob.JobStatus result = this.load_BitSetUtil.poll_BitSetUtil_DataUti();
+         if (result == autismclient.ai.print.PrintMachineJob.JobStatus.SENT) {
             this.load_Str = this.load_BitSetUtil.detail();
             return this.flush_SyncManager();
          }
 
          if ((this.load_BitSetUtil instanceof PrintClockSequence || this.load_BitSetUtil.c_())
-            && (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING || result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.READY)) {
+            && (result == autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING || result == autismclient.ai.print.PrintMachineJob.JobStatus.READY)) {
             this.load_Str = this.load_BitSetUtil.detail();
             this.load_BitSetUtil = null;
             this.init_BitSetUtil = null;
@@ -2485,7 +2485,7 @@ public final class PrintCore {
             return this.flush_SyncManager();
          }
 
-         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.NEEDS_SUPPLY) {
+         if (result == autismclient.ai.print.PrintMachineJob.JobStatus.NEEDS_SUPPLY) {
             this.read_BitSetUtil = this.load_BitSetUtil;
             this.load_BitSetUtil = null;
             this.init_UiHelper_NetHelper = null;
@@ -2493,13 +2493,13 @@ public final class PrintCore {
             return this.flush_SyncManager();
          }
 
-         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SKIPPED) {
+         if (result == autismclient.ai.print.PrintMachineJob.JobStatus.SKIPPED) {
             this.read_V_BitSetUtil(this.load_BitSetUtil);
             this.load_BitSetUtil = null;
             return this.flush_SyncManager();
          }
 
-         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT
+         if (result == autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT
             && (this.load_BitSetUtil == this.update_BitSetUtil && this.init_UiHelper_J == PrintCore.J.BUILD || this.load_BitSetUtil.b_())) {
             PrintMachineJob disturbed = this.load_BitSetUtil;
             if (this.read_ArrayList.size() < 16) {
@@ -2515,8 +2515,8 @@ public final class PrintCore {
             return this.flush_SyncManager();
          }
 
-         if (result != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED) {
-            this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN;
+         if (result != autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED) {
+            this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
             this.init_UiHelper_NetHelper_Str(this.load_BitSetUtil.detail());
             this.load_BitSetUtil = null;
             return this.flush_SyncManager();
@@ -2631,7 +2631,7 @@ public final class PrintCore {
                return this.flush_SyncManager();
             }
 
-            autismclient.ai.engine.AiPhysics.Inner_StreamUtil fall = this.init_EventBus.init_NodeWalker_StreamU();
+            autismclient.ai.engine.AiPhysics.MotionState fall = this.init_EventBus.init_NodeWalker_StreamU();
             if (!canFly && !fall.onGround() && fall.vy() < -0.1 && this.f_O_I < 20) {
                this.f_O_I++;
                return this.flush_SyncManager();
@@ -2746,7 +2746,7 @@ public final class PrintCore {
          && !this.init_Long2ObjectOpenHas.containsKey(key)
          && !this.load_Long2ObjectOpenHas.containsKey(key)
          && !this.get_LongOpenHashSet.contains(key)) {
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState b = this.init_EventBus.init_NodeWalker_StreamU();
          return Math.abs(x + 0.5 - b.x()) <= 4.0 && Math.abs(z + 0.5 - b.z()) <= 4.0 && y >= b.y() - 5.0 && y <= b.y() + 4.0;
       } else {
          return true;
@@ -2921,7 +2921,7 @@ public final class PrintCore {
             keyx -> {
                int x = (int)(keyx >> 32);
                int z = (int)keyx;
-               autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+               autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
                boolean nearBody = Math.abs(x * 16L + 8L - body.x()) <= 24.0 && Math.abs(z * 16L + 8L - body.z()) <= 24.0;
                if (keyx == -9223372036854775808L
                   || nearBody
@@ -3204,7 +3204,7 @@ public final class PrintCore {
          return c;
       }
 
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState b = this.init_EventBus.init_NodeWalker_StreamU();
       if (!b.onGround()) {
          return c;
       }
@@ -3213,19 +3213,19 @@ public final class PrintCore {
       return c;
    }
 
-   boolean init_Z_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.Inner_StreamUtil body) {
+   boolean init_Z_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.MotionState body) {
       if (!body.onGround()) {
          return false;
       }
 
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil at = body;
-      autismclient.ai.engine.AiPhysics.Inner_DataUtil still = new autismclient.ai.engine.AiPhysics.Inner_DataUtil(
+      autismclient.ai.engine.AiPhysics.MotionState at = body;
+      autismclient.ai.engine.AiPhysics.MoveInput still = new autismclient.ai.engine.AiPhysics.MoveInput(
          0.0, 0.0, false, false, false, this.init_EventBus.init_F()
       );
-      autismclient.ai.engine.AiPhysics.Inner_CachePool physics = this.init_EventBus.init_NodeWalker_CachePo();
+      autismclient.ai.engine.AiPhysics.PhysicsWorld physics = this.init_EventBus.init_NodeWalker_CachePo();
 
       while (true) {
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil next = autismclient.ai.engine.AiPhysics.init(at, still, physics);
+         autismclient.ai.engine.AiPhysics.MotionState next = autismclient.ai.engine.AiPhysics.init(at, still, physics);
          if (!next.onGround() || Math.abs(next.y() - body.y()) > 0.01 || this.init_ArrayUtil.load_Z_AABB(next.box(false).expandTowards(0.0, -0.01, 0.0))) {
             return false;
          }
@@ -3242,7 +3242,7 @@ public final class PrintCore {
       }
    }
 
-   boolean load_Z_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.Inner_StreamUtil b) {
+   boolean load_Z_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.MotionState b) {
       AABB under = new AABB(b.x() - 0.05, b.y() - 0.6, b.z() - 0.05, b.x() + 0.05, b.y() - 0.01, b.z() + 0.05);
       return this.init_ArrayUtil.init_Z_AABB(under);
    }
@@ -4439,7 +4439,7 @@ public final class PrintCore {
       this.f_am_I = 0;
       this.f_O_J = 0L;
       this.get_Z();
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil bodyNow = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState bodyNow = this.init_EventBus.init_NodeWalker_StreamU();
       boolean nearPour = this.init_BlockPos == null
          || Math.abs(bodyNow.x() - this.init_BlockPos.getX()) <= 8.0
             && Math.abs(bodyNow.z() - this.init_BlockPos.getZ()) <= 8.0
@@ -4591,7 +4591,7 @@ public final class PrintCore {
          return this.open_UiHelper_NetHelper();
       } else {
          if (lowest == 2147483647 && this.f_m_I >= 0) {
-            autismclient.ai.engine.AiPhysics.Inner_StreamUtil bi = this.init_EventBus.init_NodeWalker_StreamU();
+            autismclient.ai.engine.AiPhysics.MotionState bi = this.init_EventBus.init_NodeWalker_StreamU();
             BlockPos from = PrintNav.init(this.init_ArrayUtil, new Vec3(bi.x(), bi.y(), bi.z()));
             if (this.init_UiHelper_ConfigSto == null || !this.init_UiHelper_ConfigSto.init()) {
                this.init_UiHelper_ConfigSto = new PrintCore.Inner_ConfigStore(from);
@@ -4658,7 +4658,7 @@ public final class PrintCore {
                return this.sync_UiHelper_NetHelper();
             }
          } else {
-            autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+            autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
             BlockPos here = PrintNav.init(this.init_ArrayUtil, new Vec3(body.x(), body.y(), body.z()));
             if (this.f_b_I >= 0) {
                if (this.poll_I == this.f_c_I || this.f_an_I == this.f_b_I) {
@@ -4691,7 +4691,7 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_TokenStore_TaskQue_3(
-      PrintNav.Inner_TaskQueue reach, BlockPos here, int lowest, autismclient.ai.engine.AiPhysics.Inner_StreamUtil body, boolean justClimbed
+      PrintNav.Inner_TaskQueue reach, BlockPos here, int lowest, autismclient.ai.engine.AiPhysics.MotionState body, boolean justClimbed
    ) {
       long underFeet = BlockPos.asLong(here.getX(), here.getY() - 1, here.getZ());
       if (!this.run_LongOpenHashSet.isEmpty()) {
@@ -4803,7 +4803,7 @@ public final class PrintCore {
       return true;
    }
 
-   IntArrayList init_IntArrayList_I(int top, int lowest, autismclient.ai.engine.AiPhysics.Inner_StreamUtil body) {
+   IntArrayList init_IntArrayList_I(int top, int lowest, autismclient.ai.engine.AiPhysics.MotionState body) {
       this.sync_V();
       return this.init_RefQueue
          .init_IntArrayList(
@@ -6112,7 +6112,7 @@ public final class PrintCore {
       PrintTarget target = this.init_ListPoolArr[r];
       BlockPos c = target.pos();
       IntArrayList floors = this.init_IntArrayList_I_2(r, blocked, this.load_BlockPos);
-      autismclient.ai.engine.PlacementGoal.Inner_DataUtil con = this.init_u_DataUtil_I(r);
+      autismclient.ai.engine.PlacementGoal.PlaceConstraint con = this.init_u_DataUtil_I(r);
 
       for (int k = 0; k < Math.min(24, floors.size()) && !budget.init(); k++) {
          PrintTarget floor = this.init_ListPoolArr[floors.getInt(k)];
@@ -6190,7 +6190,7 @@ public final class PrintCore {
          }
       }
 
-      autismclient.ai.engine.PlacementGoal.Inner_DataUtil con = this.init_u_DataUtil_I(r);
+      autismclient.ai.engine.PlacementGoal.PlaceConstraint con = this.init_u_DataUtil_I(r);
       int workY = c.getY() - (con != null && con.playerFacing() == Direction.UP ? 3 : 2);
       floors.sort(
          (a, b) -> Double.compare(
@@ -7557,7 +7557,7 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_PacketUtil init_UiHelper_PacketUti_TokenStore_TaskQue_2(
-      PrintNav.Inner_TaskQueue reach, IntArrayList frontier, autismclient.ai.engine.AiPhysics.Inner_StreamUtil body
+      PrintNav.Inner_TaskQueue reach, IntArrayList frontier, autismclient.ai.engine.AiPhysics.MotionState body
    ) {
       long t0 = System.nanoTime();
 
@@ -7569,7 +7569,7 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_PacketUtil load_UiHelper_PacketUti_TokenStore_TaskQue(
-      PrintNav.Inner_TaskQueue reach, IntArrayList frontier, autismclient.ai.engine.AiPhysics.Inner_StreamUtil body
+      PrintNav.Inner_TaskQueue reach, IntArrayList frontier, autismclient.ai.engine.AiPhysics.MotionState body
    ) {
       Vec3 bodyPos = new Vec3(body.x(), body.y(), body.z());
 
@@ -7863,7 +7863,7 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_PacketUtil init_UiHelper_PacketUti_TokenStore_TaskQue_3(
-      PrintNav.Inner_TaskQueue reach, List<Integer> cells, autismclient.ai.engine.AiPhysics.Inner_StreamUtil body
+      PrintNav.Inner_TaskQueue reach, List<Integer> cells, autismclient.ai.engine.AiPhysics.MotionState body
    ) {
       if (!body.onGround()) {
          return null;
@@ -8268,7 +8268,7 @@ public final class PrintCore {
 
    private PrintCore.Inner_NetHelper load_UiHelper_NetHelper_TokenStore_TaskQue_I(PrintNav.Inner_TaskQueue reach, int lowest) {
       this.get_I++;
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
       IntArrayList goals = new IntArrayList();
 
       for (int i = 0; i < this.init_ListPoolArr.length; i++) {
@@ -8670,7 +8670,7 @@ public final class PrintCore {
    private PrintCore.Inner_NetHelper load_UiHelper_NetHelper_TokenStore_TaskQue(PrintNav.Inner_TaskQueue reach, IntArrayList frontier, boolean allowChains) {
       Item temp = this.init_Item_IntArrayList(frontier);
       BlockState tempState = temp instanceof BlockItem tempBlock ? tempBlock.getBlock().defaultBlockState() : null;
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
       List<Integer> cells = new ArrayList<>(frontier);
       cells.sort(Comparator.comparingDouble(ix -> this.init_ListPoolArr[ix].pos().distToCenterSqr(body.x(), body.y(), body.z())));
       if (cells.size() > 24) {
@@ -9229,10 +9229,10 @@ public final class PrintCore {
                                              this.init_ArrayUtil.init_V_BlockPos_BlockState(support, Blocks.AIR.defaultBlockState());
 
                                              try {
-                                                autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = autismclient.ai.engine.AiPhysics.Inner_StreamUtil.standing(
+                                                autismclient.ai.engine.AiPhysics.MotionState body = autismclient.ai.engine.AiPhysics.MotionState.standing(
                                                    feet.x, feet.y, feet.z
                                                 );
-                                                autismclient.ai.engine.AiPhysics.Inner_CachePool world = this.init_ArrayUtil.init_NodeWalker_CachePo();
+                                                autismclient.ai.engine.AiPhysics.PhysicsWorld world = this.init_ArrayUtil.init_NodeWalker_CachePo();
 
                                                 for (int tick = 0; tick < 40; tick++) {
                                                    body = autismclient.ai.engine.AiPhysics.init(
@@ -9275,7 +9275,7 @@ public final class PrintCore {
       }
    }
 
-   private boolean read_Z_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.Inner_StreamUtil body) {
+   private boolean read_Z_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.MotionState body) {
       double r = 0.299;
 
       for (int x = PrintView.init_I_D(body.x() - r); x <= PrintView.init_I_D(body.x() + r); x++) {
@@ -9573,8 +9573,8 @@ public final class PrintCore {
          return false;
       }
 
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = autismclient.ai.engine.AiPhysics.Inner_StreamUtil.standing(point.x, point.y, point.z);
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil next = autismclient.ai.engine.AiPhysics.init(
+      autismclient.ai.engine.AiPhysics.MotionState body = autismclient.ai.engine.AiPhysics.MotionState.standing(point.x, point.y, point.z);
+      autismclient.ai.engine.AiPhysics.MotionState next = autismclient.ai.engine.AiPhysics.init(
          body, PrintMover.init(autismclient.ai.print.PrintMover.Inner_StreamUtil.NONE, 0.0F), this.init_ArrayUtil.init_NodeWalker_CachePo()
       );
       return next.onGround() && next.position().distanceToSqr(point) < 1.0E-6 && !this.init_ArrayUtil.load_Z_AABB(next.box(false));
@@ -9831,7 +9831,7 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_BlockPos(BlockPos here, IntArrayList goals, Item temp) {
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
       if (goals.isEmpty()) {
          this.init_V_Str("access: no cells to climb to");
          return null;
@@ -10267,7 +10267,7 @@ public final class PrintCore {
 
    private PrintCore.Inner_NetHelper close_UiHelper_NetHelper() {
       this.f_m_I = -1;
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
       Vec3 feet = new Vec3(body.x(), body.y(), body.z());
 
       for (int i = this.load_BitSet.nextSetBit(0); i >= 0; i = this.load_BitSet.nextSetBit(i + 1)) {
@@ -10344,7 +10344,7 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_NetHelper open_UiHelper_NetHelper() {
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
       BlockPos here = PrintNav.init(this.init_ArrayUtil, new Vec3(body.x(), body.y(), body.z()));
       PrintCore.Inner_NetHelper slopeUndo = this.read_UiHelper_NetHelper_BlockPos(here);
       if (slopeUndo != null) {
@@ -11273,7 +11273,7 @@ public final class PrintCore {
 
       this.init_ArrayUtil.load_Z = false;
       if (!this.run_LongOpenHashSet.isEmpty()) {
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil b0 = this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState b0 = this.init_EventBus.init_NodeWalker_StreamU();
          PrintCore.Inner_NetHelper fill = this.update_UiHelper_NetHelper_TokenStore_TaskQue(
             this.init_TokenStore_TaskQue_BlockPos(PrintNav.init(this.init_ArrayUtil, new Vec3(b0.x(), b0.y(), b0.z())))
          );
@@ -11290,7 +11290,7 @@ public final class PrintCore {
                this.read_LongOpenHashSet.remove(k);
             }
 
-            autismclient.ai.engine.AiPhysics.Inner_StreamUtil b2 = this.init_EventBus.init_NodeWalker_StreamU();
+            autismclient.ai.engine.AiPhysics.MotionState b2 = this.init_EventBus.init_NodeWalker_StreamU();
             BlockPos h2 = PrintNav.init(this.init_ArrayUtil, new Vec3(b2.x(), b2.y(), b2.z()));
             PrintCore.Inner_NetHelper fill = this.update_UiHelper_NetHelper_TokenStore_TaskQue(this.init_TokenStore_TaskQue_BlockPos(h2));
             if (fill != null) {
@@ -11328,7 +11328,7 @@ public final class PrintCore {
          this.load_Str = "Checking";
          return this.push_UiHelper_NetHelper();
       } else {
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil b1 = this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState b1 = this.init_EventBus.init_NodeWalker_StreamU();
          PrintCore.Inner_NetHelper slopeUndo = this.read_UiHelper_NetHelper_BlockPos(PrintNav.init(this.init_ArrayUtil, new Vec3(b1.x(), b1.y(), b1.z())));
          if (slopeUndo != null) {
             return slopeUndo;
@@ -11605,7 +11605,7 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_BlockPos(
-      BlockPos here, autismclient.ai.engine.AiPhysics.Inner_StreamUtil body, LongArrayList goals, boolean extending
+      BlockPos here, autismclient.ai.engine.AiPhysics.MotionState body, LongArrayList goals, boolean extending
    ) {
       return this.init_UiHelper_NetHelper_BlockPos_2(here, body, goals, extending, false);
    }
@@ -11614,7 +11614,7 @@ public final class PrintCore {
       return this.f_am_I >= 64 || this.f_O_J >= 18000000L;
    }
 
-   private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_BlockPos_NodeWalker_StreamU(BlockPos here, autismclient.ai.engine.AiPhysics.Inner_StreamUtil body) {
+   private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_BlockPos_NodeWalker_StreamU(BlockPos here, autismclient.ai.engine.AiPhysics.MotionState body) {
       if (this.clear_Z()) {
          return null;
       }
@@ -11640,7 +11640,7 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_BlockPos_2(
-      BlockPos here, autismclient.ai.engine.AiPhysics.Inner_StreamUtil body, LongArrayList goals, boolean extending, boolean upperFirst
+      BlockPos here, autismclient.ai.engine.AiPhysics.MotionState body, LongArrayList goals, boolean extending, boolean upperFirst
    ) {
       Item temp = this.size_Z ? Items.GLASS : this.read_Item();
       BlockState tempState = temp instanceof BlockItem bi ? bi.getBlock().defaultBlockState() : null;
@@ -11654,7 +11654,7 @@ public final class PrintCore {
       return new PrintCore.U(here, feetY, goals, tempState, temp, avoidSwap, extending, upperFirst);
    }
 
-   private static Comparator<Long> init_Comparator_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.Inner_StreamUtil body) {
+   private static Comparator<Long> init_Comparator_NodeWalker_StreamU(autismclient.ai.engine.AiPhysics.MotionState body) {
       return Comparator.<Long>comparingInt(k -> -BlockPos.getY(k))
          .thenComparingDouble(k -> -(init_D_D(BlockPos.getX(k) + 0.5 - body.x()) + init_D_D(BlockPos.getZ(k) + 0.5 - body.z())));
    }
@@ -11776,7 +11776,7 @@ public final class PrintCore {
       return BlockPos.of(key);
    }
 
-   private String init_Str_BlockPos_NodeWalker_StreamU(BlockPos target, autismclient.ai.engine.AiPhysics.Inner_StreamUtil b) {
+   private String init_Str_BlockPos_NodeWalker_StreamU(BlockPos target, autismclient.ai.engine.AiPhysics.MotionState b) {
       StringBuilder out = new StringBuilder();
       int x0 = Math.min(target.getX(), (int)Math.floor(b.x())) - 1;
       int x1 = Math.max(target.getX(), (int)Math.floor(b.x())) + 1;
@@ -11952,11 +11952,11 @@ public final class PrintCore {
                   if (missing != null) {
                      return new PrintCore.T(new autismclient.ai.print.PrintChunkWork.Inner_StreamUtil(PrintChunkWork.init_J_BlockPos(missing)));
                   } else {
-                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil result = clock.init_BitSetUtil_DataUti();
-                     if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING) {
+                     autismclient.ai.print.PrintMachineJob.JobStatus result = clock.init_BitSetUtil_DataUti();
+                     if (result == autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING) {
                         return new PrintCore.aK(1);
-                     } else if (result != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED) {
-                        this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN;
+                     } else if (result != autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED) {
+                        this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
                         return this.init_UiHelper_NetHelper_Str(clock.detail());
                      } else {
                         this.f_S_I++;
@@ -11969,12 +11969,12 @@ public final class PrintCore {
                   if (missing != null) {
                      return new PrintCore.T(new autismclient.ai.print.PrintChunkWork.Inner_StreamUtil(PrintChunkWork.init_J_BlockPos(missing)));
                   } else {
-                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil result = vehicle.init_BitSetUtil_DataUti();
-                     if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING) {
+                     autismclient.ai.print.PrintMachineJob.JobStatus result = vehicle.init_BitSetUtil_DataUti();
+                     if (result == autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING) {
                         this.load_Str = vehicle.detail();
                         return new PrintCore.aK(1);
-                     } else if (result != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED) {
-                        this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN;
+                     } else if (result != autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED) {
+                        this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
                         return this.init_UiHelper_NetHelper_Str(vehicle.detail());
                      } else {
                         this.f_P_I++;
@@ -12244,24 +12244,24 @@ public final class PrintCore {
          job.init(this.init_Map);
       }
 
-      autismclient.ai.print.PrintMachineJob.Inner_DataUtil state = job.prepare();
-      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.NEEDS_SUPPLY) {
+      autismclient.ai.print.PrintMachineJob.JobStatus state = job.prepare();
+      if (state == autismclient.ai.print.PrintMachineJob.JobStatus.NEEDS_SUPPLY) {
          this.read_BitSetUtil = job;
          this.load_Str = job.detail();
          return new PrintCore.aK(1);
       }
 
-      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SKIPPED) {
+      if (state == autismclient.ai.print.PrintMachineJob.JobStatus.SKIPPED) {
          this.read_V_BitSetUtil(job);
          return new PrintCore.aK(1);
       }
 
-      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED) {
+      if (state == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED) {
          this.load_V_BitSetUtil(job);
          return new PrintCore.aK(1);
       }
 
-      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT && job instanceof PrintRailVehicle vehicle && !vehicle.init_MethodUtil_StreamU().railPlacement()
+      if (state == autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT && job instanceof PrintRailVehicle vehicle && !vehicle.init_MethodUtil_StreamU().railPlacement()
          )
        {
          this.write_BitSetUtil = null;
@@ -12275,7 +12275,7 @@ public final class PrintCore {
 
          this.init_V_Str("Skipped the off-rail minecart at " + job.position().toShortString());
          return new PrintCore.aK(1);
-      } else if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT && job.b_()) {
+      } else if (state == autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT && job.b_()) {
          if (this.read_ArrayList.size() < 16) {
             this.read_ArrayList.add(job.position().toShortString() + ": " + job.detail());
          }
@@ -12286,10 +12286,10 @@ public final class PrintCore {
 
          this.read_V_BitSetUtil(job);
          return new PrintCore.aK(1);
-      } else if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT || state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN) {
-         this.data_Z = this.data_Z | state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN;
+      } else if (state == autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT || state == autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN) {
+         this.data_Z = this.data_Z | state == autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
          return this.init_UiHelper_NetHelper_Str(job.detail());
-      } else if (state != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.READY) {
+      } else if (state != autismclient.ai.print.PrintMachineJob.JobStatus.READY) {
          this.load_Str = job.detail();
          return new PrintCore.aK(1);
       } else {
@@ -12828,7 +12828,7 @@ public final class PrintCore {
    }
 
    private void init_V_SyncManager(PrintControls controls, Vec3 goal, double tolerance, Vec3 onward) {
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState b = this.init_EventBus.init_NodeWalker_StreamU();
       float yaw = Math.hypot(goal.x - b.x(), goal.z - b.z()) > 8.0
          ? PrintGeometry.init(new Vec3(b.x(), 0.0, b.z()), new Vec3(goal.x, 0.0, goal.z))
          : (Float.isNaN(controls.init_F) ? this.init_EventBus.init_F() : controls.init_F);
@@ -12846,7 +12846,7 @@ public final class PrintCore {
    }
 
    private void init_V_SyncManager_2(PrintControls controls, Vec3 goal, int owner, PrintTarget support) {
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState b = this.init_EventBus.init_NodeWalker_StreamU();
       float yaw = Math.hypot(goal.x - b.x(), goal.z - b.z()) > 8.0
          ? PrintGeometry.init(new Vec3(b.x(), 0.0, b.z()), new Vec3(goal.x, 0.0, goal.z))
          : (Float.isNaN(controls.init_F) ? this.init_EventBus.init_F() : controls.init_F);
@@ -12867,7 +12867,7 @@ public final class PrintCore {
    }
 
    private void init_V_SyncManager_3(PrintControls controls, Vec3 goal, PrintTarget target, BlockState placed) {
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
       float yaw = Math.hypot(goal.x - body.x(), goal.z - body.z()) > 8.0
          ? PrintGeometry.init(new Vec3(body.x(), 0.0, body.z()), new Vec3(goal.x, 0.0, goal.z))
          : (Float.isNaN(controls.init_F) ? this.init_EventBus.init_F() : controls.init_F);
@@ -12878,7 +12878,7 @@ public final class PrintCore {
    }
 
    private void init_V_SyncManager_2(PrintControls controls, Vec3 goal, PrintTarget source) {
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
       float yaw = Math.hypot(goal.x - body.x(), goal.z - body.z()) > 8.0
          ? PrintGeometry.init(new Vec3(body.x(), 0.0, body.z()), new Vec3(goal.x, 0.0, goal.z))
          : (Float.isNaN(controls.init_F) ? this.init_EventBus.init_F() : controls.init_F);
@@ -13574,7 +13574,7 @@ public final class PrintCore {
                && this.init_ListPoolArr[neighbor].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                && this.init_ListPoolArr[neighbor].item() instanceof BlockItem
                && this.read_Z_I(neighbor)) {
-               autismclient.ai.engine.PlacementGoal.Inner_DataUtil placement = this.init_u_DataUtil_I(neighbor);
+               autismclient.ai.engine.PlacementGoal.PlaceConstraint placement = this.init_u_DataUtil_I(neighbor);
                if (placement == null || placement.acceptsFace(face)) {
                   users++;
                }
@@ -13875,7 +13875,7 @@ public final class PrintCore {
    }
 
    Vec3 init_Vec3() {
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState b = this.init_EventBus.init_NodeWalker_StreamU();
       return new Vec3(b.x(), b.y(), b.z());
    }
 
@@ -13918,7 +13918,7 @@ public final class PrintCore {
             this.init_ArrayUtil.init_V_BlockPos(pos);
          }
       } else {
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState b = this.init_EventBus.init_NodeWalker_StreamU();
          BlockPos here = PrintNav.init(this.init_ArrayUtil, new Vec3(b.x(), b.y(), b.z()));
          if (!this.load_Z_I_I(here.getX(), here.getZ())
             && this.init_TokenStore_TaskQue != null
@@ -14204,7 +14204,7 @@ public final class PrintCore {
    private boolean init_Z_BlockPos_9(BlockPos here, boolean groundOnly, int maxTemps) {
       double height = this.init_ArrayUtil.init_D_I_2(here.getX(), here.getY(), here.getZ());
       if (Double.isNaN(height)) {
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
          if (Math.abs(body.x() - (here.getX() + 0.5)) > 1.0 || Math.abs(body.z() - (here.getZ() + 0.5)) > 1.0 || Math.abs(body.y() - here.getY()) > 1.0) {
             return false;
          }
@@ -14474,7 +14474,7 @@ public final class PrintCore {
    }
 
    boolean run(BlockPos pos) {
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState b = this.init_EventBus.init_NodeWalker_StreamU();
       VoxelShape shape = this.init_ArrayUtil.init_VoxelShape_BlockPos(pos);
       if (shape.isEmpty()) {
          return false;
@@ -14956,7 +14956,7 @@ public final class PrintCore {
       }
 
       this.f_ae_J = this.init_ArrayUtil.read_J();
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = this.init_EventBus.init_NodeWalker_StreamU();
+      autismclient.ai.engine.AiPhysics.MotionState body = this.init_EventBus.init_NodeWalker_StreamU();
       if (!body.onGround()) {
          return null;
       }
@@ -15456,7 +15456,7 @@ public final class PrintCore {
       final boolean init_Z;
       final BlockPos init_BlockPos;
       final BlockPos load_BlockPos;
-      final autismclient.ai.engine.PlacementGoal.Inner_DataUtil init_u_DataUtil;
+      final autismclient.ai.engine.PlacementGoal.PlaceConstraint init_u_DataUtil;
       final PrintRules.Inner_CachePool init_PathHelper_CachePo;
       final boolean load_Z;
       final autismclient.ai.print.PrintClicks.Inner_DataUtil init_ConfigStore_DataUt;
@@ -15719,7 +15719,7 @@ public final class PrintCore {
                return null;
             }
 
-            autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+            autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
             if (this.init_Vec3 != null && this.init_ConfigStore_Stream == null) {
                autismclient.ai.print.PrintMover.Inner_DataUtil goal = PrintCore.this.init_CharEncoder_DataUt_Vec3(
                   this.init_Vec3, 0.08, this.init_Vec3.y - 0.01, this.load_Z, true
@@ -16138,7 +16138,7 @@ public final class PrintCore {
 
       @Override
       public boolean init_Z() {
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
          return this.init >= 30
             || this.init > 0
                && (
@@ -17376,7 +17376,7 @@ public final class PrintCore {
 
       private void init_V() {
          Vec3 at = PrintCore.this.init_Vec3();
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil coast = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState coast = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
 
          for (int tick = 0; tick < 26; tick++) {
             coast = PrintFlight.init_NodeWalker_StreamU_NodeWalker_StreamU(
@@ -17624,7 +17624,7 @@ public final class PrintCore {
       final IntArrayList init_IntArrayList;
       final IntArrayList load_IntArrayList;
       final IntArrayList read_IntArrayList = new IntArrayList();
-      final autismclient.ai.engine.AiPhysics.Inner_StreamUtil init_NodeWalker_StreamU;
+      final autismclient.ai.engine.AiPhysics.MotionState init_NodeWalker_StreamU;
       final Long2ObjectOpenHashMap<IntArrayList> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
       final Long2ObjectOpenHashMap<Vec3> load_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
       final Long2DoubleOpenHashMap init_Long2DoubleOpenHas = new Long2DoubleOpenHashMap();
@@ -17657,7 +17657,7 @@ public final class PrintCore {
       Iterator<it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry<IntArrayList>> load_Iterator;
       PrintCore.Inner_PacketUtil init_UiHelper_PacketUti;
 
-      Inner_HashUtil(PrintCore.Inner_RenderState safety, IntArrayList frontier, autismclient.ai.engine.AiPhysics.Inner_StreamUtil body) {
+      Inner_HashUtil(PrintCore.Inner_RenderState safety, IntArrayList frontier, autismclient.ai.engine.AiPhysics.MotionState body) {
          this.init_UiHelper_RenderSta = safety;
          this.init_IntArrayList = new IntArrayList(frontier);
          this.init_NodeWalker_StreamU = body;
@@ -18330,7 +18330,7 @@ public final class PrintCore {
             || PrintCore.this.sync_J() != this.read
             || PrintCore.this.reset_J != this.write
             || PrintCore.this.init_EventBus.init_J() >= this.update;
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
          boolean moved = body.position().distanceToSqr(this.init_Vec3) > (this.init_Z ? 0.01 : 1.0E-6) || !this.init_Z && !body.onGround();
          this.load_Z = evidenceChanged || PrintCore.this.init_EventBus.flush() != this.init_Z || moved;
          if (evidenceChanged) {
@@ -19192,7 +19192,7 @@ public final class PrintCore {
             } else {
                PrintCore.this.load_Str = "Landing for " + this.init_BlockPos.toShortString();
                if (this.load + 1 == this.init_TextFormat_BufferH.points().size()) {
-                  autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+                  autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
                   float yaw = Math.hypot(next.x - b.x(), next.z - b.z()) > 0.1
                      ? PrintGeometry.init(new Vec3(b.x(), 0.0, b.z()), new Vec3(next.x, 0.0, next.z))
                      : PrintCore.this.init_EventBus.init_F();
@@ -19376,7 +19376,7 @@ public final class PrintCore {
       @Override
       public PrintControls init_SyncManager() {
          PrintControls c = PrintControls.init_SyncManager();
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
          Vec3 feet = new Vec3(b.x(), b.y(), b.z());
          autismclient.ai.print.PrintMover.Inner_DataUtil hold = PrintCore.this.init_CharEncoder_DataUt_Vec3(
             this.init_Vec3, 0.08, this.init_Vec3.y - 0.01, this.init_Z, true
@@ -19850,7 +19850,7 @@ public final class PrintCore {
          }
 
          BlockPos cell = BlockPos.of(this.init_StreamUtil_NetHelp.block());
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
          Vec3 standFeet = PrintNav.init(this.init_StreamUtil_NetHelp.to(), this.init_StreamUtil_NetHelp.toFeet());
          if (!PrintCore.this.init_ArrayUtil.getBlockState(cell).isAir() && !PrintCore.this.init_ArrayUtil.getBlockState(cell).canBeReplaced()) {
             autismclient.ai.print.PrintMover.Inner_DataUtil g = PrintCore.this.init_CharEncoder_DataUt_Vec3(
@@ -20140,7 +20140,7 @@ public final class PrintCore {
       }
 
       private boolean init_Z(PrintAccess.Inner_NetHelper s) {
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
          Vec3 goal = PrintNav.init(s.to(), s.toFeet());
          double dx = b.x() - goal.x;
          double dz = b.z() - goal.z;
@@ -20161,7 +20161,7 @@ public final class PrintCore {
          PrintAccess.Inner_NetHelper step = this.init_StreamUtil_BufferH.steps().get(this.init_I);
          switch (step.kind()) {
             case WALK:
-               autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+               autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
                if (!b.onGround()
                   && !PrintCore.this.init_EventBus
                      .init_NodeWalker_CachePo()
@@ -20597,7 +20597,7 @@ public final class PrintCore {
          }
 
          PrintControls c = PrintControls.init_SyncManager();
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
          BlockPos cell = this.init_BlockPos.above(this.load_I);
          double floorTop = cell.getY() - 1 + Math.max(0.0, PrintCore.this.init_ArrayUtil.init_VoxelShape_BlockPos(cell.below()).max(Axis.Y));
          Vec3 center = new Vec3(cell.getX() + 0.5, floorTop, cell.getZ() + 0.5);
@@ -21753,7 +21753,7 @@ public final class PrintCore {
                         }
 
                         this.load_I = this.init_IntArrayList.getInt(this.init_I++);
-                        autismclient.ai.engine.PlacementGoal.Inner_DataUtil con = PrintCore.this.init_u_DataUtil_I(this.load_I);
+                        autismclient.ai.engine.PlacementGoal.PlaceConstraint con = PrintCore.this.init_u_DataUtil_I(this.load_I);
                         if (con != null && con.fullDirection() && con.playerFacing() == Direction.UP) {
                            this.write = -1;
                            this.read = 1;
@@ -22393,7 +22393,7 @@ public final class PrintCore {
             return null;
          }
 
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
          autismclient.ai.print.PrintMover.Inner_DataUtil hold = PrintCore.this.init_CharEncoder_DataUt_Vec3(
             this.init_Vec3, 0.08, this.init_Vec3.y - 0.01, true, true
          );
@@ -22930,7 +22930,7 @@ public final class PrintCore {
       PrintNav.Inner_TaskQueue init_TokenStore_TaskQue;
       PrintCore.Inner_RenderState init_UiHelper_RenderSta;
       final BlockPos init_BlockPos;
-      final autismclient.ai.engine.AiPhysics.Inner_StreamUtil init_NodeWalker_StreamU;
+      final autismclient.ai.engine.AiPhysics.MotionState init_NodeWalker_StreamU;
       final int init_I;
       final int load_I;
       final int read;
@@ -22955,7 +22955,7 @@ public final class PrintCore {
       PrintCore.Inner_NetHelper init_UiHelper_NetHelper;
       boolean load_Z;
 
-      R(PrintNav.Inner_TaskQueue reach, BlockPos here, int lowest, autismclient.ai.engine.AiPhysics.Inner_StreamUtil body) {
+      R(PrintNav.Inner_TaskQueue reach, BlockPos here, int lowest, autismclient.ai.engine.AiPhysics.MotionState body) {
          this.init_TokenStore_TaskQue = reach;
          this.init_BlockPos = here;
          this.init_I = lowest;
@@ -23641,7 +23641,7 @@ public final class PrintCore {
       final BlockPos init_BlockPos;
       final int init_I;
       final int load_I;
-      final autismclient.ai.engine.AiPhysics.Inner_StreamUtil init_NodeWalker_StreamU;
+      final autismclient.ai.engine.AiPhysics.MotionState init_NodeWalker_StreamU;
       final boolean init_Z;
       final PrintCore.b init_UiHelper_b = PrintCore.this.new b();
       PrintNav.Inner_NetHelper init_TokenStore_NetHelp;
@@ -23649,7 +23649,7 @@ public final class PrintCore {
       boolean load_Z;
       boolean read;
 
-      S(BlockPos here, int lowest, autismclient.ai.engine.AiPhysics.Inner_StreamUtil body, boolean justClimbed) {
+      S(BlockPos here, int lowest, autismclient.ai.engine.AiPhysics.MotionState body, boolean justClimbed) {
          this.init_BlockPos = here;
          this.init_I = lowest;
          this.init_NodeWalker_StreamU = body;
@@ -23843,7 +23843,7 @@ public final class PrintCore {
                if (this.init_Z && this.init_J != -9223372036854775808L && this.load_Vec3 == null) {
                   Vec3 center = Vec3.atBottomCenterOf(this.init_BlockPos.above());
                   autismclient.ai.print.PrintMover.Inner_DataUtil goal = PrintCore.this.init_CharEncoder_DataUt_Vec3(center, 0.08, center.y - 0.01, true, true);
-                  autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+                  autismclient.ai.engine.AiPhysics.MotionState body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
                   if (!PrintMover.init(body, goal)) {
                      if (++this.read_I > 60) {
                         this.init("could not center on the descent column");
@@ -23858,7 +23858,7 @@ public final class PrintCore {
 
                if (this.init_Z || !PrintCore.this.run(this.init_BlockPos) || this.init_J != -9223372036854775808L && !this.write_Z) {
                   if (!this.init_Z && this.init_J != -9223372036854775808L && !this.write_Z) {
-                     autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+                     autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
                      Vec3 home = this.init_Vec3 != null ? this.init_Vec3 : PrintNav.init(this.init_J, b.y());
                      autismclient.ai.print.PrintMover.Inner_DataUtil g = PrintCore.this.init_CharEncoder_DataUt_Vec3(home, 0.08, home.y - 0.01, this.load_Z, true);
                      if (!PrintMover.init(b, g)) {
@@ -23917,7 +23917,7 @@ public final class PrintCore {
                         );
                         if (click == null) {
                            if (this.init_J != -9223372036854775808L) {
-                              autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+                              autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
                               Vec3 home = PrintNav.init(this.init_J, b.y());
                               if (Math.hypot(b.x() - home.x, b.z() - home.z) > 0.12) {
                                  if (++this.read_I > 120) {
@@ -24676,7 +24676,7 @@ public final class PrintCore {
       }
 
       private void load(String why) {
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
          Vec3 destination = this.init_TextFormat_BufferH.points().get(Math.min(this.read_I, this.init_TextFormat_BufferH.points().size() - 1));
          BlockPos blocker = PrintFlight.init_BlockPos(PrintCore.this.init_ArrayUtil, PrintCore.this.init_Vec3(), destination);
          PrintCore.this.init_V_Str(
@@ -24762,7 +24762,7 @@ public final class PrintCore {
       }
 
       private void init(PrintControls controls, Vec3 destination, boolean sharedPose, boolean fractionalPose, boolean pourPose) {
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
          float yaw = Math.hypot(destination.x - body.x(), destination.z - body.z()) > 8.0
             ? PrintGeometry.init(new Vec3(body.x(), 0.0, body.z()), new Vec3(destination.x, 0.0, destination.z))
             : PrintCore.this.init_EventBus.init_F();
@@ -25502,12 +25502,12 @@ public final class PrintCore {
       private boolean init(BlockState proposed, autismclient.ai.print.PrintMover.Inner_StreamUtil first, float yaw) {
          if (proposed != null
             && !PrintClicks.init_Z_ArrayUtil_5(PrintCore.this.init_ArrayUtil, proposed, this.init_ListPool.pos(), PrintCore.this.init_EventBus.init_AABB())) {
-            autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+            autismclient.ai.engine.AiPhysics.MotionState body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
             PrintCore.this.init_ArrayUtil.init_V_BlockPos_BlockState(this.init_ListPool.pos(), proposed);
 
             try {
                for (int tick = 0; tick < 26; tick++) {
-                  autismclient.ai.engine.AiPhysics.Inner_StreamUtil next = PrintFlight.init_NodeWalker_StreamU_NodeWalker_StreamU(
+                  autismclient.ai.engine.AiPhysics.MotionState next = PrintFlight.init_NodeWalker_StreamU_NodeWalker_StreamU(
                      body,
                      tick == 0 ? first : autismclient.ai.print.PrintMover.Inner_StreamUtil.NONE,
                      yaw,
@@ -28884,7 +28884,7 @@ public final class PrintCore {
             }
 
             if (this.init_I == 0 && this.read < 30) {
-               autismclient.ai.engine.AiPhysics.Inner_StreamUtil b0 = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+               autismclient.ai.engine.AiPhysics.MotionState b0 = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
                Vec3 home = PrintNav.init(this.init_TokenStore_TaskQue.init_J, this.init_TokenStore_TaskQue.load(this.init_TokenStore_TaskQue.init_J));
                double off = Math.hypot(b0.x() - home.x, b0.z() - home.z);
                if (this.read > 0 ? off > 0.25 : off > 0.45 && b0.onGround()) {
@@ -28950,7 +28950,7 @@ public final class PrintCore {
             }
 
             Vec3 goal = PrintNav.init(key, this.init_TokenStore_TaskQue.load(key));
-            autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+            autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
             boolean last = this.init_I == this.init_List.size() - 1;
             double dx = b.x() - goal.x;
             double dz = b.z() - goal.z;
@@ -30650,7 +30650,7 @@ public final class PrintCore {
             return null;
          }
 
-         autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+         autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
          autismclient.ai.print.PrintMover.Inner_DataUtil g = PrintCore.this.init_CharEncoder_DataUt_Vec3(this.init_Vec3, 0.2, this.init_Vec3.y - 0.01, true, true);
          c.sync = true;
          if (!PrintMover.init(b, g)) {
@@ -32666,7 +32666,7 @@ public final class PrintCore {
 
             this.init_D = PrintCore.this.init_ArrayUtil.init_D_I_2(this.read.getX(), this.read.getY(), this.read.getZ());
             if (Double.isNaN(this.init_D)) {
-               autismclient.ai.engine.AiPhysics.Inner_StreamUtil body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
+               autismclient.ai.engine.AiPhysics.MotionState body = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
                if (Math.abs(body.x() - (this.read.getX() + 0.5)) > 1.0
                   || Math.abs(body.z() - (this.read.getZ() + 0.5)) > 1.0
                   || Math.abs(body.y() - this.read.getY()) > 1.0) {
@@ -33297,7 +33297,7 @@ public final class PrintCore {
                            continue;
                         }
 
-                        autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint = click.target().index() < 0
+                        autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = click.target().index() < 0
                            ? null
                            : PrintCore.this.init_u_DataUtil_I(click.target().index());
                         autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000);

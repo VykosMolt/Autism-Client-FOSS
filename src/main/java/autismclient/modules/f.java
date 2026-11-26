@@ -308,27 +308,27 @@ public final class f {
 
    public static float init(float vanillaYaw) {
       f.Inner_EventBus fastUse = init_f_EventBus();
-      RotationMath.Inner_DataUtil rotation = fastUse == null ? null : fastUse.load_ce_DataUtil_4();
+      RotationMath.Rotation rotation = fastUse == null ? null : fastUse.load_ce_DataUtil_4();
       return rotation == null ? vanillaYaw : rotation.init();
    }
 
    public static float load(float vanillaPitch) {
       f.Inner_EventBus fastUse = init_f_EventBus();
-      RotationMath.Inner_DataUtil rotation = fastUse == null ? null : fastUse.load_ce_DataUtil_4();
+      RotationMath.Rotation rotation = fastUse == null ? null : fastUse.load_ce_DataUtil_4();
       return rotation == null ? vanillaPitch : rotation.load();
    }
 
    public static float init(LocalPlayer player, float vanillaYaw) {
-      RotationMath.Inner_DataUtil rotation = init(player);
+      RotationMath.Rotation rotation = init(player);
       return rotation == null ? vanillaYaw : rotation.init();
    }
 
    public static float load(LocalPlayer player, float vanillaPitch) {
-      RotationMath.Inner_DataUtil rotation = init(player);
+      RotationMath.Rotation rotation = init(player);
       return rotation == null ? vanillaPitch : rotation.load();
    }
 
-   private static RotationMath.Inner_DataUtil init(LocalPlayer player) {
+   private static RotationMath.Rotation init(LocalPlayer player) {
       Minecraft client = Minecraft.getInstance();
       if (player != null && client != null && player == client.player) {
          f.Inner_EventBus fastUse = init_f_EventBus();
@@ -4492,8 +4492,8 @@ public final class f {
       private boolean load_Z;
       private boolean read;
       private int load_I;
-      private RotationMath.Inner_DataUtil init_ce_DataUtil;
-      private RotationMath.Inner_DataUtil load_ce_DataUtil;
+      private RotationMath.Rotation init_ce_DataUtil;
+      private RotationMath.Rotation load_ce_DataUtil;
 
       Inner_EventBus() {
          super("fast-use", "FastUse", ae.read, "Speeds up item use.");
@@ -4593,8 +4593,8 @@ public final class f {
       @Override
       public boolean onPacketSend(Packet<?> packet) {
          if (packet instanceof ServerboundMovePlayerPacket movement && movement.hasRotation() && MC != null && MC.player != null) {
-            RotationMath.Inner_DataUtil base = this.init_ce_DataUtil_5();
-            this.load_ce_DataUtil = new RotationMath.Inner_DataUtil(movement.getYRot(base.init()), movement.getXRot(base.load()));
+            RotationMath.Rotation base = this.init_ce_DataUtil_5();
+            this.load_ce_DataUtil = new RotationMath.Rotation(movement.getYRot(base.init()), movement.getXRot(base.load()));
          }
 
          return false;
@@ -4602,8 +4602,8 @@ public final class f {
 
       private void init_V_38() {
          if (this.init_ce_DataUtil == null) {
-            RotationMath.Inner_DataUtil accepted = this.init_ce_DataUtil_5();
-            this.init_ce_DataUtil = RotationMath.init_ce_DataUtil(new RotationMath.Inner_DataUtil(accepted.init(), 90.0F), accepted);
+            RotationMath.Rotation accepted = this.init_ce_DataUtil_5();
+            this.init_ce_DataUtil = RotationMath.init_ce_DataUtil(new RotationMath.Rotation(accepted.init(), 90.0F), accepted);
             this.load_I = 5;
          }
 
@@ -4717,19 +4717,19 @@ public final class f {
          this.load_ce_DataUtil = null;
       }
 
-      private RotationMath.Inner_DataUtil init_ce_DataUtil_5() {
+      private RotationMath.Rotation init_ce_DataUtil_5() {
          if (this.load_ce_DataUtil != null) {
             return this.load_ce_DataUtil;
          } else {
-            return MC != null && MC.player != null ? new RotationMath.Inner_DataUtil(MC.player.getYRot(), MC.player.getXRot()) : new RotationMath.Inner_DataUtil(0.0F, 0.0F);
+            return MC != null && MC.player != null ? new RotationMath.Rotation(MC.player.getYRot(), MC.player.getXRot()) : new RotationMath.Rotation(0.0F, 0.0F);
          }
       }
 
-      private RotationMath.Inner_DataUtil load_ce_DataUtil_4() {
+      private RotationMath.Rotation load_ce_DataUtil_4() {
          return this.load_I > 0 ? this.init_ce_DataUtil : null;
       }
 
-      private static boolean init(RotationMath.Inner_DataUtil first, RotationMath.Inner_DataUtil second) {
+      private static boolean init(RotationMath.Rotation first, RotationMath.Rotation second) {
          return first != null && second != null && Float.compare(first.init(), second.init()) == 0 && Float.compare(first.load(), second.load()) == 0;
       }
 
@@ -6042,7 +6042,7 @@ public final class f {
             return true;
          }
 
-         RotationMath.Inner_DataUtil current = SilentMovementCoordinator.init_ce_DataUtil();
+         RotationMath.Rotation current = SilentMovementCoordinator.init_ce_DataUtil();
          if (current == null) {
             return false;
          }
@@ -7229,8 +7229,8 @@ public final class f {
                if (point == null) {
                   this.init_V_46();
                } else {
-                  RotationMath.Inner_DataUtil wanted = RotationMath.init(point, eyes);
-                  RotationMath.Inner_DataUtil current = RotationMath.init(MC.player);
+                  RotationMath.Rotation wanted = RotationMath.init(point, eyes);
+                  RotationMath.Rotation current = RotationMath.init(MC.player);
                   if (this.close_I != target.getId()) {
                      this.close_I = target.getId();
                      this.open_I = -2147483648;
@@ -7248,7 +7248,7 @@ public final class f {
                      } else if (safe) {
                         autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
                      } else {
-                        RotationMath.Inner_DataUtil applied = new RotationMath.Inner_DataUtil(
+                        RotationMath.Rotation applied = new RotationMath.Rotation(
                            "Vertical".equals(axis) ? current.init() : wanted.init(), "Horizontal".equals(axis) ? current.load() : wanted.load()
                         );
                         autismclient.util.MouseMovementRouter.init_V_ba_StreamUtil_4(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST, current, applied);
@@ -7261,7 +7261,7 @@ public final class f {
          }
       }
 
-      private void init_V_LivingEntity(LivingEntity target, Vec3 eyes, Vec3 point, RotationMath.Inner_DataUtil current, String axis, boolean inSafeZone) {
+      private void init_V_LivingEntity(LivingEntity target, Vec3 eyes, Vec3 point, RotationMath.Rotation current, String axis, boolean inSafeZone) {
          autismclient.util.CombatAimEngine hand = this.init_q_2();
          if (this.init_ap_TaskQueue == null) {
             this.init_ap_TaskQueue = new autismclient.util.RotationStreamPlanner.Inner_TaskQueue(new Random());
@@ -7321,7 +7321,7 @@ public final class f {
          pitch = pull[1];
          this.update_I = Math.min(this.update_I + 1, 1000);
          if (!inSafeZone && (Math.abs(yaw) > 1.0E-6 || Math.abs(pitch) > 1.0E-6)) {
-            RotationMath.Inner_DataUtil out = autismclient.util.RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(this.init_ap_TaskQueue, yaw, pitch, 40.0F, 40.0F, gcd, 18.0);
+            RotationMath.Rotation out = autismclient.util.RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(this.init_ap_TaskQueue, yaw, pitch, 40.0F, 40.0F, gcd, 18.0);
             double emitYaw = RotationMath.init(out.init(), current.init());
             double emitPitch = out.load() - current.load();
             if (Math.abs(emitYaw) > 1.0E-6 || Math.abs(emitPitch) > 1.0E-6) {
@@ -7405,7 +7405,7 @@ public final class f {
          this.open_D = target.getZ();
       }
 
-      private void init(autismclient.util.CombatAimEngine hand, LivingEntity target, RotationMath.Inner_DataUtil current) {
+      private void init(autismclient.util.CombatAimEngine hand, LivingEntity target, RotationMath.Rotation current) {
          float perfectYaw = (float)(Math.toDegrees(Math.atan2(target.getZ() - MC.player.getZ(), target.getX() - MC.player.getX())) - 90.0);
          hand.init_V_D(current.init(), current.load(), perfectYaw, this.update_I * 50L <= 1050L && this.init_Z);
       }
@@ -7437,7 +7437,7 @@ public final class f {
 
       private LivingEntity init_LivingEntity_4() {
          double rangeSq = this.decimal("range") * this.decimal("range");
-         RotationMath.Inner_DataUtil current = RotationMath.init(MC.player);
+         RotationMath.Rotation current = RotationMath.init(MC.player);
          Vec3 eyes = MC.player.getEyePosition();
          String priority = this.choice("priority");
          LivingEntity best = null;
@@ -7483,7 +7483,7 @@ public final class f {
          return best;
       }
 
-      private boolean init(LivingEntity entity, double rangeSq, RotationMath.Inner_DataUtil current) {
+      private boolean init(LivingEntity entity, double rangeSq, RotationMath.Rotation current) {
          if (entity == MC.player || entity.isRemoved() || !entity.isAlive()) {
             return false;
          }
@@ -7508,11 +7508,11 @@ public final class f {
             return false;
          }
 
-         RotationMath.Inner_DataUtil toEntity = RotationMath.init(entity.getBoundingBox().getCenter(), MC.player.getEyePosition());
+         RotationMath.Rotation toEntity = RotationMath.init(entity.getBoundingBox().getCenter(), MC.player.getEyePosition());
          return RotationMath.init_F(current, toEntity) <= this.integer("fov");
       }
 
-      private int init(LivingEntity a, LivingEntity b, String priority, RotationMath.Inner_DataUtil current, Vec3 eyes) {
+      private int init(LivingEntity a, LivingEntity b, String priority, RotationMath.Rotation current, Vec3 eyes) {
          int var10000;
          switch (priority) {
             case "Smart":
@@ -7548,8 +7548,8 @@ public final class f {
          }
       }
 
-      private float init(LivingEntity entity, RotationMath.Inner_DataUtil current, Vec3 eyes) {
-         RotationMath.Inner_DataUtil toEntity = RotationMath.init(entity.getBoundingBox().getCenter(), eyes);
+      private float init(LivingEntity entity, RotationMath.Rotation current, Vec3 eyes) {
+         RotationMath.Rotation toEntity = RotationMath.init(entity.getBoundingBox().getCenter(), eyes);
          return RotationMath.init_F(current, toEntity);
       }
 
@@ -7671,7 +7671,7 @@ public final class f {
       }
 
       private Vec3 load(Vec3 eyes, AABB box) {
-         RotationMath.Inner_DataUtil current = RotationMath.init(MC.player);
+         RotationMath.Rotation current = RotationMath.init(MC.player);
          Vec3 best = null;
          float bestAngle = 3.4028235E38F;
 
@@ -7708,7 +7708,7 @@ public final class f {
       }
 
       private boolean init_Z_ce_DataUtil(
-         RotationMath.Inner_DataUtil current, RotationMath.Inner_DataUtil targetRotation, Vec3 eyes, Vec3 targetPoint, LivingEntity target, String axis
+         RotationMath.Rotation current, RotationMath.Rotation targetRotation, Vec3 eyes, Vec3 targetPoint, LivingEntity target, String axis
       ) {
          int configured = this.integer("safe-zone");
          if (configured <= 0 || current == null || targetRotation == null || eyes == null || targetPoint == null || target == null) {

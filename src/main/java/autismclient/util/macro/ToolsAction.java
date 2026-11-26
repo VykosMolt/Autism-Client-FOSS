@@ -86,7 +86,7 @@ public final class ToolsAction implements MacroAction {
                throw new IllegalArgumentException("Choose a waypoint");
             }
 
-            MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.waypoint, mc);
+            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.waypoint, mc);
             if (!resolved.init_Z()) {
                throw new IllegalArgumentException("Waypoint variable has no value");
             }
@@ -122,7 +122,7 @@ public final class ToolsAction implements MacroAction {
          for (Entry<String, JsonElement> entry : object.entrySet()) {
             JsonElement value = entry.getValue();
             if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
-               MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(value.getAsString(), mc);
+               MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(value.getAsString(), mc);
                if (!resolved.init_Z()) {
                   throw new IllegalArgumentException("Tool argument has an unset variable: " + entry.getKey());
                }
@@ -136,7 +136,7 @@ public final class ToolsAction implements MacroAction {
          for (int index = 0; index < array.size(); index++) {
             JsonElement value = array.get(index);
             if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
-               MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(value.getAsString(), mc);
+               MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(value.getAsString(), mc);
                if (!resolved.init_Z()) {
                   throw new IllegalArgumentException("Tool argument has an unset variable");
                }

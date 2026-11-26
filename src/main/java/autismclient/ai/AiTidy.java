@@ -142,7 +142,7 @@ final class AiTidy {
          final int wantFree = Math.max(1, Math.min(36, AiJson.init_I_JsonObject(args, "freeSlots", 4)));
          final int maxDrops = Math.max(1, Math.min(36, AiJson.init_I_JsonObject(args, "maxDrops", 9)));
          final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 60)));
-         final List<AiItems.Inner_DataUtil> keep = new ArrayList<>();
+         final List<AiItems.ItemSpec> keep = new ArrayList<>();
          if (args.has("keep") && args.get("keep").isJsonArray()) {
             for (JsonElement element : args.getAsJsonArray("keep")) {
                keep.add(AiItems.init_af_DataUtil(element.getAsString()));
@@ -318,7 +318,7 @@ final class AiTidy {
       }
    }
 
-   static JsonObject init(Minecraft mc, List<AiItems.Inner_DataUtil> keep, int wantFree) {
+   static JsonObject init(Minecraft mc, List<AiItems.ItemSpec> keep, int wantFree) {
       JsonArray ranked = new JsonArray();
 
       for (AiTidy.Inner_StreamUtil entry : init_List(mc, keep)) {
@@ -337,7 +337,7 @@ final class AiTidy {
       return out;
    }
 
-   static List<AiTidy.Inner_StreamUtil> init_List(Minecraft mc, List<AiItems.Inner_DataUtil> keep) {
+   static List<AiTidy.Inner_StreamUtil> init_List(Minecraft mc, List<AiItems.ItemSpec> keep) {
       List<AiTidy.Inner_StreamUtil> ranked = new ArrayList<>();
       if (mc.player == null) {
          return ranked;
@@ -396,7 +396,7 @@ final class AiTidy {
       return ranked;
    }
 
-   static AiTidy.Inner_StreamUtil init_cx_StreamUtil(Minecraft mc, List<AiItems.Inner_DataUtil> keep) {
+   static AiTidy.Inner_StreamUtil init_cx_StreamUtil(Minecraft mc, List<AiItems.ItemSpec> keep) {
       List<AiTidy.Inner_StreamUtil> ranked = init_List(mc, keep);
       if (ranked.isEmpty()) {
          return null;
@@ -579,8 +579,8 @@ final class AiTidy {
       }
    }
 
-   private static boolean init_Z(ItemStack stack, List<AiItems.Inner_DataUtil> keep) {
-      for (AiItems.Inner_DataUtil target : keep) {
+   private static boolean init_Z(ItemStack stack, List<AiItems.ItemSpec> keep) {
+      for (AiItems.ItemSpec target : keep) {
          if (target.matches(stack)) {
             return true;
          }

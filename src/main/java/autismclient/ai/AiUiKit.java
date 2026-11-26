@@ -427,7 +427,7 @@ final class AiUiKit {
       private int read;
       private int write = -1;
       private autismclient.gui.f.NetHelper init_NetHelper = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-      private ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil;
+      private ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil;
 
       Inner_StreamUtil(boolean follow) {
          this.init_Z = follow;

@@ -12,7 +12,7 @@ final class PrintMover {
    private static final int[][] init_IArr2 = new int[][]{{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
    static final boolean init_Z = !"false".equals(System.getProperty("autism.ai.print.braking", "true"));
 
-   static boolean init(AiPhysics.Inner_StreamUtil s, PrintMover.Inner_DataUtil goal) {
+   static boolean init(AiPhysics.MotionState s, PrintMover.Inner_DataUtil goal) {
       double dx = s.x() - goal.feet().x;
       double dz = s.z() - goal.feet().z;
       double dy = s.y() - goal.feet().y;
@@ -21,7 +21,7 @@ final class PrintMover {
          : false;
    }
 
-   static PrintMover.Inner_StreamUtil init(AiPhysics.Inner_StreamUtil start, AiPhysics.Inner_CachePool world, float yaw, PrintMover.Inner_DataUtil goal) {
+   static PrintMover.Inner_StreamUtil init(AiPhysics.MotionState start, AiPhysics.PhysicsWorld world, float yaw, PrintMover.Inner_DataUtil goal) {
       double needRise = goal.feet().y - start.y();
       boolean tryJump = start.onGround() && (needRise > 0.65 || start.horizontalCollision());
       boolean tapDrop = start.onGround() && needRise < -1.0;
@@ -61,11 +61,11 @@ final class PrintMover {
    }
 
    static PrintMover.Inner_StreamUtil init(
-      AiPhysics.Inner_StreamUtil start,
-      AiPhysics.Inner_CachePool world,
+      AiPhysics.MotionState start,
+      AiPhysics.PhysicsWorld world,
       float yaw,
       PrintMover.Inner_DataUtil goal,
-      Predicate<AiPhysics.Inner_StreamUtil> works
+      Predicate<AiPhysics.MotionState> works
    ) {
       PrintMover.Inner_StreamUtil best = goal.crouch() ? PrintMover.Inner_StreamUtil.CROUCH : PrintMover.Inner_StreamUtil.NONE;
       double bestCost = 1.0 / 0.0;
@@ -77,9 +77,9 @@ final class PrintMover {
          );
          if ((!keys.moving() || !autismclient.ai.engine.AiFallGuard.init(world, start, init(keys, yaw)))
             && Double.isFinite(init_D_NodeWalker_StreamU(start, world, yaw, keys, goal, true))) {
-            AiPhysics.Inner_StreamUtil state = AiPhysics.init(start, init(keys, yaw), world);
+            AiPhysics.MotionState state = AiPhysics.init(start, init(keys, yaw), world);
             boolean workable = works.test(state);
-            AiPhysics.Inner_DataUtil coast = init(goal.crouch() ? PrintMover.Inner_StreamUtil.CROUCH : PrintMover.Inner_StreamUtil.NONE, yaw);
+            AiPhysics.MoveInput coast = init(goal.crouch() ? PrintMover.Inner_StreamUtil.CROUCH : PrintMover.Inner_StreamUtil.NONE, yaw);
 
             for (int tick = 1; tick < 7; tick++) {
                state = AiPhysics.init(state, coast, world);
@@ -99,8 +99,8 @@ final class PrintMover {
    }
 
    static double init_D_NodeWalker_StreamU(
-      AiPhysics.Inner_StreamUtil start,
-      AiPhysics.Inner_CachePool world,
+      AiPhysics.MotionState start,
+      AiPhysics.PhysicsWorld world,
       float yaw,
       PrintMover.Inner_StreamUtil keys,
       PrintMover.Inner_DataUtil goal,
@@ -110,28 +110,28 @@ final class PrintMover {
    }
 
    static double init(
-      AiPhysics.Inner_StreamUtil start,
-      AiPhysics.Inner_CachePool world,
+      AiPhysics.MotionState start,
+      AiPhysics.PhysicsWorld world,
       float yaw,
       PrintMover.Inner_StreamUtil keys,
       PrintMover.Inner_DataUtil goal,
       int heldTicks,
       boolean crouchedCoast
    ) {
-      AiPhysics.Inner_StreamUtil s = start;
-      AiPhysics.Inner_DataUtil held = init(keys, yaw);
-      AiPhysics.Inner_DataUtil moving = init(
+      AiPhysics.MotionState s = start;
+      AiPhysics.MoveInput held = init(keys, yaw);
+      AiPhysics.MoveInput moving = init(
          new PrintMover.Inner_StreamUtil(keys.forward(), keys.back(), keys.left(), keys.right(), false, keys.sneak(), false), yaw
       );
-      AiPhysics.Inner_DataUtil released = init(new PrintMover.Inner_StreamUtil(false, false, false, false, false, keys.sneak() || crouchedCoast, false), yaw);
-      AiPhysics.Inner_DataUtil jumpless = heldTicks < 7 ? released : moving;
+      AiPhysics.MoveInput released = init(new PrintMover.Inner_StreamUtil(false, false, false, false, false, keys.sneak() || crouchedCoast, false), yaw);
+      AiPhysics.MoveInput jumpless = heldTicks < 7 ? released : moving;
       double best = 1.0 / 0.0;
       double peak = Double.isFinite(goal.fallPeak()) ? Math.max(start.y(), goal.fallPeak()) : start.y();
       long startA = BlockPos.asLong((int)Math.floor(start.x()), (int)Math.floor(start.y()), (int)Math.floor(start.z()));
       long startB = BlockPos.asLong((int)Math.floor(start.x()), (int)Math.floor(start.y() - 0.2), (int)Math.floor(start.z()));
 
       for (int t = 1; t <= 7; t++) {
-         AiPhysics.Inner_StreamUtil next = AiPhysics.init(s, t == 1 ? held : (t <= heldTicks ? moving : released), world);
+         AiPhysics.MotionState next = AiPhysics.init(s, t == 1 ? held : (t <= heldTicks ? moving : released), world);
          if (next.y() < goal.floor() - 0.05) {
             return 1.0 / 0.0;
          }
@@ -182,11 +182,11 @@ final class PrintMover {
       return !s.onGround() ? 1.0 / 0.0 : best;
    }
 
-   static boolean init(AiPhysics.Inner_CachePool world, AiPhysics.Inner_StreamUtil start, AiPhysics.Inner_StreamUtil next) {
+   static boolean init(AiPhysics.PhysicsWorld world, AiPhysics.MotionState start, AiPhysics.MotionState next) {
       return init(world, start, next, false);
    }
 
-   private static boolean init(AiPhysics.Inner_CachePool world, AiPhysics.Inner_StreamUtil start, AiPhysics.Inner_StreamUtil next, boolean dry) {
+   private static boolean init(AiPhysics.PhysicsWorld world, AiPhysics.MotionState start, AiPhysics.MotionState next, boolean dry) {
       double r = 0.299;
       int sx0 = (int)Math.floor(start.x() - r);
       int sx1 = (int)Math.floor(start.x() + r);
@@ -229,7 +229,7 @@ final class PrintMover {
       return out;
    }
 
-   private static boolean init_Z_NodeWalker_CachePo(AiPhysics.Inner_CachePool world, double x, double y, double z, long skipA, long skipB) {
+   private static boolean init_Z_NodeWalker_CachePo(AiPhysics.PhysicsWorld world, double x, double y, double z, long skipA, long skipB) {
       int bx = (int)Math.floor(x);
       int by = (int)Math.floor(y);
       int bz = (int)Math.floor(z);
@@ -237,10 +237,10 @@ final class PrintMover {
       return k != skipA && k != skipB && world.read_Z(bx, by, bz);
    }
 
-   static AiPhysics.Inner_DataUtil init(PrintMover.Inner_StreamUtil k, float yaw) {
+   static AiPhysics.MoveInput init(PrintMover.Inner_StreamUtil k, float yaw) {
       double forward = (k.forward() ? 1 : 0) - (k.back() ? 1 : 0);
       double strafe = (k.left() ? 1 : 0) - (k.right() ? 1 : 0);
-      return new AiPhysics.Inner_DataUtil(forward, strafe, k.jump(), k.sprint(), k.sneak(), yaw);
+      return new AiPhysics.MoveInput(forward, strafe, k.jump(), k.sprint(), k.sneak(), yaw);
    }
 
    record Inner_DataUtil(Vec3 feet, double tolerance, double floor, boolean crouch, boolean stop, double fallPeak) {

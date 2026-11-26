@@ -16,7 +16,7 @@ public class MacroVariablesAction implements MacroAction {
       LinkedHashMap<String, MacroVarValue> resolvedValues = new LinkedHashMap<>();
 
       for (int i = 0; i < count; i++) {
-         MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.values.get(i), mc);
+         MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.values.get(i), mc);
          if (!resolved.init_Z()) {
             return;
          }

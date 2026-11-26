@@ -44,16 +44,16 @@ public final class PacketComponentOriginTracker {
          return true;
       }
 
-      ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init(minecraft.getConnection());
-      return context == null || context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.VANILLA;
+      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(minecraft.getConnection());
+      return context == null || context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA;
    }
 
    public static void init_V(Component component) {
-      ConnectionPrivacyRegistry.Inner_StreamUtil origin = PacketDecodeOriginStack.init_BufferHelper_Strea();
+      ConnectionPrivacyRegistry.ConnectionSession origin = PacketDecodeOriginStack.init_BufferHelper_Strea();
       init(component, origin == null ? init_BufferHelper_Strea(component) : origin);
    }
 
-   public static void init(Component component, ConnectionPrivacyRegistry.Inner_StreamUtil origin) {
+   public static void init(Component component, ConnectionPrivacyRegistry.ConnectionSession origin) {
       init(component, Collections.newSetFromMap(new IdentityHashMap<>()), origin);
    }
 
@@ -86,7 +86,7 @@ public final class PacketComponentOriginTracker {
    }
 
    private static boolean init_Z(Object root) {
-      ConnectionPrivacyRegistry.Inner_StreamUtil origin = init_BufferHelper_Strea(root);
+      ConnectionPrivacyRegistry.ConnectionSession origin = init_BufferHelper_Strea(root);
       Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
       ArrayDeque<Object> pending = new ArrayDeque<>();
       if (root != null) {
@@ -121,13 +121,13 @@ public final class PacketComponentOriginTracker {
       return marking;
    }
 
-   private static void init(Object value, ConnectionPrivacyRegistry.Inner_StreamUtil origin) {
+   private static void init(Object value, ConnectionPrivacyRegistry.ConnectionSession origin) {
       if (value instanceof ComponentContents contents && contents instanceof PacketOriginDuck access) {
          access.autism$setFromPacket(origin);
       }
    }
 
-   private static void init(Object root, Set<Object> visited, ConnectionPrivacyRegistry.Inner_StreamUtil origin) {
+   private static void init(Object root, Set<Object> visited, ConnectionPrivacyRegistry.ConnectionSession origin) {
       ArrayDeque<Object> pending = new ArrayDeque<>();
       if (root != null) {
          pending.push(root);
@@ -149,14 +149,14 @@ public final class PacketComponentOriginTracker {
       }
    }
 
-   private static ConnectionPrivacyRegistry.Inner_StreamUtil init_BufferHelper_Strea(Object root) {
+   private static ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea(Object root) {
       Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
       ArrayDeque<Object> pending = new ArrayDeque<>();
       if (root != null) {
          pending.push(root);
       }
 
-      ConnectionPrivacyRegistry.Inner_StreamUtil origin = null;
+      ConnectionPrivacyRegistry.ConnectionSession origin = null;
 
       while (!pending.isEmpty()) {
          Object current = pending.pop();
@@ -165,7 +165,7 @@ public final class PacketComponentOriginTracker {
                init(component, pending);
             } else if (current instanceof ComponentContents contents) {
                if (contents instanceof PacketOriginDuck access && access.autism$isFromPacket()) {
-                  ConnectionPrivacyRegistry.Inner_StreamUtil candidate = access.autism$packetOrigin();
+                  ConnectionPrivacyRegistry.ConnectionSession candidate = access.autism$packetOrigin();
                   if (candidate != null) {
                      if (origin != null && origin != candidate) {
                         return null;

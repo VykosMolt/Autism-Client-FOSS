@@ -33,12 +33,12 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    }
 
    @Override
-   public AimTargetAction.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
+   public AimTargetAction.AimTarget init_M_DataUtil_Minecraft(Minecraft mc) {
       autismclient.util.InteractionTargetRef target = this.init_E();
       if (target == null) {
          return null;
       } else {
-         return target.init_Z() ? AimTargetAction.Inner_DataUtil.init(target.init_BlockPos()) : AimTargetAction.Inner_DataUtil.init(target.init_Entity_Minecraft(mc));
+         return target.init_Z() ? AimTargetAction.AimTarget.init(target.init_BlockPos()) : AimTargetAction.AimTarget.init(target.init_Entity_Minecraft(mc));
       }
    }
 

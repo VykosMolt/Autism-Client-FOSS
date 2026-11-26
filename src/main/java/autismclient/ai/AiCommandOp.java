@@ -146,8 +146,8 @@ public final class AiCommandOp {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final long init_J = AiChatLedger.init_J();
             final long load_J = System.nanoTime() + parsed.timeoutSeconds() * 1000000000L;
-            final List<AiChatLedger.Inner_StreamUtil> init_List = new ArrayList<>();
-            final List<AiChatLedger.Inner_StreamUtil> load_List = new ArrayList<>();
+            final List<AiChatLedger.ChatEntry> init_List = new ArrayList<>();
+            final List<AiChatLedger.ChatEntry> load_List = new ArrayList<>();
             Map<String, String> init_Map = Map.of();
             long read = this.init_J;
             long write;
@@ -200,9 +200,9 @@ public final class AiCommandOp {
             }
 
             void init_V_12() {
-               List<AiChatLedger.Inner_StreamUtil> fresh = new ArrayList<>();
+               List<AiChatLedger.ChatEntry> fresh = new ArrayList<>();
 
-               for (AiChatLedger.Inner_StreamUtil entry : AiChatLedger.init_List(16)) {
+               for (AiChatLedger.ChatEntry entry : AiChatLedger.init_List(16)) {
                   if (entry.revision() <= this.read) {
                      break;
                   }
@@ -214,7 +214,7 @@ public final class AiCommandOp {
                   this.read = fresh.get(0).revision();
                   Collections.reverse(fresh);
 
-                  for (AiChatLedger.Inner_StreamUtil entry : fresh) {
+                  for (AiChatLedger.ChatEntry entry : fresh) {
                      if (parsed.capture() && this.init_List.size() < 8) {
                         this.init_List.add(entry);
                      }
@@ -235,7 +235,7 @@ public final class AiCommandOp {
             JsonObject init_JsonObject_22() {
                JsonArray matchedJson = new JsonArray();
 
-               for (AiChatLedger.Inner_StreamUtil entry : this.load_List) {
+               for (AiChatLedger.ChatEntry entry : this.load_List) {
                   matchedJson.add(AiCommandOp.init(entry));
                }
 
@@ -243,7 +243,7 @@ public final class AiCommandOp {
                this.init_Map.forEach(capturesJson::addProperty);
                JsonArray linesJson = new JsonArray();
                if (parsed.capture()) {
-                  for (AiChatLedger.Inner_StreamUtil entry : this.init_List) {
+                  for (AiChatLedger.ChatEntry entry : this.init_List) {
                      linesJson.add(AiCommandOp.init(entry));
                   }
                }
@@ -281,7 +281,7 @@ public final class AiCommandOp {
       }
    }
 
-   private static JsonObject init(AiChatLedger.Inner_StreamUtil entry) {
+   private static JsonObject init(AiChatLedger.ChatEntry entry) {
       return AiJson.init_JsonObject_ObjArr("source", entry.source(), "sender", entry.sender(), "text", entry.text(), "untrusted", true);
    }
 

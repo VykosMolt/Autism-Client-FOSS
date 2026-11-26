@@ -291,7 +291,7 @@ public final class MacroCondition {
    }
 
    private int init_I_Minecraft(Minecraft mc) {
-      MacroTemplateResolver.Inner_CachePool r = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.init_Str == null ? "" : this.init_Str, mc);
+      MacroTemplateResolver.ResolveResult r = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.init_Str == null ? "" : this.init_Str, mc);
       return !r.init_Z() ? 0 : WaitInventoryPredicateAction.init_I_Minecraft_ArrayUtil(mc, MacroItemTarget.update(r.init_Str()));
    }
 
@@ -492,7 +492,7 @@ public final class MacroCondition {
    }
 
    private static String init_Str_Str_Minecraft(String template, Minecraft mc) {
-      MacroTemplateResolver.Inner_CachePool r = MacroVariableContext.init_j_CachePool_Str_Minecraft(template == null ? "" : template, mc);
+      MacroTemplateResolver.ResolveResult r = MacroVariableContext.init_j_CachePool_Str_Minecraft(template == null ? "" : template, mc);
       return r.init_Z() ? r.init_Str() : "";
    }
 

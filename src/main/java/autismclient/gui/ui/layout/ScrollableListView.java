@@ -219,7 +219,7 @@ public final class ScrollableListView {
          int trackY = this.load + 2;
          int trackWidth = this.sync;
          int trackHeight = this.write - 4;
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
             this.flush, this.get(), trackX, trackY, trackWidth, trackHeight, this.close
          );
          boolean hovered = metrics.init(mouseX, mouseY);
@@ -245,7 +245,7 @@ public final class ScrollableListView {
       if (this.poll() <= 0) {
          return false;
       } else {
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil();
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil();
          if (metrics == null) {
             return false;
          } else if (metrics.load(mouseX, mouseY)) {
@@ -271,7 +271,7 @@ public final class ScrollableListView {
 
    public void init_V_D_D(double mouseX, double mouseY) {
       if (this.init_Z) {
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil();
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil();
          if (metrics != null) {
             int newScroll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(metrics, mouseY, this.open);
             this.load_V(this.read_I(newScroll));
@@ -283,7 +283,7 @@ public final class ScrollableListView {
       return mouseX >= this.init_I && mouseX < this.init_I + this.read && mouseY >= this.load && mouseY < this.load + this.write;
    }
 
-   public autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil() {
+   public autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil() {
       if (this.poll() <= 0) {
          return null;
       }
@@ -300,7 +300,7 @@ public final class ScrollableListView {
    }
 
    public boolean load(double mouseX, double mouseY) {
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil();
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil();
       return metrics != null && metrics.init(mouseX, mouseY);
    }
 

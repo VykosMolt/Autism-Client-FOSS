@@ -61,7 +61,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    private boolean load_Z;
 
    private static int read_I_6() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public StringListEditorScreen(Screen parent, Module module, Setting<?, ?> option) {
@@ -116,7 +116,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             fieldY,
             addW,
             fieldH,
-            autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS,
+            autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
             StringListEditorScreen.Inner_CachePool.ADD,
             -1,
             mx,
@@ -134,7 +134,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             actionsY,
             clearW,
             fieldH,
-            autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.DANGER,
+            autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER,
             StringListEditorScreen.Inner_CachePool.CLEAR,
             -1,
             mx,
@@ -151,7 +151,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                actionsY,
                importW,
                fieldH,
-               autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.PRIMARY,
+               autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY,
                StringListEditorScreen.Inner_CachePool.IMPORT,
                -1,
                mx,
@@ -169,7 +169,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                actionsY,
                scanW,
                fieldH,
-               autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.PRIMARY,
+               autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY,
                StringListEditorScreen.Inner_CachePool.SCAN,
                -1,
                mx,
@@ -185,7 +185,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          this.init(graphics, summary, summaryX, this.init_I_I_I_4(actionsY, fieldH), read_I_6(), x + panelW - 4 - summaryX);
          int listY = this.pop();
          int listH = this.tick_I_7();
-         autismclient.gui.ui.widgets.ScrollListLayout.Inner_DataUtil listLayout = this.init_TextFormat_DataUti_I_I(listY, listH);
+         autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.init_TextFormat_DataUti_I_I(listY, listH);
          this.init(graphics, fieldX, listY, panelW - 8, listH, 5, -1442248437, init_CharEncoder.set());
          listLayout.init(graphics);
 
@@ -201,7 +201,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, autismclient.gui.ui.widgets.ScrollListLayout.Inner_DataUtil layout, int mx, int my) {
+   private void init(GuiGraphicsExtractor graphics, autismclient.gui.ui.widgets.ScrollListLayout.ListLayout layout, int mx, int my) {
       if (this.update_Z()) {
          this.load(graphics, layout, mx, my);
       } else {
@@ -233,7 +233,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       }
    }
 
-   private void load(GuiGraphicsExtractor graphics, autismclient.gui.ui.widgets.ScrollListLayout.Inner_DataUtil layout, int mx, int my) {
+   private void load(GuiGraphicsExtractor graphics, autismclient.gui.ui.widgets.ScrollListLayout.ListLayout layout, int mx, int my) {
       List<StringListEditorScreen.Inner_DataUtil> rows = this.write_List();
       this.poll = this.init(this.poll, 0, layout.open());
       int x = layout.init_I() + layout.pop();
@@ -273,7 +273,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             int popupY = Math.max(4, fieldY - popupH - 2);
             int popupW = Math.min(fieldW, 170);
             int popupX = fieldX;
-            this.init(graphics, popupX, popupY, popupW, popupH, 5, -301397749, ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.OUTLINE));
+            this.init(graphics, popupX, popupY, popupW, popupH, 5, -301397749, ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.OUTLINE));
             int start = Math.max(0, Math.min(this.tick - visible + 1, suggestions.size() - visible));
 
             for (int i = 0; i < visible; i++) {
@@ -297,7 +297,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       int y,
       int w,
       int h,
-      autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant,
+      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant,
       StringListEditorScreen.Inner_CachePool type,
       int index,
       int mx,
@@ -325,7 +325,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          return true;
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_3();
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil_3();
       if (metrics.init_Z() && metrics.init(mx, my)) {
          this.init_Z = true;
          this.push = metrics.load(mx, my) ? my - metrics.update() : metrics.sync() / 2;
@@ -658,7 +658,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          this.load_Z = true;
          this.poll = 0;
 
-         for (TabPlayerListParser.Inner_StreamUtil player : TabPlayerListParser.init(this.minecraft)) {
+         for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(this.minecraft)) {
             if (player != null && player.init_Str() != null && !player.init_Str().isBlank() && !load(this.write_List, player.init_Str())) {
                this.write_List.add(player.init_Str());
                if (player.init_Z()) {
@@ -816,7 +816,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          List<String> values = this.load_List_2();
          int added = 0;
 
-         for (TabPlayerListParser.Inner_StreamUtil player : TabPlayerListParser.init(this.minecraft)) {
+         for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(this.minecraft)) {
             if (player != null && player.init_Z()) {
                String tag = player.load().trim();
                if (!tag.isEmpty() && !load(values, tag)) {
@@ -1116,22 +1116,22 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       return this.update_Z() ? this.write_List().size() : this.init_List_4().size();
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_3() {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_3() {
       return this.init_PoolEntry_DataUtil_I_I(this.pop(), this.tick_I_7());
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_I_I(int listY, int listH) {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_I_I(int listY, int listH) {
       return this.init_TextFormat_DataUti_I_I(listY, listH).init_PoolEntry_DataUtil();
    }
 
-   private autismclient.gui.ui.widgets.ScrollListLayout.Inner_DataUtil init_TextFormat_DataUti_I_I(int listY, int listH) {
+   private autismclient.gui.ui.widgets.ScrollListLayout.ListLayout init_TextFormat_DataUti_I_I(int listY, int listH) {
       return autismclient.gui.ui.widgets.ScrollListLayout.init(
          this.run() + 4, listY, this.set() - 8, listH, this.add(), this.close_I_3(), this.close_I_3(), this.poll, 4, 6, 3, 6, false
       );
    }
 
    private boolean init_Z_I_I(int mx, int my) {
-      autismclient.gui.ui.widgets.ScrollListLayout.Inner_DataUtil listLayout = this.init_TextFormat_DataUti_I_I(this.pop(), this.tick_I_7());
+      autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.init_TextFormat_DataUti_I_I(this.pop(), this.tick_I_7());
       return mx >= listLayout.init_I() + listLayout.pop()
          && mx < listLayout.init_I() + listLayout.pop() + listLayout.push()
          && my >= listLayout.load() + listLayout.pop()

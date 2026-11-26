@@ -92,7 +92,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class AutoFarmModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
+public final class AutoFarmModule extends Module implements SilentMovementCoordinator.Participant {
    private static final int init_I = 2;
    private static final int load_I = 2;
    private static final float init_F = 0.05F;
@@ -171,7 +171,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    private int entry;
    private BlockPos sync_BlockPos;
    private autismclient.util.FarmActionScheduler.Inner_DataUtil read_aa_DataUtil;
-   private RotationMath.Inner_DataUtil init_ce_DataUtil;
+   private RotationMath.Rotation init_ce_DataUtil;
    private Vec3 init_Vec3;
    private static final int node = 20;
    private static final int task = 10;
@@ -181,7 +181,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    private int pool;
    private final Long2IntOpenHashMap load_Long2IntOpenHashMa = new Long2IntOpenHashMap();
    private static final int index = 3;
-   private RotationMath.Inner_DataUtil load_ce_DataUtil;
+   private RotationMath.Rotation load_ce_DataUtil;
    private int count = -2147483648;
    private int flags = -2147483648;
    private Axis init_Direction_Axis;
@@ -208,7 +208,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    private final autismclient.util.CellRetryLimiter<AutoFarmModule.Inner_DataUtil> init_X = new autismclient.util.CellRetryLimiter<>();
    private int mark = -2147483648;
    private int scan = -2147483648;
-   private RotationMath.Inner_DataUtil read_ce_DataUtil;
+   private RotationMath.Rotation read_ce_DataUtil;
    private int parse = -1;
    private int bind = -1;
    private Item init_Item;
@@ -415,7 +415,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                   this.update_V_7();
                   this.update_BlockPos = null;
                   this.entry = 0;
-                  RotationMath.Inner_DataUtil graceGoal = this.bool("movement") ? null : this.init_ce_DataUtil_2();
+                  RotationMath.Rotation graceGoal = this.bool("movement") ? null : this.init_ce_DataUtil_2();
                   if (this.bool("movement")) {
                      this.poll_V_2();
                   } else {
@@ -436,7 +436,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                   }
 
                   this.init_BlockPos = null;
-                  RotationMath.Inner_DataUtil acted = this.init_ce_DataUtil_RingBuffer_BufferH(target);
+                  RotationMath.Rotation acted = this.init_ce_DataUtil_RingBuffer_BufferH(target);
                   if (acted != null) {
                      this.flags = AutismSessionState.init_ck().state_I();
                      this.update_BlockPos = null;
@@ -528,7 +528,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_2() {
+   private RotationMath.Rotation init_ce_DataUtil_2() {
       if (this.load_ce_DataUtil == null) {
          return null;
       }
@@ -624,11 +624,11 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return owner != null && !this.id().equals(owner);
    }
 
-   private void init_V_ce_DataUtil_2(RotationMath.Inner_DataUtil goal) {
+   private void init_V_ce_DataUtil_2(RotationMath.Rotation goal) {
       this.init_V_ce_DataUtil_Z_2(goal, false);
    }
 
-   private void init_V_ce_DataUtil_Z_2(RotationMath.Inner_DataUtil goal, boolean pinQuiet) {
+   private void init_V_ce_DataUtil_Z_2(RotationMath.Rotation goal, boolean pinQuiet) {
       if (goal != null) {
          if (!this.flush_Z_3()) {
             autismclient.util.SilentRotationManager.init_V_Str(this.id(), 5, goal);
@@ -676,7 +676,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       int oy = origin.getY();
       int oz = origin.getZ();
       MutableBlockPos cursor = new MutableBlockPos();
-      RotationMath.Inner_DataUtil sweep = this.load_ce_DataUtil_2();
+      RotationMath.Rotation sweep = this.load_ce_DataUtil_2();
       BlockPos[][] candidateCells = new BlockPos[autismclient.util.FarmActionScheduler.Inner_DataUtil.values().length][3];
       double[][] candidateKeys = new double[autismclient.util.FarmActionScheduler.Inner_DataUtil.values().length][3];
       double[][] candidateDistances = new double[autismclient.util.FarmActionScheduler.Inner_DataUtil.values().length][3];
@@ -932,8 +932,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          && !AnchorAuraModule.init_Z_2()
          && !BlinkPacketManager.load_Z()
          && ServerRotationTracker.init_ch_CachePool().init_Z()) {
-         RotationMath.Inner_DataUtil goal = target.init_ce_DataUtil();
-         RotationMath.Inner_DataUtil wire = this.load_ce_DataUtil_2();
+         RotationMath.Rotation goal = target.init_ce_DataUtil();
+         RotationMath.Rotation wire = this.load_ce_DataUtil_2();
          boolean arrived = Math.abs(RotationMath.init(wire.init(), goal.init())) <= 3.0F && Math.abs(wire.load() - goal.load()) <= 3.0F;
          if (!arrived) {
             this.update_BlockPos = null;
@@ -969,8 +969,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          && !AnchorAuraModule.init_Z_2()
          && !BlinkPacketManager.load_Z()
          && ServerRotationTracker.init_ch_CachePool().init_Z()) {
-         RotationMath.Inner_DataUtil goal = target.init_ce_DataUtil();
-         RotationMath.Inner_DataUtil wire = this.load_ce_DataUtil_2();
+         RotationMath.Rotation goal = target.init_ce_DataUtil();
+         RotationMath.Rotation wire = this.load_ce_DataUtil_2();
          float distance = Math.abs(RotationMath.init(wire.init(), goal.init())) + Math.abs(wire.load() - goal.load());
          if (!target.init_BlockPos().equals(this.flush_BlockPos) || target.init_aa_DataUtil() != this.write_aa_DataUtil) {
             this.flush_BlockPos = target.init_BlockPos();
@@ -1024,7 +1024,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       int y,
       int z,
       double distanceSqr,
-      RotationMath.Inner_DataUtil sweep,
+      RotationMath.Rotation sweep,
       Vec3 eye,
       BlockPos[][] cells,
       double[][] keys,
@@ -1057,15 +1057,15 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private RotationMath.Inner_DataUtil load_ce_DataUtil_2() {
+   private RotationMath.Rotation load_ce_DataUtil_2() {
       int tick = AutismSessionState.init_ck().state_I();
       if (tick == this.scan && this.read_ce_DataUtil != null) {
          return this.read_ce_DataUtil;
       }
 
       this.scan = tick;
-      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
-      this.read_ce_DataUtil = wire.init_Z() ? new RotationMath.Inner_DataUtil(wire.read(), wire.write()) : RotationMath.init(MC.player);
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
+      this.read_ce_DataUtil = wire.init_Z() ? new RotationMath.Rotation(wire.read(), wire.write()) : RotationMath.init(MC.player);
       return this.read_ce_DataUtil;
    }
 
@@ -1208,13 +1208,13 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private AutoFarmModule.Inner_BufferHelper init_RingBuffer_BufferH_BlockPos(BlockPos cell) {
       int slot = this.bool("fortune") ? this.write_I_4() : -1;
-      RotationMath.Inner_DataUtil rotation = this.load_ce_DataUtil(cell);
+      RotationMath.Rotation rotation = this.load_ce_DataUtil(cell);
       return rotation == null
          ? null
          : new AutoFarmModule.Inner_BufferHelper(autismclient.util.FarmActionScheduler.Inner_DataUtil.HARVEST, cell, MC.level.getBlockState(cell).getBlock(), null, slot, rotation);
    }
 
-   private boolean init_Z_ce_DataUtil_Vec3(RotationMath.Inner_DataUtil goal, Vec3 eye) {
+   private boolean init_Z_ce_DataUtil_Vec3(RotationMath.Rotation goal, Vec3 eye) {
       BlockHitResult ray = ScaffoldModule.init_BlockHitResult_Vec3(eye, goal, this.init_D_4(), MC.level, MC.player);
       if (ray == null) {
          return false;
@@ -1240,7 +1240,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       ItemStack stack = choice.init_I() >= 0 ? MC.player.getInventory().getItem(choice.init_I()) : MC.player.getOffhandItem();
       autismclient.util.FarmActionScheduler.Inner_DataUtil kind = recent ? autismclient.util.FarmActionScheduler.Inner_DataUtil.REPLANT_RECENT : autismclient.util.FarmActionScheduler.Inner_DataUtil.REPLANT;
       Vec3 eye = MC.player.getEyePosition();
-      RotationMath.Inner_DataUtil rotation;
+      RotationMath.Rotation rotation;
       if (this.sync_BlockPos != null && this.sync_BlockPos.equals(cell) && this.read_aa_DataUtil == kind && this.init_Vec3.distanceTo(eye) <= 1.0) {
          rotation = this.init_ce_DataUtil;
       } else {
@@ -1262,7 +1262,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      RotationMath.Inner_DataUtil rotation = this.read_ce_DataUtil(cell);
+      RotationMath.Rotation rotation = this.read_ce_DataUtil(cell);
       return rotation == null ? null : new AutoFarmModule.Inner_BufferHelper(autismclient.util.FarmActionScheduler.Inner_DataUtil.TILL, cell, null, hoe, hoeSlot, rotation);
    }
 
@@ -1272,7 +1272,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      RotationMath.Inner_DataUtil rotation = this.init_ce_DataUtil_BlockPos(cell);
+      RotationMath.Rotation rotation = this.init_ce_DataUtil_BlockPos(cell);
       return rotation == null
          ? null
          : new AutoFarmModule.Inner_BufferHelper(
@@ -1280,11 +1280,11 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          );
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_BlockPos(BlockPos cell) {
+   private RotationMath.Rotation init_ce_DataUtil_BlockPos(BlockPos cell) {
       Vec3 eye = MC.player.getEyePosition();
       VoxelShape shape = MC.level.getBlockState(cell).getShape(MC.level, cell);
       AABB box = shape.isEmpty() ? new AABB(cell) : shape.bounds().move(cell);
-      RotationMath.Inner_DataUtil goal = RotationMath.init(box.getCenter(), eye);
+      RotationMath.Rotation goal = RotationMath.init(box.getCenter(), eye);
       if (!init_Z_F_2(goal.load())) {
          return null;
       } else {
@@ -1292,7 +1292,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private boolean load(RotationMath.Inner_DataUtil goal, Vec3 eye) {
+   private boolean load(RotationMath.Rotation goal, Vec3 eye) {
       BlockHitResult ray = ScaffoldModule.init_BlockHitResult_Vec3(eye, goal, this.init_D_4(), MC.level, MC.player);
       return ray != null && this.init_Z_BlockPos_3(ray.getBlockPos());
    }
@@ -1309,9 +1309,9 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          : false;
    }
 
-   private RotationMath.Inner_DataUtil load_ce_DataUtil(BlockPos cell) {
+   private RotationMath.Rotation load_ce_DataUtil(BlockPos cell) {
       Vec3 eye = MC.player.getEyePosition();
-      RotationMath.Inner_DataUtil row = this.init_ce_DataUtil_BlockPos_Vec3(cell, eye);
+      RotationMath.Rotation row = this.init_ce_DataUtil_BlockPos_Vec3(cell, eye);
       if (row != null) {
          return row;
       }
@@ -1364,7 +1364,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
       Vec3 centroid = new Vec3(sumX / count, sumY / count, sumZ / count);
       if (eye.distanceToSqr(centroid) <= cullSqr) {
-         RotationMath.Inner_DataUtil goal = RotationMath.init(centroid, eye);
+         RotationMath.Rotation goal = RotationMath.init(centroid, eye);
          if (this.init_Z_ce_DataUtil_Vec3(goal, eye)) {
             return goal;
          }
@@ -1385,7 +1385,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
          centroid = new Vec3(sumX / count, sumY / count, sumZ / count);
          if (eye.distanceToSqr(centroid) <= cullSqr) {
-            RotationMath.Inner_DataUtil goal = RotationMath.init(centroid, eye);
+            RotationMath.Rotation goal = RotationMath.init(centroid, eye);
             if (this.init_Z_ce_DataUtil_Vec3(goal, eye)) {
                return goal;
             }
@@ -1394,12 +1394,12 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
       VoxelShape shape = MC.level.getBlockState(cell).getShape(MC.level, cell);
       AABB box = shape.isEmpty() ? new AABB(cell) : shape.bounds().move(cell);
-      RotationMath.Inner_DataUtil boxGoal = RotationMath.init(box.getCenter(), eye);
+      RotationMath.Rotation boxGoal = RotationMath.init(box.getCenter(), eye);
       return !this.init_Z_ce_DataUtil_Vec3(boxGoal, eye) ? null : boxGoal;
    }
 
    private void init_V_BlockPos(BlockPos cell, Vec3 eye, Set<Block> crops, double cullSqr, List<BlockPos> members) {
-      RotationMath.Inner_DataUtil sweep = this.load_ce_DataUtil_2();
+      RotationMath.Rotation sweep = this.load_ce_DataUtil_2();
       int[] offsets = init_IArr_I_2(Mth.ceil(this.init_D_4()) + 3);
       BlockPos origin = MC.player.blockPosition();
       int ox = origin.getX();
@@ -1434,7 +1434,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_BlockPos_Vec3(BlockPos pick, Vec3 eye) {
+   private RotationMath.Rotation init_ce_DataUtil_BlockPos_Vec3(BlockPos pick, Vec3 eye) {
       Set<Block> crops = this.init_Set_5();
       int px = pick.getX();
       int py = pick.getY();
@@ -1489,7 +1489,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
 
       if ((end - along) * sign <= 3) {
-         RotationMath.Inner_DataUtil pivot = this.init(cursor, along, perp, py, axis, sign, crops, eye);
+         RotationMath.Rotation pivot = this.init(cursor, along, perp, py, axis, sign, crops, eye);
          if (pivot != null) {
             return pivot;
          }
@@ -1499,7 +1499,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
       this.init_Direction_Axis = axis;
       this.level = sign;
-      RotationMath.Inner_DataUtil goal = this.init(along, perp, this.init_IArr[0], axis, sign, end, eye);
+      RotationMath.Rotation goal = this.init(along, perp, this.init_IArr[0], axis, sign, end, eye);
       if (goal != null && !this.init_Z_ce_DataUtil_Vec3(goal, eye)) {
          goal = null;
       }
@@ -1511,7 +1511,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return goal;
    }
 
-   private RotationMath.Inner_DataUtil init(MutableBlockPos cursor, int along, int perp, int py, Axis axis, int sign, Set<Block> crops, Vec3 eye) {
+   private RotationMath.Rotation init(MutableBlockPos cursor, int along, int perp, int py, Axis axis, int sign, Set<Block> crops, Vec3 eye) {
       for (int offset = 1; offset <= 3; offset++) {
          for (int side = -1; side <= 1; side += 2) {
             int rowPerp = perp + side * offset;
@@ -1529,7 +1529,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                int newSign = -sign;
                int end = this.init(cursor, anchor, rowPerp, py, axis, newSign, crops, this.init_IArr);
                if (end != -2147483648) {
-                  RotationMath.Inner_DataUtil goal = this.init(anchor, rowPerp, this.init_IArr[0], axis, newSign, end, eye);
+                  RotationMath.Rotation goal = this.init(anchor, rowPerp, this.init_IArr[0], axis, newSign, end, eye);
                   if (goal != null && !this.init_Z_ce_DataUtil_Vec3(goal, eye)) {
                      goal = null;
                   }
@@ -1608,7 +1608,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return axis == Axis.X ? cursor.set(a, y, perp) : cursor.set(perp, y, a);
    }
 
-   private RotationMath.Inner_DataUtil init(int along, int perp, int y, Axis axis, int sign, int end, Vec3 eye) {
+   private RotationMath.Rotation init(int along, int perp, int y, Axis axis, int sign, int end, Vec3 eye) {
       double goal = along + sign * 1.75;
       goal = sign > 0 ? Math.min(goal, end + 1.0) : Math.max(goal, end - 1.0);
       Vec3 point = axis == Axis.X ? new Vec3(goal + 0.5, y + 0.5, perp + 0.5) : new Vec3(perp + 0.5, y + 0.5, goal + 0.5);
@@ -1621,22 +1621,22 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return component > 0.05 ? 1 : (component < -0.05 ? -1 : 0);
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_BlockPos_ItemStack(BlockPos cell, ItemStack seedStack) {
-      autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
-         new autismclient.util.BlockPlacementPlanner.Inner_StateCache(
+   private RotationMath.Rotation init_ce_DataUtil_BlockPos_ItemStack(BlockPos cell, ItemStack seedStack) {
+      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
+         new autismclient.util.BlockPlacementPlanner.Query(
                cell, MC.player.getEyePosition(), this.init_D_4(), autismclient.util.BlockPlacementPlanner.init(seedStack, MC.player, InteractionHand.MAIN_HAND)
             )
             .init_U_StateCache_ce_DataUtil(this.load_ce_DataUtil_2())
             .init_U_StateCache_D(autismclient.util.BlockPlacementPlanner.init_D())
             .init_U_StateCache_Z(MC.player.isSecondaryUseActive())
             .load(false)
-            .init_U_StateCache_U_StreamUtil(new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(48))
+            .init_U_StateCache_U_StreamUtil(new autismclient.util.BlockPlacementPlanner.RayBudget(48))
       );
       return candidate == null ? null : candidate.init_U_DataUtil().init_ce_DataUtil();
    }
 
-   private RotationMath.Inner_DataUtil read_ce_DataUtil(BlockPos dirt) {
-      RotationMath.Inner_DataUtil rotation = this.init_ce_DataUtil_BlockPos_BlockPos(dirt, dirt.above());
+   private RotationMath.Rotation read_ce_DataUtil(BlockPos dirt) {
+      RotationMath.Rotation rotation = this.init_ce_DataUtil_BlockPos_BlockPos(dirt, dirt.above());
       if (rotation != null) {
          return rotation;
       }
@@ -1654,16 +1654,16 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return null;
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_BlockPos_BlockPos(BlockPos dirt, BlockPos cell) {
-      autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
-         new autismclient.util.BlockPlacementPlanner.Inner_StateCache(
+   private RotationMath.Rotation init_ce_DataUtil_BlockPos_BlockPos(BlockPos dirt, BlockPos cell) {
+      autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
+         new autismclient.util.BlockPlacementPlanner.Query(
                cell, MC.player.getEyePosition(), this.init_D_4(), (hit, target) -> hit.getBlockPos().equals(dirt) && hit.getDirection() != Direction.DOWN
             )
             .init_U_StateCache_ce_DataUtil(this.load_ce_DataUtil_2())
             .init_U_StateCache_D(autismclient.util.BlockPlacementPlanner.init_D())
             .init_U_StateCache_Z(MC.player.isSecondaryUseActive())
             .load(false)
-            .init_U_StateCache_U_StreamUtil(new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(48))
+            .init_U_StateCache_U_StreamUtil(new autismclient.util.BlockPlacementPlanner.RayBudget(48))
       );
       return candidate == null ? null : candidate.init_U_DataUtil().init_ce_DataUtil();
    }
@@ -1697,7 +1697,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return !init_Set.contains(block) ? false : block == Blocks.ROOTED_DIRT || MC.level.getBlockState(pos.above()).isAir();
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_RingBuffer_BufferH(AutoFarmModule.Inner_BufferHelper target) {
+   private RotationMath.Rotation init_ce_DataUtil_RingBuffer_BufferH(AutoFarmModule.Inner_BufferHelper target) {
       int tick = AutismSessionState.init_ck().state_I();
       if (tick == this.start) {
          return null;
@@ -1736,17 +1736,17 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
       if (!wire.init_Z()) {
          return null;
       }
 
-      RotationMath.Inner_DataUtil wireRotation = new RotationMath.Inner_DataUtil(wire.read(), wire.write());
+      RotationMath.Rotation wireRotation = new RotationMath.Rotation(wire.read(), wire.write());
       if (target.init_aa_DataUtil() != autismclient.util.FarmActionScheduler.Inner_DataUtil.HARVEST && !init_Z_F_2(wireRotation.load())) {
          return null;
       }
 
-      RotationMath.Inner_DataUtil silent = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
+      RotationMath.Rotation silent = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
       if (silent != null && !init_Z_ce_DataUtil_ce_DataUtil_3(silent, wireRotation)) {
          return null;
       }
@@ -1756,7 +1756,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      RotationMath.Inner_DataUtil var10000;
+      RotationMath.Rotation var10000;
       switch (target.init_aa_DataUtil()) {
          case HARVEST:
             var10000 = this.init_ce_DataUtil_RingBuffer_BufferH(target, ray, wireRotation, tick);
@@ -1778,8 +1778,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return var10000;
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_RingBuffer_BufferH(
-      AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Inner_DataUtil wireRotation, int tick
+   private RotationMath.Rotation init_ce_DataUtil_RingBuffer_BufferH(
+      AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Rotation wireRotation, int tick
    ) {
       BlockPos cell = ray.getBlockPos();
       BlockState state = MC.level.getBlockState(cell);
@@ -1817,7 +1817,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private RotationMath.Inner_DataUtil load(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Inner_DataUtil wireRotation, int tick) {
+   private RotationMath.Rotation load(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Rotation wireRotation, int tick) {
       boolean offhand = this.init_Z_Item_BlockHitResult(target.init_Item(), ray);
       InteractionHand hand = offhand ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
       if (!offhand && target.init_I() < 0) {
@@ -2041,7 +2041,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private RotationMath.Inner_DataUtil read(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Inner_DataUtil wireRotation, int tick) {
+   private RotationMath.Rotation read(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Rotation wireRotation, int tick) {
       if (!this.load(ray)) {
          return null;
       }
@@ -2098,7 +2098,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return wireRotation;
    }
 
-   private RotationMath.Inner_DataUtil write(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Inner_DataUtil wireRotation, int tick) {
+   private RotationMath.Rotation write(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Rotation wireRotation, int tick) {
       if (!this.init_Z_BlockPos_3(ray.getBlockPos())) {
          return null;
       }
@@ -2295,7 +2295,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return ScaffoldModule.read_Z_F(Math.abs(pitch));
    }
 
-   private static boolean init_Z_ce_DataUtil_ce_DataUtil_3(RotationMath.Inner_DataUtil first, RotationMath.Inner_DataUtil second) {
+   private static boolean init_Z_ce_DataUtil_ce_DataUtil_3(RotationMath.Rotation first, RotationMath.Rotation second) {
       float epsilon = (float)Math.max(0.05000000074505806, RotationMath.init() + 0.05000000074505806);
       return Math.abs(RotationMath.init(first.init(), second.init())) <= epsilon && Math.abs(first.load() - second.load()) <= epsilon;
    }
@@ -2880,7 +2880,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       Block init_Block,
       Item init_Item,
       int init_I,
-      RotationMath.Inner_DataUtil init_ce_DataUtil
+      RotationMath.Rotation init_ce_DataUtil
    ) {
    }
 

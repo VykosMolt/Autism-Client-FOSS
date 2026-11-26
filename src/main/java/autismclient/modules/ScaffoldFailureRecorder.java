@@ -77,8 +77,8 @@ final class ScaffoldFailureRecorder {
       Direction init_Direction,
       Vec3 init_Vec3,
       Vec3 load_Vec3,
-      RotationMath.Inner_DataUtil init_ce_DataUtil,
-      RotationMath.Inner_DataUtil load_ce_DataUtil,
+      RotationMath.Rotation init_ce_DataUtil,
+      RotationMath.Rotation load_ce_DataUtil,
       Input init_Input,
       String load_Str
    ) {

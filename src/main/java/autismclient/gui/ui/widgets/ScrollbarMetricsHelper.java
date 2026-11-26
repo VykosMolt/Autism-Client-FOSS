@@ -9,13 +9,13 @@ public final class ScrollbarMetricsHelper {
    private ScrollbarMetricsHelper() {
    }
 
-   public static ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_I_2(
+   public static ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_I_2(
       int contentPixels, int viewPixels, int trackX, int trackY, int trackWidth, int trackHeight, int scrollOffset
    ) {
       return init_PoolEntry_DataUtil_I(contentPixels, viewPixels, trackX, trackY, trackWidth, trackHeight, scrollOffset);
    }
 
-   public static ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_I(
+   public static ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_I(
       int contentPixels, int viewPixels, int trackX, int trackY, int trackWidth, int trackHeight, float scrollOffset
    ) {
       int right = trackX + trackWidth;
@@ -24,7 +24,7 @@ public final class ScrollbarMetricsHelper {
       if (contentPixels > 0 && viewPixels > 0 && trackHeight > 0) {
          int maxScroll = Math.max(0, contentPixels - viewPixels);
          if (maxScroll <= 0) {
-            return new ScrollbarMetricsHelper.Inner_DataUtil(trackX, trackY, var14, trackHeight, trackY, trackHeight, 0);
+            return new ScrollbarMetricsHelper.Metrics(trackX, trackY, var14, trackHeight, trackY, trackHeight, 0);
          }
 
          int thumbHeight = Math.max(12, (int)Math.round(trackHeight * ((double)viewPixels / Math.max(viewPixels, contentPixels))));
@@ -32,17 +32,17 @@ public final class ScrollbarMetricsHelper {
          int travel = Math.max(1, trackHeight - thumbHeight);
          float clampedScroll = Math.max(0.0F, Math.min(scrollOffset, maxScroll));
          int thumbY = trackY + Math.round(clampedScroll / maxScroll * travel);
-         return new ScrollbarMetricsHelper.Inner_DataUtil(trackX, trackY, var14, trackHeight, thumbY, thumbHeight, maxScroll);
+         return new ScrollbarMetricsHelper.Metrics(trackX, trackY, var14, trackHeight, thumbY, thumbHeight, maxScroll);
       } else {
-         return new ScrollbarMetricsHelper.Inner_DataUtil(trackX, trackY, var14, trackHeight, trackY, trackHeight, 0);
+         return new ScrollbarMetricsHelper.Metrics(trackX, trackY, var14, trackHeight, trackY, trackHeight, 0);
       }
    }
 
-   public static void init(GuiGraphicsExtractor context, ScrollbarMetricsHelper.Inner_DataUtil metrics, boolean hovered, boolean dragging) {
+   public static void init(GuiGraphicsExtractor context, ScrollbarMetricsHelper.Metrics metrics, boolean hovered, boolean dragging) {
       if (metrics != null && metrics.init_Z()) {
          ScrollbarRenderer.init(
             autismclient.gui.f.UiHelper.init(context, Minecraft.getInstance().font, -1, -1),
-            new ScrollbarRenderer.Inner_DataUtil(
+            new ScrollbarRenderer.ScrollbarBounds(
                autismclient.gui.f.NetHelper.init(metrics.init_I(), metrics.load(), metrics.read(), metrics.write()),
                autismclient.gui.f.NetHelper.init(metrics.init_I(), metrics.update(), metrics.read(), metrics.sync()),
                metrics.flush()
@@ -53,7 +53,7 @@ public final class ScrollbarMetricsHelper {
       }
    }
 
-   public static int init(ScrollbarMetricsHelper.Inner_DataUtil metrics, double mouseY, int grabOffset) {
+   public static int init(ScrollbarMetricsHelper.Metrics metrics, double mouseY, int grabOffset) {
       if (metrics != null && metrics.init_Z()) {
          int travel = Math.max(1, metrics.write() - metrics.sync());
          int thumbTop = (int)Math.round(mouseY) - grabOffset;
@@ -65,7 +65,7 @@ public final class ScrollbarMetricsHelper {
       }
    }
 
-   public record Inner_DataUtil(int init, int load, int read, int write, int update, int sync, int flush) {
+   public record Metrics(int init, int load, int read, int write, int update, int sync, int flush) {
       public boolean init_Z() {
          return this.flush > 0;
       }

@@ -165,14 +165,14 @@ public final class LauncherQuickActions {
    }
 
    public static int init_I() {
-      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.ColorRole.TEXT);
    }
 
    public static int[] init_IArr() {
       return new int[]{
-         ThemePaletteManager.init_I_I_ct_DataUtil(-46518, ThemePaletteManager.Inner_DataUtil.ACCENT),
-         ThemePaletteManager.init_I_I_ct_DataUtil(-791321, ThemePaletteManager.Inner_DataUtil.TEXT),
-         ThemePaletteManager.init_I_I_ct_DataUtil(-7350273, ThemePaletteManager.Inner_DataUtil.ACCENT)
+         ThemePaletteManager.init_I_I_ct_DataUtil(-46518, ThemePaletteManager.ColorRole.ACCENT),
+         ThemePaletteManager.init_I_I_ct_DataUtil(-791321, ThemePaletteManager.ColorRole.TEXT),
+         ThemePaletteManager.init_I_I_ct_DataUtil(-7350273, ThemePaletteManager.ColorRole.ACCENT)
       };
    }
 }

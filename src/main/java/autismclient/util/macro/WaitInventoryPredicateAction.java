@@ -27,7 +27,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
 
    public boolean init(Minecraft mc) {
       if (mc != null && mc.player != null) {
-         MacroTemplateResolver.Inner_CachePool resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.itemName, mc);
+         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.itemName, mc);
          if (!resolution.init_Z()) {
             return false;
          }

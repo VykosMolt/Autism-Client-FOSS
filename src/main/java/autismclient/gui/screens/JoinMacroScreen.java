@@ -93,7 +93,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
             0,
             ctl,
             "Back",
-            autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY,
+            autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY,
             true,
             () -> {
                if (this.minecraft != null) {
@@ -106,14 +106,14 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
             autismclient.gui.f.NetHelper.init(x, this.push(), panelW, this.reset()),
             5,
             -401402080,
-            ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.update, ThemePaletteManager.Inner_DataUtil.OUTLINE)
+            ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.update, ThemePaletteManager.ColorRole.OUTLINE)
          );
          autismclient.gui.f.PacketUtil.load(
             graphics,
             autismclient.gui.f.NetHelper.init(this.start(), this.stop(), this.next(), this.valid()),
             5,
             -1206840035,
-            ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.update, ThemePaletteManager.Inner_DataUtil.OUTLINE)
+            ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.update, ThemePaletteManager.ColorRole.OUTLINE)
          );
          int titleX = this.open() + this.init_I_Str_3("Back") + 4;
          autismclient.gui.f.b.k.init(
@@ -139,11 +139,11 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       int x = this.set() + this.put() + 2;
       int y = this.get();
       int ctl = this.write_I_2();
-      this.init_V_I(x, y, 0, ctl, "Edit", autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY, this.init_aM() != null, () -> this.init_V_aM_2(this.init_aM()));
+      this.init_V_I(x, y, 0, ctl, "Edit", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, this.init_aM() != null, () -> this.init_V_aM_2(this.init_aM()));
       x += this.init_I_Str_3("Edit") + 2;
-      this.init_V_I(x, y, 0, ctl, "Create", autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS, true, () -> this.init_V_aM_2(null));
+      this.init_V_I(x, y, 0, ctl, "Create", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS, true, () -> this.init_V_aM_2(null));
       x += this.init_I_Str_3("Create") + 2;
-      this.init_V_I(x, y, 0, ctl, "Password", autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY, true, this::load_V_4);
+      this.init_V_I(x, y, 0, ctl, "Password", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, this::load_V_4);
    }
 
    private void load_V_4() {
@@ -182,7 +182,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          0,
          ctl,
          keep ? "Stays Enabled" : "Clears After",
-         keep ? autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY,
+         keep ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY,
          true,
          () -> JoinMacroController.load(!JoinMacroController.init_Z())
       );
@@ -287,7 +287,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    private void load(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
       int listX = this.start();
       int listW = this.next();
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_2();
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_2();
       int rowX = this.value();
       int rowRight = this.init_I_PoolEntry_DataUtil(scrollbar);
       int rowH = this.update_I_2();
@@ -374,7 +374,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init_V_I(int x, int y, int w, int h, String label, autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant, boolean enabled, Runnable action) {
+   private void init_V_I(int x, int y, int w, int h, String label, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant, boolean enabled, Runnable action) {
       if (w <= 0) {
          w = this.init_I_Str_3(label);
       }
@@ -388,12 +388,12 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          bounds,
          4,
          selected
-            ? ThemePaletteManager.init_I_I_ct_DataUtil(976607347, ThemePaletteManager.Inner_DataUtil.SUCCESS)
-            : (hovered ? ThemePaletteManager.init_I_I_ct_DataUtil(606804509, ThemePaletteManager.Inner_DataUtil.ACCENT) : 403771667)
+            ? ThemePaletteManager.init_I_I_ct_DataUtil(976607347, ThemePaletteManager.ColorRole.SUCCESS)
+            : (hovered ? ThemePaletteManager.init_I_I_ct_DataUtil(606804509, ThemePaletteManager.ColorRole.ACCENT) : 403771667)
       );
       if (selected) {
          autismclient.gui.f.PacketUtil.load(
-            graphics, bounds.load(1, 1, 1, 1), 3, ThemePaletteManager.init_I_I_ct_DataUtil(hovered ? 1463146611 : 976607347, ThemePaletteManager.Inner_DataUtil.SUCCESS)
+            graphics, bounds.load(1, 1, 1, 1), 3, ThemePaletteManager.init_I_I_ct_DataUtil(hovered ? 1463146611 : 976607347, ThemePaletteManager.ColorRole.SUCCESS)
          );
          autismclient.gui.f.PacketUtil.load(
             graphics, autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write() + 2, 2, bounds.sync() - 4), 1, GuiColorPalette.open
@@ -413,7 +413,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
 
       if (Compat263.mouseEventGlfwButton(event) == 0) {
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_2();
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_2();
          if (scrollbar.init_Z() && scrollbar.init(event.x(), event.y())) {
             this.load_Z = true;
             this.write = scrollbar.load(event.x(), event.y()) ? Math.max(0, (int)Math.round(event.y()) - scrollbar.update()) : scrollbar.sync() / 2;
@@ -577,7 +577,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    private void init_V_aM_2(AutismMacro macro) {
       AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
-      OverlayManager.init_bk().init_V_cX_cX_DataUtil(editor, AutismOverlay.Inner_DataUtil.HOST_SCREEN);
+      OverlayManager.init_bk().init_V_cX_cX_DataUtil(editor, AutismOverlay.RenderLayer.HOST_SCREEN);
       editor.init_V_aM_Consumer_2(macro, saved -> {
          if (saved != null && saved.init_Str != null && !saved.init_Str.isBlank()) {
             JoinMacroController.init_V(saved.init_Str);
@@ -742,7 +742,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       return this.start() + 4;
    }
 
-   private int init_I_PoolEntry_DataUtil(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbar) {
+   private int init_I_PoolEntry_DataUtil(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar) {
       int right = this.start() + this.next() - 4;
       return scrollbar.init_Z() ? this.cache() - 2 : right;
    }
@@ -751,7 +751,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       return this.start() + this.next() - 4 - 6;
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_2() {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_2() {
       int pitch = this.sync();
       int trackY = this.size();
       int trackH = Math.max(1, this.data() * pitch - 2);
@@ -795,7 +795,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       int read,
       int write,
       String init_Str,
-      autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil init_ByteReader_StreamU,
+      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone init_ByteReader_StreamU,
       boolean init_Z,
       Runnable init_Runnable
    ) {

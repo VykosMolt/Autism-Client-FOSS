@@ -48,7 +48,7 @@ public enum AiSurface {
       }
    }
 
-   public static AiSurface init(AiPathfinder.Inner_FileCache probe) {
+   public static AiSurface init(AiPathfinder.CellInfo probe) {
       if (probe == null || !probe.loaded()) {
          return NORMAL;
       } else if (probe.ice()) {

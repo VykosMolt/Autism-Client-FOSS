@@ -98,8 +98,8 @@ public abstract class AutismPacketSanityMixin {
 
    @Unique
    private static boolean autism$suppressesCorrections(PacketListener listener) {
-      ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init(listener);
-      return context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.MODDED;
+      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(listener);
+      return context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED;
    }
 
    @Inject(method = "handleAddObjective", at = @At("HEAD"), cancellable = true, require = 0)

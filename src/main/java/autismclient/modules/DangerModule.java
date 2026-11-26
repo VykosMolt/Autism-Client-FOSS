@@ -61,7 +61,7 @@ import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.TeamColor;
 
-public final class DangerModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
+public final class DangerModule extends Module implements SilentMovementCoordinator.Participant {
    private static final int init_I = 40;
    private static final int load_I = 12;
    private static final double init_D = 64.0;
@@ -90,10 +90,10 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    private double read_D = 0.0 / 0.0;
    private String init_Str = "";
    private String load_Str = "Idle";
-   private RotationMath.Inner_DataUtil init_ce_DataUtil;
-   private RotationMath.Inner_DataUtil load_ce_DataUtil;
+   private RotationMath.Rotation init_ce_DataUtil;
+   private RotationMath.Rotation load_ce_DataUtil;
    private int push = -2147483648;
-   private RotationMath.Inner_DataUtil read_ce_DataUtil;
+   private RotationMath.Rotation read_ce_DataUtil;
 
    public DangerModule() {
       super("danger", "Danger", ae.init_ae, "Predict nearby projectiles and pearl landings; optionally return fireballs.");
@@ -411,8 +411,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                DangerModule.Inner_DataUtil attempt = this.init_Map.get(threat.init_Entity.getUUID());
                if (threat.init_Z && (attempt == null || FireballInterceptMath.init(this.open - attempt.init_I))) {
                   Fireball ball = (Fireball)threat.init_Entity;
-                  RotationMath.Inner_DataUtil goal = this.init_ce_DataUtil_Entity(ball);
-                  ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+                  RotationMath.Rotation goal = this.init_ce_DataUtil_Entity(ball);
+                  ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
                   double yaw = wire.init_Z() ? wire.read() : MC.player.getYRot();
                   double pitch = wire.init_Z() ? wire.write() : MC.player.getXRot();
                   double strike = FireballInterceptMath.init_D_Vec3(
@@ -469,10 +469,10 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   this.init_Str = "Return window ended";
                   this.flush_V_10();
                } else {
-                  RotationMath.Inner_DataUtil goal = this.init_ce_DataUtil_Entity(this.init_Entity);
+                  RotationMath.Rotation goal = this.init_ce_DataUtil_Entity(this.init_Entity);
                   autismclient.util.SilentRotationManager.init_V_Str(this.id(), 40, goal);
                   this.init_ce_DataUtil = this.load_ce_DataUtil;
-                  RotationMath.Inner_DataUtil from = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                  RotationMath.Rotation from = autismclient.util.SilentRotationManager.init_ce_DataUtil();
                   if (from == null) {
                      from = RotationMath.init(MC.player);
                   }
@@ -543,7 +543,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       }
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_Entity(Entity ball) {
+   private RotationMath.Rotation init_ce_DataUtil_Entity(Entity ball) {
       Vec3 eye = MC.player.getEyePosition();
       AABB box = ball.getBoundingBox();
       Entity shooter = ball instanceof Projectile projectile ? projectile.getOwner() : null;
@@ -577,7 +577,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    private boolean init_Z_I_D_2(int turn, double strike) {
       if (!MC.player.onGround() && !MC.player.getAbilities().flying) {
-         RotationMath.Inner_DataUtil resume = ScaffoldModule.read_ce_DataUtil();
+         RotationMath.Rotation resume = ScaffoldModule.read_ce_DataUtil();
          if (resume == null) {
             return true;
          }
@@ -928,8 +928,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          if (previousAttempt != null && !FireballInterceptMath.init(this.open - previousAttempt.init_I)) {
             this.load_Str = "Retry interval";
          } else {
-            RotationMath.Inner_DataUtil rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
-            ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+            RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
             if (rotation != null
                && wire.init_Z()
                && !(Math.abs(RotationMath.init(rotation.init(), wire.read())) > 0.15)
@@ -1007,13 +1007,13 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                }
 
                this.load_Z = true;
-               RotationMath.Inner_DataUtil bridgeResume = ScaffoldModule.read_ce_DataUtil();
+               RotationMath.Rotation bridgeResume = ScaffoldModule.read_ce_DataUtil();
                Module scaffold = al.init_Module_Str("scaffold");
                if (bridgeResume != null || scaffold != null && scaffold.isEnabled()) {
-                  RotationMath.Inner_DataUtil resume = bridgeResume != null ? bridgeResume : RotationMath.init(MC.player);
+                  RotationMath.Rotation resume = bridgeResume != null ? bridgeResume : RotationMath.init(MC.player);
                   autismclient.util.SilentRotationManager.init_V_Str(this.id(), 40, resume);
                   autismclient.util.SilentRotationManager.init_V_LocalPlayer_F(MC.player, (float)(180.0 + RotationMath.init()));
-                  RotationMath.Inner_DataUtil endpoint = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                  RotationMath.Rotation endpoint = autismclient.util.SilentRotationManager.init_ce_DataUtil();
                   if (endpoint != null && RotationMath.load(endpoint, resume) <= 1.0F) {
                      if (bridgeResume != null) {
                         ScaffoldModule.init_V_ce_DataUtil_3(endpoint);
@@ -1038,7 +1038,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       }
    }
 
-   public static RotationMath.Inner_DataUtil init_ce_DataUtil_F_2(float partialTick) {
+   public static RotationMath.Rotation init_ce_DataUtil_F_2(float partialTick) {
       DangerModule danger = init_z();
       if (danger == null
          || !"Visible".equalsIgnoreCase(danger.value("rotation"))
@@ -1054,7 +1054,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          float progress = (AutismSessionState.init_ck().state_I() - danger.push + partialTick) / 2.0F;
          if (danger.read_ce_DataUtil != null && !(progress >= 1.0F) && !(progress < 0.0F)) {
             progress = progress * progress * (3.0F - 2.0F * progress);
-            return RotationMath.init_ce_DataUtil_ce_DataUtil(danger.read_ce_DataUtil, new RotationMath.Inner_DataUtil(MC.player.getYRot(), MC.player.getXRot()), progress);
+            return RotationMath.init_ce_DataUtil_ce_DataUtil(danger.read_ce_DataUtil, new RotationMath.Rotation(MC.player.getYRot(), MC.player.getXRot()), progress);
          } else {
             return null;
          }

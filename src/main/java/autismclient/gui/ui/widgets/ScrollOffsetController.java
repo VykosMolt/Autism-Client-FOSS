@@ -19,7 +19,7 @@ public final class ScrollOffsetController {
       this.init_V_I_I(this.init - Math.round((float)amount * stepPixels), maxScroll);
    }
 
-   public void init_V_PoolEntry_DataUtil(ScrollbarMetricsHelper.Inner_DataUtil metrics, double mouseY, int grabOffset) {
+   public void init_V_PoolEntry_DataUtil(ScrollbarMetricsHelper.Metrics metrics, double mouseY, int grabOffset) {
       if (metrics == null) {
          this.load(0, 0);
       } else {
@@ -27,7 +27,7 @@ public final class ScrollOffsetController {
       }
    }
 
-   public void init(ScrollbarMetricsHelper.Inner_DataUtil metrics, double mouseY, int grabOffset, int stepSize) {
+   public void init(ScrollbarMetricsHelper.Metrics metrics, double mouseY, int grabOffset, int stepSize) {
       if (metrics == null) {
          this.load(0, 0);
       } else {

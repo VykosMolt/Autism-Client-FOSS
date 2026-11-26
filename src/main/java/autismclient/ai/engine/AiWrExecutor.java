@@ -61,7 +61,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
+public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private static final int flowState = 16;
    private static final int flowTemp = 6;
    private static final int readEx_I = 6;
@@ -140,7 +140,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
    private boolean tick_Z;
    private AiOperation putAt_AiOperation;
    private AiChunkMemory putAt_PacketHelper;
-   private AiPathfinder.Inner_NetHelper putAt_FileStore_RingUtil;
+   private AiPathfinder.FallPolicy putAt_FileStore_RingUtil;
    private boolean flushOf_Z;
    private boolean stateOf_Z;
    private boolean store_Z;
@@ -177,7 +177,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       this.getTo = -2147483648;
       this.task = -1;
       this.initEx = -1;
-      this.putAt_FileStore_RingUtil = AiPathfinder.Inner_NetHelper.STANDARD;
+      this.putAt_FileStore_RingUtil = AiPathfinder.FallPolicy.STANDARD;
       this.flushOf_Z = true;
       this.stateOf_Z = true;
       this.nextBy_Z = true;
@@ -204,11 +204,11 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
    }
 
    static boolean putAt_Z_FileStore_PacketHe(
-      AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.Inner_FileCache> var1, Predicate<BlockPos> var2, Predicate<BlockPos> var3
+      AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.CellInfo> var1, Predicate<BlockPos> var2, Predicate<BlockPos> var3
    ) {
       if (var0 != null && var0.cellsToBreak().isEmpty() && var0.cellsToPlace().isEmpty()) {
-         AiPathfinder.Inner_FileCache var4 = (AiPathfinder.Inner_FileCache)var1.apply(var0.from());
-         AiPathfinder.Inner_FileCache var5 = (AiPathfinder.Inner_FileCache)var1.apply(var0.to());
+         AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var1.apply(var0.from());
+         AiPathfinder.CellInfo var5 = (AiPathfinder.CellInfo)var1.apply(var0.to());
          if (!var4.water() && !var5.water()) {
             boolean var10000;
             switch (var0.type()) {
@@ -249,7 +249,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
    }
 
    static int putAt_I_List(
-      List<AiPathfinder.UiHelper> var0, int var1, Function<BlockPos, AiPathfinder.Inner_FileCache> var2, Predicate<BlockPos> var3, Predicate<BlockPos> var4
+      List<AiPathfinder.UiHelper> var0, int var1, Function<BlockPos, AiPathfinder.CellInfo> var2, Predicate<BlockPos> var3, Predicate<BlockPos> var4
    ) {
       int var5 = var1;
 
@@ -260,9 +260,9 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       return var5;
    }
 
-   static boolean putAt_Z_List_Function(List<AiPathfinder.UiHelper> var0, Function<BlockPos, AiPathfinder.Inner_FileCache> var1) {
+   static boolean putAt_Z_List_Function(List<AiPathfinder.UiHelper> var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
       for (AiPathfinder.UiHelper var3 : var0) {
-         if (((AiPathfinder.Inner_FileCache)var1.apply(var3.from().below())).farmland() || ((AiPathfinder.Inner_FileCache)var1.apply(var3.to().below())).farmland()) {
+         if (((AiPathfinder.CellInfo)var1.apply(var3.from().below())).farmland() || ((AiPathfinder.CellInfo)var1.apply(var3.to().below())).farmland()) {
             return true;
          }
       }
@@ -413,7 +413,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       this.putAt_PacketHelper = var1;
    }
 
-   void putAt_V_FileStore_RingUtil(AiPathfinder.Inner_NetHelper var1) {
+   void putAt_V_FileStore_RingUtil(AiPathfinder.FallPolicy var1) {
       this.putAt_FileStore_RingUtil = var1;
    }
 
@@ -505,10 +505,10 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
          && !this.putAt_Minecraft.player.isInWater()
          && AiLadderJump.putAt(this.putAt_NetEntry(), this.putAt_Minecraft.player.blockPosition())) {
          LocalPlayer var1 = this.putAt_Minecraft.player;
-         AiPhysics.Inner_DataUtil var2 = AiLadderJump.putAt_TokenCore_CacheHel_TokenCore_TaskStat(
+         AiPhysics.MoveInput var2 = AiLadderJump.putAt_TokenCore_CacheHel_TokenCore_TaskStat(
             this.putAt_NetEntry(), putAt_TokenCore_TableCac_LocalPlayer(var1), var1.blockPosition(), false, var1.getYRot()
          );
-         this.putAt_V_LocalPlayer_TokenCore_CacheHel(var1, new AiPhysics.Inner_DataUtil(var2.forward(), var2.strafe(), false, false, true, var2.yaw()));
+         this.putAt_V_LocalPlayer_TokenCore_CacheHel(var1, new AiPhysics.MoveInput(var2.forward(), var2.strafe(), false, false, true, var2.yaw()));
       }
    }
 
@@ -516,7 +516,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       if (this.putAt_Minecraft.player != null && this.putAt_Minecraft.level != null) {
          LocalPlayer var1 = this.putAt_Minecraft.player;
          if (!var1.isInWater() && (!var1.onGround() || !(var1.getDeltaMovement().horizontalDistanceSqr() < 1.0E-4))) {
-            if (AiMotionSafety.putAt_Z_TokenCore_TaskStat_2(this.putAt_NetEntry(), putAt_TokenCore_TableCac_LocalPlayer(var1), AiPhysics.Inner_DataUtil.NONE, 64)
+            if (AiMotionSafety.putAt_Z_TokenCore_TaskStat_2(this.putAt_NetEntry(), putAt_TokenCore_TableCac_LocalPlayer(var1), AiPhysics.MoveInput.NONE, 64)
                )
              {
                return true;
@@ -864,7 +864,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                   }
                }
 
-               if (this.putAt_FileStore_PacketHe.type() != AiPathfinder.Inner_SyncManager.BRIDGE_CELL || this.putAt_TokenCodec == null && !this.pollOf_Z()) {
+               if (this.putAt_FileStore_PacketHe.type() != AiPathfinder.MoveType.BRIDGE_CELL || this.putAt_TokenCodec == null && !this.pollOf_Z()) {
                   if (!this.fill_Z(this.putAt_FileStore_PacketHe)) {
                      int var8 = AiRoutePolicy.putAt_I_List(this.putAt_List, this.pollAt_I, 5, this.putAt_Function(), this.dataEx_Z);
                      if (var8 < 0 && this.tick_Z() && !this.readEx(this.putAt_FileStore_PacketHe)) {
@@ -890,7 +890,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                      }
 
                      if (this.frameOf_Z && var1.onGround() && !this.value(this.putAt_FileStore_PacketHe)) {
-                        this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.FAST);
+                        this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.AimProfile.FAST);
                         if (!this.putAt_FileStore_PacketHe.cellsToBreak().isEmpty() && this.putAt_Z_LocalPlayer(var1, this.putAt_FileStore_PacketHe, false)) {
                            return;
                         }
@@ -899,18 +899,18 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                         return;
                      }
 
-                     boolean var4 = this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.DESCEND_SOFT
+                     boolean var4 = this.putAt_FileStore_PacketHe.type() == AiPathfinder.MoveType.DESCEND_SOFT
                         && !var1.onGround()
                         && !var1.isInWater()
                         && !var1.onClimbable();
-                     boolean var5 = this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.BRIDGE_CELL
+                     boolean var5 = this.putAt_FileStore_PacketHe.type() == AiPathfinder.MoveType.BRIDGE_CELL
                         && !this.value_Z
                         && (this.prevEx_Z || this.putAt_BlockPos != null)
-                        && this.pollOf_I < AiPathfinder.Inner_CachePool.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks()) + 60;
+                        && this.pollOf_I < AiPathfinder.MoveCosts.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks()) + 60;
                      boolean var6 = !var1.isInWater() || ++this.stateOf_I % 3 == 0;
                      if (var5) {
                         this.pollOf_I++;
-                     } else if (!var4 && var6 && ++this.pollOf_I > AiPathfinder.Inner_CachePool.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks())) {
+                     } else if (!var4 && var6 && ++this.pollOf_I > AiPathfinder.MoveCosts.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks())) {
                         this.putAt_V_Str("over its time budget" + this.putAt_Str_FileStore_PacketHe(this.putAt_FileStore_PacketHe));
                         return;
                      }
@@ -926,9 +926,9 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                      return;
                   }
 
-                  if (this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.DOOR
+                  if (this.putAt_FileStore_PacketHe.type() == AiPathfinder.MoveType.DOOR
                      && !this.putAt_Z_FileStore_PacketHe(this.putAt_FileStore_PacketHe)) {
-                     if (++this.pollOf_I > AiPathfinder.Inner_CachePool.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks())) {
+                     if (++this.pollOf_I > AiPathfinder.MoveCosts.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks())) {
                         this.putAt_V_Str("over its time budget" + this.putAt_Str_FileStore_PacketHe(this.putAt_FileStore_PacketHe));
                      }
 
@@ -986,7 +986,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       boolean var13 = Double.isFinite(this.putAt_D) && this.putAt_D > 0.0 && Math.abs(var11 - this.putAt_D) > 1.0E-4;
       double var14 = var13 ? this.putAt_D : var11;
       double var16 = var13 ? var11 : 0.0 / 0.0;
-      AiPhysics.Inner_StreamUtil var18 = putAt_TokenCore_TableCac_LocalPlayer(var1);
+      AiPhysics.MotionState var18 = putAt_TokenCore_TableCac_LocalPlayer(var1);
       float var19 = var1.getYRot();
       AiLiveGrid var20 = this.putAt_PoolStore();
       boolean var21 = this.fill_Z && var3 == this.putAt_List.size();
@@ -1028,7 +1028,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       }
    }
 
-   private Predicate<BlockPos> putAt_Predicate_TokenCore_TableCac_Predicate(AiPhysics.Inner_StreamUtil var1, Predicate<BlockPos> var2) {
+   private Predicate<BlockPos> putAt_Predicate_TokenCore_TableCac_Predicate(AiPhysics.MotionState var1, Predicate<BlockPos> var2) {
       if (var2 != null && var1.onGround()) {
          BlockPos var3 = BlockPos.containing(var1.x(), var1.y() + 1.0E-4, var1.z());
          BlockPos var4 = AiStance.init(this.putAt_Minecraft);
@@ -1128,8 +1128,8 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
          Vec3 var14 = var1.getDeltaMovement();
          if (putAt_Z_Z(this.fill_Z && this.nextBy_Z, var2.flowTemp >= this.putAt_List.size(), var1.onGround(), var1.isInWater(), var14.x, var14.z)
             && ++var2.prev <= 6) {
-            AiPhysics.Inner_DataUtil var17 = AiPaceScript.putAt(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
-            this.putAt_V_LocalPlayer_TokenCore_CacheHel(var1, new AiPhysics.Inner_DataUtil(var17.forward(), var17.strafe(), false, false, true, var17.yaw()));
+            AiPhysics.MoveInput var17 = AiPaceScript.putAt(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
+            this.putAt_V_LocalPlayer_TokenCore_CacheHel(var1, new AiPhysics.MoveInput(var17.forward(), var17.strafe(), false, false, true, var17.yaw()));
             return true;
          } else {
             this.putAt_V_RingCache_TaskStat(var2);
@@ -1168,7 +1168,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
             }
 
             if (var2.value_I < 2 && var1.onGround() && var1.getDeltaMovement().horizontalDistanceSqr() < 1.0E-6) {
-               AiPhysics.Inner_StreamUtil var13 = putAt_TokenCore_TableCac_LocalPlayer(var1);
+               AiPhysics.MotionState var13 = putAt_TokenCore_TableCac_LocalPlayer(var1);
                double var16 = Math.hypot(var13.x() - var2.putAt_TokenCore_TableCac.x(), var13.z() - var2.putAt_TokenCore_TableCac.z());
                if (var13.pose() == 0 && (var16 > 0.025 || var13.pose() != var2.putAt_TokenCore_TableCac.pose())) {
                   this.putAt(var1, var2.flowState, var2.flowTemp, var2.putAt_Z, var2.readEx_I, var2.prevEx_I, var2.value_I + 1);
@@ -1178,7 +1178,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
             return true;
          } else {
             if (var2.putAt_TableUtil.flowState() == 0) {
-               AiPhysics.Inner_StreamUtil var11 = putAt_TokenCore_TableCac_LocalPlayer(var1);
+               AiPhysics.MotionState var11 = putAt_TokenCore_TableCac_LocalPlayer(var1);
                double var4 = Math.hypot(var11.x() - var2.putAt_TokenCore_TableCac.x(), var11.z() - var2.putAt_TokenCore_TableCac.z());
                if (var4 > 0.025 || var11.pose() != var2.putAt_TokenCore_TableCac.pose()) {
                   if (var2.value_I < 2 && var1.onGround() && var1.getDeltaMovement().horizontalDistanceSqr() < 1.0E-6 && var11.pose() == 0) {
@@ -1222,7 +1222,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                      return this.putAt_Z_LocalPlayer_2(var1, var2, "wr search starved mid-stretch");
                   } else {
                      if (!var1.onGround() && !var1.onClimbable() && !var1.isInWater()) {
-                        AiPhysics.Inner_StreamUtil var20 = var2.putAt_TableUtil.putAt_TokenCore_TableCac();
+                        AiPhysics.MotionState var20 = var2.putAt_TableUtil.putAt_TokenCore_TableCac();
                         if (var20 != null) {
                            AiPacePlayback.putAt_V_LocalPlayer_TokenCore_TableCac(var1, var20);
                            return true;
@@ -1249,9 +1249,9 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                      if (putAt_Z_Z(this.fill_Z && this.nextBy_Z, var2.flowTemp >= this.putAt_List.size(), var1.onGround(), var1.isInWater(), var19.x, var19.z)) {
                         var2.value_Z = true;
                         var2.prev = 0;
-                        AiPhysics.Inner_DataUtil var9 = AiPaceScript.putAt(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
+                        AiPhysics.MoveInput var9 = AiPaceScript.putAt(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
                         this.putAt_V_LocalPlayer_TokenCore_CacheHel(
-                           var1, new AiPhysics.Inner_DataUtil(var9.forward(), var9.strafe(), false, false, true, var9.yaw())
+                           var1, new AiPhysics.MoveInput(var9.forward(), var9.strafe(), false, false, true, var9.yaw())
                         );
                         return true;
                      }
@@ -1262,7 +1262,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                case prevEx:
                case value:
                   if (!var1.onGround() && !var1.onClimbable() && !var1.isInWater()) {
-                     AiPhysics.Inner_StreamUtil var8 = var2.putAt_TableUtil.putAt_TokenCore_TableCac();
+                     AiPhysics.MotionState var8 = var2.putAt_TableUtil.putAt_TokenCore_TableCac();
                      if (var8 != null) {
                         AiPacePlayback.putAt_V_LocalPlayer_TokenCore_TableCac(var1, var8);
                         return true;
@@ -1356,7 +1356,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
          int var7 = var2.flowState;
          int var8 = var2.flowTemp;
          boolean var9 = var14 || var2.putAt_Z;
-         AiPhysics.Inner_StreamUtil var10 = !var1.onGround() && !var1.onClimbable() ? var2.putAt_TableUtil.putAt_TokenCore_TableCac() : null;
+         AiPhysics.MotionState var10 = !var1.onGround() && !var1.onClimbable() ? var2.putAt_TableUtil.putAt_TokenCore_TableCac() : null;
          this.tick_V();
          boolean var11 = var1.onGround() && var1.getDeltaMovement().horizontalDistanceSqr() <= 1.0E-6 && putAt_TokenCore_TableCac_LocalPlayer(var1).pose() == 0;
          if (!var11) {
@@ -1407,7 +1407,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
    }
 
    private BlockPos putAt_BlockPos_I(int var1) {
-      if (var1 < this.putAt_List.size() && this.putAt_List.get(var1).type() == AiPathfinder.Inner_SyncManager.DOOR) {
+      if (var1 < this.putAt_List.size() && this.putAt_List.get(var1).type() == AiPathfinder.MoveType.DOOR) {
          BlockPos var2 = this.putAt_List.get(var1).to();
          if (this.putAt_Z_BlockPos(var2)) {
             return var2;
@@ -1445,14 +1445,14 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       this.value_FileStore_PacketHe = null;
       this.prevEx_FileStore_PacketHe = null;
       this.nextBy_I = 0;
-      if (var1.type() != AiPathfinder.Inner_SyncManager.DIG_DOWN_1) {
+      if (var1.type() != AiPathfinder.MoveType.DIG_DOWN_1) {
          this.state_Z = false;
       }
 
       this.putAt_CacheHelper.init_V_DataUtil_DataUtil(
-            var1.type() != AiPathfinder.Inner_SyncManager.PILLAR && var1.type() != AiPathfinder.Inner_SyncManager.BRIDGE_CELL
-               ? AiAim.Inner_DataUtil.FAST
-               : AiAim.Inner_DataUtil.EXACT
+            var1.type() != AiPathfinder.MoveType.PILLAR && var1.type() != AiPathfinder.MoveType.BRIDGE_CELL
+               ? AiAim.AimProfile.FAST
+               : AiAim.AimProfile.EXACT
          );
       if (!putAt_Z_FileStore_PacketHe_FileStore_PacketHe(var1, this.fill_FileStore_PacketHe) && this.putAt_ValueSink_CacheHel.putAt(var1, System.nanoTime())) {
          this.syncAt_Z = true;
@@ -1645,7 +1645,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
 
       for (int var4 = this.pollAt_I; var4 < this.putAt_List.size(); var4++) {
          AiPathfinder.UiHelper var5 = this.putAt_List.get(var4);
-         if (var5.type() != AiPathfinder.Inner_SyncManager.DIG_DOWN_1 || var5.to().getX() != this.getTo || var5.to().getZ() != this.tableEx) {
+         if (var5.type() != AiPathfinder.MoveType.DIG_DOWN_1 || var5.to().getX() != this.getTo || var5.to().getZ() != this.tableEx) {
             break;
          }
 
@@ -1772,7 +1772,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
             Vec3 var8 = var1.getEyePosition();
             double var9 = var1.blockInteractionRange();
             AiDigLine.Inner_CachePool var11 = this.putAt_EventBus_JsonCache();
-            Vec3 var12 = var3 && var2.type() == AiPathfinder.Inner_SyncManager.DIG_ASCEND ? AiRoutePolicy.putAt_Vec3_Vec3_FileStore_PacketHe(var8, var2) : var8;
+            Vec3 var12 = var3 && var2.type() == AiPathfinder.MoveType.DIG_ASCEND ? AiRoutePolicy.putAt_Vec3_Vec3_FileStore_PacketHe(var8, var2) : var8;
             this.putAt_EventBus_CacheHelp = this.putAt_EventBus_CacheHelp_FileStore_PacketHe(var2, var5, var12, var1, var11, var9);
             BlockPos var13 = this.putAt_EventBus_CacheHelp == null ? null : AiDigLine.init(this.putAt_EventBus_CacheHelp, var8, var5, var11, var9);
             if (var13 != null) {
@@ -1949,7 +1949,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
 
       if (var2 >= 0 && var2 + 1 < this.putAt_List.size()) {
          AiPathfinder.UiHelper var7 = this.putAt_List.get(var2 + 1);
-         if (var7.type() != AiPathfinder.Inner_SyncManager.DIG_TUNNEL && var7.type() != AiPathfinder.Inner_SyncManager.DIG_ASCEND && var7.type() != AiPathfinder.Inner_SyncManager.DIG_DESCEND) {
+         if (var7.type() != AiPathfinder.MoveType.DIG_TUNNEL && var7.type() != AiPathfinder.MoveType.DIG_ASCEND && var7.type() != AiPathfinder.MoveType.DIG_DESCEND) {
             return List.of();
          }
 
@@ -2022,7 +2022,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
             return null;
          }
 
-         RotationMath.Inner_DataUtil var11 = RotationMath.init(var10, var15);
+         RotationMath.Rotation var11 = RotationMath.init(var10, var15);
          float var12 = Math.abs(var11.load()) > 70.0F ? var1.getYRot() : var11.init();
          Vec3 var13 = var1.getEyePosition().add(Vec3.directionFromRotation(var11.load(), var12).scale(Math.max(2.0, var10.distanceTo(var15))));
          float var14 = AiDigLine.load(var13.subtract(var1.getEyePosition()));
@@ -2036,7 +2036,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       }
    }
 
-   private static boolean putAt_Z_FileStore_BitCache(AiPathfinder.Inner_FileCache var0) {
+   private static boolean putAt_Z_FileStore_BitCache(AiPathfinder.CellInfo var0) {
       return var0.passable() && !var0.web();
    }
 
@@ -2144,8 +2144,8 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       }
    }
 
-   private static RotationMath.Inner_DataUtil putAt_TaskUtil_CacheHelp_LocalPlayer(LocalPlayer var0) {
-      return new RotationMath.Inner_DataUtil(var0.getYRot(), 90.0F);
+   private static RotationMath.Rotation putAt_TaskUtil_CacheHelp_LocalPlayer(LocalPlayer var0) {
+      return new RotationMath.Rotation(var0.getYRot(), 90.0F);
    }
 
    private boolean value(LocalPlayer var1) {
@@ -2211,7 +2211,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       int var5;
       for (var5 = this.pollAt_I; var5 + 1 < this.putAt_List.size(); var5++) {
          AiPathfinder.UiHelper var6 = this.putAt_List.get(var5 + 1);
-         if (var6.type() != AiPathfinder.Inner_SyncManager.BRIDGE_CELL
+         if (var6.type() != AiPathfinder.MoveType.BRIDGE_CELL
             || !var6.from().equals(this.putAt_List.get(var5).to())
             || var6.to().getX() - var6.from().getX() != var3
             || var6.to().getZ() - var6.from().getZ() != var4
@@ -2242,7 +2242,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       double var12 = 0.0;
 
       for (int var14 = this.pollAt_I; var14 <= var5; var14++) {
-         var12 += AiPathfinder.Inner_CachePool.putAt_I_D(this.putAt_List.get(var14).costTicks());
+         var12 += AiPathfinder.MoveCosts.putAt_I_D(this.putAt_List.get(var14).costTicks());
       }
 
       this.setOf = (int)Math.ceil(var12) + 60;
@@ -2264,7 +2264,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
          if (var8 > var5 && var9 <= 1) {
             for (int var10 = var5 + 1; var10 <= var8; var10++) {
                BlockPos var11 = new BlockPos(var2.getX() + var3 * var10, var2.getY() - 1, var2.getZ() + var4 * var10);
-               AiPathfinder.Inner_FileCache var12 = this.putAt_FileStore_BitCache_BlockPos(var11);
+               AiPathfinder.CellInfo var12 = this.putAt_FileStore_BitCache_BlockPos(var11);
                if (!var12.loaded()) {
                   return -1;
                }
@@ -2602,12 +2602,12 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       double var4 = var2.to().getX() + 0.5;
       double var6 = var2.to().getZ() + 0.5;
       float var8 = AiPhysics.putAt_F_D(var1.getX(), var1.getZ(), var4, var6);
-      AiPhysics.Inner_StreamUtil var9 = putAt_TokenCore_TableCac_LocalPlayer(var1);
+      AiPhysics.MotionState var9 = putAt_TokenCore_TableCac_LocalPlayer(var1);
       AiLiveWorld var10 = this.putAt_NetEntry();
       float var11 = this.putAt_CacheHelper.init_F();
-      AiPhysics.Inner_DataUtil[] var12 = new AiPhysics.Inner_DataUtil[]{
+      AiPhysics.MoveInput[] var12 = new AiPhysics.MoveInput[]{
          putAt_TokenCore_CacheHel_F_F(var11, var8),
-         new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, false, var11),
+         new AiPhysics.MoveInput(0.0, 0.0, false, false, false, var11),
          putAt_TokenCore_CacheHel_F_F(var11, var8 + 180.0F)
       };
       int var13 = -1;
@@ -2648,29 +2648,29 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       }
    }
 
-   private boolean putAt_Z_TokenCore_TableCac_FileStore_PacketHe(AiPhysics.Inner_StreamUtil var1, AiPathfinder.UiHelper var2) {
+   private boolean putAt_Z_TokenCore_TableCac_FileStore_PacketHe(AiPhysics.MotionState var1, AiPathfinder.UiHelper var2) {
       AiLiveWorld var3 = this.putAt_NetEntry();
       double var4 = var2.to().getX() + 0.5;
       double var6 = var2.to().getZ() + 0.5;
 
       for (int var8 = 0; var8 < 3; var8++) {
-         AiPhysics.Inner_StreamUtil var9 = var1;
+         AiPhysics.MotionState var9 = var1;
          boolean var10 = false;
          boolean var11 = false;
          boolean var12 = false;
          boolean var13 = false;
-         ArrayList<AiPhysics.Inner_StreamUtil> var14 = new ArrayList<>();
+         ArrayList<AiPhysics.MotionState> var14 = new ArrayList<>();
 
          for (int var15 = 0; var15 < 60 && !var11; var15++) {
             float var16 = AiPhysics.putAt_F_D(var9.x(), var9.z(), var4, var6);
-            AiPhysics.Inner_DataUtil var17 = var10 && var8 != 0
+            AiPhysics.MoveInput var17 = var10 && var8 != 0
                ? (
                   var8 == 1
-                     ? new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, false, var16)
-                     : new AiPhysics.Inner_DataUtil(-1.0, 0.0, false, false, false, var16)
+                     ? new AiPhysics.MoveInput(0.0, 0.0, false, false, false, var16)
+                     : new AiPhysics.MoveInput(-1.0, 0.0, false, false, false, var16)
                )
-               : new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var16);
-            AiPhysics.Inner_StreamUtil var18 = AiPhysics.putAt(var9, var17, var3);
+               : new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var16);
+            AiPhysics.MotionState var18 = AiPhysics.putAt(var9, var17, var3);
             if (AiPhysics.putAt_Z(var3, var9, var18)) {
                break;
             }
@@ -2691,8 +2691,8 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
             BlockPos var19 = BlockPos.containing(var9.x(), var9.y() + 0.01, var9.z());
             if (var10 && !var13 && this.putAt_FileStore_BitCache_BlockPos(var19).water()) {
                var13 = true;
-               var12 = !AiPathfinder.Inner_RenderState.putAt_Z_TokenCore_TaskStat(var3, var9.x(), var9.z(), var19)
-                  || !AiPathfinder.Inner_RenderState.putAt_Z_TokenCore_TaskStat(var3, var14, var19.getY());
+               var12 = !AiPathfinder.MoveGenerator.putAt_Z_TokenCore_TaskStat(var3, var9.x(), var9.z(), var19)
+                  || !AiPathfinder.MoveGenerator.putAt_Z_TokenCore_TaskStat(var3, var14, var19.getY());
             }
          }
 
@@ -2712,7 +2712,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       double var5 = var2.from().getZ() + 0.5;
       double var7 = var3 - var1.getX();
       double var9 = var5 - var1.getZ();
-      AiPhysics.Inner_StreamUtil var11 = putAt_TokenCore_TableCac_LocalPlayer(var1);
+      AiPhysics.MotionState var11 = putAt_TokenCore_TableCac_LocalPlayer(var1);
       if (Math.hypot(var7, var9) > 1.5) {
          this.putAt_V_LocalPlayer_2(var1, var2, false, false, null);
       } else if (Math.hypot(var7, var9) <= 0.1 && Math.hypot(var11.vx(), var11.vz()) < 0.03) {
@@ -2771,26 +2771,26 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
             var1.to().getY()
          )) {
          return false;
-      } else if (var1.type() == AiPathfinder.Inner_SyncManager.DOOR) {
+      } else if (var1.type() == AiPathfinder.MoveType.DOOR) {
          int var6 = Integer.signum(var1.to().getX() - var1.from().getX());
          int var4 = Integer.signum(var1.to().getZ() - var1.from().getZ());
          return !this.putAt_Z_BlockPos(var1.to())
             && AiRoutePolicy.putAt(this.putAt_List_BlockPos(var1.to()), Vec3.atLowerCornerOf(var1.to()), var2.getBoundingBox(), var6, var4, 0.05);
-      } else if (var1.type() == AiPathfinder.Inner_SyncManager.CLIMB_1) {
+      } else if (var1.type() == AiPathfinder.MoveType.CLIMB_1) {
          boolean var5 = var1.to().getY() > var1.from().getY();
          return (var5 ? var2.getY() >= var1.to().getY() + 0.1 : var2.getY() < var1.to().getY() + 0.9 && var2.getY() > var1.to().getY() - 0.5)
             && Math.abs(var2.getX() - (var1.to().getX() + 0.5)) < 1.4
             && Math.abs(var2.getZ() - (var1.to().getZ() + 0.5)) < 1.4
             && (var2.isInWater() || var2.onClimbable() || var2.onGround());
-      } else if (var1.type() == AiPathfinder.Inner_SyncManager.DIG_DOWN_1) {
+      } else if (var1.type() == AiPathfinder.MoveType.DIG_DOWN_1) {
          return !this.putAt_FileStore_BitCache_BlockPos(var1.cellsToBreak().get(0)).passable()
             ? false
             : var2.getY() < var1.from().getY() - 0.5 && (var2.onGround() || var2.isInWater() || var2.onClimbable());
-      } else if (var1.type() == AiPathfinder.Inner_SyncManager.DIG_DESCEND) {
+      } else if (var1.type() == AiPathfinder.MoveType.DIG_DESCEND) {
          return AiRoutePolicy.putAt_Z_FileStore_PacketHe(
             var1, var2.blockPosition().getX(), var2.blockPosition().getZ(), var2.getY(), var2.onGround() || var2.isInWater() || var2.onClimbable()
          );
-      } else if (var1.type() == AiPathfinder.Inner_SyncManager.DESCEND_SOFT) {
+      } else if (var1.type() == AiPathfinder.MoveType.DESCEND_SOFT) {
          return AiRoutePolicy.putAt_Z_D(var2.getY(), var1.to().getY(), var2.onGround(), var2.isInWater(), var2.onClimbable())
             && Math.abs(var2.getX() - (var1.to().getX() + 0.5)) < 1.4
             && Math.abs(var2.getZ() - (var1.to().getZ() + 0.5)) < 1.4;
@@ -2802,8 +2802,8 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
          && Math.abs(var2.getY() - var1.to().getY()) <= 1.0) {
          return true;
       } else if (var2.blockPosition().getX() == var1.to().getX() && var2.blockPosition().getZ() == var1.to().getZ()) {
-         double var3 = AiPathfinder.Inner_RenderState.putAt(var1.to().getY(), this.putAt_FileStore_BitCache_BlockPos(var1.to().below()));
-         return var1.type() != AiPathfinder.Inner_SyncManager.PILLAR && var1.type() != AiPathfinder.Inner_SyncManager.DIG_ASCEND
+         double var3 = AiPathfinder.MoveGenerator.putAt(var1.to().getY(), this.putAt_FileStore_BitCache_BlockPos(var1.to().below()));
+         return var1.type() != AiPathfinder.MoveType.PILLAR && var1.type() != AiPathfinder.MoveType.DIG_ASCEND
             ? Math.abs(var2.getY() - var3) <= 0.6 && (var2.onGround() || var2.isInWater() || var2.onClimbable())
             : var2.onGround() && Math.abs(var2.getY() - var3) <= 0.55;
       } else {
@@ -2847,25 +2847,25 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
          this.fill(var2);
          ItemStack var3 = this.putAt_Minecraft.player.getInventory().getItem(var2);
          this.putAt_Str = BuiltInRegistries.ITEM.getKey(var3.getItem()).toString();
-         BlockPlacementPlanner.Inner_StateCache var4 = new BlockPlacementPlanner.Inner_StateCache(
+         BlockPlacementPlanner.Query var4 = new BlockPlacementPlanner.Query(
                var1,
                this.putAt_Minecraft.player.getEyePosition(),
                this.putAt_Minecraft.player.blockInteractionRange(),
                BlockPlacementPlanner.init(var3, this.putAt_Minecraft.player, InteractionHand.MAIN_HAND)
             )
             .init_U_StateCache_Z(this.putAt_Minecraft.player.isShiftKeyDown() && this.putAt_Minecraft.player.getLastSentInput().shift())
-            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(6));
-         BlockPlacementPlanner.Inner_JsonUtil[] var5 = new BlockPlacementPlanner.Inner_JsonUtil[1];
-         BlockPlacementPlanner.Inner_CachePool var6 = BlockPlacementPlanner.init(var4, var5);
+            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(6));
+         BlockPlacementPlanner.RejectReason[] var5 = new BlockPlacementPlanner.RejectReason[1];
+         BlockPlacementPlanner.PlacementPlan var6 = BlockPlacementPlanner.init(var4, var5);
          if (var6 == null) {
             return AiWrExecutor.Inner_CacheHelper.readEx;
          }
 
-         this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.FAST);
-         RotationMath.Inner_DataUtil var7 = var6.init_U_DataUtil().init_ce_DataUtil();
+         this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.AimProfile.FAST);
+         RotationMath.Rotation var7 = var6.init_U_DataUtil().init_ce_DataUtil();
          Vec3 var8 = this.putAt_Minecraft.player.getEyePosition();
          Vec3 var9 = var6.init_U_DataUtil().init_Vec3();
-         boolean var10 = this.putAt_FileStore_PacketHe != null && this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.PILLAR;
+         boolean var10 = this.putAt_FileStore_PacketHe != null && this.putAt_FileStore_PacketHe.type() == AiPathfinder.MoveType.PILLAR;
          if (var10 && var7 != null && var9 != null && Math.hypot(var9.x - var8.x, var9.z - var8.z) < 0.4) {
             this.putAt_CacheHelper.init_V_Vec3(var9);
          } else if (var7 != null) {
@@ -3067,7 +3067,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
          int var3 = autismclient.util.BlockBreakSpeedHelper.init(this.putAt_Minecraft, var2, 9, false);
          if (var3 < 0
             || var2.requiresCorrectToolForDrops()
-               && AiPathfinder.Inner_StreamUtil.chunkAt(var2)
+               && AiPathfinder.LiveGridView.chunkAt(var2)
                && !this.putAt_Minecraft.player.getInventory().getItem(var3).isCorrectToolForDrops(var2)) {
             if (ToolUpkeep.init(this.putAt_List_BlockState(var2)) instanceof ToolUpkeep.Inner_DataUtil.Inner_CachePool var4) {
                int var6 = var4.backpackSlot();
@@ -3176,23 +3176,23 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       return this.putAt_PoolStore;
    }
 
-   private static AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac_LocalPlayer(LocalPlayer var0) {
+   private static AiPhysics.MotionState putAt_TokenCore_TableCac_LocalPlayer(LocalPlayer var0) {
       return AiMotionSafety.putAt_TokenCore_TableCac(var0);
    }
 
-   private AiPathfinder.Inner_FileCache putAt_FileStore_BitCache_BlockPos(BlockPos var1) {
-      AiPathfinder.Inner_FileCache var2 = AiPathfinder.Inner_StreamUtil.putAt_FileStore_BitCache_Minecraft(
+   private AiPathfinder.CellInfo putAt_FileStore_BitCache_BlockPos(BlockPos var1) {
+      AiPathfinder.CellInfo var2 = AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(
          this.putAt_Minecraft, this.putAt_Minecraft.level, var1, putAt_ItemStackArr
       );
       if (!var2.loaded() && this.putAt_PacketHelper != null) {
-         AiPathfinder.Inner_FileCache var3 = this.putAt_PacketHelper.init_ClassCache_FileCac_I(var1.getX(), var1.getY(), var1.getZ());
+         AiPathfinder.CellInfo var3 = this.putAt_PacketHelper.init_ClassCache_FileCac_I(var1.getX(), var1.getY(), var1.getZ());
          return var3 != null ? var3 : var2;
       } else {
          return var2;
       }
    }
 
-   private Function<BlockPos, AiPathfinder.Inner_FileCache> putAt_Function() {
+   private Function<BlockPos, AiPathfinder.CellInfo> putAt_Function() {
       if (this.fill_ItemStackArr == null && this.putAt_Minecraft.player != null) {
          this.fill_ItemStackArr = new ItemStack[36];
 
@@ -3203,11 +3203,11 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
 
       ItemStack[] var2 = this.fill_ItemStackArr != null ? this.fill_ItemStackArr : putAt_ItemStackArr;
       return var2x -> {
-         AiPathfinder.Inner_FileCache var3 = AiPathfinder.Inner_StreamUtil.putAt_FileStore_BitCache_Minecraft(
+         AiPathfinder.CellInfo var3 = AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(
             this.putAt_Minecraft, this.putAt_Minecraft.level, var2x, var2
          );
          if (!var3.loaded() && this.putAt_PacketHelper != null) {
-            AiPathfinder.Inner_FileCache var4 = this.putAt_PacketHelper.init_ClassCache_FileCac_I(var2x.getX(), var2x.getY(), var2x.getZ());
+            AiPathfinder.CellInfo var4 = this.putAt_PacketHelper.init_ClassCache_FileCac_I(var2x.getX(), var2x.getY(), var2x.getZ());
             return var4 != null ? var4 : var3;
          } else {
             return var3;
@@ -3244,7 +3244,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                ? var12.getY() + (var14 ? var13.max(Axis.Y) : var13.min(Axis.Y))
                : var12.getY() + (var14 ? 1.0 : 0.0);
             this.putAt_CacheHelper.init_V_ce_DataUtil(
-                  new RotationMath.Inner_DataUtil(var2.getYRot(), AiMotionSafety.putAt_F_Vec3(var3, var2.getYRot(), var2.getXRot(), var14, var7))
+                  new RotationMath.Rotation(var2.getYRot(), AiMotionSafety.putAt_F_Vec3(var3, var2.getYRot(), var2.getXRot(), var14, var7))
                );
             return;
          }
@@ -3266,7 +3266,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                   float var10 = (float)Math.toDegrees(Math.atan2(var3.y - var1.y, Math.max(0.3, var8)));
                   float var11 = AiPhysics.putAt_F_D(0.0, 0.0, var4, var5);
                   if (this.putAt_Z_Vec3(var3, var11, var10, BlockPos.containing(var1))) {
-                     this.putAt_CacheHelper.init_V_ce_DataUtil(new RotationMath.Inner_DataUtil(var11, var10));
+                     this.putAt_CacheHelper.init_V_ce_DataUtil(new RotationMath.Rotation(var11, var10));
                      return;
                   }
                }
@@ -3306,12 +3306,12 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       return var2[0] > 0;
    }
 
-   private static AiPhysics.Inner_DataUtil putAt_TokenCore_CacheHel_F_F(float var0, float var1) {
+   private static AiPhysics.MoveInput putAt_TokenCore_CacheHel_F_F(float var0, float var1) {
       int[] var2 = AiMotionSafety.putAt_IArr_F_F(var0, var1);
-      return new AiPhysics.Inner_DataUtil(var2[0], -var2[1], false, false, false, var0);
+      return new AiPhysics.MoveInput(var2[0], -var2[1], false, false, false, var0);
    }
 
-   private void putAt_V_LocalPlayer_TokenCore_CacheHel(LocalPlayer var1, AiPhysics.Inner_DataUtil var2) {
+   private void putAt_V_LocalPlayer_TokenCore_CacheHel(LocalPlayer var1, AiPhysics.MoveInput var2) {
       AiPacePlayback.putAt_V_LocalPlayer(var1, var2, var1.getXRot());
    }
 
@@ -3416,10 +3416,10 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       final int fill;
       final int readEx;
       final boolean putAt_Z;
-      final AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac;
+      final AiPhysics.MotionState putAt_TokenCore_TableCac;
       int value;
 
-      Inner_JsonCache(int var1, int var2, boolean var3, int var4, AiPhysics.Inner_StreamUtil var5) {
+      Inner_JsonCache(int var1, int var2, boolean var3, int var4, AiPhysics.MotionState var5) {
          this.flowState = var1;
          this.fill = var2;
          this.putAt_Z = var3;
@@ -3440,7 +3440,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       int flowState;
       int flowTemp;
       final double putAt_D;
-      final AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac;
+      final AiPhysics.MotionState putAt_TokenCore_TableCac;
       final AiPaceScript.Inner_JsonCache putAt_TextPool_JsonCache;
       final Predicate<BlockPos> putAt_Predicate;
       final AiPaceScript.Inner_IoHelper putAt_TextPool_IoHelper = new AiPaceScript.Inner_IoHelper();
@@ -3461,7 +3461,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
          int var2,
          double var3,
          double var5,
-         AiPhysics.Inner_StreamUtil var7,
+         AiPhysics.MotionState var7,
          AiPaceScript.Inner_JsonCache var8,
          Predicate<BlockPos> var9,
          boolean var10,

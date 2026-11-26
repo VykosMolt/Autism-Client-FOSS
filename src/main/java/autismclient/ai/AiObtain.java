@@ -75,7 +75,7 @@ final class AiObtain {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final String spec = AiJson.init_Str_JsonObject(args, "item", "");
-         final AiItems.Inner_DataUtil target = AiItems.load_af_DataUtil(spec);
+         final AiItems.ItemSpec target = AiItems.load_af_DataUtil(spec);
          if (depth == 0 && !AiJson.init_Z_JsonObject(args, "staged", false) && target.items().size() == 1) {
             String only = BuiltInRegistries.ITEM.getKey(target.items().iterator().next()).toString();
             int want = AiJson.init_Z_JsonObject(args, "additional", false)
@@ -112,7 +112,7 @@ final class AiObtain {
                final List<AiObtain.Inner_DataUtil> init_List = new ArrayList<>();
                final JsonArray init_JsonArray = new JsonArray();
                final Set<String> init_Set = new LinkedHashSet<>(target.itemIds());
-               final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard().keeping(this.init_Set);
+               final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard().keeping(this.init_Set);
                AiOperation init_AiOperation;
                AiOperation load_AiOperation;
                String init_Str = "";
@@ -129,8 +129,8 @@ final class AiObtain {
                boolean read_Z;
                boolean write_Z;
                Boolean init_Boolean;
-               AiItems.Inner_DataUtil init_af_DataUtil = target;
-               AiItems.Inner_DataUtil load_af_DataUtil;
+               AiItems.ItemSpec init_af_DataUtil = target;
+               AiItems.ItemSpec load_af_DataUtil;
                String read_Str;
                boolean update;
                String write_Str;
@@ -294,7 +294,7 @@ final class AiObtain {
                      this.load_AiOperation = null;
                      return this.init_AiOperation_Result_9("Resuming after " + this.init_Str);
                   } else if (autismclient.ai.engine.AiMotionSafety.fill_Z() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())) {
-                     AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+                     AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
                      AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.init_I_19());
                      if (action == null) {
                         return null;
@@ -317,9 +317,9 @@ final class AiObtain {
 
                AiObtain.Inner_DataUtil init_aE_DataUtil() {
                   if (!this.init_List.contains(AiObtain.Inner_DataUtil.CRAFT) && !this.init_Set_6().isEmpty()) {
-                     AiCraftPlanner.Inner_StreamUtil graph = AiCraft.init_g_StreamUtil();
+                     AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
                      if (this.init_Set_6().stream().anyMatch(item -> {
-                        AiCraftPlanner.Inner_CachePool plan = AiCraftPlanner.init(graph, BuiltInRegistries.ITEM.getKey(item).toString(), goal);
+                        AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(graph, BuiltInRegistries.ITEM.getKey(item).toString(), goal);
                         return plan.complete() && !plan.steps().isEmpty();
                      })) {
                         return AiObtain.Inner_DataUtil.CRAFT;
@@ -466,13 +466,13 @@ final class AiObtain {
                            nested
                         );
                      case CRAFT:
-                        AiCraftPlanner.Inner_StreamUtil graph = AiCraft.init_g_StreamUtil();
+                        AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
                         Item output = AiObtain.init(this.init_Set_6(), goal, graph, AiObtain::init_D);
                         if (output == null) {
                            return null;
                         } else {
                            String outputId = BuiltInRegistries.ITEM.getKey(output).toString();
-                           AiCraftPlanner.Inner_CachePool plan = AiCraftPlanner.init(graph, outputId, goal);
+                           AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(graph, outputId, goal);
                            if (!plan.complete() && depth < 5) {
                               Entry<String, Integer> shortfall = this.init(plan);
                               if (shortfall != null) {
@@ -561,7 +561,7 @@ final class AiObtain {
                                  nestedSmelt
                               );
                            } else {
-                              autismclient.util.AutoCraftingEngine.Inner_StreamUtil cooking = autismclient.util.AutoCraftingEngine.load(mc, outputx)
+                              autismclient.util.AutoCraftingEngine.SmeltRecipe cooking = autismclient.util.AutoCraftingEngine.load(mc, outputx)
                                  .stream()
                                  .filter(p -> p.init_List().stream().anyMatch(i -> AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(i).toString()) > 0))
                                  .min(Comparator.comparingInt(p -> AiSmelt.init_Z(mc, p.load_Str()) ? 0 : (AiGameState.init_I_Str(p.load_Str()) > 0 ? 1 : 2)))
@@ -772,7 +772,7 @@ final class AiObtain {
                   }
                }
 
-               Entry<String, Integer> init(AiCraftPlanner.Inner_CachePool plan) {
+               Entry<String, Integer> init(AiCraftPlanner.CraftPlan plan) {
                   return AiObtain.init(plan.missing(), visiting, this.init_Set);
                }
 
@@ -1149,7 +1149,7 @@ final class AiObtain {
                   String best = null;
                   int bestCount = -1;
 
-                  for (autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
+                  for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
                      if (plan.init_List().stream().mapToInt(i -> AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(i).toString())).sum()
                         >= goal - AiItems.init_I(this.init_af_DataUtil)) {
                         return null;
@@ -1401,18 +1401,18 @@ final class AiObtain {
       }
    }
 
-   static Item init(Set<Item> craftable, int goal, AiCraftPlanner.Inner_StreamUtil graph, ToDoubleFunction<String> missingSourceDistance) {
+   static Item init(Set<Item> craftable, int goal, AiCraftPlanner.RecipeGraph graph, ToDoubleFunction<String> missingSourceDistance) {
       Item best = null;
       String bestId = null;
       int bestMissing = 2147483647;
       int bestHeldInputs = -1;
       double bestDistance = -1.0;
-      AiCraftPlanner.Inner_CachePool bestPlan = null;
+      AiCraftPlanner.CraftPlan bestPlan = null;
 
       for (Item item : craftable) {
          if (item != null) {
             String id = BuiltInRegistries.ITEM.getKey(item).toString();
-            AiCraftPlanner.Inner_CachePool plan = AiCraftPlanner.init(graph, id, goal);
+            AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(graph, id, goal);
             int missing = 0;
 
             for (int amount : plan.missing().values()) {
@@ -1573,11 +1573,11 @@ final class AiObtain {
                false,
                false,
                (int)Math.min(60L, left),
-               autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+               autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                true,
                2.0,
                AiSpeedrun.init_ClassCache_JsonUti_BlockPos(surface),
-               AiGoto.Inner_BufferHelper.DEFAULT
+               AiGoto.GotoOptions.DEFAULT
             );
             return this.init(AiOperation.Status.RUNNING, "Looking for " + what);
          }
@@ -1602,7 +1602,7 @@ final class AiObtain {
       };
    }
 
-   private static double init_D_g_CachePool_ToDoubleFunction(AiCraftPlanner.Inner_CachePool plan, ToDoubleFunction<String> missingSourceDistance) {
+   private static double init_D_g_CachePool_ToDoubleFunction(AiCraftPlanner.CraftPlan plan, ToDoubleFunction<String> missingSourceDistance) {
       double best = 1.7976931348623157E308;
 
       for (String missingId : plan.missing().keySet()) {
@@ -1614,7 +1614,7 @@ final class AiObtain {
 
    static double init_D(String itemId) {
       Minecraft mc = Minecraft.getInstance();
-      AiItems.Inner_DataUtil target = AiItems.load_af_DataUtil(itemId);
+      AiItems.ItemSpec target = AiItems.load_af_DataUtil(itemId);
       List<Block> sources = new ArrayList<>(target.blocks());
 
       for (Item item : target.items()) {
@@ -1651,10 +1651,10 @@ final class AiObtain {
       return best;
    }
 
-   private static int init(AiCraftPlanner.Inner_CachePool plan, String outputId, AiCraftPlanner.Inner_StreamUtil graph) {
+   private static int init(AiCraftPlanner.CraftPlan plan, String outputId, AiCraftPlanner.RecipeGraph graph) {
       int held = 0;
 
-      for (AiCraftPlanner.Inner_TaskQueue step : plan.steps()) {
+      for (AiCraftPlanner.CraftStep step : plan.steps()) {
          if (step.recipe().output().equals(outputId)) {
             for (List<String> slot : step.recipe().inputs()) {
                int slotHeld = 0;
@@ -1773,12 +1773,12 @@ final class AiObtain {
       }
    }
 
-   static boolean init(AiCraftPlanner.Inner_StreamUtil graph, String outputId, AiCraftPlanner.Inner_CachePool plan) {
+   static boolean init(AiCraftPlanner.RecipeGraph graph, String outputId, AiCraftPlanner.CraftPlan plan) {
       if (plan.requiresTable()) {
          return true;
       }
 
-      List<AiCraftPlanner.Inner_BufferHelper> recipes = graph.init_List(outputId);
+      List<AiCraftPlanner.RecipeSpec> recipes = graph.init_List(outputId);
       return !recipes.isEmpty() && recipes.get(0).requiresTable();
    }
 
@@ -1811,13 +1811,13 @@ final class AiObtain {
       return AiItems.init_Set();
    }
 
-   static AiCraftPlanner.Inner_StreamUtil init(final AiCraftPlanner.Inner_StreamUtil inner) {
+   static AiCraftPlanner.RecipeGraph init(final AiCraftPlanner.RecipeGraph inner) {
       final Minecraft mc = Minecraft.getInstance();
       final Set<String> mineable = init();
       final Map<String, Double> distances = new HashMap<>();
-      return new AiCraftPlanner.Inner_StreamUtil() {
+      return new AiCraftPlanner.RecipeGraph() {
          @Override
-         public List<AiCraftPlanner.Inner_BufferHelper> init_List(String itemId) {
+         public List<AiCraftPlanner.RecipeSpec> init_List(String itemId) {
             return inner.init_List(itemId);
          }
 

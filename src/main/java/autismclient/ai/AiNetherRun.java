@@ -246,7 +246,7 @@ final class AiNetherRun {
                this.write_Str = "";
                this.write_J = -9223372036854775808L;
                this.init_Y = new AiGuardLayer(
-                  AiGuard.Inner_CachePool.standard()
+                  AiGuard.GuardPolicy.standard()
                      .withoutFlee()
                      .keeping(List.of("minecraft:blaze_rod", "minecraft:blaze_powder", "minecraft:ender_pearl", "minecraft:ender_eye", "minecraft:gold_ingot")),
                   "nether"
@@ -496,7 +496,7 @@ final class AiNetherRun {
                         }
                      } else {
                         if (!AiThreats.init_Z()) {
-                           autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(5000000000L);
+                           autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(5000000000L);
                         }
 
                         if (this.init_aB_TaskQueue == AiNetherRun.Inner_TaskQueue.RODS
@@ -1000,11 +1000,11 @@ final class AiNetherRun {
                               true,
                               false,
                               20,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                              autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                               true,
                               2.0,
                               null,
-                              AiGoto.Inner_BufferHelper.DEFAULT
+                              AiGoto.GotoOptions.DEFAULT
                            )
                         );
                      }
@@ -1200,11 +1200,11 @@ final class AiNetherRun {
                                        true,
                                        true,
                                        60,
-                                       autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                                       autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                                        true,
                                        2.0,
                                        null,
-                                       AiGoto.Inner_BufferHelper.DEFAULT
+                                       AiGoto.GotoOptions.DEFAULT
                                     )
                                  );
                               }
@@ -1270,7 +1270,7 @@ final class AiNetherRun {
                                  return this.init(
                                     "walk to a stand by the blaze spawner at " + stand.toShortString(),
                                     AiGoto.init(
-                                       stand, 0.5, true, true, true, 90, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.Inner_BufferHelper.DEFAULT
+                                       stand, 0.5, true, true, true, 90, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.GotoOptions.DEFAULT
                                     )
                                  );
                               }
@@ -1291,7 +1291,7 @@ final class AiNetherRun {
                                        true,
                                        2.0,
                                        null,
-                                       AiGoto.Inner_BufferHelper.DEFAULT
+                                       AiGoto.GotoOptions.DEFAULT
                                     )
                                  );
                               }
@@ -1308,11 +1308,11 @@ final class AiNetherRun {
                                           true,
                                           true,
                                           60,
-                                          autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                                          autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                                           true,
                                           2.0,
                                           null,
-                                          AiGoto.Inner_BufferHelper.DEFAULT
+                                          AiGoto.GotoOptions.DEFAULT
                                        )
                                     );
                                  }
@@ -1348,7 +1348,7 @@ final class AiNetherRun {
                            AiOperation.Result walk = this.init(
                               "walk into the fortress at " + bricks.toShortString(),
                               AiGoto.init(
-                                 bricks, 6.0, true, true, true, 180, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.Inner_BufferHelper.DEFAULT
+                                 bricks, 6.0, true, true, true, 180, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.GotoOptions.DEFAULT
                               )
                            );
                            this.write_J = bricks.asLong() >> 6;
@@ -1465,7 +1465,7 @@ final class AiNetherRun {
                                     true,
                                     2.0,
                                     null,
-                                    AiGoto.Inner_BufferHelper.DEFAULT
+                                    AiGoto.GotoOptions.DEFAULT
                                  ),
                                  () -> AiNetherRun.init(
                                     this.init(
@@ -1504,7 +1504,7 @@ final class AiNetherRun {
                            AiOperation.Result walk = this.init(
                               "walk into the warped forest at " + warped.toShortString(),
                               AiGoto.init(
-                                 warped, 6.0, true, true, true, 180, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.Inner_BufferHelper.DEFAULT
+                                 warped, 6.0, true, true, true, 180, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.GotoOptions.DEFAULT
                               )
                            );
                            this.write_J = warped.asLong() >> 6;
@@ -1648,7 +1648,7 @@ final class AiNetherRun {
                               : this.init(
                                  "walk back to the portal at " + door.toShortString(),
                                  AiGoto.init(
-                                    door, 1.0, true, true, true, 300, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.Inner_BufferHelper.DEFAULT
+                                    door, 1.0, true, true, true, 300, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.GotoOptions.DEFAULT
                                  )
                               );
                         }
@@ -1666,7 +1666,7 @@ final class AiNetherRun {
                               true,
                               2.0,
                               null,
-                              AiGoto.Inner_BufferHelper.DEFAULT
+                              AiGoto.GotoOptions.DEFAULT
                            )
                         );
                      }
@@ -1812,7 +1812,7 @@ final class AiNetherRun {
                this.sync_J = System.nanoTime();
                AiSpeedrun.init_V_Str_ObjArr("[AI] nether: {}", label);
                AiOperation inner = op;
-               if (session && op instanceof AiGoto.Inner_CachePool travel) {
+               if (session && op instanceof AiGoto.GotoOp travel) {
                   inner = AiNetherRun.init(travel);
                }
 
@@ -1842,7 +1842,7 @@ final class AiNetherRun {
                   true,
                   2.0,
                   new AiNetherRun.Inner_NetHelper(x, z, 6),
-                  AiGoto.Inner_BufferHelper.DEFAULT
+                  AiGoto.GotoOptions.DEFAULT
                );
             }
 
@@ -1850,8 +1850,8 @@ final class AiNetherRun {
                return this.init_D_BlockPos(target) > 64.0 && this.add < 5;
             }
 
-            autismclient.ai.engine.AiPathfinder.Inner_IoWorker init_ClassCache_IoWorke() {
-               return this.put_I > 0 ? autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST : autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST;
+            autismclient.ai.engine.AiPathfinder.RouteStrategy init_ClassCache_IoWorke() {
+               return this.put_I > 0 ? autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST : autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST;
             }
 
             AiOperation init(final int enderman, final AiOperation fight) {
@@ -2510,7 +2510,7 @@ final class AiNetherRun {
       return !AiTerrain.init(mc.level, at) || mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL);
    }
 
-   static AiOperation init(final AiGoto.Inner_CachePool travel) {
+   static AiOperation init(final AiGoto.GotoOp travel) {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
@@ -2949,7 +2949,7 @@ final class AiNetherRun {
    record Inner_DataUtil(int pearls, int gold) {
    }
 
-   record Inner_NetHelper(int x, int z, int radius) implements autismclient.ai.engine.AiPathfinder.Inner_JsonUtil {
+   record Inner_NetHelper(int x, int z, int radius) implements autismclient.ai.engine.AiPathfinder.PathGoal {
       @Override
       public boolean isInGoal(int px, int py, int pz) {
          return (long)(px - this.x) * (px - this.x) + (long)(pz - this.z) * (pz - this.z) <= (long)this.radius * this.radius;

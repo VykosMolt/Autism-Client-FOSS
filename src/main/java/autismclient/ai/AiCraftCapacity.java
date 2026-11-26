@@ -16,15 +16,15 @@ final class AiCraftCapacity {
    private AiCraftCapacity() {
    }
 
-   static boolean init_Z_J_CachePool_Z(autismclient.util.AutoCraftingEngine.Inner_CachePool result, boolean allowed) {
+   static boolean init_Z_J_CachePool_Z(autismclient.util.AutoCraftingEngine.CraftResult result, boolean allowed) {
       return allowed
          && !result.init_Z
          && !result.load
          && result.init_I == 0
-         && result.init_J_CachePool_DataUt == autismclient.util.AutoCraftingEngine.Inner_CachePool.Inner_DataUtil.INVENTORY_FULL;
+         && result.init_J_CachePool_DataUt == autismclient.util.AutoCraftingEngine.CraftResult.FailureReason.INVENTORY_FULL;
    }
 
-   static JsonObject init_JsonObject_g_CachePool(AiCraftPlanner.Inner_CachePool plan, int firstStep, String target, int seconds, AiCraftPlanner.Inner_CachePool... obligations) {
+   static JsonObject init_JsonObject_g_CachePool(AiCraftPlanner.CraftPlan plan, int firstStep, String target, int seconds, AiCraftPlanner.CraftPlan... obligations) {
       Set<String> keep = new LinkedHashSet<>();
       keep.add(target);
       keep.add("minecraft:crafting_table");
@@ -32,7 +32,7 @@ final class AiCraftCapacity {
       keep.add("minecraft:stonecutter");
 
       for (int i = Math.max(0, firstStep); i < plan.steps().size(); i++) {
-         AiCraftPlanner.Inner_BufferHelper recipe = plan.steps().get(i).recipe();
+         AiCraftPlanner.RecipeSpec recipe = plan.steps().get(i).recipe();
          keep.add(recipe.output());
          recipe.inputs().forEach(keep::addAll);
          if (!recipe.station().isEmpty()) {
@@ -40,8 +40,8 @@ final class AiCraftCapacity {
          }
       }
 
-      for (AiCraftPlanner.Inner_CachePool obligation : obligations) {
-         for (AiCraftPlanner.Inner_TaskQueue step : obligation.steps()) {
+      for (AiCraftPlanner.CraftPlan obligation : obligations) {
+         for (AiCraftPlanner.CraftStep step : obligation.steps()) {
             keep.add(step.recipe().output());
             step.recipe().inputs().forEach(keep::addAll);
             if (!step.recipe().station().isEmpty()) {

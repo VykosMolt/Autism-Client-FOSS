@@ -9,7 +9,7 @@ import net.minecraft.world.phys.AABB;
 public final class StickyPlacementSelector {
    private StickyPlacementSelector.Inner_DataUtil init;
 
-   public <T> int init(List<T> options, Function<T, BlockPlacementPlanner.Inner_TaskQueue> option) {
+   public <T> int init(List<T> options, Function<T, BlockPlacementPlanner.SupportCandidate> option) {
       if (this.init != null) {
          for (int i = 0; i < options.size(); i++) {
             if (this.init.equals(StickyPlacementSelector.Inner_DataUtil.init(option.apply(options.get(i))))) {
@@ -21,7 +21,7 @@ public final class StickyPlacementSelector {
       return 0;
    }
 
-   public void init(BlockPlacementPlanner.Inner_TaskQueue option) {
+   public void init(BlockPlacementPlanner.SupportCandidate option) {
       this.init = StickyPlacementSelector.Inner_DataUtil.init(option);
    }
 
@@ -30,7 +30,7 @@ public final class StickyPlacementSelector {
    }
 
    private record Inner_DataUtil(BlockPos init_BlockPos, BlockPos load, Direction init_Direction, AABB init_AABB) {
-      static StickyPlacementSelector.Inner_DataUtil init(BlockPlacementPlanner.Inner_TaskQueue option) {
+      static StickyPlacementSelector.Inner_DataUtil init(BlockPlacementPlanner.SupportCandidate option) {
          return new StickyPlacementSelector.Inner_DataUtil(option.init_BlockPos().immutable(), option.load_BlockPos().immutable(), option.init_Direction(), option.init_AABB());
       }
    }

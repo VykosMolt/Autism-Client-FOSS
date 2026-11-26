@@ -177,10 +177,10 @@ public final class SelectableListBox<T> {
             }
 
             int labelMaxWidth = Math.max(20, availableWidth - reservedWidth);
-            String trimmedLabel = ThemedTextHelper.init(textRenderer, label, labelMaxWidth, ThemedTextHelper.Inner_DataUtil.BODY);
+            String trimmedLabel = ThemedTextHelper.init(textRenderer, label, labelMaxWidth, ThemedTextHelper.TextTone.BODY);
             ThemedTextHelper.init(ctx, textRenderer, trimmedLabel, textColor, textX, textY, false);
             if (badge != null && !badge.isEmpty()) {
-               int labelWidth = ThemedTextHelper.init(textRenderer, trimmedLabel, ThemedTextHelper.Inner_DataUtil.BODY);
+               int labelWidth = ThemedTextHelper.init(textRenderer, trimmedLabel, ThemedTextHelper.TextTone.BODY);
                int badgeX = textX + labelWidth + 4;
                int badgeColor = this.read_Function != null ? this.read_Function.apply(item) : -22016;
                ThemedTextHelper.init(ctx, textRenderer, badge, badgeColor, badgeX, textY, false);

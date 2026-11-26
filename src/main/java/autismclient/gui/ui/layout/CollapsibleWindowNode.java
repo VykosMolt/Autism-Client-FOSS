@@ -25,7 +25,7 @@ public class CollapsibleWindowNode extends LayoutContainer {
    private boolean poll;
    private float flush_F;
    private float close_F;
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil;
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil;
    private boolean push;
 
    public CollapsibleWindowNode(String title) {
@@ -64,7 +64,7 @@ public class CollapsibleWindowNode extends LayoutContainer {
       }
    }
 
-   public autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil() {
+   public autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil() {
       return this.init_PoolEntry_DataUtil;
    }
 

@@ -170,7 +170,7 @@ final class AiCrystals {
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard();
+            final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard();
             final JsonArray init_JsonArray = new JsonArray();
             final Set<Integer> init_Set = new LinkedHashSet<>();
             final AiCrystals.Inner_CachePool init_h_CachePool = new AiCrystals.Inner_CachePool();
@@ -205,7 +205,7 @@ final class AiCrystals {
             boolean update_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.CALM);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.CALM);
                this.init_DataUtil.init_V_Z(silentAim);
             }
 
@@ -303,7 +303,7 @@ final class AiCrystals {
                   this.load_AiOperation = null;
                   return this.load("Resuming after " + this.load_Str);
                } else {
-                  AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+                  AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
                   AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.load_I_14());
                   if (action == null) {
                      return null;
@@ -435,7 +435,7 @@ final class AiCrystals {
 
                   this.init_BlockPos = stand;
                   this.init_AiOperation = AiGoto.init(
-                     stand, 1.5, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true
+                     stand, 1.5, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                   );
                }
 
@@ -574,7 +574,7 @@ final class AiCrystals {
                   this.init_BlockPos = new BlockPos(this.init_h_DataUtil.x() + side[0] * 3, this.init_h_DataUtil.y(), this.init_h_DataUtil.z() + side[1] * 3);
                   this.load_BlockPos = new BlockPos(this.init_h_DataUtil.x() + side[0] * 2, this.init_h_DataUtil.y(), this.init_h_DataUtil.z() + side[1] * 2);
                   this.init_AiOperation = AiGoto.init(
-                     this.init_BlockPos, 0.7, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true
+                     this.init_BlockPos, 0.7, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                   );
                }
 
@@ -1011,7 +1011,7 @@ final class AiCrystals {
                   mc.player,
                   crystal.position(),
                   6.0F,
-                  autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(Explosion.getDefaultDamageSource(mc.level, crystal))
+                  autismclient.util.ExplosionDamageCalculator.SimOptions.init_S_CachePool.init(Explosion.getDefaultDamageSource(mc.level, crystal))
                );
                return AiCrystals.init(damage, mc.player.getHealth() + mc.player.getAbsorptionAmount(), danger.lethal(), danger.voidFall())
                   && danger.worstSource() <= 4.0F;

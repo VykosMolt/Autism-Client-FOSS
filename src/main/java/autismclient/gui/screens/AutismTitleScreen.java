@@ -737,7 +737,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
          int logoY = this.add + init_I_F(p) + Math.max(0, (this.reset - drawH) / 2);
          graphics.blit(
             RenderPipelines.GUI_TEXTURED,
-            ThemeTextureRecolorer.init(init_Identifier, ThemePaletteManager.Inner_DataUtil.ACCENT),
+            ThemeTextureRecolorer.init(init_Identifier, ThemePaletteManager.ColorRole.ACCENT),
             logoX,
             logoY,
             0.0F,
@@ -1085,11 +1085,11 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       private void load(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
          boolean hovered = this.init_Z && this.init_Z_F_F(mouseX, mouseY);
          int yDraw = this.load_I + (this.update_Z ? AutismTitleScreen.init_I_F(p) : 0);
-         int border = ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1721357268 : 1430596138, ThemePaletteManager.Inner_DataUtil.OUTLINE);
+         int border = ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1721357268 : 1430596138, ThemePaletteManager.ColorRole.OUTLINE);
          autismclient.gui.f.PacketUtil.init(
             graphics,
             autismclient.gui.f.NetHelper.init(this.init_I, yDraw, this.read_I, this.write_I),
-            AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1207302650 : -1873801200, ThemePaletteManager.Inner_DataUtil.BUTTON), p),
+            AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1207302650 : -1873801200, ThemePaletteManager.ColorRole.BUTTON), p),
             AutismTitleScreen.init(border, p)
          );
          float hoverT = autismclient.gui.ui.HoverTransitionCache.init(
@@ -1128,7 +1128,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             int drawH = Math.max(1, Math.round(this.pop * scale));
             int textX = this.init_I + (this.read_I - drawW) / 2;
             int textY = yDraw + (this.write_I - drawH) / 2;
-            int textColor = AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.Inner_DataUtil.TEXT), p);
+            int textColor = AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p);
             graphics.blit(
                RenderPipelines.GUI_TEXTURED,
                this.write_Identifier,
@@ -1146,7 +1146,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             );
          } else if (this.init_Component != null) {
             String text = this.init_Component.getString();
-            int textColor = AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.Inner_DataUtil.TEXT), p);
+            int textColor = AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p);
             Identifier fontId = autismclient.gui.f.a.DataUtil.load;
             int textY = UiLayoutMath.init(yDraw, this.write_I, k.init(fontId), 1);
             String drawText = text;
@@ -1168,7 +1168,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                   this.flush,
                   this.sync,
                   this.flush,
-                  AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.Inner_DataUtil.TEXT), p)
+                  AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p)
                );
                textX = iconX + iconSize + 4;
                int maxTextW = Math.max(1, this.init_I + this.read_I - 4 - textX);
@@ -1183,7 +1183,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
 
          if (marker != null && !marker.isBlank()) {
             Identifier fontId = autismclient.gui.f.a.DataUtil.load;
-            int markerColor = AutismTitleScreen.init(this.init_Z ? ThemePaletteManager.init_I_I_ct_DataUtil(-11052, ThemePaletteManager.Inner_DataUtil.ACCENT) : -8362651, p);
+            int markerColor = AutismTitleScreen.init(this.init_Z ? ThemePaletteManager.init_I_I_ct_DataUtil(-11052, ThemePaletteManager.ColorRole.ACCENT) : -8362651, p);
             int markerW = k.init(AutismTitleScreen.this.font, marker, fontId, markerColor);
             int markerX = this.init_I + this.read_I - markerW - 6;
             int markerY = UiLayoutMath.init(yDraw, this.write_I, k.init(fontId), 1);
@@ -1194,11 +1194,11 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       private void read(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
          boolean hovered = this.init_Z && this.init_Z_F_F(mouseX, mouseY);
          int yDraw = this.load_I + (this.update_Z ? AutismTitleScreen.init_I_F(p) : 0);
-         int border = ThemePaletteManager.init_I_I_ct_DataUtil(-1721357268, ThemePaletteManager.Inner_DataUtil.OUTLINE);
+         int border = ThemePaletteManager.init_I_I_ct_DataUtil(-1721357268, ThemePaletteManager.ColorRole.OUTLINE);
          autismclient.gui.f.PacketUtil.init(
             graphics,
             autismclient.gui.f.NetHelper.init(this.init_I, yDraw, this.read_I, this.write_I),
-            AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(-1878391290, ThemePaletteManager.Inner_DataUtil.BUTTON), p),
+            AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(-1878391290, ThemePaletteManager.ColorRole.BUTTON), p),
             AutismTitleScreen.init(border, p)
          );
          float hoverT = autismclient.gui.ui.HoverTransitionCache.init(
@@ -1221,7 +1221,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             int iconSize = Math.min(this.close, Math.max(1, this.write_I - 6));
             int iconX = this.init_I + 5;
             int iconY = yDraw + (this.write_I - iconSize) / 2;
-            int tint = AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(-528658, ThemePaletteManager.Inner_DataUtil.TEXT), p);
+            int tint = AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(-528658, ThemePaletteManager.ColorRole.TEXT), p);
             graphics.blit(
                RenderPipelines.GUI_TEXTURED,
                ThemeTextureRecolorer.init_Identifier(this.read_Identifier),
@@ -1266,11 +1266,11 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
 
       private void write(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
          boolean hovered = this.init_Z && this.init_Z_F_F(mouseX, mouseY);
-         int border = ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1721357268 : 1430596138, ThemePaletteManager.Inner_DataUtil.OUTLINE);
+         int border = ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1721357268 : 1430596138, ThemePaletteManager.ColorRole.OUTLINE);
          autismclient.gui.f.PacketUtil.init(
             graphics,
             autismclient.gui.f.NetHelper.init(this.init_I, this.load_I, this.read_I, this.write_I),
-            AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1727527675 : 1716523024, ThemePaletteManager.Inner_DataUtil.BUTTON), p),
+            AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1727527675 : 1716523024, ThemePaletteManager.ColorRole.BUTTON), p),
             AutismTitleScreen.init(border, p)
          );
          float hoverT = autismclient.gui.ui.HoverTransitionCache.init(
@@ -1294,7 +1294,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             int iconSize = Math.min(16, Math.max(12, this.write_I - 7));
             int iconX = this.init_I + (this.read_I - iconSize) / 2;
             int iconY = this.load_I + (this.write_I - iconSize) / 2;
-            int iconTint = AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.Inner_DataUtil.TEXT), p);
+            int iconTint = AutismTitleScreen.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p);
             graphics.blit(
                RenderPipelines.GUI_TEXTURED,
                ThemeTextureRecolorer.init_Identifier(this.init_Identifier),

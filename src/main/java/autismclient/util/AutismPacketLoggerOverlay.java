@@ -458,7 +458,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       this.init_V_Packet(packet, direction, true, true);
    }
 
-   public void init_V_J(long timestampMs, int tick, String direction, Class<?> packetClass, AutismPayloadSupport.Inner_StreamUtil payloadSnapshot) {
+   public void init_V_J(long timestampMs, int tick, String direction, Class<?> packetClass, AutismPayloadSupport.PayloadEntry payloadSnapshot) {
       if (payloadSnapshot != null) {
          synchronized (this) {
             String name = packetClass != null && Packet.class.isAssignableFrom(packetClass) ? init_Str_Class(packetClass) : "Custom Payload";
@@ -493,7 +493,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                if ((payloadOnly && isPayload || !this.load_Z_Class_Str(cls, name)) && (!payloadOnly || isPayload)) {
                   PacketStateDeltaTracker.Inner_DataUtil packetContext = this.init_bq.init_bq_DataUtil_Packet_Str(packet, direction);
                   AutismPacketLoggerOverlay.Inner_NetHelper captureContext = init_AutismPacketLogger_Packet(packet);
-                  AutismPayloadSupport.Inner_StreamUtil payloadSnapshot = isPayload ? AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction) : null;
+                  AutismPayloadSupport.PayloadEntry payloadSnapshot = isPayload ? AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction) : null;
                   if (payloadSnapshot != null) {
                      PayloadChannelFilterManager.Inner_StreamUtil match = this.init_bB.init_bB_StreamUtil_AutismPayloadSuppo_Str(payloadSnapshot, direction);
                      if (match != null) {
@@ -1116,7 +1116,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   }
 
                   autismclient.gui.ui.UiClipStack.init_HashUtil().init(ctx);
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(ctx, scrollbarMetrics, scrollbarMetrics.init(bodyMx, bodyMy), this.close_Z);
                }
             } finally {
@@ -1171,7 +1171,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return this.sync_I(rawHeight, this.put_I_6());
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_7() {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_7() {
       int contentHeight = this.load_List.size() * this.put_I_6();
       int viewHeight = this.pop_I_19();
       int maxScroll = Math.max(0, contentHeight - viewHeight);
@@ -1224,25 +1224,25 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       this.init_V_GuiGraphicsExtract_4(ctx, x, row1Y, row1.init_IArr[0], this.reset_I_5(), row1.init_StrArr[0], !this.write_Z, "packet-logger:capture", mx, my);
       x += row1.init_IArr[0] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[1], this.reset_I_5(), row1.init_StrArr[1], autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[1], this.reset_I_5(), row1.init_StrArr[1], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
       );
       x += row1.init_IArr[1] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[2], this.reset_I_5(), row1.init_StrArr[2], autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[2], this.reset_I_5(), row1.init_StrArr[2], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
       );
       x += row1.init_IArr[2] + row1.init_I;
       this.init_V_GuiGraphicsExtract_4(ctx, x, row1Y, row1.init_IArr[3], this.reset_I_5(), row1.init_StrArr[3], this.open_Z, "packet-logger:grouping", mx, my);
       x += row1.init_IArr[3] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[4], this.reset_I_5(), row1.init_StrArr[4], autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[4], this.reset_I_5(), row1.init_StrArr[4], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
       );
       x += row1.init_IArr[4] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[5], this.reset_I_5(), row1.init_StrArr[5], autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[5], this.reset_I_5(), row1.init_StrArr[5], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
       );
       x += row1.init_IArr[5] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[6], this.reset_I_5(), row1.init_StrArr[6], autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[6], this.reset_I_5(), row1.init_StrArr[6], autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mx, my
       );
       x = this.init_I_2 + 4;
       int sw = this.prev_I_4();
@@ -1278,7 +1278,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int w,
       int h,
       String label,
-      autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant,
+      autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant,
       boolean active,
       int mx,
       int my
@@ -1385,7 +1385,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       autismclient.gui.ui.widgets.PanelSurfaceHelper.init(ctx, this.init_I_2 + 4, startY, this.reset - 8);
       int y = startY + 3;
       boolean hh = mx >= this.init_I_2 + 4 && mx <= this.init_I_2 + 150 && my >= y && my < y + this.put_I_6();
-      int blockedColor = hh ? ThemePaletteManager.init_I_I_ct_DataUtil(-30584, ThemePaletteManager.Inner_DataUtil.DANGER) : ThemePaletteManager.init_I_I_ct_DataUtil(-39322, ThemePaletteManager.Inner_DataUtil.DANGER);
+      int blockedColor = hh ? ThemePaletteManager.init_I_I_ct_DataUtil(-30584, ThemePaletteManager.ColorRole.DANGER) : ThemePaletteManager.init_I_I_ct_DataUtil(-39322, ThemePaletteManager.ColorRole.DANGER);
       autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(this.init_I_2 + 6, y + 1, 9, 9), this.push_Z, blockedColor);
       this.init_V_GuiGraphicsExtract_8(ctx, "Blocked (" + this.sync_Set.size() + ")", autismclient.gui.f.b.l.load, blockedColor, this.init_I_2 + 17, y + 1);
       int ubX = this.init_I_2 + this.reset - 58;
@@ -1518,7 +1518,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             int contentEndY = contentY + this.pop_I_19();
             if (mouseY >= contentY && mouseY < contentEndY) {
                if (button == 0) {
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
                   if (scrollbarMetrics.init_Z() && scrollbarMetrics.init((int)mouseX, (int)mouseY)) {
                      this.close_Z = true;
                      this.prev = Math.max(0, (int)mouseY - scrollbarMetrics.update());
@@ -1763,7 +1763,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    @Override
    public boolean init_Z_D(double mx, double my, int b, double dx, double dy) {
       if (this.close_Z && b == 0) {
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
          this.next = this.init_I_I_3(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(scrollbarMetrics, (int)my, this.prev), this.put_I_6(), scrollbarMetrics.flush());
          this.init_CacheEntry.load(this.next, scrollbarMetrics.flush());
          return true;
@@ -2224,7 +2224,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      this.pop_I_20(),
                      rowH,
                      "Clear",
-                     autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.DANGER,
+                     autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER,
                      true,
                      mx,
                      my
@@ -2238,7 +2238,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      this.tick_I_18(),
                      rowH,
                      "Reset",
-                     autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
+                     autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                      true,
                      mx,
                      my
@@ -2300,7 +2300,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   }
 
                   autismclient.gui.ui.UiClipStack.init_HashUtil().init(ctx);
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
                      contentH, listH, this.init_I_2 + this.read_I - 5, listTop, 3, listH, drawScroll
                   );
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(ctx, metrics, metrics.init(mx, my), this.write_Z);
@@ -2391,7 +2391,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
          int listTop = this.set_I_16();
          int listH = Math.max(20, this.load_I + this.write - listTop - 6);
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
             this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6(), listH, this.init_I_2 + this.read_I - 5, listTop, 3, listH, this.flush_I
          );
          if (button == 0 && metrics.init_Z() && metrics.init((int)mx, (int)my)) {
@@ -2430,7 +2430,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          } else if (this.write_Z && button == 0) {
             int listTop = this.set_I_16();
             int listH = Math.max(20, this.load_I + this.write - listTop - 6);
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
                this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6(), listH, this.init_I_2 + this.read_I - 5, listTop, 3, listH, this.flush_I
             );
             this.flush_I = this.init_I_I_3(
@@ -2503,7 +2503,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int init_I;
       String load;
       Class<?> init_Class;
-      AutismPayloadSupport.Inner_StreamUtil init_AutismPayloadSuppo;
+      AutismPayloadSupport.PayloadEntry init_AutismPayloadSuppo;
    }
 
    private static final class Inner_ConfigStore {
@@ -2596,7 +2596,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       public final boolean read_Z;
       public final String write;
       public final String update;
-      public final AutismPayloadSupport.Inner_StreamUtil init_AutismPayloadSuppo;
+      public final AutismPayloadSupport.PayloadEntry init_AutismPayloadSuppo;
       public final PacketStateDeltaTracker.Inner_DataUtil init_bq_DataUtil;
 
       public Inner_JsonUtil(
@@ -2611,7 +2611,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          boolean payload,
          String capturedBlockState,
          String capturedScreen,
-         AutismPayloadSupport.Inner_StreamUtil payloadSnapshot,
+         AutismPayloadSupport.PayloadEntry payloadSnapshot,
          PacketStateDeltaTracker.Inner_DataUtil packetContext
       ) {
          this.load_J = ts;
@@ -2994,7 +2994,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      addW,
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      this.poll_Z_14() ? "Save" : "Add",
-                     autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS,
+                     autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
                      true,
                      mx,
                      my
@@ -3009,7 +3009,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                         this.size(),
                         AutismPacketLoggerOverlay.this.add_I_13(),
                         "Cancel",
-                        autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
+                        autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                         true,
                         mx,
                         my
@@ -3028,8 +3028,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[0],
                      AutismPacketLoggerOverlay.this.init_bB.read_Z()
-                        ? autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST
-                        : autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS,
+                        ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST
+                        : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
                      true,
                      mx,
                      my
@@ -3043,7 +3043,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[1],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[1],
-                     autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS,
+                     autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
                      true,
                      mx,
                      my
@@ -3057,7 +3057,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[2],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[2],
-                     autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS,
+                     autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
                      true,
                      mx,
                      my
@@ -3071,7 +3071,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[3],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[3],
-                     this.sync_Z ? autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
+                     this.sync_Z ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                      true,
                      mx,
                      my
@@ -3085,7 +3085,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[4],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[4],
-                     autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS,
+                     autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
                      true,
                      mx,
                      my
@@ -3099,7 +3099,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[5],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[5],
-                     autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
+                     autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                      true,
                      mx,
                      my
@@ -3113,7 +3113,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[6],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[6],
-                     autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
+                     autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                      true,
                      mx,
                      my
@@ -3135,7 +3135,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      lockW,
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      registrationUnlocked ? "Registration : On" : "Registration : Off",
-                     registrationUnlocked ? autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.DANGER : autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
+                     registrationUnlocked ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                      true,
                      mx,
                      my
@@ -3186,7 +3186,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   }
 
                   autismclient.gui.ui.UiClipStack.init_HashUtil().init(ctx);
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
                      contentH, listH, this.init_I_2 + this.read_I - 7, listTop, 3, listH, drawScroll
                   );
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(ctx, metrics, metrics.init(mx, my), this.write_Z);
@@ -3213,10 +3213,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             ctx,
             autismclient.gui.f.NetHelper.init(x, y, w, h),
             -15594225,
-            ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.Inner_DataUtil.OUTLINE),
-            ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.Inner_DataUtil.OUTLINE)
+            ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.ColorRole.OUTLINE),
+            ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.ColorRole.OUTLINE)
          );
-         this.init(ctx, "Payload Registration Warning", autismclient.gui.f.b.l.load, ThemePaletteManager.init_I_I_ct_DataUtil(-19276, ThemePaletteManager.Inner_DataUtil.DANGER), x, w, y + 10);
+         this.init(ctx, "Payload Registration Warning", autismclient.gui.f.b.l.load, ThemePaletteManager.init_I_I_ct_DataUtil(-19276, ThemePaletteManager.ColorRole.DANGER), x, w, y + 10);
          this.init(ctx, "Servers can see every registered channel.", autismclient.gui.f.b.l.read, UiColorPalette.scan(), x, w, y + 30);
          this.init(ctx, "This can identify this client or selected plugins.", autismclient.gui.f.b.l.read, UiColorPalette.scan(), x, w, y + 43);
          this.init(ctx, "Passive logging and decoding still work while locked.", autismclient.gui.f.b.l.write, UiColorPalette.parse(), x, w, y + 60);
@@ -3234,7 +3234,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             cancelW,
             AutismPacketLoggerOverlay.this.add_I_13(),
             "Cancel",
-            autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
+            autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
             true,
             mx,
             my
@@ -3248,7 +3248,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             acceptW,
             AutismPacketLoggerOverlay.this.add_I_13(),
             this.load_Str_10(),
-            autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.DANGER,
+            autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER,
             ready,
             mx,
             my
@@ -3297,7 +3297,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          int bodyTop = this.load_I + 14;
          int contentW = 0;
          contentW = Math.max(
-            contentW, this.init_I_Str_3("Payload Registration Warning", autismclient.gui.f.b.l.load, ThemePaletteManager.init_I_I_ct_DataUtil(-19276, ThemePaletteManager.Inner_DataUtil.DANGER))
+            contentW, this.init_I_Str_3("Payload Registration Warning", autismclient.gui.f.b.l.load, ThemePaletteManager.init_I_I_ct_DataUtil(-19276, ThemePaletteManager.ColorRole.DANGER))
          );
          contentW = Math.max(contentW, this.init_I_Str_3("Servers can see every registered channel.", autismclient.gui.f.b.l.read, UiColorPalette.scan()));
          contentW = Math.max(contentW, this.init_I_Str_3("This can identify this client or selected plugins.", autismclient.gui.f.b.l.read, UiColorPalette.scan()));
@@ -3492,7 +3492,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   autismclient.gui.f.PacketUtil.read(
                      ctx,
                      autismclient.gui.f.NetHelper.init(removeX + 3, y + 2, 9, 9),
-                     hu ? ThemePaletteManager.init_I_I_ct_DataUtil(-39322, ThemePaletteManager.Inner_DataUtil.DANGER) : UiColorPalette.parse()
+                     hu ? ThemePaletteManager.init_I_I_ct_DataUtil(-39322, ThemePaletteManager.ColorRole.DANGER) : UiColorPalette.parse()
                   );
                }
             } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.LEARNED) {
@@ -3560,7 +3560,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   ctx, "E", autismclient.gui.f.b.l.write, eu ? -7346000 : UiColorPalette.parse(), editX + 3, this.init_I_I_l(y, autismclient.gui.f.b.l.write)
                );
                autismclient.gui.f.PacketUtil.read(
-                  ctx, autismclient.gui.f.NetHelper.init(removeX + 3, y + 2, 9, 9), hu ? ThemePaletteManager.init_I_I_ct_DataUtil(-39322, ThemePaletteManager.Inner_DataUtil.DANGER) : UiColorPalette.parse()
+                  ctx, autismclient.gui.f.NetHelper.init(removeX + 3, y + 2, 9, 9), hu ? ThemePaletteManager.init_I_I_ct_DataUtil(-39322, ThemePaletteManager.ColorRole.DANGER) : UiColorPalette.parse()
                );
             } else {
                PayloadChannelFilterManager.Inner_CachePool preset = row.init_bB_CachePool;
@@ -4569,7 +4569,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          } else {
             int listTop = this.put_I_7();
             int listH = this.next_I_6();
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
                this.init_List.size() * 14, listH, this.init_I_2 + this.read_I - 7, listTop, 3, listH, this.flush_I
             );
             if (button == 0 && metrics.init_Z() && metrics.init((int)mx, (int)my)) {
@@ -5362,7 +5362,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          } else if (this.write_Z && button == 0) {
             int listTop = this.put_I_7();
             int listH = this.next_I_6();
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
                this.init_List.size() * 14, listH, this.init_I_2 + this.read_I - 7, listTop, 3, listH, this.flush_I
             );
             this.flush_I = this.init_I_I_3(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(metrics, (int)my, this.close_I), 14, metrics.flush());

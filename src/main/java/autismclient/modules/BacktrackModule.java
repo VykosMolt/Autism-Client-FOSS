@@ -483,7 +483,7 @@ public final class BacktrackModule extends Module {
    }
 
    private boolean init_Z_LivingEntity_J(LivingEntity victim, long now) {
-      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
       if (wire.init_Z() && wire.init_Vec3() != null) {
          Vec3 eye = wire.init_Vec3().add(0.0, this.init_LocalPlayer.getEyeHeight(), 0.0);
          Vec3 look = Vec3.directionFromRotation(wire.write(), wire.read());

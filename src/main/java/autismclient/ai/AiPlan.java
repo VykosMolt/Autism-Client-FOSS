@@ -28,7 +28,7 @@ final class AiPlan {
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final List<AiPlanRunner.Inner_StreamUtil> init_List = AiPlan.init(ordered);
-            final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard();
+            final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard();
             AiOperation init_AiOperation;
             AiPlanRunner.Inner_StreamUtil init_aU_StreamUtil;
             AiOperation load_AiOperation;
@@ -153,7 +153,7 @@ final class AiPlan {
                      return null;
                   }
 
-                  AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+                  AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
                   AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.init_I_21());
                   if (action == null) {
                      return null;

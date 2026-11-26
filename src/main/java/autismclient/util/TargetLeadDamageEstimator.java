@@ -39,10 +39,10 @@ public final class TargetLeadDamageEstimator {
       return target.getBoundingBox().move(EntityMotionTracker.init_Vec3_LivingEntity(target).subtract(target.position()));
    }
 
-   public static ExplosionDamageCalculator.Inner_BufferHelper init(LivingEntity target, Vec3 source, float power, ExplosionDamageCalculator.Inner_CachePool options, AABB targetBox) {
+   public static ExplosionDamageCalculator.DamagePair init(LivingEntity target, Vec3 source, float power, ExplosionDamageCalculator.SimOptions options, AABB targetBox) {
       double targetDamage = ExplosionDamageCalculator.read(target, source, power, options.init(targetBox));
       double selfDamage = target == Minecraft.getInstance().player ? targetDamage : ExplosionDamageCalculator.read(source, power, options);
-      return new ExplosionDamageCalculator.Inner_BufferHelper(targetDamage, selfDamage);
+      return new ExplosionDamageCalculator.DamagePair(targetDamage, selfDamage);
    }
 
    static Vec3 init_Vec3_Vec3(Vec3 perTick, int horizonTicks, double maxLead, double wallFraction) {

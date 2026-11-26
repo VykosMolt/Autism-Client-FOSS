@@ -202,10 +202,10 @@ final class PrintFlight {
       return best;
    }
 
-   static AiPhysics.Inner_StreamUtil init_NodeWalker_StreamU_NodeWalker_StreamU(
-      AiPhysics.Inner_StreamUtil body, PrintMover.Inner_StreamUtil keys, float yaw, float speed, AiPhysics.Inner_CachePool world
+   static AiPhysics.MotionState init_NodeWalker_StreamU_NodeWalker_StreamU(
+      AiPhysics.MotionState body, PrintMover.Inner_StreamUtil keys, float yaw, float speed, AiPhysics.PhysicsWorld world
    ) {
-      AiPhysics.Inner_DataUtil input = PrintMover.init(keys, yaw);
+      AiPhysics.MoveInput input = PrintMover.init(keys, yaw);
       double forward = input.forward() * 0.98;
       double left = input.strafe() * 0.98;
       double length = Math.max(1.0, Math.hypot(forward, left));
@@ -244,7 +244,7 @@ final class PrintFlight {
          z = Shapes.collide(Axis.Z, box, shapes, vz);
       }
 
-      return new AiPhysics.Inner_StreamUtil(
+      return new AiPhysics.MotionState(
          body.x() + x,
          body.y() + y,
          body.z() + z,
@@ -258,11 +258,11 @@ final class PrintFlight {
       );
    }
 
-   static boolean init(AiPhysics.Inner_StreamUtil body, Vec3 goal) {
+   static boolean init(AiPhysics.MotionState body, Vec3 goal) {
       return body.position().distanceToSqr(goal) < 0.25 && body.speed() < 0.025 && Math.abs(body.vy()) < 0.025;
    }
 
-   static boolean load(AiPhysics.Inner_StreamUtil body, Vec3 goal) {
+   static boolean load(AiPhysics.MotionState body, Vec3 goal) {
       return body.position().distanceToSqr(goal) < 0.16 && body.speed() < 0.015 && Math.abs(body.vy()) < 0.015;
    }
 
@@ -291,7 +291,7 @@ final class PrintFlight {
    }
 
    private static PrintMover.Inner_StreamUtil init_CharEncoder_Stream_EventBus_2(PrintEnv env, Vec3 goal, float yaw, Predicate<Vec3> nextStep) {
-      AiPhysics.Inner_StreamUtil body = env.init_NodeWalker_StreamU();
+      AiPhysics.MotionState body = env.init_NodeWalker_StreamU();
       double dx = goal.x - body.x();
       double dz = goal.z - body.z();
       double distance = Math.hypot(dx, dz);
@@ -304,7 +304,7 @@ final class PrintFlight {
          double vy = Math.copySign(Math.min(speed * 4.5, Math.abs(goal.y - body.y()) * 0.55), goal.y - body.y());
          boolean sprintAllowed = env.push() && distance > 1.0 && (-Math.sin(Math.toRadians(yaw)) * dx + Math.cos(Math.toRadians(yaw)) * dz) / distance > 0.7;
 
-         record Inner_DataUtil(PrintMover.Inner_StreamUtil keys, AiPhysics.Inner_StreamUtil next, double score) {
+         record Inner_DataUtil(PrintMover.Inner_StreamUtil keys, AiPhysics.MotionState next, double score) {
          }
 
          ArrayList<Inner_DataUtil> candidates = new ArrayList<>(36);
@@ -316,7 +316,7 @@ final class PrintFlight {
                      PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(
                         forward > 0, forward < 0, side > 0, side < 0, vertical > 0, vertical < 0, sprint > 0
                      );
-                     AiPhysics.Inner_StreamUtil next = init_NodeWalker_StreamU_NodeWalker_StreamU(body, keys, yaw, env.sync_F(), env.init_NodeWalker_CachePo());
+                     AiPhysics.MotionState next = init_NodeWalker_StreamU_NodeWalker_StreamU(body, keys, yaw, env.sync_F(), env.init_NodeWalker_CachePo());
                      double value = Math.pow(next.vx() - vx, 2.0)
                         + Math.pow(next.vz() - vz, 2.0)
                         + Math.pow(next.vy() - vy, 2.0)
@@ -331,8 +331,8 @@ final class PrintFlight {
 
          for (Inner_DataUtil candidate : candidates) {
             if (nextStep == null || nextStep.test(candidate.next.position())) {
-               AiPhysics.Inner_StreamUtil prior = body;
-               AiPhysics.Inner_StreamUtil next = candidate.next;
+               AiPhysics.MotionState prior = body;
+               AiPhysics.MotionState next = candidate.next;
                boolean safe = true;
 
                for (int tick = 0; tick <= 25; tick++) {
@@ -357,7 +357,7 @@ final class PrintFlight {
       }
    }
 
-   private static boolean init(AiPhysics.Inner_CachePool world, AiPhysics.Inner_StreamUtil from, AiPhysics.Inner_StreamUtil to) {
+   private static boolean init(AiPhysics.PhysicsWorld world, AiPhysics.MotionState from, AiPhysics.MotionState to) {
       int samples = Math.max(1, (int)Math.ceil(from.position().distanceTo(to.position()) / 0.25));
       if (samples > 256) {
          return true;
@@ -366,7 +366,7 @@ final class PrintFlight {
       for (int sample = 1; sample <= samples; sample++) {
          double f = (double)sample / samples;
          Vec3 point = from.position().lerp(to.position(), f);
-         AiPhysics.Inner_StreamUtil body = new AiPhysics.Inner_StreamUtil(
+         AiPhysics.MotionState body = new AiPhysics.MotionState(
             point.x, point.y, point.z, to.vx(), to.vy(), to.vz(), to.onGround(), 0, false, false
          );
          if (PrintMover.init(world, from, body)) {
@@ -380,8 +380,8 @@ final class PrintFlight {
    private static PrintMover.Inner_StreamUtil init_CharEncoder_Stream_EventBus(
       PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep, boolean transit
    ) {
-      AiPhysics.Inner_StreamUtil body = env.init_NodeWalker_StreamU();
-      AiPhysics.Inner_CachePool world = env.init_NodeWalker_CachePo();
+      AiPhysics.MotionState body = env.init_NodeWalker_StreamU();
+      AiPhysics.PhysicsWorld world = env.init_NodeWalker_CachePo();
       if (body.position().distanceToSqr(goal) > 4.0) {
          PrintMover.Inner_StreamUtil travel = init_CharEncoder_Stream_EventBus_2(env, goal, yaw, nextStep);
          if (travel != null) {
@@ -391,7 +391,7 @@ final class PrintFlight {
 
       boolean openingTurn = transit && continuation != null && body.position().distanceToSqr(goal) < 0.16 && !continuation.test(body.position());
       if (!openingTurn && body.position().distanceToSqr(goal) < tolerance * tolerance) {
-         AiPhysics.Inner_StreamUtil coast = body;
+         AiPhysics.MotionState coast = body;
          boolean safe = true;
          int tick = 0;
 
@@ -428,7 +428,7 @@ final class PrintFlight {
                PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(
                   forward > 0, forward < 0, side > 0, side < 0, vertical > 0, vertical < 0, false
                );
-               AiPhysics.Inner_StreamUtil next = init_NodeWalker_StreamU_NodeWalker_StreamU(body, keys, yaw, env.sync_F(), world);
+               AiPhysics.MotionState next = init_NodeWalker_StreamU_NodeWalker_StreamU(body, keys, yaw, env.sync_F(), world);
                if (!PrintMover.init(world, body, next) && (nextStep == null || nextStep.test(next.position()))) {
                   double distance = next.position().distanceToSqr(goal);
                   double fineValue = distance + 2.0 * (next.vx() * next.vx() + next.vy() * next.vy() + next.vz() * next.vz());

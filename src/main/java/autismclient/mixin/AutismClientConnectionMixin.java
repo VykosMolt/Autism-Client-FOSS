@@ -132,7 +132,7 @@ public abstract class AutismClientConnectionMixin {
 
    @Unique
    private static void autism$snapshotPrivacyMode(Connection connection, SocketAddress peerAddress) {
-      ConnectionPrivacyRegistry.Inner_CachePool mode = AutismConfig.getGlobal().spoofClientVanilla ? ConnectionPrivacyRegistry.Inner_CachePool.VANILLA : ConnectionPrivacyRegistry.Inner_CachePool.MODDED;
+      ConnectionPrivacyRegistry.PrivacyMode mode = AutismConfig.getGlobal().spoofClientVanilla ? ConnectionPrivacyRegistry.PrivacyMode.VANILLA : ConnectionPrivacyRegistry.PrivacyMode.MODDED;
       ConnectionPrivacyRegistry.init(connection, mode, false, peerAddress);
    }
 
@@ -277,7 +277,7 @@ public abstract class AutismClientConnectionMixin {
             yaw = f.init(yaw);
             pitch = f.load(pitch);
          } else {
-            RotationMath.Inner_DataUtil rotation = SilentMovementCoordinator.load(Minecraft.getInstance().player);
+            RotationMath.Rotation rotation = SilentMovementCoordinator.load(Minecraft.getInstance().player);
             if (rotation != null) {
                yaw = rotation.init();
                pitch = rotation.load();
@@ -469,9 +469,9 @@ public abstract class AutismClientConnectionMixin {
                                           }
 
                                           ModuleRuntimeManager captureModule = ModuleRuntimeManager.init_PoolEntry();
-                                          AutismSessionState.Inner_BufferHelper captureMode = captureModule != null && captureModule.next_Z()
-                                             ? AutismSessionState.Inner_BufferHelper.EXACT
-                                             : AutismSessionState.Inner_BufferHelper.REGENERATE;
+                                          AutismSessionState.ReplayMode captureMode = captureModule != null && captureModule.next_Z()
+                                             ? AutismSessionState.ReplayMode.EXACT
+                                             : AutismSessionState.ReplayMode.REGENERATE;
                                           shared.init_V_Packet_ck_BufferHelper(packet, captureMode);
                                           ci.cancel();
                                        }

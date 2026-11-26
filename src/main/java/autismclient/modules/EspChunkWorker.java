@@ -42,7 +42,7 @@ public final class EspChunkWorker {
          return t;
       }
    );
-   private final ConcurrentHashMap<Long, EspChunkWorker.Inner_DataUtil> init_ConcurrentHashMap = new ConcurrentHashMap<>();
+   private final ConcurrentHashMap<Long, EspChunkWorker.ChunkResult> init_ConcurrentHashMap = new ConcurrentHashMap<>();
    private final Set<Long> inFlight = ConcurrentHashMap.newKeySet();
 
    static void submitEspWork(Runnable task) {
@@ -58,9 +58,9 @@ public final class EspChunkWorker {
    private EspChunkWorker() {
    }
 
-   List<EspChunkWorker.Inner_CachePool> initAsync(LevelChunk chunk, long gameTime, String stamp, EspChunkWorker.Inner_StreamUtil scanner) {
+   List<EspChunkWorker.EspBox> initAsync(LevelChunk chunk, long gameTime, String stamp, EspChunkWorker.ChunkScanner scanner) {
       long key = chunk.getPos().pack();
-      EspChunkWorker.Inner_DataUtil cached = this.init_ConcurrentHashMap.get(key);
+      EspChunkWorker.ChunkResult cached = this.init_ConcurrentHashMap.get(key);
       if (cached != null && cached.init_Str.equals(stamp) && gameTime - cached.init_J < 100L) {
          return cached.init_List;
       }
@@ -77,11 +77,11 @@ public final class EspChunkWorker {
                   this.init_V_ChunkPos(chunk.getPos());
                }
 
-               List<EspChunkWorker.Inner_CachePool> entries = new ArrayList<>();
+               List<EspChunkWorker.EspBox> entries = new ArrayList<>();
                scanner.scan(chunk, entries);
                if (init_Obj == expectedLevel) {
-                  List<EspChunkWorker.Inner_CachePool> frozen = List.copyOf(entries);
-                  EspChunkWorker.Inner_DataUtil prev = this.init_ConcurrentHashMap.put(key, new EspChunkWorker.Inner_DataUtil(stamp, gameTime, frozen));
+                  List<EspChunkWorker.EspBox> frozen = List.copyOf(entries);
+                  EspChunkWorker.ChunkResult prev = this.init_ConcurrentHashMap.put(key, new EspChunkWorker.ChunkResult(stamp, gameTime, frozen));
                   if (prev == null || !prev.init_List.equals(frozen)) {
                      init_AtomicInteger.incrementAndGet();
                   }
@@ -99,9 +99,9 @@ public final class EspChunkWorker {
       return cached != null && cached.init_Str.equals(stamp) ? cached.init_List : List.of();
    }
 
-   List<EspChunkWorker.Inner_CachePool> init(LevelChunk chunk, long gameTime, String stamp, EspChunkWorker.Inner_StreamUtil scanner) {
+   List<EspChunkWorker.EspBox> init(LevelChunk chunk, long gameTime, String stamp, EspChunkWorker.ChunkScanner scanner) {
       long key = chunk.getPos().pack();
-      EspChunkWorker.Inner_DataUtil cached = this.init_ConcurrentHashMap.get(key);
+      EspChunkWorker.ChunkResult cached = this.init_ConcurrentHashMap.get(key);
       if (cached != null && cached.init_Str.equals(stamp) && gameTime - cached.init_J < 100L) {
          return cached.init_List;
       }
@@ -110,10 +110,10 @@ public final class EspChunkWorker {
          this.init_V_ChunkPos(chunk.getPos());
       }
 
-      List<EspChunkWorker.Inner_CachePool> entries = new ArrayList<>();
+      List<EspChunkWorker.EspBox> entries = new ArrayList<>();
       scanner.scan(chunk, entries);
-      List<EspChunkWorker.Inner_CachePool> frozen = List.copyOf(entries);
-      this.init_ConcurrentHashMap.put(key, new EspChunkWorker.Inner_DataUtil(stamp, gameTime, frozen));
+      List<EspChunkWorker.EspBox> frozen = List.copyOf(entries);
+      this.init_ConcurrentHashMap.put(key, new EspChunkWorker.ChunkResult(stamp, gameTime, frozen));
       if (cached == null || !cached.init_List.equals(frozen)) {
          init_AtomicInteger.incrementAndGet();
       }
@@ -241,13 +241,13 @@ public final class EspChunkWorker {
       }
    }
 
-   record Inner_CachePool(AABB init_AABB, Vec3 init_Vec3, int init_I) {
+   record EspBox(AABB init_AABB, Vec3 init_Vec3, int init_I) {
    }
 
-   private record Inner_DataUtil(String init_Str, long init_J, List<EspChunkWorker.Inner_CachePool> init_List) {
+   private record ChunkResult(String init_Str, long init_J, List<EspChunkWorker.EspBox> init_List) {
    }
 
-   interface Inner_StreamUtil {
-      void scan(LevelChunk var1, List<EspChunkWorker.Inner_CachePool> var2);
+   interface ChunkScanner {
+      void scan(LevelChunk var1, List<EspChunkWorker.EspBox> var2);
    }
 }

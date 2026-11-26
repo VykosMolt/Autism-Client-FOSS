@@ -72,14 +72,14 @@ public final class ModdedParticleGuard {
       return packet != null && packet.particle() == ModdedParticleGuard.Inner_DataUtil.init_ByteReader_DataUti;
    }
 
-   public static boolean init(ParticleProvider<?> provider, ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   public static boolean init(ParticleProvider<?> provider, ConnectionPrivacyRegistry.ConnectionSession context) {
       return provider != null
          && context != null
-         && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.VANILLA
+         && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA
          && !provider.getClass().getName().startsWith("net.minecraft.client.particle.");
    }
 
-   public static <T> T init(ParticleProvider<?> provider, ConnectionPrivacyRegistry.Inner_StreamUtil context, Supplier<T> invocation) {
+   public static <T> T init(ParticleProvider<?> provider, ConnectionPrivacyRegistry.ConnectionSession context, Supplier<T> invocation) {
       return init(provider, context) ? null : invocation.get();
    }
 

@@ -108,7 +108,7 @@ public final class AutismPayloadSupport {
       return bytes == null ? null : (byte[])bytes.clone();
    }
 
-   public static AutismPayloadSupport.Inner_StreamUtil init_AutismPayloadSuppo(Packet<?> packet, String direction) {
+   public static AutismPayloadSupport.PayloadEntry init_AutismPayloadSuppo(Packet<?> packet, String direction) {
       if (packet == null) {
          return null;
       }
@@ -120,7 +120,7 @@ public final class AutismPayloadSupport {
 
       String channel = init_Str(payload);
       PacketWireCaptureStore.Inner_StreamUtil packetSnapshot = PacketWireCaptureStore.init(packet);
-      AutismPayloadSupport.Inner_DataUtil payloadBytes = init(packetSnapshot, channel);
+      AutismPayloadSupport.EncodedBytes payloadBytes = init(packetSnapshot, channel);
       if (payloadBytes == null) {
          payloadBytes = init_AutismPayloadSuppo(payload);
       }
@@ -134,7 +134,7 @@ public final class AutismPayloadSupport {
          packetId = PacketWireCaptureStore.init(protocolPhase, direction, packet.type());
       }
 
-      return new AutismPayloadSupport.Inner_StreamUtil(
+      return new AutismPayloadSupport.PayloadEntry(
          direction,
          channel,
          rawBytes,
@@ -150,7 +150,7 @@ public final class AutismPayloadSupport {
       );
    }
 
-   public static AutismPayloadSupport.Inner_StreamUtil init(byte[] frameBytes, String direction, String protocolPhase) {
+   public static AutismPayloadSupport.PayloadEntry init(byte[] frameBytes, String direction, String protocolPhase) {
       if (frameBytes != null && frameBytes.length != 0) {
          byte[] frame = (byte[])frameBytes.clone();
          int[] index = new int[]{0};
@@ -184,7 +184,7 @@ public final class AutismPayloadSupport {
                   Integer commandApiValue = init_Integer(payload, channel, body);
                   String dump = init(direction, channel, body, commandApiValue);
                   String payloadClassName = c2s ? ServerboundCustomPayloadPacket.class.getName() : ClientboundCustomPayloadPacket.class.getName();
-                  return new AutismPayloadSupport.Inner_StreamUtil(
+                  return new AutismPayloadSupport.PayloadEntry(
                      direction,
                      channel,
                      body,
@@ -246,34 +246,34 @@ public final class AutismPayloadSupport {
       return init_AutismPayloadSuppo(payload).init_BArr();
    }
 
-   private static AutismPayloadSupport.Inner_DataUtil init_AutismPayloadSuppo(CustomPacketPayload payload) {
+   private static AutismPayloadSupport.EncodedBytes init_AutismPayloadSuppo(CustomPacketPayload payload) {
       if (payload == null) {
-         return new AutismPayloadSupport.Inner_DataUtil(new byte[0], PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
+         return new AutismPayloadSupport.EncodedBytes(new byte[0], PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
       } else if (payload instanceof AutismPayloadSupport.RawCustomPacketPayload raw) {
-         return new AutismPayloadSupport.Inner_DataUtil(raw.bytes(), PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init());
+         return new AutismPayloadSupport.EncodedBytes(raw.bytes(), PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init());
       } else {
          byte[] remembered = init_BArr(payload);
          if (remembered != null) {
-            return new AutismPayloadSupport.Inner_DataUtil(remembered, PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init());
+            return new AutismPayloadSupport.EncodedBytes(remembered, PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init());
          }
 
          byte[] codecBytes = read(payload);
          if (codecBytes != null) {
-            return new AutismPayloadSupport.Inner_DataUtil(codecBytes, PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
+            return new AutismPayloadSupport.EncodedBytes(codecBytes, PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          }
 
          try {
             Method writeMethod = payload.getClass().getMethod("write", FriendlyByteBuf.class);
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             writeMethod.invoke(payload, buf);
-            return new AutismPayloadSupport.Inner_DataUtil(init(buf), PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
+            return new AutismPayloadSupport.EncodedBytes(init(buf), PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          } catch (Throwable var5) {
-            return new AutismPayloadSupport.Inner_DataUtil(new byte[0], PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
+            return new AutismPayloadSupport.EncodedBytes(new byte[0], PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          }
       }
    }
 
-   private static AutismPayloadSupport.Inner_DataUtil init(PacketWireCaptureStore.Inner_StreamUtil packetSnapshot, String expectedChannel) {
+   private static AutismPayloadSupport.EncodedBytes init(PacketWireCaptureStore.Inner_StreamUtil packetSnapshot, String expectedChannel) {
       if (packetSnapshot == null) {
          return null;
       }
@@ -300,7 +300,7 @@ public final class AutismPayloadSupport {
             System.arraycopy(bytes, index[0], body, 0, body.length);
          }
 
-         return new AutismPayloadSupport.Inner_DataUtil(body, PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init());
+         return new AutismPayloadSupport.EncodedBytes(body, PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init());
       } else {
          return null;
       }
@@ -347,7 +347,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static String init(AutismPayloadSupport.Inner_StreamUtil snapshot, boolean includeCommandValue) {
+   public static String init(AutismPayloadSupport.PayloadEntry snapshot, boolean includeCommandValue) {
       if (snapshot == null) {
          return "";
       }
@@ -744,15 +744,15 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static AutismPayloadSupport.Inner_StreamUtil init_AutismPayloadSuppo(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static AutismPayloadSupport.PayloadEntry init_AutismPayloadSuppo(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
       if (entry == null) {
          return null;
       } else {
-         AutismPayloadSupport.Inner_StreamUtil cached = entry.init_AutismPayloadSuppo;
+         AutismPayloadSupport.PayloadEntry cached = entry.init_AutismPayloadSuppo;
          if (entry.init_Packet == null) {
             return cached;
          } else {
-            AutismPayloadSupport.Inner_StreamUtil refreshed = init_AutismPayloadSuppo(entry.init_Packet, entry.init_Str);
+            AutismPayloadSupport.PayloadEntry refreshed = init_AutismPayloadSuppo(entry.init_Packet, entry.init_Str);
             if (cached == null) {
                return refreshed;
             } else {
@@ -763,7 +763,7 @@ public final class AutismPayloadSupport {
    }
 
    public static autismclient.util.macro.PayloadAction init_H(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
-      AutismPayloadSupport.Inner_StreamUtil snapshot = init_AutismPayloadSuppo(entry);
+      AutismPayloadSupport.PayloadEntry snapshot = init_AutismPayloadSuppo(entry);
       if (snapshot == null) {
          return null;
       }
@@ -1069,7 +1069,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   private static boolean init(AutismPayloadSupport.Inner_StreamUtil cached, AutismPayloadSupport.Inner_StreamUtil refreshed) {
+   private static boolean init(AutismPayloadSupport.PayloadEntry cached, AutismPayloadSupport.PayloadEntry refreshed) {
       if (cached != null && refreshed != null) {
          if ((cached.load_Str() == null || cached.load_Str().isBlank()) && refreshed.load_Str() != null && !refreshed.load_Str().isBlank()) {
             return true;
@@ -1127,8 +1127,8 @@ public final class AutismPayloadSupport {
       return value != null && !value.isEmpty() ? value.replace("\\", "\\\\").replace("\"", "\\\"") : "";
    }
 
-   private record Inner_DataUtil(byte[] init_BArr, String init_Str) {
-      private Inner_DataUtil {
+   private record EncodedBytes(byte[] init_BArr, String init_Str) {
+      private EncodedBytes {
          init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
          init_Str = init_Str != null && !init_Str.isBlank() ? init_Str : PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init();
       }
@@ -1138,7 +1138,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public record Inner_StreamUtil(
+   public record PayloadEntry(
       String init_Str,
       String load_Str,
       byte[] init_BArr,

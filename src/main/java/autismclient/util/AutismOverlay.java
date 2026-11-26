@@ -59,8 +59,8 @@ public interface AutismOverlay {
       return this.getClass().getSimpleName();
    }
 
-   default AutismOverlay.Inner_DataUtil init_cX_DataUtil() {
-      return AutismOverlay.Inner_DataUtil.HOST_SCREEN;
+   default AutismOverlay.RenderLayer init_cX_DataUtil() {
+      return AutismOverlay.RenderLayer.HOST_SCREEN;
    }
 
    default boolean f_() {
@@ -120,7 +120,7 @@ public interface AutismOverlay {
       }
    }
 
-   enum Inner_DataUtil {
+   enum RenderLayer {
       HOST_SCREEN,
       MODULE_MENU,
       CONTAINER_GUI,

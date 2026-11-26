@@ -92,15 +92,15 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    @Override
-   public AutismOverlay.Inner_DataUtil init_cX_DataUtil() {
-      return this.write_Z ? AutismOverlay.Inner_DataUtil.BACKGROUND_STATUS : super.init_cX_DataUtil();
+   public AutismOverlay.RenderLayer init_cX_DataUtil() {
+      return this.write_Z ? AutismOverlay.RenderLayer.BACKGROUND_STATUS : super.init_cX_DataUtil();
    }
 
    private void set_V() {
       boolean next = !this.write_Z;
       this.write_Z = next;
       this.init_cc.init_V_Consumer(s -> s.pinned = next);
-      OverlayManager.init_bk().init_V_cX_cX_DataUtil(this, next ? AutismOverlay.Inner_DataUtil.BACKGROUND_STATUS : AutismOverlay.Inner_DataUtil.HOST_SCREEN);
+      OverlayManager.init_bk().init_V_cX_cX_DataUtil(this, next ? AutismOverlay.RenderLayer.BACKGROUND_STATUS : AutismOverlay.RenderLayer.HOST_SCREEN);
       if (!next && Minecraft.getInstance().gui.screen() == null) {
          this.init_V_Z(false);
       }

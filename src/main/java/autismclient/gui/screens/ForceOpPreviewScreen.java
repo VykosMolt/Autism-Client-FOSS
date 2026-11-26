@@ -85,7 +85,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
       return autismclient.gui.f.NetHelper.init(list.read() + 2, list.write() + 2, list.update() - 4, list.sync() - 4);
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_6() {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_6() {
       autismclient.gui.f.NetHelper inner = this.load_NetHelper();
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(this.flush(), inner.sync(), inner.init() - 6, inner.write(), 6, inner.sync(), this.poll);
    }
@@ -138,7 +138,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
          }
 
          if (maxScroll > 0) {
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_6();
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil_6();
             boolean overBar = metrics.init(mx, my);
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(graphics, metrics, overBar, this.init_Z);
             this.load_List.add(new ForceOpPreviewScreen.Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil.SCROLLBAR, innerX + innerW - 6, innerY, 6, innerH));
@@ -191,7 +191,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
             }
 
             if (hit.init_SyncManager_Stream == ForceOpPreviewScreen.Inner_StreamUtil.SCROLLBAR && Compat263.mouseEventGlfwButton(event) == 0) {
-               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_6();
+               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init_PoolEntry_DataUtil_6();
                if (metrics.load(mx, my)) {
                   this.init_Z = true;
                   this.init_D = my - metrics.update();

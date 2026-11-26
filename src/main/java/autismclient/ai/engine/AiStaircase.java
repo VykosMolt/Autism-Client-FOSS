@@ -308,7 +308,7 @@ public final class AiStaircase {
          AiOperation init_AiOperation = mc.player.blockPosition().equals(top)
             ? null
             : AiGoto.init_AiOperation_BlockPos(top, 0.5, true, false, false, Math.max(10, timeoutSeconds / 2));
-         AiGoto.Inner_CachePool init_HashUtil_CachePool;
+         AiGoto.GotoOp init_HashUtil_CachePool;
 
          @Override
          public AiOperation.Result tick() {
@@ -585,7 +585,7 @@ public final class AiStaircase {
          AiOperation init_AiOperation = approach != null && !mc.player.blockPosition().equals(approach)
             ? AiGoto.init_AiOperation_BlockPos(approach, 0.5, true, false, false, Math.max(10, timeoutSeconds / 2))
             : null;
-         AiGoto.Inner_CachePool init_HashUtil_CachePool;
+         AiGoto.GotoOp init_HashUtil_CachePool;
 
          @Override
          public AiOperation.Result tick() {
@@ -683,7 +683,7 @@ public final class AiStaircase {
       return start;
    }
 
-   public static final class Inner_DataUtil implements AiPathfinder.Inner_JsonUtil {
+   public static final class Inner_DataUtil implements AiPathfinder.PathGoal {
       final int init;
       final int load;
       final int read;
@@ -703,7 +703,7 @@ public final class AiStaircase {
 
       @Override
       public double heuristic(int x, int y, int z) {
-         return AiPathfinder.Inner_CachePool.init_D_I(this.init - x, this.write - y, this.load - z);
+         return AiPathfinder.MoveCosts.init_D_I(this.init - x, this.write - y, this.load - z);
       }
 
       private boolean update(BlockPos cell) {
@@ -726,8 +726,8 @@ public final class AiStaircase {
       }
 
       @Override
-      public Set<AiPathfinder.Inner_SyncManager> init_Set() {
-         return EnumSet.of(AiPathfinder.Inner_SyncManager.PILLAR);
+      public Set<AiPathfinder.MoveType> init_Set() {
+         return EnumSet.of(AiPathfinder.MoveType.PILLAR);
       }
 
       @Override
@@ -736,7 +736,7 @@ public final class AiStaircase {
       }
    }
 
-   public static final class Inner_StreamUtil implements AiPathfinder.Inner_JsonUtil {
+   public static final class Inner_StreamUtil implements AiPathfinder.PathGoal {
       final Set<Long> init_Set;
       final Set<Long> load = new HashSet<>();
       final BlockPos init_BlockPos;
@@ -758,7 +758,7 @@ public final class AiStaircase {
 
       @Override
       public double heuristic(int x, int y, int z) {
-         return AiPathfinder.Inner_CachePool.init_D_I(this.init_BlockPos.getX() - x, this.init_BlockPos.getY() - y, this.init_BlockPos.getZ() - z);
+         return AiPathfinder.MoveCosts.init_D_I(this.init_BlockPos.getX() - x, this.init_BlockPos.getY() - y, this.init_BlockPos.getZ() - z);
       }
 
       @Override
@@ -777,8 +777,8 @@ public final class AiStaircase {
       }
 
       @Override
-      public Set<AiPathfinder.Inner_SyncManager> init_Set() {
-         return EnumSet.of(AiPathfinder.Inner_SyncManager.DIG_DOWN_1, AiPathfinder.Inner_SyncManager.PILLAR);
+      public Set<AiPathfinder.MoveType> init_Set() {
+         return EnumSet.of(AiPathfinder.MoveType.DIG_DOWN_1, AiPathfinder.MoveType.PILLAR);
       }
 
       @Override

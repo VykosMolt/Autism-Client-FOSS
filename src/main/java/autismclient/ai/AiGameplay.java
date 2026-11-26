@@ -1032,7 +1032,7 @@ final class AiGameplay {
             throw new IllegalArgumentException("block is required: a registry id or a family like \"ore\"");
          }
 
-         final AiItems.Inner_DataUtil target = AiItems.read_af_DataUtil(blockArg);
+         final AiItems.ItemSpec target = AiItems.read_af_DataUtil(blockArg);
          final Set<String> wanted = new HashSet<>(target.blockIds());
          final int radius = Math.max(8, Math.min(96, AiJson.init_I_JsonObject(args, "radius", 64)));
          final int limit = Math.max(1, Math.min(64, AiJson.init_I_JsonObject(args, "limit", 16)));

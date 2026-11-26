@@ -281,12 +281,12 @@ public final class EndPortalModule extends Module {
          LevelChunk chunk = MC.level.getChunkSource().getChunk(cx + offset[0], cz + offset[1], ChunkStatus.FULL, false);
          if (chunk != null) {
             scanned++;
-            List<EspChunkWorker.Inner_CachePool> entries = EspChunkWorker.read.init(chunk, MC.level.getGameTime(), "end-portal", EndPortalModule::init);
+            List<EspChunkWorker.EspBox> entries = EspChunkWorker.read.init(chunk, MC.level.getGameTime(), "end-portal", EndPortalModule::init);
             int x = chunk.getPos().x();
             int z = chunk.getPos().z();
             Set<Long> current = new HashSet<>();
 
-            for (EspChunkWorker.Inner_CachePool hit : entries) {
+            for (EspChunkWorker.EspBox hit : entries) {
                BlockPos pos = BlockPos.containing(hit.init_Vec3());
                current.add(pos.asLong());
                BlockState state = chunk.getBlockState(pos);
@@ -303,7 +303,7 @@ public final class EndPortalModule extends Module {
       }
    }
 
-   private static void init(LevelChunk chunk, List<EspChunkWorker.Inner_CachePool> out) {
+   private static void init(LevelChunk chunk, List<EspChunkWorker.EspBox> out) {
       LevelChunkSection[] sections = chunk.getSections();
 
       for (int section = 0; section < sections.length; section++) {
@@ -316,7 +316,7 @@ public final class EndPortalModule extends Module {
                         BlockPos p = new BlockPos(
                            chunk.getPos().getMinBlockX() + x, (chunk.getSectionYFromSectionIndex(section) << 4) + y, chunk.getPos().getMinBlockZ() + z
                         );
-                        out.add(new EspChunkWorker.Inner_CachePool(new AABB(p), Vec3.atCenterOf(p), 0));
+                        out.add(new EspChunkWorker.EspBox(new AABB(p), Vec3.atCenterOf(p), 0));
                         if (out.size() >= 256) {
                            return;
                         }

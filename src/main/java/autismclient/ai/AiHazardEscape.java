@@ -39,7 +39,7 @@ final class AiHazardEscape {
       final Object player = mc.player;
       final Object connection = mc.getConnection();
       return new AiOperation() {
-         final AiGuardLayer init_Y = new AiGuardLayer(new AiGuard.Inner_CachePool(false, false, false, 16.0F, 7.0F, 14, false, Set.of()), "hazard escape");
+         final AiGuardLayer init_Y = new AiGuardLayer(new AiGuard.GuardPolicy(false, false, false, 16.0F, 7.0F, 14, false, Set.of()), "hazard escape");
          final long init_J = System.nanoTime() + seconds * 1000000000L;
          boolean init_Z;
          String init_Str = "";

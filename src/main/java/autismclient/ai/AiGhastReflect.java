@@ -167,7 +167,7 @@ final class AiGhastReflect {
       }
    }
 
-   String init_Str_List(List<AiProjectiles.Inner_StreamUtil> threats) {
+   String init_Str_List(List<AiProjectiles.IncomingProjectile> threats) {
       if (this.read_I < 0) {
          this.init_V_List(threats);
       }
@@ -244,7 +244,7 @@ final class AiGhastReflect {
 
          AiGameOperations.init(eye.add(this.init_V_StreamUtil.flight.direction.scale(16.0)));
          if (this.init_V_StreamUtil.interceptTicks == 0 && AiDefense.load(this.init_Minecraft, ball)) {
-            autismclient.util.ServerRotationTracker.Inner_CachePool wire = autismclient.util.ServerRotationTracker.init_ch_CachePool();
+            autismclient.util.ServerRotationTracker.RotationSnapshot wire = autismclient.util.ServerRotationTracker.init_ch_CachePool();
             if (!wire.init_Z()) {
                return null;
             }
@@ -378,10 +378,10 @@ final class AiGhastReflect {
       return true;
    }
 
-   private void init_V_List(List<AiProjectiles.Inner_StreamUtil> threats) {
-      AiProjectiles.Inner_StreamUtil first = null;
+   private void init_V_List(List<AiProjectiles.IncomingProjectile> threats) {
+      AiProjectiles.IncomingProjectile first = null;
 
-      for (AiProjectiles.Inner_StreamUtil threat : threats) {
+      for (AiProjectiles.IncomingProjectile threat : threats) {
          if (this.init_Minecraft.level.getEntity(threat.entityId()) instanceof LargeFireball ball
             && ball.isAlive()
             && !this.init_Set.contains(ball.getUUID())
@@ -492,7 +492,7 @@ final class AiGhastReflect {
       return observed.lengthSqr() <= 1.0 ? observed : Vec3.ZERO;
    }
 
-   private AiGhastReflect.Inner_StreamUtil init_V_StreamUtil_LargeFireball(LargeFireball ball, Ghast ghast, List<AiProjectiles.Inner_StreamUtil> threats) {
+   private AiGhastReflect.Inner_StreamUtil init_V_StreamUtil_LargeFireball(LargeFireball ball, Ghast ghast, List<AiProjectiles.IncomingProjectile> threats) {
       this.update_Map.clear();
       Vec3 eye = this.init_Minecraft.player.getEyePosition();
       double reach = AiDefense.init_D(this.init_Minecraft);
@@ -590,12 +590,12 @@ final class AiGhastReflect {
       this.update_Map.merge(reason, 1, Integer::sum);
    }
 
-   private boolean init_Z_LargeFireball(LargeFireball ball, AABB landing, int ticks, List<AiProjectiles.Inner_StreamUtil> threats) {
-      for (AiProjectiles.Inner_StreamUtil threat : threats) {
+   private boolean init_Z_LargeFireball(LargeFireball ball, AABB landing, int ticks, List<AiProjectiles.IncomingProjectile> threats) {
+      for (AiProjectiles.IncomingProjectile threat : threats) {
          if (threat.entityId() != ball.getId()) {
             Entity other = this.init_Minecraft.level.getEntity(threat.entityId());
             if (other != null) {
-               AiProjectiles.Inner_DataUtil danger = AiProjectiles.init(this.init_Minecraft, other, landing, ticks);
+               AiProjectiles.ApproachMetrics danger = AiProjectiles.init(this.init_Minecraft, other, landing, ticks);
                if (danger != null && danger.closestApproach() <= 0.5 && danger.secondsToClosest() * 20.0 <= ticks + 5) {
                   return false;
                }

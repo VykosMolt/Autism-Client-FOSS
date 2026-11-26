@@ -27,11 +27,11 @@ public final class TranslationSnapshot {
       return init(language, key, fallback, null, false);
    }
 
-   public static String init(Language language, String key, String fallback, ConnectionPrivacyRegistry.Inner_StreamUtil origin) {
+   public static String init(Language language, String key, String fallback, ConnectionPrivacyRegistry.ConnectionSession origin) {
       return init(language, key, fallback, origin, true);
    }
 
-   private static String init(Language language, String key, String fallback, ConnectionPrivacyRegistry.Inner_StreamUtil origin, boolean connectionBound) {
+   private static String init(Language language, String key, String fallback, ConnectionPrivacyRegistry.ConnectionSession origin, boolean connectionBound) {
       if (language instanceof TranslationSnapshotDuck access) {
          TranslationSnapshot snapshot = access.autism$getTranslationSnapshot();
          if (snapshot != null) {

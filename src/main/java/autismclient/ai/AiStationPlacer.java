@@ -127,17 +127,17 @@ final class AiStationPlacer {
          this.read_I = 0;
       }
 
-      autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-      if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+      autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+      if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
          this.init_Z = false;
          this.load_BlockPos = this.init_DataPipe.init_BlockPos();
          return AiStationPlacer.Inner_DataUtil.PLACED;
-      } else if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.read_I <= 60) {
+      } else if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.read_I <= 60) {
          this.read_Str = "Placing a " + this.init_Str;
          return AiStationPlacer.Inner_DataUtil.WORKING;
       } else {
          this.init_Z = false;
-         this.load_Str = status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED
+         this.load_Str = status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED
             ? this.init_DataPipe.init_Str()
             : "not placed within 60 ticks: " + this.init_DataPipe.load_Str();
          this.init_DataPipe.init_V();

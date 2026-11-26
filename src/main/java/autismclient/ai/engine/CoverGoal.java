@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 
-public final class CoverGoal implements AiPathfinder.Inner_JsonUtil {
+public final class CoverGoal implements AiPathfinder.PathGoal {
    private final List<BlockPos> init_List;
    private final Set<Long> init_Set = new HashSet<>();
 
@@ -31,7 +31,7 @@ public final class CoverGoal implements AiPathfinder.Inner_JsonUtil {
       double best = 1.7976931348623157E308;
 
       for (BlockPos p : this.init_List) {
-         best = Math.min(best, AiPathfinder.Inner_CachePool.load(p.getX() - x, p.getY() - y, p.getZ() - z));
+         best = Math.min(best, AiPathfinder.MoveCosts.load(p.getX() - x, p.getY() - y, p.getZ() - z));
       }
 
       return best == 1.7976931348623157E308 ? 0.0 : best;

@@ -68,8 +68,8 @@ public final class LateRegisterSynthesizer {
       load_J++;
       ClientPacketListener listener = client == null ? null : client.getConnection();
       if (client != null && client.player != null && listener != null) {
-         ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init(listener);
-         if (context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.MODDED && ProtectorFeatureFlags.update()) {
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(listener);
+         if (context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED && ProtectorFeatureFlags.update()) {
             List<Identifier> channels = init(context.init_Connection(), load_J);
             if (channels != null) {
                init(context, channels, listener, listener::send);
@@ -82,7 +82,7 @@ public final class LateRegisterSynthesizer {
       }
    }
 
-   static void init(ConnectionPrivacyRegistry.Inner_StreamUtil context, List<Identifier> channels, PacketListener listener, Consumer<ServerboundCustomPayloadPacket> sender) {
+   static void init(ConnectionPrivacyRegistry.ConnectionSession context, List<Identifier> channels, PacketListener listener, Consumer<ServerboundCustomPayloadPacket> sender) {
       boolean completed = false;
 
       try {
@@ -159,8 +159,8 @@ public final class LateRegisterSynthesizer {
          return null;
       }
 
-      ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
-      if (context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.MODDED) {
+      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
+      if (context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED) {
          synchronized (init_Map) {
             LateRegisterSynthesizer.Inner_DataUtil existing = init_Map.get(connection);
             if (existing != null) {
@@ -255,7 +255,7 @@ public final class LateRegisterSynthesizer {
    }
 
    private static final class Inner_DataUtil {
-      private final ConnectionPrivacyRegistry.Inner_StreamUtil init_BufferHelper_Strea;
+      private final ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea;
       private final PacketListener init_PacketListener;
       private long init_J = -1L;
       private boolean init_Z;
@@ -263,7 +263,7 @@ public final class LateRegisterSynthesizer {
       private boolean read;
       private boolean write;
 
-      private Inner_DataUtil(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+      private Inner_DataUtil(ConnectionPrivacyRegistry.ConnectionSession context) {
          this.init_BufferHelper_Strea = context;
          this.init_PacketListener = context.init_PacketListener();
       }

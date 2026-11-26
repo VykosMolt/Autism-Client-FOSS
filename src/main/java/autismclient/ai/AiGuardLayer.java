@@ -9,7 +9,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 final class AiGuardLayer {
-   private final AiGuard.Inner_CachePool init_X_CachePool;
+   private final AiGuard.GuardPolicy init_X_CachePool;
    private final String init_Str;
    private AiOperation init_AiOperation;
    private AiFireControl init_K;
@@ -24,14 +24,14 @@ final class AiGuardLayer {
    private boolean sync;
    private boolean flush;
    private boolean close;
-   private AiGuard.Inner_DataUtil init_X_DataUtil = AiGuard.Inner_DataUtil.NONE;
+   private AiGuard.GuardAction init_X_DataUtil = AiGuard.GuardAction.NONE;
    private Object init_Obj;
    private Object load_Obj;
    private final Vec3[] init_Vec3Arr = new Vec3[10];
    private int init_I;
    private long load_J = -1L;
 
-   AiGuardLayer(AiGuard.Inner_CachePool policy, String owner) {
+   AiGuardLayer(AiGuard.GuardPolicy policy, String owner) {
       this.init_X_CachePool = policy;
       this.init_Str = owner;
    }
@@ -250,20 +250,20 @@ final class AiGuardLayer {
             && this.init_AiOperation.canInterruptNow()
             && !this.init_AiOperation.requiresReconciliationAfterEmergency()
             && autismclient.ai.engine.AiMotionSafety.fill_Z()) {
-            AiGuard.Inner_BufferHelper live = AiGuard.init_X_BufferHelper();
-            AiGuard.Inner_DataUtil next = AiGuard.init_X_StreamUtil(this.init_X_CachePool_Minecraft(zoneClient), live).action();
+            AiGuard.StatusSnapshot live = AiGuard.init_X_BufferHelper();
+            AiGuard.GuardAction next = AiGuard.init_X_StreamUtil(this.init_X_CachePool_Minecraft(zoneClient), live).action();
             if (AiCombatPriority.init_Z_X_DataUtil(this.init_X_DataUtil, next, live.hostilesNear())
-               || this.init_X_DataUtil == AiGuard.Inner_DataUtil.EAT && AiSurvival.init_Entity(zoneClient) != null) {
+               || this.init_X_DataUtil == AiGuard.GuardAction.EAT && AiSurvival.init_Entity(zoneClient) != null) {
                AiRunTrace.init_V_Str_JsonObject(
                   "survival_reprioritize",
                   AiJson.init_JsonObject_ObjArr(
                      "owner", this.init_Str, "from", this.init_X_DataUtil.name(), "to", next.name(), "health", live.health(), "hostiles", live.hostilesNear()
                   )
                );
-               interruptedMeal = this.init_X_DataUtil == AiGuard.Inner_DataUtil.EAT && AiSurvival.init_Entity(zoneClient) != null;
+               interruptedMeal = this.init_X_DataUtil == AiGuard.GuardAction.EAT && AiSurvival.init_Entity(zoneClient) != null;
                this.init_AiOperation.cancel();
                this.init_AiOperation = null;
-               this.init_X_DataUtil = AiGuard.Inner_DataUtil.NONE;
+               this.init_X_DataUtil = AiGuard.GuardAction.NONE;
                this.init_Z = this.load_Z = false;
             }
          }
@@ -273,7 +273,7 @@ final class AiGuardLayer {
          }
 
          if (autismclient.ai.engine.AiMotionSafety.fill_Z() && (leg == null || leg.canInterruptNow())) {
-            AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+            AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
             boolean moving = motion.horizontalDistance() >= 0.12;
             if (!AiThreats.init_Z() && !AiCover.init(Minecraft.getInstance()) && !AiBlazeFight.init() && AiDodge.init(Minecraft.getInstance(), moving)) {
                this.load_Z = false;
@@ -314,8 +314,8 @@ final class AiGuardLayer {
                }
 
                Minecraft mc = Minecraft.getInstance();
-               AiGuard.Inner_CachePool policy = this.init_X_CachePool_Minecraft(mc);
-               boolean unsafeMeal = interruptedMeal || AiGuard.init_X_StreamUtil(policy, vitals).action() == AiGuard.Inner_DataUtil.EAT && AiSurvival.init_Entity(mc) != null;
+               AiGuard.GuardPolicy policy = this.init_X_CachePool_Minecraft(mc);
+               boolean unsafeMeal = interruptedMeal || AiGuard.init_X_StreamUtil(policy, vitals).action() == AiGuard.GuardAction.EAT && AiSurvival.init_Entity(mc) != null;
                AiOperation action = unsafeMeal
                   ? AiSurvival.init_AiOperation_Minecraft(mc, policy, remainingSeconds.getAsInt())
                   : AiGuard.init_AiOperation_X_CachePool(policy, vitals, remainingSeconds.getAsInt());
@@ -323,13 +323,13 @@ final class AiGuardLayer {
                   return null;
                }
 
-               this.init_X_DataUtil = unsafeMeal ? AiGuard.Inner_DataUtil.FIGHT : AiGuard.init_X_StreamUtil(policy, vitals).action();
+               this.init_X_DataUtil = unsafeMeal ? AiGuard.GuardAction.FIGHT : AiGuard.init_X_StreamUtil(policy, vitals).action();
                this.load_Z = AiGuard.read_Z;
                if (this.load_Z) {
-                  this.init_X_DataUtil = AiGuard.Inner_DataUtil.FLEE;
+                  this.init_X_DataUtil = AiGuard.GuardAction.FLEE;
                }
 
-               this.init_Z = !this.load_Z && this.init_X_DataUtil == AiGuard.Inner_DataUtil.FIGHT;
+               this.init_Z = !this.load_Z && this.init_X_DataUtil == AiGuard.GuardAction.FIGHT;
                this.load_Str = unsafeMeal ? "nearby enemy prevents a safe meal" : AiGuard.init_Str(policy, vitals);
                AiSpeedrun.init_V_Str_ObjArr("[AI] {}: guard steps in ({}, health {})", this.init_Str, this.load_Str, (int)vitals.health());
                if (leg != null) {
@@ -351,7 +351,7 @@ final class AiGuardLayer {
       }
    }
 
-   private AiGuard.Inner_CachePool init_X_CachePool_Minecraft(Minecraft mc) {
+   private AiGuard.GuardPolicy init_X_CachePool_Minecraft(Minecraft mc) {
       return mc.level.dimension() == Level.OVERWORLD ? this.init_X_CachePool : this.init_X_CachePool.withoutFlee();
    }
 
@@ -387,7 +387,7 @@ final class AiGuardLayer {
          this.init_K = null;
       }
 
-      this.init_X_DataUtil = AiGuard.Inner_DataUtil.NONE;
+      this.init_X_DataUtil = AiGuard.GuardAction.NONE;
       this.write = this.update = this.sync = this.flush = false;
    }
 
@@ -399,7 +399,7 @@ final class AiGuardLayer {
 
       this.init_AiOperation.cancel();
       this.init_AiOperation = null;
-      this.init_X_DataUtil = AiGuard.Inner_DataUtil.NONE;
+      this.init_X_DataUtil = AiGuard.GuardAction.NONE;
       if (!this.close && r.status() != AiOperation.Status.UNCERTAIN) {
          if (this.write && "standing in fire".equals(this.load_Str) && r.status() != AiOperation.Status.SUCCEEDED) {
             this.init_J = System.nanoTime();
@@ -453,7 +453,7 @@ final class AiGuardLayer {
          this.load_AiOperation = null;
       }
 
-      this.init_X_DataUtil = AiGuard.Inner_DataUtil.NONE;
+      this.init_X_DataUtil = AiGuard.GuardAction.NONE;
       this.init_Z = this.load_Z = this.read = this.write = this.update = this.sync = this.flush = this.close = false;
       this.load_Str = "";
       this.init_J = 0L;

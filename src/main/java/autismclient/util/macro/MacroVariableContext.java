@@ -33,7 +33,7 @@ public final class MacroVariableContext {
    }
 
    public static String init_Str_Str_Minecraft(String name, Minecraft mc) {
-      MacroTemplateResolver.Inner_CachePool resolution = MacroTemplateResolver.init_j_CachePool("{" + name + "}", load(), mc);
+      MacroTemplateResolver.ResolveResult resolution = MacroTemplateResolver.init_j_CachePool("{" + name + "}", load(), mc);
       return resolution.init_Z() ? resolution.init_Str() : "";
    }
 
@@ -42,19 +42,19 @@ public final class MacroVariableContext {
    }
 
    public static String load(String text, Minecraft mc) {
-      MacroTemplateResolver.Inner_CachePool resolution = init_j_CachePool_Str_Minecraft(text, mc);
+      MacroTemplateResolver.ResolveResult resolution = init_j_CachePool_Str_Minecraft(text, mc);
       return resolution.init_Z() ? resolution.init_Str() : "";
    }
 
-   public static MacroTemplateResolver.Inner_CachePool init_j_CachePool_Str_Minecraft(String text, Minecraft mc) {
+   public static MacroTemplateResolver.ResolveResult init_j_CachePool_Str_Minecraft(String text, Minecraft mc) {
       return MacroTemplateResolver.init_j_CachePool(text, load(), mc);
    }
 
-   public static boolean init_Z_Str_j_CachePoolArr(String label, MacroTemplateResolver.Inner_CachePool... resolutions) {
+   public static boolean init_Z_Str_j_CachePoolArr(String label, MacroTemplateResolver.ResolveResult... resolutions) {
       LinkedHashSet<String> missing = new LinkedHashSet<>();
       boolean failed = false;
 
-      for (MacroTemplateResolver.Inner_CachePool resolution : resolutions) {
+      for (MacroTemplateResolver.ResolveResult resolution : resolutions) {
          if (resolution != null && !resolution.init_Z()) {
             failed = true;
             missing.addAll(resolution.init_List());

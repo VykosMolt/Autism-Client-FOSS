@@ -2930,9 +2930,9 @@ final class AiTools {
             }
 
             if (id.equals("game:recipes")) {
-               autismclient.util.AutoCraftingEngine.Inner_BufferHelper snapshot = this.init_cc
+               autismclient.util.AutoCraftingEngine.CraftContext snapshot = this.init_cc
                   .init_Obj_J_Supplier(generation, () -> autismclient.util.AutoCraftingEngine.init_J_BufferHelper(Minecraft.getInstance()));
-               List<autismclient.util.AutoCraftingEngine.Inner_TaskQueue> options = autismclient.util.AutoCraftingEngine.init(snapshot);
+               List<autismclient.util.AutoCraftingEngine.CraftOption> options = autismclient.util.AutoCraftingEngine.init(snapshot);
                String query = AiJson.init_Str_JsonObject(arguments, "query", "").toLowerCase(Locale.ROOT);
                JsonArray recipes = new JsonArray();
                options.stream()

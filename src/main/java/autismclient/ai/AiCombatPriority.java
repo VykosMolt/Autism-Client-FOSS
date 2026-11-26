@@ -32,8 +32,8 @@ final class AiCombatPriority {
       return seen && (standingGap <= reach || horizontal < 3.5 && jumpGap <= reach);
    }
 
-   static boolean init(AiGuard.Inner_DataUtil action) {
-      return action == AiGuard.Inner_DataUtil.EAT || action == AiGuard.Inner_DataUtil.TIDY;
+   static boolean init(AiGuard.GuardAction action) {
+      return action == AiGuard.GuardAction.EAT || action == AiGuard.GuardAction.TIDY;
    }
 
    static boolean init(int hostiles, int ranged) {
@@ -66,8 +66,8 @@ final class AiCombatPriority {
       return var10000;
    }
 
-   static boolean init_Z_X_DataUtil(AiGuard.Inner_DataUtil active, AiGuard.Inner_DataUtil next, int hostiles) {
-      return init(active) && hostiles > 0 || active == AiGuard.Inner_DataUtil.FIGHT && next == AiGuard.Inner_DataUtil.FLEE;
+   static boolean init_Z_X_DataUtil(AiGuard.GuardAction active, AiGuard.GuardAction next, int hostiles) {
+      return init(active) && hostiles > 0 || active == AiGuard.GuardAction.FIGHT && next == AiGuard.GuardAction.FLEE;
    }
 
    static float init_F_F(float current, Float preferred, List<Float> shots, double halfCone) {

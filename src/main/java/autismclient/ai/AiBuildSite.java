@@ -45,7 +45,7 @@ final class AiBuildSite {
    private static final AiBuildSite.Inner_CachePool[] init_IoWorker_CachePoolArr = AiBuildSite.Inner_CachePool.values();
    private static final Direction[] init_DirectionArr = Direction.values();
    private static final int[] init_IArr = new int[0];
-   private final AiBuilder.Inner_DataUtil init_TableIndex_DataUti;
+   private final AiBuilder.Blueprint init_TableIndex_DataUti;
    private final Map<String, List<String>> init_Map;
    private final LevelReader init_LevelReader;
    private final int pop;
@@ -53,7 +53,7 @@ final class AiBuildSite {
    private final int tick;
    private final int run;
    private final int get;
-   private final AiBuilder.Inner_StreamUtil[] init_TableIndex_StreamUArr;
+   private final AiBuilder.CellSpec[] init_TableIndex_StreamUArr;
    private final long[] init_JArr;
    private final long[] load_JArr;
    private final byte[] init_BArr;
@@ -93,11 +93,11 @@ final class AiBuildSite {
    private static final double init_D = 8.0;
    private static final BlockPos[] init_BlockPosArr = new BlockPos[0];
 
-   AiBuildSite(AiBuilder.Inner_DataUtil blueprint, Map<String, List<String>> substitutes) {
+   AiBuildSite(AiBuilder.Blueprint blueprint, Map<String, List<String>> substitutes) {
       this(blueprint, substitutes, null);
    }
 
-   AiBuildSite(AiBuilder.Inner_DataUtil blueprint, Map<String, List<String>> substitutes, LevelReader world) {
+   AiBuildSite(AiBuilder.Blueprint blueprint, Map<String, List<String>> substitutes, LevelReader world) {
       if (blueprint == null) {
          throw new IllegalArgumentException("A build site needs a blueprint");
       }
@@ -105,13 +105,13 @@ final class AiBuildSite {
       this.init_TableIndex_DataUti = blueprint;
       this.init_Map = substitutes == null ? Map.of() : substitutes;
       this.init_LevelReader = world;
-      List<AiBuilder.Inner_StreamUtil> input = blueprint.cells();
+      List<AiBuilder.CellSpec> input = blueprint.cells();
       this.pop = input.size();
       this.init_BlockPos = blueprint.origin();
       this.tick = this.init_BlockPos.getX();
       this.run = this.init_BlockPos.getY();
       this.get = this.init_BlockPos.getZ();
-      this.init_TableIndex_StreamUArr = new AiBuilder.Inner_StreamUtil[this.pop];
+      this.init_TableIndex_StreamUArr = new AiBuilder.CellSpec[this.pop];
       this.init_JArr = new long[this.pop];
       this.load_JArr = new long[this.pop];
       this.init_BArr = new byte[this.pop];
@@ -129,7 +129,7 @@ final class AiBuildSite {
       int classificationFailures = 0;
 
       for (int i = 0; i < this.pop; i++) {
-         AiBuilder.Inner_StreamUtil cell = input.get(i);
+         AiBuilder.CellSpec cell = input.get(i);
          this.init_TableIndex_StreamUArr[i] = cell;
          this.init_JArr[i] = load_J_I(cell.dx(), cell.dy(), cell.dz());
          this.load_JArr[i] = BlockPos.asLong(this.tick + cell.dx(), this.run + cell.dy(), this.get + cell.dz());
@@ -237,7 +237,7 @@ final class AiBuildSite {
       this.init_V();
    }
 
-   static boolean init_Z_TableIndex_StreamU(AiBuilder.Inner_StreamUtil cell) {
+   static boolean init_Z_TableIndex_StreamU(AiBuilder.CellSpec cell) {
       if (cell == null) {
          return false;
       }
@@ -253,7 +253,7 @@ final class AiBuildSite {
          return false;
       }
 
-      if (autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(state)) {
+      if (autismclient.ai.engine.AiPathfinder.LiveGridView.read(state)) {
          return false;
       }
 
@@ -283,7 +283,7 @@ final class AiBuildSite {
       return BlockPos.of(this.load_JArr[index]);
    }
 
-   AiBuilder.Inner_StreamUtil init_TableIndex_StreamU_I(int index) {
+   AiBuilder.CellSpec init_TableIndex_StreamU_I(int index) {
       return this.init_TableIndex_StreamUArr[index];
    }
 
@@ -307,7 +307,7 @@ final class AiBuildSite {
       return this.init_BlockPos;
    }
 
-   AiBuilder.Inner_DataUtil init_TableIndex_DataUti() {
+   AiBuilder.Blueprint init_TableIndex_DataUti() {
       return this.init_TableIndex_DataUti;
    }
 
@@ -348,7 +348,7 @@ final class AiBuildSite {
       return this.load_IArr[index];
    }
 
-   AiBuilder.Inner_StreamUtil load_TableIndex_StreamU_I(int index) {
+   AiBuilder.CellSpec load_TableIndex_StreamU_I(int index) {
       return AiBuildIntent.init_TableIndex_StreamU(this.init_TableIndex_StreamUArr[index]);
    }
 
@@ -914,7 +914,7 @@ final class AiBuildSite {
          } else if (state.getCollisionShape(level, floorPos).isEmpty()) {
             return false;
          } else {
-            return !state.getFluidState().isEmpty() ? false : !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(state);
+            return !state.getFluidState().isEmpty() ? false : !autismclient.ai.engine.AiPathfinder.LiveGridView.read(state);
          }
       } else {
          return this.update_BitSet.get(index) && this.init_BitSet.get(index);
@@ -928,7 +928,7 @@ final class AiBuildSite {
       } else {
          return !state.getFluidState().isEmpty()
             ? false
-            : !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.load(state) && !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(state);
+            : !autismclient.ai.engine.AiPathfinder.LiveGridView.load(state) && !autismclient.ai.engine.AiPathfinder.LiveGridView.read(state);
       }
    }
 
@@ -1244,7 +1244,7 @@ final class AiBuildSite {
    }
 
    private int flush_I(int index) {
-      AiBuilder.Inner_StreamUtil cell = this.init_TableIndex_StreamUArr[index];
+      AiBuilder.CellSpec cell = this.init_TableIndex_StreamUArr[index];
       String type = cell.properties().get("type");
       if (type != null && !type.equals("single") && cell.block().endsWith("chest")) {
          Direction side = AiBuilder.init_Direction(cell);
@@ -1357,7 +1357,7 @@ final class AiBuildSite {
       }
    }
 
-   private static byte init_B_TableIndex_StreamU_IoWorker_CachePool(AiBuilder.Inner_StreamUtil cell, AiBuildSite.Inner_CachePool kind) {
+   private static byte init_B_TableIndex_StreamU_IoWorker_CachePool(AiBuilder.CellSpec cell, AiBuildSite.Inner_CachePool kind) {
       List<BlockPos> offsets = AiBuildIntent.init_List(cell, kind);
       if (offsets.isEmpty()) {
          return 0;
@@ -1546,7 +1546,7 @@ final class AiBuildSite {
    }
 
    private boolean init_Z_I_BlockState(int index, BlockState live) {
-      AiBuilder.Inner_StreamUtil cell = this.init_TableIndex_StreamUArr[index];
+      AiBuilder.CellSpec cell = this.init_TableIndex_StreamUArr[index];
       if (AiBuildIntent.init(cell, live)) {
          return true;
       } else {

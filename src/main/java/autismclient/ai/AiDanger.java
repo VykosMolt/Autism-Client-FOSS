@@ -363,7 +363,7 @@ final class AiDanger {
          }
 
          float damage = (float)autismclient.util.ExplosionDamageCalculator.init_D_Vec3(
-            pos, power, autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(Explosion.getDefaultDamageSource(mc.level, entity))
+            pos, power, autismclient.util.ExplosionDamageCalculator.SimOptions.init_S_CachePool.init(Explosion.getDefaultDamageSource(mc.level, entity))
          );
          if (damage > 0.0F) {
             out.add(new AiDanger.Inner_ConfigStore(kind, pos.x, pos.y, pos.z, damage, eta));
@@ -396,7 +396,7 @@ final class AiDanger {
                float damage = (float)autismclient.util.ExplosionDamageCalculator.init_D_Vec3(
                   blast,
                   init_F_Str(kind, false, 0.0),
-                  autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(exclude).init(autismclient.util.ExplosionDamageCalculator.load(mc.level, blast))
+                  autismclient.util.ExplosionDamageCalculator.SimOptions.init_S_CachePool.init(exclude).init(autismclient.util.ExplosionDamageCalculator.load(mc.level, blast))
                );
                if (damage > 0.0F) {
                   out.add(new AiDanger.Inner_ConfigStore(kind, blast.x, blast.y, blast.z, damage, -1));
@@ -407,7 +407,7 @@ final class AiDanger {
    }
 
    private static void read(Minecraft mc, List<AiDanger.Inner_ConfigStore> out) {
-      for (AiProjectiles.Inner_StreamUtil t : AiProjectiles.init(mc)) {
+      for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(mc)) {
          String type = t.type();
          String kind = type.indexOf(58) >= 0 ? type.substring(type.indexOf(58) + 1) : type;
          float power = init_F_Str(kind, false, 0.0);

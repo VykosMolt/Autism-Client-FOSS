@@ -21,14 +21,14 @@ public final class OverlayActionButton {
    private int write;
    private int update;
    private Component init_Component;
-   private OverlayActionButton.Inner_StreamUtil init_ByteReader_StreamU = OverlayActionButton.Inner_StreamUtil.SECONDARY;
+   private OverlayActionButton.ButtonTone init_ByteReader_StreamU = OverlayActionButton.ButtonTone.SECONDARY;
    private l init_l = l.read;
    private Boolean init_Boolean;
    private String init_Str;
    private Identifier init_Identifier;
    private Boolean load_Boolean;
-   private final OverlayActionButton.Inner_DataUtil init_ByteReader_DataUti;
-   private final OverlayActionButton.Inner_DataUtil load_ByteReader_DataUti;
+   private final OverlayActionButton.PressHandler init_ByteReader_DataUti;
+   private final OverlayActionButton.PressHandler load_ByteReader_DataUti;
 
    private static Identifier init_Identifier_I(int height) {
       return init_CharEncoder.init_Identifier_l(l.read);
@@ -52,7 +52,7 @@ public final class OverlayActionButton {
    }
 
    private OverlayActionButton(
-      int x, int y, int width, int height, Component message, OverlayActionButton.Inner_DataUtil primaryAction, OverlayActionButton.Inner_DataUtil secondaryAction
+      int x, int y, int width, int height, Component message, OverlayActionButton.PressHandler primaryAction, OverlayActionButton.PressHandler secondaryAction
    ) {
       this.load_I = x;
       this.read = y;
@@ -63,12 +63,12 @@ public final class OverlayActionButton {
       this.load_ByteReader_DataUti = secondaryAction;
    }
 
-   public static OverlayActionButton init(int x, int y, int width, int height, Component message, OverlayActionButton.Inner_DataUtil pressAction) {
+   public static OverlayActionButton init(int x, int y, int width, int height, Component message, OverlayActionButton.PressHandler pressAction) {
       return new OverlayActionButton(x, y, init(width, height, message), height, message, pressAction, null);
    }
 
    public static OverlayActionButton init(
-      int x, int y, int width, int height, Component message, OverlayActionButton.Inner_DataUtil pressAction, OverlayActionButton.Inner_DataUtil secondaryPressAction
+      int x, int y, int width, int height, Component message, OverlayActionButton.PressHandler pressAction, OverlayActionButton.PressHandler secondaryPressAction
    ) {
       return new OverlayActionButton(x, y, init(width, height, message), height, message, pressAction, secondaryPressAction);
    }
@@ -101,7 +101,7 @@ public final class OverlayActionButton {
    public static boolean init(OverlayActionButton button, double mouseX, double mouseY, int mouseButton) {
       if (button != null && button.load_Z && button.init_Z) {
          if ((mouseButton == 0 || mouseButton == 1) && button.init(mouseX, mouseY)) {
-            OverlayActionButton.Inner_DataUtil action = mouseButton == 1 ? button.load_ByteReader_DataUti : button.init_ByteReader_DataUti;
+            OverlayActionButton.PressHandler action = mouseButton == 1 ? button.load_ByteReader_DataUti : button.init_ByteReader_DataUti;
             if (action == null) {
                return false;
             }
@@ -127,7 +127,7 @@ public final class OverlayActionButton {
                button.init_Identifier,
                iconHovered,
                button.init_Z,
-               button.init_ByteReader_StreamU == OverlayActionButton.Inner_StreamUtil.DANGER
+               button.init_ByteReader_StreamU == OverlayActionButton.ButtonTone.DANGER
             );
          } else {
             String label = ThemedTextHelper.init(button.init_Component.getString());
@@ -149,24 +149,24 @@ public final class OverlayActionButton {
                || upperLabel.equals("DISABLE")
                || upperLabel.equals("DISABLED")
                || upperLabel.endsWith(": DISABLED");
-            OverlayActionButton.Inner_StreamUtil variant = button.init_ByteReader_StreamU;
-            if (variant == OverlayActionButton.Inner_StreamUtil.SECONDARY && inferredDanger) {
-               variant = OverlayActionButton.Inner_StreamUtil.DANGER;
+            OverlayActionButton.ButtonTone variant = button.init_ByteReader_StreamU;
+            if (variant == OverlayActionButton.ButtonTone.SECONDARY && inferredDanger) {
+               variant = OverlayActionButton.ButtonTone.DANGER;
             }
 
-            if (variant == OverlayActionButton.Inner_StreamUtil.SECONDARY && toggleOn) {
-               variant = OverlayActionButton.Inner_StreamUtil.SUCCESS;
+            if (variant == OverlayActionButton.ButtonTone.SECONDARY && toggleOn) {
+               variant = OverlayActionButton.ButtonTone.SUCCESS;
             }
 
-            if (variant == OverlayActionButton.Inner_StreamUtil.SECONDARY && toggleOff) {
-               variant = OverlayActionButton.Inner_StreamUtil.DANGER;
+            if (variant == OverlayActionButton.ButtonTone.SECONDARY && toggleOff) {
+               variant = OverlayActionButton.ButtonTone.DANGER;
             }
 
             boolean hovered = button.init(mouseX, mouseY);
             autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(context, textRenderer, mouseX, mouseY);
             autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(button.load_I, button.read, button.write, button.update);
-            boolean allowInferredToggle = button.init_ByteReader_StreamU != OverlayActionButton.Inner_StreamUtil.FILTER_ON
-               && button.init_ByteReader_StreamU != OverlayActionButton.Inner_StreamUtil.FILTER_OFF;
+            boolean allowInferredToggle = button.init_ByteReader_StreamU != OverlayActionButton.ButtonTone.FILTER_ON
+               && button.init_ByteReader_StreamU != OverlayActionButton.ButtonTone.FILTER_OFF;
             Boolean resolvedToggleState = button.init_Boolean != null
                ? button.init_Boolean
                : (allowInferredToggle ? (toggleOn ? Boolean.TRUE : (toggleOff ? Boolean.FALSE : null)) : null);
@@ -198,7 +198,7 @@ public final class OverlayActionButton {
 
             if (!button.init_Z && !Boolean.TRUE.equals(button.load_Boolean)) {
                int radius = 3;
-               autismclient.gui.f.PacketUtil.load(context, bounds, radius, ThemePaletteManager.init_I_I_ct_DataUtil(-2009060816, ThemePaletteManager.Inner_DataUtil.OUTLINE));
+               autismclient.gui.f.PacketUtil.load(context, bounds, radius, ThemePaletteManager.init_I_I_ct_DataUtil(-2009060816, ThemePaletteManager.ColorRole.OUTLINE));
                autismclient.gui.f.PacketUtil.load(context, bounds.init(1), Math.max(1, radius - 1), 1711276032);
             }
          }
@@ -241,12 +241,12 @@ public final class OverlayActionButton {
       this.init_Component = message == null ? Component.empty() : message;
    }
 
-   public OverlayActionButton.Inner_StreamUtil init_ByteReader_StreamU() {
+   public OverlayActionButton.ButtonTone init_ByteReader_StreamU() {
       return this.init_ByteReader_StreamU;
    }
 
-   public OverlayActionButton init_ByteReader_ByteReader_StreamU(OverlayActionButton.Inner_StreamUtil variant) {
-      this.init_ByteReader_StreamU = variant == null ? OverlayActionButton.Inner_StreamUtil.SECONDARY : variant;
+   public OverlayActionButton init_ByteReader_ByteReader_StreamU(OverlayActionButton.ButtonTone variant) {
+      this.init_ByteReader_StreamU = variant == null ? OverlayActionButton.ButtonTone.SECONDARY : variant;
       return this;
    }
 
@@ -254,7 +254,7 @@ public final class OverlayActionButton {
       return mouseX >= this.load_I && mouseX < this.load_I + this.write && mouseY >= this.read && mouseY < this.read + this.update;
    }
 
-   private static CachePool.Inner_DataUtil init_CachePool_DataUtil_ByteReader_StreamU(OverlayActionButton.Inner_StreamUtil variant) {
+   private static CachePool.Inner_DataUtil init_CachePool_DataUtil_ByteReader_StreamU(OverlayActionButton.ButtonTone variant) {
       CachePool.Inner_DataUtil var10000;
       switch (variant) {
          case SECONDARY:
@@ -284,11 +284,11 @@ public final class OverlayActionButton {
    }
 
    @FunctionalInterface
-   public interface Inner_DataUtil {
+   public interface PressHandler {
       void onPress(OverlayActionButton var1);
    }
 
-   public enum Inner_StreamUtil {
+   public enum ButtonTone {
       SECONDARY,
       DANGER,
       SUCCESS,

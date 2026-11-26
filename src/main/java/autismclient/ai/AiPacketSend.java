@@ -90,9 +90,9 @@ public final class AiPacketSend {
                int cap = hasMs ? 300000 : 6000;
                if (delay >= 0 && delay <= cap) {
                   autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.init_ck();
-                  shared.init_V_ck_DataUtil(hasMs ? autismclient.util.AutismSessionState.Inner_DataUtil.MS : autismclient.util.AutismSessionState.Inner_DataUtil.TICKS);
-                  List<autismclient.util.AutismSessionState.Inner_CachePool> queued = shared.load_List();
-                  queued.add(new autismclient.util.AutismSessionState.Inner_CachePool(packet, delay, init(regenerate)));
+                  shared.init_V_ck_DataUtil(hasMs ? autismclient.util.AutismSessionState.DelayUnit.MS : autismclient.util.AutismSessionState.DelayUnit.TICKS);
+                  List<autismclient.util.AutismSessionState.DelayedPacket> queued = shared.load_List();
+                  queued.add(new autismclient.util.AutismSessionState.DelayedPacket(packet, delay, init(regenerate)));
                   shared.load_V_List(queued);
                   out.addProperty("queued", true);
                   out.addProperty("delay", delay);
@@ -161,14 +161,14 @@ public final class AiPacketSend {
    }
 
    private static JsonObject init(autismclient.util.AutismSessionState shared, JsonObject args) {
-      List<autismclient.util.AutismSessionState.Inner_CachePool> packets = shared.load_List();
+      List<autismclient.util.AutismSessionState.DelayedPacket> packets = shared.load_List();
       int offset = Math.max(0, AiJson.init_I_JsonObject(args, "offset", 0));
       int limit = Math.max(1, Math.min(AiJson.init_I_JsonObject(args, "limit", 50), 100));
       JsonArray out = new JsonArray();
       int end = Math.min(packets.size(), offset + limit);
 
       for (int i = offset; i < end; i++) {
-         autismclient.util.AutismSessionState.Inner_CachePool queued = packets.get(i);
+         autismclient.util.AutismSessionState.DelayedPacket queued = packets.get(i);
          if (queued != null && queued.init_Packet != null) {
             out.add(
                AiJson.init_JsonObject_ObjArr(
@@ -280,8 +280,8 @@ public final class AiPacketSend {
          };
    }
 
-   private static autismclient.util.AutismSessionState.Inner_BufferHelper init(boolean regenerate) {
-      return regenerate ? autismclient.util.AutismSessionState.Inner_BufferHelper.REGENERATE : autismclient.util.AutismSessionState.Inner_BufferHelper.EXACT;
+   private static autismclient.util.AutismSessionState.ReplayMode init(boolean regenerate) {
+      return regenerate ? autismclient.util.AutismSessionState.ReplayMode.REGENERATE : autismclient.util.AutismSessionState.ReplayMode.EXACT;
    }
 
    private static String init(Packet<?> packet) {

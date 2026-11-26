@@ -16,7 +16,7 @@ public class AutismPacketContentsMixin implements PacketOriginDuck {
    @Unique
    private boolean autism$fromPacket;
    @Unique
-   private ConnectionPrivacyRegistry.Inner_StreamUtil autism$packetOrigin;
+   private ConnectionPrivacyRegistry.ConnectionSession autism$packetOrigin;
 
    @Override
    public void autism$setFromPacket() {
@@ -24,7 +24,7 @@ public class AutismPacketContentsMixin implements PacketOriginDuck {
    }
 
    @Override
-   public void autism$setFromPacket(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
+   public void autism$setFromPacket(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (!this.autism$fromPacket) {
          this.autism$packetOrigin = context;
       }
@@ -33,7 +33,7 @@ public class AutismPacketContentsMixin implements PacketOriginDuck {
    }
 
    @Override
-   public ConnectionPrivacyRegistry.Inner_StreamUtil autism$packetOrigin() {
+   public ConnectionPrivacyRegistry.ConnectionSession autism$packetOrigin() {
       return this.autism$packetOrigin;
    }
 

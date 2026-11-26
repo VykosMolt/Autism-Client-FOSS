@@ -455,7 +455,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          }
 
          if (this.write_Z && this.sync_Z && hover > 0.0F && !this.close_Z) {
-            int hoverTint = ThemePaletteManager.init_I_I_ct_DataUtil((int)(hover * 14.0F) << 24 | 16723759, ThemePaletteManager.Inner_DataUtil.ACCENT);
+            int hoverTint = ThemePaletteManager.init_I_I_ct_DataUtil((int)(hover * 14.0F) << 24 | 16723759, ThemePaletteManager.ColorRole.ACCENT);
             autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), fieldBounds.init(1), Math.max(0, radius - 1), context.init_I_I(hoverTint));
          }
 
@@ -466,7 +466,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                context.init_GuiGraphicsExtract(),
                fieldBounds.init(1),
                Math.max(0, radius - 1),
-               context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(318716731, ThemePaletteManager.Inner_DataUtil.ACCENT))
+               context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(318716731, ThemePaletteManager.ColorRole.ACCENT))
             );
          }
 
@@ -496,7 +496,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                         drawY + contentInset,
                         textX + 1,
                         drawY + contentInset + fontHeight,
-                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.Inner_DataUtil.TEXT))
+                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.ColorRole.TEXT))
                      );
                }
             } else {
@@ -510,7 +510,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                         drawY + contentInset,
                         textX + 1,
                         drawY + drawH - contentInset,
-                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.Inner_DataUtil.TEXT))
+                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.ColorRole.TEXT))
                      );
                }
             }
@@ -543,7 +543,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                               lineY - 1,
                               selectionX + selectionW,
                               lineY + fontHeight + lineSpacing,
-                              context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.Inner_DataUtil.ACCENT))
+                              context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.ColorRole.ACCENT))
                            );
                      }
                   }
@@ -585,7 +585,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                         caretY - 1,
                         caretX + 1,
                         caretY + fontHeight + lineSpacing,
-                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.Inner_DataUtil.TEXT))
+                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.ColorRole.TEXT))
                      );
                }
             }
@@ -608,7 +608,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                         drawY + 2,
                         selectionX + selectionW,
                         drawY + drawH - 2,
-                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.Inner_DataUtil.ACCENT))
+                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.ColorRole.ACCENT))
                      );
                }
             }
@@ -649,7 +649,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                      drawY + contentInset,
                      caretX + 1,
                      drawY + drawH - contentInset,
-                     context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.Inner_DataUtil.TEXT))
+                     context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.ColorRole.TEXT))
                   );
             }
          }
@@ -780,7 +780,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    ) {
       int maxStart = Math.max(0, wrappedLineCount - visibleLineCount);
       if (maxStart > 0) {
-         ScrollbarMetricsHelper.Inner_DataUtil metrics = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+         ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
             Math.max(lineHeight, wrappedLineCount * lineHeight),
             Math.max(lineHeight, visibleLineCount * lineHeight),
             drawX + drawW - 5,
@@ -831,7 +831,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       int lineHeight = context.init_CharEncoder().init_I_l(this.init_l) + context.init_CharEncoder().load(1);
       int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.init_CharEncoder().load(6)) / lineHeight);
       int maxStart = Math.max(0, wrappedLines.size() - visibleLineCount);
-      ScrollbarMetricsHelper.Inner_DataUtil metrics = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+      ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
          Math.max(lineHeight, wrappedLines.size() * lineHeight),
          Math.max(lineHeight, visibleLineCount * lineHeight),
          Math.round(this.init_F + this.read_F) - 5,
@@ -1957,7 +1957,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    private record Inner_CachePool(int init, int load, int read) {
    }
 
-   private record Inner_DataUtil(ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil, int init_I, int load) {
+   private record Inner_DataUtil(ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil, int init_I, int load) {
    }
 
    private record Inner_StreamUtil(String init_Str, List<Style> init_List) {

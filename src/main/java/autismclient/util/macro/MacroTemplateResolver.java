@@ -54,7 +54,7 @@ public final class MacroTemplateResolver {
    private MacroTemplateResolver() {
    }
 
-   public static MacroTemplateResolver.Inner_CachePool init_j_CachePool(String template, MacroVariableStore context, Minecraft mc) {
+   public static MacroTemplateResolver.ResolveResult init_j_CachePool(String template, MacroVariableStore context, Minecraft mc) {
       if (template != null && !template.isEmpty()) {
          StringBuilder out = new StringBuilder(template.length());
          List<String> missing = new ArrayList<>();
@@ -78,7 +78,7 @@ public final class MacroTemplateResolver {
                   i++;
                } else {
                   String expression = template.substring(i + 1, end).trim();
-                  MacroTemplateResolver.Inner_BufferHelper value;
+                  MacroTemplateResolver.TokenResult value;
                   if (init_Pattern.matcher(expression).matches()) {
                      value = init_j_BufferHelper(expression, context, mc);
                   } else {
@@ -102,9 +102,9 @@ public final class MacroTemplateResolver {
             }
          }
 
-         return missing.isEmpty() ? MacroTemplateResolver.Inner_CachePool.init(out.toString()) : MacroTemplateResolver.Inner_CachePool.init(missing, "Missing macro value");
+         return missing.isEmpty() ? MacroTemplateResolver.ResolveResult.init(out.toString()) : MacroTemplateResolver.ResolveResult.init(missing, "Missing macro value");
       } else {
-         return MacroTemplateResolver.Inner_CachePool.init(template == null ? "" : template);
+         return MacroTemplateResolver.ResolveResult.init(template == null ? "" : template);
       }
    }
 
@@ -147,7 +147,7 @@ public final class MacroTemplateResolver {
       }
    }
 
-   private static MacroTemplateResolver.Inner_BufferHelper init_j_BufferHelper(String expression, MacroVariableStore context, Minecraft mc) {
+   private static MacroTemplateResolver.TokenResult init_j_BufferHelper(String expression, MacroVariableStore context, Minecraft mc) {
       String[] parts = expression.split("\\|", -1);
       String name = parts.length == 0 ? "" : parts[0].trim();
       Optional<MacroVarValue> found = context == null ? Optional.empty() : context.init_Optional_Str(name);
@@ -169,7 +169,7 @@ public final class MacroTemplateResolver {
       }
 
       if (found.isEmpty()) {
-         return fallback == null ? MacroTemplateResolver.Inner_BufferHelper.load(name) : MacroTemplateResolver.Inner_BufferHelper.init(fallback);
+         return fallback == null ? MacroTemplateResolver.TokenResult.load(name) : MacroTemplateResolver.TokenResult.init(fallback);
       }
 
       MacroVarValue value = found.get();
@@ -183,9 +183,9 @@ public final class MacroTemplateResolver {
             }
          }
 
-         return MacroTemplateResolver.Inner_BufferHelper.init(rendered);
+         return MacroTemplateResolver.TokenResult.init(rendered);
       } catch (IllegalArgumentException invalid) {
-         return MacroTemplateResolver.Inner_BufferHelper.load(name);
+         return MacroTemplateResolver.TokenResult.load(name);
       }
    }
 
@@ -224,7 +224,7 @@ public final class MacroTemplateResolver {
       return var10000;
    }
 
-   private static MacroTemplateResolver.Inner_BufferHelper init(String[] parts) {
+   private static MacroTemplateResolver.TokenResult init(String[] parts) {
       int specIndex = -1;
       String rendered = null;
 
@@ -242,7 +242,7 @@ public final class MacroTemplateResolver {
                }
 
                if (options.isEmpty()) {
-                  return MacroTemplateResolver.Inner_BufferHelper.load("random");
+                  return MacroTemplateResolver.TokenResult.load("random");
                }
 
                rendered = options.get(ThreadLocalRandom.current().nextInt(options.size()));
@@ -264,7 +264,7 @@ public final class MacroTemplateResolver {
       return init(rendered, parts, specIndex, "random");
    }
 
-   private static MacroTemplateResolver.Inner_BufferHelper init(String rendered, String[] parts, int specIndex, String missingName) {
+   private static MacroTemplateResolver.TokenResult init(String rendered, String[] parts, int specIndex, String missingName) {
       MacroVarValue value = MacroVarValue.init_l_Obj(rendered);
 
       try {
@@ -277,9 +277,9 @@ public final class MacroTemplateResolver {
             }
          }
 
-         return MacroTemplateResolver.Inner_BufferHelper.init(rendered);
+         return MacroTemplateResolver.TokenResult.init(rendered);
       } catch (IllegalArgumentException invalid) {
-         return MacroTemplateResolver.Inner_BufferHelper.load(missingName);
+         return MacroTemplateResolver.TokenResult.load(missingName);
       }
    }
 
@@ -292,7 +292,7 @@ public final class MacroTemplateResolver {
       }
    }
 
-   private static MacroTemplateResolver.Inner_BufferHelper init_j_BufferHelper(String expression) {
+   private static MacroTemplateResolver.TokenResult init_j_BufferHelper(String expression) {
       String[] parts = expression.split("\\|", -1);
       String spec = parts[0].trim();
       Matcher range = load.matcher(spec);
@@ -305,7 +305,7 @@ public final class MacroTemplateResolver {
       return (pipe < 0 ? expression : expression.substring(0, pipe)).trim();
    }
 
-   private static List<MacroTemplateResolver.Inner_StreamUtil> init_List(String spec) {
+   private static List<MacroTemplateResolver.PlaceholderSpan> init_List(String spec) {
       if (spec.indexOf(44) < 0) {
          return null;
       }
@@ -320,7 +320,7 @@ public final class MacroTemplateResolver {
          return null;
       }
 
-      List<MacroTemplateResolver.Inner_StreamUtil> options = new ArrayList<>();
+      List<MacroTemplateResolver.PlaceholderSpan> options = new ArrayList<>();
 
       for (String entry : spec.split(",", -1)) {
          String text = entry.trim();
@@ -338,7 +338,7 @@ public final class MacroTemplateResolver {
 
             Matcher range = load.matcher(text);
             options.add(
-               range.matches() ? new MacroTemplateResolver.Inner_StreamUtil(text, weight, range.group(1), range.group(2)) : new MacroTemplateResolver.Inner_StreamUtil(text, weight, null, null)
+               range.matches() ? new MacroTemplateResolver.PlaceholderSpan(text, weight, range.group(1), range.group(2)) : new MacroTemplateResolver.PlaceholderSpan(text, weight, null, null)
             );
          }
       }
@@ -346,16 +346,16 @@ public final class MacroTemplateResolver {
       return options.size() >= 2 ? options : null;
    }
 
-   private static String init(List<MacroTemplateResolver.Inner_StreamUtil> options) {
+   private static String init(List<MacroTemplateResolver.PlaceholderSpan> options) {
       int total = 0;
 
-      for (MacroTemplateResolver.Inner_StreamUtil option : options) {
+      for (MacroTemplateResolver.PlaceholderSpan option : options) {
          total += option.init_I();
       }
 
       int roll = ThreadLocalRandom.current().nextInt(total);
 
-      for (MacroTemplateResolver.Inner_StreamUtil option : options) {
+      for (MacroTemplateResolver.PlaceholderSpan option : options) {
          roll -= option.init_I();
          if (roll < 0) {
             return option.load() == null ? option.init_Str() : init_Str(option.load(), option.read());
@@ -426,10 +426,10 @@ public final class MacroTemplateResolver {
    }
 
    public static String init_Str(String raw) {
-      return init(raw, MacroTemplateResolver.Inner_DataUtil.AUTO);
+      return init(raw, MacroTemplateResolver.ResolveMode.AUTO);
    }
 
-   public static String init(String raw, MacroTemplateResolver.Inner_DataUtil style) {
+   public static String init(String raw, MacroTemplateResolver.ResolveMode style) {
       if (raw == null) {
          throw new IllegalArgumentException("Empty number");
       } else {
@@ -443,10 +443,10 @@ public final class MacroTemplateResolver {
    }
 
    public static String load_Str(String raw) {
-      return load(raw, MacroTemplateResolver.Inner_DataUtil.AUTO);
+      return load(raw, MacroTemplateResolver.ResolveMode.AUTO);
    }
 
-   public static String load(String raw, MacroTemplateResolver.Inner_DataUtil style) {
+   public static String load(String raw, MacroTemplateResolver.ResolveMode style) {
       if (raw == null) {
          throw new IllegalArgumentException("Empty number");
       } else {
@@ -459,7 +459,7 @@ public final class MacroTemplateResolver {
       }
    }
 
-   private static String init(String match, String raw, MacroTemplateResolver.Inner_DataUtil style) {
+   private static String init(String match, String raw, MacroTemplateResolver.ResolveMode style) {
       String token = match.trim().replace("_", "").replaceAll("\\p{Sc}", "").toUpperCase(Locale.ROOT);
       if (token.isEmpty()) {
          throw new IllegalArgumentException("Not a number: " + raw);
@@ -489,7 +489,7 @@ public final class MacroTemplateResolver {
          token = token.substring(0, token.length() - 1);
       }
 
-      String cleaned = style == MacroTemplateResolver.Inner_DataUtil.WHOLE && !scaled ? sync(token) : flush(token);
+      String cleaned = style == MacroTemplateResolver.ResolveMode.WHOLE && !scaled ? sync(token) : flush(token);
       if (!cleaned.isEmpty() && !"-".equals(cleaned) && !"+".equals(cleaned)) {
          return init(new BigDecimal(cleaned).multiply(multiplier));
       } else {
@@ -610,7 +610,7 @@ public final class MacroTemplateResolver {
 
       if ("last_sent".equals(key)) {
          String sent = AutismSessionState.init_ck().load_Str();
-         return Optional.of(MacroVarValue.init(MacroVarValue.Inner_DataUtil.TEXT, sent, Map.of("raw", MacroVarValue.init_l_Obj(sent))));
+         return Optional.of(MacroVarValue.init(MacroVarValue.ValueType.TEXT, sent, Map.of("raw", MacroVarValue.init_l_Obj(sent))));
       }
 
       if (mc != null && mc.player != null) {
@@ -680,31 +680,31 @@ public final class MacroTemplateResolver {
       }
    }
 
-   private record Inner_BufferHelper(boolean init_Z, String init_Str, String load) {
-      static MacroTemplateResolver.Inner_BufferHelper init(String value) {
-         return new MacroTemplateResolver.Inner_BufferHelper(true, value, "");
+   private record TokenResult(boolean init_Z, String init_Str, String load) {
+      static MacroTemplateResolver.TokenResult init(String value) {
+         return new MacroTemplateResolver.TokenResult(true, value, "");
       }
 
-      static MacroTemplateResolver.Inner_BufferHelper load(String name) {
-         return new MacroTemplateResolver.Inner_BufferHelper(false, "", name == null ? "" : name);
-      }
-   }
-
-   public record Inner_CachePool(boolean init_Z, String init_Str, List<String> init_List, String load) {
-      public static MacroTemplateResolver.Inner_CachePool init(String value) {
-         return new MacroTemplateResolver.Inner_CachePool(true, value, List.of(), "");
-      }
-
-      public static MacroTemplateResolver.Inner_CachePool init(List<String> missing, String error) {
-         return new MacroTemplateResolver.Inner_CachePool(false, "", List.copyOf(missing), error == null ? "" : error);
+      static MacroTemplateResolver.TokenResult load(String name) {
+         return new MacroTemplateResolver.TokenResult(false, "", name == null ? "" : name);
       }
    }
 
-   public enum Inner_DataUtil {
+   public record ResolveResult(boolean init_Z, String init_Str, List<String> init_List, String load) {
+      public static MacroTemplateResolver.ResolveResult init(String value) {
+         return new MacroTemplateResolver.ResolveResult(true, value, List.of(), "");
+      }
+
+      public static MacroTemplateResolver.ResolveResult init(List<String> missing, String error) {
+         return new MacroTemplateResolver.ResolveResult(false, "", List.copyOf(missing), error == null ? "" : error);
+      }
+   }
+
+   public enum ResolveMode {
       AUTO,
       WHOLE;
    }
 
-   private record Inner_StreamUtil(String init_Str, int init_I, String load, String read) {
+   private record PlaceholderSpan(String init_Str, int init_I, String load, String read) {
    }
 }

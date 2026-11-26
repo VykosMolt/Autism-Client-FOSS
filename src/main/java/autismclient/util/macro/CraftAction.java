@@ -52,7 +52,7 @@ public class CraftAction implements MacroAction {
       } else {
          for (CraftAction.Inner_DataUtil entry : this.entries) {
             if (entry != null && entry.init_Z()) {
-               autismclient.util.AutoCraftingEngine.Inner_TaskQueue option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_Str);
+               autismclient.util.AutoCraftingEngine.CraftOption option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_Str);
                if (option == null) {
                   option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_I);
                }
@@ -68,7 +68,7 @@ public class CraftAction implements MacroAction {
                   return;
                }
 
-               autismclient.util.AutoCraftingEngine.Inner_CachePool result = autismclient.util.AutoCraftingEngine.init_J_CachePool(mc, entry.init_Str, entry.init_I, desiredAmount);
+               autismclient.util.AutoCraftingEngine.CraftResult result = autismclient.util.AutoCraftingEngine.init_J_CachePool(mc, entry.init_Str, entry.init_I, desiredAmount);
                if (!result.init_Z) {
                   AutismClientMessaging.sendPrefixed("§c" + result.init_Str);
                   return;
@@ -212,7 +212,7 @@ public class CraftAction implements MacroAction {
          return entry;
       }
 
-      public static CraftAction.Inner_DataUtil init(autismclient.util.AutoCraftingEngine.Inner_TaskQueue option, int amount, boolean useMaxAmount) {
+      public static CraftAction.Inner_DataUtil init(autismclient.util.AutoCraftingEngine.CraftOption option, int amount, boolean useMaxAmount) {
          CraftAction.Inner_DataUtil entry = new CraftAction.Inner_DataUtil();
          if (option == null) {
             return entry;

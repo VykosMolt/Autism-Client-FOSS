@@ -17,20 +17,20 @@ import net.minecraft.world.level.block.Blocks;
 public final class AiFallGuard {
    private static final int init_I = 3;
    private static final double init_D = 3.0;
-   private static final Set<AiPathfinder.Inner_SyncManager> init_Set = EnumSet.of(
-      AiPathfinder.Inner_SyncManager.JUMP,
-      AiPathfinder.Inner_SyncManager.JUMP_GAP_2,
-      AiPathfinder.Inner_SyncManager.JUMP_GAP_3,
-      AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND,
-      AiPathfinder.Inner_SyncManager.SPRINT_JUMP,
-      AiPathfinder.Inner_SyncManager.DESCEND_1,
-      AiPathfinder.Inner_SyncManager.DESCEND_2,
-      AiPathfinder.Inner_SyncManager.DESCEND_3,
-      AiPathfinder.Inner_SyncManager.DESCEND_SOFT,
-      AiPathfinder.Inner_SyncManager.DIG_DESCEND
+   private static final Set<AiPathfinder.MoveType> init_Set = EnumSet.of(
+      AiPathfinder.MoveType.JUMP,
+      AiPathfinder.MoveType.JUMP_GAP_2,
+      AiPathfinder.MoveType.JUMP_GAP_3,
+      AiPathfinder.MoveType.PARKOUR_ASCEND,
+      AiPathfinder.MoveType.SPRINT_JUMP,
+      AiPathfinder.MoveType.DESCEND_1,
+      AiPathfinder.MoveType.DESCEND_2,
+      AiPathfinder.MoveType.DESCEND_3,
+      AiPathfinder.MoveType.DESCEND_SOFT,
+      AiPathfinder.MoveType.DIG_DESCEND
    );
    private static volatile long init_J;
-   private static volatile AiPathfinder.Inner_SyncManager init_ClassCache_SyncMan;
+   private static volatile AiPathfinder.MoveType init_ClassCache_SyncMan;
    private static volatile boolean init_Z;
    private static volatile int load_I = -1073741824;
    private static volatile long load_J;
@@ -46,13 +46,13 @@ public final class AiFallGuard {
       init_J = System.nanoTime();
    }
 
-   static void init(AiPathfinder.Inner_SyncManager type, boolean tellyBridge) {
+   static void init(AiPathfinder.MoveType type, boolean tellyBridge) {
       init(type, tellyBridge, false);
    }
 
-   static void init(AiPathfinder.Inner_SyncManager type, boolean tellyBridge, boolean provedRunUp) {
+   static void init(AiPathfinder.MoveType type, boolean tellyBridge, boolean provedRunUp) {
       init_ClassCache_SyncMan = type;
-      init_Z = provedRunUp || init_Set.contains(type) || type == AiPathfinder.Inner_SyncManager.BRIDGE_CELL && tellyBridge;
+      init_Z = provedRunUp || init_Set.contains(type) || type == AiPathfinder.MoveType.BRIDGE_CELL && tellyBridge;
       LocalPlayer player = Minecraft.getInstance().player;
       load_I = player == null ? -1073741824 : player.tickCount;
       init_J = System.nanoTime();
@@ -68,7 +68,7 @@ public final class AiFallGuard {
       read_J = System.nanoTime();
    }
 
-   private static boolean init(AiPhysics.Inner_StreamUtil s) {
+   private static boolean init(AiPhysics.MotionState s) {
       LongPredicate traps = init_LongPredicate;
       return traps != null && System.nanoTime() - read_J <= 250000000L
          ? traps.test(BlockPos.asLong((int)Math.floor(s.x()), (int)Math.floor(s.y() + 0.1), (int)Math.floor(s.z())))
@@ -103,8 +103,8 @@ public final class AiFallGuard {
             if (drivenNow) {
                double f = (original.forward() ? 1 : 0) - (original.backward() ? 1 : 0);
                double st = (original.left() ? 1 : 0) - (original.right() ? 1 : 0);
-               AiPhysics.Inner_DataUtil voidInput = new AiPhysics.Inner_DataUtil(f, st, original.jump(), original.sprint(), false, player.getYRot());
-               if (read(new AiLiveWorld(mc.level, player), AiPhysics.Inner_StreamUtil.of(player), voidInput)) {
+               AiPhysics.MoveInput voidInput = new AiPhysics.MoveInput(f, st, original.jump(), original.sprint(), false, player.getYRot());
+               if (read(new AiLiveWorld(mc.level, player), AiPhysics.MotionState.of(player), voidInput)) {
                   load_J++;
                   if (player.tickCount - read_I > 1) {
                      AutismClientAddon.LOG.info("[AI] fall guard: held at the void's edge at {}", player.blockPosition().toShortString());
@@ -135,7 +135,7 @@ public final class AiFallGuard {
                && !player.isPassenger()
                && !player.getAbilities().flying
                && !player.isFallFlying()) {
-               AiPathfinder.Inner_SyncManager current = init_ClassCache_SyncMan;
+               AiPathfinder.MoveType current = init_ClassCache_SyncMan;
                if (current != null && init_Z && player.tickCount - load_I <= 1) {
                   return original;
                }
@@ -150,9 +150,9 @@ public final class AiFallGuard {
 
                double forward = (original.forward() ? 1 : 0) - (original.backward() ? 1 : 0);
                double strafe = (original.left() ? 1 : 0) - (original.right() ? 1 : 0);
-               AiPhysics.Inner_DataUtil input = new AiPhysics.Inner_DataUtil(forward, strafe, false, original.sprint(), false, player.getYRot());
+               AiPhysics.MoveInput input = new AiPhysics.MoveInput(forward, strafe, false, original.sprint(), false, player.getYRot());
                AiLiveWorld world = new AiLiveWorld(mc.level, player);
-               if (!load(world, AiPhysics.Inner_StreamUtil.of(player), input)) {
+               if (!load(world, AiPhysics.MotionState.of(player), input)) {
                   return original;
                }
 
@@ -175,25 +175,25 @@ public final class AiFallGuard {
       }
    }
 
-   public static boolean init(AiPhysics.Inner_CachePool world, AiPhysics.Inner_StreamUtil state, AiPhysics.Inner_DataUtil input) {
+   public static boolean init(AiPhysics.PhysicsWorld world, AiPhysics.MotionState state, AiPhysics.MoveInput input) {
       if (!input.sneak() && !input.jump() && state.onGround()) {
          int x = (int)Math.floor(state.x());
          int y = (int)Math.floor(state.y() + 0.001);
          int z = (int)Math.floor(state.z());
          return !world.load_Z(x, y, z) && !world.init_Z_I(x, y, z) && !world.sync(x, y, z) && !world.sync(x, y + 1, z)
-            ? load(world, state, new AiPhysics.Inner_DataUtil(input.forward(), input.strafe(), false, input.sprint(), false, input.yaw()))
+            ? load(world, state, new AiPhysics.MoveInput(input.forward(), input.strafe(), false, input.sprint(), false, input.yaw()))
             : false;
       } else {
          return false;
       }
    }
 
-   static boolean load(AiPhysics.Inner_CachePool world, AiPhysics.Inner_StreamUtil state, AiPhysics.Inner_DataUtil input) {
+   static boolean load(AiPhysics.PhysicsWorld world, AiPhysics.MotionState state, AiPhysics.MoveInput input) {
       double top = state.y();
-      AiPhysics.Inner_StreamUtil s = state;
+      AiPhysics.MotionState s = state;
 
       for (int tick = 0; tick < 3; tick++) {
-         AiPhysics.Inner_StreamUtil next = AiPhysics.init(s, input, world);
+         AiPhysics.MotionState next = AiPhysics.init(s, input, world);
          if (AiPhysics.init_Z(world, s, next)) {
             return true;
          }
@@ -207,13 +207,13 @@ public final class AiFallGuard {
       return false;
    }
 
-   static boolean read(AiPhysics.Inner_CachePool world, AiPhysics.Inner_StreamUtil state, AiPhysics.Inner_DataUtil input) {
-      AiPhysics.Inner_StreamUtil s = state;
+   static boolean read(AiPhysics.PhysicsWorld world, AiPhysics.MotionState state, AiPhysics.MoveInput input) {
+      AiPhysics.MotionState s = state;
       double top = state.y();
-      AiPhysics.Inner_DataUtil held = new AiPhysics.Inner_DataUtil(input.forward(), input.strafe(), false, input.sprint(), false, input.yaw());
+      AiPhysics.MoveInput held = new AiPhysics.MoveInput(input.forward(), input.strafe(), false, input.sprint(), false, input.yaw());
 
       for (int tick = 0; tick < 90; tick++) {
-         s = AiPhysics.init(s, tick == 0 ? input : (tick < 3 ? held : AiPhysics.Inner_DataUtil.NONE), world);
+         s = AiPhysics.init(s, tick == 0 ? input : (tick < 3 ? held : AiPhysics.MoveInput.NONE), world);
          if (load(world, s) || init(world, s)) {
             return false;
          }
@@ -230,9 +230,9 @@ public final class AiFallGuard {
       return false;
    }
 
-   private static boolean init(AiPhysics.Inner_CachePool world, AiPhysics.Inner_StreamUtil s, double top) {
+   private static boolean init(AiPhysics.PhysicsWorld world, AiPhysics.MotionState s, double top) {
       for (int tick = 0; tick < 80; tick++) {
-         AiPhysics.Inner_StreamUtil next = AiPhysics.init(s, AiPhysics.Inner_DataUtil.NONE, world);
+         AiPhysics.MotionState next = AiPhysics.init(s, AiPhysics.MoveInput.NONE, world);
          if (AiPhysics.init_Z(world, s, next)) {
             return true;
          }
@@ -254,14 +254,14 @@ public final class AiFallGuard {
       return true;
    }
 
-   private static boolean init(AiPhysics.Inner_CachePool world, AiPhysics.Inner_StreamUtil s) {
+   private static boolean init(AiPhysics.PhysicsWorld world, AiPhysics.MotionState s) {
       int x = (int)Math.floor(s.x());
       int y = (int)Math.floor(s.y() + 0.001);
       int z = (int)Math.floor(s.z());
       return world.sync(x, y, z) || world.sync(x, y + 1, z);
    }
 
-   private static boolean load(AiPhysics.Inner_CachePool world, AiPhysics.Inner_StreamUtil s) {
+   private static boolean load(AiPhysics.PhysicsWorld world, AiPhysics.MotionState s) {
       return world.load_Z((int)Math.floor(s.x()), (int)Math.floor(s.y() + 0.1), (int)Math.floor(s.z()));
    }
 }

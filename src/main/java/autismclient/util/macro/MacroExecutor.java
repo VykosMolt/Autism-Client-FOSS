@@ -1932,7 +1932,7 @@ public class MacroExecutor {
                                              continue;
                                           }
 
-                                          List<AutismSessionState.Inner_CachePool> preGenerated = init_List_aM(macro, i + 1, tsa.preGenCount);
+                                          List<AutismSessionState.DelayedPacket> preGenerated = init_List_aM(macro, i + 1, tsa.preGenCount);
                                           long targetTick = mc.level.getGameTime() + tsa.tickOffset;
                                           load_V_Str("Tick Sync -> " + targetTick + " (" + preGenerated.size() + " pkts)");
 
@@ -1950,7 +1950,7 @@ public class MacroExecutor {
                                              continue;
                                           }
 
-                                          List<AutismSessionState.Inner_CachePool> preGenerated = init_List_aM(macro, i + 1, rsa.preGenCount);
+                                          List<AutismSessionState.DelayedPacket> preGenerated = init_List_aM(macro, i + 1, rsa.preGenCount);
                                           int baseRevision = mc.player.containerMenu.getStateId();
                                           int targetRevision = baseRevision + rsa.revisionOffset;
                                           load_V_Str("Rev Sync -> " + targetRevision + " (" + preGenerated.size() + " pkts)");
@@ -1974,7 +1974,7 @@ public class MacroExecutor {
                                              continue;
                                           }
 
-                                          List<AutismSessionState.Inner_CachePool> preGenerated = init_List_aM(macro, i + 1, stsa.preGenCount);
+                                          List<AutismSessionState.DelayedPacket> preGenerated = init_List_aM(macro, i + 1, stsa.preGenCount);
 
                                           for (int sampleWaitMs = 0; close_Z() && !ServerTickPhaseTracker.init_Z() && sampleWaitMs < stsa.maxWaitMs; sampleWaitMs += 50) {
                                              float progress = ServerTickPhaseTracker.init_F();
@@ -2724,7 +2724,7 @@ public class MacroExecutor {
    private static void init_V_Minecraft_TaskQueue(Minecraft mc, CaptureValueAction action) {
       MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
       init_V_MacroAction(action);
-      MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(action.autofillCommand, mc);
+      MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(action.autofillCommand, mc);
       if (resolved.init_Z() && !resolved.init_Str().isBlank()) {
          String query = init_Str_Str(resolved.init_Str(), action.listFilter, action.listFilterText);
          ClientPacketListener connection = mc.getConnection();
@@ -3785,7 +3785,7 @@ public class MacroExecutor {
          return (healthAction.below ? health >= healthAction.healthThreshold : health <= healthAction.healthThreshold)
             ? null
             : MacroVarValue.init(
-               MacroVarValue.Inner_DataUtil.NUMBER,
+               MacroVarValue.ValueType.NUMBER,
                Float.toString(health),
                Map.of(
                   "health",
@@ -3805,7 +3805,7 @@ public class MacroExecutor {
          String id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
          double distance = mc != null && mc.player != null ? mc.player.distanceTo(entity) : 0.0;
          return MacroVarValue.init(
-            MacroVarValue.Inner_DataUtil.ENTITY,
+            MacroVarValue.ValueType.ENTITY,
             entity.getName().getString(),
             Map.of(
                "name",
@@ -3827,7 +3827,7 @@ public class MacroExecutor {
       } else if (action instanceof WaitForSoundAction sound) {
          return sound.matchedSoundId != null && !sound.matchedSoundId.isBlank()
             ? MacroVarValue.init(
-               MacroVarValue.Inner_DataUtil.IDENTIFIER,
+               MacroVarValue.ValueType.IDENTIFIER,
                sound.matchedSoundId,
                Map.of(
                   "id",
@@ -3858,13 +3858,13 @@ public class MacroExecutor {
          return init_l_Minecraft(mc);
       } else if (action instanceof WaitForWorldChangeAction && mc != null && mc.level != null) {
          String dimension = mc.level.dimension().identifier().toString();
-         return MacroVarValue.init(MacroVarValue.Inner_DataUtil.IDENTIFIER, dimension, Map.of("id", MacroVarValue.init_l_Str(dimension), "name", MacroVarValue.init_l_Obj(dimension)));
+         return MacroVarValue.init(MacroVarValue.ValueType.IDENTIFIER, dimension, Map.of("id", MacroVarValue.init_l_Str(dimension), "name", MacroVarValue.init_l_Obj(dimension)));
       } else if (action instanceof WaitGamemodeChangeAction && mc != null && mc.gameMode != null) {
          String mode = mc.gameMode.getPlayerMode().getName();
          WaitGamemodeChangeAction wait = (WaitGamemodeChangeAction)action;
          return wait.match == WaitGamemodeChangeAction.Inner_DataUtil.TO_MODE && !wait.init(mc.gameMode.getPlayerMode())
             ? null
-            : MacroVarValue.init(MacroVarValue.Inner_DataUtil.TEXT, mode, Map.of("name", MacroVarValue.init_l_Obj(mode)));
+            : MacroVarValue.init(MacroVarValue.ValueType.TEXT, mode, Map.of("name", MacroVarValue.init_l_Obj(mode)));
       } else {
          return null;
       }
@@ -3874,7 +3874,7 @@ public class MacroExecutor {
       if (mc != null && mc.player != null) {
          String display = String.format(Locale.ROOT, "%.3f, %.3f, %.3f", mc.player.getX(), mc.player.getY(), mc.player.getZ());
          return MacroVarValue.init(
-            MacroVarValue.Inner_DataUtil.POSITION,
+            MacroVarValue.ValueType.POSITION,
             display,
             Map.of(
                "x",
@@ -3896,7 +3896,7 @@ public class MacroExecutor {
 
    private static MacroVarValue init_l_Minecraft(Minecraft mc, String itemTemplate, int slot, String condition) {
       if (mc != null && mc.player != null) {
-         MacroTemplateResolver.Inner_CachePool item = MacroVariableContext.init_j_CachePool_Str_Minecraft(itemTemplate, mc);
+         MacroTemplateResolver.ResolveResult item = MacroVariableContext.init_j_CachePool_Str_Minecraft(itemTemplate, mc);
          if (!item.init_Z()) {
             return null;
          }
@@ -3907,7 +3907,7 @@ public class MacroExecutor {
             MacroVarValue stack = init_l_ItemStack_I(mc.player.getInventory().getItem(safeSlot), safeSlot);
             return stack == null
                ? MacroVarValue.init(
-                  MacroVarValue.Inner_DataUtil.SLOT,
+                  MacroVarValue.ValueType.SLOT,
                   Integer.toString(slot),
                   Map.of("slot", MacroVarValue.init_l_I(slot), "empty", MacroVarValue.init_l_Obj("true"), "condition", MacroVarValue.init_l_Obj(condition))
                )
@@ -3922,7 +3922,7 @@ public class MacroExecutor {
          }
 
          return MacroVarValue.init(
-            MacroVarValue.Inner_DataUtil.TEXT,
+            MacroVarValue.ValueType.TEXT,
             condition,
             Map.of("condition", MacroVarValue.init_l_Obj(condition), "selected_slot", MacroVarValue.init_l_I(mc.player.getInventory().getSelectedSlot()))
          );
@@ -3956,7 +3956,7 @@ public class MacroExecutor {
          String itemId = id == null ? "" : id.toString();
          String name = stack.getHoverName().getString();
          return MacroVarValue.init(
-            MacroVarValue.Inner_DataUtil.ITEM,
+            MacroVarValue.ValueType.ITEM,
             name,
             Map.of("name", MacroVarValue.init_l_Obj(name), "id", MacroVarValue.init_l_Str(itemId), "count", MacroVarValue.init_l_Number(stack.getCount()), "slot", MacroVarValue.init_l_I(slot))
          );
@@ -3990,7 +3990,7 @@ public class MacroExecutor {
          }
       }
 
-      return MacroVarValue.init(MacroVarValue.Inner_DataUtil.PACKET, packetName, properties);
+      return MacroVarValue.init(MacroVarValue.ValueType.PACKET, packetName, properties);
    }
 
    private static void init_V_MacroAction_Map(MacroAction action, Map<String, MacroVarValue> values) {
@@ -4464,7 +4464,7 @@ public class MacroExecutor {
             String end = endEvent.init_Str_2();
             AutismClientMessaging.sendPrefixed("§b" + label + ": " + init_Str_J(deltaNanos) + " (" + start + " -> " + end + ")");
             if (report.stashToSharedState) {
-               AutismSessionState.init_ck().init_V_ck_ConfigStore(new AutismSessionState.Inner_ConfigStore(label, deltaMs, start, end, System.currentTimeMillis()));
+               AutismSessionState.init_ck().init_V_ck_ConfigStore(new AutismSessionState.TimingMeasurement(label, deltaMs, start, end, System.currentTimeMillis()));
             }
 
             return conditionCount;
@@ -4499,7 +4499,7 @@ public class MacroExecutor {
             String end = endEvent.init_Str_2();
             AutismClientMessaging.sendPrefixed("§b" + label + ": " + init_Str_J(deltaNanos) + " (" + start + " -> " + end + ")");
             if (report.stashToSharedState) {
-               AutismSessionState.init_ck().init_V_ck_ConfigStore(new AutismSessionState.Inner_ConfigStore(label, deltaMs, start, end, System.currentTimeMillis()));
+               AutismSessionState.init_ck().init_V_ck_ConfigStore(new AutismSessionState.TimingMeasurement(label, deltaMs, start, end, System.currentTimeMillis()));
             }
 
             return conditionCount;
@@ -5587,7 +5587,7 @@ public class MacroExecutor {
                         return;
                      }
 
-                     List<AutismSessionState.Inner_CachePool> preGenerated = init_List_I_Minecraft(tsa.preGenCount, mc);
+                     List<AutismSessionState.DelayedPacket> preGenerated = init_List_I_Minecraft(tsa.preGenCount, mc);
                      long targetTick = mc.level.getGameTime() + tsa.tickOffset;
                      load_V_Str("Tick Sync -> " + targetTick + " (" + preGenerated.size() + " pkts)");
 
@@ -5609,7 +5609,7 @@ public class MacroExecutor {
                         return;
                      }
 
-                     List<AutismSessionState.Inner_CachePool> preGenerated = init_List_I_Minecraft(rsa.preGenCount, mc);
+                     List<AutismSessionState.DelayedPacket> preGenerated = init_List_I_Minecraft(rsa.preGenCount, mc);
                      int baseRevision = mc.player.containerMenu.getStateId();
                      int targetRevision = baseRevision + rsa.revisionOffset;
                      load_V_Str("Rev Sync -> " + targetRevision + " (" + preGenerated.size() + " pkts)");
@@ -5632,7 +5632,7 @@ public class MacroExecutor {
                         return;
                      }
 
-                     List<AutismSessionState.Inner_CachePool> preGenerated = init_List_I_Minecraft(stsa.preGenCount, mc);
+                     List<AutismSessionState.DelayedPacket> preGenerated = init_List_I_Minecraft(stsa.preGenCount, mc);
 
                      for (int sampleWaitMs = 0; close_Z() && !ServerTickPhaseTracker.init_Z() && sampleWaitMs < stsa.maxWaitMs; sampleWaitMs += 50) {
                         float progress = ServerTickPhaseTracker.init_F();
@@ -5749,7 +5749,7 @@ public class MacroExecutor {
 
    private static void load_V_Minecraft_MacroAction(Minecraft mc, MacroAction action) {
       if (action instanceof AimTargetAction aim && aim.init_Z_3()) {
-         RotationMath.Inner_DataUtil rotation = load_Obj_Minecraft(mc, () -> MacroAimController.init(mc, aim.init_M_DataUtil_Minecraft(mc)), null);
+         RotationMath.Rotation rotation = load_Obj_Minecraft(mc, () -> MacroAimController.init(mc, aim.init_M_DataUtil_Minecraft(mc)), null);
          if (rotation != null) {
             MacroAimController.init(rotation);
             pop();
@@ -5758,11 +5758,11 @@ public class MacroExecutor {
    }
 
    private static boolean init_Z_MacroAction_Minecraft(MacroAction action, Minecraft mc) {
-      if (action instanceof WaitForChatAction chat && chat.init_UtilCore_DataUtil() == PatternCaptureMatcher.Inner_DataUtil.MATCH) {
+      if (action instanceof WaitForChatAction chat && chat.init_UtilCore_DataUtil() == PatternCaptureMatcher.MatchMode.MATCH) {
          return MacroVariableContext.init_j_CachePool_Str_Minecraft(chat.pattern, mc).init_Z();
-      } else if (action instanceof WaitForGuiAction gui && gui.matchMode == PatternCaptureMatcher.Inner_DataUtil.MATCH) {
+      } else if (action instanceof WaitForGuiAction gui && gui.matchMode == PatternCaptureMatcher.MatchMode.MATCH) {
          return MacroVariableContext.init_j_CachePool_Str_Minecraft(gui.guiTitle, mc).init_Z();
-      } else if (action instanceof WaitGuiTypeAction gui && gui.matchMode == PatternCaptureMatcher.Inner_DataUtil.MATCH) {
+      } else if (action instanceof WaitGuiTypeAction gui && gui.matchMode == PatternCaptureMatcher.MatchMode.MATCH) {
          return MacroVariableContext.init_j_CachePool_Str_Minecraft(gui.title, mc).init_Z();
       } else if (action instanceof WaitInventoryPredicateAction inventory) {
          return MacroVariableContext.init_j_CachePool_Str_Minecraft(inventory.itemName, mc).init_Z();
@@ -5773,7 +5773,7 @@ public class MacroExecutor {
       }
    }
 
-   private static List<AutismSessionState.Inner_CachePool> init_List_I_Minecraft(int count, Minecraft mc) {
+   private static List<AutismSessionState.DelayedPacket> init_List_I_Minecraft(int count, Minecraft mc) {
       MacroExecutor.Inner_IoWorker context = read_ThreadLocal.get();
       return context != null && context.init_aM() != null ? init_List_aM(context.init_aM(), context.init_I(), count, context.load()) : new ArrayList<>();
    }
@@ -5867,7 +5867,7 @@ public class MacroExecutor {
    }
 
    private static CompletableFuture<Void> init_CompletableFuture_Minecraft_aP(Minecraft mc, GuiWaitAware wfg) {
-      MacroTemplateResolver.Inner_CachePool guiName = MacroVariableContext.init_j_CachePool_Str_Minecraft(wfg.init_Str_7(), mc);
+      MacroTemplateResolver.ResolveResult guiName = MacroVariableContext.init_j_CachePool_Str_Minecraft(wfg.init_Str_7(), mc);
       if (!guiName.init_Z()) {
          return CompletableFuture.completedFuture(null);
       } else {
@@ -5881,7 +5881,7 @@ public class MacroExecutor {
 
    private static boolean init_Z_Minecraft_aP(Minecraft mc, GuiWaitAware action) {
       if (mc != null && action != null && action.read_Z()) {
-         MacroTemplateResolver.Inner_CachePool guiName = MacroVariableContext.init_j_CachePool_Str_Minecraft(action.init_Str_7(), mc);
+         MacroTemplateResolver.ResolveResult guiName = MacroVariableContext.init_j_CachePool_Str_Minecraft(action.init_Str_7(), mc);
          if (!guiName.init_Z()) {
             return false;
          } else if (init_Z_Minecraft_Str(mc, guiName.init_Str())) {
@@ -8444,7 +8444,7 @@ public class MacroExecutor {
                      ? "Crafting " + entry.load_Str + " [Max] (" + (index + 1) + "/" + craftAction.entries.size() + ")"
                      : "Crafting " + entry.load_Str + " x" + Math.max(1, entry.read_I) + " (" + (index + 1) + "/" + craftAction.entries.size() + ")"
                );
-               autismclient.util.AutoCraftingEngine.Inner_TaskQueue option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_Str);
+               autismclient.util.AutoCraftingEngine.CraftOption option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_Str);
                if (option == null) {
                   option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_I);
                }
@@ -8464,7 +8464,7 @@ public class MacroExecutor {
                   return;
                }
 
-               autismclient.util.AutoCraftingEngine.Inner_CachePool result = autismclient.util.AutoCraftingEngine.init_J_CachePool(mc, entry.init_Str, entry.init_I, desiredAmount);
+               autismclient.util.AutoCraftingEngine.CraftResult result = autismclient.util.AutoCraftingEngine.init_J_CachePool(mc, entry.init_Str, entry.init_I, desiredAmount);
                load_V_Str(result.init_Str);
                if (!result.init_Z) {
                   AutismClientMessaging.sendPrefixed("§c" + result.init_Str);
@@ -8870,7 +8870,7 @@ public class MacroExecutor {
 
       for (String player : payAction.players) {
          if (player != null) {
-            MacroTemplateResolver.Inner_CachePool playerResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(player, mc);
+            MacroTemplateResolver.ResolveResult playerResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(player, mc);
             if (playerResolution.init_Z()) {
                String trimmed = playerResolution.init_Str().trim();
                if (!trimmed.isEmpty() && !targets.contains(trimmed)) {
@@ -8885,7 +8885,7 @@ public class MacroExecutor {
       }
 
       if (!targets.isEmpty() && mc.getConnection() != null) {
-         MacroTemplateResolver.Inner_CachePool amountResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(payAction.amountInput, mc);
+         MacroTemplateResolver.ResolveResult amountResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(payAction.amountInput, mc);
          if (amountResolution.init_Z()) {
             long resolvedAmount = Math.max(0L, PayAction.init_J_Str(amountResolution.init_Str()));
             long[] dividedAmounts = payAction.divideEnabled ? PayAction.init(resolvedAmount, targets.size()) : null;
@@ -8905,7 +8905,7 @@ public class MacroExecutor {
                      .replace("<amount>", amountValue)
                      .replace("{amount}", amountValue)
                      .trim();
-                  MacroTemplateResolver.Inner_CachePool commandResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(command, mc);
+                  MacroTemplateResolver.ResolveResult commandResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(command, mc);
                   if (commandResolution.init_Z()) {
                      command = commandResolution.init_Str().trim();
                      if (!command.isEmpty()) {
@@ -9632,8 +9632,8 @@ public class MacroExecutor {
 
    private static Optional<Map<String, MacroVarValue>> init_Optional_au(WaitForChatAction action, MacroExecutor.Inner_ConfigStore capture, MacroVariableStore context) {
       if (action != null && capture != null) {
-         PatternCaptureMatcher.Inner_DataUtil mode = action.init_UtilCore_DataUtil();
-         if (mode == PatternCaptureMatcher.Inner_DataUtil.MATCH && action.patternJson != null && !action.patternJson.isBlank() && capture.init_Component() != null) {
+         PatternCaptureMatcher.MatchMode mode = action.init_UtilCore_DataUtil();
+         if (mode == PatternCaptureMatcher.MatchMode.MATCH && action.patternJson != null && !action.patternJson.isBlank() && capture.init_Component() != null) {
             String captureJson = init_Str_Component(capture.init_Component());
             if (action.patternJson.equals(captureJson)) {
                return Optional.of(init_Map_au(action, capture, Map.of()));
@@ -9641,8 +9641,8 @@ public class MacroExecutor {
          }
 
          String pattern = init_Str_Str(action.pattern);
-         if (mode == PatternCaptureMatcher.Inner_DataUtil.MATCH) {
-            MacroTemplateResolver.Inner_CachePool patternResolution = MacroTemplateResolver.init_j_CachePool(pattern, context, Minecraft.getInstance());
+         if (mode == PatternCaptureMatcher.MatchMode.MATCH) {
+            MacroTemplateResolver.ResolveResult patternResolution = MacroTemplateResolver.init_j_CachePool(pattern, context, Minecraft.getInstance());
             if (!patternResolution.init_Z()) {
                return Optional.empty();
             }
@@ -9652,9 +9652,9 @@ public class MacroExecutor {
 
          if (pattern == null || pattern.isBlank()) {
             return Optional.of(init_Map_au(action, capture, Map.of()));
-         } else if (mode != PatternCaptureMatcher.Inner_DataUtil.MATCH) {
-            Optional<PatternCaptureMatcher.Inner_StreamUtil> messageResult = PatternCaptureMatcher.init(mode, pattern, capture.load());
-            Optional<PatternCaptureMatcher.Inner_StreamUtil> result = messageResult.isPresent() ? messageResult : PatternCaptureMatcher.init(mode, pattern, capture.read());
+         } else if (mode != PatternCaptureMatcher.MatchMode.MATCH) {
+            Optional<PatternCaptureMatcher.CaptureResult> messageResult = PatternCaptureMatcher.init(mode, pattern, capture.load());
+            Optional<PatternCaptureMatcher.CaptureResult> result = messageResult.isPresent() ? messageResult : PatternCaptureMatcher.init(mode, pattern, capture.read());
             return result.map(value -> init_Map_au(action, capture, value.init_Map()));
          } else {
             int threshold = WaitForChatAction.init_I_I_8(action.fuzzyPercent);
@@ -9674,7 +9674,7 @@ public class MacroExecutor {
          properties.put("message", MacroVarValue.init_l_Obj(capture.load()));
          properties.put("display", MacroVarValue.init_l_Obj(capture.read()));
          properties.put("source", MacroVarValue.init_l_Obj(capture.init_MacroExecutor_Task().name()));
-         values.put(action.saveAs, MacroVarValue.init(MacroVarValue.Inner_DataUtil.TEXT, capture.read(), properties));
+         values.put(action.saveAs, MacroVarValue.init(MacroVarValue.ValueType.TEXT, capture.read(), properties));
       }
 
       return Map.copyOf(values);
@@ -10643,7 +10643,7 @@ public class MacroExecutor {
       if (mc.getConnection() == null) {
          AutismClientMessaging.sendPrefixed("§cNo network connection for burst!");
       } else {
-         List<AutismSessionState.Inner_CachePool> allQueuedPackets = new ArrayList<>();
+         List<AutismSessionState.DelayedPacket> allQueuedPackets = new ArrayList<>();
 
          for (SendPacketAction action : batch) {
             int repeats = SendPacketAction.init_I_I_5(action.sendCount);
@@ -10656,7 +10656,7 @@ public class MacroExecutor {
          if (!allQueuedPackets.isEmpty()) {
             List<Packet<?>> regeneratedPackets = new ArrayList<>(allQueuedPackets.size());
 
-            for (AutismSessionState.Inner_CachePool qp : allQueuedPackets) {
+            for (AutismSessionState.DelayedPacket qp : allQueuedPackets) {
                Packet<?> resolved = SendPacketAction.init_Packet_ck_CachePool(qp);
                if (resolved != null) {
                   regeneratedPackets.add(resolved);
@@ -10680,14 +10680,14 @@ public class MacroExecutor {
       }
    }
 
-   private static List<AutismSessionState.Inner_CachePool> init_List_aM(autismclient.util.AutismMacro macro, int startIdx, int count) {
+   private static List<AutismSessionState.DelayedPacket> init_List_aM(autismclient.util.AutismMacro macro, int startIdx, int count) {
       new ArrayList();
       int maxIdx = count < 0 ? macro.init_List.size() : Math.min(startIdx + count, macro.init_List.size());
       return init_List_aM(macro, startIdx, count, maxIdx);
    }
 
-   private static List<AutismSessionState.Inner_CachePool> init_List_aM(autismclient.util.AutismMacro macro, int startIdx, int count, int endIdx) {
-      List<AutismSessionState.Inner_CachePool> result = new ArrayList<>();
+   private static List<AutismSessionState.DelayedPacket> init_List_aM(autismclient.util.AutismMacro macro, int startIdx, int count, int endIdx) {
+      List<AutismSessionState.DelayedPacket> result = new ArrayList<>();
       int maxIdx = Math.min(endIdx, count < 0 ? macro.init_List.size() : Math.min(startIdx + count, macro.init_List.size()));
 
       for (int j = startIdx; j < maxIdx; j++) {
@@ -10698,7 +10698,7 @@ public class MacroExecutor {
 
          int repeats = SendPacketAction.init_I_I_5(spa.sendCount);
 
-         for (AutismSessionState.Inner_CachePool qp : spa.init_List_8()) {
+         for (AutismSessionState.DelayedPacket qp : spa.init_List_8()) {
             if (qp.init_Packet != null) {
                for (int k = 0; k < repeats; k++) {
                   result.add(qp);
@@ -10710,11 +10710,11 @@ public class MacroExecutor {
       return result;
    }
 
-   private static void load_V_Minecraft_List(Minecraft mc, List<AutismSessionState.Inner_CachePool> packets) {
+   private static void load_V_Minecraft_List(Minecraft mc, List<AutismSessionState.DelayedPacket> packets) {
       if (!packets.isEmpty() && mc.getConnection() != null) {
          ClientPacketListener handler = mc.getConnection();
 
-         for (AutismSessionState.Inner_CachePool qp : packets) {
+         for (AutismSessionState.DelayedPacket qp : packets) {
             Packet<?> toSend = SendPacketAction.init_Packet_ck_CachePool(qp);
             if (toSend != null) {
                handler.send(toSend);
@@ -11001,7 +11001,7 @@ public class MacroExecutor {
       }
 
       @Override
-      public MacroTemplateResolver.Inner_CachePool resolveTemplate(String template) {
+      public MacroTemplateResolver.ResolveResult resolveTemplate(String template) {
          return MacroTemplateResolver.init_j_CachePool(template, this.init == null ? null : this.init.init_m, Minecraft.getInstance());
       }
    }

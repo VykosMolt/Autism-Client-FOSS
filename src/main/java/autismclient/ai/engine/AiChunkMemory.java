@@ -235,36 +235,36 @@ public final class AiChunkMemory {
       return new AiChunkMemory.Inner_DataUtil(newLo, newHeight, merged, notables, observed);
    }
 
-   public AiPathfinder.Inner_FileCache init_ClassCache_FileCac_I(int x, int y, int z) {
+   public AiPathfinder.CellInfo init_ClassCache_FileCac_I(int x, int y, int z) {
       AiChunkMemory.Inner_DataUtil mem = this.init_StateCache_DataUti_I_I(x >> 4, z >> 4);
       if (mem == null) {
-         return AiPathfinder.Inner_FileCache.UNLOADED;
+         return AiPathfinder.CellInfo.UNLOADED;
       }
 
       int ry = y - mem.init_I;
       if (ry >= 0 && ry < mem.load && mem.init_JArr[ry] != 0L) {
-         AiPathfinder.Inner_FileCache var10000;
+         AiPathfinder.CellInfo var10000;
          switch (init_I_BArr_I(mem.init_BArr, ry * 256 + (z & 15) * 16 + (x & 15))) {
             case 1:
-               var10000 = AiPathfinder.Inner_FileCache.CACHED_SOLID;
+               var10000 = AiPathfinder.CellInfo.CACHED_SOLID;
                break;
             case 2:
-               var10000 = AiPathfinder.Inner_FileCache.CACHED_WATER;
+               var10000 = AiPathfinder.CellInfo.CACHED_WATER;
                break;
             case 3:
-               var10000 = AiPathfinder.Inner_FileCache.CACHED_HAZARD;
+               var10000 = AiPathfinder.CellInfo.CACHED_HAZARD;
                break;
             default:
-               var10000 = AiPathfinder.Inner_FileCache.CACHED_AIR;
+               var10000 = AiPathfinder.CellInfo.CACHED_AIR;
          }
 
          return var10000;
       } else {
-         return AiPathfinder.Inner_FileCache.UNLOADED;
+         return AiPathfinder.CellInfo.UNLOADED;
       }
    }
 
-   public AiPathfinder.Inner_StreamUtil.Inner_DataUtil init_ClassCache_StreamU_I(int cx, int cz, int yLo, int height, int revision) {
+   public AiPathfinder.LiveGridView.SectionSlice init_ClassCache_StreamU_I(int cx, int cz, int yLo, int height, int revision) {
       AiChunkMemory.Inner_DataUtil mem = this.init_StateCache_DataUti_I_I(cx, cz);
       if (mem == null) {
          return null;
@@ -307,7 +307,7 @@ public final class AiChunkMemory {
          }
       }
 
-      return new AiPathfinder.Inner_StreamUtil.Inner_DataUtil(flags, top16, digX4, mult10, revision);
+      return new AiPathfinder.LiveGridView.SectionSlice(flags, top16, digX4, mult10, revision);
    }
 
    private AiChunkMemory.Inner_DataUtil init_StateCache_DataUti_I_I(int cx, int cz) {

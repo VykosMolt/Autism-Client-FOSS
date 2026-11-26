@@ -71,10 +71,10 @@ final class AiFurnaceWork implements AiOperation {
    static boolean init_Z_Q_DataUtil(AiFurnaceWork.Inner_DataUtil plan) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         AiCraftPlanner.Inner_StreamUtil graph = AiCraft.init_g_StreamUtil();
+         AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
 
          for (Entry<String, Integer> preparation : plan.crafts().entrySet()) {
-            AiCraftPlanner.Inner_CachePool craft = AiCraftPlanner.init(graph, preparation.getKey(), preparation.getValue());
+            AiCraftPlanner.CraftPlan craft = AiCraftPlanner.init(graph, preparation.getKey(), preparation.getValue());
             if (craft.complete() && !craft.satisfied() && !craft.requiresTable()) {
                return true;
             }
@@ -332,7 +332,7 @@ final class AiFurnaceWork implements AiOperation {
          if (this.load_I + init_I_Map_BlockPos(this.init_Map, this.init_Minecraft.player.blockPosition()) + 120 < this.init_I) {
             for (Entry<String, Integer> preparation : this.init_Q_DataUtil.crafts().entrySet()) {
                if (this.load_Set.add(preparation.getKey())) {
-                  AiCraftPlanner.Inner_CachePool recipe = AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), preparation.getKey(), preparation.getValue());
+                  AiCraftPlanner.CraftPlan recipe = AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), preparation.getKey(), preparation.getValue());
                   if (recipe.complete()
                      && !recipe.satisfied()
                      && !recipe.requiresTable()
@@ -552,7 +552,7 @@ final class AiFurnaceWork implements AiOperation {
 
    private AiOperation init_AiOperation_BlockPos(final BlockPos to) {
       final Set<BlockPos> permitted = Set.copyOf(this.init_Map.keySet());
-      autismclient.ai.engine.AiPathfinder.Inner_JsonUtil goal = new autismclient.ai.engine.AiPathfinder.Inner_JsonUtil() {
+      autismclient.ai.engine.AiPathfinder.PathGoal goal = new autismclient.ai.engine.AiPathfinder.PathGoal() {
          @Override
          public boolean isInGoal(int x, int y, int z) {
             return to.equals(new BlockPos(x, y, z));
@@ -579,12 +579,12 @@ final class AiFurnaceWork implements AiOperation {
          }
 
          @Override
-         public Set<autismclient.ai.engine.AiPathfinder.Inner_SyncManager> init_Set() {
+         public Set<autismclient.ai.engine.AiPathfinder.MoveType> init_Set() {
             return Set.of(
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_2,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_3,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND
+               autismclient.ai.engine.AiPathfinder.MoveType.JUMP,
+               autismclient.ai.engine.AiPathfinder.MoveType.JUMP_GAP_2,
+               autismclient.ai.engine.AiPathfinder.MoveType.JUMP_GAP_3,
+               autismclient.ai.engine.AiPathfinder.MoveType.PARKOUR_ASCEND
             );
          }
       };
@@ -595,11 +595,11 @@ final class AiFurnaceWork implements AiOperation {
          false,
          false,
          20,
-         autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+         autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
          false,
          0.0,
          goal,
-         new AiGoto.Inner_BufferHelper(false, false, 1, true, false, false)
+         new AiGoto.GotoOptions(false, false, 1, true, false, false)
       );
    }
 

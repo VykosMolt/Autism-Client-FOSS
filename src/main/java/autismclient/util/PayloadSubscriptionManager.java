@@ -124,7 +124,7 @@ public final class PayloadSubscriptionManager {
       }
    }
 
-   public static synchronized void init(AutismPayloadSupport.Inner_StreamUtil snapshot) {
+   public static synchronized void init(AutismPayloadSupport.PayloadEntry snapshot) {
       if (snapshot != null && "S2C".equalsIgnoreCase(snapshot.init_Str())) {
          load_V(snapshot.load_Str());
 

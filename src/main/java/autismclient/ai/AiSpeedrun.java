@@ -129,14 +129,14 @@ final class AiSpeedrun {
       return Math.max(0, bread) + Math.min(Math.max(0, needed), available);
    }
 
-   static AiCraftPlanner.Inner_CachePool init_g_CachePool_g_StreamUtil_I(AiCraftPlanner.Inner_StreamUtil graph, int needed) {
+   static AiCraftPlanner.CraftPlan init_g_CachePool_g_StreamUtil_I(AiCraftPlanner.RecipeGraph graph, int needed) {
       int held = graph.init_I("minecraft:bread");
       int goal = init_I_I(held, graph.init_I("minecraft:wheat"), graph.init_I("minecraft:hay_block"), needed);
       if (goal <= held) {
          return null;
       }
 
-      AiCraftPlanner.Inner_CachePool plan = AiCraftPlanner.init(graph, "minecraft:bread", goal);
+      AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(graph, "minecraft:bread", goal);
       return plan.complete() && !plan.steps().isEmpty() ? plan : null;
    }
 
@@ -162,8 +162,8 @@ final class AiSpeedrun {
          && (current == null || current.canInterruptNow() && !current.requiresReconciliationAfterEmergency());
    }
 
-   static autismclient.ai.engine.AiPathfinder.Inner_JsonUtil init_ClassCache_JsonUti_BlockPos(BlockPos surface) {
-      return autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(surface, 2.0);
+   static autismclient.ai.engine.AiPathfinder.PathGoal init_ClassCache_JsonUti_BlockPos(BlockPos surface) {
+      return autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(surface, 2.0);
    }
 
    static BlockPos init_BlockPos_BlockPos(BlockPos from, int x, int z, Function<BlockPos, BlockPos> observedSurface) {
@@ -298,7 +298,7 @@ final class AiSpeedrun {
             long flush_J;
             long close_J;
             final AiGuardLayer init_Y = new AiGuardLayer(
-               AiGuard.Inner_CachePool.standard()
+               AiGuard.GuardPolicy.standard()
                   .keeping(
                      List.of(
                         "minecraft:blaze_rod",
@@ -823,11 +823,11 @@ final class AiSpeedrun {
                   true,
                   true,
                   40,
-                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                  autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                   true,
                   2.0,
                   new AiNetherRun.Inner_NetHelper(x, z, 3),
-                  AiGoto.Inner_BufferHelper.DEFAULT
+                  AiGoto.GotoOptions.DEFAULT
                );
             }
 
@@ -1387,8 +1387,8 @@ final class AiSpeedrun {
    }
 
    static boolean init_Z_Minecraft(Minecraft mc) {
-      AiItems.Inner_DataUtil swords = AiItems.init_af_DataUtil("#minecraft:swords");
-      AiItems.Inner_DataUtil axes = AiItems.init_af_DataUtil("#minecraft:axes");
+      AiItems.ItemSpec swords = AiItems.init_af_DataUtil("#minecraft:swords");
+      AiItems.ItemSpec axes = AiItems.init_af_DataUtil("#minecraft:axes");
 
       for (int slot = 0; slot < 36; slot++) {
          ItemStack stack = mc.player.getInventory().getItem(slot);
@@ -1441,8 +1441,8 @@ final class AiSpeedrun {
       if (seconds < 15) {
          return null;
       } else {
-         AiCraftPlanner.Inner_StreamUtil graph = AiCraft.init_g_StreamUtil();
-         AiCraftPlanner.Inner_CachePool plan = init_g_CachePool_g_StreamUtil_I(graph, needed);
+         AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
+         AiCraftPlanner.CraftPlan plan = init_g_CachePool_g_StreamUtil_I(graph, needed);
          if (plan == null) {
             return null;
          } else {
@@ -1496,7 +1496,7 @@ final class AiSpeedrun {
          final Object init_Obj = mc.level;
          final Object load_Obj = mc.getConnection();
          final Object read_Obj = mc.player;
-         final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.Inner_CachePool.standard(), "food trip");
+         final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.GuardPolicy.standard(), "food trip");
          final AiSpeedrun.Inner_CachePool init_cl_CachePool = new AiSpeedrun.Inner_CachePool();
          AiOperation.Result init_AiOperation_Result;
          AiOperation init_AiOperation;
@@ -1536,7 +1536,7 @@ final class AiSpeedrun {
             }
 
             if (!this.init_Str.equals("cook") && !this.init_Y.init_Z() && mc.player.getFoodData().getFoodLevel() <= 16) {
-               AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+               AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
                int raw = AiSpeedrun.init_Map().values().stream().mapToInt(Integer::intValue).sum();
                boolean quiet = this.init_Y.load()
                   && !this.init_Y.read()
@@ -1658,11 +1658,11 @@ final class AiSpeedrun {
                         false,
                         false,
                         Math.min(30, this.init_I_35()),
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                        autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                         true,
                         2.0,
-                        autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(stand, 1.0),
-                        new AiGoto.Inner_BufferHelper(true, false, 3, true, false, true)
+                        autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(stand, 1.0),
+                        new AiGoto.GotoOptions(true, false, 3, true, false, true)
                      )
                   );
                   this.init_AiOperation = this.init_Supplier.get();
@@ -1722,11 +1722,11 @@ final class AiSpeedrun {
                         false,
                         false,
                         Math.min(60, this.init_I_35()),
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                        autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                         true,
                         2.0,
                         AiSpeedrun.init_ClassCache_JsonUti_BlockPos(surface),
-                        AiGoto.Inner_BufferHelper.DEFAULT
+                        AiGoto.GotoOptions.DEFAULT
                      )
                   );
                   this.init_Str = "walk";

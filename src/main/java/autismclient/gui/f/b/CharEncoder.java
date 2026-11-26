@@ -18,7 +18,7 @@ public final class CharEncoder {
    private autismclient.gui.ui.UiColorScheme init_JsonUtil;
    private int open = -2147483648;
 
-   private static int init_I_I_ct_DataUtil(int color, ThemePaletteManager.Inner_DataUtil channel) {
+   private static int init_I_I_ct_DataUtil(int color, ThemePaletteManager.ColorRole channel) {
       return ThemePaletteManager.init_I_I_ct_DataUtil(color, channel);
    }
 
@@ -174,13 +174,13 @@ public final class CharEncoder {
          case init:
          case load:
          case read:
-            var10000 = init_I_I_ct_DataUtil(-854534, ThemePaletteManager.Inner_DataUtil.TEXT);
+            var10000 = init_I_I_ct_DataUtil(-854534, ThemePaletteManager.ColorRole.TEXT);
             break;
          case write:
-            var10000 = init_I_I_ct_DataUtil(-6774093, ThemePaletteManager.Inner_DataUtil.TEXT);
+            var10000 = init_I_I_ct_DataUtil(-6774093, ThemePaletteManager.ColorRole.TEXT);
             break;
          case update:
-            var10000 = init_I_I_ct_DataUtil(-45747, ThemePaletteManager.Inner_DataUtil.ACCENT);
+            var10000 = init_I_I_ct_DataUtil(-45747, ThemePaletteManager.ColorRole.ACCENT);
             break;
          default:
             throw new MatchException(null, null);
@@ -202,7 +202,7 @@ public final class CharEncoder {
    }
 
    private int init_I_I(int rgb, int alpha, float tint) {
-      int accent = init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.ACCENT);
+      int accent = init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.ACCENT);
       int tinted = UiLayoutMath.init_I_I(0xFF000000 | rgb & 16777215, 0xFF000000 | accent & 16777215, tint);
       return alpha << 24 | tinted & 16777215;
    }
@@ -224,7 +224,7 @@ public final class CharEncoder {
    }
 
    public int run() {
-      return init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.HEADER);
+      return init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.HEADER);
    }
 
    public int get() {
@@ -240,14 +240,14 @@ public final class CharEncoder {
    }
 
    public int add() {
-      return init_I_I_ct_DataUtil(this.read(2756114), ThemePaletteManager.Inner_DataUtil.DANGER);
+      return init_I_I_ct_DataUtil(this.read(2756114), ThemePaletteManager.ColorRole.DANGER);
    }
 
    public int clear() {
-      return init_I_I_ct_DataUtil(-33411, ThemePaletteManager.Inner_DataUtil.DANGER);
+      return init_I_I_ct_DataUtil(-33411, ThemePaletteManager.ColorRole.DANGER);
    }
 
-   public int init_I_ByteReader_StreamU_2(autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil variant) {
+   public int init_I_ByteReader_StreamU_2(autismclient.gui.ui.layout.ButtonNode.Variant variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
@@ -268,11 +268,11 @@ public final class CharEncoder {
       return var10000;
    }
 
-   private int flush(autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil variant) {
+   private int flush(autismclient.gui.ui.layout.ButtonNode.Variant variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
-            var10000 = init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.BUTTON);
+            var10000 = init_I_I_ct_DataUtil(-50373, ThemePaletteManager.ColorRole.BUTTON);
             break;
          case DANGER:
             var10000 = this.init_JsonUtil().data;
@@ -291,11 +291,11 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int init_I_ByteReader_StreamU_Z_2(autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil variant, boolean active) {
+   public int init_I_ByteReader_StreamU_Z_2(autismclient.gui.ui.layout.ButtonNode.Variant variant, boolean active) {
       return !active ? this.close(variant) : this.init_I_ByteReader_StreamU_2(variant);
    }
 
-   private int close(autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil variant) {
+   private int close(autismclient.gui.ui.layout.ButtonNode.Variant variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
@@ -316,7 +316,7 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int load(autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil variant) {
+   public int load(autismclient.gui.ui.layout.ButtonNode.Variant variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
@@ -335,7 +335,7 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int read(autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil variant) {
+   public int read(autismclient.gui.ui.layout.ButtonNode.Variant variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
@@ -354,7 +354,7 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int write(autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil variant) {
+   public int write(autismclient.gui.ui.layout.ButtonNode.Variant variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
@@ -373,17 +373,17 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int update(autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil variant) {
+   public int update(autismclient.gui.ui.layout.ButtonNode.Variant variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
-            var10000 = init_I_I_ct_DataUtil(-2828, ThemePaletteManager.Inner_DataUtil.TEXT);
+            var10000 = init_I_I_ct_DataUtil(-2828, ThemePaletteManager.ColorRole.TEXT);
             break;
          case DANGER:
-            var10000 = init_I_I_ct_DataUtil(-42406, ThemePaletteManager.Inner_DataUtil.DANGER);
+            var10000 = init_I_I_ct_DataUtil(-42406, ThemePaletteManager.ColorRole.DANGER);
             break;
          case SUCCESS:
-            var10000 = init_I_I_ct_DataUtil(-4656181, ThemePaletteManager.Inner_DataUtil.SUCCESS);
+            var10000 = init_I_I_ct_DataUtil(-4656181, ThemePaletteManager.ColorRole.SUCCESS);
             break;
          case SECONDARY:
          case GHOST:
@@ -396,17 +396,17 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int sync(autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil variant) {
+   public int sync(autismclient.gui.ui.layout.ButtonNode.Variant variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
-            var10000 = init_I_I_ct_DataUtil(-2828, ThemePaletteManager.Inner_DataUtil.TEXT);
+            var10000 = init_I_I_ct_DataUtil(-2828, ThemePaletteManager.ColorRole.TEXT);
             break;
          case DANGER:
-            var10000 = init_I_I_ct_DataUtil(-6521989, ThemePaletteManager.Inner_DataUtil.DANGER);
+            var10000 = init_I_I_ct_DataUtil(-6521989, ThemePaletteManager.ColorRole.DANGER);
             break;
          case SUCCESS:
-            var10000 = init_I_I_ct_DataUtil(-7821680, ThemePaletteManager.Inner_DataUtil.SUCCESS);
+            var10000 = init_I_I_ct_DataUtil(-7821680, ThemePaletteManager.ColorRole.SUCCESS);
             break;
          case SECONDARY:
          case GHOST:
@@ -419,24 +419,24 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int init_I_ByteReader_StreamU_Z(OverlayActionButton.Inner_StreamUtil variant, boolean active) {
-      if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_ON) {
+   public int init_I_ByteReader_StreamU_Z(OverlayActionButton.ButtonTone variant, boolean active) {
+      if (variant == OverlayActionButton.ButtonTone.FILTER_ON) {
          return 1430088703;
       } else {
-         return variant == OverlayActionButton.Inner_StreamUtil.FILTER_OFF
+         return variant == OverlayActionButton.ButtonTone.FILTER_OFF
             ? 1713842993
             : this.init_I_ByteReader_StreamU_Z_2(this.init_ByteReader_StreamU_ByteReader_StreamU(variant), active);
       }
    }
 
-   private int load(OverlayActionButton.Inner_StreamUtil variant) {
+   private int load(OverlayActionButton.ButtonTone variant) {
       return this.close(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
    }
 
-   public int load(OverlayActionButton.Inner_StreamUtil variant, boolean active) {
-      if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_ON) {
+   public int load(OverlayActionButton.ButtonTone variant, boolean active) {
+      if (variant == OverlayActionButton.ButtonTone.FILTER_ON) {
          return -9466369;
-      } else if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_OFF) {
+      } else if (variant == OverlayActionButton.ButtonTone.FILTER_OFF) {
          return -11117210;
       } else {
          return active
@@ -445,22 +445,22 @@ public final class CharEncoder {
       }
    }
 
-   private int read(OverlayActionButton.Inner_StreamUtil variant) {
+   private int read(OverlayActionButton.ButtonTone variant) {
       return this.read(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
    }
 
-   public int init_I_ByteReader_StreamU(OverlayActionButton.Inner_StreamUtil variant) {
-      if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_ON) {
+   public int init_I_ByteReader_StreamU(OverlayActionButton.ButtonTone variant) {
+      if (variant == OverlayActionButton.ButtonTone.FILTER_ON) {
          return -7231489;
       } else {
-         return variant == OverlayActionButton.Inner_StreamUtil.FILTER_OFF ? -9143161 : this.write(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
+         return variant == OverlayActionButton.ButtonTone.FILTER_OFF ? -9143161 : this.write(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
       }
    }
 
-   public int read(OverlayActionButton.Inner_StreamUtil variant, boolean active) {
-      if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_ON) {
+   public int read(OverlayActionButton.ButtonTone variant, boolean active) {
+      if (variant == OverlayActionButton.ButtonTone.FILTER_ON) {
          return -1;
-      } else if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_OFF) {
+      } else if (variant == OverlayActionButton.ButtonTone.FILTER_OFF) {
          return -4669753;
       } else {
          return active
@@ -469,33 +469,33 @@ public final class CharEncoder {
       }
    }
 
-   private int write(OverlayActionButton.Inner_StreamUtil variant) {
+   private int write(OverlayActionButton.ButtonTone variant) {
       return this.sync(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
    }
 
-   private autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil init_ByteReader_StreamU_ByteReader_StreamU(OverlayActionButton.Inner_StreamUtil variant) {
-      autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil var10000;
+   private autismclient.gui.ui.layout.ButtonNode.Variant init_ByteReader_StreamU_ByteReader_StreamU(OverlayActionButton.ButtonTone variant) {
+      autismclient.gui.ui.layout.ButtonNode.Variant var10000;
       switch (variant) {
          case PRIMARY:
-            var10000 = autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.PRIMARY;
+            var10000 = autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY;
             break;
          case SECONDARY:
-            var10000 = autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SECONDARY;
+            var10000 = autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY;
             break;
          case GHOST:
-            var10000 = autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.GHOST;
+            var10000 = autismclient.gui.ui.layout.ButtonNode.Variant.GHOST;
             break;
          case DANGER:
-            var10000 = autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.DANGER;
+            var10000 = autismclient.gui.ui.layout.ButtonNode.Variant.DANGER;
             break;
          case SUCCESS:
-            var10000 = autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.SUCCESS;
+            var10000 = autismclient.gui.ui.layout.ButtonNode.Variant.SUCCESS;
             break;
          case FILTER_ON:
-            var10000 = autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.PRIMARY;
+            var10000 = autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY;
             break;
          case FILTER_OFF:
-            var10000 = autismclient.gui.ui.layout.ButtonNode.Inner_StreamUtil.GHOST;
+            var10000 = autismclient.gui.ui.layout.ButtonNode.Variant.GHOST;
             break;
          default:
             throw new MatchException(null, null);
@@ -521,11 +521,11 @@ public final class CharEncoder {
    }
 
    public int prev() {
-      return init_I_I_ct_DataUtil(this.read(2308139), ThemePaletteManager.Inner_DataUtil.TOGGLE);
+      return init_I_I_ct_DataUtil(this.read(2308139), ThemePaletteManager.ColorRole.TOGGLE);
    }
 
    public int valid() {
-      return init_I_I_ct_DataUtil(this.read(1183762), ThemePaletteManager.Inner_DataUtil.BUTTON);
+      return init_I_I_ct_DataUtil(this.read(1183762), ThemePaletteManager.ColorRole.BUTTON);
    }
 
    public int size() {

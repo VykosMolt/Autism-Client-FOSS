@@ -95,7 +95,7 @@ final class AiChatPolicy {
       return Math.max(0L, revision);
    }
 
-   static AiChatPolicy.Inner_StreamUtil init(AiChatLedger.Inner_StreamUtil entry, String selfName, AiChatPolicy.Inner_DataUtil config) {
+   static AiChatPolicy.Inner_StreamUtil init(AiChatLedger.ChatEntry entry, String selfName, AiChatPolicy.Inner_DataUtil config) {
       if (entry != null && config != null) {
          String source = entry.source() == null ? "" : entry.source().toUpperCase(Locale.ROOT);
          boolean privateSource = source.equals("PLAYER_PRIVATE");
@@ -150,7 +150,7 @@ final class AiChatPolicy {
       }
    }
 
-   static AiChatPolicy.Inner_StreamUtil init(AiChatLedger.Inner_StreamUtil entry, String selfName) {
+   static AiChatPolicy.Inner_StreamUtil init(AiChatLedger.ChatEntry entry, String selfName) {
       if (entry == null) {
          return null;
       }
@@ -186,7 +186,7 @@ final class AiChatPolicy {
       }
    }
 
-   static String init(AiChatLedger.Inner_StreamUtil entry) {
+   static String init(AiChatLedger.ChatEntry entry) {
       if (entry == null) {
          return "";
       }

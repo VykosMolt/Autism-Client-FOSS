@@ -103,7 +103,7 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.ReadOnlyScoreInfo;
 import net.minecraft.world.scores.Scoreboard;
 
-public final class KillAuraModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
+public final class KillAuraModule extends Module implements SilentMovementCoordinator.Participant {
    static final int init_I = 10;
    static final double init_D = 0.5;
    static final double load_D = 2.0;
@@ -717,7 +717,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   public static boolean init_Z_ce_DataUtil(RotationMath.Inner_DataUtil goal, autismclient.util.CombatAimEngine.Inner_DataUtil frame, boolean pinQuiet) {
+   public static boolean init_Z_ce_DataUtil(RotationMath.Rotation goal, autismclient.util.CombatAimEngine.Inner_DataUtil frame, boolean pinQuiet) {
       if (AutismLiteVariant.enabled()) {
          return false;
       }
@@ -765,7 +765,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             && tick != this.stop_I
             && !MC.player.isUsingItem()
             && !this.init_aa_ConfigStore.init_Z()) {
-            RotationMath.Inner_DataUtil rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+            RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
             if (rotation == null) {
                rotation = RotationMath.init(MC.player);
             }
@@ -794,7 +794,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             && this.init_aa_ConfigStore.load_Z()
             && "Human".equals(this.choice("aim"))
             && (this.buffer() || this.init_aa_CachePool.init_Z())) {
-            RotationMath.Inner_DataUtil rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+            RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
             if (rotation != null && "kill-aura".equals(autismclient.util.SilentRotationManager.init_Str())) {
                Vec3 eyes = MC.player.getEyePosition();
                AABB box = target.getBoundingBox();
@@ -818,13 +818,13 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       this.init_aa_ConfigStore.load_V();
    }
 
-   static boolean init_Z_Vec3_6(Vec3 eyes, AABB box, RotationMath.Inner_DataUtil rotation) {
+   static boolean init_Z_Vec3_6(Vec3 eyes, AABB box, RotationMath.Rotation rotation) {
       Vec3 direction = Vec3.directionFromRotation(rotation.load(), rotation.init());
       Vec3 end = eyes.add(direction.scale(4.0));
       return !box.inflate(0.05).contains(eyes) && box.inflate(0.05).clip(eyes, end).isEmpty();
    }
 
-   static boolean load_Z_Vec3_3(Vec3 eyes, AABB box, RotationMath.Inner_DataUtil rotation) {
+   static boolean load_Z_Vec3_3(Vec3 eyes, AABB box, RotationMath.Rotation rotation) {
       Vec3 direction = Vec3.directionFromRotation(rotation.load(), rotation.init());
       Vec3 end = eyes.add(direction.scale(3.995));
       return box.inflate(0.25).clip(eyes, end).isPresent();
@@ -900,7 +900,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private void close_V_6() {
-      RotationMath.Inner_DataUtil sent = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+      RotationMath.Rotation sent = autismclient.util.SilentRotationManager.init_ce_DataUtil();
       if (sent == null) {
          sent = RotationMath.init(MC.player);
       }
@@ -1162,7 +1162,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
 
       if (target != null && target.isAlive()) {
-         RotationMath.Inner_DataUtil rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+         RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
          if (rotation == null) {
             rotation = RotationMath.init(MC.player);
          }
@@ -1250,7 +1250,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    private LivingEntity init_LivingEntity_ItemStack(ItemStack guard) {
       BlocksAttacks blocks = guard.get(DataComponents.BLOCKS_ATTACKS);
       boolean everySide = read_Z_ItemStack_2(guard) || blocks == null;
-      RotationMath.Inner_DataUtil rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+      RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
       float yaw = rotation == null ? MC.player.getYRot() : rotation.init();
       AABB body = MC.player.getBoundingBox();
       LivingEntity best = null;
@@ -1580,7 +1580,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
       filtered.sort(Comparator.comparingInt(entityx -> this.load_D_Entity(entityx) <= normalRangeSq ? 0 : 1));
       LivingEntity chosen = null;
-      RotationMath.Inner_DataUtil chosenRotation = null;
+      RotationMath.Rotation chosenRotation = null;
       boolean human = "Human".equals(this.choice("aim"));
       this.init_Vec3 = null;
       int bestRangeBucket = filtered.isEmpty() ? 2147483647 : (this.load_D_Entity(filtered.get(0)) <= normalRangeSq ? 0 : 1);
@@ -1614,11 +1614,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             if (entity != this.init_LivingEntity) {
                AABB box = entity.getBoundingBox();
                Vec3 acquisition = init_Vec3_AABB_2(box, 0.5, 0.56, 0.5);
-               RotationMath.Inner_DataUtil rotation = this.init_ce_DataUtil_Entity(entity, maximumRange, acquisition);
+               RotationMath.Rotation rotation = this.init_ce_DataUtil_Entity(entity, maximumRange, acquisition);
                if (rotation != null) {
                   if (!human) {
                      Vec3 preferred = this.init_Vec3_LivingEntity(entity, inAttackWindow, allowExcursion);
-                     RotationMath.Inner_DataUtil tracked = this.load_ce_DataUtil_Entity(entity, maximumRange, preferred);
+                     RotationMath.Rotation tracked = this.load_ce_DataUtil_Entity(entity, maximumRange, preferred);
                      chosen = entity;
                      chosenRotation = tracked != null ? tracked : rotation;
                      break;
@@ -1789,7 +1789,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private float init_F_Entity_Vec3_2(Entity entity, Vec3 eyes) {
-      RotationMath.Inner_DataUtil toCenter = RotationMath.init(entity.getBoundingBox().getCenter(), eyes);
+      RotationMath.Rotation toCenter = RotationMath.init(entity.getBoundingBox().getCenter(), eyes);
       return RotationMath.load(RotationMath.init(MC.player), toCenter);
    }
 
@@ -1875,7 +1875,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private double read_D_LivingEntity(LivingEntity entity) {
-      RotationMath.Inner_DataUtil look = "kill-aura".equals(autismclient.util.SilentRotationManager.init_Str()) ? autismclient.util.SilentRotationManager.init_ce_DataUtil() : null;
+      RotationMath.Rotation look = "kill-aura".equals(autismclient.util.SilentRotationManager.init_Str()) ? autismclient.util.SilentRotationManager.init_ce_DataUtil() : null;
       if (look == null) {
          look = RotationMath.init(MC.player);
       }
@@ -1910,7 +1910,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       return entity.getBoundingBox().inflate(entity.getPickRadius()).distanceToSqr(MC.player.getEyePosition());
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_Entity(Entity entity, double range, Vec3 preferredPoint) {
+   private RotationMath.Rotation init_ce_DataUtil_Entity(Entity entity, double range, Vec3 preferredPoint) {
       Vec3 point = this.init_Vec3_Entity(entity, range, preferredPoint);
       return point == null ? null : RotationMath.init(point, MC.player.getEyePosition());
    }
@@ -1924,7 +1924,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          return preferred;
       }
 
-      RotationMath.Inner_DataUtil reference = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+      RotationMath.Rotation reference = autismclient.util.SilentRotationManager.init_ce_DataUtil();
       if (reference == null) {
          reference = RotationMath.init(MC.player);
       }
@@ -1938,7 +1938,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          for (double y : load_DArr) {
             for (double z : init_DArr) {
                Vec3 point = init_Vec3_AABB_2(box, x, y, z);
-               RotationMath.Inner_DataUtil candidate = this.init_ce_DataUtil_Vec3(eyes, box, point, rangeSq);
+               RotationMath.Rotation candidate = this.init_ce_DataUtil_Vec3(eyes, box, point, rangeSq);
                if (candidate != null) {
                   double pointDistance = Math.sqrt(point.distanceToSqr(preferred)) / diagonal;
                   double score = RotationMath.load(reference, candidate) + pointDistance * 8.0;
@@ -1954,11 +1954,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       return best;
    }
 
-   private RotationMath.Inner_DataUtil load_ce_DataUtil_Entity(Entity entity, double range, Vec3 point) {
+   private RotationMath.Rotation load_ce_DataUtil_Entity(Entity entity, double range, Vec3 point) {
       return !entity.getBoundingBox().contains(point) ? RotationMath.init(point, MC.player.getEyePosition()) : this.init_ce_DataUtil_Entity(entity, range, point);
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_Vec3(Vec3 eyes, AABB box, Vec3 point, double rangeSq) {
+   private RotationMath.Rotation init_ce_DataUtil_Vec3(Vec3 eyes, AABB box, Vec3 point, double rangeSq) {
       if (eyes.distanceToSqr(point) <= 1.0E-12) {
          return null;
       } else {
@@ -2005,7 +2005,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       return MC.level.clip(new ClipContext(eyes, point, Block.COLLIDER, Fluid.NONE, entity)).getType() == Type.MISS;
    }
 
-   private EntityHitResult init_EntityHitResult_D(double range, RotationMath.Inner_DataUtil rotation, Predicate<Entity> predicate) {
+   private EntityHitResult init_EntityHitResult_D(double range, RotationMath.Rotation rotation, Predicate<Entity> predicate) {
       Entity camera = MC.getCameraEntity();
       if (camera == null) {
          return null;
@@ -2031,7 +2031,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private EntityHitResult init_EntityHitResult_Entity(Entity target, RotationMath.Inner_DataUtil rotation, double range, double wallsRange) {
+   private EntityHitResult init_EntityHitResult_Entity(Entity target, RotationMath.Rotation rotation, double range, double wallsRange) {
       Entity camera = MC.getCameraEntity();
       if (camera == null) {
          return null;
@@ -2062,13 +2062,13 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          this.init_aa_CachePool.load("scaffold");
          this.init_aa_ConfigStore.read_V();
       } else if (this.push_Z_3() || !this.init_aa_ConfigStore.init_Z() || !this.read_Z_LivingEntity(target)) {
-         RotationMath.Inner_DataUtil rotation = this.init_ce_DataUtil_4();
+         RotationMath.Rotation rotation = this.init_ce_DataUtil_4();
          this.init_V_Entity_ce_DataUtil(target, rotation);
       }
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_4() {
-      RotationMath.Inner_DataUtil planned = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+   private RotationMath.Rotation init_ce_DataUtil_4() {
+      RotationMath.Rotation planned = autismclient.util.SilentRotationManager.init_ce_DataUtil();
       if (planned == null) {
          planned = RotationMath.init(MC.player);
       }
@@ -2076,11 +2076,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       return init_ce_DataUtil_ce_DataUtil_ch_CachePool(planned, ServerRotationTracker.init_ch_CachePool());
    }
 
-   static RotationMath.Inner_DataUtil init_ce_DataUtil_ce_DataUtil_ch_CachePool(RotationMath.Inner_DataUtil planned, ServerRotationTracker.Inner_CachePool wire) {
-      return wire.init_Z() ? new RotationMath.Inner_DataUtil(wire.read(), wire.write()) : planned;
+   static RotationMath.Rotation init_ce_DataUtil_ce_DataUtil_ch_CachePool(RotationMath.Rotation planned, ServerRotationTracker.RotationSnapshot wire) {
+      return wire.init_Z() ? new RotationMath.Rotation(wire.read(), wire.write()) : planned;
    }
 
-   public static EntityHitResult init_EntityHitResult_EntityHitResult_ch_CachePool(EntityHitResult queued, ServerRotationTracker.Inner_CachePool wire) {
+   public static EntityHitResult init_EntityHitResult_EntityHitResult_ch_CachePool(EntityHitResult queued, ServerRotationTracker.RotationSnapshot wire) {
       if (AutismLiteVariant.enabled()) {
          return null;
       }
@@ -2092,7 +2092,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          && queued.getEntity() == aura.init_LivingEntity
          && aura.init_LivingEntity != null
          && aura.init_LivingEntity.isAlive()) {
-         RotationMath.Inner_DataUtil look = init_ce_DataUtil_ce_DataUtil_ch_CachePool(RotationMath.init(MC.player), wire);
+         RotationMath.Rotation look = init_ce_DataUtil_ce_DataUtil_ch_CachePool(RotationMath.init(MC.player), wire);
          if (aura.init_LivingEntity instanceof Player player && !aura.init_Z_Player_2(player, look, wire.init_Vec3())) {
             return null;
          } else {
@@ -2106,7 +2106,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
    private boolean read_Z_LivingEntity(LivingEntity target) {
       if (AutismSessionState.init_ck().state_I() != this.pool && this.load_LivingEntity == null) {
-         RotationMath.Inner_DataUtil rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+         RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
          if (rotation == null) {
             rotation = RotationMath.init(MC.player);
          }
@@ -2169,7 +2169,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                this.update_Z = previousLastChance;
             }
 
-            RotationMath.Inner_DataUtil rotation = this.init_ce_DataUtil_4();
+            RotationMath.Rotation rotation = this.init_ce_DataUtil_4();
             EntityHitResult hit = this.init_EntityHitResult_Entity(target, rotation, this.write_D(), 0.0);
             return hit != null
                && this.init_Z_ItemStack_Vec3(stack, hit.getLocation())
@@ -2182,7 +2182,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private void init_V_Entity_ce_DataUtil(Entity target, RotationMath.Inner_DataUtil rotation) {
+   private void init_V_Entity_ce_DataUtil(Entity target, RotationMath.Rotation rotation) {
       EntityHitResult attackHit = this.init_EntityHitResult_Entity(target, rotation, this.write_D(), 0.0);
       boolean isInRange = attackHit != null && this.init_Z_ItemStack_Vec3(MC.player.getMainHandItem(), attackHit.getLocation());
       if (!isInRange) {
@@ -2257,11 +2257,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private boolean init_Z_Player_ce_DataUtil(Player target, RotationMath.Inner_DataUtil look) {
+   private boolean init_Z_Player_ce_DataUtil(Player target, RotationMath.Rotation look) {
       return this.init_Z_Player_2(target, look, ServerRotationTracker.init_ch_CachePool().init_Vec3());
    }
 
-   private boolean init_Z_Player_2(Player target, RotationMath.Inner_DataUtil look, Vec3 sentPosition) {
+   private boolean init_Z_Player_2(Player target, RotationMath.Rotation look, Vec3 sentPosition) {
       if (!this.init_cj.init_Z_LivingEntity(target)) {
          return true;
       }
@@ -2279,7 +2279,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          Vec3 bodyHit = init_Vec3_Vec3_6(eyes, look, this.write_D(), body);
          Vec3 receivedHit = init_Vec3_Vec3_6(eyes, look, this.write_D(), received);
          if (bodyHit != null && receivedHit != null && this.init_Z_Vec3_8(eyes, receivedHit, MC.player)) {
-            RotationMath.Inner_DataUtil planned = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+            RotationMath.Rotation planned = autismclient.util.SilentRotationManager.init_ce_DataUtil();
             if (planned == null) {
                return true;
             }
@@ -2308,7 +2308,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   static Vec3 init_Vec3_Vec3_6(Vec3 eyes, RotationMath.Inner_DataUtil look, double reach, AABB box) {
+   static Vec3 init_Vec3_Vec3_6(Vec3 eyes, RotationMath.Rotation look, double reach, AABB box) {
       AABB inset = box.deflate(0.003);
       if (inset.contains(eyes)) {
          return eyes;
@@ -2346,7 +2346,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       this.init_V_BooleanSupplier(() -> !this.init_Z_Entity_ItemStack(target, mainHandStack) ? false : this.init_Z_Entity_EntityHitResult(target, attackHit));
    }
 
-   private RotationMath.Inner_DataUtil init_ce_DataUtil_LivingEntity_ce_DataUtil(LivingEntity target, RotationMath.Inner_DataUtil rotation) {
+   private RotationMath.Rotation init_ce_DataUtil_LivingEntity_ce_DataUtil(LivingEntity target, RotationMath.Rotation rotation) {
       if (this.push_Z_3() || !this.init_Z_LivingEntity_3(target)) {
          this.init_aa_ConfigStore.read_V();
          return rotation;
@@ -2694,7 +2694,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       if (AutismLiteVariant.enabled()) {
          return false;
       } else {
-         RotationMath.Inner_DataUtil look = this.init_ce_DataUtil_4();
+         RotationMath.Rotation look = this.init_ce_DataUtil_4();
          if (target instanceof Player player && !this.init_Z_Player_ce_DataUtil(player, look)) {
             return false;
          } else {
@@ -3136,7 +3136,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          return true;
       }
 
-      RotationMath.Inner_DataUtil rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+      RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
       if (rotation == null) {
          rotation = RotationMath.init(MC.player);
       }

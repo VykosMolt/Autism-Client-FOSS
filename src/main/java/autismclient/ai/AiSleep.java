@@ -197,14 +197,14 @@ final class AiSleep {
             }
 
             AiOperation.Result init_AiOperation_Result_31() {
-               autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-               if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+               autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+               if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                   this.init_Z = false;
                   this.init_BlockPos = this.init_DataPipe.init_BlockPos();
                   return this.init("Bed placed");
                }
 
-               if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.load_I <= 120) {
+               if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.load_I <= 120) {
                   return this.init("Placing a bed");
                }
 
@@ -231,7 +231,7 @@ final class AiSleep {
             }
 
             Item init_Item_4() {
-               AiItems.Inner_DataUtil beds = AiItems.init_af_DataUtil("bed");
+               AiItems.ItemSpec beds = AiItems.init_af_DataUtil("bed");
 
                for (Item item : beds.items()) {
                   if (AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(item).toString()) > 0) {
@@ -321,8 +321,8 @@ final class AiSleep {
       return mc.level == null ? false : mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.BED_RULE).canSleep(mc.level);
    }
 
-   static String init(List<AiChatLedger.Inner_StreamUtil> entries, long sinceRevision) {
-      for (AiChatLedger.Inner_StreamUtil entry : entries) {
+   static String init(List<AiChatLedger.ChatEntry> entries, long sinceRevision) {
+      for (AiChatLedger.ChatEntry entry : entries) {
          if (entry.revision() > sinceRevision) {
             String text = entry.text().toLowerCase(Locale.ROOT);
             if (text.contains("sleep") || text.contains("rest") || text.contains("bed") || text.contains("monsters")) {

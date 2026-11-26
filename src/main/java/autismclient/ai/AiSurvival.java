@@ -76,23 +76,23 @@ final class AiSurvival {
    }
 
    static AiOperation init_AiOperation(Minecraft mc) {
-      return init_AiOperation_Minecraft(mc, AiGuard.Inner_CachePool.standard(), 15);
+      return init_AiOperation_Minecraft(mc, AiGuard.GuardPolicy.standard(), 15);
    }
 
-   static AiOperation init_AiOperation_Minecraft(Minecraft mc, AiGuard.Inner_CachePool policy, int seconds) {
+   static AiOperation init_AiOperation_Minecraft(Minecraft mc, AiGuard.GuardPolicy policy, int seconds) {
       policy = policy.withoutMaintenance();
       if (mc.level.dimension() != Level.OVERWORLD) {
          policy = policy.withoutFlee();
       }
 
-      AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+      AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
       Entity threat = init_Entity(mc);
       if (threat != null && AiThreats.init_cv_DataUtil(threat) == AiThreats.Inner_DataUtil.AVOID) {
          return load(AiJson.init_JsonObject_ObjArr("radius", 12, "distance", 12, "timeoutSeconds", 15));
       }
 
       if (threat != null && vitals.hostilesNear() == 0) {
-         vitals = new AiGuard.Inner_BufferHelper(
+         vitals = new AiGuard.StatusSnapshot(
             vitals.health(), vitals.maxHealth(), vitals.food(), 1, true, vitals.hasFood(), vitals.hasWeapon(), vitals.freeSlots(), vitals.worstToolUses()
          );
       }
@@ -227,7 +227,7 @@ final class AiSurvival {
                               inventory.setSelectedSlot(slot);
                            }
 
-                           this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Inner_DataUtil(this.init_Minecraft.player.getYRot(), -89.5F));
+                           this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Rotation(this.init_Minecraft.player.getYRot(), -89.5F));
                            this.init_DataUtil.load_V();
                            this.init_Minecraft.options.keyUse.setDown(true);
                            return ++this.sync > 100
@@ -453,7 +453,7 @@ final class AiSurvival {
                         this.write_I = positions.size();
                         this.write_Z = false;
 
-                        for (AiProjectiles.Inner_StreamUtil t : AiProjectiles.init(this.init_Minecraft)) {
+                        for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(this.init_Minecraft)) {
                            if (AiProjectiles.init(t)) {
                               this.write_Z = true;
                               break;
@@ -547,7 +547,7 @@ final class AiSurvival {
                            shaft,
                            false,
                            Math.min(shaft ? 5 : 3, remaining),
-                           autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
+                           autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                            shaft,
                            2.0,
                            AiSurvival.init(this.init_Minecraft.player.blockPosition(), target)
@@ -687,9 +687,9 @@ final class AiSurvival {
       return leg % 2 == 0 ? 22.5 : -22.5;
    }
 
-   static autismclient.ai.engine.AiPathfinder.Inner_JsonUtil init(final BlockPos start, BlockPos target) {
-      final autismclient.ai.engine.AiPathfinder.Inner_JsonUtil near = autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(target, 0.6);
-      return new autismclient.ai.engine.AiPathfinder.Inner_JsonUtil() {
+   static autismclient.ai.engine.AiPathfinder.PathGoal init(final BlockPos start, BlockPos target) {
+      final autismclient.ai.engine.AiPathfinder.PathGoal near = autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(target, 0.6);
+      return new autismclient.ai.engine.AiPathfinder.PathGoal() {
          @Override
          public boolean isInGoal(int x, int y, int z) {
             return near.isInGoal(x, y, z);

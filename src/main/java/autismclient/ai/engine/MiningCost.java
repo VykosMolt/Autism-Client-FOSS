@@ -61,7 +61,7 @@ public final class MiningCost {
       if (mc.player.hasInfiniteMaterials()) {
          return hardness < 0.0F ? 1.0 / 0.0 : 1.0;
       } else {
-         return AiPathfinder.Inner_CachePool.init_D_F(
+         return AiPathfinder.MoveCosts.init_D_F(
             hardness, init(mc, stack, state), !state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state)
          );
       }
@@ -77,7 +77,7 @@ public final class MiningCost {
       }
 
       double base = stack != null && !stack.isEmpty() ? autismclient.util.BlockBreakSpeedHelper.init(mc, stack, state) : 1.0;
-      return AiPathfinder.Inner_CachePool.init_D_F(
+      return AiPathfinder.MoveCosts.init_D_F(
          hardness,
          init(base, f.haste(), f.fatigue(), f.blockSpeed(), 1.0, true),
          !state.requiresCorrectToolForDrops() || stack != null && !stack.isEmpty() && stack.isCorrectToolForDrops(state)

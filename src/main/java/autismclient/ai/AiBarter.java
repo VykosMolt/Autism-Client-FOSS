@@ -96,7 +96,7 @@ final class AiBarter {
                final int load_I = AiGameState.init_I_Str("minecraft:ender_pearl");
                final int read_I = mc.player.getInventory().getSelectedSlot();
                final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-               final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard();
+               final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard();
                final Set<Integer> init_Set = new LinkedHashSet<>();
                final Set<Integer> load_Set = new LinkedHashSet<>();
                final Map<String, Integer> init_Map = new LinkedHashMap<>();
@@ -555,8 +555,8 @@ final class AiBarter {
                      this.load_AiOperation = null;
                      return this.init_AiOperation_Result_Str_2("Resuming after " + this.init_Str);
                   } else {
-                     AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
-                     AiGuard.Inner_CachePool policy = mc.level.dimension() != Level.OVERWORLD ? this.init_X_CachePool.withoutFlee() : this.init_X_CachePool;
+                     AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
+                     AiGuard.GuardPolicy policy = mc.level.dimension() != Level.OVERWORLD ? this.init_X_CachePool.withoutFlee() : this.init_X_CachePool;
                      AiOperation action = AiGuard.init_AiOperation_X_CachePool(policy, vitals, this.read_I_2());
                      if (action == null) {
                         return null;

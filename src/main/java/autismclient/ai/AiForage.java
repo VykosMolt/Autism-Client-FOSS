@@ -58,7 +58,7 @@ final class AiForage {
             if (AiItems.init_I() < 2) {
                return AiTidy.init(AiJson.init_JsonObject_ObjArr("action", "drop", "freeSlots", 2, "timeoutSeconds", Math.min(60, seconds)));
             } else {
-               AiCraftPlanner.Inner_StreamUtil graph = AiCraft.init_g_StreamUtil();
+               AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
                boolean table = AiCraft.load() || AiCraft.init_I("minecraft:crafting_table") > 0 || AiCraftPlanner.init(graph, "minecraft:crafting_table", 1).complete();
                if (!AiCraftPlanner.init(graph, "minecraft:furnace", 1).complete()) {
                   return AiObtain.init(AiJson.init_JsonObject_ObjArr("item", "minecraft:furnace", "count", 1, "timeoutSeconds", Math.min(180, seconds)));
@@ -240,7 +240,7 @@ final class AiForage {
 
          BlockPos source = best;
          return AiNetherRun.init_AiOperation_AiOperation_Supplier(
-            AiGoto.init(source.above(), 3.0, false, false, false, 30, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true),
+            AiGoto.init(source.above(), 3.0, false, false, false, 30, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true),
             () -> AiBucket.init(AiJson.init_JsonObject_ObjArr("action", "fill", "fluid", "water", "timeoutSeconds", 10))
          );
       } else {

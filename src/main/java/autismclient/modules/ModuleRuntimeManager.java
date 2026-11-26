@@ -680,7 +680,7 @@ public final class ModuleRuntimeManager {
 
    public boolean init(byte[] frameBytes, String direction, String protocolPhase, String source) {
       if (!aD.init_Z() && frameBytes != null && frameBytes.length != 0) {
-         AutismPayloadSupport.Inner_StreamUtil snapshot = AutismPayloadSupport.init(frameBytes, direction, protocolPhase);
+         AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init(frameBytes, direction, protocolPhase);
          if (snapshot == null) {
             return false;
          }
@@ -841,7 +841,7 @@ public final class ModuleRuntimeManager {
       }
    }
 
-   private void init(AutismPayloadSupport.Inner_StreamUtil snapshot, String source) {
+   private void init(AutismPayloadSupport.PayloadEntry snapshot, String source) {
       if (init_Z && snapshot != null) {
          AutismClientAddon.LOG
             .info(
@@ -867,14 +867,14 @@ public final class ModuleRuntimeManager {
 
    private void load(Packet<?> packet, String direction) {
       long perf = bK.read_J();
-      AutismPayloadSupport.Inner_StreamUtil snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction);
+      AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction);
       if (snapshot != null) {
          this.init(snapshot, direction, packet.getClass());
          bK.load("join.passivePayload.snapshot", perf);
       }
    }
 
-   private void init(AutismPayloadSupport.Inner_StreamUtil snapshot, String direction, Class<?> packetClass) {
+   private void init(AutismPayloadSupport.PayloadEntry snapshot, String direction, Class<?> packetClass) {
       if (snapshot != null) {
          synchronized (this.init_Deque) {
             while (this.init_Deque.size() >= 96) {
@@ -927,7 +927,7 @@ public final class ModuleRuntimeManager {
       return direction != null && direction.equalsIgnoreCase("C2S") ? ServerboundCustomPayloadPacket.class : ClientboundCustomPayloadPacket.class;
    }
 
-   private String init_Str_AutismPayloadSuppo(AutismPayloadSupport.Inner_StreamUtil snapshot) {
+   private String init_Str_AutismPayloadSuppo(AutismPayloadSupport.PayloadEntry snapshot) {
       return snapshot == null
          ? ""
          : (snapshot.init_Str() == null ? "" : snapshot.init_Str())
@@ -1071,7 +1071,7 @@ public final class ModuleRuntimeManager {
             }
 
             try {
-               AutismPayloadSupport.Inner_StreamUtil snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction);
+               AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction);
                PayloadStudyTracker.init_Z(snapshot);
                if (inbound) {
                   PayloadSubscriptionManager.init(snapshot);
@@ -1081,7 +1081,7 @@ public final class ModuleRuntimeManager {
 
             if (inbound && PluginSignatureCatalog.init_Z(channel)) {
                try {
-                  AutismPayloadSupport.Inner_StreamUtil snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction);
+                  AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction);
                   if (snapshot == null) {
                      return;
                   }
@@ -1100,7 +1100,7 @@ public final class ModuleRuntimeManager {
       }
    }
 
-   private void init_V_AutismPayloadSuppo(AutismPayloadSupport.Inner_StreamUtil snapshot) {
+   private void init_V_AutismPayloadSuppo(AutismPayloadSupport.PayloadEntry snapshot) {
       if (snapshot != null) {
          String channel = snapshot.load_Str();
          PayloadStudyTracker.init_Z(snapshot);
@@ -2008,6 +2008,6 @@ public final class ModuleRuntimeManager {
       }
    }
 
-   private record Inner_StreamUtil(long init_J, int init_I, String init_Str, Class<?> init_Class, AutismPayloadSupport.Inner_StreamUtil init_AutismPayloadSuppo) {
+   private record Inner_StreamUtil(long init_J, int init_I, String init_Str, Class<?> init_Class, AutismPayloadSupport.PayloadEntry init_AutismPayloadSuppo) {
    }
 }

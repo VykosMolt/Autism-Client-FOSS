@@ -125,7 +125,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    private void sync_V_13() {
       if (this.init_AutismPacketLogger != null) {
-         AutismPayloadSupport.Inner_StreamUtil snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(this.init_AutismPacketLogger);
+         AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(this.init_AutismPacketLogger);
          if (snapshot != null && (!this.close_Z || this.init_CompletableFuture == null || this.init_CompletableFuture.isDone())) {
             this.close_Z = true;
             String baseKey = this.init_Str_bu_JsonUtil_AutismPacketLogger(null, this.init_AutismPacketLogger);
@@ -137,7 +137,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_AutismPayloadSuppo_Str(AutismPayloadSupport.Inner_StreamUtil snapshot, String analysisKey) {
+   private void init_V_AutismPayloadSuppo_Str(AutismPayloadSupport.PayloadEntry snapshot, String analysisKey) {
       if (snapshot != null && analysisKey != null && !analysisKey.isBlank()) {
          this.init_CompletableFuture = CompletableFuture.runAsync(
             () -> {
@@ -292,30 +292,30 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                );
 
                for (AutismPacketInspectOverlay.Inner_CachePool button : this.init_List(footerY)) {
-                  autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil var10000;
+                  autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone var10000;
                   switch (button.init_AutismPacketInspec()) {
                      case WAIT:
                      case QUEUE:
                      case ADD_PAYLOAD:
-                        var10000 = autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY;
+                        var10000 = autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY;
                         break;
                      case SEND:
-                        var10000 = autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS;
+                        var10000 = autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS;
                         break;
                      case EDIT_PAYLOAD:
-                        var10000 = autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.PRIMARY;
+                        var10000 = autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY;
                         break;
                      case COPY_RAW:
-                        var10000 = autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.PRIMARY;
+                        var10000 = autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY;
                         break;
                      case COPY:
-                        var10000 = autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST;
+                        var10000 = autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST;
                         break;
                      default:
                         throw new MatchException(null, null);
                   }
 
-                  autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant = var10000;
+                  autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant = var10000;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                      context, this.init_Font, button.init_I(), button.load(), button.read(), this.reset(), button.init_Str(), variant, true, mouseX, mouseY
                   );
@@ -751,7 +751,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          return "";
       }
 
-      AutismPayloadSupport.Inner_StreamUtil payload = AutismPayloadSupport.init_AutismPayloadSuppo(entry);
+      AutismPayloadSupport.PayloadEntry payload = AutismPayloadSupport.init_AutismPayloadSuppo(entry);
       PacketWireCaptureStore.Inner_StreamUtil packet = PacketWireCaptureStore.init(entry.init_Packet);
       byte[] payloadBytes = payload == null ? new byte[0] : payload.init_BArr();
       byte[] packetBytes = packet == null ? new byte[0] : packet.init_BArr();
@@ -1022,7 +1022,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      AutismPayloadSupport.Inner_StreamUtil payload = AutismPayloadSupport.init_AutismPayloadSuppo(entry);
+      AutismPayloadSupport.PayloadEntry payload = AutismPayloadSupport.init_AutismPayloadSuppo(entry);
       if (payload != null && payload.init_BArr().length > 0) {
          return true;
       }

@@ -43,7 +43,7 @@ final class AiDodge {
          return false;
       }
 
-      for (AiProjectiles.Inner_StreamUtil t : AiProjectiles.init(mc)) {
+      for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(mc)) {
          if (AiProjectiles.init(t)) {
             Entity e = mc.level.getEntity(t.entityId());
             return true;
@@ -53,7 +53,7 @@ final class AiDodge {
       return false;
    }
 
-   static boolean init(AiProjectiles.Inner_StreamUtil t, double distance) {
+   static boolean init(AiProjectiles.IncomingProjectile t, double distance) {
       return t.secondsToClosest() >= 0.0 && t.secondsToClosest() <= 1.2 && distance <= 5.0;
    }
 
@@ -94,7 +94,7 @@ final class AiDodge {
             float read_F;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
                this.update = -1;
                this.close = -100;
                this.read_Set = new HashSet<>();
@@ -110,15 +110,15 @@ final class AiDodge {
                      && this.init_Minecraft.getConnection() == this.load_Obj
                      && this.init_Minecraft.player == this.read_Obj
                      && this.init_Minecraft.player.isAlive()) {
-                     List<AiProjectiles.Inner_StreamUtil> threats = new ArrayList<>();
+                     List<AiProjectiles.IncomingProjectile> threats = new ArrayList<>();
 
-                     for (AiProjectiles.Inner_StreamUtil t : AiProjectiles.init(this.init_Minecraft)) {
+                     for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(this.init_Minecraft)) {
                         if (AiProjectiles.init(t)) {
                            threats.add(t);
                         }
                      }
 
-                     for (AiProjectiles.Inner_StreamUtil t : threats) {
+                     for (AiProjectiles.IncomingProjectile t : threats) {
                         Entity observed = this.init_Minecraft.level.getEntity(t.entityId());
                         if (observed != null) {
                            UUID previous = this.init_Map.put(t.entityId(), observed.getUUID());
@@ -146,7 +146,7 @@ final class AiDodge {
                      for (int id : this.init_Set) {
                         boolean stillThreat = false;
 
-                        for (AiProjectiles.Inner_StreamUtil t : threats) {
+                        for (AiProjectiles.IncomingProjectile t : threats) {
                            if (t.entityId() == id) {
                               stillThreat = true;
                               break;
@@ -237,9 +237,9 @@ final class AiDodge {
                         }
                      }
 
-                     AiProjectiles.Inner_StreamUtil dominant = threats.get(0);
+                     AiProjectiles.IncomingProjectile dominant = threats.get(0);
 
-                     for (AiProjectiles.Inner_StreamUtil t : threats) {
+                     for (AiProjectiles.IncomingProjectile t : threats) {
                         if (t.secondsToClosest() < dominant.secondsToClosest()) {
                            dominant = t;
                         }
@@ -314,7 +314,7 @@ final class AiDodge {
                }
             }
 
-            Vec3 init(AiProjectiles.Inner_StreamUtil dominant) {
+            Vec3 init(AiProjectiles.IncomingProjectile dominant) {
                Vec3 dir = AiProjectiles.init_Vec3(
                   new Vec3(dominant.x(), dominant.y(), dominant.z()),
                   new Vec3(dominant.vx(), dominant.vy(), dominant.vz()),
@@ -350,11 +350,11 @@ final class AiDodge {
                            if (!contact) {
                               double clearance = 1.7976931348623157E308;
 
-                              for (AiProjectiles.Inner_StreamUtil shot : AiProjectiles.init(this.init_Minecraft)) {
+                              for (AiProjectiles.IncomingProjectile shot : AiProjectiles.init(this.init_Minecraft)) {
                                  if (AiProjectiles.init(shot)) {
                                     Entity projectile = this.init_Minecraft.level.getEntity(shot.entityId());
                                     if (projectile != null) {
-                                       AiProjectiles.Inner_DataUtil predicted = AiProjectiles.init(this.init_Minecraft, projectile, landing, travelTicks);
+                                       AiProjectiles.ApproachMetrics predicted = AiProjectiles.init(this.init_Minecraft, projectile, landing, travelTicks);
                                        clearance = Math.min(clearance, predicted == null ? 10.0 : predicted.closestApproach());
                                     }
                                  }
@@ -373,10 +373,10 @@ final class AiDodge {
                return best;
             }
 
-            boolean init(AiProjectiles.Inner_StreamUtil main, List<AiProjectiles.Inner_StreamUtil> threats) {
+            boolean init(AiProjectiles.IncomingProjectile main, List<AiProjectiles.IncomingProjectile> threats) {
                Vec3 facing = new Vec3(main.x() - this.init_Minecraft.player.getX(), 0.0, main.z() - this.init_Minecraft.player.getZ()).normalize();
 
-               for (AiProjectiles.Inner_StreamUtil shot : threats) {
+               for (AiProjectiles.IncomingProjectile shot : threats) {
                   if (!AiDefense.init(this.init_Minecraft, this.init_Minecraft.level.getEntity(shot.entityId()))) {
                      return false;
                   }
@@ -407,11 +407,11 @@ final class AiDodge {
                return true;
             }
 
-            Entity init_Entity_2(List<AiProjectiles.Inner_StreamUtil> threats) {
+            Entity init_Entity_2(List<AiProjectiles.IncomingProjectile> threats) {
                Entity best = null;
                double bestTime = 1.7976931348623157E308;
 
-               for (AiProjectiles.Inner_StreamUtil t : threats) {
+               for (AiProjectiles.IncomingProjectile t : threats) {
                   Entity e = this.init_Minecraft.level.getEntity(t.entityId());
                   if (e instanceof Projectile
                      && e.isAlive()
@@ -427,10 +427,10 @@ final class AiDodge {
                return best;
             }
 
-            JsonObject init_JsonObject(List<AiProjectiles.Inner_StreamUtil> threats) {
+            JsonObject init_JsonObject(List<AiProjectiles.IncomingProjectile> threats) {
                JsonArray remaining = new JsonArray();
 
-               for (AiProjectiles.Inner_StreamUtil t : threats) {
+               for (AiProjectiles.IncomingProjectile t : threats) {
                   remaining.add(
                      AiJson.init_JsonObject_ObjArr(
                         "id", t.entityId(), "type", t.type(), "closestApproach", t.closestApproach(), "secondsToClosest", t.secondsToClosest()
@@ -476,11 +476,11 @@ final class AiDodge {
                );
             }
 
-            AiOperation.Result init(String message, List<AiProjectiles.Inner_StreamUtil> threats) {
+            AiOperation.Result init(String message, List<AiProjectiles.IncomingProjectile> threats) {
                return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject(threats));
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message, List<AiProjectiles.Inner_StreamUtil> threats) {
+            AiOperation.Result init(AiOperation.Status status, String message, List<AiProjectiles.IncomingProjectile> threats) {
                this.cancel();
                return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject(threats));
             }

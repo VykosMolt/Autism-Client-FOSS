@@ -49,7 +49,7 @@ public abstract class AutismCameraMixin {
             return;
          }
 
-         RotationMath.Inner_DataUtil rotation = DangerModule.init_ce_DataUtil_F_2(partialTick);
+         RotationMath.Rotation rotation = DangerModule.init_ce_DataUtil_F_2(partialTick);
          if (rotation == null
             && mc.player != null
             && mc.options.getCameraType().isFirstPerson()

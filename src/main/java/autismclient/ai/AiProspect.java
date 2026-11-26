@@ -32,11 +32,11 @@ final class AiProspect {
    private AiProspect() {
    }
 
-   static boolean init_Z(AiItems.Inner_DataUtil target) {
+   static boolean init_Z(AiItems.ItemSpec target) {
       return init_Str(target) != null;
    }
 
-   static String init_Str(AiItems.Inner_DataUtil target) {
+   static String init_Str(AiItems.ItemSpec target) {
       for (String id : target.itemIds()) {
          String kind = init_Map.get(id);
          if (kind != null) {
@@ -72,7 +72,7 @@ final class AiProspect {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final String spec = AiJson.init_Str_JsonObject(args, "item", "");
-         final AiItems.Inner_DataUtil target = AiItems.init_af_DataUtil(spec);
+         final AiItems.ItemSpec target = AiItems.init_af_DataUtil(spec);
          final String kind = init_Str(target);
          if (kind == null) {
             throw new IllegalArgumentException(
@@ -92,7 +92,7 @@ final class AiProspect {
             final List<BlockPos> init_List = new ArrayList<>();
             final Set<Long> init_Set = new LinkedHashSet<>();
             final JsonArray init_JsonArray = new JsonArray();
-            final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard();
+            final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard();
             AiOperation init_AiOperation;
             AiOperation load_AiOperation;
             AiOperation read;
@@ -244,7 +244,7 @@ final class AiProspect {
                   this.read = null;
                   return this.init("Resuming after " + this.init_Str);
                } else {
-                  AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
+                  AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
                   AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.init_I_30());
                   if (action == null) {
                      return null;

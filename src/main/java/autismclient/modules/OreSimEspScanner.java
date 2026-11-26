@@ -52,7 +52,7 @@ public final class OreSimEspScanner {
    private static final long[] init_JArr = new long[8192];
    private static final int[] init_IArr = new int[8192];
    private static final double[] init_DArr = new double[8192];
-   private static final EspChunkWorker.Inner_CachePool[] init_af_CachePoolArr = new EspChunkWorker.Inner_CachePool[8192];
+   private static final EspChunkWorker.EspBox[] init_af_CachePoolArr = new EspChunkWorker.EspBox[8192];
    static final int read_I = -3355444;
    private static final OreSimEspScanner.Inner_StreamUtil init_ak_StreamUtil = new OreSimEspScanner.Inner_StreamUtil("", Set.of(), List.of(), 0);
    private static volatile OreSimEspScanner.Inner_StreamUtil load_ak_StreamUtil = init_ak_StreamUtil;
@@ -419,7 +419,7 @@ public final class OreSimEspScanner {
          int playerChunkZ = player.chunkPosition().z();
          Vec3 eyes = player.getEyePosition();
          double[] heapDist = init_DArr;
-         EspChunkWorker.Inner_CachePool[] heapEntry = init_af_CachePoolArr;
+         EspChunkWorker.EspBox[] heapEntry = init_af_CachePoolArr;
          int size = 0;
 
          for (int ring = 0; ring <= chunkRadius; ring++) {
@@ -435,7 +435,7 @@ public final class OreSimEspScanner {
                   if (Math.max(Math.abs(dx), Math.abs(dz)) == ring) {
                      LevelChunk chunk = chunks.getChunk(playerChunkX + dx, playerChunkZ + dz, ChunkStatus.FULL, false);
                      if (chunk != null) {
-                        for (EspChunkWorker.Inner_CachePool entry : EspChunkWorker.flush
+                        for (EspChunkWorker.EspBox entry : EspChunkWorker.flush
                            .initAsync(chunk, gameTime, stamp, (scanned, out) -> init(scanned, selection, colors, playerBlockY, out))) {
                            Vec3 center = entry.init_Vec3();
                            double px = center.x - eyes.x;
@@ -465,7 +465,7 @@ public final class OreSimEspScanner {
       }
    }
 
-   private static void init(double[] dist, EspChunkWorker.Inner_CachePool[] entries, int index) {
+   private static void init(double[] dist, EspChunkWorker.EspBox[] entries, int index) {
       while (index > 0) {
          int parent = index - 1 >>> 1;
          if (!(dist[parent] >= dist[index])) {
@@ -477,7 +477,7 @@ public final class OreSimEspScanner {
       }
    }
 
-   private static void load(double[] dist, EspChunkWorker.Inner_CachePool[] entries, int size) {
+   private static void load(double[] dist, EspChunkWorker.EspBox[] entries, int size) {
       int index = 0;
 
       while (true) {
@@ -501,16 +501,16 @@ public final class OreSimEspScanner {
       }
    }
 
-   private static void init(double[] dist, EspChunkWorker.Inner_CachePool[] entries, int a, int b) {
+   private static void init(double[] dist, EspChunkWorker.EspBox[] entries, int a, int b) {
       double d = dist[a];
       dist[a] = dist[b];
       dist[b] = d;
-      EspChunkWorker.Inner_CachePool e = entries[a];
+      EspChunkWorker.EspBox e = entries[a];
       entries[a] = entries[b];
       entries[b] = e;
    }
 
-   private static void init(LevelChunk chunk, OreSimEspScanner.Inner_StreamUtil selection, Object2IntMap<Block> colors, int playerBlockY, List<EspChunkWorker.Inner_CachePool> out) {
+   private static void init(LevelChunk chunk, OreSimEspScanner.Inner_StreamUtil selection, Object2IntMap<Block> colors, int playerBlockY, List<EspChunkWorker.EspBox> out) {
       LevelChunkSection[] sections = chunk.getSections();
       int minX = chunk.getPos().getMinBlockX();
       int minZ = chunk.getPos().getMinBlockZ();
@@ -554,7 +554,7 @@ public final class OreSimEspScanner {
                         int x = minX + sx;
                         int y = baseY + sy;
                         int z = minZ + sz;
-                        out.add(new EspChunkWorker.Inner_CachePool(new AABB(new BlockPos(x, y, z)), new Vec3(x + 0.5, y + 0.5, z + 0.5), colors.getInt(block)));
+                        out.add(new EspChunkWorker.EspBox(new AABB(new BlockPos(x, y, z)), new Vec3(x + 0.5, y + 0.5, z + 0.5), colors.getInt(block)));
                      }
                   }
                }

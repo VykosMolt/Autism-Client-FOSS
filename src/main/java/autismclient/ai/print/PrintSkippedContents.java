@@ -42,13 +42,13 @@ public record PrintSkippedContents(BlockPos position, BlockState source, int ski
    }
 
    @Override
-   public PrintMachineJob.Inner_DataUtil prepare() {
-      return PrintMachineJob.Inner_DataUtil.SKIPPED;
+   public PrintMachineJob.JobStatus prepare() {
+      return PrintMachineJob.JobStatus.SKIPPED;
    }
 
    @Override
-   public PrintMachineJob.Inner_DataUtil poll_BitSetUtil_DataUti() {
-      return PrintMachineJob.Inner_DataUtil.SKIPPED;
+   public PrintMachineJob.JobStatus poll_BitSetUtil_DataUti() {
+      return PrintMachineJob.JobStatus.SKIPPED;
    }
 
    @Override

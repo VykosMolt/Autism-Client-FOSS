@@ -216,7 +216,7 @@ final class AiBucket {
             }
 
             boolean init_Z_9() {
-               autismclient.util.ServerRotationTracker.Inner_CachePool wire = autismclient.util.ServerRotationTracker.init_ch_CachePool();
+               autismclient.util.ServerRotationTracker.RotationSnapshot wire = autismclient.util.ServerRotationTracker.init_ch_CachePool();
                return wire.init_Z() && AiBucket.init(wire.read(), wire.write(), mc.player.getYRot(), mc.player.getXRot());
             }
 

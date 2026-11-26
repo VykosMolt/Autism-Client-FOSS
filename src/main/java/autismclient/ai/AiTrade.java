@@ -79,7 +79,7 @@ final class AiTrade {
             throw new IllegalArgumentException("trade needs tradeIndex from an inspect listing, or item to select the offer by its result");
          }
 
-         final AiItems.Inner_DataUtil wantedTarget = wanted.isBlank() ? null : AiItems.load_af_DataUtil(wanted);
+         final AiItems.ItemSpec wantedTarget = wanted.isBlank() ? null : AiItems.load_af_DataUtil(wanted);
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
@@ -493,15 +493,15 @@ final class AiTrade {
                      }
 
                      if (this.push == 4) {
-                        autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                        if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+                        autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                        if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                            this.poll++;
                            this.push = 0;
                            this.pop = 0;
                            this.init_BlockPos = null;
                            return null;
                         } else {
-                           return status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.pop <= 100
+                           return status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.pop <= 100
                               ? this.init_AiOperation_Result_12("Replacing the job-site block")
                               : this.init(AiFailure.UNREACHABLE, "Could not replace the job-site block: " + this.init_DataPipe.init_Str());
                         }

@@ -13,7 +13,7 @@ public class WaitForGuiAction implements MacroAction {
    public WaitForGuiAction.Inner_DataUtil waitMode = WaitForGuiAction.Inner_DataUtil.OPEN;
    public String guiType = "ANY";
    public String guiTitle = "";
-   public PatternCaptureMatcher.Inner_DataUtil matchMode = PatternCaptureMatcher.Inner_DataUtil.MATCH;
+   public PatternCaptureMatcher.MatchMode matchMode = PatternCaptureMatcher.MatchMode.MATCH;
    public String saveAs = "";
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
@@ -90,8 +90,8 @@ public class WaitForGuiAction implements MacroAction {
       }
 
       String title = screen.getTitle() == null ? "" : screen.getTitle().getString();
-      if (this.matchMode == PatternCaptureMatcher.Inner_DataUtil.MATCH) {
-         MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiTitle, Minecraft.getInstance());
+      if (this.matchMode == PatternCaptureMatcher.MatchMode.MATCH) {
+         MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiTitle, Minecraft.getInstance());
          if (!resolved.init_Z()) {
             return Optional.empty();
          } else {
@@ -100,7 +100,7 @@ public class WaitForGuiAction implements MacroAction {
                : Optional.of(this.init(screen, title, Map.of()));
          }
       } else {
-         Optional<PatternCaptureMatcher.Inner_StreamUtil> matched = PatternCaptureMatcher.init(this.matchMode, this.guiTitle, title);
+         Optional<PatternCaptureMatcher.CaptureResult> matched = PatternCaptureMatcher.init(this.matchMode, this.guiTitle, title);
          return matched.isEmpty() ? Optional.empty() : Optional.of(this.init(screen, title, matched.get().init_Map()));
       }
    }
@@ -111,13 +111,13 @@ public class WaitForGuiAction implements MacroAction {
       if (snapshot != null && (anyType || GuiScreenMatcher.init_Z(this.guiType))) {
          String title = snapshot.title();
          Map<String, MacroVarValue> captures = Map.of();
-         if (this.matchMode == PatternCaptureMatcher.Inner_DataUtil.MATCH) {
-            MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiTitle, Minecraft.getInstance());
+         if (this.matchMode == PatternCaptureMatcher.MatchMode.MATCH) {
+            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiTitle, Minecraft.getInstance());
             if (!resolved.init_Z() || !resolved.init_Str().isBlank() && !title.toLowerCase(Locale.ROOT).contains(resolved.init_Str().toLowerCase(Locale.ROOT))) {
                return Optional.empty();
             }
          } else {
-            Optional<PatternCaptureMatcher.Inner_StreamUtil> matched = PatternCaptureMatcher.init(this.matchMode, this.guiTitle, title);
+            Optional<PatternCaptureMatcher.CaptureResult> matched = PatternCaptureMatcher.init(this.matchMode, this.guiTitle, title);
             if (matched.isEmpty()) {
                return Optional.empty();
             }
@@ -127,7 +127,7 @@ public class WaitForGuiAction implements MacroAction {
 
          Map<String, MacroVarValue> values = new LinkedHashMap<>(captures);
          if (this.saveAs != null && !this.saveAs.isBlank()) {
-            values.put(this.saveAs, MacroVarValue.init(MacroVarValue.Inner_DataUtil.GUI, title, Map.of("title", MacroVarValue.init_l_Obj(title), "type", MacroVarValue.init_l_Obj("CUSTOM_MENU"))));
+            values.put(this.saveAs, MacroVarValue.init(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.init_l_Obj(title), "type", MacroVarValue.init_l_Obj("CUSTOM_MENU"))));
          }
 
          return Optional.of(values);
@@ -142,7 +142,7 @@ public class WaitForGuiAction implements MacroAction {
          Map<String, MacroVarValue> properties = new LinkedHashMap<>();
          properties.put("title", MacroVarValue.init_l_Obj(title));
          properties.put("type", MacroVarValue.init_l_Obj(GuiScreenMatcher.init_Str(screen)));
-         values.put(this.saveAs, MacroVarValue.init(MacroVarValue.Inner_DataUtil.GUI, title, properties));
+         values.put(this.saveAs, MacroVarValue.init(MacroVarValue.ValueType.GUI, title, properties));
       }
 
       return values;
@@ -155,7 +155,7 @@ public class WaitForGuiAction implements MacroAction {
       tag.putString("waitMode", this.waitMode.name());
       tag.putString("guiType", this.guiType == null ? "ANY" : this.guiType);
       tag.putString("guiTitle", this.guiTitle);
-      tag.putString("matchMode", (this.matchMode == null ? PatternCaptureMatcher.Inner_DataUtil.MATCH : this.matchMode).name());
+      tag.putString("matchMode", (this.matchMode == null ? PatternCaptureMatcher.MatchMode.MATCH : this.matchMode).name());
       tag.putString("saveAs", this.saveAs == null ? "" : this.saveAs);
       tag.putInt("timeoutMs", this.timeoutMs);
       tag.putBoolean("enabled", this.init);
@@ -180,7 +180,7 @@ public class WaitForGuiAction implements MacroAction {
       }
 
       this.guiType = tag.getStringOr("guiType", "ANY");
-      this.matchMode = MacroNbtCodecHelper.init(PatternCaptureMatcher.Inner_DataUtil.class, tag.getStringOr("matchMode", "MATCH"), PatternCaptureMatcher.Inner_DataUtil.MATCH);
+      this.matchMode = MacroNbtCodecHelper.init(PatternCaptureMatcher.MatchMode.class, tag.getStringOr("matchMode", "MATCH"), PatternCaptureMatcher.MatchMode.MATCH);
       this.saveAs = tag.getStringOr("saveAs", "");
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
       if (tag.contains("enabled")) {

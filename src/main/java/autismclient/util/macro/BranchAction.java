@@ -23,7 +23,7 @@ public class BranchAction implements MacroAction {
          return false;
       }
 
-      MacroTemplateResolver.Inner_CachePool resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.value, mc);
+      MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.value, mc);
       if (!resolution.init_Z()) {
          return false;
       }

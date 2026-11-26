@@ -101,7 +101,7 @@ final class AuditBuilderShulkerStock {
          int count = args.has("count") ? Math.max(1, args.get("count").getAsInt()) : 1;
          boolean additional = args.has("additional") && args.get("additional").getAsBoolean();
          int target = additional ? held(item) + count : count;
-         AiCraftPlanner.Inner_CachePool plan = plan(item, target);
+         AiCraftPlanner.CraftPlan plan = plan(item, target);
          Map<String, Integer> missing = new LinkedHashMap<>(plan.missing());
          if (plan.requiresTable() && held("minecraft:crafting_table") == 0) {
             missing.putIfAbsent("minecraft:crafting_table", 1);
@@ -180,7 +180,7 @@ final class AuditBuilderShulkerStock {
       return null;
    }
 
-   private static AiCraftPlanner.Inner_CachePool plan(String item, int target) throws Exception {
+   private static AiCraftPlanner.CraftPlan plan(String item, int target) throws Exception {
       return onClient(() -> AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), item, target));
    }
 

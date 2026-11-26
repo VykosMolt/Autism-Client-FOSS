@@ -13,9 +13,9 @@ final class BedTargetAimSolver {
    }
 
    static Vec3 init(
-      autismclient.ai.engine.AiPhysics.Inner_StreamUtil state,
-      autismclient.ai.engine.AiPhysics.Inner_DataUtil input,
-      autismclient.ai.engine.AiPhysics.Inner_CachePool world,
+      autismclient.ai.engine.AiPhysics.MotionState state,
+      autismclient.ai.engine.AiPhysics.MoveInput input,
+      autismclient.ai.engine.AiPhysics.PhysicsWorld world,
       double eyeHeight
    ) {
       return autismclient.ai.engine.AiPhysics.init(state, input, world).position().add(0.0, eyeHeight, 0.0);

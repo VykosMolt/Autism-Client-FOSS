@@ -98,7 +98,7 @@ final class AiContainer {
          final boolean navigate = AiJson.init_Z_JsonObject(args, "navigate", true);
          final int timeoutSeconds = Math.max(5, Math.min(1800, AiJson.init_I_JsonObject(args, "timeoutSeconds", 120)));
          final List<AiContainer.Inner_CachePool> requests = init(args, action);
-         final List<AiItems.Inner_DataUtil> keep = init_List(args);
+         final List<AiItems.ItemSpec> keep = init_List(args);
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
@@ -128,7 +128,7 @@ final class AiContainer {
             boolean write_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.NORMAL);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.NORMAL);
             }
 
             @Override
@@ -390,7 +390,7 @@ final class AiContainer {
             }
 
             boolean init_Z(ItemStack stack) {
-               for (AiItems.Inner_DataUtil target : keep) {
+               for (AiItems.ItemSpec target : keep) {
                   if (target.matches(stack)) {
                      return true;
                   }
@@ -584,8 +584,8 @@ final class AiContainer {
       }
    }
 
-   private static List<AiItems.Inner_DataUtil> init_List(JsonObject args) {
-      List<AiItems.Inner_DataUtil> keep = new ArrayList<>();
+   private static List<AiItems.ItemSpec> init_List(JsonObject args) {
+      List<AiItems.ItemSpec> keep = new ArrayList<>();
       if (args.has("keep") && args.get("keep").isJsonArray()) {
          for (JsonElement element : args.getAsJsonArray("keep")) {
             keep.add(AiItems.init_af_DataUtil(element.getAsString()));
@@ -595,7 +595,7 @@ final class AiContainer {
       return List.copyOf(keep);
    }
 
-   record Inner_CachePool(AiItems.Inner_DataUtil target, int count) {
+   record Inner_CachePool(AiItems.ItemSpec target, int count) {
    }
 
    enum Inner_DataUtil {

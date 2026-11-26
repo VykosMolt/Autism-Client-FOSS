@@ -17,11 +17,11 @@ public final class MouseMovementRouter {
    private MouseMovementRouter() {
    }
 
-   public static void init_V_ce_DataUtil_ce_DataUtil(RotationMath.Inner_DataUtil current, RotationMath.Inner_DataUtil target) {
+   public static void init_V_ce_DataUtil_ce_DataUtil(RotationMath.Rotation current, RotationMath.Rotation target) {
       init_V_ba_StreamUtil_4(MouseMovementRouter.Inner_StreamUtil.GENERIC, current, target);
    }
 
-   public static void init_V_ba_StreamUtil_4(MouseMovementRouter.Inner_StreamUtil source, RotationMath.Inner_DataUtil current, RotationMath.Inner_DataUtil target) {
+   public static void init_V_ba_StreamUtil_4(MouseMovementRouter.Inner_StreamUtil source, RotationMath.Rotation current, RotationMath.Rotation target) {
       if (current != null && target != null) {
          float yawDelta = RotationMath.init(target.init(), current.init());
          float pitchDelta = Mth.clamp(target.load(), -90.0F, 90.0F) - Mth.clamp(current.load(), -90.0F, 90.0F);

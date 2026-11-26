@@ -124,7 +124,7 @@ public final class TrajectoriesModule extends Module {
          if (item != null && this.bool(item.init())) {
             float yaw = player.getYRot();
             float pitch = player.getXRot();
-            RotationMath.Inner_DataUtil rotation = SilentMovementCoordinator.load(MC.player);
+            RotationMath.Rotation rotation = SilentMovementCoordinator.load(MC.player);
             if (rotation != null) {
                yaw = rotation.init();
                pitch = rotation.load();
