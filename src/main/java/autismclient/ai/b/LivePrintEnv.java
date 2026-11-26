@@ -104,7 +104,7 @@ public final class LivePrintEnv implements PrintEnv {
             .init(
                this.init_Minecraft.level,
                this.init_Minecraft.player,
-               autismclient.util.h.BlockChangeAckTracker.init_Z(this.init_Minecraft.level, this.init_TableIndex.init()),
+               autismclient.util.villager.BlockChangeAckTracker.init_Z(this.init_Minecraft.level, this.init_TableIndex.init()),
                this.load_J()
             );
    }

@@ -1,10 +1,10 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.ModNamespaceCatalog;
-import autismclient.g.PacketOriginDuck;
-import autismclient.g.PacketComponentOriginTracker;
-import autismclient.g.PacketDecodeOriginStack;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.ModNamespaceCatalog;
+import autismclient.protector.PacketOriginDuck;
+import autismclient.protector.PacketComponentOriginTracker;
+import autismclient.protector.PacketDecodeOriginStack;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.util.function.Supplier;

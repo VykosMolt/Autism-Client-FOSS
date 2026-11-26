@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.c.GifRenderContext;
+import autismclient.util.gif.GifRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

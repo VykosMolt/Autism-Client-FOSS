@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ModNamespaceCatalog;
+import autismclient.protector.ModNamespaceCatalog;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.platform.InputConstants.Type;

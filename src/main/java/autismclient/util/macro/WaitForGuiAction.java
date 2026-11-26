@@ -106,7 +106,7 @@ public class WaitForGuiAction implements MacroAction {
    }
 
    private Optional<Map<String, MacroVarValue>> init() {
-      CustomMenuSnapshot snapshot = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
+      CustomMenuSnapshot snapshot = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
       boolean anyType = this.guiType == null || this.guiType.isBlank() || "ANY".equalsIgnoreCase(this.guiType);
       if (snapshot != null && (anyType || GuiScreenMatcher.init_Z(this.guiType))) {
          String title = snapshot.title();

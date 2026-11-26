@@ -329,8 +329,8 @@ public final class ClientInteractionOverride {
    private static void flush_V() {
       if (push && init_Minecraft != null && init_Minecraft.options != null) {
          push = false;
-         boolean attackOwned = read_Z || VirtualInputDispatcher.init_Z_Z(false) || !AutismLiteVariant.enabled() && autismclient.util.a.KeyClickOutput.init_Z_Z(false);
-         boolean useOwned = load_Z || VirtualInputDispatcher.init_Z_Z(true) || !AutismLiteVariant.enabled() && autismclient.util.a.KeyClickOutput.init_Z_Z(true);
+         boolean attackOwned = read_Z || VirtualInputDispatcher.init_Z_Z(false) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.init_Z_Z(false);
+         boolean useOwned = load_Z || VirtualInputDispatcher.init_Z_Z(true) || !AutismLiteVariant.enabled() && autismclient.util.clicker.KeyClickOutput.init_Z_Z(true);
          if (!attackOwned) {
             KeyMappingControl.init(init_Minecraft.options.keyAttack).autism$resetPressedState();
          }

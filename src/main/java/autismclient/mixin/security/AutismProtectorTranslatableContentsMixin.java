@@ -1,11 +1,11 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.TranslationSnapshot;
-import autismclient.g.ProtectorFeatureFlags;
-import autismclient.g.PacketOriginDuck;
-import autismclient.g.PacketComponentOriginTracker;
-import autismclient.g.PacketDecodeOriginStack;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.TranslationSnapshot;
+import autismclient.protector.ProtectorFeatureFlags;
+import autismclient.protector.PacketOriginDuck;
+import autismclient.protector.PacketComponentOriginTracker;
+import autismclient.protector.PacketDecodeOriginStack;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.locale.Language;

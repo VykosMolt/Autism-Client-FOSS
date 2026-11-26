@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.OutboundChannelPolicy;
+import autismclient.protector.OutboundChannelPolicy;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl;

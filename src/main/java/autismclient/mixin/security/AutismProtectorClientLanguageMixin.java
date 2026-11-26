@@ -1,11 +1,11 @@
 package autismclient.mixin.security;
 
-import autismclient.g.PackTranslationPolicyResolver;
-import autismclient.g.CallerModInspector;
-import autismclient.g.TranslationSnapshot;
-import autismclient.g.TranslationSnapshotDuck;
-import autismclient.g.IsolatedResourcePack;
-import autismclient.g.ModNamespaceCatalog;
+import autismclient.protector.PackTranslationPolicyResolver;
+import autismclient.protector.CallerModInspector;
+import autismclient.protector.TranslationSnapshot;
+import autismclient.protector.TranslationSnapshotDuck;
+import autismclient.protector.IsolatedResourcePack;
+import autismclient.protector.ModNamespaceCatalog;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

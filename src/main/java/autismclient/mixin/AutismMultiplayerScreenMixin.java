@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.c.ExternalButtonScreenDuck;
+import autismclient.mixin.duck.ExternalButtonScreenDuck;
 import autismclient.gui.d.ProxiesScreen;
 import autismclient.gui.d.JoinMacroScreen;
 import autismclient.gui.d.PluginLibraryScreen;
@@ -259,7 +259,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
       ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       boolean vanilla = module != null && module.tick_Z();
       boolean bypass = module != null && module.pop_Z();
-      String label = autismclient.g.ProtectorModeDescriptions.init(vanilla, bypass);
+      String label = autismclient.protector.ProtectorModeDescriptions.init(vanilla, bypass);
       return this.autism$fitLabel(width, label, bypass ? "Bypass" : "Normal", "Packs");
    }
 
@@ -343,9 +343,9 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
       boolean bypass = module != null && module.pop_Z();
       String guidance = null;
       if (this.autism$spoofButton != null && this.autism$spoofButton.isMouseOver(mouseX, mouseY)) {
-         guidance = autismclient.g.ProtectorModeDescriptions.init(vanilla);
+         guidance = autismclient.protector.ProtectorModeDescriptions.init(vanilla);
       } else if (this.autism$packsButton != null && this.autism$packsButton.isMouseOver(mouseX, mouseY)) {
-         guidance = autismclient.g.ProtectorModeDescriptions.load(vanilla, bypass);
+         guidance = autismclient.protector.ProtectorModeDescriptions.load(vanilla, bypass);
       }
 
       if (guidance != null) {

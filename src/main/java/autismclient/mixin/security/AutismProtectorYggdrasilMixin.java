@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ProtectorFeatureFlags;
+import autismclient.protector.ProtectorFeatureFlags;
 import com.mojang.authlib.minecraft.TelemetrySession;
 import com.mojang.authlib.services.MinecraftServicesUserApiService;
 import java.util.concurrent.Executor;

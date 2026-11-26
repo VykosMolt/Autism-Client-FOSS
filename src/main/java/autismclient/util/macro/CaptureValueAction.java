@@ -519,7 +519,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
                   title, MacroVarValue.init(MacroVarValue.Inner_DataUtil.GUI, title, Map.of("title", MacroVarValue.init_l_Obj(title), "type", MacroVarValue.init_l_Obj(GuiScreenMatcher.init_Str(screen))))
                );
             } else {
-               CustomMenuSnapshot menu = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
+               CustomMenuSnapshot menu = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
                if (menu == null) {
                   var10000 = null;
                } else {

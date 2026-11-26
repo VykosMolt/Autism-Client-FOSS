@@ -45,9 +45,9 @@ final class TriggerBotModule extends Module {
    private static final double sync_D = 35.0;
    private final ClickerSettingsGroup init_h;
    private final HeldItemFilter init_O;
-   private final autismclient.util.a.ClickPatternEngine init_DataUtil = new autismclient.util.a.ClickPatternEngine();
-   private final autismclient.util.a.KeyClickOutput init_StreamUtil = autismclient.util.a.KeyClickOutput.init_StreamUtil();
-   private final autismclient.util.a.ClickPatternEngine.Inner_NetHelper init_DataUtil_NetHelper = new autismclient.util.a.ClickPatternEngine.Inner_NetHelper() {
+   private final autismclient.util.clicker.ClickPatternEngine init_DataUtil = new autismclient.util.clicker.ClickPatternEngine();
+   private final autismclient.util.clicker.KeyClickOutput init_StreamUtil = autismclient.util.clicker.KeyClickOutput.init_StreamUtil();
+   private final autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper init_DataUtil_NetHelper = new autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper() {
       @Override
       public boolean init_Z_J(long now) {
          return Module.MC.hitResult != null && Module.MC.hitResult.getType() != Type.MISS || TriggerBotModule.this.init_StreamUtil.init_Z_J(now);
@@ -69,8 +69,8 @@ final class TriggerBotModule extends Module {
       }
    };
    private final Random init_Random = new Random();
-   private final autismclient.util.a.SwingTimingModel init_JsonUtil = new autismclient.util.a.SwingTimingModel(this.init_Random);
-   private final autismclient.util.a.DoubleClickSampler init_TaskQueue = new autismclient.util.a.DoubleClickSampler(this.init_Random);
+   private final autismclient.util.clicker.SwingTimingModel init_JsonUtil = new autismclient.util.clicker.SwingTimingModel(this.init_Random);
+   private final autismclient.util.clicker.DoubleClickSampler init_TaskQueue = new autismclient.util.clicker.DoubleClickSampler(this.init_Random);
    private autismclient.util.HumanHandProfile init_am;
    private int init_I = -1;
    private long update_J;
@@ -179,7 +179,7 @@ final class TriggerBotModule extends Module {
       } else {
          boolean noCooldown = autismclient.util.LegacyCombatDetector.init(MC.player);
          boolean timed = !noCooldown && this.bool("respect-cooldown");
-         boolean rage = !timed && this.init_h.init_BufferHelper() == autismclient.util.a.ClickTechnique.RAGE;
+         boolean rage = !timed && this.init_h.init_BufferHelper() == autismclient.util.clicker.ClickTechnique.RAGE;
          boolean flinched = this.load_Z_15();
          boolean physical = this.init_StreamUtil.load_Z();
          if (physical && !this.load_Z && !timed) {
@@ -187,7 +187,7 @@ final class TriggerBotModule extends Module {
          }
 
          this.load_Z = physical;
-         autismclient.util.a.ClickProfile profile = this.init_h.init_CachePool();
+         autismclient.util.clicker.ClickProfile profile = this.init_h.init_CachePool();
          this.init_DataUtil.init_V_DataUtil_ConfigSto(this.init_h.init_DataUtil_ConfigSto());
          LivingEntity target = this.init(now, noCooldown, rage);
          boolean engaged = false;
@@ -386,7 +386,7 @@ final class TriggerBotModule extends Module {
                   ShieldHitWindowHelper.init(step),
                   autismclient.util.AttackReachHelper.init_D(MC.player)
                );
-            if (lastChance || autismclient.util.a.SwingTimingModel.init(shown, ticker, MC.player.getCurrentItemAttackStrengthDelay(), init_D_10(), offset)) {
+            if (lastChance || autismclient.util.clicker.SwingTimingModel.init(shown, ticker, MC.player.getCurrentItemAttackStrengthDelay(), init_D_10(), offset)) {
                ValueRange hold = ValueRange.parse(this.value("modern-hold"), write_ValueRange);
                int followUp = lastChance ? 0 : this.init_TaskQueue.init();
                long holdNanos = followUp > 0 ? this.init_J_7() : this.init_JsonUtil.init(hold.min(), hold.max());
@@ -403,7 +403,7 @@ final class TriggerBotModule extends Module {
    }
 
    private long init_J_7() {
-      return autismclient.util.a.ClickTimingMath.load(15.0 + 20.0 * this.init_Random.nextDouble());
+      return autismclient.util.clicker.ClickTimingMath.load(15.0 + 20.0 * this.init_Random.nextDouble());
    }
 
    private void init_V_31() {
@@ -445,7 +445,7 @@ final class TriggerBotModule extends Module {
       double bias = 0.92 + 0.16 * (trait - Math.floor(trait));
       RotationMath.Inner_DataUtil toTarget = RotationMath.init(target.getBoundingBox().getCenter(), MC.player.getEyePosition());
       float angle = RotationMath.init_F(RotationMath.init(MC.player), toTarget);
-      return autismclient.util.a.ReactionDelayModel.init(this.init_Random, reaction.min(), reaction.max(), bias, angle);
+      return autismclient.util.clicker.ReactionDelayModel.init(this.init_Random, reaction.min(), reaction.max(), bias, angle);
    }
 
    private boolean init(Entity entity) {

@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ProtectorFeatureFlags;
+import autismclient.protector.ProtectorFeatureFlags;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.multiplayer.ClientPacketListener;

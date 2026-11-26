@@ -1,9 +1,9 @@
 package autismclient.mixin;
 
 import autismclient.compat263.Compat263;
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.ComponentSafetyValidator;
-import autismclient.g.MovementBoundsGuard;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.ComponentSafetyValidator;
+import autismclient.protector.MovementBoundsGuard;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.PacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;

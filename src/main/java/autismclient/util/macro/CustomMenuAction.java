@@ -33,12 +33,12 @@ public final class CustomMenuAction implements MacroAction {
             return;
          }
 
-         long seenGeneration = autismclient.util.b.CustomMenuTracker.init_J();
-         CustomMenuSnapshot snapshot = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
+         long seenGeneration = autismclient.util.custommenu.CustomMenuTracker.init_J();
+         CustomMenuSnapshot snapshot = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
          if (snapshot != null) {
             seenGeneration = snapshot.generation();
          } else {
-            snapshot = autismclient.util.b.DialogScreenBridge.init_CustomMenuSnapshot(mc);
+            snapshot = autismclient.util.custommenu.DialogScreenBridge.init_CustomMenuSnapshot(mc);
          }
 
          if (snapshot == null) {
@@ -68,7 +68,7 @@ public final class CustomMenuAction implements MacroAction {
                return;
             }
 
-            Screen answered = autismclient.util.b.DialogScreenBridge.init_Screen(mc);
+            Screen answered = autismclient.util.custommenu.DialogScreenBridge.init_Screen(mc);
             CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, prepared.init_CustomMenuSubmissi());
             if (!result.success()) {
                this.init(result.error());
@@ -82,8 +82,8 @@ public final class CustomMenuAction implements MacroAction {
                }
             }
 
-            autismclient.util.b.CustomMenuTracker.init(seenGeneration, result.replacement(), snapshot.phase());
-            autismclient.util.b.DialogScreenBridge.init(mc, result.clientAction(), answered);
+            autismclient.util.custommenu.CustomMenuTracker.init(seenGeneration, result.replacement(), snapshot.phase());
+            autismclient.util.custommenu.DialogScreenBridge.init(mc, result.clientAction(), answered);
             return;
          }
       }

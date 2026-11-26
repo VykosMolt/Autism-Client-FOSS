@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.TranslationSnapshot;
-import autismclient.g.ModNamespaceCatalog;
+import autismclient.protector.TranslationSnapshot;
+import autismclient.protector.ModNamespaceCatalog;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.locale.DeprecatedTranslationsInfo;

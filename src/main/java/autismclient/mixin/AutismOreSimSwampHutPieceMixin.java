@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.SyntheticWorldGenLevel;
+import autismclient.util.oresim.worldgen.SyntheticWorldGenLevel;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.core.BlockPos;

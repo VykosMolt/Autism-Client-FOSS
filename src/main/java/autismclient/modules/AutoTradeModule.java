@@ -41,8 +41,8 @@ public final class AutoTradeModule extends Module {
    private Entity init_Entity;
    private MerchantMenu init_MerchantMenu;
    private Object init_Obj;
-   private autismclient.util.h.VillagerTradeSession init_CachePool;
-   private autismclient.util.h.TradeOfferFilter init_StreamUtil;
+   private autismclient.util.villager.VillagerTradeSession init_CachePool;
+   private autismclient.util.villager.TradeOfferFilter init_StreamUtil;
    private AutoTradeModule.Inner_StreamUtil init_MethodUtil_StreamU;
    private BlockPos init_BlockPos;
    private Block init_Block;
@@ -248,18 +248,18 @@ public final class AutoTradeModule extends Module {
                throw new IllegalArgumentException("Choose Items, Books or Offer for trading");
             }
 
-            List<autismclient.util.h.TradeOfferFilter.Inner_DataUtil> desired = new ArrayList<>();
+            List<autismclient.util.villager.TradeOfferFilter.Inner_DataUtil> desired = new ArrayList<>();
             if (this.load_Z_6()) {
                String book = this.choice("enchantment").equals("Custom") ? this.text("custom-enchantment") : this.choice("enchantment");
                if (book.isBlank()) {
                   throw new IllegalArgumentException("Enter a custom enchantment");
                }
 
-               desired.add(new autismclient.util.h.TradeOfferFilter.Inner_DataUtil(book, this.integer("level"), 0));
+               desired.add(new autismclient.util.villager.TradeOfferFilter.Inner_DataUtil(book, this.integer("level"), 0));
 
                for (String rule : this.list("other-books")) {
                   try {
-                     desired.add(autismclient.util.h.TradeOfferFilter.Inner_DataUtil.init(rule));
+                     desired.add(autismclient.util.villager.TradeOfferFilter.Inner_DataUtil.init(rule));
                   } catch (IllegalArgumentException e) {
                      throw new IllegalArgumentException("Invalid book rule: " + rule.strip());
                   }
@@ -270,7 +270,7 @@ public final class AutoTradeModule extends Module {
                throw new IllegalArgumentException("Choose at least one buy item");
             }
 
-            this.init_StreamUtil = new autismclient.util.h.TradeOfferFilter(
+            this.init_StreamUtil = new autismclient.util.villager.TradeOfferFilter(
                this.choice("match").equals("Offer") ? this.integer("offer") : 0,
                this.choice("match").equals("Items") ? this.list("results") : List.of(),
                this.list("payments"),
@@ -364,7 +364,7 @@ public final class AutoTradeModule extends Module {
                this.init("Run limit reached", false);
             } else if (this.init_CachePool != null) {
                this.write();
-            } else if (autismclient.util.h.VillagerTradeSession.init_Z()) {
+            } else if (autismclient.util.villager.VillagerTradeSession.init_Z()) {
                this.init_Str = "Waiting for macro trade";
             } else if (this.init_MerchantMenu != null && MC.player.containerMenu != this.init_MerchantMenu) {
                this.init("Trade screen closed", false);
@@ -419,7 +419,7 @@ public final class AutoTradeModule extends Module {
       if (this.integer("budget") > 0 && this.flush_I >= this.integer("budget")) {
          this.init("Emerald budget reached", true);
       } else {
-         this.init_CachePool = new autismclient.util.h.VillagerTradeSession(
+         this.init_CachePool = new autismclient.util.villager.VillagerTradeSession(
             this.init_StreamUtil,
             Math.max(1, count),
             this.integer("delay"),
@@ -438,23 +438,23 @@ public final class AutoTradeModule extends Module {
       this.init_CachePool.init_CachePool_CachePoo_Minecraft(MC);
       this.init_Str = this.init_CachePool.init_Str();
       if (this.init_CachePool.load_Z()) {
-         autismclient.util.h.VillagerTradeSession.Inner_CachePool result = this.init_CachePool.init_CachePool_CachePoo();
+         autismclient.util.villager.VillagerTradeSession.Inner_CachePool result = this.init_CachePool.init_CachePool_CachePoo();
          this.sync_I = this.sync_I + this.init_CachePool.init_I();
          this.flush_I = this.flush_I + this.init_CachePool.load_I();
          this.init_CachePool.init_V_Minecraft(MC);
          this.init_CachePool = null;
          if (this.init_Z) {
             this.init(
-               result == autismclient.util.h.VillagerTradeSession.Inner_CachePool.COMPLETE ? "Match purchased and locked" : "Match found; " + this.init_Str,
-               result == autismclient.util.h.VillagerTradeSession.Inner_CachePool.COMPLETE
+               result == autismclient.util.villager.VillagerTradeSession.Inner_CachePool.COMPLETE ? "Match purchased and locked" : "Match found; " + this.init_Str,
+               result == autismclient.util.villager.VillagerTradeSession.Inner_CachePool.COMPLETE
             );
-         } else if (result != autismclient.util.h.VillagerTradeSession.Inner_CachePool.UNCERTAIN
-            && result != autismclient.util.h.VillagerTradeSession.Inner_CachePool.REJECTED
-            && result != autismclient.util.h.VillagerTradeSession.Inner_CachePool.CURSOR_BUSY
-            && result != autismclient.util.h.VillagerTradeSession.Inner_CachePool.INVENTORY_FULL
-            && result != autismclient.util.h.VillagerTradeSession.Inner_CachePool.BUDGET
-            && result != autismclient.util.h.VillagerTradeSession.Inner_CachePool.CANCELLED
-            && result != autismclient.util.h.VillagerTradeSession.Inner_CachePool.NO_MENU) {
+         } else if (result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.UNCERTAIN
+            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.REJECTED
+            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.CURSOR_BUSY
+            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.INVENTORY_FULL
+            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.BUDGET
+            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.CANCELLED
+            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.NO_MENU) {
             if (this.integer("trade-limit") > 0 && this.sync_I >= this.integer("trade-limit")) {
                this.init("Trade limit reached", true);
             } else if (this.choice("target").equals("Open screen")) {
@@ -561,7 +561,7 @@ public final class AutoTradeModule extends Module {
 
                   Block current = MC.level.getBlockState(this.init_BlockPos).getBlock();
                   if (MC.level.getBlockState(this.init_BlockPos).isAir()) {
-                     if (this.push >= 0 && !autismclient.util.h.BlockChangeAckTracker.init_Z(MC.level, this.push)) {
+                     if (this.push >= 0 && !autismclient.util.villager.BlockChangeAckTracker.init_Z(MC.level, this.push)) {
                         return;
                      }
 
@@ -628,8 +628,8 @@ public final class AutoTradeModule extends Module {
                case ACQUIRE_JOB:
                   if (!this.init_Z_Villager(villager)
                      || !MC.level.getBlockState(this.init_BlockPos).is(this.init_MethodUtil_StreamU.init_Block)
-                     || this.pop >= 0 && !autismclient.util.h.BlockChangeAckTracker.init_Z(MC.level, this.pop)) {
-                     if (this.pop >= 0 && autismclient.util.h.BlockChangeAckTracker.init_Z(MC.level, this.pop) && MC.level.getBlockState(this.init_BlockPos).isAir()) {
+                     || this.pop >= 0 && !autismclient.util.villager.BlockChangeAckTracker.init_Z(MC.level, this.pop)) {
+                     if (this.pop >= 0 && autismclient.util.villager.BlockChangeAckTracker.init_Z(MC.level, this.pop) && MC.level.getBlockState(this.init_BlockPos).isAir()) {
                         this.init(AutoTradeModule.Inner_DataUtil.PLACE, "Retrying workstation placement");
                      } else if (!villager.getVillagerData().profession().is(VillagerProfession.NONE) && !this.init_Z_Villager(villager)) {
                         this.init("Villager claimed another workstation", false);
@@ -704,7 +704,7 @@ public final class AutoTradeModule extends Module {
    }
 
    private boolean init_Z_Entity_3(Entity entity) {
-      return autismclient.util.h.MerchantInteractHelper.init(MC, entity, this.decimal("range"));
+      return autismclient.util.villager.MerchantInteractHelper.init(MC, entity, this.decimal("range"));
    }
 
    private void flush() {
@@ -722,7 +722,7 @@ public final class AutoTradeModule extends Module {
    }
 
    private boolean init_Z_Vec3(Vec3 point) {
-      return autismclient.util.h.MerchantInteractHelper.init(MC, point);
+      return autismclient.util.villager.MerchantInteractHelper.init(MC, point);
    }
 
    private BlockHitResult init_BlockHitResult_BlockPos(BlockPos pos) {
@@ -916,9 +916,9 @@ public final class AutoTradeModule extends Module {
          this.flush_Z = false;
          this.open();
          autismclient.util.bi.read("Replace workstation at " + this.init_BlockPos.toShortString());
-      } else if (this.push < 0 || autismclient.util.h.BlockChangeAckTracker.init_Z(MC.level, this.push)) {
+      } else if (this.push < 0 || autismclient.util.villager.BlockChangeAckTracker.init_Z(MC.level, this.push)) {
          if (!MC.level.getBlockState(this.init_BlockPos).isAir()) {
-            if (this.pop < 0 || autismclient.util.h.BlockChangeAckTracker.init_Z(MC.level, this.pop)) {
+            if (this.pop < 0 || autismclient.util.villager.BlockChangeAckTracker.init_Z(MC.level, this.pop)) {
                this.flush_Z = false;
                this.write_Z = false;
                this.open();
@@ -939,7 +939,7 @@ public final class AutoTradeModule extends Module {
 
    @Override
    public void onGameLeft() {
-      autismclient.util.h.VillagerTradeSession var1 = this.init_CachePool;
+      autismclient.util.villager.VillagerTradeSession var1 = this.init_CachePool;
       if (var1 != null) {
          var1.init_V_Minecraft(Module.MC);
       }

@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.CallerModInspector;
-import autismclient.g.ModNamespaceCatalog;
+import autismclient.protector.CallerModInspector;
+import autismclient.protector.ModNamespaceCatalog;
 import java.util.LinkedHashSet;
 import net.minecraft.client.KeyMapping;
 import org.spongepowered.asm.mixin.Mixin;

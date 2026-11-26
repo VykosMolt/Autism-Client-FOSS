@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.CallerModInspector;
-import autismclient.g.ModNamespaceCatalog;
+import autismclient.protector.CallerModInspector;
+import autismclient.protector.ModNamespaceCatalog;
 import net.fabricmc.fabric.impl.networking.PayloadTypeRegistryImpl;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;

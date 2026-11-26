@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.PacketDecodeOriginStack;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.PacketDecodeOriginStack;
 import net.fabricmc.fabric.impl.networking.PayloadTypeRegistryImpl;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.TypeAndCodec;

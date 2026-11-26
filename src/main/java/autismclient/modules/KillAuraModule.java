@@ -157,7 +157,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    private boolean load_Z;
    private int get_I = 1000;
    private boolean read_Z;
-   private final autismclient.util.a.DoubleClickSampler init_TaskQueue = new autismclient.util.a.DoubleClickSampler(new Random());
+   private final autismclient.util.clicker.DoubleClickSampler init_TaskQueue = new autismclient.util.clicker.DoubleClickSampler(new Random());
    private int set_I = -2147483648;
    private int put_I = -1;
    private int add_I = 1000;
@@ -217,7 +217,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    private int drain;
    private static final float update_F = 1.0E-4F;
    private float sync_F = 1.0F;
-   private final autismclient.util.a.SwingTimingModel init_JsonUtil = new autismclient.util.a.SwingTimingModel();
+   private final autismclient.util.clicker.SwingTimingModel init_JsonUtil = new autismclient.util.clicker.SwingTimingModel();
    private float flush_F = this.read_F_2();
 
    static float init_F_D_Random(double lastStep, Random random) {
@@ -3315,11 +3315,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
 
       void init(
-         autismclient.util.a.ClickPatternEngine engine,
+         autismclient.util.clicker.ClickPatternEngine engine,
          long now,
          boolean active,
-         autismclient.util.a.ClickProfile profile,
-         autismclient.util.a.ClickPatternEngine.Inner_NetHelper sink
+         autismclient.util.clicker.ClickProfile profile,
+         autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper sink
       ) {
          if (active && this.read != -9223372036854775808L && now >= this.read && now - this.read <= 150000000L) {
             while (this.read < now) {
@@ -3335,7 +3335,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
    private final class Inner_CachePool {
       private final KillAuraModule.Inner_NetHelper init_aa_NetHelper = new KillAuraModule.Inner_NetHelper(20, 2);
-      private final autismclient.util.a.ClickPatternEngine init_DataUtil = new autismclient.util.a.ClickPatternEngine();
+      private final autismclient.util.clicker.ClickPatternEngine init_DataUtil = new autismclient.util.clicker.ClickPatternEngine();
       private final KillAuraModule.Inner_TaskQueue init_aa_TaskQueue = new KillAuraModule.Inner_TaskQueue();
       private final KillAuraModule.Inner_BufferHelper init_aa_BufferHelper = new KillAuraModule.Inner_BufferHelper();
       private boolean init_Z;
@@ -3391,7 +3391,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       void init_V_J(long now) {
          if (KillAuraModule.this.init_h != null) {
             this.init_DataUtil.init_V_DataUtil_ConfigSto(KillAuraModule.this.init_h.init_DataUtil_ConfigSto());
-            autismclient.util.a.ClickProfile profile = KillAuraModule.this.init_h.init_CachePool();
+            autismclient.util.clicker.ClickProfile profile = KillAuraModule.this.init_h.init_CachePool();
             this.init_aa_TaskQueue.init_I = (profile.read > 20.000000001 ? 2 : 1) + (KillAuraModule.this.pop_Z_2() ? 1 : 0);
             if (KillAuraModule.this.pop_Z_2()) {
                this.init_aa_BufferHelper.init(this.init_DataUtil, now, this.init_Z, profile, this.init_aa_TaskQueue);
@@ -4063,7 +4063,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   static final class Inner_TaskQueue implements autismclient.util.a.ClickPatternEngine.Inner_NetHelper {
+   static final class Inner_TaskQueue implements autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper {
       private static final long init_J = 150000000L;
       int init_I = 1;
       private int load_I;

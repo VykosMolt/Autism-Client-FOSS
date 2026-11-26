@@ -7114,7 +7114,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void flush_V(String key) {
-      CustomMenuSnapshot menu = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
+      CustomMenuSnapshot menu = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
       if (menu == null) {
          bi.read("No custom screen is open to pick a button from.");
       } else {

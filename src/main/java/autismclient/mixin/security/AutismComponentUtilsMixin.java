@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.PacketComponentOriginTracker;
+import autismclient.protector.PacketComponentOriginTracker;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.network.chat.MutableComponent;

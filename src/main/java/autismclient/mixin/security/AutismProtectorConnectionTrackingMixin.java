@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.ProtectorFeatureFlags;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.ProtectorFeatureFlags;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import java.net.SocketAddress;
@@ -90,7 +90,7 @@ public class AutismProtectorConnectionTrackingMixin {
 
    @Unique
    private static void autism$disconnectExactContext(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
-      autismclient.g.OutboundChannelPolicy.init_V(context);
+      autismclient.protector.OutboundChannelPolicy.init_V(context);
    }
 
    private ConnectionPrivacyRegistry.Inner_StreamUtil autism$context(SocketAddress peerAddress, boolean multiChannel) {

@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.PacketOriginComponentCodec;
+import autismclient.protector.PacketOriginComponentCodec;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.serialization.Codec;

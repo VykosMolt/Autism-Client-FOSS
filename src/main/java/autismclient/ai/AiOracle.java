@@ -74,11 +74,11 @@ final class AiOracle {
       return thread;
    });
    private static final Object init_Obj = new Object();
-   private static final LinkedHashMap<String, autismclient.util.j.a.VanillaWorldGenBootstrap> init_LinkedHashMap = new LinkedHashMap<String, autismclient.util.j.a.VanillaWorldGenBootstrap>(
+   private static final LinkedHashMap<String, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap> init_LinkedHashMap = new LinkedHashMap<String, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap>(
       4, 0.75F, true
    ) {
       @Override
-      protected boolean removeEldestEntry(Entry<String, autismclient.util.j.a.VanillaWorldGenBootstrap> eldest) {
+      protected boolean removeEldestEntry(Entry<String, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap> eldest) {
          return this.size() > 3;
       }
    };
@@ -679,7 +679,7 @@ final class AiOracle {
       long seed, ResourceKey<Level> dimension, AiOracle.Inner_StateCache spec, BlockPos origin, int cap, AtomicBoolean cancelled
    ) {
       try {
-         autismclient.util.j.a.VanillaWorldGenBootstrap context = init_ConfigStore_J_ResourceKey(seed, dimension);
+         autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context = init_ConfigStore_J_ResourceKey(seed, dimension);
          if (cancelled.get()) {
             return new AiOracle.Inner_BufferHelper(List.of(), null);
          }
@@ -713,22 +713,22 @@ final class AiOracle {
       }
    }
 
-   private static autismclient.util.j.a.VanillaWorldGenBootstrap init_ConfigStore_J_ResourceKey(long seed, ResourceKey<Level> dimension) {
+   private static autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap init_ConfigStore_J_ResourceKey(long seed, ResourceKey<Level> dimension) {
       String key = seed + "@" + dimension.identifier();
       synchronized (init_Obj) {
-         autismclient.util.j.a.VanillaWorldGenBootstrap existing = init_LinkedHashMap.get(key);
+         autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap existing = init_LinkedHashMap.get(key);
          if (existing != null) {
             return existing;
          }
 
-         autismclient.util.j.a.VanillaWorldGenBootstrap created = autismclient.util.j.a.VanillaWorldGenBootstrap.init(seed, dimension);
+         autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap created = autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap.init(seed, dimension);
          init_LinkedHashMap.put(key, created);
          return created;
       }
    }
 
    private static List<AiOracle.Inner_JsonUtil> init(
-      autismclient.util.j.a.VanillaWorldGenBootstrap context, List<Holder<Structure>> wanted, BlockPos origin, int cap, AtomicBoolean cancelled
+      autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, List<Holder<Structure>> wanted, BlockPos origin, int cap, AtomicBoolean cancelled
    ) {
       ChunkGeneratorStructureState state = context.init_ChunkGeneratorStru();
       long seed = state.getLevelSeed();
@@ -795,7 +795,7 @@ final class AiOracle {
    }
 
    private static void init_V_ConfigStore(
-      autismclient.util.j.a.VanillaWorldGenBootstrap context,
+      autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context,
       Set<Holder<Structure>> structures,
       ChunkPos candidate,
       BlockPos origin,
@@ -967,7 +967,7 @@ final class AiOracle {
       long seed, ResourceKey<Level> dimension, String biomeId, BlockPos origin, int radiusBlocks, AtomicBoolean cancelled
    ) {
       try {
-         autismclient.util.j.a.VanillaWorldGenBootstrap context = init_ConfigStore_J_ResourceKey(seed, dimension);
+         autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context = init_ConfigStore_J_ResourceKey(seed, dimension);
          if (cancelled.get()) {
             return new AiOracle.Inner_StreamUtil(null, null);
          }

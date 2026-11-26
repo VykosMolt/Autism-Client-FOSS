@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ResourcePackDownloadScope;
+import autismclient.protector.ResourcePackDownloadScope;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;

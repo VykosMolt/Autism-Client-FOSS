@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.OutboundChannelPolicy;
+import autismclient.protector.OutboundChannelPolicy;
 import net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon;
 import net.fabricmc.fabric.impl.networking.CommonRegisterPayload;
 import net.minecraft.network.Connection;

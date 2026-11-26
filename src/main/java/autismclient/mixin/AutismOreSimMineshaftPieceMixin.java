@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.SyntheticWorldGenLevel;
+import autismclient.util.oresim.worldgen.SyntheticWorldGenLevel;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;

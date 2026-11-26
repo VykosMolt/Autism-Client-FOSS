@@ -1,6 +1,6 @@
 package autismclient.mixin.via;
 
-import autismclient.compat.a.ViaFabricPlusBridge;
+import autismclient.compat.via.ViaFabricPlusBridge;
 import io.netty.channel.ChannelFuture;
 import java.net.InetSocketAddress;
 import net.minecraft.network.Connection;

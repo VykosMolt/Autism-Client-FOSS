@@ -1,6 +1,6 @@
 package autismclient.mixin.via;
 
-import autismclient.compat.a.ViaFabricPlusBridge;
+import autismclient.compat.via.ViaFabricPlusBridge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;

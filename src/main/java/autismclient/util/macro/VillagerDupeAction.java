@@ -10,7 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 public final class VillagerDupeAction implements ContextMacroAction {
    private static final int init_I = 64;
    private static final int load = 10;
-   public autismclient.util.i.VillagerDupeDriver.Inner_DataUtil filter = autismclient.util.i.VillagerDupeDriver.Inner_DataUtil.ALL;
+   public autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil filter = autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.ALL;
    public VillagerDupeAction.Inner_StreamUtil targets = VillagerDupeAction.Inner_StreamUtil.ALL_IN_RANGE;
    public int count = 1;
    public int intervalTicks = 1;
@@ -27,7 +27,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
    public void run(MacroExecutionContext ctx) {
       VillagerDupeAction.Inner_DataUtil driver = new VillagerDupeAction.Inner_DataUtil(
          ctx,
-         new autismclient.util.i.VillagerDupeDriver.CachePool(
+         new autismclient.util.villagerdupe.VillagerDupeDriver.CachePool(
             this.filter,
             this.traders,
             this.autoEmerald,
@@ -41,7 +41,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
          Math.max(0, this.stopAfter),
          this.stopWhenMissing
       );
-      autismclient.util.i.VillagerDupeDriver.init_V_Predicate(driver::init);
+      autismclient.util.villagerdupe.VillagerDupeDriver.init_V_Predicate(driver::init);
 
       while (!driver.load_Z && ctx.isActive()) {
          CompletableFuture<Void> next = driver.init_CompletableFuture;
@@ -49,7 +49,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
          ctx.awaitCondition(next);
       }
 
-      autismclient.util.i.VillagerDupeDriver.ConfigStore last = driver.init_DataUtil_ConfigSto;
+      autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore last = driver.init_DataUtil_ConfigSto;
       if (driver.init_Z && ctx.isActive()) {
          String why = last.load_Str();
          ctx.runOnClientThread(() -> AutismClientMessaging.sendPrefixed("§cVillager Dupe: " + why));
@@ -82,7 +82,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.filter = autismclient.util.i.VillagerDupeDriver.Inner_DataUtil.init_DataUtil_DataUtil_Str(tag.getStringOr("filter", "ALL"));
+      this.filter = autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.init_DataUtil_DataUtil_Str(tag.getStringOr("filter", "ALL"));
 
       try {
          this.targets = VillagerDupeAction.Inner_StreamUtil.valueOf(tag.getStringOr("targets", "ALL_IN_RANGE"));
@@ -134,8 +134,8 @@ public final class VillagerDupeAction implements ContextMacroAction {
 
    private static final class Inner_DataUtil {
       private final MacroExecutionContext init_MacroExecutionCont;
-      private final autismclient.util.i.VillagerDupeDriver init_DataUtil = autismclient.util.i.VillagerDupeDriver.init_DataUtil();
-      private final autismclient.util.i.VillagerDupeDriver.CachePool init_DataUtil_CachePool;
+      private final autismclient.util.villagerdupe.VillagerDupeDriver init_DataUtil = autismclient.util.villagerdupe.VillagerDupeDriver.init_DataUtil();
+      private final autismclient.util.villagerdupe.VillagerDupeDriver.CachePool init_DataUtil_CachePool;
       private final int load_I;
       private final int read_I;
       private final boolean read_Z;
@@ -143,12 +143,12 @@ public final class VillagerDupeAction implements ContextMacroAction {
       private int update;
       private boolean write_Z;
       volatile int init_I;
-      volatile autismclient.util.i.VillagerDupeDriver.ConfigStore init_DataUtil_ConfigSto = autismclient.util.i.VillagerDupeDriver.ConfigStore.WAITING;
+      volatile autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore init_DataUtil_ConfigSto = autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.WAITING;
       volatile boolean init_Z;
       volatile boolean load_Z;
       volatile CompletableFuture<Void> init_CompletableFuture = new CompletableFuture<>();
 
-      Inner_DataUtil(MacroExecutionContext ctx, autismclient.util.i.VillagerDupeDriver.CachePool opts, int passes, int limit, boolean stopWhenMissing) {
+      Inner_DataUtil(MacroExecutionContext ctx, autismclient.util.villagerdupe.VillagerDupeDriver.CachePool opts, int passes, int limit, boolean stopWhenMissing) {
          this.init_MacroExecutionCont = ctx;
          this.init_DataUtil_CachePool = opts;
          this.load_I = passes;
@@ -179,10 +179,10 @@ public final class VillagerDupeAction implements ContextMacroAction {
             this.init_DataUtil.read_V_Minecraft(mc);
             return this.init_Z();
          } else {
-            autismclient.util.i.VillagerDupeDriver.BufferHelper result = this.init_DataUtil
+            autismclient.util.villagerdupe.VillagerDupeDriver.BufferHelper result = this.init_DataUtil
                .init_DataUtil_BufferHel_Minecraft_DataUtil_CachePool(mc, this.init_DataUtil_CachePool);
             this.write_I++;
-            autismclient.util.i.VillagerDupeDriver.ConfigStore status = result.init_DataUtil_ConfigSto();
+            autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore status = result.init_DataUtil_ConfigSto();
             boolean change = result.init_I() > 0 || status != this.init_DataUtil_ConfigSto;
             this.init_I = this.init_I + result.init_I();
             this.init_DataUtil_ConfigSto = status;
@@ -202,7 +202,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
       }
 
       String init_Str() {
-         autismclient.util.i.VillagerDupeDriver.ConfigStore status = this.init_DataUtil_ConfigSto;
+         autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore status = this.init_DataUtil_ConfigSto;
          return "Villager Dupe: " + this.init_I + (status.load_Z() ? "" : " (" + status.init_Str() + ")");
       }
 

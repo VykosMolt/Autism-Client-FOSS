@@ -2,8 +2,8 @@ package autismclient.mixin;
 
 import autismclient.compat263.Compat263;
 import autismclient.modules.GifOverlayState;
-import autismclient.util.c.GifTextureManager;
-import autismclient.util.c.GifRenderContext;
+import autismclient.util.gif.GifTextureManager;
+import autismclient.util.gif.GifRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.object.equipment.ShieldModel;
 import net.minecraft.client.renderer.SubmitNodeCollector;

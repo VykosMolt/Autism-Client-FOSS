@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.RegistryCompatGuard;
+import autismclient.protector.RegistryCompatGuard;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.core.HolderLookup.Provider;

@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.CallerModInspector;
-import autismclient.g.ModNamespaceCatalog;
+import autismclient.protector.CallerModInspector;
+import autismclient.protector.ModNamespaceCatalog;
 import net.fabricmc.fabric.api.resource.v1.pack.PackActivationType;
 import net.fabricmc.fabric.impl.resource.ResourceLoaderImpl;
 import net.fabricmc.loader.api.ModContainer;

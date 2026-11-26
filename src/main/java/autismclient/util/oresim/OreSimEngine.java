@@ -39,16 +39,16 @@ public final class OreSimEngine {
    private static final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
    private static final int flush_I = 200000;
    private static final OreSimWorkerPool init_ConfigStore_2 = new OreSimWorkerPool("Autism-OreSim-Worldgen");
-   private static final LinkedHashMap<OreSimEngine.Inner_StreamUtil, autismclient.util.j.a.VanillaWorldGenBootstrap> init_LinkedHashMap = new LinkedHashMap<OreSimEngine.Inner_StreamUtil, autismclient.util.j.a.VanillaWorldGenBootstrap>(
+   private static final LinkedHashMap<OreSimEngine.Inner_StreamUtil, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap> init_LinkedHashMap = new LinkedHashMap<OreSimEngine.Inner_StreamUtil, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap>(
       4, 0.75F, true
    ) {
       @Override
-      protected boolean removeEldestEntry(Entry<OreSimEngine.Inner_StreamUtil, autismclient.util.j.a.VanillaWorldGenBootstrap> eldest) {
+      protected boolean removeEldestEntry(Entry<OreSimEngine.Inner_StreamUtil, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap> eldest) {
          return this.size() > 3;
       }
    };
    private static OreSimEngine.Inner_StreamUtil init_StreamUtil_StreamU;
-   private static volatile autismclient.util.j.a.VanillaWorldGenBootstrap init_ConfigStore;
+   private static volatile autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap init_ConfigStore;
    private static volatile long load_J;
    private static volatile boolean init_Z;
    private static volatile boolean load_Z;
@@ -346,10 +346,10 @@ public final class OreSimEngine {
 
    private static void init_V_StreamUtil_StreamU_J(OreSimEngine.Inner_StreamUtil key, long token) {
       init_ConfigStore_2.init(() -> {
-         autismclient.util.j.a.VanillaWorldGenBootstrap built;
+         autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap built;
          boolean tagsVerified;
          try {
-            built = autismclient.util.j.a.VanillaWorldGenBootstrap.init(key.init_J(), key.init_ResourceKey());
+            built = autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap.init(key.init_J(), key.init_ResourceKey());
             tagsVerified = built.init_Z();
          } catch (Throwable error) {
             init_V_J(token, "Minecraft 26.3 worldgen bootstrap failed", error);
@@ -371,7 +371,7 @@ public final class OreSimEngine {
       });
    }
 
-   private static void init_V_I(int chunkX, int chunkZ, autismclient.util.j.a.VanillaWorldGenBootstrap context, long token) {
+   private static void init_V_I(int chunkX, int chunkZ, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
       initialChunkPending = true;
       load_Z = true;
       init_ConfigStore_2.init(() -> {
@@ -384,7 +384,7 @@ public final class OreSimEngine {
 
                int regionMinX = chunkX - 2;
                int regionMinZ = chunkZ - 2;
-               Map<Long, ChunkAccess> generated = new autismclient.util.j.a.OreSimRegionGenerator(context).init_Map_I(regionMinX, regionMinZ, 5, () -> token != load_J);
+               Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).init_Map_I(regionMinX, regionMinZ, 5, () -> token != load_J);
                long chunkKey = ChunkPos.pack(chunkX, chunkZ);
                ChunkAccess chunk = generated.get(chunkKey);
                if (chunk == null) {
@@ -432,7 +432,7 @@ public final class OreSimEngine {
       });
    }
 
-   private static void init_V_StreamUtil_TaskQue(OreSimEngine.Inner_TaskQueue tile, autismclient.util.j.a.VanillaWorldGenBootstrap context, long token) {
+   private static void init_V_StreamUtil_TaskQue(OreSimEngine.Inner_TaskQueue tile, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
       long tileKey = ChunkPos.pack(tile.init_I(), tile.load());
       inFlightTiles.add(tileKey);
       load_Z = true;
@@ -454,7 +454,7 @@ public final class OreSimEngine {
             } else {
                int regionMinX = tile.init_I() - 2;
                int regionMinZ = tile.load() - 2;
-               Map<Long, ChunkAccess> generated = new autismclient.util.j.a.OreSimRegionGenerator(context).init_Map_I(regionMinX, regionMinZ, 8, () -> token != load_J);
+               Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).init_Map_I(regionMinX, regionMinZ, 8, () -> token != load_J);
                Map<Long, OreSimEngine.Inner_DataUtil> completed = new HashMap<>(16);
 
                for (int dxx = 0; dxx < 4; dxx++) {
@@ -521,7 +521,7 @@ public final class OreSimEngine {
    private static OreSimEngine.Inner_DataUtil init_StreamUtil_DataUti_ChunkAccess_BooleanSupplier(ChunkAccess chunk, BooleanSupplier cancelled) {
       LongArrayList positions = new LongArrayList();
       IntArrayList stateIds = new IntArrayList();
-      autismclient.util.j.a.OreSimRegionGenerator.init_V_ChunkAccess(chunk, state -> OreBlockCatalog.init(state.getBlock()), (x, y, z, state) -> {
+      autismclient.util.oresim.worldgen.OreSimRegionGenerator.init_V_ChunkAccess(chunk, state -> OreBlockCatalog.init(state.getBlock()), (x, y, z, state) -> {
          int stateId = OreBlockCatalog.Inner_StreamUtil.init(state);
          if (stateId >= 0) {
             positions.add(BlockPos.asLong(x, y, z));
@@ -599,7 +599,7 @@ public final class OreSimEngine {
       init_ConfigStore_2.init_V();
    }
 
-   private static void init_V_ConfigStore_J(autismclient.util.j.a.VanillaWorldGenBootstrap context, long token) {
+   private static void init_V_ConfigStore_J(autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
       read_Z = true;
       init_ConfigStore_2.init(() -> {
          boolean verified = false;

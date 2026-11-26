@@ -122,7 +122,7 @@ public final class JoinMacroController {
       init_V();
       init_Z = false;
       init_aM = null;
-      autismclient.util.b.CustomMenuTracker.init_V();
+      autismclient.util.custommenu.CustomMenuTracker.init_V();
       init_ClientConfiguratio = null;
       Thread worker = init_Thread;
       init_Thread = null;
@@ -228,12 +228,12 @@ public final class JoinMacroController {
                String lastError = "";
 
                while (System.currentTimeMillis() <= deadline && !Thread.currentThread().isInterrupted()) {
-                  seenGeneration = autismclient.util.b.CustomMenuTracker.init_J();
-                  snapshot = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
+                  seenGeneration = autismclient.util.custommenu.CustomMenuTracker.init_J();
+                  snapshot = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
                   if (snapshot != null) {
                      seenGeneration = snapshot.generation();
                   } else {
-                     snapshot = autismclient.util.b.DialogScreenBridge.init_CustomMenuSnapshot(mc);
+                     snapshot = autismclient.util.custommenu.DialogScreenBridge.init_CustomMenuSnapshot(mc);
                   }
 
                   if (snapshot == null) {
@@ -258,7 +258,7 @@ public final class JoinMacroController {
                   if (!prepared.init_Z()) {
                      load_V(prepared.init_Str());
                   } else {
-                     Screen answered = autismclient.util.b.DialogScreenBridge.init_Screen(mc);
+                     Screen answered = autismclient.util.custommenu.DialogScreenBridge.init_Screen(mc);
                      CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, prepared.init_CustomMenuSubmissi());
                      if (!result.success()) {
                         load_V(result.error());
@@ -274,8 +274,8 @@ public final class JoinMacroController {
                            }
                         }
 
-                        autismclient.util.b.CustomMenuTracker.init(seenGeneration, result.replacement(), snapshot.phase());
-                        autismclient.util.b.DialogScreenBridge.init(mc, result.clientAction(), answered);
+                        autismclient.util.custommenu.CustomMenuTracker.init(seenGeneration, result.replacement(), snapshot.phase());
+                        autismclient.util.custommenu.DialogScreenBridge.init(mc, result.clientAction(), answered);
                      }
                   }
                } else {
@@ -307,7 +307,7 @@ public final class JoinMacroController {
       long deadline = System.currentTimeMillis() + Math.max(100L, Math.min(120000L, timeoutMs));
 
       while (System.currentTimeMillis() <= deadline && !Thread.currentThread().isInterrupted()) {
-         if (autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot() != null) {
+         if (autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot() != null) {
             return;
          }
 

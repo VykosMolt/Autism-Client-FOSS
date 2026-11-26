@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.PacketOriginDuck;
+import autismclient.protector.PacketOriginDuck;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(targets = "net.minecraft.network.chat.contents.PlainTextContents$1")

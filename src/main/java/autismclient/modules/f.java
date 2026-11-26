@@ -1976,9 +1976,9 @@ public final class f {
       private static final ValueRange init_ValueRange = new ValueRange(25, 50);
       private static final double init_D = 250.0;
       private final ClickerSettingsGroup init_h;
-      private final autismclient.util.a.ClickPatternEngine init_DataUtil = new autismclient.util.a.ClickPatternEngine();
-      private final autismclient.util.a.KeyClickOutput init_StreamUtil = autismclient.util.a.KeyClickOutput.init_StreamUtil();
-      private final autismclient.util.a.KeyClickOutput load_StreamUtil = autismclient.util.a.KeyClickOutput.load_StreamUtil();
+      private final autismclient.util.clicker.ClickPatternEngine init_DataUtil = new autismclient.util.clicker.ClickPatternEngine();
+      private final autismclient.util.clicker.KeyClickOutput init_StreamUtil = autismclient.util.clicker.KeyClickOutput.init_StreamUtil();
+      private final autismclient.util.clicker.KeyClickOutput load_StreamUtil = autismclient.util.clicker.KeyClickOutput.load_StreamUtil();
       private final Random init_Random = new Random();
       private boolean init_Z;
       private long init_J = -9223372036854775808L;
@@ -2035,8 +2035,8 @@ public final class f {
       public void onInputFrame() {
          long now = System.nanoTime();
          boolean right = "Right".equals(this.choice("button"));
-         autismclient.util.a.KeyClickOutput output = right ? this.load_StreamUtil : this.init_StreamUtil;
-         autismclient.util.a.KeyClickOutput other = right ? this.init_StreamUtil : this.load_StreamUtil;
+         autismclient.util.clicker.KeyClickOutput output = right ? this.load_StreamUtil : this.init_StreamUtil;
+         autismclient.util.clicker.KeyClickOutput other = right ? this.init_StreamUtil : this.load_StreamUtil;
          output.init_V();
          other.init_V();
          if (other.init_Z()) {
@@ -2046,7 +2046,7 @@ public final class f {
          if (!this.load_Z_18() && !"Hold".equals(this.choice("mode"))) {
             boolean holdDown = "Hold Down".equals(this.choice("mode"));
             boolean physical = output.load_Z();
-            autismclient.util.a.ClickProfile profile = this.init_h.init_CachePool();
+            autismclient.util.clicker.ClickProfile profile = this.init_h.init_CachePool();
             this.init_DataUtil.init_V_DataUtil_ConfigSto(this.init_h.init_DataUtil_ConfigSto());
             output.init_V_Z(holdDown && physical);
             if (physical && !this.init_Z) {
@@ -2069,7 +2069,7 @@ public final class f {
          }
       }
 
-      private boolean init(long now, boolean right, autismclient.util.a.KeyClickOutput output) {
+      private boolean init(long now, boolean right, autismclient.util.clicker.KeyClickOutput output) {
          boolean working = !right && this.bool("break-blocks") && this.init_Z_39();
          if (!working) {
             this.init_V_36();
@@ -4483,7 +4483,7 @@ public final class f {
       private static final ValueRange init_ValueRange = new ValueRange(50, 80);
       private static final double load_D = 250.0;
       private final ClickerSettingsGroup init_h;
-      private final autismclient.util.a.ClickPatternEngine init_DataUtil = new autismclient.util.a.ClickPatternEngine();
+      private final autismclient.util.clicker.ClickPatternEngine init_DataUtil = new autismclient.util.clicker.ClickPatternEngine();
       private final f.Inner_EventBus.Inner_DataUtil init_f_EventBus_DataUti = new f.Inner_EventBus.Inner_DataUtil();
       private final Random init_Random = new Random();
       private boolean init_Z;
@@ -4532,7 +4532,7 @@ public final class f {
             this.init_Z = false;
             this.init_J = -9223372036854775808L;
          } else {
-            autismclient.util.a.ClickProfile profile = this.init_h.init_CachePool();
+            autismclient.util.clicker.ClickProfile profile = this.init_h.init_CachePool();
             this.init_DataUtil.init_V_DataUtil_ConfigSto(this.init_h.init_DataUtil_ConfigSto());
             if (!this.init_Z) {
                this.init_DataUtil.init_V_J_2(now, profile, this.init_f_EventBus_DataUti);
@@ -4762,7 +4762,7 @@ public final class f {
          return MC.player.getMainHandItem().getItem() instanceof BlockItem || MC.player.getOffhandItem().getItem() instanceof BlockItem;
       }
 
-      private final class Inner_DataUtil implements autismclient.util.a.ClickPatternEngine.Inner_NetHelper {
+      private final class Inner_DataUtil implements autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper {
          @Override
          public boolean init_Z_J(long now) {
             if (!Inner_EventBus.this.update_Z_7()) {
@@ -6244,7 +6244,7 @@ public final class f {
             && ItemStack.isSameItemSameComponents(this.init_ItemStack, stack)) {
             return this.init_I;
          } else if (MC != null && MC.player != null) {
-            int bytes = autismclient.g.TooltipNbtGuard.init(stack, MC.player.registryAccess());
+            int bytes = autismclient.protector.TooltipNbtGuard.init(stack, MC.player.registryAccess());
             this.init_ItemStack = stack.copy();
             this.init_I = bytes;
             return bytes;

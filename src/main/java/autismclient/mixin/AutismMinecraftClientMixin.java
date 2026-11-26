@@ -3,7 +3,7 @@ package autismclient.mixin;
 import autismclient.ai.AiClientTick;
 import autismclient.ai.aP;
 import autismclient.compat263.CompatGLFW;
-import autismclient.g.LateRegisterSynthesizer;
+import autismclient.protector.LateRegisterSynthesizer;
 import autismclient.gui.AutismLoadingOverlay;
 import autismclient.gui.d.StealthTitleScreen;
 import autismclient.gui.d.AutismTitleScreen;
@@ -35,7 +35,7 @@ import autismclient.util.WindowIconManager;
 import autismclient.util.RemoteViewController;
 import autismclient.util.AutismSessionState;
 import autismclient.util.ClientInteractionOverride;
-import autismclient.util.i.VillagerDupeDriver;
+import autismclient.util.villagerdupe.VillagerDupeDriver;
 import autismclient.util.macro.MacroExecutor;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -503,7 +503,7 @@ public class AutismMinecraftClientMixin {
          }
 
          if (!AutismLiteVariant.enabled() && !ci.isCancelled()) {
-            autismclient.util.a.KeyClickOutput.read_V();
+            autismclient.util.clicker.KeyClickOutput.read_V();
          }
       }
    }
@@ -516,7 +516,7 @@ public class AutismMinecraftClientMixin {
          ClientInteractionOverride.sync_V();
          VirtualInputDispatcher.poll();
          if (!AutismLiteVariant.enabled()) {
-            autismclient.util.a.KeyClickOutput.write();
+            autismclient.util.clicker.KeyClickOutput.write();
          }
 
          if (!AutismLiteVariant.enabled()) {
@@ -592,9 +592,9 @@ public class AutismMinecraftClientMixin {
    @Inject(method = "runTick", at = @At("TAIL"))
    private void autism$onInputFrame(CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         autismclient.util.a.KeyClickOutput.update();
+         autismclient.util.clicker.KeyClickOutput.update();
          al.poll_V();
-         autismclient.util.a.KeyClickOutput.sync();
+         autismclient.util.clicker.KeyClickOutput.sync();
       }
    }
 }

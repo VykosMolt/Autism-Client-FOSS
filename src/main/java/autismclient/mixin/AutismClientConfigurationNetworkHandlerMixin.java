@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.VanillaKnownPacksManager;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.VanillaKnownPacksManager;
 import autismclient.util.AutismSessionState;
 import java.util.List;
 import net.minecraft.client.Minecraft;

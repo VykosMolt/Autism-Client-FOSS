@@ -1,10 +1,10 @@
 package autismclient.mixin.security;
 
 import autismclient.AutismClientAddon;
-import autismclient.compat.a.ViaFabricPlusBridge;
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.TimelineTagCompatFix;
-import autismclient.g.RegistryCompatGuard;
+import autismclient.compat.via.ViaFabricPlusBridge;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.TimelineTagCompatFix;
+import autismclient.protector.RegistryCompatGuard;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.util.ArrayList;

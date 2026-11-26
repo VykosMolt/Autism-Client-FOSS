@@ -33,9 +33,9 @@ import autismclient.util.cf;
 import autismclient.util.SprintStateTracker;
 import autismclient.util.AutismSessionState;
 import autismclient.util.SodiumRegionResourceProbe;
-import autismclient.util.e.LeafDupePacketTracker;
+import autismclient.util.leafdupe.LeafDupePacketTracker;
 import autismclient.util.g.PkgCls_a;
-import autismclient.util.h.VillagerTradeSession;
+import autismclient.util.villager.VillagerTradeSession;
 import autismclient.util.macro.MacroWaitRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -425,7 +425,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          LeafDupePacketTracker.load(packet);
       }
 
-      autismclient.util.h.BlockChangeAckTracker.init_V(Minecraft.getInstance().level, packet.sequence());
+      autismclient.util.villager.BlockChangeAckTracker.init_V(Minecraft.getInstance().level, packet.sequence());
    }
 
    @Inject(method = "handlePlayerInfoUpdate", at = @At("RETURN"))

@@ -2,7 +2,7 @@ package autismclient.api.custommenu;
 
 import autismclient.AutismClientAddon;
 import autismclient.b.DataUtil;
-import autismclient.util.b.VanillaDialogMenuAdapter;
+import autismclient.util.custommenu.VanillaDialogMenuAdapter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;

@@ -1,16 +1,16 @@
 package autismclient.mixin;
 
 import autismclient.e.FileCache;
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.ResourcePackPushValidator;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.ResourcePackPushValidator;
 import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.SprintStateTracker;
 import autismclient.util.AutismSessionState;
-import autismclient.util.b.CustomMenuTracker;
-import autismclient.util.e.LeafDupePacketTracker;
+import autismclient.util.custommenu.CustomMenuTracker;
+import autismclient.util.leafdupe.LeafDupePacketTracker;
 import java.net.MalformedURLException;
 import java.net.URL;
 import net.minecraft.client.Minecraft;
@@ -67,15 +67,15 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
                serializedBypass = false;
             }
 
-            autismclient.g.ResourcePackSessionTracker.Inner_DataUtil selectedPolicy = ResourcePackPushValidator.init(context.init_BufferHelper_Cache(), sharedBypass, serializedBypass);
+            autismclient.protector.ResourcePackSessionTracker.Inner_DataUtil selectedPolicy = ResourcePackPushValidator.init(context.init_BufferHelper_Cache(), sharedBypass, serializedBypass);
             ResourcePackPushValidator.Inner_StreamUtil verdict = ResourcePackPushValidator.init(packet, forceDeny, selectedPolicy != null);
             if (verdict.init_RefQueue_DataUtil() != ResourcePackPushValidator.Inner_DataUtil.PASS) {
                if (verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.INVALID_URL) {
                   this.send(new ServerboundResourcePackPacket(packet.id(), Action.INVALID_URL));
                   ci.cancel();
                } else if (verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.BYPASS_SUCCESS || verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.DECLINE) {
-                  autismclient.g.ResourcePackSessionTracker.Inner_DataUtil policy = verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.DECLINE
-                     ? autismclient.g.ResourcePackSessionTracker.Inner_DataUtil.DECLINE
+                  autismclient.protector.ResourcePackSessionTracker.Inner_DataUtil policy = verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.DECLINE
+                     ? autismclient.protector.ResourcePackSessionTracker.Inner_DataUtil.DECLINE
                      : selectedPolicy;
 
                   URL url;
@@ -102,7 +102,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
                   }
 
                   packSource.configureForServerControl(this.connection, promptStatus);
-                  autismclient.g.ResourcePackSessionTracker.init(context, packet.id(), policy);
+                  autismclient.protector.ResourcePackSessionTracker.init(context, packet.id(), policy);
                   if (!prompt) {
                      packSource.pushPack(packet.id(), url, packet.hash());
                      ci.cancel();

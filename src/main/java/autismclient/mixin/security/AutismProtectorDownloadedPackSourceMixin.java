@@ -1,10 +1,10 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.IsolatedPackDownloader;
-import autismclient.g.PackFailureGuard;
-import autismclient.g.ResourcePackSessionTracker;
-import autismclient.g.ResourcePackDownloadScope;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.IsolatedPackDownloader;
+import autismclient.protector.PackFailureGuard;
+import autismclient.protector.ResourcePackSessionTracker;
+import autismclient.protector.ResourcePackDownloadScope;
 import autismclient.mixin.accessor.AutismServerPackManagerAccessor;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

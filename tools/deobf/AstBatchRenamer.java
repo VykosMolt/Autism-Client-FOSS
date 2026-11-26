@@ -14,7 +14,8 @@ import javax.tools.*;
  * Compiler-grade JDK-25 AST Batch Renamer for AUTISM Client deobfuscation.
  * Uses jdk.compiler (JavacTask.analyze()) for exact symbol resolution across:
  *   - Enum constant renames (E): decl, MemberSelect, Identifier (incl. switch cases & static imports)
- *   - In-place top-level class renames (C): decl, constructors, imports, all type/expr refs, file move
+ *   - Top-level class renames & cross-package moves (C): package decl, decl, constructors, imports,
+ *     all type/expr/FQN refs, same-package split import synthesis, file move & empty dir cleanup
  * Never reads or modifies untouched integrity/attestation files; never renames symbols declared in autismclient/api/.
  * Synchronizes mappings/disambig.tsv atomically so ReverseRemapJar preserves 100% runtime ABI.
  */
@@ -141,19 +142,62 @@ public final class AstBatchRenamer {
                 case "C" -> {
                     ClassRename cr = new ClassRename(p[1], p[2], p[3]);
                     if (isFrozenInternal(cr.curClass)) throw new IllegalStateException("Refused frozen class: " + cr.curClass);
-                    if (!parentPkg(cr.curClass).equals(parentPkg(cr.newClass))) {
-                        throw new IllegalStateException("Cross-package class move not enabled in in-place mode: " + cr);
-                    }
+                    if (isFrozenInternal(cr.newClass)) throw new IllegalStateException("Refused frozen target class: " + cr.newClass);
                     classRenames.put(cr.curClass, cr);
                 }
                 default -> throw new IllegalArgumentException("Unknown plan tag: " + p[0]);
             }
         }
-        System.out.printf("Loaded plan: %d enum constant renames, %d class renames (%s)%n",
+        System.out.printf("Loaded plan: %d enum constant renames, %d class renames/moves (%s)%n",
             enumRenames.size(), classRenames.size(), apply ? "APPLY" : "DRY-RUN");
 
-        // 2. Collect non-integrity source files in src/main/java
+        // 1b. Classify whole-package moves vs partial-package moves (using filenames only; never reads excluded files!)
         Path srcRoot = repo.resolve("src/main/java");
+        Map<String, String> wholeMovedPkgs = new LinkedHashMap<>();
+        Map<String, Set<String>> partialMovedPkgs = new LinkedHashMap<>();
+        Set<String> newClassTargets = new HashSet<>();
+        Map<String, List<ClassRename>> movesByOldPkg = new LinkedHashMap<>();
+        for (ClassRename cr : classRenames.values()) {
+            if (!newClassTargets.add(cr.newClass)) {
+                throw new IllegalStateException("Duplicate target class in plan: " + cr.newClass);
+            }
+            if (!cr.curClass.equals(cr.newClass) && Files.exists(srcRoot.resolve(cr.newClass + ".java")) && !classRenames.containsKey(cr.newClass)) {
+                throw new IllegalStateException("Target file already exists and is not moving: " + cr.newClass);
+            }
+            String oldPkg = parentPkg(cr.curClass);
+            String newPkg = parentPkg(cr.newClass);
+            if (!oldPkg.equals(newPkg)) {
+                movesByOldPkg.computeIfAbsent(oldPkg, k -> new ArrayList<>()).add(cr);
+            }
+        }
+        for (var e : movesByOldPkg.entrySet()) {
+            String oldPkg = e.getKey();
+            List<ClassRename> moved = e.getValue();
+            Set<String> targetPkgs = new LinkedHashSet<>();
+            for (ClassRename cr : moved) targetPkgs.add(parentPkg(cr.newClass));
+            int totalJavaInOldPkg = 0;
+            Path oldDir = srcRoot.resolve(oldPkg);
+            if (Files.isDirectory(oldDir)) {
+                try (var stream = Files.list(oldDir)) {
+                    for (Path f : stream.toList()) {
+                        if (Files.isRegularFile(f) && f.getFileName().toString().endsWith(".java")) {
+                            totalJavaInOldPkg++;
+                        }
+                    }
+                }
+            }
+            if (targetPkgs.size() == 1 && moved.size() == totalJavaInOldPkg) {
+                wholeMovedPkgs.put(oldPkg, targetPkgs.iterator().next());
+            } else {
+                partialMovedPkgs.put(oldPkg, targetPkgs);
+            }
+        }
+        if (!wholeMovedPkgs.isEmpty() || !partialMovedPkgs.isEmpty()) {
+            System.out.printf("Package moves: %d whole-package moves, %d partial-package moves%n",
+                wholeMovedPkgs.size(), partialMovedPkgs.size());
+        }
+
+        // 2. Collect non-integrity source files in src/main/java
         List<Path> srcFiles = new ArrayList<>();
         try (var stream = Files.walk(srcRoot)) {
             stream.filter(Files::isRegularFile)
@@ -168,7 +212,8 @@ public final class AstBatchRenamer {
         Set<String> matchedClassKeys = new HashSet<>();
         List<String> warnings = new ArrayList<>();
 
-        analyzeBatch(srcFiles, cp, enumRenames, classRenames, editsByFile, matchedEnumKeys, matchedClassKeys, warnings, false);
+        analyzeBatch(srcFiles, srcRoot, cp, enumRenames, classRenames, wholeMovedPkgs, partialMovedPkgs,
+            editsByFile, matchedEnumKeys, matchedClassKeys, warnings, false);
 
         // 3. Also analyze tools/checks/*Check.java individually against build/classes/java/main + cp
         Path checksDir = repo.resolve("tools/checks");
@@ -181,7 +226,8 @@ public final class AstBatchRenamer {
         int checkEditsTotal = 0;
         for (Path cf : checkFiles) {
             int before = editsByFile.getOrDefault(cf, List.of()).size();
-            analyzeBatch(List.of(cf), cp, enumRenames, classRenames, editsByFile, matchedEnumKeys, matchedClassKeys, warnings, true);
+            analyzeBatch(List.of(cf), srcRoot, cp, enumRenames, classRenames, wholeMovedPkgs, partialMovedPkgs,
+                editsByFile, matchedEnumKeys, matchedClassKeys, warnings, true);
             checkEditsTotal += editsByFile.getOrDefault(cf, List.of()).size() - before;
         }
         System.out.printf("Analyzed %d check files (%d edits in tools/checks/).%n", checkFiles.size(), checkEditsTotal);
@@ -194,25 +240,28 @@ public final class AstBatchRenamer {
             List<TextEdit> list = new ArrayList<>(entry.getValue());
             if (list.isEmpty()) continue;
             // Deduplicate identical (start, end, newText) edits
-            Map<Long, TextEdit> dedup = new TreeMap<>();
+            Map<String, TextEdit> dedup = new LinkedHashMap<>();
             for (TextEdit te : list) {
-                long key = (((long) te.start) << 32) | (te.end & 0xFFFFFFFFL);
+                String key = te.start + ":" + te.end + ":" + (te.start == te.end ? te.kind : "R");
                 TextEdit prev = dedup.putIfAbsent(key, te);
                 if (prev != null && !prev.newText.equals(te.newText)) {
                     throw new IllegalStateException("Conflicting edits at " + f + " [" + te.start + "," + te.end + "]: " + prev + " vs " + te);
                 }
             }
             List<TextEdit> sorted = new ArrayList<>(dedup.values());
-            sorted.sort(Comparator.comparingInt(TextEdit::start));
+            sorted.sort(Comparator.comparingInt(TextEdit::start).thenComparingInt(TextEdit::end));
             String content = Files.readString(f, StandardCharsets.UTF_8);
             int prevEnd = -1;
             for (TextEdit te : sorted) {
-                if (te.start < prevEnd || te.start < 0 || te.end > content.length() || te.start >= te.end) {
+                boolean isInsert = te.start == te.end && te.oldText.isEmpty();
+                if (te.start < prevEnd || te.start < 0 || te.end > content.length() || (!isInsert && te.start >= te.end)) {
                     throw new IllegalStateException("Invalid/overlapping edit in " + f + ": " + te + " (prevEnd=" + prevEnd + ")");
                 }
-                String actual = content.substring(te.start, te.end);
-                if (!actual.equals(te.oldText)) {
-                    throw new IllegalStateException("Token mismatch in " + f + " at " + te.start + ": expected '" + te.oldText + "' got '" + actual + "' (" + te.kind + ")");
+                if (!isInsert) {
+                    String actual = content.substring(te.start, te.end);
+                    if (!actual.equals(te.oldText)) {
+                        throw new IllegalStateException("Token mismatch in " + f + " at " + te.start + ": expected '" + te.oldText + "' got '" + actual + "' (" + te.kind + ")");
+                    }
                 }
                 prevEnd = te.end;
             }
@@ -264,14 +313,29 @@ public final class AstBatchRenamer {
             Files.writeString(entry.getKey(), sb.toString(), StandardCharsets.UTF_8);
         }
 
-        // 7. Rename top-level class files
+        // 7. Rename / move top-level class files & clean empty source dirs
+        Set<Path> oldDirs = new LinkedHashSet<>();
         for (ClassRename cr : classRenames.values()) {
             Path oldPath = srcRoot.resolve(cr.curClass + ".java");
             Path newPath = srcRoot.resolve(cr.newClass + ".java");
             if (Files.exists(newPath)) {
                 throw new IllegalStateException("Target file already exists: " + newPath);
             }
+            Files.createDirectories(newPath.getParent());
             Files.move(oldPath, newPath);
+            if (!oldPath.getParent().equals(newPath.getParent())) {
+                oldDirs.add(oldPath.getParent());
+            }
+        }
+        for (Path dir : oldDirs) {
+            Path cur = dir;
+            while (cur != null && !cur.equals(srcRoot) && cur.startsWith(srcRoot) && Files.isDirectory(cur)) {
+                try (var s = Files.list(cur)) {
+                    if (s.findAny().isPresent()) break;
+                }
+                Files.delete(cur);
+                cur = cur.getParent();
+            }
         }
 
         // 8. Write updated mappings/disambig.tsv
@@ -281,9 +345,12 @@ public final class AstBatchRenamer {
 
     private static void analyzeBatch(
         List<Path> files,
+        Path srcRoot,
         String cp,
         Map<String, EnumRename> enumRenames,
         Map<String, ClassRename> classRenames,
+        Map<String, String> wholeMovedPkgs,
+        Map<String, Set<String>> partialMovedPkgs,
         Map<Path, List<TextEdit>> editsByFile,
         Set<String> matchedEnumKeys,
         Set<String> matchedClassKeys,
@@ -319,6 +386,37 @@ public final class AstBatchRenamer {
                 String content = Files.readString(file, StandardCharsets.UTF_8);
                 List<TextEdit> edits = editsByFile.computeIfAbsent(file, k -> new ArrayList<>());
 
+                String fileOldPkg = cu.getPackageName() == null ? "" : cu.getPackageName().toString().replace('.', '/');
+                String fileNewPkg = fileOldPkg;
+                if (singleCheckMode) {
+                    if (wholeMovedPkgs.containsKey(fileOldPkg)) {
+                        fileNewPkg = wholeMovedPkgs.get(fileOldPkg);
+                    }
+                } else if (file.startsWith(srcRoot)) {
+                    String rel = srcRoot.relativize(file).toString().replace('\\', '/');
+                    if (rel.endsWith(".java")) {
+                        ClassRename selfCr = classRenames.get(rel.substring(0, rel.length() - 5));
+                        if (selfCr != null) {
+                            fileNewPkg = parentPkg(selfCr.newClass);
+                        }
+                    }
+                }
+                if (!fileOldPkg.equals(fileNewPkg) && cu.getPackageName() != null) {
+                    int ps = (int) sp.getStartPosition(cu, cu.getPackageName());
+                    int pe = (int) sp.getEndPosition(cu, cu.getPackageName());
+                    String oldPkgDot = fileOldPkg.replace('/', '.');
+                    String newPkgDot = fileNewPkg.replace('/', '.');
+                    if (ps >= 0 && pe > ps && content.substring(ps, pe).equals(oldPkgDot)) {
+                        edits.add(new TextEdit(ps, pe, oldPkgDot, newPkgDot, singleCheckMode ? "check-pkg-decl" : "pkg-decl"));
+                    } else {
+                        throw new IllegalStateException("Cannot locate package name '" + oldPkgDot + "' in " + file);
+                    }
+                }
+
+                // Track already-existing explicit imports (post-rewrite) and synthesized imports for split packages
+                Set<String> existingImports = new HashSet<>();
+                Set<String> extraImports = new TreeSet<>();
+
                 // Handle explicit imports separately (Javac Trees.getElement on ImportTree can be null in some forms)
                 for (ImportTree imp : cu.getImports()) {
                     Tree q = imp.getQualifiedIdentifier();
@@ -329,45 +427,87 @@ public final class AstBatchRenamer {
                             String left = full.substring(0, dot);
                             String right = full.substring(dot + 1);
                             if (imp.isStatic()) {
-                                // import static pkg.Enum.OLD_CONST; or import static pkg.OldClass.*; or import static pkg.OldClass.member;
-                                String leftInt = left.replace('.', '/');
-                                // Could be nested enum: try replacing dots from right until match
+                                // import static pkg.Enum.OLD_CONST; or import static pkg.OldClass.*; or import static pkg.OldClass.Inner.member;
                                 EnumRename er = findEnumImport(left, right, enumRenames);
                                 if (er != null) {
                                     addMemberSelectEdit(cu, sp, content, ms, er.curConst, er.newConst, "static-import-enum", edits);
                                 }
-                                ClassRename crLeft = classRenames.get(leftInt);
-                                if (crLeft != null) {
-                                    // left is pkg.OldClass -> rename identifier OldClass inside ms.getExpression()
-                                    if (ms.getExpression() instanceof MemberSelectTree lhsMs) {
-                                        addMemberSelectEdit(cu, sp, content, lhsMs, simpleName(crLeft.curClass), simpleName(crLeft.newClass), "static-import-class", edits);
-                                    }
-                                }
-                            } else {
-                                // import pkg.OldClass; or import pkg.OldClass.Inner; or import pkg.OldClass.*;
-                                if (!"*".equals(right)) {
-                                    ClassRename cr = classRenames.get(full.replace('.', '/'));
-                                    if (cr != null) {
-                                        addMemberSelectEdit(cu, sp, content, ms, simpleName(cr.curClass), simpleName(cr.newClass), "import-class", edits);
-                                    }
-                                }
-                                // Walk up ms expression chain in case of import pkg.OldClass.Inner; or import pkg.OldClass.*;
                                 ExpressionTree expr = ms.getExpression();
                                 while (expr instanceof MemberSelectTree ems) {
                                     ClassRename cr = classRenames.get(ems.toString().replace('.', '/'));
                                     if (cr != null) {
-                                        addMemberSelectEdit(cu, sp, content, ems, simpleName(cr.curClass), simpleName(cr.newClass), "import-outer-class", edits);
+                                        addClassMoveOrRenameImportEdits(cu, sp, content, ems, cr, "static-import-pkg", "static-import-class", edits);
+                                        break;
                                     }
                                     expr = ems.getExpression();
+                                }
+                            } else if ("*".equals(right)) {
+                                // import pkg.OldClass.*; OR import oldPkg.*;
+                                String leftInt = left.replace('.', '/');
+                                ClassRename cr = classRenames.get(leftInt);
+                                if (cr != null && ms.getExpression() instanceof MemberSelectTree lhsMs) {
+                                    addClassMoveOrRenameImportEdits(cu, sp, content, lhsMs, cr, "import-wildcard-class-pkg", "import-wildcard-class", edits);
+                                } else if (wholeMovedPkgs.containsKey(leftInt)) {
+                                    String targetPkg = wholeMovedPkgs.get(leftInt);
+                                    replaceExprExact(cu, sp, content, ms.getExpression(), left, targetPkg.replace('/', '.'), "import-wildcard-pkg", edits);
+                                    existingImports.add(targetPkg.replace('/', '.') + ".*");
+                                } else if (partialMovedPkgs.containsKey(leftInt)) {
+                                    existingImports.add(left + ".*");
+                                    for (String tp : partialMovedPkgs.get(leftInt)) {
+                                        String impStr = tp.replace('/', '.') + ".*";
+                                        if (!tp.equals(fileNewPkg)) {
+                                            extraImports.add("import " + impStr + ";");
+                                        }
+                                    }
+                                } else {
+                                    // Could be import pkg.OldClass.Inner.*;
+                                    ExpressionTree expr = ms.getExpression();
+                                    while (expr instanceof MemberSelectTree ems) {
+                                        ClassRename ocr = classRenames.get(ems.toString().replace('.', '/'));
+                                        if (ocr != null) {
+                                            addClassMoveOrRenameImportEdits(cu, sp, content, ems, ocr, "import-outer-pkg", "import-outer-class", edits);
+                                            break;
+                                        }
+                                        expr = ems.getExpression();
+                                    }
+                                    existingImports.add(full);
+                                }
+                            } else {
+                                // import pkg.OldClass; or import pkg.OldClass.Inner;
+                                ClassRename directCr = classRenames.get(full.replace('.', '/'));
+                                if (directCr != null) {
+                                    addClassMoveOrRenameImportEdits(cu, sp, content, ms, directCr, "import-pkg", "import-class", edits);
+                                    existingImports.add(directCr.newClass.replace('/', '.'));
+                                } else {
+                                    boolean rewritten = false;
+                                    ExpressionTree expr = ms.getExpression();
+                                    while (expr instanceof MemberSelectTree ems) {
+                                        ClassRename ocr = classRenames.get(ems.toString().replace('.', '/'));
+                                        if (ocr != null) {
+                                            addClassMoveOrRenameImportEdits(cu, sp, content, ems, ocr, "import-outer-pkg", "import-outer-class", edits);
+                                            rewritten = true;
+                                            break;
+                                        }
+                                        expr = ems.getExpression();
+                                    }
+                                    if (!rewritten) existingImports.add(full);
                                 }
                             }
                         }
                     }
                 }
 
+                final String finalFileOldPkg = fileOldPkg;
+                final String finalFileNewPkg = fileNewPkg;
+
                 new TreePathScanner<Void, Void>() {
                     @Override
                     public Void visitImport(ImportTree node, Void p) {
+                        return null; // already handled above
+                    }
+
+                    @Override
+                    public Void visitPackage(PackageTree node, Void p) {
                         return null; // already handled above
                     }
 
@@ -381,13 +521,15 @@ public final class AstBatchRenamer {
                                 matchedClassKeys.add(internal);
                                 String oldSimple = simpleName(cr.curClass);
                                 String newSimple = simpleName(cr.newClass);
-                                int s = (int) sp.getStartPosition(cu, node);
-                                int e = (int) sp.getEndPosition(cu, node);
-                                int headerEnd = content.indexOf('{', s);
-                                if (headerEnd < 0 || headerEnd > e) headerEnd = e;
-                                int tokStart = findClassDeclName(content, s, headerEnd, oldSimple);
-                                if (tokStart < 0) throw new IllegalStateException("Cannot locate class decl name " + oldSimple + " in " + file);
-                                edits.add(new TextEdit(tokStart, tokStart + oldSimple.length(), oldSimple, newSimple, "class-decl"));
+                                if (!oldSimple.equals(newSimple)) {
+                                    int s = (int) sp.getStartPosition(cu, node);
+                                    int e = (int) sp.getEndPosition(cu, node);
+                                    int headerEnd = content.indexOf('{', s);
+                                    if (headerEnd < 0 || headerEnd > e) headerEnd = e;
+                                    int tokStart = findClassDeclName(content, s, headerEnd, oldSimple);
+                                    if (tokStart < 0) throw new IllegalStateException("Cannot locate class decl name " + oldSimple + " in " + file);
+                                    edits.add(new TextEdit(tokStart, tokStart + oldSimple.length(), oldSimple, newSimple, "class-decl"));
+                                }
                             }
                         }
                         return super.visitClass(node, p);
@@ -401,17 +543,18 @@ public final class AstBatchRenamer {
                                 String internal = toInternalName(te, elements);
                                 ClassRename cr = classRenames.get(internal);
                                 if (cr != null) {
-                                    int s = (int) sp.getStartPosition(cu, node);
-                                    int e = (int) sp.getEndPosition(cu, node);
-                                    // Skip synthetic/default constructors (start == -1 or end == -1)
-                                    if (s >= 0 && e > s) {
-                                        String oldSimple = simpleName(cr.curClass);
-                                        String newSimple = simpleName(cr.newClass);
-                                        int paren = content.indexOf('(', s);
-                                        if (paren > s && paren <= e) {
-                                            int tokStart = findLastIdentToken(content, s, paren, oldSimple);
-                                            if (tokStart >= 0) {
-                                                edits.add(new TextEdit(tokStart, tokStart + oldSimple.length(), oldSimple, newSimple, "ctor-decl"));
+                                    String oldSimple = simpleName(cr.curClass);
+                                    String newSimple = simpleName(cr.newClass);
+                                    if (!oldSimple.equals(newSimple)) {
+                                        int s = (int) sp.getStartPosition(cu, node);
+                                        int e = (int) sp.getEndPosition(cu, node);
+                                        if (s >= 0 && e > s) {
+                                            int paren = content.indexOf('(', s);
+                                            if (paren > s && paren <= e) {
+                                                int tokStart = findLastIdentToken(content, s, paren, oldSimple);
+                                                if (tokStart >= 0) {
+                                                    edits.add(new TextEdit(tokStart, tokStart + oldSimple.length(), oldSimple, newSimple, "ctor-decl"));
+                                                }
                                             }
                                         }
                                     }
@@ -433,7 +576,6 @@ public final class AstBatchRenamer {
                                     matchedEnumKeys.add(key);
                                     int s = (int) sp.getStartPosition(cu, node);
                                     int e = (int) sp.getEndPosition(cu, node);
-                                    // Start after annotations on the enum constant if any
                                     int searchStart = s;
                                     ModifiersTree mods = node.getModifiers();
                                     if (mods != null && !mods.getAnnotations().isEmpty()) {
@@ -463,7 +605,16 @@ public final class AstBatchRenamer {
                             String internal = toInternalName(te, elements);
                             ClassRename cr = classRenames.get(internal);
                             if (cr != null) {
-                                addMemberSelectEdit(cu, sp, content, node, simpleName(cr.curClass), simpleName(cr.newClass), "class-select", edits);
+                                Element exprEl = trees.getElement(new TreePath(getCurrentPath(), node.getExpression()));
+                                if (exprEl instanceof PackageElement && !parentPkg(cr.curClass).equals(parentPkg(cr.newClass))) {
+                                    replaceExprExact(cu, sp, content, node.getExpression(),
+                                        parentPkg(cr.curClass).replace('/', '.'),
+                                        parentPkg(cr.newClass).replace('/', '.'),
+                                        "fqn-pkg", edits);
+                                }
+                                if (!simpleName(cr.curClass).equals(simpleName(cr.newClass))) {
+                                    addMemberSelectEdit(cu, sp, content, node, simpleName(cr.curClass), simpleName(cr.newClass), "class-select", edits);
+                                }
                             }
                         }
                         return super.visitMemberSelect(node, p);
@@ -488,17 +639,100 @@ public final class AstBatchRenamer {
                             ClassRename cr = classRenames.get(internal);
                             if (cr != null) {
                                 String oldSimple = simpleName(cr.curClass);
-                                int s = (int) sp.getStartPosition(cu, node);
-                                int e = (int) sp.getEndPosition(cu, node);
-                                if (s >= 0 && e > s && content.substring(s, e).equals(oldSimple)) {
-                                    edits.add(new TextEdit(s, e, oldSimple, simpleName(cr.newClass), "class-ident"));
+                                String newSimple = simpleName(cr.newClass);
+                                if (!oldSimple.equals(newSimple)) {
+                                    int s = (int) sp.getStartPosition(cu, node);
+                                    int e = (int) sp.getEndPosition(cu, node);
+                                    if (s >= 0 && e > s && content.substring(s, e).equals(oldSimple)) {
+                                        edits.add(new TextEdit(s, e, oldSimple, newSimple, "class-ident"));
+                                    }
+                                }
+                            }
+                            // If this file and top-level type were previously same-package and are now split across packages, synthesize explicit import!
+                            if (te.getNestingKind() == NestingKind.TOP_LEVEL) {
+                                String topInt = toInternalName(te, elements);
+                                String topOldPkg = parentPkg(topInt);
+                                ClassRename topCr = classRenames.get(topInt);
+                                String topNewInt = topCr != null ? topCr.newClass : topInt;
+                                String topNewPkg = parentPkg(topNewInt);
+                                if (!finalFileOldPkg.isEmpty() && finalFileOldPkg.equals(topOldPkg) && !finalFileNewPkg.equals(topNewPkg)) {
+                                    String fqNew = topNewInt.replace('/', '.');
+                                    if (!existingImports.contains(fqNew) && !existingImports.contains(topNewPkg.replace('/', '.') + ".*")) {
+                                        extraImports.add("import " + fqNew + ";");
+                                    }
                                 }
                             }
                         }
                         return super.visitIdentifier(node, p);
                     }
                 }.scan(cu, null);
+
+                // Synthesize any extra imports required by partial-package splits
+                if (!extraImports.isEmpty()) {
+                    int insertPos = findImportInsertOffset(cu, sp, content);
+                    StringBuilder ins = new StringBuilder();
+                    boolean needsLeadingNl = insertPos > 0 && content.charAt(insertPos - 1) != '\n';
+                    if (needsLeadingNl) ins.append('\n');
+                    for (String impLine : extraImports) {
+                        ins.append(impLine).append('\n');
+                    }
+                    edits.add(new TextEdit(insertPos, insertPos, "", ins.toString(), "insert-imports"));
+                }
             }
+        }
+    }
+
+    private static TypeElement topLevelOf(TypeElement te) {
+        Element cur = te;
+        TypeElement top = te;
+        while (cur != null) {
+            if (cur instanceof TypeElement t) top = t;
+            cur = cur.getEnclosingElement();
+        }
+        return top;
+    }
+
+    private static int findImportInsertOffset(CompilationUnitTree cu, SourcePositions sp, String content) {
+        List<? extends ImportTree> imps = cu.getImports();
+        int anchorEnd = -1;
+        if (imps != null && !imps.isEmpty()) {
+            anchorEnd = (int) sp.getEndPosition(cu, imps.get(imps.size() - 1));
+        } else if (cu.getPackage() != null) {
+            anchorEnd = (int) sp.getEndPosition(cu, cu.getPackage());
+        }
+        if (anchorEnd < 0) return 0;
+        // Advance past trailing '\r' / '\n' on the anchor line
+        int p = anchorEnd;
+        if (p < content.length() && content.charAt(p) == '\r') p++;
+        if (p < content.length() && content.charAt(p) == '\n') p++;
+        return p;
+    }
+
+    private static void replaceExprExact(
+        CompilationUnitTree cu, SourcePositions sp, String content,
+        ExpressionTree expr, String oldText, String newText, String kind, List<TextEdit> edits
+    ) {
+        int s = (int) sp.getStartPosition(cu, expr);
+        int e = (int) sp.getEndPosition(cu, expr);
+        if (s < 0 || e <= s) return;
+        String actual = content.substring(s, e);
+        if (!actual.equals(oldText)) {
+            throw new IllegalStateException("Expected '" + oldText + "' at [" + s + "," + e + "] got '" + actual + "' (" + kind + ")");
+        }
+        edits.add(new TextEdit(s, e, oldText, newText, kind));
+    }
+
+    private static void addClassMoveOrRenameImportEdits(
+        CompilationUnitTree cu, SourcePositions sp, String content,
+        MemberSelectTree ms, ClassRename cr, String pkgKind, String clsKind, List<TextEdit> edits
+    ) {
+        String oldPkg = parentPkg(cr.curClass);
+        String newPkg = parentPkg(cr.newClass);
+        if (!oldPkg.equals(newPkg)) {
+            replaceExprExact(cu, sp, content, ms.getExpression(), oldPkg.replace('/', '.'), newPkg.replace('/', '.'), pkgKind, edits);
+        }
+        if (!simpleName(cr.curClass).equals(simpleName(cr.newClass))) {
+            addMemberSelectEdit(cu, sp, content, ms, simpleName(cr.curClass), simpleName(cr.newClass), clsKind, edits);
         }
     }
 

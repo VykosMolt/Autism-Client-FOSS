@@ -5,12 +5,12 @@ import autismclient.ai.AiMacroTools;
 import autismclient.ai.SchematicWorkspace;
 import autismclient.ai.AiDirectOps;
 import autismclient.ai.a.AiChunkMemory;
-import autismclient.g.ServerPackSelectionRegistry;
-import autismclient.g.PackFailureGuard;
-import autismclient.g.ResourcePackSessionTracker;
-import autismclient.g.ProtectorFeatureFlags;
-import autismclient.g.ModNamespaceCatalog;
-import autismclient.g.VanillaTranslationKeyLoader;
+import autismclient.protector.ServerPackSelectionRegistry;
+import autismclient.protector.PackFailureGuard;
+import autismclient.protector.ResourcePackSessionTracker;
+import autismclient.protector.ProtectorFeatureFlags;
+import autismclient.protector.ModNamespaceCatalog;
+import autismclient.protector.VanillaTranslationKeyLoader;
 import autismclient.gui.e.SdfShapeRenderer;
 import autismclient.gui.f.b.k;
 import autismclient.modules.NoFallPauseTimer;
@@ -44,7 +44,7 @@ import autismclient.util.RemoteViewController;
 import autismclient.util.PlacedBlockTrailRenderer;
 import autismclient.util.SkeletonEspRenderer;
 import autismclient.util.OverlayScreenController;
-import autismclient.util.c.GifTextureManager;
+import autismclient.util.gif.GifTextureManager;
 import autismclient.util.macro.MacroExecutor;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -281,7 +281,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("cfg.fakeGamemode", FakeGamemodeManager::init_V);
          runSafe("cfg.instaBreak", BlockPreviewRenderer::load);
          runSafe("cfg.packFailureGuard", PackFailureGuard::load);
-         runSafe("cfg.packResponses", () -> ResourcePackSessionTracker.init(autismclient.g.ConnectionPrivacyRegistry.init(listener), null));
+         runSafe("cfg.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.init(listener), null));
          runSafe("cfg.hideOverlays", () -> {
             if (!OverlayScreenController.load_Z()) {
                OverlayManager.init_bk().sync_V();
@@ -314,7 +314,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("leave.fakeGamemode", FakeGamemodeManager::init_V);
          runSafe("leave.instaBreak", BlockPreviewRenderer::load);
          runSafe("leave.packStrip", ServerPackSelectionRegistry::load);
-         runSafe("leave.packResponses", () -> ResourcePackSessionTracker.init(autismclient.g.ConnectionPrivacyRegistry.init(handler), null));
+         runSafe("leave.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.init(handler), null));
          runSafe("leave.packFailureGuard", PackFailureGuard::load);
          runSafe("leave.macroEditor", AutismMacroEditorOverlay::flush_V_9);
          runSafe("leave.lanSync", () -> LanSyncManager.init_aE().sync_V());
@@ -331,8 +331,8 @@ public final class AutismClientMod implements ClientModInitializer {
       });
       runSafe("init.mapPreview", MapTooltipPreview::init_V);
       ItemTooltipCallback.EVENT.register((stack, tooltipContext, tooltipType, lines) -> {
-         autismclient.g.TooltipNbtGuard.init_I(lines);
-         autismclient.g.TooltipNbtGuard.init_Z(lines);
+         autismclient.protector.TooltipNbtGuard.init_I(lines);
+         autismclient.protector.TooltipNbtGuard.init_Z(lines);
          ModuleRuntimeManager.init_PoolEntry().init(stack, lines);
       });
       ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {

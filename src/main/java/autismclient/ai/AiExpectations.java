@@ -59,7 +59,7 @@ final class AiExpectations implements AiOperation {
             throw new IllegalArgumentException("Expected server message requires nonempty contains text");
          }
 
-         CustomMenuSnapshot menu = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
+         CustomMenuSnapshot menu = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
          this.write = menu == null ? -1L : menu.generation();
          this.load = System.nanoTime() + Math.max(1, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 20))) * 1000000000L;
       } else {
@@ -130,7 +130,7 @@ final class AiExpectations implements AiOperation {
       }
 
       if (this.init_JsonObject.has("menu")) {
-         CustomMenuSnapshot current = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
+         CustomMenuSnapshot current = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
          JsonObject e = this.init_JsonObject.getAsJsonObject("menu");
          if (current == null
             || current.generation() <= this.write

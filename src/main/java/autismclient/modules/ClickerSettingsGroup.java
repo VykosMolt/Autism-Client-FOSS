@@ -14,7 +14,7 @@ import java.util.function.BooleanSupplier;
 
 final class ClickerSettingsGroup {
    static final String init_Str = "technique";
-   static final autismclient.util.a.ClickTechnique init_BufferHelper = autismclient.util.a.ClickTechnique.BUTTERFLY;
+   static final autismclient.util.clicker.ClickTechnique init_BufferHelper = autismclient.util.clicker.ClickTechnique.BUTTERFLY;
    static final ValueRange init_ValueRange = new ValueRange(12.0, 14.5);
    private static final String load_Str = "Free Spin";
    private static final double init_D = 300.0;
@@ -24,25 +24,25 @@ final class ClickerSettingsGroup {
    private final double load_D;
    private final ValueRange load_ValueRange;
    private final boolean init_Z;
-   private final Map<autismclient.util.a.ClickTechnique, ClickerSettingsGroup.Inner_DataUtil> init_Map = new EnumMap<>(autismclient.util.a.ClickTechnique.class);
-   private autismclient.util.a.ClickPatternEngine.Inner_ConfigStore init_DataUtil_ConfigSto;
+   private final Map<autismclient.util.clicker.ClickTechnique, ClickerSettingsGroup.Inner_DataUtil> init_Map = new EnumMap<>(autismclient.util.clicker.ClickTechnique.class);
+   private autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore init_DataUtil_ConfigSto;
 
-   ClickerSettingsGroup(Module module, String group, autismclient.util.a.ClickTechnique fallback, BooleanSupplier visible) {
+   ClickerSettingsGroup(Module module, String group, autismclient.util.clicker.ClickTechnique fallback, BooleanSupplier visible) {
       this(module, group, fallback, visible, 0.0);
    }
 
-   ClickerSettingsGroup(Module module, String group, autismclient.util.a.ClickTechnique fallback, BooleanSupplier visible, double defaultCpsCeiling) {
+   ClickerSettingsGroup(Module module, String group, autismclient.util.clicker.ClickTechnique fallback, BooleanSupplier visible, double defaultCpsCeiling) {
       this(module, group, fallback, visible, defaultCpsCeiling, null);
    }
 
-   ClickerSettingsGroup(Module module, String group, autismclient.util.a.ClickTechnique fallback, BooleanSupplier visible, ValueRange defaultButterflyBand) {
+   ClickerSettingsGroup(Module module, String group, autismclient.util.clicker.ClickTechnique fallback, BooleanSupplier visible, ValueRange defaultButterflyBand) {
       this(module, group, fallback, visible, defaultButterflyBand.max(), defaultButterflyBand, false);
    }
 
    private ClickerSettingsGroup(
       Module module,
       String group,
-      autismclient.util.a.ClickTechnique fallback,
+      autismclient.util.clicker.ClickTechnique fallback,
       BooleanSupplier visible,
       double defaultCpsCeiling,
       ValueRange defaultButterflyBand
@@ -53,7 +53,7 @@ final class ClickerSettingsGroup {
    private ClickerSettingsGroup(
       Module module,
       String group,
-      autismclient.util.a.ClickTechnique fallback,
+      autismclient.util.clicker.ClickTechnique fallback,
       BooleanSupplier visible,
       double defaultCpsCeiling,
       ValueRange defaultButterflyBand,
@@ -65,18 +65,18 @@ final class ClickerSettingsGroup {
       this.load_D = defaultCpsCeiling;
       this.load_ValueRange = defaultButterflyBand;
       this.init_ChoiceSetting = module.add(
-         new ChoiceSetting("technique", "Technique", fallback.init_Str, autismclient.util.a.ClickTechnique.init_StrArr())
+         new ChoiceSetting("technique", "Technique", fallback.init_Str, autismclient.util.clicker.ClickTechnique.init_StrArr())
             .group(group)
             .description("Clicking style")
             .visibleWhen(this.init_BooleanSupplier)
       );
    }
 
-   private ValueRange init_ValueRange_BufferHelper(autismclient.util.a.ClickTechnique kind) {
-      ValueRange own = kind == autismclient.util.a.ClickTechnique.BUTTERFLY && this.load_ValueRange != null
+   private ValueRange init_ValueRange_BufferHelper(autismclient.util.clicker.ClickTechnique kind) {
+      ValueRange own = kind == autismclient.util.clicker.ClickTechnique.BUTTERFLY && this.load_ValueRange != null
          ? this.load_ValueRange
          : new ValueRange(kind.read_D, kind.write_D);
-      if (this.load_D <= 0.0 || own.max() <= this.load_D || kind == autismclient.util.a.ClickTechnique.RAGE && !this.init_Z) {
+      if (this.load_D <= 0.0 || own.max() <= this.load_D || kind == autismclient.util.clicker.ClickTechnique.RAGE && !this.init_Z) {
          return own;
       }
 
@@ -86,29 +86,29 @@ final class ClickerSettingsGroup {
    }
 
    void init_V() {
-      for (autismclient.util.a.ClickTechnique each : autismclient.util.a.ClickTechnique.values()) {
+      for (autismclient.util.clicker.ClickTechnique each : autismclient.util.clicker.ClickTechnique.values()) {
          this.init_Map.put(each, new ClickerSettingsGroup.Inner_DataUtil(each));
       }
    }
 
-   autismclient.util.a.ClickTechnique init_BufferHelper() {
-      return autismclient.util.a.ClickTechnique.init(this.init_ChoiceSetting.get());
+   autismclient.util.clicker.ClickTechnique init_BufferHelper() {
+      return autismclient.util.clicker.ClickTechnique.init(this.init_ChoiceSetting.get());
    }
 
-   autismclient.util.a.ClickProfile init_CachePool() {
+   autismclient.util.clicker.ClickProfile init_CachePool() {
       ClickerSettingsGroup.Inner_DataUtil section = this.init_Map.get(this.init_BufferHelper());
-      return section == null ? autismclient.util.a.ClickProfile.init_CachePool(this.init_BufferHelper()) : section.init_CachePool();
+      return section == null ? autismclient.util.clicker.ClickProfile.init_CachePool(this.init_BufferHelper()) : section.init_CachePool();
    }
 
-   autismclient.util.a.ClickPatternEngine.Inner_ConfigStore init_DataUtil_ConfigSto() {
+   autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore init_DataUtil_ConfigSto() {
       if (this.init_DataUtil_ConfigSto == null) {
          try {
             autismclient.util.HumanHandProfile hand = autismclient.util.HumanHandProfile.init_am();
-            this.init_DataUtil_ConfigSto = new autismclient.util.a.ClickPatternEngine.Inner_ConfigStore(
+            this.init_DataUtil_ConfigSto = new autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore(
                0.85 + 0.3 * init_D_D(hand.open()), 0.9 + 0.2 * init_D_D(hand.load_D()), hand.sync() >= 0.0
             );
          } catch (Throwable unavailable) {
-            this.init_DataUtil_ConfigSto = autismclient.util.a.ClickPatternEngine.Inner_ConfigStore.init_DataUtil_ConfigSto;
+            this.init_DataUtil_ConfigSto = autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore.init_DataUtil_ConfigSto;
          }
       }
 
@@ -154,7 +154,7 @@ final class ClickerSettingsGroup {
    }
 
    private final class Inner_DataUtil {
-      private final autismclient.util.a.ClickTechnique init_BufferHelper;
+      private final autismclient.util.clicker.ClickTechnique init_BufferHelper;
       private final String init_Str;
       private final String load_Str;
       private final String read_Str;
@@ -172,16 +172,16 @@ final class ClickerSettingsGroup {
       private IntSetting write_IntSetting;
       private IntSetting update;
       private String[] init_StrArr;
-      private autismclient.util.a.ClickProfile init_CachePool;
+      private autismclient.util.clicker.ClickProfile init_CachePool;
 
-      Inner_DataUtil(autismclient.util.a.ClickTechnique kind) {
+      Inner_DataUtil(autismclient.util.clicker.ClickTechnique kind) {
          this.init_BufferHelper = kind;
          String key = kind.init_Str.toLowerCase(Locale.ROOT);
          this.init_Str = kind.init_Str + " Clicking";
          this.load_Str = key + "-cps";
          this.read_Str = key + "-interval";
          this.init_BooleanSupplier = () -> ClickerSettingsGroup.this.init_BooleanSupplier.getAsBoolean() && ClickerSettingsGroup.this.init_BufferHelper() == kind;
-         if (kind == autismclient.util.a.ClickTechnique.RAGE) {
+         if (kind == autismclient.util.clicker.ClickTechnique.RAGE) {
             double rate = ClickerSettingsGroup.this.init_ValueRange_BufferHelper(kind).max();
             this.init_DoubleSetting = this.init(
                new DoubleSetting(this.load_Str, "CPS", rate, 1.0, kind.load_D, 0.1).description("Fixed rate, no humanizing"), null
@@ -266,7 +266,7 @@ final class ClickerSettingsGroup {
          return ClickerSettingsGroup.this.init_Module.add(setting.group(this.init_Str).visibleWhen(when));
       }
 
-      autismclient.util.a.ClickProfile init_CachePool() {
+      autismclient.util.clicker.ClickProfile init_CachePool() {
          Setting<?, ?>[] parts = new Setting[]{
             this.init_RangeSetting,
             this.init_DoubleSetting,
@@ -295,7 +295,7 @@ final class ClickerSettingsGroup {
             return this.init_CachePool;
          }
 
-         autismclient.util.a.ClickProfile.Inner_DataUtil builder = autismclient.util.a.ClickProfile.init_CachePool_DataUtil(this.init_BufferHelper);
+         autismclient.util.clicker.ClickProfile.Inner_DataUtil builder = autismclient.util.clicker.ClickProfile.init_CachePool_DataUtil(this.init_BufferHelper);
          if (this.init_DoubleSetting != null) {
             builder.init_CachePool_DataUtil_D_D(this.init_DoubleSetting.get(), this.init_DoubleSetting.get());
          } else {
@@ -350,7 +350,7 @@ final class ClickerSettingsGroup {
          }
 
          ValueRange band = this.init_RangeSetting.get();
-         double[] ms = autismclient.util.a.ClickTimingMath.init(band.min(), band.max());
+         double[] ms = autismclient.util.clicker.ClickTimingMath.init(band.min(), band.max());
          return new ValueRange(ms[0], ms[1]).toString();
       }
 
@@ -369,7 +369,7 @@ final class ClickerSettingsGroup {
          } else {
             ValueRange ms = ValueRange.parse(value, null);
             if (ms != null && ms.min() > 0.0) {
-               double[] band = autismclient.util.a.ClickTimingMath.load(ms.min(), ms.max());
+               double[] band = autismclient.util.clicker.ClickTimingMath.load(ms.min(), ms.max());
                ClickerSettingsGroup.this.init_Module.setLinkedValue(this.load_Str, new ValueRange(band[0], band[1]).toString());
             }
          }

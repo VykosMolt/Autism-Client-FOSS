@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.OutboundChannelPolicy;
+import autismclient.protector.OutboundChannelPolicy;
 import net.fabricmc.fabric.impl.networking.client.ClientLoginNetworkAddon;
 import net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl;
 import net.minecraft.network.protocol.login.ClientboundCustomQueryPacket;

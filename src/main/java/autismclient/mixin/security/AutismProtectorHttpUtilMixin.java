@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ScopedHttpUrlConnection;
-import autismclient.g.ResourcePackDownloadScope;
+import autismclient.protector.ScopedHttpUrlConnection;
+import autismclient.protector.ResourcePackDownloadScope;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.io.IOException;

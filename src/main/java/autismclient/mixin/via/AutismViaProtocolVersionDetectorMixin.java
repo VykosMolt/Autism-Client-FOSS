@@ -1,6 +1,6 @@
 package autismclient.mixin.via;
 
-import autismclient.compat.a.ViaFabricPlusBridge;
+import autismclient.compat.via.ViaFabricPlusBridge;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.io.IOException;

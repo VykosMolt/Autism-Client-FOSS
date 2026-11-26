@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.RegistryCompatGuard;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.RegistryCompatGuard;
 import autismclient.mixin.accessor.ClientCommonNetworkHandlerAccessor;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

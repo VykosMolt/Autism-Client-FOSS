@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.SyntheticWorldGenLevel;
+import autismclient.util.oresim.worldgen.SyntheticWorldGenLevel;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import org.spongepowered.asm.mixin.Mixin;

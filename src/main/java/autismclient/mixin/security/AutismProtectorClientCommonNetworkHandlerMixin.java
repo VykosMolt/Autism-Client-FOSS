@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.ResourcePackSessionTracker;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.ResourcePackSessionTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl;
 import net.minecraft.network.Connection;

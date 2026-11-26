@@ -1,8 +1,8 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.ModdedParticleGuard;
-import autismclient.g.PacketDecodeOriginStack;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.ModdedParticleGuard;
+import autismclient.protector.PacketDecodeOriginStack;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.network.PacketListener;

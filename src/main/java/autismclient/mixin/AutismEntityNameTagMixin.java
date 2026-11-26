@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.g.ComponentSafetyValidator;
+import autismclient.protector.ComponentSafetyValidator;
 import autismclient.modules.NameTagsRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;

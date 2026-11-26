@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.SyntheticWorldGenLevel;
-import autismclient.util.j.a.PaleMossDecoratorShim;
+import autismclient.util.oresim.worldgen.SyntheticWorldGenLevel;
+import autismclient.util.oresim.worldgen.PaleMossDecoratorShim;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.world.level.levelgen.feature.treedecorators.PaleMossDecorator;

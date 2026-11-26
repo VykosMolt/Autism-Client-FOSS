@@ -1,8 +1,8 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConnectionPrivacyRegistry;
-import autismclient.g.PacketOriginDuck;
-import autismclient.g.PacketDecodeOriginStack;
+import autismclient.protector.ConnectionPrivacyRegistry;
+import autismclient.protector.PacketOriginDuck;
+import autismclient.protector.PacketDecodeOriginStack;
 import net.minecraft.network.chat.contents.NbtContents;
 import net.minecraft.network.chat.contents.ObjectContents;
 import net.minecraft.network.chat.contents.ScoreContents;

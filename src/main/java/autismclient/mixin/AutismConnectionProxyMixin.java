@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.g.ConnectionPrivacyRegistry;
+import autismclient.protector.ConnectionPrivacyRegistry;
 import autismclient.util.bW;
 import autismclient.util.ProxyListManager;
 import autismclient.util.ProxyProtocolType;

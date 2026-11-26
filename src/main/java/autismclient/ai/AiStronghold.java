@@ -1205,7 +1205,7 @@ final class AiStronghold {
                      AiServerEvidence.init_J(),
                      AiServerEvidence.init_OptionalInt_I(container, this.init_co_StreamUtil.load_J, "minecraft:ender_eye"),
                      AiServerEvidence.load_J_I(container),
-                     autismclient.util.h.BlockChangeAckTracker.init_Z(mc.level, this.init_co_StreamUtil.write_I),
+                     autismclient.util.villager.BlockChangeAckTracker.init_Z(mc.level, this.init_co_StreamUtil.write_I),
                      identity,
                      this.update_I - 6
                   );
