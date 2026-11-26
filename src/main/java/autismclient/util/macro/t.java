@@ -134,7 +134,7 @@ public class t implements MacroAction {
    public String getDisplayName() {
       int steps = Math.max(0, this.stepCount);
       int selected = this.init_List_12().size();
-      return "Multi [" + steps + (steps == 1 ? " step" : " steps") + " on " + selected + (selected == 1 ? " account" : " accounts") + "]";
+      return "Multi (unsupported) [" + steps + (steps == 1 ? " step" : " steps") + " on " + selected + (selected == 1 ? " account" : " accounts") + "]";
    }
 
    @Override

@@ -2501,7 +2501,7 @@ public class AutismMacroEditorOverlay extends bj {
                   if (multiHeader >= 0 && this.init_aM.init_List.get(multiHeader) instanceof autismclient.util.macro.t multi) {
                      int childCount = multi.init(this.init_aM.init_List, multiHeader);
                      int offset = index - multiHeader;
-                     return new AutismMacroEditorOverlay.Inner_StreamUtil(false, false, false, true, multiHeader, childCount, offset, "STEP");
+                     return new AutismMacroEditorOverlay.Inner_StreamUtil(false, false, false, true, multiHeader, childCount, offset, "SKIP");
                   } else {
                      return AutismMacroEditorOverlay.Inner_StreamUtil.init_AutismMacroEditorO;
                   }

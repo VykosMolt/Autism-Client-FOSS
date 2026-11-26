@@ -77,6 +77,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
@@ -636,13 +637,14 @@ public class MacroExecutor {
 
          for (int j = currentIndex + 1; j < actions.size(); j++) {
             MacroAction candidate = actions.get(j);
-            if (candidate instanceof ByteReader
-               || candidate instanceof ClassCache
-               || candidate instanceof L
-               || candidate instanceof O
-               || candidate instanceof N
-               || candidate instanceof StreamUtil
-               || candidate instanceof PoolEntry) {
+            MacroAction boundary = originalMacroStep(candidate);
+            if (boundary instanceof ByteReader
+               || boundary instanceof ClassCache
+               || boundary instanceof L
+               || boundary instanceof O
+               || boundary instanceof N
+               || boundary instanceof StreamUtil
+               || boundary instanceof PoolEntry) {
                break;
             }
 
@@ -995,6 +997,31 @@ public class MacroExecutor {
       return init_J_aM_MacroExecutor_Pool(macro, MacroExecutor.Inner_PoolEntry.init_MacroExecutor_Pool);
    }
 
+   static boolean suppressLegacyMultiSteps(List<MacroAction> actions) {
+      boolean hasLegacyMulti = false;
+      for (int index = 0; index < actions.size(); index++) {
+         if (actions.get(index) instanceof t multi) {
+            hasLegacyMulti = true;
+            int lastCovered = index + multi.init(actions, index);
+            for (int row = index + 1; row <= lastCovered; row++) {
+               MacroAction step = actions.get(row);
+               // Keep label identity for jumps while suppressing it in action collectors.
+               if (step instanceof KeyHolder label) {
+                  label.setEnabled(false);
+               } else {
+                  actions.set(row, new SkippedLegacyMultiStep(step));
+               }
+            }
+            index = lastCovered;
+         }
+      }
+      return hasLegacyMulti;
+   }
+
+   private static MacroAction originalMacroStep(MacroAction action) {
+      return action instanceof SkippedLegacyMultiStep skipped ? skipped.original() : action;
+   }
+
    public static long init_J_aM_MacroExecutor_Pool(autismclient.util.aM macro, MacroExecutor.Inner_PoolEntry options) {
       if (!AutismLiteVariant.enabled() && !autismclient.e.ByteReader.init()) {
          return -1L;
@@ -1018,6 +1045,8 @@ public class MacroExecutor {
          }
 
          if (executionMacro != null && executionMacro.init_List != null && !executionMacro.init_List.isEmpty()) {
+            // Keep skipped rows in the execution copy so grouped steps and jumps retain their indices.
+            boolean hasLegacyMulti = suppressLegacyMultiSteps(executionMacro.init_List);
             MacroExecutor.Inner_TableIndex runState;
             synchronized (init_Obj) {
                String name = macro.init_Str == null ? "" : macro.init_Str;
@@ -1089,6 +1118,14 @@ public class MacroExecutor {
                }
             }
 
+            if (hasLegacyMulti) {
+               String warning = "Legacy Multi blocks are unsupported and will be skipped in " + macro.init_Str + ".";
+               if (runOptions.init_Z()) {
+                  AutismClientAddon.LOG.info(warning);
+               } else {
+                  AutismClientMessaging.sendPrefixed("§e" + warning);
+               }
+            }
             return runState.init_J;
          } else {
             return -1L;
@@ -1255,13 +1292,13 @@ public class MacroExecutor {
                   runState.update = 0;
                } else {
                   MacroAction action = macro.init_List.get(i);
-                  if (!action.isEnabled()) {
+                  if (action instanceof t multi) {
+                     i += multi.init(macro.init_List, i);
+                  } else if (!action.isEnabled()) {
                      if (action instanceof L disabledRace) {
                         i += disabledRace.init_I_List_I(macro.init_List, i);
                      } else if (action instanceof O disabledReport) {
                         i += disabledReport.init(macro.init_List, i);
-                     } else if (action instanceof t disabledMulti) {
-                        i += disabledMulti.init(macro.init_List, i);
                      }
                   } else if (d.init(action, mc) && init_Z_MacroAction_Minecraft(action, mc)) {
                      if (!load_Z_MacroAction(action)) {
@@ -1605,11 +1642,13 @@ public class MacroExecutor {
 
                                           for (int j = i + 1; j < macro.init_List.size(); j++) {
                                              MacroAction candidate = macro.init_List.get(j);
-                                             if (candidate instanceof ByteReader || candidate instanceof ClassCache) {
+                                             MacroAction boundary = originalMacroStep(candidate);
+                                             if (boundary instanceof ByteReader || boundary instanceof ClassCache) {
                                                 break;
                                              }
 
                                              if (candidate.isEnabled()
+                                                && !(candidate instanceof t)
                                                 && !(candidate instanceof EventBus)
                                                 && !(candidate instanceof ay)
                                                 && !(candidate instanceof at)
@@ -1669,11 +1708,6 @@ public class MacroExecutor {
                                        int bodyCount = init_I_Minecraft(mc, module, macro.init_List, i, race);
                                        if (bodyCount > 0) {
                                           i += bodyCount;
-                                       }
-                                    } else if (action instanceof t multi) {
-                                       int stepCount = init_I_Minecraft(mc, module, macro.init_Str, macro.init_List, i, multi);
-                                       if (stepCount > 0) {
-                                          i += stepCount;
                                        }
                                     } else if (action instanceof O reportAction) {
                                        int conditionCount = init_I_Minecraft_3(mc, macro.init_List, i, reportAction);
@@ -4486,12 +4520,6 @@ public class MacroExecutor {
       return init_Z_Minecraft_4(mc, trigger, timeoutMs);
    }
 
-   private static int init_I_Minecraft(
-      Minecraft mc, autismclient.modules.PoolEntry module, String macroName, List<MacroAction> actions, int headerIndex, t multi
-   ) {
-      return multi.init(actions, headerIndex);
-   }
-
    public static boolean init_Z_Minecraft_4(Minecraft mc, MacroAction trigger, int timeoutMs) {
       if (trigger == null) {
          return true;
@@ -5111,6 +5139,9 @@ public class MacroExecutor {
    }
 
    private static void init_V_Minecraft_2(Minecraft mc, MacroAction action, autismclient.modules.PoolEntry module) {
+      if (action instanceof t || action instanceof SkippedLegacyMultiStep) {
+         return;
+      }
       if (d.init(action, mc) && init_Z_MacroAction_Minecraft(action, mc)) {
          load_V_MacroAction(action);
          EnumSet<DataPipe.Inner_DataUtil> heldResources = load_EnumSet_MacroAction(action);
@@ -11287,6 +11318,37 @@ public class MacroExecutor {
 
       public String load() {
          return this.init_Str;
+      }
+   }
+
+   private record SkippedLegacyMultiStep(MacroAction original) implements MacroAction {
+      @Override
+      public void execute(Minecraft mc) {
+      }
+
+      @Override
+      public CompoundTag toTag() {
+         return this.original.toTag();
+      }
+
+      @Override
+      public void fromTag(CompoundTag tag) {
+         this.original.fromTag(tag);
+      }
+
+      @Override
+      public String getDisplayName() {
+         return this.original.getDisplayName() + " (skipped)";
+      }
+
+      @Override
+      public String getIcon() {
+         return this.original.getIcon();
+      }
+
+      @Override
+      public boolean isEnabled() {
+         return false;
       }
    }
 

@@ -544,6 +544,7 @@ public class ActionEditorOverlay extends bj {
          case f_j_StreamGate:
          case write:
          case f_C_StreamGate:
+         case f_W_StreamGate:
          case table:
             var10000 = true;
             break;
@@ -1664,7 +1665,12 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, int bodyTop, int bodyBtm) {
-      if (this.init_MapStore != null) {
+      if (this.isLegacyMulti()) {
+         FileCache.init(
+            context, this.init_Font, "Legacy Multi is unsupported. This block and its steps are skipped when the macro runs.",
+            this.bind + 6, bodyTop + 4, this.f_b_I - 12
+         );
+      } else if (this.init_MapStore != null) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.init_V_GuiGraphicsExtract(context, x, bodyTop, w, mouseX, mouseY, delta);
@@ -6586,8 +6592,6 @@ public class ActionEditorOverlay extends bj {
             case flush:
                if (this.init_Z_FieldDef(field)) {
                   this.load_V_GuiGraphicsExtract_2(ctx, field, x, y, w, mx, my);
-               } else if (this.load_Z_FieldDef(field)) {
-                  this.read_V_GuiGraphicsExtract_2(ctx, field, x, y, w, mx, my);
                } else if (field.captureMode() == StreamUtil.write) {
                   this.update(ctx, field, x, y, w, mx, my, delta);
                } else {
@@ -6741,12 +6745,6 @@ public class ActionEditorOverlay extends bj {
 
    private boolean init_Z_FieldDef(FieldDef field) {
       return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_q_StreamGate && field != null && "raceSteps".equals(field.key());
-   }
-
-   private boolean load_Z_FieldDef(FieldDef field) {
-      return AutismLiteVariant.enabled()
-         ? false
-         : this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_W_StreamGate && field != null && "accounts".equals(field.key());
    }
 
    private void load_V_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my) {
@@ -6941,86 +6939,6 @@ public class ActionEditorOverlay extends bj {
 
       int slash = choice.lastIndexOf(47);
       return (slash >= 0 ? choice.substring(slash + 1) : choice).trim();
-   }
-
-   private void read_V_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my) {
-      String key = field.key();
-      List<String> values = this.write_Map.computeIfAbsent(key, ignored -> new ArrayList<>());
-      Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label() + " (" + values.size() + ")", font, p.parse(), x, y + 2, false);
-      int addY = y + 13;
-      int[] acctBtns = this.init_IArr_I(x, w, false, "+ Accounts", "All", "None");
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, acctBtns[0], addY, acctBtns[1], 13, "+ Accounts", ByteReader.Inner_StreamUtil.write, false, mx, my, () -> {
-      });
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, acctBtns[2], addY, acctBtns[3], 13, "All", ByteReader.Inner_StreamUtil.init, false, mx, my, () -> {
-      });
-      this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, acctBtns[4], addY, acctBtns[5], 13, "None", ByteReader.Inner_StreamUtil.init, !values.isEmpty(), mx, my, values::clear
-      );
-      int listY = addY + 13 + 2;
-      int rowH = 14;
-      int visibleRows = 4;
-      EventBus viewport = this.init_EventBus_Map(this.tick_Map, key + "_multi", x, listY, w, visibleRows * rowH, rowH, 5);
-      viewport.init_V(values.size() * rowH);
-      viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
-      if (values.isEmpty()) {
-         FileCache.init(ctx, this.init_Font, "No accounts selected. Use + Accounts.", x, listY, w - 5 - 1);
-      } else {
-         int buttonW = 12;
-         int rowTextW = Math.max(20, w - 5 - buttonW - 7);
-         viewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int first = viewport.pop();
-
-         for (int vi = first; vi < values.size() && vi <= viewport.tick(); vi++) {
-            int rowY = viewport.init_I(vi);
-            if (rowY != -2147483648) {
-               boolean hovered = mx >= x && mx < x + rowTextW && my >= rowY && my < rowY + rowH;
-               this.load(ctx, x, rowY, rowTextW, rowH, vi, values.get(vi), hovered);
-               int bx = x + rowTextW + 3;
-               int rowIndex = vi;
-               this.init_V_GuiGraphicsExtract_2(ctx, bx, rowY + (rowH - buttonW) / 2, buttonW, mx, my, "X", true, true, () -> {
-                  if (rowIndex >= 0 && rowIndex < values.size()) {
-                     values.remove(rowIndex);
-                  }
-               });
-            }
-         }
-
-         viewport.init(ctx);
-      }
-   }
-
-   private void load(GuiGraphicsExtractor ctx, int x, int y, int w, int h, int index, String accountId, boolean hovered) {
-      int bgColor = hovered ? p.level() : p.flags();
-      TableIndex.init(ctx, x, y + 1, w, h - 2, bgColor);
-      TableIndex.read(ctx, x + 1, y + 3, 3, h - 6, -12268476);
-      autismclient.gui.f.b.k.init(
-         ctx,
-         this.init_Font,
-         String.valueOf(index + 1),
-         this.init_CharEncoder.init_Identifier_l(l.read),
-         p.bind(),
-         x + 8,
-         j.init(y, h, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush()),
-         false
-      );
-      String label = this.push_Str(accountId);
-      int labelX = x + 24;
-      String trimmed = autismclient.gui.f.b.k.init(this.init_Font, label, Math.max(1, x + w - labelX - 4), this.init_CharEncoder.init_Identifier_l(l.read), -1);
-      autismclient.gui.f.b.k.init(
-         ctx,
-         this.init_Font,
-         trimmed,
-         this.init_CharEncoder.init_Identifier_l(l.read),
-         -1,
-         labelX,
-         j.init(y, h, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush()),
-         false
-      );
-   }
-
-   private String push_Str(String accountId) {
-      return accountId == null ? "" : accountId;
    }
 
    private void sync_V(String fieldKey) {
@@ -8080,7 +7998,7 @@ public class ActionEditorOverlay extends bj {
       String variableWarning = this.init_Str_2;
       int warnH = this.tick_I();
       int btnY = footerY + 4 + warnH;
-      if (this.run_Z) {
+      if (this.run_Z || this.isLegacyMulti()) {
          int closeW = this.write_I("Close");
          int closeX = this.bind + (this.f_b_I - closeW) / 2;
          TableIndex.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, p.c());
@@ -8398,7 +8316,7 @@ public class ActionEditorOverlay extends bj {
          autismclient.util.au.load();
       }
 
-      if (save && this.init_MacroAction != null) {
+      if (save && this.init_MacroAction != null && !this.isLegacyMulti()) {
          if (this.load_Runnable != null) {
             this.load_Runnable.run();
          }
@@ -15413,8 +15331,6 @@ public class ActionEditorOverlay extends bj {
          case flush:
             if (this.init_Z_FieldDef(field)) {
                var10000 = 86;
-            } else if (this.load_Z_FieldDef(field)) {
-               var10000 = 86;
             } else if (field.captureMode() == StreamUtil.write) {
                var10000 = 161;
             } else {
@@ -16299,6 +16215,10 @@ public class ActionEditorOverlay extends bj {
          return "Action";
       }
 
+      if (type == StreamGate.f_W_StreamGate) {
+         return "Multi (unsupported)";
+      }
+
       String[] parts = type.name().split("_");
       StringBuilder sb = new StringBuilder();
 
@@ -16328,6 +16248,10 @@ public class ActionEditorOverlay extends bj {
 
    private String reset_Str() {
       return this.init_MacroAction != null ? this.start_Str() : "Action";
+   }
+
+   private boolean isLegacyMulti() {
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_W_StreamGate;
    }
 
    private String start_Str() {

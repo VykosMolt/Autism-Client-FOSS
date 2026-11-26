@@ -1126,20 +1126,6 @@ public final class DataUtil {
             .build()
       );
       init_Map.put(
-         StreamGate.f_W_StreamGate,
-         ActionFieldSchema.builder()
-            .stringList("accounts", "Accounts")
-            .number("stepCount", "Steps on accounts")
-            .range(1, 50)
-            .toggle("connectIfDown", "Connect if down")
-            .toggle("disconnectAfter", "Disconnect when done")
-            .enumField("waitMode", "Wait trigger", "Until ready", "Fixed delay", "No wait")
-            .number("waitMs", "Wait (ms)")
-            .range(0, 600000)
-            .hideWhenEnum("waitMode", "No wait")
-            .build()
-      );
-      init_Map.put(
          StreamGate.f_s_StreamGate,
          ActionFieldSchema.builder()
             .enumField("mode", "Mode", "MANUAL", "TOP", "BOTTOM")

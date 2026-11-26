@@ -1,0 +1,86 @@
+package autismclient.util.macro;
+
+import autismclient.util.aM;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+
+public final class LegacyMultiCheck {
+   public static void main(String[] args) throws ReflectiveOperationException {
+      CompoundTag legacy = new CompoundTag();
+      legacy.putString("type", StreamGate.f_W_StreamGate.name());
+      ListTag accounts = new ListTag();
+      accounts.add(StringTag.valueOf("legacy-account"));
+      legacy.put("accounts", accounts);
+      legacy.putInt("stepCount", 10);
+      legacy.putBoolean("connectIfDown", false);
+      legacy.putBoolean("disconnectAfter", true);
+      legacy.putString("waitMode", "Fixed delay");
+      legacy.putInt("waitMs", 1200);
+
+      aM saved = new aM("Legacy Multi fixture");
+      saved.init_List.add(aM.init_MacroAction_CompoundTag(legacy));
+      saved.init_List.add(new EventBus(0));
+      saved.init_List.add(new ClassCache());
+      saved.init_List.add(new L());
+      saved.init_List.add(new EventBus(0));
+      CompoundTag before = saved.load_CompoundTag();
+
+      aM running = saved.init_aM();
+      check(running.init_List.get(0) instanceof t, "normal macro codec reads the legacy header");
+      check(legacy.equals(running.init_List.get(0).toTag()), "legacy account and scope fields round-trip");
+      check(MacroExecutor.suppressLegacyMultiSteps(running.init_List), "run reports a legacy block");
+      check(running.init_List.size() == saved.init_List.size(), "run keeps physical indices");
+      check(!running.init_List.get(1).isEnabled(), "covered action is disabled");
+      check(!running.init_List.get(2).isEnabled() && !ClassCache.init(running.init_List, 0, false), "covered actions cannot affect Join lookahead");
+      check(running.init_List.get(3) instanceof L && running.init_List.get(4) instanceof EventBus, "scope stops at the next block and preserves its rows");
+      check(before.equals(saved.load_CompoundTag()), "preparing the run leaves saved macro data intact");
+
+      t disabled = new t() {
+         @Override
+         public boolean isEnabled() {
+            return false;
+         }
+      };
+      t truncated = new t();
+      truncated.stepCount = 10;
+      MacroAction probe = new EventBus(0) {
+         @Override
+         public void execute(Minecraft mc) {
+            throw new AssertionError("A covered action executed after direct dispatch");
+         }
+      };
+      KeyHolder label = new KeyHolder();
+      label.name = "inside Multi";
+      List<MacroAction> direct = new ArrayList<>(List.of(disabled, probe, label, truncated, probe));
+      disabled.stepCount = 10;
+      MacroExecutor.suppressLegacyMultiSteps(direct);
+      check(!direct.get(1).isEnabled() && direct.get(3) == truncated && !direct.get(4).isEnabled(),
+         "adjacent and truncated blocks keep their boundaries even when a header is disabled");
+      check(direct.get(2) == label && label.init().equals("inside multi") && !label.isEnabled(),
+         "covered labels remain valid jump targets and are excluded from action collectors");
+      direct.get(1).execute(null);
+      direct.get(4).execute(null);
+      check(!MacroExecutor.suppressLegacyMultiSteps(List.of(new EventBus(0))), "ordinary macros require no suppression");
+
+      t coversJoin = new t();
+      List<MacroAction> breakSteps = new ArrayList<>(List.of(new autismclient.util.macro.CachePool(), coversJoin, new ClassCache(), new W()));
+      MacroExecutor.suppressLegacyMultiSteps(breakSteps);
+      var collectBreakSteps = MacroExecutor.class.getDeclaredMethod("init_MacroExecutor_Stat_List_I", List.class, int.class);
+      collectBreakSteps.setAccessible(true);
+      Object collected = collectBreakSteps.invoke(null, breakSteps, 0);
+      var nextSteps = collected.getClass().getDeclaredMethod("init_List");
+      nextSteps.setAccessible(true);
+      check(((List<?>)nextSteps.invoke(collected)).isEmpty(), "Break still stops at a covered Join boundary");
+      System.out.println("PASS LegacyMultiCheck");
+   }
+
+   private static void check(boolean condition, String detail) {
+      if (!condition) {
+         throw new AssertionError(detail);
+      }
+   }
+}
