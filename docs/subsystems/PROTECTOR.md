@@ -1,6 +1,6 @@
-# AutismProtector Privacy & Compat Layer (`autismclient.g`, `autismclient.mixin.security`)
+# AutismProtector Privacy & Compat Layer (`autismclient.protector`, `autismclient.mixin.security`)
 
-AUTISM Client's **AutismProtector** subsystem spans `33` files (`8,651` LOC) in `autismclient.g` (planned target package: `autismclient.protector`) and `34` Mixins (`1,885` LOC) in `autismclient.mixin.security`. Phase 3B renamed all `33/33` classes in `autismclient.g` in place (`0/33` obfuscated remaining).
+AUTISM Client's **AutismProtector** subsystem spans `33` files (`8,651` LOC) in `autismclient.protector` (moved from `autismclient.g` in Phase 8A) and `34` Mixins (`1,885` LOC) in `autismclient.mixin.security`. Phase 3B renamed all `33/33` classes (`0/33` obfuscated remaining).
 
 ## Architecture Overview
 
@@ -12,7 +12,7 @@ AutismProtector isolates client fingerprinting surfaces and hardens server-suppl
 4. **Translation, Keybind & Component Origin Isolation** — `TranslationSnapshot` (+ `TranslationSnapshotDuck`), `PackTranslationPolicyResolver`, `VanillaTranslationKeyLoader`, `PacketOriginDuck`, `PacketOriginComponentCodec`, `PacketComponentOriginTracker`, and `PacketDecodeOriginStack` prevent remote packets/server packs from probing installed mod translation keys or mod keybinds.
 5. **Payload, NBT, Particle & Registry Guards** — `ComponentSafetyValidator`, `TooltipNbtGuard`, `MovementBoundsGuard`, `ModdedParticleGuard`, `RegistryCompatGuard`, and `TimelineTagCompatFix` protect the client against oversized components/tooltips, NaN/extreme coordinates, unknown modded particles, and missing server registry/timeline data.
 
-## Protector Classes (`autismclient.g`, `33` Classes)
+## Protector Classes (`autismclient.protector`, `33` Classes)
 
 ### Connection, Mode & Channel Isolation (`10`)
 | Class | LOC | Role |

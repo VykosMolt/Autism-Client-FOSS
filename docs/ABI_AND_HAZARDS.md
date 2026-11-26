@@ -67,8 +67,8 @@ Every rule below MUST be respected by all deobfuscation tooling and manual refac
 ## 2. Public Addon API (Frozen)
 - `autismclient.api.*` (54 files) is already 100% readable and represents the external addon contract. Do not rename classes, methods, or fields in `autismclient.api.*`.
 
-## 3. AI Subsystem (Deobfuscated in Phase 7; `worker.jar` Untouched)
-- `autismclient.ai` (`1/232` obf — only ABI-pinned `aP`), `autismclient.ai.a` (`0/71` obf), and `autismclient.ai.b` (`0/34` obf) were deobfuscated in place across Phase 7 (`312` classes renamed; `308` matched verbatim to `source-contracts.json`).
+## 3. AI Subsystem (Deobfuscated in Phase 7 & Consolidated in Phase 8B; `worker.jar` Untouched)
+- `autismclient.ai` (`1/232` obf — only ABI-pinned `aP`), `autismclient.ai.engine` (`0/71` obf, moved from `ai.a` in Phase 8B), and `autismclient.ai.print` (`0/34` obf, moved from `ai.b` in Phase 8B) were deobfuscated across Phase 7 (`312` classes renamed; `308` matched verbatim to `source-contracts.json`) and consolidated to their upstream package names in Phase 8B.
 - `src/main/resources/autism-ai/worker.jar` remains untouched.
 
 ## 4. Gson Serialization Lock (0 `@SerializedName` Annotations)

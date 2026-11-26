@@ -1,14 +1,14 @@
 # Commands Subsystem (`autismclient.commands.*`)
 
-AUTISM Client implements client-side chat commands using Mojang's **Brigadier** command parser. Phase 2 renamed all `40` classes in `autismclient.commands.b` (`39` built-in `*Command` subclasses + `SlotClickCommandHelper`), and Phase 3A renamed the remaining `3` core classes in `autismclient.commands` and all `8` custom Brigadier argument types in `autismclient.commands.a` (`0/53` obfuscated remaining across the entire commands subsystem).
+AUTISM Client implements client-side chat commands using Mojang's **Brigadier** command parser. Phase 2 renamed all `40` classes in `autismclient.commands.impl` (formerly `commands.b`: `39` built-in `*Command` subclasses + `SlotClickCommandHelper`), Phase 3A renamed the remaining `3` core classes in `autismclient.commands` and all `8` custom Brigadier argument types in `autismclient.commands.arguments` (formerly `commands.a`), and Phase 8A consolidated both subpackages (`0/53` obfuscated remaining across the entire commands subsystem).
 
 ## Package Layout
 
-| Current Package | Files | Status | Planned Target | Role |
-|---|---:|---|---|---|
-| `autismclient.commands` | 5 | **0 obf / 5 tot** | `autismclient.commands` | Core base (`Command`), source (`AutismCommandSource`), dispatcher/registry (`CommandManager`), completion helpers (`CommandSuggestions`, `RegistrySuggestions`) |
-| `autismclient.commands.a` | 8 | **0 obf / 8 tot** | `autismclient.commands.arguments` | All 8 custom Brigadier `*ArgumentType` implementations |
-| `autismclient.commands.b` | 40 | **0 obf / 40 tot** | `autismclient.commands.impl` | All 39 built-in commands + `SlotClickCommandHelper` |
+| Package | Files | Status | Role |
+|---|---:|---|---|
+| `autismclient.commands` | 5 | **0 obf / 5 tot** | Core base (`Command`), source (`AutismCommandSource`), dispatcher/registry (`CommandManager`), completion helpers (`CommandSuggestions`, `RegistrySuggestions`) |
+| `autismclient.commands.arguments` | 8 | **0 obf / 8 tot** | All 8 custom Brigadier `*ArgumentType` implementations (moved from `commands.a` in Phase 8A) |
+| `autismclient.commands.impl` | 40 | **0 obf / 40 tot** | All 39 built-in commands + `SlotClickCommandHelper` (moved from `commands.b` in Phase 8A) |
 
 ## Core Classes (`autismclient.commands`)
 - `Command` (`41` LOC) — abstract base class for all client commands (`super(name, description, aliases...)`).
@@ -17,7 +17,7 @@ AUTISM Client implements client-side chat commands using Mojang's **Brigadier** 
 - `CommandSuggestions` (`258` LOC) — Brigadier tab-completion providers for toggles, numeric presets, waypoints, prefixes, blocks, entities, and items.
 - `RegistrySuggestions` (`204` LOC) — fuzzy item/block registry ID resolver and player-inventory item completion helper.
 
-## Custom Argument Types (`autismclient.commands.a`)
+## Custom Argument Types (`autismclient.commands.arguments`)
 | Class | Type Parameter | Parses |
 |---|---|---|
 | `SlotArgumentType` | `Integer` | Inventory / container / armor slot indices (`hotbar`, `gui`, `inventory`, `helmet`..`boots`) |
@@ -29,7 +29,7 @@ AUTISM Client implements client-side chat commands using Mojang's **Brigadier** 
 | `KeyBindArgumentType` | `Integer` | GLFW key names / codes (`NONE`, `KEY_*`, `GLFW_KEY_*`) |
 | `XCarrySlotArgumentType` | `Integer` | XCarry slot names (`craft1`..`craft5`, `result`, armor/offhand/cursor) |
 
-## Built-In Commands (`autismclient.commands.b`)
+## Built-In Commands (`autismclient.commands.impl`)
 
 | Class | Command | Summary |
 |---|---|---|

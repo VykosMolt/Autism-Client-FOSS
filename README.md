@@ -40,7 +40,7 @@ Architecture notes, ABI guardrails, package maps, and deobfuscation progress liv
 - [Engineering & Verification Workflow](GEMINI.md)
 - [Architecture & Build Overview](docs/ARCHITECTURE.md)
 - [ABI Boundaries & Silent-Breakage Hazards](docs/ABI_AND_HAZARDS.md)
-- [59-Package Directory](docs/PACKAGES.md)
+- [61-Package Directory](docs/PACKAGES.md)
 - [Deobfuscation Ledger](docs/DEOBFUSCATION_LEDGER.tsv)
 - Subsystem Guides: [Commands](docs/subsystems/COMMANDS.md) · [Modules](docs/subsystems/MODULES.md) · [Macros](docs/subsystems/MACROS.md) · [GUI & Screens](docs/subsystems/GUI.md) · [AutismProtector](docs/subsystems/PROTECTOR.md) · [Core Utilities](docs/subsystems/UTIL.md) · [AI Assistant](docs/subsystems/AI.md)
 
