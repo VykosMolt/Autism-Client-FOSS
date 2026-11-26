@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.az;
+import autismclient.modules.NoRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
@@ -17,7 +17,7 @@ public abstract class AutismNoRenderDeadEntityMixin {
    private void autism$noDeadEntity(
       LivingEntityRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState cameraState, CallbackInfo ci
    ) {
-      if (state != null && state.deathTime > 0.0F && az.scan()) {
+      if (state != null && state.deathTime > 0.0F && NoRenderState.scan()) {
          ci.cancel();
       }
    }

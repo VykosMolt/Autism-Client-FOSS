@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.ah;
+import autismclient.modules.FrameEspCatalog;
 import autismclient.modules.am;
 import autismclient.util.ch;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -19,7 +19,7 @@ public class AutismLevelRendererEntityMixin {
       if (state != null) {
          ch.init_V_Entity_2(entity, state, partialTickTime);
          if (am.put()) {
-            int frameOutline = ah.init_I(entity);
+            int frameOutline = FrameEspCatalog.init_I(entity);
             if (frameOutline != 0) {
                state.outlineColor = frameOutline;
             } else {

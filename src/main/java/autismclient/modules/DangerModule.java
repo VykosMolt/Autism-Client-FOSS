@@ -73,12 +73,12 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
    private final ConcurrentHashMap<Integer, Vec3> init_ConcurrentHashMap = new ConcurrentHashMap<>();
    private final ConcurrentLinkedQueue<Integer> init_ConcurrentLinkedQu = new ConcurrentLinkedQueue<>();
    private List<DangerModule.Inner_CachePool> init_List = List.of();
-   private List<A.Inner_BufferHelper> load_List = List.of();
-   private List<A.Inner_BufferHelper> read_List = List.of();
-   private final x init_x = new x();
-   private List<x.Inner_DataUtil> write_List = List.of();
+   private List<IncomingProjectileScanner.Inner_BufferHelper> load_List = List.of();
+   private List<IncomingProjectileScanner.Inner_BufferHelper> read_List = List.of();
+   private final FireballBlastPredictor init_x = new FireballBlastPredictor();
+   private List<FireballBlastPredictor.Inner_DataUtil> write_List = List.of();
    private Object init_Obj;
-   private final v init_v = new v();
+   private final BedProximityTracker init_v = new BedProximityTracker();
    private Entity init_Entity;
    private boolean init_Z;
    private boolean load_Z;
@@ -99,12 +99,12 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
       super("danger", "Danger", ae.init_ae, "Predict nearby projectiles and pearl landings; optionally return fireballs.");
       AutismConfig.ModuleState saved = AutismConfig.getGlobal().modules.get(this.id());
       if (saved != null) {
-         saved.settings.putAll(C.init(saved.settings));
+         saved.settings.putAll(DangerOptionKeys.init(saved.settings));
       }
 
-      for (A.Inner_StreamUtil kind : A.Inner_StreamUtil.values()) {
+      for (IncomingProjectileScanner.Inner_StreamUtil kind : IncomingProjectileScanner.Inner_StreamUtil.values()) {
          this.init_V_A_StreamUtil(kind);
-         if (kind == A.Inner_StreamUtil.FIREBALL) {
+         if (kind == IncomingProjectileScanner.Inner_StreamUtil.FIREBALL) {
             this.add(
                new BoolSetting("auto-return", "Auto Return", true)
                   .group(kind.load())
@@ -122,7 +122,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                   .description("Red blocks at risk from incoming fireballs and your own shots; dimmer edges are less likely")
                   .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
             );
-         } else if (kind == A.Inner_StreamUtil.PEARL) {
+         } else if (kind == IncomingProjectileScanner.Inner_StreamUtil.PEARL) {
             this.add(
                new BoolSetting("pearl-ghost", "Landing Ghost", true)
                   .group(kind.load())
@@ -193,7 +193,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
       return (float)Math.max(0.5, Math.min(4.0, this.decimal("warning-scale")));
    }
 
-   List<v.Inner_DataUtil> init_List_19() {
+   List<BedProximityTracker.Inner_DataUtil> init_List_19() {
       return this.init_v.init_List();
    }
 
@@ -218,11 +218,11 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
 
    public static boolean init_Z_52() {
       DangerModule danger = init_z();
-      return danger != null && danger.isEnabled() && danger.poll != -2147483648 && i.init_Z_I(ck.init_ck().state_I(), danger.poll, 1);
+      return danger != null && danger.isEnabled() && danger.poll != -2147483648 && ClutchFallPhysics.init_Z_I(ck.init_ck().state_I(), danger.poll, 1);
    }
 
    private boolean pop() {
-      for (A.Inner_StreamUtil kind : A.Inner_StreamUtil.values()) {
+      for (IncomingProjectileScanner.Inner_StreamUtil kind : IncomingProjectileScanner.Inner_StreamUtil.values()) {
          if (this.init_Z_A_StreamUtil_Str(kind, "hud")) {
             return true;
          }
@@ -231,7 +231,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
       return false;
    }
 
-   private void init_V_A_StreamUtil(A.Inner_StreamUtil kind) {
+   private void init_V_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil kind) {
       String key = kind.init_Str() + "-";
       String group = kind.load();
       this.add(new BoolSetting(key + "enabled", "Enabled", true).group(group));
@@ -241,7 +241,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
             .description("Compact projectile icon and direction arrow, colored green to red by distance")
             .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
       );
-      int multiplier = kind == A.Inner_StreamUtil.PEARL ? 2 : 1;
+      int multiplier = kind == IncomingProjectileScanner.Inner_StreamUtil.PEARL ? 2 : 1;
       this.add(
          new DoubleSetting(key + "radius", "Warning Radius", 15 * multiplier, multiplier, 30 * multiplier, 1.0)
             .group(group)
@@ -271,19 +271,19 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
       return danger != null
          && danger.init_Z
          && !aD.init_Z()
-         && !aC.init_Z()
+         && !FreecamController.init_Z()
          && "danger".equals(autismclient.util.aD.init_Str())
          && autismclient.util.aD.read_Z();
    }
 
    public static boolean sync_Z_12() {
       DangerModule danger = init_z();
-      return danger != null && danger.init_Z && !danger.load_Z && !aD.init_Z() && !aC.init_Z();
+      return danger != null && danger.init_Z && !danger.load_Z && !aD.init_Z() && !FreecamController.init_Z();
    }
 
    public static boolean flush_Z_10() {
       DangerModule danger = init_z();
-      return danger != null && danger.init_Z && !aD.init_Z() && !aC.init_Z();
+      return danger != null && danger.init_Z && !aD.init_Z() && !FreecamController.init_Z();
    }
 
    public List<DangerModule.Inner_CachePool> load_List_4() {
@@ -302,27 +302,27 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
       return this.close;
    }
 
-   public List<A.Inner_BufferHelper> read_List_2() {
+   public List<IncomingProjectileScanner.Inner_BufferHelper> read_List_2() {
       return this.load_List;
    }
 
-   public List<A.Inner_BufferHelper> write_List() {
+   public List<IncomingProjectileScanner.Inner_BufferHelper> write_List() {
       return this.read_List;
    }
 
-   public List<x.Inner_DataUtil> update_List() {
+   public List<FireballBlastPredictor.Inner_DataUtil> update_List() {
       return this.write_List;
    }
 
-   public boolean init_Z_A_StreamUtil(A.Inner_StreamUtil kind) {
+   public boolean init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil kind) {
       return this.bool(kind.init_Str() + "-enabled");
    }
 
-   public boolean init_Z_A_StreamUtil_Str(A.Inner_StreamUtil kind, String option) {
+   public boolean init_Z_A_StreamUtil_Str(IncomingProjectileScanner.Inner_StreamUtil kind, String option) {
       return this.init_Z_A_StreamUtil(kind) && this.bool(kind.init_Str() + "-" + option);
    }
 
-   public double init_D_A_StreamUtil(A.Inner_StreamUtil kind) {
+   public double init_D_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil kind) {
       return this.decimal(kind.init_Str() + "-radius");
    }
 
@@ -333,10 +333,10 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
    public boolean open_Z_6() {
       return !this.write_List.isEmpty()
          || this.load_List.stream().anyMatch(w -> this.init_Z_A_StreamUtil_Str(w.init_A_StreamUtil(), "trajectory"))
-         || this.init_Z_A_StreamUtil(A.Inner_StreamUtil.PEARL) && this.bool("pearl-ghost") && !this.read_List.isEmpty();
+         || this.init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.PEARL) && this.bool("pearl-ghost") && !this.read_List.isEmpty();
    }
 
-   public int init_I_A_BufferHelper(A.Inner_BufferHelper warning) {
+   public int init_I_A_BufferHelper(IncomingProjectileScanner.Inner_BufferHelper warning) {
       if (warning.init_Z()) {
          return -9720065;
       }
@@ -347,7 +347,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
 
    @Override
    public boolean load_Z_23() {
-      return (this.init_Z || autismclient.util.aD.init_Z()) && !aD.init_Z() && !aC.init_Z();
+      return (this.init_Z || autismclient.util.aD.init_Z()) && !aD.init_Z() && !FreecamController.init_Z();
    }
 
    @Override
@@ -403,19 +403,19 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
 
          this.write_V_22();
          this.read_V_23();
-         if (this.isEnabled() && this.init_Z_A_StreamUtil(A.Inner_StreamUtil.FIREBALL) && this.bool("auto-return") && this.set()) {
+         if (this.isEnabled() && this.init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.FIREBALL) && this.bool("auto-return") && this.set()) {
             DangerModule.Inner_CachePool best = null;
             boolean landingPriority = false;
 
             for (DangerModule.Inner_CachePool threat : this.init_List) {
                DangerModule.Inner_DataUtil attempt = this.init_Map.get(threat.init_Entity.getUUID());
-               if (threat.init_Z && (attempt == null || B.init(this.open - attempt.init_I))) {
+               if (threat.init_Z && (attempt == null || FireballInterceptMath.init(this.open - attempt.init_I))) {
                   Fireball ball = (Fireball)threat.init_Entity;
                   ce.Inner_DataUtil goal = this.init_ce_DataUtil_Entity(ball);
                   ch.Inner_CachePool wire = ch.init_ch_CachePool();
                   double yaw = wire.init_Z() ? wire.read() : MC.player.getYRot();
                   double pitch = wire.init_Z() ? wire.write() : MC.player.getXRot();
-                  double strike = B.init_D_Vec3(
+                  double strike = FireballInterceptMath.init_D_Vec3(
                      MC.player.getEyePosition(),
                      this.init_Vec3_8(),
                      ball.getBoundingBox(),
@@ -427,8 +427,8 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                   );
                   double yawDifference = ce.init(goal.init(), (float)yaw);
                   double pitchDifference = goal.load() - pitch;
-                  float step = B.init(yawDifference, pitchDifference, strike, threat.init_D, ce.init());
-                  int turn = B.init(yawDifference, pitchDifference, step, ce.init());
+                  float step = FireballInterceptMath.init(yawDifference, pitchDifference, strike, threat.init_D, ce.init());
+                  int turn = FireballInterceptMath.init(yawDifference, pitchDifference, step, ce.init());
                   boolean current = this.init_Z && !this.load_Z && this.init_Entity == ball;
                   if (this.init_Z_I_D_2(turn, strike)) {
                      int start = this.get() ? turn : Math.max(turn, init_I_D_D(yawDifference, pitchDifference));
@@ -477,7 +477,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                      from = ce.init(MC.player);
                   }
 
-                  double strike = B.init_D_Vec3(
+                  double strike = FireballInterceptMath.init_D_Vec3(
                      MC.player.getEyePosition(),
                      this.init_Vec3_8(),
                      this.init_Entity.getBoundingBox(),
@@ -489,7 +489,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                   );
                   if (this.get()) {
                      autismclient.util.aD.init_V_LocalPlayer_F(
-                        MC.player, B.init(ce.init(goal.init(), from.init()), goal.load() - from.load(), strike, best.init_D, ce.init())
+                        MC.player, FireballInterceptMath.init(ce.init(goal.init(), from.init()), goal.load() - from.load(), strike, best.init_D, ce.init())
                      );
                   } else {
                      double deadline = (strike >= 0.0 ? Math.min(strike, best.init_D) : best.init_D) - 2.0;
@@ -517,13 +517,13 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
    }
 
    private void read_V_23() {
-      if (this.isEnabled() && this.init_Z_A_StreamUtil(A.Inner_StreamUtil.FIREBALL) && this.bool("auto-return")) {
+      if (this.isEnabled() && this.init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.FIREBALL) && this.bool("auto-return")) {
          for (DangerModule.Inner_CachePool threat : this.init_List) {
             if (threat.init_Z && threat.load_Z) {
                DangerModule.Inner_DataUtil attempt = this.init_Map.get(threat.init_Entity.getUUID());
-               if (attempt == null || B.init(this.open - attempt.init_I)) {
+               if (attempt == null || FireballInterceptMath.init(this.open - attempt.init_I)) {
                   Fireball ball = (Fireball)threat.init_Entity;
-                  double strike = B.init_D_Vec3(
+                  double strike = FireballInterceptMath.init_D_Vec3(
                      MC.player.getEyePosition(),
                      this.init_Vec3_8(),
                      ball.getBoundingBox(),
@@ -550,7 +550,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
       Vec3 outgoing = shooter != null && shooter != MC.player && shooter.isAlive()
          ? shooter.getBoundingBox().getCenter().add(shooter.getDeltaMovement().scale(Math.min(10.0, shooter.distanceTo(ball) / 1.5))).subtract(box.getCenter())
          : ball.getDeltaMovement().scale(-1.0);
-      B.Inner_DataUtil aim = B.init(eye, this.init_Vec3_8(), box, ball.getDeltaMovement(), outgoing, MC.player.entityInteractionRange() - 0.025);
+      FireballInterceptMath.Inner_DataUtil aim = FireballInterceptMath.init(eye, this.init_Vec3_8(), box, ball.getDeltaMovement(), outgoing, MC.player.entityInteractionRange() - 0.025);
       return ce.init(aim.load(), aim.init());
    }
 
@@ -583,7 +583,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
          }
 
          double floor = Double.isFinite(this.read_D) ? this.read_D : Math.floor(MC.player.getY());
-         int landing = B.init(MC.player.getY() - floor, MC.player.getDeltaMovement().y);
+         int landing = FireballInterceptMath.init(MC.player.getY() - floor, MC.player.getDeltaMovement().y);
          Vec3 motion = MC.player.getDeltaMovement();
          AABB support = MC.player.getBoundingBox().move(motion.x * landing, floor - MC.player.getY() - 0.2, motion.z * landing).setMaxY(floor - 0.02);
          if (!MC.level.noCollision(MC.player, support)) {
@@ -625,10 +625,10 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
          && !MC.player.isSpectator()
          && MC.gui.screen() == null
          && !aD.init_Z()
-         && !aC.init_Z()
+         && !FreecamController.init_Z()
          && !cd.init_Z()
          && !MacroExecutor.write_Z()
-         && !HashUtil.init_Z()
+         && !BlinkPacketManager.init_Z()
          && !PkgCls_a.init_Z()
          && !autismclient.util.macro.MacroAimController.init_Z()
          && !f.load();
@@ -652,18 +652,18 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
             DangerModule.Inner_DataUtil attempt = this.init_Map.get(entity.getUUID());
             if ((attempt == null || ball.getOwner() != MC.player && !(entity.getDeltaMovement().dot(attempt.init_Vec3) < 0.0)) && ball.getOwner() != MC.player) {
                double inertia = ball.isInWater() ? 0.8 : 0.95;
-               double impact = B.init_D_AABB(
+               double impact = FireballInterceptMath.init_D_AABB(
                   MC.player.getBoundingBox(), playerMotion, entity.getBoundingBox(), entity.getDeltaMovement(), 40, 1.5, ball.accelerationPower, inertia
                );
                boolean hits = impact >= 0.0;
                if (!hits) {
-                  A.Inner_DataUtil flight = A.init(MC.level, ball, A.Inner_StreamUtil.FIREBALL);
+                  IncomingProjectileScanner.Inner_DataUtil flight = IncomingProjectileScanner.init(MC.level, ball, IncomingProjectileScanner.Inner_StreamUtil.FIREBALL);
                   Vec3 landing = flight.init_Vec3();
                   if (landing != null && MC.player.getBoundingBox().distanceToSqr(landing) <= 12.25) {
                      impact = flight.init_D();
                      hits = true;
                   } else {
-                     impact = B.load(
+                     impact = FireballInterceptMath.load(
                         MC.player.getBoundingBox(),
                         playerMotion,
                         entity.getBoundingBox(),
@@ -708,16 +708,16 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
    private void update_V_18() {
       if (this.isEnabled() && !aD.init_Z()) {
          double range = 64.0;
-         List<A.Inner_BufferHelper> result = new ArrayList<>();
-         boolean showPearlGhosts = this.init_Z_A_StreamUtil(A.Inner_StreamUtil.PEARL) && this.bool("pearl-ghost");
-         HashMap<UUID, A.Inner_BufferHelper> landingModels = new HashMap<>();
+         List<IncomingProjectileScanner.Inner_BufferHelper> result = new ArrayList<>();
+         boolean showPearlGhosts = this.init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.PEARL) && this.bool("pearl-ghost");
+         HashMap<UUID, IncomingProjectileScanner.Inner_BufferHelper> landingModels = new HashMap<>();
          HashSet<UUID> predictedPearls = new HashSet<>();
          List<Projectile> candidates = MC.level
             .getEntitiesOfClass(
                Projectile.class,
                MC.player.getBoundingBox().inflate(range),
-               ballx -> A.init(ballx) != null
-                  && this.init_Z_A_StreamUtil(A.init(ballx))
+               ballx -> IncomingProjectileScanner.init(ballx) != null
+                  && this.init_Z_A_StreamUtil(IncomingProjectileScanner.init(ballx))
                   && ballx.isAlive()
                   && !ballx.isRemoved()
                   && ballx.getOwner() != MC.player
@@ -732,18 +732,18 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
             Projectile ball = candidates.get(i);
             DangerModule.Inner_DataUtil attempt = this.init_Map.get(ball.getUUID());
             if (attempt == null || !(ball.getDeltaMovement().dot(attempt.init_Vec3) < 0.0)) {
-               A.Inner_StreamUtil kind = A.init(ball);
-               A.Inner_DataUtil flight = A.init(MC.level, ball, kind);
+               IncomingProjectileScanner.Inner_StreamUtil kind = IncomingProjectileScanner.init(ball);
+               IncomingProjectileScanner.Inner_DataUtil flight = IncomingProjectileScanner.init(MC.level, ball, kind);
                Player owner = ball.getOwner() instanceof Player player ? player : null;
-               A.Inner_BufferHelper warning = new A.Inner_BufferHelper(ball, owner, kind, false, flight, this.init_I_Player(owner));
-               if (kind == A.Inner_StreamUtil.PEARL) {
+               IncomingProjectileScanner.Inner_BufferHelper warning = new IncomingProjectileScanner.Inner_BufferHelper(ball, owner, kind, false, flight, this.init_I_Player(owner));
+               if (kind == IncomingProjectileScanner.Inner_StreamUtil.PEARL) {
                   predictedPearls.add(ball.getUUID());
-                  if (showPearlGhosts && A.init(warning)) {
+                  if (showPearlGhosts && IncomingProjectileScanner.init(warning)) {
                      landingModels.put(ball.getUUID(), warning);
                   }
                }
 
-               if (A.init(flight, kind, MC.player.position(), this.init_D_A_StreamUtil(kind))) {
+               if (IncomingProjectileScanner.init(flight, kind, MC.player.position(), this.init_D_A_StreamUtil(kind))) {
                   result.add(warning);
                }
             }
@@ -770,28 +770,28 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
             for (int i = 0; i < Math.min(16, distantPearls.size()); i++) {
                ThrownEnderpearl pearl = distantPearls.get(i);
                Player owner = (Player)pearl.getOwner();
-               A.Inner_DataUtil flight = A.init(MC.level, pearl, A.Inner_StreamUtil.PEARL);
-               A.Inner_BufferHelper warning = new A.Inner_BufferHelper(pearl, owner, A.Inner_StreamUtil.PEARL, false, flight, this.init_I_Player(owner));
-               if (A.init(warning)) {
+               IncomingProjectileScanner.Inner_DataUtil flight = IncomingProjectileScanner.init(MC.level, pearl, IncomingProjectileScanner.Inner_StreamUtil.PEARL);
+               IncomingProjectileScanner.Inner_BufferHelper warning = new IncomingProjectileScanner.Inner_BufferHelper(pearl, owner, IncomingProjectileScanner.Inner_StreamUtil.PEARL, false, flight, this.init_I_Player(owner));
+               if (IncomingProjectileScanner.init(warning)) {
                   landingModels.put(pearl.getUUID(), warning);
                }
 
-               if (A.init(flight, A.Inner_StreamUtil.PEARL, MC.player.position(), this.init_D_A_StreamUtil(A.Inner_StreamUtil.PEARL))) {
+               if (IncomingProjectileScanner.init(flight, IncomingProjectileScanner.Inner_StreamUtil.PEARL, MC.player.position(), this.init_D_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.PEARL))) {
                   result.add(warning);
                }
             }
          }
 
-         if (Arrays.stream(A.Inner_StreamUtil.values()).anyMatch(kindx -> this.init_Z_A_StreamUtil_Str(kindx, "aim-preview"))) {
+         if (Arrays.stream(IncomingProjectileScanner.Inner_StreamUtil.values()).anyMatch(kindx -> this.init_Z_A_StreamUtil_Str(kindx, "aim-preview"))) {
             ArrayList<AbstractClientPlayer> players = new ArrayList<>(MC.level.players());
             players.removeIf(
                player -> player == MC.player
                   || !player.isAlive()
                   || player.isSpectator()
-                  || player.distanceToSqr(MC.player) > range * range && (!showPearlGhosts || init_A_StreamUtil_Player(player) != A.Inner_StreamUtil.PEARL)
+                  || player.distanceToSqr(MC.player) > range * range && (!showPearlGhosts || init_A_StreamUtil_Player(player) != IncomingProjectileScanner.Inner_StreamUtil.PEARL)
                   || TeamsModule.init_Z_Entity_5(player)
                   || !this.init_Z_Player_3(player)
-                  || ByteReader.init_Z(player)
+                  || AntiBotTracker.init_Z(player)
             );
             players.sort(Comparator.comparingDouble(player -> player.distanceToSqr(MC.player)));
 
@@ -800,23 +800,23 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
 
                for (InteractionHand hand : InteractionHand.values()) {
                   ItemStack stack = owner.getItemInHand(hand);
-                  A.Inner_StreamUtil kind = A.init(stack);
+                  IncomingProjectileScanner.Inner_StreamUtil kind = IncomingProjectileScanner.init(stack);
                   if (kind != null) {
-                     List<aX.Inner_BufferHelper> shots = aX.init(owner, stack, true, true);
+                     List<ProjectileBallistics.Inner_BufferHelper> shots = ProjectileBallistics.init(owner, stack, true, true);
 
-                     for (aX.Inner_BufferHelper shot : shots) {
+                     for (ProjectileBallistics.Inner_BufferHelper shot : shots) {
                         if (!this.init_Z_A_StreamUtil_Str(kind, "aim-preview")) {
                            break;
                         }
 
-                        if (kind != A.Inner_StreamUtil.ARROW || shot.init_aX_DataUtil().init_D() != 0.0) {
-                           A.Inner_DataUtil flight = A.init(MC.level, owner, kind, shot);
-                           A.Inner_BufferHelper warning = new A.Inner_BufferHelper(owner, owner, kind, true, flight, this.init_I_Player(owner));
-                           if (showPearlGhosts && A.init(warning)) {
+                        if (kind != IncomingProjectileScanner.Inner_StreamUtil.ARROW || shot.init_aX_DataUtil().init_D() != 0.0) {
+                           IncomingProjectileScanner.Inner_DataUtil flight = IncomingProjectileScanner.init(MC.level, owner, kind, shot);
+                           IncomingProjectileScanner.Inner_BufferHelper warning = new IncomingProjectileScanner.Inner_BufferHelper(owner, owner, kind, true, flight, this.init_I_Player(owner));
+                           if (showPearlGhosts && IncomingProjectileScanner.init(warning)) {
                               landingModels.put(owner.getUUID(), warning);
                            }
 
-                           if (A.init(flight, kind, MC.player.position(), this.init_D_A_StreamUtil(kind))) {
+                           if (IncomingProjectileScanner.init(flight, kind, MC.player.position(), this.init_D_A_StreamUtil(kind))) {
                               result.add(warning);
                            }
                         }
@@ -830,16 +830,16 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
             }
          }
 
-         result.sort(Comparator.comparing(A.Inner_BufferHelper::init_Z).thenComparingDouble(warningx -> warningx.init_A_DataUtil().init_D()));
+         result.sort(Comparator.comparing(IncomingProjectileScanner.Inner_BufferHelper::init_Z).thenComparingDouble(warningx -> warningx.init_A_DataUtil().init_D()));
          this.load_List = List.copyOf(result.subList(0, Math.min(16, result.size())));
-         ArrayList<A.Inner_BufferHelper> models = new ArrayList<>(landingModels.values());
+         ArrayList<IncomingProjectileScanner.Inner_BufferHelper> models = new ArrayList<>(landingModels.values());
          models.sort(
-            Comparator.comparing(A.Inner_BufferHelper::init_Z)
+            Comparator.comparing(IncomingProjectileScanner.Inner_BufferHelper::init_Z)
                .thenComparingDouble(warningx -> warningx.init_A_DataUtil().load().distanceToSqr(MC.player.position()))
          );
          this.read_List = List.copyOf(models);
-         if (this.init_Z_A_StreamUtil(A.Inner_StreamUtil.FIREBALL) && this.bool("fireball-blast-blocks")) {
-            ArrayList<A.Inner_BufferHelper> blastSources = new ArrayList<>(this.load_List);
+         if (this.init_Z_A_StreamUtil(IncomingProjectileScanner.Inner_StreamUtil.FIREBALL) && this.bool("fireball-blast-blocks")) {
+            ArrayList<IncomingProjectileScanner.Inner_BufferHelper> blastSources = new ArrayList<>(this.load_List);
             List<LargeFireball> own = MC.level
                .getEntitiesOfClass(
                   LargeFireball.class,
@@ -854,9 +854,9 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
 
             for (int i = 0; i < Math.min(8, own.size()); i++) {
                LargeFireball ball = own.get(i);
-               A.Inner_DataUtil flight = A.init(MC.level, ball, A.Inner_StreamUtil.FIREBALL);
+               IncomingProjectileScanner.Inner_DataUtil flight = IncomingProjectileScanner.init(MC.level, ball, IncomingProjectileScanner.Inner_StreamUtil.FIREBALL);
                if (flight.init_Vec3() != null) {
-                  blastSources.add(new A.Inner_BufferHelper(ball, MC.player, A.Inner_StreamUtil.FIREBALL, false, flight, -1));
+                  blastSources.add(new IncomingProjectileScanner.Inner_BufferHelper(ball, MC.player, IncomingProjectileScanner.Inner_StreamUtil.FIREBALL, false, flight, -1));
                }
             }
 
@@ -872,13 +872,13 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean init_Z_Player_3(Player player) {
-      A.Inner_StreamUtil kind = init_A_StreamUtil_Player(player);
+      IncomingProjectileScanner.Inner_StreamUtil kind = init_A_StreamUtil_Player(player);
       return kind != null && this.init_Z_A_StreamUtil_Str(kind, "aim-preview");
    }
 
-   private static A.Inner_StreamUtil init_A_StreamUtil_Player(Player player) {
-      A.Inner_StreamUtil main = A.init(player.getMainHandItem());
-      return main != null ? main : A.init(player.getOffhandItem());
+   private static IncomingProjectileScanner.Inner_StreamUtil init_A_StreamUtil_Player(Player player) {
+      IncomingProjectileScanner.Inner_StreamUtil main = IncomingProjectileScanner.init(player.getMainHandItem());
+      return main != null ? main : IncomingProjectileScanner.init(player.getOffhandItem());
    }
 
    private int init_I_Player(Player owner) {
@@ -889,7 +889,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
       PlayerInfo info = MC.getConnection() == null ? null : MC.getConnection().getPlayerInfo(owner.getUUID());
       PlayerTeam team = owner.getTeam();
       TextColor fallback = team == null ? null : team.getColor().map(TeamColor::textColor).orElse(null);
-      return at.init_I(owner.getGameProfile().name(), info == null ? null : info.getTabListDisplayName(), fallback);
+      return PlayerDisplayNameParser.init_I(owner.getGameProfile().name(), info == null ? null : info.getTabListDisplayName(), fallback);
    }
 
    @Override
@@ -925,7 +925,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
          this.load_Str = "Sprint still announced";
       } else {
          DangerModule.Inner_DataUtil previousAttempt = this.init_Map.get(this.init_Entity.getUUID());
-         if (previousAttempt != null && !B.init(this.open - previousAttempt.init_I)) {
+         if (previousAttempt != null && !FireballInterceptMath.init(this.open - previousAttempt.init_I)) {
             this.load_Str = "Retry interval";
          } else {
             ce.Inner_DataUtil rotation = autismclient.util.aD.init_ce_DataUtil();
@@ -1046,7 +1046,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
          || MC.player == null
          || !MC.player.isAlive()
          || aD.init_Z()
-         || aC.init_Z()) {
+         || FreecamController.init_Z()) {
          return null;
       }
 

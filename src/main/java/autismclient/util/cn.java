@@ -117,7 +117,7 @@ public final class cn {
                autismclient.modules.al.init_Module_Str(aD.init_Str()) instanceof cn.Inner_DataUtil owner
                   && !owner.write_Z_10()
                   && !aD.init_Z()
-                  && !autismclient.modules.aC.write()
+                  && !autismclient.modules.FreecamController.write()
             )
             || autismclient.modules.al.init_Module_Str("scaffold") instanceof autismclient.modules.ScaffoldModule scaffold && scaffold.isEnabled()
          ? false

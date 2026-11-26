@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.modules.KillAuraModule;
-import autismclient.modules.o;
+import autismclient.modules.CrosshairRenderer;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
@@ -27,7 +27,7 @@ public abstract class AutismCrosshairHudMixin {
    ) {
       if ("hud/crosshair".equals(sprite.getPath())) {
          KillAuraModule.init_V_GuiGraphicsExtract(graphics);
-         if (o.init(graphics)) {
+         if (CrosshairRenderer.init(graphics)) {
             return;
          }
       }

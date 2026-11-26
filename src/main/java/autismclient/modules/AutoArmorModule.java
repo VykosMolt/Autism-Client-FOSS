@@ -158,7 +158,7 @@ public final class AutoArmorModule extends Module {
                      MC.gui.setScreen(new InventoryScreen(MC.player));
                      this.init_Z = true;
                   }
-               } else if (!HashUtil.load_Z()) {
+               } else if (!BlinkPacketManager.load_Z()) {
                   int now = ck.init_ck().state_I();
                   if (now >= this.close) {
                      int timesChanged = MC.player.getInventory().getTimesChanged();
@@ -203,7 +203,7 @@ public final class AutoArmorModule extends Module {
                MC.gui.setScreen(new InventoryScreen(MC.player));
                this.init_Z = true;
             }
-         } else if (!HashUtil.load_Z()) {
+         } else if (!BlinkPacketManager.load_Z()) {
             this.write_V_9();
          }
       }
@@ -216,7 +216,7 @@ public final class AutoArmorModule extends Module {
          if (this.isEnabled()
             && !aD.read_Z()
             && MC.player.containerMenu == MC.player.inventoryMenu
-            && !HashUtil.load_Z()
+            && !BlinkPacketManager.load_Z()
             && (!this.bool("not-using-item") || !MC.player.isUsingItem())) {
             if (this.read_Z) {
                AutoArmorModule.Inner_DataUtil rest = this.init_TableIndex_DataUti();

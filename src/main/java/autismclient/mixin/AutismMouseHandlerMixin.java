@@ -7,7 +7,7 @@ import autismclient.compat263.CompatGLFW;
 import autismclient.modules.AutoTotemModule;
 import autismclient.modules.FreeLookModule;
 import autismclient.modules.AutoArmorModule;
-import autismclient.modules.aC;
+import autismclient.modules.FreecamController;
 import autismclient.modules.al;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.G;
@@ -178,7 +178,7 @@ public abstract class AutismMouseHandlerMixin {
 
       if (AutoTotemModule.init_Z_6() || AutoArmorModule.init_Z_20()) {
          ci.cancel();
-      } else if (aC.init_Z_D(yOffset)) {
+      } else if (FreecamController.init_Z_D(yOffset)) {
          ci.cancel();
       } else {
          if (!AutismLiteVariant.enabled()) {

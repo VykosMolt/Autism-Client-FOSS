@@ -200,7 +200,7 @@ public class bT {
          return this.init_List;
       }
 
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       List<bT.Inner_DataUtil> entries = new ArrayList<>();
       entries.add(
          new bT.Inner_DataUtil(
@@ -448,7 +448,7 @@ public class bT {
    }
 
    private void init(AutismPacketPreset preset) {
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       module.init_V_Set(this.init(preset.c2sPackets, true));
       module.load(this.init(preset.s2cPackets, false));
    }

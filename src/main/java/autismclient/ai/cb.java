@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.api.ai.AiOperation;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismServerInfoOverlay;
 import com.google.gson.JsonArray;
@@ -274,7 +274,7 @@ public final class cb {
 
       boolean force = ag.init_Z_JsonObject(args, "force", false);
       final int timeoutSeconds = Math.max(1, Math.min(150, ag.init_I_JsonObject(args, "timeoutSeconds", 150)));
-      final AutismServerInfoOverlay overlay = PoolEntry.init_PoolEntry().init_AutismServerInfoOv();
+      final AutismServerInfoOverlay overlay = ModuleRuntimeManager.init_PoolEntry().init_AutismServerInfoOv();
       if (force) {
          overlay.open_V_12();
       }

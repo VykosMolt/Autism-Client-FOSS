@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.gui.d.StreamGate;
 import autismclient.gui.f.b.CachePool;
-import autismclient.modules.aB;
+import autismclient.modules.AutoReconnectController;
 import autismclient.modules.aD;
 import autismclient.util.ct;
 import net.minecraft.client.gui.Font;
@@ -37,7 +37,7 @@ public abstract class AutismConnectScreenUiMixin extends Screen {
 
    @Inject(method = "init", at = @At("TAIL"))
    private void autism$addReconnectToggle(CallbackInfo ci) {
-      if (!aD.init_Z() && aB.read()) {
+      if (!aD.init_Z() && AutoReconnectController.read()) {
          int w = 148;
          int h = 16;
          this.autism$reconnectToggle = new StreamGate(
@@ -47,8 +47,8 @@ public abstract class AutismConnectScreenUiMixin extends Screen {
             h,
             Component.literal("Auto Reconnect"),
             CachePool.Inner_DataUtil.read,
-            aB::init_Str,
-            button -> aB.init_V()
+            AutoReconnectController::init_Str,
+            button -> AutoReconnectController.init_V()
          );
          this.addRenderableWidget(this.autism$reconnectToggle);
       }

@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.ai.a.AiMotionSafety;
 import autismclient.modules.ScaffoldModule;
-import autismclient.modules.ai;
+import autismclient.modules.MovementModuleHooks;
 import autismclient.modules.WTappingModule;
 import autismclient.util.AutismLiteVariant;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -18,7 +18,7 @@ public abstract class AutismSprintInputMixin {
       if (!AutismLiteVariant.enabled() && (WTappingModule.init_Z_36() || AiMotionSafety.putAt_Z())) {
          return new Input(original.forward(), original.backward(), original.left(), original.right(), original.jump(), original.shift(), false);
       } else if (original.forward() && !ScaffoldModule.close_Z_4()) {
-         return !original.sprint() && ai.init(false, false)
+         return !original.sprint() && MovementModuleHooks.init(false, false)
             ? new Input(original.forward(), original.backward(), original.left(), original.right(), original.jump(), original.shift(), true)
             : original;
       } else {

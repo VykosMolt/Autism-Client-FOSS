@@ -29,8 +29,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
-   private DataPipe.Inner_BufferHelper init_DataPipe_BufferHel;
-   private final ValueSink init_ValueSink = new ValueSink();
+   private BedBreachRouteSolver.Inner_BufferHelper init_DataPipe_BufferHel;
+   private final MineBreakPaceGuard init_ValueSink = new MineBreakPaceGuard();
    private BlockPos init_BlockPos;
    private boolean init_Z;
    private boolean load_Z;
@@ -75,7 +75,7 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
       return al.init_Module_Str("bed-nuker") instanceof BedNukerModule m && m.isEnabled() ? m : null;
    }
 
-   static DataPipe.Inner_BufferHelper init_DataPipe_BufferHel_BlockPos(BlockPos pos) {
+   static BedBreachRouteSolver.Inner_BufferHelper init_DataPipe_BufferHel_BlockPos(BlockPos pos) {
       BedNukerModule m = init_UtilCore();
       return m != null && pos.equals(m.init_BlockPos) ? m.init_DataPipe_BufferHel : null;
    }
@@ -97,7 +97,7 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
             }
 
             box = box.setMaxY(m.init_BlockPos.getY() + 0.5625);
-            List<BlockPos> cuts = m.init_DataPipe_BufferHel.init_List().stream().filter(c -> !c.init_Z()).map(DataPipe.Inner_DataUtil::init_BlockPos).toList();
+            List<BlockPos> cuts = m.init_DataPipe_BufferHel.init_List().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.Inner_DataUtil::init_BlockPos).toList();
             return new BedEspModule.Inner_DataUtil(
                m.init_BlockPos,
                var7,
@@ -256,8 +256,8 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
          && !MC.player.isUsingItem()
          && !MC.player.isHandsBusy()
          && !aD.init_Z()
-         && !aC.init_Z()
-         && !aC.write()
+         && !FreecamController.init_Z()
+         && !FreecamController.write()
          && !cd.init_Z()
          && !PkgCls_a.init_Z()
          && !MacroExecutor.write_Z()
@@ -275,7 +275,7 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
          && !"auto-trap".equals(autismclient.util.aD.init_Str())
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20()
-         && !HashUtil.load_Z()
+         && !BlinkPacketManager.load_Z()
          && !autismclient.util.DataPipe.init();
    }
 
@@ -307,35 +307,35 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
             this.sync = this.init_I_14();
          }
 
-         af.init_V_Obj(MC.level);
+         EspChunkWorker.init_V_Obj(MC.level);
          AutismMultiPlayerGameModeAccessor mining = (AutismMultiPlayerGameModeAccessor)MC.gameMode;
          BlockPos current = this.init_Z && mining.autism$isDestroying() ? mining.autism$getDestroyBlockPos() : null;
          float progress = current == null ? 0.0F : mining.autism$getDestroyProgress();
-         DataPipe.Inner_BufferHelper best = null;
+         BedBreachRouteSolver.Inner_BufferHelper best = null;
          BlockPos selected = null;
-         DyeColor own = b.init();
+         DyeColor own = TeamDyeColorResolver.init();
          BedEspModule.Inner_CachePool policy = BedEspModule.init_ClassCache_CachePo();
          Vec3 nextEye = this.init_Vec3_2();
-         StreamGate.Inner_StreamUtil tracking = null;
+         BedMiningEstimator.Inner_StreamUtil tracking = null;
          if (current != null
             && current.equals(this.load_BlockPos)
             && this.init_DataPipe_BufferHel != null
             && this.init_BlockPos != null
             && MC.level.getBlockState(this.init_BlockPos).getBlock() instanceof BedBlock block
             && this.init_Z_BedBlock_DyeColor(block, own)) {
-            tracking = StreamGate.init(current, this.init_DataPipe_BufferHel.init_Vec3(), progress, nextEye);
+            tracking = BedMiningEstimator.init(current, this.init_DataPipe_BufferHel.init_Vec3(), progress, nextEye);
             if (tracking != null) {
-               ArrayList<DataPipe.Inner_DataUtil> cells = new ArrayList<>();
+               ArrayList<BedBreachRouteSolver.Inner_DataUtil> cells = new ArrayList<>();
                cells.add(tracking.init_DataPipe_DataUtil());
 
-               for (DataPipe.Inner_DataUtil cell : this.init_DataPipe_BufferHel.init_List().subList(1, this.init_DataPipe_BufferHel.init_List().size())) {
+               for (BedBreachRouteSolver.Inner_DataUtil cell : this.init_DataPipe_BufferHel.init_List().subList(1, this.init_DataPipe_BufferHel.init_List().size())) {
                   BlockState state = MC.level.getBlockState(cell.init_BlockPos());
                   if (!state.isAir()) {
                      cells.add(
-                        new DataPipe.Inner_DataUtil(
+                        new BedBreachRouteSolver.Inner_DataUtil(
                            cell.init_BlockPos(),
                            cell.init_List(),
-                           StreamGate.init(state, cell.init_BlockPos(), MC.player.getInventory().getItem(cell.init_I())),
+                           BedMiningEstimator.init(state, cell.init_BlockPos(), MC.player.getInventory().getItem(cell.init_I())),
                            cell.init_I(),
                            cell.init_Z()
                         )
@@ -347,10 +347,10 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
                   .minmax(new AABB(this.init_BlockPos.relative(BedBlock.getConnectedDirection(MC.level.getBlockState(this.init_BlockPos)))))
                   .setMaxY(this.init_BlockPos.getY() + 0.5625);
                boolean complete = bounds.distanceToSqr(MC.player.getEyePosition()) <= Math.pow(MC.player.blockInteractionRange(), 2.0);
-               best = new DataPipe.Inner_BufferHelper(
+               best = new BedBreachRouteSolver.Inner_BufferHelper(
                   List.copyOf(cells),
                   tracking.init_Vec3() == null ? this.init_DataPipe_BufferHel.init_Vec3() : tracking.init_Vec3(),
-                  cells.stream().mapToDouble(DataPipe.Inner_DataUtil::init_D).sum() + Math.max(0, cells.size() - 1) * 5,
+                  cells.stream().mapToDouble(BedBreachRouteSolver.Inner_DataUtil::init_D).sum() + Math.max(0, cells.size() - 1) * 5,
                   complete
                );
                selected = this.init_BlockPos;
@@ -372,7 +372,7 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
                for (int cz = playerPos.getZ() - radius >> 4; cz <= playerPos.getZ() + radius >> 4; cz++) {
                   LevelChunk chunk = MC.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
                   if (chunk != null) {
-                     for (af.Inner_CachePool entry : BedEspModule.init_List_LevelChunk(chunk)) {
+                     for (EspChunkWorker.Inner_CachePool entry : BedEspModule.init_List_LevelChunk(chunk)) {
                         BlockPos p = BlockPos.containing(entry.init_Vec3());
                         if (!(new AABB(p).distanceToSqr(MC.player.getEyePosition()) > (double)radius * radius)) {
                            BlockState state = MC.level.getBlockState(p);
@@ -394,7 +394,7 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
             candidates.sort(Comparator.comparingDouble(px -> px.distToCenterSqr(MC.player.position())));
 
             for (BlockPos p : candidates.stream().limit(8L).toList()) {
-               DataPipe.Inner_BufferHelper candidate = StreamGate.load(p, this.bool("auto-tool"), current, progress);
+               BedBreachRouteSolver.Inner_BufferHelper candidate = BedMiningEstimator.load(p, this.bool("auto-tool"), current, progress);
                if (candidate != null
                   && (
                      best == null
@@ -416,8 +416,8 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
             double budget = KillAuraModule.init_D_9();
             boolean critical = MC.player.getHealth() + MC.player.getAbsorptionAmount() <= 6.0F;
             ce.Inner_DataUtil at = autismclient.util.aD.init_ce_DataUtil();
-            StreamGate.Inner_StreamUtil follow = tracking == null
-               ? StreamGate.init(this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_BlockPos(), this.init_DataPipe_BufferHel.init_Vec3(), 0.0F, nextEye)
+            BedMiningEstimator.Inner_StreamUtil follow = tracking == null
+               ? BedMiningEstimator.init(this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_BlockPos(), this.init_DataPipe_BufferHel.init_Vec3(), 0.0F, nextEye)
                : tracking;
             Vec3 point = follow != null && follow.init_Vec3() != null ? follow.init_Vec3() : this.init_DataPipe_BufferHel.init_Vec3();
             ce.Inner_DataUtil goal = ce.init(point, nextEye);
@@ -429,7 +429,7 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
                finish += 2.0;
             }
 
-            if (!Double.isFinite(budget) || this.init_DataPipe_BufferHel.init_Z() && DataPipe.init(finish, budget, critical)) {
+            if (!Double.isFinite(budget) || this.init_DataPipe_BufferHel.init_Z() && BedBreachRouteSolver.init(finish, budget, critical)) {
                this.init_I = this.init_I_14();
                this.init_Str = this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_Z() ? "Breaking bed" : "Opening bed";
                autismclient.util.aD.init_V_Str(this.id(), 12, goal);
@@ -520,7 +520,7 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
             MC.options.keyShift.isDown(),
             cn.init_F(MC.player)
          );
-         return CacheEntry.init(
+         return BedTargetAimSolver.init(
             state, input, autismclient.ai.a.NodeWalker.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player), MC.player.getEyeHeight()
          );
       } else {
@@ -583,7 +583,7 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
    public void onDisable() {
       this.sync = this.init_I_14();
       this.write_V_10();
-      StreamGate.init();
+      BedMiningEstimator.init();
       this.init_V_Str_Z("Idle", false);
    }
 
@@ -591,7 +591,7 @@ public final class BedNukerModule extends Module implements cn.Inner_DataUtil {
    public void onGameLeft() {
       this.write_V_10();
       this.init_V_20();
-      StreamGate.init();
+      BedMiningEstimator.init();
       this.init_ValueSink.load();
       if (this.open()) {
          autismclient.util.aD.load_V();

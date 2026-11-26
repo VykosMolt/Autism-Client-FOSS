@@ -3,7 +3,7 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.modules.Module;
-import autismclient.modules.ak;
+import autismclient.modules.OreSimEspScanner;
 import autismclient.modules.al;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismWaypoints;
@@ -39,8 +39,8 @@ public class OreSimCommand extends Command {
          AutismClientMessaging.sendPrefixed(
             "§7enabled: §f" + xray.isEnabled() + "§7  mode: §f" + xray.value("mode") + "§7  style: §f" + xray.value("render-style")
          );
-         Long seed = ak.load_Long(xray);
-         autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil seedStatus = ak.init_BufferHelper_Strea(xray);
+         Long seed = OreSimEspScanner.load_Long(xray);
+         autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil seedStatus = OreSimEspScanner.init_BufferHelper_Strea(xray);
          AutismClientMessaging.sendPrefixed(
             "§7seed: "
                + (
@@ -55,7 +55,7 @@ public class OreSimCommand extends Command {
                + AutismWaypoints.init_Str_Minecraft(Minecraft.getInstance())
                + "§7; the same world/server scoping as waypoints. No world or server seed is read."
          );
-         AutismClientMessaging.sendPrefixed("§7ore list entries: §f" + ak.load_I(xray) + "§7  families: §f" + Integer.bitCount(ak.read_I(xray)));
+         AutismClientMessaging.sendPrefixed("§7ore list entries: §f" + OreSimEspScanner.load_I(xray) + "§7  families: §f" + Integer.bitCount(OreSimEspScanner.read_I(xray)));
          String worldgen = autismclient.util.oresim.OreSimEngine.read_Z()
             ? "§cFAILED"
             : (
@@ -79,7 +79,7 @@ public class OreSimCommand extends Command {
          AutismClientMessaging.sendPrefixed(
             "§7generation source: §flocal vanilla registries + terrain + carvers + biome decoration§7; received server chunks are not inputs."
          );
-         AutismClientMessaging.sendPrefixed("§7nearby real ore: §f" + ak.init_Str());
+         AutismClientMessaging.sendPrefixed("§7nearby real ore: §f" + OreSimEspScanner.init_Str());
          AutismClientMessaging.sendPrefixed("§7matched = real ore within 5 blocks; touchingAir = of those, exposed; drawn = also in line of sight.");
       }
    }

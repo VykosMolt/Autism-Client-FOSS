@@ -2,7 +2,7 @@ package autismclient.ai;
 
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.lang.reflect.Field;
@@ -211,7 +211,7 @@ final class bY {
             }
          case "restore":
          case "load":
-            if (!PoolEntry.init_PoolEntry().task()) {
+            if (!ModuleRuntimeManager.init_PoolEntry().task()) {
                throw new IllegalStateException("No stored GUI to restore");
             }
 

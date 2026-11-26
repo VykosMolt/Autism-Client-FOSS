@@ -67,7 +67,7 @@ public class AutismOverlaysScreen extends Screen {
    protected void init() {
       super.init();
       if (!cx.read_Z() && this.init_ak == null && !this.init_Z && this.minecraft != null && this.minecraft.level != null) {
-         autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          if (module != null && module.init_Z()) {
             try {
                this.init_ak = ak.init(this.font, this.init_cX);

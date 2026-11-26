@@ -23,7 +23,7 @@ public class BindCommand extends Command {
       root.then(
          LiteralArgumentBuilder.<AutismCommandSource>literal("clear").then(RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("key", autismclient.commands.a.KeyBindArgumentType.init()).executes(ctx -> {
             int key = autismclient.commands.a.KeyBindArgumentType.init(ctx, "key");
-            autismclient.modules.PoolEntry.init_PoolEntry().init_V_I(key);
+            autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_V_I(key);
             AutismClientMessaging.sendPrefixed("§eCleared bind for §f" + autismclient.commands.a.KeyBindArgumentType.init_Str_I(key));
             return 1;
          }))
@@ -34,7 +34,7 @@ public class BindCommand extends Command {
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("command", StringArgumentType.greedyString()).suggests(autismclient.commands.CommandSuggestions::run).executes(ctx -> {
                   int key = autismclient.commands.a.KeyBindArgumentType.init(ctx, "key");
                   String cmd = StringArgumentType.getString(ctx, "command");
-                  autismclient.modules.PoolEntry.init_PoolEntry().init(key, cmd);
+                  autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init(key, cmd);
                   AutismClientMessaging.sendPrefixed("§aBound §f" + autismclient.commands.a.KeyBindArgumentType.init_Str_I(key) + "§a → §f" + cmd);
                   return 1;
                })

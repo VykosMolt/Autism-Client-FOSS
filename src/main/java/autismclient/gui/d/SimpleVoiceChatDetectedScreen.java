@@ -56,7 +56,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    }
 
    private void init(boolean keepVanillaMode) {
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       if (module != null) {
          module.update(keepVanillaMode);
       }

@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.ai;
+import autismclient.modules.MovementModuleHooks;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AutismPlayerFlyingSpeedMixin {
    @Inject(method = "getFlyingSpeed", at = @At("HEAD"), cancellable = true)
    private void autism$flightFlyingSpeed(CallbackInfoReturnable<Float> cir) {
-      float speed = ai.init_F((Player)(Object)this);
+      float speed = MovementModuleHooks.init_F((Player)(Object)this);
       if (speed != -1.0F) {
          cir.setReturnValue(speed);
       }

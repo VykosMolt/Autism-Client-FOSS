@@ -2373,7 +2373,7 @@ public final class cc {
    public void flush_V(String reason) {
       if (!Boolean.getBoolean("autism.ai.livetask")
          && this.init_AiSettings.stopOnInput
-         && !autismclient.modules.aC.init_Z()
+         && !autismclient.modules.FreecamController.init_Z()
          && load_Z_cc_FileCache(this.init_cc_FileCache)
          && this.init_cc_SyncManager != null) {
          this.init_V_cc_FileCache_Str(cc.Inner_FileCache.write, reason);
@@ -2392,7 +2392,7 @@ public final class cc {
    }
 
    private boolean load_Z_Minecraft(Minecraft mc) {
-      if (mc.gui.screen() == null && !autismclient.modules.aC.init_Z()) {
+      if (mc.gui.screen() == null && !autismclient.modules.FreecamController.init_Z()) {
          for (KeyMapping key : List.of(
             mc.options.keyUp, mc.options.keyDown, mc.options.keyLeft, mc.options.keyRight, mc.options.keyJump, mc.options.keyAttack, mc.options.keyUse
          )) {

@@ -2,10 +2,10 @@ package autismclient.gui.d;
 
 import autismclient.compat263.Compat263;
 import autismclient.gui.f.b.h;
-import autismclient.modules.m;
+import autismclient.modules.CrosshairPixelArt;
 import autismclient.modules.CrosshairModule;
-import autismclient.modules.p;
-import autismclient.modules.q;
+import autismclient.modules.CrosshairPresetGeometry;
+import autismclient.modules.CrosshairRenderState;
 import autismclient.util.cA;
 import com.mojang.blaze3d.platform.NativeImage;
 import java.util.ArrayDeque;
@@ -35,7 +35,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
    };
    private final Screen init_Screen;
    private final CrosshairModule init_n;
-   private final m init_m;
+   private final CrosshairPixelArt init_m;
    private final ArrayDeque<CrosshairEditorScreen.Inner_BufferHelper> init_ArrayDeque = new ArrayDeque<>();
    private final ArrayDeque<CrosshairEditorScreen.Inner_BufferHelper> load_ArrayDeque = new ArrayDeque<>();
    private final List<CrosshairEditorScreen.Inner_DataUtil> init_List = new ArrayList<>();
@@ -63,7 +63,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
    private autismclient.gui.f.NetHelper init_NetHelper;
    private int add;
    private int clear;
-   private m load_m;
+   private CrosshairPixelArt load_m;
    private DynamicTexture init_DynamicTexture;
    private Identifier init_Identifier;
    private int reset;
@@ -76,7 +76,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
       this(parent, module, module.init_m());
    }
 
-   public CrosshairEditorScreen(Screen parent, CrosshairModule module, m start) {
+   public CrosshairEditorScreen(Screen parent, CrosshairModule module, CrosshairPixelArt start) {
       super(Component.literal("Crosshair Editor"));
       this.init_NetHelper_ConfigSt = CrosshairEditorScreen.Inner_ConfigStore.PEN;
       this.load_NetHelper_ConfigSt = CrosshairEditorScreen.Inner_ConfigStore.PEN;
@@ -125,7 +125,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
       int rowY = y + header + 6;
       int cx = x + 6 + this.init_I_Str_13("Resolution") + 4;
 
-      for (int option : m.init_IArr) {
+      for (int option : CrosshairPixelArt.init_IArr) {
          int chipW = this.init_I_Str_13(Integer.toString(option)) + 12;
          this.init_List
             .add(
@@ -216,12 +216,12 @@ public final class CrosshairEditorScreen extends KeyHolder {
       ty += ctl + 6;
       this.clear = ty;
       ty += rowText;
-      p.Inner_NetHelper[] presets = new p.Inner_NetHelper[]{
-         p.Inner_NetHelper.CROSS, p.Inner_NetHelper.TACTICAL, p.Inner_NetHelper.CIRCLE, p.Inner_NetHelper.CHEVRON
+      CrosshairPresetGeometry.Inner_NetHelper[] presets = new CrosshairPresetGeometry.Inner_NetHelper[]{
+         CrosshairPresetGeometry.Inner_NetHelper.CROSS, CrosshairPresetGeometry.Inner_NetHelper.TACTICAL, CrosshairPresetGeometry.Inner_NetHelper.CIRCLE, CrosshairPresetGeometry.Inner_NetHelper.CHEVRON
       };
 
       for (int i = 0; i < presets.length; i++) {
-         p.Inner_NetHelper preset = presets[i];
+         CrosshairPresetGeometry.Inner_NetHelper preset = presets[i];
          this.init_List
             .add(
                new CrosshairEditorScreen.Inner_DataUtil(
@@ -542,9 +542,9 @@ public final class CrosshairEditorScreen extends KeyHolder {
    }
 
    private void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper box) {
-      q.Inner_DataUtil look = this.init_n.init_q_DataUtil_m(this.init_m());
-      q.Inner_DataUtil shown = new q.Inner_DataUtil(
-         p.Inner_NetHelper.CUSTOM,
+      CrosshairRenderState.Inner_DataUtil look = this.init_n.init_q_DataUtil_m(this.init_m());
+      CrosshairRenderState.Inner_DataUtil shown = new CrosshairRenderState.Inner_DataUtil(
+         CrosshairPresetGeometry.Inner_NetHelper.CUSTOM,
          look.init_D(),
          look.load_D(),
          look.read_D(),
@@ -1114,17 +1114,17 @@ public final class CrosshairEditorScreen extends KeyHolder {
    }
 
    private void load(int newSize) {
-      if (newSize != this.open && m.init_Z(newSize)) {
+      if (newSize != this.open && CrosshairPixelArt.init_Z(newSize)) {
          this.init_V_NetHelper_BufferHe(new CrosshairEditorScreen.Inner_BufferHelper(this.open, (int[])this.load_IArr.clone()));
-         this.load_IArr = new m(this.open, this.load_IArr).load(newSize).init_IArr();
+         this.load_IArr = new CrosshairPixelArt(this.open, this.load_IArr).load(newSize).init_IArr();
          this.open = newSize;
          this.push();
       }
    }
 
-   private void init_V_p_NetHelper(p.Inner_NetHelper style) {
+   private void init_V_p_NetHelper(CrosshairPresetGeometry.Inner_NetHelper style) {
       this.init_V_NetHelper_BufferHe(new CrosshairEditorScreen.Inner_BufferHelper(this.open, (int[])this.load_IArr.clone()));
-      this.load_IArr = p.init(style, this.open, this.init_n.init_D_14(), this.init_n.load_D_5(), this.read_I_9()).init_IArr();
+      this.load_IArr = CrosshairPresetGeometry.init(style, this.open, this.init_n.init_D_14(), this.init_n.load_D_5(), this.read_I_9()).init_IArr();
       this.push();
    }
 
@@ -1179,9 +1179,9 @@ public final class CrosshairEditorScreen extends KeyHolder {
       this.load_m = null;
    }
 
-   private m init_m() {
+   private CrosshairPixelArt init_m() {
       if (this.load_m == null) {
-         this.load_m = new m(this.open, this.load_IArr);
+         this.load_m = new CrosshairPixelArt(this.open, this.load_IArr);
       }
 
       return this.load_m;
@@ -1192,7 +1192,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
          this.sync();
       }
 
-      m drawn = this.init_m();
+      CrosshairPixelArt drawn = this.init_m();
       if (!drawn.equals(this.init_m)) {
          this.init_n.init_V_m(drawn);
       }

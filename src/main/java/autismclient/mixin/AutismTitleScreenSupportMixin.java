@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.gui.d.AutismModulesScreen;
 import autismclient.gui.d.AutismOverlaysScreen;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
 import autismclient.util.AutismProfilesOverlay;
 import autismclient.util.aJ;
@@ -58,7 +58,7 @@ public abstract class AutismTitleScreenSupportMixin extends Screen {
    @Unique
    private void autism$openProfilesOverlay() {
       if (!aD.read_Z()) {
-         PoolEntry mod = PoolEntry.init_PoolEntry();
+         ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
          if (mod != null) {
             cX overlay = mod.load_cX();
             if (overlay != null) {

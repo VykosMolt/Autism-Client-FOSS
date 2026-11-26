@@ -37,7 +37,7 @@ public final class cd {
             return new cd.Inner_DataUtil(false, "You cannot remote-view yourself.");
          }
 
-         if (autismclient.modules.aC.init_Z()) {
+         if (autismclient.modules.FreecamController.init_Z()) {
             return new cd.Inner_DataUtil(false, "Disable Freecam first.");
          }
 

@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.az;
+import autismclient.modules.NoRenderState;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import java.util.List;
 import net.minecraft.client.renderer.MapRenderer;
@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderMapMixin {
    @Inject(method = "render", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noMapContents(CallbackInfo ci) {
-      if (az.node()) {
+      if (NoRenderState.node()) {
          ci.cancel();
       }
    }
@@ -25,6 +25,6 @@ public abstract class AutismNoRenderMapMixin {
       require = 0
    )
    private List<MapDecorationRenderState> autism$noMapMarkers(List<MapDecorationRenderState> original) {
-      return az.entry() ? List.of() : original;
+      return NoRenderState.entry() ? List.of() : original;
    }
 }

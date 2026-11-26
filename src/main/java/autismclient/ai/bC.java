@@ -244,12 +244,12 @@ final class bC {
 
             autismclient.util.ce.Inner_DataUtil init_ce_DataUtil(Entity at) {
                ItemStack held = mc.player.getMainHandItem();
-               List<autismclient.modules.aX.Inner_BufferHelper> possible = autismclient.modules.aX.init(mc.player, held, true, false);
+               List<autismclient.modules.ProjectileBallistics.Inner_BufferHelper> possible = autismclient.modules.ProjectileBallistics.init(mc.player, held, true, false);
                if (possible.isEmpty()) {
                   return null;
                }
 
-               autismclient.modules.aX.Inner_DataUtil info = possible.get(0).init_aX_DataUtil();
+               autismclient.modules.ProjectileBallistics.Inner_DataUtil info = possible.get(0).init_aX_DataUtil();
                Vec3 point = autismclient.ai.a.DataUtil.init_Vec3_Entity(at);
                Vec3 motion = this.init_Vec3(at);
                if (motion.lengthSqr() >= 0.0025000000000000005) {
@@ -258,7 +258,7 @@ final class bC {
                }
 
                float yaw = autismclient.util.ce.init(point, mc.player.getEyePosition()).init();
-               Vec3 inherited = autismclient.modules.aX.init(mc.player);
+               Vec3 inherited = autismclient.modules.ProjectileBallistics.init(mc.player);
                float best = 0.0F / 0.0F;
 
                for (float pitch = 45.0F; pitch >= -60.0F; pitch -= 2.0F) {
@@ -281,8 +281,8 @@ final class bC {
                return new autismclient.util.ce.Inner_DataUtil(yaw, best);
             }
 
-            boolean init(autismclient.modules.aX.Inner_DataUtil info, float yaw, float pitch, Entity at, Vec3 inherited) {
-               autismclient.modules.aX.Inner_CachePool result = autismclient.modules.aX.init(mc.level, mc.player, info, yaw, pitch, 120, inherited);
+            boolean init(autismclient.modules.ProjectileBallistics.Inner_DataUtil info, float yaw, float pitch, Entity at, Vec3 inherited) {
+               autismclient.modules.ProjectileBallistics.Inner_CachePool result = autismclient.modules.ProjectileBallistics.init(mc.level, mc.player, info, yaw, pitch, 120, inherited);
                HitResult hit = result.init_HitResult();
                Vec3 motion = this.init_Vec3(at);
                if (motion.lengthSqr() < 0.0025000000000000005) {

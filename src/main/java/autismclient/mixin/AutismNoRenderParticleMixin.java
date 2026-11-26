@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.az;
+import autismclient.modules.NoRenderState;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.particles.ParticleOptions;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AutismNoRenderParticleMixin {
    @Inject(method = "createParticle", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noParticle(ParticleOptions options, double x, double y, double z, double vx, double vy, double vz, CallbackInfoReturnable<Particle> cir) {
-      if (options != null && az.init(options.getType())) {
+      if (options != null && NoRenderState.init(options.getType())) {
          cir.setReturnValue(null);
       }
    }

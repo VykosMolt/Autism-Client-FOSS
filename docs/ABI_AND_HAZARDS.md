@@ -24,6 +24,10 @@ Every rule below MUST be respected by all deobfuscation tooling and manual refac
 - **Compile-time frozen classes** (directly referenced by untouched integrity/attestation files; verified by `:compileJava`):
   - `autismclient/modules/f` (multi-module registration container; referenced by `modules/al.java`)
   - `autismclient/modules/as` (`NameCensorModule`; referenced by `modules/al.java`)
+  - `autismclient/modules/aD` (`PanicModeController`; referenced by `modules/al.java`)
+  - `autismclient/modules/ae` (`ModuleCategory`; referenced by `modules/al.java`)
+  - `autismclient/modules/am` (`RenderModuleState`; referenced by `modules/al.java`)
+  - `autismclient/modules/ar` (`WorldEspRenderer`; referenced by `modules/al.java`)
   - `autismclient/util/macro/ak` (`ToggleModuleAction`, plus frozen inner enum `ak$Inner_StreamUtil`; referenced by `modules/al.java`)
   - `autismclient/b/DataUtil` (`AddonManager`; referenced by `modules/al.java`)
   - `autismclient/util/g/PkgCls_a` (`PacedTpController`; referenced by `modules/al.java`)

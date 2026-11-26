@@ -43,8 +43,8 @@ final class TriggerBotModule extends Module {
    private static final double write_D = 1.5;
    private static final double update_D = 15.0;
    private static final double sync_D = 35.0;
-   private final h init_h;
-   private final O init_O;
+   private final ClickerSettingsGroup init_h;
+   private final HeldItemFilter init_O;
    private final autismclient.util.a.ClickPatternEngine init_DataUtil = new autismclient.util.a.ClickPatternEngine();
    private final autismclient.util.a.KeyClickOutput init_StreamUtil = autismclient.util.a.KeyClickOutput.init_StreamUtil();
    private final autismclient.util.a.ClickPatternEngine.Inner_NetHelper init_DataUtil_NetHelper = new autismclient.util.a.ClickPatternEngine.Inner_NetHelper() {
@@ -95,7 +95,7 @@ final class TriggerBotModule extends Module {
    TriggerBotModule() {
       super("trigger-bot", "TriggerBot", ae.init_ae, "Attacks configured entities when your crosshair is on them.");
       this.add(RegistryListSetting.entityTypes("entities", "Entities", "minecraft:player").description("Trigger entities").build());
-      this.init_O = new O(this);
+      this.init_O = new HeldItemFilter(this);
       this.add(new RangeSetting("edge-tolerance", "Edge Tolerance", sync_ValueRange, 0.0, 0.5, 0.01).description("Click just past the edge").build());
       this.add(new BoolSetting("respect-cooldown", "Respect Cooldown", true).group("Modern Combat").description("Wait for full charge").build());
       this.add(
@@ -130,7 +130,7 @@ final class TriggerBotModule extends Module {
             .visibleWhen(() -> this.bool("respect-cooldown"))
             .build()
       );
-      this.init_h = new h(this, "1.8 Combat", h.init_BufferHelper, () -> true, h.init_ValueRange);
+      this.init_h = new ClickerSettingsGroup(this, "1.8 Combat", ClickerSettingsGroup.init_BufferHelper, () -> true, ClickerSettingsGroup.init_ValueRange);
       this.add(
          new RangeSetting("legacy-reaction", "Reaction", init_ValueRange, 0.0, 400.0, 5.0)
             .unit("ms")
@@ -382,8 +382,8 @@ final class TriggerBotModule extends Module {
                && autismclient.util.u.init(
                   MC.player.getEyePosition(),
                   target.getBoundingBox(),
-                  l.init(MC.player.getDeltaMovement()),
-                  l.init(step),
+                  ShieldHitWindowHelper.init(MC.player.getDeltaMovement()),
+                  ShieldHitWindowHelper.init(step),
                   autismclient.util.u.init_D(MC.player)
                );
             if (lastChance || autismclient.util.a.SwingTimingModel.init(shown, ticker, MC.player.getCurrentItemAttackStrengthDelay(), init_D_10(), offset)) {
@@ -425,7 +425,7 @@ final class TriggerBotModule extends Module {
 
    private static double init_D_10() {
       double ms = MC.level == null ? 50.0 : Math.max(50.0, MC.level.tickRateManager().millisecondsPerTick());
-      return ms / Math.max(0.05, ai.init_F());
+      return ms / Math.max(0.05, MovementModuleHooks.init_F());
    }
 
    private boolean load_Z_15() {
@@ -453,7 +453,7 @@ final class TriggerBotModule extends Module {
          return false;
       }
 
-      if (ByteReader.load_Z(entity)) {
+      if (AntiBotTracker.load_Z(entity)) {
          return false;
       }
 

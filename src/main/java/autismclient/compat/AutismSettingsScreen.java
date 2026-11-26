@@ -10,7 +10,7 @@ import autismclient.gui.f.UiHelper;
 import autismclient.gui.f.b.RefQueue;
 import autismclient.gui.f.b.UtilCore;
 import autismclient.gui.f.b.k;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.AutismConfig;
 import autismclient.util.ValueSink;
 import autismclient.util.aJ;
@@ -161,7 +161,7 @@ public class AutismSettingsScreen extends Screen {
 
    private List<AutismSettingsScreen.BufferHelper> init_List() {
       AutismConfig cfg = AutismConfig.getGlobal();
-      PoolEntry module = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       List<AutismSettingsScreen.BufferHelper> out = new ArrayList<>();
       this.set = this.init("Command Prefix");
 
@@ -241,7 +241,7 @@ public class AutismSettingsScreen extends Screen {
       };
    }
 
-   private AutismSettingsScreen.BufferHelper init_DataUtil_BufferHel_PoolEntry(PoolEntry module, List<String> prefixes, String current) {
+   private AutismSettingsScreen.BufferHelper init_DataUtil_BufferHel_PoolEntry(ModuleRuntimeManager module, List<String> prefixes, String current) {
       if (this.init_RefQueue == null) {
          this.init_RefQueue = new RefQueue(NetHelper.init(0, 0, 0, 0), prefixes, current, module::init_V_Str);
       } else {

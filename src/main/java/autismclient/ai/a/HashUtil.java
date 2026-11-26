@@ -7,7 +7,7 @@ import autismclient.ai.cG;
 import autismclient.ai.ca;
 import autismclient.ai.aV;
 import autismclient.api.ai.AiOperation;
-import autismclient.modules.aP;
+import autismclient.modules.ScopedToggleOverride;
 import autismclient.modules.Module;
 import autismclient.modules.al;
 import autismclient.util.AutismLiteVariant;
@@ -1204,7 +1204,7 @@ public final class HashUtil {
             ClassCache.Inner_PacketUtil putAt_FileStore_StreamSt;
             ArrayUtil putAt_BufferCore;
             boolean tick_Z;
-            aP.Inner_StreamUtil putAt_JsonWorker_TableCa;
+            ScopedToggleOverride.Inner_StreamUtil putAt_JsonWorker_TableCa;
             static final int value_I = 60;
             final DataUtil putAt_CacheHelper;
             boolean flushOf_Z;
@@ -4028,7 +4028,7 @@ public final class HashUtil {
       private final List<BlockPos> putAt_List;
       private final HashUtil.Inner_TableCache.Inner_CacheHelper[] putAt_HashEntry_TableCacArr;
       private boolean putAt_Z;
-      private aP.Inner_StreamUtil putAt_JsonWorker_TableCa;
+      private ScopedToggleOverride.Inner_StreamUtil putAt_JsonWorker_TableCa;
       private ClassCache.Inner_BufferHelper putAt_FileStore_TaskStat;
       private int flowState;
       private BlockPos putAt_BlockPos;

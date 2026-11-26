@@ -138,7 +138,7 @@ public final class am {
    }
 
    public static boolean update() {
-      return init_am_JsonUtil().load_Z() || aC.init_Z();
+      return init_am_JsonUtil().load_Z() || FreecamController.init_Z();
    }
 
    public static boolean sync() {
@@ -640,7 +640,7 @@ public final class am {
    }
 
    public static boolean put() {
-      if (ah.init_Z()) {
+      if (FrameEspCatalog.init_Z()) {
          return true;
       }
 
@@ -704,7 +704,7 @@ public final class am {
          return false;
       }
 
-      if (ByteReader.load_Z(entity)) {
+      if (AntiBotTracker.load_Z(entity)) {
          return false;
       }
 
@@ -1365,13 +1365,13 @@ public final class am {
          return am.Inner_JsonUtil.init(revision, false);
       }
 
-      if (!ak.update(module)) {
+      if (!OreSimEspScanner.update(module)) {
          return am.Inner_JsonUtil.init(revision, false);
       }
 
       Set<Identifier> ids = new HashSet<>();
       Set<String> paths = new HashSet<>();
-      boolean oreSim = ak.init_Z(module);
+      boolean oreSim = OreSimEspScanner.init_Z(module);
       if (!oreSim) {
          for (String entry : module.list("whitelist")) {
             if (entry != null) {

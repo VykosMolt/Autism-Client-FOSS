@@ -37,6 +37,10 @@ public final class AstBatchRenamer {
     private static final Set<String> FROZEN_SYMBOL_EXACT = Set.of(
         "autismclient/modules/f",
         "autismclient/modules/as",
+        "autismclient/modules/aD",
+        "autismclient/modules/ae",
+        "autismclient/modules/am",
+        "autismclient/modules/ar",
         "autismclient/util/macro/ak",
         "autismclient/util/Q",
         "autismclient/b/DataUtil",

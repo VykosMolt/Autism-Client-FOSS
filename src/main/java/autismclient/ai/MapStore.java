@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.AuditDeathWaypoints;
 import autismclient.util.AuditWaypointScope;
 import autismclient.util.AutismConfig;
@@ -523,7 +523,7 @@ final class MapStore {
    static JsonObject write(JsonObject args) {
       String action = init(args, "state");
       return init(() -> {
-         PoolEntry module = PoolEntry.init_PoolEntry();
+         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
          autismclient.util.ck shared = autismclient.util.ck.init_ck();
          switch (action) {
             case "state":
@@ -554,7 +554,7 @@ final class MapStore {
       });
    }
 
-   private static JsonObject init(PoolEntry module, autismclient.util.ck shared) {
+   private static JsonObject init(ModuleRuntimeManager module, autismclient.util.ck shared) {
       return ag.init_JsonObject_ObjArr(
          "send",
          shared.read_Z(),
@@ -573,7 +573,7 @@ final class MapStore {
       String action = init(args, "list");
       return init(
          () -> {
-            PoolEntry module = PoolEntry.init_PoolEntry();
+            ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
             switch (action) {
                case "list":
                   return init(module);
@@ -674,7 +674,7 @@ final class MapStore {
       return out;
    }
 
-   private static JsonObject init(PoolEntry module) {
+   private static JsonObject init(ModuleRuntimeManager module) {
       return ag.init_JsonObject_ObjArr("blockedC2S", init(module.load_Set()), "blockedS2C", init(module.read_Set()));
    }
 

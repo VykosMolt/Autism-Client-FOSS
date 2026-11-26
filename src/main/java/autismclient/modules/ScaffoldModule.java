@@ -302,8 +302,8 @@ public final class ScaffoldModule extends Module {
    private float pool_F;
    private final autismclient.util.ap.Inner_TaskQueue init_ap_TaskQueue = new autismclient.util.ap.Inner_TaskQueue();
    private final RangeSetting init_RangeSetting;
-   private aM init_aM;
-   private aM.Inner_DataUtil init_aM_DataUtil;
+   private ScaffoldRotationSmoother init_aM;
+   private ScaffoldRotationSmoother.Inner_DataUtil init_aM_DataUtil;
    private boolean update_Z;
    private float index_F = 0.0F / 0.0F;
    private int f_x_I = -2147483648;
@@ -318,7 +318,7 @@ public final class ScaffoldModule extends Module {
    private ScaffoldModule.Inner_CacheEntry init_aI_CacheEntry;
    private boolean close_Z;
    private boolean open_Z;
-   private final aN init_aN = new aN();
+   private final ScaffoldPlaceRateTracker init_aN = new ScaffoldPlaceRateTracker();
    private int f_A_I;
    private boolean poll_Z;
    private BlockPos load_BlockPos;
@@ -507,7 +507,7 @@ public final class ScaffoldModule extends Module {
    private boolean fill_Z;
    private String write_Str;
    private final ArrayDeque<ScaffoldModule.Inner_UiHelper> flush_ArrayDeque;
-   private final aO init_aO;
+   private final ScaffoldFailureRecorder init_aO;
    private final AtomicBoolean init_AtomicBoolean;
    private final Map<BlockPos, Integer> read_Map;
    private ClientLevel load_ClientLevel;
@@ -772,7 +772,7 @@ public final class ScaffoldModule extends Module {
       this.f_aM_I = -1;
       this.write_Str = "--";
       this.flush_ArrayDeque = new ArrayDeque<>();
-      this.init_aO = new aO();
+      this.init_aO = new ScaffoldFailureRecorder();
       this.init_AtomicBoolean = new AtomicBoolean();
       this.read_Map = new HashMap<>();
       this.f_aN_I = -2147483648;
@@ -1229,7 +1229,7 @@ public final class ScaffoldModule extends Module {
       if (!this.cache_Z()) {
          this.init_aI_HashUtil = null;
          this.g_V();
-      } else if (!HashUtil.load_Z()) {
+      } else if (!BlinkPacketManager.load_Z()) {
          this.write_Z = false;
          InteractionHand hand = this.init_InteractionHand();
          if (hand == null) {
@@ -1416,7 +1416,7 @@ public final class ScaffoldModule extends Module {
             } else {
                this.next_V();
             }
-         } else if (HashUtil.load_Z()) {
+         } else if (BlinkPacketManager.load_Z()) {
             this.add_Str = "blink-action-only";
             this.init_V_Str_aI_TableIndex("real-wait", this.read_aI_TableIndex);
             this.g_V();
@@ -1612,7 +1612,7 @@ public final class ScaffoldModule extends Module {
                                  ? "pace-pfree"
                                  : "pace-" + this.clear_J + (this.f_m_Z ? "/imean" : "/" + this.reset_J + "ms");
                               this.init_V_Str_aI_TableIndex("pace-hold", target);
-                           } else if (HashUtil.load_Z()) {
+                           } else if (BlinkPacketManager.load_Z()) {
                               this.add_Str = "blink-action-only";
                               this.init_V_Str_aI_TableIndex("real-wait", target);
                            } else {
@@ -6121,7 +6121,7 @@ public final class ScaffoldModule extends Module {
 
    public static boolean load_Z_11() {
       if (AutismLiteVariant.enabled() || !DangerModule.read_Z_22() && !ClutchModule.read_Z_20()) {
-         if (init_Z_26() && !HashUtil.load_Z()) {
+         if (init_Z_26() && !BlinkPacketManager.load_Z()) {
             Module module = al.init_Module_Str("scaffold");
             ScaffoldModule scaffold = (ScaffoldModule)module;
             return autismclient.util.as.init_Z_J(scaffold.put_J);
@@ -6906,7 +6906,7 @@ public final class ScaffoldModule extends Module {
          Vec3 motion = MC.player.getDeltaMovement().add(this.read_Vec3().scale(0.0196));
          Vec3 next = eye.add(this.init_Vec3_LocalPlayer(MC.player, MC.player.getBoundingBox(), motion));
          double reach = MC.player.blockInteractionRange() - 0.035;
-         if (k.init_Z_Vec3_2(
+         if (ClutchBlockPlanner.init_Z_Vec3_2(
             next, Vec3.directionFromRotation(target.init_ce_DataUtil().load(), target.init_ce_DataUtil().init()), target.load(), target.init_Direction(), reach
          )) {
             return target;
@@ -6914,10 +6914,10 @@ public final class ScaffoldModule extends Module {
 
          ce.Inner_DataUtil from = this.poll_ce_DataUtil();
 
-         for (k.Inner_StreamUtil counts : k.init_List_Vec3_2(
+         for (ClutchBlockPlanner.Inner_StreamUtil counts : ClutchBlockPlanner.init_List_Vec3_2(
             eye,
             next,
-            k.init(target.init_BlockPos(), target.init_Direction()),
+            ClutchBlockPlanner.init(target.init_BlockPos(), target.init_Direction()),
             target.init_BlockPos(),
             target.init_Direction(),
             target.load(),
@@ -6962,7 +6962,7 @@ public final class ScaffoldModule extends Module {
          return false;
       }
 
-      if (HashUtil.load_Z()) {
+      if (BlinkPacketManager.load_Z()) {
          return false;
       }
 
@@ -9524,15 +9524,15 @@ public final class ScaffoldModule extends Module {
       return this.count_Z() ? Math.min(18.0F, cap) : cap;
    }
 
-   private aM init_aM() {
+   private ScaffoldRotationSmoother init_aM() {
       if (this.init_aM == null) {
-         this.init_aM = aM.init_aM();
+         this.init_aM = ScaffoldRotationSmoother.init_aM();
       }
 
       return this.init_aM;
    }
 
-   private aM.Inner_DataUtil init_aM_DataUtil() {
+   private ScaffoldRotationSmoother.Inner_DataUtil init_aM_DataUtil() {
       ValueRange band = this.init_RangeSetting.get();
       if (this.init_aM_DataUtil == null
          || this.init_aM_DataUtil.init_D() < band.min()
@@ -9704,8 +9704,8 @@ public final class ScaffoldModule extends Module {
       ce.Inner_DataUtil best = null;
       double cost = 1.0 / 0.0;
 
-      for (k.Inner_StreamUtil counts : k.init_List_Vec3_2(
-         eye, nextEye, k.init(support, face), support, face, support, face, reach, from.init(), from.load(), gcd, 0.02
+      for (ClutchBlockPlanner.Inner_StreamUtil counts : ClutchBlockPlanner.init_List_Vec3_2(
+         eye, nextEye, ClutchBlockPlanner.init(support, face), support, face, support, face, reach, from.init(), from.load(), gcd, 0.02
       )) {
          ce.Inner_DataUtil look = new ce.Inner_DataUtil(from.init() + ce.init(counts.init(), from.init()), counts.load());
          if (!(side * ce.init(look.init(), course) <= 0.0)) {
@@ -10702,7 +10702,7 @@ public final class ScaffoldModule extends Module {
          BlockHitResult hit = use.hitResult();
          this.init_aO
             .init(
-               new aO.Inner_StreamUtil(
+               new ScaffoldFailureRecorder.Inner_StreamUtil(
                   "use",
                   tick,
                   use.sequence(),
@@ -10720,7 +10720,7 @@ public final class ScaffoldModule extends Module {
       } else if (packet instanceof ServerboundMovePlayerPacket move) {
          this.init_aO
             .init(
-               new aO.Inner_StreamUtil(
+               new ScaffoldFailureRecorder.Inner_StreamUtil(
                   "move",
                   tick,
                   -1,
@@ -10736,9 +10736,9 @@ public final class ScaffoldModule extends Module {
                )
             );
       } else if (packet instanceof ServerboundPlayerInputPacket input) {
-         this.init_aO.init(new aO.Inner_StreamUtil("input", tick, -1, null, null, null, write_Vec3, null, null, wire, input.input(), null));
+         this.init_aO.init(new ScaffoldFailureRecorder.Inner_StreamUtil("input", tick, -1, null, null, null, write_Vec3, null, null, wire, input.input(), null));
       } else if (packet instanceof ServerboundPlayerCommandPacket command) {
-         this.init_aO.init(new aO.Inner_StreamUtil("command", tick, -1, null, null, null, write_Vec3, null, null, wire, null, command.getAction().name()));
+         this.init_aO.init(new ScaffoldFailureRecorder.Inner_StreamUtil("command", tick, -1, null, null, null, write_Vec3, null, null, wire, null, command.getAction().name()));
       }
    }
 
@@ -10746,7 +10746,7 @@ public final class ScaffoldModule extends Module {
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && scaffold.index_Z() && scaffold.init_aO.init(cell)) {
          BlockPos immutable = cell.immutable();
          scaffold.init_aO
-            .init(new aO.Inner_StreamUtil("server-block", ck.init_ck().state_I(), -1, immutable, null, null, null, null, null, null, null, state.toString()));
+            .init(new ScaffoldFailureRecorder.Inner_StreamUtil("server-block", ck.init_ck().state_I(), -1, immutable, null, null, null, null, null, null, null, state.toString()));
          if (state.isAir()) {
             scaffold.init_V_Str("server-sent-air-for-recent-use", immutable, -1);
          }
@@ -10755,7 +10755,7 @@ public final class ScaffoldModule extends Module {
 
    private void init_V_Str(String reason, BlockPos cell, int sequence) {
       if (MC != null && MC.level != null && MC.player != null && this.init_AtomicBoolean.compareAndSet(false, true)) {
-         aO.Inner_DataUtil capture = this.init_aO.init(reason, cell, sequence, ck.init_ck().state_I(), System.nanoTime());
+         ScaffoldFailureRecorder.Inner_DataUtil capture = this.init_aO.init(reason, cell, sequence, ck.init_ck().state_I(), System.nanoTime());
          if (capture == null) {
             this.init_AtomicBoolean.set(false);
          } else {
@@ -11004,7 +11004,7 @@ public final class ScaffoldModule extends Module {
             && !MC.player.isSpectator()
             && !MC.player.isHandsBusy()
             && !aD.init_Z()
-            && !aC.init_Z()
+            && !FreecamController.init_Z()
             && !cd.init_Z()
             && !f.load()
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())

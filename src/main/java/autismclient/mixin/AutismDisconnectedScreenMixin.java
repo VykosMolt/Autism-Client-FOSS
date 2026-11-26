@@ -3,7 +3,7 @@ package autismclient.mixin;
 import autismclient.c.DisconnectedScreenDuck;
 import autismclient.gui.d.StreamGate;
 import autismclient.gui.f.b.CachePool;
-import autismclient.modules.aB;
+import autismclient.modules.AutoReconnectController;
 import autismclient.modules.aD;
 import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -41,7 +41,7 @@ public abstract class AutismDisconnectedScreenMixin extends Screen implements Di
 
    @Inject(method = "init", at = @At("TAIL"))
    private void autism$addReconnectButton(CallbackInfo ci) {
-      if (!aD.init_Z() && aB.read()) {
+      if (!aD.init_Z() && AutoReconnectController.read()) {
          int w = 148;
          this.addRenderableWidget(
             new StreamGate(
@@ -51,8 +51,8 @@ public abstract class AutismDisconnectedScreenMixin extends Screen implements Di
                20,
                Component.literal("Auto Reconnect"),
                CachePool.Inner_DataUtil.read,
-               aB::init_Str,
-               button -> aB.init_V()
+               AutoReconnectController::init_Str,
+               button -> AutoReconnectController.init_V()
             )
          );
       }

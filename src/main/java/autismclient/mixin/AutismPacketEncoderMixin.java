@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.bg;
 import autismclient.util.bn;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -31,7 +31,7 @@ public abstract class AutismPacketEncoderMixin<T extends PacketListener> {
          original.call(ctx, packet, output);
       } else {
          original.call(ctx, packet, output);
-         PoolEntry module = PoolEntry.init_PoolEntry();
+         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
          if (module != null) {
             String protocol = this.protocolInfo.id().id();
             if (bg.init_Z_J(captureState)) {

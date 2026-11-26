@@ -1,7 +1,7 @@
 package autismclient.gui.f.b;
 
-import autismclient.modules.o;
-import autismclient.modules.q;
+import autismclient.modules.CrosshairRenderer;
+import autismclient.modules.CrosshairRenderState;
 import autismclient.util.cA;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
@@ -9,7 +9,7 @@ public final class PathHelper {
    private PathHelper() {
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, q.Inner_DataUtil look) {
+   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, CrosshairRenderState.Inner_DataUtil look) {
       if (bounds.update() > 8 && bounds.sync() > 8) {
          BufferHelper.init_V(context, bounds, "Preview");
          int top = BufferHelper.init_I(context, bounds, "Preview") + 2;
@@ -17,7 +17,7 @@ public final class PathHelper {
       }
    }
 
-   public static void load(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper box, q.Inner_DataUtil look) {
+   public static void load(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper box, CrosshairRenderState.Inner_DataUtil look) {
       if (box.update() > 0 && box.sync() > 0) {
          GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
          int half = box.update() / 2;
@@ -29,7 +29,7 @@ public final class PathHelper {
          cA.init(graphics, box.read(), box.write(), box.init(), box.load());
 
          try {
-            o.init_V_GuiGraphicsExtract_2(
+            CrosshairRenderer.init_V_GuiGraphicsExtract_2(
                graphics,
                look,
                box.read() + half,

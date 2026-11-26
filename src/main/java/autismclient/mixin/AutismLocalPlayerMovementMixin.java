@@ -6,7 +6,7 @@ import autismclient.modules.NoSlowModule;
 import autismclient.modules.ScaffoldModule;
 import autismclient.modules.KillAuraModule;
 import autismclient.modules.LeafDupeModule;
-import autismclient.modules.ai;
+import autismclient.modules.MovementModuleHooks;
 import autismclient.modules.al;
 import autismclient.modules.NoPushModule;
 import autismclient.modules.f;
@@ -83,31 +83,31 @@ public class AutismLocalPlayerMovementMixin {
 
    @Inject(method = "isShiftKeyDown", at = @At("HEAD"), cancellable = true)
    private void autism$flightNoSneak(CallbackInfoReturnable<Boolean> cir) {
-      if (ai.init_Z((LocalPlayer)(Object)this)) {
+      if (MovementModuleHooks.init_Z((LocalPlayer)(Object)this)) {
          cir.setReturnValue(false);
       }
    }
 
    @ModifyExpressionValue(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;canStartSprinting()Z"))
    private boolean autism$sprintDecisionMovementTick(boolean original) {
-      return !AutismLiteVariant.enabled() && DangerModule.push() ? false : ai.init(original, true) && !KillAuraModule.close_Z_6() && !ScaffoldModule.close_Z_4();
+      return !AutismLiteVariant.enabled() && DangerModule.push() ? false : MovementModuleHooks.init(original, true) && !KillAuraModule.close_Z_6() && !ScaffoldModule.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Input;sprint()Z"))
    private boolean autism$sprintDecisionInput(boolean original) {
-      return !AutismLiteVariant.enabled() && DangerModule.push() ? false : ai.init(original, false) && !KillAuraModule.close_Z_6() && !ScaffoldModule.close_Z_4();
+      return !AutismLiteVariant.enabled() && DangerModule.push() ? false : MovementModuleHooks.init(original, false) && !KillAuraModule.close_Z_6() && !ScaffoldModule.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "sendIsSprintingIfNeeded", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isSprinting()Z"))
    private boolean autism$sprintNetworkDecision(boolean original) {
-      boolean announced = ai.init(original);
+      boolean announced = MovementModuleHooks.init(original);
       ci.init_V(announced);
       return announced;
    }
 
    @ModifyExpressionValue(method = "canStartSprinting", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/ClientInput;hasForwardImpulse()Z"))
    private boolean autism$omniSprintForwardImpulse(boolean original) {
-      return ai.load() ? ((LocalPlayer)(Object)this).input.getMoveVector().length() > 1.0E-5F : original;
+      return MovementModuleHooks.load() ? ((LocalPlayer)(Object)this).input.getMoveVector().length() > 1.0E-5F : original;
    }
 
    @ModifyExpressionValue(
@@ -115,17 +115,17 @@ public class AutismLocalPlayerMovementMixin {
       at = @At(value = "FIELD", target = "Lnet/minecraft/client/player/LocalPlayer;horizontalCollision:Z", opcode = 180)
    )
    private boolean autism$sprintIgnoreCollision(boolean original) {
-      return !ai.read() && original;
+      return !MovementModuleHooks.read() && original;
    }
 
    @ModifyReturnValue(method = "shouldStopRunSprinting", at = @At("RETURN"))
    private boolean autism$sprintForceStop(boolean shouldStop) {
-      return !AutismLiteVariant.enabled() && DangerModule.push() ? true : shouldStop || ai.update() || KillAuraModule.close_Z_6() || ScaffoldModule.close_Z_4();
+      return !AutismLiteVariant.enabled() && DangerModule.push() ? true : shouldStop || MovementModuleHooks.update() || KillAuraModule.close_Z_6() || ScaffoldModule.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "isSprintingPossible", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isMobilityRestricted()Z"))
    private boolean autism$sprintIgnoreBlindness(boolean original) {
-      return !ai.write() && original;
+      return !MovementModuleHooks.write() && original;
    }
 
    @Inject(method = "getJumpRidingScale", at = @At("RETURN"), cancellable = true)

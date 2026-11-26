@@ -66,8 +66,8 @@ public final class TpClickModule extends Module {
          if (!AutismLiteVariant.enabled() && autismclient.ai.aP.load_Z()) {
             this.init_j_StreamUtil = null;
          } else if (MC.gui.screen() == null && !MC.options.keyShift.isDown()) {
-            Vec3 eye = aC.init_Z() ? aC.init_Vec3_F(1.0F) : MC.player.getEyePosition();
-            Vec3 direction = aC.init_Z() ? Vec3.directionFromRotation(aC.load_F_F(1.0F), aC.init_F_F(1.0F)) : MC.player.getViewVector(1.0F);
+            Vec3 eye = FreecamController.init_Z() ? FreecamController.init_Vec3_F(1.0F) : MC.player.getEyePosition();
+            Vec3 direction = FreecamController.init_Z() ? Vec3.directionFromRotation(FreecamController.load_F_F(1.0F), FreecamController.init_F_F(1.0F)) : MC.player.getViewVector(1.0F);
             this.init_j_StreamUtil = this.init_j_DataUtil
                .init(MC, eye, direction, Math.max(10, this.integer("reach")), MC.player.getVehicle() != null, pressed);
             if (pressed && this.init_j_StreamUtil != null && this.init_j_StreamUtil.valid() && !AutismLiteVariant.enabled()) {

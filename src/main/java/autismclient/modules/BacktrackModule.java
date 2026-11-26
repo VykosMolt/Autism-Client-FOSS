@@ -224,7 +224,7 @@ public final class BacktrackModule extends Module {
          && !candidate.isSpectator()
          && init_Minecraft.level.getEntity(candidate.getId()) == candidate
          && !candidate.isPassenger()
-         && !ByteReader.load_Z(candidate)
+         && !AntiBotTracker.load_Z(candidate)
          && !TeamsModule.init(candidate, "killaura");
    }
 
@@ -238,9 +238,9 @@ public final class BacktrackModule extends Module {
          && init_Minecraft.gui.overlay() == null
          && !init_Minecraft.player.isUsingItem()
          && !aD.init_Z()
-         && !aC.init_Z()
+         && !FreecamController.init_Z()
          && !cd.init_Z()
-         && HashUtil.init_I() == 0;
+         && BlinkPacketManager.init_I() == 0;
    }
 
    @Override
@@ -887,7 +887,7 @@ public final class BacktrackModule extends Module {
       );
    }
 
-   public static List<FileCache> init_List_9() {
+   public static List<EspHighlightBox> init_List_9() {
       BacktrackModule module = init_TaskTimer;
       if (module == null) {
          return List.of();

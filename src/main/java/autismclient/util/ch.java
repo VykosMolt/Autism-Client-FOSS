@@ -104,7 +104,7 @@ public final class ch {
       Minecraft minecraft = Minecraft.getInstance();
       if (entity != null && entity == minecraft.player && entity == minecraft.getCameraEntity() && state instanceof LivingEntityRenderState livingState) {
          boolean thirdPerson = minecraft.options != null && !minecraft.options.getCameraType().isFirstPerson();
-         boolean freecam = autismclient.modules.aC.init_Z();
+         boolean freecam = autismclient.modules.FreecamController.init_Z();
          boolean hidden = autismclient.modules.aD.init_Z();
          if (thirdPerson && !freecam && !hidden) {
             boolean silentOwner = minecraft.player != null && cn.init_ce_DataUtil(minecraft.player) != null;

@@ -394,10 +394,10 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
       return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura ? aura.load_J / 1000.0 : 0.0;
    }
 
-   public static List<FileCache> init_List() {
+   public static List<EspHighlightBox> init_List() {
       if (al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() && aura.bool("preview")) {
          int color = am.init_I_Module(aura, "preview-color", 1728031283);
-         List<FileCache> boxes = new ArrayList<>(3);
+         List<EspHighlightBox> boxes = new ArrayList<>(3);
          BlockPos anchor = aura.update_BlockPos != null ? aura.update_BlockPos : aura.load_BlockPos;
          BlockPos support = aura.push_BlockPos != null ? aura.push_BlockPos : aura.pop_BlockPos;
          BlockPos shield = aura.sync_BlockPos != null ? aura.sync_BlockPos : aura.poll_BlockPos;
@@ -409,15 +409,15 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
          }
 
          if (anchor != null) {
-            boxes.add(new FileCache(new AABB(anchor), color));
+            boxes.add(new EspHighlightBox(new AABB(anchor), color));
          }
 
          if (support != null) {
-            boxes.add(new FileCache(new AABB(support), color));
+            boxes.add(new EspHighlightBox(new AABB(support), color));
          }
 
          if (shield != null) {
-            boxes.add(new FileCache(new AABB(shield), color));
+            boxes.add(new EspHighlightBox(new AABB(shield), color));
          }
 
          return boxes;
@@ -507,11 +507,11 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
          && !MC.player.isUsingItem()
          && !MC.player.isHandsBusy()
          && !aD.init_Z()
-         && !aC.init_Z()
+         && !FreecamController.init_Z()
          && !cd.init_Z()
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
-         && !HashUtil.load_Z()
+         && !BlinkPacketManager.load_Z()
          && !cn.init_Z()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
@@ -1610,7 +1610,7 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
                && entity.isAlive()
                && !entity.isSpectator()
                && this.init_Z_Entity(entity)
-               && !ByteReader.load_Z(entity)
+               && !AntiBotTracker.load_Z(entity)
                && !TeamsModule.init(entity, "killaura")
                && autismclient.util.S.init_D_LivingEntity(entity) > 0.0
                && entity.hurtTime <= this.integer("hurt-time")

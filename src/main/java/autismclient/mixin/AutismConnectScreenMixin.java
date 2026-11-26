@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.AutismClientAddon;
-import autismclient.modules.aB;
+import autismclient.modules.AutoReconnectController;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.bV;
 import autismclient.util.cx;
@@ -31,7 +31,7 @@ public abstract class AutismConnectScreenMixin {
    private static void autism$rememberConnectAttempt(
       Screen parent, Minecraft minecraft, ServerAddress hostAndPort, ServerData data, boolean isQuickPlay, TransferState transferState, CallbackInfo ci
    ) {
-      aB.init(data, hostAndPort);
+      AutoReconnectController.init(data, hostAndPort);
       if (!AutismLiteVariant.enabled()) {
          try {
             bV.init_bV().init_V_ServerAddress_ServerData(hostAndPort, data);

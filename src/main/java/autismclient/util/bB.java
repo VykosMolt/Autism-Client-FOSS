@@ -753,7 +753,7 @@ public final class bB {
          config.save();
       }
 
-      autismclient.modules.PoolEntry.init_PoolEntry().update_V();
+      autismclient.modules.ModuleRuntimeManager.init_PoolEntry().update_V();
    }
 
    public static String init_Str_Str(String pattern) {

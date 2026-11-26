@@ -4,7 +4,7 @@ import autismclient.aggressivepvp.ActionWindow;
 import autismclient.aggressivepvp.Rotations;
 import autismclient.compat263.CompatGLFW;
 import autismclient.compat263.CompatSwingPacket;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.bw;
 import io.netty.buffer.Unpooled;
 import java.lang.reflect.Field;
@@ -111,7 +111,7 @@ public final class Protocol263Check {
       PingSpoofScheduler.write();
 
       // 4. ServerboundPunchPacket in PoolEntry, bw registry aliases, and StreamCodec compatibility
-      Field poolSetF = PoolEntry.class.getDeclaredField("init_Set");
+      Field poolSetF = ModuleRuntimeManager.class.getDeclaredField("init_Set");
       poolSetF.setAccessible(true);
       Set<Class<?>> poolSet = (Set<Class<?>>) poolSetF.get(null);
       check("PoolEntry ignore set contains ServerboundPunchPacket", poolSet.contains(ServerboundPunchPacket.class));

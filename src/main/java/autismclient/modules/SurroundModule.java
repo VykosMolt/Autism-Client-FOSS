@@ -201,7 +201,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
          && MC.gui.screen() == null
          && MC.gui.overlay() == null
          && !aD.init_Z()
-         && !aC.init_Z()
+         && !FreecamController.init_Z()
          && !cd.init_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !MacroExecutor.write_Z()
@@ -476,7 +476,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
             if (slot >= 0 && slot != MC.player.getInventory().getSelectedSlot()) {
                this.init_V_I_9(slot);
             }
-         } else if (HashUtil.load_Z()) {
+         } else if (BlinkPacketManager.load_Z()) {
             this.load_V_19();
          } else if (!this.init_List.isEmpty() && slot >= 0) {
             ch.Inner_CachePool wire = ch.init_ch_CachePool();

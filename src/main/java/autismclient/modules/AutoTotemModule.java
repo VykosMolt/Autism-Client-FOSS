@@ -573,7 +573,7 @@ public final class AutoTotemModule extends Module {
             return false;
          }
 
-         if (HashUtil.load_Z()) {
+         if (BlinkPacketManager.load_Z()) {
             return false;
          }
 
@@ -744,7 +744,7 @@ public final class AutoTotemModule extends Module {
    }
 
    private boolean flush_Z() {
-      if (HashUtil.load_Z()) {
+      if (BlinkPacketManager.load_Z()) {
          return true;
       } else if (this.push == 2) {
          return MC.getConnection() == null || MC.gameMode == null;

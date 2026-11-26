@@ -14,12 +14,12 @@ public final class CrosshairModule extends Module {
    private final ColorSetting read;
    private final ColorSetting write;
    private String init_Str;
-   private m init_m;
+   private CrosshairPixelArt init_m;
 
    public CrosshairModule() {
       super("crosshair", "Crosshair", ae.update, "Custom crosshair shapes and colors.");
       this.add(
-         new ChoiceSetting("style", "Style", p.Inner_NetHelper.CROSS.init_Str, p.Inner_NetHelper.init_StrArr())
+         new ChoiceSetting("style", "Style", CrosshairPresetGeometry.Inner_NetHelper.CROSS.init_Str, CrosshairPresetGeometry.Inner_NetHelper.init_StrArr())
             .description("Crosshair shape.")
             .group("Shape")
             .build()
@@ -48,7 +48,7 @@ public final class CrosshairModule extends Module {
          new DoubleSetting("gap", "Gap", 2.0, 0.0, 8.0, 0.5)
             .description("Space around the dot.")
             .group("Shape")
-            .visibleWhen(() -> this.init_p_NetHelper() == p.Inner_NetHelper.TACTICAL)
+            .visibleWhen(() -> this.init_p_NetHelper() == CrosshairPresetGeometry.Inner_NetHelper.TACTICAL)
             .build()
       );
       this.add(new BoolSetting("invert", "Invert", false).description("Negative, like vanilla's.").group("Look").build());
@@ -101,7 +101,7 @@ public final class CrosshairModule extends Module {
 
    @Override
    public void onDisable() {
-      q.init_V();
+      CrosshairRenderState.init_V();
    }
 
    @Override
@@ -121,12 +121,12 @@ public final class CrosshairModule extends Module {
       }
    }
 
-   public p.Inner_NetHelper init_p_NetHelper() {
-      return p.Inner_NetHelper.init(this.choice("style"));
+   public CrosshairPresetGeometry.Inner_NetHelper init_p_NetHelper() {
+      return CrosshairPresetGeometry.Inner_NetHelper.init(this.choice("style"));
    }
 
    private boolean init_Z_50() {
-      return this.init_p_NetHelper() == p.Inner_NetHelper.CUSTOM;
+      return this.init_p_NetHelper() == CrosshairPresetGeometry.Inner_NetHelper.CUSTOM;
    }
 
    public double init_D_14() {
@@ -137,10 +137,10 @@ public final class CrosshairModule extends Module {
       return this.decimal("gap");
    }
 
-   public m init_m() {
+   public CrosshairPixelArt init_m() {
       String raw = this.text("art");
       if (this.init_m == null || !raw.equals(this.init_Str)) {
-         m decoded = m.init(raw);
+         CrosshairPixelArt decoded = CrosshairPixelArt.init(raw);
          this.init_m = decoded != null ? decoded : load_m();
          this.init_Str = raw;
       }
@@ -148,7 +148,7 @@ public final class CrosshairModule extends Module {
       return this.init_m;
    }
 
-   public void init_V_m(m drawn) {
+   public void init_V_m(CrosshairPixelArt drawn) {
       if (drawn != null) {
          this.init_m = drawn;
          this.init_Str = drawn.init_Str();
@@ -156,12 +156,12 @@ public final class CrosshairModule extends Module {
       }
    }
 
-   public static m load_m() {
-      return p.init(p.Inner_NetHelper.TACTICAL, 16, 1.0, 2.0, -1);
+   public static CrosshairPixelArt load_m() {
+      return CrosshairPresetGeometry.init(CrosshairPresetGeometry.Inner_NetHelper.TACTICAL, 16, 1.0, 2.0, -1);
    }
 
-   public q.Inner_DataUtil init_q_DataUtil_m(m drawing) {
-      return new q.Inner_DataUtil(
+   public CrosshairRenderState.Inner_DataUtil init_q_DataUtil_m(CrosshairPixelArt drawing) {
+      return new CrosshairRenderState.Inner_DataUtil(
          this.init_p_NetHelper(),
          this.decimal("scale"),
          this.init_D_14(),
@@ -182,7 +182,7 @@ public final class CrosshairModule extends Module {
    }
 
    private void init_V_50() {
-      q.init(this.init_q_DataUtil_m(this.init_m()));
+      CrosshairRenderState.init(this.init_q_DataUtil_m(this.init_m()));
    }
 
    private void load_V_33() {

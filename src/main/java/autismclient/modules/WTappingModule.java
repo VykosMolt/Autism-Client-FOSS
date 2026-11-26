@@ -10,7 +10,7 @@ import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.entity.player.Player;
 
 public final class WTappingModule extends Module {
-   private final bf init = new bf(new bf.Inner_DataUtil() {
+   private final WTapController init = new WTapController(new WTapController.Inner_DataUtil() {
       @Override
       public int init_I() {
          return WTappingModule.this.integer("chance");
@@ -18,12 +18,12 @@ public final class WTappingModule extends Module {
 
       @Override
       public ValueRange init_ValueRange() {
-         return ValueRange.parse(WTappingModule.this.value("delay-ms"), bf.init_ValueRange);
+         return ValueRange.parse(WTappingModule.this.value("delay-ms"), WTapController.init_ValueRange);
       }
 
       @Override
       public ValueRange load_ValueRange() {
-         return ValueRange.parse(WTappingModule.this.value("release-ms"), bf.load_ValueRange);
+         return ValueRange.parse(WTappingModule.this.value("release-ms"), WTapController.load_ValueRange);
       }
 
       @Override
@@ -54,8 +54,8 @@ public final class WTappingModule extends Module {
       this.add(new BoolSetting("ground-only", "Ground Only", false).description("Only tap while standing on the ground."));
    }
 
-   static bf init_bf_2() {
-      bf built = KBDisplacementModule.init_bf();
+   static WTapController init_bf_2() {
+      WTapController built = KBDisplacementModule.init_bf();
       if (al.init_Module_Str("w-tapping") instanceof WTappingModule m && m.isEnabled()) {
          if (built != null) {
             built.load_V();
@@ -68,31 +68,31 @@ public final class WTappingModule extends Module {
    }
 
    public static void init(Player attacker, Entity entity) {
-      bf tapper = init_bf_2();
+      WTapController tapper = init_bf_2();
       if (tapper != null) {
          tapper.init(attacker, entity);
       }
    }
 
    public static void init(ClientboundDamageEventPacket packet) {
-      bf tapper = init_bf_2();
+      WTapController tapper = init_bf_2();
       if (tapper != null) {
          tapper.init_V_ClientboundDamageE(packet);
       }
    }
 
    public static Input init(Input original) {
-      bf tapper = init_bf_2();
+      WTapController tapper = init_bf_2();
       return tapper == null ? original : tapper.init_Input_Input(original);
    }
 
    public static boolean init_Z_36() {
-      bf tapper = init_bf_2();
+      WTapController tapper = init_bf_2();
       return tapper != null && tapper.init_Z();
    }
 
    public static boolean load() {
-      bf tapper = init_bf_2();
+      WTapController tapper = init_bf_2();
       return tapper != null && tapper.load_Z();
    }
 

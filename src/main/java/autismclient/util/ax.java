@@ -31,7 +31,7 @@ public final class ax {
          load_V();
          return false;
       } else {
-         autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          if (module == null || !module.init_Z() || !module.run_Z()) {
             load_V();
             return false;
@@ -111,7 +111,7 @@ public final class ax {
          return false;
       }
 
-      if (autismclient.modules.aC.init_Z_KeyMapping(binding)) {
+      if (autismclient.modules.FreecamController.init_Z_KeyMapping(binding)) {
          return true;
       }
 
@@ -126,7 +126,7 @@ public final class ax {
    }
 
    private static void init(KeyMapping binding) {
-      if (binding != null && !autismclient.modules.aC.init_Z_KeyMapping(binding)) {
+      if (binding != null && !autismclient.modules.FreecamController.init_Z_KeyMapping(binding)) {
          boolean physical = aB.init(binding).autism$isActuallyDown();
          boolean pressed = physical || binding == init_Minecraft.options.keyShift && autismclient.modules.al.tick_Z();
          binding.setDown(pressed);
@@ -167,7 +167,7 @@ public final class ax {
          return false;
       }
 
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       if (module == null || !module.init_Z() || !module.run_Z()) {
          load_V();
          return false;

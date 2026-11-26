@@ -173,7 +173,7 @@ public class AutismCustomFilterOverlay extends bj {
    public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       if (this.write_Z || this.a__Z()) {
          this.init_List.clear();
-         autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          int wantC2s = this.load(this.init(module.load_Set().size()));
          int wantS2c = this.load(this.init(module.read_Set().size()));
          this.set = this.push_I_5() + wantC2s + wantS2c;
@@ -246,7 +246,7 @@ public class AutismCustomFilterOverlay extends bj {
       int width,
       int listHeight,
       boolean c2s,
-      autismclient.modules.PoolEntry module,
+      autismclient.modules.ModuleRuntimeManager module,
       autismclient.gui.f.b.BitSetUtil searchField,
       AutismCustomFilterOverlay.Inner_StreamUtil listState
    ) {
@@ -435,7 +435,7 @@ public class AutismCustomFilterOverlay extends bj {
    }
 
    private void init_V_Z_Class(boolean c2s, Class<? extends Packet<?>> packetClass) {
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>(c2s ? module.load_Set() : module.read_Set());
       if (packets.add(packetClass)) {
          if (c2s) {
@@ -447,7 +447,7 @@ public class AutismCustomFilterOverlay extends bj {
    }
 
    private void load_V_Z_Class(boolean c2s, Class<? extends Packet<?>> packetClass) {
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>(c2s ? module.load_Set() : module.read_Set());
       if (packets.remove(packetClass)) {
          if (c2s) {

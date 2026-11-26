@@ -369,7 +369,7 @@ public final class PhaseModule extends Module {
 
                player.noPhysics = true;
                if (player.isShiftKeyDown()) {
-                  player.setDeltaMovement(ai.init(player, player.getDeltaMovement(), 0.179));
+                  player.setDeltaMovement(MovementModuleHooks.init(player, player.getDeltaMovement(), 0.179));
                }
             }
          }
@@ -386,7 +386,7 @@ public final class PhaseModule extends Module {
 
    private static final class Inner_DataUtil implements PhaseModule.Inner_BufferHelper {
       private static final int init_I = 3;
-      private final HashUtil.Inner_StreamUtil init_HashUtil_StreamUti = this::init;
+      private final BlinkPacketManager.Inner_StreamUtil init_HashUtil_StreamUti = this::init;
       private volatile PhaseModule.Inner_DataUtil.Inner_DataUtil_2 init_aF_DataUtil_DataUt;
       private volatile boolean init_Z;
       private volatile String init_Str;
@@ -407,16 +407,16 @@ public final class PhaseModule extends Module {
          this.load_Z = false;
          this.read_Z = false;
          this.read_I = 0;
-         HashUtil.init(this.init_HashUtil_StreamUti);
+         BlinkPacketManager.init(this.init_HashUtil_StreamUti);
       }
 
       @Override
       public void load() {
          this.init_aF_DataUtil_DataUt = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.FLUSHING;
-         HashUtil.flush();
+         BlinkPacketManager.flush();
          this.init_aF_DataUtil_DataUt = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING;
-         HashUtil.load(this.init_HashUtil_StreamUti);
-         HashUtil.init(true, true);
+         BlinkPacketManager.load(this.init_HashUtil_StreamUti);
+         BlinkPacketManager.init(true, true);
          this.load_I = 0;
          this.init_Str = null;
          this.load_Z = false;
@@ -461,7 +461,7 @@ public final class PhaseModule extends Module {
                this.init_Z = true;
 
                try {
-                  for (Vec3 pos : HashUtil.init_List()) {
+                  for (Vec3 pos : BlinkPacketManager.init_List()) {
                      if (PhaseModule.init(player, pos)) {
                         collides = true;
                         break;
@@ -496,9 +496,9 @@ public final class PhaseModule extends Module {
 
       private void flush() {
          this.init_aF_DataUtil_DataUt = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.FLUSHING;
-         HashUtil.flush();
+         BlinkPacketManager.flush();
          this.init_aF_DataUtil_DataUt = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING;
-         HashUtil.init(false, true);
+         BlinkPacketManager.init(false, true);
          this.load_I = 0;
          if (this.read_Z) {
             this.read_I = 0;
@@ -514,13 +514,13 @@ public final class PhaseModule extends Module {
          this.init_Str = "Phase disabled: server set you back.";
       }
 
-      private HashUtil.Inner_DataUtil init(Packet<?> packet, boolean incoming) {
+      private BlinkPacketManager.Inner_DataUtil init(Packet<?> packet, boolean incoming) {
          if (aD.read_Z()) {
-            return HashUtil.Inner_DataUtil.FLUSH;
+            return BlinkPacketManager.Inner_DataUtil.FLUSH;
          } else {
             PhaseModule.Inner_DataUtil.Inner_DataUtil_2 current = this.init_aF_DataUtil_DataUt;
             if (current == PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING) {
-               return HashUtil.Inner_DataUtil.FLUSH;
+               return BlinkPacketManager.Inner_DataUtil.FLUSH;
             } else if (!(packet instanceof ClientboundBlockUpdatePacket)
                && !(packet instanceof ClientboundBlockEventPacket)
                && !(packet instanceof ClientboundSectionBlocksUpdatePacket)
@@ -528,10 +528,10 @@ public final class PhaseModule extends Module {
                && !(packet instanceof ClientboundChunkBatchFinishedPacket)
                && !(packet instanceof ClientboundSetTitleTextPacket)) {
                return current != PhaseModule.Inner_DataUtil.Inner_DataUtil_2.PHASING && current != PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WALKING
-                  ? HashUtil.Inner_DataUtil.PASS
-                  : HashUtil.Inner_DataUtil.QUEUE;
+                  ? BlinkPacketManager.Inner_DataUtil.PASS
+                  : BlinkPacketManager.Inner_DataUtil.QUEUE;
             } else {
-               return HashUtil.Inner_DataUtil.PASS;
+               return BlinkPacketManager.Inner_DataUtil.PASS;
             }
          }
       }

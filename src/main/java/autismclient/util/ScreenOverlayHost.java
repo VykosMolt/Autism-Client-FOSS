@@ -2,7 +2,7 @@ package autismclient.util;
 
 import autismclient.compat263.Compat263;
 import autismclient.gui.macro.editor.ActionEditorOverlay;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -40,7 +40,7 @@ public final class ScreenOverlayHost {
    }
 
    public boolean isActive() {
-      PoolEntry module = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       return module != null && (this.dialogMode ? module.load_Z() : module.init_Z());
    }
 
@@ -133,7 +133,7 @@ public final class ScreenOverlayHost {
          manager.init_V(actionEditor);
       }
 
-      PoolEntry autismModule = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager autismModule = ModuleRuntimeManager.init_PoolEntry();
       this.keybindOverlay = new AutismKeybindOverlay();
       this.keybindOverlay.b__V();
       manager.init_V(this.keybindOverlay);
@@ -157,7 +157,7 @@ public final class ScreenOverlayHost {
       });
       this.launcherOverlay.load_V_Supplier(() -> {
          if (this.serverInfoOverlay == null) {
-            PoolEntry mod = PoolEntry.init_PoolEntry();
+            ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
             if (mod != null) {
                this.serverInfoOverlay = mod.init_AutismServerInfoOv();
             }
@@ -170,7 +170,7 @@ public final class ScreenOverlayHost {
          return this.serverInfoOverlay;
       });
       if (this.packetLoggerOverlay == null && AutismPacketLoggerOverlay.poll_Z_13()) {
-         PoolEntry mod = PoolEntry.init_PoolEntry();
+         ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
          this.packetLoggerOverlay = mod == null ? null : mod.init_AutismPacketLogger();
          if (this.packetLoggerOverlay != null) {
             this.packetLoggerOverlay.flush_V_13();
@@ -181,7 +181,7 @@ public final class ScreenOverlayHost {
       }
 
       if (this.serverInfoOverlay == null && AutismServerInfoOverlay.poll_Z_16()) {
-         PoolEntry mod = PoolEntry.init_PoolEntry();
+         ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
          this.serverInfoOverlay = mod == null ? null : mod.init_AutismServerInfoOv();
          if (this.serverInfoOverlay != null) {
             this.serverInfoOverlay.update_V_21();
@@ -192,7 +192,7 @@ public final class ScreenOverlayHost {
       }
 
       if (this.dialogMode && !AutismLiteVariant.enabled()) {
-         PoolEntry mod = PoolEntry.init_PoolEntry();
+         ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
          cX profilesOverlay = mod == null ? null : mod.load_cX();
          if (profilesOverlay != null && profilesOverlay.sync_Z()) {
             manager.init_V(profilesOverlay);

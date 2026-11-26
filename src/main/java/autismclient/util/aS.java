@@ -22,7 +22,7 @@ public final class aS {
 
    public static boolean init_Z_Minecraft(Minecraft mc) {
       if (MacroExecutor.load_Z() && !autismclient.modules.aD.init_Z()) {
-         autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          return module == null || !module.init_Z() || mc.gui.screen() instanceof LevelLoadingScreen;
       } else {
          return false;

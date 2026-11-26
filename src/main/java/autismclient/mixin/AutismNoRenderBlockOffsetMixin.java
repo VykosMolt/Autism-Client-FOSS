@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.az;
+import autismclient.modules.NoRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 import net.minecraft.world.phys.Vec3;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AutismNoRenderBlockOffsetMixin {
    @Inject(method = "getOffset", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noOffset(BlockPos pos, CallbackInfoReturnable<Vec3> cir) {
-      if (az.pool()) {
+      if (NoRenderState.pool()) {
          cir.setReturnValue(Vec3.ZERO);
       }
    }

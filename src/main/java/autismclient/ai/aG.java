@@ -384,8 +384,8 @@ final class aG {
 
    private static long init_J() {
       if (load_J < 0L) {
-         for (int i = 0; i < autismclient.modules.aq.init.size(); i++) {
-            if ("hide-villages".equals(autismclient.modules.aq.init.get(i).init_Str())) {
+         for (int i = 0; i < autismclient.modules.StructureStorageFilter.init.size(); i++) {
+            if ("hide-villages".equals(autismclient.modules.StructureStorageFilter.init.get(i).init_Str())) {
                load_J = 1L << i;
                break;
             }
@@ -1354,7 +1354,7 @@ final class aG {
          LevelChunkSection section = sections[i];
          if (section != null
             && !section.hasOnlyAir()
-            && autismclient.modules.aq.init_Z_LevelChunk(chunk, new BlockPos(centerX, chunk.getSectionYFromSectionIndex(i) << 4, centerZ), mask, sectionCache)) {
+            && autismclient.modules.StructureStorageFilter.init_Z_LevelChunk(chunk, new BlockPos(centerX, chunk.getSectionYFromSectionIndex(i) << 4, centerZ), mask, sectionCache)) {
             return true;
          }
       }

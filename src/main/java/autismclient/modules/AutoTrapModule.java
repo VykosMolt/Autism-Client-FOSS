@@ -251,7 +251,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
    private boolean init_Z_14() {
       if (MC == null || MC.player == null || MC.level == null || MC.gameMode == null) {
          return false;
-      } else if (aD.init_Z() || aC.init_Z()) {
+      } else if (aD.init_Z() || FreecamController.init_Z()) {
          return false;
       } else if (!MC.player.isAlive() || MC.player.isSpectator()) {
          return false;
@@ -564,7 +564,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
          return false;
       } else if (entity.hurtTime > this.integer("hurt-time")) {
          return false;
-      } else if (ByteReader.load_Z(entity)) {
+      } else if (AntiBotTracker.load_Z(entity)) {
          return false;
       } else if (TeamsModule.init(entity, "killaura")) {
          return false;
@@ -1001,7 +1001,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
          return null;
       }
 
-      if (HashUtil.load_Z()) {
+      if (BlinkPacketManager.load_Z()) {
          return null;
       }
 

@@ -673,7 +673,7 @@ public class aE {
                   }
                } else if (ctx.load_Str != null && ctx.load_Str.startsWith("__DELAY_PACKETS__\t")) {
                   boolean enabled = "1".equals(ctx.load_Str.substring("__DELAY_PACKETS__\t".length()));
-                  autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+                  autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
                   int flushed = module.init_I_Z(enabled);
                   module.init(enabled, flushed);
                   AutismClientAddon.LOG.info("[Sync] Delay packets set to {} (flushed={})", enabled, flushed);

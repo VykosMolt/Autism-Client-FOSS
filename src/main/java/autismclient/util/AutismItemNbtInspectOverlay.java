@@ -717,7 +717,7 @@ public class AutismItemNbtInspectOverlay extends bj {
                if (!AutismLiteVariant.enabled()
                   && this.init_az_StreamUtil.init_ItemStack() != null
                   && !this.init_az_StreamUtil.init_ItemStack().isEmpty()
-                  && autismclient.modules.TextFormat.load(this.init_az_StreamUtil.init_ItemStack())) {
+                  && autismclient.modules.AdminToolsItemHelper.load(this.init_az_StreamUtil.init_ItemStack())) {
                   bi.init("Filled Admin Tools with complete item NBT.", -13248397);
                } else {
                   AutismClientMessaging.sendPrefixed("Admin Tools: could not fill NBT editor.");

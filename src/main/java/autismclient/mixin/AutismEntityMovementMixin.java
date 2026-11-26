@@ -3,8 +3,8 @@ package autismclient.mixin;
 import autismclient.ai.cc;
 import autismclient.modules.AntiWebModule;
 import autismclient.modules.NoSlowModule;
-import autismclient.modules.aC;
-import autismclient.modules.ai;
+import autismclient.modules.FreecamController;
+import autismclient.modules.MovementModuleHooks;
 import autismclient.modules.NoPushModule;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.cd;
@@ -54,20 +54,20 @@ public class AutismEntityMovementMixin {
 
    @ModifyVariable(method = "move", at = @At("HEAD"), argsOnly = true)
    private Vec3 autism$modifyLocalPlayerMovement(Vec3 movement, MoverType type) {
-      return ai.init((Entity)(Object)this, type, movement);
+      return MovementModuleHooks.init((Entity)(Object)this, type, movement);
    }
 
    @Redirect(method = "getBlockBounciness", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;getBounceRestitution()F"))
    private float autism$antiBounceRestitution(Block block) {
       Entity entity = (Entity)(Object)this;
-      return block instanceof SlimeBlock && ai.init_Z(entity) ? 0.0F : block.getBounceRestitution();
+      return block instanceof SlimeBlock && MovementModuleHooks.init_Z(entity) ? 0.0F : block.getBounceRestitution();
    }
 
    @Inject(method = "turn", at = @At("HEAD"), cancellable = true)
    private void autism$freecamTurn(double deltaYaw, double deltaPitch, CallbackInfo ci) {
       if ((Object)this == Minecraft.getInstance().player) {
-         if (aC.init_Z()) {
-            aC.load(deltaYaw, deltaPitch);
+         if (FreecamController.init_Z()) {
+            FreecamController.load(deltaYaw, deltaPitch);
             ci.cancel();
          } else if (cd.init_Z()) {
             ci.cancel();

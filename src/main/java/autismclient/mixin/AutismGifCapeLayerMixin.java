@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.compat263.Compat263;
-import autismclient.modules.L;
+import autismclient.modules.GifOverlayState;
 import autismclient.util.c.GifTextureManager;
 import autismclient.util.c.GifRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -42,12 +42,12 @@ public abstract class AutismGifCapeLayerMixin {
    private void autism$gifCape(
       PoseStack poseStack, SubmitNodeCollector collector, int lightCoords, AvatarRenderState state, float yRot, float xRot, CallbackInfo ci
    ) {
-      if (L.init_Z()) {
+      if (GifOverlayState.init_Z()) {
          String name = autism$owner(state);
          if (name != null && !name.isEmpty()) {
-            String path = L.init(name);
+            String path = GifOverlayState.init(name);
             if (path != null) {
-               Identifier texture = GifTextureManager.init_Identifier_Str_2(path, L.init_D(), L.read_Z(), L.read_D());
+               Identifier texture = GifTextureManager.init_Identifier_Str_2(path, GifOverlayState.init_D(), GifOverlayState.read_Z(), GifOverlayState.read_D());
                if (texture != null) {
                   ci.cancel();
                   if (!state.isInvisible && !this.hasLayer(state.chestEquipment, LayerType.WINGS)) {

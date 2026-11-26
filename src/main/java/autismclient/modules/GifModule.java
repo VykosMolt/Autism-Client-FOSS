@@ -184,8 +184,8 @@ public final class GifModule extends Module {
    }
 
    private void read() {
-      L.init(
-         new L.Inner_DataUtil(
+      GifOverlayState.init(
+         new GifOverlayState.Inner_DataUtil(
             this.isEnabledRaw(),
             this.bool("cape-enabled"),
             this.bool("shield-enabled"),
@@ -214,7 +214,7 @@ public final class GifModule extends Module {
          }
       }
 
-      return L.init_Str();
+      return GifOverlayState.init_Str();
    }
 
    private static Map<String, String> init(List<String> entries) {

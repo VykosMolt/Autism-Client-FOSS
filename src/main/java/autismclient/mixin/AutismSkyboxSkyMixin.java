@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.aJ;
+import autismclient.modules.CustomSkyboxRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SkyRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,22 +12,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismSkyboxSkyMixin {
    @Inject(method = "renderSkyDisc", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$skyboxPanorama(CallbackInfo ci) {
-      if (aJ.init_Z()) {
-         aJ.init(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+      if (CustomSkyboxRenderer.init_Z()) {
+         CustomSkyboxRenderer.init(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
          ci.cancel();
       }
    }
 
    @Inject(method = "renderSunMoonAndStars", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$skyboxNoSunMoonStars(CallbackInfo ci) {
-      if (aJ.init_Z()) {
+      if (CustomSkyboxRenderer.init_Z()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "renderSunriseAndSunset", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$skyboxNoSunriseGlow(CallbackInfo ci) {
-      if (aJ.init_Z()) {
+      if (CustomSkyboxRenderer.init_Z()) {
          ci.cancel();
       }
    }

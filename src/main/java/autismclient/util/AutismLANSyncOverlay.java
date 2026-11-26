@@ -145,7 +145,7 @@ public class AutismLANSyncOverlay extends bj {
       this.sync_Z = visible;
       if (visible) {
          aE sync = aE.init_aE();
-         autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          if ((this.flush_Z || module.init_Z() && module.push_Z()) && !sync.init_Z()) {
             sync.init_V();
          }
@@ -558,7 +558,7 @@ public class AutismLANSyncOverlay extends bj {
    public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
       if (this.sync_Z || this.a__Z()) {
          aE sync = aE.init_aE();
-         autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          this.count++;
          if (this.count >= 10) {
             this.count = 0;

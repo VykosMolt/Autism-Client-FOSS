@@ -706,7 +706,7 @@ public final class al {
       int width;
       int height;
       if ("bed_danger".equals(id) && !AutismLiteVariant.enabled()) {
-         int[] size = autismclient.modules.u.init_IArr(font);
+         int[] size = autismclient.modules.BedDangerHudRenderer.init_IArr(font);
          width = size[0];
          height = size[1];
       } else if ("watermark".equals(id)) {
@@ -1094,12 +1094,12 @@ public final class al {
    }
 
    private static boolean load_Z() {
-      return autismclient.modules.aC.init_Z();
+      return autismclient.modules.FreecamController.init_Z();
    }
 
    private static Vec3 init_Vec3() {
       if (load_Z()) {
-         return autismclient.modules.aC.load_Vec3_F(1.0F);
+         return autismclient.modules.FreecamController.load_Vec3_F(1.0F);
       } else {
          return init_Minecraft.player == null ? Vec3.ZERO : init_Minecraft.player.position();
       }
@@ -1107,7 +1107,7 @@ public final class al {
 
    private static BlockPos init_BlockPos() {
       if (load_Z()) {
-         return BlockPos.containing(autismclient.modules.aC.load_Vec3_F(1.0F));
+         return BlockPos.containing(autismclient.modules.FreecamController.load_Vec3_F(1.0F));
       } else {
          return init_Minecraft.player == null ? BlockPos.ZERO : init_Minecraft.player.blockPosition();
       }
@@ -1115,7 +1115,7 @@ public final class al {
 
    private static float init_F() {
       if (load_Z()) {
-         return autismclient.modules.aC.init_F_F(1.0F);
+         return autismclient.modules.FreecamController.init_F_F(1.0F);
       } else {
          return init_Minecraft.player == null ? 180.0F : init_Minecraft.player.getYRot();
       }
@@ -1123,15 +1123,15 @@ public final class al {
 
    private static float load_F() {
       if (load_Z()) {
-         return autismclient.modules.aC.load_F_F(1.0F);
+         return autismclient.modules.FreecamController.load_F_F(1.0F);
       } else {
          return init_Minecraft.player == null ? 0.0F : init_Minecraft.player.getXRot();
       }
    }
 
    private static Vec3 load_Vec3() {
-      if (load_Z() && autismclient.modules.aC.load_Z()) {
-         return autismclient.modules.aC.load_Vec3_F(1.0F);
+      if (load_Z() && autismclient.modules.FreecamController.load_Z()) {
+         return autismclient.modules.FreecamController.load_Vec3_F(1.0F);
       } else {
          return init_Minecraft.player == null ? Vec3.ZERO : init_Minecraft.player.position();
       }
@@ -1420,7 +1420,7 @@ public final class al {
       int unscaledW = layout.update();
       int unscaledH = layout.sync();
       if ("bed_danger".equals(id) && !AutismLiteVariant.enabled()) {
-         autismclient.modules.u.init(context, font, x, y, editor);
+         autismclient.modules.BedDangerHudRenderer.init(context, font, x, y, editor);
          if (editor || selected || hovered) {
             init_V_GuiGraphicsExtract_3(context, x, y, unscaledW, unscaledH, load_I_Str_2(id, selected ? "accent-color" : "outline-color", -1426113733), 1);
          }
@@ -3547,7 +3547,7 @@ public final class al {
          String id = init_List.get(i);
          boolean hiddenBedDanger = "bed_danger".equals(id) && !editor;
          if (hiddenBedDanger && !AutismLiteVariant.enabled()) {
-            hiddenBedDanger = !autismclient.modules.u.init();
+            hiddenBedDanger = !autismclient.modules.BedDangerHudRenderer.init();
          }
 
          al.Inner_CachePool current = !flush_Z(id) && init_AutismConfig_HudEl_Str(id).enabled && !hiddenBedDanger

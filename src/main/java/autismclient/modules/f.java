@@ -349,7 +349,7 @@ public final class f {
          this.add(new BoolSetting("fill", "Fill", false).group("General").description("Draw translucent filled boxes."));
          this.add(new BoolSetting("meshing", "Meshing", true).group("General").description("Merge adjacent storage."));
          this.add(new BoolSetting("tracers", "Tracers", false).group("Tracers").description("Line to each target"));
-         this.add(RegistryListSetting.storages("storage-list", "Storage", ap.init_Str).group("Storage").description("Blocks and entities"));
+         this.add(RegistryListSetting.storages("storage-list", "Storage", StorageEspCatalog.init_Str).group("Storage").description("Blocks and entities"));
          this.add(new ColorSetting("chest-color", "Chest", -855662592).group("Colors").description("Chest + chest minecart/boat."));
          this.add(new ColorSetting("trapped-chest-color", "Trapped Chest", -855695328).group("Colors"));
          this.add(new ColorSetting("ender-chest-color", "Ender Chest", -864550657).group("Colors"));
@@ -361,7 +361,7 @@ public final class f {
          this.add(new ColorSetting("crafter-color", "Crafter", -858214805).group("Colors").description("Crafter, pot, bookshelf"));
          this.add(new ColorSetting("other-color", "Other", -7566196).group("Colors").description("Fallback."));
 
-         for (aq.Inner_DataUtil structure : aq.init) {
+         for (StructureStorageFilter.Inner_DataUtil structure : StructureStorageFilter.init) {
             this.add(new BoolSetting(structure.init_Str(), structure.load(), false).group("Ignore Structures"));
          }
       }
@@ -412,7 +412,7 @@ public final class f {
 
       @Override
       public void tick() {
-         if (!IoWorker.init_Z()
+         if (!NoFallPauseTimer.init_Z()
             && MC.player != null
             && MC.gameMode != null
             && !"Packet".equals(this.choice("mode"))
@@ -447,7 +447,7 @@ public final class f {
       }
 
       private boolean init_Z_37() {
-         if (IoWorker.init_Z()) {
+         if (NoFallPauseTimer.init_Z()) {
             return false;
          }
 
@@ -487,7 +487,7 @@ public final class f {
       }
 
       private boolean read() {
-         if (HashUtil.load_Z()) {
+         if (BlinkPacketManager.load_Z()) {
             return false;
          }
 
@@ -552,7 +552,7 @@ public final class f {
       }
 
       private boolean write() {
-         if (HashUtil.load_Z()) {
+         if (BlinkPacketManager.load_Z()) {
             return false;
          }
 
@@ -655,7 +655,7 @@ public final class f {
       }
 
       private void init_V_34() {
-         if (!HashUtil.load_Z() && this.init_Z && this.init_BlockPos != null && MC.level != null && MC.player != null && MC.gameMode != null) {
+         if (!BlinkPacketManager.load_Z() && this.init_Z && this.init_BlockPos != null && MC.level != null && MC.player != null && MC.gameMode != null) {
             if (++this.init_I > 20) {
                this.init_Z = false;
                this.init_BlockPos = null;
@@ -703,7 +703,7 @@ public final class f {
          double x = Math.floor(MC.player.getX()) + 0.5;
          double z = Math.floor(MC.player.getZ()) + 0.5;
          MC.player.setPos(x, MC.player.getY(), z);
-         if (!HashUtil.init_Z() && MC.getConnection() != null) {
+         if (!BlinkPacketManager.init_Z() && MC.getConnection() != null) {
             MC.getConnection().send(new Pos(MC.player.getX(), MC.player.getY(), MC.player.getZ(), MC.player.onGround(), MC.player.horizontalCollision));
          }
       }
@@ -802,9 +802,9 @@ public final class f {
       private final Random init_Random = new Random();
       private String init_Str = "";
       private Set<String> init_Set = Set.of();
-      private final BitSetUtil init_BitSetUtil = new BitSetUtil();
+      private final AutoFishStateMachine init_BitSetUtil = new AutoFishStateMachine();
       private Object init_Obj;
-      private BitSetUtil.Inner_CachePool init_BitSetUtil_CachePo;
+      private AutoFishStateMachine.Inner_CachePool init_BitSetUtil_CachePo;
       private InteractionHand init_InteractionHand;
       private ItemStack init_ItemStack = ItemStack.EMPTY;
       private int init_I = -1;
@@ -981,7 +981,7 @@ public final class f {
                      } else if (!this.init_f_BufferHelper_Buf().init_Z()) {
                         this.read_V_17();
                      } else {
-                        BitSetUtil.Inner_CachePool use = this.init_BitSetUtil
+                        AutoFishStateMachine.Inner_CachePool use = this.init_BitSetUtil
                            .init(
                               this.init_I_25(),
                               this.bool("auto-cast"),
@@ -1218,7 +1218,7 @@ public final class f {
             && !MC.player.isDeadOrDying()
             && !MC.player.isUsingItem()
             && !MC.player.isHandsBusy()
-            && !HashUtil.load_Z()
+            && !BlinkPacketManager.load_Z()
             && !AutoTotemModule.init_Z_6()
             && (autismclient.util.aD.init_Str() == null || !autismclient.util.aD.read_Z())
             && autismclient.util.ah.read_Z(this.id())
@@ -1234,7 +1234,7 @@ public final class f {
             && ItemStack.isSameItemSameComponents(this.init_ItemStack, MC.player.getItemInHand(this.init_InteractionHand));
       }
 
-      private boolean init_Z_BitSetUtil_CachePo(BitSetUtil.Inner_CachePool use) {
+      private boolean init_Z_BitSetUtil_CachePo(AutoFishStateMachine.Inner_CachePool use) {
          if (!this.load_Z_17()) {
             return false;
          }
@@ -1274,7 +1274,7 @@ public final class f {
          }
       }
 
-      private void init(BitSetUtil.Inner_CachePool use, boolean dispatched) {
+      private void init(AutoFishStateMachine.Inner_CachePool use, boolean dispatched) {
          this.init_BitSetUtil.init(use, dispatched, this.init_I_25());
          if (!dispatched && !this.load_Z_17()) {
             this.init_BitSetUtil.load_V();
@@ -1501,7 +1501,7 @@ public final class f {
             return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
          }
 
-         if (HashUtil.load_Z()) {
+         if (BlinkPacketManager.load_Z()) {
             return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
          }
 
@@ -1928,19 +1928,19 @@ public final class f {
 
       @Override
       public void onEnable() {
-         aC.load_V_Z(this.bool("reload-chunks"));
-         aC.init_V_Z(this.bool("interact"));
+         FreecamController.load_V_Z(this.bool("reload-chunks"));
+         FreecamController.init_V_Z(this.bool("interact"));
       }
 
       @Override
       public void onDisable() {
-         aC.init_V();
+         FreecamController.init_V();
       }
 
       @Override
       public void onOptionValueChanged(String settingId) {
          if ("interact".equals(settingId)) {
-            aC.init_V_Z(this.bool("interact"));
+            FreecamController.init_V_Z(this.bool("interact"));
          }
       }
 
@@ -1958,12 +1958,12 @@ public final class f {
 
       @Override
       public void preMovementTick() {
-         aC.init(this.decimal("speed"), this.decimal("vertical-speed"));
+         FreecamController.init(this.decimal("speed"), this.decimal("vertical-speed"));
       }
 
       @Override
       public Vec3 onPlayerMove(MoverType type, Vec3 movement) {
-         return aC.init(type, movement);
+         return FreecamController.init(type, movement);
       }
 
       @Override
@@ -1975,7 +1975,7 @@ public final class f {
    static final class Inner_CachePool extends Module {
       private static final ValueRange init_ValueRange = new ValueRange(25, 50);
       private static final double init_D = 250.0;
-      private final h init_h;
+      private final ClickerSettingsGroup init_h;
       private final autismclient.util.a.ClickPatternEngine init_DataUtil = new autismclient.util.a.ClickPatternEngine();
       private final autismclient.util.a.KeyClickOutput init_StreamUtil = autismclient.util.a.KeyClickOutput.init_StreamUtil();
       private final autismclient.util.a.KeyClickOutput load_StreamUtil = autismclient.util.a.KeyClickOutput.load_StreamUtil();
@@ -1984,16 +1984,16 @@ public final class f {
       private long init_J = -9223372036854775808L;
       private long load_J;
       private boolean load_Z;
-      private final O init_O;
+      private final HeldItemFilter init_O;
 
       Inner_CachePool() {
          super("auto-clicker", "AutoClicker", ae.init_ae, "Auto clicks or holds");
          this.add(new ChoiceSetting("mode", "Mode", "Hold Down", "Constant", "Hold Down", "Hold").description("Click or hold").build());
          this.add(new ChoiceSetting("button", "Button", "Left", "Left", "Right").description("Mouse button").build());
-         this.init_O = new O(this);
+         this.init_O = new HeldItemFilter(this);
          this.add(new BoolSetting("break-blocks", "Break Blocks", true));
          this.add(new RangeSetting("break-delay", "Break Delay", init_ValueRange, 0.0, 250.0, 5.0).unit("ms").visibleWhen(() -> this.bool("break-blocks")));
-         this.init_h = new h(this, "General", h.init_BufferHelper, () -> !"Hold".equals(this.value("mode")), h.init_ValueRange);
+         this.init_h = new ClickerSettingsGroup(this, "General", ClickerSettingsGroup.init_BufferHelper, () -> !"Hold".equals(this.value("mode")), ClickerSettingsGroup.init_ValueRange);
          this.init_h.init_V();
       }
 
@@ -4482,7 +4482,7 @@ public final class f {
       private static final double init_D = 12.0;
       private static final ValueRange init_ValueRange = new ValueRange(50, 80);
       private static final double load_D = 250.0;
-      private final h init_h;
+      private final ClickerSettingsGroup init_h;
       private final autismclient.util.a.ClickPatternEngine init_DataUtil = new autismclient.util.a.ClickPatternEngine();
       private final f.Inner_EventBus.Inner_DataUtil init_f_EventBus_DataUti = new f.Inner_EventBus.Inner_DataUtil();
       private final Random init_Random = new Random();
@@ -4506,7 +4506,7 @@ public final class f {
                .description("How long right-click is held before the clicks start")
                .visibleWhen(() -> this.bool("exp") || this.bool("blocks"))
          );
-         this.init_h = new h(this, "General", h.init_BufferHelper, () -> this.bool("exp") || this.bool("blocks"), 12.0);
+         this.init_h = new ClickerSettingsGroup(this, "General", ClickerSettingsGroup.init_BufferHelper, () -> this.bool("exp") || this.bool("blocks"), 12.0);
          this.init_h.init_V();
       }
 
@@ -4635,7 +4635,7 @@ public final class f {
             && !MC.player.isDeadOrDying()
             && !MC.player.isSpectator()
             && !aD.read_Z()
-            && !aC.init_Z()
+            && !FreecamController.init_Z()
             && !cd.init_Z()
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
             && !MacroExecutor.write_Z();
@@ -4966,7 +4966,7 @@ public final class f {
          if (MC.player != null
             && MC.gameMode != null
             && !MC.player.isSpectator()) {
-            if (IoWorker.init_Z()) {
+            if (NoFallPauseTimer.init_Z()) {
                if (this.init_Z) {
                   this.load_V_29();
                }
@@ -5061,7 +5061,7 @@ public final class f {
             return false;
          }
 
-         if (IoWorker.init_Z()) {
+         if (NoFallPauseTimer.init_Z()) {
             return false;
          }
 
@@ -5123,7 +5123,7 @@ public final class f {
       }
 
       float init_F_7() {
-         if (IoWorker.init_Z()) {
+         if (NoFallPauseTimer.init_Z()) {
             return -1.0F;
          }
 
@@ -5138,7 +5138,7 @@ public final class f {
       }
 
       boolean load_Z_21() {
-         if (IoWorker.init_Z()) {
+         if (NoFallPauseTimer.init_Z()) {
             return false;
          }
 
@@ -5509,13 +5509,13 @@ public final class f {
          int legacy = am.init_I_Module(this, "color", -855688389);
          boolean carry = legacy != -855688389;
 
-         for (String id : ad.init(this)) {
-            if (ad.init_Block(id) != null) {
+         for (String id : BlockEspCatalog.init(this)) {
+            if (BlockEspCatalog.init_Block(id) != null) {
                String key = "color-" + id;
                boolean fresh = this.value(key) == null;
                if (this.setting(key) == null) {
                   String label = cc.load(id);
-                  this.add(new ColorSetting(key, label.isBlank() ? id : label, ad.init_I(id)).group("Colors").visibleWhen(() -> ad.init_Z(this, id)));
+                  this.add(new ColorSetting(key, label.isBlank() ? id : label, BlockEspCatalog.init_I(id)).group("Colors").visibleWhen(() -> BlockEspCatalog.init_Z(this, id)));
                }
 
                if (carry && fresh) {
@@ -5549,7 +5549,7 @@ public final class f {
          this.add(new BoolSetting("fill", "Fill", true).description("Shade box interiors.").visibleWhen(this::load).build());
 
          for (autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind : autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.values()) {
-            this.add(new ColorSetting(kind.init(), kind.load_Str, kind.init_I).group("Colors").visibleWhen(() -> this.load() && ak.init_Z(this, kind)).build());
+            this.add(new ColorSetting(kind.init(), kind.load_Str, kind.init_I).group("Colors").visibleWhen(() -> this.load() && OreSimEspScanner.init_Z(this, kind)).build());
          }
 
          this.init_V_40();
@@ -5600,14 +5600,14 @@ public final class f {
       }
 
       private void init_V_40() {
-         for (String id : ak.init_List(this)) {
+         for (String id : OreSimEspScanner.init_List(this)) {
             String key = "block-color-" + id;
             if (this.setting(key) == null) {
                String label = cc.load(id);
                this.add(
                   new ColorSetting(key, label.isBlank() ? id : label, -3355444)
                      .group("Colors")
-                     .visibleWhen(() -> this.load() && !this.read() && ak.init(this, id))
+                     .visibleWhen(() -> this.load() && !this.read() && OreSimEspScanner.init(this, id))
                      .build()
                );
             }
@@ -5661,12 +5661,12 @@ public final class f {
             am.load_V();
          }
 
-         ak.init(this, MC.level, MC.player);
+         OreSimEspScanner.init(this, MC.level, MC.player);
       }
 
       @Override
       public String info() {
-         return ak.init_Str(this);
+         return OreSimEspScanner.init_Str(this);
       }
 
       private static String init_Str_12() {
@@ -6564,11 +6564,11 @@ public final class f {
          this.add(new BoolSetting("fill", "Fill", false).group("General").description("Draw translucent filled boxes."));
          this.add(new BoolSetting("meshing", "Meshing", true).group("General").description("Merge adjacent spawners."));
          this.add(new BoolSetting("tracers", "Tracers", false).group("Tracers").description("Line to each spawner"));
-         this.add(RegistryListSetting.entityTypes("spawner-list", "Spawners", ao.init_Str).group("Spawners").description("Mobs to highlight."));
+         this.add(RegistryListSetting.entityTypes("spawner-list", "Spawners", SpawnerEspCatalog.init_Str).group("Spawners").description("Mobs to highlight."));
 
-         for (ao.Inner_DataUtil target : ao.init_List) {
+         for (SpawnerEspCatalog.Inner_DataUtil target : SpawnerEspCatalog.init_List) {
             String id = target.init_Str();
-            this.add(new ColorSetting("color-" + id, target.load(), target.init_I()).group("Colors").visibleWhen(() -> ao.init_Z(this, id)));
+            this.add(new ColorSetting("color-" + id, target.load(), target.init_I()).group("Colors").visibleWhen(() -> SpawnerEspCatalog.init_Z(this, id)));
          }
       }
 
@@ -6580,12 +6580,12 @@ public final class f {
       }
 
       private void init() {
-         for (String id : ao.init(this)) {
-            if (!ao.init(id)) {
+         for (String id : SpawnerEspCatalog.init(this)) {
+            if (!SpawnerEspCatalog.init(id)) {
                String key = "color-" + id;
                if (this.setting(key) == null) {
                   String label = cc.read(id);
-                  this.add(new ColorSetting(key, label.isBlank() ? id : label, -855688389).group("Colors").visibleWhen(() -> ao.init_Z(this, id)));
+                  this.add(new ColorSetting(key, label.isBlank() ? id : label, -855688389).group("Colors").visibleWhen(() -> SpawnerEspCatalog.init_Z(this, id)));
                }
             }
          }
@@ -7145,7 +7145,7 @@ public final class f {
       private int poll;
       private String init_Str = "";
       private Set<String> init_Set = Set.of();
-      private final O init_O;
+      private final HeldItemFilter init_O;
 
       Inner_StreamUtil() {
          super("aim-assist", "AimAssist", ae.init_ae, "Smoothly assists your aim toward configured entities.");
@@ -7159,7 +7159,7 @@ public final class f {
          this.add(new BoolSetting("y-axis", "Y Axis", false).description("Turns your aim up and down").build());
          this.add(new IntSetting("hurt-time", "Hurt Time", 10, 0, 10, 1).build());
          this.add(new BoolSetting("only-while-moving", "Only While Moving", false).description("Only while you move the mouse").build());
-         this.init_O = new O(this);
+         this.init_O = new HeldItemFilter(this);
          this.add(
             new ChoiceSetting("smooth-mode", "Smooth", "Human", "Human", "Instant")
                .group("Smoothing")
@@ -7488,7 +7488,7 @@ public final class f {
             return false;
          }
 
-         if (ByteReader.load_Z(entity)) {
+         if (AntiBotTracker.load_Z(entity)) {
             return false;
          }
 
@@ -8392,15 +8392,15 @@ public final class f {
          );
          this.add(new BoolSetting("fill", "Fill", false).group("General").description("Draw a translucent plate over each frame."));
          this.add(new BoolSetting("tracers", "Tracers", false).group("Tracers").description("Line to each frame"));
-         this.add(RegistryListSetting.items("item-list", "Items", ah.load_Str).group("Items").description("Items to highlight; each gets its own color."));
+         this.add(RegistryListSetting.items("item-list", "Items", FrameEspCatalog.load_Str).group("Items").description("Items to highlight; each gets its own color."));
          this.add(
             new BoolSetting("other-frames", "Other Frames", false).group("Items").description("Also highlight frames holding an item that is not on the list.")
          );
          this.add(new BoolSetting("empty-frames", "Empty Frames", false).group("Items").description("Also highlight empty frames."));
 
-         for (ah.Inner_StreamUtil target : ah.init_List) {
+         for (FrameEspCatalog.Inner_StreamUtil target : FrameEspCatalog.init_List) {
             String id = target.init_Str();
-            this.add(new ColorSetting("color-" + id, target.load(), target.init_I()).group("Colors").visibleWhen(() -> ah.init_Z(this, id)));
+            this.add(new ColorSetting("color-" + id, target.load(), target.init_I()).group("Colors").visibleWhen(() -> FrameEspCatalog.init_Z(this, id)));
          }
 
          this.add(
@@ -8419,12 +8419,12 @@ public final class f {
       }
 
       private void init() {
-         for (String id : ah.init(this)) {
-            if (!ah.init_Z(id)) {
+         for (String id : FrameEspCatalog.init(this)) {
+            if (!FrameEspCatalog.init_Z(id)) {
                String key = "color-" + id;
                if (this.setting(key) == null) {
                   String label = cc.init(id);
-                  this.add(new ColorSetting(key, label.isBlank() ? id : label, ah.init_I(id)).group("Colors").visibleWhen(() -> ah.init_Z(this, id)));
+                  this.add(new ColorSetting(key, label.isBlank() ? id : label, FrameEspCatalog.init_I(id)).group("Colors").visibleWhen(() -> FrameEspCatalog.init_Z(this, id)));
                }
             }
          }
@@ -8445,7 +8445,7 @@ public final class f {
             if (!(packet instanceof ServerboundUseItemOnPacket use && use.hand() == InteractionHand.MAIN_HAND)) {
                return false;
             } else {
-               if (HashUtil.load_Z()) {
+               if (BlinkPacketManager.load_Z()) {
                   return false;
                }
 

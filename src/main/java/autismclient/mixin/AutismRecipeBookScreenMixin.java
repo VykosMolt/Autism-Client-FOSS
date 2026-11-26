@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.compat263.Compat263;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.bk;
 import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
 import net.minecraft.client.input.CharacterEvent;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AutismRecipeBookScreenMixin {
    @Unique
    private boolean autism$isActive() {
-      PoolEntry module = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       return module != null && module.init_Z();
    }
 

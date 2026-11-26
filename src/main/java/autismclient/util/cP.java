@@ -51,7 +51,7 @@ public final class cP {
       }
    }
 
-   public List<autismclient.modules.FileCache> init(
+   public List<autismclient.modules.EspHighlightBox> init(
       Object target,
       AABB drawn,
       AABB received,
@@ -88,7 +88,7 @@ public final class cP {
                this.init_ArrayDeque.removeFirst();
             }
 
-            ArrayList<autismclient.modules.FileCache> boxes = new ArrayList<>();
+            ArrayList<autismclient.modules.EspHighlightBox> boxes = new ArrayList<>();
             int outline = init_I_I_D(receivedColor, fade);
             if (!"Box".equals(style)) {
                AABB ghost = received.move(this.init_Vec3.subtract(position));
@@ -106,11 +106,11 @@ public final class cP {
                init(boxes, x, y, z, w, h, d, 0.53, 0.0, 0.3, 0.78, 0.39, 0.7, outline);
             }
 
-            boxes.add(new autismclient.modules.FileCache(received, "Box".equals(style) ? init_I_I_D(outline, 0.18) : 0, outline));
+            boxes.add(new autismclient.modules.EspHighlightBox(received, "Box".equals(style) ? init_I_I_D(outline, 0.18) : 0, outline));
             if (delayed && drawn.getCenter().distanceToSqr(received.getCenter()) > 4.0E-4) {
                int delayedOutline = init_I_I_D(delayedColor, fade);
-               boxes.add(new autismclient.modules.FileCache(drawn, init_I_I_D(delayedOutline, 0.12), delayedOutline));
-               boxes.add(autismclient.modules.FileCache.init(drawn.getCenter(), received.getCenter(), init_I_I_D(outline, 0.8), 2.0F));
+               boxes.add(new autismclient.modules.EspHighlightBox(drawn, init_I_I_D(delayedOutline, 0.12), delayedOutline));
+               boxes.add(autismclient.modules.EspHighlightBox.init(drawn.getCenter(), received.getCenter(), init_I_I_D(outline, 0.8), 2.0F));
             }
 
             if (history) {
@@ -120,7 +120,7 @@ public final class cP {
                   if (last != null) {
                      double ageFade = Math.max(0.0, 1.0 - (now - sample.init_J()) / 6.5E8);
                      boxes.add(
-                        autismclient.modules.FileCache.init(
+                        autismclient.modules.EspHighlightBox.init(
                            last.init_Vec3().add(0.0, 0.035, 0.0), sample.init_Vec3().add(0.0, 0.035, 0.0), init_I_I_D(outline, ageFade * 0.8), 1.5F
                         )
                      );
@@ -142,7 +142,7 @@ public final class cP {
    }
 
    private static void init(
-      List<autismclient.modules.FileCache> result,
+      List<autismclient.modules.EspHighlightBox> result,
       double x,
       double y,
       double z,
@@ -158,7 +158,7 @@ public final class cP {
       int color
    ) {
       result.add(
-         new autismclient.modules.FileCache(
+         new autismclient.modules.EspHighlightBox(
             new AABB(x + a * w, y + b * h, z + c * d, x + e * w, y + f * h, z + g * d), init_I_I_D(color, 0.2), init_I_I_D(color, 0.65)
          )
       );

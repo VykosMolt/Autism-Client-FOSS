@@ -417,7 +417,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          actionEditor.read_V(true);
          manager.init_V(actionEditor);
          manager.init_V_cX_Z(actionEditor, false);
-         autismclient.modules.PoolEntry global = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          if (global != null) {
             AutismPacketLoggerOverlay logger = global.init_AutismPacketLogger();
             if (logger != null) {
@@ -502,7 +502,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          ActionEditorOverlay actionEditor = ActionEditorOverlay.init_ActionEditorOverla_2();
          actionEditor.read_V(false);
          manager.init_V(actionEditor);
-         autismclient.modules.PoolEntry global = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          if (global != null) {
             AutismPacketLoggerOverlay logger = global.init_AutismPacketLogger();
             if (logger != null) {
@@ -545,7 +545,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          }
       }
 
-      autismclient.modules.PoolEntry global = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       if (global != null) {
          this.init_V_cX(global.load_AutismPacketLogger());
          this.init_V_cX(global.load_AutismServerInfoOv());
@@ -598,8 +598,8 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          || overlay == this.init_AutismCustomFilter
          || this.init_AutismCustomFilter != null && overlay == this.init_AutismCustomFilter.init_AutismCustomFilter()
          || overlay == this.init_AutismKeybindOverl
-         || autismclient.modules.PoolEntry.init_PoolEntry() != null && overlay == autismclient.modules.PoolEntry.init_PoolEntry().load_AutismPacketLogger()
-         || autismclient.modules.PoolEntry.init_PoolEntry() != null && overlay == autismclient.modules.PoolEntry.init_PoolEntry().load_AutismServerInfoOv()
+         || autismclient.modules.ModuleRuntimeManager.init_PoolEntry() != null && overlay == autismclient.modules.ModuleRuntimeManager.init_PoolEntry().load_AutismPacketLogger()
+         || autismclient.modules.ModuleRuntimeManager.init_PoolEntry() != null && overlay == autismclient.modules.ModuleRuntimeManager.init_PoolEntry().load_AutismServerInfoOv()
          || overlay == AutismMacroEditorOverlay.init_AutismMacroEditorO_2()
          || overlay == ActionEditorOverlay.init_ActionEditorOverla_2();
    }
@@ -674,20 +674,20 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
                this.load(this.ensureCustomFilterOverlay(bk.init_bk()));
                break;
             case "logger":
-               autismclient.modules.PoolEntry globalxx = autismclient.modules.PoolEntry.init_PoolEntry();
+               autismclient.modules.ModuleRuntimeManager globalxx = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
                if (globalxx != null) {
                   this.load(globalxx.init_AutismPacketLogger());
                }
                break;
             case "server":
-               autismclient.modules.PoolEntry globalx = autismclient.modules.PoolEntry.init_PoolEntry();
+               autismclient.modules.ModuleRuntimeManager globalx = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
                if (globalx != null) {
                   this.load(globalx.init_AutismServerInfoOv());
                }
                break;
          }
       } else {
-         autismclient.modules.PoolEntry global = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          if (global != null) {
             switch (id) {
                case "admin":
@@ -813,7 +813,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          actionEditor.read_V(false);
       }
 
-      autismclient.modules.PoolEntry global = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       if (global != null) {
          AutismPacketLoggerOverlay logger = global.load_AutismPacketLogger();
          if (logger != null) {
@@ -840,7 +840,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       this.read(this.init_AutismCustomFilter);
       this.read(this.init_AutismKeybindOverl);
       this.read(this.init_AutismAdminToolsOv);
-      autismclient.modules.PoolEntry global = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       if (global != null) {
          this.read(global.load_AutismPacketLogger());
          this.read(global.load_AutismServerInfoOv());

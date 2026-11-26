@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.ai;
+import autismclient.modules.MovementModuleHooks;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,6 +11,6 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class AutismSprintJumpMixin {
    @ModifyExpressionValue(method = "jumpFromGround", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getYRot()F"))
    private float autism$omniSprintJumpYaw(float original) {
-      return (Object)this instanceof LocalPlayer player && ai.sync() ? ai.init(player) : original;
+      return (Object)this instanceof LocalPlayer player && MovementModuleHooks.sync() ? MovementModuleHooks.init(player) : original;
    }
 }

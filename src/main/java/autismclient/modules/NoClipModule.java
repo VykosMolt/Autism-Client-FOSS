@@ -117,6 +117,6 @@ public final class NoClipModule extends Module {
 
    private static void init(Entity target, LocalPlayer player, double speed) {
       double y = MC.options.keyJump.isDown() ? speed : (MC.options.keyShift.isDown() ? -speed : 0.0);
-      target.setDeltaMovement(ai.init(player, new Vec3(0.0, y, 0.0), speed));
+      target.setDeltaMovement(MovementModuleHooks.init(player, new Vec3(0.0, y, 0.0), speed));
    }
 }

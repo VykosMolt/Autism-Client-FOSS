@@ -16,7 +16,7 @@ import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.Vec3;
 
 public final class AntiKnockbackModule extends Module {
-   private final ab init_ab = new ab();
+   private final KnockbackCounterStrafe init_ab = new KnockbackCounterStrafe();
    private int init_I = -2147483648;
    private int load_I = -2147483648;
    private Vec3 init_Vec3 = Vec3.ZERO;
@@ -62,8 +62,8 @@ public final class AntiKnockbackModule extends Module {
          && MC.player.isAlive()
          && !MC.player.isSpectator()
          && !aD.init_Z()
-         && !aC.init_Z()
-         && !aC.write()
+         && !FreecamController.init_Z()
+         && !FreecamController.write()
          && MC.gui.screen() == null
          && !MC.player.isPassenger()
          && !MC.player.isInWater()

@@ -3,7 +3,7 @@ package autismclient.mixin;
 import autismclient.e.FileCache;
 import autismclient.g.ConnectionPrivacyRegistry;
 import autismclient.g.ResourcePackPushValidator;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
@@ -57,7 +57,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
          ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(this.connection);
          if (context != null) {
             ck shared = ck.init_ck();
-            PoolEntry module = PoolEntry.init_PoolEntry();
+            ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
             boolean forceDeny = shared.clear_Z() || module != null && module.set_Z();
             boolean sharedBypass = shared.add_Z();
             boolean serializedBypass = module != null ? module.pop_Z() : AutismConfig.getGlobal().pretendPackAccepted;

@@ -2,7 +2,7 @@ package autismclient.commands.b;
 
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
-import autismclient.modules.aC;
+import autismclient.modules.FreecamController;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.p;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -24,8 +24,8 @@ public final class CopyPosCommand extends Command {
       root.executes(
          ctx -> {
             Minecraft mc = Minecraft.getInstance();
-            if (aC.init_Z()) {
-               String coordinates = init(aC.load_Vec3_F(1.0F));
+            if (FreecamController.init_Z()) {
+               String coordinates = init(FreecamController.load_Vec3_F(1.0F));
                if (mc != null && mc.keyboardHandler != null) {
                   mc.keyboardHandler.setClipboard(coordinates);
                }

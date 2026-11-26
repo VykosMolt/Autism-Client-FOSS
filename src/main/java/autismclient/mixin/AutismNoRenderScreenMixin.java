@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.az;
+import autismclient.modules.NoRenderState;
 import net.minecraft.client.gui.screens.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderScreenMixin {
    @Inject(method = "extractTransparentBackground", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noGuiBackground(CallbackInfo ci) {
-      if (az.poll()) {
+      if (NoRenderState.poll()) {
          ci.cancel();
       }
    }

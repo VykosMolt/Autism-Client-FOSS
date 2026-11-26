@@ -35,7 +35,7 @@ public abstract class Module implements SettingOwner {
    private boolean addon;
    private final Map<String, Long> controlRevisions = new ConcurrentHashMap<>();
    private boolean configuredWrite;
-   private final aP temporaryActivation = new aP(() -> this.state().enabled, enabled -> {
+   private final ScopedToggleOverride temporaryActivation = new ScopedToggleOverride(() -> this.state().enabled, enabled -> {
       try {
          if (enabled) {
             this.onEnable();
@@ -100,7 +100,7 @@ public abstract class Module implements SettingOwner {
       return this.state().enabled;
    }
 
-   public final aP.Inner_StreamUtil borrowEnabled(boolean enabled) {
+   public final ScopedToggleOverride.Inner_StreamUtil borrowEnabled(boolean enabled) {
       return enabled && aD.load_Z(this) ? () -> {} : this.temporaryActivation.init_aP_StreamUtil(enabled);
    }
 

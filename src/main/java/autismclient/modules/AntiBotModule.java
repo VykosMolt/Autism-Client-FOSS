@@ -50,10 +50,10 @@ public final class AntiBotModule extends Module {
    final BoolSetting close = this.add(this.init_BoolSetting(new BoolSetting("need-crit", "Need Crit", false)).description("Hidden until crit-hit"));
    final BoolSetting open = this.add(this.init_BoolSetting(new BoolSetting("odd-scale", "Odd Scale", false)).description("Scale is not normal"));
    final BoolSetting poll = this.add(this.init_BoolSetting(new BoolSetting("armor", "Armor", false)).description("Real players wear this"));
-   final ChoiceSetting load_ChoiceSetting = this.add(this.init("armor-head", "Helmet", ConfigStore.load_List));
-   final ChoiceSetting read_ChoiceSetting = this.add(this.init("armor-chest", "Chestplate", ConfigStore.read_List));
-   final ChoiceSetting write_ChoiceSetting = this.add(this.init("armor-legs", "Leggings", ConfigStore.init_List));
-   final ChoiceSetting update_ChoiceSetting = this.add(this.init("armor-feet", "Boots", ConfigStore.init_List));
+   final ChoiceSetting load_ChoiceSetting = this.add(this.init("armor-head", "Helmet", ArmorFilterMatcher.load_List));
+   final ChoiceSetting read_ChoiceSetting = this.add(this.init("armor-chest", "Chestplate", ArmorFilterMatcher.read_List));
+   final ChoiceSetting write_ChoiceSetting = this.add(this.init("armor-legs", "Leggings", ArmorFilterMatcher.init_List));
+   final ChoiceSetting update_ChoiceSetting = this.add(this.init("armor-feet", "Boots", ArmorFilterMatcher.init_List));
 
    public AntiBotModule() {
       super("antibot", "AntiBot", ae.write, "Ignores fake/bot players.");
@@ -89,21 +89,21 @@ public final class AntiBotModule extends Module {
 
    @Override
    public void tick() {
-      ByteReader.init_V();
+      AntiBotTracker.init_V();
    }
 
    @Override
    public void onDisable() {
-      ByteReader.load();
+      AntiBotTracker.load();
    }
 
    @Override
    public void onGameJoin() {
-      ByteReader.load();
+      AntiBotTracker.load();
    }
 
    @Override
    public void onGameLeft() {
-      ByteReader.load();
+      AntiBotTracker.load();
    }
 }

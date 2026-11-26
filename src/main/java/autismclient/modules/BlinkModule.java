@@ -27,17 +27,17 @@ public final class BlinkModule extends Module {
    @Override
    public void onEnable() {
       this.init();
-      HashUtil.init_V();
+      BlinkPacketManager.init_V();
    }
 
    @Override
    public void onDisable() {
-      HashUtil.load_V();
+      BlinkPacketManager.load_V();
    }
 
    @Override
    public void onGameLeft() {
-      HashUtil.auditDisconnect();
+      BlinkPacketManager.auditDisconnect();
       if (this.isEnabled()) {
          this.setEnabled(false);
       }
@@ -46,29 +46,29 @@ public final class BlinkModule extends Module {
    @Override
    protected void onOptionValueChanged(String optionId) {
       if (this.isEnabled()) {
-         boolean wasHoldingMovement = HashUtil.auditHoldingMovement();
+         boolean wasHoldingMovement = BlinkPacketManager.auditHoldingMovement();
          this.init();
-         if (!wasHoldingMovement && HashUtil.auditHoldingMovement()) {
-            HashUtil.init_V();
+         if (!wasHoldingMovement && BlinkPacketManager.auditHoldingMovement()) {
+            BlinkPacketManager.init_V();
          }
       }
    }
 
    @Override
    public String info() {
-      int held = HashUtil.init_I();
+      int held = BlinkPacketManager.init_I();
       if (held <= 0) {
          return "";
       }
 
-      int reset = HashUtil.load_I();
+      int reset = BlinkPacketManager.load_I();
       return reset >= 0 ? held + " | " + String.format(Locale.ROOT, "%.1fs", reset / 20.0) : Integer.toString(held);
    }
 
    private void init() {
-      HashUtil.load(this.bool("incoming"), this.bool("outgoing"));
-      HashUtil.read(this.bool("hold-movement"), this.bool("hold-actions"));
-      HashUtil.init(this.bool("show-position"));
-      HashUtil.init(this.bool("auto-reset"), this.integer("reset-after"));
+      BlinkPacketManager.load(this.bool("incoming"), this.bool("outgoing"));
+      BlinkPacketManager.read(this.bool("hold-movement"), this.bool("hold-actions"));
+      BlinkPacketManager.init(this.bool("show-position"));
+      BlinkPacketManager.init(this.bool("auto-reset"), this.integer("reset-after"));
    }
 }

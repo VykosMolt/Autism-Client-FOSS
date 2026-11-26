@@ -557,8 +557,8 @@ public class AutismQueueEditorOverlay extends bj {
                      }
                   }
                );
-               boolean flushOnDelay = autismclient.modules.PoolEntry.init_PoolEntry().stop_Z();
-               boolean captureAsExact = autismclient.modules.PoolEntry.init_PoolEntry().next_Z();
+               boolean flushOnDelay = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().stop_Z();
+               boolean captureAsExact = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().next_Z();
                int clearWidth = this.init_I_Str_5("Clear", 42, 58);
                int captureModeBtnWidth = this.next();
                int flushWidth = Math.max(this.init_I_Str_5("FLUSH ON DELAY", 110, 150), rowWidth - clearWidth - captureModeBtnWidth - gap - gap);
@@ -576,7 +576,7 @@ public class AutismQueueEditorOverlay extends bj {
                      ? "When delay turns off, queued packets auto-flush"
                      : "When delay turns off, keep the queued packets until you flush or clear them",
                   () -> {
-                     autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+                     autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
                      boolean newValue = !module.stop_Z();
                      module.flush(newValue);
                      AutismClientMessaging.sendPrefixed(newValue ? "§aFlush on Delay ON" : "§eFlush on Delay OFF");
@@ -595,7 +595,7 @@ public class AutismQueueEditorOverlay extends bj {
                   mouseY,
                   captureAsExact ? "Capture as Exact: new packets stored verbatim" : "Capture as Regenerate: new packets rewritten on send",
                   () -> {
-                     autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+                     autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
                      boolean nowExact = !module.next_Z();
                      module.close(nowExact);
                      ck.Inner_BufferHelper bulkMode = nowExact ? ck.Inner_BufferHelper.EXACT : ck.Inner_BufferHelper.REGENERATE;
@@ -631,7 +631,7 @@ public class AutismQueueEditorOverlay extends bj {
                      int cleared = ck.init_ck().write_I();
                      this.flush_V_16();
                      this.push = 0;
-                     autismclient.modules.PoolEntry.init_PoolEntry().read(cleared);
+                     autismclient.modules.ModuleRuntimeManager.init_PoolEntry().read(cleared);
                   }
                );
                boolean captureModeOn = ck.init_ck().chunk();
@@ -737,7 +737,7 @@ public class AutismQueueEditorOverlay extends bj {
                   () -> {
                      if (!this.flush_Z && init_Minecraft.getConnection() != null) {
                         int count = ck.init_ck().init_I_ClientPacketListen(init_Minecraft.getConnection());
-                        autismclient.modules.PoolEntry.init_PoolEntry().load(count);
+                        autismclient.modules.ModuleRuntimeManager.init_PoolEntry().load(count);
                      }
                   }
                );

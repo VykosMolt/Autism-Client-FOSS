@@ -84,7 +84,7 @@ public final class TrajectoriesModule extends Module {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         aW.init(MC, this.bool("item-pearl"));
+         TrajectoryStateCache.init(MC, this.bool("item-pearl"));
       }
    }
 
@@ -98,7 +98,7 @@ public final class TrajectoriesModule extends Module {
       this.init_V_26();
       ar.init_V_List(List.of());
       if (!AutismLiteVariant.enabled()) {
-         aW.init_V();
+         TrajectoryStateCache.init_V();
       }
    }
 
@@ -106,7 +106,7 @@ public final class TrajectoriesModule extends Module {
       if (al.init_Module_Str("trajectories") instanceof TrajectoriesModule trajectories && trajectories.isEnabled()) {
          trajectories.load = trajectories.init_List_F_2(partialTick);
          if (!AutismLiteVariant.enabled()) {
-            aW.init(MC, trajectories.load);
+            TrajectoryStateCache.init(MC, trajectories.load);
          }
 
          ar.init_V_List(trajectories.load);
@@ -143,7 +143,7 @@ public final class TrajectoriesModule extends Module {
                }
             }
 
-            Vec3 inherited = aX.init(player);
+            Vec3 inherited = ProjectileBallistics.init(player);
             TrajectoriesModule.Inner_DataUtil frame = new TrajectoriesModule.Inner_DataUtil(
                MC.level,
                player,
@@ -161,12 +161,12 @@ public final class TrajectoriesModule extends Module {
             if (!frame.equals(this.init_aS_DataUtil) || !ItemStack.matches(stack, this.init_ItemStack)) {
                List<TrajectoriesModule.Inner_ConfigStore> flights = new ArrayList<>(3);
 
-               for (aX.Inner_BufferHelper shot : aX.init(player, stack, true, true)) {
-                  aX.Inner_CachePool result = aX.init(MC.level, player, shot, yaw, pitch, inherited);
+               for (ProjectileBallistics.Inner_BufferHelper shot : ProjectileBallistics.init(player, stack, true, true)) {
+                  ProjectileBallistics.Inner_CachePool result = ProjectileBallistics.init(MC.level, player, shot, yaw, pitch, inherited);
                   if (result.init_List().size() > 1) {
                      flights.add(
                         new TrajectoriesModule.Inner_ConfigStore(
-                           result, shot.init_aX_DataUtil().init_aX_StreamUtil() == aX.Inner_StreamUtil.ROCKET, init(result.init_HitResult(), item, stack)
+                           result, shot.init_aX_DataUtil().init_aX_StreamUtil() == ProjectileBallistics.Inner_StreamUtil.ROCKET, init(result.init_HitResult(), item, stack)
                         )
                      );
                   }
@@ -189,7 +189,7 @@ public final class TrajectoriesModule extends Module {
             List<TrajectoriesModule.Inner_CachePool> result = new ArrayList<>(this.init_List.size());
 
             for (TrajectoriesModule.Inner_ConfigStore visual : this.init_List) {
-               aX.Inner_CachePool flight = visual.init_aX_CachePool();
+               ProjectileBallistics.Inner_CachePool flight = visual.init_aX_CachePool();
                result.add(
                   new TrajectoriesModule.Inner_CachePool(
                      flight.init_List(),
@@ -215,7 +215,7 @@ public final class TrajectoriesModule extends Module {
       }
    }
 
-   static Vec3 init_Vec3_aX_CachePool(aX.Inner_CachePool flight) {
+   static Vec3 init_Vec3_aX_CachePool(ProjectileBallistics.Inner_CachePool flight) {
       return flight.init_HitResult() != null && flight.init_List().size() >= 2 ? flight.init_List().get(flight.init_List().size() - 2) : null;
    }
 
@@ -386,7 +386,7 @@ public final class TrajectoriesModule extends Module {
    ) {
    }
 
-   private record Inner_ConfigStore(aX.Inner_CachePool init_aX_CachePool, boolean init_Z, TrajectoriesModule.Inner_BufferHelper init_aS_BufferHelper) {
+   private record Inner_ConfigStore(ProjectileBallistics.Inner_CachePool init_aX_CachePool, boolean init_Z, TrajectoriesModule.Inner_BufferHelper init_aS_BufferHelper) {
    }
 
    private record Inner_DataUtil(

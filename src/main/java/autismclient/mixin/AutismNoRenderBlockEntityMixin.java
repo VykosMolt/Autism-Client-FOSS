@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.az;
+import autismclient.modules.NoRenderState;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer.CrumblingOverlay;
@@ -16,7 +16,7 @@ public abstract class AutismNoRenderBlockEntityMixin {
    private void autism$noBlockEntity(
       BlockEntity blockEntity, float partialTick, CrumblingOverlay crumbling, boolean crumblingOnly, CallbackInfoReturnable<BlockEntityRenderState> cir
    ) {
-      if (blockEntity != null && az.init(blockEntity.getBlockState().getBlock())) {
+      if (blockEntity != null && NoRenderState.init(blockEntity.getBlockState().getBlock())) {
          cir.setReturnValue(null);
       }
    }

@@ -37,8 +37,8 @@ public final class aP {
    private int load_I;
    private Vec3 init_Vec3;
    private boolean write;
-   private autismclient.modules.aP.Inner_StreamUtil init_aP_StreamUtil;
-   private autismclient.modules.aP.Inner_StreamUtil load_aP_StreamUtil;
+   private autismclient.modules.ScopedToggleOverride.Inner_StreamUtil init_aP_StreamUtil;
+   private autismclient.modules.ScopedToggleOverride.Inner_StreamUtil load_aP_StreamUtil;
 
    private static boolean init_Z_aR(aR placement) {
       return placement instanceof cU || placement instanceof cV.Inner_CachePool || placement instanceof az;

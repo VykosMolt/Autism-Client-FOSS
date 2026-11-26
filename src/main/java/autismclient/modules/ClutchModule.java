@@ -98,7 +98,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    private final Map<Integer, ClutchModule.Inner_CachePool> init_Map = new HashMap<>();
    private final Map<BlockPos, Integer> load_Map = new HashMap<>();
    private Object init_Obj;
-   private i.Inner_TaskQueue init_i_TaskQueue;
+   private ClutchFallPhysics.Inner_TaskQueue init_i_TaskQueue;
    private int poll_I = -2147483648;
    private int push_I = -2147483648;
    private int pop_I;
@@ -114,7 +114,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    private int put;
    private int add = -2147483648;
    private boolean sync_Z;
-   private final i.Inner_NetHelper init_i_NetHelper = new i.Inner_NetHelper(160);
+   private final ClutchFallPhysics.Inner_NetHelper init_i_NetHelper = new ClutchFallPhysics.Inner_NetHelper(160);
    private Vec3 init_Vec3;
    private Vec3 load_Vec3 = Vec3.ZERO;
    private int clear = -2147483648;
@@ -243,17 +243,17 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
    public static boolean init_Z_49() {
       ClutchModule clutch = init_j();
-      return clutch != null && clutch.init_Z && !clutch.update_Z && !aD.init_Z() && !aC.init_Z();
+      return clutch != null && clutch.init_Z && !clutch.update_Z && !aD.init_Z() && !FreecamController.init_Z();
    }
 
    public static boolean read_Z_20() {
       ClutchModule clutch = init_j();
-      return clutch != null && clutch.init_Z && !clutch.load_Z && clutch.push_Z_4() && clutch.state != 3 && !aD.init_Z() && !aC.init_Z();
+      return clutch != null && clutch.init_Z && !clutch.load_Z && clutch.push_Z_4() && clutch.state != 3 && !aD.init_Z() && !FreecamController.init_Z();
    }
 
    public static boolean sync_Z_10() {
       ClutchModule clutch = init_j();
-      return clutch != null && clutch.init_Z && !clutch.load_Z && clutch.push_Z_4() && clutch.state != 3 && !i.init_Z_I(clutch.read_I_9(), clutch.entry, 4);
+      return clutch != null && clutch.init_Z && !clutch.load_Z && clutch.push_Z_4() && clutch.state != 3 && !ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.entry, 4);
    }
 
    public static boolean flush_Z_9() {
@@ -266,7 +266,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
    public static boolean close_Z_8() {
       ClutchModule clutch = init_j();
-      return clutch != null && clutch.init_Z && "clutch".equals(autismclient.util.aD.init_Str()) && !aD.init_Z() && !aC.init_Z();
+      return clutch != null && clutch.init_Z && "clutch".equals(autismclient.util.aD.init_Str()) && !aD.init_Z() && !FreecamController.init_Z();
    }
 
    public static boolean open_Z_5() {
@@ -276,7 +276,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
    @Override
    public boolean load_Z_23() {
-      return (close_Z_8() || this.tick_Z_6()) && !aD.init_Z() && !aC.init_Z();
+      return (close_Z_8() || this.tick_Z_6()) && !aD.init_Z() && !FreecamController.init_Z();
    }
 
    @Override
@@ -316,13 +316,13 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       return ck.init_ck().state_I();
    }
 
-   private boolean init_Z_i_TaskQueue(i.Inner_TaskQueue value) {
-      return i.init_Z_i_TaskQueue(value, this.bool("own-knockback"), this.bool("melee"), this.bool("projectiles"), this.bool("explosions"));
+   private boolean init_Z_i_TaskQueue(ClutchFallPhysics.Inner_TaskQueue value) {
+      return ClutchFallPhysics.init_Z_i_TaskQueue(value, this.bool("own-knockback"), this.bool("melee"), this.bool("projectiles"), this.bool("explosions"));
    }
 
    private boolean push_Z_4() {
-      return i.init_Z_i_TaskQueue(this.init_i_TaskQueue, this.bool("steer"), this.bool("own-steer"))
-         && (!i.init_Z_i_TaskQueue(this.init_i_TaskQueue) || this.init_i_NetHelper.init_Z(this.read_I_9()));
+      return ClutchFallPhysics.init_Z_i_TaskQueue(this.init_i_TaskQueue, this.bool("steer"), this.bool("own-steer"))
+         && (!ClutchFallPhysics.init_Z_i_TaskQueue(this.init_i_TaskQueue) || this.init_i_NetHelper.init_Z(this.read_I_9()));
    }
 
    private boolean pop_Z_3() {
@@ -338,7 +338,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          && !(entity.getDeltaMovement().y <= 0.0)
          && !(((AutismLivingEntityAccessor)entity).autism$getJumpPower() <= 1.0E-5F)) {
          clutch.flush_V_9();
-         if (!clutch.run_Z_3() && (!clutch.init_Z || i.init_Z_i_TaskQueue(clutch.init_i_TaskQueue))) {
+         if (!clutch.run_Z_3() && (!clutch.init_Z || ClutchFallPhysics.init_Z_i_TaskQueue(clutch.init_i_TaskQueue))) {
             clutch.init_i_NetHelper.init_V(clutch.read_I_9());
          }
       }
@@ -355,21 +355,21 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          DamageSource damage = packet.getSource(MC.level);
          Entity direct = damage.getDirectEntity();
          Entity owner = damage.getEntity();
-         i.Inner_StreamUtil cause = init_i_StreamUtil_Entity(direct);
-         if (cause == i.Inner_StreamUtil.OTHER && damage.is(DamageTypes.ARROW)) {
-            cause = i.Inner_StreamUtil.ARROW;
+         ClutchFallPhysics.Inner_StreamUtil cause = init_i_StreamUtil_Entity(direct);
+         if (cause == ClutchFallPhysics.Inner_StreamUtil.OTHER && damage.is(DamageTypes.ARROW)) {
+            cause = ClutchFallPhysics.Inner_StreamUtil.ARROW;
          }
 
-         if (cause == i.Inner_StreamUtil.OTHER && (damage.is(DamageTypes.PLAYER_ATTACK) || damage.is(DamageTypes.MOB_ATTACK))) {
-            cause = i.Inner_StreamUtil.MELEE;
+         if (cause == ClutchFallPhysics.Inner_StreamUtil.OTHER && (damage.is(DamageTypes.PLAYER_ATTACK) || damage.is(DamageTypes.MOB_ATTACK))) {
+            cause = ClutchFallPhysics.Inner_StreamUtil.MELEE;
          }
 
          ClutchModule.Inner_CachePool seen = direct == null ? null : clutch.init_Map.get(direct.getId());
          boolean own = owner == MC.player || owner == null && seen != null && seen.init_Z;
-         i.Inner_TaskQueue hit = new i.Inner_TaskQueue(
-            cause, own, cause != i.Inner_StreamUtil.OTHER || owner instanceof LivingEntity || direct instanceof Projectile && owner != null, clutch.read_I_9()
+         ClutchFallPhysics.Inner_TaskQueue hit = new ClutchFallPhysics.Inner_TaskQueue(
+            cause, own, cause != ClutchFallPhysics.Inner_StreamUtil.OTHER || owner instanceof LivingEntity || direct instanceof Projectile && owner != null, clutch.read_I_9()
          );
-         if (cause != i.Inner_StreamUtil.OTHER || direct instanceof Projectile) {
+         if (cause != ClutchFallPhysics.Inner_StreamUtil.OTHER || direct instanceof Projectile) {
             clutch.start = clutch.init_Z_i_TaskQueue(hit) ? -2147483648 : clutch.read_I_9();
             if (!clutch.init_Z_i_TaskQueue(hit)) {
                clutch.write_V_20();
@@ -385,7 +385,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
             if (!hit.init_Z()) {
                clutch.entry = -2147483648;
             }
-         } else if (hit.init_Z() && cause != i.Inner_StreamUtil.OTHER) {
+         } else if (hit.init_Z() && cause != ClutchFallPhysics.Inner_StreamUtil.OTHER) {
             clutch.read_V_21();
          }
 
@@ -398,9 +398,9 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
             + " eligible="
             + clutch.init_Z_i_TaskQueue(hit);
          clutch.stop = clutch.read_I_9();
-         if (!clutch.init_Z_i_TaskQueue(hit) && cause == i.Inner_StreamUtil.OTHER && owner == null && direct == null) {
+         if (!clutch.init_Z_i_TaskQueue(hit) && cause == ClutchFallPhysics.Inner_StreamUtil.OTHER && owner == null && direct == null) {
             clutch.reset = clutch.read_I_9();
-            if (i.init_Z_I(clutch.read_I_9(), clutch.clear, 2)) {
+            if (ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.clear, 2)) {
                clutch.init_V_Z_10(true);
             }
          }
@@ -423,7 +423,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          Vec3 before = clutch.init_Vec3 == null ? Vec3.ZERO : clutch.init_Vec3;
          clutch.init_Vec3 = null;
          Vec3 push = MC.player.getDeltaMovement().subtract(before);
-         boolean impulse = i.init_Z_Vec3(before, MC.player.getDeltaMovement(), i.init_Z_I(clutch.read_I_9(), clutch.reset, 3));
+         boolean impulse = ClutchFallPhysics.init_Z_Vec3(before, MC.player.getDeltaMovement(), ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.reset, 3));
          if (impulse) {
             clutch.clear = clutch.read_I_9();
             clutch.load_Vec3 = MC.player.getDeltaMovement();
@@ -435,14 +435,14 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
             clutch.stop = clutch.read_I_9();
          }
 
-         if (i.init_Z_I(clutch.read_I_9(), clutch.entry, 3)) {
+         if (ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.entry, 3)) {
             clutch.read_V_21();
          } else {
             ClutchModule.Inner_CachePool nearest = null;
             double score = 1.0 / 0.0;
 
             for (ClutchModule.Inner_CachePool sample : clutch.init_Map.values()) {
-               if (i.init_Z_I(clutch.read_I_9(), sample.load_I, 4) && !(sample.load_Vec3.lengthSqr() < 0.001)) {
+               if (ClutchFallPhysics.init_Z_I(clutch.read_I_9(), sample.load_I, 4) && !(sample.load_Vec3.lengthSqr() < 0.001)) {
                   double distance = init_D_AABB(MC.player.getBoundingBox().inflate(0.45), sample.init_Vec3, sample.init_Vec3.add(sample.load_Vec3.scale(4.0)));
                   if (Double.isFinite(distance)) {
                      distance = sample.init_Vec3.distanceToSqr(MC.player.getEyePosition()) * 0.001;
@@ -456,11 +456,11 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
             }
 
             if (nearest != null && score <= 0.025) {
-               i.Inner_TaskQueue hit = new i.Inner_TaskQueue(
-                  nearest.init_i_StreamUtil, nearest.init_Z || i.init_Z_I(clutch.read_I_9(), clutch.entry, 3), nearest.load_Z || impulse, clutch.read_I_9()
+               ClutchFallPhysics.Inner_TaskQueue hit = new ClutchFallPhysics.Inner_TaskQueue(
+                  nearest.init_i_StreamUtil, nearest.init_Z || ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.entry, 3), nearest.load_Z || impulse, clutch.read_I_9()
                );
-               boolean enemyDamage = clutch.init_i_TaskQueue != null && !clutch.init_i_TaskQueue.init_Z() && i.init_Z_I(clutch.read_I_9(), clutch.poll_I, 2);
-               if (nearest.init_Z && !enemyDamage || clutch.init_i_TaskQueue == null || !i.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 4)) {
+               boolean enemyDamage = clutch.init_i_TaskQueue != null && !clutch.init_i_TaskQueue.init_Z() && ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.poll_I, 2);
+               if (nearest.init_Z && !enemyDamage || clutch.init_i_TaskQueue == null || !ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 4)) {
                   clutch.init_Str = clutch.init_Str + " projectile " + nearest.init_i_StreamUtil + (nearest.init_Z ? " own" : "");
                   clutch.init_i_TaskQueue = clutch.init_Z_i_TaskQueue(hit) ? hit : null;
                }
@@ -472,24 +472,24 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                }
             }
 
-            boolean excluded = i.init_Z_I(clutch.read_I_9(), clutch.start, 3)
+            boolean excluded = ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.start, 3)
                || nearest != null
-                  && !clutch.init_Z_i_TaskQueue(new i.Inner_TaskQueue(nearest.init_i_StreamUtil, nearest.init_Z, nearest.load_Z || impulse, clutch.read_I_9()));
+                  && !clutch.init_Z_i_TaskQueue(new ClutchFallPhysics.Inner_TaskQueue(nearest.init_i_StreamUtil, nearest.init_Z, nearest.load_Z || impulse, clutch.read_I_9()));
             if (!impulse
                || excluded
-               || clutch.init_Z_i_TaskQueue(clutch.init_i_TaskQueue) && i.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 2)) {
+               || clutch.init_Z_i_TaskQueue(clutch.init_i_TaskQueue) && ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 2)) {
                if (impulse && excluded) {
                   clutch.write_V_20();
                }
             } else {
-               clutch.init_V_Z_10(i.init_Z_I(clutch.read_I_9(), clutch.reset, 3));
+               clutch.init_V_Z_10(ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.reset, 3));
             }
 
-            if (clutch.init_Z && clutch.init_Z_i_TaskQueue(clutch.init_i_TaskQueue) && i.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 2)) {
+            if (clutch.init_Z && clutch.init_Z_i_TaskQueue(clutch.init_i_TaskQueue) && ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 2)) {
                clutch.update_V_16();
             }
 
-            if (clutch.init_Z_i_TaskQueue(clutch.init_i_TaskQueue) && i.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 2)) {
+            if (clutch.init_Z_i_TaskQueue(clutch.init_i_TaskQueue) && ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 2)) {
                clutch.sync_V_11();
             }
          }
@@ -504,8 +504,8 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          double best = 16.0;
 
          for (ClutchModule.Inner_CachePool sample : clutch.init_Map.values()) {
-            if ((sample.init_i_StreamUtil == i.Inner_StreamUtil.FIREBALL || sample.init_i_StreamUtil == i.Inner_StreamUtil.WIND)
-               && i.init_Z_I(clutch.read_I_9(), sample.load_I, 5)) {
+            if ((sample.init_i_StreamUtil == ClutchFallPhysics.Inner_StreamUtil.FIREBALL || sample.init_i_StreamUtil == ClutchFallPhysics.Inner_StreamUtil.WIND)
+               && ClutchFallPhysics.init_Z_I(clutch.read_I_9(), sample.load_I, 5)) {
                double distance = sample.init_Vec3.distanceToSqr(packet.center());
                if (distance < best) {
                   nearest = sample;
@@ -516,19 +516,19 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
          if (!packet.playerKnockback().isEmpty() && !(packet.playerKnockback().get().lengthSqr() < 0.0025)) {
             boolean ownBlast = clutch.update_Vec3 != null
-                  && i.init_Z_I(clutch.read_I_9(), clutch.index, 100)
+                  && ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.index, 100)
                   && clutch.update_Vec3.distanceToSqr(packet.center()) <= 64.0
                || clutch.init_Z_Vec3_3(packet.center());
             boolean own = nearest != null
-               ? nearest.init_Z || i.init_Z_I(clutch.read_I_9(), clutch.entry, 3)
-               : ownBlast || i.init_Z_I(clutch.read_I_9(), clutch.entry, 3);
-            i.Inner_TaskQueue hit = new i.Inner_TaskQueue(
-               nearest != null ? nearest.init_i_StreamUtil : i.Inner_StreamUtil.BLAST, own, nearest == null || nearest.load_Z, clutch.read_I_9()
+               ? nearest.init_Z || ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.entry, 3)
+               : ownBlast || ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.entry, 3);
+            ClutchFallPhysics.Inner_TaskQueue hit = new ClutchFallPhysics.Inner_TaskQueue(
+               nearest != null ? nearest.init_i_StreamUtil : ClutchFallPhysics.Inner_StreamUtil.BLAST, own, nearest == null || nearest.load_Z, clutch.read_I_9()
             );
             if (nearest == null && !clutch.init_Z_i_TaskQueue(hit)) {
                boolean enemyHit = clutch.init_i_TaskQueue != null
                   && !clutch.init_i_TaskQueue.init_Z()
-                  && i.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 4);
+                  && ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 4);
                if (own && !enemyHit) {
                   clutch.read_V_21();
                } else {
@@ -587,21 +587,21 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean init_Z_Vec3_3(Vec3 near) {
-      return this.write_Vec3 != null && near != null && i.init_Z_I(this.read_I_9(), this.buffer, 20) && this.write_Vec3.distanceToSqr(near) <= 64.0;
+      return this.write_Vec3 != null && near != null && ClutchFallPhysics.init_Z_I(this.read_I_9(), this.buffer, 20) && this.write_Vec3.distanceToSqr(near) <= 64.0;
    }
 
    private boolean run_Z_3() {
-      return i.load(this.init_i_TaskQueue) && this.init_Z_i_TaskQueue(this.init_i_TaskQueue) && i.init_Z_I(this.read_I_9(), this.init_i_TaskQueue.init_I(), 4);
+      return ClutchFallPhysics.load(this.init_i_TaskQueue) && this.init_Z_i_TaskQueue(this.init_i_TaskQueue) && ClutchFallPhysics.init_Z_I(this.read_I_9(), this.init_i_TaskQueue.init_I(), 4);
    }
 
    private void init_V_Z_10(boolean hurt) {
-      if (this.bool("melee") && MC.level != null && !i.init_Z_I(this.read_I_9(), this.entry, 3) && !i.init_Z_I(this.read_I_9(), this.start, 3)) {
+      if (this.bool("melee") && MC.level != null && !ClutchFallPhysics.init_Z_I(this.read_I_9(), this.entry, 3) && !ClutchFallPhysics.init_Z_I(this.read_I_9(), this.start, 3)) {
          if (!this.init_Z && this.load_Vec3.y >= 0.55 && this.init_Z_Vec3_3(MC.player.position())) {
             this.init_Str = this.init_Str + " own boost";
             this.read_V_21();
          } else {
             this.init_Str = this.init_Str + " server impulse hurt=" + hurt;
-            this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.SERVER_PUSH, false, true, this.read_I_9());
+            this.init_i_TaskQueue = new ClutchFallPhysics.Inner_TaskQueue(ClutchFallPhysics.Inner_StreamUtil.SERVER_PUSH, false, true, this.read_I_9());
             this.poll_I = this.push_I = this.read_I_9();
             this.write_BlockPos = this.read_BlockPos;
             this.update_V_16();
@@ -611,12 +611,12 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private void update_V_16() {
-      if (this.init_Z && i.load(this.init_i_TaskQueue)) {
+      if (this.init_Z && ClutchFallPhysics.load(this.init_i_TaskQueue)) {
          if (this.state == 0 || this.state == 3) {
             this.flush_Z = this.stop();
          }
 
-         this.state = i.init_I_I(this.state);
+         this.state = ClutchFallPhysics.init_I_I(this.state);
          this.load_Z = false;
          this.get = 0;
          this.tick = 0;
@@ -625,12 +625,12 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean init_Z_I_9(int tick) {
-      return i.load(this.init_i_TaskQueue) && !MC.player.onGround() && i.init_Z_I(tick, this.init_i_TaskQueue.init_I(), this.clear, this.value, 160);
+      return ClutchFallPhysics.load(this.init_i_TaskQueue) && !MC.player.onGround() && ClutchFallPhysics.init_Z_I(tick, this.init_i_TaskQueue.init_I(), this.clear, this.value, 160);
    }
 
    private boolean get_Z_3() {
       int ticks = (int)Math.round(this.decimal("guard-time") * 20.0);
-      return ticks > 0 && this.add != -2147483648 && i.init_Z_I(this.read_I_9(), this.add, ticks);
+      return ticks > 0 && this.add != -2147483648 && ClutchFallPhysics.init_Z_I(this.read_I_9(), this.add, ticks);
    }
 
    private void sync_V_11() {
@@ -645,7 +645,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
    private boolean init_Z_Z_I_2(boolean stocked, int mode) {
       if (stocked && mode != 2 && !this.load_Z && MC.player.onGround() && ((AutismLivingEntityAccessor)MC.player).autism$getNoJumpDelay() <= 1) {
-         return i.init_Z_I(this.read_I_9(), this.pool, 2) ? true : this.init_Z && !this.read_Z && i.load(this.init_i_TaskQueue) && !this.next();
+         return ClutchFallPhysics.init_Z_I(this.read_I_9(), this.pool, 2) ? true : this.init_Z && !this.read_Z && ClutchFallPhysics.load(this.init_i_TaskQueue) && !this.next();
       } else {
          return false;
       }
@@ -655,15 +655,15 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       return !box.contains(from) && !box.clip(from, to).isPresent() ? 1.0 / 0.0 : 0.0;
    }
 
-   private static i.Inner_StreamUtil init_i_StreamUtil_Entity(Entity entity) {
+   private static ClutchFallPhysics.Inner_StreamUtil init_i_StreamUtil_Entity(Entity entity) {
       if (entity instanceof Fireball) {
-         return i.Inner_StreamUtil.FIREBALL;
+         return ClutchFallPhysics.Inner_StreamUtil.FIREBALL;
       } else if (entity instanceof AbstractWindCharge) {
-         return i.Inner_StreamUtil.WIND;
+         return ClutchFallPhysics.Inner_StreamUtil.WIND;
       } else if (entity instanceof AbstractArrow) {
-         return i.Inner_StreamUtil.ARROW;
+         return ClutchFallPhysics.Inner_StreamUtil.ARROW;
       } else {
-         return !(entity instanceof Snowball) && !(entity instanceof ThrownEgg) ? i.Inner_StreamUtil.OTHER : i.Inner_StreamUtil.SNOWBALL;
+         return !(entity instanceof Snowball) && !(entity instanceof ThrownEgg) ? ClutchFallPhysics.Inner_StreamUtil.OTHER : ClutchFallPhysics.Inner_StreamUtil.SNOWBALL;
       }
    }
 
@@ -705,20 +705,20 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
    private void close_V_8() {
       int tick = this.read_I_9();
-      this.init_Map.values().removeIf(sample -> !i.init_Z_I(tick, sample.load_I, 5));
+      this.init_Map.values().removeIf(sample -> !ClutchFallPhysics.init_Z_I(tick, sample.load_I, 5));
 
       for (Entity entity : MC.level
-         .getEntities(MC.player, MC.player.getBoundingBox().inflate(10.0), candidate -> init_i_StreamUtil_Entity(candidate) != i.Inner_StreamUtil.OTHER)) {
+         .getEntities(MC.player, MC.player.getBoundingBox().inflate(10.0), candidate -> init_i_StreamUtil_Entity(candidate) != ClutchFallPhysics.Inner_StreamUtil.OTHER)) {
          Projectile projectile = (Projectile)entity;
          Entity owner = projectile.getOwner();
          ClutchModule.Inner_CachePool old = this.init_Map.get(entity.getId());
          boolean own = owner != null ? owner == MC.player : old != null && old.init_Z;
-         boolean launched = init_i_StreamUtil_Entity(entity) == i.Inner_StreamUtil.FIREBALL || init_i_StreamUtil_Entity(entity) == i.Inner_StreamUtil.WIND;
+         boolean launched = init_i_StreamUtil_Entity(entity) == ClutchFallPhysics.Inner_StreamUtil.FIREBALL || init_i_StreamUtil_Entity(entity) == ClutchFallPhysics.Inner_StreamUtil.WIND;
          if (old == null
             && owner == null
             && launched
             && this.write_Vec3 != null
-            && i.init_Z_I(tick, this.buffer, 8)
+            && ClutchFallPhysics.init_Z_I(tick, this.buffer, 8)
             && entity.position().distanceToSqr(this.write_Vec3) < 9.0) {
             own = true;
          }
@@ -739,7 +739,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       if (packet instanceof ServerboundUseItemOnPacket use
          && use.hand() == InteractionHand.MAIN_HAND
          && use.hitResult() == this.init_BlockHitResult
-         && i.init_Z_I(this.read_I_9(), this.chunk, 1)) {
+         && ClutchFallPhysics.init_Z_I(this.read_I_9(), this.chunk, 1)) {
          this.block = use.sequence();
       }
 
@@ -783,7 +783,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          && hit != null
          && hand == InteractionHand.MAIN_HAND
          && hit == clutch.init_BlockHitResult
-         && i.init_Z_I(clutch.read_I_9(), clutch.chunk, 1)) {
+         && ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.chunk, 1)) {
          if (result != null && result.consumesAction()) {
             ScaffoldModule.init_V_I_I(clutch.frame, clutch.block);
             if (clutch.update_BlockPos != null && MC.level != null && !MC.level.getBlockState(clutch.update_BlockPos).isAir()) {
@@ -812,9 +812,9 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          && MC.gui.screen() == null
          && MC.gui.overlay() == null
          && !aD.init_Z()
-         && !aC.init_Z()
+         && !FreecamController.init_Z()
          && !cd.init_Z()
-         && !HashUtil.init_Z()
+         && !BlinkPacketManager.init_Z()
          && !PkgCls_a.init_Z()
          && !MacroExecutor.write_Z()
          && !AutoTotemModule.init_Z_6();
@@ -842,7 +842,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          this.write_Z = false;
          this.pop_V_3();
          this.run_V_3();
-         if (this.pop_Z && (MC.player.onGround() || MC.player.isInWater() || MC.player.isInLava()) && !i.init_Z_I(this.read_I_9(), this.node, 2)) {
+         if (this.pop_Z && (MC.player.onGround() || MC.player.isInWater() || MC.player.isInLava()) && !ClutchFallPhysics.init_Z_I(this.read_I_9(), this.node, 2)) {
             this.pop_Z = false;
          }
 
@@ -864,9 +864,9 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
             }
 
             if (!this.init_Z
-               && i.load(this.init_i_TaskQueue)
-               && !i.init_Z_I(tick, this.init_i_TaskQueue.init_I(), 2)
-               && !i.init_Z_I(tick, this.push_I, 2)
+               && ClutchFallPhysics.load(this.init_i_TaskQueue)
+               && !ClutchFallPhysics.init_Z_I(tick, this.init_i_TaskQueue.init_I(), 2)
+               && !ClutchFallPhysics.init_Z_I(tick, this.push_I, 2)
                && this.next()) {
                this.init_i_TaskQueue = null;
                this.poll_I = -2147483648;
@@ -883,10 +883,10 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
                this.load_Map.entrySet().removeIf(entry -> tick - entry.getValue() > 1);
                boolean freshHit = this.init_Z_i_TaskQueue(this.init_i_TaskQueue)
-                  && (i.init_Z_I(tick, this.init_i_TaskQueue.init_I(), 24) && i.init_Z_I(tick, this.push_I, 24) || this.init_Z_I_9(tick));
+                  && (ClutchFallPhysics.init_Z_I(tick, this.init_i_TaskQueue.init_I(), 24) && ClutchFallPhysics.init_Z_I(tick, this.push_I, 24) || this.init_Z_I_9(tick));
                boolean walkingEdge = !this.init_Z && !freshHit && this.reset();
                if (this.init_Z || freshHit || walkingEdge || this.read_Z(tick)) {
-                  i.Inner_ConfigStore forecast = walkingEdge ? this.load_i_ConfigStore() : this.init_i_ConfigStore();
+                  ClutchFallPhysics.Inner_ConfigStore forecast = walkingEdge ? this.load_i_ConfigStore() : this.init_i_ConfigStore();
                   if (!this.init_Z && !freshHit) {
                      if (walkingEdge) {
                         if (!forecast.init_Z() || forecast.init_List().isEmpty()) {
@@ -915,7 +915,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
                      int slot = this.sync_I_2();
                      boolean chosenAxis = Math.abs(MC.player.getDeltaMovement().x) > Math.abs(MC.player.getDeltaMovement().z);
-                     boolean ownFlight = i.init_Z_i_TaskQueue(this.init_i_TaskQueue);
+                     boolean ownFlight = ClutchFallPhysics.init_Z_i_TaskQueue(this.init_i_TaskQueue);
                      int chosenMode = ownFlight ? 3 : 0;
                      ClutchModule.Inner_BufferHelper first = ownFlight && forecast.init_Z() ? this.init_j_BufferHelper_i_ConfigStore_I(forecast, slot) : null;
                      if (this.push_Z_4() && !walkingEdge && first == null) {
@@ -928,7 +928,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                      }
 
                      if (this.push_Z_4() && !walkingEdge && forecast.init_Z() && this.init_Z_j_BufferHelper(first) && chosenMode != 3) {
-                        i.Inner_ConfigStore alternateForecast = this.init_i_ConfigStore_Z(!chosenAxis);
+                        ClutchFallPhysics.Inner_ConfigStore alternateForecast = this.init_i_ConfigStore_Z(!chosenAxis);
                         ClutchModule.Inner_BufferHelper alternate = alternateForecast.init_Z() ? this.init_j_BufferHelper_i_ConfigStore_I(alternateForecast, slot) : null;
                         if (!alternateForecast.init_Z() || this.init_Z_j_BufferHelper_j_BufferHelper(alternate, first)) {
                            chosenAxis = !chosenAxis;
@@ -937,7 +937,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                         }
 
                         for (int mode = 1; mode <= 2 && forecast.init_Z() && this.init_Z_j_BufferHelper(first); mode++) {
-                           i.Inner_ConfigStore candidate = this.init_i_ConfigStore_Z_I(chosenAxis, mode);
+                           ClutchFallPhysics.Inner_ConfigStore candidate = this.init_i_ConfigStore_Z_I(chosenAxis, mode);
                            ClutchModule.Inner_BufferHelper catchRoute = candidate.init_Z() ? this.init_j_BufferHelper_i_ConfigStore_I(candidate, slot) : null;
                            if (!candidate.init_Z()
                               || this.init_Z_j_BufferHelper_j_BufferHelper(catchRoute, first)
@@ -950,7 +950,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                      }
 
                      if (this.push_Z_4() && !walkingEdge && forecast.init_Z() && first != null && chosenMode == 0) {
-                        i.Inner_ConfigStore diagonalForecast = this.init_i_ConfigStore_Z_I(chosenAxis, 1);
+                        ClutchFallPhysics.Inner_ConfigStore diagonalForecast = this.init_i_ConfigStore_Z_I(chosenAxis, 1);
                         ClutchModule.Inner_BufferHelper diagonal = diagonalForecast.init_Z() ? this.init_j_BufferHelper_i_ConfigStore_I(diagonalForecast, slot) : null;
                         if (!diagonalForecast.init_Z() || this.load_Z_j_BufferHelper_j_BufferHelper(diagonal, first)) {
                            forecast = diagonalForecast;
@@ -961,7 +961,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
                      if (first == null && slot >= 0 && !walkingEdge && forecast.init_Z() && this.clear()) {
                         triedCrouch = true;
-                        i.Inner_ConfigStore crouched = this.init_i_ConfigStore_Z_2(chosenAxis, 1, true);
+                        ClutchFallPhysics.Inner_ConfigStore crouched = this.init_i_ConfigStore_Z_2(chosenAxis, 1, true);
                         ClutchModule.Inner_BufferHelper catchRoute = this.init_j_BufferHelper_i_ConfigStore_I(crouched, slot);
                         if (catchRoute != null) {
                            forecast = crouched;
@@ -972,7 +972,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                      }
 
                      if (first == null && this.push_Z_4() && !walkingEdge && forecast.init_Z() && this.init_BlockPos_7() != null) {
-                        i.Inner_ConfigStore rowReturn = this.init_i_ConfigStore_Z_I(chosenAxis, 4);
+                        ClutchFallPhysics.Inner_ConfigStore rowReturn = this.init_i_ConfigStore_Z_I(chosenAxis, 4);
                         ClutchModule.Inner_BufferHelper catchRoute = this.init(rowReturn, slot, null, false, Set.of(), true);
                         if (catchRoute != null) {
                            forecast = rowReturn;
@@ -1010,7 +1010,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                      }
 
                      if (walkingEdge) {
-                        this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.FALL, true, true, tick);
+                        this.init_i_TaskQueue = new ClutchFallPhysics.Inner_TaskQueue(ClutchFallPhysics.Inner_StreamUtil.FALL, true, true, tick);
                         this.write_BlockPos = this.read_BlockPos;
                         this.push_I = tick;
                      }
@@ -1037,7 +1037,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                   }
 
                   if (freshHit
-                     && i.load(this.init_i_TaskQueue)
+                     && ClutchFallPhysics.load(this.init_i_TaskQueue)
                      && MC.player.getDeltaMovement().y > 0.15
                      && (MC.player.getDeltaMovement().y >= 0.6 || this.init_Z_I_9(tick))) {
                      this.push_Z = true;
@@ -1075,7 +1075,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                            ? null
                            : (acquiredRoute != null ? acquiredRoute : this.init_j_BufferHelper_i_ConfigStore_I(forecast, slot));
                         if (!this.read_Z && this.push_Z_4() && !this.close_Z && this.init_Z_j_BufferHelper(route)) {
-                           i.Inner_ConfigStore alternateForecast = this.init_i_ConfigStore_Z(!this.flush_Z);
+                           ClutchFallPhysics.Inner_ConfigStore alternateForecast = this.init_i_ConfigStore_Z(!this.flush_Z);
                            ClutchModule.Inner_BufferHelper alternate = alternateForecast.init_Z()
                               ? this.init_j_BufferHelper_i_ConfigStore_I(alternateForecast, slot)
                               : null;
@@ -1096,7 +1096,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                            }
 
                            for (int mode = 1; mode <= 2 && this.init_Z_j_BufferHelper(route); mode++) {
-                              i.Inner_ConfigStore candidate = this.init_i_ConfigStore_Z_I(this.flush_Z, mode);
+                              ClutchFallPhysics.Inner_ConfigStore candidate = this.init_i_ConfigStore_Z_I(this.flush_Z, mode);
                               ClutchModule.Inner_BufferHelper catchRoute = candidate.init_Z() ? this.init_j_BufferHelper_i_ConfigStore_I(candidate, slot) : null;
                               if (!candidate.init_Z()) {
                                  this.state = mode;
@@ -1116,7 +1116,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                         }
 
                         if (!this.read_Z && route == null && slot >= 0 && !this.close_Z && !triedCrouch && this.clear()) {
-                           i.Inner_ConfigStore crouched = this.init_i_ConfigStore_Z_2(this.flush_Z, 1, true);
+                           ClutchFallPhysics.Inner_ConfigStore crouched = this.init_i_ConfigStore_Z_2(this.flush_Z, 1, true);
                            ClutchModule.Inner_BufferHelper catchRoute = this.init_j_BufferHelper_i_ConfigStore_I(crouched, slot);
                            if (catchRoute != null) {
                               this.queue = tick;
@@ -1127,7 +1127,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                         }
 
                         if (!this.read_Z && route == null && this.push_Z_4() && !this.close_Z && this.init_BlockPos_7() != null) {
-                           i.Inner_ConfigStore rowReturn = this.init_i_ConfigStore_Z_I(this.flush_Z, 4);
+                           ClutchFallPhysics.Inner_ConfigStore rowReturn = this.init_i_ConfigStore_Z_I(this.flush_Z, 4);
                            ClutchModule.Inner_BufferHelper catchRoute = this.init(rowReturn, slot, null, false, Set.of(), true);
                            if (catchRoute != null) {
                               forecast = rowReturn;
@@ -1171,7 +1171,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                            if (this.close_Z) {
                               this.push_V_4();
                            } else {
-                              if (!this.valid() && !i.init_Z_I(tick, this.task, 3) && !this.load_Z_I_5(tick)) {
+                              if (!this.valid() && !ClutchFallPhysics.init_Z_I(tick, this.task, 3) && !this.load_Z_I_5(tick)) {
                                  this.poll_V_5();
                               }
 
@@ -1207,7 +1207,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                               this.cache = this.load_BlockPos.getY();
                            }
 
-                           k.Inner_NetHelper link = route.init_k_JsonUtil().init_k_NetHelper();
+                           ClutchBlockPlanner.Inner_NetHelper link = route.init_k_JsonUtil().init_k_NetHelper();
                            this.set = this.init_I_k_NetHelper(link);
                            if (hand
                               && this.init_j_DataUtil != null
@@ -1215,7 +1215,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                               && !this.load_Map.containsKey(this.init_j_DataUtil.init_BlockPos)
                               && (!route.init_Z() || route.init_k_JsonUtil().init_k_NetHelper().init_BlockPos().equals(this.init_j_DataUtil.init_BlockPos))) {
                               for (int i = 0; i < route.init_k_JsonUtil().init_List().size(); i++) {
-                                 k.Inner_NetHelper preparedLink = route.init_k_JsonUtil().init_List().get(i);
+                                 ClutchBlockPlanner.Inner_NetHelper preparedLink = route.init_k_JsonUtil().init_List().get(i);
                                  if (preparedLink.init_BlockPos().equals(this.init_j_DataUtil.init_BlockPos)) {
                                     Direction nextFace = i + 1 < route.init_k_JsonUtil().init_List().size()
                                           && route.init_k_JsonUtil().init_List().get(i + 1).load_BlockPos().equals(this.init_j_DataUtil.init_BlockPos)
@@ -1289,7 +1289,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                                     ClutchModule.Inner_DataUtil current = this.load_I_k_NetHelper(link) == 0
                                        ? this.init_j_DataUtil
                                        : this.init_j_DataUtil_j_BufferHelper(
-                                          route, new k.Inner_NetHelper(link.init_BlockPos(), link.load_BlockPos(), link.init_Direction(), 0, 0), this.prev
+                                          route, new ClutchBlockPlanner.Inner_NetHelper(link.init_BlockPos(), link.load_BlockPos(), link.init_Direction(), 0, 0), this.prev
                                        );
                                     if (current != null
                                        && ScaffoldModule.init_Z_Vec3(
@@ -1413,7 +1413,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean load_Z_I_5(int tick) {
-      return this.run == tick || this.init_BlockHitResult != null && i.init_Z_I(tick, this.chunk, 1);
+      return this.run == tick || this.init_BlockHitResult != null && ClutchFallPhysics.init_Z_I(tick, this.chunk, 1);
    }
 
    private void write(int tick) {
@@ -1444,7 +1444,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          } else if (!this.get_Z_3()) {
             return !this.bool("own-knockback")
                ? false
-               : i.init_Z_I(tick, this.value, MC.player.getY(), this.read_BlockPos.getY(), MC.player.getDeltaMovement().y, this.pop_Z, put());
+               : ClutchFallPhysics.init_Z_I(tick, this.value, MC.player.getY(), this.read_BlockPos.getY(), MC.player.getDeltaMovement().y, this.pop_Z, put());
          } else {
             return !put() || MC.player.getY() < this.read_BlockPos.getY() + 0.4;
          }
@@ -1453,13 +1453,13 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
    }
 
-   private boolean init_Z_I_i_ConfigStore(int tick, i.Inner_ConfigStore forecast) {
+   private boolean init_Z_I_i_ConfigStore(int tick, ClutchFallPhysics.Inner_ConfigStore forecast) {
       if (!this.read_Z(tick) || !forecast.init_Z() || forecast.init_List().isEmpty()) {
          return false;
       }
 
       if (this.get_Z_3()) {
-         this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.GUARD, false, true, tick);
+         this.init_i_TaskQueue = new ClutchFallPhysics.Inner_TaskQueue(ClutchFallPhysics.Inner_StreamUtil.GUARD, false, true, tick);
          this.write_BlockPos = this.read_BlockPos;
          this.push_I = tick;
          this.poll_I = -2147483648;
@@ -1471,7 +1471,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          return false;
       }
 
-      this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.FALL, true, true, tick);
+      this.init_i_TaskQueue = new ClutchFallPhysics.Inner_TaskQueue(ClutchFallPhysics.Inner_StreamUtil.FALL, true, true, tick);
       this.write_BlockPos = this.read_BlockPos;
       this.push_I = tick;
       this.poll_I = -2147483648;
@@ -1479,7 +1479,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean init_Z_D_D_2(double fallen, double below) {
-      return i.init_Z_D(fallen, below, this.bool("own-void-only"), this.integer("own-fall-height"));
+      return ClutchFallPhysics.init_Z_D(fallen, below, this.bool("own-void-only"), this.integer("own-fall-height"));
    }
 
    private boolean load_Z_D_D_2(double fallen, double below) {
@@ -1492,7 +1492,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
 
       double health = MC.player.getHealth() + MC.player.getAbsorptionAmount();
-      return i.init_D_D(fallen + below) >= health;
+      return ClutchFallPhysics.init_D_D(fallen + below) >= health;
    }
 
    private double init_D_AABB_2(AABB body) {
@@ -1531,7 +1531,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       return 1.0 / 0.0;
    }
 
-   private i.Inner_BufferHelper init_i_BufferHelper_AABB(AABB body) {
+   private ClutchFallPhysics.Inner_BufferHelper init_i_BufferHelper_AABB(AABB body) {
       AABB box = body.deflate(0.001);
       MutableBlockPos pos = new MutableBlockPos();
 
@@ -1542,15 +1542,15 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                BlockState state = MC.level.getBlockState(pos);
                FluidState fluid = state.getFluidState();
                if (fluid.is(FluidTags.LAVA)) {
-                  return i.Inner_BufferHelper.HAZARD;
+                  return ClutchFallPhysics.Inner_BufferHelper.HAZARD;
                }
 
                if (fluid.is(FluidTags.WATER) && y + fluid.getHeight(MC.level, pos) > box.minY) {
-                  return i.Inner_BufferHelper.CUSHION;
+                  return ClutchFallPhysics.Inner_BufferHelper.CUSHION;
                }
 
                if (state.is(Blocks.COBWEB) || state.is(Blocks.POWDER_SNOW)) {
-                  return i.Inner_BufferHelper.CUSHION;
+                  return ClutchFallPhysics.Inner_BufferHelper.CUSHION;
                }
             }
          }
@@ -1558,7 +1558,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
       Vec3 centre = body.getCenter();
       pos.set(Mth.floor(centre.x), Mth.floor(body.minY - 0.05), Mth.floor(centre.z));
-      return MC.level.getBlockState(pos).is(Blocks.SLIME_BLOCK) ? i.Inner_BufferHelper.CUSHION : i.Inner_BufferHelper.NONE;
+      return MC.level.getBlockState(pos).is(Blocks.SLIME_BLOCK) ? ClutchFallPhysics.Inner_BufferHelper.CUSHION : ClutchFallPhysics.Inner_BufferHelper.NONE;
    }
 
    private double init_D_13() {
@@ -1566,13 +1566,13 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       return Math.max(1.0, Math.min(this.integer("safe-fall"), 2.0 + health));
    }
 
-   private i.Inner_ConfigStore init_i_ConfigStore() {
+   private ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore() {
       if (this.close_Z) {
          return this.load_i_ConfigStore();
       }
 
-      i.Inner_CachePool collision = (body, motion) -> Entity.collideBoundingBox(MC.player, motion, body, MC.level, List.of());
-      i.Inner_JsonUtil medium = this::init_i_BufferHelper_AABB;
+      ClutchFallPhysics.Inner_CachePool collision = (body, motion) -> Entity.collideBoundingBox(MC.player, motion, body, MC.level, List.of());
+      ClutchFallPhysics.Inner_JsonUtil medium = this::init_i_BufferHelper_AABB;
       if (this.init_Z && !this.load_Z && this.push_Z_4() && this.state != 3) {
          return this.init_i_ConfigStore_Z_I(this.flush_Z, this.state);
       }
@@ -1585,20 +1585,20 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          }
       }
 
-      return i.init_i_ConfigStore_AABB(
+      return ClutchFallPhysics.init_i_ConfigStore_AABB(
          MC.player.getBoundingBox(), MC.player.getDeltaMovement(), acceleration, this.init_D_13(), collision, medium, MC.player.fallDistance
       );
    }
 
-   private i.Inner_ConfigStore init_i_ConfigStore_Z(boolean axis) {
+   private ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_Z(boolean axis) {
       return this.init_i_ConfigStore_Z_I(axis, 0);
    }
 
-   private i.Inner_ConfigStore init_i_ConfigStore_Z_I(boolean axis, int mode) {
+   private ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_Z_I(boolean axis, int mode) {
       return this.init_i_ConfigStore_Z(axis, mode, List.of());
    }
 
-   private i.Inner_ConfigStore init_i_ConfigStore_Z(boolean axis, int mode, List<VoxelShape> extra, int placementTick) {
+   private ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_Z(boolean axis, int mode, List<VoxelShape> extra, int placementTick) {
       if (this.push_Z_4() && !this.load_Z && mode != 3) {
          return this.load(axis, mode, extra, placementTick);
       }
@@ -1612,7 +1612,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
 
       Vec3 input = acceleration;
-      return i.init_i_ConfigStore_AABB(
+      return ClutchFallPhysics.init_i_ConfigStore_AABB(
          MC.player.getBoundingBox(),
          MC.player.getDeltaMovement(),
          this.init_D_13(),
@@ -1625,11 +1625,11 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       );
    }
 
-   private i.Inner_ConfigStore init_i_ConfigStore_Z(boolean axis, int mode, List<VoxelShape> extra) {
+   private ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_Z(boolean axis, int mode, List<VoxelShape> extra) {
       return this.load(axis, mode, extra, 0);
    }
 
-   private i.Inner_ConfigStore load(boolean axis, int mode, List<VoxelShape> extra, int placementTick) {
+   private ClutchFallPhysics.Inner_ConfigStore load(boolean axis, int mode, List<VoxelShape> extra, int placementTick) {
       if (mode == 3) {
          return this.init_i_ConfigStore_Z(axis, mode, extra, placementTick);
       }
@@ -1643,7 +1643,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
             initialMotion = new Vec3(initialMotion.x, Math.max(initialMotion.y, jump), initialMotion.z);
          }
 
-         return i.init_i_ConfigStore_AABB(
+         return ClutchFallPhysics.init_i_ConfigStore_AABB(
             MC.player.getBoundingBox(),
             initialMotion,
             this.init_D_13(),
@@ -1661,7 +1661,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
    private Vec3 init_Vec3_AABB(AABB body, Vec3 motion, boolean axis, int mode, boolean supported) {
       if (supported || this.load_Z) {
-         return i.init_Vec3_Vec3(motion);
+         return ClutchFallPhysics.init_Vec3_Vec3(motion);
       }
 
       if (mode == 4 && this.sync_BlockPos != null) {
@@ -1679,7 +1679,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          }
       }
 
-      return mode == 0 ? i.init_Vec3_Vec3_Z(motion, axis) : i.init_Vec3_Vec3(motion);
+      return mode == 0 ? ClutchFallPhysics.init_Vec3_Vec3_Z(motion, axis) : ClutchFallPhysics.init_Vec3_Vec3(motion);
    }
 
    private BlockPos init_BlockPos_7() {
@@ -1716,7 +1716,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean add() {
-      return i.init_Z_I(this.read_I_9(), this.queue, 2) && !MC.player.onGround();
+      return ClutchFallPhysics.init_Z_I(this.read_I_9(), this.queue, 2) && !MC.player.onGround();
    }
 
    private boolean clear() {
@@ -1730,12 +1730,12 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          && Math.abs(MC.player.getEyeHeight() - 1.62) < 0.001;
    }
 
-   private i.Inner_ConfigStore init_i_ConfigStore_Z_2(boolean axis, int mode, boolean start) {
+   private ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_Z_2(boolean axis, int mode, boolean start) {
       return this.init_i_ConfigStore_Z(axis, mode, start, List.of(), 0);
    }
 
-   private i.Inner_ConfigStore init_i_ConfigStore_Z(boolean axis, int mode, boolean start, List<VoxelShape> extra, int placementTick) {
-      return i.init(
+   private ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_Z(boolean axis, int mode, boolean start, List<VoxelShape> extra, int placementTick) {
+      return ClutchFallPhysics.init(
          autismclient.ai.a.NodeWalker.Inner_StreamUtil.of(MC.player),
          MC.options.keyShift.isDown() ? 64 : (!start && this.read_I_9() != this.queue ? 0 : 1),
          MC.player.getYRot(),
@@ -1773,12 +1773,12 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          && init_Vec3_Input_F(this.init_Input_2(), MC.player.getYRot()).horizontalDistanceSqr() > 0.0;
    }
 
-   private i.Inner_ConfigStore load_i_ConfigStore() {
+   private ClutchFallPhysics.Inner_ConfigStore load_i_ConfigStore() {
       Input input = this.init_Input_2();
       autismclient.ai.a.NodeWalker.Inner_DataUtil pressed = new autismclient.ai.a.NodeWalker.Inner_DataUtil(
          (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0), (input.left() ? 1 : 0) - (input.right() ? 1 : 0), false, false, true, cn.init_F(MC.player)
       );
-      return i.init_i_ConfigStore_NodeWalker_StreamU(
+      return ClutchFallPhysics.init_i_ConfigStore_NodeWalker_StreamU(
          autismclient.ai.a.NodeWalker.Inner_StreamUtil.of(MC.player),
          pressed,
          autismclient.ai.a.NodeWalker.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player),
@@ -1845,20 +1845,20 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
    }
 
-   private ClutchModule.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore_I(i.Inner_ConfigStore forecast, int slot) {
+   private ClutchModule.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore_I(ClutchFallPhysics.Inner_ConfigStore forecast, int slot) {
       return this.init_j_BufferHelper_i_ConfigStore(forecast, slot, null, false);
    }
 
-   private ClutchModule.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore_2(i.Inner_ConfigStore forecast, int slot, BlockPos assumed) {
+   private ClutchModule.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore_2(ClutchFallPhysics.Inner_ConfigStore forecast, int slot, BlockPos assumed) {
       return this.init_j_BufferHelper_i_ConfigStore(forecast, slot, assumed, false);
    }
 
-   private ClutchModule.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore(i.Inner_ConfigStore forecast, int slot, BlockPos assumed, boolean bestEffort) {
+   private ClutchModule.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore(ClutchFallPhysics.Inner_ConfigStore forecast, int slot, BlockPos assumed, boolean bestEffort) {
       return this.init_j_BufferHelper_i_ConfigStore(forecast, slot, assumed, bestEffort, Set.of());
    }
 
    private ClutchModule.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore(
-      i.Inner_ConfigStore forecast, int slot, BlockPos assumed, boolean bestEffort, Set<BlockPos> rejectedStarts
+      ClutchFallPhysics.Inner_ConfigStore forecast, int slot, BlockPos assumed, boolean bestEffort, Set<BlockPos> rejectedStarts
    ) {
       ClutchModule.Inner_BufferHelper prepared = this.init(forecast, slot, assumed, bestEffort, rejectedStarts, this.state == 4);
       return prepared == null && !bestEffort && assumed == null
@@ -1867,32 +1867,32 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private ClutchModule.Inner_BufferHelper init(
-      i.Inner_ConfigStore forecast, int slot, BlockPos assumed, boolean bestEffort, Set<BlockPos> rejectedStarts, boolean marginal
+      ClutchFallPhysics.Inner_ConfigStore forecast, int slot, BlockPos assumed, boolean bestEffort, Set<BlockPos> rejectedStarts, boolean marginal
    ) {
       if (!forecast.init_List().isEmpty() && slot >= 0) {
          List<AABB> bodies = new ArrayList<>(forecast.init_List().size() + 1);
          bodies.add(MC.player.getBoundingBox());
 
-         for (i.Inner_UiHelper step : forecast.init_List()) {
+         for (ClutchFallPhysics.Inner_UiHelper step : forecast.init_List()) {
             bodies.add(step.init_AABB());
          }
 
          double eyeHeight = MC.player.getEyeHeight();
          double range = MC.player.blockInteractionRange() - 0.03;
          ce.Inner_DataUtil from = this.init_ce_DataUtil_6();
-         ToDoubleFunction<k.Inner_NetHelper> turnCost = link -> {
+         ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> turnCost = link -> {
             Vec3 eye = forecast.load().isEmpty()
                ? ClutchModule.Inner_BufferHelper.init(bodies, eyeHeight, this.load_I_k_NetHelper(link))
                : forecast.load().get(Mth.clamp(this.load_I_k_NetHelper(link), 0, forecast.load().size() - 1));
             float angle = ce.load(from, ClutchModule.Inner_BufferHelper.init_ce_DataUtil_Vec3_k_NetHelper(eye, link));
             return Math.max(0.0F, angle / this.init_I_k_NetHelper(link) - 25.0F) * 0.04;
          };
-         k.Inner_JsonUtil plan = null;
-         boolean own = i.init_Z_i_TaskQueue(this.init_i_TaskQueue);
+         ClutchBlockPlanner.Inner_JsonUtil plan = null;
+         boolean own = ClutchFallPhysics.init_Z_i_TaskQueue(this.init_i_TaskQueue);
 
          for (int pass = own ? 0 : 2; pass < 3 && plan == null; pass++) {
-            k.Inner_DataUtil world = this.init_k_DataUtil_BlockPos(assumed, range, rejectedStarts, pass < 2 ? this.flush_I_2() : 2147483647);
-            plan = k.init(
+            ClutchBlockPlanner.Inner_DataUtil world = this.init_k_DataUtil_BlockPos(assumed, range, rejectedStarts, pass < 2 ? this.flush_I_2() : 2147483647);
+            plan = ClutchBlockPlanner.init(
                bodies,
                eyeHeight,
                range - 0.05,
@@ -1918,17 +1918,17 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
    }
 
-   private ClutchModule.Inner_BufferHelper load_j_BufferHelper_i_ConfigStore_I(i.Inner_ConfigStore forecast, int slot) {
+   private ClutchModule.Inner_BufferHelper load_j_BufferHelper_i_ConfigStore_I(ClutchFallPhysics.Inner_ConfigStore forecast, int slot) {
       if (slot >= 0 && !forecast.init_List().isEmpty()) {
          List<AABB> bodies = new ArrayList<>();
          bodies.add(MC.player.getBoundingBox());
 
-         for (i.Inner_UiHelper step : forecast.init_List()) {
+         for (ClutchFallPhysics.Inner_UiHelper step : forecast.init_List()) {
             bodies.add(step.init_AABB());
          }
 
          double reach = MC.player.blockInteractionRange() - 0.03;
-         k.Inner_JsonUtil urgent = k.init(
+         ClutchBlockPlanner.Inner_JsonUtil urgent = ClutchBlockPlanner.init(
             bodies,
             MC.player.getEyeHeight(),
             reach - 0.05,
@@ -1951,18 +1951,18 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
    }
 
-   private ClutchModule.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore(i.Inner_ConfigStore forecast, int slot, int reserve) {
-      if (forecast.init_Z() && this.push_Z && i.load(this.init_i_TaskQueue) && slot >= 0 && !forecast.init_List().isEmpty() && ScaffoldModule.load_I_I(slot) > reserve) {
+   private ClutchModule.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore(ClutchFallPhysics.Inner_ConfigStore forecast, int slot, int reserve) {
+      if (forecast.init_Z() && this.push_Z && ClutchFallPhysics.load(this.init_i_TaskQueue) && slot >= 0 && !forecast.init_List().isEmpty() && ScaffoldModule.load_I_I(slot) > reserve) {
          List<AABB> bodies = new ArrayList<>(forecast.init_List().size() + 1);
          bodies.add(MC.player.getBoundingBox());
 
-         for (i.Inner_UiHelper step : forecast.init_List()) {
+         for (ClutchFallPhysics.Inner_UiHelper step : forecast.init_List()) {
             bodies.add(step.init_AABB());
          }
 
          double eyeHeight = MC.player.getEyeHeight();
          double range = MC.player.blockInteractionRange() - 0.03;
-         k.Inner_JsonUtil plan = k.load(
+         ClutchBlockPlanner.Inner_JsonUtil plan = ClutchBlockPlanner.load(
             bodies, eyeHeight, range - 0.05, this.init_k_DataUtil_BlockPos(null, range, Set.of(), 2147483647, this.read_Z), 0, forecast.load()
          );
          return plan == null ? null : new ClutchModule.Inner_BufferHelper(plan, bodies, eyeHeight, true, forecast.load());
@@ -1971,21 +1971,21 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
    }
 
-   private ClutchModule.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore_2(i.Inner_ConfigStore forecast, boolean axis, int mode, int slot) {
+   private ClutchModule.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore_2(ClutchFallPhysics.Inner_ConfigStore forecast, boolean axis, int mode, int slot) {
       if (!forecast.init_List().isEmpty() && slot >= 0) {
          List<AABB> bodies = new ArrayList<>(forecast.init_List().size() + 1);
          bodies.add(MC.player.getBoundingBox());
 
-         for (i.Inner_UiHelper step : forecast.init_List()) {
+         for (ClutchFallPhysics.Inner_UiHelper step : forecast.init_List()) {
             bodies.add(step.init_AABB());
          }
 
          double eyeHeight = MC.player.getEyeHeight();
          double range = MC.player.blockInteractionRange() - 0.03;
 
-         for (k.Inner_NetHelper link : k.init_List_List(bodies, eyeHeight, range - 0.05, this.init_k_DataUtil_BlockPos_D(null, range), 0, 8, forecast.load())) {
+         for (ClutchBlockPlanner.Inner_NetHelper link : ClutchBlockPlanner.init_List_List(bodies, eyeHeight, range - 0.05, this.init_k_DataUtil_BlockPos_D(null, range), 0, 8, forecast.load())) {
             if (!this.init_i_ConfigStore_Z(axis, mode, List.of(Shapes.create(new AABB(link.init_BlockPos()))), link.init_I()).init_Z()) {
-               k.Inner_JsonUtil plan = new k.Inner_JsonUtil(List.of(link), link.init_BlockPos(), link.init_I() + 1, MC.player.fallDistance, false);
+               ClutchBlockPlanner.Inner_JsonUtil plan = new ClutchBlockPlanner.Inner_JsonUtil(List.of(link), link.init_BlockPos(), link.init_I() + 1, MC.player.fallDistance, false);
                return new ClutchModule.Inner_BufferHelper(plan, bodies, eyeHeight, false, forecast.load());
             }
          }
@@ -1996,25 +1996,25 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
    }
 
-   private k.Inner_DataUtil init_k_DataUtil_BlockPos_D(BlockPos assumed, double range) {
+   private ClutchBlockPlanner.Inner_DataUtil init_k_DataUtil_BlockPos_D(BlockPos assumed, double range) {
       return this.init_k_DataUtil_BlockPos(assumed, range, Set.of());
    }
 
-   private k.Inner_DataUtil init_k_DataUtil_BlockPos(BlockPos assumed, double range, Set<BlockPos> rejectedStarts) {
+   private ClutchBlockPlanner.Inner_DataUtil init_k_DataUtil_BlockPos(BlockPos assumed, double range, Set<BlockPos> rejectedStarts) {
       return this.init_k_DataUtil_BlockPos(assumed, range, rejectedStarts, 2147483647);
    }
 
-   private k.Inner_DataUtil init_k_DataUtil_BlockPos(BlockPos assumed, double range, Set<BlockPos> rejectedStarts, int maxRow) {
+   private ClutchBlockPlanner.Inner_DataUtil init_k_DataUtil_BlockPos(BlockPos assumed, double range, Set<BlockPos> rejectedStarts, int maxRow) {
       return this.init_k_DataUtil_BlockPos(assumed, range, rejectedStarts, maxRow, false);
    }
 
-   private k.Inner_DataUtil init_k_DataUtil_BlockPos(
+   private ClutchBlockPlanner.Inner_DataUtil init_k_DataUtil_BlockPos(
       final BlockPos assumed, double range, final Set<BlockPos> rejectedStarts, final int maxRow, boolean optional
    ) {
       final boolean sneaking = MC.player.isSecondaryUseActive();
       final BlockHitResult writtenRay = this.init_j_StreamUtil.init(range);
       final List<AABB> others = this.init_j_StreamUtil.init(optional);
-      return new k.Inner_DataUtil() {
+      return new ClutchBlockPlanner.Inner_DataUtil() {
          private boolean update(int x, int y, int z) {
             return assumed != null && assumed.getX() == x && assumed.getY() == y && assumed.getZ() == z;
          }
@@ -2064,7 +2064,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          @Override
          public boolean init(int x, int y, int z, Direction face) {
             BlockPos pos = new BlockPos(x, y, z);
-            return !pos.equals(assumed) && i.init_Z_BlockHitResult(writtenRay, pos, face);
+            return !pos.equals(assumed) && ClutchFallPhysics.init_Z_BlockHitResult(writtenRay, pos, face);
          }
       };
    }
@@ -2080,7 +2080,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          Vec3 latest = interpolation != null && interpolation.hasActiveInterpolation()
             ? Compat263.interpPos(interpolation).subtract(entity.position())
             : Vec3.ZERO;
-         AABB swept = optional ? i.load(entity.getBoundingBox(), latest, step, lead) : i.init_AABB_AABB(entity.getBoundingBox(), latest, step, lead);
+         AABB swept = optional ? ClutchFallPhysics.load(entity.getBoundingBox(), latest, step, lead) : ClutchFallPhysics.init_AABB_AABB(entity.getBoundingBox(), latest, step, lead);
          others.add(swept);
       }
 
@@ -2099,12 +2099,12 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       return false;
    }
 
-   private double init_D_i_ConfigStore(i.Inner_ConfigStore forecast) {
-      List<i.Inner_UiHelper> steps = forecast.init_List();
+   private double init_D_i_ConfigStore(ClutchFallPhysics.Inner_ConfigStore forecast) {
+      List<ClutchFallPhysics.Inner_UiHelper> steps = forecast.init_List();
       if (!steps.isEmpty() && steps.getLast().init_Z()) {
          double highest = MC.player.getBoundingBox().minY;
 
-         for (i.Inner_UiHelper step : steps) {
+         for (ClutchFallPhysics.Inner_UiHelper step : steps) {
             highest = Math.max(highest, step.init_AABB().minY);
          }
 
@@ -2170,7 +2170,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       if (this.write_BlockPos != null) {
          return this.write_BlockPos.getY();
       } else {
-         return this.read_BlockPos != null && i.init_Z_I(this.read_I_9(), this.value, 40)
+         return this.read_BlockPos != null && ClutchFallPhysics.init_Z_I(this.read_I_9(), this.value, 40)
             ? this.read_BlockPos.getY()
             : Mth.floor(MC.player.getY() + 1.0E-6) - 1;
       }
@@ -2185,15 +2185,15 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       return look != null ? look : ce.init(MC.player);
    }
 
-   private int init_I_k_NetHelper(k.Inner_NetHelper link) {
-      return i.init_I_I(link.init_I(), link.load_I(), i.load(this.init_i_TaskQueue));
+   private int init_I_k_NetHelper(ClutchBlockPlanner.Inner_NetHelper link) {
+      return ClutchFallPhysics.init_I_I(link.init_I(), link.load_I(), ClutchFallPhysics.load(this.init_i_TaskQueue));
    }
 
-   private int load_I_k_NetHelper(k.Inner_NetHelper link) {
-      return i.init_I_I_I(link.init_I(), link.load_I());
+   private int load_I_k_NetHelper(ClutchBlockPlanner.Inner_NetHelper link) {
+      return ClutchFallPhysics.init_I_I_I(link.init_I(), link.load_I());
    }
 
-   private ClutchModule.Inner_DataUtil init_j_DataUtil_j_BufferHelper(ClutchModule.Inner_BufferHelper route, k.Inner_NetHelper link, int slot) {
+   private ClutchModule.Inner_DataUtil init_j_DataUtil_j_BufferHelper(ClutchModule.Inner_BufferHelper route, ClutchBlockPlanner.Inner_NetHelper link, int slot) {
       ItemStack stack = MC.player.getInventory().getItem(slot);
       int at = route.init_k_JsonUtil().read() ? link.init_I() : this.load_I_k_NetHelper(link);
       double reach = MC.player.blockInteractionRange() - 0.03;
@@ -2266,7 +2266,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          && !MC.player.isUsingItem()
          && this.init_j_ConfigStore != null
          && this.init_j_ConfigStore.init_I < this.read_I_9()
-         && !HashUtil.load_Z()) {
+         && !BlinkPacketManager.load_Z()) {
          ce.Inner_DataUtil rotation = autismclient.util.aD.init_ce_DataUtil();
          if (rotation == null) {
             return this.init_Z_Str_3("No rotation");
@@ -2277,7 +2277,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          BlockPos support = this.init_j_DataUtil.init_U_CachePool.init_U_TaskQueue().load_BlockPos();
          Vec3 wireEye = this.init_j_ConfigStore.init_Vec3.add(0.0, this.init_j_ConfigStore.init_D, 0.0);
          if (!this.init_j_DataUtil.read
-            && !i.init_Z_BlockHitResult(
+            && !ClutchFallPhysics.init_Z_BlockHitResult(
                this.init_BlockHitResult_Vec3(wireEye, this.init_j_ConfigStore.init_ce_DataUtil, reach),
                support,
                this.init_j_DataUtil.init_U_CachePool.init_U_TaskQueue().init_Direction()
@@ -2329,7 +2329,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
             )) {
                return this.init_Z_Str_3("Native face or reach");
             } else {
-               if (!i.init_Z_BlockHitResult(
+               if (!ClutchFallPhysics.init_Z_BlockHitResult(
                   this.init_BlockHitResult_Vec3(wireEye, this.init_j_DataUtil.read ? rotation : this.init_j_ConfigStore.init_ce_DataUtil, reach),
                   support,
                   hit.getDirection()
@@ -2345,7 +2345,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                      return this.init_Z_Str_3("Native cell differs");
                   }
 
-                  if (i.init_Z_i_TaskQueue(this.init_i_TaskQueue)
+                  if (ClutchFallPhysics.init_Z_i_TaskQueue(this.init_i_TaskQueue)
                      && !this.init_j_DataUtil.init_Z
                      && placedCell.getY() > this.init_j_DataUtil.init_BlockPos.getY()) {
                      return this.init_Z_Str_3("Keeping own catch row");
@@ -2410,8 +2410,8 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       return this.init(candidatePlan, rotation, eye, next, wireEye, reach, 0);
    }
 
-   private i.Inner_DataUtil init_i_DataUtil_I_F(int lead, float yaw) {
-      return i.init(
+   private ClutchFallPhysics.Inner_DataUtil init_i_DataUtil_I_F(int lead, float yaw) {
+      return ClutchFallPhysics.init(
          MC.player.getBoundingBox(),
          MC.player.getDeltaMovement(),
          MC.player.getEyeHeight(),
@@ -2435,7 +2435,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          && !MC.player.hasEffect(MobEffects.LEVITATION)
          && !MC.player.hasEffect(MobEffects.SLOW_FALLING);
       if (!moving
-         && k.init_Z_Vec3_2(
+         && ClutchBlockPlanner.init_Z_Vec3_2(
             next, Vec3.directionFromRotation(rotation.load(), rotation.init()), candidatePlan.init_BlockPos, candidatePlan.init_Direction, reach
          )) {
          return null;
@@ -2446,10 +2446,10 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       double margin = this.state == 4 ? 1.0E-5 : 0.02;
       autismclient.util.U.Inner_NetHelper placement = autismclient.util.U.init(MC.player.getMainHandItem(), MC.player, InteractionHand.MAIN_HAND);
       autismclient.util.U.Inner_StreamUtil budget = new autismclient.util.U.Inner_StreamUtil(8);
-      List<Vec3> points = new ArrayList<>(k.init_List_Vec3(eye, next, rect, candidatePlan.init_BlockPos, candidatePlan.init_Direction, margin));
+      List<Vec3> points = new ArrayList<>(ClutchBlockPlanner.init_List_Vec3(eye, next, rect, candidatePlan.init_BlockPos, candidatePlan.init_Direction, margin));
 
-      for (double a : k.init_DArr) {
-         for (double b : k.init_DArr) {
+      for (double a : ClutchBlockPlanner.init_DArr) {
+         for (double b : ClutchBlockPlanner.init_DArr) {
             Axis axis = option.init_Direction().getAxis();
             points.add(
                axis == Axis.X
@@ -2470,8 +2470,8 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
 
       if (this.state == 4) {
-         List<k.Inner_StreamUtil> counts = moving && candidatePlan.init_Direction != null && candidatePlan.init_Direction.getAxis() != Axis.Y
-            ? k.init_List_Vec3(
+         List<ClutchBlockPlanner.Inner_StreamUtil> counts = moving && candidatePlan.init_Direction != null && candidatePlan.init_Direction.getAxis() != Axis.Y
+            ? ClutchBlockPlanner.init_List_Vec3(
                eye,
                rect,
                option.load_BlockPos(),
@@ -2485,7 +2485,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                margin,
                yaw -> this.init_i_DataUtil_I_F(lead, (float)yaw)
             )
-            : k.init_List_Vec3_2(
+            : ClutchBlockPlanner.init_List_Vec3_2(
                eye,
                next,
                rect,
@@ -2506,7 +2506,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
 
       for (ce.Inner_DataUtil goal : goals) {
-         i.Inner_DataUtil window = moving ? this.init_i_DataUtil_I_F(lead, goal.init()) : null;
+         ClutchFallPhysics.Inner_DataUtil window = moving ? this.init_i_DataUtil_I_F(lead, goal.init()) : null;
          Vec3 clickEye = window == null ? eye : window.init_Vec3();
          Vec3 nextEye = window == null ? next : window.load();
          if (window == null || MC.level.noCollision(MC.player, window.init_AABB().deflate(1.0E-5))) {
@@ -2514,9 +2514,9 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
             if (!(Math.abs(goal.load()) > 89.5)
                && (
                   wireEye == null
-                     || i.init_Z_BlockHitResult(this.init_BlockHitResult_Vec3(wireEye, goal, reach), option.load_BlockPos(), option.init_Direction())
+                     || ClutchFallPhysics.init_Z_BlockHitResult(this.init_BlockHitResult_Vec3(wireEye, goal, reach), option.load_BlockPos(), option.init_Direction())
                )
-               && k.init_Z_Vec3_2(
+               && ClutchBlockPlanner.init_Z_Vec3_2(
                   nextEye, Vec3.directionFromRotation(goal.load(), goal.init()), candidatePlan.init_BlockPos, candidatePlan.init_Direction, reach
                )) {
                autismclient.util.U.Inner_StateCache request = new autismclient.util.U.Inner_StateCache(candidatePlan.init_BlockPos, clickEye, reach, placement)
@@ -2536,13 +2536,13 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                   && candidate.init_U_TaskQueue().init_Direction() == option.init_Direction()
                   && (
                      wireEye == null
-                        || i.init_Z_BlockHitResult(
+                        || ClutchFallPhysics.init_Z_BlockHitResult(
                            this.init_BlockHitResult_Vec3(wireEye, candidate.init_U_DataUtil().init_ce_DataUtil(), reach),
                            option.load_BlockPos(),
                            option.init_Direction()
                         )
                   )
-                  && k.init_Z_Vec3_2(
+                  && ClutchBlockPlanner.init_Z_Vec3_2(
                      nextEye,
                      Vec3.directionFromRotation(candidate.init_U_DataUtil().init_ce_DataUtil().load(), candidate.init_U_DataUtil().init_ce_DataUtil().init()),
                      candidatePlan.init_BlockPos,
@@ -2571,7 +2571,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean next() {
-      return i.init(
+      return ClutchFallPhysics.init(
          MC.player.getBoundingBox(),
          MC.player.getDeltaMovement(),
          MC.player.onGround(),
@@ -2582,7 +2582,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean prev() {
-      return this.add != -2147483648 && i.init_Z_I(this.read_I_9(), this.add, 10);
+      return this.add != -2147483648 && ClutchFallPhysics.init_Z_I(this.read_I_9(), this.add, 10);
    }
 
    private boolean init_Z_Input_2(Input input) {
@@ -2655,7 +2655,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       autismclient.ai.a.NodeWalker.Inner_CachePool world = autismclient.ai.a.NodeWalker.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player);
       boolean unsafe = this.init_Z_NodeWalker_StreamU(start, pressed, world);
       if (!unsafe && !input.shift() && start.pose() != 0) {
-         unsafe = this.init_Z_NodeWalker_StreamU(i.init_NodeWalker_StreamU_NodeWalker_StreamU(start), pressed, world);
+         unsafe = this.init_Z_NodeWalker_StreamU(ClutchFallPhysics.init_NodeWalker_StreamU_NodeWalker_StreamU(start), pressed, world);
       }
 
       if (unsafe) {
@@ -2670,7 +2670,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       autismclient.ai.a.NodeWalker.Inner_DataUtil pressed,
       autismclient.ai.a.NodeWalker.Inner_CachePool world
    ) {
-      i.Inner_ConfigStore intended = i.init(start, pressed, world, this.init_D_13(), null, this::init_i_BufferHelper_AABB);
+      ClutchFallPhysics.Inner_ConfigStore intended = ClutchFallPhysics.init(start, pressed, world, this.init_D_13(), null, this::init_i_BufferHelper_AABB);
       if (intended.init_Z() && !intended.init_List().isEmpty()) {
          AABB last = intended.init_List().getLast().init_AABB();
          if (!this.init_Z_D_5(this.init_D_AABB_2(last) + Math.max(0.0, start.y() - last.minY))) {
@@ -2680,7 +2680,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          int slot = this.sync_I_2();
          if (slot >= 0 && this.bool("own-steer") && (this.bool("own-knockback") || this.get_Z_3())) {
             for (boolean axis : new boolean[]{true, false}) {
-               i.Inner_ConfigStore braking = i.init(start, pressed, world, this.init_D_13(), axis, this::init_i_BufferHelper_AABB);
+               ClutchFallPhysics.Inner_ConfigStore braking = ClutchFallPhysics.init(start, pressed, world, this.init_D_13(), axis, this::init_i_BufferHelper_AABB);
                if (!braking.init_Z()) {
                   return false;
                }
@@ -2713,7 +2713,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       Vec3 at = MC.player.getBoundingBox().getCenter().add(motion.x * 2.0 + wish.x * ahead, 0.0, motion.z * 2.0 + wish.z * ahead);
       AABB feet = new AABB(at.x - radius, MC.player.getY() - 0.6, at.z - radius, at.x + radius, MC.player.getY() - 0.01, at.z + radius);
       if (input.jump() || MC.level.noCollision(MC.player, feet) && this.init_Z_D_5(this.init_D_AABB_2(feet.move(0.0, MC.player.getY() - feet.minY, 0.0)))) {
-         Vec3 brake = i.init_Vec3_Vec3(motion);
+         Vec3 brake = ClutchFallPhysics.init_Vec3_Vec3(motion);
          double yaw = Math.toRadians(keyYaw);
          double forward = brake.z * Math.cos(yaw) - brake.x * Math.sin(yaw);
          double side = brake.x * Math.cos(yaw) + brake.z * Math.sin(yaw);
@@ -2742,7 +2742,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
    private static Input init_Input_j_Input(ClutchModule clutch, Input input) {
       if (clutch.init_Z && !clutch.load_Z) {
-         if (!clutch.push_Z_4() || !clutch.set() || clutch.state == 3 || i.init_Z_I(clutch.read_I_9(), clutch.entry, 4)) {
+         if (!clutch.push_Z_4() || !clutch.set() || clutch.state == 3 || ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.entry, 4)) {
             return input;
          }
 
@@ -2753,14 +2753,14 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          Vec3 motion = MC.player.getDeltaMovement();
          Vec3 wanted = clutch.init_Vec3_AABB(MC.player.getBoundingBox(), motion, clutch.flush_Z, clutch.state, MC.player.onGround());
          if (MC.player.onGround() && motion.y <= 0.0) {
-            wanted = i.init_Vec3_Vec3(motion);
+            wanted = ClutchFallPhysics.init_Vec3_Vec3(motion);
          }
 
          double yaw = Math.toRadians(MC.player.getYRot());
          double forward = wanted.z * Math.cos(yaw) - wanted.x * Math.sin(yaw);
          double side = wanted.x * Math.cos(yaw) + wanted.z * Math.sin(yaw);
          boolean edge = MC.player.onGround() && motion.y <= 0.0 && MC.level.noCollision(MC.player, MC.player.getBoundingBox().move(motion.x, -0.2, motion.z));
-         boolean freshImpulse = clutch.init_i_TaskQueue != null && i.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 2);
+         boolean freshImpulse = clutch.init_i_TaskQueue != null && ClutchFallPhysics.init_Z_I(clutch.read_I_9(), clutch.init_i_TaskQueue.init_I(), 2);
          boolean jump = clutch.init_Z_Z_I_2(clutch.update_I_3() >= 0, clutch.state);
          return new Input(
             forward > 0.08,
@@ -2992,12 +2992,12 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       this.chunk = -2147483648;
    }
 
-   private record Inner_BufferHelper(k.Inner_JsonUtil init_k_JsonUtil, List<AABB> init_List, double init_D, boolean init_Z, List<Vec3> load) {
-      Inner_BufferHelper(k.Inner_JsonUtil plan, List<AABB> bodies, double eyeHeight) {
+   private record Inner_BufferHelper(ClutchBlockPlanner.Inner_JsonUtil init_k_JsonUtil, List<AABB> init_List, double init_D, boolean init_Z, List<Vec3> load) {
+      Inner_BufferHelper(ClutchBlockPlanner.Inner_JsonUtil plan, List<AABB> bodies, double eyeHeight) {
          this(plan, bodies, eyeHeight, false, List.of());
       }
 
-      Inner_BufferHelper(k.Inner_JsonUtil plan, List<AABB> bodies, double eyeHeight, boolean tower) {
+      Inner_BufferHelper(ClutchBlockPlanner.Inner_JsonUtil plan, List<AABB> bodies, double eyeHeight, boolean tower) {
          this(plan, bodies, eyeHeight, tower, List.of());
       }
 
@@ -3005,7 +3005,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          return this.load.isEmpty() ? init(this.init_List, this.init_D, tick) : this.load.get(Mth.clamp(tick, 0, this.load.size() - 1));
       }
 
-      ce.Inner_DataUtil init_ce_DataUtil_k_NetHelper_I(k.Inner_NetHelper link, int tick) {
+      ce.Inner_DataUtil init_ce_DataUtil_k_NetHelper_I(ClutchBlockPlanner.Inner_NetHelper link, int tick) {
          return init_ce_DataUtil_Vec3_k_NetHelper(this.init(tick), link);
       }
 
@@ -3014,18 +3014,18 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          return new Vec3((body.minX + body.maxX) * 0.5, body.minY + eyeHeight, (body.minZ + body.maxZ) * 0.5);
       }
 
-      static ce.Inner_DataUtil init(List<AABB> bodies, double eyeHeight, k.Inner_NetHelper link, int tick) {
+      static ce.Inner_DataUtil init(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.Inner_NetHelper link, int tick) {
          return init_ce_DataUtil_Vec3_k_NetHelper(init(bodies, eyeHeight, tick), link);
       }
 
-      static ce.Inner_DataUtil init_ce_DataUtil_Vec3_k_NetHelper(Vec3 eye, k.Inner_NetHelper link) {
+      static ce.Inner_DataUtil init_ce_DataUtil_Vec3_k_NetHelper(Vec3 eye, ClutchBlockPlanner.Inner_NetHelper link) {
          BlockPos support = link.load_BlockPos();
-         ce.Inner_DataUtil goal = ce.init(k.init_Vec3_Vec3(eye, support.getX(), support.getY(), support.getZ(), link.init_Direction()), eye);
+         ce.Inner_DataUtil goal = ce.init(ClutchBlockPlanner.init_Vec3_Vec3(eye, support.getX(), support.getY(), support.getZ(), link.init_Direction()), eye);
          return new ce.Inner_DataUtil(goal.init(), Mth.clamp(goal.load(), -89.5F, 89.5F));
       }
    }
 
-   private record Inner_CachePool(int init_I, i.Inner_StreamUtil init_i_StreamUtil, boolean init_Z, boolean load_Z, Vec3 init_Vec3, Vec3 load_Vec3, int load_I) {
+   private record Inner_CachePool(int init_I, ClutchFallPhysics.Inner_StreamUtil init_i_StreamUtil, boolean init_Z, boolean load_Z, Vec3 init_Vec3, Vec3 load_Vec3, int load_I) {
    }
 
    private record Inner_ConfigStore(Vec3 init_Vec3, ce.Inner_DataUtil init_ce_DataUtil, double init_D, int init_I) {

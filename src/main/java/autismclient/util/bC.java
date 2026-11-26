@@ -490,6 +490,6 @@ public final class bC {
          config.save();
       }
 
-      autismclient.modules.PoolEntry.init_PoolEntry().init_V_Z(false);
+      autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_V_Z(false);
    }
 }

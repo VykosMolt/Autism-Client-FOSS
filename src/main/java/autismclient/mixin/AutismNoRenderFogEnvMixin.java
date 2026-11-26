@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.az;
+import autismclient.modules.NoRenderState;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.client.renderer.fog.environment.BlindnessFogEnvironment;
 import net.minecraft.client.renderer.fog.environment.DarknessFogEnvironment;
@@ -17,6 +17,6 @@ public abstract class AutismNoRenderFogEnvMixin {
       }
 
       Object self = this;
-      return self instanceof BlindnessFogEnvironment && az.prev() ? false : !(self instanceof DarknessFogEnvironment) || !az.valid();
+      return self instanceof BlindnessFogEnvironment && NoRenderState.prev() ? false : !(self instanceof DarknessFogEnvironment) || !NoRenderState.valid();
    }
 }

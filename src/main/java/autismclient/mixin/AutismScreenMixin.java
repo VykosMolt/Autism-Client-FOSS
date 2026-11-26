@@ -4,7 +4,7 @@ import autismclient.c.ExternalButtonScreenDuck;
 import autismclient.e.TableIndex;
 import autismclient.gui.f.b.DataPipe;
 import autismclient.mixin.accessor.AutismScreenAccessor;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
@@ -139,7 +139,7 @@ public abstract class AutismScreenMixin {
          return false;
       }
 
-      PoolEntry module = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       return module != null && module.init_Z();
    }
 }

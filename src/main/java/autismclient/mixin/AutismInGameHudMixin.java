@@ -8,17 +8,17 @@ import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.UiHelper;
 import autismclient.gui.f.b.StreamUtil;
 import autismclient.gui.macro.editor.ActionEditorOverlay;
-import autismclient.modules.F;
+import autismclient.modules.EndPortalRenderer;
 import autismclient.modules.Module;
-import autismclient.modules.NodeWalker;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.BedEspOverlayRenderer;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.AntiVanishModule;
 import autismclient.modules.aD;
-import autismclient.modules.aT;
-import autismclient.modules.aj;
+import autismclient.modules.TrajectoryOffscreenIndicator;
+import autismclient.modules.NameTagsRenderer;
 import autismclient.modules.am;
-import autismclient.modules.an;
-import autismclient.modules.y;
+import autismclient.modules.EntityEsp2DRenderer;
+import autismclient.modules.DangerHudRenderer;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismServerInfoOverlay;
 import autismclient.util.PkgCls_d;
@@ -83,7 +83,7 @@ public abstract class AutismInGameHudMixin {
          cf.Inner_DataUtil activity = cf.init_cf_DataUtil();
          long hudWork = 31168L;
          boolean aiPlan = !AutismLiteVariant.enabled() && MC.gui.screen() == null && cG.load_Z();
-         boolean portalGuide = !AutismLiteVariant.enabled() && F.load();
+         boolean portalGuide = !AutismLiteVariant.enabled() && EndPortalRenderer.load();
          if (macroFrameWork || activity.init(hudWork) || aiPlan || portalGuide) {
             HashUtil.init_HashUtil().load(context);
             if (macroFrameWork) {
@@ -122,7 +122,7 @@ public abstract class AutismInGameHudMixin {
                bk overlayManager = null;
                boolean overlayVisible = false;
                if (screen == null) {
-                  serverInfoOverlay = PoolEntry.init_PoolEntry().load_AutismServerInfoOv();
+                  serverInfoOverlay = ModuleRuntimeManager.init_PoolEntry().load_AutismServerInfoOv();
                   serverProbeBannerVisible = serverInfoOverlay != null && serverInfoOverlay.run_Z_5();
                   if (activity.init(256L)) {
                      overlayManager = bk.init_bk();
@@ -146,7 +146,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (!AutismLiteVariant.enabled() && portalGuide) {
-                        NetHelper b = F.init_NetHelper(context);
+                        NetHelper b = EndPortalRenderer.init_NetHelper(context);
                         hudOccluders.add(new al.Inner_BufferHelper("end_portal", b.read(), b.write(), b.update(), b.sync()));
                      }
 
@@ -229,27 +229,27 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (!AutismLiteVariant.enabled() && portalGuide) {
-                        F.init_V(context);
+                        EndPortalRenderer.init_V(context);
                      }
 
                      if (esp2dVisible) {
-                        an.init_V_GuiGraphicsExtract(context);
+                        EntityEsp2DRenderer.init_V_GuiGraphicsExtract(context);
                      }
 
                      if (nametagsVisible) {
-                        aj.init(context);
+                        NameTagsRenderer.init(context);
                      }
 
                      if (!AutismLiteVariant.enabled() && bedsVisible) {
-                        NodeWalker.init(context);
+                        BedEspOverlayRenderer.init(context);
                      }
 
                      if (!AutismLiteVariant.enabled() && activity.init(4096L)) {
-                        autismclient.modules.y.init(context);
+                        autismclient.modules.DangerHudRenderer.init(context);
                      }
 
                      if (!AutismLiteVariant.enabled() && activity.init(8192L)) {
-                        aT.init(context);
+                        TrajectoryOffscreenIndicator.init(context);
                      }
                   };
                   if (mainHudVisible) {
@@ -312,7 +312,7 @@ public abstract class AutismInGameHudMixin {
 
    @Unique
    private boolean isAutismActive() {
-      PoolEntry module = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       return module != null && module.init_Z();
    }
 

@@ -1,9 +1,9 @@
 package autismclient.mixin;
 
 import autismclient.ai.cG;
-import autismclient.modules.D;
-import autismclient.modules.F;
-import autismclient.modules.NodeWalker;
+import autismclient.modules.PearlGhostRenderer;
+import autismclient.modules.EndPortalRenderer;
+import autismclient.modules.BedEspOverlayRenderer;
 import autismclient.modules.ar;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.co;
@@ -39,9 +39,9 @@ public class AutismLevelRendererTracerMixin {
       boolean waypoints = ar.read_Z();
       boolean skeleton = co.init_Z();
       boolean ai = !AutismLiteVariant.enabled() && cG.init_Z();
-      boolean danger = !AutismLiteVariant.enabled() && D.init();
-      boolean beds = !AutismLiteVariant.enabled() && NodeWalker.init_Z();
-      boolean portal = !AutismLiteVariant.enabled() && F.init_Z();
+      boolean danger = !AutismLiteVariant.enabled() && PearlGhostRenderer.init();
+      boolean beds = !AutismLiteVariant.enabled() && BedEspOverlayRenderer.init_Z();
+      boolean portal = !AutismLiteVariant.enabled() && EndPortalRenderer.init_Z();
       if (tracers || esp || waypoints || skeleton || ai || danger || beds || portal) {
          PoseStack matrixStack = new PoseStack();
          matrixStack.mulPose(cameraState.viewRotationMatrix);
@@ -67,15 +67,15 @@ public class AutismLevelRendererTracerMixin {
             }
 
             if (danger) {
-               D.init(matrixStack);
+               PearlGhostRenderer.init(matrixStack);
             }
 
             if (beds) {
-               NodeWalker.init(matrixStack);
+               BedEspOverlayRenderer.init(matrixStack);
             }
 
             if (portal) {
-               F.init(matrixStack);
+               EndPortalRenderer.init(matrixStack);
             }
          }
       }

@@ -13,12 +13,12 @@ import autismclient.g.ModNamespaceCatalog;
 import autismclient.g.VanillaTranslationKeyLoader;
 import autismclient.gui.e.BufferHelper;
 import autismclient.gui.f.b.k;
-import autismclient.modules.IoWorker;
+import autismclient.modules.NoFallPauseTimer;
 import autismclient.modules.HoleEspModule;
-import autismclient.modules.PoolEntry;
-import autismclient.modules.aB;
+import autismclient.modules.ModuleRuntimeManager;
+import autismclient.modules.AutoReconnectController;
 import autismclient.modules.ScaffoldModule;
-import autismclient.modules.ak;
+import autismclient.modules.OreSimEspScanner;
 import autismclient.util.AuditJoinSend;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
@@ -120,7 +120,7 @@ public final class AutismClientMod implements ClientModInitializer {
    public void onInitializeClient() {
       qualificationFlags();
       AutismClientAddon.FOLDER.mkdirs();
-      runSafe("initialize", () -> PoolEntry.init_PoolEntry().init_V());
+      runSafe("initialize", () -> ModuleRuntimeManager.init_PoolEntry().init_V());
       ModNamespaceCatalog.init_V();
       if (!ProtectorFeatureFlags.read()) {
          VanillaTranslationKeyLoader.init_V();
@@ -207,13 +207,13 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            PoolEntry.init_PoolEntry().load_V();
+            ModuleRuntimeManager.init_PoolEntry().load_V();
          } catch (Throwable t) {
             logTickError("module", t);
          }
 
          try {
-            ak.init_V();
+            OreSimEspScanner.init_V();
          } catch (Throwable t) {
             logTickError("oreSimRetention", t);
          }
@@ -269,8 +269,8 @@ public final class AutismClientMod implements ClientModInitializer {
       ClientTickEvents.END_LEVEL_TICK.register(level -> runSafe("lan.levelTick", () -> aE.init_aE().init_V_J(level.getGameTime())));
       ClientConfigurationConnectionEvents.INIT.register((listener, client) -> {
          runSafe("cfg.preserveUi", () -> cx.init_V(client));
-         runSafe("cfg.hideMenuOverlays", () -> PoolEntry.init_PoolEntry().close_V());
-         runSafe("cfg.configStarted", () -> PoolEntry.init_PoolEntry().sync_V());
+         runSafe("cfg.hideMenuOverlays", () -> ModuleRuntimeManager.init_PoolEntry().close_V());
+         runSafe("cfg.configStarted", () -> ModuleRuntimeManager.init_PoolEntry().sync_V());
          runSafe("cfg.joinMacro", () -> aA.init(listener));
       });
       ClientConfigurationConnectionEvents.DISCONNECT.register((listener, client) -> {
@@ -287,17 +287,17 @@ public final class AutismClientMod implements ClientModInitializer {
                bk.init_bk().sync_V();
             }
          });
-         runSafe("cfg.onGameLeft", () -> PoolEntry.init_PoolEntry().write_V());
+         runSafe("cfg.onGameLeft", () -> ModuleRuntimeManager.init_PoolEntry().write_V());
          runSafe("cfg.joinMacro", aA::update);
       });
       ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
          runSafe("join.clientInfo", AuditJoinSend.create(client, handler));
          runSafe("join.preserveUi", () -> cx.init_V(client));
          runSafe("join.pacedTp", () -> bl.init("connection changed"));
-         runSafe("join.movementGrace", IoWorker::init_V);
-         runSafe("join.hideMenuOverlays", () -> PoolEntry.init_PoolEntry().close_V());
-         runSafe("join.remember", () -> aB.init(client.getCurrentServer()));
-         runSafe("join.onGameJoin", () -> PoolEntry.init_PoolEntry().read_V());
+         runSafe("join.movementGrace", NoFallPauseTimer::init_V);
+         runSafe("join.hideMenuOverlays", () -> ModuleRuntimeManager.init_PoolEntry().close_V());
+         runSafe("join.remember", () -> AutoReconnectController.init(client.getCurrentServer()));
+         runSafe("join.onGameJoin", () -> ModuleRuntimeManager.init_PoolEntry().read_V());
          runSafe("join.joinMacro", aA::load_V);
          runSafe("join.surfaceFailures", autismclient.b.DataUtil::load_V);
          runSafe("join.lagWatchdog", aF::init);
@@ -310,7 +310,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("leave.persist", AutismConfig::enqueuePendingSaveNow);
          runSafe("leave.stopMacro", () -> MacroExecutor.init_V_Z(AutismConfig.getGlobal().stopMacroOnLeave));
          runSafe("leave.pacedTp", () -> bl.init("disconnected"));
-         runSafe("leave.movementGrace", IoWorker::load);
+         runSafe("leave.movementGrace", NoFallPauseTimer::load);
          runSafe("leave.fakeGamemode", W::init_V);
          runSafe("leave.instaBreak", au::load);
          runSafe("leave.packStrip", ServerPackSelectionRegistry::load);
@@ -324,16 +324,16 @@ public final class AutismClientMod implements ClientModInitializer {
             }
          });
          runSafe("leave.joinMacro", aA::write);
-         runSafe("leave.onGameLeft", () -> PoolEntry.init_PoolEntry().write_V());
+         runSafe("leave.onGameLeft", () -> ModuleRuntimeManager.init_PoolEntry().write_V());
          runSafe("leave.pingSpoof", autismclient.util.macro.PingSpoofScheduler::write);
-         runSafe("leave.blink", autismclient.modules.HashUtil::auditDisconnect);
+         runSafe("leave.blink", autismclient.modules.BlinkPacketManager::auditDisconnect);
          runSafe("leave.lagWatchdog", aF::init);
       });
       runSafe("init.mapPreview", aQ::init_V);
       ItemTooltipCallback.EVENT.register((stack, tooltipContext, tooltipType, lines) -> {
          autismclient.g.TooltipNbtGuard.init_I(lines);
          autismclient.g.TooltipNbtGuard.init_Z(lines);
-         PoolEntry.init_PoolEntry().init(stack, lines);
+         ModuleRuntimeManager.init_PoolEntry().init(stack, lines);
       });
       ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
          try {

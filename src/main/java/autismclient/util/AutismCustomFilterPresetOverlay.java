@@ -161,7 +161,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
                int x = this.flush_I + this.get_I_4();
                int y = this.close_I + 14 + this.set_I_4();
                int width = this.open - this.get_I_4() * 2;
-               autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
                autismclient.gui.f.b.FileCache.init(context, this.init_Font, "Preset Name", x, y);
                String counts = "C2S " + module.load_Set().size() + " | S2C " + module.read_Set().size();
                cs.init(context, this.init_Font, counts, cs.Inner_DataUtil.MUTED, x + width - cs.init(this.init_Font, counts, cs.Inner_DataUtil.MUTED), y, false);
@@ -400,7 +400,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
    }
 
    private void close_V_4() {
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       module.open_V();
       module.poll_V();
       AutismClientMessaging.sendPrefixed("Reset current filter to default packet lists.");

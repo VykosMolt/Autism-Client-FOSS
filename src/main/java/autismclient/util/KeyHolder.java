@@ -1,7 +1,7 @@
 package autismclient.util;
 
 import autismclient.modules.Module;
-import autismclient.modules.c;
+import autismclient.modules.DistanceFadeCurve;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -61,7 +61,7 @@ public final class KeyHolder {
                                  for (autismclient.modules.BedDefenderModule.Inner_CachePool cell : sorted) {
                                     BlockPos p = cell.init_BlockPos();
                                     if (level.isLoaded(p) && level.getBlockState(p).canBeReplaced()) {
-                                       float fade = cell.init_I() <= nextLayer ? 1.0F : c.init(Math.sqrt(new AABB(p).distanceToSqr(camera)));
+                                       float fade = cell.init_I() <= nextLayer ? 1.0F : DistanceFadeCurve.init(Math.sqrt(new AABB(p).distanceToSqr(camera)));
                                        int layerAlpha = Math.round(alpha * fade);
                                        if (layerAlpha != 0) {
                                           autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = autismclient.util.oresim.OreGhostModelCache.init(

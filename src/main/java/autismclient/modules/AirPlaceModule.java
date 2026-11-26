@@ -82,7 +82,7 @@ public final class AirPlaceModule extends Module {
          && MC.gameMode != null
          && MC.options.keyUse.isDown()
          && ((AutismMinecraftAccessor)MC).autism$getRightClickDelay() <= 0
-         && !HashUtil.load_Z()
+         && !BlinkPacketManager.load_Z()
          && autismclient.util.ah.write_Z(this.id())) {
          try {
             if (!bM.init(this.id())) {

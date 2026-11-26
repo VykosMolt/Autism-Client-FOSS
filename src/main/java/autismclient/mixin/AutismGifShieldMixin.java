@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.compat263.Compat263;
-import autismclient.modules.L;
+import autismclient.modules.GifOverlayState;
 import autismclient.util.c.GifTextureManager;
 import autismclient.util.c.GifRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -44,17 +44,17 @@ public abstract class AutismGifShieldMixin {
       int outlineColor,
       CallbackInfo ci
    ) {
-      if (L.load_Z()) {
-         String name = GifRenderContext.init_Z() ? L.init_Str() : GifRenderContext.init_Str();
+      if (GifOverlayState.load_Z()) {
+         String name = GifRenderContext.init_Z() ? GifOverlayState.init_Str() : GifRenderContext.init_Str();
          if (name != null && !name.isEmpty()) {
-            String path = L.load(name);
+            String path = GifOverlayState.load(name);
             if (path != null) {
                BannerPatternLayers patterns = components != null
                   ? components.getOrDefault(DataComponents.BANNER_PATTERNS, BannerPatternLayers.EMPTY)
                   : BannerPatternLayers.EMPTY;
                DyeColor baseColor = components != null ? components.get(DataComponents.BASE_COLOR) : null;
                if (patterns.layers().isEmpty() && baseColor == null) {
-                  Identifier texture = GifTextureManager.load(path, L.load_D(), L.write_Z(), L.write_D());
+                  Identifier texture = GifTextureManager.load(path, GifOverlayState.load_D(), GifOverlayState.write_Z(), GifOverlayState.write_D());
                   if (texture != null) {
                      Compat263.submitModel(
                         submitNodeCollector,

@@ -14,7 +14,7 @@ public final class z {
    }
 
    public static String init_Str() {
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       String stored = module == null ? AutismConfig.getGlobal().commandPrefix : module.init_Str();
       String safeStored = stored == null ? "" : stored;
       String cachedStored = write;

@@ -42,7 +42,7 @@ public final class AuditClientFixes {
    }
 
    public static boolean isAutismActive() {
-      autismclient.modules.PoolEntry var0 = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager var0 = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       return var0 != null ? var0.init_Z() : false;
    }
 
@@ -51,11 +51,11 @@ public final class AuditClientFixes {
    }
 
    public static boolean isFreecamActive() {
-      return autismclient.modules.aC.init_Z();
+      return autismclient.modules.FreecamController.init_Z();
    }
 
    public static boolean isNoRenderInWallOverlay() {
-      return autismclient.modules.az.close();
+      return autismclient.modules.NoRenderState.close();
    }
 
    public static boolean shouldKeepNoPhysics() {

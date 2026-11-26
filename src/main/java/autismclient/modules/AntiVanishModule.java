@@ -55,7 +55,7 @@ public final class AntiVanishModule extends Module {
    private final autismclient.util.CachePool init_CachePool = new autismclient.util.CachePool();
    private final autismclient.util.StreamUtil init_StreamUtil = new autismclient.util.StreamUtil();
    private final Map<UUID, AntiVanishModule.Inner_DataUtil> init_Map = new LinkedHashMap<>();
-   private final UiHelper init_UiHelper = new UiHelper();
+   private final VanishActivityDetector init_UiHelper = new VanishActivityDetector();
    private volatile long read_J;
    private long write_J = -1L;
    private final Map<UUID, AntiVanishModule.Inner_DataUtil> load_Map = new LinkedHashMap<>();
@@ -351,7 +351,7 @@ public final class AntiVanishModule extends Module {
          && player.tickCount >= 5
          && !(player.distanceToSqr(MC.player) > (double)this.integer("range") * this.integer("range"))) {
          String name = player.getGameProfile().name();
-         boolean npc = ConfigStore.init_Z_UUID(player.getUUID()) || ByteReader.init_Z(player.getUUID());
+         boolean npc = ArmorFilterMatcher.init_Z_UUID(player.getUUID()) || AntiBotTracker.init_Z(player.getUUID());
          this.init_CachePool.init(new autismclient.util.CachePool.Inner_DataUtil(player.getUUID(), name, true, npc), action, at);
       }
    }
@@ -369,8 +369,8 @@ public final class AntiVanishModule extends Module {
       return id != null
          && !id.equals(MC.player.getUUID())
          && bO.load_Z(name)
-         && !ConfigStore.init_Z_UUID(id)
-         && !ByteReader.init_Z(id)
+         && !ArmorFilterMatcher.init_Z_UUID(id)
+         && !AntiBotTracker.init_Z(id)
          && this.init_Z_Str(name);
    }
 
@@ -424,7 +424,7 @@ public final class AntiVanishModule extends Module {
                return;
             }
 
-            if (this.init_ClientPacketListen.getPlayerInfo(id) == null && !this.init_Set.contains(id) && !ConfigStore.init_Z_UUID(id) && !ByteReader.init_Z(id)
+            if (this.init_ClientPacketListen.getPlayerInfo(id) == null && !this.init_Set.contains(id) && !ArmorFilterMatcher.init_Z_UUID(id) && !AntiBotTracker.init_Z(id)
                )
              {
                unknown.add(id);
@@ -446,7 +446,7 @@ public final class AntiVanishModule extends Module {
    private boolean init_Z_UUID_2(UUID id, String name, boolean unresolved) {
       return !unresolved
          ? this.init_Z_UUID_Str(id, name)
-         : id != null && !id.equals(MC.player.getUUID()) && !ConfigStore.init_Z_UUID(id) && !ByteReader.init_Z(id) && !this.bool("player-filter");
+         : id != null && !id.equals(MC.player.getUUID()) && !ArmorFilterMatcher.init_Z_UUID(id) && !AntiBotTracker.init_Z(id) && !this.bool("player-filter");
    }
 
    private void load_V_J(long at) {

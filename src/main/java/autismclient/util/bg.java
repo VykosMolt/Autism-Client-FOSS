@@ -68,10 +68,10 @@ public final class bg {
    }
 
    public static void write() {
-      load(autismclient.modules.PoolEntry.init_PoolEntry());
+      load(autismclient.modules.ModuleRuntimeManager.init_PoolEntry());
    }
 
-   public static void init_V_PoolEntry(autismclient.modules.PoolEntry module) {
+   public static void init_V_PoolEntry(autismclient.modules.ModuleRuntimeManager module) {
       long deadline = load_J;
       if (deadline > 0L && System.currentTimeMillis() > deadline) {
          load_J = 0L;
@@ -79,7 +79,7 @@ public final class bg {
       }
    }
 
-   public static void load(autismclient.modules.PoolEntry module) {
+   public static void load(autismclient.modules.ModuleRuntimeManager module) {
       int next = 0;
       if (module != null && !autismclient.modules.aD.read_Z()) {
          if (module.update_Z()) {

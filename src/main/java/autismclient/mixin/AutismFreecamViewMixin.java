@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.aC;
+import autismclient.modules.FreecamController;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import net.minecraft.client.renderer.GameRenderer;
@@ -16,21 +16,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismFreecamViewMixin {
    @Inject(method = "bobView", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$freecamNoBob(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
-      if (aC.init_Z()) {
+      if (FreecamController.init_Z()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$freecamNoHurtTilt(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
-      if (aC.init_Z()) {
+      if (FreecamController.init_Z()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "renderItemInHand", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$freecamNoHandWhileDriven(CameraRenderState cameraState, PlayerRenderState playerRenderState, GpuTextureView lightmap, CallbackInfo ci) {
-      if (aC.init_Z() && aC.write()) {
+      if (FreecamController.init_Z() && FreecamController.write()) {
          ci.cancel();
       }
    }
@@ -45,6 +45,6 @@ public abstract class AutismFreecamViewMixin {
       require = 0
    )
    private boolean autism$freecamNoBodyOverlays(boolean isHudHidden) {
-      return isHudHidden || aC.init_Z();
+      return isHudHidden || FreecamController.init_Z();
    }
 }

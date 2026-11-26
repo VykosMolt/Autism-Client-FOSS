@@ -77,12 +77,12 @@ final class cU extends aR {
    }
 
    static Vec3 init_Vec3_Minecraft(Minecraft mc) {
-      return autismclient.modules.aC.init_Z() ? autismclient.modules.aC.init_Vec3_F(1.0F) : mc.player.getEyePosition();
+      return autismclient.modules.FreecamController.init_Z() ? autismclient.modules.FreecamController.init_Vec3_F(1.0F) : mc.player.getEyePosition();
    }
 
    static Vec3 load_Vec3_Minecraft(Minecraft mc) {
-      return autismclient.modules.aC.init_Z()
-         ? Vec3.directionFromRotation(autismclient.modules.aC.load_F_F(1.0F), autismclient.modules.aC.init_F_F(1.0F))
+      return autismclient.modules.FreecamController.init_Z()
+         ? Vec3.directionFromRotation(autismclient.modules.FreecamController.load_F_F(1.0F), autismclient.modules.FreecamController.init_F_F(1.0F))
          : mc.player.getViewVector(1.0F);
    }
 

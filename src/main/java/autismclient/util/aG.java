@@ -18,24 +18,24 @@ public final class aG {
 
    public static void init_V() {
       boolean newValue = !ck.init_ck().read_Z();
-      autismclient.modules.PoolEntry.init_PoolEntry().init_Z_Z(newValue);
+      autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_Z_Z(newValue);
       bi.init("Send Packets " + (newValue ? "on" : "off"), newValue ? -13248397 : -50373);
    }
 
    public static void load_V() {
       boolean newValue = !ck.init_ck().write_Z();
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       int sent = module.init_I_Z(newValue);
       module.init(newValue, sent);
    }
 
    public static void read() {
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       module.load(module.read_I());
    }
 
    public static void write() {
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       module.read(module.write_I());
    }
 
@@ -54,7 +54,7 @@ public final class aG {
    }
 
    public static void close() {
-      if (autismclient.modules.PoolEntry.init_PoolEntry().task()) {
+      if (autismclient.modules.ModuleRuntimeManager.init_PoolEntry().task()) {
          bi.init("GUI restored.", -13248397);
       } else {
          bi.write("No stored GUI.");
@@ -67,7 +67,7 @@ public final class aG {
 
    public static void poll() {
       if (!autismclient.modules.aD.read_Z()) {
-         autismclient.modules.PoolEntry.init_PoolEntry().push(false);
+         autismclient.modules.ModuleRuntimeManager.init_PoolEntry().push(false);
          if (init_Minecraft.getConnection() != null) {
             ck.init_ck().init_I_ClientPacketListen(init_Minecraft.getConnection());
             init_Minecraft.getConnection().getConnection().disconnect(Component.literal("Disconnecting (Autism)"));

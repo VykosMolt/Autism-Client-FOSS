@@ -43,7 +43,7 @@ public final class HandNoClipModule extends Module {
          && mc.player != null
          && mc.level != null
          && !aD.read_Z()
-         && !aC.init_Z()
+         && !FreecamController.init_Z()
          && !cn.init_Z()
          && cn.init_ce_DataUtil() == null
          && al.init_Module_Str("hand-no-clip") instanceof HandNoClipModule module

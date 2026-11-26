@@ -8,7 +8,7 @@ import autismclient.gui.f.b.j;
 import autismclient.gui.f.b.l;
 import autismclient.modules.Module;
 import autismclient.modules.ScaffoldModule;
-import autismclient.modules.ap;
+import autismclient.modules.StorageEspCatalog;
 import autismclient.util.M;
 import autismclient.util.Y;
 import autismclient.util.cA;
@@ -650,7 +650,7 @@ public class NodeWalker extends KeyHolder {
                );
             break;
          case STORAGE_LIST:
-            for (ap.Inner_BufferHelper target : ap.init_List) {
+            for (StorageEspCatalog.Inner_BufferHelper target : StorageEspCatalog.init_List) {
                ItemStack icon = target.init_ItemStack();
                out.add(new NodeWalker.Inner_DataUtil(target.init_Str, target.load_Str, target.read, icon, icon.isEmpty()));
             }

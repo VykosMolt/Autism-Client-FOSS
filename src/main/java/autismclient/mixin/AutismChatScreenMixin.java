@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.commands.CommandManager;
 import autismclient.e.RefQueue;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.AuditHideOff;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
@@ -50,7 +50,7 @@ public abstract class AutismChatScreenMixin {
                   return;
                }
 
-               PoolEntry module = PoolEntry.init_PoolEntry();
+               ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
                module.flush_V();
                Minecraft mc = Minecraft.getInstance();
                AutismClientMessaging.sendPrefixed("Autism is now " + (module.init_Z() ? "enabled" : "disabled") + ".");

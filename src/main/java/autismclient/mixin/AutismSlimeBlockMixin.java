@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.ai;
+import autismclient.modules.MovementModuleHooks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class AutismSlimeBlockMixin {
    @Inject(method = "fallOn", at = @At("HEAD"), cancellable = true)
    private void autism$noFallAntiBounce(Level level, BlockState state, BlockPos pos, Entity entity, double fallDistance, CallbackInfo ci) {
-      if (ai.init_Z(entity)) {
+      if (MovementModuleHooks.init_Z(entity)) {
          ci.cancel();
       }
    }

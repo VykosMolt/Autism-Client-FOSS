@@ -1,12 +1,12 @@
 package autismclient.mixin;
 
 import autismclient.ai.aF;
-import autismclient.modules.ByteReader;
+import autismclient.modules.AntiBotTracker;
 import autismclient.modules.BacktrackModule;
 import autismclient.modules.BedNukerModule;
 import autismclient.modules.KBDisplacementModule;
 import autismclient.modules.ScaffoldModule;
-import autismclient.modules.af;
+import autismclient.modules.EspChunkWorker;
 import autismclient.modules.al;
 import autismclient.modules.WTappingModule;
 import autismclient.modules.ClutchModule;
@@ -71,7 +71,7 @@ public class AutismMultiPlayerGameModeMixin {
          WTappingModule.init(player, entity);
          r.init(player, entity);
          t.init(player, entity);
-         ByteReader.init_V(entity);
+         AntiBotTracker.init_V(entity);
       }
    }
 
@@ -100,7 +100,7 @@ public class AutismMultiPlayerGameModeMixin {
    @Inject(method = "destroyBlock", at = @At("RETURN"), require = 0)
    private void autism$onDestroyBlockInvalidateEsp(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
       if (Boolean.TRUE.equals(cir.getReturnValue())) {
-         af.init_V_BlockPos(pos);
+         EspChunkWorker.init_V_BlockPos(pos);
       }
    }
 
@@ -115,9 +115,9 @@ public class AutismMultiPlayerGameModeMixin {
 
       if (hit != null && cir.getReturnValue() != null && cir.getReturnValue().consumesAction()) {
          BlockPos hitPos = hit.getBlockPos();
-         af.init_V_BlockPos(hitPos);
+         EspChunkWorker.init_V_BlockPos(hitPos);
          if (hit.getDirection() != null) {
-            af.init_V_BlockPos(hitPos.relative(hit.getDirection()));
+            EspChunkWorker.init_V_BlockPos(hitPos.relative(hit.getDirection()));
          }
 
          if (!AutismLiteVariant.enabled()) {

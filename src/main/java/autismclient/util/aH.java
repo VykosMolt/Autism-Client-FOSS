@@ -50,7 +50,7 @@ public final class aH {
             shared.read_Z() ? autismclient.gui.f.b.CachePool.Inner_DataUtil.write : autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
             () -> {
                boolean newValue = !shared.read_Z();
-               autismclient.modules.PoolEntry.init_PoolEntry().init_Z_Z(newValue);
+               autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_Z_Z(newValue);
                bi.init("Send Packets " + (newValue ? "on" : "off"), newValue ? -13248397 : -50373);
             }
          )
@@ -65,7 +65,7 @@ public final class aH {
             shared.write_Z() ? autismclient.gui.f.b.CachePool.Inner_DataUtil.write : autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
             () -> {
                boolean newValue = !shared.write_Z();
-               autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
                int sent = module.init_I_Z(newValue);
                module.init(newValue, sent);
             }
@@ -75,7 +75,7 @@ public final class aH {
       buttons.add(
          new autismclient.gui.f.b.DataPipe(
             baseX, baseY + 96, thirdWidth, defaultHeight, Component.literal("Clear Q"), autismclient.gui.f.b.CachePool.Inner_DataUtil.update, () -> {
-               autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
                int count = module.write_I();
                module.read(count);
             }
@@ -104,7 +104,7 @@ public final class aH {
             defaultHeight,
             Component.literal("Pkt Log"),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-            () -> autismclient.modules.PoolEntry.init_PoolEntry().state()
+            () -> autismclient.modules.ModuleRuntimeManager.init_PoolEntry().state()
          )
       );
       int halfWidth = (defaultWidth - 5) / 2;
@@ -151,7 +151,7 @@ public final class aH {
             Component.literal("Disconnect and send packets"),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
             () -> {
-               autismclient.modules.PoolEntry.init_PoolEntry().push(false);
+               autismclient.modules.ModuleRuntimeManager.init_PoolEntry().push(false);
                if (client.getConnection() != null) {
                   int sent = shared.init_I_ClientPacketListen(client.getConnection());
                   client.getConnection().getConnection().disconnect(Component.literal("Disconnecting (Autism)"));

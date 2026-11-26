@@ -834,7 +834,7 @@ public final class ck {
       }
 
       this.tick_V();
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       boolean hasDelays = this.init_List.stream().anyMatch(qpx -> qpx.load > 0);
       if (module.reset_Z() && !hasDelays) {
          return this.load_I_ClientPacketListen(networkHandler);

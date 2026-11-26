@@ -139,7 +139,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
    private final Random init_Random = new Random();
    private final KillAuraModule.Inner_StreamUtil init_aa_StreamUtil = new KillAuraModule.Inner_StreamUtil(new Random());
    private final KillAuraModule.Inner_CachePool init_aa_CachePool = new KillAuraModule.Inner_CachePool();
-   private final h init_h;
+   private final ClickerSettingsGroup init_h;
    private final Random load_Random = new Random();
    private final KillAuraModule.Inner_ConfigStore init_aa_ConfigStore = new KillAuraModule.Inner_ConfigStore();
    private final KillAuraModule.Inner_DataUtil init_aa_DataUtil = new KillAuraModule.Inner_DataUtil();
@@ -180,7 +180,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
    private int queue = -1;
    private int buffer;
    private int entry;
-   private final l.Inner_BufferHelper init_l_BufferHelper = new l.Inner_BufferHelper();
+   private final ShieldHitWindowHelper.Inner_BufferHelper init_l_BufferHelper = new ShieldHitWindowHelper.Inner_BufferHelper();
    private InteractionHand init_InteractionHand;
    private ItemStack init_ItemStack = ItemStack.EMPTY;
    private int node = -1;
@@ -195,7 +195,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
    private boolean write_Z;
    private String read_Str = "";
    private Set<String> init_Set = Set.of();
-   private final O init_O;
+   private final HeldItemFilter init_O;
    private final KillAuraModule.Inner_JsonUtil init_aa_JsonUtil = new KillAuraModule.Inner_JsonUtil();
    private LivingEntity read_LivingEntity;
    private int flags = -2147483648;
@@ -259,12 +259,12 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
             .description("Delay after full charge")
             .build()
       );
-      this.init_h = new h(this, "1.8 Combat", h.init_BufferHelper, () -> true, h.init_ValueRange);
+      this.init_h = new ClickerSettingsGroup(this, "1.8 Combat", ClickerSettingsGroup.init_BufferHelper, () -> true, ClickerSettingsGroup.init_ValueRange);
       this.add(
          new RangeSetting("pre-reach", "Pre-Reach", read_ValueRange, 0.0, 1.5, 0.05).group("1.8 Combat").description("Swing before reach, blocks").build()
       );
       this.add(new BoolSetting("criticals", "Criticals", false).description("Smart critical hits").build());
-      this.init_O = new O(this);
+      this.init_O = new HeldItemFilter(this);
       this.add(new BoolSetting("auto-sword", "Auto Sword", true).visibleWhen(() -> !this.init_O.init_Z()).build());
       this.add(new BoolSetting("shield-break", "Shield Break", true).build());
       AutismConfig.ModuleState saved = AutismConfig.getGlobal().modules.get(this.id());
@@ -386,7 +386,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
             && MC.player != null
             && MC.gui.screen() == null
             && MC.gui.overlay() == null
-            && !HashUtil.load_Z()
+            && !BlinkPacketManager.load_Z()
             && autismclient.util.ah.write_Z(this.id())) {
             try {
                autismclient.util.aw.init_V(MC, this.clear_I);
@@ -410,7 +410,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
             && MC.player != null
             && MC.gui.screen() == null
             && MC.gui.overlay() == null
-            && !HashUtil.load_Z()
+            && !BlinkPacketManager.load_Z()
             && autismclient.util.ah.write_Z(this.id())) {
             try {
                autismclient.util.aw.init_V(MC, this.clear_I);
@@ -437,7 +437,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
             if (!this.add_Z_2()) {
                this.clear_I = -1;
                this.reset_I = -1;
-            } else if (MC.gui.screen() == null && MC.gui.overlay() == null && !HashUtil.load_Z()) {
+            } else if (MC.gui.screen() == null && MC.gui.overlay() == null && !BlinkPacketManager.load_Z()) {
                this.valid();
             }
          }
@@ -965,7 +965,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
       if (this.read_InteractionHand != null) {
          int tick = ck.init_ck().state_I();
          long age = (long)tick - this.pool;
-         if (!AutismLiteVariant.enabled() && aC.write()) {
+         if (!AutismLiteVariant.enabled() && FreecamController.write()) {
             this.open_V_4();
          } else if (!this.pop_Z_2()
             || !this.init_Z_Z_3(true)
@@ -1014,7 +1014,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
       KillAuraModule aura = init_aa();
       if (aura != null && MC.player != null && MC.level != null) {
          HitResult hit = MC.hitResult;
-         if (hit instanceof EntityHitResult npc && ByteReader.init_Z(npc.getEntity())) {
+         if (hit instanceof EntityHitResult npc && AntiBotTracker.init_Z(npc.getEntity())) {
             return false;
          } else if (hit != null && hit.getType() == Type.BLOCK) {
             return false;
@@ -1125,14 +1125,14 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
 
             int raise = init_I_ItemStack_2(MC.player.getItemInHand(hand));
             int ownHit = this.read_I_6();
-            l.Inner_CachePool decision = this.pop_Z_2()
-               ? l.init(true, this.init_InteractionHand != null, raise, ownHit)
-               : l.init_l_CachePool_Z(true, this.init_InteractionHand != null, MC.player.hurtTime, raise, ownHit);
+            ShieldHitWindowHelper.Inner_CachePool decision = this.pop_Z_2()
+               ? ShieldHitWindowHelper.init(true, this.init_InteractionHand != null, raise, ownHit)
+               : ShieldHitWindowHelper.init_l_CachePool_Z(true, this.init_InteractionHand != null, MC.player.hurtTime, raise, ownHit);
             if (ck.init_ck().state_I() == this.pool) {
-               decision = l.Inner_CachePool.DOWN;
+               decision = ShieldHitWindowHelper.Inner_CachePool.DOWN;
             }
 
-            if (decision == l.Inner_CachePool.DOWN) {
+            if (decision == ShieldHitWindowHelper.Inner_CachePool.DOWN) {
                this.load_V_Z_2(false);
             } else if (this.init_InteractionHand != null
                && MC.player.isUsingItem()
@@ -1173,7 +1173,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
          int falling = this.write_I_6();
          boolean strongerSoon = falling <= 1
             && this.init_l_BufferHelper.init_I(target.getUUID(), target.hurtTime, tick, this.init_D_Z_2(true)) == 0
-            && this.init_Z_ItemStack_Vec3(MC.player.getMainHandItem(), l.init(target.getBoundingBox(), MC.player.getEyePosition()));
+            && this.init_Z_ItemStack_Vec3(MC.player.getMainHandItem(), ShieldHitWindowHelper.init(target.getBoundingBox(), MC.player.getEyePosition()));
          if (strongerSoon) {
             open = Math.min(open, falling + 1);
          }
@@ -1262,8 +1262,8 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
             Vec3 view = load_Vec3_LivingEntity(enemy);
             double[] reach = init_DArr_LivingEntity(enemy);
             double distance = body.distanceToSqr(eye);
-            if (l.init_Z_Vec3(eye, body, reach[0], reach[1] + 0.5, reach[2])
-               && l.init(eye, view, body)
+            if (ShieldHitWindowHelper.init_Z_Vec3(eye, body, reach[0], reach[1] + 0.5, reach[2])
+               && ShieldHitWindowHelper.init(eye, view, body)
                && this.init_Z_LivingEntity(enemy, eye, body)
                && this.init_l_BufferHelper.init_Z(enemy.getUUID(), enemy.hurtTime, ck.init_ck().state_I(), this.bool("block-hit-after-hit"))
                && (everySide || init_Z_BlocksAttacks(blocks, MC.player.getEyePosition(), eye, yaw))
@@ -1289,7 +1289,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean init_Z_LivingEntity(LivingEntity enemy, Vec3 eye, AABB victim) {
-      Vec3 nearest = l.init(victim, eye);
+      Vec3 nearest = ShieldHitWindowHelper.init(victim, eye);
       Vec3 center = victim.getCenter();
       Vec3[] points = new Vec3[]{
          nearest,
@@ -1310,8 +1310,8 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
    }
 
    private double load_D_2() {
-      double clientTickMs = MC.level.tickRateManager().millisecondsPerTick() / Math.max(0.05, ai.init_F());
-      return l.load(clientTickMs);
+      double clientTickMs = MC.level.tickRateManager().millisecondsPerTick() / Math.max(0.05, MovementModuleHooks.init_F());
+      return ShieldHitWindowHelper.load(clientTickMs);
    }
 
    private boolean pop_Z_2() {
@@ -1355,7 +1355,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
             motion = new Vec3(motion.x, Math.max(motion.y, ((AutismLivingEntityAccessor)MC.player).autism$getJumpPower()), motion.z);
          }
 
-         return this.store = l.init(MC.player.getBoundingBox(), motion, (body, step) -> Entity.collideBoundingBox(MC.player, step, body, MC.level, List.of()));
+         return this.store = ShieldHitWindowHelper.init(MC.player.getBoundingBox(), motion, (body, step) -> Entity.collideBoundingBox(MC.player, step, body, MC.level, List.of()));
       } else {
          return this.store;
       }
@@ -1451,7 +1451,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
          && (bedBudget ? this.next() : this.get_Z_2())
          && (bedBudget || this.level != ck.init_ck().state_I())
          && !aD.init_Z()
-         && !aC.init_Z()
+         && !FreecamController.init_Z()
          && !cd.init_Z()
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
@@ -1467,7 +1467,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
          && !start_Z_2()
          && (AutismLiteVariant.enabled() || bedBudget || !KBDisplacementModule.init_Z_24())
          && (AutismLiteVariant.enabled() || bedBudget || !BedNukerModule.init_Z_23())
-         && !HashUtil.load_Z()
+         && !BlinkPacketManager.load_Z()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20();
    }
@@ -1524,7 +1524,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
                   try {
                      float pixel = 1.0F / window.getGuiScale();
                      graphics.pose().scale(pixel, pixel);
-                     r.init_V_GuiGraphicsExtract(graphics, window.getWidth() / 2.0F, window.getHeight() / 2.0F, radiusX, radiusY);
+                     CrosshairVectorPipeline.init_V_GuiGraphicsExtract(graphics, window.getWidth() / 2.0F, window.getHeight() / 2.0F, radiusX, radiusY);
                   } finally {
                      graphics.pose().popMatrix();
                   }
@@ -1777,7 +1777,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
          return false;
       } else if (entity == MC.player || entity.hasPassenger(MC.player)) {
          return false;
-      } else if (ByteReader.load_Z(entity)) {
+      } else if (AntiBotTracker.load_Z(entity)) {
          return false;
       } else if (TeamsModule.init(entity, "killaura")) {
          return false;
@@ -2250,7 +2250,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
       if (this.buffer() && !this.write(0) && !(MC.player.getAttackStrengthScale(0.5F) <= 0.9F)) {
          Vec3 motion = new Vec3(target.getX() - target.xo, target.getY() - target.yo, target.getZ() - target.zo);
          return autismclient.util.u.init(
-            MC.player.getEyePosition(), target.getBoundingBox(), l.init(MC.player.getDeltaMovement()), l.init(motion), this.write_D()
+            MC.player.getEyePosition(), target.getBoundingBox(), ShieldHitWindowHelper.init(MC.player.getDeltaMovement()), ShieldHitWindowHelper.init(motion), this.write_D()
          );
       } else {
          return false;
@@ -3108,7 +3108,7 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
             this.start_I--;
             if (this.start_I == 0
                && (!this.clear_Z_2() || this.open(this.init_LivingEntity))
-               && !HashUtil.load_Z()
+               && !BlinkPacketManager.load_Z()
                && (AutismLiteVariant.enabled() || !BedNukerModule.init_Z_23())
                && !CrystalAuraModule.init_Z_51()
                && !CrystalAuraModule.sync_Z_11()

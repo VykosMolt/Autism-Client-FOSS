@@ -562,27 +562,27 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       return al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura ? aura.load_J / 1000.0 : 0.0;
    }
 
-   public static List<FileCache> init_List_18() {
+   public static List<EspHighlightBox> init_List_18() {
       if (al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled() && aura.bool("preview")) {
          int color = am.init_I_Module(aura, "preview-color", 1728002875);
-         List<FileCache> boxes = new ArrayList<>(2);
+         List<EspHighlightBox> boxes = new ArrayList<>(2);
          int tick = ck.init_ck().state_I();
          if (aura.read_BlockPos == null && aura.load_BlockPos == null && tick - aura.state < 0) {
             if (aura.write_BlockPos != null) {
-               boxes.add(new FileCache(new AABB(aura.write_BlockPos), color));
+               boxes.add(new EspHighlightBox(new AABB(aura.write_BlockPos), color));
             }
 
             if (aura.update_BlockPos != null) {
-               boxes.add(new FileCache(new AABB(aura.update_BlockPos), color));
+               boxes.add(new EspHighlightBox(new AABB(aura.update_BlockPos), color));
             }
          }
 
          if (aura.read_BlockPos != null) {
-            boxes.add(new FileCache(new AABB(aura.read_BlockPos), color));
+            boxes.add(new EspHighlightBox(new AABB(aura.read_BlockPos), color));
          }
 
          if (aura.load_BlockPos != null) {
-            boxes.add(new FileCache(new AABB(aura.load_BlockPos), color));
+            boxes.add(new EspHighlightBox(new AABB(aura.load_BlockPos), color));
          }
 
          return boxes;
@@ -748,11 +748,11 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          && !MC.player.isUsingItem()
          && !MC.player.isHandsBusy()
          && !aD.init_Z()
-         && !aC.init_Z()
+         && !FreecamController.init_Z()
          && !cd.init_Z()
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
-         && !HashUtil.load_Z()
+         && !BlinkPacketManager.load_Z()
          && !cn.init_Z()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
@@ -1158,7 +1158,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
                && entity.isAlive()
                && !entity.isSpectator()
                && this.init_Z_Entity_8(entity)
-               && !ByteReader.load_Z(entity)
+               && !AntiBotTracker.load_Z(entity)
                && !TeamsModule.init(entity, "killaura")
                && entity.hurtTime <= this.integer("hurt-time")
                && autismclient.util.S.init_D_LivingEntity(entity) > 0.0
@@ -2351,7 +2351,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          .getEntitiesOfClass(
             Player.class,
             search,
-            entityx -> entityx != player && entityx.isAlive() && !entityx.isSpectator() && !ByteReader.load_Z(entityx) && !TeamsModule.init(entityx, "killaura")
+            entityx -> entityx != player && entityx.isAlive() && !entityx.isSpectator() && !AntiBotTracker.load_Z(entityx) && !TeamsModule.init(entityx, "killaura")
          );
       Vec3 eye = player.getEyePosition();
       double rangeSq = range * range;
@@ -2835,7 +2835,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          && enemy.isAlive()
          && MC.level.getEntity(enemy.getId()) == enemy
          && !TeamsModule.init(enemy, "killaura")
-         && !ByteReader.load_Z(enemy)
+         && !AntiBotTracker.load_Z(enemy)
          && this.init_Z_LivingEntity_S_BufferHelper(
             enemy,
             this.init_S_BufferHelper_LivingEntity(enemy, source, this.init_AABB_LivingEntity(enemy, placing ? this.read_I_10() : 0, placing ? 1.5 : 0.5))

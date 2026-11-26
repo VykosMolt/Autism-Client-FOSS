@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.ck;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -16,7 +16,7 @@ public abstract class AutismInventoryMenuRemovedMixin {
    private void autism$skipDrainWhenXCarryForced(Player player, CallbackInfo ci) {
       if (player instanceof LocalPlayer) {
          ck shared = ck.init_ck();
-         PoolEntry module = PoolEntry.init_PoolEntry();
+         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
          boolean passive = module != null && module.get_Z();
          if (passive || shared.sync_Z()) {
             InventoryMenu self = (InventoryMenu)(Object)this;

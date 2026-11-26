@@ -8,7 +8,7 @@ import autismclient.gui.d.SimpleVoiceChatDetectedScreen;
 import autismclient.gui.f.RenderState;
 import autismclient.gui.f.UiHelper;
 import autismclient.gui.f.b.h;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
 import autismclient.util.AutismConfig;
 import autismclient.util.aA;
@@ -87,7 +87,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
       if (!this.autism$voicePromptChecked) {
          this.autism$voicePromptChecked = true;
          if (!aD.init_Z() && FabricLoader.getInstance().isModLoaded("voicechat")) {
-            PoolEntry module = PoolEntry.init_PoolEntry();
+            ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
             if (module != null && module.tick_Z()) {
                AutismConfig config = AutismConfig.getGlobal();
                if (config != null && !config.voiceChatModdedPromptShown) {
@@ -188,7 +188,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
       if (this.autism$spoofButton == null) {
          this.autism$spoofButton = this.addRenderableWidget(Button.builder(Component.literal("Client"), ignored -> {
-            PoolEntry module = PoolEntry.init_PoolEntry();
+            ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
             if (module != null) {
                module.update(!module.tick_Z());
             }
@@ -199,7 +199,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
       if (this.autism$packsButton == null) {
          this.autism$packsButton = this.addRenderableWidget(Button.builder(Component.literal("Packs"), ignored -> {
-            PoolEntry module = PoolEntry.init_PoolEntry();
+            ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
             if (module != null) {
                module.write(!module.pop_Z());
             }
@@ -249,14 +249,14 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
    @Unique
    private Component autism$spoofClientLabel(int width) {
-      PoolEntry module = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       boolean enabled = module != null && module.tick_Z();
       return this.autism$fitLabel(width, enabled ? "Client: Vanilla" : "Client: Modded", enabled ? "Vanilla" : "Modded", "Client");
    }
 
    @Unique
    private Component autism$bypassPacksLabel(int width) {
-      PoolEntry module = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       boolean vanilla = module != null && module.tick_Z();
       boolean bypass = module != null && module.pop_Z();
       String label = autismclient.g.ProtectorModeDescriptions.init(vanilla, bypass);
@@ -338,7 +338,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
    @Unique
    private void autism$renderButtonGuidance(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-      PoolEntry module = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       boolean vanilla = module != null && module.tick_Z();
       boolean bypass = module != null && module.pop_Z();
       String guidance = null;

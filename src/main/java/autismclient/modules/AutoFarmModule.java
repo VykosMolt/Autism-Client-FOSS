@@ -586,7 +586,7 @@ public final class AutoFarmModule extends Module implements cn.Inner_DataUtil {
    private boolean read_Z_8() {
       if (MC == null || MC.player == null || MC.level == null || MC.gameMode == null) {
          return false;
-      } else if (aD.init_Z() || aC.init_Z()) {
+      } else if (aD.init_Z() || FreecamController.init_Z()) {
          return false;
       } else if (!MC.player.isAlive() || MC.player.isSpectator()) {
          return false;
@@ -930,7 +930,7 @@ public final class AutoFarmModule extends Module implements cn.Inner_DataUtil {
          && !SurroundModule.init_Z_27()
          && !CrystalAuraModule.init_Z_51()
          && !AnchorAuraModule.init_Z_2()
-         && !HashUtil.load_Z()
+         && !BlinkPacketManager.load_Z()
          && ch.init_ch_CachePool().init_Z()) {
          ce.Inner_DataUtil goal = target.init_ce_DataUtil();
          ce.Inner_DataUtil wire = this.load_ce_DataUtil_2();
@@ -967,7 +967,7 @@ public final class AutoFarmModule extends Module implements cn.Inner_DataUtil {
          && !SurroundModule.init_Z_27()
          && !CrystalAuraModule.init_Z_51()
          && !AnchorAuraModule.init_Z_2()
-         && !HashUtil.load_Z()
+         && !BlinkPacketManager.load_Z()
          && ch.init_ch_CachePool().init_Z()) {
          ce.Inner_DataUtil goal = target.init_ce_DataUtil();
          ce.Inner_DataUtil wire = this.load_ce_DataUtil_2();
@@ -1732,7 +1732,7 @@ public final class AutoFarmModule extends Module implements cn.Inner_DataUtil {
          return null;
       }
 
-      if (HashUtil.load_Z()) {
+      if (BlinkPacketManager.load_Z()) {
          return null;
       }
 

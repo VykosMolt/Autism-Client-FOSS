@@ -77,7 +77,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
    private List<BedDefenderModule.Inner_TaskQueue> load_List = List.of();
    private Set<BlockPos> init_Set = Set.of();
    private int init_I;
-   private final a init_a = new a();
+   private final ExternalBreakTracker init_a = new ExternalBreakTracker();
    private final Map<BlockPos, Integer> init_Map = new ConcurrentHashMap<>();
    private final Set<BlockPos> load_Set = new HashSet<>();
    private Set<BlockPos> read_Set = Set.of();
@@ -381,7 +381,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
          && MC.gui.screen() == null
          && MC.gui.overlay() == null
          && !aD.init_Z()
-         && !aC.init_Z()
+         && !FreecamController.init_Z()
          && !cd.init_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !MacroExecutor.write_Z()
@@ -535,7 +535,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
             }
          }
 
-         List<BlockPos> ordered = MapStore.init(eye, this.read_List, rays, postureBefore);
+         List<BlockPos> ordered = BlockPlacementOrderSolver.init(eye, this.read_List, rays, postureBefore);
          this.read_List.clear();
          this.read_List.addAll(ordered);
          this.close_V_2();
@@ -549,7 +549,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
          for (BlockPos blocker : considered) {
             for (Entry<BlockPos, List<Vec3>> entry : rays.entrySet()) {
                if (rank.get(entry.getKey()) < rank.get(blocker)
-                  && (MapStore.init(eye, blocker, entry.getValue()) || postureBefore.getOrDefault(blocker, Set.of()).contains(entry.getKey()))) {
+                  && (BlockPlacementOrderSolver.init(eye, blocker, entry.getValue()) || postureBefore.getOrDefault(blocker, Set.of()).contains(entry.getKey()))) {
                   this.read_Map.computeIfAbsent(blocker, ignored -> new HashSet<>()).add(entry.getKey());
                }
             }
@@ -1078,7 +1078,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
    }
 
    private DyeColor init_DyeColor() {
-      return b.init();
+      return TeamDyeColorResolver.init();
    }
 
    private BlockPos init_BlockPos_Vec3(Vec3 eye, double radius, boolean skipCompleted) {
@@ -1114,7 +1114,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
          if (slot >= 0 && slot != MC.player.getInventory().getSelectedSlot()) {
             this.init_V_I_3(slot);
          }
-      } else if (HashUtil.load_Z()) {
+      } else if (BlinkPacketManager.load_Z()) {
          this.load_V_7();
       } else if (this.read_List.isEmpty() || slot < 0) {
          this.load_V_7();
@@ -1560,7 +1560,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
          }
       }
 
-      return KeyHolder.init(request.init_Vec3(), option.init_AABB(), option.init_Direction(), blockers, preferred);
+      return FaceVisibilitySolver.init(request.init_Vec3(), option.init_AABB(), option.init_Direction(), blockers, preferred);
    }
 
    private autismclient.util.U.Inner_StateCache init_U_StateCache_ce_DataUtil(ce.Inner_DataUtil from, ItemStack material, boolean sneaking, StringBuilder trace) {

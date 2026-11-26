@@ -1,7 +1,7 @@
 package autismclient.aggressivepvp;
 
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
-import autismclient.modules.ByteReader;
+import autismclient.modules.AntiBotTracker;
 import autismclient.modules.AutoTotemModule;
 import autismclient.modules.Module;
 import autismclient.modules.TeamsModule;
@@ -32,7 +32,7 @@ public final class Autism {
 
     /** Left alone by AUTISM's own Crystal Aura: a bot (AntiBot) or a friend Teams protects from attacks. */
     public static boolean excluded(Entity entity) {
-        return ByteReader.load_Z(entity) || TeamsModule.init(entity, "killaura");
+        return AntiBotTracker.load_Z(entity) || TeamsModule.init(entity, "killaura");
     }
 
     public static boolean friend(Entity entity) {

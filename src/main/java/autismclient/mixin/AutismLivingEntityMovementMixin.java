@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.modules.AirJumpModule;
 import autismclient.modules.ScaffoldModule;
-import autismclient.modules.ai;
+import autismclient.modules.MovementModuleHooks;
 import autismclient.modules.NoJumpDelayModule;
 import autismclient.modules.ClutchModule;
 import autismclient.util.AutismLiteVariant;
@@ -77,6 +77,6 @@ public class AutismLivingEntityMovementMixin {
 
    @Inject(method = "travelInFluid", at = @At("RETURN"))
    private void autism$restoreLiquidSpeed(Vec3 input, CallbackInfo ci) {
-      ai.init_V((LivingEntity)(Object)this);
+      MovementModuleHooks.init_V((LivingEntity)(Object)this);
    }
 }

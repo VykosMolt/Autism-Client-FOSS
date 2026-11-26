@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.modules.aJ;
-import autismclient.modules.az;
+import autismclient.modules.CustomSkyboxRenderer;
+import autismclient.modules.NoRenderState;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.client.renderer.fog.FogRenderer;
@@ -37,6 +37,6 @@ public abstract class AutismNoRenderFogMixin {
    }
 
    private static boolean autism$fogOff() {
-      return az.size() || aJ.init_Z();
+      return NoRenderState.size() || CustomSkyboxRenderer.init_Z();
    }
 }

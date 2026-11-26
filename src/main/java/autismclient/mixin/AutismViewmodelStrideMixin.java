@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.bc;
+import autismclient.modules.ViewmodelState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientAvatarState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,7 +16,7 @@ public abstract class AutismViewmodelStrideMixin {
 
    @Inject(method = "updateBob", at = @At("RETURN"), require = 0)
    private void autism$airWalker(float movement, CallbackInfo ci) {
-      if (bc.close_Z()) {
+      if (ViewmodelState.close_Z()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.player != null && mc.player.avatarState() == (Object)this) {
             this.bob = (float)Math.min(0.1, mc.player.getDeltaMovement().horizontalDistance());

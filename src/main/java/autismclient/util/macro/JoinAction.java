@@ -78,7 +78,7 @@ public class JoinAction implements MacroAction {
          return typed;
       }
 
-      ServerData last = autismclient.modules.aB.init_ServerData();
+      ServerData last = autismclient.modules.AutoReconnectController.init_ServerData();
       return last != null && last.ip != null ? last.ip.trim() : "";
    }
 
@@ -305,7 +305,7 @@ public class JoinAction implements MacroAction {
       private Boolean init(long now, long elapsed) {
          Screen screen = cx.init_Screen(this.init_Minecraft);
          if (this.init_ClassCache_DataUti == null && screen instanceof ConnectScreen connecting && this.init_Minecraft.level == null) {
-            ServerData pending = autismclient.modules.aB.init_ServerData();
+            ServerData pending = autismclient.modules.AutoReconnectController.init_ServerData();
             if (pending == null || !JoinAction.init_Z_Str_Str(pending.ip, this.init_Str)) {
                this.load_J += elapsed;
                this.init_V_Str("Waiting for another connection");
@@ -420,7 +420,7 @@ public class JoinAction implements MacroAction {
          } catch (Throwable var4) {
          }
 
-         ServerData last = autismclient.modules.aB.init_ServerData();
+         ServerData last = autismclient.modules.AutoReconnectController.init_ServerData();
          return last != null && JoinAction.init_Z_Str_Str(last.ip, this.init_Str) ? last : new ServerData(this.init_Str, this.init_Str, Type.OTHER);
       }
 

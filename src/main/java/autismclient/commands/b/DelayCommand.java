@@ -68,7 +68,7 @@ public class DelayCommand extends Command {
       }
 
       boolean target = var10000;
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       int flushed = module.init_I_Z(target);
       module.init(target, flushed);
       return 1;

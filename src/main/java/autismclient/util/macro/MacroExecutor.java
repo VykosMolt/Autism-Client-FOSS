@@ -1270,7 +1270,7 @@ public class MacroExecutor {
             }
 
             load_V_Str("Loop " + (loopCount + 1) + (maxLoops == 2147483647 ? "" : "/" + maxLoops));
-            autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+            autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
             boolean burstMode = module.clear_Z();
             read_I = macro.init_List.size();
             runState.write_I = -1;
@@ -4257,7 +4257,7 @@ public class MacroExecutor {
          for (MacroAction action : actions) {
             if (action != null && action.isEnabled()) {
                try {
-                  init_V_Minecraft_2(mc, action, autismclient.modules.PoolEntry.init_PoolEntry());
+                  init_V_Minecraft_2(mc, action, autismclient.modules.ModuleRuntimeManager.init_PoolEntry());
                } catch (Throwable t) {
                   AutismClientMessaging.sendPrefixed("§cCleanup failed: " + init_Str_Throwable(t));
                }
@@ -4316,7 +4316,7 @@ public class MacroExecutor {
       return action.mode == WaitForMacroStepAction.Inner_DataUtil.FINISHED;
    }
 
-   private static int init_I_Minecraft(Minecraft mc, autismclient.modules.PoolEntry module, List<MacroAction> actions, int headerIndex, RaceAction race) {
+   private static int init_I_Minecraft(Minecraft mc, autismclient.modules.ModuleRuntimeManager module, List<MacroAction> actions, int headerIndex, RaceAction race) {
       int bodyCount = race.init_I_List_I(actions, headerIndex);
       List<MacroAction> conditions = new ArrayList<>();
       List<MacroAction> bodyActions = new ArrayList<>();
@@ -4541,7 +4541,7 @@ public class MacroExecutor {
 
    private static void init_V_Minecraft(
       Minecraft mc,
-      autismclient.modules.PoolEntry module,
+      autismclient.modules.ModuleRuntimeManager module,
       List<MacroAction> bodyActions,
       MacroExecutor.Inner_TableIndex run,
       CompletableFuture<Void> bodyFuture
@@ -5138,7 +5138,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_2(Minecraft mc, MacroAction action, autismclient.modules.PoolEntry module) {
+   private static void init_V_Minecraft_2(Minecraft mc, MacroAction action, autismclient.modules.ModuleRuntimeManager module) {
       if (action instanceof MultiAction || action instanceof SkippedLegacyMultiStep) {
          return;
       }
@@ -7974,7 +7974,7 @@ public class MacroExecutor {
             action.init_V();
             String names = actions.size() == 1 ? actions.get(0).getDisplayName() : actions.size() + " steps";
             load_V_Str("Break: next " + names);
-            autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+            autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
             boolean previousSuppressPostGui = Boolean.TRUE.equals(load_ThreadLocal.get());
 
             try {
@@ -10721,7 +10721,7 @@ public class MacroExecutor {
             }
          }
 
-         autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          if (module.start_Z()) {
             try {
                Connection connection = handler.getConnection();

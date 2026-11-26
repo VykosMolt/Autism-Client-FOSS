@@ -70,7 +70,7 @@ public class DelayPacketsAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       ck shared = ck.init_ck();
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       boolean shouldEnable = this.mode == DelayPacketsAction.Inner_DataUtil.ENABLE;
       int flushed = 0;
       if (!shouldEnable && this.flushOnDisable && mc.getConnection() != null) {

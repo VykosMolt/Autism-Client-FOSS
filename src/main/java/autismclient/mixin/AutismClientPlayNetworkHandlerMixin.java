@@ -8,9 +8,9 @@ import autismclient.ai.cc;
 import autismclient.ai.a.IoWorker;
 import autismclient.ai.a.a;
 import autismclient.modules.AnchorAuraModule;
-import autismclient.modules.ByteReader;
+import autismclient.modules.AntiBotTracker;
 import autismclient.modules.EndPortalModule;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.InventoryTweaksModule;
 import autismclient.modules.AntiKnockbackModule;
 import autismclient.modules.AntiVanishModule;
@@ -18,7 +18,7 @@ import autismclient.modules.KBDisplacementModule;
 import autismclient.modules.aD;
 import autismclient.modules.ScaffoldModule;
 import autismclient.modules.LeafDupeModule;
-import autismclient.modules.af;
+import autismclient.modules.EspChunkWorker;
 import autismclient.modules.al;
 import autismclient.modules.WTappingModule;
 import autismclient.modules.ClutchModule;
@@ -180,17 +180,17 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleLogin", at = @At("RETURN"))
    private void autism$espLoginApplied(ClientboundLoginPacket packet, CallbackInfo ci) {
-      af.init_V_Packet(packet);
+      EspChunkWorker.init_V_Packet(packet);
    }
 
    @Inject(method = "handleRespawn", at = @At("RETURN"))
    private void autism$espRespawnApplied(ClientboundRespawnPacket packet, CallbackInfo ci) {
-      af.init_V_Packet(packet);
+      EspChunkWorker.init_V_Packet(packet);
    }
 
    @Inject(method = "handleBlockEntityData", at = @At("RETURN"), require = 0)
    private void autism$espBlockEntityDataApplied(ClientboundBlockEntityDataPacket packet, CallbackInfo ci) {
-      af.init_V_Packet(packet);
+      EspChunkWorker.init_V_Packet(packet);
    }
 
    @Inject(
@@ -256,7 +256,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleBlockUpdate", at = @At("RETURN"))
    private void autism$aiBlockApplied(ClientboundBlockUpdatePacket packet, CallbackInfo ci) {
-      af.init_V_Packet(packet);
+      EspChunkWorker.init_V_Packet(packet);
       if (!AutismLiteVariant.enabled()) {
          ScaffoldModule.init_V_BlockPos_BlockState_2(packet.getPos(), packet.getBlockState());
          AnchorAuraModule.init_V_BlockPos_BlockState(packet.getPos(), packet.getBlockState());
@@ -268,7 +268,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleChunkBlocksUpdate", at = @At("RETURN"))
    private void autism$aiGridSectionApplied(ClientboundSectionBlocksUpdatePacket packet, CallbackInfo ci) {
-      af.init_V_Packet(packet);
+      EspChunkWorker.init_V_Packet(packet);
       if (!AutismLiteVariant.enabled()) {
          boolean[] bumped = new boolean[]{false};
          packet.runUpdates((pos, state) -> {
@@ -286,7 +286,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleForgetLevelChunk", at = @At("RETURN"))
    private void autism$aiGridChunkUnloaded(ClientboundForgetLevelChunkPacket packet, CallbackInfo ci) {
-      af.init_V_Packet(packet);
+      EspChunkWorker.init_V_Packet(packet);
       if (!AutismLiteVariant.enabled()) {
          AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
       }
@@ -299,7 +299,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleLevelChunkWithLight", at = @At("RETURN"))
    private void autism$aiFullChunkApplied(ClientboundLevelChunkWithLightPacket packet, CallbackInfo ci) {
-      af.init_V_Packet(packet);
+      EspChunkWorker.init_V_Packet(packet);
       if (!AutismLiteVariant.enabled()) {
          AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
       }
@@ -564,7 +564,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleCommands", at = @At("RETURN"))
    private void autism$onCommandTreeApplied(ClientboundCommandsPacket packet, CallbackInfo ci) {
-      PoolEntry module = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       if (module != null) {
          AutismServerInfoOverlay overlay = module.load_AutismServerInfoOv();
          if (overlay != null) {
@@ -733,42 +733,42 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       }
 
       if (!AutismLiteVariant.enabled() && packet.getType() == EntityTypes.PLAYER) {
-         ByteReader.init_V(packet.getId());
+         AntiBotTracker.init_V(packet.getId());
       }
    }
 
    @Inject(method = "handleRemoveEntities", at = @At("RETURN"))
    private void autism$antiBotRemove(ClientboundRemoveEntitiesPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ByteReader.init(packet.entityIds());
+         AntiBotTracker.init(packet.entityIds());
       }
    }
 
    @Inject(method = "handleUpdateAttributes", at = @At("RETURN"))
    private void autism$antiBotAttributes(ClientboundUpdateAttributesPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ByteReader.load(packet.getEntityId());
+         AntiBotTracker.load(packet.getEntityId());
       }
    }
 
    @Inject(method = "handleAnimate", at = @At("RETURN"))
    private void autism$antiBotAnimate(ClientboundAnimatePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ByteReader.init(packet.getId(), packet.getAction());
+         AntiBotTracker.init(packet.getId(), packet.getAction());
       }
    }
 
    @Inject(method = "handlePlayerInfoUpdate", at = @At("RETURN"))
    private void autism$antiBotInfoUpdate(ClientboundPlayerInfoUpdatePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ByteReader.init(packet);
+         AntiBotTracker.init(packet);
       }
    }
 
    @Inject(method = "handlePlayerInfoRemove", at = @At("RETURN"))
    private void autism$antiBotInfoRemove(ClientboundPlayerInfoRemovePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ByteReader.init(packet.profileIds());
+         AntiBotTracker.init(packet.profileIds());
       }
    }
 
@@ -777,7 +777,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (!AutismLiteVariant.enabled() && packet.hasPosition()) {
          ClientLevel level = Minecraft.getInstance().level;
          if (level != null) {
-            ByteReader.load_V(packet.getEntity(level));
+            AntiBotTracker.load_V(packet.getEntity(level));
          }
       }
    }
@@ -787,14 +787,14 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (!AutismLiteVariant.enabled()) {
          ClientLevel level = Minecraft.getInstance().level;
          if (level != null) {
-            ByteReader.load_V(level.getEntity(packet.id()));
+            AntiBotTracker.load_V(level.getEntity(packet.id()));
          }
       }
    }
 
    @Unique
    private boolean autism$packetHooksActive() {
-      PoolEntry module = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       return module != null && module.read_Z();
    }
 

@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.AutismPacketLoggerOverlay;
 import autismclient.util.bn;
 import autismclient.util.br;
@@ -56,7 +56,7 @@ public final class aI {
    }
 
    public static JsonObject init(JsonObject args) {
-      AutismPacketLoggerOverlay overlay = PoolEntry.init_PoolEntry().init_AutismPacketLogger();
+      AutismPacketLoggerOverlay overlay = ModuleRuntimeManager.init_PoolEntry().init_AutismPacketLogger();
       if (overlay == null) {
          throw new IllegalStateException("Packet logger overlay is unavailable");
       }
@@ -119,7 +119,7 @@ public final class aI {
    }
 
    public static JsonObject load(JsonObject args) {
-      AutismPacketLoggerOverlay overlay = PoolEntry.init_PoolEntry().init_AutismPacketLogger();
+      AutismPacketLoggerOverlay overlay = ModuleRuntimeManager.init_PoolEntry().init_AutismPacketLogger();
       if (overlay == null) {
          throw new IllegalStateException("Packet logger overlay is unavailable");
       }

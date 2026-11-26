@@ -8,9 +8,9 @@ import autismclient.g.ServerPackSelectionRegistry;
 import autismclient.g.OutboundPacketFilterHandler;
 import autismclient.g.ResourcePackPushValidator;
 import autismclient.mixin.accessor.AutismClientConnectionAccessor;
-import autismclient.modules.HashUtil;
+import autismclient.modules.BlinkPacketManager;
 import autismclient.modules.Module;
-import autismclient.modules.PoolEntry;
+import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.BacktrackModule;
 import autismclient.modules.aD;
 import autismclient.modules.ScaffoldModule;
@@ -307,9 +307,9 @@ public abstract class AutismClientConnectionMixin {
          }
 
          PacketListener packetListener = ((Connection)(Object)this).getPacketListener();
-         PoolEntry module = PoolEntry.init_PoolEntry();
-         PoolEntry.Inner_DataUtil hooks = module == null
-            ? PoolEntry.Inner_DataUtil.init_PoolEntry_DataUtil()
+         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
+         ModuleRuntimeManager.Inner_DataUtil hooks = module == null
+            ? ModuleRuntimeManager.Inner_DataUtil.init_PoolEntry_DataUtil()
             : module.init_PoolEntry_DataUtil_Z(this.isPlayConnectionActive());
          boolean normalLoggerPath = hooks.init_Z();
          String protocolHint = !hooks.read() && !hooks.write() ? "" : this.autism$protocolHint(packetListener);
@@ -326,7 +326,7 @@ public abstract class AutismClientConnectionMixin {
                   }
                }
 
-               if (!this.autism$isLocalClientPlayConnection() || !PingSpoofScheduler.load_Z(packet) && !HashUtil.load(packet)) {
+               if (!this.autism$isLocalClientPlayConnection() || !PingSpoofScheduler.load_Z(packet) && !BlinkPacketManager.load(packet)) {
                   if (this.autism$isLocalClientPlayConnection() && packet instanceof ServerboundPongPacket pong) {
                      autismclient.util.ci.load(pong.getId());
                   }
@@ -468,7 +468,7 @@ public abstract class AutismClientConnectionMixin {
                                              AutismClientAddon.LOG.debug("[Autism] QUEUED packet (delay enabled)");
                                           }
 
-                                          PoolEntry captureModule = PoolEntry.init_PoolEntry();
+                                          ModuleRuntimeManager captureModule = ModuleRuntimeManager.init_PoolEntry();
                                           ck.Inner_BufferHelper captureMode = captureModule != null && captureModule.next_Z()
                                              ? ck.Inner_BufferHelper.EXACT
                                              : ck.Inner_BufferHelper.REGENERATE;
@@ -539,9 +539,9 @@ public abstract class AutismClientConnectionMixin {
    @Inject(method = "channelRead0", at = @At("HEAD"), cancellable = true)
    private void yang$onReceivePacket(ChannelHandlerContext ctx, Packet<?> packet, CallbackInfo ci) {
          PacketListener listener = ((Connection)(Object)this).getPacketListener();
-         PoolEntry module = PoolEntry.init_PoolEntry();
-         PoolEntry.Inner_DataUtil hooks = module == null
-            ? PoolEntry.Inner_DataUtil.init_PoolEntry_DataUtil()
+         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
+         ModuleRuntimeManager.Inner_DataUtil hooks = module == null
+            ? ModuleRuntimeManager.Inner_DataUtil.init_PoolEntry_DataUtil()
             : module.init_PoolEntry_DataUtil_Z(isPlayReceiveListener(listener));
          boolean normalLoggerPath = hooks.init_Z();
          boolean vanillaDialogPacket = packet instanceof ClientboundShowDialogPacket || packet instanceof ClientboundClearDialogPacket;
@@ -554,7 +554,7 @@ public abstract class AutismClientConnectionMixin {
                CustomMenuTracker.load(packet, protocolHint);
             }
 
-            if (!isPlayReceiveListener(listener) || !PingSpoofScheduler.init_Z(packet) && !HashUtil.init_Z(packet)) {
+            if (!isPlayReceiveListener(listener) || !PingSpoofScheduler.init_Z(packet) && !BlinkPacketManager.init_Z(packet)) {
                this.autism$clearRuntimeConnectionStateOnDisconnect(packet);
                boolean payloadLoggedEarly = false;
                if (module != null && hooks.read()) {
@@ -634,7 +634,7 @@ public abstract class AutismClientConnectionMixin {
 
    @Unique
    private boolean isAutismActive() {
-      PoolEntry module = PoolEntry.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       return module != null && module.read_Z();
    }
 
@@ -725,7 +725,7 @@ public abstract class AutismClientConnectionMixin {
          D.init_V();
          autismclient.util.macro.PacketGateManager.load_V();
          PingSpoofScheduler.write();
-         HashUtil.auditDisconnect();
+         BlinkPacketManager.auditDisconnect();
          ck s = ck.init_ck();
          s.init_V_Set_Z(Collections.emptySet(), false);
          s.sync(false);
@@ -781,7 +781,7 @@ public abstract class AutismClientConnectionMixin {
    private boolean autism$shouldKeepXCarryOpen(ck shared, ServerboundContainerClosePacket packet) {
       Minecraft client = Minecraft.getInstance();
       if (client != null && client.player != null) {
-         PoolEntry module = PoolEntry.init_PoolEntry();
+         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
          boolean allowPassiveXCarry = module != null && module.get_Z();
          if (!allowPassiveXCarry && !shared.sync_Z()) {
             return false;

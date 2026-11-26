@@ -87,13 +87,13 @@ public final class ListPool {
          && mc.gui.screen() == null
          && mc.gui.overlay() == null
          && !autismclient.modules.aD.init_Z()
-         && !autismclient.modules.aC.init_Z()
+         && !autismclient.modules.FreecamController.init_Z()
          && !cd.init_Z()
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !autismclient.util.g.PkgCls_a.init_Z())
          && !f.load()
          && !cn.init_Z()
-         && !autismclient.modules.HashUtil.init_Z()
+         && !autismclient.modules.BlinkPacketManager.init_Z()
          && !autismclient.modules.AutoTotemModule.init_Z_6()
          && !autismclient.modules.AutoArmorModule.init_Z_20();
    }
@@ -336,7 +336,7 @@ public final class ListPool {
          && !autismclient.modules.ScaffoldModule.init_Z_26()
          && !f.load()
          && !autismclient.modules.aD.init_Z()
-         && !autismclient.modules.aC.init_Z()
+         && !autismclient.modules.FreecamController.init_Z()
          && !cd.init_Z()) {
          ck state = ck.init_ck();
          return !state.frame() && !state.pool();

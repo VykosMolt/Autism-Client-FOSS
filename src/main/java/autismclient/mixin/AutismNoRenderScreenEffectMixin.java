@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.az;
+import autismclient.modules.NoRenderState;
 import autismclient.util.AuditClientFixes;
 import net.minecraft.client.renderer.ScreenEffectRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,14 +12,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderScreenEffectMixin {
    @Inject(method = "submitFire", at = @At("HEAD"), cancellable = true, require = 0)
    private static void autism$noFireOverlay(CallbackInfo ci) {
-      if (az.sync() || AuditClientFixes.isFreecamActive()) {
+      if (NoRenderState.sync() || AuditClientFixes.isFreecamActive()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "submitWater", at = @At("HEAD"), cancellable = true, require = 0)
    private static void autism$noLiquidOverlay(CallbackInfo ci) {
-      if (az.flush() || AuditClientFixes.isFreecamActive()) {
+      if (NoRenderState.flush() || AuditClientFixes.isFreecamActive()) {
          ci.cancel();
       }
    }

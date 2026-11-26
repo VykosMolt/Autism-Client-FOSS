@@ -9,16 +9,16 @@ import autismclient.gui.d.RefQueue;
 import autismclient.gui.d.UtilCore;
 import autismclient.gui.macro.editor.ActionEditorOverlay;
 import autismclient.modules.AutoTotemModule;
-import autismclient.modules.HashUtil;
+import autismclient.modules.BlinkPacketManager;
 import autismclient.modules.HandNoClipModule;
 import autismclient.modules.AutoArmorModule;
 import autismclient.modules.KBDisplacementModule;
-import autismclient.modules.aC;
+import autismclient.modules.FreecamController;
 import autismclient.modules.aD;
 import autismclient.modules.ScaffoldModule;
 import autismclient.modules.KillAuraModule;
-import autismclient.modules.ah;
-import autismclient.modules.ai;
+import autismclient.modules.FrameEspCatalog;
+import autismclient.modules.MovementModuleHooks;
 import autismclient.modules.al;
 import autismclient.modules.am;
 import autismclient.modules.f;
@@ -95,7 +95,7 @@ public class AutismMinecraftClientMixin {
          float fcXRot = 0.0F;
          float fcYRotO = 0.0F;
          float fcXRotO = 0.0F;
-         if (aC.read()) {
+         if (FreecamController.read()) {
             Entity cam = self.getCameraEntity();
             if (cam != null) {
                double eyeOffset = cam.getEyeY() - cam.getY();
@@ -109,11 +109,11 @@ public class AutismMinecraftClientMixin {
                fcXRot = cam.getXRot();
                fcYRotO = cam.yRotO;
                fcXRotO = cam.xRotO;
-               double fx = aC.init_D_F(partialTicks);
-               double fy = aC.load_D_F(partialTicks) - eyeOffset;
-               double fz = aC.read(partialTicks);
-               float fyaw = aC.init_F_F(partialTicks);
-               float fpitch = aC.load_F_F(partialTicks);
+               double fx = FreecamController.init_D_F(partialTicks);
+               double fy = FreecamController.load_D_F(partialTicks) - eyeOffset;
+               double fz = FreecamController.read(partialTicks);
+               float fyaw = FreecamController.init_F_F(partialTicks);
+               float fpitch = FreecamController.load_F_F(partialTicks);
                cam.setPos(fx, fy, fz);
                cam.xOld = fx;
                cam.yOld = fy;
@@ -147,7 +147,7 @@ public class AutismMinecraftClientMixin {
 
    @Inject(method = "shouldEntityAppearGlowing", at = @At("RETURN"), cancellable = true)
    private void autism$frameEspGlow(Entity entity, CallbackInfoReturnable<Boolean> cir) {
-      if (!cir.getReturnValueZ() && ah.init_Z(entity)) {
+      if (!cir.getReturnValueZ() && FrameEspCatalog.init_Z(entity)) {
          cir.setReturnValue(true);
       }
    }
@@ -190,7 +190,7 @@ public class AutismMinecraftClientMixin {
          as.push();
       } else {
          LateRegisterSynthesizer.init((Minecraft)(Object)this);
-         ai.init_V();
+         MovementModuleHooks.init_V();
          if (!AutismLiteVariant.enabled()) {
             KBDisplacementModule.load_V_17();
          }
@@ -201,7 +201,7 @@ public class AutismMinecraftClientMixin {
             D.load_V();
          }
 
-         autismclient.modules.PoolEntry autism = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager autism = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          if (!aD.init_Z() && autism.valid()) {
             this.autism$pollCommandBinds(autism);
          }
@@ -209,7 +209,7 @@ public class AutismMinecraftClientMixin {
    }
 
    @Unique
-   private void autism$pollCommandBinds(autismclient.modules.PoolEntry module) {
+   private void autism$pollCommandBinds(autismclient.modules.ModuleRuntimeManager module) {
       Minecraft client = (Minecraft)(Object)this;
       if (client.getWindow() != null && !(client.gui.screen() instanceof ChatScreen) && !(client.gui.screen() instanceof SignEditScreen)) {
          Map<Integer, String> binds = module.init_Map();
@@ -384,7 +384,7 @@ public class AutismMinecraftClientMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isWithinEntityInteractionRange(Lnet/minecraft/world/entity/Entity;D)Z")
    )
    private boolean autism$freecamEntityUseReach(boolean original) {
-      return original || aC.read();
+      return original || FreecamController.read();
    }
 
    @ModifyExpressionValue(
@@ -395,7 +395,7 @@ public class AutismMinecraftClientMixin {
       )
    )
    private boolean autism$freecamEntityAttackReach(boolean original) {
-      return original || aC.read();
+      return original || FreecamController.read();
    }
 
    @ModifyExpressionValue(
@@ -546,7 +546,7 @@ public class AutismMinecraftClientMixin {
                   ci.cancel();
                }
             } else if (client.getWindow() != null && !client.getWindow().isFocused()) {
-               autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
                if (module != null && module.init_Z() && module.poll_Z()) {
                   ci.cancel();
                }
@@ -575,7 +575,7 @@ public class AutismMinecraftClientMixin {
       }
 
       if (!aD.read_Z() && ((Minecraft)(Object)this).player != null) {
-         float multiplier = ai.init_F();
+         float multiplier = MovementModuleHooks.init_F();
          if (multiplier != 1.0F) {
             cir.setReturnValue(cir.getReturnValue() / multiplier);
          }
@@ -585,7 +585,7 @@ public class AutismMinecraftClientMixin {
    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;runAllTasks()V", shift = Shift.BEFORE))
    private void autism$onPacketProcessFrame(CallbackInfo ci) {
       al.open_V();
-      HashUtil.write();
+      BlinkPacketManager.write();
       VillagerDupeDriver.load_V_Minecraft((Minecraft)(Object)this);
    }
 

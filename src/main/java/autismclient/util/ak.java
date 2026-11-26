@@ -58,7 +58,7 @@ public final class ak {
          manager.init_V(itemNbtInspectOverlay);
       }
 
-      autismclient.modules.PoolEntry autismModule = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager autismModule = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       if (!AutismLiteVariant.enabled()) {
          autismclient.ai.ConfigStore.init_ConfigStore().load_V();
          autismclient.ai.cV.read_V();
@@ -92,7 +92,7 @@ public final class ak {
       });
       this.init_AutismLauncherOver.load_V_Supplier(() -> {
          if (this.init_AutismServerInfoOv == null) {
-            this.init_AutismServerInfoOv = autismclient.modules.PoolEntry.init_PoolEntry().init_AutismServerInfoOv();
+            this.init_AutismServerInfoOv = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_AutismServerInfoOv();
          }
 
          if (this.init_AutismServerInfoOv != null) {
@@ -102,7 +102,7 @@ public final class ak {
          return this.init_AutismServerInfoOv;
       });
       if (this.init_AutismPacketLogger == null && AutismPacketLoggerOverlay.poll_Z_13()) {
-         this.init_AutismPacketLogger = autismclient.modules.PoolEntry.init_PoolEntry().init_AutismPacketLogger();
+         this.init_AutismPacketLogger = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_AutismPacketLogger();
          if (this.init_AutismPacketLogger != null) {
             this.init_AutismPacketLogger.flush_V_13();
             if (this.init_AutismPacketLogger.sync_Z()) {
@@ -112,7 +112,7 @@ public final class ak {
       }
 
       if (this.init_AutismServerInfoOv == null && AutismServerInfoOverlay.poll_Z_16()) {
-         this.init_AutismServerInfoOv = autismclient.modules.PoolEntry.init_PoolEntry().init_AutismServerInfoOv();
+         this.init_AutismServerInfoOv = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_AutismServerInfoOv();
          if (this.init_AutismServerInfoOv != null) {
             this.init_AutismServerInfoOv.update_V_21();
             if (this.init_AutismServerInfoOv.sync_Z()) {

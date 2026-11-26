@@ -165,7 +165,7 @@ public final class aF {
       );
       init(sb, "overlays", () -> bk.init_bk().init_Str());
       init(sb, "packetLogger", () -> {
-         autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          AutismPacketLoggerOverlay logger = module == null ? null : module.load_AutismPacketLogger();
          return logger == null ? "not created" : logger.load_Str_9();
       });

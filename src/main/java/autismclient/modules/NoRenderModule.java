@@ -122,7 +122,7 @@ public final class NoRenderModule extends Module {
 
    @Override
    public void onDisable() {
-      az.init_V();
+      NoRenderState.init_V();
       load();
    }
 
@@ -149,56 +149,56 @@ public final class NoRenderModule extends Module {
    }
 
    private void init() {
-      az.init_Z = this.init_BoolSetting.get();
-      az.load_Z = this.load_BoolSetting.get();
-      az.read = this.read.get();
-      az.write = this.write.get();
-      az.update = this.update.get();
-      az.sync = this.sync.get();
-      az.flush = this.flush.get();
-      az.close = this.close.get();
-      az.open = this.open.get();
-      az.poll = this.poll.get();
-      az.push = this.push.get();
-      az.pop = this.pop.get();
-      az.tick = this.tick.get();
-      az.run = this.run.get();
-      az.get = this.get.get();
-      az.set = this.set.get();
-      az.put = this.put.get();
-      az.add = this.add.get();
-      az.clear = this.clear.get();
-      az.reset = this.reset.get();
-      az.start = this.start.get();
-      az.stop = this.stop.get();
-      az.next = this.next.get();
-      az.prev = this.prev.get();
-      az.valid = this.valid.get();
-      az.size = this.size.get();
-      az.data = this.data.get();
-      az.value = this.value.get();
-      az.cache = this.cache.get();
-      az.state = this.state.get();
-      az.queue = this.queue.get();
-      az.buffer = this.buffer.get();
-      az.entry = this.entry.get();
-      az.node = this.node.get();
-      az.task = this.task.get();
-      az.pool = this.pool.get();
-      az.index = this.index.get();
-      az.count = this.count.get();
-      az.load_List = this.init_RegistryListSettin.get();
-      az.flags = this.flags.get();
-      az.level = this.level.get();
-      az.frame = this.frame.get();
-      az.block = this.block.get();
-      az.chunk = this.chunk.get();
-      az.table = this.table.get();
+      NoRenderState.init_Z = this.init_BoolSetting.get();
+      NoRenderState.load_Z = this.load_BoolSetting.get();
+      NoRenderState.read = this.read.get();
+      NoRenderState.write = this.write.get();
+      NoRenderState.update = this.update.get();
+      NoRenderState.sync = this.sync.get();
+      NoRenderState.flush = this.flush.get();
+      NoRenderState.close = this.close.get();
+      NoRenderState.open = this.open.get();
+      NoRenderState.poll = this.poll.get();
+      NoRenderState.push = this.push.get();
+      NoRenderState.pop = this.pop.get();
+      NoRenderState.tick = this.tick.get();
+      NoRenderState.run = this.run.get();
+      NoRenderState.get = this.get.get();
+      NoRenderState.set = this.set.get();
+      NoRenderState.put = this.put.get();
+      NoRenderState.add = this.add.get();
+      NoRenderState.clear = this.clear.get();
+      NoRenderState.reset = this.reset.get();
+      NoRenderState.start = this.start.get();
+      NoRenderState.stop = this.stop.get();
+      NoRenderState.next = this.next.get();
+      NoRenderState.prev = this.prev.get();
+      NoRenderState.valid = this.valid.get();
+      NoRenderState.size = this.size.get();
+      NoRenderState.data = this.data.get();
+      NoRenderState.value = this.value.get();
+      NoRenderState.cache = this.cache.get();
+      NoRenderState.state = this.state.get();
+      NoRenderState.queue = this.queue.get();
+      NoRenderState.buffer = this.buffer.get();
+      NoRenderState.entry = this.entry.get();
+      NoRenderState.node = this.node.get();
+      NoRenderState.task = this.task.get();
+      NoRenderState.pool = this.pool.get();
+      NoRenderState.index = this.index.get();
+      NoRenderState.count = this.count.get();
+      NoRenderState.load_List = this.init_RegistryListSettin.get();
+      NoRenderState.flags = this.flags.get();
+      NoRenderState.level = this.level.get();
+      NoRenderState.frame = this.frame.get();
+      NoRenderState.block = this.block.get();
+      NoRenderState.chunk = this.chunk.get();
+      NoRenderState.table = this.table.get();
       NoRenderModule.Inner_DataUtil tm = this.init_EnumSetting.get();
-      az.store = tm != NoRenderModule.Inner_DataUtil.VANILLA;
-      az.init_J = this.init(tm);
+      NoRenderState.store = tm != NoRenderModule.Inner_DataUtil.VANILLA;
+      NoRenderState.init_J = this.init(tm);
       NoRenderModule.Inner_StreamUtil wm = this.load_EnumSetting.get();
-      az.drain = wm != NoRenderModule.Inner_StreamUtil.VANILLA;
+      NoRenderState.drain = wm != NoRenderModule.Inner_StreamUtil.VANILLA;
       float var10000;
       switch (wm) {
          case RAIN:
@@ -212,17 +212,17 @@ public final class NoRenderModule extends Module {
             var10000 = 0.0F;
       }
 
-      az.init_F = var10000;
-      az.load_F = wm == NoRenderModule.Inner_StreamUtil.THUNDER ? 1.0F : 0.0F;
-      az.init_List = this.load_RegistryListSettin.get();
-      az.f_b_Z = this.store.get();
-      az.fill = this.drain.get();
-      az.mark = this.fill.get();
-      az.scan = this.mark.get();
-      az.parse = this.scan.get();
-      az.bind = this.parse.get();
-      az.f_a_Z = this.bind.get();
-      az.load_V();
+      NoRenderState.init_F = var10000;
+      NoRenderState.load_F = wm == NoRenderModule.Inner_StreamUtil.THUNDER ? 1.0F : 0.0F;
+      NoRenderState.init_List = this.load_RegistryListSettin.get();
+      NoRenderState.f_b_Z = this.store.get();
+      NoRenderState.fill = this.drain.get();
+      NoRenderState.mark = this.fill.get();
+      NoRenderState.scan = this.mark.get();
+      NoRenderState.parse = this.scan.get();
+      NoRenderState.bind = this.parse.get();
+      NoRenderState.f_a_Z = this.bind.get();
+      NoRenderState.load_V();
    }
 
    private long init(NoRenderModule.Inner_DataUtil mode) {

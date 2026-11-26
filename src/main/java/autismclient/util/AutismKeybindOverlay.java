@@ -250,7 +250,7 @@ public class AutismKeybindOverlay extends bj {
 
    private void sync_V_6() {
       if (!AutismLiteVariant.enabled()) {
-         autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          cX profiles = module == null ? null : module.load_cX();
          if (profiles != null) {
             ((AutismProfilesOverlay)profiles).load(false);
@@ -732,7 +732,7 @@ public class AutismKeybindOverlay extends bj {
 
    private void init_V_Str_5(String requested) {
       String selected = z.init_Str(requested);
-      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       if (module != null) {
          module.init_V_Str(selected);
       } else {

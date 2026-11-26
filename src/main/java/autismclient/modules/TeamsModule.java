@@ -303,7 +303,7 @@ public final class TeamsModule extends Module {
       Integer[] rgb = new Integer[]{null};
       boolean[] plain = new boolean[]{false};
       boolean[] conflict = new boolean[]{false};
-      at.init_MutableComponent(name, display, null).visit((style, text) -> {
+      PlayerDisplayNameParser.init_MutableComponent(name, display, null).visit((style, text) -> {
          if (!text.isBlank()) {
             TextColor color = style.getColor();
             if (color == null) {

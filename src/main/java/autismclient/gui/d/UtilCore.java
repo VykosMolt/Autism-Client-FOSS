@@ -597,7 +597,7 @@ public class UtilCore extends Screen implements TaskQueue {
       }, Component.literal("Modules & Macros")));
       all.add(new UtilCore.Inner_TaskQueue("PROFILES", "", autismclient.gui.f.a.DataUtil.add, null, 32, () -> {
          if (!aD.read_Z()) {
-            autismclient.modules.PoolEntry mod = autismclient.modules.PoolEntry.init_PoolEntry();
+            autismclient.modules.ModuleRuntimeManager mod = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
             cX overlay = mod == null ? null : mod.load_cX();
             if (overlay != null) {
                bk.init_bk().init_V(overlay);

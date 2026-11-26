@@ -53,7 +53,7 @@ final class ax implements AiOperation {
       return control;
    }
 
-   static autismclient.modules.aP.Inner_StreamUtil init(Module module, boolean enabled) {
+   static autismclient.modules.ScopedToggleOverride.Inner_StreamUtil init(Module module, boolean enabled) {
       return init_AutoCloseable_AutoCloseable(module.borrowEnabled(enabled));
    }
 
