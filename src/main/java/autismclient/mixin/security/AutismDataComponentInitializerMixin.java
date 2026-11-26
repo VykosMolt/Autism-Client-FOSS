@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.TaskTimer;
+import autismclient.g.RegistryCompatGuard;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.core.HolderLookup.Provider;
@@ -22,11 +22,11 @@ public interface AutismDataComponentInitializerMixin {
       try {
          return original.call(self, context);
       } catch (RuntimeException error) {
-         if (!TaskTimer.init_Z(error)) {
+         if (!RegistryCompatGuard.init_Z(error)) {
             throw error;
          }
 
-         TaskTimer.init_V(error);
+         RegistryCompatGuard.init_V(error);
          return null;
       }
    }

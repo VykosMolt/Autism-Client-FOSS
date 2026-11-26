@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.StreamUtil;
+import autismclient.g.PacketComponentOriginTracker;
 import net.minecraft.network.chat.ComponentContents;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.ResolutionContext;
@@ -18,6 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AutismResolvedContentsMixin {
    @Inject(method = "resolve", at = @At("RETURN"))
    private void autism$propagateResolution(ResolutionContext context, int recursionDepth, CallbackInfoReturnable<MutableComponent> cir) {
-      StreamUtil.init((ComponentContents)(Object)this, cir.getReturnValue());
+      PacketComponentOriginTracker.init((ComponentContents)(Object)this, cir.getReturnValue());
    }
 }

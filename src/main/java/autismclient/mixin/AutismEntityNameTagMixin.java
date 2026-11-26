@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.g.CachePool;
+import autismclient.g.ComponentSafetyValidator;
 import autismclient.modules.aj;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
@@ -29,11 +29,11 @@ public class AutismEntityNameTagMixin {
       EntityRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera, CallbackInfo ci
    ) {
       if (state != null) {
-         if (state.nameTag != null && !CachePool.init(state.nameTag)) {
+         if (state.nameTag != null && !ComponentSafetyValidator.init(state.nameTag)) {
             state.nameTag = Component.literal("[unsafe name removed]").withStyle(ChatFormatting.DARK_GRAY);
          }
 
-         if (state.scoreText != null && !CachePool.init(state.scoreText)) {
+         if (state.scoreText != null && !ComponentSafetyValidator.init(state.scoreText)) {
             state.scoreText = Component.literal("[unsafe score removed]").withStyle(ChatFormatting.DARK_GRAY);
          }
       }

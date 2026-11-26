@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConfigStore;
+import autismclient.g.OutboundChannelPolicy;
 import net.fabricmc.fabric.impl.networking.client.ClientLoginNetworkAddon;
 import net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl;
 import net.minecraft.network.protocol.login.ClientboundCustomQueryPacket;
@@ -19,7 +19,7 @@ public abstract class AutismFabricClientLoginNetworkAddonMixin {
 
    @Inject(method = "handlePacket", at = @At("HEAD"), cancellable = true)
    private void autism$gateLoginQuery(ClientboundCustomQueryPacket packet, CallbackInfoReturnable<Boolean> cir) {
-      if (!ConfigStore.init(this.listener)) {
+      if (!OutboundChannelPolicy.init(this.listener)) {
          cir.setReturnValue(false);
       }
    }

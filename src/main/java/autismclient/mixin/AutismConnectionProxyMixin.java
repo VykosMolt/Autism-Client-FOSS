@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.g.BufferHelper;
+import autismclient.g.ConnectionPrivacyRegistry;
 import autismclient.util.bW;
 import autismclient.util.bY;
 import autismclient.util.bZ;
@@ -26,13 +26,13 @@ public abstract class AutismConnectionProxyMixin {
       Connection connection = (Connection)(Object)this;
       if (connection.getReceiving() == PacketFlow.CLIENTBOUND && !(pipeline.channel() instanceof LocalChannel)) {
          bY manager = bY.init_bY();
-         BufferHelper.Inner_ConfigStore route;
+         ConnectionPrivacyRegistry.Inner_ConfigStore route;
          synchronized (manager) {
             bW main = manager.init_bW();
-            route = main == null ? null : new BufferHelper.Inner_ConfigStore(main.init_bZ, main.read, main.init_I, main.write, main.update);
+            route = main == null ? null : new ConnectionPrivacyRegistry.Inner_ConfigStore(main.init_bZ, main.read, main.init_I, main.write, main.update);
          }
 
-         BufferHelper.init(connection, route);
+         ConnectionPrivacyRegistry.init(connection, route);
          if (route != null) {
             autism$removeAllProxyHandlers(pipeline);
             autism$installProxy(pipeline, route.init_bZ(), route.init_Str(), route.init_I(), route.load(), route.read());

@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConfigStore;
+import autismclient.g.OutboundChannelPolicy;
 import net.fabricmc.fabric.impl.networking.AbstractChanneledNetworkAddon;
 import net.fabricmc.fabric.impl.networking.CommonRegisterPayload;
 import net.minecraft.network.Connection;
@@ -19,14 +19,14 @@ public abstract class AutismFabricChanneledNetworkAddonMixin {
 
    @Inject(method = "onCommonVersionPacket", at = @At("HEAD"), cancellable = true)
    private void autism$gateCommonVersion(int version, CallbackInfo ci) {
-      if (!ConfigStore.init_Z(this.connection)) {
+      if (!OutboundChannelPolicy.init_Z(this.connection)) {
          ci.cancel();
       }
    }
 
    @Inject(method = "onCommonRegisterPacket", at = @At("HEAD"), cancellable = true)
    private void autism$gateCommonRegister(CommonRegisterPayload payload, CallbackInfo ci) {
-      if (!ConfigStore.init_Z(this.connection)) {
+      if (!OutboundChannelPolicy.init_Z(this.connection)) {
          ci.cancel();
       }
    }

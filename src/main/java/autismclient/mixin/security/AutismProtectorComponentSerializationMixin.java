@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.PoolEntry;
+import autismclient.g.PacketOriginComponentCodec;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.serialization.Codec;
@@ -20,6 +20,6 @@ public class AutismProtectorComponentSerializationMixin {
       )
    )
    private static Codec<Component> autism$wrapRecursive(String name, Function<Codec<Component>, Codec<Component>> body, Operation<Codec<Component>> original) {
-      return new PoolEntry(original.call(name, body));
+      return new PacketOriginComponentCodec(original.call(name, body));
    }
 }

@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.BitSetUtil;
-import autismclient.g.MethodUtil;
+import autismclient.g.CallerModInspector;
+import autismclient.g.ModNamespaceCatalog;
 import java.util.LinkedHashSet;
 import net.minecraft.client.KeyMapping;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,9 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AutismProtectorKeyMappingRegistryImplMixin {
    @Inject(method = "registerKeyMapping", at = @At("RETURN"))
    private static void autism$trackModKeyMapping(KeyMapping keyMapping, CallbackInfoReturnable<KeyMapping> cir) {
-      LinkedHashSet<String> mods = BitSetUtil.init();
+      LinkedHashSet<String> mods = CallerModInspector.init();
       if (!mods.isEmpty()) {
-         MethodUtil.read(keyMapping.getName(), mods.getLast());
+         ModNamespaceCatalog.read(keyMapping.getName(), mods.getLast());
       }
    }
 }

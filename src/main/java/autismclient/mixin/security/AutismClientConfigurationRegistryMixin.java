@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.BufferHelper;
-import autismclient.g.TaskTimer;
+import autismclient.g.ConnectionPrivacyRegistry;
+import autismclient.g.RegistryCompatGuard;
 import autismclient.mixin.accessor.ClientCommonNetworkHandlerAccessor;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -30,12 +30,12 @@ public abstract class AutismClientConfigurationRegistryMixin {
       Operation<Frozen> original
    ) {
       Connection connection = ((ClientCommonNetworkHandlerAccessor)(Object)this).getConnection();
-      TaskTimer.init_V(BufferHelper.init_BufferHelper_Strea(connection));
+      RegistryCompatGuard.init_V(ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection));
 
       try {
          return original.call(collector, knownDataSource, originalRegistries, synchronizedRegistriesOnly);
       } finally {
-         TaskTimer.init_V();
+         RegistryCompatGuard.init_V();
       }
    }
 }

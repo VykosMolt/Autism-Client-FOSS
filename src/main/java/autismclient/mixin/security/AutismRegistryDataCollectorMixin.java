@@ -2,9 +2,9 @@ package autismclient.mixin.security;
 
 import autismclient.AutismClientAddon;
 import autismclient.compat.a.ViaFabricPlusBridge;
-import autismclient.g.BufferHelper;
-import autismclient.g.MapStore;
-import autismclient.g.TaskTimer;
+import autismclient.g.ConnectionPrivacyRegistry;
+import autismclient.g.TimelineTagCompatFix;
+import autismclient.g.RegistryCompatGuard;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.util.ArrayList;
@@ -51,8 +51,8 @@ public abstract class AutismRegistryDataCollectorMixin {
          return null;
       }
 
-      BufferHelper.Inner_StreamUtil connection = TaskTimer.init_BufferHelper_Strea();
-      MapStore.init(entries, connection != null && ViaFabricPlusBridge.init_Z(connection.init_Connection()));
+      ConnectionPrivacyRegistry.Inner_StreamUtil connection = RegistryCompatGuard.init_BufferHelper_Strea();
+      TimelineTagCompatFix.init(entries, connection != null && ViaFabricPlusBridge.init_Z(connection.init_Connection()));
       if (connection == null) {
          return entries;
       }
@@ -98,13 +98,13 @@ public abstract class AutismRegistryDataCollectorMixin {
    private static List<PendingComponents<?>> autism$buildRemoteComponentsCompat(
       DataComponentInitializers initializers, Provider context, Operation<List<PendingComponents<?>>> original
    ) {
-      BufferHelper.Inner_StreamUtil connection = TaskTimer.init_BufferHelper_Strea();
-      TaskTimer.load(connection);
+      ConnectionPrivacyRegistry.Inner_StreamUtil connection = RegistryCompatGuard.init_BufferHelper_Strea();
+      RegistryCompatGuard.load(connection);
 
       try {
          return original.call(initializers, context);
       } finally {
-         TaskTimer.load();
+         RegistryCompatGuard.load();
       }
    }
 }

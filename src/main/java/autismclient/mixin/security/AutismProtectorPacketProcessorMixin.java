@@ -1,8 +1,8 @@
 package autismclient.mixin.security;
 
-import autismclient.g.BufferHelper;
-import autismclient.g.ByteReader;
-import autismclient.g.TokenStore;
+import autismclient.g.ConnectionPrivacyRegistry;
+import autismclient.g.ModdedParticleGuard;
+import autismclient.g.PacketDecodeOriginStack;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.network.PacketListener;
@@ -18,16 +18,16 @@ public class AutismProtectorPacketProcessorMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/Packet;handle(Lnet/minecraft/network/PacketListener;)V")
    )
    private <T extends PacketListener> void autism$wrapHandle(Packet<?> instance, T listener, Operation<Void> original) {
-      if (!(instance instanceof ClientboundLevelParticlesPacket particles && ByteReader.init(particles))) {
-         if (!TokenStore.init(instance)) {
+      if (!(instance instanceof ClientboundLevelParticlesPacket particles && ModdedParticleGuard.init(particles))) {
+         if (!PacketDecodeOriginStack.init(instance)) {
             original.call(instance, listener);
          } else {
-            TokenStore.init(BufferHelper.init(listener));
+            PacketDecodeOriginStack.init(ConnectionPrivacyRegistry.init(listener));
 
             try {
                original.call(instance, listener);
             } finally {
-               TokenStore.init(false);
+               PacketDecodeOriginStack.init(false);
             }
          }
       }

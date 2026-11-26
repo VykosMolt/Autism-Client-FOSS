@@ -255,8 +255,8 @@ public final class ViaFabricPlusBridge {
 
    public static boolean init(Object userConnection, String channel, byte[] data) {
       Connection owner = init(userConnection);
-      autismclient.g.BufferHelper.Inner_StreamUtil context = autismclient.g.BufferHelper.init_BufferHelper_Strea(owner);
-      return context != null && context.init_BufferHelper_Cache() != autismclient.g.BufferHelper.Inner_CachePool.VANILLA
+      autismclient.g.ConnectionPrivacyRegistry.Inner_StreamUtil context = autismclient.g.ConnectionPrivacyRegistry.init_BufferHelper_Strea(owner);
+      return context != null && context.init_BufferHelper_Cache() != autismclient.g.ConnectionPrivacyRegistry.Inner_CachePool.VANILLA
          ? !"vv:mod_details".equals(channel)
          : false;
    }

@@ -3,7 +3,7 @@ package autismclient.mixin;
 import autismclient.ai.ClassCache;
 import autismclient.ai.aP;
 import autismclient.compat263.CompatGLFW;
-import autismclient.g.TaskQueue;
+import autismclient.g.LateRegisterSynthesizer;
 import autismclient.gui.StreamUtil;
 import autismclient.gui.d.RefQueue;
 import autismclient.gui.d.UtilCore;
@@ -189,7 +189,7 @@ public class AutismMinecraftClientMixin {
       if (aD.read_Z()) {
          as.push();
       } else {
-         TaskQueue.init((Minecraft)(Object)this);
+         LateRegisterSynthesizer.init((Minecraft)(Object)this);
          ai.init_V();
          if (!AutismLiteVariant.enabled()) {
             KBDisplacementModule.load_V_17();

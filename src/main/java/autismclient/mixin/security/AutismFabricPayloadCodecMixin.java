@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.BufferHelper;
-import autismclient.g.TokenStore;
+import autismclient.g.ConnectionPrivacyRegistry;
+import autismclient.g.PacketDecodeOriginStack;
 import net.fabricmc.fabric.impl.networking.PayloadTypeRegistryImpl;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.TypeAndCodec;
@@ -25,10 +25,10 @@ public class AutismFabricPayloadCodecMixin {
       cancellable = true
    )
    private void autism$gatePayloadCodec(Identifier id, CallbackInfoReturnable<TypeAndCodec<?, ?>> cir) {
-      if (this.flow == PacketFlow.CLIENTBOUND && TokenStore.init_Z()) {
-         BufferHelper.Inner_StreamUtil context = TokenStore.init_BufferHelper_Strea();
+      if (this.flow == PacketFlow.CLIENTBOUND && PacketDecodeOriginStack.init_Z()) {
+         ConnectionPrivacyRegistry.Inner_StreamUtil context = PacketDecodeOriginStack.init_BufferHelper_Strea();
          if ((context == null || context.init_Connection().getReceiving() == PacketFlow.CLIENTBOUND)
-            && (context == null || context.init_BufferHelper_Cache() != BufferHelper.Inner_CachePool.MODDED || !BufferHelper.init_Z(context))) {
+            && (context == null || context.init_BufferHelper_Cache() != ConnectionPrivacyRegistry.Inner_CachePool.MODDED || !ConnectionPrivacyRegistry.init_Z(context))) {
             cir.setReturnValue(null);
          }
       }

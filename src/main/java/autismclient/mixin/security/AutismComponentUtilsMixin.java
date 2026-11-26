@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.StreamUtil;
+import autismclient.g.PacketComponentOriginTracker;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.network.chat.MutableComponent;
@@ -19,6 +19,6 @@ public class AutismComponentUtilsMixin {
    private static void autism$propagateResolution(
       ResolutionContext context, Component component, int recursionDepth, CallbackInfoReturnable<MutableComponent> cir
    ) {
-      StreamUtil.init(component, cir.getReturnValue());
+      PacketComponentOriginTracker.init(component, cir.getReturnValue());
    }
 }

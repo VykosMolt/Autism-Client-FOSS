@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ConfigStore;
+import autismclient.g.OutboundChannelPolicy;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl;
@@ -18,7 +18,7 @@ public abstract class AutismProtectorClientHandshakePacketListenerMixin {
    )
    private void autism$authorizeVanillaQueryAnswer(Connection connection, Packet<?> packet, Operation<Void> original) {
       if (packet instanceof ServerboundCustomQueryAnswerPacket answer) {
-         ConfigStore.init(connection, answer);
+         OutboundChannelPolicy.init(connection, answer);
       }
 
       original.call(connection, packet);

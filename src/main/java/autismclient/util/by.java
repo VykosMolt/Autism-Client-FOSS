@@ -8,7 +8,7 @@ public class by {
       if (!autismclient.modules.aD.read_Z()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.getConnection() != null) {
-            autismclient.g.HashUtil.init_V(packet);
+            autismclient.g.ProtectorFeatureFlags.init_V(packet);
             mc.getConnection().send(packet);
          }
       }
@@ -18,7 +18,7 @@ public class by {
       if (!autismclient.modules.aD.read_Z()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.getConnection() != null) {
-            autismclient.g.HashUtil.init_V(packet);
+            autismclient.g.ProtectorFeatureFlags.init_V(packet);
             mc.getConnection().send(packet);
          }
       }

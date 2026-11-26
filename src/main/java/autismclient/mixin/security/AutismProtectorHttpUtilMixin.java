@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.RenderState;
-import autismclient.g.UiHelper;
+import autismclient.g.ScopedHttpUrlConnection;
+import autismclient.g.ResourcePackDownloadScope;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public class AutismProtectorHttpUtilMixin {
    @WrapOperation(method = "downloadFile", at = @At(value = "INVOKE", target = "Ljava/net/URL;openConnection(Ljava/net/Proxy;)Ljava/net/URLConnection;"))
    private static URLConnection autism$scopedConnection(URL url, Proxy proxy, Operation<URLConnection> original) throws IOException {
-      UiHelper.Inner_BufferHelper snapshot = UiHelper.load();
-      return snapshot == null ? original.call(url, proxy) : new RenderState(snapshot, url, proxy);
+      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.load();
+      return snapshot == null ? original.call(url, proxy) : new ScopedHttpUrlConnection(snapshot, url, proxy);
    }
 }

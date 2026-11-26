@@ -5,12 +5,12 @@ import autismclient.ai.am;
 import autismclient.ai.cV;
 import autismclient.ai.o;
 import autismclient.ai.a.StateCache;
-import autismclient.g.CharEncoder;
-import autismclient.g.FieldCache;
-import autismclient.g.FileCache;
-import autismclient.g.HashUtil;
-import autismclient.g.MethodUtil;
-import autismclient.g.PathHelper;
+import autismclient.g.ServerPackSelectionRegistry;
+import autismclient.g.PackFailureGuard;
+import autismclient.g.ResourcePackSessionTracker;
+import autismclient.g.ProtectorFeatureFlags;
+import autismclient.g.ModNamespaceCatalog;
+import autismclient.g.VanillaTranslationKeyLoader;
 import autismclient.gui.e.BufferHelper;
 import autismclient.gui.f.b.k;
 import autismclient.modules.IoWorker;
@@ -121,14 +121,14 @@ public final class AutismClientMod implements ClientModInitializer {
       qualificationFlags();
       AutismClientAddon.FOLDER.mkdirs();
       runSafe("initialize", () -> PoolEntry.init_PoolEntry().init_V());
-      MethodUtil.init_V();
-      if (!HashUtil.read()) {
-         PathHelper.init_V();
+      ModNamespaceCatalog.init_V();
+      if (!ProtectorFeatureFlags.read()) {
+         VanillaTranslationKeyLoader.init_V();
       }
 
-      if (HashUtil.load()) {
+      if (ProtectorFeatureFlags.load()) {
          AutismClientAddon.LOG.info("[AutismProtector] External protection mod detected; deferring all anti-fingerprint mixins to it.");
-      } else if (HashUtil.write()) {
+      } else if (ProtectorFeatureFlags.write()) {
          AutismClientAddon.LOG
             .info("[AutismProtector] ExploitPreventer detected; deferring overlapping protections while keeping brand/channel hiding active.");
       } else {
@@ -201,7 +201,7 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            FileCache.read();
+            ResourcePackSessionTracker.read();
          } catch (Throwable t) {
             logTickError("packResponses", t);
          }
@@ -280,8 +280,8 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("cfg.pacedTp", () -> bl.init("connection changed"));
          runSafe("cfg.fakeGamemode", W::init_V);
          runSafe("cfg.instaBreak", au::load);
-         runSafe("cfg.packFailureGuard", FieldCache::load);
-         runSafe("cfg.packResponses", () -> FileCache.init(autismclient.g.BufferHelper.init(listener), null));
+         runSafe("cfg.packFailureGuard", PackFailureGuard::load);
+         runSafe("cfg.packResponses", () -> ResourcePackSessionTracker.init(autismclient.g.ConnectionPrivacyRegistry.init(listener), null));
          runSafe("cfg.hideOverlays", () -> {
             if (!cx.load_Z()) {
                bk.init_bk().sync_V();
@@ -313,9 +313,9 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("leave.movementGrace", IoWorker::load);
          runSafe("leave.fakeGamemode", W::init_V);
          runSafe("leave.instaBreak", au::load);
-         runSafe("leave.packStrip", CharEncoder::load);
-         runSafe("leave.packResponses", () -> FileCache.init(autismclient.g.BufferHelper.init(handler), null));
-         runSafe("leave.packFailureGuard", FieldCache::load);
+         runSafe("leave.packStrip", ServerPackSelectionRegistry::load);
+         runSafe("leave.packResponses", () -> ResourcePackSessionTracker.init(autismclient.g.ConnectionPrivacyRegistry.init(handler), null));
+         runSafe("leave.packFailureGuard", PackFailureGuard::load);
          runSafe("leave.macroEditor", AutismMacroEditorOverlay::flush_V_9);
          runSafe("leave.lanSync", () -> aE.init_aE().sync_V());
          runSafe("leave.hideOverlays", () -> {
@@ -331,8 +331,8 @@ public final class AutismClientMod implements ClientModInitializer {
       });
       runSafe("init.mapPreview", aQ::init_V);
       ItemTooltipCallback.EVENT.register((stack, tooltipContext, tooltipType, lines) -> {
-         autismclient.g.StateCache.init_I(lines);
-         autismclient.g.StateCache.init_Z(lines);
+         autismclient.g.TooltipNbtGuard.init_I(lines);
+         autismclient.g.TooltipNbtGuard.init_Z(lines);
          PoolEntry.init_PoolEntry().init(stack, lines);
       });
       ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {

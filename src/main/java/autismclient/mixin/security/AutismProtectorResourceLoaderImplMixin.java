@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.BitSetUtil;
-import autismclient.g.MethodUtil;
+import autismclient.g.CallerModInspector;
+import autismclient.g.ModNamespaceCatalog;
 import net.fabricmc.fabric.api.resource.v1.pack.PackActivationType;
 import net.fabricmc.fabric.impl.resource.ResourceLoaderImpl;
 import net.fabricmc.loader.api.ModContainer;
@@ -23,8 +23,8 @@ public class AutismProtectorResourceLoaderImplMixin {
    ) {
       if (cir.getReturnValueZ() && container != null) {
          String mod = container.getMetadata().getId();
-         MethodUtil.read_V(mod);
-         MethodUtil.init(BitSetUtil.init_Set(mod));
+         ModNamespaceCatalog.read_V(mod);
+         ModNamespaceCatalog.init(CallerModInspector.init_Set(mod));
       }
    }
 }

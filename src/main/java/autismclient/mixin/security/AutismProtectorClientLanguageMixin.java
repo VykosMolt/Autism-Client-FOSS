@@ -1,11 +1,11 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ArrayUtil;
-import autismclient.g.BitSetUtil;
-import autismclient.g.ClassCache;
-import autismclient.g.DataUtil;
-import autismclient.g.JsonUtil;
-import autismclient.g.MethodUtil;
+import autismclient.g.PackTranslationPolicyResolver;
+import autismclient.g.CallerModInspector;
+import autismclient.g.TranslationSnapshot;
+import autismclient.g.TranslationSnapshotDuck;
+import autismclient.g.IsolatedResourcePack;
+import autismclient.g.ModNamespaceCatalog;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -27,17 +27,17 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(ClientLanguage.class)
-public class AutismProtectorClientLanguageMixin implements DataUtil {
+public class AutismProtectorClientLanguageMixin implements TranslationSnapshotDuck {
    @Unique
-   private ClassCache autism$translationSnapshot;
+   private TranslationSnapshot autism$translationSnapshot;
 
    @Override
-   public void autism$setTranslationSnapshot(ClassCache snapshot) {
+   public void autism$setTranslationSnapshot(TranslationSnapshot snapshot) {
       this.autism$translationSnapshot = snapshot;
    }
 
    @Override
-   public ClassCache autism$getTranslationSnapshot() {
+   public TranslationSnapshot autism$getTranslationSnapshot() {
       return this.autism$translationSnapshot;
    }
 
@@ -45,19 +45,19 @@ public class AutismProtectorClientLanguageMixin implements DataUtil {
    private static ClientLanguage autism$captureTranslations(
       ResourceManager resourceManager, List<String> languageStack, boolean defaultRightToLeft, Operation<ClientLanguage> original
    ) {
-      ArrayUtil.Inner_StreamUtil token = ArrayUtil.init(resourceManager);
-      ClassCache.Inner_DataUtil builder = ClassCache.Inner_DataUtil.init_ClassCache_DataUti_ResourceManager(resourceManager);
+      PackTranslationPolicyResolver.Inner_StreamUtil token = PackTranslationPolicyResolver.init(resourceManager);
+      TranslationSnapshot.Inner_DataUtil builder = TranslationSnapshot.Inner_DataUtil.init_ClassCache_DataUti_ResourceManager(resourceManager);
       boolean success = false;
 
       try {
-         MethodUtil.load();
+         ModNamespaceCatalog.load();
          ClientLanguage language = original.call(resourceManager, languageStack, defaultRightToLeft);
-         ((DataUtil)language).autism$setTranslationSnapshot(builder.init_ClassCache());
+         ((TranslationSnapshotDuck)language).autism$setTranslationSnapshot(builder.init_ClassCache());
          success = true;
          return language;
       } finally {
          if (!success) {
-            ArrayUtil.init(token);
+            PackTranslationPolicyResolver.init(token);
          }
 
          builder.close();
@@ -72,23 +72,23 @@ public class AutismProtectorClientLanguageMixin implements DataUtil {
       BiConsumer<String, String> snapshotOutput = snapshotOutput(output, resource);
       PackResources source = resource.source();
       if (source instanceof VanillaPackResources) {
-         original.call(stream, trackingOutput(snapshotOutput, (key, value) -> MethodUtil.init_V(key)));
-      } else if (source instanceof FilePackResources || source instanceof OverlayedPackResources || source instanceof JsonUtil) {
-         original.call(stream, trackingOutput(snapshotOutput, MethodUtil::init_V));
+         original.call(stream, trackingOutput(snapshotOutput, (key, value) -> ModNamespaceCatalog.init_V(key)));
+      } else if (source instanceof FilePackResources || source instanceof OverlayedPackResources || source instanceof IsolatedResourcePack) {
+         original.call(stream, trackingOutput(snapshotOutput, ModNamespaceCatalog::init_V));
       } else if (source instanceof PathPackResources) {
          original.call(stream, snapshotOutput);
       } else {
-         String modId = source instanceof ModNioPackResources modPack ? modPack.getFabricModMetadata().getId() : BitSetUtil.init(source.getClass());
+         String modId = source instanceof ModNioPackResources modPack ? modPack.getFabricModMetadata().getId() : CallerModInspector.init(source.getClass());
          if (modId == null) {
             original.call(stream, snapshotOutput);
          } else {
-            original.call(stream, trackingOutput(snapshotOutput, (key, value) -> MethodUtil.load(key, modId)));
+            original.call(stream, trackingOutput(snapshotOutput, (key, value) -> ModNamespaceCatalog.load(key, modId)));
          }
       }
    }
 
    private static BiConsumer<String, String> snapshotOutput(BiConsumer<String, String> output, Resource resource) {
-      ClassCache.Inner_DataUtil builder = ClassCache.Inner_DataUtil.init_ClassCache_DataUti();
+      TranslationSnapshot.Inner_DataUtil builder = TranslationSnapshot.Inner_DataUtil.init_ClassCache_DataUti();
       return builder == null ? output : (key, value) -> {
          try {
             builder.init(resource.source(), resource.sourcePackId(), key, value);

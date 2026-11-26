@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.HashUtil;
+import autismclient.g.ProtectorFeatureFlags;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -20,6 +20,6 @@ public abstract class AutismProtectorChatSigningMixin {
       )
    )
    private MessageSignature autism$skipSigning(Encoder encoder, SignedMessageBody body, Operation<MessageSignature> original) {
-      return HashUtil.run() ? null : original.call(encoder, body);
+      return ProtectorFeatureFlags.run() ? null : original.call(encoder, body);
    }
 }

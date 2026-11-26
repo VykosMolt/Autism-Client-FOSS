@@ -3,10 +3,10 @@ package autismclient.mixin;
 import autismclient.AutismClientAddon;
 import autismclient.ai.aq;
 import autismclient.api.custommenu.CustomMenuAdapterRegistry;
-import autismclient.g.BufferHelper;
-import autismclient.g.CharEncoder;
-import autismclient.g.ListPool;
-import autismclient.g.RefQueue;
+import autismclient.g.ConnectionPrivacyRegistry;
+import autismclient.g.ServerPackSelectionRegistry;
+import autismclient.g.OutboundPacketFilterHandler;
+import autismclient.g.ResourcePackPushValidator;
 import autismclient.mixin.accessor.AutismClientConnectionAccessor;
 import autismclient.modules.HashUtil;
 import autismclient.modules.Module;
@@ -132,8 +132,8 @@ public abstract class AutismClientConnectionMixin {
 
    @Unique
    private static void autism$snapshotPrivacyMode(Connection connection, SocketAddress peerAddress) {
-      BufferHelper.Inner_CachePool mode = AutismConfig.getGlobal().spoofClientVanilla ? BufferHelper.Inner_CachePool.VANILLA : BufferHelper.Inner_CachePool.MODDED;
-      BufferHelper.init(connection, mode, false, peerAddress);
+      ConnectionPrivacyRegistry.Inner_CachePool mode = AutismConfig.getGlobal().spoofClientVanilla ? ConnectionPrivacyRegistry.Inner_CachePool.VANILLA : ConnectionPrivacyRegistry.Inner_CachePool.MODDED;
+      ConnectionPrivacyRegistry.init(connection, mode, false, peerAddress);
    }
 
    @Inject(
@@ -163,8 +163,8 @@ public abstract class AutismClientConnectionMixin {
             LeafDupeModule.load_V_21();
          }
 
-         CharEncoder.load();
-         RefQueue.init();
+         ServerPackSelectionRegistry.load();
+         ResourcePackPushValidator.init();
       }
    }
 
@@ -177,7 +177,7 @@ public abstract class AutismClientConnectionMixin {
       } catch (Throwable var7) {
       }
 
-      if (!ListPool.init((Connection)(Object)this, channel, packet, listener, flush)) {
+      if (!OutboundPacketFilterHandler.init((Connection)(Object)this, channel, packet, listener, flush)) {
          ci.cancel();
       } else {
          if (!AutismLiteVariant.enabled() && !LeafDupeModule.init_Z_Connection_Packet((Connection)(Object)this, packet)) {
@@ -209,14 +209,14 @@ public abstract class AutismClientConnectionMixin {
       }
    )
    private ChannelFuture autism$completeReviewedPayload(Channel channel, Object packet, Operation<ChannelFuture> original) {
-      if (!ListPool.init(packet)) {
+      if (!OutboundPacketFilterHandler.init(packet)) {
          return original.call(channel, packet);
       }
 
       try {
-         return ListPool.init((Connection)(Object)this, packet, original.call(channel, packet));
+         return OutboundPacketFilterHandler.init((Connection)(Object)this, packet, original.call(channel, packet));
       } catch (RuntimeException | Error failure) {
-         ListPool.init((Connection)(Object)this, packet);
+         OutboundPacketFilterHandler.init((Connection)(Object)this, packet);
          throw failure;
       }
    }
@@ -235,15 +235,15 @@ public abstract class AutismClientConnectionMixin {
       }
    )
    private ChannelFuture autism$completeReviewedPayloadPromise(Channel channel, Object packet, ChannelPromise promise, Operation<ChannelFuture> original) {
-      if (!ListPool.init(packet)) {
+      if (!OutboundPacketFilterHandler.init(packet)) {
          return original.call(channel, packet, promise);
       }
 
       try {
          ChannelPromise completion = promise.isVoid() ? channel.newPromise() : promise;
-         return ListPool.init((Connection)(Object)this, packet, original.call(channel, packet, completion));
+         return OutboundPacketFilterHandler.init((Connection)(Object)this, packet, original.call(channel, packet, completion));
       } catch (RuntimeException | Error failure) {
-         ListPool.init((Connection)(Object)this, packet);
+         OutboundPacketFilterHandler.init((Connection)(Object)this, packet);
          throw failure;
       }
    }
@@ -298,12 +298,12 @@ public abstract class AutismClientConnectionMixin {
          this.autism$trackSentMessage(packet);
          this.autism$ensureSpoofPipelineFilter();
          if (packet instanceof ServerboundResourcePackPacket resourcePackPacket) {
-            if (RefQueue.init(resourcePackPacket)) {
+            if (ResourcePackPushValidator.init(resourcePackPacket)) {
                ci.cancel();
                return;
             }
 
-            CharEncoder.init(resourcePackPacket.id(), resourcePackPacket.action());
+            ServerPackSelectionRegistry.init(resourcePackPacket.id(), resourcePackPacket.action());
          }
 
          PacketListener packetListener = ((Connection)(Object)this).getPacketListener();
@@ -657,7 +657,7 @@ public abstract class AutismClientConnectionMixin {
                }
 
                if (pipeline.get("encoder") != null) {
-                  pipeline.addAfter("encoder", "autism_spoof_filter", new ListPool((Connection)(Object)this));
+                  pipeline.addAfter("encoder", "autism_spoof_filter", new OutboundPacketFilterHandler((Connection)(Object)this));
                   this.autism$spoofPipelineInstalled = true;
                }
             } catch (Throwable t) {
@@ -672,11 +672,11 @@ public abstract class AutismClientConnectionMixin {
          ScaffoldModule.init_V_Packet(packet);
          this.autism$trackSentMessage(packet);
          this.autism$ensureSpoofPipelineFilter();
-         if (packet instanceof ServerboundResourcePackPacket resourcePackPacket && RefQueue.init(resourcePackPacket)) {
+         if (packet instanceof ServerboundResourcePackPacket resourcePackPacket && ResourcePackPushValidator.init(resourcePackPacket)) {
             ci.cancel();
          } else {
             if (packet instanceof ServerboundResourcePackPacket resourcePackPacket) {
-               CharEncoder.init(resourcePackPacket.id(), resourcePackPacket.action());
+               ServerPackSelectionRegistry.init(resourcePackPacket.id(), resourcePackPacket.action());
             }
 
             if (!(packet instanceof ServerboundCustomPayloadPacket) && !aD.read_Z()) {

@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.BufferHelper;
-import autismclient.g.FileCache;
+import autismclient.g.ConnectionPrivacyRegistry;
+import autismclient.g.ResourcePackSessionTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl;
 import net.minecraft.network.Connection;
@@ -25,7 +25,7 @@ public abstract class AutismProtectorClientCommonNetworkHandlerMixin {
    @Inject(method = "handleResourcePackPop", at = @At("HEAD"))
    private void autism$onPackPop(ClientboundResourcePackPopPacket packet, CallbackInfo ci) {
       if (this.minecraft.isSameThread()) {
-         FileCache.init(BufferHelper.init_BufferHelper_Strea(this.connection), packet.id().orElse(null));
+         ResourcePackSessionTracker.init(ConnectionPrivacyRegistry.init_BufferHelper_Strea(this.connection), packet.id().orElse(null));
       }
    }
 }

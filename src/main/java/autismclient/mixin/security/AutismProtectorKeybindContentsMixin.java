@@ -1,10 +1,10 @@
 package autismclient.mixin.security;
 
-import autismclient.g.BufferHelper;
-import autismclient.g.MethodUtil;
-import autismclient.g.NetHelper;
-import autismclient.g.StreamUtil;
-import autismclient.g.TokenStore;
+import autismclient.g.ConnectionPrivacyRegistry;
+import autismclient.g.ModNamespaceCatalog;
+import autismclient.g.PacketOriginDuck;
+import autismclient.g.PacketComponentOriginTracker;
+import autismclient.g.PacketDecodeOriginStack;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.util.function.Supplier;
@@ -18,14 +18,14 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(KeybindContents.class)
-public abstract class AutismProtectorKeybindContentsMixin implements NetHelper {
+public abstract class AutismProtectorKeybindContentsMixin implements PacketOriginDuck {
    @Shadow
    @Final
    private String name;
    @Unique
    private boolean autism$fromPacket;
    @Unique
-   private BufferHelper.Inner_StreamUtil autism$packetOrigin;
+   private ConnectionPrivacyRegistry.Inner_StreamUtil autism$packetOrigin;
    @Unique
    private Component autism$displaySource;
    @Unique
@@ -33,11 +33,11 @@ public abstract class AutismProtectorKeybindContentsMixin implements NetHelper {
 
    @Override
    public void autism$setFromPacket() {
-      this.autism$setFromPacket(TokenStore.init_BufferHelper_Strea());
+      this.autism$setFromPacket(PacketDecodeOriginStack.init_BufferHelper_Strea());
    }
 
    @Override
-   public void autism$setFromPacket(BufferHelper.Inner_StreamUtil context) {
+   public void autism$setFromPacket(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
       if (!this.autism$fromPacket) {
          this.autism$packetOrigin = context;
       }
@@ -46,7 +46,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements NetHelper {
    }
 
    @Override
-   public BufferHelper.Inner_StreamUtil autism$packetOrigin() {
+   public ConnectionPrivacyRegistry.Inner_StreamUtil autism$packetOrigin() {
       return this.autism$packetOrigin;
    }
 
@@ -58,10 +58,10 @@ public abstract class AutismProtectorKeybindContentsMixin implements NetHelper {
    @WrapOperation(method = "getNestedComponent", at = @At(value = "INVOKE", target = "Ljava/util/function/Supplier;get()Ljava/lang/Object;"))
    private Object autism$tagResolvedKeybind(Supplier<?> supplier, Operation<Object> original) {
       if (this.autism$fromPacket
-         && (this.autism$packetOrigin == null || this.autism$packetOrigin.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.VANILLA)
-         && !MethodUtil.init_Z(this.name)) {
+         && (this.autism$packetOrigin == null || this.autism$packetOrigin.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.Inner_CachePool.VANILLA)
+         && !ModNamespaceCatalog.init_Z(this.name)) {
          Component replacement = Component.translatable(this.name);
-         StreamUtil.init(replacement, this.autism$packetOrigin);
+         PacketComponentOriginTracker.init(replacement, this.autism$packetOrigin);
          return replacement;
       }
 
@@ -70,7 +70,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements NetHelper {
          if (component.getContents() instanceof TranslatableContents translation && translation.getArgs().length == 0 && component.getSiblings().isEmpty()) {
             if (this.autism$displaySource != component) {
                Component copy = Component.translatableWithFallback(translation.getKey(), translation.getFallback()).withStyle(component.getStyle());
-               StreamUtil.init(copy, this.autism$packetOrigin);
+               PacketComponentOriginTracker.init(copy, this.autism$packetOrigin);
                this.autism$displaySource = component;
                this.autism$displayCopy = copy;
             }
@@ -78,7 +78,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements NetHelper {
             return this.autism$displayCopy;
          }
 
-         StreamUtil.init(component, this.autism$packetOrigin);
+         PacketComponentOriginTracker.init(component, this.autism$packetOrigin);
       }
 
       return resolved;

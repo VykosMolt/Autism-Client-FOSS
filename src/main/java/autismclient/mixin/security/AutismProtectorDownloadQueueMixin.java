@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.UiHelper;
+import autismclient.g.ResourcePackDownloadScope;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -37,18 +37,18 @@ public class AutismProtectorDownloadQueueMixin {
    private CompletableFuture autism$scopedBatch(
       Supplier supplier, Executor executor, Operation<CompletableFuture> original, @Local(argsOnly = true) BatchConfig config
    ) throws IOException {
-      UiHelper.Inner_BufferHelper snapshot = UiHelper.init_UiHelper_BufferHel();
+      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.init_UiHelper_BufferHel();
       if (snapshot == null) {
          return original.call(supplier, executor);
       }
 
       snapshot.init_V();
-      UiHelper.Inner_DataUtil registration = UiHelper.init(config, snapshot);
+      ResourcePackDownloadScope.Inner_DataUtil registration = ResourcePackDownloadScope.init(config, snapshot);
 
       CompletableFuture future;
       try {
          Supplier scopedSupplier = () -> {
-            try (UiHelper.Inner_CachePool ignored = UiHelper.load(snapshot)) {
+            try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.load(snapshot)) {
                return supplier.get();
             } catch (IOException e) {
                throw new CompletionException(e);
@@ -66,8 +66,8 @@ public class AutismProtectorDownloadQueueMixin {
 
    @WrapOperation(method = "runDownload", at = @At(value = "INVOKE", target = "Ljava/util/Map;forEach(Ljava/util/function/BiConsumer;)V"))
    private void autism$workerScope(Map requests, BiConsumer action, Operation<Void> original, @Local(argsOnly = true) BatchConfig config) throws IOException {
-      UiHelper.Inner_BufferHelper registered = UiHelper.init(config);
-      UiHelper.Inner_BufferHelper worker = UiHelper.load();
+      ResourcePackDownloadScope.Inner_BufferHelper registered = ResourcePackDownloadScope.init(config);
+      ResourcePackDownloadScope.Inner_BufferHelper worker = ResourcePackDownloadScope.load();
       if (registered == null && worker == null) {
          original.call(requests, action);
       } else {
@@ -81,7 +81,7 @@ public class AutismProtectorDownloadQueueMixin {
 
          registered.init_V();
 
-         try (UiHelper.Inner_CachePool ignored = UiHelper.load(registered)) {
+         try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.load(registered)) {
             original.call(requests, action);
          }
       }
@@ -95,13 +95,13 @@ public class AutismProtectorDownloadQueueMixin {
    private Path autism$scopedCacheDirectory(
       Path cacheDir, String name, Operation<Path> original, @Local(argsOnly = true) UUID packId, @Local BatchConfig config
    ) throws IOException {
-      UiHelper.Inner_BufferHelper snapshot = UiHelper.load();
+      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.load();
       if (snapshot == null) {
          return original.call(cacheDir, name);
       } else {
          snapshot.init_V();
          if (config != null && packId != null && packId.toString().equals(name)) {
-            return UiHelper.init(cacheDir, snapshot, packId, config.hashFunction());
+            return ResourcePackDownloadScope.init(cacheDir, snapshot, packId, config.hashFunction());
          } else {
             throw new IOException("Ambiguous resource-pack cache identity");
          }
@@ -127,25 +127,25 @@ public class AutismProtectorDownloadQueueMixin {
       DownloadProgressListener listener,
       Operation<Path> original
    ) throws InterruptedException, IOException {
-      UiHelper.Inner_BufferHelper snapshot = UiHelper.load();
+      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.load();
       if (snapshot == null) {
          return original.call(targetDir, url, headers, hashFunction, requestedHash, maxSize, proxy, listener);
       }
 
-      ReentrantLock lock = UiHelper.init(targetDir);
+      ReentrantLock lock = ResourcePackDownloadScope.init(targetDir);
       lock.lockInterruptibly();
 
       try {
          snapshot.init_V();
          Path result = original.call(targetDir, url, headers, hashFunction, requestedHash, maxSize, proxy, autism$guardedProgress(snapshot, listener));
          snapshot.init_V();
-         return UiHelper.init(targetDir.getParent(), result);
+         return ResourcePackDownloadScope.init(targetDir.getParent(), result);
       } finally {
          lock.unlock();
       }
    }
 
-   private static DownloadProgressListener autism$guardedProgress(final UiHelper.Inner_BufferHelper snapshot, final DownloadProgressListener listener) {
+   private static DownloadProgressListener autism$guardedProgress(final ResourcePackDownloadScope.Inner_BufferHelper snapshot, final DownloadProgressListener listener) {
       return new DownloadProgressListener() {
          @Override
          public void requestStart() {

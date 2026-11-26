@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.BufferHelper;
-import autismclient.g.ByteReader;
+import autismclient.g.ConnectionPrivacyRegistry;
+import autismclient.g.ModdedParticleGuard;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.Minecraft;
@@ -36,7 +36,7 @@ public class AutismProtectorParticleEngineMixin {
       RandomSource random,
       Operation<Particle> original
    ) {
-      BufferHelper.Inner_StreamUtil context = BufferHelper.init(Minecraft.getInstance().getConnection());
-      return ByteReader.init(provider, context, () -> original.call(provider, options, level, x, y, z, xSpeed, ySpeed, zSpeed, random));
+      ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init(Minecraft.getInstance().getConnection());
+      return ModdedParticleGuard.init(provider, context, () -> original.call(provider, options, level, x, y, z, xSpeed, ySpeed, zSpeed, random));
    }
 }

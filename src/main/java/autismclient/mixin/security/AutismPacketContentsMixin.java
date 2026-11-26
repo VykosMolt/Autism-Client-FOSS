@@ -1,8 +1,8 @@
 package autismclient.mixin.security;
 
-import autismclient.g.BufferHelper;
-import autismclient.g.NetHelper;
-import autismclient.g.TokenStore;
+import autismclient.g.ConnectionPrivacyRegistry;
+import autismclient.g.PacketOriginDuck;
+import autismclient.g.PacketDecodeOriginStack;
 import net.minecraft.network.chat.contents.NbtContents;
 import net.minecraft.network.chat.contents.ObjectContents;
 import net.minecraft.network.chat.contents.ScoreContents;
@@ -12,19 +12,19 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 @Mixin({LiteralContents.class, NbtContents.class, SelectorContents.class, ScoreContents.class, ObjectContents.class})
-public class AutismPacketContentsMixin implements NetHelper {
+public class AutismPacketContentsMixin implements PacketOriginDuck {
    @Unique
    private boolean autism$fromPacket;
    @Unique
-   private BufferHelper.Inner_StreamUtil autism$packetOrigin;
+   private ConnectionPrivacyRegistry.Inner_StreamUtil autism$packetOrigin;
 
    @Override
    public void autism$setFromPacket() {
-      this.autism$setFromPacket(TokenStore.init_BufferHelper_Strea());
+      this.autism$setFromPacket(PacketDecodeOriginStack.init_BufferHelper_Strea());
    }
 
    @Override
-   public void autism$setFromPacket(BufferHelper.Inner_StreamUtil context) {
+   public void autism$setFromPacket(ConnectionPrivacyRegistry.Inner_StreamUtil context) {
       if (!this.autism$fromPacket) {
          this.autism$packetOrigin = context;
       }
@@ -33,7 +33,7 @@ public class AutismPacketContentsMixin implements NetHelper {
    }
 
    @Override
-   public BufferHelper.Inner_StreamUtil autism$packetOrigin() {
+   public ConnectionPrivacyRegistry.Inner_StreamUtil autism$packetOrigin() {
       return this.autism$packetOrigin;
    }
 

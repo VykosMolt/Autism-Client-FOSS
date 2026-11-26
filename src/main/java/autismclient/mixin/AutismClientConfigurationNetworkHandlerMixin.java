@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.g.BufferHelper;
-import autismclient.g.NodeWalker;
+import autismclient.g.ConnectionPrivacyRegistry;
+import autismclient.g.VanillaKnownPacksManager;
 import autismclient.util.ck;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -51,10 +51,10 @@ public abstract class AutismClientConfigurationNetworkHandlerMixin {
 
          if (client != null && client.isSameThread()) {
             ClientConfigurationPacketListenerImpl listener = (ClientConfigurationPacketListenerImpl)(Object)this;
-            BufferHelper.Inner_StreamUtil context = BufferHelper.init(listener);
-            if (NodeWalker.init(context)) {
-               if (!(this.knownPacks instanceof NodeWalker)) {
-                  this.knownPacks = new NodeWalker();
+            ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init(listener);
+            if (VanillaKnownPacksManager.init(context)) {
+               if (!(this.knownPacks instanceof VanillaKnownPacksManager)) {
+                  this.knownPacks = new VanillaKnownPacksManager();
                }
 
                List<KnownPack> selected = this.knownPacks.trySelectingPacks(packet.knownPacks());

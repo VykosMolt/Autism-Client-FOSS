@@ -1,6 +1,6 @@
 package autismclient.mixin.security;
 
-import autismclient.g.BufferHelper;
+import autismclient.g.ConnectionPrivacyRegistry;
 import autismclient.mixin.accessor.AutismDownloadedPackSourceAccessor;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -33,7 +33,7 @@ public abstract class AutismProtectorConnectScreenMixin {
    )
    private void autism$associatePreSrvOrigin(DownloadedPackSource source, Connection connection, PackPromptStatus status, Operation<Void> original) {
       ServerPackManager manager = ((AutismDownloadedPackSourceAccessor)source).autism$manager();
-      BufferHelper.init(
+      ConnectionPrivacyRegistry.init(
          connection,
          this.val$hostAndPort.getHost(),
          this.val$hostAndPort.getPort(),

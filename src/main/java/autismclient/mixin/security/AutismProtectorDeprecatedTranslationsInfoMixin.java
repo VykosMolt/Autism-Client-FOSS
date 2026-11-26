@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
-import autismclient.g.ClassCache;
-import autismclient.g.MethodUtil;
+import autismclient.g.TranslationSnapshot;
+import autismclient.g.ModNamespaceCatalog;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.locale.DeprecatedTranslationsInfo;
@@ -21,8 +21,8 @@ public abstract class AutismProtectorDeprecatedTranslationsInfoMixin {
 
    @Inject(method = "applyToMap", at = @At("HEAD"))
    private void autism$trackDeprecatedTranslations(Map<String, String> translations, CallbackInfo ci) {
-      MethodUtil.init(this.removed(), this.renamed());
-      ClassCache.Inner_DataUtil builder = ClassCache.Inner_DataUtil.init_ClassCache_DataUti();
+      ModNamespaceCatalog.init(this.removed(), this.renamed());
+      TranslationSnapshot.Inner_DataUtil builder = TranslationSnapshot.Inner_DataUtil.init_ClassCache_DataUti();
       if (builder != null) {
          builder.init(this.removed(), this.renamed());
       }
