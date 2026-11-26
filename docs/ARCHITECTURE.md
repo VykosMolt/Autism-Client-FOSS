@@ -70,7 +70,18 @@ AUTISM_TOOL_ENV_PREPARED=1 SKIP_JAR_CHECK=1 bash tools/verify-26.3.sh
 10. **AI Assistant (`autismclient.ai`, `ai.a`, `ai.b`, `autism-ai/worker.jar`)**
     - Self-contained autonomous agent, catalog (`AiCatalog`), memory/regions, engine (`ai.a`), schematic printer (`ai.b`), and Rhino JS worker (`worker.jar`). Currently frozen during non-AI deobfuscation.
 
+## Deobfuscation Pipeline & Progress
+
+All source renames are executed mechanically via JDK 25's compiler AST (`com.sun.source.util.JavacTask` + `javax.lang.model`) while preserving 100% binary runtime ABI compatibility through `tools/ReverseRemapJar.java` and `mappings/disambig.tsv`:
+
+- **`tools/deobf/AstBatchRenamer.java`** — type-resolved AST batch renamer covering `src/main/java` and `tools/checks/*Check.java`, enforcing all frozen/integrity boundaries ([ABI_AND_HAZARDS.md](./ABI_AND_HAZARDS.md)) and syncing `mappings/disambig.tsv` atomically.
+- **`tools/deobf/VerifyBytecodeEquiv.java`** — strict class-by-class and resource equivalence verifier between baseline and candidate packaged JARs (validating classfile version, generic signatures, exceptions, `InnerClasses`, `NestHost`/`NestMembers`, `PermittedSubclasses`, deterministic recursive annotations + `annotationDefault`, `RecordComponents`, byte-identical resources, SHA-256 identity on all 50 excluded classes, and globally injective 1-to-1 bijection of javac synthetic `$SwitchMap$` fields).
+- **Completed Phases:**
+  - **Phase 1 (`44b8fe9`):** `1,336` non-AI, non-frozen enum constants restored to exact runtime names from `mappings/enum-names.tsv` (bit-for-bit SHA-256 identical packaged JAR).
+  - **Phase 2 (`df79bd7`):** `222` Rosetta Stone non-AI classes renamed in place (`40` in `commands/b`, `62` in `modules`, `103` in `util/macro`, `17` in `gui/d`), 100% aligned with `source-contracts.json` (`4,074/4,074` classes + `94/94` resources semantically bytecode-identical).
+
 ## Related Docs
 - [ABI & Silent-Breakage Hazards](./ABI_AND_HAZARDS.md)
 - [59-Package Directory](./PACKAGES.md)
 - [Deobfuscation Ledger](./DEOBFUSCATION_LEDGER.tsv)
+- Subsystem Guides: [Commands](./subsystems/COMMANDS.md) · [Modules](./subsystems/MODULES.md) · [Macros](./subsystems/MACROS.md) · [GUI & Screens](./subsystems/GUI.md)
