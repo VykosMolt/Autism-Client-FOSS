@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.gui.e.UiScissorStack;
-import autismclient.gui.e.SubpixelScissorTracker;
+import autismclient.gui.sdf.UiScissorStack;
+import autismclient.gui.sdf.SubpixelScissorTracker;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,6 +14,6 @@ public abstract class AutismGuiRenderStateResetMixin {
    private void autism$clearScissorMirror(CallbackInfo ci) {
       UiScissorStack.load_V();
       SubpixelScissorTracker.init();
-      autismclient.gui.f.UiAlphaStack.init_V_I(0);
+      autismclient.gui.ui.UiAlphaStack.init_V_I(0);
    }
 }

@@ -1,7 +1,7 @@
 package autismclient.util;
 
-import autismclient.gui.f.b.SearchFilterList;
-import autismclient.gui.f.b.UiLayoutMath;
+import autismclient.gui.ui.widgets.SearchFilterList;
+import autismclient.gui.ui.widgets.UiLayoutMath;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -26,12 +26,12 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    private static final int open_I = 6;
    private final Font init_Font;
    private final autismclient.gui.f.b.CharEncoder init_CharEncoder_2 = new autismclient.gui.f.b.CharEncoder();
-   private final autismclient.gui.f.c.CollapsibleWindowNode init_CharEncoder_3 = new autismclient.gui.f.c.CollapsibleWindowNode("Select Packet");
-   private final autismclient.gui.f.c.LayoutTreeHost init_TextFormat = new autismclient.gui.f.c.LayoutTreeHost(this.init_CharEncoder_2, this.init_CharEncoder_3);
-   private final autismclient.gui.f.b.TextInputWidget init_BitSetUtil = new autismclient.gui.f.b.TextInputWidget();
-   private final autismclient.gui.f.c.LabelNode init_PoolEntry = new autismclient.gui.f.c.LabelNode("", autismclient.gui.f.b.l.write).load_PoolEntry(true);
-   private final autismclient.gui.f.c.VerticalSpacerNode init_BitSetUtil_2 = new autismclient.gui.f.c.VerticalSpacerNode();
-   private autismclient.gui.f.c.ScrollableListView init_EventBus = null;
+   private final autismclient.gui.ui.layout.CollapsibleWindowNode init_CharEncoder_3 = new autismclient.gui.ui.layout.CollapsibleWindowNode("Select Packet");
+   private final autismclient.gui.ui.layout.LayoutTreeHost init_TextFormat = new autismclient.gui.ui.layout.LayoutTreeHost(this.init_CharEncoder_2, this.init_CharEncoder_3);
+   private final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget();
+   private final autismclient.gui.ui.layout.LabelNode init_PoolEntry = new autismclient.gui.ui.layout.LabelNode("", autismclient.gui.f.b.l.write).load_PoolEntry(true);
+   private final autismclient.gui.ui.layout.VerticalSpacerNode init_BitSetUtil_2 = new autismclient.gui.ui.layout.VerticalSpacerNode();
+   private autismclient.gui.ui.layout.ScrollableListView init_EventBus = null;
    private final List<Class<? extends Packet<?>>> init_List = new ArrayList<>();
    private final List<Class<? extends Packet<?>>> load_List = new ArrayList<>();
    private final List<Class<? extends Packet<?>>> read_List = new ArrayList<>();
@@ -67,7 +67,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    private boolean open_Z = true;
    private boolean poll_Z = false;
    private boolean push_Z = true;
-   private final autismclient.gui.f.VisibilityTransition init_CharEncoder = new autismclient.gui.f.VisibilityTransition(false);
+   private final autismclient.gui.ui.VisibilityTransition init_CharEncoder = new autismclient.gui.ui.VisibilityTransition(false);
 
    public AutismPacketSelectorOverlay(Font textRenderer) {
       this.init_Font = textRenderer;
@@ -96,7 +96,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.init_CharEncoder_3.init(autismclient.gui.f.b.l.load);
       this.init_CharEncoder_3.init_CharEncoder_Z_Z(true, true);
       this.init_CharEncoder_3.init_CharEncoder_I_I(this.run_I_20() + 2, this.run_I_20() + this.put() + this.add_I_15() + this.clear() + 12);
-      this.init_CharEncoder_3.init_PacketUtil().init(this.get_I_18()).init(autismclient.gui.f.c.EdgeInsets.init(this.run_I_20()));
+      this.init_CharEncoder_3.init_PacketUtil().init(this.get_I_18()).init(autismclient.gui.ui.layout.EdgeInsets.init(this.run_I_20()));
       this.init_BitSetUtil
          .load_BitSetUtil_Str("Search packets...")
          .read_BitSetUtil_I(this.set_I_18())
@@ -220,12 +220,12 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
 
    private void flush_V_15() {
       this.sync_V_16();
-      autismclient.gui.f.c.LayoutContext metrics = this.init_TextFormat.init_SyncManager();
+      autismclient.gui.ui.layout.LayoutContext metrics = this.init_TextFormat.init_SyncManager();
       if (metrics != null) {
          this.get = Math.round(this.init_CharEncoder_3.init_F_SyncManager_F(metrics, this.run));
       }
 
-      autismclient.gui.f.c.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       this.pop = Math.max(8, Math.round((viewport.init() - this.run) / 2.0F));
       this.tick = Math.max(8, Math.round((viewport.load() - this.get) / 2.0F));
       OverlayBounds clamped = this.init_cH_cH_4(new OverlayBounds(this.pop, this.tick, this.run, this.get, this.write_Z, this.update_Z));
@@ -289,11 +289,11 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       }
 
       context.nextStratum();
-      autismclient.gui.f.c.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
       boolean headerHovered = this.init_Z_F_F_5(uiMouseX, uiMouseY);
-      autismclient.gui.f.c.LayoutContext metrics = new autismclient.gui.f.c.LayoutContext(
+      autismclient.gui.ui.layout.LayoutContext metrics = new autismclient.gui.ui.layout.LayoutContext(
          context, init_Minecraft.font, viewport, this.init_CharEncoder_2, uiMouseX, uiMouseY, delta
       );
       this.init_CharEncoder_3.load_CharEncoder(!this.update_Z);
@@ -313,13 +313,13 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
          try {
             this.init_V_GuiGraphicsExtract_10(context, viewport, uiMouseX, uiMouseY, delta);
          } finally {
-            autismclient.gui.f.UiClipStack.init_HashUtil().init(context);
+            autismclient.gui.ui.UiClipStack.init_HashUtil().init(context);
          }
       }
    }
 
    private void init_V_GuiGraphicsExtract_10(
-      GuiGraphicsExtractor context, autismclient.gui.f.c.LayoutViewport viewport, float uiMouseX, float uiMouseY, float delta
+      GuiGraphicsExtractor context, autismclient.gui.ui.layout.LayoutViewport viewport, float uiMouseX, float uiMouseY, float delta
    ) {
       int viewX = Math.round(this.init_BitSetUtil_2.load_F());
       int viewY = Math.round(this.init_BitSetUtil_2.read_F());
@@ -333,7 +333,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
             || this.init_EventBus.read_I() != viewW
             || this.init_EventBus.write_I() != viewH) {
             int preservedScroll = this.init_EventBus == null ? 0 : this.init_EventBus.open();
-            this.init_EventBus = new autismclient.gui.f.c.ScrollableListView(viewX, viewY, viewW, viewH, this.pop_I_22(), 6);
+            this.init_EventBus = new autismclient.gui.ui.layout.ScrollableListView(viewX, viewY, viewW, viewH, this.pop_I_22(), 6);
             this.init_EventBus.init_V(contentHeight);
             this.init_EventBus.load_V(preservedScroll);
          }
@@ -359,7 +359,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       boolean selected = this.poll_Z && this.read_Set.contains(packetClass);
       int rowColor = selected ? UiColorPalette.init(false) : UiColorPalette.init(c2s, index, false);
       int color = selected ? UiColorPalette.store() : UiColorPalette.init(c2s, index);
-      autismclient.gui.f.b.PanelSurfaceHelper.init(context, x, y, width, this.pop_I_22(), rowColor);
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, x, y, width, this.pop_I_22(), rowColor);
       String name = PacketNameResolver.init_Str_Class(packetClass);
       int textWidth = width - 10;
       String trimmed = autismclient.gui.f.b.k.init(
@@ -369,7 +369,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(
          context, this.init_Font, trimmed, this.init_CharEncoder_2.init_Identifier_l(autismclient.gui.f.b.l.read), color, x + 6, textY, false
       );
-      autismclient.gui.f.b.PanelSurfaceHelper.init(context, x + 4, y + this.pop_I_22() - 1, width - 8, UiColorPalette.mark());
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, x + 4, y + this.pop_I_22() - 1, width - 8, UiColorPalette.mark());
    }
 
    private void init(GuiGraphicsExtractor context, int viewX, int viewY, int viewW, int viewH, float uiMouseX, float uiMouseY) {
@@ -384,7 +384,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      autismclient.gui.f.c.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
       if (button == 0 && this.load_Z_F_F_4(uiMouseX, uiMouseY)) {
@@ -483,7 +483,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
-      autismclient.gui.f.c.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
       if (button == 0 && this.sync_Z) {
@@ -516,7 +516,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      autismclient.gui.f.c.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
       if (this.sync_Z && button == 0) {
@@ -585,7 +585,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       if (!this.write_Z) {
          return false;
       } else {
-         autismclient.gui.f.c.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+         autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
          float uiMouseX = viewport.init_F_D(mouseX);
          float uiMouseY = viewport.load(mouseY);
          if (!this.update_Z
@@ -685,7 +685,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      autismclient.gui.f.c.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
       int renderedHeight = this.update_Z ? this.init_CharEncoder_2.load() : this.get;
@@ -698,7 +698,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      autismclient.gui.f.c.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
       return this.init_Z_F_F_5(uiMouseX, uiMouseY) && !this.load_Z_F_F_4(uiMouseX, uiMouseY);
@@ -719,7 +719,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private boolean load_Z_F_F_4(float uiMouseX, float uiMouseY) {
-      return autismclient.gui.f.b.WindowHeaderHelper.init(
+      return autismclient.gui.ui.widgets.WindowHeaderHelper.init(
          autismclient.gui.f.NetHelper.init(this.pop, this.tick, this.run, Math.max(this.init_CharEncoder_2.load(), this.get)),
          this.init_CharEncoder_2.load(),
          uiMouseX,
@@ -728,7 +728,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private OverlayBounds init_cH_cH_4(OverlayBounds bounds) {
-      autismclient.gui.f.c.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       int margin = 4;
       int viewportW = Math.round(viewport.init());
       int viewportH = Math.round(viewport.load());
@@ -752,7 +752,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private int pop_I_22() {
-      return autismclient.gui.f.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.init(12);
    }
 
    private int tick_I_20() {
@@ -768,7 +768,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private int set_I_18() {
-      return autismclient.gui.f.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.init(13);
    }
 
    private int put() {

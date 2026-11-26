@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.mixin.duck.DisconnectedScreenDuck;
-import autismclient.gui.d.StyledButton;
+import autismclient.gui.screens.StyledButton;
 import autismclient.gui.f.b.CachePool;
 import autismclient.modules.AutoReconnectController;
 import autismclient.modules.aD;

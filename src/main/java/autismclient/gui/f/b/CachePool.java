@@ -3,6 +3,7 @@ package autismclient.gui.f.b;
 import autismclient.util.ThemePaletteManager;
 import autismclient.util.ThemeTextureRecolorer;
 import net.minecraft.resources.Identifier;
+import autismclient.gui.ui.widgets.UiLayoutMath;
 
 public final class CachePool {
    private CachePool() {
@@ -11,7 +12,7 @@ public final class CachePool {
    public static void init(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, CachePool.Inner_DataUtil tone, boolean hovered, boolean active
    ) {
-      load(context, bounds, label, null, tone, hovered, active, autismclient.gui.f.ToggleTransitionCache.init(autismclient.gui.f.ToggleTransitionCache.init(bounds), active));
+      load(context, bounds, label, null, tone, hovered, active, autismclient.gui.ui.ToggleTransitionCache.init(autismclient.gui.ui.ToggleTransitionCache.init(bounds), active));
    }
 
    public static void init(
@@ -37,7 +38,7 @@ public final class CachePool {
       boolean active,
       float activeProgress
    ) {
-      autismclient.gui.f.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
       float progress = Math.min(1.0F, Math.max(0.0F, activeProgress));
       int var10000;
       switch (tone) {
@@ -56,7 +57,7 @@ public final class CachePool {
 
       int toneColor = var10000;
       boolean colored = tone == CachePool.Inner_DataUtil.read || tone == CachePool.Inner_DataUtil.write || tone == CachePool.Inner_DataUtil.update;
-      float hoverT = autismclient.gui.f.HoverTransitionCache.init(autismclient.gui.f.HoverTransitionCache.init(bounds), hovered);
+      float hoverT = autismclient.gui.ui.HoverTransitionCache.init(autismclient.gui.ui.HoverTransitionCache.init(bounds), hovered);
       int fill = UiLayoutMath.init_I_I(colors.load, toneColor, colored ? 0.08F + 0.14F * progress : 0.12F * progress);
       int border = colored ? UiLayoutMath.init_I_I(fill, toneColor, 0.5F + 0.5F * progress) : colors.set;
       fill = UiLayoutMath.init_I_I(fill, colors.read, hoverT * 0.6F);
@@ -70,7 +71,7 @@ public final class CachePool {
          int groupW = iconSize + 4 + textW;
          int iconX = bounds.read() + Math.max(3, (bounds.update() - groupW) / 2);
          int iconY = bounds.write() + Math.max(1, (bounds.sync() - iconSize) / 2);
-         if (!autismclient.gui.e.SdfIconRenderer.init(context.init_GuiGraphicsExtract(), icon, iconX, iconY, iconSize, iconSize, colors.prev)) {
+         if (!autismclient.gui.sdf.SdfIconRenderer.init(context.init_GuiGraphicsExtract(), icon, iconX, iconY, iconSize, iconSize, colors.prev)) {
             context.init_GuiGraphicsExtract()
                .blit(ThemeTextureRecolorer.init(icon, ThemePaletteManager.Inner_DataUtil.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
          }

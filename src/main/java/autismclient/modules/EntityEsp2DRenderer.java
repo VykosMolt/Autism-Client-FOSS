@@ -136,13 +136,13 @@ public final class EntityEsp2DRenderer {
       float radius = Math.max(0.75F, 2.0F * px);
       int shadow = init_I_F(0.62F * fade);
       if (fill) {
-         autismclient.gui.e.SdfShapeRenderer.init_V_GuiGraphicsExtract(context, x, y, w, h, radius, init_I_F(0.2F * fade) | rgb, init_I_F(0.05F * fade) | rgb, 0, 0);
+         autismclient.gui.sdf.SdfShapeRenderer.init_V_GuiGraphicsExtract(context, x, y, w, h, radius, init_I_F(0.2F * fade) | rgb, init_I_F(0.05F * fade) | rgb, 0, 0);
       }
 
-      autismclient.gui.e.SdfShapeRenderer.init(context, x - px, y - px, w + 2.0F * px, h + 2.0F * px, radius + px, 0, shadow);
-      autismclient.gui.e.SdfShapeRenderer.init(context, x, y, w, h, radius, 0, init_I_F(fade) | rgb);
+      autismclient.gui.sdf.SdfShapeRenderer.init(context, x - px, y - px, w + 2.0F * px, h + 2.0F * px, radius + px, 0, shadow);
+      autismclient.gui.sdf.SdfShapeRenderer.init(context, x, y, w, h, radius, 0, init_I_F(fade) | rgb);
       if (w > 4.0F * px && h > 4.0F * px) {
-         autismclient.gui.e.SdfShapeRenderer.init(context, x + px, y + px, w - 2.0F * px, h - 2.0F * px, Math.max(0.75F, radius - px), 0, shadow);
+         autismclient.gui.sdf.SdfShapeRenderer.init(context, x + px, y + px, w - 2.0F * px, h - 2.0F * px, Math.max(0.75F, radius - px), 0, shadow);
       }
    }
 
@@ -172,8 +172,8 @@ public final class EntityEsp2DRenderer {
 
    private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, float x, float y, float w, float h, int color) {
       float radius = Math.min(w, h) * 0.5F;
-      if (radius >= 0.75F && autismclient.gui.e.SdfShapeRenderer.init_Z()) {
-         autismclient.gui.e.SdfShapeRenderer.init(context, x, y, w, h, radius, color);
+      if (radius >= 0.75F && autismclient.gui.sdf.SdfShapeRenderer.init_Z()) {
+         autismclient.gui.sdf.SdfShapeRenderer.init(context, x, y, w, h, radius, color);
       } else {
          context.pose().pushMatrix();
          context.pose().translate(x, y);

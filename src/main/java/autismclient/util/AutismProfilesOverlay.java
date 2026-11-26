@@ -8,7 +8,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
    private static final String load_Str = "Profiles Library";
    private static final int flush_I = 380;
    private static final int close_I = 1;
-   private final autismclient.gui.c.ProfilesLibraryView init_StreamUtil;
+   private final autismclient.gui.profiles.ProfilesLibraryView init_StreamUtil;
    private final Font init_Font;
    private boolean write_Z;
    private double init_D;
@@ -22,7 +22,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
    public AutismProfilesOverlay(Font font) {
       super("autism-profiles", 300, 170);
       this.init_Font = font;
-      this.init_StreamUtil = new autismclient.gui.c.ProfilesLibraryView(font);
+      this.init_StreamUtil = new autismclient.gui.profiles.ProfilesLibraryView(font);
       this.init_I_2 = 90;
       this.load_I = 40;
    }
@@ -146,14 +146,14 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
       int sh = cA.load_I();
       autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), -1073741824);
       int margin = 6;
-      int headerHeight = autismclient.gui.f.UiDensityMetrics.init(14);
-      int availableHeight = Math.max(1, sh - autismclient.gui.f.UiDensityMetrics.init(44));
+      int headerHeight = autismclient.gui.ui.UiDensityMetrics.init(14);
+      int availableHeight = Math.max(1, sh - autismclient.gui.ui.UiDensityMetrics.init(44));
       this.read_I = Math.max(1, Math.min(sw - margin * 2, this.init_StreamUtil.init_I() + 2));
       this.write = Math.min(availableHeight, this.init_StreamUtil.init(this.read_I - 2) + headerHeight + 1);
       this.init_I_2 = (sw - this.read_I) / 2;
       this.load_I = (availableHeight - this.write) / 2;
       autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(ctx, this.init_Font, mx, my).init_SyncManager();
-      autismclient.gui.f.b.WindowFrameRenderer.init(
+      autismclient.gui.ui.widgets.WindowFrameRenderer.init(
          context,
          autismclient.gui.f.NetHelper.init(this.init_I_2, this.load_I, this.read_I, this.write),
          "Profiles Library",
@@ -172,12 +172,12 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
    private void init_V_SyncManager_2(autismclient.gui.f.SyncManager context, int headerHeight, float delta) {
       autismclient.gui.f.NetHelper body = autismclient.gui.f.NetHelper.init(this.init_I_2, this.load_I, this.read_I, this.write).load(1, headerHeight, 1, 1);
       if (body.update() != 0 && body.sync() != 0) {
-         autismclient.gui.f.UiClipStack.init_HashUtil().init(context.init_GuiGraphicsExtract(), body);
+         autismclient.gui.ui.UiClipStack.init_HashUtil().init(context.init_GuiGraphicsExtract(), body);
 
          try {
             this.init_StreamUtil.init_V_SyncManager(context, body, delta);
          } finally {
-            autismclient.gui.f.UiClipStack.init_HashUtil().init(context.init_GuiGraphicsExtract());
+            autismclient.gui.ui.UiClipStack.init_HashUtil().init(context.init_GuiGraphicsExtract());
          }
       }
    }

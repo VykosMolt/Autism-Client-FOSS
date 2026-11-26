@@ -14,8 +14,8 @@ final class AiSessionsDrawer {
    private final AiService init_cc;
    private final AiViewState init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
-   final autismclient.gui.f.b.TextInputWidget init_BitSetUtil = new autismclient.gui.f.b.TextInputWidget().init_BitSetUtil_I(96).load_BitSetUtil_Str("Search chats");
-   final autismclient.gui.f.b.TextInputWidget load_BitSetUtil = new autismclient.gui.f.b.TextInputWidget().init_BitSetUtil_I(96);
+   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(96).load_BitSetUtil_Str("Search chats");
+   final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(96);
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(false);
    private autismclient.gui.f.NetHelper init_NetHelper = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
    boolean init_Z;
@@ -129,7 +129,7 @@ final class AiSessionsDrawer {
    }
 
    private void init(AiUiKit kit, AiSessions.Inner_StreamUtil meta, autismclient.gui.f.NetHelper row, long now) {
-      autismclient.gui.f.UiColorScheme colors = kit.init_JsonUtil;
+      autismclient.gui.ui.UiColorScheme colors = kit.init_JsonUtil;
       String id = meta.id();
       boolean active = id.equals(this.init_cF.read_Str);
       boolean hovered = kit.init_Z_NetHelper(row);

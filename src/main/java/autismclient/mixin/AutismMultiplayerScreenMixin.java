@@ -1,13 +1,13 @@
 package autismclient.mixin;
 
 import autismclient.mixin.duck.ExternalButtonScreenDuck;
-import autismclient.gui.d.ProxiesScreen;
-import autismclient.gui.d.JoinMacroScreen;
-import autismclient.gui.d.PluginLibraryScreen;
-import autismclient.gui.d.SimpleVoiceChatDetectedScreen;
-import autismclient.gui.f.UiDensityMetrics;
+import autismclient.gui.screens.ProxiesScreen;
+import autismclient.gui.screens.JoinMacroScreen;
+import autismclient.gui.screens.PluginLibraryScreen;
+import autismclient.gui.screens.SimpleVoiceChatDetectedScreen;
+import autismclient.gui.ui.UiDensityMetrics;
 import autismclient.gui.f.UiHelper;
-import autismclient.gui.f.b.TooltipRenderer;
+import autismclient.gui.ui.widgets.TooltipRenderer;
 import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
 import autismclient.util.AutismConfig;

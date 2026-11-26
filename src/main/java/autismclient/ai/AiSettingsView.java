@@ -53,17 +53,17 @@ final class AiSettingsView {
    private final AiService init_cc;
    private final AiViewState init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
-   final autismclient.gui.f.b.TextInputWidget init_BitSetUtil = init_BitSetUtil();
-   final autismclient.gui.f.b.TextInputWidget load_BitSetUtil = init_BitSetUtil();
-   final autismclient.gui.f.b.TextInputWidget read_BitSetUtil = init_BitSetUtil_I(512);
-   final autismclient.gui.f.b.TextInputWidget write_BitSetUtil = load_BitSetUtil();
-   final autismclient.gui.f.b.TextInputWidget update_BitSetUtil = load_BitSetUtil();
-   final autismclient.gui.f.b.TextInputWidget sync_BitSetUtil = load_BitSetUtil();
-   final autismclient.gui.f.b.TextInputWidget flush_BitSetUtil = load_BitSetUtil();
-   final autismclient.gui.f.b.TextInputWidget close = load_BitSetUtil();
-   private final autismclient.gui.f.b.DropdownWidget init_SyncManager;
-   private final autismclient.gui.f.b.DropdownWidget load_SyncManager;
-   private final List<autismclient.gui.f.b.DropdownWidget> sync_List;
+   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = init_BitSetUtil();
+   final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = init_BitSetUtil();
+   final autismclient.gui.ui.widgets.TextInputWidget read_BitSetUtil = init_BitSetUtil_I(512);
+   final autismclient.gui.ui.widgets.TextInputWidget write_BitSetUtil = load_BitSetUtil();
+   final autismclient.gui.ui.widgets.TextInputWidget update_BitSetUtil = load_BitSetUtil();
+   final autismclient.gui.ui.widgets.TextInputWidget sync_BitSetUtil = load_BitSetUtil();
+   final autismclient.gui.ui.widgets.TextInputWidget flush_BitSetUtil = load_BitSetUtil();
+   final autismclient.gui.ui.widgets.TextInputWidget close = load_BitSetUtil();
+   private final autismclient.gui.ui.widgets.DropdownWidget init_SyncManager;
+   private final autismclient.gui.ui.widgets.DropdownWidget load_SyncManager;
+   private final List<autismclient.gui.ui.widgets.DropdownWidget> sync_List;
    private final AiModelCatalog init_av = new AiModelCatalog();
    private String load_Str = "";
    private List<String> flush_List = List.of();
@@ -94,20 +94,20 @@ final class AiSettingsView {
       this.init_cc = service;
       this.init_cF = view;
       this.init_AiAssistantOverlay = host;
-      this.init_SyncManager = new autismclient.gui.f.b.DropdownWidget(0, 0, 10, 10, update_List, 0, index -> {
+      this.init_SyncManager = new autismclient.gui.ui.widgets.DropdownWidget(0, 0, 10, 10, update_List, 0, index -> {
          if (index == 0) {
             this.read_V();
          } else {
             this.init_V_AiSettings_Provide(AiSettings.Provider.values()[index - 1]);
          }
       });
-      this.load_SyncManager = new autismclient.gui.f.b.DropdownWidget(0, 0, 10, 10, List.of(), 0, this::init_V_I);
+      this.load_SyncManager = new autismclient.gui.ui.widgets.DropdownWidget(0, 0, 10, 10, List.of(), 0, this::init_V_I);
       this.load_SyncManager.init_Z = false;
       this.sync_List = List.of(this.init_SyncManager, this.load_SyncManager);
       this.init_BitSetUtil.init_BitSetUtil_Consumer(text -> this.write_V());
       this.read_BitSetUtil.init_BitSetUtil_Consumer(text -> this.sync_V());
 
-      for (autismclient.gui.f.b.TextInputWidget field : List.of(
+      for (autismclient.gui.ui.widgets.TextInputWidget field : List.of(
          this.init_BitSetUtil,
          this.load_BitSetUtil,
          this.read_BitSetUtil,
@@ -121,7 +121,7 @@ final class AiSettingsView {
       }
    }
 
-   List<autismclient.gui.f.b.TextInputWidget> init_List() {
+   List<autismclient.gui.ui.widgets.TextInputWidget> init_List() {
       return List.of(
          this.init_BitSetUtil,
          this.load_BitSetUtil,
@@ -140,18 +140,18 @@ final class AiSettingsView {
       this.init_cE_StreamUtil.load();
    }
 
-   private static autismclient.gui.f.b.TextInputWidget init_BitSetUtil_I(int max) {
-      return new autismclient.gui.f.b.TextInputWidget().init_BitSetUtil_I(max);
+   private static autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_I(int max) {
+      return new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(max);
    }
 
-   private static autismclient.gui.f.b.TextInputWidget init_BitSetUtil() {
-      autismclient.gui.f.b.TextInputWidget field = new autismclient.gui.f.b.TextInputWidget().init_BitSetUtil_I(2048);
+   private static autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil() {
+      autismclient.gui.ui.widgets.TextInputWidget field = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(2048);
       field.init_BitSetUtil_Function(text -> Component.literal("*".repeat(Math.min(64, text.length()))));
       return field;
    }
 
-   private static autismclient.gui.f.b.TextInputWidget load_BitSetUtil() {
-      return new autismclient.gui.f.b.TextInputWidget().init_BitSetUtil_I(12).init_BitSetUtil_Predicate(v -> v.chars().allMatch(Character::isDigit));
+   private static autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil() {
+      return new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(12).init_BitSetUtil_Predicate(v -> v.chars().allMatch(Character::isDigit));
    }
 
    void init_V_AiSettings(AiSettings s) {
@@ -174,7 +174,7 @@ final class AiSettingsView {
       this.update_Str = "";
       this.write_Z = false;
       this.sync_J = 0L;
-      autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
+      autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
       this.load_Z = false;
       this.update_V();
       if (!this.read_Z) {
@@ -217,7 +217,7 @@ final class AiSettingsView {
    private void read_V() {
       if (!this.read_Z) {
          this.read_Z = true;
-         autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
+         autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
          this.update_Str = "";
       }
    }
@@ -313,7 +313,7 @@ final class AiSettingsView {
    private void sync_V() {
       if (!this.load_Z) {
          this.init_av.init_V();
-         autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
+         autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
          this.read_Str = "Scan to load models for this connection";
          this.init_Z = false;
          this.read_J = System.currentTimeMillis() + 700L;
@@ -335,7 +335,7 @@ final class AiSettingsView {
    private void flush_V() {
       try {
          if (this.init_av.init_Z(AiModelCatalog.Inner_DataUtil.of(this.init_AiSettings_Provide, this.read_BitSetUtil.init_Str(), this.init_Str()))) {
-            autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
+            autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
             this.read_Str = "Scan to load models for this connection";
             this.init_Z = false;
             this.read_J = System.currentTimeMillis() + 700L;
@@ -371,7 +371,7 @@ final class AiSettingsView {
          long generation = this.init_av.init_J(identity);
          this.read_Str = "";
          this.init_Z = false;
-         autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
+         autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
          this.update_V();
          if (k.isBlank()) {
             this.init_av.init(generation, identity, new AiModels.Inner_CachePool(List.of(), "Add an API key to scan for models"));
@@ -446,24 +446,24 @@ final class AiSettingsView {
    }
 
    boolean init_Z() {
-      return autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List);
+      return autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List);
    }
 
    boolean init_Z_D_D(double x, double y) {
-      return autismclient.gui.f.b.DropdownWidget.init(this.sync_List, x, y);
+      return autismclient.gui.ui.widgets.DropdownWidget.init(this.sync_List, x, y);
    }
 
    boolean init_Z_D_2(double x, double y, int button) {
       this.flush_V();
-      return this.init_Z() && autismclient.gui.f.b.DropdownWidget.init_Z_List_2(this.sync_List, x, y, button);
+      return this.init_Z() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(this.sync_List, x, y, button);
    }
 
    boolean init_Z_D(double x, double y, double amount) {
-      if (autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List, x, y, amount)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List, x, y, amount)) {
          return true;
       }
 
-      autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
+      autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
       return false;
    }
 
@@ -477,7 +477,7 @@ final class AiSettingsView {
          this.init_cF.init_V();
       }
 
-      return autismclient.gui.f.b.DropdownWidget.write(this.sync_List) || used;
+      return autismclient.gui.ui.widgets.DropdownWidget.write(this.sync_List) || used;
    }
 
    boolean load(double x, double y, int button) {
@@ -485,13 +485,13 @@ final class AiSettingsView {
          this.init_V_D(x);
          return true;
       } else {
-         return this.init_Z() && autismclient.gui.f.b.DropdownWidget.load(this.sync_List, x, y, button);
+         return this.init_Z() && autismclient.gui.ui.widgets.DropdownWidget.load(this.sync_List, x, y, button);
       }
    }
 
    boolean read_Z() {
       boolean used = this.load_Z();
-      return autismclient.gui.f.b.DropdownWidget.read(this.sync_List) || used;
+      return autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List) || used;
    }
 
    boolean write_Z() {
@@ -529,7 +529,7 @@ final class AiSettingsView {
    }
 
    void init_V_cE(AiUiKit kit) {
-      autismclient.gui.f.b.DropdownWidget.read(kit.init_GuiGraphicsExtract, kit.init_Font, this.sync_List, kit.sync, kit.flush);
+      autismclient.gui.ui.widgets.DropdownWidget.read(kit.init_GuiGraphicsExtract, kit.init_Font, this.sync_List, kit.sync, kit.flush);
    }
 
    void init_V_cE(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
@@ -570,7 +570,7 @@ final class AiSettingsView {
          if (kit.load_Z(field)) {
             kit.init_V_NetHelper_Runnable(
                field,
-               () -> autismclient.gui.f.b.DropdownWidget.init_Z_List_2(
+               () -> autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(
                   this.sync_List, this.init_AiAssistantOverlay.read_I(), this.init_AiAssistantOverlay.write_I(), 0
                )
             );
@@ -580,7 +580,7 @@ final class AiSettingsView {
          if (this.read_Z) {
             kit.init_V_Str_2("Runs in the client. Instant, free, no API.", x + 5, y + 1, w - 10, kit.init_JsonUtil.valid);
             y += AiUiKit.write();
-            autismclient.gui.f.b.DropdownWidget.load(kit.init_GuiGraphicsExtract, kit.init_Font, List.of(this.init_SyncManager), kit.write, kit.update);
+            autismclient.gui.ui.widgets.DropdownWidget.load(kit.init_GuiGraphicsExtract, kit.init_Font, List.of(this.init_SyncManager), kit.write, kit.update);
             y += 4;
          }
       }
@@ -594,7 +594,7 @@ final class AiSettingsView {
          if (kit.load_Z(modelBounds)) {
             kit.init_V_NetHelper(
                modelBounds,
-               () -> autismclient.gui.f.b.DropdownWidget.init_Z_List_2(
+               () -> autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(
                   this.sync_List, this.init_AiAssistantOverlay.read_I(), this.init_AiAssistantOverlay.write_I(), 0
                ),
                null,
@@ -610,7 +610,7 @@ final class AiSettingsView {
             this.init_av.load() ? "Scanning models..." : "Scan for models",
             () -> this.init_V_Z(true)
          );
-         autismclient.gui.f.b.DropdownWidget.load(kit.init_GuiGraphicsExtract, kit.init_Font, this.sync_List, kit.write, kit.update);
+         autismclient.gui.ui.widgets.DropdownWidget.load(kit.init_GuiGraphicsExtract, kit.init_Font, this.sync_List, kit.write, kit.update);
          y += ctrl + 2;
          String status = this.init_av.load() ? "Scanning models..." : this.read_Str;
          if (!status.isBlank()) {
@@ -642,7 +642,7 @@ final class AiSettingsView {
          y += ctrl + 2;
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, ctrl);
          if (kit.load_Z(this.init_NetHelper)) {
-            autismclient.gui.f.b.SliderRenderer.init(kit.init_SyncManager, this.init_NetHelper, opacity / 100.0, kit.init_Z_NetHelper(this.init_NetHelper));
+            autismclient.gui.ui.widgets.SliderRenderer.init(kit.init_SyncManager, this.init_NetHelper, opacity / 100.0, kit.init_Z_NetHelper(this.init_NetHelper));
             kit.init_V_NetHelper(this.init_NetHelper, () -> {
                this.update_Z = true;
                this.init_V_D(this.init_AiAssistantOverlay.read_I());
@@ -721,7 +721,7 @@ final class AiSettingsView {
          autismclient.gui.f.NetHelper stopRow = autismclient.gui.f.NetHelper.init(x, y, w, ctrl);
          kit.init_V_Str_3("Stop key", stopRow, x + 5, labelW - 5, kit.init_JsonUtil.prev);
          autismclient.gui.f.NetHelper bind = autismclient.gui.f.NetHelper.init(x + labelW, y, Math.max(34, kit.load("F10") + 10), ctrl);
-         autismclient.gui.f.b.KeybindButtonRenderer.init(kit.init_SyncManager, bind, this.init_I_AiSettings_J(live, now), this.write_Z, kit.init_Z_NetHelper(bind));
+         autismclient.gui.ui.widgets.KeybindButtonRenderer.init(kit.init_SyncManager, bind, this.init_I_AiSettings_J(live, now), this.write_Z, kit.init_Z_NetHelper(bind));
          kit.init_V_NetHelper(bind, () -> this.write_Z = !this.write_Z, null, this.write_Z ? "Press a key, Esc cancels" : "Emergency stop key");
          y += ctrl + 2;
          if (!this.read_Z) {
@@ -767,21 +767,21 @@ final class AiSettingsView {
       return autismclient.gui.f.NetHelper.init(x + labelW, y, Math.max(20, w - labelW), AiUiKit.init_I());
    }
 
-   private int init_I_cE_2(AiUiKit kit, String label, autismclient.gui.f.b.TextInputWidget field, int x, int y, int w, int labelW) {
+   private int init_I_cE_2(AiUiKit kit, String label, autismclient.gui.ui.widgets.TextInputWidget field, int x, int y, int w, int labelW) {
       kit.init_V_BitSetUtil_NetHelper(field, this.init(kit, label, x, y, w, labelW));
       return y + AiUiKit.init_I() + 2;
    }
 
    private int init(AiUiKit kit, AiSettingsView.Inner_CachePool section, int x, int y, int w) {
-      autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, w, autismclient.gui.f.UiDensityMetrics.init(12));
+      autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, w, autismclient.gui.ui.UiDensityMetrics.init(12));
       boolean folded = this.init_EnumSet.contains(section);
-      autismclient.gui.f.b.GroupHeaderRenderer.init(kit.init_SyncManager, bounds, section.init_Str, folded, kit.init_Z_NetHelper(bounds));
+      autismclient.gui.ui.widgets.GroupHeaderRenderer.init(kit.init_SyncManager, bounds, section.init_Str, folded, kit.init_Z_NetHelper(bounds));
       kit.init_V_NetHelper_Runnable(bounds, () -> {
          if (!this.init_EnumSet.remove(section)) {
             this.init_EnumSet.add(section);
          }
 
-         autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
+         autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
       });
       return y + bounds.sync() + 2;
    }
@@ -799,7 +799,7 @@ final class AiSettingsView {
    }
 
    private void init_V_D(double x) {
-      this.write_I = (int)autismclient.gui.f.b.SliderRenderer.init(x, this.init_NetHelper.read() + 3, this.init_NetHelper.update() - 6, 0.0, 100.0, 1.0);
+      this.write_I = (int)autismclient.gui.ui.widgets.SliderRenderer.init(x, this.init_NetHelper.read() + 3, this.init_NetHelper.update() - 6, 0.0, 100.0, 1.0);
       AiVisualization.init_V(this.write_I);
    }
 
@@ -1040,7 +1040,7 @@ final class AiSettingsView {
       }
    }
 
-   private static int init_I_BitSetUtil_Str(autismclient.gui.f.b.TextInputWidget field, String name) {
+   private static int init_I_BitSetUtil_Str(autismclient.gui.ui.widgets.TextInputWidget field, String name) {
       long value = init_J_BitSetUtil_Str(field, name);
       if (value > 2147483647L) {
          throw new IllegalArgumentException(name + " is too large");
@@ -1049,7 +1049,7 @@ final class AiSettingsView {
       }
    }
 
-   private static long init_J_BitSetUtil_Str(autismclient.gui.f.b.TextInputWidget field, String name) {
+   private static long init_J_BitSetUtil_Str(autismclient.gui.ui.widgets.TextInputWidget field, String name) {
       try {
          return Long.parseLong(field.init_Str().trim());
       } catch (NumberFormatException e) {

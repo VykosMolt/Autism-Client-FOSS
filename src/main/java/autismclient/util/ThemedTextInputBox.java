@@ -19,7 +19,7 @@ public class ThemedTextInputBox {
    private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private final Minecraft init_Minecraft;
    private final Font init_Font;
-   private final autismclient.gui.f.b.TextInputWidget init_BitSetUtil = new autismclient.gui.f.b.TextInputWidget().load_BitSetUtil_I(3).write_BitSetUtil(1);
+   private final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().load_BitSetUtil_I(3).write_BitSetUtil(1);
    private int init_I;
    private int load_I;
    private int read_I;
@@ -378,15 +378,15 @@ public class ThemedTextInputBox {
       }
    }
 
-   private autismclient.gui.f.c.LayoutContext init_SyncManager() {
-      return new autismclient.gui.f.c.LayoutContext(
-         null, this.init_Font, autismclient.gui.f.c.LayoutViewport.init_RingBuffer_F(2.0F), init_CharEncoder, 0.0F, 0.0F, 0.0F
+   private autismclient.gui.ui.layout.LayoutContext init_SyncManager() {
+      return new autismclient.gui.ui.layout.LayoutContext(
+         null, this.init_Font, autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(2.0F), init_CharEncoder, 0.0F, 0.0F, 0.0F
       );
    }
 
-   private autismclient.gui.f.c.LayoutContext init_SyncManager(GuiGraphicsExtractor drawContext, int mouseX, int mouseY, float delta) {
-      return new autismclient.gui.f.c.LayoutContext(
-         drawContext, this.init_Font, autismclient.gui.f.c.LayoutViewport.init_RingBuffer_F(2.0F), init_CharEncoder, mouseX, mouseY, delta
+   private autismclient.gui.ui.layout.LayoutContext init_SyncManager(GuiGraphicsExtractor drawContext, int mouseX, int mouseY, float delta) {
+      return new autismclient.gui.ui.layout.LayoutContext(
+         drawContext, this.init_Font, autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(2.0F), init_CharEncoder, mouseX, mouseY, delta
       );
    }
 }

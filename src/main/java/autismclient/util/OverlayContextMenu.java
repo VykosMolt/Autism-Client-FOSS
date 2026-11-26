@@ -1,6 +1,6 @@
 package autismclient.util;
 
-import autismclient.gui.f.b.UiLayoutMath;
+import autismclient.gui.ui.widgets.UiLayoutMath;
 import java.util.function.Function;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -148,7 +148,7 @@ public class OverlayContextMenu<T> {
             int iy = this.flush + 2 + i * this.update;
             boolean hov = mx >= this.sync && mx < this.sync + w && my >= iy && my < iy + this.update;
             if (hov) {
-               autismclient.gui.f.b.PanelSurfaceHelper.init(ctx, this.sync + 1, iy, w - 2, this.update, UiColorPalette.g());
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.init(ctx, this.sync + 1, iy, w - 2, this.update, UiColorPalette.g());
             }
 
             int textY = UiLayoutMath.init(iy, this.update, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());

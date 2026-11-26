@@ -133,14 +133,14 @@ final class CrosshairVectorPipeline {
    private static void init_V_GuiGraphicsExtract_2(
       GuiGraphicsExtractor graphics, RenderPipeline pipeline, CrosshairVectorPipeline.Inner_StreamUtil parameters, float[] quad, int mode
    ) {
-      autismclient.gui.e.TexturedQuadRenderState element = autismclient.gui.e.TexturedQuadRenderState.init(
+      autismclient.gui.sdf.TexturedQuadRenderState element = autismclient.gui.sdf.TexturedQuadRenderState.init(
          pipeline,
          TextureSetup.singleTexture(parameters.getTextureView(), parameters.getSampler()),
          new Matrix3x2f(graphics.pose()),
          quad,
          1,
          0xFF000000 | mode << 16,
-         autismclient.gui.e.UiScissorStack.init_ScreenRectangle()
+         autismclient.gui.sdf.UiScissorStack.init_ScreenRectangle()
       );
       if (element != null) {
          ((AutismGuiGraphicsExtractorAccessor)graphics).autism$guiRenderState().addGuiElement(element);

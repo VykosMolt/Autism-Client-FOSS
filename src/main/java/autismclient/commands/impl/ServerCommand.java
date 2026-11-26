@@ -58,7 +58,7 @@ public class ServerCommand extends Command {
          if (mc != null) {
             mc.execute(() -> {
                if (mc.gui.screen() == null) {
-                  mc.gui.setScreen(new autismclient.gui.d.AutismOverlaysScreen(overlay));
+                  mc.gui.setScreen(new autismclient.gui.screens.AutismOverlaysScreen(overlay));
                }
             });
          }

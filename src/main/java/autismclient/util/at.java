@@ -24,7 +24,7 @@ public final class at {
          AutismConfig config = AutismConfig.getGlobal();
          if (init == null) {
             return false;
-         } else if (autismclient.gui.f.b.TextInputWidget.read_Z()) {
+         } else if (autismclient.gui.ui.widgets.TextInputWidget.read_Z()) {
             return false;
          } else if (init.gui.screen() == null) {
             return true;
@@ -43,7 +43,7 @@ public final class at {
          } else if (OverlayManager.init_bk().update_Z()) {
             return false;
          } else {
-            return !AutismLiteVariant.enabled() && init.gui.screen() instanceof autismclient.gui.d.AutismModulesScreen moduleScreen ? !moduleScreen.load_Z_2() : true;
+            return !AutismLiteVariant.enabled() && init.gui.screen() instanceof autismclient.gui.screens.AutismModulesScreen moduleScreen ? !moduleScreen.load_Z_2() : true;
          }
       }
    }

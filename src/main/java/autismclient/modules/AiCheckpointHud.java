@@ -17,7 +17,7 @@ public final class AiCheckpointHud {
       if (!checkpoints.isEmpty() && WorldProjectionHelper.init(PROJECTION)) {
          Vec3 camera = WorldProjectionHelper.init();
          GuiGraphicsExtractor graphics = ui.init_GuiGraphicsExtract();
-         autismclient.gui.f.UiColorScheme colors = ui.init_TableIndex().init_JsonUtil();
+         autismclient.gui.ui.UiColorScheme colors = ui.init_TableIndex().init_JsonUtil();
 
          for (int i = 0; i < checkpoints.size(); i++) {
             Vec3 feet = checkpoints.get(i).feet();

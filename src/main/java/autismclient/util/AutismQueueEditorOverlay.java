@@ -1,7 +1,7 @@
 package autismclient.util;
 
-import autismclient.gui.f.b.TooltipRenderer;
-import autismclient.gui.f.b.UiLayoutMath;
+import autismclient.gui.ui.widgets.TooltipRenderer;
+import autismclient.gui.ui.widgets.UiLayoutMath;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -30,7 +30,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    private int tick = 0;
    private final Font init_Font;
    private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
-   private final autismclient.gui.f.b.ScrollOffsetController init_CacheEntry = new autismclient.gui.f.b.ScrollOffsetController();
+   private final autismclient.gui.ui.widgets.ScrollOffsetController init_CacheEntry = new autismclient.gui.ui.widgets.ScrollOffsetController();
    private List<AutismSessionState.Inner_CachePool> init_List = new ArrayList<>();
    private final List<AutismQueueEditorOverlay.Inner_DataUtil> load_List = new ArrayList<>();
    private final List<AutismQueueEditorOverlay.Inner_StreamUtil> read_List = new ArrayList<>();
@@ -202,11 +202,11 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int run_I_21() {
-      return autismclient.gui.f.c.PanelLayoutMath.init(this.open_I, this.data());
+      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.open_I, this.data());
    }
 
    private int init_I(boolean hasScrollbar) {
-      return Math.max(40, autismclient.gui.f.c.PanelLayoutMath.init(this.run_I_21(), hasScrollbar, this.size()));
+      return Math.max(40, autismclient.gui.ui.layout.PanelLayoutMath.init(this.run_I_21(), hasScrollbar, this.size()));
    }
 
    private int get_I_19() {
@@ -214,7 +214,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int init_I_Str_5(String label, int minWidth, int maxWidth) {
-      return autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, minWidth, maxWidth);
+      return autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, minWidth, maxWidth);
    }
 
    private int init_I(int panelHeight) {
@@ -233,11 +233,11 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       return this.set_I_19() + this.load(panelHeight);
    }
 
-   private autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil(int panelHeight) {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil(int panelHeight) {
       int visibleHeight = this.load(panelHeight);
       int contentHeight = this.init_List.size() * this.start_I_14();
       int maxScroll = Math.max(0, contentHeight - visibleHeight);
-      return autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
          contentHeight,
          Math.max(1, visibleHeight),
          this.tick_I_21() + this.run_I_21() - 5,
@@ -300,17 +300,17 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int init(GuiGraphicsExtractor context, int x, int y, int h, String label, boolean active, int mouseX, int mouseY, String tip, Runnable action) {
-      int width = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 96);
-      autismclient.gui.f.b.ButtonDrawHelper.init(context, this.init_Font, x, y, width, h, label, active, "queue:auto:" + label + ":" + x + ":" + y, mouseX, mouseY);
+      int width = autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 96);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.init_Font, x, y, width, h, label, active, "queue:auto:" + label + ":" + x + ":" + y, mouseX, mouseY);
       this.load_List.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, width, h, action));
       this.init(x, y, width, h, mouseX, mouseY, tip);
       return x + width;
    }
 
    private int init(GuiGraphicsExtractor context, int x, int y, int h, String label, int mouseX, int mouseY, String tip, Runnable action) {
-      int width = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 96);
-      autismclient.gui.f.b.ButtonDrawHelper.init(
-         context, this.init_Font, x, y, width, h, label, autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST, true, mouseX, mouseY
+      int width = autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 96);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+         context, this.init_Font, x, y, width, h, label, autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST, true, mouseX, mouseY
       );
       this.load_List.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, width, h, action));
       this.init(x, y, width, h, mouseX, mouseY, tip);
@@ -318,8 +318,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int load(GuiGraphicsExtractor context, int x, int y, int h, String label, boolean active, int mouseX, int mouseY, String tip, Runnable action) {
-      int width = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 112);
-      autismclient.gui.f.b.ButtonDrawHelper.init(context, this.init_Font, x, y, width, h, label, active, "queue:status:" + label + ":" + x + ":" + y, mouseX, mouseY);
+      int width = autismclient.gui.ui.layout.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 112);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.init_Font, x, y, width, h, label, active, "queue:status:" + label + ":" + x + ":" + y, mouseX, mouseY);
       this.load_List.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, width, h, action));
       this.init(x, y, width, h, mouseX, mouseY, tip);
       return x + width;
@@ -328,7 +328,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    private void init(
       GuiGraphicsExtractor context, int x, int y, int w, int h, String label, boolean active, int mouseX, int mouseY, String tip, Runnable action
    ) {
-      this.init(context, x, y, w, h, label, autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY, active, mouseX, mouseY, tip, action);
+      this.init(context, x, y, w, h, label, autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SECONDARY, active, mouseX, mouseY, tip, action);
    }
 
    private void init(
@@ -338,14 +338,14 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       int w,
       int h,
       String label,
-      autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil variant,
+      autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil variant,
       boolean active,
       int mouseX,
       int mouseY,
       String tip,
       Runnable action
    ) {
-      autismclient.gui.f.b.ButtonDrawHelper.init(context, this.init_Font, x, y, w, h, label, variant, active, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.init_Font, x, y, w, h, label, variant, active, mouseX, mouseY);
       if (active) {
          this.load_List.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, w, h, action));
       }
@@ -360,7 +360,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    private void load(
       GuiGraphicsExtractor context, int x, int y, int w, int h, String label, boolean enabled, int mouseX, int mouseY, String tip, Runnable action
    ) {
-      autismclient.gui.f.b.ButtonDrawHelper.init(context, this.init_Font, x, y, w, h, label, enabled, "queue:state:" + label + ":" + x + ":" + y, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.init_Font, x, y, w, h, label, enabled, "queue:state:" + label + ":" + x + ":" + y, mouseX, mouseY);
       this.load_List.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, w, h, action));
       this.init(x, y, w, h, mouseX, mouseY, tip);
    }
@@ -542,7 +542,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   replayWidth,
                   this.next(),
                   "Replay",
-                  autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
+                  autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
                   true,
                   mouseX,
                   mouseY,
@@ -589,7 +589,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   captureModeBtnWidth,
                   this.next(),
                   captureAsExact ? "E" : "R",
-                  captureAsExact ? autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.DANGER : autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS,
+                  captureAsExact ? autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.DANGER : autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS,
                   true,
                   mouseX,
                   mouseY,
@@ -622,7 +622,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   clearWidth,
                   this.next(),
                   "Clear",
-                  autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.DANGER,
+                  autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.DANGER,
                   true,
                   mouseX,
                   mouseY,
@@ -651,7 +651,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   modeWidth,
                   this.next(),
                   delayModeLabel,
-                  autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
+                  autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
                   true,
                   mouseX,
                   mouseY,
@@ -687,7 +687,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   plus1Width,
                   this.next(),
                   "+1",
-                  autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
+                  autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
                   true,
                   mouseX,
                   mouseY,
@@ -701,7 +701,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   plus10Width,
                   this.next(),
                   "+10",
-                  autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
+                  autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
                   true,
                   mouseX,
                   mouseY,
@@ -715,7 +715,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   plus20Width,
                   this.next(),
                   "+20",
-                  autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
+                  autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
                   true,
                   mouseX,
                   mouseY,
@@ -729,7 +729,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   sendWidth,
                   this.next(),
                   this.flush_Z ? "In Game" : "Send Q",
-                  autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS,
+                  autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS,
                   !this.flush_Z,
                   mouseX,
                   mouseY,
@@ -752,7 +752,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                      syncWidth,
                      this.next(),
                      "Sync",
-                     autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
+                     autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.GHOST,
                      !this.flush_Z,
                      mouseX,
                      mouseY,
@@ -766,7 +766,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                      syncExecWidth,
                      this.next(),
                      "Sync Exec",
-                     autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS,
+                     autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS,
                      !this.flush_Z,
                      mouseX,
                      mouseY,
@@ -799,10 +799,10 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   int listHeight = this.init_I(panelHeight);
                   int clipTop = this.set_I_19();
                   int clipBottom = this.read(panelHeight);
-                  autismclient.gui.f.b.ListRowRenderer.init(context, listX, listY, listWidth, listHeight, selectedPacket != null);
-                  autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil(panelHeight);
+                  autismclient.gui.ui.widgets.ListRowRenderer.init(context, listX, listY, listWidth, listHeight, selectedPacket != null);
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil(panelHeight);
                   int listContentWidth = this.init_I(scrollbarMetrics.init_Z());
-                  autismclient.gui.f.UiClipStack.init_HashUtil()
+                  autismclient.gui.ui.UiClipStack.init_HashUtil()
                      .init(context, autismclient.gui.f.NetHelper.init(listX + 1, clipTop, Math.max(0, listWidth - 2), Math.max(0, clipBottom - clipTop)));
                   int baseY = contentStartY - drawScroll;
                   int groupColorIndex = 0;
@@ -836,7 +836,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                         int rowW = Math.max(36, listContentWidth - 2);
                         boolean selected = selectedPacket != null && selectedPacket.init_I() == packet.init_I();
                         boolean hovered = mouseX >= rowX && mouseX < rowX + rowW && mouseY >= rowY && mouseY < rowY + this.start_I_14();
-                        autismclient.gui.f.b.ListRowRenderer.init(
+                        autismclient.gui.ui.widgets.ListRowRenderer.init(
                            context,
                            this.init_Font,
                            "",
@@ -846,7 +846,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                            this.start_I_14(),
                            hovered,
                            selected,
-                           grouped ? autismclient.gui.f.b.ListRowRenderer.Inner_DataUtil.WARNING : autismclient.gui.f.b.ListRowRenderer.Inner_DataUtil.NORMAL
+                           grouped ? autismclient.gui.ui.widgets.ListRowRenderer.Inner_DataUtil.WARNING : autismclient.gui.ui.widgets.ListRowRenderer.Inner_DataUtil.NORMAL
                         );
                         String label = "#" + packet.init_I() + " " + PacketNameResolver.init_Str_Packet(packet.init_Packet);
                         String delayText = String.valueOf(packet.load_I());
@@ -882,7 +882,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                         int modeBtnW = 14;
                         int modeBtnX = delayBtnX - modeBtnW - 2;
                         boolean exact = packet.init_Z();
-                        autismclient.gui.f.b.ButtonDrawHelper.init(
+                        autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                            context,
                            this.init_Font,
                            modeBtnX,
@@ -890,12 +890,12 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                            modeBtnW,
                            this.stop(),
                            exact ? "E" : "R",
-                           exact ? autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.DANGER : autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS,
+                           exact ? autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.DANGER : autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.SUCCESS,
                            true,
                            mouseX,
                            mouseY
                         );
-                        autismclient.gui.f.b.ButtonDrawHelper.init(
+                        autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                            context,
                            this.init_Font,
                            delayBtnX,
@@ -903,7 +903,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                            delayBtnWidth,
                            this.stop(),
                            delayText,
-                           autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.PRIMARY,
+                           autismclient.gui.ui.widgets.OverlayActionButton.Inner_StreamUtil.PRIMARY,
                            true,
                            mouseX,
                            mouseY
@@ -913,8 +913,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                            && mouseX < removeBtnX + this.stop()
                            && mouseY >= buttonY
                            && mouseY < buttonY + this.stop();
-                        autismclient.gui.f.b.ListRowRenderer.init(context, removeBtnX, buttonY, this.stop(), removeHovered);
-                        autismclient.gui.f.b.ListRowRenderer.init(context, rowX, rowY + this.start_I_14(), rowW);
+                        autismclient.gui.ui.widgets.ListRowRenderer.init(context, removeBtnX, buttonY, this.stop(), removeHovered);
+                        autismclient.gui.ui.widgets.ListRowRenderer.init(context, rowX, rowY + this.start_I_14(), rowW);
                         this.read_List
                            .add(
                               new AutismQueueEditorOverlay.Inner_StreamUtil(
@@ -924,8 +924,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                      }
                   }
 
-                  autismclient.gui.f.UiClipStack.init_HashUtil().init(context);
-                  autismclient.gui.f.b.ScrollbarMetricsHelper.init(context, scrollbarMetrics, scrollbarMetrics.init(mouseX, mouseY), this.poll_Z);
+                  autismclient.gui.ui.UiClipStack.init_HashUtil().init(context);
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(context, scrollbarMetrics, scrollbarMetrics.init(mouseX, mouseY), this.poll_Z);
                }
             } finally {
                this.init_V_GuiGraphicsExtract_Z(context, clipBody);
@@ -979,11 +979,11 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil(panelHeight);
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil(panelHeight);
          if (button == 0 && scrollbarMetrics.init_Z() && scrollbarMetrics.init(mouseX, mouseY)) {
             this.poll_Z = true;
             this.tick = scrollbarMetrics.load(mouseX, mouseY) ? (int)Math.round(mouseY) - scrollbarMetrics.update() : scrollbarMetrics.sync() / 2;
-            this.push = this.init_I_I_3(autismclient.gui.f.b.ScrollbarMetricsHelper.init(scrollbarMetrics, mouseY, this.tick), this.start_I_14(), scrollbarMetrics.flush());
+            this.push = this.init_I_I_3(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(scrollbarMetrics, mouseY, this.tick), this.start_I_14(), scrollbarMetrics.flush());
             this.init_CacheEntry.load(this.push, scrollbarMetrics.flush());
             return true;
          }
@@ -1042,8 +1042,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          int panelHeight = this.update_Z
             ? 14
             : this.init_cH_cX_cH(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
-         autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil(panelHeight);
-         this.push = this.init_I_I_3(autismclient.gui.f.b.ScrollbarMetricsHelper.init(scrollbarMetrics, mouseY, this.tick), this.start_I_14(), scrollbarMetrics.flush());
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil(panelHeight);
+         this.push = this.init_I_I_3(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.init(scrollbarMetrics, mouseY, this.tick), this.start_I_14(), scrollbarMetrics.flush());
          this.init_CacheEntry.load(this.push, scrollbarMetrics.flush());
          return true;
       } else {
@@ -1166,7 +1166,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int start_I_14() {
-      return autismclient.gui.f.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.init(14);
    }
 
    private int stop() {
@@ -1174,7 +1174,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int next() {
-      return autismclient.gui.f.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.init(13);
    }
 
    private int prev() {

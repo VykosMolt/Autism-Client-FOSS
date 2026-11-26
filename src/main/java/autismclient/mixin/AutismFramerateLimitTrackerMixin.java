@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.gui.d.AutismModulesScreen;
-import autismclient.gui.d.AutismTitleScreen;
+import autismclient.gui.screens.AutismModulesScreen;
+import autismclient.gui.screens.AutismTitleScreen;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.macro.MacroFpsOverrideManager;
 import com.mojang.blaze3d.platform.FramerateLimitTracker;

@@ -95,7 +95,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
          this.init_AiAssistantOverlay.write_V_Z(false);
          manager.update_V(this.init_AiAssistantOverlay);
          if (init_Minecraft.gui.screen() == null) {
-            init_Minecraft.gui.setScreen(new autismclient.gui.d.AutismOverlaysScreen(this.init_AiAssistantOverlay, null, false, false));
+            init_Minecraft.gui.setScreen(new autismclient.gui.screens.AutismOverlaysScreen(this.init_AiAssistantOverlay, null, false, false));
          }
       }
    }

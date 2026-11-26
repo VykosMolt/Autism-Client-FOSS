@@ -1406,7 +1406,7 @@ public final class AiVisualization {
       next = AiTaskStatus.init(status, ui.init_PoolEntry()::init, 2147483647);
       int width = AiTaskStatus.init(status, ui.init_PoolEntry()::init, Math.min(ui.init_I() - 16, 360));
       stop = width;
-      int height = autismclient.gui.f.b.StatusToastCardRenderer.init(ui, width, status.bannerActivity(), status.bannerDetail(), status.percent());
+      int height = autismclient.gui.ui.widgets.StatusToastCardRenderer.init(ui, width, status.bannerActivity(), status.bannerDetail(), status.percent());
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(8, 8, width, height);
 
       for (AutismOverlay overlay : OverlayManager.init_bk().init_List()) {
@@ -1431,7 +1431,7 @@ public final class AiVisualization {
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(g, Minecraft.getInstance().font, 0, 0);
          autismclient.gui.f.NetHelper b = init_NetHelper(g);
          AiTaskStatus.Inner_StreamUtil status = load_cG_DataUtil.status;
-         autismclient.gui.f.b.StatusToastCardRenderer.init(
+         autismclient.gui.ui.widgets.StatusToastCardRenderer.init(
             ui, b, status.title(), status.bannerActivity(), status.bannerDetail(), ui.init_TableIndex().init_JsonUtil().prev, status.percent()
          );
       }

@@ -2,11 +2,11 @@ package autismclient.gui;
 
 import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.PacketUtil;
-import autismclient.gui.f.UiTextRenderer;
+import autismclient.gui.ui.UiTextRenderer;
 import autismclient.gui.f.SyncManager;
 import autismclient.gui.f.UiHelper;
 import autismclient.gui.f.b.BufferHelper;
-import autismclient.gui.f.b.ProgressBarRenderer;
+import autismclient.gui.ui.widgets.ProgressBarRenderer;
 import autismclient.modules.aD;
 import autismclient.util.cA;
 import java.util.concurrent.atomic.AtomicBoolean;

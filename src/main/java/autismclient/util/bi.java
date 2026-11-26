@@ -1,6 +1,6 @@
 package autismclient.util;
 
-import autismclient.gui.f.b.ToastNotificationStack;
+import autismclient.gui.ui.widgets.ToastNotificationStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 

@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.gui.e.UiScissorStack;
-import autismclient.gui.e.SubpixelScissorTracker;
+import autismclient.gui.sdf.UiScissorStack;
+import autismclient.gui.sdf.SubpixelScissorTracker;
 import autismclient.util.cA;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.spongepowered.asm.mixin.Mixin;

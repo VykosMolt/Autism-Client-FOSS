@@ -187,7 +187,7 @@ public final class CrosshairModule extends Module {
 
    private void load_V_33() {
       if (MC != null && MC.gui != null) {
-         MC.gui.setScreen(new autismclient.gui.d.CrosshairEditorScreen(MC.gui.screen(), this));
+         MC.gui.setScreen(new autismclient.gui.screens.CrosshairEditorScreen(MC.gui.screen(), this));
       }
    }
 

@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.compat263.Compat263;
-import autismclient.gui.f.b.SimpleClickButton;
+import autismclient.gui.ui.widgets.SimpleClickButton;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.ScreenOverlayHost;
 import autismclient.util.ContainerScreenToolbar;

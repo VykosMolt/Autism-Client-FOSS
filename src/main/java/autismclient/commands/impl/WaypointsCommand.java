@@ -147,7 +147,7 @@ public final class WaypointsCommand extends Command {
    private int write() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.gui != null) {
-         mc.execute(() -> mc.gui.setScreen(new autismclient.gui.d.WaypointsScreen(mc.gui.screen())));
+         mc.execute(() -> mc.gui.setScreen(new autismclient.gui.screens.WaypointsScreen(mc.gui.screen())));
          return 1;
       } else {
          return 1;

@@ -12,7 +12,7 @@ import org.joml.Vector4f;
 
 public final class DangerHudRenderer {
    private static final Matrix4f init_Matrix4f = new Matrix4f();
-   private static final autismclient.gui.f.b.WorldIndicatorBadge.Inner_StreamUtil init_TaskTimer_StreamUt = autismclient.gui.f.b.WorldIndicatorBadge.init(0, 1, false);
+   private static final autismclient.gui.ui.widgets.WorldIndicatorBadge.Inner_StreamUtil init_TaskTimer_StreamUt = autismclient.gui.ui.widgets.WorldIndicatorBadge.init(0, 1, false);
    private static final Vector4f init_Vector4f = new Vector4f();
    private static final float[] init_FArr = new float[6];
    private static final float[] load = new float[6];
@@ -93,9 +93,9 @@ public final class DangerHudRenderer {
                      markerY = Mth.clamp(markerY, 11.0F * scale, Math.max(11.0F * scale, screenH - 11.0F * scale));
                      init_FArr[i] = markerX;
                      load[i] = markerY;
-                     autismclient.gui.f.b.WorldIndicatorBadge.init(
+                     autismclient.gui.ui.widgets.WorldIndicatorBadge.init(
                         context,
-                        new autismclient.gui.f.b.WorldIndicatorBadge.Inner_DataUtil(markerX, markerY, angle),
+                        new autismclient.gui.ui.widgets.WorldIndicatorBadge.Inner_DataUtil(markerX, markerY, angle),
                         init_TaskTimer_StreamUt,
                         scale,
                         warning.init_A_StreamUtil().init_ItemStack(),

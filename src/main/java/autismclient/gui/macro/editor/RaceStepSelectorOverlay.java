@@ -1,22 +1,22 @@
 package autismclient.gui.macro.editor;
 
-import autismclient.gui.f.UiClipStack;
+import autismclient.gui.ui.UiClipStack;
 import autismclient.gui.f.NetHelper;
-import autismclient.gui.f.b.TextInputWidget;
+import autismclient.gui.ui.widgets.TextInputWidget;
 import autismclient.gui.f.b.CharEncoder;
-import autismclient.gui.f.b.WindowHeaderHelper;
-import autismclient.gui.f.b.ListRowRenderer;
-import autismclient.gui.f.b.PanelSurfaceHelper;
-import autismclient.gui.f.b.SearchFilterList;
-import autismclient.gui.f.b.UiLayoutMath;
+import autismclient.gui.ui.widgets.WindowHeaderHelper;
+import autismclient.gui.ui.widgets.ListRowRenderer;
+import autismclient.gui.ui.widgets.PanelSurfaceHelper;
+import autismclient.gui.ui.widgets.SearchFilterList;
+import autismclient.gui.ui.widgets.UiLayoutMath;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
-import autismclient.gui.f.c.ScrollableListView;
-import autismclient.gui.f.c.EdgeInsets;
-import autismclient.gui.f.c.LabelNode;
-import autismclient.gui.f.c.LayoutViewport;
-import autismclient.gui.f.c.LayoutContext;
-import autismclient.gui.f.c.LayoutTreeHost;
+import autismclient.gui.ui.layout.ScrollableListView;
+import autismclient.gui.ui.layout.EdgeInsets;
+import autismclient.gui.ui.layout.LabelNode;
+import autismclient.gui.ui.layout.LayoutViewport;
+import autismclient.gui.ui.layout.LayoutContext;
+import autismclient.gui.ui.layout.LayoutTreeHost;
 import autismclient.util.DraggableOverlayWindow;
 import autismclient.util.OverlayManager;
 import autismclient.util.OverlayBounds;
@@ -43,11 +43,11 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    private static final int put = 6;
    private final Font init_Font;
    private final CharEncoder init_CharEncoder_2 = new CharEncoder();
-   private final autismclient.gui.f.c.CollapsibleWindowNode init_CharEncoder_3 = new autismclient.gui.f.c.CollapsibleWindowNode("Race Selector");
+   private final autismclient.gui.ui.layout.CollapsibleWindowNode init_CharEncoder_3 = new autismclient.gui.ui.layout.CollapsibleWindowNode("Race Selector");
    private final LayoutTreeHost init_TextFormat = new LayoutTreeHost(this.init_CharEncoder_2, this.init_CharEncoder_3);
    private final TextInputWidget init_BitSetUtil = new TextInputWidget();
    private final LabelNode init_PoolEntry = new LabelNode("", l.write).load_PoolEntry(true);
-   private final autismclient.gui.f.c.VerticalSpacerNode init_BitSetUtil_2 = new autismclient.gui.f.c.VerticalSpacerNode();
+   private final autismclient.gui.ui.layout.VerticalSpacerNode init_BitSetUtil_2 = new autismclient.gui.ui.layout.VerticalSpacerNode();
    private ScrollableListView init_EventBus;
    private final SearchFilterList<RaceStepSelectorOverlay.Inner_DataUtil> init_a = new SearchFilterList<>(
       option -> option.load() + "\n" + option.read() + "\n" + option.init() + "\n" + option.write()
@@ -67,7 +67,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    private int clear;
    private int reset = 160;
    private int start;
-   private final autismclient.gui.f.VisibilityTransition init_CharEncoder = new autismclient.gui.f.VisibilityTransition(false);
+   private final autismclient.gui.ui.VisibilityTransition init_CharEncoder = new autismclient.gui.ui.VisibilityTransition(false);
 
    public RaceStepSelectorOverlay(Font textRenderer) {
       this.init_Font = textRenderer;

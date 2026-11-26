@@ -3,10 +3,10 @@ package autismclient.mixin;
 import autismclient.AutismClientAddon;
 import autismclient.ai.AiVisualization;
 import autismclient.e.PathHelper;
-import autismclient.gui.f.UiClipStack;
+import autismclient.gui.ui.UiClipStack;
 import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.UiHelper;
-import autismclient.gui.f.b.StatusToastCardRenderer;
+import autismclient.gui.ui.widgets.StatusToastCardRenderer;
 import autismclient.gui.macro.editor.ActionEditorOverlay;
 import autismclient.modules.EndPortalRenderer;
 import autismclient.modules.Module;
@@ -360,7 +360,7 @@ public abstract class AutismInGameHudMixin {
       }
 
       int sw = cA.init_I();
-      autismclient.gui.f.UiTextRenderer text = UiHelper.init(MC.font);
+      autismclient.gui.ui.UiTextRenderer text = UiHelper.init(MC.font);
       int boxWidth = Math.min(sw - 16, Math.max(270, Math.max(text.init(title), Math.max(text.init(line1), line2.isEmpty() ? 0 : text.init(line2))) + 18));
       int height = StatusToastCardRenderer.init(UiHelper.init(graphics, MC.font, 0, 0), boxWidth, line1, line2);
       return new HudBannerSpec((sw - boxWidth) / 2, 0, boxWidth, height, title, line1, line2);
@@ -376,7 +376,7 @@ public abstract class AutismInGameHudMixin {
       String line1 = PayloadStudyTracker.load_Str();
       String line2 = PayloadStudyTracker.read();
       int sw = cA.init_I();
-      autismclient.gui.f.UiTextRenderer text = UiHelper.init(MC.font);
+      autismclient.gui.ui.UiTextRenderer text = UiHelper.init(MC.font);
       int boxWidth = Math.min(sw - 16, Math.max(276, Math.max(text.init(title), Math.max(text.init(line1), text.init(line2))) + 18));
       int height = StatusToastCardRenderer.init(UiHelper.init(graphics, MC.font, 0, 0), boxWidth, line1, line2);
       return new HudBannerSpec((sw - boxWidth) / 2, Math.max(0, topOffset), boxWidth, height, title, line1, line2);

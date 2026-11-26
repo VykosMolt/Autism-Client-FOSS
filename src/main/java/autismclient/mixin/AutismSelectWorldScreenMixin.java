@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.mixin.duck.ExternalButtonScreenDuck;
-import autismclient.gui.d.JoinMacroScreen;
+import autismclient.gui.screens.JoinMacroScreen;
 import autismclient.modules.aD;
 import autismclient.util.JoinMacroController;
 import autismclient.util.MacroLibraryManager;

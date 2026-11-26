@@ -1,11 +1,13 @@
 package autismclient.gui.f;
 
-import autismclient.gui.d.GuiColorPalette;
+import autismclient.gui.screens.GuiColorPalette;
 import autismclient.util.cA;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import autismclient.gui.ui.UiTextRenderer;
+import autismclient.gui.ui.UiTheme;
 
 public final class UiHelper {
    private static final UiTheme init_TableIndex = new UiTheme();

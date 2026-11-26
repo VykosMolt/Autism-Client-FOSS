@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.mixin.duck.ExternalButtonScreenDuck;
 import autismclient.e.TableIndex;
-import autismclient.gui.f.b.SimpleClickButton;
+import autismclient.gui.ui.widgets.SimpleClickButton;
 import autismclient.mixin.accessor.AutismScreenAccessor;
 import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;

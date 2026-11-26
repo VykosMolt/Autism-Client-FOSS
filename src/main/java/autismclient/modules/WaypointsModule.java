@@ -92,7 +92,7 @@ public final class WaypointsModule extends Module {
 
    private void load() {
       if (MC != null && MC.gui != null) {
-         MC.gui.setScreen(new autismclient.gui.d.WaypointsScreen(MC.gui.screen()));
+         MC.gui.setScreen(new autismclient.gui.screens.WaypointsScreen(MC.gui.screen()));
       }
    }
 }

@@ -447,7 +447,7 @@ public final class ToolsCommand extends Command {
    private int read() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.gui != null) {
-         mc.execute(() -> mc.gui.setScreen(new autismclient.gui.d.AiToolsScreen(mc.gui.screen())));
+         mc.execute(() -> mc.gui.setScreen(new autismclient.gui.screens.AiToolsScreen(mc.gui.screen())));
          return 1;
       } else {
          return 1;

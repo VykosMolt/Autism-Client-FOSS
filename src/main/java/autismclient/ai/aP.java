@@ -117,7 +117,7 @@ public final class aP {
             AiVisualization.init(placement, true);
          }
 
-         autismclient.gui.f.b.TextInputWidget.init_V();
+         autismclient.gui.ui.widgets.TextInputWidget.init_V();
          autismclient.util.OverlayScreenController.init_V(mc, null);
          mc.mouseHandler.grabMouse();
       }
@@ -449,7 +449,7 @@ public final class aP {
          ? Math.max(ui.init_PoolEntry().init(text.message()), ui.init_PoolEntry().init(text.detail())) + 24
          : 380;
       int width = Math.max(1, Math.min(targetWidth, ui.init_I() - 16));
-      return autismclient.gui.f.NetHelper.init(8, 8, width, autismclient.gui.f.b.StatusToastCardRenderer.init(ui, width, text.message(), text.detail()));
+      return autismclient.gui.f.NetHelper.init(8, 8, width, autismclient.gui.ui.widgets.StatusToastCardRenderer.init(ui, width, text.message(), text.detail()));
    }
 
    public static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics) {
@@ -461,7 +461,7 @@ public final class aP {
             autismclient.modules.AiCheckpointHud.render(ui, navigation.checkpoints());
          }
 
-         autismclient.gui.f.b.StatusToastCardRenderer.init(
+         autismclient.gui.ui.widgets.StatusToastCardRenderer.init(
             ui,
             init_NetHelper_GuiGraphicsExtract(graphics),
             mode.init_aR instanceof AiNavigationSelection navigation

@@ -1,6 +1,8 @@
 package autismclient.gui.f;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import autismclient.gui.ui.UiTextRenderer;
+import autismclient.gui.ui.UiTheme;
 
 public final class SyncManager {
    private final GuiGraphicsExtractor init_GuiGraphicsExtract;

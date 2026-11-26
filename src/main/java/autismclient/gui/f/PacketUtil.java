@@ -1,6 +1,6 @@
 package autismclient.gui.f;
 
-import autismclient.gui.f.b.UiLayoutMath;
+import autismclient.gui.ui.widgets.UiLayoutMath;
 import autismclient.util.GuiIconAtlas;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
@@ -73,7 +73,7 @@ public final class PacketUtil {
 
    public static void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor graphics, NetHelper bounds, int fill, int border, int accent) {
       if (bounds.update() > 0 && bounds.sync() > 0) {
-         autismclient.gui.e.SdfShapeRenderer.load(
+         autismclient.gui.sdf.SdfShapeRenderer.load(
             graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), 5.0F, init(1073741824, (fill >>> 24) / 255.0F)
          );
          read(graphics, bounds, 5, fill, border);
@@ -100,24 +100,24 @@ public final class PacketUtil {
 
    public static void load(GuiGraphicsExtractor graphics, NetHelper bounds, int radius, int color) {
       if (bounds.update() > 0 && bounds.sync() > 0) {
-         autismclient.gui.e.SdfShapeRenderer.init(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, color);
+         autismclient.gui.sdf.SdfShapeRenderer.init(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, color);
       }
    }
 
    public static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, float cx, float cy, float r, int color) {
-      autismclient.gui.e.SdfShapeRenderer.init_V_GuiGraphicsExtract(graphics, cx, cy, r, color);
+      autismclient.gui.sdf.SdfShapeRenderer.init_V_GuiGraphicsExtract(graphics, cx, cy, r, color);
    }
 
    public static void init(GuiGraphicsExtractor graphics, float centerX, float top, float[] widths, float rowHeight, float radius, int color) {
-      autismclient.gui.e.SdfShapeRenderer.init(graphics, centerX, top, widths, rowHeight, radius, color);
+      autismclient.gui.sdf.SdfShapeRenderer.init(graphics, centerX, top, widths, rowHeight, radius, color);
    }
 
    public static void init(GuiGraphicsExtractor graphics, float centerX, float top, float[] widths, float[] heights, float radius, int color) {
-      autismclient.gui.e.SdfShapeRenderer.init(graphics, centerX, top, widths, heights, radius, color);
+      autismclient.gui.sdf.SdfShapeRenderer.init(graphics, centerX, top, widths, heights, radius, color);
    }
 
    public static void load(GuiGraphicsExtractor graphics, NetHelper bounds, int radius, int fill, int border) {
-      autismclient.gui.e.SdfShapeRenderer.init(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, fill, border);
+      autismclient.gui.sdf.SdfShapeRenderer.init(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, fill, border);
    }
 
    public static void init_V_SyncManager(SyncManager context, NetHelper bounds, int radius, int fill, int border) {
@@ -135,7 +135,7 @@ public final class PacketUtil {
          int topBorder = UiLayoutMath.init_I_I(border, border & 0xFF000000 | 16777215, 0.28F);
          topBorder = Math.min(255, Math.round((border >>> 24) * 1.4F)) << 24 | topBorder & 16777215;
          int bottomBorder = init(border, 0.55F);
-         autismclient.gui.e.SdfShapeRenderer.init_V_GuiGraphicsExtract(
+         autismclient.gui.sdf.SdfShapeRenderer.init_V_GuiGraphicsExtract(
             graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, topFill, bottomFill, topBorder, bottomBorder
          );
       }
@@ -143,7 +143,7 @@ public final class PacketUtil {
 
    public static void read(GuiGraphicsExtractor graphics, NetHelper bounds, int radius, int color) {
       if (bounds.update() > 0 && bounds.sync() > 0) {
-         autismclient.gui.e.SdfShapeRenderer.read(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, color);
+         autismclient.gui.sdf.SdfShapeRenderer.read(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, color);
       }
    }
 

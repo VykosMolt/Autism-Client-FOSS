@@ -16,7 +16,7 @@ final class AiChatView {
    private final AiService init_cc;
    private final AiViewState init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
-   final autismclient.gui.f.b.TextInputWidget init_BitSetUtil = new autismclient.gui.f.b.TextInputWidget().init_BitSetUtil_I(16000).flush(true);
+   final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(16000).flush(true);
    final AiActionMenu init_StreamUtil;
    private final AiTranscriptLayout init_cC = new AiTranscriptLayout();
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(true);
@@ -75,11 +75,11 @@ final class AiChatView {
       this.init_BitSetUtil.load_BitSetUtil_Consumer(text -> this.load_V());
    }
 
-   autismclient.gui.f.b.TextInputWidget init_BitSetUtil() {
+   autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil() {
       return this.init_cF.init_AiSettings.builtIn ? this.init_StreamUtil.init_BitSetUtil : this.init_BitSetUtil;
    }
 
-   boolean init_Z_I_BitSetUtil(int key, autismclient.gui.f.b.TextInputWidget focused) {
+   boolean init_Z_I_BitSetUtil(int key, autismclient.gui.ui.widgets.TextInputWidget focused) {
       return this.init_cF.init_AiSettings.builtIn && (focused == null || this.init_StreamUtil.init_List().contains(focused))
          ? this.init_StreamUtil.init_Z_I_Z(key, focused != null)
          : false;
@@ -109,7 +109,7 @@ final class AiChatView {
       }
    }
 
-   autismclient.gui.f.b.TextInputWidget init_BitSetUtil_C(char c) {
+   autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_C(char c) {
       return this.init_cF.init_AiSettings.builtIn ? this.init_StreamUtil.init_BitSetUtil_C(c) : null;
    }
 
@@ -313,7 +313,7 @@ final class AiChatView {
 
    private void load_V_cE_2(AiUiKit kit, autismclient.gui.f.NetHelper v, long now) {
       if (v.sync() >= 6) {
-         autismclient.gui.f.UiColorScheme colors = kit.init_JsonUtil;
+         autismclient.gui.ui.UiColorScheme colors = kit.init_JsonUtil;
          if (this.init_cF.init_List.isEmpty() && !this.init_cF.init_Z()) {
             this.init_V_cE_NetHelper(kit, v);
          } else {
@@ -429,7 +429,7 @@ final class AiChatView {
    }
 
    static int load_I() {
-      return autismclient.gui.e.MsdfTextRenderer.init_I() * 31 + Float.floatToIntBits(autismclient.gui.e.MsdfTextRenderer.init_F());
+      return autismclient.gui.sdf.MsdfTextRenderer.init_I() * 31 + Float.floatToIntBits(autismclient.gui.sdf.MsdfTextRenderer.init_F());
    }
 
    private int init_I_cE_cc_JsonUtil(AiUiKit kit, AiService.Inner_JsonUtil message) {
@@ -458,7 +458,7 @@ final class AiChatView {
    }
 
    private void init_V_cE_2(AiUiKit kit, AiTranscriptLayout.Inner_BufferHelper line, int left, int x, int y, int contentW) {
-      autismclient.gui.f.UiColorScheme colors = kit.init_JsonUtil;
+      autismclient.gui.ui.UiColorScheme colors = kit.init_JsonUtil;
       if (line.spans() == null) {
          kit.init_V_Str(line.text(), x, y, colors.prev);
       } else {
@@ -523,7 +523,7 @@ final class AiChatView {
    }
 
    private void init_V_cE_NetHelper(AiUiKit kit, autismclient.gui.f.NetHelper v) {
-      autismclient.gui.f.UiColorScheme colors = kit.init_JsonUtil;
+      autismclient.gui.ui.UiColorScheme colors = kit.init_JsonUtil;
       int ctrl = AiUiKit.init_I();
       if (!this.init_cF.read_Z && !this.init_cF.init_AiSettings.builtIn) {
          String title = "Connect a model provider";
@@ -862,7 +862,7 @@ final class AiChatView {
       boolean on = this.read_Z();
       String label = on ? "Plan" : "Act";
       autismclient.gui.f.NetHelper chip = autismclient.gui.f.NetHelper.init(x, s.write() + (s.sync() - AiUiKit.read()) / 2, kit.init_I_Str(label) + 10, AiUiKit.read());
-      autismclient.gui.f.b.PillBadgeRenderer.init(kit.init_SyncManager, chip, label, on ? -14249 : kit.init_JsonUtil.clear, on, kit.init_Z_NetHelper(chip));
+      autismclient.gui.ui.widgets.PillBadgeRenderer.init(kit.init_SyncManager, chip, label, on ? -14249 : kit.init_JsonUtil.clear, on, kit.init_Z_NetHelper(chip));
       kit.init_V_NetHelper(
          chip,
          this::init_V,
@@ -950,7 +950,7 @@ final class AiChatView {
    }
 
    private void read(AiUiKit kit, autismclient.gui.f.NetHelper s) {
-      autismclient.gui.f.UiColorScheme colors = kit.init_JsonUtil;
+      autismclient.gui.ui.UiColorScheme colors = kit.init_JsonUtil;
       int limit = s.init() - 10;
       int x = s.read() + 2;
       kit.init_V_I(x + 3, s.write() + s.sync() / 2, 2.5F, this.init_I_cE(kit));

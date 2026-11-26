@@ -11,7 +11,7 @@ import autismclient.protector.ResourcePackSessionTracker;
 import autismclient.protector.ProtectorFeatureFlags;
 import autismclient.protector.ModNamespaceCatalog;
 import autismclient.protector.VanillaTranslationKeyLoader;
-import autismclient.gui.e.SdfShapeRenderer;
+import autismclient.gui.sdf.SdfShapeRenderer;
 import autismclient.gui.f.b.k;
 import autismclient.modules.NoFallPauseTimer;
 import autismclient.modules.HoleEspModule;
@@ -169,8 +169,8 @@ public final class AutismClientMod implements ClientModInitializer {
             Thread prewarm = new Thread(() -> {
                try {
                   SdfShapeRenderer.prewarm();
-                  autismclient.gui.e.SdfIconRenderer.prewarm();
-                  autismclient.gui.e.MsdfFontFace.prewarm();
+                  autismclient.gui.sdf.SdfIconRenderer.prewarm();
+                  autismclient.gui.sdf.MsdfFontFace.prewarm();
                   PacketTypeRegistry.load();
                } catch (Throwable var1x) {
                }

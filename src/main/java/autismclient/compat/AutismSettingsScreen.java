@@ -1,14 +1,14 @@
 package autismclient.compat;
 
 import autismclient.compat263.Compat263;
-import autismclient.gui.d.ThemeColorScreen;
-import autismclient.gui.f.UiClipStack;
+import autismclient.gui.screens.ThemeColorScreen;
+import autismclient.gui.ui.UiClipStack;
 import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.PacketUtil;
 import autismclient.gui.f.SyncManager;
 import autismclient.gui.f.UiHelper;
-import autismclient.gui.f.b.DropdownMenu;
-import autismclient.gui.f.b.ScrollbarRenderer;
+import autismclient.gui.ui.widgets.DropdownMenu;
+import autismclient.gui.ui.widgets.ScrollbarRenderer;
 import autismclient.gui.f.b.k;
 import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.AutismConfig;
@@ -203,7 +203,7 @@ public class AutismSettingsScreen extends Screen {
       }
 
       out.add(this.init("Theme Color", () -> this.minecraft.gui.setScreen(new ThemeColorScreen(this))));
-      out.add(this.init("Addons", () -> this.minecraft.gui.setScreen(new autismclient.gui.d.AddonsScreen(this))));
+      out.add(this.init("Addons", () -> this.minecraft.gui.setScreen(new autismclient.gui.screens.AddonsScreen(this))));
       out.add(this.init("Discord", () -> aJ.init_V("https://discord.com/invite/JZ7XgUCtBu")));
       return out;
    }

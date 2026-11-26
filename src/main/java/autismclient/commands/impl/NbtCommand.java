@@ -55,7 +55,7 @@ public class NbtCommand extends Command {
             AutismItemNbtInspectOverlay overlay = AutismItemNbtInspectOverlay.init_AutismItemNbtInspe_Font(mc.font);
             mc.execute(() -> {
                if (mc.gui.screen() == null) {
-                  mc.gui.setScreen(new autismclient.gui.d.AutismOverlaysScreen(overlay));
+                  mc.gui.setScreen(new autismclient.gui.screens.AutismOverlaysScreen(overlay));
                }
             });
          }

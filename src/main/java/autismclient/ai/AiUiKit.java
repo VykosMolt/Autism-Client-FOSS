@@ -1,8 +1,8 @@
 package autismclient.ai;
 
-import autismclient.gui.f.UiClipStack;
+import autismclient.gui.ui.UiClipStack;
 import autismclient.gui.f.PacketUtil;
-import autismclient.gui.f.b.ScrollbarMetricsHelper;
+import autismclient.gui.ui.widgets.ScrollbarMetricsHelper;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +24,8 @@ final class AiUiKit {
    private AiUiKit.Inner_StreamUtil init_cE_StreamUtil;
    GuiGraphicsExtractor init_GuiGraphicsExtract;
    autismclient.gui.f.SyncManager init_SyncManager;
-   autismclient.gui.f.UiColorScheme init_JsonUtil;
-   autismclient.gui.f.c.LayoutContext init_SyncManager_2;
+   autismclient.gui.ui.UiColorScheme init_JsonUtil;
+   autismclient.gui.ui.layout.LayoutContext init_SyncManager_2;
    Font init_Font;
    int write;
    int update;
@@ -41,8 +41,8 @@ final class AiUiKit {
       this.update = pointerBlocked ? -10000 : mouseY;
       this.init_SyncManager = autismclient.gui.f.UiHelper.init(graphics, this.init_Font, this.write, this.update);
       this.init_JsonUtil = this.init_SyncManager.init_TableIndex().init_JsonUtil();
-      this.init_SyncManager_2 = new autismclient.gui.f.c.LayoutContext(
-         graphics, this.init_Font, autismclient.gui.f.c.LayoutViewport.init_RingBuffer_F(2.0F), this.init_CharEncoder, this.write, this.update, delta
+      this.init_SyncManager_2 = new autismclient.gui.ui.layout.LayoutContext(
+         graphics, this.init_Font, autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(2.0F), this.init_CharEncoder, this.write, this.update, delta
       );
       this.init_List.clear();
       this.load_List.clear();
@@ -55,19 +55,19 @@ final class AiUiKit {
    }
 
    static int init_I() {
-      return autismclient.gui.f.UiDensityMetrics.init(13);
+      return autismclient.gui.ui.UiDensityMetrics.init(13);
    }
 
    static int load_I() {
-      return autismclient.gui.f.UiDensityMetrics.init(14);
+      return autismclient.gui.ui.UiDensityMetrics.init(14);
    }
 
    static int read() {
-      return autismclient.gui.f.UiDensityMetrics.init(12);
+      return autismclient.gui.ui.UiDensityMetrics.init(12);
    }
 
    static int write() {
-      return autismclient.gui.f.UiDensityMetrics.init(10);
+      return autismclient.gui.ui.UiDensityMetrics.init(10);
    }
 
    int init_I_Str(String text) {
@@ -75,7 +75,7 @@ final class AiUiKit {
    }
 
    int load(String label) {
-      return autismclient.gui.f.UiDensityMetrics.load(this.init_I_Str(label));
+      return autismclient.gui.ui.UiDensityMetrics.load(this.init_I_Str(label));
    }
 
    static autismclient.gui.f.NetHelper init_NetHelper_NetHelper_NetHelper(autismclient.gui.f.NetHelper a, autismclient.gui.f.NetHelper b) {
@@ -149,7 +149,7 @@ final class AiUiKit {
       }
    }
 
-   void init_V_BitSetUtil_NetHelper(autismclient.gui.f.b.TextInputWidget field, autismclient.gui.f.NetHelper bounds) {
+   void init_V_BitSetUtil_NetHelper(autismclient.gui.ui.widgets.TextInputWidget field, autismclient.gui.f.NetHelper bounds) {
       field.init_TableIndex_F(bounds.read(), bounds.write(), bounds.update(), bounds.sync());
       field.init_V_SyncManager(this.init_SyncManager_2);
       autismclient.gui.f.NetHelper c = this.init_NetHelper_NetHelper(bounds);
@@ -181,7 +181,7 @@ final class AiUiKit {
    }
 
    void init(autismclient.gui.f.NetHelper bounds, Identifier icon, boolean selected, boolean danger, String tip, Runnable action) {
-      autismclient.gui.f.b.IconButtonRenderer.init(this.init_GuiGraphicsExtract, this.init_Font, bounds, icon, this.init_Z_NetHelper(bounds), true, danger);
+      autismclient.gui.ui.widgets.IconButtonRenderer.init(this.init_GuiGraphicsExtract, this.init_Font, bounds, icon, this.init_Z_NetHelper(bounds), true, danger);
       if (selected) {
          int radius = Math.min(3, Math.max(2, Math.min(bounds.update(), bounds.sync()) / 3));
          PacketUtil.load(this.init_GuiGraphicsExtract, bounds, radius, PacketUtil.init(this.init_JsonUtil.clear, 0.14F), this.init_JsonUtil.clear);
@@ -191,7 +191,7 @@ final class AiUiKit {
    }
 
    void init_V_NetHelper_2(autismclient.gui.f.NetHelper bounds, String label, boolean value, String key, Runnable action) {
-      autismclient.gui.f.b.ToggleSwitchRenderer.init(this.init_SyncManager, bounds, label, value, this.init_Z_NetHelper(bounds), "ai:" + key);
+      autismclient.gui.ui.widgets.ToggleSwitchRenderer.init(this.init_SyncManager, bounds, label, value, this.init_Z_NetHelper(bounds), "ai:" + key);
       this.init_V_NetHelper_Runnable(bounds, action);
    }
 
@@ -232,7 +232,7 @@ final class AiUiKit {
       PacketUtil.init_V_GuiGraphicsExtract(this.init_GuiGraphicsExtract, cx, cy, r, color);
    }
 
-   boolean init_Z_D(double x, double y, int button, List<autismclient.gui.f.b.TextInputWidget> fields) {
+   boolean init_Z_D(double x, double y, int button, List<autismclient.gui.ui.widgets.TextInputWidget> fields) {
       int ix = (int)x;
       int iy = (int)y;
 
@@ -250,7 +250,7 @@ final class AiUiKit {
          AiUiKit.Inner_DataUtil hit = this.init_List.get(i);
          if (hit.bounds().init_Z(ix, iy)) {
             if (hit.field() != null) {
-               for (autismclient.gui.f.b.TextInputWidget other : fields) {
+               for (autismclient.gui.ui.widgets.TextInputWidget other : fields) {
                   if (other != hit.field()) {
                      other.init_V_Z(false);
                   }
@@ -265,7 +265,7 @@ final class AiUiKit {
 
             Runnable action = button == 1 ? hit.right() : (button == 0 ? hit.left() : null);
             if (action != null || hit.left() != null || hit.right() != null) {
-               for (autismclient.gui.f.b.TextInputWidget field : fields) {
+               for (autismclient.gui.ui.widgets.TextInputWidget field : fields) {
                   field.init_V_Z(false);
                }
 
@@ -278,7 +278,7 @@ final class AiUiKit {
          }
       }
 
-      for (autismclient.gui.f.b.TextInputWidget field : fields) {
+      for (autismclient.gui.ui.widgets.TextInputWidget field : fields) {
          field.init_V_Z(false);
       }
 
@@ -325,7 +325,7 @@ final class AiUiKit {
          AiUiKit.Inner_DataUtil hit = this.init_List.get(i);
          if (hit.bounds().init_Z(this.write, this.update)) {
             if (hit.tip() != null && !hit.tip().isBlank()) {
-               autismclient.gui.f.b.TooltipRenderer.init(this.init_SyncManager, hit.tip(), this.write, this.update);
+               autismclient.gui.ui.widgets.TooltipRenderer.init(this.init_SyncManager, hit.tip(), this.write, this.update);
             }
 
             if (hit.tip() != null || hit.left() != null || hit.field() != null) {
@@ -335,26 +335,26 @@ final class AiUiKit {
       }
    }
 
-   static autismclient.gui.e.MsdfFontFace init_ConfigStore_I(int style) {
+   static autismclient.gui.sdf.MsdfFontFace init_ConfigStore_I(int style) {
       if ((style & 1) != 0) {
-         return autismclient.gui.e.MsdfFontFace.TITLE;
+         return autismclient.gui.sdf.MsdfFontFace.TITLE;
       } else {
-         return (style & 2) != 0 ? autismclient.gui.e.MsdfFontFace.LABEL : autismclient.gui.e.MsdfFontFace.BODY;
+         return (style & 2) != 0 ? autismclient.gui.sdf.MsdfFontFace.LABEL : autismclient.gui.sdf.MsdfFontFace.BODY;
       }
    }
 
    static float init_F_I(int style) {
-      float body = autismclient.gui.e.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.e.MsdfFontFace.BODY);
+      float body = autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.sdf.MsdfFontFace.BODY);
       return (style & 16) != 0 ? body * 1.15F : body;
    }
 
    void init_V_Str(String text, float x, int y, int style, int color) {
       if (!text.isEmpty()) {
-         autismclient.gui.e.MsdfFontFace face = init_ConfigStore_I(style);
-         if (autismclient.gui.e.MsdfTextRenderer.init(face, text)) {
+         autismclient.gui.sdf.MsdfFontFace face = init_ConfigStore_I(style);
+         if (autismclient.gui.sdf.MsdfTextRenderer.init(face, text)) {
             float size = init_F_I(style);
-            autismclient.gui.e.MsdfTextRenderer.init(
-               this.init_GuiGraphicsExtract, face, text, x, autismclient.gui.e.MsdfTextRenderer.init(face, y, size), size, color, false
+            autismclient.gui.sdf.MsdfTextRenderer.init(
+               this.init_GuiGraphicsExtract, face, text, x, autismclient.gui.sdf.MsdfTextRenderer.init(face, y, size), size, color, false
             );
          } else {
             this.init_GuiGraphicsExtract.text(this.init_Font, text, Math.round(x), y, color, false);
@@ -372,9 +372,9 @@ final class AiUiKit {
          @Override
          public int init(String text, int start, int end, int style) {
             String part = text.substring(start, end);
-            autismclient.gui.e.MsdfFontFace face = AiUiKit.init_ConfigStore_I(style);
-            if (autismclient.gui.e.MsdfTextRenderer.init(face, part)) {
-               autismclient.gui.e.MsdfFontAtlas msdf = face.init_StreamUtil();
+            autismclient.gui.sdf.MsdfFontFace face = AiUiKit.init_ConfigStore_I(style);
+            if (autismclient.gui.sdf.MsdfTextRenderer.init(face, part)) {
+               autismclient.gui.sdf.MsdfFontAtlas msdf = face.init_StreamUtil();
                if (msdf != null) {
                   return (int)Math.ceil(msdf.init(part, AiUiKit.init_F_I(style)) - 1.0E-4);
                }
@@ -417,7 +417,7 @@ final class AiUiKit {
    private record Inner_CachePool(autismclient.gui.f.NetHelper bounds, AiUiKit.Inner_StreamUtil scroll) {
    }
 
-   private record Inner_DataUtil(autismclient.gui.f.NetHelper bounds, Runnable left, Runnable right, String tip, autismclient.gui.f.b.TextInputWidget field) {
+   private record Inner_DataUtil(autismclient.gui.f.NetHelper bounds, Runnable left, Runnable right, String tip, autismclient.gui.ui.widgets.TextInputWidget field) {
    }
 
    static final class Inner_StreamUtil {

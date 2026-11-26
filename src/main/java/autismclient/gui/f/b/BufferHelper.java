@@ -1,4 +1,5 @@
 package autismclient.gui.f.b;
+import autismclient.gui.ui.widgets.UiLayoutMath;
 
 public final class BufferHelper {
    private BufferHelper() {
@@ -9,7 +10,7 @@ public final class BufferHelper {
    }
 
    public static void init_V(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String title) {
-      autismclient.gui.f.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
       autismclient.gui.f.PacketUtil.read(context.init_GuiGraphicsExtract(), bounds, 5, colors.open, colors.get);
       if (title != null && !title.isBlank()) {
          autismclient.gui.f.NetHelper header = init(bounds);
@@ -30,8 +31,8 @@ public final class BufferHelper {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String key, boolean active, boolean hovered) {
-      autismclient.gui.f.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
-      float hover = autismclient.gui.f.HoverTransitionCache.init(key, hovered);
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      float hover = autismclient.gui.ui.HoverTransitionCache.init(key, hovered);
       int fill = UiLayoutMath.init_I_I(colors.open, colors.push, hover);
       if (active) {
          fill = UiLayoutMath.init_I_I(fill, colors.stop, 0.09F);
@@ -43,7 +44,7 @@ public final class BufferHelper {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, float alpha) {
-      autismclient.gui.f.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
       autismclient.gui.f.PacketUtil.read(
          context.init_GuiGraphicsExtract(),
          bounds,
@@ -58,6 +59,6 @@ public final class BufferHelper {
    }
 
    private static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper bounds) {
-      return autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write(), bounds.update(), autismclient.gui.f.UiDensityMetrics.init(14));
+      return autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write(), bounds.update(), autismclient.gui.ui.UiDensityMetrics.init(14));
    }
 }

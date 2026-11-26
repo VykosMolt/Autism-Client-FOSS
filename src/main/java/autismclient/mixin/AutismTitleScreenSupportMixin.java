@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.gui.d.AutismModulesScreen;
-import autismclient.gui.d.AutismOverlaysScreen;
+import autismclient.gui.screens.AutismModulesScreen;
+import autismclient.gui.screens.AutismOverlaysScreen;
 import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
 import autismclient.util.AutismProfilesOverlay;

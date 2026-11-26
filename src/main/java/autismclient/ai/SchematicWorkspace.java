@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.compat263.Compat263;
-import autismclient.gui.d.PromptDialogScreen;
+import autismclient.gui.screens.PromptDialogScreen;
 import autismclient.util.OverlayManager;
 import autismclient.util.OverlayBounds;
 import com.google.gson.JsonObject;
@@ -216,7 +216,7 @@ public final class SchematicWorkspace {
 
       OverlayManager manager = OverlayManager.init_bk();
       if (this.init_Minecraft.gui.screen() == null) {
-         autismclient.util.OverlayScreenController.init_V(this.init_Minecraft, new autismclient.gui.d.AutismOverlaysScreen(this.init_SchematicLibraryOv, null, false, false));
+         autismclient.util.OverlayScreenController.init_V(this.init_Minecraft, new autismclient.gui.screens.AutismOverlaysScreen(this.init_SchematicLibraryOv, null, false, false));
       }
 
       manager.init_V(this.init_SchematicLibraryOv);

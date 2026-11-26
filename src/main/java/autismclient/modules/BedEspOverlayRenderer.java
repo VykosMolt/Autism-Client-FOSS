@@ -95,9 +95,9 @@ public final class BedEspOverlayRenderer {
             int rowHeight = Math.max(
                12,
                (int)Math.ceil(
-                     autismclient.gui.e.MsdfTextRenderer.load(
-                        autismclient.gui.e.MsdfFontFace.BODY,
-                        autismclient.gui.e.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.e.MsdfFontFace.BODY)
+                     autismclient.gui.sdf.MsdfTextRenderer.load(
+                        autismclient.gui.sdf.MsdfFontFace.BODY,
+                        autismclient.gui.sdf.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.sdf.MsdfFontFace.BODY)
                      )
                   )
                   + 2

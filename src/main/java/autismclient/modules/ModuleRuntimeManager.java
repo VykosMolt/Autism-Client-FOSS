@@ -1631,7 +1631,7 @@ public final class ModuleRuntimeManager {
          return true;
       }
 
-      autismclient.gui.d.AutismOverlaysScreen host = new autismclient.gui.d.AutismOverlaysScreen(overlay, null, false, true);
+      autismclient.gui.screens.AutismOverlaysScreen host = new autismclient.gui.screens.AutismOverlaysScreen(overlay, null, false, true);
       OverlayScreenController.init_V(init_Minecraft, host);
       if (init_Minecraft.gui.screen() != host) {
          return false;
@@ -1859,7 +1859,7 @@ public final class ModuleRuntimeManager {
          if (cfg.keybindModuleMenu != -1) {
             boolean pressed = this.init_Z_I(cfg.keybindModuleMenu);
             if (pressed && !this.open && init_Minecraft.gui.screen() == null && !AutismLiteVariant.enabled()) {
-               init_Minecraft.gui.setScreen(new autismclient.gui.d.AutismModulesScreen(null));
+               init_Minecraft.gui.setScreen(new autismclient.gui.screens.AutismModulesScreen(null));
             }
 
             this.open = pressed;

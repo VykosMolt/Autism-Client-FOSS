@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.gui.f.UiAlphaStack;
+import autismclient.gui.ui.UiAlphaStack;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;

@@ -3,18 +3,18 @@ package autismclient.gui.macro.editor;
 import autismclient.api.custommenu.CustomMenuButton;
 import autismclient.api.custommenu.CustomMenuSnapshot;
 import autismclient.compat263.Compat263;
-import autismclient.gui.f.UiClipStack;
-import autismclient.gui.f.UiDensityMetrics;
+import autismclient.gui.ui.UiClipStack;
+import autismclient.gui.ui.UiDensityMetrics;
 import autismclient.gui.f.UiHelper;
-import autismclient.gui.f.b.OverlayActionButton;
+import autismclient.gui.ui.widgets.OverlayActionButton;
 import autismclient.gui.f.b.CharEncoder;
-import autismclient.gui.f.b.ListRowRenderer;
-import autismclient.gui.f.b.ScrollbarMetricsHelper;
-import autismclient.gui.f.b.PanelSurfaceHelper;
-import autismclient.gui.f.b.ToastNotificationStack;
-import autismclient.gui.f.b.UiLayoutMath;
+import autismclient.gui.ui.widgets.ListRowRenderer;
+import autismclient.gui.ui.widgets.ScrollbarMetricsHelper;
+import autismclient.gui.ui.widgets.PanelSurfaceHelper;
+import autismclient.gui.ui.widgets.ToastNotificationStack;
+import autismclient.gui.ui.widgets.UiLayoutMath;
 import autismclient.gui.f.b.l;
-import autismclient.gui.f.c.ScrollableListView;
+import autismclient.gui.ui.layout.ScrollableListView;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismPacketSelectorOverlay;
@@ -262,10 +262,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private final List<MacroExecutor.Inner_PacketUtil> update_List = new ArrayList<>();
    private int f_e_I = 0;
    private ItemAction init_MapStore;
-   private final autismclient.gui.macro.editor.a.ActiveCaptureSession init_StreamUtil = new autismclient.gui.macro.editor.a.ActiveCaptureSession();
+   private final autismclient.gui.macro.editor.capture.ActiveCaptureSession init_StreamUtil = new autismclient.gui.macro.editor.capture.ActiveCaptureSession();
    private String write_Str;
-   private final List<autismclient.gui.f.b.DropdownWidget> sync_List = new ArrayList<>();
-   private final Map<String, autismclient.gui.f.b.DropdownWidget> run_Map = new HashMap<>();
+   private final List<autismclient.gui.ui.widgets.DropdownWidget> sync_List = new ArrayList<>();
+   private final Map<String, autismclient.gui.ui.widgets.DropdownWidget> run_Map = new HashMap<>();
    private final List<String> flush_List = new ArrayList<>();
    private AutismMacro init_aM;
    private int f_f_I = -1;
@@ -1238,7 +1238,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.size_List.clear();
       } else {
          this.push(true);
-         autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
+         autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
          this.init_AutismPacketSelect.init_V_Z(false);
          this.init_RaceStepSelectorOv.init_V_Z(false);
          this.push_V();
@@ -1255,7 +1255,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.load_Z != value) {
          super.write_V_Z(value);
          if (value) {
-            autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
+            autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
             this.init_AutismPacketSelect.init_V_Z(false);
             this.init_RaceStepSelectorOv.init_V_Z(false);
             this.valid_List.clear();
@@ -1286,7 +1286,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          && (
             this.init_AutismPacketSelect.sync_Z()
                || this.init_RaceStepSelectorOv.sync_Z()
-               || autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List)
+               || autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)
                || mx >= this.bind && mx < this.bind + this.f_b_I && my >= this.f_a_I && my < this.f_a_I + (this.load_Z ? 14 : this.f_c_I)
          );
    }
@@ -1577,7 +1577,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.size_List.clear();
          int rawMouseX = mouseX;
          int rawMouseY = mouseY;
-         if (!this.sync_List.isEmpty() && autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List)) {
+         if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
             mouseX = -2147483648;
             mouseY = -2147483648;
          }
@@ -1615,7 +1615,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
 
                if (!this.sync_List.isEmpty()) {
-                  autismclient.gui.f.b.DropdownWidget.load(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
+                  autismclient.gui.ui.widgets.DropdownWidget.load(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
                }
             } finally {
                this.init_V_GuiGraphicsExtract_Z(context, true);
@@ -1623,9 +1623,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          this.init_V_GuiGraphicsExtract_14(context, bounds, this.load_Z, this.update_Z);
-         if (!this.sync_List.isEmpty() && autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List)) {
+         if (!this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
             context.nextStratum();
-            autismclient.gui.f.b.DropdownWidget.read(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
+            autismclient.gui.ui.widgets.DropdownWidget.read(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
          }
 
          if (this.init_AutismPacketSelect.sync_Z()) {
@@ -2060,7 +2060,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                int times = this.init_MapStore.init_I_I_3(i);
                String summary = " • " + summaryAct + (summaryBtn.isBlank() ? "" : " " + summaryBtn) + (times != 1 ? " ×" + times : "");
                Component rowLabel = Component.empty().append(displayName).append(Component.literal(summary).withStyle(s -> s.withColor(-7829368)));
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx, this.init_Font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, itemW, 13), rowHovered, selected, ListRowRenderer.Inner_DataUtil.NORMAL, true
                );
                if (iy + 13 > cy && iy < cy + selAreaH) {
@@ -2627,7 +2627,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                int nameW = useMax ? maxX - 3 - x : maxX - 3 - amountW - 3 - x;
                boolean rowHovered = mx >= x && mx < x + nameW && my >= siy && my < siy + 13;
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   entry.init_Component(),
@@ -2701,7 +2701,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                ListRowRenderer.Inner_DataUtil tone = inList
                   ? ListRowRenderer.Inner_DataUtil.READY
                   : (opt.read_Z ? ListRowRenderer.Inner_DataUtil.NORMAL : ListRowRenderer.Inner_DataUtil.MISSING);
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx, this.init_Font, opt.init_Component, autismclient.gui.f.NetHelper.init(x, ry, recW, 13), hov, inList, tone, true
                );
                if (opt.init_ItemStack != null && opt.init_ItemStack.getCount() > 1) {
@@ -2845,7 +2845,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                String summary = " • " + (cnt == 0 ? "all" : "×" + cnt);
                Component rowLabel = Component.empty().append(displayName).append(Component.literal(summary).withStyle(s -> s.withColor(-7829368)));
                boolean rowHovered = mx >= x && mx < x + dropItemW && my >= iy && my < iy + 13;
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   rowLabel,
@@ -3655,8 +3655,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int idx = Math.max(0, Math.min(selectedIdx, options.size() - 1));
       List<String> opts = options;
       IntConsumer cb = onSelect;
-      autismclient.gui.f.b.DropdownWidget dd = this.run_Map
-         .computeIfAbsent(cacheKey, k -> new autismclient.gui.f.b.DropdownWidget(ctrlX, cy + 2, ctrlW, 13, opts, idx, cb));
+      autismclient.gui.ui.widgets.DropdownWidget dd = this.run_Map
+         .computeIfAbsent(cacheKey, k -> new autismclient.gui.ui.widgets.DropdownWidget(ctrlX, cy + 2, ctrlW, 13, opts, idx, cb));
       dd.init_SyncManager_I(ctrlX, cy + 2, ctrlW, 13).init_SyncManager_List(opts).init_SyncManager_I(idx).init_SyncManager_IntConsumer(cb);
       this.sync_List.add(dd);
       return cy + 14 + 2;
@@ -3667,7 +3667,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int idx = Math.max(0, Math.min(selectedIdx, options.size() - 1));
          List<String> opts = options;
          IntConsumer cb = onSelect;
-         autismclient.gui.f.b.DropdownWidget dd = this.run_Map.computeIfAbsent(cacheKey, k -> new autismclient.gui.f.b.DropdownWidget(x, y, w, h, opts, idx, cb));
+         autismclient.gui.ui.widgets.DropdownWidget dd = this.run_Map.computeIfAbsent(cacheKey, k -> new autismclient.gui.ui.widgets.DropdownWidget(x, y, w, h, opts, idx, cb));
          dd.init_SyncManager_I(x, y, w, h).init_SyncManager_List(opts).init_SyncManager_I(idx).init_SyncManager_IntConsumer(cb);
          this.sync_List.add(dd);
       }
@@ -3702,7 +3702,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = this.reset_List.get(i);
                boolean selected = i == this.f_z_I;
                boolean hovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   this.init_Component_aM_CachePool(rule),
@@ -3882,7 +3882,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             String pname = qp != null && qp.init_Packet != null ? PacketNameResolver.init_Str_Packet(qp.init_Packet) : "???";
             String rowText = i + 1 + ". " + pname + " d=" + (qp != null ? qp.load_I() : 0);
             boolean hovered = mx >= x && mx < x + textW && my >= iy && my < iy + 13;
-            autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+            autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                ctx,
                this.init_Font,
                Component.literal(rowText),
@@ -4827,8 +4827,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             set_List.size() - 1
          )
       );
-      autismclient.gui.f.b.DropdownWidget dd = this.run_Map
-         .computeIfAbsent("payload_add_type", key -> new autismclient.gui.f.b.DropdownWidget(x, y, w, 13, set_List, idx, newIdx -> {
+      autismclient.gui.ui.widgets.DropdownWidget dd = this.run_Map
+         .computeIfAbsent("payload_add_type", key -> new autismclient.gui.ui.widgets.DropdownWidget(x, y, w, 13, set_List, idx, newIdx -> {
             this.reset_Z = true;
             this.read_Map.put("payload_add_type", newIdx);
          }));
@@ -5259,8 +5259,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void init_V_I_2(int x, int y, int w, int mx, int my, PayloadFieldCodec.Inner_JsonUtil template) {
       int idx = this.init_I_bJ_StreamUtil(template == null ? PayloadFieldCodec.Inner_StreamUtil.ADVANCED_MIXED : template.init_bJ_StreamUtil());
-      autismclient.gui.f.b.DropdownWidget dd = this.run_Map
-         .computeIfAbsent("payload_mode", key -> new autismclient.gui.f.b.DropdownWidget(x, y, w, 13, put_List, idx, newIdx -> {
+      autismclient.gui.ui.widgets.DropdownWidget dd = this.run_Map
+         .computeIfAbsent("payload_mode", key -> new autismclient.gui.ui.widgets.DropdownWidget(x, y, w, 13, put_List, idx, newIdx -> {
             if (newIdx >= 0 && newIdx < add_List.size()) {
                this.push(true);
                this.clear_Z = true;
@@ -5336,8 +5336,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_I(int row, int x, int y, int w, int mx, int my) {
       String key = this.init_Str_I(row);
       int idx = Math.max(0, Math.min(this.read_Map.getOrDefault(key, this.init_I_bJ_BufferHelper(PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES)), set_List.size() - 1));
-      autismclient.gui.f.b.DropdownWidget dd = this.run_Map
-         .computeIfAbsent(key, cacheKey -> new autismclient.gui.f.b.DropdownWidget(x, y, w, 13, set_List, idx, newIdx -> this.write_V_I_I(row, newIdx)));
+      autismclient.gui.ui.widgets.DropdownWidget dd = this.run_Map
+         .computeIfAbsent(key, cacheKey -> new autismclient.gui.ui.widgets.DropdownWidget(x, y, w, 13, set_List, idx, newIdx -> this.write_V_I_I(row, newIdx)));
       dd.init_SyncManager_I(x, y, w, 13)
          .init_SyncManager_List(set_List)
          .init_SyncManager_I(idx)
@@ -6088,7 +6088,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return null;
       }
 
-      OverlayActionButton button = autismclient.gui.macro.editor.a.CaptureButtonRenderer.init(
+      OverlayActionButton button = autismclient.gui.macro.editor.capture.CaptureButtonRenderer.init(
          ctx, this.init_Font, autismclient.gui.f.NetHelper.init(x, y, w, h), mode, capturing, active, mx, my, idleLabel, capturingLabel, action
       );
       this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(button, action));
@@ -6097,7 +6097,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, int x, int y, int size, int mx, int my, Runnable action) {
       boolean hovered = mx >= x && mx < x + size && my >= y && my < y + size;
-      autismclient.gui.macro.editor.a.EditorListRowHelper.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), hovered);
+      autismclient.gui.macro.editor.capture.EditorListRowHelper.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), hovered);
       this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(x, y, size, size, (mouseX, mouseY, mouseButton) -> {
          if (mouseButton != 0) {
             return false;
@@ -6839,7 +6839,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       GuiGraphicsExtractor ctx, int x, int y, int size, int mx, int my, String symbol, boolean danger, boolean active, Runnable action
    ) {
       boolean hovered = active && mx >= x && mx < x + size && my >= y && my < y + size;
-      autismclient.gui.macro.editor.a.EditorListRowHelper.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), symbol, hovered, danger);
+      autismclient.gui.macro.editor.capture.EditorListRowHelper.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), symbol, hovered, danger);
       this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(x, y, size, size, (mouseX, mouseY, mouseButton) -> {
          if (active && mouseButton == 0) {
             action.run();
@@ -7159,8 +7159,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_Str_2(String key, ThemedTextInputBox textField, int x, int y, int width) {
       if (this.close_Z(key) && textField != null) {
          String cacheKey = "__vars_" + key;
-         autismclient.gui.f.b.DropdownWidget dropdown = this.run_Map
-            .computeIfAbsent(cacheKey, ignored -> new autismclient.gui.f.b.DropdownWidget(x, y, width, 13, this.flush_List, 0, index -> {}));
+         autismclient.gui.ui.widgets.DropdownWidget dropdown = this.run_Map
+            .computeIfAbsent(cacheKey, ignored -> new autismclient.gui.ui.widgets.DropdownWidget(x, y, width, 13, this.flush_List, 0, index -> {}));
          dropdown.init_SyncManager_I(x, y, width, 13).init_SyncManager_List(this.flush_List).init_SyncManager_Str("{}").init_SyncManager_IntConsumer(index -> {
             if (index >= 0 && index < this.flush_List.size()) {
                textField.read(this.flush_List.get(index));
@@ -7344,7 +7344,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if (iy != -2147483648) {
                if (folderRow.init_Z()) {
                   autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, iy, itemW, 14);
-                  autismclient.gui.f.b.GroupHeaderRenderer.load(
+                  autismclient.gui.ui.widgets.GroupHeaderRenderer.load(
                      UiHelper.init(ctx, this.init_Font, mx, my), bounds, folderRow.init_Str(), folderRow.load_Z(), bounds.init_Z(mx, my)
                   );
                   int hitTop = Math.max(iy, listY);
@@ -7360,7 +7360,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                } else {
                   boolean selected = macroName.equals(current);
                   boolean hovered = mx >= x && mx < x + itemW && my >= iy && my < iy + 14;
-                  autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+                  autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                      ctx,
                      this.init_Font,
                      Component.literal(macroName),
@@ -7410,9 +7410,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             boolean toolsLabels = this.init_MacroAction instanceof ToolsAction || key.startsWith("cond_tool");
             List<String> displayOpts = toolsLabels ? opts.stream().map(value -> ToolsActionSchemaBuilder.init(key, value)).toList() : opts;
             int ddW = this.init_I_List_I(displayOpts, valueW);
-            autismclient.gui.f.b.DropdownWidget dd = this.run_Map
+            autismclient.gui.ui.widgets.DropdownWidget dd = this.run_Map
                .computeIfAbsent(
-                  key, k -> new autismclient.gui.f.b.DropdownWidget(ctrlX, y + 2, ddW, ddH, displayOpts, idx, newIdx -> this.init_V_FieldDef_I(field, newIdx))
+                  key, k -> new autismclient.gui.ui.widgets.DropdownWidget(ctrlX, y + 2, ddW, ddH, displayOpts, idx, newIdx -> this.init_V_FieldDef_I(field, newIdx))
                );
             dd.init_SyncManager_I(ctrlX, y + 2, ddW, ddH)
                .init_SyncManager_List(displayOpts)
@@ -7431,8 +7431,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       options.add("Static");
       options.addAll(this.flush_List);
       String cacheKey = "__enum_vars_" + field.key();
-      autismclient.gui.f.b.DropdownWidget dropdown = this.run_Map
-         .computeIfAbsent(cacheKey, ignored -> new autismclient.gui.f.b.DropdownWidget(x, y, width, 13, options, 0, index -> {}));
+      autismclient.gui.ui.widgets.DropdownWidget dropdown = this.run_Map
+         .computeIfAbsent(cacheKey, ignored -> new autismclient.gui.ui.widgets.DropdownWidget(x, y, width, 13, options, 0, index -> {}));
       dropdown.init_SyncManager_I(x, y, width, 13).init_SyncManager_List(options).init_SyncManager_Str("{}").init_SyncManager_IntConsumer(index -> {
          if (index <= 0) {
             bindingField.init_V_Str("");
@@ -7522,7 +7522,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       String filter = !editable && af != null ? af.load_Str().toLowerCase() : "";
       String emptyHint = this.pop_Str(key);
-      List<Integer> filtered = autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+      List<Integer> filtered = autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
          lst, this.push_Map.computeIfAbsent(key, ignored -> new ArrayList<>()), value -> filter.isEmpty() || value.toLowerCase().contains(filter)
       );
       String sectionLabel = filter.isEmpty() ? field.label() + " (" + lst.size() + ")" : field.label() + " (" + filtered.size() + "/" + lst.size() + ")";
@@ -7531,7 +7531,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       boolean hasSlotField = editable && this.reset_Z(key);
       int btnH = 13;
       int addY = y + 13;
-      autismclient.gui.macro.editor.a.EditorListRowHelper.Inner_DataUtil toolbar = autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+      autismclient.gui.macro.editor.capture.EditorListRowHelper.Inner_DataUtil toolbar = autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
          autismclient.gui.f.NetHelper.init(x, addY, w, 13), hasSlotField, hasCapture
       );
       int slotW = toolbar.load() == null ? 0 : toolbar.load().update();
@@ -7682,11 +7682,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean hovered = mx >= x && mx < x + rowAreaW && my >= iy && my < iy + 14;
                if (field.captureMode() == CaptureMode.PACKET_NAME) {
                   int textColor = this.init_I_Str(lst.get(ri), ri, selected);
-                  autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+                  autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                      ctx, this.init_Font, displayValue, autismclient.gui.f.NetHelper.init(x, iy, rowAreaW, 14), hovered, selected, textColor, this.reset_Z(key)
                   );
                } else {
-                  autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+                  autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                      ctx,
                      this.init_Font,
                      displayValue,
@@ -7747,8 +7747,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   String ddKey = key + "_xcarry_dest_" + fDestIndex;
                   int ddX = actionX;
                   int ddY = iy + 1;
-                  autismclient.gui.f.b.DropdownWidget dd = this.run_Map
-                     .computeIfAbsent(ddKey, k -> new autismclient.gui.f.b.DropdownWidget(ddX, ddY, destW, 13, destOptions, selectedDestIndex, newIdx -> {
+                  autismclient.gui.ui.widgets.DropdownWidget dd = this.run_Map
+                     .computeIfAbsent(ddKey, k -> new autismclient.gui.ui.widgets.DropdownWidget(ddX, ddY, destW, 13, destOptions, selectedDestIndex, newIdx -> {
                         if (newIdx >= 0 && newIdx < destValues.length) {
                            this.sync_V(fDestIndex, destValues[newIdx]);
                         }
@@ -7862,7 +7862,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             int siy = catSelViewport.init_I(i);
             if (siy != -2147483648) {
                String display = RegistryDisplayNameCache.load(sel.get(i));
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   Component.literal(display),
@@ -7911,7 +7911,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       );
       autismclient.gui.f.b.k.init(ctx, this.init_Font, headerLabel, font, UiColorPalette.parse(), x, headerTextY, false);
       cy += headerH + 2;
-      List<String> filtered = autismclient.gui.macro.editor.a.EditorListRowHelper.load(
+      List<String> filtered = autismclient.gui.macro.editor.capture.EditorListRowHelper.load(
          pop_List(),
          this.pop_Map.computeIfAbsent(key + "_catalog", ignored -> new ArrayList<>()),
          idx -> init_Z_Str_StrArr(filter, idx, clear_Str_Str(idx), RegistryDisplayNameCache.load(idx))
@@ -7930,7 +7930,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             String display = RegistryDisplayNameCache.load(id);
             boolean already = sel.contains(id);
             boolean hov = mx >= x && mx < x + catItemW && my >= iy && my < iy + 13;
-            autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+            autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                ctx,
                this.init_Font,
                Component.literal(display),
@@ -9089,12 +9089,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int imx = (int)mx;
       int imy = (int)my;
       if (!this.sync_List.isEmpty()) {
-         if (autismclient.gui.f.b.DropdownWidget.init_Z_List_2(this.sync_List, mx, my, button)) {
+         if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(this.sync_List, mx, my, button)) {
             OverlayManager.init_bk().update_V(this);
             return true;
          }
 
-         if (autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List)) {
+         if (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
             return true;
          }
       }
@@ -9271,7 +9271,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          consumed = true;
       }
 
-      if (autismclient.gui.f.b.DropdownWidget.write(this.sync_List)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.write(this.sync_List)) {
          return true;
       }
 
@@ -9301,7 +9301,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      if (autismclient.gui.f.b.DropdownWidget.load(this.sync_List, mx, my, button)) {
+      if (autismclient.gui.ui.widgets.DropdownWidget.load(this.sync_List, mx, my, button)) {
          return true;
       }
 
@@ -9376,8 +9376,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       if (this.write_Z && this.init_Z_D_D(mx, my)) {
          if (!this.sync_List.isEmpty()
-            && (autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List) || autismclient.gui.f.b.DropdownWidget.init(this.sync_List, mx, my))
-            && autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List, mx, my, amount)) {
+            && (autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List) || autismclient.gui.ui.widgets.DropdownWidget.init(this.sync_List, mx, my))
+            && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List, mx, my, amount)) {
             return true;
          }
 
@@ -9439,7 +9439,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return this.init_RaceStepSelectorOv.init_Z_I(keyCode, scanCode, modifiers);
       }
 
-      if (!autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List)) {
+      if (!autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
          if (keyCode == 256) {
             if (this.poll_Z_2()) {
                return true;
@@ -9469,7 +9469,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       } else {
          if (keyCode == 256 || keyCode == 257) {
-            autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
+            autismclient.gui.ui.widgets.DropdownWidget.read(this.sync_List);
          }
 
          return true;
@@ -11664,7 +11664,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean sel = this.init_Z_List_Str(selected, row.load());
                boolean hovered = mx >= x && mx < x + w && my >= iy && my < iy + rowH;
                String label = autismclient.gui.f.b.k.init(this.init_Font, "  " + row.load(), w - 6, font, UiColorPalette.parse());
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   Component.literal(label),
@@ -11727,7 +11727,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                int modeW = this.init_I_List_I(tmOptions, 52);
                int rowW = itemW - removeW - modeW - 4;
                boolean hovered = mx >= x && mx < x + rowW && my >= iy + 1 && my < iy + 14;
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   Component.literal(entry.init_Str),
@@ -11923,7 +11923,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private List<String> init_List_Str_2(String cacheKey, List<String> source, String query, Function<String, String> labeler) {
       String filter = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
       List<String> target = this.pop_Map.computeIfAbsent(cacheKey, ignored -> new ArrayList<>());
-      return autismclient.gui.macro.editor.a.EditorListRowHelper.load(
+      return autismclient.gui.macro.editor.capture.EditorListRowHelper.load(
          source, target, id -> id != null && init_Z_Str_StrArr(filter, id, clear_Str_Str(id), labeler.apply(id))
       );
    }
@@ -11932,7 +11932,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (source != null && !source.isEmpty()) {
          String filter = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
          List<String> target = cacheKey == null ? new ArrayList<>() : this.pop_Map.computeIfAbsent(cacheKey, ignored -> new ArrayList<>());
-         return autismclient.gui.macro.editor.a.EditorListRowHelper.load(
+         return autismclient.gui.macro.editor.capture.EditorListRowHelper.load(
             source, target, value -> value != null && (filter.isEmpty() || value.toLowerCase(Locale.ROOT).contains(filter))
          );
       } else {
@@ -12063,7 +12063,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                String modeSummary = " • " + e.init_Str();
                Component rowLabel = Component.empty().append(targetDisp).append(Component.literal(modeSummary).withStyle(s -> s.withColor(-7829368)));
                boolean rowHovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx, this.init_Font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), rowHovered, selected, ListRowRenderer.Inner_DataUtil.NORMAL, true
                );
                int fi = i;
@@ -14401,11 +14401,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             boolean hovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
             Component richLabel = richFormatter == null ? null : richFormatter.apply(value);
             if (richLabel != null) {
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx, this.init_Font, richLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), hovered, selected, ListRowRenderer.Inner_DataUtil.NORMAL, true
                );
             } else {
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   Component.literal(formatter.apply(value)),
@@ -14509,7 +14509,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean selected = selectedPredicate != null && selectedPredicate.test(value);
                boolean hovered = mx >= x && mx < x + itemW && my >= iy && my < iy + rowH;
                ItemStack icon = this.init_ItemStack_Str_Obj(listKey, value);
-               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   Component.literal(display),
@@ -15860,8 +15860,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private int init_I_StreamUtil(CaptureMode mode, String idleLabel, String capturingLabel) {
       return Math.max(
-         this.write_I(autismclient.gui.macro.editor.a.CaptureButtonRenderer.init(mode, false, idleLabel, capturingLabel)),
-         this.write_I(autismclient.gui.macro.editor.a.CaptureButtonRenderer.init(mode, true, idleLabel, capturingLabel))
+         this.write_I(autismclient.gui.macro.editor.capture.CaptureButtonRenderer.init(mode, false, idleLabel, capturingLabel)),
+         this.write_I(autismclient.gui.macro.editor.capture.CaptureButtonRenderer.init(mode, true, idleLabel, capturingLabel))
       );
    }
 
