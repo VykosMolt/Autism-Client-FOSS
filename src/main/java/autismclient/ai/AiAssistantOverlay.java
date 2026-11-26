@@ -440,7 +440,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             return true;
          }
 
-         if (this.isOverHeaderDragArea(x, y, this.init_cH())) {
+         if (this.isOverHeaderCloseButton(x, y, this.init_cH())) {
             this.init_V_Z(false);
             return true;
          }

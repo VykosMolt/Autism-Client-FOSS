@@ -151,16 +151,16 @@ public abstract class OverlayLayoutBase {
       }
    }
 
-   protected boolean isOverHeaderDragArea(double mouseX, double mouseY, OverlayBounds bounds) {
-      return this.headerDragBounds(bounds).init_Z((int)mouseX, (int)mouseY);
+   protected boolean isOverHeaderCloseButton(double mouseX, double mouseY, OverlayBounds bounds) {
+      return this.headerCloseButtonBounds(bounds).init_Z((int)mouseX, (int)mouseY);
    }
 
    protected boolean isOverHeaderCollapseToggle(double mouseX, double mouseY, OverlayBounds bounds) {
       return this.isClickHeaderCollapse() ? false : this.headerToggleBounds(bounds).init_Z((int)mouseX, (int)mouseY);
    }
 
-   protected boolean isOverHeader(double mouseX, double mouseY, OverlayBounds bounds) {
-      return this.isOverHeaderDragArea(mouseX, mouseY, bounds) || this.isOverHeaderCollapseToggle(mouseX, mouseY, bounds);
+   protected boolean isOverHeaderControl(double mouseX, double mouseY, OverlayBounds bounds) {
+      return this.isOverHeaderCloseButton(mouseX, mouseY, bounds) || this.isOverHeaderCollapseToggle(mouseX, mouseY, bounds);
    }
 
    private boolean isWindowActive() {
@@ -171,7 +171,7 @@ public abstract class OverlayLayoutBase {
       return autismclient.gui.f.NetHelper.init(bounds.x, bounds.y, bounds.width, 14);
    }
 
-   private autismclient.gui.f.NetHelper headerDragBounds(OverlayBounds bounds) {
+   private autismclient.gui.f.NetHelper headerCloseButtonBounds(OverlayBounds bounds) {
       return autismclient.gui.ui.widgets.WindowHeaderHelper.load(this.headerBounds(bounds), 14);
    }
 

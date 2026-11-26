@@ -15,23 +15,23 @@ import net.minecraft.world.phys.Vec3;
 public final class AiMotionSafety {
    private static final boolean DEBUG_NAV = Boolean.getBoolean("autism.navigation.debug");
    static final double putAt_D = 0.5;
-   private static LocalPlayer activeNavPlayer;
-   private static int activeNavTick;
+   private static LocalPlayer sprintSuppressedPlayer;
+   private static int sprintSuppressedTick;
    private static volatile float pitchFloorDegrees;
    private static volatile long pitchFloorUntilNanos;
 
    private AiMotionSafety() {
    }
 
-   static void markNavigationControl(LocalPlayer var0, boolean var1) {
-      activeNavPlayer = var1 ? null : var0;
-      activeNavTick = var0 == null ? 0 : var0.tickCount;
+   static void setSprintAllowed(LocalPlayer var0, boolean var1) {
+      sprintSuppressedPlayer = var1 ? null : var0;
+      sprintSuppressedTick = var0 == null ? 0 : var0.tickCount;
    }
 
-   public static boolean isNavigationControlling() {
+   public static boolean isSprintSuppressed() {
       LocalPlayer var0 = Minecraft.getInstance().player;
-      if (var0 != null && var0 == activeNavPlayer) {
-         int var1 = var0.tickCount - activeNavTick;
+      if (var0 != null && var0 == sprintSuppressedPlayer) {
+         int var1 = var0.tickCount - sprintSuppressedTick;
          return var1 >= 0 && var1 <= 1;
       } else {
          return false;
@@ -39,7 +39,7 @@ public final class AiMotionSafety {
    }
 
    public static void releaseMovementKeys() {
-      activeNavPlayer = null;
+      sprintSuppressedPlayer = null;
       Minecraft var0 = Minecraft.getInstance();
       if (var0.options != null) {
          for (KeyMapping var2 : List.of(

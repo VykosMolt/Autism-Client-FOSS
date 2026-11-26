@@ -156,7 +156,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       }
 
       OverlayBounds bounds = this.init_cH();
-      return mouseX >= this.tick && mouseX <= this.tick + this.get && mouseY >= this.run && mouseY <= this.run + 14 && !this.isOverHeader(mouseX, mouseY, bounds);
+      return mouseX >= this.tick && mouseX <= this.tick + this.get && mouseY >= this.run && mouseY <= this.run + 14 && !this.isOverHeaderControl(mouseX, mouseY, bounds);
    }
 
    @Override
@@ -516,7 +516,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
       if (button == 0 && mouseX >= this.tick && mouseX < this.tick + this.get && mouseY >= this.run && mouseY < this.run + 14) {
          OverlayBounds bounds = this.init_cH();
-         if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
+         if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.init_V_Z(false);
             return true;
          } else {

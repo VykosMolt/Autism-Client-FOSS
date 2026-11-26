@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class AutismSprintInputMixin {
    @ModifyExpressionValue(method = "tick", at = @At(value = "NEW", target = "(ZZZZZZZ)Lnet/minecraft/world/entity/player/Input;"))
    private Input autism$sprintInputRecord(Input original) {
-      if (!AutismLiteVariant.enabled() && (WTappingModule.init_Z_36() || AiMotionSafety.isNavigationControlling())) {
+      if (!AutismLiteVariant.enabled() && (WTappingModule.init_Z_36() || AiMotionSafety.isSprintSuppressed())) {
          return new Input(original.forward(), original.backward(), original.left(), original.right(), original.jump(), original.shift(), false);
       } else if (original.forward() && !ScaffoldModule.close_Z_4()) {
          return !original.sprint() && MovementModuleHooks.init(false, false)

@@ -211,7 +211,7 @@ public class MacroLibraryManager {
       return this.folderLayout.init(this.macros.stream().filter(filter).toList(), query, includeEmpty);
    }
 
-   public synchronized List<MacroFolderLayout.Inner_DataUtil> getCollapsedFolderEntries(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
+   public synchronized List<MacroFolderLayout.Inner_DataUtil> getOrderedFolderEntries(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
       return this.folderLayout.load(this.macros.stream().filter(filter).toList(), query, includeEmpty);
    }
 

@@ -76,7 +76,7 @@ public final class AiPhysics {
             while (var22 <= (int)Math.floor(var18 - 1.0E-5)) {
                boolean var23 = bodyOverlapsCell(var1, var20, var21, var22);
                if (var23 || (var21 < var15 ? !var0.chunkAt(var20, var21, var22) : !var0.prev(var20, var21, var22))) {
-                  if (var21 < var15 || !var0.putAt_Z_I_2(var20, var21, var22) || var23 && !bodyOverlapsCellStrict(var2, var20, var21, var22)) {
+                  if (var21 < var15 || !var0.putAt_Z_I_2(var20, var21, var22) || var23 && !bodyOverlapsCellDest(var2, var20, var21, var22)) {
                      var22++;
                      continue;
                   }
@@ -119,7 +119,7 @@ public final class AiPhysics {
          && var2 <= (int)Math.floor(var0.y() + 0.06 - 1.0E-5);
    }
 
-   private static boolean bodyOverlapsCellStrict(AiPhysics.MotionState var0, int var1, int var2, int var3) {
+   private static boolean bodyOverlapsCellDest(AiPhysics.MotionState var0, int var1, int var2, int var3) {
       double var4 = 0.33999999999999997;
       return var1 >= (int)Math.floor(var0.x() - var4)
          && var1 <= (int)Math.floor(var0.x() + var4 - 1.0E-5)
@@ -169,7 +169,7 @@ public final class AiPhysics {
                }
 
                if (var28 >= var16) {
-                  if (var0.putAt_Z_I_2(var27, var28, var29) && (!bodyOverlapsCell(var1, var27, var28, var29) || bodyOverlapsCellStrict(var2, var27, var28, var29))) {
+                  if (var0.putAt_Z_I_2(var27, var28, var29) && (!bodyOverlapsCell(var1, var27, var28, var29) || bodyOverlapsCellDest(var2, var27, var28, var29))) {
                      return true;
                   }
 

@@ -169,7 +169,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          && mouseX <= this.flush_I + this.open_I
          && mouseY >= this.close_I
          && mouseY <= this.close_I + 14
-         && !this.isOverHeader(mouseX, mouseY, bounds);
+         && !this.isOverHeaderControl(mouseX, mouseY, bounds);
    }
 
    public void update_V_20() {
@@ -956,7 +956,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          if (this.load_Z_D_2(mouseX, mouseY, bounds)) {
             this.pop_V();
             return true;
-         } else if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
+         } else if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.init_V_Z(false);
             return true;
          } else {

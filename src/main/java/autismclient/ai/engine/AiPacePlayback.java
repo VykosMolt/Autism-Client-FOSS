@@ -2041,7 +2041,7 @@ public final class AiPacePlayback {
       var3.options.keyJump.setDown(var1.jump());
       var3.options.keyShift.setDown(var1.sneak());
       boolean var6 = var1.sprint() && var1.forward() > 0.0;
-      AiMotionSafety.markNavigationControl(var0, var6);
+      AiMotionSafety.setSprintAllowed(var0, var6);
       var0.setSprinting(var6);
       if (!var3.options.toggleSprint().get()) {
          var3.options.keySprint.setDown(var6);
@@ -2082,7 +2082,7 @@ public final class AiPacePlayback {
    }
 
    public static void fill_V_LocalPlayer(LocalPlayer var0) {
-      AiMotionSafety.markNavigationControl(null, true);
+      AiMotionSafety.setSprintAllowed(null, true);
       Minecraft var1 = Minecraft.getInstance();
       var1.options.keyUp.setDown(false);
       var1.options.keyDown.setDown(false);

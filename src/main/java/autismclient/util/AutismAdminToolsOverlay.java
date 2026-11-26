@@ -1136,7 +1136,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
 
       if (button == 0) {
          OverlayBounds bounds = this.init_cH();
-         if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
+         if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.init_V_Z(false);
             return true;
          }

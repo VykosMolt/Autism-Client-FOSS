@@ -214,7 +214,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       }
 
       OverlayBounds bounds = this.init_cH();
-      return mouseX >= this.pop && mouseX <= this.pop + this.run && mouseY >= this.tick && mouseY <= this.tick + 14 && !this.isOverHeader(mouseX, mouseY, bounds);
+      return mouseX >= this.pop && mouseX <= this.pop + this.run && mouseY >= this.tick && mouseY <= this.tick + 14 && !this.isOverHeaderControl(mouseX, mouseY, bounds);
    }
 
    private int push_I_12() {
@@ -1804,7 +1804,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
       if (button == 0 && mouseX >= this.pop && mouseX <= this.pop + this.run && mouseY >= this.tick && mouseY <= this.tick + 14) {
          OverlayBounds bounds = new OverlayBounds(this.pop, this.tick, this.run, this.update_Z ? 14 : this.push_I_12(), this.sync_Z, this.update_Z);
-         if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
+         if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.init_V_Z(false);
             return true;
          } else {

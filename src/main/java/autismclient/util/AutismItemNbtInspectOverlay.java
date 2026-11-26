@@ -261,7 +261,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
       OverlayBounds bounds = this.init_cH();
       if (button == 0 && mouseY >= this.load_I && mouseY <= this.load_I + 14 && mouseX >= this.init_I_2 && mouseX <= this.init_I_2 + this.read_I) {
-         if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
+         if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.read_V_4();
             return true;
          } else {
@@ -388,7 +388,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
             && mouseX <= this.init_I_2 + this.read_I
             && mouseY >= this.load_I
             && mouseY <= this.load_I + 14
-            && !this.isOverHeader(mouseX, mouseY, this.init_cH());
+            && !this.isOverHeaderControl(mouseX, mouseY, this.init_cH());
    }
 
    @Override

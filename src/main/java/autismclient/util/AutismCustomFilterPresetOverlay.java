@@ -128,7 +128,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
          && mouseX <= this.flush_I + this.open
          && mouseY >= this.close_I
          && mouseY <= this.close_I + 14
-         && !this.isOverHeader(mouseX, mouseY, bounds);
+         && !this.isOverHeaderControl(mouseX, mouseY, bounds);
    }
 
    @Override
@@ -500,7 +500,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
       if (button == 0 && mouseX >= this.flush_I && mouseX < this.flush_I + this.open && mouseY >= this.close_I && mouseY < this.close_I + 14) {
          OverlayBounds bounds = this.init_cH();
-         if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
+         if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.init_V_Z(false);
             return true;
          } else {

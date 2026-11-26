@@ -218,8 +218,8 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    }
 
    @Override
-   protected boolean isOverHeader(double mouseX, double mouseY, OverlayBounds bounds) {
-      return super.isOverHeader(mouseX, mouseY, bounds) || this.load_Z_D_2(mouseX, mouseY, bounds);
+   protected boolean isOverHeaderControl(double mouseX, double mouseY, OverlayBounds bounds) {
+      return super.isOverHeaderControl(mouseX, mouseY, bounds) || this.load_Z_D_2(mouseX, mouseY, bounds);
    }
 
    @Override
@@ -238,7 +238,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
       if (!this.init_Z) {
          return false;
       } else if (!(mx < this.init_I_2) && !(mx > this.init_I_2 + this.read_I)) {
-         return !(my < this.load_I) && !(my > this.load_I + 14) ? !this.isOverHeader(mx, my, this.init_cH()) : false;
+         return !(my < this.load_I) && !(my > this.load_I + 14) ? !this.isOverHeaderControl(mx, my, this.init_cH()) : false;
       } else {
          return false;
       }

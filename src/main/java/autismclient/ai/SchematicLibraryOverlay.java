@@ -860,7 +860,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             return true;
          }
 
-         if (this.isOverHeaderDragArea(mx, my, this.init_cH())) {
+         if (this.isOverHeaderCloseButton(mx, my, this.init_cH())) {
             this.init_V_Z(false);
             return true;
          }

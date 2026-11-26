@@ -1298,7 +1298,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          && mx < this.bind + this.f_b_I
          && my >= this.f_a_I
          && my < this.f_a_I + 14
-         && !this.isOverHeader(mx, my, this.init_cH());
+         && !this.isOverHeaderControl(mx, my, this.init_cH());
    }
 
    @Override
@@ -9099,7 +9099,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      if (this.isOverHeaderDragArea(mx, my, this.init_cH())) {
+      if (this.isOverHeaderCloseButton(mx, my, this.init_cH())) {
          this.set(false);
          return true;
       }

@@ -496,7 +496,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
       OverlayBounds bounds = this.init_cH();
       if (button == 0 && mouseY >= this.poll && mouseY <= this.poll + 14 && mouseX >= this.open && mouseX <= this.open + this.push) {
-         if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
+         if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.write_V_17();
             return true;
          } else {
@@ -643,7 +643,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             && mouseX <= this.open + this.push
             && mouseY >= this.poll
             && mouseY <= this.poll + 14
-            && !this.isOverHeader(mouseX, mouseY, this.init_cH());
+            && !this.isOverHeaderControl(mouseX, mouseY, this.init_cH());
    }
 
    @Override

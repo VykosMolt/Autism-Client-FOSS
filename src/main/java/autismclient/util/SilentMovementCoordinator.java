@@ -61,7 +61,7 @@ public final class SilentMovementCoordinator {
             return input;
          }
 
-         if (SilentRotationManager.load_Z() || shouldUseFreeLookRotation(rotation)) {
+         if (SilentRotationManager.load_Z() || shouldSkipMoveFix(rotation)) {
             combatMoveFixer.init();
             bedNukerMoveFixer.init();
             return input;
@@ -111,7 +111,7 @@ public final class SilentMovementCoordinator {
       return AutismLiteVariant.enabled() ? false : "clutch".equals(SilentRotationManager.init_Str()) && !ClutchModule.sync_Z_10();
    }
 
-   private static boolean shouldUseFreeLookRotation(RotationMath.Rotation rotation) {
+   private static boolean shouldSkipMoveFix(RotationMath.Rotation rotation) {
       return rotation == null
             || !(
                autismclient.modules.al.init_Module_Str(SilentRotationManager.init_Str()) instanceof SilentMovementCoordinator.Participant owner
@@ -126,7 +126,7 @@ public final class SilentMovementCoordinator {
 
    public static float getMovementYaw(LocalPlayer player) {
       RotationMath.Rotation rotation = activeRotationFor(player);
-      return shouldUseFreeLookRotation(rotation) ? rotation.yaw() : player.getYRot();
+      return shouldSkipMoveFix(rotation) ? rotation.yaw() : player.getYRot();
    }
 
    public static float getEntityYaw(Entity entity, float vanillaYaw) {

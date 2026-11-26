@@ -1522,7 +1522,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       String filter = this.init_BitSetUtil.init_Str().trim().toLowerCase(Locale.ROOT);
       List<AutismMacroListOverlay.Inner_StreamUtil> items = new ArrayList<>();
 
-      for (MacroFolderLayout.Inner_DataUtil row : MacroLibraryManager.getInstance().getCollapsedFolderEntries(filter, true, macro -> !AutoFishMacroPresets.load(macro))) {
+      for (MacroFolderLayout.Inner_DataUtil row : MacroLibraryManager.getInstance().getOrderedFolderEntries(filter, true, macro -> !AutoFishMacroPresets.load(macro))) {
          items.add(row.init_Z() ? AutismMacroListOverlay.Inner_StreamUtil.init(row, null) : AutismMacroListOverlay.Inner_StreamUtil.init(row.init_aM()));
       }
 

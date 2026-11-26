@@ -227,7 +227,11 @@ public final class VerifyBytecodeEquiv {
                     while (mat.find()) {
                         String tok = mat.group();
                         int start = mat.start();
-                        if (start >= ownerDot.length() && tr.regionMatches(start - ownerDot.length(), ownerDot, 0, ownerDot.length())) {
+                        int ownerStart = start - ownerDot.length();
+                        boolean boundaryOk = ownerStart == 0
+                            || (ownerStart > 0 && !Character.isJavaIdentifierPart(tr.charAt(ownerStart - 1))
+                                && tr.charAt(ownerStart - 1) != '/' && tr.charAt(ownerStart - 1) != '.');
+                        if (ownerStart >= 0 && boundaryOk && tr.regionMatches(ownerStart, ownerDot, 0, ownerDot.length())) {
                             mat.appendReplacement(out, Matcher.quoteReplacement(mapLambdaName(tok, lambdaMap)));
                         } else {
                             mat.appendReplacement(out, Matcher.quoteReplacement(tok));

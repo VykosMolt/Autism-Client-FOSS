@@ -68,7 +68,7 @@ public final class MovementModuleHooks {
          return false;
       } else if (!AutismLiteVariant.enabled() && ClutchModule.flush_Z_9()) {
          return false;
-      } else if (!AutismLiteVariant.enabled() && autismclient.ai.engine.AiMotionSafety.isNavigationControlling()) {
+      } else if (!AutismLiteVariant.enabled() && autismclient.ai.engine.AiMotionSafety.isSprintSuppressed()) {
          return false;
       } else if (ScaffoldModule.open_Z_3()) {
          return original;
@@ -78,7 +78,7 @@ public final class MovementModuleHooks {
    }
 
    public static boolean update() {
-      if (!AutismLiteVariant.enabled() && (WTappingModule.init_Z_36() || autismclient.ai.engine.AiMotionSafety.isNavigationControlling())) {
+      if (!AutismLiteVariant.enabled() && (WTappingModule.init_Z_36() || autismclient.ai.engine.AiMotionSafety.isSprintSuppressed())) {
          return true;
       } else {
          return ScaffoldModule.open_Z_3() ? false : al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled() && sprint.init();

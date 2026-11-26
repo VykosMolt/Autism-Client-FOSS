@@ -188,7 +188,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
          return false;
       } else {
          OverlayBounds bounds = this.init_cH();
-         if (!this.update_Z && this.isOverHeaderDragArea(mx, my, bounds)) {
+         if (!this.update_Z && this.isOverHeaderCloseButton(mx, my, bounds)) {
             this.init_V_Z(false);
             this.write_Z = false;
             return true;

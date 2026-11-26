@@ -460,7 +460,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
 
       OverlayBounds bounds = this.init_cH();
-      return mouseX >= this.get && mouseX <= this.get + this.put && mouseY >= this.set && mouseY <= this.set + 14 && !this.isOverHeader(mouseX, mouseY, bounds);
+      return mouseX >= this.get && mouseX <= this.get + this.put && mouseY >= this.set && mouseY <= this.set + 14 && !this.isOverHeaderControl(mouseX, mouseY, bounds);
    }
 
    @Override
@@ -656,7 +656,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
       if (button == 0 && mouseX >= this.get && mouseX <= this.get + this.put && mouseY >= this.set && mouseY <= this.set + 14) {
          OverlayBounds bounds = new OverlayBounds(this.get, this.set, this.put, this.update_Z ? 14 : this.add, this.sync_Z, this.update_Z);
-         if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
+         if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.init_V_Z(false);
             return true;
          }

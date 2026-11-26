@@ -1040,7 +1040,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    public boolean load_Z_D_D(double mx, double my) {
       return !this.init_Z
          ? false
-         : mx >= this.init_I_2 && mx <= this.init_I_2 + this.reset && my >= this.load_I && my <= this.load_I + 14 && !this.isOverHeader(mx, my, this.init_cH());
+         : mx >= this.init_I_2 && mx <= this.init_I_2 + this.reset && my >= this.load_I && my <= this.load_I + 14 && !this.isOverHeaderControl(mx, my, this.init_cH());
    }
 
    @Override
@@ -1469,7 +1469,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             return true;
          }
 
-         if (this.isOverHeaderDragArea(mouseX, mouseY, bounds)) {
+         if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.init_V_Z(false);
             return true;
          }
@@ -2344,7 +2344,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          OverlayBounds bounds = this.init_cH();
-         if (button == 0 && this.isOverHeaderDragArea(mx, my, bounds)) {
+         if (button == 0 && this.isOverHeaderCloseButton(mx, my, bounds)) {
             this.init_V_Z(false);
             return true;
          }
@@ -4454,7 +4454,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          OverlayBounds bounds = this.init_cH();
-         if (button == 0 && this.isOverHeaderDragArea(mx, my, bounds)) {
+         if (button == 0 && this.isOverHeaderCloseButton(mx, my, bounds)) {
             this.init_V_Z(false);
             return true;
          }

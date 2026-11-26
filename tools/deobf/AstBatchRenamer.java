@@ -182,7 +182,8 @@ public final class AstBatchRenamer {
                 case "E" -> {
                     EnumRename er = new EnumRename(p[1], p[2], p[3], p[4], p[5]);
                     if (isFrozenInternal(er.curEnum)) throw new IllegalStateException("Refused frozen enum: " + er.curEnum);
-                    enumRenames.put(er.curEnum + "#" + er.curConst, er);
+                    String k = er.curEnum + "#" + er.curConst;
+                    if (enumRenames.putIfAbsent(k, er) != null) throw new IllegalArgumentException("Duplicate E source key in plan: " + k);
                 }
                 case "C" -> {
                     ClassRename cr = new ClassRename(p[1], p[2], p[3]);
@@ -191,7 +192,7 @@ public final class AstBatchRenamer {
                     }
                     if (isFrozenInternal(cr.curClass)) throw new IllegalStateException("Refused frozen class: " + cr.curClass);
                     if (isFrozenInternal(cr.newClass)) throw new IllegalStateException("Refused frozen target class: " + cr.newClass);
-                    classRenames.put(cr.curClass, cr);
+                    if (classRenames.putIfAbsent(cr.curClass, cr) != null) throw new IllegalArgumentException("Duplicate C source key in plan: " + cr.curClass);
                 }
                 case "N" -> {
                     ClassRename nr = new ClassRename(p[1], p[2], p[3]);
@@ -206,14 +207,15 @@ public final class AstBatchRenamer {
                     }
                     if (isFrozenInternal(nr.curClass)) throw new IllegalStateException("Refused frozen nested class: " + nr.curClass);
                     if (isFrozenInternal(nr.newClass)) throw new IllegalStateException("Refused frozen target nested class: " + nr.newClass);
-                    classRenames.put(nr.curClass, nr);
+                    if (classRenames.putIfAbsent(nr.curClass, nr) != null) throw new IllegalArgumentException("Duplicate N source key in plan: " + nr.curClass);
                 }
                 case "F" -> {
                     FieldRename fr = new FieldRename(p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
                     if (isFrozenInternal(fr.curOwner)) throw new IllegalStateException("Refused frozen field owner: " + fr.curOwner);
                     if (isGsonLocked(fr.curOwner)) throw new IllegalStateException("Refused Gson-locked field owner: " + fr.curOwner);
                     if (!isValidJavaIdent(fr.newName)) throw new IllegalArgumentException("Invalid target field name: " + fr.newName);
-                    fieldRenames.put(fr.curOwner + "#" + fr.curName + "#" + fr.curDesc, fr);
+                    String k = fr.curOwner + "#" + fr.curName + "#" + fr.curDesc;
+                    if (fieldRenames.putIfAbsent(k, fr) != null) throw new IllegalArgumentException("Duplicate F source key in plan: " + k);
                 }
                 case "M" -> {
                     MethodRename mr = new MethodRename(p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
@@ -222,7 +224,8 @@ public final class AstBatchRenamer {
                         throw new IllegalStateException("Refused forbidden method rename: " + mr);
                     }
                     if (!isValidJavaIdent(mr.newName)) throw new IllegalArgumentException("Invalid target method name: " + mr.newName);
-                    methodRenames.put(mr.curOwner + "#" + mr.curName + "#" + mr.curDesc, mr);
+                    String k = mr.curOwner + "#" + mr.curName + "#" + mr.curDesc;
+                    if (methodRenames.putIfAbsent(k, mr) != null) throw new IllegalArgumentException("Duplicate M source key in plan: " + k);
                 }
                 case "R" -> {
                     RecordCompRename rr = new RecordCompRename(p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8]);
@@ -232,8 +235,10 @@ public final class AstBatchRenamer {
                         throw new IllegalStateException("Refused forbidden record component rename: " + rr);
                     }
                     if (!isValidJavaIdent(rr.newName)) throw new IllegalArgumentException("Invalid target record component name: " + rr.newName);
-                    recordCompRenames.put(rr.curRecord + "#" + rr.curName + "#" + rr.curDesc, rr);
-                    recordCompByMethodKey.put(rr.curRecord + "#" + rr.curName + "#()" + rr.curDesc, rr);
+                    String rk = rr.curRecord + "#" + rr.curName + "#" + rr.curDesc;
+                    String mk = rr.curRecord + "#" + rr.curName + "#()" + rr.curDesc;
+                    if (recordCompRenames.putIfAbsent(rk, rr) != null) throw new IllegalArgumentException("Duplicate R source key in plan: " + rk);
+                    if (recordCompByMethodKey.putIfAbsent(mk, rr) != null) throw new IllegalArgumentException("Duplicate R method key in plan: " + mk);
                 }
                 default -> throw new IllegalArgumentException("Unknown plan tag: " + p[0]);
             }
@@ -547,14 +552,24 @@ public final class AstBatchRenamer {
             SourcePositions sp = trees.getSourcePositions();
 
             Set<String> renamedMethodOldNames = new HashSet<>();
+            Set<String> renamedMethodNewNames = new HashSet<>();
             Set<String> renamedMethodOwners = new HashSet<>();
             for (MethodRename mr : methodRenames.values()) {
                 renamedMethodOldNames.add(mr.curName);
+                renamedMethodNewNames.add(mr.newName);
                 renamedMethodOwners.add(mr.curOwner);
             }
             for (RecordCompRename rr : recordCompByMethodKey.values()) {
                 renamedMethodOldNames.add(rr.curName);
+                renamedMethodNewNames.add(rr.newName);
                 renamedMethodOwners.add(rr.curRecord);
+            }
+            Set<String> renamedFieldNewNames = new HashSet<>();
+            for (FieldRename fr : fieldRenames.values()) {
+                renamedFieldNewNames.add(fr.newName);
+            }
+            for (RecordCompRename rr : recordCompRenames.values()) {
+                renamedFieldNewNames.add(rr.newName);
             }
 
             for (CompilationUnitTree cu : cus) {
@@ -726,15 +741,19 @@ public final class AstBatchRenamer {
                                     edits.add(new TextEdit(tokStart, tokStart + oldSimple.length(), oldSimple, newSimple, "class-decl"));
                                 }
                             }
-                            // Guard against silent widening/overload-resolution shifts: refuse merging two
-                            // previously distinct method names with the same arity into one overloaded name.
-                            if (renamedMethodOwners.contains(internal)) {
-                                Map<String, String[]> byFinalNameArity = new HashMap<>(); // finalName#arity -> [oldName, origKey]
-                                for (Element mem : te.getEnclosedElements()) {
+                            // Guard against silent widening/overload-resolution shifts, varargs merges, and accidental
+                            // overrides across both declared AND inherited methods in te's type hierarchy.
+                            if (!renamedMethodOwners.isEmpty() && hasRenamedMethodInHierarchy(te, renamedMethodOwners, types, elements)) {
+                                Map<String, String[]> byFinalNameArity = new HashMap<>(); // finalName#arity -> [oldName, origKey, owner]
+                                Map<String, String[]> byFinalNameParamDesc = new HashMap<>(); // finalName#paramDesc -> [oldName, origKey, owner]
+                                Map<String, List<String[]>> byFinalName = new HashMap<>(); // finalName -> list of [oldName, origKey, isVarArgs]
+                                for (Element mem : elements.getAllMembers(te)) {
                                     if (!(mem instanceof ExecutableElement mee) || mee.getKind() != ElementKind.METHOD) continue;
+                                    if (!(mee.getEnclosingElement() instanceof TypeElement mte)) continue;
+                                    String mOwner = toInternalName(mte, elements);
                                     String oldM = mee.getSimpleName().toString();
                                     String mDesc = jvmMethodDesc(mee, types, elements);
-                                    String mKey = internal + "#" + oldM + "#" + mDesc;
+                                    String mKey = mOwner + "#" + oldM + "#" + mDesc;
                                     MethodRename mr = methodRenames.get(mKey);
                                     RecordCompRename rcr = recordCompByMethodKey.get(mKey);
                                     String finalM = mr != null ? mr.newName : (rcr != null ? rcr.newName : oldM);
@@ -742,13 +761,33 @@ public final class AstBatchRenamer {
                                         ? (mr.origOwner + "\t" + mr.origName + "\t" + mr.origDesc)
                                         : (rcr != null ? (rcr.origRecord + "\t" + rcr.origMethodName + "\t()" + rcr.origDesc) : mKey);
                                     String sig = finalM + "#" + mee.getParameters().size();
-                                    String[] prev = byFinalNameArity.putIfAbsent(sig, new String[]{oldM, origKey});
-                                    if (prev != null && !prev[0].equals(oldM) && !prev[1].equals(origKey)) {
+                                    String[] prevArity = byFinalNameArity.putIfAbsent(sig, new String[]{oldM, origKey, mOwner});
+                                    if (prevArity != null && !prevArity[0].equals(oldM) && !prevArity[1].equals(origKey)) {
                                         throw new IllegalStateException(
                                             "Refused arity-colliding overload merge on " + internal
-                                                + " (risks silent widening/overload-resolution shift): '" + prev[0] + "' and '" + oldM
-                                                + "' both map to '" + finalM + "' with arity " + mee.getParameters().size());
+                                                + " (risks silent widening/overload-resolution shift): '" + prevArity[2] + "." + prevArity[0]
+                                                + "' and '" + mOwner + "." + oldM + "' both map to '" + finalM
+                                                + "' with arity " + mee.getParameters().size());
                                     }
+                                    String pSig = finalM + "#" + paramDescOf(mDesc);
+                                    String[] prevSig = byFinalNameParamDesc.putIfAbsent(pSig, new String[]{oldM, origKey, mOwner});
+                                    if (prevSig != null && !prevSig[0].equals(oldM) && !prevSig[1].equals(origKey)) {
+                                        throw new IllegalStateException(
+                                            "Refused accidental override / signature collision on " + internal
+                                                + ": '" + prevSig[2] + "." + prevSig[0] + "' and '" + mOwner + "." + oldM
+                                                + "' both map to '" + pSig + "'");
+                                    }
+                                    List<String[]> sameFinal = byFinalName.computeIfAbsent(finalM, k -> new ArrayList<>());
+                                    String varArgsFlag = mee.isVarArgs() ? "1" : "0";
+                                    for (String[] existing : sameFinal) {
+                                        if (!existing[0].equals(oldM) && !existing[1].equals(origKey)
+                                            && ("1".equals(existing[2]) || "1".equals(varArgsFlag))) {
+                                            throw new IllegalStateException(
+                                                "Refused varargs overload merge on " + internal
+                                                    + ": '" + existing[0] + "' and '" + oldM + "' both map to '" + finalM + "'");
+                                        }
+                                    }
+                                    sameFinal.add(new String[]{oldM, origKey, varArgsFlag});
                                 }
                             }
                         }
@@ -881,7 +920,7 @@ public final class AstBatchRenamer {
                                 throw new IllegalStateException("Tag R used on non-record-component field: " + fKey);
                             }
                             if (fr != null && ve.getModifiers().contains(Modifier.PUBLIC)
-                                && isSubclassOf(te, "autismclient/util/macro/MacroAction", types, elements)) {
+                                && isSubtypeOfInternal(te, "autismclient/util/macro/MacroAction", types, elements)) {
                                 throw new IllegalStateException("Refused MacroAction public field rename (reflection-bound): " + fKey);
                             }
                             String targetNewName = null;
@@ -906,7 +945,7 @@ public final class AstBatchRenamer {
                                         int initStart = (int) sp.getStartPosition(cu, node.getInitializer());
                                         if (initStart > searchStart && initStart < searchEnd) searchEnd = initStart;
                                     }
-                                    int tokStart = findFirstIdentToken(content, searchStart, searchEnd, fName);
+                                    int tokStart = findLastIdentToken(content, searchStart, searchEnd, fName);
                                     if (tokStart < 0) {
                                         throw new IllegalStateException("Cannot locate field/record-comp decl name " + fKey + " in " + file);
                                     }
@@ -934,7 +973,7 @@ public final class AstBatchRenamer {
                                         int teEnd = (int) sp.getEndPosition(cu, node.getType());
                                         if (teEnd > searchStart && teEnd < e) searchStart = teEnd;
                                     }
-                                    int tokStart = findFirstIdentToken(content, searchStart, e, pName);
+                                    int tokStart = findLastIdentToken(content, searchStart, e, pName);
                                     if (tokStart < 0) {
                                         throw new IllegalStateException("Cannot locate canonical record ctor param " + pName + " in " + file);
                                     }
@@ -1018,7 +1057,8 @@ public final class AstBatchRenamer {
                         } else if ((!fieldRenames.isEmpty() || !recordCompRenames.isEmpty())
                             && el instanceof VariableElement ve && ve.getKind() == ElementKind.FIELD
                             && ve.getEnclosingElement() instanceof TypeElement te) {
-                            String fKey = toInternalName(te, elements) + "#" + ve.getSimpleName().toString() + "#" + jvmTypeDesc(ve.asType(), types, elements);
+                            String fSimple = ve.getSimpleName().toString();
+                            String fKey = toInternalName(te, elements) + "#" + fSimple + "#" + jvmTypeDesc(ve.asType(), types, elements);
                             FieldRename fr = fieldRenames.get(fKey);
                             RecordCompRename rcr = fr == null ? recordCompRenames.get(fKey) : null;
                             String oldName = fr != null ? fr.curName : (rcr != null ? rcr.curName : null);
@@ -1030,6 +1070,8 @@ public final class AstBatchRenamer {
                                 if (s >= 0 && e > s && content.substring(s, e).equals(oldName)) {
                                     edits.add(new TextEdit(s, e, oldName, newName, fr != null ? "field-ident" : "record-comp-field-ident"));
                                 }
+                            } else if (oldName == null && renamedFieldNewNames.contains(fSimple)) {
+                                checkUnrenamedFieldNotShadowed(trees, getCurrentPath(), te, fSimple, fieldRenames, recordCompRenames, elements, types, file);
                             }
                         } else if (!recordCompRenames.isEmpty()
                             && el instanceof VariableElement ve && ve.getKind() == ElementKind.PARAMETER
@@ -1041,6 +1083,7 @@ public final class AstBatchRenamer {
                             String fKey = toInternalName(te, elements) + "#" + ve.getSimpleName().toString() + "#" + jvmTypeDesc(ve.asType(), types, elements);
                             RecordCompRename rcr = recordCompRenames.get(fKey);
                             if (rcr != null && !rcr.curName.equals(rcr.newName)) {
+                                checkNoLocalShadowingParam(trees, getCurrentPath(), ve, rcr.curName, rcr.newName, recordCompRenames, elements, types, file);
                                 int s = (int) sp.getStartPosition(cu, node);
                                 int e = (int) sp.getEndPosition(cu, node);
                                 if (s >= 0 && e > s && content.substring(s, e).equals(rcr.curName)) {
@@ -1049,7 +1092,8 @@ public final class AstBatchRenamer {
                             }
                         } else if ((!methodRenames.isEmpty() || !recordCompByMethodKey.isEmpty())
                             && el instanceof ExecutableElement ee && ee.getEnclosingElement() instanceof TypeElement te) {
-                            String mKey = toInternalName(te, elements) + "#" + ee.getSimpleName().toString() + "#" + jvmMethodDesc(ee, types, elements);
+                            String mSimple = ee.getSimpleName().toString();
+                            String mKey = toInternalName(te, elements) + "#" + mSimple + "#" + jvmMethodDesc(ee, types, elements);
                             MethodRename mr = methodRenames.get(mKey);
                             RecordCompRename rcr = mr == null ? recordCompByMethodKey.get(mKey) : null;
                             String oldName = mr != null ? mr.curName : (rcr != null ? rcr.curName : null);
@@ -1061,6 +1105,8 @@ public final class AstBatchRenamer {
                                 if (s >= 0 && e > s && content.substring(s, e).equals(oldName)) {
                                     edits.add(new TextEdit(s, e, oldName, newName, mr != null ? "method-ident" : "record-accessor-ident"));
                                 }
+                            } else if (oldName == null && renamedMethodNewNames.contains(mSimple)) {
+                                checkUnrenamedMethodNotShadowed(trees, getCurrentPath(), te, mSimple, methodRenames, recordCompByMethodKey, elements, types, file);
                             }
                         } else if (el instanceof TypeElement te) {
                             String internal = toInternalName(te, elements);
@@ -1343,14 +1389,36 @@ public final class AstBatchRenamer {
         return sb.toString();
     }
 
-    private static boolean isSubclassOf(TypeElement te, String targetInternal, Types types, Elements elements) {
-        TypeElement cur = te;
-        while (cur != null) {
-            if (toInternalName(cur, elements).equals(targetInternal)) return true;
-            TypeMirror sup = cur.getSuperclass();
-            if (sup == null || sup.getKind() != TypeKind.DECLARED) break;
-            Element se = ((DeclaredType) sup).asElement();
-            cur = se instanceof TypeElement ste ? ste : null;
+    private static boolean isSubtypeOfInternal(TypeElement te, String targetInternal, Types types, Elements elements) {
+        Deque<TypeMirror> q = new ArrayDeque<>();
+        q.add(te.asType());
+        Set<String> visited = new HashSet<>();
+        while (!q.isEmpty()) {
+            TypeMirror tm = q.poll();
+            if (tm.getKind() != TypeKind.DECLARED) continue;
+            Element el = ((DeclaredType) tm).asElement();
+            if (!(el instanceof TypeElement cur)) continue;
+            String curInt = toInternalName(cur, elements);
+            if (curInt.equals(targetInternal)) return true;
+            if (!visited.add(curInt)) continue;
+            q.addAll(types.directSupertypes(tm));
+        }
+        return false;
+    }
+
+    private static boolean hasRenamedMethodInHierarchy(TypeElement te, Set<String> renamedMethodOwners, Types types, Elements elements) {
+        Deque<TypeMirror> q = new ArrayDeque<>();
+        q.add(te.asType());
+        Set<String> visited = new HashSet<>();
+        while (!q.isEmpty()) {
+            TypeMirror tm = q.poll();
+            if (tm.getKind() != TypeKind.DECLARED) continue;
+            Element el = ((DeclaredType) tm).asElement();
+            if (!(el instanceof TypeElement cur)) continue;
+            String curInt = toInternalName(cur, elements);
+            if (renamedMethodOwners.contains(curInt)) return true;
+            if (!visited.add(curInt)) continue;
+            q.addAll(types.directSupertypes(tm));
         }
         return false;
     }
@@ -1452,16 +1520,18 @@ public final class AstBatchRenamer {
         String ownerInt = toInternalName(ownerTe, elements);
         Set<String> targets = new LinkedHashSet<>();
         boolean sawUnrenamed = false;
-        for (Element mem : ownerTe.getEnclosedElements()) {
+        for (Element mem : elements.getAllMembers(ownerTe)) {
             if (!mem.getModifiers().contains(Modifier.STATIC)) continue;
             if (!mem.getSimpleName().contentEquals(right)) continue;
+            if (!(mem.getEnclosingElement() instanceof TypeElement mte)) continue;
+            String declInt = toInternalName(mte, elements);
             if (mem instanceof VariableElement ve && ve.getKind() == ElementKind.FIELD) {
-                String fKey = ownerInt + "#" + right + "#" + jvmTypeDesc(ve.asType(), types, elements);
+                String fKey = declInt + "#" + right + "#" + jvmTypeDesc(ve.asType(), types, elements);
                 FieldRename fr = fieldRenames.get(fKey);
                 if (fr != null) targets.add(fr.newName);
                 else sawUnrenamed = true;
             } else if (mem instanceof ExecutableElement ee && ee.getKind() == ElementKind.METHOD) {
-                String mKey = ownerInt + "#" + right + "#" + jvmMethodDesc(ee, types, elements);
+                String mKey = declInt + "#" + right + "#" + jvmMethodDesc(ee, types, elements);
                 MethodRename mr = methodRenames.get(mKey);
                 if (mr != null) targets.add(mr.newName);
                 else sawUnrenamed = true;
@@ -1622,22 +1692,172 @@ public final class AstBatchRenamer {
             }
         }
 
-        // Integrity check: verify zero duplicate current-side F/M keys in updated disambig.tsv
+        // Integrity check: verify zero duplicate original AND zero duplicate current C/F/M keys in updated disambig.tsv
+        Set<String> origClassKeys = new HashSet<>();
+        Set<String> curClassKeys = new HashSet<>();
+        Set<String> origFieldKeys = new HashSet<>();
         Set<String> curFieldKeys = new HashSet<>();
+        Set<String> origMethodKeys = new HashSet<>();
         Set<String> curMethodKeys = new HashSet<>();
         for (String line : out) {
             if (line.isEmpty() || line.startsWith("#")) continue;
             String[] p = line.split("\t", -1);
-            if ("F".equals(p[0])) {
+            if ("C".equals(p[0])) {
+                if (!origClassKeys.add(p[1])) throw new IllegalStateException("Duplicate orig C key in disambig.tsv: " + p[1]);
+                if (!curClassKeys.add(p[2])) throw new IllegalStateException("Duplicate current C key in disambig.tsv: " + p[2]);
+            } else if ("F".equals(p[0])) {
+                String ok = p[1] + "\t" + p[2] + "\t" + p[3];
                 String ck = p[4] + "\t" + p[5] + "\t" + p[6];
+                if (!origFieldKeys.add(ok)) throw new IllegalStateException("Duplicate orig F key in disambig.tsv: " + ok);
                 if (!curFieldKeys.add(ck)) throw new IllegalStateException("Duplicate current F key in disambig.tsv: " + ck);
             } else if ("M".equals(p[0])) {
+                String ok = p[1] + "\t" + p[2] + "\t" + p[3];
                 String ck = p[4] + "\t" + p[5] + "\t" + p[6];
+                if (!origMethodKeys.add(ok)) throw new IllegalStateException("Duplicate orig M key in disambig.tsv: " + ok);
                 if (!curMethodKeys.add(ck)) throw new IllegalStateException("Duplicate current M key in disambig.tsv: " + ck);
             }
         }
 
         return out;
+    }
+
+    /**
+     * Reverse-shadowing guard: ensures an unqualified reference to an UNRENAMED field on declaringType
+     * will not be shadowed by any renamed field, record component, or canonical record ctor parameter in scope.
+     */
+    private static void checkUnrenamedFieldNotShadowed(
+        Trees trees, TreePath path, TypeElement declaringType, String fieldName,
+        Map<String, FieldRename> fieldRenames, Map<String, RecordCompRename> recordCompRenames,
+        Elements elements, Types types, Path file
+    ) {
+        Scope sc = trees.getScope(path);
+        String declInternal = toInternalName(declaringType, elements);
+        boolean reachedDeclaringClass = false;
+        while (sc != null) {
+            TypeElement enc = sc.getEnclosingClass();
+            if (reachedDeclaringClass && !declaringType.equals(enc)) {
+                break;
+            }
+            for (Element local : sc.getLocalElements()) {
+                if (local instanceof VariableElement lve && lve.getKind() == ElementKind.PARAMETER
+                    && lve.getEnclosingElement() instanceof ExecutableElement cee
+                    && cee.getSimpleName().contentEquals("<init>")
+                    && cee.getEnclosingElement() instanceof TypeElement rte
+                    && rte.getKind() == ElementKind.RECORD
+                    && isCanonicalRecordConstructor(cee, rte, types, elements)) {
+                    String lOld = lve.getSimpleName().toString();
+                    RecordCompRename pr = recordCompRenames.get(
+                        toInternalName(rte, elements) + "#" + lOld + "#" + jvmTypeDesc(lve.asType(), types, elements));
+                    if (pr != null && !pr.curName.equals(pr.newName) && pr.newName.equals(fieldName)) {
+                        throw new IllegalStateException(
+                            "Refused record ctor param rename '" + pr.curName + "' -> '" + pr.newName
+                                + "': would shadow unqualified field '" + fieldName + "' of " + declInternal + " in " + file);
+                    }
+                }
+            }
+            if (enc != null) {
+                if (enc.equals(declaringType)) {
+                    reachedDeclaringClass = true;
+                } else {
+                    for (Element mem : elements.getAllMembers(enc)) {
+                        if (mem instanceof VariableElement fve && fve.getKind() == ElementKind.FIELD
+                            && fve.getEnclosingElement() instanceof TypeElement fte && !fte.equals(declaringType)) {
+                            String fOwner = toInternalName(fte, elements);
+                            String fOld = fve.getSimpleName().toString();
+                            String fKey = fOwner + "#" + fOld + "#" + jvmTypeDesc(fve.asType(), types, elements);
+                            FieldRename ofr = fieldRenames.get(fKey);
+                            RecordCompRename orcr = ofr == null ? recordCompRenames.get(fKey) : null;
+                            String renamedTo = ofr != null ? ofr.newName : (orcr != null ? orcr.newName : null);
+                            if (renamedTo != null && !renamedTo.equals(fOld) && renamedTo.equals(fieldName)) {
+                                throw new IllegalStateException(
+                                    "Refused field rename '" + fOld + "' -> '" + renamedTo + "' on " + fOwner
+                                        + ": would reverse-shadow unqualified field '" + fieldName + "' of " + declInternal + " in " + file);
+                            }
+                        }
+                    }
+                }
+            }
+            sc = sc.getEnclosingScope();
+        }
+    }
+
+    /**
+     * Guards against a renamed canonical record constructor parameter being shadowed by an in-scope
+     * local variable / lambda parameter / catch variable / pattern binding inside the constructor body.
+     */
+    private static void checkNoLocalShadowingParam(
+        Trees trees, TreePath path, VariableElement paramEl, String oldName, String newName,
+        Map<String, RecordCompRename> recordCompRenames, Elements elements, Types types, Path file
+    ) {
+        Scope sc = trees.getScope(path);
+        while (sc != null) {
+            for (Element local : sc.getLocalElements()) {
+                if (local instanceof VariableElement lve && !lve.equals(paramEl)) {
+                    ElementKind k = lve.getKind();
+                    if (k == ElementKind.LOCAL_VARIABLE || k == ElementKind.PARAMETER
+                        || k == ElementKind.EXCEPTION_PARAMETER || k == ElementKind.RESOURCE_VARIABLE
+                        || k == ElementKind.BINDING_VARIABLE) {
+                        String lName = lve.getSimpleName().toString();
+                        if (k == ElementKind.PARAMETER && lve.getEnclosingElement() instanceof ExecutableElement cee
+                            && cee.getSimpleName().contentEquals("<init>")
+                            && cee.getEnclosingElement() instanceof TypeElement rte
+                            && rte.getKind() == ElementKind.RECORD
+                            && isCanonicalRecordConstructor(cee, rte, types, elements)) {
+                            RecordCompRename pr = recordCompRenames.get(
+                                toInternalName(rte, elements) + "#" + lName + "#" + jvmTypeDesc(lve.asType(), types, elements));
+                            if (pr != null) lName = pr.newName;
+                        }
+                        if (lName.equals(newName)) {
+                            throw new IllegalStateException(
+                                "Refused record ctor param rename '" + oldName + "' -> '" + newName
+                                    + "' in " + file + ": would be shadowed by in-scope " + k + " '" + newName + "'");
+                        }
+                    }
+                }
+            }
+            if (sc.getEnclosingMethod() != null && sc.getEnclosingMethod().equals(paramEl.getEnclosingElement())) {
+                break;
+            }
+            sc = sc.getEnclosingScope();
+        }
+    }
+
+    /**
+     * Reverse-shadowing guard: ensures an unqualified call to an UNRENAMED method on declaringType
+     * will not be shadowed by any renamed method on an intermediate inner/anonymous/subclass scope.
+     */
+    private static void checkUnrenamedMethodNotShadowed(
+        Trees trees, TreePath path, TypeElement declaringType, String methodName,
+        Map<String, MethodRename> methodRenames, Map<String, RecordCompRename> recordCompByMethodKey,
+        Elements elements, Types types, Path file
+    ) {
+        Scope sc = trees.getScope(path);
+        String declInternal = toInternalName(declaringType, elements);
+        while (sc != null) {
+            TypeElement enc = sc.getEnclosingClass();
+            if (enc != null) {
+                if (enc.equals(declaringType)) {
+                    break;
+                }
+                for (Element mem : elements.getAllMembers(enc)) {
+                    if (mem instanceof ExecutableElement mee && mee.getKind() == ElementKind.METHOD
+                        && mee.getEnclosingElement() instanceof TypeElement mte && !mte.equals(declaringType)) {
+                        String mOwner = toInternalName(mte, elements);
+                        String mOld = mee.getSimpleName().toString();
+                        String mKey = mOwner + "#" + mOld + "#" + jvmMethodDesc(mee, types, elements);
+                        MethodRename omr = methodRenames.get(mKey);
+                        RecordCompRename orcr = omr == null ? recordCompByMethodKey.get(mKey) : null;
+                        String renamedTo = omr != null ? omr.newName : (orcr != null ? orcr.newName : null);
+                        if (renamedTo != null && !renamedTo.equals(mOld) && renamedTo.equals(methodName)) {
+                            throw new IllegalStateException(
+                                "Refused method rename '" + mOld + "' -> '" + renamedTo + "' on " + mOwner
+                                    + ": would reverse-shadow unqualified call to '" + methodName + "' of " + declInternal + " in " + file);
+                        }
+                    }
+                }
+            }
+            sc = sc.getEnclosingScope();
+        }
     }
 
     /**

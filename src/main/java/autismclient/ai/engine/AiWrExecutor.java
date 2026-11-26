@@ -3320,7 +3320,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private void putAt_V_LocalPlayer_Z(LocalPlayer var1, boolean var2) {
-      AiMotionSafety.markNavigationControl(var1, var2);
+      AiMotionSafety.setSprintAllowed(var1, var2);
       var1.setSprinting(var2);
       if (!this.putAt_Minecraft.options.toggleSprint().get()) {
          this.putAt_Minecraft.options.keySprint.setDown(var2);

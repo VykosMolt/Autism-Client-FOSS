@@ -38736,7 +38736,7 @@ M	autismclient/util/bj	load	(DDLautismclient/util/cH;)Z	autismclient/util/Dragga
 M	autismclient/util/bj	load	(II)I	autismclient/util/DraggableOverlayWindow	load_I_I_I	(II)I
 M	autismclient/util/bj	load	(II)V	autismclient/util/DraggableOverlayWindow	load_V_I_I	(II)V
 M	autismclient/util/bj	pop	()V	autismclient/util/DraggableOverlayWindow	pop_V	()V
-M	autismclient/util/bj	read	(DDLautismclient/util/cH;)Z	autismclient/util/DraggableOverlayWindow	isOverHeader	(DDLautismclient/util/OverlayBounds;)Z
+M	autismclient/util/bj	read	(DDLautismclient/util/cH;)Z	autismclient/util/DraggableOverlayWindow	isOverHeaderControl	(DDLautismclient/util/OverlayBounds;)Z
 M	autismclient/util/bj	read	(II)I	autismclient/util/DraggableOverlayWindow	read_I_I_I	(II)I
 M	autismclient/util/bj	run	()V	autismclient/util/DraggableOverlayWindow	run_V	()V
 M	autismclient/util/bj	set	()Z	autismclient/util/DraggableOverlayWindow	set_Z	()Z
@@ -39333,7 +39333,7 @@ M	autismclient/util/cF	open	()I	autismclient/util/OverlayLayoutBase	headerHeight
 M	autismclient/util/cF	open	()Z	autismclient/util/OverlayLayoutBase	isWindowActive	()Z
 M	autismclient/util/cF	poll	()I	autismclient/util/OverlayLayoutBase	lastAnimatedHeight	()I
 M	autismclient/util/cF	poll	()Z	autismclient/util/OverlayLayoutBase	isClickHeaderCollapse	()Z
-M	autismclient/util/cF	read	(DDLautismclient/util/cH;)Z	autismclient/util/OverlayLayoutBase	isOverHeader	(DDLautismclient/util/OverlayBounds;)Z
+M	autismclient/util/cF	read	(DDLautismclient/util/cH;)Z	autismclient/util/OverlayLayoutBase	isOverHeaderControl	(DDLautismclient/util/OverlayBounds;)Z
 M	autismclient/util/cF	sync	(II)I	autismclient/util/OverlayLayoutBase	alignHeightToStep	(II)I
 M	autismclient/util/cF	sync	(Z)V	autismclient/util/OverlayLayoutBase	snapCollapseState	(Z)V
 M	autismclient/util/cG	init	(Lnet/minecraft/client/Minecraft;)V	autismclient/util/WindowIconManager	init_V	(Lnet/minecraft/client/Minecraft;)V
@@ -46659,13 +46659,13 @@ M	autismclient/util/bk	open	()V	autismclient/util/OverlayManager	clearFocus	()V
 M	autismclient/util/bk	init	(Lnet/minecraft/client/gui/screens/Screen;)V	autismclient/util/OverlayManager	syncScreenContext	(Lnet/minecraft/client/gui/screens/Screen;)V
 M	autismclient/util/bk	put	()V	autismclient/util/OverlayManager	syncLayerInputFlags	()V
 M	autismclient/util/bk	add	()V	autismclient/util/OverlayManager	rebuildLayerHost	()V
-M	autismclient/util/cF	write	(DDLautismclient/util/cH;)Z	autismclient/util/OverlayLayoutBase	isOverHeaderDragArea	(DDLautismclient/util/OverlayBounds;)Z
+M	autismclient/util/cF	write	(DDLautismclient/util/cH;)Z	autismclient/util/OverlayLayoutBase	isOverHeaderCloseButton	(DDLautismclient/util/OverlayBounds;)Z
 M	autismclient/util/cF	init	(Lautismclient/util/cH;)Lautismclient/gui/f/NetHelper;	autismclient/util/OverlayLayoutBase	headerBounds	(Lautismclient/util/OverlayBounds;)Lautismclient/gui/f/NetHelper;
-M	autismclient/util/cF	load	(Lautismclient/util/cH;)Lautismclient/gui/f/NetHelper;	autismclient/util/OverlayLayoutBase	headerDragBounds	(Lautismclient/util/OverlayBounds;)Lautismclient/gui/f/NetHelper;
+M	autismclient/util/cF	load	(Lautismclient/util/cH;)Lautismclient/gui/f/NetHelper;	autismclient/util/OverlayLayoutBase	headerCloseButtonBounds	(Lautismclient/util/OverlayBounds;)Lautismclient/gui/f/NetHelper;
 M	autismclient/util/cF	read	(Lautismclient/util/cH;)Lautismclient/gui/f/NetHelper;	autismclient/util/OverlayLayoutBase	headerToggleBounds	(Lautismclient/util/OverlayBounds;)Lautismclient/gui/f/NetHelper;
 M	autismclient/util/cn	init	(Lnet/minecraft/client/player/ClientInput;Lnet/minecraft/world/entity/player/Input;)Lnet/minecraft/world/entity/player/Input;	autismclient/util/SilentMovementCoordinator	rewriteMovementInput	(Lnet/minecraft/client/player/ClientInput;Lnet/minecraft/world/entity/player/Input;)Lnet/minecraft/world/entity/player/Input;
 M	autismclient/util/cn	init	(Lnet/minecraft/world/entity/player/Input;FF)Lnet/minecraft/world/entity/player/Input;	autismclient/util/SilentMovementCoordinator	correctInputForYaw	(Lnet/minecraft/world/entity/player/Input;FF)Lnet/minecraft/world/entity/player/Input;
-M	autismclient/util/cn	init	(Lautismclient/util/ce$DataUtil;)Z	autismclient/util/SilentMovementCoordinator	shouldUseFreeLookRotation	(Lautismclient/util/RotationMath$Rotation;)Z
+M	autismclient/util/cn	init	(Lautismclient/util/ce$DataUtil;)Z	autismclient/util/SilentMovementCoordinator	shouldSkipMoveFix	(Lautismclient/util/RotationMath$Rotation;)Z
 M	autismclient/util/cn	init	(Lnet/minecraft/client/player/LocalPlayer;F)F	autismclient/util/SilentMovementCoordinator	getPlayerYaw	(Lnet/minecraft/client/player/LocalPlayer;F)F
 M	autismclient/util/cn	load	(Lnet/minecraft/client/player/LocalPlayer;F)F	autismclient/util/SilentMovementCoordinator	getPlayerPitch	(Lnet/minecraft/client/player/LocalPlayer;F)F
 M	autismclient/util/cn	init	(Lnet/minecraft/client/player/LocalPlayer;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;	autismclient/util/SilentMovementCoordinator	getPlayerLookVector	(Lnet/minecraft/client/player/LocalPlayer;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
@@ -46709,8 +46709,8 @@ F	autismclient/g/BufferHelper$StreamUtil	write	Z	autismclient/protector/Connecti
 F	autismclient/modules/aC	write	F	autismclient/modules/FreecamController	prevPitch	F
 F	autismclient/ai/a/DataUtil	write	I	autismclient/ai/engine/AiAim	lastGlobalStepTick	I
 F	autismclient/ai/a/AiMotionSafety	putAt_Z	Z	autismclient/ai/engine/AiMotionSafety	DEBUG_NAV	Z
-F	autismclient/ai/a/AiMotionSafety	putAt_LocalPlayer	Lnet/minecraft/client/player/LocalPlayer;	autismclient/ai/engine/AiMotionSafety	activeNavPlayer	Lnet/minecraft/client/player/LocalPlayer;
-F	autismclient/ai/a/AiMotionSafety	flowState	I	autismclient/ai/engine/AiMotionSafety	activeNavTick	I
+F	autismclient/ai/a/AiMotionSafety	putAt_LocalPlayer	Lnet/minecraft/client/player/LocalPlayer;	autismclient/ai/engine/AiMotionSafety	sprintSuppressedPlayer	Lnet/minecraft/client/player/LocalPlayer;
+F	autismclient/ai/a/AiMotionSafety	flowState	I	autismclient/ai/engine/AiMotionSafety	sprintSuppressedTick	I
 F	autismclient/ai/a/AiMotionSafety	putAt_F	F	autismclient/ai/engine/AiMotionSafety	pitchFloorDegrees	F
 F	autismclient/ai/a/AiMotionSafety	putAt_J	J	autismclient/ai/engine/AiMotionSafety	pitchFloorUntilNanos	J
 F	autismclient/ai/a/NodeWalker	putAt_ThreadLocal	Ljava/lang/ThreadLocal;	autismclient/ai/engine/AiPhysics	SCRATCH_BUFFERS	Ljava/lang/ThreadLocal;
@@ -46835,7 +46835,7 @@ M	autismclient/util/aM	init	(Ljava/lang/String;Lnet/minecraft/nbt/CompoundTag;)L
 M	autismclient/util/aM	read	()V	autismclient/util/AutismMacro	migrateLegacyRaceActions	()V
 M	autismclient/util/aN	init	(Ljava/util/List;ZLautismclient/util/aM;)Ljava/util/List;	autismclient/util/MacroLibraryManager	insertMacros	(Ljava/util/List;ZLautismclient/util/AutismMacro;)Ljava/util/List;
 M	autismclient/util/aN	init	(Ljava/lang/String;ZLjava/util/function/Predicate;)Ljava/util/List;	autismclient/util/MacroLibraryManager	getFilteredFolderEntries	(Ljava/lang/String;ZLjava/util/function/Predicate;)Ljava/util/List;
-M	autismclient/util/aN	load	(Ljava/lang/String;ZLjava/util/function/Predicate;)Ljava/util/List;	autismclient/util/MacroLibraryManager	getCollapsedFolderEntries	(Ljava/lang/String;ZLjava/util/function/Predicate;)Ljava/util/List;
+M	autismclient/util/aN	load	(Ljava/lang/String;ZLjava/util/function/Predicate;)Ljava/util/List;	autismclient/util/MacroLibraryManager	getOrderedFolderEntries	(Ljava/lang/String;ZLjava/util/function/Predicate;)Ljava/util/List;
 M	autismclient/util/aN	load	(Ljava/lang/String;Ljava/lang/String;)Z	autismclient/util/MacroLibraryManager	reorderFolder	(Ljava/lang/String;Ljava/lang/String;)Z
 M	autismclient/util/aN	init	(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z	autismclient/util/MacroLibraryManager	reorderFolderWithAnchor	(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z
 M	autismclient/util/aN	init	(Ljava/util/Collection;Ljava/lang/String;Ljava/lang/String;)Z	autismclient/util/MacroLibraryManager	moveMacros	(Ljava/util/Collection;Ljava/lang/String;Ljava/lang/String;)Z
@@ -46889,8 +46889,8 @@ M	autismclient/ai/a/CachePool	init	(Lnet/minecraft/client/Minecraft;Lnet/minecra
 M	autismclient/ai/a/CachePool	init	(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Ljava/util/function/Predicate;)Lnet/minecraft/world/phys/Vec3;	autismclient/ai/engine/AiBlockInteraction	findVisibleEntryPoint	(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Ljava/util/function/Predicate;)Lnet/minecraft/world/phys/Vec3;
 M	autismclient/ai/a/CachePool	init	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/BlockHitResult;	autismclient/ai/engine/AiBlockInteraction	clipBlockTarget	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/BlockHitResult;
 M	autismclient/ai/a/CachePool	init	(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/BlockHitResult;D)Z	autismclient/ai/engine/AiBlockInteraction	isValidTargetHit	(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/BlockHitResult;D)Z
-M	autismclient/ai/a/AiMotionSafety	putAt_V_LocalPlayer_Z	(Lnet/minecraft/client/player/LocalPlayer;Z)V	autismclient/ai/engine/AiMotionSafety	markNavigationControl	(Lnet/minecraft/client/player/LocalPlayer;Z)V
-M	autismclient/ai/a/AiMotionSafety	putAt_Z	()Z	autismclient/ai/engine/AiMotionSafety	isNavigationControlling	()Z
+M	autismclient/ai/a/AiMotionSafety	putAt_V_LocalPlayer_Z	(Lnet/minecraft/client/player/LocalPlayer;Z)V	autismclient/ai/engine/AiMotionSafety	setSprintAllowed	(Lnet/minecraft/client/player/LocalPlayer;Z)V
+M	autismclient/ai/a/AiMotionSafety	putAt_Z	()Z	autismclient/ai/engine/AiMotionSafety	isSprintSuppressed	()Z
 M	autismclient/ai/a/AiMotionSafety	putAt_V	()V	autismclient/ai/engine/AiMotionSafety	releaseMovementKeys	()V
 M	autismclient/ai/a/AiMotionSafety	putAt_TokenCore_TableCac	(Lnet/minecraft/client/player/LocalPlayer;)Lautismclient/ai/a/NodeWalker$StreamUtil;	autismclient/ai/engine/AiMotionSafety	snapshotPlayer	(Lnet/minecraft/client/player/LocalPlayer;)Lautismclient/ai/engine/AiPhysics$MotionState;
 M	autismclient/ai/a/AiMotionSafety	fill_Z	()Z	autismclient/ai/engine/AiMotionSafety	isPlayerSupported	()Z
@@ -46922,7 +46922,7 @@ M	autismclient/ai/a/NodeWalker	putAt_Z	(Lautismclient/ai/a/NodeWalker$CachePool;
 M	autismclient/ai/a/NodeWalker	fill	(Lautismclient/ai/a/NodeWalker$CachePool;Lautismclient/ai/a/NodeWalker$StreamUtil;Lautismclient/ai/a/NodeWalker$StreamUtil;)Z	autismclient/ai/engine/AiPhysics	hitsStrictHazard	(Lautismclient/ai/engine/AiPhysics$PhysicsWorld;Lautismclient/ai/engine/AiPhysics$MotionState;Lautismclient/ai/engine/AiPhysics$MotionState;)Z
 M	autismclient/ai/a/NodeWalker	putAt_IArr	(Lautismclient/ai/a/NodeWalker$CachePool;Lautismclient/ai/a/NodeWalker$StreamUtil;Lautismclient/ai/a/NodeWalker$StreamUtil;)[I	autismclient/ai/engine/AiPhysics	findHazardCell	(Lautismclient/ai/engine/AiPhysics$PhysicsWorld;Lautismclient/ai/engine/AiPhysics$MotionState;Lautismclient/ai/engine/AiPhysics$MotionState;)[I
 M	autismclient/ai/a/NodeWalker	putAt_Z_TokenCore_TableCac	(Lautismclient/ai/a/NodeWalker$StreamUtil;III)Z	autismclient/ai/engine/AiPhysics	feetInsideCell	(Lautismclient/ai/engine/AiPhysics$MotionState;III)Z
-M	autismclient/ai/a/NodeWalker	fill	(Lautismclient/ai/a/NodeWalker$StreamUtil;III)Z	autismclient/ai/engine/AiPhysics	bodyOverlapsCellStrict	(Lautismclient/ai/engine/AiPhysics$MotionState;III)Z
+M	autismclient/ai/a/NodeWalker	fill	(Lautismclient/ai/a/NodeWalker$StreamUtil;III)Z	autismclient/ai/engine/AiPhysics	bodyOverlapsCellDest	(Lautismclient/ai/engine/AiPhysics$MotionState;III)Z
 M	autismclient/ai/a/NodeWalker	readEx	(Lautismclient/ai/a/NodeWalker$StreamUtil;III)Z	autismclient/ai/engine/AiPhysics	bodyOverlapsCell	(Lautismclient/ai/engine/AiPhysics$MotionState;III)Z
 M	autismclient/ai/a/NodeWalker	putAt_Z_TokenCore_TaskStat	(Lautismclient/ai/a/NodeWalker$CachePool;Lautismclient/ai/a/NodeWalker$StreamUtil;Lautismclient/ai/a/NodeWalker$StreamUtil;Z)Z	autismclient/ai/engine/AiPhysics	checkHazardSweep	(Lautismclient/ai/engine/AiPhysics$PhysicsWorld;Lautismclient/ai/engine/AiPhysics$MotionState;Lautismclient/ai/engine/AiPhysics$MotionState;Z)Z
 M	autismclient/ai/a/NodeWalker	putAt_D_I	(I)D	autismclient/ai/engine/AiPhysics	stuckHorizontalScale	(I)D
