@@ -4,9 +4,9 @@ import autismclient.AutismClientAddon;
 import autismclient.util.AuditWaypointScope;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismWaypoints;
-import autismclient.util.PkgCls_c;
+import autismclient.util.AutismBufferSource;
 import autismclient.util.bK;
-import autismclient.util.cI;
+import autismclient.util.WorldLineRenderer;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -46,11 +46,11 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public final class ar {
-   private static final PkgCls_c.Inner_DataUtil init_c_DataUtil = new PkgCls_c.Inner_DataUtil(4194304);
-   private static final PkgCls_c.Inner_DataUtil load_c_DataUtil = new PkgCls_c.Inner_DataUtil(4194304);
-   private static final PkgCls_c.Inner_DataUtil read_c_DataUtil = new PkgCls_c.Inner_DataUtil(786432);
-   private static final autismclient.util.P init_P = new autismclient.util.P("autism_esp_fill");
-   private static final autismclient.util.P load_P = new autismclient.util.P("autism_esp_wire");
+   private static final AutismBufferSource.Inner_DataUtil init_c_DataUtil = new AutismBufferSource.Inner_DataUtil(4194304);
+   private static final AutismBufferSource.Inner_DataUtil load_c_DataUtil = new AutismBufferSource.Inner_DataUtil(4194304);
+   private static final AutismBufferSource.Inner_DataUtil read_c_DataUtil = new AutismBufferSource.Inner_DataUtil(786432);
+   private static final autismclient.util.CachedGpuMeshBuffer init_P = new autismclient.util.CachedGpuMeshBuffer("autism_esp_fill");
+   private static final autismclient.util.CachedGpuMeshBuffer load_P = new autismclient.util.CachedGpuMeshBuffer("autism_esp_wire");
    private static final Pose init_PoseStack_Pose = new PoseStack().last();
    private static boolean init_Z = true;
    private static boolean load_Z;
@@ -536,7 +536,7 @@ public final class ar {
       if (!lines.isEmpty()) {
          load_List = List.of();
          Vec3 cam = load_Vec3;
-         PkgCls_c bufferSource = init_c_DataUtil.init();
+         AutismBufferSource bufferSource = init_c_DataUtil.init();
          VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.tracerEspLines());
          Pose pose = matrices.last();
 
@@ -660,7 +660,7 @@ public final class ar {
       Vec3 cam = write_Vec3;
       int oreGhosts = tick_I;
       tick_I = 0;
-      PkgCls_c bufferSource = load_c_DataUtil.init();
+      AutismBufferSource bufferSource = load_c_DataUtil.init();
       Pose pose = matrices.last();
       boolean meshed = init(
          pose,
@@ -974,7 +974,7 @@ public final class ar {
       load_P.init_V();
    }
 
-   private static void init_V_PoseStack_Pose(Pose pose, PkgCls_c bufferSource, int count, Vec3 cam) {
+   private static void init_V_PoseStack_Pose(Pose pose, AutismBufferSource bufferSource, int count, Vec3 cam) {
       Minecraft mc = Minecraft.getInstance();
       ClientLevel level = mc == null ? null : mc.level;
       if (level != null) {
@@ -1186,7 +1186,7 @@ public final class ar {
             bz = b.z + (a.z - b.z) * t;
          }
 
-         cI.init(pose, buffer, ax, ay, az, bx, by, bz, color, width);
+         WorldLineRenderer.init(pose, buffer, ax, ay, az, bx, by, bz, color, width);
       }
    }
 
@@ -1195,7 +1195,7 @@ public final class ar {
    }
 
    private static void load(Pose pose, VertexConsumer buffer, double x1, double y1, double z1, double x2, double y2, double z2, int color, float width) {
-      cI.init(pose, buffer, x1, y1, z1, x2, y2, z2, color, width);
+      WorldLineRenderer.init(pose, buffer, x1, y1, z1, x2, y2, z2, color, width);
    }
 
    private static void load(Pose pose, VertexConsumer buffer, AABB box, int color) {
@@ -1714,7 +1714,7 @@ public final class ar {
             float uy = up.y;
             float uz = up.z;
             Pose pose = matrices.last();
-            final PkgCls_c bufferSource = read_c_DataUtil.init();
+            final AutismBufferSource bufferSource = read_c_DataUtil.init();
             final Matrix4f textPose = new Matrix4f();
             GlyphVisitor waypointGlyphs = new GlyphVisitor() {
                @Override

@@ -40,7 +40,7 @@ public final class at {
             return false;
          } else if (init(init.gui.screen(), 0)) {
             return false;
-         } else if (bk.init_bk().update_Z()) {
+         } else if (OverlayManager.init_bk().update_Z()) {
             return false;
          } else {
             return !AutismLiteVariant.enabled() && init.gui.screen() instanceof autismclient.gui.d.AutismModulesScreen moduleScreen ? !moduleScreen.load_Z_2() : true;

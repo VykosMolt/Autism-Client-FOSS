@@ -114,7 +114,7 @@ public final class StreamGate {
          if (init(mc, pos, state, blockEntity)) {
             int containerId = mc.player != null && mc.player.containerMenu != null ? mc.player.containerMenu.containerId : -1;
             init_StreamGate_DataUti = new StreamGate.Inner_DataUtil(localPayload, false, -1L, containerId, System.nanoTime());
-            bi.init("Reading block contents...", p.node());
+            bi.init("Reading block contents...", UiColorPalette.node());
             return false;
          }
 

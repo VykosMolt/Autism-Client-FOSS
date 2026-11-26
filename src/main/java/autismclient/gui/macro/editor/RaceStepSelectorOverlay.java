@@ -17,17 +17,17 @@ import autismclient.gui.f.c.PoolEntry;
 import autismclient.gui.f.c.RingBuffer;
 import autismclient.gui.f.c.SyncManager;
 import autismclient.gui.f.c.TextFormat;
-import autismclient.util.bj;
-import autismclient.util.bk;
-import autismclient.util.cH;
-import autismclient.util.p;
+import autismclient.util.DraggableOverlayWindow;
+import autismclient.util.OverlayManager;
+import autismclient.util.OverlayBounds;
+import autismclient.util.UiColorPalette;
 import java.util.List;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
-public final class RaceStepSelectorOverlay extends bj {
+public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final int flush_I = 160;
    private static final int close_I = 260;
@@ -104,13 +104,13 @@ public final class RaceStepSelectorOverlay extends bj {
       RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
       this.add = Math.max(8, Math.round((viewport.init() - this.reset) / 2.0F));
       this.clear = Math.max(8, Math.round((viewport.load() - this.start) / 2.0F));
-      cH clamped = this.init_cH(new cH(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z));
+      OverlayBounds clamped = this.init_cH(new OverlayBounds(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z));
       this.add = clamped.init_I;
       this.clear = clamped.load_I;
       this.reset = clamped.read;
       this.start = clamped.write;
       this.init_CharEncoder_3.write(true);
-      bk.init_bk().init(this);
+      OverlayManager.init_bk().init(this);
    }
 
    public void load_V_3() {
@@ -214,7 +214,7 @@ public final class RaceStepSelectorOverlay extends bj {
       this.init_CharEncoder_3.update(true);
       this.init_CharEncoder_3.sync(this.init_Z_F_F(uiMouseX, uiMouseY));
       this.start = Math.max(this.init_CharEncoder_2.load(), Math.round(this.init_CharEncoder_3.init_F_SyncManager_F(metrics, this.reset)));
-      cH clamped = this.init_cH(new cH(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z));
+      OverlayBounds clamped = this.init_cH(new OverlayBounds(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z));
       this.add = clamped.init_I;
       this.clear = clamped.load_I;
       this.reset = clamped.read;
@@ -274,7 +274,7 @@ public final class RaceStepSelectorOverlay extends bj {
    ) {
       boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + 14;
       int bg = hovered ? this.init_CharEncoder_2.next() : this.init_CharEncoder_2.stop();
-      int accent = "Condition".equalsIgnoreCase(option.init()) ? p.node() : p.init();
+      int accent = "Condition".equalsIgnoreCase(option.init()) ? UiColorPalette.node() : UiColorPalette.init();
       TableIndex.init(context, x, y, width, 14, bg);
       TableIndex.read(context, x, y, 2, 14, accent);
       String label = option.init() + " / " + option.read();
@@ -283,7 +283,7 @@ public final class RaceStepSelectorOverlay extends bj {
       );
       int textY = j.init(y, 14, this.init_CharEncoder_2.init_I_l(l.read), this.init_CharEncoder_2.flush());
       k.init(context, this.init_Font, trimmed, this.init_CharEncoder_2.init_Identifier_l(l.read), this.init_CharEncoder_2.load(l.read), x + 6, textY, false);
-      TableIndex.init(context, x + 4, y + 14 - 1, width - 8, p.mark());
+      TableIndex.init(context, x + 4, y + 14 - 1, width - 8, UiColorPalette.mark());
    }
 
    @Override
@@ -395,7 +395,7 @@ public final class RaceStepSelectorOverlay extends bj {
             this.flush_Z = true;
          }
 
-         cH clamped = this.init_cH(new cH(nextX, nextY, this.reset, this.start, this.write_Z, this.update_Z));
+         OverlayBounds clamped = this.init_cH(new OverlayBounds(nextX, nextY, this.reset, this.start, this.write_Z, this.update_Z));
          this.add = clamped.init_I;
          this.clear = clamped.load_I;
          return true;
@@ -494,14 +494,14 @@ public final class RaceStepSelectorOverlay extends bj {
    }
 
    @Override
-   public cH init_cH() {
-      return new cH(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z);
+   public OverlayBounds init_cH() {
+      return new OverlayBounds(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(cH bounds) {
+   public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
-         cH clamped = this.init_cH(bounds);
+         OverlayBounds clamped = this.init_cH(bounds);
          this.add = clamped.init_I;
          this.clear = clamped.load_I;
          this.reset = clamped.read;
@@ -541,7 +541,7 @@ public final class RaceStepSelectorOverlay extends bj {
       return mx >= x && mx < x + w && my >= y && my < y + h;
    }
 
-   private cH init_cH(cH layout) {
+   private OverlayBounds init_cH(OverlayBounds layout) {
       RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
       int margin = 4;
       int viewportW = Math.round(viewport.init());
@@ -554,7 +554,7 @@ public final class RaceStepSelectorOverlay extends bj {
       int renderedHeight = layout.load_Z ? this.init_CharEncoder_2.load() : height;
       int x = Math.max(margin, Math.min(layout.init_I, Math.max(margin, viewportW - margin - width)));
       int y = Math.max(margin, Math.min(layout.load_I, Math.max(margin, viewportH - margin - renderedHeight)));
-      return new cH(x, y, width, height, layout.init_Z, layout.load_Z);
+      return new OverlayBounds(x, y, width, height, layout.init_Z, layout.load_Z);
    }
 
    public record Inner_DataUtil(String init, String load, String read, String write) {

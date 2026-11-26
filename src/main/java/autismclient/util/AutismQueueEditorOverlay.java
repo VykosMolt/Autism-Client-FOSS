@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
-public class AutismQueueEditorOverlay extends bj {
+public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private int flush_I = 100;
    private int close_I = 100;
@@ -77,14 +77,14 @@ public class AutismQueueEditorOverlay extends bj {
    }
 
    @Override
-   public cH init_cH() {
-      return new cH(this.flush_I, this.close_I, this.open_I, this.poll_I, this.sync_Z, this.update_Z);
+   public OverlayBounds init_cH() {
+      return new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.poll_I, this.sync_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(cH bounds) {
+   public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
-         cH clamped = this.init_cH_cX_cH(this, bounds);
+         OverlayBounds clamped = this.init_cH_cX_cH(this, bounds);
          this.flush_I = clamped.init_I;
          this.close_I = clamped.load_I;
          this.open_I = clamped.read;
@@ -104,7 +104,7 @@ public class AutismQueueEditorOverlay extends bj {
       if (visible) {
          this.push = 0;
          this.init_CacheEntry.load(0, 0);
-         bk.init_bk().update_V(this);
+         OverlayManager.init_bk().update_V(this);
       }
 
       this.update_V_20();
@@ -154,7 +154,7 @@ public class AutismQueueEditorOverlay extends bj {
       List<ck.Inner_CachePool> displayQueue = this.init_List.isEmpty() ? this.init_List_12() : this.init_List;
       int panelHeight = this.update_Z
          ? 14
-         : this.init_cH_cX_cH(this, new cH(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
+         : this.init_cH_cX_cH(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
       return mouseX >= this.flush_I && mouseX <= this.flush_I + this.open_I && mouseY >= this.close_I && mouseY <= this.close_I + panelHeight;
    }
 
@@ -164,7 +164,7 @@ public class AutismQueueEditorOverlay extends bj {
          return false;
       }
 
-      cH bounds = this.init_cH();
+      OverlayBounds bounds = this.init_cH();
       return mouseX >= this.flush_I
          && mouseX <= this.flush_I + this.open_I
          && mouseY >= this.close_I
@@ -459,8 +459,8 @@ public class AutismQueueEditorOverlay extends bj {
          }
 
          ck.Inner_CachePool selectedPacket = this.init_ck_CachePool(this.init_List);
-         cH clamped = this.init_cH_cX_cH(
-            this, new cH(this.flush_I, this.close_I, this.init_I_I_I(this.open_I, this.init_I()), this.init_I(this.init_List), this.sync_Z, this.update_Z)
+         OverlayBounds clamped = this.init_cH_cX_cH(
+            this, new OverlayBounds(this.flush_I, this.close_I, this.init_I_I_I(this.open_I, this.init_I()), this.init_I(this.init_List), this.sync_Z, this.update_Z)
          );
          this.flush_I = clamped.init_I;
          this.close_I = clamped.load_I;
@@ -476,7 +476,7 @@ public class AutismQueueEditorOverlay extends bj {
          this.read_List.clear();
          this.load_Str = null;
          String title = "Queue (" + this.init_List.size() + ")";
-         cH bounds = new cH(this.flush_I, this.close_I, this.open_I, panelHeight, this.sync_Z, this.update_Z);
+         OverlayBounds bounds = new OverlayBounds(this.flush_I, this.close_I, this.open_I, panelHeight, this.sync_Z, this.update_Z);
          this.init_V_GuiGraphicsExtract_6(context, mouseX, mouseY, bounds, title, this.update_Z, this.write_Z);
          this.init_V_GuiGraphicsExtract_13(context, mouseX, mouseY, bounds);
          boolean clipBody = this.init_Z_GuiGraphicsExtract(context, bounds, this.update_Z);
@@ -776,11 +776,11 @@ public class AutismQueueEditorOverlay extends bj {
                }
 
                if (this.init_List.isEmpty()) {
-                  cs.init(
+                  ThemedTextHelper.init(
                      context,
                      this.init_Font,
                      "Queue empty",
-                     cs.Inner_DataUtil.MUTED,
+                     ThemedTextHelper.Inner_DataUtil.MUTED,
                      this.flush_I + 10,
                      j.init(this.push_I_23(), this.start_I_14(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
                      false
@@ -822,7 +822,7 @@ public class AutismQueueEditorOverlay extends bj {
                            grouped = true;
                         }
 
-                        int textColor = p.scan();
+                        int textColor = UiColorPalette.scan();
                         if (grouped) {
                            if (packet.load_I() != lastDelay) {
                               groupColorIndex++;
@@ -871,7 +871,7 @@ public class AutismQueueEditorOverlay extends bj {
                            this.init_Font,
                            trimmed,
                            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-                           selected ? p.table() : textColor,
+                           selected ? UiColorPalette.table() : textColor,
                            rowX + 7,
                            rowTextY,
                            false
@@ -950,9 +950,9 @@ public class AutismQueueEditorOverlay extends bj {
       List<ck.Inner_CachePool> displayQueue = this.init_List.isEmpty() ? this.init_List_12() : this.init_List;
       int panelHeight = this.update_Z
          ? 14
-         : this.init_cH_cX_cH(this, new cH(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
+         : this.init_cH_cX_cH(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
       if (button == 0 && mouseX >= this.flush_I && mouseX <= this.flush_I + this.open_I && mouseY >= this.close_I && mouseY <= this.close_I + 14) {
-         cH bounds = new cH(this.flush_I, this.close_I, this.open_I, panelHeight, this.sync_Z, this.update_Z);
+         OverlayBounds bounds = new OverlayBounds(this.flush_I, this.close_I, this.open_I, panelHeight, this.sync_Z, this.update_Z);
          if (this.load_Z_D_2(mouseX, mouseY, bounds)) {
             this.pop_V();
             return true;
@@ -1031,8 +1031,8 @@ public class AutismQueueEditorOverlay extends bj {
    @Override
    public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (this.write_Z && button == 0) {
-         cH nextBounds = this.init_cH_cX_cH(
-            this, new cH((int)(mouseX - this.init_D), (int)(mouseY - this.load_D), this.open_I, this.poll_I, this.sync_Z, this.update_Z)
+         OverlayBounds nextBounds = this.init_cH_cX_cH(
+            this, new OverlayBounds((int)(mouseX - this.init_D), (int)(mouseY - this.load_D), this.open_I, this.poll_I, this.sync_Z, this.update_Z)
          );
          this.flush_I = nextBounds.init_I;
          this.close_I = nextBounds.load_I;
@@ -1041,7 +1041,7 @@ public class AutismQueueEditorOverlay extends bj {
          List<ck.Inner_CachePool> displayQueue = this.init_List.isEmpty() ? this.init_List_12() : this.init_List;
          int panelHeight = this.update_Z
             ? 14
-            : this.init_cH_cX_cH(this, new cH(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
+            : this.init_cH_cX_cH(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
          autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil(panelHeight);
          this.push = this.init_I_I_3(autismclient.gui.f.b.PoolEntry.init(scrollbarMetrics, mouseY, this.tick), this.start_I_14(), scrollbarMetrics.flush());
          this.init_CacheEntry.load(this.push, scrollbarMetrics.flush());
@@ -1069,7 +1069,7 @@ public class AutismQueueEditorOverlay extends bj {
    public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
       if (this.sync_Z && !this.update_Z && this.init_Z_D_D(mouseX, mouseY)) {
          List<ck.Inner_CachePool> displayQueue = this.init_List.isEmpty() ? this.init_List_12() : this.init_List;
-         int panelHeight = this.init_cH_cX_cH(this, new cH(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
+         int panelHeight = this.init_cH_cX_cH(this, new OverlayBounds(this.flush_I, this.close_I, this.open_I, this.init_I(displayQueue), this.sync_Z, this.update_Z)).write;
          int visibleHeight = this.load(panelHeight);
          int maxScroll = Math.max(0, displayQueue.size() * this.start_I_14() - visibleHeight);
          if (maxScroll <= 0) {

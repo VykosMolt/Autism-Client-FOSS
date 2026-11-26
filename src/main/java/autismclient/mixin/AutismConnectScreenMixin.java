@@ -4,7 +4,7 @@ import autismclient.AutismClientAddon;
 import autismclient.modules.AutoReconnectController;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismProfileManager;
-import autismclient.util.cx;
+import autismclient.util.OverlayScreenController;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConnectScreen;
@@ -24,7 +24,7 @@ public abstract class AutismConnectScreenMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Gui;screen()Lnet/minecraft/client/gui/screens/Screen;")
    )
    private static Screen autism$connectionBehindEditor(Screen foreground) {
-      return cx.init_Screen(Minecraft.getInstance());
+      return OverlayScreenController.init_Screen(Minecraft.getInstance());
    }
 
    @Inject(method = "startConnecting", at = @At("HEAD"))

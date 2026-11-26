@@ -1,6 +1,6 @@
 package autismclient.gui.f.b;
 
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 import net.minecraft.resources.Identifier;
 
 public final class CharEncoder {
@@ -16,12 +16,12 @@ public final class CharEncoder {
    private autismclient.gui.f.JsonUtil init_JsonUtil;
    private int open = -2147483648;
 
-   private static int init_I_I_ct_DataUtil(int color, ct.Inner_DataUtil channel) {
-      return ct.init_I_I_ct_DataUtil(color, channel);
+   private static int init_I_I_ct_DataUtil(int color, ThemePaletteManager.Inner_DataUtil channel) {
+      return ThemePaletteManager.init_I_I_ct_DataUtil(color, channel);
    }
 
    private autismclient.gui.f.JsonUtil init_JsonUtil() {
-      int generation = ct.init_I();
+      int generation = ThemePaletteManager.init_I();
       if (this.init_JsonUtil == null) {
          this.init_JsonUtil = new autismclient.gui.f.JsonUtil();
          this.open = generation;
@@ -172,13 +172,13 @@ public final class CharEncoder {
          case init:
          case load:
          case read:
-            var10000 = init_I_I_ct_DataUtil(-854534, ct.Inner_DataUtil.TEXT);
+            var10000 = init_I_I_ct_DataUtil(-854534, ThemePaletteManager.Inner_DataUtil.TEXT);
             break;
          case write:
-            var10000 = init_I_I_ct_DataUtil(-6774093, ct.Inner_DataUtil.TEXT);
+            var10000 = init_I_I_ct_DataUtil(-6774093, ThemePaletteManager.Inner_DataUtil.TEXT);
             break;
          case update:
-            var10000 = init_I_I_ct_DataUtil(-45747, ct.Inner_DataUtil.ACCENT);
+            var10000 = init_I_I_ct_DataUtil(-45747, ThemePaletteManager.Inner_DataUtil.ACCENT);
             break;
          default:
             throw new MatchException(null, null);
@@ -200,7 +200,7 @@ public final class CharEncoder {
    }
 
    private int init_I_I(int rgb, int alpha, float tint) {
-      int accent = init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.ACCENT);
+      int accent = init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.ACCENT);
       int tinted = j.init_I_I(0xFF000000 | rgb & 16777215, 0xFF000000 | accent & 16777215, tint);
       return alpha << 24 | tinted & 16777215;
    }
@@ -222,7 +222,7 @@ public final class CharEncoder {
    }
 
    public int run() {
-      return init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.HEADER);
+      return init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.HEADER);
    }
 
    public int get() {
@@ -238,11 +238,11 @@ public final class CharEncoder {
    }
 
    public int add() {
-      return init_I_I_ct_DataUtil(this.read(2756114), ct.Inner_DataUtil.DANGER);
+      return init_I_I_ct_DataUtil(this.read(2756114), ThemePaletteManager.Inner_DataUtil.DANGER);
    }
 
    public int clear() {
-      return init_I_I_ct_DataUtil(-33411, ct.Inner_DataUtil.DANGER);
+      return init_I_I_ct_DataUtil(-33411, ThemePaletteManager.Inner_DataUtil.DANGER);
    }
 
    public int init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
@@ -270,7 +270,7 @@ public final class CharEncoder {
       int var10000;
       switch (variant) {
          case PRIMARY:
-            var10000 = init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.BUTTON);
+            var10000 = init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.BUTTON);
             break;
          case DANGER:
             var10000 = this.init_JsonUtil().data;
@@ -375,13 +375,13 @@ public final class CharEncoder {
       int var10000;
       switch (variant) {
          case PRIMARY:
-            var10000 = init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.TEXT);
+            var10000 = init_I_I_ct_DataUtil(-2828, ThemePaletteManager.Inner_DataUtil.TEXT);
             break;
          case DANGER:
-            var10000 = init_I_I_ct_DataUtil(-42406, ct.Inner_DataUtil.DANGER);
+            var10000 = init_I_I_ct_DataUtil(-42406, ThemePaletteManager.Inner_DataUtil.DANGER);
             break;
          case SUCCESS:
-            var10000 = init_I_I_ct_DataUtil(-4656181, ct.Inner_DataUtil.SUCCESS);
+            var10000 = init_I_I_ct_DataUtil(-4656181, ThemePaletteManager.Inner_DataUtil.SUCCESS);
             break;
          case SECONDARY:
          case GHOST:
@@ -398,13 +398,13 @@ public final class CharEncoder {
       int var10000;
       switch (variant) {
          case PRIMARY:
-            var10000 = init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.TEXT);
+            var10000 = init_I_I_ct_DataUtil(-2828, ThemePaletteManager.Inner_DataUtil.TEXT);
             break;
          case DANGER:
-            var10000 = init_I_I_ct_DataUtil(-6521989, ct.Inner_DataUtil.DANGER);
+            var10000 = init_I_I_ct_DataUtil(-6521989, ThemePaletteManager.Inner_DataUtil.DANGER);
             break;
          case SUCCESS:
-            var10000 = init_I_I_ct_DataUtil(-7821680, ct.Inner_DataUtil.SUCCESS);
+            var10000 = init_I_I_ct_DataUtil(-7821680, ThemePaletteManager.Inner_DataUtil.SUCCESS);
             break;
          case SECONDARY:
          case GHOST:
@@ -519,11 +519,11 @@ public final class CharEncoder {
    }
 
    public int prev() {
-      return init_I_I_ct_DataUtil(this.read(2308139), ct.Inner_DataUtil.TOGGLE);
+      return init_I_I_ct_DataUtil(this.read(2308139), ThemePaletteManager.Inner_DataUtil.TOGGLE);
    }
 
    public int valid() {
-      return init_I_I_ct_DataUtil(this.read(1183762), ct.Inner_DataUtil.BUTTON);
+      return init_I_I_ct_DataUtil(this.read(1183762), ThemePaletteManager.Inner_DataUtil.BUTTON);
    }
 
    public int size() {

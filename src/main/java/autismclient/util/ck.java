@@ -136,7 +136,7 @@ public final class ck {
    private volatile int pool = 0;
    private volatile double init_D = 50.0;
    private volatile long write_J = -1L;
-   private final Map<String, cH> init_Map = new HashMap<>();
+   private final Map<String, OverlayBounds> init_Map = new HashMap<>();
    private final Set<String> write_Set = ConcurrentHashMap.newKeySet();
    private final Map<String, ck.Inner_TaskQueue> load_Map = new HashMap<>();
    private final List<String> flush_List = new ArrayList<>();
@@ -233,9 +233,9 @@ public final class ck {
       this.entry_I = y;
    }
 
-   public synchronized cH init_cH_Str(String id) {
-      cH layout = this.init_Map.get(id);
-      return layout == null ? null : new cH(layout.init_I, layout.load_I, layout.read, layout.write, layout.init_Z, layout.load_Z);
+   public synchronized OverlayBounds init_cH_Str(String id) {
+      OverlayBounds layout = this.init_Map.get(id);
+      return layout == null ? null : new OverlayBounds(layout.init_I, layout.load_I, layout.read, layout.write, layout.init_Z, layout.load_Z);
    }
 
    public boolean init_Z_Str(String id) {
@@ -252,14 +252,14 @@ public final class ck {
       }
    }
 
-   public synchronized void init_V_Str_cH(String id, cH layout) {
+   public synchronized void init_V_Str_cH(String id, OverlayBounds layout) {
       if (id != null && !id.isEmpty() && layout != null) {
-         cH trueGeometry = bk.init_bk().init(id);
+         OverlayBounds trueGeometry = OverlayManager.init_bk().init(id);
          if (trueGeometry != null) {
-            layout = new cH(trueGeometry.init_I, trueGeometry.load_I, trueGeometry.read, trueGeometry.write, layout.init_Z, layout.load_Z);
+            layout = new OverlayBounds(trueGeometry.init_I, trueGeometry.load_I, trueGeometry.read, trueGeometry.write, layout.init_Z, layout.load_Z);
          }
 
-         this.init_Map.put(id, new cH(layout.init_I, layout.load_I, layout.read, layout.write, layout.init_Z, layout.load_Z));
+         this.init_Map.put(id, new OverlayBounds(layout.init_I, layout.load_I, layout.read, layout.write, layout.init_Z, layout.load_Z));
       }
    }
 

@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.util.AuditClientFixes;
-import autismclient.util.ax;
+import autismclient.util.GuiMovementPassThrough;
 import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -18,6 +18,6 @@ abstract class AuditKeyboardReleaseMixin {
       require = 1
    )
    private boolean audit$containerKeyReleased(Screen var1, KeyEvent var2) {
-      return var1 instanceof AbstractContainerScreen && AuditClientFixes.isAutismActive() && ax.init(var2, false) ? true : var1.keyReleased(var2);
+      return var1 instanceof AbstractContainerScreen && AuditClientFixes.isAutismActive() && GuiMovementPassThrough.init(var2, false) ? true : var1.keyReleased(var2);
    }
 }

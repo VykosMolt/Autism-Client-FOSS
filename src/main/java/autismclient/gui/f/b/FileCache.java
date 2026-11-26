@@ -1,7 +1,7 @@
 package autismclient.gui.f.b;
 
-import autismclient.util.ct;
-import autismclient.util.cz;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.GuiIconAtlas;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -87,7 +87,7 @@ public final class FileCache {
       int var10000;
       switch (tone) {
          case NORMAL:
-            var10000 = selected ? ct.init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.TEXT) : init_CharEncoder.load(l.read);
+            var10000 = selected ? ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.Inner_DataUtil.TEXT) : init_CharEncoder.load(l.read);
             break;
          case READY:
             var10000 = selected ? -1507344 : -6426438;
@@ -96,10 +96,10 @@ public final class FileCache {
             var10000 = selected ? -3104 : -14726;
             break;
          case MISSING:
-            var10000 = ct.init_I_I_ct_DataUtil(selected ? -4884 : -20561, ct.Inner_DataUtil.DANGER);
+            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(selected ? -4884 : -20561, ThemePaletteManager.Inner_DataUtil.DANGER);
             break;
          case DANGER:
-            var10000 = ct.init_I_I_ct_DataUtil(selected ? -5398 : -29556, ct.Inner_DataUtil.DANGER);
+            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(selected ? -5398 : -29556, ThemePaletteManager.Inner_DataUtil.DANGER);
             break;
          default:
             throw new MatchException(null, null);
@@ -176,7 +176,7 @@ public final class FileCache {
    }
 
    public static void load(GuiGraphicsExtractor context, int x, int y, int width, int height, boolean hovered) {
-      RingBuffer.init(context, RingBuffer.init(), autismclient.gui.f.NetHelper.init(x, y, width, height), cz.open, hovered, true, true);
+      RingBuffer.init(context, RingBuffer.init(), autismclient.gui.f.NetHelper.init(x, y, width, height), GuiIconAtlas.open, hovered, true, true);
    }
 
    public static void init(GuiGraphicsExtractor context, int x, int y, int size, String symbol, boolean hovered, boolean danger) {

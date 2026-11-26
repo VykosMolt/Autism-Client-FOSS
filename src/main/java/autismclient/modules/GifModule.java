@@ -176,11 +176,11 @@ public final class GifModule extends Module {
    }
 
    private void init_V_8() {
-      autismclient.util.ar.pickImage(this.text("cape-image").trim(), selected -> this.setValue("cape-image", selected));
+      autismclient.util.NativeImageFilePicker.pickImage(this.text("cape-image").trim(), selected -> this.setValue("cape-image", selected));
    }
 
    private void load() {
-      autismclient.util.ar.pickImage(this.text("shield-image").trim(), selected -> this.setValue("shield-image", selected));
+      autismclient.util.NativeImageFilePicker.pickImage(this.text("shield-image").trim(), selected -> this.setValue("shield-image", selected));
    }
 
    private void read() {

@@ -1,7 +1,7 @@
 package autismclient.gui.f.b;
 
-import autismclient.util.ct;
-import autismclient.util.cu;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.ThemeTextureRecolorer;
 import net.minecraft.resources.Identifier;
 
 public final class CachePool {
@@ -72,7 +72,7 @@ public final class CachePool {
          int iconY = bounds.write() + Math.max(1, (bounds.sync() - iconSize) / 2);
          if (!autismclient.gui.e.CachePool.init(context.init_GuiGraphicsExtract(), icon, iconX, iconY, iconSize, iconSize, colors.prev)) {
             context.init_GuiGraphicsExtract()
-               .blit(cu.init(icon, ct.Inner_DataUtil.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
+               .blit(ThemeTextureRecolorer.init(icon, ThemePaletteManager.Inner_DataUtil.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
          }
 
          context.init_PoolEntry()

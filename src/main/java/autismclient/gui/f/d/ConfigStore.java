@@ -29,9 +29,9 @@ import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.ValueSink;
 import autismclient.util.AutismMacro;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import autismclient.util.ck;
-import autismclient.util.cz;
+import autismclient.util.GuiIconAtlas;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -565,7 +565,7 @@ public final class ConfigStore {
          return true;
       }
 
-      if (bk.init_bk().write_Z()) {
+      if (OverlayManager.init_bk().write_Z()) {
          return true;
       }
 
@@ -647,7 +647,7 @@ public final class ConfigStore {
       int iconSize = Math.min(12, row.sync() - 2);
       int iconX = row.read() + 5;
       int iconY = row.write() + (row.sync() - iconSize) / 2;
-      cz.init(context.init_GuiGraphicsExtract(), init_Identifier_Str(key), iconX, iconY, iconSize, textColor);
+      GuiIconAtlas.init(context.init_GuiGraphicsExtract(), init_Identifier_Str(key), iconX, iconY, iconSize, textColor);
       int labelX = iconX + iconSize + 5;
       context.init_PoolEntry().read(context.init_GuiGraphicsExtract(), label, labelX, context.init_PoolEntry().init_I(row), row.init() - 5 - labelX, textColor);
       this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.RAIL_ITEM, row, null, null, key, -1);
@@ -785,7 +785,7 @@ public final class ConfigStore {
             context.init_GuiGraphicsExtract(),
             this.init_ConfigStore_Buffer.init_Font(),
             settings,
-            cz.sync,
+            GuiIconAtlas.sync,
             settings.init_Z(context.read(), context.write()),
             true,
             false
@@ -1613,7 +1613,7 @@ public final class ConfigStore {
          return true;
       }
 
-      boolean typeToSearch = this.write_Z() ? (chr >= 'a' && chr <= 'z' || chr >= 'A' && chr <= 'Z') && !bk.init_bk().load_Z() : chr >= ' ' && chr != 127;
+      boolean typeToSearch = this.write_Z() ? (chr >= 'a' && chr <= 'z' || chr >= 'A' && chr <= 'Z') && !OverlayManager.init_bk().load_Z() : chr >= ' ' && chr != 127;
       if (typeToSearch && this.init_Module == null) {
          this.load_V_I(-1);
          if (this.load_StreamUtil != null) {
@@ -2353,7 +2353,7 @@ public final class ConfigStore {
             context.init_GuiGraphicsExtract(),
             this.init_ConfigStore_Buffer.init_Font(),
             settings,
-            cz.sync,
+            GuiIconAtlas.sync,
             settings.init_Z(context.read(), context.write()),
             true,
             false

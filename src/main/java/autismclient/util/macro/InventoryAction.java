@@ -17,7 +17,7 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
          if (this.mode == InventoryAction.Inner_DataUtil.OPEN) {
             mc.execute(() -> mc.gui.setScreen(new InventoryScreen(mc.player)));
          } else {
-            mc.execute(() -> autismclient.util.af.init(mc, this.sendPacket, false));
+            mc.execute(() -> autismclient.util.GuiDesyncHelper.init(mc, this.sendPacket, false));
          }
       }
    }

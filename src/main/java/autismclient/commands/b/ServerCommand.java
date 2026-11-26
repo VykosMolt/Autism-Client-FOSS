@@ -4,7 +4,7 @@ import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismServerInfoOverlay;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import autismclient.util.macro.ServerTickPhaseTracker;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.Minecraft;
@@ -47,7 +47,7 @@ public class ServerCommand extends Command {
       if (overlay == null) {
          AutismClientMessaging.sendPrefixed("§cServer overlay unavailable.");
       } else {
-         bk.init_bk().init_V(overlay);
+         OverlayManager.init_bk().init_V(overlay);
          if (pluginsTab) {
             overlay.clear_V_8();
          } else {

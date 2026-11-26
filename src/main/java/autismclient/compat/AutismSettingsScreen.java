@@ -15,8 +15,8 @@ import autismclient.util.AutismConfig;
 import autismclient.util.ValueSink;
 import autismclient.util.aJ;
 import autismclient.util.cA;
-import autismclient.util.ct;
-import autismclient.util.z;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.CommandPrefixHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -117,8 +117,8 @@ public class AutismSettingsScreen extends Screen {
          NetHelper panel = NetHelper.init(px, py, panelW, panelH);
          PacketUtil.load(graphics, panel, 5, -435549684, this.init_I());
          NetHelper header = NetHelper.init(px, py, panelW, 14);
-         PacketUtil.read(graphics, NetHelper.init(px + 1, py + 1, panelW - 2, 13), 4, this.init(858003997, ct.Inner_DataUtil.HEADER));
-         this.init(graphics, "AUTISM Client Settings", autismclient.gui.f.a.DataUtil.read, this.init(-791321, ct.Inner_DataUtil.TEXT), header);
+         PacketUtil.read(graphics, NetHelper.init(px + 1, py + 1, panelW - 2, 13), 4, this.init(858003997, ThemePaletteManager.Inner_DataUtil.HEADER));
+         this.init(graphics, "AUTISM Client Settings", autismclient.gui.f.a.DataUtil.read, this.init(-791321, ThemePaletteManager.Inner_DataUtil.TEXT), header);
          NetHelper footer = NetHelper.init(px, panel.load() - 17, panelW, 17);
          NetHelper done = NetHelper.init(px + 4, footer.write(), panelW - 8, 13);
          this.init(graphics, done, "Done", done.init_Z(mx, my), true);
@@ -190,8 +190,8 @@ public class AutismSettingsScreen extends Screen {
          cfg.save();
       }));
       out.add(this.init("Overlay Scale", cA.init_Str(), () -> cA.init_V_D(cA.load_D()), () -> cA.init_V_D(cA.read())));
-      List<String> prefixes = new ArrayList<>(z.init_List);
-      String cur = z.init_Str();
+      List<String> prefixes = new ArrayList<>(CommandPrefixHelper.init_List);
+      String cur = CommandPrefixHelper.init_Str();
       if (!prefixes.contains(cur)) {
          cur = prefixes.isEmpty() ? "." : prefixes.get(0);
       }
@@ -213,14 +213,14 @@ public class AutismSettingsScreen extends Screen {
       return (g, rb, mx, my, clickable) -> {
          boolean on = getter.get();
          boolean hover = clickable && rb.init_Z(mx, my);
-         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ct.Inner_DataUtil.BUTTON) : 639113758, this.init(1717972012, ct.Inner_DataUtil.OUTLINE));
-         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
+         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ThemePaletteManager.Inner_DataUtil.BUTTON) : 639113758, this.init(1717972012, ThemePaletteManager.Inner_DataUtil.OUTLINE));
+         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
          NetHelper tog = NetHelper.init(rb.init() - 26, rb.write() + 2, 22, rb.sync() - 4);
          PacketUtil.load(
-            g, tog, 4, on ? this.init(-1474094563, ct.Inner_DataUtil.TOGGLE) : 1074926358, on ? this.init(-39836, ct.Inner_DataUtil.TOGGLE) : 1716936038
+            g, tog, 4, on ? this.init(-1474094563, ThemePaletteManager.Inner_DataUtil.TOGGLE) : 1074926358, on ? this.init(-39836, ThemePaletteManager.Inner_DataUtil.TOGGLE) : 1716936038
          );
          int knobX = on ? tog.init() - 10 : tog.read() + 2;
-         PacketUtil.init(g, NetHelper.init(knobX, tog.write() + 2, 8, tog.sync() - 4), on ? this.init(-50373, ct.Inner_DataUtil.TOGGLE) : -7697782);
+         PacketUtil.init(g, NetHelper.init(knobX, tog.write() + 2, 8, tog.sync() - 4), on ? this.init(-50373, ThemePaletteManager.Inner_DataUtil.TOGGLE) : -7697782);
          if (clickable) {
             this.init_V_NetHelper(rb, () -> setter.accept(!getter.get()), null);
          }
@@ -231,10 +231,10 @@ public class AutismSettingsScreen extends Screen {
       this.set = Math.max(this.set, this.init(label));
       return (g, rb, mx, my, clickable) -> {
          boolean hover = clickable && rb.init_Z(mx, my);
-         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ct.Inner_DataUtil.BUTTON) : 639113758, this.init(1717972012, ct.Inner_DataUtil.OUTLINE));
-         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
+         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ThemePaletteManager.Inner_DataUtil.BUTTON) : 639113758, this.init(1717972012, ThemePaletteManager.Inner_DataUtil.OUTLINE));
+         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
          int vw = k.init(this.font, value, autismclient.gui.f.a.DataUtil.init, -4743522);
-         this.init(g, value, autismclient.gui.f.a.DataUtil.init, this.init(-39836, ct.Inner_DataUtil.ACCENT), rb.init() - vw - 6, this.init(rb));
+         this.init(g, value, autismclient.gui.f.a.DataUtil.init, this.init(-39836, ThemePaletteManager.Inner_DataUtil.ACCENT), rb.init() - vw - 6, this.init(rb));
          if (clickable) {
             this.init_V_NetHelper(rb, onLeft, onRight);
          }
@@ -250,8 +250,8 @@ public class AutismSettingsScreen extends Screen {
       }
 
       return (g, rb, mx, my, clickable) -> {
-         PacketUtil.load(g, rb, 4, 639113758, this.init(1717972012, ct.Inner_DataUtil.OUTLINE));
-         this.init(g, "Command Prefix", autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
+         PacketUtil.load(g, rb, 4, 639113758, this.init(1717972012, ThemePaletteManager.Inner_DataUtil.OUTLINE));
+         this.init(g, "Command Prefix", autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
          int ctrlW = Math.min(110, rb.update() / 2);
          NetHelper ctrl = NetHelper.init(rb.init() - ctrlW - 2, rb.write() + 1, ctrlW, rb.sync() - 2);
          this.init_RefQueue.init_V_NetHelper(ctrl);
@@ -278,13 +278,13 @@ public class AutismSettingsScreen extends Screen {
             g,
             rb,
             4,
-            active ? this.init(1428429341, ct.Inner_DataUtil.ACCENT) : (hover ? this.init(1075845661, ct.Inner_DataUtil.BUTTON) : 639113758),
-            active ? this.init(-39836, ct.Inner_DataUtil.ACCENT) : this.init(1717972012, ct.Inner_DataUtil.OUTLINE)
+            active ? this.init(1428429341, ThemePaletteManager.Inner_DataUtil.ACCENT) : (hover ? this.init(1075845661, ThemePaletteManager.Inner_DataUtil.BUTTON) : 639113758),
+            active ? this.init(-39836, ThemePaletteManager.Inner_DataUtil.ACCENT) : this.init(1717972012, ThemePaletteManager.Inner_DataUtil.OUTLINE)
          );
-         this.init(g, k.init_Str(), autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
+         this.init(g, k.init_Str(), autismclient.gui.f.a.DataUtil.load, this.init(-791321, ThemePaletteManager.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
          String v = active ? "press a key..." : ValueSink.init_Str(k.init_IntSupplier().getAsInt());
          int vw = autismclient.gui.f.b.k.init(this.font, v, autismclient.gui.f.a.DataUtil.init, -4743522);
-         this.init(g, v, autismclient.gui.f.a.DataUtil.init, this.init(-4743522, ct.Inner_DataUtil.TEXT), rb.init() - vw - 6, this.init(rb));
+         this.init(g, v, autismclient.gui.f.a.DataUtil.init, this.init(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT), rb.init() - vw - 6, this.init(rb));
          if (clickable) {
             this.init_V_NetHelper(rb, () -> this.init_V(idx), null);
          }
@@ -320,12 +320,12 @@ public class AutismSettingsScreen extends Screen {
       this.tick = this.init_I(UtilCore.init_I_UtilCore_DataUtil(metrics, my, this.run));
    }
 
-   private int init(int argb, ct.Inner_DataUtil ch) {
-      return ct.init_I_I_ct_DataUtil(argb, ch);
+   private int init(int argb, ThemePaletteManager.Inner_DataUtil ch) {
+      return ThemePaletteManager.init_I_I_ct_DataUtil(argb, ch);
    }
 
    private int init_I() {
-      return this.init(-5035221, ct.Inner_DataUtil.OUTLINE);
+      return this.init(-5035221, ThemePaletteManager.Inner_DataUtil.OUTLINE);
    }
 
    private void init(GuiGraphicsExtractor g, NetHelper b, String label, boolean hover, boolean primary) {

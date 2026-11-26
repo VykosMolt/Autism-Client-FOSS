@@ -1,8 +1,8 @@
 package autismclient.mixin;
 
 import autismclient.modules.aD;
-import autismclient.util.aT;
-import autismclient.util.cC;
+import autismclient.util.CustomMainMenuGuard;
+import autismclient.util.CustomSplashProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -18,11 +18,11 @@ public class AutismSplashRendererMixin {
    private void autism$hideSplashText(GuiGraphicsExtractor graphics, int screenWidth, Font font, float alpha, CallbackInfo ci) {
       if (aD.init_Z()) {
          if (!Minecraft.getInstance().options.hideSplashTexts().get()) {
-            cC.init(Minecraft.getInstance(), graphics, screenWidth, font, alpha);
+            CustomSplashProvider.init(Minecraft.getInstance(), graphics, screenWidth, font, alpha);
          }
 
          ci.cancel();
-      } else if (!aT.load()) {
+      } else if (!CustomMainMenuGuard.load()) {
          ci.cancel();
       }
    }

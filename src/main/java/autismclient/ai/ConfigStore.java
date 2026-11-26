@@ -2,8 +2,8 @@ package autismclient.ai;
 
 import autismclient.AutismClientAddon;
 import autismclient.util.AutismConfig;
-import autismclient.util.bk;
-import autismclient.util.cX;
+import autismclient.util.OverlayManager;
+import autismclient.util.AutismOverlay;
 import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -60,18 +60,18 @@ public final class ConfigStore implements autismclient.util.SilentMovementCoordi
       }
    }
 
-   public cX init_cX() {
+   public AutismOverlay init_cX() {
       return this.init_AiAssistantOverlay;
    }
 
    public void load_V() {
       if (this.init_AiAssistantOverlay != null && this.init_AiAssistantOverlay.sync_Z()) {
-         bk.init_bk().init_V(this.init_AiAssistantOverlay);
+         OverlayManager.init_bk().init_V(this.init_AiAssistantOverlay);
       }
    }
 
    public void read() {
-      bk manager = bk.init_bk();
+      OverlayManager manager = OverlayManager.init_bk();
       if (this.init_AiAssistantOverlay != null
          && this.init_AiAssistantOverlay.sync_Z()
          && manager.init_List().contains(this.init_AiAssistantOverlay)
@@ -88,7 +88,7 @@ public final class ConfigStore implements autismclient.util.SilentMovementCoordi
             this.init_AiAssistantOverlay = new AiAssistantOverlay(cc.init_cc());
          }
 
-         bk manager = bk.init_bk();
+         OverlayManager manager = OverlayManager.init_bk();
          manager.init_V(this.init_AiAssistantOverlay);
          manager.init_V_cX_Z(this.init_AiAssistantOverlay, false);
          this.init_AiAssistantOverlay.init_V_Z(true);
@@ -165,7 +165,7 @@ public final class ConfigStore implements autismclient.util.SilentMovementCoordi
       if (this.init_AiAssistantOverlay != null
          && this.init_AiAssistantOverlay.sync_Z()
          && init_Minecraft.gui.screen() != null
-         && bk.init_bk().init_List().contains(this.init_AiAssistantOverlay)) {
+         && OverlayManager.init_bk().init_List().contains(this.init_AiAssistantOverlay)) {
          this.init_AiAssistantOverlay.push_V();
          init_Minecraft.gui.setScreen(null);
       }

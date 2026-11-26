@@ -1,8 +1,8 @@
 package autismclient.gui.f.c;
 
 import autismclient.gui.f.b.MethodUtil;
-import autismclient.util.ct;
-import autismclient.util.cu;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.ThemeTextureRecolorer;
 import net.minecraft.resources.Identifier;
 
 public final class ConfigStore extends TableIndex {
@@ -59,7 +59,7 @@ public final class ConfigStore extends TableIndex {
             int contentX = drawX;
             if (this.init_Identifier != null) {
                int iconY = drawY + Math.max(1, (drawH - this.init_I) / 2);
-               context.init(cu.init(this.init_Identifier, ct.Inner_DataUtil.ACCENT), drawX, iconY, drawX + this.init_I, iconY + this.init_I);
+               context.init(ThemeTextureRecolorer.init(this.init_Identifier, ThemePaletteManager.Inner_DataUtil.ACCENT), drawX, iconY, drawX + this.init_I, iconY + this.init_I);
                contentX += this.init_I + this.load_I;
             }
 
@@ -69,7 +69,7 @@ public final class ConfigStore extends TableIndex {
                   this.init_Str,
                   contentX,
                   drawY + Math.max(1, (drawH - 9) / 2),
-                  context.init_I_I(ct.init_I_I_ct_DataUtil(-791321, ct.Inner_DataUtil.TEXT))
+                  context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-791321, ThemePaletteManager.Inner_DataUtil.TEXT))
                );
          }
       }

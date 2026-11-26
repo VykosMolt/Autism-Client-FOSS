@@ -7,8 +7,8 @@ import autismclient.util.bW;
 import autismclient.util.ProxyListManager;
 import autismclient.util.ProxyProtocolType;
 import autismclient.util.cA;
-import autismclient.util.ct;
-import autismclient.util.cz;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.GuiIconAtlas;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -259,7 +259,7 @@ public class ProxiesScreen extends KeyHolder {
       check.init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY);
       check.init_Z = proxy.init_bW_CachePool != bW.Inner_CachePool.CHECKING;
       autismclient.gui.f.b.ByteReader delete = autismclient.gui.f.b.ByteReader.init(deleteX, btnY, btnH, btnH, Component.empty(), b -> this.load_V_bW(proxy));
-      delete.init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER).init_ByteReader_Identifier(cz.open);
+      delete.init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER).init_ByteReader_Identifier(GuiIconAtlas.open);
       return new ProxiesScreen.Inner_StreamUtil(proxy, rowY, activeSection, toggle, check, delete);
    }
 
@@ -1391,11 +1391,11 @@ public class ProxiesScreen extends KeyHolder {
    }
 
    private static int load_I_I(int argb) {
-      return ct.init_I_I_ct_DataUtil(argb, ct.Inner_DataUtil.OUTLINE);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(argb, ThemePaletteManager.Inner_DataUtil.OUTLINE);
    }
 
    private static int read_I_I(int argb) {
-      return ct.init_I_I_ct_DataUtil(argb, ct.Inner_DataUtil.SUCCESS);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(argb, ThemePaletteManager.Inner_DataUtil.SUCCESS);
    }
 
    private enum Inner_DataUtil {

@@ -268,7 +268,7 @@ final class MapStore {
                      colors.advanced = true;
                   }
 
-                  autismclient.util.ct.init_V();
+                  autismclient.util.ThemePaletteManager.init_V();
                   cfg.save();
                   JsonObject out = init(colors);
                   out.addProperty("changed", changed);
@@ -282,7 +282,7 @@ final class MapStore {
                }
 
                colors.advanced = false;
-               autismclient.util.ct.init_V();
+               autismclient.util.ThemePaletteManager.init_V();
                cfg.save();
                return init(colors);
             default:
@@ -407,7 +407,7 @@ final class MapStore {
          colors.addProperty(channel, init(init(c, channel)));
       }
 
-      return ag.init_JsonObject_ObjArr("advanced", c.advanced, "customized", autismclient.util.ct.init_Z(), "colors", colors);
+      return ag.init_JsonObject_ObjArr("advanced", c.advanced, "customized", autismclient.util.ThemePaletteManager.init_Z(), "colors", colors);
    }
 
    static JsonObject read(JsonObject args) {
@@ -419,18 +419,18 @@ final class MapStore {
                case "list":
                   JsonArray elements = new JsonArray();
 
-                  for (String id : autismclient.util.al.init_List()) {
+                  for (String id : autismclient.util.AutismHudManager.init_List()) {
                      elements.add(init(id, false));
                   }
 
-                  return ag.init_JsonObject_ObjArr("elements", elements, "revision", autismclient.util.al.load_I());
+                  return ag.init_JsonObject_ObjArr("elements", elements, "revision", autismclient.util.AutismHudManager.load_I());
                case "get":
                   return init(init_Str(args), true);
                case "set": {
                   String id = init_Str(args);
-                  AutismConfig.HudElementState state = autismclient.util.al.init_AutismConfig_HudEl_Str(id);
+                  AutismConfig.HudElementState state = autismclient.util.AutismHudManager.init_AutismConfig_HudEl_Str(id);
                   if (args.has("enabled")) {
-                     autismclient.util.al.init_V_Str_Z(id, ag.init_Z_JsonObject(args, "enabled", state.enabled));
+                     autismclient.util.AutismHudManager.init_V_Str_Z(id, ag.init_Z_JsonObject(args, "enabled", state.enabled));
                   }
 
                   boolean positioned = args.has("x") || args.has("y");
@@ -446,7 +446,7 @@ final class MapStore {
                         state.f_y_I = ag.init_I_JsonObject(args, "y", state.f_y_I);
                      }
                   } else if (positioned) {
-                     autismclient.util.al.init_V_Str(
+                     autismclient.util.AutismHudManager.init_V_Str(
                         id,
                         ag.init_I_JsonObject(args, "x", state.f_x_I),
                         ag.init_I_JsonObject(args, "y", state.f_y_I),
@@ -462,16 +462,16 @@ final class MapStore {
                   if (args.has("settings") && args.get("settings").isJsonObject()) {
                      for (Entry<String, JsonElement> entry : args.getAsJsonObject("settings").entrySet()) {
                         String value = entry.getValue().isJsonPrimitive() ? entry.getValue().getAsString() : entry.getValue().toString();
-                        autismclient.util.al.init_V_Str(id, entry.getKey(), value);
+                        autismclient.util.AutismHudManager.init_V_Str(id, entry.getKey(), value);
                      }
                   }
 
-                  autismclient.util.al.init_V_Str_Z(id, autismclient.util.al.init_AutismConfig_HudEl_Str(id).enabled);
+                  autismclient.util.AutismHudManager.init_V_Str_Z(id, autismclient.util.AutismHudManager.init_AutismConfig_HudEl_Str(id).enabled);
                   return init(id, true);
                }
                case "reset": {
                   String id = init_Str(args);
-                  autismclient.util.al.load_V(id);
+                  autismclient.util.AutismHudManager.load_V(id);
                   return init(id, true);
                }
                default:
@@ -484,7 +484,7 @@ final class MapStore {
    private static String init_Str(JsonObject args) {
       String id = load(args, "id");
 
-      for (String known : autismclient.util.al.init_List()) {
+      for (String known : autismclient.util.AutismHudManager.init_List()) {
          if (known.equalsIgnoreCase(id)) {
             return known;
          }
@@ -494,14 +494,14 @@ final class MapStore {
    }
 
    private static JsonObject init(String id, boolean withSettings) {
-      AutismConfig.HudElementState s = autismclient.util.al.init_AutismConfig_HudEl_Str(id);
+      AutismConfig.HudElementState s = autismclient.util.AutismHudManager.init_AutismConfig_HudEl_Str(id);
       JsonObject out = ag.init_JsonObject_ObjArr(
          "id",
          id,
          "label",
-         autismclient.util.al.init_Str_Str(id),
+         autismclient.util.AutismHudManager.init_Str_Str(id),
          "description",
-         autismclient.util.al.load_Str(id),
+         autismclient.util.AutismHudManager.load_Str(id),
          "enabled",
          s.enabled,
          "x",

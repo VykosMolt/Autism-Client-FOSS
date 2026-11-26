@@ -1,8 +1,8 @@
 package autismclient.gui.f.c;
 
 import autismclient.gui.f.b.j;
-import autismclient.util.cs;
-import autismclient.util.p;
+import autismclient.util.ThemedTextHelper;
+import autismclient.util.UiColorPalette;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -17,15 +17,15 @@ public final class RenderState<T> {
    private final List<T> init_List = new ArrayList<>();
    private int init_I = -1;
    private boolean init_Z = true;
-   private int load_I = p.update();
-   private int read_I = p.count();
-   private int write_I = p.table();
+   private int load_I = UiColorPalette.update();
+   private int read_I = UiColorPalette.count();
+   private int write_I = UiColorPalette.table();
    private int update = -1;
-   private int sync = p.bind();
+   private int sync = UiColorPalette.bind();
    private Function<T, String> load_Function;
    private Function<T, Integer> read_Function;
    private Function<T, String> write_Function;
-   private int flush = p.bind();
+   private int flush = UiColorPalette.bind();
 
    public RenderState(
       int x, int y, int width, int height, int rowHeight, int scrollbarWidth, Function<T, String> labelExtractor, BiConsumer<T, Boolean> selectionHandler
@@ -177,19 +177,19 @@ public final class RenderState<T> {
             }
 
             int labelMaxWidth = Math.max(20, availableWidth - reservedWidth);
-            String trimmedLabel = cs.init(textRenderer, label, labelMaxWidth, cs.Inner_DataUtil.BODY);
-            cs.init(ctx, textRenderer, trimmedLabel, textColor, textX, textY, false);
+            String trimmedLabel = ThemedTextHelper.init(textRenderer, label, labelMaxWidth, ThemedTextHelper.Inner_DataUtil.BODY);
+            ThemedTextHelper.init(ctx, textRenderer, trimmedLabel, textColor, textX, textY, false);
             if (badge != null && !badge.isEmpty()) {
-               int labelWidth = cs.init(textRenderer, trimmedLabel, cs.Inner_DataUtil.BODY);
+               int labelWidth = ThemedTextHelper.init(textRenderer, trimmedLabel, ThemedTextHelper.Inner_DataUtil.BODY);
                int badgeX = textX + labelWidth + 4;
                int badgeColor = this.read_Function != null ? this.read_Function.apply(item) : -22016;
-               cs.init(ctx, textRenderer, badge, badgeColor, badgeX, textY, false);
+               ThemedTextHelper.init(ctx, textRenderer, badge, badgeColor, badgeX, textY, false);
             }
 
             if (secondary != null && !secondary.isEmpty()) {
                int secondaryWidth = textRenderer.width(secondary);
                int secondaryX = bounds.init + bounds.read - secondaryWidth - 6;
-               cs.init(ctx, textRenderer, secondary, this.flush, secondaryX, textY, false);
+               ThemedTextHelper.init(ctx, textRenderer, secondary, this.flush, secondaryX, textY, false);
             }
          }
       });

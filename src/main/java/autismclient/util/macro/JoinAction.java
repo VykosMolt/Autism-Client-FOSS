@@ -3,7 +3,7 @@ package autismclient.util.macro;
 import autismclient.AutismClientAddon;
 import autismclient.mixin.accessor.AutismConnectScreenAccessor;
 import autismclient.util.bi;
-import autismclient.util.cx;
+import autismclient.util.OverlayScreenController;
 import io.netty.channel.ChannelFuture;
 import java.util.List;
 import java.util.Locale;
@@ -168,7 +168,7 @@ public class JoinAction implements MacroAction {
          }
       }
 
-      if (cx.init_Screen(mc) == screen) {
+      if (OverlayScreenController.init_Screen(mc) == screen) {
          mc.gui.setScreen(access.autism$parent());
       }
    }
@@ -256,7 +256,7 @@ public class JoinAction implements MacroAction {
 
       boolean init_Z() throws InterruptedException {
          this.read_J = System.currentTimeMillis();
-         if (cx.init_Screen(this.init_Minecraft) instanceof DisconnectedScreen earlier) {
+         if (OverlayScreenController.init_Screen(this.init_Minecraft) instanceof DisconnectedScreen earlier) {
             this.init_Screen = earlier;
          }
 
@@ -303,7 +303,7 @@ public class JoinAction implements MacroAction {
       }
 
       private Boolean init(long now, long elapsed) {
-         Screen screen = cx.init_Screen(this.init_Minecraft);
+         Screen screen = OverlayScreenController.init_Screen(this.init_Minecraft);
          if (this.init_ClassCache_DataUti == null && screen instanceof ConnectScreen connecting && this.init_Minecraft.level == null) {
             ServerData pending = autismclient.modules.AutoReconnectController.init_ServerData();
             if (pending == null || !JoinAction.init_Z_Str_Str(pending.ip, this.init_Str)) {
@@ -388,13 +388,13 @@ public class JoinAction implements MacroAction {
          ServerAddress target = ServerAddress.parseString(this.init_Str);
          this.init_Minecraft.execute(() -> {
             try {
-               Screen current = cx.init_Screen(this.init_Minecraft);
+               Screen current = OverlayScreenController.init_Screen(this.init_Minecraft);
                if (current instanceof ConnectScreen already) {
                   next.init_Z = false;
                   next.init_ConnectScreen = already;
                } else {
                   ConnectScreen.startConnecting(init_Screen_Screen(current), this.init_Minecraft, target, this.init_ServerData(), false, null);
-                  if (cx.init_Screen(this.init_Minecraft) instanceof ConnectScreen connecting) {
+                  if (OverlayScreenController.init_Screen(this.init_Minecraft) instanceof ConnectScreen connecting) {
                      next.init_ConnectScreen = connecting;
                   }
                }
@@ -507,7 +507,7 @@ public class JoinAction implements MacroAction {
             return this.read ? JoinAction.Inner_StreamUtil.FAILED : JoinAction.Inner_StreamUtil.CANCELLED;
          }
 
-         Screen current = cx.init_Screen(mc);
+         Screen current = OverlayScreenController.init_Screen(mc);
          if (current == connecting || init_Z_AutismConnectScree(access)) {
             this.load_J = -1L;
             return JoinAction.Inner_StreamUtil.ALIVE;
@@ -527,7 +527,7 @@ public class JoinAction implements MacroAction {
       boolean init_Z_Minecraft(Minecraft mc) {
          ConnectScreen connecting = this.init_ConnectScreen;
          if (connecting != null && mc.level == null) {
-            Screen current = cx.init_Screen(mc);
+            Screen current = OverlayScreenController.init_Screen(mc);
             return current != connecting && !(current instanceof DisconnectedScreen) && init_Z_AutismConnectScree((AutismConnectScreenAccessor)connecting);
          } else {
             return false;

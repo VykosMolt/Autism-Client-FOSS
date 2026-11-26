@@ -1,7 +1,7 @@
 package autismclient.modules;
 
 import autismclient.util.AutismAdminToolsOverlay;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import net.minecraft.world.item.ItemStack;
 
 public final class AdminToolsItemHelper {
@@ -19,7 +19,7 @@ public final class AdminToolsItemHelper {
 
       try {
          AutismAdminToolsOverlay overlay = AutismAdminToolsOverlay.init_AutismAdminToolsOv();
-         bk manager = bk.init_bk();
+         OverlayManager manager = OverlayManager.init_bk();
          manager.init_V(overlay);
          overlay.init_V_Z(true);
          overlay.read_V_2();

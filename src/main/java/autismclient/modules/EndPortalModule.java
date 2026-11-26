@@ -4,11 +4,11 @@ import autismclient.api.module.BoolSetting;
 import autismclient.api.module.ColorSetting;
 import autismclient.api.module.DoubleSetting;
 import autismclient.api.module.EnumSetting;
-import autismclient.util.cR;
-import autismclient.util.cS;
-import autismclient.util.cT;
-import autismclient.util.cU;
-import autismclient.util.cV;
+import autismclient.util.EndPortalMemoryCache;
+import autismclient.util.StrongholdTriangulator;
+import autismclient.util.StrongholdRingEstimator;
+import autismclient.util.EndPortalSessionTracker;
+import autismclient.util.EndPortalDisplayHelper;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -41,10 +41,10 @@ public final class EndPortalModule extends Module {
    private final ColorSetting init_ColorSetting;
    private final DoubleSetting init_DoubleSetting;
    private final EnumSetting<EndPortalModule.Inner_DataUtil> init_EnumSetting;
-   private final cR init_cR = new cR();
-   private final cU init_cU = new cU(this.init_cR);
+   private final EndPortalMemoryCache init_cR = new EndPortalMemoryCache();
+   private final EndPortalSessionTracker init_cU = new EndPortalSessionTracker(this.init_cR);
    private final Map<Integer, EndPortalModule.Inner_StreamUtil> init_Map = new LinkedHashMap<>();
-   private cR.Inner_DataUtil init_cR_DataUtil;
+   private EndPortalMemoryCache.Inner_DataUtil init_cR_DataUtil;
    private List<int[]> init_List = List.of();
    private int load_I = -1;
    private int read_I;
@@ -54,7 +54,7 @@ public final class EndPortalModule extends Module {
    private long init_J = -1L;
    private Vec3 init_Vec3;
    private Vec3 load_Vec3;
-   private Map<Long, cS.Inner_CachePool> load_Map = Map.of();
+   private Map<Long, StrongholdTriangulator.Inner_CachePool> load_Map = Map.of();
    private List<Vec3> load_List = List.of();
    private volatile List<BlockPos> read_List = List.of();
 
@@ -162,7 +162,7 @@ public final class EndPortalModule extends Module {
    }
 
    static boolean load_Z() {
-      return MC.level != null && cU.init_Z_Z_Z(MC.level.dimensionType().hasSkyLight(), MC.level.dimensionType().hasEnderDragonFight());
+      return MC.level != null && EndPortalSessionTracker.init_Z_Z_Z(MC.level.dimensionType().hasSkyLight(), MC.level.dimensionType().hasEnderDragonFight());
    }
 
    private boolean pop() {
@@ -209,7 +209,7 @@ public final class EndPortalModule extends Module {
             && !(eye.position().distanceToSqr(MC.player.position()) > 4096.0)
             && !(eye.getDeltaMovement().horizontalDistance() > 0.09)
             && module.init_Map.size() < 4) {
-            module.init_Map.put(eye.getId(), new EndPortalModule.Inner_StreamUtil(eye.getUUID(), MC.level.getGameTime(), new cS.Inner_StreamUtil(eye.position())));
+            module.init_Map.put(eye.getId(), new EndPortalModule.Inner_StreamUtil(eye.getUUID(), MC.level.getGameTime(), new StrongholdTriangulator.Inner_StreamUtil(eye.position())));
          }
       }
    }
@@ -223,11 +223,11 @@ public final class EndPortalModule extends Module {
          Entity eye = MC.level.getEntity(entry.getKey());
          int age = (int)(MC.level.getGameTime() - tracked.init_J);
          if (eye instanceof EyeOfEnder && eye.isAlive() && eye.getUUID().equals(tracked.init_UUID) && age >= 0 && age <= 60) {
-            cS.Inner_BufferHelper ray = tracked.init_cS_StreamUtil.init(eye.position(), age);
+            StrongholdTriangulator.Inner_BufferHelper ray = tracked.init_cS_StreamUtil.init(eye.position(), age);
             if (ray != null) {
                boolean added = this.init_cR_DataUtil.init_cS.init_Z_Vec3_Vec3(ray.init(), ray.load().scale(8.0));
                if (added) {
-                  cT.Inner_StreamUtil prediction = this.init_cR_DataUtil.init_cS.init_cT_StreamUtil();
+                  StrongholdRingEstimator.Inner_StreamUtil prediction = this.init_cR_DataUtil.init_cS.init_cT_StreamUtil();
                   autismclient.util.bi.read(
                      prediction != null
                         ? "EndPortal: stronghold location estimated."
@@ -291,7 +291,7 @@ public final class EndPortalModule extends Module {
                current.add(pos.asLong());
                BlockState state = chunk.getBlockState(pos);
                if (state.is(Blocks.END_PORTAL_FRAME)) {
-                  this.init_cR_DataUtil.init(new cS.Inner_CachePool(pos, state.getValue(EndPortalFrameBlock.FACING)));
+                  this.init_cR_DataUtil.init(new StrongholdTriangulator.Inner_CachePool(pos, state.getValue(EndPortalFrameBlock.FACING)));
                }
             }
 
@@ -330,11 +330,11 @@ public final class EndPortalModule extends Module {
 
    private void update_V() {
       List<BlockPos> shown = new ArrayList<>();
-      Iterator<Entry<Long, cS.Inner_CachePool>> iterator = this.init_cR_DataUtil.init_Map.entrySet().iterator();
+      Iterator<Entry<Long, StrongholdTriangulator.Inner_CachePool>> iterator = this.init_cR_DataUtil.init_Map.entrySet().iterator();
       int view = am.init_I();
 
       while (iterator.hasNext()) {
-         cS.Inner_CachePool f = iterator.next().getValue();
+         StrongholdTriangulator.Inner_CachePool f = iterator.next().getValue();
          BlockPos pos = f.init_BlockPos();
          if (MC.level.getChunkSource().getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.FULL, false) != null) {
             BlockState state = MC.level.getBlockState(pos);
@@ -342,10 +342,10 @@ public final class EndPortalModule extends Module {
                iterator.remove();
             } else {
                if (state.getValue(EndPortalFrameBlock.FACING) != f.init_Direction()) {
-                  this.init_cR_DataUtil.init(new cS.Inner_CachePool(pos, state.getValue(EndPortalFrameBlock.FACING)));
+                  this.init_cR_DataUtil.init(new StrongholdTriangulator.Inner_CachePool(pos, state.getValue(EndPortalFrameBlock.FACING)));
                }
 
-               if (cV.init(MC.player.position(), Vec3.atCenterOf(pos), view)) {
+               if (EndPortalDisplayHelper.init(MC.player.position(), Vec3.atCenterOf(pos), view)) {
                   shown.add(pos);
                }
             }
@@ -355,7 +355,7 @@ public final class EndPortalModule extends Module {
       shown.sort(Comparator.comparingDouble(p -> p.distToCenterSqr(MC.player.position())));
       this.read_List = List.copyOf(shown);
       if (!this.load_Map.equals(this.init_cR_DataUtil.init_Map)) {
-         this.load_List = cS.init_List_Collection(this.init_cR_DataUtil.init_Map.values());
+         this.load_List = StrongholdTriangulator.init_List_Collection(this.init_cR_DataUtil.init_Map.values());
          this.load_Map = Map.copyOf(this.init_cR_DataUtil.init_Map);
       }
 
@@ -453,6 +453,6 @@ public final class EndPortalModule extends Module {
       COORDINATES;
    }
 
-   private record Inner_StreamUtil(UUID init_UUID, long init_J, cS.Inner_StreamUtil init_cS_StreamUtil) {
+   private record Inner_StreamUtil(UUID init_UUID, long init_J, StrongholdTriangulator.Inner_StreamUtil init_cS_StreamUtil) {
    }
 }

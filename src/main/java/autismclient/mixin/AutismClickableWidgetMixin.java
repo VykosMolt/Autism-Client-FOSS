@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,7 +20,7 @@ public abstract class AutismClickableWidgetMixin {
       at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/components/AbstractWidget;isHovered:Z", shift = Shift.AFTER)
    )
    private void autism$suppressHoverWhenOverlayBlocks(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-      if (bk.init_bk().load(mouseX, mouseY)) {
+      if (OverlayManager.init_bk().load(mouseX, mouseY)) {
          this.isHovered = false;
       }
    }

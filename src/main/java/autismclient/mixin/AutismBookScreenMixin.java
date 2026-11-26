@@ -4,9 +4,9 @@ import autismclient.compat263.Compat263;
 import autismclient.gui.f.b.DataPipe;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.ScreenOverlayHost;
-import autismclient.util.aH;
+import autismclient.util.ContainerScreenToolbar;
 import autismclient.util.cA;
-import autismclient.util.cp;
+import autismclient.util.DesyncableScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.BookViewScreen;
@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(BookViewScreen.class)
-public abstract class AutismBookScreenMixin extends Screen implements cp {
+public abstract class AutismBookScreenMixin extends Screen implements DesyncableScreen {
    @Unique
    private static final Minecraft MC = Minecraft.getInstance();
    @Unique
@@ -51,7 +51,7 @@ public abstract class AutismBookScreenMixin extends Screen implements cp {
             double mouseX = cA.init_D_D(click.x());
             double mouseY = cA.init_D_D(click.y());
 
-            for (DataPipe button : aH.init(MC, this.autism$host.queueEditorOverlay())) {
+            for (DataPipe button : ContainerScreenToolbar.init(MC, this.autism$host.queueEditorOverlay())) {
                if (button.init(mouseX, mouseY, Compat263.mouseEventGlfwButton(click))) {
                   cir.setReturnValue(true);
                   return;

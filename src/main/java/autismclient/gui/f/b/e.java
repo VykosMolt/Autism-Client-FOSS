@@ -1,6 +1,6 @@
 package autismclient.gui.f.b;
 
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 import java.util.function.ToIntFunction;
 
 public final class e {
@@ -58,7 +58,7 @@ public final class e {
             autismclient.gui.f.PacketUtil.init(
                context.init_GuiGraphicsExtract(),
                autismclient.gui.f.NetHelper.init(selectX, bounds.write() + 3, selectW, Math.max(1, bounds.sync() - 6)),
-               ct.init_I_I_ct_DataUtil(1728006730, ct.Inner_DataUtil.ACCENT)
+               ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.Inner_DataUtil.ACCENT)
             );
          }
 

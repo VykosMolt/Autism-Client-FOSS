@@ -660,7 +660,7 @@ public final class AutismConfig implements Cloneable {
          this.hudEdgePadding = 4;
       }
 
-      this.commandPrefix = z.init_Str(this.commandPrefix);
+      this.commandPrefix = CommandPrefixHelper.init_Str(this.commandPrefix);
       if (!this.resourcePackChoiceInitialized) {
          this.pretendPackAccepted = false;
          this.resourcePackChoiceInitialized = true;

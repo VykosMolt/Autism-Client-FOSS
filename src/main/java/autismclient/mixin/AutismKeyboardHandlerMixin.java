@@ -4,7 +4,7 @@ import autismclient.ai.aP;
 import autismclient.commands.CommandManager;
 import autismclient.compat263.Compat263;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.cx;
+import autismclient.util.OverlayScreenController;
 import autismclient.util.SystemClipboardHelper;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -27,7 +27,7 @@ public class AutismKeyboardHandlerMixin {
 
    @WrapMethod(method = "keyPress")
    private void autism$userKey(long window, int action, KeyEvent event, Operation<Void> original) {
-      cx.init_V();
+      OverlayScreenController.init_V();
 
       try {
          if (action == 1 && event != null) {
@@ -53,7 +53,7 @@ public class AutismKeyboardHandlerMixin {
             original.call(window, action, event);
          }
       } finally {
-         cx.load_V();
+         OverlayScreenController.load_V();
       }
    }
 
@@ -99,7 +99,7 @@ public class AutismKeyboardHandlerMixin {
 
    @WrapMethod(method = "charTyped")
    private void autism$userText(long window, CharacterEvent event, Operation<Void> original) {
-      cx.init_V();
+      OverlayScreenController.init_V();
 
       try {
          if (AutismLiteVariant.enabled() || !aP.load_Z()) {
@@ -107,7 +107,7 @@ public class AutismKeyboardHandlerMixin {
             return;
          }
       } finally {
-         cx.load_V();
+         OverlayScreenController.load_V();
       }
    }
 

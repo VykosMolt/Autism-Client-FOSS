@@ -9,10 +9,10 @@ import autismclient.gui.d.UtilCore;
 import autismclient.gui.f.b.BitSetUtil;
 import autismclient.modules.aD;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.aT;
+import autismclient.util.CustomMainMenuGuard;
 import autismclient.util.bi;
 import autismclient.util.cA;
-import autismclient.util.cx;
+import autismclient.util.OverlayScreenController;
 import autismclient.util.macro.MacroExecutor;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -48,7 +48,7 @@ public class AutismGuiSetScreenMixin {
 
    @Inject(method = "screen", at = @At("RETURN"), cancellable = true)
    private void autism$foregroundScreen(CallbackInfoReturnable<Screen> cir) {
-      cir.setReturnValue(cx.init_Screen(cir.getReturnValue()));
+      cir.setReturnValue(OverlayScreenController.init_Screen(cir.getReturnValue()));
    }
 
    @ModifyExpressionValue(
@@ -56,42 +56,42 @@ public class AutismGuiSetScreenMixin {
       at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/Gui;screen:Lnet/minecraft/client/gui/screens/Screen;")
    )
    private Screen autism$renderForeground(Screen actual) {
-      return cx.init_Screen(actual);
+      return OverlayScreenController.init_Screen(actual);
    }
 
    @WrapOperation(method = "setScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;removed()V"))
    private void autism$keepEditorAlive(Screen previous, Operation<Void> original) {
-      if (!cx.init_Z(previous)) {
+      if (!OverlayScreenController.init_Z(previous)) {
          original.call(previous);
       }
    }
 
    @WrapMethod(method = "tick")
    private void autism$tickConnectionAndEditor(Operation<Void> original) {
-      cx.read_V();
+      OverlayScreenController.read_V();
 
       try {
          original.call();
       } finally {
-         cx.write();
+         OverlayScreenController.write();
       }
 
-      cx.load_V(this.screen);
+      OverlayScreenController.load_V(this.screen);
    }
 
    @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
    private void autism$replaceScreen(Screen screen, CallbackInfo ci) {
       if (aD.init_Z()) {
-         cx.update();
+         OverlayScreenController.update();
       }
 
       if (!AutismLiteVariant.enabled() && screen instanceof JsonUtil) {
-         cx.update();
+         OverlayScreenController.update();
          BitSetUtil.init_V();
-      } else if (!this.autism$replacingScreen && cx.init(this.minecraft, this.screen, screen)) {
+      } else if (!this.autism$replacingScreen && OverlayScreenController.init(this.minecraft, this.screen, screen)) {
          ci.cancel();
       } else {
-         if (!cx.read_Z()) {
+         if (!OverlayScreenController.read_Z()) {
             BitSetUtil.init_V();
          }
 
@@ -110,7 +110,7 @@ public class AutismGuiSetScreenMixin {
                } else if (aD.init_Z()) {
                   this.autism$setScreen(new RefQueue());
                   ci.cancel();
-               } else if (!AutismLiteVariant.enabled() && aT.init()) {
+               } else if (!AutismLiteVariant.enabled() && CustomMainMenuGuard.init()) {
                   this.autism$setScreen(new UtilCore());
                   ci.cancel();
                }

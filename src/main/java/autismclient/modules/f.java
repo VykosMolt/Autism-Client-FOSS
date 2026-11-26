@@ -30,7 +30,7 @@ import autismclient.util.AutismWaypoints;
 import autismclient.util.BookBotPageGenerator;
 import autismclient.util.PerTickPlacementLock;
 import autismclient.util.PacketTypeRegistry;
-import autismclient.util.cG;
+import autismclient.util.WindowIconManager;
 import autismclient.util.AutoFishMacroPresets;
 import autismclient.util.HumanizedTurnPlanner;
 import autismclient.util.cc;
@@ -5432,7 +5432,7 @@ public final class f {
 
       private void init() {
          if (MC != null) {
-            cG.load(MC);
+            WindowIconManager.load(MC);
             if (!AutismLiteVariant.enabled() && MC.gui.screen() instanceof autismclient.gui.d.UtilCore) {
                MC.gui.setScreen(new autismclient.gui.d.UtilCore());
             }
@@ -5466,17 +5466,17 @@ public final class f {
 
       @Override
       public void onEnable() {
-         autismclient.util.al.init_V();
+         autismclient.util.AutismHudManager.init_V();
          autismclient.util.macro.ServerTickPhaseTracker.load_V();
       }
 
       @Override
       protected void onSettingsReset() {
-         autismclient.util.al.update_V();
+         autismclient.util.AutismHudManager.update_V();
       }
 
       private void init() {
-         autismclient.util.al.init_V();
+         autismclient.util.AutismHudManager.init_V();
          MC.gui.setScreen(new autismclient.gui.d.AutismHudEditorScreen(MC.gui.screen()));
       }
    }
@@ -6488,7 +6488,7 @@ public final class f {
 
       @Override
       public void onDisable() {
-         autismclient.util.au.load();
+         autismclient.util.BlockPreviewRenderer.load();
          this.init_BlockPos = null;
       }
 
@@ -6497,7 +6497,7 @@ public final class f {
          this.init_BlockPos = pos == null ? null : pos.immutable();
          this.init_Direction = direction == null ? Direction.UP : direction;
          if (this.bool("render")) {
-            autismclient.util.au.init(this.init_BlockPos, this.init("color", this.init("line-color", -12986502)));
+            autismclient.util.BlockPreviewRenderer.init(this.init_BlockPos, this.init("color", this.init("line-color", -12986502)));
          }
 
          this.init_I = 0;
@@ -6511,9 +6511,9 @@ public final class f {
             && this.init_BlockPos != null
             && !AutoTotemModule.init_Z_6()) {
             if (!this.bool("render")) {
-               autismclient.util.au.load();
+               autismclient.util.BlockPreviewRenderer.load();
             } else {
-               autismclient.util.au.init(this.init_BlockPos, this.init("color", this.init("line-color", -12986502)));
+               autismclient.util.BlockPreviewRenderer.init(this.init_BlockPos, this.init("color", this.init("line-color", -12986502)));
             }
 
             if (!MC.level.isOutsideBuildHeight(this.init_BlockPos)
@@ -6553,7 +6553,7 @@ public final class f {
 
       @Override
       public void onGameLeft() {
-         autismclient.util.au.load();
+         autismclient.util.BlockPreviewRenderer.load();
          this.init_BlockPos = null;
       }
    }
@@ -8005,7 +8005,7 @@ public final class f {
 
       @Override
       public void tick() {
-         autismclient.util.ax.init_V();
+         autismclient.util.GuiMovementPassThrough.init_V();
       }
    }
 
@@ -8532,30 +8532,30 @@ public final class f {
 
       @Override
       public void onEnable() {
-         autismclient.util.V.Inner_DataUtil m = this.init_V_DataUtil();
-         autismclient.util.V.init(m, this.bool("fake-y"));
-         if (m == autismclient.util.V.Inner_DataUtil.CUSTOM) {
+         autismclient.util.CoordinateSpoofer.Inner_DataUtil m = this.init_V_DataUtil();
+         autismclient.util.CoordinateSpoofer.init(m, this.bool("fake-y"));
+         if (m == autismclient.util.CoordinateSpoofer.Inner_DataUtil.CUSTOM) {
             this.init_V_48();
          }
       }
 
       @Override
       public void onDisable() {
-         autismclient.util.V.init_V();
+         autismclient.util.CoordinateSpoofer.init_V();
       }
 
       @Override
       public void tick() {
-         autismclient.util.V.Inner_DataUtil m = this.init_V_DataUtil();
-         autismclient.util.V.init(m);
-         autismclient.util.V.init(this.bool("fake-y"));
-         if (m == autismclient.util.V.Inner_DataUtil.CUSTOM) {
+         autismclient.util.CoordinateSpoofer.Inner_DataUtil m = this.init_V_DataUtil();
+         autismclient.util.CoordinateSpoofer.init(m);
+         autismclient.util.CoordinateSpoofer.init(this.bool("fake-y"));
+         if (m == autismclient.util.CoordinateSpoofer.Inner_DataUtil.CUSTOM) {
             this.init_V_48();
          }
       }
 
       private void init_V_48() {
-         autismclient.util.V.init_V(this.decimal("custom-x"), this.decimal("custom-y"), this.decimal("custom-z"));
+         autismclient.util.CoordinateSpoofer.init_V(this.decimal("custom-x"), this.decimal("custom-y"), this.decimal("custom-z"));
       }
 
       private void load() {
@@ -8567,26 +8567,26 @@ public final class f {
          }
       }
 
-      private autismclient.util.V.Inner_DataUtil init_V_DataUtil() {
-         autismclient.util.V.Inner_DataUtil var10000;
+      private autismclient.util.CoordinateSpoofer.Inner_DataUtil init_V_DataUtil() {
+         autismclient.util.CoordinateSpoofer.Inner_DataUtil var10000;
          switch (this.choice("mode")) {
             case "Scaled":
-               var10000 = autismclient.util.V.Inner_DataUtil.SCALED;
+               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.SCALED;
                break;
             case "Rotated":
-               var10000 = autismclient.util.V.Inner_DataUtil.ROTATED;
+               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.ROTATED;
                break;
             case "Scrambled":
-               var10000 = autismclient.util.V.Inner_DataUtil.SCRAMBLED;
+               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.SCRAMBLED;
                break;
             case "Frozen":
-               var10000 = autismclient.util.V.Inner_DataUtil.FROZEN;
+               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.FROZEN;
                break;
             case "Custom":
-               var10000 = autismclient.util.V.Inner_DataUtil.CUSTOM;
+               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.CUSTOM;
                break;
             default:
-               var10000 = autismclient.util.V.Inner_DataUtil.OFFSET;
+               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.OFFSET;
          }
 
          return var10000;

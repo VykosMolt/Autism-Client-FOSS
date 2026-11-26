@@ -5,7 +5,7 @@ import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.PayloadSubscriptionManager;
 import autismclient.util.PayloadStudyTracker;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import autismclient.util.ck;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
@@ -151,8 +151,8 @@ public final class aD {
    private static void write_V() {
       read_V();
       autismclient.util.bi.init_V();
-      bk.init_bk().update_V();
-      autismclient.util.au.load();
+      OverlayManager.init_bk().update_V();
+      autismclient.util.BlockPreviewRenderer.load();
       PayloadStudyTracker.init_V();
       PayloadSubscriptionManager.load();
       AutismClientMessaging.clearClientMessages();

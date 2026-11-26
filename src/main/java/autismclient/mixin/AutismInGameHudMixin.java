@@ -21,12 +21,12 @@ import autismclient.modules.EntityEsp2DRenderer;
 import autismclient.modules.DangerHudRenderer;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismServerInfoOverlay;
-import autismclient.util.PkgCls_d;
-import autismclient.util.aO;
-import autismclient.util.al;
+import autismclient.util.HudBannerSpec;
+import autismclient.util.MacroStatusHudRenderer;
+import autismclient.util.AutismHudManager;
 import autismclient.util.PayloadStudyTracker;
 import autismclient.util.bK;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import autismclient.util.cA;
 import autismclient.util.PacketQueueHudRenderer;
 import autismclient.util.cf;
@@ -99,7 +99,7 @@ public abstract class AutismInGameHudMixin {
                boolean captureActive = this.hasAnyCaptureSession(shared);
                boolean payloadStudyActive = PayloadStudyTracker.init_Z();
                Module hud = activity.init(64L) ? autismclient.modules.al.init_Module_Str("hud") : null;
-               boolean nativeHudVisible = hud != null && al.init_Z_Screen_Module(screen, hud);
+               boolean nativeHudVisible = hud != null && AutismHudManager.init_Z_Screen_Module(screen, hud);
                boolean esp2dVisible = am.add();
                boolean nametagsVisible = activity.init(128L);
                boolean bedsVisible = activity.init(16384L);
@@ -119,13 +119,13 @@ public abstract class AutismInGameHudMixin {
                   || activity.init(8192L);
                AutismServerInfoOverlay serverInfoOverlay = null;
                boolean serverProbeBannerVisible = false;
-               bk overlayManager = null;
+               OverlayManager overlayManager = null;
                boolean overlayVisible = false;
                if (screen == null) {
                   serverInfoOverlay = ModuleRuntimeManager.init_PoolEntry().load_AutismServerInfoOv();
                   serverProbeBannerVisible = serverInfoOverlay != null && serverInfoOverlay.run_Z_5();
                   if (activity.init(256L)) {
-                     overlayManager = bk.init_bk();
+                     overlayManager = OverlayManager.init_bk();
                      overlayVisible = overlayManager.load_Z();
                   }
                }
@@ -135,24 +135,24 @@ public abstract class AutismInGameHudMixin {
                      int screenWidth = cA.init_I();
                      int x = Math.max(0, screenWidth - 172);
                      int y = 0;
-                     PkgCls_d captureBanner = captureActive ? this.captureBannerSpec(shared, context) : null;
-                     PkgCls_d payloadStudyBanner = payloadStudyActive
+                     HudBannerSpec captureBanner = captureActive ? this.captureBannerSpec(shared, context) : null;
+                     HudBannerSpec payloadStudyBanner = payloadStudyActive
                         ? this.payloadStudyBannerSpec(context, captureBanner == null ? 0 : captureBanner.write())
                         : null;
-                     ArrayList<al.Inner_BufferHelper> hudOccluders = new ArrayList<>(3);
+                     ArrayList<AutismHudManager.Inner_BufferHelper> hudOccluders = new ArrayList<>(3);
                      if (!AutismLiteVariant.enabled() && aiPlan) {
                         NetHelper b = cG.init_NetHelper(context);
-                        hudOccluders.add(new al.Inner_BufferHelper("ai_plan", b.read(), b.write(), b.update(), b.sync()));
+                        hudOccluders.add(new AutismHudManager.Inner_BufferHelper("ai_plan", b.read(), b.write(), b.update(), b.sync()));
                      }
 
                      if (!AutismLiteVariant.enabled() && portalGuide) {
                         NetHelper b = EndPortalRenderer.init_NetHelper(context);
-                        hudOccluders.add(new al.Inner_BufferHelper("end_portal", b.read(), b.write(), b.update(), b.sync()));
+                        hudOccluders.add(new AutismHudManager.Inner_BufferHelper("end_portal", b.read(), b.write(), b.update(), b.sync()));
                      }
 
                      if (captureBanner != null) {
                         hudOccluders.add(
-                           new al.Inner_BufferHelper(
+                           new AutismHudManager.Inner_BufferHelper(
                               "capture_banner", captureBanner.init_I(), captureBanner.load_I(), captureBanner.read_I(), captureBanner.write()
                            )
                         );
@@ -160,7 +160,7 @@ public abstract class AutismInGameHudMixin {
 
                      if (payloadStudyBanner != null) {
                         hudOccluders.add(
-                           new al.Inner_BufferHelper(
+                           new AutismHudManager.Inner_BufferHelper(
                               "payload_study_banner",
                               payloadStudyBanner.init_I(),
                               payloadStudyBanner.load_I(),
@@ -170,28 +170,28 @@ public abstract class AutismInGameHudMixin {
                         );
                      } else if (captureActive) {
                         int fallbackW = Math.min(screenWidth - 16, 300);
-                        hudOccluders.add(new al.Inner_BufferHelper("capture_banner", Math.max(0, (screenWidth - fallbackW) / 2), 0, fallbackW, 56));
+                        hudOccluders.add(new AutismHudManager.Inner_BufferHelper("capture_banner", Math.max(0, (screenWidth - fallbackW) / 2), 0, fallbackW, 56));
                      }
 
                      if (queueVisible) {
                         int queueHeight = PacketQueueHudRenderer.init_I(MC.font, 172, 8);
                         if (queueHeight > 0) {
-                           hudOccluders.add(new al.Inner_BufferHelper("packet_queue", x, y, 172, queueHeight));
+                           hudOccluders.add(new AutismHudManager.Inner_BufferHelper("packet_queue", x, y, 172, queueHeight));
                            y += queueHeight;
                         }
                      }
 
                      if (macroRunning) {
-                        int macroHeight = aO.init_I(MC.font, 172, 10);
+                        int macroHeight = MacroStatusHudRenderer.init_I(MC.font, 172, 10);
                         if (macroHeight > 0) {
-                           hudOccluders.add(new al.Inner_BufferHelper("macro_queue", x, y, 172, macroHeight));
+                           hudOccluders.add(new AutismHudManager.Inner_BufferHelper("macro_queue", x, y, 172, macroHeight));
                         }
                      }
 
                      if (nativeHudVisible) {
-                        al.init_V_GuiGraphicsExtract_4(context, MC.font, false, null, -1, -1, hudOccluders);
+                        AutismHudManager.init_V_GuiGraphicsExtract_4(context, MC.font, false, null, -1, -1, hudOccluders);
                      } else if (antiVanishHudVisible) {
-                        al.init_V_GuiGraphicsExtract_2(context, MC.font, "anti_vanish");
+                        AutismHudManager.init_V_GuiGraphicsExtract_2(context, MC.font, "anti_vanish");
                      }
 
                      if (captureBanner != null) {
@@ -225,7 +225,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (macroRunning) {
-                        aO.init(context, MC.font, x, y, 172, 10, false, true, false);
+                        MacroStatusHudRenderer.init(context, MC.font, x, y, 172, 10, false, true, false);
                      }
 
                      if (!AutismLiteVariant.enabled() && portalGuide) {
@@ -317,7 +317,7 @@ public abstract class AutismInGameHudMixin {
    }
 
    @Unique
-   private PkgCls_d captureBannerSpec(ck shared, GuiGraphicsExtractor graphics) {
+   private HudBannerSpec captureBannerSpec(ck shared, GuiGraphicsExtractor graphics) {
       boolean blockCap = shared.pool();
       boolean entityCap = shared.frame();
       boolean attackCap = shared.count();
@@ -363,11 +363,11 @@ public abstract class AutismInGameHudMixin {
       autismclient.gui.f.PoolEntry text = UiHelper.init(MC.font);
       int boxWidth = Math.min(sw - 16, Math.max(270, Math.max(text.init(title), Math.max(text.init(line1), line2.isEmpty() ? 0 : text.init(line2))) + 18));
       int height = StreamUtil.init(UiHelper.init(graphics, MC.font, 0, 0), boxWidth, line1, line2);
-      return new PkgCls_d((sw - boxWidth) / 2, 0, boxWidth, height, title, line1, line2);
+      return new HudBannerSpec((sw - boxWidth) / 2, 0, boxWidth, height, title, line1, line2);
    }
 
    @Unique
-   private PkgCls_d payloadStudyBannerSpec(GuiGraphicsExtractor graphics, int topOffset) {
+   private HudBannerSpec payloadStudyBannerSpec(GuiGraphicsExtractor graphics, int topOffset) {
       String title = PayloadStudyTracker.init_Str();
       if (title.isBlank()) {
          return null;
@@ -379,7 +379,7 @@ public abstract class AutismInGameHudMixin {
       autismclient.gui.f.PoolEntry text = UiHelper.init(MC.font);
       int boxWidth = Math.min(sw - 16, Math.max(276, Math.max(text.init(title), Math.max(text.init(line1), text.init(line2))) + 18));
       int height = StreamUtil.init(UiHelper.init(graphics, MC.font, 0, 0), boxWidth, line1, line2);
-      return new PkgCls_d((sw - boxWidth) / 2, Math.max(0, topOffset), boxWidth, height, title, line1, line2);
+      return new HudBannerSpec((sw - boxWidth) / 2, Math.max(0, topOffset), boxWidth, height, title, line1, line2);
    }
 
    @Unique

@@ -6,7 +6,7 @@ import autismclient.api.module.ColorSetting;
 import autismclient.api.module.DoubleSetting;
 import autismclient.api.module.IntSetting;
 import autismclient.api.module.RegistryListSetting;
-import autismclient.util.cJ;
+import autismclient.util.BlockSelectionOutlineRenderer;
 
 public final class WorldModule extends Module {
    private boolean init_Z;
@@ -122,7 +122,7 @@ public final class WorldModule extends Module {
    @Override
    public void onDisable() {
       am.init_V();
-      cJ.init_V();
+      BlockSelectionOutlineRenderer.init_V();
    }
 
    @Override
@@ -156,8 +156,8 @@ public final class WorldModule extends Module {
       boolean corners = "Corners".equals(this.choice("highlight-style"));
       boolean fill = this.bool("highlight-fill");
       int fillColor = color & 16777215 | 1073741824;
-      cJ.init(active, color, width, corners, fill, fillColor);
-      cJ.init(active && this.bool("highlight-progress"));
+      BlockSelectionOutlineRenderer.init(active, color, width, corners, fill, fillColor);
+      BlockSelectionOutlineRenderer.init(active && this.bool("highlight-progress"));
    }
 
    @Override

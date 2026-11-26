@@ -702,7 +702,7 @@ public class MacroExecutor {
          }
 
          if (!init_AtomicBoolean.get()) {
-            autismclient.util.au.load();
+            autismclient.util.BlockPreviewRenderer.load();
             MacroFpsOverrideManager.load_V();
             PingSpoofScheduler.load_V();
          }
@@ -6125,7 +6125,7 @@ public class MacroExecutor {
             }
 
             if (action.closeAfter && !action.persistent) {
-               init_V_Minecraft_Runnable(mc, () -> autismclient.util.af.init(mc, action.closeSendPkt, false));
+               init_V_Minecraft_Runnable(mc, () -> autismclient.util.GuiDesyncHelper.init(mc, action.closeSendPkt, false));
             }
          }
       }
@@ -7393,7 +7393,7 @@ public class MacroExecutor {
          int completed = 0;
          boolean wasSolid = !init_Z_Minecraft_BlockPos(mc, target);
          if (init_Z_Minecraft_MethodUtil(mc, action)) {
-            autismclient.util.au.init(target);
+            autismclient.util.BlockPreviewRenderer.init(target);
 
             try {
                long lastAttemptTick = ck.init_ck().state_I() - (delayTicks + 1L);
@@ -7471,7 +7471,7 @@ public class MacroExecutor {
                   init_V_Minecraft_Runnable(mc, () -> load_V_Minecraft_Str(mc, sneakMode));
                }
 
-               autismclient.util.au.load(target);
+               autismclient.util.BlockPreviewRenderer.load(target);
             }
          }
       } else {
@@ -7559,7 +7559,7 @@ public class MacroExecutor {
          boolean useNextSteps = action.interact && action.runNextSteps;
          boolean[] nextStepsFired = new boolean[]{false};
          boolean[] missingNextStepsWarned = new boolean[]{false};
-         autismclient.util.au.init(target);
+         autismclient.util.BlockPreviewRenderer.init(target);
          long lastTick = -1L;
 
          while (true) {
@@ -7624,7 +7624,7 @@ public class MacroExecutor {
                      load_V_Minecraft_Str(mc, action.sneakMode);
                   }
                }, action.h_());
-               autismclient.util.au.load(target);
+               autismclient.util.BlockPreviewRenderer.load(target);
             }
          }
       } else {
@@ -8990,7 +8990,7 @@ public class MacroExecutor {
       }
 
       sync(Minecraft.getInstance());
-      autismclient.util.au.load();
+      autismclient.util.BlockPreviewRenderer.load();
       Minecraft mc = Minecraft.getInstance();
       PacketGateManager.init(mc == null ? null : mc.getConnection());
       MacroFpsOverrideManager.load_V();

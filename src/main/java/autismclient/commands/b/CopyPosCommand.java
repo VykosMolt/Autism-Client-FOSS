@@ -4,7 +4,7 @@ import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.modules.FreecamController;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.p;
+import autismclient.util.UiColorPalette;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -52,7 +52,7 @@ public final class CopyPosCommand extends Command {
    static Component init(String coordinates) {
       return Component.literal(coordinates)
          .withStyle(
-            style -> style.withColor(p.parse())
+            style -> style.withColor(UiColorPalette.parse())
                .withUnderlined(true)
                .withHoverEvent(new ShowText(Component.literal("Click to copy coordinates")))
                .withClickEvent(new CopyToClipboard(coordinates))

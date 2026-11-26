@@ -1,6 +1,6 @@
 package autismclient.gui.d;
 
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 
 public final class ValueSink {
    public static final int init = -15987181;
@@ -18,12 +18,12 @@ public final class ValueSink {
    }
 
    public static void init() {
-      update = ct.init_I_I_ct_DataUtil(-9547177, ct.Inner_DataUtil.OUTLINE);
-      sync = ct.init_I_I_ct_DataUtil(-12588930, ct.Inner_DataUtil.SUCCESS);
-      flush = ct.init_I_I_ct_DataUtil(-854534, ct.Inner_DataUtil.TEXT);
-      close = ct.init_I_I_ct_DataUtil(-6774093, ct.Inner_DataUtil.TEXT);
-      open = ct.init_I_I_ct_DataUtil(-13248397, ct.Inner_DataUtil.SUCCESS);
-      poll = ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.DANGER);
+      update = ThemePaletteManager.init_I_I_ct_DataUtil(-9547177, ThemePaletteManager.Inner_DataUtil.OUTLINE);
+      sync = ThemePaletteManager.init_I_I_ct_DataUtil(-12588930, ThemePaletteManager.Inner_DataUtil.SUCCESS);
+      flush = ThemePaletteManager.init_I_I_ct_DataUtil(-854534, ThemePaletteManager.Inner_DataUtil.TEXT);
+      close = ThemePaletteManager.init_I_I_ct_DataUtil(-6774093, ThemePaletteManager.Inner_DataUtil.TEXT);
+      open = ThemePaletteManager.init_I_I_ct_DataUtil(-13248397, ThemePaletteManager.Inner_DataUtil.SUCCESS);
+      poll = ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.Inner_DataUtil.DANGER);
    }
 
    static {

@@ -27,7 +27,7 @@ import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismServerInfoOverlay;
 import autismclient.util.J;
-import autismclient.util.aQ;
+import autismclient.util.MapTooltipPreview;
 import autismclient.util.RotationMath;
 import autismclient.util.cf;
 import autismclient.util.SprintStateTracker;
@@ -130,7 +130,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleMapItemData", at = @At("RETURN"))
    private void autism$mapPreviewUpdated(ClientboundMapItemDataPacket packet, CallbackInfo ci) {
-      aQ.init_V(packet.mapId());
+      MapTooltipPreview.init_V(packet.mapId());
    }
 
    @Inject(method = "handleAnimate", at = @At("RETURN"))

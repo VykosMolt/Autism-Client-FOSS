@@ -8,8 +8,8 @@ import autismclient.util.AuditWaypointScope;
 import autismclient.util.AutismWaypoints;
 import autismclient.util.bi;
 import autismclient.util.cA;
-import autismclient.util.ct;
-import autismclient.util.k;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.ThemedTextInputBox;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,10 +43,10 @@ public class WaypointsScreen extends KeyHolder {
    private final Screen init_Screen;
    private final String init_Str;
    private final List<WaypointsScreen.Inner_DataUtil> init_List = new ArrayList<>();
-   private final Map<String, k> init_Map = new LinkedHashMap<>();
+   private final Map<String, ThemedTextInputBox> init_Map = new LinkedHashMap<>();
    private final List<String> load_List = new ArrayList<>();
-   private k init_k;
-   private k load_k;
+   private ThemedTextInputBox init_k;
+   private ThemedTextInputBox load_k;
    private int get;
    private boolean init_Z;
    private int set;
@@ -58,7 +58,7 @@ public class WaypointsScreen extends KeyHolder {
    private List<AutismWaypoints.Waypoint> read_List = List.of();
 
    private static int read_I_17() {
-      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT);
    }
 
    public WaypointsScreen(Screen parent) {
@@ -171,10 +171,10 @@ public class WaypointsScreen extends KeyHolder {
                autismclient.gui.f.PacketUtil.load(
                   graphics,
                   autismclient.gui.f.NetHelper.init(swatchX, swatchY, 18, 10),
-                  !swatchOver && !waypoint.name().equals(this.load_Str) ? init_CharEncoder.set() : ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.OUTLINE)
+                  !swatchOver && !waypoint.name().equals(this.load_Str) ? init_CharEncoder.set() : ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.OUTLINE)
                );
                int nameX = swatchX + 18 + 4;
-               k nameField = this.init_Map.get(waypoint.name());
+               ThemedTextInputBox nameField = this.init_Map.get(waypoint.name());
                if (nameField != null) {
                   nameField.read(nameX);
                   nameField.write(rowY + 1);
@@ -268,7 +268,7 @@ public class WaypointsScreen extends KeyHolder {
          return true;
       }
 
-      k focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
+      ThemedTextInputBox focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
       if (focused != null && !init_Z_k(focused, mx, my)) {
          this.write_V_15();
       }
@@ -293,7 +293,7 @@ public class WaypointsScreen extends KeyHolder {
       }
 
       for (String name : this.load_List) {
-         k rowField = this.init_Map.get(name);
+         ThemedTextInputBox rowField = this.init_Map.get(name);
          if (rowField != null && rowField.init_Z_D_2(mx, my, Compat263.mouseEventGlfwButton(event))) {
             this.read(name);
             return true;
@@ -360,7 +360,7 @@ public class WaypointsScreen extends KeyHolder {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       this.init_Z = false;
-      k focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
+      ThemedTextInputBox focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
       if (focused != null && focused.load(mx, my, Compat263.mouseEventGlfwButton(event))) {
          return true;
       } else if (this.init_k != null && this.init_k.load(mx, my, Compat263.mouseEventGlfwButton(event))) {
@@ -374,7 +374,7 @@ public class WaypointsScreen extends KeyHolder {
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
-      k focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
+      ThemedTextInputBox focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
       if (focused != null && focused.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
          return true;
       }
@@ -409,7 +409,7 @@ public class WaypointsScreen extends KeyHolder {
 
          return true;
       } else if (Compat263.keyEventGlfwKey(input) != 257 && Compat263.keyEventGlfwKey(input) != 335) {
-         k focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
+         ThemedTextInputBox focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
          if (focused != null && focused.init_Z_KeyEvent(input)) {
             return true;
          } else if (this.init_k.init_Z_KeyEvent(input)) {
@@ -431,7 +431,7 @@ public class WaypointsScreen extends KeyHolder {
    @Override
    public boolean charTyped(CharacterEvent input) {
       this.flush_V_9();
-      k focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
+      ThemedTextInputBox focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
       if (focused != null && focused.init_Z_CharacterEvent(input)) {
          return true;
       } else if (this.init_k.init_Z_CharacterEvent(input)) {
@@ -495,12 +495,12 @@ public class WaypointsScreen extends KeyHolder {
 
    private void read_V_17() {
       List<AutismWaypoints.Waypoint> rows = this.init_List_14();
-      Map<String, k> alive = new LinkedHashMap<>();
+      Map<String, ThemedTextInputBox> alive = new LinkedHashMap<>();
 
       for (AutismWaypoints.Waypoint waypoint : rows) {
-         k field = this.init_Map.get(waypoint.name());
+         ThemedTextInputBox field = this.init_Map.get(waypoint.name());
          if (field == null) {
-            field = new k(this.minecraft, this.font, 0, 0, 1, this.close_I_7() - 2, false);
+            field = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 1, this.close_I_7() - 2, false);
             field.load(64);
             field.init_V_Str(waypoint.name());
          } else if (!waypoint.name().equals(this.read_Str) && !waypoint.name().equals(field.load_Str())) {
@@ -524,7 +524,7 @@ public class WaypointsScreen extends KeyHolder {
       }
 
       this.read_Str = name;
-      k field = this.init_Map.get(name);
+      ThemedTextInputBox field = this.init_Map.get(name);
       if (field != null) {
          field.push(true);
          field.flush(field.load_Str().length());
@@ -542,7 +542,7 @@ public class WaypointsScreen extends KeyHolder {
    private void write_V_15() {
       if (this.read_Str != null) {
          String original = this.read_Str;
-         k field = this.init_Map.get(original);
+         ThemedTextInputBox field = this.init_Map.get(original);
          this.read_Str = null;
          if (field != null) {
             field.push(false);
@@ -565,7 +565,7 @@ public class WaypointsScreen extends KeyHolder {
 
    private void update_V_14() {
       if (this.read_Str != null) {
-         k field = this.init_Map.get(this.read_Str);
+         ThemedTextInputBox field = this.init_Map.get(this.read_Str);
          if (field != null) {
             field.init_V_Str(this.read_Str);
             field.push(false);
@@ -575,7 +575,7 @@ public class WaypointsScreen extends KeyHolder {
       }
    }
 
-   private static boolean init_Z_k(k field, int mx, int my) {
+   private static boolean init_Z_k(ThemedTextInputBox field, int mx, int my) {
       return mx >= field.init_I() && mx < field.init_I() + field.read_I() && my >= field.load_I() && my < field.load_I() + field.write();
    }
 
@@ -670,13 +670,13 @@ public class WaypointsScreen extends KeyHolder {
 
    private void flush_V_9() {
       if (this.init_k == null) {
-         this.init_k = new k(this.minecraft, this.font, 0, 0, 1, this.flush_I_9(), false);
+         this.init_k = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 1, this.flush_I_9(), false);
          this.init_k.load(64);
          this.init_k.init_V_Component(Component.literal("Waypoint name"));
       }
 
       if (this.load_k == null) {
-         this.load_k = new k(this.minecraft, this.font, 0, 0, 1, this.flush_I_9(), false);
+         this.load_k = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 1, this.flush_I_9(), false);
          this.load_k.load(7);
          this.load_k.init_V_Component(Component.literal("RRGGBB"));
          this.load_k.load(text -> {
@@ -814,7 +814,7 @@ public class WaypointsScreen extends KeyHolder {
 
    private void load(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int fill, int border) {
       autismclient.gui.f.PacketUtil.init(
-         graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), fill, ct.init_I_I_ct_DataUtil(-1721357268, ct.Inner_DataUtil.OUTLINE)
+         graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), fill, ThemePaletteManager.init_I_I_ct_DataUtil(-1721357268, ThemePaletteManager.Inner_DataUtil.OUTLINE)
       );
    }
 

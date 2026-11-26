@@ -6,12 +6,12 @@ import autismclient.util.aA;
 import autismclient.util.AutismMacro;
 import autismclient.util.aN;
 import autismclient.util.bi;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import autismclient.util.cA;
-import autismclient.util.cX;
+import autismclient.util.AutismOverlay;
 import autismclient.util.cY;
-import autismclient.util.ct;
-import autismclient.util.k;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.ThemedTextInputBox;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +30,7 @@ public final class JoinMacroScreen extends KeyHolder {
    private final Screen init_Screen;
    private final List<JoinMacroScreen.Inner_StreamUtil> init_List = new ArrayList<>();
    private final List<JoinMacroScreen.Inner_DataUtil> load_List = new ArrayList<>();
-   private k init_k;
+   private ThemedTextInputBox init_k;
    private int read_I;
    private String init_Str = "";
    private long init_J = -9223372036854775808L;
@@ -54,7 +54,7 @@ public final class JoinMacroScreen extends KeyHolder {
    @Override
    protected void init() {
       if (this.init_k == null) {
-         this.init_k = new k(this.minecraft, this.font, this.open(), this.get(), this.put(), this.write_I_2(), false);
+         this.init_k = new ThemedTextInputBox(this.minecraft, this.font, this.open(), this.get(), this.put(), this.write_I_2(), false);
          this.init_k.init_V_Component(Component.literal("Search macros..."));
          this.init_k.load(64);
          this.init_k.init_V_Consumer(value -> {
@@ -106,14 +106,14 @@ public final class JoinMacroScreen extends KeyHolder {
             autismclient.gui.f.NetHelper.init(x, this.push(), panelW, this.reset()),
             5,
             -401402080,
-            ct.init_I_I_ct_DataUtil(ValueSink.update, ct.Inner_DataUtil.OUTLINE)
+            ThemePaletteManager.init_I_I_ct_DataUtil(ValueSink.update, ThemePaletteManager.Inner_DataUtil.OUTLINE)
          );
          autismclient.gui.f.PacketUtil.load(
             graphics,
             autismclient.gui.f.NetHelper.init(this.start(), this.stop(), this.next(), this.valid()),
             5,
             -1206840035,
-            ct.init_I_I_ct_DataUtil(ValueSink.update, ct.Inner_DataUtil.OUTLINE)
+            ThemePaletteManager.init_I_I_ct_DataUtil(ValueSink.update, ThemePaletteManager.Inner_DataUtil.OUTLINE)
          );
          int titleX = this.open() + this.init_I_Str_3("Back") + 4;
          autismclient.gui.f.b.k.init(
@@ -388,12 +388,12 @@ public final class JoinMacroScreen extends KeyHolder {
          bounds,
          4,
          selected
-            ? ct.init_I_I_ct_DataUtil(976607347, ct.Inner_DataUtil.SUCCESS)
-            : (hovered ? ct.init_I_I_ct_DataUtil(606804509, ct.Inner_DataUtil.ACCENT) : 403771667)
+            ? ThemePaletteManager.init_I_I_ct_DataUtil(976607347, ThemePaletteManager.Inner_DataUtil.SUCCESS)
+            : (hovered ? ThemePaletteManager.init_I_I_ct_DataUtil(606804509, ThemePaletteManager.Inner_DataUtil.ACCENT) : 403771667)
       );
       if (selected) {
          autismclient.gui.f.PacketUtil.load(
-            graphics, bounds.load(1, 1, 1, 1), 3, ct.init_I_I_ct_DataUtil(hovered ? 1463146611 : 976607347, ct.Inner_DataUtil.SUCCESS)
+            graphics, bounds.load(1, 1, 1, 1), 3, ThemePaletteManager.init_I_I_ct_DataUtil(hovered ? 1463146611 : 976607347, ThemePaletteManager.Inner_DataUtil.SUCCESS)
          );
          autismclient.gui.f.PacketUtil.load(
             graphics, autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write() + 2, 2, bounds.sync() - 4), 1, ValueSink.open
@@ -577,7 +577,7 @@ public final class JoinMacroScreen extends KeyHolder {
 
    private void init_V_aM_2(AutismMacro macro) {
       AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
-      bk.init_bk().init_V_cX_cX_DataUtil(editor, cX.Inner_DataUtil.HOST_SCREEN);
+      OverlayManager.init_bk().init_V_cX_cX_DataUtil(editor, AutismOverlay.Inner_DataUtil.HOST_SCREEN);
       editor.init_V_aM_Consumer_2(macro, saved -> {
          if (saved != null && saved.init_Str != null && !saved.init_Str.isBlank()) {
             aA.init_V(saved.init_Str);

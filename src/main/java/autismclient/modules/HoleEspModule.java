@@ -6,7 +6,7 @@ import autismclient.api.module.ColorSetting;
 import autismclient.api.module.DoubleSetting;
 import autismclient.api.module.IntSetting;
 import autismclient.util.bK;
-import autismclient.util.cI;
+import autismclient.util.WorldLineRenderer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack.Pose;
 import java.util.List;
@@ -15,7 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public final class HoleEspModule extends Module implements autismclient.util.aj.Inner_ConfigStore {
+public final class HoleEspModule extends Module implements autismclient.util.PvpHoleScanner.Inner_ConfigStore {
    private static final String init_Str = "Box";
    private static final String load_Str = "GlowingPlane";
    private static final double init_D = 0.19607843137254902;
@@ -88,7 +88,7 @@ public final class HoleEspModule extends Module implements autismclient.util.aj.
    public void tick() {
       this.load_V_9();
       this.write();
-      autismclient.util.aj.load();
+      autismclient.util.PvpHoleScanner.load();
    }
 
    @Override
@@ -110,7 +110,7 @@ public final class HoleEspModule extends Module implements autismclient.util.aj.
 
    private void load_V_9() {
       if (!this.update_Z) {
-         autismclient.util.aj.init(this);
+         autismclient.util.PvpHoleScanner.init(this);
          this.update_Z = true;
       }
    }
@@ -118,7 +118,7 @@ public final class HoleEspModule extends Module implements autismclient.util.aj.
    private void read() {
       if (this.update_Z) {
          this.update_Z = false;
-         autismclient.util.aj.load(this);
+         autismclient.util.PvpHoleScanner.load(this);
       }
    }
 
@@ -179,7 +179,7 @@ public final class HoleEspModule extends Module implements autismclient.util.aj.
                         return;
                      }
 
-                     List<autismclient.util.aj.Inner_DataUtil> holes = autismclient.util.aj.init_List();
+                     List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes = autismclient.util.PvpHoleScanner.init_List();
                      if (holes.isEmpty()) {
                         return;
                      }
@@ -210,11 +210,11 @@ public final class HoleEspModule extends Module implements autismclient.util.aj.
       }
    }
 
-   private void init(Pose pose, VertexConsumer buffer, List<autismclient.util.aj.Inner_DataUtil> holes, Vec3 camera, Vec3 player) {
+   private void init(Pose pose, VertexConsumer buffer, List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes, Vec3 camera, Vec3 player) {
       long perf = bK.load_J();
       int drawn = 0;
 
-      for (autismclient.util.aj.Inner_DataUtil hole : holes) {
+      for (autismclient.util.PvpHoleScanner.Inner_DataUtil hole : holes) {
          if (drawn >= this.write_I) {
             break;
          }
@@ -241,11 +241,11 @@ public final class HoleEspModule extends Module implements autismclient.util.aj.
       bK.init("frame.holeEspFill", perf);
    }
 
-   private void load_V_PoseStack_Pose(Pose pose, VertexConsumer buffer, List<autismclient.util.aj.Inner_DataUtil> holes, Vec3 camera, Vec3 player) {
+   private void load_V_PoseStack_Pose(Pose pose, VertexConsumer buffer, List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes, Vec3 camera, Vec3 player) {
       long perf = bK.load_J();
       int drawn = 0;
 
-      for (autismclient.util.aj.Inner_DataUtil hole : holes) {
+      for (autismclient.util.PvpHoleScanner.Inner_DataUtil hole : holes) {
          if (drawn >= this.write_I) {
             break;
          }
@@ -268,7 +268,7 @@ public final class HoleEspModule extends Module implements autismclient.util.aj.
       bK.init("frame.holeEspOutline", perf);
    }
 
-   private int init(autismclient.util.aj.Inner_StreamUtil type) {
+   private int init(autismclient.util.PvpHoleScanner.Inner_StreamUtil type) {
       int var10000;
       switch (type) {
          case ONE_BY_ONE_BEDROCK:
@@ -333,10 +333,10 @@ public final class HoleEspModule extends Module implements autismclient.util.aj.
    }
 
    private static void load_V_PoseStack_Pose_2(Pose pose, VertexConsumer buffer, AABB box, double y, int color) {
-      cI.init(pose, buffer, box.minX, y, box.minZ, box.maxX, y, box.minZ, color, 1.5F);
-      cI.init(pose, buffer, box.maxX, y, box.minZ, box.maxX, y, box.maxZ, color, 1.5F);
-      cI.init(pose, buffer, box.maxX, y, box.maxZ, box.minX, y, box.maxZ, color, 1.5F);
-      cI.init(pose, buffer, box.minX, y, box.maxZ, box.minX, y, box.minZ, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, box.minX, y, box.minZ, box.maxX, y, box.minZ, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, box.maxX, y, box.minZ, box.maxX, y, box.maxZ, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, box.maxX, y, box.maxZ, box.minX, y, box.maxZ, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, box.minX, y, box.maxZ, box.minX, y, box.minZ, color, 1.5F);
    }
 
    private static void init(Pose pose, VertexConsumer buffer, AABB box, int color) {
@@ -346,18 +346,18 @@ public final class HoleEspModule extends Module implements autismclient.util.aj.
       double x2 = box.maxX;
       double y2 = box.maxY;
       double z2 = box.maxZ;
-      cI.init(pose, buffer, x1, y1, z1, x2, y1, z1, color, 1.5F);
-      cI.init(pose, buffer, x2, y1, z1, x2, y1, z2, color, 1.5F);
-      cI.init(pose, buffer, x2, y1, z2, x1, y1, z2, color, 1.5F);
-      cI.init(pose, buffer, x1, y1, z2, x1, y1, z1, color, 1.5F);
-      cI.init(pose, buffer, x1, y2, z1, x2, y2, z1, color, 1.5F);
-      cI.init(pose, buffer, x2, y2, z1, x2, y2, z2, color, 1.5F);
-      cI.init(pose, buffer, x2, y2, z2, x1, y2, z2, color, 1.5F);
-      cI.init(pose, buffer, x1, y2, z2, x1, y2, z1, color, 1.5F);
-      cI.init(pose, buffer, x1, y1, z1, x1, y2, z1, color, 1.5F);
-      cI.init(pose, buffer, x2, y1, z1, x2, y2, z1, color, 1.5F);
-      cI.init(pose, buffer, x2, y1, z2, x2, y2, z2, color, 1.5F);
-      cI.init(pose, buffer, x1, y1, z2, x1, y2, z2, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x1, y1, z1, x2, y1, z1, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x2, y1, z1, x2, y1, z2, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x2, y1, z2, x1, y1, z2, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x1, y1, z2, x1, y1, z1, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x1, y2, z1, x2, y2, z1, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x2, y2, z1, x2, y2, z2, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x2, y2, z2, x1, y2, z2, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x1, y2, z2, x1, y2, z1, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x1, y1, z1, x1, y2, z1, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x2, y1, z1, x2, y2, z1, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x2, y1, z2, x2, y2, z2, color, 1.5F);
+      WorldLineRenderer.init(pose, buffer, x1, y1, z2, x1, y2, z2, color, 1.5F);
    }
 
    private static void load(Pose pose, VertexConsumer buffer, AABB box, int color) {

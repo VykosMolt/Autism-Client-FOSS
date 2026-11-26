@@ -1,9 +1,9 @@
 package autismclient.ai;
 
 import autismclient.gui.f.PacketUtil;
-import autismclient.util.bk;
-import autismclient.util.cH;
-import autismclient.util.cX;
+import autismclient.util.OverlayManager;
+import autismclient.util.OverlayBounds;
+import autismclient.util.AutismOverlay;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
-final class AiAssistantOverlay extends autismclient.util.bj {
+final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow {
    private static final int flush_I = 4;
    private static final int close_I = 2;
    private static final int open = 360;
@@ -28,7 +28,7 @@ final class AiAssistantOverlay extends autismclient.util.bj {
       .init_BitSetUtil_I(96)
       .load_BitSetUtil_Str("Chat title");
    private final List<autismclient.gui.f.b.BitSetUtil> init_List;
-   private final autismclient.util.F<String> init_F_2;
+   private final autismclient.util.OverlayContextMenu<String> init_F_2;
    private AiAssistantOverlay.Inner_DataUtil init_AiAssistantOverlay = AiAssistantOverlay.Inner_DataUtil.init;
    private boolean write_Z;
    private boolean update_Z;
@@ -65,7 +65,7 @@ final class AiAssistantOverlay extends autismclient.util.bj {
       all.addAll(this.init_TaskTimer.init_StreamUtil.init_List());
       all.addAll(this.init_cf.init_List());
       this.init_List = List.copyOf(all);
-      this.init_F_2 = new autismclient.util.F<>(this.init_cE.init_CharEncoder, Minecraft.getInstance().font, id -> ce.init_StrArr, cE.read());
+      this.init_F_2 = new autismclient.util.OverlayContextMenu<>(this.init_cE.init_CharEncoder, Minecraft.getInstance().font, id -> ce.init_StrArr, cE.read());
       this.init_V_F(this.init_F_2);
    }
 
@@ -92,15 +92,15 @@ final class AiAssistantOverlay extends autismclient.util.bj {
    }
 
    @Override
-   public cX.Inner_DataUtil init_cX_DataUtil() {
-      return this.write_Z ? cX.Inner_DataUtil.BACKGROUND_STATUS : super.init_cX_DataUtil();
+   public AutismOverlay.Inner_DataUtil init_cX_DataUtil() {
+      return this.write_Z ? AutismOverlay.Inner_DataUtil.BACKGROUND_STATUS : super.init_cX_DataUtil();
    }
 
    private void set_V() {
       boolean next = !this.write_Z;
       this.write_Z = next;
       this.init_cc.init_V_Consumer(s -> s.pinned = next);
-      bk.init_bk().init_V_cX_cX_DataUtil(this, next ? cX.Inner_DataUtil.BACKGROUND_STATUS : cX.Inner_DataUtil.HOST_SCREEN);
+      OverlayManager.init_bk().init_V_cX_cX_DataUtil(this, next ? AutismOverlay.Inner_DataUtil.BACKGROUND_STATUS : AutismOverlay.Inner_DataUtil.HOST_SCREEN);
       if (!next && Minecraft.getInstance().gui.screen() == null) {
          this.init_V_Z(false);
       }
@@ -288,7 +288,7 @@ final class AiAssistantOverlay extends autismclient.util.bj {
             }
          }
 
-         cH bounds = this.init_cH_cX(this);
+         OverlayBounds bounds = this.init_cH_cX(this);
          this.init_I_2 = bounds.init_I;
          this.load_I = bounds.load_I;
          this.read_I = bounds.read;
@@ -343,7 +343,7 @@ final class AiAssistantOverlay extends autismclient.util.bj {
       this.init_cE
          .init(
             autismclient.gui.f.NetHelper.init(x, bar.write(), h, h),
-            autismclient.util.cz.get,
+            autismclient.util.GuiIconAtlas.get,
             this.init_ce.init_Z,
             false,
             this.init_ce.init_Z ? "Hide chats" : "Chats",
@@ -355,7 +355,7 @@ final class AiAssistantOverlay extends autismclient.util.bj {
       this.init_cE
          .init(
             autismclient.gui.f.NetHelper.init(right, bar.write(), h, h),
-            autismclient.util.cz.set,
+            autismclient.util.GuiIconAtlas.set,
             !inChat,
             false,
             inChat ? "Settings" : "Back to chat (Esc)",
@@ -365,7 +365,7 @@ final class AiAssistantOverlay extends autismclient.util.bj {
       this.init_cE
          .init(
             autismclient.gui.f.NetHelper.init(right, bar.write(), h, h),
-            autismclient.util.cz.add,
+            autismclient.util.GuiIconAtlas.add,
             this.write_Z,
             false,
             this.write_Z ? "Pinned: stays open in-game (click to unpin)" : "Pin: keep open after the menu closes",

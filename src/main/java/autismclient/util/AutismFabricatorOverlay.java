@@ -32,7 +32,7 @@ import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-public class AutismFabricatorOverlay extends bj {
+public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private static AutismFabricatorOverlay init_AutismFabricatorOv_2;
@@ -59,11 +59,11 @@ public class AutismFabricatorOverlay extends bj {
    private boolean update_Z = false;
    private boolean sync_Z = false;
    private AbstractContainerScreen<?> init_AbstractContainerS;
-   private final List<k> init_List = new ArrayList<>();
-   private k init_k;
-   private k load_k;
-   private k read_k;
-   private k write_k;
+   private final List<ThemedTextInputBox> init_List = new ArrayList<>();
+   private ThemedTextInputBox init_k;
+   private ThemedTextInputBox load_k;
+   private ThemedTextInputBox read_k;
+   private ThemedTextInputBox write_k;
    private int next = 0;
    private final AutismFabricatorOverlay.Inner_DataUtil[] init_AutismFabricatorOvArr = AutismFabricatorOverlay.Inner_DataUtil.values();
    private final List<String> load_List = Arrays.stream(this.init_AutismFabricatorOvArr).map(action -> action.init_Str).toList();
@@ -379,14 +379,14 @@ public class AutismFabricatorOverlay extends bj {
    }
 
    @Override
-   public cH init_cH() {
-      return new cH(this.get, this.set, this.put, this.add, this.sync_Z, this.update_Z);
+   public OverlayBounds init_cH() {
+      return new OverlayBounds(this.get, this.set, this.put, this.add, this.sync_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(cH bounds) {
+   public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
-         cH clamped = this.init_cH_cX_cH(this, bounds);
+         OverlayBounds clamped = this.init_cH_cX_cH(this, bounds);
          this.get = clamped.init_I;
          this.set = clamped.load_I;
          this.put = Math.min(clamped.read, this.flush_I);
@@ -408,7 +408,7 @@ public class AutismFabricatorOverlay extends bj {
       this.sync_Z = visible;
       if (visible) {
          this.update_V_6();
-         bk.init_bk().update_V(this);
+         OverlayManager.init_bk().update_V(this);
       } else {
          this.clear_V_2();
       }
@@ -459,13 +459,13 @@ public class AutismFabricatorOverlay extends bj {
          return false;
       }
 
-      cH bounds = this.init_cH();
+      OverlayBounds bounds = this.init_cH();
       return mouseX >= this.get && mouseX <= this.get + this.put && mouseY >= this.set && mouseY <= this.set + 14 && !this.read_Z_D_2(mouseX, mouseY, bounds);
    }
 
    @Override
    public boolean write_Z() {
-      for (k field : this.init_List) {
+      for (ThemedTextInputBox field : this.init_List) {
          if (field.init_Z()) {
             return true;
          }
@@ -476,7 +476,7 @@ public class AutismFabricatorOverlay extends bj {
 
    @Override
    public void push_V() {
-      for (k field : this.init_List) {
+      for (ThemedTextInputBox field : this.init_List) {
          field.push(false);
       }
    }
@@ -552,7 +552,7 @@ public class AutismFabricatorOverlay extends bj {
       int fieldX = this.run_I_5();
       int fieldWidth = this.get_I_5();
       this.init_AutismFabricatorOv = this.init_AutismFabricatorOvArr[this.next];
-      this.init_k = new k(init_Minecraft, init_Minecraft.font, fieldX, this.start_I_5(), fieldWidth, push_I_7(), false);
+      this.init_k = new ThemedTextInputBox(init_Minecraft, init_Minecraft.font, fieldX, this.start_I_5(), fieldWidth, push_I_7(), false);
       this.init_k.init_V_Component(Component.literal("Optional slot - right-click to fill"));
       this.init_k.init_V_Str(this.load_Str);
       this.init_k.load(5);
@@ -579,7 +579,7 @@ public class AutismFabricatorOverlay extends bj {
          this.init_List.add(this.init_k);
       }
 
-      this.load_k = new k(init_Minecraft, init_Minecraft.font, fieldX, this.stop_I_2(), fieldWidth, push_I_7(), false);
+      this.load_k = new ThemedTextInputBox(init_Minecraft, init_Minecraft.font, fieldX, this.stop_I_2(), fieldWidth, push_I_7(), false);
       this.load_k.init_V_Component(Component.literal("Optional item match").withStyle(style -> style.withColor(ChatFormatting.DARK_GRAY)));
       this.load_k.init_V_Str(this.read_Str);
       this.load_k.load(50);
@@ -602,7 +602,7 @@ public class AutismFabricatorOverlay extends bj {
       int timesY = this.poll_Z_5() ? this.size() : this.prev_I();
       int timesX = this.poll_Z_5() ? this.value() : fieldX;
       int timesWidth = this.poll_Z_5() ? this.state() : fieldWidth;
-      this.read_k = new k(init_Minecraft, init_Minecraft.font, timesX, timesY, timesWidth, push_I_7(), false);
+      this.read_k = new ThemedTextInputBox(init_Minecraft, init_Minecraft.font, timesX, timesY, timesWidth, push_I_7(), false);
       this.read_k.init_V_Component(Component.literal("1"));
       this.read_k.init_V_Str(this.write_Str);
       this.read_k.load(5);
@@ -622,7 +622,7 @@ public class AutismFabricatorOverlay extends bj {
       this.init_List.add(this.read_k);
       if (this.poll_Z_5()) {
          int searchY = this.valid();
-         this.write_k = new k(init_Minecraft, init_Minecraft.font, this.get + 4, searchY, this.put - 8, push_I_7(), false);
+         this.write_k = new ThemedTextInputBox(init_Minecraft, init_Minecraft.font, this.get + 4, searchY, this.put - 8, push_I_7(), false);
          this.write_k.init_V_Component(Component.literal("Search crafting recipes..."));
          this.write_k.init_V_Str(this.update_Str);
          this.write_k.init_V_Consumer(text -> {
@@ -655,7 +655,7 @@ public class AutismFabricatorOverlay extends bj {
       }
 
       if (button == 0 && mouseX >= this.get && mouseX <= this.get + this.put && mouseY >= this.set && mouseY <= this.set + 14) {
-         cH bounds = new cH(this.get, this.set, this.put, this.update_Z ? 14 : this.add, this.sync_Z, this.update_Z);
+         OverlayBounds bounds = new OverlayBounds(this.get, this.set, this.put, this.update_Z ? 14 : this.add, this.sync_Z, this.update_Z);
          if (this.write(mouseX, mouseY, bounds)) {
             this.init_V_Z(false);
             return true;
@@ -665,7 +665,7 @@ public class AutismFabricatorOverlay extends bj {
          this.init_D = mouseX - this.get;
          this.load_D = mouseY - this.set;
 
-         for (k field : this.init_List) {
+         for (ThemedTextInputBox field : this.init_List) {
             field.push(false);
          }
 
@@ -678,7 +678,7 @@ public class AutismFabricatorOverlay extends bj {
          MouseButtonEvent click = new MouseButtonEvent(mouseX, mouseY, Compat263.newGlfwMouseButtonInfo(button, 0));
          boolean clickedField = false;
 
-         for (k field : this.init_List) {
+         for (ThemedTextInputBox field : this.init_List) {
             boolean wasClicked = field.init(click, false);
             if (wasClicked) {
                field.push(true);
@@ -752,7 +752,7 @@ public class AutismFabricatorOverlay extends bj {
                            this.init_V_I_2(index);
                         }
 
-                        for (k field : this.init_List) {
+                        for (ThemedTextInputBox field : this.init_List) {
                            field.push(false);
                         }
 
@@ -766,7 +766,7 @@ public class AutismFabricatorOverlay extends bj {
                if (mouseX >= listX && mouseX < listX + planContentWidth) {
                   this.init_V_I_2(-1);
 
-                  for (k field : this.init_List) {
+                  for (ThemedTextInputBox field : this.init_List) {
                      field.push(false);
                   }
 
@@ -785,7 +785,7 @@ public class AutismFabricatorOverlay extends bj {
                      this.init_V_J_TaskQueue(this.close_List.get(index));
                      this.set_V_3();
 
-                     for (k field : this.init_List) {
+                     for (ThemedTextInputBox field : this.init_List) {
                         field.push(false);
                      }
 
@@ -798,7 +798,7 @@ public class AutismFabricatorOverlay extends bj {
                if (mouseX >= listX && mouseX < listX + recipeContentWidth) {
                   this.poll_V_3();
 
-                  for (k field : this.init_List) {
+                  for (ThemedTextInputBox field : this.init_List) {
                      field.push(false);
                   }
 
@@ -825,7 +825,7 @@ public class AutismFabricatorOverlay extends bj {
                this.reset_V_2();
                this.read_V_3();
 
-               for (k field : this.init_List) {
+               for (ThemedTextInputBox field : this.init_List) {
                   field.push(false);
                }
 
@@ -842,7 +842,7 @@ public class AutismFabricatorOverlay extends bj {
             if (mouseX >= bx && mouseX < bx + bw) {
                this.load(false);
 
-               for (k field : this.init_List) {
+               for (ThemedTextInputBox field : this.init_List) {
                   field.push(false);
                }
 
@@ -853,7 +853,7 @@ public class AutismFabricatorOverlay extends bj {
             if (mouseX >= bx && mouseX < bx + bw) {
                this.load(true);
 
-               for (k field : this.init_List) {
+               for (ThemedTextInputBox field : this.init_List) {
                   field.push(false);
                }
 
@@ -864,7 +864,7 @@ public class AutismFabricatorOverlay extends bj {
             if (mouseX >= bx && mouseX < bx + bw) {
                AutismMacroEditorOverlay macroEditor = null;
 
-               for (cX ov : bk.init_bk().init_List()) {
+               for (AutismOverlay ov : OverlayManager.init_bk().init_List()) {
                   if (ov instanceof AutismMacroEditorOverlay) {
                      macroEditor = (AutismMacroEditorOverlay)ov;
                      break;
@@ -877,7 +877,7 @@ public class AutismFabricatorOverlay extends bj {
                   this.init_V_Str_ChatFormatting("Open a macro editor first!", ChatFormatting.RED);
                }
 
-               for (k field : this.init_List) {
+               for (ThemedTextInputBox field : this.init_List) {
                   field.push(false);
                }
 
@@ -906,7 +906,7 @@ public class AutismFabricatorOverlay extends bj {
          this.write_Z = false;
       }
 
-      for (k field : this.init_List) {
+      for (ThemedTextInputBox field : this.init_List) {
          if (field.load(mouseX, mouseY, button)) {
             return true;
          }
@@ -936,8 +936,8 @@ public class AutismFabricatorOverlay extends bj {
       }
 
       if (this.write_Z) {
-         cH nextBounds = this.init_cH_cX_cH(
-            this, new cH((int)(mouseX - this.init_D), (int)(mouseY - this.load_D), this.put, this.add, this.sync_Z, this.update_Z)
+         OverlayBounds nextBounds = this.init_cH_cX_cH(
+            this, new OverlayBounds((int)(mouseX - this.init_D), (int)(mouseY - this.load_D), this.put, this.add, this.sync_Z, this.update_Z)
          );
          this.get = nextBounds.init_I;
          this.set = nextBounds.load_I;
@@ -945,7 +945,7 @@ public class AutismFabricatorOverlay extends bj {
          return true;
       }
 
-      for (k field : this.init_List) {
+      for (ThemedTextInputBox field : this.init_List) {
          if (field.init(mouseX, mouseY, button, deltaX, deltaY)) {
             return true;
          }
@@ -1382,7 +1382,7 @@ public class AutismFabricatorOverlay extends bj {
       if (this.sync_Z && !this.update_Z) {
          boolean anyFocused = false;
 
-         for (k field : this.init_List) {
+         for (ThemedTextInputBox field : this.init_List) {
             if (field.init_Z()) {
                anyFocused = true;
                break;
@@ -1391,7 +1391,7 @@ public class AutismFabricatorOverlay extends bj {
 
          if (anyFocused) {
             if (keyCode == 256) {
-               for (k field : this.init_List) {
+               for (ThemedTextInputBox field : this.init_List) {
                   field.push(false);
                }
 
@@ -1400,7 +1400,7 @@ public class AutismFabricatorOverlay extends bj {
 
             KeyEvent input = Compat263.newGlfwKeyEvent(keyCode, scanCode, modifiers);
 
-            for (k field : this.init_List) {
+            for (ThemedTextInputBox field : this.init_List) {
                if (field.init_Z()) {
                   field.init_Z_KeyEvent(input);
                   return true;
@@ -1420,7 +1420,7 @@ public class AutismFabricatorOverlay extends bj {
       if (this.sync_Z && !this.update_Z) {
          CharacterEvent input = new CharacterEvent(codepoint);
 
-         for (k field : this.init_List) {
+         for (ThemedTextInputBox field : this.init_List) {
             if (field.init_Z() && field.init_Z_CharacterEvent(input)) {
                return true;
             }
@@ -1450,7 +1450,7 @@ public class AutismFabricatorOverlay extends bj {
          }
 
          int panelHeight = this.add;
-         cH bounds = new cH(this.get, this.set, this.put, panelHeight, this.sync_Z, this.update_Z);
+         OverlayBounds bounds = new OverlayBounds(this.get, this.set, this.put, panelHeight, this.sync_Z, this.update_Z);
          this.init_V_GuiGraphicsExtract_6(context, mouseX, mouseY, bounds, "Fabricator", this.update_Z, this.write_Z);
          boolean clipBody = this.init_Z_GuiGraphicsExtract(context, bounds, this.update_Z);
          if (!clipBody) {
@@ -1460,7 +1460,7 @@ public class AutismFabricatorOverlay extends bj {
                int labelX = this.get + 4;
                int fieldX = this.run_I_5();
                int fieldWidth = this.get_I_5();
-               cs.init(context, init_Minecraft.font, "Action", cs.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.reset_I_2()), false);
+               ThemedTextHelper.init(context, init_Minecraft.font, "Action", ThemedTextHelper.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.reset_I_2()), false);
                if (this.init_SyncManager == null) {
                   this.init_SyncManager = new autismclient.gui.f.b.SyncManager(
                      fieldX, this.reset_I_2(), fieldWidth, push_I_7(), this.load_List, this.next, idx -> {
@@ -1481,22 +1481,22 @@ public class AutismFabricatorOverlay extends bj {
                   .init_SyncManager_I(this.next);
                this.sync_List.add(this.init_SyncManager);
 
-               for (k field : this.init_List) {
+               for (ThemedTextInputBox field : this.init_List) {
                   field.init_V(context, mouseX, mouseY, delta);
                }
 
                if (this.pop_Z_3()) {
-                  cs.init(context, init_Minecraft.font, "Slot", cs.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.start_I_5()), false);
-                  cs.init(context, init_Minecraft.font, "Item", cs.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.stop_I_2()), false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, "Slot", ThemedTextHelper.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.start_I_5()), false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, "Item", ThemedTextHelper.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.stop_I_2()), false);
                }
 
                if (this.push_Z_4()) {
                   if (this.tick_Z_3() || this.run_Z_2()) {
-                     cs.init(
+                     ThemedTextHelper.init(
                         context,
                         init_Minecraft.font,
                         this.run_Z_2() ? "Drop Mode" : "Click",
-                        cs.Inner_DataUtil.MUTED,
+                        ThemedTextHelper.Inner_DataUtil.MUTED,
                         labelX,
                         this.init_I_I_4(this.next_I_2()),
                         false
@@ -1541,7 +1541,7 @@ public class AutismFabricatorOverlay extends bj {
                      }
                   }
 
-                  cs.init(context, init_Minecraft.font, this.read_Str_4(), cs.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.prev_I()), false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, this.read_Str_4(), ThemedTextHelper.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.prev_I()), false);
                } else {
                   this.sync_V_5();
                   int listX = this.flags();
@@ -1598,7 +1598,7 @@ public class AutismFabricatorOverlay extends bj {
                   autismclient.gui.f.b.PoolEntry.Inner_DataUtil craftPlanScrollbar = this.init_PoolEntry_DataUtil();
                   autismclient.gui.f.b.PoolEntry.init(context, craftPlanScrollbar, craftPlanScrollbar.init(mouseX, mouseY), this.state == 1);
                   if (this.init_ItemStack.isEmpty()) {
-                     cs.init(context, init_Minecraft.font, "Recipe: none selected", cs.Inner_DataUtil.MUTED, listX, this.entry(), false);
+                     ThemedTextHelper.init(context, init_Minecraft.font, "Recipe: none selected", ThemedTextHelper.Inner_DataUtil.MUTED, listX, this.entry(), false);
                   } else {
                      Component summaryText = Component.empty()
                         .append(this.init_ItemStack.getHoverName().copy())
@@ -1609,10 +1609,10 @@ public class AutismFabricatorOverlay extends bj {
                                  + (this.init_J_TaskQueue != null && this.init_J_TaskQueue.read_Z ? " | x" + this.init_J_TaskQueue.update : "")
                            )
                         );
-                     cs.init(context, init_Minecraft.font, summaryText.getString(), p.a(), listX, this.entry(), false);
+                     ThemedTextHelper.init(context, init_Minecraft.font, summaryText.getString(), UiColorPalette.a(), listX, this.entry(), false);
                   }
 
-                  cs.init(context, init_Minecraft.font, "Amount", cs.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.size()), false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, "Amount", ThemedTextHelper.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.size()), false);
                   this.init(context, this.cache(), this.size(), this.data(), push_I_7(), "Use Max", this.push_Z, "fabricator:use-max", mouseX, mouseY);
                   autismclient.gui.f.b.FileCache.init(context, init_Minecraft.font, "Recipes", listX, this.node());
                   int listY = this.count();
@@ -1667,10 +1667,10 @@ public class AutismFabricatorOverlay extends bj {
                   autismclient.gui.f.HashUtil.init_HashUtil().init(context);
                   autismclient.gui.f.b.PoolEntry.Inner_DataUtil craftListScrollbar = this.load_PoolEntry_DataUtil();
                   autismclient.gui.f.b.PoolEntry.init(context, craftListScrollbar, craftListScrollbar.init(mouseX, mouseY), this.state == 2);
-                  String recipeCountLine = cs.init(
-                     init_Minecraft.font, this.valid + " ready / " + this.flush_List.size() + " total", listWidth, cs.Inner_DataUtil.MUTED
+                  String recipeCountLine = ThemedTextHelper.init(
+                     init_Minecraft.font, this.valid + " ready / " + this.flush_List.size() + " total", listWidth, ThemedTextHelper.Inner_DataUtil.MUTED
                   );
-                  cs.init(context, init_Minecraft.font, recipeCountLine, cs.Inner_DataUtil.MUTED, listX, listY + this.open_I + 2, false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, recipeCountLine, ThemedTextHelper.Inner_DataUtil.MUTED, listX, listY + this.open_I + 2, false);
                }
 
                int btnY = this.set_I_5();
@@ -1723,7 +1723,7 @@ public class AutismFabricatorOverlay extends bj {
                      break;
                   }
 
-                  cs.init(context, init_Minecraft.font, actionLines.get(i), cs.Inner_DataUtil.MUTED, this.get + 4, lineY, false);
+                  ThemedTextHelper.init(context, init_Minecraft.font, actionLines.get(i), ThemedTextHelper.Inner_DataUtil.MUTED, this.get + 4, lineY, false);
                }
 
                if (!this.sync_List.isEmpty()) {

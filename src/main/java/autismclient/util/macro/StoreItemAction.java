@@ -30,7 +30,7 @@ public class StoreItemAction implements MacroAction {
             }
 
             if (this.closeAfter && !this.persistent) {
-               autismclient.util.af.init(mc, this.closeSendPkt, false);
+               autismclient.util.GuiDesyncHelper.init(mc, this.closeSendPkt, false);
             }
          }
       }

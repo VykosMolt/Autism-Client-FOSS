@@ -1,6 +1,6 @@
 package autismclient.gui.d;
 
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -36,7 +36,7 @@ public class StreamGate extends Button {
    protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
       Font font = Minecraft.getInstance().font;
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(this.getX(), this.getY(), this.getWidth(), this.getHeight());
-      autismclient.gui.f.PacketUtil.init(graphics, bounds, ct.init_I_I_ct_DataUtil(-15594737, ct.Inner_DataUtil.BUTTON));
+      autismclient.gui.f.PacketUtil.init(graphics, bounds, ThemePaletteManager.init_I_I_ct_DataUtil(-15594737, ThemePaletteManager.Inner_DataUtil.BUTTON));
       boolean hovered = this.active
          && mouseX >= this.getX()
          && mouseX < this.getX() + this.getWidth()

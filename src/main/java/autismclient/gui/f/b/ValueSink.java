@@ -1,6 +1,6 @@
 package autismclient.gui.f.b;
 
-import autismclient.util.cH;
+import autismclient.util.OverlayBounds;
 import com.mojang.blaze3d.platform.cursor.CursorType;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -15,7 +15,7 @@ public final class ValueSink {
    private ValueSink() {
    }
 
-   public static boolean init(cH b, double mx, double my) {
+   public static boolean init(OverlayBounds b, double mx, double my) {
       return b != null && init(b.init_I, b.load_I, b.read, b.write, mx, my);
    }
 
@@ -27,7 +27,7 @@ public final class ValueSink {
       return w > 0 && h > 0 ? mx >= x + w - 10 && mx < x + w && my >= y + h - 10 && my < y + h : false;
    }
 
-   public static void init(GuiGraphicsExtractor graphics, autismclient.gui.f.JsonUtil colors, cH b, boolean hover, boolean active) {
+   public static void init(GuiGraphicsExtractor graphics, autismclient.gui.f.JsonUtil colors, OverlayBounds b, boolean hover, boolean active) {
       if (b != null) {
          init(graphics, colors, b.init_I, b.load_I, b.read, b.write, hover, active);
       }

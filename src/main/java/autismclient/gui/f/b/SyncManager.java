@@ -1,6 +1,6 @@
 package autismclient.gui.f.b;
 
-import autismclient.util.cs;
+import autismclient.util.ThemedTextHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntConsumer;
@@ -314,7 +314,7 @@ public final class SyncManager {
    }
 
    private static String init_Str_Str(String raw) {
-      String sanitized = cs.init(raw);
+      String sanitized = ThemedTextHelper.init(raw);
       if (sanitized != null && !sanitized.isEmpty()) {
          if (sanitized.length() <= 3 && sanitized.chars().anyMatch(Character::isDigit)) {
             return sanitized;

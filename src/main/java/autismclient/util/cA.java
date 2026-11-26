@@ -146,7 +146,7 @@ public final class cA {
          config.save();
 
          try {
-            bk.init_bk().flush();
+            OverlayManager.init_bk().flush();
          } catch (Throwable var6) {
          }
       }

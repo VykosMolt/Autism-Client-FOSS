@@ -3,7 +3,7 @@ package autismclient.util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
-public final class AutismProfilesOverlay extends bj {
+public final class AutismProfilesOverlay extends DraggableOverlayWindow {
    private static final String init_Str_2 = "autism-profiles";
    private static final String load_Str = "Profiles Library";
    private static final int flush_I = 380;
@@ -31,7 +31,7 @@ public final class AutismProfilesOverlay extends bj {
       this.load(false);
       this.init_V_Z(!this.init_Z);
       if (this.init_Z) {
-         bk.init_bk().update_V(this);
+         OverlayManager.init_bk().update_V(this);
       }
    }
 
@@ -87,8 +87,8 @@ public final class AutismProfilesOverlay extends bj {
    }
 
    @Override
-   public cX.Inner_DataUtil init_cX_DataUtil() {
-      return cX.Inner_DataUtil.HOST_SCREEN;
+   public AutismOverlay.Inner_DataUtil init_cX_DataUtil() {
+      return AutismOverlay.Inner_DataUtil.HOST_SCREEN;
    }
 
    @Override
@@ -121,7 +121,7 @@ public final class AutismProfilesOverlay extends bj {
             int want = this.init_StreamUtil.init(this.read_I - 2) + 14 + 1;
             int maxH = Math.min(cA.load_I() - 16, 380);
             this.write = Math.max(this.load_I(), Math.min(want, maxH));
-            cH bounds = this.init_cH_cX(this);
+            OverlayBounds bounds = this.init_cH_cX(this);
             this.init_I_2 = bounds.init_I;
             this.load_I = bounds.load_I;
             this.read_I = bounds.read;
@@ -187,7 +187,7 @@ public final class AutismProfilesOverlay extends bj {
       if (!this.init_Z) {
          return false;
       } else {
-         cH bounds = this.init_cH();
+         OverlayBounds bounds = this.init_cH();
          if (!this.update_Z && this.write(mx, my, bounds)) {
             this.init_V_Z(false);
             this.write_Z = false;
@@ -219,8 +219,8 @@ public final class AutismProfilesOverlay extends bj {
    @Override
    public boolean init_Z_D(double mx, double my, int button, double dx, double dy) {
       if (this.write_Z) {
-         cH c = this.init_cH_cX_cH(
-            this, new cH((int)Math.round(mx - this.init_D), (int)Math.round(my - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z)
+         OverlayBounds c = this.init_cH_cX_cH(
+            this, new OverlayBounds((int)Math.round(mx - this.init_D), (int)Math.round(my - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z)
          );
          this.init_I_2 = c.init_I;
          this.load_I = c.load_I;

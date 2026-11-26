@@ -47,7 +47,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult.Type;
 
-public class AutismMacroEditorOverlay extends bj {
+public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static AutismMacroEditorOverlay init_AutismMacroEditorO_5;
    private static final int flush_I = 30;
@@ -81,8 +81,8 @@ public class AutismMacroEditorOverlay extends bj {
    private List<Boolean> update_List = new ArrayList<>();
    private int put_I = -1;
    private final List<autismclient.gui.f.b.SyncManager> sync_List = new ArrayList<>();
-   private k init_k;
-   private k load_k;
+   private ThemedTextInputBox init_k;
+   private ThemedTextInputBox load_k;
    private boolean flush_Z = false;
    private int add_I = 0;
    private int clear_I = 0;
@@ -119,7 +119,7 @@ public class AutismMacroEditorOverlay extends bj {
    private List<AutismMacroEditorOverlay.Inner_NetHelper> open_List = Collections.emptyList();
    private Map<String, List<AutismMacroEditorOverlay.Inner_NetHelper>> init_Map = Collections.emptyMap();
    private final a<AutismMacroEditorOverlay.Inner_NetHelper> init_a = new a<>(entry -> entry.init_Str + "\n" + entry.load + "\n" + entry.read);
-   private k read_k;
+   private ThemedTextInputBox read_k;
    private final AutismMacroEditorOverlay.Inner_StateCache init_AutismMacroEditorO_4 = new AutismMacroEditorOverlay.Inner_StateCache();
    private int buffer = 0;
    private final HashMap<String, Integer> init_HashMap = new HashMap<>();
@@ -130,7 +130,7 @@ public class AutismMacroEditorOverlay extends bj {
    private int task = -1;
    private int pool = 0;
    private int index = 0;
-   private final F<Integer> init_F_3;
+   private final OverlayContextMenu<Integer> init_F_3;
    private static final int count = 0;
    private static final int flags = 1;
    private static final int level = 2;
@@ -171,7 +171,7 @@ public class AutismMacroEditorOverlay extends bj {
       if (init_AutismMacroEditorO_5 == null) {
          init_AutismMacroEditorO_5 = new AutismMacroEditorOverlay(Minecraft.getInstance().font);
          init_AutismMacroEditorO_5.b__V();
-         bk.init_bk().init_V(init_AutismMacroEditorO_5);
+         OverlayManager.init_bk().init_V(init_AutismMacroEditorO_5);
       }
 
       init_AutismMacroEditorO_5.sync_V_9();
@@ -253,7 +253,7 @@ public class AutismMacroEditorOverlay extends bj {
          true
       );
       int icon = 8;
-      cz.init(context, running ? cz.close : cz.flush, x + (w - icon) / 2, y + (h - icon) / 2, icon, enabled ? -218103809 : 1728053247);
+      GuiIconAtlas.init(context, running ? GuiIconAtlas.close : GuiIconAtlas.flush, x + (w - icon) / 2, y + (h - icon) / 2, icon, enabled ? -218103809 : 1728053247);
    }
 
    private void init_V_GuiGraphicsExtract_3(
@@ -277,7 +277,7 @@ public class AutismMacroEditorOverlay extends bj {
       );
       int groupW = icon + gap + textW;
       int startX = x + Math.max(2, (w - groupW) / 2);
-      cz.init(context, iconId, startX, y + (h - icon) / 2, icon, enabled ? -218103809 : 1728053247);
+      GuiIconAtlas.init(context, iconId, startX, y + (h - icon) / 2, icon, enabled ? -218103809 : 1728053247);
       autismclient.gui.f.b.k.init(
          context,
          this.init_Font,
@@ -292,7 +292,7 @@ public class AutismMacroEditorOverlay extends bj {
 
    public AutismMacroEditorOverlay(Font textRenderer) {
       this.init_Font = textRenderer;
-      this.init_F_3 = new F<>(this.init_CharEncoder, textRenderer, this::init_StrArr_Integer, 12);
+      this.init_F_3 = new OverlayContextMenu<>(this.init_CharEncoder, textRenderer, this::init_StrArr_Integer, 12);
       this.init_V_F(this.init_F_3);
       this.get_I = this.buffer_I();
       this.set_I = this.entry_I();
@@ -2017,7 +2017,7 @@ public class AutismMacroEditorOverlay extends bj {
          this.init_Font,
          String.valueOf(number),
          this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-         p.bind(),
+         UiColorPalette.bind(),
          this.get_I_10() + 8,
          this.init_I_I_6(top),
          false
@@ -2168,7 +2168,7 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private void next_V_3() {
-      bk.init_bk().read_V(this.init_AutismMacroEditorO_4);
+      OverlayManager.init_bk().read_V(this.init_AutismMacroEditorO_4);
       this.init_AutismMacroEditorO_3 = null;
       this.close_List = Collections.emptyList();
       this.open_List = Collections.emptyList();
@@ -3315,7 +3315,7 @@ public class AutismMacroEditorOverlay extends bj {
          List<AutismMacroEditorOverlay.Inner_NetHelper> entries = this.init_List_AutismMacroEditorO(mode);
          this.init_a.init_V_List(entries);
          this.init_a.init_V_Str("");
-         this.read_k = new k(init_Minecraft, this.init_Font, 0, 0, 1, 16, false);
+         this.read_k = new ThemedTextInputBox(init_Minecraft, this.init_Font, 0, 0, 1, 16, false);
          this.read_k.init_V_Component(Component.literal("Search..."));
          this.read_k.init_V_Consumer(ignored -> this.task_V());
          this.task_V();
@@ -3329,7 +3329,7 @@ public class AutismMacroEditorOverlay extends bj {
             this.load_k.push(false);
          }
 
-         bk manager = bk.init_bk();
+         OverlayManager manager = OverlayManager.init_bk();
          manager.init_V(this.init_AutismMacroEditorO_4);
          manager.update_V(this.init_AutismMacroEditorO_4);
       }
@@ -3551,14 +3551,14 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    @Override
-   public cH init_cH() {
-      return new cH(this.tick_I, this.run_I, this.get_I, this.set_I, this.write_Z, this.pop_Z);
+   public OverlayBounds init_cH() {
+      return new OverlayBounds(this.tick_I, this.run_I, this.get_I, this.set_I, this.write_Z, this.pop_Z);
    }
 
    @Override
-   public void init_V_cH(cH bounds) {
+   public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
-         cH clamped = this.init_cH_cX_cH(this, new cH(bounds.init_I, bounds.load_I, this.stop_I_3(), this.prev_I_2(), bounds.init_Z, bounds.load_Z));
+         OverlayBounds clamped = this.init_cH_cX_cH(this, new OverlayBounds(bounds.init_I, bounds.load_I, this.stop_I_3(), this.prev_I_2(), bounds.init_Z, bounds.load_Z));
          this.tick_I = clamped.init_I;
          this.run_I = clamped.load_I;
          this.get_I = clamped.read;
@@ -3699,7 +3699,7 @@ public class AutismMacroEditorOverlay extends bj {
          this.flush_Z = false;
       }
 
-      for (cX overlay : bk.init_bk().init_List()) {
+      for (AutismOverlay overlay : OverlayManager.init_bk().init_List()) {
          if (overlay instanceof AutismMacroListOverlay macroListOverlay) {
             macroListOverlay.init_V_Z(false);
          }
@@ -3753,7 +3753,7 @@ public class AutismMacroEditorOverlay extends bj {
       this.add_V_5();
       this.parse_V();
       this.init_CharEncoder_2.read_CharEncoder(!this.pop_Z);
-      bk.init_bk().update_V(this);
+      OverlayManager.init_bk().update_V(this);
    }
 
    public void write_V_12() {
@@ -3857,10 +3857,10 @@ public class AutismMacroEditorOverlay extends bj {
       this.set_V_5();
       this.add_V_5();
       if (shouldReopenMacroList) {
-         for (cX overlay : bk.init_bk().init_List()) {
+         for (AutismOverlay overlay : OverlayManager.init_bk().init_List()) {
             if (overlay instanceof AutismMacroListOverlay macroListOverlay) {
                macroListOverlay.init_V_Z(true);
-               bk.init_bk().update_V(macroListOverlay);
+               OverlayManager.init_bk().update_V(macroListOverlay);
                break;
             }
          }
@@ -4039,14 +4039,14 @@ public class AutismMacroEditorOverlay extends bj {
       ck.init_ck().init_V_Z(visible);
       if (visible) {
          this.init_CharEncoder_2.read_CharEncoder(!this.pop_Z);
-         bk.init_bk().update_V(this);
+         OverlayManager.init_bk().update_V(this);
       } else {
          this.push_V();
       }
    }
 
    public static void flush_V_9() {
-      cx.init_V(init_Minecraft);
+      OverlayScreenController.init_V(init_Minecraft);
    }
 
    public static void close_V_8() {
@@ -4262,7 +4262,7 @@ public class AutismMacroEditorOverlay extends bj {
       int deleteTopW = !this.update_Z ? this.b_I() : 0;
       int nameFieldW = this.get_I - this.store_I() * 2 - (deleteTopW > 0 ? deleteTopW + gap : 0);
       if (this.init_k == null) {
-         this.init_k = new k(init_Minecraft, this.init_Font, this.tick_I + this.store_I(), row1Y, nameFieldW, this.c_I(), false);
+         this.init_k = new ThemedTextInputBox(init_Minecraft, this.init_Font, this.tick_I + this.store_I(), row1Y, nameFieldW, this.c_I(), false);
          this.init_k.init_V_Component(Component.literal("Macro Name"));
          this.init_k.init_V_Consumer(text -> {
             this.init_aM.init_Str = text;
@@ -4332,7 +4332,7 @@ public class AutismMacroEditorOverlay extends bj {
       bx += loopW + gap;
       if (this.add_I == 1) {
          if (this.load_k == null) {
-            this.load_k = new k(init_Minecraft, this.init_Font, bx, row2Y, this.h_I(), this.i_I(), false);
+            this.load_k = new ThemedTextInputBox(init_Minecraft, this.init_Font, bx, row2Y, this.h_I(), this.i_I(), false);
             this.load_k.init_V_Consumer(text -> {
                try {
                   this.init_aM.init_I = Integer.parseInt(text.replaceAll("[^0-9-]", ""));
@@ -4864,7 +4864,7 @@ public class AutismMacroEditorOverlay extends bj {
          }
 
          autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
-         cH clamped = this.init_cH_cX_cH(this, new cH(this.tick_I, this.run_I, this.stop_I_3(), this.prev_I_2(), this.write_Z, this.pop_Z));
+         OverlayBounds clamped = this.init_cH_cX_cH(this, new OverlayBounds(this.tick_I, this.run_I, this.stop_I_3(), this.prev_I_2(), this.write_Z, this.pop_Z));
          if (clamped.init_I != this.tick_I || clamped.load_I != this.run_I || clamped.read != this.get_I || clamped.write != this.set_I) {
             this.tick_I = clamped.init_I;
             this.run_I = clamped.load_I;
@@ -4875,7 +4875,7 @@ public class AutismMacroEditorOverlay extends bj {
 
          float uiMouseX = viewport.init_F_D(mouseX);
          float uiMouseY = viewport.load(mouseY);
-         boolean active = bk.init_bk().update_Z(this) || bk.init_bk().write_Z(this);
+         boolean active = OverlayManager.init_bk().update_Z(this) || OverlayManager.init_bk().write_Z(this);
          boolean headerHovered = uiMouseX >= this.tick_I
             && uiMouseX < this.tick_I + this.get_I
             && uiMouseY >= this.run_I
@@ -4926,7 +4926,7 @@ public class AutismMacroEditorOverlay extends bj {
                   this.init_Font,
                   "Step Builder",
                   this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load),
-                  p.parse(),
+                  UiColorPalette.parse(),
                   this.tick_I + this.store_I() + 2,
                   j.init(
                      builderLabelY,
@@ -4946,7 +4946,7 @@ public class AutismMacroEditorOverlay extends bj {
                   this.init_Font,
                   "Steps (" + this.init_aM.init_List.size() + ")",
                   this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load),
-                  p.parse(),
+                  UiColorPalette.parse(),
                   this.tick_I + this.store_I() + 2,
                   j.init(
                      listLabelY,
@@ -4980,7 +4980,7 @@ public class AutismMacroEditorOverlay extends bj {
                }
 
                this.clear_V_4();
-               p.init(context, this.get_I_10(), listY, this.set_I_10(), listHeight, false);
+               UiColorPalette.init(context, this.get_I_10(), listY, this.set_I_10(), listHeight, false);
                autismclient.gui.f.HashUtil.init_HashUtil()
                   .init(
                      context,
@@ -5128,11 +5128,11 @@ public class AutismMacroEditorOverlay extends bj {
                   if (ix == this.put_I) {
                      this.init(context, b[0], b[1], b[2], b[3], macroCurrentlyRunning, enabled, panelMouseX, panelMouseY);
                   } else if ("Multi".equals(lbl)) {
-                     this.init_V_GuiGraphicsExtract_3(context, b[0], b[1], b[2], b[3], lbl, cz.flush, variant, enabled, panelMouseX, panelMouseY);
+                     this.init_V_GuiGraphicsExtract_3(context, b[0], b[1], b[2], b[3], lbl, GuiIconAtlas.flush, variant, enabled, panelMouseX, panelMouseY);
                   } else if (!"Add Action".equals(lbl) && !"Add Conditional".equals(lbl)) {
                      this.init(context, b[0], b[1], b[2], b[3], lbl, variant, enabled, panelMouseX, panelMouseY);
                   } else {
-                     this.init_V_GuiGraphicsExtract_3(context, b[0], b[1], b[2], b[3], lbl.substring(4), cz.pop, variant, enabled, panelMouseX, panelMouseY);
+                     this.init_V_GuiGraphicsExtract_3(context, b[0], b[1], b[2], b[3], lbl.substring(4), GuiIconAtlas.pop, variant, enabled, panelMouseX, panelMouseY);
                   }
 
                   if (panelMouseX >= b[0] && panelMouseX < b[0] + b[2] && panelMouseY >= b[1] && panelMouseY < b[1] + b[3]) {
@@ -5280,14 +5280,14 @@ public class AutismMacroEditorOverlay extends bj {
       int bodyIndent = groupBody ? 10 : 0;
       boolean hoverRow = interactive && mouseX >= rowLeft - 1 && mouseX <= rowRight + 1 && mouseY >= actionY && mouseY < actionY + this.mark_I();
       boolean selectedRow = interactive && this.read_Z(actionIndex);
-      int bgColor = selectedRow ? ct.init_I_I_ct_DataUtil(1715082778, ct.Inner_DataUtil.ACCENT) : (hoverRow ? p.level() : p.flags());
+      int bgColor = selectedRow ? ThemePaletteManager.init_I_I_ct_DataUtil(1715082778, ThemePaletteManager.Inner_DataUtil.ACCENT) : (hoverRow ? UiColorPalette.level() : UiColorPalette.flags());
       autismclient.gui.f.b.TableIndex.init(
          context, rowLeft, actionY + 1, rowRight - rowLeft, this.mark_I() - 2, autismclient.gui.f.c.SyncManager.init(bgColor, alpha)
       );
       AutismMacroEditorOverlay.Inner_BufferHelper impact = this.init_AutismMacroEditorO_I(actionIndex);
       if (impact.init_Z) {
          int rh = this.mark_I();
-         int rgb = (impact.read ? p.buffer() : p.queue()) & 16777215;
+         int rgb = (impact.read ? UiColorPalette.buffer() : UiColorPalette.queue()) & 16777215;
          int tint = autismclient.gui.f.c.SyncManager.init((impact.load ? 77 : 51) << 24 | rgb, alpha);
          int edge = autismclient.gui.f.c.SyncManager.init(-805306368 | rgb, alpha);
          autismclient.gui.f.b.TableIndex.init(context, rowLeft, actionY + 1, rowRight - rowLeft, rh - 2, tint);
@@ -5305,7 +5305,7 @@ public class AutismMacroEditorOverlay extends bj {
          autismclient.gui.f.PacketUtil.load(
             context,
             autismclient.gui.f.NetHelper.init(rowLeft, actionY + 1, rowRight - rowLeft, this.mark_I() - 2),
-            autismclient.gui.f.c.SyncManager.init(ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.OUTLINE), alpha)
+            autismclient.gui.f.c.SyncManager.init(ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.Inner_DataUtil.OUTLINE), alpha)
          );
       }
 
@@ -5313,11 +5313,11 @@ public class AutismMacroEditorOverlay extends bj {
          int railX = this.get_I_10() + 2 + xOffset;
          int railTop = group.load() ? actionY + 3 : actionY;
          int railBottom = group.read() ? actionY + this.mark_I() - 3 : actionY + this.mark_I();
-         int railColor = autismclient.gui.f.c.SyncManager.init(group.read_Z ? p.node() : this.init_CharEncoder.run(), alpha);
+         int railColor = autismclient.gui.f.c.SyncManager.init(group.read_Z ? UiColorPalette.node() : this.init_CharEncoder.run(), alpha);
          autismclient.gui.f.b.TableIndex.read(context, railX, railTop, 2, railBottom - railTop, railColor);
       }
 
-      int badgeColor = group.read_Z ? p.node() : (groupHeader ? this.init_CharEncoder.run() : (conditional ? -30720 : -12268476));
+      int badgeColor = group.read_Z ? UiColorPalette.node() : (groupHeader ? this.init_CharEncoder.run() : (conditional ? -30720 : -12268476));
       if (!groupHeader) {
          autismclient.gui.f.b.TableIndex.read(
             context, this.get_I_10() + 2 + xOffset + bodyIndent, actionY + 3, 3, this.mark_I() - 6, autismclient.gui.f.c.SyncManager.init(badgeColor, alpha)
@@ -5329,7 +5329,7 @@ public class AutismMacroEditorOverlay extends bj {
          this.init_Font,
          String.valueOf(actionIndex + 1),
          this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-         autismclient.gui.f.c.SyncManager.init(p.bind(), alpha),
+         autismclient.gui.f.c.SyncManager.init(UiColorPalette.bind(), alpha),
          this.get_I_10() + 8 + xOffset + bodyIndent,
          this.init_I_I_6(actionY),
          false
@@ -5339,7 +5339,7 @@ public class AutismMacroEditorOverlay extends bj {
       int contentRight = this.read(action, allowMove, allowDuplicate, allowDelete) + xOffset;
       int maxNameW = Math.max(1, contentRight - nameX - 8);
       if (group.init() && !group.init_Str.isEmpty()) {
-         int roleColor = autismclient.gui.f.c.SyncManager.init(group.read_Z ? p.node() : (groupHeader ? -10281 : p.parse()), alpha);
+         int roleColor = autismclient.gui.f.c.SyncManager.init(group.read_Z ? UiColorPalette.node() : (groupHeader ? -10281 : UiColorPalette.parse()), alpha);
          String role = group.init_Str;
          int roleW = autismclient.gui.f.b.k.init(this.init_Font, role, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load), roleColor);
          autismclient.gui.f.b.k.init(
@@ -5386,7 +5386,7 @@ public class AutismMacroEditorOverlay extends bj {
                this.level_I(),
                mouseX >= cx && mouseX < cx + this.level_I() && mouseY >= controlY && mouseY < controlY + this.level_I(),
                false,
-               cz.update
+               GuiIconAtlas.update
             );
             cx += this.u();
             this.init(
@@ -5397,7 +5397,7 @@ public class AutismMacroEditorOverlay extends bj {
                this.level_I(),
                mouseX >= cx && mouseX < cx + this.level_I() && mouseY >= controlY && mouseY < controlY + this.level_I(),
                false,
-               cz.write
+               GuiIconAtlas.write
             );
             cx += this.u();
          }
@@ -5411,7 +5411,7 @@ public class AutismMacroEditorOverlay extends bj {
                this.level_I(),
                mouseX >= cx && mouseX < cx + this.level_I() && mouseY >= controlY && mouseY < controlY + this.level_I(),
                false,
-               cz.push
+               GuiIconAtlas.push
             );
             cx += this.u();
          }
@@ -5426,7 +5426,7 @@ public class AutismMacroEditorOverlay extends bj {
                this.level_I(),
                mouseX >= cx && mouseX < cx + this.level_I() && mouseY >= controlY && mouseY < controlY + this.level_I(),
                false,
-               cz.poll
+               GuiIconAtlas.poll
             );
             cx += this.u();
          }
@@ -5440,7 +5440,7 @@ public class AutismMacroEditorOverlay extends bj {
                this.level_I(),
                mouseX >= cx && mouseX < cx + this.level_I() && mouseY >= controlY && mouseY < controlY + this.level_I(),
                true,
-               cz.open
+               GuiIconAtlas.open
             );
          }
       }
@@ -5455,14 +5455,14 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private void init_V_GuiGraphicsExtract_5(GuiGraphicsExtractor context, int x, int y, boolean hovered) {
-      this.init(context, x, y, 14, 12, hovered, true, cz.open);
+      this.init(context, x, y, 14, 12, hovered, true, GuiIconAtlas.open);
    }
 
    private void init(GuiGraphicsExtractor context, int x, int y, int width, String label, boolean hovered, boolean selected) {
-      int bg = selected ? p.frame() : (hovered ? p.level() : p.flags());
+      int bg = selected ? UiColorPalette.frame() : (hovered ? UiColorPalette.level() : UiColorPalette.flags());
       autismclient.gui.f.b.TableIndex.init(context, x, y, width, 12, bg);
       int textX = x + 3;
-      this.init_V_GuiGraphicsExtract_4(context, label, textX, y + 2, selected ? p.table() : p.b());
+      this.init_V_GuiGraphicsExtract_4(context, label, textX, y + 2, selected ? UiColorPalette.table() : UiColorPalette.b());
    }
 
    private boolean write_Z_D_D_2(double mouseX, double mouseY) {
@@ -5481,7 +5481,7 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    @Override
-   protected autismclient.gui.f.NetHelper init_NetHelper_cH(cH bounds) {
+   protected autismclient.gui.f.NetHelper init_NetHelper_cH(OverlayBounds bounds) {
       autismclient.gui.f.NetHelper window = autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, this.init_CharEncoder.load());
       autismclient.gui.f.NetHelper bar = autismclient.gui.f.b.ClassCache.init(window, this.init_CharEncoder.load());
       autismclient.gui.f.NetHelper close = autismclient.gui.f.b.ClassCache.load(window, this.init_CharEncoder.load());
@@ -5491,8 +5491,8 @@ public class AutismMacroEditorOverlay extends bj {
       return autismclient.gui.f.NetHelper.init(x, y, size, size);
    }
 
-   private cH load_cH() {
-      return new cH(this.tick_I, this.run_I, this.get_I, this.F(), this.write_Z, this.pop_Z);
+   private OverlayBounds load_cH() {
+      return new OverlayBounds(this.tick_I, this.run_I, this.get_I, this.F(), this.write_Z, this.pop_Z);
    }
 
    private int F() {
@@ -6669,7 +6669,7 @@ public class AutismMacroEditorOverlay extends bj {
       EXIT;
    }
 
-   private final class Inner_StateCache implements cX {
+   private final class Inner_StateCache implements AutismOverlay {
       @Override
       public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
          if (this.sync_Z()) {
@@ -6736,10 +6736,10 @@ public class AutismMacroEditorOverlay extends bj {
       }
 
       @Override
-      public cH init_cH() {
+      public OverlayBounds init_cH() {
          int width = AutismMacroEditorOverlay.init_Minecraft.getWindow() == null ? 640 : cA.init_I();
          int height = AutismMacroEditorOverlay.init_Minecraft.getWindow() == null ? 360 : cA.load_I();
-         return new cH(0, 0, width, height, this.sync_Z(), false);
+         return new OverlayBounds(0, 0, width, height, this.sync_Z(), false);
       }
 
       @Override

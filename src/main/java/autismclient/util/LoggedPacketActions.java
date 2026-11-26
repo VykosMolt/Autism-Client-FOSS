@@ -114,7 +114,7 @@ public final class LoggedPacketActions {
             action.guiName = "";
             action.packets.add(new ck.Inner_CachePool(entry.init_Packet, 0, ck.Inner_BufferHelper.EXACT));
             macroEditor.init_V_MacroAction_2(action);
-            bk.init_bk().update_V(macroEditor);
+            OverlayManager.init_bk().update_V(macroEditor);
             AutismClientMessaging.sendPrefixed("Added send action: " + entry.load_Str);
             return true;
          }
@@ -139,7 +139,7 @@ public final class LoggedPacketActions {
                autismclient.util.macro.WaitForPacketAction action = new autismclient.util.macro.WaitForPacketAction(target);
                action.packetNames.add(target);
                macroEditor.init_V_MacroAction_2(action);
-               bk.init_bk().update_V(macroEditor);
+               OverlayManager.init_bk().update_V(macroEditor);
                AutismClientMessaging.sendPrefixed("Added wait condition: " + autismclient.util.macro.WaitForPacketAction.write(target));
                return true;
             }
@@ -158,7 +158,7 @@ public final class LoggedPacketActions {
             return false;
          } else {
             ActionEditorOverlay.init_ActionEditorOverla_2().init_V_H(action);
-            bk.init_bk().update_V(ActionEditorOverlay.init_ActionEditorOverla_2());
+            OverlayManager.init_bk().update_V(ActionEditorOverlay.init_ActionEditorOverla_2());
             return true;
          }
       }
@@ -180,7 +180,7 @@ public final class LoggedPacketActions {
                return false;
             } else {
                macroEditor.init_V_MacroAction_2(action);
-               bk.init_bk().update_V(macroEditor);
+               OverlayManager.init_bk().update_V(macroEditor);
                AutismClientMessaging.sendPrefixed("Added payload action: " + entry.load_Str);
                return true;
             }
@@ -195,7 +195,7 @@ public final class LoggedPacketActions {
    private static AutismMacroEditorOverlay init_AutismMacroEditorO() {
       AutismMacroEditorOverlay macroEditor = load();
       if (macroEditor != null) {
-         bk.init_bk().update_V(macroEditor);
+         OverlayManager.init_bk().update_V(macroEditor);
          return macroEditor;
       }
 
@@ -206,12 +206,12 @@ public final class LoggedPacketActions {
 
       AutismMacro existingMacro = ck.init_ck().init_aM();
       macroEditor.init_V_aM(existingMacro);
-      bk.init_bk().update_V(macroEditor);
+      OverlayManager.init_bk().update_V(macroEditor);
       return macroEditor;
    }
 
    private static AutismMacroEditorOverlay load() {
-      for (cX overlay : bk.init_bk().init_List()) {
+      for (AutismOverlay overlay : OverlayManager.init_bk().init_List()) {
          if (overlay instanceof AutismMacroEditorOverlay macroEditor && macroEditor.sync_Z()) {
             return macroEditor;
          }

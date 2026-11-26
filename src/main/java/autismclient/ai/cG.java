@@ -1,10 +1,10 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.util.PkgCls_c;
-import autismclient.util.bk;
-import autismclient.util.cH;
-import autismclient.util.cX;
+import autismclient.util.AutismBufferSource;
+import autismclient.util.OverlayManager;
+import autismclient.util.OverlayBounds;
+import autismclient.util.AutismOverlay;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -55,7 +55,7 @@ public final class cG {
    private static final long load_J = 200000000L;
    private static final Map<Object, cG.Inner_CachePool> init_Map = new IdentityHashMap<>();
    private static final Map<BlockState, autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil> load_Map = new IdentityHashMap<>();
-   private static final PkgCls_c.Inner_DataUtil init_c_DataUtil = new PkgCls_c.Inner_DataUtil(4194304);
+   private static final AutismBufferSource.Inner_DataUtil init_c_DataUtil = new AutismBufferSource.Inner_DataUtil(4194304);
    private static AiSettings init_AiSettings = new AiSettings();
    private static boolean init_Z;
    private static ClientLevel init_ClientLevel;
@@ -986,7 +986,7 @@ public final class cG {
             init_Obj = currentModels;
          }
 
-         PkgCls_c source = init_c_DataUtil.init();
+         AutismBufferSource source = init_c_DataUtil.init();
          Pose pose = matrices.last();
          int alpha = (reset >= 0 && System.nanoTime() < update_J ? reset : load(init_AiSettings.ghostOpacity)) * 255 / 100;
          int quads = 0;
@@ -1082,37 +1082,37 @@ public final class cG {
             if (selection != null) {
                cP.Inner_DataUtil area = selection.init_cP_DataUtil();
                if (area != null) {
-                  autismclient.util.cI.init(pose, lines, new AABB(area.min()).minmax(new AABB(area.max())).move(offset), -1336493569, 1.3F);
+                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(area.min()).minmax(new AABB(area.max())).move(offset), -1336493569, 1.3F);
                }
 
                if (selection.init_BlockPos != null) {
-                  autismclient.util.cI.init(pose, lines, new AABB(selection.init_BlockPos).move(offset), -12067963, 1.8F);
+                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(selection.init_BlockPos).move(offset), -12067963, 1.8F);
                }
 
                if (selection.load != null) {
-                  autismclient.util.cI.init(pose, lines, new AABB(selection.load).move(offset), -20923, 1.8F);
+                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(selection.load).move(offset), -20923, 1.8F);
                }
 
                if (selection.read != null) {
-                  autismclient.util.cI.init(pose, lines, new AABB(selection.read).move(offset).inflate(0.008), -11093505, 2.0F);
+                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(selection.read).move(offset).inflate(0.008), -11093505, 2.0F);
                }
             }
 
             if (init_AiSettings.visualizeGhosts) {
                for (int i = Math.max(0, f.ghosts.size() - 192); i < f.ghosts.size(); i++) {
                   cG.Inner_StreamUtil g = f.ghosts.get(i);
-                  autismclient.util.cI.init(pose, lines, new AABB(g.pos).move(offset).deflate(0.006), -1342177280 | g.color & 16777215, 1.1F);
+                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(g.pos).move(offset).deflate(0.006), -1342177280 | g.color & 16777215, 1.1F);
                }
             }
 
             if (f.bounds != null && init_AiSettings.visualizeGhosts) {
-               autismclient.util.cI.init(pose, lines, f.bounds.move(offset), -1873364481, 1.6F);
+               autismclient.util.WorldLineRenderer.init(pose, lines, f.bounds.move(offset), -1873364481, 1.6F);
             }
 
             for (cG.Inner_BufferHelper s : f.route) {
                float tm = (s.t0 + s.t1) * 0.5F;
                float w = (s.active ? 3.8F : 3.4F) - 1.7F * tm;
-               autismclient.util.cI.init(
+               autismclient.util.WorldLineRenderer.init(
                   pose, lines, s.a.x + offset.x, s.a.y + offset.y, s.a.z + offset.z, s.b.x + offset.x, s.b.y + offset.y, s.b.z + offset.z, haloColor(s.t0), haloColor(s.t1), w
                );
             }
@@ -1127,7 +1127,7 @@ public final class cG {
                float w = (s.active ? 2.4F : 2.15F) - 1.05F * tm;
                int c0 = routeColor(s.t0, s.air);
                int c1 = routeColor(s.t1, s.air);
-               autismclient.util.cI.init(pose, lines, a.x, a.y, a.z, b.x, b.y, b.z, c0, c1, w);
+               autismclient.util.WorldLineRenderer.init(pose, lines, a.x, a.y, a.z, b.x, b.y, b.z, c0, c1, w);
                double segLen = a.distanceTo(b);
                if (traveled + segLen >= nextArrow && tm < 0.88F) {
                   Vec3 heading = b.subtract(a);
@@ -1137,8 +1137,8 @@ public final class cG {
                      double dz = heading.z / length;
                      int arrowColor = lerpColor(-253296647, 1145218798, tm);
                      float arrowWidth = 1.85F - 0.7F * tm;
-                     autismclient.util.cI.init(pose, lines, b.add(-dx * 0.21 - dz * 0.11, 0.0, -dz * 0.21 + dx * 0.11), b, arrowColor, arrowWidth);
-                     autismclient.util.cI.init(pose, lines, b.add(-dx * 0.21 + dz * 0.11, 0.0, -dz * 0.21 - dx * 0.11), b, arrowColor, arrowWidth);
+                     autismclient.util.WorldLineRenderer.init(pose, lines, b.add(-dx * 0.21 - dz * 0.11, 0.0, -dz * 0.21 + dx * 0.11), b, arrowColor, arrowWidth);
+                     autismclient.util.WorldLineRenderer.init(pose, lines, b.add(-dx * 0.21 + dz * 0.11, 0.0, -dz * 0.21 - dx * 0.11), b, arrowColor, arrowWidth);
                      nextArrow = traveled + segLen + 5.5;
                   }
                }
@@ -1158,10 +1158,10 @@ public final class cG {
                   List<Vec3> corners = init(b, init(g.pos, f.camera));
 
                   for (int i = 0; i < 4; i++) {
-                     autismclient.util.cI.init(pose, lines, corners.get(i), corners.get((i + 1) % 4), g.color, g.active ? 1.45F : 0.9F);
+                     autismclient.util.WorldLineRenderer.init(pose, lines, corners.get(i), corners.get((i + 1) % 4), g.color, g.active ? 1.45F : 0.9F);
                   }
                } else {
-                  autismclient.util.cI.init(pose, lines, b, g.color, 1.7F);
+                  autismclient.util.WorldLineRenderer.init(pose, lines, b, g.color, 1.7F);
                }
             }
          } finally {
@@ -1201,7 +1201,7 @@ public final class cG {
 
    private static void drawCircle(Pose pose, VertexConsumer lines, Vec3 center, float radius, int color, float width) {
       for (int i = 0; i < 12; i++) {
-         autismclient.util.cI.init(
+         autismclient.util.WorldLineRenderer.init(
             pose,
             lines,
             center.x + circleCos[i] * radius,
@@ -1409,9 +1409,9 @@ public final class cG {
       int height = autismclient.gui.f.b.StreamUtil.init(ui, width, status.bannerActivity(), status.bannerDetail(), status.percent());
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(8, 8, width, height);
 
-      for (cX overlay : bk.init_bk().init_List()) {
+      for (AutismOverlay overlay : OverlayManager.init_bk().init_List()) {
          if (overlay.sync_Z() && overlay.init_Str().equals("ai-assistant")) {
-            cH window = overlay.init_cH();
+            OverlayBounds window = overlay.init_cH();
             if (bounds.read() < window.init_I + window.read
                && bounds.init() > window.init_I
                && bounds.write() < window.load_I + window.write

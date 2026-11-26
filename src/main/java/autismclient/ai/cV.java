@@ -2,8 +2,8 @@ package autismclient.ai;
 
 import autismclient.compat263.Compat263;
 import autismclient.gui.d.PacketUtil;
-import autismclient.util.bk;
-import autismclient.util.cH;
+import autismclient.util.OverlayManager;
+import autismclient.util.OverlayBounds;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -146,7 +146,7 @@ public final class cV {
    public static void load_V() {
       if (close_Z()) {
          cV workspace = init_cV();
-         bk manager = bk.init_bk();
+         OverlayManager manager = OverlayManager.init_bk();
          SchematicLibraryOverlay window = workspace.init_SchematicLibraryOv;
          if (window != null && window.sync_Z() && manager.init_List().contains(window) && !manager.load_Z(window)) {
             window.init_V_Z(false);
@@ -159,7 +159,7 @@ public final class cV {
    public static void read_V() {
       if (close_Z()) {
          if (init_cV == null || init_cV.init_SchematicLibraryOv == null) {
-            cH saved = autismclient.util.ck.init_ck().init_cH_Str("schematic-library");
+            OverlayBounds saved = autismclient.util.ck.init_ck().init_cH_Str("schematic-library");
             if (saved == null || !saved.init_Z) {
                return;
             }
@@ -169,7 +169,7 @@ public final class cV {
          }
 
          if (init_cV.init_SchematicLibraryOv.sync_Z()) {
-            bk manager = bk.init_bk();
+            OverlayManager manager = OverlayManager.init_bk();
             manager.init_V(init_cV.init_SchematicLibraryOv);
             manager.init_V_cX_Z(init_cV.init_SchematicLibraryOv, false);
          }
@@ -214,9 +214,9 @@ public final class cV {
          this.init_SchematicLibraryOv = new SchematicLibraryOverlay(this);
       }
 
-      bk manager = bk.init_bk();
+      OverlayManager manager = OverlayManager.init_bk();
       if (this.init_Minecraft.gui.screen() == null) {
-         autismclient.util.cx.init_V(this.init_Minecraft, new autismclient.gui.d.AutismOverlaysScreen(this.init_SchematicLibraryOv, null, false, false));
+         autismclient.util.OverlayScreenController.init_V(this.init_Minecraft, new autismclient.gui.d.AutismOverlaysScreen(this.init_SchematicLibraryOv, null, false, false));
       }
 
       manager.init_V(this.init_SchematicLibraryOv);
@@ -480,7 +480,7 @@ public final class cV {
    void init_V_cR_DataUtil(cR.Inner_DataUtil file) {
       if (this.read_Z() && !this.flush_Z() && file != null) {
          PacketUtil screen = new PacketUtil("Rename file", file.name(), name -> this.init_V_cR_DataUtil_Str(file, name));
-         autismclient.util.cx.init_Z(this.init_Minecraft, screen);
+         autismclient.util.OverlayScreenController.init_Z(this.init_Minecraft, screen);
       }
    }
 
@@ -527,7 +527,7 @@ public final class cV {
                this.push();
             }
          });
-         autismclient.util.cx.init_Z(this.init_Minecraft, screen);
+         autismclient.util.OverlayScreenController.init_Z(this.init_Minecraft, screen);
       }
    }
 
@@ -703,7 +703,7 @@ public final class cV {
                this.init_SchematicLibraryOv.init_V_Z(false);
             }
 
-            autismclient.util.cx.init_V(this.init_Minecraft, null);
+            autismclient.util.OverlayScreenController.init_V(this.init_Minecraft, null);
          } catch (Exception e) {
             this.read(cR.init_Str_Throwable(e));
          }
@@ -739,7 +739,7 @@ public final class cV {
                      p.mirror()
                   );
                   this.init_cV_DataUtil = new cV.Inner_DataUtil(p.id(), o.init_k_StreamUtil("game:build", args));
-                  autismclient.util.cx.init_V(this.init_Minecraft, null);
+                  autismclient.util.OverlayScreenController.init_V(this.init_Minecraft, null);
                } catch (Exception e) {
                   this.read(cR.init_Str_Throwable(e));
                }

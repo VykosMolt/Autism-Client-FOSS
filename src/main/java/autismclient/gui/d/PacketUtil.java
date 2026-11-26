@@ -2,8 +2,8 @@ package autismclient.gui.d;
 
 import autismclient.compat263.Compat263;
 import autismclient.util.cA;
-import autismclient.util.cx;
-import autismclient.util.k;
+import autismclient.util.OverlayScreenController;
+import autismclient.util.ThemedTextInputBox;
 import java.util.List;
 import java.util.function.Consumer;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -20,7 +20,7 @@ public final class PacketUtil extends KeyHolder {
    private final List<String> init_List;
    private final List<PacketUtil.Inner_DataUtil> load_List;
    private final Runnable init_Runnable;
-   private k init_k;
+   private ThemedTextInputBox init_k;
    private final String init_Str;
    private final Consumer<String> init_Consumer;
    private boolean init_Z;
@@ -49,7 +49,7 @@ public final class PacketUtil extends KeyHolder {
    @Override
    protected void init() {
       if (this.init_Str != null && this.init_k == null) {
-         this.init_k = new k(this.minecraft, this.font, 0, 0, 100, 16, false);
+         this.init_k = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 100, 16, false);
          this.init_k.load(240);
          this.init_k.init_V_Str(this.init_Str);
          this.init_k.push(true);
@@ -186,7 +186,7 @@ public final class PacketUtil extends KeyHolder {
             this.init_k.push(false);
          }
 
-         cx.load(this.minecraft, this);
+         OverlayScreenController.load(this.minecraft, this);
          action.run();
       }
    }
@@ -198,7 +198,7 @@ public final class PacketUtil extends KeyHolder {
 
    @Override
    public void removed() {
-      cx.init_V(this);
+      OverlayScreenController.init_V(this);
       if (this.init_k != null) {
          this.init_k.push(false);
       }

@@ -25,7 +25,7 @@ import autismclient.util.ValueSink;
 import autismclient.util.aN;
 import autismclient.util.PacketNameResolver;
 import autismclient.util.PacketFilterListCodec;
-import autismclient.util.dn;
+import autismclient.util.PipeDelimitedListUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -774,7 +774,7 @@ final class BufferHelper {
             raw -> {
                List<String> names = new ArrayList<>();
 
-               for (String entry : dn.init(raw)) {
+               for (String entry : PipeDelimitedListUtil.init(raw)) {
                   Identifier id = Identifier.tryParse(entry);
                   String name = id == null
                      ? entry

@@ -6,8 +6,8 @@ import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
 import autismclient.util.AutismProfilesOverlay;
 import autismclient.util.aJ;
-import autismclient.util.bk;
-import autismclient.util.cX;
+import autismclient.util.OverlayManager;
+import autismclient.util.AutismOverlay;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Button.OnPress;
 import net.minecraft.client.gui.screens.Screen;
@@ -60,9 +60,9 @@ public abstract class AutismTitleScreenSupportMixin extends Screen {
       if (!aD.read_Z()) {
          ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
          if (mod != null) {
-            cX overlay = mod.load_cX();
+            AutismOverlay overlay = mod.load_cX();
             if (overlay != null) {
-               bk.init_bk().init_V(overlay);
+               OverlayManager.init_bk().init_V(overlay);
                if (overlay instanceof AutismProfilesOverlay pf) {
                   pf.load(true);
                }

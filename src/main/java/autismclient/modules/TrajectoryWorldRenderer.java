@@ -1,7 +1,7 @@
 package autismclient.modules;
 
-import autismclient.util.PkgCls_c;
-import autismclient.util.cI;
+import autismclient.util.AutismBufferSource;
+import autismclient.util.WorldLineRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack.Pose;
@@ -101,7 +101,7 @@ public final class TrajectoryWorldRenderer {
       poll = -1;
    }
 
-   public static void init(PoseStack matrices, PkgCls_c buffers, Vec3 camera, List<TrajectoriesModule.Inner_CachePool> paths) {
+   public static void init(PoseStack matrices, AutismBufferSource buffers, Vec3 camera, List<TrajectoriesModule.Inner_CachePool> paths) {
       Minecraft mc = Minecraft.getInstance();
       CameraRenderState state = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
       if (state.initialized && mc.level != null && mc.player != null && mc.getWindow().getHeight() >= 1) {
@@ -162,16 +162,16 @@ public final class TrajectoryWorldRenderer {
             VertexConsumer fill = buffers.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
             for (Entity entity : hitTargets) {
-               cI.init(pose, fill, init(entity, camera, partial, 0.016), init(-44976, 72));
+               WorldLineRenderer.init(pose, fill, init(entity, camera, partial, 0.016), init(-44976, 72));
             }
 
             VertexConsumer edge = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
 
             for (Entity entity : hitTargets) {
                AABB box = init(entity, camera, partial, 0.018);
-               cI.init(pose, edge, box, init(-44976, 48), 7.0F);
-               cI.init(pose, edge, box, -653585893, 4.8F);
-               cI.init(pose, edge, box, init(-44976, 255), 3.0F);
+               WorldLineRenderer.init(pose, edge, box, init(-44976, 48), 7.0F);
+               WorldLineRenderer.init(pose, edge, box, -653585893, 4.8F);
+               WorldLineRenderer.init(pose, edge, box, init(-44976, 255), 3.0F);
             }
          }
 

@@ -21,7 +21,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-public final class AutismAdminToolsOverlay extends bj {
+public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    private static volatile AutismAdminToolsOverlay init_AutismAdminToolsOv_2;
    private static final int flush_I = 320;
    private static final int close_I = 200;
@@ -160,7 +160,7 @@ public final class AutismAdminToolsOverlay extends bj {
             f.Inner_DataUtil module = this.init_f_DataUtil();
             if (module != null) {
                this.update_V_4();
-               cH bounds = this.init_cH_cX(this);
+               OverlayBounds bounds = this.init_cH_cX(this);
                this.init_I_2 = bounds.init_I;
                this.load_I = bounds.load_I;
                this.read_I = bounds.read;
@@ -191,7 +191,7 @@ public final class AutismAdminToolsOverlay extends bj {
       }
    }
 
-   private void init_V_SyncManager_8(autismclient.gui.f.SyncManager context, f.Inner_DataUtil module, cH bounds, int mouseX, int mouseY) {
+   private void init_V_SyncManager_8(autismclient.gui.f.SyncManager context, f.Inner_DataUtil module, OverlayBounds bounds, int mouseX, int mouseY) {
       int x = bounds.init_I + 4;
       int y = bounds.load_I + 14 + 4;
       int w = Math.max(1, bounds.read - 8);
@@ -1135,7 +1135,7 @@ public final class AutismAdminToolsOverlay extends bj {
       }
 
       if (button == 0) {
-         cH bounds = this.init_cH();
+         OverlayBounds bounds = this.init_cH();
          if (this.write(mouseX, mouseY, bounds)) {
             this.init_V_Z(false);
             return true;
@@ -1437,7 +1437,7 @@ public final class AutismAdminToolsOverlay extends bj {
       this.close_Z = false;
       ck.init_ck().cache(false);
       ck.init_ck().read_V_Runnable(null);
-      bk.init_bk().update_V(this);
+      OverlayManager.init_bk().update_V(this);
       if (this.open_Z) {
          Screen restore = this.init_Screen;
          mc.execute(() -> {
@@ -1527,9 +1527,9 @@ public final class AutismAdminToolsOverlay extends bj {
    @Override
    public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (button == 0 && this.sync_Z) {
-         cH current = this.init_cH();
+         OverlayBounds current = this.init_cH();
          this.init_V_cH(
-            new cH(
+            new OverlayBounds(
                current.init_I + (int)Math.round(deltaX), current.load_I + (int)Math.round(deltaY), current.read, current.write, current.init_Z, current.load_Z
             )
          );

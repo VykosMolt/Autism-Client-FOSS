@@ -1,7 +1,7 @@
 package autismclient.gui.f.b;
 
-import autismclient.util.ct;
-import autismclient.util.cz;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.GuiIconAtlas;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -24,7 +24,7 @@ public final class RingBuffer {
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, font, -10000, -10000);
          autismclient.gui.f.JsonUtil colors = context.init_TableIndex().init_JsonUtil();
          int radius = init(bounds);
-         int fill = danger ? ct.init_I_I_ct_DataUtil(-868936937, ct.Inner_DataUtil.DANGER) : -1156179423;
+         int fill = danger ? ThemePaletteManager.init_I_I_ct_DataUtil(-868936937, ThemePaletteManager.Inner_DataUtil.DANGER) : -1156179423;
          autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, fill, danger ? colors.data : colors.set);
          float hoverT = autismclient.gui.f.DataUtil.init(autismclient.gui.f.DataUtil.init(bounds), hovered && active);
          if (hoverT > 0.001F) {
@@ -50,7 +50,7 @@ public final class RingBuffer {
             context.init_PoolEntry().load(graphics, glyph, bounds, color);
          } else {
             autismclient.gui.f.NetHelper glyph = init(bounds, 3);
-            cz.init(graphics, "+".equals(symbol) ? cz.pop : cz.tick, glyph.read(), glyph.write(), glyph.update(), glyph.sync(), color);
+            GuiIconAtlas.init(graphics, "+".equals(symbol) ? GuiIconAtlas.pop : GuiIconAtlas.tick, glyph.read(), glyph.write(), glyph.update(), glyph.sync(), color);
          }
       }
    }
@@ -97,7 +97,7 @@ public final class RingBuffer {
             size--;
          }
 
-         cz.init(graphics, icon, bounds.read() + (bounds.update() - size) / 2, bounds.write() + (bounds.sync() - size) / 2, size, color);
+         GuiIconAtlas.init(graphics, icon, bounds.read() + (bounds.update() - size) / 2, bounds.write() + (bounds.sync() - size) / 2, size, color);
       }
    }
 

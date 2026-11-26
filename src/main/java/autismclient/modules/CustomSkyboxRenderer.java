@@ -1,8 +1,8 @@
 package autismclient.modules;
 
-import autismclient.util.PkgCls_c;
-import autismclient.util.ct;
-import autismclient.util.cu;
+import autismclient.util.AutismBufferSource;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.ThemeTextureRecolorer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -10,7 +10,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public final class CustomSkyboxRenderer {
-   private static final PkgCls_c.Inner_DataUtil init_c_DataUtil = new PkgCls_c.Inner_DataUtil(786432);
+   private static final AutismBufferSource.Inner_DataUtil init_c_DataUtil = new AutismBufferSource.Inner_DataUtil(786432);
    private static final float[][] init_FArr2 = new float[][]{
       {-1.0F, -1.0F, 1.0F, -1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, -1.0F, 1.0F},
       {1.0F, -1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, -1.0F, 1.0F, -1.0F, -1.0F},
@@ -60,12 +60,12 @@ public final class CustomSkyboxRenderer {
          Vector3f corner = new Vector3f();
 
          try {
-            PkgCls_c bufferSource = init_c_DataUtil.init();
+            AutismBufferSource bufferSource = init_c_DataUtil.init();
 
             for (int face = 0; face < init_FArr2.length; face++) {
                Identifier texture = recolor
-                  ? cu.init_Identifier(init_IdentifierArr[face], ct.init_ct_StreamUtil().init_I_ct_DataUtil(ct.Inner_DataUtil.BACKDROP))
-                  : cu.init_Identifier(init_IdentifierArr[face], customColor);
+                  ? ThemeTextureRecolorer.init_Identifier(init_IdentifierArr[face], ThemePaletteManager.init_ct_StreamUtil().init_I_ct_DataUtil(ThemePaletteManager.Inner_DataUtil.BACKDROP))
+                  : ThemeTextureRecolorer.init_Identifier(init_IdentifierArr[face], customColor);
                if (texture != null) {
                   VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.waypointDiscSeeThrough(texture));
                   float[] verts = init_FArr2[face];

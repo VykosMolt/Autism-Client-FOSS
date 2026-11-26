@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.util.aT;
-import autismclient.util.cu;
+import autismclient.util.CustomMainMenuGuard;
+import autismclient.util.ThemeTextureRecolorer;
 import net.minecraft.client.gui.render.GuiRenderer;
 import net.minecraft.client.renderer.CubeMap;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -20,12 +20,12 @@ public abstract class AutismGuiRendererPanoramaMixin {
 
    @Inject(method = "registerPanoramaTextures", at = @At("TAIL"))
    private void autism$registerCustomPanorama(TextureManager textureManager, CallbackInfo ci) {
-      cu.init(textureManager);
+      ThemeTextureRecolorer.init(textureManager);
    }
 
    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/CubeMap;render(FF)V"))
    private void autism$renderPanorama(CubeMap vanillaCubeMap, float rotX, float rotY) {
-      boolean custom = !aT.load() && cu.init_Z();
+      boolean custom = !CustomMainMenuGuard.load() && ThemeTextureRecolorer.init_Z();
       CubeMap target = custom ? this.autism$customCubeMap : vanillaCubeMap;
       target.render(rotX, rotY);
    }

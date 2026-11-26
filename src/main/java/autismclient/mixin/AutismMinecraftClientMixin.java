@@ -27,11 +27,11 @@ import autismclient.util.D;
 import autismclient.util.ManualInteractionYield;
 import autismclient.util.CombatInteractionController;
 import autismclient.util.StreamGate;
-import autismclient.util.aT;
+import autismclient.util.CustomMainMenuGuard;
 import autismclient.util.SilentMiningCoordinator;
 import autismclient.util.VirtualInputDispatcher;
 import autismclient.util.PayloadStudyTracker;
-import autismclient.util.cG;
+import autismclient.util.WindowIconManager;
 import autismclient.util.cd;
 import autismclient.util.ck;
 import autismclient.util.ClientInteractionOverride;
@@ -175,7 +175,7 @@ public class AutismMinecraftClientMixin {
 
    @Inject(method = "tick", at = @At("HEAD"))
    private void autism$onTickHead(CallbackInfo ci) {
-      cG.read((Minecraft)(Object)this);
+      WindowIconManager.read((Minecraft)(Object)this);
       ck.init_ck().push_V();
       VirtualInputDispatcher.open();
       al.update_V();
@@ -238,7 +238,7 @@ public class AutismMinecraftClientMixin {
       if (client.gui.screen() instanceof TitleScreen) {
          if (aD.init_Z()) {
             client.gui.setScreen(new RefQueue());
-         } else if (!AutismLiteVariant.enabled() && aT.init()) {
+         } else if (!AutismLiteVariant.enabled() && CustomMainMenuGuard.init()) {
             client.gui.setScreen(new UtilCore());
          }
       }
@@ -250,7 +250,7 @@ public class AutismMinecraftClientMixin {
          Minecraft client = (Minecraft)(Object)this;
          if (aD.init_Z() && client.gui.screen() instanceof UtilCore) {
             client.gui.setScreen(new RefQueue());
-         } else if (!aD.init_Z() && client.gui.screen() instanceof RefQueue && aT.init()) {
+         } else if (!aD.init_Z() && client.gui.screen() instanceof RefQueue && CustomMainMenuGuard.init()) {
             client.gui.setScreen(new UtilCore());
          }
       }

@@ -12,7 +12,7 @@ import autismclient.util.AutismConfig;
 import autismclient.util.PerTickPlacementLock;
 import autismclient.util.cd;
 import autismclient.util.RotationMath;
-import autismclient.util.cg;
+import autismclient.util.PlacedBlockTrailRenderer;
 import autismclient.util.ck;
 import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.g.PkgCls_a;
@@ -215,8 +215,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private void init_V_49() {
-      cg.init(
-         cg.Inner_DataUtil.CLUTCH,
+      PlacedBlockTrailRenderer.init(
+         PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH,
          this.isEnabled() && this.bool("place-animation"),
          this.bool("animation-custom"),
          am.init_I_Module(this, "animation-color", -50373)
@@ -787,7 +787,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          if (result != null && result.consumesAction()) {
             ScaffoldModule.init_V_I_I(clutch.frame, clutch.block);
             if (clutch.update_BlockPos != null && MC.level != null && !MC.level.getBlockState(clutch.update_BlockPos).isAir()) {
-               cg.init(cg.Inner_DataUtil.CLUTCH, clutch.update_BlockPos);
+               PlacedBlockTrailRenderer.init(PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH, clutch.update_BlockPos);
             }
          }
 
@@ -2922,7 +2922,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    @Override
    public void onDisable() {
-      cg.init_V(cg.Inner_DataUtil.CLUTCH);
+      PlacedBlockTrailRenderer.init_V(PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH);
       this.init_i_TaskQueue = null;
       this.poll_I = -2147483648;
       if (this.init_Z) {
@@ -2935,7 +2935,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    @Override
    public void onGameLeft() {
       this.get_V_3();
-      cg.load(cg.Inner_DataUtil.CLUTCH);
+      PlacedBlockTrailRenderer.load(PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH);
    }
 
    private void get_V_3() {

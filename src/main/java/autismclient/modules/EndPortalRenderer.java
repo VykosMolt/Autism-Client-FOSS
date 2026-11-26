@@ -1,10 +1,10 @@
 package autismclient.modules;
 
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.PkgCls_c;
-import autismclient.util.cI;
-import autismclient.util.cS;
-import autismclient.util.cV;
+import autismclient.util.AutismBufferSource;
+import autismclient.util.WorldLineRenderer;
+import autismclient.util.StrongholdTriangulator;
+import autismclient.util.EndPortalDisplayHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
@@ -21,7 +21,7 @@ import org.joml.Vector4f;
 
 public final class EndPortalRenderer {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final PkgCls_c.Inner_DataUtil init_c_DataUtil = new PkgCls_c.Inner_DataUtil(32768);
+   private static final AutismBufferSource.Inner_DataUtil init_c_DataUtil = new AutismBufferSource.Inner_DataUtil(32768);
    private static final Matrix4f init_Matrix4f = new Matrix4f();
    private static final Vector4f init_Vector4f = new Vector4f();
    private static final ItemStack init_ItemStack = new ItemStack(Items.END_PORTAL_FRAME);
@@ -50,7 +50,7 @@ public final class EndPortalRenderer {
    }
 
    private static boolean init(EndPortalModule module, Vec3 target, Vec3 camera) {
-      if (module.sync() && cV.init(camera, target, am.init_I())) {
+      if (module.sync() && EndPortalDisplayHelper.init(camera, target, am.init_I())) {
          int x = (int)Math.floor(target.x) >> 4;
          int z = (int)Math.floor(target.z) >> 4;
          return init_Minecraft.level.getChunkSource().getChunk(x, z, ChunkStatus.FULL, false) != null;
@@ -69,18 +69,18 @@ public final class EndPortalRenderer {
       if (module != null) {
          Vec3 camera = WorldProjectionHelper.init();
          Vec3 target = module.init_Vec3();
-         PkgCls_c source = init_c_DataUtil.init();
+         AutismBufferSource source = init_c_DataUtil.init();
          int color = module.init_I_2();
          if (!module.init_List_3().isEmpty()) {
             VertexConsumer fill = source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
             for (BlockPos pos : module.init_List_3()) {
-               cI.init(matrices.last(), fill, init(pos).move(camera.scale(-1.0)), cV.init(color, 32));
+               WorldLineRenderer.init(matrices.last(), fill, init(pos).move(camera.scale(-1.0)), EndPortalDisplayHelper.init(color, 32));
             }
          }
 
          if (init(module, target, camera)) {
-            cV.Inner_DataUtil column = cV.init(camera, target, init_Minecraft.level.getMinY(), init_Minecraft.level.getMaxY() + 1.0);
+            EndPortalDisplayHelper.Inner_DataUtil column = EndPortalDisplayHelper.init(camera, target, init_Minecraft.level.getMinY(), init_Minecraft.level.getMaxY() + 1.0);
             if (column != null) {
                init(matrices, source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough()), column, color);
             }
@@ -89,7 +89,7 @@ public final class EndPortalRenderer {
          VertexConsumer lines = source.init(autismclient.render.AutismRenderTypes.tracerEspLines());
 
          for (BlockPos pos : module.init_List_3()) {
-            cI.init(matrices.last(), lines, init(pos).inflate(0.003).move(camera.scale(-1.0)), cV.init(color, 221), 1.5F);
+            WorldLineRenderer.init(matrices.last(), lines, init(pos).inflate(0.003).move(camera.scale(-1.0)), EndPortalDisplayHelper.init(color, 221), 1.5F);
          }
 
          if (module.write_Z() && target != null) {
@@ -111,16 +111,16 @@ public final class EndPortalRenderer {
       }
    }
 
-   private static void init(PoseStack matrices, VertexConsumer fill, cV.Inner_DataUtil column, int color) {
+   private static void init(PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.Inner_DataUtil column, int color) {
       init(matrices, fill, column, column.read(), column.write(), color, 10, 28, 88);
    }
 
    private static void init(
-      PoseStack matrices, VertexConsumer fill, cV.Inner_DataUtil column, double minY, double maxY, int color, int outer, int middle, int core
+      PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.Inner_DataUtil column, double minY, double maxY, int color, int outer, int middle, int core
    ) {
-      cI.init(matrices.last(), fill, column.init(column.sync(), minY, maxY), cV.init(color, outer));
-      cI.init(matrices.last(), fill, column.init(column.sync() * 0.5, minY, maxY), cV.init(color, middle));
-      cI.init(matrices.last(), fill, column.init(column.update(), minY, maxY), cV.init(color, core));
+      WorldLineRenderer.init(matrices.last(), fill, column.init(column.sync(), minY, maxY), EndPortalDisplayHelper.init(color, outer));
+      WorldLineRenderer.init(matrices.last(), fill, column.init(column.sync() * 0.5, minY, maxY), EndPortalDisplayHelper.init(color, middle));
+      WorldLineRenderer.init(matrices.last(), fill, column.init(column.update(), minY, maxY), EndPortalDisplayHelper.init(color, core));
    }
 
    private static AABB init(BlockPos p) {
@@ -132,9 +132,9 @@ public final class EndPortalRenderer {
       Vec3 target = module.init_Vec3();
       float scale = module.init_F();
       String label = module.read_Z_2()
-         ? cV.init(target, module.close(), module.open())
-         : cV.init(init_Minecraft.player.position(), target, module.close(), module.open());
-      String prompt = cV.init(target != null, EndPortalModule.load_Z(), module.flush());
+         ? EndPortalDisplayHelper.init(target, module.close(), module.open())
+         : EndPortalDisplayHelper.init(init_Minecraft.player.position(), target, module.close(), module.open());
+      String prompt = EndPortalDisplayHelper.init(target != null, EndPortalModule.load_Z(), module.flush());
       if (!prompt.isEmpty()) {
          label = prompt;
       }
@@ -157,7 +157,7 @@ public final class EndPortalRenderer {
          float yaw = init_Minecraft.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.yRot;
          float ring = 76.0F + (Math.max(size.init(), size.load()) / 2.0F + 24.0F) * scale;
          placement = autismclient.gui.f.b.TaskTimer.init(
-            init_Vector4f.x, init_Vector4f.y, init_Vector4f.w, cS.init(camera, target, yaw), ui.init_I(), ui.load_I(), size, scale, ring
+            init_Vector4f.x, init_Vector4f.y, init_Vector4f.w, StrongholdTriangulator.init(camera, target, yaw), ui.init_I(), ui.load_I(), size, scale, ring
          );
       }
 

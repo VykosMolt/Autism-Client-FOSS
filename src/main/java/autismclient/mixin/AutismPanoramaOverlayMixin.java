@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.util.aT;
-import autismclient.util.cu;
+import autismclient.util.CustomMainMenuGuard;
+import autismclient.util.ThemeTextureRecolorer;
 import net.minecraft.client.renderer.Panorama;
 import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,6 +25,6 @@ public abstract class AutismPanoramaOverlayMixin {
       index = 1
    )
    private Identifier autism$swapOverlay(Identifier original) {
-      return aT.load() ? original : cu.load(AUTISM_PANORAMA_OVERLAY);
+      return CustomMainMenuGuard.load() ? original : ThemeTextureRecolorer.load(AUTISM_PANORAMA_OVERLAY);
    }
 }

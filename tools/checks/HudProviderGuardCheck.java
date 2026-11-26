@@ -42,7 +42,7 @@ public class HudProviderGuardCheck {
    }
 
    static Object call(String name, String id) throws Exception {
-      Method m = al.class.getDeclaredMethod(name, String.class);
+      Method m = AutismHudManager.class.getDeclaredMethod(name, String.class);
       m.setAccessible(true);
       return m.invoke(null, id);
    }

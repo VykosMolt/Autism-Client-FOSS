@@ -3,7 +3,7 @@ package autismclient.mixin;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.ScreenOverlayHost;
 import autismclient.util.ck;
-import autismclient.util.cp;
+import autismclient.util.DesyncableScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.BookEditScreen;
@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(BookEditScreen.class)
-public abstract class AutismBookEditScreenMixin extends Screen implements cp {
+public abstract class AutismBookEditScreenMixin extends Screen implements DesyncableScreen {
    @Unique
    private static final Minecraft MC = Minecraft.getInstance();
    @Unique

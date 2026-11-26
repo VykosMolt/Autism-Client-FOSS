@@ -1,7 +1,7 @@
 package autismclient.gui.f.b;
 
-import autismclient.util.cs;
-import autismclient.util.ct;
+import autismclient.util.ThemedTextHelper;
+import autismclient.util.ThemePaletteManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -42,7 +42,7 @@ public final class ByteReader {
          return requestedWidth;
       }
 
-      String label = cs.init(message == null ? "" : message.getString());
+      String label = ThemedTextHelper.init(message == null ? "" : message.getString());
       Identifier font = init_Identifier_I(height);
       int measured = j.init_I_Font(renderer, label, font, init_CharEncoder.load(l.read), 4, requestedWidth, 2147483647);
       return Math.max(requestedWidth, measured);
@@ -127,7 +127,7 @@ public final class ByteReader {
                button.init_ByteReader_StreamU == ByteReader.Inner_StreamUtil.DANGER
             );
          } else {
-            String label = cs.init(button.init_Component.getString());
+            String label = ThemedTextHelper.init(button.init_Component.getString());
             String upperLabel = label.toUpperCase();
             boolean inferredDanger = "x".equalsIgnoreCase(label) || label.toLowerCase().contains("delete") || label.toLowerCase().contains("clear");
             boolean toggleOn = label.startsWith("[x]")
@@ -195,7 +195,7 @@ public final class ByteReader {
 
             if (!button.init_Z && !Boolean.TRUE.equals(button.load_Boolean)) {
                int radius = 3;
-               autismclient.gui.f.PacketUtil.load(context, bounds, radius, ct.init_I_I_ct_DataUtil(-2009060816, ct.Inner_DataUtil.OUTLINE));
+               autismclient.gui.f.PacketUtil.load(context, bounds, radius, ThemePaletteManager.init_I_I_ct_DataUtil(-2009060816, ThemePaletteManager.Inner_DataUtil.OUTLINE));
                autismclient.gui.f.PacketUtil.load(context, bounds.init(1), Math.max(1, radius - 1), 1711276032);
             }
          }

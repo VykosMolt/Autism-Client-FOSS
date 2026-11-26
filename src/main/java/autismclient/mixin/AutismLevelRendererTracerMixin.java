@@ -6,7 +6,7 @@ import autismclient.modules.EndPortalRenderer;
 import autismclient.modules.BedEspOverlayRenderer;
 import autismclient.modules.ar;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.co;
+import autismclient.util.SkeletonEspRenderer;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
@@ -37,7 +37,7 @@ public class AutismLevelRendererTracerMixin {
       boolean tracers = ar.init_Z();
       boolean esp = ar.load_Z();
       boolean waypoints = ar.read_Z();
-      boolean skeleton = co.init_Z();
+      boolean skeleton = SkeletonEspRenderer.init_Z();
       boolean ai = !AutismLiteVariant.enabled() && cG.init_Z();
       boolean danger = !AutismLiteVariant.enabled() && PearlGhostRenderer.init();
       boolean beds = !AutismLiteVariant.enabled() && BedEspOverlayRenderer.init_Z();
@@ -54,7 +54,7 @@ public class AutismLevelRendererTracerMixin {
          }
 
          if (skeleton) {
-            co.init(matrixStack);
+            SkeletonEspRenderer.init(matrixStack);
          }
 
          if (waypoints) {

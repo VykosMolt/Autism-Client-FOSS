@@ -5,8 +5,8 @@ import autismclient.gui.f.b.j;
 import autismclient.gui.f.b.l;
 import autismclient.util.M;
 import autismclient.util.cA;
-import autismclient.util.ct;
-import autismclient.util.k;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.ThemedTextInputBox;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -42,7 +42,7 @@ public final class PickItemScreen extends KeyHolder {
    private final List<PickItemScreen.Inner_DataUtil> init_List;
    private final List<PickItemScreen.Inner_StreamUtil> load_List = new ArrayList<>();
    private String init_Str;
-   private k init_k;
+   private ThemedTextInputBox init_k;
    private int pop;
    private boolean init_Z;
    private int tick;
@@ -50,7 +50,7 @@ public final class PickItemScreen extends KeyHolder {
    private List<PickItemScreen.Inner_DataUtil> read_List = List.of();
 
    private static int read() {
-      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT);
    }
 
    public PickItemScreen(Screen parent, String selectedId, Consumer<String> onPick) {
@@ -256,7 +256,7 @@ public final class PickItemScreen extends KeyHolder {
 
    private void init_V(int x, int y, int w, int h) {
       if (this.init_k == null) {
-         this.init_k = new k(Minecraft.getInstance(), this.font, x, y, w, h, true);
+         this.init_k = new ThemedTextInputBox(Minecraft.getInstance(), this.font, x, y, w, h, true);
          this.init_k.init_V_Component(Component.literal("Search item id or name"));
          this.init_k.init_V_Consumer(value -> this.pop = 0);
          this.init_k.init_V_Predicate(value -> {

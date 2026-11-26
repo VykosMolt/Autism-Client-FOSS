@@ -3,7 +3,7 @@ package autismclient.ai;
 import autismclient.compat263.Compat263;
 import autismclient.gui.f.PacketUtil;
 import autismclient.gui.f.b.PoolEntry;
-import autismclient.util.cH;
+import autismclient.util.OverlayBounds;
 import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.time.Instant;
@@ -23,7 +23,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.network.chat.Component;
 
-final class SchematicLibraryOverlay extends autismclient.util.bj {
+final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWindow {
    static final String init_Str_2 = "schematic-library";
    private static final int flush_I = 4;
    private static final int close_I = 13;
@@ -42,7 +42,7 @@ final class SchematicLibraryOverlay extends autismclient.util.bj {
    private final autismclient.gui.f.b.CacheEntry init_CacheEntry = new autismclient.gui.f.b.CacheEntry();
    private final NumberFormat init_NumberFormat = NumberFormat.getIntegerInstance();
    private SchematicLibraryOverlay.Inner_ConfigStore init_SchematicLibraryOv_2 = SchematicLibraryOverlay.Inner_ConfigStore.init;
-   private autismclient.util.k init_k;
+   private autismclient.util.ThemedTextInputBox init_k;
    private autismclient.gui.f.NetHelper init_NetHelper;
    private autismclient.gui.f.NetHelper load_NetHelper;
    private autismclient.gui.f.b.TextFormat.Inner_DataUtil init_TextFormat_DataUti;
@@ -226,7 +226,7 @@ final class SchematicLibraryOverlay extends autismclient.util.bj {
          this.init_k = null;
          if (this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.init
             || this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.read) {
-            this.init_k = new autismclient.util.k(this.init_Minecraft, this.init_Font, 0, 0, 100, 13, false);
+            this.init_k = new autismclient.util.ThemedTextInputBox(this.init_Minecraft, this.init_Font, 0, 0, 100, 13, false);
             this.init_k.load(100);
             this.init_k
                .init_V_Component(
@@ -268,7 +268,7 @@ final class SchematicLibraryOverlay extends autismclient.util.bj {
          this.write = this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.read
             ? Math.min(auto, sync_I())
             : this.load_I_I_I(auto, this.a__I());
-         cH clamped = this.init_cH_cX(this);
+         OverlayBounds clamped = this.init_cH_cX(this);
          this.init_I_2 = clamped.init_I;
          this.load_I = clamped.load_I;
          this.read_I = clamped.read;
@@ -938,7 +938,7 @@ final class SchematicLibraryOverlay extends autismclient.util.bj {
    @Override
    public boolean init_Z_D(double x, double y, int button, double dx, double dy) {
       if (this.update_Z) {
-         cH clamped = this.init_cH_cX_cH(this, new cH((int)(x - this.init_D), (int)(y - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z));
+         OverlayBounds clamped = this.init_cH_cX_cH(this, new OverlayBounds((int)(x - this.init_D), (int)(y - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z));
          this.init_I_2 = clamped.init_I;
          this.load_I = clamped.load_I;
          return true;

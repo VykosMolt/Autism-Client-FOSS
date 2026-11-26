@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.modules.GoldenLeverModule;
 import autismclient.modules.as;
-import autismclient.util.aQ;
+import autismclient.util.MapTooltipPreview;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import java.util.Optional;
 import net.minecraft.network.chat.Component;
@@ -21,6 +21,6 @@ public class AutismItemStackMixin {
 
    @ModifyReturnValue(method = "getTooltipImage", at = @At("RETURN"))
    private Optional<TooltipComponent> autism$mapPreview(Optional<TooltipComponent> original) {
-      return aQ.init((ItemStack)(Object)this, original);
+      return MapTooltipPreview.init((ItemStack)(Object)this, original);
    }
 }

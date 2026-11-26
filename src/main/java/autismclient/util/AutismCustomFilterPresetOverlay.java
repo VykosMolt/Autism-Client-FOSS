@@ -6,7 +6,7 @@ import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
-public class AutismCustomFilterPresetOverlay extends bj {
+public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
    private final Font init_Font;
    private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private final autismclient.gui.f.b.BitSetUtil init_BitSetUtil;
@@ -57,14 +57,14 @@ public class AutismCustomFilterPresetOverlay extends bj {
    }
 
    @Override
-   public cH init_cH() {
-      return new cH(this.flush_I, this.close_I, this.open, this.poll, this.write_Z, this.update_Z);
+   public OverlayBounds init_cH() {
+      return new OverlayBounds(this.flush_I, this.close_I, this.open, this.poll, this.write_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(cH bounds) {
+   public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
-         cH clamped = this.init_cH_cX_cH(this, bounds);
+         OverlayBounds clamped = this.init_cH_cX_cH(this, bounds);
          this.flush_I = clamped.init_I;
          this.close_I = clamped.load_I;
          this.open = clamped.read;
@@ -78,7 +78,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
    public void init_V_Z(boolean visible) {
       this.write_Z = visible;
       if (visible) {
-         bk.init_bk().update_V(this);
+         OverlayManager.init_bk().update_V(this);
       } else {
          this.open_V_4();
       }
@@ -123,7 +123,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
          return false;
       }
 
-      cH bounds = this.init_cH();
+      OverlayBounds bounds = this.init_cH();
       return mouseX >= this.flush_I
          && mouseX <= this.flush_I + this.open
          && mouseY >= this.close_I
@@ -146,12 +146,12 @@ public class AutismCustomFilterPresetOverlay extends bj {
       if (this.write_Z || this.a__Z()) {
          this.init_List.clear();
          this.poll = this.push_I_6() + this.load(this.init(this.init_List_3().size()));
-         cH clamped = this.init_cH_cX_cH(this, new cH(this.flush_I, this.close_I, this.open, this.poll, this.write_Z, this.update_Z));
+         OverlayBounds clamped = this.init_cH_cX_cH(this, new OverlayBounds(this.flush_I, this.close_I, this.open, this.poll, this.write_Z, this.update_Z));
          this.flush_I = clamped.init_I;
          this.close_I = clamped.load_I;
          this.open = clamped.read;
          this.poll = clamped.write;
-         cH bounds = new cH(this.flush_I, this.close_I, this.open, this.poll, this.write_Z, this.update_Z);
+         OverlayBounds bounds = new OverlayBounds(this.flush_I, this.close_I, this.open, this.poll, this.write_Z, this.update_Z);
          this.init_V_GuiGraphicsExtract_6(context, mouseX, mouseY, bounds, "Preset Manager", this.update_Z, this.sync_Z);
          boolean clipBody = this.init_Z_GuiGraphicsExtract(context, bounds, this.update_Z);
          if (!clipBody) {
@@ -164,7 +164,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
                autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
                autismclient.gui.f.b.FileCache.init(context, this.init_Font, "Preset Name", x, y);
                String counts = "C2S " + module.load_Set().size() + " | S2C " + module.read_Set().size();
-               cs.init(context, this.init_Font, counts, cs.Inner_DataUtil.MUTED, x + width - cs.init(this.init_Font, counts, cs.Inner_DataUtil.MUTED), y, false);
+               ThemedTextHelper.init(context, this.init_Font, counts, ThemedTextHelper.Inner_DataUtil.MUTED, x + width - ThemedTextHelper.init(this.init_Font, counts, ThemedTextHelper.Inner_DataUtil.MUTED), y, false);
                y += this.put();
                this.init_BitSetUtil.init_TableIndex_F(x, y, width, this.start_I_4());
                this.init_BitSetUtil.init_V_SyncManager(this.init_SyncManager_GuiGraphicsExtract_2(context, mouseX, mouseY, delta));
@@ -181,7 +181,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
                   new boolean[]{this.poll_Z_4(), this.push_Z_3(), this.pop_Z_2(), this.tick_Z_2()}
                );
                String resetLabel = "Reset To Default";
-               int resetW = Math.min(width, autismclient.gui.f.RenderState.load(cs.init(this.init_Font, resetLabel, cs.Inner_DataUtil.BODY)));
+               int resetW = Math.min(width, autismclient.gui.f.RenderState.load(ThemedTextHelper.init(this.init_Font, resetLabel, ThemedTextHelper.Inner_DataUtil.BODY)));
                y = this.init(context, mouseX, mouseY, x, y, resetW, resetLabel, this::close_V_4, true);
                y += this.reset() - this.clear();
                int listHeight = Math.max(this.load(1), this.poll - (y - this.close_I) - this.put() - this.get_I_4());
@@ -206,7 +206,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
       autismclient.gui.f.b.TextFormat.Inner_DataUtil listLayout = this.init(x, y, width, listHeight, rows.size(), visualScroll);
       int contentWidth = Math.max(40, listLayout.push());
       this.init_AutismCustomFilter.init(x, y, width, listHeight, listLayout.init_PoolEntry_DataUtil());
-      boolean focused = bk.init_bk().update_Z(this) || bk.init_bk().write_Z(this);
+      boolean focused = OverlayManager.init_bk().update_Z(this) || OverlayManager.init_bk().write_Z(this);
       listLayout.init(context, focused);
       if (rows.isEmpty()) {
          autismclient.gui.f.b.FileCache.init(context, this.init_Font, "No presets", x, y, contentWidth);
@@ -260,13 +260,13 @@ public class AutismCustomFilterPresetOverlay extends bj {
                         selected,
                         row.init_bT_DataUtil.load_Z() ? autismclient.gui.f.b.FileCache.Inner_DataUtil.WARNING : autismclient.gui.f.b.FileCache.Inner_DataUtil.NORMAL
                      );
-                     int textColor = selected ? p.table() : (row.init_bT_DataUtil.load_Z() ? -4729601 : p.b());
+                     int textColor = selected ? UiColorPalette.table() : (row.init_bT_DataUtil.load_Z() ? -4729601 : UiColorPalette.b());
                      String prefix = row.init_bT_DataUtil.load_Z() ? "[DEV] " : "[USR] ";
-                     String name = cs.init(this.init_Font, prefix + row.init_bT_DataUtil.init_Str(), contentWidth - 70, cs.Inner_DataUtil.BODY);
-                     cs.init(context, this.init_Font, name, textColor, x + 5, rowTextY, false);
+                     String name = ThemedTextHelper.init(this.init_Font, prefix + row.init_bT_DataUtil.init_Str(), contentWidth - 70, ThemedTextHelper.Inner_DataUtil.BODY);
+                     ThemedTextHelper.init(context, this.init_Font, name, textColor, x + 5, rowTextY, false);
                      String counts = row.init_bT_DataUtil.init_I() + " / " + row.init_bT_DataUtil.load_I();
-                     int countsWidth = cs.init(this.init_Font, counts, cs.Inner_DataUtil.BODY);
-                     cs.init(context, this.init_Font, counts, textColor, x + contentWidth - countsWidth - 1, rowTextY, false);
+                     int countsWidth = ThemedTextHelper.init(this.init_Font, counts, ThemedTextHelper.Inner_DataUtil.BODY);
+                     ThemedTextHelper.init(context, this.init_Font, counts, textColor, x + contentWidth - countsWidth - 1, rowTextY, false);
                   }
 
                   autismclient.gui.f.b.FileCache.init(context, x + 2, rowY + this.stop(), contentWidth);
@@ -284,10 +284,10 @@ public class AutismCustomFilterPresetOverlay extends bj {
             + "/"
             + Math.max(1, Math.round((float)listLayout.open() / this.next()) + 1)
          : (this.init_Str_2 == null ? "Select a preset row" : "Selected: " + this.init_Str_2);
-      int footerMaxW = Math.max(1, width - cs.init(this.init_Font, headerLabel, cs.Inner_DataUtil.BODY) - 8);
-      footer = cs.init(this.init_Font, footer, footerMaxW, cs.Inner_DataUtil.MUTED);
-      int footerW = cs.init(this.init_Font, footer, cs.Inner_DataUtil.MUTED);
-      cs.init(context, this.init_Font, footer, cs.Inner_DataUtil.MUTED, x + width - footerW, headerY, false);
+      int footerMaxW = Math.max(1, width - ThemedTextHelper.init(this.init_Font, headerLabel, ThemedTextHelper.Inner_DataUtil.BODY) - 8);
+      footer = ThemedTextHelper.init(this.init_Font, footer, footerMaxW, ThemedTextHelper.Inner_DataUtil.MUTED);
+      int footerW = ThemedTextHelper.init(this.init_Font, footer, ThemedTextHelper.Inner_DataUtil.MUTED);
+      ThemedTextHelper.init(context, this.init_Font, footer, ThemedTextHelper.Inner_DataUtil.MUTED, x + width - footerW, headerY, false);
       return y + listHeight;
    }
 
@@ -499,7 +499,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
       }
 
       if (button == 0 && mouseX >= this.flush_I && mouseX < this.flush_I + this.open && mouseY >= this.close_I && mouseY < this.close_I + 14) {
-         cH bounds = this.init_cH();
+         OverlayBounds bounds = this.init_cH();
          if (this.write(mouseX, mouseY, bounds)) {
             this.init_V_Z(false);
             return true;
@@ -598,8 +598,8 @@ public class AutismCustomFilterPresetOverlay extends bj {
          this.init_AutismCustomFilter.init_CacheEntry.init(this.init_AutismCustomFilter.init_PoolEntry_DataUtil, mouseY, this.push, this.next());
          return true;
       } else if (this.sync_Z && button == 0) {
-         cH nextBounds = this.init_cH_cX_cH(
-            this, new cH((int)(mouseX - this.init_D), (int)(mouseY - this.load_D), this.open, this.poll, this.write_Z, this.update_Z)
+         OverlayBounds nextBounds = this.init_cH_cX_cH(
+            this, new OverlayBounds((int)(mouseX - this.init_D), (int)(mouseY - this.load_D), this.open, this.poll, this.write_Z, this.update_Z)
          );
          this.flush_I = nextBounds.init_I;
          this.close_I = nextBounds.load_I;
@@ -669,7 +669,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
          return false;
       }
 
-      cH bounds = this.init_cH();
+      OverlayBounds bounds = this.init_cH();
       int frameHeight = this.update_Z ? 14 : this.poll;
       return mouseX >= bounds.init_I && mouseX <= bounds.init_I + bounds.read && mouseY >= bounds.load_I && mouseY <= bounds.load_I + frameHeight
          ? true

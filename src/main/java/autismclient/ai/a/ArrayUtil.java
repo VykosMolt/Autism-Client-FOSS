@@ -3,7 +3,7 @@ package autismclient.ai.a;
 import autismclient.mixin.accessor.AutismLivingEntityAccessor;
 import autismclient.modules.Module;
 import autismclient.modules.al;
-import autismclient.util.cx;
+import autismclient.util.OverlayScreenController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -79,7 +79,7 @@ public final class ArrayUtil {
    }
 
    public boolean putAt_Z() {
-      return cx.init_Z(this.putAt_Minecraft, this.putAt_RingBuffer);
+      return OverlayScreenController.init_Z(this.putAt_Minecraft, this.putAt_RingBuffer);
    }
 
    public void putAt_V() {

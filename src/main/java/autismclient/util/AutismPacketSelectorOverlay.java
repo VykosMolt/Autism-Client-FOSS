@@ -18,7 +18,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.protocol.Packet;
 
-public class AutismPacketSelectorOverlay extends bj {
+public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final int flush_I = 230;
    private static final int close_I = 1;
@@ -228,7 +228,7 @@ public class AutismPacketSelectorOverlay extends bj {
       autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
       this.pop = Math.max(8, Math.round((viewport.init() - this.run) / 2.0F));
       this.tick = Math.max(8, Math.round((viewport.load() - this.get) / 2.0F));
-      cH clamped = this.init_cH_cH_4(new cH(this.pop, this.tick, this.run, this.get, this.write_Z, this.update_Z));
+      OverlayBounds clamped = this.init_cH_cH_4(new OverlayBounds(this.pop, this.tick, this.run, this.get, this.write_Z, this.update_Z));
       this.pop = clamped.init_I;
       this.tick = clamped.load_I;
       this.run = clamped.read;
@@ -236,7 +236,7 @@ public class AutismPacketSelectorOverlay extends bj {
       this.init_BitSetUtil.init_BitSetUtil_Str("");
       this.init_BitSetUtil.init_V_Z(true);
       this.init_CharEncoder_3.write(true);
-      bk.init_bk().init(this);
+      OverlayManager.init_bk().init(this);
    }
 
    public void write_V_21() {
@@ -301,7 +301,7 @@ public class AutismPacketSelectorOverlay extends bj {
       this.init_CharEncoder_3.sync(headerHovered);
       this.get = Math.round(this.init_CharEncoder_3.init_F_SyncManager_F(metrics, this.run));
       this.get = Math.max(this.init_CharEncoder_2.load(), this.get);
-      cH clamped = this.init_cH_cH_4(new cH(this.pop, this.tick, this.run, this.get, this.write_Z, this.update_Z));
+      OverlayBounds clamped = this.init_cH_cH_4(new OverlayBounds(this.pop, this.tick, this.run, this.get, this.write_Z, this.update_Z));
       this.pop = clamped.init_I;
       this.tick = clamped.load_I;
       this.run = clamped.read;
@@ -357,8 +357,8 @@ public class AutismPacketSelectorOverlay extends bj {
    private void init_V_GuiGraphicsExtract_9(GuiGraphicsExtractor context, Class<? extends Packet<?>> packetClass, int x, int y, int width, int index) {
       boolean c2s = this.init_Set.contains(packetClass);
       boolean selected = this.poll_Z && this.read_Set.contains(packetClass);
-      int rowColor = selected ? p.init(false) : p.init(c2s, index, false);
-      int color = selected ? p.store() : p.init(c2s, index);
+      int rowColor = selected ? UiColorPalette.init(false) : UiColorPalette.init(c2s, index, false);
+      int color = selected ? UiColorPalette.store() : UiColorPalette.init(c2s, index);
       autismclient.gui.f.b.TableIndex.init(context, x, y, width, this.pop_I_22(), rowColor);
       String name = PacketNameResolver.init_Str_Class(packetClass);
       int textWidth = width - 10;
@@ -369,7 +369,7 @@ public class AutismPacketSelectorOverlay extends bj {
       autismclient.gui.f.b.k.init(
          context, this.init_Font, trimmed, this.init_CharEncoder_2.init_Identifier_l(autismclient.gui.f.b.l.read), color, x + 6, textY, false
       );
-      autismclient.gui.f.b.TableIndex.init(context, x + 4, y + this.pop_I_22() - 1, width - 8, p.mark());
+      autismclient.gui.f.b.TableIndex.init(context, x + 4, y + this.pop_I_22() - 1, width - 8, UiColorPalette.mark());
    }
 
    private void init(GuiGraphicsExtractor context, int viewX, int viewY, int viewW, int viewH, float uiMouseX, float uiMouseY) {
@@ -527,7 +527,7 @@ public class AutismPacketSelectorOverlay extends bj {
          this.flush_Z = true;
          int nextX = Math.round(uiMouseX - this.load_F);
          int nextY = Math.round(uiMouseY - this.read_F);
-         cH clamped = this.init_cH_cH_4(new cH(nextX, nextY, this.run, this.get, this.write_Z, this.update_Z));
+         OverlayBounds clamped = this.init_cH_cH_4(new OverlayBounds(nextX, nextY, this.run, this.get, this.write_Z, this.update_Z));
          this.pop = clamped.init_I;
          this.tick = clamped.load_I;
          return true;
@@ -636,14 +636,14 @@ public class AutismPacketSelectorOverlay extends bj {
    }
 
    @Override
-   public cH init_cH() {
-      return new cH(this.pop, this.tick, this.run, this.get, this.write_Z, this.update_Z);
+   public OverlayBounds init_cH() {
+      return new OverlayBounds(this.pop, this.tick, this.run, this.get, this.write_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(cH bounds) {
+   public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
-         cH clamped = this.init_cH_cH_4(bounds);
+         OverlayBounds clamped = this.init_cH_cH_4(bounds);
          this.pop = clamped.init_I;
          this.tick = clamped.load_I;
          this.run = clamped.read;
@@ -727,7 +727,7 @@ public class AutismPacketSelectorOverlay extends bj {
       );
    }
 
-   private cH init_cH_cH_4(cH bounds) {
+   private OverlayBounds init_cH_cH_4(OverlayBounds bounds) {
       autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
       int margin = 4;
       int viewportW = Math.round(viewport.init());
@@ -740,7 +740,7 @@ public class AutismPacketSelectorOverlay extends bj {
       int renderedHeight = bounds.load_Z ? this.init_CharEncoder_2.load() : height;
       int x = Math.max(margin, Math.min(bounds.init_I, Math.max(margin, viewportW - margin - width)));
       int y = Math.max(margin, Math.min(bounds.load_I, Math.max(margin, viewportH - margin - renderedHeight)));
-      return new cH(x, y, width, height, bounds.init_Z, bounds.load_Z);
+      return new OverlayBounds(x, y, width, height, bounds.init_Z, bounds.load_Z);
    }
 
    private boolean init_Z_F_2(float x, float y, float width, float height, float mouseX, float mouseY) {

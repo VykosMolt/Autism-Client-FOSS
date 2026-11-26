@@ -2,7 +2,7 @@ package autismclient.gui.c;
 
 import autismclient.gui.f.SyncManager;
 import autismclient.util.AutismProfileManager;
-import autismclient.util.cz;
+import autismclient.util.GuiIconAtlas;
 import com.mojang.blaze3d.platform.NativeImage;
 import java.io.IOException;
 import java.util.HashMap;
@@ -70,7 +70,7 @@ final class DataUtil {
       if (texture != null) {
          context.init_GuiGraphicsExtract().blit(texture, x, y, x + size, y + size, 0.0F, 1.0F, 0.0F, 1.0F);
       } else {
-         cz.init(context.init_GuiGraphicsExtract(), fallback, x, y, size, context.init_TableIndex().init_JsonUtil().valid);
+         GuiIconAtlas.init(context.init_GuiGraphicsExtract(), fallback, x, y, size, context.init_TableIndex().init_JsonUtil().valid);
       }
    }
 

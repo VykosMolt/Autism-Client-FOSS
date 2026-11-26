@@ -3,7 +3,7 @@ package autismclient.gui.f.c;
 import autismclient.gui.f.b.j;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 
 public class TaskQueue extends TableIndex {
    private String init_Str;
@@ -88,15 +88,15 @@ public class TaskQueue extends TableIndex {
          boolean hovered = clickable && this.init_Z_F_F(context.init_F(), context.load());
          if (hovered) {
             context.init_GuiGraphicsExtract()
-               .fill(drawX, drawY, drawX + drawW, drawY + drawH, context.init_I_I(ct.init_I_I_ct_DataUtil(339024671, ct.Inner_DataUtil.ACCENT)));
+               .fill(drawX, drawY, drawX + drawW, drawY + drawH, context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(339024671, ThemePaletteManager.Inner_DataUtil.ACCENT)));
          }
 
          int labelColor = clickable && hovered
-            ? j.init_I_I(context.init_CharEncoder().load(this.init_l), ct.init_I_I_ct_DataUtil(-791321, ct.Inner_DataUtil.TEXT), 0.35F)
+            ? j.init_I_I(context.init_CharEncoder().load(this.init_l), ThemePaletteManager.init_I_I_ct_DataUtil(-791321, ThemePaletteManager.Inner_DataUtil.TEXT), 0.35F)
             : context.init_CharEncoder().load(this.init_l);
          int valueColor = this.init_Integer != null ? this.init_Integer : context.init_CharEncoder().load(this.load_l);
          if (clickable && hovered) {
-            valueColor = j.init_I_I(valueColor, ct.init_I_I_ct_DataUtil(-2314, ct.Inner_DataUtil.TEXT), 0.28F);
+            valueColor = j.init_I_I(valueColor, ThemePaletteManager.init_I_I_ct_DataUtil(-2314, ThemePaletteManager.Inner_DataUtil.TEXT), 0.28F);
          }
 
          int labelTextY = j.init(drawY, drawH, context.init_CharEncoder().init_I_l(this.init_l), context.init_CharEncoder().flush() + this.init_I);

@@ -11,12 +11,12 @@ import autismclient.modules.FreecamController;
 import autismclient.modules.al;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.ClickRateTracker;
-import autismclient.util.aS;
+import autismclient.util.ScreenMacroStopWidget;
 import autismclient.util.MouseDeltaAccumulator;
 import autismclient.util.MouseMovementRouter;
 import autismclient.util.cf;
 import autismclient.util.ck;
-import autismclient.util.cx;
+import autismclient.util.OverlayScreenController;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -58,7 +58,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @WrapMethod(method = "onButton")
    private void autism$userClick(long window, MouseButtonInfo button, int action, Operation<Void> original) {
-      cx.init_V();
+      OverlayScreenController.init_V();
 
       try {
          if (AutismLiteVariant.enabled()
@@ -69,13 +69,13 @@ public abstract class AutismMouseHandlerMixin {
             return;
          }
       } finally {
-         cx.load_V();
+         OverlayScreenController.load_V();
       }
    }
 
    @WrapMethod(method = "onScroll")
    private void autism$userScroll(long window, double x, double y, Operation<Void> original) {
-      cx.init_V();
+      OverlayScreenController.init_V();
 
       try {
          if (AutismLiteVariant.enabled() || window != Minecraft.getInstance().getWindow().handle() || !aP.init_Z_D(y)) {
@@ -83,13 +83,13 @@ public abstract class AutismMouseHandlerMixin {
             return;
          }
       } finally {
-         cx.load_V();
+         OverlayScreenController.load_V();
       }
    }
 
    @Inject(method = "grabMouse", at = @At("HEAD"), cancellable = true)
    private void autism$keepEditorCursor(CallbackInfo ci) {
-      if (cx.load_Z()) {
+      if (OverlayScreenController.load_Z()) {
          ci.cancel();
       }
    }
@@ -160,7 +160,7 @@ public abstract class AutismMouseHandlerMixin {
          Window gameWindow = this.minecraft.getWindow();
          if (window == gameWindow.handle()) {
             MouseHandler self = (MouseHandler)(Object)this;
-            if (aS.init_Z_D_D(self.getScaledXPos(gameWindow), self.getScaledYPos(gameWindow))) {
+            if (ScreenMacroStopWidget.init_Z_D_D(self.getScaledXPos(gameWindow), self.getScaledYPos(gameWindow))) {
                ci.cancel();
             }
          }

@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.util.ad;
-import autismclient.util.cJ;
+import autismclient.util.FreecamTargetOutlineRenderer;
+import autismclient.util.BlockSelectionOutlineRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismLevelRendererOutlineMixin {
    @Inject(method = "submitBlockOutline", at = @At("HEAD"), cancellable = true)
    private void autism$hideVanillaOutlineInFreecam(PoseStack poseStack, SubmitNodeCollector collector, LevelRenderState state, CallbackInfo ci) {
-      if (ad.init_Z() || cJ.init_Z()) {
+      if (FreecamTargetOutlineRenderer.init_Z() || BlockSelectionOutlineRenderer.init_Z()) {
          ci.cancel();
       }
    }

@@ -1,7 +1,7 @@
 package autismclient.gui.f.c;
 
 import autismclient.gui.f.b.MethodUtil;
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 
 public class StreamUtil extends HashUtil {
    private IoWorker init_IoWorker;
@@ -148,7 +148,7 @@ public class StreamUtil extends HashUtil {
                   drawY,
                   underlineX + underlineWidth,
                   drawY + context.init_CharEncoder().load(1),
-                  ct.init_I_I_ct_DataUtil(this.load_I, ct.Inner_DataUtil.ACCENT)
+                  ThemePaletteManager.init_I_I_ct_DataUtil(this.load_I, ThemePaletteManager.Inner_DataUtil.ACCENT)
                );
          }
       }

@@ -13,7 +13,7 @@ import java.util.function.IntSupplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
-public class AutismKeybindOverlay extends bj {
+public class AutismKeybindOverlay extends DraggableOverlayWindow {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final String init_Str_2 = "Settings";
    private static final String load_Str = "Fire keybinds while a container screen is open. Blocked in chat/sign/book editors and focused text fields.";
@@ -251,12 +251,12 @@ public class AutismKeybindOverlay extends bj {
    private void sync_V_6() {
       if (!AutismLiteVariant.enabled()) {
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-         cX profiles = module == null ? null : module.load_cX();
+         AutismOverlay profiles = module == null ? null : module.load_cX();
          if (profiles != null) {
             ((AutismProfilesOverlay)profiles).load(false);
             profiles.init_V_Z(true);
-            bk manager = bk.init_bk();
-            manager.init_V_cX_cX_DataUtil(profiles, cX.Inner_DataUtil.HOST_SCREEN);
+            OverlayManager manager = OverlayManager.init_bk();
+            manager.init_V_cX_cX_DataUtil(profiles, AutismOverlay.Inner_DataUtil.HOST_SCREEN);
             manager.update_V(profiles);
          }
       }
@@ -287,13 +287,13 @@ public class AutismKeybindOverlay extends bj {
    }
 
    @Override
-   public cH init_cH() {
-      return new cH(this.init_I_2, this.load_I, this.read_I, this.write, this.init_Z, this.load_Z);
+   public OverlayBounds init_cH() {
+      return new OverlayBounds(this.init_I_2, this.load_I, this.read_I, this.write, this.init_Z, this.load_Z);
    }
 
    @Override
-   public void init_V_cH(cH bounds) {
-      cH clamped = this.init_cH_cH(bounds);
+   public void init_V_cH(OverlayBounds bounds) {
+      OverlayBounds clamped = this.init_cH_cH(bounds);
       this.init_I_2 = clamped.init_I;
       this.load_I = clamped.load_I;
       this.read_I = clamped.read;
@@ -312,7 +312,7 @@ public class AutismKeybindOverlay extends bj {
          float uiMouseY = viewport.load(mouseY);
          int contentWidth = this.tick_I_9();
          this.read_I = this.init_I_I_I(contentWidth, contentWidth);
-         boolean active = bk.init_bk().update_Z(this) || bk.init_bk().write_Z(this);
+         boolean active = OverlayManager.init_bk().update_Z(this) || OverlayManager.init_bk().write_Z(this);
          boolean headerHovered = uiMouseX >= this.init_I_2
             && uiMouseX < this.init_I_2 + this.read_I
             && uiMouseY >= this.load_I
@@ -325,10 +325,10 @@ public class AutismKeybindOverlay extends bj {
          this.init_CharEncoder_2.sync(headerHovered);
          int contentHeight = Math.max(this.init_CharEncoder.load(), Math.round(this.init_CharEncoder_2.init_F_SyncManager_F(metrics, this.read_I)));
          this.write = this.load_Z ? contentHeight : Math.min(contentHeight, this.load_I_I_I(contentHeight, this.a__I()));
-         cH clamped = this.init_cH_cH(new cH(this.init_I_2, this.load_I, this.read_I, this.write, this.init_Z, this.load_Z));
+         OverlayBounds clamped = this.init_cH_cH(new OverlayBounds(this.init_I_2, this.load_I, this.read_I, this.write, this.init_Z, this.load_Z));
          if (!this.load_Z && clamped.write < contentHeight && this.read_I < contentWidth + 6) {
             this.read_I = contentWidth + 6;
-            clamped = this.init_cH_cH(new cH(this.init_I_2, this.load_I, this.read_I, this.write, this.init_Z, this.load_Z));
+            clamped = this.init_cH_cH(new OverlayBounds(this.init_I_2, this.load_I, this.read_I, this.write, this.init_Z, this.load_Z));
          }
 
          this.init_I_2 = clamped.init_I;
@@ -498,8 +498,8 @@ public class AutismKeybindOverlay extends bj {
          autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
          float uiMouseX = viewport.init_F_D(mouseX);
          float uiMouseY = viewport.load(mouseY);
-         cH clamped = this.init_cH_cH(
-            new cH(Math.round(uiMouseX - this.load_F), Math.round(uiMouseY - this.read_F), this.read_I, this.write, this.init_Z, this.load_Z)
+         OverlayBounds clamped = this.init_cH_cH(
+            new OverlayBounds(Math.round(uiMouseX - this.load_F), Math.round(uiMouseY - this.read_F), this.read_I, this.write, this.init_Z, this.load_Z)
          );
          this.init_I_2 = clamped.init_I;
          this.load_I = clamped.load_I;
@@ -550,7 +550,7 @@ public class AutismKeybindOverlay extends bj {
          this.flush_V_6();
       } else {
          this.init_CharEncoder_2.write(!this.load_Z);
-         bk.init_bk().update_V(this);
+         OverlayManager.init_bk().update_V(this);
       }
    }
 
@@ -637,7 +637,7 @@ public class AutismKeybindOverlay extends bj {
       return autismclient.gui.f.NetHelper.init(this.init_I_2, this.load_I, this.read_I, Math.max(this.init_CharEncoder.load(), this.write));
    }
 
-   private cH init_cH_cH(cH bounds) {
+   private OverlayBounds init_cH_cH(OverlayBounds bounds) {
       autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
       int margin = 4;
       int viewportW = Math.round(viewport.init());
@@ -650,7 +650,7 @@ public class AutismKeybindOverlay extends bj {
       int renderedHeight = bounds.load_Z ? this.init_CharEncoder.load() : height;
       int x = Math.max(margin, Math.min(bounds.init_I, Math.max(margin, viewportW - margin - width)));
       int y = Math.max(margin, Math.min(bounds.load_I, Math.max(margin, viewportH - margin - renderedHeight)));
-      return new cH(x, y, width, height, bounds.init_Z, bounds.load_Z);
+      return new OverlayBounds(x, y, width, height, bounds.init_Z, bounds.load_Z);
    }
 
    private int push_I_11() {
@@ -731,7 +731,7 @@ public class AutismKeybindOverlay extends bj {
    }
 
    private void init_V_Str_5(String requested) {
-      String selected = z.init_Str(requested);
+      String selected = CommandPrefixHelper.init_Str(requested);
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       if (module != null) {
          module.init_V_Str(selected);
@@ -1281,7 +1281,7 @@ public class AutismKeybindOverlay extends bj {
             Math.max(1, rowW - controlW - AutismKeybindOverlay.this.data()),
             false
          );
-         String value = z.init_Str();
+         String value = CommandPrefixHelper.init_Str();
          autismclient.gui.f.b.UiHelper.init(
             autismclient.gui.f.UiHelper.init(context.init_GuiGraphicsExtract(), context.init_Font(), Math.round(context.init_F()), Math.round(context.load())),
             this.init_NetHelper,
@@ -1295,7 +1295,7 @@ public class AutismKeybindOverlay extends bj {
       public boolean init_Z_SyncManager_2(autismclient.gui.f.c.SyncManager context, float mouseX, float mouseY, int button) {
          if (button == 0 && this.init_NetHelper.init_Z(Math.round(mouseX), Math.round(mouseY))) {
             AutismKeybindOverlay.this.init_RefQueue = new autismclient.gui.f.b.RefQueue(
-               this.init_NetHelper, z.init_List, z.init_Str(), AutismKeybindOverlay.this::init_V_Str_5
+               this.init_NetHelper, CommandPrefixHelper.init_List, CommandPrefixHelper.init_Str(), AutismKeybindOverlay.this::init_V_Str_5
             );
             AutismKeybindOverlay.this.init_RefQueue.init_V_2();
             return true;

@@ -20,12 +20,12 @@ import autismclient.util.AutismPacketLoggerOverlay;
 import autismclient.util.AutismPacketSelectorOverlay;
 import autismclient.util.AutismQueueEditorOverlay;
 import autismclient.util.AutismServerInfoOverlay;
-import autismclient.util.aG;
+import autismclient.util.LauncherQuickActions;
 import autismclient.util.AutismMacro;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import autismclient.util.cA;
-import autismclient.util.cH;
-import autismclient.util.cX;
+import autismclient.util.OverlayBounds;
+import autismclient.util.AutismOverlay;
 import autismclient.util.ck;
 import autismclient.util.PacketFilterListCodec;
 import autismclient.util.macro.ak;
@@ -133,7 +133,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          int my = cA.init_I_D(mouseY);
          boolean selectorOpen = this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.sync_Z();
          this.init_V_Z_2(selectorOpen || this.init_ConfigStore.load_Z());
-         boolean overlayBlocksMenuHover = !selectorOpen && !this.init_ConfigStore.load_Z() && bk.init_bk().load(mouseX, mouseY);
+         boolean overlayBlocksMenuHover = !selectorOpen && !this.init_ConfigStore.load_Z() && OverlayManager.init_bk().load(mouseX, mouseY);
          int menuMouseX = overlayBlocksMenuHover ? -10000 : mx;
          int menuMouseY = overlayBlocksMenuHover ? -10000 : my;
          cA.init_V_GuiGraphicsExtract(graphics);
@@ -150,7 +150,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          }
 
          if (!aD.init_Z() && !selectorOpen && !this.init_ConfigStore.read_Z() && !this.init_ConfigStore.load_Z()) {
-            bk.init_bk().init(graphics, mouseX, mouseY, delta);
+            OverlayManager.init_bk().init(graphics, mouseX, mouseY, delta);
          }
       }
    }
@@ -167,7 +167,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          } else {
             return this.init_ConfigStore != null
                   && !this.init_ConfigStore.load_Z()
-                  && bk.init_bk().init_Z_D_2(event.x(), event.y(), Compat263.mouseEventGlfwButton(event))
+                  && OverlayManager.init_bk().init_Z_D_2(event.x(), event.y(), Compat263.mouseEventGlfwButton(event))
                ? true
                : this.init_ConfigStore == null
                   || this.init_ConfigStore.init_Z_I(mx, my, Compat263.mouseEventGlfwButton(event), Compat263.mouseEventGlfwModifiers(event));
@@ -189,7 +189,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          } else {
             return this.init_ConfigStore != null
                   && !this.init_ConfigStore.load_Z()
-                  && bk.init_bk().load(event.x(), event.y(), Compat263.mouseEventGlfwButton(event))
+                  && OverlayManager.init_bk().load(event.x(), event.y(), Compat263.mouseEventGlfwButton(event))
                ? true
                : this.init_ConfigStore == null || this.init_ConfigStore.load_Z_I(mx, my, Compat263.mouseEventGlfwButton(event));
          }
@@ -210,7 +210,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          } else {
             return this.init_ConfigStore != null
                   && !this.init_ConfigStore.load_Z()
-                  && bk.init_bk().init(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), dx, dy)
+                  && OverlayManager.init_bk().init(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), dx, dy)
                ? true
                : this.init_ConfigStore == null || this.init_ConfigStore.init_Z_I(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy);
          }
@@ -227,7 +227,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          if (this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.sync_Z()) {
             return this.init_AutismPacketSelect.init_Z_D_2(mx, my, scrollY);
          } else {
-            return this.init_ConfigStore != null && !this.init_ConfigStore.load_Z() && bk.init_bk().init_Z_D(x, y, scrollY)
+            return this.init_ConfigStore != null && !this.init_ConfigStore.load_Z() && OverlayManager.init_bk().init_Z_D(x, y, scrollY)
                ? true
                : this.init_ConfigStore == null || this.init_ConfigStore.init_Z_I(mx, my, scrollY);
          }
@@ -244,7 +244,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          return true;
       } else if (this.init_ConfigStore != null
          && !this.init_ConfigStore.load_Z()
-         && bk.init_bk().init_Z_I(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
+         && OverlayManager.init_bk().init_Z_I(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
          return true;
       } else if (this.init_ConfigStore != null
          && this.init_ConfigStore.read_Z_I(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
@@ -267,7 +267,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          char chr = (char)input.codepoint();
          if (this.init_AutismPacketSelect != null && this.init_AutismPacketSelect.sync_Z() && this.init_AutismPacketSelect.init_Z_C_I(chr, 0)) {
             return true;
-         } else if (this.init_ConfigStore != null && !this.init_ConfigStore.load_Z() && bk.init_bk().init_Z_C_I(chr, 0)) {
+         } else if (this.init_ConfigStore != null && !this.init_ConfigStore.load_Z() && OverlayManager.init_bk().init_Z_C_I(chr, 0)) {
             return true;
          } else {
             return this.init_ConfigStore != null && this.init_ConfigStore.init_Z_C(chr) ? true : super.charTyped(input);
@@ -303,7 +303,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
             this.init_ConfigStore.close();
          }
 
-         bk.init_bk().close();
+         OverlayManager.init_bk().close();
          this.push();
          this.update();
          this.close();
@@ -346,7 +346,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
    }
 
    private void write() {
-      bk manager = bk.init_bk();
+      OverlayManager manager = OverlayManager.init_bk();
       if (!AutismLiteVariant.enabled()) {
          autismclient.ai.ConfigStore.init_ConfigStore().load_V();
          cV.read_V();
@@ -380,7 +380,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          manager.init_V(this.init_AutismQueueEditorO);
          this.init_AutismCustomFilter = this.init(AutismCustomFilterOverlay.class, null);
          if (this.init_AutismCustomFilter == null) {
-            cH filterLayout = ck.init_ck().init_cH_Str("autism-custom-filter");
+            OverlayBounds filterLayout = ck.init_ck().init_cH_Str("autism-custom-filter");
             if (filterLayout != null && filterLayout.init_Z) {
                this.ensureCustomFilterOverlay(manager);
             }
@@ -462,7 +462,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          manager.init_V(this.init_AutismQueueEditorO);
          this.init_AutismCustomFilter = this.init(AutismCustomFilterOverlay.class, null);
          if (this.init_AutismCustomFilter == null) {
-            cH filterLayout = ck.init_ck().init_cH_Str("autism-custom-filter");
+            OverlayBounds filterLayout = ck.init_ck().init_cH_Str("autism-custom-filter");
             if (filterLayout != null && filterLayout.init_Z) {
                this.ensureCustomFilterOverlay(manager);
             }
@@ -539,7 +539,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       this.init_V_cX(this.init_AutismKeybindOverl);
       this.init_V_cX(this.init_AutismAdminToolsOv);
       if (!AutismLiteVariant.enabled()) {
-         cX assistant = autismclient.ai.ConfigStore.init_ConfigStore().init_cX();
+         AutismOverlay assistant = autismclient.ai.ConfigStore.init_ConfigStore().init_cX();
          if (assistant != null && !assistant.f_()) {
             this.init_V_cX(assistant);
          }
@@ -558,10 +558,10 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       }
    }
 
-   private void init_V_cX(cX overlay) {
+   private void init_V_cX(AutismOverlay overlay) {
       if (overlay != null && overlay.sync_Z() && !overlay.f_()) {
          init_Set.add(overlay.init_Str());
-         bk.init_bk().init_V_cX_Z(overlay, true);
+         OverlayManager.init_bk().init_V_cX_Z(overlay, true);
       }
    }
 
@@ -570,19 +570,19 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          Set<String> restoreIds = new LinkedHashSet<>(init_Set);
          init_Set.clear();
 
-         for (cX overlay : bk.init_bk().init_List()) {
+         for (AutismOverlay overlay : OverlayManager.init_bk().init_List()) {
             if (overlay != null && restoreIds.contains(overlay.init_Str())) {
-               bk.init_bk().init_V_cX_Z(overlay, false);
+               OverlayManager.init_bk().init_V_cX_Z(overlay, false);
             }
          }
       }
    }
 
    private void flush() {
-      bk manager = bk.init_bk();
+      OverlayManager manager = OverlayManager.init_bk();
       this.load.clear();
 
-      for (cX overlay : manager.init_List()) {
+      for (AutismOverlay overlay : manager.init_List()) {
          if (overlay != null && overlay.sync_Z() && !this.init_Z_cX(overlay)) {
             this.load.add(overlay.init_Str());
             manager.init_V_cX_Z(overlay, true);
@@ -590,7 +590,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       }
    }
 
-   private boolean init_Z_cX(cX overlay) {
+   private boolean init_Z_cX(AutismOverlay overlay) {
       return "ai-assistant".equals(overlay.init_Str())
          || overlay == this.init_AutismMacroListOve
          || overlay == this.init_AutismLANSyncOverl
@@ -606,9 +606,9 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
 
    private void close() {
       if (!this.load.isEmpty()) {
-         bk manager = bk.init_bk();
+         OverlayManager manager = OverlayManager.init_bk();
 
-         for (cX overlay : manager.init_List()) {
+         for (AutismOverlay overlay : manager.init_List()) {
             if (overlay != null && this.load.contains(overlay.init_Str())) {
                manager.init_V_cX_Z(overlay, false);
             }
@@ -618,8 +618,8 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       }
    }
 
-   private <T extends cX> T init(Class<T> type, String overlayId) {
-      for (cX overlay : bk.init_bk().init_List()) {
+   private <T extends AutismOverlay> T init(Class<T> type, String overlayId) {
+      for (AutismOverlay overlay : OverlayManager.init_bk().init_List()) {
          if (overlay != null && type.isInstance(overlay) && (overlayId == null || overlayId.equals(overlay.init_Str()))) {
             return type.cast(overlay);
          }
@@ -628,7 +628,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       return null;
    }
 
-   private AutismCustomFilterOverlay ensureCustomFilterOverlay(bk manager) {
+   private AutismCustomFilterOverlay ensureCustomFilterOverlay(OverlayManager manager) {
       if (this.init_AutismCustomFilter == null) {
          this.init_AutismCustomFilter = this.init(AutismCustomFilterOverlay.class, null);
          if (this.init_AutismCustomFilter == null) {
@@ -671,7 +671,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
                this.load(this.init_AutismQueueEditorO);
                break;
             case "packets":
-               this.load(this.ensureCustomFilterOverlay(bk.init_bk()));
+               this.load(this.ensureCustomFilterOverlay(OverlayManager.init_bk()));
                break;
             case "logger":
                autismclient.modules.ModuleRuntimeManager globalxx = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
@@ -703,31 +703,31 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
                   AutismPacketLoggerOverlay logger = global.init_AutismPacketLogger();
                   if (logger != null) {
                      logger.b__V();
-                     bk.init_bk().init_V(logger);
+                     OverlayManager.init_bk().init_V(logger);
                      this.load(logger);
                   }
                   break;
                case "packets":
-                  this.load(this.ensureCustomFilterOverlay(bk.init_bk()));
+                  this.load(this.ensureCustomFilterOverlay(OverlayManager.init_bk()));
                   break;
                case "server":
                   AutismServerInfoOverlay serverInfo = global.init_AutismServerInfoOv();
                   if (serverInfo != null) {
-                     bk.init_bk().init_V(serverInfo);
+                     OverlayManager.init_bk().init_V(serverInfo);
                      this.load(serverInfo);
                   }
                   break;
                case "send":
-                  aG.init_V();
+                  LauncherQuickActions.init_V();
                   break;
                case "delay":
-                  aG.load_V();
+                  LauncherQuickActions.load_V();
                   break;
                case "flush":
-                  aG.read();
+                  LauncherQuickActions.read();
                   break;
                case "clear":
-                  aG.write();
+                  LauncherQuickActions.write();
             }
          }
       }
@@ -736,7 +736,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
    private void open() {
       AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
       if (editor != null) {
-         bk.init_bk().init_V(editor);
+         OverlayManager.init_bk().init_V(editor);
       }
 
       if (editor != null && editor.sync_Z()) {
@@ -744,18 +744,18 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
             this.init_AutismMacroListOve.init_V_Z(false);
          }
 
-         bk.init_bk().update_V(editor);
+         OverlayManager.init_bk().update_V(editor);
       } else {
          this.load(this.init_AutismMacroListOve);
       }
    }
 
-   private void load(cX overlay) {
+   private void load(AutismOverlay overlay) {
       if (overlay != null) {
-         bk.init_bk().init_V(overlay);
+         OverlayManager.init_bk().init_V(overlay);
          overlay.init_V_Z(!overlay.sync_Z());
          if (overlay.sync_Z()) {
-            bk.init_bk().update_V(overlay);
+            OverlayManager.init_bk().update_V(overlay);
          }
       }
    }
@@ -764,7 +764,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       if (this.init_Screen instanceof AbstractContainerScreen<?> handledScreen) {
          this.init_AutismFabricatorOv = AutismFabricatorOverlay.init_AutismFabricatorOv_AbstractContainerS(handledScreen);
          this.init_AutismFabricatorOv.write_V_8();
-         bk.init_bk().init_V(this.init_AutismFabricatorOv);
+         OverlayManager.init_bk().init_V(this.init_AutismFabricatorOv);
          return this.init_AutismFabricatorOv;
       } else {
          return null;
@@ -776,7 +776,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
          if (editor != null) {
             editor.load_V_Z_3(this.init_Z_5());
-            bk manager = bk.init_bk();
+            OverlayManager manager = OverlayManager.init_bk();
             manager.init_V(editor);
             manager.init_V_cX_Z(editor, false);
             if (editor.sync_Z() && ck.init_ck().init_aM() != null) {
@@ -853,7 +853,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       }
    }
 
-   private void read(cX overlay) {
+   private void read(AutismOverlay overlay) {
       if (overlay != null) {
          if (overlay instanceof AutismMacroListOverlay macroList) {
             macroList.write_V_13();
@@ -970,7 +970,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
          if (editor != null) {
             editor.load_V_Z_3(AutismModulesScreen.this.init_Z_5());
-            bk manager = bk.init_bk();
+            OverlayManager manager = OverlayManager.init_bk();
             manager.init_V(editor);
             manager.init_V_cX_Z(editor, false);
             editor.init_V_aM_Z(macro, true);

@@ -12,7 +12,7 @@ import autismclient.modules.Module;
 import autismclient.modules.al;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismWaypoints;
-import autismclient.util.cx;
+import autismclient.util.OverlayScreenController;
 import autismclient.util.RotationMath;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -2769,7 +2769,7 @@ public final class HashUtil {
             }
 
             private AiOperation.Result pollOf_AiOperation_Result_3() {
-               if (this.putAt_BufferCore == null && !cx.init_Z()) {
+               if (this.putAt_BufferCore == null && !OverlayScreenController.init_Z()) {
                   ArrayUtil.Inner_DataUtil var1x = ArrayUtil.putAt_BufferCore_CacheHe_Minecraft_List(
                      this.putAt_Minecraft, this.putAt_FileStore_StreamSt.movements()
                   );

@@ -3,10 +3,10 @@ package autismclient.gui.d;
 import autismclient.AutismClientAddon;
 import autismclient.compat263.Compat263;
 import autismclient.util.AutismItemNbtInspectOverlay;
-import autismclient.util.ak;
-import autismclient.util.bk;
-import autismclient.util.cX;
-import autismclient.util.cx;
+import autismclient.util.OverlaySuiteController;
+import autismclient.util.OverlayManager;
+import autismclient.util.AutismOverlay;
+import autismclient.util.OverlayScreenController;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.CharacterEvent;
@@ -17,31 +17,31 @@ import net.minecraft.network.chat.Component;
 public class AutismOverlaysScreen extends Screen {
    private static final int init_I = 120;
    private static final int load_I = 16;
-   private final cX init_cX;
+   private final AutismOverlay init_cX;
    private final Screen init_Screen;
    private final boolean init_Z;
    private final boolean load_Z;
    private boolean read;
-   private ak init_ak;
+   private OverlaySuiteController init_ak;
    private boolean write = true;
 
    public AutismOverlaysScreen() {
       this(null, null, false);
    }
 
-   public AutismOverlaysScreen(cX tiedOverlay) {
+   public AutismOverlaysScreen(AutismOverlay tiedOverlay) {
       this(tiedOverlay, null, false);
    }
 
-   public AutismOverlaysScreen(cX tiedOverlay, Screen returnScreen) {
+   public AutismOverlaysScreen(AutismOverlay tiedOverlay, Screen returnScreen) {
       this(tiedOverlay, returnScreen, false);
    }
 
-   public AutismOverlaysScreen(cX tiedOverlay, Screen returnScreen, boolean showBackButton) {
+   public AutismOverlaysScreen(AutismOverlay tiedOverlay, Screen returnScreen, boolean showBackButton) {
       this(tiedOverlay, returnScreen, showBackButton, false);
    }
 
-   public AutismOverlaysScreen(cX tiedOverlay, Screen returnScreen, boolean showBackButton, boolean dismissOnClose) {
+   public AutismOverlaysScreen(AutismOverlay tiedOverlay, Screen returnScreen, boolean showBackButton, boolean dismissOnClose) {
       super(Component.literal("Autism Overlays"));
       this.init_cX = tiedOverlay;
       this.init_Screen = returnScreen;
@@ -54,7 +54,7 @@ public class AutismOverlaysScreen extends Screen {
       return this;
    }
 
-   public boolean init(cX overlay) {
+   public boolean init(AutismOverlay overlay) {
       return overlay != null && this.init_cX == overlay;
    }
 
@@ -66,18 +66,18 @@ public class AutismOverlaysScreen extends Screen {
    @Override
    protected void init() {
       super.init();
-      if (!cx.read_Z() && this.init_ak == null && !this.init_Z && this.minecraft != null && this.minecraft.level != null) {
+      if (!OverlayScreenController.read_Z() && this.init_ak == null && !this.init_Z && this.minecraft != null && this.minecraft.level != null) {
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
          if (module != null && module.init_Z()) {
             try {
-               this.init_ak = ak.init(this.font, this.init_cX);
+               this.init_ak = OverlaySuiteController.init(this.font, this.init_cX);
             } catch (Throwable error) {
                AutismClientAddon.LOG.warn("Host screen window set failed to build", error);
             }
 
             if (this.init_cX != null) {
-               bk.init_bk().init_V(this.init_cX);
-               bk.init_bk().update_V(this.init_cX);
+               OverlayManager.init_bk().init_V(this.init_cX);
+               OverlayManager.init_bk().update_V(this.init_cX);
             }
          }
       }
@@ -85,14 +85,14 @@ public class AutismOverlaysScreen extends Screen {
       if (this.write) {
          this.write = false;
          if (this.init_cX != null && this.init_cX.sync_Z()) {
-            bk.init_bk().write_V(this.init_cX);
+            OverlayManager.init_bk().write_V(this.init_cX);
          }
       }
    }
 
    @Override
    public void removed() {
-      if (this.init_ak != null && !cx.read_Z()) {
+      if (this.init_ak != null && !OverlayScreenController.read_Z()) {
          try {
             this.init_ak.init();
          } catch (Throwable error) {
@@ -109,7 +109,7 @@ public class AutismOverlaysScreen extends Screen {
    public void tick() {
       super.tick();
       if (this.init_cX != null && !this.init_cX.sync_Z() && !this.init_cX.a__Z() && this.minecraft != null && this.minecraft.gui.screen() == this) {
-         cx.init_V(this.minecraft, this.init_Screen);
+         OverlayScreenController.init_V(this.minecraft, this.init_Screen);
       }
    }
 
@@ -119,7 +119,7 @@ public class AutismOverlaysScreen extends Screen {
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.width, this.height), -1072689136);
       }
 
-      bk.init_bk().init(graphics, mouseX, mouseY, delta);
+      OverlayManager.init_bk().init(graphics, mouseX, mouseY, delta);
       if (this.init_Z && this.font != null) {
          autismclient.gui.f.NetHelper back = this.init_NetHelper();
          boolean hovered = this.init((double)mouseX, (double)mouseY);
@@ -150,23 +150,23 @@ public class AutismOverlaysScreen extends Screen {
          this.load();
          return true;
       } else {
-         return bk.init_bk().init_Z_D_2(event.x(), event.y(), Compat263.mouseEventGlfwButton(event));
+         return OverlayManager.init_bk().init_Z_D_2(event.x(), event.y(), Compat263.mouseEventGlfwButton(event));
       }
    }
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      return bk.init_bk().load(event.x(), event.y(), Compat263.mouseEventGlfwButton(event));
+      return OverlayManager.init_bk().load(event.x(), event.y(), Compat263.mouseEventGlfwButton(event));
    }
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-      return bk.init_bk().init(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), dx, dy);
+      return OverlayManager.init_bk().init(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), dx, dy);
    }
 
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-      return bk.init_bk().init_Z_D(mouseX, mouseY, scrollY);
+      return OverlayManager.init_bk().init_Z_D(mouseX, mouseY, scrollY);
    }
 
    @Override
@@ -176,10 +176,10 @@ public class AutismOverlaysScreen extends Screen {
          && this.minecraft.options.keyInventory != null
          && this.minecraft.options.keyInventory.matches(input);
       boolean closeKey = Compat263.keyEventGlfwKey(input) == 256 || inventoryKey;
-      if (closeKey && this.minecraft != null && !bk.init_bk().update_Z()) {
+      if (closeKey && this.minecraft != null && !OverlayManager.init_bk().update_Z()) {
          this.load();
          return true;
-      } else if (bk.init_bk().init_Z_I(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
+      } else if (OverlayManager.init_bk().init_Z_I(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
          return true;
       } else if (closeKey && this.minecraft != null) {
          this.load();
@@ -191,7 +191,7 @@ public class AutismOverlaysScreen extends Screen {
 
    @Override
    public boolean charTyped(CharacterEvent input) {
-      return bk.init_bk().init_Z_C_I((char)input.codepoint(), 0);
+      return OverlayManager.init_bk().init_Z_C_I((char)input.codepoint(), 0);
    }
 
    private void load() {
@@ -201,14 +201,14 @@ public class AutismOverlaysScreen extends Screen {
 
       if (this.load_Z) {
          if (this.init_cX != null) {
-            bk.init_bk().read_V(this.init_cX);
+            OverlayManager.init_bk().read_V(this.init_cX);
          }
 
          AutismItemNbtInspectOverlay.load_V_8();
       }
 
       if (this.minecraft != null) {
-         cx.init_V(this.minecraft, this.init_Screen);
+         OverlayScreenController.init_V(this.minecraft, this.init_Screen);
       }
    }
 }

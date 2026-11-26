@@ -11,9 +11,9 @@ import autismclient.util.bN;
 import autismclient.util.bO;
 import autismclient.util.bi;
 import autismclient.util.cA;
-import autismclient.util.ct;
-import autismclient.util.dn;
-import autismclient.util.k;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.PipeDelimitedListUtil;
+import autismclient.util.ThemedTextInputBox;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -45,8 +45,8 @@ public class DataPipe extends KeyHolder {
    private final Module init_Module;
    private final Setting<?, ?> init_Setting;
    private final List<DataPipe.Inner_StreamUtil> init_List = new ArrayList<>();
-   private k init_k;
-   private k load_k;
+   private ThemedTextInputBox init_k;
+   private ThemedTextInputBox load_k;
    private int poll;
    private boolean init_Z;
    private int push;
@@ -61,7 +61,7 @@ public class DataPipe extends KeyHolder {
    private boolean load_Z;
 
    private static int read_I_6() {
-      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT);
    }
 
    public DataPipe(Screen parent, Module module, Setting<?, ?> option) {
@@ -273,7 +273,7 @@ public class DataPipe extends KeyHolder {
             int popupY = Math.max(4, fieldY - popupH - 2);
             int popupW = Math.min(fieldW, 170);
             int popupX = fieldX;
-            this.init(graphics, popupX, popupY, popupW, popupH, 5, -301397749, ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.OUTLINE));
+            this.init(graphics, popupX, popupY, popupW, popupH, 5, -301397749, ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.OUTLINE));
             int start = Math.max(0, Math.min(this.tick - visible + 1, suggestions.size() - visible));
 
             for (int i = 0; i < visible; i++) {
@@ -511,7 +511,7 @@ public class DataPipe extends KeyHolder {
             values.add(value);
          }
 
-         this.init_V_Str_2(dn.init(values));
+         this.init_V_Str_2(PipeDelimitedListUtil.init(values));
          this.write("");
          this.pop = -1;
          this.tick = 0;
@@ -546,7 +546,7 @@ public class DataPipe extends KeyHolder {
       List<String> values = this.load_List_2();
       if (index >= 0 && index < values.size()) {
          values.remove(index);
-         this.init_V_Str_2(dn.init(values));
+         this.init_V_Str_2(PipeDelimitedListUtil.init(values));
          if (this.pop == index) {
             this.read_V_6();
          } else if (this.pop > index) {
@@ -602,7 +602,7 @@ public class DataPipe extends KeyHolder {
       String rawValue = this.init_Module.value(this.init_Setting.id());
       if (!rawValue.equals(this.init_Str)) {
          this.init_Str = rawValue;
-         this.load_List = List.copyOf(dn.init(rawValue));
+         this.load_List = List.copyOf(PipeDelimitedListUtil.init(rawValue));
          this.load_Str = null;
          this.read_List = List.of();
       }
@@ -762,7 +762,7 @@ public class DataPipe extends KeyHolder {
             values.add(name);
          }
 
-         this.init_V_Str_2(dn.init(values));
+         this.init_V_Str_2(PipeDelimitedListUtil.init(values));
       }
    }
 
@@ -795,7 +795,7 @@ public class DataPipe extends KeyHolder {
                }
             }
 
-            this.init_V_Str_2(dn.init(values));
+            this.init_V_Str_2(PipeDelimitedListUtil.init(values));
          }
       }
    }
@@ -827,7 +827,7 @@ public class DataPipe extends KeyHolder {
          }
 
          if (added > 0) {
-            this.init_V_Str_2(dn.init(values));
+            this.init_V_Str_2(PipeDelimitedListUtil.init(values));
             this.open_V_2();
             bi.init("Rank scan added " + added + " tag" + (added == 1 ? "." : "s."), -13248397);
          } else {
@@ -878,7 +878,7 @@ public class DataPipe extends KeyHolder {
          List<String> values = this.load_List_2();
          int added = 0;
 
-         for (String entry : dn.init(source.value(sourceOptionId))) {
+         for (String entry : PipeDelimitedListUtil.init(source.value(sourceOptionId))) {
             if (entry != null && !entry.isBlank() && !load(values, entry)) {
                values.add(entry.trim());
                added++;
@@ -886,7 +886,7 @@ public class DataPipe extends KeyHolder {
          }
 
          if (added > 0) {
-            this.init_V_Str_2(dn.init(values));
+            this.init_V_Str_2(PipeDelimitedListUtil.init(values));
             this.open_V_2();
             bi.init("Imported " + added + " name" + (added == 1 ? "." : "s."), -13248397);
          } else {
@@ -984,13 +984,13 @@ public class DataPipe extends KeyHolder {
 
    private void flush_V_4() {
       if (this.init_k == null) {
-         this.init_k = new k(this.minecraft, this.font, 0, 0, 1, this.flush_I_4(), false);
+         this.init_k = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 1, this.flush_I_4(), false);
          this.init_k.load(512);
          this.init_k.init_V_Consumer(value -> this.tick = 0);
       }
 
       if (this.load_k == null) {
-         this.load_k = new k(this.minecraft, this.font, 0, 0, 1, this.flush_I_4(), false);
+         this.load_k = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 1, this.flush_I_4(), false);
          this.load_k.load(128);
          this.load_k.init_V_Component(Component.literal("Search"));
          this.load_k.init_V_Consumer(value -> {

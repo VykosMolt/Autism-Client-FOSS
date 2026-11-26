@@ -12,10 +12,10 @@ import autismclient.modules.StorageEspCatalog;
 import autismclient.util.M;
 import autismclient.util.Y;
 import autismclient.util.cA;
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 import autismclient.util.di;
-import autismclient.util.dn;
-import autismclient.util.k;
+import autismclient.util.PipeDelimitedListUtil;
+import autismclient.util.ThemedTextInputBox;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -62,7 +62,7 @@ public class NodeWalker extends KeyHolder {
    private final List<NodeWalker.Inner_DataUtil> init_List;
    private final Map<String, NodeWalker.Inner_DataUtil> init_Map = new HashMap<>();
    private final List<NodeWalker.Inner_StreamUtil> load_List = new ArrayList<>();
-   private k init_k;
+   private ThemedTextInputBox init_k;
    private int poll;
    private int push;
    private boolean init_Z;
@@ -77,7 +77,7 @@ public class NodeWalker extends KeyHolder {
    private int run;
 
    private static int read_I_10() {
-      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.TEXT);
+      return ThemePaletteManager.init_I_I_ct_DataUtil(-4743522, ThemePaletteManager.Inner_DataUtil.TEXT);
    }
 
    public NodeWalker(Screen parent, Module module, Setting<?, ?> option) {
@@ -230,7 +230,7 @@ public class NodeWalker extends KeyHolder {
       int actionY = y + (rowH - 1 - actionW) / 2;
       int textMax = actionX - 4 - textX;
       int textY = this.init_I_I_I_6(y, rowH - 1);
-      this.load(graphics, label, textX, textY, invalid ? ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.DANGER) : -791321, textMax);
+      this.load(graphics, label, textX, textY, invalid ? ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.DANGER) : -791321, textMax);
       if (!id.equals(label)) {
          int labelW = Math.min(textMax, autismclient.gui.f.b.k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
          int idX = textX + labelW + 4;
@@ -388,7 +388,7 @@ public class NodeWalker extends KeyHolder {
 
    private void init(int x, int y, int w, int h) {
       if (this.init_k == null) {
-         this.init_k = new k(Minecraft.getInstance(), this.font, x, y, w, h, false);
+         this.init_k = new ThemedTextInputBox(Minecraft.getInstance(), this.font, x, y, w, h, false);
          this.init_k.init_V_Component(Component.literal("Search"));
          this.init_k.init_V_Consumer(value -> this.read_V_10());
          this.init_k.push(true);
@@ -412,7 +412,7 @@ public class NodeWalker extends KeyHolder {
    }
 
    private void init_V_Str_6(String id) {
-      List<String> tokens = dn.init(this.init_Module.value(this.init_Setting.id()));
+      List<String> tokens = PipeDelimitedListUtil.init(this.init_Module.value(this.init_Setting.id()));
       LinkedHashSet<String> valid = this.init_LinkedHashSet_List(tokens);
       List<String> invalid = this.init_List_List_2(tokens);
       valid.add(id);
@@ -421,7 +421,7 @@ public class NodeWalker extends KeyHolder {
    }
 
    private void load_V_2(String id) {
-      List<String> tokens = dn.init(this.init_Module.value(this.init_Setting.id()));
+      List<String> tokens = PipeDelimitedListUtil.init(this.init_Module.value(this.init_Setting.id()));
       LinkedHashSet<String> valid = this.init_LinkedHashSet_List(tokens);
       List<String> invalid = this.init_List_List_2(tokens);
       String normalized = di.init(id);
@@ -434,7 +434,7 @@ public class NodeWalker extends KeyHolder {
    private void init_V_Set_List(Set<String> valid, List<String> invalid) {
       List<String> out = new ArrayList<>(valid);
       out.addAll(invalid);
-      String encoded = dn.init(out);
+      String encoded = PipeDelimitedListUtil.init(out);
       if (this.init_Screen instanceof AutismModulesScreen moduleScreen && moduleScreen.init_Z_5()) {
          this.init_Module.setConfiguredValue(this.init_Setting.id(), encoded);
       } else {
@@ -499,7 +499,7 @@ public class NodeWalker extends KeyHolder {
       String rawValue = this.init_Module.value(this.init_Setting.id());
       String needle = this.init_Str_6().trim().toLowerCase(Locale.ROOT);
       if (!rawValue.equals(this.init_Str) || !needle.equals(this.load_Str)) {
-         List<String> tokens = dn.init(this.init_Module.value(this.init_Setting.id()));
+         List<String> tokens = PipeDelimitedListUtil.init(this.init_Module.value(this.init_Setting.id()));
          LinkedHashSet<String> selected = this.init_LinkedHashSet_List(tokens);
          List<NodeWalker.Inner_ConfigStore> selectedRows = new ArrayList<>();
 

@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.compat263.Compat263;
 import autismclient.modules.ModuleRuntimeManager;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
@@ -24,7 +24,7 @@ public abstract class AutismRecipeBookScreenMixin {
    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
    private void autism$handleOverlayClick(MouseButtonEvent click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
       if (this.autism$isActive()) {
-         bk manager = bk.init_bk();
+         OverlayManager manager = OverlayManager.init_bk();
          if (manager.init_Z_D_2(click.x(), click.y(), Compat263.mouseEventGlfwButton(click))) {
             cir.setReturnValue(true);
          }
@@ -33,21 +33,21 @@ public abstract class AutismRecipeBookScreenMixin {
 
    @Inject(method = "mouseDragged", at = @At("HEAD"), cancellable = true)
    private void autism$handleOverlayDrag(MouseButtonEvent click, double deltaX, double deltaY, CallbackInfoReturnable<Boolean> cir) {
-      if (this.autism$isActive() && bk.init_bk().init(click.x(), click.y(), Compat263.mouseEventGlfwButton(click), deltaX, deltaY)) {
+      if (this.autism$isActive() && OverlayManager.init_bk().init(click.x(), click.y(), Compat263.mouseEventGlfwButton(click), deltaX, deltaY)) {
          cir.setReturnValue(true);
       }
    }
 
    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
    private void autism$handleOverlayKeys(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
-      if (this.autism$isActive() && bk.init_bk().init_Z_I(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
+      if (this.autism$isActive() && OverlayManager.init_bk().init_Z_I(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))) {
          cir.setReturnValue(true);
       }
    }
 
    @Inject(method = "charTyped", at = @At("HEAD"), cancellable = true)
    private void autism$handleOverlayChars(CharacterEvent input, CallbackInfoReturnable<Boolean> cir) {
-      if (this.autism$isActive() && bk.init_bk().init_Z_C_I((char)input.codepoint(), 0)) {
+      if (this.autism$isActive() && OverlayManager.init_bk().init_Z_C_I((char)input.codepoint(), 0)) {
          cir.setReturnValue(true);
       }
    }

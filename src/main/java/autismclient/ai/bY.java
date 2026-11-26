@@ -180,7 +180,7 @@ final class bY {
 
       boolean sendPacket = ag.init_Z_JsonObject(args, "sendPacket", true);
       String title = init(screen.getTitle() == null ? screen.getClass().getSimpleName() : screen.getTitle().getString(), 256);
-      boolean closed = sendPacket ? autismclient.util.af.init(mc, true, false) : autismclient.util.af.read(mc, false);
+      boolean closed = sendPacket ? autismclient.util.GuiDesyncHelper.init(mc, true, false) : autismclient.util.GuiDesyncHelper.read(mc, false);
       if (!closed) {
          throw new IllegalStateException(
             "The screen could not be closed" + (sendPacket ? "" : " without notifying the server (no container open or the client is locked)")
@@ -201,7 +201,7 @@ final class bY {
             if (mc.gui.screen() == null) {
                throw new IllegalArgumentException("No screen is open to store");
             } else {
-               if (!autismclient.util.af.init(mc, false)) {
+               if (!autismclient.util.GuiDesyncHelper.init(mc, false)) {
                   throw new IllegalStateException("The screen could not be stored (no container or no player)");
                }
 
@@ -323,7 +323,7 @@ final class bY {
 
       final int timeout = init(args, 45, 120);
       final Minecraft mc = Minecraft.getInstance();
-      if (autismclient.util.cx.init_Screen(mc) instanceof ConnectScreen) {
+      if (autismclient.util.OverlayScreenController.init_Screen(mc) instanceof ConnectScreen) {
          throw new IllegalArgumentException("A connection attempt is already in progress");
       }
 
@@ -351,7 +351,7 @@ final class bY {
                   ag.init_JsonObject_ObjArr("server", address, "worldObserved", true)
                );
             } else {
-               Screen screen = autismclient.util.cx.init_Screen(mc);
+               Screen screen = autismclient.util.OverlayScreenController.init_Screen(mc);
                if (screen instanceof DisconnectedScreen disconnected) {
                   String reason = bY.init(bY.init(disconnected), 1024);
                   return this.init(
@@ -385,7 +385,7 @@ final class bY {
          public void cancel() {
             if (!this.init_Z) {
                this.init_Z = true;
-               bY.init(autismclient.util.cx.init_Screen(mc));
+               bY.init(autismclient.util.OverlayScreenController.init_Screen(mc));
             }
          }
       };

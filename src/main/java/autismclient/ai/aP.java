@@ -118,7 +118,7 @@ public final class aP {
          }
 
          autismclient.gui.f.b.BitSetUtil.init_V();
-         autismclient.util.cx.init_V(mc, null);
+         autismclient.util.OverlayScreenController.init_V(mc, null);
          mc.mouseHandler.grabMouse();
       }
    }
@@ -392,7 +392,7 @@ public final class aP {
                this.init_Runnable.run();
             }
          } else if (review && this.init_aR.read_Z()) {
-            autismclient.util.cx.init_V(mc, this.init_Screen);
+            autismclient.util.OverlayScreenController.init_V(mc, this.init_Screen);
             if (!init_Z_aR(this.init_aR)) {
                ConfigStore.init_ConfigStore().write_V();
             } else {

@@ -2,14 +2,14 @@ package autismclient.gui.f.b;
 
 import autismclient.AutismClientAddon;
 import autismclient.util.bK;
-import autismclient.util.bk;
-import autismclient.util.cF;
-import autismclient.util.cH;
-import autismclient.util.cX;
+import autismclient.util.OverlayManager;
+import autismclient.util.OverlayLayoutBase;
+import autismclient.util.OverlayBounds;
+import autismclient.util.AutismOverlay;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public final class ArrayUtil implements autismclient.gui.f.StateCache {
-   private final cX init_cX;
+   private final AutismOverlay init_cX;
    private final autismclient.gui.f.CharEncoder init_CharEncoder;
    private boolean init_Z;
    private boolean load;
@@ -17,7 +17,7 @@ public final class ArrayUtil implements autismclient.gui.f.StateCache {
    private boolean write = true;
    private static long init_J;
 
-   public ArrayUtil(cX overlay) {
+   public ArrayUtil(AutismOverlay overlay) {
       this.init_cX = overlay;
       this.init_CharEncoder = new autismclient.gui.f.CharEncoder(overlay.sync_Z());
    }
@@ -60,15 +60,15 @@ public final class ArrayUtil implements autismclient.gui.f.StateCache {
 
    @Override
    public autismclient.gui.f.NetHelper init_NetHelper() {
-      cH bounds = this.init_cX.init_cH();
-      return autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, bounds.load_Z ? cF.open_I() : bounds.write);
+      OverlayBounds bounds = this.init_cX.init_cH();
+      return autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, bounds.load_Z ? OverlayLayoutBase.open_I() : bounds.write);
    }
 
    @Override
    public void init_V_NetHelper(autismclient.gui.f.NetHelper bounds) {
       if (bounds != null) {
-         cH current = this.init_cX.init_cH();
-         this.init_cX.init_V_cH(new cH(bounds.read(), bounds.write(), bounds.update(), bounds.sync(), current.init_Z, current.load_Z));
+         OverlayBounds current = this.init_cX.init_cH();
+         this.init_cX.init_V_cH(new OverlayBounds(bounds.read(), bounds.write(), bounds.update(), bounds.sync(), current.init_Z, current.load_Z));
       }
    }
 
@@ -111,11 +111,11 @@ public final class ArrayUtil implements autismclient.gui.f.StateCache {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
       int mouseX = block ? -10000 : context.read();
       int mouseY = block ? -10000 : context.write();
-      boolean clip = this.init_cX instanceof cF window && window.add_Z() && window.poll_I() > 0;
+      boolean clip = this.init_cX instanceof OverlayLayoutBase window && window.add_Z() && window.poll_I() > 0;
       if (clip) {
-         cH bounds = this.init_cX.init_cH();
+         OverlayBounds bounds = this.init_cX.init_cH();
          autismclient.gui.f.HashUtil.init_HashUtil()
-            .init(graphics, autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, ((cF)this.init_cX).poll_I()));
+            .init(graphics, autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, ((OverlayLayoutBase)this.init_cX).poll_I()));
       }
 
       try {
@@ -130,9 +130,9 @@ public final class ArrayUtil implements autismclient.gui.f.StateCache {
    }
 
    private void init_V_SyncManager(autismclient.gui.f.SyncManager context, int mouseX, int mouseY) {
-      if (this.init_cX.read_Z() && this.init_cX.sync_Z() && !this.init_cX.flush_Z() && !(this.init_cX instanceof cF window && window.add_Z())) {
-         cH bounds = this.init_cX.init_cH();
-         boolean active = bk.init_bk().read_Z(this.init_cX);
+      if (this.init_cX.read_Z() && this.init_cX.sync_Z() && !this.init_cX.flush_Z() && !(this.init_cX instanceof OverlayLayoutBase window && window.add_Z())) {
+         OverlayBounds bounds = this.init_cX.init_cH();
+         boolean active = OverlayManager.init_bk().read_Z(this.init_cX);
          boolean hover = !active && ValueSink.init(bounds, mouseX, mouseY);
          ValueSink.init(context.init_GuiGraphicsExtract(), context.init_TableIndex().init_JsonUtil(), bounds, hover, active);
          if (hover || active) {

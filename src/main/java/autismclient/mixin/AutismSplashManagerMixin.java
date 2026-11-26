@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.modules.aD;
-import autismclient.util.cC;
+import autismclient.util.CustomSplashProvider;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.SplashRenderer;
@@ -19,14 +19,14 @@ public abstract class AutismSplashManagerMixin {
    @Inject(method = "prepare", at = @At("HEAD"), cancellable = true)
    private void autism$prepareOnlyVanillaSplashes(ResourceManager manager, ProfilerFiller profiler, CallbackInfoReturnable<List<Component>> cir) {
       if (aD.init_Z()) {
-         cir.setReturnValue(cC.init_List(Minecraft.getInstance()));
+         cir.setReturnValue(CustomSplashProvider.init_List(Minecraft.getInstance()));
       }
    }
 
    @Inject(method = "getSplash", at = @At("HEAD"), cancellable = true)
    private void autism$getOnlyVanillaSplash(CallbackInfoReturnable<SplashRenderer> cir) {
       if (aD.init_Z()) {
-         cir.setReturnValue(cC.init_SplashRenderer(Minecraft.getInstance()));
+         cir.setReturnValue(CustomSplashProvider.init_SplashRenderer(Minecraft.getInstance()));
       }
    }
 }

@@ -2,7 +2,7 @@ package autismclient.modules;
 
 import autismclient.util.AuditClientFixes;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import autismclient.util.SodiumRegionResourceProbe;
 import java.awt.Color;
 import java.lang.invoke.MethodHandle;
@@ -687,7 +687,7 @@ public final class am {
          return true;
       }
 
-      bk overlays = bk.init_bk();
+      OverlayManager overlays = OverlayManager.init_bk();
       return overlays.init_Z() && overlays.load_Z();
    }
 

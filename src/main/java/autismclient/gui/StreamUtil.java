@@ -4,9 +4,9 @@ import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.PacketUtil;
 import autismclient.modules.aD;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.ct;
-import autismclient.util.cu;
-import autismclient.util.p;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.ThemeTextureRecolorer;
+import autismclient.util.UiColorPalette;
 import com.mojang.blaze3d.platform.Window;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -26,7 +26,7 @@ public class StreamUtil extends LoadingOverlay {
    private static final Identifier init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/loading_logo.png");
    private static final int init_I = 2106;
    private static final int load_I = 1297;
-   private static final int read_I = p.e();
+   private static final int read_I = UiColorPalette.e();
    private static final int write_I = 236;
    private static final int update = 32;
    private static final int sync = 39;
@@ -148,7 +148,7 @@ public class StreamUtil extends LoadingOverlay {
       int y = centerY - drawH / 2;
       int color = ARGB.white(alpha);
       graphics.blit(
-         RenderPipelines.GUI_TEXTURED, cu.init(init_Identifier, ct.Inner_DataUtil.ACCENT), x, y, 0.0F, 0.0F, drawW, drawH, 2106, 1297, 2106, 1297, color
+         RenderPipelines.GUI_TEXTURED, ThemeTextureRecolorer.init(init_Identifier, ThemePaletteManager.Inner_DataUtil.ACCENT), x, y, 0.0F, 0.0F, drawW, drawH, 2106, 1297, 2106, 1297, color
       );
    }
 
@@ -168,7 +168,7 @@ public class StreamUtil extends LoadingOverlay {
       int y1 = barY + 5;
       int barWidth = Mth.ceil((x1 - x0 - 2) * this.init_F);
       int alpha = Math.round(barFade * 255.0F);
-      int barColor = ct.init_I_I_ct_DataUtil(ARGB.color(alpha, 236, 32, 39), ct.Inner_DataUtil.ACCENT);
+      int barColor = ThemePaletteManager.init_I_I_ct_DataUtil(ARGB.color(alpha, 236, 32, 39), ThemePaletteManager.Inner_DataUtil.ACCENT);
       if (barWidth > 0) {
          PacketUtil.init(graphics, NetHelper.init(x0 + 2, y0 + 2, barWidth, y1 - y0 - 4), barColor);
       }

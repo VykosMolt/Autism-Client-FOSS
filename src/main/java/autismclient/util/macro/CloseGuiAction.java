@@ -55,7 +55,7 @@ public class CloseGuiAction implements MacroAction {
             }
 
             if (matchGui && matchItem) {
-               autismclient.util.af.init(mc, this.sendPacket, false);
+               autismclient.util.GuiDesyncHelper.init(mc, this.sendPacket, false);
             }
          }
       }

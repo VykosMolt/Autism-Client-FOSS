@@ -17,13 +17,13 @@ import autismclient.util.PayloadStudyTracker;
 import autismclient.util.bK;
 import autismclient.util.PluginSignatureCatalog;
 import autismclient.util.AutismProfileManager;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import autismclient.util.PacketTypeRegistry;
-import autismclient.util.cX;
+import autismclient.util.AutismOverlay;
 import autismclient.util.cf;
 import autismclient.util.ck;
-import autismclient.util.ct;
-import autismclient.util.cx;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.OverlayScreenController;
 import autismclient.util.SodiumRegionResourceProbe;
 import autismclient.util.macro.MacroExecutor;
 import java.net.InetSocketAddress;
@@ -114,7 +114,7 @@ public final class ModuleRuntimeManager {
    private volatile boolean poll;
    private volatile boolean push;
    private AutismServerInfoOverlay init_AutismServerInfoOv;
-   private cX load_cX;
+   private AutismOverlay load_cX;
    private final Deque<ModuleRuntimeManager.Inner_StreamUtil> init_Deque = new ArrayDeque<>(96);
    private final Set<Packet<?>> load_Set = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
    private final Deque<String> load_Deque = new ArrayDeque<>(256);
@@ -146,7 +146,7 @@ public final class ModuleRuntimeManager {
          this.init("applyRuntimeDefaults", () -> this.init_AutismConfig.applyRuntimeDefaults());
          AutismConfig.setGlobal(this.init_AutismConfig);
          if (!AutismLiteVariant.enabled()) {
-            this.init("themeWarm", () -> ct.init_ct_StreamUtil());
+            this.init("themeWarm", () -> ThemePaletteManager.init_ct_StreamUtil());
          }
 
          this.init("moduleRegistry", () -> al.init_V_AutismConfig(this.init_AutismConfig));
@@ -223,9 +223,9 @@ public final class ModuleRuntimeManager {
          this.get_V();
          this.init_V_Z(filtersChanged);
          autismclient.util.PacketCaptureState.load(this);
-         autismclient.util.al.init_V();
+         autismclient.util.AutismHudManager.init_V();
          if (themeChanged) {
-            ct.init_V();
+            ThemePaletteManager.init_V();
          }
 
          boolean panicNow = aD.init_Z();
@@ -1366,7 +1366,7 @@ public final class ModuleRuntimeManager {
 
    public void init_V_Str(String prefix) {
       if (this.init_AutismConfig != null) {
-         this.init_AutismConfig.commandPrefix = autismclient.util.z.init_Str(prefix);
+         this.init_AutismConfig.commandPrefix = autismclient.util.CommandPrefixHelper.init_Str(prefix);
          this.reset_V();
       }
    }
@@ -1579,12 +1579,12 @@ public final class ModuleRuntimeManager {
          return false;
       }
 
-      bk.init_bk().init_V(overlay);
+      OverlayManager.init_bk().init_V(overlay);
       overlay.close_V_12();
       return true;
    }
 
-   public cX load_cX() {
+   public AutismOverlay load_cX() {
       if (AutismLiteVariant.enabled()) {
          return null;
       }
@@ -1597,12 +1597,12 @@ public final class ModuleRuntimeManager {
       return this.load_cX;
    }
 
-   public cX update_cX() {
+   public AutismOverlay update_cX() {
       return this.load_cX;
    }
 
    public void close_V() {
-      if (!cx.load_Z() && !AutismLiteVariant.enabled()) {
+      if (!OverlayScreenController.load_Z() && !AutismLiteVariant.enabled()) {
          try {
             if (this.load_cX != null && this.load_cX.sync_Z()) {
                this.load_cX.init_V_Z(false);
@@ -1621,7 +1621,7 @@ public final class ModuleRuntimeManager {
          return false;
       }
 
-      cX overlay = this.load_cX();
+      AutismOverlay overlay = this.load_cX();
       if (overlay == null) {
          return false;
       }
@@ -1632,13 +1632,13 @@ public final class ModuleRuntimeManager {
       }
 
       autismclient.gui.d.AutismOverlaysScreen host = new autismclient.gui.d.AutismOverlaysScreen(overlay, null, false, true);
-      cx.init_V(init_Minecraft, host);
+      OverlayScreenController.init_V(init_Minecraft, host);
       if (init_Minecraft.gui.screen() != host) {
          return false;
       }
 
       ((AutismProfilesOverlay)overlay).update_V_19();
-      bk manager = bk.init_bk();
+      OverlayManager manager = OverlayManager.init_bk();
       manager.init_V(overlay);
       manager.update_V(overlay);
       manager.write_V(overlay);
@@ -1976,7 +1976,7 @@ public final class ModuleRuntimeManager {
    }
 
    private boolean frame() {
-      return bk.init_bk().update_Z();
+      return OverlayManager.init_bk().update_Z();
    }
 
    private boolean init_Z_I(int bindCode) {

@@ -5,8 +5,8 @@ import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
 import autismclient.util.AutismConfig;
 import autismclient.util.cA;
-import autismclient.util.cz;
-import autismclient.util.p;
+import autismclient.util.GuiIconAtlas;
+import autismclient.util.UiColorPalette;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -375,7 +375,7 @@ public class PluginLibraryScreen extends KeyHolder {
                      .add(
                         autismclient.gui.f.b.ByteReader.init(cursor, btnY, btnH, btnH, Component.empty(), b -> this.init_V_MapStore_StreamUti(row))
                            .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER)
-                           .init_ByteReader_Identifier(cz.open)
+                           .init_ByteReader_Identifier(GuiIconAtlas.open)
                      );
                   cursor -= 2;
                }
@@ -554,7 +554,7 @@ public class PluginLibraryScreen extends KeyHolder {
          String pre = text.substring(0, idx);
          String mid = text.substring(idx, idx + queryLower.length());
          String post = text.substring(idx + queryLower.length());
-         int accent = p.init();
+         int accent = UiColorPalette.init();
          k.init(graphics, this.font, pre, font, baseColor, x, y, false);
          int midX = x + k.init(this.font, pre, font, baseColor);
          k.init(graphics, this.font, mid, font, accent, midX, y, false);

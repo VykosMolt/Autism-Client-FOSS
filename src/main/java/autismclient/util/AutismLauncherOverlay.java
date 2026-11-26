@@ -7,7 +7,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 
-public class AutismLauncherOverlay extends bj {
+public class AutismLauncherOverlay extends DraggableOverlayWindow {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final int flush_I = 0;
    private static final int close_I = 0;
@@ -170,7 +170,7 @@ public class AutismLauncherOverlay extends bj {
    private AutismPacketLoggerOverlay init_AutismPacketLogger() {
       AutismPacketLoggerOverlay overlay = this.init_Supplier == null ? this.init_AutismPacketLogger : this.init_Supplier.get();
       if (overlay != null) {
-         bk.init_bk().init_V(overlay);
+         OverlayManager.init_bk().init_V(overlay);
       }
 
       return overlay;
@@ -179,7 +179,7 @@ public class AutismLauncherOverlay extends bj {
    private AutismServerInfoOverlay init_AutismServerInfoOv() {
       AutismServerInfoOverlay overlay = this.load_Supplier == null ? this.init_AutismServerInfoOv : this.load_Supplier.get();
       if (overlay != null) {
-         bk.init_bk().init_V(overlay);
+         OverlayManager.init_bk().init_V(overlay);
       }
 
       return overlay;
@@ -200,7 +200,7 @@ public class AutismLauncherOverlay extends bj {
                   this.init_AutismMacroListOve.init_V_Z(false);
                }
 
-               bk.init_bk().update_V(macroEditorOverlay);
+               OverlayManager.init_bk().update_V(macroEditorOverlay);
             } else if (this.init_AutismMacroListOve != null) {
                this.init_V_cX(this.init_AutismMacroListOve);
             }
@@ -286,7 +286,7 @@ public class AutismLauncherOverlay extends bj {
          this.init_V_Str_Identifier("SCREEN", autismclient.gui.f.a.DataUtil.run);
          this.init_V_PacketUtil(
             this.init_DataUtil.init_PacketUtil_2(),
-            this.init("Close", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, this.init_Runnable != null ? this.init_Runnable : aG::update),
+            this.init("Close", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, this.init_Runnable != null ? this.init_Runnable : LauncherQuickActions::update),
             this.init("De-sync", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.DANGER, this.load_Runnable != null ? this.load_Runnable : this::open_V_6)
          );
          this.init_V_PacketUtil(
@@ -296,7 +296,7 @@ public class AutismLauncherOverlay extends bj {
          );
          this.init_V_PacketUtil(
             this.init_DataUtil.init_PacketUtil_2(),
-            this.init("Title", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, aG::open),
+            this.init("Title", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, LauncherQuickActions::open),
             this.init("Disc+Send", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.DANGER, this::put_V_3)
          );
       }
@@ -319,8 +319,8 @@ public class AutismLauncherOverlay extends bj {
             .init(new autismclient.gui.f.c.IoWorker(4, 0, 2, 0))
             .init_StreamUtil(false);
          syncRow.init_TableIndex_Z(true);
-         int keyColor = aG.init_I();
-         int[] valueColors = aG.init_IArr();
+         int keyColor = LauncherQuickActions.init_I();
+         int[] valueColors = LauncherQuickActions.init_IArr();
          this.init_JsonUtil = syncRow.init_TableIndex_TableIndex(
             new autismclient.gui.f.c.JsonUtil("Rev: ", "--").init(keyColor).load(valueColors[0]).init_JsonUtil(true)
          );
@@ -356,9 +356,9 @@ public class AutismLauncherOverlay extends bj {
       }
    }
 
-   private void init_V_cX(cX overlay) {
+   private void init_V_cX(AutismOverlay overlay) {
       if (overlay != null) {
-         bk manager = bk.init_bk();
+         OverlayManager manager = OverlayManager.init_bk();
          boolean wasRegistered = manager.init_List().contains(overlay);
          manager.init_V(overlay);
          manager.init_V_cX_Z(overlay, false);
@@ -437,14 +437,14 @@ public class AutismLauncherOverlay extends bj {
    }
 
    @Override
-   public cH init_cH() {
-      return new cH(this.stop, this.next, this.prev, this.valid, this.flush_Z, !this.init_DataUtil.init_Z_3());
+   public OverlayBounds init_cH() {
+      return new OverlayBounds(this.stop, this.next, this.prev, this.valid, this.flush_Z, !this.init_DataUtil.init_Z_3());
    }
 
    @Override
-   public void init_V_cH(cH bounds) {
+   public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
-         cH clamped = this.init_cH_cH_2(bounds);
+         OverlayBounds clamped = this.init_cH_cH_2(bounds);
          this.stop = clamped.init_I;
          this.next = clamped.load_I;
          this.prev = clamped.read;
@@ -461,7 +461,7 @@ public class AutismLauncherOverlay extends bj {
       ck.init_ck().init_V_Str_cH(this.init_Str(), this.init_cH());
       AutismConfig config = AutismConfig.getGlobal();
       AutismConfig.ModuleCategoryLayout layout = config.moduleCategoryLayouts.computeIfAbsent("MAIN_MENU", ignored -> new AutismConfig.ModuleCategoryLayout());
-      cH trueGeometry = bk.init_bk().init(this.init_Str());
+      OverlayBounds trueGeometry = OverlayManager.init_bk().init(this.init_Str());
       int saveX = trueGeometry != null ? trueGeometry.init_I : this.stop;
       int saveY = trueGeometry != null ? trueGeometry.load_I : this.next;
       if (layout.f_x_I != saveX || layout.f_y_I != saveY || layout.collapsed != this.flush_Z()) {
@@ -474,7 +474,7 @@ public class AutismLauncherOverlay extends bj {
 
    @Override
    public void b__V() {
-      cH saved = ck.init_ck().init_cH_Str(this.init_Str());
+      OverlayBounds saved = ck.init_ck().init_cH_Str(this.init_Str());
       boolean savedVisible = saved == null || saved.init_Z;
       boolean savedCollapsed = saved != null && saved.load_Z;
       AutismConfig config = AutismConfig.getGlobal();
@@ -491,7 +491,7 @@ public class AutismLauncherOverlay extends bj {
       }
 
       if (layout != null && layout.f_x_I >= 0 && layout.f_y_I >= 0) {
-         this.init_V_cH(new cH(layout.f_x_I, layout.f_y_I, this.prev, this.valid, savedVisible, layout.collapsed || savedCollapsed));
+         this.init_V_cH(new OverlayBounds(layout.f_x_I, layout.f_y_I, this.prev, this.valid, savedVisible, layout.collapsed || savedCollapsed));
       } else if (saved != null) {
          this.init_V_cH(saved);
       }
@@ -529,8 +529,8 @@ public class AutismLauncherOverlay extends bj {
             context, init_Minecraft.font, viewport, this.init_CharEncoder, uiMouseX, uiMouseY, delta
          );
          this.valid = Math.max(this.load_I(), Math.round(this.init_StateCache.init_F_SyncManager_F(metrics, this.prev)));
-         cH clamped = this.init_cH_cH_2(
-            new cH(this.stop, this.next, this.prev, this.valid, this.flush_Z, this.init_DataUtil != null && !this.init_DataUtil.init_Z_3())
+         OverlayBounds clamped = this.init_cH_cH_2(
+            new OverlayBounds(this.stop, this.next, this.prev, this.valid, this.flush_Z, this.init_DataUtil != null && !this.init_DataUtil.init_Z_3())
          );
          this.stop = clamped.init_I;
          this.next = clamped.load_I;
@@ -586,8 +586,8 @@ public class AutismLauncherOverlay extends bj {
       autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
-      cH clamped = this.init_cH_cH_2(
-         new cH(
+      OverlayBounds clamped = this.init_cH_cH_2(
+         new OverlayBounds(
             Math.round(uiMouseX - this.load_F),
             Math.round(uiMouseY - this.read_F),
             this.prev,
@@ -717,7 +717,7 @@ public class AutismLauncherOverlay extends bj {
          && uiMouseY < this.next + this.prev();
    }
 
-   private cH init_cH_cH_2(cH bounds) {
+   private OverlayBounds init_cH_cH_2(OverlayBounds bounds) {
       autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
       int margin = 4;
       int viewportW = Math.round(viewport.init());
@@ -730,7 +730,7 @@ public class AutismLauncherOverlay extends bj {
       int renderedHeight = bounds.load_Z ? this.prev() : height;
       int x = Math.max(margin, Math.min(bounds.init_I, Math.max(margin, viewportW - margin - width)));
       int y = Math.max(margin, Math.min(bounds.load_I, Math.max(margin, viewportH - margin - renderedHeight)));
-      return new cH(x, y, width, height, bounds.init_Z, bounds.load_Z);
+      return new OverlayBounds(x, y, width, height, bounds.init_Z, bounds.load_Z);
    }
 
    private int push_I_13() {
@@ -928,39 +928,39 @@ public class AutismLauncherOverlay extends bj {
    }
 
    private void update_V_9() {
-      aG.init_V();
+      LauncherQuickActions.init_V();
    }
 
    private void sync_V_8() {
-      aG.load_V();
+      LauncherQuickActions.load_V();
    }
 
    private void flush_V_8() {
-      aG.read();
+      LauncherQuickActions.read();
    }
 
    private void close_V_7() {
-      aG.write();
+      LauncherQuickActions.write();
    }
 
    private void open_V_6() {
-      aG.sync();
+      LauncherQuickActions.sync();
    }
 
    private void poll_V_4() {
-      aG.flush();
+      LauncherQuickActions.flush();
    }
 
    private void set_V_4() {
-      aG.close();
+      LauncherQuickActions.close();
    }
 
    private void put_V_3() {
-      aG.poll();
+      LauncherQuickActions.poll();
    }
 
    private void init_V_Str_6(String raw) {
-      String sent = aG.init(raw);
+      String sent = LauncherQuickActions.init(raw);
       if (sent != null && this.init_BitSetUtil != null) {
          if (!sent.isEmpty()) {
             this.init_BitSetUtil.read_BitSetUtil_Str(sent);
@@ -973,16 +973,16 @@ public class AutismLauncherOverlay extends bj {
 
    private void add_V_4() {
       if (this.init_BitSetUtil != null) {
-         this.init_BitSetUtil.load_BitSetUtil_Str(aG.load_Str());
+         this.init_BitSetUtil.load_BitSetUtil_Str(LauncherQuickActions.load_Str());
       }
    }
 
    private String load_Str_6() {
-      return aG.init_Str();
+      return LauncherQuickActions.init_Str();
    }
 
    private void clear_V_3() {
-      String[] metrics = aG.init_StrArr();
+      String[] metrics = LauncherQuickActions.init_StrArr();
       if (this.init_JsonUtil != null) {
          this.init_JsonUtil.init(metrics[0]);
       }

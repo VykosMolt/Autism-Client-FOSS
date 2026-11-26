@@ -1,6 +1,6 @@
 package autismclient.gui.f.b;
 
-import autismclient.util.cz;
+import autismclient.util.GuiIconAtlas;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.joml.Matrix3x2fStack;
 
@@ -90,7 +90,7 @@ public final class i {
             );
          }
 
-         cz.init(graphics, cz.init_Identifier, ix, iy, icon, icon, init(colors.valid, colors.prev, closeT));
+         GuiIconAtlas.init(graphics, GuiIconAtlas.init_Identifier, ix, iy, icon, icon, init(colors.valid, colors.prev, closeT));
       }
    }
 

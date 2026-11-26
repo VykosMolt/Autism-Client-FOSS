@@ -1,9 +1,9 @@
 package autismclient.modules;
 
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.PkgCls_c;
+import autismclient.util.AutismBufferSource;
 import autismclient.util.cA;
-import autismclient.util.cI;
+import autismclient.util.WorldLineRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.List;
@@ -23,7 +23,7 @@ import org.joml.Vector4f;
 
 public final class BedEspOverlayRenderer {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final PkgCls_c.Inner_DataUtil init_c_DataUtil = new PkgCls_c.Inner_DataUtil(65536);
+   private static final AutismBufferSource.Inner_DataUtil init_c_DataUtil = new AutismBufferSource.Inner_DataUtil(65536);
 
    private BedEspOverlayRenderer() {
    }
@@ -52,17 +52,17 @@ public final class BedEspOverlayRenderer {
    public static void init(PoseStack matrices) {
       if (init_Z()) {
          Vec3 camera = WorldProjectionHelper.init();
-         PkgCls_c source = init_c_DataUtil.init();
+         AutismBufferSource source = init_c_DataUtil.init();
          List<BedEspModule.Inner_DataUtil> beds = init_List();
          boolean path = BedEspModule.init_ClassCache_CachePo().load();
          VertexConsumer fill = source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
          for (BedEspModule.Inner_DataUtil bed : beds) {
             int rgb = bed.init_DyeColor().getTextureDiffuseColor();
-            cI.init(matrices.last(), fill, bed.init_AABB().move(camera.scale(-1.0)), init(rgb, 32));
+            WorldLineRenderer.init(matrices.last(), fill, bed.init_AABB().move(camera.scale(-1.0)), init(rgb, 32));
             if (path && bed.init_Z()) {
                for (int n = 0; n < bed.load_List().size(); n++) {
-                  cI.init(matrices.last(), fill, new AABB(bed.load_List().get(n)).inflate(0.005).move(camera.scale(-1.0)), n == 0 ? 540999579 : 419417696);
+                  WorldLineRenderer.init(matrices.last(), fill, new AABB(bed.load_List().get(n)).inflate(0.005).move(camera.scale(-1.0)), n == 0 ? 540999579 : 419417696);
                }
             }
          }
@@ -70,12 +70,12 @@ public final class BedEspOverlayRenderer {
          VertexConsumer lines = source.init(autismclient.render.AutismRenderTypes.tracerEspLines());
 
          for (BedEspModule.Inner_DataUtil bed : beds) {
-            cI.init(
+            WorldLineRenderer.init(
                matrices.last(), lines, bed.init_AABB().inflate(0.004).move(camera.scale(-1.0)), init(bed.init_DyeColor().getTextureDiffuseColor(), 204), 1.5F
             );
             if (path && bed.init_Z()) {
                for (int n = 0; n < bed.load_List().size(); n++) {
-                  cI.init(
+                  WorldLineRenderer.init(
                      matrices.last(), lines, new AABB(bed.load_List().get(n)).inflate(0.007).move(camera.scale(-1.0)), n == 0 ? -868286565 : -855650720, 1.5F
                   );
                }

@@ -19,25 +19,25 @@ public final class CacheEntry {
       String blockId = state.getStringOr("Name", "minecraft:air");
       String raw = root.toString();
       List<az.Inner_BufferHelper> nice = new ArrayList<>();
-      init(nice, "Identity", p.index());
-      load(nice, "Block: " + blockId, p.task());
-      load(nice, "State: " + root.getStringOr("block_state", blockId), p.parse());
-      load(nice, "Dimension: " + root.getStringOr("dimension", "<unknown>"), p.parse());
+      init(nice, "Identity", UiColorPalette.index());
+      load(nice, "Block: " + blockId, UiColorPalette.task());
+      load(nice, "State: " + root.getStringOr("block_state", blockId), UiColorPalette.parse());
+      load(nice, "Dimension: " + root.getStringOr("dimension", "<unknown>"), UiColorPalette.parse());
       int[] pos = root.getIntArray("position").orElse(new int[0]);
-      load(nice, "Position: " + init(pos), p.parse());
-      load(nice, "Source: " + root.getStringOr("source", "client"), p.a());
+      load(nice, "Position: " + init(pos), UiColorPalette.parse());
+      load(nice, "Source: " + root.getStringOr("source", "client"), UiColorPalette.a());
       CompoundTag entity = root.getCompound("block_entity").orElse(null);
       if (entity != null) {
          init_V(nice);
-         init(nice, "Block Entity", p.node());
-         load(nice, "Type: " + entity.getStringOr("id", "<unknown>"), p.task());
-         load(nice, "Fields: " + entity.size(), p.parse());
+         init(nice, "Block Entity", UiColorPalette.node());
+         load(nice, "Type: " + entity.getStringOr("id", "<unknown>"), UiColorPalette.task());
+         load(nice, "Fields: " + entity.size(), UiColorPalette.parse());
       }
 
       if (!items.isEmpty() || root.getBooleanOr("contents_available", false)) {
          init_V(nice);
-         init(nice, "Contents", p.cache());
-         load(nice, "Slots: " + root.getIntOr("container_slots", items.size()), p.parse());
+         init(nice, "Contents", UiColorPalette.cache());
+         load(nice, "Slots: " + root.getIntOr("container_slots", items.size()), UiColorPalette.parse());
          int nonEmpty = 0;
 
          for (int slot = 0; slot < items.size(); slot++) {
@@ -45,32 +45,32 @@ public final class CacheEntry {
             if (stack != null && !stack.isEmpty()) {
                nonEmpty++;
                String id = String.valueOf(BuiltInRegistries.ITEM.getKey(stack.getItem()));
-               load(nice, "Slot " + slot + ": " + stack.getCount() + "x " + id + " (" + stack.getHoverName().getString() + ")", p.task());
+               load(nice, "Slot " + slot + ": " + stack.getCount() + "x " + id + " (" + stack.getHoverName().getString() + ")", UiColorPalette.task());
             }
          }
 
          if (nonEmpty == 0) {
-            load(nice, "Container is empty.", p.a());
+            load(nice, "Container is empty.", UiColorPalette.a());
          }
       }
 
       if (note != null && !note.isBlank()) {
          init_V(nice);
-         init(nice, "Access", p.queue());
-         load(nice, note, p.parse());
+         init(nice, "Access", UiColorPalette.queue());
+         load(nice, note, UiColorPalette.parse());
       }
 
       List<az.Inner_BufferHelper> rawLines = new ArrayList<>();
-      init(rawLines, "Raw Block SNBT", p.index());
+      init(rawLines, "Raw Block SNBT", UiColorPalette.index());
       boolean truncated = raw.length() > 40000;
       String shown = truncated ? raw.substring(0, 40000) : raw;
 
       for (String rawLine : az.init_List_Str(shown)) {
-         rawLines.add(new az.Inner_BufferHelper(rawLine, p.task(), az.init_List_Str_I(rawLine, p.task())));
+         rawLines.add(new az.Inner_BufferHelper(rawLine, UiColorPalette.task(), az.init_List_Str_I(rawLine, UiColorPalette.task())));
       }
 
       if (truncated) {
-         load(rawLines, "... (display truncated; Copy Raw keeps everything)", p.a());
+         load(rawLines, "... (display truncated; Copy Raw keeps everything)", UiColorPalette.a());
       }
 
       StringBuilder pretty = new StringBuilder("Block NBT - ").append(blockId);
@@ -109,7 +109,7 @@ public final class CacheEntry {
    }
 
    private static void init_V(List<az.Inner_BufferHelper> lines) {
-      load(lines, "", p.a());
+      load(lines, "", UiColorPalette.a());
    }
 
    public record Inner_DataUtil(String init_Str, List<az.Inner_BufferHelper> init_List, List<az.Inner_BufferHelper> load_List, String load_Str, String read)

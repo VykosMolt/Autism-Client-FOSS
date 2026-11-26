@@ -1,8 +1,8 @@
 package autismclient.mixin;
 
-import autismclient.util.aT;
-import autismclient.util.ct;
-import autismclient.util.cu;
+import autismclient.util.CustomMainMenuGuard;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.ThemeTextureRecolorer;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.LogoRenderer;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -31,7 +31,7 @@ public class AutismLogoRendererMixin {
 
    @Inject(method = "extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IFI)V", at = @At("HEAD"), cancellable = true)
    private void autism$renderHighResolutionLogo(GuiGraphicsExtractor graphics, int width, float alpha, int heightOffset, CallbackInfo ci) {
-      if (!aT.load()) {
+      if (!CustomMainMenuGuard.load()) {
          int maxWidth = Math.min(320, Math.max(180, width - 40));
          float scale = Math.min(maxWidth / 516.0F, 0.5F);
          int drawWidth = Math.round(516.0F * scale);
@@ -40,7 +40,7 @@ public class AutismLogoRendererMixin {
          int logoY = heightOffset + 0;
          graphics.blit(
             RenderPipelines.GUI_TEXTURED,
-            cu.init(PACKUTIL_LOGO, ct.Inner_DataUtil.ACCENT),
+            ThemeTextureRecolorer.init(PACKUTIL_LOGO, ThemePaletteManager.Inner_DataUtil.ACCENT),
             logoX,
             logoY,
             0.0F,

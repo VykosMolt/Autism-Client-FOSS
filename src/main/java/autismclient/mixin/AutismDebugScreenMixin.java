@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.V;
+import autismclient.util.CoordinateSpoofer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,7 +24,7 @@ public abstract class AutismDebugScreenMixin {
       )
    )
    private Collection<String> autism$fakeF3Coords(Collection<String> lines) {
-      if (!V.init_Z()) {
+      if (!CoordinateSpoofer.init_Z()) {
          return lines;
       }
 
@@ -33,7 +33,7 @@ public abstract class AutismDebugScreenMixin {
          return lines;
       }
 
-      double[] f = V.init_DArr(cam.getX(), cam.getY(), cam.getZ());
+      double[] f = CoordinateSpoofer.init_DArr(cam.getX(), cam.getY(), cam.getZ());
       int bx = Mth.floor(f[0]);
       int by = Mth.floor(f[1]);
       int bz = Mth.floor(f[2]);

@@ -51,7 +51,7 @@ import net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 
-public class AutismServerInfoOverlay extends bj {
+public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final Logger init_Logger = LogUtils.getLogger();
    private static final String init_Str_2 = "autism-serverinfo";
@@ -806,7 +806,7 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    public static boolean poll_Z_16() {
-      cH layout = ck.init_ck().init_cH_Str("autism-serverinfo");
+      OverlayBounds layout = ck.init_ck().init_cH_Str("autism-serverinfo");
       return layout != null && layout.init_Z;
    }
 
@@ -898,7 +898,7 @@ public class AutismServerInfoOverlay extends bj {
       this.init_V_Str_9("Players:", players, null);
       this.init_V_Str_9("Protocol:", proto, null);
       if (!"--".equals(versionNote)) {
-         this.init_V_Str_9("Version Note:", versionNote, p.entry());
+         this.init_V_Str_9("Version Note:", versionNote, UiColorPalette.entry());
       }
 
       this.init_V_Str_9("Difficulty:", diff, null);
@@ -907,13 +907,13 @@ public class AutismServerInfoOverlay extends bj {
       this.init_V_Str_9("TPS:", tps, null);
       List<String> detectedAcs = this.init_List_13();
       if (this.tick_Z) {
-         this.init_V_Str_9("AntiCheats:", "Scanning...", ct.init_I_I_ct_DataUtil(-48060, ct.Inner_DataUtil.DANGER));
+         this.init_V_Str_9("AntiCheats:", "Scanning...", ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.Inner_DataUtil.DANGER));
       } else if (!this.pop_Z) {
-         this.init_V_Str_9("AntiCheats:", "Probe Plugins First", ct.init_I_I_ct_DataUtil(-48060, ct.Inner_DataUtil.DANGER));
+         this.init_V_Str_9("AntiCheats:", "Probe Plugins First", ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.Inner_DataUtil.DANGER));
       } else if (detectedAcs.isEmpty()) {
          this.init_V_Str_9("AntiCheats:", "None detected", null);
       } else {
-         this.init_V_Str_9("AntiCheats:", String.join(", ", detectedAcs), ct.init_I_I_ct_DataUtil(-48060, ct.Inner_DataUtil.DANGER));
+         this.init_V_Str_9("AntiCheats:", String.join(", ", detectedAcs), ThemePaletteManager.init_I_I_ct_DataUtil(-48060, ThemePaletteManager.Inner_DataUtil.DANGER));
       }
 
       this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(this.init_PacketUtil);
@@ -1232,7 +1232,7 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    private void entry_V_2() {
-      cH clamped = this.init_cH_cH_5(new cH(this.poll_I, this.push_I, this.pop_I, this.run_I, this.write_Z, this.update_Z));
+      OverlayBounds clamped = this.init_cH_cH_5(new OverlayBounds(this.poll_I, this.push_I, this.pop_I, this.run_I, this.write_Z, this.update_Z));
       this.poll_I = clamped.init_I;
       this.push_I = clamped.load_I;
       this.pop_I = clamped.read;
@@ -1903,19 +1903,19 @@ public class AutismServerInfoOverlay extends bj {
 
    private int init_I_AutismServerInfoOv_Z(AutismServerInfoOverlay.Inner_ConfigStore confidence, boolean hovered) {
       if (hovered) {
-         return p.task();
+         return UiColorPalette.task();
       }
 
       int var10000;
       switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence) {
          case EXACT:
-            var10000 = p.cache();
+            var10000 = UiColorPalette.cache();
             break;
          case STRONG:
-            var10000 = p.node();
+            var10000 = UiColorPalette.node();
             break;
          case FEATURE:
-            var10000 = p.entry();
+            var10000 = UiColorPalette.entry();
             break;
          case UNKNOWN:
             var10000 = this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
@@ -3598,7 +3598,7 @@ public class AutismServerInfoOverlay extends bj {
 
    private int node_I_2() {
       AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
-      return session != null && !session.init_Deque.isEmpty() ? p.entry() : p.node();
+      return session != null && !session.init_Deque.isEmpty() ? UiColorPalette.entry() : UiColorPalette.node();
    }
 
    private String sync_Str_2() {
@@ -4527,7 +4527,7 @@ public class AutismServerInfoOverlay extends bj {
       this.write_Z = v;
       if (v) {
          this.init_CharEncoder_2.write(!this.update_Z);
-         bk.init_bk().update_V(this);
+         OverlayManager.init_bk().update_V(this);
          this.frame_V_2();
          if (this.start == 0) {
             this.count_V_2();
@@ -4614,14 +4614,14 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    @Override
-   public cH init_cH() {
-      return new cH(this.poll_I, this.push_I, this.pop_I, this.run_I, this.write_Z, this.update_Z);
+   public OverlayBounds init_cH() {
+      return new OverlayBounds(this.poll_I, this.push_I, this.pop_I, this.run_I, this.write_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(cH b) {
+   public void init_V_cH(OverlayBounds b) {
       if (b != null) {
-         cH clamped = this.init_cH_cH_5(b);
+         OverlayBounds clamped = this.init_cH_cH_5(b);
          this.poll_I = clamped.init_I;
          this.push_I = clamped.load_I;
          this.pop_I = clamped.read;
@@ -4676,7 +4676,7 @@ public class AutismServerInfoOverlay extends bj {
       autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mx);
       float uiMouseY = viewport.load(my);
-      boolean active = bk.init_bk().update_Z(this) || bk.init_bk().write_Z(this);
+      boolean active = OverlayManager.init_bk().update_Z(this) || OverlayManager.init_bk().write_Z(this);
       boolean headerHovered = this.init_Z_F_F_6(uiMouseX, uiMouseY);
       autismclient.gui.f.c.SyncManager metrics = new autismclient.gui.f.c.SyncManager(
          ctx, this.init_Font, viewport, this.init_CharEncoder, uiMouseX, uiMouseY, delta
@@ -4698,7 +4698,7 @@ public class AutismServerInfoOverlay extends bj {
       }
 
       this.pop_I = this.pop_I_24();
-      cH clamped = this.init_cH_cH_5(new cH(this.poll_I, this.push_I, this.pop_I, this.run_I, this.write_Z, this.update_Z));
+      OverlayBounds clamped = this.init_cH_cH_5(new OverlayBounds(this.poll_I, this.push_I, this.pop_I, this.run_I, this.write_Z, this.update_Z));
       this.poll_I = clamped.init_I;
       this.push_I = clamped.load_I;
       this.pop_I = clamped.read;
@@ -4790,7 +4790,7 @@ public class AutismServerInfoOverlay extends bj {
                scrollbarMetrics = this.load_PoolEntry_DataUtil_I(x, listTop, rowW, viewH);
             }
 
-            boolean active = bk.init_bk().update_Z(this) || bk.init_bk().write_Z(this);
+            boolean active = OverlayManager.init_bk().update_Z(this) || OverlayManager.init_bk().write_Z(this);
             viewport.init_V_GuiGraphicsExtract(ctx);
 
             try {
@@ -4847,7 +4847,7 @@ public class AutismServerInfoOverlay extends bj {
 
                         boolean isAnticheat = row.load != null && update_Set.contains(row.load.toLowerCase(Locale.ROOT));
                         int nameColor = isAnticheat
-                           ? ct.init_I_I_ct_DataUtil(-43691, ct.Inner_DataUtil.DANGER)
+                           ? ThemePaletteManager.init_I_I_ct_DataUtil(-43691, ThemePaletteManager.Inner_DataUtil.DANGER)
                            : this.init_I_AutismServerInfoOv_Z(row.init_AutismServerInfoOv, hovered);
                         String label = isAnticheat ? "! " + row.load : row.load;
                         int labelX = clipLeft + (standaloneCommandHint ? 5 : 13);
@@ -4911,7 +4911,7 @@ public class AutismServerInfoOverlay extends bj {
                                     this.push_V();
                                     this.init_List.clear();
                                     String fullCmd = hintCommand.startsWith("/") ? hintCommand : "/" + hintCommand;
-                                    bk.init_bk().init_V_cX_Z(this, true);
+                                    OverlayManager.init_bk().init_V_cX_Z(this, true);
                                     init_Minecraft.gui.setScreen(new ChatScreen(fullCmd, false));
                                  }));
                            }
@@ -4967,7 +4967,7 @@ public class AutismServerInfoOverlay extends bj {
                                        this.init_List.clear();
                                        if (commandRow) {
                                           String fullCmd = actionValue.startsWith("/") ? actionValue : "/" + actionValue;
-                                          bk.init_bk().init_V_cX_Z(this, true);
+                                          OverlayManager.init_bk().init_V_cX_Z(this, true);
                                           init_Minecraft.gui.setScreen(new ChatScreen(fullCmd, false));
                                        } else {
                                           this.write_V_3(actionValue);
@@ -5010,7 +5010,7 @@ public class AutismServerInfoOverlay extends bj {
             var10000 = -1716016;
             break;
          case GUI:
-            var10000 = p.entry();
+            var10000 = UiColorPalette.entry();
             break;
          case CHANNEL:
             var10000 = this.read_I_4(row.read == null ? null : row.read.replaceFirst("^ch\\s+", ""));
@@ -5134,9 +5134,9 @@ public class AutismServerInfoOverlay extends bj {
          } else if (this.sync_Z_2(lower)) {
             return -7371387;
          } else if (lower.contains("[registered")) {
-            return p.cache();
+            return UiColorPalette.cache();
          } else {
-            return lower.contains("[live") ? p.node() : p.node();
+            return lower.contains("[live") ? UiColorPalette.node() : UiColorPalette.node();
          }
       }
    }
@@ -5291,7 +5291,7 @@ public class AutismServerInfoOverlay extends bj {
             action.payloadProvenance = "serverInfoChannel";
             ActionEditorOverlay editor = ActionEditorOverlay.init_ActionEditorOverla_2();
             editor.init_V_H(action);
-            bk.init_bk().update_V(editor);
+            OverlayManager.init_bk().update_V(editor);
          }
       }
    }
@@ -5519,7 +5519,7 @@ public class AutismServerInfoOverlay extends bj {
       return Math.max(0, this.sync_I(Math.max(0, viewHeight - 2), this.o()));
    }
 
-   private cH init_cH_cH_5(cH bounds) {
+   private OverlayBounds init_cH_cH_5(OverlayBounds bounds) {
       autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
       int viewportWidth = Math.round(viewport.init());
       int viewportHeight = Math.round(viewport.load());
@@ -5533,7 +5533,7 @@ public class AutismServerInfoOverlay extends bj {
       int renderedHeight = bounds.load_Z ? this.init_CharEncoder.load() : height;
       int x = Math.max(margin, Math.min(bounds.init_I, Math.max(margin, viewportWidth - margin - width)));
       int y = Math.max(margin, Math.min(bounds.load_I, Math.max(margin, viewportHeight - margin - renderedHeight)));
-      return new cH(x, y, width, height, bounds.init_Z, bounds.load_Z);
+      return new OverlayBounds(x, y, width, height, bounds.init_Z, bounds.load_Z);
    }
 
    private String load(ServerData entry) {
@@ -6679,8 +6679,8 @@ public class AutismServerInfoOverlay extends bj {
       autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mx);
       float uiMouseY = viewport.load(my);
-      cH clamped = this.init_cH_cH_5(
-         new cH(Math.round(uiMouseX - (float)this.init_D), Math.round(uiMouseY - (float)this.load_D), this.pop_I, this.run_I, this.write_Z, this.update_Z)
+      OverlayBounds clamped = this.init_cH_cH_5(
+         new OverlayBounds(Math.round(uiMouseX - (float)this.init_D), Math.round(uiMouseY - (float)this.load_D), this.pop_I, this.run_I, this.write_Z, this.update_Z)
       );
       this.poll_I = clamped.init_I;
       this.push_I = clamped.load_I;

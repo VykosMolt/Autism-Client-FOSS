@@ -16,7 +16,7 @@ import autismclient.gui.f.b.g;
 import autismclient.util.AutismProfile;
 import autismclient.util.AutismProfileManager;
 import autismclient.util.bi;
-import autismclient.util.cz;
+import autismclient.util.GuiIconAtlas;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -159,7 +159,7 @@ public final class StreamUtil {
             ctx,
             NetHelper.init(right, bar.write(), newW, bar.sync()),
             "New profile",
-            cz.pop,
+            GuiIconAtlas.pop,
             CachePool.Inner_DataUtil.read,
             () -> this.init(StreamUtil.Inner_StreamUtil.CREATE)
          );
@@ -355,7 +355,7 @@ public final class StreamUtil {
 
                this.init(ctx, label, tx, rule.write(), remove.read() - tx - 4, this.init_JsonUtil.prev);
                RingBuffer.init(
-                  ctx.init_GuiGraphicsExtract(), this.init_Font, remove, cz.init_Identifier, this.init_Z_SyncManager_NetHelper(ctx, remove), true, true
+                  ctx.init_GuiGraphicsExtract(), this.init_Font, remove, GuiIconAtlas.init_Identifier, this.init_Z_SyncManager_NetHelper(ctx, remove), true, true
                );
                this.init_V_NetHelper_Runnable(remove, () -> this.init_V_AutismProfile_Str(p, pattern));
             }

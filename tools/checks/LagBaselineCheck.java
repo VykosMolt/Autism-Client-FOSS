@@ -18,10 +18,10 @@ public class LagBaselineCheck {
 
    // Feeds aF one sample per second: `before` for `seconds`, then `after` for two minutes.
    private static boolean fires(int before, int seconds, boolean screenOpen, int after) {
-      aF.init();
+      LagWatchdogReporter.init();
       for (int s = 0; s < seconds + 120; s++) {
          boolean early = s < seconds;
-         if (aF.auditLow(early ? before : after, early && screenOpen, 1000L * (s + 1))) {
+         if (LagWatchdogReporter.auditLow(early ? before : after, early && screenOpen, 1000L * (s + 1))) {
             return true;
          }
       }

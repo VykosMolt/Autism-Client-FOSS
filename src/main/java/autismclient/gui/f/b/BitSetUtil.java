@@ -1,7 +1,7 @@
 package autismclient.gui.f.b;
 
 import autismclient.compat263.CompatGLFW;
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -453,7 +453,7 @@ public class BitSetUtil extends autismclient.gui.f.c.TableIndex implements ListP
          }
 
          if (this.write_Z && this.sync_Z && hover > 0.0F && !this.close_Z) {
-            int hoverTint = ct.init_I_I_ct_DataUtil((int)(hover * 14.0F) << 24 | 16723759, ct.Inner_DataUtil.ACCENT);
+            int hoverTint = ThemePaletteManager.init_I_I_ct_DataUtil((int)(hover * 14.0F) << 24 | 16723759, ThemePaletteManager.Inner_DataUtil.ACCENT);
             autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), fieldBounds.init(1), Math.max(0, radius - 1), context.init_I_I(hoverTint));
          }
 
@@ -464,7 +464,7 @@ public class BitSetUtil extends autismclient.gui.f.c.TableIndex implements ListP
                context.init_GuiGraphicsExtract(),
                fieldBounds.init(1),
                Math.max(0, radius - 1),
-               context.init_I_I(ct.init_I_I_ct_DataUtil(318716731, ct.Inner_DataUtil.ACCENT))
+               context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(318716731, ThemePaletteManager.Inner_DataUtil.ACCENT))
             );
          }
 
@@ -494,7 +494,7 @@ public class BitSetUtil extends autismclient.gui.f.c.TableIndex implements ListP
                         drawY + contentInset,
                         textX + 1,
                         drawY + contentInset + fontHeight,
-                        context.init_I_I(ct.init_I_I_ct_DataUtil(-4627, ct.Inner_DataUtil.TEXT))
+                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.Inner_DataUtil.TEXT))
                      );
                }
             } else {
@@ -508,7 +508,7 @@ public class BitSetUtil extends autismclient.gui.f.c.TableIndex implements ListP
                         drawY + contentInset,
                         textX + 1,
                         drawY + drawH - contentInset,
-                        context.init_I_I(ct.init_I_I_ct_DataUtil(-4627, ct.Inner_DataUtil.TEXT))
+                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.Inner_DataUtil.TEXT))
                      );
                }
             }
@@ -541,7 +541,7 @@ public class BitSetUtil extends autismclient.gui.f.c.TableIndex implements ListP
                               lineY - 1,
                               selectionX + selectionW,
                               lineY + fontHeight + lineSpacing,
-                              context.init_I_I(ct.init_I_I_ct_DataUtil(1728006730, ct.Inner_DataUtil.ACCENT))
+                              context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.Inner_DataUtil.ACCENT))
                            );
                      }
                   }
@@ -583,7 +583,7 @@ public class BitSetUtil extends autismclient.gui.f.c.TableIndex implements ListP
                         caretY - 1,
                         caretX + 1,
                         caretY + fontHeight + lineSpacing,
-                        context.init_I_I(ct.init_I_I_ct_DataUtil(-4627, ct.Inner_DataUtil.TEXT))
+                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.Inner_DataUtil.TEXT))
                      );
                }
             }
@@ -606,7 +606,7 @@ public class BitSetUtil extends autismclient.gui.f.c.TableIndex implements ListP
                         drawY + 2,
                         selectionX + selectionW,
                         drawY + drawH - 2,
-                        context.init_I_I(ct.init_I_I_ct_DataUtil(1728006730, ct.Inner_DataUtil.ACCENT))
+                        context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(1728006730, ThemePaletteManager.Inner_DataUtil.ACCENT))
                      );
                }
             }
@@ -647,7 +647,7 @@ public class BitSetUtil extends autismclient.gui.f.c.TableIndex implements ListP
                      drawY + contentInset,
                      caretX + 1,
                      drawY + drawH - contentInset,
-                     context.init_I_I(ct.init_I_I_ct_DataUtil(-4627, ct.Inner_DataUtil.TEXT))
+                     context.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(-4627, ThemePaletteManager.Inner_DataUtil.TEXT))
                   );
             }
          }

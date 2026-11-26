@@ -8,7 +8,7 @@ public class DesyncAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      autismclient.util.af.read(mc, false);
+      autismclient.util.GuiDesyncHelper.read(mc, false);
    }
 
    @Override

@@ -2,7 +2,7 @@ package autismclient.gui.macro.editor.a;
 
 import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.b.FileCache;
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 import java.util.List;
 import java.util.function.Predicate;
 import net.minecraft.client.gui.Font;
@@ -88,7 +88,7 @@ public final class CachePool {
             var10000 = selected ? -5398 : -29556;
             break;
          case NORMAL:
-            var10000 = selected ? ct.init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.TEXT) : -1;
+            var10000 = selected ? ThemePaletteManager.init_I_I_ct_DataUtil(-2828, ThemePaletteManager.Inner_DataUtil.TEXT) : -1;
             break;
          default:
             throw new MatchException(null, null);

@@ -10,9 +10,9 @@ import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismPacketLoggerOverlay;
 import autismclient.util.AutismQueueEditorOverlay;
-import autismclient.util.aH;
-import autismclient.util.aS;
-import autismclient.util.bk;
+import autismclient.util.ContainerScreenToolbar;
+import autismclient.util.ScreenMacroStopWidget;
+import autismclient.util.OverlayManager;
 import autismclient.util.cA;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -56,13 +56,13 @@ public abstract class AutismScreenMixin {
             }
 
             if (this.autism$queueEditorOverlay != null) {
-               bk.init_bk().init_V(this.autism$queueEditorOverlay);
+               OverlayManager.init_bk().init_V(this.autism$queueEditorOverlay);
             }
          } else {
             Font textRenderer = ((AutismScreenAccessor)(Object)this).getFont();
             this.autism$queueEditorOverlay = new AutismQueueEditorOverlay(textRenderer);
             this.autism$queueEditorOverlay.sync_V_17();
-            bk.init_bk().init_V(this.autism$queueEditorOverlay);
+            OverlayManager.init_bk().init_V(this.autism$queueEditorOverlay);
             this.autism$lecternInitialized = true;
          }
       }
@@ -85,7 +85,7 @@ public abstract class AutismScreenMixin {
                cA.init_V_GuiGraphicsExtract(context);
 
                try {
-                  for (DataPipe button : aH.init(MC, this.autism$queueEditorOverlay)) {
+                  for (DataPipe button : ContainerScreenToolbar.init(MC, this.autism$queueEditorOverlay)) {
                      button.init(context, textRenderer, virtualMouseX, virtualMouseY);
                   }
                } finally {
@@ -98,12 +98,12 @@ public abstract class AutismScreenMixin {
 
    @Inject(method = "extractRenderState", at = @At("TAIL"))
    private void autism$renderMenuMacroProgress(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-      if (aS.init_Z_Minecraft(MC) && (AutismLiteVariant.enabled() || TableIndex.init())) {
+      if (ScreenMacroStopWidget.init_Z_Minecraft(MC) && (AutismLiteVariant.enabled() || TableIndex.init())) {
          context.nextStratum();
          cA.init_V_GuiGraphicsExtract(context);
 
          try {
-            aS.init_V_GuiGraphicsExtract(context, (Screen)(Object)this, mouseX, mouseY);
+            ScreenMacroStopWidget.init_V_GuiGraphicsExtract(context, (Screen)(Object)this, mouseX, mouseY);
          } catch (Throwable var10) {
          } finally {
             cA.load_V_GuiGraphicsExtract(context);
@@ -120,8 +120,8 @@ public abstract class AutismScreenMixin {
       }
 
       if (screen instanceof LecternScreen) {
-         bk.init_bk().read_V(this.autism$queueEditorOverlay);
-         bk.init_bk().read_V(this.autism$packetLoggerOverlay);
+         OverlayManager.init_bk().read_V(this.autism$queueEditorOverlay);
+         OverlayManager.init_bk().read_V(this.autism$packetLoggerOverlay);
       }
    }
 

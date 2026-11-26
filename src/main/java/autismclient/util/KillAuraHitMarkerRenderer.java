@@ -114,9 +114,9 @@ public final class KillAuraHitMarkerRenderer {
             double dx = (corner & 1) == 0 ? bracket : -bracket;
             double dy = (corner & 2) == 0 ? bracket : -bracket;
             double dz = (corner & 4) == 0 ? bracket : -bracket;
-            cI.init(pose, buffer, x, y, z, x + dx, y, z, color, 2.0F);
-            cI.init(pose, buffer, x, y, z, x, y + dy, z, color, 2.0F);
-            cI.init(pose, buffer, x, y, z, x, y, z + dz, color, 2.0F);
+            WorldLineRenderer.init(pose, buffer, x, y, z, x + dx, y, z, color, 2.0F);
+            WorldLineRenderer.init(pose, buffer, x, y, z, x, y + dy, z, color, 2.0F);
+            WorldLineRenderer.init(pose, buffer, x, y, z, x, y, z + dz, color, 2.0F);
          }
       }
    }

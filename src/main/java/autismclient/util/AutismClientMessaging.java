@@ -56,7 +56,7 @@ public final class AutismClientMessaging {
    }
 
    public static MutableComponent themedTag(String tag) {
-      return Component.empty().append(styled("[", p.a())).append(styled(tag == null ? "" : tag, p.init(), true)).append(styled("] ", p.a()));
+      return Component.empty().append(styled("[", UiColorPalette.a())).append(styled(tag == null ? "" : tag, UiColorPalette.init(), true)).append(styled("] ", UiColorPalette.a()));
    }
 
    public static MutableComponent themedBody(String message) {
@@ -223,13 +223,13 @@ public final class AutismClientMessaging {
          String sender = message.substring(7, close);
          String body = message.substring(close + 2);
          return Component.empty()
-            .append(styled("[", p.a()))
-            .append(styled("LAN", p.node(), true))
-            .append(styled("] ", p.a()))
-            .append(styled("<", p.a()))
-            .append(styled(sender, p.state(), true))
-            .append(styled("> ", p.a()))
-            .append(colorizeTokenStream(body, p.scan()));
+            .append(styled("[", UiColorPalette.a()))
+            .append(styled("LAN", UiColorPalette.node(), true))
+            .append(styled("] ", UiColorPalette.a()))
+            .append(styled("<", UiColorPalette.a()))
+            .append(styled(sender, UiColorPalette.state(), true))
+            .append(styled("> ", UiColorPalette.a()))
+            .append(colorizeTokenStream(body, UiColorPalette.scan()));
       } else {
          return null;
       }
@@ -241,9 +241,9 @@ public final class AutismClientMessaging {
          if (colon > 0 && colon < 24 && isLikelyLabel(message.substring(0, colon))) {
             String label = message.substring(0, colon);
             String rest = message.substring(colon + 1);
-            MutableComponent root = Component.empty().append(styled(label, p.pool(), true)).append(styled(":", p.a()));
+            MutableComponent root = Component.empty().append(styled(label, UiColorPalette.pool(), true)).append(styled(":", UiColorPalette.a()));
             if (!rest.isEmpty()) {
-               root.append(styled(leadingWhitespace(rest), p.a()));
+               root.append(styled(leadingWhitespace(rest), UiColorPalette.a()));
                root.append(colorizeTokenStream(rest.stripLeading(), inferDefaultColor(rest.trim())));
             }
 
@@ -320,7 +320,7 @@ public final class AutismClientMessaging {
       int var10000;
       switch (ch) {
          case '"':
-            var10000 = p.index();
+            var10000 = UiColorPalette.index();
             break;
          case '(':
          case ')':
@@ -331,7 +331,7 @@ public final class AutismClientMessaging {
          case '[':
          case ']':
          case '|':
-            var10000 = p.a();
+            var10000 = UiColorPalette.a();
             break;
          default:
             var10000 = defaultColor;
@@ -363,7 +363,7 @@ public final class AutismClientMessaging {
       if (normalized.isEmpty()) {
          return defaultColor;
       } else if (isNumericToken(normalized)) {
-         return p.index();
+         return UiColorPalette.index();
       } else if (normalized.equals("enabled")
          || normalized.equals("started")
          || normalized.equals("joined")
@@ -380,7 +380,7 @@ public final class AutismClientMessaging {
          || normalized.equals("sent")
          || normalized.equals("on")
          || normalized.equals("true")) {
-         return p.value();
+         return UiColorPalette.value();
       } else if (normalized.equals("disabled")
          || normalized.equals("stopped")
          || normalized.equals("empty")
@@ -393,7 +393,7 @@ public final class AutismClientMessaging {
          || normalized.equals("out")
          || normalized.equals("off")
          || normalized.equals("false")) {
-         return p.entry();
+         return UiColorPalette.entry();
       } else if (normalized.equals("failed")
          || normalized.equals("error")
          || normalized.equals("errors")
@@ -406,7 +406,7 @@ public final class AutismClientMessaging {
          || normalized.equals("invalid")
          || normalized.equals("not")
          || normalized.equals("null")) {
-         return p.valid();
+         return UiColorPalette.valid();
       } else if (normalized.equals("queue")
          || normalized.equals("packet")
          || normalized.equals("packets")
@@ -414,7 +414,7 @@ public final class AutismClientMessaging {
          || normalized.equals("lan")
          || normalized.equals("session")
          || normalized.equals("tcp")) {
-         return p.node();
+         return UiColorPalette.node();
       } else if (!normalized.equals("gui")
          && !normalized.equals("screen")
          && !normalized.equals("inventory")
@@ -422,9 +422,9 @@ public final class AutismClientMessaging {
          && !normalized.equals("slots")) {
          return !normalized.equals("macro") && !normalized.equals("macros") && !normalized.equals("preset") && !normalized.equals("presets")
             ? defaultColor
-            : p.state();
+            : UiColorPalette.state();
       } else {
-         return p.queue();
+         return UiColorPalette.queue();
       }
    }
 
@@ -536,25 +536,25 @@ public final class AutismClientMessaging {
             var10000 = -10897036;
             break;
          case '3':
-            var10000 = p.node();
+            var10000 = UiColorPalette.node();
             break;
          case '4':
-            var10000 = p.valid();
+            var10000 = UiColorPalette.valid();
             break;
          case '5':
             var10000 = -1602869;
             break;
          case '6':
-            var10000 = p.queue();
+            var10000 = UiColorPalette.queue();
             break;
          case '7':
-            var10000 = p.pool();
+            var10000 = UiColorPalette.pool();
             break;
          case '8':
-            var10000 = p.a();
+            var10000 = UiColorPalette.a();
             break;
          case '9':
-            var10000 = p.buffer();
+            var10000 = UiColorPalette.buffer();
             break;
          case ':':
          case ';':
@@ -610,22 +610,22 @@ public final class AutismClientMessaging {
             var10000 = null;
             break;
          case 'a':
-            var10000 = p.value();
+            var10000 = UiColorPalette.value();
             break;
          case 'b':
-            var10000 = p.node();
+            var10000 = UiColorPalette.node();
             break;
          case 'c':
-            var10000 = p.valid();
+            var10000 = UiColorPalette.valid();
             break;
          case 'd':
-            var10000 = p.state();
+            var10000 = UiColorPalette.state();
             break;
          case 'e':
-            var10000 = p.entry();
+            var10000 = UiColorPalette.entry();
             break;
          case 'f':
-            var10000 = p.parse();
+            var10000 = UiColorPalette.parse();
             break;
          case 'r':
             var10000 = null;
@@ -660,7 +660,7 @@ public final class AutismClientMessaging {
    private static int inferDefaultColor(String message) {
       String lower = message == null ? "" : message.trim().toLowerCase();
       if (lower.isEmpty()) {
-         return p.parse();
+         return UiColorPalette.parse();
       } else if (lower.contains("failed")
          || lower.contains("error")
          || lower.startsWith("no ")
@@ -670,7 +670,7 @@ public final class AutismClientMessaging {
          || lower.contains("denied")
          || lower.contains("blocked")
          || lower.contains("crashed")) {
-         return p.valid();
+         return UiColorPalette.valid();
       } else if (lower.contains("enabled")
          || lower.contains("started")
          || lower.contains("joined")
@@ -687,7 +687,7 @@ public final class AutismClientMessaging {
          || lower.startsWith("deleted ")
          || lower.startsWith("broadcasted ")
          || lower.startsWith("queue sent")) {
-         return p.value();
+         return UiColorPalette.value();
       } else if (!lower.contains("disabled")
          && !lower.contains("stopped")
          && !lower.contains("empty")
@@ -696,9 +696,9 @@ public final class AutismClientMessaging {
          && !lower.contains("left")
          && !lower.contains("attempting")
          && !lower.contains("timed out")) {
-         return lower.startsWith("[lan] <") ? p.scan() : p.parse();
+         return lower.startsWith("[lan] <") ? UiColorPalette.scan() : UiColorPalette.parse();
       } else {
-         return p.entry();
+         return UiColorPalette.entry();
       }
    }
 

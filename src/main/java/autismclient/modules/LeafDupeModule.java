@@ -11,7 +11,7 @@ import autismclient.mixin.accessor.AutismLocalPlayerAccessor;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import autismclient.util.ServerRotationTracker;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -1102,7 +1102,7 @@ public final class LeafDupeModule extends Module {
    private String write_Str_2() {
       if (aD.init_Z()) {
          return "Paused";
-      } else if (MC.gui.screen() != null || bk.init_bk().update_Z()) {
+      } else if (MC.gui.screen() != null || OverlayManager.init_bk().update_Z()) {
          return "GUI open";
       } else if (!MC.mouseHandler.isMouseGrabbed()) {
          return "Cursor released";

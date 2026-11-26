@@ -1,6 +1,6 @@
 package autismclient.modules;
 
-import autismclient.util.cx;
+import autismclient.util.OverlayScreenController;
 import autismclient.util.macro.MacroExecutor;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
@@ -123,7 +123,7 @@ public final class AutoReconnectController {
    }
 
    public static void load_V() {
-      Screen screen = cx.init_Screen(init_Minecraft);
+      Screen screen = OverlayScreenController.init_Screen(init_Minecraft);
       if (screen instanceof DisconnectedScreen) {
          Screen parent = screen instanceof autismclient.c.DisconnectedScreenDuck access ? access.autism$parent() : screen;
          init(screen, parent);
@@ -134,7 +134,7 @@ public final class AutoReconnectController {
 
    public static void init(Screen parent) {
       if (init_Z()) {
-         Screen nextParent = parent == null ? cx.init_Screen(init_Minecraft) : parent;
+         Screen nextParent = parent == null ? OverlayScreenController.init_Screen(init_Minecraft) : parent;
          ConnectScreen.startConnecting(nextParent, init_Minecraft, init_ServerAddress, init_ServerData, false, null);
          init_Screen = null;
          init_I = init_I();

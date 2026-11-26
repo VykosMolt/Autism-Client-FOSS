@@ -19,7 +19,7 @@ public final class BedDangerHudRenderer {
    static void init(GuiGraphicsExtractor graphics, DangerModule module) {
       Minecraft mc = Minecraft.getInstance();
       if (init() && mc.player != null && mc.gui.screen() == null && !aD.init_Z()) {
-         autismclient.util.al.init_V_GuiGraphicsExtract_2(graphics, mc.font, "bed_danger");
+         autismclient.util.AutismHudManager.init_V_GuiGraphicsExtract_2(graphics, mc.font, "bed_danger");
       }
    }
 

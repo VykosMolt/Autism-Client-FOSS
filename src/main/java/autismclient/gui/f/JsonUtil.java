@@ -1,7 +1,7 @@
 package autismclient.gui.f;
 
 import autismclient.gui.f.b.j;
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 
 public final class JsonUtil {
    public int init;
@@ -37,11 +37,11 @@ public final class JsonUtil {
    }
 
    public void init() {
-      this.init(ct.init_ct_StreamUtil());
+      this.init(ThemePaletteManager.init_ct_StreamUtil());
    }
 
-   public void init(ct.Inner_StreamUtil state) {
-      this.clear = ct.init_I_I_2(-50373, ct.Inner_DataUtil.ACCENT, state);
+   public void init(ThemePaletteManager.Inner_StreamUtil state) {
+      this.clear = ThemePaletteManager.init_I_I_2(-50373, ThemePaletteManager.Inner_DataUtil.ACCENT, state);
       this.init = 1208486416;
       this.update = this.init(1777705, 212, 0.035F);
       this.sync = this.init(1711912, 230, 0.035F);
@@ -60,14 +60,14 @@ public final class JsonUtil {
       this.put = this.init(34, 0.06F);
       this.add = 385875967;
       this.write = this.init(84, 0.06F);
-      this.reset = ct.init_I_I_2(-7397596, ct.Inner_DataUtil.ACCENT, state);
-      this.start = ct.init_I_I_2(1157577531, ct.Inner_DataUtil.ACCENT, state);
-      this.stop = ct.init_I_I_2(-12588930, ct.Inner_DataUtil.SUCCESS, state);
-      this.next = ct.init_I_I_2(1715464318, ct.Inner_DataUtil.SUCCESS, state);
-      this.prev = ct.init_I_I_2(-854534, ct.Inner_DataUtil.TEXT, state);
-      this.valid = ct.init_I_I_2(-6774093, ct.Inner_DataUtil.TEXT, state);
-      this.size = ct.init_I_I_2(-10853776, ct.Inner_DataUtil.TEXT, state);
-      this.data = ct.init_I_I_2(-43691, ct.Inner_DataUtil.DANGER, state);
+      this.reset = ThemePaletteManager.init_I_I_2(-7397596, ThemePaletteManager.Inner_DataUtil.ACCENT, state);
+      this.start = ThemePaletteManager.init_I_I_2(1157577531, ThemePaletteManager.Inner_DataUtil.ACCENT, state);
+      this.stop = ThemePaletteManager.init_I_I_2(-12588930, ThemePaletteManager.Inner_DataUtil.SUCCESS, state);
+      this.next = ThemePaletteManager.init_I_I_2(1715464318, ThemePaletteManager.Inner_DataUtil.SUCCESS, state);
+      this.prev = ThemePaletteManager.init_I_I_2(-854534, ThemePaletteManager.Inner_DataUtil.TEXT, state);
+      this.valid = ThemePaletteManager.init_I_I_2(-6774093, ThemePaletteManager.Inner_DataUtil.TEXT, state);
+      this.size = ThemePaletteManager.init_I_I_2(-10853776, ThemePaletteManager.Inner_DataUtil.TEXT, state);
+      this.data = ThemePaletteManager.init_I_I_2(-43691, ThemePaletteManager.Inner_DataUtil.DANGER, state);
    }
 
    private int init(int rgb, int alpha, float tint) {

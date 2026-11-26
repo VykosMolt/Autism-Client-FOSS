@@ -8,7 +8,7 @@ import autismclient.util.ay;
 import autismclient.util.az;
 import autismclient.util.bi;
 import autismclient.util.cA;
-import autismclient.util.dl;
+import autismclient.util.SnbtBraceRepairer;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -316,7 +316,7 @@ public final class BufferHelper extends KeyHolder {
 
    private void read() {
       if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.FULL_NBT) {
-         String repaired = dl.init_Str(this.init_BitSetUtil.init_Str());
+         String repaired = SnbtBraceRepairer.init_Str(this.init_BitSetUtil.init_Str());
          ItemStack stack = ay.init_ItemStack(repaired);
          if (stack.isEmpty()) {
             this.init_BitSetUtil.init_BitSetUtil_Str(az.init_Str_Str(repaired));

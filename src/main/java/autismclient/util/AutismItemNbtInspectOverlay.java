@@ -9,7 +9,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.item.ItemStack;
 
-public class AutismItemNbtInspectOverlay extends bj {
+public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final int flush_I = 4;
    private static AutismItemNbtInspectOverlay init_AutismItemNbtInspe;
@@ -48,7 +48,7 @@ public class AutismItemNbtInspectOverlay extends bj {
    public static void load_V_8() {
       if (init_AutismItemNbtInspe != null) {
          init_AutismItemNbtInspe.init_V_Z(false);
-         bk.init_bk().read_V(init_AutismItemNbtInspe);
+         OverlayManager.init_bk().read_V(init_AutismItemNbtInspe);
       }
    }
 
@@ -91,7 +91,7 @@ public class AutismItemNbtInspectOverlay extends bj {
 
    public void init_V_az_StreamUtil(az.Inner_StreamUtil inspection, int anchorX, int anchorY) {
       if (inspection != null) {
-         bk manager = bk.init_bk();
+         OverlayManager manager = OverlayManager.init_bk();
          manager.init_V(this);
          this.init_az_StreamUtil = inspection;
          this.sync_Z = false;
@@ -105,7 +105,7 @@ public class AutismItemNbtInspectOverlay extends bj {
          this.read_I = width;
          int height = this.load_I_I_I(this.pop_I_10(), this.load_I());
          this.init_V_cH(
-            new cH(Math.max(8, Math.min(anchorX, screenW - width - 8)), Math.max(8, Math.min(anchorY, screenH - height - 8)), width, height, true, false)
+            new OverlayBounds(Math.max(8, Math.min(anchorX, screenW - width - 8)), Math.max(8, Math.min(anchorY, screenH - height - 8)), width, height, true, false)
          );
          manager.update_V(this);
       }
@@ -132,8 +132,8 @@ public class AutismItemNbtInspectOverlay extends bj {
    protected void c_() {
       this.write_Z = true;
       if (!this.set_Z()) {
-         cH b = this.init_cH();
-         this.init_V_cH(new cH(b.init_I, b.load_I, this.push_I_10(), this.pop_I_10(), b.init_Z, b.load_Z));
+         OverlayBounds b = this.init_cH();
+         this.init_V_cH(new OverlayBounds(b.init_I, b.load_I, this.push_I_10(), this.pop_I_10(), b.init_Z, b.load_Z));
       }
    }
 
@@ -146,7 +146,7 @@ public class AutismItemNbtInspectOverlay extends bj {
    @Override
    public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       if (this.init_Z || this.a__Z()) {
-         cH bounds = this.init_cH();
+         OverlayBounds bounds = this.init_cH();
          String title = this.init_az_StreamUtil == null ? "NBT Inspector" : this.init_az_StreamUtil.init_Str();
          this.init_V_GuiGraphicsExtract_6(context, mouseX, mouseY, bounds, title, this.load_Z, this.flush_Z);
          boolean clipped = this.init_Z_GuiGraphicsExtract(context, bounds, this.load_Z);
@@ -259,7 +259,7 @@ public class AutismItemNbtInspectOverlay extends bj {
          return false;
       }
 
-      cH bounds = this.init_cH();
+      OverlayBounds bounds = this.init_cH();
       if (button == 0 && mouseY >= this.load_I && mouseY <= this.load_I + 14 && mouseX >= this.init_I_2 && mouseX <= this.init_I_2 + this.read_I) {
          if (this.write(mouseX, mouseY, bounds)) {
             this.read_V_4();
@@ -330,7 +330,7 @@ public class AutismItemNbtInspectOverlay extends bj {
       }
 
       if (this.init_Z && button == 0 && this.flush_Z) {
-         this.init_V_cH(new cH((int)Math.round(mouseX - this.init_D), (int)Math.round(mouseY - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z));
+         this.init_V_cH(new OverlayBounds((int)Math.round(mouseX - this.init_D), (int)Math.round(mouseY - this.load_D), this.read_I, this.write, this.init_Z, this.load_Z));
          return true;
       } else {
          return false;
@@ -498,7 +498,7 @@ public class AutismItemNbtInspectOverlay extends bj {
    ) {
       int safeContinuationOffset = autismclient.gui.f.b.MapStore.load(maxWidth, continuationOffset);
       if (prefixWidth >= maxWidth) {
-         this.init_V_Str_3(prefix.stripTrailing(), 0, p.pool(), maxWidth, target);
+         this.init_V_Str_3(prefix.stripTrailing(), 0, UiColorPalette.pool(), maxWidth, target);
          this.init_V_Str_3(value, safeContinuationOffset, valueColor, maxWidth, target);
       } else if (value != null && !value.isEmpty()) {
          String remaining = value;
@@ -516,7 +516,7 @@ public class AutismItemNbtInspectOverlay extends bj {
          }
       } else {
          target.add(
-            AutismItemNbtInspectOverlay.Inner_StreamUtil.init(List.of(new az.Inner_TaskQueue(prefix, p.pool()), new az.Inner_TaskQueue("", valueColor)), 0)
+            AutismItemNbtInspectOverlay.Inner_StreamUtil.init(List.of(new az.Inner_TaskQueue(prefix, UiColorPalette.pool()), new az.Inner_TaskQueue("", valueColor)), 0)
          );
       }
    }
@@ -616,14 +616,14 @@ public class AutismItemNbtInspectOverlay extends bj {
             target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init(current, continuation ? continuationOffset : 0));
          }
       } else {
-         target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init("", 0, p.a()));
+         target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init("", 0, UiColorPalette.a()));
       }
    }
 
    private AutismItemNbtInspectOverlay.Inner_StreamUtil init_AutismItemNbtInspe_Str(String prefix, String value, int valueColor, int offset) {
       List<az.Inner_TaskQueue> tokens = new ArrayList<>();
       if (prefix != null && !prefix.isEmpty()) {
-         tokens.add(new az.Inner_TaskQueue(prefix, p.pool()));
+         tokens.add(new az.Inner_TaskQueue(prefix, UiColorPalette.pool()));
       }
 
       tokens.add(new az.Inner_TaskQueue(value == null ? "" : value, valueColor));
@@ -698,7 +698,7 @@ public class AutismItemNbtInspectOverlay extends bj {
 
    private int load(String text) {
       return text != null && !text.isEmpty()
-         ? autismclient.gui.f.b.k.init(this.init_Font, text, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), p.task())
+         ? autismclient.gui.f.b.k.init(this.init_Font, text, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.task())
          : 0;
    }
 

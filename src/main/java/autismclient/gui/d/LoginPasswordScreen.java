@@ -4,7 +4,7 @@ import autismclient.gui.f.b.j;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
 import autismclient.util.cA;
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 import java.security.SecureRandom;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -233,17 +233,17 @@ public final class LoginPasswordScreen extends KeyHolder {
 
       try {
          autismclient.gui.f.PacketUtil.init(
-            graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), ct.init_I_I_ct_DataUtil(-15987181, ct.Inner_DataUtil.BACKDROP)
+            graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), ThemePaletteManager.init_I_I_ct_DataUtil(-15987181, ThemePaletteManager.Inner_DataUtil.BACKDROP)
          );
          LoginPasswordScreen.Layout l = this.computeLayout();
-         int border = ct.init_I_I_ct_DataUtil(ValueSink.update, ct.Inner_DataUtil.OUTLINE);
-         int textColor = ct.init_I_I_ct_DataUtil(ValueSink.flush, ct.Inner_DataUtil.TEXT);
-         int muted = ct.init_I_I_ct_DataUtil(ValueSink.close, ct.Inner_DataUtil.TEXT);
+         int border = ThemePaletteManager.init_I_I_ct_DataUtil(ValueSink.update, ThemePaletteManager.Inner_DataUtil.OUTLINE);
+         int textColor = ThemePaletteManager.init_I_I_ct_DataUtil(ValueSink.flush, ThemePaletteManager.Inner_DataUtil.TEXT);
+         int muted = ThemePaletteManager.init_I_I_ct_DataUtil(ValueSink.close, ThemePaletteManager.Inner_DataUtil.TEXT);
          autismclient.gui.f.PacketUtil.load(
             graphics,
             autismclient.gui.f.NetHelper.init(l.x(), l.y(), l.w(), l.h()),
             5,
-            ct.init_I_I_ct_DataUtil(-401402080, ct.Inner_DataUtil.BUTTON),
+            ThemePaletteManager.init_I_I_ct_DataUtil(-401402080, ThemePaletteManager.Inner_DataUtil.BUTTON),
             border
          );
          int titleY = this.init_I_I_I_10(l.y() + 6, this.write_I_14());

@@ -15,7 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
-public class AutismPacketInspectOverlay extends bj {
+public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final int flush_I = 0;
    private static final int close_I = 8;
@@ -60,7 +60,7 @@ public class AutismPacketInspectOverlay extends bj {
 
    public void init_V_bu_JsonUtil(PacketInspectorEngine.Inner_JsonUtil inspection, AutismPacketLoggerOverlay.Inner_JsonUtil sourceEntry, int anchorX, int anchorY) {
       if (inspection != null) {
-         bk manager = bk.init_bk();
+         OverlayManager manager = OverlayManager.init_bk();
          manager.init_V(this);
          this.open_V_9();
          this.update_V_15();
@@ -85,7 +85,7 @@ public class AutismPacketInspectOverlay extends bj {
 
    public void init_V_AutismPacketLogger(AutismPacketLoggerOverlay.Inner_JsonUtil sourceEntry, int anchorX, int anchorY) {
       if (sourceEntry != null) {
-         bk manager = bk.init_bk();
+         OverlayManager manager = OverlayManager.init_bk();
          manager.init_V(this);
          this.open_V_9();
          this.update_V_15();
@@ -198,7 +198,7 @@ public class AutismPacketInspectOverlay extends bj {
    public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       if (this.write_Z || this.a__Z()) {
          this.flush_V_12();
-         cH bounds = this.init_cH();
+         OverlayBounds bounds = this.init_cH();
          String title = this.init_bu_JsonUtil == null ? "Packet Inspect" : this.init_bu_JsonUtil.init_Str();
          this.init_V_GuiGraphicsExtract_6(context, mouseX, mouseY, bounds, title, this.update_Z, this.sync_Z);
          boolean clipBody = this.init_Z_GuiGraphicsExtract(context, bounds, this.update_Z);
@@ -227,7 +227,7 @@ public class AutismPacketInspectOverlay extends bj {
                int innerWidth = autismclient.gui.f.b.MapStore.init(listWidth, this.add_I_12());
                int innerHeight = listHeight - this.add_I_12() * 2;
                int lineH = this.valid();
-               if (!bk.init_bk().update_Z(this) && !bk.init_bk().write_Z(this)) {
+               if (!OverlayManager.init_bk().update_Z(this) && !OverlayManager.init_bk().write_Z(this)) {
                   boolean var32 = false;
                } else {
                   boolean footerY = true;
@@ -383,7 +383,7 @@ public class AutismPacketInspectOverlay extends bj {
    ) {
       int safeContinuationOffset = autismclient.gui.f.b.MapStore.load(maxWidth, continuationOffset);
       if (prefixWidth >= maxWidth) {
-         this.init_V_Str_4(prefix.stripTrailing(), 0, p.pool(), maxWidth, target);
+         this.init_V_Str_4(prefix.stripTrailing(), 0, UiColorPalette.pool(), maxWidth, target);
          this.init_V_Str_4(value, safeContinuationOffset, valueColor, maxWidth, target);
       } else if (value != null && !value.isEmpty()) {
          String remaining = value;
@@ -396,11 +396,11 @@ public class AutismPacketInspectOverlay extends bj {
                current, 0, current.length(), availableWidth, (start, end) -> this.load(current.substring(start, end))
             );
             String part = remaining.substring(0, split).stripTrailing();
-            target.add(new AutismPacketInspectOverlay.Inner_BufferHelper(firstLine ? prefix : null, p.pool(), part, valueColor, offset));
+            target.add(new AutismPacketInspectOverlay.Inner_BufferHelper(firstLine ? prefix : null, UiColorPalette.pool(), part, valueColor, offset));
             remaining = remaining.substring(split).stripLeading();
          }
       } else {
-         target.add(new AutismPacketInspectOverlay.Inner_BufferHelper(prefix, p.pool(), "", valueColor, prefixWidth));
+         target.add(new AutismPacketInspectOverlay.Inner_BufferHelper(prefix, UiColorPalette.pool(), "", valueColor, prefixWidth));
       }
    }
 
@@ -453,7 +453,7 @@ public class AutismPacketInspectOverlay extends bj {
             this.init_Font,
             label,
             this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-            view.load() ? p.valid() : p.parse(),
+            view.load() ? UiColorPalette.valid() : UiColorPalette.parse(),
             x + 4,
             y + 2,
             false
@@ -494,7 +494,7 @@ public class AutismPacketInspectOverlay extends bj {
          return false;
       }
 
-      cH bounds = this.init_cH();
+      OverlayBounds bounds = this.init_cH();
       if (button == 0 && mouseY >= this.poll && mouseY <= this.poll + 14 && mouseX >= this.open && mouseX <= this.open + this.push) {
          if (this.write(mouseX, mouseY, bounds)) {
             this.write_V_17();
@@ -565,7 +565,7 @@ public class AutismPacketInspectOverlay extends bj {
       }
 
       if (this.write_Z && button == 0 && this.sync_Z) {
-         this.init_V_cH(new cH((int)Math.round(mouseX - this.init_D), (int)Math.round(mouseY - this.load_D), this.push, this.pop, this.write_Z, this.update_Z));
+         this.init_V_cH(new OverlayBounds((int)Math.round(mouseX - this.init_D), (int)Math.round(mouseY - this.load_D), this.push, this.pop, this.write_Z, this.update_Z));
          return true;
       } else {
          return false;
@@ -675,14 +675,14 @@ public class AutismPacketInspectOverlay extends bj {
    }
 
    @Override
-   public cH init_cH() {
-      return new cH(this.open, this.poll, this.push, this.pop, this.write_Z, this.update_Z);
+   public OverlayBounds init_cH() {
+      return new OverlayBounds(this.open, this.poll, this.push, this.pop, this.write_Z, this.update_Z);
    }
 
    @Override
-   public void init_V_cH(cH bounds) {
+   public void init_V_cH(OverlayBounds bounds) {
       if (bounds != null) {
-         cH clamped = this.init_cH_cX_cH(this, bounds);
+         OverlayBounds clamped = this.init_cH_cX_cH(this, bounds);
          boolean sizeChanged = this.push != clamped.read || this.pop != clamped.write;
          this.open = clamped.init_I;
          this.poll = clamped.load_I;
@@ -907,7 +907,7 @@ public class AutismPacketInspectOverlay extends bj {
       int desiredListHeight = Math.max(this.task(), desiredVisibleLines * lineHeight + this.add_I_12() * 2 + 2);
       int desiredHeight = 14 + this.size() + this.value() + this.data() + desiredListHeight + this.set_I_14() + this.buffer();
       desiredHeight = Math.min(maxHeight, Math.max(this.tick_I_16(), desiredHeight));
-      this.init_V_cH(new cH(anchorX, anchorY, desiredWidth, desiredHeight, true, false));
+      this.init_V_cH(new OverlayBounds(anchorX, anchorY, desiredWidth, desiredHeight, true, false));
    }
 
    private void open_V_9() {
@@ -1065,7 +1065,7 @@ public class AutismPacketInspectOverlay extends bj {
 
    private int load(String text) {
       return text != null && !text.isEmpty()
-         ? autismclient.gui.f.b.k.init(this.init_Font, text, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), p.task())
+         ? autismclient.gui.f.b.k.init(this.init_Font, text, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.task())
          : 0;
    }
 
@@ -1177,13 +1177,13 @@ public class AutismPacketInspectOverlay extends bj {
       int init(Font textRenderer) {
          int width = this.read
             + autismclient.gui.f.b.k.init(
-               textRenderer, this.load_Str, new autismclient.gui.f.b.CharEncoder().init_Identifier_l(autismclient.gui.f.b.l.read), p.task()
+               textRenderer, this.load_Str, new autismclient.gui.f.b.CharEncoder().init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.task()
             );
          if (this.init_Str != null && !this.init_Str.isEmpty()) {
             width = Math.max(
                width,
                autismclient.gui.f.b.k.init(
-                  textRenderer, this.init_Str, new autismclient.gui.f.b.CharEncoder().init_Identifier_l(autismclient.gui.f.b.l.read), p.task()
+                  textRenderer, this.init_Str, new autismclient.gui.f.b.CharEncoder().init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.task()
                )
             );
          }

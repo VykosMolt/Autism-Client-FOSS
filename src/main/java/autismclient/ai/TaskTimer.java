@@ -175,7 +175,7 @@ final class TaskTimer {
             );
             kit.init(
                autismclient.gui.f.NetHelper.init(row.init() - remove, row.write(), remove, ctrl),
-               autismclient.util.cz.open,
+               autismclient.util.GuiIconAtlas.open,
                false,
                false,
                "Remove attachment",
@@ -608,7 +608,7 @@ final class TaskTimer {
       int approveW = kit.load("Approve") + 12;
       kit.init_V_NetHelper_3(
          autismclient.gui.f.NetHelper.init(x, y, approveW, ctrl),
-         autismclient.util.cz.read,
+         autismclient.util.GuiIconAtlas.read,
          "Approve",
          autismclient.gui.f.b.CachePool.Inner_DataUtil.write,
          this::update
@@ -759,7 +759,7 @@ final class TaskTimer {
          right -= h;
          kit.init(
             autismclient.gui.f.NetHelper.init(right, c.write(), h, h),
-            autismclient.util.cz.close,
+            autismclient.util.GuiIconAtlas.close,
             false,
             false,
             "Stop (" + autismclient.util.ValueSink.init_Str(this.init_cF.init_AiSettings.emergencyKey) + ")",
@@ -770,11 +770,11 @@ final class TaskTimer {
 
       if (this.init_cF.init_Z()) {
          right -= h;
-         kit.init(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.cz.run, false, false, "Pause", this::flush);
+         kit.init(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.GuiIconAtlas.run, false, false, "Pause", this::flush);
          right -= 2;
       } else if (canResume) {
          right -= h;
-         kit.init(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.cz.flush, false, false, "Resume", this::close);
+         kit.init(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.GuiIconAtlas.flush, false, false, "Resume", this::close);
          right -= 2;
       }
 
@@ -786,7 +786,7 @@ final class TaskTimer {
       right -= 2;
       if (this.init_cF.load() && !this.init_cF.init_Z) {
          right -= h;
-         kit.init(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.cz.put, false, false, "Queue as the next objective", this::write);
+         kit.init(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.GuiIconAtlas.put, false, false, "Queue as the next objective", this::write);
          right -= 2;
       }
 

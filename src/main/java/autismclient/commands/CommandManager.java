@@ -41,7 +41,7 @@ import autismclient.commands.b.XCarryCommand;
 import autismclient.modules.aD;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.z;
+import autismclient.util.CommandPrefixHelper;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -300,7 +300,7 @@ public final class CommandManager {
    }
 
    public static String init_Str() {
-      return z.init_Str();
+      return CommandPrefixHelper.init_Str();
    }
 
    public static boolean init_Z(String message) {

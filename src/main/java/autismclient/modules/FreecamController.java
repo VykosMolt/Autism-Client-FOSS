@@ -243,12 +243,12 @@ public final class FreecamController {
 
    private static Component init_Component_D(double speed) {
       return Component.empty()
-         .append(init("[", autismclient.util.p.a(), false))
-         .append(init("AUTISM", autismclient.util.p.init(), true))
-         .append(init("] ", autismclient.util.p.a(), false))
-         .append(init("Freecam Speed", autismclient.util.p.pool(), true))
-         .append(init(": ", autismclient.util.p.a(), false))
-         .append(init(init_Str_D(speed), autismclient.util.p.index(), true));
+         .append(init("[", autismclient.util.UiColorPalette.a(), false))
+         .append(init("AUTISM", autismclient.util.UiColorPalette.init(), true))
+         .append(init("] ", autismclient.util.UiColorPalette.a(), false))
+         .append(init("Freecam Speed", autismclient.util.UiColorPalette.pool(), true))
+         .append(init(": ", autismclient.util.UiColorPalette.a(), false))
+         .append(init(init_Str_D(speed), autismclient.util.UiColorPalette.index(), true));
    }
 
    private static MutableComponent init(String value, int color, boolean bold) {

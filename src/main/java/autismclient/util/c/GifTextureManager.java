@@ -2,7 +2,7 @@ package autismclient.util.c;
 
 import autismclient.AutismClientAddon;
 import autismclient.util.BackgroundTaskExecutor;
-import autismclient.util.aq;
+import autismclient.util.NativeImageMipmapBuilder;
 import autismclient.util.bi;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -439,7 +439,7 @@ public final class GifTextureManager {
                init_V_BooleanSupplier(stale);
                NativeImage top = init_NativeImage_IArr(argbFrames[i], width, height);
                argbFrames[i] = null;
-               chains[i] = mipmap ? aq.init(top, 3072) : new NativeImage[]{top};
+               chains[i] = mipmap ? NativeImageMipmapBuilder.init(top, 3072) : new NativeImage[]{top};
             }
          } catch (Throwable t) {
             init_V_NativeImageArr2(chains);

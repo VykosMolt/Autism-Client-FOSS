@@ -1876,3 +1876,55 @@ Phase6B	class	autismclient/util/t	autismclient/util/RecentCombatTracker	autismcl
 Phase6B	class	autismclient/util/u	autismclient/util/AttackReachHelper	autismclient/util/u	applied	Computes effective AttackRange (incl. piercing momentum) and reach boundary crossings
 Phase6B	class	autismclient/util/x	autismclient/util/CombatTargetScorer	autismclient/util/x	applied	Scores candidate LivingEntity targets by look angle, distance, player bias, and attacker
 Phase6B	class	autismclient/util/y	autismclient/util/CommandProbeIdAllocator	autismclient/util/y	applied	Atomic transaction-ID allocator (>=2_000_000_000) tagging internal command suggestion probes
+Phase6C	class	autismclient/util/F	autismclient/util/OverlayContextMenu	autismclient/util/F	applied	Themed right-click popup context menu widget for overlays
+Phase6C	class	autismclient/util/KeyHolder	autismclient/util/BedDefenderGhostRenderer	autismclient/util/KeyHolder	applied	LevelRenderEvents ghost-block visualizer for BedDefenderModule
+Phase6C	class	autismclient/util/Kw_do	autismclient/util/OverlayWindowSizeStore	autismclient/util/do	applied	Persists and clamps per-overlay WindowSize bounds in AutismConfig
+Phase6C	class	autismclient/util/P	autismclient/util/CachedGpuMeshBuffer	autismclient/util/P	applied	AutoCloseable GpuBuffer/MeshData cache for reusable 3D world geometry
+Phase6C	class	autismclient/util/PkgCls_c	autismclient/util/AutismBufferSource	autismclient/util/c	applied	AutoCloseable StagedVertexBuffer multi-RenderType batching buffer source
+Phase6C	class	autismclient/util/PkgCls_d	autismclient/util/HudBannerSpec	autismclient/util/d	applied	Record specifying HUD capture and payload-study banner layout and text
+Phase6C	class	autismclient/util/V	autismclient/util/CoordinateSpoofer	autismclient/util/V	applied	Coordinate display spoofer (OFFSET/SCALED, optional Y spoof) for F3/HUD
+Phase6C	class	autismclient/util/aF	autismclient/util/LagWatchdogReporter	autismclient/util/aF	applied	Sustained low-FPS lag watchdog and diagnostic census report generator
+Phase6C	class	autismclient/util/aG	autismclient/util/LauncherQuickActions	autismclient/util/aG	applied	Shared launcher/screen quick actions (Send/Delay packets, desync/restore GUI)
+Phase6C	class	autismclient/util/aH	autismclient/util/ContainerScreenToolbar	autismclient/util/aH	applied	Builds container-screen sidebar buttons (Close without packet, De-sync, etc.)
+Phase6C	class	autismclient/util/aO	autismclient/util/MacroStatusHudRenderer	autismclient/util/aO	applied	HUD renderer for active running macro status list
+Phase6C	class	autismclient/util/aQ	autismclient/util/MapTooltipPreview	autismclient/util/aQ	applied	ClientTooltipComponentCallback rendering inline filled-map item hover previews
+Phase6C	class	autismclient/util/aS	autismclient/util/ScreenMacroStopWidget	autismclient/util/aS	applied	Renders and hit-tests clickable Stop macro panel on active screens
+Phase6C	class	autismclient/util/aT	autismclient/util/CustomMainMenuGuard	autismclient/util/aT	applied	Checks whether custom AUTISM main menu is active and not hidden
+Phase6C	class	autismclient/util/ad	autismclient/util/FreecamTargetOutlineRenderer	autismclient/util/ad	applied	LevelRenderEvents renderer drawing Freecam crosshair block/entity outlines
+Phase6C	class	autismclient/util/af	autismclient/util/GuiDesyncHelper	autismclient/util/af	applied	Stores, restores, locally closes, and desyncs open Minecraft container GUIs
+Phase6C	class	autismclient/util/ag	autismclient/util/ScreenTitleCopier	autismclient/util/ag	applied	Copies current Minecraft Screen title to clipboard with notification
+Phase6C	class	autismclient/util/aj	autismclient/util/PvpHoleScanner	autismclient/util/aj	applied	Background world scanner detecting safe bedrock/obsidian PvP holes for HoleEsp
+Phase6C	class	autismclient/util/ak	autismclient/util/OverlaySuiteController	autismclient/util/ak	applied	Instantiates and coordinates the bundled suite of core in-game overlays
+Phase6C	class	autismclient/util/al	autismclient/util/AutismHudManager	autismclient/util/al	applied	Central HUD layout manager and renderer for all built-in and addon HUD elements
+Phase6C	class	autismclient/util/aq	autismclient/util/NativeImageMipmapBuilder	autismclient/util/aq	applied	Generates downsampled NativeImage mipmap pyramid levels for GifTextureManager
+Phase6C	class	autismclient/util/ar	autismclient/util/NativeImageFilePicker	autismclient/util/ar	applied	Native SDL3 file dialog picker for GIF/PNG/JPEG images on client thread
+Phase6C	class	autismclient/util/au	autismclient/util/BlockPreviewRenderer	autismclient/util/au	applied	LevelRenderEvents renderer highlighting block placement previews (Lines/Sides/Both)
+Phase6C	class	autismclient/util/ax	autismclient/util/GuiMovementPassThrough	autismclient/util/ax	applied	Forwards movement keys through non-text GUI screens when GuiMove is enabled
+Phase6C	class	autismclient/util/bj	autismclient/util/DraggableOverlayWindow	autismclient/util/bj	applied	Abstract base class for draggable/resizable/collapsible AUTISM overlay windows
+Phase6C	class	autismclient/util/bk	autismclient/util/OverlayManager	autismclient/util/bk	applied	Singleton manager registering, ordering, hit-testing, and rendering all overlays
+Phase6C	class	autismclient/util/cC	autismclient/util/CustomSplashProvider	autismclient/util/cC	applied	Loads and renders custom main-menu splash lines from texts/splashes.txt
+Phase6C	class	autismclient/util/cF	autismclient/util/OverlayLayoutBase	autismclient/util/cF	applied	Abstract base class providing viewport-clamped OverlayBounds layout support
+Phase6C	class	autismclient/util/cG	autismclient/util/WindowIconManager	autismclient/util/cG	applied	Loads and applies AUTISM window icons (16..256px) via GLFW/SDL/macOS
+Phase6C	class	autismclient/util/cH	autismclient/util/OverlayBounds	autismclient/util/cH	applied	Mutable (x, y, width, height, visible, collapsed) layout bounds for overlays
+Phase6C	class	autismclient/util/cI	autismclient/util/WorldLineRenderer	autismclient/util/cI	applied	Immediate-mode 3D line and AABB wireframe VertexConsumer geometry emitter
+Phase6C	class	autismclient/util/cJ	autismclient/util/BlockSelectionOutlineRenderer	autismclient/util/cJ	applied	Custom block-selection outline and fill LevelRenderEvents renderer
+Phase6C	class	autismclient/util/cR	autismclient/util/EndPortalMemoryCache	autismclient/util/cR	applied	8-entry LRU per-(server,dimension) cache of EndPortal triangulation sessions
+Phase6C	class	autismclient/util/cS	autismclient/util/StrongholdTriangulator	autismclient/util/cS	applied	Eye-of-Ender ray collector and stronghold intersection triangulator
+Phase6C	class	autismclient/util/cT	autismclient/util/StrongholdRingEstimator	autismclient/util/cT	applied	Probabilistic Minecraft stronghold ring-band estimator from Eye-of-Ender rays
+Phase6C	class	autismclient/util/cU	autismclient/util/EndPortalSessionTracker	autismclient/util/cU	applied	Tracks current (world, connection, server, dimension) EndPortal cache binding
+Phase6C	class	autismclient/util/cV	autismclient/util/EndPortalDisplayHelper	autismclient/util/cV	applied	View-distance check, beam AABB projection, and HUD text formatter for EndPortal
+Phase6C	class	autismclient/util/cX	autismclient/util/AutismOverlay	autismclient/util/cX	applied	Core UI interface implemented by all AUTISM floating overlay windows
+Phase6C	class	autismclient/util/cg	autismclient/util/PlacedBlockTrailRenderer	autismclient/util/cg	applied	32-slot fading 320ms ring buffer rendering placed-block trails for Scaffold/Clutch
+Phase6C	class	autismclient/util/co	autismclient/util/SkeletonEspRenderer	autismclient/util/co	applied	LevelRenderEvents 3D player/entity skeleton-ESP bone line renderer
+Phase6C	class	autismclient/util/cp	autismclient/util/DesyncableScreen	autismclient/util/cp	applied	Duck interface on container/book screens for closeWithPacket/closeWithoutPacket/desync
+Phase6C	class	autismclient/util/cs	autismclient/util/ThemedTextHelper	autismclient/util/cs	applied	Styled text-tone (TITLE/LABEL/BODY/MUTED/ACCENT) Component and font helper
+Phase6C	class	autismclient/util/ct	autismclient/util/ThemePaletteManager	autismclient/util/ct	applied	Theme palette, hue-shift color transform state, and 512-entry recolor cache
+Phase6C	class	autismclient/util/cu	autismclient/util/ThemeTextureRecolorer	autismclient/util/cu	applied	Dynamic texture recoloring cache for themed panorama, overlay, and skybox textures
+Phase6C	class	autismclient/util/cx	autismclient/util/OverlayScreenController	autismclient/util/cx	applied	Manages guarded/hidden Screen transitions and modal overlay screen stack
+Phase6C	class	autismclient/util/cz	autismclient/util/GuiIconAtlas	autismclient/util/cz	applied	Registry of textures/gui/icons/*.png Identifier constants and GUI blit helper
+Phase6C	class	autismclient/util/da	autismclient/util/MapNonEmptyCache	autismclient/util/da	applied	Package-private per-tick cache checking if MapItemSavedData has painted pixels
+Phase6C	class	autismclient/util/dl	autismclient/util/SnbtBraceRepairer	autismclient/util/dl	applied	SNBT and structured-brace auto-balancer and formatter
+Phase6C	class	autismclient/util/dn	autismclient/util/PipeDelimitedListUtil	autismclient/util/dn	applied	Splits and joins trimmed pipe-delimited (|) string lists
+Phase6C	class	autismclient/util/k	autismclient/util/ThemedTextInputBox	autismclient/util/k	applied	Custom themed text-input and chat-box widget with recent-chat history
+Phase6C	class	autismclient/util/p	autismclient/util/UiColorPalette	autismclient/util/p	applied	Central UI color palette constants and color blending/brightening helper
+Phase6C	class	autismclient/util/z	autismclient/util/CommandPrefixHelper	autismclient/util/z	applied	Command prefix resolver, sorted module-name cache, and safe toggle dispatcher

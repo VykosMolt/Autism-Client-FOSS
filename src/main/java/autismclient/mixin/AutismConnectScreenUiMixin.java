@@ -4,7 +4,7 @@ import autismclient.gui.d.StreamGate;
 import autismclient.gui.f.b.CachePool;
 import autismclient.modules.AutoReconnectController;
 import autismclient.modules.aD;
-import autismclient.util.ct;
+import autismclient.util.ThemePaletteManager;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ConnectScreen;
@@ -91,7 +91,7 @@ public abstract class AutismConnectScreenUiMixin extends Screen {
       if (aD.init_Z()) {
          graphics.centeredText(font, text, x, y, color);
       } else {
-         int accent = ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.ACCENT) & 16777215;
+         int accent = ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.ACCENT) & 16777215;
          int rowHeight = 12;
          int top = y - STEP_LABELS.length * rowHeight / 2 + 1;
          char spin = SPINNER[(int)(System.currentTimeMillis() / 100L % SPINNER.length)];

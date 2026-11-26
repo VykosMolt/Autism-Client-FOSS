@@ -208,21 +208,21 @@ public final class PacketInspectorEngine {
          return load_bu_JsonUtil_AutismPacketLogger(entry, payloadAnalysis, includePayloadAnalyzer);
       } catch (Throwable t) {
          PacketInspectorEngine.Inner_ConfigStore builder = new PacketInspectorEngine.Inner_ConfigStore(entry.load_Str + " [" + entry.init_Str + "]");
-         builder.init("Meta", p.index());
-         builder.load("Name: " + entry.load_Str, p.task());
+         builder.init("Meta", UiColorPalette.index());
+         builder.load("Name: " + entry.load_Str, UiColorPalette.task());
          builder.load("Direction: " + entry.init_Str, init_I_Str(entry.init_Str));
-         builder.load("Class: " + entry.init_Class.getName(), p.parse());
-         builder.load("Tick: " + entry.init_I, p.parse());
-         builder.load("Time: " + Instant.ofEpochMilli(entry.load_J), p.parse());
+         builder.load("Class: " + entry.init_Class.getName(), UiColorPalette.parse());
+         builder.load("Tick: " + entry.init_I, UiColorPalette.parse());
+         builder.load("Time: " + Instant.ofEpochMilli(entry.load_J), UiColorPalette.parse());
          builder.init_V();
-         builder.init("Inspect Error", p.valid());
-         builder.load("The detailed inspector failed on this packet, so this fallback view was opened instead.", p.valid());
-         builder.load("Reason: " + t.getClass().getSimpleName() + (t.getMessage() == null ? "" : " - " + poll(t.getMessage())), p.valid());
+         builder.init("Inspect Error", UiColorPalette.valid());
+         builder.load("The detailed inspector failed on this packet, so this fallback view was opened instead.", UiColorPalette.valid());
+         builder.load("Reason: " + t.getClass().getSimpleName() + (t.getMessage() == null ? "" : " - " + poll(t.getMessage())), UiColorPalette.valid());
          if (entry.init_Packet != null) {
             builder.init_V();
-            builder.init("Fallback", p.entry());
-            builder.load("Packet Type: " + load_Str_Obj(load_Obj_Obj_Str(entry.init_Packet, "getPacketType")), p.parse());
-            builder.load("toString(): " + poll(String.valueOf(entry.init_Packet)), p.a());
+            builder.init("Fallback", UiColorPalette.entry());
+            builder.load("Packet Type: " + load_Str_Obj(load_Obj_Obj_Str(entry.init_Packet, "getPacketType")), UiColorPalette.parse());
+            builder.load("toString(): " + poll(String.valueOf(entry.init_Packet)), UiColorPalette.a());
          }
 
          return builder.init_bu_JsonUtil();
@@ -245,46 +245,46 @@ public final class PacketInspectorEngine {
       String title = entry.load_Str + " [" + entry.init_Str + "]";
       PacketInspectorEngine.Inner_ConfigStore builder = new PacketInspectorEngine.Inner_ConfigStore(title);
       AutismPayloadSupport.Inner_StreamUtil payloadSnapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
-      builder.init("Meta", p.index());
-      builder.load("Name: " + entry.load_Str, p.task());
+      builder.init("Meta", UiColorPalette.index());
+      builder.load("Name: " + entry.load_Str, UiColorPalette.task());
       builder.load("Direction: " + entry.init_Str, init_I_Str(entry.init_Str));
-      builder.load("Class: " + entry.init_Class.getName(), p.parse());
+      builder.load("Class: " + entry.init_Class.getName(), UiColorPalette.parse());
       if (payloadSnapshot != null) {
-         builder.load("Payload Channel: " + payloadSnapshot.load_Str(), p.value());
-         builder.load("Payload Size: " + payloadSnapshot.init_I() + " bytes", p.scan());
+         builder.load("Payload Channel: " + payloadSnapshot.load_Str(), UiColorPalette.value());
+         builder.load("Payload Size: " + payloadSnapshot.init_I() + " bytes", UiColorPalette.scan());
          PayloadChannelFilterManager.Inner_StreamUtil filter = init_bB_StreamUtil_AutismPayloadSuppo(payloadSnapshot);
          if (filter != null) {
-            builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", p.cache());
+            builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.cache());
          }
 
          String source = read_Str_Str(payloadSnapshot.load_Str());
          if (source != null && !source.isBlank()) {
-            builder.load("Likely Source: " + source, p.parse());
+            builder.load("Likely Source: " + source, UiColorPalette.parse());
          }
       }
 
       Object packetType = load_Obj_Obj_Str(entry.init_Packet, "getPacketType");
       if (packetType != null) {
-         builder.load("Packet Type: " + load_Str_Obj(packetType), p.parse());
+         builder.load("Packet Type: " + load_Str_Obj(packetType), UiColorPalette.parse());
       }
 
-      builder.load("Tick: " + entry.init_I, p.parse());
-      builder.load("Time: " + Instant.ofEpochMilli(entry.load_J), p.parse());
-      builder.load("Inventory: " + entry.init_Z + " | Movement: " + entry.load_Z, p.a());
+      builder.load("Tick: " + entry.init_I, UiColorPalette.parse());
+      builder.load("Time: " + Instant.ofEpochMilli(entry.load_J), UiColorPalette.parse());
+      builder.load("Inventory: " + entry.init_Z + " | Movement: " + entry.load_Z, UiColorPalette.a());
       PacketDetailFormatter.Inner_DataUtil normalAnalysis = PacketDetailFormatter.init_bh_DataUtil_AutismPacketLogger(entry);
       if (entry.init_Packet == null) {
          builder.init_V();
-         builder.init("Reality", p.node());
+         builder.init("Reality", UiColorPalette.node());
          if (payloadSnapshot != null) {
             init_Z_AutismPayloadSuppo_bu_ConfigStore(payloadSnapshot, builder);
-            builder.load("Packet Object: missing; showing preserved payload snapshot.", p.a());
+            builder.load("Packet Object: missing; showing preserved payload snapshot.", UiColorPalette.a());
          } else {
-            builder.load("Packet instance is missing, so only metadata is available.", p.valid());
+            builder.load("Packet instance is missing, so only metadata is available.", UiColorPalette.valid());
          }
 
          if (normalAnalysis.load_Z()) {
             builder.init_V();
-            builder.init("Meaning", p.entry());
+            builder.init("Meaning", UiColorPalette.entry());
             init_V_bu_ConfigStore_List(builder, normalAnalysis.load_List());
          }
 
@@ -292,14 +292,14 @@ public final class PacketInspectorEngine {
             PacketInspectorEngine.Inner_ConfigStore analyzerBuilder = new PacketInspectorEngine.Inner_ConfigStore(title);
             if (init_Z_AutismPayloadSuppo(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
                builder.init_V();
-               builder.init("Analyzer", p.cache());
+               builder.init("Analyzer", UiColorPalette.cache());
                builder.init(analyzerBuilder);
             }
          }
 
          if (normalAnalysis.read_Z()) {
             builder.init_V();
-            builder.init("Wire", p.buffer());
+            builder.init("Wire", UiColorPalette.buffer());
             init_V_bu_ConfigStore_List(builder, normalAnalysis.read_List());
          }
 
@@ -308,25 +308,25 @@ public final class PacketInspectorEngine {
          PacketInspectorEngine.Inner_FileCache summary = PacketInspectorEngine.Inner_FileCache.init_bu_FileCache;
          if (normalAnalysis.init_Z()) {
             builder.init_V();
-            builder.init("Reality", p.node());
+            builder.init("Reality", UiColorPalette.node());
             init_V_bu_ConfigStore_List(builder, normalAnalysis.init_List());
          } else if (payloadSnapshot != null) {
             builder.init_V();
-            builder.init("Reality", p.node());
+            builder.init("Reality", UiColorPalette.node());
             init_Z_AutismPayloadSuppo_bu_ConfigStore(payloadSnapshot, builder);
          } else {
             PacketInspectorEngine.Inner_ConfigStore summaryBuilder = new PacketInspectorEngine.Inner_ConfigStore(title);
             summary = init_bu_FileCache_Packet(entry.init_Packet, entry.load_Str, entry, summaryBuilder);
             if (summary.init_Z()) {
                builder.init_V();
-               builder.init("Reality", p.node());
+               builder.init("Reality", UiColorPalette.node());
                builder.init(summaryBuilder);
             }
          }
 
          if (normalAnalysis.load_Z()) {
             builder.init_V();
-            builder.init("Meaning", p.entry());
+            builder.init("Meaning", UiColorPalette.entry());
             init_V_bu_ConfigStore_List(builder, normalAnalysis.load_List());
          }
 
@@ -334,21 +334,21 @@ public final class PacketInspectorEngine {
             PacketInspectorEngine.Inner_ConfigStore analyzerBuilder = new PacketInspectorEngine.Inner_ConfigStore(title);
             if (init_Z_AutismPayloadSuppo(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
                builder.init_V();
-               builder.init("Analyzer", p.cache());
+               builder.init("Analyzer", UiColorPalette.cache());
                builder.init(analyzerBuilder);
             }
          }
 
          if (normalAnalysis.read_Z()) {
             builder.init_V();
-            builder.init("Wire", p.buffer());
+            builder.init("Wire", UiColorPalette.buffer());
             init_V_bu_ConfigStore_List(builder, normalAnalysis.read_List());
          }
 
          boolean semanticComplete = normalAnalysis.init_Z() ? normalAnalysis.write() : summary.load();
          if (!semanticComplete) {
             builder.init_V();
-            builder.init("Details", p.buffer());
+            builder.init("Details", UiColorPalette.buffer());
             init_V_Obj(entry.init_Packet, builder, new IdentityHashMap<>());
          }
 
@@ -363,25 +363,25 @@ public final class PacketInspectorEngine {
          String title = entry == null ? "Payload Analyzer" : entry.load_Str + " Analyzer";
          PacketInspectorEngine.Inner_ConfigStore builder = new PacketInspectorEngine.Inner_ConfigStore(title);
          AutismPayloadSupport.Inner_StreamUtil snapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
-         builder.init("Analyzer", p.cache());
+         builder.init("Analyzer", UiColorPalette.cache());
          if (snapshot == null) {
-            builder.load("No payload snapshot is available for this packet.", p.valid());
+            builder.load("No payload snapshot is available for this packet.", UiColorPalette.valid());
             return builder.init_bu_JsonUtil();
          }
 
          if (payloadAnalysis == null) {
-            builder.load("Channel: " + snapshot.load_Str(), p.value());
+            builder.load("Channel: " + snapshot.load_Str(), UiColorPalette.value());
             builder.load(
                "Direction: " + snapshot.init_Str() + " | Protocol: " + init_Str_Str_Str(snapshot.update(), "unknown"), init_I_Str(snapshot.init_Str())
             );
-            builder.load("Body Size: " + snapshot.init_BArr().length + " bytes", p.scan());
+            builder.load("Body Size: " + snapshot.init_BArr().length + " bytes", UiColorPalette.scan());
             String source = read_Str_Str(snapshot.load_Str());
             if (source != null && !source.isBlank()) {
-               builder.load("What It Looks Like: " + source, p.scan());
+               builder.load("What It Looks Like: " + source, UiColorPalette.scan());
             }
 
             builder.init_V();
-            builder.load("Decoder Status: waiting for automatic payload analysis.", p.entry());
+            builder.load("Decoder Status: waiting for automatic payload analysis.", UiColorPalette.entry());
             return builder.init_bu_JsonUtil();
          } else {
             init_Z_AutismPayloadSuppo(snapshot, builder, payloadAnalysis);
@@ -389,8 +389,8 @@ public final class PacketInspectorEngine {
          }
       } catch (Throwable t) {
          PacketInspectorEngine.Inner_ConfigStore builder = new PacketInspectorEngine.Inner_ConfigStore("Payload Analyzer");
-         builder.init("Analyzer Error", p.valid());
-         builder.load("Reason: " + t.getClass().getSimpleName() + (t.getMessage() == null ? "" : " - " + poll(t.getMessage())), p.valid());
+         builder.init("Analyzer Error", UiColorPalette.valid());
+         builder.load("Reason: " + t.getClass().getSimpleName() + (t.getMessage() == null ? "" : " - " + poll(t.getMessage())), UiColorPalette.valid());
          return builder.init_bu_JsonUtil();
       }
    }
@@ -398,7 +398,7 @@ public final class PacketInspectorEngine {
    public static PacketInspectorEngine.Inner_SyncManager init_bu_SyncManager_AutismPayloadSuppo(AutismPayloadSupport.Inner_StreamUtil snapshot) {
       String channel = snapshot == null ? "payload" : init_Str_Str_Str(snapshot.load_Str(), "payload");
       return new PacketInspectorEngine.Inner_SyncManager(
-         false, false, 0.02, "Preparing " + channel, List.of(new PacketInspectorEngine.Inner_TaskQueue("Decoder Status: preparing automatic payload analysis", p.parse()))
+         false, false, 0.02, "Preparing " + channel, List.of(new PacketInspectorEngine.Inner_TaskQueue("Decoder Status: preparing automatic payload analysis", UiColorPalette.parse()))
       );
    }
 
@@ -409,7 +409,7 @@ public final class PacketInspectorEngine {
          true,
          1.0,
          "Decoder failed",
-         List.of(new PacketInspectorEngine.Inner_TaskQueue("Decoder Status: failed", p.valid()), new PacketInspectorEngine.Inner_TaskQueue("Reason: " + poll(reason), p.valid()))
+         List.of(new PacketInspectorEngine.Inner_TaskQueue("Decoder Status: failed", UiColorPalette.valid()), new PacketInspectorEngine.Inner_TaskQueue("Reason: " + poll(reason), UiColorPalette.valid()))
       );
    }
 
@@ -418,7 +418,7 @@ public final class PacketInspectorEngine {
    ) {
       if (snapshot == null) {
          PacketInspectorEngine.Inner_SyncManager empty = new PacketInspectorEngine.Inner_SyncManager(
-            true, false, 1.0, "No payload body", List.of(new PacketInspectorEngine.Inner_TaskQueue("No payload snapshot is available.", p.a()))
+            true, false, 1.0, "No payload body", List.of(new PacketInspectorEngine.Inner_TaskQueue("No payload snapshot is available.", UiColorPalette.a()))
          );
          if (progressSink != null) {
             progressSink.accept(empty);
@@ -489,28 +489,28 @@ public final class PacketInspectorEngine {
 
       byte[] raw = snapshot.init_BArr();
       String channel = init_Str_Str_Str(snapshot.load_Str(), "unknown");
-      builder.load("Channel: " + channel, p.value());
+      builder.load("Channel: " + channel, UiColorPalette.value());
       PayloadChannelFilterManager.Inner_StreamUtil filter = init_bB_StreamUtil_AutismPayloadSuppo(snapshot);
       if (filter != null) {
-         builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", p.cache());
+         builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.cache());
       }
 
       String source = read_Str_Str(channel);
       if (source != null && !source.isBlank()) {
-         builder.load("Likely Source: " + source, p.scan());
+         builder.load("Likely Source: " + source, UiColorPalette.scan());
       }
 
       builder.load(
          "Payload Direction: " + snapshot.init_Str() + " | Protocol: " + init_Str_Str_Str(snapshot.update(), "unknown"), init_I_Str(snapshot.init_Str())
       );
       if (snapshot.load_I() >= 0) {
-         builder.load("Payload Packet ID: " + snapshot.load_I(), p.parse());
+         builder.load("Payload Packet ID: " + snapshot.load_I(), UiColorPalette.parse());
       }
 
-      builder.load("Payload Class: " + init_Str_Str_Str(snapshot.write(), "unknown"), p.parse());
-      builder.load("Payload Size: " + raw.length + " bytes", p.scan());
+      builder.load("Payload Class: " + init_Str_Str_Str(snapshot.write(), "unknown"), UiColorPalette.parse());
+      builder.load("Payload Size: " + raw.length + " bytes", UiColorPalette.scan());
       if (snapshot.init_Integer() != null) {
-         builder.load("CommandApi Value: " + snapshot.init_Integer(), p.value());
+         builder.load("CommandApi Value: " + snapshot.init_Integer(), UiColorPalette.value());
       }
 
       PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.init_bJ_NetHelper(raw);
@@ -518,41 +518,41 @@ public final class PacketInspectorEngine {
          List<String> channels = sync(raw, 10);
          if (!channels.isEmpty()) {
             int total = init_I_BArr(raw);
-            builder.load((read_Z_Str(channel) ? "Unregistered" : "Registered") + " Channels: " + total, p.value());
+            builder.load((read_Z_Str(channel) ? "Unregistered" : "Registered") + " Channels: " + total, UiColorPalette.value());
 
             for (String value : channels) {
-               builder.load("  - " + value, p.scan());
+               builder.load("  - " + value, UiColorPalette.scan());
             }
 
             if (total > channels.size()) {
-               builder.load("  ... +" + (total - channels.size()) + " more", p.a());
+               builder.load("  ... +" + (total - channels.size()) + " more", UiColorPalette.a());
             }
          }
       }
 
       if (preview.read() != null && !preview.read().startsWith("<")) {
-         builder.load("Minecraft String: " + open(poll(preview.read())), p.value());
+         builder.load("Minecraft String: " + open(poll(preview.read())), UiColorPalette.value());
       }
 
       if (preview.write() != null && !preview.write().startsWith("<")) {
-         builder.load("Java writeUTF: " + open(poll(preview.write())), p.value());
+         builder.load("Java writeUTF: " + open(poll(preview.write())), UiColorPalette.value());
       }
 
       if (preview.load() != null && !preview.load().isBlank() && !"<binary>".equals(preview.load())) {
-         builder.load("UTF-8 Guess: " + open(poll(init_Str_Str(preview.load()))), p.value());
+         builder.load("UTF-8 Guess: " + open(poll(init_Str_Str(preview.load()))), UiColorPalette.value());
       }
 
       List<String> identifiers = sync(raw, 6);
       if (!identifiers.isEmpty() && !load_Z_Str(channel)) {
-         builder.load("Identifier Tokens: " + identifiers.size(), p.scan());
+         builder.load("Identifier Tokens: " + identifiers.size(), UiColorPalette.scan());
 
          for (String identifier : identifiers) {
-            builder.load("  - " + identifier, p.parse());
+            builder.load("  - " + identifier, UiColorPalette.parse());
          }
       }
 
-      builder.load("Payload Hex: " + preview.init(), p.a());
-      builder.load("Analyzer: automatic payload decoding runs when this packet is inspected.", p.parse());
+      builder.load("Payload Hex: " + preview.init(), UiColorPalette.a());
+      builder.load("Analyzer: automatic payload decoding runs when this packet is inspected.", UiColorPalette.parse());
       return true;
    }
 
@@ -586,18 +586,18 @@ public final class PacketInspectorEngine {
       if (packet instanceof ServerboundPlayerActionPacket playerAction) {
          wrote = true;
          complete = true;
-         builder.load("Action: " + playerAction.getAction(), p.scan());
-         builder.load("Meaning: " + init_Str_ServerboundPlayerA(playerAction.getAction()), p.scan());
-         builder.load("Block Pos: " + init_Str_BlockPos(playerAction.getPos()), p.scan());
-         builder.load("Face: " + playerAction.getDirection(), p.scan());
-         builder.load("Sequence: " + playerAction.getSequence(), p.parse());
+         builder.load("Action: " + playerAction.getAction(), UiColorPalette.scan());
+         builder.load("Meaning: " + init_Str_ServerboundPlayerA(playerAction.getAction()), UiColorPalette.scan());
+         builder.load("Block Pos: " + init_Str_BlockPos(playerAction.getPos()), UiColorPalette.scan());
+         builder.load("Face: " + playerAction.getDirection(), UiColorPalette.scan());
+         builder.load("Sequence: " + playerAction.getSequence(), UiColorPalette.parse());
          String capturedBlockState = entry == null ? null : entry.write;
          if (capturedBlockState != null && !capturedBlockState.isBlank()) {
-            builder.load("Block: " + capturedBlockState, p.value());
+            builder.load("Block: " + capturedBlockState, UiColorPalette.value());
          } else {
             BlockState state = init_BlockState_BlockPos(playerAction.getPos());
             if (state != null) {
-               builder.load("Block: " + init_Str_BlockState(state), p.value());
+               builder.load("Block: " + init_Str_BlockState(state), UiColorPalette.value());
             }
          }
 
@@ -607,7 +607,7 @@ public final class PacketInspectorEngine {
                   || playerAction.getAction() == Action.DROP_ALL_ITEMS
                   || playerAction.getAction() == Action.RELEASE_USE_ITEM
             )) {
-            builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getMainHandItem()), p.value());
+            builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getMainHandItem()), UiColorPalette.value());
          }
       }
 
@@ -615,24 +615,24 @@ public final class PacketInspectorEngine {
          BlockHitResult hit = interactBlock.hitResult();
          wrote = true;
          complete = true;
-         builder.load("Interaction: Use Block (right click targeted block)", p.scan());
-         builder.load("Hand: " + interactBlock.hand(), p.scan());
-         builder.load("Block Pos: " + init_Str_BlockPos(hit.getBlockPos()), p.scan());
-         builder.load("Side: " + hit.getDirection(), p.scan());
-         builder.load("Hit Pos: " + init_Str_Vec3(hit.getLocation()), p.scan());
-         builder.load("Inside Block: " + hit.isInside(), p.scan());
-         builder.load("Sequence: " + interactBlock.sequence(), p.parse());
+         builder.load("Interaction: Use Block (right click targeted block)", UiColorPalette.scan());
+         builder.load("Hand: " + interactBlock.hand(), UiColorPalette.scan());
+         builder.load("Block Pos: " + init_Str_BlockPos(hit.getBlockPos()), UiColorPalette.scan());
+         builder.load("Side: " + hit.getDirection(), UiColorPalette.scan());
+         builder.load("Hit Pos: " + init_Str_Vec3(hit.getLocation()), UiColorPalette.scan());
+         builder.load("Inside Block: " + hit.isInside(), UiColorPalette.scan());
+         builder.load("Sequence: " + interactBlock.sequence(), UiColorPalette.parse());
          if (init_Minecraft.player != null) {
-            builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getItemInHand(interactBlock.hand())), p.value());
+            builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getItemInHand(interactBlock.hand())), UiColorPalette.value());
          }
 
          String capturedBlockState = entry == null ? null : entry.write;
          if (capturedBlockState != null && !capturedBlockState.isBlank()) {
-            builder.load("Block: " + capturedBlockState, p.value());
+            builder.load("Block: " + capturedBlockState, UiColorPalette.value());
          } else {
             BlockState state = init_BlockState_BlockPos(hit.getBlockPos());
             if (state != null) {
-               builder.load("Block: " + init_Str_BlockState(state), p.value());
+               builder.load("Block: " + init_Str_BlockState(state), UiColorPalette.value());
             }
          }
       }
@@ -640,17 +640,17 @@ public final class PacketInspectorEngine {
       if (packet instanceof ServerboundUseItemPacket interactItem) {
          wrote = true;
          complete = true;
-         builder.load("Interaction: Use Item (right click without a targeted block)", p.scan());
-         builder.load("Hand: " + interactItem.hand(), p.scan());
-         builder.load("Sequence: " + interactItem.sequence(), p.parse());
-         builder.load("Yaw: " + interactItem.yRot(), p.parse());
-         builder.load("Pitch: " + interactItem.xRot(), p.parse());
+         builder.load("Interaction: Use Item (right click without a targeted block)", UiColorPalette.scan());
+         builder.load("Hand: " + interactItem.hand(), UiColorPalette.scan());
+         builder.load("Sequence: " + interactItem.sequence(), UiColorPalette.parse());
+         builder.load("Yaw: " + interactItem.yRot(), UiColorPalette.parse());
+         builder.load("Pitch: " + interactItem.xRot(), UiColorPalette.parse());
          if (init_Minecraft.player != null) {
             if (load_Obj_Obj_StrArr(init_Minecraft.player.getInventory(), "getSelectedSlot", "selectedSlot") instanceof Number number) {
-               builder.load("Selected Slot: " + load_Str_I(number.intValue()), p.scan());
+               builder.load("Selected Slot: " + load_Str_I(number.intValue()), UiColorPalette.scan());
             }
 
-            builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getItemInHand(interactItem.hand())), p.value());
+            builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getItemInHand(interactItem.hand())), UiColorPalette.value());
          }
       }
 
@@ -659,21 +659,21 @@ public final class PacketInspectorEngine {
          complete = true;
          int entityId = interactEntity.entityId();
          init_V_bu_ConfigStore(builder, "Entity Id", entityId);
-         builder.load("Player Sneaking: " + interactEntity.usingSecondaryAction(), p.scan());
+         builder.load("Player Sneaking: " + interactEntity.usingSecondaryAction(), UiColorPalette.scan());
          PacketInspectorEngine.Inner_NetHelper capture = init_bu_NetHelper_ServerboundInterac(interactEntity);
          if (capture.init_Str != null) {
-            builder.load("Interaction: " + capture.init_Str, p.scan());
+            builder.load("Interaction: " + capture.init_Str, UiColorPalette.scan());
          }
 
          if (capture.init_InteractionHand != null) {
-            builder.load("Hand: " + capture.init_InteractionHand, p.scan());
+            builder.load("Hand: " + capture.init_InteractionHand, UiColorPalette.scan());
             if (init_Minecraft.player != null) {
-               builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getItemInHand(capture.init_InteractionHand)), p.value());
+               builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getItemInHand(capture.init_InteractionHand)), UiColorPalette.value());
             }
          }
 
          if (capture.init_Vec3 != null) {
-            builder.load("Hit Pos: " + init_Str_Vec3(capture.init_Vec3), p.scan());
+            builder.load("Hit Pos: " + init_Str_Vec3(capture.init_Vec3), UiColorPalette.scan());
          }
       }
 
@@ -681,86 +681,86 @@ public final class PacketInspectorEngine {
          wrote = true;
          complete = true;
          init_V_bu_ConfigStore(builder, "Entity Id", attack.entityId());
-         builder.load("Interaction: Attack", p.scan());
+         builder.load("Interaction: Attack", UiColorPalette.scan());
          if (init_Minecraft.player != null) {
-            builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getMainHandItem()), p.value());
+            builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getMainHandItem()), UiColorPalette.value());
          }
       }
 
       if (packet instanceof ClientboundOpenScreenPacket openScreen) {
          wrote = true;
          complete = true;
-         builder.load("Sync Id: " + openScreen.getContainerId(), p.scan());
-         builder.load("Screen Type: " + load_Str_Obj(openScreen.getType()), p.scan());
-         builder.load("Title: " + init_Str_Obj(openScreen.getTitle()), p.value());
+         builder.load("Sync Id: " + openScreen.getContainerId(), UiColorPalette.scan());
+         builder.load("Screen Type: " + load_Str_Obj(openScreen.getType()), UiColorPalette.scan());
+         builder.load("Title: " + init_Str_Obj(openScreen.getTitle()), UiColorPalette.value());
       }
 
       if (packet instanceof ClientboundContainerSetSlotPacket slotUpdate) {
          wrote = true;
          complete = true;
-         builder.load("Sync Id: " + slotUpdate.getContainerId(), p.scan());
-         builder.load("Revision: " + slotUpdate.getStateId(), p.parse());
-         builder.load("Slot: " + slotUpdate.getSlot(), p.scan());
-         builder.load("Stack: " + init_Str_ItemStack(slotUpdate.getItem()), p.value());
+         builder.load("Sync Id: " + slotUpdate.getContainerId(), UiColorPalette.scan());
+         builder.load("Revision: " + slotUpdate.getStateId(), UiColorPalette.parse());
+         builder.load("Slot: " + slotUpdate.getSlot(), UiColorPalette.scan());
+         builder.load("Stack: " + init_Str_ItemStack(slotUpdate.getItem()), UiColorPalette.value());
       }
 
       if (packet instanceof ClientboundContainerSetContentPacket inventory) {
          wrote = true;
-         builder.load("Sync Id: " + inventory.containerId(), p.scan());
-         builder.load("Revision: " + inventory.stateId(), p.parse());
-         builder.load("Items: " + inventory.items().size() + " slots (" + init_I_List(inventory.items()) + " non-empty)", p.scan());
-         builder.load("Cursor: " + init_Str_ItemStack(inventory.carriedItem()), p.value());
+         builder.load("Sync Id: " + inventory.containerId(), UiColorPalette.scan());
+         builder.load("Revision: " + inventory.stateId(), UiColorPalette.parse());
+         builder.load("Items: " + inventory.items().size() + " slots (" + init_I_List(inventory.items()) + " non-empty)", UiColorPalette.scan());
+         builder.load("Cursor: " + init_Str_ItemStack(inventory.carriedItem()), UiColorPalette.value());
       }
 
       if (packet instanceof ClientboundLevelChunkWithLightPacket chunkData) {
          wrote = true;
-         builder.load("Chunk: " + chunkData.x() + ", " + chunkData.z(), p.scan());
-         builder.load("Chunk Data: " + load_Str_Obj(chunkData.chunkData()), p.parse());
-         builder.load("Light Data: " + load_Str_Obj(chunkData.lightData()), p.parse());
+         builder.load("Chunk: " + chunkData.x() + ", " + chunkData.z(), UiColorPalette.scan());
+         builder.load("Chunk Data: " + load_Str_Obj(chunkData.chunkData()), UiColorPalette.parse());
+         builder.load("Light Data: " + load_Str_Obj(chunkData.lightData()), UiColorPalette.parse());
       }
 
       if (packet instanceof ClientboundEntityPositionSyncPacket positionSync) {
          wrote = true;
          init_V_bu_ConfigStore(builder, "Entity Id", positionSync.id());
-         builder.load("Values: " + load_Str_Obj(Compat263.entityPosSyncValues(positionSync)), p.scan());
-         builder.load("On Ground: " + positionSync.onGround(), p.scan());
+         builder.load("Values: " + load_Str_Obj(Compat263.entityPosSyncValues(positionSync)), UiColorPalette.scan());
+         builder.load("On Ground: " + positionSync.onGround(), UiColorPalette.scan());
       }
 
       if (packet instanceof ClientboundSetEntityDataPacket trackerUpdate) {
          wrote = true;
          init_V_bu_ConfigStore(builder, "Entity Id", trackerUpdate.id());
          List<?> trackedValues = trackerUpdate.packedItems();
-         builder.load("Tracked Values: " + (trackedValues == null ? 0 : trackedValues.size()), p.scan());
+         builder.load("Tracked Values: " + (trackedValues == null ? 0 : trackedValues.size()), UiColorPalette.scan());
       }
 
       if (packet instanceof ClientboundAddEntityPacket addEntity) {
          wrote = true;
          complete = true;
          init_V_bu_ConfigStore(builder, "Entity Id", addEntity.getId());
-         builder.load("Entity Type: " + init_Str_EntityType(addEntity.getType()), p.value());
-         builder.load("Uuid: " + addEntity.getUUID(), p.parse());
-         builder.load("Pos: " + init_Str_Vec3(new Vec3(addEntity.getX(), addEntity.getY(), addEntity.getZ())), p.scan());
-         builder.load("Movement: " + init_Str_Vec3(addEntity.getMovement()), p.scan());
-         builder.load("Rot: yaw=" + addEntity.getYRot() + ", pitch=" + addEntity.getXRot() + ", head=" + addEntity.getYHeadRot(), p.scan());
-         builder.load("Data: " + addEntity.getData(), p.parse());
+         builder.load("Entity Type: " + init_Str_EntityType(addEntity.getType()), UiColorPalette.value());
+         builder.load("Uuid: " + addEntity.getUUID(), UiColorPalette.parse());
+         builder.load("Pos: " + init_Str_Vec3(new Vec3(addEntity.getX(), addEntity.getY(), addEntity.getZ())), UiColorPalette.scan());
+         builder.load("Movement: " + init_Str_Vec3(addEntity.getMovement()), UiColorPalette.scan());
+         builder.load("Rot: yaw=" + addEntity.getYRot() + ", pitch=" + addEntity.getXRot() + ", head=" + addEntity.getYHeadRot(), UiColorPalette.scan());
+         builder.load("Data: " + addEntity.getData(), UiColorPalette.parse());
       }
 
       if (packet instanceof ClientboundSoundPacket soundPacket) {
          wrote = true;
          complete = true;
-         builder.load("Sound: " + init_Str_Holder(soundPacket.getSound()), p.value());
-         builder.load("Category: " + soundPacket.getSource(), p.scan());
-         builder.load("Pos: " + init_Str_Vec3(new Vec3(soundPacket.getX(), soundPacket.getY(), soundPacket.getZ())), p.scan());
-         builder.load("Volume: " + soundPacket.getVolume(), p.parse());
-         builder.load("Pitch: " + soundPacket.getPitch(), p.parse());
-         builder.load("Seed: " + soundPacket.getSeed(), p.a());
+         builder.load("Sound: " + init_Str_Holder(soundPacket.getSound()), UiColorPalette.value());
+         builder.load("Category: " + soundPacket.getSource(), UiColorPalette.scan());
+         builder.load("Pos: " + init_Str_Vec3(new Vec3(soundPacket.getX(), soundPacket.getY(), soundPacket.getZ())), UiColorPalette.scan());
+         builder.load("Volume: " + soundPacket.getVolume(), UiColorPalette.parse());
+         builder.load("Pitch: " + soundPacket.getPitch(), UiColorPalette.parse());
+         builder.load("Seed: " + soundPacket.getSeed(), UiColorPalette.a());
       }
 
       if (packet instanceof ClientboundGameEventPacket gameState) {
          wrote = true;
          complete = true;
-         builder.load("Reason: " + load_Str_Obj(gameState.getEvent()), p.scan());
-         builder.load("Value: " + gameState.getParam(), p.scan());
+         builder.load("Reason: " + load_Str_Obj(gameState.getEvent()), UiColorPalette.scan());
+         builder.load("Value: " + gameState.getParam(), UiColorPalette.scan());
       }
 
       PacketInspectorEngine.Inner_FileCache broadKnown = init_bu_FileCache_Packet_bu_ConfigStore(packet, builder);
@@ -776,32 +776,32 @@ public final class PacketInspectorEngine {
       AutismPayloadSupport.Inner_StreamUtil payloadSnapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
       if (payloadSnapshot != null) {
          wrote = true;
-         builder.load("Channel: " + payloadSnapshot.load_Str(), p.scan());
+         builder.load("Channel: " + payloadSnapshot.load_Str(), UiColorPalette.scan());
          if (payloadSnapshot.update() != null && !payloadSnapshot.update().isBlank()) {
-            builder.load("Payload Protocol: " + payloadSnapshot.update(), p.parse());
+            builder.load("Payload Protocol: " + payloadSnapshot.update(), UiColorPalette.parse());
          }
 
-         builder.load("Payload Class: " + payloadSnapshot.write(), p.parse());
-         builder.load("Payload Size: " + payloadSnapshot.init_I() + " bytes", p.scan());
+         builder.load("Payload Class: " + payloadSnapshot.write(), UiColorPalette.parse());
+         builder.load("Payload Size: " + payloadSnapshot.init_I() + " bytes", UiColorPalette.scan());
          if (payloadSnapshot.init_Integer() != null) {
-            builder.load("CommandApi Value: " + payloadSnapshot.init_Integer(), p.value());
+            builder.load("CommandApi Value: " + payloadSnapshot.init_Integer(), UiColorPalette.value());
          }
 
          PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.init_bJ_NetHelper(payloadSnapshot.init_BArr());
          if (preview.read() != null && !preview.read().startsWith("<")) {
-            builder.load("Minecraft String: " + preview.read(), p.value());
+            builder.load("Minecraft String: " + preview.read(), UiColorPalette.value());
          }
 
          if (preview.write() != null && !preview.write().startsWith("<")) {
-            builder.load("Java writeUTF: " + preview.write(), p.value());
+            builder.load("Java writeUTF: " + preview.write(), UiColorPalette.value());
          }
 
          if (preview.load() != null && !preview.load().isBlank() && !"<binary>".equals(preview.load())) {
-            builder.load("UTF-8 Guess: " + preview.load(), p.value());
+            builder.load("UTF-8 Guess: " + preview.load(), UiColorPalette.value());
          }
 
-         builder.load("Payload Hex: " + preview.init(), p.a());
-         builder.load("Payload Fields: raw bytes preserved; use Edit Payload for typed builder.", p.value());
+         builder.load("Payload Hex: " + preview.init(), UiColorPalette.a());
+         builder.load("Payload Fields: raw bytes preserved; use Edit Payload for typed builder.", UiColorPalette.value());
          complete = false;
       }
 
@@ -837,21 +837,21 @@ public final class PacketInspectorEngine {
       boolean completeKnownSchema = false;
       String bestInterpretation = "";
       init_V_bu_ConfigStore(builder, progressSink, 0.06, "Reading payload metadata", false, false);
-      builder.load("Channel: " + snapshot.load_Str(), p.value());
+      builder.load("Channel: " + snapshot.load_Str(), UiColorPalette.value());
       builder.load("Direction: " + snapshot.init_Str() + " | Protocol: " + init_Str_Str_Str(snapshot.update(), "unknown"), init_I_Str(snapshot.init_Str()));
-      builder.load("Body Size: " + raw.length + " bytes", p.scan());
+      builder.load("Body Size: " + raw.length + " bytes", UiColorPalette.scan());
       PayloadChannelFilterManager.Inner_StreamUtil filter = init_bB_StreamUtil_AutismPayloadSuppo(snapshot);
       if (filter != null) {
-         builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", p.cache());
+         builder.load("Matched Filter: " + filter.load() + " (" + filter.read() + ")", UiColorPalette.cache());
       }
 
       String source = read_Str_Str(snapshot.load_Str());
       if (source != null && !source.isBlank()) {
-         builder.load("What It Looks Like: " + source, p.scan());
+         builder.load("What It Looks Like: " + source, UiColorPalette.scan());
       }
 
       if (snapshot.init_Integer() != null) {
-         builder.load("CommandApi Int: " + snapshot.init_Integer(), p.value());
+         builder.load("CommandApi Int: " + snapshot.init_Integer(), UiColorPalette.value());
          decodedAnything = true;
       }
 
@@ -891,7 +891,7 @@ public final class PacketInspectorEngine {
          } else {
             JsonElement embeddedJson = init_JsonElement_BArr(raw);
             if (embeddedJson != null) {
-               builder.load("Decoded As: embedded JSON", p.value());
+               builder.load("Decoded As: embedded JSON", UiColorPalette.value());
                init_V_JsonElement_bu_ConfigStore(embeddedJson, builder);
                decodedStrongly = true;
                decodedAnything = true;
@@ -905,8 +905,8 @@ public final class PacketInspectorEngine {
       String minecraftString = completeKnownSchema ? null : AutismPayloadSupport.read(raw);
       if (!completeKnownSchema) {
          if (minecraftString != null && !minecraftString.isBlank()) {
-            builder.load("Decoded As: Minecraft String", p.value());
-            builder.load("Value: " + open(poll(minecraftString)), p.scan());
+            builder.load("Decoded As: Minecraft String", UiColorPalette.value());
+            builder.load("Value: " + open(poll(minecraftString)), UiColorPalette.scan());
             decodedStrongly = true;
             decodedAnything = true;
             textualPayload = true;
@@ -917,10 +917,10 @@ public final class PacketInspectorEngine {
 
          List<String> minecraftStrings = load_List_BArr_I(raw, 12);
          if (minecraftStrings.size() > 1 || minecraftStrings.size() == 1 && !Objects.equals(minecraftStrings.get(0), minecraftString)) {
-            builder.load("Minecraft String Sequence: " + minecraftStrings.size() + " value" + init_Str_I(minecraftStrings.size()), p.value());
+            builder.load("Minecraft String Sequence: " + minecraftStrings.size() + " value" + init_Str_I(minecraftStrings.size()), UiColorPalette.value());
 
             for (String value : minecraftStrings) {
-               builder.load("  - " + open(poll(value)), p.scan());
+               builder.load("  - " + open(poll(value)), UiColorPalette.scan());
             }
 
             decodedStrongly = true;
@@ -933,8 +933,8 @@ public final class PacketInspectorEngine {
 
          String javaUtf = AutismPayloadSupport.update(raw);
          if (javaUtf != null && !javaUtf.isBlank()) {
-            builder.load("Decoded As: Java writeUTF", p.value());
-            builder.load("Value: " + open(poll(javaUtf)), p.scan());
+            builder.load("Decoded As: Java writeUTF", UiColorPalette.value());
+            builder.load("Value: " + open(poll(javaUtf)), UiColorPalette.scan());
             decodedStrongly = true;
             decodedAnything = true;
             textualPayload = true;
@@ -945,10 +945,10 @@ public final class PacketInspectorEngine {
 
          List<String> javaUtfStrings = read_List_BArr_I(raw, 12);
          if (javaUtfStrings.size() > 1 || javaUtfStrings.size() == 1 && !Objects.equals(javaUtfStrings.get(0), javaUtf)) {
-            builder.load("Java writeUTF Sequence: " + javaUtfStrings.size() + " value" + init_Str_I(javaUtfStrings.size()), p.value());
+            builder.load("Java writeUTF Sequence: " + javaUtfStrings.size() + " value" + init_Str_I(javaUtfStrings.size()), UiColorPalette.value());
 
             for (String value : javaUtfStrings) {
-               builder.load("  - " + open(poll(value)), p.scan());
+               builder.load("  - " + open(poll(value)), UiColorPalette.scan());
             }
 
             decodedStrongly = true;
@@ -969,7 +969,7 @@ public final class PacketInspectorEngine {
 
          String utf8 = AutismPayloadSupport.write(raw);
          if (utf8 != null && !utf8.isBlank() && !Objects.equals(utf8, minecraftString) && !Objects.equals(utf8, javaUtf)) {
-            builder.load("Readable UTF-8: " + open(poll(init_Str_Str(utf8))), p.value());
+            builder.load("Readable UTF-8: " + open(poll(init_Str_Str(utf8))), UiColorPalette.value());
             decodedAnything = true;
             textualPayload = true;
             if (bestInterpretation.isBlank()) {
@@ -990,10 +990,10 @@ public final class PacketInspectorEngine {
 
          List<String> identifiers = sync(raw, 16);
          if (!identifiers.isEmpty() && !load_Z_Str(snapshot.load_Str())) {
-            builder.load("Identifier Tokens: " + identifiers.size(), p.scan());
+            builder.load("Identifier Tokens: " + identifiers.size(), UiColorPalette.scan());
 
             for (String identifier : identifiers) {
-               builder.load("  - " + identifier, p.parse());
+               builder.load("  - " + identifier, UiColorPalette.parse());
             }
 
             decodedAnything = true;
@@ -1005,10 +1005,10 @@ public final class PacketInspectorEngine {
 
          List<String> strings = flush(raw, 8);
          if (!strings.isEmpty()) {
-            builder.load("Readable Fragments:", p.scan());
+            builder.load("Readable Fragments:", UiColorPalette.scan());
 
             for (String string : strings) {
-               builder.load("  - " + open(poll(string)), p.parse());
+               builder.load("  - " + open(poll(string)), UiColorPalette.parse());
             }
 
             decodedAnything = true;
@@ -1041,20 +1041,20 @@ public final class PacketInspectorEngine {
       }
 
       if (raw.length == 0) {
-         builder.load("Body is empty.", p.a());
+         builder.load("Body is empty.", UiColorPalette.a());
       } else if (!bestInterpretation.isBlank()) {
-         builder.load("Best Interpretation: " + bestInterpretation, !completeKnownSchema && !decodedStrongly ? p.scan() : p.value());
+         builder.load("Best Interpretation: " + bestInterpretation, !completeKnownSchema && !decodedStrongly ? UiColorPalette.scan() : UiColorPalette.value());
       }
 
       if (raw.length != 0) {
          if (completeKnownSchema) {
-            builder.load("Confidence: complete known-schema decode. Payload body is accounted for.", p.value());
+            builder.load("Confidence: complete known-schema decode. Payload body is accounted for.", UiColorPalette.value());
          } else if (decodedStrongly) {
-            builder.load("Confidence: high. A full structured/text decoder matched this payload.", p.value());
+            builder.load("Confidence: high. A full structured/text decoder matched this payload.", UiColorPalette.value());
          } else if (!decodedAnything) {
-            builder.load("Binary Payload: no safe schema/text decoder matched. Exact bytes are preserved.", p.a());
+            builder.load("Binary Payload: no safe schema/text decoder matched. Exact bytes are preserved.", UiColorPalette.a());
          } else if (!decodedStrongly) {
-            builder.load("Confidence: partial. Analyzer found readable hints, but no complete schema matched.", p.a());
+            builder.load("Confidence: partial. Analyzer found readable hints, but no complete schema matched.", UiColorPalette.a());
          }
       }
 
@@ -1095,8 +1095,8 @@ public final class PacketInspectorEngine {
          }
 
          if (brand != null && !brand.isBlank()) {
-            builder.load("Decoded As: Brand payload (" + mode + ")", p.value());
-            builder.load("Brand: " + open(poll(init_Str_Str(brand))), p.scan());
+            builder.load("Decoded As: Brand payload (" + mode + ")", UiColorPalette.value());
+            builder.load("Brand: " + open(poll(init_Str_Str(brand))), UiColorPalette.scan());
             return PacketInspectorEngine.Inner_BufferHelper.load_bu_BufferHelper;
          } else {
             return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
@@ -1105,7 +1105,7 @@ public final class PacketInspectorEngine {
          if ("vv:server_details".equals(channel)) {
             JsonElement json = load_JsonElement_BArr(raw);
             if (json != null) {
-               builder.load("Decoded As: ViaVersion server details JSON", p.value());
+               builder.load("Decoded As: ViaVersion server details JSON", UiColorPalette.value());
                init_V_JsonElement_bu_ConfigStore(json, builder);
                return PacketInspectorEngine.Inner_BufferHelper.load_bu_BufferHelper;
             }
@@ -1119,10 +1119,10 @@ public final class PacketInspectorEngine {
                }
 
                if (!values.isEmpty()) {
-                  builder.load("Decoded As: Fabric readable payload fields", p.value());
+                  builder.load("Decoded As: Fabric readable payload fields", UiColorPalette.value());
 
                   for (String value : values) {
-                     builder.load("  - " + open(poll(init_Str_Str(value))), p.scan());
+                     builder.load("  - " + open(poll(init_Str_Str(value))), UiColorPalette.scan());
                   }
 
                   return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, false);
@@ -1130,8 +1130,8 @@ public final class PacketInspectorEngine {
 
                String utf8 = AutismPayloadSupport.write(raw);
                if (utf8 != null && !utf8.isBlank()) {
-                  builder.load("Decoded As: Fabric readable text payload", p.value());
-                  builder.load("Text: " + open(poll(init_Str_Str(utf8))), p.scan());
+                  builder.load("Decoded As: Fabric readable text payload", UiColorPalette.value());
+                  builder.load("Text: " + open(poll(init_Str_Str(utf8))), UiColorPalette.scan());
                   return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, false);
                }
             }
@@ -1139,8 +1139,8 @@ public final class PacketInspectorEngine {
             if (channel.startsWith("worldedit:")) {
                String utf8 = AutismPayloadSupport.write(raw);
                if (utf8 != null && !utf8.isBlank()) {
-                  builder.load("Decoded As: WorldEdit/CUI text payload", p.value());
-                  builder.load("Message: " + open(poll(init_Str_Str(utf8))), p.scan());
+                  builder.load("Decoded As: WorldEdit/CUI text payload", UiColorPalette.value());
+                  builder.load("Message: " + open(poll(init_Str_Str(utf8))), UiColorPalette.scan());
                   return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, false);
                }
             }
@@ -1163,19 +1163,19 @@ public final class PacketInspectorEngine {
       }
 
       if (subchannel != null && !subchannel.isBlank()) {
-         builder.load("Decoded As: BungeeCord/DataOutput plugin message", p.value());
-         builder.load("Subchannel: " + subchannel, p.scan());
+         builder.load("Decoded As: BungeeCord/DataOutput plugin message", UiColorPalette.value());
+         builder.load("Subchannel: " + subchannel, UiColorPalette.scan());
          String normalized = subchannel.toLowerCase(Locale.ROOT);
          boolean known = true;
 
          try {
             switch (normalized) {
                case "connect":
-                  builder.load("Target Server: " + reader.init_Str(), p.scan());
+                  builder.load("Target Server: " + reader.init_Str(), UiColorPalette.scan());
                   break;
                case "connectother":
-                  builder.load("Player: " + reader.init_Str(), p.scan());
-                  builder.load("Target Server: " + reader.init_Str(), p.scan());
+                  builder.load("Player: " + reader.init_Str(), UiColorPalette.scan());
+                  builder.load("Target Server: " + reader.init_Str(), UiColorPalette.scan());
                case "ip":
                case "getserver":
                case "getservers":
@@ -1186,26 +1186,26 @@ public final class PacketInspectorEngine {
                case "playerlist":
                case "uuidother":
                case "serverip":
-                  builder.load("Argument: " + reader.init_Str(), p.scan());
+                  builder.load("Argument: " + reader.init_Str(), UiColorPalette.scan());
                   break;
                case "message":
                case "messageraw":
                case "kickplayer":
-                  builder.load("Player: " + reader.init_Str(), p.scan());
-                  builder.load("Message: " + open(poll(reader.init_Str())), p.scan());
+                  builder.load("Player: " + reader.init_Str(), UiColorPalette.scan());
+                  builder.load("Message: " + open(poll(reader.init_Str())), UiColorPalette.scan());
                   break;
                case "forward": {
-                  builder.load("Target Server: " + reader.init_Str(), p.scan());
+                  builder.load("Target Server: " + reader.init_Str(), UiColorPalette.scan());
                   String nestedChannel = reader.init_Str();
-                  builder.load("Nested Channel: " + nestedChannel, p.value());
+                  builder.load("Nested Channel: " + nestedChannel, UiColorPalette.value());
                   byte[] nested = reader.load_BArr();
                   init_bu_BufferHelper_Str("Nested Forward Payload", nestedChannel, nested, builder);
                   break;
                }
                case "forwardtoplayer": {
-                  builder.load("Target Player: " + reader.init_Str(), p.scan());
+                  builder.load("Target Player: " + reader.init_Str(), UiColorPalette.scan());
                   String nestedChannel = reader.init_Str();
-                  builder.load("Nested Channel: " + nestedChannel, p.value());
+                  builder.load("Nested Channel: " + nestedChannel, UiColorPalette.value());
                   byte[] nested = reader.load_BArr();
                   init_bu_BufferHelper_Str("Nested Forward Payload", nestedChannel, nested, builder);
                   break;
@@ -1232,20 +1232,20 @@ public final class PacketInspectorEngine {
                   }
 
                   if (!values.isEmpty()) {
-                     builder.load("Additional UTF Fields: " + values.size(), p.scan());
+                     builder.load("Additional UTF Fields: " + values.size(), UiColorPalette.scan());
 
                      for (String value : values) {
-                        builder.load("  - " + open(poll(value)), p.parse());
+                        builder.load("  - " + open(poll(value)), UiColorPalette.parse());
                      }
                   }
             }
          } catch (IOException ex) {
-            builder.load("BungeeCord Parse Stopped: " + poll(ex.getMessage()), p.entry());
+            builder.load("BungeeCord Parse Stopped: " + poll(ex.getMessage()), UiColorPalette.entry());
             return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, false);
          }
 
          if (reader.load_I() > 0) {
-            builder.load("Remaining Bytes: " + reader.load_I() + "B " + AutismPayloadSupport.init_Str(reader.init_BArr(), 48), p.a());
+            builder.load("Remaining Bytes: " + reader.load_I() + "B " + AutismPayloadSupport.init_Str(reader.init_BArr(), 48), UiColorPalette.a());
          }
 
          return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, known && reader.load_I() == 0);
@@ -1263,12 +1263,12 @@ public final class PacketInspectorEngine {
       } else {
          byte[] decoded = init_BArr_BArr_bu_CachePool(raw, kind);
          if (decoded != null && decoded.length != 0) {
-            builder.load("Decoded As: " + kind.init() + " compressed payload", p.value());
-            builder.load("Uncompressed Size: " + decoded.length + " bytes", p.scan());
+            builder.load("Decoded As: " + kind.init() + " compressed payload", UiColorPalette.value());
+            builder.load("Uncompressed Size: " + decoded.length + " bytes", UiColorPalette.scan());
             PacketInspectorEngine.Inner_BufferHelper nested = init_bu_BufferHelper_Str("Uncompressed Payload", snapshot == null ? "" : snapshot.load_Str(), decoded, builder);
             return nested.init_Z() ? new PacketInspectorEngine.Inner_BufferHelper(true, true, nested.read(), nested.write()) : new PacketInspectorEngine.Inner_BufferHelper(true, true, false, false);
          } else {
-            builder.load("Compression Decode: " + kind.init() + " header found, but decompression failed.", p.entry());
+            builder.load("Compression Decode: " + kind.init() + " header found, but decompression failed.", UiColorPalette.entry());
             return new PacketInspectorEngine.Inner_BufferHelper(true, false, false, false);
          }
       }
@@ -1279,7 +1279,7 @@ public final class PacketInspectorEngine {
          bytes = new byte[0];
       }
 
-      builder.load(title + ": " + bytes.length + " bytes", p.scan());
+      builder.load(title + ": " + bytes.length + " bytes", UiColorPalette.scan());
       if (bytes.length == 0) {
          return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
       }
@@ -1290,7 +1290,7 @@ public final class PacketInspectorEngine {
       boolean complete = false;
       JsonElement json = load_JsonElement_BArr(bytes);
       if (json != null) {
-         builder.load("  Nested Decoded As: JSON", p.value());
+         builder.load("  Nested Decoded As: JSON", UiColorPalette.value());
          init_V_JsonElement_bu_ConfigStore(json, builder);
          return PacketInspectorEngine.Inner_BufferHelper.load_bu_BufferHelper;
       }
@@ -1307,7 +1307,7 @@ public final class PacketInspectorEngine {
 
       String mcString = AutismPayloadSupport.read(bytes);
       if (mcString != null && !mcString.isBlank()) {
-         builder.load("  Nested Minecraft String: " + open(poll(mcString)), p.value());
+         builder.load("  Nested Minecraft String: " + open(poll(mcString)), UiColorPalette.value());
          anything = true;
          strong = true;
          textual = true;
@@ -1316,10 +1316,10 @@ public final class PacketInspectorEngine {
 
       List<String> javaUtf = read_List_BArr_I(bytes, 8);
       if (!javaUtf.isEmpty()) {
-         builder.load("  Nested Java UTF Fields: " + javaUtf.size(), p.value());
+         builder.load("  Nested Java UTF Fields: " + javaUtf.size(), UiColorPalette.value());
 
          for (String value : javaUtf) {
-            builder.load("    - " + open(poll(value)), p.parse());
+            builder.load("    - " + open(poll(value)), UiColorPalette.parse());
          }
 
          anything = true;
@@ -1330,10 +1330,10 @@ public final class PacketInspectorEngine {
 
       List<String> ids = sync(bytes, 8);
       if (!ids.isEmpty()) {
-         builder.load("  Nested Identifiers: " + ids.size(), p.scan());
+         builder.load("  Nested Identifiers: " + ids.size(), UiColorPalette.scan());
 
          for (String id : ids) {
-            builder.load("    - " + id, p.parse());
+            builder.load("    - " + id, UiColorPalette.parse());
          }
 
          anything = true;
@@ -1343,11 +1343,11 @@ public final class PacketInspectorEngine {
       if (!anything) {
          String utf8 = AutismPayloadSupport.write(bytes);
          if (utf8 != null && !utf8.isBlank()) {
-            builder.load("  Nested UTF-8: " + open(poll(init_Str_Str(utf8))), p.scan());
+            builder.load("  Nested UTF-8: " + open(poll(init_Str_Str(utf8))), UiColorPalette.scan());
             anything = true;
             textual = true;
          } else {
-            builder.load("  Nested Hex: " + AutismPayloadSupport.init_Str(bytes, 64), p.a());
+            builder.load("  Nested Hex: " + AutismPayloadSupport.init_Str(bytes, 64), UiColorPalette.a());
          }
       }
 
@@ -1361,10 +1361,10 @@ public final class PacketInspectorEngine {
             return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
          }
 
-         builder.load("Minecraft ByteBuf String Fields: " + fields.size(), p.scan());
+         builder.load("Minecraft ByteBuf String Fields: " + fields.size(), UiColorPalette.scan());
 
          for (PacketInspectorEngine.Inner_DataUtil field : fields) {
-            builder.load("  @" + field.init_I() + " len=" + field.load() + ": " + open(poll(field.init_Str())), p.parse());
+            builder.load("  @" + field.init_I() + " len=" + field.load() + ": " + open(poll(field.init_Str())), UiColorPalette.parse());
          }
 
          return new PacketInspectorEngine.Inner_BufferHelper(true, false, true, false);
@@ -1408,7 +1408,7 @@ public final class PacketInspectorEngine {
       if (raw != null && raw.length >= 3) {
          CompoundTag compressed = init_CompoundTag_BArr(raw);
          if (compressed != null) {
-            builder.load(label + ": compressed NBT compound", p.value());
+            builder.load(label + ": compressed NBT compound", UiColorPalette.value());
             init_V_CompoundTag(compressed, builder, "  ");
             return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, true);
          } else {
@@ -1434,17 +1434,17 @@ public final class PacketInspectorEngine {
 
    private static void init_V_CompoundTag(CompoundTag tag, PacketInspectorEngine.Inner_ConfigStore builder, String indent) {
       if (tag != null) {
-         builder.load(indent + "Keys: " + tag.size(), p.scan());
+         builder.load(indent + "Keys: " + tag.size(), UiColorPalette.scan());
          int shown = 0;
 
          for (String key : tag.keySet()) {
             if (shown >= 16) {
-               builder.load(indent + "... +" + (tag.size() - shown) + " more", p.a());
+               builder.load(indent + "... +" + (tag.size() - shown) + " more", UiColorPalette.a());
                break;
             }
 
             Tag value = tag.get(key);
-            builder.load(indent + key + ": " + init_Str_Tag(value), p.parse());
+            builder.load(indent + key + ": " + init_Str_Tag(value), UiColorPalette.parse());
             shown++;
          }
       }
@@ -1464,10 +1464,10 @@ public final class PacketInspectorEngine {
          boolean wrote = false;
          List<String> uuids = init_List_Pattern(flush_Pattern, text, 8);
          if (!uuids.isEmpty()) {
-            builder.load("UUID Tokens: " + uuids.size(), p.scan());
+            builder.load("UUID Tokens: " + uuids.size(), UiColorPalette.scan());
 
             for (String uuid : uuids) {
-               builder.load("  - " + uuid.toLowerCase(Locale.ROOT), p.parse());
+               builder.load("  - " + uuid.toLowerCase(Locale.ROOT), UiColorPalette.parse());
             }
 
             wrote = true;
@@ -1475,10 +1475,10 @@ public final class PacketInspectorEngine {
 
          List<String> hosts = init_List_Pattern(close_Pattern, text, 12);
          if (!hosts.isEmpty()) {
-            builder.load("Host/IP Tokens: " + hosts.size(), p.scan());
+            builder.load("Host/IP Tokens: " + hosts.size(), UiColorPalette.scan());
 
             for (String host : hosts) {
-               builder.load("  - " + host, p.parse());
+               builder.load("  - " + host, UiColorPalette.parse());
             }
 
             wrote = true;
@@ -1504,7 +1504,7 @@ public final class PacketInspectorEngine {
             if (init_Z_BArr(decoded)) {
                PacketInspectorEngine.Inner_BufferHelper outcome = init_bu_BufferHelper_BArr(decoded);
                if (outcome.init_Z()) {
-                  builder.load("Embedded Base64 Payload @" + base64.start() + ": " + decoded.length + " bytes", p.value());
+                  builder.load("Embedded Base64 Payload @" + base64.start() + ": " + decoded.length + " bytes", UiColorPalette.value());
                   PacketInspectorEngine.Inner_BufferHelper nested = init_bu_BufferHelper_Str("  Base64 decoded", "", decoded, builder);
                   anything = true;
                   strong |= nested.load_Z() || outcome.load_Z();
@@ -1523,7 +1523,7 @@ public final class PacketInspectorEngine {
             if (init_Z_BArr(decoded)) {
                PacketInspectorEngine.Inner_BufferHelper outcome = init_bu_BufferHelper_BArr(decoded);
                if (outcome.init_Z()) {
-                  builder.load("Embedded Hex Payload @" + hex.start() + ": " + decoded.length + " bytes", p.value());
+                  builder.load("Embedded Hex Payload @" + hex.start() + ": " + decoded.length + " bytes", UiColorPalette.value());
                   PacketInspectorEngine.Inner_BufferHelper nested = init_bu_BufferHelper_Str("  Hex decoded", "", decoded, builder);
                   anything = true;
                   strong |= nested.load_Z() || outcome.load_Z();
@@ -1558,7 +1558,7 @@ public final class PacketInspectorEngine {
                      byte[] slice = Arrays.copyOfRange(raw, start, start + length);
                      PacketInspectorEngine.Inner_BufferHelper outcome = init_bu_BufferHelper_BArr(slice);
                      if (outcome.init_Z()) {
-                        builder.load("Nested Candidate: VarInt length @" + offset + " -> " + length + " bytes", p.scan());
+                        builder.load("Nested Candidate: VarInt length @" + offset + " -> " + length + " bytes", UiColorPalette.scan());
                         PacketInspectorEngine.Inner_BufferHelper nested = init_bu_BufferHelper_Str("  Candidate Payload", "", slice, builder);
                         anything = true;
                         strong |= nested.load_Z() || outcome.load_Z();
@@ -1577,7 +1577,7 @@ public final class PacketInspectorEngine {
                   byte[] slice = Arrays.copyOfRange(raw, shortStart, shortStart + shortLength);
                   PacketInspectorEngine.Inner_BufferHelper outcome = init_bu_BufferHelper_BArr(slice);
                   if (outcome.init_Z()) {
-                     builder.load("Nested Candidate: unsigned-short length @" + offset + " -> " + shortLength + " bytes", p.scan());
+                     builder.load("Nested Candidate: unsigned-short length @" + offset + " -> " + shortLength + " bytes", UiColorPalette.scan());
                      PacketInspectorEngine.Inner_BufferHelper nested = init_bu_BufferHelper_Str("  Candidate Payload", "", slice, builder);
                      anything = true;
                      strong |= nested.load_Z() || outcome.load_Z();
@@ -1612,10 +1612,10 @@ public final class PacketInspectorEngine {
             return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
          }
 
-         builder.load("Raw UUID Candidates: " + uuids.size(), p.scan());
+         builder.load("Raw UUID Candidates: " + uuids.size(), UiColorPalette.scan());
 
          for (String uuid : uuids) {
-            builder.load("  - " + uuid, p.parse());
+            builder.load("  - " + uuid, UiColorPalette.parse());
          }
 
          return new PacketInspectorEngine.Inner_BufferHelper(true, false, false, false);
@@ -1751,24 +1751,24 @@ public final class PacketInspectorEngine {
       channels.addAll(nullSeparated.stream().filter(value -> read_Pattern.matcher(value).matches()).map(value -> value.toLowerCase(Locale.ROOT)).toList());
       channels.addAll(identifiers);
       if (channels.isEmpty()) {
-         builder.load("Register Payload: no channel identifiers were readable.", p.a());
+         builder.load("Register Payload: no channel identifiers were readable.", UiColorPalette.a());
          return false;
       }
 
       int total = Math.max(init_I_BArr(raw), channels.size());
       builder.load(
          (read_Z_Str(snapshot.load_Str()) ? "Unregistered" : "Registered") + " Channels: " + channels.size() + (total > channels.size() ? "+ shown" : ""),
-         p.value()
+         UiColorPalette.value()
       );
       int shown = 0;
 
       for (String channel : channels) {
          if (shown >= 48) {
-            builder.load("  ... +" + (channels.size() - shown) + " more", p.a());
+            builder.load("  ... +" + (channels.size() - shown) + " more", UiColorPalette.a());
             break;
          }
 
-         builder.load("  - " + channel, p.scan());
+         builder.load("  - " + channel, UiColorPalette.scan());
          shown++;
       }
 
@@ -1813,10 +1813,10 @@ public final class PacketInspectorEngine {
          return false;
       }
 
-      builder.load("Null-Separated Strings: " + parts.size() + " value" + init_Str_I(parts.size()), p.value());
+      builder.load("Null-Separated Strings: " + parts.size() + " value" + init_Str_I(parts.size()), UiColorPalette.value());
 
       for (String part : parts) {
-         builder.load("  - " + open(poll(part)), p.scan());
+         builder.load("  - " + open(poll(part)), UiColorPalette.scan());
       }
 
       return true;
@@ -2019,45 +2019,45 @@ public final class PacketInspectorEngine {
       if (raw != null && raw.length != 0) {
          List<String> varInts = update(raw, 5);
          if (!varInts.isEmpty()) {
-            builder.load("VarInt Prefix: " + String.join(", ", varInts), p.parse());
+            builder.load("VarInt Prefix: " + String.join(", ", varInts), UiColorPalette.parse());
          }
 
          if (raw.length >= 1) {
-            builder.load("First Byte: unsigned=" + (raw[0] & 0xFF) + ", signed=" + raw[0], p.a());
+            builder.load("First Byte: unsigned=" + (raw[0] & 0xFF) + ", signed=" + raw[0], UiColorPalette.a());
          }
 
          if (raw.length >= 2) {
             ByteBuffer be = ByteBuffer.wrap(raw).order(ByteOrder.BIG_ENDIAN);
             ByteBuffer le = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
-            builder.load("First Short: BE=" + be.getShort(0) + ", LE=" + le.getShort(0), p.a());
+            builder.load("First Short: BE=" + be.getShort(0) + ", LE=" + le.getShort(0), UiColorPalette.a());
          }
 
          if (raw.length >= 4) {
             ByteBuffer be = ByteBuffer.wrap(raw).order(ByteOrder.BIG_ENDIAN);
             ByteBuffer le = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
-            builder.load("First Int: BE=" + be.getInt(0) + ", LE=" + le.getInt(0), p.a());
+            builder.load("First Int: BE=" + be.getInt(0) + ", LE=" + le.getInt(0), UiColorPalette.a());
             float beFloat = be.getFloat(0);
             float leFloat = le.getFloat(0);
             if (init_Z_F(beFloat) || init_Z_F(leFloat)) {
-               builder.load("First Float: BE=" + init_Str_F(beFloat) + ", LE=" + init_Str_F(leFloat), p.a());
+               builder.load("First Float: BE=" + init_Str_F(beFloat) + ", LE=" + init_Str_F(leFloat), UiColorPalette.a());
             }
          }
 
          if (raw.length >= 8) {
             ByteBuffer be = ByteBuffer.wrap(raw).order(ByteOrder.BIG_ENDIAN);
             ByteBuffer le = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
-            builder.load("First Long: BE=" + be.getLong(0) + ", LE=" + le.getLong(0), p.a());
+            builder.load("First Long: BE=" + be.getLong(0) + ", LE=" + le.getLong(0), UiColorPalette.a());
             double beDouble = be.getDouble(0);
             double leDouble = le.getDouble(0);
             if (init_Z_D(beDouble) || init_Z_D(leDouble)) {
-               builder.load("First Double: BE=" + init_Str_D(beDouble) + ", LE=" + init_Str_D(leDouble), p.a());
+               builder.load("First Double: BE=" + init_Str_D(beDouble) + ", LE=" + init_Str_D(leDouble), UiColorPalette.a());
             }
          }
 
          if (raw.length >= 16) {
             ByteBuffer uuidBuffer = ByteBuffer.wrap(raw).order(ByteOrder.BIG_ENDIAN);
             UUID uuid = new UUID(uuidBuffer.getLong(0), uuidBuffer.getLong(8));
-            builder.load("First 16 Bytes As UUID: " + uuid, p.a());
+            builder.load("First 16 Bytes As UUID: " + uuid, UiColorPalette.a());
          }
       }
    }
@@ -2086,9 +2086,9 @@ public final class PacketInspectorEngine {
    private static void load_V_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
       PacketInspectorEngine.Inner_CachePool kind = init_bu_CachePool_BArr(raw);
       if (kind == PacketInspectorEngine.Inner_CachePool.GZIP) {
-         builder.load("Compression Hint: gzip stream header", p.entry());
+         builder.load("Compression Hint: gzip stream header", UiColorPalette.entry());
       } else if (kind == PacketInspectorEngine.Inner_CachePool.ZLIB) {
-         builder.load("Compression Hint: zlib/deflate stream header", p.entry());
+         builder.load("Compression Hint: zlib/deflate stream header", UiColorPalette.entry());
       }
    }
 
@@ -2125,7 +2125,7 @@ public final class PacketInspectorEngine {
                + ", entropy="
                + init_Str_D(init_D_IArr_I(histogram, raw.length))
                + " bits/B",
-            p.a()
+            UiColorPalette.a()
          );
       }
    }
@@ -2205,28 +2205,28 @@ public final class PacketInspectorEngine {
       if (json != null) {
          if (json.isJsonObject()) {
             JsonObject object = json.getAsJsonObject();
-            builder.load("Decoded As: JSON object (" + object.size() + " keys)", p.value());
+            builder.load("Decoded As: JSON object (" + object.size() + " keys)", UiColorPalette.value());
 
             for (Entry<String, JsonElement> entry : object.entrySet()) {
-               builder.load("  " + entry.getKey() + ": " + init_Str_JsonElement(entry.getValue()), p.scan());
+               builder.load("  " + entry.getKey() + ": " + init_Str_JsonElement(entry.getValue()), UiColorPalette.scan());
             }
          } else if (json.isJsonArray()) {
             JsonArray array = json.getAsJsonArray();
-            builder.load("Decoded As: JSON array (" + array.size() + " items)", p.value());
+            builder.load("Decoded As: JSON array (" + array.size() + " items)", UiColorPalette.value());
             int index = 0;
 
             for (JsonElement element : array) {
                if (index >= 16) {
-                  builder.load("  ... +" + (array.size() - index) + " more", p.a());
+                  builder.load("  ... +" + (array.size() - index) + " more", UiColorPalette.a());
                   break;
                }
 
-               builder.load("  [" + index + "]: " + init_Str_JsonElement(element), p.scan());
+               builder.load("  [" + index + "]: " + init_Str_JsonElement(element), UiColorPalette.scan());
                index++;
             }
          } else {
-            builder.load("Decoded As: JSON value", p.value());
-            builder.load("Value: " + init_Str_JsonElement(json), p.scan());
+            builder.load("Decoded As: JSON value", UiColorPalette.value());
+            builder.load("Value: " + init_Str_JsonElement(json), UiColorPalette.scan());
          }
       }
    }
@@ -2511,7 +2511,7 @@ public final class PacketInspectorEngine {
             wrote |= init_Z_bu_ConfigStore_Str(builder, "Server removed entities");
             Object ids = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, "getEntityIds", "entityIds"), init_Obj_Obj_I(packet, 0));
             if (ids != null) {
-               builder.load("Entities: " + open(ids), p.node());
+               builder.load("Entities: " + open(ids), UiColorPalette.node());
                wrote = true;
             }
             break;
@@ -2526,7 +2526,7 @@ public final class PacketInspectorEngine {
             wrote |= load_Z_bu_ConfigStore(builder, packet, "Vehicle", "getVehicle", "vehicle", "vehicleId");
             Object passengers = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, "getPassengers", "passengers"), read_Obj_Obj_StrArr(packet, "Passengers"));
             if (passengers != null) {
-               builder.load("Passengers: " + open(passengers), p.node());
+               builder.load("Passengers: " + open(passengers), UiColorPalette.node());
                wrote = true;
             }
             break;
@@ -2554,10 +2554,10 @@ public final class PacketInspectorEngine {
             );
             Object slot = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, "getSlot", "slot", "getSelectedSlot", "selectedSlot"), init_Obj_Obj_I(packet, 0));
             if (slot instanceof Number number) {
-               builder.load("Slot: " + load_Str_I(number.intValue()), p.scan());
+               builder.load("Slot: " + load_Str_I(number.intValue()), UiColorPalette.scan());
                wrote = true;
             } else if (slot != null) {
-               builder.load("Slot: " + load_Str_Obj(slot), p.scan());
+               builder.load("Slot: " + load_Str_Obj(slot), UiColorPalette.scan());
                wrote = true;
             }
             break;
@@ -2795,7 +2795,7 @@ public final class PacketInspectorEngine {
 
    private static boolean init_Z_bu_ConfigStore_Str(PacketInspectorEngine.Inner_ConfigStore builder, String meaning) {
       if (meaning != null && !meaning.isBlank()) {
-         builder.load("Meaning: " + meaning, p.scan());
+         builder.load("Meaning: " + meaning, UiColorPalette.scan());
          return true;
       } else {
          return false;
@@ -2831,7 +2831,7 @@ public final class PacketInspectorEngine {
          init_V_bu_ConfigStore(builder, label, number.intValue());
          return true;
       } else if (value instanceof Entity entity) {
-         builder.load(label + ": " + init_Str_Entity(entity), p.node());
+         builder.load(label + ": " + init_Str_Entity(entity), UiColorPalette.node());
          return true;
       } else {
          return init_Z_bu_ConfigStore(builder, label, value);
@@ -2853,7 +2853,7 @@ public final class PacketInspectorEngine {
       Object value = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, accessors), read_Obj_Obj_StrArr(packet, label));
       if (value != null && value != init_Obj) {
          if (value instanceof Collection<?> collection) {
-            builder.load(label + ": " + load_Str_Collection(collection), p.parse());
+            builder.load(label + ": " + load_Str_Collection(collection), UiColorPalette.parse());
          } else {
             builder.load(label + ": " + load_Str_Str_Obj(label, value), init_I_Str_Obj(label, value));
          }
@@ -2871,7 +2871,7 @@ public final class PacketInspectorEngine {
       Object y = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, yGetter, yField), read_Obj_Obj_StrArr(packet, yField));
       Object z = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, zGetter, zField), read_Obj_Obj_StrArr(packet, zField));
       if (x instanceof Number xn && y instanceof Number yn && z instanceof Number zn) {
-         builder.load(label + ": " + init_Str_Vec3(new Vec3(xn.doubleValue(), yn.doubleValue(), zn.doubleValue())), p.entry());
+         builder.load(label + ": " + init_Str_Vec3(new Vec3(xn.doubleValue(), yn.doubleValue(), zn.doubleValue())), UiColorPalette.entry());
          return true;
       } else {
          return false;
@@ -2883,7 +2883,7 @@ public final class PacketInspectorEngine {
       if (properties.isEmpty()) {
          String rawFallback = read_Str_Obj(packet);
          if (rawFallback != null) {
-            builder.load("Raw: " + rawFallback, p.a());
+            builder.load("Raw: " + rawFallback, UiColorPalette.a());
             return new PacketInspectorEngine.Inner_FileCache(true, false);
          } else {
             return PacketInspectorEngine.Inner_FileCache.init_bu_FileCache;
@@ -2914,9 +2914,9 @@ public final class PacketInspectorEngine {
       Packet<?> packet, String packetNameHint, AutismPacketLoggerOverlay.Inner_JsonUtil entry, PacketInspectorEngine.Inner_ConfigStore builder
    ) {
       if (packet instanceof ServerboundPunchPacket) {
-         builder.load("Interaction: Punch / Swing (attack / use animation)", p.scan());
+         builder.load("Interaction: Punch / Swing (attack / use animation)", UiColorPalette.scan());
          if (init_Minecraft.player != null) {
-            builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getMainHandItem()), p.value());
+            builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getMainHandItem()), UiColorPalette.value());
          }
 
          return new PacketInspectorEngine.Inner_FileCache(true, true);
@@ -2925,10 +2925,10 @@ public final class PacketInspectorEngine {
       if (packet instanceof CompatSwingPacket || init_Z_Packet(packet, packetNameHint, "HandSwingC2S", "HandSwingC2SPacket")) {
          Object hand = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, "getHand", "hand"), init_Obj_Obj_I(packet, 0), read_Obj_Obj_StrArr(packet, "Hand"));
          if (hand != null) {
-            builder.load("Interaction: Swing InteractionHand (attack / use animation)", p.scan());
-            builder.load("Hand: " + load_Str_Obj(hand), p.scan());
+            builder.load("Interaction: Swing InteractionHand (attack / use animation)", UiColorPalette.scan());
+            builder.load("Hand: " + load_Str_Obj(hand), UiColorPalette.scan());
             if (init_Minecraft.player != null && hand instanceof InteractionHand playerHand) {
-               builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getItemInHand(playerHand)), p.value());
+               builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getItemInHand(playerHand)), UiColorPalette.value());
             }
 
             return new PacketInspectorEngine.Inner_FileCache(true, true);
@@ -2939,9 +2939,9 @@ public final class PacketInspectorEngine {
          Object slot = load_Obj_Obj_StrArr(updateSelectedSlotPacket, "getSelectedSlot", "getSlot", "selectedSlot", "slot");
          if (slot != null) {
             if (slot instanceof Number number) {
-               builder.load("Selected Slot: " + load_Str_I(number.intValue()), p.scan());
+               builder.load("Selected Slot: " + load_Str_I(number.intValue()), UiColorPalette.scan());
             } else {
-               builder.load("Selected Slot: " + load_Str_Obj(slot), p.scan());
+               builder.load("Selected Slot: " + load_Str_Obj(slot), UiColorPalette.scan());
             }
 
             return new PacketInspectorEngine.Inner_FileCache(true, true);
@@ -2955,29 +2955,29 @@ public final class PacketInspectorEngine {
          Object signature = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, "signature", "getSignature"), init_Obj_Obj_I(packet, 3));
          Object acknowledgment = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, "acknowledgment", "getAcknowledgment"), init_Obj_Obj_I(packet, 4));
          if (message != null || timestamp != null || salt != null) {
-            builder.load("Kind: Outgoing Signed Chat Message", p.scan());
+            builder.load("Kind: Outgoing Signed Chat Message", UiColorPalette.scan());
             if (init_Minecraft.player != null) {
                String senderName = init_Minecraft.player.getName() == null ? null : init_Minecraft.player.getName().getString();
                if (senderName != null && !senderName.isBlank()) {
-                  builder.load("Sender: " + senderName, p.scan());
+                  builder.load("Sender: " + senderName, UiColorPalette.scan());
                }
             }
 
             String text = update(message);
             if (text != null && !text.isBlank()) {
-               builder.load("Message: " + open(poll(text)), p.value());
+               builder.load("Message: " + open(poll(text)), UiColorPalette.value());
             }
 
             if (timestamp != null) {
-               builder.load("Timestamp: " + load_Str_Obj(timestamp), p.parse());
+               builder.load("Timestamp: " + load_Str_Obj(timestamp), UiColorPalette.parse());
             }
 
             if (salt != null) {
-               builder.load("Salt: " + load_Str_Obj(salt), p.parse());
+               builder.load("Salt: " + load_Str_Obj(salt), UiColorPalette.parse());
             }
 
             if (signature != null) {
-               builder.load("Signature: Present", p.parse());
+               builder.load("Signature: Present", UiColorPalette.parse());
             }
 
             if (acknowledgment != null) {
@@ -2997,8 +2997,8 @@ public final class PacketInspectorEngine {
             read_Obj_Obj_StrArr(packet, "Sequence")
          );
          if (sequence != null) {
-            builder.load("Meaning: Server acknowledged a sequence-based player action", p.scan());
-            builder.load("Sequence: " + load_Str_Obj(sequence), p.scan());
+            builder.load("Meaning: Server acknowledged a sequence-based player action", UiColorPalette.scan());
+            builder.load("Sequence: " + load_Str_Obj(sequence), UiColorPalette.scan());
             return new PacketInspectorEngine.Inner_FileCache(true, true);
          }
       }
@@ -3012,17 +3012,17 @@ public final class PacketInspectorEngine {
             read_Obj_Obj_StrArr(packet, "Sync Id", "SyncId")
          );
          if (syncId != null) {
-            builder.load("Interaction: Close Handled Screen", p.scan());
-            builder.load("Sync Id: " + load_Str_Obj(syncId), p.scan());
+            builder.load("Interaction: Close Handled Screen", UiColorPalette.scan());
+            builder.load("Sync Id: " + load_Str_Obj(syncId), UiColorPalette.scan());
             if (entry != null && entry.update != null && !entry.update.isBlank()) {
-               builder.load("Closed Screen: " + entry.update, p.value());
+               builder.load("Closed Screen: " + entry.update, UiColorPalette.value());
             }
 
             if (syncId instanceof Number number && number.intValue() == 0) {
-               builder.load("Likely Screen: Player Inventory / Survival Crafting", p.value());
+               builder.load("Likely Screen: Player Inventory / Survival Crafting", UiColorPalette.value());
             }
 
-            builder.load("Note: This packet only sends the sync id, not the closed screen title/type", p.parse());
+            builder.load("Note: This packet only sends the sync id, not the closed screen title/type", UiColorPalette.parse());
             return new PacketInspectorEngine.Inner_FileCache(true, true);
          }
       }
@@ -3042,18 +3042,18 @@ public final class PacketInspectorEngine {
             read_Obj_Obj_StrArr(packet, "Equipment List", "EquipmentList")
          );
          if (entityIdValue != null || equipmentListValue != null) {
-            builder.load("Meaning: Server updated an entity's visible equipment", p.scan());
+            builder.load("Meaning: Server updated an entity's visible equipment", UiColorPalette.scan());
             if (entityIdValue instanceof Number entityIdNumber) {
                init_V_bu_ConfigStore(builder, "Entity Id", entityIdNumber.intValue());
             } else if (entityIdValue != null) {
-               builder.load("Entity Id: " + load_Str_Obj(entityIdValue), p.scan());
+               builder.load("Entity Id: " + load_Str_Obj(entityIdValue), UiColorPalette.scan());
             }
 
             if (equipmentListValue instanceof Collection<?> equipmentEntries) {
-               builder.load("Changed Slots: " + equipmentEntries.size(), p.scan());
+               builder.load("Changed Slots: " + equipmentEntries.size(), UiColorPalette.scan());
                String equipmentSummary = read_Str_Collection(equipmentEntries);
                if (equipmentSummary != null && !equipmentSummary.isBlank()) {
-                  builder.load("Equipment: " + equipmentSummary, p.value());
+                  builder.load("Equipment: " + equipmentSummary, UiColorPalette.value());
                }
             } else if (equipmentListValue != null) {
                builder.load("Equipment: " + poll(equipmentListValue), load_I_Obj(equipmentListValue));
@@ -3067,13 +3067,13 @@ public final class PacketInspectorEngine {
          Object syncId = load_Obj_Obj_StrArr(buttonClickPacket, "getSyncId", "syncId");
          Object buttonId = load_Obj_Obj_StrArr(buttonClickPacket, "getButtonId", "buttonId");
          if (syncId != null || buttonId != null) {
-            builder.load("Interaction: Click handled-screen button", p.scan());
+            builder.load("Interaction: Click handled-screen button", UiColorPalette.scan());
             if (syncId != null) {
-               builder.load("Sync Id: " + load_Str_Obj(syncId), p.scan());
+               builder.load("Sync Id: " + load_Str_Obj(syncId), UiColorPalette.scan());
             }
 
             if (buttonId != null) {
-               builder.load("Button Id: " + load_Str_Obj(buttonId), p.scan());
+               builder.load("Button Id: " + load_Str_Obj(buttonId), UiColorPalette.scan());
             }
 
             return new PacketInspectorEngine.Inner_FileCache(true, true);
@@ -3085,7 +3085,7 @@ public final class PacketInspectorEngine {
          Object stack = load_Obj_Obj_StrArr(creativeInventoryActionPacket, "getStack", "stack");
          if (slot != null || stack != null) {
             if (slot != null) {
-               builder.load("Slot: " + load_Str_Obj(slot), p.scan());
+               builder.load("Slot: " + load_Str_Obj(slot), UiColorPalette.scan());
             }
 
             if (stack != null) {
@@ -3105,25 +3105,25 @@ public final class PacketInspectorEngine {
          Object modifiedStacks = load_Obj_Obj_StrArr(clickSlotPacket, "getModifiedStacks", "modifiedStacks");
          Object cursorStack = load_Obj_Obj_StrArr(clickSlotPacket, "cursor", "getStack", "getCursorStack", "cursorStack");
          if (syncId != null || slot != null || actionType != null) {
-            builder.load("Interaction: " + write_Str_Obj(actionType), p.scan());
+            builder.load("Interaction: " + write_Str_Obj(actionType), UiColorPalette.scan());
             if (syncId != null) {
-               builder.load("Sync Id: " + load_Str_Obj(syncId), p.scan());
+               builder.load("Sync Id: " + load_Str_Obj(syncId), UiColorPalette.scan());
             }
 
             if (revision != null) {
-               builder.load("Revision: " + load_Str_Obj(revision), p.parse());
+               builder.load("Revision: " + load_Str_Obj(revision), UiColorPalette.parse());
             }
 
             if (slot != null) {
-               builder.load("Slot: " + load_Str_Obj(slot), p.scan());
+               builder.load("Slot: " + load_Str_Obj(slot), UiColorPalette.scan());
             }
 
             if (button != null) {
-               builder.load("Button: " + load_Str_Obj(button), p.scan());
+               builder.load("Button: " + load_Str_Obj(button), UiColorPalette.scan());
             }
 
             if (actionType != null) {
-               builder.load("Action Type: " + load_Str_Obj(actionType), p.scan());
+               builder.load("Action Type: " + load_Str_Obj(actionType), UiColorPalette.scan());
             }
 
             if (cursorStack != null) {
@@ -3131,7 +3131,7 @@ public final class PacketInspectorEngine {
             }
 
             if (modifiedStacks instanceof Map<?, ?> map) {
-               builder.load("Changed Slots: " + map.size(), p.parse());
+               builder.load("Changed Slots: " + map.size(), UiColorPalette.parse());
             } else if (modifiedStacks != null) {
                builder.load("Changed Slots: " + poll(modifiedStacks), load_I_Obj(modifiedStacks));
             }
@@ -3146,25 +3146,25 @@ public final class PacketInspectorEngine {
          Object title = load_Obj_Obj_StrArr(bookUpdatePacket, "title", "getTitle");
          if (slot != null || pages != null || title != null) {
             boolean signing = title instanceof Optional<?> optional && optional.isPresent();
-            builder.load("Interaction: " + (signing ? "Sign Book" : "Edit Book"), p.scan());
+            builder.load("Interaction: " + (signing ? "Sign Book" : "Edit Book"), UiColorPalette.scan());
             if (slot instanceof Number number) {
-               builder.load("Slot: " + load_Str_I(number.intValue()), p.scan());
+               builder.load("Slot: " + load_Str_I(number.intValue()), UiColorPalette.scan());
             } else if (slot != null) {
-               builder.load("Slot: " + load_Str_Obj(slot), p.scan());
+               builder.load("Slot: " + load_Str_Obj(slot), UiColorPalette.scan());
             }
 
             if (title != null) {
                String titleComponent = update(title);
                if (titleComponent != null && !titleComponent.isBlank()) {
-                  builder.load("Title: " + open(poll(titleComponent)), p.value());
+                  builder.load("Title: " + open(poll(titleComponent)), UiColorPalette.value());
                }
             }
 
             if (pages instanceof Collection<?> collection) {
-               builder.load("Pages: " + collection.size(), p.scan());
+               builder.load("Pages: " + collection.size(), UiColorPalette.scan());
                String preview = init_Str_Collection(collection);
                if (preview != null) {
-                  builder.load("Preview: " + preview, p.parse());
+                  builder.load("Preview: " + preview, UiColorPalette.parse());
                }
             }
 
@@ -3177,17 +3177,17 @@ public final class PacketInspectorEngine {
          Object lines = load_Obj_Obj_StrArr(updateSignPacket, "getText", "text");
          Object front = load_Obj_Obj_StrArr(updateSignPacket, "isFront", "front");
          if (pos != null || lines != null || front != null) {
-            builder.load("Interaction: Update Sign Component", p.scan());
+            builder.load("Interaction: Update Sign Component", UiColorPalette.scan());
             if (pos != null) {
                builder.load("Block Pos: " + poll(pos), load_I_Obj(pos));
             }
 
             if (front != null) {
-               builder.load("Side: " + (Boolean.TRUE.equals(front) ? "Front" : "Back"), p.scan());
+               builder.load("Side: " + (Boolean.TRUE.equals(front) ? "Front" : "Back"), UiColorPalette.scan());
             }
 
             if (lines instanceof String[] stringLines) {
-               builder.load("Component: " + load_Str_StrArr(stringLines), p.value());
+               builder.load("Component: " + load_Str_StrArr(stringLines), UiColorPalette.value());
             } else if (lines != null) {
                builder.load("Component: " + poll(lines), load_I_Obj(lines));
             }
@@ -3199,8 +3199,8 @@ public final class PacketInspectorEngine {
       if (packet instanceof ServerboundRenameItemPacket renameItemPacket) {
          Object name = load_Obj_Obj_StrArr(renameItemPacket, "getName", "name");
          if (name != null) {
-            builder.load("Interaction: Rename Item in Anvil", p.scan());
-            builder.load("Name: " + open(poll(String.valueOf(name))), p.value());
+            builder.load("Interaction: Rename Item in Anvil", UiColorPalette.scan());
+            builder.load("Name: " + open(poll(String.valueOf(name))), UiColorPalette.value());
             return new PacketInspectorEngine.Inner_FileCache(true, true);
          }
       }
@@ -3210,17 +3210,17 @@ public final class PacketInspectorEngine {
          Object recipeId = load_Obj_Obj_StrArr(craftRequestPacket, "recipeId", "getRecipeId");
          Object craftAll = load_Obj_Obj_StrArr(craftRequestPacket, "craftAll", "isCraftAll", "getCraftAll");
          if (syncId != null || recipeId != null || craftAll != null) {
-            builder.load("Interaction: Craft Recipe", p.scan());
+            builder.load("Interaction: Craft Recipe", UiColorPalette.scan());
             if (syncId != null) {
-               builder.load("Sync Id: " + load_Str_Obj(syncId), p.scan());
+               builder.load("Sync Id: " + load_Str_Obj(syncId), UiColorPalette.scan());
             }
 
             if (recipeId != null) {
-               builder.load("Recipe: " + load_Str_Obj(recipeId), p.value());
+               builder.load("Recipe: " + load_Str_Obj(recipeId), UiColorPalette.value());
             }
 
             if (craftAll != null) {
-               builder.load("Craft All: " + load_Str_Obj(craftAll), p.scan());
+               builder.load("Craft All: " + load_Str_Obj(craftAll), UiColorPalette.scan());
             }
 
             return new PacketInspectorEngine.Inner_FileCache(true, true);
@@ -3230,8 +3230,8 @@ public final class PacketInspectorEngine {
       if (packet instanceof ServerboundSelectTradePacket selectMerchantTradePacket) {
          Object tradeId = load_Obj_Obj_StrArr(selectMerchantTradePacket, "getTradeId", "tradeId");
          if (tradeId != null) {
-            builder.load("Interaction: Select Merchant Trade", p.scan());
-            builder.load("Trade Index: " + load_Str_Obj(tradeId), p.scan());
+            builder.load("Interaction: Select Merchant Trade", UiColorPalette.scan());
+            builder.load("Trade Index: " + load_Str_Obj(tradeId), UiColorPalette.scan());
             return new PacketInspectorEngine.Inner_FileCache(true, true);
          }
       }
@@ -3242,15 +3242,15 @@ public final class PacketInspectorEngine {
          Object value = load_Obj_Obj_StrArr(screenHandlerPropertyUpdatePacket, "getValue", "value");
          if (syncId != null || property != null || value != null) {
             if (syncId != null) {
-               builder.load("Sync Id: " + load_Str_Obj(syncId), p.scan());
+               builder.load("Sync Id: " + load_Str_Obj(syncId), UiColorPalette.scan());
             }
 
             if (property != null) {
-               builder.load("Property: " + load_Str_Obj(property), p.scan());
+               builder.load("Property: " + load_Str_Obj(property), UiColorPalette.scan());
             }
 
             if (value != null) {
-               builder.load("Value: " + load_Str_Obj(value), p.scan());
+               builder.load("Value: " + load_Str_Obj(value), UiColorPalette.scan());
             }
 
             return new PacketInspectorEngine.Inner_FileCache(true, true);
@@ -3265,7 +3265,7 @@ public final class PacketInspectorEngine {
             if (entityId instanceof Number number) {
                init_V_bu_ConfigStore(builder, "Entity Id", number.intValue());
             } else if (entityId != null) {
-               builder.load("Entity Id: " + load_Str_Obj(entityId), p.scan());
+               builder.load("Entity Id: " + load_Str_Obj(entityId), UiColorPalette.scan());
             }
 
             if (pos != null) {
@@ -3273,7 +3273,7 @@ public final class PacketInspectorEngine {
             }
 
             if (progress != null) {
-               builder.load("Progress: " + load_Str_Obj(progress), p.scan());
+               builder.load("Progress: " + load_Str_Obj(progress), UiColorPalette.scan());
             }
 
             return new PacketInspectorEngine.Inner_FileCache(true, true);
@@ -3298,11 +3298,11 @@ public final class PacketInspectorEngine {
             if (entityId instanceof Number number) {
                init_V_bu_ConfigStore(builder, "Entity Id", number.intValue());
             } else if (entityId != null) {
-               builder.load("Entity Id: " + load_Str_Obj(entityId), p.scan());
+               builder.load("Entity Id: " + load_Str_Obj(entityId), UiColorPalette.scan());
             }
 
             if (status != null) {
-               builder.load("Status: " + load_Str_Obj(status), p.scan());
+               builder.load("Status: " + load_Str_Obj(status), UiColorPalette.scan());
             }
 
             return new PacketInspectorEngine.Inner_FileCache(true, true);
@@ -3320,7 +3320,7 @@ public final class PacketInspectorEngine {
             if (entityId instanceof Number number) {
                init_V_bu_ConfigStore(builder, "Entity Id", number.intValue());
             } else if (entityId != null) {
-               builder.load("Entity Id: " + load_Str_Obj(entityId), p.scan());
+               builder.load("Entity Id: " + load_Str_Obj(entityId), UiColorPalette.scan());
             }
 
             if (velocity != null) {
@@ -3336,19 +3336,19 @@ public final class PacketInspectorEngine {
          Object overlay = load_Obj_Obj_StrArr(gameMessagePacket, "overlay", "isOverlay", "getOverlay");
          if (content != null || overlay != null) {
             String message = update(content);
-            builder.load("Kind: " + (Boolean.TRUE.equals(overlay) ? "Overlay / HUD message" : "Game / system message"), p.scan());
+            builder.load("Kind: " + (Boolean.TRUE.equals(overlay) ? "Overlay / HUD message" : "Game / system message"), UiColorPalette.scan());
             PacketInspectorEngine.Inner_StateCache parsed = init_bu_StateCache_Str(message);
             if (parsed != null) {
-               builder.load("Possible Sender: " + parsed.init(), p.scan());
-               builder.load("Message: " + open(poll(parsed.load())), p.value());
+               builder.load("Possible Sender: " + parsed.init(), UiColorPalette.scan());
+               builder.load("Message: " + open(poll(parsed.load())), UiColorPalette.value());
             } else if (message != null && !message.isBlank()) {
-               builder.load("Message: " + open(poll(message)), p.value());
+               builder.load("Message: " + open(poll(message)), UiColorPalette.value());
             } else if (content != null) {
                builder.load("Message: " + poll(content), load_I_Obj(content));
             }
 
             if (overlay != null) {
-               builder.load("Overlay: " + load_Str_Obj(overlay), p.scan());
+               builder.load("Overlay: " + load_Str_Obj(overlay), UiColorPalette.scan());
             }
 
             return new PacketInspectorEngine.Inner_FileCache(true, true);
@@ -3415,8 +3415,8 @@ public final class PacketInspectorEngine {
          Object text = load_Obj_Obj_StrArr(overlayMessagePacket, "text", "getText");
          String message = update(text);
          if (message != null || text != null) {
-            builder.load("Kind: Overlay / HUD message", p.scan());
-            builder.load("Message: " + (message == null ? poll(text) : open(poll(message))), message == null ? load_I_Obj(text) : p.value());
+            builder.load("Kind: Overlay / HUD message", UiColorPalette.scan());
+            builder.load("Message: " + (message == null ? poll(text) : open(poll(message))), message == null ? load_I_Obj(text) : UiColorPalette.value());
             return new PacketInspectorEngine.Inner_FileCache(true, true);
          }
       }
@@ -3424,8 +3424,8 @@ public final class PacketInspectorEngine {
       if (packet instanceof ClientboundOpenBookPacket openWrittenBookPacket) {
          Object hand = load_Obj_Obj_StrArr(openWrittenBookPacket, "getHand", "hand");
          if (hand != null) {
-            builder.load("Interaction: Open Written Book", p.scan());
-            builder.load("Hand: " + load_Str_Obj(hand), p.scan());
+            builder.load("Interaction: Open Written Book", UiColorPalette.scan());
+            builder.load("Hand: " + load_Str_Obj(hand), UiColorPalette.scan());
             return new PacketInspectorEngine.Inner_FileCache(true, true);
          }
       }
@@ -3447,15 +3447,15 @@ public final class PacketInspectorEngine {
          Object onGround = load_Obj_Obj_StrArr(playerMovePacket, "isOnGround", "onGround");
          if (x != null || y != null || z != null || yaw != null || pitch != null || onGround != null) {
             if (x != null || y != null || z != null) {
-               builder.load("Pos: x=" + load_Str_Obj(x) + ", y=" + load_Str_Obj(y) + ", z=" + load_Str_Obj(z), p.scan());
+               builder.load("Pos: x=" + load_Str_Obj(x) + ", y=" + load_Str_Obj(y) + ", z=" + load_Str_Obj(z), UiColorPalette.scan());
             }
 
             if (yaw != null || pitch != null) {
-               builder.load("Rot: yaw=" + load_Str_Obj(yaw) + ", pitch=" + load_Str_Obj(pitch), p.scan());
+               builder.load("Rot: yaw=" + load_Str_Obj(yaw) + ", pitch=" + load_Str_Obj(pitch), UiColorPalette.scan());
             }
 
             if (onGround != null) {
-               builder.load("On Ground: " + load_Str_Obj(onGround), p.scan());
+               builder.load("On Ground: " + load_Str_Obj(onGround), UiColorPalette.scan());
             }
 
             return new PacketInspectorEngine.Inner_FileCache(true, true);
@@ -3489,9 +3489,9 @@ public final class PacketInspectorEngine {
       if (!wroteAny) {
          String rawFallback = read_Str_Obj(root);
          if (rawFallback != null) {
-            builder.load("Raw: " + rawFallback, p.a());
+            builder.load("Raw: " + rawFallback, UiColorPalette.a());
          } else {
-            builder.load("<No readable fields>", p.a());
+            builder.load("<No readable fields>", UiColorPalette.a());
          }
       }
    }
@@ -3502,50 +3502,50 @@ public final class PacketInspectorEngine {
       try {
          init_V_Str(label, value, depth, indent, builder, visited);
       } catch (Throwable t) {
-         builder.load(indent + label + ": <error reading value: " + t.getClass().getSimpleName() + ">", p.valid());
+         builder.load(indent + label + ": <error reading value: " + t.getClass().getSimpleName() + ">", UiColorPalette.valid());
       }
    }
 
    private static void init_V_Str(String label, Object value, int depth, String indent, PacketInspectorEngine.Inner_ConfigStore builder, IdentityHashMap<Object, Boolean> visited) {
       if (!builder.init_Z()) {
          if (value == init_Obj) {
-            builder.load(indent + label + ": <inaccessible>", p.a());
+            builder.load(indent + label + ": <inaccessible>", UiColorPalette.a());
          } else if (value == null) {
-            builder.load(indent + label + ": null", p.a());
+            builder.load(indent + label + ": null", UiColorPalette.a());
          } else if (depth >= 7) {
-            builder.load(indent + label + ": <max depth reached>", p.a());
+            builder.load(indent + label + ": <max depth reached>", UiColorPalette.a());
          } else {
             Class<?> valueClass = value.getClass();
             if (init_Z_Obj(value)) {
                builder.load(indent + label + ": " + init_Str_Str_Obj(label, value), load_I_Str_Obj(label, value));
             } else if (value instanceof Optional<?> optional) {
                if (optional.isEmpty()) {
-                  builder.load(indent + label + ": Optional.empty", p.a());
+                  builder.load(indent + label + ": Optional.empty", UiColorPalette.a());
                } else {
-                  builder.load(indent + label + ": Optional", p.parse());
+                  builder.load(indent + label + ": Optional", UiColorPalette.parse());
                   init_V_Str("value", optional.get(), depth + 1, builder, visited);
                }
             } else if (value instanceof BlockHitResult hit) {
-               builder.load(indent + label + ": BlockHitResult", p.parse());
+               builder.load(indent + label + ": BlockHitResult", UiColorPalette.parse());
                init_V_Str("blockPos", hit.getBlockPos(), depth + 1, builder, visited);
                init_V_Str("hitPos", hit.getLocation(), depth + 1, builder, visited);
                init_V_Str("side", hit.getDirection(), depth + 1, builder, visited);
                init_V_Str("type", hit.getType(), depth + 1, builder, visited);
                init_V_Str("insideBlock", hit.isInside(), depth + 1, builder, visited);
             } else if (value instanceof Map<?, ?> map) {
-               builder.load(indent + label + ": Map[" + map.size() + "]", p.parse());
+               builder.load(indent + label + ": Map[" + map.size() + "]", UiColorPalette.parse());
                int index = 0;
 
                for (Entry<?, ?> entry : map.entrySet()) {
                   if (index >= 64) {
-                     builder.load(indent + "  ... " + (map.size() - index) + " more entries", p.a());
+                     builder.load(indent + "  ... " + (map.size() - index) + " more entries", UiColorPalette.a());
                      return;
                   }
 
                   if (init_Z_Obj(entry.getKey()) && init_Z_Obj(entry.getValue())) {
-                     builder.load(indent + "  [" + index + "] " + init_Str_Obj(entry.getKey()) + " = " + init_Str_Obj(entry.getValue()), p.scan());
+                     builder.load(indent + "  [" + index + "] " + init_Str_Obj(entry.getKey()) + " = " + init_Str_Obj(entry.getValue()), UiColorPalette.scan());
                   } else {
-                     builder.load(indent + "  [" + index + "]", p.parse());
+                     builder.load(indent + "  [" + index + "]", UiColorPalette.parse());
                      init_V_Str("key", entry.getKey(), depth + 2, builder, visited);
                      init_V_Str("value", entry.getValue(), depth + 2, builder, visited);
                   }
@@ -3553,12 +3553,12 @@ public final class PacketInspectorEngine {
                   index++;
                }
             } else if (value instanceof Collection<?> collection) {
-               builder.load(indent + label + ": List[" + collection.size() + "]", p.parse());
+               builder.load(indent + label + ": List[" + collection.size() + "]", UiColorPalette.parse());
                int index = 0;
 
                for (Object item : collection) {
                   if (index >= 64) {
-                     builder.load(indent + "  ... " + (collection.size() - index) + " more entries", p.a());
+                     builder.load(indent + "  ... " + (collection.size() - index) + " more entries", UiColorPalette.a());
                      return;
                   }
 
@@ -3568,20 +3568,20 @@ public final class PacketInspectorEngine {
             } else if (valueClass.isArray()) {
                int length = Array.getLength(value);
                if (valueClass.getComponentType().isPrimitive()) {
-                  builder.load(indent + label + ": " + push(value), p.scan());
+                  builder.load(indent + label + ": " + push(value), UiColorPalette.scan());
                } else {
-                  builder.load(indent + label + ": " + load_Str_Class(valueClass) + "[" + length + "]", p.parse());
+                  builder.load(indent + label + ": " + load_Str_Class(valueClass) + "[" + length + "]", UiColorPalette.parse());
 
                   for (int i = 0; i < Math.min(length, 64); i++) {
                      init_V_Str("[" + i + "]", Array.get(value, i), depth + 1, builder, visited);
                   }
 
                   if (length > 64) {
-                     builder.load(indent + "  ... " + (length - 64) + " more entries", p.a());
+                     builder.load(indent + "  ... " + (length - 64) + " more entries", UiColorPalette.a());
                   }
                }
             } else if (visited.containsKey(value)) {
-               builder.load(indent + label + ": <already shown " + load_Str_Class(valueClass) + ">", p.a());
+               builder.load(indent + label + ": <already shown " + load_Str_Class(valueClass) + ">", UiColorPalette.a());
             } else if (init_Z_Class(valueClass)) {
                builder.load(indent + label + ": " + load_Str_Obj(value), load_I_Str_Obj(label, value));
             } else {
@@ -3591,7 +3591,7 @@ public final class PacketInspectorEngine {
                if (properties.isEmpty() && fields.isEmpty()) {
                   builder.load(indent + label + ": " + load_Str_Obj(value), load_I_Str_Obj(label, value));
                } else {
-                  builder.load(indent + label + ": " + load_Str_Class(valueClass), p.parse());
+                  builder.load(indent + label + ": " + load_Str_Class(valueClass), UiColorPalette.parse());
                   Set<String> consumedFieldNames = new LinkedHashSet<>();
 
                   for (PacketInspectorEngine.Inner_EventBus property : properties) {
@@ -4161,24 +4161,24 @@ public final class PacketInspectorEngine {
 
    private static int init_I_Obj(Object value) {
       if (value instanceof Boolean bool) {
-         return bool ? p.cache() : p.state();
+         return bool ? UiColorPalette.cache() : UiColorPalette.state();
       } else if (value instanceof Entity || value instanceof UUID) {
-         return p.node();
+         return UiColorPalette.node();
       } else if (value instanceof BlockState || value instanceof BlockPos || value instanceof Vec3) {
-         return p.entry();
+         return UiColorPalette.entry();
       } else if (value instanceof ItemStack || value instanceof Component || value instanceof String) {
-         return p.cache();
+         return UiColorPalette.cache();
       } else if (value instanceof Enum) {
-         return p.queue();
+         return UiColorPalette.queue();
       } else if (value instanceof Identifier) {
-         return p.buffer();
+         return UiColorPalette.buffer();
       } else {
-         return !(value instanceof Number) && !(value instanceof Instant) && !(value instanceof BitSet) ? p.task() : p.pool();
+         return !(value instanceof Number) && !(value instanceof Instant) && !(value instanceof BitSet) ? UiColorPalette.task() : UiColorPalette.pool();
       }
    }
 
    private static int init_I_Str(String direction) {
-      return "C2S".equalsIgnoreCase(direction) ? p.node() : p.queue();
+      return "C2S".equalsIgnoreCase(direction) ? UiColorPalette.node() : UiColorPalette.queue();
    }
 
    private static String init_Str_Obj(Object value) {
@@ -4561,7 +4561,7 @@ public final class PacketInspectorEngine {
    }
 
    private static void init_V_bu_ConfigStore(PacketInspectorEngine.Inner_ConfigStore builder, String label, int entityId) {
-      builder.load(label + ": " + read_Str_I(entityId), p.node());
+      builder.load(label + ": " + read_Str_I(entityId), UiColorPalette.node());
    }
 
    private static String read_Str_I(int entityId) {
@@ -4766,9 +4766,9 @@ public final class PacketInspectorEngine {
 
    private static int init_I_Str_Obj(String label, Object value) {
       if (value != null && value != init_Obj) {
-         return !(value instanceof Collection) && !(value instanceof Map) && !value.getClass().isArray() ? load_I_Str_Obj(label, value) : p.parse();
+         return !(value instanceof Collection) && !(value instanceof Map) && !value.getClass().isArray() ? load_I_Str_Obj(label, value) : UiColorPalette.parse();
       } else {
-         return p.a();
+         return UiColorPalette.a();
       }
    }
 
@@ -4779,7 +4779,7 @@ public final class PacketInspectorEngine {
    private static int load_I_Str_Obj(String label, Object value) {
       String normalized = sync_Str(label);
       if (value instanceof Boolean bool) {
-         return bool ? p.cache() : p.state();
+         return bool ? UiColorPalette.cache() : UiColorPalette.state();
       } else {
          if (normalized.contains("sender")
             || normalized.contains("author")
@@ -4787,11 +4787,11 @@ public final class PacketInspectorEngine {
             || normalized.equals("entity")
             || normalized.contains("entityid")
             || normalized.contains("owner")) {
-            return p.node();
+            return UiColorPalette.node();
          }
 
          if (normalized.contains("target") || normalized.contains("recipient") || normalized.contains("team")) {
-            return p.state();
+            return UiColorPalette.state();
          }
 
          if (normalized.contains("message")
@@ -4804,7 +4804,7 @@ public final class PacketInspectorEngine {
             || normalized.contains("recipe")
             || normalized.contains("item")
             || normalized.contains("stack")) {
-            return p.cache();
+            return UiColorPalette.cache();
          }
 
          if (normalized.equals("kind")
@@ -4815,11 +4815,11 @@ public final class PacketInspectorEngine {
             || normalized.contains("reason")
             || normalized.contains("status")
             || normalized.contains("hand")) {
-            return p.queue();
+            return UiColorPalette.queue();
          }
 
          if (normalized.contains("timestamp") || normalized.contains("time") || normalized.contains("sequence") || normalized.contains("salt")) {
-            return p.index();
+            return UiColorPalette.index();
          }
 
          if (normalized.contains("slot")
@@ -4828,11 +4828,11 @@ public final class PacketInspectorEngine {
             || normalized.contains("revision")
             || normalized.contains("checksum")
             || normalized.contains("offset")) {
-            return p.buffer();
+            return UiColorPalette.buffer();
          }
 
          if (normalized.contains("sound") || normalized.contains("channel") || normalized.contains("identifier") || normalized.contains("packettype")) {
-            return p.buffer();
+            return UiColorPalette.buffer();
          }
 
          if (normalized.contains("block")
@@ -4843,15 +4843,15 @@ public final class PacketInspectorEngine {
             || normalized.contains("yaw")
             || normalized.contains("pitch")
             || normalized.contains("velocity")) {
-            return p.entry();
+            return UiColorPalette.entry();
          }
 
          if (normalized.contains("filter")) {
             String text = value == null ? "" : String.valueOf(value).toLowerCase(Locale.ROOT);
             if (text.contains("fully filtered")) {
-               return p.state();
+               return UiColorPalette.state();
             } else {
-               return text.contains("pass-through") ? p.cache() : p.entry();
+               return text.contains("pass-through") ? UiColorPalette.cache() : UiColorPalette.entry();
             }
          } else {
             return init_I_Obj(value);
@@ -5129,7 +5129,7 @@ public final class PacketInspectorEngine {
          if (!this.init_Z) {
             if (this.init_List.size() >= 900) {
                this.init_Z = true;
-               this.init_List.add(new PacketInspectorEngine.Inner_TaskQueue("... output truncated ...", p.valid()));
+               this.init_List.add(new PacketInspectorEngine.Inner_TaskQueue("... output truncated ...", UiColorPalette.valid()));
                this.init_StringBuilder.append("... output truncated ...\n");
             } else {
                this.init_List.add(new PacketInspectorEngine.Inner_TaskQueue(text, color));
@@ -5139,7 +5139,7 @@ public final class PacketInspectorEngine {
       }
 
       void init_V() {
-         this.load("", p.scan());
+         this.load("", UiColorPalette.scan());
       }
 
       void init(PacketInspectorEngine.Inner_ConfigStore other) {

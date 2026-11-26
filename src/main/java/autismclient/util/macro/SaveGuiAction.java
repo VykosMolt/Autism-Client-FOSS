@@ -10,8 +10,8 @@ public class SaveGuiAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      if (autismclient.util.af.init(mc, true) && this.closeAfter) {
-         autismclient.util.af.init(mc, this.sendPacket, false);
+      if (autismclient.util.GuiDesyncHelper.init(mc, true) && this.closeAfter) {
+         autismclient.util.GuiDesyncHelper.init(mc, this.sendPacket, false);
       }
    }
 

@@ -1,8 +1,8 @@
 package autismclient.modules;
 
 import autismclient.compat263.Compat263;
-import autismclient.util.PkgCls_c;
-import autismclient.util.cI;
+import autismclient.util.AutismBufferSource;
+import autismclient.util.WorldLineRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack.Pose;
@@ -32,7 +32,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public final class PearlGhostRenderer {
-   private static final PkgCls_c.Inner_DataUtil init_c_DataUtil = new PkgCls_c.Inner_DataUtil(786432);
+   private static final AutismBufferSource.Inner_DataUtil init_c_DataUtil = new AutismBufferSource.Inner_DataUtil(786432);
    private static final Vector3f init_Vector3f = new Vector3f();
    private static final AvatarRenderState init_AvatarRenderState = new AvatarRenderState();
    private static PlayerModel init_PlayerModel;
@@ -57,7 +57,7 @@ public final class PearlGhostRenderer {
             DangerModule danger = DangerModule.init_z();
             Vec3 camera = WorldProjectionHelper.init();
             float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-            PkgCls_c buffers = init_c_DataUtil.init();
+            AutismBufferSource buffers = init_c_DataUtil.init();
             VertexConsumer lines = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
 
             for (IncomingProjectileScanner.Inner_BufferHelper warning : danger.read_List_2()) {
@@ -123,7 +123,7 @@ public final class PearlGhostRenderer {
    }
 
    private static void init_V_Minecraft(
-      Minecraft mc, PoseStack pose, PkgCls_c buffers, IncomingProjectileScanner.Inner_BufferHelper warning, Vec3 camera, float partial, double opacity
+      Minecraft mc, PoseStack pose, AutismBufferSource buffers, IncomingProjectileScanner.Inner_BufferHelper warning, Vec3 camera, float partial, double opacity
    ) {
       init(
          mc,
@@ -143,7 +143,7 @@ public final class PearlGhostRenderer {
       for (FireballBlastPredictor.Inner_DataUtil block : blocks) {
          AABB box = new AABB(block.init_BlockPos()).inflate(0.002).move(camera.scale(-1.0));
          int alpha = (int)Math.round(90.0 + 125.0 * block.init_D());
-         cI.init(pose, lines, box, 16729413 | alpha << 24, 1.5F);
+         WorldLineRenderer.init(pose, lines, box, 16729413 | alpha << 24, 1.5F);
       }
    }
 
@@ -151,12 +151,12 @@ public final class PearlGhostRenderer {
       for (FireballBlastPredictor.Inner_DataUtil block : blocks) {
          AABB box = new AABB(block.init_BlockPos()).inflate(0.001).move(camera.scale(-1.0));
          int alpha = (int)Math.round(14.0 + 35.0 * block.init_D());
-         cI.init(pose, fill, box, 16729413 | alpha << 24);
+         WorldLineRenderer.init(pose, fill, box, 16729413 | alpha << 24);
       }
    }
 
    static void init(
-      Minecraft mc, PoseStack pose, PkgCls_c buffers, AbstractClientPlayer owner, Vec3 teleport, Vec3 camera, float partial, int tint, double opacity, int pass
+      Minecraft mc, PoseStack pose, AutismBufferSource buffers, AbstractClientPlayer owner, Vec3 teleport, Vec3 camera, float partial, int tint, double opacity, int pass
    ) {
       if (init_Obj != mc.getEntityModels()) {
          init_Obj = mc.getEntityModels();

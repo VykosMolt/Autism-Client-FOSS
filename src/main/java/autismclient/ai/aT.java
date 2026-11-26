@@ -515,7 +515,7 @@ final class aT implements AutoCloseable {
    private static final class Inner_BufferHelper {
       final BlockPos init_BlockPos;
       final IntArrayList init_IntArrayList;
-      final autismclient.util.P init_P = new autismclient.util.P("autism_ai_plan_section");
+      final autismclient.util.CachedGpuMeshBuffer init_P = new autismclient.util.CachedGpuMeshBuffer("autism_ai_plan_section");
       boolean init_Z = true;
       boolean load_Z;
       int init_I;

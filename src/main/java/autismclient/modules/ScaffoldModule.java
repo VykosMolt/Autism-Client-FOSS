@@ -17,7 +17,7 @@ import autismclient.util.PlacementTickStamp;
 import autismclient.util.PerTickPlacementLock;
 import autismclient.util.cd;
 import autismclient.util.RotationMath;
-import autismclient.util.cg;
+import autismclient.util.PlacedBlockTrailRenderer;
 import autismclient.util.ServerRotationTracker;
 import autismclient.util.ck;
 import autismclient.util.AsyncTraceLogger;
@@ -950,14 +950,14 @@ public final class ScaffoldModule extends Module {
          this.sync_Z = true;
       }
 
-      cg.init_V();
+      PlacedBlockTrailRenderer.init_V();
    }
 
    @Override
    public void onGameLeft() {
       this.load_V_Z(false);
       this.d_V();
-      cg.load(cg.Inner_DataUtil.SCAFFOLD);
+      PlacedBlockTrailRenderer.load(PlacedBlockTrailRenderer.Inner_DataUtil.SCAFFOLD);
    }
 
    @Override
@@ -989,7 +989,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void flush_V_5() {
-      cg.init(this.isEnabled() && this.bool("place-animation"), this.bool("animation-custom"), am.init_I_Module(this, "animation-color", -50373));
+      PlacedBlockTrailRenderer.init(this.isEnabled() && this.bool("place-animation"), this.bool("animation-custom"), am.init_I_Module(this, "animation-color", -50373));
    }
 
    @Override
@@ -1705,7 +1705,7 @@ public final class ScaffoldModule extends Module {
             }
 
             this.init_V_I_BlockPos(this.f_aM_I, cell);
-            cg.init(cell);
+            PlacedBlockTrailRenderer.init(cell);
             this.add_Str = "ok";
             this.init_V_Str_aI_TableIndex("settle-ok", pending);
             this.run_V();
@@ -6500,7 +6500,7 @@ public final class ScaffoldModule extends Module {
                   this.init_V_I_3(this.f_aM_I, placed, this.read_aI_TableIndex.init_BlockPos());
                }
 
-               cg.init(placed);
+               PlacedBlockTrailRenderer.init(placed);
                if (imperfection) {
                   this.init_aN.init_V();
                   this.open_Z = this.init_aN.init_Z();
@@ -16051,7 +16051,7 @@ public final class ScaffoldModule extends Module {
             } else {
                Compat263.swing(MC.player, hand);
                autismclient.util.ClickRateTracker.load_V();
-               cg.init(target.load());
+               PlacedBlockTrailRenderer.init(target.load());
                this.init_V_BlockPos_3(target.load(), placementLine, previousFallOff);
                boolean wasStackUsed = !stack.isEmpty() && (stack.getCount() != oldCount || MC.player.hasInfiniteMaterials());
                if (wasStackUsed) {

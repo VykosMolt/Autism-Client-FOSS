@@ -13,15 +13,15 @@ import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismProfilesOverlay;
 import autismclient.util.L;
 import autismclient.util.aJ;
-import autismclient.util.aS;
-import autismclient.util.aT;
+import autismclient.util.ScreenMacroStopWidget;
+import autismclient.util.CustomMainMenuGuard;
 import autismclient.util.bK;
-import autismclient.util.bk;
+import autismclient.util.OverlayManager;
 import autismclient.util.cA;
-import autismclient.util.cX;
-import autismclient.util.ct;
-import autismclient.util.cu;
-import autismclient.util.p;
+import autismclient.util.AutismOverlay;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.ThemeTextureRecolorer;
+import autismclient.util.UiColorPalette;
 import com.mojang.authlib.minecraft.BanDetails;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import com.mojang.realmsclient.RealmsMainScreen;
@@ -139,7 +139,7 @@ public class UtilCore extends Screen implements TaskQueue {
 
    @Override
    protected void init() {
-      if (!aT.init() && this.minecraft != null) {
+      if (!CustomMainMenuGuard.init() && this.minecraft != null) {
          this.minecraft.gui.setScreen(new TitleScreen());
       } else {
          this.sync_Z = true;
@@ -261,7 +261,7 @@ public class UtilCore extends Screen implements TaskQueue {
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-      if (aS.init_Z_Minecraft(this.minecraft) && (AutismLiteVariant.enabled() || autismclient.e.HashUtil.init())) {
+      if (ScreenMacroStopWidget.init_Z_Minecraft(this.minecraft) && (AutismLiteVariant.enabled() || autismclient.e.HashUtil.init())) {
          List<autismclient.gui.f.NetHelper> avoid = new ArrayList<>();
          avoid.add(autismclient.gui.f.NetHelper.init(this.put, this.add, this.clear, this.reset));
          if (this.flush_Z) {
@@ -277,7 +277,7 @@ public class UtilCore extends Screen implements TaskQueue {
          cA.init_V_GuiGraphicsExtract(graphics);
 
          try {
-            aS.init_V_GuiGraphicsExtract(graphics, this, mouseX, mouseY, avoid.toArray(new autismclient.gui.f.NetHelper[0]));
+            ScreenMacroStopWidget.init_V_GuiGraphicsExtract(graphics, this, mouseX, mouseY, avoid.toArray(new autismclient.gui.f.NetHelper[0]));
          } catch (Throwable var10) {
          } finally {
             cA.load_V_GuiGraphicsExtract(graphics);
@@ -299,7 +299,7 @@ public class UtilCore extends Screen implements TaskQueue {
       }
 
       String version = "Minecraft " + SharedConstants.getCurrentVersion().name();
-      graphics.text(this.font, version, 2, this.height - 10, p.init());
+      graphics.text(this.font, version, 2, this.height - 10, UiColorPalette.init());
    }
 
    private SplashRenderer init_SplashRenderer() {
@@ -598,9 +598,9 @@ public class UtilCore extends Screen implements TaskQueue {
       all.add(new UtilCore.Inner_TaskQueue("PROFILES", "", autismclient.gui.f.a.DataUtil.add, null, 32, () -> {
          if (!aD.read_Z()) {
             autismclient.modules.ModuleRuntimeManager mod = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-            cX overlay = mod == null ? null : mod.load_cX();
+            AutismOverlay overlay = mod == null ? null : mod.load_cX();
             if (overlay != null) {
-               bk.init_bk().init_V(overlay);
+               OverlayManager.init_bk().init_V(overlay);
                ((AutismProfilesOverlay)overlay).load(true);
                overlay.init_V_Z(true);
                this.minecraft.gui.setScreen(new AutismOverlaysScreen(overlay, this, true));
@@ -737,7 +737,7 @@ public class UtilCore extends Screen implements TaskQueue {
          int logoY = this.add + init_I_F(p) + Math.max(0, (this.reset - drawH) / 2);
          graphics.blit(
             RenderPipelines.GUI_TEXTURED,
-            cu.init(init_Identifier, ct.Inner_DataUtil.ACCENT),
+            ThemeTextureRecolorer.init(init_Identifier, ThemePaletteManager.Inner_DataUtil.ACCENT),
             logoX,
             logoY,
             0.0F,
@@ -1085,11 +1085,11 @@ public class UtilCore extends Screen implements TaskQueue {
       private void load(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
          boolean hovered = this.init_Z && this.init_Z_F_F(mouseX, mouseY);
          int yDraw = this.load_I + (this.update_Z ? UtilCore.init_I_F(p) : 0);
-         int border = ct.init_I_I_ct_DataUtil(this.init_Z ? -1721357268 : 1430596138, ct.Inner_DataUtil.OUTLINE);
+         int border = ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1721357268 : 1430596138, ThemePaletteManager.Inner_DataUtil.OUTLINE);
          autismclient.gui.f.PacketUtil.init(
             graphics,
             autismclient.gui.f.NetHelper.init(this.init_I, yDraw, this.read_I, this.write_I),
-            UtilCore.init(ct.init_I_I_ct_DataUtil(this.init_Z ? -1207302650 : -1873801200, ct.Inner_DataUtil.BUTTON), p),
+            UtilCore.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1207302650 : -1873801200, ThemePaletteManager.Inner_DataUtil.BUTTON), p),
             UtilCore.init(border, p)
          );
          float hoverT = autismclient.gui.f.DataUtil.init(
@@ -1128,7 +1128,7 @@ public class UtilCore extends Screen implements TaskQueue {
             int drawH = Math.max(1, Math.round(this.pop * scale));
             int textX = this.init_I + (this.read_I - drawW) / 2;
             int textY = yDraw + (this.write_I - drawH) / 2;
-            int textColor = UtilCore.init(ct.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ct.Inner_DataUtil.TEXT), p);
+            int textColor = UtilCore.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.Inner_DataUtil.TEXT), p);
             graphics.blit(
                RenderPipelines.GUI_TEXTURED,
                this.write_Identifier,
@@ -1146,7 +1146,7 @@ public class UtilCore extends Screen implements TaskQueue {
             );
          } else if (this.init_Component != null) {
             String text = this.init_Component.getString();
-            int textColor = UtilCore.init(ct.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ct.Inner_DataUtil.TEXT), p);
+            int textColor = UtilCore.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.Inner_DataUtil.TEXT), p);
             Identifier fontId = autismclient.gui.f.a.DataUtil.load;
             int textY = j.init(yDraw, this.write_I, k.init(fontId), 1);
             String drawText = text;
@@ -1157,7 +1157,7 @@ public class UtilCore extends Screen implements TaskQueue {
                int iconY = yDraw + (this.write_I - iconSize) / 2;
                graphics.blit(
                   RenderPipelines.GUI_TEXTURED,
-                  cu.init_Identifier(this.read_Identifier),
+                  ThemeTextureRecolorer.init_Identifier(this.read_Identifier),
                   iconX,
                   iconY,
                   0.0F,
@@ -1168,7 +1168,7 @@ public class UtilCore extends Screen implements TaskQueue {
                   this.flush,
                   this.sync,
                   this.flush,
-                  UtilCore.init(ct.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ct.Inner_DataUtil.TEXT), p)
+                  UtilCore.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.Inner_DataUtil.TEXT), p)
                );
                textX = iconX + iconSize + 4;
                int maxTextW = Math.max(1, this.init_I + this.read_I - 4 - textX);
@@ -1183,7 +1183,7 @@ public class UtilCore extends Screen implements TaskQueue {
 
          if (marker != null && !marker.isBlank()) {
             Identifier fontId = autismclient.gui.f.a.DataUtil.load;
-            int markerColor = UtilCore.init(this.init_Z ? ct.init_I_I_ct_DataUtil(-11052, ct.Inner_DataUtil.ACCENT) : -8362651, p);
+            int markerColor = UtilCore.init(this.init_Z ? ThemePaletteManager.init_I_I_ct_DataUtil(-11052, ThemePaletteManager.Inner_DataUtil.ACCENT) : -8362651, p);
             int markerW = k.init(UtilCore.this.font, marker, fontId, markerColor);
             int markerX = this.init_I + this.read_I - markerW - 6;
             int markerY = j.init(yDraw, this.write_I, k.init(fontId), 1);
@@ -1194,11 +1194,11 @@ public class UtilCore extends Screen implements TaskQueue {
       private void read(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
          boolean hovered = this.init_Z && this.init_Z_F_F(mouseX, mouseY);
          int yDraw = this.load_I + (this.update_Z ? UtilCore.init_I_F(p) : 0);
-         int border = ct.init_I_I_ct_DataUtil(-1721357268, ct.Inner_DataUtil.OUTLINE);
+         int border = ThemePaletteManager.init_I_I_ct_DataUtil(-1721357268, ThemePaletteManager.Inner_DataUtil.OUTLINE);
          autismclient.gui.f.PacketUtil.init(
             graphics,
             autismclient.gui.f.NetHelper.init(this.init_I, yDraw, this.read_I, this.write_I),
-            UtilCore.init(ct.init_I_I_ct_DataUtil(-1878391290, ct.Inner_DataUtil.BUTTON), p),
+            UtilCore.init(ThemePaletteManager.init_I_I_ct_DataUtil(-1878391290, ThemePaletteManager.Inner_DataUtil.BUTTON), p),
             UtilCore.init(border, p)
          );
          float hoverT = autismclient.gui.f.DataUtil.init(
@@ -1221,10 +1221,10 @@ public class UtilCore extends Screen implements TaskQueue {
             int iconSize = Math.min(this.close, Math.max(1, this.write_I - 6));
             int iconX = this.init_I + 5;
             int iconY = yDraw + (this.write_I - iconSize) / 2;
-            int tint = UtilCore.init(ct.init_I_I_ct_DataUtil(-528658, ct.Inner_DataUtil.TEXT), p);
+            int tint = UtilCore.init(ThemePaletteManager.init_I_I_ct_DataUtil(-528658, ThemePaletteManager.Inner_DataUtil.TEXT), p);
             graphics.blit(
                RenderPipelines.GUI_TEXTURED,
-               cu.init_Identifier(this.read_Identifier),
+               ThemeTextureRecolorer.init_Identifier(this.read_Identifier),
                iconX,
                iconY,
                0.0F,
@@ -1240,7 +1240,7 @@ public class UtilCore extends Screen implements TaskQueue {
             if (hoverT > 0.001F) {
                graphics.blit(
                   RenderPipelines.GUI_TEXTURED,
-                  cu.init_Identifier(this.read_Identifier),
+                  ThemeTextureRecolorer.init_Identifier(this.read_Identifier),
                   iconX,
                   iconY,
                   0.0F,
@@ -1266,11 +1266,11 @@ public class UtilCore extends Screen implements TaskQueue {
 
       private void write(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
          boolean hovered = this.init_Z && this.init_Z_F_F(mouseX, mouseY);
-         int border = ct.init_I_I_ct_DataUtil(this.init_Z ? -1721357268 : 1430596138, ct.Inner_DataUtil.OUTLINE);
+         int border = ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1721357268 : 1430596138, ThemePaletteManager.Inner_DataUtil.OUTLINE);
          autismclient.gui.f.PacketUtil.init(
             graphics,
             autismclient.gui.f.NetHelper.init(this.init_I, this.load_I, this.read_I, this.write_I),
-            UtilCore.init(ct.init_I_I_ct_DataUtil(this.init_Z ? -1727527675 : 1716523024, ct.Inner_DataUtil.BUTTON), p),
+            UtilCore.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -1727527675 : 1716523024, ThemePaletteManager.Inner_DataUtil.BUTTON), p),
             UtilCore.init(border, p)
          );
          float hoverT = autismclient.gui.f.DataUtil.init(
@@ -1294,10 +1294,10 @@ public class UtilCore extends Screen implements TaskQueue {
             int iconSize = Math.min(16, Math.max(12, this.write_I - 7));
             int iconX = this.init_I + (this.read_I - iconSize) / 2;
             int iconY = this.load_I + (this.write_I - iconSize) / 2;
-            int iconTint = UtilCore.init(ct.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ct.Inner_DataUtil.TEXT), p);
+            int iconTint = UtilCore.init(ThemePaletteManager.init_I_I_ct_DataUtil(this.init_Z ? -528658 : -8362651, ThemePaletteManager.Inner_DataUtil.TEXT), p);
             graphics.blit(
                RenderPipelines.GUI_TEXTURED,
-               cu.init_Identifier(this.init_Identifier),
+               ThemeTextureRecolorer.init_Identifier(this.init_Identifier),
                iconX,
                iconY,
                0.0F,

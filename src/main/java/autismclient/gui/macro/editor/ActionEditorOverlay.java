@@ -30,22 +30,22 @@ import autismclient.util.PayloadFieldCodec;
 import autismclient.util.bN;
 import autismclient.util.bO;
 import autismclient.util.bi;
-import autismclient.util.bj;
-import autismclient.util.bk;
+import autismclient.util.DraggableOverlayWindow;
+import autismclient.util.OverlayManager;
 import autismclient.util.ContainerClickSnapshot;
 import autismclient.util.PacketNameResolver;
 import autismclient.util.PacketTypeRegistry;
 import autismclient.util.cA;
-import autismclient.util.cH;
-import autismclient.util.cX;
+import autismclient.util.OverlayBounds;
+import autismclient.util.AutismOverlay;
 import autismclient.util.cY;
 import autismclient.util.cc;
 import autismclient.util.ck;
-import autismclient.util.ct;
-import autismclient.util.cx;
-import autismclient.util.k;
+import autismclient.util.ThemePaletteManager;
+import autismclient.util.OverlayScreenController;
+import autismclient.util.ThemedTextInputBox;
 import autismclient.util.MacroClipboardCodec;
-import autismclient.util.p;
+import autismclient.util.UiColorPalette;
 import autismclient.util.macro.MacroItemTarget;
 import autismclient.util.macro.CaptureOutputAction;
 import autismclient.util.macro.PayAction;
@@ -158,7 +158,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
-public class ActionEditorOverlay extends bj {
+public class ActionEditorOverlay extends DraggableOverlayWindow {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final int flush_I = 280;
    private static final int close_I = 184;
@@ -246,13 +246,13 @@ public class ActionEditorOverlay extends bj {
    private CompoundTag init_CompoundTag;
    private ActionFieldSchema init_ActionFieldSchema;
    private Runnable init_Runnable;
-   private final Map<String, k> init_Map = new LinkedHashMap<>();
+   private final Map<String, ThemedTextInputBox> init_Map = new LinkedHashMap<>();
    private final Map<String, Boolean> load_Map = new LinkedHashMap<>();
    private final Map<String, Integer> read_Map = new LinkedHashMap<>();
    private final Map<String, List<String>> write_Map = new LinkedHashMap<>();
    private final Map<String, MacroItemTarget> update_Map = new HashMap<>();
    private final Map<String, List<MacroItemTarget>> sync_Map = new HashMap<>();
-   private final Map<String, k> flush_Map = new LinkedHashMap<>();
+   private final Map<String, ThemedTextInputBox> flush_Map = new LinkedHashMap<>();
    private final Map<String, EventBus> close_Map = new HashMap<>();
    private final Map<String, Integer> open_Map = new HashMap<>();
    private final Map<String, String> poll_Map = new HashMap<>();
@@ -334,7 +334,7 @@ public class ActionEditorOverlay extends bj {
       "Misc / SAVE_GUI",
       "Misc / DESYNC"
    );
-   private List<cX> poll_List;
+   private List<AutismOverlay> poll_List;
    private final f init_f = new f(700L, 140.0F, 180.0F, 4, 4, 18);
    private List<autismclient.util.macro.CraftAction.Inner_DataUtil> push_List;
    private List<J.Inner_TaskQueue> pop_List;
@@ -460,7 +460,7 @@ public class ActionEditorOverlay extends bj {
    public static ActionEditorOverlay init_ActionEditorOverla_2() {
       if (init_ActionEditorOverla_4 == null) {
          init_ActionEditorOverla_4 = new ActionEditorOverlay(init_Minecraft.font);
-         bk.init_bk().init_V(init_ActionEditorOverla_4);
+         OverlayManager.init_bk().init_V(init_ActionEditorOverla_4);
       }
 
       return init_ActionEditorOverla_4;
@@ -638,7 +638,7 @@ public class ActionEditorOverlay extends bj {
       this.read(action);
       this.load_V_MacroAction(action);
       if (action instanceof UseItemAction useItemAction) {
-         k slotField = this.init_Map.get("slot");
+         ThemedTextInputBox slotField = this.init_Map.get("slot");
          if (slotField != null && useItemAction.slot < 0 && !this.init_CompoundTag.contains("slot")) {
             slotField.init_V_Str("");
          }
@@ -691,17 +691,17 @@ public class ActionEditorOverlay extends bj {
          this.init_MapStore.useCursorItemForPickupAll = ia.useCursorItemForPickupAll;
 
          for (int i = 0; i < this.init_MapStore.itemNames.size(); i++) {
-            k f = this.init_k_I(28);
+            ThemedTextInputBox f = this.init_k_I(28);
             f.poll(true);
             f.init_V_Str(String.valueOf(this.init_MapStore.init_I_I_3(i)));
             this.init_Map.put("item_times_" + i, f);
          }
 
-         k addF = this.init_k_I(120);
+         ThemedTextInputBox addF = this.init_k_I(120);
          addF.init_V_Component(Component.literal("Item name"));
          addF.init_V_Consumer(text -> this.close_V_2());
          this.flush_Map.put("_item_add", addF);
-         k addSlotF = this.init_k_I(52);
+         ThemedTextInputBox addSlotF = this.init_k_I(52);
          addSlotF.poll(true);
          addSlotF.init_V_Component(Component.literal("Slot"));
          addSlotF.init_V_Consumer(text -> this.close_V_2());
@@ -711,10 +711,10 @@ public class ActionEditorOverlay extends bj {
          this.load_Map.put("item_waitForItem", ia.waitForItem);
          this.load_Map.put("item_useCursorItemForPickupAll", ia.useCursorItemForPickupAll);
          this.load_Map.put("item_useClickDelay", ia.useClickDelay);
-         k guiF = this.init_k_I(80);
+         ThemedTextInputBox guiF = this.init_k_I(80);
          guiF.init_V_Str(ia.guiName != null ? ia.guiName : "");
          this.init_Map.put("item_guiName", guiF);
-         k delayF = this.init_k_I(60);
+         ThemedTextInputBox delayF = this.init_k_I(60);
          delayF.poll(true);
          delayF.init_V_Str(String.valueOf(Math.max(0, ia.clickDelayMs)));
          this.init_Map.put("item_clickDelayMs", delayF);
@@ -732,16 +732,16 @@ public class ActionEditorOverlay extends bj {
 
       if (action.getType() == MacroActionType.WAIT_SLOT_CHANGE) {
          this.load_Map.put("listenDuringPreviousAction", action.listensDuringPreviousAction());
-         k wscAddF = this.init_k_I(120);
+         ThemedTextInputBox wscAddF = this.init_k_I(120);
          wscAddF.init_V_Component(Component.literal("Item name (optional)"));
          wscAddF.init_V_Consumer(text -> this.scan());
          this.flush_Map.put("_wsc_add", wscAddF);
-         k wscSlotF = this.init_k_I(52);
+         ThemedTextInputBox wscSlotF = this.init_k_I(52);
          wscSlotF.poll(true);
          wscSlotF.init_V_Component(Component.literal("Slot #"));
          wscSlotF.init_V_Consumer(text -> this.scan());
          this.init_Map.put("wsc_slot", wscSlotF);
-         k wscCountF = this.init_k_I(36);
+         ThemedTextInputBox wscCountF = this.init_k_I(36);
          wscCountF.poll(true);
          wscCountF.init_V_Component(Component.literal("Count"));
          wscCountF.init_V_Consumer(text -> this.parse());
@@ -761,18 +761,18 @@ public class ActionEditorOverlay extends bj {
 
          for (int i = 0; i < this.push_List.size(); i++) {
             autismclient.util.macro.CraftAction.Inner_DataUtil entry = this.push_List.get(i);
-            k f = this.init_k_I(44);
+            ThemedTextInputBox f = this.init_k_I(44);
             f.poll(true);
             f.init_V_Str(String.valueOf(entry.read_I));
             this.init_Map.put("craft_amount_" + i, f);
             this.load_Map.put("craft_useMax_" + i, entry.init_Z);
          }
 
-         k amtF = this.init_k_I(44);
+         ThemedTextInputBox amtF = this.init_k_I(44);
          amtF.poll(true);
          amtF.init_V_Str("1");
          this.init_Map.put("_craft_amount", amtF);
-         k srchF = this.init_k_I(180);
+         ThemedTextInputBox srchF = this.init_k_I(180);
          srchF.init_V_Component(Component.literal("Search recipes..."));
          this.flush_Map.put("_craft_search", srchF);
          this.pop_List = J.init_List(init_Minecraft);
@@ -799,7 +799,7 @@ public class ActionEditorOverlay extends bj {
 
          this.f_z_I = 0;
          this.load_Map.put("listenDuringPreviousAction", packetMatchAction.listenDuringPreviousAction);
-         k valueField = this.init_k_I(120);
+         ThemedTextInputBox valueField = this.init_k_I(120);
          valueField.init_V_Component(Component.literal("Value"));
          this.init_Map.put("_wpm_value", valueField);
          this.z();
@@ -823,27 +823,27 @@ public class ActionEditorOverlay extends bj {
          }
 
          for (int i = 0; i < this.init_PacketUtil.itemNames.size(); i++) {
-            k f = this.init_k_I(32);
+            ThemedTextInputBox f = this.init_k_I(32);
             f.poll(true);
             f.init_V_Str(String.valueOf(this.init_PacketUtil.itemCounts.get(i)));
             this.init_Map.put("drop_count_" + i, f);
          }
 
-         k cntF = this.init_k_I(60);
+         ThemedTextInputBox cntF = this.init_k_I(60);
          cntF.poll(true);
          cntF.init_V_Str(String.valueOf(da.dropCount));
          cntF.init_V_Consumer(text -> this.prev_V());
          this.init_Map.put("drop_globalCount", cntF);
-         k addDropF = this.init_k_I(120);
+         ThemedTextInputBox addDropF = this.init_k_I(120);
          addDropF.init_V_Component(Component.literal("Item name..."));
          addDropF.init_V_Consumer(text -> this.stop_V());
          this.flush_Map.put("_drop_add", addDropF);
-         k addDropSlotF = this.init_k_I(52);
+         ThemedTextInputBox addDropSlotF = this.init_k_I(52);
          addDropSlotF.poll(true);
          addDropSlotF.init_V_Component(Component.literal("Slot"));
          addDropSlotF.init_V_Consumer(text -> this.stop_V());
          this.init_Map.put("drop_entrySlot", addDropSlotF);
-         k dropGuiF = this.init_k_I(80);
+         ThemedTextInputBox dropGuiF = this.init_k_I(80);
          dropGuiF.init_V_Str(da.guiName != null ? da.guiName : "");
          this.init_Map.put("drop_guiName", dropGuiF);
          this.load_Map.put("drop_waitForGuiBefore", da.waitForGuiBefore);
@@ -881,23 +881,23 @@ public class ActionEditorOverlay extends bj {
 
          for (int i = 0; i < this.clear_List.size(); i++) {
             WaitForLanStepAction.Inner_DataUtil e = this.clear_List.get(i);
-            k uf = this.init_k_I(80);
+            ThemedTextInputBox uf = this.init_k_I(80);
             uf.init_V_Str(e.init_Str);
             this.init_Map.put("lan_user_" + i, uf);
-            k sf = this.init_k_I(40);
+            ThemedTextInputBox sf = this.init_k_I(40);
             sf.poll(true);
             sf.init_V_Str(String.valueOf(e.init_I));
             this.init_Map.put("lan_step_" + i, sf);
          }
 
-         k newUF = this.init_k_I(80);
+         ThemedTextInputBox newUF = this.init_k_I(80);
          newUF.init_V_Component(Component.literal("Peer name..."));
          this.flush_Map.put("_lan_user_add", newUF);
-         k newSF = this.init_k_I(40);
+         ThemedTextInputBox newSF = this.init_k_I(40);
          newSF.poll(true);
          newSF.init_V_Str("1");
          this.flush_Map.put("_lan_step_add", newSF);
-         k dsF = this.init_k_I(60);
+         ThemedTextInputBox dsF = this.init_k_I(60);
          dsF.poll(true);
          dsF.init_V_Str(String.valueOf(wls.defaultStep));
          this.init_Map.put("lan_defaultStep", dsF);
@@ -907,35 +907,35 @@ public class ActionEditorOverlay extends bj {
 
       this.poll_Z = false;
       if (action instanceof WaitForSoundAction) {
-         k search = this.flush_Map.get("soundIds");
+         ThemedTextInputBox search = this.flush_Map.get("soundIds");
          if (search != null) {
             search.init_V_Component(Component.literal("Search sound id..."));
          }
       }
 
       if (action instanceof WaitForEntityAction) {
-         k search = this.flush_Map.get("entityIds");
+         ThemedTextInputBox search = this.flush_Map.get("entityIds");
          if (search != null) {
             search.init_V_Component(Component.literal("Search entity type..."));
          }
       }
 
       if (action instanceof LookAtBlockAction) {
-         k search = this.flush_Map.get("entityIds");
+         ThemedTextInputBox search = this.flush_Map.get("entityIds");
          if (search != null) {
             search.init_V_Component(Component.literal("Search entity type..."));
          }
       }
 
       if (action instanceof StoreItemAction) {
-         k search = this.flush_Map.get("targetItems");
+         ThemedTextInputBox search = this.flush_Map.get("targetItems");
          if (search != null) {
             search.init_V_Component(Component.literal("Search item id..."));
          }
       }
 
       if (action instanceof InventoryAuditAction) {
-         k search = this.flush_Map.get("targetItems");
+         ThemedTextInputBox search = this.flush_Map.get("targetItems");
          if (search != null) {
             search.init_V_Component(Component.literal("Item name"));
          }
@@ -946,7 +946,7 @@ public class ActionEditorOverlay extends bj {
       this.set_Map.clear();
       this.state_Z = false;
       if (action instanceof PayAction) {
-         k search = this.flush_Map.get("players");
+         ThemedTextInputBox search = this.flush_Map.get("players");
          if (search != null) {
             search.init_V_Component(Component.literal("Search or add player..."));
          }
@@ -955,7 +955,7 @@ public class ActionEditorOverlay extends bj {
       this.stop_List.clear();
       this.prev_List = null;
       if (action instanceof ak) {
-         k search = this.init_k_I(180);
+         ThemedTextInputBox search = this.init_k_I(180);
          search.init_V_Component(Component.literal("Search module..."));
          this.flush_Map.put("_toggle_module_search", search);
          this.c();
@@ -970,15 +970,15 @@ public class ActionEditorOverlay extends bj {
       }
 
       if (action instanceof WaitForChatAction) {
-         k search = this.init_k_I(180);
+         ThemedTextInputBox search = this.init_k_I(180);
          search.init_V_Component(Component.literal("Search recent chat..."));
          this.flush_Map.put("_wait_chat_search", search);
-         k captureName = this.init_k_I(100);
+         ThemedTextInputBox captureName = this.init_k_I(100);
          captureName.init_V_Component(Component.literal("Variable name"));
          this.flush_Map.put("_capture_name", captureName);
          this.size_Z = false;
          this.h();
-         k patternField = this.init_Map.get("pattern");
+         ThemedTextInputBox patternField = this.init_Map.get("pattern");
          if (patternField != null) {
             patternField.load(true);
             patternField.sync(40);
@@ -1013,18 +1013,18 @@ public class ActionEditorOverlay extends bj {
       }
 
       if (action instanceof WaitForGuiAction) {
-         k captureName = this.init_k_I(100);
+         ThemedTextInputBox captureName = this.init_k_I(100);
          captureName.init_V_Component(Component.literal("Variable name"));
          this.flush_Map.put("_capture_name", captureName);
       }
 
       if (action instanceof autismclient.util.macro.CaptureValueAction) {
-         k token = this.init_k_I(180);
+         ThemedTextInputBox token = this.init_k_I(180);
          token.open(false);
          token.update(false);
          token.init_V_Component(Component.literal("Set a variable name"));
          this.flush_Map.put("_capture_token", token);
-         k preview = this.init_k_I(180);
+         ThemedTextInputBox preview = this.init_k_I(180);
          preview.open(false);
          preview.update(false);
          preview.init_V_Component(Component.literal("Nothing available now"));
@@ -1034,7 +1034,7 @@ public class ActionEditorOverlay extends bj {
          this.pop_Z = false;
 
          for (String key : List.of("saveAs", "exampleText", "selectedText")) {
-            k field = this.init_Map.get(key);
+            ThemedTextInputBox field = this.init_Map.get(key);
             if (field != null) {
                field.init_V_Consumer(ignored -> this.e());
             }
@@ -1048,7 +1048,7 @@ public class ActionEditorOverlay extends bj {
          this.data_Z = false;
          this.i();
          RotateAction rotateAction = (RotateAction)action;
-         k smoothnessField = this.init_Map.get("smoothness");
+         ThemedTextInputBox smoothnessField = this.init_Map.get("smoothness");
          int smoothness = RotateAction.init_I(rotateAction.smoothness);
          this.init_CompoundTag.putInt("smoothness", smoothness);
          if (smoothnessField != null) {
@@ -1057,7 +1057,7 @@ public class ActionEditorOverlay extends bj {
       } else if (action instanceof LookAtBlockAction lookAtAction) {
          this.data_Z = false;
          this.i();
-         k smoothnessField = this.init_Map.get("smoothness");
+         ThemedTextInputBox smoothnessField = this.init_Map.get("smoothness");
          int smoothness = RotateAction.init_I(lookAtAction.smoothness);
          this.init_CompoundTag.putInt("smoothness", smoothness);
          if (smoothnessField != null) {
@@ -1071,7 +1071,7 @@ public class ActionEditorOverlay extends bj {
       if (action instanceof XCarryAction xCarryAction) {
          this.value_Z = false;
          this.j();
-         k delayField = this.init_Map.get("safeClickDelayTicks");
+         ThemedTextInputBox delayField = this.init_Map.get("safeClickDelayTicks");
          int safeDelay = XCarryAction.write(xCarryAction.safeClickDelayTicks);
          this.init_CompoundTag.putInt("safeClickDelayTicks", safeDelay);
          this.init_CompoundTag.putBoolean("safeClickDelayAfterPickup", xCarryAction.safeClickDelayAfterPickup);
@@ -1097,7 +1097,7 @@ public class ActionEditorOverlay extends bj {
       this.store();
       this.node();
       if (action.getType() == MacroActionType.PLACE) {
-         k slotF = this.init_k_I(52);
+         ThemedTextInputBox slotF = this.init_k_I(52);
          slotF.poll(true);
          slotF.init_V_Component(Component.literal("Slot"));
          slotF.init_V_Consumer(text -> this.table());
@@ -1116,13 +1116,13 @@ public class ActionEditorOverlay extends bj {
             slotF.init_V_Str(placeTarget.init_Z() ? String.valueOf(placeTarget.init_I) : "");
          }
 
-         k nameF = this.init_Map.get("itemName");
+         ThemedTextInputBox nameF = this.init_Map.get("itemName");
          if (nameF != null) {
             nameF.init_V_Consumer(text -> this.table());
          }
 
          if (action instanceof PlaceAction placeAction && placeAction.blockPos != null) {
-            autismclient.util.au.init(placeAction.blockPos, -50373);
+            autismclient.util.BlockPreviewRenderer.init(placeAction.blockPos, -50373);
          }
       }
 
@@ -1134,7 +1134,7 @@ public class ActionEditorOverlay extends bj {
       int maxH = Math.max(minH, cA.load_I() * 4 / 5);
       this.f_c_I = Math.max(minH, Math.min(maxH, desiredH));
       this.write_Z = true;
-      bk.init_bk().update_V(this);
+      OverlayManager.init_bk().update_V(this);
    }
 
    public void init_V_H(PayloadAction action) {
@@ -1152,7 +1152,7 @@ public class ActionEditorOverlay extends bj {
          return false;
       }
 
-      k channelField = this.init_Map.get("payload_channel");
+      ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
       if (channelField == null) {
          return false;
       }
@@ -1171,7 +1171,7 @@ public class ActionEditorOverlay extends bj {
             this.init_H.channel = target;
          }
 
-         k contentField = this.init_Map.get("payload_content");
+         ThemedTextInputBox contentField = this.init_Map.get("payload_content");
          if (contentField != null) {
             contentField.init_V_Str(this.init_Str_Str_Str(contentField.load_Str(), target));
          }
@@ -1182,7 +1182,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       this.fill();
-      bk.init_bk().update_V(this);
+      OverlayManager.init_bk().update_V(this);
       return true;
    }
 
@@ -1265,13 +1265,13 @@ public class ActionEditorOverlay extends bj {
    }
 
    @Override
-   public cH init_cH() {
-      return new cH(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z);
+   public OverlayBounds init_cH() {
+      return new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z);
    }
 
    @Override
-   public void init_V_cH(cH b) {
-      cH c = this.init_cH_cX_cH(this, b);
+   public void init_V_cH(OverlayBounds b) {
+      OverlayBounds c = this.init_cH_cX_cH(this, b);
       this.bind = c.init_I;
       this.f_a_I = c.load_I;
       this.f_b_I = c.read;
@@ -1316,13 +1316,13 @@ public class ActionEditorOverlay extends bj {
          return true;
       }
 
-      for (k f : this.init_Map.values()) {
+      for (ThemedTextInputBox f : this.init_Map.values()) {
          if (f.init_Z()) {
             return true;
          }
       }
 
-      for (k f : this.flush_Map.values()) {
+      for (ThemedTextInputBox f : this.flush_Map.values()) {
          if (f.init_Z()) {
             return true;
          }
@@ -1472,8 +1472,8 @@ public class ActionEditorOverlay extends bj {
             }
 
             if ("itemName".equals(key) && this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.USE_ITEM) {
-               k itemField = this.init_Map.get("itemName");
-               k slotField = this.init_Map.get("slot");
+               ThemedTextInputBox itemField = this.init_Map.get("itemName");
+               ThemedTextInputBox slotField = this.init_Map.get("slot");
                if (capturedTarget.update()) {
                   MacroItemTarget nameOnly = init_ArrayUtil_ArrayUtil(capturedTarget);
                   if (itemField != null) {
@@ -1537,7 +1537,7 @@ public class ActionEditorOverlay extends bj {
 
                return true;
             } else {
-               k tf = this.init_Map.get(key);
+               ThemedTextInputBox tf = this.init_Map.get(key);
                if (tf == null) {
                   return false;
                }
@@ -1596,13 +1596,13 @@ public class ActionEditorOverlay extends bj {
             this.f_c_I = Math.max(minH, Math.min(maxH, neededH));
          }
 
-         cH clamped = this.init_cH_cX_cH(this, new cH(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z));
+         OverlayBounds clamped = this.init_cH_cX_cH(this, new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z));
          this.bind = clamped.init_I;
          this.f_a_I = clamped.load_I;
          this.f_b_I = clamped.read;
          this.f_c_I = clamped.write;
          String title = this.start_Str();
-         cH bounds = this.init_cH();
+         OverlayBounds bounds = this.init_cH();
          this.init_V_GuiGraphicsExtract_6(context, mouseX, mouseY, bounds, title, this.load_Z, this.update_Z);
          boolean clipBody = this.init_Z_GuiGraphicsExtract(context, bounds, this.load_Z);
          if (clipBody) {
@@ -1894,9 +1894,9 @@ public class ActionEditorOverlay extends bj {
                   BlockPos previewPos = null;
 
                   try {
-                     k fx = this.init_Map.get("blockPos_0");
-                     k fy = this.init_Map.get("blockPos_1");
-                     k fz = this.init_Map.get("blockPos_2");
+                     ThemedTextInputBox fx = this.init_Map.get("blockPos_0");
+                     ThemedTextInputBox fy = this.init_Map.get("blockPos_1");
+                     ThemedTextInputBox fz = this.init_Map.get("blockPos_2");
                      if (fx != null && fy != null && fz != null) {
                         String sx = fx.load_Str().strip();
                         String sy = fy.load_Str().strip();
@@ -1913,11 +1913,11 @@ public class ActionEditorOverlay extends bj {
                   }
 
                   if (previewPos != null) {
-                     autismclient.util.au.init(previewPos, -50373);
+                     autismclient.util.BlockPreviewRenderer.init(previewPos, -50373);
                   }
 
                   Identifier placeFont = this.init_CharEncoder.init_Identifier_l(l.read);
-                  autismclient.gui.f.b.k.init(context, this.init_Font, "Item", placeFont, p.parse(), x, y + 2, false);
+                  autismclient.gui.f.b.k.init(context, this.init_Font, "Item", placeFont, UiColorPalette.parse(), x, y + 2, false);
                   y += 13;
                   this.poll(context, x, y, w, mouseX, mouseY, delta);
                   y += 20;
@@ -1998,7 +1998,7 @@ public class ActionEditorOverlay extends bj {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       int cy = bodyTop + 4;
       int headerBtnW = this.write_I("Clear");
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Items / Exact Slots (" + this.init_MapStore.itemNames.size() + ")", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Items / Exact Slots (" + this.init_MapStore.itemNames.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       boolean canClearAll = !this.init_MapStore.itemNames.isEmpty();
       int clearX = x + w - headerBtnW;
       this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClearAll, mx, my, () -> {
@@ -2124,14 +2124,14 @@ public class ActionEditorOverlay extends bj {
       }
 
       cy += selAreaH;
-      TableIndex.init(ctx, x, cy + 2, w, p.c());
+      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
       int addPickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
       String addLbl = this.f_j_I >= 0 ? "New" : "+Add";
       int addBtnW = this.write_I(addLbl);
       int slotW = 26;
-      k addF = this.flush_Map.get("_item_add");
-      k entrySlotF = this.init_Map.get("item_entrySlot");
+      ThemedTextInputBox addF = this.flush_Map.get("_item_add");
+      ThemedTextInputBox entrySlotF = this.init_Map.get("item_entrySlot");
       if (addF != null && entrySlotF != null) {
          int pickX = x + w - addBtnW - 3 - addPickW;
          int plusX = x + w - addBtnW;
@@ -2225,7 +2225,7 @@ public class ActionEditorOverlay extends bj {
             );
          }
 
-         k tf = this.init_Map.get("item_times_" + this.f_j_I);
+         ThemedTextInputBox tf = this.init_Map.get("item_times_" + this.f_j_I);
          if (tf != null) {
             tf.read(x + editActW + editGap + editBtnW + editGap);
             tf.write(cy);
@@ -2243,12 +2243,12 @@ public class ActionEditorOverlay extends bj {
       this.load(ctx, font, "item_waitForGuiBefore", "item_waitForGuiAfter", x, cy, w, mx, my);
       cy += 16;
       if (!this.load_Map.getOrDefault("item_waitForGuiBefore", false) && !this.load_Map.getOrDefault("item_waitForGuiAfter", false)) {
-         k guiF = this.init_Map.get("item_guiName");
+         ThemedTextInputBox guiF = this.init_Map.get("item_guiName");
          if (guiF != null) {
             guiF.read(-1000);
          }
       } else {
-         k guiF = this.init_Map.get("item_guiName");
+         ThemedTextInputBox guiF = this.init_Map.get("item_guiName");
          if (guiF != null) {
             int lw = this.init_I_I(w, "GUI Name", font);
             this.init_V_GuiGraphicsExtract_3(ctx, "GUI Name", x, cy, lw, font);
@@ -2266,7 +2266,7 @@ public class ActionEditorOverlay extends bj {
       this.init_V_GuiGraphicsExtract_2(ctx, font, "item_useClickDelay", "Delay Clicks", x, cy, w, mx, my);
       cy += 16;
       if (this.load_Map.getOrDefault("item_useClickDelay", false)) {
-         k delayF = this.init_Map.get("item_clickDelayMs");
+         ThemedTextInputBox delayF = this.init_Map.get("item_clickDelayMs");
          if (delayF != null) {
             int lw = this.init_I_I(w, "Delay (ms)", font);
             this.init_V_GuiGraphicsExtract_3(ctx, "Delay (ms)", x, cy, lw, font);
@@ -2278,7 +2278,7 @@ public class ActionEditorOverlay extends bj {
 
          cy += 16;
       } else {
-         k delayF = this.init_Map.get("item_clickDelayMs");
+         ThemedTextInputBox delayF = this.init_Map.get("item_clickDelayMs");
          if (delayF != null) {
             delayF.read(-1000);
          }
@@ -2363,7 +2363,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       int idx = this.init_MapStore.itemNames.size() - 1;
-      k f = this.init_k_I(28);
+      ThemedTextInputBox f = this.init_k_I(28);
       f.poll(true);
       f.init_V_Str("1");
       this.init_Map.put("item_times_" + idx, f);
@@ -2402,7 +2402,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       for (int i = 0; i < this.init_MapStore.itemNames.size(); i++) {
-         k f = this.init_k_I(28);
+         ThemedTextInputBox f = this.init_k_I(28);
          f.poll(true);
          f.init_V_Str(String.valueOf(this.init_MapStore.init_I_I_3(i)));
          this.init_Map.put("item_times_" + i, f);
@@ -2420,13 +2420,13 @@ public class ActionEditorOverlay extends bj {
 
    private void update_V_3() {
       this.f_j_I = -1;
-      k addF = this.flush_Map.get("_item_add");
+      ThemedTextInputBox addF = this.flush_Map.get("_item_add");
       this.stop_Z = true;
       if (addF != null) {
          addF.init_V_Str("");
       }
 
-      k slotF = this.init_Map.get("item_entrySlot");
+      ThemedTextInputBox slotF = this.init_Map.get("item_entrySlot");
       if (slotF != null) {
          slotF.init_V_Str("");
       }
@@ -2435,8 +2435,8 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void sync_V_2() {
-      k addF = this.flush_Map.get("_item_add");
-      k slotF = this.init_Map.get("item_entrySlot");
+      ThemedTextInputBox addF = this.flush_Map.get("_item_add");
+      ThemedTextInputBox slotF = this.init_Map.get("item_entrySlot");
       if (addF != null && slotF != null) {
          this.stop_Z = true;
          if (this.f_j_I >= 0 && this.f_j_I < this.init_MapStore.itemNames.size()) {
@@ -2464,8 +2464,8 @@ public class ActionEditorOverlay extends bj {
 
    private void flush(boolean preserveSelection) {
       if (this.init_MapStore != null) {
-         k addF = this.flush_Map.get("_item_add");
-         k slotF = this.init_Map.get("item_entrySlot");
+         ThemedTextInputBox addF = this.flush_Map.get("_item_add");
+         ThemedTextInputBox slotF = this.init_Map.get("item_entrySlot");
          if (addF != null && slotF != null) {
             String nameText = addF.load_Str().strip();
             String slotText = slotF.load_Str().strip();
@@ -2507,7 +2507,7 @@ public class ActionEditorOverlay extends bj {
             }
 
             this.f_j_I = targetIndex;
-            k addF = this.flush_Map.get("_item_add");
+            ThemedTextInputBox addF = this.flush_Map.get("_item_add");
             if (addF != null) {
                addF.init_V_Str(target.init_Str());
             }
@@ -2561,7 +2561,7 @@ public class ActionEditorOverlay extends bj {
       int amountW = 44;
       int headerBtnW = this.write_I("Clear");
       int cy = bodyTop + 4;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Craft Entries (" + this.push_List.size() + ")", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Craft Entries (" + this.push_List.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       boolean canClearEntries = !this.push_List.isEmpty();
       this.init_ByteReader_GuiGraphicsExtract_2(
          ctx, x + w - headerBtnW, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClearEntries, mx, my, () -> {
@@ -2616,7 +2616,7 @@ public class ActionEditorOverlay extends bj {
                );
                if (!useMax) {
                   int amtX = maxX - 3 - amountW;
-                  k af = this.init_Map.get("craft_amount_" + i);
+                  ThemedTextInputBox af = this.init_Map.get("craft_amount_" + i);
                   if (af != null) {
                      af.read(amtX);
                      af.write(siy + 1);
@@ -2646,10 +2646,10 @@ public class ActionEditorOverlay extends bj {
       }
 
       cy += selAreaH;
-      TableIndex.init(ctx, x, cy + 2, w, p.c());
+      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
       int refreshW = this.write_I("Reload");
-      k srchF = this.flush_Map.get("_craft_search");
+      ThemedTextInputBox srchF = this.flush_Map.get("_craft_search");
       if (srchF != null) {
          srchF.read(x);
          srchF.write(cy);
@@ -2706,7 +2706,7 @@ public class ActionEditorOverlay extends bj {
                );
                if (opt.init_ItemStack != null && opt.init_ItemStack.getCount() > 1) {
                   String cnt = "×" + opt.init_ItemStack.getCount();
-                  autismclient.gui.f.b.k.init(ctx, this.init_Font, cnt, font, p.bind(), x + recW - this.init_I_Identifier_Str(font, cnt) - 2, ry + 2, false);
+                  autismclient.gui.f.b.k.init(ctx, this.init_Font, cnt, font, UiColorPalette.bind(), x + recW - this.init_I_Identifier_Str(font, cnt) - 2, ry + 2, false);
                }
 
                J.Inner_TaskQueue fOpt = opt;
@@ -2719,7 +2719,7 @@ public class ActionEditorOverlay extends bj {
                      autismclient.util.macro.CraftAction.Inner_DataUtil newEntry = autismclient.util.macro.CraftAction.Inner_DataUtil.init(fOpt, 1, false);
                      this.push_List.add(newEntry);
                      int idx = this.push_List.size() - 1;
-                     k f = this.init_k_I(44);
+                     ThemedTextInputBox f = this.init_k_I(44);
                      f.poll(true);
                      f.init_V_Str("1");
                      this.init_Map.put("craft_amount_" + idx, f);
@@ -2742,7 +2742,7 @@ public class ActionEditorOverlay extends bj {
 
    private void poll_V_2() {
       if (this.init_J_TaskQueue != null) {
-         k amtF = this.init_Map.get("_craft_amount");
+         ThemedTextInputBox amtF = this.init_Map.get("_craft_amount");
          int amount = 1;
          if (amtF != null && !this.tick_Z) {
             try {
@@ -2761,7 +2761,7 @@ public class ActionEditorOverlay extends bj {
                existing.read_I = newEntry.read_I;
                existing.init_Z = newEntry.init_Z;
                this.load_Map.put("craft_useMax_" + i, newEntry.init_Z);
-               k f = this.init_Map.get("craft_amount_" + i);
+               ThemedTextInputBox f = this.init_Map.get("craft_amount_" + i);
                if (f != null) {
                   f.init_V_Str(String.valueOf(newEntry.read_I));
                }
@@ -2772,7 +2772,7 @@ public class ActionEditorOverlay extends bj {
 
          this.push_List.add(newEntry);
          int idx = this.push_List.size() - 1;
-         k f = this.init_k_I(44);
+         ThemedTextInputBox f = this.init_k_I(44);
          f.poll(true);
          f.init_V_Str(String.valueOf(newEntry.read_I));
          this.init_Map.put("craft_amount_" + idx, f);
@@ -2785,7 +2785,7 @@ public class ActionEditorOverlay extends bj {
 
       for (int i = 0; i < this.push_List.size(); i++) {
          autismclient.util.macro.CraftAction.Inner_DataUtil entry = this.push_List.get(i);
-         k f = this.init_k_I(44);
+         ThemedTextInputBox f = this.init_k_I(44);
          f.poll(true);
          f.init_V_Str(String.valueOf(entry.read_I));
          this.init_Map.put("craft_amount_" + i, f);
@@ -2812,7 +2812,7 @@ public class ActionEditorOverlay extends bj {
       int cy = bodyTop + 4;
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "packetOrder", x, cy, w, mx, my, delta);
       int headerBtnW = this.write_I("Clear");
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Drop Entries (" + this.init_PacketUtil.itemNames.size() + ")", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Drop Entries (" + this.init_PacketUtil.itemNames.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       boolean canClearAll = !this.init_PacketUtil.itemNames.isEmpty();
       int clearX = x + w - headerBtnW;
       this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClearAll, mx, my, () -> {
@@ -2900,14 +2900,14 @@ public class ActionEditorOverlay extends bj {
       }
 
       cy += selAreaH;
-      TableIndex.init(ctx, x, cy + 2, w, p.c());
+      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
       int addPickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
       String addLbl = this.f_k_I >= 0 ? "New" : "+Add";
       int addBtnW = this.write_I(addLbl);
       int slotW = 44;
-      k addF = this.flush_Map.get("_drop_add");
-      k entrySlotF = this.init_Map.get("drop_entrySlot");
+      ThemedTextInputBox addF = this.flush_Map.get("_drop_add");
+      ThemedTextInputBox entrySlotF = this.init_Map.get("drop_entrySlot");
       if (addF != null && entrySlotF != null) {
          int pickX = x + w - addBtnW - 3 - addPickW;
          int plusX = x + w - addBtnW;
@@ -2999,7 +2999,7 @@ public class ActionEditorOverlay extends bj {
          }
       );
       cy += 16;
-      k cntF = this.init_Map.get("drop_globalCount");
+      ThemedTextInputBox cntF = this.init_Map.get("drop_globalCount");
       this.next_V();
       if (cntF != null) {
          modeLabel = editingSelectedDrop ? "Selected Count" : (noDropTargets ? "Held Count" : "Default Count");
@@ -3015,12 +3015,12 @@ public class ActionEditorOverlay extends bj {
       this.load(ctx, font, "drop_waitForGuiBefore", "drop_waitForGuiAfter", x, cy, w, mx, my);
       cy += 16;
       if (!this.load_Map.getOrDefault("drop_waitForGuiBefore", false) && !this.load_Map.getOrDefault("drop_waitForGuiAfter", false)) {
-         k guiF = this.init_Map.get("drop_guiName");
+         ThemedTextInputBox guiF = this.init_Map.get("drop_guiName");
          if (guiF != null) {
             guiF.read(-1000);
          }
       } else {
-         k guiF = this.init_Map.get("drop_guiName");
+         ThemedTextInputBox guiF = this.init_Map.get("drop_guiName");
          if (guiF != null) {
             lw = this.init_I_I(w, "GUI Name", font);
             this.init_V_GuiGraphicsExtract_3(ctx, "GUI Name", x, cy, lw, font);
@@ -3042,7 +3042,7 @@ public class ActionEditorOverlay extends bj {
             int safeCount = Math.max(0, count);
             this.init_PacketUtil.itemCounts.add(safeCount);
             int idx = this.init_PacketUtil.itemNames.size() - 1;
-            k f = this.init_k_I(32);
+            ThemedTextInputBox f = this.init_k_I(32);
             f.poll(true);
             f.init_V_Str(String.valueOf(safeCount));
             int fieldIndex = idx;
@@ -3069,7 +3069,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       for (int i = 0; i < this.init_PacketUtil.itemNames.size(); i++) {
-         k f = this.init_k_I(32);
+         ThemedTextInputBox f = this.init_k_I(32);
          f.poll(true);
          f.init_V_Str(String.valueOf(this.init_PacketUtil.itemCounts.get(i)));
          int fieldIndex = i;
@@ -3098,13 +3098,13 @@ public class ActionEditorOverlay extends bj {
 
    private void add_V_2() {
       this.f_k_I = -1;
-      k addF = this.flush_Map.get("_drop_add");
+      ThemedTextInputBox addF = this.flush_Map.get("_drop_add");
       this.next_Z = true;
       if (addF != null) {
          addF.init_V_Str("");
       }
 
-      k slotF = this.init_Map.get("drop_entrySlot");
+      ThemedTextInputBox slotF = this.init_Map.get("drop_entrySlot");
       if (slotF != null) {
          slotF.init_V_Str("");
       }
@@ -3114,8 +3114,8 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void clear_V() {
-      k addF = this.flush_Map.get("_drop_add");
-      k slotF = this.init_Map.get("drop_entrySlot");
+      ThemedTextInputBox addF = this.flush_Map.get("_drop_add");
+      ThemedTextInputBox slotF = this.init_Map.get("drop_entrySlot");
       if (addF != null && slotF != null) {
          this.next_Z = true;
          if (this.f_k_I >= 0 && this.f_k_I < this.init_PacketUtil.itemNames.size()) {
@@ -3144,8 +3144,8 @@ public class ActionEditorOverlay extends bj {
 
    private void close(boolean preserveSelection) {
       if (this.init_PacketUtil != null) {
-         k addF = this.flush_Map.get("_drop_add");
-         k slotF = this.init_Map.get("drop_entrySlot");
+         ThemedTextInputBox addF = this.flush_Map.get("_drop_add");
+         ThemedTextInputBox slotF = this.init_Map.get("drop_entrySlot");
          if (addF != null && slotF != null) {
             String nameText = addF.load_Str().strip();
             String slotText = slotF.load_Str().strip();
@@ -3194,7 +3194,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private int pop_I_2() {
-      k globalCountField = this.init_Map.get("drop_globalCount");
+      ThemedTextInputBox globalCountField = this.init_Map.get("drop_globalCount");
       if (this.f_k_I >= 0 && this.f_k_I < this.init_PacketUtil.itemCounts.size()) {
          return Math.max(0, this.init_PacketUtil.itemCounts.get(this.f_k_I));
       }
@@ -3233,7 +3233,7 @@ public class ActionEditorOverlay extends bj {
 
          int safeCount = Math.max(0, count);
          this.init_PacketUtil.itemCounts.set(index, safeCount);
-         k rowField = this.init_Map.get("drop_count_" + index);
+         ThemedTextInputBox rowField = this.init_Map.get("drop_count_" + index);
          if (rowField != null) {
             rowField.init_V_Str(String.valueOf(safeCount));
          }
@@ -3242,7 +3242,7 @@ public class ActionEditorOverlay extends bj {
 
    private void next_V() {
       if (this.init_PacketUtil != null) {
-         k countField = this.init_Map.get("drop_globalCount");
+         ThemedTextInputBox countField = this.init_Map.get("drop_globalCount");
          if (countField != null) {
             boolean editingSelectedDrop = this.f_k_I >= 0 && this.f_k_I < this.init_PacketUtil.itemNames.size();
             boolean dropAll = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == DropAction.Inner_DataUtil.ALL;
@@ -3257,7 +3257,7 @@ public class ActionEditorOverlay extends bj {
 
    private void prev_V() {
       if (!this.valid_Z && this.init_PacketUtil != null) {
-         k countField = this.init_Map.get("drop_globalCount");
+         ThemedTextInputBox countField = this.init_Map.get("drop_globalCount");
          if (countField != null) {
             boolean editingSelectedDrop = this.f_k_I >= 0 && this.f_k_I < this.init_PacketUtil.itemNames.size();
             boolean dropAll = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == DropAction.Inner_DataUtil.ALL;
@@ -3284,7 +3284,7 @@ public class ActionEditorOverlay extends bj {
       cy += 16;
       this.init_V_GuiGraphicsExtract_2(ctx, font, "lan_filterByUser", "Specific Peers", x, cy, w, mx, my);
       cy += 16;
-      k dsF = this.init_Map.get("lan_defaultStep");
+      ThemedTextInputBox dsF = this.init_Map.get("lan_defaultStep");
       if (dsF != null && (!filterByUser || this.clear_List.isEmpty())) {
          int lw = this.init_I_I(w, filterByUser ? "Fallback Step" : "Any Peer Step", font);
          this.init_V_GuiGraphicsExtract_3(ctx, filterByUser ? "Fallback Step" : "Any Peer Step", x, cy, lw, font);
@@ -3305,7 +3305,7 @@ public class ActionEditorOverlay extends bj {
       cy = this.init_I_GuiGraphicsExtract(ctx, x, cy, w, summary);
       if (filterByUser) {
          if (!this.clear_List.isEmpty()) {
-            autismclient.gui.f.b.k.init(ctx, this.init_Font, "Peers (" + this.clear_List.size() + ")", font, p.parse(), x, cy + 2, false);
+            autismclient.gui.f.b.k.init(ctx, this.init_Font, "Peers (" + this.clear_List.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
             cy += 13;
          }
 
@@ -3337,7 +3337,7 @@ public class ActionEditorOverlay extends bj {
                int iy = lanViewport.init_I(i);
                if (iy != -2147483648) {
                   TableIndex.read(ctx, x, iy, stepX - gapPx - x, 13);
-                  k uf = this.init_Map.get("lan_user_" + i);
+                  ThemedTextInputBox uf = this.init_Map.get("lan_user_" + i);
                   if (uf != null) {
                      uf.read(x);
                      uf.write(iy + 1);
@@ -3345,7 +3345,7 @@ public class ActionEditorOverlay extends bj {
                      uf.init_V(ctx, mx, my, delta);
                   }
 
-                  k sf = this.init_Map.get("lan_step_" + i);
+                  ThemedTextInputBox sf = this.init_Map.get("lan_step_" + i);
                   if (sf != null) {
                      sf.read(stepX);
                      sf.write(iy + 1);
@@ -3371,11 +3371,11 @@ public class ActionEditorOverlay extends bj {
          }
 
          cy += selAreaH;
-         TableIndex.init(ctx, x, cy + 2, w, p.c());
+         TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
          cy += 6;
          int addBtnW = this.write_I("+Add");
-         k newUF = this.flush_Map.get("_lan_user_add");
-         k newSF = this.flush_Map.get("_lan_step_add");
+         ThemedTextInputBox newUF = this.flush_Map.get("_lan_user_add");
+         ThemedTextInputBox newSF = this.flush_Map.get("_lan_step_add");
          if (newUF != null && newSF != null) {
             int plusX = x + w - addBtnW;
             int stepAX = plusX - 3 - stepW;
@@ -3399,10 +3399,10 @@ public class ActionEditorOverlay extends bj {
 
                this.clear_List.add(new WaitForLanStepAction.Inner_DataUtil(uname, step));
                int idx = this.clear_List.size() - 1;
-               k uf2 = this.init_k_I(80);
+               ThemedTextInputBox uf2 = this.init_k_I(80);
                uf2.init_V_Str(uname);
                this.init_Map.put("lan_user_" + idx, uf2);
-               k sf2 = this.init_k_I(40);
+               ThemedTextInputBox sf2 = this.init_k_I(40);
                sf2.poll(true);
                sf2.init_V_Str(String.valueOf(step));
                this.init_Map.put("lan_step_" + idx, sf2);
@@ -3418,10 +3418,10 @@ public class ActionEditorOverlay extends bj {
 
       for (int i = 0; i < this.clear_List.size(); i++) {
          WaitForLanStepAction.Inner_DataUtil e = this.clear_List.get(i);
-         k uf = this.init_k_I(80);
+         ThemedTextInputBox uf = this.init_k_I(80);
          uf.init_V_Str(e.init_Str);
          this.init_Map.put("lan_user_" + i, uf);
-         k sf = this.init_k_I(40);
+         ThemedTextInputBox sf = this.init_k_I(40);
          sf.poll(true);
          sf.init_V_Str(String.valueOf(e.init_I));
          this.init_Map.put("lan_step_" + i, sf);
@@ -3434,7 +3434,7 @@ public class ActionEditorOverlay extends bj {
       int topY = y + 2;
       int bottomY = y + 20;
       String info = this.pop_Str();
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, info, w, font, -1), font, p.bind(), x, y - 10, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, info, w, font, -1), font, UiColorPalette.bind(), x, y - 10, false);
       int[] topBtns = this.init_IArr_I(x, w, false, "Queue First", "Paste Base64");
       this.init_V_GuiGraphicsExtract(ctx, topBtns[0], topY, topBtns[1], btnH, "Queue First", mx, my, () -> {
          List<ck.Inner_CachePool> queue = ck.init_ck().load_List();
@@ -3616,7 +3616,7 @@ public class ActionEditorOverlay extends bj {
                      this.z();
                   });
                } else {
-                  k valueField = this.init_Map.get("_wpm_value");
+                  ThemedTextInputBox valueField = this.init_Map.get("_wpm_value");
                   if (valueField != null) {
                      int lw = this.init_I_I(w, "Value", font, 72);
                      this.init_V_GuiGraphicsExtract_3(ctx, "Value", x, cy, lw, font);
@@ -3675,7 +3675,7 @@ public class ActionEditorOverlay extends bj {
 
    private void read_V(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Packet Rules (" + this.reset_List.size() + ")", font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Packet Rules (" + this.reset_List.size() + ")", font, UiColorPalette.parse(), x, y + 2, false);
       int clearW = this.write_I("Clear");
       this.init_ByteReader_GuiGraphicsExtract_2(
          ctx, x + w - clearW, y, clearW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, !this.reset_List.isEmpty(), mx, my, () -> {
@@ -3743,7 +3743,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       List<ck.Inner_CachePool> finalQueuePackets = queuePackets;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Action Packets (" + actionPackets.size() + ")", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Action Packets (" + actionPackets.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       int apClearW = this.write_I("Clear");
       this.init_ByteReader_GuiGraphicsExtract_2(
          ctx,
@@ -3766,9 +3766,9 @@ public class ActionEditorOverlay extends bj {
             this.write(updated);
          }
       });
-      TableIndex.init(ctx, x, cy + 2, w, p.c());
+      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
-      k nameField = this.init_Map.get("customName");
+      ThemedTextInputBox nameField = this.init_Map.get("customName");
       if (nameField != null) {
          int lw = this.init_I_I(w, "Name", font);
          this.init_V_GuiGraphicsExtract_3(ctx, "Name", x, cy, lw, font);
@@ -3779,7 +3779,7 @@ public class ActionEditorOverlay extends bj {
          cy += 16;
       }
 
-      k countField = this.init_Map.get("sendCount");
+      ThemedTextInputBox countField = this.init_Map.get("sendCount");
       if (countField != null) {
          int lw = this.init_I_I(w, "Send Count", font);
          this.init_V_GuiGraphicsExtract_3(ctx, "Send Count", x, cy, lw, font);
@@ -3793,12 +3793,12 @@ public class ActionEditorOverlay extends bj {
       this.load(ctx, font, "waitForGuiBefore", "waitForGuiAfter", x, cy, w, mx, my);
       cy += 16;
       if (!this.load_Map.getOrDefault("waitForGuiBefore", false) && !this.load_Map.getOrDefault("waitForGuiAfter", false)) {
-         k guiField = this.init_Map.get("guiName");
+         ThemedTextInputBox guiField = this.init_Map.get("guiName");
          if (guiField != null) {
             guiField.read(-1000);
          }
       } else {
-         k guiField = this.init_Map.get("guiName");
+         ThemedTextInputBox guiField = this.init_Map.get("guiName");
          if (guiField != null) {
             int lw = this.init_I_I(w, "GUI Name", font);
             this.init_V_GuiGraphicsExtract_3(ctx, "GUI Name", x, cy, lw, font);
@@ -3833,9 +3833,9 @@ public class ActionEditorOverlay extends bj {
       });
       this.init_V_GuiGraphicsExtract(ctx, clearBtns[2], cy, clearBtns[3], 13, "GBreak", mx, my, this::bind);
       cy += 20;
-      TableIndex.init(ctx, x, cy + 2, w, p.c());
+      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Current Queue (" + finalQueuePackets.size() + ")", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Current Queue (" + finalQueuePackets.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       cy += 14;
       this.init_I_GuiGraphicsExtract(ctx, x, cy, w, mx, my, delta, "_send_packet_queue", finalQueuePackets, false, packetIndex -> {
          if (packetIndex >= 0 && packetIndex < finalQueuePackets.size()) {
@@ -3868,7 +3868,7 @@ public class ActionEditorOverlay extends bj {
       int modeW = removable ? 14 : 0;
       int textW = w - 5 - 2 - (removable ? removeW + 2 + modeW + 2 : 0);
       if (packets.isEmpty()) {
-         autismclient.gui.f.b.k.init(ctx, this.init_Font, removable ? "(none - use GBreak, queue, or Paste)" : "(queue empty)", font, p.bind(), x, y + 2, false);
+         autismclient.gui.f.b.k.init(ctx, this.init_Font, removable ? "(none - use GBreak, queue, or Paste)" : "(queue empty)", font, UiColorPalette.bind(), x, y + 2, false);
          return y + listH;
       }
 
@@ -3938,7 +3938,7 @@ public class ActionEditorOverlay extends bj {
       int topY = y + 2;
       int bottomY = y + 20;
       String info = this.push_Str();
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, info, w, font, -1), font, p.bind(), x, y - 10, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, info, w, font, -1), font, UiColorPalette.bind(), x, y - 10, false);
       int[] topBtns = this.init_IArr_I(x, w, false, "From Queue", "Paste Base64");
       this.init_V_GuiGraphicsExtract(ctx, topBtns[0], topY, topBtns[1], btnH, "From Queue", mx, my, () -> {
          List<ck.Inner_CachePool> queue = ck.init_ck().load_List();
@@ -3992,7 +3992,7 @@ public class ActionEditorOverlay extends bj {
       this.clear_Z = false;
       this.reset_Z = false;
       this.start_Z = false;
-      k channelField = this.init_k_I(120);
+      ThemedTextInputBox channelField = this.init_k_I(120);
       channelField.init_V_Str(state.init_Str());
       channelField.init_V_Component(Component.literal("namespace:channel"));
       channelField.init_V_Consumer(text -> {
@@ -4012,7 +4012,7 @@ public class ActionEditorOverlay extends bj {
          seedAction.payloadPhase = this.init_bE.load_Str;
       }
 
-      k contentField = this.init_k_I(126);
+      ThemedTextInputBox contentField = this.init_k_I(126);
       contentField.load(true);
       contentField.read(true);
       contentField.sync(true);
@@ -4030,7 +4030,7 @@ public class ActionEditorOverlay extends bj {
          }
       });
       this.init_Map.put("payload_content", contentField);
-      k hexView = this.init_k_I(138);
+      ThemedTextInputBox hexView = this.init_k_I(138);
       hexView.load(true);
       hexView.read(true);
       hexView.sync(true);
@@ -4048,7 +4048,7 @@ public class ActionEditorOverlay extends bj {
          }
       });
       this.init_Map.put("payload_hex_view", hexView);
-      k utf8View = this.init_k_I(138);
+      ThemedTextInputBox utf8View = this.init_k_I(138);
       utf8View.load(true);
       utf8View.read(true);
       utf8View.sync(true);
@@ -4066,7 +4066,7 @@ public class ActionEditorOverlay extends bj {
          }
       });
       this.init_Map.put("payload_utf8_view", utf8View);
-      k logicalView = this.init_k_I(138);
+      ThemedTextInputBox logicalView = this.init_k_I(138);
       logicalView.load(true);
       logicalView.read(true);
       logicalView.sync(true);
@@ -4084,7 +4084,7 @@ public class ActionEditorOverlay extends bj {
          }
       });
       this.init_Map.put("payload_logical_view", logicalView);
-      k commandField = this.init_k_I(66);
+      ThemedTextInputBox commandField = this.init_k_I(66);
       commandField.poll(true);
       commandField.init_V_Str(String.valueOf(this.init_bE.load_I));
       commandField.init_V_Component(Component.literal("value"));
@@ -4208,7 +4208,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void open(boolean syncPreview) {
-      k jsonField = this.init_Map.get("payload_json");
+      ThemedTextInputBox jsonField = this.init_Map.get("payload_json");
       if (jsonField != null) {
          jsonField.init_V_Str(PayloadJsonCodec.init_Str(jsonField.load_Str()));
          if (syncPreview) {
@@ -4218,17 +4218,17 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void poll(boolean notifyOnError) {
-      k jsonField = this.init_Map.get("payload_json");
+      ThemedTextInputBox jsonField = this.init_Map.get("payload_json");
       if (jsonField != null) {
          PayloadAction preview = new PayloadAction();
          if (this.init_H != null) {
             preview.fromTag(this.init_H.toTag());
          }
 
-         k channelField = this.init_Map.get("payload_channel");
-         k rawField = this.init_Map.get("payload_data");
-         k textField = this.init_Map.get("payload_text");
-         k commandField = this.init_Map.get("payload_command_value");
+         ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
+         ThemedTextInputBox rawField = this.init_Map.get("payload_data");
+         ThemedTextInputBox textField = this.init_Map.get("payload_text");
+         ThemedTextInputBox commandField = this.init_Map.get("payload_command_value");
          preview.payloadJson = jsonField.load_Str();
          preview.channel = channelField == null ? preview.channel : channelField.load_Str().strip();
          preview.payloadData = rawField == null ? preview.payloadData : rawField.load_Str();
@@ -4292,7 +4292,7 @@ public class ActionEditorOverlay extends bj {
          this.init_ActionEditorOverla = null;
          this.pop(true);
       } else {
-         k contentField = this.init_Map.get("payload_content");
+         ThemedTextInputBox contentField = this.init_Map.get("payload_content");
          if (contentField != null) {
             contentField.init_V_Str(PayloadFieldCodec.init(safeFields));
          }
@@ -4311,7 +4311,7 @@ public class ActionEditorOverlay extends bj {
          return this.init_bE.init_List == null ? List.of() : this.init_bE.init_List;
       }
 
-      k contentField = this.init_Map.get("payload_content");
+      ThemedTextInputBox contentField = this.init_Map.get("payload_content");
       return PayloadFieldCodec.init_List(contentField == null ? "" : contentField.load_Str());
    }
 
@@ -4337,7 +4337,7 @@ public class ActionEditorOverlay extends bj {
       if (this.init_bE != null && this.init_bE.read_Str != null && !this.init_bE.read_Str.isBlank()) {
          return this.init_bE.read_Str.strip();
       } else {
-         k channelField = this.init_Map.get("payload_channel");
+         ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
          if (channelField != null && !channelField.load_Str().isBlank()) {
             return channelField.load_Str().strip();
          } else {
@@ -4492,13 +4492,13 @@ public class ActionEditorOverlay extends bj {
          this.start_Z = true;
 
          try {
-            k channelField = this.init_Map.get("payload_channel");
+            ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
             if (channelField != null && (force || !channelField.init_Z())) {
                channelField.init_V_Str(this.init_bE.read_Str == null ? "" : this.init_bE.read_Str);
             }
 
             this.read_Map.put("payload_mode", this.init_I_bJ_StreamUtil(PayloadFieldCodec.Inner_StreamUtil.init(this.init_bE.sync, this.init_bE.read_Str)));
-            k commandField = this.init_Map.get("payload_command_value");
+            ThemedTextInputBox commandField = this.init_Map.get("payload_command_value");
             if (commandField != null && (force || !commandField.init_Z())) {
                commandField.init_V_Str(String.valueOf(this.init_bE.load_I));
             }
@@ -4517,22 +4517,22 @@ public class ActionEditorOverlay extends bj {
             this.start_Z = true;
 
             try {
-               k contentField = this.init_Map.get("payload_content");
+               ThemedTextInputBox contentField = this.init_Map.get("payload_content");
                if (contentField != null && (force || !contentField.init_Z())) {
                   contentField.init_V_Str(this.init_bE.init_Str());
                }
 
-               k hexView = this.init_Map.get("payload_hex_view");
+               ThemedTextInputBox hexView = this.init_Map.get("payload_hex_view");
                if (hexView != null && (force || !hexView.init_Z())) {
                   hexView.init_V_Str(this.init_bE.load_Str());
                }
 
-               k utf8View = this.init_Map.get("payload_utf8_view");
+               ThemedTextInputBox utf8View = this.init_Map.get("payload_utf8_view");
                if (utf8View != null && (force || !utf8View.init_Z())) {
                   utf8View.init_V_Str(this.init_bE.read());
                }
 
-               k logicalView = this.init_Map.get("payload_logical_view");
+               ThemedTextInputBox logicalView = this.init_Map.get("payload_logical_view");
                if (logicalView != null && (force || !logicalView.init_Z())) {
                   logicalView.init_V_Str(this.init_bE.write());
                }
@@ -4586,14 +4586,14 @@ public class ActionEditorOverlay extends bj {
       ActionEditorOverlay.ConfigStore preview = this.init_ActionEditorOverla();
       PayloadFieldCodec.Inner_JsonUtil template = preview.init_bJ_JsonUtil();
       PayloadFieldCodec.Inner_DataUtil built = preview.init_bJ_DataUtil();
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Custom Payload", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Custom Payload", font, UiColorPalette.parse(), x, cy + 2, false);
       cy += 14;
       cy = this.init_I_GuiGraphicsExtract(ctx, x, cy, w);
       cy = this.init_I_GuiGraphicsExtract(ctx, x, cy, w, mx, my);
       int dirLabelW = 18;
       int dirW = this.write_I(template.init_bJ_ConfigStore().name());
       int modeLabelW = 28;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Dir", font, p.bind(), x, cy + 3, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Dir", font, UiColorPalette.bind(), x, cy + 3, false);
       this.init_ByteReader_GuiGraphicsExtract_2(
          ctx, x + dirLabelW, cy, dirW, 13, template.init_bJ_ConfigStore().name(), ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
             this.push(true);
@@ -4611,11 +4611,11 @@ public class ActionEditorOverlay extends bj {
          }
       );
       int modeLabelX = x + dirLabelW + dirW + 5;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Mode", font, p.bind(), modeLabelX, cy + 3, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Mode", font, UiColorPalette.bind(), modeLabelX, cy + 3, false);
       int modeX = modeLabelX + modeLabelW;
       this.init_V_I_2(modeX, cy, this.init_I_List_I(put_List, Math.max(54, x + w - modeX)), mx, my, template);
       cy += 18;
-      k channelField = this.init_Map.get("payload_channel");
+      ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
       if (channelField != null) {
          int lw = this.init_I_I(w, "Channel", font, 64);
          this.init_V_GuiGraphicsExtract_3(ctx, "Channel", x, cy, lw, font);
@@ -4629,7 +4629,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       if (this.init_bE != null && this.init_bE.init_Z) {
-         k commandField = this.init_Map.get("payload_command_value");
+         ThemedTextInputBox commandField = this.init_Map.get("payload_command_value");
          if (commandField != null) {
             int lw = this.init_I_I(w, "CommandApi", font, 64);
             this.init_V_GuiGraphicsExtract_3(ctx, "CommandApi", x, cy, lw, font);
@@ -4670,11 +4670,11 @@ public class ActionEditorOverlay extends bj {
       }
 
       if (this.f_i_I == 0) {
-         autismclient.gui.f.b.k.init(ctx, this.init_Font, "Packet Script", font, p.parse(), x, cy + 2, false);
+         autismclient.gui.f.b.k.init(ctx, this.init_Font, "Packet Script", font, UiColorPalette.parse(), x, cy + 2, false);
          int psClearW = this.write_I("Clear");
          this.init_ByteReader_GuiGraphicsExtract_2(
             ctx, x + w - psClearW, cy, psClearW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, !this.load_List().isEmpty(), mx, my, () -> {
-               k contentField = this.init_Map.get("payload_content");
+               ThemedTextInputBox contentField = this.init_Map.get("payload_content");
                if (contentField != null) {
                   contentField.init_V_Str("");
                }
@@ -4700,7 +4700,7 @@ public class ActionEditorOverlay extends bj {
             () -> this.read_V(this.read_Map.getOrDefault("payload_add_type", this.init_I_bJ_BufferHelper(PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES)))
          );
          cy += 17;
-         k contentField = this.init_Map.get("payload_content");
+         ThemedTextInputBox contentField = this.init_Map.get("payload_content");
          if (contentField != null) {
             contentField.read(x);
             contentField.write(cy);
@@ -4712,10 +4712,10 @@ public class ActionEditorOverlay extends bj {
          cy += 130;
       } else if (this.f_i_I == 1) {
          this.run(false);
-         k hexView = this.init_Map.get("payload_hex_view");
+         ThemedTextInputBox hexView = this.init_Map.get("payload_hex_view");
          if (hexView != null) {
             int bytes = this.init_bE == null ? built.init_BArr().length : this.init_bE.init_BArr.length;
-            autismclient.gui.f.b.k.init(ctx, this.init_Font, "Body Hex - payload body only (" + bytes + " bytes)", font, p.parse(), x, cy + 2, false);
+            autismclient.gui.f.b.k.init(ctx, this.init_Font, "Body Hex - payload body only (" + bytes + " bytes)", font, UiColorPalette.parse(), x, cy + 2, false);
             cy += 14;
             hexView.read(x);
             hexView.write(cy);
@@ -4726,9 +4726,9 @@ public class ActionEditorOverlay extends bj {
          }
       } else if (this.f_i_I == 2) {
          this.run(false);
-         k utf8View = this.init_Map.get("payload_utf8_view");
+         ThemedTextInputBox utf8View = this.init_Map.get("payload_utf8_view");
          if (utf8View != null) {
-            autismclient.gui.f.b.k.init(ctx, this.init_Font, "UTF-8 / Raw Text Body", font, p.parse(), x, cy + 2, false);
+            autismclient.gui.f.b.k.init(ctx, this.init_Font, "UTF-8 / Raw Text Body", font, UiColorPalette.parse(), x, cy + 2, false);
             cy += 14;
             utf8View.read(x);
             utf8View.write(cy);
@@ -4739,9 +4739,9 @@ public class ActionEditorOverlay extends bj {
          }
       } else {
          this.run(false);
-         k logicalView = this.init_Map.get("payload_logical_view");
+         ThemedTextInputBox logicalView = this.init_Map.get("payload_logical_view");
          if (logicalView != null) {
-            autismclient.gui.f.b.k.init(ctx, this.init_Font, "Logical Packet - envelope + body", font, p.parse(), x, cy + 2, false);
+            autismclient.gui.f.b.k.init(ctx, this.init_Font, "Logical Packet - envelope + body", font, UiColorPalette.parse(), x, cy + 2, false);
             cy += 14;
             logicalView.read(x);
             logicalView.write(cy);
@@ -4754,7 +4754,7 @@ public class ActionEditorOverlay extends bj {
 
       String notice = this.load_Str_bJ_DataUtil(built);
       boolean modelBad = this.init_bE != null && this.init_bE.flush != null && !this.init_bE.flush.isBlank();
-      int noticeColor = !modelBad && built.load().isEmpty() ? (!built.init_List().isEmpty() ? -14249 : p.bind()) : p.valid();
+      int noticeColor = !modelBad && built.load().isEmpty() ? (!built.init_List().isEmpty() ? -14249 : UiColorPalette.bind()) : UiColorPalette.valid();
       autismclient.gui.f.b.k.init(
          ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, notice, Math.max(10, w), font, noticeColor), font, noticeColor, x, cy + 2, false
       );
@@ -4808,7 +4808,7 @@ public class ActionEditorOverlay extends bj {
 
    private void value() {
       for (String key : List.of("payload_content", "payload_hex_view", "payload_utf8_view", "payload_logical_view")) {
-         k field = this.init_Map.get(key);
+         ThemedTextInputBox field = this.init_Map.get(key);
          if (field != null) {
             field.push(false);
          }
@@ -4860,7 +4860,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void init_V_bJ_DataUtil(PayloadFieldCodec.Inner_DataUtil built) {
-      k hexView = this.init_Map.get("payload_hex_view");
+      ThemedTextInputBox hexView = this.init_Map.get("payload_hex_view");
       if (hexView != null && !hexView.init_Z()) {
          this.start_Z = true;
 
@@ -4871,7 +4871,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      k utf8View = this.init_Map.get("payload_utf8_view");
+      ThemedTextInputBox utf8View = this.init_Map.get("payload_utf8_view");
       if (utf8View != null && !utf8View.init_Z()) {
          this.start_Z = true;
 
@@ -4926,7 +4926,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       if (this.f_i_I == 1) {
-         k hexView = this.init_Map.get("payload_hex_view");
+         ThemedTextInputBox hexView = this.init_Map.get("payload_hex_view");
          if (hexView != null && hexView.init_Z()) {
             try {
                this.init_BArr_Str(hexView.load_Str());
@@ -4993,7 +4993,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private String update_Str() {
-      k contentField = this.init_Map.get("payload_content");
+      ThemedTextInputBox contentField = this.init_Map.get("payload_content");
       if (contentField == null) {
          return null;
       }
@@ -5310,7 +5310,7 @@ public class ActionEditorOverlay extends bj {
       int valueX = x + typeW + gap;
       int valueW = Math.max(36, w - typeW - gap - actionsW - gap);
       this.init_V_I(row, x, y + 2, typeW, mx, my);
-      k valueField = this.init_Map.get(this.load_Str_I(row));
+      ThemedTextInputBox valueField = this.init_Map.get(this.load_Str_I(row));
       if (valueField != null) {
          PayloadFieldCodec.Inner_BufferHelper type = this.init_bJ_BufferHelper_I(row);
          valueField.init_V_Component(Component.literal(type.load()));
@@ -5351,7 +5351,7 @@ public class ActionEditorOverlay extends bj {
          int previous = this.read_Map.getOrDefault(key, -1);
          this.read_Map.put(key, newIdx);
          if (previous != newIdx) {
-            k valueField = this.init_Map.get(this.load_Str_I(row));
+            ThemedTextInputBox valueField = this.init_Map.get(this.load_Str_I(row));
             if (valueField != null && valueField.load_Str().isBlank()) {
                valueField.init_V_Str(get_List.get(newIdx).load());
             }
@@ -5392,7 +5392,7 @@ public class ActionEditorOverlay extends bj {
          action.fromTag(this.init_H.toTag());
       }
 
-      k channelField = this.init_Map.get("payload_channel");
+      ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
       if (channelField != null && !channelField.load_Str().isBlank()) {
          action.channel = channelField.load_Str().strip();
       }
@@ -5426,7 +5426,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void write_V(String line) {
-      k contentField = this.init_Map.get("payload_content");
+      ThemedTextInputBox contentField = this.init_Map.get("payload_content");
       if (contentField != null && line != null && !line.isBlank()) {
          String current = contentField.load_Str() == null ? "" : contentField.load_Str().stripTrailing();
          contentField.init_V_Str(current.isBlank() ? line : current + "\n" + line);
@@ -5458,7 +5458,7 @@ public class ActionEditorOverlay extends bj {
                this.init_ActionEditorOverla = null;
             }
 
-            k channelField = this.init_Map.get("payload_channel");
+            ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
             if (channelField != null) {
                channelField.init_V_Str(template.init_Str());
             }
@@ -5485,11 +5485,11 @@ public class ActionEditorOverlay extends bj {
          ? "Encoder: vanilla"
          : this.init_bE.init_Str + " / " + this.init_bE.load_Str + (this.init_bE.init_I >= 0 ? " / id " + this.init_bE.init_I : " / id ?");
       autismclient.gui.f.b.k.init(
-         ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, status, Math.max(10, w), font, p.scan()), font, p.scan(), x, y + 2, false
+         ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, status, Math.max(10, w), font, UiColorPalette.scan()), font, UiColorPalette.scan(), x, y + 2, false
       );
       y += 11;
       autismclient.gui.f.b.k.init(
-         ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, transport, Math.max(10, w), font, p.bind()), font, p.bind(), x, y + 2, false
+         ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, transport, Math.max(10, w), font, UiColorPalette.bind()), font, UiColorPalette.bind(), x, y + 2, false
       );
       return y + 13;
    }
@@ -5548,7 +5548,7 @@ public class ActionEditorOverlay extends bj {
       this.start_Z = true;
 
       try {
-         k channelField = this.init_Map.get("payload_channel");
+         ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
          if (channelField != null) {
             channelField.init_V_Str(state.init_Str());
          }
@@ -5596,7 +5596,7 @@ public class ActionEditorOverlay extends bj {
          action.commandApiOverride = false;
          action.javaSource = "";
          action.payloadScriptEnabled = false;
-         k channelField = this.init_Map.get("payload_channel");
+         ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
          if (channelField != null) {
             String editorChannel = channelField.load_Str().strip();
             if (!editorChannel.isBlank()) {
@@ -5640,11 +5640,11 @@ public class ActionEditorOverlay extends bj {
       if (this.init_H == null && this.init_MacroAction == null) {
          Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
          int cy = bodyTop + 4;
-         autismclient.gui.f.b.k.init(ctx, this.init_Font, "Custom Payload Editor", font, p.parse(), x, cy + 2, false);
+         autismclient.gui.f.b.k.init(ctx, this.init_Font, "Custom Payload Editor", font, UiColorPalette.parse(), x, cy + 2, false);
          cy += 13;
-         autismclient.gui.f.b.k.init(ctx, this.init_Font, "Packet JSON", font, p.parse(), x, cy + 2, false);
+         autismclient.gui.f.b.k.init(ctx, this.init_Font, "Packet JSON", font, UiColorPalette.parse(), x, cy + 2, false);
          cy += 13;
-         k jsonField = this.init_Map.get("payload_json");
+         ThemedTextInputBox jsonField = this.init_Map.get("payload_json");
          if (jsonField != null) {
             jsonField.read(x);
             jsonField.write(cy);
@@ -5664,7 +5664,7 @@ public class ActionEditorOverlay extends bj {
             this.fill();
          });
          cy += 18;
-         k channelField = this.init_Map.get("payload_channel");
+         ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
          if (channelField != null) {
             int lw = this.init_I_I(w, "Channel", font, 92);
             this.init_V_GuiGraphicsExtract_3(ctx, "Channel", x, cy, lw, font);
@@ -5678,7 +5678,7 @@ public class ActionEditorOverlay extends bj {
          }
 
          if (this.load_Map.getOrDefault("payload_command_api", false)) {
-            k commandField = this.init_Map.get("payload_command_value");
+            ThemedTextInputBox commandField = this.init_Map.get("payload_command_value");
             if (commandField != null) {
                int lw = this.init_I_I(w, "CommandApi", font, 92);
                this.init_V_GuiGraphicsExtract_3(ctx, "CommandApi", x, cy, lw, font);
@@ -5700,9 +5700,9 @@ public class ActionEditorOverlay extends bj {
             }
          }
 
-         autismclient.gui.f.b.k.init(ctx, this.init_Font, "UTF-8 Component", font, p.parse(), x, cy + 2, false);
+         autismclient.gui.f.b.k.init(ctx, this.init_Font, "UTF-8 Component", font, UiColorPalette.parse(), x, cy + 2, false);
          cy += 13;
-         k textField = this.init_Map.get("payload_text");
+         ThemedTextInputBox textField = this.init_Map.get("payload_text");
          if (textField != null) {
             textField.read(x);
             textField.write(cy);
@@ -5722,9 +5722,9 @@ public class ActionEditorOverlay extends bj {
             this.fill();
          });
          cy += 18;
-         autismclient.gui.f.b.k.init(ctx, this.init_Font, "Raw Payload", font, p.parse(), x, cy + 2, false);
+         autismclient.gui.f.b.k.init(ctx, this.init_Font, "Raw Payload", font, UiColorPalette.parse(), x, cy + 2, false);
          cy += 13;
-         k rawField = this.init_Map.get("payload_data");
+         ThemedTextInputBox rawField = this.init_Map.get("payload_data");
          if (rawField != null) {
             rawField.read(x);
             rawField.write(cy);
@@ -5740,7 +5740,7 @@ public class ActionEditorOverlay extends bj {
             this.fill();
          });
          this.init_V_GuiGraphicsExtract(ctx, parseBtns[2], cy, parseBtns[3], 13, "Normalize", mx, my, () -> {
-            k field = this.init_Map.get("payload_data");
+            ThemedTextInputBox field = this.init_Map.get("payload_data");
             if (field != null) {
                try {
                   field.init_V_Str(AutismPayloadSupport.init_Str(AutismPayloadSupport.init_BArr(field.load_Str())));
@@ -5769,9 +5769,9 @@ public class ActionEditorOverlay extends bj {
             }
          );
          cy += 20;
-         autismclient.gui.f.b.k.init(ctx, this.init_Font, "Runtime Java", font, p.parse(), x, cy + 2, false);
+         autismclient.gui.f.b.k.init(ctx, this.init_Font, "Runtime Java", font, UiColorPalette.parse(), x, cy + 2, false);
          cy += 13;
-         k javaField = this.init_Map.get("payload_java");
+         ThemedTextInputBox javaField = this.init_Map.get("payload_java");
          if (javaField != null) {
             javaField.read(x);
             javaField.write(cy);
@@ -5797,7 +5797,7 @@ public class ActionEditorOverlay extends bj {
          }
 
          action.payloadClassName = "";
-         k jsonField = this.init_Map.get("payload_json");
+         ThemedTextInputBox jsonField = this.init_Map.get("payload_json");
          if (jsonField != null) {
             action.payloadJson = jsonField.load_Str();
          }
@@ -5814,7 +5814,7 @@ public class ActionEditorOverlay extends bj {
             }
          }
 
-         k channelField = this.init_Map.get("payload_channel");
+         ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
          if (channelField != null) {
             String editorChannel = channelField.load_Str().strip();
             if (!editorChannel.isBlank()) {
@@ -5822,25 +5822,25 @@ public class ActionEditorOverlay extends bj {
             }
          }
 
-         k rawField = this.init_Map.get("payload_data");
+         ThemedTextInputBox rawField = this.init_Map.get("payload_data");
          if (rawField != null) {
             action.payloadData = rawField.load_Str();
          }
 
          if (action.payloadData == null || action.payloadData.isBlank()) {
-            k textField = this.init_Map.get("payload_text");
+            ThemedTextInputBox textField = this.init_Map.get("payload_text");
             if (textField != null && !textField.load_Str().isBlank()) {
                action.payloadData = AutismPayloadSupport.init_Str(textField.load_Str().getBytes(StandardCharsets.UTF_8));
             }
          }
 
-         k javaField = this.init_Map.get("payload_java");
+         ThemedTextInputBox javaField = this.init_Map.get("payload_java");
          if (javaField != null) {
             action.javaSource = javaField.load_Str();
          }
 
          action.commandApiRecognized = this.load_Map.getOrDefault("payload_command_api", false);
-         k commandField = this.init_Map.get("payload_command_value");
+         ThemedTextInputBox commandField = this.init_Map.get("payload_command_value");
          if (commandField != null) {
             try {
                action.commandApiValue = Integer.parseInt(commandField.load_Str().strip());
@@ -5877,9 +5877,9 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void state() {
-      k rawField = this.init_Map.get("payload_data");
-      k commandField = this.init_Map.get("payload_command_value");
-      k channelField = this.init_Map.get("payload_channel");
+      ThemedTextInputBox rawField = this.init_Map.get("payload_data");
+      ThemedTextInputBox commandField = this.init_Map.get("payload_command_value");
+      ThemedTextInputBox channelField = this.init_Map.get("payload_channel");
       if (rawField != null && commandField != null) {
          try {
             byte[] bytes = AutismPayloadSupport.init_BArr(rawField.load_Str());
@@ -5898,8 +5898,8 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void queue() {
-      k rawField = this.init_Map.get("payload_data");
-      k commandField = this.init_Map.get("payload_command_value");
+      ThemedTextInputBox rawField = this.init_Map.get("payload_data");
+      ThemedTextInputBox commandField = this.init_Map.get("payload_command_value");
       if (rawField != null && commandField != null) {
          try {
             byte[] bytes = AutismPayloadSupport.init_BArr(rawField.load_Str());
@@ -5913,8 +5913,8 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void buffer() {
-      k rawField = this.init_Map.get("payload_data");
-      k textField = this.init_Map.get("payload_text");
+      ThemedTextInputBox rawField = this.init_Map.get("payload_data");
+      ThemedTextInputBox textField = this.init_Map.get("payload_text");
       if (rawField != null && textField != null) {
          try {
             byte[] bytes = AutismPayloadSupport.init_BArr(rawField.load_Str());
@@ -5932,8 +5932,8 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void entry() {
-      k rawField = this.init_Map.get("payload_data");
-      k textField = this.init_Map.get("payload_text");
+      ThemedTextInputBox rawField = this.init_Map.get("payload_data");
+      ThemedTextInputBox textField = this.init_Map.get("payload_text");
       if (rawField != null && textField != null) {
          rawField.init_V_Str(AutismPayloadSupport.init_Str(textField.load_Str().getBytes(StandardCharsets.UTF_8)));
       }
@@ -6042,19 +6042,19 @@ public class ActionEditorOverlay extends bj {
       int var10000;
       switch (variant == null ? ByteReader.Inner_StreamUtil.SECONDARY : variant) {
          case SUCCESS:
-            var10000 = ct.init_I_I_ct_DataUtil(-13248397, ct.Inner_DataUtil.SUCCESS);
+            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-13248397, ThemePaletteManager.Inner_DataUtil.SUCCESS);
             break;
          case DANGER:
-            var10000 = ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.DANGER);
+            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.DANGER);
             break;
          case PRIMARY:
          case FILTER_ON:
-            var10000 = ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.BUTTON);
+            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-42149, ThemePaletteManager.Inner_DataUtil.BUTTON);
             break;
          case GHOST:
          case FILTER_OFF:
          case SECONDARY:
-            var10000 = ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.OUTLINE);
+            var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.OUTLINE);
             break;
          default:
             throw new MatchException(null, null);
@@ -6113,7 +6113,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private int init_I_GuiGraphicsExtract(GuiGraphicsExtractor ctx, int x, int y, int w, String text) {
-      return this.init_I_GuiGraphicsExtract_2(ctx, x, y, w, text, p.bind());
+      return this.init_I_GuiGraphicsExtract_2(ctx, x, y, w, text, UiColorPalette.bind());
    }
 
    private int init_I_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, int x, int y, int w, String text, int color) {
@@ -6368,12 +6368,12 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void init_V_Str_Str_2(String key, String placeholder) {
-      k field = this.init_Map.get(key);
+      ThemedTextInputBox field = this.init_Map.get(key);
       this.init_V_k_Str(field, placeholder);
    }
 
    private void load_V_Str_Str(String key, String placeholder) {
-      k field = this.flush_Map.get(key);
+      ThemedTextInputBox field = this.flush_Map.get(key);
       this.init_V_k_Str(field, placeholder);
    }
 
@@ -6383,7 +6383,7 @@ public class ActionEditorOverlay extends bj {
       this.init_V_Str_Str_2(key + "_2", "Z");
    }
 
-   private void init_V_k_Str(k field, String placeholder) {
+   private void init_V_k_Str(ThemedTextInputBox field, String placeholder) {
       if (field != null && placeholder != null && !placeholder.isBlank()) {
          field.init_V_Component(Component.literal(this.update_Str(placeholder)));
       }
@@ -6591,7 +6591,7 @@ public class ActionEditorOverlay extends bj {
       String summary = this.flush_Str(field.key());
       int valX = this.flush_I(x, lw);
       int valW = this.close(w, lw);
-      int color = p.scan();
+      int color = UiColorPalette.scan();
       String trimmed = autismclient.gui.f.b.k.init(this.init_Font, summary, font, color) > valW
          ? autismclient.gui.f.b.k.init(this.init_Font, summary, Math.max(8, valW - 4), font, color)
          : summary;
@@ -6641,12 +6641,12 @@ public class ActionEditorOverlay extends bj {
    }
 
    private String close_Str(String key) {
-      k f = this.init_Map.get(key);
+      ThemedTextInputBox f = this.init_Map.get(key);
       return f == null ? "" : f.load_Str();
    }
 
    private int init_I_Str_I(String key, int fallback) {
-      k f = this.init_Map.get(key);
+      ThemedTextInputBox f = this.init_Map.get(key);
       if (f == null) {
          return fallback;
       }
@@ -6659,8 +6659,8 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void poll(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my, float delta) {
-      k nameF = this.init_Map.get("itemName");
-      k slotF = this.init_Map.get("place_itemSlot");
+      ThemedTextInputBox nameF = this.init_Map.get("itemName");
+      ThemedTextInputBox slotF = this.init_Map.get("place_itemSlot");
       if (nameF != null && slotF != null) {
          int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
          int slotW = 26;
@@ -6688,7 +6688,7 @@ public class ActionEditorOverlay extends bj {
       String summary = this.open_Str();
       int valX = this.flush_I(x, lw);
       int valW = this.close(w, lw);
-      int color = summary != null && !summary.isEmpty() ? p.scan() : p.parse();
+      int color = summary != null && !summary.isEmpty() ? UiColorPalette.scan() : UiColorPalette.parse();
       String display = summary != null && !summary.isEmpty() ? summary : "Not captured";
       String trimmed = autismclient.gui.f.b.k.init(this.init_Font, display, font, color) > valW
          ? autismclient.gui.f.b.k.init(this.init_Font, display, Math.max(8, valW - 4), font, color)
@@ -6725,7 +6725,7 @@ public class ActionEditorOverlay extends bj {
       String key = field.key();
       List<String> values = this.write_Map.computeIfAbsent(key, ignored -> new ArrayList<>());
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label() + " (" + values.size() + ")", font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label() + " (" + values.size() + ")", font, UiColorPalette.parse(), x, y + 2, false);
       int addY = y + 13;
       int[] addBtns = this.init_IArr_I(x, w, false, "+ Condition", "+ Action");
       this.init_ByteReader_GuiGraphicsExtract_2(
@@ -6792,11 +6792,11 @@ public class ActionEditorOverlay extends bj {
    private void init_V_GuiGraphicsExtract_4(GuiGraphicsExtractor ctx, int x, int y, int w, int h, int index, String step, boolean hovered) {
       String canonical = RaceAction.load_Str(step);
       boolean condition = RaceAction.init_Z_2(canonical);
-      int bgColor = hovered ? p.level() : p.flags();
+      int bgColor = hovered ? UiColorPalette.level() : UiColorPalette.flags();
       TableIndex.init(ctx, x, y + 1, w, h - 2, bgColor);
       int badgeColor = condition ? -30720 : -12268476;
       TableIndex.read(ctx, x + 1, y + 3, 3, h - 6, badgeColor);
-      int numberColor = p.bind();
+      int numberColor = UiColorPalette.bind();
       autismclient.gui.f.b.k.init(
          ctx,
          this.init_Font,
@@ -6808,7 +6808,7 @@ public class ActionEditorOverlay extends bj {
          false
       );
       String role = condition ? "COND" : "ACT";
-      int roleColor = condition ? p.node() : p.parse();
+      int roleColor = condition ? UiColorPalette.node() : UiColorPalette.parse();
       int roleX = x + 24;
       autismclient.gui.f.b.k.init(
          ctx,
@@ -7021,13 +7021,13 @@ public class ActionEditorOverlay extends bj {
 
    private void load(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my, float delta) {
       String key = field.key();
-      k tf = this.init_Map.get(key);
+      ThemedTextInputBox tf = this.init_Map.get(key);
       if (tf != null) {
          Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
          if (field.type() == CachePool.MACRO_SELECT) {
             this.init_V_GuiGraphicsExtract_6(ctx, field, tf, x, y, w, mx, my);
          } else if (this.read(field)) {
-            autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label(), font, p.parse(), x, y + 2, false);
+            autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label(), font, UiColorPalette.parse(), x, y + 2, false);
             tf.read(x);
             tf.write(y + 13);
             int variableW = this.close_Z(field.key()) ? 24 : 0;
@@ -7129,7 +7129,7 @@ public class ActionEditorOverlay extends bj {
          if (buttons.isEmpty()) {
             bi.read("This screen has no pressable buttons.");
          } else {
-            k tf = this.init_Map.get(key);
+            ThemedTextInputBox tf = this.init_Map.get(key);
             String current = tf == null ? "" : tf.load_Str().trim();
             int next = 0;
 
@@ -7150,13 +7150,13 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_FieldDef(FieldDef field, k textField, int x, int y, int width) {
+   private void init_V_FieldDef(FieldDef field, ThemedTextInputBox textField, int x, int y, int width) {
       if (field != null) {
          this.init_V_Str_2(field.key(), textField, x, y, width);
       }
    }
 
-   private void init_V_Str_2(String key, k textField, int x, int y, int width) {
+   private void init_V_Str_2(String key, ThemedTextInputBox textField, int x, int y, int width) {
       if (this.close_Z(key) && textField != null) {
          String cacheKey = "__vars_" + key;
          autismclient.gui.f.b.SyncManager dropdown = this.run_Map
@@ -7306,7 +7306,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_GuiGraphicsExtract_6(GuiGraphicsExtractor ctx, FieldDef field, k backingField, int x, int y, int w, int mx, int my) {
+   private void init_V_GuiGraphicsExtract_6(GuiGraphicsExtractor ctx, FieldDef field, ThemedTextInputBox backingField, int x, int y, int w, int mx, int my) {
       backingField.read(-10000);
       backingField.write(-10000);
       List<cY.Inner_DataUtil> macros = new ArrayList<>(autismclient.util.aN.init_aN().init_List_Str(""));
@@ -7316,13 +7316,13 @@ public class ActionEditorOverlay extends bj {
 
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       String current = backingField.load_Str() == null ? "" : backingField.load_Str();
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label(), font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label(), font, UiColorPalette.parse(), x, y + 2, false);
       int badgeW = Math.min(150, Math.max(60, w / 2));
       int badgeX = x + w - badgeW;
       TableIndex.read(ctx, badgeX, y + 1, badgeW, 14);
       String selectedLabel = current.isBlank() ? "No macro selected" : current;
       String selectedTrimmed = autismclient.gui.f.b.k.init(this.init_Font, selectedLabel, badgeW - 6, font, -1);
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, selectedTrimmed, font, current.isBlank() ? p.a() : p.scan(), badgeX + 3, y + 3, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, selectedTrimmed, font, current.isBlank() ? UiColorPalette.a() : UiColorPalette.scan(), badgeX + 3, y + 3, false);
       int listY = y + 17;
       int listH = 70;
       int itemW = w - 5 - 1;
@@ -7397,7 +7397,7 @@ public class ActionEditorOverlay extends bj {
          int ddH = 13;
          int variableW = this.close_Z(key) ? 20 : 0;
          int valueW = Math.max(1, ctrlW - (variableW > 0 ? variableW + 2 : 0));
-         k bindingField = field.dynamic() ? this.init_Map.get(key) : null;
+         ThemedTextInputBox bindingField = field.dynamic() ? this.init_Map.get(key) : null;
          if (bindingField != null && !bindingField.load_Str().isBlank()) {
             bindingField.read(ctrlX);
             bindingField.write(y + 2);
@@ -7426,7 +7426,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void load(FieldDef field, k bindingField, int x, int y, int width) {
+   private void load(FieldDef field, ThemedTextInputBox bindingField, int x, int y, int width) {
       List<String> options = new ArrayList<>();
       options.add("Static");
       options.addAll(this.flush_List);
@@ -7453,9 +7453,9 @@ public class ActionEditorOverlay extends bj {
       int capBtnW = this.init_I_StreamUtil(field.captureMode(), null, null);
       int capBtnH = 13;
       int labelW = hasCapture ? w - capBtnW - 4 : w;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label(), font, p.parse(), x, y + 3, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label(), font, UiColorPalette.parse(), x, y + 3, false);
       if (this.init_MacroAction instanceof ToolsAction && "position".equals(key) && !"OFFSET".equals(this.tick_Str("destination"))) {
-         int currentW = autismclient.gui.f.b.k.init(this.init_Font, "Use current", font, p.scan()) + 12;
+         int currentW = autismclient.gui.f.b.k.init(this.init_Font, "Use current", font, UiColorPalette.scan()) + 12;
          this.init_ByteReader_GuiGraphicsExtract_2(
             ctx, x + w - currentW, y, currentW, 13, "Use current", ByteReader.Inner_StreamUtil.SECONDARY, init_Minecraft.player != null, mx, my, () -> {
                if (init_Minecraft.player != null) {
@@ -7463,7 +7463,7 @@ public class ActionEditorOverlay extends bj {
                   int[] values = new int[]{position.getX(), position.getY(), position.getZ()};
 
                   for (int axisIndex = 0; axisIndex < 3; axisIndex++) {
-                     k input = this.init_Map.get(key + "_" + axisIndex);
+                     ThemedTextInputBox input = this.init_Map.get(key + "_" + axisIndex);
                      if (input != null) {
                         input.init_V_Str(Integer.toString(values[axisIndex]));
                      }
@@ -7481,11 +7481,11 @@ public class ActionEditorOverlay extends bj {
       int fieldW = (w - 4) / 3;
 
       for (int i = 0; i < 3; i++) {
-         k tf = this.init_Map.get(key + "_" + i);
+         ThemedTextInputBox tf = this.init_Map.get(key + "_" + i);
          if (tf != null) {
             int fx = x + i * (fieldW + 2);
             int variableW = this.close_Z(field.key()) ? 18 : 0;
-            autismclient.gui.f.b.k.init(ctx, this.init_Font, axis[i], font, p.bind(), fx, y + 14 + 3, false);
+            autismclient.gui.f.b.k.init(ctx, this.init_Font, axis[i], font, UiColorPalette.bind(), fx, y + 14 + 3, false);
             tf.read(fx + 9);
             tf.write(y + 14 + 1);
             tf.update(Math.max(1, fieldW - 9 - (variableW > 0 ? variableW + 2 : 0)));
@@ -7497,7 +7497,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_k(k field) {
+   private void init_V_k(ThemedTextInputBox field) {
       if (field != null) {
          String current = field.load_Str() == null ? "" : field.load_Str().trim();
          String selected = TinyFileDialogs.tinyfd_openFileDialog("NBT Book Text File", current.isBlank() ? null : current, null, null, false);
@@ -7511,7 +7511,7 @@ public class ActionEditorOverlay extends bj {
       String key = field.key();
       List<String> lst = this.write_Map.getOrDefault(key, Collections.emptyList());
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      k af = this.flush_Map.get(key);
+      ThemedTextInputBox af = this.flush_Map.get(key);
       boolean editable = this.set_Z(key);
       boolean xcarryList = this.put_Z(key);
       int editIdx = editable ? this.open_Map.getOrDefault(key, -1) : -1;
@@ -7526,7 +7526,7 @@ public class ActionEditorOverlay extends bj {
          lst, this.push_Map.computeIfAbsent(key, ignored -> new ArrayList<>()), value -> filter.isEmpty() || value.toLowerCase().contains(filter)
       );
       String sectionLabel = filter.isEmpty() ? field.label() + " (" + lst.size() + ")" : field.label() + " (" + filtered.size() + "/" + lst.size() + ")";
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, sectionLabel, font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, sectionLabel, font, UiColorPalette.parse(), x, y + 2, false);
       boolean hasCapture = field.captureMode() != StreamUtil.NONE && this.init_Z_StreamUtil(field.captureMode());
       boolean hasSlotField = editable && this.reset_Z(key);
       int btnH = 13;
@@ -7535,7 +7535,7 @@ public class ActionEditorOverlay extends bj {
          autismclient.gui.f.NetHelper.init(x, addY, w, 13), hasSlotField, hasCapture
       );
       int slotW = toolbar.load() == null ? 0 : toolbar.load().update();
-      k slotField = hasSlotField ? this.init_Map.get(key + "_slot") : null;
+      ThemedTextInputBox slotField = hasSlotField ? this.init_Map.get(key + "_slot") : null;
       if (hasSlotField && slotField == null) {
          slotField = this.init_k_I(slotW);
          slotField.poll(true);
@@ -7572,7 +7572,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      k fSlotField = slotField;
+      ThemedTextInputBox fSlotField = slotField;
       if (af != null) {
          this.init_ByteReader_GuiGraphicsExtract_2(
             ctx, toolbar.read().read(), toolbar.read().write(), toolbar.read().update(), btnH, "+Add", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
@@ -7621,7 +7621,7 @@ public class ActionEditorOverlay extends bj {
          this.flush(lst.size());
          if (editIdx >= 0 && editIdx < lst.size()) {
             int selectedXCarryIndex = editIdx;
-            k countField = this.init_Map.get(key + "_xcarry_count");
+            ThemedTextInputBox countField = this.init_Map.get(key + "_xcarry_count");
             if (countField == null) {
                countField = this.init_k_I(38);
                countField.poll(true);
@@ -7630,7 +7630,7 @@ public class ActionEditorOverlay extends bj {
             }
 
             int amountY = itemsY;
-            autismclient.gui.f.b.k.init(ctx, this.init_Font, "Amount", this.init_CharEncoder.init_Identifier_l(l.read), p.parse(), x, amountY + 3, false);
+            autismclient.gui.f.b.k.init(ctx, this.init_Font, "Amount", this.init_CharEncoder.init_Identifier_l(l.read), UiColorPalette.parse(), x, amountY + 3, false);
             int modeX = x + 52;
             boolean custom = this.init_aQ_DataUtil_I(editIdx) == XCarryAction.Inner_DataUtil.CUSTOM;
             int amountBtnW = Math.max(this.write_I("Count"), this.write_I("FullStk"));
@@ -7638,7 +7638,7 @@ public class ActionEditorOverlay extends bj {
                ctx, modeX, amountY, amountBtnW, btnH, custom ? "Count" : "FullStk", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
                   boolean nowCustom = this.init_aQ_DataUtil_I(selectedXCarryIndex) == XCarryAction.Inner_DataUtil.CUSTOM;
                   this.init_V_I_aQ_DataUtil(selectedXCarryIndex, nowCustom ? XCarryAction.Inner_DataUtil.FULL_STK : XCarryAction.Inner_DataUtil.CUSTOM);
-                  k cf = this.init_Map.get(key + "_xcarry_count");
+                  ThemedTextInputBox cf = this.init_Map.get(key + "_xcarry_count");
                   if (cf != null) {
                      cf.init_V_Str(String.valueOf(this.write_I(selectedXCarryIndex)));
                   }
@@ -7700,7 +7700,7 @@ public class ActionEditorOverlay extends bj {
 
                if (editable) {
                   int fri = ri;
-                  k fSlotF2 = hasSlotField ? this.init_Map.get(key + "_slot") : null;
+                  ThemedTextInputBox fSlotF2 = hasSlotField ? this.init_Map.get(key + "_slot") : null;
                   this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(x, iy, rowAreaW, 14, () -> {
                      int curIdx = this.open_Map.getOrDefault(key, -1);
                      if (curIdx == fri) {
@@ -7713,7 +7713,7 @@ public class ActionEditorOverlay extends bj {
                            fSlotF2.init_V_Str("");
                         }
 
-                        k countField = this.init_Map.get(key + "_xcarry_count");
+                        ThemedTextInputBox countField = this.init_Map.get(key + "_xcarry_count");
                         if (countField != null) {
                            countField.init_V_Str("");
                         }
@@ -7729,7 +7729,7 @@ public class ActionEditorOverlay extends bj {
                            fSlotF2.init_V_Str(parsed.init_Z() ? String.valueOf(parsed.init_I) : "");
                         }
 
-                        k countField = this.init_Map.get(key + "_xcarry_count");
+                        ThemedTextInputBox countField = this.init_Map.get(key + "_xcarry_count");
                         if (countField != null) {
                            countField.init_V_Str(String.valueOf(this.write_I(fri)));
                         }
@@ -7781,7 +7781,7 @@ public class ActionEditorOverlay extends bj {
                         boolean nowCustom = this.init_aQ_DataUtil_I(fAmountIndex) == XCarryAction.Inner_DataUtil.CUSTOM;
                         this.init_V_I_aQ_DataUtil(fAmountIndex, nowCustom ? XCarryAction.Inner_DataUtil.FULL_STK : XCarryAction.Inner_DataUtil.CUSTOM);
                         this.open_Map.put(key, fAmountIndex);
-                        k cf = this.init_Map.get(key + "_xcarry_count");
+                        ThemedTextInputBox cf = this.init_Map.get(key + "_xcarry_count");
                         if (cf != null) {
                            cf.init_V_Str(String.valueOf(this.write_I(fAmountIndex)));
                         }
@@ -7843,10 +7843,10 @@ public class ActionEditorOverlay extends bj {
       String key = field.key();
       List<String> sel = this.write_Map.getOrDefault(key, Collections.emptyList());
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      k af = this.flush_Map.get(key);
+      ThemedTextInputBox af = this.flush_Map.get(key);
       String filter = af != null ? af.load_Str().toLowerCase() : "";
       int cy = y;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label() + " (" + sel.size() + ")", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label() + " (" + sel.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       cy += 13;
       int delW = 13;
       int selAreaH = 56;
@@ -7889,7 +7889,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       cy += selAreaH;
-      TableIndex.init(ctx, x, cy + 1, w, p.c());
+      TableIndex.init(ctx, x, cy + 1, w, UiColorPalette.c());
       cy += 5;
       if (af != null) {
          af.read(x);
@@ -7904,12 +7904,12 @@ public class ActionEditorOverlay extends bj {
       int capBtnW2 = this.init_I_StreamUtil(field.captureMode(), null, null);
       int cbX = x + w - capBtnW2;
       int headerTextW = Math.max(24, cbX - x - 4);
-      String headerLabel = autismclient.gui.f.b.k.init(this.init_Font, "Available Blocks", headerTextW, font, p.parse());
+      String headerLabel = autismclient.gui.f.b.k.init(this.init_Font, "Available Blocks", headerTextW, font, UiColorPalette.parse());
       int headerTextY = j.init(cy, headerH, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush());
       this.init_ByteReader_GuiGraphicsExtract(
          ctx, cbX, cy, capBtnW2, capBtnH2, field.captureMode(), false, true, mx, my, () -> this.init_V_FieldDef_List(field, sel)
       );
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, headerLabel, font, p.parse(), x, headerTextY, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, headerLabel, font, UiColorPalette.parse(), x, headerTextY, false);
       cy += headerH + 2;
       List<String> filtered = autismclient.gui.macro.editor.a.CachePool.load(
          pop_List(),
@@ -7975,7 +7975,7 @@ public class ActionEditorOverlay extends bj {
       if (this.run_Z || this.isLegacyMulti()) {
          int closeW = this.write_I("Close");
          int closeX = this.bind + (this.f_b_I - closeW) / 2;
-         TableIndex.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, p.c());
+         TableIndex.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, UiColorPalette.c());
          this.init_ByteReader_GuiGraphicsExtract_2(
             ctx, closeX, btnY, closeW, btnH, "Close", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> this.set(false)
          );
@@ -7990,7 +7990,7 @@ public class ActionEditorOverlay extends bj {
 
          int total = cancelW + saveW + gap;
          int sx = this.bind + (this.f_b_I - total) / 2;
-         TableIndex.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, p.c());
+         TableIndex.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, UiColorPalette.c());
          if (!variableWarning.isBlank()) {
             Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
             String text = autismclient.gui.f.b.k.init(this.init_Font, variableWarning, this.f_b_I - 8, font, -1);
@@ -8020,7 +8020,7 @@ public class ActionEditorOverlay extends bj {
       if (this.init_aM != null && this.init_aM.init_List != null && this.f_f_I >= 0) {
          Set<String> used = new LinkedHashSet<>();
 
-         for (k field : this.init_Map.values()) {
+         for (ThemedTextInputBox field : this.init_Map.values()) {
             init_V_Set_Str(used, field == null ? "" : field.load_Str());
          }
 
@@ -8089,19 +8089,19 @@ public class ActionEditorOverlay extends bj {
       String pattern = "";
       PatternCaptureMatcher.Inner_DataUtil mode = PatternCaptureMatcher.Inner_DataUtil.MATCH;
       if (this.init_MacroAction instanceof WaitForChatAction) {
-         k field = this.init_Map.get("pattern");
+         ThemedTextInputBox field = this.init_Map.get("pattern");
          pattern = field == null ? "" : field.load_Str();
          mode = this.init_UtilCore_DataUtil();
       } else if (this.init_MacroAction instanceof WaitForGuiAction) {
-         k field = this.init_Map.get("guiTitle");
+         ThemedTextInputBox field = this.init_Map.get("guiTitle");
          pattern = field == null ? "" : field.load_Str();
          mode = this.init_UtilCore_DataUtil();
       } else if (this.init_MacroAction instanceof WaitGuiTypeAction) {
-         k field = this.init_Map.get("title");
+         ThemedTextInputBox field = this.init_Map.get("title");
          pattern = field == null ? "" : field.load_Str();
          mode = this.init_UtilCore_DataUtil();
       } else if (this.init_MacroAction instanceof autismclient.util.macro.CaptureValueAction) {
-         k field = this.init_Map.get("pattern");
+         ThemedTextInputBox field = this.init_Map.get("pattern");
          pattern = field == null ? "" : field.load_Str();
          mode = this.init_UtilCore_DataUtil();
       }
@@ -8164,7 +8164,7 @@ public class ActionEditorOverlay extends bj {
       this.level();
       this.poll_List = new ArrayList<>();
 
-      for (cX o : bk.init_bk().init_List()) {
+      for (AutismOverlay o : OverlayManager.init_bk().init_List()) {
          if (o != this && o.sync_Z()) {
             o.a__V();
             this.poll_List.add(o);
@@ -8195,7 +8195,7 @@ public class ActionEditorOverlay extends bj {
          this.open_Z = true;
          init_Minecraft.execute(() -> {
             if (init_Minecraft.player != null) {
-               cx.init_V(init_Minecraft, new InventoryScreen(init_Minecraft.player));
+               OverlayScreenController.init_V(init_Minecraft, new InventoryScreen(init_Minecraft.player));
             }
          });
       }
@@ -8203,9 +8203,9 @@ public class ActionEditorOverlay extends bj {
 
    private void flags() {
       if (this.poll_List != null) {
-         bk manager = bk.init_bk();
+         OverlayManager manager = OverlayManager.init_bk();
 
-         for (cX overlay : this.poll_List) {
+         for (AutismOverlay overlay : this.poll_List) {
             manager.init_V(overlay);
             overlay.init_V_Z(true);
             overlay.a__V();
@@ -8237,18 +8237,18 @@ public class ActionEditorOverlay extends bj {
       this.sync_Z = false;
       this.valid_List.clear();
       this.size_List.clear();
-      bk.init_bk().update_V(this);
+      OverlayManager.init_bk().update_V(this);
       if (this.open_Z) {
          Screen restore = this.load_Screen;
          init_Minecraft.execute(() -> {
             if (init_Minecraft.gui.screen() instanceof InventoryScreen) {
                if (restore != null) {
-                  cx.init_V(init_Minecraft, restore);
+                  OverlayScreenController.init_V(init_Minecraft, restore);
                }
             } else if (restore == null && init_Minecraft.gui.screen() == null && init_Minecraft.player != null) {
-               cx.init_V(init_Minecraft, new InventoryScreen(init_Minecraft.player));
+               OverlayScreenController.init_V(init_Minecraft, new InventoryScreen(init_Minecraft.player));
             } else if (restore != null && init_Minecraft.gui.screen() == null) {
-               cx.init_V(init_Minecraft, restore);
+               OverlayScreenController.init_V(init_Minecraft, restore);
             }
          });
          this.open_Z = false;
@@ -8256,13 +8256,13 @@ public class ActionEditorOverlay extends bj {
          final Screen restore = this.load_Screen;
          init_Minecraft.execute(() -> {
             if (init_Minecraft.gui.screen() == null) {
-               cx.init_V(init_Minecraft, restore);
+               OverlayScreenController.init_V(init_Minecraft, restore);
             }
          });
       } else if (reopenInventory && init_Minecraft.player != null) {
          init_Minecraft.execute(() -> {
             if (init_Minecraft.gui.screen() == null && init_Minecraft.player != null) {
-               cx.init_V(init_Minecraft, new InventoryScreen(init_Minecraft.player));
+               OverlayScreenController.init_V(init_Minecraft, new InventoryScreen(init_Minecraft.player));
             }
          });
       }
@@ -8270,7 +8270,7 @@ public class ActionEditorOverlay extends bj {
       if (closeCurrentScreen) {
          init_Minecraft.execute(() -> {
             if (init_Minecraft.gui.screen() != null) {
-               cx.init_V(init_Minecraft, null);
+               OverlayScreenController.init_V(init_Minecraft, null);
             }
          });
       }
@@ -8287,7 +8287,7 @@ public class ActionEditorOverlay extends bj {
       ck.init_ck().cache(false);
       this.level();
       if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PLACE) {
-         autismclient.util.au.load();
+         autismclient.util.BlockPreviewRenderer.load();
       }
 
       if (save && this.init_MacroAction != null && !this.isLegacyMulti()) {
@@ -8362,7 +8362,7 @@ public class ActionEditorOverlay extends bj {
             case TEXT:
             case MACRO_SELECT: {
                String v = this.init_CompoundTag.contains(key) ? this.init_CompoundTag.getStringOr(key, "") : "";
-               k f = this.init_k_I(80);
+               ThemedTextInputBox f = this.init_k_I(80);
                f.init_V_Str(v);
                if ("saveAs".equals(key) && (v.isEmpty() || init_Pattern.matcher(v).matches())) {
                   f.load(sx -> sx.isEmpty() || init_Pattern.matcher(sx).matches());
@@ -8373,7 +8373,7 @@ public class ActionEditorOverlay extends bj {
             }
             case NUMBER: {
                int v = this.init_CompoundTag.contains(key) ? this.init_CompoundTag.getIntOr(key, 0) : 0;
-               k f = this.init_k_I(80);
+               ThemedTextInputBox f = this.init_k_I(80);
                if (!field.dynamic()) {
                   f.poll(true);
                }
@@ -8385,7 +8385,7 @@ public class ActionEditorOverlay extends bj {
             }
             case DECIMAL: {
                double v = this.init_CompoundTag.contains(key) ? this.init_CompoundTag.getDoubleOr(key, 0.0) : 0.0;
-               k f = this.init_k_I(80);
+               ThemedTextInputBox f = this.init_k_I(80);
                if (!field.dynamic()) {
                   f.load(sx -> sx.isEmpty() || sx.equals("-") || sx.matches("-?\\d*\\.?\\d*"));
                }
@@ -8397,7 +8397,7 @@ public class ActionEditorOverlay extends bj {
             }
             case SLOT: {
                int v = this.init_CompoundTag.contains(key) ? this.init_CompoundTag.getIntOr(key, 0) : 0;
-               k f = this.init_k_I(50);
+               ThemedTextInputBox f = this.init_k_I(50);
                if (!field.dynamic()) {
                   f.load(sx -> sx.isEmpty() || sx.equals("-") || sx.matches("-?\\d*"));
                }
@@ -8412,7 +8412,7 @@ public class ActionEditorOverlay extends bj {
                boolean dbl = field.xyzDouble();
 
                for (int i = 0; i < 3; i++) {
-                  k f = this.init_k_I(50);
+                  ThemedTextInputBox f = this.init_k_I(50);
                   if (dbl) {
                      if (!field.dynamic()) {
                         f.load(sx -> sx.isEmpty() || sx.equals("-") || sx.matches("-?\\d*\\.?\\d*"));
@@ -8448,7 +8448,7 @@ public class ActionEditorOverlay extends bj {
 
                this.read_Map.put(key, Math.max(0, idx));
                if (field.dynamic()) {
-                  k bindingField = this.init_k_I(80);
+                  ThemedTextInputBox bindingField = this.init_k_I(80);
                   bindingField.init_V_Str(DynamicBindingManager.init(action, key));
                   this.init_Map.put(key, bindingField);
                }
@@ -8466,7 +8466,7 @@ public class ActionEditorOverlay extends bj {
                }
 
                this.write_Map.put(key, list);
-               k af = this.init_k_I(80);
+               ThemedTextInputBox af = this.init_k_I(80);
                if (field.captureMode() == StreamUtil.BLOCK_CATALOG) {
                   af.init_V_Component(Component.literal("Search blocks..."));
                } else {
@@ -8490,7 +8490,7 @@ public class ActionEditorOverlay extends bj {
       if (action instanceof ToolsAction) {
          for (FieldDef field : this.init_ActionFieldSchema.fields()) {
             if (field.key().startsWith("toolArg.")) {
-               k input = this.init_Map.get(field.key());
+               ThemedTextInputBox input = this.init_Map.get(field.key());
                if (input != null && !this.init_CompoundTag.contains(field.key())) {
                   input.init_V_Str("");
                }
@@ -8546,7 +8546,7 @@ public class ActionEditorOverlay extends bj {
             }
 
             for (int i = 0; i < this.init_MapStore.itemNames.size(); i++) {
-               k tf = this.init_Map.get("item_times_" + i);
+               ThemedTextInputBox tf = this.init_Map.get("item_times_" + i);
                if (tf != null) {
                   try {
                      while (this.init_MapStore.itemTimes.size() <= i) {
@@ -8564,7 +8564,7 @@ public class ActionEditorOverlay extends bj {
             this.init_MapStore.waitForItem = this.load_Map.getOrDefault("item_waitForItem", false);
             this.init_MapStore.useCursorItemForPickupAll = this.load_Map.getOrDefault("item_useCursorItemForPickupAll", true);
             this.init_MapStore.useClickDelay = this.load_Map.getOrDefault("item_useClickDelay", false);
-            k delayF = this.init_Map.get("item_clickDelayMs");
+            ThemedTextInputBox delayF = this.init_Map.get("item_clickDelayMs");
             if (delayF != null) {
                try {
                   this.init_MapStore.clickDelayMs = Math.max(0, Integer.parseInt(delayF.load_Str().strip()));
@@ -8572,7 +8572,7 @@ public class ActionEditorOverlay extends bj {
                }
             }
 
-            k guiF = this.init_Map.get("item_guiName");
+            ThemedTextInputBox guiF = this.init_Map.get("item_guiName");
             if (guiF != null) {
                this.init_MapStore.guiName = guiF.load_Str();
             }
@@ -8593,7 +8593,7 @@ public class ActionEditorOverlay extends bj {
          } else if (this.push_List != null) {
             for (int i = 0; i < this.push_List.size(); i++) {
                autismclient.util.macro.CraftAction.Inner_DataUtil entry = this.push_List.get(i);
-               k af = this.init_Map.get("craft_amount_" + i);
+               ThemedTextInputBox af = this.init_Map.get("craft_amount_" + i);
                if (af != null) {
                   try {
                      entry.read_I = Math.max(1, Integer.parseInt(af.load_Str().strip()));
@@ -8623,7 +8623,7 @@ public class ActionEditorOverlay extends bj {
             }
 
             for (int i = 0; i < this.init_PacketUtil.itemNames.size(); i++) {
-               k f = this.init_Map.get("drop_count_" + i);
+               ThemedTextInputBox f = this.init_Map.get("drop_count_" + i);
                if (f != null) {
                   try {
                      this.init_PacketUtil.itemCounts.set(i, Math.max(0, Integer.parseInt(f.load_Str().strip())));
@@ -8632,7 +8632,7 @@ public class ActionEditorOverlay extends bj {
                }
             }
 
-            k cntF = this.init_Map.get("drop_globalCount");
+            ThemedTextInputBox cntF = this.init_Map.get("drop_globalCount");
             if (cntF != null) {
                try {
                   this.init_PacketUtil.dropCount = Math.max(1, Integer.parseInt(cntF.load_Str().strip()));
@@ -8645,7 +8645,7 @@ public class ActionEditorOverlay extends bj {
             this.init_PacketUtil.waitForGuiBefore = this.load_Map.getOrDefault("drop_waitForGuiBefore", false);
             this.init_PacketUtil.waitForGuiAfter = this.load_Map.getOrDefault("drop_waitForGuiAfter", false);
             this.init_PacketUtil.useHandlerSlots = this.load_Map.getOrDefault("drop_useHandlerSlots", true);
-            k guiF = this.init_Map.get("drop_guiName");
+            ThemedTextInputBox guiF = this.init_Map.get("drop_guiName");
             if (guiF != null) {
                this.init_PacketUtil.guiName = guiF.load_Str();
             }
@@ -8663,12 +8663,12 @@ public class ActionEditorOverlay extends bj {
             if (this.clear_List != null) {
                for (int i = 0; i < this.clear_List.size(); i++) {
                   WaitForLanStepAction.Inner_DataUtil e = this.clear_List.get(i);
-                  k uf = this.init_Map.get("lan_user_" + i);
+                  ThemedTextInputBox uf = this.init_Map.get("lan_user_" + i);
                   if (uf != null) {
                      e.init_Str = uf.load_Str();
                   }
 
-                  k sf = this.init_Map.get("lan_step_" + i);
+                  ThemedTextInputBox sf = this.init_Map.get("lan_step_" + i);
                   if (sf != null) {
                      try {
                         e.init_I = Math.max(1, Integer.parseInt(sf.load_Str().strip()));
@@ -8686,7 +8686,7 @@ public class ActionEditorOverlay extends bj {
                this.init_CompoundTag.put("entries", entryList);
                this.init_CompoundTag.putBoolean("filterByUser", this.load_Map.getOrDefault("lan_filterByUser", false));
                this.init_CompoundTag.putBoolean("listenDuringPreviousAction", this.load_Map.getOrDefault("listenDuringPreviousAction", false));
-               k dsF = this.init_Map.get("lan_defaultStep");
+               ThemedTextInputBox dsF = this.init_Map.get("lan_defaultStep");
                if (dsF != null) {
                   try {
                      this.init_CompoundTag.putInt("defaultStep", Math.max(1, Integer.parseInt(dsF.load_Str().strip())));
@@ -8718,7 +8718,7 @@ public class ActionEditorOverlay extends bj {
                this.init_CompoundTag.put("packetNames", packetList);
                this.init_CompoundTag.putString("packetName", targets.isEmpty() ? "" : targets.get(0));
                this.init_CompoundTag.putBoolean("listenDuringPreviousAction", this.load_Map.getOrDefault("listenDuringPreviousAction", false));
-               k saveAs = this.init_Map.get("saveAs");
+               ThemedTextInputBox saveAs = this.init_Map.get("saveAs");
                if (saveAs != null) {
                   this.init_CompoundTag.putString("saveAs", saveAs.load_Str());
                }
@@ -8735,7 +8735,7 @@ public class ActionEditorOverlay extends bj {
 
                this.init_CompoundTag.put("rules", rules);
                this.init_CompoundTag.putBoolean("listenDuringPreviousAction", this.load_Map.getOrDefault("listenDuringPreviousAction", false));
-               k saveAs = this.init_Map.get("saveAs");
+               ThemedTextInputBox saveAs = this.init_Map.get("saveAs");
                if (saveAs != null) {
                   this.init_CompoundTag.putString("saveAs", saveAs.load_Str());
                }
@@ -8745,14 +8745,14 @@ public class ActionEditorOverlay extends bj {
                   switch (field.type()) {
                      case TEXT:
                      case MACRO_SELECT:
-                        k f = this.init_Map.get(key);
+                        ThemedTextInputBox f = this.init_Map.get(key);
                         if (f != null) {
                            this.init_CompoundTag.putString(key, f.load_Str());
                         }
                         break;
                      case NUMBER:
                      case SLOT:
-                        k fx = this.init_Map.get(key);
+                        ThemedTextInputBox fx = this.init_Map.get(key);
                         if (fx == null) {
                            break;
                         }
@@ -8773,7 +8773,7 @@ public class ActionEditorOverlay extends bj {
                         }
                         break;
                      case DECIMAL:
-                        k fxDbl = this.init_Map.get(key);
+                        ThemedTextInputBox fxDbl = this.init_Map.get(key);
                         if (fxDbl == null) {
                            break;
                         }
@@ -8799,7 +8799,7 @@ public class ActionEditorOverlay extends bj {
                         int i = 0;
 
                         for (; i < 3; i++) {
-                           k fXyz = this.init_Map.get(key + "_" + i);
+                           ThemedTextInputBox fXyz = this.init_Map.get(key + "_" + i);
                            if (fXyz != null) {
                               String t = fXyz.load_Str().strip();
                               if (field.dynamic() && t.contains("{")) {
@@ -8825,7 +8825,7 @@ public class ActionEditorOverlay extends bj {
                         this.init_CompoundTag.putBoolean(key, this.load_Map.getOrDefault(key, false));
                         break;
                      case ENUM:
-                        k bindingField = field.dynamic() ? this.init_Map.get(key) : null;
+                        ThemedTextInputBox bindingField = field.dynamic() ? this.init_Map.get(key) : null;
                         String binding = bindingField == null ? "" : bindingField.load_Str().strip();
                         if (field.dynamic() && !binding.isBlank()) {
                            this.read_V_Str_Str(key, binding);
@@ -8888,7 +8888,7 @@ public class ActionEditorOverlay extends bj {
                }
 
                if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.USE_ITEM) {
-                  k slotField = this.init_Map.get("slot");
+                  ThemedTextInputBox slotField = this.init_Map.get("slot");
                   if (slotField == null || slotField.load_Str() == null || slotField.load_Str().strip().isEmpty()) {
                      this.init_CompoundTag.remove("slot");
                   }
@@ -9090,7 +9090,7 @@ public class ActionEditorOverlay extends bj {
       int imy = (int)my;
       if (!this.sync_List.isEmpty()) {
          if (autismclient.gui.f.b.SyncManager.init_Z_List_2(this.sync_List, mx, my, button)) {
-            bk.init_bk().update_V(this);
+            OverlayManager.init_bk().update_V(this);
             return true;
          }
 
@@ -9108,7 +9108,7 @@ public class ActionEditorOverlay extends bj {
          this.update_Z = true;
          this.load_D = mx - this.bind;
          this.read_D = my - this.f_a_I;
-         bk.init_bk().update_V(this);
+         OverlayManager.init_bk().update_V(this);
          return true;
       }
 
@@ -9120,12 +9120,12 @@ public class ActionEditorOverlay extends bj {
          return true;
       }
 
-      bk.init_bk().update_V(this);
+      OverlayManager.init_bk().update_V(this);
       MouseButtonEvent click = new MouseButtonEvent(imx, imy, Compat263.newGlfwMouseButtonInfo(button, 0));
       boolean bodyInputAllowed = this.init_NetHelper == null || this.init_NetHelper.init_Z(imx, imy);
-      k focused = null;
+      ThemedTextInputBox focused = null;
       if (bodyInputAllowed) {
-         for (Entry<String, k> entry : this.init_Map.entrySet()) {
+         for (Entry<String, ThemedTextInputBox> entry : this.init_Map.entrySet()) {
             if (this.open_Z(entry.getKey())) {
                String baseKey = entry.getKey().replaceAll("_\\d+$", "");
                FieldDef fld = this.load_FieldDef_Str(baseKey);
@@ -9138,7 +9138,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       if (bodyInputAllowed && focused == null) {
-         for (Entry<String, k> entry : this.flush_Map.entrySet()) {
+         for (Entry<String, ThemedTextInputBox> entry : this.flush_Map.entrySet()) {
             FieldDef fld = this.load_FieldDef_Str(entry.getKey());
             if ((fld == null || this.write(fld)) && entry.getValue().init(click, false)) {
                focused = entry.getValue();
@@ -9148,7 +9148,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       if (focused != null) {
-         k ff = focused;
+         ThemedTextInputBox ff = focused;
          this.init_Map.values().forEach(f -> f.push(f == ff));
          this.flush_Map.values().forEach(f -> f.push(f == ff));
          return true;
@@ -9275,13 +9275,13 @@ public class ActionEditorOverlay extends bj {
          return true;
       }
 
-      for (Entry<String, k> entry : this.init_Map.entrySet()) {
+      for (Entry<String, ThemedTextInputBox> entry : this.init_Map.entrySet()) {
          if (this.open_Z(entry.getKey()) && entry.getValue().load(mx, my, button)) {
             consumed = true;
          }
       }
 
-      for (k field : this.flush_Map.values()) {
+      for (ThemedTextInputBox field : this.flush_Map.values()) {
          if (field.load(mx, my, button)) {
             consumed = true;
          }
@@ -9323,19 +9323,19 @@ public class ActionEditorOverlay extends bj {
       if (this.update_Z) {
          this.bind = (int)(mx - this.load_D);
          this.f_a_I = (int)(my - this.read_D);
-         cH c = this.init_cH_cX(this);
+         OverlayBounds c = this.init_cH_cX(this);
          this.bind = c.init_I;
          this.f_a_I = c.load_I;
          return true;
       }
 
-      for (Entry<String, k> entry : this.init_Map.entrySet()) {
+      for (Entry<String, ThemedTextInputBox> entry : this.init_Map.entrySet()) {
          if (this.open_Z(entry.getKey()) && entry.getValue().init(mx, my, button, dx, dy)) {
             return true;
          }
       }
 
-      for (k field : this.flush_Map.values()) {
+      for (ThemedTextInputBox field : this.flush_Map.values()) {
          if (field.init(mx, my, button, dx, dy)) {
             return true;
          }
@@ -9383,13 +9383,13 @@ public class ActionEditorOverlay extends bj {
 
          boolean bodyScrollAllowed = this.init_NetHelper == null || this.init_NetHelper.init_Z((int)mx, (int)my);
          if (bodyScrollAllowed) {
-            for (Entry<String, k> entry : this.init_Map.entrySet()) {
+            for (Entry<String, ThemedTextInputBox> entry : this.init_Map.entrySet()) {
                if (this.open_Z(entry.getKey()) && entry.getValue().init_Z_D(mx, my, amount)) {
                   return true;
                }
             }
 
-            for (k field : this.flush_Map.values()) {
+            for (ThemedTextInputBox field : this.flush_Map.values()) {
                if (field.init_Z_D(mx, my, amount)) {
                   return true;
                }
@@ -9453,13 +9453,13 @@ public class ActionEditorOverlay extends bj {
          } else {
             KeyEvent ki = Compat263.newGlfwKeyEvent(keyCode, scanCode, modifiers);
 
-            for (k f : this.init_Map.values()) {
+            for (ThemedTextInputBox f : this.init_Map.values()) {
                if (f.init_Z()) {
                   return f.init_Z_KeyEvent(ki);
                }
             }
 
-            for (k f : this.flush_Map.values()) {
+            for (ThemedTextInputBox f : this.flush_Map.values()) {
                if (f.init_Z()) {
                   return f.init_Z_KeyEvent(ki);
                }
@@ -9493,13 +9493,13 @@ public class ActionEditorOverlay extends bj {
 
       CharacterEvent ci = new CharacterEvent(chr);
 
-      for (k f : this.init_Map.values()) {
+      for (ThemedTextInputBox f : this.init_Map.values()) {
          if (f.init_Z() && f.init_Z_CharacterEvent(ci)) {
             return true;
          }
       }
 
-      for (k f : this.flush_Map.values()) {
+      for (ThemedTextInputBox f : this.flush_Map.values()) {
          if (f.init_Z() && f.init_Z_CharacterEvent(ci)) {
             return true;
          }
@@ -9787,8 +9787,8 @@ public class ActionEditorOverlay extends bj {
    }
 
    private MacroItemTarget init_ArrayUtil() {
-      k nameF = this.init_Map.get("itemName");
-      k slotF = this.init_Map.get("place_itemSlot");
+      ThemedTextInputBox nameF = this.init_Map.get("itemName");
+      ThemedTextInputBox slotF = this.init_Map.get("place_itemSlot");
       return this.init_ArrayUtil_Str_2(nameF == null ? "" : nameF.load_Str(), slotF == null ? "" : slotF.load_Str(), this.update_Map.get("itemName"));
    }
 
@@ -9825,14 +9825,14 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void poll_V(String key) {
-      k field = this.init_Map.get(key);
+      ThemedTextInputBox field = this.init_Map.get(key);
       if (field != null) {
          field.init_V_Function(value -> this.init_Component_Str_Str(key, value));
       }
    }
 
    private void push_V(String key) {
-      k field = this.flush_Map.get(key);
+      ThemedTextInputBox field = this.flush_Map.get(key);
       if (field != null) {
          field.init_V_Function(value -> this.load_Component_Str_Str(key, value));
       }
@@ -9954,13 +9954,13 @@ public class ActionEditorOverlay extends bj {
    }
 
    private MacroItemTarget init_ArrayUtil_Str_Str(String key, String slotKey) {
-      k valueField = this.init_Map.get(key);
+      ThemedTextInputBox valueField = this.init_Map.get(key);
       String text = valueField == null ? "" : valueField.load_Str().strip();
       MacroItemTarget previous = this.update_Map.get(key);
       int slot = -1;
       boolean slotDriven = false;
       if (slotKey != null) {
-         k slotField = this.init_Map.get(slotKey);
+         ThemedTextInputBox slotField = this.init_Map.get(slotKey);
          slot = slotField == null ? -1 : this.load_I_Str_I(slotField.load_Str(), -1);
          slotDriven = true;
       } else if (previous != null && previous.init_Z()) {
@@ -10106,7 +10106,7 @@ public class ActionEditorOverlay extends bj {
       int minH = this.push_I_2();
       int maxH = Math.max(minH, cA.load_I() * 4 / 5);
       this.f_c_I = Math.max(minH, Math.min(maxH, neededH));
-      cH clamped = this.init_cH_cX_cH(this, new cH(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z));
+      OverlayBounds clamped = this.init_cH_cX_cH(this, new OverlayBounds(this.bind, this.f_a_I, this.f_b_I, this.f_c_I, this.write_Z, this.load_Z));
       this.bind = clamped.init_I;
       this.f_a_I = clamped.load_I;
       this.f_b_I = clamped.read;
@@ -10126,9 +10126,9 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void init_V_aD_DataUtil(WaitForSlotChangeAction.Inner_DataUtil e) {
-      k addF = this.flush_Map.get("_wsc_add");
-      k slotF = this.init_Map.get("wsc_slot");
-      k countF = this.init_Map.get("wsc_count");
+      ThemedTextInputBox addF = this.flush_Map.get("_wsc_add");
+      ThemedTextInputBox slotF = this.init_Map.get("wsc_slot");
+      ThemedTextInputBox countF = this.init_Map.get("wsc_count");
       if (addF != null && slotF != null) {
          this.prev_Z = true;
          MacroItemTarget target = e.init_ArrayUtil();
@@ -10143,9 +10143,9 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void mark() {
-      k addF = this.flush_Map.get("_wsc_add");
-      k slotF = this.init_Map.get("wsc_slot");
-      k countF = this.init_Map.get("wsc_count");
+      ThemedTextInputBox addF = this.flush_Map.get("_wsc_add");
+      ThemedTextInputBox slotF = this.init_Map.get("wsc_slot");
+      ThemedTextInputBox countF = this.init_Map.get("wsc_count");
       this.prev_Z = true;
       if (addF != null) {
          addF.init_V_Str("");
@@ -10164,8 +10164,8 @@ public class ActionEditorOverlay extends bj {
 
    private void scan() {
       if (!this.prev_Z && this.run_List != null && this.f_l_I >= 0 && this.f_l_I < this.run_List.size()) {
-         k addF = this.flush_Map.get("_wsc_add");
-         k slotF = this.init_Map.get("wsc_slot");
+         ThemedTextInputBox addF = this.flush_Map.get("_wsc_add");
+         ThemedTextInputBox slotF = this.init_Map.get("wsc_slot");
          if (addF != null && slotF != null) {
             String nameText = addF.load_Str().strip();
             String slotText = slotF.load_Str().strip();
@@ -10187,7 +10187,7 @@ public class ActionEditorOverlay extends bj {
 
    private void parse() {
       if (!this.prev_Z && this.run_List != null) {
-         k countF = this.init_Map.get("wsc_count");
+         ThemedTextInputBox countF = this.init_Map.get("wsc_count");
          if (countF != null) {
             int count;
             try {
@@ -10206,7 +10206,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_k_k(k addF, k slotF) {
+   private void init_V_k_k(ThemedTextInputBox addF, ThemedTextInputBox slotF) {
       if (this.run_List != null) {
          String nameText = addF.load_Str().strip();
          String slotText = slotF.load_Str().strip();
@@ -10787,7 +10787,7 @@ public class ActionEditorOverlay extends bj {
 
    private int init_I_Str(String entry, int index, boolean selected) {
       if (selected) {
-         return p.store();
+         return UiColorPalette.store();
       }
 
       Class<? extends Packet<?>> packetClass = PacketTypeRegistry.init_Class_Str(entry);
@@ -10796,7 +10796,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       boolean c2s = PacketTypeRegistry.load().contains(packetClass);
-      return p.init(c2s, index);
+      return UiColorPalette.init(c2s, index);
    }
 
    private MacroItemTarget init_ArrayUtil_Str(String key, int index, String entry) {
@@ -10999,7 +10999,7 @@ public class ActionEditorOverlay extends bj {
          state.read_V_Runnable(() -> {
             state.open_V();
             if (this.init_Screen != null) {
-               cx.init_V(init_Minecraft, this.init_Screen);
+               OverlayScreenController.init_V(init_Minecraft, this.init_Screen);
                this.init_Screen = null;
             }
 
@@ -11007,7 +11007,7 @@ public class ActionEditorOverlay extends bj {
          });
          init_Minecraft.execute(() -> {
             if (init_Minecraft.gui.screen() != null) {
-               cx.init_V(init_Minecraft, null);
+               OverlayScreenController.init_V(init_Minecraft, null);
             }
          });
          AutismClientMessaging.sendPrefixed("GBreak: Break a block to capture the insta-break packet");
@@ -11020,7 +11020,7 @@ public class ActionEditorOverlay extends bj {
             if (!captured.isEmpty()) {
                this.write(Collections.singletonList(captured.get(0)));
                this.init_CompoundTag.putString("customName", "GBreak");
-               k customNameField = this.init_Map.get("customName");
+               ThemedTextInputBox customNameField = this.init_Map.get("customName");
                if (customNameField != null) {
                   customNameField.init_V_Str("GBreak");
                }
@@ -11031,12 +11031,12 @@ public class ActionEditorOverlay extends bj {
             }
 
             if (this.init_Screen != null) {
-               cx.init_V(init_Minecraft, this.init_Screen);
+               OverlayScreenController.init_V(init_Minecraft, this.init_Screen);
                this.init_Screen = null;
             }
 
             this.init_V_Z_Z(false, false);
-            bk.init_bk().update_V(this);
+            OverlayManager.init_bk().update_V(this);
          }));
       }
    }
@@ -11048,7 +11048,7 @@ public class ActionEditorOverlay extends bj {
          ck state = ck.init_ck();
          state.read_V_Runnable(() -> {
             if (previousScreen != null) {
-               cx.init_V(init_Minecraft, previousScreen);
+               OverlayScreenController.init_V(init_Minecraft, previousScreen);
             }
 
             state.load_V_Consumer(null);
@@ -11056,7 +11056,7 @@ public class ActionEditorOverlay extends bj {
          });
          init_Minecraft.execute(() -> {
             if (init_Minecraft.gui.screen() != null) {
-               cx.init_V(init_Minecraft, null);
+               OverlayScreenController.init_V(init_Minecraft, null);
             }
          });
          state.value(this.poll_Z);
@@ -11073,11 +11073,11 @@ public class ActionEditorOverlay extends bj {
             }
 
             if (previousScreen != null) {
-               cx.init_V(init_Minecraft, previousScreen);
+               OverlayScreenController.init_V(init_Minecraft, previousScreen);
             }
 
             this.init_V_Z_Z(false, false);
-            bk.init_bk().update_V(this);
+            OverlayManager.init_bk().update_V(this);
          }));
       }
    }
@@ -11099,7 +11099,7 @@ public class ActionEditorOverlay extends bj {
             vp.read_V(-1);
          }
       }, cc::write, "(any sound - add to filter)");
-      k search = this.flush_Map.get("soundIds");
+      ThemedTextInputBox search = this.flush_Map.get("soundIds");
       if (search != null) {
          search.read(x);
          search.write(cy + 1);
@@ -11132,7 +11132,7 @@ public class ActionEditorOverlay extends bj {
       cy = this.init_I_GuiGraphicsExtract_2(
          ctx, x, cy, w, mx, my, "wait_entity_selected", "Entities", selected, selected::remove, this::reset_Str, "(any entity - add type or specific)"
       );
-      k search = this.flush_Map.get("entityIds");
+      ThemedTextInputBox search = this.flush_Map.get("entityIds");
       String modeLabel = this.poll_Z ? "[Spec]" : "[Type]";
       int modeW = Math.max(this.write_I("[Spec]"), this.write_I("[Type]"));
       int capW = this.write_I("CAP");
@@ -11158,7 +11158,7 @@ public class ActionEditorOverlay extends bj {
          }
       }, selected::contains, cc::read);
       cy += 66;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Nearby Entities", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Nearby Entities", font, UiColorPalette.parse(), x, cy + 2, false);
       cy += 13;
       List<String> nearbyEntries = this.sync_List();
       this.init_V_GuiGraphicsExtract(ctx, x, cy, w, mx, my, "wait_entity_nearby", nearbyEntries, 3, value -> {
@@ -11219,7 +11219,7 @@ public class ActionEditorOverlay extends bj {
 
    private void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my, String listKey, String fieldKey) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Nearby Containers", font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Nearby Containers", font, UiColorPalette.parse(), x, y + 2, false);
       y += 14;
       List<BlockPos> nearbyContainers = this.flush_List();
       this.init_V_GuiGraphicsExtract(
@@ -11263,7 +11263,7 @@ public class ActionEditorOverlay extends bj {
          );
          int storeEditIdx = this.open_Map.getOrDefault("store_items_selected", -1);
          boolean storeEditing = storeEditIdx >= 0 && storeEditIdx < selected.size();
-         k search = this.flush_Map.get("targetItems");
+         ThemedTextInputBox search = this.flush_Map.get("targetItems");
          int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
          int addBtnW = this.write_I("+Add");
          int slotW = 44;
@@ -11271,7 +11271,7 @@ public class ActionEditorOverlay extends bj {
          int addBtnX = capBtnX - 3 - addBtnW;
          int slotX = addBtnX - 2 - slotW;
          int nameW = slotX - x - 2;
-         k storeSlotF = this.init_Map.get("store_slot");
+         ThemedTextInputBox storeSlotF = this.init_Map.get("store_slot");
          if (storeSlotF == null) {
             storeSlotF = this.init_k_I(slotW);
             storeSlotF.poll(true);
@@ -11313,7 +11313,7 @@ public class ActionEditorOverlay extends bj {
             }
          }
 
-         k fStoreSlotF = storeSlotF;
+         ThemedTextInputBox fStoreSlotF = storeSlotF;
          this.init_ByteReader_GuiGraphicsExtract_2(ctx, addBtnX, cy, addBtnW, 13, "+Add", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
             if (search != null) {
                String nameText = search.load_Str().strip();
@@ -11409,7 +11409,7 @@ public class ActionEditorOverlay extends bj {
          );
          int auditEditIdx = this.open_Map.getOrDefault("audit_items_selected", -1);
          boolean auditEditing = auditEditIdx >= 0 && auditEditIdx < selected.size();
-         k search = this.flush_Map.get("targetItems");
+         ThemedTextInputBox search = this.flush_Map.get("targetItems");
          String addLabel = auditEditing ? "New" : "+Add";
          int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
          int addBtnW = this.write_I(addLabel);
@@ -11418,7 +11418,7 @@ public class ActionEditorOverlay extends bj {
          int addBtnX = x + w - addBtnW;
          int slotX = pickX - 3 - slotW;
          int nameW = slotX - x - 2;
-         k auditSlotF = this.init_Map.get("audit_slot");
+         ThemedTextInputBox auditSlotF = this.init_Map.get("audit_slot");
          if (auditSlotF == null) {
             auditSlotF = this.init_k_I(slotW);
             auditSlotF.poll(true);
@@ -11460,7 +11460,7 @@ public class ActionEditorOverlay extends bj {
             }
          }
 
-         k fAuditSlotF = auditSlotF;
+         ThemedTextInputBox fAuditSlotF = auditSlotF;
          boolean capturing = this.init_StreamUtil.init("targetItems");
          this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, pickW, 13, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("targetItems"));
          this.init_ByteReader_GuiGraphicsExtract_2(ctx, addBtnX, cy, addBtnW, 13, addLabel, ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
@@ -11535,7 +11535,7 @@ public class ActionEditorOverlay extends bj {
          selected::clear,
          "(scan the server or add one manually)"
       );
-      k search = this.flush_Map.get("players");
+      ThemedTextInputBox search = this.flush_Map.get("players");
       int scanW = this.write_I("Scan");
       int allW = this.write_I("All");
       int searchW = Math.max(1, w - scanW - allW - 4);
@@ -11559,7 +11559,7 @@ public class ActionEditorOverlay extends bj {
          cy = this.init_I_GuiGraphicsExtract_3(ctx, x, cy, w, mx, my, selected, query) + 4;
       }
 
-      k amountField = this.init_Map.get("amountInput");
+      ThemedTextInputBox amountField = this.init_Map.get("amountInput");
       long amount = PayAction.init_J_Str(amountField != null ? amountField.load_Str() : "");
       boolean divide = this.load_Map.getOrDefault("divideEnabled", false);
       int count = selected.size();
@@ -11663,7 +11663,7 @@ public class ActionEditorOverlay extends bj {
             } else {
                boolean sel = this.init_Z_List_Str(selected, row.load());
                boolean hovered = mx >= x && mx < x + w && my >= iy && my < iy + rowH;
-               String label = autismclient.gui.f.b.k.init(this.init_Font, "  " + row.load(), w - 6, font, p.parse());
+               String label = autismclient.gui.f.b.k.init(this.init_Font, "  " + row.load(), w - 6, font, UiColorPalette.parse());
                autismclient.gui.macro.editor.a.CachePool.init(
                   ctx,
                   this.init_Font,
@@ -11689,7 +11689,7 @@ public class ActionEditorOverlay extends bj {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       int cy = bodyTop + 4;
       List<ak.Inner_DataUtil> selected = this.prev_List != null ? this.prev_List : Collections.emptyList();
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Module Actions (" + selected.size() + ")", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Module Actions (" + selected.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       boolean canClear = !selected.isEmpty();
       int tmClearW = this.write_I("Clear");
       int clearX = x + w - tmClearW;
@@ -11761,7 +11761,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       cy += listH + 4;
-      k search = this.flush_Map.get("_toggle_module_search");
+      ThemedTextInputBox search = this.flush_Map.get("_toggle_module_search");
       int refreshW = this.write_I("Refresh");
       int addW = this.write_I("+Add");
       int searchW = Math.max(1, w - refreshW - addW - 4);
@@ -11809,7 +11809,7 @@ public class ActionEditorOverlay extends bj {
       List<ak.Inner_DataUtil> selected
    ) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, title, font, p.parse(), x, y + 1, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, title, font, UiColorPalette.parse(), x, y + 1, false);
       y += 12;
       if (source != null && !source.isEmpty()) {
          this.init_V_GuiGraphicsExtract(
@@ -11907,7 +11907,7 @@ public class ActionEditorOverlay extends bj {
          emptyVp.load_V(0);
       }
 
-      for (String moduleName : autismclient.util.z.read_List()) {
+      for (String moduleName : autismclient.util.CommandPrefixHelper.read_List()) {
          if (moduleName != null && !moduleName.isBlank() && !this.init_Z_List_Str(this.stop_List, moduleName)) {
             this.stop_List.add(moduleName);
          }
@@ -12035,7 +12035,7 @@ public class ActionEditorOverlay extends bj {
          this.f_l_I = -1;
       }
 
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Items / Slots (" + entries.size() + ")", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Items / Slots (" + entries.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       boolean canClear = !entries.isEmpty();
       int clearX = x + w - headerBtnW;
       this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClear, mx, my, () -> {
@@ -12100,10 +12100,10 @@ public class ActionEditorOverlay extends bj {
       }
 
       cy += selAreaH;
-      TableIndex.init(ctx, x, cy + 2, w, p.c());
+      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
-      k wscAddF = this.flush_Map.get("_wsc_add");
-      k wscSlotF = this.init_Map.get("wsc_slot");
+      ThemedTextInputBox wscAddF = this.flush_Map.get("_wsc_add");
+      ThemedTextInputBox wscSlotF = this.init_Map.get("wsc_slot");
       if (wscAddF != null && wscSlotF != null) {
          int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
          int slotW = 44;
@@ -12144,7 +12144,7 @@ public class ActionEditorOverlay extends bj {
          }
       });
       int cntX = x + modBtnW + 2;
-      k countF = this.init_Map.get("wsc_count");
+      ThemedTextInputBox countF = this.init_Map.get("wsc_count");
       boolean countRelevant = curMode == WaitForSlotChangeAction.Inner_StreamUtil.COUNT_AT_LEAST || curMode == WaitForSlotChangeAction.Inner_StreamUtil.COUNT_BELOW;
       if (countF != null) {
          if (countRelevant) {
@@ -12161,7 +12161,7 @@ public class ActionEditorOverlay extends bj {
          } else {
             TableIndex.read(ctx, cntX, cy, cntW, 13);
             this.sync_V(ctx, cntX, cy, cntW, 13, -14018022);
-            autismclient.gui.f.b.k.init(ctx, this.init_Font, "-", font, p.bind(), cntX + (cntW - this.init_I_Identifier_Str(font, "-")) / 2, cy + 3, false);
+            autismclient.gui.f.b.k.init(ctx, this.init_Font, "-", font, UiColorPalette.bind(), cntX + (cntW - this.init_I_Identifier_Str(font, "-")) / 2, cy + 3, false);
          }
       }
 
@@ -12185,12 +12185,12 @@ public class ActionEditorOverlay extends bj {
       int[] useBtns = this.init_IArr_I(x, w, false, "Use Held", "Use Current");
       this.init_V_GuiGraphicsExtract(ctx, useBtns[0], cy, useBtns[1], 13, "Use Held", mx, my, this::o);
       this.init_V_GuiGraphicsExtract(ctx, useBtns[2], cy, useBtns[3], 13, "Use Current", mx, my, () -> {
-         k field = this.init_Map.get("itemName");
+         ThemedTextInputBox field = this.init_Map.get("itemName");
          if (field != null) {
             field.init_V_Str("");
          }
 
-         k slotField = this.init_Map.get("slot");
+         ThemedTextInputBox slotField = this.init_Map.get("slot");
          if (slotField != null) {
             slotField.init_V_Str("");
          }
@@ -12213,8 +12213,8 @@ public class ActionEditorOverlay extends bj {
 
    private int init_I_GuiGraphicsExtract(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my, float delta) {
       FieldDef itemFieldDef = this.load_FieldDef_Str("itemName");
-      k itemField = this.init_Map.get("itemName");
-      k slotField = this.init_Map.get("slot");
+      ThemedTextInputBox itemField = this.init_Map.get("itemName");
+      ThemedTextInputBox slotField = this.init_Map.get("slot");
       if (itemFieldDef != null && itemField != null && slotField != null) {
          Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
          int labelW = this.init_I_I(w, itemFieldDef.label(), font, 88);
@@ -12320,7 +12320,7 @@ public class ActionEditorOverlay extends bj {
       cy = this.init_I_GuiGraphicsExtract_2(
          ctx, x, cy, w, mx, my, "look_at_entity_selected", "Entities", selected, selected::remove, this::reset_Str, "(add entity types or specific captures)"
       );
-      k search = this.flush_Map.get("entityIds");
+      ThemedTextInputBox search = this.flush_Map.get("entityIds");
       String modeLabel = this.poll_Z ? "[Spec]" : "[Type]";
       int modeW = Math.max(this.write_I("[Spec]"), this.write_I("[Type]"));
       int capW = this.write_I("CAP");
@@ -12346,7 +12346,7 @@ public class ActionEditorOverlay extends bj {
          }
       }, selected::contains, cc::read);
       cy += 66;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Nearby Entities", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Nearby Entities", font, UiColorPalette.parse(), x, cy + 2, false);
       cy += 13;
       List<String> nearbyEntries = this.sync_List();
       this.init_V_GuiGraphicsExtract(ctx, x, cy, w, mx, my, "look_at_entity_nearby", nearbyEntries, 3, value -> {
@@ -12387,16 +12387,16 @@ public class ActionEditorOverlay extends bj {
    private void next(GuiGraphicsExtractor ctx, int x, int bodyTop, int w, int mx, int my, float delta) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       int cy = bodyTop + 4;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "From", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "From", font, UiColorPalette.parse(), x, cy + 2, false);
       int flipW = this.write_I("Flip Ends");
       this.init_V_GuiGraphicsExtract(ctx, x + w - flipW, cy, flipW, 13, "Flip Ends", mx, my, this::w);
       cy += 16;
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "fromUseItemName", x, cy, w, mx, my, delta);
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "fromItemName", x, cy, w, mx, my, delta);
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "fromSlot", x, cy, w, mx, my, delta);
-      TableIndex.init(ctx, x, cy + 2, w, p.c());
+      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 8;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "To", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "To", font, UiColorPalette.parse(), x, cy + 2, false);
       cy += 16;
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "toUseItemName", x, cy, w, mx, my, delta);
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "toItemName", x, cy, w, mx, my, delta);
@@ -12451,7 +12451,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       String hint = var10000;
-      this.init_I_GuiGraphicsExtract_2(ctx, x, cy, w, hint, "DISCONNECT".equals(mode) ? p.bind() : -19605);
+      this.init_I_GuiGraphicsExtract_2(ctx, x, cy, w, hint, "DISCONNECT".equals(mode) ? UiColorPalette.bind() : -19605);
    }
 
    private void size(GuiGraphicsExtractor ctx, int x, int bodyTop, int w, int mx, int my, float delta) {
@@ -12479,7 +12479,7 @@ public class ActionEditorOverlay extends bj {
       this.init_V_GuiGraphicsExtract(ctx, slotBtns[0], cy, slotBtns[1], 13, "Held", mx, my, this::p);
       this.init_V_GuiGraphicsExtract(ctx, slotBtns[2], cy, slotBtns[3], 13, "Use Slot Only", mx, my, this::q);
       cy += 18;
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Fallback Hotbar Slot", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Fallback Hotbar Slot", font, UiColorPalette.parse(), x, cy + 2, false);
       cy += 12;
       cy = this.load_I(ctx, x, cy, w, mx, my);
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "strategy", x, cy, w, mx, my, delta);
@@ -12635,7 +12635,7 @@ public class ActionEditorOverlay extends bj {
    private int read_I(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
       List<MacroExecutor.Inner_PacketUtil> history = MacroExecutor.load_List().stream().limit(6L).toList();
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Recent Chat", font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Recent Chat", font, UiColorPalette.parse(), x, y + 2, false);
       y += 13;
       int listH = this.update_I(history.size());
       this.init_V_GuiGraphicsExtract(ctx, x, y, w, listH, mx, my, history, "capture_value_recent", 3, this::init_V_MacroExecutor_Pack);
@@ -12646,8 +12646,8 @@ public class ActionEditorOverlay extends bj {
       if (entry != null) {
          String text = this.init_Str_MacroExecutor_Pack(entry);
          String suggested = autismclient.util.macro.CaptureValueAction.init_Str_Str_5(text);
-         k exampleField = this.init_Map.get("exampleText");
-         k selectedField = this.init_Map.get("selectedText");
+         ThemedTextInputBox exampleField = this.init_Map.get("exampleText");
+         ThemedTextInputBox selectedField = this.init_Map.get("selectedText");
          this.push_Z = true;
          if (exampleField != null) {
             exampleField.init_V_Str(text);
@@ -12667,7 +12667,7 @@ public class ActionEditorOverlay extends bj {
       List<autismclient.util.macro.CaptureValueAction.Inner_JsonUtil> lines = autismclient.util.macro.CaptureValueAction.init_List_Minecraft_2(init_Minecraft);
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       String title = !lines.isEmpty() && !lines.get(0).read().isBlank() ? "Scoreboard - " + lines.get(0).read() : "Scoreboard";
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, title, w, font, -1), font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, title, w, font, -1), font, UiColorPalette.parse(), x, y + 2, false);
       y += 13;
       int listH = lines.isEmpty() ? 24 : Math.min(5, lines.size()) * 22;
       int itemW = Math.max(1, w - 5 - 1);
@@ -12676,7 +12676,7 @@ public class ActionEditorOverlay extends bj {
       viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (lines.isEmpty()) {
          TableIndex.init(ctx, x, y, itemW, 24, false, false);
-         autismclient.gui.f.b.k.init(ctx, this.init_Font, "No scoreboard", font, p.bind(), x + 3, y + 7, false);
+         autismclient.gui.f.b.k.init(ctx, this.init_Font, "No scoreboard", font, UiColorPalette.bind(), x + 3, y + 7, false);
          return y + 24 + 2;
       }
 
@@ -12693,13 +12693,13 @@ public class ActionEditorOverlay extends bj {
             TableIndex.init(ctx, x, rowY, itemW, 22, hovered, selected);
             TableIndex.read(ctx, x, rowY + 2, 3, 18, selected ? -13248397 : -3376606);
             String rowLabel = "Row " + (line.init_I() + 1);
-            autismclient.gui.f.b.k.init(ctx, this.init_Font, rowLabel, font, p.bind(), x + 6, rowY + 2, false);
+            autismclient.gui.f.b.k.init(ctx, this.init_Font, rowLabel, font, UiColorPalette.bind(), x + 6, rowY + 2, false);
             autismclient.gui.f.b.k.init(
                ctx,
                this.init_Font,
                autismclient.gui.f.b.k.init(this.init_Font, line.flush(), Math.max(20, itemW - 10), font, -1),
                font,
-               p.scan(),
+               UiColorPalette.scan(),
                x + 6,
                rowY + 11,
                false
@@ -12750,7 +12750,7 @@ public class ActionEditorOverlay extends bj {
       List<String> names = this.init_List_TaskQueue(draft);
       List<String> pool = draft.init_List_List(names);
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Matches (" + pool.size() + " of " + names.size() + ")", font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Matches (" + pool.size() + " of " + names.size() + ")", font, UiColorPalette.parse(), x, y + 2, false);
       y += 13;
       int listH = pool.isEmpty() ? 24 : Math.min(5, pool.size()) * 14;
       int itemW = Math.max(1, w - 5 - 1);
@@ -12759,7 +12759,7 @@ public class ActionEditorOverlay extends bj {
       viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (pool.isEmpty()) {
          TableIndex.init(ctx, x, y, itemW, 24, false, false);
-         autismclient.gui.f.b.k.init(ctx, this.init_Font, "No matches", font, p.bind(), x + 3, y + 7, false);
+         autismclient.gui.f.b.k.init(ctx, this.init_Font, "No matches", font, UiColorPalette.bind(), x + 3, y + 7, false);
          return y + 24 + 2;
       }
 
@@ -12777,7 +12777,7 @@ public class ActionEditorOverlay extends bj {
                this.init_Font,
                autismclient.gui.f.b.k.init(this.init_Font, name, Math.max(20, itemW - 10), font, -1),
                font,
-               p.scan(),
+               UiColorPalette.scan(),
                x + 6,
                rowY + 3,
                false
@@ -12792,11 +12792,11 @@ public class ActionEditorOverlay extends bj {
 
    private void init_V_TaskQueue_JsonUtil(autismclient.util.macro.CaptureValueAction.Inner_JsonUtil line) {
       if (line != null) {
-         k rowField = this.init_Map.get("scoreboardRow");
-         k rowIndexField = this.init_Map.get("scoreboardRowIndex");
-         k objectiveField = this.init_Map.get("scoreboardObjective");
-         k exampleField = this.init_Map.get("exampleText");
-         k selectedField = this.init_Map.get("selectedText");
+         ThemedTextInputBox rowField = this.init_Map.get("scoreboardRow");
+         ThemedTextInputBox rowIndexField = this.init_Map.get("scoreboardRowIndex");
+         ThemedTextInputBox objectiveField = this.init_Map.get("scoreboardObjective");
+         ThemedTextInputBox exampleField = this.init_Map.get("exampleText");
+         ThemedTextInputBox selectedField = this.init_Map.get("selectedText");
          String suggested = autismclient.util.macro.CaptureValueAction.init_Str_Str_5(line.flush());
          this.push_Z = true;
          if (rowField != null) {
@@ -12880,7 +12880,7 @@ public class ActionEditorOverlay extends bj {
                this.init_CompoundTag.putString("selectedText", selected);
             }
 
-            k patternField = this.init_Map.get("pattern");
+            ThemedTextInputBox patternField = this.init_Map.get("pattern");
             String current = patternField != null
                ? patternField.load_Str()
                : (this.init_CompoundTag == null ? "" : this.init_CompoundTag.getStringOr("pattern", ""));
@@ -12945,10 +12945,10 @@ public class ActionEditorOverlay extends bj {
       GuiGraphicsExtractor ctx, String label, String fieldKey, String value, int x, int y, int w, int mx, int my, String copiedMessage
    ) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, label, font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, label, font, UiColorPalette.parse(), x, y + 2, false);
       y += 12;
       int buttonW = this.write_I("Copy");
-      k field = this.flush_Map.get(fieldKey);
+      ThemedTextInputBox field = this.flush_Map.get(fieldKey);
       if (field != null) {
          String safe = value == null ? "" : value;
          if (!safe.equals(field.load_Str())) {
@@ -13087,7 +13087,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private String update(String key, String fallback) {
-      k field = this.init_Map.get(key);
+      ThemedTextInputBox field = this.init_Map.get(key);
       return field == null ? fallback : field.load_Str();
    }
 
@@ -13098,7 +13098,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void poll(int slot) {
-      k field = this.init_Map.get("slot");
+      ThemedTextInputBox field = this.init_Map.get("slot");
       if (field != null) {
          field.init_V_Str(String.valueOf(Math.max(0, slot)));
       }
@@ -13137,7 +13137,7 @@ public class ActionEditorOverlay extends bj {
                : ("CAPTURE".equals(matchMode) ? "Use {name} to capture." : "Fuzzy match: " + fuzzyPercent + "%.")
          );
       cy = this.init_I_GuiGraphicsExtract(ctx, x, cy, w, hint);
-      k searchField = this.flush_Map.get("_wait_chat_search");
+      ThemedTextInputBox searchField = this.flush_Map.get("_wait_chat_search");
       if (searchField != null) {
          searchField.read(x);
          searchField.write(cy);
@@ -13147,13 +13147,13 @@ public class ActionEditorOverlay extends bj {
       }
 
       List<MacroExecutor.Inner_PacketUtil> history = this.update_List();
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Recent Messages (" + history.size() + ")", font, p.parse(), x, cy + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Recent Messages (" + history.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       autismclient.gui.f.b.k.init(
          ctx,
          this.init_Font,
          autismclient.gui.f.b.k.init(this.init_Font, this.write_Str("Click a row to use that message."), Math.max(20, w - 122), font, -1),
          font,
-         p.bind(),
+         UiColorPalette.bind(),
          x + 118,
          cy + 2,
          false
@@ -13163,8 +13163,8 @@ public class ActionEditorOverlay extends bj {
       this.init_V_GuiGraphicsExtract_2(ctx, x, cy, w, availableListHeight, mx, my, history);
    }
 
-   private int init_I_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, k patternField, int x, int y, int w, int mx, int my) {
-      k nameField = this.flush_Map.get("_capture_name");
+   private int init_I_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, ThemedTextInputBox patternField, int x, int y, int w, int mx, int my) {
+      ThemedTextInputBox nameField = this.flush_Map.get("_capture_name");
       if (nameField != null && patternField != null) {
          int buttonW = this.write_I("Capture");
          nameField.read(x);
@@ -13190,9 +13190,9 @@ public class ActionEditorOverlay extends bj {
    private int sync_I(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       int percent = this.put_I();
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Match Strength", font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Match Strength", font, UiColorPalette.parse(), x, y + 2, false);
       String label = percent + "%";
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, label, font, p.bind(), x + w - this.init_I_Identifier_Str(font, label), y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, label, font, UiColorPalette.bind(), x + w - this.init_I_Identifier_Str(font, label), y + 2, false);
       y += 13;
       int sliderW = w;
       int sliderH = 14;
@@ -13202,7 +13202,7 @@ public class ActionEditorOverlay extends bj {
       this.f_o_I = y;
       this.f_p_I = sliderW;
       this.f_q_I = sliderH;
-      autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(x, y, sliderW, sliderH), -15921896, p.c());
+      autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(x, y, sliderW, sliderH), -15921896, UiColorPalette.c());
       autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(x + 1, trackY, sliderW - 2, trackH), -15397876);
       int[] steps = new int[]{40, 50, 60, 70, 80, 90, 100};
       int knobIndex = Math.max(0, Math.min(6, (percent - 40) / 10));
@@ -13226,7 +13226,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private int put_I() {
-      k field = this.init_Map.get("fuzzyPercent");
+      ThemedTextInputBox field = this.init_Map.get("fuzzyPercent");
       if (field == null) {
          return 100;
       }
@@ -13239,7 +13239,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void push(int percent) {
-      k field = this.init_Map.get("fuzzyPercent");
+      ThemedTextInputBox field = this.init_Map.get("fuzzyPercent");
       if (field != null) {
          field.init_V_Str(String.valueOf(WaitForChatAction.init_I_I_8(percent)));
       }
@@ -13268,9 +13268,9 @@ public class ActionEditorOverlay extends bj {
    private int flush(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       int smoothness = this.add_I();
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Smoothness", font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Smoothness", font, UiColorPalette.parse(), x, y + 2, false);
       String label = smoothness + " / 10";
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, label, font, p.bind(), x + w - this.init_I_Identifier_Str(font, label), y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, label, font, UiColorPalette.bind(), x + w - this.init_I_Identifier_Str(font, label), y + 2, false);
       y += 13;
       int sliderW = w;
       int sliderH = 14;
@@ -13280,7 +13280,7 @@ public class ActionEditorOverlay extends bj {
       this.f_s_I = y;
       this.f_t_I = sliderW;
       this.f_u_I = sliderH;
-      autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(x, y, sliderW, sliderH), -15921896, p.c());
+      autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(x, y, sliderW, sliderH), -15921896, UiColorPalette.c());
       autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(x + 1, trackY, sliderW - 2, trackH), -15397876);
       int knobIndex = Math.max(0, Math.min(9, smoothness - 1));
       int knobCenterX = x + Math.round((sliderW - 1) * (knobIndex / 9.0F));
@@ -13302,7 +13302,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private int add_I() {
-      k field = this.init_Map.get("smoothness");
+      ThemedTextInputBox field = this.init_Map.get("smoothness");
       if (field == null) {
          return 9;
       }
@@ -13315,7 +13315,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void tick(int smoothness) {
-      k field = this.init_Map.get("smoothness");
+      ThemedTextInputBox field = this.init_Map.get("smoothness");
       if (field != null) {
          field.init_V_Str(String.valueOf(RotateAction.init_I(smoothness)));
       }
@@ -13344,9 +13344,9 @@ public class ActionEditorOverlay extends bj {
    private int close(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       int delay = this.clear_I();
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Safe Delay", font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, "Safe Delay", font, UiColorPalette.parse(), x, y + 2, false);
       String label = delay + "t";
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, label, font, p.bind(), x + w - this.init_I_Identifier_Str(font, label), y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, label, font, UiColorPalette.bind(), x + w - this.init_I_Identifier_Str(font, label), y + 2, false);
       y += 13;
       int sliderW = w;
       int sliderH = 14;
@@ -13356,7 +13356,7 @@ public class ActionEditorOverlay extends bj {
       this.f_w_I = y;
       this.f_x_I = sliderW;
       this.f_y_I = sliderH;
-      autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(x, y, sliderW, sliderH), -15921896, p.c());
+      autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(x, y, sliderW, sliderH), -15921896, UiColorPalette.c());
       autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(x + 1, trackY, sliderW - 2, trackH), -15397876);
       int knobIndex = Math.max(0, Math.min(10, delay));
       int knobCenterX = x + Math.round((sliderW - 1) * (knobIndex / 10.0F));
@@ -13378,7 +13378,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private int clear_I() {
-      k field = this.init_Map.get("safeClickDelayTicks");
+      ThemedTextInputBox field = this.init_Map.get("safeClickDelayTicks");
       if (field == null) {
          return 1;
       }
@@ -13391,7 +13391,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void get(int ticks) {
-      k field = this.init_Map.get("safeClickDelayTicks");
+      ThemedTextInputBox field = this.init_Map.get("safeClickDelayTicks");
       if (field != null) {
          field.init_V_Str(String.valueOf(XCarryAction.write(ticks)));
       }
@@ -13418,7 +13418,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void load_V_MacroExecutor_Pack(MacroExecutor.Inner_PacketUtil entry) {
-      k field = this.init_Map.get("pattern");
+      ThemedTextInputBox field = this.init_Map.get("pattern");
       if (field != null && entry != null) {
          Component patternComponent = entry.init_Component() != null
             ? entry.init_Component().copy()
@@ -13429,7 +13429,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_k_Component(k field, Component component) {
+   private void init_V_k_Component(ThemedTextInputBox field, Component component) {
       if (field != null) {
          Component safeComponent = component != null ? component.copy() : Component.empty();
          String visibleText = safeComponent.getString();
@@ -13587,7 +13587,7 @@ public class ActionEditorOverlay extends bj {
 
    private List<MacroExecutor.Inner_PacketUtil> update_List() {
       List<MacroExecutor.Inner_PacketUtil> history = MacroExecutor.load_List();
-      k searchField = this.flush_Map.get("_wait_chat_search");
+      ThemedTextInputBox searchField = this.flush_Map.get("_wait_chat_search");
       String query = searchField != null ? searchField.load_Str().trim() : "";
       this.update_List.clear();
       String normalizedQuery = query.isEmpty() ? "" : this.put_Str(query);
@@ -13663,8 +13663,8 @@ public class ActionEditorOverlay extends bj {
          TableIndex.init(ctx, x, y, itemW, 24, false, false);
          String firstLine = "capture_value_recent".equals(viewportKey) ? "No recent chat yet." : "No recent messages matched your search.";
          String secondLine = "capture_value_recent".equals(viewportKey) ? "Send or receive a message first." : "Send or receive chat first, then pick it here.";
-         autismclient.gui.f.b.k.init(ctx, this.init_Font, firstLine, font, p.bind(), x + 3, y + 3, false);
-         autismclient.gui.f.b.k.init(ctx, this.init_Font, secondLine, font, p.bind(), x + 3, y + 13, false);
+         autismclient.gui.f.b.k.init(ctx, this.init_Font, firstLine, font, UiColorPalette.bind(), x + 3, y + 3, false);
+         autismclient.gui.f.b.k.init(ctx, this.init_Font, secondLine, font, UiColorPalette.bind(), x + 3, y + 13, false);
       } else {
          chatViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
          int first = chatViewport.pop();
@@ -13688,7 +13688,7 @@ public class ActionEditorOverlay extends bj {
                   List<FormattedCharSequence> wrapped = this.init_List_MacroExecutor_Pack(value, Math.max(20, itemW - 6), 3);
                   int textY = iy + 3;
                   if (wrapped.isEmpty()) {
-                     autismclient.gui.f.b.k.init(ctx, this.init_Font, "(empty)", font, p.bind(), x + 3, textY, false);
+                     autismclient.gui.f.b.k.init(ctx, this.init_Font, "(empty)", font, UiColorPalette.bind(), x + 3, textY, false);
                   } else {
                      for (FormattedCharSequence line : wrapped) {
                         if (textY + 8 > iy + itemH) {
@@ -13975,7 +13975,7 @@ public class ActionEditorOverlay extends bj {
       String title = c2s ? "C2S Packets" : "S2C Packets";
       List<String> selected = this.write_Map.getOrDefault(key, Collections.emptyList());
       y = this.init_I_GuiGraphicsExtract_2(ctx, x, y, w, mx, my, key + "_selected", title, selected, selected::remove, value -> value, "(none selected)");
-      k search = this.flush_Map.get(searchKey);
+      ThemedTextInputBox search = this.flush_Map.get(searchKey);
       if (search != null) {
          search.read(x);
          search.write(y + 1);
@@ -14021,7 +14021,7 @@ public class ActionEditorOverlay extends bj {
 
    private void o() {
       if (init_Minecraft.player != null) {
-         k field = this.init_Map.get("itemName");
+         ThemedTextInputBox field = this.init_Map.get("itemName");
          if (field != null) {
             if (init_Minecraft.player.getMainHandItem().isEmpty()) {
                field.init_V_Str("");
@@ -14037,7 +14037,7 @@ public class ActionEditorOverlay extends bj {
 
    private void p() {
       if (init_Minecraft.player != null) {
-         k field = this.init_Map.get("itemName");
+         ThemedTextInputBox field = this.init_Map.get("itemName");
          if (field != null) {
             if (init_Minecraft.player.getMainHandItem().isEmpty()) {
                field.init_V_Str("");
@@ -14054,7 +14054,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void q() {
-      k field = this.init_Map.get("itemName");
+      ThemedTextInputBox field = this.init_Map.get("itemName");
       if (field != null) {
          field.init_V_Str("");
       }
@@ -14063,7 +14063,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private int start_I() {
-      k field = this.init_Map.get("slot");
+      ThemedTextInputBox field = this.init_Map.get("slot");
       if (field == null) {
          return 0;
       }
@@ -14076,7 +14076,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void put(int slot) {
-      k field = this.init_Map.get("slot");
+      ThemedTextInputBox field = this.init_Map.get("slot");
       if (field != null) {
          field.init_V_Str(String.valueOf(Math.max(0, Math.min(8, slot))));
       }
@@ -14084,15 +14084,15 @@ public class ActionEditorOverlay extends bj {
 
    private String tick_Str() {
       int fallbackSlot = this.start_I() + 1;
-      k itemField = this.init_Map.get("itemName");
+      ThemedTextInputBox itemField = this.init_Map.get("itemName");
       String itemName = itemField != null ? itemField.load_Str().trim() : "";
       return itemName.isEmpty() ? "Uses hotbar slot " + fallbackSlot + "." : "Uses the named item, else slot " + fallbackSlot + ".";
    }
 
    private String run_Str() {
-      k field = this.init_Map.get("itemName");
+      ThemedTextInputBox field = this.init_Map.get("itemName");
       String item = field != null ? field.load_Str().trim() : "";
-      k slotField = this.init_Map.get("slot");
+      ThemedTextInputBox slotField = this.init_Map.get("slot");
       String slot = slotField != null ? slotField.load_Str().trim() : "";
       if (!slot.isEmpty() && !item.isEmpty()) {
          return "slot #" + slot + " / named item";
@@ -14113,7 +14113,7 @@ public class ActionEditorOverlay extends bj {
 
    private void s() {
       if (init_Minecraft.player != null) {
-         k field = this.init_Map.get("itemName");
+         ThemedTextInputBox field = this.init_Map.get("itemName");
          if (field != null) {
             if (init_Minecraft.player.getMainHandItem().isEmpty()) {
                field.init_V_Str("");
@@ -14130,7 +14130,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void t() {
-      k field = this.init_Map.get("itemName");
+      ThemedTextInputBox field = this.init_Map.get("itemName");
       if (field != null) {
          field.init_V_Str("");
       }
@@ -14140,8 +14140,8 @@ public class ActionEditorOverlay extends bj {
 
    private void u() {
       if (this.put_Z() && init_Minecraft.player != null) {
-         k yawField = this.init_Map.get("yaw");
-         k pitchField = this.init_Map.get("pitch");
+         ThemedTextInputBox yawField = this.init_Map.get("yaw");
+         ThemedTextInputBox pitchField = this.init_Map.get("pitch");
          if (yawField != null) {
             yawField.init_V_Str(init_Str_D(init_Minecraft.player.getYRot()));
          }
@@ -14154,9 +14154,9 @@ public class ActionEditorOverlay extends bj {
 
    private void v() {
       if (this.put_Z() && init_Minecraft.player != null) {
-         k xField = this.init_Map.get("pos_0");
-         k yField = this.init_Map.get("pos_1");
-         k zField = this.init_Map.get("pos_2");
+         ThemedTextInputBox xField = this.init_Map.get("pos_0");
+         ThemedTextInputBox yField = this.init_Map.get("pos_1");
+         ThemedTextInputBox zField = this.init_Map.get("pos_2");
          if (xField != null) {
             xField.init_V_Str(init_Str_D(init_Minecraft.player.getX()));
          }
@@ -14172,7 +14172,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private String set_Str() {
-      k itemField = this.init_Map.get("itemName");
+      ThemedTextInputBox itemField = this.init_Map.get("itemName");
       String itemName = itemField != null ? itemField.load_Str().trim() : "";
       String handLabel = this.load_Map.getOrDefault("checkMainHand", true) ? "main hand" : "off hand";
       return itemName.isEmpty() ? "Waits for the " + handLabel + " cooldown." : "Waits for the named item cooldown.";
@@ -14187,10 +14187,10 @@ public class ActionEditorOverlay extends bj {
       String toSlot = this.init_Map.containsKey("toSlot") ? this.init_Map.get("toSlot").load_Str() : "";
       this.load_Map.put("fromUseItemName", toUseName);
       this.load_Map.put("toUseItemName", fromUseName);
-      k fromItemField = this.init_Map.get("fromItemName");
-      k toItemField = this.init_Map.get("toItemName");
-      k fromSlotField = this.init_Map.get("fromSlot");
-      k toSlotField = this.init_Map.get("toSlot");
+      ThemedTextInputBox fromItemField = this.init_Map.get("fromItemName");
+      ThemedTextInputBox toItemField = this.init_Map.get("toItemName");
+      ThemedTextInputBox fromSlotField = this.init_Map.get("fromSlot");
+      ThemedTextInputBox toSlotField = this.init_Map.get("toSlot");
       if (fromItemField != null) {
          fromItemField.init_V_Str(toItem);
       }
@@ -14365,7 +14365,7 @@ public class ActionEditorOverlay extends bj {
          this.open_Map.put(listKey, -1);
       }
 
-      autismclient.gui.f.b.k.init(ctx, this.init_Font, label + " (" + values.size() + ")", font, p.parse(), x, y + 2, false);
+      autismclient.gui.f.b.k.init(ctx, this.init_Font, label + " (" + values.size() + ")", font, UiColorPalette.parse(), x, y + 2, false);
       boolean canClear = !values.isEmpty();
       int clearX = x + w - headerBtnW;
       this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, y, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClear, mx, my, () -> {
@@ -14608,7 +14608,7 @@ public class ActionEditorOverlay extends bj {
          ck state = ck.init_ck();
          state.read_V_Runnable(() -> {
             if (previousScreen != null) {
-               cx.init_V(init_Minecraft, previousScreen);
+               OverlayScreenController.init_V(init_Minecraft, previousScreen);
             }
 
             state.load_V_Consumer(null);
@@ -14616,7 +14616,7 @@ public class ActionEditorOverlay extends bj {
          });
          init_Minecraft.execute(() -> {
             if (init_Minecraft.gui.screen() != null) {
-               cx.init_V(init_Minecraft, null);
+               OverlayScreenController.init_V(init_Minecraft, null);
             }
          });
          state.value(this.poll_Z);
@@ -14633,11 +14633,11 @@ public class ActionEditorOverlay extends bj {
             }
 
             if (previousScreen != null) {
-               cx.init_V(init_Minecraft, previousScreen);
+               OverlayScreenController.init_V(init_Minecraft, previousScreen);
             }
 
             this.init_V_Z_Z(false, false);
-            bk.init_bk().update_V(this);
+            OverlayManager.init_bk().update_V(this);
          }));
       }
    }
@@ -14819,9 +14819,9 @@ public class ActionEditorOverlay extends bj {
 
    private void init_V_Str_BlockPos(String fieldKey, BlockPos pos) {
       if (fieldKey != null && pos != null) {
-         k fx = this.init_Map.get(fieldKey + "_0");
-         k fy = this.init_Map.get(fieldKey + "_1");
-         k fz = this.init_Map.get(fieldKey + "_2");
+         ThemedTextInputBox fx = this.init_Map.get(fieldKey + "_0");
+         ThemedTextInputBox fy = this.init_Map.get(fieldKey + "_1");
+         ThemedTextInputBox fz = this.init_Map.get(fieldKey + "_2");
          if (fx != null) {
             fx.init_V_Str(String.valueOf(pos.getX()));
          }
@@ -14838,9 +14838,9 @@ public class ActionEditorOverlay extends bj {
 
    private boolean init_Z_Str_BlockPos(String fieldKey, BlockPos pos) {
       if (fieldKey != null && pos != null) {
-         k fx = this.init_Map.get(fieldKey + "_0");
-         k fy = this.init_Map.get(fieldKey + "_1");
-         k fz = this.init_Map.get(fieldKey + "_2");
+         ThemedTextInputBox fx = this.init_Map.get(fieldKey + "_0");
+         ThemedTextInputBox fy = this.init_Map.get(fieldKey + "_1");
+         ThemedTextInputBox fz = this.init_Map.get(fieldKey + "_2");
          if (fx != null && fy != null && fz != null) {
             try {
                int x = (int)Math.round(Double.parseDouble(fx.load_Str().trim()));
@@ -14886,7 +14886,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void run_V(String fieldKey) {
-      k field = this.init_Map.get(fieldKey);
+      ThemedTextInputBox field = this.init_Map.get(fieldKey);
       Consumer<Class<? extends Packet<?>>> set = packetClass -> {
          if (packetClass != null && field != null) {
             String name = PacketTypeRegistry.init_Str_Class(packetClass);
@@ -14905,7 +14905,7 @@ public class ActionEditorOverlay extends bj {
 
    private void y() {
       if (this.reset_List != null && this.f_z_I >= 0 && this.f_z_I < this.reset_List.size()) {
-         k valueField = this.init_Map.get("_wpm_value");
+         ThemedTextInputBox valueField = this.init_Map.get("_wpm_value");
          if (valueField != null) {
             this.reset_List.get(this.f_z_I).read = valueField.load_Str();
          }
@@ -14913,7 +14913,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void z() {
-      k valueField = this.init_Map.get("_wpm_value");
+      ThemedTextInputBox valueField = this.init_Map.get("_wpm_value");
       if (valueField != null) {
          if (this.reset_List != null && this.f_z_I >= 0 && this.f_z_I < this.reset_List.size()) {
             valueField.init_V_Str(this.reset_List.get(this.f_z_I).read == null ? "" : this.reset_List.get(this.f_z_I).read);
@@ -15227,7 +15227,7 @@ public class ActionEditorOverlay extends bj {
       int bw = (w - 4) / 3;
 
       for (int i = 0; i < 3; i++) {
-         k f = this.init_Map.get(field.key() + "_" + i);
+         ThemedTextInputBox f = this.init_Map.get(field.key() + "_" + i);
          if (f != null) {
             int fx = x + i * (bw + 2);
             f.read(fx);
@@ -15664,7 +15664,7 @@ public class ActionEditorOverlay extends bj {
                         h += this.write(this.load_FieldDef_Str("delayMs")) ? 16 : 0;
                         h += 74;
                         h += 18;
-                        k paySearch = this.flush_Map.get("players");
+                        ThemedTextInputBox paySearch = this.flush_Map.get("players");
                         int payRows = this.state_Z ? Math.max(1, this.load_List_Str(paySearch != null ? paySearch.load_Str() : "").size()) : 1;
                         h += payRows * 13 + 4;
                         return h + 48;
@@ -15834,7 +15834,7 @@ public class ActionEditorOverlay extends bj {
    private void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor ctx, String text, int x, int y, int maxW, Identifier font) {
       String trimmed = autismclient.gui.f.b.k.init(this.init_Font, text, maxW - 4, font, -1);
       autismclient.gui.f.b.k.init(
-         ctx, this.init_Font, trimmed, font, p.scan(), x, j.init(y, 14, this.init_I_Identifier(font), this.init_CharEncoder.flush()), false
+         ctx, this.init_Font, trimmed, font, UiColorPalette.scan(), x, j.init(y, 14, this.init_I_Identifier(font), this.init_CharEncoder.flush()), false
       );
    }
 
@@ -15847,7 +15847,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private int init_I_Identifier_Str(Identifier font, String text) {
-      return autismclient.gui.f.b.k.init(this.init_Font, text == null ? "" : text, font, p.scan());
+      return autismclient.gui.f.b.k.init(this.init_Font, text == null ? "" : text, font, UiColorPalette.scan());
    }
 
    private int read_I(String text) {
@@ -15954,8 +15954,8 @@ public class ActionEditorOverlay extends bj {
       return vp;
    }
 
-   private k init_k_I(int w) {
-      return new k(init_Minecraft, this.init_Font, 0, 0, w, 13, false);
+   private ThemedTextInputBox init_k_I(int w) {
+      return new ThemedTextInputBox(init_Minecraft, this.init_Font, 0, 0, w, 13, false);
    }
 
    private static String init_Str_D(double v) {
@@ -16036,7 +16036,7 @@ public class ActionEditorOverlay extends bj {
          this.index();
          init_Minecraft.execute(() -> {
             if (init_Minecraft.gui.screen() != null) {
-               cx.init_V(init_Minecraft, null);
+               OverlayScreenController.init_V(init_Minecraft, null);
             }
          });
          ck state = ck.init_ck();
@@ -16087,7 +16087,7 @@ public class ActionEditorOverlay extends bj {
             boolean dbl = field.xyzDouble();
             init_Minecraft.execute(() -> {
                if (init_Minecraft.gui.screen() != null) {
-                  cx.init_V(init_Minecraft, null);
+                  OverlayScreenController.init_V(init_Minecraft, null);
                }
             });
             ck state = ck.init_ck();
@@ -16100,9 +16100,9 @@ public class ActionEditorOverlay extends bj {
                state.init_V_BiConsumer((pos, face) -> {
                   Direction useFace = face == null ? Direction.UP : face;
                   BlockPos targetPos = pos.relative(useFace);
-                  k fx = this.init_Map.get(key + "_0");
-                  k fy = this.init_Map.get(key + "_1");
-                  k fz = this.init_Map.get(key + "_2");
+                  ThemedTextInputBox fx = this.init_Map.get(key + "_0");
+                  ThemedTextInputBox fy = this.init_Map.get(key + "_1");
+                  ThemedTextInputBox fz = this.init_Map.get(key + "_2");
                   if (fx != null) {
                      fx.init_V_Str(dbl ? init_Str_D(targetPos.getX()) : String.valueOf(targetPos.getX()));
                   }
@@ -16120,9 +16120,9 @@ public class ActionEditorOverlay extends bj {
                });
             } else {
                state.init_V_Consumer(pos -> {
-                  k fx = this.init_Map.get(key + "_0");
-                  k fy = this.init_Map.get(key + "_1");
-                  k fz = this.init_Map.get(key + "_2");
+                  ThemedTextInputBox fx = this.init_Map.get(key + "_0");
+                  ThemedTextInputBox fy = this.init_Map.get(key + "_1");
+                  ThemedTextInputBox fz = this.init_Map.get(key + "_2");
                   if (fx != null) {
                      fx.init_V_Str(dbl ? init_Str_D(pos.getX()) : String.valueOf(pos.getX()));
                   }
@@ -16148,7 +16148,7 @@ public class ActionEditorOverlay extends bj {
          this.index();
          init_Minecraft.execute(() -> {
             if (init_Minecraft.gui.screen() != null) {
-               cx.init_V(init_Minecraft, null);
+               OverlayScreenController.init_V(init_Minecraft, null);
             }
          });
          ck state = ck.init_ck();
