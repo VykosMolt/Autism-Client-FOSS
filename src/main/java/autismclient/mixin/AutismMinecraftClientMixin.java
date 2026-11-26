@@ -26,7 +26,6 @@ import autismclient.util.AutismLiteVariant;
 import autismclient.util.D;
 import autismclient.util.DataPipe;
 import autismclient.util.ListPool;
-import autismclient.util.PkgCls_g;
 import autismclient.util.StreamGate;
 import autismclient.util.aT;
 import autismclient.util.aY;
@@ -179,7 +178,6 @@ public class AutismMinecraftClientMixin {
       cG.read((Minecraft)(Object)this);
       ck.init_ck().push_V();
       as.open();
-      PkgCls_g.init();
       al.update_V();
       s.init_V();
       am.read_V();
@@ -278,10 +276,6 @@ public class AutismMinecraftClientMixin {
             } else if (al.init_Z_HitResult(client.hitResult)) {
                cir.setReturnValue(false);
             } else if ((AutismLiteVariant.enabled() || !ListPool.update()) && !DataPipe.load()) {
-               if (client.hitResult instanceof EntityHitResult entityHit) {
-                  PkgCls_g.init_V(entityHit.getEntity());
-               }
-
                if (ck.init_ck().count()) {
                   ck.init_ck().index();
                   cir.setReturnValue(false);

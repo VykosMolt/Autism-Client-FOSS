@@ -2,8 +2,6 @@ package autismclient.modules;
 
 import autismclient.util.AuditClientFixes;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.PkgCls_g;
-import autismclient.util.PkgCls_h;
 import autismclient.util.bk;
 import autismclient.util.dm;
 import java.awt.Color;
@@ -26,7 +24,6 @@ import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
-import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos.MutableBlockPos;
@@ -60,7 +57,6 @@ public final class am {
    private static volatile am.Inner_StreamUtil init_am_StreamUtil = am.Inner_StreamUtil.init("esp", -1, false);
    private static volatile am.Inner_ConfigStore init_am_ConfigStore = am.Inner_ConfigStore.init(-1, false);
    private static volatile am.Inner_StreamUtil load_am_StreamUtil = am.Inner_StreamUtil.init("tracers", -1, false);
-   private static volatile am.Inner_DataUtil init_am_DataUtil = am.Inner_DataUtil.init(-1, false);
    private static final AtomicBoolean init_AtomicBoolean = new AtomicBoolean();
    private static final long init_J = 200L;
    private static volatile long load_J = -1L;
@@ -465,65 +461,6 @@ public final class am {
       return read_I(entity) | 0xFF000000;
    }
 
-   public static boolean run() {
-      return init_am_DataUtil().load_Z();
-   }
-
-   public static void init_V_Entity_EntityRenderState(Entity entity, EntityRenderState state) {
-      if (state instanceof PkgCls_h holder) {
-         am.Inner_DataUtil snapshot = init_am_DataUtil();
-         if (!snapshot.load_Z() || entity instanceof ItemEntity || !init_Z_am_DataUtil_Entity(snapshot, entity)) {
-            holder.autism$setChams(false, 0, 0);
-         } else if (snapshot.write_Z() && PkgCls_g.init_Z(entity)) {
-            int hit = snapshot.update_I() | 0xFF000000;
-            holder.autism$setChams(true, hit, hit);
-         } else if (snapshot.read_Z()) {
-            holder.autism$setChams(true, 16777215, 16777215);
-         } else {
-            int alpha = Math.round(255.0F * Math.max(0.0F, Math.min(100.0F, snapshot.write_I())) / 100.0F);
-            holder.autism$setChams(true, alpha << 24 | snapshot.load_I() & 16777215, alpha << 24 | snapshot.read_I() & 16777215);
-         }
-      }
-   }
-
-   private static boolean init_Z_am_DataUtil_Entity(am.Inner_DataUtil snapshot, Entity entity) {
-      if (snapshot == null || !snapshot.load_Z()) {
-         return false;
-      }
-
-      if (init_Minecraft == null || init_Minecraft.player == null || entity == null) {
-         return false;
-      }
-
-      if (entity == init_Minecraft.player) {
-         return false;
-      }
-
-      if (ByteReader.load_Z(entity)) {
-         return false;
-      }
-
-      if (entity == init_Minecraft.getCameraEntity() && init_Minecraft.options.getCameraType().isFirstPerson()) {
-         return false;
-      }
-
-      double maxDistance = snapshot.init_D();
-      if (maxDistance > 0.0 && entity.distanceToSqr(init_Minecraft.player) > maxDistance * maxDistance) {
-         return false;
-      }
-
-      if (snapshot.init_Set().isEmpty() && snapshot.load_Set().isEmpty()) {
-         return true;
-      }
-
-      EntityType<?> entityType = entity.getType();
-      Boolean matched = snapshot.init_ConcurrentHashMap().get(entityType);
-      return matched != null ? matched : snapshot.init_ConcurrentHashMap().computeIfAbsent(entityType, type -> {
-         Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey((EntityType<?>)type);
-         return snapshot.init_Set().contains(id) || snapshot.load_Set().contains(id.getPath());
-      });
-   }
-
    public static boolean read_Z(Entity entity) {
       if (entity instanceof ItemEntity itemEntity) {
          am.Inner_ConfigStore snapshot = init_am_ConfigStore();
@@ -731,7 +668,6 @@ public final class am {
          init_am_StreamUtil = init("esp", revision, hidden, false);
          init_am_ConfigStore = init_am_ConfigStore_I_Z(revision, hidden);
          load_am_StreamUtil = init("tracers", revision, hidden, true);
-         init_am_DataUtil = init_am_DataUtil_I_Z(revision, hidden);
          dm.init(init_am_JsonUtil.load_Z());
       }
    }
@@ -870,75 +806,6 @@ public final class am {
          load_am_StreamUtil = snapshot;
          return snapshot;
       }
-   }
-
-   private static am.Inner_DataUtil init_am_DataUtil() {
-      am.Inner_DataUtil snapshot = init_am_DataUtil;
-      int revision = al.init_I();
-      boolean hidden = init_Z();
-      if (snapshot.init_I() == revision && snapshot.init_Z() == hidden) {
-         return snapshot;
-      }
-
-      synchronized (am.class) {
-         snapshot = init_am_DataUtil;
-         if (snapshot.init_I() == revision && snapshot.init_Z() == hidden) {
-            return snapshot;
-         }
-
-         snapshot = init_am_DataUtil_I_Z(revision, hidden);
-         init_am_DataUtil = snapshot;
-         return snapshot;
-      }
-   }
-
-   private static am.Inner_DataUtil init_am_DataUtil_I_Z(int revision, boolean hidden) {
-      if (hidden) {
-         return am.Inner_DataUtil.init(revision, true);
-      }
-
-      Module module = al.init_Module_Str("chams");
-      if (module != null && module.isEnabled()) {
-         Set<Identifier> ids = new HashSet<>();
-         Set<String> paths = new HashSet<>();
-
-         for (String entry : module.list("entities")) {
-            if (entry != null) {
-               String normalized = entry.trim().toLowerCase(Locale.ROOT);
-               if (!normalized.isEmpty()) {
-                  Identifier identifier = normalized.contains(":") ? Identifier.tryParse(normalized) : null;
-                  if (identifier != null) {
-                     ids.add(identifier);
-                  } else {
-                     paths.add(normalized.contains(":") ? normalized.substring(normalized.indexOf(58) + 1) : normalized);
-                  }
-               }
-            }
-         }
-
-         return new am.Inner_DataUtil(
-            revision,
-            false,
-            true,
-            "Texture".equals(module.value("style")),
-            init_D_Str_D(module.value("max-distance"), 128.0),
-            Set.copyOf(ids),
-            Set.copyOf(paths),
-            init_I_Module(module, "visible-color", -13238437),
-            init_I_Module(module, "occluded-color", -5230337),
-            (int)init_D_Str_D(module.value("opacity"), 100.0),
-            Boolean.parseBoolean(module.value("hit-color")),
-            init_I_Module(module, "hit-color-value", -50373),
-            Boolean.parseBoolean(module.value("draw-armor")),
-            new ConcurrentHashMap<>()
-         );
-      } else {
-         return am.Inner_DataUtil.init(revision, false);
-      }
-   }
-
-   public static boolean reset() {
-      return init_am_DataUtil().update_Z();
    }
 
    private static am.Inner_ConfigStore init_am_ConfigStore() {
@@ -1568,29 +1435,6 @@ public final class am {
       static am.Inner_ConfigStore init(int revision, boolean hidden) {
          return new am.Inner_ConfigStore(
             revision, hidden, false, "", false, 0.0, 0.0, Set.of(), Set.of(), -855648406, true, new ConcurrentHashMap<>(), new ConcurrentHashMap<>()
-         );
-      }
-   }
-
-   private record Inner_DataUtil(
-      int init_I,
-      boolean init_Z,
-      boolean load_Z,
-      boolean read_Z,
-      double init_D,
-      Set<Identifier> init_Set,
-      Set<String> load_Set,
-      int load_I,
-      int read_I,
-      int write_I,
-      boolean write_Z,
-      int update_I,
-      boolean update_Z,
-      ConcurrentHashMap<EntityType<?>, Boolean> init_ConcurrentHashMap
-   ) {
-      static am.Inner_DataUtil init(int revision, boolean hidden) {
-         return new am.Inner_DataUtil(
-            revision, hidden, false, false, 0.0, Set.of(), Set.of(), -13238437, -5230337, 100, true, -50373, true, new ConcurrentHashMap<>()
          );
       }
    }

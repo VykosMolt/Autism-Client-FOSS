@@ -18,10 +18,6 @@ public class AutismLevelRendererEntityMixin {
       EntityRenderState state = cir.getReturnValue();
       if (state != null) {
          ch.init_V_Entity_2(entity, state, partialTickTime);
-         if (am.run()) {
-            am.init_V_Entity_EntityRenderState(entity, state);
-         }
-
          if (am.put()) {
             int frameOutline = ah.init_I(entity);
             if (frameOutline != 0) {

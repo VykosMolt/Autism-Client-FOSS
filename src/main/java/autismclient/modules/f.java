@@ -259,7 +259,6 @@ public final class f {
          al.init_V_Module(new f.Inner_ByteReader());
          al.init_V_Module(new I());
          al.init_V_Module(new f.Inner_SyncManager());
-         al.init_V_Module(new g());
          al.init_V_Module(new f.Inner_RingBuffer());
          al.init_V_Module(new au());
          al.init_V_Module(new f.Inner_ClassCache());

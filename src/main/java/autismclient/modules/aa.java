@@ -12,7 +12,6 @@ import autismclient.mixin.accessor.AutismMinecraftAccessor;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.PkgCls_g;
 import autismclient.util.cd;
 import autismclient.util.ce;
 import autismclient.util.ch;
@@ -2949,7 +2948,6 @@ public final class aa extends Module implements cn.Inner_DataUtil {
             if (this.bool("hitsound") || this.bool("hit-marker")) {
                this.load_V_Entity(entity);
                this.clear_V_2();
-               PkgCls_g.load(entity);
             }
          }
 
