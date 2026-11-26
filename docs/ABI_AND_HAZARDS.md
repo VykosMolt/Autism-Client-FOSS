@@ -29,6 +29,16 @@ Every rule below MUST be respected by all deobfuscation tooling and manual refac
   - `autismclient/modules/am` (`RenderModuleState`; referenced by `modules/al.java`)
   - `autismclient/modules/ar` (`WorldEspRenderer`; referenced by `modules/al.java`)
   - `autismclient/util/macro/ak` (`ToggleModuleAction`, plus frozen inner enum `ak$Inner_StreamUtil`; referenced by `modules/al.java`)
+  - `autismclient/util/L` (auth/session manager; referenced by `a/DataUtil`, `gui/d/JsonUtil`, `util/mm/guardian/impl/InjectionScan`, `LoginProof`)
+  - `autismclient/util/RefQueue` (conservatively frozen: `/challenge` JAR-attestation helper called only by `util/L` and coupled to `autismclient/e/DataUtil`)
+  - `autismclient/util/ValueSink` (keybind/mouse-button code helper; referenced by `modules/al.java`)
+  - `autismclient/util/aJ` (safe `http`/`https` URL launcher; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/util/at` (input/camera active-state helper; referenced by `modules/al.java`)
+  - `autismclient/util/bK` (performance profiler (`autism.perf`); referenced by `modules/al.java`)
+  - `autismclient/util/bW` (proxy entry model, plus frozen inner enum `bW$Inner_StreamUtil`; referenced by `util/bX.java`)
+  - `autismclient/util/bi` (HUD toast notification helper; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/util/cA` (virtual UI scaling & screen-metrics helper; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/util/cf` (runtime feature/activity bitmask tracker; referenced by `modules/al.java`)
   - `autismclient/b/DataUtil` (`AddonManager`; referenced by `modules/al.java`)
   - `autismclient/util/g/PkgCls_a` (`PacedTpController`; referenced by `modules/al.java`)
   - `autismclient/util/mm/IoWorker` (`ServerTimeAnchor`; referenced by `autismclient/a/*`)
@@ -54,8 +64,8 @@ There are **zero** `@SerializedName` annotations in the codebase. Every field on
 - `autismclient.util.AutismConfig` (and all nested classes: `HudElementState`, `ThemeColors`, `PluginScanCacheEntry`, `PayloadFilter`, etc.)
 - `autismclient.util.AutismWaypoints` + `Waypoint`
 - `autismclient.util.ServerPluginScanCache.CacheFile`
-- `autismclient.util.AutismPacketPreset` (used by `util/bT.java`)
-- `autismclient.util.AutismProfile` (used by `util/bV.java`)
+- `autismclient.util.AutismPacketPreset` (used by `util/PacketPresetManager.java`)
+- `autismclient.util.AutismProfile` (used by `util/AutismProfileManager.java`)
 - `autismclient.util.oresim.AutismOreSimSeedStore`
 - `autismclient.modules.ScaffoldFailureRecorder` (formerly `aO`)
 - `autismclient.ai.{AiSettings, AiToolSettings, AiMemoryStore.Memory, AiRegions.Region}` (AI deferred)

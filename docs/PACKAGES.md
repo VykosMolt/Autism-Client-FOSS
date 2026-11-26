@@ -1,6 +1,6 @@
 # 59-Package Directory (AUTISM Client 5.8-26.3)
 
-Counts reflect the post-Phase-5B working tree and exclude hard-frozen integrity paths (`e/`, `sys/`, `obf/`, and the 5 untouched individual integrity files).
+Counts reflect the post-Phase-6 working tree and exclude hard-frozen integrity paths (`e/`, `sys/`, `obf/`, and the 5 untouched individual integrity files).
 
 ## Frozen / Stable Packages
 | Package | Files | LOC | Status | Description |
@@ -19,7 +19,7 @@ Counts reflect the post-Phase-5B working tree and exclude hard-frozen integrity 
 | `autismclient.compat263` | 7 | 1,405 | MC 26.3 compatibility shims |
 | `autismclient.render` | 1 | 273 | `AutismRenderTypes` |
 
-## Non-AI Deobfuscation Target Packages (Post-Phase-5B)
+## Non-AI Deobfuscation Target Packages (Post-Phase-6)
 | Current Package | Files (Obf/Tot) | LOC | Role | Planned Target Package |
 |---|---:|---:|---|---|
 | `autismclient.c` | **0 / 2** | 16 | **Phase 3A complete:** `DisconnectedScreenDuck`, `ExternalButtonScreenDuck` | `autismclient.mixin.duck` |
@@ -51,7 +51,7 @@ Counts reflect the post-Phase-5B working tree and exclude hard-frozen integrity 
 | `autismclient.util.h` | **0 / 4** | 781 | **Phase 3A complete:** Villager trade engine (`VillagerTradeSession`, `TradeOfferFilter`, `MerchantInteractHelper`, `BlockChangeAckTracker`) | `autismclient.util.villager` |
 | `autismclient.util.i` | **0 / 1** | 1,060 | **Phase 3A complete:** `VillagerDupeDriver` | `autismclient.util.villagerdupe` |
 | `autismclient.util.mm` + `.a` | 5 / 7 | 1,962 | **Phase 3A:** `LocalPrefsStore`, `WindowsDpapiBridge`; remaining `5` (`IoWorker`, `StateCache`, `a/CachePool`, `a/DataUtil`, `a/StreamUtil`) are **ABI-pinned/frozen** | `autismclient.util.storage` |
-| `autismclient.util` | 222 / 256 | 116,228 | **Phase 3A:** `AutismMacro`; overlays, config, waypoints, packet logger/inspector, aim/input/inventory/perf utils | `autismclient.util` |
+| `autismclient.util` | **11 / 256** | 116,228 | **Phase 3A + 6A–6D complete:** `211` non-pinned utility classes + `AutismMacro` renamed (packet/payload, combat/rotation, HUD/overlays/EndPortal, crafting/placement/LAN sync/session); only `11` **ABI-pinned/attestation** classes remain (`L`, `Q`, `RefQueue`, `ValueSink`, `aJ`, `at`, `bK`, `bW`, `bi`, `cA`, `cf`) | `autismclient.util` |
 
 ## Deferred AI Packages (Untouched For Now)
 | Current Package | Files (Obf/Tot) | LOC | Original Name in `source-contracts.json` |

@@ -46,7 +46,7 @@ AUTISM Client renders its custom menus, editors, and HUD screens through a virtu
 - **Menu Screens:** `ListPool` (`126` LOC, pause menu), `RefQueue` (`216` LOC, vanilla-style title screen), `UtilCore` (`1,321` LOC, AUTISM main menu screen).
 
 ## Notes on `LoginPasswordScreen`
-Replaced the removed multi-account secrets table (`0bbe8b5`) with a single-account password form backed by `util/aA.java`:
+Replaced the removed multi-account secrets table (`0bbe8b5`) with a single-account password form backed by `util/JoinMacroController.java`:
 - Masks input by default (`Show`/`Hide` toggle) and generates 9–16 char passwords via `SecureRandom`.
 - Overrides `Screen.setInitialFocus()` so MC 26.3 keyboard navigation and window resize (`rebuildWidgets()`) keep focus on the password `EditBox`.
 - Uses adaptive margins and width clamping so compact/high-scale virtual screens never clip or overlap widgets.
