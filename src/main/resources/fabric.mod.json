@@ -20,6 +20,7 @@
       "autismclient.compat.AutismModMenuIntegration"
     ]
   },
+  "accessWidener": "autism.accesswidener",
   "mixins": [
     "autism.mixins.json"
   ],
