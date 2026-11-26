@@ -1024,6 +1024,7 @@ public final class AstBatchRenamer {
                             String oldName = fr != null ? fr.curName : (rcr != null ? rcr.curName : null);
                             String newName = fr != null ? fr.newName : (rcr != null ? rcr.newName : null);
                             if (oldName != null && !oldName.equals(newName)) {
+                                checkNoFieldShadowing(trees, getCurrentPath(), te, oldName, newName, fieldRenames, recordCompRenames, elements, types, file);
                                 int s = (int) sp.getStartPosition(cu, node);
                                 int e = (int) sp.getEndPosition(cu, node);
                                 if (s >= 0 && e > s && content.substring(s, e).equals(oldName)) {
@@ -1054,6 +1055,7 @@ public final class AstBatchRenamer {
                             String oldName = mr != null ? mr.curName : (rcr != null ? rcr.curName : null);
                             String newName = mr != null ? mr.newName : (rcr != null ? rcr.newName : null);
                             if (oldName != null && !oldName.equals(newName)) {
+                                checkNoMethodShadowing(trees, getCurrentPath(), te, oldName, newName, methodRenames, recordCompByMethodKey, elements, types, file);
                                 int s = (int) sp.getStartPosition(cu, node);
                                 int e = (int) sp.getEndPosition(cu, node);
                                 if (s >= 0 && e > s && content.substring(s, e).equals(oldName)) {
@@ -1636,5 +1638,111 @@ public final class AstBatchRenamer {
         }
 
         return out;
+    }
+
+    /**
+     * Guards against silent lexical shadowing when rewriting an unqualified field reference (IdentifierTree).
+     * Refuses any rename where an in-scope local/parameter/catch/resource/pattern variable or an intermediate
+     * enclosing/subclass field would shadow the renamed field after rewriting.
+     */
+    private static void checkNoFieldShadowing(
+        Trees trees, TreePath path, TypeElement declaringType, String oldName, String newName,
+        Map<String, FieldRename> fieldRenames, Map<String, RecordCompRename> recordCompRenames,
+        Elements elements, Types types, Path file
+    ) {
+        Scope sc = trees.getScope(path);
+        String declInternal = toInternalName(declaringType, elements);
+        boolean reachedDeclaringClass = false;
+        while (sc != null) {
+            TypeElement enc = sc.getEnclosingClass();
+            if (reachedDeclaringClass && !declaringType.equals(enc)) {
+                break;
+            }
+            for (Element local : sc.getLocalElements()) {
+                if (local instanceof VariableElement lve) {
+                    ElementKind k = lve.getKind();
+                    if (k == ElementKind.LOCAL_VARIABLE || k == ElementKind.PARAMETER
+                        || k == ElementKind.EXCEPTION_PARAMETER || k == ElementKind.RESOURCE_VARIABLE
+                        || k == ElementKind.BINDING_VARIABLE) {
+                        String lName = lve.getSimpleName().toString();
+                        if (k == ElementKind.PARAMETER && lve.getEnclosingElement() instanceof ExecutableElement cee
+                            && cee.getSimpleName().contentEquals("<init>")
+                            && cee.getEnclosingElement() instanceof TypeElement rte
+                            && rte.getKind() == ElementKind.RECORD
+                            && isCanonicalRecordConstructor(cee, rte, types, elements)) {
+                            RecordCompRename pr = recordCompRenames.get(
+                                toInternalName(rte, elements) + "#" + lName + "#" + jvmTypeDesc(lve.asType(), types, elements));
+                            if (pr != null) lName = pr.newName;
+                        }
+                        if (lName.equals(newName)) {
+                            throw new IllegalStateException(
+                                "Refused unqualified field rename '" + oldName + "' -> '" + newName + "' on " + declInternal
+                                    + " in " + file + ": would be shadowed by in-scope " + k + " '" + newName + "'");
+                        }
+                    }
+                }
+            }
+            if (enc != null) {
+                if (enc.equals(declaringType)) {
+                    reachedDeclaringClass = true;
+                } else {
+                    for (Element mem : elements.getAllMembers(enc)) {
+                        if (mem instanceof VariableElement fve && fve.getKind() == ElementKind.FIELD
+                            && fve.getEnclosingElement() instanceof TypeElement fte && !fte.equals(declaringType)) {
+                            String fOwner = toInternalName(fte, elements);
+                            String fOld = fve.getSimpleName().toString();
+                            String fKey = fOwner + "#" + fOld + "#" + jvmTypeDesc(fve.asType(), types, elements);
+                            FieldRename ofr = fieldRenames.get(fKey);
+                            RecordCompRename orcr = ofr == null ? recordCompRenames.get(fKey) : null;
+                            String fFinal = ofr != null ? ofr.newName : (orcr != null ? orcr.newName : fOld);
+                            if (fFinal.equals(newName)) {
+                                throw new IllegalStateException(
+                                    "Refused unqualified field rename '" + oldName + "' -> '" + newName + "' on " + declInternal
+                                        + " in " + file + ": would be shadowed by field '" + fFinal + "' of " + fOwner);
+                            }
+                        }
+                    }
+                }
+            }
+            sc = sc.getEnclosingScope();
+        }
+    }
+
+    /**
+     * Guards against silent method shadowing when rewriting an unqualified method call (IdentifierTree)
+     * inside an inner/anonymous/subclass or static-import scope.
+     */
+    private static void checkNoMethodShadowing(
+        Trees trees, TreePath path, TypeElement declaringType, String oldName, String newName,
+        Map<String, MethodRename> methodRenames, Map<String, RecordCompRename> recordCompByMethodKey,
+        Elements elements, Types types, Path file
+    ) {
+        Scope sc = trees.getScope(path);
+        String declInternal = toInternalName(declaringType, elements);
+        while (sc != null) {
+            TypeElement enc = sc.getEnclosingClass();
+            if (enc != null) {
+                if (enc.equals(declaringType)) {
+                    break;
+                }
+                for (Element mem : elements.getAllMembers(enc)) {
+                    if (mem instanceof ExecutableElement mee && mee.getKind() == ElementKind.METHOD
+                        && mee.getEnclosingElement() instanceof TypeElement mte && !mte.equals(declaringType)) {
+                        String mOwner = toInternalName(mte, elements);
+                        String mOld = mee.getSimpleName().toString();
+                        String mKey = mOwner + "#" + mOld + "#" + jvmMethodDesc(mee, types, elements);
+                        MethodRename omr = methodRenames.get(mKey);
+                        RecordCompRename orcr = omr == null ? recordCompByMethodKey.get(mKey) : null;
+                        String mFinal = omr != null ? omr.newName : (orcr != null ? orcr.newName : mOld);
+                        if (mFinal.equals(newName)) {
+                            throw new IllegalStateException(
+                                "Refused unqualified method rename '" + oldName + "' -> '" + newName + "' on " + declInternal
+                                    + " in " + file + ": would be shadowed by method '" + mFinal + "' of " + mOwner);
+                        }
+                    }
+                }
+            }
+            sc = sc.getEnclosingScope();
+        }
     }
 }
