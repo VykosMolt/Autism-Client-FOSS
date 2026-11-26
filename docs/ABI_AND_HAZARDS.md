@@ -45,6 +45,17 @@ Every rule below MUST be respected by all deobfuscation tooling and manual refac
   - `autismclient/util/mm/StateCache` (conservatively frozen: JWT public-key verifier tightly coupled to encrypted string helpers in `autismclient/e/DataUtil`)
   - `autismclient/util/mm/a/CachePool` (`LocalIdentityStore`; referenced by `autismclient/a/CachePool` & `guardian/impl/LoginProof`)
   - `autismclient/util/mm/a/DataUtil` (`LocalSecretSealer`; referenced by `autismclient/a/StreamUtil`)
+  - `autismclient/gui/f/NetHelper` (`UiRect`; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/gui/f/PacketUtil` (`UiPrimitives`; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/gui/f/SyncManager` (`UiRenderContext`; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/gui/f/UiHelper` (`UiContextFactory`; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/gui/f/a/DataUtil` (`UiAssetIds`; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/gui/f/b/BufferHelper` (`CardSurfaceRenderer`; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/gui/f/b/CachePool` (`ButtonRenderer`, plus frozen inner enum `CachePool$Inner_DataUtil`; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/gui/f/b/CharEncoder` (`UiStyleTheme`; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/gui/f/b/k` (`FontDrawHelper`; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/gui/f/b/l` (`TextTone` enum; referenced by `gui/d/JsonUtil.java`)
+  - `autismclient/ai/aP` (`AiPlacementScreen`; referenced by `modules/al.java`)
 - **Compile-time frozen enum constants** (directly referenced by untouched `.java` files; verified by `:compileJava`):
   - `autismclient/gui/f/b/CachePool$Inner_DataUtil` (referenced by `gui/d/JsonUtil.java`)
   - `autismclient/gui/f/b/l` (referenced by `gui/d/JsonUtil.java`)
@@ -56,8 +67,9 @@ Every rule below MUST be respected by all deobfuscation tooling and manual refac
 ## 2. Public Addon API (Frozen)
 - `autismclient.api.*` (54 files) is already 100% readable and represents the external addon contract. Do not rename classes, methods, or fields in `autismclient.api.*`.
 
-## 3. AI Subsystem (Deferred)
-- `autismclient.ai`, `autismclient.ai.a`, `autismclient.ai.b`, and `src/main/resources/autism-ai/worker.jar` are intentionally untouched during non-AI deobfuscation.
+## 3. AI Subsystem (Deobfuscated in Phase 7; `worker.jar` Untouched)
+- `autismclient.ai` (`1/232` obf — only ABI-pinned `aP`), `autismclient.ai.a` (`0/71` obf), and `autismclient.ai.b` (`0/34` obf) were deobfuscated in place across Phase 7 (`312` classes renamed; `308` matched verbatim to `source-contracts.json`).
+- `src/main/resources/autism-ai/worker.jar` remains untouched.
 
 ## 4. Gson Serialization Lock (0 `@SerializedName` Annotations)
 There are **zero** `@SerializedName` annotations in the codebase. Every field on these JSON-serialized types IS an on-disk config/cache key and **MUST NOT** be renamed without adding `@SerializedName("<original>")` + round-trip verification:
@@ -68,7 +80,7 @@ There are **zero** `@SerializedName` annotations in the codebase. Every field on
 - `autismclient.util.AutismProfile` (used by `util/AutismProfileManager.java`)
 - `autismclient.util.oresim.AutismOreSimSeedStore`
 - `autismclient.modules.ScaffoldFailureRecorder` (formerly `aO`)
-- `autismclient.ai.{AiSettings, AiToolSettings, AiMemoryStore.Memory, AiRegions.Region}` (AI deferred)
+- `autismclient.ai.{AiSettings, AiToolSettings, AiMemoryStore.Memory, AiRegions.Region, AiCatalog.Entry}` and `autismclient.api.ai.{AiCapabilityDescriptor, AiObservation}`
 
 ## 5. `Enum.name()` & `Enum.valueOf()` Serialization
 - `mappings/enum-names.tsv` stores the exact original runtime `Enum.name()` strings (`2,190` constants across `413` enums).

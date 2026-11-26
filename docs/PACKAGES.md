@@ -1,6 +1,6 @@
 # 59-Package Directory (AUTISM Client 5.8-26.3)
 
-Counts reflect the post-Phase-6 working tree and exclude hard-frozen integrity paths (`e/`, `sys/`, `obf/`, and the 5 untouched individual integrity files).
+Counts reflect the unified post-Phase-7 working tree (`1,484 / 1,520` non-excluded files named; all `36` remaining obfuscated top-level classes are compile-time ABI-pinned/attestation). The `1,520` non-excluded total excludes hard-frozen integrity paths (`e/`, `sys/`, `obf/`, `a/`, `util/mm/guardian/`, and the 5 untouched individual integrity files; `a/` and `util/mm/guardian*` are listed separately in the Frozen section below).
 
 ## Frozen / Stable Packages
 | Package | Files | LOC | Status | Description |
@@ -19,7 +19,7 @@ Counts reflect the post-Phase-6 working tree and exclude hard-frozen integrity p
 | `autismclient.compat263` | 7 | 1,405 | MC 26.3 compatibility shims |
 | `autismclient.render` | 1 | 273 | `AutismRenderTypes` |
 
-## Non-AI Deobfuscation Target Packages (Post-Phase-6)
+## Deobfuscated Non-AI Packages (Unified Post-Phase-7)
 | Current Package | Files (Obf/Tot) | LOC | Role | Planned Target Package |
 |---|---:|---:|---|---|
 | `autismclient.c` | **0 / 2** | 16 | **Phase 3A complete:** `DisconnectedScreenDuck`, `ExternalButtonScreenDuck` | `autismclient.mixin.duck` |
@@ -32,13 +32,13 @@ Counts reflect the post-Phase-6 working tree and exclude hard-frozen integrity p
 | `autismclient.g` | **0 / 33** | 8,651 | **Phase 3B complete:** All 33 **AutismProtector** anti-fingerprint / pack / proxy / compat classes | `autismclient.protector` |
 | `autismclient.modules` | **6 / 150** | 93,930 | **Phase 2 + 5B complete:** `62` `*Module`s + `Module` + `AiCheckpointHud` + `80` helpers renamed; only `6` **ABI-pinned** classes remain (`f`, `as`, `aD`, `ae`, `am`, `ar`) | `autismclient.modules` |
 | `autismclient.util.macro` | **1 / 138** | 44,808 | **Phase 2 + 5A complete:** `102` `*Action`s + `MacroAction` + `MacroCondition` + `MacroExecutor` + `32` helpers renamed; only **ABI-pinned** `ak` remains | `autismclient.util.macro` |
-| `autismclient.gui.macro.editor` | 3 / 8 | 19,378 | **Phase 3A:** `ActionFieldRegistry` + `ActionEditorOverlay`, `ActionFieldSchema`, `FieldDef`, `RaceStepSelectorOverlay`; `3` helpers remain | `autismclient.gui.macro.editor` |
-| `autismclient.gui.macro.editor.a` | 3 / 3 | 294 | Macro live-capture UI helpers | `autismclient.gui.macro.editor.capture` |
-| `autismclient.gui` | 3 / 3 | 508 | Theme-applying overlay, custom inventory screen, custom loading overlay | `autismclient.gui` |
-| `autismclient.gui.c` | 2 / 2 | 1,029 | Profile / server library browser & server icon cache | `autismclient.gui.profiles` |
-| `autismclient.gui.d` | 13 / 30 | 18,714 | **Phase 2:** `17` named `*Screen` GUIs; remaining `13` base/dynamic-title screens & helpers | `autismclient.gui.screens` |
-| `autismclient.gui.e` | 10 / 10 | 2,543 | Custom UI icon & dynamic texture loaders | `autismclient.gui.assets` |
-| `autismclient.gui.f` (+ `.a/.b/.c/.d`) | 107 / 107 | 17,531 | Custom UI toolkit (theme, widgets, layout, scrollbars, typography) | `autismclient.gui.ui.*` |
+| `autismclient.gui.macro.editor` | **0 / 8** | 19,378 | **Phase 3A + 4A complete:** `ActionEditorOverlay`, `ActionFieldRegistry`, `ActionFieldSchema`, `ToolsActionSchemaBuilder`, `FieldDef`, `FieldType`, `CaptureMode`, `RaceStepSelectorOverlay` | `autismclient.gui.macro.editor` |
+| `autismclient.gui.macro.editor.a` | **0 / 3** | 294 | **Phase 4A complete:** `EditorListRowHelper`, `CaptureButtonRenderer`, `ActiveCaptureSession` | `autismclient.gui.macro.editor.capture` |
+| `autismclient.gui` | **0 / 3** | 508 | **Phase 4A complete:** `ThemeApplyProgressOverlay`, `AutismGhostInventoryScreen`, `AutismLoadingOverlay` | `autismclient.gui` |
+| `autismclient.gui.c` | **0 / 2** | 1,029 | **Phase 4A complete:** `ProfilesLibraryView`, `ProfileServerIconCache` | `autismclient.gui.profiles` |
+| `autismclient.gui.d` | **0 / 30** | 18,714 | **Phase 2 + 4A complete:** `17` named `*Screen` GUIs + `13` base/menu/editor/widget classes | `autismclient.gui.screens` |
+| `autismclient.gui.e` | **0 / 10** | 2,543 | **Phase 4A complete:** SDF/MSDF vector shape, icon, font atlas & subpixel scissor renderer | `autismclient.gui.sdf` |
+| `autismclient.gui.f` (+ `.a/.b/.c/.d`) | **10 / 107** | 17,531 | **Phase 4B complete:** `97` UI toolkit classes renamed; only `10` **ABI-pinned** classes remain (`NetHelper`, `PacketUtil`, `SyncManager`, `UiHelper`, `a/DataUtil`, `b/{BufferHelper,CachePool,CharEncoder,k,l}`) | `autismclient.gui.ui.*` |
 | `autismclient.util.oresim` | **0 / 8** | 1,833 | **Phase 3A complete:** `AutismOreSimSeedStore`, `OreSimEngine`, `OreSimSeedParser`, `OreBlockCatalog`, `OreGhostModelCache`, `OreSimWorkerPool`, `NearestOreHeap`, `NearestChunkSelector` | `autismclient.util.oresim` |
 | `autismclient.util.j.a` | **0 / 5** | 1,115 | **Phase 3A complete:** `OreSimRegionGenerator`, `SyntheticWorldGenLevel`, `VanillaWorldGenBootstrap`, `WorldGenThreadScope`, `PaleMossDecoratorShim` | `autismclient.util.oresim.worldgen` |
 | `autismclient.util.a` | **0 / 8** | 1,631 | **Phase 3A complete:** Clicker / CPS pattern engine (`ClickPatternEngine`, `ClickProfile`, `ClickTechnique`, `ClickTimingMath`, `DoubleClickSampler`, `KeyClickOutput`, `ReactionDelayModel`, `SwingTimingModel`) | `autismclient.util.clicker` |
@@ -53,9 +53,9 @@ Counts reflect the post-Phase-6 working tree and exclude hard-frozen integrity p
 | `autismclient.util.mm` + `.a` | 5 / 7 | 1,962 | **Phase 3A:** `LocalPrefsStore`, `WindowsDpapiBridge`; remaining `5` (`IoWorker`, `StateCache`, `a/CachePool`, `a/DataUtil`, `a/StreamUtil`) are **ABI-pinned/frozen** | `autismclient.util.storage` |
 | `autismclient.util` | **11 / 256** | 116,228 | **Phase 3A + 6A–6D complete:** `211` non-pinned utility classes + `AutismMacro` renamed (packet/payload, combat/rotation, HUD/overlays/EndPortal, crafting/placement/LAN sync/session); only `11` **ABI-pinned/attestation** classes remain (`L`, `Q`, `RefQueue`, `ValueSink`, `aJ`, `at`, `bK`, `bW`, `bi`, `cA`, `cf`) | `autismclient.util` |
 
-## Deferred AI Packages (Untouched For Now)
-| Current Package | Files (Obf/Tot) | LOC | Original Name in `source-contracts.json` |
-|---|---:|---:|---|
-| `autismclient.ai` | 220 / 232 | 150,193 | `autismclient.ai` (`249` contract entries) |
-| `autismclient.ai.a` | 59 / 71 | 56,176 | `autismclient.ai.engine` (`61` contract entries) |
-| `autismclient.ai.b` | 34 / 34 | 48,890 | `autismclient.ai.print` (`34` contract entries) |
+## Deobfuscated AI Packages (Phase 7 Complete)
+| Current Package | Files (Obf/Tot) | LOC | Role / Original Name in `source-contracts.json` | Planned Target Package |
+|---|---:|---:|---|---|
+| `autismclient.ai` | **1 / 232** | 150,193 | **Phase 7C–7E complete:** `219` renamed + `12` pre-existing readable; only **ABI-pinned** `aP` (`AiPlacementScreen`) remains (`249` contract entries) | `autismclient.ai` |
+| `autismclient.ai.a` | **0 / 71** | 56,176 | **Phase 7B complete:** `59` renamed + `12` pre-existing readable (`61` contract entries) | `autismclient.ai.engine` |
+| `autismclient.ai.b` | **0 / 34** | 48,890 | **Phase 7A complete:** `34/34` exact matches (`34` contract entries) | `autismclient.ai.print` |
