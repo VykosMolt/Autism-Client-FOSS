@@ -35,7 +35,7 @@ import autismclient.util.cG;
 import autismclient.util.cd;
 import autismclient.util.ck;
 import autismclient.util.s;
-import autismclient.util.i.DataUtil;
+import autismclient.util.i.VillagerDupeDriver;
 import autismclient.util.macro.MacroExecutor;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -196,7 +196,7 @@ public class AutismMinecraftClientMixin {
          }
 
          MacroExecutor.load_V();
-         DataUtil.init_V_Minecraft((Minecraft)(Object)this);
+         VillagerDupeDriver.init_V_Minecraft((Minecraft)(Object)this);
          if (D.init_Z()) {
             D.load_V();
          }
@@ -224,7 +224,7 @@ public class AutismMinecraftClientMixin {
                if (down && !wasDown) {
                   String cmd = entry.getValue();
                   if (cmd != null && !cmd.isBlank()) {
-                     autismclient.commands.DataUtil.read(cmd);
+                     autismclient.commands.CommandManager.read(cmd);
                   }
                }
             }
@@ -503,7 +503,7 @@ public class AutismMinecraftClientMixin {
          }
 
          if (!AutismLiteVariant.enabled() && !ci.isCancelled()) {
-            autismclient.util.a.StreamUtil.read_V();
+            autismclient.util.a.KeyClickOutput.read_V();
          }
       }
    }
@@ -516,7 +516,7 @@ public class AutismMinecraftClientMixin {
          s.sync_V();
          as.poll();
          if (!AutismLiteVariant.enabled()) {
-            autismclient.util.a.StreamUtil.write();
+            autismclient.util.a.KeyClickOutput.write();
          }
 
          if (!AutismLiteVariant.enabled()) {
@@ -586,15 +586,15 @@ public class AutismMinecraftClientMixin {
    private void autism$onPacketProcessFrame(CallbackInfo ci) {
       al.open_V();
       HashUtil.write();
-      DataUtil.load_V_Minecraft((Minecraft)(Object)this);
+      VillagerDupeDriver.load_V_Minecraft((Minecraft)(Object)this);
    }
 
    @Inject(method = "runTick", at = @At("TAIL"))
    private void autism$onInputFrame(CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         autismclient.util.a.StreamUtil.update();
+         autismclient.util.a.KeyClickOutput.update();
          al.poll_V();
-         autismclient.util.a.StreamUtil.sync();
+         autismclient.util.a.KeyClickOutput.sync();
       }
    }
 }

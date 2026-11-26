@@ -42,7 +42,7 @@ public final class DataUtil {
          plain = new byte[0];
       }
 
-      byte[] dpapi = TaskQueue.init(plain);
+      byte[] dpapi = WindowsDpapiBridge.init(plain);
       if (dpapi != null) {
          return init((byte)1, dpapi);
       }
@@ -118,7 +118,7 @@ public final class DataUtil {
                var10000 = payload;
                break;
             case 1:
-               var10000 = TaskQueue.load(payload);
+               var10000 = WindowsDpapiBridge.load(payload);
                break;
             case 2:
                var10000 = sync(payload);

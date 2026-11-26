@@ -54,7 +54,7 @@ public final class cG {
    private static final long init_J = 450000000L;
    private static final long load_J = 200000000L;
    private static final Map<Object, cG.Inner_CachePool> init_Map = new IdentityHashMap<>();
-   private static final Map<BlockState, autismclient.util.oresim.DataUtil.Inner_StreamUtil> load_Map = new IdentityHashMap<>();
+   private static final Map<BlockState, autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil> load_Map = new IdentityHashMap<>();
    private static final PkgCls_c.Inner_DataUtil init_c_DataUtil = new PkgCls_c.Inner_DataUtil(4194304);
    private static AiSettings init_AiSettings = new AiSettings();
    private static boolean init_Z;
@@ -1018,9 +1018,9 @@ public final class cG {
             if (alpha > 0) {
                for (cG.Inner_StreamUtil g : f.ghosts) {
                   if (!g.mining && !g.planned && !g.state.isAir()) {
-                     autismclient.util.oresim.DataUtil.Inner_StreamUtil model = load_Map.get(g.state);
+                     autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = load_Map.get(g.state);
                      if (model == null && baked < 8 && System.nanoTime() - started < 2000000L) {
-                        model = autismclient.util.oresim.DataUtil.init(g.state);
+                        model = autismclient.util.oresim.OreGhostModelCache.init(g.state);
                         if (model.init_List().isEmpty()) {
                            model = init(g.state);
                         }
@@ -1039,7 +1039,7 @@ public final class cG {
                         double oy = p.getY() - f.camera.y;
                         double oz = p.getZ() - f.camera.z;
 
-                        for (autismclient.util.oresim.DataUtil.Inner_DataUtil face : model.init_List()) {
+                        for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : model.init_List()) {
                            if (quads >= 16384) {
                               break;
                            }
@@ -1261,9 +1261,9 @@ public final class cG {
       return alpha << 24 | Math.min(255, r) << 16 | Math.min(255, g) << 8 | Math.min(255, b);
    }
 
-   private static autismclient.util.oresim.DataUtil.Inner_StreamUtil init(BlockState state) {
+   private static autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil init(BlockState state) {
       TextureAtlasSprite sprite = Minecraft.getInstance().getModelManager().getBlockStateModelSet().getParticleMaterial(state).sprite();
-      List<autismclient.util.oresim.DataUtil.Inner_DataUtil> faces = new ArrayList<>();
+      List<autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil> faces = new ArrayList<>();
 
       for (Direction d : Direction.values()) {
          float[] var10000;
@@ -1301,10 +1301,10 @@ public final class cG {
             vertices[i * 5 + 4] = i < 2 ? sprite.getV1() : sprite.getV0();
          }
 
-         faces.add(new autismclient.util.oresim.DataUtil.Inner_DataUtil(d, d, vertices, -1));
+         faces.add(new autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil(d, d, vertices, -1));
       }
 
-      return new autismclient.util.oresim.DataUtil.Inner_StreamUtil(List.copyOf(faces));
+      return new autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil(List.copyOf(faces));
    }
 
    public static JsonObject init_JsonObject() {

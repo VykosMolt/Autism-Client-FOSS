@@ -56,7 +56,7 @@ final class T {
    }
 
    static JsonObject init() {
-      CustomMenuSnapshot current = autismclient.util.b.CachePool.init_CustomMenuSnapshot();
+      CustomMenuSnapshot current = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
       if (current == null) {
          return ag.init_JsonObject_ObjArr("available", false);
       }
@@ -104,7 +104,7 @@ final class T {
 
    static AiOperation init_AiOperation(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
-      CustomMenuSnapshot current = autismclient.util.b.CachePool.init_CustomMenuSnapshot();
+      CustomMenuSnapshot current = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
       long generation = args.has("generation") && !args.get("generation").isJsonNull() ? args.get("generation").getAsLong() : -9223372036854775808L;
       if (generation == -9223372036854775808L) {
          throw new IllegalArgumentException("generation required; inspect game:menu again");
@@ -174,7 +174,7 @@ final class T {
             mc.getConnection().send(packet);
          }
 
-         autismclient.util.b.CachePool.init(current, response.replacement());
+         autismclient.util.b.CustomMenuTracker.init(current, response.replacement());
          if (mc.gui.screen() instanceof DialogScreen<?> screen) {
             screen.runAction(Optional.ofNullable(response.clientAction()));
          }

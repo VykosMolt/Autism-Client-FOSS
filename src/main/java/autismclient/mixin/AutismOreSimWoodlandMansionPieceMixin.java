@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.BufferHelper;
+import autismclient.util.j.a.SyntheticWorldGenLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -18,7 +18,7 @@ public abstract class AutismOreSimWoodlandMansionPieceMixin {
    private void autism$skipSyntheticMobMarker(
       String marker, BlockPos position, ServerLevelAccessor level, RandomSource random, BoundingBox chunkBox, CallbackInfo ci
    ) {
-      if (level instanceof BufferHelper synthetic && ("Mage".equals(marker) || "Warrior".equals(marker) || "Group of Allays".equals(marker))) {
+      if (level instanceof SyntheticWorldGenLevel synthetic && ("Mage".equals(marker) || "Warrior".equals(marker) || "Group of Allays".equals(marker))) {
          if ("Group of Allays".equals(marker)) {
             synthetic.getRandom().nextInt(3);
          }

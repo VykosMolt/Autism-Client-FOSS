@@ -33,7 +33,7 @@ final class aT implements AutoCloseable {
    private static final int open = 6144;
    private static final int poll = 4096;
    private static final long init_J = 2000000L;
-   private static final Map<BlockState, autismclient.util.oresim.DataUtil.Inner_StreamUtil> init_Map = new IdentityHashMap<>();
+   private static final Map<BlockState, autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil> init_Map = new IdentityHashMap<>();
    private static Object init_Obj;
    BlockPos init_BlockPos;
    int init_I;
@@ -347,7 +347,7 @@ final class aT implements AutoCloseable {
                   if (classification != -12067963) {
                      BlockState state = this.init_BlockStateArr[i];
                      if (!state.isAir()) {
-                        autismclient.util.oresim.DataUtil.Inner_StreamUtil model = init_DataUtil_StreamUti_BlockState(state);
+                        autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = init_DataUtil_StreamUti_BlockState(state);
                         if (!model.init_List().isEmpty()) {
                            BlockPos at = this.init_BlockPos_I(i);
                            float ox = at.getX() - this.init_BlockPos.getX() - section.init_BlockPos.getX();
@@ -358,7 +358,7 @@ final class aT implements AutoCloseable {
                            Iterator i$ = model.init_List().iterator();
 
                            while (true) {
-                              autismclient.util.oresim.DataUtil.Inner_DataUtil face;
+                              autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face;
                               Direction cull;
                               Integer next;
                               do {
@@ -366,7 +366,7 @@ final class aT implements AutoCloseable {
                                     continue label91;
                                  }
 
-                                 face = (autismclient.util.oresim.DataUtil.Inner_DataUtil)i$.next();
+                                 face = (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil)i$.next();
                                  cull = face.init_Direction();
                                  if (cull == null) {
                                     break;
@@ -410,8 +410,8 @@ final class aT implements AutoCloseable {
       section.load_I = drawn[0];
    }
 
-   static autismclient.util.oresim.DataUtil.Inner_StreamUtil init_DataUtil_StreamUti_BlockState(BlockState state) {
-      autismclient.util.oresim.DataUtil.Inner_StreamUtil model = autismclient.util.oresim.DataUtil.init(state);
+   static autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil init_DataUtil_StreamUti_BlockState(BlockState state) {
+      autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = autismclient.util.oresim.OreGhostModelCache.init(state);
       if (!model.init_List().isEmpty()) {
          return model;
       }
@@ -425,7 +425,7 @@ final class aT implements AutoCloseable {
       return init_Map.computeIfAbsent(state, aT::load);
    }
 
-   private static autismclient.util.oresim.DataUtil.Inner_StreamUtil load(BlockState state) {
+   private static autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil load(BlockState state) {
       List<AABB> boxes = new ArrayList<>(state.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).toAabbs());
       if (!state.getFluidState().isEmpty() && boxes.isEmpty()) {
          float height = state.getFluidState().getOwnHeight();
@@ -437,19 +437,19 @@ final class aT implements AutoCloseable {
       }
 
       TextureAtlasSprite sprite = Minecraft.getInstance().getModelManager().getBlockStateModelSet().getParticleMaterial(state).sprite();
-      ArrayList<autismclient.util.oresim.DataUtil.Inner_DataUtil> faces = new ArrayList<>();
+      ArrayList<autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil> faces = new ArrayList<>();
 
       for (AABB box : boxes) {
          for (Direction d : Direction.values()) {
             faces.add(
-               new autismclient.util.oresim.DataUtil.Inner_DataUtil(
+               new autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil(
                   null, d, init_FArr_AABB(box, d, sprite.getU0(), sprite.getV0(), sprite.getU1(), sprite.getV1()), -1
                )
             );
          }
       }
 
-      return new autismclient.util.oresim.DataUtil.Inner_StreamUtil(List.copyOf(faces));
+      return new autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil(List.copyOf(faces));
    }
 
    private static float[] init_FArr_AABB(AABB b, Direction d, float u0, float v0, float u1, float v1) {

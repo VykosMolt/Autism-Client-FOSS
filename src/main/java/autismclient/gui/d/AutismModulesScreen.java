@@ -21,7 +21,7 @@ import autismclient.util.AutismPacketSelectorOverlay;
 import autismclient.util.AutismQueueEditorOverlay;
 import autismclient.util.AutismServerInfoOverlay;
 import autismclient.util.aG;
-import autismclient.util.aM;
+import autismclient.util.AutismMacro;
 import autismclient.util.bk;
 import autismclient.util.cA;
 import autismclient.util.cH;
@@ -966,7 +966,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       }
 
       @Override
-      public void init(Module module, Setting<?, ?> option, aM macro) {
+      public void init(Module module, Setting<?, ?> option, AutismMacro macro) {
          AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
          if (editor != null) {
             editor.load_V_Z_3(AutismModulesScreen.this.init_Z_5());

@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.BufferHelper;
+import autismclient.util.j.a.SyntheticWorldGenLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -18,7 +18,7 @@ public abstract class AutismOreSimOceanRuinPieceMixin {
    private void autism$skipSyntheticDrowned(
       String marker, BlockPos position, ServerLevelAccessor level, RandomSource random, BoundingBox chunkBox, CallbackInfo ci
    ) {
-      if (level instanceof BufferHelper && "drowned".equals(marker)) {
+      if (level instanceof SyntheticWorldGenLevel && "drowned".equals(marker)) {
          level.setBlock(position, position.getY() > level.getSeaLevel() ? Blocks.AIR.defaultBlockState() : Blocks.WATER.defaultBlockState(), 2);
          ci.cancel();
       }

@@ -33,9 +33,9 @@ import autismclient.util.cf;
 import autismclient.util.ci;
 import autismclient.util.ck;
 import autismclient.util.dm;
-import autismclient.util.e.DataUtil;
+import autismclient.util.e.LeafDupePacketTracker;
 import autismclient.util.g.PkgCls_a;
-import autismclient.util.h.CachePool;
+import autismclient.util.h.VillagerTradeSession;
 import autismclient.util.macro.b;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -117,7 +117,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleSetHeldSlot", at = @At("RETURN"))
    private void autism$leafDupeServerSlot(ClientboundSetHeldSlotPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         DataUtil.init(packet.slot());
+         LeafDupePacketTracker.init(packet.slot());
       }
    }
 
@@ -328,7 +328,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleContainerContent", at = @At("RETURN"))
    private void autism$aiContentsApplied(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
-      CachePool.init_V_ClientboundContain(packet);
+      VillagerTradeSession.init_V_ClientboundContain(packet);
       J.init_V(packet.containerId());
       if (!AutismLiteVariant.enabled()) {
          ca.init(packet.containerId(), packet.items());
@@ -422,10 +422,10 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         DataUtil.load(packet);
+         LeafDupePacketTracker.load(packet);
       }
 
-      autismclient.util.h.DataUtil.init_V(Minecraft.getInstance().level, packet.sequence());
+      autismclient.util.h.BlockChangeAckTracker.init_V(Minecraft.getInstance().level, packet.sequence());
    }
 
    @Inject(method = "handlePlayerInfoUpdate", at = @At("RETURN"))
@@ -579,11 +579,11 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          && !aD.read_Z()
          && message != null
          && message.length() > 256
-         && (autismclient.commands.DataUtil.load() || !autismclient.commands.DataUtil.init_Z(message))) {
+         && (autismclient.commands.CommandManager.load() || !autismclient.commands.CommandManager.init_Z(message))) {
          ClientPacketListener self = (ClientPacketListener)(Object)this;
 
          for (int i = 0; i < message.length(); i += 256) {
-            autismclient.commands.DataUtil.init(self, message.substring(i, Math.min(message.length(), i + 256)));
+            autismclient.commands.CommandManager.init(self, message.substring(i, Math.min(message.length(), i + 256)));
          }
 
          ci.cancel();
@@ -593,27 +593,27 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "sendChat", at = @At("HEAD"), cancellable = true)
    private void autism$dispatchAutismCommand(String message, CallbackInfo ci) {
       try {
-         if (autismclient.commands.DataUtil.load()) {
+         if (autismclient.commands.CommandManager.load()) {
             return;
          }
 
-         if (!autismclient.commands.DataUtil.init_Z(message)) {
+         if (!autismclient.commands.CommandManager.init_Z(message)) {
             return;
          }
 
-         if (autismclient.commands.DataUtil.load_Z(message)) {
+         if (autismclient.commands.CommandManager.load_Z(message)) {
             ci.cancel();
             return;
          }
 
-         String body = autismclient.commands.DataUtil.init_Str(message);
+         String body = autismclient.commands.CommandManager.init_Str(message);
          if (body.isBlank()) {
             ci.cancel();
             return;
          }
 
          AutismClientMessaging.rememberRecentChat(message);
-         autismclient.commands.DataUtil.read(body);
+         autismclient.commands.CommandManager.read(body);
          ci.cancel();
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("[Commands] sendChat interception failed for '{}'", message, t);

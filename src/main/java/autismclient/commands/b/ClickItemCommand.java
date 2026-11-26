@@ -19,11 +19,11 @@ public final class ClickItemCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(context -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.DataUtil.init_Str() + "click-item \"<item name>\" [click] [times]");
+         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "click-item \"<item name>\" [click] [times]");
          return 1;
       });
       RequiredArgumentBuilder<AutismCommandSource, String> item = (RequiredArgumentBuilder<AutismCommandSource, String>)RequiredArgumentBuilder.<AutismCommandSource, String>argument(
-            "item-name", autismclient.commands.a.StateCache.init()
+            "item-name", autismclient.commands.a.ContainerItemNameArgumentType.init()
          )
          .executes(context -> init(context, SlotClickCommandHelper.Inner_StreamUtil.init("Left", ContainerInput.PICKUP, 0), 1));
       SlotClickCommandHelper.init(item, ClickItemCommand::init);
@@ -33,7 +33,7 @@ public final class ClickItemCommand extends Command {
    private static int init(CommandContext<AutismCommandSource> context, SlotClickCommandHelper.Inner_StreamUtil spec, int times) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.containerMenu != null) {
-         String requestedName = autismclient.commands.a.StateCache.init(context, "item-name");
+         String requestedName = autismclient.commands.a.ContainerItemNameArgumentType.init(context, "item-name");
          int handlerSlot = init(mc.player.containerMenu, requestedName);
          if (handlerSlot < 0) {
             AutismClientMessaging.sendPrefixed("§cNo visible item named §f" + requestedName + "§c exists in the current GUI.");

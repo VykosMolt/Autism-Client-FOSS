@@ -58,7 +58,7 @@ public class AutismLANSyncOverlay extends bj {
    private boolean close_Z = false;
    private int cache = 0;
    private final autismclient.gui.f.b.CacheEntry init_CacheEntry = new autismclient.gui.f.b.CacheEntry();
-   private autismclient.gui.f.c.RenderState<aM> init_RenderState = null;
+   private autismclient.gui.f.c.RenderState<AutismMacro> init_RenderState = null;
    private int state = 0;
    private int queue = 0;
    private int buffer = 0;
@@ -449,10 +449,10 @@ public class AutismLANSyncOverlay extends bj {
 
    private int init_I_aE_Str(aE sync, String peer) {
       int contentHeight = 0;
-      List<aM> myMacroList = aN.init_aN().init_List();
+      List<AutismMacro> myMacroList = aN.init_aN().init_List();
       Set<String> myMacroKeys = new LinkedHashSet<>();
 
-      for (aM macro : myMacroList) {
+      for (AutismMacro macro : myMacroList) {
          myMacroKeys.add(cZ.init(macro.init_Str));
       }
 
@@ -460,11 +460,11 @@ public class AutismLANSyncOverlay extends bj {
          return myMacroList.size() * this.run_I_10();
       }
 
-      Map<String, Map<String, aM>> allRemote = sync.read_Map();
-      Map<String, aM> peerMacroData = allRemote.getOrDefault(peer, Collections.emptyMap());
+      Map<String, Map<String, AutismMacro>> allRemote = sync.read_Map();
+      Map<String, AutismMacro> peerMacroData = allRemote.getOrDefault(peer, Collections.emptyMap());
       Set<String> peerMacroKeys = new LinkedHashSet<>();
 
-      for (aM macro : peerMacroData.values()) {
+      for (AutismMacro macro : peerMacroData.values()) {
          if (macro != null) {
             peerMacroKeys.add(cZ.init(macro.init_Str));
          }
@@ -1190,7 +1190,7 @@ public class AutismLANSyncOverlay extends bj {
    private int init(GuiGraphicsExtractor ctx, int mx, int my, int cy, int lx, int btnW, aE sync) {
       autismclient.gui.f.b.FileCache.init(ctx, this.init_Font, "Local Macros", lx, cy);
       cy += 12;
-      List<aM> localMacros = aN.init_aN().init_List();
+      List<AutismMacro> localMacros = aN.init_aN().init_List();
       if (localMacros.isEmpty()) {
          this.sync_V_7();
          this.init(ctx, "No macros", autismclient.gui.f.b.l.write, p.bind(), lx, cy);
@@ -1394,28 +1394,28 @@ public class AutismLANSyncOverlay extends bj {
             if (isExpanded) {
                int detailLx = lx + 6;
                int detailRx = this.pop + this.run - this.start - 4;
-               List<aM> myMacroList = aN.init_aN().init_List();
+               List<AutismMacro> myMacroList = aN.init_aN().init_List();
                Map<String, String> displayNames = new LinkedHashMap<>();
                Set<String> myMacroKeys = new LinkedHashSet<>();
 
-               for (aM m : myMacroList) {
+               for (AutismMacro m : myMacroList) {
                   String key = cZ.init(m.init_Str);
                   myMacroKeys.add(key);
                   displayNames.put(key, m.init_Str);
                }
 
                if (isMe) {
-                  for (aM macro : myMacroList) {
+                  for (AutismMacro macro : myMacroList) {
                      cy = this.init(
                         ctx, mx, my, cy, detailLx, detailRx, rowW, macro.init_Str, assigned, null, peerKey, sync, false, clipTop, clipBottom, rowPitch
                      );
                   }
                } else {
-                  Map<String, Map<String, aM>> allRemote = sync.read_Map();
-                  Map<String, aM> peerMacroData = allRemote.getOrDefault(peer, Collections.emptyMap());
+                  Map<String, Map<String, AutismMacro>> allRemote = sync.read_Map();
+                  Map<String, AutismMacro> peerMacroData = allRemote.getOrDefault(peer, Collections.emptyMap());
                   Set<String> peerMacroKeys = new LinkedHashSet<>();
 
-                  for (aM m : peerMacroData.values()) {
+                  for (AutismMacro m : peerMacroData.values()) {
                      if (m != null) {
                         String key = cZ.init(m.init_Str);
                         peerMacroKeys.add(key);
@@ -1569,21 +1569,21 @@ public class AutismLANSyncOverlay extends bj {
       List<String> missingPeers = new ArrayList<>(sync.init_List_Str(macroName));
       Map<String, Integer> differentPeers = new LinkedHashMap<>();
       if (macroName != null && !macroName.isBlank()) {
-         aM localMacro = aN.init_aN().init_aM_Str(macroName);
+         AutismMacro localMacro = aN.init_aN().init_aM_Str(macroName);
          if (localMacro == null) {
             return new AutismLANSyncOverlay.Inner_CachePool(missingPeers, differentPeers);
          }
 
          Set<String> missingPeerSet = new HashSet<>(missingPeers);
-         Map<String, Map<String, aM>> allRemote = sync.read_Map();
+         Map<String, Map<String, AutismMacro>> allRemote = sync.read_Map();
          List<String> peers = new ArrayList<>(sync.init_Map().keySet());
          Collections.sort(peers);
 
          for (String peer : peers) {
             if (!peer.equals(sync.load_Str()) && !missingPeerSet.contains(peer)) {
-               Map<String, aM> peerMacros = allRemote.get(peer);
+               Map<String, AutismMacro> peerMacros = allRemote.get(peer);
                if (peerMacros != null) {
-                  aM remoteMacro = peerMacros.get(cZ.init(macroName));
+                  AutismMacro remoteMacro = peerMacros.get(cZ.init(macroName));
                   int differences = init_I_aM_aM(localMacro, remoteMacro);
                   if (differences > 0) {
                      differentPeers.put(peer, differences);
@@ -1751,13 +1751,13 @@ public class AutismLANSyncOverlay extends bj {
 
          if (rowVisible) {
             this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(importX, cy, importW - 4, rowPitch, () -> {
-               Map<String, Map<String, aM>> allRemote = sync.read_Map();
-               Map<String, aM> peerMacros = allRemote.get(peerKey);
-               aM sourceMacro = peerMacros != null ? peerMacros.get(cZ.init(mName)) : null;
+               Map<String, Map<String, AutismMacro>> allRemote = sync.read_Map();
+               Map<String, AutismMacro> peerMacros = allRemote.get(peerKey);
+               AutismMacro sourceMacro = peerMacros != null ? peerMacros.get(cZ.init(mName)) : null;
                if (sourceMacro == null) {
                   AutismClientMessaging.sendPrefixed("§cMacro not found: " + mName);
                } else {
-                  aM imported = aN.init_aN().init_aM_aM_Str(sourceMacro, sourceMacro.init_Str);
+                  AutismMacro imported = aN.init_aN().init_aM_aM_Str(sourceMacro, sourceMacro.init_Str);
                   if (imported == null) {
                      AutismClientMessaging.sendPrefixed("§cFailed to import macro: " + mName);
                   } else {
@@ -1771,7 +1771,7 @@ public class AutismLANSyncOverlay extends bj {
       return cy + rowPitch;
    }
 
-   private static int init_I_aM_aM(aM a, aM b) {
+   private static int init_I_aM_aM(AutismMacro a, AutismMacro b) {
       if (a != null && b != null) {
          List<MacroAction> aActions = a.init_List != null ? a.init_List : Collections.emptyList();
          List<MacroAction> bActions = b.init_List != null ? b.init_List : Collections.emptyList();
@@ -1853,7 +1853,7 @@ public class AutismLANSyncOverlay extends bj {
             && this.init_RenderState.init_Z(mouseX, mouseY)
             && this.init_RenderState.init_Z_D_2(mouseX, mouseY, button)) {
             if (!this.init_RenderState.read_Z()) {
-               aM selected = this.init_RenderState.init_Obj();
+               AutismMacro selected = this.init_RenderState.init_Obj();
                if (selected != null) {
                   this.init_Str_2 = selected.init_Str;
                   this.read_V_5();

@@ -237,8 +237,8 @@ public final class MacroCondition {
                var10000 = mc.crosshairPickEntity != null;
                break;
             case VILLAGER_ITEM:
-               var10000 = autismclient.util.i.DataUtil.init_Z_Minecraft(
-                  mc, autismclient.util.i.DataUtil.Inner_DataUtil.init_DataUtil_DataUtil_Str(init_Str_Str_Minecraft(this.init_Str, mc)), true
+               var10000 = autismclient.util.i.VillagerDupeDriver.init_Z_Minecraft(
+                  mc, autismclient.util.i.VillagerDupeDriver.Inner_DataUtil.init_DataUtil_DataUtil_Str(init_Str_Str_Minecraft(this.init_Str, mc)), true
                );
                break;
             case CONNECTION:

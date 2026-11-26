@@ -74,11 +74,11 @@ final class aG {
       return thread;
    });
    private static final Object init_Obj = new Object();
-   private static final LinkedHashMap<String, autismclient.util.j.a.ConfigStore> init_LinkedHashMap = new LinkedHashMap<String, autismclient.util.j.a.ConfigStore>(
+   private static final LinkedHashMap<String, autismclient.util.j.a.VanillaWorldGenBootstrap> init_LinkedHashMap = new LinkedHashMap<String, autismclient.util.j.a.VanillaWorldGenBootstrap>(
       4, 0.75F, true
    ) {
       @Override
-      protected boolean removeEldestEntry(Entry<String, autismclient.util.j.a.ConfigStore> eldest) {
+      protected boolean removeEldestEntry(Entry<String, autismclient.util.j.a.VanillaWorldGenBootstrap> eldest) {
          return this.size() > 3;
       }
    };
@@ -164,12 +164,12 @@ final class aG {
          case "structure":
             return new aG.Inner_ConfigStore(aG.Inner_SyncManager.flush, null, null, init_aG_StateCache_Str("stronghold"));
          case "ancient_debris":
-            return new aG.Inner_ConfigStore(aG.Inner_SyncManager.update, autismclient.util.oresim.CachePool.Inner_DataUtil.DEBRIS, null, null);
+            return new aG.Inner_ConfigStore(aG.Inner_SyncManager.update, autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.DEBRIS, null, null);
          default:
             if (q.startsWith("structure:")) {
                return load(q.substring("structure:".length()));
             } else {
-               for (autismclient.util.oresim.CachePool.Inner_DataUtil kind : autismclient.util.oresim.CachePool.Inner_DataUtil.values()) {
+               for (autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind : autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.values()) {
                   if (kind.init_Str.equals(q)) {
                      return new aG.Inner_ConfigStore(aG.Inner_SyncManager.update, kind, null, null);
                   }
@@ -291,7 +291,7 @@ final class aG {
       return Collections.unmodifiableMap(m);
    }
 
-   static int init_I_CachePool_DataUtil(autismclient.util.oresim.CachePool.Inner_DataUtil kind) {
+   static int init_I_CachePool_DataUtil(autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind) {
       return 1 << kind.ordinal();
    }
 
@@ -329,7 +329,7 @@ final class aG {
    static aG.Inner_NetHelper init_aG_NetHelper_Str_aG_TaskQueue(String seedArg, aG.Inner_TaskQueue probe) {
       String raw = seedArg == null ? "" : seedArg.strip();
       if (!raw.isEmpty()) {
-         autismclient.util.oresim.BufferHelper.Inner_DataUtil parsed = autismclient.util.oresim.BufferHelper.init(raw);
+         autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil parsed = autismclient.util.oresim.OreSimSeedParser.init(raw);
          if (!parsed.init_Z()) {
             throw new IllegalArgumentException("seed must be a signed decimal long, got \"" + raw + "\"");
          } else {
@@ -340,10 +340,10 @@ final class aG {
          if (local != null) {
             return new aG.Inner_NetHelper(local, "singleplayer");
          } else {
-            autismclient.util.oresim.BufferHelper.Inner_DataUtil stored = autismclient.util.oresim.BufferHelper.init(probe.init_Str());
+            autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil stored = autismclient.util.oresim.OreSimSeedParser.init(probe.init_Str());
             if (stored.init_Z()) {
                return new aG.Inner_NetHelper(stored.init_Long(), "stored");
-            } else if (stored.init_BufferHelper_Strea() == autismclient.util.oresim.BufferHelper.Inner_StreamUtil.INVALID) {
+            } else if (stored.init_BufferHelper_Strea() == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID) {
                throw new IllegalArgumentException(
                   "The stored oresim-seed for this server is not a signed decimal long; fix the xray module's oresim-seed setting or pass the seed argument"
                );
@@ -399,7 +399,7 @@ final class aG {
       return load_J;
    }
 
-   private static AiOperation init(final autismclient.util.oresim.CachePool.Inner_DataUtil kind, final int cap, String seedArg) {
+   private static AiOperation init(final autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind, final int cap, String seedArg) {
       final Minecraft mc = Minecraft.getInstance();
       final aG.Inner_NetHelper seed = init_aG_NetHelper_Str_aG_TaskQueue(seedArg, init_aG_TaskQueue_Minecraft(mc));
       final int mask = init_I_CachePool_DataUtil(kind);
@@ -411,19 +411,19 @@ final class aG {
          @Override
          public AiOperation.Result tick() {
             if (!this.init_Z && mc.player != null && mc.level != null) {
-               autismclient.util.oresim.StreamUtil.init(mc.level, mc.player.blockPosition(), seed.value(), 8, mask);
-               if (autismclient.util.oresim.StreamUtil.read_Z()) {
+               autismclient.util.oresim.OreSimEngine.init(mc.level, mc.player.blockPosition(), seed.value(), 8, mask);
+               if (autismclient.util.oresim.OreSimEngine.read_Z()) {
                   return this.init(
                      AiOperation.Status.FAILED,
                      "Ore simulation failed (status "
-                        + autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH()
+                        + autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH()
                         + "): "
-                        + autismclient.util.oresim.StreamUtil.init_Str(),
+                        + autismclient.util.oresim.OreSimEngine.init_Str(),
                      new JsonObject()
                   );
                }
 
-               if (autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.UNSUPPORTED_DIMENSION) {
+               if (autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNSUPPORTED_DIMENSION) {
                   return this.init(
                      AiOperation.Status.FAILED,
                      "Ore simulation supports only the Overworld, Nether and End; the current dimension "
@@ -436,16 +436,16 @@ final class aG {
                if (System.nanoTime() > this.init_J) {
                   return this.init(
                      AiOperation.Status.TIMED_OUT,
-                     "Ore simulation did not finish within 60s (status " + autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() + ")",
+                     "Ore simulation did not finish within 60s (status " + autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() + ")",
                      this.init()
                   );
                }
 
-               if (!autismclient.util.oresim.StreamUtil.init_Z()) {
+               if (!autismclient.util.oresim.OreSimEngine.init_Z()) {
                   return this.init("Loading vanilla worldgen context for seed simulation");
                }
 
-               autismclient.util.oresim.StreamUtil.Inner_ConfigStore progress = autismclient.util.oresim.StreamUtil.init_StreamUtil_ConfigS();
+               autismclient.util.oresim.OreSimEngine.Inner_ConfigStore progress = autismclient.util.oresim.OreSimEngine.init_StreamUtil_ConfigS();
                if (!progress.init_Z() && ++this.init_I < 400) {
                   return this.init("Simulating ore generation (" + progress.init_I() + "/" + progress.load() + " chunks)");
                }
@@ -453,12 +453,12 @@ final class aG {
                Vec3 eye = mc.player.getEyePosition();
                long[] outPos = new long[cap];
                int[] outState = new int[cap];
-               int n = autismclient.util.oresim.StreamUtil.init(
+               int n = autismclient.util.oresim.OreSimEngine.init(
                   eye.x,
                   eye.y,
                   eye.z,
                   8,
-                  stateId -> autismclient.util.oresim.CachePool.Inner_StreamUtil.init_CachePool_DataUtil(stateId) == kind,
+                  stateId -> autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init_CachePool_DataUtil(stateId) == kind,
                   cap,
                   outPos,
                   outState
@@ -522,9 +522,9 @@ final class aG {
          }
 
          JsonObject init() {
-            autismclient.util.oresim.StreamUtil.Inner_ConfigStore p = autismclient.util.oresim.StreamUtil.init_StreamUtil_ConfigS();
+            autismclient.util.oresim.OreSimEngine.Inner_ConfigStore p = autismclient.util.oresim.OreSimEngine.init_StreamUtil_ConfigS();
             return ag.init_JsonObject_ObjArr(
-               "engineStatus", autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH().name(), "simulatedChunks", p.init_I(), "totalChunks", p.load()
+               "engineStatus", autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH().name(), "simulatedChunks", p.init_I(), "totalChunks", p.load()
             );
          }
 
@@ -537,7 +537,7 @@ final class aG {
          public void cancel() {
             if (!this.init_Z) {
                this.init_Z = true;
-               autismclient.util.oresim.StreamUtil.load_V();
+               autismclient.util.oresim.OreSimEngine.load_V();
             }
          }
       };
@@ -679,7 +679,7 @@ final class aG {
       long seed, ResourceKey<Level> dimension, aG.Inner_StateCache spec, BlockPos origin, int cap, AtomicBoolean cancelled
    ) {
       try {
-         autismclient.util.j.a.ConfigStore context = init_ConfigStore_J_ResourceKey(seed, dimension);
+         autismclient.util.j.a.VanillaWorldGenBootstrap context = init_ConfigStore_J_ResourceKey(seed, dimension);
          if (cancelled.get()) {
             return new aG.Inner_BufferHelper(List.of(), null);
          }
@@ -713,22 +713,22 @@ final class aG {
       }
    }
 
-   private static autismclient.util.j.a.ConfigStore init_ConfigStore_J_ResourceKey(long seed, ResourceKey<Level> dimension) {
+   private static autismclient.util.j.a.VanillaWorldGenBootstrap init_ConfigStore_J_ResourceKey(long seed, ResourceKey<Level> dimension) {
       String key = seed + "@" + dimension.identifier();
       synchronized (init_Obj) {
-         autismclient.util.j.a.ConfigStore existing = init_LinkedHashMap.get(key);
+         autismclient.util.j.a.VanillaWorldGenBootstrap existing = init_LinkedHashMap.get(key);
          if (existing != null) {
             return existing;
          }
 
-         autismclient.util.j.a.ConfigStore created = autismclient.util.j.a.ConfigStore.init(seed, dimension);
+         autismclient.util.j.a.VanillaWorldGenBootstrap created = autismclient.util.j.a.VanillaWorldGenBootstrap.init(seed, dimension);
          init_LinkedHashMap.put(key, created);
          return created;
       }
    }
 
    private static List<aG.Inner_JsonUtil> init(
-      autismclient.util.j.a.ConfigStore context, List<Holder<Structure>> wanted, BlockPos origin, int cap, AtomicBoolean cancelled
+      autismclient.util.j.a.VanillaWorldGenBootstrap context, List<Holder<Structure>> wanted, BlockPos origin, int cap, AtomicBoolean cancelled
    ) {
       ChunkGeneratorStructureState state = context.init_ChunkGeneratorStru();
       long seed = state.getLevelSeed();
@@ -795,7 +795,7 @@ final class aG {
    }
 
    private static void init_V_ConfigStore(
-      autismclient.util.j.a.ConfigStore context,
+      autismclient.util.j.a.VanillaWorldGenBootstrap context,
       Set<Holder<Structure>> structures,
       ChunkPos candidate,
       BlockPos origin,
@@ -967,7 +967,7 @@ final class aG {
       long seed, ResourceKey<Level> dimension, String biomeId, BlockPos origin, int radiusBlocks, AtomicBoolean cancelled
    ) {
       try {
-         autismclient.util.j.a.ConfigStore context = init_ConfigStore_J_ResourceKey(seed, dimension);
+         autismclient.util.j.a.VanillaWorldGenBootstrap context = init_ConfigStore_J_ResourceKey(seed, dimension);
          if (cancelled.get()) {
             return new aG.Inner_StreamUtil(null, null);
          }
@@ -1432,7 +1432,7 @@ final class aG {
    record Inner_CachePool(int x, int y, int z, double distanceSq) {
    }
 
-   record Inner_ConfigStore(aG.Inner_SyncManager subject, autismclient.util.oresim.CachePool.Inner_DataUtil ore, String blockId, aG.Inner_StateCache structure) {
+   record Inner_ConfigStore(aG.Inner_SyncManager subject, autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil ore, String blockId, aG.Inner_StateCache structure) {
    }
 
    private record Inner_DataUtil(int x, int y, int z, String biomeId, double distanceSq) {

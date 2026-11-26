@@ -95,7 +95,7 @@ public class RaceAction implements MacroAction {
 
       this.conditionType = this.conditionTypes.isEmpty() ? "" : this.conditionTypes.get(0);
       this.actionType = this.actionTypes.get(0);
-      MacroAction nested = tag.getCompound("triggerAction").map(autismclient.util.aM::init_MacroAction_CompoundTag).orElse(null);
+      MacroAction nested = tag.getCompound("triggerAction").map(autismclient.util.AutismMacro::init_MacroAction_CompoundTag).orElse(null);
       if (init_Z(nested)) {
          this.triggerAction = nested;
       }
@@ -573,7 +573,7 @@ public class RaceAction implements MacroAction {
    private static MacroAction init(CompoundTag tag) {
       RaceAction.Inner_DataUtil type = init_L_DataUtil(tag.getStringOr("triggerType", RaceAction.Inner_DataUtil.DELAY.name()));
       MacroAction action = init(type);
-      CompoundTag actionTag = autismclient.util.aM.init_CompoundTag_MacroAction(action);
+      CompoundTag actionTag = autismclient.util.AutismMacro.init_CompoundTag_MacroAction(action);
       switch (type) {
          case DELAY:
             actionTag.putBoolean("useTicks", tag.getBooleanOr("useTicks", false));
@@ -733,7 +733,7 @@ public class RaceAction implements MacroAction {
    private static void init_V_CompoundTag_MacroAction(CompoundTag tag, MacroAction action) {
       RaceAction.Inner_DataUtil type = init_L_DataUtil(action);
       tag.putString("triggerType", type.name());
-      CompoundTag src = autismclient.util.aM.init_CompoundTag_MacroAction(action);
+      CompoundTag src = autismclient.util.AutismMacro.init_CompoundTag_MacroAction(action);
 
       for (String key : src.keySet()) {
          if (!"type".equals(key) && !tag.contains(key)) {

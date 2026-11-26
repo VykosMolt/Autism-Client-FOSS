@@ -23,7 +23,7 @@ import autismclient.util.ClassCache;
 import autismclient.util.D;
 import autismclient.util.J;
 import autismclient.util.N;
-import autismclient.util.aM;
+import autismclient.util.AutismMacro;
 import autismclient.util.bE;
 import autismclient.util.bG;
 import autismclient.util.bJ;
@@ -267,7 +267,7 @@ public class ActionEditorOverlay extends bj {
    private final List<autismclient.gui.f.b.SyncManager> sync_List = new ArrayList<>();
    private final Map<String, autismclient.gui.f.b.SyncManager> run_Map = new HashMap<>();
    private final List<String> flush_List = new ArrayList<>();
-   private aM init_aM;
+   private AutismMacro init_aM;
    private int f_f_I = -1;
    private static final List<String> close_List = List.of(
       "Timing / DELAY",
@@ -506,7 +506,7 @@ public class ActionEditorOverlay extends bj {
 
       StreamGate type = action.getType();
       if (type == null) {
-         return !DataUtil.init(action).fields().isEmpty();
+         return !ActionFieldRegistry.init(action).fields().isEmpty();
       }
 
       boolean var10000;
@@ -523,7 +523,7 @@ public class ActionEditorOverlay extends bj {
             var10000 = true;
             break;
          default:
-            var10000 = !DataUtil.init(type).fields().isEmpty();
+            var10000 = !ActionFieldRegistry.init(type).fields().isEmpty();
       }
 
       return var10000;
@@ -597,7 +597,7 @@ public class ActionEditorOverlay extends bj {
       this.init_RaceStepSelectorOv = new RaceStepSelectorOverlay(textRenderer);
    }
 
-   public void init_V_aM_I(aM macro, int actionIndex) {
+   public void init_V_aM_I(AutismMacro macro, int actionIndex) {
       this.init_aM = macro;
       this.f_f_I = actionIndex;
       this.task();
@@ -617,8 +617,8 @@ public class ActionEditorOverlay extends bj {
       this.f_d_I = Math.max(1, editCount);
       this.load_Runnable = onPreSave;
       this.init_Runnable = onSave;
-      this.init_CompoundTag = aM.init_CompoundTag_MacroAction(action);
-      this.init_ActionFieldSchema = DataUtil.init(action);
+      this.init_CompoundTag = AutismMacro.init_CompoundTag_MacroAction(action);
+      this.init_ActionFieldSchema = ActionFieldRegistry.init(action);
       this.f_e_I = 0;
       this.task();
       this.init_Map.clear();
@@ -7114,7 +7114,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void flush_V(String key) {
-      CustomMenuSnapshot menu = autismclient.util.b.CachePool.init_CustomMenuSnapshot();
+      CustomMenuSnapshot menu = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
       if (menu == null) {
          bi.read("No custom screen is open to pick a button from.");
       } else {
@@ -7311,7 +7311,7 @@ public class ActionEditorOverlay extends bj {
       backingField.write(-10000);
       List<cY.Inner_DataUtil> macros = new ArrayList<>(autismclient.util.aN.init_aN().init_List_Str(""));
       if (backingField.load_Str() != null && !backingField.load_Str().isBlank() && autismclient.util.aN.init_aN().init_aM_Str(backingField.load_Str()) == null) {
-         macros.add(0, new cY.Inner_DataUtil("", new aM(backingField.load_Str()), 0, false));
+         macros.add(0, new cY.Inner_DataUtil("", new AutismMacro(backingField.load_Str()), 0, false));
       }
 
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);

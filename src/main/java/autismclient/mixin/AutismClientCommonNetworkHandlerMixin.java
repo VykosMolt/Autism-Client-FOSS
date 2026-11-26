@@ -9,8 +9,8 @@ import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.ci;
 import autismclient.util.ck;
-import autismclient.util.b.CachePool;
-import autismclient.util.e.DataUtil;
+import autismclient.util.b.CustomMenuTracker;
+import autismclient.util.e.LeafDupePacketTracker;
 import java.net.MalformedURLException;
 import java.net.URL;
 import net.minecraft.client.Minecraft;
@@ -116,13 +116,13 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
    @Inject(method = "handleShowDialog", at = @At("TAIL"))
    private void autism$trackCustomMenu(ClientboundShowDialogPacket packet, CallbackInfo ci) {
       String phase = (Object)this instanceof ClientConfigurationPacketListener ? "CONFIGURATION" : "PLAY";
-      CachePool.init(packet, phase);
+      CustomMenuTracker.init(packet, phase);
    }
 
    @Inject(method = "handleClearDialog", at = @At("TAIL"))
    private void autism$clearCustomMenu(ClientboundClearDialogPacket packet, CallbackInfo ci) {
       String phase = (Object)this instanceof ClientConfigurationPacketListener ? "CONFIGURATION" : "PLAY";
-      CachePool.init(packet, phase);
+      CustomMenuTracker.init(packet, phase);
    }
 
    @Inject(method = "handlePing", at = @At("HEAD"))
@@ -130,7 +130,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
       if (Minecraft.getInstance().isSameThread()) {
          autismclient.util.ci.init(packet.getId());
          if (!AutismLiteVariant.enabled()) {
-            DataUtil.load(packet);
+            LeafDupePacketTracker.load(packet);
          }
       }
    }

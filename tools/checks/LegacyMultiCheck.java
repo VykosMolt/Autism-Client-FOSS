@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.aM;
+import autismclient.util.AutismMacro;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -21,15 +21,15 @@ public final class LegacyMultiCheck {
       legacy.putString("waitMode", "Fixed delay");
       legacy.putInt("waitMs", 1200);
 
-      aM saved = new aM("Legacy Multi fixture");
-      saved.init_List.add(aM.init_MacroAction_CompoundTag(legacy));
+      AutismMacro saved = new AutismMacro("Legacy Multi fixture");
+      saved.init_List.add(AutismMacro.init_MacroAction_CompoundTag(legacy));
       saved.init_List.add(new DelayAction(0));
       saved.init_List.add(new JoinAction());
       saved.init_List.add(new RaceAction());
       saved.init_List.add(new DelayAction(0));
       CompoundTag before = saved.load_CompoundTag();
 
-      aM running = saved.init_aM();
+      AutismMacro running = saved.init_aM();
       check(running.init_List.get(0) instanceof MultiAction, "normal macro codec reads the legacy header");
       check(legacy.equals(running.init_List.get(0).toTag()), "legacy account and scope fields round-trip");
       check(MacroExecutor.suppressLegacyMultiSteps(running.init_List), "run reports a legacy block");

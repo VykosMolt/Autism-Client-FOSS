@@ -324,12 +324,12 @@ public final class cA {
       }
 
       Set<String> ids = new TreeSet<>(load);
-      ids.addAll(autismclient.commands.StreamUtil.init_List());
+      ids.addAll(autismclient.commands.CommandSuggestions.init_List());
       return open = List.copyOf(ids);
    }
 
    static boolean init(Block block) {
-      return autismclient.commands.StreamUtil.init_Z_Block(block);
+      return autismclient.commands.CommandSuggestions.init_Z_Block(block);
    }
 
    static List<String> update() {
@@ -352,14 +352,14 @@ public final class cA {
    }
 
    static List<String> sync() {
-      List<String> ids = new ArrayList<>(autismclient.commands.StreamUtil.read().size() + 1);
+      List<String> ids = new ArrayList<>(autismclient.commands.CommandSuggestions.read().size() + 1);
       ids.add("hostiles");
-      ids.addAll(autismclient.commands.StreamUtil.read());
+      ids.addAll(autismclient.commands.CommandSuggestions.read());
       return ids;
    }
 
    static List<String> flush() {
-      return autismclient.commands.StreamUtil.load();
+      return autismclient.commands.CommandSuggestions.load();
    }
 
    private static List<String> init(boolean suggestTo) {

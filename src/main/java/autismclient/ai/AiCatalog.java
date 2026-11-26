@@ -41,7 +41,7 @@ public final class AiCatalog {
    public void init_V() {
       long source = Objects.hash(
          autismclient.modules.al.init_I(),
-         autismclient.commands.DataUtil.init_I(),
+         autismclient.commands.CommandManager.init_I(),
          AiCapabilities.revision(),
          ck.init_Str(),
          MacroActionRegistry.entries().stream().map(ex -> ex.typeId()).toList(),
@@ -120,12 +120,12 @@ public final class AiCatalog {
          for (StreamGate type : StreamGate.values()) {
             CompoundTag tag = new CompoundTag();
             tag.putString("type", type.name());
-            MacroAction action = autismclient.util.aM.init_MacroAction_CompoundTag(tag);
+            MacroAction action = autismclient.util.AutismMacro.init_MacroAction_CompoundTag(tag);
             if (action == null) {
                throw new IllegalStateException("Built-in macro type has no catalog adapter: " + type.name());
             }
 
-            init(entries, type.name(), action, autismclient.gui.macro.editor.DataUtil.init(type), "autism", "");
+            init(entries, type.name(), action, autismclient.gui.macro.editor.ActionFieldRegistry.init(type), "autism", "");
          }
 
          for (MacroActionEntry entry : MacroActionRegistry.entries()) {
@@ -151,8 +151,8 @@ public final class AiCatalog {
             }
          }
 
-         for (Command command : autismclient.commands.DataUtil.init_List()) {
-            init(entries, init(command, autismclient.commands.DataUtil.init_Str(command), autismclient.commands.DataUtil.init_List(command)), "{}");
+         for (Command command : autismclient.commands.CommandManager.init_List()) {
+            init(entries, init(command, autismclient.commands.CommandManager.init_Str(command), autismclient.commands.CommandManager.init_List(command)), "{}");
          }
 
          for (String id : CustomMenuAdapterRegistry.ids()) {
@@ -253,7 +253,7 @@ public final class AiCatalog {
    }
 
    static void init(List<AiCatalog.Entry> entries, String id, MacroAction action, ActionFieldSchema schema, String owner, String tip) {
-      String defaults = NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, autismclient.util.aM.init_CompoundTag_MacroAction(action)).toString();
+      String defaults = NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, autismclient.util.AutismMacro.init_CompoundTag_MacroAction(action)).toString();
       String fields = ag.init_JsonObject_ObjArr(
             "fields",
             schema == null ? List.of() : schema.fields(),
@@ -322,7 +322,7 @@ public final class AiCatalog {
          );
       }
 
-      init(entries, descriptor, defaults, ck.load(action.getClass()) + ck.load(autismclient.util.aM.class) + ck.load(an.class));
+      init(entries, descriptor, defaults, ck.load(action.getClass()) + ck.load(autismclient.util.AutismMacro.class) + ck.load(an.class));
    }
 
    static AiCapabilityDescriptor init(
@@ -353,9 +353,9 @@ public final class AiCatalog {
             dependency = ck.load(module.getClass());
          }
       } else if (d.id().startsWith("command:")) {
-         dependency = autismclient.commands.DataUtil.init_List()
+         dependency = autismclient.commands.CommandManager.init_List()
             .stream()
-            .filter(c -> d.id().equals("command:" + autismclient.commands.DataUtil.init_Str(c)))
+            .filter(c -> d.id().equals("command:" + autismclient.commands.CommandManager.init_Str(c)))
             .map(c -> ck.load(c.getClass()))
             .findFirst()
             .orElse("");

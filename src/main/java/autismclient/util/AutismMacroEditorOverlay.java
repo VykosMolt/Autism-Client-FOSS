@@ -64,12 +64,12 @@ public class AutismMacroEditorOverlay extends bj {
    private final autismclient.gui.f.c.TextFormat init_TextFormat = new autismclient.gui.f.c.TextFormat(this.init_CharEncoder, this.init_CharEncoder_2);
    private final autismclient.gui.f.c.BitSetUtil init_BitSetUtil = new autismclient.gui.f.c.BitSetUtil();
    private boolean write_Z = false;
-   private aM init_aM;
-   private aM load_aM;
+   private AutismMacro init_aM;
+   private AutismMacro load_aM;
    private boolean update_Z = false;
    private boolean sync_Z = false;
    private AutismMacroEditorOverlay.Inner_DataUtil init_AutismMacroEditorO = AutismMacroEditorOverlay.Inner_DataUtil.NORMAL;
-   private Consumer<aM> init_Consumer = null;
+   private Consumer<AutismMacro> init_Consumer = null;
    private int tick_I;
    private int run_I;
    private int get_I = 258;
@@ -144,7 +144,7 @@ public class AutismMacroEditorOverlay extends bj {
    private int table;
    private final Deque<AutismMacroEditorOverlay.Inner_CachePool> init_Deque = new ArrayDeque<>();
    private final Deque<AutismMacroEditorOverlay.Inner_CachePool> load_Deque = new ArrayDeque<>();
-   private aM read_aM;
+   private AutismMacro read_aM;
    private boolean tick_Z = false;
    private boolean run_Z = false;
    private CompoundTag init_CompoundTag = null;
@@ -916,7 +916,7 @@ public class AutismMacroEditorOverlay extends bj {
       }
 
       try {
-         return aM.init_CompoundTag_MacroAction(action);
+         return AutismMacro.init_CompoundTag_MacroAction(action);
       } catch (Throwable ignored) {
          return null;
       }
@@ -1032,13 +1032,13 @@ public class AutismMacroEditorOverlay extends bj {
          }
 
          this.f_V();
-         aM oneShot = new aM();
+         AutismMacro oneShot = new AutismMacro();
          oneShot.init_Str = this.init_aM.init_Str != null && !this.init_aM.init_Str.isBlank() ? this.init_aM.init_Str : "(Unsaved)";
          oneShot.init_Z = false;
          oneShot.init_I = -1;
 
          for (int i = startIndex; i < endExclusive; i++) {
-            MacroAction copy = aM.init_MacroAction_CompoundTag(this.init_aM.init_List.get(i).toTag());
+            MacroAction copy = AutismMacro.init_MacroAction_CompoundTag(this.init_aM.init_List.get(i).toTag());
             if (copy != null) {
                oneShot.init_List.add(copy);
             }
@@ -1145,7 +1145,7 @@ public class AutismMacroEditorOverlay extends bj {
 
       for (MacroAction action : actions) {
          if (action != null) {
-            MacroAction copy = aM.init_MacroAction_CompoundTag(action.toTag());
+            MacroAction copy = AutismMacro.init_MacroAction_CompoundTag(action.toTag());
             if (copy != null) {
                clones.add(copy);
             }
@@ -3670,28 +3670,28 @@ public class AutismMacroEditorOverlay extends bj {
       }
    }
 
-   public void init_V_aM(aM macroToEdit) {
+   public void init_V_aM(AutismMacro macroToEdit) {
       this.init_V_aM_Z(macroToEdit, false);
    }
 
-   public void init_V_aM_Z(aM macroToEdit, boolean reopenMacroListOnClose) {
+   public void init_V_aM_Z(AutismMacro macroToEdit, boolean reopenMacroListOnClose) {
       this.init_V_aM(macroToEdit, reopenMacroListOnClose, AutismMacroEditorOverlay.Inner_DataUtil.NORMAL, null, false);
    }
 
-   public void load_V_aM(aM sharedMacro) {
+   public void load_V_aM(AutismMacro sharedMacro) {
       this.init_V_aM(sharedMacro, false, AutismMacroEditorOverlay.Inner_DataUtil.NORMAL, null, true);
    }
 
-   public void init_V_aM_Consumer_2(aM macroToEdit, Consumer<aM> onSaveComplete) {
+   public void init_V_aM_Consumer_2(AutismMacro macroToEdit, Consumer<AutismMacro> onSaveComplete) {
       this.init_V_aM(macroToEdit, false, AutismMacroEditorOverlay.Inner_DataUtil.JOIN_MACRO_MENU, onSaveComplete, false);
    }
 
-   public void load_V_aM_Consumer(aM macroToEdit, Consumer<aM> onSaveComplete) {
+   public void load_V_aM_Consumer(AutismMacro macroToEdit, Consumer<AutismMacro> onSaveComplete) {
       this.init_V_aM(macroToEdit, false, AutismMacroEditorOverlay.Inner_DataUtil.NORMAL, onSaveComplete, false);
    }
 
    private void init_V_aM(
-      aM macroToEdit, boolean reopenMacroListOnClose, AutismMacroEditorOverlay.Inner_DataUtil context, Consumer<aM> onSaveComplete, boolean forceNew
+      AutismMacro macroToEdit, boolean reopenMacroListOnClose, AutismMacroEditorOverlay.Inner_DataUtil context, Consumer<AutismMacro> onSaveComplete, boolean forceNew
    ) {
       this.load_aM = null;
       if (this.write_Z) {
@@ -3714,19 +3714,19 @@ public class AutismMacroEditorOverlay extends bj {
       ck.init_ck().init_V_Z(true);
       ActionEditorOverlay.init_ActionEditorOverla_2().load_V_Z(this.cache_Z());
       if (macroToEdit == null) {
-         this.init_aM = new aM("");
+         this.init_aM = new AutismMacro("");
          this.read_aM = null;
          this.update_Z = true;
       } else if (forceNew) {
          this.read_aM = null;
-         this.init_aM = new aM();
+         this.init_aM = new AutismMacro();
          this.init_aM.init_aM_CompoundTag(macroToEdit.load_CompoundTag());
          this.init_aM.init_Str = "";
          this.init_aM.load_I = -1;
          this.update_Z = true;
       } else {
          this.read_aM = macroToEdit;
-         this.init_aM = new aM();
+         this.init_aM = new AutismMacro();
          this.init_aM.init_aM_CompoundTag(macroToEdit.load_CompoundTag());
          this.update_Z = false;
       }
@@ -3775,7 +3775,7 @@ public class AutismMacroEditorOverlay extends bj {
       if (this.tick_Z) {
          if (this.run_Z) {
             String name = this.init_aM == null ? "" : this.init_aM.init_Str;
-            aM savedMacro = name != null && !name.isBlank() ? aN.init_aN().init_aM_Str(name) : null;
+            AutismMacro savedMacro = name != null && !name.isBlank() ? aN.init_aN().init_aM_Str(name) : null;
             if (savedMacro == null && this.read_aM != null) {
                savedMacro = this.read_aM;
             }
@@ -3797,17 +3797,17 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private void block_V() {
-      aM runningMacro = this.init_aM();
+      AutismMacro runningMacro = this.init_aM();
       if (runningMacro == null || !this.tick_Z && this.load_Z_aM(runningMacro)) {
          if (this.init_aM != null && this.init_aM.init_Str != null && !this.init_aM.init_Str.isBlank()) {
-            aM persisted = aN.init_aN().init_aM_Str(this.init_aM.init_Str);
+            AutismMacro persisted = aN.init_aN().init_aM_Str(this.init_aM.init_Str);
             if (this.tick_Z || persisted == null) {
                MacroExecutor.init_V_Str(this.init_aM.init_Str);
             }
          }
 
          if (this.read_aM != null && this.read_aM.init_Str != null && !this.read_aM.init_Str.isBlank()) {
-            aM persisted = aN.init_aN().init_aM_Str(this.read_aM.init_Str);
+            AutismMacro persisted = aN.init_aN().init_aM_Str(this.read_aM.init_Str);
             if (this.tick_Z || persisted == null) {
                MacroExecutor.init_V_Str(this.read_aM.init_Str);
             }
@@ -3817,9 +3817,9 @@ public class AutismMacroEditorOverlay extends bj {
       }
    }
 
-   private boolean load_Z_aM(aM candidate) {
+   private boolean load_Z_aM(AutismMacro candidate) {
       if (candidate != null && candidate.init_Str != null && !candidate.init_Str.isBlank()) {
-         aM persisted = aN.init_aN().init_aM_Str(candidate.init_Str);
+         AutismMacro persisted = aN.init_aN().init_aM_Str(candidate.init_Str);
          return persisted == candidate;
       } else {
          return false;
@@ -3933,7 +3933,7 @@ public class AutismMacroEditorOverlay extends bj {
       }
    }
 
-   private aM init_aM() {
+   private AutismMacro init_aM() {
       if (this.read_aM != null && MacroExecutor.init_Z_aM(this.read_aM)) {
          return this.read_aM;
       } else if (this.init_aM != null && MacroExecutor.init_Z_aM(this.init_aM)) {
@@ -4016,7 +4016,7 @@ public class AutismMacroEditorOverlay extends bj {
       return speeds[index];
    }
 
-   public boolean init_Z_aM(aM macroToCheck) {
+   public boolean init_Z_aM(AutismMacro macroToCheck) {
       return macroToCheck != null && this.read_aM != null
          ? this.read_aM == macroToCheck || this.read_aM.init_Str != null && this.read_aM.init_Str.equals(macroToCheck.init_Str)
          : false;
@@ -4512,7 +4512,7 @@ public class AutismMacroEditorOverlay extends bj {
          MacroExecutor.init_V_J(this.update_J);
       }
 
-      aM runningMacro = this.init_aM();
+      AutismMacro runningMacro = this.init_aM();
       if (runningMacro != null) {
          MacroExecutor.load_V_aM(runningMacro);
       } else {
@@ -4529,7 +4529,7 @@ public class AutismMacroEditorOverlay extends bj {
    private void g_V() {
       boolean hasValidName = this.init_aM.init_Str != null && !this.init_aM.init_Str.trim().isEmpty();
       if (hasValidName) {
-         aM existingWithName = aN.init_aN().init_aM_Str(this.init_aM.init_Str);
+         AutismMacro existingWithName = aN.init_aN().init_aM_Str(this.init_aM.init_Str);
          boolean isNameConflict = this.update_Z && existingWithName != null;
          if (isNameConflict) {
             AutismClientMessaging.sendPrefixed("Name already exists: " + this.init_aM.init_Str);
@@ -4558,7 +4558,7 @@ public class AutismMacroEditorOverlay extends bj {
             this.run_Z = false;
          }
 
-         aM savedMacro = aN.init_aN().init_aM_Str(this.init_aM.init_Str);
+         AutismMacro savedMacro = aN.init_aN().init_aM_Str(this.init_aM.init_Str);
          this.store_V();
          this.update_J = savedMacro != null ? savedMacro.init_J() : this.init_aM.init_J();
          this.chunk_V();
@@ -4757,12 +4757,12 @@ public class AutismMacroEditorOverlay extends bj {
             if (trimmedName.isEmpty()) {
                bi.init("Name your macro before saving.", -2075846);
             } else {
-               aM nameOwner = aN.init_aN().init_aM_Str(trimmedName);
+               AutismMacro nameOwner = aN.init_aN().init_aM_Str(trimmedName);
                if (nameOwner != null && nameOwner != this.read_aM) {
                   bi.init("A macro named \"" + trimmedName + "\" already exists.", -2075846);
                } else if (this.init_Z_Str_3(this.init_aM.init_Str)) {
                   String previousName = !this.update_Z && this.read_aM != null && this.read_aM.init_Str != null ? this.read_aM.init_Str : "";
-                  aM savedOrUpdated = this.init_aM;
+                  AutismMacro savedOrUpdated = this.init_aM;
                   if (this.update_Z) {
                      aN.init_aN().init_V_aM(this.init_aM);
                      savedOrUpdated = this.init_aM;
@@ -4789,7 +4789,7 @@ public class AutismMacroEditorOverlay extends bj {
                   this.tick_Z = false;
                   this.run_Z = false;
                   this.init_CompoundTag = null;
-                  Consumer<aM> callback = this.init_Consumer;
+                  Consumer<AutismMacro> callback = this.init_Consumer;
                   if (callback != null) {
                      callback.accept(savedOrUpdated);
                   }
@@ -4807,7 +4807,7 @@ public class AutismMacroEditorOverlay extends bj {
       }
 
       try {
-         return aM.init_MacroAction_CompoundTag(original.toTag());
+         return AutismMacro.init_MacroAction_CompoundTag(original.toTag());
       } catch (Exception var3) {
          return null;
       }
@@ -5947,7 +5947,7 @@ public class AutismMacroEditorOverlay extends bj {
          MacroAction original = this.init_aM.init_List.get(index);
          this.count_V();
          CompoundTag tag = original.toTag();
-         MacroAction copy = aM.init_MacroAction_CompoundTag(tag);
+         MacroAction copy = AutismMacro.init_MacroAction_CompoundTag(tag);
          if (copy != null) {
             this.init_aM.init_List.add(index + 1, copy);
             int header = this.read_I_2(index);

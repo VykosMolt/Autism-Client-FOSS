@@ -778,7 +778,7 @@ public final class o {
    }
 
    static String load_Str() {
-      return autismclient.commands.DataUtil.init_Str() + "tools";
+      return autismclient.commands.CommandManager.init_Str() + "tools";
    }
 
    private static String write_Str() {

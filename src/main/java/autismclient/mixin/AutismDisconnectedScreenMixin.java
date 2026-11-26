@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.c.DataUtil;
+import autismclient.c.DisconnectedScreenDuck;
 import autismclient.gui.d.StreamGate;
 import autismclient.gui.f.b.CachePool;
 import autismclient.modules.aB;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(DisconnectedScreen.class)
-public abstract class AutismDisconnectedScreenMixin extends Screen implements DataUtil {
+public abstract class AutismDisconnectedScreenMixin extends Screen implements DisconnectedScreenDuck {
    @Shadow
    @Final
    private Screen parent;

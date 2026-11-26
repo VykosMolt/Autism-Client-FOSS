@@ -299,10 +299,10 @@ public class k {
    }
 
    private static boolean auditIsKeyCommand(String message) {
-      if (!autismclient.commands.DataUtil.init_Z(message)) {
+      if (!autismclient.commands.CommandManager.init_Z(message)) {
          return false;
       }
-      String body = autismclient.commands.DataUtil.init_Str(message);
+      String body = autismclient.commands.CommandManager.init_Str(message);
       if (body == null) {
          return false;
       }
@@ -319,8 +319,8 @@ public class k {
          this.init_BitSetUtil.init_V_Z(false);
          return true;
       } else {
-         boolean sensitive = autismclient.commands.DataUtil.load_Z(value) || auditIsKeyCommand(value);
-         boolean recordBeforeDispatch = this.init_Predicate == null && autismclient.commands.DataUtil.init_Z(value) && !sensitive;
+         boolean sensitive = autismclient.commands.CommandManager.load_Z(value) || auditIsKeyCommand(value);
+         boolean recordBeforeDispatch = this.init_Predicate == null && autismclient.commands.CommandManager.init_Z(value) && !sensitive;
          if (recordBeforeDispatch) {
             AutismClientMessaging.rememberRecentChat(value);
             this.init_BitSetUtil.read_BitSetUtil_Str(value);
@@ -351,14 +351,14 @@ public class k {
          return true;
       }
 
-      if (autismclient.commands.DataUtil.init_Z(message)) {
-         if (autismclient.commands.DataUtil.load_Z(message)) {
+      if (autismclient.commands.CommandManager.init_Z(message)) {
+         if (autismclient.commands.CommandManager.load_Z(message)) {
             return true;
          }
 
-         String body = autismclient.commands.DataUtil.init_Str(message);
+         String body = autismclient.commands.CommandManager.init_Str(message);
          if (!body.isBlank()) {
-            autismclient.commands.DataUtil.read(body);
+            autismclient.commands.CommandManager.read(body);
          }
 
          return true;

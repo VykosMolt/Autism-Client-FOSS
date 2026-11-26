@@ -372,7 +372,7 @@ public class JoinAction implements MacroAction {
       private void init(Screen screen, long now) {
          if (screen instanceof DisconnectedScreen && screen != this.init_Screen) {
             this.init_Screen = screen;
-            String reason = screen instanceof autismclient.c.DataUtil access ? access.autism$reason() : "";
+            String reason = screen instanceof autismclient.c.DisconnectedScreenDuck access ? access.autism$reason() : "";
             this.load_Str = JoinAction.init_Str(reason);
             this.update = Math.max(this.write + 5000L, now + 1000L);
          }
@@ -425,7 +425,7 @@ public class JoinAction implements MacroAction {
       }
 
       private static Screen init_Screen_Screen(Screen current) {
-         if (current instanceof DisconnectedScreen && current instanceof autismclient.c.DataUtil access && access.autism$parent() != null) {
+         if (current instanceof DisconnectedScreen && current instanceof autismclient.c.DisconnectedScreenDuck access && access.autism$parent() != null) {
             return access.autism$parent();
          } else {
             return current instanceof JoinMultiplayerScreen ? current : new JoinMultiplayerScreen(new TitleScreen());

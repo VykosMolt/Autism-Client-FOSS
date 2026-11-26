@@ -2,8 +2,8 @@ package autismclient.mixin;
 
 import autismclient.compat263.Compat263;
 import autismclient.modules.L;
-import autismclient.util.c.CachePool;
-import autismclient.util.c.StreamUtil;
+import autismclient.util.c.GifTextureManager;
+import autismclient.util.c.GifRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
@@ -47,7 +47,7 @@ public abstract class AutismGifCapeLayerMixin {
          if (name != null && !name.isEmpty()) {
             String path = L.init(name);
             if (path != null) {
-               Identifier texture = CachePool.init_Identifier_Str_2(path, L.init_D(), L.read_Z(), L.read_D());
+               Identifier texture = GifTextureManager.init_Identifier_Str_2(path, L.init_D(), L.read_Z(), L.read_D());
                if (texture != null) {
                   ci.cancel();
                   if (!state.isInvisible && !this.hasLayer(state.chestEquipment, LayerType.WINGS)) {
@@ -77,7 +77,7 @@ public abstract class AutismGifCapeLayerMixin {
 
    @Unique
    private static String autism$owner(AvatarRenderState state) {
-      String name = StreamUtil.init_Str();
+      String name = GifRenderContext.init_Str();
       if (name != null && !name.isEmpty()) {
          return name;
       }

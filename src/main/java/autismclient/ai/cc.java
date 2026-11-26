@@ -4406,7 +4406,7 @@ public final class cc {
 
             return "evidence " + id + " is not a SUCCEEDED perform of this session";
          case "macro":
-            autismclient.util.aM macro = autismclient.util.aN.init_aN().init_aM_Str(ag.init_Str_JsonObject(p, "name", ""));
+            autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(ag.init_Str_JsonObject(p, "name", ""));
             if (macro == null) {
                return "no macro named " + ag.init_Str_JsonObject(p, "name", "");
             }

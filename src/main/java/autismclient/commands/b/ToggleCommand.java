@@ -18,15 +18,15 @@ public class ToggleCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.DataUtil.init_Str() + "toggle <module> [on|off|toggle]");
+         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "toggle <module> [on|off|toggle]");
          return 1;
       });
       root.then(
-         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("module", autismclient.commands.a.ConfigStore.init_ConfigStore())
-               .executes(ctx -> init(autismclient.commands.a.ConfigStore.init(ctx, "module"), ak.Inner_StreamUtil.init)))
+         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("module", autismclient.commands.a.ModuleArgumentType.init_ConfigStore())
+               .executes(ctx -> init(autismclient.commands.a.ModuleArgumentType.init(ctx, "module"), ak.Inner_StreamUtil.init)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("state", StringArgumentType.word())
-                  .suggests(autismclient.commands.StreamUtil::init_CompletableFuture_CommandContext_SuggestionsBuilder)
+                  .suggests(autismclient.commands.CommandSuggestions::init_CompletableFuture_CommandContext_SuggestionsBuilder)
                   .executes(
                      ctx -> {
                         String state = StringArgumentType.getString(ctx, "state").toLowerCase();
@@ -63,7 +63,7 @@ public class ToggleCommand extends Command {
                         }
 
                         ak.Inner_StreamUtil mode = var10000;
-                        return init(autismclient.commands.a.ConfigStore.init(ctx, "module"), mode);
+                        return init(autismclient.commands.a.ModuleArgumentType.init(ctx, "module"), mode);
                      }
                   )
             )

@@ -24,22 +24,22 @@ public class GiveCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.DataUtil.init_Str() + "give <item> [count]");
+         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.init_Str() + "give <item> [count]");
          return 1;
       });
       root.then(
-         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("item", autismclient.commands.a.DataUtil.init())
-               .suggests(autismclient.commands.StreamUtil::clear)
-               .executes(ctx -> init(autismclient.commands.a.DataUtil.init(ctx, "item"), 1)))
+         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("item", autismclient.commands.a.ItemOrBlockIdArgumentType.init())
+               .suggests(autismclient.commands.CommandSuggestions::clear)
+               .executes(ctx -> init(autismclient.commands.a.ItemOrBlockIdArgumentType.init(ctx, "item"), 1)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("count", IntegerArgumentType.integer(1, 64))
-                  .suggests(autismclient.commands.StreamUtil::sync)
-                  .executes(ctx -> init(autismclient.commands.a.DataUtil.init(ctx, "item"), IntegerArgumentType.getInteger(ctx, "count")))
+                  .suggests(autismclient.commands.CommandSuggestions::sync)
+                  .executes(ctx -> init(autismclient.commands.a.ItemOrBlockIdArgumentType.init(ctx, "item"), IntegerArgumentType.getInteger(ctx, "count")))
             )
       );
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, String>argument("item [count]", StringArgumentType.greedyString())
-            .suggests(autismclient.commands.StreamUtil::clear)
+            .suggests(autismclient.commands.CommandSuggestions::clear)
             .executes(ctx -> init(StringArgumentType.getString(ctx, "item [count]")))
       );
    }
@@ -59,7 +59,7 @@ public class GiveCommand extends Command {
       }
 
       if (words.isEmpty()) {
-         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.DataUtil.init_Str() + "give <item> [count]");
+         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.init_Str() + "give <item> [count]");
          return 1;
       } else {
          return init(String.join("_", words), count);
@@ -78,7 +78,7 @@ public class GiveCommand extends Command {
          return 1;
       }
 
-      Item item = autismclient.commands.CachePool.init_Item(itemId);
+      Item item = autismclient.commands.RegistrySuggestions.init_Item(itemId);
       if (item == null) {
          AutismClientMessaging.sendPrefixed("§cUnknown item: §f" + itemId);
          return 1;

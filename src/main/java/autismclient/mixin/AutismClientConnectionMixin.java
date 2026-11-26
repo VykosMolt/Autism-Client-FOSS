@@ -31,8 +31,8 @@ import autismclient.util.ck;
 import autismclient.util.cn;
 import autismclient.util.m;
 import autismclient.util.y;
-import autismclient.util.b.CachePool;
-import autismclient.util.e.DataUtil;
+import autismclient.util.b.CustomMenuTracker;
+import autismclient.util.e.LeafDupePacketTracker;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.J;
 import autismclient.util.macro.MacroExecutor;
@@ -191,7 +191,7 @@ public abstract class AutismClientConnectionMixin {
          }
 
          if (!AutismLiteVariant.enabled()) {
-            DataUtil.init((Connection)(Object)this, packet);
+            LeafDupePacketTracker.init((Connection)(Object)this, packet);
          }
 
          ScaffoldModule.read_V_Packet(packet);
@@ -551,7 +551,7 @@ public abstract class AutismClientConnectionMixin {
             this.autism$clearRuntimeConnectionStateOnDisconnect(packet);
          } else {
             if (customMenuPacket) {
-               CachePool.load(packet, protocolHint);
+               CustomMenuTracker.load(packet, protocolHint);
             }
 
             if (!isPlayReceiveListener(listener) || !J.init_Z(packet) && !HashUtil.init_Z(packet)) {

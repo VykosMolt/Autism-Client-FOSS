@@ -4,7 +4,7 @@ import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.aE;
-import autismclient.util.aM;
+import autismclient.util.AutismMacro;
 import autismclient.util.aN;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -20,7 +20,7 @@ public final class SyncCommand extends Command {
       root.executes(context -> init());
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("send").executes(context -> {
-               AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.DataUtil.init_Str() + "sync send <message or /command>");
+               AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "sync send <message or /command>");
                return 1;
             }))
             .then(
@@ -30,18 +30,18 @@ public final class SyncCommand extends Command {
       );
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("macro").executes(context -> {
-               AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.DataUtil.init_Str() + "sync macro <name>");
+               AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "sync macro <name>");
                return 1;
             }))
             .then(
-               RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.a.CachePool.init_CachePool())
-                  .executes(context -> load(autismclient.commands.a.CachePool.init(context, "name")))
+               RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.a.MacroNameArgumentType.init_CachePool())
+                  .executes(context -> load(autismclient.commands.a.MacroNameArgumentType.init(context, "name")))
             )
       );
    }
 
    private static int init() {
-      String prefix = autismclient.commands.DataUtil.init_Str();
+      String prefix = autismclient.commands.CommandManager.init_Str();
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "sync send <message or /command>");
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "sync macro <name>");
       return 1;
@@ -64,7 +64,7 @@ public final class SyncCommand extends Command {
          AutismClientMessaging.sendPrefixed("§cJoin a LAN Sync session first.");
          return 1;
       } else {
-         aM macro = aN.init_aN().init_aM_Str(name);
+         AutismMacro macro = aN.init_aN().init_aM_Str(name);
          if (macro == null) {
             AutismClientMessaging.sendPrefixed("§cMacro not found: §f" + name);
             return 1;

@@ -87,14 +87,14 @@ public final class aG {
             message = last.trim();
          }
 
-         if (autismclient.commands.DataUtil.init_Z(message)) {
-            if (autismclient.commands.DataUtil.load_Z(message)) {
+         if (autismclient.commands.CommandManager.init_Z(message)) {
+            if (autismclient.commands.CommandManager.load_Z(message)) {
                return "";
             }
 
-            String body = autismclient.commands.DataUtil.init_Str(message);
+            String body = autismclient.commands.CommandManager.init_Str(message);
             if (!body.isBlank()) {
-               autismclient.commands.DataUtil.read(body);
+               autismclient.commands.CommandManager.read(body);
             }
          } else {
             if (init_Minecraft.getConnection() == null) {

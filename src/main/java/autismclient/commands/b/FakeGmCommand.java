@@ -18,11 +18,11 @@ public class FakeGmCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.DataUtil.init_Str() + "fakegm <survival|creative|adventure|spectator|reset>");
-         AutismClientMessaging.sendPrefixed("§7Real change: " + autismclient.commands.DataUtil.init_Str() + "gamemode");
+         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.init_Str() + "fakegm <survival|creative|adventure|spectator|reset>");
+         AutismClientMessaging.sendPrefixed("§7Real change: " + autismclient.commands.CommandManager.init_Str() + "gamemode");
          return 1;
       });
-      root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("mode", StringArgumentType.word()).suggests(autismclient.commands.StreamUtil::set).executes(ctx -> {
+      root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("mode", StringArgumentType.word()).suggests(autismclient.commands.CommandSuggestions::set).executes(ctx -> {
          String mode = StringArgumentType.getString(ctx, "mode").toLowerCase(Locale.ROOT);
          W.Inner_DataUtil result;
          if (!"reset".equals(mode) && !"r".equals(mode)) {

@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.BufferHelper;
+import autismclient.util.j.a.SyntheticWorldGenLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -17,7 +17,7 @@ public abstract class AutismOreSimEndCityPieceMixin {
    private void autism$skipSyntheticEntityMarker(
       String marker, BlockPos position, ServerLevelAccessor level, RandomSource random, BoundingBox chunkBox, CallbackInfo ci
    ) {
-      if (level instanceof BufferHelper && (marker.startsWith("Sentry") || marker.startsWith("Elytra"))) {
+      if (level instanceof SyntheticWorldGenLevel && (marker.startsWith("Sentry") || marker.startsWith("Elytra"))) {
          ci.cancel();
       }
    }

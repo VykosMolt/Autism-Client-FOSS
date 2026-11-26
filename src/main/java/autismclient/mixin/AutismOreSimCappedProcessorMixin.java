@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.BufferHelper;
+import autismclient.util.j.a.SyntheticWorldGenLevel;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -39,7 +39,7 @@ public abstract class AutismOreSimCappedProcessorMixin {
       StructurePlaceSettings settings,
       Operation<List<StructureBlockInfo>> original
    ) {
-      if (!(level instanceof BufferHelper synthetic)) {
+      if (!(level instanceof SyntheticWorldGenLevel synthetic)) {
          return original.call(level, position, referencePos, originalBlocks, processedBlocks, settings);
       } else if (this.limit.maxInclusive() != 0 && !processedBlocks.isEmpty()) {
          if (originalBlocks.size() != processedBlocks.size()) {

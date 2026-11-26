@@ -24,7 +24,7 @@ public final class aA {
    private static boolean load;
    private static final aA.Inner_DataUtil init_aA_DataUtil = new aA.Inner_DataUtil();
    private static int init_I;
-   private static volatile aM init_aM;
+   private static volatile AutismMacro init_aM;
    private static volatile ClientConfigurationPacketListenerImpl init_ClientConfiguratio;
    private static volatile Thread init_Thread;
 
@@ -122,7 +122,7 @@ public final class aA {
       init_V();
       init_Z = false;
       init_aM = null;
-      autismclient.util.b.CachePool.init_V();
+      autismclient.util.b.CustomMenuTracker.init_V();
       init_ClientConfiguratio = null;
       Thread worker = init_Thread;
       init_Thread = null;
@@ -136,9 +136,9 @@ public final class aA {
       init_ClientConfiguratio = listener;
       init_I++;
       if (load_Z() && init_aA_CachePool().init_Z_I(init_I)) {
-         aM selected = aN.init_aN().init_aM_Str(init_Str());
+         AutismMacro selected = aN.init_aN().init_aM_Str(init_Str());
          if (selected != null) {
-            aM copy = selected.init_aM();
+            AutismMacro copy = selected.init_aM();
             int prefix = 0;
             boolean sawCustomMenu = false;
 
@@ -228,12 +228,12 @@ public final class aA {
                String lastError = "";
 
                while (System.currentTimeMillis() <= deadline && !Thread.currentThread().isInterrupted()) {
-                  seenGeneration = autismclient.util.b.CachePool.init_J();
-                  snapshot = autismclient.util.b.CachePool.init_CustomMenuSnapshot();
+                  seenGeneration = autismclient.util.b.CustomMenuTracker.init_J();
+                  snapshot = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
                   if (snapshot != null) {
                      seenGeneration = snapshot.generation();
                   } else {
-                     snapshot = autismclient.util.b.DataUtil.init_CustomMenuSnapshot(mc);
+                     snapshot = autismclient.util.b.DialogScreenBridge.init_CustomMenuSnapshot(mc);
                   }
 
                   if (snapshot == null) {
@@ -258,7 +258,7 @@ public final class aA {
                   if (!prepared.init_Z()) {
                      load_V(prepared.init_Str());
                   } else {
-                     Screen answered = autismclient.util.b.DataUtil.init_Screen(mc);
+                     Screen answered = autismclient.util.b.DialogScreenBridge.init_Screen(mc);
                      CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, prepared.init_CustomMenuSubmissi());
                      if (!result.success()) {
                         load_V(result.error());
@@ -274,8 +274,8 @@ public final class aA {
                            }
                         }
 
-                        autismclient.util.b.CachePool.init(seenGeneration, result.replacement(), snapshot.phase());
-                        autismclient.util.b.DataUtil.init(mc, result.clientAction(), answered);
+                        autismclient.util.b.CustomMenuTracker.init(seenGeneration, result.replacement(), snapshot.phase());
+                        autismclient.util.b.DialogScreenBridge.init(mc, result.clientAction(), answered);
                      }
                   }
                } else {
@@ -307,7 +307,7 @@ public final class aA {
       long deadline = System.currentTimeMillis() + Math.max(100L, Math.min(120000L, timeoutMs));
 
       while (System.currentTimeMillis() <= deadline && !Thread.currentThread().isInterrupted()) {
-         if (autismclient.util.b.CachePool.init_CustomMenuSnapshot() != null) {
+         if (autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot() != null) {
             return;
          }
 
@@ -389,7 +389,7 @@ public final class aA {
       if (load_Z() && !init_Z && init_aA_CachePool().init_Z_I(init_I)) {
          init_Z = true;
          String macroName = init_Str();
-         aM macro = init_aM != null ? init_aM : aN.init_aN().init_aM_Str(macroName);
+         AutismMacro macro = init_aM != null ? init_aM : aN.init_aN().init_aM_Str(macroName);
          if (macro == null) {
             bi.read("Join macro missing: " + macroName);
             init_V("");

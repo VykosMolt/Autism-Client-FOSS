@@ -593,7 +593,7 @@ public class NodeWalker extends KeyHolder {
                         }
                         break;
                      case ORE_SIM:
-                        if (!autismclient.util.oresim.CachePool.init(block)) {
+                        if (!autismclient.util.oresim.OreBlockCatalog.init(block)) {
                            return;
                         }
                         break;

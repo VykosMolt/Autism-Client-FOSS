@@ -7173,7 +7173,7 @@ final class TableIndex {
                      .init(
                         ca.init_J_BlockPos(pos),
                         TableIndex.init(cell, mc.level.getBlockState(pos), power.substitutes(), true),
-                        autismclient.util.h.DataUtil.init_Z(mc.level, this.init_TableIndex_StateCa.init_I()),
+                        autismclient.util.h.BlockChangeAckTracker.init_Z(mc.level, this.init_TableIndex_StateCa.init_I()),
                         mc.player.tickCount
                      );
                   if (outcome == TableIndex.Inner_StateCache.Inner_DataUtil.read) {

@@ -266,7 +266,7 @@ public final class af {
    }
 
    static String init_Str(String spec) {
-      return autismclient.commands.CachePool.init_Str(spec);
+      return autismclient.commands.RegistrySuggestions.init_Str(spec);
    }
 
    static String load_Str(String clean) {
@@ -275,14 +275,14 @@ public final class af {
       }
 
       if (clean.indexOf(58) < 0) {
-         for (String form : autismclient.commands.CachePool.init_List(clean)) {
+         for (String form : autismclient.commands.RegistrySuggestions.init_List(clean)) {
             if (init_Map.containsKey(form)) {
                return form;
             }
          }
       }
 
-      Identifier id = autismclient.commands.CachePool.init_Identifier(clean);
+      Identifier id = autismclient.commands.RegistrySuggestions.init_Identifier(clean);
       return id == null ? null : id.toString();
    }
 

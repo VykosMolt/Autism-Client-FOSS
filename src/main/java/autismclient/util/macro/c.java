@@ -8,7 +8,7 @@ public final class c {
       return action != null && !(action instanceof DelayAction) && RaceAction.init_Z(action);
    }
 
-   public static boolean init(autismclient.util.aM macro) {
+   public static boolean init(autismclient.util.AutismMacro macro) {
       if (macro != null && macro.init_List != null) {
          for (MacroAction action : macro.init_List) {
             if (action != null && action.isEnabled()) {

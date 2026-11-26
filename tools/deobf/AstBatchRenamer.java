@@ -39,6 +39,12 @@ public final class AstBatchRenamer {
         "autismclient/modules/as",
         "autismclient/util/macro/ak",
         "autismclient/util/Q",
+        "autismclient/b/DataUtil",
+        "autismclient/util/g/PkgCls_a",
+        "autismclient/util/mm/IoWorker",
+        "autismclient/util/mm/StateCache",
+        "autismclient/util/mm/a/CachePool",
+        "autismclient/util/mm/a/DataUtil",
         "autismclient/util/mm/a/StreamUtil"
     );
     private static final Set<String> FROZEN_ENUMS = Set.of(

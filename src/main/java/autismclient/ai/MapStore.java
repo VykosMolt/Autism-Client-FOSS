@@ -931,7 +931,7 @@ final class MapStore {
                }
                break;
             case "move":
-               autismclient.util.aM macro = m.init_aM_Str(load(args, "macro"));
+               autismclient.util.AutismMacro macro = m.init_aM_Str(load(args, "macro"));
                if (macro == null) {
                   throw new IllegalArgumentException("Unknown macro; read client:macros first");
                }
@@ -963,12 +963,12 @@ final class MapStore {
             case "running":
                return ag.init_JsonObject_ObjArr("running", MacroExecutor.write_Z());
             case "delete": {
-               autismclient.util.aM macro = init(m, args);
+               autismclient.util.AutismMacro macro = init(m, args);
                m.load(macro);
                return ag.init_JsonObject_ObjArr("deleted", macro.init_Str, "macros", m.init_List().size());
             }
             case "rename": {
-               autismclient.util.aM macro = init(m, args);
+               autismclient.util.AutismMacro macro = init(m, args);
                String next = load(args, "newName");
                if (m.init_aM_Str(next) != null) {
                   throw new IllegalArgumentException("A macro named '" + next + "' already exists");
@@ -980,8 +980,8 @@ final class MapStore {
                return ag.init_JsonObject_ObjArr("renamed", next, "folder", macro.read);
             }
             case "duplicate": {
-               autismclient.util.aM macro = init(m, args);
-               autismclient.util.aM copy = m.init_aM_aM_Str(macro, ag.init_Str_JsonObject(args, "newName", macro.init_Str + " copy").trim());
+               autismclient.util.AutismMacro macro = init(m, args);
+               autismclient.util.AutismMacro copy = m.init_aM_aM_Str(macro, ag.init_Str_JsonObject(args, "newName", macro.init_Str + " copy").trim());
                if (copy == null) {
                   throw new IllegalStateException("The macro could not be duplicated");
                }
@@ -989,7 +989,7 @@ final class MapStore {
                return ag.init_JsonObject_ObjArr("created", copy.init_Str, "folder", copy.read);
             }
             case "export": {
-               autismclient.util.aM macro = init(m, args);
+               autismclient.util.AutismMacro macro = init(m, args);
                return ag.init_JsonObject_ObjArr("name", macro.init_Str, "share", autismclient.util.o.init_Str(macro));
             }
             case "stop":
@@ -1007,8 +1007,8 @@ final class MapStore {
       });
    }
 
-   private static autismclient.util.aM init(autismclient.util.aN m, JsonObject args) {
-      autismclient.util.aM macro = m.init_aM_Str(load(args, "name"));
+   private static autismclient.util.AutismMacro init(autismclient.util.aN m, JsonObject args) {
+      autismclient.util.AutismMacro macro = m.init_aM_Str(load(args, "name"));
       if (macro == null) {
          throw new IllegalArgumentException("Unknown macro; read client:macros first");
       } else {
@@ -1025,7 +1025,7 @@ final class MapStore {
 
       int unfiled = 0;
 
-      for (autismclient.util.aM macro : m.init_List()) {
+      for (autismclient.util.AutismMacro macro : m.init_List()) {
          String folder = macro.read == null ? "" : macro.read;
          if (folder.isEmpty()) {
             unfiled++;

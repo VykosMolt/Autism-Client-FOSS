@@ -134,7 +134,7 @@ public class MacroExecutor {
    private static final ThreadLocal<Boolean> load_ThreadLocal;
    private static volatile MacroExecutor.Inner_TableIndex init_MacroExecutor_Tabl;
    private static volatile boolean init_Z;
-   private static autismclient.util.aM init_aM;
+   private static autismclient.util.AutismMacro init_aM;
    private static Thread init_Thread;
    private static final AtomicReference<String> init_AtomicReference;
    private static String init_Str;
@@ -202,7 +202,7 @@ public class MacroExecutor {
    private static final List<MacroExecutor.Inner_FieldCache> update_List;
    private static volatile String write_Str;
 
-   private static Map<String, Integer> init_Map_MacroExecutor_Tabl_aM(MacroExecutor.Inner_TableIndex run, autismclient.util.aM macro) {
+   private static Map<String, Integer> init_Map_MacroExecutor_Tabl_aM(MacroExecutor.Inner_TableIndex run, autismclient.util.AutismMacro macro) {
       Map<String, Integer> cached = run.init_Map;
       if (cached != null) {
          return cached;
@@ -223,7 +223,7 @@ public class MacroExecutor {
       return built;
    }
 
-   private static Integer init_Integer_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex run, autismclient.util.aM macro, int i, FlowAction flow, Minecraft mc) {
+   private static Integer init_Integer_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex run, autismclient.util.AutismMacro macro, int i, FlowAction flow, Minecraft mc) {
       Integer var10000;
       switch (flow.target) {
          case STOP:
@@ -261,7 +261,7 @@ public class MacroExecutor {
       return var10000;
    }
 
-   private static int init_I_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex run, autismclient.util.aM macro, int currentI, FlowAction flow, Minecraft mc) {
+   private static int init_I_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex run, autismclient.util.AutismMacro macro, int currentI, FlowAction flow, Minecraft mc) {
       run.write_I = -1;
       run.update = 0;
       Integer dest = init_Integer_MacroExecutor_Tabl(run, macro, currentI, flow, mc);
@@ -344,7 +344,7 @@ public class MacroExecutor {
       }
    }
 
-   private static int init_I_aM(autismclient.util.aM macro, int headerIndex, int coveredRows) {
+   private static int init_I_aM(autismclient.util.AutismMacro macro, int headerIndex, int coveredRows) {
       int last = macro == null ? headerIndex : macro.init_List.size() - 1;
       long end = (long)headerIndex + Math.max(0, coveredRows);
       return (int)Math.max(headerIndex, Math.min(last, end));
@@ -968,11 +968,11 @@ public class MacroExecutor {
       return macroName == null ? "" : macroName.trim().toLowerCase(Locale.ROOT);
    }
 
-   private static String init_Str_aM(autismclient.util.aM macro) {
+   private static String init_Str_aM(autismclient.util.AutismMacro macro) {
       return macro != null && macro.init_Str != null ? macro.init_Str : "";
    }
 
-   private static boolean init_Z_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex run, autismclient.util.aM macro, String macroName) {
+   private static boolean init_Z_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex run, autismclient.util.AutismMacro macro, String macroName) {
       if (run != null && run.init_AtomicBoolean.get()) {
          if (macro == null || run.init_aM != macro && run.load_aM != macro) {
             String targetKey = read_Str(macroName);
@@ -989,11 +989,11 @@ public class MacroExecutor {
       }
    }
 
-   public static void init_V_aM(autismclient.util.aM macro) {
+   public static void init_V_aM(autismclient.util.AutismMacro macro) {
       init_J_aM(macro);
    }
 
-   public static long init_J_aM(autismclient.util.aM macro) {
+   public static long init_J_aM(autismclient.util.AutismMacro macro) {
       return init_J_aM_MacroExecutor_Pool(macro, MacroExecutor.Inner_PoolEntry.init_MacroExecutor_Pool);
    }
 
@@ -1022,7 +1022,7 @@ public class MacroExecutor {
       return action instanceof SkippedLegacyMultiStep skipped ? skipped.original() : action;
    }
 
-   public static long init_J_aM_MacroExecutor_Pool(autismclient.util.aM macro, MacroExecutor.Inner_PoolEntry options) {
+   public static long init_J_aM_MacroExecutor_Pool(autismclient.util.AutismMacro macro, MacroExecutor.Inner_PoolEntry options) {
       if (!AutismLiteVariant.enabled() && !autismclient.e.ByteReader.init()) {
          return -1L;
       }
@@ -1033,7 +1033,7 @@ public class MacroExecutor {
 
       MacroExecutor.Inner_PoolEntry runOptions = options == null ? MacroExecutor.Inner_PoolEntry.init_MacroExecutor_Pool : options;
       if (macro != null && macro.init_List != null && !macro.init_List.isEmpty()) {
-         autismclient.util.aM executionMacro;
+         autismclient.util.AutismMacro executionMacro;
          try {
             executionMacro = macro.init_aM();
          } catch (Throwable copyError) {
@@ -1196,7 +1196,7 @@ public class MacroExecutor {
    private static void update(MacroExecutor.Inner_TableIndex runState) {
       init_ThreadLocal.set(runState);
       n.init_V();
-      autismclient.util.aM macro = runState.load_aM;
+      autismclient.util.AutismMacro macro = runState.load_aM;
       Minecraft mc = Minecraft.getInstance();
       int loopCount = 0;
       int maxLoops = macro.init_Z ? (macro.init_I == -1 ? 2147483647 : macro.init_I) : 1;
@@ -9059,7 +9059,7 @@ public class MacroExecutor {
       return false;
    }
 
-   public static boolean init_Z_aM(autismclient.util.aM macro) {
+   public static boolean init_Z_aM(autismclient.util.AutismMacro macro) {
       if (macro == null) {
          return false;
       }
@@ -9079,7 +9079,7 @@ public class MacroExecutor {
 
          for (MacroExecutor.Inner_TableIndex run : init_LinkedHashMap.values()) {
             if (run.init_AtomicBoolean.get() && !run.init_MacroExecutor_Pool.load()) {
-               autismclient.util.aM macro = run.load_aM;
+               autismclient.util.AutismMacro macro = run.load_aM;
                String name = macro != null && macro.init_Str != null ? macro.init_Str : "";
                snapshots.add(new MacroExecutor.Inner_UiHelper(macro, name, run.read_Str == null ? "" : run.read_Str, run.init_I, run.load_I, run.read_I));
             }
@@ -9171,7 +9171,7 @@ public class MacroExecutor {
       }
    }
 
-   public static void load_V_aM(autismclient.util.aM macro) {
+   public static void load_V_aM(autismclient.util.AutismMacro macro) {
       if (macro != null) {
          boolean stopped = false;
          String displayName = init_Str_aM(macro);
@@ -9194,11 +9194,11 @@ public class MacroExecutor {
    }
 
    public static String init_Str() {
-      autismclient.util.aM m = init_aM;
+      autismclient.util.AutismMacro m = init_aM;
       return m != null && m.init_Str != null ? m.init_Str : "";
    }
 
-   public static autismclient.util.aM init_aM() {
+   public static autismclient.util.AutismMacro init_aM() {
       return init_aM;
    }
 
@@ -10680,13 +10680,13 @@ public class MacroExecutor {
       }
    }
 
-   private static List<ck.Inner_CachePool> init_List_aM(autismclient.util.aM macro, int startIdx, int count) {
+   private static List<ck.Inner_CachePool> init_List_aM(autismclient.util.AutismMacro macro, int startIdx, int count) {
       new ArrayList();
       int maxIdx = count < 0 ? macro.init_List.size() : Math.min(startIdx + count, macro.init_List.size());
       return init_List_aM(macro, startIdx, count, maxIdx);
    }
 
-   private static List<ck.Inner_CachePool> init_List_aM(autismclient.util.aM macro, int startIdx, int count, int endIdx) {
+   private static List<ck.Inner_CachePool> init_List_aM(autismclient.util.AutismMacro macro, int startIdx, int count, int endIdx) {
       List<ck.Inner_CachePool> result = new ArrayList<>();
       int maxIdx = Math.min(endIdx, count < 0 ? macro.init_List.size() : Math.min(startIdx + count, macro.init_List.size()));
 
@@ -10734,11 +10734,11 @@ public class MacroExecutor {
       }
    }
 
-   private static int load_I_aM(autismclient.util.aM macro, int startIdx, int packetCount) {
+   private static int load_I_aM(autismclient.util.AutismMacro macro, int startIdx, int packetCount) {
       return init_I_aM(macro, startIdx, packetCount, macro.init_List.size());
    }
 
-   private static int init_I_aM(autismclient.util.aM macro, int startIdx, int packetCount, int endIdx) {
+   private static int init_I_aM(autismclient.util.AutismMacro macro, int startIdx, int packetCount, int endIdx) {
       int actionsToSkip = 0;
       int packetsRemaining = packetCount;
 
@@ -11098,7 +11098,7 @@ public class MacroExecutor {
    public record Inner_HashUtil(String init_Str, String load, long init_J) {
    }
 
-   private record Inner_IoWorker(autismclient.util.aM init_aM, int init_I, int load) {
+   private record Inner_IoWorker(autismclient.util.AutismMacro init_aM, int init_I, int load) {
    }
 
    private static final class Inner_JsonUtil {
@@ -11354,8 +11354,8 @@ public class MacroExecutor {
 
    private static final class Inner_TableIndex {
       final long init_J;
-      final autismclient.util.aM init_aM;
-      final autismclient.util.aM load_aM;
+      final autismclient.util.AutismMacro init_aM;
+      final autismclient.util.AutismMacro load_aM;
       final AtomicBoolean init_AtomicBoolean = new AtomicBoolean(true);
       final AtomicBoolean load_AtomicBoolean = new AtomicBoolean(false);
       volatile String init_Str = "CANCELLED";
@@ -11397,7 +11397,7 @@ public class MacroExecutor {
       final MacroExecutor.Inner_PoolEntry init_MacroExecutor_Pool;
       final m init_m = new m();
 
-      Inner_TableIndex(long id, autismclient.util.aM sourceMacro, autismclient.util.aM macro, MacroExecutor.Inner_PoolEntry options) {
+      Inner_TableIndex(long id, autismclient.util.AutismMacro sourceMacro, autismclient.util.AutismMacro macro, MacroExecutor.Inner_PoolEntry options) {
          this.init_J = id;
          this.init_aM = sourceMacro;
          this.load_aM = macro;
@@ -11427,7 +11427,7 @@ public class MacroExecutor {
       }
    }
 
-   public record Inner_UiHelper(autismclient.util.aM init_aM, String init_Str, String load_Str, int init_I, int load_I, int read) {
+   public record Inner_UiHelper(autismclient.util.AutismMacro init_aM, String init_Str, String load_Str, int init_I, int load_I, int read) {
    }
 
    public record MacroRunOutcome(long id, String outcome, String status, int lastCompletedStep) {

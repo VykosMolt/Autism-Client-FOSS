@@ -1,6 +1,6 @@
 package autismclient.mixin.via;
 
-import autismclient.compat.a.DataUtil;
+import autismclient.compat.a.ViaFabricPlusBridge;
 import io.netty.channel.ChannelFuture;
 import java.net.InetSocketAddress;
 import net.minecraft.network.Connection;
@@ -19,6 +19,6 @@ public abstract class AutismViaConnectionMixin {
    private static void autism$selectNativeProtocol(
       InetSocketAddress address, EventLoopGroupHolder eventLoopGroup, Connection connection, CallbackInfoReturnable<ChannelFuture> cir
    ) {
-      DataUtil.init_V(connection);
+      ViaFabricPlusBridge.init_V(connection);
    }
 }

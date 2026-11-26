@@ -28,7 +28,7 @@ import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.ValueSink;
-import autismclient.util.aM;
+import autismclient.util.AutismMacro;
 import autismclient.util.bk;
 import autismclient.util.ck;
 import autismclient.util.cz;
@@ -2901,7 +2901,7 @@ public final class ConfigStore {
 
       void write(Module var1, Setting<?, ?> var2);
 
-      void init(Module var1, Setting<?, ?> var2, aM var3);
+      void init(Module var1, Setting<?, ?> var2, AutismMacro var3);
 
       void init(String var1);
 

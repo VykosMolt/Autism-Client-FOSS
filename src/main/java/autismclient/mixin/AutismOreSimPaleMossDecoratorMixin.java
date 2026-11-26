@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.BufferHelper;
-import autismclient.util.j.a.CachePool;
+import autismclient.util.j.a.SyntheticWorldGenLevel;
+import autismclient.util.j.a.PaleMossDecoratorShim;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.world.level.levelgen.feature.treedecorators.PaleMossDecorator;
@@ -24,8 +24,8 @@ public abstract class AutismOreSimPaleMossDecoratorMixin {
 
    @WrapMethod(method = "place")
    private void autism$placeInSyntheticWorld(Context context, Operation<Void> original) {
-      if (context.level() instanceof BufferHelper synthetic) {
-         CachePool.init(context, synthetic, this.leavesProbability, this.trunkProbability, this.groundProbability);
+      if (context.level() instanceof SyntheticWorldGenLevel synthetic) {
+         PaleMossDecoratorShim.init(context, synthetic, this.leavesProbability, this.trunkProbability, this.groundProbability);
       } else {
          original.call(context);
       }

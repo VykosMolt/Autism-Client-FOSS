@@ -44,7 +44,7 @@ import autismclient.util.cd;
 import autismclient.util.cg;
 import autismclient.util.co;
 import autismclient.util.cx;
-import autismclient.util.c.CachePool;
+import autismclient.util.c.GifTextureManager;
 import autismclient.util.macro.MacroExecutor;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -146,7 +146,7 @@ public final class AutismClientMod implements ClientModInitializer {
 
       aC.init_V();
       HoleEspModule.init_V_12();
-      autismclient.commands.DataUtil.init_V();
+      autismclient.commands.CommandManager.init_V();
       if (!AutismLiteVariant.enabled()) {
          o.init_V();
          am.init_V();
@@ -165,7 +165,7 @@ public final class AutismClientMod implements ClientModInitializer {
          @Override
          public void onResourceManagerReload(ResourceManager manager) {
             k.init_V();
-            CachePool.init();
+            GifTextureManager.init();
             Thread prewarm = new Thread(() -> {
                try {
                   BufferHelper.prewarm();

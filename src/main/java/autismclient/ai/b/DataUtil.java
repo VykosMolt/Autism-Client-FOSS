@@ -104,7 +104,7 @@ public final class DataUtil implements EventBus {
             .init(
                this.init_Minecraft.level,
                this.init_Minecraft.player,
-               autismclient.util.h.DataUtil.init_Z(this.init_Minecraft.level, this.init_TableIndex.init()),
+               autismclient.util.h.BlockChangeAckTracker.init_Z(this.init_Minecraft.level, this.init_TableIndex.init()),
                this.load_J()
             );
    }

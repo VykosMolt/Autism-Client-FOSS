@@ -21,10 +21,16 @@ Every rule below MUST be respected by all deobfuscation tooling and manual refac
 ### Compile-Time & Runtime ABI Pins
 - `autismclient/util/Q.java` — empty no-op stub required by untouched `modules/al.java`.
 - `autismclient/util/mm/a/StreamUtil.java` — hashing helpers called by frozen `autismclient/a/CachePool`.
-- **Compile-time frozen classes** (directly referenced by untouched `modules/al.java`; verified by `:compileJava`):
-  - `autismclient/modules/f` (multi-module registration container)
-  - `autismclient/modules/as`
-  - `autismclient/util/macro/ak` (also has frozen inner enum `ak$Inner_StreamUtil`)
+- **Compile-time frozen classes** (directly referenced by untouched integrity/attestation files; verified by `:compileJava`):
+  - `autismclient/modules/f` (multi-module registration container; referenced by `modules/al.java`)
+  - `autismclient/modules/as` (`NameCensorModule`; referenced by `modules/al.java`)
+  - `autismclient/util/macro/ak` (`ToggleModuleAction`, plus frozen inner enum `ak$Inner_StreamUtil`; referenced by `modules/al.java`)
+  - `autismclient/b/DataUtil` (`AddonManager`; referenced by `modules/al.java`)
+  - `autismclient/util/g/PkgCls_a` (`PacedTpController`; referenced by `modules/al.java`)
+  - `autismclient/util/mm/IoWorker` (`ServerTimeAnchor`; referenced by `autismclient/a/*`)
+  - `autismclient/util/mm/StateCache` (JWT public-key verifier calling `autismclient/e/DataUtil`)
+  - `autismclient/util/mm/a/CachePool` (`LocalIdentityStore`; referenced by `autismclient/a/CachePool` & `guardian/impl/LoginProof`)
+  - `autismclient/util/mm/a/DataUtil` (`LocalSecretSealer`; referenced by `autismclient/a/StreamUtil`)
 - **Compile-time frozen enum constants** (directly referenced by untouched `.java` files; verified by `:compileJava`):
   - `autismclient/gui/f/b/CachePool$Inner_DataUtil` (referenced by `gui/d/JsonUtil.java`)
   - `autismclient/gui/f/b/l` (referenced by `gui/d/JsonUtil.java`)

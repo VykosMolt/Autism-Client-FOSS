@@ -1,7 +1,7 @@
 package autismclient.mixin.security;
 
 import autismclient.AutismClientAddon;
-import autismclient.compat.a.DataUtil;
+import autismclient.compat.a.ViaFabricPlusBridge;
 import autismclient.g.BufferHelper;
 import autismclient.g.MapStore;
 import autismclient.g.TaskTimer;
@@ -52,7 +52,7 @@ public abstract class AutismRegistryDataCollectorMixin {
       }
 
       BufferHelper.Inner_StreamUtil connection = TaskTimer.init_BufferHelper_Strea();
-      MapStore.init(entries, connection != null && DataUtil.init_Z(connection.init_Connection()));
+      MapStore.init(entries, connection != null && ViaFabricPlusBridge.init_Z(connection.init_Connection()));
       if (connection == null) {
          return entries;
       }

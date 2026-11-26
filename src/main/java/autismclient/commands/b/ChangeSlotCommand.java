@@ -17,13 +17,13 @@ public final class ChangeSlotCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(context -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.DataUtil.init_Str() + "change-slot <1-9>");
+         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "change-slot <1-9>");
          return 1;
       });
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("hotbar-slot", IntegerArgumentType.integer(1, 9))
             .suggests(
-               (context, builder) -> autismclient.commands.StreamUtil.init_CompletableFuture_SuggestionsBuilder_StrArr(
+               (context, builder) -> autismclient.commands.CommandSuggestions.init_CompletableFuture_SuggestionsBuilder_StrArr(
                   builder, "1", "2", "3", "4", "5", "6", "7", "8", "9"
                )
             )

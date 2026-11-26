@@ -90,7 +90,7 @@ public final class aO {
       }
 
       MacroExecutor.Inner_UiHelper primary = runs.get(0);
-      aM macro = primary.init_aM();
+      AutismMacro macro = primary.init_aM();
       if (macro != null && macro.init_List != null && !macro.init_List.isEmpty()) {
          int total = init(primary, macro);
          int current = Math.max(0, primary.init_I());
@@ -110,7 +110,7 @@ public final class aO {
       }
    }
 
-   private static int init(MacroExecutor.Inner_UiHelper run, aM macro) {
+   private static int init(MacroExecutor.Inner_UiHelper run, AutismMacro macro) {
       int actionCount = macro != null && macro.init_List != null ? macro.init_List.size() : 0;
       return Math.max(run.load_I(), actionCount);
    }
@@ -159,7 +159,7 @@ public final class aO {
       ArrayList<autismclient.gui.f.c.BufferHelper.Inner_DataUtil> rows = new ArrayList<>();
 
       for (MacroExecutor.Inner_UiHelper run : runs) {
-         aM macro = run.init_aM();
+         AutismMacro macro = run.init_aM();
          if (macro != null && macro.init_List != null && !macro.init_List.isEmpty()) {
             List<MacroAction> actions = macro.init_List;
             int total = init(run, macro);

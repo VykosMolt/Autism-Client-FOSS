@@ -197,7 +197,7 @@ public final class CachePool {
       byte[] var10000;
       switch (scheme) {
          case 1:
-            var10000 = TaskQueue.load(stored);
+            var10000 = WindowsDpapiBridge.load(stored);
             break;
          case 2:
             var10000 = write(stored);
@@ -297,8 +297,8 @@ public final class CachePool {
    }
 
    private static CachePool.Inner_StreamUtil init(byte[] edPkcs8, byte[] xPkcs8) {
-      byte[] e = TaskQueue.init(edPkcs8);
-      byte[] x = TaskQueue.init(xPkcs8);
+      byte[] e = WindowsDpapiBridge.init(edPkcs8);
+      byte[] x = WindowsDpapiBridge.init(xPkcs8);
       if (e != null && x != null) {
          return new CachePool.Inner_StreamUtil((byte)1, e, x);
       }

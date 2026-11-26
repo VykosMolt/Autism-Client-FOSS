@@ -12,8 +12,8 @@ public final class cL {
    private cL() {
    }
 
-   public static aM init(cL.Inner_DataUtil preset) {
-      aM var10000;
+   public static AutismMacro init(cL.Inner_DataUtil preset) {
+      AutismMacro var10000;
       switch (preset == null ? cL.Inner_DataUtil.CUSTOM : preset) {
          case FREE_SLOTS:
             var10000 = init("AutoFish - Free Slots Stop", init_aH());
@@ -31,7 +31,7 @@ public final class cL {
       return var10000;
    }
 
-   public static boolean init(aM macro) {
+   public static boolean init(AutismMacro macro) {
       return c.init(macro);
    }
 
@@ -41,7 +41,7 @@ public final class cL {
          : init(name, "AutoFish - Free Slots Stop") || init(name, "AutoFish - Durability Stop") || init(name, "AutoFish - Custom Stop");
    }
 
-   public static boolean load(aM macro) {
+   public static boolean load(AutismMacro macro) {
       return macro != null && init_Z(macro.init_Str);
    }
 
@@ -65,9 +65,9 @@ public final class cL {
       return action instanceof autismclient.util.macro.ak toggle && load(toggle);
    }
 
-   private static aM init(String preferredName, MacroAction firstCondition) {
+   private static AutismMacro init(String preferredName, MacroAction firstCondition) {
       aN manager = aN.init_aN();
-      aM existing = manager.init_aM_Str(preferredName);
+      AutismMacro existing = manager.init_aM_Str(preferredName);
       if (existing != null) {
          boolean changed = false;
          if (!init(existing)) {
@@ -82,7 +82,7 @@ public final class cL {
 
          return existing;
       } else {
-         aM macro = new aM(manager.init_Str_Str(preferredName));
+         AutismMacro macro = new AutismMacro(manager.init_Str_Str(preferredName));
          macro.load_Str = "AutoFish stop macro";
          macro.init_List.add(firstCondition);
          manager.init_V_aM(macro);
@@ -126,7 +126,7 @@ public final class cL {
       }
    }
 
-   private static boolean read(aM macro) {
+   private static boolean read(AutismMacro macro) {
       if (macro != null && macro.init_List != null) {
          for (int i = 0; i < macro.init_List.size(); i++) {
             MacroAction action = macro.init_List.get(i);

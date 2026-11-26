@@ -15,7 +15,7 @@ import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
 
 public final class AutoLoginModule extends Module {
    private static volatile AutoLoginModule init_CharEncoder;
-   private final autismclient.util.f.CachePool init_CachePool = new autismclient.util.f.CachePool(new AutoLoginModule.Inner_DataUtil());
+   private final autismclient.util.f.AutoLoginDriver init_CachePool = new autismclient.util.f.AutoLoginDriver(new AutoLoginModule.Inner_DataUtil());
 
    AutoLoginModule() {
       super("auto-login", "AutoLogin", ae.read, "Answers server login and register gates.");
@@ -48,7 +48,7 @@ public final class AutoLoginModule extends Module {
    @Override
    public void tick() {
       this.init_CachePool
-         .init(new autismclient.util.f.StreamUtil((long)(this.decimal("window") * 1000.0), (long)(this.decimal("chat-delay") * 1000.0), 2500L, 4, 1000L, 3000L));
+         .init(new autismclient.util.f.AutoLoginTimings((long)(this.decimal("window") * 1000.0), (long)(this.decimal("chat-delay") * 1000.0), 2500L, 4, 1000L, 3000L));
       this.init_CachePool.load(System.currentTimeMillis());
    }
 
@@ -66,7 +66,7 @@ public final class AutoLoginModule extends Module {
       }
    }
 
-   private final class Inner_DataUtil implements autismclient.util.f.BufferHelper {
+   private final class Inner_DataUtil implements autismclient.util.f.AutoLoginBackend {
       @Override
       public String init_Str() {
          String configured = AutoLoginModule.this.text("password");
@@ -97,7 +97,7 @@ public final class AutoLoginModule extends Module {
 
       @Override
       public CustomMenuSnapshot init_CustomMenuSnapshot() {
-         return autismclient.util.b.CachePool.init_CustomMenuSnapshot();
+         return autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
       }
 
       @Override
@@ -110,7 +110,7 @@ public final class AutoLoginModule extends Module {
                }
             }
 
-            autismclient.util.b.CachePool.init(snapshot, result.replacement());
+            autismclient.util.b.CustomMenuTracker.init(snapshot, result.replacement());
             if (result.clientAction() != null && Module.MC != null) {
                Module.MC.execute(() -> {
                   if (Module.MC.gui.screen() instanceof DialogScreen<?> dialog) {

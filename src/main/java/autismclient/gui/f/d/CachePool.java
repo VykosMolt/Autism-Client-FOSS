@@ -10,7 +10,7 @@ import autismclient.gui.f.SyncManager;
 import autismclient.gui.f.TableIndex;
 import autismclient.gui.f.b.e;
 import autismclient.modules.Module;
-import autismclient.util.aM;
+import autismclient.util.AutismMacro;
 import autismclient.util.aN;
 import java.util.ArrayList;
 import java.util.List;
@@ -227,7 +227,7 @@ final class CachePool {
          }
       }
 
-      for (aM macro : aN.init_aN().init_List()) {
+      for (AutismMacro macro : aN.init_aN().init_List()) {
          if (macro != null && macro.init_Str != null && (needle.isEmpty() || macro.init_Str.toLowerCase(Locale.ROOT).contains(needle))) {
             names.add(macro.init_Str);
          }

@@ -93,11 +93,11 @@ public final class AutismAddons {
       }
 
       public void register(Command command) {
-         autismclient.commands.DataUtil.init_V(command, DataUtil.init_Str());
+         autismclient.commands.CommandManager.init_V(command, DataUtil.init_Str());
       }
 
       public AddonRegistrationResult registerDetailed(Command command) {
-         return autismclient.commands.DataUtil.init_AddonRegistrationR(command, DataUtil.init_Str());
+         return autismclient.commands.CommandManager.init_AddonRegistrationR(command, DataUtil.init_Str());
       }
    }
 

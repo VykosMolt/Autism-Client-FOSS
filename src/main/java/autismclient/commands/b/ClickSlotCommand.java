@@ -18,11 +18,11 @@ public final class ClickSlotCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(context -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.DataUtil.init_Str() + "click-slot <slot> [click] [times]");
+         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "click-slot <slot> [click] [times]");
          return 1;
       });
       RequiredArgumentBuilder<AutismCommandSource, Integer> slot = (RequiredArgumentBuilder<AutismCommandSource, Integer>)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument(
-            "slot", autismclient.commands.a.BufferHelper.init()
+            "slot", autismclient.commands.a.SlotArgumentType.init()
          )
          .executes(context -> init(context, SlotClickCommandHelper.Inner_StreamUtil.init("Left", ContainerInput.PICKUP, 0), 1));
       SlotClickCommandHelper.init(slot, ClickSlotCommand::init);
@@ -32,9 +32,9 @@ public final class ClickSlotCommand extends Command {
    private static int init(CommandContext<AutismCommandSource> context, SlotClickCommandHelper.Inner_StreamUtil spec, int times) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.containerMenu != null) {
-         int visibleSlot = autismclient.commands.a.BufferHelper.init(context, "slot");
+         int visibleSlot = autismclient.commands.a.SlotArgumentType.init(context, "slot");
          int handlerSlot = aw.load_I(mc, visibleSlot);
-         return SlotClickCommandHelper.init(handlerSlot, spec, times, autismclient.commands.a.BufferHelper.init_Str_I(visibleSlot));
+         return SlotClickCommandHelper.init(handlerSlot, spec, times, autismclient.commands.a.SlotArgumentType.init_Str_I(visibleSlot));
       } else {
          AutismClientMessaging.sendPrefixed("§cNo active inventory or GUI.");
          return 1;

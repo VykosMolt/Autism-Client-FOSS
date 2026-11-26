@@ -104,7 +104,7 @@ public final class AiCommand extends Command {
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("speedrun").executes(ctx -> this.init_I_I(45)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("minutes", IntegerArgumentType.integer(1))
-                  .suggests(autismclient.commands.StreamUtil::poll)
+                  .suggests(autismclient.commands.CommandSuggestions::poll)
                   .executes(ctx -> this.init_I_I(IntegerArgumentType.getInteger(ctx, "minutes")))
             )
       );
@@ -112,7 +112,7 @@ public final class AiCommand extends Command {
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("trace").executes(ctx -> this.load(10)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("n", IntegerArgumentType.integer(1, 50))
-                  .suggests(autismclient.commands.StreamUtil::push)
+                  .suggests(autismclient.commands.CommandSuggestions::push)
                   .executes(ctx -> this.load(IntegerArgumentType.getInteger(ctx, "n")))
             )
       );
@@ -405,6 +405,6 @@ public final class AiCommand extends Command {
    }
 
    private static String load_Str_2() {
-      return autismclient.commands.DataUtil.init_Str();
+      return autismclient.commands.CommandManager.init_Str();
    }
 }

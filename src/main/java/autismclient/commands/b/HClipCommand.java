@@ -19,7 +19,7 @@ public class HClipCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         String prefix = autismclient.commands.DataUtil.init_Str();
+         String prefix = autismclient.commands.CommandManager.init_Str();
          AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "hclip <blocks>");
          AutismClientMessaging.sendPrefixed("§7Modes: §fdefault, forward, back, padding, single, custom (paper alias still works)");
          AutismClientMessaging.sendPrefixed("§7Examples: §f" + prefix + "hclip forward §7or §f" + prefix + "hclip custom -25 10 20 true true true");
@@ -47,10 +47,10 @@ public class HClipCommand extends Command {
          LiteralArgumentBuilder.<AutismCommandSource>literal("custom")
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Double>argument("blocks", DoubleArgumentType.doubleArg())
-                  .suggests(autismclient.commands.StreamUtil::load)
+                  .suggests(autismclient.commands.CommandSuggestions::load)
                   .then(
                      ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("segment", IntegerArgumentType.integer(1, 50))
-                           .suggests(autismclient.commands.StreamUtil::read)
+                           .suggests(autismclient.commands.CommandSuggestions::read)
                            .executes(
                               ctx -> {
                                  autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(
@@ -63,7 +63,7 @@ public class HClipCommand extends Command {
                            ))
                         .then(
                            ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("maxPackets", IntegerArgumentType.integer(1, 100))
-                                 .suggests(autismclient.commands.StreamUtil::write)
+                                 .suggests(autismclient.commands.CommandSuggestions::write)
                                  .executes(
                                     ctx -> {
                                        autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(
@@ -77,7 +77,7 @@ public class HClipCommand extends Command {
                                  ))
                               .then(
                                  ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("updateLocal", BoolArgumentType.bool())
-                                       .suggests(autismclient.commands.StreamUtil::flush)
+                                       .suggests(autismclient.commands.CommandSuggestions::flush)
                                        .executes(ctx -> {
                                           autismclient.util.macro.HClipAction.Inner_BufferHelper options = init(ctx);
                                           options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -86,7 +86,7 @@ public class HClipCommand extends Command {
                                        }))
                                     .then(
                                        ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("vehicle", BoolArgumentType.bool())
-                                             .suggests(autismclient.commands.StreamUtil::flush)
+                                             .suggests(autismclient.commands.CommandSuggestions::flush)
                                              .executes(ctx -> {
                                                 autismclient.util.macro.HClipAction.Inner_BufferHelper options = init(ctx);
                                                 options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -96,7 +96,7 @@ public class HClipCommand extends Command {
                                              }))
                                           .then(
                                              RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("forceGround", BoolArgumentType.bool())
-                                                .suggests(autismclient.commands.StreamUtil::flush)
+                                                .suggests(autismclient.commands.CommandSuggestions::flush)
                                                 .executes(ctx -> {
                                                    autismclient.util.macro.HClipAction.Inner_BufferHelper options = init(ctx);
                                                    options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -116,7 +116,7 @@ public class HClipCommand extends Command {
 
    private static RequiredArgumentBuilder<AutismCommandSource, Double> init(String name, HClipCommand.Inner_DataUtil customizer) {
       return (RequiredArgumentBuilder<AutismCommandSource, Double>)RequiredArgumentBuilder.<AutismCommandSource, Double>argument(name, DoubleArgumentType.doubleArg())
-         .suggests(autismclient.commands.StreamUtil::load)
+         .suggests(autismclient.commands.CommandSuggestions::load)
          .executes(
             ctx -> {
                autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(

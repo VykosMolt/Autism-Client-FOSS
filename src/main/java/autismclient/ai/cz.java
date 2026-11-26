@@ -3145,10 +3145,10 @@ final class cz {
                }
 
                if (id.startsWith("command:")) {
-                  Command command = autismclient.commands.DataUtil.init_Command(id.substring(8));
+                  Command command = autismclient.commands.CommandManager.init_Command(id.substring(8));
                   if (command != null) {
-                     current.addProperty("prefix", autismclient.commands.DataUtil.init_Str());
-                     current.add("forms", ag.init.toJsonTree(autismclient.commands.DataUtil.init_List(command)));
+                     current.addProperty("prefix", autismclient.commands.CommandManager.init_Str());
+                     current.add("forms", ag.init.toJsonTree(autismclient.commands.CommandManager.init_List(command)));
                   }
                }
 
@@ -3213,8 +3213,8 @@ final class cz {
       if (args.has("macro") && args.get("macro").isJsonObject()) {
          JsonObject data = args.getAsJsonObject("macro");
          String existing = this.init_cc.init_Obj_J_Supplier(generation, () -> {
-            autismclient.util.aM validated = an.init(data, this.init_cc.init_AiCatalog_Snapshot());
-            autismclient.util.aM old = autismclient.util.aN.init_aN().init_aM_Str(validated.init_Str);
+            autismclient.util.AutismMacro validated = an.init(data, this.init_cc.init_AiCatalog_Snapshot());
+            autismclient.util.AutismMacro old = autismclient.util.aN.init_aN().init_aM_Str(validated.init_Str);
             return old == null ? "" : init_JsonObject_aM(old).toString();
          });
          if (!existing.isEmpty()) {
@@ -3229,9 +3229,9 @@ final class cz {
             .init_Obj_J_Supplier(
                generation,
                () -> {
-                  autismclient.util.aM macro = an.init(data, this.init_cc.init_AiCatalog_Snapshot());
+                  autismclient.util.AutismMacro macro = an.init(data, this.init_cc.init_AiCatalog_Snapshot());
                   autismclient.util.aN manager = autismclient.util.aN.init_aN();
-                  autismclient.util.aM old = manager.init_aM_Str(macro.init_Str);
+                  autismclient.util.AutismMacro old = manager.init_aM_Str(macro.init_Str);
                   if (!existing.equals(old == null ? "" : init_JsonObject_aM(old).toString())) {
                      throw new IllegalArgumentException("Macro changed while preserving its revision; inspect again");
                   }
@@ -3254,7 +3254,7 @@ final class cz {
       }
    }
 
-   static JsonObject init_JsonObject_aM(autismclient.util.aM macro) {
+   static JsonObject init_JsonObject_aM(autismclient.util.AutismMacro macro) {
       return NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, macro.load_CompoundTag()).getAsJsonObject();
    }
 
@@ -3643,7 +3643,7 @@ final class cz {
             JsonObject action = args.deepCopy();
             action.addProperty("type", id.substring(6));
             action.remove("timeoutSeconds");
-            autismclient.util.aM m = an.init(
+            autismclient.util.AutismMacro m = an.init(
                ag.init_JsonObject_ObjArr("name", "AI operation " + UUID.randomUUID(), "actions", List.of(action)), this.init_cc.init_AiCatalog_Snapshot()
             );
             return this.init_AiOperation_aM_JsonObject(m, args);
@@ -3658,7 +3658,7 @@ final class cz {
       if (id.equals("client:macros")) {
          JsonArray macros = new JsonArray();
 
-         for (autismclient.util.aM m : autismclient.util.aN.init_aN().init_List()) {
+         for (autismclient.util.AutismMacro m : autismclient.util.aN.init_aN().init_List()) {
             macros.add(ag.init_JsonObject_ObjArr("macro", init_JsonObject_aM(m), "fingerprint", ag.init_Str_Str(init_JsonObject_aM(m).toString())));
          }
 
@@ -3797,7 +3797,7 @@ final class cz {
                   var10000 = R.init_AiOperation(AiOperation.Status.SUCCEEDED, "LAN Sync action dispatched", ai.load(args));
                   break;
                case "client:run_macro":
-                  autismclient.util.aM macro = autismclient.util.aN.init_aN().init_aM_Str(ag.init_Str_JsonObject(args, "name", ""));
+                  autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(ag.init_Str_JsonObject(args, "name", ""));
                   if (macro == null) {
                      throw new IllegalArgumentException("Unknown macro");
                   }
@@ -3900,11 +3900,11 @@ final class cz {
       return null;
    }
 
-   private AiOperation init_AiOperation_aM_JsonObject(autismclient.util.aM macro, JsonObject args) {
+   private AiOperation init_AiOperation_aM_JsonObject(autismclient.util.AutismMacro macro, JsonObject args) {
       return init_AiOperation_aM(macro, args, this.init_cc.init_AiSettings());
    }
 
-   static AiOperation init_AiOperation_aM(autismclient.util.aM macro, JsonObject args, AiSettings settings) {
+   static AiOperation init_AiOperation_aM(autismclient.util.AutismMacro macro, JsonObject args, AiSettings settings) {
       String restricted = init_Str_JsonElement_AiSettings(init_JsonObject_aM(macro), settings);
       if (restricted != null) {
          throw new IllegalArgumentException(restricted);

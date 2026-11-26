@@ -3,7 +3,7 @@ package autismclient.gui.d;
 import autismclient.compat263.Compat263;
 import autismclient.util.AutismMacroEditorOverlay;
 import autismclient.util.aA;
-import autismclient.util.aM;
+import autismclient.util.AutismMacro;
 import autismclient.util.aN;
 import autismclient.util.bi;
 import autismclient.util.bk;
@@ -570,12 +570,12 @@ public final class JoinMacroScreen extends KeyHolder {
       return this.init_k == null ? "" : this.init_k.load_Str().trim().toLowerCase(Locale.ROOT);
    }
 
-   private aM init_aM() {
+   private AutismMacro init_aM() {
       String selected = aA.init_Str();
       return selected.isBlank() ? null : aN.init_aN().init_aM_Str(selected);
    }
 
-   private void init_V_aM_2(aM macro) {
+   private void init_V_aM_2(AutismMacro macro) {
       AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
       bk.init_bk().init_V_cX_cX_DataUtil(editor, cX.Inner_DataUtil.HOST_SCREEN);
       editor.init_V_aM_Consumer_2(macro, saved -> {

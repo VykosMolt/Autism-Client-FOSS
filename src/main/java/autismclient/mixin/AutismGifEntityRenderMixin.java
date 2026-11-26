@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.c.StreamUtil;
+import autismclient.util.c.GifRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -33,7 +33,7 @@ public abstract class AutismGifEntityRenderMixin {
          if (level != null && level.getEntity(avatar.id) instanceof Player player && player.getGameProfile() != null) {
             String name = player.getGameProfile().name();
             if (name != null && !name.isEmpty()) {
-               StreamUtil.init(name);
+               GifRenderContext.init(name);
             }
          }
       }
@@ -50,6 +50,6 @@ public abstract class AutismGifEntityRenderMixin {
       SubmitNodeCollector submitNodeCollector,
       CallbackInfo ci
    ) {
-      StreamUtil.init_V();
+      GifRenderContext.init_V();
    }
 }

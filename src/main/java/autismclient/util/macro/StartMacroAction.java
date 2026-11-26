@@ -17,7 +17,7 @@ public class StartMacroAction implements MacroAction {
             return;
          }
 
-         autismclient.util.aM macro = autismclient.util.aN.init_aN().init_aM_Str(this.macroName);
+         autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(this.macroName);
          if (macro != null) {
             macro.init_V();
          }

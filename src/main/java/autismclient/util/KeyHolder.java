@@ -64,11 +64,11 @@ public final class KeyHolder {
                                        float fade = cell.init_I() <= nextLayer ? 1.0F : c.init(Math.sqrt(new AABB(p).distanceToSqr(camera)));
                                        int layerAlpha = Math.round(alpha * fade);
                                        if (layerAlpha != 0) {
-                                          autismclient.util.oresim.DataUtil.Inner_StreamUtil model = autismclient.util.oresim.DataUtil.init(
+                                          autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = autismclient.util.oresim.OreGhostModelCache.init(
                                              cell.init_BlockState()
                                           );
 
-                                          for (autismclient.util.oresim.DataUtil.Inner_DataUtil face : model.init_List()) {
+                                          for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : model.init_List()) {
                                              if (++quads > 4096) {
                                                 return;
                                              }

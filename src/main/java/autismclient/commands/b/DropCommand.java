@@ -38,17 +38,17 @@ public class DropCommand extends Command {
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("fullinventory").executes(ctx -> load()));
       root.then(
          ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("amount", IntegerArgumentType.integer(1))
-               .suggests(autismclient.commands.StreamUtil::sync)
+               .suggests(autismclient.commands.CommandSuggestions::sync)
                .executes(ctx -> init(IntegerArgumentType.getInteger(ctx, "amount"))))
             .then(
-               RequiredArgumentBuilder.<AutismCommandSource, String>argument("item", autismclient.commands.a.DataUtil.init())
-                  .suggests(autismclient.commands.CachePool::init)
-                  .executes(ctx -> init(IntegerArgumentType.getInteger(ctx, "amount"), autismclient.commands.a.DataUtil.init(ctx, "item")))
+               RequiredArgumentBuilder.<AutismCommandSource, String>argument("item", autismclient.commands.a.ItemOrBlockIdArgumentType.init())
+                  .suggests(autismclient.commands.RegistrySuggestions::init)
+                  .executes(ctx -> init(IntegerArgumentType.getInteger(ctx, "amount"), autismclient.commands.a.ItemOrBlockIdArgumentType.init(ctx, "item")))
             )
       );
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, String>argument("item [amount]", StringArgumentType.greedyString())
-            .suggests(autismclient.commands.CachePool::init)
+            .suggests(autismclient.commands.RegistrySuggestions::init)
             .executes(ctx -> init_I(StringArgumentType.getString(ctx, "item [amount]")))
       );
    }
@@ -114,9 +114,9 @@ public class DropCommand extends Command {
          return 1;
       }
 
-      Item item = autismclient.commands.CachePool.init(mc, spec);
+      Item item = autismclient.commands.RegistrySuggestions.init(mc, spec);
       if (item == null) {
-         item = autismclient.commands.CachePool.init_Item(spec);
+         item = autismclient.commands.RegistrySuggestions.init_Item(spec);
       }
 
       if (item == null) {
@@ -144,7 +144,7 @@ public class DropCommand extends Command {
    }
 
    private static void init_V_3() {
-      String prefix = autismclient.commands.DataUtil.init_Str();
+      String prefix = autismclient.commands.CommandManager.init_Str();
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "drop hand");
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "drop fullinventory");
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "drop <amount> [item_id]");
@@ -228,11 +228,11 @@ public class DropCommand extends Command {
       Identifier id = init_Identifier(rawItemId);
       Item item = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
       if (item == null) {
-         item = autismclient.commands.CachePool.init(mc, rawItemId);
+         item = autismclient.commands.RegistrySuggestions.init(mc, rawItemId);
       }
 
       if (item == null) {
-         item = autismclient.commands.CachePool.init_Item(rawItemId);
+         item = autismclient.commands.RegistrySuggestions.init_Item(rawItemId);
       }
 
       if (item == null) {

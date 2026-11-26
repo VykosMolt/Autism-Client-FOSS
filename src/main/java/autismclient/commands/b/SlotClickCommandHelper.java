@@ -34,7 +34,7 @@ final class SlotClickCommandHelper {
             "swap-hotbar", IntegerArgumentType.integer(1, 9)
          )
          .suggests(
-            (context, builder) -> autismclient.commands.StreamUtil.init_CompletableFuture_SuggestionsBuilder_StrArr(
+            (context, builder) -> autismclient.commands.CommandSuggestions.init_CompletableFuture_SuggestionsBuilder_StrArr(
                builder, "1", "2", "3", "4", "5", "6", "7", "8", "9"
             )
          )
@@ -121,7 +121,7 @@ final class SlotClickCommandHelper {
 
    private static RequiredArgumentBuilder<AutismCommandSource, Integer> init(SlotClickCommandHelper.Inner_BufferHelper executor) {
       return (RequiredArgumentBuilder<AutismCommandSource, Integer>)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("times", IntegerArgumentType.integer(1, 100000))
-         .suggests(autismclient.commands.StreamUtil::sync)
+         .suggests(autismclient.commands.CommandSuggestions::sync)
          .executes(context -> executor.execute(context, IntegerArgumentType.getInteger(context, "times")));
    }
 

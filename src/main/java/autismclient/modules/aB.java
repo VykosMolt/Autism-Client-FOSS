@@ -125,7 +125,7 @@ public final class aB {
    public static void load_V() {
       Screen screen = cx.init_Screen(init_Minecraft);
       if (screen instanceof DisconnectedScreen) {
-         Screen parent = screen instanceof autismclient.c.DataUtil access ? access.autism$parent() : screen;
+         Screen parent = screen instanceof autismclient.c.DisconnectedScreenDuck access ? access.autism$parent() : screen;
          init(screen, parent);
       } else {
          init_Screen = null;

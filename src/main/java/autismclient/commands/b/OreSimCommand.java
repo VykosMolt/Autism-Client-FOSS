@@ -40,11 +40,11 @@ public class OreSimCommand extends Command {
             "§7enabled: §f" + xray.isEnabled() + "§7  mode: §f" + xray.value("mode") + "§7  style: §f" + xray.value("render-style")
          );
          Long seed = ak.load_Long(xray);
-         autismclient.util.oresim.BufferHelper.Inner_StreamUtil seedStatus = ak.init_BufferHelper_Strea(xray);
+         autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil seedStatus = ak.init_BufferHelper_Strea(xray);
          AutismClientMessaging.sendPrefixed(
             "§7seed: "
                + (
-                  seedStatus == autismclient.util.oresim.BufferHelper.Inner_StreamUtil.INVALID
+                  seedStatus == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID
                      ? "§cINVALID"
                      : (seed == null ? "§cNONE - enter a signed 64-bit value" : "§f" + seed)
                )
@@ -56,25 +56,25 @@ public class OreSimCommand extends Command {
                + "§7; the same world/server scoping as waypoints. No world or server seed is read."
          );
          AutismClientMessaging.sendPrefixed("§7ore list entries: §f" + ak.load_I(xray) + "§7  families: §f" + Integer.bitCount(ak.read_I(xray)));
-         String worldgen = autismclient.util.oresim.StreamUtil.read_Z()
+         String worldgen = autismclient.util.oresim.OreSimEngine.read_Z()
             ? "§cFAILED"
             : (
-               autismclient.util.oresim.StreamUtil.load_Z()
-                  ? "§e" + autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH().name().toLowerCase(Locale.ROOT)
+               autismclient.util.oresim.OreSimEngine.load_Z()
+                  ? "§e" + autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH().name().toLowerCase(Locale.ROOT)
                   : (
-                     autismclient.util.oresim.StreamUtil.init_Z()
+                     autismclient.util.oresim.OreSimEngine.init_Z()
                         ? "§aready"
-                        : "§c" + autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH().name().toLowerCase(Locale.ROOT)
+                        : "§c" + autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH().name().toLowerCase(Locale.ROOT)
                   )
             );
          AutismClientMessaging.sendPrefixed("§7local Minecraft 26.2 worldgen: " + worldgen);
-         if (autismclient.util.oresim.StreamUtil.read_Z()
-            || autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.UNVERIFIED_WORLDGEN) {
-            AutismClientMessaging.sendPrefixed("§c" + autismclient.util.oresim.StreamUtil.init_Str());
+         if (autismclient.util.oresim.OreSimEngine.read_Z()
+            || autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNVERIFIED_WORLDGEN) {
+            AutismClientMessaging.sendPrefixed("§c" + autismclient.util.oresim.OreSimEngine.init_Str());
          }
 
          AutismClientMessaging.sendPrefixed(
-            "§7chunks simulated: §f" + autismclient.util.oresim.StreamUtil.init_I() + "§7  positions: §f" + autismclient.util.oresim.StreamUtil.load_I()
+            "§7chunks simulated: §f" + autismclient.util.oresim.OreSimEngine.init_I() + "§7  positions: §f" + autismclient.util.oresim.OreSimEngine.load_I()
          );
          AutismClientMessaging.sendPrefixed(
             "§7generation source: §flocal vanilla registries + terrain + carvers + biome decoration§7; received server chunks are not inputs."

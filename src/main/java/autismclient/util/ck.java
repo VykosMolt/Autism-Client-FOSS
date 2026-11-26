@@ -122,7 +122,7 @@ public final class ck {
    private int state_I = 280;
    private int queue_I = 280;
    private boolean stop_Z = false;
-   private aM init_aM = null;
+   private AutismMacro init_aM = null;
    private int buffer_I = 400;
    private int entry_I = 100;
    private boolean next_Z = false;
@@ -209,11 +209,11 @@ public final class ck {
       this.stop_Z = visible;
    }
 
-   public aM init_aM() {
+   public AutismMacro init_aM() {
       return this.init_aM;
    }
 
-   public void init_V_aM(aM macro) {
+   public void init_V_aM(AutismMacro macro) {
       this.init_aM = macro;
    }
 

@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.BufferHelper;
+import autismclient.util.j.a.SyntheticWorldGenLevel;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismOreSimOceanMonumentPieceMixin {
    @Inject(method = "spawnElder", at = @At("HEAD"), cancellable = true)
    private void autism$skipSyntheticEntity(WorldGenLevel level, BoundingBox chunkBox, int x, int y, int z, CallbackInfo ci) {
-      if (level instanceof BufferHelper) {
+      if (level instanceof SyntheticWorldGenLevel) {
          ci.cancel();
       }
    }

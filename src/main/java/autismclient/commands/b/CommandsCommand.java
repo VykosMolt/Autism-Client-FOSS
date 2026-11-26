@@ -13,11 +13,11 @@ public class CommandsCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         String prefix = autismclient.commands.DataUtil.init_Str();
-         AutismClientMessaging.sendPrefixed("§e" + autismclient.commands.DataUtil.init_List().size() + " commands (prefix §f" + prefix + "§e):");
+         String prefix = autismclient.commands.CommandManager.init_Str();
+         AutismClientMessaging.sendPrefixed("§e" + autismclient.commands.CommandManager.init_List().size() + " commands (prefix §f" + prefix + "§e):");
          StringBuilder line = new StringBuilder();
 
-         for (Command c : autismclient.commands.DataUtil.init_List()) {
+         for (Command c : autismclient.commands.CommandManager.init_List()) {
             if (line.length() > 0) {
                line.append("§7, ");
             }

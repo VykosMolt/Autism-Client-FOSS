@@ -25,7 +25,7 @@ import net.minecraft.nbt.Tag;
 
 public class aN {
    private static aN init_aN;
-   private List<aM> init_List = new ArrayList<>();
+   private List<AutismMacro> init_List = new ArrayList<>();
    private cY init_cY = new cY();
    private volatile File init_File;
    private volatile long init_J;
@@ -75,20 +75,20 @@ public class aN {
       return candidate;
    }
 
-   public synchronized aM init_aM_aM_Str(aM source, String preferredName) {
+   public synchronized AutismMacro init_aM_aM_Str(AutismMacro source, String preferredName) {
       if (source == null) {
          return null;
       }
 
-      aM copy = source.init_aM();
+      AutismMacro copy = source.init_aM();
       copy.load_aM();
       copy.init_Str = this.init_Str_Str(preferredName != null && !preferredName.isBlank() ? preferredName : source.init_Str);
       this.init_V_aM(copy);
       return copy;
    }
 
-   public synchronized List<aM> init(List<aM> copies, boolean imported, aM anchor) {
-      List<aM> added = new ArrayList<>();
+   public synchronized List<AutismMacro> init(List<AutismMacro> copies, boolean imported, AutismMacro anchor) {
+      List<AutismMacro> added = new ArrayList<>();
       if (copies != null && !copies.isEmpty()) {
          int anchorIndex = -1;
          if (anchor != null) {
@@ -106,9 +106,9 @@ public class aN {
             folderKeys.add(cY.load_Str_Str(folder));
          }
 
-         for (aM source : copies) {
+         for (AutismMacro source : copies) {
             if (source != null) {
-               aM copy = source;
+               AutismMacro copy = source;
                if (imported) {
                   copy.load_aM();
                }
@@ -130,7 +130,7 @@ public class aN {
                   String key = cY.load_Str_Str(folder);
 
                   for (int i = this.init_List.size() - 1; i >= 0; i--) {
-                     aM macro = this.init_List.get(i);
+                     AutismMacro macro = this.init_List.get(i);
                      if (macro != null && cY.load_Str_Str(macro.read).equals(key)) {
                         index = i + 1;
                         break;
@@ -153,9 +153,9 @@ public class aN {
       }
    }
 
-   public synchronized void init_V_aM(aM macro) {
+   public synchronized void init_V_aM(AutismMacro macro) {
       if (macro != null) {
-         aM existing = this.init_aM_Str(macro.init_Str);
+         AutismMacro existing = this.init_aM_Str(macro.init_Str);
          if (existing != null && existing != macro) {
             this.init_Z_aM(existing);
          }
@@ -168,8 +168,8 @@ public class aN {
       }
    }
 
-   private boolean init_Z_aM(aM macro) {
-      Iterator<aM> it = this.init_List.iterator();
+   private boolean init_Z_aM(AutismMacro macro) {
+      Iterator<AutismMacro> it = this.init_List.iterator();
 
       while (it.hasNext()) {
          if (it.next() == macro) {
@@ -181,12 +181,12 @@ public class aN {
       return false;
    }
 
-   public synchronized aM init_aM_Str(String name) {
+   public synchronized AutismMacro init_aM_Str(String name) {
       if (name == null) {
          return null;
       }
 
-      for (aM macro : this.init_List) {
+      for (AutismMacro macro : this.init_List) {
          if (macro != null && cZ.init(macro.init_Str, name)) {
             return macro;
          }
@@ -195,7 +195,7 @@ public class aN {
       return null;
    }
 
-   public synchronized List<aM> init_List() {
+   public synchronized List<AutismMacro> init_List() {
       return new ArrayList<>(this.init_List);
    }
 
@@ -207,11 +207,11 @@ public class aN {
       return this.init(query, false, macro -> true);
    }
 
-   public synchronized List<cY.Inner_DataUtil> init(String query, boolean includeEmpty, Predicate<aM> filter) {
+   public synchronized List<cY.Inner_DataUtil> init(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
       return this.init_cY.init(this.init_List.stream().filter(filter).toList(), query, includeEmpty);
    }
 
-   public synchronized List<cY.Inner_DataUtil> load(String query, boolean includeEmpty, Predicate<aM> filter) {
+   public synchronized List<cY.Inner_DataUtil> load(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
       return this.init_cY.load(this.init_List.stream().filter(filter).toList(), query, includeEmpty);
    }
 
@@ -257,10 +257,10 @@ public class aN {
       return this.init_cY.write(folder);
    }
 
-   private List<aM> read_List() {
-      List<aM> out = new ArrayList<>();
+   private List<AutismMacro> read_List() {
+      List<AutismMacro> out = new ArrayList<>();
 
-      for (aM macro : this.init_List) {
+      for (AutismMacro macro : this.init_List) {
          if (macro != null && macro.init_Str != null && (macro.read == null || macro.read.isEmpty())) {
             out.add(macro);
          }
@@ -269,10 +269,10 @@ public class aN {
       return out;
    }
 
-   private void init_V_Collection(Collection<aM> leaving) {
+   private void init_V_Collection(Collection<AutismMacro> leaving) {
       Set<String> keys = new HashSet<>();
 
-      for (aM macro : leaving) {
+      for (AutismMacro macro : leaving) {
          if (macro != null && macro.init_Str != null && (macro.read == null || macro.read.isEmpty())) {
             keys.add(cZ.init(macro.init_Str));
          }
@@ -292,7 +292,7 @@ public class aN {
       return true;
    }
 
-   public synchronized boolean init_Z_aM_Str(aM macro, String folder) {
+   public synchronized boolean init_Z_aM_Str(AutismMacro macro, String folder) {
       if (macro != null && !this.init_List.stream().noneMatch(m -> m == macro)) {
          String target = cY.init_Str_Str(folder);
          if (!target.isEmpty() && this.load_List().stream().noneMatch(f -> cY.load_Str_Str(f).equals(cY.load_Str_Str(target)))) {
@@ -307,15 +307,15 @@ public class aN {
       }
    }
 
-   public synchronized boolean init(Collection<aM> moving, String targetFolder, String insertBeforeName) {
+   public synchronized boolean init(Collection<AutismMacro> moving, String targetFolder, String insertBeforeName) {
       return this.init(moving, targetFolder, insertBeforeName, List.of());
    }
 
-   public synchronized boolean init(Collection<aM> moving, String targetFolder, String insertBeforeName, List<String> foldersAbove) {
+   public synchronized boolean init(Collection<AutismMacro> moving, String targetFolder, String insertBeforeName, List<String> foldersAbove) {
       if (moving != null && !moving.isEmpty()) {
-         Set<aM> block = new LinkedHashSet<>();
+         Set<AutismMacro> block = new LinkedHashSet<>();
 
-         for (aM macro : moving) {
+         for (AutismMacro macro : moving) {
             if (macro != null) {
                block.add(macro);
             }
@@ -325,7 +325,7 @@ public class aN {
             return false;
          }
 
-         for (aM macro : block) {
+         for (AutismMacro macro : block) {
             if (this.init_List.stream().noneMatch(m -> m == macro)) {
                return false;
             }
@@ -339,14 +339,14 @@ public class aN {
          String canonical = this.init_cY.read(target);
          this.init_V_Collection(block);
 
-         for (aM macro : block) {
+         for (AutismMacro macro : block) {
             this.init_Z_aM(macro);
          }
 
          int index = -1;
          if (insertBeforeName != null) {
             for (int i = 0; i < this.init_List.size(); i++) {
-               aM macro = this.init_List.get(i);
+               AutismMacro macro = this.init_List.get(i);
                if (macro != null && cZ.init(macro.init_Str, insertBeforeName)) {
                   index = i;
                   break;
@@ -358,7 +358,7 @@ public class aN {
             String targetKey = cY.load_Str_Str(canonical);
 
             for (int i = this.init_List.size() - 1; i >= 0; i--) {
-               aM macro = this.init_List.get(i);
+               AutismMacro macro = this.init_List.get(i);
                if (macro != null && cY.load_Str_Str(macro.read).equals(targetKey)) {
                   index = i + 1;
                   break;
@@ -370,7 +370,7 @@ public class aN {
             }
          }
 
-         for (aM macro : block) {
+         for (AutismMacro macro : block) {
             macro.read = canonical;
          }
 
@@ -399,13 +399,13 @@ public class aN {
       return this.init_J;
    }
 
-   public synchronized void load(aM macro) {
+   public synchronized void load(AutismMacro macro) {
       if (macro != null && this.init_Z_aM_Z(macro, true)) {
          this.load_V();
       }
    }
 
-   private boolean init_Z_aM_Z(aM macro, boolean announce) {
+   private boolean init_Z_aM_Z(AutismMacro macro, boolean announce) {
       if (MacroExecutor.init_Z_Str(macro.init_Str)) {
          MacroExecutor.init_V_Str(macro.init_Str);
          AutismClientMessaging.sendPrefixed("§eStopped running macro before deletion: " + macro.init_Str);
@@ -433,15 +433,15 @@ public class aN {
       return true;
    }
 
-   public void read(aM macro) {
+   public void read(AutismMacro macro) {
       this.load(macro);
    }
 
-   public synchronized int init_I_Collection(Collection<aM> macros) {
+   public synchronized int init_I_Collection(Collection<AutismMacro> macros) {
       if (macros != null && !macros.isEmpty()) {
          int removed = 0;
 
-         for (aM macro : macros) {
+         for (AutismMacro macro : macros) {
             if (macro != null && this.init_Z_aM_Z(macro, false)) {
                removed++;
             }
@@ -457,10 +457,10 @@ public class aN {
       }
    }
 
-   public synchronized List<aM> init_List_Collection(Collection<aM> macros) {
-      List<aM> copies = new ArrayList<>();
+   public synchronized List<AutismMacro> init_List_Collection(Collection<AutismMacro> macros) {
+      List<AutismMacro> copies = new ArrayList<>();
       if (macros != null && !macros.isEmpty()) {
-         for (aM macro : macros) {
+         for (AutismMacro macro : macros) {
             if (macro != null) {
                int index = -1;
 
@@ -472,7 +472,7 @@ public class aN {
                }
 
                if (index >= 0) {
-                  aM copy = macro.init_aM_Str(this.init_Str_Str(macro.init_Str));
+                  AutismMacro copy = macro.init_aM_Str(this.init_Str_Str(macro.init_Str));
                   copy.load_I = -1;
                   this.init_List.add(index + 1, copy);
                   copies.add(copy);
@@ -491,7 +491,7 @@ public class aN {
    }
 
    public void load_V(String name) {
-      aM macro = this.init_aM_Str(name);
+      AutismMacro macro = this.init_aM_Str(name);
       if (macro != null) {
          macro.init_V();
          AutismClientMessaging.sendPrefixed("§aExecuting macro: " + macro.init_Str);
@@ -535,7 +535,7 @@ public class aN {
          CompoundTag tag = new CompoundTag();
          ListTag list = new ListTag();
 
-         for (aM macro : this.init_List) {
+         for (AutismMacro macro : this.init_List) {
             if (macro != null) {
                list.add(macro.load_CompoundTag());
             }
@@ -658,7 +658,7 @@ public class aN {
       }
    }
 
-   private List<aM> init_List_Path(Path path) throws IOException {
+   private List<AutismMacro> init_List_Path(Path path) throws IOException {
       CompoundTag tag = AuditMacroRead.read(path);
       if (tag == null) {
          throw new IllegalStateException("Macro file was empty");
@@ -671,10 +671,10 @@ public class aN {
          for (Tag element : list) {
             if (element instanceof CompoundTag macroTag) {
                try {
-                  aM macro = new aM().init_aM_CompoundTag(macroTag);
+                  AutismMacro macro = new AutismMacro().init_aM_CompoundTag(macroTag);
                   Integer previous = (Integer)seen.get(cZ.init(macro.init_Str));
                   if (previous != null) {
-                     AutismClientAddon.LOG.warn("Dropping macro '{}' shadowed by a name that differs only in case", ((aM)var12.get(previous)).init_Str);
+                     AutismClientAddon.LOG.warn("Dropping macro '{}' shadowed by a name that differs only in case", ((AutismMacro)var12.get(previous)).init_Str);
                      var12.set(previous, macro);
                   } else {
                      seen.put(cZ.init(macro.init_Str), var12.size());

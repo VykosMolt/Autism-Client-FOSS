@@ -519,7 +519,7 @@ public class CaptureValueAction implements CacheEntry, MacroAction {
                   title, l.init(l.Inner_DataUtil.GUI, title, Map.of("title", l.init_l_Obj(title), "type", l.init_l_Obj(f.init_Str(screen))))
                );
             } else {
-               CustomMenuSnapshot menu = autismclient.util.b.CachePool.init_CustomMenuSnapshot();
+               CustomMenuSnapshot menu = autismclient.util.b.CustomMenuTracker.init_CustomMenuSnapshot();
                if (menu == null) {
                   var10000 = null;
                } else {

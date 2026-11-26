@@ -24,7 +24,7 @@ public final class an {
    private an() {
    }
 
-   public static autismclient.util.aM init(JsonObject root, AiCatalog.Snapshot catalog) {
+   public static autismclient.util.AutismMacro init(JsonObject root, AiCatalog.Snapshot catalog) {
       if (root == null) {
          throw new IllegalArgumentException("Macro requires a JSON object with a name and actions array");
       }
@@ -66,7 +66,7 @@ public final class an {
                }
 
                CompoundTag tag = (CompoundTag)JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, root);
-               autismclient.util.aM macro = new autismclient.util.aM().init_aM_CompoundTag(tag);
+               autismclient.util.AutismMacro macro = new autismclient.util.AutismMacro().init_aM_CompoundTag(tag);
                macro.init_Str = name;
                if (macro.init_List.size() != actions.size()) {
                   throw new IllegalArgumentException("Macro contains an unsupported action");
@@ -81,7 +81,7 @@ public final class an {
                   }
 
                   JsonObject serialized = NbtOps.INSTANCE
-                     .convertTo(JsonOps.INSTANCE, autismclient.util.aM.init_CompoundTag_MacroAction(built))
+                     .convertTo(JsonOps.INSTANCE, autismclient.util.AutismMacro.init_CompoundTag_MacroAction(built))
                      .getAsJsonObject();
                   Set<String> bound = supplied.get("_dynamicBindings") instanceof JsonObject bindings ? bindings.keySet() : Set.of();
                   Set<String> derived = type.equals("RACE") ? Set.of("conditionType", "actionType") : Set.of();
@@ -219,7 +219,7 @@ public final class an {
 
          ActionFieldSchema schema;
          try {
-            schema = autismclient.gui.macro.editor.DataUtil.init(StreamGate.valueOf(id));
+            schema = autismclient.gui.macro.editor.ActionFieldRegistry.init(StreamGate.valueOf(id));
          } catch (IllegalArgumentException e) {
             schema = MacroActionRegistry.schema(id);
          }

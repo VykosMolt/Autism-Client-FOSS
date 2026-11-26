@@ -41,7 +41,7 @@ public class PrivateFilesCheck {
       expectPrivate(new File(folder, "config.json"));
       expectPrivate(new File(folder, "config.json.bak"));
 
-      Object prefs = autismclient.util.mm.EventBus.init_EventBus();
+      Object prefs = autismclient.util.mm.LocalPrefsStore.init_EventBus();
       Method write = prefs.getClass().getDeclaredMethod("write_V");
       write.setAccessible(true);
       write.invoke(prefs);

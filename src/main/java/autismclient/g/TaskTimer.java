@@ -52,7 +52,7 @@ public final class TaskTimer {
       return context != null
          && !context.read()
          && BufferHelper.init_Z(context)
-         && (context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.MODDED || autismclient.compat.a.DataUtil.init_Z(context.init_Connection()));
+         && (context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.MODDED || autismclient.compat.a.ViaFabricPlusBridge.init_Z(context.init_Connection()));
    }
 
    public static void load() {

@@ -21,7 +21,7 @@ public class GhostBlockCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         String prefix = autismclient.commands.DataUtil.init_Str();
+         String prefix = autismclient.commands.CommandManager.init_Str();
          AutismClientMessaging.sendPrefixed("§eUsage: " + prefix + "ghostblock <toggle|reset|creative|block>");
          AutismClientMessaging.sendPrefixed("§7" + prefix + "ghostblock toggle §8- §7toggle the module");
          AutismClientMessaging.sendPrefixed("§7" + prefix + "ghostblock reset §8- §7remove all ghost blocks");
@@ -61,7 +61,7 @@ public class GhostBlockCommand extends Command {
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("creative").executes(ctx -> init((String)null)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("state", StringArgumentType.word())
-                  .suggests(autismclient.commands.StreamUtil::init_CompletableFuture_CommandContext_SuggestionsBuilder)
+                  .suggests(autismclient.commands.CommandSuggestions::init_CompletableFuture_CommandContext_SuggestionsBuilder)
                   .executes(ctx -> init(StringArgumentType.getString(ctx, "state")))
             )
       );
@@ -77,9 +77,9 @@ public class GhostBlockCommand extends Command {
                return 1;
             }))
             .then(
-               RequiredArgumentBuilder.<AutismCommandSource, String>argument("block", autismclient.commands.a.DataUtil.init())
-                  .suggests(autismclient.commands.StreamUtil::get)
-                  .executes(ctx -> load(autismclient.commands.a.DataUtil.init(ctx, "block")))
+               RequiredArgumentBuilder.<AutismCommandSource, String>argument("block", autismclient.commands.a.ItemOrBlockIdArgumentType.init())
+                  .suggests(autismclient.commands.CommandSuggestions::get)
+                  .executes(ctx -> load(autismclient.commands.a.ItemOrBlockIdArgumentType.init(ctx, "block")))
             )
       );
    }
@@ -126,7 +126,7 @@ public class GhostBlockCommand extends Command {
          Identifier id = Identifier.tryParse(value.contains(":") ? value : "minecraft:" + value);
          Block block = id == null ? null : BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
          if (block == null) {
-            block = autismclient.commands.CachePool.init_Block(value);
+            block = autismclient.commands.RegistrySuggestions.init_Block(value);
          }
 
          if (block == null) {

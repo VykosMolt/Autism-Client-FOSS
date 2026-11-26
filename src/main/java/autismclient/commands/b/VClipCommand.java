@@ -20,7 +20,7 @@ public class VClipCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         String prefix = autismclient.commands.DataUtil.init_Str();
+         String prefix = autismclient.commands.CommandManager.init_Str();
          AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "vclip <blocks>");
          AutismClientMessaging.sendPrefixed("§7Modes: §fdefault, top, bottom, paper, single, custom");
          AutismClientMessaging.sendPrefixed("§7Examples: §f" + prefix + "vclip top §7or §f" + prefix + "vclip custom -25 10 20 true true");
@@ -47,10 +47,10 @@ public class VClipCommand extends Command {
          LiteralArgumentBuilder.<AutismCommandSource>literal("custom")
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Double>argument("blocks", DoubleArgumentType.doubleArg())
-                  .suggests(autismclient.commands.StreamUtil::load)
+                  .suggests(autismclient.commands.CommandSuggestions::load)
                   .then(
                      ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("segment", IntegerArgumentType.integer(1, 50))
-                           .suggests(autismclient.commands.StreamUtil::read)
+                           .suggests(autismclient.commands.CommandSuggestions::read)
                            .executes(ctx -> {
                               VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(DoubleArgumentType.getDouble(ctx, "blocks"));
                               options.init_I = IntegerArgumentType.getInteger(ctx, "segment");
@@ -59,7 +59,7 @@ public class VClipCommand extends Command {
                            }))
                         .then(
                            ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("maxPackets", IntegerArgumentType.integer(1, 100))
-                                 .suggests(autismclient.commands.StreamUtil::write)
+                                 .suggests(autismclient.commands.CommandSuggestions::write)
                                  .executes(ctx -> {
                                     VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(DoubleArgumentType.getDouble(ctx, "blocks"));
                                     options.init_I = IntegerArgumentType.getInteger(ctx, "segment");
@@ -69,7 +69,7 @@ public class VClipCommand extends Command {
                                  }))
                               .then(
                                  ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("updateLocal", BoolArgumentType.bool())
-                                       .suggests(autismclient.commands.StreamUtil::flush)
+                                       .suggests(autismclient.commands.CommandSuggestions::flush)
                                        .executes(ctx -> {
                                           VClipAction.Inner_CachePool options = init(ctx);
                                           options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -78,7 +78,7 @@ public class VClipCommand extends Command {
                                        }))
                                     .then(
                                        ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("vehicle", BoolArgumentType.bool())
-                                             .suggests(autismclient.commands.StreamUtil::flush)
+                                             .suggests(autismclient.commands.CommandSuggestions::flush)
                                              .executes(ctx -> {
                                                 VClipAction.Inner_CachePool options = init(ctx);
                                                 options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -88,7 +88,7 @@ public class VClipCommand extends Command {
                                              }))
                                           .then(
                                              RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("forceGround", BoolArgumentType.bool())
-                                                .suggests(autismclient.commands.StreamUtil::flush)
+                                                .suggests(autismclient.commands.CommandSuggestions::flush)
                                                 .executes(ctx -> {
                                                    VClipAction.Inner_CachePool options = init(ctx);
                                                    options.load_Z = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -108,7 +108,7 @@ public class VClipCommand extends Command {
 
    private static RequiredArgumentBuilder<AutismCommandSource, Double> init(String name, VClipCommand.Inner_DataUtil customizer) {
       return (RequiredArgumentBuilder<AutismCommandSource, Double>)RequiredArgumentBuilder.<AutismCommandSource, Double>argument(name, DoubleArgumentType.doubleArg())
-         .suggests(autismclient.commands.StreamUtil::load)
+         .suggests(autismclient.commands.CommandSuggestions::load)
          .executes(ctx -> {
             VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(DoubleArgumentType.getDouble(ctx, name));
             init(customizer.apply(options));

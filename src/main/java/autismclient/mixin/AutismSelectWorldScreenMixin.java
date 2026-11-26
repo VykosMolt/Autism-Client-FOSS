@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.c.StreamUtil;
+import autismclient.c.ExternalButtonScreenDuck;
 import autismclient.gui.d.JoinMacroScreen;
 import autismclient.modules.aD;
 import autismclient.util.aA;
@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = SelectWorldScreen.class, priority = 2000)
-public abstract class AutismSelectWorldScreenMixin extends Screen implements StreamUtil {
+public abstract class AutismSelectWorldScreenMixin extends Screen implements ExternalButtonScreenDuck {
    @Unique
    private static final int BUTTON_HEIGHT = 20;
    @Unique

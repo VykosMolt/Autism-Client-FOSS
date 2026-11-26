@@ -170,7 +170,7 @@ public final class d {
 
    // Fields without a declared range keep the parsed value.
    static Object clampToEditorRange(MacroAction action, String key, Object value) {
-      for (FieldDef def : autismclient.gui.macro.editor.DataUtil.init(action).fields()) {
+      for (FieldDef def : autismclient.gui.macro.editor.ActionFieldRegistry.init(action).fields()) {
          if (!key.equals(def.key())) {
             continue;
          }

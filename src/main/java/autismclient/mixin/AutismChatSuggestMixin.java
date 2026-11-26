@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.AutismClientAddon;
 import autismclient.commands.AutismCommandSource;
-import autismclient.commands.DataUtil;
+import autismclient.commands.CommandManager;
 import autismclient.mixin.accessor.AutismCommandSuggestionsListAccessor;
 import autismclient.modules.al;
 import autismclient.util.aN;
@@ -107,11 +107,11 @@ public abstract class AutismChatSuggestMixin {
 
          ci.cancel();
       } else {
-         int prefixLen = DataUtil.init_Str().length();
+         int prefixLen = CommandManager.init_Str().length();
          StringReader reader = new StringReader(value);
          reader.setCursor(prefixLen);
          int cursor = Math.max(prefixLen, Math.min(this.input.getCursorPosition(), value.length()));
-         int commandRevision = DataUtil.init_I();
+         int commandRevision = CommandManager.init_I();
          int moduleRevision = al.init_I();
          long macroRevision = aN.init_aN().init_J();
          Minecraft minecraft = Minecraft.getInstance();
@@ -125,7 +125,7 @@ public abstract class AutismChatSuggestMixin {
             || menu != this.autism$cachedMenu
             || menuRevision != this.autism$cachedMenuRevision
             || !this.autism$owningSuggestions && this.pendingSuggestions == null) {
-            ParseResults<AutismCommandSource> parse = DataUtil.init_CommandDispatcher().parse(reader, AutismCommandSource.INSTANCE);
+            ParseResults<AutismCommandSource> parse = CommandManager.init_CommandDispatcher().parse(reader, AutismCommandSource.INSTANCE);
             @SuppressWarnings("unchecked")
             ParseResults<ClientSuggestionProvider> widgetParse = (ParseResults)parse;
             this.currentParse = widgetParse;
@@ -139,7 +139,7 @@ public abstract class AutismChatSuggestMixin {
                this.autism$clearActiveSuggestions();
                this.autism$rememberSuggestionKey(value, cursor, commandRevision, moduleRevision, macroRevision, menu, menuRevision);
                String inputSnapshot = value;
-               CompletableFuture<Suggestions> future = DataUtil.init_CommandDispatcher().getCompletionSuggestions(parse, cursor);
+               CompletableFuture<Suggestions> future = CommandManager.init_CommandDispatcher().getCompletionSuggestions(parse, cursor);
                this.pendingSuggestions = future;
                future.thenAccept(result -> {
                   Runnable apply = () -> {
@@ -186,7 +186,7 @@ public abstract class AutismChatSuggestMixin {
 
    @Unique
    private static boolean autism$isAutismCommandInput(String value) {
-      return !DataUtil.init_Z() && DataUtil.init_Z(value);
+      return !CommandManager.init_Z() && CommandManager.init_Z(value);
    }
 
    @Unique

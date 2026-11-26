@@ -8,7 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 
 public final class WaitVillagerItemAction implements ContextMacroAction {
    private static final int init_I = 1200;
-   public autismclient.util.i.DataUtil.Inner_DataUtil filter = autismclient.util.i.DataUtil.Inner_DataUtil.ALL;
+   public autismclient.util.i.VillagerDupeDriver.Inner_DataUtil filter = autismclient.util.i.VillagerDupeDriver.Inner_DataUtil.ALL;
    public boolean traders = true;
    public boolean holdEmerald = true;
    public int timeoutTicks = 0;
@@ -17,13 +17,13 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
    @Override
    public void run(MacroExecutionContext ctx) {
       WaitVillagerItemAction.Inner_DataUtil watcher = new WaitVillagerItemAction.Inner_DataUtil(ctx, init(this.timeoutTicks, 0, 1200));
-      autismclient.util.i.DataUtil.init_V_Predicate(watcher::init);
+      autismclient.util.i.VillagerDupeDriver.init_V_Predicate(watcher::init);
 
       while (!watcher.load_Z && ctx.isActive()) {
          CompletableFuture<Void> next = watcher.init_CompletableFuture;
-         autismclient.util.i.DataUtil.ConfigStore status = watcher.init_DataUtil_ConfigSto;
+         autismclient.util.i.VillagerDupeDriver.ConfigStore status = watcher.init_DataUtil_ConfigSto;
          ctx.setStatus(
-            !status.load_Z() && status != autismclient.util.i.DataUtil.ConfigStore.SCREEN
+            !status.load_Z() && status != autismclient.util.i.VillagerDupeDriver.ConfigStore.SCREEN
                ? "Waiting for a villager item (" + status.init_Str() + ")"
                : "Waiting for a villager item"
          );
@@ -50,7 +50,7 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.filter = autismclient.util.i.DataUtil.Inner_DataUtil.init_DataUtil_DataUtil_Str(tag.getStringOr("filter", "ALL"));
+      this.filter = autismclient.util.i.VillagerDupeDriver.Inner_DataUtil.init_DataUtil_DataUtil_Str(tag.getStringOr("filter", "ALL"));
       this.traders = tag.getBooleanOr("traders", true);
       this.holdEmerald = tag.getBooleanOr("holdEmerald", true);
       this.timeoutTicks = init(tag.getIntOr("timeoutTicks", 0), 0, 1200);
@@ -88,16 +88,16 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
 
    private final class Inner_DataUtil {
       private final MacroExecutionContext init_MacroExecutionCont;
-      private final autismclient.util.i.DataUtil init_DataUtil = autismclient.util.i.DataUtil.init_DataUtil();
-      private final autismclient.util.i.DataUtil.CachePool init_DataUtil_CachePool = new autismclient.util.i.DataUtil.CachePool(
+      private final autismclient.util.i.VillagerDupeDriver init_DataUtil = autismclient.util.i.VillagerDupeDriver.init_DataUtil();
+      private final autismclient.util.i.VillagerDupeDriver.CachePool init_DataUtil_CachePool = new autismclient.util.i.VillagerDupeDriver.CachePool(
          WaitVillagerItemAction.this.filter, WaitVillagerItemAction.this.traders, true, false, true, false, false, 1
       );
-      private final autismclient.util.i.DataUtil.Inner_DataUtil init_DataUtil_DataUtil = WaitVillagerItemAction.this.filter;
+      private final autismclient.util.i.VillagerDupeDriver.Inner_DataUtil init_DataUtil_DataUtil = WaitVillagerItemAction.this.filter;
       private final boolean read = WaitVillagerItemAction.this.traders;
       private final boolean write = WaitVillagerItemAction.this.holdEmerald;
       final int init_I;
       private int load_I;
-      volatile autismclient.util.i.DataUtil.ConfigStore init_DataUtil_ConfigSto = autismclient.util.i.DataUtil.ConfigStore.WAITING;
+      volatile autismclient.util.i.VillagerDupeDriver.ConfigStore init_DataUtil_ConfigSto = autismclient.util.i.VillagerDupeDriver.ConfigStore.WAITING;
       volatile boolean init_Z;
       volatile boolean load_Z;
       volatile CompletableFuture<Void> init_CompletableFuture = new CompletableFuture<>();
@@ -112,11 +112,11 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
             return this.init_Z();
          }
 
-         autismclient.util.i.DataUtil.ConfigStore next = (this.write
+         autismclient.util.i.VillagerDupeDriver.ConfigStore next = (this.write
                ? this.init_DataUtil.load(mc, this.init_DataUtil_CachePool)
                : this.init_DataUtil.read(mc, this.init_DataUtil_CachePool))
             .init_DataUtil_ConfigSto();
-         this.init_Z = autismclient.util.i.DataUtil.init_Z_Minecraft(mc, this.init_DataUtil_DataUtil, this.read);
+         this.init_Z = autismclient.util.i.VillagerDupeDriver.init_Z_Minecraft(mc, this.init_DataUtil_DataUtil, this.read);
          this.load_I++;
          if (!this.init_Z && (this.init_I <= 0 || this.load_I < this.init_I)) {
             if (next != this.init_DataUtil_ConfigSto) {

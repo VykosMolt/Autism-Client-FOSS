@@ -204,7 +204,7 @@ public final class bs {
          return null;
       }
 
-      aM existingMacro = ck.init_ck().init_aM();
+      AutismMacro existingMacro = ck.init_ck().init_aM();
       macroEditor.init_V_aM(existingMacro);
       bk.init_bk().update_V(macroEditor);
       return macroEditor;

@@ -27,13 +27,13 @@ public final class TradeAction implements ContextMacroAction {
    public boolean closeWhenDone;
    private boolean init = true;
 
-   public autismclient.util.h.StreamUtil init() {
-      return new autismclient.util.h.StreamUtil(
+   public autismclient.util.h.TradeOfferFilter init() {
+      return new autismclient.util.h.TradeOfferFilter(
          this.selection == TradeAction.Inner_DataUtil.OFFER ? init(this.offerNumber, 1, 512) : 0,
-         this.selection == TradeAction.Inner_DataUtil.ITEM ? List.of(autismclient.util.h.StreamUtil.init(this.resultItem)) : List.of(),
+         this.selection == TradeAction.Inner_DataUtil.ITEM ? List.of(autismclient.util.h.TradeOfferFilter.init(this.resultItem)) : List.of(),
          List.of(),
          this.selection == TradeAction.Inner_DataUtil.BOOK
-            ? List.of(new autismclient.util.h.StreamUtil.Inner_DataUtil(this.enchantment, init(this.minLevel, 1, 255), 0))
+            ? List.of(new autismclient.util.h.TradeOfferFilter.Inner_DataUtil(this.enchantment, init(this.minLevel, 1, 255), 0))
             : List.of(),
          this.exactLevel,
          init(this.maxEmeralds, 0, 128)
@@ -43,7 +43,7 @@ public final class TradeAction implements ContextMacroAction {
    @Override
    public void run(MacroExecutionContext ctx) {
       if (this.selection != TradeAction.Inner_DataUtil.ITEM || this.resultItem != null && !this.resultItem.isBlank()) {
-         autismclient.util.h.CachePool session = new autismclient.util.h.CachePool(
+         autismclient.util.h.VillagerTradeSession session = new autismclient.util.h.VillagerTradeSession(
             this.init(), this.untilUnavailable ? 10000 : init(this.amount, 1, 10000), this.delayTicks, this.timeoutTicks, this.emeraldBudget, this.keepEmeralds
          );
 
@@ -59,8 +59,8 @@ public final class TradeAction implements ContextMacroAction {
 
             if (this.target == TradeAction.Inner_StreamUtil.OPEN_SCREEN || this.init(ctx)) {
                while (ctx.isActive()) {
-                  autismclient.util.h.CachePool.Inner_CachePool state = ctx.callOnClientThread(
-                     () -> ctx.isActive() ? session.init_CachePool_CachePoo_Minecraft(ctx.mc()) : autismclient.util.h.CachePool.Inner_CachePool.CANCELLED
+                  autismclient.util.h.VillagerTradeSession.Inner_CachePool state = ctx.callOnClientThread(
+                     () -> ctx.isActive() ? session.init_CachePool_CachePoo_Minecraft(ctx.mc()) : autismclient.util.h.VillagerTradeSession.Inner_CachePool.CANCELLED
                   );
                   if (state == null) {
                      return;
@@ -71,7 +71,7 @@ public final class TradeAction implements ContextMacroAction {
                      ctx.setVariable("trade_count", session.init_I());
                      ctx.setVariable("trade_spent", session.load_I());
                      ctx.setVariable("trade_status", session.init_CachePool_CachePoo().name());
-                     if (session.init_CachePool_CachePoo() != autismclient.util.h.CachePool.Inner_CachePool.COMPLETE) {
+                     if (session.init_CachePool_CachePoo() != autismclient.util.h.VillagerTradeSession.Inner_CachePool.COMPLETE) {
                         ctx.runOnClientThread(
                            () -> AutismClientMessaging.sendPrefixed("Trade: " + session.init_Str() + " (" + session.init_I() + " completed)")
                         );
@@ -115,7 +115,7 @@ public final class TradeAction implements ContextMacroAction {
          return false;
       }
 
-      Entity entity = ctx.callOnClientThread(() -> autismclient.util.h.BufferHelper.init(ctx.mc(), this.target == TradeAction.Inner_StreamUtil.AIMED, this.range));
+      Entity entity = ctx.callOnClientThread(() -> autismclient.util.h.MerchantInteractHelper.init(ctx.mc(), this.target == TradeAction.Inner_StreamUtil.AIMED, this.range));
       if (entity == null) {
          return false;
       }
@@ -128,7 +128,7 @@ public final class TradeAction implements ContextMacroAction {
          }
 
          if (!sent) {
-            sent = Boolean.TRUE.equals(ctx.callOnClientThread(() -> ctx.isActive() && autismclient.util.h.BufferHelper.load(ctx.mc(), entity, this.range)));
+            sent = Boolean.TRUE.equals(ctx.callOnClientThread(() -> ctx.isActive() && autismclient.util.h.MerchantInteractHelper.load(ctx.mc(), entity, this.range)));
          }
 
          ctx.setStatus("Trade: opening merchant");

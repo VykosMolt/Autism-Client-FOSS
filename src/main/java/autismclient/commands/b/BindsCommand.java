@@ -24,7 +24,7 @@ public class BindsCommand extends Command {
          AutismClientMessaging.sendPrefixed("§e" + binds.size() + " command keybinds:");
 
          for (Entry<Integer, String> e : binds.entrySet()) {
-            AutismClientMessaging.sendPrefixed("§b" + autismclient.commands.a.StreamUtil.init_Str_I(e.getKey()) + "§7 → §f" + e.getValue());
+            AutismClientMessaging.sendPrefixed("§b" + autismclient.commands.a.KeyBindArgumentType.init_Str_I(e.getKey()) + "§7 → §f" + e.getValue());
          }
 
          return 1;

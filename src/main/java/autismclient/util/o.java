@@ -52,7 +52,7 @@ public class o {
    private static final String load = "autism_macro_steps";
    private static final String read = "autism_macro_list";
    private static String write;
-   private static List<aM> init_List = List.of();
+   private static List<AutismMacro> init_List = List.of();
    private static boolean init_Z;
    private static final long init_J = 8388608L;
    private static volatile Set<String> init_Set;
@@ -81,7 +81,7 @@ public class o {
       }
    }
 
-   public static boolean init_Z(aM macro) {
+   public static boolean init_Z(AutismMacro macro) {
       if (macro == null) {
          return false;
       }
@@ -103,11 +103,11 @@ public class o {
       }
    }
 
-   public static boolean init_Z(List<aM> macros, boolean cut) {
+   public static boolean init_Z(List<AutismMacro> macros, boolean cut) {
       if (macros != null && !macros.isEmpty()) {
-         List<aM> live = new ArrayList<>();
+         List<AutismMacro> live = new ArrayList<>();
 
-         for (aM macro : macros) {
+         for (AutismMacro macro : macros) {
             if (macro != null) {
                live.add(macro);
             }
@@ -128,7 +128,7 @@ public class o {
                rootTag.putString("type", "autism_macro_list");
                ListTag macroList = new ListTag();
 
-               for (aM macro : live) {
+               for (AutismMacro macro : live) {
                   macroList.add(macro.init_CompoundTag());
                }
 
@@ -150,10 +150,10 @@ public class o {
       }
    }
 
-   private static void init_V(List<aM> macros, boolean cut) {
-      List<aM> copies = new ArrayList<>(macros.size());
+   private static void init_V(List<AutismMacro> macros, boolean cut) {
+      List<AutismMacro> copies = new ArrayList<>(macros.size());
 
-      for (aM macro : macros) {
+      for (AutismMacro macro : macros) {
          copies.add(macro.init_aM());
       }
 
@@ -176,10 +176,10 @@ public class o {
       }
 
       if (clipboard != null && write != null && clipboard.equals(write) && !init_List.isEmpty()) {
-         List<aM> out = new ArrayList<>(init_List.size());
+         List<AutismMacro> out = new ArrayList<>(init_List.size());
 
-         for (aM macro : init_List) {
-            aM copy = macro.init_aM();
+         for (AutismMacro macro : init_List) {
+            AutismMacro copy = macro.init_aM();
             if (!init_Z) {
                copy.load_I = -1;
             }
@@ -190,12 +190,12 @@ public class o {
          init_Z = false;
          return new o.Inner_StreamUtil(out, true);
       } else {
-         List<aM> list = init_List();
+         List<AutismMacro> list = init_List();
          if (!list.isEmpty()) {
             return new o.Inner_StreamUtil(list, false);
          }
 
-         aM single = init_aM();
+         AutismMacro single = init_aM();
          return new o.Inner_StreamUtil(single == null ? List.of() : List.of(single), false);
       }
    }
@@ -245,10 +245,10 @@ public class o {
 
       for (int i = 0; i < actionList.size(); i++) {
          if (actionList.get(i) instanceof CompoundTag actionTag) {
-            if (!aM.init_Z_Str(actionTag.getStringOr("type", ""))) {
+            if (!AutismMacro.init_Z_Str(actionTag.getStringOr("type", ""))) {
                dropped++;
             } else {
-               MacroAction action = aM.init_MacroAction_CompoundTag(actionTag);
+               MacroAction action = AutismMacro.init_MacroAction_CompoundTag(actionTag);
                if (action != null) {
                   action.sanitizeForSharing();
                   actions.add(action);
@@ -261,9 +261,9 @@ public class o {
       return actions;
    }
 
-   private static aM init_aM(CompoundTag macroTag) {
-      int dropped = aM.init_I_CompoundTag(macroTag);
-      aM macro = new aM().init_aM_CompoundTag(macroTag).load_aM();
+   private static AutismMacro init_aM(CompoundTag macroTag) {
+      int dropped = AutismMacro.init_I_CompoundTag(macroTag);
+      AutismMacro macro = new AutismMacro().init_aM_CompoundTag(macroTag).load_aM();
       macro.load_I = -1;
       init(dropped);
       return macro;
@@ -275,7 +275,7 @@ public class o {
       }
    }
 
-   public static aM init_aM() {
+   public static AutismMacro init_aM() {
       CompoundTag rootTag = init_CompoundTag();
       if (rootTag == null) {
          return null;
@@ -296,7 +296,7 @@ public class o {
             return null;
          }
 
-         aM macro = new aM();
+         AutismMacro macro = new AutismMacro();
          macro.init_List = actions;
          return macro;
       } else {
@@ -305,8 +305,8 @@ public class o {
       }
    }
 
-   public static List<aM> init_List() {
-      List<aM> macros = new ArrayList<>();
+   public static List<AutismMacro> init_List() {
+      List<AutismMacro> macros = new ArrayList<>();
       CompoundTag rootTag = init_CompoundTag();
       if (rootTag == null) {
          return macros;
@@ -342,7 +342,7 @@ public class o {
       }
    }
 
-   public static String init_Str(aM macro) {
+   public static String init_Str(AutismMacro macro) {
       if (macro == null) {
          return null;
       }
@@ -361,7 +361,7 @@ public class o {
       }
    }
 
-   public static aM init_aM(String base64) {
+   public static AutismMacro init_aM(String base64) {
       CompoundTag rootTag = init_CompoundTag(base64);
       if (rootTag == null) {
          return null;
@@ -379,7 +379,7 @@ public class o {
             return null;
          }
 
-         aM macro = new aM();
+         AutismMacro macro = new AutismMacro();
          macro.init_List = actions;
          return macro;
       } else {
@@ -411,7 +411,7 @@ public class o {
 
             for (MacroAction action : actions) {
                if (action != null) {
-                  MacroAction copy = aM.init_MacroAction_CompoundTag(action.toTag());
+                  MacroAction copy = AutismMacro.init_MacroAction_CompoundTag(action.toTag());
                   if (copy != null) {
                      copy.sanitizeForSharing();
                      actionList.add(copy.toTag());
@@ -1439,6 +1439,6 @@ public class o {
       STEPS;
    }
 
-   public record Inner_StreamUtil(List<aM> init_List, boolean init_Z) {
+   public record Inner_StreamUtil(List<AutismMacro> init_List, boolean init_Z) {
    }
 }

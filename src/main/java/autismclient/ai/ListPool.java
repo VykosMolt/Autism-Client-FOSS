@@ -18,24 +18,24 @@ final class ListPool {
    }
 
    static AiOperation init(String name, JsonObject args) {
-      Command command = autismclient.commands.DataUtil.init_Command(name);
+      Command command = autismclient.commands.CommandManager.init_Command(name);
       if (command == null) {
          throw new IllegalArgumentException("Client command '" + name + "' is not registered");
       }
 
-      String prefix = autismclient.commands.DataUtil.init_Str();
+      String prefix = autismclient.commands.CommandManager.init_Str();
       String line = init(init(args), name, Arrays.asList(command.aliases()), prefix, word -> {
-         Command other = autismclient.commands.DataUtil.init_Command(word);
-         return other != null && other != command ? autismclient.commands.DataUtil.init_Str(other) : null;
+         Command other = autismclient.commands.CommandManager.init_Command(word);
+         return other != null && other != command ? autismclient.commands.CommandManager.init_Str(other) : null;
       });
       List<String> raw = new ArrayList<>();
 
-      autismclient.commands.DataUtil.Inner_DataUtil dispatch;
+      autismclient.commands.CommandManager.Inner_DataUtil dispatch;
       try (AutismClientMessaging.Inner_DataUtil ignored = AutismClientMessaging.capture(raw)) {
-         dispatch = autismclient.commands.DataUtil.init_DataUtil_DataUtil(line);
+         dispatch = autismclient.commands.CommandManager.init_DataUtil_DataUtil(line);
       }
 
-      List<String> forms = autismclient.commands.DataUtil.init_List(command);
+      List<String> forms = autismclient.commands.CommandManager.init_List(command);
       String typed = prefix + line;
       JsonObject data = ag.init_JsonObject_ObjArr(
          "command", name, "body", line, "typed", typed, "dispatch", dispatch.init_DataUtil_StreamUti().name(), "replies", init(raw), "forms", forms

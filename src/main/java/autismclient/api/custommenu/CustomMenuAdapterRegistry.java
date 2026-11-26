@@ -2,7 +2,7 @@ package autismclient.api.custommenu;
 
 import autismclient.AutismClientAddon;
 import autismclient.b.DataUtil;
-import autismclient.util.b.BufferHelper;
+import autismclient.util.b.VanillaDialogMenuAdapter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -120,7 +120,7 @@ public final class CustomMenuAdapterRegistry {
    }
 
    static {
-      ADAPTERS.put("minecraft:dialog", new CustomMenuAdapterRegistry.Registered(new BufferHelper(), "autismclient"));
+      ADAPTERS.put("minecraft:dialog", new CustomMenuAdapterRegistry.Registered(new VanillaDialogMenuAdapter(), "autismclient"));
       publishSnapshot();
    }
 

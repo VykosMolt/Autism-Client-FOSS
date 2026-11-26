@@ -83,7 +83,7 @@ public class AutismMacroListOverlay extends bj {
    private double write_D;
    private float sync_F;
    private boolean run_Z;
-   private List<aM> init_List = List.of();
+   private List<AutismMacro> init_List = List.of();
    private final Set<String> load_Set = new HashSet<>();
    private int next;
    private boolean get_Z;
@@ -280,7 +280,7 @@ public class AutismMacroListOverlay extends bj {
       int nameWidth = 0;
       int stepsWidth = autismclient.gui.f.b.k.init(this.init_Font, init_Str_I_5(0), font, color);
 
-      for (aM macro : aN.init_aN().init_List()) {
+      for (AutismMacro macro : aN.init_aN().init_List()) {
          if (!cL.load(macro)) {
             nameWidth = Math.max(nameWidth, autismclient.gui.f.b.k.init(this.init_Font, macro.init_Str, font, color));
             stepsWidth = Math.max(stepsWidth, autismclient.gui.f.b.k.init(this.init_Font, init_Str_I_5(macro.init_List.size()), font, color));
@@ -1070,7 +1070,7 @@ public class AutismMacroListOverlay extends bj {
    }
 
    public void init_V_I_7(int count) {
-      List<aM> picked = new ArrayList<>();
+      List<AutismMacro> picked = new ArrayList<>();
       AutismMacroListOverlay.Inner_StreamUtil first = null;
 
       for (AutismMacroListOverlay.Inner_StreamUtil item : this.update_List) {
@@ -1098,13 +1098,13 @@ public class AutismMacroListOverlay extends bj {
    private void init_V_AutismMacroListOve(AutismMacroListOverlay.Inner_StreamUtil item) {
       if (item.load != null && !item.load.isBlank()) {
          aE sync = aE.init_aE();
-         Map<String, Map<String, aM>> allRemote = sync.read_Map();
-         Map<String, aM> remoteMacros = allRemote.get(item.load);
-         aM source = remoteMacros != null ? remoteMacros.get(cZ.init(item.init_Str)) : null;
+         Map<String, Map<String, AutismMacro>> allRemote = sync.read_Map();
+         Map<String, AutismMacro> remoteMacros = allRemote.get(item.load);
+         AutismMacro source = remoteMacros != null ? remoteMacros.get(cZ.init(item.init_Str)) : null;
          if (source == null) {
             AutismClientMessaging.sendPrefixed("§cRemote macro is no longer available: " + item.init_Str);
          } else {
-            aM imported = aN.init_aN().init_aM_aM_Str(source, source.init_Str);
+            AutismMacro imported = aN.init_aN().init_aM_aM_Str(source, source.init_Str);
             if (imported == null) {
                AutismClientMessaging.sendPrefixed("§cFailed to import macro: " + item.init_Str);
             } else {
@@ -1153,7 +1153,7 @@ public class AutismMacroListOverlay extends bj {
          AutismClientMessaging.sendPrefixed("§cA macro with that name already exists.");
          return true;
       } else {
-         aM pasted = o.init_aM();
+         AutismMacro pasted = o.init_aM();
          if (pasted == null) {
             bi.write("Clipboard has no macro steps.");
             return true;
@@ -1517,7 +1517,7 @@ public class AutismMacroListOverlay extends bj {
    }
 
    private List<AutismMacroListOverlay.Inner_StreamUtil> init_List_List(
-      List<aM> localMacros, Map<String, Map<String, aM>> remoteMacros, aE sync
+      List<AutismMacro> localMacros, Map<String, Map<String, AutismMacro>> remoteMacros, aE sync
    ) {
       String filter = this.init_BitSetUtil.init_Str().trim().toLowerCase(Locale.ROOT);
       List<AutismMacroListOverlay.Inner_StreamUtil> items = new ArrayList<>();
@@ -1527,8 +1527,8 @@ public class AutismMacroListOverlay extends bj {
       }
 
       if (sync.write_Z()) {
-         for (Entry<String, Map<String, aM>> entry : remoteMacros.entrySet()) {
-            List<aM> available = entry.getValue().values().stream().filter(m -> !cL.load(m)).filter(m -> aN.init_aN().init_aM_Str(m.init_Str) == null).toList();
+         for (Entry<String, Map<String, AutismMacro>> entry : remoteMacros.entrySet()) {
+            List<AutismMacro> available = entry.getValue().values().stream().filter(m -> !cL.load(m)).filter(m -> aN.init_aN().init_aM_Str(m.init_Str) == null).toList();
             List<cY.Inner_DataUtil> remoteRows = cY.init(
                available, List.of(), folder -> this.init_Set.contains(entry.getKey() + "\u0000" + cY.load_Str_Str(folder)), filter, false
             );
@@ -1686,7 +1686,7 @@ public class AutismMacroListOverlay extends bj {
    }
 
    private void clear_V_5() {
-      List<aM> selected = this.load_List_4();
+      List<AutismMacro> selected = this.load_List_4();
       if (selected.isEmpty()) {
          bi.read("Select macros first.");
       } else {
@@ -1706,7 +1706,7 @@ public class AutismMacroListOverlay extends bj {
          );
          String common = null;
 
-         for (aM macro : selected) {
+         for (AutismMacro macro : selected) {
             String folder = macro.read == null ? "" : macro.read;
             if (common == null) {
                common = folder;
@@ -1726,9 +1726,9 @@ public class AutismMacroListOverlay extends bj {
             int index = labels.indexOf(choice);
             if (index >= 0) {
                String target = folders.get(index);
-               List<aM> moving = new ArrayList<>();
+               List<AutismMacro> moving = new ArrayList<>();
 
-               for (aM macro : this.load_List_4()) {
+               for (AutismMacro macro : this.load_List_4()) {
                   if (!cY.load_Str_Str(macro.read).equals(cY.load_Str_Str(target))) {
                      moving.add(macro);
                   }
@@ -1747,27 +1747,27 @@ public class AutismMacroListOverlay extends bj {
       }
    }
 
-   private boolean init_Z_aM_2(aM macro) {
+   private boolean init_Z_aM_2(AutismMacro macro) {
       return macro != null && this.init_LinkedHashSet.contains(cZ.init(macro.init_Str));
    }
 
-   private void init_V_aM_2(aM macro) {
+   private void init_V_aM_2(AutismMacro macro) {
       if (macro != null && macro.init_Str != null && !macro.init_Str.isBlank()) {
          this.init_LinkedHashSet.add(cZ.init(macro.init_Str));
       }
    }
 
-   private void load_V_aM_2(aM macro) {
+   private void load_V_aM_2(AutismMacro macro) {
       this.init_LinkedHashSet.clear();
       this.init_V_aM_2(macro);
       this.load_Str = macro != null && macro.init_Str != null ? cZ.init(macro.init_Str) : null;
       this.next_V_4();
    }
 
-   private void init_V_List_4(List<aM> macros) {
+   private void init_V_List_4(List<AutismMacro> macros) {
       this.init_LinkedHashSet.clear();
 
-      for (aM macro : macros) {
+      for (AutismMacro macro : macros) {
          this.init_V_aM_2(macro);
       }
 
@@ -1775,7 +1775,7 @@ public class AutismMacroListOverlay extends bj {
       this.next_V_4();
    }
 
-   private void read(aM macro) {
+   private void read(AutismMacro macro) {
       if (macro != null && macro.init_Str != null && !macro.init_Str.isBlank()) {
          String key = cZ.init(macro.init_Str);
          if (!this.init_LinkedHashSet.remove(key)) {
@@ -1787,7 +1787,7 @@ public class AutismMacroListOverlay extends bj {
       }
    }
 
-   private void write(aM macro) {
+   private void write(AutismMacro macro) {
       if (macro != null && macro.init_Str != null) {
          String key = cZ.init(macro.init_Str);
          int from = -1;
@@ -1841,13 +1841,13 @@ public class AutismMacroListOverlay extends bj {
       this.next_V_4();
    }
 
-   private List<aM> load_List_4() {
-      List<aM> out = new ArrayList<>();
+   private List<AutismMacro> load_List_4() {
+      List<AutismMacro> out = new ArrayList<>();
       if (this.init_LinkedHashSet.isEmpty()) {
          return out;
       }
 
-      for (aM macro : aN.init_aN().init_List()) {
+      for (AutismMacro macro : aN.init_aN().init_List()) {
          if (macro != null && this.init_LinkedHashSet.contains(cZ.init(macro.init_Str))) {
             out.add(macro);
          }
@@ -1890,7 +1890,7 @@ public class AutismMacroListOverlay extends bj {
    }
 
    private boolean run_Z_4() {
-      List<aM> selected = this.load_List_4();
+      List<AutismMacro> selected = this.load_List_4();
       if (selected.isEmpty()) {
          bi.read("Select macros first.");
          return true;
@@ -1906,7 +1906,7 @@ public class AutismMacroListOverlay extends bj {
    }
 
    private boolean put_Z_3() {
-      List<aM> selected = this.load_List_4();
+      List<AutismMacro> selected = this.load_List_4();
       if (selected.isEmpty()) {
          bi.read("Select macros first.");
          return true;
@@ -1927,9 +1927,9 @@ public class AutismMacroListOverlay extends bj {
          bi.read("Clipboard has no macros.");
          return true;
       } else {
-         List<aM> selected = this.load_List_4();
-         aM anchor = selected.isEmpty() ? null : selected.get(selected.size() - 1);
-         List<aM> added = aN.init_aN().init(paste.init_List(), !paste.init_Z(), anchor);
+         List<AutismMacro> selected = this.load_List_4();
+         AutismMacro anchor = selected.isEmpty() ? null : selected.get(selected.size() - 1);
+         List<AutismMacro> added = aN.init_aN().init(paste.init_List(), !paste.init_Z(), anchor);
          if (added.isEmpty()) {
             bi.write("Failed to paste macros.");
             return true;
@@ -1944,13 +1944,13 @@ public class AutismMacroListOverlay extends bj {
    }
 
    private boolean reset_Z_3() {
-      List<aM> selected = this.load_List_4();
+      List<AutismMacro> selected = this.load_List_4();
       if (selected.isEmpty()) {
          bi.read("Select macros first.");
          return true;
       }
 
-      List<aM> copies = aN.init_aN().init_List_Collection(selected);
+      List<AutismMacro> copies = aN.init_aN().init_List_Collection(selected);
       if (!copies.isEmpty()) {
          this.init_V_List_4(copies);
          this.clear_Z = true;
@@ -1961,7 +1961,7 @@ public class AutismMacroListOverlay extends bj {
    }
 
    private boolean load_Z_Z_2(boolean confirmed) {
-      List<aM> selected = this.load_List_4();
+      List<AutismMacro> selected = this.load_List_4();
       if (selected.isEmpty()) {
          return false;
       }
@@ -2065,11 +2065,11 @@ public class AutismMacroListOverlay extends bj {
 
    private void init_V_F_F(float uiMouseX, float uiMouseY) {
       if (!this.run_Z && this.flush_Str != null && (!(Math.abs(uiMouseX - this.read_D) < 3.0) || !(Math.abs(uiMouseY - this.write_D) < 3.0))) {
-         aM pressed = aN.init_aN().init_aM_Str(this.flush_Str);
+         AutismMacro pressed = aN.init_aN().init_aM_Str(this.flush_Str);
          if (pressed == null) {
             this.prev_V_4();
          } else {
-            List<aM> dragged;
+            List<AutismMacro> dragged;
             if (this.init_LinkedHashSet.contains(this.flush_Str)) {
                dragged = this.load_List_4();
             } else {
@@ -2084,7 +2084,7 @@ public class AutismMacroListOverlay extends bj {
                this.init_List = dragged;
                this.load_Set.clear();
 
-               for (aM macro : dragged) {
+               for (AutismMacro macro : dragged) {
                   this.load_Set.add(cZ.init(macro.init_Str));
                }
 
@@ -2117,7 +2117,7 @@ public class AutismMacroListOverlay extends bj {
 
    private void valid_V_2() {
       if (this.run_Z) {
-         List<aM> dragged = this.init_List;
+         List<AutismMacro> dragged = this.init_List;
          boolean apply = this.get_Z && !this.put_Z;
          String targetFolder = this.close_Str;
          String insertBefore = this.open_Str;
@@ -2131,7 +2131,7 @@ public class AutismMacroListOverlay extends bj {
          boolean wasSelected = this.tick_Z;
          this.prev_V_4();
          if (pressedKey != null) {
-            aM pressed = aN.init_aN().init_aM_Str(pressedKey);
+            AutismMacro pressed = aN.init_aN().init_aM_Str(pressedKey);
             if (pressed != null) {
                if (wasSelected && this.init_LinkedHashSet.size() == 1) {
                   this.reset_V_4();
@@ -2311,9 +2311,9 @@ public class AutismMacroListOverlay extends bj {
 
    private boolean init_Z_Str_Str_2(String folder, String insertBefore) {
       String folderKey = cY.load_Str_Str(folder);
-      List<aM> run = new ArrayList<>();
+      List<AutismMacro> run = new ArrayList<>();
 
-      for (aM macro : aN.init_aN().init_List()) {
+      for (AutismMacro macro : aN.init_aN().init_List()) {
          if (macro != null && cY.load_Str_Str(macro.read).equals(folderKey)) {
             run.add(macro);
          }
@@ -2507,7 +2507,7 @@ public class AutismMacroListOverlay extends bj {
       }
    }
 
-   private void init_V_GuiGraphicsExtract_7(GuiGraphicsExtractor context, aM macro, int x, int y, int width, float alpha) {
+   private void init_V_GuiGraphicsExtract_7(GuiGraphicsExtractor context, AutismMacro macro, int x, int y, int width, float alpha) {
       int fill = autismclient.gui.f.c.SyncManager.init(ct.init_I_I_ct_DataUtil(1715082778, ct.Inner_DataUtil.ACCENT), alpha * 0.85F);
       int edge = autismclient.gui.f.c.SyncManager.init(ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.OUTLINE), alpha * 0.85F);
       autismclient.gui.f.b.TableIndex.init(context, x, y, width, this.get_I_11(), fill);
@@ -2535,7 +2535,7 @@ public class AutismMacroListOverlay extends bj {
 
       int count = 0;
 
-      for (aM macro : aN.init_aN().init_List()) {
+      for (AutismMacro macro : aN.init_aN().init_List()) {
          if (!cL.load(macro)) {
             count++;
          }
@@ -2735,7 +2735,7 @@ public class AutismMacroListOverlay extends bj {
       private AutismMacroListOverlay.Inner_CachePool init_AutismMacroListOve;
       private String init_Str;
       private int init_I;
-      private aM init_aM;
+      private AutismMacro init_aM;
       private String load;
       private cY.Inner_DataUtil init_cY_DataUtil;
 
@@ -2756,7 +2756,7 @@ public class AutismMacroListOverlay extends bj {
          return item;
       }
 
-      private static AutismMacroListOverlay.Inner_StreamUtil init(aM macro) {
+      private static AutismMacroListOverlay.Inner_StreamUtil init(AutismMacro macro) {
          AutismMacroListOverlay.Inner_StreamUtil item = new AutismMacroListOverlay.Inner_StreamUtil();
          item.init_AutismMacroListOve = AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO;
          item.init_aM = macro;

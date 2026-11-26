@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.BufferHelper;
+import autismclient.util.j.a.SyntheticWorldGenLevel;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
@@ -28,7 +28,7 @@ public abstract class AutismOreSimMineshaftPieceMixin {
       ResourceKey<LootTable> lootTable,
       CallbackInfoReturnable<Boolean> cir
    ) {
-      if (level instanceof BufferHelper) {
+      if (level instanceof SyntheticWorldGenLevel) {
          random.nextLong();
          cir.setReturnValue(true);
       }

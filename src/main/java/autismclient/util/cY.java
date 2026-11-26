@@ -108,7 +108,7 @@ public final class cY {
       }
    }
 
-   public void init_V_List_Set(List<aM> looseInOrder, Set<String> leavingKeys) {
+   public void init_V_List_Set(List<AutismMacro> looseInOrder, Set<String> leavingKeys) {
       if (!this.load.isEmpty() && !leavingKeys.isEmpty()) {
          for (String folder : new ArrayList<>(this.load.keySet())) {
             String anchor = this.load.get(folder);
@@ -116,7 +116,7 @@ public final class cY {
                String next = null;
                boolean passed = false;
 
-               for (aM macro : looseInOrder) {
+               for (AutismMacro macro : looseInOrder) {
                   String key = cZ.init(macro.init_Str);
                   if (!passed) {
                      passed = key.equals(anchor);
@@ -137,11 +137,11 @@ public final class cY {
       }
    }
 
-   public void init_V_List(List<aM> looseInOrder) {
+   public void init_V_List(List<AutismMacro> looseInOrder) {
       if (!this.load.isEmpty()) {
          List<String> keys = new ArrayList<>(looseInOrder.size());
 
-         for (aM macro : looseInOrder) {
+         for (AutismMacro macro : looseInOrder) {
             keys.add(cZ.init(macro.init_Str));
          }
 
@@ -175,10 +175,10 @@ public final class cY {
       }
    }
 
-   public void init_V_Collection(Collection<aM> macros) {
+   public void init_V_Collection(Collection<AutismMacro> macros) {
       TreeSet<String> discovered = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
-      for (aM macro : macros) {
+      for (AutismMacro macro : macros) {
          if (macro != null) {
             String clean = init_Str_Str(macro.read);
             if (!clean.isEmpty() && !this.init_Map.containsKey(load_Str_Str(clean))) {
@@ -191,14 +191,14 @@ public final class cY {
          this.init_Z_Str(name);
       }
 
-      for (aM macro : macros) {
+      for (AutismMacro macro : macros) {
          if (macro != null) {
             macro.read = this.read(macro.read);
          }
       }
    }
 
-   public boolean init(String oldName, String newName, Collection<aM> macros) {
+   public boolean init(String oldName, String newName, Collection<AutismMacro> macros) {
       String oldKey = load_Str_Str(oldName);
       String next = init_Str_Str(newName);
       String nextKey = load_Str_Str(next);
@@ -228,7 +228,7 @@ public final class cY {
             this.read.put(nextKey, slot);
          }
 
-         for (aM macro : macros) {
+         for (AutismMacro macro : macros) {
             if (macro != null && load_Str_Str(macro.read).equals(oldKey)) {
                macro.read = next;
             }
@@ -240,7 +240,7 @@ public final class cY {
       }
    }
 
-   public boolean init_Z_Str_Collection(String name, Collection<aM> macros) {
+   public boolean init_Z_Str_Collection(String name, Collection<AutismMacro> macros) {
       String key = load_Str_Str(name);
       if (this.init_Map.remove(key) == null) {
          return false;
@@ -250,7 +250,7 @@ public final class cY {
       this.load.remove(key);
       this.read.remove(key);
 
-      for (aM macro : macros) {
+      for (AutismMacro macro : macros) {
          if (macro != null && load_Str_Str(macro.read).equals(key)) {
             macro.read = "";
          }
@@ -278,7 +278,7 @@ public final class cY {
       return list;
    }
 
-   public static cY init_cY_Tag_Collection(Tag tag, Collection<aM> macros) {
+   public static cY init_cY_Tag_Collection(Tag tag, Collection<AutismMacro> macros) {
       cY folders = new cY();
       if (tag instanceof ListTag) {
          for (Tag entry : (ListTag)tag) {
@@ -302,28 +302,28 @@ public final class cY {
       return folders;
    }
 
-   public List<cY.Inner_DataUtil> init(Collection<aM> macros, String query, boolean includeEmpty) {
+   public List<cY.Inner_DataUtil> init(Collection<AutismMacro> macros, String query, boolean includeEmpty) {
       return init(macros, this.init_List(), this::load_Z_Str, query, includeEmpty);
    }
 
-   public List<cY.Inner_DataUtil> load(Collection<aM> macros, String query, boolean includeEmpty) {
+   public List<cY.Inner_DataUtil> load(Collection<AutismMacro> macros, String query, boolean includeEmpty) {
       return init(macros, this.init_List(), this::load_Z_Str, query, includeEmpty, true, this.load);
    }
 
    public static List<cY.Inner_DataUtil> init(
-      Collection<aM> macros, Collection<String> folders, Predicate<String> collapsed, String query, boolean includeEmpty
+      Collection<AutismMacro> macros, Collection<String> folders, Predicate<String> collapsed, String query, boolean includeEmpty
    ) {
       return init(macros, folders, collapsed, query, includeEmpty, false);
    }
 
    public static List<cY.Inner_DataUtil> init(
-      Collection<aM> macros, Collection<String> folders, Predicate<String> collapsed, String query, boolean includeEmpty, boolean preserveOrder
+      Collection<AutismMacro> macros, Collection<String> folders, Predicate<String> collapsed, String query, boolean includeEmpty, boolean preserveOrder
    ) {
       return init(macros, folders, collapsed, query, includeEmpty, preserveOrder, Map.of());
    }
 
    private static List<cY.Inner_DataUtil> init(
-      Collection<aM> macros,
+      Collection<AutismMacro> macros,
       Collection<String> folders,
       Predicate<String> collapsed,
       String query,
@@ -333,7 +333,7 @@ public final class cY {
    ) {
       String needle = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
       Map<String, String> labels = new HashMap<>();
-      Map<String, List<aM>> groups = new HashMap<>();
+      Map<String, List<AutismMacro>> groups = new HashMap<>();
       List<String> order = new ArrayList<>();
 
       for (String folder : folders) {
@@ -347,7 +347,7 @@ public final class cY {
 
       TreeMap<String, String> extra = new TreeMap<>();
 
-      for (aM macro : macros) {
+      for (AutismMacro macro : macros) {
          if (macro != null && macro.init_Str != null && !macro.init_Str.isBlank()) {
             String folder = init_Str_Str(macro.read);
             String key = load_Str_Str(folder);
@@ -366,7 +366,7 @@ public final class cY {
       List<String> folderKeys = new ArrayList<>(order);
       folderKeys.addAll(extra.keySet());
       List<cY.Inner_DataUtil> rows = new ArrayList<>();
-      List<aM> loose = groups.getOrDefault("", List.of());
+      List<AutismMacro> loose = groups.getOrDefault("", List.of());
       if (anchors.isEmpty()) {
          init(rows, "", loose, needle, collapsed, includeEmpty, preserveOrder);
 
@@ -406,11 +406,11 @@ public final class cY {
    }
 
    private static void init(
-      List<cY.Inner_DataUtil> rows, String folder, List<aM> all, String needle, Predicate<String> collapsed, boolean includeEmpty, boolean preserveOrder
+      List<cY.Inner_DataUtil> rows, String folder, List<AutismMacro> all, String needle, Predicate<String> collapsed, boolean includeEmpty, boolean preserveOrder
    ) {
       boolean folderMatch = folder.toLowerCase(Locale.ROOT).contains(needle);
-      Stream<aM> matching = all.stream().filter(m -> folderMatch || m.init_Str.toLowerCase(Locale.ROOT).contains(needle));
-      List<aM> matches = preserveOrder ? matching.toList() : matching.sorted(Comparator.comparing(m -> m.init_Str, String.CASE_INSENSITIVE_ORDER)).toList();
+      Stream<AutismMacro> matching = all.stream().filter(m -> folderMatch || m.init_Str.toLowerCase(Locale.ROOT).contains(needle));
+      List<AutismMacro> matches = preserveOrder ? matching.toList() : matching.sorted(Comparator.comparing(m -> m.init_Str, String.CASE_INSENSITIVE_ORDER)).toList();
       if (!matches.isEmpty() || includeEmpty && all.isEmpty() && folderMatch) {
          boolean shut = needle.isEmpty() && collapsed.test(folder);
          if (!folder.isEmpty()) {
@@ -418,14 +418,14 @@ public final class cY {
          }
 
          if (folder.isEmpty() || !shut) {
-            for (aM macro : matches) {
+            for (AutismMacro macro : matches) {
                rows.add(new cY.Inner_DataUtil(folder, macro, 0, false));
             }
          }
       }
    }
 
-   public record Inner_DataUtil(String init_Str, aM init_aM, int init_I, boolean init_Z) {
+   public record Inner_DataUtil(String init_Str, AutismMacro init_aM, int init_I, boolean init_Z) {
       public boolean init_Z() {
          return this.init_aM == null;
       }

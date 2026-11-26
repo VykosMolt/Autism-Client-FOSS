@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.c.StreamUtil;
+import autismclient.c.ExternalButtonScreenDuck;
 import autismclient.e.TableIndex;
 import autismclient.gui.f.b.DataPipe;
 import autismclient.mixin.accessor.AutismScreenAccessor;
@@ -71,7 +71,7 @@ public abstract class AutismScreenMixin {
    @Inject(method = "extractRenderState", at = @At("TAIL"))
    private void autism$render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
       Screen screen = (Screen)(Object)this;
-      if (screen instanceof StreamUtil externalButtonScreen) {
+      if (screen instanceof ExternalButtonScreenDuck externalButtonScreen) {
          externalButtonScreen.autism$renderExternalButtons(context, mouseX, mouseY, delta);
       }
 

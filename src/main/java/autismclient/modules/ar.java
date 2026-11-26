@@ -986,7 +986,7 @@ public final class ar {
             long packed = load_JArr[i];
             BlockState state = init_BlockStateArr[i];
             if (state != null) {
-               autismclient.util.oresim.DataUtil.Inner_StreamUtil template = autismclient.util.oresim.DataUtil.init(state);
+               autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil template = autismclient.util.oresim.OreGhostModelCache.init(state);
                if (!template.init_List().isEmpty()) {
                   int bx = BlockPos.getX(packed);
                   int by = BlockPos.getY(packed);
@@ -998,7 +998,7 @@ public final class ar {
                   double relY = cam.y - (by + 0.5);
                   double relZ = cam.z - (bz + 0.5);
 
-                  for (autismclient.util.oresim.DataUtil.Inner_DataUtil face : template.init_List()) {
+                  for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : template.init_List()) {
                      Direction cull = face.init_Direction();
                      if (cull == null
                         || !init_LongOpenHashSet.contains(BlockPos.asLong(bx + cull.getStepX(), by + cull.getStepY(), bz + cull.getStepZ()))
@@ -1449,7 +1449,7 @@ public final class ar {
       int revision = al.init_I();
       BlockPos anchor = player.blockPosition();
       long slot = level.getGameTime() >> 2;
-      int engineRevision = autismclient.util.oresim.StreamUtil.read_I();
+      int engineRevision = autismclient.util.oresim.OreSimEngine.read_I();
       ar.Inner_CachePool cached = run_ar_CachePool;
       if (anchor.equals(load_BlockPos) && cached.init_I() == revision && slot == update_J && engineRevision == get_I) {
          return cached;
@@ -1487,7 +1487,7 @@ public final class ar {
          int candidateCount = 0;
 
          for (int i = 0; i < simCount && candidateCount < 2176; i++) {
-            BlockState state = autismclient.util.oresim.CachePool.Inner_StreamUtil.init_BlockState(init_IArr[i]);
+            BlockState state = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init_BlockState(init_IArr[i]);
             if (state != null && init_LongOpenHashSet.add(read_JArr[i])) {
                load_JArr[candidateCount] = read_JArr[i];
                init_BlockStateArr[candidateCount] = state;

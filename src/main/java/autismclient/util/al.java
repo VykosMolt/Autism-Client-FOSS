@@ -1556,7 +1556,7 @@ public final class al {
          init_V_Str_Str(id, path);
       }
 
-      Identifier texture = path.isEmpty() ? null : autismclient.util.c.CachePool.init_Identifier_Str(path, load_D(id), init_D_Str(id), id);
+      Identifier texture = path.isEmpty() ? null : autismclient.util.c.GifTextureManager.init_Identifier_Str(path, load_D(id), init_D_Str(id), id);
       if (texture != null) {
          context.blit(texture, x, y, x + width, y + height, 0.0F, 1.0F, 0.0F, 1.0F);
       } else if (editor) {
@@ -3235,7 +3235,7 @@ public final class al {
    }
 
    private static void init_V_Str_Str(String id, String path) {
-      int[] natural = autismclient.util.c.CachePool.init_IArr_Str(path);
+      int[] natural = autismclient.util.c.GifTextureManager.init_IArr_Str(path);
       if (natural != null && natural[0] > 0 && natural[1] > 0) {
          String signature = path + "|" + natural[0] + "x" + natural[1];
          if (!signature.equals(write_Map.get(id))) {

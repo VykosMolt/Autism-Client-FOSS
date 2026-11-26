@@ -22,14 +22,14 @@ public class XCarryCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         String prefix = autismclient.commands.DataUtil.init_Str();
+         String prefix = autismclient.commands.CommandManager.init_Str();
          AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "xcarry <slot>");
          AutismClientMessaging.sendPrefixed("§7Slots: §fcraft1§7..§fcraft5§7, §fhelmet§7, §fchestplate§7, §fleggings§7, §fboots§7, §foffhand§7, §fcursor§7.");
          return 1;
       });
       root.then(
-         RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("slot", autismclient.commands.a.SyncManager.init())
-            .executes(ctx -> init(autismclient.commands.a.SyncManager.init(ctx, "slot")))
+         RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("slot", autismclient.commands.a.XCarrySlotArgumentType.init())
+            .executes(ctx -> init(autismclient.commands.a.XCarrySlotArgumentType.init(ctx, "slot")))
       );
    }
 
@@ -64,7 +64,7 @@ public class XCarryCommand extends Command {
             }
 
             String itemName = heldStack.getHoverName().getString();
-            String slotName = autismclient.commands.a.SyncManager.init_Str_I(targetSlot);
+            String slotName = autismclient.commands.a.XCarrySlotArgumentType.init_Str_I(targetSlot);
             LinkedHashSet<Integer> forcedSlots = init(shared);
             boolean forcedCursor = shared.sync_Z() && shared.flush_Z();
             if (targetSlot == -2147483648) {

@@ -1644,14 +1644,14 @@ public final class f {
       private void push() {
          if (!this.bool("stop-macro-enabled") && this.value("stop-macro").trim().isEmpty()) {
             if (Boolean.parseBoolean(this.value("stop-inv-slots"))) {
-               autismclient.util.aM macro = cL.init(cL.Inner_DataUtil.FREE_SLOTS);
+               autismclient.util.AutismMacro macro = cL.init(cL.Inner_DataUtil.FREE_SLOTS);
                if (macro != null) {
                   this.init(macro, cL.Inner_DataUtil.FREE_SLOTS);
                   this.setValue("stop-macro-enabled", "true");
                   this.setValue("stop-macro", macro.init_Str);
                }
             } else if (Boolean.parseBoolean(this.value("stop-out-of-rods"))) {
-               autismclient.util.aM macro = cL.init(cL.Inner_DataUtil.DURABILITY);
+               autismclient.util.AutismMacro macro = cL.init(cL.Inner_DataUtil.DURABILITY);
                if (macro != null) {
                   this.init(macro, cL.Inner_DataUtil.DURABILITY);
                   this.setValue("stop-macro-enabled", "true");
@@ -1661,7 +1661,7 @@ public final class f {
          }
       }
 
-      private void init(autismclient.util.aM macro, cL.Inner_DataUtil preset) {
+      private void init(autismclient.util.AutismMacro macro, cL.Inner_DataUtil preset) {
          if (macro != null && macro.init_List != null && !macro.init_List.isEmpty() && preset != null) {
             if (preset == cL.Inner_DataUtil.FREE_SLOTS && macro.init_List.get(0) instanceof autismclient.util.macro.WaitFreeSlotsAction wait) {
                int slots = AuditClientFixes.autoFishMinFreeSlots(this, wait.slots);
@@ -1703,13 +1703,13 @@ public final class f {
             if (macroName.isBlank()) {
                this.load("AutoFish auto stop rule missing.");
             } else {
-               autismclient.util.aM macro = autismclient.util.aN.init_aN().init_aM_Str(macroName);
+               autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(macroName);
                if (macro == null) {
                   this.load("AutoFish auto stop rule not found: " + macroName);
                } else if (!cL.init(macro)) {
                   this.load("AutoFish auto stop rule must start with a conditional.");
                } else {
-                  autismclient.util.aM runtimeMacro = this.init_aM_aM(macro);
+                  autismclient.util.AutismMacro runtimeMacro = this.init_aM_aM(macro);
                   if (runtimeMacro != null && runtimeMacro.init_List != null && !runtimeMacro.init_List.isEmpty()) {
                      runtimeMacro.load_V();
                      this.init_J = MacroExecutor.init_J_aM_MacroExecutor_Pool(runtimeMacro, MacroExecutor.Inner_PoolEntry.init_MacroExecutor_Pool());
@@ -1728,16 +1728,16 @@ public final class f {
          String macroName = this.value("stop-macro").trim();
          cL.Inner_DataUtil preset = cL.init_cL_DataUtil(macroName);
          if (preset != null) {
-            autismclient.util.aM macro = autismclient.util.aN.init_aN().init_aM_Str(macroName);
+            autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(macroName);
             if (macro != null) {
                this.init(macro, preset);
             }
          }
       }
 
-      private autismclient.util.aM init_aM_aM(autismclient.util.aM source) {
+      private autismclient.util.AutismMacro init_aM_aM(autismclient.util.AutismMacro source) {
          if (source != null && source.init_List != null) {
-            autismclient.util.aM runtime = source.init_aM_Str(source.init_Str);
+            autismclient.util.AutismMacro runtime = source.init_aM_Str(source.init_Str);
             runtime.load_I = -1;
             runtime.init_Z = false;
             runtime.init_I = -1;
@@ -1976,9 +1976,9 @@ public final class f {
       private static final ValueRange init_ValueRange = new ValueRange(25, 50);
       private static final double init_D = 250.0;
       private final h init_h;
-      private final autismclient.util.a.DataUtil init_DataUtil = new autismclient.util.a.DataUtil();
-      private final autismclient.util.a.StreamUtil init_StreamUtil = autismclient.util.a.StreamUtil.init_StreamUtil();
-      private final autismclient.util.a.StreamUtil load_StreamUtil = autismclient.util.a.StreamUtil.load_StreamUtil();
+      private final autismclient.util.a.ClickPatternEngine init_DataUtil = new autismclient.util.a.ClickPatternEngine();
+      private final autismclient.util.a.KeyClickOutput init_StreamUtil = autismclient.util.a.KeyClickOutput.init_StreamUtil();
+      private final autismclient.util.a.KeyClickOutput load_StreamUtil = autismclient.util.a.KeyClickOutput.load_StreamUtil();
       private final Random init_Random = new Random();
       private boolean init_Z;
       private long init_J = -9223372036854775808L;
@@ -2035,8 +2035,8 @@ public final class f {
       public void onInputFrame() {
          long now = System.nanoTime();
          boolean right = "Right".equals(this.choice("button"));
-         autismclient.util.a.StreamUtil output = right ? this.load_StreamUtil : this.init_StreamUtil;
-         autismclient.util.a.StreamUtil other = right ? this.init_StreamUtil : this.load_StreamUtil;
+         autismclient.util.a.KeyClickOutput output = right ? this.load_StreamUtil : this.init_StreamUtil;
+         autismclient.util.a.KeyClickOutput other = right ? this.init_StreamUtil : this.load_StreamUtil;
          output.init_V();
          other.init_V();
          if (other.init_Z()) {
@@ -2046,7 +2046,7 @@ public final class f {
          if (!this.load_Z_18() && !"Hold".equals(this.choice("mode"))) {
             boolean holdDown = "Hold Down".equals(this.choice("mode"));
             boolean physical = output.load_Z();
-            autismclient.util.a.CachePool profile = this.init_h.init_CachePool();
+            autismclient.util.a.ClickProfile profile = this.init_h.init_CachePool();
             this.init_DataUtil.init_V_DataUtil_ConfigSto(this.init_h.init_DataUtil_ConfigSto());
             output.init_V_Z(holdDown && physical);
             if (physical && !this.init_Z) {
@@ -2069,7 +2069,7 @@ public final class f {
          }
       }
 
-      private boolean init(long now, boolean right, autismclient.util.a.StreamUtil output) {
+      private boolean init(long now, boolean right, autismclient.util.a.KeyClickOutput output) {
          boolean working = !right && this.bool("break-blocks") && this.init_Z_39();
          if (!working) {
             this.init_V_36();
@@ -4483,7 +4483,7 @@ public final class f {
       private static final ValueRange init_ValueRange = new ValueRange(50, 80);
       private static final double load_D = 250.0;
       private final h init_h;
-      private final autismclient.util.a.DataUtil init_DataUtil = new autismclient.util.a.DataUtil();
+      private final autismclient.util.a.ClickPatternEngine init_DataUtil = new autismclient.util.a.ClickPatternEngine();
       private final f.Inner_EventBus.Inner_DataUtil init_f_EventBus_DataUti = new f.Inner_EventBus.Inner_DataUtil();
       private final Random init_Random = new Random();
       private boolean init_Z;
@@ -4532,7 +4532,7 @@ public final class f {
             this.init_Z = false;
             this.init_J = -9223372036854775808L;
          } else {
-            autismclient.util.a.CachePool profile = this.init_h.init_CachePool();
+            autismclient.util.a.ClickProfile profile = this.init_h.init_CachePool();
             this.init_DataUtil.init_V_DataUtil_ConfigSto(this.init_h.init_DataUtil_ConfigSto());
             if (!this.init_Z) {
                this.init_DataUtil.init_V_J_2(now, profile, this.init_f_EventBus_DataUti);
@@ -4762,7 +4762,7 @@ public final class f {
          return MC.player.getMainHandItem().getItem() instanceof BlockItem || MC.player.getOffhandItem().getItem() instanceof BlockItem;
       }
 
-      private final class Inner_DataUtil implements autismclient.util.a.DataUtil.Inner_NetHelper {
+      private final class Inner_DataUtil implements autismclient.util.a.ClickPatternEngine.Inner_NetHelper {
          @Override
          public boolean init_Z_J(long now) {
             if (!Inner_EventBus.this.update_Z_7()) {
@@ -5548,7 +5548,7 @@ public final class f {
          this.add(new BoolSetting("exposed-only", "Exposed Only", false).description("Only exposed ores.").visibleWhen(this::init_Z_43).build());
          this.add(new BoolSetting("fill", "Fill", true).description("Shade box interiors.").visibleWhen(this::load).build());
 
-         for (autismclient.util.oresim.CachePool.Inner_DataUtil kind : autismclient.util.oresim.CachePool.Inner_DataUtil.values()) {
+         for (autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind : autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.values()) {
             this.add(new ColorSetting(kind.init(), kind.load_Str, kind.init_I).group("Colors").visibleWhen(() -> this.load() && ak.init_Z(this, kind)).build());
          }
 
@@ -5595,7 +5595,7 @@ public final class f {
          }
 
          if ("oresim-seed".equals(settingId)) {
-            autismclient.util.oresim.StreamUtil.init_V();
+            autismclient.util.oresim.OreSimEngine.init_V();
          }
       }
 
@@ -5624,7 +5624,7 @@ public final class f {
       @Override
       public void onDisable() {
          this.init_Str = "";
-         autismclient.util.oresim.StreamUtil.load_V();
+         autismclient.util.oresim.OreSimEngine.load_V();
          if (this.init_Z_43()) {
             am.init_V();
          }
@@ -5632,9 +5632,9 @@ public final class f {
 
       @Override
       public void onGameLeft() {
-         autismclient.util.oresim.StreamUtil.init_V();
-         autismclient.util.oresim.StreamUtil.write_V();
-         autismclient.util.oresim.DataUtil.init();
+         autismclient.util.oresim.OreSimEngine.init_V();
+         autismclient.util.oresim.OreSimEngine.write_V();
+         autismclient.util.oresim.OreGhostModelCache.init();
       }
 
       @Override
@@ -5670,7 +5670,7 @@ public final class f {
       }
 
       private static String init_Str_12() {
-         return String.join("|", autismclient.util.oresim.CachePool.init_List);
+         return String.join("|", autismclient.util.oresim.OreBlockCatalog.init_List);
       }
    }
 
@@ -8333,7 +8333,7 @@ public final class f {
                if (msg.startsWith("/") && msg.length() > 1) {
                   MC.getConnection().sendCommand(msg.substring(1));
                } else {
-                  autismclient.commands.DataUtil.init(MC.getConnection(), msg);
+                  autismclient.commands.CommandManager.init(MC.getConnection(), msg);
                }
             }
          }

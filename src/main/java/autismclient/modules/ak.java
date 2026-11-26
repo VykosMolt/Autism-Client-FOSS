@@ -62,7 +62,7 @@ public final class ak {
    private static boolean read_Z;
    private static int pop = -2147483648;
    private static final Object2IntOpenHashMap<Block> init_Object2IntOpenHash = new Object2IntOpenHashMap<>();
-   private static volatile autismclient.util.oresim.BufferHelper.Inner_DataUtil init_BufferHelper_DataU = autismclient.util.oresim.BufferHelper.init(null);
+   private static volatile autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil init_BufferHelper_DataU = autismclient.util.oresim.OreSimSeedParser.init(null);
    private static final long read_J = TimeUnit.MINUTES.toNanos(2L);
    private static ak.Inner_StreamUtil write_ak_StreamUtil;
    private static boolean[] init_ZArr = new boolean[0];
@@ -153,7 +153,7 @@ public final class ak {
                Block block = BuiltInRegistries.BLOCK.getOptional(parsed).orElse(Blocks.AIR);
                if (block != Blocks.AIR) {
                   blocks.add(block);
-                  autismclient.util.oresim.CachePool.Inner_DataUtil family = autismclient.util.oresim.CachePool.init(id);
+                  autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil family = autismclient.util.oresim.OreBlockCatalog.init(id);
                   if (family != null) {
                      mask |= 1 << family.ordinal();
                   } else if (!nonOre.contains(id)) {
@@ -171,7 +171,7 @@ public final class ak {
       return init_ak_StreamUtil(xray).init_I();
    }
 
-   static boolean init_Z(Module xray, autismclient.util.oresim.CachePool.Inner_DataUtil kind) {
+   static boolean init_Z(Module xray, autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind) {
       return kind != null && (init_ak_StreamUtil(xray).init_I() & 1 << kind.ordinal()) != 0;
    }
 
@@ -189,7 +189,7 @@ public final class ak {
       return init_List(xray).contains(id);
    }
 
-   static int init_I(Module xray, autismclient.util.oresim.CachePool.Inner_DataUtil kind) {
+   static int init_I(Module xray, autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind) {
       return am.init_I_Module(xray, kind.init(), kind.init_I);
    }
 
@@ -210,19 +210,19 @@ public final class ak {
       }
 
       Identifier id = BuiltInRegistries.BLOCK.getKey(block);
-      autismclient.util.oresim.CachePool.Inner_DataUtil family = id == null ? null : autismclient.util.oresim.CachePool.init(id.toString());
+      autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil family = id == null ? null : autismclient.util.oresim.OreBlockCatalog.init(id.toString());
       int color = family != null ? init_I(xray, family) : (id == null ? -3355444 : am.init_I_Module(xray, "block-color-" + id, -3355444));
       init_Object2IntOpenHash.put(block, color);
       return color;
    }
 
    static Long init_Long(Module xray) {
-      autismclient.util.oresim.BufferHelper.Inner_DataUtil parsed = autismclient.util.oresim.BufferHelper.init(xray == null ? null : xray.value("oresim-seed"));
+      autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil parsed = autismclient.util.oresim.OreSimSeedParser.init(xray == null ? null : xray.value("oresim-seed"));
       init_BufferHelper_DataU = parsed;
       return parsed.init_Long();
    }
 
-   public static autismclient.util.oresim.BufferHelper.Inner_StreamUtil init_BufferHelper_Strea(Module xray) {
+   public static autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil init_BufferHelper_Strea(Module xray) {
       init_Long(xray);
       return init_BufferHelper_DataU.init_BufferHelper_Strea();
    }
@@ -246,7 +246,7 @@ public final class ak {
 
    static void init(Module xray, ClientLevel level, Player player) {
       if (init_Z(xray) && xray != null && xray.isEnabled() && level != null && player != null) {
-         autismclient.util.oresim.StreamUtil.read_V();
+         autismclient.util.oresim.OreSimEngine.read_V();
          Long parsedSeed = init_Long(xray);
          int mask = init_I(xray);
          long now = System.nanoTime();
@@ -254,23 +254,23 @@ public final class ak {
             init_Z = true;
             init_Long = parsedSeed;
             load_J = now + 400000000L;
-            autismclient.util.oresim.StreamUtil.init_V();
+            autismclient.util.oresim.OreSimEngine.init_V();
          } else if (parsedSeed != null && mask != 0 && now >= load_J) {
-            autismclient.util.oresim.StreamUtil.init(level, player.blockPosition(), parsedSeed, write_I(xray), mask);
+            autismclient.util.oresim.OreSimEngine.init(level, player.blockPosition(), parsedSeed, write_I(xray), mask);
             if (++open >= 4) {
                open = 0;
                load(xray, level, player);
             }
          } else {
-            autismclient.util.oresim.StreamUtil.init_V();
+            autismclient.util.oresim.OreSimEngine.init_V();
          }
       } else {
-         autismclient.util.oresim.StreamUtil.load_V();
+         autismclient.util.oresim.OreSimEngine.load_V();
       }
    }
 
    public static void init_V() {
-      if (autismclient.util.oresim.StreamUtil.init(read_J)) {
+      if (autismclient.util.oresim.OreSimEngine.init(read_J)) {
          init_Z = false;
          init_Long = null;
          load_J = 0L;
@@ -284,8 +284,8 @@ public final class ak {
          double maxDistSq = 25.0;
          MutableBlockPos cursor = new MutableBlockPos();
          int[] rays = new int[]{0};
-         autismclient.util.oresim.StreamUtil.init_V_BlockPos(player.blockPosition(), 5, (stateId, packed) -> {
-            BlockState predicted = autismclient.util.oresim.CachePool.Inner_StreamUtil.init_BlockState(stateId);
+         autismclient.util.oresim.OreSimEngine.init_V_BlockPos(player.blockPosition(), 5, (stateId, packed) -> {
+            BlockState predicted = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init_BlockState(stateId);
             if (predicted == null) {
                return false;
             } else {
@@ -323,16 +323,16 @@ public final class ak {
    }
 
    static long init(Module xray, ClientLevel level) {
-      return init_Z(xray) ? (long)autismclient.util.oresim.StreamUtil.read_I() << 1 | 1L : (long)af.init_I() << 1;
+      return init_Z(xray) ? (long)autismclient.util.oresim.OreSimEngine.read_I() << 1 | 1L : (long)af.init_I() << 1;
    }
 
    private static boolean init(ak.Inner_StreamUtil selection, int stateId) {
-      BlockState state = autismclient.util.oresim.CachePool.Inner_StreamUtil.init_BlockState(stateId);
+      BlockState state = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init_BlockState(stateId);
       return state != null && selection.init_Set().contains(state.getBlock());
    }
 
    private static boolean[] init_ZArr(ak.Inner_StreamUtil selection) {
-      int count = autismclient.util.oresim.CachePool.Inner_StreamUtil.init();
+      int count = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init();
       boolean[] table = init_ZArr;
       if (selection == write_ak_StreamUtil && table.length == count) {
          return table;
@@ -362,7 +362,7 @@ public final class ak {
          }
 
          Vec3 eyes = player.getEyePosition();
-         return autismclient.util.oresim.StreamUtil.init(eyes.x, eyes.y, eyes.z, write_I(xray), init_IntPredicate(selection), 8192, outPos, outState);
+         return autismclient.util.oresim.OreSimEngine.init(eyes.x, eyes.y, eyes.z, write_I(xray), init_IntPredicate(selection), 8192, outPos, outState);
       } else {
          return 0;
       }
@@ -382,15 +382,15 @@ public final class ak {
       ak.Inner_StreamUtil selection = init_ak_StreamUtil(xray);
       if (!selection.init_Set().isEmpty()) {
          Vec3 eyes = player.getEyePosition();
-         int count = autismclient.util.oresim.StreamUtil.init(eyes.x, eyes.y, eyes.z, write_I(xray), init_IntPredicate(selection), 8192, init_JArr, init_IArr);
-         int[] colors = new int[autismclient.util.oresim.CachePool.Inner_DataUtil.values().length];
+         int count = autismclient.util.oresim.OreSimEngine.init(eyes.x, eyes.y, eyes.z, write_I(xray), init_IntPredicate(selection), 8192, init_JArr, init_IArr);
+         int[] colors = new int[autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.values().length];
 
-         for (autismclient.util.oresim.CachePool.Inner_DataUtil kind : autismclient.util.oresim.CachePool.Inner_DataUtil.values()) {
+         for (autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind : autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.values()) {
             colors[kind.ordinal()] = init_I(xray, kind);
          }
 
          for (int i = 0; i < count; i++) {
-            autismclient.util.oresim.CachePool.Inner_DataUtil kind = autismclient.util.oresim.CachePool.Inner_StreamUtil.init_CachePool_DataUtil(init_IArr[i]);
+            autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.init_CachePool_DataUtil(init_IArr[i]);
             emit.accept(init(init_JArr[i]), kind == null ? -3355444 : colors[kind.ordinal()]);
          }
       }
@@ -610,7 +610,7 @@ public final class ak {
                set = 0;
             } else {
                LongOpenHashSet predicted = new LongOpenHashSet();
-               autismclient.util.oresim.StreamUtil.init_V_BlockPos_2(center, 6, predicted);
+               autismclient.util.oresim.OreSimEngine.init_V_BlockPos_2(center, 6, predicted);
                int emitted = 0;
                int skippedPredicted = 0;
                int[] rays = new int[]{0};
@@ -694,26 +694,26 @@ public final class ak {
       if (xray != null && xray.isEnabled() && init_Z(xray)) {
          boolean shaderCullMode = !load_Z(xray) && am.pop();
          Long parsedSeed = init_Long(xray);
-         if (init_BufferHelper_DataU.init_BufferHelper_Strea() == autismclient.util.oresim.BufferHelper.Inner_StreamUtil.INVALID) {
+         if (init_BufferHelper_DataU.init_BufferHelper_Strea() == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID) {
             return "invalid seed";
          } else if (parsedSeed == null) {
             return "no seed";
          } else if (init_I(xray) == 0) {
             return "no ores";
-         } else if (autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.UNSUPPORTED_DIMENSION) {
+         } else if (autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNSUPPORTED_DIMENSION) {
             return "unsupported dimension";
-         } else if (autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.UNVERIFIED_WORLDGEN) {
+         } else if (autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNVERIFIED_WORLDGEN) {
             return "unverified worldgen";
-         } else if (autismclient.util.oresim.StreamUtil.read_Z()) {
+         } else if (autismclient.util.oresim.OreSimEngine.read_Z()) {
             return "worldgen failed";
          } else {
-            autismclient.util.oresim.StreamUtil.Inner_ConfigStore progress = autismclient.util.oresim.StreamUtil.init_StreamUtil_ConfigS();
+            autismclient.util.oresim.OreSimEngine.Inner_ConfigStore progress = autismclient.util.oresim.OreSimEngine.init_StreamUtil_ConfigS();
             if (progress.load() > 0) {
                return init(progress);
             } else if (shaderCullMode) {
                return "Shader cull mode";
             } else {
-               return autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.LOADING_CONTEXT
+               return autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.LOADING_CONTEXT
                   ? "loading worldgen"
                   : "waiting";
             }
@@ -723,7 +723,7 @@ public final class ak {
       }
    }
 
-   static String init(autismclient.util.oresim.StreamUtil.Inner_ConfigStore progress) {
+   static String init(autismclient.util.oresim.OreSimEngine.Inner_ConfigStore progress) {
       return progress.init_I() + "/" + progress.load() + " chunks";
    }
 

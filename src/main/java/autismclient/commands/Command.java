@@ -31,7 +31,7 @@ public abstract class Command {
    public abstract void build(LiteralArgumentBuilder<AutismCommandSource> var1);
 
    public int run(CommandContext<AutismCommandSource> ctx) {
-      AutismClientMessaging.sendPrefixed("§eUsage: " + DataUtil.init_Str() + this.name + (this.aliases.length > 0 ? " (alias: " + this.aliases[0] + ")" : ""));
+      AutismClientMessaging.sendPrefixed("§eUsage: " + CommandManager.init_Str() + this.name + (this.aliases.length > 0 ? " (alias: " + this.aliases[0] + ")" : ""));
       if (!this.description.isEmpty()) {
          AutismClientMessaging.sendPrefixed("§7" + this.description);
       }

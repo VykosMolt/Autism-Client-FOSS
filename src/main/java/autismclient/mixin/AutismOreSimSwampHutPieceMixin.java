@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.util.j.a.BufferHelper;
+import autismclient.util.j.a.SyntheticWorldGenLevel;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.core.BlockPos;
@@ -32,7 +32,7 @@ public abstract class AutismOreSimSwampHutPieceMixin {
       BlockPos pivot,
       Operation<Void> original
    ) {
-      if (level instanceof BufferHelper) {
+      if (level instanceof SyntheticWorldGenLevel) {
          this.spawnedWitch = true;
          this.spawnedCat = true;
       }

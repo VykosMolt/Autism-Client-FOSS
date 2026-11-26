@@ -2,8 +2,8 @@ package autismclient.mixin;
 
 import autismclient.compat263.Compat263;
 import autismclient.modules.L;
-import autismclient.util.c.CachePool;
-import autismclient.util.c.StreamUtil;
+import autismclient.util.c.GifTextureManager;
+import autismclient.util.c.GifRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.object.equipment.ShieldModel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -45,7 +45,7 @@ public abstract class AutismGifShieldMixin {
       CallbackInfo ci
    ) {
       if (L.load_Z()) {
-         String name = StreamUtil.init_Z() ? L.init_Str() : StreamUtil.init_Str();
+         String name = GifRenderContext.init_Z() ? L.init_Str() : GifRenderContext.init_Str();
          if (name != null && !name.isEmpty()) {
             String path = L.load(name);
             if (path != null) {
@@ -54,7 +54,7 @@ public abstract class AutismGifShieldMixin {
                   : BannerPatternLayers.EMPTY;
                DyeColor baseColor = components != null ? components.get(DataComponents.BASE_COLOR) : null;
                if (patterns.layers().isEmpty() && baseColor == null) {
-                  Identifier texture = CachePool.load(path, L.load_D(), L.write_Z(), L.write_D());
+                  Identifier texture = GifTextureManager.load(path, L.load_D(), L.write_Z(), L.write_D());
                   if (texture != null) {
                      Compat263.submitModel(
                         submitNodeCollector,

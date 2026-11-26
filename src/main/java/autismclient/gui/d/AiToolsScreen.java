@@ -75,7 +75,7 @@ public final class AiToolsScreen extends Screen {
          int sh = cA.load_I();
          autismclient.gui.f.SyncManager ctx = autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my);
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), -1610021111);
-         String toolsCommand = autismclient.commands.DataUtil.init_Str() + "tools";
+         String toolsCommand = autismclient.commands.CommandManager.init_Str() + "tools";
          String title = "AI TOOLS  ·  " + toolsCommand + " defaults";
          String help = "Read when a " + toolsCommand + " op starts; Esc discards, Done saves.";
          int margin = 6;

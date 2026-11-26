@@ -105,7 +105,7 @@ public final class PoolEntry {
    private boolean close_Z;
    private boolean open;
    private final Map<String, Boolean> init_Map = new HashMap<>();
-   private List<autismclient.util.aM> init_List = List.of();
+   private List<autismclient.util.AutismMacro> init_List = List.of();
    private long load_J = -1L;
    private int read_I;
    private int write_I;
@@ -447,8 +447,8 @@ public final class PoolEntry {
    public void write_V() {
       dm.init_V();
       ar.load_V();
-      autismclient.util.oresim.StreamUtil.init_V();
-      autismclient.util.oresim.StreamUtil.write_V();
+      autismclient.util.oresim.OreSimEngine.init_V();
+      autismclient.util.oresim.OreSimEngine.write_V();
       this.pop = false;
       this.tick = false;
       this.run = false;
@@ -1938,7 +1938,7 @@ public final class PoolEntry {
                this.close_Z = pressed;
             }
 
-            for (autismclient.util.aM macro : this.init_List) {
+            for (autismclient.util.AutismMacro macro : this.init_List) {
                boolean pressed = this.init_Z_I(macro.load_I);
                boolean wasPressed = this.init_Map.getOrDefault(macro.init_Str, false);
                if (pressed && !wasPressed) {
@@ -1959,10 +1959,10 @@ public final class PoolEntry {
       autismclient.util.aN macroManager = autismclient.util.aN.init_aN();
       long revision = macroManager.init_J();
       if (revision != this.load_J) {
-         List<autismclient.util.aM> keyboundMacros = new ArrayList<>();
+         List<autismclient.util.AutismMacro> keyboundMacros = new ArrayList<>();
          Set<String> activeMacroNames = new HashSet<>();
 
-         for (autismclient.util.aM macro : macroManager.init_List()) {
+         for (autismclient.util.AutismMacro macro : macroManager.init_List()) {
             if (macro != null && macro.load_I != -1) {
                keyboundMacros.add(macro);
                activeMacroNames.add(macro.init_Str);

@@ -465,7 +465,7 @@ public class ThemeColorScreen extends Screen {
 
       for (int i = 0; i < preview.size() && y + this.open() <= contentLimit; i++) {
          Module m = preview.get(i);
-         String key = m.keybind() >= 0 ? autismclient.commands.a.StreamUtil.init_Str_I(m.keybind()) : "";
+         String key = m.keybind() >= 0 ? autismclient.commands.a.KeyBindArgumentType.init_Str_I(m.keybind()) : "";
          y = this.init(g, x, y, innerW, m.name(), key, m.isEnabled(), i == 0, i == 1);
       }
 

@@ -58,7 +58,7 @@ public final class cd {
          init_ClientLevel = mc.level;
          mc.options.setCameraType(CameraType.FIRST_PERSON);
          mc.setCameraEntity(player);
-         return new cd.Inner_DataUtil(true, "Viewing " + init_Str + ". Use " + autismclient.commands.DataUtil.init_Str() + "rv stop to leave.");
+         return new cd.Inner_DataUtil(true, "Viewing " + init_Str + ". Use " + autismclient.commands.CommandManager.init_Str() + "rv stop to leave.");
       } else {
          return new cd.Inner_DataUtil(false, "Join a world first.");
       }

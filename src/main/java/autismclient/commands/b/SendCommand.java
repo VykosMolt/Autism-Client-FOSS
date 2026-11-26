@@ -21,18 +21,18 @@ public class SendCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.DataUtil.init_Str() + "send <packetName> [field=value ...]");
+         AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.init_Str() + "send <packetName> [field=value ...]");
          AutismClientMessaging.sendPrefixed("§7Tip: press Tab after the space to search C2S packet classes.");
-         AutismClientMessaging.sendPrefixed("§7Example: §f" + autismclient.commands.DataUtil.init_Str() + "send ServerboundSetCarriedItemPacket slot=0");
+         AutismClientMessaging.sendPrefixed("§7Example: §f" + autismclient.commands.CommandManager.init_Str() + "send ServerboundSetCarriedItemPacket slot=0");
          return 1;
       });
       root.then(
-         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("packet", autismclient.commands.a.JsonUtil.init_JsonUtil())
-               .executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.a.JsonUtil.init(ctx, "packet"), "")))
+         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("packet", autismclient.commands.a.PacketNameArgumentType.init_JsonUtil())
+               .executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.a.PacketNameArgumentType.init(ctx, "packet"), "")))
             .then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("args", StringArgumentType.greedyString()).suggests((ctx, builder) -> {
-               Class<? extends Packet<?>> cls = bw.init_Class_Str(autismclient.commands.a.JsonUtil.init(ctx, "packet"));
+               Class<? extends Packet<?>> cls = bw.init_Class_Str(autismclient.commands.a.PacketNameArgumentType.init(ctx, "packet"));
                return bm.init_CompletableFuture_Class_SuggestionsBuilder(cls, builder);
-            }).executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.a.JsonUtil.init(ctx, "packet"), StringArgumentType.getString(ctx, "args"))))
+            }).executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.a.PacketNameArgumentType.init(ctx, "packet"), StringArgumentType.getString(ctx, "args"))))
       );
    }
 

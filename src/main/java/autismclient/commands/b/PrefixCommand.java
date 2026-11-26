@@ -25,7 +25,7 @@ public class PrefixCommand extends Command {
          AutismClientMessaging.sendPrefixed("Prefix reset to " + prefix);
          return 1;
       }));
-      root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("new", StringArgumentType.word()).suggests(autismclient.commands.StreamUtil::add).executes(ctx -> {
+      root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("new", StringArgumentType.word()).suggests(autismclient.commands.CommandSuggestions::add).executes(ctx -> {
          String requested = StringArgumentType.getString(ctx, "new");
          if (!z.init_List.contains(requested)) {
             AutismClientMessaging.sendPrefixed("Prefix must be one of: . % - _ * # @ & =");

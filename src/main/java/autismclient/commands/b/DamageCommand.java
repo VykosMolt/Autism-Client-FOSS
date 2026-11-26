@@ -17,12 +17,12 @@ public class DamageCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.DataUtil.init_Str() + "damage <amount>");
+         AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.init_Str() + "damage <amount>");
          return 1;
       });
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, Double>argument("amount", DoubleArgumentType.doubleArg(0.1, 1024.0))
-            .suggests(autismclient.commands.StreamUtil::update)
+            .suggests(autismclient.commands.CommandSuggestions::update)
             .executes(ctx -> {
                double amt = DoubleArgumentType.getDouble(ctx, "amount");
                ClientPacketListener conn = Minecraft.getInstance().getConnection();

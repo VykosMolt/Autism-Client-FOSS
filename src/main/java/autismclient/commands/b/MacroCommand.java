@@ -3,7 +3,7 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.aM;
+import autismclient.util.AutismMacro;
 import autismclient.util.aN;
 import autismclient.util.macro.MacroExecutor;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -24,7 +24,7 @@ public class MacroCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         String prefix = autismclient.commands.DataUtil.init_Str();
+         String prefix = autismclient.commands.CommandManager.init_Str();
          AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "macro <name> [times] [delayTicks]");
          AutismClientMessaging.sendPrefixed("§7Also: §f" + prefix + "macro stop [name] §7or §f" + prefix + "macro clear");
          return 1;
@@ -40,10 +40,10 @@ public class MacroCommand extends Command {
                   }
                ))
             .then(
-               RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.a.CachePool.init_CachePool())
+               RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.a.MacroNameArgumentType.init_CachePool())
                   .executes(
                      ctx -> {
-                        String name = autismclient.commands.a.CachePool.init(ctx, "name");
+                        String name = autismclient.commands.a.MacroNameArgumentType.init(ctx, "name");
                         AtomicBoolean flag = init.remove(name.toLowerCase());
                         if (flag != null) {
                            flag.set(false);
@@ -62,18 +62,18 @@ public class MacroCommand extends Command {
          return 1;
       }));
       root.then(
-         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.a.CachePool.init_CachePool())
-               .executes(ctx -> init(autismclient.commands.a.CachePool.init(ctx, "name"), 1, 0)))
+         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.a.MacroNameArgumentType.init_CachePool())
+               .executes(ctx -> init(autismclient.commands.a.MacroNameArgumentType.init(ctx, "name"), 1, 0)))
             .then(
                ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("times", IntegerArgumentType.integer(1, 100000))
-                     .suggests(autismclient.commands.StreamUtil::close)
-                     .executes(ctx -> init(autismclient.commands.a.CachePool.init(ctx, "name"), IntegerArgumentType.getInteger(ctx, "times"), 0)))
+                     .suggests(autismclient.commands.CommandSuggestions::close)
+                     .executes(ctx -> init(autismclient.commands.a.MacroNameArgumentType.init(ctx, "name"), IntegerArgumentType.getInteger(ctx, "times"), 0)))
                   .then(
                      RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("delayTicks", IntegerArgumentType.integer(0, 72000))
-                        .suggests(autismclient.commands.StreamUtil::open)
+                        .suggests(autismclient.commands.CommandSuggestions::open)
                         .executes(
                            ctx -> init(
-                              autismclient.commands.a.CachePool.init(ctx, "name"),
+                              autismclient.commands.a.MacroNameArgumentType.init(ctx, "name"),
                               IntegerArgumentType.getInteger(ctx, "times"),
                               IntegerArgumentType.getInteger(ctx, "delayTicks")
                            )
@@ -84,7 +84,7 @@ public class MacroCommand extends Command {
    }
 
    private static int init(String name, int times, int delayTicks) {
-      aM macro = aN.init_aN().init_aM_Str(name);
+      AutismMacro macro = aN.init_aN().init_aM_Str(name);
       if (macro == null) {
          AutismClientMessaging.sendPrefixed("§cMacro not found: §f" + name);
          return 1;

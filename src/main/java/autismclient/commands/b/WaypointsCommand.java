@@ -30,19 +30,19 @@ public final class WaypointsCommand extends Command {
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("del").executes(ctx -> this.init()))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", StringArgumentType.greedyString())
-                  .suggests(autismclient.commands.StreamUtil::tick)
+                  .suggests(autismclient.commands.CommandSuggestions::tick)
                   .executes(ctx -> this.load(StringArgumentType.getString(ctx, "name")))
             )
       );
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, Double>argument("x", DoubleArgumentType.doubleArg())
-            .suggests(autismclient.commands.StreamUtil::pop)
+            .suggests(autismclient.commands.CommandSuggestions::pop)
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Double>argument("y", DoubleArgumentType.doubleArg())
-                  .suggests(autismclient.commands.StreamUtil::pop)
+                  .suggests(autismclient.commands.CommandSuggestions::pop)
                   .then(
                      RequiredArgumentBuilder.<AutismCommandSource, Double>argument("z", DoubleArgumentType.doubleArg())
-                        .suggests(autismclient.commands.StreamUtil::pop)
+                        .suggests(autismclient.commands.CommandSuggestions::pop)
                         .executes(
                            ctx -> this.init(
                               DoubleArgumentType.getDouble(ctx, "x"), DoubleArgumentType.getDouble(ctx, "y"), DoubleArgumentType.getDouble(ctx, "z")
@@ -83,7 +83,7 @@ public final class WaypointsCommand extends Command {
 
    private int init() {
       AutismClientMessaging.sendPrefixed(
-         "§eUsage: " + autismclient.commands.DataUtil.init_Str() + "wp [x y z] | gui | del <name> | clear  §7(coordinates accept ~ and ~N)"
+         "§eUsage: " + autismclient.commands.CommandManager.init_Str() + "wp [x y z] | gui | del <name> | clear  §7(coordinates accept ~ and ~N)"
       );
       return 1;
    }

@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.commands.DataUtil;
+import autismclient.commands.CommandManager;
 import autismclient.e.RefQueue;
 import autismclient.modules.PoolEntry;
 import autismclient.util.AuditHideOff;
@@ -42,7 +42,7 @@ public abstract class AutismChatScreenMixin {
       if (message != null) {
          String trimmed = message.trim();
          if (!trimmed.isEmpty()) {
-            if (!"^toggleautism".equalsIgnoreCase(trimmed) && DataUtil.load_Z(trimmed)) {
+            if (!"^toggleautism".equalsIgnoreCase(trimmed) && CommandManager.load_Z(trimmed)) {
                ci.cancel();
             } else if ("^toggleautism".equalsIgnoreCase(trimmed)) {
                if (AuditHideOff.disable()) {
