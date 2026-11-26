@@ -3,7 +3,7 @@ package autismclient.mixin;
 import autismclient.AutismClientAddon;
 import autismclient.modules.AutoReconnectController;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.bV;
+import autismclient.util.AutismProfileManager;
 import autismclient.util.cx;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.Minecraft;
@@ -34,7 +34,7 @@ public abstract class AutismConnectScreenMixin {
       AutoReconnectController.init(data, hostAndPort);
       if (!AutismLiteVariant.enabled()) {
          try {
-            bV.init_bV().init_V_ServerAddress_ServerData(hostAndPort, data);
+            AutismProfileManager.init_bV().init_V_ServerAddress_ServerData(hostAndPort, data);
          } catch (Throwable t) {
             AutismClientAddon.LOG.error("Profiles: failed to apply on-connect profile", t);
          }

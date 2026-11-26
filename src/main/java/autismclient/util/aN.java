@@ -543,7 +543,7 @@ public class aN {
 
          tag.put("macros", list);
          tag.put("folders", this.init_cY.init_ListTag());
-         dj.init("macro-library:" + target.getAbsolutePath(), AuditMacroRead.track(() -> init_V_File_CompoundTag(target, tag), target, tag));
+         DebouncedPersistenceScheduler.init("macro-library:" + target.getAbsolutePath(), AuditMacroRead.track(() -> init_V_File_CompoundTag(target, tag), target, tag));
       }
 
       if (broadcast && aE.init_aE().write_Z()) {

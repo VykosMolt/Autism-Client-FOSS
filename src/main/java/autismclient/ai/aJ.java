@@ -1,8 +1,8 @@
 package autismclient.ai;
 
 import autismclient.api.ai.AiOperation;
-import autismclient.util.bm;
-import autismclient.util.de;
+import autismclient.util.PacketCommandBuilder;
+import autismclient.util.PacketRegenerator;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.util.List;
@@ -35,41 +35,41 @@ public final class aJ {
          throw new IllegalArgumentException("name is required; resolve packet names with client:packets first");
       }
 
-      Class<? extends Packet<?>> packetClass = autismclient.util.bw.init_Class_Str(name);
+      Class<? extends Packet<?>> packetClass = autismclient.util.PacketTypeRegistry.init_Class_Str(name);
       if (packetClass == null) {
          throw new IllegalArgumentException("Unknown packet '" + name + "'; search exact names with client:packets first");
       }
 
-      if (!autismclient.util.bw.load().contains(packetClass)) {
+      if (!autismclient.util.PacketTypeRegistry.load().contains(packetClass)) {
          throw new IllegalArgumentException(
-            autismclient.util.bw.init_Set().contains(packetClass)
+            autismclient.util.PacketTypeRegistry.init_Set().contains(packetClass)
                ? name + " is S2C-only; the client cannot originate it"
                : name + " is not registered as a C2S packet"
          );
       }
 
       String rawArgs = ag.init_Str_JsonObject(args, "args", "");
-      bm.Inner_StreamUtil built = bm.init_bm_StreamUtil_Class_Str(packetClass, rawArgs);
+      PacketCommandBuilder.Inner_StreamUtil built = PacketCommandBuilder.init_bm_StreamUtil_Class_Str(packetClass, rawArgs);
       if (built != null && built.init_Z() && built.init_Packet() != null) {
          Packet<?> packet = built.init_Packet();
          boolean regenerate = ag.init_Z_JsonObject(args, "regenerate", false);
          String mode = ag.init_Str_JsonObject(args, "mode", "send").trim().toLowerCase(Locale.ROOT);
          JsonObject out = new JsonObject();
-         out.addProperty("name", autismclient.util.bw.init_Str_Class(packetClass));
+         out.addProperty("name", autismclient.util.PacketTypeRegistry.init_Str_Class(packetClass));
          out.addProperty("packetClass", packetClass.getName());
          out.addProperty("mode", mode);
          out.addProperty("numericPacketId", aI.init(packet.type(), "C2S"));
-         autismclient.util.bx.Inner_StreamUtil schema = autismclient.util.bx.init(packetClass);
+         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(packetClass);
          out.addProperty("schemaComplete", schema != null && schema.init_Z() && !schema.load_Z());
          out.addProperty("builderSource", built.load_Str() == null ? "" : built.load_Str());
          switch (mode) {
             case "send":
-               Packet<?> wire = regenerate ? de.init(packet) : packet;
+               Packet<?> wire = regenerate ? PacketRegenerator.init(packet) : packet;
                if (wire == null) {
                   throw new IllegalArgumentException("PacketRegenerator produced no packet for " + name);
                }
 
-               autismclient.util.by.init(wire);
+               autismclient.util.DirectPacketSender.init(wire);
                out.addProperty("sent", true);
                out.addProperty("regenerated", regenerate && wire != packet);
                break;
@@ -110,7 +110,7 @@ public final class aJ {
          return out;
       } else {
          String reason = built == null ? "no builder accepted the arguments" : built.init_Str();
-         String help = init(bm.init_Str_Class(packetClass), 2000);
+         String help = init(PacketCommandBuilder.init_Str_Class(packetClass), 2000);
          throw new IllegalArgumentException("Could not build " + name + ": " + reason + (help.isEmpty() ? "" : "\n" + help));
       }
    }
@@ -285,7 +285,7 @@ public final class aJ {
    }
 
    private static String init(Packet<?> packet) {
-      String name = autismclient.util.bw.init_Str_Class((Class<? extends Packet<?>>)packet.getClass());
+      String name = autismclient.util.PacketTypeRegistry.init_Str_Class((Class<? extends Packet<?>>)packet.getClass());
       return name == null ? packet.getClass().getSimpleName() : name;
    }
 

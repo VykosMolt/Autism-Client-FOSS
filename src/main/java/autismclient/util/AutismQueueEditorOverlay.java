@@ -494,7 +494,7 @@ public class AutismQueueEditorOverlay extends bj {
                int rowRight = leftX + rowWidth;
                int bx = leftX;
                bx = this.init(context, bx, row1Y, this.next(), "Copy", mouseX, mouseY, "Copy queue to clipboard (serialized)", () -> {
-                  o.init_V(this.init_List_12());
+                  MacroClipboardCodec.init_V(this.init_List_12());
                   bi.init("Queue copied.");
                }) + gap;
                bx = this.init(context, bx, row1Y, this.next(), "Paste", mouseX, mouseY, "Replace queue from clipboard", () -> {
@@ -502,7 +502,7 @@ public class AutismQueueEditorOverlay extends bj {
                      ck.Inner_CachePool.load_V();
                   }
 
-                  List<ck.Inner_CachePool> newQueue = o.read();
+                  List<ck.Inner_CachePool> newQueue = MacroClipboardCodec.read();
                   if (newQueue != null) {
                      ck.init_ck().load_V_List(newQueue);
                      this.flush_V_16();
@@ -525,7 +525,7 @@ public class AutismQueueEditorOverlay extends bj {
                   }
                }) + gap;
                bx = this.init(context, bx, row1Y, this.next(), "Ins", mouseX, mouseY, "Insert clipboard packets at the end of the queue", () -> {
-                  List<ck.Inner_CachePool> newPackets = o.read();
+                  List<ck.Inner_CachePool> newPackets = MacroClipboardCodec.read();
                   if (newPackets != null && !newPackets.isEmpty()) {
                      List<ck.Inner_CachePool> combinedQueue = new ArrayList<>(ck.init_ck().load_List());
                      combinedQueue.addAll(newPackets);
@@ -848,7 +848,7 @@ public class AutismQueueEditorOverlay extends bj {
                            selected,
                            grouped ? autismclient.gui.f.b.FileCache.Inner_DataUtil.WARNING : autismclient.gui.f.b.FileCache.Inner_DataUtil.NORMAL
                         );
-                        String label = "#" + packet.init_I() + " " + bv.init_Str_Packet(packet.init_Packet);
+                        String label = "#" + packet.init_I() + " " + PacketNameResolver.init_Str_Packet(packet.init_Packet);
                         String delayText = String.valueOf(packet.load_I());
                         int labelMaxWidth = this.open(rowX, rowW);
                         String trimmed = autismclient.gui.f.b.k.init(
@@ -1103,7 +1103,7 @@ public class AutismQueueEditorOverlay extends bj {
             if (queue.isEmpty()) {
                AutismClientMessaging.sendPrefixed("§cQueue is empty");
             } else {
-               String queueData = o.init_Str(queue);
+               String queueData = MacroClipboardCodec.init_Str(queue);
                if (queueData == null) {
                   AutismClientMessaging.sendPrefixed("§cFailed to serialize queue");
                } else {

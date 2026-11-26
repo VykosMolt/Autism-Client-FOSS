@@ -814,7 +814,7 @@ public class ThemeColorScreen extends Screen {
       init_V_AutismConfig_Theme_AutismConfig_Theme(this.init_AutismConfig_Theme, this.init_AutismConfig.themeColors);
       ct.init_V();
       Runnable saved = autismclient.gui.CachePool.init("Saving config");
-      autismclient.util.ClassCache.init_Future_Str_Runnable("theme-config-save", () -> {
+      autismclient.util.BackgroundTaskExecutor.init_Future_Str_Runnable("theme-config-save", () -> {
          try {
             this.init_AutismConfig.save();
          } finally {

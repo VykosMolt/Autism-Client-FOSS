@@ -5,7 +5,7 @@ import autismclient.commands.CommandManager;
 import autismclient.compat263.Compat263;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.cx;
-import autismclient.util.n;
+import autismclient.util.SystemClipboardHelper;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.client.KeyboardHandler;
@@ -131,14 +131,14 @@ public class AutismKeyboardHandlerMixin {
    @Inject(method = "getClipboard", at = @At("HEAD"), cancellable = true)
    private void autism$linuxClipboardGet(CallbackInfoReturnable<String> cir) {
       if (Util.getPlatform() == OS.LINUX) {
-         cir.setReturnValue(n.init_Str());
+         cir.setReturnValue(SystemClipboardHelper.init_Str());
       }
    }
 
    @Inject(method = "setClipboard", at = @At("HEAD"), cancellable = true)
    private void autism$linuxClipboardSet(String text, CallbackInfo ci) {
       if (Util.getPlatform() == OS.LINUX) {
-         n.init_V(text);
+         SystemClipboardHelper.init_V(text);
          ci.cancel();
       }
    }

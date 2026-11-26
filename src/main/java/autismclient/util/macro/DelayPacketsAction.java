@@ -1,7 +1,7 @@
 package autismclient.util.macro;
 
-import autismclient.util.bv;
-import autismclient.util.bw;
+import autismclient.util.PacketNameResolver;
+import autismclient.util.PacketTypeRegistry;
 import autismclient.util.ck;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,10 +43,10 @@ public class DelayPacketsAction implements MacroAction {
       for (String target : defaultNames) {
          String targetNoSuffix = target.endsWith("Packet") ? target.substring(0, target.length() - 6) : target;
 
-         for (Class<?> clz : bw.load()) {
-            String registryName = bw.init_Str_Class((Class<? extends Packet<?>>)clz);
+         for (Class<?> clz : PacketTypeRegistry.load()) {
+            String registryName = PacketTypeRegistry.init_Str_Class((Class<? extends Packet<?>>)clz);
             if (registryName != null && (registryName.equals(target) || registryName.equals(targetNoSuffix))) {
-               this.c2sPacketNames.add(bv.init_Str_Class((Class<? extends Packet<?>>)clz));
+               this.c2sPacketNames.add(PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)clz));
                break;
             }
          }
@@ -59,11 +59,11 @@ public class DelayPacketsAction implements MacroAction {
       ck shared = ck.init_ck();
 
       for (Class<?> clz : shared.load_Set()) {
-         this.c2sPacketNames.add(bv.init_Str_Class((Class<? extends Packet<?>>)clz));
+         this.c2sPacketNames.add(PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)clz));
       }
 
       for (Class<?> clz : shared.read_Set()) {
-         this.s2cPacketNames.add(bv.init_Str_Class((Class<? extends Packet<?>>)clz));
+         this.s2cPacketNames.add(PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)clz));
       }
    }
 
@@ -96,7 +96,7 @@ public class DelayPacketsAction implements MacroAction {
 
    private Set<Class<? extends Packet<?>>> init(List<String> names, boolean isC2S) {
       Set<Class<? extends Packet<?>>> result = new HashSet<>();
-      Set<Class<? extends Packet<?>>> pool = isC2S ? bw.load() : bw.init_Set();
+      Set<Class<? extends Packet<?>>> pool = isC2S ? PacketTypeRegistry.load() : PacketTypeRegistry.init_Set();
 
       for (String name : names) {
          String trimmed = name.trim();
@@ -104,7 +104,7 @@ public class DelayPacketsAction implements MacroAction {
             String withSuffix = trimmed.endsWith("Packet") ? trimmed : trimmed + "Packet";
 
             for (Class<? extends Packet<?>> clazz : pool) {
-               String friendlyName = bv.init_Str_Class(clazz);
+               String friendlyName = PacketNameResolver.init_Str_Class(clazz);
                if (friendlyName.equalsIgnoreCase(trimmed)
                   || friendlyName.equalsIgnoreCase(withSuffix)
                   || clazz.getSimpleName().equalsIgnoreCase(trimmed)

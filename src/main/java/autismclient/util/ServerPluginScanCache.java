@@ -187,7 +187,7 @@ final class ServerPluginScanCache {
    private void init_V() {
       Map<String, AutismConfig.PluginScanCacheEntry> snapshot = this.write();
       long revision = this.load_J;
-      dj.init(this.init_Str, () -> this.init_Z_Map_J(snapshot, revision));
+      DebouncedPersistenceScheduler.init(this.init_Str, () -> this.init_Z_Map_J(snapshot, revision));
    }
 
    private Map<String, AutismConfig.PluginScanCacheEntry> write() {

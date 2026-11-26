@@ -77,7 +77,7 @@ public class AutismFabricatorOverlay extends bj {
    private int prev = 0;
    private final String[] init_StrArr = new String[]{"Left Click", "Right Click", "Quick Move"};
    private boolean flush_Z = false;
-   private bo.Inner_StreamUtil init_bo_StreamUtil = null;
+   private ContainerClickSnapshot.Inner_StreamUtil init_bo_StreamUtil = null;
    private Integer init_Integer = null;
    private String init_Str_2 = "";
    private ChatFormatting init_ChatFormatting = ChatFormatting.GRAY;
@@ -294,11 +294,11 @@ public class AutismFabricatorOverlay extends bj {
    }
 
    private int task() {
-      return this.init_AutismFabricatorOv.write() ? bo.Inner_DataUtil.values().length : 2;
+      return this.init_AutismFabricatorOv.write() ? ContainerClickSnapshot.Inner_DataUtil.values().length : 2;
    }
 
-   private bo.Inner_DataUtil init_bo_DataUtil_2() {
-      return bo.Inner_DataUtil.init(this.prev);
+   private ContainerClickSnapshot.Inner_DataUtil init_bo_DataUtil_2() {
+      return ContainerClickSnapshot.Inner_DataUtil.init(this.prev);
    }
 
    private boolean run_Z_2() {
@@ -1837,7 +1837,7 @@ public class AutismFabricatorOverlay extends bj {
             } else {
                String screenTitle = this.init_AbstractContainerS != null ? this.init_AbstractContainerS.getTitle().getString() : "";
                String menuClass = handler.getClass().getName();
-               this.init_bo_StreamUtil = new bo.Inner_StreamUtil(
+               this.init_bo_StreamUtil = new ContainerClickSnapshot.Inner_StreamUtil(
                   handler.containerId,
                   handler.getStateId(),
                   slot.index,
@@ -1907,7 +1907,7 @@ public class AutismFabricatorOverlay extends bj {
          }
 
          if (this.init_AutismFabricatorOv.write()) {
-            bo.Inner_StreamUtil target = this.init_bo_StreamUtil();
+            ContainerClickSnapshot.Inner_StreamUtil target = this.init_bo_StreamUtil();
             if (target == null) {
                this.init_V_Str_ChatFormatting("Right-click a GUI slot to capture a Packet target first!", ChatFormatting.RED);
                return;
@@ -1982,12 +1982,12 @@ public class AutismFabricatorOverlay extends bj {
       return target;
    }
 
-   private bo.Inner_StreamUtil init_bo_StreamUtil() {
+   private ContainerClickSnapshot.Inner_StreamUtil init_bo_StreamUtil() {
       return this.init_bo_StreamUtil == null ? null : this.init_bo_StreamUtil.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil_2());
    }
 
    private Packet<?> init_Packet() {
-      bo.Inner_StreamUtil target = this.init_bo_StreamUtil();
+      ContainerClickSnapshot.Inner_StreamUtil target = this.init_bo_StreamUtil();
       return target == null ? null : target.init_ServerboundContain();
    }
 
@@ -2068,7 +2068,7 @@ public class AutismFabricatorOverlay extends bj {
 
    private void read(boolean queue) {
       try {
-         bo.Inner_StreamUtil target = this.init_bo_StreamUtil();
+         ContainerClickSnapshot.Inner_StreamUtil target = this.init_bo_StreamUtil();
          if (target == null) {
             this.init_V_Str_ChatFormatting("Right-click a GUI slot to capture a Packet target first", ChatFormatting.RED);
             return;
@@ -2223,7 +2223,7 @@ public class AutismFabricatorOverlay extends bj {
          int queuedCount = ck.init_ck().init_I_ClientPacketListen(handler);
 
          for (Packet<?> packet : packets) {
-            by.init(packet);
+            DirectPacketSender.init(packet);
          }
 
          if (queuedCount > 0) {
@@ -2272,7 +2272,7 @@ public class AutismFabricatorOverlay extends bj {
          String amountMode = this.push_Z ? "Max" : "x" + Math.max(1, this.store());
          return planInfo + " | Recipe: " + this.init_ItemStack.getHoverName().getString() + " | " + source + " | " + availability + " | " + amountMode;
       } else if (this.init_AutismFabricatorOv.write()) {
-         bo.Inner_StreamUtil target = this.init_bo_StreamUtil();
+         ContainerClickSnapshot.Inner_StreamUtil target = this.init_bo_StreamUtil();
          return target == null ? "Packet: right-click a GUI slot to capture" : "Packet: " + target.init_Str();
       } else {
          Integer slot = this.init_Integer();
@@ -2468,7 +2468,7 @@ public class AutismFabricatorOverlay extends bj {
       if (this.init_AutismFabricatorOv.write()) {
          return packet;
       } else {
-         return packet instanceof ServerboundContainerClickPacket clickSlotPacket ? de.init(clickSlotPacket) : packet;
+         return packet instanceof ServerboundContainerClickPacket clickSlotPacket ? PacketRegenerator.init(clickSlotPacket) : packet;
       }
    }
 

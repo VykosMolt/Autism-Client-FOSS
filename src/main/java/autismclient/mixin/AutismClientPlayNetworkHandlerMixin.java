@@ -32,7 +32,7 @@ import autismclient.util.ce;
 import autismclient.util.cf;
 import autismclient.util.ci;
 import autismclient.util.ck;
-import autismclient.util.dm;
+import autismclient.util.SodiumRegionResourceProbe;
 import autismclient.util.e.LeafDupePacketTracker;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.h.VillagerTradeSession;
@@ -513,7 +513,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleMovePlayer", at = @At("RETURN"))
    private void autism$onServerPositionCorrection(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
-      dm.load_V();
+      SodiumRegionResourceProbe.load_V();
       Minecraft mc = Minecraft.getInstance();
       this.autism$restoreView(mc);
       long correctionToken = this.autism$pacedTeleportCorrectionToken;

@@ -2,8 +2,8 @@ package autismclient.util.macro;
 
 import autismclient.AutismClientAddon;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.PkgCls_a;
-import autismclient.util.PkgCls_b;
+import autismclient.util.BookBotFileReader;
+import autismclient.util.BookBotPageGenerator;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -98,7 +98,7 @@ public class NbtBookAction implements MacroAction {
          }
 
          mc.getConnection().send(new ServerboundEditBookPacket(hotbarSlot, pageList, this.sign ? Optional.of(bookTitle) : Optional.empty()));
-         int estimatedBytes = PkgCls_b.init(pageList);
+         int estimatedBytes = BookBotPageGenerator.init(pageList);
          AutismClientMessaging.sendPrefixed(
             "§aWrote book " + (bookIndex + 1) + "/" + totalBooks + " (~" + estimatedBytes / 1024 + "KB, " + pageList.size() + " pages)"
          );
@@ -132,7 +132,7 @@ public class NbtBookAction implements MacroAction {
    }
 
    private List<String> init_List_I_3(int numPages) {
-      return PkgCls_b.init(numPages, this.characters, this.read(), new Random());
+      return BookBotPageGenerator.init(numPages, this.characters, this.read(), new Random());
    }
 
    public static File init_File() {
@@ -154,7 +154,7 @@ public class NbtBookAction implements MacroAction {
             AutismClientMessaging.sendPrefixed("§cBook file must be inside book-sources/.");
             return "";
          } else {
-            return PkgCls_a.init(resolved);
+            return BookBotFileReader.init(resolved);
          }
       } catch (Exception ignored) {
          return "";
@@ -220,7 +220,7 @@ public class NbtBookAction implements MacroAction {
 
    public static List<String> init_List_Font(Font tr, String text, int maxPages) {
       if (text != null && !text.isEmpty()) {
-         String normalized = PkgCls_a.init(text);
+         String normalized = BookBotFileReader.init(text);
          String[] paragraphs = normalized.split("\n", -1);
          List<String> visualLines = new ArrayList<>();
 
@@ -412,7 +412,7 @@ public class NbtBookAction implements MacroAction {
       }
 
       if (tag.contains("randomType")) {
-         this.randomType = PkgCls_b.init(tag.getStringOr("randomType", "Utf8"));
+         this.randomType = BookBotPageGenerator.init(tag.getStringOr("randomType", "Utf8"));
       } else if (this.onlyAscii) {
          this.randomType = "Ascii";
       }
@@ -470,7 +470,7 @@ public class NbtBookAction implements MacroAction {
    }
 
    private String read() {
-      this.randomType = PkgCls_b.init(this.randomType);
+      this.randomType = BookBotPageGenerator.init(this.randomType);
       this.onlyAscii = "Ascii".equals(this.randomType);
       return this.randomType;
    }

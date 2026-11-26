@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.bo;
+import autismclient.util.ContainerClickSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -21,7 +21,7 @@ public class RaceAction implements MacroAction {
    public ArrayList<String> actionTypes = new ArrayList<>();
    private transient boolean init_Z = false;
    private transient boolean load = false;
-   private transient bo.Inner_StreamUtil init_bo_StreamUtil = null;
+   private transient ContainerClickSnapshot.Inner_StreamUtil init_bo_StreamUtil = null;
    private transient int init_I = 1;
 
    @Override
@@ -107,7 +107,7 @@ public class RaceAction implements MacroAction {
          this.init_Z = true;
          this.load = tag.getBooleanOr("useNextAction", false);
          this.init_I = Math.max(1, tag.getIntOr("times", 1));
-         this.init_bo_StreamUtil = tag.getCompound("target").map(bo.Inner_StreamUtil::init_bo_StreamUtil_CompoundTag).orElse(null);
+         this.init_bo_StreamUtil = tag.getCompound("target").map(ContainerClickSnapshot.Inner_StreamUtil::init_bo_StreamUtil_CompoundTag).orElse(null);
       }
 
       if (!init_Z(this.triggerAction)) {

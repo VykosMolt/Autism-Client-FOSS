@@ -1,7 +1,7 @@
 package autismclient.util.macro;
 
-import autismclient.util.bv;
-import autismclient.util.bw;
+import autismclient.util.PacketNameResolver;
+import autismclient.util.PacketTypeRegistry;
 import autismclient.util.ck;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -270,11 +270,11 @@ public final class PacketGateManager {
          return false;
       }
 
-      if (init(want, init_Str(bv.init_Str_Packet_Str(packet, direction)))) {
+      if (init(want, init_Str(PacketNameResolver.init_Str_Packet_Str(packet, direction)))) {
          return true;
       }
 
-      if (init(want, init_Str(bv.init_Str_Packet(packet)))) {
+      if (init(want, init_Str(PacketNameResolver.init_Str_Packet(packet)))) {
          return true;
       }
 
@@ -282,7 +282,7 @@ public final class PacketGateManager {
          return true;
       }
 
-      String registry = init_Str(bw.init_Str_Class((Class<? extends Packet<?>>)packet.getClass()));
+      String registry = init_Str(PacketTypeRegistry.init_Str_Class((Class<? extends Packet<?>>)packet.getClass()));
       return init(want, registry);
    }
 
@@ -291,7 +291,7 @@ public final class PacketGateManager {
    }
 
    private static String init_Str(String value) {
-      return bv.load(value);
+      return PacketNameResolver.load(value);
    }
 
    public static final class Inner_DataUtil {

@@ -158,7 +158,7 @@ public final class aF {
                + " capture="
                + capture
                + " payloadStudy="
-               + bI.init_Z()
+               + PayloadStudyTracker.init_Z()
                + " packHide="
                + autismclient.modules.aD.init_Z();
          }

@@ -27,7 +27,7 @@ import autismclient.util.cA;
 import autismclient.util.cH;
 import autismclient.util.cX;
 import autismclient.util.ck;
-import autismclient.util.dd;
+import autismclient.util.PacketFilterListCodec;
 import autismclient.util.macro.ak;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -317,8 +317,8 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
             this.init_AutismPacketSelect = new AutismPacketSelectorOverlay(this.font);
          }
 
-         boolean c2s = dd.init_Z(option.id());
-         Set<Class<? extends Packet<?>>> selected = dd.init_Set(module.value(option.id()), c2s);
+         boolean c2s = PacketFilterListCodec.init_Z(option.id());
+         Set<Class<? extends Packet<?>>> selected = PacketFilterListCodec.init_Set(module.value(option.id()), c2s);
          if (c2s) {
             this.init_AutismPacketSelect
                .init_V_BiConsumer_Collection((packetClass, enabled) -> this.init(module, option, true, packetClass, enabled), selected);
@@ -330,14 +330,14 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
    }
 
    private void init(Module module, Setting<?, ?> option, boolean c2s, Class<? extends Packet<?>> packetClass, boolean selected) {
-      Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>(dd.init_Set(module.value(option.id()), c2s));
+      Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>(PacketFilterListCodec.init_Set(module.value(option.id()), c2s));
       if (selected) {
          packets.add(packetClass);
       } else {
          packets.remove(packetClass);
       }
 
-      String encoded = dd.init(packets);
+      String encoded = PacketFilterListCodec.init(packets);
       if (this.init_Z_5()) {
          module.setConfiguredValue(option.id(), encoded);
       } else {

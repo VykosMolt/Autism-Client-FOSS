@@ -669,7 +669,7 @@ public class DataPipe extends KeyHolder {
 
          this.write_List.sort(String::compareToIgnoreCase);
          bi.init("Scanned " + this.write_List.size() + " players.", -13248397);
-         autismclient.util.ClassCache.init_Future_Str_Runnable("player-rank-scan", () -> {
+         autismclient.util.BackgroundTaskExecutor.init_Future_Str_Runnable("player-rank-scan", () -> {
             List<String> probed = bN.init(this.minecraft, true);
             if (!probed.isEmpty()) {
                this.minecraft.execute(() -> {

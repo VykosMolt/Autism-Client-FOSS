@@ -37,7 +37,7 @@ import autismclient.util.ad;
 import autismclient.util.au;
 import autismclient.util.bk;
 import autismclient.util.bl;
-import autismclient.util.bw;
+import autismclient.util.PacketTypeRegistry;
 import autismclient.util.cG;
 import autismclient.util.cJ;
 import autismclient.util.cd;
@@ -171,7 +171,7 @@ public final class AutismClientMod implements ClientModInitializer {
                   BufferHelper.prewarm();
                   autismclient.gui.e.CachePool.prewarm();
                   autismclient.gui.e.ConfigStore.prewarm();
-                  bw.load();
+                  PacketTypeRegistry.load();
                } catch (Throwable var1x) {
                }
             }, "Autism-UI-Prewarm");

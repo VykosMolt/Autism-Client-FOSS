@@ -71,15 +71,15 @@ public class AutismPacketSelectorOverlay extends bj {
 
    public AutismPacketSelectorOverlay(Font textRenderer) {
       this.init_Font = textRenderer;
-      this.load_List.addAll(bw.load());
-      this.load_List.sort(Comparator.comparing(bv::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
-      this.read_List.addAll(bw.init_Set());
-      this.read_List.sort(Comparator.comparing(bv::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
+      this.load_List.addAll(PacketTypeRegistry.load());
+      this.load_List.sort(Comparator.comparing(PacketNameResolver::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
+      this.read_List.addAll(PacketTypeRegistry.init_Set());
+      this.read_List.sort(Comparator.comparing(PacketNameResolver::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
       this.init_Set.addAll(this.load_List);
       this.write_List.addAll(this.load_List);
       this.write_List.addAll(this.read_List);
       this.init_List.addAll(this.write_List);
-      this.init_List.sort(Comparator.comparing(bv::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
+      this.init_List.sort(Comparator.comparing(PacketNameResolver::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
 
       for (Class<? extends Packet<?>> packetClass : this.init_List) {
          this.init_Map.put(packetClass, init_Str_Class_2(packetClass));
@@ -360,7 +360,7 @@ public class AutismPacketSelectorOverlay extends bj {
       int rowColor = selected ? p.init(false) : p.init(c2s, index, false);
       int color = selected ? p.store() : p.init(c2s, index);
       autismclient.gui.f.b.TableIndex.init(context, x, y, width, this.pop_I_22(), rowColor);
-      String name = bv.init_Str_Class(packetClass);
+      String name = PacketNameResolver.init_Str_Class(packetClass);
       int textWidth = width - 10;
       String trimmed = autismclient.gui.f.b.k.init(
          this.init_Font, name, textWidth, this.init_CharEncoder_2.init_Identifier_l(autismclient.gui.f.b.l.read), color
@@ -627,7 +627,7 @@ public class AutismPacketSelectorOverlay extends bj {
    }
 
    private static String init_Str_Class_2(Class<? extends Packet<?>> packetClass) {
-      return packetClass == null ? "" : (packetClass.getSimpleName() + "\n" + bv.init_Str_Class(packetClass)).toLowerCase(Locale.ROOT);
+      return packetClass == null ? "" : (packetClass.getSimpleName() + "\n" + PacketNameResolver.init_Str_Class(packetClass)).toLowerCase(Locale.ROOT);
    }
 
    @Override

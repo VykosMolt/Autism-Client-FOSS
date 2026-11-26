@@ -30,7 +30,7 @@ public class AutismPacketInspectOverlay extends bj {
    private int poll = 50;
    private int push = 220;
    private int pop = 173;
-   private bu.Inner_JsonUtil init_bu_JsonUtil;
+   private PacketInspectorEngine.Inner_JsonUtil init_bu_JsonUtil;
    private AutismPacketLoggerOverlay.Inner_JsonUtil init_AutismPacketLogger;
    private List<AutismPacketInspectOverlay.Inner_BufferHelper> init_List = Collections.emptyList();
    private boolean flush_Z = true;
@@ -38,8 +38,8 @@ public class AutismPacketInspectOverlay extends bj {
    private autismclient.gui.f.c.EventBus init_EventBus = null;
    private String init_Str_2 = "";
    private int run = 0;
-   private AtomicReference<bu.Inner_SyncManager> init_AtomicReference;
-   private bu.Inner_SyncManager init_bu_SyncManager;
+   private AtomicReference<PacketInspectorEngine.Inner_SyncManager> init_AtomicReference;
+   private PacketInspectorEngine.Inner_SyncManager init_bu_SyncManager;
    private CompletableFuture<?> init_CompletableFuture;
    private String load_Str = "";
    private boolean close_Z;
@@ -58,7 +58,7 @@ public class AutismPacketInspectOverlay extends bj {
       this.pop = this.get_I_14();
    }
 
-   public void init_V_bu_JsonUtil(bu.Inner_JsonUtil inspection, AutismPacketLoggerOverlay.Inner_JsonUtil sourceEntry, int anchorX, int anchorY) {
+   public void init_V_bu_JsonUtil(PacketInspectorEngine.Inner_JsonUtil inspection, AutismPacketLoggerOverlay.Inner_JsonUtil sourceEntry, int anchorX, int anchorY) {
       if (inspection != null) {
          bk manager = bk.init_bk();
          manager.init_V(this);
@@ -129,7 +129,7 @@ public class AutismPacketInspectOverlay extends bj {
          if (snapshot != null && (!this.close_Z || this.init_CompletableFuture == null || this.init_CompletableFuture.isDone())) {
             this.close_Z = true;
             String baseKey = this.init_Str_bu_JsonUtil_AutismPacketLogger(null, this.init_AutismPacketLogger);
-            this.init_bu_SyncManager = bu.init_bu_SyncManager_AutismPayloadSuppo(snapshot);
+            this.init_bu_SyncManager = PacketInspectorEngine.init_bu_SyncManager_AutismPayloadSuppo(snapshot);
             this.init_AtomicReference = new AtomicReference<>(this.init_bu_SyncManager);
             this.load_Str = baseKey;
             this.init_V_AutismPayloadSuppo_Str(snapshot, baseKey);
@@ -142,20 +142,20 @@ public class AutismPacketInspectOverlay extends bj {
          this.init_CompletableFuture = CompletableFuture.runAsync(
             () -> {
                try {
-                  bu.Inner_SyncManager result = bu.init_bu_SyncManager_AutismPayloadSuppo_Consumer(
+                  PacketInspectorEngine.Inner_SyncManager result = PacketInspectorEngine.init_bu_SyncManager_AutismPayloadSuppo_Consumer(
                      snapshot, view -> this.init_V_Str_bu_SyncManager(analysisKey, view)
                   );
                   this.init_V_Str_bu_SyncManager(analysisKey, result);
                } catch (Throwable t) {
-                  this.init_V_Str_bu_SyncManager(analysisKey, bu.init_bu_SyncManager_Str(AutismPayloadSupport.init(t)));
+                  this.init_V_Str_bu_SyncManager(analysisKey, PacketInspectorEngine.init_bu_SyncManager_Str(AutismPayloadSupport.init(t)));
                }
             }
          );
       }
    }
 
-   private void init_V_Str_bu_SyncManager(String analysisKey, bu.Inner_SyncManager view) {
-      AtomicReference<bu.Inner_SyncManager> ref = this.init_AtomicReference;
+   private void init_V_Str_bu_SyncManager(String analysisKey, PacketInspectorEngine.Inner_SyncManager view) {
+      AtomicReference<PacketInspectorEngine.Inner_SyncManager> ref = this.init_AtomicReference;
       if (ref != null && view != null && analysisKey.equals(this.load_Str)) {
          ref.set(view);
       }
@@ -163,7 +163,7 @@ public class AutismPacketInspectOverlay extends bj {
 
    private void flush_V_12() {
       if (this.init_AtomicReference != null && this.init_AutismPacketLogger != null) {
-         bu.Inner_SyncManager next = this.init_AtomicReference.get();
+         PacketInspectorEngine.Inner_SyncManager next = this.init_AtomicReference.get();
          if (next != null && next != this.init_bu_SyncManager) {
             int oldScroll = this.init_EventBus != null ? this.init_EventBus.open() : this.run;
             this.init_bu_SyncManager = next;
@@ -177,10 +177,10 @@ public class AutismPacketInspectOverlay extends bj {
       }
    }
 
-   private bu.Inner_JsonUtil init_bu_JsonUtil() {
+   private PacketInspectorEngine.Inner_JsonUtil init_bu_JsonUtil() {
       return this.init_AutismPacketLogger == null
          ? this.init_bu_JsonUtil
-         : bu.init_bu_JsonUtil_AutismPacketLogger(this.init_AutismPacketLogger, this.init_bu_SyncManager, true);
+         : PacketInspectorEngine.init_bu_JsonUtil_AutismPacketLogger(this.init_AutismPacketLogger, this.init_bu_SyncManager, true);
    }
 
    private void load(boolean keepScroll) {
@@ -337,7 +337,7 @@ public class AutismPacketInspectOverlay extends bj {
          } else {
             List<AutismPacketInspectOverlay.Inner_BufferHelper> wrapped = new ArrayList<>();
 
-            for (bu.Inner_TaskQueue line : this.init_bu_JsonUtil.init_List()) {
+            for (PacketInspectorEngine.Inner_TaskQueue line : this.init_bu_JsonUtil.init_List()) {
                this.init_V_bu_TaskQueue(line, innerWidth, wrapped);
             }
 
@@ -348,7 +348,7 @@ public class AutismPacketInspectOverlay extends bj {
       }
    }
 
-   private void init_V_bu_TaskQueue(bu.Inner_TaskQueue line, int maxWidth, List<AutismPacketInspectOverlay.Inner_BufferHelper> target) {
+   private void init_V_bu_TaskQueue(PacketInspectorEngine.Inner_TaskQueue line, int maxWidth, List<AutismPacketInspectOverlay.Inner_BufferHelper> target) {
       String text = line.init_Str();
       if (text == null || text.isEmpty()) {
          target.add(AutismPacketInspectOverlay.Inner_BufferHelper.init("", 0, line.init_I()));
@@ -441,7 +441,7 @@ public class AutismPacketInspectOverlay extends bj {
       }
    }
 
-   private void init(GuiGraphicsExtractor context, int x, int y, int width, int height, bu.Inner_SyncManager view) {
+   private void init(GuiGraphicsExtractor context, int x, int y, int width, int height, PacketInspectorEngine.Inner_SyncManager view) {
       if (view != null && width > 0 && height > 0) {
          int fill = -1441722090;
          autismclient.gui.f.PacketUtil.init(context, autismclient.gui.f.NetHelper.init(x, y, width, height - 2), fill, -2007870113);
@@ -710,19 +710,19 @@ public class AutismPacketInspectOverlay extends bj {
       if (action != null) {
          switch (action) {
             case WAIT:
-               bs.poll(this.init_AutismPacketLogger);
+               LoggedPacketActions.poll(this.init_AutismPacketLogger);
                break;
             case SEND:
                this.init_V(this.init_AutismPacketLogger);
                break;
             case QUEUE:
-               bs.close(this.init_AutismPacketLogger);
+               LoggedPacketActions.close(this.init_AutismPacketLogger);
                break;
             case EDIT_PAYLOAD:
-               bs.push(this.init_AutismPacketLogger);
+               LoggedPacketActions.push(this.init_AutismPacketLogger);
                break;
             case ADD_PAYLOAD:
-               bs.pop(this.init_AutismPacketLogger);
+               LoggedPacketActions.pop(this.init_AutismPacketLogger);
                break;
             case COPY_RAW:
                this.close_V_11();
@@ -752,7 +752,7 @@ public class AutismPacketInspectOverlay extends bj {
       }
 
       AutismPayloadSupport.Inner_StreamUtil payload = AutismPayloadSupport.init_AutismPayloadSuppo(entry);
-      bn.Inner_StreamUtil packet = bn.init(entry.init_Packet);
+      PacketWireCaptureStore.Inner_StreamUtil packet = PacketWireCaptureStore.init(entry.init_Packet);
       byte[] payloadBytes = payload == null ? new byte[0] : payload.init_BArr();
       byte[] packetBytes = packet == null ? new byte[0] : packet.init_BArr();
       if (payloadBytes.length == 0 && packetBytes.length == 0) {
@@ -779,7 +779,7 @@ public class AutismPacketInspectOverlay extends bj {
          out.append("Captured Packet Type: ").append(packet.write()).append('\n');
       }
 
-      String decoded = bh.init_Str_AutismPacketLogger(entry);
+      String decoded = PacketDetailFormatter.init_Str_AutismPacketLogger(entry);
       if (decoded != null && !decoded.isBlank()) {
          out.append('\n').append(decoded).append('\n');
       }
@@ -884,7 +884,7 @@ public class AutismPacketInspectOverlay extends bj {
 
    private void init_V(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
       if (entry != null && entry.init_Packet != null && "C2S".equalsIgnoreCase(entry.init_Str)) {
-         bs.read(entry);
+         LoggedPacketActions.read(entry);
       } else {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be sent.");
       }
@@ -918,7 +918,7 @@ public class AutismPacketInspectOverlay extends bj {
       }
    }
 
-   private String init_Str_bu_JsonUtil_AutismPacketLogger(bu.Inner_JsonUtil inspection, AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   private String init_Str_bu_JsonUtil_AutismPacketLogger(PacketInspectorEngine.Inner_JsonUtil inspection, AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
       if (entry != null) {
          String className = entry.init_Class == null ? "" : entry.init_Class.getName();
          return entry.init_Str + "|" + entry.load_Str + "|" + className + "|" + entry.load_J + "|" + entry.init_I;
@@ -962,7 +962,7 @@ public class AutismPacketInspectOverlay extends bj {
       int contentWidth = autismclient.gui.f.b.MapStore.init(listWidth, this.add_I_12());
       List<AutismPacketInspectOverlay.Inner_BufferHelper> measured = new ArrayList<>();
       if (this.init_bu_JsonUtil != null) {
-         for (bu.Inner_TaskQueue line : this.init_bu_JsonUtil.init_List()) {
+         for (PacketInspectorEngine.Inner_TaskQueue line : this.init_bu_JsonUtil.init_List()) {
             this.init_V_bu_TaskQueue(line, contentWidth, measured);
          }
       }
@@ -994,23 +994,23 @@ public class AutismPacketInspectOverlay extends bj {
          actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.COPY_RAW);
       }
 
-      if (bs.init(this.init_AutismPacketLogger)) {
+      if (LoggedPacketActions.init(this.init_AutismPacketLogger)) {
          actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.QUEUE);
       }
 
-      if (bs.sync(this.init_AutismPacketLogger)) {
+      if (LoggedPacketActions.sync(this.init_AutismPacketLogger)) {
          actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.EDIT_PAYLOAD);
       }
 
-      if (bs.flush(this.init_AutismPacketLogger)) {
+      if (LoggedPacketActions.flush(this.init_AutismPacketLogger)) {
          actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.ADD_PAYLOAD);
       }
 
-      if (bs.write(this.init_AutismPacketLogger)) {
+      if (LoggedPacketActions.write(this.init_AutismPacketLogger)) {
          actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.SEND);
       }
 
-      if (bs.update(this.init_AutismPacketLogger)) {
+      if (LoggedPacketActions.update(this.init_AutismPacketLogger)) {
          actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.WAIT);
       }
 
@@ -1027,7 +1027,7 @@ public class AutismPacketInspectOverlay extends bj {
          return true;
       }
 
-      bn.Inner_StreamUtil packet = bn.init(entry.init_Packet);
+      PacketWireCaptureStore.Inner_StreamUtil packet = PacketWireCaptureStore.init(entry.init_Packet);
       return packet != null && packet.init_BArr().length > 0;
    }
 

@@ -3,7 +3,7 @@ package autismclient.modules;
 import autismclient.util.AuditClientFixes;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.bk;
-import autismclient.util.dm;
+import autismclient.util.SodiumRegionResourceProbe;
 import java.awt.Color;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -386,7 +386,7 @@ public final class am {
       if (init_AtomicBoolean.getAndSet(false)) {
          load_J = -1L;
          if (init_Minecraft != null && init_Minecraft.level != null && init_Minecraft.levelExtractor != null) {
-            dm.init_V();
+            SodiumRegionResourceProbe.init_V();
             AuditClientFixes.refreshChunksSoft(init_Minecraft);
          }
       }
@@ -668,7 +668,7 @@ public final class am {
          init_am_StreamUtil = init("esp", revision, hidden, false);
          init_am_ConfigStore = init_am_ConfigStore_I_Z(revision, hidden);
          load_am_StreamUtil = init("tracers", revision, hidden, true);
-         dm.init(init_am_JsonUtil.load_Z());
+         SodiumRegionResourceProbe.init(init_am_JsonUtil.load_Z());
       }
    }
 

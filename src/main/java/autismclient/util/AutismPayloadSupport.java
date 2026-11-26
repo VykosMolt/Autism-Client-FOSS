@@ -77,7 +77,7 @@ public final class AutismPayloadSupport {
    }
 
    private static boolean init_Z() {
-      return bg.load(bg.load_J());
+      return PacketCaptureState.load(PacketCaptureState.load_J());
    }
 
    public static void init(CustomPacketPayload payload, byte[] rawBytes) {
@@ -95,7 +95,7 @@ public final class AutismPayloadSupport {
 
    private static void load(CustomPacketPayload payload, byte[] rawBytes) {
       if (payload != null) {
-         init_Map.put(payload, rawBytes == null ? bg.init_BArr : rawBytes);
+         init_Map.put(payload, rawBytes == null ? PacketCaptureState.init_BArr : rawBytes);
       }
    }
 
@@ -119,7 +119,7 @@ public final class AutismPayloadSupport {
       }
 
       String channel = init_Str(payload);
-      bn.Inner_StreamUtil packetSnapshot = bn.init(packet);
+      PacketWireCaptureStore.Inner_StreamUtil packetSnapshot = PacketWireCaptureStore.init(packet);
       AutismPayloadSupport.Inner_DataUtil payloadBytes = init(packetSnapshot, channel);
       if (payloadBytes == null) {
          payloadBytes = init_AutismPayloadSuppo(payload);
@@ -131,7 +131,7 @@ public final class AutismPayloadSupport {
       String protocolPhase = packetSnapshot == null ? load_Map.getOrDefault(packet, "") : packetSnapshot.load();
       int packetId = packetSnapshot == null ? -1 : packetSnapshot.init_I();
       if (packetId < 0) {
-         packetId = bn.init(protocolPhase, direction, packet.type());
+         packetId = PacketWireCaptureStore.init(protocolPhase, direction, packet.type());
       }
 
       return new AutismPayloadSupport.Inner_StreamUtil(
@@ -158,7 +158,7 @@ public final class AutismPayloadSupport {
          if (packetId != null && packetId >= 0 && index[0] < frame.length) {
             boolean c2s = direction != null && direction.equalsIgnoreCase("C2S");
             boolean s2c = direction != null && direction.equalsIgnoreCase("S2C");
-            int expectedId = bn.init(
+            int expectedId = PacketWireCaptureStore.init(
                protocolPhase, direction, c2s ? CommonPacketTypes.SERVERBOUND_CUSTOM_PAYLOAD : CommonPacketTypes.CLIENTBOUND_CUSTOM_PAYLOAD
             );
             if (expectedId >= 0 && packetId != expectedId) {
@@ -196,7 +196,7 @@ public final class AutismPayloadSupport {
                      payloadClassName,
                      protocolPhase,
                      packetId,
-                     bE.Inner_StreamUtil.CAPTURED_EXACT.init()
+                     PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init()
                   );
                } else {
                   return null;
@@ -248,32 +248,32 @@ public final class AutismPayloadSupport {
 
    private static AutismPayloadSupport.Inner_DataUtil init_AutismPayloadSuppo(CustomPacketPayload payload) {
       if (payload == null) {
-         return new AutismPayloadSupport.Inner_DataUtil(new byte[0], bE.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
+         return new AutismPayloadSupport.Inner_DataUtil(new byte[0], PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
       } else if (payload instanceof AutismPayloadSupport.RawCustomPacketPayload raw) {
-         return new AutismPayloadSupport.Inner_DataUtil(raw.bytes(), bE.Inner_StreamUtil.CAPTURED_EXACT.init());
+         return new AutismPayloadSupport.Inner_DataUtil(raw.bytes(), PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init());
       } else {
          byte[] remembered = init_BArr(payload);
          if (remembered != null) {
-            return new AutismPayloadSupport.Inner_DataUtil(remembered, bE.Inner_StreamUtil.CAPTURED_EXACT.init());
+            return new AutismPayloadSupport.Inner_DataUtil(remembered, PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init());
          }
 
          byte[] codecBytes = read(payload);
          if (codecBytes != null) {
-            return new AutismPayloadSupport.Inner_DataUtil(codecBytes, bE.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
+            return new AutismPayloadSupport.Inner_DataUtil(codecBytes, PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          }
 
          try {
             Method writeMethod = payload.getClass().getMethod("write", FriendlyByteBuf.class);
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             writeMethod.invoke(payload, buf);
-            return new AutismPayloadSupport.Inner_DataUtil(init(buf), bE.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
+            return new AutismPayloadSupport.Inner_DataUtil(init(buf), PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          } catch (Throwable var5) {
-            return new AutismPayloadSupport.Inner_DataUtil(new byte[0], bE.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
+            return new AutismPayloadSupport.Inner_DataUtil(new byte[0], PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          }
       }
    }
 
-   private static AutismPayloadSupport.Inner_DataUtil init(bn.Inner_StreamUtil packetSnapshot, String expectedChannel) {
+   private static AutismPayloadSupport.Inner_DataUtil init(PacketWireCaptureStore.Inner_StreamUtil packetSnapshot, String expectedChannel) {
       if (packetSnapshot == null) {
          return null;
       }
@@ -300,7 +300,7 @@ public final class AutismPayloadSupport {
             System.arraycopy(bytes, index[0], body, 0, body.length);
          }
 
-         return new AutismPayloadSupport.Inner_DataUtil(body, bE.Inner_StreamUtil.CAPTURED_EXACT.init());
+         return new AutismPayloadSupport.Inner_DataUtil(body, PayloadEditorModel.Inner_StreamUtil.CAPTURED_EXACT.init());
       } else {
          return null;
       }
@@ -622,7 +622,7 @@ public final class AutismPayloadSupport {
 
    public static ServerboundCustomPayloadPacket init_ServerboundCustomP(String channel, byte[] bytes) {
       Identifier id = init_Identifier(channel);
-      bD.init_V(id.toString());
+      PayloadSubscriptionManager.init_V(id.toString());
       AutismPayloadSupport.RawCustomPacketPayload payload = new AutismPayloadSupport.RawCustomPacketPayload(id, bytes);
       init(payload, bytes);
       return new ServerboundCustomPayloadPacket(payload);
@@ -649,7 +649,7 @@ public final class AutismPayloadSupport {
          init_V(channel, bytes, sourceProtocol);
          ServerboundCustomPayloadPacket packet = init_ServerboundCustomP(channel, bytes);
          init(packet);
-         by.init(packet);
+         DirectPacketSender.init(packet);
          return true;
       } catch (Throwable t) {
          if (notifyUser) {
@@ -662,7 +662,7 @@ public final class AutismPayloadSupport {
 
    private static void init_V(String channel, byte[] bytes, String sourceProtocol) {
       Identifier id = init_Identifier(channel);
-      if (load_Z(id.toString()) && !bD.init_Z()) {
+      if (load_Z(id.toString()) && !PayloadSubscriptionManager.init_Z()) {
          throw new IllegalStateException("Payload registration is locked. Unlock it in Packet Logger > Payload > Channels.");
       }
 
@@ -773,7 +773,7 @@ public final class AutismPayloadSupport {
       action.payloadData = init_Str(snapshot.init_BArr());
       action.payloadClassName = "";
       CustomPacketPayload payload = entry != null && entry.init_Packet != null ? init(entry.init_Packet) : null;
-      action.payloadJson = bG.init(
+      action.payloadJson = PayloadJsonCodec.init(
          snapshot.init_Str(),
          action.channel,
          payload == null ? new AutismPayloadSupport.RawCustomPacketPayload(init_Identifier(action.channel), snapshot.init_BArr()) : payload
@@ -789,27 +789,27 @@ public final class AutismPayloadSupport {
       action.payloadPhase = snapshot.update() != null && snapshot.update().toLowerCase(Locale.ROOT).contains("config") ? "CONFIGURATION" : "PLAY";
       action.payloadPacketId = snapshot.load_I();
       action.payloadProvenance = snapshot.sync();
-      action.payloadFields = bJ.init(init_List(snapshot.init_BArr()));
+      action.payloadFields = PayloadFieldCodec.init(init_List(snapshot.init_BArr()));
       action.payloadEncodingMode = init_Str(action.channel, snapshot.init_BArr());
       return action;
    }
 
-   public static List<bJ.Inner_CachePool> init_List(byte[] bytes) {
+   public static List<PayloadFieldCodec.Inner_CachePool> init_List(byte[] bytes) {
       byte[] safeBytes = bytes == null ? new byte[0] : bytes;
       String mcString = read(safeBytes);
       if (mcString != null) {
-         return List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.MINECRAFT_STRING, mcString, true));
+         return List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING, mcString, true));
       }
 
       String writeUtf = update(safeBytes);
       if (writeUtf != null) {
-         return List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.JAVA_WRITE_UTF, writeUtf, true));
+         return List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.JAVA_WRITE_UTF, writeUtf, true));
       }
 
       String utf8 = write(safeBytes);
       return utf8.isBlank() && safeBytes.length != 0
-         ? List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.HEX_BYTES, init_Str(safeBytes), true))
-         : List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.STRING_BYTES, utf8, true));
+         ? List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.HEX_BYTES, init_Str(safeBytes), true))
+         : List.of(new PayloadFieldCodec.Inner_CachePool(PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES, utf8, true));
    }
 
    public static String init_Str(String channel, byte[] bytes) {
@@ -1130,7 +1130,7 @@ public final class AutismPayloadSupport {
    private record Inner_DataUtil(byte[] init_BArr, String init_Str) {
       private Inner_DataUtil {
          init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
-         init_Str = init_Str != null && !init_Str.isBlank() ? init_Str : bE.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init();
+         init_Str = init_Str != null && !init_Str.isBlank() ? init_Str : PayloadEditorModel.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init();
       }
 
       public byte[] init_BArr() {

@@ -97,7 +97,7 @@ public final class cu {
             float[] hsb = Color.RGBtoHSB(targetColor >> 16 & 0xFF, targetColor >> 8 & 0xFF, targetColor & 0xFF, null);
             float targetHue = hsb[0];
             float targetSat = hsb[1];
-            ClassCache.init_Future_Str_Runnable("skybox-recolor", () -> {
+            BackgroundTaskExecutor.init_Future_Str_Runnable("skybox-recolor", () -> {
                NativeImage recolored = null;
 
                try (NativeImage src = NativeImage.read(png)) {
@@ -154,7 +154,7 @@ public final class cu {
          if (png == null) {
             load_Set.remove(source);
          } else {
-            ClassCache.init_Future_Str_Runnable("theme-recolor", () -> {
+            BackgroundTaskExecutor.init_Future_Str_Runnable("theme-recolor", () -> {
                NativeImage recolored = null;
 
                try (NativeImage src = NativeImage.read(png)) {
@@ -319,7 +319,7 @@ public final class cu {
          return;
       }
 
-      ClassCache.init_Future_Str_Runnable("theme-overlay", () -> {
+      BackgroundTaskExecutor.init_Future_Str_Runnable("theme-overlay", () -> {
          NativeImage recolored = null;
 
          try (NativeImage src = NativeImage.read(png)) {
@@ -500,7 +500,7 @@ public final class cu {
                this.load = true;
             }
 
-            ClassCache.init_Future_Str_Runnable("theme-preview", this::init_V);
+            BackgroundTaskExecutor.init_Future_Str_Runnable("theme-preview", this::init_V);
          }
       }
 

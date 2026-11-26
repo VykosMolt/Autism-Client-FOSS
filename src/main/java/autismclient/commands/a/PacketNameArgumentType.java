@@ -1,7 +1,7 @@
 package autismclient.commands.a;
 
 import autismclient.commands.AutismCommandSource;
-import autismclient.util.bw;
+import autismclient.util.PacketTypeRegistry;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -54,8 +54,8 @@ public class PacketNameArgumentType implements ArgumentType<String> {
 
       List<PacketNameArgumentType.Inner_DataUtil> rebuilt = new ArrayList<>();
 
-      for (Class<? extends Packet<?>> cls : bw.load()) {
-         String name = bw.init_Str_Class(cls);
+      for (Class<? extends Packet<?>> cls : PacketTypeRegistry.load()) {
+         String name = PacketTypeRegistry.init_Str_Class(cls);
          if (name != null) {
             rebuilt.add(new PacketNameArgumentType.Inner_DataUtil(name, name.toLowerCase(Locale.ROOT)));
          }

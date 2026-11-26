@@ -19,11 +19,11 @@ public final class bN {
 
    public static List<String> init(Minecraft mc, boolean probeHidden, final BooleanSupplier cancelled) {
       String self = init(mc);
-      LinkedHashMap<String, String> names = be.init(mc, self);
+      LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
       final ClientPacketListener connection = mc == null ? null : mc.getConnection();
       if (probeHidden && connection != null) {
-         List<be.Inner_StreamUtil> vectors = be.init_List_ClientPacketListen(connection);
-         be.init(connection, names, self, vectors, new be.Inner_DataUtil() {
+         List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.init_List_ClientPacketListen(connection);
+         CommandTabNameProber.init(connection, names, self, vectors, new CommandTabNameProber.Inner_DataUtil() {
             @Override
             public boolean init_Z() {
                Minecraft m = Minecraft.getInstance();

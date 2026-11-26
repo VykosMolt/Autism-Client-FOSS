@@ -24,11 +24,11 @@ import autismclient.util.AutismServerInfoOverlay;
 import autismclient.util.PkgCls_d;
 import autismclient.util.aO;
 import autismclient.util.al;
-import autismclient.util.bI;
+import autismclient.util.PayloadStudyTracker;
 import autismclient.util.bK;
 import autismclient.util.bk;
 import autismclient.util.cA;
-import autismclient.util.cb;
+import autismclient.util.PacketQueueHudRenderer;
 import autismclient.util.cf;
 import autismclient.util.ck;
 import autismclient.util.macro.MacroExecutor;
@@ -97,7 +97,7 @@ public abstract class AutismInGameHudMixin {
                boolean queueSending = shared.run_Z();
                boolean queueVisible = shared.write_Z() || shared.open_Z() || queueSending;
                boolean captureActive = this.hasAnyCaptureSession(shared);
-               boolean payloadStudyActive = bI.init_Z();
+               boolean payloadStudyActive = PayloadStudyTracker.init_Z();
                Module hud = activity.init(64L) ? autismclient.modules.al.init_Module_Str("hud") : null;
                boolean nativeHudVisible = hud != null && al.init_Z_Screen_Module(screen, hud);
                boolean esp2dVisible = am.add();
@@ -174,7 +174,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (queueVisible) {
-                        int queueHeight = cb.init_I(MC.font, 172, 8);
+                        int queueHeight = PacketQueueHudRenderer.init_I(MC.font, 172, 8);
                         if (queueHeight > 0) {
                            hudOccluders.add(new al.Inner_BufferHelper("packet_queue", x, y, 172, queueHeight));
                            y += queueHeight;
@@ -220,7 +220,7 @@ public abstract class AutismInGameHudMixin {
 
                      y = 0;
                      if (queueVisible) {
-                        int queueHeight = cb.init(context, MC.font, x, y, 172, 8, false, !macroRunning, false);
+                        int queueHeight = PacketQueueHudRenderer.init(context, MC.font, x, y, 172, 8, false, !macroRunning, false);
                         y += queueHeight;
                      }
 
@@ -368,13 +368,13 @@ public abstract class AutismInGameHudMixin {
 
    @Unique
    private PkgCls_d payloadStudyBannerSpec(GuiGraphicsExtractor graphics, int topOffset) {
-      String title = bI.init_Str();
+      String title = PayloadStudyTracker.init_Str();
       if (title.isBlank()) {
          return null;
       }
 
-      String line1 = bI.load_Str();
-      String line2 = bI.read();
+      String line1 = PayloadStudyTracker.load_Str();
+      String line2 = PayloadStudyTracker.read();
       int sw = cA.init_I();
       autismclient.gui.f.PoolEntry text = UiHelper.init(MC.font);
       int boxWidth = Math.min(sw - 16, Math.max(276, Math.max(text.init(title), Math.max(text.init(line1), text.init(line2))) + 18));

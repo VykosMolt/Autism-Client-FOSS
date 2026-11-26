@@ -28,7 +28,7 @@ public final class PayAllModule extends Module {
    @Override
    public void onEnable() {
       int generation = ++this.init;
-      autismclient.util.ClassCache.init_Future_Str_Runnable("pay-all", () -> this.init_V(generation));
+      autismclient.util.BackgroundTaskExecutor.init_Future_Str_Runnable("pay-all", () -> this.init_V(generation));
    }
 
    @Override

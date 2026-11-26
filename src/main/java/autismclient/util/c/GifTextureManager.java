@@ -1,7 +1,7 @@
 package autismclient.util.c;
 
 import autismclient.AutismClientAddon;
-import autismclient.util.ClassCache;
+import autismclient.util.BackgroundTaskExecutor;
 import autismclient.util.aq;
 import autismclient.util.bi;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -289,7 +289,7 @@ public final class GifTextureManager {
 
    private static void write() {
       if (init_AtomicBoolean.compareAndSet(false, true)) {
-         ClassCache.init_Future_Str_Runnable("gif-load", () -> {
+         BackgroundTaskExecutor.init_Future_Str_Runnable("gif-load", () -> {
             GifTextureManager.Inner_CachePool job;
             try {
                while ((job = init_Queue.poll()) != null) {

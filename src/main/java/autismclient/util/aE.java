@@ -2150,7 +2150,7 @@ public class aE {
       if (packet instanceof autismclient.util.d.LanSyncPacket.IoWorker && packet.init_Str().equals(this.read_Str)) {
          autismclient.util.d.LanSyncPacket.IoWorker p = (autismclient.util.d.LanSyncPacket.IoWorker)packet;
          if ((p.load == null || !p.load.equals(this.write_Str))
-            && bT.init_bT().init(p.read, p.write, p.load)
+            && PacketPresetManager.init_bT().init(p.read, p.write, p.load)
             && this.load_Z
             && p.load != null
             && !p.load.isBlank()) {
@@ -2206,7 +2206,7 @@ public class aE {
          }
 
          ck.Inner_CachePool.load_V();
-         List<ck.Inner_CachePool> receivedQueue = o.init_List(queueData);
+         List<ck.Inner_CachePool> receivedQueue = MacroClipboardCodec.init_List(queueData);
          if (receivedQueue == null || receivedQueue.isEmpty()) {
             AutismClientMessaging.sendPrefixed("§cReceived empty queue");
             return;

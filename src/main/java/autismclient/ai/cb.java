@@ -55,7 +55,7 @@ public final class cb {
             out.add(
                new cb.Inner_DataUtil(
                   display,
-                  autismclient.util.bQ.init_Str(display),
+                  autismclient.util.PluginSignatureCatalog.init_Str(display),
                   load_Str(init_Str(confidence, display)),
                   load_Str(init_Str(evidence, display)),
                   init_List(init_List(commands, display), maxCommands),
@@ -198,10 +198,10 @@ public final class cb {
             return direct;
          }
 
-         String key = autismclient.util.bQ.init_Str(plugin);
+         String key = autismclient.util.PluginSignatureCatalog.init_Str(plugin);
 
          for (Entry<String, List<String>> entry : map.entrySet()) {
-            if (entry.getKey() != null && autismclient.util.bQ.init_Str(entry.getKey()).equals(key)) {
+            if (entry.getKey() != null && autismclient.util.PluginSignatureCatalog.init_Str(entry.getKey()).equals(key)) {
                return entry.getValue();
             }
          }
@@ -219,10 +219,10 @@ public final class cb {
             return direct;
          }
 
-         String key = autismclient.util.bQ.init_Str(plugin);
+         String key = autismclient.util.PluginSignatureCatalog.init_Str(plugin);
 
          for (Entry<String, String> entry : map.entrySet()) {
-            if (entry.getKey() != null && autismclient.util.bQ.init_Str(entry.getKey()).equals(key)) {
+            if (entry.getKey() != null && autismclient.util.PluginSignatureCatalog.init_Str(entry.getKey()).equals(key)) {
                return entry.getValue();
             }
          }
@@ -462,9 +462,9 @@ public final class cb {
 
    private static void init(JsonObject out, String address, String brand) {
       if (!address.isBlank()) {
-         List<autismclient.util.bQ.Inner_CachePool> fingerprints;
+         List<autismclient.util.PluginSignatureCatalog.Inner_CachePool> fingerprints;
          try {
-            fingerprints = autismclient.util.bQ.init_List(address, brand);
+            fingerprints = autismclient.util.PluginSignatureCatalog.init_List(address, brand);
          } catch (Throwable ignored) {
             return;
          }
@@ -473,7 +473,7 @@ public final class cb {
             JsonArray array = new JsonArray();
             int included = 0;
 
-            for (autismclient.util.bQ.Inner_CachePool fingerprint : fingerprints) {
+            for (autismclient.util.PluginSignatureCatalog.Inner_CachePool fingerprint : fingerprints) {
                if (included++ >= 24) {
                   break;
                }

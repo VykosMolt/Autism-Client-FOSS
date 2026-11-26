@@ -515,7 +515,7 @@ public final class cc {
                   this.init_AiRegions.init(this.init_AiMemoryStore.init_Path());
                   ck.init_V();
                   aW.init_V();
-                  autismclient.util.bx.init_I();
+                  autismclient.util.PacketSchemaRegistry.init_I();
                   AiMemoryStore.init_V_Path_I(this.init_AiMemoryStore.init_Path().resolve("images"), 32);
                   synchronized (this) {
                      this.init_cd = new cd(this.init_AiMemoryStore.init_Path());

@@ -306,7 +306,7 @@ public class AutismCustomFilterOverlay extends bj {
                (index, rowY) -> {
                   Class<? extends Packet<?>> packetClass = filteredPackets.get(index);
                   boolean hovered = mouseX >= x + 2 && mouseX < x + 2 + contentWidth && mouseY >= rowY && mouseY < rowY + this.reset();
-                  String packetName = bv.init_Str_Class(packetClass);
+                  String packetName = PacketNameResolver.init_Str_Class(packetClass);
                   autismclient.gui.f.b.FileCache.init(
                      context,
                      this.init_Font,
@@ -402,7 +402,7 @@ public class AutismCustomFilterOverlay extends bj {
          List<Class<? extends Packet<?>>> filtered = new ArrayList<>();
 
          for (Class<? extends Packet<?>> packetClass : packets) {
-            String name = bv.init_Str_Class(packetClass).toLowerCase(Locale.ROOT);
+            String name = PacketNameResolver.init_Str_Class(packetClass).toLowerCase(Locale.ROOT);
             String fullName = packetClass.getName().toLowerCase(Locale.ROOT);
             if (name.contains(lowered) || fullName.contains(lowered)) {
                filtered.add(packetClass);
@@ -426,7 +426,7 @@ public class AutismCustomFilterOverlay extends bj {
       }
 
       List<Class<? extends Packet<?>>> sorted = packets == null ? new ArrayList<>() : new ArrayList<>(packets);
-      sorted.sort(Comparator.comparing(bv::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
+      sorted.sort(Comparator.comparing(PacketNameResolver::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
       state.init_List = List.copyOf(this.init_List_List_Str_2(sorted, normalizedQuery));
       state.update = sourceHash;
       state.sync = sourceSize;

@@ -2,7 +2,7 @@ package autismclient.commands.b;
 
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
-import autismclient.util.bf;
+import autismclient.util.NameScrapeController;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -29,21 +29,21 @@ public final class NameScrapeCommand extends Command {
             )
       );
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("pause").executes(ctx -> {
-         bf.init_V();
+         NameScrapeController.init_V();
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("resume").executes(ctx -> {
-         bf.load_V();
+         NameScrapeController.load_V();
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("stop").executes(ctx -> {
-         bf.read_V();
+         NameScrapeController.read_V();
          return 1;
       }));
    }
 
    private static int init(int count, boolean deep) {
-      bf.init(count, deep);
+      NameScrapeController.init(count, deep);
       return 1;
    }
 }

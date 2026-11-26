@@ -1,8 +1,8 @@
 package autismclient.mixin;
 
 import autismclient.modules.ModuleRuntimeManager;
-import autismclient.util.bg;
-import autismclient.util.bn;
+import autismclient.util.PacketCaptureState;
+import autismclient.util.PacketWireCaptureStore;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import io.netty.buffer.ByteBuf;
@@ -26,19 +26,19 @@ public abstract class AutismPacketEncoderMixin<T extends PacketListener> {
 
    @WrapMethod(method = "encode(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/protocol/Packet;Lio/netty/buffer/ByteBuf;)V")
    private void autism$captureEncodedPlaintext(ChannelHandlerContext ctx, Packet<T> packet, ByteBuf output, Operation<Void> original) {
-      long captureState = bg.init_J();
-      if (bg.init_I_J(captureState) == 0) {
+      long captureState = PacketCaptureState.init_J();
+      if (PacketCaptureState.init_I_J(captureState) == 0) {
          original.call(ctx, packet, output);
       } else {
          original.call(ctx, packet, output);
          ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
          if (module != null) {
             String protocol = this.protocolInfo.id().id();
-            if (bg.init_Z_J(captureState)) {
-               bn.init(packet, "C2S", protocol, packet.type(), output);
+            if (PacketCaptureState.init_Z_J(captureState)) {
+               PacketWireCaptureStore.init(packet, "C2S", protocol, packet.type(), output);
             }
 
-            if (bg.load(captureState) && autism$isPayloadCarrier(packet)) {
+            if (PacketCaptureState.load(captureState) && autism$isPayloadCarrier(packet)) {
                module.init(packet, "C2S", protocol, "encoder");
             }
          }

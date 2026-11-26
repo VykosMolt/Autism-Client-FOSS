@@ -1,7 +1,7 @@
 package autismclient.util.macro;
 
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.bo;
+import autismclient.util.ContainerClickSnapshot;
 import autismclient.util.ck;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -9,8 +9,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 
 public class PacketClickAction implements MacroAction {
-   public bo.Inner_StreamUtil target;
-   public String mode = bo.Inner_DataUtil.LEFT_CLICK.name();
+   public ContainerClickSnapshot.Inner_StreamUtil target;
+   public String mode = ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK.name();
    public int times = 1;
    public boolean queue = false;
    private transient boolean init = false;
@@ -18,24 +18,24 @@ public class PacketClickAction implements MacroAction {
    public PacketClickAction() {
    }
 
-   public PacketClickAction(bo.Inner_StreamUtil target, int times, boolean queue) {
+   public PacketClickAction(ContainerClickSnapshot.Inner_StreamUtil target, int times, boolean queue) {
       this.target = target;
       this.times = Math.max(1, times);
       this.queue = queue;
       this.load();
    }
 
-   public void init(bo.Inner_StreamUtil newTarget) {
+   public void init(ContainerClickSnapshot.Inner_StreamUtil newTarget) {
       this.read();
       this.target = newTarget == null ? null : newTarget.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil());
       this.load();
    }
 
-   private bo.Inner_DataUtil init_bo_DataUtil() {
+   private ContainerClickSnapshot.Inner_DataUtil init_bo_DataUtil() {
       if (this.target != null && (this.mode == null || this.mode.isBlank())) {
-         return this.target.init_bo_DataUtil() == null ? bo.Inner_DataUtil.LEFT_CLICK : this.target.init_bo_DataUtil();
+         return this.target.init_bo_DataUtil() == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.target.init_bo_DataUtil();
       } else {
-         return bo.Inner_DataUtil.init(this.mode);
+         return ContainerClickSnapshot.Inner_DataUtil.init(this.mode);
       }
    }
 
@@ -73,7 +73,7 @@ public class PacketClickAction implements MacroAction {
             AutismClientMessaging.sendPrefixed("§cPacket Click has no captured target.");
          } else {
             int count = Math.max(1, this.times);
-            bo.Inner_StreamUtil effectiveTarget = this.target.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil());
+            ContainerClickSnapshot.Inner_StreamUtil effectiveTarget = this.target.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil());
 
             for (int i = 0; i < count; i++) {
                ServerboundContainerClickPacket packet = effectiveTarget.init_ServerboundContain();
@@ -116,11 +116,11 @@ public class PacketClickAction implements MacroAction {
       this.times = Math.max(1, tag.getIntOr("times", 1));
       this.queue = tag.getBooleanOr("queue", false);
       this.mode = tag.getStringOr("mode", "");
-      this.target = tag.getCompound("target").map(bo.Inner_StreamUtil::init_bo_StreamUtil_CompoundTag).orElse(null);
+      this.target = tag.getCompound("target").map(ContainerClickSnapshot.Inner_StreamUtil::init_bo_StreamUtil_CompoundTag).orElse(null);
       if (this.mode == null || this.mode.isBlank()) {
          this.mode = this.target != null && this.target.init_bo_DataUtil() != null
             ? this.target.init_bo_DataUtil().name()
-            : bo.Inner_DataUtil.LEFT_CLICK.name();
+            : ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK.name();
       }
 
       if (this.target != null) {

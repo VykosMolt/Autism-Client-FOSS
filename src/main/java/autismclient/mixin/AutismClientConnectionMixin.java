@@ -23,13 +23,13 @@ import autismclient.util.AutismLiteVariant;
 import autismclient.util.D;
 import autismclient.util.E;
 import autismclient.util.EventBus;
-import autismclient.util.bg;
+import autismclient.util.PacketCaptureState;
 import autismclient.util.ce;
 import autismclient.util.ch;
 import autismclient.util.ci;
 import autismclient.util.ck;
 import autismclient.util.cn;
-import autismclient.util.m;
+import autismclient.util.BedSleepDesyncHelper;
 import autismclient.util.y;
 import autismclient.util.b.CustomMenuTracker;
 import autismclient.util.e.LeafDupePacketTracker;
@@ -155,7 +155,7 @@ public abstract class AutismClientConnectionMixin {
    @Inject(method = "channelInactive", at = @At("HEAD"))
    private void autism$onChannelInactive(ChannelHandlerContext context, CallbackInfo ci) {
       this.autism$spoofPipelineInstalled = false;
-      bg.read();
+      PacketCaptureState.read();
       if (((Connection)(Object)this).getPacketListener() instanceof ClientGamePacketListener) {
          ch.init_V();
          ScaffoldModule.update_V_10();
@@ -316,7 +316,7 @@ public abstract class AutismClientConnectionMixin {
          if (!aD.read_Z() && !PkgCls_a.load_Z()) {
             if (PkgCls_a.init_Z_Packet(packet)) {
                ci.cancel();
-            } else if (m.init_Z() && packet instanceof ServerboundPlayerCommandPacket autism$cmd && autism$cmd.getAction() == Action.STOP_SLEEPING) {
+            } else if (BedSleepDesyncHelper.init_Z() && packet instanceof ServerboundPlayerCommandPacket autism$cmd && autism$cmd.getAction() == Action.STOP_SLEEPING) {
                ci.cancel();
             } else {
                if (packet instanceof ServerboundMovePlayerPacket) {

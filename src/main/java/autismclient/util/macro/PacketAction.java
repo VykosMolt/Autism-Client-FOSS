@@ -2,8 +2,8 @@ package autismclient.util.macro;
 
 import autismclient.AutismClientAddon;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.by;
-import autismclient.util.de;
+import autismclient.util.DirectPacketSender;
+import autismclient.util.PacketRegenerator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -35,14 +35,14 @@ public class PacketAction implements MacroAction {
                   AutismClientMessaging.sendPrefixed("§cPacket data is empty!");
                } else {
                   try {
-                     Packet<?> packet = autismclient.util.o.init_Packet(resolvedPacketData);
+                     Packet<?> packet = autismclient.util.MacroClipboardCodec.init_Packet(resolvedPacketData);
                      if (packet == null) {
                         AutismClientMessaging.sendPrefixed("§cFailed to deserialize packet! Invalid data.");
                         return;
                      }
 
                      if (this.regenerate) {
-                        Packet<?> regenerated = de.init(packet);
+                        Packet<?> regenerated = PacketRegenerator.init(packet);
                         if (regenerated == null) {
                            AutismClientMessaging.sendPrefixed("§cFailed to regenerate packet: " + packet.getClass().getSimpleName());
                            return;
@@ -51,7 +51,7 @@ public class PacketAction implements MacroAction {
                         packet = regenerated;
                      }
 
-                     by.init(packet);
+                     DirectPacketSender.init(packet);
                   } catch (Exception e) {
                      AutismClientMessaging.sendPrefixed("§cPacket send error: " + e.getMessage());
                      AutismClientAddon.LOG.error("[MacroExecutor] Packet action failed", e);

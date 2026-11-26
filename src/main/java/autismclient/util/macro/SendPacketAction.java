@@ -1,10 +1,10 @@
 package autismclient.util.macro;
 
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.bv;
-import autismclient.util.by;
+import autismclient.util.PacketNameResolver;
+import autismclient.util.DirectPacketSender;
 import autismclient.util.ck;
-import autismclient.util.de;
+import autismclient.util.PacketRegenerator;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,7 +30,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
 
    public static Packet<?> init_Packet_ck_CachePool(ck.Inner_CachePool qp) {
       if (qp != null && qp.init_Packet != null) {
-         return qp.init_Z() ? qp.init_Packet : de.init(qp.init_Packet);
+         return qp.init_Z() ? qp.init_Packet : PacketRegenerator.init(qp.init_Packet);
       } else {
          return null;
       }
@@ -61,7 +61,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
                            break;
                         }
 
-                        by.init(toSend);
+                        DirectPacketSender.init(toSend);
                         successCount++;
                      } catch (Exception e) {
                         AutismClientMessaging.sendPrefixed("§cSend failed: " + e.getMessage());
@@ -130,7 +130,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
       ListTag packetList = new ListTag();
 
       for (ck.Inner_CachePool qp : this.packets) {
-         CompoundTag packetTag = autismclient.util.o.init(qp);
+         CompoundTag packetTag = autismclient.util.MacroClipboardCodec.init(qp);
          if (packetTag != null) {
             packetList.add(packetTag);
          }
@@ -157,7 +157,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
             for (int i = 0; i < packetList.size(); i++) {
                Tag element = packetList.get(i);
                if (element instanceof CompoundTag) {
-                  ck.Inner_CachePool qp = autismclient.util.o.init_ck_CachePool((CompoundTag)element);
+                  ck.Inner_CachePool qp = autismclient.util.MacroClipboardCodec.init_ck_CachePool((CompoundTag)element);
                   if (qp != null) {
                      this.packets.add(qp);
                   }
@@ -179,7 +179,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
 
          for (ck.Inner_CachePool qp : this.packets) {
             if (qp.init_Packet != null) {
-               String name = bv.init_Str_Packet(qp.init_Packet);
+               String name = PacketNameResolver.init_Str_Packet(qp.init_Packet);
                nameCounts.merge(name, 1, Integer::sum);
             }
          }

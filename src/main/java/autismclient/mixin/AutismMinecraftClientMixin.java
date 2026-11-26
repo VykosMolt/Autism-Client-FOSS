@@ -30,7 +30,7 @@ import autismclient.util.StreamGate;
 import autismclient.util.aT;
 import autismclient.util.aY;
 import autismclient.util.as;
-import autismclient.util.bI;
+import autismclient.util.PayloadStudyTracker;
 import autismclient.util.cG;
 import autismclient.util.cd;
 import autismclient.util.ck;
@@ -480,7 +480,7 @@ public class AutismMinecraftClientMixin {
          boolean inventoryJustPressed = inventoryDown && !this.autism$inventoryWasDown;
          this.autism$inventoryWasDown = inventoryDown;
          if (justPressed || inventoryJustPressed) {
-            if (justPressed && bI.load_Z()) {
+            if (justPressed && PayloadStudyTracker.load_Z()) {
                s.sync_V();
                as.poll();
                ci.cancel();
@@ -533,7 +533,7 @@ public class AutismMinecraftClientMixin {
    private void autism$cancelLostFocusPause(boolean suppressPauseMenuIfWeReallyArePausing, CallbackInfo ci) {
       if (!aD.read_Z()) {
          Minecraft client = (Minecraft)(Object)this;
-         if (bI.load_Z()) {
+         if (PayloadStudyTracker.load_Z()) {
             ci.cancel();
          } else if (ck.init_ck().flags()) {
             ci.cancel();

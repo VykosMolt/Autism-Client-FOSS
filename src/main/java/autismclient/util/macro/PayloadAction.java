@@ -2,9 +2,9 @@ package autismclient.util.macro;
 
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismPayloadSupport;
-import autismclient.util.bG;
-import autismclient.util.bH;
-import autismclient.util.bJ;
+import autismclient.util.PayloadJsonCodec;
+import autismclient.util.PayloadScriptRunner;
+import autismclient.util.PayloadFieldCodec;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
@@ -65,8 +65,8 @@ public class PayloadAction implements MacroAction {
                   : (this.sourceProtocol == null ? "" : this.sourceProtocol);
                byte[] rawBytes;
                if (hasStructuredPayload) {
-                  bJ.Inner_JsonUtil template = bJ.init(this);
-                  bJ.Inner_DataUtil built = template.init_bJ_DataUtil();
+                  PayloadFieldCodec.Inner_JsonUtil template = PayloadFieldCodec.init(this);
+                  PayloadFieldCodec.Inner_DataUtil built = template.init_bJ_DataUtil();
                   if (!built.init_Z()) {
                      throw new IllegalArgumentException(String.join("; ", built.load()));
                   }
@@ -80,7 +80,7 @@ public class PayloadAction implements MacroAction {
                      sendProtocol = template.init_bJ_TaskQueue().name();
                   }
                } else if (useJsonModel) {
-                  bG.Inner_DataUtil encoded = bG.init_bG_DataUtil(this);
+                  PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.init_bG_DataUtil(this);
                   if (!MacroTemplateResolver.init_Z(this.channel)) {
                      targetChannel = encoded.init_Str();
                   }
@@ -98,10 +98,10 @@ public class PayloadAction implements MacroAction {
                   rawBytes = AutismPayloadSupport.init_BArr(rawBytes, this.commandApiValue);
                }
 
-               bH.Inner_DataUtil context = new bH.Inner_DataUtil(
+               PayloadScriptRunner.Inner_DataUtil context = new PayloadScriptRunner.Inner_DataUtil(
                   targetChannel, rawBytes, this.commandApiRecognized && this.commandApiOverride ? this.commandApiValue : null
                );
-               bH.Inner_StreamUtil result = bH.init(this.payloadScriptEnabled ? this.javaSource : "", context);
+               PayloadScriptRunner.Inner_StreamUtil result = PayloadScriptRunner.init(this.payloadScriptEnabled ? this.javaSource : "", context);
                if (AutismPayloadSupport.init_Z(result.init_Str(), result.init_BArr(), sendProtocol)) {
                   AutismClientMessaging.sendPrefixed("Sent payload: " + result.init_Str());
                }

@@ -475,7 +475,7 @@ public final class J {
                }
 
                packets.add(
-                  de.init(
+                  PacketRegenerator.init(
                      new ServerboundContainerClickPacket(
                         craftingHandler.containerId,
                         craftingHandler.getStateId(),

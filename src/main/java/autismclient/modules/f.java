@@ -27,11 +27,11 @@ import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismWaypoints;
-import autismclient.util.PkgCls_b;
+import autismclient.util.BookBotPageGenerator;
 import autismclient.util.bM;
-import autismclient.util.bw;
+import autismclient.util.PacketTypeRegistry;
 import autismclient.util.cG;
-import autismclient.util.cL;
+import autismclient.util.AutoFishMacroPresets;
 import autismclient.util.cM;
 import autismclient.util.cc;
 import autismclient.util.cd;
@@ -39,7 +39,7 @@ import autismclient.util.ce;
 import autismclient.util.cj;
 import autismclient.util.ck;
 import autismclient.util.cn;
-import autismclient.util.dd;
+import autismclient.util.PacketFilterListCodec;
 import autismclient.util.di;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroAction;
@@ -1644,16 +1644,16 @@ public final class f {
       private void push() {
          if (!this.bool("stop-macro-enabled") && this.value("stop-macro").trim().isEmpty()) {
             if (Boolean.parseBoolean(this.value("stop-inv-slots"))) {
-               autismclient.util.AutismMacro macro = cL.init(cL.Inner_DataUtil.FREE_SLOTS);
+               autismclient.util.AutismMacro macro = AutoFishMacroPresets.init(AutoFishMacroPresets.Inner_DataUtil.FREE_SLOTS);
                if (macro != null) {
-                  this.init(macro, cL.Inner_DataUtil.FREE_SLOTS);
+                  this.init(macro, AutoFishMacroPresets.Inner_DataUtil.FREE_SLOTS);
                   this.setValue("stop-macro-enabled", "true");
                   this.setValue("stop-macro", macro.init_Str);
                }
             } else if (Boolean.parseBoolean(this.value("stop-out-of-rods"))) {
-               autismclient.util.AutismMacro macro = cL.init(cL.Inner_DataUtil.DURABILITY);
+               autismclient.util.AutismMacro macro = AutoFishMacroPresets.init(AutoFishMacroPresets.Inner_DataUtil.DURABILITY);
                if (macro != null) {
-                  this.init(macro, cL.Inner_DataUtil.DURABILITY);
+                  this.init(macro, AutoFishMacroPresets.Inner_DataUtil.DURABILITY);
                   this.setValue("stop-macro-enabled", "true");
                   this.setValue("stop-macro", macro.init_Str);
                }
@@ -1661,9 +1661,9 @@ public final class f {
          }
       }
 
-      private void init(autismclient.util.AutismMacro macro, cL.Inner_DataUtil preset) {
+      private void init(autismclient.util.AutismMacro macro, AutoFishMacroPresets.Inner_DataUtil preset) {
          if (macro != null && macro.init_List != null && !macro.init_List.isEmpty() && preset != null) {
-            if (preset == cL.Inner_DataUtil.FREE_SLOTS && macro.init_List.get(0) instanceof autismclient.util.macro.WaitFreeSlotsAction wait) {
+            if (preset == AutoFishMacroPresets.Inner_DataUtil.FREE_SLOTS && macro.init_List.get(0) instanceof autismclient.util.macro.WaitFreeSlotsAction wait) {
                int slots = AuditClientFixes.autoFishMinFreeSlots(this, wait.slots);
                boolean changed = wait.countMode != autismclient.util.macro.WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS
                   || wait.comparison != autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST
@@ -1674,7 +1674,7 @@ public final class f {
                if (changed) {
                   autismclient.util.aN.init_aN().read_V();
                }
-            } else if (preset == cL.Inner_DataUtil.DURABILITY && macro.init_List.get(0) instanceof autismclient.util.macro.WaitDurabilityAction wait) {
+            } else if (preset == AutoFishMacroPresets.Inner_DataUtil.DURABILITY && macro.init_List.get(0) instanceof autismclient.util.macro.WaitDurabilityAction wait) {
                int value = Math.max(1, this.integer("min-durability"));
                boolean changed = wait.targetMode != autismclient.util.macro.WaitDurabilityAction.Inner_CachePool.ITEM
                   || !"minecraft:fishing_rod".equals(wait.itemName)
@@ -1706,7 +1706,7 @@ public final class f {
                autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(macroName);
                if (macro == null) {
                   this.load("AutoFish auto stop rule not found: " + macroName);
-               } else if (!cL.init(macro)) {
+               } else if (!AutoFishMacroPresets.init(macro)) {
                   this.load("AutoFish auto stop rule must start with a conditional.");
                } else {
                   autismclient.util.AutismMacro runtimeMacro = this.init_aM_aM(macro);
@@ -1726,7 +1726,7 @@ public final class f {
 
       private void run() {
          String macroName = this.value("stop-macro").trim();
-         cL.Inner_DataUtil preset = cL.init_cL_DataUtil(macroName);
+         AutoFishMacroPresets.Inner_DataUtil preset = AutoFishMacroPresets.init_cL_DataUtil(macroName);
          if (preset != null) {
             autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(macroName);
             if (macro != null) {
@@ -1750,7 +1750,7 @@ public final class f {
             boolean injectStop = trigger != f.Inner_BufferHelper.Inner_StreamUtil.RUN_STEPS_ONLY;
             boolean skipImmediateDuplicateDisable = injectStop
                && conditionIndex + 1 < runtime.init_List.size()
-               && cL.load(runtime.init_List.get(conditionIndex + 1));
+               && AutoFishMacroPresets.load(runtime.init_List.get(conditionIndex + 1));
             boolean injectResume = trigger == f.Inner_BufferHelper.Inner_StreamUtil.STOP_RUN_RESUME
                && !this.init(runtime.init_List, conditionIndex, skipImmediateDuplicateDisable);
             ArrayList<MacroAction> rebuilt = new ArrayList<>();
@@ -1801,7 +1801,7 @@ public final class f {
          for (int i = Math.max(0, conditionIndex + 1); i < actions.size(); i++) {
             if (!ignoreImmediateDuplicateDisable || i != conditionIndex + 1) {
                MacroAction action = actions.get(i);
-               if (action != null && action.isEnabled() && cL.init(action)) {
+               if (action != null && action.isEnabled() && AutoFishMacroPresets.init(action)) {
                   return true;
                }
             }
@@ -4824,14 +4824,14 @@ public final class f {
          if (c2s) {
             if (!value.equals(this.init_Str)) {
                this.init_Str = value;
-               this.init_Set = dd.init_Set(value, true);
+               this.init_Set = PacketFilterListCodec.init_Set(value, true);
             }
 
             return this.init_Set;
          } else {
             if (!value.equals(this.load_Str)) {
                this.load_Str = value;
-               this.load_Set = dd.init_Set(value, false);
+               this.load_Set = PacketFilterListCodec.init_Set(value, false);
             }
 
             return this.load_Set;
@@ -4843,7 +4843,7 @@ public final class f {
             String simple = packet.getClass().getSimpleName().toLowerCase(Locale.ROOT);
             String full = packet.getClass().getName().toLowerCase(Locale.ROOT);
             Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)packet.getClass();
-            String registry = String.valueOf(bw.init_Str_Class(packetClass)).toLowerCase(Locale.ROOT);
+            String registry = String.valueOf(PacketTypeRegistry.init_Str_Class(packetClass)).toLowerCase(Locale.ROOT);
 
             for (String token : list.split("[,|]")) {
                String needle = token.trim().toLowerCase(Locale.ROOT);
@@ -7017,7 +7017,7 @@ public final class f {
          boolean randomMode = "Random".equals(this.choice("mode"));
          int pageCount = "File".equals(this.choice("mode")) ? 100 : Math.min(100, Math.max(1, this.integer("pages")));
          if (randomMode) {
-            return PkgCls_b.init(pageCount, this.integer("characters"), this.choice("random-type"), this.init_Random);
+            return BookBotPageGenerator.init(pageCount, this.integer("characters"), this.choice("random-type"), this.init_Random);
          } else {
             int chars = this.integer("characters");
             if (!custom.isBlank() && this.bool("word-wrap")) {
@@ -7055,7 +7055,7 @@ public final class f {
          }
 
          try {
-            return autismclient.util.PkgCls_a.init(Path.of(path));
+            return autismclient.util.BookBotFileReader.init(Path.of(path));
          } catch (Exception ex) {
             AutismClientMessaging.sendPrefixed("BookBot file read failed: " + ex.getMessage());
             return "";

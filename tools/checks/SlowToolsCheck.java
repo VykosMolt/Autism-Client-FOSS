@@ -46,10 +46,10 @@ public class SlowToolsCheck {
 
    private static void child(String mode, Path out) throws Exception {
       long start = System.nanoTime();
-      n.init_V("hello");
+      SystemClipboardHelper.init_V("hello");
       long ms = (System.nanoTime() - start) / 1000000L;
       check(ms < 500L, "clipboard write blocked the caller for " + ms + " ms");
-      check(n.init_Str().equals("hello"), "pending write not visible to a read");
+      check(SystemClipboardHelper.init_Str().equals("hello"), "pending write not visible to a read");
       long deadline = System.currentTimeMillis() + 5000L;
       while (!(Files.exists(out) && Files.readString(out).equals("hello")) && System.currentTimeMillis() < deadline) {
          Thread.sleep(100L);

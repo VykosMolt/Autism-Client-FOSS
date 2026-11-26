@@ -14,7 +14,7 @@ import autismclient.gui.f.b.PoolEntry;
 import autismclient.gui.f.b.RingBuffer;
 import autismclient.gui.f.b.g;
 import autismclient.util.AutismProfile;
-import autismclient.util.bV;
+import autismclient.util.AutismProfileManager;
 import autismclient.util.bi;
 import autismclient.util.cz;
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ public final class StreamUtil {
    private static final int load_I = 4;
    private final Font init_Font;
    private final CharEncoder init_CharEncoder = new CharEncoder();
-   private final bV init_bV = bV.init_bV();
+   private final AutismProfileManager init_bV = AutismProfileManager.init_bV();
    private final DataUtil init_DataUtil = new DataUtil();
    private final List<StreamUtil.Inner_DataUtil> init_List = new ArrayList<>();
    private final List<BitSetUtil> load_List = new ArrayList<>();
@@ -300,7 +300,7 @@ public final class StreamUtil {
 
    private void init_V_SyncManager(autismclient.gui.f.SyncManager ctx, AutismProfile p, int x, int y, int w) {
       boolean active = p.id.equals(this.init_bV.init_Str());
-      boolean canDelete = !bV.init_Z_AutismProfile(p);
+      boolean canDelete = !AutismProfileManager.init_Z_AutismProfile(p);
       int slots = read_I_I(w);
       int cellW = (w - (slots - 1) * 2) / slots;
       String[] labels = new String[]{active ? "Active" : "Load", "Rename", "Duplicate", "Delete"};

@@ -19,22 +19,22 @@ import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismPacketSelectorOverlay;
 import autismclient.util.AutismPayloadSupport;
-import autismclient.util.ClassCache;
+import autismclient.util.BackgroundTaskExecutor;
 import autismclient.util.D;
 import autismclient.util.J;
 import autismclient.util.N;
 import autismclient.util.AutismMacro;
-import autismclient.util.bE;
-import autismclient.util.bG;
-import autismclient.util.bJ;
+import autismclient.util.PayloadEditorModel;
+import autismclient.util.PayloadJsonCodec;
+import autismclient.util.PayloadFieldCodec;
 import autismclient.util.bN;
 import autismclient.util.bO;
 import autismclient.util.bi;
 import autismclient.util.bj;
 import autismclient.util.bk;
-import autismclient.util.bo;
-import autismclient.util.bv;
-import autismclient.util.bw;
+import autismclient.util.ContainerClickSnapshot;
+import autismclient.util.PacketNameResolver;
+import autismclient.util.PacketTypeRegistry;
 import autismclient.util.cA;
 import autismclient.util.cH;
 import autismclient.util.cX;
@@ -44,7 +44,7 @@ import autismclient.util.ck;
 import autismclient.util.ct;
 import autismclient.util.cx;
 import autismclient.util.k;
-import autismclient.util.o;
+import autismclient.util.MacroClipboardCodec;
 import autismclient.util.p;
 import autismclient.util.macro.MacroItemTarget;
 import autismclient.util.macro.CaptureOutputAction;
@@ -346,7 +346,7 @@ public class ActionEditorOverlay extends bj {
    private int[] init_IArr;
    private DropAction init_PacketUtil;
    private PayloadAction init_H;
-   private bE init_bE;
+   private PayloadEditorModel init_bE;
    private boolean run_Z = false;
    private ActionEditorOverlay.TaskQueue init_ActionEditorOverla_3 = ActionEditorOverlay.TaskQueue.BINARY_REPLAY;
    private int f_h_I = 0;
@@ -388,42 +388,42 @@ public class ActionEditorOverlay extends bj {
    private int f_x_I = 0;
    private int f_y_I = 0;
    private boolean cache_Z = false;
-   private static final List<bJ.Inner_BufferHelper> get_List = List.of(
-      bJ.Inner_BufferHelper.BYTE,
-      bJ.Inner_BufferHelper.UNSIGNED_BYTE,
-      bJ.Inner_BufferHelper.BOOLEAN,
-      bJ.Inner_BufferHelper.SHORT,
-      bJ.Inner_BufferHelper.UNSIGNED_SHORT,
-      bJ.Inner_BufferHelper.CHAR,
-      bJ.Inner_BufferHelper.INT,
-      bJ.Inner_BufferHelper.LONG,
-      bJ.Inner_BufferHelper.FLOAT,
-      bJ.Inner_BufferHelper.DOUBLE,
-      bJ.Inner_BufferHelper.JAVA_WRITE_UTF,
-      bJ.Inner_BufferHelper.RAW_BYTES,
-      bJ.Inner_BufferHelper.BYTE_ARRAY,
-      bJ.Inner_BufferHelper.STRING_BYTES,
-      bJ.Inner_BufferHelper.VAR_INT,
-      bJ.Inner_BufferHelper.VAR_LONG,
-      bJ.Inner_BufferHelper.MINECRAFT_STRING,
-      bJ.Inner_BufferHelper.IDENTIFIER,
-      bJ.Inner_BufferHelper.UUID_FIELD,
-      bJ.Inner_BufferHelper.BLOCK_POS,
-      bJ.Inner_BufferHelper.ENUM_VAR_INT,
-      bJ.Inner_BufferHelper.OPTIONAL_VALUE,
-      bJ.Inner_BufferHelper.NBT,
-      bJ.Inner_BufferHelper.ITEM_STACK,
-      bJ.Inner_BufferHelper.TEXT_COMPONENT
+   private static final List<PayloadFieldCodec.Inner_BufferHelper> get_List = List.of(
+      PayloadFieldCodec.Inner_BufferHelper.BYTE,
+      PayloadFieldCodec.Inner_BufferHelper.UNSIGNED_BYTE,
+      PayloadFieldCodec.Inner_BufferHelper.BOOLEAN,
+      PayloadFieldCodec.Inner_BufferHelper.SHORT,
+      PayloadFieldCodec.Inner_BufferHelper.UNSIGNED_SHORT,
+      PayloadFieldCodec.Inner_BufferHelper.CHAR,
+      PayloadFieldCodec.Inner_BufferHelper.INT,
+      PayloadFieldCodec.Inner_BufferHelper.LONG,
+      PayloadFieldCodec.Inner_BufferHelper.FLOAT,
+      PayloadFieldCodec.Inner_BufferHelper.DOUBLE,
+      PayloadFieldCodec.Inner_BufferHelper.JAVA_WRITE_UTF,
+      PayloadFieldCodec.Inner_BufferHelper.RAW_BYTES,
+      PayloadFieldCodec.Inner_BufferHelper.BYTE_ARRAY,
+      PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES,
+      PayloadFieldCodec.Inner_BufferHelper.VAR_INT,
+      PayloadFieldCodec.Inner_BufferHelper.VAR_LONG,
+      PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING,
+      PayloadFieldCodec.Inner_BufferHelper.IDENTIFIER,
+      PayloadFieldCodec.Inner_BufferHelper.UUID_FIELD,
+      PayloadFieldCodec.Inner_BufferHelper.BLOCK_POS,
+      PayloadFieldCodec.Inner_BufferHelper.ENUM_VAR_INT,
+      PayloadFieldCodec.Inner_BufferHelper.OPTIONAL_VALUE,
+      PayloadFieldCodec.Inner_BufferHelper.NBT,
+      PayloadFieldCodec.Inner_BufferHelper.ITEM_STACK,
+      PayloadFieldCodec.Inner_BufferHelper.TEXT_COMPONENT
    );
    private static final List<String> set_List = init_List_2();
    private static final List<String> put_List = List.of("Raw UTF-8", "Hex", "DataOutput", "ByteBuf", "JSON", "Mixed");
-   private static final List<bJ.Inner_StreamUtil> add_List = List.of(
-      bJ.Inner_StreamUtil.RAW_UTF8,
-      bJ.Inner_StreamUtil.MANUAL_HEX,
-      bJ.Inner_StreamUtil.JAVA_DATA_OUTPUT,
-      bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF,
-      bJ.Inner_StreamUtil.JSON_TEXT,
-      bJ.Inner_StreamUtil.ADVANCED_MIXED
+   private static final List<PayloadFieldCodec.Inner_StreamUtil> add_List = List.of(
+      PayloadFieldCodec.Inner_StreamUtil.RAW_UTF8,
+      PayloadFieldCodec.Inner_StreamUtil.MANUAL_HEX,
+      PayloadFieldCodec.Inner_StreamUtil.JAVA_DATA_OUTPUT,
+      PayloadFieldCodec.Inner_StreamUtil.MINECRAFT_BYTEBUF,
+      PayloadFieldCodec.Inner_StreamUtil.JSON_TEXT,
+      PayloadFieldCodec.Inner_StreamUtil.ADVANCED_MIXED
    );
    private List<WaitForLanStepAction.Inner_DataUtil> clear_List;
    private List<autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool> reset_List;
@@ -450,7 +450,7 @@ public class ActionEditorOverlay extends bj {
    private static List<String> init_List_2() {
       List<String> labels = new ArrayList<>();
 
-      for (bJ.Inner_BufferHelper type : get_List) {
+      for (PayloadFieldCodec.Inner_BufferHelper type : get_List) {
          labels.add(type.init());
       }
 
@@ -3446,7 +3446,7 @@ public class ActionEditorOverlay extends bj {
          }
       });
       this.init_V_GuiGraphicsExtract(ctx, topBtns[2], topY, topBtns[3], btnH, "Paste Base64", mx, my, () -> {
-         List<ck.Inner_CachePool> pasted = o.read();
+         List<ck.Inner_CachePool> pasted = MacroClipboardCodec.read();
          if (pasted != null && !pasted.isEmpty()) {
             this.init_V_ck_CachePool(pasted.get(0));
             AutismClientMessaging.sendPrefixed("Loaded first pasted packet");
@@ -3817,7 +3817,7 @@ public class ActionEditorOverlay extends bj {
          AutismClientMessaging.sendPrefixed("Loaded " + finalQueuePackets.size() + " packets from queue");
       });
       this.init_V_GuiGraphicsExtract(ctx, fromBtns[2], cy, fromBtns[3], 13, "Paste Base64", mx, my, () -> {
-         List<ck.Inner_CachePool> pasted = o.read();
+         List<ck.Inner_CachePool> pasted = MacroClipboardCodec.read();
          if (pasted != null && !pasted.isEmpty()) {
             this.write(pasted);
             AutismClientMessaging.sendPrefixed("Pasted " + pasted.size() + " packets");
@@ -3879,7 +3879,7 @@ public class ActionEditorOverlay extends bj {
          int iy = packetViewport.init_I(i);
          if (iy != -2147483648) {
             ck.Inner_CachePool qp = packets.get(i);
-            String pname = qp != null && qp.init_Packet != null ? bv.init_Str_Packet(qp.init_Packet) : "???";
+            String pname = qp != null && qp.init_Packet != null ? PacketNameResolver.init_Str_Packet(qp.init_Packet) : "???";
             String rowText = i + 1 + ". " + pname + " d=" + (qp != null ? qp.load_I() : 0);
             boolean hovered = mx >= x && mx < x + textW && my >= iy && my < iy + 13;
             autismclient.gui.macro.editor.a.CachePool.init(
@@ -3946,7 +3946,7 @@ public class ActionEditorOverlay extends bj {
          AutismClientMessaging.sendPrefixed("Loaded " + this.read_List().size() + " packets from queue");
       });
       this.init_V_GuiGraphicsExtract(ctx, topBtns[2], topY, topBtns[3], btnH, "Paste Base64", mx, my, () -> {
-         List<ck.Inner_CachePool> pasted = o.read();
+         List<ck.Inner_CachePool> pasted = MacroClipboardCodec.read();
          if (pasted != null && !pasted.isEmpty()) {
             this.write(pasted);
             AutismClientMessaging.sendPrefixed("Pasted " + pasted.size() + " packets");
@@ -3979,7 +3979,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void load_V_H(PayloadAction seedAction) {
-      this.init_bE = bE.init_bE_H(seedAction);
+      this.init_bE = PayloadEditorModel.init_bE_H(seedAction);
       this.init_ActionEditorOverla_2 = null;
       this.write_J = -9223372036854775808L;
       this.init_ActionEditorOverla = null;
@@ -4105,8 +4105,8 @@ public class ActionEditorOverlay extends bj {
       this.init_Map.put("payload_command_value", commandField);
       this.load_Map.put("payload_command_api", this.init_bE.load_Z);
       this.pop(true);
-      bJ.Inner_JsonUtil template = this.load_bJ_JsonUtil();
-      bJ.Inner_StreamUtil suggestedMode = this.init_bJ_StreamUtil_Str(template.init_Str(), template.init_List(), template.init_bJ_StreamUtil());
+      PayloadFieldCodec.Inner_JsonUtil template = this.load_bJ_JsonUtil();
+      PayloadFieldCodec.Inner_StreamUtil suggestedMode = this.init_bJ_StreamUtil_Str(template.init_Str(), template.init_List(), template.init_bJ_StreamUtil());
       this.read_Map.put("payload_mode", this.init_I_bJ_StreamUtil(suggestedMode));
       this.read_Map
          .put("payload_add_type", this.init_I_bJ_BufferHelper(this.init_bJ_BufferHelper_Str(template.init_Str(), suggestedMode, template.init_List())));
@@ -4132,8 +4132,8 @@ public class ActionEditorOverlay extends bj {
 
       if (action.payloadJson != null && !action.payloadJson.isBlank()) {
          try {
-            action.payloadJson = bG.init_Str(action.payloadJson);
-            bG.Inner_DataUtil encoded = bG.init_bG_DataUtil(action);
+            action.payloadJson = PayloadJsonCodec.init_Str(action.payloadJson);
+            PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.init_bG_DataUtil(action);
             if (channel.isBlank() && encoded.init_Str() != null && !encoded.init_Str().isBlank()) {
                channel = encoded.init_Str();
             }
@@ -4210,7 +4210,7 @@ public class ActionEditorOverlay extends bj {
    private void open(boolean syncPreview) {
       k jsonField = this.init_Map.get("payload_json");
       if (jsonField != null) {
-         jsonField.init_V_Str(bG.init_Str(jsonField.load_Str()));
+         jsonField.init_V_Str(PayloadJsonCodec.init_Str(jsonField.load_Str()));
          if (syncPreview) {
             this.poll(true);
          }
@@ -4241,8 +4241,8 @@ public class ActionEditorOverlay extends bj {
          }
 
          try {
-            preview.payloadJson = bG.init_Str(preview.payloadJson);
-            bG.Inner_DataUtil encoded = bG.init_bG_DataUtil(preview);
+            preview.payloadJson = PayloadJsonCodec.init_Str(preview.payloadJson);
+            PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.init_bG_DataUtil(preview);
             this.start_Z = true;
 
             try {
@@ -4281,9 +4281,9 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void load_V_List(List<bJ.Inner_CachePool> fields) {
+   private void load_V_List(List<PayloadFieldCodec.Inner_CachePool> fields) {
       this.size();
-      List<bJ.Inner_CachePool> safeFields = fields == null ? List.of() : fields;
+      List<PayloadFieldCodec.Inner_CachePool> safeFields = fields == null ? List.of() : fields;
       this.f_h_I = safeFields.size();
       if (this.init_bE != null) {
          this.init_bE.init_List = new ArrayList<>(safeFields);
@@ -4294,7 +4294,7 @@ public class ActionEditorOverlay extends bj {
       } else {
          k contentField = this.init_Map.get("payload_content");
          if (contentField != null) {
-            contentField.init_V_Str(bJ.init(safeFields));
+            contentField.init_V_Str(PayloadFieldCodec.init(safeFields));
          }
       }
    }
@@ -4306,28 +4306,28 @@ public class ActionEditorOverlay extends bj {
       this.f_h_I = 0;
    }
 
-   private List<bJ.Inner_CachePool> load_List() {
+   private List<PayloadFieldCodec.Inner_CachePool> load_List() {
       if (this.init_bE != null) {
          return this.init_bE.init_List == null ? List.of() : this.init_bE.init_List;
       }
 
       k contentField = this.init_Map.get("payload_content");
-      return bJ.init_List(contentField == null ? "" : contentField.load_Str());
+      return PayloadFieldCodec.init_List(contentField == null ? "" : contentField.load_Str());
    }
 
    private void data() {
       if (!this.start_Z) {
          String channel = this.write_Str();
-         List<bJ.Inner_CachePool> fields = this.load_List();
+         List<PayloadFieldCodec.Inner_CachePool> fields = this.load_List();
          if (!this.clear_Z) {
-            bJ.Inner_StreamUtil current = add_List.get(
-               Math.max(0, Math.min(this.read_Map.getOrDefault("payload_mode", this.init_I_bJ_StreamUtil(bJ.Inner_StreamUtil.ADVANCED_MIXED)), add_List.size() - 1))
+            PayloadFieldCodec.Inner_StreamUtil current = add_List.get(
+               Math.max(0, Math.min(this.read_Map.getOrDefault("payload_mode", this.init_I_bJ_StreamUtil(PayloadFieldCodec.Inner_StreamUtil.ADVANCED_MIXED)), add_List.size() - 1))
             );
             this.read_Map.put("payload_mode", this.init_I_bJ_StreamUtil(this.init_bJ_StreamUtil_Str(channel, fields, current)));
          }
 
          if (!this.reset_Z) {
-            bJ.Inner_StreamUtil mode = this.init_bJ_StreamUtil_Str(channel);
+            PayloadFieldCodec.Inner_StreamUtil mode = this.init_bJ_StreamUtil_Str(channel);
             this.read_Map.put("payload_add_type", this.init_I_bJ_BufferHelper(this.init_bJ_BufferHelper_Str(channel, mode, fields)));
          }
       }
@@ -4346,23 +4346,23 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private bJ.Inner_StreamUtil init_bJ_StreamUtil_Str(String channel, List<bJ.Inner_CachePool> fields, bJ.Inner_StreamUtil fallback) {
-      List<bJ.Inner_CachePool> safeFields = fields == null ? List.of() : fields;
+   private PayloadFieldCodec.Inner_StreamUtil init_bJ_StreamUtil_Str(String channel, List<PayloadFieldCodec.Inner_CachePool> fields, PayloadFieldCodec.Inner_StreamUtil fallback) {
+      List<PayloadFieldCodec.Inner_CachePool> safeFields = fields == null ? List.of() : fields;
       if (AutismPayloadSupport.init_Z(channel)) {
-         return bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF;
+         return PayloadFieldCodec.Inner_StreamUtil.MINECRAFT_BYTEBUF;
       }
 
       if ("bungeecord:main".equalsIgnoreCase(channel == null ? "" : channel.strip())) {
-         return bJ.Inner_StreamUtil.JAVA_DATA_OUTPUT;
+         return PayloadFieldCodec.Inner_StreamUtil.JAVA_DATA_OUTPUT;
       }
 
-      for (bJ.Inner_CachePool field : safeFields) {
+      for (PayloadFieldCodec.Inner_CachePool field : safeFields) {
          if (field != null) {
             switch (field.init_bJ_BufferHelper()) {
                case HEX_BYTES:
                case RAW_BYTES:
                case BYTE_ARRAY:
-                  return bJ.Inner_StreamUtil.MANUAL_HEX;
+                  return PayloadFieldCodec.Inner_StreamUtil.MANUAL_HEX;
                case JAVA_WRITE_UTF:
                case BYTE:
                case UNSIGNED_BYTE:
@@ -4374,7 +4374,7 @@ public class ActionEditorOverlay extends bj {
                case LONG:
                case FLOAT:
                case DOUBLE:
-                  return bJ.Inner_StreamUtil.JAVA_DATA_OUTPUT;
+                  return PayloadFieldCodec.Inner_StreamUtil.JAVA_DATA_OUTPUT;
                case VAR_INT:
                case VAR_LONG:
                case MINECRAFT_STRING:
@@ -4383,35 +4383,35 @@ public class ActionEditorOverlay extends bj {
                case BLOCK_POS:
                case ENUM_VAR_INT:
                case OPTIONAL_VALUE:
-                  return bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF;
+                  return PayloadFieldCodec.Inner_StreamUtil.MINECRAFT_BYTEBUF;
                case JSON_STRING:
                case TEXT_COMPONENT:
                case NBT:
                case ITEM_STACK:
-                  return bJ.Inner_StreamUtil.JSON_TEXT;
+                  return PayloadFieldCodec.Inner_StreamUtil.JSON_TEXT;
                case STRING_BYTES:
                case RAW_UTF8_STRING:
-                  return bJ.Inner_StreamUtil.RAW_UTF8;
+                  return PayloadFieldCodec.Inner_StreamUtil.RAW_UTF8;
             }
          }
       }
 
-      return fallback == null ? bJ.Inner_StreamUtil.ADVANCED_MIXED : fallback;
+      return fallback == null ? PayloadFieldCodec.Inner_StreamUtil.ADVANCED_MIXED : fallback;
    }
 
-   private bJ.Inner_BufferHelper init_bJ_BufferHelper_Str(String channel, bJ.Inner_StreamUtil mode, List<bJ.Inner_CachePool> fields) {
+   private PayloadFieldCodec.Inner_BufferHelper init_bJ_BufferHelper_Str(String channel, PayloadFieldCodec.Inner_StreamUtil mode, List<PayloadFieldCodec.Inner_CachePool> fields) {
       if (AutismPayloadSupport.init_Z(channel)) {
-         return bJ.Inner_BufferHelper.MINECRAFT_STRING;
+         return PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING;
       } else if ("bungeecord:main".equalsIgnoreCase(channel == null ? "" : channel.strip())) {
-         return bJ.Inner_BufferHelper.JAVA_WRITE_UTF;
-      } else if (mode == bJ.Inner_StreamUtil.MANUAL_HEX) {
-         return bJ.Inner_BufferHelper.HEX_BYTES;
-      } else if (mode == bJ.Inner_StreamUtil.JAVA_DATA_OUTPUT) {
-         return bJ.Inner_BufferHelper.JAVA_WRITE_UTF;
-      } else if (mode == bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF) {
-         return bJ.Inner_BufferHelper.MINECRAFT_STRING;
+         return PayloadFieldCodec.Inner_BufferHelper.JAVA_WRITE_UTF;
+      } else if (mode == PayloadFieldCodec.Inner_StreamUtil.MANUAL_HEX) {
+         return PayloadFieldCodec.Inner_BufferHelper.HEX_BYTES;
+      } else if (mode == PayloadFieldCodec.Inner_StreamUtil.JAVA_DATA_OUTPUT) {
+         return PayloadFieldCodec.Inner_BufferHelper.JAVA_WRITE_UTF;
+      } else if (mode == PayloadFieldCodec.Inner_StreamUtil.MINECRAFT_BYTEBUF) {
+         return PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING;
       } else {
-         return mode == bJ.Inner_StreamUtil.JSON_TEXT ? bJ.Inner_BufferHelper.TEXT_COMPONENT : bJ.Inner_BufferHelper.STRING_BYTES;
+         return mode == PayloadFieldCodec.Inner_StreamUtil.JSON_TEXT ? PayloadFieldCodec.Inner_BufferHelper.TEXT_COMPONENT : PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES;
       }
    }
 
@@ -4497,7 +4497,7 @@ public class ActionEditorOverlay extends bj {
                channelField.init_V_Str(this.init_bE.read_Str == null ? "" : this.init_bE.read_Str);
             }
 
-            this.read_Map.put("payload_mode", this.init_I_bJ_StreamUtil(bJ.Inner_StreamUtil.init(this.init_bE.sync, this.init_bE.read_Str)));
+            this.read_Map.put("payload_mode", this.init_I_bJ_StreamUtil(PayloadFieldCodec.Inner_StreamUtil.init(this.init_bE.sync, this.init_bE.read_Str)));
             k commandField = this.init_Map.get("payload_command_value");
             if (commandField != null && (force || !commandField.init_Z())) {
                commandField.init_V_Str(String.valueOf(this.init_bE.load_I));
@@ -4549,14 +4549,14 @@ public class ActionEditorOverlay extends bj {
       return text != null && !text.isEmpty() ? text.replace("\\", "\\\\").replace("\r\n", "\\n").replace("\r", "\\n").replace("\n", "\\n") : "";
    }
 
-   private int init_I_bJ_BufferHelper(bJ.Inner_BufferHelper type) {
+   private int init_I_bJ_BufferHelper(PayloadFieldCodec.Inner_BufferHelper type) {
       int index = get_List.indexOf(type);
-      return index < 0 ? get_List.indexOf(bJ.Inner_BufferHelper.STRING_BYTES) : index;
+      return index < 0 ? get_List.indexOf(PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES) : index;
    }
 
-   private bJ.Inner_BufferHelper init_bJ_BufferHelper_I(int row) {
+   private PayloadFieldCodec.Inner_BufferHelper init_bJ_BufferHelper_I(int row) {
       int index = Math.max(
-         0, Math.min(this.read_Map.getOrDefault(this.init_Str_I(row), this.init_I_bJ_BufferHelper(bJ.Inner_BufferHelper.STRING_BYTES)), get_List.size() - 1)
+         0, Math.min(this.read_Map.getOrDefault(this.init_Str_I(row), this.init_I_bJ_BufferHelper(PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES)), get_List.size() - 1)
       );
       return get_List.get(index);
    }
@@ -4569,13 +4569,13 @@ public class ActionEditorOverlay extends bj {
       return "payload_value_" + row;
    }
 
-   private int init_I_bJ_StreamUtil(bJ.Inner_StreamUtil mode) {
+   private int init_I_bJ_StreamUtil(PayloadFieldCodec.Inner_StreamUtil mode) {
       int index = add_List.indexOf(mode);
-      return index < 0 ? add_List.indexOf(bJ.Inner_StreamUtil.ADVANCED_MIXED) : index;
+      return index < 0 ? add_List.indexOf(PayloadFieldCodec.Inner_StreamUtil.ADVANCED_MIXED) : index;
    }
 
-   private bJ.Inner_StreamUtil init_bJ_StreamUtil_Str(String channel) {
-      int fallback = this.init_I_bJ_StreamUtil(bJ.Inner_StreamUtil.init(this.init_H == null ? "" : this.init_H.payloadEncodingMode, channel));
+   private PayloadFieldCodec.Inner_StreamUtil init_bJ_StreamUtil_Str(String channel) {
+      int fallback = this.init_I_bJ_StreamUtil(PayloadFieldCodec.Inner_StreamUtil.init(this.init_H == null ? "" : this.init_H.payloadEncodingMode, channel));
       int index = Math.max(0, Math.min(this.read_Map.getOrDefault("payload_mode", fallback), add_List.size() - 1));
       return add_List.get(index);
    }
@@ -4584,8 +4584,8 @@ public class ActionEditorOverlay extends bj {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       int cy = bodyTop + 4;
       ActionEditorOverlay.ConfigStore preview = this.init_ActionEditorOverla();
-      bJ.Inner_JsonUtil template = preview.init_bJ_JsonUtil();
-      bJ.Inner_DataUtil built = preview.init_bJ_DataUtil();
+      PayloadFieldCodec.Inner_JsonUtil template = preview.init_bJ_JsonUtil();
+      PayloadFieldCodec.Inner_DataUtil built = preview.init_bJ_DataUtil();
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Custom Payload", font, p.parse(), x, cy + 2, false);
       cy += 14;
       cy = this.init_I_GuiGraphicsExtract(ctx, x, cy, w);
@@ -4598,12 +4598,12 @@ public class ActionEditorOverlay extends bj {
          ctx, x + dirLabelW, cy, dirW, 13, template.init_bJ_ConfigStore().name(), ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
             this.push(true);
             if (this.init_bE != null) {
-               this.init_bE.init_Str = bJ.init_Str(this.init_bE.init_Str);
+               this.init_bE.init_Str = PayloadFieldCodec.init_Str(this.init_bE.init_Str);
                this.init_bE.init_V();
                this.init_ActionEditorOverla = null;
                this.pop(false);
             } else if (this.init_H != null) {
-               this.init_H.payloadDirection = bJ.init_Str(this.init_H.payloadDirection);
+               this.init_H.payloadDirection = PayloadFieldCodec.init_Str(this.init_H.payloadDirection);
             }
 
             this.get_Z = true;
@@ -4697,7 +4697,7 @@ public class ActionEditorOverlay extends bj {
             true,
             mx,
             my,
-            () -> this.read_V(this.read_Map.getOrDefault("payload_add_type", this.init_I_bJ_BufferHelper(bJ.Inner_BufferHelper.STRING_BYTES)))
+            () -> this.read_V(this.read_Map.getOrDefault("payload_add_type", this.init_I_bJ_BufferHelper(PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES)))
          );
          cy += 17;
          k contentField = this.init_Map.get("payload_content");
@@ -4841,7 +4841,7 @@ public class ActionEditorOverlay extends bj {
 
    private void read_V(int index) {
       if (index >= 0 && index < get_List.size()) {
-         bJ.Inner_BufferHelper type = get_List.get(index);
+         PayloadFieldCodec.Inner_BufferHelper type = get_List.get(index);
          this.write_V(type.init() + " = " + type.load());
          if (!this.clear_Z) {
             this.read_Map
@@ -4849,7 +4849,7 @@ public class ActionEditorOverlay extends bj {
                   "payload_mode",
                   this.init_I_bJ_StreamUtil(
                      this.init_bJ_StreamUtil_Str(
-                        this.write_Str(), List.of(new bJ.Inner_CachePool(type, type.load(), true)), this.init_bJ_StreamUtil_Str(this.write_Str())
+                        this.write_Str(), List.of(new PayloadFieldCodec.Inner_CachePool(type, type.load(), true)), this.init_bJ_StreamUtil_Str(this.write_Str())
                      )
                   )
                );
@@ -4859,7 +4859,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_bJ_DataUtil(bJ.Inner_DataUtil built) {
+   private void init_V_bJ_DataUtil(PayloadFieldCodec.Inner_DataUtil built) {
       k hexView = this.init_Map.get("payload_hex_view");
       if (hexView != null && !hexView.init_Z()) {
          this.start_Z = true;
@@ -4901,8 +4901,8 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private String init_Str_bJ_DataUtil(bJ.Inner_DataUtil built) {
-      bJ.Inner_NetHelper preview = built.init_bJ_NetHelper();
+   private String init_Str_bJ_DataUtil(PayloadFieldCodec.Inner_DataUtil built) {
+      PayloadFieldCodec.Inner_NetHelper preview = built.init_bJ_NetHelper();
       String fullUtf8 = AutismPayloadSupport.write(built.init_BArr());
       if (fullUtf8 != null && !fullUtf8.isBlank()) {
          return fullUtf8;
@@ -4915,7 +4915,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private String load_Str_bJ_DataUtil(bJ.Inner_DataUtil built) {
+   private String load_Str_bJ_DataUtil(PayloadFieldCodec.Inner_DataUtil built) {
       if (this.init_bE != null && this.init_bE.flush != null && !this.init_bE.flush.isBlank()) {
          return "Fix: " + this.read_Str(this.init_bE.flush);
       }
@@ -5051,7 +5051,7 @@ public class ActionEditorOverlay extends bj {
                   String typePart = line.substring(0, split);
                   String sep = line.substring(split, split + 1);
                   String valuePart = line.substring(split + 1);
-                  bJ.Inner_BufferHelper type = this.init_bJ_BufferHelper_Str(typePart.strip());
+                  PayloadFieldCodec.Inner_BufferHelper type = this.init_bJ_BufferHelper_Str(typePart.strip());
                   this.init_V_MutableComponent(out, typePart, this.load_Z_Str(typePart.strip()) ? 16328306 : (type == null ? 16742263 : 6740463));
                   this.init_V_MutableComponent(out, sep, 11184810);
                   this.init_V_MutableComponent_Str(out, valuePart);
@@ -5219,24 +5219,24 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private bJ.Inner_BufferHelper init_bJ_BufferHelper_Str(String token) {
+   private PayloadFieldCodec.Inner_BufferHelper init_bJ_BufferHelper_Str(String token) {
       if (token != null && !token.isBlank()) {
          String normalized = token.strip().toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
 
-         for (bJ.Inner_BufferHelper type : bJ.Inner_BufferHelper.values()) {
+         for (PayloadFieldCodec.Inner_BufferHelper type : PayloadFieldCodec.Inner_BufferHelper.values()) {
             if (type.name().equals(normalized) || type.init().equalsIgnoreCase(token.strip())) {
                return type;
             }
          }
 
          if ("UUID".equals(normalized)) {
-            return bJ.Inner_BufferHelper.UUID_FIELD;
+            return PayloadFieldCodec.Inner_BufferHelper.UUID_FIELD;
          } else if ("UTF".equals(normalized) || "WRITEUTF".equals(normalized)) {
-            return bJ.Inner_BufferHelper.JAVA_WRITE_UTF;
+            return PayloadFieldCodec.Inner_BufferHelper.JAVA_WRITE_UTF;
          } else if (!"MC_STRING".equals(normalized) && !"MINECRAFT_STRING".equals(normalized)) {
-            return !"COMPONENT".equals(normalized) && !"TEXT_COMPONENT".equals(normalized) ? null : bJ.Inner_BufferHelper.TEXT_COMPONENT;
+            return !"COMPONENT".equals(normalized) && !"TEXT_COMPONENT".equals(normalized) ? null : PayloadFieldCodec.Inner_BufferHelper.TEXT_COMPONENT;
          } else {
-            return bJ.Inner_BufferHelper.MINECRAFT_STRING;
+            return PayloadFieldCodec.Inner_BufferHelper.MINECRAFT_STRING;
          }
       } else {
          return null;
@@ -5257,8 +5257,8 @@ public class ActionEditorOverlay extends bj {
       return "true".equalsIgnoreCase(text) || "false".equalsIgnoreCase(text);
    }
 
-   private void init_V_I_2(int x, int y, int w, int mx, int my, bJ.Inner_JsonUtil template) {
-      int idx = this.init_I_bJ_StreamUtil(template == null ? bJ.Inner_StreamUtil.ADVANCED_MIXED : template.init_bJ_StreamUtil());
+   private void init_V_I_2(int x, int y, int w, int mx, int my, PayloadFieldCodec.Inner_JsonUtil template) {
+      int idx = this.init_I_bJ_StreamUtil(template == null ? PayloadFieldCodec.Inner_StreamUtil.ADVANCED_MIXED : template.init_bJ_StreamUtil());
       autismclient.gui.f.b.SyncManager dd = this.run_Map
          .computeIfAbsent("payload_mode", key -> new autismclient.gui.f.b.SyncManager(x, y, w, 13, put_List, idx, newIdx -> {
             if (newIdx >= 0 && newIdx < add_List.size()) {
@@ -5312,7 +5312,7 @@ public class ActionEditorOverlay extends bj {
       this.init_V_I(row, x, y + 2, typeW, mx, my);
       k valueField = this.init_Map.get(this.load_Str_I(row));
       if (valueField != null) {
-         bJ.Inner_BufferHelper type = this.init_bJ_BufferHelper_I(row);
+         PayloadFieldCodec.Inner_BufferHelper type = this.init_bJ_BufferHelper_I(row);
          valueField.init_V_Component(Component.literal(type.load()));
          valueField.read(valueX);
          valueField.write(y + 3);
@@ -5335,7 +5335,7 @@ public class ActionEditorOverlay extends bj {
 
    private void init_V_I(int row, int x, int y, int w, int mx, int my) {
       String key = this.init_Str_I(row);
-      int idx = Math.max(0, Math.min(this.read_Map.getOrDefault(key, this.init_I_bJ_BufferHelper(bJ.Inner_BufferHelper.STRING_BYTES)), set_List.size() - 1));
+      int idx = Math.max(0, Math.min(this.read_Map.getOrDefault(key, this.init_I_bJ_BufferHelper(PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES)), set_List.size() - 1));
       autismclient.gui.f.b.SyncManager dd = this.run_Map
          .computeIfAbsent(key, cacheKey -> new autismclient.gui.f.b.SyncManager(x, y, w, 13, set_List, idx, newIdx -> this.write_V_I_I(row, newIdx)));
       dd.init_SyncManager_I(x, y, w, 13)
@@ -5362,7 +5362,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void update_V(int row, int direction) {
-      List<bJ.Inner_CachePool> fields = new ArrayList<>(this.load_List());
+      List<PayloadFieldCodec.Inner_CachePool> fields = new ArrayList<>(this.load_List());
       int target = row + direction;
       if (row >= 0 && row < fields.size() && target >= 0 && target < fields.size()) {
          Collections.swap(fields, row, target);
@@ -5373,7 +5373,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void write_V(int row) {
-      List<bJ.Inner_CachePool> fields = new ArrayList<>(this.load_List());
+      List<PayloadFieldCodec.Inner_CachePool> fields = new ArrayList<>(this.load_List());
       if (fields.size() > 1 && row >= 0 && row < fields.size()) {
          fields.remove(row);
          this.load_V_List(fields);
@@ -5382,7 +5382,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private bJ.Inner_JsonUtil init_bJ_JsonUtil() {
+   private PayloadFieldCodec.Inner_JsonUtil init_bJ_JsonUtil() {
       if (this.init_bE != null) {
          return this.load_bJ_JsonUtil();
       }
@@ -5399,13 +5399,13 @@ public class ActionEditorOverlay extends bj {
 
       action.payloadPhase = "PLAY";
       action.payloadEncodingMode = this.init_bJ_StreamUtil_Str(action.channel).name();
-      action.payloadFields = bJ.init(this.load_List());
-      return bJ.init(action);
+      action.payloadFields = PayloadFieldCodec.init(this.load_List());
+      return PayloadFieldCodec.init(action);
    }
 
    private ActionEditorOverlay.ConfigStore init_ActionEditorOverla() {
       if (this.init_bE == null) {
-         bJ.Inner_JsonUtil template = this.init_bJ_JsonUtil();
+         PayloadFieldCodec.Inner_JsonUtil template = this.init_bJ_JsonUtil();
          return new ActionEditorOverlay.ConfigStore(-9223372036854775808L, template, template.init_bJ_DataUtil());
       }
 
@@ -5415,14 +5415,14 @@ public class ActionEditorOverlay extends bj {
          return hit;
       }
 
-      bJ.Inner_JsonUtil template = this.load_bJ_JsonUtil();
+      PayloadFieldCodec.Inner_JsonUtil template = this.load_bJ_JsonUtil();
       hit = new ActionEditorOverlay.ConfigStore(revision, template, template.init_bJ_DataUtil());
       this.init_ActionEditorOverla = hit;
       return hit;
    }
 
-   private bJ.Inner_JsonUtil load_bJ_JsonUtil() {
-      return this.init_bE == null ? bJ.init(new PayloadAction()) : this.init_bE.init_bJ_JsonUtil();
+   private PayloadFieldCodec.Inner_JsonUtil load_bJ_JsonUtil() {
+      return this.init_bE == null ? PayloadFieldCodec.init(new PayloadAction()) : this.init_bE.init_bJ_JsonUtil();
    }
 
    private void write_V(String line) {
@@ -5434,14 +5434,14 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_bJ_JsonUtil(bJ.Inner_JsonUtil template) {
+   private void init_V_bJ_JsonUtil(PayloadFieldCodec.Inner_JsonUtil template) {
       if (template != null) {
          if (this.init_H != null) {
             this.init_H.channel = template.init_Str();
             this.init_H.payloadDirection = template.init_bJ_ConfigStore().name();
             this.init_H.payloadPhase = template.init_bJ_TaskQueue().name();
             this.init_H.payloadEncodingMode = template.init_bJ_StreamUtil().name();
-            this.init_H.payloadFields = bJ.init(template.init_List());
+            this.init_H.payloadFields = PayloadFieldCodec.init(template.init_List());
          }
 
          this.start_Z = true;
@@ -5540,7 +5540,7 @@ public class ActionEditorOverlay extends bj {
 
    private void cache() {
       this.init_ActionEditorOverla_2 = null;
-      this.init_bE = bE.init_bE_H(this.init_H);
+      this.init_bE = PayloadEditorModel.init_bE_H(this.init_H);
       this.write_J = -9223372036854775808L;
       this.init_ActionEditorOverla = null;
       ActionEditorOverlay.JsonUtil state = this.init_ActionEditorOverla_H(this.init_H);
@@ -5579,7 +5579,7 @@ public class ActionEditorOverlay extends bj {
             action.channel = "minecraft:brand";
          }
 
-         bJ.Inner_DataUtil built = this.init_bE.init_bJ_JsonUtil().init_bJ_DataUtil();
+         PayloadFieldCodec.Inner_DataUtil built = this.init_bE.init_bJ_JsonUtil().init_bJ_DataUtil();
          if (!built.init_Z()) {
             throw new IllegalArgumentException(String.join("; ", built.load()));
          }
@@ -5604,15 +5604,15 @@ public class ActionEditorOverlay extends bj {
             }
          }
 
-         action.payloadFields = bJ.init(this.load_List());
+         action.payloadFields = PayloadFieldCodec.init(this.load_List());
          if (action.payloadDirection == null || action.payloadDirection.isBlank()) {
             action.payloadDirection = "C2S";
          }
 
          action.payloadPhase = "PLAY";
          action.payloadEncodingMode = this.init_bJ_StreamUtil_Str(action.channel).name();
-         bJ.Inner_JsonUtil template = bJ.init(action);
-         bJ.Inner_DataUtil built = template.init_bJ_DataUtil();
+         PayloadFieldCodec.Inner_JsonUtil template = PayloadFieldCodec.init(action);
+         PayloadFieldCodec.Inner_DataUtil built = template.init_bJ_DataUtil();
          if (!built.init_Z()) {
             throw new IllegalArgumentException(String.join("; ", built.load()));
          }
@@ -5621,7 +5621,7 @@ public class ActionEditorOverlay extends bj {
          action.payloadDirection = template.init_bJ_ConfigStore().name();
          action.payloadPhase = "PLAY";
          action.payloadEncodingMode = template.init_bJ_StreamUtil().name();
-         action.payloadFields = bJ.init(template.init_List());
+         action.payloadFields = PayloadFieldCodec.init(template.init_List());
          action.sourceDirection = action.payloadDirection;
          action.sourceProtocol = "";
          action.payloadData = AutismPayloadSupport.init_Str(built.init_BArr());
@@ -5803,12 +5803,12 @@ public class ActionEditorOverlay extends bj {
          }
 
          boolean jsonUsable = false;
-         bG.Inner_DataUtil jsonEncoded = null;
+         PayloadJsonCodec.Inner_DataUtil jsonEncoded = null;
          if (action.payloadJson != null && !action.payloadJson.isBlank()) {
-            action.payloadJson = bG.init_Str(action.payloadJson);
+            action.payloadJson = PayloadJsonCodec.init_Str(action.payloadJson);
 
             try {
-               jsonEncoded = bG.init_bG_DataUtil(action);
+               jsonEncoded = PayloadJsonCodec.init_bG_DataUtil(action);
                jsonUsable = true;
             } catch (Exception var13) {
             }
@@ -5850,7 +5850,7 @@ public class ActionEditorOverlay extends bj {
 
          if (this.add_Z && jsonUsable && jsonEncoded != null && !this.set_Z && !this.put_Z) {
             try {
-               jsonEncoded = bG.init_bG_DataUtil(action);
+               jsonEncoded = PayloadJsonCodec.init_bG_DataUtil(action);
                action.channel = jsonEncoded.init_Str();
                action.payloadData = AutismPayloadSupport.init_Str(jsonEncoded.init_BArr());
             } catch (Exception var11) {
@@ -6923,10 +6923,10 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_bo_StreamUtil(bo.Inner_StreamUtil target) {
+   private void init_V_bo_StreamUtil(ContainerClickSnapshot.Inner_StreamUtil target) {
       if (target != null) {
          if (this.init_MacroAction instanceof PacketClickAction pca) {
-            bo.Inner_DataUtil mode = this.init_bo_DataUtil();
+            ContainerClickSnapshot.Inner_DataUtil mode = this.init_bo_DataUtil();
             pca.mode = mode.name();
             pca.init(target.init_bo_StreamUtil_bo_DataUtil(mode));
             if (this.init_CompoundTag != null) {
@@ -6940,13 +6940,13 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private bo.Inner_DataUtil init_bo_DataUtil() {
+   private ContainerClickSnapshot.Inner_DataUtil init_bo_DataUtil() {
       FieldDef modeField = this.init_FieldDef_Str("mode");
       if (modeField != null && modeField.type() == CachePool.ENUM && !modeField.enumOptions().isEmpty()) {
          int idx = Math.max(0, Math.min(this.read_Map.getOrDefault("mode", 0), modeField.enumOptions().size() - 1));
-         return bo.Inner_DataUtil.init(modeField.enumOptions().get(idx));
+         return ContainerClickSnapshot.Inner_DataUtil.init(modeField.enumOptions().get(idx));
       } else {
-         return bo.Inner_DataUtil.init(this.init_CompoundTag == null ? "" : this.init_CompoundTag.getStringOr("mode", ""));
+         return ContainerClickSnapshot.Inner_DataUtil.init(this.init_CompoundTag == null ? "" : this.init_CompoundTag.getStringOr("mode", ""));
       }
    }
 
@@ -10790,12 +10790,12 @@ public class ActionEditorOverlay extends bj {
          return p.store();
       }
 
-      Class<? extends Packet<?>> packetClass = bw.init_Class_Str(entry);
+      Class<? extends Packet<?>> packetClass = PacketTypeRegistry.init_Class_Str(entry);
       if (packetClass == null) {
          return this.init_CharEncoder.load(l.read);
       }
 
-      boolean c2s = bw.load().contains(packetClass);
+      boolean c2s = PacketTypeRegistry.load().contains(packetClass);
       return p.init(c2s, index);
    }
 
@@ -10930,7 +10930,7 @@ public class ActionEditorOverlay extends bj {
          ListTag packetList = new ListTag();
          if (packets != null) {
             for (ck.Inner_CachePool qp : packets) {
-               CompoundTag packetTag = o.init(qp);
+               CompoundTag packetTag = MacroClipboardCodec.init(qp);
                if (packetTag != null) {
                   packetList.add(packetTag);
                }
@@ -10951,7 +10951,7 @@ public class ActionEditorOverlay extends bj {
 
       for (ck.Inner_CachePool qp : packets) {
          if (qp != null && qp.init_Packet != null) {
-            autoName = bv.init_Str_Packet(qp.init_Packet);
+            autoName = PacketNameResolver.init_Str_Packet(qp.init_Packet);
             break;
          }
       }
@@ -10966,11 +10966,11 @@ public class ActionEditorOverlay extends bj {
    private void init_V_ck_CachePool(ck.Inner_CachePool packet) {
       if (this.init_CompoundTag != null && packet != null) {
          List<ck.Inner_CachePool> single = Collections.singletonList(packet);
-         String base64 = o.init_Str(single);
+         String base64 = MacroClipboardCodec.init_Str(single);
          if (base64 != null && !base64.isBlank()) {
             this.init_CompoundTag.putString("packetData", base64);
             if (!this.init_CompoundTag.contains("description") || this.init_CompoundTag.getStringOr("description", "").isBlank()) {
-               String name = packet.init_Packet != null ? bv.init_Str_Packet(packet.init_Packet) : "Packet";
+               String name = packet.init_Packet != null ? PacketNameResolver.init_Str_Packet(packet.init_Packet) : "Packet";
                this.init_CompoundTag.putString("description", name);
             }
          }
@@ -11851,7 +11851,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      ClassCache.init_Future_Str_Runnable("pay-scan-probe", () -> {
+      BackgroundTaskExecutor.init_Future_Str_Runnable("pay-scan-probe", () -> {
          List<String> probed = bN.init(init_Minecraft, true);
          if (!probed.isEmpty()) {
             init_Minecraft.execute(() -> {
@@ -13849,13 +13849,13 @@ public class ActionEditorOverlay extends bj {
 
    private Class<? extends Packet<?>> init_Class_Str_Z(String target, boolean c2s) {
       if (target != null && !target.isBlank()) {
-         for (Class<? extends Packet<?>> candidate : c2s ? new ArrayList<>(bw.load()) : new ArrayList<>(bw.init_Set())) {
-            String registryName = bw.init_Str_Class(candidate);
+         for (Class<? extends Packet<?>> candidate : c2s ? new ArrayList<>(PacketTypeRegistry.load()) : new ArrayList<>(PacketTypeRegistry.init_Set())) {
+            String registryName = PacketTypeRegistry.init_Str_Class(candidate);
             if (this.init_Z_Str_Str(target, registryName)) {
                return candidate;
             }
 
-            if (this.init_Z_Str_Str(target, bv.init_Str_Class(candidate))) {
+            if (this.init_Z_Str_Str(target, PacketNameResolver.init_Str_Class(candidate))) {
                return candidate;
             }
 
@@ -13875,7 +13875,7 @@ public class ActionEditorOverlay extends bj {
          List<String> targets = this.init_List_Z(c2s);
          if (selected) {
             if (!this.init_Z_List(targets, packetClass, c2s)) {
-               targets.add(bv.init_Str_Class(packetClass));
+               targets.add(PacketNameResolver.init_Str_Class(packetClass));
             }
          } else {
             targets.removeIf(existing -> packetClass.equals(this.init_Class_Str_Z(existing, c2s)));
@@ -13905,9 +13905,9 @@ public class ActionEditorOverlay extends bj {
          for (ck.Inner_CachePool queuedPacket : queue) {
             if (queuedPacket != null && queuedPacket.init_Packet != null) {
                Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)queuedPacket.init_Packet.getClass();
-               if (bw.load().contains(packetClass)) {
+               if (PacketTypeRegistry.load().contains(packetClass)) {
                   this.init_V_Z(true, packetClass, true);
-               } else if (bw.init_Set().contains(packetClass)) {
+               } else if (PacketTypeRegistry.init_Set().contains(packetClass)) {
                   this.init_V_Z(false, packetClass, true);
                }
             }
@@ -13954,7 +13954,7 @@ public class ActionEditorOverlay extends bj {
       for (int i = 0; i < targets.size() && i < 3; i++) {
          String target = targets.get(i);
          Class<? extends Packet<?>> packetClass = this.init_Class_Str_Z(target, c2s);
-         labels.add(packetClass != null ? bv.init_Str_Class(packetClass) : target);
+         labels.add(packetClass != null ? PacketNameResolver.init_Str_Class(packetClass) : target);
       }
 
       String summary = direction + ": " + targets.size();
@@ -14871,8 +14871,8 @@ public class ActionEditorOverlay extends bj {
 
             autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = new autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool();
             rule.init_aM_DataUtil = c2s ? autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.C2S : autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.S2C;
-            String name = bw.init_Str_Class(packetClass);
-            rule.init_Str = name != null && !name.isBlank() ? name : bv.init_Str_Class(packetClass);
+            String name = PacketTypeRegistry.init_Str_Class(packetClass);
+            rule.init_Str = name != null && !name.isBlank() ? name : PacketNameResolver.init_Str_Class(packetClass);
             this.reset_List.add(rule);
             this.f_z_I = this.reset_List.size() - 1;
             this.z();
@@ -14889,8 +14889,8 @@ public class ActionEditorOverlay extends bj {
       k field = this.init_Map.get(fieldKey);
       Consumer<Class<? extends Packet<?>>> set = packetClass -> {
          if (packetClass != null && field != null) {
-            String name = bw.init_Str_Class(packetClass);
-            field.init_V_Str(name != null && !name.isBlank() ? name : bv.init_Str_Class(packetClass));
+            String name = PacketTypeRegistry.init_Str_Class(packetClass);
+            field.init_V_Str(name != null && !name.isBlank() ? name : PacketNameResolver.init_Str_Class(packetClass));
          }
       };
       String direction = this.tick_Str("direction");
@@ -14932,7 +14932,7 @@ public class ActionEditorOverlay extends bj {
          return Component.literal("(empty)");
       }
 
-      String label = rule.init_aM_DataUtil + " " + (rule.init_Str != null && !rule.init_Str.isBlank() ? bv.init_Str_Str(rule.init_Str) : "Any Packet");
+      String label = rule.init_aM_DataUtil + " " + (rule.init_Str != null && !rule.init_Str.isBlank() ? PacketNameResolver.init_Str_Str(rule.init_Str) : "Any Packet");
       if (rule.load != null && !rule.load.isBlank()) {
          label = label + " / " + rule.load;
       }
@@ -14998,10 +14998,10 @@ public class ActionEditorOverlay extends bj {
          Class<? extends Packet<?>> packetClass = this.init_Class_Str_Str("", normalized);
          if (packetClass == null) {
             return normalized;
-         } else if (bw.load().contains(packetClass)) {
+         } else if (PacketTypeRegistry.load().contains(packetClass)) {
             return this.init_Str_Str_Class("C2S", packetClass);
          } else {
-            return bw.init_Set().contains(packetClass) ? this.init_Str_Str_Class("S2C", packetClass) : normalized;
+            return PacketTypeRegistry.init_Set().contains(packetClass) ? this.init_Str_Str_Class("S2C", packetClass) : normalized;
          }
       }
    }
@@ -15109,10 +15109,10 @@ public class ActionEditorOverlay extends bj {
    private String init_Str_ck_CachePool(ck.Inner_CachePool queuedPacket) {
       if (queuedPacket != null && queuedPacket.init_Packet != null) {
          Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)queuedPacket.init_Packet.getClass();
-         if (bw.load().contains(packetClass)) {
+         if (PacketTypeRegistry.load().contains(packetClass)) {
             return this.init_Str_Str_Class("C2S", packetClass);
          } else {
-            return bw.init_Set().contains(packetClass) ? this.init_Str_Str_Class("S2C", packetClass) : "";
+            return PacketTypeRegistry.init_Set().contains(packetClass) ? this.init_Str_Str_Class("S2C", packetClass) : "";
          }
       } else {
          return "";
@@ -15124,9 +15124,9 @@ public class ActionEditorOverlay extends bj {
          return "";
       }
 
-      String name = bw.init_Str_Class(packetClass);
+      String name = PacketTypeRegistry.init_Str_Class(packetClass);
       if (name == null || name.isBlank()) {
-         name = bv.init_Str_Class(packetClass);
+         name = PacketNameResolver.init_Str_Class(packetClass);
       }
 
       return WaitForPacketAction.init(direction, name);
@@ -15138,38 +15138,38 @@ public class ActionEditorOverlay extends bj {
          return null;
       }
 
-      Class<? extends Packet<?>> direct = bw.init_Class_Str(packetName);
+      Class<? extends Packet<?>> direct = PacketTypeRegistry.init_Class_Str(packetName);
       if (direct != null) {
          if (direction.isBlank()) {
             return direct;
          }
 
-         if ("C2S".equalsIgnoreCase(direction) && bw.load().contains(direct)) {
+         if ("C2S".equalsIgnoreCase(direction) && PacketTypeRegistry.load().contains(direct)) {
             return direct;
          }
 
-         if ("S2C".equalsIgnoreCase(direction) && bw.init_Set().contains(direct)) {
+         if ("S2C".equalsIgnoreCase(direction) && PacketTypeRegistry.init_Set().contains(direct)) {
             return direct;
          }
       }
 
       List<Class<? extends Packet<?>>> pool = new ArrayList<>();
       if ("C2S".equalsIgnoreCase(direction)) {
-         pool.addAll(bw.load());
+         pool.addAll(PacketTypeRegistry.load());
       } else if ("S2C".equalsIgnoreCase(direction)) {
-         pool.addAll(bw.init_Set());
+         pool.addAll(PacketTypeRegistry.init_Set());
       } else {
-         pool.addAll(bw.load());
-         pool.addAll(bw.init_Set());
+         pool.addAll(PacketTypeRegistry.load());
+         pool.addAll(PacketTypeRegistry.init_Set());
       }
 
       for (Class<? extends Packet<?>> candidate : pool) {
-         String registryName = bw.init_Str_Class(candidate);
+         String registryName = PacketTypeRegistry.init_Str_Class(candidate);
          if (this.init_Z_Str_Str(packetName, registryName)) {
             return candidate;
          }
 
-         if (this.init_Z_Str_Str(packetName, bv.init_Str_Class(candidate))) {
+         if (this.init_Z_Str_Str(packetName, PacketNameResolver.init_Str_Class(candidate))) {
             return candidate;
          }
 
@@ -15209,8 +15209,8 @@ public class ActionEditorOverlay extends bj {
    private List<String> read_List(boolean c2s) {
       List<String> names = new ArrayList<>();
 
-      for (Class<? extends Packet<?>> packetClass : c2s ? bw.load() : bw.init_Set()) {
-         String name = bw.init_Str_Class(packetClass);
+      for (Class<? extends Packet<?>> packetClass : c2s ? PacketTypeRegistry.load() : PacketTypeRegistry.init_Set()) {
+         String name = PacketTypeRegistry.init_Str_Class(packetClass);
          if (name != null && !name.isBlank()) {
             names.add(name);
          }
@@ -15984,9 +15984,9 @@ public class ActionEditorOverlay extends bj {
          if (!both) {
             Consumer<Class<? extends Packet<?>>> add = packetClass -> {
                if (packetClass != null && lst != null) {
-                  String namex = bw.init_Str_Class(packetClass);
+                  String namex = PacketTypeRegistry.init_Str_Class(packetClass);
                   if (namex == null || namex.isBlank()) {
-                     namex = bv.init_Str_Class(packetClass);
+                     namex = PacketNameResolver.init_Str_Class(packetClass);
                   }
 
                   if (!lst.contains(namex)) {
@@ -16005,9 +16005,9 @@ public class ActionEditorOverlay extends bj {
          } else {
             BiConsumer<Class<? extends Packet<?>>, Boolean> toggle = (packetClass, selected) -> {
                if (packetClass != null && lst != null) {
-                  String namex = bw.init_Str_Class(packetClass);
+                  String namex = PacketTypeRegistry.init_Str_Class(packetClass);
                   if (namex == null || namex.isBlank()) {
-                     namex = bv.init_Str_Class(packetClass);
+                     namex = PacketNameResolver.init_Str_Class(packetClass);
                   }
 
                   if (selected) {
@@ -16022,7 +16022,7 @@ public class ActionEditorOverlay extends bj {
             List<Class<? extends Packet<?>>> selected = new ArrayList<>();
             if (lst != null) {
                for (String name : lst) {
-                  Class<? extends Packet<?>> c = bw.init_Class_Str(name);
+                  Class<? extends Packet<?>> c = PacketTypeRegistry.init_Class_Str(name);
                   if (c != null && !selected.contains(c)) {
                      selected.add(c);
                   }
@@ -16251,7 +16251,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private record ConfigStore(long init_J, bJ.Inner_JsonUtil init_bJ_JsonUtil, bJ.Inner_DataUtil init_bJ_DataUtil) {
+   private record ConfigStore(long init_J, PayloadFieldCodec.Inner_JsonUtil init_bJ_JsonUtil, PayloadFieldCodec.Inner_DataUtil init_bJ_DataUtil) {
    }
 
    private record Inner_BufferHelper(boolean init_Z, String init_Str, String load, List<String> init_List) {

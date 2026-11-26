@@ -221,7 +221,7 @@ public final class AutismHttp {
    }
 
    private static HttpURLConnection load(String url, int timeoutMs) throws IOException {
-      HttpURLConnection connection = (HttpURLConnection)URI.create(url).toURL().openConnection(MapStore.init_Proxy());
+      HttpURLConnection connection = (HttpURLConnection)URI.create(url).toURL().openConnection(MinecraftProxySelector.init_Proxy());
       init_V(connection, timeoutMs);
       return connection;
    }

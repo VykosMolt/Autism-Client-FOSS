@@ -10,21 +10,21 @@ import autismclient.util.AutismPacketLoggerOverlay;
 import autismclient.util.AutismPayloadSupport;
 import autismclient.util.AutismProfilesOverlay;
 import autismclient.util.AutismServerInfoOverlay;
-import autismclient.util.bB;
-import autismclient.util.bD;
-import autismclient.util.bF;
-import autismclient.util.bI;
+import autismclient.util.PayloadChannelFilterManager;
+import autismclient.util.PayloadSubscriptionManager;
+import autismclient.util.PayloadNotificationTracker;
+import autismclient.util.PayloadStudyTracker;
 import autismclient.util.bK;
-import autismclient.util.bQ;
-import autismclient.util.bV;
+import autismclient.util.PluginSignatureCatalog;
+import autismclient.util.AutismProfileManager;
 import autismclient.util.bk;
-import autismclient.util.bw;
+import autismclient.util.PacketTypeRegistry;
 import autismclient.util.cX;
 import autismclient.util.cf;
 import autismclient.util.ck;
 import autismclient.util.ct;
 import autismclient.util.cx;
-import autismclient.util.dm;
+import autismclient.util.SodiumRegionResourceProbe;
 import autismclient.util.macro.MacroExecutor;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -110,7 +110,7 @@ public final class ModuleRuntimeManager {
    private int read_I;
    private int write_I;
    private AutismPacketLoggerOverlay init_AutismPacketLogger;
-   private bB init_bB;
+   private PayloadChannelFilterManager init_bB;
    private volatile boolean poll;
    private volatile boolean push;
    private AutismServerInfoOverlay init_AutismServerInfoOv;
@@ -167,11 +167,11 @@ public final class ModuleRuntimeManager {
             }
          });
          if (!AutismLiteVariant.enabled()) {
-            this.init("profiles", () -> bV.init_bV());
+            this.init("profiles", () -> AutismProfileManager.init_bV());
          }
 
          this.load_Z = true;
-         autismclient.util.bg.load(this);
+         autismclient.util.PacketCaptureState.load(this);
       }
    }
 
@@ -222,7 +222,7 @@ public final class ModuleRuntimeManager {
          al.load_V();
          this.get_V();
          this.init_V_Z(filtersChanged);
-         autismclient.util.bg.load(this);
+         autismclient.util.PacketCaptureState.load(this);
          autismclient.util.al.init_V();
          if (themeChanged) {
             ct.init_V();
@@ -280,20 +280,20 @@ public final class ModuleRuntimeManager {
 
    private void pop_V() {
       if (AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init()) {
-         autismclient.util.bg.init_V_PoolEntry(this);
+         autismclient.util.PacketCaptureState.init_V_PoolEntry(this);
          if (!AutismLiteVariant.enabled()) {
-            bV.init_bV().load();
+            AutismProfileManager.init_bV().load();
          }
 
          autismclient.util.macro.PingSpoofScheduler.update();
          BlinkPacketManager.update();
-         autismclient.util.m.init(init_Minecraft);
+         autismclient.util.BedSleepDesyncHelper.init(init_Minecraft);
          boolean hidden = aD.init_Z();
          if (hidden) {
             this.run = false;
             this.update_J = 0L;
-            bI.init_V();
-            bF.load();
+            PayloadStudyTracker.init_V();
+            PayloadNotificationTracker.load();
             AutismServerInfoOverlay hiddenServerInfo = this.load_AutismServerInfoOv();
             if (hiddenServerInfo != null) {
                hiddenServerInfo.poll_V_9();
@@ -301,9 +301,9 @@ public final class ModuleRuntimeManager {
          }
 
          bK.read_V();
-         bF.init();
+         PayloadNotificationTracker.init();
          if (!hidden) {
-            bD.init(init_Minecraft, this.open_Z());
+            PayloadSubscriptionManager.init(init_Minecraft, this.open_Z());
          }
 
          autismclient.util.aE lanSync = autismclient.util.aE.init_aE();
@@ -388,7 +388,7 @@ public final class ModuleRuntimeManager {
                || shared.count()
                || shared.pool()
                || shared.frame()
-               || bI.init_Z()
+               || PayloadStudyTracker.init_Z()
                || am.add()
                || AntiVanishModule.init_Z_19()
                || autismclient.util.bi.init_Z()
@@ -398,7 +398,7 @@ public final class ModuleRuntimeManager {
    }
 
    public void read_V() {
-      dm.init_V();
+      SodiumRegionResourceProbe.init_V();
       bK.load_V();
       long perf = bK.read_J();
       this.pop = true;
@@ -413,7 +413,7 @@ public final class ModuleRuntimeManager {
          }
 
          this.tick_V();
-         bD.init_V();
+         PayloadSubscriptionManager.init_V();
       }
 
       this.set_V();
@@ -445,23 +445,23 @@ public final class ModuleRuntimeManager {
    }
 
    public void write_V() {
-      dm.init_V();
+      SodiumRegionResourceProbe.init_V();
       ar.load_V();
       autismclient.util.oresim.OreSimEngine.init_V();
       autismclient.util.oresim.OreSimEngine.write_V();
       this.pop = false;
       this.tick = false;
       this.run = false;
-      bQ.init();
-      bF.load();
-      bD.load();
+      PluginSignatureCatalog.init();
+      PayloadNotificationTracker.load();
+      PayloadSubscriptionManager.load();
       AutismServerInfoOverlay leftOverlay = this.load_AutismServerInfoOv();
       if (leftOverlay != null) {
          leftOverlay.flush_V_17();
       }
 
       this.update_J = 0L;
-      autismclient.util.bg.load(this);
+      autismclient.util.PacketCaptureState.load(this);
       ck.init_ck().close_V();
       this.read_Z = false;
       this.write_Z = false;
@@ -507,9 +507,9 @@ public final class ModuleRuntimeManager {
          return ModuleRuntimeManager.Inner_DataUtil.init_PoolEntry_DataUtil();
       }
 
-      long captureState = autismclient.util.bg.init_J();
-      boolean loggerCapture = autismclient.util.bg.init_Z_J(captureState);
-      boolean passivePayloadCapture = autismclient.util.bg.load(captureState);
+      long captureState = autismclient.util.PacketCaptureState.init_J();
+      boolean loggerCapture = autismclient.util.PacketCaptureState.init_Z_J(captureState);
+      boolean passivePayloadCapture = autismclient.util.PacketCaptureState.load(captureState);
       if (!this.init_Z()) {
          return !loggerCapture && !passivePayloadCapture
             ? ModuleRuntimeManager.Inner_DataUtil.init_PoolEntry_DataUtil()
@@ -534,7 +534,7 @@ public final class ModuleRuntimeManager {
    }
 
    public boolean write_Z() {
-      return !aD.init_Z() && (this.close_Z() || this.count() || bI.init_Z());
+      return !aD.init_Z() && (this.close_Z() || this.count() || PayloadStudyTracker.init_Z());
    }
 
    public boolean update_Z() {
@@ -542,7 +542,7 @@ public final class ModuleRuntimeManager {
    }
 
    public boolean sync_Z() {
-      return aD.init_Z() ? false : this.open_Z() || this.write_Z() || this.pool() || bI.init_Z();
+      return aD.init_Z() ? false : this.open_Z() || this.write_Z() || this.pool() || PayloadStudyTracker.init_Z();
    }
 
    private boolean pool() {
@@ -602,7 +602,7 @@ public final class ModuleRuntimeManager {
    }
 
    private boolean index() {
-      return this.close_Z() || this.pool() || this.open_Z() || bI.init_Z();
+      return this.close_Z() || this.pool() || this.open_Z() || PayloadStudyTracker.init_Z();
    }
 
    public void update_V() {
@@ -616,10 +616,10 @@ public final class ModuleRuntimeManager {
       }
 
       if (refreshSubscriptions) {
-         bD.init_V();
+         PayloadSubscriptionManager.init_V();
       }
 
-      autismclient.util.bg.load(this);
+      autismclient.util.PacketCaptureState.load(this);
    }
 
    private boolean count() {
@@ -650,7 +650,7 @@ public final class ModuleRuntimeManager {
 
    public void sync_V() {
       this.tick_V();
-      bD.init_V();
+      PayloadSubscriptionManager.init_V();
    }
 
    public boolean close_Z() {
@@ -711,12 +711,12 @@ public final class ModuleRuntimeManager {
 
             captured = true;
          } else if (passiveWork) {
-            bB.Inner_StreamUtil filterMatch = this.init(snapshot.load_Str(), direction);
+            PayloadChannelFilterManager.Inner_StreamUtil filterMatch = this.init(snapshot.load_Str(), direction);
             if (filterMatch != null) {
                if (logger != null) {
                   logger.init_V_J(System.currentTimeMillis(), this.write_I, direction == null ? "" : direction, init_Class_Str(direction), snapshot);
                } else {
-                  bF.init(snapshot.load_Str(), direction, filterMatch);
+                  PayloadNotificationTracker.init(snapshot.load_Str(), direction, filterMatch);
                   this.init(snapshot, direction, init_Class_Str(direction));
                }
 
@@ -780,12 +780,12 @@ public final class ModuleRuntimeManager {
 
                captured = true;
             } else if (passiveWork) {
-               bB.Inner_StreamUtil filterMatch = this.init(channel, direction);
+               PayloadChannelFilterManager.Inner_StreamUtil filterMatch = this.init(channel, direction);
                if (filterMatch != null) {
                   if (logger != null) {
                      logger.load_V_Packet_Str(packet, direction);
                   } else {
-                     bF.init(channel, direction, filterMatch);
+                     PayloadNotificationTracker.init(channel, direction, filterMatch);
                      this.load(packet, direction);
                   }
 
@@ -887,18 +887,18 @@ public final class ModuleRuntimeManager {
       }
    }
 
-   private bB.Inner_StreamUtil init(String channel, String direction) {
+   private PayloadChannelFilterManager.Inner_StreamUtil init(String channel, String direction) {
       if (channel != null && !channel.isBlank()) {
-         bB listeners = this.init_bB();
+         PayloadChannelFilterManager listeners = this.init_bB();
          return listeners.init_Z() ? listeners.init_bB_StreamUtil_Str_Str(channel, direction) : null;
       } else {
          return null;
       }
    }
 
-   private bB init_bB() {
+   private PayloadChannelFilterManager init_bB() {
       if (this.init_bB == null) {
-         this.init_bB = new bB();
+         this.init_bB = new PayloadChannelFilterManager();
       }
 
       return this.init_bB;
@@ -975,7 +975,7 @@ public final class ModuleRuntimeManager {
    private void tick_V() {
       if (!aD.init_Z()) {
          this.update_J = Math.max(this.update_J, System.currentTimeMillis() + 20000L);
-         autismclient.util.bg.load(this);
+         autismclient.util.PacketCaptureState.load(this);
       }
    }
 
@@ -1067,26 +1067,26 @@ public final class ModuleRuntimeManager {
             String channel = AutismPayloadSupport.init_Str(payload);
             boolean inbound = "S2C".equalsIgnoreCase(direction);
             if (inbound) {
-               bD.load_V(channel);
+               PayloadSubscriptionManager.load_V(channel);
             }
 
             try {
                AutismPayloadSupport.Inner_StreamUtil snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction);
-               bI.init_Z(snapshot);
+               PayloadStudyTracker.init_Z(snapshot);
                if (inbound) {
-                  bD.init(snapshot);
+                  PayloadSubscriptionManager.init(snapshot);
                }
             } catch (Throwable var10) {
             }
 
-            if (inbound && bQ.init_Z(channel)) {
+            if (inbound && PluginSignatureCatalog.init_Z(channel)) {
                try {
                   AutismPayloadSupport.Inner_StreamUtil snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(packet, direction);
                   if (snapshot == null) {
                      return;
                   }
 
-                  boolean changed = bQ.init(this.read_Str(), this.load_Str(), snapshot);
+                  boolean changed = PluginSignatureCatalog.init(this.read_Str(), this.load_Str(), snapshot);
                   if (changed) {
                      AutismServerInfoOverlay overlay = this.load_AutismServerInfoOv();
                      if (overlay != null) {
@@ -1103,16 +1103,16 @@ public final class ModuleRuntimeManager {
    private void init_V_AutismPayloadSuppo(AutismPayloadSupport.Inner_StreamUtil snapshot) {
       if (snapshot != null) {
          String channel = snapshot.load_Str();
-         bI.init_Z(snapshot);
+         PayloadStudyTracker.init_Z(snapshot);
          boolean inbound = "S2C".equalsIgnoreCase(snapshot.init_Str());
          if (inbound) {
-            bD.load_V(channel);
-            bD.init(snapshot);
+            PayloadSubscriptionManager.load_V(channel);
+            PayloadSubscriptionManager.init(snapshot);
          }
 
-         if (inbound && bQ.init_Z(channel)) {
+         if (inbound && PluginSignatureCatalog.init_Z(channel)) {
             try {
-               boolean changed = bQ.init(this.read_Str(), this.load_Str(), snapshot);
+               boolean changed = PluginSignatureCatalog.init(this.read_Str(), this.load_Str(), snapshot);
                if (changed) {
                   AutismServerInfoOverlay overlay = this.load_AutismServerInfoOv();
                   if (overlay != null) {
@@ -1696,7 +1696,7 @@ public final class ModuleRuntimeManager {
    public Set<Class<? extends Packet<?>>> write_Set() {
       Set<Class<? extends Packet<?>>> defaults = new LinkedHashSet<>();
 
-      for (Class<? extends Packet<?>> packetClass : bw.load()) {
+      for (Class<? extends Packet<?>> packetClass : PacketTypeRegistry.load()) {
          if (!init_Set.contains(packetClass)) {
             defaults.add(packetClass);
          }
@@ -1814,7 +1814,7 @@ public final class ModuleRuntimeManager {
       if (names != null) {
          for (String name : names) {
             if (name != null && !name.isBlank()) {
-               Class<? extends Packet<?>> packetClass = bw.init_Class_Str(name);
+               Class<? extends Packet<?>> packetClass = PacketTypeRegistry.init_Class_Str(name);
                if (packetClass == null) {
                   try {
                      Class<?> direct = Class.forName(name);
@@ -1844,7 +1844,7 @@ public final class ModuleRuntimeManager {
       List<String> names = new ArrayList<>();
 
       for (Class<? extends Packet<?>> packetClass : packets) {
-         String name = bw.init_Str_Class(packetClass);
+         String name = PacketTypeRegistry.init_Str_Class(packetClass);
          names.add(name != null ? name : packetClass.getName());
       }
 

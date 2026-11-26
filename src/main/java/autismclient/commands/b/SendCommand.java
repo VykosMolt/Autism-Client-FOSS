@@ -3,8 +3,8 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.bm;
-import autismclient.util.bw;
+import autismclient.util.PacketCommandBuilder;
+import autismclient.util.PacketTypeRegistry;
 import autismclient.util.ck;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -30,33 +30,33 @@ public class SendCommand extends Command {
          ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("packet", autismclient.commands.a.PacketNameArgumentType.init_JsonUtil())
                .executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.a.PacketNameArgumentType.init(ctx, "packet"), "")))
             .then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("args", StringArgumentType.greedyString()).suggests((ctx, builder) -> {
-               Class<? extends Packet<?>> cls = bw.init_Class_Str(autismclient.commands.a.PacketNameArgumentType.init(ctx, "packet"));
-               return bm.init_CompletableFuture_Class_SuggestionsBuilder(cls, builder);
+               Class<? extends Packet<?>> cls = PacketTypeRegistry.init_Class_Str(autismclient.commands.a.PacketNameArgumentType.init(ctx, "packet"));
+               return PacketCommandBuilder.init_CompletableFuture_Class_SuggestionsBuilder(cls, builder);
             }).executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.a.PacketNameArgumentType.init(ctx, "packet"), StringArgumentType.getString(ctx, "args"))))
       );
    }
 
    private int init_I_Str_Str_3(String name, String args) {
-      Class<? extends Packet<?>> cls = bw.init_Class_Str(name);
+      Class<? extends Packet<?>> cls = PacketTypeRegistry.init_Class_Str(name);
       if (cls == null) {
          AutismClientMessaging.sendPrefixed("§cUnknown packet: §f" + name);
          return 1;
       }
 
-      if (!bw.load().contains(cls)) {
+      if (!PacketTypeRegistry.load().contains(cls)) {
          AutismClientMessaging.sendPrefixed("§cRefusing to send non-C2S packet: §f" + name);
          return 1;
       }
 
-      bm.Inner_DataUtil prepared;
+      PacketCommandBuilder.Inner_DataUtil prepared;
       try {
-         prepared = bm.init_bm_DataUtil_Str(args);
+         prepared = PacketCommandBuilder.init_bm_DataUtil_Str(args);
       } catch (IllegalArgumentException e) {
          AutismClientMessaging.sendPrefixed("§cBad arguments: " + e.getMessage());
          return 1;
       }
 
-      bm.Inner_StreamUtil result = bm.init_bm_StreamUtil_Class_Str(cls, prepared.init_Str());
+      PacketCommandBuilder.Inner_StreamUtil result = PacketCommandBuilder.init_bm_StreamUtil_Class_Str(cls, prepared.init_Str());
       if (result.load_Z()) {
          init_V_Str_Str("§e", result.init_Str());
          return 1;

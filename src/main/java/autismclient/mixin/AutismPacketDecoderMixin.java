@@ -1,8 +1,8 @@
 package autismclient.mixin;
 
 import autismclient.modules.ModuleRuntimeManager;
-import autismclient.util.bg;
-import autismclient.util.bn;
+import autismclient.util.PacketCaptureState;
+import autismclient.util.PacketWireCaptureStore;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import io.netty.buffer.ByteBuf;
@@ -27,17 +27,17 @@ public abstract class AutismPacketDecoderMixin<T extends PacketListener> {
 
    @WrapMethod(method = "decode")
    private void autism$captureIncomingPlaintext(ChannelHandlerContext ctx, ByteBuf input, List<Object> out, Operation<Void> original) {
-      long captureState = bg.init_J();
-      if (bg.init_I_J(captureState) == 0) {
+      long captureState = PacketCaptureState.init_J();
+      if (PacketCaptureState.init_I_J(captureState) == 0) {
          original.call(ctx, input, out);
       } else {
          int outSizeBeforeDecode = out == null ? 0 : out.size();
-         byte[] incomingPlaintext = bg.init_Z_J(captureState) ? bn.init(input) : bg.init_BArr;
+         byte[] incomingPlaintext = PacketCaptureState.init_Z_J(captureState) ? PacketWireCaptureStore.init(input) : PacketCaptureState.init_BArr;
          original.call(ctx, input, out);
          if (out != null && !out.isEmpty()) {
             int start = Math.max(0, Math.min(outSizeBeforeDecode, out.size()));
-            boolean capturePlaintext = bg.init_Z_J(captureState) && incomingPlaintext.length > 0;
-            boolean capturePayloads = bg.load(captureState);
+            boolean capturePlaintext = PacketCaptureState.init_Z_J(captureState) && incomingPlaintext.length > 0;
+            boolean capturePayloads = PacketCaptureState.load(captureState);
             ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
             if (module != null) {
                String protocol = this.protocolInfo.id().id();
@@ -45,7 +45,7 @@ public abstract class AutismPacketDecoderMixin<T extends PacketListener> {
                for (int i = start; i < out.size(); i++) {
                   if (out.get(i) instanceof Packet<?> packet) {
                      if (capturePlaintext) {
-                        bn.init(packet, "S2C", protocol, packet.type(), incomingPlaintext);
+                        PacketWireCaptureStore.init(packet, "S2C", protocol, packet.type(), incomingPlaintext);
                      }
 
                      if (capturePayloads && autism$isPayloadCarrier(packet)) {

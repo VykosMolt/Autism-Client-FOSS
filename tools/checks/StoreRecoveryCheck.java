@@ -13,7 +13,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 
 public class StoreRecoveryCheck {
-   static final class Store extends df<String> {
+   static final class Store extends AtomicNbtListStore<String> {
       final File file;
 
       Store(File file) {
@@ -96,7 +96,7 @@ public class StoreRecoveryCheck {
       s1.load_V();
       check(s1.init_List().equals(Arrays.asList("a", "b")), "corrupt primary + good bak loads bak, got " + s1.init_List());
       check(corrupt(dir1).length == 1 && Arrays.equals(Files.readAllBytes(corrupt(dir1)[0].toPath()), garbage), "corrupt primary kept aside");
-      dj.init(5000L);
+      DebouncedPersistenceScheduler.init(5000L);
       check(f1.exists(), "bak recovery writes primary back to disk");
       Store s1Second = new Store(f1);
       s1Second.load_V();
@@ -108,7 +108,7 @@ public class StoreRecoveryCheck {
       Store sMissing = new Store(fMissing);
       sMissing.load_V();
       check(sMissing.init_List().equals(Arrays.asList("m1", "m2")), "missing primary + good bak loads bak, got " + sMissing.init_List());
-      dj.init(5000L);
+      DebouncedPersistenceScheduler.init(5000L);
       check(fMissing.exists(), "missing primary recovery recreates primary file");
 
       File dir2 = Files.createTempDirectory("dfcheck").toFile();
@@ -121,7 +121,7 @@ public class StoreRecoveryCheck {
       check(s2.close_I() == 0, "both corrupt loads empty");
       s2.init_List.add("new");
       s2.read_V();
-      dj.init(5000L);
+      DebouncedPersistenceScheduler.init(5000L);
       check(corrupt(dir2).length == 1 && Arrays.equals(Files.readAllBytes(corrupt(dir2)[0].toPath()), garbage), "save kept the corrupt original");
       check(Arrays.equals(Files.readAllBytes(bak2.toPath()), garbage), "save did not clobber the bak");
       Store again = new Store(f2);
@@ -136,11 +136,11 @@ public class StoreRecoveryCheck {
       s3.load_V();
       Files.write(f3.toPath(), garbage);
       s3.read_V();
-      dj.init(5000L);
+      DebouncedPersistenceScheduler.init(5000L);
       check(!bak3.exists(), "unparseable primary is not copied to bak");
       write(f3, "x");
       s3.read_V();
-      dj.init(5000L);
+      DebouncedPersistenceScheduler.init(5000L);
       Store b3 = new Store(bak3);
       b3.load_V();
       check(b3.init_List().equals(Arrays.asList("x")), "parseable primary is copied to bak");

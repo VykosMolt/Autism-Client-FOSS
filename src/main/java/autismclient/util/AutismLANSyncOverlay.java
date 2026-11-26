@@ -1087,7 +1087,7 @@ public class AutismLANSyncOverlay extends bj {
       if (!this.flush_Z) {
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> {
             try {
-               String queueData = o.init_Str(ck.init_ck().load_List());
+               String queueData = MacroClipboardCodec.init_Str(ck.init_ck().load_List());
                sync.write(queueData);
                AutismClientMessaging.sendPrefixed("§aQueue broadcasted to " + (sync.load_I() - 1) + " peers");
             } catch (Exception e) {

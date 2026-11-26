@@ -1253,7 +1253,7 @@ public class AutismMacroEditorOverlay extends bj {
          return true;
       }
 
-      if (o.init_Z(selected)) {
+      if (MacroClipboardCodec.init_Z(selected)) {
          bi.init("Copied " + selected.size() + " macro " + init_Str_I_4(selected.size()) + ".");
       } else {
          bi.write("Failed to copy macro steps.");
@@ -1271,7 +1271,7 @@ public class AutismMacroEditorOverlay extends bj {
          return false;
       }
 
-      List<MacroAction> pasted = o.load_List();
+      List<MacroAction> pasted = MacroClipboardCodec.load_List();
       if (pasted != null && !pasted.isEmpty()) {
          this.init_V_List_3(pasted);
       } else {
@@ -1303,7 +1303,7 @@ public class AutismMacroEditorOverlay extends bj {
          return true;
       }
 
-      if (!o.init_Z(selected)) {
+      if (!MacroClipboardCodec.init_Z(selected)) {
          bi.write("Failed to copy macro steps.");
          return true;
       }

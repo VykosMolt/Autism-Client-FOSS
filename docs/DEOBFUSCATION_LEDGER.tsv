@@ -1764,3 +1764,56 @@ Phase5B	C	autismclient/modules/u	autismclient/modules/BedDangerHudRenderer	autis
 Phase5B	C	autismclient/modules/v	autismclient/modules/BedProximityTracker	autismclient/modules/v	modules:bed-proximity-tracker	applied
 Phase5B	C	autismclient/modules/x	autismclient/modules/FireballBlastPredictor	autismclient/modules/x	modules:fireball-blast-predictor	applied
 Phase5B	C	autismclient/modules/y	autismclient/modules/DangerHudRenderer	autismclient/modules/y	modules:danger-hud-renderer	applied
+Phase6A	class	autismclient/util/A	autismclient/util/AutismConfigSnapshotter	autismclient/util/A	applied	Deep-copies AutismConfig via reflection for async persistence
+Phase6A	class	autismclient/util/B	autismclient/util/AutismConfigPersistence	autismclient/util/B	applied	Captures AutismConfig snapshot and schedules JSON disk write
+Phase6A	class	autismclient/util/ClassCache	autismclient/util/BackgroundTaskExecutor	autismclient/util/ClassCache	applied	Named daemon cached thread pool (Autism-BG-*) for background tasks
+Phase6A	class	autismclient/util/MapStore	autismclient/util/MinecraftProxySelector	autismclient/util/MapStore	applied	ProxySelector delegating account/session HTTP requests to Minecraft proxy
+Phase6A	class	autismclient/util/PkgCls_a	autismclient/util/BookBotFileReader	autismclient/util/a	applied	Reads BookBot text files (<=4 MiB) with BOM/charset auto-detection
+Phase6A	class	autismclient/util/PkgCls_b	autismclient/util/BookBotPageGenerator	autismclient/util/b	applied	Generates random Ascii/Utf8/PaperMC book pages for BookBot/NbtBookAction
+Phase6A	class	autismclient/util/bB	autismclient/util/PayloadChannelFilterManager	autismclient/util/bB	applied	Manages packet logger payload channel filter rules and namespace families
+Phase6A	class	autismclient/util/bC	autismclient/util/PayloadRegistrationManager	autismclient/util/bC	applied	Manages custom/preset/learned plugin channel registration rules
+Phase6A	class	autismclient/util/bD	autismclient/util/PayloadSubscriptionManager	autismclient/util/bD	applied	Tracks and manages runtime minecraft:register/unregister payload subscriptions
+Phase6A	class	autismclient/util/bE	autismclient/util/PayloadEditorModel	autismclient/util/bE	applied	Mutable editor form model for PayloadAction direction/channel/fields/bytes
+Phase6A	class	autismclient/util/bF	autismclient/util/PayloadNotificationTracker	autismclient/util/bF	applied	Rate-limited S2C custom payload notification tracker
+Phase6A	class	autismclient/util/bG	autismclient/util/PayloadJsonCodec	autismclient/util/bG	applied	Gson-backed JSON serializer/deserializer for CustomPacketPayload & PayloadAction
+Phase6A	class	autismclient/util/bH	autismclient/util/PayloadScriptRunner	autismclient/util/bH	applied	Stubbed Java-script payload runner returning raw payload bytes
+Phase6A	class	autismclient/util/bI	autismclient/util/PayloadStudyTracker	autismclient/util/bI	applied	Active custom payload capture study session stats and summary tracker
+Phase6A	class	autismclient/util/bJ	autismclient/util/PayloadFieldCodec	autismclient/util/bJ	applied	Structured payload field encoder/decoder (HEX_BYTES, UTF8, BungeeCord, brand)
+Phase6A	class	autismclient/util/bQ	autismclient/util/PluginSignatureCatalog	autismclient/util/bQ	applied	Maps plugin channel namespaces/aliases to server plugin names & hints
+Phase6A	class	autismclient/util/bR	autismclient/util/ServerScanIdAllocator	autismclient/util/bR	applied	Allocates 10000-sized probe transaction ID ranges for AutismServerInfoOverlay
+Phase6A	class	autismclient/util/bS	autismclient/util/ServerScanAttemptTracker	autismclient/util/bS	applied	Tracks server plugin scan generation, address, and 4-attempt retry budget
+Phase6A	class	autismclient/util/bT	autismclient/util/PacketPresetManager	autismclient/util/bT	applied	Manages developer and user JSON packet presets in presets/
+Phase6A	class	autismclient/util/bV	autismclient/util/AutismProfileManager	autismclient/util/bV	applied	Manages AutismProfile JSON files and per-profile macro libraries in profiles/
+Phase6A	class	autismclient/util/bY	autismclient/util/ProxyListManager	autismclient/util/bY	applied	Manages autism-proxies.nbt persistence, latency sorting, testing, and pruning
+Phase6A	class	autismclient/util/bZ	autismclient/util/ProxyProtocolType	autismclient/util/bZ	applied	SOCKS4/SOCKS5 proxy protocol enum
+Phase6A	class	autismclient/util/be	autismclient/util/CommandTabNameProber	autismclient/util/be	applied	Probes server Brigadier command completions to discover online player names
+Phase6A	class	autismclient/util/bf	autismclient/util/NameScrapeController	autismclient/util/bf	applied	Stateful /namescrape controller (start/pause/resume/stop & HUD status)
+Phase6A	class	autismclient/util/bg	autismclient/util/PacketCaptureState	autismclient/util/bg	applied	Bitmask/epoch & ThreadLocal suppression state for Netty packet wire capture
+Phase6A	class	autismclient/util/bh	autismclient/util/PacketDetailFormatter	autismclient/util/bh	applied	Formats logged packets via STREAM_CODEC wire decode and schema fallback
+Phase6A	class	autismclient/util/bm	autismclient/util/PacketCommandBuilder	autismclient/util/bm	applied	Parses /send CLI arguments and builds Packet<?> instances via schema/reflection
+Phase6A	class	autismclient/util/bn	autismclient/util/PacketWireCaptureStore	autismclient/util/bn	applied	WeakHashMap store of raw captured Netty ByteBuf bytes & packet IDs
+Phase6A	class	autismclient/util/bo	autismclient/util/ContainerClickSnapshot	autismclient/util/bo	applied	Container click mode enum & ServerboundContainerClickPacket snapshot helper
+Phase6A	class	autismclient/util/bp	autismclient/util/PacketStreamCodecDecoder	autismclient/util/bp	applied	Reflects MC STREAM_CODEC fields to decode raw wire bytes into Packet<?>
+Phase6A	class	autismclient/util/bq	autismclient/util/PacketStateDeltaTracker	autismclient/util/bq	applied	Tracks live world/container/player state deltas per logged packet
+Phase6A	class	autismclient/util/br	autismclient/util/PacketSchemaSnapshot	autismclient/util/br	applied	Record holding schema-or-reflection-decoded Packet<?> field snapshots
+Phase6A	class	autismclient/util/bs	autismclient/util/LoggedPacketActions	autismclient/util/bs	applied	UI actions on logged C2S packets (resend, queue, add macro send/wait)
+Phase6A	class	autismclient/util/bt	autismclient/util/PacketFieldSnapshot	autismclient/util/bt	applied	Record holding one inspected packet field value and formatted lines
+Phase6A	class	autismclient/util/bu	autismclient/util/PacketInspectorEngine	autismclient/util/bu	applied	Deep packet inspection report builder & NBT/byte/pattern analyzer
+Phase6A	class	autismclient/util/bv	autismclient/util/PacketNameResolver	autismclient/util/bv	applied	Canonical human-readable MC packet name resolver & alias cache
+Phase6A	class	autismclient/util/bw	autismclient/util/PacketTypeRegistry	autismclient/util/bw	applied	Reflects MC *PacketTypes holders to index all S2C/C2S Packet<?> classes
+Phase6A	class	autismclient/util/bx	autismclient/util/PacketSchemaRegistry	autismclient/util/bx	applied	Loads /autism-packet-schemas.tsv and indexes packet/field schemas
+Phase6A	class	autismclient/util/by	autismclient/util/DirectPacketSender	autismclient/util/by	applied	Sends Packet<?> directly over ClientPacketListener with protector tagging
+Phase6A	class	autismclient/util/cK	autismclient/util/InspectorMappingsIndex	autismclient/util/cK	applied	Loads /autism-inspector-mappings.tsv for readable inspector names
+Phase6A	class	autismclient/util/cL	autismclient/util/AutoFishMacroPresets	autismclient/util/cL	applied	Builds built-in AutoFish stop-macro presets (Free Slots/Durability/Custom)
+Phase6A	class	autismclient/util/ca	autismclient/util/ProxyConnectivityTester	autismclient/util/ca	applied	Tests SOCKS4/SOCKS5 proxy connectivity, latency, and failure status
+Phase6A	class	autismclient/util/cb	autismclient/util/PacketQueueHudRenderer	autismclient/util/cb	applied	HUD renderer for the PACKET QUEUE status widget
+Phase6A	class	autismclient/util/cw	autismclient/util/AsyncTraceLogger	autismclient/util/cw	applied	Bounded queue & daemon thread (autism-trace-log) writing trace lines
+Phase6A	class	autismclient/util/dd	autismclient/util/PacketFilterListCodec	autismclient/util/dd	applied	Parses/formats comma-or-pipe packet filter lists to Packet<?> sets
+Phase6A	class	autismclient/util/de	autismclient/util/PacketRegenerator	autismclient/util/de	applied	Regenerates fresh C2S Packet<?> instances with live player/menu state
+Phase6A	class	autismclient/util/df	autismclient/util/AtomicNbtListStore	autismclient/util/df	applied	Atomic NBT list persistence base class with .tmp/.bak/.corrupt quarantine
+Phase6A	class	autismclient/util/dj	autismclient/util/DebouncedPersistenceScheduler	autismclient/util/dj	applied	Single-thread scheduled executor (autism-persistence) debouncing disk writes
+Phase6A	class	autismclient/util/dm	autismclient/util/SodiumRegionResourceProbe	autismclient/util/dm	applied	ClassValue/MethodHandle Sodium render-region geometry/resource probe
+Phase6A	class	autismclient/util/l	autismclient/util/PacketWireCaptureHandler	autismclient/util/l	applied	Netty ChannelDuplexHandler tapping inbound/outbound ByteBufs into wire store
+Phase6A	class	autismclient/util/m	autismclient/util/BedSleepDesyncHelper	autismclient/util/m	applied	Clears local bed sleeping pose/screen while preserving bed anchor
+Phase6A	class	autismclient/util/n	autismclient/util/SystemClipboardHelper	autismclient/util/n	applied	Cross-platform Wayland/X11/GLFW clipboard bridge with async write worker
+Phase6A	class	autismclient/util/o	autismclient/util/MacroClipboardCodec	autismclient/util/o	applied	Clipboard & NBT/Base64 codec for macros, macro steps, and queued packets

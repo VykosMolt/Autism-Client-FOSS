@@ -227,7 +227,7 @@ public final class AutismConfig implements Cloneable {
       bK.init(this);
       autismclient.modules.aD.init(this);
       autismclient.g.ProtectorFeatureFlags.init_V(this);
-      B.init(this);
+      AutismConfigPersistence.init(this);
       Runnable hook = AuditConfigSafety.deferHook(afterSave);
       if (hook != null) {
          try {
@@ -239,15 +239,15 @@ public final class AutismConfig implements Cloneable {
    }
 
    public static void enqueuePendingSaveNow() {
-      B.init();
+      AutismConfigPersistence.init();
       if (!AutismLiteVariant.enabled()) {
-         bV.init_V();
+         AutismProfileManager.init_V();
       }
    }
 
    public static void flushPendingSaves(long timeoutMs) {
       enqueuePendingSaveNow();
-      B.init(timeoutMs);
+      AutismConfigPersistence.init(timeoutMs);
    }
 
    static String toJson(AutismConfig config) {
@@ -318,7 +318,7 @@ public final class AutismConfig implements Cloneable {
    }
 
    public AutismConfig deepCopy() {
-      return A.init(this);
+      return AutismConfigSnapshotter.init(this);
    }
 
    public AutismConfig snapshotForProfile() {

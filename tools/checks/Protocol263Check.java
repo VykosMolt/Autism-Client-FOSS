@@ -5,7 +5,7 @@ import autismclient.aggressivepvp.Rotations;
 import autismclient.compat263.CompatGLFW;
 import autismclient.compat263.CompatSwingPacket;
 import autismclient.modules.ModuleRuntimeManager;
-import autismclient.util.bw;
+import autismclient.util.PacketTypeRegistry;
 import io.netty.buffer.Unpooled;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -115,9 +115,9 @@ public final class Protocol263Check {
       poolSetF.setAccessible(true);
       Set<Class<?>> poolSet = (Set<Class<?>>) poolSetF.get(null);
       check("PoolEntry ignore set contains ServerboundPunchPacket", poolSet.contains(ServerboundPunchPacket.class));
-      check("bw resolves CompatSwingPacket -> ServerboundPunchPacket", bw.init_Class_Str("CompatSwingPacket") == ServerboundPunchPacket.class);
-      check("bw resolves HandSwingC2SPacket -> ServerboundPunchPacket", bw.init_Class_Str("HandSwingC2SPacket") == ServerboundPunchPacket.class);
-      check("bw resolves ServerboundAttackPacket", bw.init_Class_Str("ServerboundAttackPacket") == ServerboundAttackPacket.class);
+      check("bw resolves CompatSwingPacket -> ServerboundPunchPacket", PacketTypeRegistry.init_Class_Str("CompatSwingPacket") == ServerboundPunchPacket.class);
+      check("bw resolves HandSwingC2SPacket -> ServerboundPunchPacket", PacketTypeRegistry.init_Class_Str("HandSwingC2SPacket") == ServerboundPunchPacket.class);
+      check("bw resolves ServerboundAttackPacket", PacketTypeRegistry.init_Class_Str("ServerboundAttackPacket") == ServerboundAttackPacket.class);
       var buf = Unpooled.buffer();
       boolean codecOk = true;
       try {

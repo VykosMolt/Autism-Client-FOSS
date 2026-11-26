@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.bv;
+import autismclient.util.PacketNameResolver;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -79,7 +79,7 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
 
    public static String write(String target) {
       String packet = load(target);
-      String friendly = bv.init_Str_Str(packet);
+      String friendly = PacketNameResolver.init_Str_Str(packet);
       String direction = init(target);
       return direction.isEmpty() ? friendly : direction + " " + friendly;
    }

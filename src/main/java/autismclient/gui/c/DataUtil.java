@@ -1,7 +1,7 @@
 package autismclient.gui.c;
 
 import autismclient.gui.f.SyncManager;
-import autismclient.util.bV;
+import autismclient.util.AutismProfileManager;
 import autismclient.util.cz;
 import com.mojang.blaze3d.platform.NativeImage;
 import java.io.IOException;
@@ -25,7 +25,7 @@ final class DataUtil {
    ServerData init_ServerData_Str(String pattern) {
       if (pattern != null && !pattern.isBlank() && !pattern.equals("*")) {
          ServerData current = Minecraft.getInstance().getCurrentServer();
-         boolean currentMatches = current != null && bV.load_Z_Str_Str(current.ip, pattern);
+         boolean currentMatches = current != null && AutismProfileManager.load_Z_Str_Str(current.ip, pattern);
          return currentMatches && this.init_Z_ServerData(current)
             ? current
             : this.init_Map.computeIfAbsent(pattern, key -> Optional.ofNullable(this.load(key))).orElse(currentMatches ? current : null);
@@ -47,7 +47,7 @@ final class DataUtil {
 
       for (int i = 0; i < this.init_ServerList.size(); i++) {
          ServerData server = this.init_ServerList.get(i);
-         if (bV.load_Z_Str_Str(server.ip, pattern)) {
+         if (AutismProfileManager.load_Z_Str_Str(server.ip, pattern)) {
             if (this.init_Z_ServerData(server)) {
                return server;
             }

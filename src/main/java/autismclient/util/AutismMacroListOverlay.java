@@ -281,7 +281,7 @@ public class AutismMacroListOverlay extends bj {
       int stepsWidth = autismclient.gui.f.b.k.init(this.init_Font, init_Str_I_5(0), font, color);
 
       for (AutismMacro macro : aN.init_aN().init_List()) {
-         if (!cL.load(macro)) {
+         if (!AutoFishMacroPresets.load(macro)) {
             nameWidth = Math.max(nameWidth, autismclient.gui.f.b.k.init(this.init_Font, macro.init_Str, font, color));
             stepsWidth = Math.max(stepsWidth, autismclient.gui.f.b.k.init(this.init_Font, init_Str_I_5(macro.init_List.size()), font, color));
          }
@@ -1047,7 +1047,7 @@ public class AutismMacroListOverlay extends bj {
                   return;
                }
 
-               if (o.init_Z(List.of(item.init_aM), false)) {
+               if (MacroClipboardCodec.init_Z(List.of(item.init_aM), false)) {
                   bi.init("Copied macro: " + item.init_aM.init_Str);
                } else {
                   bi.write("Failed to copy macro.");
@@ -1121,7 +1121,7 @@ public class AutismMacroListOverlay extends bj {
    }
 
    private void set_V_6() {
-      switch (o.init_o_DataUtil()) {
+      switch (MacroClipboardCodec.init_o_DataUtil()) {
          case MACROS:
             this.clear_Z_3();
             break;
@@ -1153,7 +1153,7 @@ public class AutismMacroListOverlay extends bj {
          AutismClientMessaging.sendPrefixed("§cA macro with that name already exists.");
          return true;
       } else {
-         AutismMacro pasted = o.init_aM();
+         AutismMacro pasted = MacroClipboardCodec.init_aM();
          if (pasted == null) {
             bi.write("Clipboard has no macro steps.");
             return true;
@@ -1522,13 +1522,13 @@ public class AutismMacroListOverlay extends bj {
       String filter = this.init_BitSetUtil.init_Str().trim().toLowerCase(Locale.ROOT);
       List<AutismMacroListOverlay.Inner_StreamUtil> items = new ArrayList<>();
 
-      for (cY.Inner_DataUtil row : aN.init_aN().load(filter, true, macro -> !cL.load(macro))) {
+      for (cY.Inner_DataUtil row : aN.init_aN().load(filter, true, macro -> !AutoFishMacroPresets.load(macro))) {
          items.add(row.init_Z() ? AutismMacroListOverlay.Inner_StreamUtil.init(row, null) : AutismMacroListOverlay.Inner_StreamUtil.init(row.init_aM()));
       }
 
       if (sync.write_Z()) {
          for (Entry<String, Map<String, AutismMacro>> entry : remoteMacros.entrySet()) {
-            List<AutismMacro> available = entry.getValue().values().stream().filter(m -> !cL.load(m)).filter(m -> aN.init_aN().init_aM_Str(m.init_Str) == null).toList();
+            List<AutismMacro> available = entry.getValue().values().stream().filter(m -> !AutoFishMacroPresets.load(m)).filter(m -> aN.init_aN().init_aM_Str(m.init_Str) == null).toList();
             List<cY.Inner_DataUtil> remoteRows = cY.init(
                available, List.of(), folder -> this.init_Set.contains(entry.getKey() + "\u0000" + cY.load_Str_Str(folder)), filter, false
             );
@@ -1896,7 +1896,7 @@ public class AutismMacroListOverlay extends bj {
          return true;
       }
 
-      if (o.init_Z(selected, false)) {
+      if (MacroClipboardCodec.init_Z(selected, false)) {
          bi.init("Copied " + load_Str_I_2(selected.size()) + ".");
       } else {
          bi.write("Failed to copy macros.");
@@ -1910,7 +1910,7 @@ public class AutismMacroListOverlay extends bj {
       if (selected.isEmpty()) {
          bi.read("Select macros first.");
          return true;
-      } else if (!o.init_Z(selected, true)) {
+      } else if (!MacroClipboardCodec.init_Z(selected, true)) {
          bi.write("Failed to copy macros.");
          return true;
       } else {
@@ -1922,7 +1922,7 @@ public class AutismMacroListOverlay extends bj {
    }
 
    private boolean clear_Z_3() {
-      o.Inner_StreamUtil paste = o.init_o_StreamUtil();
+      MacroClipboardCodec.Inner_StreamUtil paste = MacroClipboardCodec.init_o_StreamUtil();
       if (paste.init_List().isEmpty()) {
          bi.read("Clipboard has no macros.");
          return true;
@@ -2536,7 +2536,7 @@ public class AutismMacroListOverlay extends bj {
       int count = 0;
 
       for (AutismMacro macro : aN.init_aN().init_List()) {
-         if (!cL.load(macro)) {
+         if (!AutoFishMacroPresets.load(macro)) {
             count++;
          }
       }

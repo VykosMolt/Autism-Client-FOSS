@@ -862,10 +862,10 @@ public final class ck {
 
             try {
                for (ck.Inner_CachePool qp : this.init_List) {
-                  if (bw.load().contains(qp.init_Packet.getClass())) {
+                  if (PacketTypeRegistry.load().contains(qp.init_Packet.getClass())) {
                      Packet<?> packetToSend = this.init_Packet_ck_CachePool(qp);
                      if (packetToSend != null) {
-                        by.init(packetToSend);
+                        DirectPacketSender.init(packetToSend);
                      }
                   } else {
                      AutismClientAddon.LOG.warn("[Autism] Skipped sending invalid C2S packet during flush: {}", qp.init_Packet.getClass().getName());
@@ -912,7 +912,7 @@ public final class ck {
 
          try {
             for (ck.Inner_CachePool qp : this.init_List) {
-               if (bw.load().contains(qp.init_Packet.getClass())) {
+               if (PacketTypeRegistry.load().contains(qp.init_Packet.getClass())) {
                   Packet<?> packetToSend = this.init_Packet_ck_CachePool(qp);
                   if (packetToSend != null) {
                      networkHandler.getConnection().send(packetToSend, null);
@@ -945,7 +945,7 @@ public final class ck {
             } else if (qp.init_Z()) {
                newPackets.add(new ck.Inner_CachePool(qp.init_Packet, qp.load, qp.init_I, qp.init_ck_BufferHelper));
             } else {
-               Packet<?> regenerated = de.init(qp.init_Packet);
+               Packet<?> regenerated = PacketRegenerator.init(qp.init_Packet);
                if (regenerated != null) {
                   newPackets.add(new ck.Inner_CachePool(regenerated, qp.load, qp.init_I, qp.init_ck_BufferHelper));
                } else {
@@ -994,7 +994,7 @@ public final class ck {
                this.run_Z = true;
 
                try {
-                  if (bw.load().contains(qp.init_Packet.getClass())) {
+                  if (PacketTypeRegistry.load().contains(qp.init_Packet.getClass())) {
                      Packet<?> packetToSend = this.init_Packet_ck_CachePool(qp);
                      if (packetToSend == null) {
                         qp.init_V();
@@ -1184,7 +1184,7 @@ public final class ck {
 
    private Packet<?> init_Packet_ck_CachePool(ck.Inner_CachePool queuedPacket) {
       if (queuedPacket != null && queuedPacket.init_Packet != null) {
-         return queuedPacket.init_Z() ? queuedPacket.init_Packet : de.init(queuedPacket.init_Packet);
+         return queuedPacket.init_Z() ? queuedPacket.init_Packet : PacketRegenerator.init(queuedPacket.init_Packet);
       } else {
          return null;
       }

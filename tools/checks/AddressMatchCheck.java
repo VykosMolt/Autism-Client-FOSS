@@ -12,12 +12,12 @@ public class AddressMatchCheck {
       expect("play.example.com:25566", "play.example.com", true);
 
       String host = "play.example.com";
-      int exact = bV.auditScore(host, 25565, "play.example.com");
-      int wildApex = bV.auditScore(host, 25565, "*.play.example.com");
-      int wildParent = bV.auditScore(host, 25565, "*.example.com");
-      int exactPort = bV.auditScore(host, 25565, "play.example.com:25565");
-      if (!(exactPort > exact && exact > wildApex && wildApex > wildParent && wildParent > bV.auditScore(host, 25565, "*:25565")
-         && bV.auditScore(host, 25565, "*:25565") > bV.auditScore(host, 25565, "*"))) {
+      int exact = AutismProfileManager.auditScore(host, 25565, "play.example.com");
+      int wildApex = AutismProfileManager.auditScore(host, 25565, "*.play.example.com");
+      int wildParent = AutismProfileManager.auditScore(host, 25565, "*.example.com");
+      int exactPort = AutismProfileManager.auditScore(host, 25565, "play.example.com:25565");
+      if (!(exactPort > exact && exact > wildApex && wildApex > wildParent && wildParent > AutismProfileManager.auditScore(host, 25565, "*:25565")
+         && AutismProfileManager.auditScore(host, 25565, "*:25565") > AutismProfileManager.auditScore(host, 25565, "*"))) {
          fail("ranking exact+port > exact > longer wildcard > shorter wildcard > *:port > *");
       }
 
@@ -25,7 +25,7 @@ public class AddressMatchCheck {
    }
 
    private static void expect(String address, String pattern, boolean match) {
-      if (bV.load_Z_Str_Str(address, pattern) != match) {
+      if (AutismProfileManager.load_Z_Str_Str(address, pattern) != match) {
          fail("match(" + address + ", " + pattern + ") != " + match);
       }
    }

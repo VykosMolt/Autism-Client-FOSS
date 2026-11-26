@@ -4,8 +4,8 @@ import autismclient.compat263.Compat263;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
 import autismclient.util.bW;
-import autismclient.util.bY;
-import autismclient.util.bZ;
+import autismclient.util.ProxyListManager;
+import autismclient.util.ProxyProtocolType;
 import autismclient.util.cA;
 import autismclient.util.ct;
 import autismclient.util.cz;
@@ -43,7 +43,7 @@ public class ProxiesScreen extends KeyHolder {
    private EditBox write_EditBox;
    private EditBox update_EditBox;
    private EditBox sync_EditBox;
-   private bZ init_bZ = bZ.Socks5;
+   private ProxyProtocolType init_bZ = ProxyProtocolType.Socks5;
    private ProxiesScreen.Inner_DataUtil init_ArrayUtil_DataUtil = ProxiesScreen.Inner_DataUtil.ALL;
    private bW init_bW;
    private String init_Str = "";
@@ -95,7 +95,7 @@ public class ProxiesScreen extends KeyHolder {
          this.load_V();
       });
       this.init_V_Z(!this.init_Z());
-      bY.init_bY().init_Z_Z(false);
+      ProxyListManager.init_bY().init_Z_Z(false);
       this.load_V();
    }
 
@@ -122,9 +122,9 @@ public class ProxiesScreen extends KeyHolder {
       if (!this.init_Z()) {
          int actionGap = 2;
          int usableW = this.poll_I();
-         bY manager = bY.init_bY();
-         bY.Inner_TaskQueue refreshStatus = manager.init_bY_TaskQueue();
-         bY.Inner_BufferHelper importStatus = manager.init_bY_BufferHelper();
+         ProxyListManager manager = ProxyListManager.init_bY();
+         ProxyListManager.Inner_TaskQueue refreshStatus = manager.init_bY_TaskQueue();
+         ProxyListManager.Inner_BufferHelper importStatus = manager.init_bY_BufferHelper();
          boolean refreshRunning = refreshStatus.init_Z();
          boolean importRunning = importStatus.init_Z();
          String typeLabel = "Type: " + this.init_bZ;
@@ -136,7 +136,7 @@ public class ProxiesScreen extends KeyHolder {
          int[] actionWidths = this.init_IArr_I_2(usableW, actionGap, typeLabel, addLabel, clearLabel, refreshLabel, "Cleanup", importLabel, "Config");
          int actionX = this.open_I();
          this.init_List.add(autismclient.gui.f.b.ByteReader.init(actionX, actionY, actionWidths[0], ctl, Component.literal(typeLabel), b -> {
-            this.init_bZ = this.init_bZ == bZ.Socks5 ? bZ.Socks4 : bZ.Socks5;
+            this.init_bZ = this.init_bZ == ProxyProtocolType.Socks5 ? ProxyProtocolType.Socks4 : ProxyProtocolType.Socks5;
             this.load_V();
          }).init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY));
          actionX += actionWidths[0] + actionGap;
@@ -282,13 +282,13 @@ public class ProxiesScreen extends KeyHolder {
       int maxScroll = this.init_I_I(this.load_List().size());
       this.update_I = load(this.update_I, maxScroll);
       this.init_CacheEntry.load(this.update_I, maxScroll);
-      bY.Inner_TaskQueue status = bY.init_bY().init_bY_TaskQueue();
+      ProxyListManager.Inner_TaskQueue status = ProxyListManager.init_bY().init_bY_TaskQueue();
       if (status.load_J() != this.init_J) {
          this.init_J = status.load_J();
          this.load_V();
       }
 
-      bY.Inner_BufferHelper importStatus = bY.init_bY().init_bY_BufferHelper();
+      ProxyListManager.Inner_BufferHelper importStatus = ProxyListManager.init_bY().init_bY_BufferHelper();
       if (importStatus.load_J() != this.load_J) {
          this.load_J = importStatus.load_J();
          this.load_V();
@@ -298,7 +298,7 @@ public class ProxiesScreen extends KeyHolder {
    private void read_V() {
       bW proxy = this.init_bW();
       if (proxy != null) {
-         if (bY.init_bY().init_Z_bW(proxy)) {
+         if (ProxyListManager.init_bY().init_Z_bW(proxy)) {
             this.init_bW = null;
             this.run_V();
             this.init_V_Str_I("Added proxy " + proxy.read + ":" + proxy.init_I + ".", ValueSink.open);
@@ -315,7 +315,7 @@ public class ProxiesScreen extends KeyHolder {
       if (this.init_bW != null) {
          bW updated = this.init_bW();
          if (updated != null) {
-            if (bY.init_bY().init_Z_bW_bW(this.init_bW, updated)) {
+            if (ProxyListManager.init_bY().init_Z_bW_bW(this.init_bW, updated)) {
                this.init_V_Str_I("Updated " + this.init_bW.init_Str() + ".", ValueSink.open);
                this.get_V();
             } else {
@@ -329,7 +329,7 @@ public class ProxiesScreen extends KeyHolder {
    private void init_V_bW(bW proxy) {
       if (proxy != null) {
          int sectionsBefore = this.load_List().size() - this.init_List().size();
-         bY.init_bY().init_V_bW_Z(proxy, !proxy.init_Z);
+         ProxyListManager.init_bY().init_V_bW_Z(proxy, !proxy.init_Z);
          this.init_V_I(sectionsBefore);
          this.init_V_Str_I(proxy.init_Z ? "Enabled " + proxy.init_Str() + "." : "Disabled proxy.", proxy.init_Z ? ValueSink.open : ValueSink.close);
          this.load_V();
@@ -347,7 +347,7 @@ public class ProxiesScreen extends KeyHolder {
 
    private void load_V_bW(bW proxy) {
       if (proxy != null) {
-         bY.init_bY().init_V_bW(proxy);
+         ProxyListManager.init_bY().init_V_bW(proxy);
          if (proxy.equals(this.init_bW)) {
             this.init_bW = null;
          }
@@ -362,8 +362,8 @@ public class ProxiesScreen extends KeyHolder {
          proxy.init_bW_CachePool = bW.Inner_CachePool.CHECKING;
          proxy.init_J = 0L;
          this.load_V();
-         autismclient.util.ClassCache.init_Future_Str_Runnable("Autism-Proxy-Check", () -> {
-            proxy.init_I_I(bY.init_bY().read_I());
+         autismclient.util.BackgroundTaskExecutor.init_Future_Str_Runnable("Autism-Proxy-Check", () -> {
+            proxy.init_I_I(ProxyListManager.init_bY().read_I());
             if (this.minecraft != null) {
                this.minecraft.execute(() -> {
                   this.init_V_Str_I(proxy.init_Str() + " is " + this.init_Str_bW(proxy) + ".", proxy.init_bW_CachePool.init_I());
@@ -375,11 +375,11 @@ public class ProxiesScreen extends KeyHolder {
    }
 
    private void update_V() {
-      bY manager = bY.init_bY();
+      ProxyListManager manager = ProxyListManager.init_bY();
       if (manager.init_bY_BufferHelper().init_Z()) {
          this.init_V_Str_I("Finish import before refreshing.", -14249);
       } else {
-         bY.Inner_TaskQueue currentStatus = manager.init_bY_TaskQueue();
+         ProxyListManager.Inner_TaskQueue currentStatus = manager.init_bY_TaskQueue();
          if (currentStatus.init_Z()) {
             if (manager.update_Z()) {
                this.init_V_Str_I("Proxy refresh canceled.", -14249);
@@ -393,10 +393,10 @@ public class ProxiesScreen extends KeyHolder {
             long generation = manager.init_bY_TaskQueue().init_J();
             this.init_V_Str_I("Refreshing proxies...", -7429889);
             this.load_V();
-            autismclient.util.ClassCache.init("Autism-Proxy-Refresh-Watch", () -> !manager.init_bY_TaskQueue().init_Z(), () -> {
+            autismclient.util.BackgroundTaskExecutor.init("Autism-Proxy-Refresh-Watch", () -> !manager.init_bY_TaskQueue().init_Z(), () -> {
                if (this.minecraft != null) {
                   this.minecraft.execute(() -> {
-                     bY.Inner_TaskQueue finished = manager.init_bY_TaskQueue();
+                     ProxyListManager.Inner_TaskQueue finished = manager.init_bY_TaskQueue();
                      if (finished.init_J() == generation && finished.init_I() >= finished.load_I()) {
                         this.init_V_Str_I("Proxy refresh finished.", ValueSink.open);
                      }
@@ -410,7 +410,7 @@ public class ProxiesScreen extends KeyHolder {
    }
 
    private void sync_V() {
-      bY manager = bY.init_bY();
+      ProxyListManager manager = ProxyListManager.init_bY();
       if (manager.init_bY_TaskQueue().init_Z()) {
          this.init_V_Str_I("Cancel refresh before cleanup.", -14249);
       } else if (manager.init_bY_BufferHelper().init_Z()) {
@@ -427,7 +427,7 @@ public class ProxiesScreen extends KeyHolder {
    }
 
    private void flush_V() {
-      bY manager = bY.init_bY();
+      ProxyListManager manager = ProxyListManager.init_bY();
       if (manager.init_bY_TaskQueue().init_Z()) {
          this.init_V_Str_I("Cancel refresh before sorting proxies.", -14249);
       } else if (manager.init_bY_BufferHelper().init_Z()) {
@@ -444,7 +444,7 @@ public class ProxiesScreen extends KeyHolder {
    }
 
    private void close_V() {
-      bY manager = bY.init_bY();
+      ProxyListManager manager = ProxyListManager.init_bY();
       if (manager.init_bY_TaskQueue().init_Z()) {
          this.init_V_Str_I("Cancel refresh before clearing proxies.", -14249);
       } else if (manager.init_bY_BufferHelper().init_Z()) {
@@ -461,8 +461,8 @@ public class ProxiesScreen extends KeyHolder {
    }
 
    private void open_V() {
-      bY manager = bY.init_bY();
-      bY.Inner_BufferHelper status = manager.init_bY_BufferHelper();
+      ProxyListManager manager = ProxyListManager.init_bY();
+      ProxyListManager.Inner_BufferHelper status = manager.init_bY_BufferHelper();
       if (status.init_Z()) {
          if (manager.sync_Z()) {
             this.init_V_Str_I("Proxy import canceled.", -14249);
@@ -477,7 +477,7 @@ public class ProxiesScreen extends KeyHolder {
 
    private void poll_V() {
       this.load_Z = false;
-      bY manager = bY.init_bY();
+      ProxyListManager manager = ProxyListManager.init_bY();
       PointerBuffer filters = BufferUtils.createPointerBuffer(1);
       ByteBuffer txtFilter = MemoryUtil.memASCII("*.txt");
       try {
@@ -499,7 +499,7 @@ public class ProxiesScreen extends KeyHolder {
 
    private void push_V() {
       this.load_Z = false;
-      bY manager = bY.init_bY();
+      ProxyListManager manager = ProxyListManager.init_bY();
       String clipboard = this.minecraft != null ? this.minecraft.keyboardHandler.getClipboard() : null;
       if (clipboard == null || clipboard.isBlank()) {
          this.init_V_Str_I("Clipboard is empty.", -14249);
@@ -510,13 +510,13 @@ public class ProxiesScreen extends KeyHolder {
       }
    }
 
-   private void init_V_bY_J(bY manager, long generation) {
+   private void init_V_bY_J(ProxyListManager manager, long generation) {
       this.init_V_Str_I("Importing proxies...", -7429889);
       this.load_V();
-      autismclient.util.ClassCache.init("Autism-Proxy-Import-Watch", () -> !manager.init_bY_BufferHelper().init_Z(), () -> {
+      autismclient.util.BackgroundTaskExecutor.init("Autism-Proxy-Import-Watch", () -> !manager.init_bY_BufferHelper().init_Z(), () -> {
          if (this.minecraft != null) {
             this.minecraft.execute(() -> {
-               bY.Inner_BufferHelper finished = manager.init_bY_BufferHelper();
+               ProxyListManager.Inner_BufferHelper finished = manager.init_bY_BufferHelper();
                if (finished.init_J() == generation && !finished.read_Z()) {
                   this.init_V_Str_I("Imported " + finished.read_I() + " proxies.", finished.read_I() > 0 ? ValueSink.open : -14249);
                   this.update_I = 0;
@@ -644,11 +644,11 @@ public class ProxiesScreen extends KeyHolder {
          }
 
          List<bW> proxies = this.init_List();
-         bY manager = bY.init_bY();
+         ProxyListManager manager = ProxyListManager.init_bY();
          int total = manager.close_I();
          int enabled = manager.init_I_2();
-         bY.Inner_TaskQueue refreshStatus = manager.init_bY_TaskQueue();
-         bY.Inner_BufferHelper importStatus = manager.init_bY_BufferHelper();
+         ProxyListManager.Inner_TaskQueue refreshStatus = manager.init_bY_TaskQueue();
+         ProxyListManager.Inner_BufferHelper importStatus = manager.init_bY_BufferHelper();
          String summary = proxies.size() == total ? total + " proxies  enabled " + enabled : proxies.size() + " / " + total + " proxies  enabled " + enabled;
          String workLabel = this.init_Str_bY_BufferHelper(importStatus);
          int workColor = importStatus.init_Z() ? -7429889 : -14249;
@@ -934,14 +934,14 @@ public class ProxiesScreen extends KeyHolder {
          this.read_EditBox.setValue(proxy.init_I <= 0 ? "" : Integer.toString(proxy.init_I));
          this.write_EditBox.setValue(init_Str_Str(proxy.write));
          this.update_EditBox.setValue(proxy.update == null ? "" : proxy.update);
-         this.init_bZ = proxy.init_bZ == null ? bZ.Socks5 : proxy.init_bZ;
+         this.init_bZ = proxy.init_bZ == null ? ProxyProtocolType.Socks5 : proxy.init_bZ;
       }
 
       this.load_V();
    }
 
    private List<bW> init_List() {
-      bY manager = bY.init_bY();
+      ProxyListManager manager = ProxyListManager.init_bY();
       long listRevision = manager.init_J();
       long refreshRevision = manager.init_bY_TaskQueue().load_J();
       String query = load_Str_Str(this.init_Str);
@@ -977,7 +977,7 @@ public class ProxiesScreen extends KeyHolder {
    }
 
    private bW load_bW() {
-      bY manager = bY.init_bY();
+      ProxyListManager manager = ProxyListManager.init_bY();
       long revision = manager.init_J();
       if (revision != this.update_J) {
          this.load_bW = manager.init_bW();
@@ -1077,7 +1077,7 @@ public class ProxiesScreen extends KeyHolder {
       return var10000;
    }
 
-   private String init_Str_bY_TaskQueue(bY.Inner_TaskQueue status) {
+   private String init_Str_bY_TaskQueue(ProxyListManager.Inner_TaskQueue status) {
       if (status == null) {
          return "";
       } else if (status.init_Z()) {
@@ -1087,7 +1087,7 @@ public class ProxiesScreen extends KeyHolder {
       }
    }
 
-   private String init_Str_bY_BufferHelper(bY.Inner_BufferHelper status) {
+   private String init_Str_bY_BufferHelper(ProxyListManager.Inner_BufferHelper status) {
       if (status == null) {
          return "";
       } else if (status.init_Z()) {
@@ -1097,7 +1097,7 @@ public class ProxiesScreen extends KeyHolder {
       }
    }
 
-   private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor graphics, bY.Inner_TaskQueue refreshStatus, bY.Inner_BufferHelper importStatus) {
+   private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor graphics, ProxyListManager.Inner_TaskQueue refreshStatus, ProxyListManager.Inner_BufferHelper importStatus) {
       boolean importing = importStatus != null && importStatus.init_Z();
       boolean refreshing = refreshStatus != null && refreshStatus.init_Z();
       if (importing || refreshing) {

@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.modules.aD;
 import autismclient.util.AutismPayloadSupport;
-import autismclient.util.bg;
+import autismclient.util.PacketCaptureState;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
@@ -27,8 +27,8 @@ public abstract class AutismCustomPayloadCodecMixin {
    )
    private void autism$encodeRawCustomPacketPayload(FriendlyByteBuf buf, CustomPacketPayload payload, CallbackInfo ci) {
       if (!aD.read_Z()) {
-         long captureState = bg.load_J();
-         boolean capturePayload = bg.load(captureState);
+         long captureState = PacketCaptureState.load_J();
+         boolean capturePayload = PacketCaptureState.load(captureState);
          if (capturePayload && buf != null) {
             AutismCustomPayloadCodecMixin.CaptureCursor cursor = AUTISM_CAPTURE_CURSOR.get();
             cursor.encodeStartIndex = buf.writerIndex();
@@ -62,8 +62,8 @@ public abstract class AutismCustomPayloadCodecMixin {
       cursor.encodeStartIndex = -1;
       cursor.encodeState = 0L;
       if (!aD.read_Z()) {
-         long captureState = bg.load_J();
-         if (bg.load(captureState)) {
+         long captureState = PacketCaptureState.load_J();
+         if (PacketCaptureState.load(captureState)) {
             int startIndex = recordedState == captureState ? recordedStart : -1;
             if (payload != null && buf != null && startIndex >= 0) {
                int end = buf.writerIndex();
@@ -80,8 +80,8 @@ public abstract class AutismCustomPayloadCodecMixin {
    @Inject(method = "decode(Lnet/minecraft/network/FriendlyByteBuf;)Lnet/minecraft/network/protocol/common/custom/CustomPacketPayload;", at = @At("HEAD"))
    private void autism$captureDecodeStart(FriendlyByteBuf buf, CallbackInfoReturnable<CustomPacketPayload> cir) {
       if (!aD.read_Z()) {
-         long captureState = bg.load_J();
-         if (bg.load(captureState) && buf != null) {
+         long captureState = PacketCaptureState.load_J();
+         if (PacketCaptureState.load(captureState) && buf != null) {
             AutismCustomPayloadCodecMixin.CaptureCursor cursor = AUTISM_CAPTURE_CURSOR.get();
             cursor.decodeStartIndex = buf.readerIndex();
             cursor.decodeState = captureState;
@@ -97,8 +97,8 @@ public abstract class AutismCustomPayloadCodecMixin {
       cursor.decodeStartIndex = -1;
       cursor.decodeState = 0L;
       if (!aD.read_Z()) {
-         long captureState = bg.load_J();
-         if (bg.load(captureState)) {
+         long captureState = PacketCaptureState.load_J();
+         if (PacketCaptureState.load(captureState)) {
             int startIndex = recordedState == captureState ? recordedStart : -1;
             CustomPacketPayload payload = cir.getReturnValue();
             if (payload != null && buf != null && startIndex >= 0) {

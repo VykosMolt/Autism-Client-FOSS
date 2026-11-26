@@ -12,8 +12,8 @@ public class AutismCustomFilterPresetOverlay extends bj {
    private final autismclient.gui.f.b.BitSetUtil init_BitSetUtil;
    private final List<AutismCustomFilterPresetOverlay.Inner_DataUtil> init_List = new ArrayList<>();
    private final AutismCustomFilterPresetOverlay.Inner_StreamUtil init_AutismCustomFilter = new AutismCustomFilterPresetOverlay.Inner_StreamUtil();
-   private List<bT.Inner_DataUtil> load_List = List.of();
-   private List<bT.Inner_DataUtil> read_List = List.of();
+   private List<PacketPresetManager.Inner_DataUtil> load_List = List.of();
+   private List<PacketPresetManager.Inner_DataUtil> read_List = List.of();
    private List<AutismCustomFilterPresetOverlay.Inner_CachePool> write_List = List.of();
    private int flush_I = 570;
    private int close_I = 48;
@@ -313,9 +313,9 @@ public class AutismCustomFilterPresetOverlay extends bj {
    }
 
    private List<AutismCustomFilterPresetOverlay.Inner_CachePool> init_List_3() {
-      bT manager = bT.init_bT();
-      List<bT.Inner_DataUtil> builtInEntries = manager.init_List();
-      List<bT.Inner_DataUtil> userEntries = manager.load_List();
+      PacketPresetManager manager = PacketPresetManager.init_bT();
+      List<PacketPresetManager.Inner_DataUtil> builtInEntries = manager.init_List();
+      List<PacketPresetManager.Inner_DataUtil> userEntries = manager.load_List();
       if (builtInEntries == this.load_List && userEntries == this.read_List) {
          return this.write_List;
       }
@@ -323,7 +323,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
       List<AutismCustomFilterPresetOverlay.Inner_CachePool> rows = new ArrayList<>();
       rows.add(AutismCustomFilterPresetOverlay.Inner_CachePool.init("Developer Templates"));
 
-      for (bT.Inner_DataUtil entry : builtInEntries) {
+      for (PacketPresetManager.Inner_DataUtil entry : builtInEntries) {
          rows.add(AutismCustomFilterPresetOverlay.Inner_CachePool.init(entry));
       }
 
@@ -331,7 +331,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
       if (userEntries.isEmpty()) {
          rows.add(AutismCustomFilterPresetOverlay.Inner_CachePool.load("No user presets yet"));
       } else {
-         for (bT.Inner_DataUtil entry : userEntries) {
+         for (PacketPresetManager.Inner_DataUtil entry : userEntries) {
             rows.add(AutismCustomFilterPresetOverlay.Inner_CachePool.init(entry));
          }
       }
@@ -346,7 +346,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
       String name = this.load_Str_4();
       if (name == null) {
          AutismClientMessaging.sendPrefixed("Enter a preset name first.");
-      } else if (bT.init_bT().init_Z(name)) {
+      } else if (PacketPresetManager.init_bT().init_Z(name)) {
          this.init_Str_2 = name;
          this.init_BitSetUtil.init_BitSetUtil_Str(name);
       }
@@ -356,8 +356,8 @@ public class AutismCustomFilterPresetOverlay extends bj {
       String presetName = this.read_Str_3();
       if (presetName == null) {
          AutismClientMessaging.sendPrefixed("Select a preset first.");
-      } else if (bT.init_bT().read_Z(presetName)) {
-         this.init_Str_2 = bT.init_bT().init_bT_DataUtil(presetName) != null ? bT.init_bT().init_bT_DataUtil(presetName).init_Str() : presetName;
+      } else if (PacketPresetManager.init_bT().read_Z(presetName)) {
+         this.init_Str_2 = PacketPresetManager.init_bT().init_bT_DataUtil(presetName) != null ? PacketPresetManager.init_bT().init_bT_DataUtil(presetName).init_Str() : presetName;
          this.init_BitSetUtil.init_BitSetUtil_Str(this.init_Str_2);
       }
    }
@@ -367,9 +367,9 @@ public class AutismCustomFilterPresetOverlay extends bj {
       if (presetName == null) {
          AutismClientMessaging.sendPrefixed("Select a user preset first.");
       } else {
-         bT.Inner_DataUtil entry = bT.init_bT().init_bT_DataUtil(presetName);
+         PacketPresetManager.Inner_DataUtil entry = PacketPresetManager.init_bT().init_bT_DataUtil(presetName);
          if (entry != null && !entry.load_Z()) {
-            if (bT.init_bT().load_Z(entry.init_Str())) {
+            if (PacketPresetManager.init_bT().load_Z(entry.init_Str())) {
                this.init_Str_2 = entry.init_Str();
                this.init_BitSetUtil.init_BitSetUtil_Str(entry.init_Str());
             }
@@ -384,9 +384,9 @@ public class AutismCustomFilterPresetOverlay extends bj {
       if (presetName == null) {
          AutismClientMessaging.sendPrefixed("Select a user preset first.");
       } else {
-         bT.Inner_DataUtil entry = bT.init_bT().init_bT_DataUtil(presetName);
+         PacketPresetManager.Inner_DataUtil entry = PacketPresetManager.init_bT().init_bT_DataUtil(presetName);
          if (entry != null && !entry.load_Z()) {
-            if (bT.init_bT().write_Z(entry.init_Str())) {
+            if (PacketPresetManager.init_bT().write_Z(entry.init_Str())) {
                if (entry.init_Str().equals(this.init_Str_2)) {
                   this.init_Str_2 = null;
                }
@@ -418,7 +418,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
 
    private String read_Str_3() {
       if (this.init_Str_2 != null) {
-         bT.Inner_DataUtil selectedEntry = bT.init_bT().init_bT_DataUtil(this.init_Str_2);
+         PacketPresetManager.Inner_DataUtil selectedEntry = PacketPresetManager.init_bT().init_bT_DataUtil(this.init_Str_2);
          if (selectedEntry != null) {
             return selectedEntry.init_Str();
          }
@@ -429,17 +429,17 @@ public class AutismCustomFilterPresetOverlay extends bj {
          return null;
       }
 
-      bT.Inner_DataUtil typedEntry = bT.init_bT().init_bT_DataUtil(typedName);
+      PacketPresetManager.Inner_DataUtil typedEntry = PacketPresetManager.init_bT().init_bT_DataUtil(typedName);
       return typedEntry != null ? typedEntry.init_Str() : null;
    }
 
-   private bT.Inner_DataUtil init_bT_DataUtil() {
-      return this.init_Str_2 == null ? null : bT.init_bT().init_bT_DataUtil(this.init_Str_2);
+   private PacketPresetManager.Inner_DataUtil init_bT_DataUtil() {
+      return this.init_Str_2 == null ? null : PacketPresetManager.init_bT().init_bT_DataUtil(this.init_Str_2);
    }
 
    private boolean poll_Z_4() {
       String name = this.load_Str_4();
-      return name != null && !bT.init_bT().update(name);
+      return name != null && !PacketPresetManager.init_bT().update(name);
    }
 
    private boolean push_Z_3() {
@@ -447,7 +447,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
    }
 
    private boolean pop_Z_2() {
-      bT.Inner_DataUtil entry = this.init_bT_DataUtil();
+      PacketPresetManager.Inner_DataUtil entry = this.init_bT_DataUtil();
       return entry != null && !entry.load_Z();
    }
 
@@ -755,9 +755,9 @@ public class AutismCustomFilterPresetOverlay extends bj {
       private final boolean init_Z;
       private final boolean load;
       private final String init_Str;
-      private final bT.Inner_DataUtil init_bT_DataUtil;
+      private final PacketPresetManager.Inner_DataUtil init_bT_DataUtil;
 
-      private Inner_CachePool(boolean header, boolean note, String label, bT.Inner_DataUtil entry) {
+      private Inner_CachePool(boolean header, boolean note, String label, PacketPresetManager.Inner_DataUtil entry) {
          this.init_Z = header;
          this.load = note;
          this.init_Str = label;
@@ -772,7 +772,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
          return new AutismCustomFilterPresetOverlay.Inner_CachePool(false, true, label, null);
       }
 
-      private static AutismCustomFilterPresetOverlay.Inner_CachePool init(bT.Inner_DataUtil entry) {
+      private static AutismCustomFilterPresetOverlay.Inner_CachePool init(PacketPresetManager.Inner_DataUtil entry) {
          return new AutismCustomFilterPresetOverlay.Inner_CachePool(false, false, null, entry);
       }
    }

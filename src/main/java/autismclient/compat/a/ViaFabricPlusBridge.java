@@ -1,8 +1,8 @@
 package autismclient.compat.a;
 
 import autismclient.util.bW;
-import autismclient.util.bY;
-import autismclient.util.bZ;
+import autismclient.util.ProxyListManager;
+import autismclient.util.ProxyProtocolType;
 import com.google.common.net.InetAddresses;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
@@ -74,7 +74,7 @@ public final class ViaFabricPlusBridge {
          );
       }
 
-      bY manager = bY.init_bY();
+      ProxyListManager manager = ProxyListManager.init_bY();
       ViaFabricPlusBridge.ConfigStore route;
       synchronized (manager) {
          route = ViaFabricPlusBridge.ConfigStore.init(manager.init_bW());
@@ -153,7 +153,7 @@ public final class ViaFabricPlusBridge {
                   socket.connect(new InetSocketAddress(proxy.init_Str(), proxy.init_I()), 3000);
                   DataInputStream input = new DataInputStream(socket.getInputStream());
                   OutputStream output = socket.getOutputStream();
-                  if (proxy.init_bZ() == bZ.Socks4) {
+                  if (proxy.init_bZ() == ProxyProtocolType.Socks4) {
                      if (literal && address.length != 4) {
                         throw new IOException("SOCKS4 does not support IPv6 destinations");
                      }
@@ -289,7 +289,7 @@ public final class ViaFabricPlusBridge {
       void close();
    }
 
-   private record ConfigStore(bZ init_bZ, String init_Str, int init_I, String load, String read) {
+   private record ConfigStore(ProxyProtocolType init_bZ, String init_Str, int init_I, String load, String read) {
       private static ViaFabricPlusBridge.ConfigStore init(bW proxy) throws IOException {
          if (proxy == null) {
             return null;

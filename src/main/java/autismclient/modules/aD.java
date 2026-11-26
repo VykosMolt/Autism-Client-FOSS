@@ -3,8 +3,8 @@ package autismclient.modules;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.bD;
-import autismclient.util.bI;
+import autismclient.util.PayloadSubscriptionManager;
+import autismclient.util.PayloadStudyTracker;
 import autismclient.util.bk;
 import autismclient.util.ck;
 import autismclient.util.g.PkgCls_a;
@@ -153,14 +153,14 @@ public final class aD {
       autismclient.util.bi.init_V();
       bk.init_bk().update_V();
       autismclient.util.au.load();
-      bI.init_V();
-      bD.load();
+      PayloadStudyTracker.init_V();
+      PayloadSubscriptionManager.load();
       AutismClientMessaging.clearClientMessages();
       AutismClientMessaging.clearChatInputHistory();
    }
 
    public static void read_V() {
-      autismclient.util.bg.update();
+      autismclient.util.PacketCaptureState.update();
       al.tick_V();
       autismclient.util.as.pop();
       autismclient.util.aE.init_aE().read_V();

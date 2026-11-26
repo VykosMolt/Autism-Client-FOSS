@@ -16,7 +16,7 @@ public final class D {
    private static final Map<Integer, AtomicInteger> init_Map = new ConcurrentHashMap<>();
    private static final Map<Integer, ServerboundContainerClosePacket> load = new ConcurrentHashMap<>();
    private static final Map<Integer, Long> read = new ConcurrentHashMap<>();
-   private static volatile Consumer<bo.Inner_StreamUtil> init_Consumer = null;
+   private static volatile Consumer<ContainerClickSnapshot.Inner_StreamUtil> init_Consumer = null;
 
    private D() {
    }
@@ -126,7 +126,7 @@ public final class D {
       return !read.isEmpty();
    }
 
-   public static void init(Consumer<bo.Inner_StreamUtil> consumer) {
+   public static void init(Consumer<ContainerClickSnapshot.Inner_StreamUtil> consumer) {
       init_Consumer = consumer;
    }
 
@@ -134,8 +134,8 @@ public final class D {
       return init_Consumer != null;
    }
 
-   public static boolean init(bo.Inner_StreamUtil target) {
-      Consumer<bo.Inner_StreamUtil> consumer = init_Consumer;
+   public static boolean init(ContainerClickSnapshot.Inner_StreamUtil target) {
+      Consumer<ContainerClickSnapshot.Inner_StreamUtil> consumer = init_Consumer;
       if (consumer != null && target != null) {
          init_Consumer = null;
 

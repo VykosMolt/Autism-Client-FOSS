@@ -22,7 +22,7 @@ import net.minecraft.nbt.Tag;
 public class bW {
    public String init_Str = UUID.randomUUID().toString();
    public String load_Str = "";
-   public bZ init_bZ = bZ.Socks5;
+   public ProxyProtocolType init_bZ = ProxyProtocolType.Socks5;
    public String read = "";
    public int init_I = 0;
    public boolean init_Z = false;
@@ -187,7 +187,7 @@ public class bW {
    }
 
    public synchronized bW.Inner_DataUtil init_bW_DataUtil_I(int timeoutMs) {
-      ca.Inner_DataUtil verified = ca.init(this, "example.com", 80, timeoutMs);
+      ProxyConnectivityTester.Inner_DataUtil verified = ProxyConnectivityTester.init(this, "example.com", 80, timeoutMs);
       if (!verified.init_Z()) {
          return new bW.Inner_DataUtil(bW.Inner_CachePool.DEAD, 0L, 2);
       }
@@ -209,10 +209,10 @@ public class bW {
       }
    }
 
-   private bW.Inner_BufferHelper init_bW_BufferHelper_bZ_I(bZ checkType, int timeoutMs) {
+   private bW.Inner_BufferHelper init_bW_BufferHelper_bZ_I(ProxyProtocolType checkType, int timeoutMs) {
       try {
          Instant before = Instant.now();
-         boolean alive = checkType == bZ.Socks4 ? this.init_Z_I(timeoutMs) : this.load_Z_I(timeoutMs);
+         boolean alive = checkType == ProxyProtocolType.Socks4 ? this.init_Z_I(timeoutMs) : this.load_Z_I(timeoutMs);
          if (alive) {
             return new bW.Inner_BufferHelper(true, false, Duration.between(before, Instant.now()).toMillis());
          }
@@ -324,7 +324,7 @@ public class bW {
       CompoundTag tag = new CompoundTag();
       tag.putString("id", this.write());
       tag.putString("name", init_Str_Str(this.load_Str));
-      tag.putString("type", this.init_bZ == null ? bZ.Socks5.name() : this.init_bZ.name());
+      tag.putString("type", this.init_bZ == null ? ProxyProtocolType.Socks5.name() : this.init_bZ.name());
       tag.putString("address", init_Str_Str(this.read));
       tag.putInt("port", this.init_I);
       tag.putBoolean("enabled", this.init_Z);
@@ -351,12 +351,12 @@ public class bW {
       }
 
       this.load_Str = tag.getStringOr("name", "");
-      String typeName = tag.getStringOr("type", bZ.Socks5.name());
+      String typeName = tag.getStringOr("type", ProxyProtocolType.Socks5.name());
 
       try {
-         this.init_bZ = bZ.valueOf(typeName);
+         this.init_bZ = ProxyProtocolType.valueOf(typeName);
       } catch (IllegalArgumentException e) {
-         this.init_bZ = typeName.toLowerCase(Locale.ROOT).contains("4") ? bZ.Socks4 : bZ.Socks5;
+         this.init_bZ = typeName.toLowerCase(Locale.ROOT).contains("4") ? ProxyProtocolType.Socks4 : ProxyProtocolType.Socks5;
       }
 
       this.read = tag.getStringOr("address", "");

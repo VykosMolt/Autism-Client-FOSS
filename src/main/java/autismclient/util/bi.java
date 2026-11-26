@@ -43,7 +43,7 @@ public final class bi {
       } else {
          Minecraft mc = Minecraft.getInstance();
          if (graphics != null && mc != null && mc.font != null) {
-            bf.init(graphics);
+            NameScrapeController.init(graphics);
             if (init_f.init_Z()) {
                int width = Math.min(320, Math.max(120, cA.init_I() - 16));
                int x = Math.max(8, (cA.init_I() - width) / 2);
@@ -54,7 +54,7 @@ public final class bi {
    }
 
    public static boolean init_Z() {
-      return autismclient.modules.aD.write_Z() ? false : init_f.init_Z() || bf.init_Z();
+      return autismclient.modules.aD.write_Z() ? false : init_f.init_Z() || NameScrapeController.init_Z();
    }
 
    public static int init_I() {

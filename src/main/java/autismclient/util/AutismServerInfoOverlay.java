@@ -120,7 +120,7 @@ public class AutismServerInfoOverlay extends bj {
    private boolean tick_Z = false;
    private AutismServerInfoOverlay.Inner_PacketUtil init_AutismServerInfoOv_3;
    private long read_J = 1L;
-   private final bR init_bR = new bR();
+   private final ServerScanIdAllocator init_bR = new ServerScanIdAllocator();
    private AutismServerInfoOverlay.Inner_ByteReader init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.NONE;
    private String close_Str = "";
    private int queue;
@@ -1599,7 +1599,7 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    private String load_Str_2(String plugin) {
-      return bQ.init_Str(plugin);
+      return PluginSignatureCatalog.init_Str(plugin);
    }
 
    private int init_I_AutismServerInfoOv_3(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
@@ -3032,7 +3032,7 @@ public class AutismServerInfoOverlay extends bj {
       if (address != null && !address.isBlank()) {
          boolean changed = false;
 
-         for (bQ.Inner_CachePool fingerprint : bQ.init_List(address, this.close_Str_2())) {
+         for (PluginSignatureCatalog.Inner_CachePool fingerprint : PluginSignatureCatalog.init_List(address, this.close_Str_2())) {
             if (fingerprint != null && fingerprint.init_Str() != null && !fingerprint.init_Str().isBlank()) {
                changed |= this.init_Z_Map_bQ_CachePool(entries, fingerprint);
                AutismServerInfoOverlay.Inner_ConfigStore confidence = this.init_AutismServerInfoOv_bQ_CachePool(fingerprint);
@@ -3056,12 +3056,12 @@ public class AutismServerInfoOverlay extends bj {
       }
    }
 
-   private AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv_bQ_CachePool(bQ.Inner_CachePool fingerprint) {
+   private AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv_bQ_CachePool(PluginSignatureCatalog.Inner_CachePool fingerprint) {
       String basis = fingerprint == null ? "" : fingerprint.read();
       return "embedded".equalsIgnoreCase(basis) ? AutismServerInfoOverlay.Inner_ConfigStore.STRONG : AutismServerInfoOverlay.Inner_ConfigStore.EXACT;
    }
 
-   private boolean init_Z_Map_bQ_CachePool(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries, bQ.Inner_CachePool fingerprint) {
+   private boolean init_Z_Map_bQ_CachePool(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries, PluginSignatureCatalog.Inner_CachePool fingerprint) {
       if (entries != null && !entries.isEmpty() && fingerprint != null) {
          Set<String> keywords = this.init_Set_bQ_CachePool(fingerprint);
          if (keywords.isEmpty()) {
@@ -3104,7 +3104,7 @@ public class AutismServerInfoOverlay extends bj {
       }
    }
 
-   private Set<String> init_Set_bQ_CachePool(bQ.Inner_CachePool fingerprint) {
+   private Set<String> init_Set_bQ_CachePool(PluginSignatureCatalog.Inner_CachePool fingerprint) {
       LinkedHashSet<String> keywords = new LinkedHashSet<>();
       this.init_V_Set_Str_3(keywords, fingerprint.init_Str());
       this.init_V_Set_Str_3(keywords, fingerprint.load());
@@ -3169,7 +3169,7 @@ public class AutismServerInfoOverlay extends bj {
          }
       } else if (this.pop_Z) {
          String address = this.load_Str_11();
-         long revision = bQ.init_J(address, this.close_Str_2());
+         long revision = PluginSignatureCatalog.init_J(address, this.close_Str_2());
          if (revision != this.sync_J) {
             this.sync_J = revision;
             if (revision > 0L) {
@@ -4488,7 +4488,7 @@ public class AutismServerInfoOverlay extends bj {
                this.init_V_AutismServerInfoOv(session, "command tree update", error);
             }
          } else {
-            bQ.init();
+            PluginSignatureCatalog.init();
             this.sync_J = -1L;
             if (currentAddress.equals(this.poll_Str) && this.pop_Z && AutismConfig.getGlobal().autoProbePlugins) {
                this.fill_V_2();
@@ -5105,7 +5105,7 @@ public class AutismServerInfoOverlay extends bj {
          return observed;
       }
 
-      List<String> probableNamespaces = bQ.init_List(plugin);
+      List<String> probableNamespaces = PluginSignatureCatalog.init_List(plugin);
       if (!probableNamespaces.isEmpty()) {
          List<String> rows = new ArrayList<>();
 
@@ -7005,7 +7005,7 @@ public class AutismServerInfoOverlay extends bj {
    private static final class Inner_PacketUtil {
       final long init_J;
       final String init_Str;
-      final bS init_bS;
+      final ServerScanAttemptTracker init_bS;
       String load_Str;
       final long load_J;
       final Map<String, AutismServerInfoOverlay.Inner_TextFormat> init_Map;
@@ -7029,7 +7029,7 @@ public class AutismServerInfoOverlay extends bj {
       ) {
          this.init_J = generation;
          this.init_Str = serverAddress == null ? "" : serverAddress;
-         this.init_bS = new bS(generation, this.init_Str);
+         this.init_bS = new ServerScanAttemptTracker(generation, this.init_Str);
          this.load_Str = contextSignature == null ? "" : contextSignature;
          this.load_J = startedAt;
          this.init_Map = previousEntries == null ? Map.of() : Collections.unmodifiableMap(new TreeMap<>(previousEntries));

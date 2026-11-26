@@ -6,7 +6,7 @@ import autismclient.util.AuditWaypointScope;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismProfile;
 import autismclient.util.AutismWaypoints;
-import autismclient.util.bT;
+import autismclient.util.PacketPresetManager;
 import autismclient.util.macro.MacroExecutor;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -93,7 +93,7 @@ final class MapStore {
       String action = init(args, "list");
       return init(
          () -> {
-            autismclient.util.bV m = autismclient.util.bV.init_bV();
+            autismclient.util.AutismProfileManager m = autismclient.util.AutismProfileManager.init_bV();
             switch (action) {
                case "list":
                   return init(m);
@@ -189,7 +189,7 @@ final class MapStore {
       );
    }
 
-   private static AutismProfile init(autismclient.util.bV m, JsonObject args, String key) {
+   private static AutismProfile init(autismclient.util.AutismProfileManager m, JsonObject args, String key) {
       String name = load(args, key);
       AutismProfile byId = m.init_AutismProfile_Str(AutismProfile.sanitizeId(name));
       if (byId != null) {
@@ -205,7 +205,7 @@ final class MapStore {
       throw new IllegalArgumentException("No profile named '" + name + "'; list the profiles first");
    }
 
-   private static JsonObject init(AutismProfile p, autismclient.util.bV m) {
+   private static JsonObject init(AutismProfile p, autismclient.util.AutismProfileManager m) {
       return ag.init_JsonObject_ObjArr(
          "id",
          p.id,
@@ -222,11 +222,11 @@ final class MapStore {
          "serverPatterns",
          p.serverPatterns,
          "isDefault",
-         autismclient.util.bV.init_Z_AutismProfile(p)
+         autismclient.util.AutismProfileManager.init_Z_AutismProfile(p)
       );
    }
 
-   private static JsonObject init(autismclient.util.bV m) {
+   private static JsonObject init(autismclient.util.AutismProfileManager m) {
       JsonArray list = new JsonArray();
 
       for (AutismProfile p : m.init_List()) {
@@ -580,7 +580,7 @@ final class MapStore {
                case "block":
                case "unblock":
                   boolean c2s = init_Z(args);
-                  Class<? extends Packet<?>> packet = autismclient.util.bw.init_Class_Str(load(args, "packet"));
+                  Class<? extends Packet<?>> packet = autismclient.util.PacketTypeRegistry.init_Class_Str(load(args, "packet"));
                   if (packet == null) {
                      throw new IllegalArgumentException(
                         "Unknown packet '" + ag.init_Str_JsonObject(args, "packet", "") + "'; use the friendly names from action list"
@@ -613,30 +613,30 @@ final class MapStore {
                case "presets":
                   JsonArray presets = new JsonArray();
 
-                  for (bT.Inner_DataUtil e : bT.init_bT().init_List()) {
+                  for (PacketPresetManager.Inner_DataUtil e : PacketPresetManager.init_bT().init_List()) {
                      presets.add(init(e));
                   }
 
-                  for (bT.Inner_DataUtil e : bT.init_bT().load_List()) {
+                  for (PacketPresetManager.Inner_DataUtil e : PacketPresetManager.init_bT().load_List()) {
                      presets.add(init(e));
                   }
 
                   return ag.init_JsonObject_ObjArr("presets", presets);
                case "loadPreset":
-                  if (!bT.init_bT().read_Z(load(args, "name"))) {
+                  if (!PacketPresetManager.init_bT().read_Z(load(args, "name"))) {
                      throw new IllegalArgumentException("Unknown preset; action presets lists them");
                   }
 
                   return init(module);
                case "savePreset":
                   String name = load(args, "name");
-                  if (!bT.init_bT().init_Z(name)) {
+                  if (!PacketPresetManager.init_bT().init_Z(name)) {
                      throw new IllegalArgumentException("The preset name is reserved or invalid");
                   }
 
                   return ag.init_JsonObject_ObjArr("saved", name);
                case "deletePreset":
-                  if (!bT.init_bT().write_Z(load(args, "name"))) {
+                  if (!PacketPresetManager.init_bT().write_Z(load(args, "name"))) {
                      throw new IllegalArgumentException("Unknown or built-in preset");
                   }
 
@@ -666,7 +666,7 @@ final class MapStore {
       List<String> sorted = new ArrayList<>();
 
       for (Class<? extends Packet<?>> p : packets) {
-         sorted.add(autismclient.util.bw.init_Str_Class(p));
+         sorted.add(autismclient.util.PacketTypeRegistry.init_Str_Class(p));
       }
 
       Collections.sort(sorted);
@@ -678,7 +678,7 @@ final class MapStore {
       return ag.init_JsonObject_ObjArr("blockedC2S", init(module.load_Set()), "blockedS2C", init(module.read_Set()));
    }
 
-   private static JsonObject init(bT.Inner_DataUtil e) {
+   private static JsonObject init(PacketPresetManager.Inner_DataUtil e) {
       return ag.init_JsonObject_ObjArr("name", e.init_Str(), "c2s", e.init_I(), "s2c", e.load_I(), "builtIn", e.load_Z());
    }
 
@@ -747,7 +747,7 @@ final class MapStore {
       String action = init(args, "list");
       return init(
          () -> {
-            autismclient.util.bY m = autismclient.util.bY.init_bY();
+            autismclient.util.ProxyListManager m = autismclient.util.ProxyListManager.init_bY();
             switch (action) {
                case "list":
                   break;
@@ -755,8 +755,8 @@ final class MapStore {
                   autismclient.util.bW proxy = new autismclient.util.bW();
                   proxy.load_Str = ag.init_Str_JsonObject(args, "name", load(args, "address"));
                   proxy.init_bZ = ag.init_Str_JsonObject(args, "type", "Socks5").equalsIgnoreCase("Socks4")
-                     ? autismclient.util.bZ.Socks4
-                     : autismclient.util.bZ.Socks5;
+                     ? autismclient.util.ProxyProtocolType.Socks4
+                     : autismclient.util.ProxyProtocolType.Socks5;
                   proxy.read = load(args, "address");
                   proxy.init_I = ag.init_I_JsonObject(args, "port", 0);
                   if (proxy.init_I < 1 || proxy.init_I > 65535) {
@@ -814,7 +814,7 @@ final class MapStore {
       );
    }
 
-   private static autismclient.util.bW init(autismclient.util.bY m, JsonObject args) {
+   private static autismclient.util.bW init(autismclient.util.ProxyListManager m, JsonObject args) {
       String key = load(args, "proxy");
       autismclient.util.bW byId = m.init_bW_Str(key);
       if (byId != null) {
@@ -990,7 +990,7 @@ final class MapStore {
             }
             case "export": {
                autismclient.util.AutismMacro macro = init(m, args);
-               return ag.init_JsonObject_ObjArr("name", macro.init_Str, "share", autismclient.util.o.init_Str(macro));
+               return ag.init_JsonObject_ObjArr("name", macro.init_Str, "share", autismclient.util.MacroClipboardCodec.init_Str(macro));
             }
             case "stop":
                String name = ag.init_Str_JsonObject(args, "name", "").trim();

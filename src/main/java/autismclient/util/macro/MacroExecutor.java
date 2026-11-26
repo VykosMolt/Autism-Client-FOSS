@@ -11,11 +11,11 @@ import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.bN;
-import autismclient.util.be;
+import autismclient.util.CommandTabNameProber;
 import autismclient.util.bi;
 import autismclient.util.bl;
-import autismclient.util.bv;
-import autismclient.util.bw;
+import autismclient.util.PacketNameResolver;
+import autismclient.util.PacketTypeRegistry;
 import autismclient.util.ce;
 import autismclient.util.ck;
 import com.google.gson.Gson;
@@ -2340,7 +2340,7 @@ public class MacroExecutor {
    }
 
    private static String write(String value) {
-      return bv.load(value);
+      return PacketNameResolver.load(value);
    }
 
    private static boolean init_Z_Str_Str(String normalizedExpected, String candidate) {
@@ -2401,11 +2401,11 @@ public class MacroExecutor {
       }
 
       String normalizedExpected = parsed.read();
-      if (init_Z_Str_Str(normalizedExpected, bv.init_Str_Packet_Str(packet, direction))) {
+      if (init_Z_Str_Str(normalizedExpected, PacketNameResolver.init_Str_Packet_Str(packet, direction))) {
          return true;
       }
 
-      if (init_Z_Str_Str(normalizedExpected, bv.init_Str_Packet(packet))) {
+      if (init_Z_Str_Str(normalizedExpected, PacketNameResolver.init_Str_Packet(packet))) {
          return true;
       }
 
@@ -2413,7 +2413,7 @@ public class MacroExecutor {
          return true;
       }
 
-      String fullName = bw.init_Str_Class((Class<? extends Packet<?>>)packet.getClass());
+      String fullName = PacketTypeRegistry.init_Str_Class((Class<? extends Packet<?>>)packet.getClass());
       return init_Z_Str_Str(normalizedExpected, fullName);
    }
 
@@ -2772,7 +2772,7 @@ public class MacroExecutor {
    }
 
    private static List<String> init_List_ClientPacketListen_Str(final ClientPacketListener connection, String query) {
-      be.Inner_DataUtil control = new be.Inner_DataUtil() {
+      CommandTabNameProber.Inner_DataUtil control = new CommandTabNameProber.Inner_DataUtil() {
          @Override
          public boolean init_Z() {
             Minecraft mc = Minecraft.getInstance();
@@ -2799,7 +2799,7 @@ public class MacroExecutor {
             return false;
          }
       };
-      List<String> all = be.init(connection, query, control);
+      List<String> all = CommandTabNameProber.init(connection, query, control);
       all.sort(String.CASE_INSENSITIVE_ORDER);
       return all;
    }
@@ -2831,9 +2831,9 @@ public class MacroExecutor {
 
    private static List<String> init_List_Minecraft_ClientPacketListen(Minecraft mc, final ClientPacketListener connection) {
       String self = mc.player == null ? "" : mc.player.getName().getString();
-      LinkedHashMap<String, String> names = be.init(mc, self);
-      List<be.Inner_StreamUtil> vectors = be.init_List_ClientPacketListen(connection);
-      be.Inner_DataUtil control = new be.Inner_DataUtil() {
+      LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
+      List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.init_List_ClientPacketListen(connection);
+      CommandTabNameProber.Inner_DataUtil control = new CommandTabNameProber.Inner_DataUtil() {
          @Override
          public boolean init_Z() {
             Minecraft m = Minecraft.getInstance();
@@ -2855,7 +2855,7 @@ public class MacroExecutor {
             return 100000;
          }
       };
-      be.init(connection, names, self, vectors, control);
+      CommandTabNameProber.init(connection, names, self, vectors, control);
       List<String> out = new ArrayList<>(names.values());
       out.sort(String.CASE_INSENSITIVE_ORDER);
       return out;
@@ -3971,7 +3971,7 @@ public class MacroExecutor {
       }
 
       LinkedHashMap<String, MacroVarValue> properties = new LinkedHashMap<>();
-      String packetName = bv.init_Str_Packet_Str(packet, direction);
+      String packetName = PacketNameResolver.init_Str_Packet_Str(packet, direction);
       properties.put("name", MacroVarValue.init_l_Obj(packetName));
       properties.put("class", MacroVarValue.init_l_Obj(packet.getClass().getName()));
       properties.put("direction", MacroVarValue.init_l_Obj(direction));
@@ -9490,7 +9490,7 @@ public class MacroExecutor {
 
                   String target = load_AtomicReference.get();
                   if (init_Z_Str_2(target, packet, direction)) {
-                     init_AtomicReference.set(direction + " " + bv.init_Str_Packet_Str(packet, direction));
+                     init_AtomicReference.set(direction + " " + PacketNameResolver.init_Str_Packet_Str(packet, direction));
                      f = init_CompletableFuture;
                   }
                }
@@ -11313,7 +11313,7 @@ public class MacroExecutor {
          }
 
          String dir = this.init_Str != null && !this.init_Str.isBlank() ? this.init_Str + " " : "";
-         return dir + bv.init_Str_Packet_Str(this.init_Packet, this.init_Str == null ? "" : this.init_Str);
+         return dir + PacketNameResolver.init_Str_Packet_Str(this.init_Packet, this.init_Str == null ? "" : this.init_Str);
       }
 
       public String load() {

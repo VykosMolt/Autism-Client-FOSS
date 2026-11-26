@@ -2,9 +2,9 @@ package autismclient.ai;
 
 import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.AutismPacketLoggerOverlay;
-import autismclient.util.bn;
-import autismclient.util.br;
-import autismclient.util.bu;
+import autismclient.util.PacketWireCaptureStore;
+import autismclient.util.PacketSchemaSnapshot;
+import autismclient.util.PacketInspectorEngine;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -65,7 +65,7 @@ public final class aI {
       switch (action) {
          case "start":
             overlay.read(false);
-            autismclient.util.bg.write();
+            autismclient.util.PacketCaptureState.write();
             break;
          case "stop":
             overlay.read(true);
@@ -222,11 +222,11 @@ public final class aI {
 
    private static void init(JsonObject out, AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
       if (entry.init_Class != null) {
-         autismclient.util.bx.Inner_StreamUtil schema = autismclient.util.bx.init(entry.init_Class);
+         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(entry.init_Class);
          if (schema != null) {
             JsonArray fields = new JsonArray();
 
-            for (autismclient.util.bx.Inner_DataUtil field : schema.init_List()) {
+            for (autismclient.util.PacketSchemaRegistry.Inner_DataUtil field : schema.init_List()) {
                fields.add(
                   ag.init_JsonObject_ObjArr("name", field.init_Str(), "javaType", field.load(), "valueKind", field.read(), "editableCandidate", field.init_Z())
                );
@@ -256,10 +256,10 @@ public final class aI {
       }
 
       if (entry.init_Packet != null) {
-         br view = br.init_br_Packet(entry.init_Packet);
+         PacketSchemaSnapshot view = PacketSchemaSnapshot.init_br_Packet(entry.init_Packet);
          JsonArray decoded = new JsonArray();
 
-         for (autismclient.util.bt field : view.init_List()) {
+         for (autismclient.util.PacketFieldSnapshot field : view.init_List()) {
             decoded.add(
                ag.init_JsonObject_ObjArr(
                   "name", field.init_Str(), "value", init(field.write(), 220), "readable", field.init_Z(), "editableCandidate", field.load_Z()
@@ -271,7 +271,7 @@ public final class aI {
          }
 
          out.add("decoded", ag.init_JsonObject_ObjArr("status", view.init_Str(), "complete", view.read(), "fields", decoded));
-         bn.Inner_StreamUtil snapshot = bn.init(entry.init_Packet);
+         PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.init_Packet);
          if (snapshot != null) {
             byte[] plaintext = snapshot.init_BArr();
             out.add(
@@ -284,14 +284,14 @@ public final class aI {
                   "plaintextLength",
                   plaintext.length,
                   "hexPrefix",
-                  bn.init(plaintext, 64)
+                  PacketWireCaptureStore.init(plaintext, 64)
                )
             );
          }
       }
 
       if (entry.init_Class != null) {
-         out.addProperty("inspector", init(bu.init_bu_JsonUtil_AutismPacketLogger(entry).load(), 4096));
+         out.addProperty("inspector", init(PacketInspectorEngine.init_bu_JsonUtil_AutismPacketLogger(entry).load(), 4096));
       }
    }
 
@@ -301,8 +301,8 @@ public final class aI {
       int offset = init(ag.init_I_JsonObject(args, "offset", 0));
       int limit = init(ag.init_I_JsonObject(args, "limit", 10), 30);
       Collection<Class<? extends Packet<?>>> source = "C2S".equals(direction)
-         ? autismclient.util.bw.load()
-         : ("S2C".equals(direction) ? autismclient.util.bw.init_Set() : autismclient.util.bw.init_Set);
+         ? autismclient.util.PacketTypeRegistry.load()
+         : ("S2C".equals(direction) ? autismclient.util.PacketTypeRegistry.init_Set() : autismclient.util.PacketTypeRegistry.init_Set);
       List<Class<? extends Packet<?>>> matched = source.stream()
          .filter(c -> c.getSimpleName().toLowerCase(Locale.ROOT).contains(query))
          .sorted(Comparator.comparing(Class::getName))
@@ -313,14 +313,14 @@ public final class aI {
       for (int i = offset; i < end; i++) {
          Class<? extends Packet<?>> packetClass = matched.get(i);
          String flow = init(packetClass);
-         autismclient.util.bx.Inner_StreamUtil schema = autismclient.util.bx.init(packetClass);
-         JsonObject entry = ag.init_JsonObject_ObjArr("name", autismclient.util.bw.init_Str_Class(packetClass), "schema", schema);
+         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(packetClass);
+         JsonObject entry = ag.init_JsonObject_ObjArr("name", autismclient.util.PacketTypeRegistry.init_Str_Class(packetClass), "schema", schema);
          entry.addProperty("direction", flow);
          entry.addProperty("numericPacketId", init(packetClass, "BOTH".equals(flow) ? "C2S" : flow));
          if (schema != null) {
             JsonArray editable = new JsonArray();
 
-            for (autismclient.util.bx.Inner_DataUtil field : schema.init_List()) {
+            for (autismclient.util.PacketSchemaRegistry.Inner_DataUtil field : schema.init_List()) {
                if (field.init_Z()) {
                   editable.add(field.init_Str());
                }
@@ -336,8 +336,8 @@ public final class aI {
    }
 
    static String init(Class<? extends Packet<?>> packetClass) {
-      boolean c2s = autismclient.util.bw.load().contains(packetClass);
-      boolean s2c = autismclient.util.bw.init_Set().contains(packetClass);
+      boolean c2s = autismclient.util.PacketTypeRegistry.load().contains(packetClass);
+      boolean s2c = autismclient.util.PacketTypeRegistry.init_Set().contains(packetClass);
       return c2s && s2c ? "BOTH" : (c2s ? "C2S" : (s2c ? "S2C" : "ANY"));
    }
 
@@ -351,9 +351,9 @@ public final class aI {
       }
 
       try {
-         int id = bn.init("PLAY", direction, type);
+         int id = PacketWireCaptureStore.init("PLAY", direction, type);
          if (id < 0) {
-            id = bn.init("CONFIGURATION", direction, type);
+            id = PacketWireCaptureStore.init("CONFIGURATION", direction, type);
          }
 
          return id;

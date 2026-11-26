@@ -23,8 +23,8 @@ import autismclient.modules.Module;
 import autismclient.modules.CrosshairModule;
 import autismclient.util.ValueSink;
 import autismclient.util.aN;
-import autismclient.util.bv;
-import autismclient.util.dd;
+import autismclient.util.PacketNameResolver;
+import autismclient.util.PacketFilterListCodec;
 import autismclient.util.dn;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -817,16 +817,16 @@ final class BufferHelper {
    }
 
    private static String init_Str_Setting_Str(Setting<?, ?> option, String value) {
-      boolean c2s = dd.init_Z(option == null ? "" : option.id());
-      Set<Class<? extends Packet<?>>> packets = dd.init_Set(value, c2s);
-      List<String> invalid = dd.init_List(value, c2s);
+      boolean c2s = PacketFilterListCodec.init_Z(option == null ? "" : option.id());
+      Set<Class<? extends Packet<?>>> packets = PacketFilterListCodec.init_Set(value, c2s);
+      List<String> invalid = PacketFilterListCodec.init_List(value, c2s);
       int count = packets.size() + invalid.size();
       if (count <= 0) {
          return "Empty";
       } else if (count > 1) {
          return count + " packets";
       } else {
-         return !packets.isEmpty() ? bv.init_Str_Class(packets.iterator().next()) : invalid.get(0);
+         return !packets.isEmpty() ? PacketNameResolver.init_Str_Class(packets.iterator().next()) : invalid.get(0);
       }
    }
 
