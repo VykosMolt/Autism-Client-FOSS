@@ -34,10 +34,10 @@ import autismclient.util.y;
 import autismclient.util.b.CustomMenuTracker;
 import autismclient.util.e.LeafDupePacketTracker;
 import autismclient.util.g.PkgCls_a;
-import autismclient.util.macro.J;
+import autismclient.util.macro.PingSpoofScheduler;
 import autismclient.util.macro.MacroExecutor;
 import autismclient.util.macro.XCarryAction;
-import autismclient.util.macro.ab;
+import autismclient.util.macro.ServerTickPhaseTracker;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import io.netty.channel.Channel;
@@ -326,7 +326,7 @@ public abstract class AutismClientConnectionMixin {
                   }
                }
 
-               if (!this.autism$isLocalClientPlayConnection() || !J.load_Z(packet) && !HashUtil.load(packet)) {
+               if (!this.autism$isLocalClientPlayConnection() || !PingSpoofScheduler.load_Z(packet) && !HashUtil.load(packet)) {
                   if (this.autism$isLocalClientPlayConnection() && packet instanceof ServerboundPongPacket pong) {
                      autismclient.util.ci.load(pong.getId());
                   }
@@ -420,14 +420,14 @@ public abstract class AutismClientConnectionMixin {
                               ci.cancel();
                            } else if (!forceBookOrSignPacket) {
                               if (!shared.get_Z()) {
-                                 autismclient.util.macro.C.Inner_StreamUtil gateResult = autismclient.util.macro.C.init(packet, "C2S");
-                                 if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.CANCEL) {
+                                 autismclient.util.macro.PacketGateManager.Inner_StreamUtil gateResult = autismclient.util.macro.PacketGateManager.init(packet, "C2S");
+                                 if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.CANCEL) {
                                     ScaffoldModule.load_V_Packet(packet);
                                     ci.cancel();
                                     return;
                                  }
 
-                                 if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.DELAY) {
+                                 if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.DELAY) {
                                     shared.init_V_Packet(packet);
                                     ci.cancel();
                                     return;
@@ -554,7 +554,7 @@ public abstract class AutismClientConnectionMixin {
                CustomMenuTracker.load(packet, protocolHint);
             }
 
-            if (!isPlayReceiveListener(listener) || !J.init_Z(packet) && !HashUtil.init_Z(packet)) {
+            if (!isPlayReceiveListener(listener) || !PingSpoofScheduler.init_Z(packet) && !HashUtil.init_Z(packet)) {
                this.autism$clearRuntimeConnectionStateOnDisconnect(packet);
                boolean payloadLoggedEarly = false;
                if (module != null && hooks.read()) {
@@ -576,7 +576,7 @@ public abstract class AutismClientConnectionMixin {
                }
 
                if (normalLoggerPath) {
-                  ab.init(packet);
+                  ServerTickPhaseTracker.init(packet);
                   MacroExecutor.load_V_Packet(packet);
                   if (packet instanceof ClientboundCommandSuggestionsPacket macroSuggestions && y.init(macroSuggestions.id())) {
                      ci.cancel();
@@ -589,10 +589,10 @@ public abstract class AutismClientConnectionMixin {
                         ci.cancel();
                      } else {
                         ck shared = ck.init_ck();
-                        autismclient.util.macro.C.Inner_StreamUtil gateResult = autismclient.util.macro.C.init(packet, "S2C");
-                        if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.CANCEL) {
+                        autismclient.util.macro.PacketGateManager.Inner_StreamUtil gateResult = autismclient.util.macro.PacketGateManager.init(packet, "S2C");
+                        if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.CANCEL) {
                            ci.cancel();
-                        } else if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.DELAY) {
+                        } else if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.DELAY) {
                            shared.init_V_Packet(packet);
                            ci.cancel();
                         } else if (AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init()) {
@@ -723,8 +723,8 @@ public abstract class AutismClientConnectionMixin {
    private void autism$clearRuntimeConnectionStateOnDisconnect(Packet<?> packet) {
       if (autism$isDisconnectPacket(packet)) {
          D.init_V();
-         autismclient.util.macro.C.load_V();
-         J.write();
+         autismclient.util.macro.PacketGateManager.load_V();
+         PingSpoofScheduler.write();
          HashUtil.auditDisconnect();
          ck s = ck.init_ck();
          s.init_V_Set_Z(Collections.emptySet(), false);

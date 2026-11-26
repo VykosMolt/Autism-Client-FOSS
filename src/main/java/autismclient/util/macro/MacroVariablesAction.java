@@ -13,41 +13,41 @@ public class MacroVariablesAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       int count = Math.min(this.names.size(), this.values.size());
-      LinkedHashMap<String, l> resolvedValues = new LinkedHashMap<>();
+      LinkedHashMap<String, MacroVarValue> resolvedValues = new LinkedHashMap<>();
 
       for (int i = 0; i < count; i++) {
-         j.Inner_CachePool resolved = n.init_j_CachePool_Str_Minecraft(this.values.get(i), mc);
+         MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.values.get(i), mc);
          if (!resolved.init_Z()) {
             return;
          }
 
          String name = this.names.get(i);
-         if (!m.load(name).isEmpty()) {
-            resolvedValues.put(name, l.init_l_Obj(resolved.init_Str()));
+         if (!MacroVariableStore.load(name).isEmpty()) {
+            resolvedValues.put(name, MacroVarValue.init_l_Obj(resolved.init_Str()));
          }
       }
 
-      n.init_V_Map(resolvedValues);
+      MacroVariableContext.init_V_Map(resolvedValues);
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.MACRO_VARIABLES;
+   public MacroActionType getType() {
+      return MacroActionType.MACRO_VARIABLES;
    }
 
    @Override
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "MACRO_VARIABLES");
-      tag.put("names", i.init(this.names));
-      tag.put("values", i.init(this.values));
+      tag.put("names", MacroNbtCodecHelper.init(this.names));
+      tag.put("values", MacroNbtCodecHelper.init(this.values));
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.names = i.init(tag.getList("names").orElse(new ListTag()));
-      this.values = i.init(tag.getList("values").orElse(new ListTag()));
+      this.names = MacroNbtCodecHelper.init(tag.getList("names").orElse(new ListTag()));
+      this.values = MacroNbtCodecHelper.init(tag.getList("values").orElse(new ListTag()));
    }
 
    @Override

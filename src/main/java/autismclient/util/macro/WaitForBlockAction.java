@@ -22,8 +22,8 @@ public class WaitForBlockAction implements MacroAction {
    private boolean init = true;
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_BLOCK;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_BLOCK;
    }
 
    @Override
@@ -98,7 +98,7 @@ public class WaitForBlockAction implements MacroAction {
 
       tag.put("blockIds", list);
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       return tag;
    }
 
@@ -151,7 +151,7 @@ public class WaitForBlockAction implements MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
    }
 
    public enum Inner_DataUtil {

@@ -21,8 +21,8 @@ public class WaitDurabilityAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_DURABILITY;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_DURABILITY;
    }
 
    public boolean init(Minecraft mc) {
@@ -49,7 +49,7 @@ public class WaitDurabilityAction implements MacroAction {
    }
 
    private boolean load(Minecraft mc) {
-      ArrayUtil target = ArrayUtil.update(this.itemName).init_ArrayUtil_Minecraft(mc);
+      MacroItemTarget target = MacroItemTarget.update(this.itemName).init_ArrayUtil_Minecraft(mc);
       if (target == null) {
          return false;
       }
@@ -58,7 +58,7 @@ public class WaitDurabilityAction implements MacroAction {
          return this.init_Z(mc.player.getMainHandItem()) || this.init_Z(mc.player.getOffhandItem());
       }
 
-      ArrayUtil itemOnly = target.init_ArrayUtil();
+      MacroItemTarget itemOnly = target.init_ArrayUtil();
       if (itemOnly.update()) {
          itemOnly.init_I = -1;
       }
@@ -162,17 +162,17 @@ public class WaitDurabilityAction implements MacroAction {
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
       tag.putBoolean("useNext", this.useNext);
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.targetMode = i.init(WaitDurabilityAction.Inner_CachePool.class, tag.getStringOr("targetMode", WaitDurabilityAction.Inner_CachePool.HELD.name()), WaitDurabilityAction.Inner_CachePool.HELD);
+      this.targetMode = MacroNbtCodecHelper.init(WaitDurabilityAction.Inner_CachePool.class, tag.getStringOr("targetMode", WaitDurabilityAction.Inner_CachePool.HELD.name()), WaitDurabilityAction.Inner_CachePool.HELD);
       this.itemName = tag.getStringOr("itemName", "");
       this.slot = Math.max(0, Math.min(40, tag.getIntOr("slot", 0)));
-      this.measurement = i.init(WaitDurabilityAction.Inner_StreamUtil.class, tag.getStringOr("measurement", WaitDurabilityAction.Inner_StreamUtil.REMAINING.name()), WaitDurabilityAction.Inner_StreamUtil.REMAINING);
-      this.comparison = i.init(WaitDurabilityAction.Inner_DataUtil.class, tag.getStringOr("comparison", WaitDurabilityAction.Inner_DataUtil.AT_MOST.name()), WaitDurabilityAction.Inner_DataUtil.AT_MOST);
+      this.measurement = MacroNbtCodecHelper.init(WaitDurabilityAction.Inner_StreamUtil.class, tag.getStringOr("measurement", WaitDurabilityAction.Inner_StreamUtil.REMAINING.name()), WaitDurabilityAction.Inner_StreamUtil.REMAINING);
+      this.comparison = MacroNbtCodecHelper.init(WaitDurabilityAction.Inner_DataUtil.class, tag.getStringOr("comparison", WaitDurabilityAction.Inner_DataUtil.AT_MOST.name()), WaitDurabilityAction.Inner_DataUtil.AT_MOST);
       this.value = Math.max(0, tag.getIntOr("value", 2));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       this.useNext = tag.getBooleanOr("useNext", false);
@@ -180,7 +180,7 @@ public class WaitDurabilityAction implements MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
    }
 
    @Override
@@ -195,7 +195,7 @@ public class WaitDurabilityAction implements MacroAction {
             var10000 = "Held";
             break;
          case ITEM:
-            var10000 = this.itemName != null && !this.itemName.isBlank() ? ArrayUtil.update(this.itemName).load_Str() : "Held";
+            var10000 = this.itemName != null && !this.itemName.isBlank() ? MacroItemTarget.update(this.itemName).load_Str() : "Held";
             break;
          case SLOT:
             var10000 = "#" + Math.max(0, Math.min(40, this.slot));

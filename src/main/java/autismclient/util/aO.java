@@ -2,7 +2,7 @@ package autismclient.util;
 
 import autismclient.util.macro.MacroAction;
 import autismclient.util.macro.MacroExecutor;
-import autismclient.util.macro.h;
+import autismclient.util.macro.MacroStepColorHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -178,7 +178,7 @@ public final class aO {
 
             for (int i = scroll; i < scroll + visibleRows && i < total && i < actions.size(); i++) {
                MacroAction action = actions.get(i);
-               int color = h.init(i, current, run.read(), nowColor);
+               int color = MacroStepColorHelper.init(i, current, run.read(), nowColor);
                rows.add(
                   new autismclient.gui.f.c.BufferHelper.Inner_DataUtil(
                      autismclient.gui.f.b.k.init(textRenderer, i + 1 + ". " + action.getDisplayName(), contentWidth, load_Identifier, color),

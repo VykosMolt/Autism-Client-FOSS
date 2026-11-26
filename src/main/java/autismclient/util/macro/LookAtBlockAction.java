@@ -173,8 +173,8 @@ public class LookAtBlockAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.LOOK_AT_BLOCK;
+   public MacroActionType getType() {
+      return MacroActionType.LOOK_AT_BLOCK;
    }
 
    @Override

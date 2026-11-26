@@ -23,12 +23,12 @@ public final class o {
    );
    private static final AiCatalog init_AiCatalog = new AiCatalog();
    private static volatile o.Inner_DataUtil init_o_DataUtil;
-   private static volatile autismclient.util.macro.k.Inner_StreamUtil init_k_StreamUtil;
+   private static volatile autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil;
    private static final List<o.Inner_DataUtil> init_List = new ArrayList<>();
    private static volatile AiToolSettings init_AiToolSettings;
    private static int init_I;
    private static int load_I;
-   private static volatile autismclient.util.macro.k.Inner_StreamUtil load_k_StreamUtil;
+   private static volatile autismclient.util.macro.MacroToolBridge.Inner_StreamUtil load_k_StreamUtil;
    private static volatile AiOperation.Result init_AiOperation_Result;
 
    public static boolean init_Z(String id) {
@@ -116,7 +116,7 @@ public final class o {
       init_k_StreamUtil(id, args);
    }
 
-   public static autismclient.util.macro.k.Inner_StreamUtil init_k_StreamUtil(String id, JsonObject args) {
+   public static autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil(String id, JsonObject args) {
       o.Inner_DataUtil running = init_o_DataUtil;
       if (running != null && !id.equals("client:run_macro")) {
          throw new IllegalStateException("Already running " + running.init_Str + " (" + init_Str(running) + ") - " + load_Str() + " stop first");
@@ -179,9 +179,9 @@ public final class o {
          load_k_StreamUtil = created.init_k_StreamUtil;
          created.init_k_StreamUtil.init(() -> Minecraft.getInstance().execute(() -> init(created.init_k_StreamUtil)));
          if (lease != null) {
-            created.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.WAITING, "Starting " + id, "{}");
+            created.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING, "Starting " + id, "{}");
          } else {
-            created.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.WAITING, "Waiting for shared controls", "{}");
+            created.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING, "Waiting for shared controls", "{}");
          }
 
          init_AiOperation_Result = null;
@@ -195,12 +195,12 @@ public final class o {
       }
    }
 
-   public static autismclient.util.macro.k.Inner_StreamUtil init_k_StreamUtil() {
+   public static autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil() {
       o.Inner_DataUtil a = init_o_DataUtil;
       return a != null ? a.init_k_StreamUtil : (init_k_StreamUtil != null ? init_k_StreamUtil : load_k_StreamUtil);
    }
 
-   public static void init(autismclient.util.macro.k.Inner_StreamUtil job) {
+   public static void init(autismclient.util.macro.MacroToolBridge.Inner_StreamUtil job) {
       o.Inner_DataUtil a = init_o_DataUtil;
       if (a != null && a.init_k_StreamUtil == job) {
          init(a, A.size, "Cancelled by its owner");
@@ -290,7 +290,7 @@ public final class o {
          AutismClientMessaging.sendPrefixed("§7" + a.init_Str + " is already paused - " + load_Str() + " resume continues.");
       } else if (a.load_AiOperation == null && !init_Set.contains(a.init_Str)) {
          a.init_Z = true;
-         a.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.PAUSED, "Paused", a.write);
+         a.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.PAUSED, "Paused", a.write);
          load(a);
          AutismClientMessaging.sendPrefixed("§e" + a.init_Str + " paused (inputs released; its deadline keeps running) - " + load_Str() + " resume continues.");
       } else {
@@ -308,7 +308,7 @@ public final class o {
          a.init_Z = false;
          a.init_k_StreamUtil
             .init(
-               a.init_AutoCloseable == null ? autismclient.util.macro.k.Inner_ConfigStore.WAITING : autismclient.util.macro.k.Inner_ConfigStore.RUNNING,
+               a.init_AutoCloseable == null ? autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING : autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.RUNNING,
                "Resumed",
                a.write
             );
@@ -362,7 +362,7 @@ public final class o {
                   return;
                }
 
-               a.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.WAITING, "Starting " + a.init_Str, a.write);
+               a.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING, "Starting " + a.init_Str, a.write);
             }
 
             if (mc.player != null && mc.player.isAlive() && a.init_List.contains("INPUT") && a.init_List.contains("ROTATION")) {
@@ -532,7 +532,7 @@ public final class o {
       a.read = result.message();
       a.write = data == null ? "{}" : data;
       if (!result.terminal()) {
-         a.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.RUNNING, a.read, a.write);
+         a.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.RUNNING, a.read, a.write);
          if (init_o_DataUtil == a) {
             String title = a.init_Str.substring(a.init_Str.indexOf(':') + 1).replace('_', ' ');
             String pretty = title.isEmpty() ? a.init_Str : Character.toUpperCase(title.charAt(0)) + title.substring(1);
@@ -642,7 +642,7 @@ public final class o {
                init_I--;
             }
 
-            a.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.valueOf(result.status().name()), result.message(), result.dataJson());
+            a.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.valueOf(result.status().name()), result.message(), result.dataJson());
          }
       });
    }
@@ -831,7 +831,7 @@ public final class o {
       final String init_Str;
       final AiOperation init_AiOperation;
       AutoCloseable init_AutoCloseable;
-      final autismclient.util.macro.k.Inner_StreamUtil init_k_StreamUtil;
+      final autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil;
       final List<String> init_List;
       final int init_I;
       final long init_J = System.nanoTime();
@@ -851,7 +851,7 @@ public final class o {
          this.init_List = resources;
          this.init_Obj = world;
          this.init_I = emergencyKey;
-         this.init_k_StreamUtil = new autismclient.util.macro.k.Inner_StreamUtil(id);
+         this.init_k_StreamUtil = new autismclient.util.macro.MacroToolBridge.Inner_StreamUtil(id);
       }
    }
 }

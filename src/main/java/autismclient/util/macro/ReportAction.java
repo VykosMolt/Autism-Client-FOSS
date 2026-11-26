@@ -20,7 +20,7 @@ public class ReportAction implements MacroAction {
    public ReportAction.Inner_DataUtil endCondition = ReportAction.Inner_DataUtil.GUI_OPEN;
    public String reportLabel = "Report";
    public String startConditionType = RaceAction.Inner_DataUtil.DELAY.name();
-   public String startActionType = StreamGate.ITEM.name();
+   public String startActionType = MacroActionType.ITEM.name();
    public String endConditionType = RaceAction.Inner_DataUtil.WAIT_GUI.name();
    public int conditionCount = 0;
    public String commandText = "";
@@ -185,7 +185,7 @@ public class ReportAction implements MacroAction {
       tag.putString("endEvent", this.init_O_StreamUtil().name());
       tag.putString("endCondition", this.endCondition.name());
       tag.putString("startConditionType", this.startConditionType == null ? RaceAction.Inner_DataUtil.DELAY.name() : this.startConditionType);
-      tag.putString("startActionType", this.startActionType == null ? StreamGate.ITEM.name() : this.startActionType);
+      tag.putString("startActionType", this.startActionType == null ? MacroActionType.ITEM.name() : this.startActionType);
       tag.putString("endConditionType", this.endConditionType == null ? RaceAction.Inner_DataUtil.WAIT_GUI.name() : this.endConditionType);
       tag.putInt("conditionCount", Math.max(0, this.conditionCount));
       tag.putString("reportLabel", this.reportLabel == null ? "" : this.reportLabel);
@@ -212,7 +212,7 @@ public class ReportAction implements MacroAction {
 
       this.reportLabel = tag.getStringOr("reportLabel", "Report");
       this.startConditionType = tag.getStringOr("startConditionType", RaceAction.Inner_DataUtil.DELAY.name());
-      this.startActionType = tag.getStringOr("startActionType", StreamGate.ITEM.name());
+      this.startActionType = tag.getStringOr("startActionType", MacroActionType.ITEM.name());
       this.endConditionType = tag.getStringOr("endConditionType", "");
       this.conditionCount = Math.max(0, tag.getIntOr("conditionCount", 0));
       this.commandText = tag.getStringOr("commandText", "");
@@ -299,8 +299,8 @@ public class ReportAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.REPORT;
+   public MacroActionType getType() {
+      return MacroActionType.REPORT;
    }
 
    @Override

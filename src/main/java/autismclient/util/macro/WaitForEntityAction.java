@@ -13,7 +13,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
-public class WaitForEntityAction implements CacheEntry, MacroAction {
+public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
    public List<String> entityIds = new ArrayList<>();
    public boolean mustBeLookingAt = false;
    public WaitForEntityAction.Inner_DataUtil checkMode = WaitForEntityAction.Inner_DataUtil.RADIUS;
@@ -53,7 +53,7 @@ public class WaitForEntityAction implements CacheEntry, MacroAction {
       tag.putInt("timeoutMs", this.timeoutMs);
       tag.putBoolean("enabled", this.init);
       tag.putString("checkMode", this.checkMode.name());
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -105,7 +105,7 @@ public class WaitForEntityAction implements CacheEntry, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
@@ -137,7 +137,7 @@ public class WaitForEntityAction implements CacheEntry, MacroAction {
       this.centerOnPlayer = true;
       this.containerEntitiesOnly = tag.getBooleanOr("containerEntitiesOnly", false);
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
    }
 
    public boolean init_Z_5(Minecraft mc) {
@@ -260,8 +260,8 @@ public class WaitForEntityAction implements CacheEntry, MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_ENTITY;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_ENTITY;
    }
 
    @Override

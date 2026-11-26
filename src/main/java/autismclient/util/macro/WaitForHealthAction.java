@@ -4,7 +4,7 @@ import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
-public class WaitForHealthAction implements CacheEntry, MacroAction {
+public class WaitForHealthAction implements CaptureOutputAction, MacroAction {
    public static final String COMPARISON_DROPS_BELOW = "Drops Below";
    public static final String COMPARISON_RISES_ABOVE = "Rises Above";
    public float healthThreshold = 20.0F;
@@ -31,7 +31,7 @@ public class WaitForHealthAction implements CacheEntry, MacroAction {
       tag.putFloat("healthThreshold", this.healthThreshold);
       tag.putBoolean("below", this.below);
       tag.putString("comparison", this.init());
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -48,13 +48,13 @@ public class WaitForHealthAction implements CacheEntry, MacroAction {
          this.below = tag.getBooleanOr("below", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_HEALTH;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_HEALTH;
    }
 
    @Override

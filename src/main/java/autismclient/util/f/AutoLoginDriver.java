@@ -4,7 +4,7 @@ import autismclient.api.custommenu.CustomMenuButton;
 import autismclient.api.custommenu.CustomMenuInput;
 import autismclient.api.custommenu.CustomMenuSnapshot;
 import autismclient.api.custommenu.CustomMenuSubmission;
-import autismclient.util.macro.RenderState;
+import autismclient.util.macro.CustomMenuActionPlanner;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -138,8 +138,8 @@ public final class AutoLoginDriver {
       CustomMenuButton button;
       Map<String, String> values;
       try {
-         CustomMenuButton accept = hasText ? null : RenderState.init(snapshot.buttons());
-         button = accept != null ? accept : RenderState.read(snapshot.buttons());
+         CustomMenuButton accept = hasText ? null : CustomMenuActionPlanner.init(snapshot.buttons());
+         button = accept != null ? accept : CustomMenuActionPlanner.read(snapshot.buttons());
          if (button == null) {
             this.update = now + this.init_StreamUtil.write();
             return true;

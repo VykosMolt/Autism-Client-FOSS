@@ -24,7 +24,7 @@ public class WaitForMacroStepAction implements MacroAction {
       tag.putString("mode", this.mode.name());
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       return tag;
    }
 
@@ -41,12 +41,12 @@ public class WaitForMacroStepAction implements MacroAction {
 
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       this.init = tag.getBooleanOr("enabled", true);
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_MACRO_STEP;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_MACRO_STEP;
    }
 
    @Override

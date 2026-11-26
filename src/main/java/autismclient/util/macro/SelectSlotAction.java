@@ -7,21 +7,21 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
-public class SelectSlotAction implements E, MacroAction {
+public class SelectSlotAction implements PacketOrderAware, MacroAction {
    public int slot = 0;
    public String itemName = "";
-   public ArrayUtil itemTarget = new ArrayUtil();
+   public MacroItemTarget itemTarget = new MacroItemTarget();
    public SelectSlotAction.Inner_DataUtil strategy = SelectSlotAction.Inner_DataUtil.FIRST_MATCH;
    public String outputVariable = "";
-   public volatile D packetOrder = D.INSTANT;
+   public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
 
    @Override
    public void execute(Minecraft mc) {
       if (mc.player != null) {
-         List<ArrayUtil> targets = new ArrayList<>();
+         List<MacroItemTarget> targets = new ArrayList<>();
 
-         for (ArrayUtil candidate : this.init_List_7()) {
-            ArrayUtil resolved = candidate.init_ArrayUtil_Minecraft(mc);
+         for (MacroItemTarget candidate : this.init_List_7()) {
+            MacroItemTarget resolved = candidate.init_ArrayUtil_Minecraft(mc);
             if (resolved != null) {
                targets.add(resolved);
             }
@@ -31,7 +31,7 @@ public class SelectSlotAction implements E, MacroAction {
             int empty = this.init_I_Minecraft(mc);
             if (empty >= 0) {
                autismclient.util.aw.init_V(mc, empty);
-               n.init_V_Str_Obj(this.outputVariable, empty);
+               MacroVariableContext.init_V_Str_Obj(this.outputVariable, empty);
                return;
             }
          }
@@ -41,15 +41,15 @@ public class SelectSlotAction implements E, MacroAction {
                int best = this.init_I_Minecraft_List(mc, targets);
                if (best >= 0) {
                   autismclient.util.aw.init_V(mc, best);
-                  n.init_V_Str_Obj(this.outputVariable, best);
+                  MacroVariableContext.init_V_Str_Obj(this.outputVariable, best);
                   return;
                }
             }
 
-            for (ArrayUtil target : targets) {
+            for (MacroItemTarget target : targets) {
                int selectedSlot = autismclient.util.aw.init(mc, target, this.slot);
                if (selectedSlot >= 0) {
-                  n.init_V_Str_Obj(this.outputVariable, selectedSlot);
+                  MacroVariableContext.init_V_Str_Obj(this.outputVariable, selectedSlot);
                   return;
                }
             }
@@ -57,18 +57,18 @@ public class SelectSlotAction implements E, MacroAction {
 
          int actualSlot = Math.max(0, Math.min(8, this.slot));
          autismclient.util.aw.init_V(mc, actualSlot);
-         n.init_V_Str_Obj(this.outputVariable, actualSlot);
+         MacroVariableContext.init_V_Str_Obj(this.outputVariable, actualSlot);
       }
    }
 
    @Override
-   public D init_D() {
+   public PacketOrderMode init_D() {
       return this.packetOrder;
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.SELECT_SLOT;
+   public MacroActionType getType() {
+      return MacroActionType.SELECT_SLOT;
    }
 
    @Override
@@ -78,30 +78,30 @@ public class SelectSlotAction implements E, MacroAction {
       tag.putInt("slot", this.slot);
       tag.putString("strategy", this.strategy.name());
       tag.putString("outputVariable", this.outputVariable);
-      ArrayUtil target = this.init_ArrayUtil_2();
+      MacroItemTarget target = this.init_ArrayUtil_2();
       if (target.init_Z() || target.update()) {
          tag.put("itemName", target.init_CompoundTag());
       }
 
-      E.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
       this.slot = tag.getIntOr("slot", 0);
-      this.strategy = i.init(SelectSlotAction.Inner_DataUtil.class, tag.getStringOr("strategy", "FIRST_MATCH"), SelectSlotAction.Inner_DataUtil.FIRST_MATCH);
+      this.strategy = MacroNbtCodecHelper.init(SelectSlotAction.Inner_DataUtil.class, tag.getStringOr("strategy", "FIRST_MATCH"), SelectSlotAction.Inner_DataUtil.FIRST_MATCH);
       this.outputVariable = tag.getStringOr("outputVariable", "");
       this.itemTarget = tag.getCompound("itemName")
-         .map(ArrayUtil::init_ArrayUtil_CompoundTag)
-         .orElseGet(() -> ArrayUtil.update(tag.getStringOr("itemName", "")));
+         .map(MacroItemTarget::init_ArrayUtil_CompoundTag)
+         .orElseGet(() -> MacroItemTarget.update(tag.getStringOr("itemName", "")));
       this.itemName = this.itemTarget.write_Str();
-      this.packetOrder = E.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
    }
 
    @Override
    public String getDisplayName() {
-      ArrayUtil target = this.init_ArrayUtil_2();
+      MacroItemTarget target = this.init_ArrayUtil_2();
       return !target.init_Z() && !target.update() ? "Select Slot " + (this.slot + 1) : "Select " + this.strategy + " \"" + target.load_Str() + "\"";
    }
 
@@ -110,12 +110,12 @@ public class SelectSlotAction implements E, MacroAction {
       return "S";
    }
 
-   private ArrayUtil init_ArrayUtil_2() {
+   private MacroItemTarget init_ArrayUtil_2() {
       if (this.itemTarget != null && (this.itemTarget.init_Z() || this.itemTarget.update())) {
          return this.itemTarget;
       }
 
-      this.itemTarget = ArrayUtil.update(this.init_Str_Str_6(this.itemName));
+      this.itemTarget = MacroItemTarget.update(this.init_Str_Str_6(this.itemName));
       return this.itemTarget;
    }
 
@@ -157,18 +157,18 @@ public class SelectSlotAction implements E, MacroAction {
       return -1;
    }
 
-   private List<ArrayUtil> init_List_7() {
+   private List<MacroItemTarget> init_List_7() {
       String raw = this.init_Str_Str_6(this.itemName);
       if (raw != null && !raw.isBlank()) {
          if (!raw.contains("|")) {
-            ArrayUtil target = this.init_ArrayUtil_2();
+            MacroItemTarget target = this.init_ArrayUtil_2();
             return !target.init_Z() && !target.update() ? List.of() : List.of(target);
          }
 
-         ArrayList<ArrayUtil> out = new ArrayList<>();
+         ArrayList<MacroItemTarget> out = new ArrayList<>();
 
          for (String part : raw.split("\\|")) {
-            ArrayUtil target = ArrayUtil.update(part.trim());
+            MacroItemTarget target = MacroItemTarget.update(part.trim());
             if (target.init_Z() || target.update()) {
                out.add(target);
             }
@@ -176,12 +176,12 @@ public class SelectSlotAction implements E, MacroAction {
 
          return out;
       } else {
-         ArrayUtil target = this.init_ArrayUtil_2();
+         MacroItemTarget target = this.init_ArrayUtil_2();
          return !target.init_Z() && !target.update() ? List.of() : List.of(target);
       }
    }
 
-   private int init_I_Minecraft_List(Minecraft mc, List<ArrayUtil> targets) {
+   private int init_I_Minecraft_List(Minecraft mc, List<MacroItemTarget> targets) {
       int bestSlot = -1;
       int bestMetric = this.strategy == SelectSlotAction.Inner_DataUtil.WORST_DURABILITY ? 2147483647 : -2147483648;
 
@@ -189,7 +189,7 @@ public class SelectSlotAction implements E, MacroAction {
          ItemStack stack = mc.player.getInventory().getItem(i);
          boolean matches = false;
 
-         for (ArrayUtil target : targets) {
+         for (MacroItemTarget target : targets) {
             if (target.init_I_ItemStack_I(stack, i) >= 0) {
                matches = true;
                break;

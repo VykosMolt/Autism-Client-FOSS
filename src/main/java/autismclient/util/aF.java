@@ -2,7 +2,7 @@ package autismclient.util;
 
 import autismclient.AutismClientAddon;
 import autismclient.util.macro.MacroExecutor;
-import autismclient.util.macro.b;
+import autismclient.util.macro.MacroWaitRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -67,7 +67,7 @@ public final class aF {
          init();
       } else if (client.getWindow() == null || !client.getWindow().isFocused()) {
          read_J = 0L;
-      } else if (autismclient.util.macro.BitSetUtil.init_Z()) {
+      } else if (autismclient.util.macro.MacroFpsOverrideManager.init_Z()) {
          read_J = 0L;
       } else {
          int fps = client.getFps();
@@ -169,7 +169,7 @@ public final class aF {
          AutismPacketLoggerOverlay logger = module == null ? null : module.load_AutismPacketLogger();
          return logger == null ? "not created" : logger.load_Str_9();
       });
-      init(sb, "macro", () -> MacroExecutor.read_Str() + " pendingConditions=" + b.init_I());
+      init(sb, "macro", () -> MacroExecutor.read_Str() + " pendingConditions=" + MacroWaitRegistry.init_I());
       init(sb, "antiVanish", autismclient.modules.AntiVanishModule::load_Str);
       init(sb, "hud", () -> {
          return "enabledElements=" + al.init_I() + " activeModules=" + autismclient.modules.al.load_List().size() + " toasts=" + bi.init_I();

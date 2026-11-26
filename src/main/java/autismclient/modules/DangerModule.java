@@ -630,7 +630,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
          && !MacroExecutor.write_Z()
          && !HashUtil.init_Z()
          && !PkgCls_a.init_Z()
-         && !autismclient.util.macro.g.init_Z()
+         && !autismclient.util.macro.MacroAimController.init_Z()
          && !f.load();
    }
 

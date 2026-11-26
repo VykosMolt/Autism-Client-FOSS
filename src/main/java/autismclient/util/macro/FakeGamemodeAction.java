@@ -55,8 +55,8 @@ public class FakeGamemodeAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.FAKE_GAMEMODE;
+   public MacroActionType getType() {
+      return MacroActionType.FAKE_GAMEMODE;
    }
 
    @Override

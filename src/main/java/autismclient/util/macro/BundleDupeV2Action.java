@@ -182,8 +182,8 @@ public class BundleDupeV2Action implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.BUNDLE_DUPE_V2;
+   public MacroActionType getType() {
+      return MacroActionType.BUNDLE_DUPE_V2;
    }
 
    @Override

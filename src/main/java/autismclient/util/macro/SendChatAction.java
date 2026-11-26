@@ -3,7 +3,7 @@ package autismclient.util.macro;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
-public class SendChatAction implements MacroAction, aP {
+public class SendChatAction implements MacroAction, GuiWaitAware {
    public String message = "";
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = true;
@@ -20,7 +20,7 @@ public class SendChatAction implements MacroAction, aP {
    @Override
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
-      tag.putString("type", StreamGate.SEND_CHAT.name());
+      tag.putString("type", MacroActionType.SEND_CHAT.name());
       tag.putString("message", this.message);
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
@@ -35,8 +35,8 @@ public class SendChatAction implements MacroAction, aP {
          this.message = tag.getStringOr("message", "");
       }
 
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, true);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, true);
       if (tag.contains("guiName")) {
          this.guiName = tag.getStringOr("guiName", "");
       }
@@ -49,8 +49,8 @@ public class SendChatAction implements MacroAction, aP {
    @Override
    public void execute(Minecraft mc) {
       if (!autismclient.modules.aD.read_Z() && this.message != null && !this.message.isEmpty() && mc.getConnection() != null) {
-         j.Inner_CachePool resolution = n.init_j_CachePool_Str_Minecraft(this.message, mc);
-         if (n.init_Z_Str_j_CachePoolArr("Send chat", resolution)) {
+         MacroTemplateResolver.Inner_CachePool resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.message, mc);
+         if (MacroVariableContext.init_Z_Str_j_CachePoolArr("Send chat", resolution)) {
             String resolved = resolution.init_Str();
             if (resolved.startsWith("/") && resolved.length() > 1) {
                mc.getConnection().sendCommand(resolved.substring(1));
@@ -62,8 +62,8 @@ public class SendChatAction implements MacroAction, aP {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.SEND_CHAT;
+   public MacroActionType getType() {
+      return MacroActionType.SEND_CHAT;
    }
 
    @Override
@@ -99,7 +99,7 @@ public class SendChatAction implements MacroAction, aP {
    @Override
    public String getDisplayName() {
       String preview = this.message.length() > 20 ? this.message.substring(0, 20) + "..." : this.message;
-      return "Chat: " + preview + aP.init_Str_aP(this);
+      return "Chat: " + preview + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override

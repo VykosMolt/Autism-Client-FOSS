@@ -48,18 +48,18 @@ public final class Protocol263Check {
 
    @SuppressWarnings("unchecked")
    public static void main(String[] args) throws Exception {
-      Method updatePred = J.class.getDeclaredMethod("update", Packet.class);
+      Method updatePred = PingSpoofScheduler.class.getDeclaredMethod("update", Packet.class);
       updatePred.setAccessible(true);
-      Method syncPred = J.class.getDeclaredMethod("sync", Packet.class);
+      Method syncPred = PingSpoofScheduler.class.getDeclaredMethod("sync", Packet.class);
       syncPred.setAccessible(true);
-      Method writePred = J.class.getDeclaredMethod("write", Packet.class);
+      Method writePred = PingSpoofScheduler.class.getDeclaredMethod("write", Packet.class);
       writePred.setAccessible(true);
 
-      Field inQueueF = J.class.getDeclaredField("init_Queue");
+      Field inQueueF = PingSpoofScheduler.class.getDeclaredField("init_Queue");
       inQueueF.setAccessible(true);
       Queue<Object> inQueue = (Queue<Object>) inQueueF.get(null);
 
-      Field inCountF = J.class.getDeclaredField("incomingQueued");
+      Field inCountF = PingSpoofScheduler.class.getDeclaredField("incomingQueued");
       inCountF.setAccessible(true);
       AtomicInteger inCount = (AtomicInteger) inCountF.get(null);
 
@@ -77,38 +77,38 @@ public final class Protocol263Check {
          !(Boolean) updatePred.invoke(null, new ClientboundBundlePacket(List.of(alive))));
 
       // 3. Bare and bundled disconnect drop queues and pass through
-      J.load(150, true, true);
-      var dataCtor = Class.forName("autismclient.util.macro.J$Inner_DataUtil").getDeclaredConstructor(Packet.class, long.class);
+      PingSpoofScheduler.load(150, true, true);
+      var dataCtor = Class.forName("autismclient.util.macro.PingSpoofScheduler$Inner_DataUtil").getDeclaredConstructor(Packet.class, long.class);
       dataCtor.setAccessible(true);
       inQueue.add(dataCtor.newInstance(alive, System.currentTimeMillis()));
       inCount.incrementAndGet();
-      boolean heldBare = J.init_Z(new ClientboundDisconnectPacket(Component.literal("kicked")));
+      boolean heldBare = PingSpoofScheduler.init_Z(new ClientboundDisconnectPacket(Component.literal("kicked")));
       check("PingSpoof bare disconnect passes through", !heldBare);
       check("PingSpoof bare disconnect clears queue", inQueue.isEmpty() && inCount.get() == 0);
 
       inQueue.add(dataCtor.newInstance(alive, System.currentTimeMillis()));
       inCount.incrementAndGet();
-      boolean heldBundled = J.init_Z(new ClientboundBundlePacket(List.of(alive, new ClientboundDisconnectPacket(Component.literal("kicked")))));
+      boolean heldBundled = PingSpoofScheduler.init_Z(new ClientboundBundlePacket(List.of(alive, new ClientboundDisconnectPacket(Component.literal("kicked")))));
       check("PingSpoof bundled disconnect passes through", !heldBundled);
       check("PingSpoof bundled disconnect clears queue", inQueue.isEmpty() && inCount.get() == 0);
 
       // 3b. Bare and bundled StartConfiguration drop queues and pass through; bundled keepalive exempt
       inQueue.add(dataCtor.newInstance(alive, System.currentTimeMillis()));
       inCount.incrementAndGet();
-      boolean heldStartCfg = J.init_Z(ClientboundStartConfigurationPacket.INSTANCE);
+      boolean heldStartCfg = PingSpoofScheduler.init_Z(ClientboundStartConfigurationPacket.INSTANCE);
       check("PingSpoof bare StartConfiguration passes through", !heldStartCfg);
       check("PingSpoof bare StartConfiguration clears queue", inQueue.isEmpty() && inCount.get() == 0);
 
       inQueue.add(dataCtor.newInstance(alive, System.currentTimeMillis()));
       inCount.incrementAndGet();
-      boolean heldBundledStartCfg = J.init_Z(new ClientboundBundlePacket(List.of(alive, ClientboundStartConfigurationPacket.INSTANCE)));
+      boolean heldBundledStartCfg = PingSpoofScheduler.init_Z(new ClientboundBundlePacket(List.of(alive, ClientboundStartConfigurationPacket.INSTANCE)));
       check("PingSpoof bundled StartConfiguration passes through", !heldBundledStartCfg);
       check("PingSpoof bundled StartConfiguration clears queue", inQueue.isEmpty() && inCount.get() == 0);
 
       check("PingSpoof write() exempts bundled keepalive",
          (Boolean) writePred.invoke(null, new ClientboundBundlePacket(List.of(alive, new ClientboundKeepAlivePacket(42L)))));
-      J.read_V();
-      J.write();
+      PingSpoofScheduler.read_V();
+      PingSpoofScheduler.write();
 
       // 4. ServerboundPunchPacket in PoolEntry, bw registry aliases, and StreamCodec compatibility
       Field poolSetF = PoolEntry.class.getDeclaredField("init_Set");

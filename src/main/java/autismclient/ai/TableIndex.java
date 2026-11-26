@@ -9,7 +9,7 @@ import autismclient.api.ai.AiOperation;
 import autismclient.mixin.accessor.AutismClientLevelPredictionAccessor;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.U;
-import autismclient.util.macro.ArrayUtil;
+import autismclient.util.macro.MacroItemTarget;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -4279,7 +4279,7 @@ final class TableIndex {
                                                 }
 
                                                 String itemId = BuiltInRegistries.ITEM.getKey(item).toString();
-                                                if (autismclient.util.aw.init(mc, ArrayUtil.write(itemId), mc.player.getInventory().getSelectedSlot()) < 0) {
+                                                if (autismclient.util.aw.init(mc, MacroItemTarget.write(itemId), mc.player.getInventory().getSelectedSlot()) < 0) {
                                                    if (schematic && ++this.node <= 20) {
                                                       autismclient.ai.a.AiMotionSafety.putAt_V();
                                                       return this.init_AiOperation_Result_5("Awaiting material: selecting " + itemId);
@@ -7101,7 +7101,7 @@ final class TableIndex {
                      }
 
                      if (autismclient.util.aw.init(
-                           mc, ArrayUtil.write(BuiltInRegistries.ITEM.getKey(item).toString()), mc.player.getInventory().getSelectedSlot()
+                           mc, MacroItemTarget.write(BuiltInRegistries.ITEM.getKey(item).toString()), mc.player.getInventory().getSelectedSlot()
                         )
                         < 0) {
                         return false;

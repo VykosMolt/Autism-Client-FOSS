@@ -364,8 +364,8 @@ public class NbtBookAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.NBT_BOOK;
+   public MacroActionType getType() {
+      return MacroActionType.NBT_BOOK;
    }
 
    @Override

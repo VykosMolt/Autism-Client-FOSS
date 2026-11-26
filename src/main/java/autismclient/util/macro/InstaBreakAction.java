@@ -5,7 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 
-public class InstaBreakAction implements E, M, MacroAction, aP {
+public class InstaBreakAction implements PacketOrderAware, AimTargetAction, MacroAction, GuiWaitAware {
    public BlockPos blockPos = BlockPos.ZERO;
    public Direction direction = Direction.UP;
    public int delayTicks = 0;
@@ -13,14 +13,14 @@ public class InstaBreakAction implements E, M, MacroAction, aP {
    public boolean autoPickaxe = true;
    public boolean manualDirection = false;
    public boolean interact = false;
-   public TaskTimer interactTiming = TaskTimer.WITH;
+   public InteractTimingMode interactTiming = InteractTimingMode.WITH;
    public int interactCustomMs = 0;
    public boolean sneak = false;
    public String sneakMode = "Packet";
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = false;
    public String guiName = "";
-   public volatile D packetOrder = D.INSTANT;
+   public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
    private boolean init = true;
    public boolean raycast = false;
 
@@ -39,8 +39,8 @@ public class InstaBreakAction implements E, M, MacroAction, aP {
    }
 
    @Override
-   public M.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
-      return M.Inner_DataUtil.init(this.blockPos);
+   public AimTargetAction.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
+      return AimTargetAction.Inner_DataUtil.init(this.blockPos);
    }
 
    @Override
@@ -65,7 +65,7 @@ public class InstaBreakAction implements E, M, MacroAction, aP {
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
       tag.putBoolean("enabled", this.init);
-      E.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
       return tag;
    }
 
@@ -88,24 +88,24 @@ public class InstaBreakAction implements E, M, MacroAction, aP {
       this.autoPickaxe = tag.getBooleanOr("autoPickaxe", true);
       this.manualDirection = tag.getBooleanOr("manualDirection", false);
       this.interact = tag.getBooleanOr("interact", false);
-      this.interactTiming = TaskTimer.init(tag.getStringOr("interactTiming", "WITH"), TaskTimer.WITH);
+      this.interactTiming = InteractTimingMode.init(tag.getStringOr("interactTiming", "WITH"), InteractTimingMode.WITH);
       this.interactCustomMs = Math.max(-5000, Math.min(5000, tag.getIntOr("interactCustomMs", 0)));
       this.sneak = tag.getBooleanOr("sneak", false);
       this.raycast = tag.getBooleanOr("raycast", false);
       this.sneakMode = tag.getStringOr("sneakMode", "Packet");
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
       this.guiName = tag.getStringOr("guiName", "");
       if (tag.contains("enabled")) {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      this.packetOrder = E.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.INSTA_BREAK;
+   public MacroActionType getType() {
+      return MacroActionType.INSTA_BREAK;
    }
 
    @Override
@@ -117,7 +117,7 @@ public class InstaBreakAction implements E, M, MacroAction, aP {
          + ","
          + this.blockPos.getZ()
          + (this.times == 0 ? " ∞" : " x" + this.times)
-         + aP.init_Str_aP(this);
+         + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override
@@ -151,7 +151,7 @@ public class InstaBreakAction implements E, M, MacroAction, aP {
    }
 
    @Override
-   public D init_D() {
+   public PacketOrderMode init_D() {
       return this.packetOrder;
    }
 

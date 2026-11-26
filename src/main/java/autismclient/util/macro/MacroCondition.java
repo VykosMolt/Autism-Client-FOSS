@@ -94,12 +94,12 @@ public final class MacroCondition {
 
    public static MacroCondition init_a_CompoundTag_Str(CompoundTag t, String p) {
       MacroCondition leaf = init_a_a_CachePool(MacroCondition.Inner_CachePool.ALWAYS);
-      leaf.init_a_CachePool = i.init(MacroCondition.Inner_CachePool.class, t.getStringOr(p + "kind", "ALWAYS"), MacroCondition.Inner_CachePool.ALWAYS);
+      leaf.init_a_CachePool = MacroNbtCodecHelper.init(MacroCondition.Inner_CachePool.class, t.getStringOr(p + "kind", "ALWAYS"), MacroCondition.Inner_CachePool.ALWAYS);
       leaf.init_Z = t.getBooleanOr(p + "negate", false);
       leaf.init_Str = t.getStringOr(p + "item", "");
-      leaf.init_a_ConfigStore = i.init(MacroCondition.Inner_ConfigStore.class, t.getStringOr(p + "op", "EQ"), MacroCondition.Inner_ConfigStore.EQ);
+      leaf.init_a_ConfigStore = MacroNbtCodecHelper.init(MacroCondition.Inner_ConfigStore.class, t.getStringOr(p + "op", "EQ"), MacroCondition.Inner_ConfigStore.EQ);
       leaf.load_Str = t.getStringOr(p + "value", "");
-      leaf.init_a_DataUtil = i.init(MacroCondition.Inner_DataUtil.class, t.getStringOr(p + "cmp", "AT_LEAST"), MacroCondition.Inner_DataUtil.AT_LEAST);
+      leaf.init_a_DataUtil = MacroNbtCodecHelper.init(MacroCondition.Inner_DataUtil.class, t.getStringOr(p + "cmp", "AT_LEAST"), MacroCondition.Inner_DataUtil.AT_LEAST);
       leaf.init_I = t.getIntOr(p + "amount", 0);
       leaf.load_I = t.getIntOr(p + "slot", 0);
       leaf.read = t.getStringOr(p + "toolScope", "THIS_MACRO");
@@ -163,7 +163,7 @@ public final class MacroCondition {
 
    private boolean read(Minecraft mc) {
       if (this.init_a_CachePool == MacroCondition.Inner_CachePool.TOOLS) {
-         return k.init(MacroExecutor.load_J(), this.read, this.update, this.write);
+         return MacroToolBridge.init(MacroExecutor.load_J(), this.read, this.update, this.write);
       }
 
       if (mc == null) {
@@ -291,8 +291,8 @@ public final class MacroCondition {
    }
 
    private int init_I_Minecraft(Minecraft mc) {
-      j.Inner_CachePool r = n.init_j_CachePool_Str_Minecraft(this.init_Str == null ? "" : this.init_Str, mc);
-      return !r.init_Z() ? 0 : WaitInventoryPredicateAction.init_I_Minecraft_ArrayUtil(mc, ArrayUtil.update(r.init_Str()));
+      MacroTemplateResolver.Inner_CachePool r = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.init_Str == null ? "" : this.init_Str, mc);
+      return !r.init_Z() ? 0 : WaitInventoryPredicateAction.init_I_Minecraft_ArrayUtil(mc, MacroItemTarget.update(r.init_Str()));
    }
 
    private boolean write(Minecraft mc) {
@@ -492,7 +492,7 @@ public final class MacroCondition {
    }
 
    private static String init_Str_Str_Minecraft(String template, Minecraft mc) {
-      j.Inner_CachePool r = n.init_j_CachePool_Str_Minecraft(template == null ? "" : template, mc);
+      MacroTemplateResolver.Inner_CachePool r = MacroVariableContext.init_j_CachePool_Str_Minecraft(template == null ? "" : template, mc);
       return r.init_Z() ? r.init_Str() : "";
    }
 
@@ -739,10 +739,10 @@ public final class MacroCondition {
          return init_a();
       }
 
-      m.init_a_BufferHelper = i.init(MacroCondition.Inner_BufferHelper.class, t.getStringOr("node", "GROUP"), MacroCondition.Inner_BufferHelper.GROUP);
+      m.init_a_BufferHelper = MacroNbtCodecHelper.init(MacroCondition.Inner_BufferHelper.class, t.getStringOr("node", "GROUP"), MacroCondition.Inner_BufferHelper.GROUP);
       m.init_Z = t.getBooleanOr("negate", false);
       if (m.init_a_BufferHelper == MacroCondition.Inner_BufferHelper.GROUP) {
-         m.init_a_StreamUtil = i.init(MacroCondition.Inner_StreamUtil.class, t.getStringOr("combine", "ALL"), MacroCondition.Inner_StreamUtil.ALL);
+         m.init_a_StreamUtil = MacroNbtCodecHelper.init(MacroCondition.Inner_StreamUtil.class, t.getStringOr("combine", "ALL"), MacroCondition.Inner_StreamUtil.ALL);
          m.init_List = new ArrayList<>();
          Tag var3 = t.get("children");
          if (var3 instanceof ListTag) {
@@ -753,20 +753,20 @@ public final class MacroCondition {
             }
          }
       } else {
-         m.init_a_CachePool = i.init(MacroCondition.Inner_CachePool.class, t.getStringOr("kind", "ALWAYS"), MacroCondition.Inner_CachePool.ALWAYS);
+         m.init_a_CachePool = MacroNbtCodecHelper.init(MacroCondition.Inner_CachePool.class, t.getStringOr("kind", "ALWAYS"), MacroCondition.Inner_CachePool.ALWAYS);
          m.init_Str = t.getStringOr("item", "");
          m.load_Str = t.getStringOr("varB", "");
-         m.init_a_ConfigStore = i.init(MacroCondition.Inner_ConfigStore.class, t.getStringOr("op", "EQ"), MacroCondition.Inner_ConfigStore.EQ);
-         m.init_a_DataUtil = i.init(MacroCondition.Inner_DataUtil.class, t.getStringOr("cmp", "AT_LEAST"), MacroCondition.Inner_DataUtil.AT_LEAST);
+         m.init_a_ConfigStore = MacroNbtCodecHelper.init(MacroCondition.Inner_ConfigStore.class, t.getStringOr("op", "EQ"), MacroCondition.Inner_ConfigStore.EQ);
+         m.init_a_DataUtil = MacroNbtCodecHelper.init(MacroCondition.Inner_DataUtil.class, t.getStringOr("cmp", "AT_LEAST"), MacroCondition.Inner_DataUtil.AT_LEAST);
          m.init_I = t.getIntOr("amount", 0);
          m.load_I = t.getIntOr("slot", 0);
          m.read = t.getStringOr("toolScope", "THIS_MACRO");
          m.write = t.getStringOr("toolState", "SUCCEEDED");
          m.update = t.getStringOr("toolFilter", "");
          m.init_D = t.getDoubleOr("range", 5.0);
-         m.init_ar_CachePool = i.init(WaitDurabilityAction.Inner_CachePool.class, t.getStringOr("durMode", "HELD"), WaitDurabilityAction.Inner_CachePool.HELD);
-         m.init_ar_StreamUtil = i.init(WaitDurabilityAction.Inner_StreamUtil.class, t.getStringOr("durMeasure", "PERCENT_REMAINING"), WaitDurabilityAction.Inner_StreamUtil.PERCENT_REMAINING);
-         m.init_aH_StreamUtil = i.init(WaitFreeSlotsAction.Inner_StreamUtil.class, t.getStringOr("freeMode", "FREE_SLOTS"), WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS);
+         m.init_ar_CachePool = MacroNbtCodecHelper.init(WaitDurabilityAction.Inner_CachePool.class, t.getStringOr("durMode", "HELD"), WaitDurabilityAction.Inner_CachePool.HELD);
+         m.init_ar_StreamUtil = MacroNbtCodecHelper.init(WaitDurabilityAction.Inner_StreamUtil.class, t.getStringOr("durMeasure", "PERCENT_REMAINING"), WaitDurabilityAction.Inner_StreamUtil.PERCENT_REMAINING);
+         m.init_aH_StreamUtil = MacroNbtCodecHelper.init(WaitFreeSlotsAction.Inner_StreamUtil.class, t.getStringOr("freeMode", "FREE_SLOTS"), WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS);
       }
 
       return m;

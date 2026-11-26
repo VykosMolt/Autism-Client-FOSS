@@ -11,7 +11,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.phys.EntityHitResult;
 
-public class InteractEntityAction implements E, M, MacroAction, aP {
+public class InteractEntityAction implements PacketOrderAware, AimTargetAction, MacroAction, GuiWaitAware {
    public InteractEntityAction.Inner_DataUtil targetMode = InteractEntityAction.Inner_DataUtil.ENTITY;
    public List<String> entityTargets = new ArrayList<>();
    public boolean waitForTarget = true;
@@ -19,7 +19,7 @@ public class InteractEntityAction implements E, M, MacroAction, aP {
    public boolean waitForGuiAfter = false;
    public String guiName = "";
    public boolean raycast = false;
-   public volatile D packetOrder = D.INSTANT;
+   public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
    private boolean init = true;
 
    @Override
@@ -33,12 +33,12 @@ public class InteractEntityAction implements E, M, MacroAction, aP {
    }
 
    @Override
-   public M.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
+   public AimTargetAction.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
       autismclient.util.E target = this.init_E();
       if (target == null) {
          return null;
       } else {
-         return target.init_Z() ? M.Inner_DataUtil.init(target.init_BlockPos()) : M.Inner_DataUtil.init(target.init_Entity_Minecraft(mc));
+         return target.init_Z() ? AimTargetAction.Inner_DataUtil.init(target.init_BlockPos()) : AimTargetAction.Inner_DataUtil.init(target.init_Entity_Minecraft(mc));
       }
    }
 
@@ -172,13 +172,13 @@ public class InteractEntityAction implements E, M, MacroAction, aP {
    }
 
    @Override
-   public D init_D() {
+   public PacketOrderMode init_D() {
       return this.packetOrder;
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.INTERACT_ENTITY;
+   public MacroActionType getType() {
+      return MacroActionType.INTERACT_ENTITY;
    }
 
    @Override
@@ -209,7 +209,7 @@ public class InteractEntityAction implements E, M, MacroAction, aP {
          targetLabel = this.entityTargets.size() + " entities";
       }
 
-      return "Interact Entity " + targetLabel + aP.init_Str_aP(this);
+      return "Interact Entity " + targetLabel + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override
@@ -233,7 +233,7 @@ public class InteractEntityAction implements E, M, MacroAction, aP {
       tag.putString("guiName", this.guiName);
       tag.putBoolean("raycast", this.raycast);
       tag.putBoolean("enabled", this.init);
-      E.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
       return tag;
    }
 
@@ -268,12 +268,12 @@ public class InteractEntityAction implements E, M, MacroAction, aP {
       }
 
       this.waitForTarget = tag.getBooleanOr("waitForTarget", true);
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
       this.guiName = tag.getStringOr("guiName", "");
       this.raycast = tag.getBooleanOr("raycast", false);
       this.init = tag.getBooleanOr("enabled", true);
-      this.packetOrder = E.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
    }
 
    public enum Inner_DataUtil {

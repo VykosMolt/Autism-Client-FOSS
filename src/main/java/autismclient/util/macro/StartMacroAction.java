@@ -42,8 +42,8 @@ public class StartMacroAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.START_MACRO;
+   public MacroActionType getType() {
+      return MacroActionType.START_MACRO;
    }
 
    @Override

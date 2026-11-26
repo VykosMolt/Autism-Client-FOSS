@@ -196,8 +196,8 @@ public final class TradeAction implements ContextMacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.TRADE;
+   public MacroActionType getType() {
+      return MacroActionType.TRADE;
    }
 
    @Override

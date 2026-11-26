@@ -16,8 +16,8 @@ public class SaveGuiAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.SAVE_GUI;
+   public MacroActionType getType() {
+      return MacroActionType.SAVE_GUI;
    }
 
    @Override

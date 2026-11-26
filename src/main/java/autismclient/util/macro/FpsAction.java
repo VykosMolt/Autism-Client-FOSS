@@ -37,7 +37,7 @@ public class FpsAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       long owner = MacroExecutor.load_J();
-      BitSetUtil.init(owner < 0L ? 0L : owner, Math.max(0, this.maxFps), this.init_J_2() * 1000000L);
+      MacroFpsOverrideManager.init(owner < 0L ? 0L : owner, Math.max(0, this.maxFps), this.init_J_2() * 1000000L);
    }
 
    @Override
@@ -91,8 +91,8 @@ public class FpsAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.FPS;
+   public MacroActionType getType() {
+      return MacroActionType.FPS;
    }
 
    @Override

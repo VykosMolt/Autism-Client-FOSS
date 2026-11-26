@@ -25,8 +25,8 @@ public class PickUpAllAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.PICK_UP_ALL;
+   public MacroActionType getType() {
+      return MacroActionType.PICK_UP_ALL;
    }
 
    @Override

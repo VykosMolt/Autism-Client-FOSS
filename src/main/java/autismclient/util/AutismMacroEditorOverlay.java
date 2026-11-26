@@ -12,7 +12,7 @@ import autismclient.gui.f.b.j;
 import autismclient.gui.macro.editor.ActionEditorOverlay;
 import autismclient.util.macro.MacroAction;
 import autismclient.util.macro.MacroExecutor;
-import autismclient.util.macro.d;
+import autismclient.util.macro.DynamicBindingManager;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1128,7 +1128,7 @@ public class AutismMacroEditorOverlay extends bj {
                if (target != primary && this.load_Z_MacroAction_2(target)) {
                   CompoundTag copy = edited.copy();
                   target.fromTag(copy);
-                  d.init(target, copy);
+                  DynamicBindingManager.init(target, copy);
                }
             }
          }
@@ -4708,7 +4708,7 @@ public class AutismMacroEditorOverlay extends bj {
             race.load_V();
             race.conditionType = race.conditionTypes.isEmpty() ? "" : race.conditionTypes.get(0);
             race.triggerAction = race.conditionTypes.isEmpty() ? new autismclient.util.macro.DelayAction(0) : race.init_MacroAction();
-            race.actionType = race.actionTypes.isEmpty() ? autismclient.util.macro.StreamGate.PACKET_CLICK.name() : race.actionTypes.get(0);
+            race.actionType = race.actionTypes.isEmpty() ? autismclient.util.macro.MacroActionType.PACKET_CLICK.name() : race.actionTypes.get(0);
             race.bodyCount = replacement.size();
             this.fill_V();
          }

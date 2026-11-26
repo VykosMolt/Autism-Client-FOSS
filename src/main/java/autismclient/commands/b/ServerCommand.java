@@ -5,7 +5,7 @@ import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismServerInfoOverlay;
 import autismclient.util.bk;
-import autismclient.util.macro.ab;
+import autismclient.util.macro.ServerTickPhaseTracker;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.Minecraft;
 
@@ -66,7 +66,7 @@ public class ServerCommand extends Command {
    }
 
    private static void read() {
-      double tps = ab.init_D();
+      double tps = ServerTickPhaseTracker.init_D();
       AutismClientMessaging.sendPrefixed(String.format("§eTPS: §f%.2f §7(estimated)", tps));
    }
 }

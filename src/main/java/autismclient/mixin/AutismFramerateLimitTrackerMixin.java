@@ -3,7 +3,7 @@ package autismclient.mixin;
 import autismclient.gui.d.AutismModulesScreen;
 import autismclient.gui.d.UtilCore;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.macro.BitSetUtil;
+import autismclient.util.macro.MacroFpsOverrideManager;
 import com.mojang.blaze3d.platform.FramerateLimitTracker;
 import com.mojang.blaze3d.platform.FramerateLimitTracker.FramerateThrottleReason;
 import net.minecraft.client.Minecraft;
@@ -18,7 +18,7 @@ public abstract class AutismFramerateLimitTrackerMixin {
    private void autism$applyFpsAction(CallbackInfoReturnable<Integer> cir) {
       Minecraft minecraft = Minecraft.getInstance();
       if (minecraft != null && minecraft.level != null) {
-         int override = BitSetUtil.load_I();
+         int override = MacroFpsOverrideManager.load_I();
          if (override >= 0) {
             cir.setReturnValue(Math.min(override, cir.getReturnValueI()));
             return;

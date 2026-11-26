@@ -185,9 +185,9 @@ public class HClipAction implements MacroAction {
    }
 
    private static int init_I_Minecraft(Minecraft mc, Vec3 from, Vec3 to, boolean grounded) {
-      List<A.Inner_DataUtil> steps = A.init(from, to, grounded);
+      List<ClipCollisionHelper.Inner_DataUtil> steps = ClipCollisionHelper.init(from, to, grounded);
 
-      for (A.Inner_DataUtil step : steps) {
+      for (ClipCollisionHelper.Inner_DataUtil step : steps) {
          init(mc, new Pos(step.init_Vec3(), step.init_Z(), false));
       }
 
@@ -225,8 +225,8 @@ public class HClipAction implements MacroAction {
          return init_TokenStore_StreamU;
       }
 
-      F.Inner_BufferHelper route = F.init_F_BufferHelper_F_StreamUtil(
-         F.init_F_StreamUtil_Entity(player), start, requestedTarget, radius, escapeRange, routeCap, false
+      TpRoutePlanner.Inner_BufferHelper route = TpRoutePlanner.init_F_BufferHelper_F_StreamUtil(
+         TpRoutePlanner.init_F_StreamUtil_Entity(player), start, requestedTarget, radius, escapeRange, routeCap, false
       );
       return !route.init_Z()
          ? HClipAction.Inner_StreamUtil.init_TokenStore_StreamU_Str(route.init_Str())
@@ -513,8 +513,8 @@ public class HClipAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.HCLIP;
+   public MacroActionType getType() {
+      return MacroActionType.HCLIP;
    }
 
    @Override

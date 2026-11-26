@@ -26,7 +26,7 @@ public class AssertAction implements MacroAction {
       if (!this.init(mc)) {
          String out;
          if (this.message != null && !this.message.isBlank()) {
-            j.Inner_CachePool resolved = n.init_j_CachePool_Str_Minecraft(this.message, mc);
+            MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.message, mc);
             if (!resolved.init_Z()) {
                return;
             }
@@ -48,22 +48,22 @@ public class AssertAction implements MacroAction {
          return false;
       }
 
-      j.Inner_CachePool itemResolution = n.init_j_CachePool_Str_Minecraft(this.itemName, mc);
-      j.Inner_CachePool entityResolution = n.init_j_CachePool_Str_Minecraft(this.entityId, mc);
-      j.Inner_CachePool guiResolution = n.init_j_CachePool_Str_Minecraft(this.guiType, mc);
+      MacroTemplateResolver.Inner_CachePool itemResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.itemName, mc);
+      MacroTemplateResolver.Inner_CachePool entityResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.entityId, mc);
+      MacroTemplateResolver.Inner_CachePool guiResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiType, mc);
       if (itemResolution.init_Z() && entityResolution.init_Z() && guiResolution.init_Z()) {
          boolean var10000;
          switch (this.check) {
             case HELD_ITEM:
                var10000 = mc.player != null
-                  && ArrayUtil.update(itemResolution.init_Str()).init_I_ItemStack_I(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot())
+                  && MacroItemTarget.update(itemResolution.init_Str()).init_I_ItemStack_I(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot())
                      >= 0;
                break;
             case INVENTORY_ITEM:
-               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, ArrayUtil.update(itemResolution.init_Str()));
+               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.update(itemResolution.init_Str()));
                break;
             case GUI_TYPE:
-               var10000 = f.init(mc.gui.screen(), guiResolution.init_Str(), "");
+               var10000 = GuiScreenMatcher.init(mc.gui.screen(), guiResolution.init_Str(), "");
                break;
             case LOOKING_AT_ENTITY:
                var10000 = mc.crosshairPickEntity != null && this.init(mc.crosshairPickEntity, entityResolution.init_Str());
@@ -75,13 +75,13 @@ public class AssertAction implements MacroAction {
                var10000 = mc.player != null && mc.player.getVehicle() != null && this.init(mc.player.getVehicle(), entityResolution.init_Str());
                break;
             case HAS_BUNDLE:
-               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, ArrayUtil.update("minecraft:bundle"));
+               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.update("minecraft:bundle"));
                break;
             case BUNDLE_V2_READY:
                var10000 = this.load(mc);
                break;
             case HAS_WRITABLE_BOOK:
-               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, ArrayUtil.update("minecraft:writable_book"));
+               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.update("minecraft:writable_book"));
                break;
             case CONNECTION:
                var10000 = mc.getConnection() != null;
@@ -140,8 +140,8 @@ public class AssertAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.ASSERT;
+   public MacroActionType getType() {
+      return MacroActionType.ASSERT;
    }
 
    @Override
@@ -159,8 +159,8 @@ public class AssertAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.check = i.init(AssertAction.Inner_DataUtil.class, tag.getStringOr("check", "CONNECTION"), AssertAction.Inner_DataUtil.CONNECTION);
-      this.failureBehavior = i.init(AssertAction.Inner_StreamUtil.class, tag.getStringOr("failureBehavior", "STOP_MACRO"), AssertAction.Inner_StreamUtil.STOP_MACRO);
+      this.check = MacroNbtCodecHelper.init(AssertAction.Inner_DataUtil.class, tag.getStringOr("check", "CONNECTION"), AssertAction.Inner_DataUtil.CONNECTION);
+      this.failureBehavior = MacroNbtCodecHelper.init(AssertAction.Inner_StreamUtil.class, tag.getStringOr("failureBehavior", "STOP_MACRO"), AssertAction.Inner_StreamUtil.STOP_MACRO);
       this.itemName = tag.getStringOr("itemName", "");
       this.guiType = tag.getStringOr("guiType", "ANY");
       this.entityId = tag.getStringOr("entityId", "");

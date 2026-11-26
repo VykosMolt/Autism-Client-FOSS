@@ -119,8 +119,8 @@ public class CraftAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.CRAFT;
+   public MacroActionType getType() {
+      return MacroActionType.CRAFT;
    }
 
    @Override

@@ -8,7 +8,7 @@ import net.minecraft.world.item.ItemStack;
 public class CloseGuiAction implements MacroAction {
    public String guiName = "";
    public String itemName = "";
-   public ArrayUtil itemTarget = new ArrayUtil();
+   public MacroItemTarget itemTarget = new MacroItemTarget();
    public int targetSlot = -1;
    public boolean useItemFilter = false;
    public boolean sendPacket = true;
@@ -19,7 +19,7 @@ public class CloseGuiAction implements MacroAction {
       if (mc.player != null && mc.gui.screen() != null) {
          boolean matchGui = true;
          if (!this.guiName.isEmpty()) {
-            j.Inner_CachePool gui = n.init_j_CachePool_Str_Minecraft(this.guiName, mc);
+            MacroTemplateResolver.Inner_CachePool gui = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiName, mc);
             if (!gui.init_Z()) {
                return;
             }
@@ -28,7 +28,7 @@ public class CloseGuiAction implements MacroAction {
          }
 
          boolean matchItem = true;
-         ArrayUtil target = this.init().init_ArrayUtil_Minecraft(mc);
+         MacroItemTarget target = this.init().init_ArrayUtil_Minecraft(mc);
          if (!this.useItemFilter || target != null) {
             if (this.useItemFilter && (target.init_Z() || target.update())) {
                matchItem = false;
@@ -62,8 +62,8 @@ public class CloseGuiAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.CLOSE_GUI;
+   public MacroActionType getType() {
+      return MacroActionType.CLOSE_GUI;
    }
 
    @Override
@@ -71,7 +71,7 @@ public class CloseGuiAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "CLOSE_GUI");
       tag.putString("guiName", this.guiName);
-      ArrayUtil target = this.init();
+      MacroItemTarget target = this.init();
       if (target.init_Z() || target.update()) {
          tag.put("itemName", target.init_CompoundTag());
       }
@@ -88,13 +88,13 @@ public class CloseGuiAction implements MacroAction {
          this.guiName = tag.getStringOr("guiName", "");
       }
 
-      this.itemTarget = tag.getCompound("itemName").map(ArrayUtil::init_ArrayUtil_CompoundTag).orElseGet(() -> {
+      this.itemTarget = tag.getCompound("itemName").map(MacroItemTarget::init_ArrayUtil_CompoundTag).orElseGet(() -> {
          int legacySlot = tag.contains("targetSlot") ? tag.getIntOr("targetSlot", -1) : -1;
          String legacyName = tag.getStringOr("itemName", "");
          if (legacySlot >= 0 && !legacyName.isBlank()) {
-            return ArrayUtil.update("#" + legacySlot + "|" + legacyName);
+            return MacroItemTarget.update("#" + legacySlot + "|" + legacyName);
          } else {
-            return legacySlot >= 0 ? ArrayUtil.init_ArrayUtil_I(legacySlot) : ArrayUtil.update(legacyName);
+            return legacySlot >= 0 ? MacroItemTarget.init_ArrayUtil_I(legacySlot) : MacroItemTarget.update(legacyName);
          }
       });
       this.itemName = this.itemTarget.write_Str();
@@ -135,14 +135,14 @@ public class CloseGuiAction implements MacroAction {
       this.init = e;
    }
 
-   private ArrayUtil init() {
+   private MacroItemTarget init() {
       if (this.itemTarget == null || !this.itemTarget.init_Z() && !this.itemTarget.update()) {
          if (this.targetSlot >= 0 && !this.itemName.isBlank()) {
-            this.itemTarget = ArrayUtil.update("#" + this.targetSlot + "|" + this.itemName);
+            this.itemTarget = MacroItemTarget.update("#" + this.targetSlot + "|" + this.itemName);
          } else if (this.targetSlot >= 0) {
-            this.itemTarget = ArrayUtil.init_ArrayUtil_I(this.targetSlot);
+            this.itemTarget = MacroItemTarget.init_ArrayUtil_I(this.targetSlot);
          } else {
-            this.itemTarget = ArrayUtil.update(this.itemName);
+            this.itemTarget = MacroItemTarget.update(this.itemName);
          }
 
          return this.itemTarget;

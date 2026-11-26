@@ -27,8 +27,8 @@ public class TickSyncAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.TICK_SYNC;
+   public MacroActionType getType() {
+      return MacroActionType.TICK_SYNC;
    }
 
    @Override

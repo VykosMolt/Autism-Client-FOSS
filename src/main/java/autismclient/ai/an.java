@@ -5,7 +5,7 @@ import autismclient.api.macro.MacroActionRegistry;
 import autismclient.gui.macro.editor.ActionFieldSchema;
 import autismclient.gui.macro.editor.FieldDef;
 import autismclient.util.macro.MacroAction;
-import autismclient.util.macro.StreamGate;
+import autismclient.util.macro.MacroActionType;
 import autismclient.util.macro.MacroCondition;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -219,7 +219,7 @@ public final class an {
 
          ActionFieldSchema schema;
          try {
-            schema = autismclient.gui.macro.editor.ActionFieldRegistry.init(StreamGate.valueOf(id));
+            schema = autismclient.gui.macro.editor.ActionFieldRegistry.init(MacroActionType.valueOf(id));
          } catch (IllegalArgumentException e) {
             schema = MacroActionRegistry.schema(id);
          }
@@ -362,7 +362,7 @@ public final class an {
       }
    }
 
-   public static String init(StreamGate type) {
+   public static String init(MacroActionType type) {
       String var10000;
       switch (type) {
          case REPEAT:

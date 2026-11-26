@@ -139,7 +139,7 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
    private String read_Str;
 
    private static int init_I() {
-      return autismclient.util.FileCache.init_I_I(autismclient.util.macro.ab.init_I());
+      return autismclient.util.FileCache.init_I_I(autismclient.util.macro.ServerTickPhaseTracker.init_I());
    }
 
    public AnchorAuraModule() {
@@ -1094,7 +1094,7 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
 
    private int load_I() {
       return autismclient.util.NetHelper.init_I_I(
-         this.init_I_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore.PLACE), this.integer("switch-delay"), autismclient.util.macro.ab.init_I()
+         this.init_I_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore.PLACE), this.integer("switch-delay"), autismclient.util.macro.ServerTickPhaseTracker.init_I()
       );
    }
 
@@ -1104,7 +1104,7 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
          this.init_I_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore.CHARGE),
          this.init_I_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore.DETONATE),
          this.integer("switch-delay"),
-         autismclient.util.macro.ab.init_I(),
+         autismclient.util.macro.ServerTickPhaseTracker.init_I(),
          shielded
       );
    }
@@ -1499,7 +1499,7 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
          this.valid = tick;
       }
 
-      this.init_StateCache.load(this.init_Obj(), tick, autismclient.util.macro.ab.init_I());
+      this.init_StateCache.load(this.init_Obj(), tick, autismclient.util.macro.ServerTickPhaseTracker.init_I());
    }
 
    private Object init_Obj() {
@@ -2346,7 +2346,7 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
    }
 
    private AABB init_AABB_LivingEntity(LivingEntity enemy) {
-      int horizon = Math.min(12, 6 + (int)Math.ceil(autismclient.util.macro.ab.init_I() / 50.0));
+      int horizon = Math.min(12, 6 + (int)Math.ceil(autismclient.util.macro.ServerTickPhaseTracker.init_I() / 50.0));
       return this.init_TableIndex.init_AABB_LivingEntity(enemy, ck.init_ck().state_I(), horizon, 2.0);
    }
 

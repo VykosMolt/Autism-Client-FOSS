@@ -55,8 +55,8 @@ public class JumpAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.JUMP;
+   public MacroActionType getType() {
+      return MacroActionType.JUMP;
    }
 
    @Override

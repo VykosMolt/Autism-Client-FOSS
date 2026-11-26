@@ -13,12 +13,12 @@ public interface MacroAction {
 
    void fromTag(CompoundTag var1);
 
-   default StreamGate getType() {
+   default MacroActionType getType() {
       return null;
    }
 
    default String getTypeId() {
-      StreamGate type = this.getType();
+      MacroActionType type = this.getType();
       return type != null ? type.name() : this.getClass().getName();
    }
 

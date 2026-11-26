@@ -3,11 +3,11 @@ package autismclient.util.macro;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
-public class SneakAction implements E, MacroAction {
+public class SneakAction implements PacketOrderAware, MacroAction {
    public boolean sneak = true;
    private boolean init = true;
    public boolean persistent = false;
-   public volatile D packetOrder = D.INSTANT;
+   public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
 
    public SneakAction() {
    }
@@ -30,7 +30,7 @@ public class SneakAction implements E, MacroAction {
       tag.putBoolean("sneak", this.sneak);
       tag.putBoolean("persistent", this.persistent);
       tag.putBoolean("enabled", this.init);
-      E.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
       return tag;
    }
 
@@ -48,16 +48,16 @@ public class SneakAction implements E, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      this.packetOrder = E.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.SNEAK;
+   public MacroActionType getType() {
+      return MacroActionType.SNEAK;
    }
 
    @Override
-   public D init_D() {
+   public PacketOrderMode init_D() {
       return this.packetOrder;
    }
 

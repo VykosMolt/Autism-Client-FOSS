@@ -12,7 +12,7 @@ import autismclient.commands.Command;
 import autismclient.gui.macro.editor.ActionFieldSchema;
 import autismclient.modules.Module;
 import autismclient.util.macro.MacroAction;
-import autismclient.util.macro.StreamGate;
+import autismclient.util.macro.MacroActionType;
 import com.google.gson.JsonArray;
 import com.mojang.serialization.JsonOps;
 import java.util.ArrayList;
@@ -117,7 +117,7 @@ public final class AiCatalog {
             init(entries, d, "{}");
          }
 
-         for (StreamGate type : StreamGate.values()) {
+         for (MacroActionType type : MacroActionType.values()) {
             CompoundTag tag = new CompoundTag();
             tag.putString("type", type.name());
             MacroAction action = autismclient.util.AutismMacro.init_MacroAction_CompoundTag(tag);
@@ -295,7 +295,7 @@ public final class AiCatalog {
          fields,
          "Use serializedDefaults as the wire format. Validate fields, control flow, live targets, and action-specific world prerequisites before execution.",
          semantics,
-         contributed == null ? autismclient.util.macro.DataPipe.init(action).stream().map(Enum::name).toList() : contributed.resources(),
+         contributed == null ? autismclient.util.macro.MacroResourceClassifier.init(action).stream().map(Enum::name).toList() : contributed.resources(),
          "Verify the macro run's terminal status, then check the intended game-state postcondition.",
          "Inspect the failed step and live targets; missing add-ons or unavailable navigation support cannot be repaired by repeating the same action.",
          defaults,

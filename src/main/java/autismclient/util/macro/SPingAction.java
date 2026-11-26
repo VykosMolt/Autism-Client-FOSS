@@ -39,7 +39,7 @@ public class SPingAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       long owner = MacroExecutor.load_J();
-      J.init(owner < 0L ? 0L : owner, Math.max(0, this.pingDelayMs), this.realIncoming, this.realOutgoing, this.init_J_3() * 1000000L);
+      PingSpoofScheduler.init(owner < 0L ? 0L : owner, Math.max(0, this.pingDelayMs), this.realIncoming, this.realOutgoing, this.init_J_3() * 1000000L);
    }
 
    @Override
@@ -103,8 +103,8 @@ public class SPingAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.SPING;
+   public MacroActionType getType() {
+      return MacroActionType.SPING;
    }
 
    @Override

@@ -27,8 +27,8 @@ public class RevisionSyncAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.REVISION_SYNC;
+   public MacroActionType getType() {
+      return MacroActionType.REVISION_SYNC;
    }
 
    @Override

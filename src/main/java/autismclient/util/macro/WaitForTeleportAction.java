@@ -4,7 +4,7 @@ import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
-public class WaitForTeleportAction implements CacheEntry, MacroAction {
+public class WaitForTeleportAction implements CaptureOutputAction, MacroAction {
    public double minDistance = 0.0;
    public boolean horizontalOnly = false;
    public boolean listenDuringPreviousAction = false;
@@ -22,7 +22,7 @@ public class WaitForTeleportAction implements CacheEntry, MacroAction {
       tag.putDouble("minDistance", this.minDistance);
       tag.putBoolean("horizontalOnly", this.horizontalOnly);
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -35,13 +35,13 @@ public class WaitForTeleportAction implements CacheEntry, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_TELEPORT;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_TELEPORT;
    }
 
    @Override

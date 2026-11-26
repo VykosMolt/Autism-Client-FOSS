@@ -8,9 +8,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
-public class PlaceAction implements E, M, MacroAction, aP {
+public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroAction, GuiWaitAware {
    public String itemName = "";
-   public ArrayUtil itemTarget = new ArrayUtil();
+   public MacroItemTarget itemTarget = new MacroItemTarget();
    public BlockPos blockPos = BlockPos.ZERO;
    public Direction direction = Direction.UP;
    public boolean manualDirection = false;
@@ -21,10 +21,10 @@ public class PlaceAction implements E, M, MacroAction, aP {
    public boolean sneak = false;
    public String sneakMode = "Packet";
    public boolean interact = false;
-   public TaskTimer interactTiming = TaskTimer.AFTER;
+   public InteractTimingMode interactTiming = InteractTimingMode.AFTER;
    public int interactCustomMs = 0;
    public String guiName = "";
-   public volatile D packetOrder = D.INSTANT;
+   public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
    private boolean init = true;
    public boolean raycast = false;
 
@@ -39,7 +39,7 @@ public class PlaceAction implements E, M, MacroAction, aP {
          BlockHitResult hit = init(mc, this.blockPos, this.manualDirection, this.direction);
          if (hit != null) {
             int originalSlot = mc.player.getInventory().getSelectedSlot();
-            ArrayUtil target = this.init_ArrayUtil().init_ArrayUtil_Minecraft(mc);
+            MacroItemTarget target = this.init_ArrayUtil().init_ArrayUtil_Minecraft(mc);
             if (target != null) {
                init(mc, target);
                boolean sneaking = this.sneak;
@@ -98,7 +98,7 @@ public class PlaceAction implements E, M, MacroAction, aP {
       return init(mc, this.blockPos, this.manualDirection, this.direction);
    }
 
-   private static void init(Minecraft mc, ArrayUtil target) {
+   private static void init(Minecraft mc, MacroItemTarget target) {
       if (target != null && (target.init_Z() || target.update())) {
          if (target.update()) {
             autismclient.util.aw.init(mc, target, mc.player.getInventory().getSelectedSlot());
@@ -157,13 +157,13 @@ public class PlaceAction implements E, M, MacroAction, aP {
    }
 
    @Override
-   public D init_D() {
+   public PacketOrderMode init_D() {
       return this.packetOrder;
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.PLACE;
+   public MacroActionType getType() {
+      return MacroActionType.PLACE;
    }
 
    @Override
@@ -183,11 +183,11 @@ public class PlaceAction implements E, M, MacroAction, aP {
 
    @Override
    public String getDisplayName() {
-      ArrayUtil target = this.init_ArrayUtil();
+      MacroItemTarget target = this.init_ArrayUtil();
       String item = !target.init_Z() && !target.update() ? "current" : target.load_Str();
       String pos = this.blockPos.getX() + "," + this.blockPos.getY() + "," + this.blockPos.getZ();
       String face = this.manualDirection ? this.direction.name().toLowerCase() : "auto";
-      return "Place " + item + " at " + pos + " " + face + aP.init_Str_aP(this);
+      return "Place " + item + " at " + pos + " " + face + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override
@@ -201,15 +201,15 @@ public class PlaceAction implements E, M, MacroAction, aP {
    }
 
    @Override
-   public M.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
-      return M.Inner_DataUtil.init(this.blockPos);
+   public AimTargetAction.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
+      return AimTargetAction.Inner_DataUtil.init(this.blockPos);
    }
 
    @Override
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "PLACE");
-      ArrayUtil target = this.init_ArrayUtil();
+      MacroItemTarget target = this.init_ArrayUtil();
       if (target.init_Z() || target.update()) {
          tag.put("itemName", target.init_CompoundTag());
       }
@@ -234,20 +234,20 @@ public class PlaceAction implements E, M, MacroAction, aP {
       tag.putInt("interactCustomMs", this.interactCustomMs);
       tag.putString("guiName", this.guiName);
       tag.putBoolean("enabled", this.init);
-      E.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.itemTarget = tag.getCompound("itemName").map(ArrayUtil::init_ArrayUtil_CompoundTag).orElseGet(() -> {
+      this.itemTarget = tag.getCompound("itemName").map(MacroItemTarget::init_ArrayUtil_CompoundTag).orElseGet(() -> {
          String legacyName = tag.getStringOr("itemName", "");
          if (!legacyName.isBlank()) {
-            return ArrayUtil.update(legacyName);
+            return MacroItemTarget.update(legacyName);
          }
 
          int legacySlot = tag.getIntOr("slot", -1);
-         return legacySlot >= 0 ? ArrayUtil.init_ArrayUtil_I(legacySlot) : new ArrayUtil();
+         return legacySlot >= 0 ? MacroItemTarget.init_ArrayUtil_I(legacySlot) : new MacroItemTarget();
       });
       this.itemName = this.itemTarget.write_Str();
       int x = tag.getIntOr("blockX", 0);
@@ -256,19 +256,19 @@ public class PlaceAction implements E, M, MacroAction, aP {
       this.blockPos = new BlockPos(x, y, z);
       this.manualDirection = tag.getBooleanOr("manualDirection", false);
       this.direction = this.manualDirection ? init_Direction_CompoundTag(tag) : Direction.UP;
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
       this.waitForItem = tag.getBooleanOr("waitForItem", true);
       this.silentSwitch = tag.getBooleanOr("silentSwitch", false);
       this.sneak = tag.getBooleanOr("sneak", false);
       this.raycast = tag.getBooleanOr("raycast", false);
       this.sneakMode = tag.getStringOr("sneakMode", "Packet");
       this.interact = tag.getBooleanOr("interact", false);
-      this.interactTiming = TaskTimer.init(tag.getStringOr("interactTiming", "AFTER"), TaskTimer.AFTER);
+      this.interactTiming = InteractTimingMode.init(tag.getStringOr("interactTiming", "AFTER"), InteractTimingMode.AFTER);
       this.interactCustomMs = Math.max(-5000, Math.min(5000, tag.getIntOr("interactCustomMs", 0)));
       this.guiName = tag.getStringOr("guiName", "");
       this.init = tag.getBooleanOr("enabled", true);
-      this.packetOrder = E.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
    }
 
    private static Direction init_Direction_CompoundTag(CompoundTag tag) {
@@ -289,12 +289,12 @@ public class PlaceAction implements E, M, MacroAction, aP {
       return values[Math.max(0, Math.min(values.length - 1, dirOrd))];
    }
 
-   public ArrayUtil init_ArrayUtil() {
+   public MacroItemTarget init_ArrayUtil() {
       if (this.itemTarget != null && (this.itemTarget.init_Z() || this.itemTarget.update())) {
          return this.itemTarget;
       }
 
-      this.itemTarget = ArrayUtil.update(this.itemName);
+      this.itemTarget = MacroItemTarget.update(this.itemName);
       return this.itemTarget;
    }
 }

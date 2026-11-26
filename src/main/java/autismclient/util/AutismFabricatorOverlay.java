@@ -112,7 +112,7 @@ public class AutismFabricatorOverlay extends bj {
    private static final int node = 2;
    private String load_Str = "0";
    private String read_Str = "";
-   private autismclient.util.macro.ArrayUtil init_ArrayUtil = new autismclient.util.macro.ArrayUtil();
+   private autismclient.util.macro.MacroItemTarget init_ArrayUtil = new autismclient.util.macro.MacroItemTarget();
    private String write_Str = "1";
    private String update_Str = "";
    private int task = -1;
@@ -563,7 +563,7 @@ public class AutismFabricatorOverlay extends bj {
          try {
             int stableSlot = Integer.parseInt(text);
             int slotId = aw.read_I(init_Minecraft, stableSlot);
-            autismclient.util.macro.ArrayUtil slotTarget = this.init_ArrayUtil_I(slotId);
+            autismclient.util.macro.MacroItemTarget slotTarget = this.init_ArrayUtil_I(slotId);
             String itemName = slotTarget.init_Str();
             if (!itemName.isEmpty()) {
                this.init_ArrayUtil = slotTarget;
@@ -590,7 +590,7 @@ public class AutismFabricatorOverlay extends bj {
       this.load_k.init_V_Consumer(text -> {
          this.read_Str = text;
          if (this.init_ArrayUtil != null && !text.equals(this.init_ArrayUtil.init_Str())) {
-            this.init_ArrayUtil = this.init_ArrayUtil.write_Z() ? this.init_ArrayUtil.init_ArrayUtil_Str(text) : autismclient.util.macro.ArrayUtil.update(text);
+            this.init_ArrayUtil = this.init_ArrayUtil.write_Z() ? this.init_ArrayUtil.init_ArrayUtil_Str(text) : autismclient.util.macro.MacroItemTarget.update(text);
          }
 
          this.reset_V_2();
@@ -993,22 +993,22 @@ public class AutismFabricatorOverlay extends bj {
    }
 
    private String init_Str_I_2(int slotId) {
-      autismclient.util.macro.ArrayUtil target = this.init_ArrayUtil_I(slotId);
+      autismclient.util.macro.MacroItemTarget target = this.init_ArrayUtil_I(slotId);
       return target.init_Str();
    }
 
-   private autismclient.util.macro.ArrayUtil init_ArrayUtil_I(int slotId) {
+   private autismclient.util.macro.MacroItemTarget init_ArrayUtil_I(int slotId) {
       AbstractContainerMenu handler = this.init_AbstractContainerM();
       if (handler != null && slotId >= 0 && slotId < handler.slots.size()) {
          Slot slot = handler.slots.get(slotId);
          if (slot != null && !slot.getItem().isEmpty()) {
             int visibleSlot = aw.init_I(init_Minecraft, slot.index);
-            return autismclient.util.macro.ArrayUtil.init_ArrayUtil_ItemStack_I(slot.getItem(), visibleSlot);
+            return autismclient.util.macro.MacroItemTarget.init_ArrayUtil_ItemStack_I(slot.getItem(), visibleSlot);
          } else {
-            return new autismclient.util.macro.ArrayUtil();
+            return new autismclient.util.macro.MacroItemTarget();
          }
       } else {
-         return new autismclient.util.macro.ArrayUtil();
+         return new autismclient.util.macro.MacroItemTarget();
       }
    }
 
@@ -1144,7 +1144,7 @@ public class AutismFabricatorOverlay extends bj {
                || this.task >= 0 && option.load_I == this.task) {
                this.init_J_TaskQueue = option;
                this.init_ItemStack = option.init_ItemStack.copy();
-               this.init_ArrayUtil = autismclient.util.macro.ArrayUtil.init_ArrayUtil_ItemStack_I(option.init_ItemStack, -1);
+               this.init_ArrayUtil = autismclient.util.macro.MacroItemTarget.init_ArrayUtil_ItemStack_I(option.init_ItemStack, -1);
                this.read_Str = option.load_Str;
                this.sync_Str = option.init_Str;
                this.task = option.init_I;
@@ -1209,7 +1209,7 @@ public class AutismFabricatorOverlay extends bj {
       if (option != null) {
          this.init_J_TaskQueue = option;
          this.init_ItemStack = option.init_ItemStack.copy();
-         this.init_ArrayUtil = autismclient.util.macro.ArrayUtil.init_ArrayUtil_ItemStack_I(option.init_ItemStack, -1);
+         this.init_ArrayUtil = autismclient.util.macro.MacroItemTarget.init_ArrayUtil_ItemStack_I(option.init_ItemStack, -1);
          this.read_Str = option.load_Str;
          this.task = option.init_I;
          this.sync_Str = option.init_Str;
@@ -1234,7 +1234,7 @@ public class AutismFabricatorOverlay extends bj {
       this.data = -1;
       this.init_J_TaskQueue = null;
       this.init_ItemStack = ItemStack.EMPTY;
-      this.init_ArrayUtil = new autismclient.util.macro.ArrayUtil();
+      this.init_ArrayUtil = new autismclient.util.macro.MacroItemTarget();
       this.task = -1;
       this.sync_Str = "";
    }
@@ -1828,7 +1828,7 @@ public class AutismFabricatorOverlay extends bj {
    public void init_V_Slot_I(Slot slot, int button) {
       if (slot != null && !this.poll_Z_5()) {
          int stableSlotId = aw.init_I(init_Minecraft, slot.index);
-         autismclient.util.macro.ArrayUtil clickedTarget = this.init_ArrayUtil_I(slot.index);
+         autismclient.util.macro.MacroItemTarget clickedTarget = this.init_ArrayUtil_I(slot.index);
          String itemName = clickedTarget.init_Str();
          if (this.init_AutismFabricatorOv.write()) {
             AbstractContainerMenu handler = this.init_AbstractContainerM();
@@ -1867,7 +1867,7 @@ public class AutismFabricatorOverlay extends bj {
 
                this.init_V_Str_ChatFormatting("Selected slot " + stableSlotId + ": " + itemName, ChatFormatting.GREEN);
             } else {
-               this.init_ArrayUtil = new autismclient.util.macro.ArrayUtil();
+               this.init_ArrayUtil = new autismclient.util.macro.MacroItemTarget();
                this.read_Str = "";
                if (this.load_k != null) {
                   this.load_k.init_V_Str("");
@@ -1933,7 +1933,7 @@ public class AutismFabricatorOverlay extends bj {
             dropAction.dropCount = this.flush_Z ? 0 : repeats;
             String entry = enteredSlot != null ? "#" + enteredSlot + (!itemName.isEmpty() ? "|" + itemName : "") : itemName;
             if (!entry.isBlank()) {
-               autismclient.util.macro.ArrayUtil target = this.init_ArrayUtil_Integer_Str(enteredSlot, itemName);
+               autismclient.util.macro.MacroItemTarget target = this.init_ArrayUtil_Integer_Str(enteredSlot, itemName);
                entry = target.write_Str();
                dropAction.itemTargets.add(target);
                dropAction.itemNames.add(entry);
@@ -1955,7 +1955,7 @@ public class AutismFabricatorOverlay extends bj {
          }
 
          if (!itemName.isEmpty()) {
-            autismclient.util.macro.ArrayUtil target = this.init_ArrayUtil_Integer_Str(enteredSlot, itemName);
+            autismclient.util.macro.MacroItemTarget target = this.init_ArrayUtil_Integer_Str(enteredSlot, itemName);
             itemAction.itemTargets.add(target);
             itemAction.itemNames.add(target.write_Str());
             itemAction.itemTimes.add(repeats);
@@ -1970,11 +1970,11 @@ public class AutismFabricatorOverlay extends bj {
       }
    }
 
-   private autismclient.util.macro.ArrayUtil init_ArrayUtil_Integer_Str(Integer enteredSlot, String itemName) {
+   private autismclient.util.macro.MacroItemTarget init_ArrayUtil_Integer_Str(Integer enteredSlot, String itemName) {
       String safeName = itemName == null ? "" : itemName.trim();
-      autismclient.util.macro.ArrayUtil target = this.init_ArrayUtil != null && safeName.equals(this.init_ArrayUtil.init_Str())
+      autismclient.util.macro.MacroItemTarget target = this.init_ArrayUtil != null && safeName.equals(this.init_ArrayUtil.init_Str())
          ? this.init_ArrayUtil.init_ArrayUtil()
-         : autismclient.util.macro.ArrayUtil.update(safeName);
+         : autismclient.util.macro.MacroItemTarget.update(safeName);
       if (enteredSlot != null) {
          target.init_I = enteredSlot;
       }
@@ -2322,7 +2322,7 @@ public class AutismFabricatorOverlay extends bj {
 
    private boolean init_Z_ItemStack_Str(ItemStack stack, String query) {
       return stack != null && !stack.isEmpty() && query != null && !query.isBlank()
-         ? autismclient.util.macro.ArrayUtil.update(query).init_I_ItemStack_I(stack, -1) >= 0
+         ? autismclient.util.macro.MacroItemTarget.update(query).init_I_ItemStack_I(stack, -1) >= 0
          : false;
    }
 
@@ -2479,7 +2479,7 @@ public class AutismFabricatorOverlay extends bj {
             return null;
          }
 
-         autismclient.util.macro.ArrayUtil target = autismclient.util.macro.ArrayUtil.update(searchName);
+         autismclient.util.macro.MacroItemTarget target = autismclient.util.macro.MacroItemTarget.update(searchName);
          Integer bestMatch = null;
          int bestScore = -1;
 

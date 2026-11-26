@@ -1786,7 +1786,7 @@ public final class f {
          for (int i = 0; i < actions.size(); i++) {
             MacroAction action = actions.get(i);
             if (action != null && action.isEnabled()) {
-               return autismclient.util.macro.c.init(action) ? i : -1;
+               return autismclient.util.macro.RaceEligibilityChecker.init(action) ? i : -1;
             }
          }
 
@@ -1877,7 +1877,7 @@ public final class f {
          @Override
          public CompoundTag toTag() {
             CompoundTag tag = new CompoundTag();
-            tag.putString("type", autismclient.util.macro.StreamGate.TOGGLE_MODULE.name());
+            tag.putString("type", autismclient.util.macro.MacroActionType.TOGGLE_MODULE.name());
             return tag;
          }
 
@@ -1886,8 +1886,8 @@ public final class f {
          }
 
          @Override
-         public autismclient.util.macro.StreamGate getType() {
-            return autismclient.util.macro.StreamGate.TOGGLE_MODULE;
+         public autismclient.util.macro.MacroActionType getType() {
+            return autismclient.util.macro.MacroActionType.TOGGLE_MODULE;
          }
 
          @Override
@@ -5467,7 +5467,7 @@ public final class f {
       @Override
       public void onEnable() {
          autismclient.util.al.init_V();
-         autismclient.util.macro.ab.load_V();
+         autismclient.util.macro.ServerTickPhaseTracker.load_V();
       }
 
       @Override

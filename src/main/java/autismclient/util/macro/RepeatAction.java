@@ -46,8 +46,8 @@ public class RepeatAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.REPEAT;
+   public MacroActionType getType() {
+      return MacroActionType.REPEAT;
    }
 
    @Override

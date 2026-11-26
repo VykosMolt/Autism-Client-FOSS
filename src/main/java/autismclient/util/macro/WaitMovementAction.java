@@ -85,8 +85,8 @@ public class WaitMovementAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_MOVEMENT;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_MOVEMENT;
    }
 
    @Override
@@ -107,13 +107,13 @@ public class WaitMovementAction implements MacroAction {
       tag.putBoolean("horizontalOnly", this.horizontalOnly);
       tag.putString("targetDimension", this.targetDimension == null ? "" : this.targetDimension);
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = i.init(WaitMovementAction.Inner_DataUtil.class, tag.getStringOr("mode", "POSITION"), WaitMovementAction.Inner_DataUtil.POSITION);
+      this.mode = MacroNbtCodecHelper.init(WaitMovementAction.Inner_DataUtil.class, tag.getStringOr("mode", "POSITION"), WaitMovementAction.Inner_DataUtil.POSITION);
       this.f_x_D = tag.getDoubleOr("x", 0.0);
       this.f_y_D = tag.getDoubleOr("y", 0.0);
       this.f_z_D = tag.getDoubleOr("z", 0.0);
@@ -130,7 +130,7 @@ public class WaitMovementAction implements MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
    }
 
    @Override

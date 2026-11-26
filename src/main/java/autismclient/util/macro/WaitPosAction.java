@@ -3,7 +3,7 @@ package autismclient.util.macro;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
-public class WaitPosAction implements CacheEntry, MacroAction {
+public class WaitPosAction implements CaptureOutputAction, MacroAction {
    public double f_x_D = 0.0;
    public double f_y_D = 0.0;
    public double f_z_D = 0.0;
@@ -43,7 +43,7 @@ public class WaitPosAction implements CacheEntry, MacroAction {
       tag.putFloat("pitch", this.pitch);
       tag.putFloat("rotLeeway", this.rotLeeway);
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -86,13 +86,13 @@ public class WaitPosAction implements CacheEntry, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_POS;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_POS;
    }
 
    @Override

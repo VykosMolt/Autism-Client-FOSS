@@ -16325,7 +16325,7 @@ public final class ScaffoldModule extends Module {
          }
 
          int tick = ck.init_ck().state_I();
-         boolean settled = load_Z_I(this.read_IArr[slot], this.f_B_I, this.write_IArr[slot], tick, autismclient.util.macro.ab.init_I())
+         boolean settled = load_Z_I(this.read_IArr[slot], this.f_B_I, this.write_IArr[slot], tick, autismclient.util.macro.ServerTickPhaseTracker.init_I())
             && (this.f_C_I != slot || !this.poll_Z_3());
          this.load_IArr[slot] = init_I_I_2(this.load_IArr[slot], visible, settled);
          return this.load_IArr[slot];

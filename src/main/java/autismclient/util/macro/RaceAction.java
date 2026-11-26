@@ -15,7 +15,7 @@ public class RaceAction implements MacroAction {
    public int bodyCount = 0;
    public int timeoutMs = 10000;
    public String conditionType = RaceAction.Inner_DataUtil.WAIT_PACKET.name();
-   public String actionType = StreamGate.PACKET_CLICK.name();
+   public String actionType = MacroActionType.PACKET_CLICK.name();
    public ArrayList<String> raceSteps = new ArrayList<>();
    public ArrayList<String> conditionTypes = new ArrayList<>();
    public ArrayList<String> actionTypes = new ArrayList<>();
@@ -36,10 +36,10 @@ public class RaceAction implements MacroAction {
       tag.putInt("bodyCount", Math.max(0, this.bodyCount));
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
       tag.putString("conditionType", this.conditionType == null ? RaceAction.Inner_DataUtil.WAIT_PACKET.name() : this.conditionType);
-      tag.putString("actionType", this.actionType == null ? StreamGate.PACKET_CLICK.name() : this.actionType);
-      tag.put("raceSteps", i.init(this.read()));
-      tag.put("conditionTypes", i.init(this.init_List_2()));
-      tag.put("actionTypes", i.init(this.write()));
+      tag.putString("actionType", this.actionType == null ? MacroActionType.PACKET_CLICK.name() : this.actionType);
+      tag.put("raceSteps", MacroNbtCodecHelper.init(this.read()));
+      tag.put("conditionTypes", MacroNbtCodecHelper.init(this.init_List_2()));
+      tag.put("actionTypes", MacroNbtCodecHelper.init(this.write()));
       MacroAction trigger = this.triggerAction == null ? new DelayAction(0) : this.triggerAction;
       if (!this.init_List_2().isEmpty()) {
          tag.put("triggerAction", trigger.toTag());
@@ -55,24 +55,24 @@ public class RaceAction implements MacroAction {
       this.bodyCount = Math.max(0, tag.getIntOr("bodyCount", 0));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 10000));
       this.conditionType = read_Str(tag.getStringOr("conditionType", tag.getStringOr("triggerType", RaceAction.Inner_DataUtil.WAIT_PACKET.name())));
-      this.actionType = tag.getStringOr("actionType", StreamGate.PACKET_CLICK.name());
-      this.raceSteps = i.init(tag.getList("raceSteps").orElse(new ListTag()));
+      this.actionType = tag.getStringOr("actionType", MacroActionType.PACKET_CLICK.name());
+      this.raceSteps = MacroNbtCodecHelper.init(tag.getList("raceSteps").orElse(new ListTag()));
       this.raceSteps.removeIf(s -> s == null || s.isBlank());
       boolean hasConditionTypes = tag.contains("conditionTypes");
-      this.conditionTypes = i.init(tag.getList("conditionTypes").orElse(new ListTag()));
+      this.conditionTypes = MacroNbtCodecHelper.init(tag.getList("conditionTypes").orElse(new ListTag()));
       this.conditionTypes.removeIf(s -> s == null || s.isBlank());
       if (!hasConditionTypes && this.conditionType != null && !this.conditionType.isBlank()) {
          this.conditionTypes.add(this.conditionType);
       }
 
-      this.actionTypes = i.init(tag.getList("actionTypes").orElse(new ListTag()));
+      this.actionTypes = MacroNbtCodecHelper.init(tag.getList("actionTypes").orElse(new ListTag()));
       if (this.actionTypes.isEmpty() && this.actionType != null && !this.actionType.isBlank()) {
          this.actionTypes.add(this.actionType);
       }
 
       this.actionTypes.removeIf(s -> s == null || s.isBlank());
       if (this.actionTypes.isEmpty()) {
-         this.actionTypes.add(StreamGate.PACKET_CLICK.name());
+         this.actionTypes.add(MacroActionType.PACKET_CLICK.name());
       }
 
       this.conditionTypes.replaceAll(RaceAction::read_Str);
@@ -89,7 +89,7 @@ public class RaceAction implements MacroAction {
          this.raceSteps.removeIf(s -> s == null || s.isBlank());
          this.load_V();
          if (this.actionTypes.isEmpty()) {
-            this.actionTypes.add(StreamGate.PACKET_CLICK.name());
+            this.actionTypes.add(MacroActionType.PACKET_CLICK.name());
          }
       }
 
@@ -251,7 +251,7 @@ public class RaceAction implements MacroAction {
       }
 
       if (out.isEmpty()) {
-         out.add(this.actionType != null && !this.actionType.isBlank() ? this.actionType.trim().toUpperCase(Locale.ROOT) : StreamGate.PACKET_CLICK.name());
+         out.add(this.actionType != null && !this.actionType.isBlank() ? this.actionType.trim().toUpperCase(Locale.ROOT) : MacroActionType.PACKET_CLICK.name());
       }
 
       return out;
@@ -289,11 +289,11 @@ public class RaceAction implements MacroAction {
    }
 
    public static MacroAction load_MacroAction(String typeName) {
-      StreamGate type;
+      MacroActionType type;
       try {
-         type = StreamGate.valueOf(typeName == null ? "" : typeName.trim().toUpperCase(Locale.ROOT));
+         type = MacroActionType.valueOf(typeName == null ? "" : typeName.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException ignored) {
-         type = StreamGate.PACKET_CLICK;
+         type = MacroActionType.PACKET_CLICK;
       }
 
       MacroAction var10000;
@@ -881,8 +881,8 @@ public class RaceAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.RACE;
+   public MacroActionType getType() {
+      return MacroActionType.RACE;
    }
 
    @Override

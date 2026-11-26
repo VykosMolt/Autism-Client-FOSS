@@ -18,7 +18,7 @@ public final class PingSpoofModule extends Module {
 
    @Override
    public void onDisable() {
-      autismclient.util.macro.J.read_V();
+      autismclient.util.macro.PingSpoofScheduler.read_V();
    }
 
    @Override
@@ -29,6 +29,6 @@ public final class PingSpoofModule extends Module {
    }
 
    private void init() {
-      autismclient.util.macro.J.load(this.integer("delay"), this.bool("real-incoming"), this.bool("real-outgoing"));
+      autismclient.util.macro.PingSpoofScheduler.load(this.integer("delay"), this.bool("real-incoming"), this.bool("real-outgoing"));
    }
 }

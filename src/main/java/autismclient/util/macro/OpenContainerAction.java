@@ -13,7 +13,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 
-public class OpenContainerAction implements M, MacroAction, aP {
+public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWaitAware {
    public OpenContainerAction.Inner_DataUtil targetMode = OpenContainerAction.Inner_DataUtil.BLOCK;
    public BlockPos blockPos = BlockPos.ZERO;
    public String entityTarget = "";
@@ -36,15 +36,15 @@ public class OpenContainerAction implements M, MacroAction, aP {
    }
 
    @Override
-   public M.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
+   public AimTargetAction.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
       if (this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK) {
-         return M.Inner_DataUtil.init(this.blockPos);
+         return AimTargetAction.Inner_DataUtil.init(this.blockPos);
       } else {
          autismclient.util.E target = this.targetMode == OpenContainerAction.Inner_DataUtil.LAST_TARGET ? ck.init_ck().init_E() : this.init_E_2();
          if (target == null) {
             return null;
          } else {
-            return target.init_Z() ? M.Inner_DataUtil.init(target.init_BlockPos()) : M.Inner_DataUtil.init(target.init_Entity_Minecraft(mc));
+            return target.init_Z() ? AimTargetAction.Inner_DataUtil.init(target.init_BlockPos()) : AimTargetAction.Inner_DataUtil.init(target.init_Entity_Minecraft(mc));
          }
       }
    }
@@ -188,8 +188,8 @@ public class OpenContainerAction implements M, MacroAction, aP {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.OPEN_CONTAINER;
+   public MacroActionType getType() {
+      return MacroActionType.OPEN_CONTAINER;
    }
 
    @Override
@@ -227,7 +227,7 @@ public class OpenContainerAction implements M, MacroAction, aP {
 
       String targetLabel = var10000;
       String base = "Open Container " + targetLabel;
-      return base + aP.init_Str_aP(this);
+      return base + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override
@@ -289,8 +289,8 @@ public class OpenContainerAction implements M, MacroAction, aP {
       }
 
       this.waitForTarget = tag.getBooleanOr("waitForTarget", true);
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, true);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, true);
       this.guiName = tag.getStringOr("guiName", "");
       this.raycast = tag.getBooleanOr("raycast", false);
       this.init = tag.getBooleanOr("enabled", true);

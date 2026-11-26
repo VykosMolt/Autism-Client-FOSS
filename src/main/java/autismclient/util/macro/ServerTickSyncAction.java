@@ -14,8 +14,8 @@ public class ServerTickSyncAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.SERVER_TICK_SYNC;
+   public MacroActionType getType() {
+      return MacroActionType.SERVER_TICK_SYNC;
    }
 
    @Override

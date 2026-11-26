@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 
-public final class am implements autismclient.util.macro.k.Inner_DataUtil {
+public final class am implements autismclient.util.macro.MacroToolBridge.Inner_DataUtil {
    private static final am init_am = new am();
-   private volatile List<autismclient.util.macro.k.Inner_TaskQueue> init_List = List.of();
+   private volatile List<autismclient.util.macro.MacroToolBridge.Inner_TaskQueue> init_List = List.of();
    private volatile List<String> load = List.of();
    private String init_Str = "";
    private final ArrayDeque<am.Inner_DataUtil> init_ArrayDeque = new ArrayDeque<>();
@@ -24,12 +24,12 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
    }
 
    public static void init_V() {
-      autismclient.util.macro.k.init(init_am);
+      autismclient.util.macro.MacroToolBridge.init(init_am);
       init_am.load_V_Minecraft(Minecraft.getInstance());
    }
 
    @Override
-   public List<autismclient.util.macro.k.Inner_TaskQueue> init_List() {
+   public List<autismclient.util.macro.MacroToolBridge.Inner_TaskQueue> init_List() {
       return this.init_List;
    }
 
@@ -39,7 +39,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
    }
 
    @Override
-   public autismclient.util.macro.k.Inner_StreamUtil init_k_StreamUtil() {
+   public autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil() {
       return o.init_k_StreamUtil();
    }
 
@@ -54,9 +54,9 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
             .stream()
             .filter(e -> init_Z_Str(e.contract().id()) && e.contract().classification() != AiCapabilityDescriptor.Classification.DISCOVER_ONLY)
             .map(
-               e -> new autismclient.util.macro.k.Inner_TaskQueue(e.contract().id(), load_Str_Str(e.contract().id()), init_Str_Str(e.contract().inputSchema()))
+               e -> new autismclient.util.macro.MacroToolBridge.Inner_TaskQueue(e.contract().id(), load_Str_Str(e.contract().id()), init_Str_Str(e.contract().inputSchema()))
             )
-            .sorted(Comparator.comparing(autismclient.util.macro.k.Inner_TaskQueue::load).thenComparing(autismclient.util.macro.k.Inner_TaskQueue::init))
+            .sorted(Comparator.comparing(autismclient.util.macro.MacroToolBridge.Inner_TaskQueue::load).thenComparing(autismclient.util.macro.MacroToolBridge.Inner_TaskQueue::init))
             .toList();
          this.init_Str = snapshot.revision();
       }
@@ -105,7 +105,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
    }
 
    @Override
-   public autismclient.util.macro.k.Inner_StreamUtil init(String id, String argumentsJson) {
+   public autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init(String id, String argumentsJson) {
       if (!init_Z_Str(id)) {
          throw new IllegalArgumentException("Choose a direct tool; use Start Macro for another macro");
       }
@@ -124,7 +124,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
    private void init_V_am_DataUtil(am.Inner_DataUtil request) {
       this.init_ArrayDeque.remove(request);
       if (request.load == null) {
-         request.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.CANCELLED, "Tool cancelled before starting", "{}");
+         request.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.CANCELLED, "Tool cancelled before starting", "{}");
       } else {
          o.init(request.load);
       }
@@ -135,12 +135,12 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
       init_am.init_ArrayDeque.clear();
 
       for (am.Inner_DataUtil request : cancelled) {
-         request.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.CANCELLED, reason, "{}");
+         request.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.CANCELLED, reason, "{}");
       }
    }
 
    @Override
-   public CompletableFuture<autismclient.util.macro.k.Inner_CachePool> init(autismclient.util.macro.k.Inner_StreamUtil job, String operation) {
+   public CompletableFuture<autismclient.util.macro.MacroToolBridge.Inner_CachePool> init(autismclient.util.macro.MacroToolBridge.Inner_StreamUtil job, String operation) {
       if (job.load().isDone()) {
          return job.load();
       } else if (!List.of("STOP", "PAUSE", "RESUME").contains(operation)) {
@@ -162,14 +162,14 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
                   queued.init_Z = "PAUSE".equals(operation);
                   queued.init_k_StreamUtil
                      .init(
-                        queued.init_Z ? autismclient.util.macro.k.Inner_ConfigStore.PAUSED : autismclient.util.macro.k.Inner_ConfigStore.WAITING,
+                        queued.init_Z ? autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.PAUSED : autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING,
                         queued.init_Z ? "Paused before starting" : "Waiting for tool runner",
                         "{}"
                      );
                   return queued.init_k_StreamUtil.init_k_CachePool();
                }
 
-               autismclient.util.macro.k.Inner_StreamUtil inner = this.init_am_DataUtil != null && this.init_am_DataUtil.init_k_StreamUtil == job
+               autismclient.util.macro.MacroToolBridge.Inner_StreamUtil inner = this.init_am_DataUtil != null && this.init_am_DataUtil.init_k_StreamUtil == job
                   ? this.init_am_DataUtil.load
                   : job;
                if (o.init_k_StreamUtil() == inner && o.init_Z()) {
@@ -197,7 +197,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
    }
 
    private static void load_V_am_DataUtil(am.Inner_DataUtil request) {
-      autismclient.util.macro.k.Inner_CachePool result = request.load.init_k_CachePool();
+      autismclient.util.macro.MacroToolBridge.Inner_CachePool result = request.load.init_k_CachePool();
       request.init_k_StreamUtil.init(result.init_k_ConfigStore(), result.init_Str(), result.load());
    }
 
@@ -212,7 +212,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
 
       init_am.init_ArrayDeque.removeIf(requestx -> {
          if (requestx.init_Obj != null && requestx.init_Obj != mc.level) {
-            requestx.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.CANCELLED, "World changed before tool started", "{}");
+            requestx.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.CANCELLED, "World changed before tool started", "{}");
             return true;
          } else {
             return requestx.init_k_StreamUtil.load().isDone();
@@ -228,7 +228,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
                init_am.init_am_DataUtil = request;
                request.load.load().whenComplete((outcome, error) -> {
                   if (error != null) {
-                     request.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.FAILED, "Tool completion failed", "{}");
+                     request.init_k_StreamUtil.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.FAILED, "Tool completion failed", "{}");
                   } else {
                      request.init_k_StreamUtil.init(outcome.init_k_ConfigStore(), outcome.init_Str(), outcome.load());
                   }
@@ -236,21 +236,21 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
                load_V_am_DataUtil(request);
             } catch (Exception error) {
                request.init_k_StreamUtil
-                  .init(autismclient.util.macro.k.Inner_ConfigStore.FAILED, error.getMessage() == null ? "Tool could not start" : error.getMessage(), "{}");
+                  .init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.FAILED, error.getMessage() == null ? "Tool could not start" : error.getMessage(), "{}");
             }
          }
       }
    }
 
    private static final class Inner_DataUtil {
-      final autismclient.util.macro.k.Inner_StreamUtil init_k_StreamUtil;
+      final autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil;
       final String init_Str;
       Object init_Obj;
-      autismclient.util.macro.k.Inner_StreamUtil load;
+      autismclient.util.macro.MacroToolBridge.Inner_StreamUtil load;
       boolean init_Z;
 
       Inner_DataUtil(String id, String arguments) {
-         this.init_k_StreamUtil = new autismclient.util.macro.k.Inner_StreamUtil(id);
+         this.init_k_StreamUtil = new autismclient.util.macro.MacroToolBridge.Inner_StreamUtil(id);
          this.init_Str = arguments;
       }
    }

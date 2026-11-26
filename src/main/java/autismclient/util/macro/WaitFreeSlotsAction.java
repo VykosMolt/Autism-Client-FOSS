@@ -16,8 +16,8 @@ public class WaitFreeSlotsAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_FREE_SLOTS;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_FREE_SLOTS;
    }
 
    public boolean init(Minecraft mc) {
@@ -75,21 +75,21 @@ public class WaitFreeSlotsAction implements MacroAction {
       tag.putInt("slots", Math.max(0, Math.min(36, this.slots)));
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.countMode = i.init(WaitFreeSlotsAction.Inner_StreamUtil.class, tag.getStringOr("countMode", WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS.name()), WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS);
-      this.comparison = i.init(WaitFreeSlotsAction.Inner_DataUtil.class, tag.getStringOr("comparison", WaitFreeSlotsAction.Inner_DataUtil.AT_MOST.name()), WaitFreeSlotsAction.Inner_DataUtil.AT_MOST);
+      this.countMode = MacroNbtCodecHelper.init(WaitFreeSlotsAction.Inner_StreamUtil.class, tag.getStringOr("countMode", WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS.name()), WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS);
+      this.comparison = MacroNbtCodecHelper.init(WaitFreeSlotsAction.Inner_DataUtil.class, tag.getStringOr("comparison", WaitFreeSlotsAction.Inner_DataUtil.AT_MOST.name()), WaitFreeSlotsAction.Inner_DataUtil.AT_MOST);
       this.slots = Math.max(0, Math.min(36, tag.getIntOr("slots", 0)));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       if (tag.contains("enabled")) {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
    }
 
    @Override

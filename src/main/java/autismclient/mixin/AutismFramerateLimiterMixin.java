@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.AutismClientAddon;
-import autismclient.util.macro.BitSetUtil;
+import autismclient.util.macro.MacroFpsOverrideManager;
 import java.util.concurrent.locks.LockSupport;
 import net.minecraft.client.FramerateLimiter;
 import net.minecraft.client.Minecraft;
@@ -17,10 +17,10 @@ public abstract class AutismFramerateLimiterMixin {
    @Inject(method = "limitDisplayFPS", at = @At("HEAD"), cancellable = true)
    private static void autism$freezeWhenZero(int framerateLimit, CallbackInfo ci) {
       Minecraft minecraft = Minecraft.getInstance();
-      if (minecraft != null && minecraft.level != null && minecraft.gui.screen() == null && BitSetUtil.load_Z()) {
+      if (minecraft != null && minecraft.level != null && minecraft.gui.screen() == null && MacroFpsOverrideManager.load_Z()) {
          boolean logged = false;
 
-         while (BitSetUtil.load_Z() && Minecraft.getInstance().level != null && Minecraft.getInstance().gui.screen() == null) {
+         while (MacroFpsOverrideManager.load_Z() && Minecraft.getInstance().level != null && Minecraft.getInstance().gui.screen() == null) {
             if (!logged) {
                logged = true;
                AutismClientAddon.LOG.warn("[FPS] Render freeze engaged (macro FPS 0); auto-releases on screen open or failsafe expiry");

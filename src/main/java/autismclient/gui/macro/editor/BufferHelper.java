@@ -1,7 +1,7 @@
 package autismclient.gui.macro.editor;
 
 import autismclient.util.macro.ToolsAction;
-import autismclient.util.macro.k;
+import autismclient.util.macro.MacroToolBridge;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -18,7 +18,7 @@ public final class BufferHelper {
 
    public static ActionFieldSchema init(ToolsAction action) {
       ActionFieldSchema.Builder builder = ActionFieldSchema.builder().enumField("operation", "Action", "RUN", "WAIT", "STOP", "PAUSE", "RESUME");
-      List<String> ids = new ArrayList<>(k.init_List().stream().map(k.Inner_TaskQueue::init).toList());
+      List<String> ids = new ArrayList<>(MacroToolBridge.init_List().stream().map(MacroToolBridge.Inner_TaskQueue::init).toList());
       if (!ids.contains(action.toolId)) {
          ids.addFirst(action.toolId);
       }
@@ -35,7 +35,7 @@ public final class BufferHelper {
             )
             .showWhenEnum("operation", "RUN");
          builder.blockPos("position", "Position").xyzKeys("x", "y", "z").dynamic();
-         ArrayList<String> waypoints = new ArrayList<>(k.load());
+         ArrayList<String> waypoints = new ArrayList<>(MacroToolBridge.load());
          if (!waypoints.contains(action.waypoint)) {
             waypoints.addFirst(action.waypoint);
          }
@@ -44,7 +44,7 @@ public final class BufferHelper {
       }
 
       builder.toggle("advanced", "More Options").showWhenEnum("operation", "RUN");
-      k.Inner_TaskQueue tool = k.init_k_TaskQueue(action.toolId);
+      MacroToolBridge.Inner_TaskQueue tool = MacroToolBridge.init_k_TaskQueue(action.toolId);
       if (tool != null) {
          JsonObject schema = JsonParser.parseString(tool.read()).getAsJsonObject();
          Set<String> required = new HashSet<>();
@@ -151,7 +151,7 @@ public final class BufferHelper {
             return init(value.toLowerCase(Locale.ROOT));
          }
       } else {
-         return value.isBlank() ? "Any tool" : k.init_Str(value);
+         return value.isBlank() ? "Any tool" : MacroToolBridge.init_Str(value);
       }
    }
 }

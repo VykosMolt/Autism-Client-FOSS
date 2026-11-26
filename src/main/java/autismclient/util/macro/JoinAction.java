@@ -141,7 +141,7 @@ public class JoinAction implements MacroAction {
       }
 
       try {
-         b.load_CompletableFuture().get(250L, TimeUnit.MILLISECONDS);
+         MacroWaitRegistry.load_CompletableFuture().get(250L, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
          throw e;
       } catch (Exception var2) {
@@ -204,8 +204,8 @@ public class JoinAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.JOIN;
+   public MacroActionType getType() {
+      return MacroActionType.JOIN;
    }
 
    @Override

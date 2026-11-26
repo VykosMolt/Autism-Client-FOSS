@@ -16,7 +16,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 
-public class WaitPacketMatchAction implements CacheEntry, MacroAction {
+public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
    public final List<WaitPacketMatchAction.Inner_CachePool> rules = new ArrayList<>();
    public WaitPacketMatchAction.Inner_DataUtil direction = WaitPacketMatchAction.Inner_DataUtil.C2S;
    public String packetName = "";
@@ -34,8 +34,8 @@ public class WaitPacketMatchAction implements CacheEntry, MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_PACKET_MATCH;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_PACKET_MATCH;
    }
 
    public List<WaitPacketMatchAction.Inner_CachePool> init_List_9() {
@@ -87,7 +87,7 @@ public class WaitPacketMatchAction implements CacheEntry, MacroAction {
          return false;
       }
 
-      if (!C.init(rule.init_Str, packet, packetDirection)) {
+      if (!PacketGateManager.init(rule.init_Str, packet, packetDirection)) {
          return false;
       }
 
@@ -264,7 +264,7 @@ public class WaitPacketMatchAction implements CacheEntry, MacroAction {
 
       tag.put("rules", list);
       tag.putInt("timeoutMs", this.timeoutMs);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -280,10 +280,10 @@ public class WaitPacketMatchAction implements CacheEntry, MacroAction {
          }
       }
 
-      this.direction = i.init(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
+      this.direction = MacroNbtCodecHelper.init(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
       this.packetName = tag.getStringOr("packetName", "");
       this.fieldName = tag.getStringOr("fieldName", "");
-      this.operator = i.init(WaitPacketMatchAction.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
+      this.operator = MacroNbtCodecHelper.init(WaitPacketMatchAction.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
       this.value = tag.getStringOr("value", "");
       if (this.rules.isEmpty() && (tag.contains("packetName") || tag.contains("fieldName"))) {
          this.rules.add(this.init_aM_CachePool());
@@ -291,7 +291,7 @@ public class WaitPacketMatchAction implements CacheEntry, MacroAction {
 
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
       this.init_V_11();
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
@@ -355,10 +355,10 @@ public class WaitPacketMatchAction implements CacheEntry, MacroAction {
 
       static WaitPacketMatchAction.Inner_CachePool init(CompoundTag tag) {
          WaitPacketMatchAction.Inner_CachePool rule = new WaitPacketMatchAction.Inner_CachePool();
-         rule.init_aM_DataUtil = i.init(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
+         rule.init_aM_DataUtil = MacroNbtCodecHelper.init(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
          rule.init_Str = tag.getStringOr("packetName", "");
          rule.load = tag.getStringOr("fieldName", "");
-         rule.init_aM_StreamUtil = i.init(WaitPacketMatchAction.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
+         rule.init_aM_StreamUtil = MacroNbtCodecHelper.init(WaitPacketMatchAction.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
          rule.read = tag.getStringOr("value", "");
          return rule;
       }

@@ -91,8 +91,8 @@ public class ak implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.TOGGLE_MODULE;
+   public MacroActionType getType() {
+      return MacroActionType.TOGGLE_MODULE;
    }
 
    @Override

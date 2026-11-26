@@ -58,8 +58,8 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_VILLAGER_ITEM;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_VILLAGER_ITEM;
    }
 
    @Override

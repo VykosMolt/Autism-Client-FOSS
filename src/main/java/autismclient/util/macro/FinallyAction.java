@@ -11,8 +11,8 @@ public class FinallyAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.FINALLY;
+   public MacroActionType getType() {
+      return MacroActionType.FINALLY;
    }
 
    @Override

@@ -30,7 +30,7 @@ public final class ToolsAction implements MacroAction {
    private boolean init = true;
 
    public boolean init() {
-      k.Inner_TaskQueue tool = k.init_k_TaskQueue(this.toolId);
+      MacroToolBridge.Inner_TaskQueue tool = MacroToolBridge.init_k_TaskQueue(this.toolId);
       if (tool == null) {
          return false;
       }
@@ -86,7 +86,7 @@ public final class ToolsAction implements MacroAction {
                throw new IllegalArgumentException("Choose a waypoint");
             }
 
-            j.Inner_CachePool resolved = n.init_j_CachePool_Str_Minecraft(this.waypoint, mc);
+            MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.waypoint, mc);
             if (!resolved.init_Z()) {
                throw new IllegalArgumentException("Waypoint variable has no value");
             }
@@ -122,7 +122,7 @@ public final class ToolsAction implements MacroAction {
          for (Entry<String, JsonElement> entry : object.entrySet()) {
             JsonElement value = entry.getValue();
             if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
-               j.Inner_CachePool resolved = n.init_j_CachePool_Str_Minecraft(value.getAsString(), mc);
+               MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(value.getAsString(), mc);
                if (!resolved.init_Z()) {
                   throw new IllegalArgumentException("Tool argument has an unset variable: " + entry.getKey());
                }
@@ -136,7 +136,7 @@ public final class ToolsAction implements MacroAction {
          for (int index = 0; index < array.size(); index++) {
             JsonElement value = array.get(index);
             if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
-               j.Inner_CachePool resolved = n.init_j_CachePool_Str_Minecraft(value.getAsString(), mc);
+               MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(value.getAsString(), mc);
                if (!resolved.init_Z()) {
                   throw new IllegalArgumentException("Tool argument has an unset variable");
                }
@@ -149,11 +149,11 @@ public final class ToolsAction implements MacroAction {
       }
    }
 
-   public k.Inner_StreamUtil init_k_StreamUtil_Minecraft_J(Minecraft mc, long owner) {
+   public MacroToolBridge.Inner_StreamUtil init_k_StreamUtil_Minecraft_J(Minecraft mc, long owner) {
       if (!"RUN".equals(this.operation)) {
-         return k.load(owner, this.scope, "");
+         return MacroToolBridge.load(owner, this.scope, "");
       } else if (this.toolId != null && !this.toolId.isBlank()) {
-         return k.init_k_StreamUtil(owner, this.toolId, this.init_JsonObject_Minecraft(mc).toString());
+         return MacroToolBridge.init_k_StreamUtil(owner, this.toolId, this.init_JsonObject_Minecraft(mc).toString());
       } else {
          throw new IllegalArgumentException("Choose a tool");
       }
@@ -164,7 +164,7 @@ public final class ToolsAction implements MacroAction {
       if ("RUN".equals(this.operation)) {
          this.init_k_StreamUtil_Minecraft_J(mc, MacroExecutor.load_J());
       } else {
-         k.init_CompletableFuture(MacroExecutor.load_J(), this.scope, this.operation);
+         MacroToolBridge.init_CompletableFuture(MacroExecutor.load_J(), this.scope, this.operation);
       }
    }
 
@@ -183,7 +183,7 @@ public final class ToolsAction implements MacroAction {
       }
 
       try {
-         k.Inner_TaskQueue definition = k.init_k_TaskQueue(this.toolId);
+         MacroToolBridge.Inner_TaskQueue definition = MacroToolBridge.init_k_TaskQueue(this.toolId);
          if (definition == null) {
             return false;
          }
@@ -278,7 +278,7 @@ public final class ToolsAction implements MacroAction {
       this.saveAs = tag.getStringOr("saveAs", "");
       this.init = tag.getBooleanOr("enabled", true);
       JsonObject args = init_JsonObject_Str(tag.getStringOr("argumentsJson", "{}"));
-      k.Inner_TaskQueue definition = k.init_k_TaskQueue(this.toolId);
+      MacroToolBridge.Inner_TaskQueue definition = MacroToolBridge.init_k_TaskQueue(this.toolId);
       JsonObject schema = definition == null ? new JsonObject() : JsonParser.parseString(definition.read()).getAsJsonObject();
       JsonObject properties = schema.has("properties") ? schema.getAsJsonObject("properties") : new JsonObject();
 
@@ -322,13 +322,13 @@ public final class ToolsAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.TOOLS;
+   public MacroActionType getType() {
+      return MacroActionType.TOOLS;
    }
 
    @Override
    public String getDisplayName() {
-      return "Tools: " + ("RUN".equals(this.operation) ? k.init_Str(this.toolId) : this.operation.toLowerCase());
+      return "Tools: " + ("RUN".equals(this.operation) ? MacroToolBridge.init_Str(this.toolId) : this.operation.toLowerCase());
    }
 
    @Override

@@ -16,7 +16,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 
-public class SendPacketAction implements MacroAction, aP {
+public class SendPacketAction implements MacroAction, GuiWaitAware {
    public List<ck.Inner_CachePool> packets = new ArrayList<>();
    public String customName = "";
    public int sendCount = 1;
@@ -114,8 +114,8 @@ public class SendPacketAction implements MacroAction, aP {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.SEND_PACKET;
+   public MacroActionType getType() {
+      return MacroActionType.SEND_PACKET;
    }
 
    @Override
@@ -145,8 +145,8 @@ public class SendPacketAction implements MacroAction, aP {
       this.packets.clear();
       this.customName = tag.getStringOr("customName", "");
       this.sendCount = tag.contains("sendCount") ? init_I_I_5(tag.getIntOr("sendCount", 1)) : 1;
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
       if (tag.contains("guiName")) {
          this.guiName = tag.getStringOr("guiName", "");
       }
@@ -200,7 +200,7 @@ public class SendPacketAction implements MacroAction, aP {
          base = base + " x" + this.sendCount;
       }
 
-      return base + aP.init_Str_aP(this);
+      return base + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override

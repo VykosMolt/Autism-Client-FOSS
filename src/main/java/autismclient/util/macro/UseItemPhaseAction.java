@@ -49,7 +49,7 @@ public class UseItemPhaseAction implements MacroAction {
                }
 
                try {
-                  b.load_CompletableFuture().get(100L, TimeUnit.MILLISECONDS);
+                  MacroWaitRegistry.load_CompletableFuture().get(100L, TimeUnit.MILLISECONDS);
                } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
                   stopped = true;
@@ -83,7 +83,7 @@ public class UseItemPhaseAction implements MacroAction {
 
    public void init_V_2(Minecraft mc) {
       if (mc != null && mc.player != null && mc.getConnection() != null) {
-         ArrayUtil target = ArrayUtil.update(this.itemName);
+         MacroItemTarget target = MacroItemTarget.update(this.itemName);
          if (target.update()) {
             autismclient.util.aw.init(mc, target, mc.player.getInventory().getSelectedSlot());
          }
@@ -145,7 +145,7 @@ public class UseItemPhaseAction implements MacroAction {
    }
 
    public void init_V_14() {
-      C.init_V(this.gateId);
+      PacketGateManager.init_V(this.gateId);
    }
 
    public void load(Minecraft mc) {
@@ -172,8 +172,8 @@ public class UseItemPhaseAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.USE_ITEM_PHASE;
+   public MacroActionType getType() {
+      return MacroActionType.USE_ITEM_PHASE;
    }
 
    @Override
@@ -200,7 +200,7 @@ public class UseItemPhaseAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.phase = i.init(UseItemPhaseAction.Inner_DataUtil.class, tag.getStringOr("phase", "USE_ONCE"), UseItemPhaseAction.Inner_DataUtil.USE_ONCE);
+      this.phase = MacroNbtCodecHelper.init(UseItemPhaseAction.Inner_DataUtil.class, tag.getStringOr("phase", "USE_ONCE"), UseItemPhaseAction.Inner_DataUtil.USE_ONCE);
       this.itemName = tag.getStringOr("itemName", "");
       this.hand = tag.getStringOr("hand", "MAIN_HAND");
       this.holdTicks = tag.getIntOr("holdTicks", 0);

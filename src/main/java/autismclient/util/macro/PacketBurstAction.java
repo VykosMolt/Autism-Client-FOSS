@@ -101,7 +101,7 @@ public class PacketBurstAction implements MacroAction {
          case CLIENT_COMMAND:
             var10000 = mc.player == null
                ? null
-               : new ServerboundPlayerCommandPacket(mc.player, i.init(Action.class, this.playerCommand, Action.OPEN_INVENTORY));
+               : new ServerboundPlayerCommandPacket(mc.player, MacroNbtCodecHelper.init(Action.class, this.playerCommand, Action.OPEN_INVENTORY));
             break;
          case BUNDLE_SELECT:
             var10000 = new ServerboundSelectBundleItemPacket(
@@ -135,7 +135,7 @@ public class PacketBurstAction implements MacroAction {
    }
 
    private ContainerInput init_ContainerInput() {
-      return i.init(ContainerInput.class, this.containerInput, ContainerInput.PICKUP);
+      return MacroNbtCodecHelper.init(ContainerInput.class, this.containerInput, ContainerInput.PICKUP);
    }
 
    private InteractionHand init_InteractionHand_2() {
@@ -143,8 +143,8 @@ public class PacketBurstAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.PACKET_BURST;
+   public MacroActionType getType() {
+      return MacroActionType.PACKET_BURST;
    }
 
    @Override
@@ -170,7 +170,7 @@ public class PacketBurstAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = i.init(PacketBurstAction.Inner_DataUtil.class, tag.getStringOr("mode", "CONTAINER_CLICK"), PacketBurstAction.Inner_DataUtil.CONTAINER_CLICK);
+      this.mode = MacroNbtCodecHelper.init(PacketBurstAction.Inner_DataUtil.class, tag.getStringOr("mode", "CONTAINER_CLICK"), PacketBurstAction.Inner_DataUtil.CONTAINER_CLICK);
       this.count = tag.getIntOr("count", 1);
       this.delayTicks = tag.getIntOr("delayTicks", 0);
       this.slot = tag.getIntOr("slot", 0);

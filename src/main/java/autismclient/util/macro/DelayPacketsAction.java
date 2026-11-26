@@ -120,8 +120,8 @@ public class DelayPacketsAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.DELAY_PACKETS;
+   public MacroActionType getType() {
+      return MacroActionType.DELAY_PACKETS;
    }
 
    @Override

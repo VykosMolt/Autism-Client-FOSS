@@ -9,7 +9,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
-public class MineAction implements E, MacroAction {
+public class MineAction implements PacketOrderAware, MacroAction {
    public List<String> targetBlocks = new ArrayList<>();
    public boolean stopInventoryFull = false;
    public boolean stopSlotsUsed = false;
@@ -18,16 +18,16 @@ public class MineAction implements E, MacroAction {
    public int minedCountTarget = 64;
    public boolean stopAfterTime = false;
    public int timeoutSeconds = 60;
-   public volatile D packetOrder = D.INSTANT;
+   public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
    private boolean init = true;
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.MINE;
+   public MacroActionType getType() {
+      return MacroActionType.MINE;
    }
 
    @Override
-   public D init_D() {
+   public PacketOrderMode init_D() {
       return this.packetOrder;
    }
 
@@ -79,7 +79,7 @@ public class MineAction implements E, MacroAction {
       tag.putBoolean("stopAfterTime", this.stopAfterTime);
       tag.putInt("timeoutSeconds", this.timeoutSeconds);
       tag.putBoolean("enabled", this.init);
-      E.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
       return tag;
    }
 
@@ -106,6 +106,6 @@ public class MineAction implements E, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      this.packetOrder = E.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
    }
 }

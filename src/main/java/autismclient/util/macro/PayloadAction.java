@@ -34,15 +34,15 @@ public class PayloadAction implements MacroAction {
       if (!autismclient.modules.aD.read_Z() && this.init) {
          if (mc != null && mc.getConnection() != null) {
             try {
-               j.Inner_CachePool channelResolution = n.init_j_CachePool_Str_Minecraft(this.channel, mc);
+               MacroTemplateResolver.Inner_CachePool channelResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.channel, mc);
                if (!channelResolution.init_Z() || channelResolution.init_Str().isBlank()) {
                   return;
                }
 
                String resolvedChannel = channelResolution.init_Str().trim();
                String resolvedPayloadData = this.payloadData;
-               if (j.init_Z(this.payloadData)) {
-                  j.Inner_CachePool payloadResolution = n.init_j_CachePool_Str_Minecraft(this.payloadData, mc);
+               if (MacroTemplateResolver.init_Z(this.payloadData)) {
+                  MacroTemplateResolver.Inner_CachePool payloadResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.payloadData, mc);
                   if (!payloadResolution.init_Z()) {
                      return;
                   }
@@ -71,7 +71,7 @@ public class PayloadAction implements MacroAction {
                      throw new IllegalArgumentException(String.join("; ", built.load()));
                   }
 
-                  if (!j.init_Z(this.channel)) {
+                  if (!MacroTemplateResolver.init_Z(this.channel)) {
                      targetChannel = template.init_Str();
                   }
 
@@ -81,7 +81,7 @@ public class PayloadAction implements MacroAction {
                   }
                } else if (useJsonModel) {
                   bG.Inner_DataUtil encoded = bG.init_bG_DataUtil(this);
-                  if (!j.init_Z(this.channel)) {
+                  if (!MacroTemplateResolver.init_Z(this.channel)) {
                      targetChannel = encoded.init_Str();
                   }
 
@@ -166,8 +166,8 @@ public class PayloadAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.PAYLOAD;
+   public MacroActionType getType() {
+      return MacroActionType.PAYLOAD;
    }
 
    @Override

@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.GameType;
 
-public class WaitGamemodeChangeAction implements CacheEntry, MacroAction {
+public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroAction {
    public WaitGamemodeChangeAction.Inner_DataUtil match = WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE;
    public WaitGamemodeChangeAction.Inner_StreamUtil gameMode = WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL;
    public boolean detectFake = false;
@@ -27,28 +27,28 @@ public class WaitGamemodeChangeAction implements CacheEntry, MacroAction {
       tag.putBoolean("detectFake", this.detectFake);
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.match = i.init(WaitGamemodeChangeAction.Inner_DataUtil.class, tag.getStringOr("match", WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE.name()), WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE);
-      this.gameMode = i.init(WaitGamemodeChangeAction.Inner_StreamUtil.class, tag.getStringOr("gameMode", WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL.name()), WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL);
+      this.match = MacroNbtCodecHelper.init(WaitGamemodeChangeAction.Inner_DataUtil.class, tag.getStringOr("match", WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE.name()), WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE);
+      this.gameMode = MacroNbtCodecHelper.init(WaitGamemodeChangeAction.Inner_StreamUtil.class, tag.getStringOr("gameMode", WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL.name()), WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL);
       this.detectFake = tag.getBooleanOr("detectFake", false);
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       if (tag.contains("enabled")) {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_GAMEMODE_CHANGE;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_GAMEMODE_CHANGE;
    }
 
    @Override

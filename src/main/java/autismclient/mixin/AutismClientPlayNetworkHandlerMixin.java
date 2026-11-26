@@ -36,7 +36,7 @@ import autismclient.util.dm;
 import autismclient.util.e.LeafDupePacketTracker;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.h.VillagerTradeSession;
-import autismclient.util.macro.b;
+import autismclient.util.macro.MacroWaitRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -624,12 +624,12 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleContainerContent", at = @At("RETURN"))
    private void yang$onInventory(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
       if (!aD.read_Z()) {
-         b.init_V();
-         boolean macroWaits = b.load_Z();
+         MacroWaitRegistry.init_V();
+         boolean macroWaits = MacroWaitRegistry.load_Z();
          boolean inventoryTweaks = InventoryTweaksModule.write_Z_3();
          if (macroWaits || inventoryTweaks) {
             if (macroWaits) {
-               b.init_V(Minecraft.getInstance());
+               MacroWaitRegistry.init_V(Minecraft.getInstance());
             }
 
             if (inventoryTweaks) {
@@ -642,12 +642,12 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleContainerSetSlot", at = @At("RETURN"))
    private void yang$onSlotUpdate(ClientboundContainerSetSlotPacket packet, CallbackInfo ci) {
       if (!aD.read_Z()) {
-         b.init_V();
-         boolean macroWaits = b.load_Z();
+         MacroWaitRegistry.init_V();
+         boolean macroWaits = MacroWaitRegistry.load_Z();
          boolean inventoryTweaks = InventoryTweaksModule.write_Z_3();
          if (macroWaits || inventoryTweaks) {
             if (macroWaits) {
-               b.init_V(packet.getSlot());
+               MacroWaitRegistry.init_V(packet.getSlot());
             }
 
             if (inventoryTweaks) {
@@ -664,9 +664,9 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       }
 
       if (!aD.read_Z()) {
-         b.init_V();
-         if (b.load_Z()) {
-            b.init_V(Minecraft.getInstance());
+         MacroWaitRegistry.init_V();
+         if (MacroWaitRegistry.load_Z()) {
+            MacroWaitRegistry.init_V(Minecraft.getInstance());
          }
       }
    }
@@ -674,9 +674,9 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleSetPlayerInventory", at = @At("RETURN"))
    private void autism$onSetPlayerInventory(ClientboundSetPlayerInventoryPacket packet, CallbackInfo ci) {
       if (!aD.read_Z()) {
-         b.init_V();
-         if (b.load_Z()) {
-            b.init_V(Minecraft.getInstance());
+         MacroWaitRegistry.init_V();
+         if (MacroWaitRegistry.load_Z()) {
+            MacroWaitRegistry.init_V(Minecraft.getInstance());
          }
       }
    }
@@ -684,7 +684,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleSoundEvent", at = @At("RETURN"))
    private void yang$onPlaySound(ClientboundSoundPacket packet, CallbackInfo ci) {
       if (!aD.read_Z()) {
-         boolean macroWaits = b.read_Z();
+         boolean macroWaits = MacroWaitRegistry.read_Z();
          boolean moduleHooks = cf.init_Z_J(32L);
          if (macroWaits || moduleHooks) {
             if (macroWaits) {
@@ -700,7 +700,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleSoundEntityEvent", at = @At("RETURN"))
    private void autism$onPlayEntitySound(ClientboundSoundEntityPacket packet, CallbackInfo ci) {
-      if (!aD.read_Z() && b.read_Z()) {
+      if (!aD.read_Z() && MacroWaitRegistry.read_Z()) {
          try {
             Minecraft mc = Minecraft.getInstance();
             if (mc == null || mc.level == null || packet == null) {
@@ -713,7 +713,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
             }
 
             String soundId = packet.getSound().value().location().toString();
-            b.init(soundId, entity.getX(), entity.getY(), entity.getZ());
+            MacroWaitRegistry.init(soundId, entity.getX(), entity.getY(), entity.getZ());
          } catch (Exception var6) {
          }
       }
@@ -806,7 +806,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          }
 
          String soundId = packet.getSound().value().location().toString();
-         b.init(soundId, packet.getX(), packet.getY(), packet.getZ());
+         MacroWaitRegistry.init(soundId, packet.getX(), packet.getY(), packet.getZ());
       } catch (Exception var2) {
       }
    }

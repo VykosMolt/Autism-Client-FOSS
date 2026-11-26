@@ -8,8 +8,8 @@ public class SwapSlotsAction implements MacroAction {
    public int toSlot = -1;
    public String fromItemName = "";
    public String toItemName = "";
-   public ArrayUtil fromItemTarget = new ArrayUtil();
-   public ArrayUtil toItemTarget = new ArrayUtil();
+   public MacroItemTarget fromItemTarget = new MacroItemTarget();
+   public MacroItemTarget toItemTarget = new MacroItemTarget();
    public boolean fromUseItemName = false;
    public boolean toUseItemName = false;
    public boolean useHandlerSlots = true;
@@ -21,7 +21,7 @@ public class SwapSlotsAction implements MacroAction {
          int resolvedFrom = this.fromSlot;
          int resolvedTo = this.toSlot;
          if (this.fromUseItemName) {
-            ArrayUtil target = this.init().init_ArrayUtil_Minecraft(mc);
+            MacroItemTarget target = this.init().init_ArrayUtil_Minecraft(mc);
             if (target == null) {
                return;
             }
@@ -37,7 +37,7 @@ public class SwapSlotsAction implements MacroAction {
          }
 
          if (this.toUseItemName) {
-            ArrayUtil target = this.load().init_ArrayUtil_Minecraft(mc);
+            MacroItemTarget target = this.load().init_ArrayUtil_Minecraft(mc);
             if (target == null) {
                return;
             }
@@ -61,8 +61,8 @@ public class SwapSlotsAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.SWAP_SLOTS;
+   public MacroActionType getType() {
+      return MacroActionType.SWAP_SLOTS;
    }
 
    @Override
@@ -71,8 +71,8 @@ public class SwapSlotsAction implements MacroAction {
       tag.putString("type", "SWAP_SLOTS");
       tag.putInt("fromSlot", this.fromSlot);
       tag.putInt("toSlot", this.toSlot);
-      ArrayUtil fromTarget = this.init();
-      ArrayUtil toTarget = this.load();
+      MacroItemTarget fromTarget = this.init();
+      MacroItemTarget toTarget = this.load();
       if (fromTarget.init_Z() || fromTarget.update()) {
          tag.put("fromItemName", fromTarget.init_CompoundTag());
       }
@@ -92,11 +92,11 @@ public class SwapSlotsAction implements MacroAction {
       this.fromSlot = tag.getIntOr("fromSlot", -1);
       this.toSlot = tag.getIntOr("toSlot", -1);
       this.fromItemTarget = tag.getCompound("fromItemName")
-         .map(ArrayUtil::init_ArrayUtil_CompoundTag)
-         .orElseGet(() -> ArrayUtil.update(tag.getStringOr("fromItemName", "")));
+         .map(MacroItemTarget::init_ArrayUtil_CompoundTag)
+         .orElseGet(() -> MacroItemTarget.update(tag.getStringOr("fromItemName", "")));
       this.toItemTarget = tag.getCompound("toItemName")
-         .map(ArrayUtil::init_ArrayUtil_CompoundTag)
-         .orElseGet(() -> ArrayUtil.update(tag.getStringOr("toItemName", "")));
+         .map(MacroItemTarget::init_ArrayUtil_CompoundTag)
+         .orElseGet(() -> MacroItemTarget.update(tag.getStringOr("toItemName", "")));
       this.fromItemName = this.fromItemTarget.write_Str();
       this.toItemName = this.toItemTarget.write_Str();
       this.fromUseItemName = tag.contains("fromUseItemName") ? tag.getBooleanOr("fromUseItemName", false) : !this.fromItemName.isEmpty();
@@ -129,21 +129,21 @@ public class SwapSlotsAction implements MacroAction {
       this.init = e;
    }
 
-   private ArrayUtil init() {
+   private MacroItemTarget init() {
       if (this.fromItemTarget != null && (this.fromItemTarget.init_Z() || this.fromItemTarget.update())) {
          return this.fromItemTarget;
       }
 
-      this.fromItemTarget = ArrayUtil.update(this.fromItemName);
+      this.fromItemTarget = MacroItemTarget.update(this.fromItemName);
       return this.fromItemTarget;
    }
 
-   private ArrayUtil load() {
+   private MacroItemTarget load() {
       if (this.toItemTarget != null && (this.toItemTarget.init_Z() || this.toItemTarget.update())) {
          return this.toItemTarget;
       }
 
-      this.toItemTarget = ArrayUtil.update(this.toItemName);
+      this.toItemTarget = MacroItemTarget.update(this.toItemName);
       return this.toItemTarget;
    }
 }

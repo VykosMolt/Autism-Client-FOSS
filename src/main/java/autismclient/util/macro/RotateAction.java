@@ -44,8 +44,8 @@ public class RotateAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.ROTATE;
+   public MacroActionType getType() {
+      return MacroActionType.ROTATE;
    }
 
    @Override

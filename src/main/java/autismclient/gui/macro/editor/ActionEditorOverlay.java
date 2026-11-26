@@ -46,8 +46,8 @@ import autismclient.util.cx;
 import autismclient.util.k;
 import autismclient.util.o;
 import autismclient.util.p;
-import autismclient.util.macro.ArrayUtil;
-import autismclient.util.macro.CacheEntry;
+import autismclient.util.macro.MacroItemTarget;
+import autismclient.util.macro.CaptureOutputAction;
 import autismclient.util.macro.PayAction;
 import autismclient.util.macro.PayloadAction;
 import autismclient.util.macro.PlaceAction;
@@ -59,8 +59,8 @@ import autismclient.util.macro.ItemAction;
 import autismclient.util.macro.DropAction;
 import autismclient.util.macro.InteractEntityAction;
 import autismclient.util.macro.RotateAction;
-import autismclient.util.macro.StreamGate;
-import autismclient.util.macro.UtilCore;
+import autismclient.util.macro.MacroActionType;
+import autismclient.util.macro.PatternCaptureMatcher;
 import autismclient.util.macro.SelectSlotAction;
 import autismclient.util.macro.LookAtBlockAction;
 import autismclient.util.macro.SendPacketAction;
@@ -74,7 +74,7 @@ import autismclient.util.macro.WaitForWorldChangeAction;
 import autismclient.util.macro.WaitGamemodeChangeAction;
 import autismclient.util.macro.WaitGuiTypeAction;
 import autismclient.util.macro.WaitPosAction;
-import autismclient.util.macro.aP;
+import autismclient.util.macro.GuiWaitAware;
 import autismclient.util.macro.XCarryAction;
 import autismclient.util.macro.StoreItemAction;
 import autismclient.util.macro.SwapSlotsAction;
@@ -87,8 +87,8 @@ import autismclient.util.macro.WaitForEntityAction;
 import autismclient.util.macro.WaitForGuiAction;
 import autismclient.util.macro.WaitForHealthAction;
 import autismclient.util.macro.WaitForLanStepAction;
-import autismclient.util.macro.d;
-import autismclient.util.macro.m;
+import autismclient.util.macro.DynamicBindingManager;
+import autismclient.util.macro.MacroVariableStore;
 import autismclient.util.macro.MissingAddonAction;
 import autismclient.util.macro.OpenContainerAction;
 import autismclient.util.macro.PacketClickAction;
@@ -250,8 +250,8 @@ public class ActionEditorOverlay extends bj {
    private final Map<String, Boolean> load_Map = new LinkedHashMap<>();
    private final Map<String, Integer> read_Map = new LinkedHashMap<>();
    private final Map<String, List<String>> write_Map = new LinkedHashMap<>();
-   private final Map<String, ArrayUtil> update_Map = new HashMap<>();
-   private final Map<String, List<ArrayUtil>> sync_Map = new HashMap<>();
+   private final Map<String, MacroItemTarget> update_Map = new HashMap<>();
+   private final Map<String, List<MacroItemTarget>> sync_Map = new HashMap<>();
    private final Map<String, k> flush_Map = new LinkedHashMap<>();
    private final Map<String, EventBus> close_Map = new HashMap<>();
    private final Map<String, Integer> open_Map = new HashMap<>();
@@ -466,7 +466,7 @@ public class ActionEditorOverlay extends bj {
       return init_ActionEditorOverla_4;
    }
 
-   private static boolean init_Z_StreamGate(StreamGate type) {
+   private static boolean init_Z_StreamGate(MacroActionType type) {
       if (type == null) {
          return false;
       }
@@ -504,7 +504,7 @@ public class ActionEditorOverlay extends bj {
          return false;
       }
 
-      StreamGate type = action.getType();
+      MacroActionType type = action.getType();
       if (type == null) {
          return !ActionFieldRegistry.init(action).fields().isEmpty();
       }
@@ -730,7 +730,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (action.getType() == StreamGate.WAIT_SLOT_CHANGE) {
+      if (action.getType() == MacroActionType.WAIT_SLOT_CHANGE) {
          this.load_Map.put("listenDuringPreviousAction", action.listensDuringPreviousAction());
          k wscAddF = this.init_k_I(120);
          wscAddF.init_V_Component(Component.literal("Item name (optional)"));
@@ -1086,17 +1086,17 @@ public class ActionEditorOverlay extends bj {
          this.j();
       }
 
-      if (action.getType() == StreamGate.INVENTORY || action.getType() == StreamGate.CLOSE_GUI || action.getType() == StreamGate.SAVE_GUI) {
+      if (action.getType() == MacroActionType.INVENTORY || action.getType() == MacroActionType.CLOSE_GUI || action.getType() == MacroActionType.SAVE_GUI) {
          this.load_Map.put("sendPacket", !this.init_CompoundTag.getBooleanOr("sendPacket", true));
       }
 
-      if (action.getType() == StreamGate.STORE_ITEM) {
+      if (action.getType() == MacroActionType.STORE_ITEM) {
          this.load_Map.put("closeSendPkt", !this.init_CompoundTag.getBooleanOr("closeSendPkt", true));
       }
 
       this.store();
       this.node();
-      if (action.getType() == StreamGate.PLACE) {
+      if (action.getType() == MacroActionType.PLACE) {
          k slotF = this.init_k_I(52);
          slotF.poll(true);
          slotF.init_V_Component(Component.literal("Slot"));
@@ -1107,7 +1107,7 @@ public class ActionEditorOverlay extends bj {
             this.load_Map.put("place_silentSwitch", placeAction.silentSwitch);
          }
 
-         ArrayUtil placeTarget = this.update_Map.get("itemName");
+         MacroItemTarget placeTarget = this.update_Map.get("itemName");
          if (placeTarget == null && action instanceof PlaceAction placeAction) {
             placeTarget = this.init_ArrayUtil_ArrayUtil_Str(placeAction.itemTarget, placeAction.itemName);
          }
@@ -1405,11 +1405,11 @@ public class ActionEditorOverlay extends bj {
    public boolean init_Z_Slot(Slot slot, String itemName, String registryId, boolean slotMode) {
       this.variableWarningStale = true;
       int visibleSlot = slot != null ? autismclient.util.aw.init_I(init_Minecraft, slot) : -1;
-      ArrayUtil capturedTarget = this.init_ArrayUtil_Slot(slot, itemName, registryId, visibleSlot);
+      MacroItemTarget capturedTarget = this.init_ArrayUtil_Slot(slot, itemName, registryId, visibleSlot);
       if (this.init_StreamUtil.init_Z() && (!itemName.isEmpty() || visibleSlot >= 0)) {
          boolean useSlot = slotMode && visibleSlot >= 0;
          if (useSlot) {
-            capturedTarget = ArrayUtil.init_ArrayUtil_I(Math.max(0, visibleSlot));
+            capturedTarget = MacroItemTarget.init_ArrayUtil_I(Math.max(0, visibleSlot));
          }
 
          String key = this.init_StreamUtil.init_Str();
@@ -1471,11 +1471,11 @@ public class ActionEditorOverlay extends bj {
                return true;
             }
 
-            if ("itemName".equals(key) && this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.USE_ITEM) {
+            if ("itemName".equals(key) && this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.USE_ITEM) {
                k itemField = this.init_Map.get("itemName");
                k slotField = this.init_Map.get("slot");
                if (capturedTarget.update()) {
-                  ArrayUtil nameOnly = init_ArrayUtil_ArrayUtil(capturedTarget);
+                  MacroItemTarget nameOnly = init_ArrayUtil_ArrayUtil(capturedTarget);
                   if (itemField != null) {
                      itemField.init_V_Str(nameOnly.init_Str());
                   }
@@ -1525,7 +1525,7 @@ public class ActionEditorOverlay extends bj {
                         )
                   );
                if (result != null && result.init_Z() && (this.get_Z(key) || this.put_Z(key) || this.run_Z(key))) {
-                  ArrayUtil preservedTarget = this.tick_Z(key)
+                  MacroItemTarget preservedTarget = this.tick_Z(key)
                      ? load_ArrayUtil_ArrayUtil(capturedTarget)
                      : (this.run_Z(key) ? (useSlot ? capturedTarget : init_ArrayUtil_ArrayUtil(capturedTarget)) : capturedTarget);
                   this.init_V_Str_2(key, list, preservedTarget);
@@ -1551,7 +1551,7 @@ public class ActionEditorOverlay extends bj {
                      this.update_Map.put(key, capturedTarget.init_ArrayUtil());
                   }
                } else {
-                  ArrayUtil nameOnly = init_ArrayUtil_ArrayUtil(capturedTarget);
+                  MacroItemTarget nameOnly = init_ArrayUtil_ArrayUtil(capturedTarget);
                   tf.init_V_Str(nameOnly.init_Str());
                   if ("itemName".equals(key) || "fromItemName".equals(key) || "toItemName".equals(key) || this.update_Map.containsKey(key)) {
                      this.update_Map.put(key, nameOnly.init_ArrayUtil());
@@ -1677,80 +1677,80 @@ public class ActionEditorOverlay extends bj {
                this.f_e_I = Math.max(0, Math.min(maxScroll, rel * maxScroll / Math.max(1, capSbH)));
             }));
          }
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SEND_PACKET) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.SEND_PACKET) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.flush(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_PACKET) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.update_V_GuiGraphicsExtract(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET_MATCH) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_PACKET_MATCH) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.sync(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SOUND) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_SOUND) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.push(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_ENTITY) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_ENTITY) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.pop(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.USE_ITEM) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.USE_ITEM) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.clear(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.LOOK_AT_BLOCK) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.LOOK_AT_BLOCK) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.start(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.ROTATE) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.ROTATE) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.reset(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.GO_TO) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.GO_TO) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.stop(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SWAP_SLOTS) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.SWAP_SLOTS) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.next(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CLICK) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.CLICK) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.prev(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DISCONNECT) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.DISCONNECT) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.valid(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_GUI) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_GUI) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.size(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_CHAT) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_CHAT) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.init_V_GuiGraphicsExtract(context, x, bodyTop, bodyBtm - this.run_I(), w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SELECT_SLOT) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.SELECT_SLOT) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.data(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_COOLDOWN) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_COOLDOWN) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.value(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction == null || this.init_MacroAction.getType() != StreamGate.OPEN_CONTAINER && this.init_MacroAction.getType() != StreamGate.INTERACT_ENTITY) {
-         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SLOT_CHANGE) {
+      } else if (this.init_MacroAction == null || this.init_MacroAction.getType() != MacroActionType.OPEN_CONTAINER && this.init_MacroAction.getType() != MacroActionType.INTERACT_ENTITY) {
+         if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_SLOT_CHANGE) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.add(context, x, bodyTop, w, mouseX, mouseY, delta);
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_INVENTORY_PREDICATE) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_INVENTORY_PREDICATE) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.cache(context, x, bodyTop, w, mouseX, mouseY, delta);
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CAPTURE_VALUE) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.CAPTURE_VALUE) {
             int contentBtm = bodyBtm - this.run_I();
             int contentAreaH = Math.max(0, contentBtm - bodyTop);
             int totalContentH = this.stop_I();
@@ -1782,11 +1782,11 @@ public class ActionEditorOverlay extends bj {
                   this.f_e_I = Math.max(0, Math.min(maxScroll, rel * maxScroll / Math.max(1, capSbH)));
                }));
             }
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DELAY_PACKETS) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.DELAY_PACKETS) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.queue(context, x, bodyTop, w, mouseX, mouseY, delta);
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.MINE) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.MINE) {
             int contentBtm = bodyBtm - this.run_I();
             int contentAreaH = Math.max(0, contentBtm - bodyTop);
             int totalContentH = this.stop_I();
@@ -1818,7 +1818,7 @@ public class ActionEditorOverlay extends bj {
                   this.f_e_I = Math.max(0, Math.min(maxScroll, rel * maxScroll / Math.max(1, capSbH)));
                }));
             }
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PAY) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PAY) {
             int contentBtm = bodyBtm - this.run_I();
             int contentAreaH = Math.max(0, contentBtm - bodyTop);
             int totalContentH = this.stop_I();
@@ -1850,15 +1850,15 @@ public class ActionEditorOverlay extends bj {
                   this.f_e_I = Math.max(0, Math.min(maxScroll, rel * maxScroll / Math.max(1, capSbH)));
                }));
             }
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY_AUDIT) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.INVENTORY_AUDIT) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.get(context, x, bodyTop, w, mouseX, mouseY, delta);
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.STORE_ITEM) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.STORE_ITEM) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.run(context, x, bodyTop, w, mouseX, mouseY, delta);
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.TOGGLE_MODULE) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.TOGGLE_MODULE) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.put(context, x, bodyTop, w, mouseX, mouseY, delta);
@@ -1889,7 +1889,7 @@ public class ActionEditorOverlay extends bj {
 
             try {
                int y = bodyTop + 4 - this.f_e_I;
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PLACE) {
                   y = this.init_I_GuiGraphicsExtract_5(context, "packetOrder", x, y, w, mouseX, mouseY, delta);
                   BlockPos previewPos = null;
 
@@ -1935,7 +1935,7 @@ public class ActionEditorOverlay extends bj {
                      && this.write(field)
                      && (
                         this.init_MacroAction == null
-                           || this.init_MacroAction.getType() != StreamGate.PLACE
+                           || this.init_MacroAction.getType() != MacroActionType.PLACE
                            || !"itemName".equals(field.key()) && !"packetOrder".equals(field.key())
                      )) {
                      this.init_V_GuiGraphicsExtract_5(context, field, x, y, w, mouseX, mouseY, delta);
@@ -1949,7 +1949,7 @@ public class ActionEditorOverlay extends bj {
                      && this.write(field)
                      && (
                         this.init_MacroAction == null
-                           || this.init_MacroAction.getType() != StreamGate.PLACE
+                           || this.init_MacroAction.getType() != MacroActionType.PLACE
                            || !"itemName".equals(field.key()) && !"packetOrder".equals(field.key())
                      )) {
                      this.init_V_GuiGraphicsExtract_5(context, field, x, y, w, mouseX, mouseY, delta);
@@ -1957,17 +1957,17 @@ public class ActionEditorOverlay extends bj {
                   }
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PACKET) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PACKET) {
                   this.load_V(context, x, y, w, mouseX, mouseY);
                   y += 52;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SEND_PACKET) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.SEND_PACKET) {
                   this.write_V(context, x, y, w, mouseX, mouseY);
                   y += 52;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DELAY_PACKETS) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.DELAY_PACKETS) {
                   this.update_V(context, x, y, w, mouseX, mouseY);
                }
             } finally {
@@ -2034,7 +2034,7 @@ public class ActionEditorOverlay extends bj {
                N eiAct = ACTIONS[eiActIdx];
                int eiBtn = this.init_MapStore.read_I(i);
                boolean selected = i == this.f_j_I;
-               ArrayUtil entryTarget = this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, i);
+               MacroItemTarget entryTarget = this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, i);
                Component displayName = this.load_Component_ArrayUtil_Str(entryTarget, entry);
                boolean rowHovered = mx >= x && mx < x + itemW && my >= iy && my < iy + 13;
                String summaryAct = eiAct.load_Str;
@@ -2329,7 +2329,7 @@ public class ActionEditorOverlay extends bj {
 
    private boolean reset_Z() {
       if (this.init_MapStore != null && this.f_j_I >= 0 && this.f_j_I < this.init_MapStore.itemNames.size()) {
-         ArrayUtil target = this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, this.f_j_I);
+         MacroItemTarget target = this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, this.f_j_I);
          return target.update() && !target.init_Z()
             ? this.init_MapStore.init_N_I(this.f_j_I) != N.PICKUP_ALL
                || !this.load_Map.getOrDefault("item_useCursorItemForPickupAll", this.init_MapStore.useCursorItemForPickupAll)
@@ -2339,7 +2339,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_ArrayUtil(ArrayUtil target) {
+   private void init_V_ArrayUtil(MacroItemTarget target) {
       this.init_V_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, target);
 
       while (this.init_MapStore.itemTimes.size() < this.init_MapStore.itemNames.size()) {
@@ -2440,7 +2440,7 @@ public class ActionEditorOverlay extends bj {
       if (addF != null && slotF != null) {
          this.stop_Z = true;
          if (this.f_j_I >= 0 && this.f_j_I < this.init_MapStore.itemNames.size()) {
-            ArrayUtil target = this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, this.f_j_I);
+            MacroItemTarget target = this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, this.f_j_I);
             addF.init_V_Str(target.init_Str());
             slotF.init_V_Str(target.init_Z() ? String.valueOf(target.init_I) : "");
             this.stop_Z = false;
@@ -2469,7 +2469,7 @@ public class ActionEditorOverlay extends bj {
          if (addF != null && slotF != null) {
             String nameText = addF.load_Str().strip();
             String slotText = slotF.load_Str().strip();
-            ArrayUtil target = this.init_ArrayUtil_Str_2(
+            MacroItemTarget target = this.init_ArrayUtil_Str_2(
                nameText, slotText, this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, this.f_j_I)
             );
             String entry = target.write_Str();
@@ -2490,9 +2490,9 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void load_V_ArrayUtil(ArrayUtil rawTarget) {
+   private void load_V_ArrayUtil(MacroItemTarget rawTarget) {
       if (this.init_MapStore != null) {
-         ArrayUtil target = load_ArrayUtil_ArrayUtil(rawTarget);
+         MacroItemTarget target = load_ArrayUtil_ArrayUtil(rawTarget);
          String entry = target == null ? "" : target.write_Str();
          if (!entry.isBlank()) {
             int targetIndex = this.f_j_I;
@@ -2839,7 +2839,7 @@ public class ActionEditorOverlay extends bj {
             if (iy != -2147483648) {
                String entry = this.init_PacketUtil.itemNames.get(i);
                boolean selected = i == this.f_k_I;
-               ArrayUtil entryTarget = this.init_ArrayUtil_List(this.init_PacketUtil.itemTargets, this.init_PacketUtil.itemNames, i);
+               MacroItemTarget entryTarget = this.init_ArrayUtil_List(this.init_PacketUtil.itemTargets, this.init_PacketUtil.itemNames, i);
                Component displayName = this.load_Component_ArrayUtil_Str(entryTarget, entry);
                int cnt = i < this.init_PacketUtil.itemCounts.size() ? this.init_PacketUtil.itemCounts.get(i) : 0;
                String summary = " • " + (cnt == 0 ? "all" : "×" + cnt);
@@ -3034,7 +3034,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_ArrayUtil_I(ArrayUtil target, int count) {
+   private void init_V_ArrayUtil_I(MacroItemTarget target, int count) {
       if (target != null) {
          String entry = target.write_Str();
          if (!entry.isEmpty()) {
@@ -3119,7 +3119,7 @@ public class ActionEditorOverlay extends bj {
       if (addF != null && slotF != null) {
          this.next_Z = true;
          if (this.f_k_I >= 0 && this.f_k_I < this.init_PacketUtil.itemNames.size()) {
-            ArrayUtil target = this.init_ArrayUtil_List(this.init_PacketUtil.itemTargets, this.init_PacketUtil.itemNames, this.f_k_I);
+            MacroItemTarget target = this.init_ArrayUtil_List(this.init_PacketUtil.itemTargets, this.init_PacketUtil.itemNames, this.f_k_I);
             addF.init_V_Str(target.init_Str());
             slotF.init_V_Str(target.init_Z() ? String.valueOf(target.init_I) : "");
             this.next_Z = false;
@@ -3149,7 +3149,7 @@ public class ActionEditorOverlay extends bj {
          if (addF != null && slotF != null) {
             String nameText = addF.load_Str().strip();
             String slotText = slotF.load_Str().strip();
-            ArrayUtil target = this.init_ArrayUtil_Str_2(
+            MacroItemTarget target = this.init_ArrayUtil_Str_2(
                nameText, slotText, this.init_ArrayUtil_List(this.init_PacketUtil.itemTargets, this.init_PacketUtil.itemNames, this.f_k_I)
             );
             String entry = target.write_Str();
@@ -3170,9 +3170,9 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void read(ArrayUtil rawTarget) {
+   private void read(MacroItemTarget rawTarget) {
       if (this.init_PacketUtil != null) {
-         ArrayUtil target = load_ArrayUtil_ArrayUtil(rawTarget);
+         MacroItemTarget target = load_ArrayUtil_ArrayUtil(rawTarget);
          String entry = target == null ? "" : target.write_Str();
          if (!entry.isBlank()) {
             int targetIndex = this.f_k_I;
@@ -6396,7 +6396,7 @@ public class ActionEditorOverlay extends bj {
 
       if (this.init_MacroAction instanceof ToolsAction && field.key().startsWith("toolArg.")) {
          String name = field.key().substring("toolArg.".length());
-         autismclient.util.macro.k.Inner_TaskQueue tool = autismclient.util.macro.k.init_k_TaskQueue(this.tick_Str("toolId"));
+         autismclient.util.macro.MacroToolBridge.Inner_TaskQueue tool = autismclient.util.macro.MacroToolBridge.init_k_TaskQueue(this.tick_Str("toolId"));
          if (tool != null) {
             JsonObject definition = JsonParser.parseString(tool.read()).getAsJsonObject();
             if (definition.has("required")) {
@@ -6441,7 +6441,7 @@ public class ActionEditorOverlay extends bj {
                var10000 = "1024";
                break;
             case "title":
-               var10000 = this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.NBT_BOOK ? "Book title" : "Optional title";
+               var10000 = this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.NBT_BOOK ? "Book title" : "Optional title";
                break;
             case "guiTitle":
                var10000 = "Optional title";
@@ -6718,7 +6718,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private boolean init_Z_FieldDef(FieldDef field) {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.RACE && field != null && "raceSteps".equals(field.key());
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.RACE && field != null && "raceSteps".equals(field.key());
    }
 
    private void load_V_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my) {
@@ -7043,7 +7043,7 @@ public class ActionEditorOverlay extends bj {
             boolean itemSlotPick = field.captureMode() == StreamUtil.ITEM_SLOT && this.clear_Z();
             boolean menuButtonPick = field.captureMode() == StreamUtil.CUSTOM_MENU_BUTTON;
             boolean nbtBookFilePick = this.init_MacroAction != null
-               && this.init_MacroAction.getType() == StreamGate.NBT_BOOK
+               && this.init_MacroAction.getType() == MacroActionType.NBT_BOOK
                && "customFilePath".equals(key);
             int lw = this.init_I_I(w, field.label(), font, !itemSlotPick && !packetPick && !slotPick && !menuButtonPick ? 56 : 88);
             this.init_V_GuiGraphicsExtract_3(ctx, field.label(), x, y, lw, font);
@@ -7174,7 +7174,7 @@ public class ActionEditorOverlay extends bj {
 
    private boolean close_Z(String key) {
       return this.init_MacroAction != null
-         && this.init_MacroAction.getType() == StreamGate.SEND_CHAT
+         && this.init_MacroAction.getType() == MacroActionType.SEND_CHAT
          && "message".equals(key)
          && !this.flush_List.isEmpty();
    }
@@ -7196,7 +7196,7 @@ public class ActionEditorOverlay extends bj {
 
    private static void init_V_Set(Set<String> tokens, MacroAction action, int limit) {
       if (action instanceof autismclient.util.macro.CaptureValueAction capture && tokens.size() < limit) {
-         for (String name : UtilCore.init(capture.matchMode, capture.pattern)) {
+         for (String name : PatternCaptureMatcher.init(capture.matchMode, capture.pattern)) {
             if (tokens.size() >= limit) {
                return;
             }
@@ -7205,7 +7205,7 @@ public class ActionEditorOverlay extends bj {
          }
 
          if (tokens.size() < limit) {
-            String root = m.load(capture.saveAs);
+            String root = MacroVariableStore.load(capture.saveAs);
             if (!root.isBlank()) {
                tokens.add("{" + root + "}");
             }
@@ -7215,19 +7215,19 @@ public class ActionEditorOverlay extends bj {
 
    private static void init_V_Set_MacroAction(Set<String> tokens, MacroAction action) {
       if (action instanceof WaitForChatAction chat) {
-         for (String name : UtilCore.init(chat.init_UtilCore_DataUtil(), chat.pattern)) {
+         for (String name : PatternCaptureMatcher.init(chat.init_UtilCore_DataUtil(), chat.pattern)) {
             tokens.add("{" + name + "}");
          }
 
          init_V_Set_2(tokens, chat.saveAs, "sender", "message", "display", "source");
       } else if (action instanceof WaitForGuiAction gui) {
-         for (String name : UtilCore.init(gui.matchMode, gui.guiTitle)) {
+         for (String name : PatternCaptureMatcher.init(gui.matchMode, gui.guiTitle)) {
             tokens.add("{" + name + "}");
          }
 
          init_V_Set_2(tokens, gui.saveAs, "title", "type");
       } else if (action instanceof autismclient.util.macro.CaptureValueAction capture) {
-         for (String name : UtilCore.init(capture.matchMode, capture.pattern)) {
+         for (String name : PatternCaptureMatcher.init(capture.matchMode, capture.pattern)) {
             tokens.add("{" + name + "}");
          }
 
@@ -7255,7 +7255,7 @@ public class ActionEditorOverlay extends bj {
                tokens.add("{" + name.trim() + "}");
             }
          }
-      } else if (action instanceof CacheEntry output) {
+      } else if (action instanceof CaptureOutputAction output) {
          String root = output.load();
          if (action instanceof WaitForHealthAction) {
             init_V_Set_2(tokens, root, "health", "max", "absorption");
@@ -7266,7 +7266,7 @@ public class ActionEditorOverlay extends bj {
          } else if (action instanceof WaitForPacketAction || action instanceof autismclient.util.macro.WaitPacketMatchAction) {
             init_V_Set_2(tokens, root, "name", "class", "direction");
             if (action instanceof autismclient.util.macro.WaitPacketMatchAction packetMatch) {
-               String cleanRoot = m.load(root);
+               String cleanRoot = MacroVariableStore.load(root);
                if (!cleanRoot.isBlank()) {
                   for (autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule : packetMatch.init_List_9()) {
                      if (rule.load != null && !rule.load.isBlank()) {
@@ -7276,7 +7276,7 @@ public class ActionEditorOverlay extends bj {
                }
             }
          } else if (action instanceof WaitGuiTypeAction gui) {
-            for (String name : UtilCore.init(gui.matchMode, gui.title)) {
+            for (String name : PatternCaptureMatcher.init(gui.matchMode, gui.title)) {
                tokens.add("{" + name + "}");
             }
 
@@ -7295,7 +7295,7 @@ public class ActionEditorOverlay extends bj {
 
    private static void init_V_Set_2(Set<String> tokens, String root, String... properties) {
       if (root != null && !root.isBlank()) {
-         String clean = m.load(root);
+         String clean = MacroVariableStore.load(root);
          if (!clean.isBlank()) {
             tokens.add("{" + clean + "}");
 
@@ -7381,7 +7381,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private boolean read(FieldDef field) {
-      return field != null && "pattern".equals(field.key()) && this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_CHAT;
+      return field != null && "pattern".equals(field.key()) && this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_CHAT;
    }
 
    private void update_V_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my) {
@@ -7725,7 +7725,7 @@ public class ActionEditorOverlay extends bj {
                         }
 
                         if (fSlotF2 != null) {
-                           ArrayUtil parsed = ArrayUtil.update(raw);
+                           MacroItemTarget parsed = MacroItemTarget.update(raw);
                            fSlotF2.init_V_Str(parsed.init_Z() ? String.valueOf(parsed.init_I) : "");
                         }
 
@@ -8035,7 +8035,7 @@ public class ActionEditorOverlay extends bj {
             return "";
          }
 
-         used.removeAll(autismclient.util.macro.j.init_Set);
+         used.removeAll(autismclient.util.macro.MacroTemplateResolver.init_Set);
          if (used.isEmpty()) {
             return "";
          }
@@ -8079,15 +8079,15 @@ public class ActionEditorOverlay extends bj {
 
    private Set<String> init_Set() {
       LinkedHashSet<String> outputs = new LinkedHashSet<>();
-      if (this.init_MacroAction instanceof CacheEntry captureOutput) {
-         String root = m.load(captureOutput.load());
+      if (this.init_MacroAction instanceof CaptureOutputAction captureOutput) {
+         String root = MacroVariableStore.load(captureOutput.load());
          if (!root.isBlank()) {
             outputs.add(root);
          }
       }
 
       String pattern = "";
-      UtilCore.Inner_DataUtil mode = UtilCore.Inner_DataUtil.MATCH;
+      PatternCaptureMatcher.Inner_DataUtil mode = PatternCaptureMatcher.Inner_DataUtil.MATCH;
       if (this.init_MacroAction instanceof WaitForChatAction) {
          k field = this.init_Map.get("pattern");
          pattern = field == null ? "" : field.load_Str();
@@ -8106,18 +8106,18 @@ public class ActionEditorOverlay extends bj {
          mode = this.init_UtilCore_DataUtil();
       }
 
-      if (mode != UtilCore.Inner_DataUtil.MATCH) {
-         outputs.addAll(UtilCore.init(mode, pattern));
+      if (mode != PatternCaptureMatcher.Inner_DataUtil.MATCH) {
+         outputs.addAll(PatternCaptureMatcher.init(mode, pattern));
       }
 
       return outputs;
    }
 
-   private UtilCore.Inner_DataUtil init_UtilCore_DataUtil() {
+   private PatternCaptureMatcher.Inner_DataUtil init_UtilCore_DataUtil() {
       try {
-         return UtilCore.Inner_DataUtil.valueOf(this.tick_Str("matchMode"));
+         return PatternCaptureMatcher.Inner_DataUtil.valueOf(this.tick_Str("matchMode"));
       } catch (IllegalArgumentException | NullPointerException ignored) {
-         return UtilCore.Inner_DataUtil.MATCH;
+         return PatternCaptureMatcher.Inner_DataUtil.MATCH;
       }
    }
 
@@ -8286,7 +8286,7 @@ public class ActionEditorOverlay extends bj {
       this.get(true);
       ck.init_ck().cache(false);
       this.level();
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PLACE) {
          autismclient.util.au.load();
       }
 
@@ -8297,7 +8297,7 @@ public class ActionEditorOverlay extends bj {
 
          this.frame();
          this.init_MacroAction.fromTag(this.init_CompoundTag);
-         d.init(this.init_MacroAction, this.init_CompoundTag);
+         DynamicBindingManager.init(this.init_MacroAction, this.init_CompoundTag);
          if (this.init_Runnable != null) {
             this.init_Runnable.run();
          }
@@ -8378,7 +8378,7 @@ public class ActionEditorOverlay extends bj {
                   f.poll(true);
                }
 
-               String binding = d.init(action, key);
+               String binding = DynamicBindingManager.init(action, key);
                f.init_V_Str(binding.isBlank() ? String.valueOf(v) : binding);
                this.init_Map.put(key, f);
                break;
@@ -8390,7 +8390,7 @@ public class ActionEditorOverlay extends bj {
                   f.load(sx -> sx.isEmpty() || sx.equals("-") || sx.matches("-?\\d*\\.?\\d*"));
                }
 
-               String binding = d.init(action, key);
+               String binding = DynamicBindingManager.init(action, key);
                f.init_V_Str(binding.isBlank() ? init_Str_D(v) : binding);
                this.init_Map.put(key, f);
                break;
@@ -8402,7 +8402,7 @@ public class ActionEditorOverlay extends bj {
                   f.load(sx -> sx.isEmpty() || sx.equals("-") || sx.matches("-?\\d*"));
                }
 
-               String binding = d.init(action, key);
+               String binding = DynamicBindingManager.init(action, key);
                f.init_V_Str(binding.isBlank() ? String.valueOf(v) : binding);
                this.init_Map.put(key, f);
                break;
@@ -8419,7 +8419,7 @@ public class ActionEditorOverlay extends bj {
                      }
 
                      double v = this.init_CompoundTag.contains(xyzKeys[i]) ? this.init_CompoundTag.getDoubleOr(xyzKeys[i], 0.0) : 0.0;
-                     String binding = d.init(action, xyzKeys[i]);
+                     String binding = DynamicBindingManager.init(action, xyzKeys[i]);
                      f.init_V_Str(binding.isBlank() ? init_Str_D(v) : binding);
                   } else {
                      if (!field.dynamic()) {
@@ -8427,7 +8427,7 @@ public class ActionEditorOverlay extends bj {
                      }
 
                      int v = this.init_CompoundTag.contains(xyzKeys[i]) ? this.init_CompoundTag.getIntOr(xyzKeys[i], 0) : 0;
-                     String binding = d.init(action, xyzKeys[i]);
+                     String binding = DynamicBindingManager.init(action, xyzKeys[i]);
                      f.init_V_Str(binding.isBlank() ? String.valueOf(v) : binding);
                   }
 
@@ -8449,7 +8449,7 @@ public class ActionEditorOverlay extends bj {
                this.read_Map.put(key, Math.max(0, idx));
                if (field.dynamic()) {
                   k bindingField = this.init_k_I(80);
-                  bindingField.init_V_Str(d.init(action, key));
+                  bindingField.init_V_Str(DynamicBindingManager.init(action, key));
                   this.init_Map.put(key, bindingField);
                }
                break;
@@ -8525,7 +8525,7 @@ public class ActionEditorOverlay extends bj {
 
             ToolsAction draft = new ToolsAction();
             draft.fromTag(this.init_CompoundTag);
-            d.init(draft, this.init_CompoundTag);
+            DynamicBindingManager.init(draft, this.init_CompoundTag);
             this.init_ActionFieldSchema = BufferHelper.init(draft);
             this.init_Map.clear();
             this.load_Map.clear();
@@ -8707,7 +8707,7 @@ public class ActionEditorOverlay extends bj {
                this.init_CompoundTag.put("entries", entriesTag);
                this.init_CompoundTag.putString("moduleName", "");
                this.init_CompoundTag.putString("toggleMode", ak.Inner_StreamUtil.init.name());
-            } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET) {
+            } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_PACKET) {
                List<String> targets = this.init_List_List(this.close_List());
                ListTag packetList = new ListTag();
 
@@ -8722,7 +8722,7 @@ public class ActionEditorOverlay extends bj {
                if (saveAs != null) {
                   this.init_CompoundTag.putString("saveAs", saveAs.load_Str());
                }
-            } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET_MATCH) {
+            } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_PACKET_MATCH) {
                this.y();
                ListTag rules = new ListTag();
                if (this.reset_List != null) {
@@ -8851,12 +8851,12 @@ public class ActionEditorOverlay extends bj {
                }
 
                this.drain();
-               if (this.init_MacroAction instanceof aP && !this.next_Z()) {
+               if (this.init_MacroAction instanceof GuiWaitAware && !this.next_Z()) {
                   this.init_CompoundTag.putString("guiName", "");
                   this.init_CompoundTag.putString("waitGuiName", "");
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.INVENTORY) {
                   String mode = this.tick_Str("mode");
                   if ("CLOSE".equals(mode)) {
                      this.init_CompoundTag.putBoolean("waitForGuiBefore", false);
@@ -8867,12 +8867,12 @@ public class ActionEditorOverlay extends bj {
                   this.init_CompoundTag.putBoolean("sendPacket", !this.load_Map.getOrDefault("sendPacket", false));
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SLOT_CHANGE) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_SLOT_CHANGE) {
                   ListTag nbtEntries = new ListTag();
                   if (this.run_List != null) {
                      for (WaitForSlotChangeAction.Inner_DataUtil e : this.run_List) {
                         CompoundTag ec = new CompoundTag();
-                        ArrayUtil target = e.init_ArrayUtil();
+                        MacroItemTarget target = e.init_ArrayUtil();
                         if (target.init_Z() || target.update()) {
                            ec.put("target", target.init_CompoundTag());
                         }
@@ -8887,7 +8887,7 @@ public class ActionEditorOverlay extends bj {
                   this.init_CompoundTag.putBoolean("listenDuringPreviousAction", this.load_Map.getOrDefault("listenDuringPreviousAction", false));
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.USE_ITEM) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.USE_ITEM) {
                   k slotField = this.init_Map.get("slot");
                   if (slotField == null || slotField.load_Str() == null || slotField.load_Str().strip().isEmpty()) {
                      this.init_CompoundTag.remove("slot");
@@ -8904,11 +8904,11 @@ public class ActionEditorOverlay extends bj {
                   }
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.NBT_BOOK) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.NBT_BOOK) {
                   this.block();
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SWAP_SLOTS) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.SWAP_SLOTS) {
                   boolean fromUseItemName = this.init_CompoundTag.getBooleanOr("fromUseItemName", false);
                   boolean toUseItemName = this.init_CompoundTag.getBooleanOr("toUseItemName", false);
                   if (fromUseItemName) {
@@ -8925,13 +8925,13 @@ public class ActionEditorOverlay extends bj {
                }
 
                if (this.init_MacroAction != null
-                  && this.init_MacroAction.getType() == StreamGate.GO_TO
+                  && this.init_MacroAction.getType() == MacroActionType.GO_TO
                   && !this.init_CompoundTag.getBooleanOr("waitForArrival", false)) {
                   this.init_CompoundTag.putDouble("arrivalRadius", 2.0);
                   this.init_CompoundTag.putInt("timeoutMs", 60000);
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CLICK) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.CLICK) {
                   if (!this.next_Z()) {
                      this.init_CompoundTag.putString("guiName", "");
                   }
@@ -8945,7 +8945,7 @@ public class ActionEditorOverlay extends bj {
                   }
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.XCARRY) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.XCARRY) {
                   this.init_CompoundTag.putInt("safeClickDelayTicks", XCarryAction.write(this.init_CompoundTag.getIntOr("safeClickDelayTicks", 1)));
                   this.init_CompoundTag
                      .putBoolean(
@@ -8959,7 +8959,7 @@ public class ActionEditorOverlay extends bj {
                      );
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DISCONNECT) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.DISCONNECT) {
                   String mode = this.init_CompoundTag.getStringOr("mode", "DISCONNECT");
                   if ("DISCONNECT".equals(mode)) {
                      this.init_CompoundTag.putBoolean("useNextAction", false);
@@ -8973,38 +8973,38 @@ public class ActionEditorOverlay extends bj {
                }
 
                if (this.init_MacroAction != null
-                  && this.init_MacroAction.getType() == StreamGate.BREAK
+                  && this.init_MacroAction.getType() == MacroActionType.BREAK
                   && !this.init_CompoundTag.getBooleanOr("interact", false)) {
                   this.init_CompoundTag.putBoolean("runNextSteps", false);
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CLOSE_GUI) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.CLOSE_GUI) {
                   this.init_CompoundTag.putBoolean("sendPacket", !this.load_Map.getOrDefault("sendPacket", false));
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SAVE_GUI) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.SAVE_GUI) {
                   this.init_CompoundTag.putBoolean("sendPacket", !this.load_Map.getOrDefault("sendPacket", false));
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.STORE_ITEM) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.STORE_ITEM) {
                   this.init_CompoundTag.putBoolean("closeSendPkt", !this.load_Map.getOrDefault("closeSendPkt", false));
                }
 
                if (this.init_MacroAction != null
-                  && (this.init_MacroAction.getType() == StreamGate.OPEN_CONTAINER || this.init_MacroAction.getType() == StreamGate.INTERACT_ENTITY)) {
+                  && (this.init_MacroAction.getType() == MacroActionType.OPEN_CONTAINER || this.init_MacroAction.getType() == MacroActionType.INTERACT_ENTITY)) {
                   List<String> selectedTargets = this.write_Map.getOrDefault("entityTargets", Collections.emptyList());
                   String entityTarget = selectedTargets.isEmpty() ? "" : selectedTargets.get(0);
                   this.init_CompoundTag.putString("entityTarget", entityTarget);
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_CHAT) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_CHAT) {
                   this.init_CompoundTag.putInt("fuzzyPercent", WaitForChatAction.init_I_I_8(this.put_I()));
                   if (!this.next_Z()) {
                      this.init_CompoundTag.putString("waitGuiName", "");
                   }
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PLACE) {
                   if (!this.init_CompoundTag.getBooleanOr("manualDirection", false)) {
                      this.init_CompoundTag.remove("direction");
                   }
@@ -9537,11 +9537,11 @@ public class ActionEditorOverlay extends bj {
          return this.stop_Z();
       }
 
-      if (this.poll_Z(field.key()) && this.init_MacroAction instanceof aP) {
+      if (this.poll_Z(field.key()) && this.init_MacroAction instanceof GuiWaitAware) {
          return this.next_Z();
       }
 
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.INVENTORY) {
          String mode = this.tick_Str("mode");
          if ("waitForGuiBefore".equals(field.key()) || "waitForGuiAfter".equals(field.key())) {
             return "OPEN".equals(mode);
@@ -9552,7 +9552,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_ENTITY) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_ENTITY) {
          String checkMode = this.tick_Str("checkMode");
          if ("centerOnPlayer".equals(field.key()) || "radius".equals(field.key()) || "mustBeLookingAt".equals(field.key())) {
             return "RADIUS".equals(checkMode) || "NEARBY".equals(checkMode) && !"mustBeLookingAt".equals(field.key());
@@ -9563,7 +9563,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY_AUDIT) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.INVENTORY_AUDIT) {
          String mode = this.tick_Str("mode");
          String openMode = this.tick_Str("openMode");
          boolean isDupeMode = "DUPE".equals(mode) || "DUPE_SPAM".equals(mode);
@@ -9593,13 +9593,13 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PACKET_GATE && "DISABLE_GATE".equals(this.tick_Str("mode"))) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PACKET_GATE && "DISABLE_GATE".equals(this.tick_Str("mode"))) {
          String key = field.key();
          return "mode".equals(key) || "gateId".equals(key) || "flushOnDisable".equals(key);
       }
 
       if (this.init_MacroAction != null
-         && (this.init_MacroAction.getType() == StreamGate.FPS || this.init_MacroAction.getType() == StreamGate.SPING)) {
+         && (this.init_MacroAction.getType() == MacroActionType.FPS || this.init_MacroAction.getType() == MacroActionType.SPING)) {
          String endMode = this.tick_Str("endMode");
          boolean timeout = endMode.isEmpty() || "TIMEOUT".equals(endMode);
          boolean steps = "STEPS".equals(endMode);
@@ -9626,7 +9626,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CAPTURE_VALUE) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.CAPTURE_VALUE) {
          String key = field.key();
          if ("listFilterText".equals(key) || "listStripPrefix".equals(key) || "listPickPosition".equals(key)) {
             String source = this.tick_Str("source");
@@ -9679,7 +9679,7 @@ public class ActionEditorOverlay extends bj {
 
    private boolean stop_Z() {
       return this.init_MacroAction != null
-         && this.init_MacroAction.getType() == StreamGate.XCARRY
+         && this.init_MacroAction.getType() == MacroActionType.XCARRY
          && "PUT_IN".equals(this.tick_Str("mode"))
          && "SAFE_CLICK".equals(this.tick_Str("transferMode"));
    }
@@ -9786,15 +9786,15 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private ArrayUtil init_ArrayUtil() {
+   private MacroItemTarget init_ArrayUtil() {
       k nameF = this.init_Map.get("itemName");
       k slotF = this.init_Map.get("place_itemSlot");
       return this.init_ArrayUtil_Str_2(nameF == null ? "" : nameF.load_Str(), slotF == null ? "" : slotF.load_Str(), this.update_Map.get("itemName"));
    }
 
    private void table() {
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
-         ArrayUtil target = this.init_ArrayUtil();
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PLACE) {
+         MacroItemTarget target = this.init_ArrayUtil();
          if (!target.init_Z() && !target.update()) {
             this.update_Map.remove("itemName");
          } else {
@@ -9803,8 +9803,8 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_Str(String key, ArrayUtil source, String legacyValue, String slotKey) {
-      ArrayUtil resolved = this.init_ArrayUtil_ArrayUtil_Str(source, legacyValue);
+   private void init_V_Str(String key, MacroItemTarget source, String legacyValue, String slotKey) {
+      MacroItemTarget resolved = this.init_ArrayUtil_ArrayUtil_Str(source, legacyValue);
       if (resolved.init_Z() || resolved.update()) {
          this.update_Map.put(key, resolved.init_ArrayUtil());
          this.init_CompoundTag.putString(key, resolved.init_Str());
@@ -9876,7 +9876,7 @@ public class ActionEditorOverlay extends bj {
       return var10000;
    }
 
-   private ArrayUtil load_ArrayUtil() {
+   private MacroItemTarget load_ArrayUtil() {
       int storeIndex = this.open_Map.getOrDefault("store_items_selected", -1);
       int auditIndex = this.open_Map.getOrDefault("audit_items_selected", -1);
       int index = storeIndex >= 0 ? storeIndex : auditIndex;
@@ -9884,9 +9884,9 @@ public class ActionEditorOverlay extends bj {
          return null;
       }
 
-      List<ArrayUtil> targets = this.init_List_Str("targetItems");
+      List<MacroItemTarget> targets = this.init_List_Str("targetItems");
       if (index >= 0 && index < targets.size()) {
-         ArrayUtil target = targets.get(index);
+         MacroItemTarget target = targets.get(index);
          if (target != null && (target.init_Z() || target.update())) {
             return target;
          }
@@ -9895,7 +9895,7 @@ public class ActionEditorOverlay extends bj {
       return null;
    }
 
-   private Component init_Component_ArrayUtil_Str(ArrayUtil target, String value) {
+   private Component init_Component_ArrayUtil_Str(MacroItemTarget target, String value) {
       if (target == null) {
          return null;
       }
@@ -9909,13 +9909,13 @@ public class ActionEditorOverlay extends bj {
       return safeValue.equals(rich.getString()) ? rich.copy() : null;
    }
 
-   private void init_V_Str_3(String key, List<ArrayUtil> source, List<String> legacyValues) {
-      List<ArrayUtil> resolved = this.init_List_List_List(source, legacyValues);
+   private void init_V_Str_3(String key, List<MacroItemTarget> source, List<String> legacyValues) {
+      List<MacroItemTarget> resolved = this.init_List_List_List(source, legacyValues);
       if (!resolved.isEmpty()) {
-         this.sync_Map.put(key, ArrayUtil.init_List_List(resolved));
+         this.sync_Map.put(key, MacroItemTarget.init_List_List(resolved));
          ListTag listTag = new ListTag();
 
-         for (ArrayUtil target : resolved) {
+         for (MacroItemTarget target : resolved) {
             if (target != null) {
                String entry = target.write_Str();
                if (!entry.isBlank()) {
@@ -9928,23 +9928,23 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private ArrayUtil init_ArrayUtil_ArrayUtil_Str(ArrayUtil source, String legacyValue) {
-      return source != null && (source.init_Z() || source.update()) ? source.init_ArrayUtil() : ArrayUtil.update(legacyValue);
+   private MacroItemTarget init_ArrayUtil_ArrayUtil_Str(MacroItemTarget source, String legacyValue) {
+      return source != null && (source.init_Z() || source.update()) ? source.init_ArrayUtil() : MacroItemTarget.update(legacyValue);
    }
 
-   private List<ArrayUtil> init_List_List_List(List<ArrayUtil> source, List<String> legacyValues) {
-      List<ArrayUtil> resolved = ArrayUtil.init_List_List(source);
+   private List<MacroItemTarget> init_List_List_List(List<MacroItemTarget> source, List<String> legacyValues) {
+      List<MacroItemTarget> resolved = MacroItemTarget.init_List_List(source);
       if (!resolved.isEmpty()) {
          return resolved;
       }
 
-      List<ArrayUtil> parsed = new ArrayList<>();
+      List<MacroItemTarget> parsed = new ArrayList<>();
       if (legacyValues == null) {
          return parsed;
       }
 
       for (String legacyValue : legacyValues) {
-         ArrayUtil target = ArrayUtil.update(legacyValue);
+         MacroItemTarget target = MacroItemTarget.update(legacyValue);
          if (target.init_Z() || target.update()) {
             parsed.add(target);
          }
@@ -9953,10 +9953,10 @@ public class ActionEditorOverlay extends bj {
       return parsed;
    }
 
-   private ArrayUtil init_ArrayUtil_Str_Str(String key, String slotKey) {
+   private MacroItemTarget init_ArrayUtil_Str_Str(String key, String slotKey) {
       k valueField = this.init_Map.get(key);
       String text = valueField == null ? "" : valueField.load_Str().strip();
-      ArrayUtil previous = this.update_Map.get(key);
+      MacroItemTarget previous = this.update_Map.get(key);
       int slot = -1;
       boolean slotDriven = false;
       if (slotKey != null) {
@@ -9969,14 +9969,14 @@ public class ActionEditorOverlay extends bj {
 
       if (!text.isEmpty() || slotDriven && slot >= 0) {
          if (previous != null && text.equals(previous.init_Str())) {
-            ArrayUtil preserved = previous.init_ArrayUtil();
+            MacroItemTarget preserved = previous.init_ArrayUtil();
             if (slotDriven) {
                preserved.init_I = slot;
             }
 
             return preserved;
          } else if (previous != null && previous.write_Z() && !text.isEmpty()) {
-            ArrayUtil preserved = previous.load_ArrayUtil_Str(text);
+            MacroItemTarget preserved = previous.load_ArrayUtil_Str(text);
             if (slot >= 0) {
                preserved.init_I = slot;
             } else if (slotDriven) {
@@ -9994,26 +9994,26 @@ public class ActionEditorOverlay extends bj {
                raw = text;
             }
 
-            return ArrayUtil.update(raw);
+            return MacroItemTarget.update(raw);
          }
       } else {
-         return new ArrayUtil();
+         return new MacroItemTarget();
       }
    }
 
-   private List<ArrayUtil> init_List_Str(String key) {
+   private List<MacroItemTarget> init_List_Str(String key) {
       List<String> values = this.write_Map.getOrDefault(key, Collections.emptyList());
-      List<ArrayUtil> previous = this.sync_Map.getOrDefault(key, Collections.emptyList());
+      List<MacroItemTarget> previous = this.sync_Map.getOrDefault(key, Collections.emptyList());
       boolean[] used = new boolean[previous.size()];
-      List<ArrayUtil> rebuilt = new ArrayList<>();
+      List<MacroItemTarget> rebuilt = new ArrayList<>();
 
       for (String value : values) {
          String entry = value == null ? "" : value.strip();
          if (!entry.isEmpty()) {
-            ArrayUtil preserved = null;
+            MacroItemTarget preserved = null;
 
             for (int i = 0; i < previous.size(); i++) {
-               ArrayUtil candidate = previous.get(i);
+               MacroItemTarget candidate = previous.get(i);
                if (!used[i] && candidate != null && entry.equals(candidate.write_Str())) {
                   preserved = candidate.init_ArrayUtil();
                   used[i] = true;
@@ -10022,7 +10022,7 @@ public class ActionEditorOverlay extends bj {
             }
 
             if (preserved == null) {
-               preserved = ArrayUtil.update(entry);
+               preserved = MacroItemTarget.update(entry);
             }
 
             if (this.put_Z(key) && preserved.update()) {
@@ -10035,7 +10035,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      this.sync_Map.put(key, ArrayUtil.init_List_List(rebuilt));
+      this.sync_Map.put(key, MacroItemTarget.init_List_List(rebuilt));
       return rebuilt;
    }
 
@@ -10084,7 +10084,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_Str_ArrayUtil(String key, ArrayUtil target) {
+   private void init_V_Str_ArrayUtil(String key, MacroItemTarget target) {
       if (target == null || !target.init_Z() && !target.update()) {
          this.init_CompoundTag.remove(key);
          this.update_Map.remove(key);
@@ -10094,8 +10094,8 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_Str_List(String key, List<ArrayUtil> targets) {
-      this.init_CompoundTag.put(key, ArrayUtil.init_ListTag_List(targets));
+   private void init_V_Str_List(String key, List<MacroItemTarget> targets) {
+      this.init_CompoundTag.put(key, MacroItemTarget.init_ListTag_List(targets));
    }
 
    private void fill() {
@@ -10131,7 +10131,7 @@ public class ActionEditorOverlay extends bj {
       k countF = this.init_Map.get("wsc_count");
       if (addF != null && slotF != null) {
          this.prev_Z = true;
-         ArrayUtil target = e.init_ArrayUtil();
+         MacroItemTarget target = e.init_ArrayUtil();
          addF.init_V_Str(target.init_Str());
          slotF.init_V_Str(target.init_Z() ? String.valueOf(target.init_I) : "");
          if (countF != null) {
@@ -10170,7 +10170,7 @@ public class ActionEditorOverlay extends bj {
             String nameText = addF.load_Str().strip();
             String slotText = slotF.load_Str().strip();
             WaitForSlotChangeAction.Inner_DataUtil entry = this.run_List.get(this.f_l_I);
-            ArrayUtil target = this.init_ArrayUtil_Str_2(nameText, slotText, entry.init_ArrayUtil());
+            MacroItemTarget target = this.init_ArrayUtil_Str_2(nameText, slotText, entry.init_ArrayUtil());
             String rawTarget = target.write_Str();
             String norm = rawTarget.isEmpty() ? "" : StoreItemAction.init_Str_Str_8(rawTarget);
             if (norm == null) {
@@ -10210,7 +10210,7 @@ public class ActionEditorOverlay extends bj {
       if (this.run_List != null) {
          String nameText = addF.load_Str().strip();
          String slotText = slotF.load_Str().strip();
-         ArrayUtil target = this.init_ArrayUtil_Str_2(nameText, slotText, null);
+         MacroItemTarget target = this.init_ArrayUtil_Str_2(nameText, slotText, null);
          String rawTarget = target.write_Str();
          String norm = rawTarget.isEmpty() ? "" : StoreItemAction.init_Str_Str_8(rawTarget);
          if (norm == null) {
@@ -10257,15 +10257,15 @@ public class ActionEditorOverlay extends bj {
    }
 
    private boolean pop_Z(String key) {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SLOT_CHANGE && "targetEntries".equals(key);
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_SLOT_CHANGE && "targetEntries".equals(key);
    }
 
    private boolean tick_Z(String key) {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.STORE_ITEM && "targetItems".equals(key);
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.STORE_ITEM && "targetItems".equals(key);
    }
 
    private boolean run_Z(String key) {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY_AUDIT && "targetItems".equals(key);
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.INVENTORY_AUDIT && "targetItems".equals(key);
    }
 
    private boolean get_Z(String key) {
@@ -10284,56 +10284,56 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private ArrayUtil init_ArrayUtil_Slot(Slot slot, String itemName, String registryId, int visibleSlot) {
+   private MacroItemTarget init_ArrayUtil_Slot(Slot slot, String itemName, String registryId, int visibleSlot) {
       if (slot != null && slot.getItem() != null && !slot.getItem().isEmpty()) {
-         return ArrayUtil.init_ArrayUtil_ItemStack_I(slot.getItem(), visibleSlot);
+         return MacroItemTarget.init_ArrayUtil_ItemStack_I(slot.getItem(), visibleSlot);
       }
 
       if (visibleSlot >= 0) {
-         return ArrayUtil.init_ArrayUtil_I(visibleSlot);
+         return MacroItemTarget.init_ArrayUtil_I(visibleSlot);
       }
 
       String fallback = registryId != null && !registryId.isBlank() ? registryId.trim() : (itemName == null ? "" : itemName.trim());
-      return ArrayUtil.update(fallback);
+      return MacroItemTarget.update(fallback);
    }
 
-   private static ArrayUtil init_ArrayUtil_ArrayUtil(ArrayUtil target) {
+   private static MacroItemTarget init_ArrayUtil_ArrayUtil(MacroItemTarget target) {
       if (target == null) {
-         return new ArrayUtil();
+         return new MacroItemTarget();
       }
 
       if (!target.init_Z()) {
          return target;
       }
 
-      ArrayUtil copy = target.init_ArrayUtil();
+      MacroItemTarget copy = target.init_ArrayUtil();
       copy.init_I = -1;
       return copy;
    }
 
-   private static ArrayUtil load_ArrayUtil_ArrayUtil(ArrayUtil target) {
+   private static MacroItemTarget load_ArrayUtil_ArrayUtil(MacroItemTarget target) {
       if (target == null) {
-         return new ArrayUtil();
+         return new MacroItemTarget();
       } else {
          return target.update() ? init_ArrayUtil_ArrayUtil(target) : target.init_ArrayUtil();
       }
    }
 
-   private ArrayUtil init_ArrayUtil_Str_2(String nameText, String slotText, ArrayUtil previous) {
+   private MacroItemTarget init_ArrayUtil_Str_2(String nameText, String slotText, MacroItemTarget previous) {
       String trimmedName = nameText == null ? "" : nameText.strip();
       int slot = this.load_I_Str_I(slotText, -1);
       if (trimmedName.isEmpty() && slot < 0) {
-         return new ArrayUtil();
+         return new MacroItemTarget();
       }
 
       if (previous != null && trimmedName.equals(previous.init_Str())) {
-         ArrayUtil kept = previous.init_ArrayUtil();
+         MacroItemTarget kept = previous.init_ArrayUtil();
          kept.init_I = slot;
          return kept;
       }
 
       if (previous != null && previous.write_Z() && !trimmedName.isEmpty()) {
-         ArrayUtil preserved = previous.load_ArrayUtil_Str(trimmedName);
+         MacroItemTarget preserved = previous.load_ArrayUtil_Str(trimmedName);
          preserved.init_I = slot;
          return preserved;
       }
@@ -10347,21 +10347,21 @@ public class ActionEditorOverlay extends bj {
          raw = trimmedName;
       }
 
-      return ArrayUtil.update(raw);
+      return MacroItemTarget.update(raw);
    }
 
-   private ArrayUtil init_ArrayUtil_List(List<ArrayUtil> targets, List<String> legacyEntries, int index) {
+   private MacroItemTarget init_ArrayUtil_List(List<MacroItemTarget> targets, List<String> legacyEntries, int index) {
       if (targets != null && index >= 0 && index < targets.size()) {
-         ArrayUtil target = targets.get(index);
+         MacroItemTarget target = targets.get(index);
          if (target != null && (target.init_Z() || target.update())) {
             return target;
          }
       }
 
-      return legacyEntries != null && index >= 0 && index < legacyEntries.size() ? ArrayUtil.update(legacyEntries.get(index)) : new ArrayUtil();
+      return legacyEntries != null && index >= 0 && index < legacyEntries.size() ? MacroItemTarget.update(legacyEntries.get(index)) : new MacroItemTarget();
    }
 
-   private void init_V_Str_2(String key, List<String> entries, ArrayUtil capturedTarget) {
+   private void init_V_Str_2(String key, List<String> entries, MacroItemTarget capturedTarget) {
       if (key != null && entries != null && capturedTarget != null) {
          String normalized = capturedTarget.write_Str();
          if (this.get_Z(key) || this.pop_Z(key)) {
@@ -10373,15 +10373,15 @@ public class ActionEditorOverlay extends bj {
          if (normalized != null && !normalized.isBlank()) {
             int index = entries.indexOf(normalized);
             if (index >= 0) {
-               List<ArrayUtil> targets = this.init_List_Str(key);
+               List<MacroItemTarget> targets = this.init_List_Str(key);
 
                while (targets.size() < entries.size()) {
-                  targets.add(new ArrayUtil());
+                  targets.add(new MacroItemTarget());
                }
 
-               ArrayUtil stored = this.put_Z(key) ? init_ArrayUtil_ArrayUtil(capturedTarget) : capturedTarget.init_ArrayUtil();
+               MacroItemTarget stored = this.put_Z(key) ? init_ArrayUtil_ArrayUtil(capturedTarget) : capturedTarget.init_ArrayUtil();
                if (!normalized.equals(stored.write_Str())) {
-                  ArrayUtil normalizedTarget = ArrayUtil.update(normalized);
+                  MacroItemTarget normalizedTarget = MacroItemTarget.update(normalized);
                   stored.init_I = normalizedTarget.init_I;
                   if (!normalizedTarget.init_Z() && !stored.update()) {
                      stored = normalizedTarget;
@@ -10389,43 +10389,43 @@ public class ActionEditorOverlay extends bj {
                }
 
                targets.set(index, stored);
-               this.sync_Map.put(key, ArrayUtil.init_List_List(targets));
+               this.sync_Map.put(key, MacroItemTarget.init_List_List(targets));
             }
          }
       }
    }
 
-   private void init_V_List(List<ArrayUtil> targets, List<String> legacyEntries, int index, ArrayUtil target) {
+   private void init_V_List(List<MacroItemTarget> targets, List<String> legacyEntries, int index, MacroItemTarget target) {
       if (targets != null && legacyEntries != null && index >= 0) {
          while (targets.size() <= index) {
-            targets.add(new ArrayUtil());
+            targets.add(new MacroItemTarget());
          }
 
          while (legacyEntries.size() <= index) {
             legacyEntries.add("");
          }
 
-         ArrayUtil stored = target == null ? new ArrayUtil() : target;
+         MacroItemTarget stored = target == null ? new MacroItemTarget() : target;
          targets.set(index, stored);
          legacyEntries.set(index, stored.write_Str());
       }
    }
 
-   private void init_V_List(List<ArrayUtil> targets, List<String> legacyEntries, ArrayUtil target) {
+   private void init_V_List(List<MacroItemTarget> targets, List<String> legacyEntries, MacroItemTarget target) {
       if (targets != null && legacyEntries != null && target != null) {
          targets.add(target);
          legacyEntries.add(target.write_Str());
       }
    }
 
-   private void init_V_List_I(List<ArrayUtil> targets, int size) {
+   private void init_V_List_I(List<MacroItemTarget> targets, int size) {
       if (targets != null) {
          while (targets.size() > size) {
             targets.remove(targets.size() - 1);
          }
 
          while (targets.size() < size) {
-            targets.add(new ArrayUtil());
+            targets.add(new MacroItemTarget());
          }
       }
    }
@@ -10435,12 +10435,12 @@ public class ActionEditorOverlay extends bj {
    }
 
    private boolean put_Z(String key) {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.XCARRY && "entries".equals(key);
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.XCARRY && "entries".equals(key);
    }
 
    private boolean add_Z(String key) {
       return this.init_MacroAction != null
-         && (this.init_MacroAction.getType() == StreamGate.OPEN_CONTAINER || this.init_MacroAction.getType() == StreamGate.INTERACT_ENTITY)
+         && (this.init_MacroAction.getType() == MacroActionType.OPEN_CONTAINER || this.init_MacroAction.getType() == MacroActionType.INTERACT_ENTITY)
          && "entityTargets".equals(key);
    }
 
@@ -10452,8 +10452,8 @@ public class ActionEditorOverlay extends bj {
       Slot slot, String itemName, String registryId, int visibleSlot, boolean slotMode, List<String> entries
    ) {
       if (slot != null && visibleSlot >= 0) {
-         ArrayUtil captured = slotMode
-            ? ArrayUtil.init_ArrayUtil_I(visibleSlot)
+         MacroItemTarget captured = slotMode
+            ? MacroItemTarget.init_ArrayUtil_I(visibleSlot)
             : load_ArrayUtil_ArrayUtil(this.init_ArrayUtil_Slot(slot, itemName, registryId, visibleSlot));
          if (!captured.update()) {
             String mode = this.tick_Str("mode");
@@ -10483,7 +10483,7 @@ public class ActionEditorOverlay extends bj {
          return null;
       }
 
-      ArrayUtil parsed = ArrayUtil.update(trimmed);
+      MacroItemTarget parsed = MacroItemTarget.update(trimmed);
       if (!parsed.update()) {
          if (!trimmed.startsWith("#") && trimmed.matches("\\d+")) {
             trimmed = "#" + trimmed;
@@ -10778,7 +10778,7 @@ public class ActionEditorOverlay extends bj {
 
    private Component init_Component_Str(String key, String entry, int index) {
       if (this.reset_Z(key)) {
-         ArrayUtil target = this.init_ArrayUtil_Str(key, index, entry);
+         MacroItemTarget target = this.init_ArrayUtil_Str(key, index, entry);
          return this.load_Component_ArrayUtil_Str(target, this.read_Str_Str_Str(key, entry));
       } else {
          return Component.literal(this.read_Str_Str_Str(key, entry));
@@ -10799,16 +10799,16 @@ public class ActionEditorOverlay extends bj {
       return p.init(c2s, index);
    }
 
-   private ArrayUtil init_ArrayUtil_Str(String key, int index, String entry) {
-      List<ArrayUtil> targets = this.init_List_Str(key);
+   private MacroItemTarget init_ArrayUtil_Str(String key, int index, String entry) {
+      List<MacroItemTarget> targets = this.init_List_Str(key);
       if (index >= 0 && index < targets.size()) {
-         ArrayUtil target = targets.get(index);
+         MacroItemTarget target = targets.get(index);
          if (target != null && (target.init_Z() || target.update())) {
             return target.init_ArrayUtil();
          }
       }
 
-      ArrayUtil parsed = ArrayUtil.update(entry);
+      MacroItemTarget parsed = MacroItemTarget.update(entry);
       return !parsed.init_Z() && !parsed.update() ? null : parsed;
    }
 
@@ -10816,7 +10816,7 @@ public class ActionEditorOverlay extends bj {
       return this.get_Z(key) || this.put_Z(key);
    }
 
-   private Component load_Component_ArrayUtil_Str(ArrayUtil target, String fallback) {
+   private Component load_Component_ArrayUtil_Str(MacroItemTarget target, String fallback) {
       String safeFallback = fallback == null ? "" : fallback;
       if (target == null) {
          return Component.literal(safeFallback);
@@ -11285,7 +11285,7 @@ public class ActionEditorOverlay extends bj {
                search.init_V_Str(this.get_Str(pendingText));
             }
 
-            ArrayUtil parsed = ArrayUtil.update(pendingText);
+            MacroItemTarget parsed = MacroItemTarget.update(pendingText);
             storeSlotF.init_V_Str(parsed.init_Z() ? String.valueOf(parsed.init_I) : "");
          }
 
@@ -11432,7 +11432,7 @@ public class ActionEditorOverlay extends bj {
                search.init_V_Str(this.get_Str(pendingText));
             }
 
-            ArrayUtil parsed = ArrayUtil.update(pendingText);
+            MacroItemTarget parsed = MacroItemTarget.update(pendingText);
             auditSlotF.init_V_Str(parsed.init_Z() ? String.valueOf(parsed.init_I) : "");
          }
 
@@ -12596,7 +12596,7 @@ public class ActionEditorOverlay extends bj {
          previewText = preview.init_Str();
       }
 
-      boolean derivingPattern = exampleCapture && !draft.exampleText.isBlank() && draft.matchMode != UtilCore.Inner_DataUtil.MATCH;
+      boolean derivingPattern = exampleCapture && !draft.exampleText.isBlank() && draft.matchMode != PatternCaptureMatcher.Inner_DataUtil.MATCH;
       if (derivingPattern && draft.selectedText.isBlank()) {
          previewText = "Set Capture This";
       } else if (derivingPattern && draft.pattern.isBlank()) {
@@ -12625,7 +12625,7 @@ public class ActionEditorOverlay extends bj {
             );
       }
 
-      if (!draft.saveAs.isBlank() && m.load(draft.saveAs).isBlank()) {
+      if (!draft.saveAs.isBlank() && MacroVariableStore.load(draft.saveAs).isBlank()) {
          behaviorHint = "Bad variable name";
       }
 
@@ -12985,7 +12985,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       try {
-         draft.matchMode = UtilCore.Inner_DataUtil.valueOf(this.tick_Str("matchMode"));
+         draft.matchMode = PatternCaptureMatcher.Inner_DataUtil.valueOf(this.tick_Str("matchMode"));
       } catch (IllegalArgumentException | NullPointerException var12) {
       }
 
@@ -13045,12 +13045,12 @@ public class ActionEditorOverlay extends bj {
          .getOrDefault("autofillCacheList", this.init_CompoundTag != null && this.init_CompoundTag.getBooleanOr("autofillCacheList", false));
 
       try {
-         draft.listSelection = autismclient.util.macro.ConfigStore.Inner_CachePool.valueOf(this.tick_Str("listSelection"));
+         draft.listSelection = autismclient.util.macro.CandidatePoolSelector.Inner_CachePool.valueOf(this.tick_Str("listSelection"));
       } catch (IllegalArgumentException | NullPointerException var5) {
       }
 
       try {
-         draft.listFilter = autismclient.util.macro.ConfigStore.Inner_DataUtil.valueOf(this.tick_Str("listFilter"));
+         draft.listFilter = autismclient.util.macro.CandidatePoolSelector.Inner_DataUtil.valueOf(this.tick_Str("listFilter"));
       } catch (IllegalArgumentException | NullPointerException var4) {
       }
 
@@ -13077,13 +13077,13 @@ public class ActionEditorOverlay extends bj {
       boolean listSource = draft.source == autismclient.util.macro.CaptureValueAction.Inner_StateCache.COMMAND_AUTOFILL
          || draft.source == autismclient.util.macro.CaptureValueAction.Inner_StateCache.TABLIST;
       if (!listSource) {
-         Set<String> captured = UtilCore.init(draft.matchMode, draft.pattern);
+         Set<String> captured = PatternCaptureMatcher.init(draft.matchMode, draft.pattern);
          if (!captured.isEmpty()) {
             return captured.iterator().next();
          }
       }
 
-      return m.load(draft.saveAs);
+      return MacroVariableStore.load(draft.saveAs);
    }
 
    private String update(String key, String fallback) {
@@ -13173,7 +13173,7 @@ public class ActionEditorOverlay extends bj {
          nameField.sync(13);
          nameField.init_V(ctx, mx, my, 0.0F);
          this.init_V_GuiGraphicsExtract(ctx, x + w - buttonW, y + 1, buttonW, 13, "Capture", mx, my, () -> {
-            String name = m.load(nameField.load_Str());
+            String name = MacroVariableStore.load(nameField.load_Str());
             if (!name.isBlank()) {
                patternField.read("{" + name + "}");
                this.read_Map.put("matchMode", 1);
@@ -14027,7 +14027,7 @@ public class ActionEditorOverlay extends bj {
                field.init_V_Str("");
                this.update_Map.remove("itemName");
             } else {
-               ArrayUtil target = init_ArrayUtil_ArrayUtil(ArrayUtil.init_ArrayUtil_ItemStack_I(init_Minecraft.player.getMainHandItem(), -1));
+               MacroItemTarget target = init_ArrayUtil_ArrayUtil(MacroItemTarget.init_ArrayUtil_ItemStack_I(init_Minecraft.player.getMainHandItem(), -1));
                this.update_Map.put("itemName", target);
                field.init_V_Str(target.init_Str());
             }
@@ -14043,7 +14043,7 @@ public class ActionEditorOverlay extends bj {
                field.init_V_Str("");
                this.update_Map.remove("itemName");
             } else {
-               ArrayUtil target = ArrayUtil.init_ArrayUtil_ItemStack_I(
+               MacroItemTarget target = MacroItemTarget.init_ArrayUtil_ItemStack_I(
                   init_Minecraft.player.getMainHandItem(), init_Minecraft.player.getInventory().getSelectedSlot()
                );
                this.update_Map.put("itemName", target);
@@ -14119,7 +14119,7 @@ public class ActionEditorOverlay extends bj {
                field.init_V_Str("");
                this.update_Map.remove("itemName");
             } else {
-               ArrayUtil target = ArrayUtil.init_ArrayUtil_ItemStack_I(
+               MacroItemTarget target = MacroItemTarget.init_ArrayUtil_ItemStack_I(
                   init_Minecraft.player.getMainHandItem(), init_Minecraft.player.getInventory().getSelectedSlot()
                );
                this.update_Map.put("itemName", target);
@@ -15356,7 +15356,7 @@ public class ActionEditorOverlay extends bj {
          }
 
          return h;
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SEND_PACKET) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.SEND_PACKET) {
          int h = 80;
          h += 16;
          h += 16;
@@ -15367,7 +15367,7 @@ public class ActionEditorOverlay extends bj {
 
          return h + 116;
       } else {
-         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SOUND) {
+         if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_SOUND) {
             int h = 4;
             h += this.write(this.load_FieldDef_Str("waitForGuiBefore")) ? 16 : 0;
             h += this.write(this.load_FieldDef_Str("waitForGuiAfter")) ? 16 : 0;
@@ -15380,7 +15380,7 @@ public class ActionEditorOverlay extends bj {
             return h + 78;
          }
 
-         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_ENTITY) {
+         if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_ENTITY) {
             int h = 4;
             h += this.write(this.load_FieldDef_Str("checkMode")) ? 16 : 0;
             h += this.write(this.load_FieldDef_Str("radius")) ? 16 : 0;
@@ -15394,7 +15394,7 @@ public class ActionEditorOverlay extends bj {
             return h + 52;
          }
 
-         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.LOOK_AT_BLOCK) {
+         if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.LOOK_AT_BLOCK) {
             int h = 4;
             h += this.write(this.load_FieldDef_Str("targetMode")) ? 16 : 0;
             String mode = this.tick_Str("targetMode");
@@ -15416,7 +15416,7 @@ public class ActionEditorOverlay extends bj {
             h += this.write(this.load_FieldDef_Str("waitForCompletion")) ? 16 : 0;
             return h + 14;
          } else {
-            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.ROTATE) {
+            if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.ROTATE) {
                int h = 4;
                h += this.write(this.load_FieldDef_Str("yaw")) ? 16 : 0;
                h += this.write(this.load_FieldDef_Str("pitch")) ? 16 : 0;
@@ -15427,7 +15427,7 @@ public class ActionEditorOverlay extends bj {
                return h + 14;
             }
 
-            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.GO_TO) {
+            if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.GO_TO) {
                int h = 4;
                h += this.init_I_FieldDef(this.load_FieldDef_Str("pos")) + 2;
                h += 18;
@@ -15435,7 +15435,7 @@ public class ActionEditorOverlay extends bj {
                return h + 14;
             }
 
-            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.USE_ITEM) {
+            if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.USE_ITEM) {
                int h = 4;
                h += this.write(this.load_FieldDef_Str("packetOrder")) ? 16 : 0;
                h += this.write(this.load_FieldDef_Str("itemName")) ? 16 : 0;
@@ -15450,7 +15450,7 @@ public class ActionEditorOverlay extends bj {
                return h + 16;
             }
 
-            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY_AUDIT) {
+            if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.INVENTORY_AUDIT) {
                int h = 4;
                h += this.write(this.load_FieldDef_Str("mode")) ? 16 : 0;
                h += this.write(this.load_FieldDef_Str("targetItems")) ? 92 : 0;
@@ -15469,7 +15469,7 @@ public class ActionEditorOverlay extends bj {
                h += this.write(this.load_FieldDef_Str("spamDelayMs")) ? 16 : 0;
                return h + 16;
             } else {
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SWAP_SLOTS) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.SWAP_SLOTS) {
                   int h = 20;
                   h += this.write(this.load_FieldDef_Str("fromUseItemName")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("fromItemName")) ? 16 : 0;
@@ -15481,7 +15481,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CLICK) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.CLICK) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("packetOrder")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("clickType")) ? 16 : 0;
@@ -15491,7 +15491,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DISCONNECT) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.DISCONNECT) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("mode")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("delayMs")) ? 16 : 0;
@@ -15506,7 +15506,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 12;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_GUI) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_GUI) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("waitMode")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("guiType")) ? 16 : 0;
@@ -15518,7 +15518,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SELECT_SLOT) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.SELECT_SLOT) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("packetOrder")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("itemName")) ? 16 : 0;
@@ -15529,7 +15529,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_COOLDOWN) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_COOLDOWN) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("itemName")) ? 16 : 0;
                   h += 18;
@@ -15537,7 +15537,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_CHAT) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_CHAT) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("pattern")) ? this.init_I_FieldDef(this.load_FieldDef_Str("pattern")) + 2 : 0;
                   h += 18;
@@ -15554,7 +15554,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CAPTURE_VALUE) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.CAPTURE_VALUE) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("source")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("autofillCommand")) ? 16 : 0;
@@ -15590,8 +15590,8 @@ public class ActionEditorOverlay extends bj {
                   h += this.write(this.load_FieldDef_Str("waitForTrigger")) ? 16 : 0;
                   return h + 24;
                } else if (this.init_MacroAction == null
-                  || this.init_MacroAction.getType() != StreamGate.OPEN_CONTAINER && this.init_MacroAction.getType() != StreamGate.INTERACT_ENTITY) {
-                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
+                  || this.init_MacroAction.getType() != MacroActionType.OPEN_CONTAINER && this.init_MacroAction.getType() != MacroActionType.INTERACT_ENTITY) {
+                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PLACE) {
                      int h = 4;
                      h += this.write(this.load_FieldDef_Str("packetOrder")) ? 16 : 0;
                      h += 47;
@@ -15609,7 +15609,7 @@ public class ActionEditorOverlay extends bj {
                      return h + 36;
                   }
 
-                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SLOT_CHANGE) {
+                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_SLOT_CHANGE) {
                      int h = 4;
                      h += 16;
                      h += 16;
@@ -15619,7 +15619,7 @@ public class ActionEditorOverlay extends bj {
                      return h + 12;
                   }
 
-                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_INVENTORY_PREDICATE) {
+                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_INVENTORY_PREDICATE) {
                      int h = 4;
                      h += this.write(this.load_FieldDef_Str("listenDuringPreviousAction")) ? 16 : 0;
                      h += this.write(this.load_FieldDef_Str("condition")) ? 16 : 0;
@@ -15630,7 +15630,7 @@ public class ActionEditorOverlay extends bj {
                      return h + (this.write(this.load_FieldDef_Str("saveAs")) ? 16 : 0);
                   }
 
-                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DELAY_PACKETS) {
+                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.DELAY_PACKETS) {
                      int h = 4;
                      h += this.write(this.load_FieldDef_Str("mode")) ? 16 : 0;
                      h += this.write(this.load_FieldDef_Str("flushOnDisable")) ? 16 : 0;
@@ -15640,7 +15640,7 @@ public class ActionEditorOverlay extends bj {
 
                      return h + 8;
                   } else {
-                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.MINE) {
+                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.MINE) {
                         int h = 4;
                         h += this.write(this.load_FieldDef_Str("packetOrder")) ? 16 : 0;
                         h += this.init_I_FieldDef(this.load_FieldDef_Str("targetBlocks")) + 2 + 4;
@@ -15654,7 +15654,7 @@ public class ActionEditorOverlay extends bj {
                         return h + 14;
                      }
 
-                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PAY) {
+                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PAY) {
                         int h = 4;
                         h += this.write(this.load_FieldDef_Str("commandTemplate")) ? 16 : 0;
                         h += this.write(this.load_FieldDef_Str("amountInput")) ? 16 : 0;
@@ -15670,7 +15670,7 @@ public class ActionEditorOverlay extends bj {
                         return h + 48;
                      }
 
-                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.STORE_ITEM) {
+                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.STORE_ITEM) {
                         int h = 4;
                         h += this.write(this.load_FieldDef_Str("mode")) ? 16 : 0;
                         h += this.write(this.load_FieldDef_Str("allItems")) ? 16 : 0;
@@ -15686,7 +15686,7 @@ public class ActionEditorOverlay extends bj {
                         h += this.write(this.load_FieldDef_Str("closeAfter")) ? 16 : 0;
                         return h + (this.write(this.load_FieldDef_Str("closeSendPkt")) ? 16 : 0);
                      } else {
-                        if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.TOGGLE_MODULE) {
+                        if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.TOGGLE_MODULE) {
                            int h = 4;
                            h += 74;
                            h += 18;
@@ -15731,11 +15731,11 @@ public class ActionEditorOverlay extends bj {
 
                            return h;
                         } else {
-                           if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET) {
+                           if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_PACKET) {
                               return 242;
                            }
 
-                           if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET_MATCH) {
+                           if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.WAIT_PACKET_MATCH) {
                               int rows = this.reset_List == null ? 1 : Math.max(1, Math.min(4, Math.max(1, this.reset_List.size())));
                               int h = 82 + rows * 14 + 5;
                               if (this.reset_List != null && !this.reset_List.isEmpty()) {
@@ -15772,11 +15772,11 @@ public class ActionEditorOverlay extends bj {
                                  }
                               }
 
-                              if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PACKET) {
+                              if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PACKET) {
                                  h += 52;
                               }
 
-                              if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DELAY_PACKETS) {
+                              if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.DELAY_PACKETS) {
                                  h += 18;
                               }
 
@@ -15980,7 +15980,7 @@ public class ActionEditorOverlay extends bj {
 
    private void init_V_FieldDef_List(FieldDef field, List<String> lst) {
       if (field.captureMode() == StreamUtil.PACKET_NAME) {
-         boolean both = this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PACKET_GATE;
+         boolean both = this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PACKET_GATE;
          if (!both) {
             Consumer<Class<? extends Packet<?>>> add = packetClass -> {
                if (packetClass != null && lst != null) {
@@ -16077,7 +16077,7 @@ public class ActionEditorOverlay extends bj {
    private void init_V_FieldDef(FieldDef field) {
       if (this.put_Z()) {
          if (this.init_MacroAction != null
-            && (this.init_MacroAction.getType() == StreamGate.INSTA_BREAK || this.init_MacroAction.getType() == StreamGate.BREAK)
+            && (this.init_MacroAction.getType() == MacroActionType.INSTA_BREAK || this.init_MacroAction.getType() == MacroActionType.BREAK)
             && "blockPos".equals(field.key())) {
             this.B();
          } else {
@@ -16091,12 +16091,12 @@ public class ActionEditorOverlay extends bj {
                }
             });
             ck state = ck.init_ck();
-            state.state(this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE);
+            state.state(this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PLACE);
             state.read_V_Runnable(() -> {
                state.state(false);
                this.init_V_Z_Z(true, false);
             });
-            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
+            if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PLACE) {
                state.init_V_BiConsumer((pos, face) -> {
                   Direction useFace = face == null ? Direction.UP : face;
                   BlockPos targetPos = pos.relative(useFace);
@@ -16184,12 +16184,12 @@ public class ActionEditorOverlay extends bj {
       return init_List;
    }
 
-   private static String init_Str_StreamGate(StreamGate type) {
+   private static String init_Str_StreamGate(MacroActionType type) {
       if (type == null) {
          return "Action";
       }
 
-      if (type == StreamGate.MULTI) {
+      if (type == MacroActionType.MULTI) {
          return "Multi (unsupported)";
       }
 
@@ -16225,7 +16225,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private boolean isLegacyMulti() {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.MULTI;
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.MULTI;
    }
 
    private String start_Str() {

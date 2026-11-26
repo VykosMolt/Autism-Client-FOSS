@@ -1,7 +1,7 @@
 package autismclient.api.macro;
 
-import autismclient.util.macro.j;
-import autismclient.util.macro.l;
+import autismclient.util.macro.MacroTemplateResolver;
+import autismclient.util.macro.MacroVarValue;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -28,32 +28,32 @@ public interface MacroExecutionContext {
 
    void sendPacket(Packet<?> var1);
 
-   Optional<l> variable(String var1);
+   Optional<MacroVarValue> variable(String var1);
 
-   void setVariable(String var1, l var2);
+   void setVariable(String var1, MacroVarValue var2);
 
    default void setVariable(String name, Object value) {
-      this.setVariable(name, l.init_l_Obj(value));
+      this.setVariable(name, MacroVarValue.init_l_Obj(value));
    }
 
    void removeVariable(String var1);
 
-   Map<String, l> variables();
+   Map<String, MacroVarValue> variables();
 
-   j.Inner_CachePool resolveTemplate(String var1);
+   MacroTemplateResolver.Inner_CachePool resolveTemplate(String var1);
 
-   default void captureResult(String name, l value) {
+   default void captureResult(String name, MacroVarValue value) {
       this.setVariable(name, value);
    }
 
-   default void captureResults(Map<String, l> values) {
+   default void captureResults(Map<String, MacroVarValue> values) {
       if (values != null) {
          values.forEach(this::setVariable);
       }
    }
 
    default Optional<Integer> resolveInt(String template) {
-      j.Inner_CachePool resolved = this.resolveTemplate(template);
+      MacroTemplateResolver.Inner_CachePool resolved = this.resolveTemplate(template);
       if (!resolved.init_Z()) {
          return Optional.empty();
       }
@@ -66,7 +66,7 @@ public interface MacroExecutionContext {
    }
 
    default Optional<Double> resolveDouble(String template) {
-      j.Inner_CachePool resolved = this.resolveTemplate(template);
+      MacroTemplateResolver.Inner_CachePool resolved = this.resolveTemplate(template);
       if (!resolved.init_Z()) {
          return Optional.empty();
       }
@@ -83,7 +83,7 @@ public interface MacroExecutionContext {
          return Optional.empty();
       }
 
-      j.Inner_CachePool resolved = this.resolveTemplate(template);
+      MacroTemplateResolver.Inner_CachePool resolved = this.resolveTemplate(template);
       if (!resolved.init_Z()) {
          return Optional.empty();
       }

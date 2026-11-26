@@ -499,8 +499,8 @@ public class DisconnectAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.DISCONNECT;
+   public MacroActionType getType() {
+      return MacroActionType.DISCONNECT;
    }
 
    @Override

@@ -790,7 +790,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
          || BedNukerModule.init_Z_23()
          || AutoTotemModule.init_Z_6()
          || AutoArmorModule.init_Z_20()
-         || autismclient.util.macro.g.init_Z()) {
+         || autismclient.util.macro.MacroAimController.init_Z()) {
          return false;
       }
 
@@ -822,10 +822,10 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
 
    private static boolean init_Z_Packet_Packet(Packet<?> look, Packet<?> attack) {
       Module canceller = al.init_Module_Str("packet-canceller");
-      if (!HashUtil.init_Z() && (!autismclient.util.macro.J.read_Z() || !autismclient.util.macro.J.load_Z()) && !ck.init_ck().reset_Z()) {
+      if (!HashUtil.init_Z() && (!autismclient.util.macro.PingSpoofScheduler.read_Z() || !autismclient.util.macro.PingSpoofScheduler.load_Z()) && !ck.init_ck().reset_Z()) {
          return canceller == null || !canceller.isEnabled() || !canceller.onPacketSend(look) && !canceller.onPacketSend(attack)
-            ? autismclient.util.macro.C.init(look, "C2S") == autismclient.util.macro.C.Inner_StreamUtil.PASS
-               && autismclient.util.macro.C.init(attack, "C2S") == autismclient.util.macro.C.Inner_StreamUtil.PASS
+            ? autismclient.util.macro.PacketGateManager.init(look, "C2S") == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.PASS
+               && autismclient.util.macro.PacketGateManager.init(attack, "C2S") == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.PASS
             : false;
       } else {
          return false;

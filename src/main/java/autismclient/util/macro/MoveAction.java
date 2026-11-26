@@ -94,8 +94,8 @@ public class MoveAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.MOVE;
+   public MacroActionType getType() {
+      return MacroActionType.MOVE;
    }
 
    @Override

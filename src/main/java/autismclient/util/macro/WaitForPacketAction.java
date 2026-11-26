@@ -12,7 +12,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.protocol.Packet;
 
-public class WaitForPacketAction implements CacheEntry, MacroAction {
+public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
    public static final String C2S_PREFIX = "C2S:";
    public static final String S2C_PREFIX = "S2C:";
    public String packetName = "";
@@ -114,7 +114,7 @@ public class WaitForPacketAction implements CacheEntry, MacroAction {
       tag.putString("type", this.getType().name());
       tag.putString("packetName", this.packetName);
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       ListTag list = new ListTag();
 
@@ -136,7 +136,7 @@ public class WaitForPacketAction implements CacheEntry, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
       this.packetNames.clear();
       if (tag.contains("packetNames")) {
@@ -150,8 +150,8 @@ public class WaitForPacketAction implements CacheEntry, MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_PACKET;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_PACKET;
    }
 
    @Override

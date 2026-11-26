@@ -2,7 +2,7 @@ package autismclient.util;
 
 import autismclient.AutismClientAddon;
 import autismclient.util.macro.MacroExecutor;
-import autismclient.util.macro.b;
+import autismclient.util.macro.MacroWaitRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -767,12 +767,12 @@ public class aE {
          long currentTick = this.load_J();
          if (currentTick >= 0L && currentTick < targetTick) {
             aE.Inner_ConfigStore sched = new aE.Inner_ConfigStore(executionId, targetTick);
-            if (autismclient.util.macro.ab.init_Z()) {
+            if (autismclient.util.macro.ServerTickPhaseTracker.init_Z()) {
                long ticksOut = targetTick - currentTick;
                long now = System.nanoTime();
-               long nextTickNano = autismclient.util.macro.ab.init_J();
+               long nextTickNano = autismclient.util.macro.ServerTickPhaseTracker.init_J();
                long targetBoundaryNano = nextTickNano + Math.max(0L, ticksOut - 1L) * 50000000L;
-               int pingMs = autismclient.util.macro.ab.init_I();
+               int pingMs = autismclient.util.macro.ServerTickPhaseTracker.init_I();
                long halfPingNano = pingMs * 1000000L / 2L;
                long fireAt = targetBoundaryNano - halfPingNano;
                if (fireAt <= now) {
@@ -1214,7 +1214,7 @@ public class aE {
          AutismClientAddon.LOG.info("[Heartbeat] Peer timed out: {}", dead);
          this.push(this.load_Runnable);
          this.push(this.close_Runnable);
-         b.update();
+         MacroWaitRegistry.update();
       }
 
       if (this.load_Z && !deadPeers.isEmpty()) {
@@ -1353,7 +1353,7 @@ public class aE {
 
                      this.push(this.load_Runnable);
                      this.push(this.close_Runnable);
-                     b.update();
+                     MacroWaitRegistry.update();
                   }
                }
                break;
@@ -1603,7 +1603,7 @@ public class aE {
                   AutismClientAddon.LOG.info("[TCP] Client disconnected: {}", disconnectedUser);
                   this.valid();
                   this.push(this.load_Runnable);
-                  b.update();
+                  MacroWaitRegistry.update();
                }
             }
          }
@@ -2355,7 +2355,7 @@ public class aE {
             this.open_Map.put(senderUsername, completedStep);
          }
 
-         b.update();
+         MacroWaitRegistry.update();
          Runnable listener = this.poll_Runnable;
          if (listener != null) {
             listener.run();
@@ -2579,7 +2579,7 @@ public class aE {
          }
 
          this.load(new autismclient.util.d.LanSyncPacket.TextFormat(this.read_Str, this.write_Str, completedStep, totalSteps, macroName != null ? macroName : ""));
-         b.update();
+         MacroWaitRegistry.update();
       }
    }
 

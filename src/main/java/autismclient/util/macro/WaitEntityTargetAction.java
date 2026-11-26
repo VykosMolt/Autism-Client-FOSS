@@ -18,13 +18,13 @@ public class WaitEntityTargetAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_ENTITY_TARGET;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_ENTITY_TARGET;
    }
 
    public boolean init(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
-         j.Inner_CachePool entityResolution = n.init_j_CachePool_Str_Minecraft(this.entityId, mc);
+         MacroTemplateResolver.Inner_CachePool entityResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.entityId, mc);
          if (!entityResolution.init_Z()) {
             return false;
          }
@@ -87,18 +87,18 @@ public class WaitEntityTargetAction implements MacroAction {
       tag.putDouble("range", this.range);
       tag.putBoolean("containerEntitiesOnly", this.containerEntitiesOnly);
       tag.putInt("timeoutMs", this.timeoutMs);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.condition = i.init(WaitEntityTargetAction.Inner_DataUtil.class, tag.getStringOr("condition", "LOOKING_AT"), WaitEntityTargetAction.Inner_DataUtil.LOOKING_AT);
+      this.condition = MacroNbtCodecHelper.init(WaitEntityTargetAction.Inner_DataUtil.class, tag.getStringOr("condition", "LOOKING_AT"), WaitEntityTargetAction.Inner_DataUtil.LOOKING_AT);
       this.entityId = tag.getStringOr("entityId", "");
       this.range = tag.getDoubleOr("range", 5.0);
       this.containerEntitiesOnly = tag.getBooleanOr("containerEntitiesOnly", false);
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
    }
 
    @Override

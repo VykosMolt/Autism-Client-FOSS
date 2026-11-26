@@ -14,8 +14,8 @@ public class BranchAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.BRANCH;
+   public MacroActionType getType() {
+      return MacroActionType.BRANCH;
    }
 
    public boolean init(Minecraft mc) {
@@ -23,7 +23,7 @@ public class BranchAction implements MacroAction {
          return false;
       }
 
-      j.Inner_CachePool resolution = n.init_j_CachePool_Str_Minecraft(this.value, mc);
+      MacroTemplateResolver.Inner_CachePool resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.value, mc);
       if (!resolution.init_Z()) {
          return false;
       }
@@ -35,17 +35,17 @@ public class BranchAction implements MacroAction {
             var10000 = true;
             break;
          case GUI_TYPE:
-            var10000 = f.init(mc.gui.screen(), resolved);
+            var10000 = GuiScreenMatcher.init(mc.gui.screen(), resolved);
             break;
          case INVENTORY_ITEM:
-            var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, ArrayUtil.update(resolved));
+            var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.update(resolved));
             break;
          case ENTITY_TARGET:
             var10000 = mc.crosshairPickEntity != null;
             break;
          case HELD_ITEM:
             var10000 = mc.player != null
-               && ArrayUtil.update(resolved).init_I_ItemStack_I(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot()) >= 0;
+               && MacroItemTarget.update(resolved).init_I_ItemStack_I(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot()) >= 0;
             break;
          default:
             throw new MatchException(null, null);
@@ -67,7 +67,7 @@ public class BranchAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.conditionKind = i.init(BranchAction.Inner_DataUtil.class, tag.getStringOr("conditionKind", "ALWAYS"), BranchAction.Inner_DataUtil.ALWAYS);
+      this.conditionKind = MacroNbtCodecHelper.init(BranchAction.Inner_DataUtil.class, tag.getStringOr("conditionKind", "ALWAYS"), BranchAction.Inner_DataUtil.ALWAYS);
       this.value = tag.getStringOr("value", "");
       this.thenSteps = tag.getIntOr("thenSteps", 1);
       this.elseSteps = tag.getIntOr("elseSteps", 0);

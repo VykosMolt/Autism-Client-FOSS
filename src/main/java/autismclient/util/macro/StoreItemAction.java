@@ -13,7 +13,7 @@ import net.minecraft.world.item.ItemStack;
 public class StoreItemAction implements MacroAction {
    public StoreItemAction.Inner_DataUtil mode = StoreItemAction.Inner_DataUtil.STORE;
    public List<String> targetItems = new ArrayList<>();
-   public List<ArrayUtil> itemTargets = new ArrayList<>();
+   public List<MacroItemTarget> itemTargets = new ArrayList<>();
    public boolean persistent = false;
    public boolean closeAfter = false;
    public boolean allItems = false;
@@ -54,12 +54,12 @@ public class StoreItemAction implements MacroAction {
          return true;
       }
 
-      List<ArrayUtil> targets = this.load_List_Minecraft(Minecraft.getInstance());
+      List<MacroItemTarget> targets = this.load_List_Minecraft(Minecraft.getInstance());
       if (targets.isEmpty()) {
          return false;
       }
 
-      for (ArrayUtil target : targets) {
+      for (MacroItemTarget target : targets) {
          if (this.init_Z_ItemStack_2(stack, visibleSlot, target)) {
             return true;
          }
@@ -98,13 +98,13 @@ public class StoreItemAction implements MacroAction {
       }
    }
 
-   private boolean init_Z_ItemStack_2(ItemStack stack, int visibleSlot, ArrayUtil target) {
+   private boolean init_Z_ItemStack_2(ItemStack stack, int visibleSlot, MacroItemTarget target) {
       return target == null || !target.init_Z() && !target.update() ? false : target.init_Z_ItemStack_I(stack, visibleSlot);
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.STORE_ITEM;
+   public MacroActionType getType() {
+      return MacroActionType.STORE_ITEM;
    }
 
    @Override
@@ -117,7 +117,7 @@ public class StoreItemAction implements MacroAction {
       tag.putBoolean("allItems", this.allItems);
       tag.putBoolean("closeSendPkt", this.closeSendPkt);
       tag.putInt("delayTicks", this.delayTicks);
-      tag.put("targetItems", ArrayUtil.init_ListTag_List(this.init_List_11()));
+      tag.put("targetItems", MacroItemTarget.init_ListTag_List(this.init_List_11()));
       tag.putBoolean("enabled", this.init);
       return tag;
    }
@@ -156,7 +156,7 @@ public class StoreItemAction implements MacroAction {
       this.targetItems.clear();
       if (tag.contains("targetItems")) {
          ListTag list = tag.getList("targetItems").orElse(new ListTag());
-         this.itemTargets.addAll(ArrayUtil.init_List_ListTag(list));
+         this.itemTargets.addAll(MacroItemTarget.init_List_ListTag(list));
       }
 
       this.init_V_13();
@@ -172,7 +172,7 @@ public class StoreItemAction implements MacroAction {
          return modeStr + " All" + (this.persistent ? " [Inf]" : "");
       }
 
-      List<ArrayUtil> targets = this.init_List_11();
+      List<MacroItemTarget> targets = this.init_List_11();
       if (targets.isEmpty()) {
          return modeStr + " (nothing)";
       }
@@ -229,7 +229,7 @@ public class StoreItemAction implements MacroAction {
 
    public static String load_Str_Str_3(String entry) {
       if (entry != null && !entry.isBlank()) {
-         ArrayUtil target = ArrayUtil.update(entry);
+         MacroItemTarget target = MacroItemTarget.update(entry);
          String label = target.read_Str();
          if (target.init_Z() && label.isBlank()) {
             return "#" + target.init_I;
@@ -284,13 +284,13 @@ public class StoreItemAction implements MacroAction {
       this.init = e;
    }
 
-   private List<ArrayUtil> init_List_11() {
+   private List<MacroItemTarget> init_List_11() {
       if (!this.itemTargets.isEmpty()) {
          return this.itemTargets;
       }
 
       for (String target : this.targetItems) {
-         ArrayUtil parsed = ArrayUtil.update(target);
+         MacroItemTarget parsed = MacroItemTarget.update(target);
          if (parsed.init_Z() || parsed.update()) {
             this.itemTargets.add(parsed);
          }
@@ -299,12 +299,12 @@ public class StoreItemAction implements MacroAction {
       return this.itemTargets;
    }
 
-   private List<ArrayUtil> load_List_Minecraft(Minecraft mc) {
-      List<ArrayUtil> runtime = new ArrayList<>();
+   private List<MacroItemTarget> load_List_Minecraft(Minecraft mc) {
+      List<MacroItemTarget> runtime = new ArrayList<>();
 
-      for (ArrayUtil target : this.init_List_11()) {
+      for (MacroItemTarget target : this.init_List_11()) {
          if (target != null) {
-            ArrayUtil resolved = target.init_ArrayUtil_Minecraft(mc);
+            MacroItemTarget resolved = target.init_ArrayUtil_Minecraft(mc);
             if (resolved != null && (resolved.init_Z() || resolved.update())) {
                runtime.add(resolved);
             }
@@ -317,7 +317,7 @@ public class StoreItemAction implements MacroAction {
    private void init_V_13() {
       this.targetItems.clear();
 
-      for (ArrayUtil target : this.itemTargets) {
+      for (MacroItemTarget target : this.itemTargets) {
          if (target != null) {
             String entry = target.write_Str();
             if (!entry.isBlank()) {

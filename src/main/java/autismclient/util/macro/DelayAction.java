@@ -47,8 +47,8 @@ public class DelayAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.DELAY;
+   public MacroActionType getType() {
+      return MacroActionType.DELAY;
    }
 
    @Override

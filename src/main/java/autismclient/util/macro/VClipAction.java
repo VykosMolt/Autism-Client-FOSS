@@ -144,7 +144,7 @@ public class VClipAction implements MacroAction {
 
    private static VClipAction.Inner_DataUtil init_ap_DataUtil(LocalPlayer player) {
       Vec3 start = player.position();
-      Vec3 candidate = F.update(F.init_F_StreamUtil_Entity(player), start, 128.0);
+      Vec3 candidate = TpRoutePlanner.update(TpRoutePlanner.init_F_StreamUtil_Entity(player), start, 128.0);
       return candidate != null ? new VClipAction.Inner_DataUtil(true, candidate.y - start.y, "top") : new VClipAction.Inner_DataUtil(false, 0.0, "no direct safe top target");
    }
 
@@ -191,7 +191,7 @@ public class VClipAction implements MacroAction {
       Vec3 from = new Vec3(x, y, z);
       Vec3 target = new Vec3(x, targetY, z);
 
-      for (A.Inner_DataUtil step : A.init(from, target, true)) {
+      for (ClipCollisionHelper.Inner_DataUtil step : ClipCollisionHelper.init(from, target, true)) {
          init(mc, new Pos(step.init_Vec3(), step.init_Z(), false));
          sent++;
       }
@@ -252,8 +252,8 @@ public class VClipAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.VCLIP;
+   public MacroActionType getType() {
+      return MacroActionType.VCLIP;
    }
 
    @Override

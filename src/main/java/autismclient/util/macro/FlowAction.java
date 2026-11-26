@@ -17,8 +17,8 @@ public class FlowAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.FLOW;
+   public MacroActionType getType() {
+      return MacroActionType.FLOW;
    }
 
    public boolean init(Minecraft mc) {
@@ -43,10 +43,10 @@ public class FlowAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.target = i.init(FlowAction.Inner_StreamUtil.class, tag.getStringOr("target", "LABEL"), FlowAction.Inner_StreamUtil.LABEL);
+      this.target = MacroNbtCodecHelper.init(FlowAction.Inner_StreamUtil.class, tag.getStringOr("target", "LABEL"), FlowAction.Inner_StreamUtil.LABEL);
       this.amount = Math.max(0, tag.getIntOr("amount", 1));
       this.labelName = tag.getStringOr("labelName", "");
-      this.onMissingLabel = i.init(FlowAction.Inner_DataUtil.class, tag.getStringOr("onMissingLabel", "CONTINUE"), FlowAction.Inner_DataUtil.CONTINUE);
+      this.onMissingLabel = MacroNbtCodecHelper.init(FlowAction.Inner_DataUtil.class, tag.getStringOr("onMissingLabel", "CONTINUE"), FlowAction.Inner_DataUtil.CONTINUE);
       this.conditional = tag.getBooleanOr("conditional", false);
       this.condition = MacroCondition.init(tag, "condition", "cond_");
       if (tag.contains("enabled")) {

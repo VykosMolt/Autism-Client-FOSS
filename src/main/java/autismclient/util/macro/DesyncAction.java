@@ -12,8 +12,8 @@ public class DesyncAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.DESYNC;
+   public MacroActionType getType() {
+      return MacroActionType.DESYNC;
    }
 
    @Override

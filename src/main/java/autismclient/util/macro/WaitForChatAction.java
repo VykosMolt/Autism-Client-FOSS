@@ -4,11 +4,11 @@ import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
-public class WaitForChatAction implements MacroAction, aP {
+public class WaitForChatAction implements MacroAction, GuiWaitAware {
    public String pattern = "";
    public String patternJson = "";
    public boolean useRegex = false;
-   public UtilCore.Inner_DataUtil matchMode = UtilCore.Inner_DataUtil.MATCH;
+   public PatternCaptureMatcher.Inner_DataUtil matchMode = PatternCaptureMatcher.Inner_DataUtil.MATCH;
    public String saveAs = "";
    public int fuzzyPercent = 100;
    public boolean serverMessageOnly = false;
@@ -46,7 +46,7 @@ public class WaitForChatAction implements MacroAction, aP {
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("waitGuiName", this.waitGuiName);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       return tag;
    }
 
@@ -67,12 +67,12 @@ public class WaitForChatAction implements MacroAction, aP {
          this.useRegex = tag.getBooleanOr("useRegex", false);
       }
 
-      this.matchMode = i.init(
-         UtilCore.Inner_DataUtil.class,
+      this.matchMode = MacroNbtCodecHelper.init(
+         PatternCaptureMatcher.Inner_DataUtil.class,
          tag.getStringOr("matchMode", this.useRegex ? "REGEX" : "MATCH"),
-         this.useRegex ? UtilCore.Inner_DataUtil.REGEX : UtilCore.Inner_DataUtil.MATCH
+         this.useRegex ? PatternCaptureMatcher.Inner_DataUtil.REGEX : PatternCaptureMatcher.Inner_DataUtil.MATCH
       );
-      this.useRegex = this.matchMode == UtilCore.Inner_DataUtil.REGEX;
+      this.useRegex = this.matchMode == PatternCaptureMatcher.Inner_DataUtil.REGEX;
       this.saveAs = tag.getStringOr("saveAs", "");
       if (tag.contains("fuzzyPercent")) {
          this.fuzzyPercent = init_I_I_8(tag.getIntOr("fuzzyPercent", 100));
@@ -89,24 +89,24 @@ public class WaitForChatAction implements MacroAction, aP {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
       if (tag.contains("waitGuiName")) {
          this.waitGuiName = tag.getStringOr("waitGuiName", "");
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_CHAT;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_CHAT;
    }
 
    @Override
    public String getDisplayName() {
       String desc = this.pattern.isEmpty() ? "Any Chat" : this.pattern;
-      if (this.init_UtilCore_DataUtil() == UtilCore.Inner_DataUtil.MATCH) {
+      if (this.init_UtilCore_DataUtil() == PatternCaptureMatcher.Inner_DataUtil.MATCH) {
          desc = desc + " (~" + init_I_I_8(this.fuzzyPercent) + "%)";
       } else {
          desc = desc + " [" + this.init_UtilCore_DataUtil().name().toLowerCase(Locale.ROOT) + "]";
@@ -116,7 +116,7 @@ public class WaitForChatAction implements MacroAction, aP {
          desc = desc + " (" + this.timeoutMs + "ms)";
       }
 
-      return "Wait Chat: " + desc + aP.init_Str_aP(this);
+      return "Wait Chat: " + desc + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override
@@ -170,11 +170,11 @@ public class WaitForChatAction implements MacroAction, aP {
       return Math.max(40, Math.min(100, snapped));
    }
 
-   public UtilCore.Inner_DataUtil init_UtilCore_DataUtil() {
+   public PatternCaptureMatcher.Inner_DataUtil init_UtilCore_DataUtil() {
       if (this.matchMode == null) {
-         return this.useRegex ? UtilCore.Inner_DataUtil.REGEX : UtilCore.Inner_DataUtil.MATCH;
+         return this.useRegex ? PatternCaptureMatcher.Inner_DataUtil.REGEX : PatternCaptureMatcher.Inner_DataUtil.MATCH;
       } else {
-         return this.useRegex && this.matchMode == UtilCore.Inner_DataUtil.MATCH ? UtilCore.Inner_DataUtil.REGEX : this.matchMode;
+         return this.useRegex && this.matchMode == PatternCaptureMatcher.Inner_DataUtil.MATCH ? PatternCaptureMatcher.Inner_DataUtil.REGEX : this.matchMode;
       }
    }
 }

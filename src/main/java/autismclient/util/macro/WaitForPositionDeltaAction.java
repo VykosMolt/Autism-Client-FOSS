@@ -4,7 +4,7 @@ import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
-public class WaitForPositionDeltaAction implements CacheEntry, MacroAction {
+public class WaitForPositionDeltaAction implements CaptureOutputAction, MacroAction {
    public double distance = 5.0;
    public boolean horizontalOnly = false;
    public boolean listenDuringPreviousAction = false;
@@ -22,7 +22,7 @@ public class WaitForPositionDeltaAction implements CacheEntry, MacroAction {
       tag.putDouble("distance", this.distance);
       tag.putBoolean("horizontalOnly", this.horizontalOnly);
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -35,13 +35,13 @@ public class WaitForPositionDeltaAction implements CacheEntry, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_POSITION_DELTA;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_POSITION_DELTA;
    }
 
    @Override

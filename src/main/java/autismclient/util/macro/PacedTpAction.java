@@ -65,8 +65,8 @@ public final class PacedTpAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.TP;
+   public MacroActionType getType() {
+      return MacroActionType.TP;
    }
 
    @Override

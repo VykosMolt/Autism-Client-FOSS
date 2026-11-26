@@ -1046,7 +1046,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
 
    private void init_V_Z_11(boolean destroy) {
       int tick = ck.init_ck().state_I();
-      this.init_StateCache.load(this.init_LivingEntity, tick, autismclient.util.macro.ab.init_I());
+      this.init_StateCache.load(this.init_LivingEntity, tick, autismclient.util.macro.ServerTickPhaseTracker.init_I());
       long now = System.nanoTime();
       if (this.tick_Z_7()) {
          this.init_NetHelper.init_V_Str(destroy ? "destroy" : "place", tick, now, this.integer("spam-delay") * 1000000L);
@@ -1422,8 +1422,8 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       this.load_Str = "dispatched";
       this.read_V_22();
       this.init_V_Z_11(true);
-      this.load_FileCache.init(crystal, ck.init_ck().state_I(), autismclient.util.macro.ab.init_I());
-      this.init_RenderState.init(crystal, BlockPos.containing(crystal.position()), ck.init_ck().state_I(), autismclient.util.macro.ab.init_I());
+      this.load_FileCache.init(crystal, ck.init_ck().state_I(), autismclient.util.macro.ServerTickPhaseTracker.init_I());
+      this.init_RenderState.init(crystal, BlockPos.containing(crystal.position()), ck.init_ck().state_I(), autismclient.util.macro.ServerTickPhaseTracker.init_I());
       this.flags = ck.init_ck().state_I();
       this.start++;
       if (!"Unlimited".equals(this.choice("burst-limit")) && this.start >= Integer.parseInt(this.choice("burst-limit"))) {
@@ -1705,7 +1705,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    private void init_V_BlockPos_7(BlockPos cell) {
       int tick = ck.init_ck().state_I();
       this.init_RenderState.init(cell, tick);
-      this.init_FileCache.init(cell, tick, autismclient.util.macro.ab.init_I());
+      this.init_FileCache.init(cell, tick, autismclient.util.macro.ServerTickPhaseTracker.init_I());
    }
 
    private boolean init_Z_Entity_BlockPos(Entity occupant, BlockPos cell) {
@@ -2813,7 +2813,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    }
 
    private int read_I_10() {
-      return Math.min(12, 2 + (int)Math.ceil(autismclient.util.macro.ab.init_I() / 50.0));
+      return Math.min(12, 2 + (int)Math.ceil(autismclient.util.macro.ServerTickPhaseTracker.init_I() / 50.0));
    }
 
    private AABB init_AABB_LivingEntity(LivingEntity enemy, int horizonTicks, double maxLead) {

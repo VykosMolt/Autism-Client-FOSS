@@ -96,8 +96,8 @@ public class GoToAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.GO_TO;
+   public MacroActionType getType() {
+      return MacroActionType.GO_TO;
    }
 
    @Override

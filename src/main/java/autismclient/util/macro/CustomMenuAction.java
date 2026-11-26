@@ -44,12 +44,12 @@ public final class CustomMenuAction implements MacroAction {
          if (snapshot == null) {
             LockSupport.parkNanos(20000000L);
          } else {
-            RenderState.Inner_DataUtil prepared = RenderState.init(this, snapshot, value -> {
+            CustomMenuActionPlanner.Inner_DataUtil prepared = CustomMenuActionPlanner.init(this, snapshot, value -> {
                String withSecrets = autismclient.util.aA.init_Str(value);
                if (withSecrets == null) {
                   throw new IllegalStateException("Missing form value");
                } else {
-                  j.Inner_CachePool resolved = n.init_j_CachePool_Str_Minecraft(withSecrets, mc);
+                  MacroTemplateResolver.Inner_CachePool resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(withSecrets, mc);
                   if (!resolved.init_Z()) {
                      throw new IllegalStateException("Missing macro value");
                   } else {
@@ -114,15 +114,15 @@ public final class CustomMenuAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.CUSTOM_MENU;
+   public MacroActionType getType() {
+      return MacroActionType.CUSTOM_MENU;
    }
 
    @Override
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
-      tag.putString("type", StreamGate.CUSTOM_MENU.name());
-      tag.put("fieldValues", i.init(this.fieldValues));
+      tag.putString("type", MacroActionType.CUSTOM_MENU.name());
+      tag.put("fieldValues", MacroNbtCodecHelper.init(this.fieldValues));
       tag.putString("clickButton", this.clickButton);
       tag.putInt("timeoutMs", this.init());
       tag.putBoolean("enabled", this.init_Z);
@@ -134,14 +134,14 @@ public final class CustomMenuAction implements MacroAction {
       this.fieldValues.clear();
       this.clickButton = tag.getStringOr("clickButton", "");
       if (tag.getList("fieldValues").isPresent()) {
-         this.fieldValues.addAll(i.init(tag.getList("fieldValues").orElse(new ListTag())));
+         this.fieldValues.addAll(MacroNbtCodecHelper.init(tag.getList("fieldValues").orElse(new ListTag())));
       } else {
          String primary = tag.getStringOr("primaryValue", "");
          if (!primary.isBlank()) {
             this.fieldValues.add(primary);
          }
 
-         this.fieldValues.addAll(i.init(tag.getList("inputValues").orElse(new ListTag())));
+         this.fieldValues.addAll(MacroNbtCodecHelper.init(tag.getList("inputValues").orElse(new ListTag())));
          if (this.clickButton.isBlank()) {
             String buttonMode = tag.getStringOr("buttonMode", "SAFE_AUTO");
             String selector = tag.getStringOr("buttonSelector", "");

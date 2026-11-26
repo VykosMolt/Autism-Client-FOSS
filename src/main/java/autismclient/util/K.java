@@ -21,11 +21,11 @@ public final class K {
       return init(mc, null, 1);
    }
 
-   public static boolean init(Minecraft mc, autismclient.util.macro.ArrayUtil carriedGuard) {
+   public static boolean init(Minecraft mc, autismclient.util.macro.MacroItemTarget carriedGuard) {
       return init(mc, carriedGuard, 1);
    }
 
-   public static boolean init(Minecraft mc, autismclient.util.macro.ArrayUtil carriedGuard, int times) {
+   public static boolean init(Minecraft mc, autismclient.util.macro.MacroItemTarget carriedGuard, int times) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }
@@ -61,7 +61,7 @@ public final class K {
       return clicked.get();
    }
 
-   private static boolean load(Minecraft mc, autismclient.util.macro.ArrayUtil carriedGuard, int times) {
+   private static boolean load(Minecraft mc, autismclient.util.macro.MacroItemTarget carriedGuard, int times) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }
@@ -164,9 +164,9 @@ public final class K {
       init_ItemStack = ItemStack.EMPTY;
    }
 
-   private static boolean init(autismclient.util.macro.ArrayUtil target, ItemStack carried) {
+   private static boolean init(autismclient.util.macro.MacroItemTarget target, ItemStack carried) {
       if (target != null && target.update()) {
-         autismclient.util.macro.ArrayUtil identityOnly = target.init_ArrayUtil();
+         autismclient.util.macro.MacroItemTarget identityOnly = target.init_ArrayUtil();
          identityOnly.init_I = -1;
          return identityOnly.init_Z_ItemStack_I(carried, -1);
       } else {

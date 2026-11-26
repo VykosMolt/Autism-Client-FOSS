@@ -15,8 +15,8 @@ public class IfAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.IF;
+   public MacroActionType getType() {
+      return MacroActionType.IF;
    }
 
    public boolean init(Minecraft mc) {

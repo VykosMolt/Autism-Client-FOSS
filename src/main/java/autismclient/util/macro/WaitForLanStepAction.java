@@ -15,8 +15,8 @@ public class WaitForLanStepAction implements MacroAction {
    private boolean init = true;
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_LAN_STEP;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_LAN_STEP;
    }
 
    @Override
@@ -66,7 +66,7 @@ public class WaitForLanStepAction implements MacroAction {
       }
 
       tag.put("entries", list);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       return tag;
    }
 
@@ -78,7 +78,7 @@ public class WaitForLanStepAction implements MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.entries.clear();
       if (tag.contains("entries")) {
          for (Tag el : tag.getList("entries").orElse(new ListTag())) {

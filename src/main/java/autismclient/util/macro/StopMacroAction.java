@@ -42,8 +42,8 @@ public class StopMacroAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.STOP_MACRO;
+   public MacroActionType getType() {
+      return MacroActionType.STOP_MACRO;
    }
 
    @Override

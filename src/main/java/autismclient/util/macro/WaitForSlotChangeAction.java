@@ -7,7 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
-public class WaitForSlotChangeAction implements CacheEntry, MacroAction {
+public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction {
    public List<WaitForSlotChangeAction.Inner_DataUtil> entries = new ArrayList<>();
    public boolean listenDuringPreviousAction = false;
    public String saveAs = "";
@@ -19,7 +19,7 @@ public class WaitForSlotChangeAction implements CacheEntry, MacroAction {
    public WaitForSlotChangeAction(int slotNumber) {
       WaitForSlotChangeAction.Inner_DataUtil entry = new WaitForSlotChangeAction.Inner_DataUtil();
       entry.init_Str = slotNumber >= 0 ? "#" + slotNumber : "";
-      entry.init_ArrayUtil = ArrayUtil.update(entry.init_Str);
+      entry.init_ArrayUtil = MacroItemTarget.update(entry.init_Str);
       this.entries.add(entry);
    }
 
@@ -31,7 +31,7 @@ public class WaitForSlotChangeAction implements CacheEntry, MacroAction {
 
       for (WaitForSlotChangeAction.Inner_DataUtil entry : this.entries) {
          CompoundTag entryTag = new CompoundTag();
-         ArrayUtil target = entry.init_ArrayUtil();
+         MacroItemTarget target = entry.init_ArrayUtil();
          if (target.init_Z() || target.update()) {
             entryTag.put("target", target.init_CompoundTag());
          }
@@ -43,7 +43,7 @@ public class WaitForSlotChangeAction implements CacheEntry, MacroAction {
 
       tag.put("entries", list);
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -56,8 +56,8 @@ public class WaitForSlotChangeAction implements CacheEntry, MacroAction {
             if (element instanceof CompoundTag entryTag) {
                WaitForSlotChangeAction.Inner_DataUtil entry = new WaitForSlotChangeAction.Inner_DataUtil();
                entry.init_ArrayUtil = entryTag.getCompound("target")
-                  .map(ArrayUtil::init_ArrayUtil_CompoundTag)
-                  .orElseGet(() -> ArrayUtil.update(entryTag.getStringOr("target", "")));
+                  .map(MacroItemTarget::init_ArrayUtil_CompoundTag)
+                  .orElseGet(() -> MacroItemTarget.update(entryTag.getStringOr("target", "")));
                entry.init_Str = entry.init_ArrayUtil.write_Str();
                entry.init_I = entryTag.getIntOr("count", 1);
 
@@ -122,7 +122,7 @@ public class WaitForSlotChangeAction implements CacheEntry, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
@@ -150,8 +150,8 @@ public class WaitForSlotChangeAction implements CacheEntry, MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_SLOT_CHANGE;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_SLOT_CHANGE;
    }
 
    @Override
@@ -200,7 +200,7 @@ public class WaitForSlotChangeAction implements CacheEntry, MacroAction {
 
    public static class Inner_DataUtil {
       public String init_Str = "";
-      public ArrayUtil init_ArrayUtil = new ArrayUtil();
+      public MacroItemTarget init_ArrayUtil = new MacroItemTarget();
       public WaitForSlotChangeAction.Inner_StreamUtil init_aD_StreamUtil = WaitForSlotChangeAction.Inner_StreamUtil.NOT_EMPTY;
       public int init_I = 1;
 
@@ -209,14 +209,14 @@ public class WaitForSlotChangeAction implements CacheEntry, MacroAction {
 
       public Inner_DataUtil(String target, WaitForSlotChangeAction.Inner_StreamUtil waitMode, int targetCount) {
          this.init_Str = target;
-         this.init_ArrayUtil = ArrayUtil.update(target);
+         this.init_ArrayUtil = MacroItemTarget.update(target);
          this.init_aD_StreamUtil = waitMode;
          this.init_I = targetCount;
       }
 
       public WaitForSlotChangeAction.Inner_DataUtil init_aD_DataUtil() {
          WaitForSlotChangeAction.Inner_DataUtil copy = new WaitForSlotChangeAction.Inner_DataUtil(this.init_Str, this.init_aD_StreamUtil, this.init_I);
-         copy.init_ArrayUtil = this.init_ArrayUtil == null ? new ArrayUtil() : this.init_ArrayUtil.init_ArrayUtil();
+         copy.init_ArrayUtil = this.init_ArrayUtil == null ? new MacroItemTarget() : this.init_ArrayUtil.init_ArrayUtil();
          return copy;
       }
 
@@ -255,12 +255,12 @@ public class WaitForSlotChangeAction implements CacheEntry, MacroAction {
          this.init_aD_StreamUtil = modes[(this.init_aD_StreamUtil.ordinal() - 1 + modes.length) % modes.length];
       }
 
-      public ArrayUtil init_ArrayUtil() {
+      public MacroItemTarget init_ArrayUtil() {
          if (this.init_ArrayUtil != null && (this.init_ArrayUtil.init_Z() || this.init_ArrayUtil.update())) {
             return this.init_ArrayUtil;
          }
 
-         this.init_ArrayUtil = ArrayUtil.update(this.init_Str);
+         this.init_ArrayUtil = MacroItemTarget.update(this.init_Str);
          return this.init_ArrayUtil;
       }
    }

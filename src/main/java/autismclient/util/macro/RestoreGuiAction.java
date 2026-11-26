@@ -5,7 +5,7 @@ import autismclient.util.ck;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
-public class RestoreGuiAction implements MacroAction, aP {
+public class RestoreGuiAction implements MacroAction, GuiWaitAware {
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = true;
    private boolean init = true;
@@ -55,8 +55,8 @@ public class RestoreGuiAction implements MacroAction, aP {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.RESTORE_GUI;
+   public MacroActionType getType() {
+      return MacroActionType.RESTORE_GUI;
    }
 
    @Override
@@ -71,8 +71,8 @@ public class RestoreGuiAction implements MacroAction, aP {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, true);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, true);
       if (tag.contains("enabled")) {
          this.init = tag.getBooleanOr("enabled", true);
       }
@@ -80,7 +80,7 @@ public class RestoreGuiAction implements MacroAction, aP {
 
    @Override
    public String getDisplayName() {
-      return "Restore GUI" + aP.init_Str_aP(this);
+      return "Restore GUI" + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override

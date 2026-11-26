@@ -13,8 +13,8 @@ public class LabelAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.LABEL;
+   public MacroActionType getType() {
+      return MacroActionType.LABEL;
    }
 
    public static String init(String s) {

@@ -11,9 +11,9 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 
-public class ItemAction implements MacroAction, aP {
+public class ItemAction implements MacroAction, GuiWaitAware {
    public List<String> itemNames = new ArrayList<>();
-   public List<ArrayUtil> itemTargets = new ArrayList<>();
+   public List<MacroItemTarget> itemTargets = new ArrayList<>();
    public List<Integer> itemTimes = new ArrayList<>();
    public List<Integer> itemActionIdx = new ArrayList<>();
    public List<Integer> itemButtons = new ArrayList<>();
@@ -312,7 +312,7 @@ public class ItemAction implements MacroAction, aP {
                eiButton = eiAction.init_I();
             }
 
-            ArrayUtil entryTarget = this.init_ArrayUtil_I(ei).init_ArrayUtil_Minecraft(mc);
+            MacroItemTarget entryTarget = this.init_ArrayUtil_I(ei).init_ArrayUtil_Minecraft(mc);
             if (entryTarget != null) {
                String entryName = init_Str_Str(entryTarget.write_Str());
                int configuredEntrySlot = entryTarget.init_Z() ? entryTarget.init_I : -1;
@@ -354,7 +354,7 @@ public class ItemAction implements MacroAction, aP {
          }
 
          if (action == autismclient.util.N.PICKUP_ALL && this.useCursorItemForPickupAll) {
-            out.add(new ItemAction.Inner_StreamUtil(action, effectiveButton, -1, ArrayUtil.init_ArrayUtil_I(this.targetSlot), this.times));
+            out.add(new ItemAction.Inner_StreamUtil(action, effectiveButton, -1, MacroItemTarget.init_ArrayUtil_I(this.targetSlot), this.times));
             return out;
          }
 
@@ -407,7 +407,7 @@ public class ItemAction implements MacroAction, aP {
          for (ItemAction.Inner_StreamUtil e : this.init_List_Minecraft_AbstractContainerM(mc, handler)) {
             boolean cursorPickupAll = e.init_ArrayUtil() != null || e.init_N() == autismclient.util.N.PICKUP_ALL && e.load() < 0;
             if (cursorPickupAll) {
-               ArrayUtil t = e.init_ArrayUtil();
+               MacroItemTarget t = e.init_ArrayUtil();
 
                for (int j = 0; j < e.read(); j++) {
                   plan.add(() -> autismclient.util.K.init(mc, t, 1));
@@ -439,14 +439,14 @@ public class ItemAction implements MacroAction, aP {
    }
 
    private int init_I_AbstractContainerM_Str(AbstractContainerMenu handler, String name) {
-      return this.init_I_AbstractContainerM_ArrayUtil(handler, ArrayUtil.update(name));
+      return this.init_I_AbstractContainerM_ArrayUtil(handler, MacroItemTarget.update(name));
    }
 
-   private int init_I_AbstractContainerM_ArrayUtil(AbstractContainerMenu handler, ArrayUtil target) {
+   private int init_I_AbstractContainerM_ArrayUtil(AbstractContainerMenu handler, MacroItemTarget target) {
       return this.init(handler, target, ItemAction.Inner_DataUtil.BOTH, ItemAction.Inner_CachePool.DEFAULT);
    }
 
-   private int init(AbstractContainerMenu handler, ArrayUtil target, ItemAction.Inner_DataUtil searchScope, ItemAction.Inner_CachePool amountMode) {
+   private int init(AbstractContainerMenu handler, MacroItemTarget target, ItemAction.Inner_DataUtil searchScope, ItemAction.Inner_CachePool amountMode) {
       if (!target.update()) {
          return -1;
       }
@@ -471,7 +471,7 @@ public class ItemAction implements MacroAction, aP {
       return var10000;
    }
 
-   private int init(AbstractContainerMenu handler, ArrayUtil target, ItemAction.Inner_CachePool mode, Boolean playerInventoryOnly) {
+   private int init(AbstractContainerMenu handler, MacroItemTarget target, ItemAction.Inner_CachePool mode, Boolean playerInventoryOnly) {
       int bestSlot = -1;
       int bestScore = -1;
       int bestCount = mode == ItemAction.Inner_CachePool.LEAST ? 2147483647 : -1;
@@ -514,10 +514,10 @@ public class ItemAction implements MacroAction, aP {
    }
 
    private int init(AbstractContainerMenu handler, String name, int requiredSlot) {
-      return this.init(handler, ArrayUtil.update(name), requiredSlot);
+      return this.init(handler, MacroItemTarget.update(name), requiredSlot);
    }
 
-   private int init(AbstractContainerMenu handler, ArrayUtil target, int requiredSlot) {
+   private int init(AbstractContainerMenu handler, MacroItemTarget target, int requiredSlot) {
       if (requiredSlot >= 0 && requiredSlot < handler.slots.size()) {
          Slot slot = handler.slots.get(requiredSlot);
          if (slot == null || slot.getItem().isEmpty()) {
@@ -571,15 +571,15 @@ public class ItemAction implements MacroAction, aP {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.ITEM;
+   public MacroActionType getType() {
+      return MacroActionType.ITEM;
    }
 
    @Override
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "ITEM");
-      tag.put("itemNames", ArrayUtil.init_ListTag_List(this.load_List_3()));
+      tag.put("itemNames", MacroItemTarget.init_ListTag_List(this.load_List_3()));
       ListTag times2 = new ListTag();
 
       for (int t : this.itemTimes) {
@@ -639,11 +639,11 @@ public class ItemAction implements MacroAction, aP {
       this.itemNames.clear();
       if (tag.contains("itemNames")) {
          ListTag nl = tag.getList("itemNames").orElse(new ListTag());
-         this.itemTargets.addAll(ArrayUtil.init_List_ListTag(nl));
+         this.itemTargets.addAll(MacroItemTarget.init_List_ListTag(nl));
       } else if (tag.contains("itemName")) {
          String old = tag.getStringOr("itemName", "");
          if (!old.isEmpty()) {
-            this.itemTargets.add(ArrayUtil.update(old));
+            this.itemTargets.add(MacroItemTarget.update(old));
          }
       }
 
@@ -772,8 +772,8 @@ public class ItemAction implements MacroAction, aP {
       this.actionIndex = sync(tag.getIntOr("actionIndex", 0));
       this.button = init_I_N_I(this.init_N(), tag.getIntOr("button", 0));
       this.times = tag.getIntOr("times", 1);
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
       if (tag.contains("guiName")) {
          this.guiName = tag.getStringOr("guiName", "");
       }
@@ -789,11 +789,11 @@ public class ItemAction implements MacroAction, aP {
 
    @Override
    public String getDisplayName() {
-      List<ArrayUtil> targets = this.load_List_3();
+      List<MacroItemTarget> targets = this.load_List_3();
       if (targets.isEmpty()) {
          return this.useSlot && this.targetSlot >= 0
-            ? "#" + this.targetSlot + " (" + this.init_N().load_Str + ")" + aP.init_Str_aP(this)
-            : "Item (empty)" + aP.init_Str_aP(this);
+            ? "#" + this.targetSlot + " (" + this.init_N().load_Str + ")" + GuiWaitAware.init_Str_aP(this)
+            : "Item (empty)" + GuiWaitAware.init_Str_aP(this);
       }
 
       String actionName = this.init_N_I(0).load_Str;
@@ -816,7 +816,7 @@ public class ItemAction implements MacroAction, aP {
          base = base + " [wait]";
       }
 
-      return base + aP.init_Str_aP(this);
+      return base + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override
@@ -1001,13 +1001,13 @@ public class ItemAction implements MacroAction, aP {
       return separator >= 0 && separator + 1 < entry.length() ? entry.substring(separator + 1).trim() : "";
    }
 
-   private List<ArrayUtil> load_List_3() {
+   private List<MacroItemTarget> load_List_3() {
       if (!this.itemTargets.isEmpty()) {
          return this.itemTargets;
       }
 
       for (String itemName : this.itemNames) {
-         ArrayUtil target = ArrayUtil.update(itemName);
+         MacroItemTarget target = MacroItemTarget.update(itemName);
          if (target.init_Z() || target.update()) {
             this.itemTargets.add(target);
          }
@@ -1016,15 +1016,15 @@ public class ItemAction implements MacroAction, aP {
       return this.itemTargets;
    }
 
-   private ArrayUtil init_ArrayUtil_I(int index) {
-      List<ArrayUtil> targets = this.load_List_3();
-      return index >= 0 && index < targets.size() ? targets.get(index) : new ArrayUtil();
+   private MacroItemTarget init_ArrayUtil_I(int index) {
+      List<MacroItemTarget> targets = this.load_List_3();
+      return index >= 0 && index < targets.size() ? targets.get(index) : new MacroItemTarget();
    }
 
    private void update_V() {
       this.itemNames.clear();
 
-      for (ArrayUtil target : this.itemTargets) {
+      for (MacroItemTarget target : this.itemTargets) {
          if (target != null) {
             String entry = target.write_Str();
             if (!entry.isBlank()) {
@@ -1058,6 +1058,6 @@ public class ItemAction implements MacroAction, aP {
       }
    }
 
-   private record Inner_StreamUtil(autismclient.util.N init_N, int init_I, int load, ArrayUtil init_ArrayUtil, int read) {
+   private record Inner_StreamUtil(autismclient.util.N init_N, int init_I, int load, MacroItemTarget init_ArrayUtil, int read) {
    }
 }

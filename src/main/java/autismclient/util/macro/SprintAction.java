@@ -3,11 +3,11 @@ package autismclient.util.macro;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
-public class SprintAction implements E, MacroAction {
+public class SprintAction implements PacketOrderAware, MacroAction {
    public boolean sprint = true;
    private boolean init = true;
    public boolean persistent = false;
-   public volatile D packetOrder = D.INSTANT;
+   public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
 
    public SprintAction() {
    }
@@ -34,7 +34,7 @@ public class SprintAction implements E, MacroAction {
       tag.putBoolean("sprint", this.sprint);
       tag.putBoolean("persistent", this.persistent);
       tag.putBoolean("enabled", this.init);
-      E.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
       return tag;
    }
 
@@ -52,16 +52,16 @@ public class SprintAction implements E, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      this.packetOrder = E.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.SPRINT;
+   public MacroActionType getType() {
+      return MacroActionType.SPRINT;
    }
 
    @Override
-   public D init_D() {
+   public PacketOrderMode init_D() {
       return this.packetOrder;
    }
 

@@ -211,7 +211,7 @@ final class bf {
             && !BedNukerModule.init_Z_23()
             && !AutoTotemModule.init_Z_6()
             && !AutoArmorModule.init_Z_20()
-            && !autismclient.util.macro.g.init_Z()
+            && !autismclient.util.macro.MacroAimController.init_Z()
             && !cn.init_Z();
       } else {
          return false;

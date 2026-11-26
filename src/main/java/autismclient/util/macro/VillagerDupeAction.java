@@ -103,8 +103,8 @@ public final class VillagerDupeAction implements ContextMacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.VILLAGER_DUPE;
+   public MacroActionType getType() {
+      return MacroActionType.VILLAGER_DUPE;
    }
 
    @Override

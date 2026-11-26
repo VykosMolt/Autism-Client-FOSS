@@ -3,7 +3,7 @@ package autismclient.util.macro;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
-public class WaitForWorldChangeAction implements CacheEntry, MacroAction {
+public class WaitForWorldChangeAction implements CaptureOutputAction, MacroAction {
    public String targetDimension = "";
    public boolean listenDuringPreviousAction = false;
    public String saveAs = "";
@@ -19,7 +19,7 @@ public class WaitForWorldChangeAction implements CacheEntry, MacroAction {
       tag.putString("type", this.getType().name());
       tag.putString("targetDimension", this.targetDimension == null ? "" : this.targetDimension);
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -31,13 +31,13 @@ public class WaitForWorldChangeAction implements CacheEntry, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_WORLD_CHANGE;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_WORLD_CHANGE;
    }
 
    @Override

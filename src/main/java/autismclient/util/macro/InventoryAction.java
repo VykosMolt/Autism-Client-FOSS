@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.nbt.CompoundTag;
 
-public class InventoryAction implements MacroAction, aP {
+public class InventoryAction implements MacroAction, GuiWaitAware {
    public InventoryAction.Inner_DataUtil mode = InventoryAction.Inner_DataUtil.OPEN;
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = true;
@@ -53,8 +53,8 @@ public class InventoryAction implements MacroAction, aP {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.INVENTORY;
+   public MacroActionType getType() {
+      return MacroActionType.INVENTORY;
    }
 
    @Override
@@ -79,8 +79,8 @@ public class InventoryAction implements MacroAction, aP {
          }
       }
 
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, true);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, true);
       if (tag.contains("guiName")) {
          this.guiName = tag.getStringOr("guiName", "");
       }
@@ -93,7 +93,7 @@ public class InventoryAction implements MacroAction, aP {
    @Override
    public String getDisplayName() {
       if (this.mode == InventoryAction.Inner_DataUtil.OPEN) {
-         return "Inv Open" + aP.init_Str_aP(this);
+         return "Inv Open" + GuiWaitAware.init_Str_aP(this);
       } else {
          return this.sendPacket ? "Inv Close" : "Inv Close (no pkt)";
       }

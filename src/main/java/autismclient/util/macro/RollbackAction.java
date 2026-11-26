@@ -285,7 +285,7 @@ public final class RollbackAction implements MacroAction {
       tag.putString("type", this.getType().name());
       tag.putBoolean("enabled", this.init_Z);
       tag.putString("scope", this.scope.name());
-      tag.put("slots", i.init(this.slots));
+      tag.put("slots", MacroNbtCodecHelper.init(this.slots));
       tag.putInt("startSlot", this.startSlot);
       tag.putInt("endSlot", this.endSlot);
       return tag;
@@ -294,15 +294,15 @@ public final class RollbackAction implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       this.init_Z = tag.getBooleanOr("enabled", true);
-      this.scope = i.init(RollbackAction.Inner_DataUtil.class, tag.getStringOr("scope", "ALL_CONTAINER"), RollbackAction.Inner_DataUtil.ALL_CONTAINER);
-      this.slots = i.init(tag.getList("slots").orElse(new ListTag()));
+      this.scope = MacroNbtCodecHelper.init(RollbackAction.Inner_DataUtil.class, tag.getStringOr("scope", "ALL_CONTAINER"), RollbackAction.Inner_DataUtil.ALL_CONTAINER);
+      this.slots = MacroNbtCodecHelper.init(tag.getList("slots").orElse(new ListTag()));
       this.startSlot = tag.getIntOr("startSlot", 0);
       this.endSlot = tag.getIntOr("endSlot", 26);
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.ROLLBACK;
+   public MacroActionType getType() {
+      return MacroActionType.ROLLBACK;
    }
 
    @Override

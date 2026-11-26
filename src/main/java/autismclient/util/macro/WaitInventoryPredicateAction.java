@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
-public class WaitInventoryPredicateAction implements CacheEntry, MacroAction {
+public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroAction {
    public WaitInventoryPredicateAction.Inner_DataUtil condition = WaitInventoryPredicateAction.Inner_DataUtil.ITEM_EXISTS;
    public String itemName = "";
    public int count = 1;
@@ -21,18 +21,18 @@ public class WaitInventoryPredicateAction implements CacheEntry, MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_INVENTORY_PREDICATE;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_INVENTORY_PREDICATE;
    }
 
    public boolean init(Minecraft mc) {
       if (mc != null && mc.player != null) {
-         j.Inner_CachePool resolution = n.init_j_CachePool_Str_Minecraft(this.itemName, mc);
+         MacroTemplateResolver.Inner_CachePool resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.itemName, mc);
          if (!resolution.init_Z()) {
             return false;
          }
 
-         ArrayUtil target = ArrayUtil.update(resolution.init_Str());
+         MacroItemTarget target = MacroItemTarget.update(resolution.init_Str());
          this.init_V_Minecraft_ArrayUtil(mc, target);
          boolean var10000;
          switch (this.condition) {
@@ -92,7 +92,7 @@ public class WaitInventoryPredicateAction implements CacheEntry, MacroAction {
       this.init_Z = false;
    }
 
-   private void init_V_Minecraft_ArrayUtil(Minecraft mc, ArrayUtil target) {
+   private void init_V_Minecraft_ArrayUtil(Minecraft mc, MacroItemTarget target) {
       if (!this.init_Z) {
          this.init_I = init_I_Minecraft_ArrayUtil(mc, target);
          this.load = init_ItemStack_Minecraft_I(mc, this.slot).isEmpty();
@@ -100,11 +100,11 @@ public class WaitInventoryPredicateAction implements CacheEntry, MacroAction {
       }
    }
 
-   static boolean init_Z_Minecraft_ArrayUtil(Minecraft mc, ArrayUtil target) {
+   static boolean init_Z_Minecraft_ArrayUtil(Minecraft mc, MacroItemTarget target) {
       return init_I_Minecraft_ArrayUtil(mc, target) > 0;
    }
 
-   static int init_I_Minecraft_ArrayUtil(Minecraft mc, ArrayUtil target) {
+   static int init_I_Minecraft_ArrayUtil(Minecraft mc, MacroItemTarget target) {
       if (mc != null && mc.player != null && target != null && target.update()) {
          int total = 0;
 
@@ -159,19 +159,19 @@ public class WaitInventoryPredicateAction implements CacheEntry, MacroAction {
       tag.putInt("count", this.count);
       tag.putInt("slot", this.slot);
       tag.putInt("timeoutMs", this.timeoutMs);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.condition = i.init(WaitInventoryPredicateAction.Inner_DataUtil.class, tag.getStringOr("condition", "ITEM_EXISTS"), WaitInventoryPredicateAction.Inner_DataUtil.ITEM_EXISTS);
+      this.condition = MacroNbtCodecHelper.init(WaitInventoryPredicateAction.Inner_DataUtil.class, tag.getStringOr("condition", "ITEM_EXISTS"), WaitInventoryPredicateAction.Inner_DataUtil.ITEM_EXISTS);
       this.itemName = tag.getStringOr("itemName", "");
       this.count = tag.getIntOr("count", 1);
       this.slot = tag.getIntOr("slot", 0);
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 

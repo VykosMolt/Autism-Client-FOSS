@@ -1,7 +1,7 @@
 package autismclient.util;
 
 import autismclient.util.macro.MacroAction;
-import autismclient.util.macro.c;
+import autismclient.util.macro.RaceEligibilityChecker;
 import java.util.Locale;
 
 public final class cL {
@@ -32,7 +32,7 @@ public final class cL {
    }
 
    public static boolean init(AutismMacro macro) {
-      return c.init(macro);
+      return RaceEligibilityChecker.init(macro);
    }
 
    public static boolean init_Z(String name) {
@@ -130,7 +130,7 @@ public final class cL {
       if (macro != null && macro.init_List != null) {
          for (int i = 0; i < macro.init_List.size(); i++) {
             MacroAction action = macro.init_List.get(i);
-            if (action != null && action.isEnabled() && c.init(action)) {
+            if (action != null && action.isEnabled() && RaceEligibilityChecker.init(action)) {
                int next = i + 1;
                if (next < macro.init_List.size() && init(macro.init_List.get(next))) {
                   macro.init_List.remove(next);

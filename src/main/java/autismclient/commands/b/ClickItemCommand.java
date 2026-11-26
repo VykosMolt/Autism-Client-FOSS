@@ -48,14 +48,14 @@ public final class ClickItemCommand extends Command {
    }
 
    private static int init(AbstractContainerMenu menu, String requestedName) {
-      String normalizedTarget = autismclient.util.macro.ArrayUtil.init_Str_Str(requestedName);
+      String normalizedTarget = autismclient.util.macro.MacroItemTarget.init_Str_Str(requestedName);
       if (normalizedTarget.isEmpty()) {
          return -1;
       }
 
       for (int handlerSlot = 0; handlerSlot < menu.slots.size(); handlerSlot++) {
          ItemStack stack = menu.slots.get(handlerSlot).getItem();
-         if (!stack.isEmpty() && normalizedTarget.equals(autismclient.util.macro.ArrayUtil.init_Str_Str(stack.getHoverName().getString()))) {
+         if (!stack.isEmpty() && normalizedTarget.equals(autismclient.util.macro.MacroItemTarget.init_Str_Str(stack.getHoverName().getString()))) {
             return handlerSlot;
          }
       }

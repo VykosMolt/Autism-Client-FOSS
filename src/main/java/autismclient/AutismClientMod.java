@@ -325,7 +325,7 @@ public final class AutismClientMod implements ClientModInitializer {
          });
          runSafe("leave.joinMacro", aA::write);
          runSafe("leave.onGameLeft", () -> PoolEntry.init_PoolEntry().write_V());
-         runSafe("leave.pingSpoof", autismclient.util.macro.J::write);
+         runSafe("leave.pingSpoof", autismclient.util.macro.PingSpoofScheduler::write);
          runSafe("leave.blink", autismclient.modules.HashUtil::auditDisconnect);
          runSafe("leave.lagWatchdog", aF::init);
       });

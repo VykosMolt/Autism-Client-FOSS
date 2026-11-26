@@ -23,8 +23,8 @@ public class SendToggleAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.SEND_TOGGLE;
+   public MacroActionType getType() {
+      return MacroActionType.SEND_TOGGLE;
    }
 
    @Override

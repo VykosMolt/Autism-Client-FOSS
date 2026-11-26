@@ -285,7 +285,7 @@ public final class PoolEntry {
             bV.init_bV().load();
          }
 
-         autismclient.util.macro.J.update();
+         autismclient.util.macro.PingSpoofScheduler.update();
          HashUtil.update();
          autismclient.util.m.init(init_Minecraft);
          boolean hidden = aD.init_Z();
@@ -313,9 +313,9 @@ public final class PoolEntry {
             bK.load("join.lanSync.tick", perf);
          }
 
-         if (!hidden && autismclient.util.macro.b.init_Z()) {
+         if (!hidden && autismclient.util.macro.MacroWaitRegistry.init_Z()) {
             long perf = bK.read_J();
-            autismclient.util.macro.b.load(init_Minecraft);
+            autismclient.util.macro.MacroWaitRegistry.load(init_Minecraft);
             bK.load("join.macroConditions.tick", perf);
          }
 
@@ -495,7 +495,7 @@ public final class PoolEntry {
             || this.pool()
             || al.load_Z()
             || AddonEvents.hasPacketListeners()
-            || autismclient.util.macro.C.init_Z()
+            || autismclient.util.macro.PacketGateManager.init_Z()
             || MacroExecutor.update_Z();
       } else {
          return false;
@@ -525,7 +525,7 @@ public final class PoolEntry {
                || serverInfoObservation
                || al.load_Z()
                || AddonEvents.hasPacketListeners()
-               || autismclient.util.macro.C.init_Z()
+               || autismclient.util.macro.PacketGateManager.init_Z()
                || MacroExecutor.update_Z()
          );
       return !normalPath && !passivePayloadCapture && !loggerCapture && !serverInfoObservation

@@ -9,7 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
 
-public class SignEditAction implements MacroAction, aP {
+public class SignEditAction implements MacroAction, GuiWaitAware {
    public SignEditAction.Inner_StreamUtil targetMode = SignEditAction.Inner_StreamUtil.CURRENT_SIGN_GUI;
    public String line1 = "";
    public String line2 = "";
@@ -35,15 +35,15 @@ public class SignEditAction implements MacroAction, aP {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.getConnection() != null) {
          BlockPos pos = this.init_BlockPos_Minecraft(mc);
          if (pos != null) {
-            j.Inner_CachePool resolvedLine1 = n.init_j_CachePool_Str_Minecraft(this.line1, mc);
-            j.Inner_CachePool resolvedLine2 = n.init_j_CachePool_Str_Minecraft(this.line2, mc);
-            j.Inner_CachePool resolvedLine3 = n.init_j_CachePool_Str_Minecraft(this.line3, mc);
-            j.Inner_CachePool resolvedLine4 = n.init_j_CachePool_Str_Minecraft(this.line4, mc);
-            if (n.init_Z_Str_j_CachePoolArr("Edit sign", resolvedLine1, resolvedLine2, resolvedLine3, resolvedLine4)) {
-               j.Inner_CachePool resolvedCommand = j.Inner_CachePool.init("");
+            MacroTemplateResolver.Inner_CachePool resolvedLine1 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line1, mc);
+            MacroTemplateResolver.Inner_CachePool resolvedLine2 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line2, mc);
+            MacroTemplateResolver.Inner_CachePool resolvedLine3 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line3, mc);
+            MacroTemplateResolver.Inner_CachePool resolvedLine4 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line4, mc);
+            if (MacroVariableContext.init_Z_Str_j_CachePoolArr("Edit sign", resolvedLine1, resolvedLine2, resolvedLine3, resolvedLine4)) {
+               MacroTemplateResolver.Inner_CachePool resolvedCommand = MacroTemplateResolver.Inner_CachePool.init("");
                if (this.sendCommandAfter && this.commandAfter != null && !this.commandAfter.isBlank()) {
-                  resolvedCommand = n.init_j_CachePool_Str_Minecraft(this.commandAfter, mc);
-                  if (!n.init_Z_Str_j_CachePoolArr("Edit sign command", resolvedCommand)) {
+                  resolvedCommand = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.commandAfter, mc);
+                  if (!MacroVariableContext.init_Z_Str_j_CachePoolArr("Edit sign command", resolvedCommand)) {
                      return;
                   }
                }
@@ -103,8 +103,8 @@ public class SignEditAction implements MacroAction, aP {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.SIGN_EDIT;
+   public MacroActionType getType() {
+      return MacroActionType.SIGN_EDIT;
    }
 
    @Override
@@ -132,7 +132,7 @@ public class SignEditAction implements MacroAction, aP {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.targetMode = i.init(SignEditAction.Inner_StreamUtil.class, tag.getStringOr("targetMode", "CURRENT_SIGN_GUI"), SignEditAction.Inner_StreamUtil.CURRENT_SIGN_GUI);
+      this.targetMode = MacroNbtCodecHelper.init(SignEditAction.Inner_StreamUtil.class, tag.getStringOr("targetMode", "CURRENT_SIGN_GUI"), SignEditAction.Inner_StreamUtil.CURRENT_SIGN_GUI);
       this.line1 = tag.getStringOr("line1", "");
       this.line2 = tag.getStringOr("line2", "");
       this.line3 = tag.getStringOr("line3", "");
@@ -145,7 +145,7 @@ public class SignEditAction implements MacroAction, aP {
       this.waitForGuiAfter = tag.getBooleanOr("waitForGuiAfter", false);
       this.guiName = tag.getStringOr("guiName", "SIGN");
       if (tag.contains("closeMode")) {
-         this.closeMode = i.init(SignEditAction.Inner_DataUtil.class, tag.getStringOr("closeMode", "STAY_OPEN"), SignEditAction.Inner_DataUtil.STAY_OPEN);
+         this.closeMode = MacroNbtCodecHelper.init(SignEditAction.Inner_DataUtil.class, tag.getStringOr("closeMode", "STAY_OPEN"), SignEditAction.Inner_DataUtil.STAY_OPEN);
       } else if (tag.getBooleanOr("sendClosePacketAfter", false)) {
          this.closeMode = SignEditAction.Inner_DataUtil.SEND_CLOSE_PACKET_ONLY;
       } else if (tag.getBooleanOr("closeAfterEdit", false)) {

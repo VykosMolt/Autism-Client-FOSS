@@ -9,7 +9,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
-public class WaitForSoundAction implements CacheEntry, MacroAction, aP {
+public class WaitForSoundAction implements CaptureOutputAction, MacroAction, GuiWaitAware {
    public List<String> soundIds = new ArrayList<>();
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = false;
@@ -25,8 +25,8 @@ public class WaitForSoundAction implements CacheEntry, MacroAction, aP {
    private boolean init = true;
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.WAIT_SOUND;
+   public MacroActionType getType() {
+      return MacroActionType.WAIT_SOUND;
    }
 
    @Override
@@ -36,12 +36,12 @@ public class WaitForSoundAction implements CacheEntry, MacroAction, aP {
    @Override
    public String getDisplayName() {
       if (this.soundIds.isEmpty()) {
-         return "Wait Sound: Any" + aP.init_Str_aP(this);
+         return "Wait Sound: Any" + GuiWaitAware.init_Str_aP(this);
       }
 
       String first = cc.write(this.soundIds.get(0));
       String s = this.soundIds.size() == 1 ? first : first + " (+" + (this.soundIds.size() - 1) + ")";
-      return "Wait Sound: " + s + aP.init_Str_aP(this);
+      return "Wait Sound: " + s + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override
@@ -106,7 +106,7 @@ public class WaitForSoundAction implements CacheEntry, MacroAction, aP {
       tag.putBoolean("checkDistance", this.checkDistance);
       tag.putDouble("maxDistance", this.maxDistance);
       tag.putBoolean("enabled", this.init);
-      p.init(tag, this);
+      ListenDuringPreviousSerializer.init(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -123,8 +123,8 @@ public class WaitForSoundAction implements CacheEntry, MacroAction, aP {
          }
       }
 
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
       this.waitGuiName = tag.getStringOr("waitGuiName", "");
       this.checkDistance = tag.getBooleanOr("checkDistance", false);
       this.maxDistance = tag.getDoubleOr("maxDistance", 16.0);
@@ -132,7 +132,7 @@ public class WaitForSoundAction implements CacheEntry, MacroAction, aP {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      p.load(tag, this);
+      ListenDuringPreviousSerializer.load(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 

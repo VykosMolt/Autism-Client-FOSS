@@ -4,7 +4,7 @@ import autismclient.AutismClientAddon;
 import autismclient.api.macro.MacroActionRegistry;
 import autismclient.util.macro.MacroAction;
 import autismclient.util.macro.MacroExecutor;
-import autismclient.util.macro.d;
+import autismclient.util.macro.DynamicBindingManager;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -167,15 +167,15 @@ public class AutismMacro {
                return migratedLegacy;
             }
 
-            autismclient.util.macro.StreamGate type = autismclient.util.macro.StreamGate.valueOf(typeName);
+            autismclient.util.macro.MacroActionType type = autismclient.util.macro.MacroActionType.valueOf(typeName);
             MacroAction action = init_MacroAction_StreamGate(type);
-            if (type == autismclient.util.macro.StreamGate.WAIT_ITEM) {
+            if (type == autismclient.util.macro.MacroActionType.WAIT_ITEM) {
                ((autismclient.util.macro.WaitForSlotChangeAction)action).init(actionTag);
             } else {
                action.fromTag(actionTag);
             }
 
-            d.init(action, actionTag);
+            DynamicBindingManager.init(action, actionTag);
             return action;
          } catch (IllegalArgumentException e) {
             return load(actionTag);
@@ -191,7 +191,7 @@ public class AutismMacro {
 
    public static CompoundTag init_CompoundTag_MacroAction(MacroAction action) {
       CompoundTag tag = action == null ? new CompoundTag() : action.toTag();
-      d.load(action, tag);
+      DynamicBindingManager.load(action, tag);
       return tag;
    }
 
@@ -224,7 +224,7 @@ public class AutismMacro {
       }
    }
 
-   private static MacroAction init_MacroAction_StreamGate(autismclient.util.macro.StreamGate type) {
+   private static MacroAction init_MacroAction_StreamGate(autismclient.util.macro.MacroActionType type) {
       MacroAction var10000;
       switch (type) {
          case DELAY:
@@ -557,7 +557,7 @@ public class AutismMacro {
             MacroAction action = factory.get();
             if (action != null) {
                action.fromTag(actionTag);
-               d.init(action, actionTag);
+               DynamicBindingManager.init(action, actionTag);
                return action;
             }
          } catch (Throwable t) {
@@ -632,7 +632,7 @@ public class AutismMacro {
    static {
       Set<String> s = new HashSet<>();
 
-      for (autismclient.util.macro.StreamGate t : autismclient.util.macro.StreamGate.values()) {
+      for (autismclient.util.macro.MacroActionType t : autismclient.util.macro.MacroActionType.values()) {
          s.add(t.name());
       }
 

@@ -16,12 +16,12 @@ public class EndPacketGateAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      C.init(this.gateId, mc == null ? null : mc.getConnection(), this.flushOnDisable);
+      PacketGateManager.init(this.gateId, mc == null ? null : mc.getConnection(), this.flushOnDisable);
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.END_PACKET_GATE;
+   public MacroActionType getType() {
+      return MacroActionType.END_PACKET_GATE;
    }
 
    @Override

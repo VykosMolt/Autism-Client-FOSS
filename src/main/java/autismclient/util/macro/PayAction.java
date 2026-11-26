@@ -97,8 +97,8 @@ public class PayAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.PAY;
+   public MacroActionType getType() {
+      return MacroActionType.PAY;
    }
 
    @Override

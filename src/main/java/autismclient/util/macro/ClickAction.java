@@ -8,13 +8,13 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult.Type;
 
-public class ClickAction implements E, MacroAction, aP {
+public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    public ClickAction.Inner_DataUtil type;
    public int clickCount = 1;
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = false;
    public String guiName = "";
-   public volatile D packetOrder = D.INSTANT;
+   public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
 
    public ClickAction() {
    }
@@ -70,13 +70,13 @@ public class ClickAction implements E, MacroAction, aP {
    }
 
    @Override
-   public D init_D() {
+   public PacketOrderMode init_D() {
       return this.packetOrder;
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.CLICK;
+   public MacroActionType getType() {
+      return MacroActionType.CLICK;
    }
 
    @Override
@@ -88,7 +88,7 @@ public class ClickAction implements E, MacroAction, aP {
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
-      E.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
       return tag;
    }
 
@@ -110,13 +110,13 @@ public class ClickAction implements E, MacroAction, aP {
          this.clickCount = tag.getIntOr("clickCount", 1);
       }
 
-      this.waitForGuiBefore = aP.init_Z_CompoundTag_Z(tag, false);
-      this.waitForGuiAfter = aP.load_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiBefore = GuiWaitAware.init_Z_CompoundTag_Z(tag, false);
+      this.waitForGuiAfter = GuiWaitAware.load_Z_CompoundTag_Z(tag, false);
       if (tag.contains("guiName")) {
          this.guiName = tag.getStringOr("guiName", "");
       }
 
-      this.packetOrder = E.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
    }
 
    @Override
@@ -126,7 +126,7 @@ public class ClickAction implements E, MacroAction, aP {
          base = base + " x" + this.clickCount;
       }
 
-      return base + aP.init_Str_aP(this);
+      return base + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override

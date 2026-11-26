@@ -117,10 +117,10 @@ public final class aw {
    }
 
    public static int init(Minecraft mc, String itemName) {
-      return init(mc, autismclient.util.macro.ArrayUtil.update(itemName));
+      return init(mc, autismclient.util.macro.MacroItemTarget.update(itemName));
    }
 
-   public static int init(Minecraft mc, autismclient.util.macro.ArrayUtil target) {
+   public static int init(Minecraft mc, autismclient.util.macro.MacroItemTarget target) {
       if (mc != null && mc.player != null && target != null && target.update()) {
          int bestSlot = -1;
          int bestScore = -1;
@@ -141,10 +141,10 @@ public final class aw {
    }
 
    public static int load(Minecraft mc, String itemName) {
-      return load(mc, autismclient.util.macro.ArrayUtil.update(itemName));
+      return load(mc, autismclient.util.macro.MacroItemTarget.update(itemName));
    }
 
-   public static int load(Minecraft mc, autismclient.util.macro.ArrayUtil target) {
+   public static int load(Minecraft mc, autismclient.util.macro.MacroItemTarget target) {
       if (mc != null && mc.player != null && target != null && target.update()) {
          int bestSlot = -1;
          int bestScore = -1;
@@ -170,10 +170,10 @@ public final class aw {
    }
 
    public static int init(Minecraft mc, String itemName, int preferredHotbarSlot) {
-      return init(mc, autismclient.util.macro.ArrayUtil.update(itemName), preferredHotbarSlot);
+      return init(mc, autismclient.util.macro.MacroItemTarget.update(itemName), preferredHotbarSlot);
    }
 
-   public static int init(Minecraft mc, autismclient.util.macro.ArrayUtil target, int preferredHotbarSlot) {
+   public static int init(Minecraft mc, autismclient.util.macro.MacroItemTarget target, int preferredHotbarSlot) {
       if (mc != null && mc.player != null && target != null && target.update()) {
          int bestHotbarSlot = -1;
          int bestHotbarScore = -1;

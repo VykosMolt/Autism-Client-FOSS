@@ -35,7 +35,7 @@ public class InventoryAuditAction implements MacroAction {
    private static final int sync = 25;
    public InventoryAuditAction.Inner_BufferHelper mode = InventoryAuditAction.Inner_BufferHelper.DUPE;
    public List<String> targetItems = new ArrayList<>();
-   public List<ArrayUtil> itemTargets = new ArrayList<>();
+   public List<MacroItemTarget> itemTargets = new ArrayList<>();
    public String openCommand = "/ec";
    public InventoryAuditAction.Inner_ConfigStore openMode = InventoryAuditAction.Inner_ConfigStore.COMMAND;
    public BlockPos containerPos = BlockPos.ZERO;
@@ -55,7 +55,7 @@ public class InventoryAuditAction implements MacroAction {
    }
 
    public boolean load_Z_2() {
-      for (ArrayUtil target : this.init_List_3()) {
+      for (MacroItemTarget target : this.init_List_3()) {
          if (target != null && (target.init_Z() || target.update())) {
             return true;
          }
@@ -72,7 +72,7 @@ public class InventoryAuditAction implements MacroAction {
 
    public void init_V_Minecraft_2(Minecraft mc) throws InterruptedException {
       if (mc != null && mc.player != null) {
-         j.Inner_CachePool commandResolution = n.init_j_CachePool_Str_Minecraft(this.init_Str_2(), mc);
+         MacroTemplateResolver.Inner_CachePool commandResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.init_Str_2(), mc);
          if (commandResolution.init_Z()) {
             String cmd = commandResolution.init_Str().trim();
             if (!cmd.isBlank()) {
@@ -172,9 +172,9 @@ public class InventoryAuditAction implements MacroAction {
 
    private Set<Integer> init_Set_Minecraft(Minecraft mc) {
       Set<Integer> slots = new HashSet<>();
-      List<ArrayUtil> targets = this.load_List_2();
+      List<MacroItemTarget> targets = this.load_List_2();
       if (!targets.isEmpty()) {
-         for (ArrayUtil target : targets) {
+         for (MacroItemTarget target : targets) {
             if (target != null && target.init_Z()) {
                slots.add(target.init_I);
             }
@@ -566,7 +566,7 @@ public class InventoryAuditAction implements MacroAction {
    }
 
    private boolean init_Z_Minecraft_J(Minecraft mc, long timeoutMs) throws InterruptedException {
-      CompletableFuture<Void> future = b.init_CompletableFuture("");
+      CompletableFuture<Void> future = MacroWaitRegistry.init_CompletableFuture("");
 
       try {
          return this.init_Z_CompletableFuture_J(future, timeoutMs);
@@ -985,18 +985,18 @@ public class InventoryAuditAction implements MacroAction {
    }
 
    private boolean load_Z_ItemStack_I(ItemStack stack, int visibleSlot) {
-      List<ArrayUtil> targets = this.load_List_2();
+      List<MacroItemTarget> targets = this.load_List_2();
       if (targets.isEmpty()) {
          return false;
       }
 
-      for (ArrayUtil itemTarget : targets) {
+      for (MacroItemTarget itemTarget : targets) {
          if (!itemTarget.init_Z() || itemTarget.init_I == visibleSlot) {
             if (!itemTarget.update() || itemTarget.init_Z_ItemStack_I(stack, visibleSlot)) {
                return true;
             }
          } else if (itemTarget.update()) {
-            ArrayUtil identityTarget = itemTarget.init_ArrayUtil();
+            MacroItemTarget identityTarget = itemTarget.init_ArrayUtil();
             identityTarget.init_I = -1;
             if (identityTarget.init_Z_ItemStack_I(stack, visibleSlot)) {
                return true;
@@ -1073,14 +1073,14 @@ public class InventoryAuditAction implements MacroAction {
 
    private Map<String, Integer> load(InventoryAuditAction.Inner_CachePool snapshot) {
       Map<String, Integer> totals = new LinkedHashMap<>();
-      List<ArrayUtil> targets = this.load_List_2();
+      List<MacroItemTarget> targets = this.load_List_2();
       if (snapshot != null && !targets.isEmpty()) {
          for (InventoryAuditAction.Inner_TaskQueue slot : snapshot.init_Map().values()) {
             ItemStack stack = slot.init_ItemStack();
             if (stack != null && !stack.isEmpty()) {
                String itemId = this.init_Str_ItemStack(stack);
 
-               for (ArrayUtil itemTarget : targets) {
+               for (MacroItemTarget itemTarget : targets) {
                   if (this.init_Z_ArrayUtil(itemTarget, stack, slot.init_I())) {
                      totals.merge(itemId, stack.getCount(), Integer::sum);
                      break;
@@ -1095,11 +1095,11 @@ public class InventoryAuditAction implements MacroAction {
       }
    }
 
-   private boolean init_Z_ArrayUtil(ArrayUtil itemTarget, ItemStack stack, int visibleSlot) {
+   private boolean init_Z_ArrayUtil(MacroItemTarget itemTarget, ItemStack stack, int visibleSlot) {
       if (itemTarget == null) {
          return false;
       } else if (itemTarget.update()) {
-         ArrayUtil identityTarget = itemTarget.init_ArrayUtil();
+         MacroItemTarget identityTarget = itemTarget.init_ArrayUtil();
          identityTarget.init_I = -1;
          return identityTarget.init_Z_ItemStack_I(stack, visibleSlot);
       } else {
@@ -1153,12 +1153,12 @@ public class InventoryAuditAction implements MacroAction {
    }
 
    private boolean read_Z_ItemStack_I(ItemStack stack, int visibleSlot) {
-      List<ArrayUtil> targets = this.load_List_2();
+      List<MacroItemTarget> targets = this.load_List_2();
       if (targets.isEmpty()) {
          return false;
       }
 
-      for (ArrayUtil itemTarget : targets) {
+      for (MacroItemTarget itemTarget : targets) {
          if (this.init_Z_ArrayUtil(itemTarget, stack, visibleSlot)) {
             return true;
          }
@@ -1357,7 +1357,7 @@ public class InventoryAuditAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
       tag.putString("mode", this.mode.name());
-      tag.put("targetItems", ArrayUtil.init_ListTag_List(this.init_List_3()));
+      tag.put("targetItems", MacroItemTarget.init_ListTag_List(this.init_List_3()));
       tag.putString("openCommand", this.init_Str_2());
       tag.putString("openMode", this.openMode.name());
       tag.putInt("containerX", this.containerPos.getX());
@@ -1399,7 +1399,7 @@ public class InventoryAuditAction implements MacroAction {
       this.targetItems.clear();
       if (tag.contains("targetItems")) {
          ListTag list = tag.getList("targetItems").orElse(new ListTag());
-         this.itemTargets.addAll(ArrayUtil.init_List_ListTag(list));
+         this.itemTargets.addAll(MacroItemTarget.init_List_ListTag(list));
       }
 
       this.load_V_2();
@@ -1469,8 +1469,8 @@ public class InventoryAuditAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.INVENTORY_AUDIT;
+   public MacroActionType getType() {
+      return MacroActionType.INVENTORY_AUDIT;
    }
 
    @Override
@@ -1508,13 +1508,13 @@ public class InventoryAuditAction implements MacroAction {
       this.init_Z = enabled;
    }
 
-   private List<ArrayUtil> init_List_3() {
+   private List<MacroItemTarget> init_List_3() {
       if (!this.itemTargets.isEmpty()) {
          return this.itemTargets;
       }
 
       for (String target : this.targetItems) {
-         ArrayUtil parsed = ArrayUtil.update(target);
+         MacroItemTarget parsed = MacroItemTarget.update(target);
          if (parsed.init_Z() || parsed.update()) {
             this.itemTargets.add(parsed);
          }
@@ -1523,13 +1523,13 @@ public class InventoryAuditAction implements MacroAction {
       return this.itemTargets;
    }
 
-   private List<ArrayUtil> load_List_2() {
-      List<ArrayUtil> runtime = new ArrayList<>();
+   private List<MacroItemTarget> load_List_2() {
+      List<MacroItemTarget> runtime = new ArrayList<>();
       Minecraft mc = Minecraft.getInstance();
 
-      for (ArrayUtil target : this.init_List_3()) {
+      for (MacroItemTarget target : this.init_List_3()) {
          if (target != null) {
-            ArrayUtil resolved = target.init_ArrayUtil_Minecraft(mc);
+            MacroItemTarget resolved = target.init_ArrayUtil_Minecraft(mc);
             if (resolved != null && (resolved.init_Z() || resolved.update())) {
                runtime.add(resolved);
             }
@@ -1542,7 +1542,7 @@ public class InventoryAuditAction implements MacroAction {
    private void load_V_2() {
       this.targetItems.clear();
 
-      for (ArrayUtil target : this.itemTargets) {
+      for (MacroItemTarget target : this.itemTargets) {
          if (target != null) {
             String entry = target.write_Str();
             if (!entry.isBlank()) {

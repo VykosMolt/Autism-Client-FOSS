@@ -224,7 +224,7 @@ public final class aA {
                Minecraft mc = Minecraft.getInstance();
                CustomMenuSnapshot snapshot = null;
                long seenGeneration = 0L;
-               autismclient.util.macro.RenderState.Inner_DataUtil prepared = null;
+               autismclient.util.macro.CustomMenuActionPlanner.Inner_DataUtil prepared = null;
                String lastError = "";
 
                while (System.currentTimeMillis() <= deadline && !Thread.currentThread().isInterrupted()) {
@@ -239,7 +239,7 @@ public final class aA {
                   if (snapshot == null) {
                      LockSupport.parkNanos(20000000L);
                   } else {
-                     prepared = autismclient.util.macro.RenderState.init(action, snapshot, aA::load_Str);
+                     prepared = autismclient.util.macro.CustomMenuActionPlanner.init(action, snapshot, aA::load_Str);
                      if (prepared.init_Z() || prepared.init_Str() == null || !prepared.init_Str().contains("unavailable")) {
                         break;
                      }

@@ -3,9 +3,9 @@ package autismclient.gui.macro.editor;
 import autismclient.api.macro.MacroActionRegistry;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.macro.MacroAction;
-import autismclient.util.macro.StreamGate;
+import autismclient.util.macro.MacroActionType;
 import autismclient.util.macro.ToolsAction;
-import autismclient.util.macro.k;
+import autismclient.util.macro.MacroToolBridge;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -13,7 +13,7 @@ import java.util.Map;
 
 public final class ActionFieldRegistry {
    private static final ActionFieldSchema init_ActionFieldSchema = ActionFieldSchema.builder().build();
-   private static final Map<StreamGate, ActionFieldSchema> init_Map = new EnumMap<>(StreamGate.class);
+   private static final Map<MacroActionType, ActionFieldSchema> init_Map = new EnumMap<>(MacroActionType.class);
    private static final String[] init_StrArr = new String[]{
       "ALWAYS",
       "HELD_ITEM",
@@ -45,7 +45,7 @@ public final class ActionFieldRegistry {
       "VARIABLE"
    };
 
-   public static ActionFieldSchema init(StreamGate type) {
+   public static ActionFieldSchema init(MacroActionType type) {
       return init_Map.getOrDefault(type, init_ActionFieldSchema);
    }
 
@@ -55,11 +55,11 @@ public final class ActionFieldRegistry {
       } else if (action instanceof ToolsAction tools) {
          return BufferHelper.init(tools);
       } else {
-         StreamGate type = action.getType();
-         if (type == StreamGate.IF || type == StreamGate.FLOW) {
+         MacroActionType type = action.getType();
+         if (type == MacroActionType.IF || type == MacroActionType.FLOW) {
             ArrayList<String> ids = new ArrayList<>();
             ids.add("");
-            ids.addAll(k.init_List().stream().map(k.Inner_TaskQueue::init).toList());
+            ids.addAll(MacroToolBridge.init_List().stream().map(MacroToolBridge.Inner_TaskQueue::init).toList());
             String saved = action.toTag().getStringOr("cond_toolFilter", "");
             if (!ids.contains(saved)) {
                ids.add(saved);
@@ -91,9 +91,9 @@ public final class ActionFieldRegistry {
    }
 
    static {
-      init_Map.put(StreamGate.TOOLS, ActionFieldSchema.builder().enumField("operation", "Action", "RUN", "WAIT", "STOP", "PAUSE", "RESUME").build());
+      init_Map.put(MacroActionType.TOOLS, ActionFieldSchema.builder().enumField("operation", "Action", "RUN", "WAIT", "STOP", "PAUSE", "RESUME").build());
       init_Map.put(
-         StreamGate.DELAY,
+         MacroActionType.DELAY,
          ActionFieldSchema.builder()
             .toggle("useTicks", "Use Ticks")
             .number("delayMs", "Delay (ms)")
@@ -107,7 +107,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.FPS,
+         MacroActionType.FPS,
          ActionFieldSchema.builder()
             .number("maxFps", "Max FPS (0 = freeze)")
             .dynamic()
@@ -131,7 +131,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.SPING,
+         MacroActionType.SPING,
          ActionFieldSchema.builder()
             .number("pingDelayMs", "Add Ping (ms)")
             .dynamic()
@@ -156,9 +156,9 @@ public final class ActionFieldRegistry {
             .showWhenEnum("endMode", "TIMEOUT")
             .build()
       );
-      init_Map.put(StreamGate.PACKET, ActionFieldSchema.builder().text("description", "Description").toggle("regenerate", "Regenerate").build());
+      init_Map.put(MacroActionType.PACKET, ActionFieldSchema.builder().text("description", "Description").toggle("regenerate", "Regenerate").build());
       init_Map.put(
-         StreamGate.PACKET_CLICK,
+         MacroActionType.PACKET_CLICK,
          ActionFieldSchema.builder()
             .enumField("mode", "Click Mode", "LEFT_CLICK", "RIGHT_CLICK", "QUICK_MOVE")
             .number("times", "Repeats")
@@ -168,9 +168,9 @@ public final class ActionFieldRegistry {
             .capturePacketClick("target", "Re-capture")
             .build()
       );
-      init_Map.put(StreamGate.WAIT_PACKET, ActionFieldSchema.builder().text("saveAs", "Save As").build());
+      init_Map.put(MacroActionType.WAIT_PACKET, ActionFieldSchema.builder().text("saveAs", "Save As").build());
       init_Map.put(
-         StreamGate.WAIT_HEALTH,
+         MacroActionType.WAIT_HEALTH,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .decimal("healthThreshold", "Target Health")
@@ -181,7 +181,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_ITEM,
+         MacroActionType.WAIT_ITEM,
          ActionFieldSchema.builder()
             .stringList("itemNames", "Items")
             .dynamic()
@@ -194,7 +194,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_BLOCK,
+         MacroActionType.WAIT_BLOCK,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .enumField("checkMode", "Check Mode", "AT_POSITION", "IN_REACH", "LOOKING_AT")
@@ -216,7 +216,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_GUI,
+         MacroActionType.WAIT_GUI,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .enumField("waitMode", "Wait Mode", "OPEN", "CLOSE")
@@ -233,7 +233,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.CUSTOM_MENU,
+         MacroActionType.CUSTOM_MENU,
          ActionFieldSchema.builder()
             .stringList("fieldValues", "Text Field Values (in order)")
             .dynamic()
@@ -246,7 +246,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.CLICK,
+         MacroActionType.CLICK,
          ActionFieldSchema.builder()
             .enumField("packetOrder", "Packet Order", "INSTANT", "GRIM")
             .enumField("clickType", "Click Type", "LEFT", "RIGHT")
@@ -260,7 +260,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.ROTATE,
+         MacroActionType.ROTATE,
          ActionFieldSchema.builder()
             .decimal("yaw", "Yaw")
             .dynamic()
@@ -276,7 +276,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.USE_ITEM,
+         MacroActionType.USE_ITEM,
          ActionFieldSchema.builder()
             .enumField("packetOrder", "Packet Order", "INSTANT", "GRIM")
             .text("itemName", "Item Name")
@@ -302,7 +302,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.INVENTORY,
+         MacroActionType.INVENTORY,
          ActionFieldSchema.builder()
             .enumField("mode", "Mode", "OPEN", "CLOSE")
             .toggle("waitForGuiBefore", "Before")
@@ -314,7 +314,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.SEND_PACKET,
+         MacroActionType.SEND_PACKET,
          ActionFieldSchema.builder()
             .text("customName", "Custom Name")
             .number("sendCount", "Send Count")
@@ -325,10 +325,10 @@ public final class ActionFieldRegistry {
             .dynamic()
             .build()
       );
-      init_Map.put(StreamGate.PAYLOAD, init_ActionFieldSchema);
-      init_Map.put(StreamGate.CRAFT, init_ActionFieldSchema);
+      init_Map.put(MacroActionType.PAYLOAD, init_ActionFieldSchema);
+      init_Map.put(MacroActionType.CRAFT, init_ActionFieldSchema);
       init_Map.put(
-         StreamGate.SELECT_SLOT,
+         MacroActionType.SELECT_SLOT,
          ActionFieldSchema.builder()
             .enumField("packetOrder", "Packet Order", "INSTANT", "GRIM")
             .slot("slot", "Slot")
@@ -342,7 +342,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.XCARRY,
+         MacroActionType.XCARRY,
          ActionFieldSchema.builder()
             .enumField("mode", "Mode", "PUT_IN", "TAKE_OUT", "DROP")
             .enumField("transferMode", "Transfer", "FAST", "CLICK", "SAFE_CLICK")
@@ -360,19 +360,19 @@ public final class ActionFieldRegistry {
             .captureItemSlot()
             .build()
       );
-      init_Map.put(StreamGate.DROP, ActionFieldSchema.builder().enumField("packetOrder", "Packet Order", "INSTANT", "GRIM").build());
-      init_Map.put(StreamGate.ITEM, init_ActionFieldSchema);
-      init_Map.put(StreamGate.PICK_UP_ALL, ActionFieldSchema.builder().number("times", "Clicks").range(1, 100).build());
+      init_Map.put(MacroActionType.DROP, ActionFieldSchema.builder().enumField("packetOrder", "Packet Order", "INSTANT", "GRIM").build());
+      init_Map.put(MacroActionType.ITEM, init_ActionFieldSchema);
+      init_Map.put(MacroActionType.PICK_UP_ALL, ActionFieldSchema.builder().number("times", "Clicks").range(1, 100).build());
       init_Map.put(
-         StreamGate.TICK_SYNC,
+         MacroActionType.TICK_SYNC,
          ActionFieldSchema.builder().number("tickOffset", "Tick Offset").range(0, 20).number("preGenCount", "Pre-gen Count").range(-1, 100).build()
       );
       init_Map.put(
-         StreamGate.REVISION_SYNC,
+         MacroActionType.REVISION_SYNC,
          ActionFieldSchema.builder().number("revisionOffset", "Revision Offset").range(0, 100).number("preGenCount", "Pre-gen Count").range(-1, 100).build()
       );
       init_Map.put(
-         StreamGate.SERVER_TICK_SYNC,
+         MacroActionType.SERVER_TICK_SYNC,
          ActionFieldSchema.builder()
             .number("bufferMs", "Buffer (ms)")
             .range(0, 5000)
@@ -384,7 +384,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.CLOSE_GUI,
+         MacroActionType.CLOSE_GUI,
          ActionFieldSchema.builder()
             .text("guiName", "GUI Name")
             .dynamic()
@@ -399,7 +399,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.SWAP_SLOTS,
+         MacroActionType.SWAP_SLOTS,
          ActionFieldSchema.builder()
             .toggle("fromUseItemName", "From: Use Item Name")
             .text("fromItemName", "From: Item Name")
@@ -420,7 +420,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_COOLDOWN,
+         MacroActionType.WAIT_COOLDOWN,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .text("itemName", "Item Name")
@@ -430,11 +430,11 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.GO_TO,
+         MacroActionType.GO_TO,
          ActionFieldSchema.builder().blockPos("pos", "Target Position").dynamic().xyzDouble(true).toggle("waitForArrival", "Wait for Arrival").build()
       );
       init_Map.put(
-         StreamGate.WAIT_POS,
+         MacroActionType.WAIT_POS,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .blockPos("pos", "Position")
@@ -457,7 +457,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.DISCONNECT,
+         MacroActionType.DISCONNECT,
          ActionFieldSchema.builder()
             .enumField("mode", "Mode", "DISCONNECT", "KICK", "KICK_DUPE", "AUTO_DISCONNECT")
             .number("delayMs", "Delay (ms)")
@@ -489,12 +489,12 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.TOGGLE_MODULE,
+         MacroActionType.TOGGLE_MODULE,
          ActionFieldSchema.builder().text("moduleName", "Module Name").enumField("toggleMode", "Toggle Mode", "TOGGLE", "ENABLE", "DISABLE").build()
       );
-      init_Map.put(StreamGate.START_MACRO, ActionFieldSchema.builder().macroSelect("macroName", "Macro").toggle("restartIfRunning", "Restart If Running").build());
+      init_Map.put(MacroActionType.START_MACRO, ActionFieldSchema.builder().macroSelect("macroName", "Macro").toggle("restartIfRunning", "Restart If Running").build());
       init_Map.put(
-         StreamGate.JOIN,
+         MacroActionType.JOIN,
          ActionFieldSchema.builder()
             .text("server", "Server (blank = last)")
             .enumField("when", "Continue When", "JOINING", "WORLD", "FIRST_TICK", "INVENTORY_READY", "PLAYABLE", "FULLY_READY")
@@ -503,7 +503,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.STOP_MACRO,
+         MacroActionType.STOP_MACRO,
          ActionFieldSchema.builder()
             .enumField("target", "Target", "SELF", "SELECTED", "ALL")
             .macroSelect("macroName", "Macro")
@@ -511,7 +511,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.SNEAK,
+         MacroActionType.SNEAK,
          ActionFieldSchema.builder()
             .enumField("packetOrder", "Packet Order", "INSTANT", "GRIM")
             .toggle("sneak", "Sneak")
@@ -519,11 +519,11 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.JUMP,
+         MacroActionType.JUMP,
          ActionFieldSchema.builder().toggle("tap", "Tap (single tick)").number("durationTicks", "Duration (ticks)").range(1, 200).hideWhen("tap").build()
       );
       init_Map.put(
-         StreamGate.SPRINT,
+         MacroActionType.SPRINT,
          ActionFieldSchema.builder()
             .enumField("packetOrder", "Packet Order", "INSTANT", "GRIM")
             .toggle("sprint", "Sprint")
@@ -531,7 +531,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.MOVE,
+         MacroActionType.MOVE,
          ActionFieldSchema.builder()
             .enumField("direction", "Direction", "FORWARD", "BACKWARD", "LEFT", "RIGHT")
             .number("durationTicks", "Duration (ticks)")
@@ -540,7 +540,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.LOOK_AT_BLOCK,
+         MacroActionType.LOOK_AT_BLOCK,
          ActionFieldSchema.builder()
             .enumField("targetMode", "Target Mode", "SPECIFIC", "BLOCK", "ENTITY")
             .blockPos("blockPos", "Block Position")
@@ -567,11 +567,11 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.REPEAT,
+         MacroActionType.REPEAT,
          ActionFieldSchema.builder().number("stepCount", "Steps to Repeat").range(1, 1000).number("repeatCount", "Repeat Count").range(1, 10000).build()
       );
       init_Map.put(
-         StreamGate.WAIT_CHAT,
+         MacroActionType.WAIT_CHAT,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .text("pattern", "Pattern")
@@ -590,7 +590,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_ENTITY,
+         MacroActionType.WAIT_ENTITY,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .enumField("checkMode", "Check Mode", "RADIUS", "LOOKING_AT", "WITHIN_REACH", "MOUNTED_IN", "NEARBY")
@@ -617,7 +617,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_ENTITY_TARGET,
+         MacroActionType.WAIT_ENTITY_TARGET,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .enumField("condition", "Condition", "LOOKING_AT", "WITHIN_REACH", "MOUNTED_IN", "NEARBY")
@@ -631,9 +631,9 @@ public final class ActionFieldRegistry {
             .range(0, 300000)
             .build()
       );
-      init_Map.put(StreamGate.WAIT_SLOT_CHANGE, ActionFieldSchema.builder().text("saveAs", "Save As").build());
+      init_Map.put(MacroActionType.WAIT_SLOT_CHANGE, ActionFieldSchema.builder().text("saveAs", "Save As").build());
       init_Map.put(
-         StreamGate.OPEN_CONTAINER,
+         MacroActionType.OPEN_CONTAINER,
          ActionFieldSchema.builder()
             .enumField("targetMode", "Target", "BLOCK", "ENTITY", "LAST_TARGET")
             .blockPos("pos", "Container Position")
@@ -653,7 +653,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.INTERACT_ENTITY,
+         MacroActionType.INTERACT_ENTITY,
          ActionFieldSchema.builder()
             .enumField("packetOrder", "Packet Order", "INSTANT", "GRIM")
             .enumField("targetMode", "Target", "ENTITY", "LAST_TARGET")
@@ -669,15 +669,15 @@ public final class ActionFieldRegistry {
             .dynamic()
             .build()
       );
-      init_Map.put(StreamGate.DESYNC, init_ActionFieldSchema);
-      init_Map.put(StreamGate.RESTORE_GUI, ActionFieldSchema.builder().toggle("waitForGuiBefore", "Before").toggle("waitForGuiAfter", "After").build());
+      init_Map.put(MacroActionType.DESYNC, init_ActionFieldSchema);
+      init_Map.put(MacroActionType.RESTORE_GUI, ActionFieldSchema.builder().toggle("waitForGuiBefore", "Before").toggle("waitForGuiAfter", "After").build());
       init_Map.put(
-         StreamGate.SAVE_GUI,
+         MacroActionType.SAVE_GUI,
          ActionFieldSchema.builder().toggle("closeAfter", "Close After Saving").toggle("sendPacket", "Close without pkt").showWhen("closeAfter").build()
       );
-      init_Map.put(StreamGate.SEND_TOGGLE, ActionFieldSchema.builder().enumField("mode", "Mode", "ENABLE", "DISABLE").build());
+      init_Map.put(MacroActionType.SEND_TOGGLE, ActionFieldSchema.builder().enumField("mode", "Mode", "ENABLE", "DISABLE").build());
       init_Map.put(
-         StreamGate.DELAY_PACKETS,
+         MacroActionType.DELAY_PACKETS,
          ActionFieldSchema.builder()
             .enumField("mode", "Mode", "ENABLE", "DISABLE")
             .toggle("flushOnDisable", "Flush on Disable")
@@ -691,7 +691,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.INVENTORY_AUDIT,
+         MacroActionType.INVENTORY_AUDIT,
          ActionFieldSchema.builder()
             .enumField("mode", "Mode", "DUPE", "DUPE_SPAM")
             .stringList("targetItems", "Targets")
@@ -738,7 +738,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.STORE_ITEM,
+         MacroActionType.STORE_ITEM,
          ActionFieldSchema.builder()
             .enumField("mode", "Mode", "LOOT", "STORE")
             .toggle("allItems", "All Items")
@@ -757,7 +757,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_SOUND,
+         MacroActionType.WAIT_SOUND,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .stringList("soundIds", "Sound IDs")
@@ -774,7 +774,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.MINE,
+         MacroActionType.MINE,
          ActionFieldSchema.builder()
             .enumField("packetOrder", "Packet Order", "INSTANT", "GRIM")
             .stringList("targetBlocks", "Target Blocks")
@@ -798,7 +798,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.INSTA_BREAK,
+         MacroActionType.INSTA_BREAK,
          ActionFieldSchema.builder()
             .enumField("packetOrder", "Packet Order", "INSTANT", "GRIM")
             .blockPos("blockPos", "Target Block")
@@ -830,7 +830,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.BREAK,
+         MacroActionType.BREAK,
          ActionFieldSchema.builder()
             .enumField("packetOrder", "Packet Order", "INSTANT", "GRIM")
             .blockPos("blockPos", "Target Block")
@@ -866,7 +866,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.TRADE,
+         MacroActionType.TRADE,
          ActionFieldSchema.builder()
             .enumField("target", "Villager", "OPEN_SCREEN", "AIMED", "NEAREST")
             .decimal("range", "Reach")
@@ -905,7 +905,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.PAY,
+         MacroActionType.PAY,
          ActionFieldSchema.builder()
             .text("commandTemplate", "Command Template")
             .dynamic()
@@ -924,7 +924,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.SEND_CHAT,
+         MacroActionType.SEND_CHAT,
          ActionFieldSchema.builder()
             .text("message", "Message")
             .dynamic()
@@ -935,7 +935,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.NBT_BOOK,
+         MacroActionType.NBT_BOOK,
          ActionFieldSchema.builder()
             .number("pages", "Pages")
             .range(1, 100)
@@ -963,9 +963,9 @@ public final class ActionFieldRegistry {
             .toggle("disconnectAfter", "Disconnect After")
             .build()
       );
-      init_Map.put(StreamGate.WAIT_LAN_STEP, init_ActionFieldSchema);
+      init_Map.put(MacroActionType.WAIT_LAN_STEP, init_ActionFieldSchema);
       init_Map.put(
-         StreamGate.WAIT_MACRO_STEP,
+         MacroActionType.WAIT_MACRO_STEP,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .macroSelect("macroName", "Macro")
@@ -978,7 +978,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_WORLD_CHANGE,
+         MacroActionType.WAIT_WORLD_CHANGE,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .text("targetDimension", "Target Dimension")
@@ -986,7 +986,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_POSITION_DELTA,
+         MacroActionType.WAIT_POSITION_DELTA,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .decimal("distance", "Distance")
@@ -996,7 +996,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_TELEPORT,
+         MacroActionType.WAIT_TELEPORT,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .decimal("minDistance", "Min Distance")
@@ -1006,7 +1006,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_GAMEMODE_CHANGE,
+         MacroActionType.WAIT_GAMEMODE_CHANGE,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .enumField("match", "Match", "ANY_CHANGE", "TO_MODE")
@@ -1019,7 +1019,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_MOVEMENT,
+         MacroActionType.WAIT_MOVEMENT,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .enumField("mode", "Wait For", "POSITION", "POSITION_DELTA", "WORLD_CHANGE", "TELEPORT")
@@ -1056,7 +1056,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.RACE,
+         MacroActionType.RACE,
          ActionFieldSchema.builder()
             .text("label", "Label")
             .stringList("raceSteps", "Race Steps")
@@ -1066,7 +1066,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.REPORT,
+         MacroActionType.REPORT,
          ActionFieldSchema.builder()
             .text("reportLabel", "Label")
             .enumField(
@@ -1126,7 +1126,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.VCLIP,
+         MacroActionType.VCLIP,
          ActionFieldSchema.builder()
             .enumField("mode", "Mode", "MANUAL", "TOP", "BOTTOM")
             .decimal("deltaY", "Y Blocks")
@@ -1145,7 +1145,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.HCLIP,
+         MacroActionType.HCLIP,
          ActionFieldSchema.builder()
             .enumField("mode", "Mode", "MANUAL", "FORWARD", "BACK")
             .decimal("blocks", "Blocks Forward")
@@ -1170,7 +1170,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.TP,
+         MacroActionType.TP,
          ActionFieldSchema.builder()
             .decimal("x", "X")
             .decRange(-3.0E7, 3.0E7)
@@ -1188,7 +1188,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.PACKET_GATE,
+         MacroActionType.PACKET_GATE,
          ActionFieldSchema.builder()
             .enumField("mode", "Mode", "CANCEL", "DELAY", "ALLOW_ONLY")
             .enumField("scope", "Ends", "END_MARKER", "MACRO_PASS")
@@ -1199,9 +1199,9 @@ public final class ActionFieldRegistry {
             .showWhenEnum("mode", "DELAY")
             .build()
       );
-      init_Map.put(StreamGate.END_PACKET_GATE, ActionFieldSchema.builder().text("gateId", "Gate ID").toggle("flushOnDisable", "Flush").build());
+      init_Map.put(MacroActionType.END_PACKET_GATE, ActionFieldSchema.builder().text("gateId", "Gate ID").toggle("flushOnDisable", "Flush").build());
       init_Map.put(
-         StreamGate.PACKET_BURST,
+         MacroActionType.PACKET_BURST,
          ActionFieldSchema.builder()
             .enumField(
                "mode",
@@ -1249,7 +1249,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.BUNDLE_DUPE_V2,
+         MacroActionType.BUNDLE_DUPE_V2,
          ActionFieldSchema.builder()
             .number("hotbarSlot", "Hotbar Slot")
             .range(0, 8)
@@ -1268,7 +1268,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.ROLLBACK,
+         MacroActionType.ROLLBACK,
          ActionFieldSchema.builder()
             .enumField("scope", "Scope", "ALL_CONTAINER", "CAPTURED_SLOTS", "SLOT_RANGE")
             .stringList("slots", "Slots")
@@ -1283,7 +1283,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.CONTAINER_CLICK_SEQUENCE,
+         MacroActionType.CONTAINER_CLICK_SEQUENCE,
          ActionFieldSchema.builder()
             .enumField("slotSource", "Slots", "SINGLE", "RANGE", "LIST", "CAPTURED_SEQUENCE")
             .enumField("containerSource", "Container", "CURRENT", "SAVED_GUI", "PLAYER_INVENTORY", "MANUAL")
@@ -1314,7 +1314,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.ASSERT,
+         MacroActionType.ASSERT,
          ActionFieldSchema.builder()
             .enumField(
                "check",
@@ -1351,7 +1351,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.USE_ITEM_PHASE,
+         MacroActionType.USE_ITEM_PHASE,
          ActionFieldSchema.builder()
             .enumField("phase", "Phase", "USE_ONCE", "START_USE", "RELEASE_USE", "USE_BLOCK", "SWING")
             .text("itemName", "Item")
@@ -1388,10 +1388,10 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.SEND_COMMAND_PACKET, ActionFieldSchema.builder().text("command", "Command").dynamic().toggle("stripLeadingSlash", "Strip Slash").build()
+         MacroActionType.SEND_COMMAND_PACKET, ActionFieldSchema.builder().text("command", "Command").dynamic().toggle("stripLeadingSlash", "Strip Slash").build()
       );
       init_Map.put(
-         StreamGate.WAIT_PACKET_MATCH,
+         MacroActionType.WAIT_PACKET_MATCH,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .enumField("direction", "Direction", "C2S", "S2C", "ANY")
@@ -1406,7 +1406,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_INVENTORY_PREDICATE,
+         MacroActionType.WAIT_INVENTORY_PREDICATE,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .enumField(
@@ -1452,7 +1452,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_DURABILITY,
+         MacroActionType.WAIT_DURABILITY,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .enumField("targetMode", "Target", "HELD", "ITEM", "SLOT")
@@ -1473,7 +1473,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_FREE_SLOTS,
+         MacroActionType.WAIT_FREE_SLOTS,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .enumField("countMode", "Count", "FREE_SLOTS", "FILLED_SLOTS")
@@ -1485,7 +1485,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_GUI_TYPE,
+         MacroActionType.WAIT_GUI_TYPE,
          ActionFieldSchema.builder()
             .toggle("listenDuringPreviousAction", "Listen During Previous")
             .enumField("waitMode", "Mode", "OPEN", "CLOSE")
@@ -1502,7 +1502,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.IF,
+         MacroActionType.IF,
          ActionFieldSchema.builder()
             .condition("condition", "Condition")
             .enumField("cond_kind", "Check", init())
@@ -1554,7 +1554,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.FLOW,
+         MacroActionType.FLOW,
          ActionFieldSchema.builder()
             .enumField("target", "Go To", "FORWARD", "BACK", "STEP", "LABEL", "TOP", "END", "STOP")
             .number("amount", "Steps")
@@ -1615,9 +1615,9 @@ public final class ActionFieldRegistry {
             .showWhenEnum("cond_kind", "SELECTED_SLOT")
             .build()
       );
-      init_Map.put(StreamGate.LABEL, ActionFieldSchema.builder().text("name", "Label Name").build());
+      init_Map.put(MacroActionType.LABEL, ActionFieldSchema.builder().text("name", "Label Name").build());
       init_Map.put(
-         StreamGate.BRANCH,
+         MacroActionType.BRANCH,
          ActionFieldSchema.builder()
             .enumField("conditionKind", "Condition", "ALWAYS", "GUI_TYPE", "INVENTORY_ITEM", "ENTITY_TARGET", "HELD_ITEM")
             .text("value", "Value")
@@ -1628,13 +1628,13 @@ public final class ActionFieldRegistry {
             .range(0, 100)
             .build()
       );
-      init_Map.put(StreamGate.FINALLY, ActionFieldSchema.builder().number("bodyCount", "Cleanup Rows").range(0, 100).build());
+      init_Map.put(MacroActionType.FINALLY, ActionFieldSchema.builder().number("bodyCount", "Cleanup Rows").range(0, 100).build());
       init_Map.put(
-         StreamGate.MACRO_VARIABLES,
+         MacroActionType.MACRO_VARIABLES,
          ActionFieldSchema.builder().stringList("names", "Names").addLabel("Add Name").stringList("values", "Values").dynamic().addLabel("Add Value").build()
       );
       init_Map.put(
-         StreamGate.CAPTURE_VALUE,
+         MacroActionType.CAPTURE_VALUE,
          ActionFieldSchema.builder()
             .enumField(
                "source",
@@ -1740,7 +1740,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.FAKE_GAMEMODE,
+         MacroActionType.FAKE_GAMEMODE,
          ActionFieldSchema.builder()
             .enumField("mode", "Gamemode", "SURVIVAL", "CREATIVE", "ADVENTURE", "SPECTATOR", "RESET")
             .enumField("method", "Method", "FAKE", "REAL")
@@ -1748,7 +1748,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.PLACE,
+         MacroActionType.PLACE,
          ActionFieldSchema.builder()
             .enumField("packetOrder", "Packet Order", "INSTANT", "GRIM")
             .text("itemName", "Item")
@@ -1778,7 +1778,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.SIGN_EDIT,
+         MacroActionType.SIGN_EDIT,
          ActionFieldSchema.builder()
             .enumField("targetMode", "Target", "CURRENT_SIGN_GUI", "LAST_INTERACTED_BLOCK", "MANUAL_POS")
             .text("line1", "Line 1")
@@ -1813,7 +1813,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.VILLAGER_DUPE,
+         MacroActionType.VILLAGER_DUPE,
          ActionFieldSchema.builder()
             .enumField("filter", "Items", "ALL", "SADDLE", "HORSE_ARMOR", "CARPET")
             .enumField("targets", "Targets", "ALL_IN_RANGE", "NEAREST")
@@ -1833,7 +1833,7 @@ public final class ActionFieldRegistry {
             .build()
       );
       init_Map.put(
-         StreamGate.WAIT_VILLAGER_ITEM,
+         MacroActionType.WAIT_VILLAGER_ITEM,
          ActionFieldSchema.builder()
             .enumField("filter", "Items", "ALL", "SADDLE", "HORSE_ARMOR", "CARPET")
             .toggle("traders", "Traders")

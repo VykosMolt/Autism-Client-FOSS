@@ -9,9 +9,9 @@ import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action;
 import net.minecraft.world.InteractionHand;
 
-public class UseItemAction implements E, MacroAction, aP {
+public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    public String itemName = "";
-   public ArrayUtil itemTarget = new ArrayUtil();
+   public MacroItemTarget itemTarget = new MacroItemTarget();
    public int slot = -1;
    public UseItemAction.Inner_DataUtil useMode = UseItemAction.Inner_DataUtil.AUTOMATIC;
    public boolean waitForFinish = true;
@@ -20,13 +20,13 @@ public class UseItemAction implements E, MacroAction, aP {
    public boolean sneak = false;
    public boolean waitForGui = false;
    public String guiName = "";
-   public volatile D packetOrder = D.INSTANT;
+   public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
    private boolean init = true;
 
    @Override
    public void execute(Minecraft mc) {
       if (mc.player != null && mc.getConnection() != null) {
-         ArrayUtil target = this.init_ArrayUtil_3();
+         MacroItemTarget target = this.init_ArrayUtil_3();
          target = target.init_ArrayUtil_Minecraft(mc);
          if (target != null) {
             if (target.init_Z() || target.update()) {
@@ -45,15 +45,15 @@ public class UseItemAction implements E, MacroAction, aP {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.USE_ITEM;
+   public MacroActionType getType() {
+      return MacroActionType.USE_ITEM;
    }
 
    @Override
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "USE_ITEM");
-      ArrayUtil target = this.init_ArrayUtil_3();
+      MacroItemTarget target = this.init_ArrayUtil_3();
       if (target.init_Z() || target.update()) {
          tag.put("itemName", target.init_CompoundTag());
       }
@@ -70,15 +70,15 @@ public class UseItemAction implements E, MacroAction, aP {
       tag.putBoolean("waitForGui", this.waitForGui);
       tag.putString("guiName", this.guiName == null ? "" : this.guiName);
       tag.putBoolean("enabled", this.init);
-      E.init_V_CompoundTag_D(tag, this.packetOrder);
+      PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
       this.itemTarget = tag.getCompound("itemName")
-         .map(ArrayUtil::init_ArrayUtil_CompoundTag)
-         .orElseGet(() -> ArrayUtil.update(tag.getStringOr("itemName", "")));
+         .map(MacroItemTarget::init_ArrayUtil_CompoundTag)
+         .orElseGet(() -> MacroItemTarget.update(tag.getStringOr("itemName", "")));
       this.slot = tag.contains("slot") ? Math.max(-1, tag.getIntOr("slot", -1)) : this.itemTarget.init_I;
       this.itemTarget.init_I = -1;
       this.itemName = this.itemTarget.write_Str();
@@ -115,7 +115,7 @@ public class UseItemAction implements E, MacroAction, aP {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      this.packetOrder = E.init_D_CompoundTag(tag);
+      this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
    }
 
    @Override
@@ -148,13 +148,13 @@ public class UseItemAction implements E, MacroAction, aP {
    }
 
    @Override
-   public D init_D() {
+   public PacketOrderMode init_D() {
       return this.packetOrder;
    }
 
    @Override
    public String getDisplayName() {
-      ArrayUtil target = this.init_ArrayUtil_3();
+      MacroItemTarget target = this.init_ArrayUtil_3();
       String item = !target.init_Z() && !target.update() ? "current" : target.load_Str();
       String count = this.useCount > 1 ? " x" + this.useCount : "";
       String wait = this.waitForFinish ? ", wait" : "";
@@ -162,7 +162,7 @@ public class UseItemAction implements E, MacroAction, aP {
       String base = this.useMode == UseItemAction.Inner_DataUtil.CUSTOM_HOLD
          ? "Use Item (" + item + ", hold " + this.holdTicks + "t" + wait + sneakLabel + ")"
          : "Use Item (" + item + count + wait + sneakLabel + ")";
-      return base + aP.init_Str_aP(this);
+      return base + GuiWaitAware.init_Str_aP(this);
    }
 
    @Override
@@ -180,10 +180,10 @@ public class UseItemAction implements E, MacroAction, aP {
       this.init = e;
    }
 
-   private ArrayUtil init_ArrayUtil_3() {
-      ArrayUtil target = this.itemTarget != null ? this.itemTarget.init_ArrayUtil() : ArrayUtil.update(this.itemName);
+   private MacroItemTarget init_ArrayUtil_3() {
+      MacroItemTarget target = this.itemTarget != null ? this.itemTarget.init_ArrayUtil() : MacroItemTarget.update(this.itemName);
       if (!target.init_Z() && !target.update()) {
-         target = ArrayUtil.update(this.itemName);
+         target = MacroItemTarget.update(this.itemName);
       }
 
       target.init_I = this.slot;

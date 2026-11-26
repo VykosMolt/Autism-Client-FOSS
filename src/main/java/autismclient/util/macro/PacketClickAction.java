@@ -129,8 +129,8 @@ public class PacketClickAction implements MacroAction {
    }
 
    @Override
-   public StreamGate getType() {
-      return StreamGate.PACKET_CLICK;
+   public MacroActionType getType() {
+      return MacroActionType.PACKET_CLICK;
    }
 
    @Override
