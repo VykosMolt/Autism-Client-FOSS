@@ -2640,7 +2640,7 @@ public final class AiService {
          LocalPlayer rider = mc.player;
          if (rider != null && !rider.isPassenger() && !rider.isFallFlying()) {
             AiAssistant.init_ConfigStore().pop();
-            AutoCloseable lease = MacroExecutor.init_AutoCloseable_Collection(entry.contract().resources());
+            AutoCloseable lease = MacroExecutor.acquireExternalResources(entry.contract().resources());
             if (lease == null) {
                return false;
             }
@@ -2834,7 +2834,7 @@ public final class AiService {
 
             AutoCloseable lease = () -> {};
             if (!id.startsWith("macro:") && !id.equals("client:run_macro")) {
-               lease = MacroExecutor.init_AutoCloseable_Collection(this.init_AiCatalog_Snapshot().get(id).contract().resources());
+               lease = MacroExecutor.acquireExternalResources(this.init_AiCatalog_Snapshot().get(id).contract().resources());
                if (lease == null) {
                   throw new IllegalStateException("Another controller owns required macro resources");
                }
@@ -5289,7 +5289,7 @@ public final class AiService {
       AiRunTrace trace = AiRunTrace.init_bL();
       if (trace != null) {
          JsonObject saved = evidence.deepCopy();
-         saved.addProperty("simulationTick", autismclient.util.AutismSessionState.init_ck().state_I());
+         saved.addProperty("simulationTick", autismclient.util.AutismSessionState.getInstance().getClientTick());
          saved.addProperty("observedAtMs", System.currentTimeMillis());
          this.load_ExecutorService.execute(() -> trace.load(kind, saved));
       }

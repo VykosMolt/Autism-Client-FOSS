@@ -25,7 +25,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
       this.init_Str = overlayId;
       this.read_I = initialWidth;
       this.write = initialHeight;
-      this.read_Z = AutismSessionState.init_ck().init_Z_Str(this.init_Str());
+      this.read_Z = AutismSessionState.getInstance().isOverlayPinned(this.init_Str());
    }
 
    protected boolean d_() {
@@ -44,7 +44,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
 
    protected void pop_V() {
       this.read_Z = !this.read_Z;
-      AutismSessionState.init_ck().init_V_Str_Z(this.init_Str(), this.read_Z);
+      AutismSessionState.getInstance().setOverlayPinned(this.init_Str(), this.read_Z);
       OverlayManager.getInstance().refreshRenderLayer(this);
       this.a__V();
    }
@@ -81,7 +81,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
             .colors();
          boolean hovered = pin.init_Z(mouseX, mouseY);
          int color = this.read_Z ? colors.accent : (hovered ? colors.textPrimary : colors.textSecondary);
-         GuiIconAtlas.init(context, GuiIconAtlas.add, pin.read(), pin.write(), pin.update(), pin.sync(), color);
+         GuiIconAtlas.draw(context, GuiIconAtlas.PIN, pin.read(), pin.write(), pin.update(), pin.sync(), color);
       }
    }
 

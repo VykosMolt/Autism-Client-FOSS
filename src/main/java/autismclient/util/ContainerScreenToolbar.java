@@ -15,7 +15,7 @@ public final class ContainerScreenToolbar {
          return buttons;
       }
 
-      AutismSessionState shared = AutismSessionState.init_ck();
+      AutismSessionState shared = AutismSessionState.getInstance();
       int baseX = 5;
       int baseY = 5;
       int defaultWidth = 140;
@@ -46,11 +46,11 @@ public final class ContainerScreenToolbar {
             baseY + 48,
             defaultWidth,
             defaultHeight,
-            Component.literal("Send packets: " + init(shared.read_Z())),
-            shared.read_Z() ? autismclient.gui.f.b.CachePool.Inner_DataUtil.write : autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
+            Component.literal("Send packets: " + init(shared.isSendPacketsEnabled())),
+            shared.isSendPacketsEnabled() ? autismclient.gui.f.b.CachePool.Inner_DataUtil.write : autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
             () -> {
-               boolean newValue = !shared.read_Z();
-               autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_Z_Z(newValue);
+               boolean newValue = !shared.isSendPacketsEnabled();
+               autismclient.modules.ModuleRuntimeManager.getInstance().setAndSaveSendGuiPackets(newValue);
                bi.init("Send Packets " + (newValue ? "on" : "off"), newValue ? -13248397 : -50373);
             }
          )
@@ -61,13 +61,13 @@ public final class ContainerScreenToolbar {
             baseY + 72,
             defaultWidth,
             defaultHeight,
-            Component.literal("Delay packets: " + init(shared.write_Z())),
-            shared.write_Z() ? autismclient.gui.f.b.CachePool.Inner_DataUtil.write : autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
+            Component.literal("Delay packets: " + init(shared.isDelayPacketsEnabled())),
+            shared.isDelayPacketsEnabled() ? autismclient.gui.f.b.CachePool.Inner_DataUtil.write : autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
             () -> {
-               boolean newValue = !shared.write_Z();
-               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-               int sent = module.init_I_Z(newValue);
-               module.init(newValue, sent);
+               boolean newValue = !shared.isDelayPacketsEnabled();
+               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+               int sent = module.toggleDelayPackets(newValue);
+               module.notifyDelayToggle(newValue, sent);
             }
          )
       );
@@ -75,9 +75,9 @@ public final class ContainerScreenToolbar {
       buttons.add(
          new autismclient.gui.ui.widgets.SimpleClickButton(
             baseX, baseY + 96, thirdWidth, defaultHeight, Component.literal("Clear Q"), autismclient.gui.f.b.CachePool.Inner_DataUtil.update, () -> {
-               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-               int count = module.write_I();
-               module.read(count);
+               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+               int count = module.clearPacketQueue();
+               module.notifyQueueCleared(count);
             }
          )
       );
@@ -104,7 +104,7 @@ public final class ContainerScreenToolbar {
             defaultHeight,
             Component.literal("Pkt Log"),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-            () -> autismclient.modules.ModuleRuntimeManager.init_PoolEntry().state()
+            () -> autismclient.modules.ModuleRuntimeManager.getInstance().togglePacketLoggerOverlay()
          )
       );
       int halfWidth = (defaultWidth - 5) / 2;
@@ -128,11 +128,11 @@ public final class ContainerScreenToolbar {
             Component.literal("Load GUI"),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
             () -> {
-               if (shared.init_Screen() != null && shared.init_AbstractContainerM() != null) {
+               if (shared.getStoredGuiScreen() != null && shared.getStoredContainerMenu() != null) {
                   client.execute(() -> {
-                     client.gui.setScreen(shared.init_Screen());
+                     client.gui.setScreen(shared.getStoredGuiScreen());
                      if (client.player != null) {
-                        client.player.containerMenu = shared.init_AbstractContainerM();
+                        client.player.containerMenu = shared.getStoredContainerMenu();
                      }
                   });
                   bi.init("GUI restored.", -13248397);
@@ -151,9 +151,9 @@ public final class ContainerScreenToolbar {
             Component.literal("Disconnect and send packets"),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
             () -> {
-               autismclient.modules.ModuleRuntimeManager.init_PoolEntry().push(false);
+               autismclient.modules.ModuleRuntimeManager.getInstance().setDelayGuiPackets(false);
                if (client.getConnection() != null) {
-                  int sent = shared.init_I_ClientPacketListen(client.getConnection());
+                  int sent = shared.flushDelayedPackets(client.getConnection());
                   client.getConnection().getConnection().disconnect(Component.literal("Disconnecting (Autism)"));
                   bi.init(
                      sent > 0 ? "Sent " + sent + " packet" + (sent == 1 ? "" : "s") + " and disconnected" : "Disconnected - queue empty",

@@ -84,7 +84,7 @@ public class DisconnectAction implements MacroAction {
          long lastPositionCheck = startTime;
          Screen prevScreen = initialScreen;
 
-         while (!triggered && MacroExecutor.init_Z() && System.currentTimeMillis() - startTime < this.timeoutSec * 1000L) {
+         while (!triggered && MacroExecutor.isCurrentRunActive() && System.currentTimeMillis() - startTime < this.timeoutSec * 1000L) {
             if (mc.player == null || mc.getConnection() == null) {
                AutismClientMessaging.sendPrefixed("§cConnection lost during wait!");
                return;

@@ -78,9 +78,9 @@ public class PacketClickAction implements MacroAction {
             for (int i = 0; i < count; i++) {
                ServerboundContainerClickPacket packet = effectiveTarget.init_ServerboundContain();
                if (this.queue) {
-                  AutismSessionState.init_ck().load_V_Packet(packet);
+                  AutismSessionState.getInstance().enqueueExactPacket(packet);
                } else {
-                  AutismSessionState.init_ck().init_V_ClientPacketListen_Packet(mc.getConnection(), packet);
+                  AutismSessionState.getInstance().sendPacketBypassingInterception(mc.getConnection(), packet);
                }
             }
 

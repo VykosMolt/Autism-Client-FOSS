@@ -10,6 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class AutismNoRenderNauseaMixin {
    @ModifyExpressionValue(method = "renderLevel", at = @At(value = "INVOKE", target = "Ljava/lang/Math;max(FF)F", ordinal = 0), require = 0)
    private float autism$noNauseaWarp(float original) {
-      return NoRenderState.read() ? 0.0F : original;
+      return NoRenderState.hideNausea() ? 0.0F : original;
    }
 }

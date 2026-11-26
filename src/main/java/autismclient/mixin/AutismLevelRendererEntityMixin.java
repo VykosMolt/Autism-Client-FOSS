@@ -17,7 +17,7 @@ public class AutismLevelRendererEntityMixin {
    private void autism$espEntityOutline(Entity entity, float partialTickTime, CallbackInfoReturnable<EntityRenderState> cir) {
       EntityRenderState state = cir.getReturnValue();
       if (state != null) {
-         ServerRotationTracker.init_V_Entity_2(entity, state, partialTickTime);
+         ServerRotationTracker.applyRenderRotation(entity, state, partialTickTime);
          if (am.put()) {
             int frameOutline = FrameEspCatalog.init_I(entity);
             if (frameOutline != 0) {

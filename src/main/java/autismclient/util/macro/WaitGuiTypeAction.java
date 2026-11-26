@@ -35,12 +35,12 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
          String actual = screen.getTitle() == null ? "" : screen.getTitle().getString();
          Map<String, MacroVarValue> values = new LinkedHashMap<>();
          if (this.matchMode == PatternCaptureMatcher.MatchMode.MATCH) {
-            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.title, mc);
-            if (!resolved.init_Z()) {
+            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.resolveTemplate(this.title, mc);
+            if (!resolved.success()) {
                return Optional.empty();
             }
 
-            if (!resolved.init_Str().isBlank() && !GuiScreenMatcher.init(screen, this.guiType, resolved.init_Str())) {
+            if (!resolved.value().isBlank() && !GuiScreenMatcher.init(screen, this.guiType, resolved.value())) {
                return Optional.empty();
             }
          } else {
@@ -53,7 +53,7 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
          }
 
          if (this.saveAs != null && !this.saveAs.isBlank()) {
-            values.put(this.saveAs, MacroVarValue.init(MacroVarValue.ValueType.GUI, actual, Map.of("title", MacroVarValue.init_l_Obj(actual), "type", MacroVarValue.init_l_Obj(GuiScreenMatcher.init_Str(screen)))));
+            values.put(this.saveAs, MacroVarValue.of(MacroVarValue.ValueType.GUI, actual, Map.of("title", MacroVarValue.ofText(actual), "type", MacroVarValue.ofText(GuiScreenMatcher.init_Str(screen)))));
          }
 
          return Optional.of(values);
@@ -72,7 +72,7 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
       tag.putString("matchMode", (this.matchMode == null ? PatternCaptureMatcher.MatchMode.MATCH : this.matchMode).name());
       tag.putString("saveAs", this.saveAs == null ? "" : this.saveAs);
       tag.putInt("timeoutMs", this.timeoutMs);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
 
@@ -84,7 +84,7 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
       this.matchMode = MacroNbtCodecHelper.parseEnum(PatternCaptureMatcher.MatchMode.class, tag.getStringOr("matchMode", "MATCH"), PatternCaptureMatcher.MatchMode.MATCH);
       this.saveAs = tag.getStringOr("saveAs", "");
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
    @Override

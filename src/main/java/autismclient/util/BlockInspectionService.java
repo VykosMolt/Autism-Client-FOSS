@@ -114,7 +114,7 @@ public final class BlockInspectionService {
          if (init(mc, pos, state, blockEntity)) {
             int containerId = mc.player != null && mc.player.containerMenu != null ? mc.player.containerMenu.containerId : -1;
             init_StreamGate_DataUti = new BlockInspectionService.Inner_DataUtil(localPayload, false, -1L, containerId, System.nanoTime());
-            bi.init("Reading block contents...", UiColorPalette.node());
+            bi.init("Reading block contents...", UiColorPalette.cyan());
             return false;
          }
 

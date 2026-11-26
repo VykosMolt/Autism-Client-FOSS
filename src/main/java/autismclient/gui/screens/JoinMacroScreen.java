@@ -55,9 +55,9 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    protected void init() {
       if (this.init_k == null) {
          this.init_k = new ThemedTextInputBox(this.minecraft, this.font, this.open(), this.get(), this.put(), this.write_I_2(), false);
-         this.init_k.init_V_Component(Component.literal("Search macros..."));
-         this.init_k.load(64);
-         this.init_k.init_V_Consumer(value -> {
+         this.init_k.setPlaceholder(Component.literal("Search macros..."));
+         this.init_k.setMaxLength(64);
+         this.init_k.setChangedListener(value -> {
             this.read_I = 0;
             this.init_Z = true;
          });
@@ -123,7 +123,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          boolean menuOpen = autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.read_List);
          int hoverX = menuOpen ? -2147483648 : virtualMouseX;
          int hoverY = menuOpen ? -2147483648 : virtualMouseY;
-         this.init_k.init_V(graphics, virtualMouseX, virtualMouseY, delta);
+         this.init_k.render(graphics, virtualMouseX, virtualMouseY, delta);
          this.load(hoverX, hoverY);
          this.init(graphics, hoverX, hoverY);
          this.load(graphics, hoverX, hoverY);
@@ -408,7 +408,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          return true;
       }
 
-      if (this.init_k != null && this.init_k.init_Z_D_2(event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
+      if (this.init_k != null && this.init_k.mouseClicked(event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
          return true;
       }
 
@@ -419,7 +419,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
             this.write = scrollbar.containsThumb(event.x(), event.y()) ? Math.max(0, (int)Math.round(event.y()) - scrollbar.thumbY()) : scrollbar.thumbHeight() / 2;
             this.init_V_I_2(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, event.y(), this.write));
             if (this.init_k != null) {
-               this.init_k.push(false);
+               this.init_k.setFocused(false);
             }
 
             return true;
@@ -451,7 +451,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
 
       if (this.init_k != null) {
-         this.init_k.push(false);
+         this.init_k.setFocused(false);
       }
 
       return true;
@@ -466,7 +466,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          this.load_Z = false;
          return true;
       } else {
-         return this.init_k != null && this.init_k.load(event.x(), event.y(), Compat263.mouseEventGlfwButton(event));
+         return this.init_k != null && this.init_k.mouseReleased(event.x(), event.y(), Compat263.mouseEventGlfwButton(event));
       }
    }
 
@@ -481,7 +481,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          this.init_V_I_2(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_2(), event.y(), this.write));
          return true;
       } else {
-         return this.init_k != null && this.init_k.init(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), dx, dy);
+         return this.init_k != null && this.init_k.mouseDragged(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), dx, dy);
       }
    }
 
@@ -493,7 +493,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          return true;
       }
 
-      if (this.init_k != null && this.init_k.init_Z_D(mouseX, mouseY, scrollY)) {
+      if (this.init_k != null && this.init_k.mouseScrolled(mouseX, mouseY, scrollY)) {
          return true;
       }
 
@@ -511,7 +511,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    @Override
    public boolean keyPressed(KeyEvent input) {
-      if (this.init_k != null && this.init_k.init_Z_KeyEvent(input)) {
+      if (this.init_k != null && this.init_k.keyPressed(input)) {
          return true;
       }
 
@@ -531,7 +531,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    @Override
    public boolean charTyped(CharacterEvent input) {
-      return this.init_k != null && this.init_k.init_Z_CharacterEvent(input);
+      return this.init_k != null && this.init_k.charTyped(input);
    }
 
    @Override
@@ -567,7 +567,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private String init_Str() {
-      return this.init_k == null ? "" : this.init_k.load_Str().trim().toLowerCase(Locale.ROOT);
+      return this.init_k == null ? "" : this.init_k.getValue().trim().toLowerCase(Locale.ROOT);
    }
 
    private AutismMacro init_aM() {
@@ -608,10 +608,10 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    private void update_V_2() {
       if (this.init_k != null) {
-         this.init_k.read(this.set());
-         this.init_k.write(this.get());
-         this.init_k.update(this.put());
-         this.init_k.sync(this.write_I_2());
+         this.init_k.setX(this.set());
+         this.init_k.setY(this.get());
+         this.init_k.setWidth(this.put());
+         this.init_k.setHeight(this.write_I_2());
       }
    }
 

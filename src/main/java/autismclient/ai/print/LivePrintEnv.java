@@ -344,20 +344,20 @@ public final class LivePrintEnv implements PrintEnv {
 
    @Override
    public Vec3 init_Vec3() {
-      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-      return wire.init_Vec3() != null ? wire.init_Vec3() : this.init_LocalPlayer().position();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+      return wire.position() != null ? wire.position() : this.init_LocalPlayer().position();
    }
 
    @Override
    public float write_F() {
-      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-      return wire.init_Z() && Float.isFinite(wire.read()) ? wire.read() : this.init_LocalPlayer().getYRot();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+      return wire.initialized() && Float.isFinite(wire.currentYaw()) ? wire.currentYaw() : this.init_LocalPlayer().getYRot();
    }
 
    @Override
    public float update_F() {
-      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-      return wire.init_Z() && Float.isFinite(wire.write()) ? wire.write() : this.init_LocalPlayer().getXRot();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+      return wire.initialized() && Float.isFinite(wire.currentPitch()) ? wire.currentPitch() : this.init_LocalPlayer().getXRot();
    }
 
    @Override

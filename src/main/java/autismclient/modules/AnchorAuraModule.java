@@ -288,14 +288,14 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    @Override
    public void onDisable() {
       this.init_V_2();
-      autismclient.util.SilentRotationManager.init("anchor-aura");
+      autismclient.util.SilentRotationManager.releaseOwner("anchor-aura");
    }
 
    @Override
    public void onGameLeft() {
       this.init_V_2();
-      if ("anchor-aura".equals(autismclient.util.SilentRotationManager.init_Str())) {
-         autismclient.util.SilentRotationManager.load_V();
+      if ("anchor-aura".equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+         autismclient.util.SilentRotationManager.resetAll();
       }
    }
 
@@ -347,7 +347,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       this.init_Map.clear();
       this.load_Map.clear();
       this.read_Str = "";
-      autismclient.util.InventorySlotArbiter.update_V("anchor-aura");
+      autismclient.util.InventorySlotArbiter.releaseAllClaims("anchor-aura");
    }
 
    @Override
@@ -357,13 +357,13 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    @Override
    public boolean hasDisabledTickWork() {
-      return "anchor-aura".equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.read_Z();
+      return "anchor-aura".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && autismclient.util.SilentRotationManager.hasActiveRotation();
    }
 
    @Override
    public void tick() {
-      if (!this.isEnabled() && MC != null && MC.player != null && "anchor-aura".equals(autismclient.util.SilentRotationManager.init_Str())) {
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer("anchor-aura", MC.player);
+      if (!this.isEnabled() && MC != null && MC.player != null && "anchor-aura".equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+         autismclient.util.SilentRotationManager.tick("anchor-aura", MC.player);
       }
    }
 
@@ -382,7 +382,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    LivingEntity load_LivingEntity() {
-      int age = AutismSessionState.init_ck().state_I() - this.add;
+      int age = AutismSessionState.getInstance().getClientTick() - this.add;
       return this.isEnabled() && age >= 0 && age <= 2 && this.flush() ? this.init_LivingEntity : null;
    }
 
@@ -401,7 +401,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          BlockPos anchor = aura.update_BlockPos != null ? aura.update_BlockPos : aura.load_BlockPos;
          BlockPos support = aura.push_BlockPos != null ? aura.push_BlockPos : aura.pop_BlockPos;
          BlockPos shield = aura.sync_BlockPos != null ? aura.sync_BlockPos : aura.poll_BlockPos;
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          if (anchor == null && support == null && shield == null && tick - aura.buffer < 0) {
             anchor = aura.flush_BlockPos;
             support = aura.close_BlockPos;
@@ -428,7 +428,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    public static boolean init_Z_2() {
       if (al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled()) {
-         int age = AutismSessionState.init_ck().state_I() - aura.put;
+         int age = AutismSessionState.getInstance().getClientTick() - aura.put;
          return age >= 0 && age <= 5;
       } else {
          return false;
@@ -436,7 +436,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    public static boolean read_Z() {
-      return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() ? aura.add == AutismSessionState.init_ck().state_I() : false;
+      return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() ? aura.add == AutismSessionState.getInstance().getClientTick() : false;
    }
 
    public static boolean init_Z_I(int slot) {
@@ -471,7 +471,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    @Override
    public boolean load_Z_23() {
       boolean enabled = this.isEnabled();
-      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.flush());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || enabled && this.flush());
    }
 
    private boolean sync() {
@@ -509,9 +509,9 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          && !aD.init_Z()
          && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
-         && !MacroExecutor.write_Z()
+         && !MacroExecutor.isRunning()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
-         && !BlinkPacketManager.load_Z()
+         && !BlinkPacketManager.isHoldingActionsOnly()
          && !SilentMovementCoordinator.isSafeWalkActive()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
@@ -543,11 +543,11 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
          this.init_PoolEntry.init(MC.level, MC.player, MC.getConnection(), () -> {
             this.init_V_2();
-            if ("anchor-aura".equals(autismclient.util.SilentRotationManager.init_Str())) {
-               autismclient.util.SilentRotationManager.load_V();
+            if ("anchor-aura".equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+               autismclient.util.SilentRotationManager.resetAll();
             }
          });
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          this.read_V_I(tick);
          this.write_V_2();
          this.load_V_I(tick);
@@ -632,7 +632,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             this.add = tick;
          }
 
-         autismclient.util.InventorySlotArbiter.update_Z("anchor-aura");
+         autismclient.util.InventorySlotArbiter.claimInventoryClick("anchor-aura");
          RotationMath.Rotation wire = this.init_ce_DataUtil();
          boolean allowed = wire != null && this.init_Z_BufferHelper_Confi(plan.init_BufferHelper_Confi()) && mayAct;
          boolean slotReady = allowed && this.init_Z_I_Z(plan.init_I(), finishing);
@@ -682,19 +682,19 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       this.init_StateCache.init_V();
       this.read_Str = "";
       if (this.load_BlockPos == null) {
-         autismclient.util.InventorySlotArbiter.write_V("anchor-aura");
-         autismclient.util.InventorySlotArbiter.load_V("anchor-aura");
+         autismclient.util.InventorySlotArbiter.releaseInventoryClick("anchor-aura");
+         autismclient.util.InventorySlotArbiter.releaseAllSlots("anchor-aura");
       }
 
-      if ("anchor-aura".equals(autismclient.util.SilentRotationManager.init_Str())) {
-         autismclient.util.SilentRotationManager.init("anchor-aura");
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer("anchor-aura", MC.player);
+      if ("anchor-aura".equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+         autismclient.util.SilentRotationManager.releaseOwner("anchor-aura");
+         autismclient.util.SilentRotationManager.tick("anchor-aura", MC.player);
       }
    }
 
    private RotationMath.Rotation init_ce_DataUtil() {
-      ServerRotationTracker.RotationSnapshot snapshot = ServerRotationTracker.init_ch_CachePool();
-      return !snapshot.init_Z() ? null : new RotationMath.Rotation(snapshot.read(), snapshot.write());
+      ServerRotationTracker.RotationSnapshot snapshot = ServerRotationTracker.getSnapshot();
+      return !snapshot.initialized() ? null : new RotationMath.Rotation(snapshot.currentYaw(), snapshot.currentPitch());
    }
 
    private RotationMath.Rotation load_ce_DataUtil() {
@@ -703,16 +703,16 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private boolean init_Z_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore step) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       return this.init_NetHelper.init_Z_Str(step.name(), tick, System.nanoTime());
    }
 
    private void init_V_BufferHelper_Confi(AnchorAuraModule.Inner_ConfigStore step) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       this.init_NetHelper
          .init_V_Str(
             step.name(),
-            AutismSessionState.init_ck().state_I(),
+            AutismSessionState.getInstance().getClientTick(),
             System.nanoTime(),
             autismclient.util.ActionCooldownScheduler.init_J_I(this.init_I_BufferHelper_Confi(step), this.integer("step-jitter"), this.init_Random)
          );
@@ -744,7 +744,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    @Override
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
-      if (this.init_NetHelper.init(AutismSessionState.init_ck().state_I())) {
+      if (this.init_NetHelper.init(AutismSessionState.getInstance().getClientTick())) {
          return true;
       }
 
@@ -764,7 +764,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    @Override
    public boolean shouldCancelAttack(HitResult hitResult) {
-      return hitResult instanceof EntityHitResult && "anchor-aura".equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.read_Z();
+      return hitResult instanceof EntityHitResult && "anchor-aura".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && autismclient.util.SilentRotationManager.hasActiveRotation();
    }
 
    private AnchorAuraModule.Inner_CachePool init_BufferHelper_Cache_I(int tick, double range, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
@@ -993,7 +993,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       if (this.update_BlockPos != null) {
          boolean valid = this.bool("place")
             && enemy == this.read_LivingEntity
-            && !autismclient.util.InventorySlotArbiter.init(this.cache, "anchor-aura")
+            && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.cache, "anchor-aura")
             && (
                this.push_BlockPos != null
                   ? read_Z_ItemStack(MC.player.getInventory().getItem(this.cache))
@@ -1156,7 +1156,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       BlockPos cell = this.load_BlockPos;
       this.init_StateCache.init(cell, !ban && this.bool("repeat") && this.init_LivingEntity == this.load_LivingEntity ? this.init_LivingEntity : null);
       if (cell != null && ban) {
-         this.init_Map.put(cell, AutismSessionState.init_ck().state_I() + 40);
+         this.init_Map.put(cell, AutismSessionState.getInstance().getClientTick() + 40);
       }
 
       this.load_BlockPos = null;
@@ -1173,8 +1173,8 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       this.valid = -2147483648;
       this.read_Z = false;
       this.size = -2147483648;
-      autismclient.util.InventorySlotArbiter.load_V("anchor-aura");
-      autismclient.util.InventorySlotArbiter.write_V("anchor-aura");
+      autismclient.util.InventorySlotArbiter.releaseAllSlots("anchor-aura");
+      autismclient.util.InventorySlotArbiter.releaseInventoryClick("anchor-aura");
    }
 
    private void read_V_I(int tick) {
@@ -1445,7 +1445,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                && this.load_Z_BufferHelper_Cache(plan)
                && this.init_ce_DataUtil() != null
                && this.init_BlockHitResult_BufferHelper_Cache_ce_DataUtil(plan, this.init_ce_DataUtil()) != null,
-            () -> this.init_V_BufferHelper_Cache_I(plan, AutismSessionState.init_ck().state_I())
+            () -> this.init_V_BufferHelper_Cache_I(plan, AutismSessionState.getInstance().getClientTick())
          )
          && !PerTickPlacementLock.init("anchor-aura")) {
          autismclient.util.ClientInteractionOverride.write_V();
@@ -2217,7 +2217,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       String configured = this.choice("detonate-slot");
       if ("Auto".equals(configured)) {
          int selected = player.getInventory().getSelectedSlot();
-         if (!load_Z_ItemStack(player.getMainHandItem()) && !autismclient.util.InventorySlotArbiter.init(selected, "anchor-aura")) {
+         if (!load_Z_ItemStack(player.getMainHandItem()) && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(selected, "anchor-aura")) {
             return selected;
          }
 
@@ -2225,7 +2225,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          return anchor >= 0 ? anchor : this.init_I_Predicate(stack -> !load_Z_ItemStack(stack));
       } else {
          int slot = Integer.parseInt(configured) - 1;
-         return !load_Z_ItemStack(player.getInventory().getItem(slot)) && !autismclient.util.InventorySlotArbiter.init(slot, "anchor-aura") ? slot : -1;
+         return !load_Z_ItemStack(player.getInventory().getItem(slot)) && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, "anchor-aura") ? slot : -1;
       }
    }
 
@@ -2235,7 +2235,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
 
       LocalPlayer player = MC.player;
-      if (!autismclient.util.InventorySlotArbiter.init_Z("anchor-aura", slot)) {
+      if (!autismclient.util.InventorySlotArbiter.claimSlot("anchor-aura", slot)) {
          return false;
       }
 
@@ -2264,12 +2264,12 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    private boolean load(int slot, boolean finishingWork) {
       if (!BedDefenderModule.init_Z_10() && !SurroundModule.init_Z_27()) {
          if (finishingWork || !CrystalAuraModule.flush() || !CrystalAuraModule.init_Z_51() && !CrystalAuraModule.sync_Z_11()) {
-            int tick = AutismSessionState.init_ck().state_I();
+            int tick = AutismSessionState.getInstance().getClientTick();
             if (tick == this.stop) {
                return false;
             }
 
-            if (!autismclient.util.InventorySlotArbiter.write_Z("anchor-aura")) {
+            if (!autismclient.util.InventorySlotArbiter.beginActionGroup("anchor-aura")) {
                return false;
             }
 
@@ -2277,7 +2277,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
                this.read_J = System.nanoTime() + this.integer("switch-delay") * 1000000L;
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V("anchor-aura");
+               autismclient.util.InventorySlotArbiter.endActionGroup("anchor-aura");
             }
 
             this.stop = tick;
@@ -2297,7 +2297,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       int bestSteps = 2147483647;
 
       for (int slot = 0; slot < 9; slot++) {
-         if (match.test(player.getInventory().getItem(slot)) && !autismclient.util.InventorySlotArbiter.init(slot, "anchor-aura")) {
+         if (match.test(player.getInventory().getItem(slot)) && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, "anchor-aura")) {
             int steps = Math.abs(slot - selected);
             steps = Math.min(steps, 9 - steps);
             if (steps < bestSteps) {
@@ -2321,7 +2321,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             }
          } else if (this.start > 0) {
             this.start--;
-         } else if (!autismclient.util.InventorySlotArbiter.init(this.clear, "anchor-aura") && this.load(this.clear, false)) {
+         } else if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.clear, "anchor-aura") && this.load(this.clear, false)) {
             this.clear = -1;
             this.reset = -1;
          }
@@ -2347,7 +2347,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private AABB init_AABB_LivingEntity(LivingEntity enemy) {
       int horizon = Math.min(12, 6 + (int)Math.ceil(autismclient.util.macro.ServerTickPhaseTracker.init_I() / 50.0));
-      return this.init_TableIndex.init_AABB_LivingEntity(enemy, AutismSessionState.init_ck().state_I(), horizon, 2.0);
+      return this.init_TableIndex.init_AABB_LivingEntity(enemy, AutismSessionState.getInstance().getClientTick(), horizon, 2.0);
    }
 
    private autismclient.util.ExplosionDamageCalculator.DamagePair init_S_BufferHelper_LivingEntity(

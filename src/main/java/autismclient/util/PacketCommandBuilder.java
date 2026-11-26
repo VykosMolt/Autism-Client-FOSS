@@ -2257,7 +2257,7 @@ public final class PacketCommandBuilder {
    }
 
    private static String read_Str(Class<?> packetClass) {
-      String known = PacketTypeRegistry.init_Str_Class((Class<? extends Packet<?>>)packetClass);
+      String known = PacketTypeRegistry.getPacketName((Class<? extends Packet<?>>)packetClass);
       return known != null ? known : packetClass.getSimpleName().replace('$', '.');
    }
 

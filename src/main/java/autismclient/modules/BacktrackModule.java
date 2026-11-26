@@ -240,7 +240,7 @@ public final class BacktrackModule extends Module {
          && !aD.init_Z()
          && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
-         && BlinkPacketManager.init_I() == 0;
+         && BlinkPacketManager.getQueuedPacketCount() == 0;
    }
 
    @Override
@@ -372,7 +372,7 @@ public final class BacktrackModule extends Module {
       }
 
       if ("Combat".equals(this.choice("target"))) {
-         String owner = autismclient.util.SilentRotationManager.init_Str();
+         String owner = autismclient.util.SilentRotationManager.getActiveOwnerId();
 
          for (String id : new String[]{owner == null ? "" : owner, "anchor-aura", "crystal-aura", "kill-aura"}) {
             Module module = al.init_Module_Str(id);
@@ -483,10 +483,10 @@ public final class BacktrackModule extends Module {
    }
 
    private boolean init_Z_LivingEntity_J(LivingEntity victim, long now) {
-      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-      if (wire.init_Z() && wire.init_Vec3() != null) {
-         Vec3 eye = wire.init_Vec3().add(0.0, this.init_LocalPlayer.getEyeHeight(), 0.0);
-         Vec3 look = Vec3.directionFromRotation(wire.write(), wire.read());
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+      if (wire.initialized() && wire.position() != null) {
+         Vec3 eye = wire.position().add(0.0, this.init_LocalPlayer.getEyeHeight(), 0.0);
+         Vec3 look = Vec3.directionFromRotation(wire.currentPitch(), wire.currentYaw());
          double reach = this.init_LocalPlayer.entityInteractionRange();
          if (reach <= 0.0) {
             return false;

@@ -58,9 +58,9 @@ public abstract class AutismTitleScreenSupportMixin extends Screen {
    @Unique
    private void autism$openProfilesOverlay() {
       if (!aD.read_Z()) {
-         ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
+         ModuleRuntimeManager mod = ModuleRuntimeManager.getInstance();
          if (mod != null) {
-            AutismOverlay overlay = mod.load_cX();
+            AutismOverlay overlay = mod.getOrCreateProfilesOverlay();
             if (overlay != null) {
                OverlayManager.getInstance().register(overlay);
                if (overlay instanceof AutismProfilesOverlay pf) {

@@ -128,7 +128,7 @@ public final class PatternCaptureMatcher {
                return Optional.empty();
             }
 
-            values.put(name, MacroVarValue.init_l_Obj(value));
+            values.put(name, MacroVarValue.ofText(value));
          }
 
          return Optional.of(new PatternCaptureMatcher.CaptureResult(matcher.group(), values));
@@ -156,7 +156,7 @@ public final class PatternCaptureMatcher {
          for (String name : names) {
             String value = matcher.group(name);
             if (value != null) {
-               values.put(name, MacroVarValue.init_l_Obj(value));
+               values.put(name, MacroVarValue.ofText(value));
             }
          }
 

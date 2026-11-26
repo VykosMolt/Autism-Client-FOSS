@@ -15,7 +15,7 @@ public class BindsCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         Map<Integer, String> binds = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_Map();
+         Map<Integer, String> binds = autismclient.modules.ModuleRuntimeManager.getInstance().getCommandBinds();
          if (binds.isEmpty()) {
             AutismClientMessaging.sendPrefixed("§eNo command keybinds set.");
             return 1;

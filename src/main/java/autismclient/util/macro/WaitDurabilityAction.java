@@ -162,7 +162,7 @@ public class WaitDurabilityAction implements MacroAction {
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
       tag.putBoolean("useNext", this.useNext);
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
 
@@ -180,7 +180,7 @@ public class WaitDurabilityAction implements MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
    @Override

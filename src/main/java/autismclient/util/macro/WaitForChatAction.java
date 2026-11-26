@@ -34,7 +34,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
-      tag.putString("pattern", this.patternJson != null && !this.patternJson.isBlank() ? this.pattern : MacroExecutor.init_Str_Str(this.pattern));
+      tag.putString("pattern", this.patternJson != null && !this.patternJson.isBlank() ? this.pattern : MacroExecutor.cleanVisibleChatText(this.pattern));
       tag.putString("patternJson", this.patternJson == null ? "" : this.patternJson);
       tag.putBoolean("useRegex", this.useRegex);
       tag.putString("matchMode", this.init_UtilCore_DataUtil().name());
@@ -46,7 +46,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("waitGuiName", this.waitGuiName);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
 
@@ -60,7 +60,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
 
       if (tag.contains("pattern")) {
          String loadedPattern = tag.getStringOr("pattern", "");
-         this.pattern = this.patternJson != null && !this.patternJson.isBlank() ? loadedPattern : MacroExecutor.init_Str_Str(loadedPattern);
+         this.pattern = this.patternJson != null && !this.patternJson.isBlank() ? loadedPattern : MacroExecutor.cleanVisibleChatText(loadedPattern);
       }
 
       if (tag.contains("useRegex")) {
@@ -95,7 +95,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
          this.waitGuiName = tag.getStringOr("waitGuiName", "");
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
    @Override

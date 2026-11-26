@@ -597,7 +597,7 @@ public class LanSyncManager {
                macro.regeneratePackets();
             }
          } else if ("__QUEUE_FLUSH__".equals(command)) {
-            AutismSessionState.init_ck().load_V();
+            AutismSessionState.getInstance().regenerateQueuedPackets();
          }
 
          LanSyncManager.Inner_StreamUtil method = this.init_aE_StreamUtil_I(methodOrdinal);
@@ -668,14 +668,14 @@ public class LanSyncManager {
                if ("__QUEUE_FLUSH__".equals(ctx.load_Str)) {
                   ClientPacketListener nh = mc.getConnection();
                   if (nh != null) {
-                     int count = AutismSessionState.init_ck().init_I_ClientPacketListen(nh);
+                     int count = AutismSessionState.getInstance().flushDelayedPackets(nh);
                      AutismClientAddon.LOG.info("[Sync] Queue flushed! {} packets sent", count);
                   }
                } else if (ctx.load_Str != null && ctx.load_Str.startsWith("__DELAY_PACKETS__\t")) {
                   boolean enabled = "1".equals(ctx.load_Str.substring("__DELAY_PACKETS__\t".length()));
-                  autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-                  int flushed = module.init_I_Z(enabled);
-                  module.init(enabled, flushed);
+                  autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+                  int flushed = module.toggleDelayPackets(enabled);
+                  module.notifyDelayToggle(enabled, flushed);
                   AutismClientAddon.LOG.info("[Sync] Delay packets set to {} (flushed={})", enabled, flushed);
                } else if (ctx.load_Str != null && ctx.load_Str.startsWith("__CHAT__\t")) {
                   String chatMsg = ctx.load_Str.substring("__CHAT__\t".length());
@@ -1002,7 +1002,7 @@ public class LanSyncManager {
          if (this.read_Str == null) {
             AutismClientMessaging.sendPrefixed("§cJoin a session first.");
          } else {
-            AutismSessionState.init_ck().load_V();
+            AutismSessionState.getInstance().regenerateQueuedPackets();
             if (this.load_Z) {
                this.add();
             } else {
@@ -2205,14 +2205,14 @@ public class LanSyncManager {
             return;
          }
 
-         AutismSessionState.DelayedPacket.load_V();
+         AutismSessionState.DelayedPacket.resetIdCounter();
          List<AutismSessionState.DelayedPacket> receivedQueue = MacroClipboardCodec.init_List(queueData);
          if (receivedQueue == null || receivedQueue.isEmpty()) {
             AutismClientMessaging.sendPrefixed("§cReceived empty queue");
             return;
          }
 
-         AutismSessionState.init_ck().load_V_List(receivedQueue);
+         AutismSessionState.getInstance().replaceDelayedPackets(receivedQueue);
          AutismClientMessaging.sendPrefixed("§aReceived queue: " + receivedQueue.size() + " packets");
       } catch (Exception e) {
          AutismClientAddon.LOG.error("[Autism-LAN] Failed to process queue sync", e);
@@ -2227,7 +2227,7 @@ public class LanSyncManager {
          if ("__SYNC__".equals(safeSender)) {
             AutismClientMessaging.sendPrefixed(safeMessage);
          } else if ("__STOP_ALL__".equals(safeSender)) {
-            MacroExecutor.read_V();
+            MacroExecutor.stopAll();
             AutismClientMessaging.sendPrefixed("§c[LAN] Macros stopped by " + safeMessage);
          } else if ("__SPREAD_DATA__".equals(safeSender)) {
             try {
@@ -2526,7 +2526,7 @@ public class LanSyncManager {
 
    public void run() {
       if (!this.init_Z && this.write_Z()) {
-         MacroExecutor.read_V();
+         MacroExecutor.stopAll();
          AutismClientMessaging.sendPrefixed("§c[LAN] Macros stopped by " + this.write_Str);
          this.load(new autismclient.util.sync.LanSyncPacket.Inner_DataUtil(this.read_Str, "__STOP_ALL__", this.write_Str));
       }

@@ -107,7 +107,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          int fieldX = x + 4;
          int fieldY = this.open_I_2();
          int fieldH = this.flush_I_4();
-         this.init_k.init_V(graphics, mx, my, delta);
+         this.init_k.render(graphics, mx, my, delta);
          int addW = this.update_I_5();
          this.init(
             graphics,
@@ -123,7 +123,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             my
          );
          this.load(graphics, fieldX, fieldY, this.write_I_5(), mx, my);
-         this.load_k.init_V(graphics, mx, my, delta);
+         this.load_k.render(graphics, mx, my, delta);
          int actionsY = this.push();
          int nextX = fieldX;
          int clearW = this.init_I_Str_8("Clear");
@@ -264,7 +264,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    }
 
    private void load(GuiGraphicsExtractor graphics, int fieldX, int fieldY, int fieldW, int mx, int my) {
-      if (this.load_Z() && this.init_k != null && this.init_k.init_Z()) {
+      if (this.load_Z() && this.init_k != null && this.init_k.isFocused()) {
          List<String> suggestions = this.update_List();
          if (!suggestions.isEmpty()) {
             int visible = Math.min(5, suggestions.size());
@@ -334,13 +334,13 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       }
 
       this.flush_V_4();
-      if (this.init_k.init_Z_D_2(mx, my, Compat263.mouseEventGlfwButton(event))) {
-         this.load_k.push(false);
+      if (this.init_k.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
+         this.load_k.setFocused(false);
          return true;
       }
 
-      if (this.load_k.init_Z_D_2(mx, my, Compat263.mouseEventGlfwButton(event))) {
-         this.init_k.push(false);
+      if (this.load_k.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
+         this.init_k.setFocused(false);
          return true;
       }
 
@@ -395,8 +395,8 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          }
       }
 
-      this.init_k.push(false);
-      this.load_k.push(false);
+      this.init_k.setFocused(false);
+      this.load_k.setFocused(false);
       return true;
    }
 
@@ -418,10 +418,10 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       this.init_Z = false;
-      if (this.init_k != null && this.init_k.load(mx, my, Compat263.mouseEventGlfwButton(event))) {
+      if (this.init_k != null && this.init_k.mouseReleased(mx, my, Compat263.mouseEventGlfwButton(event))) {
          return true;
       } else {
-         return this.load_k != null && this.load_k.load(mx, my, Compat263.mouseEventGlfwButton(event)) ? true : true;
+         return this.load_k != null && this.load_k.mouseReleased(mx, my, Compat263.mouseEventGlfwButton(event)) ? true : true;
       }
    }
 
@@ -429,11 +429,11 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       int my = cA.init_I_D(event.y());
       int mx = cA.init_I_D(event.x());
-      if (this.init_k != null && this.init_k.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
+      if (this.init_k != null && this.init_k.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
          return true;
       }
 
-      if (this.load_k != null && this.load_k.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
+      if (this.load_k != null && this.load_k.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
          return true;
       }
 
@@ -461,7 +461,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             this.onClose();
             return true;
          }
-      } else if (this.init_k.init_Z() && this.load_Z() && Compat263.keyEventGlfwKey(input) == 258) {
+      } else if (this.init_k.isFocused() && this.load_Z() && Compat263.keyEventGlfwKey(input) == 258) {
          List<String> suggestions = this.update_List();
          if (!suggestions.isEmpty()) {
             this.tick = Math.floorMod(this.tick + ((Compat263.keyEventGlfwModifiers(input) & 1) != 0 ? -1 : 1), suggestions.size());
@@ -470,13 +470,13 @@ public class StringListEditorScreen extends VirtualScaledScreen {
 
          return true;
       } else if (Compat263.keyEventGlfwKey(input) != 257 && Compat263.keyEventGlfwKey(input) != 335) {
-         if (this.init_k.init_Z_KeyEvent(input)) {
+         if (this.init_k.keyPressed(input)) {
             return true;
          } else {
-            return this.load_k.init_Z_KeyEvent(input) ? true : true;
+            return this.load_k.keyPressed(input) ? true : true;
          }
       } else {
-         if (this.init_k.init_Z()) {
+         if (this.init_k.isFocused()) {
             this.load_V_9();
          }
 
@@ -487,10 +487,10 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    @Override
    public boolean charTyped(CharacterEvent input) {
       this.flush_V_4();
-      if (this.init_k.init_Z_CharacterEvent(input)) {
+      if (this.init_k.charTyped(input)) {
          return true;
       } else {
-         return this.load_k.init_Z_CharacterEvent(input) ? true : true;
+         return this.load_k.charTyped(input) ? true : true;
       }
    }
 
@@ -525,11 +525,11 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          this.pop = index;
          this.write(values.get(index));
          if (this.init_k != null) {
-            this.init_k.push(true);
+            this.init_k.setFocused(true);
          }
 
          if (this.load_k != null) {
-            this.load_k.push(false);
+            this.load_k.setFocused(false);
          }
 
          this.tick = 0;
@@ -973,11 +973,11 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          this.tick = index;
          this.write(this.init_Str_Str_Str_2(this.read_Str(), suggestions.get(index)));
          if (this.init_k != null) {
-            this.init_k.push(true);
+            this.init_k.setFocused(true);
          }
 
          if (this.load_k != null) {
-            this.load_k.push(false);
+            this.load_k.setFocused(false);
          }
       }
    }
@@ -985,15 +985,15 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    private void flush_V_4() {
       if (this.init_k == null) {
          this.init_k = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 1, this.flush_I_4(), false);
-         this.init_k.load(512);
-         this.init_k.init_V_Consumer(value -> this.tick = 0);
+         this.init_k.setMaxLength(512);
+         this.init_k.setChangedListener(value -> this.tick = 0);
       }
 
       if (this.load_k == null) {
          this.load_k = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 1, this.flush_I_4(), false);
-         this.load_k.load(128);
-         this.load_k.init_V_Component(Component.literal("Search"));
-         this.load_k.init_V_Consumer(value -> {
+         this.load_k.setMaxLength(128);
+         this.load_k.setPlaceholder(Component.literal("Search"));
+         this.load_k.setChangedListener(value -> {
             this.load_Str = null;
             this.open_V_2();
          });
@@ -1004,15 +1004,15 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       if (this.init_k != null && this.load_k != null) {
          int fieldX = this.run() + 4;
          int fieldH = this.flush_I_4();
-         this.init_k.read(fieldX);
-         this.init_k.write(this.open_I_2());
-         this.init_k.update(this.write_I_5());
-         this.init_k.sync(fieldH);
-         this.init_k.init_V_Component(Component.literal(this.pop >= 0 ? "Edit entry" : this.load_Str()));
-         this.load_k.read(fieldX);
-         this.load_k.write(this.poll());
-         this.load_k.update(this.set() - 8);
-         this.load_k.sync(fieldH);
+         this.init_k.setX(fieldX);
+         this.init_k.setY(this.open_I_2());
+         this.init_k.setWidth(this.write_I_5());
+         this.init_k.setHeight(fieldH);
+         this.init_k.setPlaceholder(Component.literal(this.pop >= 0 ? "Edit entry" : this.load_Str()));
+         this.load_k.setX(fieldX);
+         this.load_k.setY(this.poll());
+         this.load_k.setWidth(this.set() - 8);
+         this.load_k.setHeight(fieldH);
       }
    }
 
@@ -1074,17 +1074,17 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    }
 
    private String read_Str() {
-      return this.init_k == null ? "" : this.init_k.load_Str();
+      return this.init_k == null ? "" : this.init_k.getValue();
    }
 
    private void write(String value) {
       this.flush_V_4();
-      this.init_k.init_V_Str(value == null ? "" : value);
-      this.init_k.flush(this.init_k.load_Str().length());
+      this.init_k.setValue(value == null ? "" : value);
+      this.init_k.setCursorToEnd(this.init_k.getValue().length());
    }
 
    private String write_Str() {
-      return this.load_k == null ? "" : this.load_k.load_Str();
+      return this.load_k == null ? "" : this.load_k.getValue();
    }
 
    private String update_Str() {

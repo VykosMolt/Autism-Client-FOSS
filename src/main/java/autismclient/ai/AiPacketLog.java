@@ -56,7 +56,7 @@ public final class AiPacketLog {
    }
 
    public static JsonObject init(JsonObject args) {
-      AutismPacketLoggerOverlay overlay = ModuleRuntimeManager.init_PoolEntry().init_AutismPacketLogger();
+      AutismPacketLoggerOverlay overlay = ModuleRuntimeManager.getInstance().getOrCreatePacketLoggerOverlay();
       if (overlay == null) {
          throw new IllegalStateException("Packet logger overlay is unavailable");
       }
@@ -119,7 +119,7 @@ public final class AiPacketLog {
    }
 
    public static JsonObject load(JsonObject args) {
-      AutismPacketLoggerOverlay overlay = ModuleRuntimeManager.init_PoolEntry().init_AutismPacketLogger();
+      AutismPacketLoggerOverlay overlay = ModuleRuntimeManager.getInstance().getOrCreatePacketLoggerOverlay();
       if (overlay == null) {
          throw new IllegalStateException("Packet logger overlay is unavailable");
       }
@@ -301,8 +301,8 @@ public final class AiPacketLog {
       int offset = init(AiJson.getInt(args, "offset", 0));
       int limit = init(AiJson.getInt(args, "limit", 10), 30);
       Collection<Class<? extends Packet<?>>> source = "C2S".equals(direction)
-         ? autismclient.util.PacketTypeRegistry.load()
-         : ("S2C".equals(direction) ? autismclient.util.PacketTypeRegistry.init_Set() : autismclient.util.PacketTypeRegistry.init_Set);
+         ? autismclient.util.PacketTypeRegistry.getC2sPackets()
+         : ("S2C".equals(direction) ? autismclient.util.PacketTypeRegistry.getS2cPackets() : autismclient.util.PacketTypeRegistry.ALL_PACKETS);
       List<Class<? extends Packet<?>>> matched = source.stream()
          .filter(c -> c.getSimpleName().toLowerCase(Locale.ROOT).contains(query))
          .sorted(Comparator.comparing(Class::getName))
@@ -314,7 +314,7 @@ public final class AiPacketLog {
          Class<? extends Packet<?>> packetClass = matched.get(i);
          String flow = init(packetClass);
          autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(packetClass);
-         JsonObject entry = AiJson.objectOf("name", autismclient.util.PacketTypeRegistry.init_Str_Class(packetClass), "schema", schema);
+         JsonObject entry = AiJson.objectOf("name", autismclient.util.PacketTypeRegistry.getPacketName(packetClass), "schema", schema);
          entry.addProperty("direction", flow);
          entry.addProperty("numericPacketId", init(packetClass, "BOTH".equals(flow) ? "C2S" : flow));
          if (schema != null) {
@@ -336,8 +336,8 @@ public final class AiPacketLog {
    }
 
    static String init(Class<? extends Packet<?>> packetClass) {
-      boolean c2s = autismclient.util.PacketTypeRegistry.load().contains(packetClass);
-      boolean s2c = autismclient.util.PacketTypeRegistry.init_Set().contains(packetClass);
+      boolean c2s = autismclient.util.PacketTypeRegistry.getC2sPackets().contains(packetClass);
+      boolean s2c = autismclient.util.PacketTypeRegistry.getS2cPackets().contains(packetClass);
       return c2s && s2c ? "BOTH" : (c2s ? "C2S" : (s2c ? "S2C" : "ANY"));
    }
 

@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderBossHealthOverlayMixin {
    @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noBossBar(CallbackInfo ci) {
-      if (NoRenderState.get()) {
+      if (NoRenderState.hideBossBar()) {
          ci.cancel();
       }
    }

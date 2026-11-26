@@ -53,7 +53,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
       tag.putInt("timeoutMs", this.timeoutMs);
       tag.putBoolean("enabled", this.init);
       tag.putString("checkMode", this.checkMode.name());
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -105,7 +105,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
@@ -137,7 +137,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
       this.centerOnPlayer = true;
       this.containerEntitiesOnly = tag.getBooleanOr("containerEntitiesOnly", false);
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
    public boolean init_Z_5(Minecraft mc) {

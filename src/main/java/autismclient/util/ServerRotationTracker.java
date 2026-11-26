@@ -12,13 +12,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 public final class ServerRotationTracker {
-   private static volatile ServerRotationTracker.TickPair init_ch_StreamUtil = ServerRotationTracker.TickPair.init_ch_StreamUtil();
-   private static volatile float init_F = 0.0F / 0.0F;
+   private static volatile ServerRotationTracker.TickPair latestTickPair = ServerRotationTracker.TickPair.empty();
+   private static volatile float lastWireYaw = 0.0F / 0.0F;
 
    private ServerRotationTracker() {
    }
 
-   public static void init(Packet<?> packet) {
+   public static void onOutgoingPacket(Packet<?> packet) {
       if (!AutismLiteVariant.enabled()) {
          ClutchModule.init_V_Packet_2(packet);
       }
@@ -36,71 +36,71 @@ public final class ServerRotationTracker {
 
          float yaw = movement.getYRot(0.0F);
          if (movement.hasRotation() && Float.isFinite(yaw)) {
-            init_F = yaw;
+            lastWireYaw = yaw;
          }
 
-         init(movement.getYRot(0.0F), movement.getXRot(0.0F), AutismSessionState.init_ck().state_I(), position, movement.hasRotation());
+         recordMovementState(movement.getYRot(0.0F), movement.getXRot(0.0F), AutismSessionState.getInstance().getClientTick(), position, movement.hasRotation());
       }
    }
 
-   static void init_V(float yaw, float pitch) {
-      init_V_F(yaw, pitch, AutismSessionState.init_ck().state_I());
+   static void recordRotation(float yaw, float pitch) {
+      recordRotation(yaw, pitch, AutismSessionState.getInstance().getClientTick());
    }
 
-   static void init_V_F(float yaw, float pitch, int tick) {
-      init(yaw, pitch, tick, null, true);
+   static void recordRotation(float yaw, float pitch, int tick) {
+      recordMovementState(yaw, pitch, tick, null, true);
    }
 
-   private static synchronized void init(float yaw, float pitch, int tick, Vec3 position, boolean hasRotation) {
-      ServerRotationTracker.TickPair old = init_ch_StreamUtil;
-      Vec3 nextPosition = position == null ? old.init_Vec3() : position;
+   private static synchronized void recordMovementState(float yaw, float pitch, int tick, Vec3 position, boolean hasRotation) {
+      ServerRotationTracker.TickPair old = latestTickPair;
+      Vec3 nextPosition = position == null ? old.position() : position;
       if (hasRotation && Float.isFinite(yaw) && Float.isFinite(pitch)) {
-         ServerRotationTracker.Angles next = init_ch_DataUtil(yaw, pitch);
-         if (old.load() == null) {
-            init_ch_StreamUtil = new ServerRotationTracker.TickPair(next, next, tick, nextPosition);
-         } else if (old.init_I() == tick) {
-            init_ch_StreamUtil = new ServerRotationTracker.TickPair(old.init_ch_DataUtil(), next, tick, nextPosition);
+         ServerRotationTracker.Angles next = normalizeAngles(yaw, pitch);
+         if (old.current() == null) {
+            latestTickPair = new ServerRotationTracker.TickPair(next, next, tick, nextPosition);
+         } else if (old.tick() == tick) {
+            latestTickPair = new ServerRotationTracker.TickPair(old.previous(), next, tick, nextPosition);
          } else {
-            init_ch_StreamUtil = new ServerRotationTracker.TickPair(old.load(), next, tick, nextPosition);
+            latestTickPair = new ServerRotationTracker.TickPair(old.current(), next, tick, nextPosition);
          }
       } else {
-         init_ch_StreamUtil = new ServerRotationTracker.TickPair(old.init_ch_DataUtil(), old.load(), old.init_I(), nextPosition);
+         latestTickPair = new ServerRotationTracker.TickPair(old.previous(), old.current(), old.tick(), nextPosition);
       }
    }
 
-   public static synchronized void init_V() {
-      init_ch_StreamUtil = ServerRotationTracker.TickPair.init_ch_StreamUtil();
-      init_F = 0.0F / 0.0F;
+   public static synchronized void reset() {
+      latestTickPair = ServerRotationTracker.TickPair.empty();
+      lastWireYaw = 0.0F / 0.0F;
    }
 
-   public static float init_F() {
-      return init_F;
+   public static float getLastWireYaw() {
+      return lastWireYaw;
    }
 
-   public static ServerRotationTracker.RotationSnapshot init_ch_CachePool() {
-      ServerRotationTracker.TickPair value = init_ch_StreamUtil;
-      ServerRotationTracker.Angles previous = value.init_ch_DataUtil();
-      ServerRotationTracker.Angles current = value.load();
+   public static ServerRotationTracker.RotationSnapshot getSnapshot() {
+      ServerRotationTracker.TickPair value = latestTickPair;
+      ServerRotationTracker.Angles previous = value.previous();
+      ServerRotationTracker.Angles current = value.current();
       return new ServerRotationTracker.RotationSnapshot(
-         previous == null ? 0.0F / 0.0F : previous.init(),
-         previous == null ? 0.0F / 0.0F : previous.load(),
-         current == null ? 0.0F / 0.0F : current.init(),
-         current == null ? 0.0F / 0.0F : current.load(),
-         value.init_I(),
+         previous == null ? 0.0F / 0.0F : previous.yaw(),
+         previous == null ? 0.0F / 0.0F : previous.pitch(),
+         current == null ? 0.0F / 0.0F : current.yaw(),
+         current == null ? 0.0F / 0.0F : current.pitch(),
+         value.tick(),
          current != null,
-         value.init_Vec3()
+         value.position()
       );
    }
 
-   static ServerRotationTracker.Angles init_ch_DataUtil() {
-      return init_ch_StreamUtil.load();
+   static ServerRotationTracker.Angles getCurrentAngles() {
+      return latestTickPair.current();
    }
 
-   static ServerRotationTracker.TickPair init_ch_StreamUtil() {
-      return init_ch_StreamUtil;
+   static ServerRotationTracker.TickPair getLatestTickPair() {
+      return latestTickPair;
    }
 
-   public static void init_V_Entity_2(Entity entity, EntityRenderState state, float partialTick) {
+   public static void applyRenderRotation(Entity entity, EntityRenderState state, float partialTick) {
       Minecraft minecraft = Minecraft.getInstance();
       if (entity != null && entity == minecraft.player && entity == minecraft.getCameraEntity() && state instanceof LivingEntityRenderState livingState) {
          boolean thirdPerson = minecraft.options != null && !minecraft.options.getCameraType().isFirstPerson();
@@ -109,11 +109,11 @@ public final class ServerRotationTracker {
          if (thirdPerson && !freecam && !hidden) {
             boolean silentOwner = minecraft.player != null && SilentMovementCoordinator.getRenderRotation(minecraft.player) != null;
             if (silentOwner) {
-               ServerRotationTracker.Angles rotation = init_ch_DataUtil_ch_StreamUtil(init_ch_StreamUtil, partialTick, AutismSessionState.init_ck().state_I());
+               ServerRotationTracker.Angles rotation = interpolateForTick(latestTickPair, partialTick, AutismSessionState.getInstance().getClientTick());
                if (rotation != null) {
-                  init(livingState, rotation);
+                  applyToLivingRenderState(livingState, rotation);
                   if (state instanceof AvatarRenderState avatarState) {
-                     init_V_Entity(entity, avatarState, rotation);
+                     applyFallFlyingYaw(entity, avatarState, rotation);
                   }
                }
             }
@@ -121,29 +121,29 @@ public final class ServerRotationTracker {
       }
    }
 
-   static boolean init(boolean localPlayer, boolean cameraEntity, boolean thirdPerson, boolean freecam, boolean hidden, boolean silentOwner) {
+   static boolean shouldApplyRenderRotation(boolean localPlayer, boolean cameraEntity, boolean thirdPerson, boolean freecam, boolean hidden, boolean silentOwner) {
       return localPlayer && cameraEntity && thirdPerson && !freecam && !hidden && silentOwner;
    }
 
-   static ServerRotationTracker.Angles init_ch_DataUtil_ch_StreamUtil(ServerRotationTracker.TickPair value, float partialTick, int renderTick) {
-      if (value != null && value.load() != null) {
-         ServerRotationTracker.Angles previous = value.init_ch_DataUtil() == null ? value.load() : value.init_ch_DataUtil();
+   static ServerRotationTracker.Angles interpolateForTick(ServerRotationTracker.TickPair value, float partialTick, int renderTick) {
+      if (value != null && value.current() != null) {
+         ServerRotationTracker.Angles previous = value.previous() == null ? value.current() : value.previous();
          float progress;
-         if (renderTick < value.init_I()) {
+         if (renderTick < value.tick()) {
             progress = 0.0F;
-         } else if (renderTick == value.init_I()) {
+         } else if (renderTick == value.tick()) {
             progress = Mth.clamp(partialTick, 0.0F, 1.0F);
          } else {
             progress = 1.0F;
          }
 
-         return init_ch_DataUtil_ch_DataUtil(previous, value.load(), progress);
+         return lerpAngles(previous, value.current(), progress);
       } else {
          return null;
       }
    }
 
-   static ServerRotationTracker.Angles init_ch_DataUtil_ch_DataUtil(ServerRotationTracker.Angles previous, ServerRotationTracker.Angles current, float progress) {
+   static ServerRotationTracker.Angles lerpAngles(ServerRotationTracker.Angles previous, ServerRotationTracker.Angles current, float progress) {
       if (previous == null) {
          return current;
       }
@@ -153,27 +153,27 @@ public final class ServerRotationTracker {
       }
 
       float amount = Mth.clamp(progress, 0.0F, 1.0F);
-      float yawDelta = Mth.wrapDegrees(current.init() - previous.init());
-      float yaw = Mth.wrapDegrees(previous.init() + yawDelta * amount);
-      float pitch = previous.load() + (current.load() - previous.load()) * amount;
-      return init_ch_DataUtil(yaw, pitch);
+      float yawDelta = Mth.wrapDegrees(current.yaw() - previous.yaw());
+      float yaw = Mth.wrapDegrees(previous.yaw() + yawDelta * amount);
+      float pitch = previous.pitch() + (current.pitch() - previous.pitch()) * amount;
+      return normalizeAngles(yaw, pitch);
    }
 
-   private static ServerRotationTracker.Angles init_ch_DataUtil(float yaw, float pitch) {
+   private static ServerRotationTracker.Angles normalizeAngles(float yaw, float pitch) {
       return new ServerRotationTracker.Angles(Mth.wrapDegrees(yaw), Mth.clamp(pitch, -90.0F, 90.0F));
    }
 
-   static void init(LivingEntityRenderState state, ServerRotationTracker.Angles rotation) {
+   static void applyToLivingRenderState(LivingEntityRenderState state, ServerRotationTracker.Angles rotation) {
       if (state != null && rotation != null) {
-         state.bodyRot = rotation.init();
+         state.bodyRot = rotation.yaw();
          state.yRot = 0.0F;
-         state.xRot = state.isUpsideDown ? -rotation.load() : rotation.load();
+         state.xRot = state.isUpsideDown ? -rotation.pitch() : rotation.pitch();
       }
    }
 
-   private static void init_V_Entity(Entity entity, AvatarRenderState state, ServerRotationTracker.Angles rotation) {
+   private static void applyFallFlyingYaw(Entity entity, AvatarRenderState state, ServerRotationTracker.Angles rotation) {
       if (state.isFallFlying && entity != null) {
-         Vec3 look = Vec3.directionFromRotation(rotation.load(), rotation.init());
+         Vec3 look = Vec3.directionFromRotation(rotation.pitch(), rotation.yaw());
          Vec3 movement = entity.getDeltaMovement();
          if (!(movement.horizontalDistanceSqr() <= 1.0E-5) && !(look.horizontalDistanceSqr() <= 1.0E-5)) {
             Vec3 horizontalMovement = movement.horizontal().normalize();
@@ -189,21 +189,21 @@ public final class ServerRotationTracker {
       }
    }
 
-   public record RotationSnapshot(float init_F, float load, float read, float write, int init_I, boolean init_Z, Vec3 init_Vec3) {
+   public record RotationSnapshot(float previousYaw, float previousPitch, float currentYaw, float currentPitch, int tick, boolean initialized, Vec3 position) {
       public RotationSnapshot(float previousYaw, float previousPitch, float currentYaw, float currentPitch, int tick, boolean initialized) {
          this(previousYaw, previousPitch, currentYaw, currentPitch, tick, initialized, null);
       }
    }
 
-   record Angles(float init, float load) {
+   record Angles(float yaw, float pitch) {
    }
 
-   record TickPair(ServerRotationTracker.Angles init_ch_DataUtil, ServerRotationTracker.Angles load, int init_I, Vec3 init_Vec3) {
+   record TickPair(ServerRotationTracker.Angles previous, ServerRotationTracker.Angles current, int tick, Vec3 position) {
       TickPair(ServerRotationTracker.Angles previous, ServerRotationTracker.Angles current, int tick) {
          this(previous, current, tick, null);
       }
 
-      static ServerRotationTracker.TickPair init_ch_StreamUtil() {
+      static ServerRotationTracker.TickPair empty() {
          return new ServerRotationTracker.TickPair(null, null, -2147483648);
       }
    }

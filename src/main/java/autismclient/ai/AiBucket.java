@@ -216,8 +216,8 @@ final class AiBucket {
             }
 
             boolean init_Z_9() {
-               autismclient.util.ServerRotationTracker.RotationSnapshot wire = autismclient.util.ServerRotationTracker.init_ch_CachePool();
-               return wire.init_Z() && AiBucket.init(wire.read(), wire.write(), mc.player.getYRot(), mc.player.getXRot());
+               autismclient.util.ServerRotationTracker.RotationSnapshot wire = autismclient.util.ServerRotationTracker.getSnapshot();
+               return wire.initialized() && AiBucket.init(wire.currentYaw(), wire.currentPitch(), mc.player.getYRot(), mc.player.getXRot());
             }
 
             Vec3 init_Vec3_4() {

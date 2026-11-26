@@ -50,10 +50,10 @@ public abstract class AutismChatScreenMixin {
                   return;
                }
 
-               ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-               module.flush_V();
+               ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+               module.notifyStandaloneAlwaysEnabled();
                Minecraft mc = Minecraft.getInstance();
-               AutismClientMessaging.sendPrefixed("Autism is now " + (module.init_Z() ? "enabled" : "disabled") + ".");
+               AutismClientMessaging.sendPrefixed("Autism is now " + (module.isActive() ? "enabled" : "disabled") + ".");
                mc.gui.setScreen(null);
                ci.cancel();
             }

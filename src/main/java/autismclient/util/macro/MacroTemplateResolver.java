@@ -19,13 +19,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
 public final class MacroTemplateResolver {
-   private static final Pattern init_Pattern = Pattern.compile("[A-Za-z_][A-Za-z0-9_.-]{0,63}(?:\\|[^{}|]+)*");
-   private static final Pattern load = Pattern.compile("([-+]?\\d+(?:\\.\\d+)?)\\s*-\\s*([-+]?\\d+(?:\\.\\d+)?)");
-   private static final Pattern read = Pattern.compile("(.*?)\\s*\\*\\s*(\\d{1,3})\\s*$");
-   private static final Pattern write = Pattern.compile("\\d+,\\d+");
-   private static final String init_Str = "\"':={}\\";
-   private static final Pattern update = Pattern.compile("(?i)(?:[-+]\\p{Sc}?)?(?:\\d(?:[.,_]?\\d)*|[.,]\\d+)(?:[kmbt](?![\\p{L}\\d]))?");
-   public static final Set<String> init_Set = Set.of(
+   private static final Pattern EXPRESSION_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9_.-]{0,63}(?:\\|[^{}|]+)*");
+   private static final Pattern RANGE_PATTERN = Pattern.compile("([-+]?\\d+(?:\\.\\d+)?)\\s*-\\s*([-+]?\\d+(?:\\.\\d+)?)");
+   private static final Pattern WEIGHTED_OPTION_PATTERN = Pattern.compile("(.*?)\\s*\\*\\s*(\\d{1,3})\\s*$");
+   private static final Pattern COMMA_NUMBER_PATTERN = Pattern.compile("\\d+,\\d+");
+   private static final String FORBIDDEN_OPTION_CHARS = "\"':={}\\";
+   private static final Pattern NUMBER_TOKEN_PATTERN = Pattern.compile("(?i)(?:[-+]\\p{Sc}?)?(?:\\d(?:[.,_]?\\d)*|[.,]\\d+)(?:[kmbt](?![\\p{L}\\d]))?");
+   public static final Set<String> BUILTIN_VARIABLES = Set.of(
       "timestamp",
       "player",
       "user",
@@ -54,7 +54,7 @@ public final class MacroTemplateResolver {
    private MacroTemplateResolver() {
    }
 
-   public static MacroTemplateResolver.ResolveResult init_j_CachePool(String template, MacroVariableStore context, Minecraft mc) {
+   public static MacroTemplateResolver.ResolveResult resolve(String template, MacroVariableStore context, Minecraft mc) {
       if (template != null && !template.isEmpty()) {
          StringBuilder out = new StringBuilder(template.length());
          List<String> missing = new ArrayList<>();
@@ -79,22 +79,22 @@ public final class MacroTemplateResolver {
                } else {
                   String expression = template.substring(i + 1, end).trim();
                   MacroTemplateResolver.TokenResult value;
-                  if (init_Pattern.matcher(expression).matches()) {
-                     value = init_j_BufferHelper(expression, context, mc);
+                  if (EXPRESSION_PATTERN.matcher(expression).matches()) {
+                     value = resolveNamedExpression(expression, context, mc);
                   } else {
-                     if (!load_Z(expression)) {
+                     if (!isInlineRandomExpression(expression)) {
                         out.append(ch);
                         i++;
                         continue;
                      }
 
-                     value = init_j_BufferHelper(expression);
+                     value = resolveInlineRandomExpression(expression);
                   }
 
-                  if (!value.init_Z) {
-                     missing.add(value.load.isEmpty() ? expression : value.load);
+                  if (!value.resolved) {
+                     missing.add(value.missingName.isEmpty() ? expression : value.missingName);
                   } else {
-                     out.append(init(expression, value.init_Str, out.length() == 0));
+                     out.append(stripLeadingSlashForLastSent(expression, value.value, out.length() == 0));
                   }
 
                   i = end + 1;
@@ -102,13 +102,13 @@ public final class MacroTemplateResolver {
             }
          }
 
-         return missing.isEmpty() ? MacroTemplateResolver.ResolveResult.init(out.toString()) : MacroTemplateResolver.ResolveResult.init(missing, "Missing macro value");
+         return missing.isEmpty() ? MacroTemplateResolver.ResolveResult.ok(out.toString()) : MacroTemplateResolver.ResolveResult.failed(missing, "Missing macro value");
       } else {
-         return MacroTemplateResolver.ResolveResult.init(template == null ? "" : template);
+         return MacroTemplateResolver.ResolveResult.ok(template == null ? "" : template);
       }
    }
 
-   private static String init(String expression, String rendered, boolean atStart) {
+   private static String stripLeadingSlashForLastSent(String expression, String rendered, boolean atStart) {
       if (!atStart && rendered.length() >= 2 && rendered.charAt(0) == '/') {
          String[] parts = expression.split("\\|", -1);
          if (parts.length != 0 && "last_sent".equalsIgnoreCase(parts[0].trim())) {
@@ -127,14 +127,14 @@ public final class MacroTemplateResolver {
       }
    }
 
-   public static boolean init_Z(String text) {
+   public static boolean containsPlaceholder(String text) {
       if (text != null && !text.isBlank()) {
          for (int i = 0; i < text.length(); i++) {
             if (text.charAt(i) == '{' && (i + 1 >= text.length() || text.charAt(i + 1) != '{')) {
                int end = text.indexOf(125, i + 1);
                if (end > i) {
                   String expression = text.substring(i + 1, end).trim();
-                  if (init_Pattern.matcher(expression).matches() || load_Z(expression)) {
+                  if (EXPRESSION_PATTERN.matcher(expression).matches() || isInlineRandomExpression(expression)) {
                      return true;
                   }
                }
@@ -147,16 +147,16 @@ public final class MacroTemplateResolver {
       }
    }
 
-   private static MacroTemplateResolver.TokenResult init_j_BufferHelper(String expression, MacroVariableStore context, Minecraft mc) {
+   private static MacroTemplateResolver.TokenResult resolveNamedExpression(String expression, MacroVariableStore context, Minecraft mc) {
       String[] parts = expression.split("\\|", -1);
       String name = parts.length == 0 ? "" : parts[0].trim();
       Optional<MacroVarValue> found = context == null ? Optional.empty() : context.init_Optional_Str(name);
       if (found.isEmpty() && "random".equalsIgnoreCase(name)) {
-         return init(parts);
+         return resolveRandomExpression(parts);
       }
 
       if (found.isEmpty()) {
-         found = init(name, mc);
+         found = resolveBuiltinVariable(name, mc);
       }
 
       String fallback = null;
@@ -169,27 +169,27 @@ public final class MacroTemplateResolver {
       }
 
       if (found.isEmpty()) {
-         return fallback == null ? MacroTemplateResolver.TokenResult.load(name) : MacroTemplateResolver.TokenResult.init(fallback);
+         return fallback == null ? MacroTemplateResolver.TokenResult.missing(name) : MacroTemplateResolver.TokenResult.ok(fallback);
       }
 
       MacroVarValue value = found.get();
-      String rendered = value.init_Str();
+      String rendered = value.asString();
 
       try {
          for (int i = 1; i < parts.length; i++) {
             String formatter = parts[i].trim();
             if (!formatter.isEmpty() && !formatter.regionMatches(true, 0, "default:", 0, 8)) {
-               rendered = init(rendered, formatter, value);
+               rendered = applyFormatter(rendered, formatter, value);
             }
          }
 
-         return MacroTemplateResolver.TokenResult.init(rendered);
+         return MacroTemplateResolver.TokenResult.ok(rendered);
       } catch (IllegalArgumentException invalid) {
-         return MacroTemplateResolver.TokenResult.load(name);
+         return MacroTemplateResolver.TokenResult.missing(name);
       }
    }
 
-   private static String init(String text, String formatter, MacroVarValue value) {
+   private static String applyFormatter(String text, String formatter, MacroVarValue value) {
       String key = formatter.toLowerCase(Locale.ROOT);
       String var10000;
       switch (key) {
@@ -203,28 +203,28 @@ public final class MacroTemplateResolver {
             var10000 = text.toUpperCase(Locale.ROOT);
             break;
          case "number":
-            var10000 = read(text);
+            var10000 = parseIntegerNumber(text);
             break;
          case "name":
-            var10000 = value.init_Optional_Str("name").map(MacroVarValue::init_Str).orElse(text);
+            var10000 = value.resolvePath("name").map(MacroVarValue::asString).orElse(text);
             break;
          case "id":
-            var10000 = value.init_Optional_Str("id").map(MacroVarValue::init_Str).orElseThrow(() -> new IllegalArgumentException("No id"));
+            var10000 = value.resolvePath("id").map(MacroVarValue::asString).orElseThrow(() -> new IllegalArgumentException("No id"));
             break;
          case "count":
-            var10000 = value.init_Optional_Str("count").map(MacroVarValue::init_Str).orElseThrow(() -> new IllegalArgumentException("No count"));
+            var10000 = value.resolvePath("count").map(MacroVarValue::asString).orElseThrow(() -> new IllegalArgumentException("No count"));
             break;
          case "slot":
-            var10000 = value.init_Optional_Str("slot").map(MacroVarValue::init_Str).orElseThrow(() -> new IllegalArgumentException("No slot"));
+            var10000 = value.resolvePath("slot").map(MacroVarValue::asString).orElseThrow(() -> new IllegalArgumentException("No slot"));
             break;
          default:
-            var10000 = value.init_Optional_Str(key).map(MacroVarValue::init_Str).orElseThrow(() -> new IllegalArgumentException("Unknown formatter: " + formatter));
+            var10000 = value.resolvePath(key).map(MacroVarValue::asString).orElseThrow(() -> new IllegalArgumentException("Unknown formatter: " + formatter));
       }
 
       return var10000;
    }
 
-   private static MacroTemplateResolver.TokenResult init(String[] parts) {
+   private static MacroTemplateResolver.TokenResult resolveRandomExpression(String[] parts) {
       int specIndex = -1;
       String rendered = null;
 
@@ -242,15 +242,15 @@ public final class MacroTemplateResolver {
                }
 
                if (options.isEmpty()) {
-                  return MacroTemplateResolver.TokenResult.load("random");
+                  return MacroTemplateResolver.TokenResult.missing("random");
                }
 
                rendered = options.get(ThreadLocalRandom.current().nextInt(options.size()));
                specIndex = i;
             } else {
-               Matcher range = load.matcher(token);
+               Matcher range = RANGE_PATTERN.matcher(token);
                if (range.matches()) {
-                  rendered = init_Str(range.group(1), range.group(2));
+                  rendered = rollNumericRange(range.group(1), range.group(2));
                   specIndex = i;
                }
             }
@@ -261,51 +261,51 @@ public final class MacroTemplateResolver {
          rendered = Integer.toString(ThreadLocalRandom.current().nextInt(100));
       }
 
-      return init(rendered, parts, specIndex, "random");
+      return applyTrailingFormatters(rendered, parts, specIndex, "random");
    }
 
-   private static MacroTemplateResolver.TokenResult init(String rendered, String[] parts, int specIndex, String missingName) {
-      MacroVarValue value = MacroVarValue.init_l_Obj(rendered);
+   private static MacroTemplateResolver.TokenResult applyTrailingFormatters(String rendered, String[] parts, int specIndex, String missingName) {
+      MacroVarValue value = MacroVarValue.ofText(rendered);
 
       try {
          for (int i = 1; i < parts.length; i++) {
             if (i != specIndex) {
                String formatter = parts[i].trim();
                if (!formatter.isEmpty() && !formatter.regionMatches(true, 0, "default:", 0, 8)) {
-                  rendered = init(rendered, formatter, value);
+                  rendered = applyFormatter(rendered, formatter, value);
                }
             }
          }
 
-         return MacroTemplateResolver.TokenResult.init(rendered);
+         return MacroTemplateResolver.TokenResult.ok(rendered);
       } catch (IllegalArgumentException invalid) {
-         return MacroTemplateResolver.TokenResult.load(missingName);
+         return MacroTemplateResolver.TokenResult.missing(missingName);
       }
    }
 
-   private static boolean load_Z(String expression) {
-      String spec = write(expression);
+   private static boolean isInlineRandomExpression(String expression) {
+      String spec = extractPrimarySpec(expression);
       if (spec.isEmpty()) {
          return false;
       } else {
-         return load.matcher(spec).matches() ? true : init_List(spec) != null;
+         return RANGE_PATTERN.matcher(spec).matches() ? true : parseWeightedOptions(spec) != null;
       }
    }
 
-   private static MacroTemplateResolver.TokenResult init_j_BufferHelper(String expression) {
+   private static MacroTemplateResolver.TokenResult resolveInlineRandomExpression(String expression) {
       String[] parts = expression.split("\\|", -1);
       String spec = parts[0].trim();
-      Matcher range = load.matcher(spec);
-      String rendered = range.matches() ? init_Str(range.group(1), range.group(2)) : init(init_List(spec));
-      return init(rendered, parts, 0, spec);
+      Matcher range = RANGE_PATTERN.matcher(spec);
+      String rendered = range.matches() ? rollNumericRange(range.group(1), range.group(2)) : pickWeightedOption(parseWeightedOptions(spec));
+      return applyTrailingFormatters(rendered, parts, 0, spec);
    }
 
-   private static String write(String expression) {
+   private static String extractPrimarySpec(String expression) {
       int pipe = expression.indexOf(124);
       return (pipe < 0 ? expression : expression.substring(0, pipe)).trim();
    }
 
-   private static List<MacroTemplateResolver.PlaceholderSpan> init_List(String spec) {
+   private static List<MacroTemplateResolver.PlaceholderSpan> parseWeightedOptions(String spec) {
       if (spec.indexOf(44) < 0) {
          return null;
       }
@@ -316,7 +316,7 @@ public final class MacroTemplateResolver {
          }
       }
 
-      if (write.matcher(spec).matches()) {
+      if (COMMA_NUMBER_PATTERN.matcher(spec).matches()) {
          return null;
       }
 
@@ -326,7 +326,7 @@ public final class MacroTemplateResolver {
          String text = entry.trim();
          if (!text.isEmpty()) {
             int weight = 1;
-            Matcher weighted = read.matcher(text);
+            Matcher weighted = WEIGHTED_OPTION_PATTERN.matcher(text);
             if (weighted.matches()) {
                String base = weighted.group(1).trim();
                int parsed = Integer.parseInt(weighted.group(2));
@@ -336,7 +336,7 @@ public final class MacroTemplateResolver {
                }
             }
 
-            Matcher range = load.matcher(text);
+            Matcher range = RANGE_PATTERN.matcher(text);
             options.add(
                range.matches() ? new MacroTemplateResolver.PlaceholderSpan(text, weight, range.group(1), range.group(2)) : new MacroTemplateResolver.PlaceholderSpan(text, weight, null, null)
             );
@@ -346,26 +346,26 @@ public final class MacroTemplateResolver {
       return options.size() >= 2 ? options : null;
    }
 
-   private static String init(List<MacroTemplateResolver.PlaceholderSpan> options) {
+   private static String pickWeightedOption(List<MacroTemplateResolver.PlaceholderSpan> options) {
       int total = 0;
 
       for (MacroTemplateResolver.PlaceholderSpan option : options) {
-         total += option.init_I();
+         total += option.weight();
       }
 
       int roll = ThreadLocalRandom.current().nextInt(total);
 
       for (MacroTemplateResolver.PlaceholderSpan option : options) {
-         roll -= option.init_I();
+         roll -= option.weight();
          if (roll < 0) {
-            return option.load() == null ? option.init_Str() : init_Str(option.load(), option.read());
+            return option.rangeLo() == null ? option.text() : rollNumericRange(option.rangeLo(), option.rangeHi());
          }
       }
 
-      return options.get(options.size() - 1).init_Str();
+      return options.get(options.size() - 1).text();
    }
 
-   private static String init_Str(String loText, String hiText) {
+   private static String rollNumericRange(String loText, String hiText) {
       BigDecimal lo = new BigDecimal(loText);
       BigDecimal hi = new BigDecimal(hiText);
       if (lo.compareTo(hi) > 0) {
@@ -389,7 +389,7 @@ public final class MacroTemplateResolver {
                picked = ThreadLocalRandom.current().nextLong();
             }
 
-            int padWidth = init_I(loText, hiText);
+            int padWidth = inferZeroPadWidth(loText, hiText);
             if (padWidth > 0 && picked != -9223372036854775808L) {
                String digits = Long.toString(Math.abs(picked));
                StringBuilder padded = new StringBuilder(padWidth + 1);
@@ -414,52 +414,52 @@ public final class MacroTemplateResolver {
       return picked.setScale(scale, RoundingMode.HALF_UP).toPlainString();
    }
 
-   private static int init_I(String loText, String hiText) {
-      String loDigits = update(loText);
-      String hiDigits = update(hiText);
+   private static int inferZeroPadWidth(String loText, String hiText) {
+      String loDigits = stripLeadingSign(loText);
+      String hiDigits = stripLeadingSign(hiText);
       boolean padded = loDigits.length() >= 2 && loDigits.charAt(0) == '0' || hiDigits.length() >= 2 && hiDigits.charAt(0) == '0';
       return padded ? Math.max(loDigits.length(), hiDigits.length()) : 0;
    }
 
-   private static String update(String text) {
+   private static String stripLeadingSign(String text) {
       return !text.startsWith("-") && !text.startsWith("+") ? text : text.substring(1);
    }
 
-   public static String init_Str(String raw) {
-      return init(raw, MacroTemplateResolver.ResolveMode.AUTO);
+   public static String extractNormalizedNumber(String raw) {
+      return extractNormalizedNumber(raw, MacroTemplateResolver.ResolveMode.AUTO);
    }
 
-   public static String init(String raw, MacroTemplateResolver.ResolveMode style) {
+   public static String extractNormalizedNumber(String raw, MacroTemplateResolver.ResolveMode style) {
       if (raw == null) {
          throw new IllegalArgumentException("Empty number");
       } else {
-         Matcher found = update.matcher(raw);
+         Matcher found = NUMBER_TOKEN_PATTERN.matcher(raw);
          if (!found.find()) {
             throw new IllegalArgumentException("Not a number: " + raw);
          } else {
-            return init(found.group(), raw, style);
+            return normalizeMatchedNumber(found.group(), raw, style);
          }
       }
    }
 
-   public static String load_Str(String raw) {
-      return load(raw, MacroTemplateResolver.ResolveMode.AUTO);
+   public static String parseNormalizedNumber(String raw) {
+      return parseNormalizedNumber(raw, MacroTemplateResolver.ResolveMode.AUTO);
    }
 
-   public static String load(String raw, MacroTemplateResolver.ResolveMode style) {
+   public static String parseNormalizedNumber(String raw, MacroTemplateResolver.ResolveMode style) {
       if (raw == null) {
          throw new IllegalArgumentException("Empty number");
       } else {
-         Matcher found = update.matcher(raw.trim());
+         Matcher found = NUMBER_TOKEN_PATTERN.matcher(raw.trim());
          if (!found.matches()) {
             throw new IllegalArgumentException("Not a number: " + raw);
          } else {
-            return init(found.group(), raw, style);
+            return normalizeMatchedNumber(found.group(), raw, style);
          }
       }
    }
 
-   private static String init(String match, String raw, MacroTemplateResolver.ResolveMode style) {
+   private static String normalizeMatchedNumber(String match, String raw, MacroTemplateResolver.ResolveMode style) {
       String token = match.trim().replace("_", "").replaceAll("\\p{Sc}", "").toUpperCase(Locale.ROOT);
       if (token.isEmpty()) {
          throw new IllegalArgumentException("Not a number: " + raw);
@@ -489,15 +489,15 @@ public final class MacroTemplateResolver {
          token = token.substring(0, token.length() - 1);
       }
 
-      String cleaned = style == MacroTemplateResolver.ResolveMode.WHOLE && !scaled ? sync(token) : flush(token);
+      String cleaned = style == MacroTemplateResolver.ResolveMode.WHOLE && !scaled ? normalizeWholeNumberDigits(token) : normalizeDecimalSeparators(token);
       if (!cleaned.isEmpty() && !"-".equals(cleaned) && !"+".equals(cleaned)) {
-         return init(new BigDecimal(cleaned).multiply(multiplier));
+         return formatBigDecimal(new BigDecimal(cleaned).multiply(multiplier));
       } else {
          throw new IllegalArgumentException("Not a number: " + raw);
       }
    }
 
-   private static String sync(String token) {
+   private static String normalizeWholeNumberDigits(String token) {
       int last = Math.max(token.lastIndexOf(46), token.lastIndexOf(44));
       String body = last >= 0 && token.length() - last - 1 != 3 ? token.substring(0, last) : token;
       StringBuilder out = new StringBuilder(body.length());
@@ -513,7 +513,7 @@ public final class MacroTemplateResolver {
       return !digits.isEmpty() && !"-".equals(digits) && !"+".equals(digits) ? digits : digits + "0";
    }
 
-   private static String flush(String token) {
+   private static String normalizeDecimalSeparators(String token) {
       int lastDot = token.lastIndexOf(46);
       int lastComma = token.lastIndexOf(44);
       char decimal = 0;
@@ -522,7 +522,7 @@ public final class MacroTemplateResolver {
       } else if (lastDot >= 0 || lastComma >= 0) {
          char only = (char)(lastDot >= 0 ? 46 : 44);
          int index = Math.max(lastDot, lastComma);
-         boolean groups = init(token, only) > 1 || only == ',' && token.length() - index - 1 == 3;
+         boolean groups = countOccurrences(token, only) > 1 || only == ',' && token.length() - index - 1 == 3;
          if (!groups) {
             decimal = only;
          }
@@ -542,7 +542,7 @@ public final class MacroTemplateResolver {
       return out.toString();
    }
 
-   private static int init(String text, char ch) {
+   private static int countOccurrences(String text, char ch) {
       int total = 0;
 
       for (int i = 0; i < text.length(); i++) {
@@ -554,12 +554,12 @@ public final class MacroTemplateResolver {
       return total;
    }
 
-   public static String init(BigDecimal value) {
+   public static String formatBigDecimal(BigDecimal value) {
       BigDecimal stripped = value.stripTrailingZeros();
       return stripped.scale() < 0 ? stripped.setScale(0).toPlainString() : stripped.toPlainString();
    }
 
-   public static String read(String raw) {
+   public static String parseIntegerNumber(String raw) {
       if (raw == null) {
          throw new IllegalArgumentException("Empty number");
       }
@@ -594,23 +594,23 @@ public final class MacroTemplateResolver {
          token = token.substring(0, token.length() - 1);
       }
 
-      BigDecimal number = new BigDecimal(flush(token)).multiply(multiplier).setScale(0, RoundingMode.DOWN);
+      BigDecimal number = new BigDecimal(normalizeDecimalSeparators(token)).multiply(multiplier).setScale(0, RoundingMode.DOWN);
       return number.toPlainString();
    }
 
-   private static Optional<MacroVarValue> init(String name, Minecraft mc) {
+   private static Optional<MacroVarValue> resolveBuiltinVariable(String name, Minecraft mc) {
       if (name == null) {
          return Optional.empty();
       }
 
       String key = name.trim().toLowerCase(Locale.ROOT);
       if ("timestamp".equals(key)) {
-         return Optional.of(MacroVarValue.init_l_Obj(Instant.now().toString()));
+         return Optional.of(MacroVarValue.ofText(Instant.now().toString()));
       }
 
       if ("last_sent".equals(key)) {
-         String sent = AutismSessionState.init_ck().load_Str();
-         return Optional.of(MacroVarValue.init(MacroVarValue.ValueType.TEXT, sent, Map.of("raw", MacroVarValue.init_l_Obj(sent))));
+         String sent = AutismSessionState.getInstance().getLastSentMessage();
+         return Optional.of(MacroVarValue.of(MacroVarValue.ValueType.TEXT, sent, Map.of("raw", MacroVarValue.ofText(sent))));
       }
 
       if (mc != null && mc.player != null) {
@@ -619,56 +619,56 @@ public final class MacroTemplateResolver {
             case "player":
             case "user":
             case "username":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(mc.player.getName().getString()));
+               var10000 = Optional.of(MacroVarValue.ofText(mc.player.getName().getString()));
                break;
             case "uuid":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(mc.player.getUUID().toString()));
+               var10000 = Optional.of(MacroVarValue.ofText(mc.player.getUUID().toString()));
                break;
             case "x":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(String.format(Locale.ROOT, "%.3f", mc.player.getX())));
+               var10000 = Optional.of(MacroVarValue.ofText(String.format(Locale.ROOT, "%.3f", mc.player.getX())));
                break;
             case "y":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(String.format(Locale.ROOT, "%.3f", mc.player.getY())));
+               var10000 = Optional.of(MacroVarValue.ofText(String.format(Locale.ROOT, "%.3f", mc.player.getY())));
                break;
             case "z":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(String.format(Locale.ROOT, "%.3f", mc.player.getZ())));
+               var10000 = Optional.of(MacroVarValue.ofText(String.format(Locale.ROOT, "%.3f", mc.player.getZ())));
                break;
             case "bx":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(Integer.toString(mc.player.blockPosition().getX())));
+               var10000 = Optional.of(MacroVarValue.ofText(Integer.toString(mc.player.blockPosition().getX())));
                break;
             case "by":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(Integer.toString(mc.player.blockPosition().getY())));
+               var10000 = Optional.of(MacroVarValue.ofText(Integer.toString(mc.player.blockPosition().getY())));
                break;
             case "bz":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(Integer.toString(mc.player.blockPosition().getZ())));
+               var10000 = Optional.of(MacroVarValue.ofText(Integer.toString(mc.player.blockPosition().getZ())));
                break;
             case "pos":
                BlockPos pos = mc.player.blockPosition();
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(pos.getX() + " " + pos.getY() + " " + pos.getZ()));
+               var10000 = Optional.of(MacroVarValue.ofText(pos.getX() + " " + pos.getY() + " " + pos.getZ()));
                break;
             case "yaw":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(String.format(Locale.ROOT, "%.2f", mc.player.getYRot())));
+               var10000 = Optional.of(MacroVarValue.ofText(String.format(Locale.ROOT, "%.2f", mc.player.getYRot())));
                break;
             case "pitch":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(String.format(Locale.ROOT, "%.2f", mc.player.getXRot())));
+               var10000 = Optional.of(MacroVarValue.ofText(String.format(Locale.ROOT, "%.2f", mc.player.getXRot())));
                break;
             case "rot":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(String.format(Locale.ROOT, "%.2f %.2f", mc.player.getYRot(), mc.player.getXRot())));
+               var10000 = Optional.of(MacroVarValue.ofText(String.format(Locale.ROOT, "%.2f %.2f", mc.player.getYRot(), mc.player.getXRot())));
                break;
             case "facing":
-               var10000 = Optional.of(MacroVarValue.init_l_Obj(Direction.fromYRot(mc.player.getYRot()).getName()));
+               var10000 = Optional.of(MacroVarValue.ofText(Direction.fromYRot(mc.player.getYRot()).getName()));
                break;
             case "dimension":
             case "dim":
-               var10000 = mc.level == null ? Optional.empty() : Optional.of(MacroVarValue.init_l_Obj(mc.level.dimension().identifier().toString()));
+               var10000 = mc.level == null ? Optional.empty() : Optional.of(MacroVarValue.ofText(mc.level.dimension().identifier().toString()));
                break;
             case "selected_slot":
             case "target_slot":
-               var10000 = Optional.of(MacroVarValue.init_l_I(mc.player.getInventory().getSelectedSlot()));
+               var10000 = Optional.of(MacroVarValue.ofSlot(mc.player.getInventory().getSelectedSlot()));
                break;
             case "server":
                ServerData server = mc.getCurrentServer();
-               var10000 = server != null && server.ip != null ? Optional.of(MacroVarValue.init_l_Obj(server.ip)) : Optional.empty();
+               var10000 = server != null && server.ip != null ? Optional.of(MacroVarValue.ofText(server.ip)) : Optional.empty();
                break;
             default:
                var10000 = Optional.empty();
@@ -680,22 +680,22 @@ public final class MacroTemplateResolver {
       }
    }
 
-   private record TokenResult(boolean init_Z, String init_Str, String load) {
-      static MacroTemplateResolver.TokenResult init(String value) {
+   private record TokenResult(boolean resolved, String value, String missingName) {
+      static MacroTemplateResolver.TokenResult ok(String value) {
          return new MacroTemplateResolver.TokenResult(true, value, "");
       }
 
-      static MacroTemplateResolver.TokenResult load(String name) {
+      static MacroTemplateResolver.TokenResult missing(String name) {
          return new MacroTemplateResolver.TokenResult(false, "", name == null ? "" : name);
       }
    }
 
-   public record ResolveResult(boolean init_Z, String init_Str, List<String> init_List, String load) {
-      public static MacroTemplateResolver.ResolveResult init(String value) {
+   public record ResolveResult(boolean success, String value, List<String> missingVariables, String errorMessage) {
+      public static MacroTemplateResolver.ResolveResult ok(String value) {
          return new MacroTemplateResolver.ResolveResult(true, value, List.of(), "");
       }
 
-      public static MacroTemplateResolver.ResolveResult init(List<String> missing, String error) {
+      public static MacroTemplateResolver.ResolveResult failed(List<String> missing, String error) {
          return new MacroTemplateResolver.ResolveResult(false, "", List.copyOf(missing), error == null ? "" : error);
       }
    }
@@ -705,6 +705,6 @@ public final class MacroTemplateResolver {
       WHOLE;
    }
 
-   private record PlaceholderSpan(String init_Str, int init_I, String load, String read) {
+   private record PlaceholderSpan(String text, int weight, String rangeLo, String rangeHi) {
    }
 }

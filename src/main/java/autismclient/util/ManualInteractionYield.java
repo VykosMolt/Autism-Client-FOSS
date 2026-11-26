@@ -54,7 +54,7 @@ public final class ManualInteractionYield {
    }
 
    private static boolean read() {
-      return SilentMovementCoordinator.activeRotation() != null && SilentRotationManager.init_Z();
+      return SilentMovementCoordinator.activeRotation() != null && SilentRotationManager.isReturningToPlayer();
    }
 
    public static void init_V(Minecraft mc) {
@@ -109,7 +109,7 @@ public final class ManualInteractionYield {
 
    private static void load(Minecraft mc) {
       if (mc != null) {
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          if (tick != update) {
             update = tick;
             if (mc.player != null && mc.level != null && mc.options != null && !autismclient.modules.FreecamController.isActive()) {

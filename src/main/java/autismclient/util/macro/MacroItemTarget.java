@@ -65,13 +65,13 @@ public final class MacroItemTarget {
    }
 
    public Component toStyledComponent() {
-      Component rich = MacroExecutor.init_Component_Str(this.textJson);
+      Component rich = MacroExecutor.deserializeComponentJson(this.textJson);
       return rich != null ? rich.copy() : Component.literal(this.rawLabel());
    }
 
    public Component restyleText(String editedValue) {
       String safeValue = editedValue == null ? "" : editedValue;
-      Component rich = MacroExecutor.init_Component_Str(this.textJson);
+      Component rich = MacroExecutor.deserializeComponentJson(this.textJson);
       return rich == null ? Component.literal(safeValue) : preserveComponentStyles(rich, safeValue);
    }
 
@@ -103,7 +103,7 @@ public final class MacroItemTarget {
       } else {
          Component styled = this.restyleText(safeValue);
          target.displayName = safeValue;
-         target.textJson = styled == null ? "" : MacroExecutor.init_Str_Component(styled);
+         target.textJson = styled == null ? "" : MacroExecutor.serializeComponentJson(styled);
          target.manual = false;
          target.template = safeValue.contains("{") ? safeValue : "";
          return target;
@@ -129,7 +129,7 @@ public final class MacroItemTarget {
 
    public String resolvedDisplayName() {
       if (this.hasTextJson()) {
-         Component rich = MacroExecutor.init_Component_Str(this.textJson);
+         Component rich = MacroExecutor.deserializeComponentJson(this.textJson);
          if (rich != null && !rich.getString().isBlank()) {
             return rich.getString();
          }
@@ -149,7 +149,7 @@ public final class MacroItemTarget {
 
    public Component toDisplayComponent() {
       if (this.hasTextJson()) {
-         Component rich = MacroExecutor.init_Component_Str(this.textJson);
+         Component rich = MacroExecutor.deserializeComponentJson(this.textJson);
          if (rich != null) {
             return rich.copy();
          }
@@ -305,7 +305,7 @@ public final class MacroItemTarget {
          target.displayName = stack.getHoverName().getString();
          target.manual = false;
          if (hasCustomOrStyledName(stack)) {
-            target.textJson = MacroExecutor.init_Str_Component(stack.getHoverName());
+            target.textJson = MacroExecutor.serializeComponentJson(stack.getHoverName());
          }
 
          return target;
@@ -372,7 +372,7 @@ public final class MacroItemTarget {
       }
 
       if (this.hasTextJson()) {
-         String stackJson = MacroExecutor.init_Str_Component(stack.getHoverName());
+         String stackJson = MacroExecutor.serializeComponentJson(stack.getHoverName());
          if (this.textJson.equals(stackJson)) {
             return 400;
          } else {
@@ -505,21 +505,21 @@ public final class MacroItemTarget {
          String trimmed = source.trim();
          if (trimmed.matches("\\{[A-Za-z_][A-Za-z0-9_.-]{0,63}}")) {
             String name = trimmed.substring(1, trimmed.length() - 1);
-            Optional<MacroVarValue> value = MacroVariableContext.init_Optional_Str(name);
-            if (value.isPresent() && value.get().init_l_DataUtil() == MacroVarValue.ValueType.ITEM) {
+            Optional<MacroVarValue> value = MacroVariableContext.get(name);
+            if (value.isPresent() && value.get().getType() == MacroVarValue.ValueType.ITEM) {
                MacroVarValue item = value.get();
                MacroItemTarget resolved = new MacroItemTarget();
-               resolved.slot = item.init_Optional_Str("slot").map(v -> parseIntOrDefault(v.init_Str(), this.slot)).orElse(this.slot);
-               resolved.registryId = item.init_Optional_Str("id").map(MacroVarValue::init_Str).orElse("");
-               resolved.displayName = item.init_Optional_Str("name").map(MacroVarValue::init_Str).orElse(item.init_Str());
+               resolved.slot = item.resolvePath("slot").map(v -> parseIntOrDefault(v.asString(), this.slot)).orElse(this.slot);
+               resolved.registryId = item.resolvePath("id").map(MacroVarValue::asString).orElse("");
+               resolved.displayName = item.resolvePath("name").map(MacroVarValue::asString).orElse(item.asString());
                resolved.manual = false;
                return resolved;
             }
          }
 
-         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(source, mc);
-         if (resolution.init_Z() && !resolution.init_Str().isBlank()) {
-            MacroItemTarget resolved = parse(resolution.init_Str());
+         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.resolveTemplate(source, mc);
+         if (resolution.success() && !resolution.value().isBlank()) {
+            MacroItemTarget resolved = parse(resolution.value());
             if (this.hasSlot()) {
                resolved.slot = this.slot;
             }
@@ -542,7 +542,7 @@ public final class MacroItemTarget {
    }
 
    private static String stripFormatting(String text) {
-      return MacroExecutor.init_Str_Str(text);
+      return MacroExecutor.cleanVisibleChatText(text);
    }
 
    private static boolean looksLikeRegistryId(String text) {
@@ -589,7 +589,7 @@ public final class MacroItemTarget {
             return true;
          }
 
-         String json = MacroExecutor.init_Str_Component(stackName);
+         String json = MacroExecutor.serializeComponentJson(stackName);
          return json.contains("\"color\"")
             || json.contains("\"bold\"")
             || json.contains("\"italic\"")

@@ -35,33 +35,33 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.getConnection() != null) {
          BlockPos pos = this.init_BlockPos_Minecraft(mc);
          if (pos != null) {
-            MacroTemplateResolver.ResolveResult resolvedLine1 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line1, mc);
-            MacroTemplateResolver.ResolveResult resolvedLine2 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line2, mc);
-            MacroTemplateResolver.ResolveResult resolvedLine3 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line3, mc);
-            MacroTemplateResolver.ResolveResult resolvedLine4 = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.line4, mc);
-            if (MacroVariableContext.init_Z_Str_j_CachePoolArr("Edit sign", resolvedLine1, resolvedLine2, resolvedLine3, resolvedLine4)) {
-               MacroTemplateResolver.ResolveResult resolvedCommand = MacroTemplateResolver.ResolveResult.init("");
+            MacroTemplateResolver.ResolveResult resolvedLine1 = MacroVariableContext.resolveTemplate(this.line1, mc);
+            MacroTemplateResolver.ResolveResult resolvedLine2 = MacroVariableContext.resolveTemplate(this.line2, mc);
+            MacroTemplateResolver.ResolveResult resolvedLine3 = MacroVariableContext.resolveTemplate(this.line3, mc);
+            MacroTemplateResolver.ResolveResult resolvedLine4 = MacroVariableContext.resolveTemplate(this.line4, mc);
+            if (MacroVariableContext.requireResolved("Edit sign", resolvedLine1, resolvedLine2, resolvedLine3, resolvedLine4)) {
+               MacroTemplateResolver.ResolveResult resolvedCommand = MacroTemplateResolver.ResolveResult.ok("");
                if (this.sendCommandAfter && this.commandAfter != null && !this.commandAfter.isBlank()) {
-                  resolvedCommand = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.commandAfter, mc);
-                  if (!MacroVariableContext.init_Z_Str_j_CachePoolArr("Edit sign command", resolvedCommand)) {
+                  resolvedCommand = MacroVariableContext.resolveTemplate(this.commandAfter, mc);
+                  if (!MacroVariableContext.requireResolved("Edit sign command", resolvedCommand)) {
                      return;
                   }
                }
 
-               AutismSessionState.init_ck().size(true);
+               AutismSessionState.getInstance().setForceNextSignUpdate(true);
                mc.getConnection()
                   .send(
                      Compat263.newSignUpdatePacket(
                         pos,
                         this.init_Z_Minecraft_2(mc),
-                        resolvedLine1.init_Str(),
-                        resolvedLine2.init_Str(),
-                        resolvedLine3.init_Str(),
-                        resolvedLine4.init_Str()
+                        resolvedLine1.value(),
+                        resolvedLine2.value(),
+                        resolvedLine3.value(),
+                        resolvedLine4.value()
                      )
                   );
                if (this.sendCommandAfter && this.commandAfter != null && !this.commandAfter.isBlank()) {
-                  String command = resolvedCommand.init_Str().trim();
+                  String command = resolvedCommand.value().trim();
                   if (command.startsWith("/")) {
                      command = command.substring(1);
                   }
@@ -92,7 +92,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
       if (this.targetMode == SignEditAction.Inner_StreamUtil.MANUAL_POS) {
          return new BlockPos(this.f_x_I, this.f_y_I, this.f_z_I);
       } else if (this.targetMode == SignEditAction.Inner_StreamUtil.LAST_INTERACTED_BLOCK) {
-         return AutismSessionState.init_ck().init_BlockPos();
+         return AutismSessionState.getInstance().getLastInteractedBlockPos();
       } else {
          return mc.gui.screen() instanceof SignEditScreenAccessor access ? access.autism$getSignPos() : null;
       }

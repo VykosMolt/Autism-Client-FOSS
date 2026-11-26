@@ -26,19 +26,19 @@ public class AssertAction implements MacroAction {
       if (!this.init(mc)) {
          String out;
          if (this.message != null && !this.message.isBlank()) {
-            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.message, mc);
-            if (!resolved.init_Z()) {
+            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.resolveTemplate(this.message, mc);
+            if (!resolved.success()) {
                return;
             }
 
-            out = resolved.init_Str();
+            out = resolved.value();
          } else {
             out = "Macro assert failed: " + this.check;
          }
 
          AutismClientMessaging.sendPrefixed("§c" + out);
          if (this.failureBehavior == AssertAction.Inner_StreamUtil.STOP_MACRO) {
-            MacroExecutor.init_V();
+            MacroExecutor.stopCurrentRun();
          }
       }
    }
@@ -48,31 +48,31 @@ public class AssertAction implements MacroAction {
          return false;
       }
 
-      MacroTemplateResolver.ResolveResult itemResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.itemName, mc);
-      MacroTemplateResolver.ResolveResult entityResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.entityId, mc);
-      MacroTemplateResolver.ResolveResult guiResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiType, mc);
-      if (itemResolution.init_Z() && entityResolution.init_Z() && guiResolution.init_Z()) {
+      MacroTemplateResolver.ResolveResult itemResolution = MacroVariableContext.resolveTemplate(this.itemName, mc);
+      MacroTemplateResolver.ResolveResult entityResolution = MacroVariableContext.resolveTemplate(this.entityId, mc);
+      MacroTemplateResolver.ResolveResult guiResolution = MacroVariableContext.resolveTemplate(this.guiType, mc);
+      if (itemResolution.success() && entityResolution.success() && guiResolution.success()) {
          boolean var10000;
          switch (this.check) {
             case HELD_ITEM:
                var10000 = mc.player != null
-                  && MacroItemTarget.parse(itemResolution.init_Str()).matchScore(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot())
+                  && MacroItemTarget.parse(itemResolution.value()).matchScore(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot())
                      >= 0;
                break;
             case INVENTORY_ITEM:
-               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.parse(itemResolution.init_Str()));
+               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.parse(itemResolution.value()));
                break;
             case GUI_TYPE:
-               var10000 = GuiScreenMatcher.init(mc.gui.screen(), guiResolution.init_Str(), "");
+               var10000 = GuiScreenMatcher.init(mc.gui.screen(), guiResolution.value(), "");
                break;
             case LOOKING_AT_ENTITY:
-               var10000 = mc.crosshairPickEntity != null && this.init(mc.crosshairPickEntity, entityResolution.init_Str());
+               var10000 = mc.crosshairPickEntity != null && this.init(mc.crosshairPickEntity, entityResolution.value());
                break;
             case LOOKING_AT_CONTAINER_ENTITY:
-               var10000 = mc.crosshairPickEntity != null && this.init(mc.crosshairPickEntity, entityResolution.init_Str()) && this.init(mc.crosshairPickEntity);
+               var10000 = mc.crosshairPickEntity != null && this.init(mc.crosshairPickEntity, entityResolution.value()) && this.init(mc.crosshairPickEntity);
                break;
             case MOUNTED_ENTITY:
-               var10000 = mc.player != null && mc.player.getVehicle() != null && this.init(mc.player.getVehicle(), entityResolution.init_Str());
+               var10000 = mc.player != null && mc.player.getVehicle() != null && this.init(mc.player.getVehicle(), entityResolution.value());
                break;
             case HAS_BUNDLE:
                var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.parse("minecraft:bundle"));

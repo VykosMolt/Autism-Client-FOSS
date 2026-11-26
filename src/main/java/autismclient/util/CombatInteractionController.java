@@ -66,7 +66,7 @@ public final class CombatInteractionController {
 
    private static boolean open() {
       Module aura = autismclient.modules.al.init_Module_Str("kill-aura");
-      return aura != null && aura.isEnabled() && "kill-aura".equals(SilentRotationManager.init_Str()) && SilentRotationManager.read_Z();
+      return aura != null && aura.isEnabled() && "kill-aura".equals(SilentRotationManager.getActiveOwnerId()) && SilentRotationManager.hasActiveRotation();
    }
 
    public static boolean load() {
@@ -89,11 +89,11 @@ public final class CombatInteractionController {
          && !autismclient.modules.aD.init_Z()
          && !autismclient.modules.FreecamController.isActive()
          && !RemoteViewController.init_Z()
-         && !MacroExecutor.write_Z()
+         && !MacroExecutor.isRunning()
          && (AutismLiteVariant.enabled() || !autismclient.util.g.PkgCls_a.init_Z())
          && !f.load()
          && !SilentMovementCoordinator.isSafeWalkActive()
-         && !autismclient.modules.BlinkPacketManager.init_Z()
+         && !autismclient.modules.BlinkPacketManager.isBlinking()
          && !autismclient.modules.AutoTotemModule.init_Z_6()
          && !autismclient.modules.AutoArmorModule.init_Z_20();
    }
@@ -113,7 +113,7 @@ public final class CombatInteractionController {
 
    public static boolean write() {
       Minecraft mc = Minecraft.getInstance();
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (open() && load_Z(mc) && !load()) {
          if (init_LocalPlayer != null && (init_LocalPlayer != mc.player || init_ClientPacketListen != mc.getConnection() || init_ClientLevel != mc.level)) {
             init_V();
@@ -197,9 +197,9 @@ public final class CombatInteractionController {
                   read_ce_DataUtil = RotationMath.lookAt(init_Vec3(), init_LocalPlayer.getEyePosition());
                }
 
-               ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-               float yaw = ServerRotationTracker.init_F();
-               RotationMath.Rotation written = wire.init_Z() ? new RotationMath.Rotation(Float.isFinite(yaw) ? yaw : wire.read(), wire.write()) : null;
+               ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+               float yaw = ServerRotationTracker.getLastWireYaw();
+               RotationMath.Rotation written = wire.initialized() ? new RotationMath.Rotation(Float.isFinite(yaw) ? yaw : wire.currentYaw(), wire.currentPitch()) : null;
                boolean ready = tick > read_I && written != null && init_Z(mc, written);
                write_V(mc);
                if (!autismclient.modules.KillAuraModule.init_Z_ce_DataUtil(ready ? written : read_ce_DataUtil, init_q_DataUtil, ready)) {
@@ -226,13 +226,13 @@ public final class CombatInteractionController {
                   return false;
                }
 
-               if (!SilentRotationManager.init_Z(read_ce_DataUtil)) {
+               if (!SilentRotationManager.snapKillAuraRotation(read_ce_DataUtil)) {
                   init_V();
                   return false;
                }
             }
 
-            init_ce_DataUtil = SilentRotationManager.init_ce_DataUtil();
+            init_ce_DataUtil = SilentRotationManager.getCurrentRotation();
             return true;
          } else {
             init_V();
@@ -250,7 +250,7 @@ public final class CombatInteractionController {
          && init_LocalPlayer == mc.player
          && init_ClientPacketListen == mc.getConnection()
          && init_ClientLevel == mc.level
-         && write_I == AutismSessionState.init_ck().state_I()
+         && write_I == AutismSessionState.getInstance().getClientTick()
          && open();
    }
 
@@ -259,12 +259,12 @@ public final class CombatInteractionController {
    }
 
    private static boolean poll() {
-      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
       return init_ce_DataUtil != null
-         && wire.init_Z()
-         && Math.abs(RotationMath.angleDelta(wire.read(), init_ce_DataUtil.yaw())) < 0.001F
-         && Math.abs(wire.write() - init_ce_DataUtil.pitch()) < 0.001F
-         && AutismSessionState.init_ck().state_I() > read_I;
+         && wire.initialized()
+         && Math.abs(RotationMath.angleDelta(wire.currentYaw(), init_ce_DataUtil.yaw())) < 0.001F
+         && Math.abs(wire.currentPitch() - init_ce_DataUtil.pitch()) < 0.001F
+         && AutismSessionState.getInstance().getClientTick() > read_I;
    }
 
    public static void init_V(Minecraft mc) {
@@ -290,7 +290,7 @@ public final class CombatInteractionController {
                   init_ClientPacketListen = mc.getConnection();
                   init_ClientLevel = mc.level;
                   if (!init_Z) {
-                     sync_I = AutismSessionState.init_ck().state_I();
+                     sync_I = AutismSessionState.getInstance().getClientTick();
                   }
 
                   init_Z = true;
@@ -299,7 +299,7 @@ public final class CombatInteractionController {
             } else {
                if (key.autism$clickCount() > 0) {
                   if (!init_Z) {
-                     sync_I = AutismSessionState.init_ck().state_I();
+                     sync_I = AutismSessionState.getInstance().getClientTick();
                   }
 
                   init_Z = true;
@@ -338,15 +338,15 @@ public final class CombatInteractionController {
          && !autismclient.modules.aD.init_Z()
          && !autismclient.modules.FreecamController.isActive()
          && !RemoteViewController.init_Z()) {
-         AutismSessionState state = AutismSessionState.init_ck();
-         return !state.frame() && !state.pool();
+         AutismSessionState state = AutismSessionState.getInstance();
+         return !state.hasEntityCaptureCallback() && !state.hasBlockCaptureCallback();
       } else {
          return false;
       }
    }
 
    public static CombatInteractionController.Inner_DataUtil init_ListPool_DataUtil(Minecraft mc) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (!load() && !sync_Z && load_Z(mc) && update_I != tick) {
          if (!close() || update_Z(mc) && !init(tick)) {
             if (update() && poll() && write_Z(mc) && init_Z(mc, init_ce_DataUtil)) {
@@ -398,7 +398,7 @@ public final class CombatInteractionController {
          : (init_HitResult instanceof EntityHitResult entity ? entity.getLocation().subtract(entity.getEntity().position()) : init_HitResult.getLocation());
       init_BlockState = init_HitResult instanceof BlockHitResult block && block.getType() == Type.BLOCK ? mc.level.getBlockState(block.getBlockPos()) : null;
       read_ce_DataUtil = load_ce_DataUtil;
-      read_I = AutismSessionState.init_ck().state_I();
+      read_I = AutismSessionState.getInstance().getClientTick();
       load_J = System.nanoTime();
       close = true;
    }
@@ -501,13 +501,13 @@ public final class CombatInteractionController {
 
    private static RotationMath.Rotation init_ce_DataUtil(Minecraft mc) {
       RotationMath.Rotation camera = RotationMath.ofPlayer(mc.player);
-      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-      if (!wire.init_Z()) {
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+      if (!wire.initialized()) {
          return camera;
       }
 
-      float yaw = ServerRotationTracker.init_F();
-      RotationMath.Rotation from = new RotationMath.Rotation(Float.isFinite(yaw) ? yaw : wire.read(), wire.write());
+      float yaw = ServerRotationTracker.getLastWireYaw();
+      RotationMath.Rotation from = new RotationMath.Rotation(Float.isFinite(yaw) ? yaw : wire.currentYaw(), wire.currentPitch());
       RotationMath.Rotation rounded = RotationMath.applyGcd(camera, from);
       if (load(mc, rounded)) {
          return rounded;

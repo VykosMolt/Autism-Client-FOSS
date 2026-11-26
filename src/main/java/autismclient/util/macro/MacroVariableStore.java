@@ -37,7 +37,7 @@ public final class MacroVariableStore {
          if (value == null) {
             return Optional.empty();
          } else {
-            return dot < 0 ? Optional.of(value) : value.init_Optional_Str(key.substring(dot + 1));
+            return dot < 0 ? Optional.of(value) : value.resolvePath(key.substring(dot + 1));
          }
       }
    }

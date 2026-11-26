@@ -22,7 +22,7 @@ public class WaitForTeleportAction implements CaptureOutputAction, MacroAction {
       tag.putDouble("minDistance", this.minDistance);
       tag.putBoolean("horizontalOnly", this.horizontalOnly);
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -35,7 +35,7 @@ public class WaitForTeleportAction implements CaptureOutputAction, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 

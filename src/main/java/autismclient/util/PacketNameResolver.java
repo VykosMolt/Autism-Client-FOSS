@@ -138,7 +138,7 @@ public class PacketNameResolver {
 
    public static String init_Str_Str(String name) {
       if (name != null && !name.isEmpty()) {
-         Class<? extends Packet<?>> packetClass = PacketTypeRegistry.init_Class_Str(name);
+         Class<? extends Packet<?>> packetClass = PacketTypeRegistry.resolvePacketClass(name);
          if (packetClass != null) {
             String resolved = load(packetClass);
             return resolved != null ? read(resolved) : "Unknown Packet";
@@ -161,14 +161,14 @@ public class PacketNameResolver {
          return null;
       }
 
-      String direct = PacketTypeRegistry.init_Str_Class(packetClass);
+      String direct = PacketTypeRegistry.getPacketName(packetClass);
       if (direct != null) {
          return direct;
       }
 
-      for (Class<? extends Packet<?>> registeredClass : PacketTypeRegistry.init_Set) {
+      for (Class<? extends Packet<?>> registeredClass : PacketTypeRegistry.ALL_PACKETS) {
          if (registeredClass == packetClass || registeredClass.isAssignableFrom(packetClass)) {
-            String name = PacketTypeRegistry.init_Str_Class(registeredClass);
+            String name = PacketTypeRegistry.getPacketName(registeredClass);
             if (name != null) {
                return name;
             }
@@ -231,8 +231,8 @@ public class PacketNameResolver {
             return manual;
          }
 
-         for (Class<? extends Packet<?>> registeredClass : PacketTypeRegistry.init_Set) {
-            String registeredName = PacketTypeRegistry.init_Str_Class(registeredClass);
+         for (Class<? extends Packet<?>> registeredClass : PacketTypeRegistry.ALL_PACKETS) {
+            String registeredName = PacketTypeRegistry.getPacketName(registeredClass);
             if (registeredName != null && init_Z_Str(normalizedText, registeredName, registeredClass)) {
                return registeredName;
             }
@@ -257,7 +257,7 @@ public class PacketNameResolver {
          }
 
          for (Class<? extends Packet<?>> registeredClass : init_Iterable_Str(direction)) {
-            String registeredName = PacketTypeRegistry.init_Str_Class(registeredClass);
+            String registeredName = PacketTypeRegistry.getPacketName(registeredClass);
             if (registeredName != null && init_Z_Str(normalizedText, registeredName, registeredClass)) {
                return registeredName;
             }
@@ -272,7 +272,7 @@ public class PacketNameResolver {
    private static String write(Class<? extends Packet<?>> packetClass, String direction) {
       for (Class<? extends Packet<?>> registeredClass : init_Iterable_Str(direction)) {
          if (registeredClass == packetClass) {
-            return PacketTypeRegistry.init_Str_Class(registeredClass);
+            return PacketTypeRegistry.getPacketName(registeredClass);
          }
       }
 
@@ -281,9 +281,9 @@ public class PacketNameResolver {
 
    private static Iterable<Class<? extends Packet<?>>> init_Iterable_Str(String direction) {
       if ("C2S".equalsIgnoreCase(direction)) {
-         return PacketTypeRegistry.load();
+         return PacketTypeRegistry.getC2sPackets();
       } else {
-         return "S2C".equalsIgnoreCase(direction) ? PacketTypeRegistry.init_Set() : PacketTypeRegistry.init_Set;
+         return "S2C".equalsIgnoreCase(direction) ? PacketTypeRegistry.getS2cPackets() : PacketTypeRegistry.ALL_PACKETS;
       }
    }
 

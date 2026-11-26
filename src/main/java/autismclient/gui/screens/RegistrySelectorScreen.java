@@ -117,7 +117,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          }
 
          this.init(x + 4, this.close(), panelW - 8, this.flush());
-         this.init_k.init_V(graphics, mx, my, delta);
+         this.init_k.render(graphics, mx, my, delta);
          RegistrySelectorScreen.Inner_BufferHelper pane = this.init_NodeWalker_BufferH();
          this.init(graphics, pane, pane.init(), "Available", true, mx, my);
          this.init(graphics, pane, pane.load(), "Selected", false, mx, my);
@@ -278,7 +278,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          return true;
       }
 
-      if (this.init_k != null && this.init_k.init_Z_D_2(mx, my, Compat263.mouseEventGlfwButton(event))) {
+      if (this.init_k != null && this.init_k.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
          return true;
       }
 
@@ -326,7 +326,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       this.init_Z = false;
       this.load_Z = false;
       if (this.init_k != null) {
-         this.init_k.load(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
+         this.init_k.mouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
       }
 
       return true;
@@ -343,7 +343,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          this.push = this.init_I_I_10(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_Z(false), my, this.pop));
          return true;
       } else {
-         return this.init_k != null && this.init_k.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
+         return this.init_k != null && this.init_k.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
       }
    }
 
@@ -373,14 +373,14 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          this.onClose();
          return true;
       } else {
-         return this.init_k != null && this.init_k.init_Z_KeyEvent(input) ? true : true;
+         return this.init_k != null && this.init_k.keyPressed(input) ? true : true;
       }
    }
 
    @Override
    public boolean charTyped(CharacterEvent input) {
       if (this.init_k != null) {
-         this.init_k.init_Z_CharacterEvent(input);
+         this.init_k.charTyped(input);
       }
 
       return true;
@@ -389,19 +389,19 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    private void init(int x, int y, int w, int h) {
       if (this.init_k == null) {
          this.init_k = new ThemedTextInputBox(Minecraft.getInstance(), this.font, x, y, w, h, false);
-         this.init_k.init_V_Component(Component.literal("Search"));
-         this.init_k.init_V_Consumer(value -> this.read_V_10());
-         this.init_k.push(true);
+         this.init_k.setPlaceholder(Component.literal("Search"));
+         this.init_k.setChangedListener(value -> this.read_V_10());
+         this.init_k.setFocused(true);
       }
 
-      this.init_k.read(x);
-      this.init_k.write(y);
-      this.init_k.update(w);
-      this.init_k.sync(h);
+      this.init_k.setX(x);
+      this.init_k.setY(y);
+      this.init_k.setWidth(w);
+      this.init_k.setHeight(h);
    }
 
    private String init_Str_6() {
-      return this.init_k == null ? "" : this.init_k.load_Str();
+      return this.init_k == null ? "" : this.init_k.getValue();
    }
 
    @Override

@@ -24,12 +24,12 @@ public class WaitEntityTargetAction implements MacroAction {
 
    public boolean init(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
-         MacroTemplateResolver.ResolveResult entityResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.entityId, mc);
-         if (!entityResolution.init_Z()) {
+         MacroTemplateResolver.ResolveResult entityResolution = MacroVariableContext.resolveTemplate(this.entityId, mc);
+         if (!entityResolution.success()) {
             return false;
          }
 
-         String expectedEntity = entityResolution.init_Str();
+         String expectedEntity = entityResolution.value();
          boolean var10000;
          switch (this.condition) {
             case LOOKING_AT:
@@ -87,7 +87,7 @@ public class WaitEntityTargetAction implements MacroAction {
       tag.putDouble("range", this.range);
       tag.putBoolean("containerEntitiesOnly", this.containerEntitiesOnly);
       tag.putInt("timeoutMs", this.timeoutMs);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
 
@@ -98,7 +98,7 @@ public class WaitEntityTargetAction implements MacroAction {
       this.range = tag.getDoubleOr("range", 5.0);
       this.containerEntitiesOnly = tag.getBooleanOr("containerEntitiesOnly", false);
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
    @Override

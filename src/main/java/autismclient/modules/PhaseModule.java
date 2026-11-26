@@ -407,16 +407,16 @@ public final class PhaseModule extends Module {
          this.load_Z = false;
          this.read_Z = false;
          this.read_I = 0;
-         BlinkPacketManager.init(this.init_HashUtil_StreamUti);
+         BlinkPacketManager.registerPolicy(this.init_HashUtil_StreamUti);
       }
 
       @Override
       public void load() {
          this.init_aF_DataUtil_DataUt = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.FLUSHING;
-         BlinkPacketManager.flush();
+         BlinkPacketManager.flushIncoming();
          this.init_aF_DataUtil_DataUt = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING;
-         BlinkPacketManager.load(this.init_HashUtil_StreamUti);
-         BlinkPacketManager.init(true, true);
+         BlinkPacketManager.unregisterPolicy(this.init_HashUtil_StreamUti);
+         BlinkPacketManager.requestPolicyFlush(true, true);
          this.load_I = 0;
          this.init_Str = null;
          this.load_Z = false;
@@ -461,7 +461,7 @@ public final class PhaseModule extends Module {
                this.init_Z = true;
 
                try {
-                  for (Vec3 pos : BlinkPacketManager.init_List()) {
+                  for (Vec3 pos : BlinkPacketManager.getQueuedMovementPositions()) {
                      if (PhaseModule.init(player, pos)) {
                         collides = true;
                         break;
@@ -496,9 +496,9 @@ public final class PhaseModule extends Module {
 
       private void flush() {
          this.init_aF_DataUtil_DataUt = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.FLUSHING;
-         BlinkPacketManager.flush();
+         BlinkPacketManager.flushIncoming();
          this.init_aF_DataUtil_DataUt = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING;
-         BlinkPacketManager.init(false, true);
+         BlinkPacketManager.requestPolicyFlush(false, true);
          this.load_I = 0;
          if (this.read_Z) {
             this.read_I = 0;

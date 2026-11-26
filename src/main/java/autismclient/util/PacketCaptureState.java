@@ -68,7 +68,7 @@ public final class PacketCaptureState {
    }
 
    public static void write() {
-      load(autismclient.modules.ModuleRuntimeManager.init_PoolEntry());
+      load(autismclient.modules.ModuleRuntimeManager.getInstance());
    }
 
    public static void init_V_PoolEntry(autismclient.modules.ModuleRuntimeManager module) {
@@ -82,15 +82,15 @@ public final class PacketCaptureState {
    public static void load(autismclient.modules.ModuleRuntimeManager module) {
       int next = 0;
       if (module != null && !autismclient.modules.aD.read_Z()) {
-         if (module.update_Z()) {
+         if (module.isLoggerCaptureEnabled()) {
             next |= 1;
          }
 
-         if (module.sync_Z()) {
+         if (module.needsAnyPayloadHook()) {
             next |= 2;
          }
 
-         long deadline = module.init_J();
+         long deadline = module.getJoinProbeWindowUntilMs();
          load_J = deadline > System.currentTimeMillis() ? deadline : 0L;
       } else {
          load_J = 0L;

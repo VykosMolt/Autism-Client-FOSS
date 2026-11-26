@@ -130,14 +130,14 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    @Override
    public void onDisable() {
       this.init_V_23();
-      autismclient.util.SilentRotationManager.init(this.id());
+      autismclient.util.SilentRotationManager.releaseOwner(this.id());
    }
 
    @Override
    public void onGameLeft() {
       this.init_V_23();
-      if (this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
-         autismclient.util.SilentRotationManager.load_V();
+      if (this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+         autismclient.util.SilentRotationManager.resetAll();
       }
    }
 
@@ -152,7 +152,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       this.close_I = -1;
       this.open = -1;
       this.poll = 0;
-      autismclient.util.InventorySlotArbiter.update_V(this.id());
+      autismclient.util.InventorySlotArbiter.releaseAllClaims(this.id());
    }
 
    @Override
@@ -162,13 +162,13 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
 
    @Override
    public boolean hasDisabledTickWork() {
-      return autismclient.util.SilentRotationManager.read_Z() && this.id().equals(autismclient.util.SilentRotationManager.init_Str());
+      return autismclient.util.SilentRotationManager.hasActiveRotation() && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
    }
 
    @Override
    public void tick() {
-      if (!this.isEnabled() && MC != null && MC.player != null && this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
+      if (!this.isEnabled() && MC != null && MC.player != null && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+         autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
       }
    }
 
@@ -182,15 +182,15 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       if (!(al.init_Module_Str("surround") instanceof SurroundModule surround)) {
          return false;
       } else {
-         int age = AutismSessionState.init_ck().state_I() - surround.flush_I;
-         return age >= 0 && age <= 5 && "surround".equals(autismclient.util.SilentRotationManager.init_Str());
+         int age = AutismSessionState.getInstance().getClientTick() - surround.flush_I;
+         return age >= 0 && age <= 5 && "surround".equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
       }
    }
 
    @Override
    public boolean load_Z_23() {
       boolean enabled = this.isEnabled();
-      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.read_Z_13());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || enabled && this.read_Z_13());
    }
 
    private boolean read_Z_13() {
@@ -204,7 +204,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
-         && !MacroExecutor.write_Z()
+         && !MacroExecutor.isRunning()
          && !MC.player.isDeadOrDying()
          && !MC.player.isSpectator()
          && !MC.player.isUsingItem()
@@ -216,7 +216,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    private boolean sync_Z_7() {
-      return this.init_aa_JsonUtil.init(AutismSessionState.init_ck().state_I(), this::flush_Z_6);
+      return this.init_aa_JsonUtil.init(AutismSessionState.getInstance().getClientTick(), this::flush_Z_6);
    }
 
    private boolean flush_Z_6() {
@@ -229,9 +229,9 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    private void load_V_19() {
-      if (MC != null && MC.player != null && this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
-         autismclient.util.SilentRotationManager.init(this.id());
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
+      if (MC != null && MC.player != null && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+         autismclient.util.SilentRotationManager.releaseOwner(this.id());
+         autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
       }
    }
 
@@ -387,8 +387,8 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          return init_DirectionArr;
       }
 
-      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-      float fromYaw = wire.init_Z() ? wire.read() : MC.player.getYRot();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+      float fromYaw = wire.initialized() ? wire.currentYaw() : MC.player.getYRot();
       int start = 0;
       float best = 3.4028235E38F;
 
@@ -476,11 +476,11 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
             if (slot >= 0 && slot != MC.player.getInventory().getSelectedSlot()) {
                this.init_V_I_9(slot);
             }
-         } else if (BlinkPacketManager.load_Z()) {
+         } else if (BlinkPacketManager.isHoldingActionsOnly()) {
             this.load_V_19();
          } else if (!this.init_List.isEmpty() && slot >= 0) {
-            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-            RotationMath.Rotation wireRotation = wire.init_Z() ? new RotationMath.Rotation(wire.read(), wire.write()) : null;
+            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+            RotationMath.Rotation wireRotation = wire.initialized() ? new RotationMath.Rotation(wire.currentYaw(), wire.currentPitch()) : null;
             RotationMath.Rotation from = wireRotation != null ? wireRotation : RotationMath.ofPlayer(MC.player);
             ItemStack material = MC.player.getInventory().getItem(slot);
             SurroundModule.Inner_StreamUtil plan = this.init_aK_StreamUtil_ce_DataUtil(from, material, null);
@@ -517,14 +517,14 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    private boolean init(RotationMath.Rotation goal, boolean holdPitch) {
-      autismclient.util.SilentRotationManager.init_V_Str(this.id(), 25, goal);
-      this.flush_I = AutismSessionState.init_ck().state_I();
-      if (!this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
+      autismclient.util.SilentRotationManager.requestRotation(this.id(), 25, goal);
+      this.flush_I = AutismSessionState.getInstance().getClientTick();
+      if (!this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
          return false;
       }
 
       int speed = this.integer("aim-speed");
-      autismclient.util.SilentRotationManager.init(this.id(), MC.player, init_F_I_2(speed), holdPitch ? 0.0F : init_F_I_2(speed), init_ap_StreamUtil_I(speed));
+      autismclient.util.SilentRotationManager.tick(this.id(), MC.player, init_F_I_2(speed), holdPitch ? 0.0F : init_F_I_2(speed), init_ap_StreamUtil_I(speed));
       return true;
    }
 
@@ -621,12 +621,12 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    private boolean close_Z_5() {
-      return AutismSessionState.init_ck().state_I() != this.sync_I;
+      return AutismSessionState.getInstance().getClientTick() != this.sync_I;
    }
 
    private void init(SurroundModule.Inner_StreamUtil plan, BlockHitResult hit) {
       InteractionHand hand = InteractionHand.MAIN_HAND;
-      if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+      if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
             if (!autismclient.util.ClientInteractionOverride.init(hit, hand)) {
                return;
@@ -640,7 +640,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
             this.close_V_5();
             this.init_BlockPos = plan.init_BlockPos();
          } finally {
-            autismclient.util.InventorySlotArbiter.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
       }
    }
@@ -656,17 +656,17 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    private void close_V_5() {
-      this.sync_I = AutismSessionState.init_ck().state_I();
+      this.sync_I = AutismSessionState.getInstance().getClientTick();
    }
 
    @Override
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
-      return this.sync_I == AutismSessionState.init_ck().state_I();
+      return this.sync_I == AutismSessionState.getInstance().getClientTick();
    }
 
    @Override
    public boolean shouldCancelAttack(HitResult hitResult) {
-      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.read_Z();
+      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && autismclient.util.SilentRotationManager.hasActiveRotation();
    }
 
    private void init_V_BlockPos_5(BlockPos cell) {
@@ -686,7 +686,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       int best = -1;
 
       for (int slot = 0; slot < 9; slot++) {
-         if (!autismclient.util.InventorySlotArbiter.init(slot, this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, this.id())) {
             ItemStack stack = inventory.getItem(slot);
             if (this.init_Z_ItemStack_5(stack)) {
                if (slot == selected) {
@@ -704,7 +704,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    private void init_V_I_9(int slot) {
-      if (!BedDefenderModule.init_Z_10() && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+      if (!BedDefenderModule.init_Z_10() && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
             int selected = MC.player.getInventory().getSelectedSlot();
             if (this.close_I < 0 && this.bool("switch-back")) {
@@ -714,7 +714,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
             autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
             this.open = slot;
          } finally {
-            autismclient.util.InventorySlotArbiter.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
       }
    }
@@ -727,14 +727,14 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          } else if (this.open >= 0 && MC.player.getInventory().getSelectedSlot() != this.open) {
             this.close_I = -1;
             this.open = -1;
-         } else if (++this.poll >= 6 && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+         } else if (++this.poll >= 6 && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             try {
                autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, this.close_I);
                this.close_I = -1;
                this.open = -1;
                this.poll = 0;
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
          }
       }

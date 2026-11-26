@@ -16,18 +16,18 @@ public class MacroVariablesAction implements MacroAction {
       LinkedHashMap<String, MacroVarValue> resolvedValues = new LinkedHashMap<>();
 
       for (int i = 0; i < count; i++) {
-         MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.values.get(i), mc);
-         if (!resolved.init_Z()) {
+         MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.resolveTemplate(this.values.get(i), mc);
+         if (!resolved.success()) {
             return;
          }
 
          String name = this.names.get(i);
          if (!MacroVariableStore.load(name).isEmpty()) {
-            resolvedValues.put(name, MacroVarValue.init_l_Obj(resolved.init_Str()));
+            resolvedValues.put(name, MacroVarValue.ofText(resolved.value()));
          }
       }
 
-      MacroVariableContext.init_V_Map(resolvedValues);
+      MacroVariableContext.setAll(resolvedValues);
    }
 
    @Override

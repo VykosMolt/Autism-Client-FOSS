@@ -27,7 +27,7 @@ public class AutismKeyboardHandlerMixin {
 
    @WrapMethod(method = "keyPress")
    private void autism$userKey(long window, int action, KeyEvent event, Operation<Void> original) {
-      OverlayScreenController.init_V();
+      OverlayScreenController.beginExplicitTransition();
 
       try {
          if (action == 1 && event != null) {
@@ -53,7 +53,7 @@ public class AutismKeyboardHandlerMixin {
             original.call(window, action, event);
          }
       } finally {
-         OverlayScreenController.load_V();
+         OverlayScreenController.endExplicitTransition();
       }
    }
 
@@ -99,7 +99,7 @@ public class AutismKeyboardHandlerMixin {
 
    @WrapMethod(method = "charTyped")
    private void autism$userText(long window, CharacterEvent event, Operation<Void> original) {
-      OverlayScreenController.init_V();
+      OverlayScreenController.beginExplicitTransition();
 
       try {
          if (AutismLiteVariant.enabled() || !aP.load_Z()) {
@@ -107,7 +107,7 @@ public class AutismKeyboardHandlerMixin {
             return;
          }
       } finally {
-         OverlayScreenController.load_V();
+         OverlayScreenController.endExplicitTransition();
       }
    }
 

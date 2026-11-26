@@ -250,8 +250,8 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
 
    private void sync_V_6() {
       if (!AutismLiteVariant.enabled()) {
-         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-         AutismOverlay profiles = module == null ? null : module.load_cX();
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+         AutismOverlay profiles = module == null ? null : module.getOrCreateProfilesOverlay();
          if (profiles != null) {
             ((AutismProfilesOverlay)profiles).load(false);
             profiles.init_V_Z(true);
@@ -732,9 +732,9 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
 
    private void init_V_Str_5(String requested) {
       String selected = CommandPrefixHelper.init_Str(requested);
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (module != null) {
-         module.init_V_Str(selected);
+         module.setCommandPrefix(selected);
       } else {
          this.init_AutismConfig().commandPrefix = selected;
          this.init_AutismConfig().save();

@@ -922,7 +922,7 @@ public class ThemeColorScreen extends Screen {
          this.load_F = hsb[1];
          this.read_F = hsb[2];
          if (this.init_k != null) {
-            this.init_k.push(false);
+            this.init_k.setFocused(false);
          }
 
          this.load_V();
@@ -935,16 +935,16 @@ public class ThemeColorScreen extends Screen {
       private void init_V() {
          if (this.init_k == null) {
             this.init_k = new autismclient.util.ThemedTextInputBox(init_Minecraft(), init_Minecraft().font, 0, 0, 20, autismclient.gui.ui.UiDensityMetrics.scaledHeight(13), false);
-            this.init_k.load(6);
-            this.init_k.load(next -> next.chars().allMatch(ch -> init_Z_C((char)ch)));
-            this.init_k.init_V_Consumer(value -> this.sync());
-            this.init_k.init_V_Str(String.format(Locale.ROOT, "%06X", this.flush_I << 16 | this.close << 8 | this.open));
+            this.init_k.setMaxLength(6);
+            this.init_k.setFilter(next -> next.chars().allMatch(ch -> init_Z_C((char)ch)));
+            this.init_k.setChangedListener(value -> this.sync());
+            this.init_k.setValue(String.format(Locale.ROOT, "%06X", this.flush_I << 16 | this.close << 8 | this.open));
          }
       }
 
       private void load_V() {
-         if (this.init_k != null && !this.init_k.init_Z()) {
-            this.init_k.init_V_Str(String.format(Locale.ROOT, "%06X", this.flush_I << 16 | this.close << 8 | this.open));
+         if (this.init_k != null && !this.init_k.isFocused()) {
+            this.init_k.setValue(String.format(Locale.ROOT, "%06X", this.flush_I << 16 | this.close << 8 | this.open));
          }
       }
 
@@ -998,11 +998,11 @@ public class ThemeColorScreen extends Screen {
          autismclient.gui.f.PacketUtil.load(g2, swatch, 3, this.load_I(), ctx.init_TableIndex().colors().borderSubtle);
          this.flush_NetHelper = autismclient.gui.f.NetHelper.init(rx, swatch.load() + 2, rw, ctrlH);
          this.init_V();
-         this.init_k.read(this.flush_NetHelper.read());
-         this.init_k.write(this.flush_NetHelper.write());
-         this.init_k.update(this.flush_NetHelper.update());
-         this.init_k.sync(this.flush_NetHelper.sync());
-         this.init_k.init_V(g2, ctx.read(), ctx.write(), 0.0F);
+         this.init_k.setX(this.flush_NetHelper.read());
+         this.init_k.setY(this.flush_NetHelper.write());
+         this.init_k.setWidth(this.flush_NetHelper.update());
+         this.init_k.setHeight(this.flush_NetHelper.sync());
+         this.init_k.render(g2, ctx.read(), ctx.write(), 0.0F);
          int sy = this.init_NetHelper.load() + 4;
          this.read_NetHelper = autismclient.gui.f.NetHelper.init(area.read() + 14, sy, area.update() - 52, 9);
          this.write_NetHelper = autismclient.gui.f.NetHelper.init(area.read() + 14, sy + 12, area.update() - 52, 9);
@@ -1056,7 +1056,7 @@ public class ThemeColorScreen extends Screen {
             return false;
          } else {
             this.init_V();
-            if (this.init_k.init_Z_D_2(mx, my, button)) {
+            if (this.init_k.mouseClicked(mx, my, button)) {
                return true;
             } else if (this.init_NetHelper.init_Z(mx, my)) {
                this.push = 1;
@@ -1089,7 +1089,7 @@ public class ThemeColorScreen extends Screen {
       }
 
       void init_V_I(int mx, int my, int button, double dx, double dy) {
-         if (this.init_k == null || !this.init_k.init(mx, my, button, dx, dy)) {
+         if (this.init_k == null || !this.init_k.mouseDragged(mx, my, button, dx, dy)) {
             switch (this.push) {
                case 1:
                   this.init(mx, my);
@@ -1117,18 +1117,18 @@ public class ThemeColorScreen extends Screen {
       void init_V(int mx, int my, int button) {
          this.push = 0;
          if (this.init_k != null) {
-            this.init_k.load(mx, my, button);
+            this.init_k.mouseReleased(mx, my, button);
          }
       }
 
       boolean init_Z_KeyEvent(KeyEvent input) {
-         if (this.init_k != null && this.init_k.init_Z()) {
+         if (this.init_k != null && this.init_k.isFocused()) {
             int key = Compat263.keyEventGlfwKey(input);
             if (key != 257 && key != 335 && key != 256) {
-               this.init_k.init_Z_KeyEvent(input);
+               this.init_k.keyPressed(input);
                return true;
             } else {
-               this.init_k.push(false);
+               this.init_k.setFocused(false);
                this.load_V();
                return true;
             }
@@ -1138,8 +1138,8 @@ public class ThemeColorScreen extends Screen {
       }
 
       boolean init_Z_CharacterEvent(CharacterEvent input) {
-         if (this.init_k != null && this.init_k.init_Z()) {
-            this.init_k.init_Z_CharacterEvent(input);
+         if (this.init_k != null && this.init_k.isFocused()) {
+            this.init_k.charTyped(input);
             return true;
          } else {
             return false;
@@ -1147,7 +1147,7 @@ public class ThemeColorScreen extends Screen {
       }
 
       private void sync() {
-         String hexText = this.init_k == null ? "" : this.init_k.load_Str();
+         String hexText = this.init_k == null ? "" : this.init_k.getValue();
          if (hexText.length() == 6) {
             try {
                int rgb = Integer.parseInt(hexText, 16) & 16777215;

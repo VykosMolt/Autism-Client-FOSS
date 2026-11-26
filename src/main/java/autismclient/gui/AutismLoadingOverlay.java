@@ -26,7 +26,7 @@ public class AutismLoadingOverlay extends LoadingOverlay {
    private static final Identifier init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/loading_logo.png");
    private static final int init_I = 2106;
    private static final int load_I = 1297;
-   private static final int read_I = UiColorPalette.e();
+   private static final int read_I = UiColorPalette.solidBlack();
    private static final int write_I = 236;
    private static final int update = 32;
    private static final int sync = 39;

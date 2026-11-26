@@ -31,11 +31,11 @@ public final class GuiMovementPassThrough {
          load_V();
          return false;
       } else {
-         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-         if (module == null || !module.init_Z() || !module.run_Z()) {
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+         if (module == null || !module.isActive() || !module.isInventoryMoveEnabled()) {
             load_V();
             return false;
-         } else if (MacroExecutor.read_Z()) {
+         } else if (MacroExecutor.isHoldingMovementInput()) {
             load_V();
             return false;
          } else if (!init_Z()) {
@@ -167,13 +167,13 @@ public final class GuiMovementPassThrough {
          return false;
       }
 
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-      if (module == null || !module.init_Z() || !module.run_Z()) {
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+      if (module == null || !module.isActive() || !module.isInventoryMoveEnabled()) {
          load_V();
          return false;
       }
 
-      if (MacroExecutor.read_Z()) {
+      if (MacroExecutor.isHoldingMovementInput()) {
          load_V();
          return false;
       }

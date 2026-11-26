@@ -114,7 +114,7 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
       tag.putString("type", this.getType().name());
       tag.putString("packetName", this.packetName);
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       ListTag list = new ListTag();
 
@@ -136,7 +136,7 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
       this.packetNames.clear();
       if (tag.contains("packetNames")) {

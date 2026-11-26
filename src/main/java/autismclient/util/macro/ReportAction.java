@@ -53,7 +53,7 @@ public class ReportAction implements MacroAction {
 
                   boolean fired;
                   try {
-                     fired = MacroExecutor.init_Z_Minecraft_4(mc, condition, remainingTimeout);
+                     fired = MacroExecutor.executeTriggerAction(mc, condition, remainingTimeout);
                   } catch (Throwable e) {
                      if (e instanceof InterruptedException) {
                         Thread.currentThread().interrupt();
@@ -79,8 +79,8 @@ public class ReportAction implements MacroAction {
                         "§b" + this.init_Str_3() + ": " + deltaMs + " ms (" + this.load_Str_2() + " -> " + this.read_Str() + ")"
                      );
                      if (this.stashToSharedState) {
-                        AutismSessionState.init_ck()
-                           .init_V_ck_ConfigStore(
+                        AutismSessionState.getInstance()
+                           .recordTimingMeasurement(
                               new AutismSessionState.TimingMeasurement(this.init_Str_3(), deltaMs, this.load_Str_2(), this.read_Str(), System.currentTimeMillis())
                            );
                      }
@@ -98,13 +98,13 @@ public class ReportAction implements MacroAction {
                || p instanceof ServerboundChatCommandSignedPacket
                || p instanceof ServerboundChatPacket spc && spc.message() != null && spc.message().startsWith("/")
             : p -> p instanceof ServerboundContainerClickPacket;
-         MacroExecutor.PacketWaiter sendListener = MacroExecutor.load_MacroExecutor_Even_Predicate(startMatch);
+         MacroExecutor.PacketWaiter sendListener = MacroExecutor.registerOutgoingPacketWaiter(startMatch);
 
          try {
             if (this.startEvent == ReportAction.Inner_CachePool.COMMAND_SENT) {
                String command = init_Str_Str_2(this.commandText);
                if (command.isBlank()) {
-                  sendListener.init_V();
+                  sendListener.cancel();
                   AutismClientMessaging.sendPrefixed("Report \"" + this.init_Str_3() + "\": set a command for COMMAND_SENT.");
                   return null;
                }
@@ -116,10 +116,10 @@ public class ReportAction implements MacroAction {
                });
             }
 
-            sendListener.init_CompletableFuture.get(Math.max(100, this.timeoutMs), TimeUnit.MILLISECONDS);
+            sendListener.future.get(Math.max(100, this.timeoutMs), TimeUnit.MILLISECONDS);
             return System.nanoTime();
          } catch (Exception e) {
-            sendListener.init_V();
+            sendListener.cancel();
             if (e instanceof InterruptedException) {
                Thread.currentThread().interrupt();
                return null;

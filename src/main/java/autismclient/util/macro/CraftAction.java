@@ -177,7 +177,7 @@ public class CraftAction implements MacroAction {
       }
 
       public Component init_Component() {
-         Component rich = MacroExecutor.init_Component_Str(this.read_Str);
+         Component rich = MacroExecutor.deserializeComponentJson(this.read_Str);
          return rich != null && !rich.getString().isBlank() ? rich.copy() : Component.literal(this.load_Str == null ? "" : this.load_Str);
       }
 
@@ -221,7 +221,7 @@ public class CraftAction implements MacroAction {
          entry.init_I = option.init_I;
          entry.init_Str = option.init_Str;
          entry.load_Str = option.load_Str;
-         entry.read_Str = MacroExecutor.init_Str_Component(option.init_Component);
+         entry.read_Str = MacroExecutor.serializeComponentJson(option.init_Component);
          entry.load_I = Math.max(1, option.init_ItemStack.getCount());
          entry.read_I = Math.max(1, amount);
          entry.init_Z = useMaxAmount;

@@ -82,8 +82,8 @@ public final class AirPlaceModule extends Module {
          && MC.gameMode != null
          && MC.options.keyUse.isDown()
          && ((AutismMinecraftAccessor)MC).autism$getRightClickDelay() <= 0
-         && !BlinkPacketManager.load_Z()
-         && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+         && !BlinkPacketManager.isHoldingActionsOnly()
+         && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
             if (!PerTickPlacementLock.init(this.id())) {
                return;
@@ -92,14 +92,14 @@ public final class AirPlaceModule extends Module {
             this.init_V_BlockHitResult(placement.init_BlockHitResult());
             ((AutismMinecraftAccessor)MC).autism$setRightClickDelay(4);
          } finally {
-            autismclient.util.InventorySlotArbiter.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
       }
    }
 
    private void init_V_BlockHitResult(BlockHitResult hit) {
       for (InteractionHand hand : InteractionHand.values()) {
-         if (hand != InteractionHand.OFF_HAND || !autismclient.util.InventorySlotArbiter.load_Z(this.id())) {
+         if (hand != InteractionHand.OFF_HAND || !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id())) {
             ItemStack stack = MC.player.getItemInHand(hand);
             if (!stack.isItemEnabled(MC.level.enabledFeatures())) {
                return;

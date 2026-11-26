@@ -274,7 +274,7 @@ public final class AiServerIntel {
 
       boolean force = AiJson.getBoolean(args, "force", false);
       final int timeoutSeconds = Math.max(1, Math.min(150, AiJson.getInt(args, "timeoutSeconds", 150)));
-      final AutismServerInfoOverlay overlay = ModuleRuntimeManager.init_PoolEntry().init_AutismServerInfoOv();
+      final AutismServerInfoOverlay overlay = ModuleRuntimeManager.getInstance().getOrCreateServerInfoOverlay();
       if (force) {
          overlay.open_V_12();
       }

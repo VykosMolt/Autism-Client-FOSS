@@ -458,7 +458,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
    @Override
    public void a__V() {
-      AutismSessionState.init_ck().init_V_Str_cH(this.init_Str(), this.init_cH());
+      AutismSessionState.getInstance().setOverlayBounds(this.init_Str(), this.init_cH());
       AutismConfig config = AutismConfig.getGlobal();
       AutismConfig.ModuleCategoryLayout layout = config.moduleCategoryLayouts.computeIfAbsent("MAIN_MENU", ignored -> new AutismConfig.ModuleCategoryLayout());
       OverlayBounds trueGeometry = OverlayManager.getInstance().getStashedBounds(this.init_Str());
@@ -474,7 +474,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
    @Override
    public void b__V() {
-      OverlayBounds saved = AutismSessionState.init_ck().init_cH_Str(this.init_Str());
+      OverlayBounds saved = AutismSessionState.getInstance().getOverlayBounds(this.init_Str());
       boolean savedVisible = saved == null || saved.visible;
       boolean savedCollapsed = saved != null && saved.collapsed;
       AutismConfig config = AutismConfig.getGlobal();
@@ -500,9 +500,9 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    @Override
    public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       if (this.flush_Z || this.a__Z()) {
-         AutismSessionState shared = AutismSessionState.init_ck();
+         AutismSessionState shared = AutismSessionState.getInstance();
          if (this.init_ByteReader != null) {
-            boolean sending = shared.read_Z();
+            boolean sending = shared.isSendPacketsEnabled();
             this.init_ByteReader.init_ByteReader_Str("Send");
             this.init_ByteReader
                .init_ByteReader_ByteReader_StreamU(
@@ -511,7 +511,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          }
 
          if (this.load_ByteReader != null) {
-            boolean delaying = shared.write_Z();
+            boolean delaying = shared.isDelayPacketsEnabled();
             this.load_ByteReader.init_ByteReader_Str("Delay");
             this.load_ByteReader
                .init_ByteReader_ByteReader_StreamU(

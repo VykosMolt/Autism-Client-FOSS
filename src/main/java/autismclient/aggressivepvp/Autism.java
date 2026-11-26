@@ -27,7 +27,7 @@ public final class Autism {
 
     /** The AUTISM module that holds the look this tick, or null. */
     public static String aimOwner() {
-        return SilentRotationManager.init_Str();
+        return SilentRotationManager.getActiveOwnerId();
     }
 
     /** Left alone by AUTISM's own Crystal Aura: a bot (AntiBot) or a friend Teams protects from attacks. */

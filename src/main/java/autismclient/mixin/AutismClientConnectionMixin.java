@@ -157,7 +157,7 @@ public abstract class AutismClientConnectionMixin {
       this.autism$spoofPipelineInstalled = false;
       PacketCaptureState.read();
       if (((Connection)(Object)this).getPacketListener() instanceof ClientGamePacketListener) {
-         ServerRotationTracker.init_V();
+         ServerRotationTracker.reset();
          ScaffoldModule.update_V_10();
          if (!AutismLiteVariant.enabled()) {
             LeafDupeModule.load_V_21();
@@ -185,7 +185,7 @@ public abstract class AutismClientConnectionMixin {
             return;
          }
 
-         ServerRotationTracker.init(packet);
+         ServerRotationTracker.onOutgoingPacket(packet);
          if (!AutismLiteVariant.enabled()) {
             BacktrackModule.init_V_Connection_Packet((Connection)(Object)this, packet);
          }
@@ -307,12 +307,12 @@ public abstract class AutismClientConnectionMixin {
          }
 
          PacketListener packetListener = ((Connection)(Object)this).getPacketListener();
-         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
+         ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
          ModuleRuntimeManager.Inner_DataUtil hooks = module == null
-            ? ModuleRuntimeManager.Inner_DataUtil.init_PoolEntry_DataUtil()
-            : module.init_PoolEntry_DataUtil_Z(this.isPlayConnectionActive());
-         boolean normalLoggerPath = hooks.init_Z();
-         String protocolHint = !hooks.read() && !hooks.write() ? "" : this.autism$protocolHint(packetListener);
+            ? ModuleRuntimeManager.Inner_DataUtil.none()
+            : module.getPacketCapturePlan(this.isPlayConnectionActive());
+         boolean normalLoggerPath = hooks.normalPath();
+         String protocolHint = !hooks.loggerCapture() && !hooks.serverInfoObservation() ? "" : this.autism$protocolHint(packetListener);
          if (!aD.read_Z() && !PkgCls_a.load_Z()) {
             if (PkgCls_a.init_Z_Packet(packet)) {
                ci.cancel();
@@ -326,33 +326,33 @@ public abstract class AutismClientConnectionMixin {
                   }
                }
 
-               if (!this.autism$isLocalClientPlayConnection() || !PingSpoofScheduler.load_Z(packet) && !BlinkPacketManager.load(packet)) {
+               if (!this.autism$isLocalClientPlayConnection() || !PingSpoofScheduler.load_Z(packet) && !BlinkPacketManager.interceptOutgoing(packet)) {
                   if (this.autism$isLocalClientPlayConnection() && packet instanceof ServerboundPongPacket pong) {
                      autismclient.util.SprintStateTracker.load(pong.getId());
                   }
 
                   boolean payloadLoggedEarly = false;
-                  if (module != null && hooks.read()) {
-                     payloadLoggedEarly = module.init_Z(packet, "C2S", protocolHint);
+                  if (module != null && hooks.loggerCapture()) {
+                     payloadLoggedEarly = module.captureCustomPayloadPacket(packet, "C2S", protocolHint);
                   }
 
-                  if (module != null && !normalLoggerPath && hooks.write()) {
-                     module.init_V_Packet(packet);
+                  if (module != null && !normalLoggerPath && hooks.serverInfoObservation()) {
+                     module.observeOutgoingServerInfoPacket(packet);
                   }
 
-                  AutismSessionState shared = AutismSessionState.init_ck();
+                  AutismSessionState shared = AutismSessionState.getInstance();
                   if (packet instanceof ServerboundUseItemOnPacket pibp
-                     && shared.init_Z_BlockPos_Direction(pibp.hitResult().getBlockPos(), pibp.hitResult().getDirection())) {
+                     && shared.dispatchBlockCapture(pibp.hitResult().getBlockPos(), pibp.hitResult().getDirection())) {
                      ScaffoldModule.load_V_Packet(packet);
                      ci.cancel();
-                  } else if (packet instanceof ServerboundInteractPacket && shared.frame()) {
-                     shared.init_Z_Entity(Minecraft.getInstance().crosshairPickEntity);
+                  } else if (packet instanceof ServerboundInteractPacket && shared.hasEntityCaptureCallback()) {
+                     shared.dispatchEntityCapture(Minecraft.getInstance().crosshairPickEntity);
                      ScaffoldModule.load_V_Packet(packet);
                      ci.cancel();
                   } else {
                      if (packet instanceof ServerboundContainerClosePacket closeForHold) {
                         boolean requiredClose = !AutismLiteVariant.enabled() && AiMenuClose.init(closeForHold);
-                        if (!requiredClose && shared.queue_Z()) {
+                        if (!requiredClose && shared.pollDropNextContainerClose()) {
                            ci.cancel();
                            return;
                         }
@@ -371,8 +371,8 @@ public abstract class AutismClientConnectionMixin {
 
                      if (normalLoggerPath) {
                         if (packet instanceof ServerboundUseItemOnPacket pibp) {
-                           shared.init_V_BlockPos(pibp.hitResult().getBlockPos());
-                           shared.init_V_E(InteractionTargetRef.init(pibp.hitResult(), pibp.hand()));
+                           shared.setLastInteractedBlockPos(pibp.hitResult().getBlockPos());
+                           shared.setLastInteractionTarget(InteractionTargetRef.init(pibp.hitResult(), pibp.hand()));
                         }
 
                         if (packet instanceof ServerboundInteractPacket entityPacket) {
@@ -380,46 +380,46 @@ public abstract class AutismClientConnectionMixin {
                            if (targeted != null && targeted != Minecraft.getInstance().player) {
                               InteractionHand capturedHand = entityPacket.hand();
                               Vec3 capturedHitPos = entityPacket.location();
-                              shared.init_V_E(capturedHitPos != null ? InteractionTargetRef.init(targeted, capturedHand, capturedHitPos) : InteractionTargetRef.init(targeted, capturedHand));
+                              shared.setLastInteractionTarget(capturedHitPos != null ? InteractionTargetRef.init(targeted, capturedHand, capturedHitPos) : InteractionTargetRef.init(targeted, capturedHand));
                            }
                         }
 
-                        if (packet instanceof ServerboundSignUpdatePacket && shared.buffer_Z()) {
+                        if (packet instanceof ServerboundSignUpdatePacket && shared.consumeDropNextSignUpdate()) {
                            ci.cancel();
-                        } else if (packet instanceof ServerboundEditBookPacket && shared.entry()) {
+                        } else if (packet instanceof ServerboundEditBookPacket && shared.consumeDropNextBookEdit()) {
                            ci.cancel();
                         } else {
-                           boolean forceBookOrSignPacket = packet instanceof ServerboundSignUpdatePacket && shared.node()
-                              || packet instanceof ServerboundEditBookPacket && shared.task();
-                           if (packet instanceof ServerboundSignUpdatePacket && !shared.set_Z()) {
-                              shared.open(true);
+                           boolean forceBookOrSignPacket = packet instanceof ServerboundSignUpdatePacket && shared.consumeForceNextSignUpdate()
+                              || packet instanceof ServerboundEditBookPacket && shared.consumeForceNextBookEdit();
+                           if (packet instanceof ServerboundSignUpdatePacket && !shared.isSignEditingAllowed()) {
+                              shared.setAllowSignEditing(true);
                               if (!forceBookOrSignPacket) {
                                  ci.cancel();
                                  return;
                               }
                            }
 
-                           if (packet instanceof ServerboundEditBookPacket && !shared.put_Z()) {
-                              shared.poll(true);
+                           if (packet instanceof ServerboundEditBookPacket && !shared.isBookEditingAllowed()) {
+                              shared.setAllowBookEditing(true);
                               if (!forceBookOrSignPacket) {
                                  ci.cancel();
                                  return;
                               }
                            }
 
-                           if (shared.cache_Z()) {
+                           if (shared.isGbreakCapturing()) {
                               if (packet instanceof ServerboundPlayerActionPacket) {
-                                 shared.read_V_Packet(packet);
+                                 shared.onGbreakPacket(packet);
                               }
                            } else if (packet instanceof ServerboundPlayerActionPacket actionPacket
                               && actionPacket.getAction() == net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK
                               && al.load_Z_BlockPos_Direction(actionPacket.getPos(), actionPacket.getDirection())) {
                               ci.cancel();
-                           } else if (module.init(packet, payloadLoggedEarly)) {
+                           } else if (module.onPacketSend(packet, payloadLoggedEarly)) {
                               ScaffoldModule.load_V_Packet(packet);
                               ci.cancel();
                            } else if (!forceBookOrSignPacket) {
-                              if (!shared.get_Z()) {
+                              if (!shared.isBypassingPacketInterception()) {
                                  autismclient.util.macro.PacketGateManager.Inner_StreamUtil gateResult = autismclient.util.macro.PacketGateManager.init(packet, "C2S");
                                  if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.CANCEL) {
                                     ScaffoldModule.load_V_Packet(packet);
@@ -428,18 +428,18 @@ public abstract class AutismClientConnectionMixin {
                                  }
 
                                  if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.DELAY) {
-                                    shared.init_V_Packet(packet);
+                                    shared.enqueueDelayedPacket(packet);
                                     ci.cancel();
                                     return;
                                  }
                               }
 
                               if (AutismLiteVariant.enabled() || autismclient.e.RefQueue.init()) {
-                                 boolean anyFeatureActive = shared.write_Z() || !shared.read_Z() || shared.reset_Z();
-                                 if (anyFeatureActive && !shared.get_Z() && !autism$isTransactionSync(packet)) {
+                                 boolean anyFeatureActive = shared.isDelayPacketsEnabled() || !shared.isSendPacketsEnabled() || shared.isUseCustomPackets();
+                                 if (anyFeatureActive && !shared.isBypassingPacketInterception() && !autism$isTransactionSync(packet)) {
                                     boolean shouldHandle = false;
-                                    if (shared.reset_Z()) {
-                                       shouldHandle = shared.load_Set().contains(packet.getClass());
+                                    if (shared.isUseCustomPackets()) {
+                                       shouldHandle = shared.getCustomC2sPackets().contains(packet.getClass());
                                     } else {
                                        shouldHandle = this.isGuiPacket(packet);
                                     }
@@ -450,29 +450,29 @@ public abstract class AutismClientConnectionMixin {
                                              .debug(
                                                 "[Autism] Packet detected: {} | Send={} Delay={} | Custom={}",
                                                 packet.getClass().getSimpleName(),
-                                                shared.read_Z(),
-                                                shared.write_Z(),
-                                                shared.reset_Z()
+                                                shared.isSendPacketsEnabled(),
+                                                shared.isDelayPacketsEnabled(),
+                                                shared.isUseCustomPackets()
                                              );
                                        }
 
-                                       if (!shared.read_Z()) {
+                                       if (!shared.isSendPacketsEnabled()) {
                                           if (AUTISM_PACKET_TRACE) {
                                              AutismClientAddon.LOG.debug("[Autism] CANCELLED packet (send disabled)");
                                           }
 
                                           ScaffoldModule.load_V_Packet(packet);
                                           ci.cancel();
-                                       } else if (shared.write_Z()) {
+                                       } else if (shared.isDelayPacketsEnabled()) {
                                           if (AUTISM_PACKET_TRACE) {
                                              AutismClientAddon.LOG.debug("[Autism] QUEUED packet (delay enabled)");
                                           }
 
-                                          ModuleRuntimeManager captureModule = ModuleRuntimeManager.init_PoolEntry();
-                                          AutismSessionState.ReplayMode captureMode = captureModule != null && captureModule.next_Z()
+                                          ModuleRuntimeManager captureModule = ModuleRuntimeManager.getInstance();
+                                          AutismSessionState.ReplayMode captureMode = captureModule != null && captureModule.isCaptureAsExact()
                                              ? AutismSessionState.ReplayMode.EXACT
                                              : AutismSessionState.ReplayMode.REGENERATE;
-                                          shared.init_V_Packet_ck_BufferHelper(packet, captureMode);
+                                          shared.enqueueDelayedPacket(packet, captureMode);
                                           ci.cancel();
                                        }
                                     }
@@ -497,7 +497,7 @@ public abstract class AutismClientConnectionMixin {
          }
 
          if (this.isAutismActive()) {
-            MacroExecutor.init_V_Packet(packet);
+            MacroExecutor.onOutgoingPacket(packet);
          }
       }
    }
@@ -513,11 +513,11 @@ public abstract class AutismClientConnectionMixin {
    @Unique
    private void autism$trackSentMessage(Packet<?> packet) {
       if (packet instanceof ServerboundChatPacket chat) {
-         AutismSessionState.init_ck().read_V_Str(chat.message());
+         AutismSessionState.getInstance().setLastSentMessage(chat.message());
       } else if (packet instanceof ServerboundChatCommandPacket command) {
-         AutismSessionState.init_ck().read_V_Str("/" + command.command());
+         AutismSessionState.getInstance().setLastSentMessage("/" + command.command());
       } else if (packet instanceof ServerboundChatCommandSignedPacket signed) {
-         AutismSessionState.init_ck().read_V_Str("/" + signed.command());
+         AutismSessionState.getInstance().setLastSentMessage("/" + signed.command());
       }
    }
 
@@ -539,14 +539,14 @@ public abstract class AutismClientConnectionMixin {
    @Inject(method = "channelRead0", at = @At("HEAD"), cancellable = true)
    private void yang$onReceivePacket(ChannelHandlerContext ctx, Packet<?> packet, CallbackInfo ci) {
          PacketListener listener = ((Connection)(Object)this).getPacketListener();
-         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
+         ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
          ModuleRuntimeManager.Inner_DataUtil hooks = module == null
-            ? ModuleRuntimeManager.Inner_DataUtil.init_PoolEntry_DataUtil()
-            : module.init_PoolEntry_DataUtil_Z(isPlayReceiveListener(listener));
-         boolean normalLoggerPath = hooks.init_Z();
+            ? ModuleRuntimeManager.Inner_DataUtil.none()
+            : module.getPacketCapturePlan(isPlayReceiveListener(listener));
+         boolean normalLoggerPath = hooks.normalPath();
          boolean vanillaDialogPacket = packet instanceof ClientboundShowDialogPacket || packet instanceof ClientboundClearDialogPacket;
          boolean customMenuPacket = !vanillaDialogPacket && CustomMenuAdapterRegistry.acceptsInbound(packet);
-         String protocolHint = !hooks.read() && !hooks.write() && !customMenuPacket ? "" : this.autism$protocolHint(listener);
+         String protocolHint = !hooks.loggerCapture() && !hooks.serverInfoObservation() && !customMenuPacket ? "" : this.autism$protocolHint(listener);
          if (aD.read_Z()) {
             this.autism$clearRuntimeConnectionStateOnDisconnect(packet);
          } else {
@@ -554,19 +554,19 @@ public abstract class AutismClientConnectionMixin {
                CustomMenuTracker.load(packet, protocolHint);
             }
 
-            if (!isPlayReceiveListener(listener) || !PingSpoofScheduler.init_Z(packet) && !BlinkPacketManager.init_Z(packet)) {
+            if (!isPlayReceiveListener(listener) || !PingSpoofScheduler.init_Z(packet) && !BlinkPacketManager.interceptIncoming(packet)) {
                this.autism$clearRuntimeConnectionStateOnDisconnect(packet);
                boolean payloadLoggedEarly = false;
-               if (module != null && hooks.read()) {
-                  payloadLoggedEarly = module.init_Z(packet, "S2C", protocolHint);
+               if (module != null && hooks.loggerCapture()) {
+                  payloadLoggedEarly = module.captureCustomPayloadPacket(packet, "S2C", protocolHint);
                }
 
-               if (module != null && !normalLoggerPath && hooks.write()) {
-                  module.load_V(packet);
+               if (module != null && !normalLoggerPath && hooks.serverInfoObservation()) {
+                  module.observeIncomingServerInfoPacket(packet);
                }
 
                if (autism$isIncomingChatPacket(packet)) {
-                  MacroExecutor.read(packet);
+                  MacroExecutor.recordIncomingChatPacket(packet);
                   autismclient.modules.AutoLoginModule.init(packet);
                }
 
@@ -577,7 +577,7 @@ public abstract class AutismClientConnectionMixin {
 
                if (normalLoggerPath) {
                   ServerTickPhaseTracker.init(packet);
-                  MacroExecutor.load_V_Packet(packet);
+                  MacroExecutor.onIncomingPacket(packet);
                   if (packet instanceof ClientboundCommandSuggestionsPacket macroSuggestions && CommandProbeIdAllocator.init(macroSuggestions.id())) {
                      ci.cancel();
                   } else {
@@ -585,22 +585,22 @@ public abstract class AutismClientConnectionMixin {
                         ContainerCloseGuard.load(openScreenPacket.getContainerId());
                      }
 
-                     if (module.load(packet, payloadLoggedEarly)) {
+                     if (module.onPacketReceive(packet, payloadLoggedEarly)) {
                         ci.cancel();
                      } else {
-                        AutismSessionState shared = AutismSessionState.init_ck();
+                        AutismSessionState shared = AutismSessionState.getInstance();
                         autismclient.util.macro.PacketGateManager.Inner_StreamUtil gateResult = autismclient.util.macro.PacketGateManager.init(packet, "S2C");
                         if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.CANCEL) {
                            ci.cancel();
                         } else if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.DELAY) {
-                           shared.init_V_Packet(packet);
+                           shared.enqueueDelayedPacket(packet);
                            ci.cancel();
                         } else if (AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init()) {
-                           boolean anyFeatureActive = shared.write_Z() || !shared.read_Z() || shared.reset_Z();
+                           boolean anyFeatureActive = shared.isDelayPacketsEnabled() || !shared.isSendPacketsEnabled() || shared.isUseCustomPackets();
                            if (anyFeatureActive && !autism$isTransactionSync(packet)) {
                               boolean shouldHandle = false;
-                              if (shared.reset_Z()) {
-                                 shouldHandle = shared.read_Set().contains(packet.getClass());
+                              if (shared.isUseCustomPackets()) {
+                                 shouldHandle = shared.getCustomS2cPackets().contains(packet.getClass());
                               }
 
                               if (shouldHandle) {
@@ -609,15 +609,15 @@ public abstract class AutismClientConnectionMixin {
                                        .debug(
                                           "[Autism] S2C Packet detected: {} | Send={} Delay={}",
                                           packet.getClass().getSimpleName(),
-                                          shared.read_Z(),
-                                          shared.write_Z()
+                                          shared.isSendPacketsEnabled(),
+                                          shared.isDelayPacketsEnabled()
                                        );
                                  }
 
-                                 if (!shared.read_Z()) {
+                                 if (!shared.isSendPacketsEnabled()) {
                                     ci.cancel();
-                                 } else if (shared.write_Z()) {
-                                    shared.init_V_Packet(packet);
+                                 } else if (shared.isDelayPacketsEnabled()) {
+                                    shared.enqueueDelayedPacket(packet);
                                     ci.cancel();
                                  }
                               }
@@ -634,8 +634,8 @@ public abstract class AutismClientConnectionMixin {
 
    @Unique
    private boolean isAutismActive() {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      return module != null && module.read_Z();
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      return module != null && module.needsPacketHooks();
    }
 
    @Unique
@@ -680,10 +680,10 @@ public abstract class AutismClientConnectionMixin {
             }
 
             if (!(packet instanceof ServerboundCustomPayloadPacket) && !aD.read_Z()) {
-               AutismSessionState shared = AutismSessionState.init_ck();
+               AutismSessionState shared = AutismSessionState.getInstance();
                if (packet instanceof ServerboundContainerClosePacket closeForHold) {
                   boolean requiredClose = !AutismLiteVariant.enabled() && AiMenuClose.init(closeForHold);
-                  if (!requiredClose && shared.queue_Z()) {
+                  if (!requiredClose && shared.pollDropNextContainerClose()) {
                      ci.cancel();
                      return;
                   }
@@ -726,10 +726,10 @@ public abstract class AutismClientConnectionMixin {
          autismclient.util.macro.PacketGateManager.load_V();
          PingSpoofScheduler.write();
          BlinkPacketManager.auditDisconnect();
-         AutismSessionState s = AutismSessionState.init_ck();
-         s.init_V_Set_Z(Collections.emptySet(), false);
-         s.sync(false);
-         s.update(false);
+         AutismSessionState s = AutismSessionState.getInstance();
+         s.setXCarrySlotMask(Collections.emptySet(), false);
+         s.setXCarryForced(false);
+         s.setXCarryActive(false);
       }
    }
 
@@ -781,9 +781,9 @@ public abstract class AutismClientConnectionMixin {
    private boolean autism$shouldKeepXCarryOpen(AutismSessionState shared, ServerboundContainerClosePacket packet) {
       Minecraft client = Minecraft.getInstance();
       if (client != null && client.player != null) {
-         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-         boolean allowPassiveXCarry = module != null && module.get_Z();
-         if (!allowPassiveXCarry && !shared.sync_Z()) {
+         ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+         boolean allowPassiveXCarry = module != null && module.isXCarryEnabled();
+         if (!allowPassiveXCarry && !shared.isXCarryForced()) {
             return false;
          }
 
@@ -793,16 +793,16 @@ public abstract class AutismClientConnectionMixin {
 
          Set<Integer> mask;
          boolean carryCursor;
-         if (shared.sync_Z()) {
-            mask = shared.init_Set();
-            carryCursor = shared.flush_Z();
+         if (shared.isXCarryForced()) {
+            mask = shared.getXCarrySlotMask();
+            carryCursor = shared.isXCarryCarryCursor();
          } else {
-            mask = module == null ? null : module.init_Set();
-            carryCursor = module == null || module.cache();
+            mask = module == null ? null : module.getXCarrySlotSet();
+            carryCursor = module == null || module.isXCarryCarryCursor();
          }
 
          boolean hasItems = XCarryAction.init_Z_InventoryMenu_3(client.player.inventoryMenu, carryCursor, mask);
-         shared.update(hasItems);
+         shared.setXCarryActive(hasItems);
          return true;
       } else {
          return false;

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderSpawnPacketMixin {
    @Inject(method = "handleAddEntity", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$dropSpawnPacket(ClientboundAddEntityPacket packet, CallbackInfo ci) {
-      if (packet != null && NoRenderState.load(packet.getType())) {
+      if (packet != null && NoRenderState.shouldDropSpawnPacket(packet.getType())) {
          ci.cancel();
       }
    }

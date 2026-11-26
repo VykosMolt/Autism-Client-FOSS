@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AutismNoRenderBlockSeedMixin {
    @Inject(method = "getSeed", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$constantSeed(BlockState state, BlockPos pos, CallbackInfoReturnable<Long> cir) {
-      if (NoRenderState.pool()) {
+      if (NoRenderState.useConstantTextureRotations()) {
          cir.setReturnValue(0L);
       }
    }

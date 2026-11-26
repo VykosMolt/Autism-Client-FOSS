@@ -39,7 +39,7 @@ final class WTapController {
    }
 
    private static int init_I() {
-      return AutismSessionState.init_ck().state_I();
+      return AutismSessionState.getInstance().getClientTick();
    }
 
    void init(Player attacker, Entity entity) {

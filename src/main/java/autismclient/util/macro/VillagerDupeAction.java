@@ -53,7 +53,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
       if (driver.init_Z && ctx.isActive()) {
          String why = last.load_Str();
          ctx.runOnClientThread(() -> AutismClientMessaging.sendPrefixed("§cVillager Dupe: " + why));
-         MacroExecutor.init_V();
+         MacroExecutor.stopCurrentRun();
       }
 
       int total = driver.init_I;

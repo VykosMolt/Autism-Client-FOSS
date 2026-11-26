@@ -79,7 +79,7 @@ final class AiProjectiles {
    static List<AiProjectiles.IncomingProjectile> init(Minecraft mc) {
       try {
          if (mc.player != null && mc.level != null) {
-            int now = autismclient.util.AutismSessionState.init_ck().state_I();
+            int now = autismclient.util.AutismSessionState.getInstance().getClientTick();
             if (init_LocalPlayer == mc.player && init_Obj == mc.level && now - load_I < 1) {
                return init_List;
             }

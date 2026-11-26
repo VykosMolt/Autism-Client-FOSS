@@ -520,13 +520,13 @@ public class MacroClipboardCodec {
                if (list != null && !list.isEmpty()) {
                   CompoundTag packetTag = (CompoundTag)list.get(0);
                   AutismSessionState.DelayedPacket qp = init_ck_CachePool(packetTag);
-                  return qp != null ? qp.init_Packet : null;
+                  return qp != null ? qp.packet : null;
                } else {
                   return null;
                }
             } else if (tag.contains("packet")) {
                AutismSessionState.DelayedPacket qp = init_ck_CachePool(tag);
-               return qp != null ? qp.init_Packet : null;
+               return qp != null ? qp.packet : null;
             } else {
                return init_Packet(tag);
             }
@@ -542,10 +542,10 @@ public class MacroClipboardCodec {
    public static CompoundTag init(AutismSessionState.DelayedPacket qp) {
       try {
          CompoundTag tag = new CompoundTag();
-         tag.putInt("delay", qp.load_I());
-         tag.putInt("id", qp.init_I());
-         tag.putString("replayMode", qp.init_ck_BufferHelper().name());
-         CompoundTag packetData = init(qp.init_Packet);
+         tag.putInt("delay", qp.getDelay());
+         tag.putInt("id", qp.getId());
+         tag.putString("replayMode", qp.getReplayMode().name());
+         CompoundTag packetData = init(qp.packet);
          if (packetData != null) {
             tag.put("packet", packetData);
             return tag;
@@ -588,7 +588,7 @@ public class MacroClipboardCodec {
       CompoundTag tag = new CompoundTag();
       String className = packet.getClass().getName();
       tag.putString("class", className);
-      String friendlyName = PacketTypeRegistry.init_Str_Class((Class<? extends Packet<?>>)packet.getClass());
+      String friendlyName = PacketTypeRegistry.getPacketName((Class<? extends Packet<?>>)packet.getClass());
       if (friendlyName != null) {
          tag.putString("friendlyName", friendlyName);
       }
@@ -629,7 +629,7 @@ public class MacroClipboardCodec {
          }
 
          if (packetClass == null && tag.contains("friendlyName")) {
-            packetClass = PacketTypeRegistry.init_Class_Str(tag.getStringOr("friendlyName", ""));
+            packetClass = PacketTypeRegistry.resolvePacketClass(tag.getStringOr("friendlyName", ""));
          }
 
          if (packetClass == null) {
@@ -644,7 +644,7 @@ public class MacroClipboardCodec {
 
          Packet<?> packet = (Packet<?>)init_o_CachePool().init_Obj_Class(packetClass);
          load(packet, fieldsTag);
-         if (!PacketTypeRegistry.load().contains(packetClass)) {
+         if (!PacketTypeRegistry.getC2sPackets().contains(packetClass)) {
             AutismClientAddon.LOG.warn("[Autism] Deserialized packet {} is NOT a registered C2S packet! It may be skipped when sending.", className);
          }
 
@@ -1117,11 +1117,11 @@ public class MacroClipboardCodec {
             Set<String> built = new HashSet<>();
 
             try {
-               for (Class<?> c : PacketTypeRegistry.load()) {
+               for (Class<?> c : PacketTypeRegistry.getC2sPackets()) {
                   built.add(c.getName());
                }
 
-               for (Class<?> c : PacketTypeRegistry.init_Set()) {
+               for (Class<?> c : PacketTypeRegistry.getS2cPackets()) {
                   built.add(c.getName());
                }
             } catch (Throwable var5) {

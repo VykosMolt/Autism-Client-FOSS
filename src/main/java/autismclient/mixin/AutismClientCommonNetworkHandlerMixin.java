@@ -56,11 +56,11 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
       if (!aD.read_Z() && this.minecraft.isSameThread()) {
          ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getActive(this.connection);
          if (context != null) {
-            AutismSessionState shared = AutismSessionState.init_ck();
-            ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-            boolean forceDeny = shared.clear_Z() || module != null && module.set_Z();
-            boolean sharedBypass = shared.add_Z();
-            boolean serializedBypass = module != null ? module.pop_Z() : AutismConfig.getGlobal().pretendPackAccepted;
+            AutismSessionState shared = AutismSessionState.getInstance();
+            ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+            boolean forceDeny = shared.isAutoDenyResourcePack() || module != null && module.isAutoDenyResourcePack();
+            boolean sharedBypass = shared.isPretendPackAccepted();
+            boolean serializedBypass = module != null ? module.isPretendPackAccepted() : AutismConfig.getGlobal().pretendPackAccepted;
             if (!AutismLiteVariant.enabled() && !FileCache.init()) {
                forceDeny = false;
                sharedBypass = false;

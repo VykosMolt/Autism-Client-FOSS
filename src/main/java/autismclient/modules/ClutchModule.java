@@ -266,7 +266,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    public static boolean close_Z_8() {
       ClutchModule clutch = init_j();
-      return clutch != null && clutch.init_Z && "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && !aD.init_Z() && !FreecamController.isActive();
+      return clutch != null && clutch.init_Z && "clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && !aD.init_Z() && !FreecamController.isActive();
    }
 
    public static boolean open_Z_5() {
@@ -313,7 +313,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private int read_I_9() {
-      return AutismSessionState.init_ck().state_I();
+      return AutismSessionState.getInstance().getClientTick();
    }
 
    private boolean init_Z_i_TaskQueue(ClutchFallPhysics.Inner_TaskQueue value) {
@@ -345,7 +345,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private boolean tick_Z_6() {
-      return "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.init_Z();
+      return "clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && autismclient.util.SilentRotationManager.isReturningToPlayer();
    }
 
    public static void init_V_ClientboundDamageE_3(ClientboundDamageEventPacket packet) {
@@ -814,9 +814,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          && !aD.init_Z()
          && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
-         && !BlinkPacketManager.init_Z()
+         && !BlinkPacketManager.isBlinking()
          && !PkgCls_a.init_Z()
-         && !MacroExecutor.write_Z()
+         && !MacroExecutor.isRunning()
          && !AutoTotemModule.init_Z_6();
    }
 
@@ -1176,12 +1176,12 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               }
 
                               if (!this.update_Z) {
-                                 RotationMath.Rotation aim = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                                 RotationMath.Rotation aim = autismclient.util.SilentRotationManager.getCurrentRotation();
                                  if (aim == null) {
                                     aim = RotationMath.ofPlayer(MC.player);
                                  }
 
-                                 autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, aim);
+                                 autismclient.util.SilentRotationManager.requestRotation(this.id(), 50, aim);
                               }
                            }
                         } else {
@@ -1193,11 +1193,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               this.next = this.write_I_7();
                               this.valid = -1;
                               autismclient.util.ClientInteractionOverride.write_V();
-                              autismclient.util.SilentRotationManager.init_V();
+                              autismclient.util.SilentRotationManager.syncFromServerRotation();
                            }
 
                            this.prev = slot;
-                           boolean hand = autismclient.util.InventorySlotArbiter.init_Z(this.id(), this.prev);
+                           boolean hand = autismclient.util.InventorySlotArbiter.claimSlot(this.id(), this.prev);
                            if (hand && (MC.player.getInventory().getSelectedSlot() != this.prev || reacquiringHand)) {
                               autismclient.util.VirtualInputDispatcher.init_V_I(this.prev);
                            }
@@ -1265,7 +1265,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                            if (next == null) {
                               this.init_j_DataUtil = null;
                               this.load_Str = "Turning to the catch";
-                              autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, route.init_ce_DataUtil_k_NetHelper_I(link, this.load_I_k_NetHelper(link)));
+                              autismclient.util.SilentRotationManager.requestRotation(this.id(), 50, route.init_ce_DataUtil_k_NetHelper_I(link, this.load_I_k_NetHelper(link)));
                               this.read_V(this.set);
                            } else {
                               this.init_j_DataUtil = next;
@@ -1334,7 +1334,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                                  }
                               }
 
-                              autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, this.init_j_DataUtil.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil());
+                              autismclient.util.SilentRotationManager.requestRotation(this.id(), 50, this.init_j_DataUtil.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil());
                               this.read_V(this.set);
                               if (hand) {
                                  this.start();
@@ -1370,9 +1370,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private void read_V(int ticksLeft) {
       if ((this.state == 4 || this.init_j_DataUtil != null && this.init_j_DataUtil.read) && ticksLeft <= 1) {
-         autismclient.util.SilentRotationManager.init_V_Str_3(this.id(), MC.player, 180.0F);
+         autismclient.util.SilentRotationManager.stepUrgentFixed(this.id(), MC.player, 180.0F);
       } else {
-         autismclient.util.SilentRotationManager.init_V_Str_4(this.id(), MC.player, ticksLeft);
+         autismclient.util.SilentRotationManager.stepUrgentTimed(this.id(), MC.player, ticksLeft);
       }
    }
 
@@ -1396,7 +1396,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       this.next = placement ? this.write_I_7() : -1;
       if (placement) {
          this.valid = -1;
-         autismclient.util.SilentRotationManager.init_V();
+         autismclient.util.SilentRotationManager.syncFromServerRotation();
          autismclient.util.ClientInteractionOverride.write_V();
          autismclient.util.VirtualInputDispatcher.update_V();
          if (MC.player.isUsingItem()) {
@@ -1806,7 +1806,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       return this.prev >= 0
             && this.prev == selected
             && this.init_Z_ItemStack_9(MC.player.getInventory().getItem(selected))
-            && !autismclient.util.InventorySlotArbiter.init(selected, this.id())
+            && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(selected, this.id())
             && ScaffoldModule.load_I_I(selected) > 0
          ? selected
          : this.sync_I_2();
@@ -1818,7 +1818,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       int most = 0;
 
       for (int i = 0; i < 9; i++) {
-         if (this.init_Z_ItemStack_9(MC.player.getInventory().getItem(i)) && !autismclient.util.InventorySlotArbiter.init(i, this.id())) {
+         if (this.init_Z_ItemStack_9(MC.player.getInventory().getItem(i)) && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(i, this.id())) {
             int available = ScaffoldModule.load_I_I(i);
             if (i == selected && available >= 8) {
                return selected;
@@ -2177,7 +2177,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private RotationMath.Rotation init_ce_DataUtil_6() {
-      RotationMath.Rotation look = "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) ? autismclient.util.SilentRotationManager.init_ce_DataUtil() : null;
+      RotationMath.Rotation look = "clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) ? autismclient.util.SilentRotationManager.getCurrentRotation() : null;
       if (look == null) {
          look = SilentMovementCoordinator.getRenderRotation(MC.player);
       }
@@ -2266,8 +2266,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          && !MC.player.isUsingItem()
          && this.init_j_ConfigStore != null
          && this.init_j_ConfigStore.init_I < this.read_I_9()
-         && !BlinkPacketManager.load_Z()) {
-         RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+         && !BlinkPacketManager.isHoldingActionsOnly()) {
+         RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.getCurrentRotation();
          if (rotation == null) {
             return this.init_Z_Str_3("No rotation");
          }
@@ -2304,9 +2304,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                this.init_j_DataUtil.init_Direction,
                this.init_j_DataUtil.read
             );
-            autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, carry.init_U_DataUtil().init_ce_DataUtil());
+            autismclient.util.SilentRotationManager.requestRotation(this.id(), 50, carry.init_U_DataUtil().init_ce_DataUtil());
             this.read_V(1);
-            rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+            rotation = autismclient.util.SilentRotationManager.getCurrentRotation();
             if (rotation == null) {
                return this.init_Z_Str_3("No rotation");
             }
@@ -2369,7 +2369,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                   return this.init_Z_Str_3("Placement obstructed");
                }
 
-               if (!autismclient.util.InventorySlotArbiter.read_Z(this.id()) || !PerTickPlacementLock.init(this.id())) {
+               if (!autismclient.util.InventorySlotArbiter.canBeginActionGroup(this.id()) || !PerTickPlacementLock.init(this.id())) {
                   return this.init_Z_Str_3("Placement hand busy");
                }
 
@@ -2390,7 +2390,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                   }
 
                   this.load_Str = "Catch placed";
-                  autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, rotation);
+                  autismclient.util.SilentRotationManager.requestRotation(this.id(), 50, rotation);
                   return true;
                } else {
                   return this.init_Z_Str_3("Click queue");
@@ -2796,7 +2796,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    private void poll_V_5() {
       if (!this.update_Z) {
          this.update_Z = true;
-         autismclient.util.InventorySlotArbiter.load_V(this.id());
+         autismclient.util.InventorySlotArbiter.releaseAllSlots(this.id());
          if (this.bool("restore-slot") && this.next >= 0 && this.prev >= 0 && this.next != this.prev) {
             this.valid = this.next;
             this.size = this.prev;
@@ -2804,8 +2804,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             this.run_V_3();
          }
 
-         if ("clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && !this.valid()) {
-            autismclient.util.SilentRotationManager.init(this.id());
+         if ("clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && !this.valid()) {
+            autismclient.util.SilentRotationManager.releaseOwner(this.id());
          }
       }
    }
@@ -2813,7 +2813,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    private void push_V_4() {
       if (this.init_Z) {
          this.init_j_DataUtil = null;
-         autismclient.util.InventorySlotArbiter.load_V(this.id());
+         autismclient.util.InventorySlotArbiter.releaseAllSlots(this.id());
          if (MC.player != null && MC.level != null && MC.player.isAlive()) {
             if (!this.load_Z && !this.update_Z) {
                this.load_Z = true;
@@ -2833,11 +2833,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             if (this.update_Z) {
                this.load_V_Z_3(bridge);
             } else {
-               if (bridge && "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && this.get < 20) {
+               if (bridge && "clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && this.get < 20) {
                   RotationMath.Rotation goal = resume != null ? resume : RotationMath.ofPlayer(MC.player);
-                  autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, goal);
-                  autismclient.util.SilentRotationManager.init_V_Str_4(this.id(), MC.player, Math.max(1, Math.min(8, 19 - this.get)));
-                  RotationMath.Rotation end = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                  autismclient.util.SilentRotationManager.requestRotation(this.id(), 50, goal);
+                  autismclient.util.SilentRotationManager.stepUrgentTimed(this.id(), MC.player, Math.max(1, Math.min(8, 19 - this.get)));
+                  RotationMath.Rotation end = autismclient.util.SilentRotationManager.getCurrentRotation();
                   if (end != null && RotationMath.vectorAngleDegrees(end, goal) > 1.0F) {
                      this.load_Str = "Handing back";
                      return;
@@ -2857,8 +2857,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private void load_V_Z_3(boolean bridge) {
-      RotationMath.Rotation end = autismclient.util.SilentRotationManager.init_ce_DataUtil();
-      boolean ours = "clutch".equals(autismclient.util.SilentRotationManager.init_Str());
+      RotationMath.Rotation end = autismclient.util.SilentRotationManager.getCurrentRotation();
+      boolean ours = "clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
       if (bridge && end != null) {
          if (ours) {
             float offset = ScaffoldModule.load_F_F_F(end.yaw(), MC.player.getYRot());
@@ -2876,10 +2876,10 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
          ScaffoldModule.load_V_ce_DataUtil(end);
          if (ours) {
-            autismclient.util.SilentRotationManager.load_V();
+            autismclient.util.SilentRotationManager.resetAll();
          }
       } else if (ours) {
-         autismclient.util.SilentRotationManager.init(this.id());
+         autismclient.util.SilentRotationManager.releaseOwner(this.id());
       }
 
       if (this.sync_Z) {
@@ -2896,7 +2896,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private void pop_V_3() {
       if (!this.init_Z && MC.player != null && this.tick_Z_6()) {
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
+         autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
       }
    }
 
@@ -2939,11 +2939,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private void get_V_3() {
-      if ("clutch".equals(autismclient.util.SilentRotationManager.init_Str())) {
-         autismclient.util.SilentRotationManager.load_V();
+      if ("clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+         autismclient.util.SilentRotationManager.resetAll();
       }
 
-      autismclient.util.InventorySlotArbiter.update_V(this.id());
+      autismclient.util.InventorySlotArbiter.releaseAllClaims(this.id());
       this.init_Map.clear();
       this.load_Map.clear();
       this.init_i_TaskQueue = null;

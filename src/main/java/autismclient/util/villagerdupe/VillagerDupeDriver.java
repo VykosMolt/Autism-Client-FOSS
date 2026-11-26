@@ -142,7 +142,7 @@ public final class VillagerDupeDriver {
 
       LocalPlayer player = mc.player;
       VillagerDupeDriver.ConfigStore emerald = this.init_DataUtil_ConfigSto_LocalPlayer_DataUtil_CachePool(player, opts);
-      return emerald != null ? emerald : this.init(mc, player, opts, player.hasInfiniteMaterials(), AutismSessionState.init_ck().state_I());
+      return emerald != null ? emerald : this.init(mc, player, opts, player.hasInfiniteMaterials(), AutismSessionState.getInstance().getClientTick());
    }
 
    public static boolean init_Z_Minecraft(Minecraft mc, VillagerDupeDriver.Inner_DataUtil filter, boolean traders) {
@@ -182,7 +182,7 @@ public final class VillagerDupeDriver {
       }
 
       LocalPlayer player = mc.player;
-      int now = AutismSessionState.init_ck().state_I();
+      int now = AutismSessionState.getInstance().getClientTick();
       this.init_V_ClientLevel(mc.level);
       this.load(mc, player, opts, now);
       if (mc.gui.screen() != null) {
@@ -212,7 +212,7 @@ public final class VillagerDupeDriver {
                return this.init(mc, player, opts, now, mode);
             } finally {
                if (this.sync_Z) {
-                  InventorySlotArbiter.read_V("villager-dupe");
+                  InventorySlotArbiter.endActionGroup("villager-dupe");
                }
 
                this.sync_Z = false;
@@ -376,7 +376,7 @@ public final class VillagerDupeDriver {
    }
 
    private VillagerDupeDriver.ConfigStore init_DataUtil_ConfigSto_Minecraft(Minecraft mc, LocalPlayer player, VillagerDupeDriver.CachePool opts) {
-      if (opts.read() && !InventorySlotArbiter.load_Z("villager-dupe")) {
+      if (opts.read() && !InventorySlotArbiter.isHotbarClaimedByOther("villager-dupe")) {
          int slot = init_I_LocalPlayer_Z(player, player.hasInfiniteMaterials());
          if (slot < 0) {
             return VillagerDupeDriver.ConfigStore.EMERALD_IN_OFFHAND;
@@ -431,7 +431,7 @@ public final class VillagerDupeDriver {
          } else if (opts.write() && offhand.is(Items.TOTEM_OF_UNDYING)) {
             return VillagerDupeDriver.ConfigStore.TOTEM;
          } else {
-            return InventorySlotArbiter.load_Z("villager-dupe") ? VillagerDupeDriver.ConfigStore.OFFHAND_TAKEN : null;
+            return InventorySlotArbiter.isHotbarClaimedByOther("villager-dupe") ? VillagerDupeDriver.ConfigStore.OFFHAND_TAKEN : null;
          }
       } else {
          return null;
@@ -734,7 +734,7 @@ public final class VillagerDupeDriver {
          return false;
       }
 
-      if (init_I_I_I(AutismSessionState.init_ck().state_I(), this.run) > init_I_Minecraft(mc)) {
+      if (init_I_I_I(AutismSessionState.getInstance().getClientTick(), this.run) > init_I_Minecraft(mc)) {
          return false;
       }
 
@@ -757,7 +757,7 @@ public final class VillagerDupeDriver {
 
    private boolean load_Z() {
       if (!this.sync_Z) {
-         this.sync_Z = InventorySlotArbiter.write_Z("villager-dupe");
+         this.sync_Z = InventorySlotArbiter.beginActionGroup("villager-dupe");
       }
 
       return this.sync_Z;

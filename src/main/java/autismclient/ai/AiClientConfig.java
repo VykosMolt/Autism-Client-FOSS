@@ -523,28 +523,28 @@ final class AiClientConfig {
    static JsonObject write(JsonObject args) {
       String action = init(args, "state");
       return init(() -> {
-         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-         autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.init_ck();
+         ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+         autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.getInstance();
          switch (action) {
             case "state":
                break;
             case "send":
-               module.init_Z_Z(AiJson.getBoolean(args, "value", true));
+               module.setAndSaveSendGuiPackets(AiJson.getBoolean(args, "value", true));
                break;
             case "delay":
-               module.init_I_Z(AiJson.getBoolean(args, "value", true));
+               module.toggleDelayPackets(AiJson.getBoolean(args, "value", true));
                break;
             case "flush":
-               return AiJson.objectOf("flushed", module.read_I(), "queued", shared.open_Z());
+               return AiJson.objectOf("flushed", module.flushPacketQueue(), "queued", shared.hasDelayedPackets());
             case "clear":
-               return AiJson.objectOf("cleared", module.write_I(), "queued", shared.open_Z());
+               return AiJson.objectOf("cleared", module.clearPacketQueue(), "queued", shared.hasDelayedPackets());
             case "delayMode":
                String mode = AiJson.getString(args, "mode", "").trim().toUpperCase(Locale.ROOT);
                if (!mode.equals("TICKS") && !mode.equals("MS")) {
                   throw new IllegalArgumentException("mode must be TICKS or MS");
                }
 
-               shared.init_V_ck_DataUtil(autismclient.util.AutismSessionState.DelayUnit.valueOf(mode));
+               shared.setDelayUnit(autismclient.util.AutismSessionState.DelayUnit.valueOf(mode));
                break;
             default:
                throw new IllegalArgumentException("Unknown action '" + action + "'; use state, send, delay, flush, clear or delayMode");
@@ -557,15 +557,15 @@ final class AiClientConfig {
    private static JsonObject init(ModuleRuntimeManager module, autismclient.util.AutismSessionState shared) {
       return AiJson.objectOf(
          "send",
-         shared.read_Z(),
+         shared.isSendPacketsEnabled(),
          "delay",
-         shared.write_Z(),
+         shared.isDelayPacketsEnabled(),
          "queued",
-         shared.open_Z(),
+         shared.hasDelayedPackets(),
          "delayMode",
-         shared.init_ck_DataUtil().name(),
+         shared.getDelayUnit().name(),
          "flushOnDelayDisable",
-         module.stop_Z()
+         module.isFlushQueueOnDelayDisable()
       );
    }
 
@@ -573,21 +573,21 @@ final class AiClientConfig {
       String action = init(args, "list");
       return init(
          () -> {
-            ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
+            ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
             switch (action) {
                case "list":
                   return init(module);
                case "block":
                case "unblock":
                   boolean c2s = init_Z(args);
-                  Class<? extends Packet<?>> packet = autismclient.util.PacketTypeRegistry.init_Class_Str(load(args, "packet"));
+                  Class<? extends Packet<?>> packet = autismclient.util.PacketTypeRegistry.resolvePacketClass(load(args, "packet"));
                   if (packet == null) {
                      throw new IllegalArgumentException(
                         "Unknown packet '" + AiJson.getString(args, "packet", "") + "'; use the friendly names from action list"
                      );
                   }
 
-                  Set<Class<? extends Packet<?>>> set = new LinkedHashSet<>(c2s ? module.load_Set() : module.read_Set());
+                  Set<Class<? extends Packet<?>>> set = new LinkedHashSet<>(c2s ? module.getCustomC2sPacketsCopy() : module.getCustomS2cPacketsCopy());
                   if (action.equals("block")) {
                      set.add(packet);
                   } else {
@@ -595,18 +595,18 @@ final class AiClientConfig {
                   }
 
                   if (c2s) {
-                     module.init_V_Set(set);
+                     module.setCustomC2sPackets(set);
                   } else {
-                     module.load(set);
+                     module.setCustomS2cPackets(set);
                   }
 
                   return init(module);
                case "clear":
                   boolean c2sClear = init_Z(args);
                   if (c2sClear) {
-                     module.init_V_Set(new LinkedHashSet<>());
+                     module.setCustomC2sPackets(new LinkedHashSet<>());
                   } else {
-                     module.load(new LinkedHashSet<>());
+                     module.setCustomS2cPackets(new LinkedHashSet<>());
                   }
 
                   return init(module);
@@ -666,7 +666,7 @@ final class AiClientConfig {
       List<String> sorted = new ArrayList<>();
 
       for (Class<? extends Packet<?>> p : packets) {
-         sorted.add(autismclient.util.PacketTypeRegistry.init_Str_Class(p));
+         sorted.add(autismclient.util.PacketTypeRegistry.getPacketName(p));
       }
 
       Collections.sort(sorted);
@@ -675,7 +675,7 @@ final class AiClientConfig {
    }
 
    private static JsonObject init(ModuleRuntimeManager module) {
-      return AiJson.objectOf("blockedC2S", init(module.load_Set()), "blockedS2C", init(module.read_Set()));
+      return AiJson.objectOf("blockedC2S", init(module.getCustomC2sPacketsCopy()), "blockedS2C", init(module.getCustomS2cPacketsCopy()));
    }
 
    private static JsonObject init(PacketPresetManager.Inner_DataUtil e) {
@@ -881,7 +881,7 @@ final class AiClientConfig {
             return AiJson.objectOf("connected", false);
          }
 
-         autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.init_ck();
+         autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.getInstance();
          ServerData server = mc.getCurrentServer();
          JsonObject out = AiJson.objectOf("connected", true, "brand", connection.serverBrand() == null ? "" : connection.serverBrand());
          if (server != null) {
@@ -889,13 +889,13 @@ final class AiClientConfig {
             out.addProperty("ping", server.ping);
             out.addProperty("protocol", server.protocol);
             out.addProperty("reportedVersion", server.version == null ? "" : server.version.getString());
-            String real = shared.init_Str_Str(server.ip);
+            String real = shared.getDetectedServerVersion(server.ip);
             if (real != null && !real.isBlank()) {
                out.addProperty("realVersion", real);
             }
          }
 
-         double tps = shared.load_D();
+         double tps = shared.getEstimatedTps();
          if (tps > 0.0) {
             out.addProperty("estimatedTps", Math.round(tps * 10.0) / 10.0);
          }
@@ -961,7 +961,7 @@ final class AiClientConfig {
          autismclient.util.MacroLibraryManager m = autismclient.util.MacroLibraryManager.getInstance();
          switch (action) {
             case "running":
-               return AiJson.objectOf("running", MacroExecutor.write_Z());
+               return AiJson.objectOf("running", MacroExecutor.isRunning());
             case "delete": {
                autismclient.util.AutismMacro macro = init(m, args);
                m.deleteMacro(macro);
@@ -995,12 +995,12 @@ final class AiClientConfig {
             case "stop":
                String name = AiJson.getString(args, "name", "").trim();
                if (name.isEmpty()) {
-                  MacroExecutor.sync_V();
+                  MacroExecutor.stopAllFromAi();
                } else {
-                  MacroExecutor.init_V_Str(name);
+                  MacroExecutor.stopMacroByName(name);
                }
 
-               return AiJson.objectOf("stopped", name.isEmpty() ? "all" : name, "running", MacroExecutor.write_Z());
+               return AiJson.objectOf("stopped", name.isEmpty() ? "all" : name, "running", MacroExecutor.isRunning());
             default:
                throw new IllegalArgumentException("Unknown macro action '" + action + "'; use running, delete, rename, duplicate, export or stop");
          }

@@ -22,7 +22,7 @@ public final class PacketFilterListCodec {
 
    public static Set<Class<? extends Packet<?>>> init_Set(String value, boolean c2s) {
       Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>();
-      Set<Class<? extends Packet<?>>> pool = c2s ? PacketTypeRegistry.load() : PacketTypeRegistry.init_Set();
+      Set<Class<? extends Packet<?>>> pool = c2s ? PacketTypeRegistry.getC2sPackets() : PacketTypeRegistry.getS2cPackets();
 
       for (String token : init_List(value)) {
          Class<? extends Packet<?>> packetClass = init(token, pool);
@@ -36,7 +36,7 @@ public final class PacketFilterListCodec {
 
    public static List<String> init_List(String value, boolean c2s) {
       List<String> invalid = new ArrayList<>();
-      Set<Class<? extends Packet<?>>> pool = c2s ? PacketTypeRegistry.load() : PacketTypeRegistry.init_Set();
+      Set<Class<? extends Packet<?>>> pool = c2s ? PacketTypeRegistry.getC2sPackets() : PacketTypeRegistry.getS2cPackets();
 
       for (String token : init_List(value)) {
          if (init(token, pool) == null) {
@@ -52,7 +52,7 @@ public final class PacketFilterListCodec {
          List<String> names = new ArrayList<>();
 
          for (Class<? extends Packet<?>> packetClass : packets) {
-            String name = PacketTypeRegistry.init_Str_Class(packetClass);
+            String name = PacketTypeRegistry.getPacketName(packetClass);
             names.add(name == null ? packetClass.getName() : name);
          }
 
@@ -84,19 +84,19 @@ public final class PacketFilterListCodec {
    }
 
    private static Class<? extends Packet<?>> init(String token, Set<Class<? extends Packet<?>>> pool) {
-      Class<? extends Packet<?>> packetClass = PacketTypeRegistry.init_Class_Str(token);
+      Class<? extends Packet<?>> packetClass = PacketTypeRegistry.resolvePacketClass(token);
       if (packetClass != null && pool.contains(packetClass)) {
          return packetClass;
       }
 
       String friendly = PacketNameResolver.init_Str_Str(token);
-      packetClass = PacketTypeRegistry.init_Class_Str(friendly);
+      packetClass = PacketTypeRegistry.resolvePacketClass(friendly);
       if (packetClass != null && pool.contains(packetClass)) {
          return packetClass;
       }
 
       for (Class<? extends Packet<?>> candidate : pool) {
-         String registryName = PacketTypeRegistry.init_Str_Class(candidate);
+         String registryName = PacketTypeRegistry.getPacketName(candidate);
          if (init(token, registryName, candidate)) {
             return candidate;
          }

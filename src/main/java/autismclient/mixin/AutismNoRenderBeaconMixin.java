@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderBeaconMixin {
    @Inject(method = "submitBeaconBeam", at = @At("HEAD"), cancellable = true, require = 0)
    private static void autism$noBeaconBeams(CallbackInfo ci) {
-      if (NoRenderState.queue()) {
+      if (NoRenderState.hideBeaconBeams()) {
          ci.cancel();
       }
    }

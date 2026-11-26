@@ -60,13 +60,13 @@ public final class PacketQueueHudRenderer {
    }
 
    private static void init_V(Font textRenderer, int panelWidth, int maxLines) {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      boolean isSending = shared.run_Z();
-      String modeStr = shared.load_ck_DataUtil() == AutismSessionState.DelayUnit.MS ? "ms" : "t";
-      int queueRevision = shared.read_I();
+      AutismSessionState shared = AutismSessionState.getInstance();
+      boolean isSending = shared.hasSendingPackets();
+      String modeStr = shared.getEffectiveDelayUnit() == AutismSessionState.DelayUnit.MS ? "ms" : "t";
+      int queueRevision = shared.getQueueRevision();
       long now = System.nanoTime();
       if (init_Z_Z(isSending, modeStr, maxLines, panelWidth, queueRevision, now)) {
-         init(textRenderer, shared.init_ck_StreamUtil_Z_I(isSending, maxLines), isSending, modeStr, maxLines, panelWidth, queueRevision, now);
+         init(textRenderer, shared.snapshotDelayQueue(isSending, maxLines), isSending, modeStr, maxLines, panelWidth, queueRevision, now);
       }
    }
 
@@ -84,8 +84,8 @@ public final class PacketQueueHudRenderer {
    private static void init(
       Font textRenderer, AutismSessionState.DelayQueueSnapshot snapshot, boolean isSending, String modeStr, int maxLines, int panelWidth, int queueRevision, long now
    ) {
-      List<AutismSessionState.DelayedPacket> packets = snapshot.init_List();
-      int totalCount = snapshot.init_I();
+      List<AutismSessionState.DelayedPacket> packets = snapshot.visiblePackets();
+      int totalCount = snapshot.totalCount();
       int visibleCount = Math.min(packets.size(), maxLines);
       int contentWidth = panelWidth - 12;
       ArrayList<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> rows = new ArrayList<>(visibleCount + 2);
@@ -111,9 +111,9 @@ public final class PacketQueueHudRenderer {
       } else {
          for (int i = 0; i < visibleCount; i++) {
             AutismSessionState.DelayedPacket qp = packets.get(i);
-            String simpleName = PacketNameResolver.init_Str_Packet(qp.init_Packet);
-            String delayStr = qp.load_I() > 0 ? " +" + qp.load_I() + modeStr : "";
-            String label = "#" + qp.init_I() + " " + (qp.init_Z() ? "[Exact] " : "") + simpleName + delayStr;
+            String simpleName = PacketNameResolver.init_Str_Packet(qp.packet);
+            String delayStr = qp.getDelay() > 0 ? " +" + qp.getDelay() + modeStr : "";
+            String label = "#" + qp.getId() + " " + (qp.isExactReplay() ? "[Exact] " : "") + simpleName + delayStr;
             int color = isSending && i == 0 ? -601459 : -1581859;
             rows.add(
                new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(

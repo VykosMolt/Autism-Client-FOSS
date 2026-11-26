@@ -86,7 +86,7 @@ final class AiSessionsDrawer {
          int y = inner.write();
          kit.init_V_NetHelper_3(
             autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), ctrl),
-            autismclient.util.GuiIconAtlas.pop,
+            autismclient.util.GuiIconAtlas.PLUS,
             "New chat",
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
             this::read
@@ -157,7 +157,7 @@ final class AiSessionsDrawer {
             right -= ageW + 4;
          } else {
             autismclient.gui.f.NetHelper trash = autismclient.gui.f.NetHelper.init(row.init() - icon - 1, row.write() + 1, icon, icon);
-            kit.init(trash, autismclient.util.GuiIconAtlas.open, false, armed, armed ? "Click again to delete" : "Delete chat", () -> this.load(id));
+            kit.init(trash, autismclient.util.GuiIconAtlas.DELETE, false, armed, armed ? "Click again to delete" : "Delete chat", () -> this.load(id));
             right = trash.read() - 3;
          }
 

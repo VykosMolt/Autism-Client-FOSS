@@ -67,7 +67,7 @@ public class ContainerClickSequenceAction implements MacroAction {
             var10000 = mc.player.containerMenu.containerId;
             break;
          case SAVED_GUI:
-            AbstractContainerMenu saved = AutismSessionState.init_ck().init_AbstractContainerM();
+            AbstractContainerMenu saved = AutismSessionState.getInstance().getStoredContainerMenu();
             var10000 = saved == null ? this.savedContainerId : saved.containerId;
             break;
          case PLAYER_INVENTORY:

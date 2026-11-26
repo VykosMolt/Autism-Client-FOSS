@@ -164,30 +164,30 @@ public final class aD {
       al.tick_V();
       autismclient.util.VirtualInputDispatcher.pop();
       autismclient.util.LanSyncManager.init_aE().read_V();
-      if (MacroExecutor.write_Z()) {
-         MacroExecutor.read_V();
+      if (MacroExecutor.isRunning()) {
+         MacroExecutor.stopAll();
       }
 
       autismclient.util.ContainerCloseGuard.init_V();
       autismclient.util.macro.PacketGateManager.load_V();
-      BlinkPacketManager.load_V();
-      autismclient.util.SilentRotationManager.load_V();
+      BlinkPacketManager.disableAndFlush();
+      autismclient.util.SilentRotationManager.resetAll();
       autismclient.util.macro.PingSpoofScheduler.load_V();
       autismclient.util.macro.PingSpoofScheduler.read_V();
       if (!AutismLiteVariant.enabled()) {
          PkgCls_a.init_V_Str("panic mode");
       }
 
-      AutismSessionState shared = AutismSessionState.init_ck();
-      shared.read_V_Z(true);
-      shared.write(false);
-      shared.run(false);
-      shared.cache(false);
-      shared.write_I();
-      shared.init_V_Set_Z(Collections.emptySet(), false);
-      shared.sync(false);
-      shared.update(false);
-      shared.next(false);
+      AutismSessionState shared = AutismSessionState.getInstance();
+      shared.setSendPacketsEnabled(true);
+      shared.setDelayPacketsEnabled(false);
+      shared.setStaggeredPacketSend(false);
+      shared.setTimedCaptureMode(false);
+      shared.cancelAndClearPacketQueues();
+      shared.setXCarrySlotMask(Collections.emptySet(), false);
+      shared.setXCarryForced(false);
+      shared.setXCarryActive(false);
+      shared.setDropNextContainerClose(false);
    }
 
    private static void init(Runnable action) {

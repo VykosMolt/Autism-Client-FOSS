@@ -207,7 +207,7 @@ public class PayAction implements MacroAction {
          return true;
       }
 
-      if (MacroExecutor.init_Z_Str(macroName)) {
+      if (MacroExecutor.isMacroNameRunning(macroName)) {
          return true;
       }
 
@@ -223,7 +223,7 @@ public class PayAction implements MacroAction {
 
       long deadline = System.nanoTime() + 15000000000L;
 
-      while (MacroExecutor.init_Z_J(runId)) {
+      while (MacroExecutor.isRunActive(runId)) {
          if (cancelled != null && cancelled.getAsBoolean()) {
             return false;
          }

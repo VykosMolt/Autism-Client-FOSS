@@ -68,7 +68,7 @@ public final class PacketDetailFormatter {
       Packet<?> packet = wireDecode.init_Packet != null ? wireDecode.init_Packet : entry.init_Packet;
       if (packet == null) {
          if (wireDecode.init_Str != null && !wireDecode.init_Str.isBlank()) {
-            out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.cache() : UiColorPalette.entry());
+            out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.teal() : UiColorPalette.warningYellow());
          }
 
          return out.init(false, "fallback");
@@ -131,7 +131,7 @@ public final class PacketDetailFormatter {
 
    private static boolean init_Z_Packet(Packet<?> packet, PacketDetailFormatter.Inner_StreamUtil out, PacketDetailFormatter.Inner_CachePool wireDecode) {
       if (wireDecode != null && wireDecode.init_Str != null && !wireDecode.init_Str.isBlank()) {
-         out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.cache() : UiColorPalette.entry());
+         out.init("Wire Decode: " + wireDecode.init_Str, wireDecode.init_Z ? UiColorPalette.teal() : UiColorPalette.warningYellow());
       }
 
       PacketSchemaSnapshot view = PacketSchemaSnapshot.init_br_Packet(packet);
@@ -142,41 +142,41 @@ public final class PacketDetailFormatter {
 
    private static void init_V_br_bh_StreamUtil(PacketSchemaSnapshot view, PacketDetailFormatter.Inner_StreamUtil out) {
       if (view == null) {
-         out.init("Status: fallback", UiColorPalette.entry());
-         out.init("No packet object was available.", UiColorPalette.valid());
+         out.init("Status: fallback", UiColorPalette.warningYellow());
+         out.init("No packet object was available.", UiColorPalette.errorText());
       } else {
          PacketSchemaRegistry.Inner_StreamUtil schema = view.init_bx_StreamUtil();
-         out.init("Status: " + view.init_Str(), view.read() ? UiColorPalette.cache() : UiColorPalette.entry());
+         out.init("Status: " + view.init_Str(), view.read() ? UiColorPalette.teal() : UiColorPalette.warningYellow());
          if (schema != null) {
-            out.init("Schema: " + (view.load_Z() ? "Minecraft source-backed schema" : "reflection fallback"), UiColorPalette.scan());
-            out.init("Protocol: " + schema.read() + " | Direction: " + schema.write(), UiColorPalette.parse());
-            out.init("Codec: " + schema.update() + " | Source: " + schema.flush(), UiColorPalette.parse());
+            out.init("Schema: " + (view.load_Z() ? "Minecraft source-backed schema" : "reflection fallback"), UiColorPalette.textBright());
+            out.init("Protocol: " + schema.read() + " | Direction: " + schema.write(), UiColorPalette.textBody());
+            out.init("Codec: " + schema.update() + " | Source: " + schema.flush(), UiColorPalette.textBody());
             if (!schema.sync().isBlank()) {
-               out.init("Packet Type: " + schema.sync(), UiColorPalette.parse());
+               out.init("Packet Type: " + schema.sync(), UiColorPalette.textBody());
             }
 
             if (schema.load_Z()) {
-               out.init("Field Note: using parent packet schema for nested packet variant", UiColorPalette.entry());
+               out.init("Field Note: using parent packet schema for nested packet variant", UiColorPalette.warningYellow());
             }
          } else {
-            out.init("Schema: reflection fallback", UiColorPalette.entry());
+            out.init("Schema: reflection fallback", UiColorPalette.warningYellow());
          }
 
          if (!view.load_Str().isBlank()) {
-            out.init("Fallback Note: " + view.load_Str(), UiColorPalette.a());
+            out.init("Fallback Note: " + view.load_Str(), UiColorPalette.textMuted());
          }
 
          if (view.init_List().isEmpty()) {
-            out.init("Fields: none", UiColorPalette.a());
+            out.init("Fields: none", UiColorPalette.textMuted());
          } else {
-            out.init("Fields: " + view.init_List().size(), UiColorPalette.scan());
+            out.init("Fields: " + view.init_List().size(), UiColorPalette.textBright());
 
             for (PacketFieldSnapshot field : view.init_List()) {
-               int color = field.init_Z() ? UiColorPalette.task() : UiColorPalette.valid();
+               int color = field.init_Z() ? UiColorPalette.softWhite() : UiColorPalette.errorText();
                out.init(field.init_Str() + " (" + field.load_Str() + "): " + field.write(), color);
 
                for (String detail : field.init_List()) {
-                  out.init("  " + detail, UiColorPalette.parse());
+                  out.init("  " + detail, UiColorPalette.textBody());
                }
             }
          }
@@ -185,153 +185,153 @@ public final class PacketDetailFormatter {
 
    private static void init_V_Packet(Packet<?> packet, PacketSchemaSnapshot view, PacketDetailFormatter.Inner_StreamUtil out) {
       if (packet instanceof ClientboundOpenScreenPacket open) {
-         out.load("Server opens a handled screen.", UiColorPalette.scan());
-         out.load("Container: #" + open.getContainerId() + " type=" + load(open.getType()), UiColorPalette.buffer());
-         out.load("Title: " + init_Str_Str(open.getTitle() == null ? "" : open.getTitle().getString()), UiColorPalette.value());
+         out.load("Server opens a handled screen.", UiColorPalette.textBright());
+         out.load("Container: #" + open.getContainerId() + " type=" + load(open.getType()), UiColorPalette.blue());
+         out.load("Title: " + init_Str_Str(open.getTitle() == null ? "" : open.getTitle().getString()), UiColorPalette.successText());
       } else if (packet instanceof ClientboundContainerSetContentPacket content) {
-         out.load("Server replaces the full contents of a container.", UiColorPalette.scan());
-         out.load("Container: #" + content.containerId() + " state=" + content.stateId(), UiColorPalette.buffer());
-         out.load("Slots: " + content.items().size() + " total, " + init_I_Collection(content.items()) + " non-empty", UiColorPalette.scan());
-         out.load("Carried Item: " + PacketStateDeltaTracker.init_Str_ItemStack(content.carriedItem()), UiColorPalette.value());
+         out.load("Server replaces the full contents of a container.", UiColorPalette.textBright());
+         out.load("Container: #" + content.containerId() + " state=" + content.stateId(), UiColorPalette.blue());
+         out.load("Slots: " + content.items().size() + " total, " + init_I_Collection(content.items()) + " non-empty", UiColorPalette.textBright());
+         out.load("Carried Item: " + PacketStateDeltaTracker.init_Str_ItemStack(content.carriedItem()), UiColorPalette.successText());
          init_V_List_bh_StreamUtil(content.items(), out);
       } else if (packet instanceof ClientboundContainerSetSlotPacket slot) {
-         out.load("Server updates one container slot.", UiColorPalette.scan());
-         out.load("Container: #" + slot.getContainerId() + " state=" + slot.getStateId(), UiColorPalette.buffer());
-         out.load("Slot: " + slot.getSlot(), UiColorPalette.scan());
-         out.load("Item: " + PacketStateDeltaTracker.init_Str_ItemStack(slot.getItem()), UiColorPalette.value());
+         out.load("Server updates one container slot.", UiColorPalette.textBright());
+         out.load("Container: #" + slot.getContainerId() + " state=" + slot.getStateId(), UiColorPalette.blue());
+         out.load("Slot: " + slot.getSlot(), UiColorPalette.textBright());
+         out.load("Item: " + PacketStateDeltaTracker.init_Str_ItemStack(slot.getItem()), UiColorPalette.successText());
       } else if (packet instanceof ClientboundSetCursorItemPacket cursor) {
-         out.load("Server sets the carried cursor item.", UiColorPalette.scan());
-         out.load("Cursor: " + PacketStateDeltaTracker.init_Str_ItemStack(cursor.contents()), UiColorPalette.value());
+         out.load("Server sets the carried cursor item.", UiColorPalette.textBright());
+         out.load("Cursor: " + PacketStateDeltaTracker.init_Str_ItemStack(cursor.contents()), UiColorPalette.successText());
       } else if (packet instanceof ClientboundSetPlayerInventoryPacket inventory) {
-         out.load("Server updates a player inventory slot.", UiColorPalette.scan());
-         out.load("Inventory Slot: " + inventory.slot(), UiColorPalette.buffer());
-         out.load("Item: " + PacketStateDeltaTracker.init_Str_ItemStack(inventory.contents()), UiColorPalette.value());
+         out.load("Server updates a player inventory slot.", UiColorPalette.textBright());
+         out.load("Inventory Slot: " + inventory.slot(), UiColorPalette.blue());
+         out.load("Item: " + PacketStateDeltaTracker.init_Str_ItemStack(inventory.contents()), UiColorPalette.successText());
       } else if (packet instanceof ClientboundSetHeldSlotPacket held) {
-         out.load("Server changes the selected hotbar slot.", UiColorPalette.scan());
-         out.load("Selected Slot: " + held.slot(), UiColorPalette.value());
+         out.load("Server changes the selected hotbar slot.", UiColorPalette.textBright());
+         out.load("Selected Slot: " + held.slot(), UiColorPalette.successText());
       } else if (packet instanceof ServerboundSetCarriedItemPacket carried) {
-         out.load("Client changes the selected hotbar slot.", UiColorPalette.scan());
-         out.load("Selected Slot: " + carried.getSlot(), UiColorPalette.value());
+         out.load("Client changes the selected hotbar slot.", UiColorPalette.textBright());
+         out.load("Selected Slot: " + carried.getSlot(), UiColorPalette.successText());
       } else if (packet instanceof ServerboundContainerClickPacket click) {
-         out.load("Client clicks inside a handled screen.", UiColorPalette.scan());
-         out.load("Container: #" + click.containerId() + " state=" + click.stateId(), UiColorPalette.buffer());
-         out.load("Input: " + init_Str_ContainerInput(click.containerInput()) + " (" + click.containerInput() + ")", UiColorPalette.value());
-         out.load("Slot: " + click.slotNum() + " | Button: " + init_Str_ContainerInput_I(click.containerInput(), click.buttonNum()), UiColorPalette.scan());
-         out.load("Changed Slots: " + click.changedSlots().size(), UiColorPalette.scan());
+         out.load("Client clicks inside a handled screen.", UiColorPalette.textBright());
+         out.load("Container: #" + click.containerId() + " state=" + click.stateId(), UiColorPalette.blue());
+         out.load("Input: " + init_Str_ContainerInput(click.containerInput()) + " (" + click.containerInput() + ")", UiColorPalette.successText());
+         out.load("Slot: " + click.slotNum() + " | Button: " + init_Str_ContainerInput_I(click.containerInput(), click.buttonNum()), UiColorPalette.textBright());
+         out.load("Changed Slots: " + click.changedSlots().size(), UiColorPalette.textBright());
          int shown = 0;
 
          for (Entry<HashedStack> slot : click.changedSlots().int2ObjectEntrySet()) {
             if (shown >= 16) {
-               out.load("  ... +" + (click.changedSlots().size() - shown) + " more", UiColorPalette.a());
+               out.load("  ... +" + (click.changedSlots().size() - shown) + " more", UiColorPalette.textMuted());
                break;
             }
 
-            out.load("  #" + slot.getIntKey() + " -> " + PacketStateDeltaTracker.init_Str_HashedStack(slot.getValue()), UiColorPalette.parse());
+            out.load("  #" + slot.getIntKey() + " -> " + PacketStateDeltaTracker.init_Str_HashedStack(slot.getValue()), UiColorPalette.textBody());
             shown++;
          }
 
-         out.load("Carried Item: " + PacketStateDeltaTracker.init_Str_HashedStack(click.carriedItem()), UiColorPalette.value());
+         out.load("Carried Item: " + PacketStateDeltaTracker.init_Str_HashedStack(click.carriedItem()), UiColorPalette.successText());
       } else if (packet instanceof ServerboundContainerButtonClickPacket button) {
-         out.load("Client presses a handled-screen button.", UiColorPalette.scan());
-         out.load("Container: #" + load(init_Obj_Obj_StrArr(button, "containerId", "getContainerId", "getSyncId")), UiColorPalette.buffer());
-         out.load("Button Id: " + load(init_Obj_Obj_StrArr(button, "buttonId", "getButtonId")), UiColorPalette.scan());
+         out.load("Client presses a handled-screen button.", UiColorPalette.textBright());
+         out.load("Container: #" + load(init_Obj_Obj_StrArr(button, "containerId", "getContainerId", "getSyncId")), UiColorPalette.blue());
+         out.load("Button Id: " + load(init_Obj_Obj_StrArr(button, "buttonId", "getButtonId")), UiColorPalette.textBright());
       } else if (packet instanceof ServerboundContainerClosePacket || packet instanceof ClientboundContainerClosePacket) {
-         out.load(packet instanceof ServerboundContainerClosePacket ? "Client closes a handled screen." : "Server closes a handled screen.", UiColorPalette.scan());
+         out.load(packet instanceof ServerboundContainerClosePacket ? "Client closes a handled screen." : "Server closes a handled screen.", UiColorPalette.textBright());
          Object id = packet instanceof ClientboundContainerClosePacket close
             ? close.getContainerId()
             : init_Obj_Obj_StrArr(packet, "containerId", "getContainerId");
-         out.load("Container: #" + load(id), UiColorPalette.buffer());
+         out.load("Container: #" + load(id), UiColorPalette.blue());
       } else if (packet instanceof ClientboundContainerSetDataPacket data) {
-         out.load("Server updates a container property/data slot.", UiColorPalette.scan());
-         out.load("Container: #" + load(init_Obj_Obj_StrArr(data, "containerId", "getContainerId", "getSyncId")), UiColorPalette.buffer());
+         out.load("Server updates a container property/data slot.", UiColorPalette.textBright());
+         out.load("Container: #" + load(init_Obj_Obj_StrArr(data, "containerId", "getContainerId", "getSyncId")), UiColorPalette.blue());
          out.load(
             "Property: "
                + load(init_Obj_Obj_StrArr(data, "id", "getId", "propertyId", "getPropertyId"))
                + " = "
                + load(init_Obj_Obj_StrArr(data, "value", "getValue")),
-            UiColorPalette.value()
+            UiColorPalette.successText()
          );
       } else if (packet instanceof ServerboundSetCreativeModeSlotPacket creative) {
-         out.load("Client sets a creative inventory slot.", UiColorPalette.scan());
-         out.load("Slot: " + load(init_Obj_Obj_StrArr(creative, "slot", "getSlot")), UiColorPalette.buffer());
-         out.load("Stack: " + init_Str_Obj(init_Obj_Obj_StrArr(creative, "itemStack", "stack", "getItem", "getStack")), UiColorPalette.value());
+         out.load("Client sets a creative inventory slot.", UiColorPalette.textBright());
+         out.load("Slot: " + load(init_Obj_Obj_StrArr(creative, "slot", "getSlot")), UiColorPalette.blue());
+         out.load("Stack: " + init_Str_Obj(init_Obj_Obj_StrArr(creative, "itemStack", "stack", "getItem", "getStack")), UiColorPalette.successText());
       } else if (packet instanceof ServerboundSelectBundleItemPacket bundle) {
-         out.load("Client selects an item inside a bundle.", UiColorPalette.scan());
+         out.load("Client selects an item inside a bundle.", UiColorPalette.textBright());
          out.load(
             "Slot: "
                + load(init_Obj_Obj_StrArr(bundle, "slot", "getSlot"))
                + " | Index: "
                + load(init_Obj_Obj_StrArr(bundle, "selectedItemIndex", "index", "getIndex")),
-            UiColorPalette.buffer()
+            UiColorPalette.blue()
          );
       } else if (packet instanceof ClientboundPlayerPositionPacket position) {
          PositionMoveRotation change = position.change();
-         out.load("Server sends an authoritative player position/rotation correction.", UiColorPalette.scan());
-         out.load("Teleport Id: " + position.id(), UiColorPalette.buffer());
-         out.load("Relative Flags: " + init_Str_Set(position.relatives()), UiColorPalette.scan());
-         out.load("Encoded Position: " + init_Str_Vec3(change.position()), UiColorPalette.scan());
-         out.load("Encoded Velocity Delta: " + init_Str_Vec3(change.deltaMovement()), UiColorPalette.scan());
-         out.load("Encoded Rotation: yaw=" + init_Str_F(change.yRot()) + ", pitch=" + init_Str_F(change.xRot()), UiColorPalette.scan());
-         out.load("Expected Reply: ServerboundAcceptTeleportation #" + position.id(), UiColorPalette.queue());
+         out.load("Server sends an authoritative player position/rotation correction.", UiColorPalette.textBright());
+         out.load("Teleport Id: " + position.id(), UiColorPalette.blue());
+         out.load("Relative Flags: " + init_Str_Set(position.relatives()), UiColorPalette.textBright());
+         out.load("Encoded Position: " + init_Str_Vec3(change.position()), UiColorPalette.textBright());
+         out.load("Encoded Velocity Delta: " + init_Str_Vec3(change.deltaMovement()), UiColorPalette.textBright());
+         out.load("Encoded Rotation: yaw=" + init_Str_F(change.yRot()) + ", pitch=" + init_Str_F(change.xRot()), UiColorPalette.textBright());
+         out.load("Expected Reply: ServerboundAcceptTeleportation #" + position.id(), UiColorPalette.amber());
       } else if (packet instanceof ServerboundMovePlayerPacket move) {
-         out.load("Client sends player movement state.", UiColorPalette.scan());
-         out.load("Variant: " + move.getClass().getSimpleName().replace("ServerboundMovePlayerPacket$", ""), UiColorPalette.scan());
-         out.load("Has Position: " + move.hasPosition() + " | Has Rotation: " + move.hasRotation(), UiColorPalette.scan());
-         out.load("On Ground: " + move.isOnGround() + " | Horizontal Collision: " + move.horizontalCollision(), UiColorPalette.scan());
-         out.load("Encoded Position: x=" + move.getX(0.0) + ", y=" + move.getY(0.0) + ", z=" + move.getZ(0.0), UiColorPalette.value());
-         out.load("Encoded Rotation: yaw=" + init_Str_F(move.getYRot(0.0F)) + ", pitch=" + init_Str_F(move.getXRot(0.0F)), UiColorPalette.value());
+         out.load("Client sends player movement state.", UiColorPalette.textBright());
+         out.load("Variant: " + move.getClass().getSimpleName().replace("ServerboundMovePlayerPacket$", ""), UiColorPalette.textBright());
+         out.load("Has Position: " + move.hasPosition() + " | Has Rotation: " + move.hasRotation(), UiColorPalette.textBright());
+         out.load("On Ground: " + move.isOnGround() + " | Horizontal Collision: " + move.horizontalCollision(), UiColorPalette.textBright());
+         out.load("Encoded Position: x=" + move.getX(0.0) + ", y=" + move.getY(0.0) + ", z=" + move.getZ(0.0), UiColorPalette.successText());
+         out.load("Encoded Rotation: yaw=" + init_Str_F(move.getYRot(0.0F)) + ", pitch=" + init_Str_F(move.getXRot(0.0F)), UiColorPalette.successText());
       } else if (packet instanceof ServerboundAcceptTeleportationPacket ack) {
-         out.load("Client acknowledges a server teleport/correction.", UiColorPalette.scan());
-         out.load("Teleport Id: " + ack.id(), UiColorPalette.buffer());
+         out.load("Client acknowledges a server teleport/correction.", UiColorPalette.textBright());
+         out.load("Teleport Id: " + ack.id(), UiColorPalette.blue());
       } else if (packet instanceof ClientboundLoginPacket login) {
-         out.load("Server enters the play world.", UiColorPalette.scan());
-         out.load("Player Entity Id: " + login.playerId(), UiColorPalette.buffer());
-         out.load("Dimension: " + login.commonPlayerSpawnInfo().dimension().identifier(), UiColorPalette.value());
-         out.load("Game Mode: " + login.commonPlayerSpawnInfo().gameType(), UiColorPalette.scan());
-         out.load("Chunk Radius: " + login.chunkRadius() + " | Simulation Distance: " + login.simulationDistance(), UiColorPalette.scan());
+         out.load("Server enters the play world.", UiColorPalette.textBright());
+         out.load("Player Entity Id: " + login.playerId(), UiColorPalette.blue());
+         out.load("Dimension: " + login.commonPlayerSpawnInfo().dimension().identifier(), UiColorPalette.successText());
+         out.load("Game Mode: " + login.commonPlayerSpawnInfo().gameType(), UiColorPalette.textBright());
+         out.load("Chunk Radius: " + login.chunkRadius() + " | Simulation Distance: " + login.simulationDistance(), UiColorPalette.textBright());
       } else if (packet instanceof ClientboundRespawnPacket respawn) {
-         out.load("Server respawns player or changes dimension/world.", UiColorPalette.scan());
-         out.load("Dimension: " + respawn.commonPlayerSpawnInfo().dimension().identifier(), UiColorPalette.value());
-         out.load("Game Mode: " + respawn.commonPlayerSpawnInfo().gameType(), UiColorPalette.scan());
-         out.load("Keep Data Mask: " + respawn.dataToKeep(), UiColorPalette.scan());
+         out.load("Server respawns player or changes dimension/world.", UiColorPalette.textBright());
+         out.load("Dimension: " + respawn.commonPlayerSpawnInfo().dimension().identifier(), UiColorPalette.successText());
+         out.load("Game Mode: " + respawn.commonPlayerSpawnInfo().gameType(), UiColorPalette.textBright());
+         out.load("Keep Data Mask: " + respawn.dataToKeep(), UiColorPalette.textBright());
       } else if (packet instanceof ClientboundTransferPacket transfer) {
-         out.load("Server requests client transfer.", UiColorPalette.scan());
-         out.load("Target: " + transfer.host() + ":" + transfer.port(), UiColorPalette.value());
+         out.load("Server requests client transfer.", UiColorPalette.textBright());
+         out.load("Target: " + transfer.host() + ":" + transfer.port(), UiColorPalette.successText());
       } else if (packet instanceof ClientboundStartConfigurationPacket) {
-         out.load("Server starts configuration phase.", UiColorPalette.scan());
+         out.load("Server starts configuration phase.", UiColorPalette.textBright());
       } else if (packet instanceof ClientboundFinishConfigurationPacket) {
-         out.load("Server finishes configuration phase.", UiColorPalette.scan());
+         out.load("Server finishes configuration phase.", UiColorPalette.textBright());
       } else if (packet instanceof ClientboundSetChunkCacheCenterPacket center) {
-         out.load("Server changes chunk cache center.", UiColorPalette.scan());
-         out.load("Chunk Center: " + center.getX() + ", " + center.getZ(), UiColorPalette.value());
+         out.load("Server changes chunk cache center.", UiColorPalette.textBright());
+         out.load("Chunk Center: " + center.getX() + ", " + center.getZ(), UiColorPalette.successText());
       } else if (packet instanceof ClientboundSetChunkCacheRadiusPacket radius) {
-         out.load("Server changes chunk render/cache radius.", UiColorPalette.scan());
-         out.load("Radius: " + radius.getRadius(), UiColorPalette.value());
+         out.load("Server changes chunk render/cache radius.", UiColorPalette.textBright());
+         out.load("Radius: " + radius.getRadius(), UiColorPalette.successText());
       } else if (packet instanceof ClientboundSetSimulationDistancePacket simulation) {
-         out.load("Server changes simulation distance.", UiColorPalette.scan());
-         out.load("Simulation Distance: " + simulation.simulationDistance(), UiColorPalette.value());
+         out.load("Server changes simulation distance.", UiColorPalette.textBright());
+         out.load("Simulation Distance: " + simulation.simulationDistance(), UiColorPalette.successText());
       } else if (packet instanceof ClientboundForgetLevelChunkPacket forget) {
-         out.load("Client should unload a chunk.", UiColorPalette.scan());
-         out.load("Chunk: " + forget.pos().x() + ", " + forget.pos().z(), UiColorPalette.value());
+         out.load("Client should unload a chunk.", UiColorPalette.textBright());
+         out.load("Chunk: " + forget.pos().x() + ", " + forget.pos().z(), UiColorPalette.successText());
       } else if (packet instanceof ClientboundLevelChunkWithLightPacket chunk) {
-         out.load("Server sends chunk data with light data.", UiColorPalette.scan());
-         out.load("Chunk: " + chunk.x() + ", " + chunk.z(), UiColorPalette.value());
+         out.load("Server sends chunk data with light data.", UiColorPalette.textBright());
+         out.load("Chunk: " + chunk.x() + ", " + chunk.z(), UiColorPalette.successText());
       } else if (packet instanceof ClientboundGameEventPacket gameEvent) {
-         out.load("Server sends a game/world event.", UiColorPalette.scan());
-         out.load("Event: " + load(gameEvent.getEvent()) + " | Value: " + gameEvent.getParam(), UiColorPalette.value());
+         out.load("Server sends a game/world event.", UiColorPalette.textBright());
+         out.load("Event: " + load(gameEvent.getEvent()) + " | Value: " + gameEvent.getParam(), UiColorPalette.successText());
       } else if (packet instanceof ClientboundResourcePackPushPacket pack) {
-         out.load("Server requests a resource pack.", UiColorPalette.scan());
-         out.load("Id: " + pack.id(), UiColorPalette.buffer());
-         out.load("Url: " + pack.url(), UiColorPalette.value());
-         out.load("Required: " + pack.required() + " | Hash: " + pack.hash(), UiColorPalette.scan());
+         out.load("Server requests a resource pack.", UiColorPalette.textBright());
+         out.load("Id: " + pack.id(), UiColorPalette.blue());
+         out.load("Url: " + pack.url(), UiColorPalette.successText());
+         out.load("Required: " + pack.required() + " | Hash: " + pack.hash(), UiColorPalette.textBright());
       } else if (packet instanceof ClientboundResourcePackPopPacket pack) {
-         out.load("Server removes a resource pack.", UiColorPalette.scan());
-         out.load("Id: " + pack.id().map(Object::toString).orElse("latest / top"), UiColorPalette.buffer());
+         out.load("Server removes a resource pack.", UiColorPalette.textBright());
+         out.load("Id: " + pack.id().map(Object::toString).orElse("latest / top"), UiColorPalette.blue());
       } else if (packet instanceof ClientboundDisconnectPacket disconnect) {
-         out.load("Server disconnects the client.", UiColorPalette.scan());
-         out.load("Reason: " + load(disconnect.reason()), UiColorPalette.valid());
+         out.load("Server disconnects the client.", UiColorPalette.textBright());
+         out.load("Reason: " + load(disconnect.reason()), UiColorPalette.errorText());
       } else if (view != null && view.read()) {
-         out.load("No specialist meaning layer yet; Reality shows the exact source-backed packet fields.", UiColorPalette.a());
+         out.load("No specialist meaning layer yet; Reality shows the exact source-backed packet fields.", UiColorPalette.textMuted());
       }
    }
 
@@ -342,15 +342,15 @@ public final class PacketDetailFormatter {
          ItemStack stack = items.get(i);
          if (stack != null && !stack.isEmpty()) {
             if (shown == 0) {
-               out.load("Non-empty Preview:", UiColorPalette.scan());
+               out.load("Non-empty Preview:", UiColorPalette.textBright());
             }
 
             if (shown >= 12) {
-               out.load("  ... more non-empty slots hidden", UiColorPalette.a());
+               out.load("  ... more non-empty slots hidden", UiColorPalette.textMuted());
                return;
             }
 
-            out.load("  #" + i + " " + PacketStateDeltaTracker.init_Str_ItemStack(stack), UiColorPalette.parse());
+            out.load("  #" + i + " " + PacketStateDeltaTracker.init_Str_ItemStack(stack), UiColorPalette.textBody());
             shown++;
          }
       }
@@ -361,97 +361,97 @@ public final class PacketDetailFormatter {
       PacketStateDeltaTracker.Inner_CachePool before = capture == null ? PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool : capture.init_bq_CachePool();
       PacketStateDeltaTracker.Inner_CachePool after = capture == null ? PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool : capture.load();
       if (packet instanceof ClientboundOpenScreenPacket open) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: server opened a handled screen", UiColorPalette.scan());
-         out.init("Container Id: " + open.getContainerId(), UiColorPalette.buffer());
-         out.init("Screen Type: " + load(open.getType()), UiColorPalette.scan());
-         out.init("Title: " + init_Str_Str(open.getTitle() == null ? "" : open.getTitle().getString()), UiColorPalette.value());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: server opened a handled screen", UiColorPalette.textBright());
+         out.init("Container Id: " + open.getContainerId(), UiColorPalette.blue());
+         out.init("Screen Type: " + load(open.getType()), UiColorPalette.textBright());
+         out.init("Title: " + init_Str_Str(open.getTitle() == null ? "" : open.getTitle().getString()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundContainerSetContentPacket content) {
-         out.init("Status: context-aware", UiColorPalette.cache());
-         out.init("Meaning: server replaced full container contents", UiColorPalette.scan());
-         out.init("Container Id: " + content.containerId(), UiColorPalette.buffer());
-         out.init("State Id: " + content.stateId(), UiColorPalette.parse());
-         out.init("Slots: " + content.items().size() + " total, " + init_I_Collection(content.items()) + " non-empty", UiColorPalette.scan());
-         out.init("Container Area: " + init_Str_bq_CachePool(after), UiColorPalette.scan());
-         out.init("Cursor: " + PacketStateDeltaTracker.init_Str_ItemStack(content.carriedItem()), UiColorPalette.value());
+         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Meaning: server replaced full container contents", UiColorPalette.textBright());
+         out.init("Container Id: " + content.containerId(), UiColorPalette.blue());
+         out.init("State Id: " + content.stateId(), UiColorPalette.textBody());
+         out.init("Slots: " + content.items().size() + " total, " + init_I_Collection(content.items()) + " non-empty", UiColorPalette.textBright());
+         out.init("Container Area: " + init_Str_bq_CachePool(after), UiColorPalette.textBright());
+         out.init("Cursor: " + PacketStateDeltaTracker.init_Str_ItemStack(content.carriedItem()), UiColorPalette.successText());
          load(content.items(), out);
          return true;
       } else if (packet instanceof ClientboundContainerSetSlotPacket slot) {
-         out.init("Status: context-aware", UiColorPalette.cache());
-         out.init("Meaning: server updated one container slot", UiColorPalette.scan());
-         out.init("Container Id: " + slot.getContainerId(), UiColorPalette.buffer());
-         out.init("State Id: " + slot.getStateId(), UiColorPalette.parse());
-         out.init("Slot: " + slot.getSlot() + " (" + PacketStateDeltaTracker.init_Str_bq_CachePool_I(after, slot.getSlot()) + ")", UiColorPalette.scan());
-         out.init("Before: " + before.init(slot.getSlot()), UiColorPalette.a());
-         out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(slot.getItem()), UiColorPalette.value());
+         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Meaning: server updated one container slot", UiColorPalette.textBright());
+         out.init("Container Id: " + slot.getContainerId(), UiColorPalette.blue());
+         out.init("State Id: " + slot.getStateId(), UiColorPalette.textBody());
+         out.init("Slot: " + slot.getSlot() + " (" + PacketStateDeltaTracker.init_Str_bq_CachePool_I(after, slot.getSlot()) + ")", UiColorPalette.textBright());
+         out.init("Before: " + before.init(slot.getSlot()), UiColorPalette.textMuted());
+         out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(slot.getItem()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetCursorItemPacket cursor) {
-         out.init("Status: context-aware", UiColorPalette.cache());
-         out.init("Meaning: server updated carried cursor item", UiColorPalette.scan());
-         out.init("Before: " + before.read_Str(), UiColorPalette.a());
-         out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(cursor.contents()), UiColorPalette.value());
+         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Meaning: server updated carried cursor item", UiColorPalette.textBright());
+         out.init("Before: " + before.read_Str(), UiColorPalette.textMuted());
+         out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(cursor.contents()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetPlayerInventoryPacket inventory) {
-         out.init("Status: context-aware", UiColorPalette.cache());
-         out.init("Meaning: server updated a player inventory slot", UiColorPalette.scan());
-         out.init("Inventory Slot: " + inventory.slot(), UiColorPalette.buffer());
-         out.init("Before: " + before.load_Map().getOrDefault(inventory.slot(), "unknown"), UiColorPalette.a());
-         out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(inventory.contents()), UiColorPalette.value());
+         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Meaning: server updated a player inventory slot", UiColorPalette.textBright());
+         out.init("Inventory Slot: " + inventory.slot(), UiColorPalette.blue());
+         out.init("Before: " + before.load_Map().getOrDefault(inventory.slot(), "unknown"), UiColorPalette.textMuted());
+         out.init("After: " + PacketStateDeltaTracker.init_Str_ItemStack(inventory.contents()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetHeldSlotPacket held) {
-         out.init("Status: context-aware", UiColorPalette.cache());
-         out.init("Meaning: server selected held hotbar slot", UiColorPalette.scan());
-         out.init("Before: " + before.update_I(), UiColorPalette.a());
-         out.init("After: " + held.slot(), UiColorPalette.value());
+         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Meaning: server selected held hotbar slot", UiColorPalette.textBright());
+         out.init("Before: " + before.update_I(), UiColorPalette.textMuted());
+         out.init("After: " + held.slot(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ServerboundSetCarriedItemPacket carried) {
-         out.init("Status: context-aware", UiColorPalette.cache());
-         out.init("Meaning: client selected hotbar slot", UiColorPalette.scan());
-         out.init("Before: " + before.update_I(), UiColorPalette.a());
-         out.init("After: " + carried.getSlot(), UiColorPalette.value());
+         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Meaning: client selected hotbar slot", UiColorPalette.textBright());
+         out.init("Before: " + before.update_I(), UiColorPalette.textMuted());
+         out.init("After: " + carried.getSlot(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ServerboundContainerClickPacket click) {
          init_V_ServerboundContain(click, before, after, out);
          return false;
       } else if (packet instanceof ServerboundContainerButtonClickPacket button) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: client clicked a handled-screen button", UiColorPalette.scan());
-         out.init("Container Id: " + init_Obj_Obj_StrArr(button, "containerId", "getContainerId", "getSyncId"), UiColorPalette.buffer());
-         out.init("Button Id: " + init_Obj_Obj_StrArr(button, "buttonId", "getButtonId"), UiColorPalette.scan());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: client clicked a handled-screen button", UiColorPalette.textBright());
+         out.init("Container Id: " + init_Obj_Obj_StrArr(button, "containerId", "getContainerId", "getSyncId"), UiColorPalette.blue());
+         out.init("Button Id: " + init_Obj_Obj_StrArr(button, "buttonId", "getButtonId"), UiColorPalette.textBright());
          return true;
       } else if (packet instanceof ServerboundContainerClosePacket || packet instanceof ClientboundContainerClosePacket) {
-         out.init("Status: context-aware", UiColorPalette.cache());
+         out.init("Status: context-aware", UiColorPalette.teal());
          out.init(
-            "Meaning: " + (packet instanceof ServerboundContainerClosePacket ? "client closed a handled screen" : "server closed a handled screen"), UiColorPalette.scan()
+            "Meaning: " + (packet instanceof ServerboundContainerClosePacket ? "client closed a handled screen" : "server closed a handled screen"), UiColorPalette.textBright()
          );
          Object id = packet instanceof ClientboundContainerClosePacket close
             ? close.getContainerId()
             : init_Obj_Obj_StrArr(packet, "containerId", "getContainerId");
-         out.init("Container Id: " + load(id), UiColorPalette.buffer());
+         out.init("Container Id: " + load(id), UiColorPalette.blue());
          if (!before.load_Str().isBlank()) {
-            out.init("Closed Screen: " + init_Str_Str(before.load_Str()), UiColorPalette.value());
+            out.init("Closed Screen: " + init_Str_Str(before.load_Str()), UiColorPalette.successText());
          }
 
          return true;
       } else if (packet instanceof ClientboundContainerSetDataPacket data) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: server updated container property/data", UiColorPalette.scan());
-         out.init("Container Id: " + init_Obj_Obj_StrArr(data, "containerId", "getContainerId", "getSyncId"), UiColorPalette.buffer());
-         out.init("Property: " + init_Obj_Obj_StrArr(data, "id", "getId", "propertyId", "getPropertyId"), UiColorPalette.scan());
-         out.init("Value: " + init_Obj_Obj_StrArr(data, "value", "getValue"), UiColorPalette.value());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: server updated container property/data", UiColorPalette.textBright());
+         out.init("Container Id: " + init_Obj_Obj_StrArr(data, "containerId", "getContainerId", "getSyncId"), UiColorPalette.blue());
+         out.init("Property: " + init_Obj_Obj_StrArr(data, "id", "getId", "propertyId", "getPropertyId"), UiColorPalette.textBright());
+         out.init("Value: " + init_Obj_Obj_StrArr(data, "value", "getValue"), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ServerboundSetCreativeModeSlotPacket creative) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: client set a creative inventory slot", UiColorPalette.scan());
-         out.init("Slot: " + init_Obj_Obj_StrArr(creative, "slot", "getSlot"), UiColorPalette.buffer());
-         out.init("Stack: " + init_Str_Obj(init_Obj_Obj_StrArr(creative, "itemStack", "stack", "getItem", "getStack")), UiColorPalette.value());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: client set a creative inventory slot", UiColorPalette.textBright());
+         out.init("Slot: " + init_Obj_Obj_StrArr(creative, "slot", "getSlot"), UiColorPalette.blue());
+         out.init("Stack: " + init_Str_Obj(init_Obj_Obj_StrArr(creative, "itemStack", "stack", "getItem", "getStack")), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ServerboundSelectBundleItemPacket bundle) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: client selected an item inside a bundle", UiColorPalette.scan());
-         out.init("Slot: " + init_Obj_Obj_StrArr(bundle, "slot", "getSlot"), UiColorPalette.buffer());
-         out.init("Selected Item Index: " + init_Obj_Obj_StrArr(bundle, "selectedItemIndex", "index", "getIndex"), UiColorPalette.scan());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: client selected an item inside a bundle", UiColorPalette.textBright());
+         out.init("Slot: " + init_Obj_Obj_StrArr(bundle, "slot", "getSlot"), UiColorPalette.blue());
+         out.init("Selected Item Index: " + init_Obj_Obj_StrArr(bundle, "selectedItemIndex", "index", "getIndex"), UiColorPalette.textBright());
          return true;
       } else if (packet instanceof ClientboundPlayerPositionPacket position) {
          init_V_ClientboundPlayerP(position, before, after, out);
@@ -460,11 +460,11 @@ public final class PacketDetailFormatter {
          init_V_ServerboundMovePla(move, before, after, out);
          return true;
       } else if (packet instanceof ServerboundAcceptTeleportationPacket ack) {
-         out.init("Status: context-aware", UiColorPalette.cache());
-         out.init("Meaning: client acknowledged server teleport/correction", UiColorPalette.scan());
-         out.init("Teleport Id: " + ack.id(), UiColorPalette.buffer());
+         out.init("Status: context-aware", UiColorPalette.teal());
+         out.init("Meaning: client acknowledged server teleport/correction", UiColorPalette.textBright());
+         out.init("Teleport Id: " + ack.id(), UiColorPalette.blue());
          if (before.sync() >= 0) {
-            out.init("Pending Before: " + before.sync() + (before.sync() == ack.id() ? " (matched)" : " (different)"), UiColorPalette.scan());
+            out.init("Pending Before: " + before.sync() + (before.sync() == ack.id() ? " (matched)" : " (different)"), UiColorPalette.textBright());
          }
 
          return true;
@@ -472,77 +472,77 @@ public final class PacketDetailFormatter {
          init_V_ClientboundLoginPa_bh_StreamUtil(login, out);
          return true;
       } else if (packet instanceof ClientboundRespawnPacket respawn) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: respawn or dimension/world change", UiColorPalette.scan());
-         out.init("Dimension: " + respawn.commonPlayerSpawnInfo().dimension().identifier(), UiColorPalette.value());
-         out.init("Game Mode: " + respawn.commonPlayerSpawnInfo().gameType(), UiColorPalette.scan());
-         out.init("Previous Game Mode: " + respawn.commonPlayerSpawnInfo().previousGameType(), UiColorPalette.parse());
-         out.init("Keep Data Mask: " + respawn.dataToKeep(), UiColorPalette.scan());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: respawn or dimension/world change", UiColorPalette.textBright());
+         out.init("Dimension: " + respawn.commonPlayerSpawnInfo().dimension().identifier(), UiColorPalette.successText());
+         out.init("Game Mode: " + respawn.commonPlayerSpawnInfo().gameType(), UiColorPalette.textBright());
+         out.init("Previous Game Mode: " + respawn.commonPlayerSpawnInfo().previousGameType(), UiColorPalette.textBody());
+         out.init("Keep Data Mask: " + respawn.dataToKeep(), UiColorPalette.textBright());
          return true;
       } else if (packet instanceof ClientboundTransferPacket transfer) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: server requested client transfer", UiColorPalette.scan());
-         out.init("Target: " + transfer.host() + ":" + transfer.port(), UiColorPalette.value());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: server requested client transfer", UiColorPalette.textBright());
+         out.init("Target: " + transfer.host() + ":" + transfer.port(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundStartConfigurationPacket) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: play connection is switching into configuration phase", UiColorPalette.scan());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: play connection is switching into configuration phase", UiColorPalette.textBright());
          return true;
       } else if (packet instanceof ClientboundFinishConfigurationPacket) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: configuration phase finished", UiColorPalette.scan());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: configuration phase finished", UiColorPalette.textBright());
          return true;
       } else if (packet instanceof ClientboundSetChunkCacheCenterPacket center) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: server changed chunk cache center", UiColorPalette.scan());
-         out.init("Chunk Center: " + center.getX() + ", " + center.getZ(), UiColorPalette.value());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: server changed chunk cache center", UiColorPalette.textBright());
+         out.init("Chunk Center: " + center.getX() + ", " + center.getZ(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetChunkCacheRadiusPacket radius) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: server changed chunk render/cache radius", UiColorPalette.scan());
-         out.init("Radius: " + radius.getRadius(), UiColorPalette.value());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: server changed chunk render/cache radius", UiColorPalette.textBright());
+         out.init("Radius: " + radius.getRadius(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetSimulationDistancePacket simulation) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: server changed simulation distance", UiColorPalette.scan());
-         out.init("Simulation Distance: " + simulation.simulationDistance(), UiColorPalette.value());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: server changed simulation distance", UiColorPalette.textBright());
+         out.init("Simulation Distance: " + simulation.simulationDistance(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundForgetLevelChunkPacket forget) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: client should unload a chunk", UiColorPalette.scan());
-         out.init("Chunk: " + forget.pos().x() + ", " + forget.pos().z(), UiColorPalette.value());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: client should unload a chunk", UiColorPalette.textBright());
+         out.init("Chunk: " + forget.pos().x() + ", " + forget.pos().z(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundLevelChunkWithLightPacket chunk) {
-         out.init("Status: fallback", UiColorPalette.entry());
-         out.init("Meaning: server sent chunk data with light data", UiColorPalette.scan());
-         out.init("Chunk: " + chunk.x() + ", " + chunk.z(), UiColorPalette.value());
-         out.init("Chunk Data: " + load(chunk.chunkData()), UiColorPalette.parse());
-         out.init("Light Data: " + load(chunk.lightData()), UiColorPalette.parse());
+         out.init("Status: fallback", UiColorPalette.warningYellow());
+         out.init("Meaning: server sent chunk data with light data", UiColorPalette.textBright());
+         out.init("Chunk: " + chunk.x() + ", " + chunk.z(), UiColorPalette.successText());
+         out.init("Chunk Data: " + load(chunk.chunkData()), UiColorPalette.textBody());
+         out.init("Light Data: " + load(chunk.lightData()), UiColorPalette.textBody());
          return false;
       } else if (packet instanceof ClientboundGameEventPacket gameEvent) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: game/world event", UiColorPalette.scan());
-         out.init("Event: " + load(gameEvent.getEvent()), UiColorPalette.scan());
-         out.init("Value: " + gameEvent.getParam(), UiColorPalette.value());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: game/world event", UiColorPalette.textBright());
+         out.init("Event: " + load(gameEvent.getEvent()), UiColorPalette.textBright());
+         out.init("Value: " + gameEvent.getParam(), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundResourcePackPushPacket pack) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: server requested resource pack", UiColorPalette.scan());
-         out.init("Id: " + pack.id(), UiColorPalette.buffer());
-         out.init("Url: " + pack.url(), UiColorPalette.value());
-         out.init("Hash: " + pack.hash(), UiColorPalette.parse());
-         out.init("Required: " + pack.required(), UiColorPalette.scan());
-         pack.prompt().ifPresent(component -> out.init("Prompt: " + init_Str_Str(component.getString()), UiColorPalette.scan()));
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: server requested resource pack", UiColorPalette.textBright());
+         out.init("Id: " + pack.id(), UiColorPalette.blue());
+         out.init("Url: " + pack.url(), UiColorPalette.successText());
+         out.init("Hash: " + pack.hash(), UiColorPalette.textBody());
+         out.init("Required: " + pack.required(), UiColorPalette.textBright());
+         pack.prompt().ifPresent(component -> out.init("Prompt: " + init_Str_Str(component.getString()), UiColorPalette.textBright()));
          return true;
       } else if (packet instanceof ClientboundResourcePackPopPacket pack) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: server removed resource pack", UiColorPalette.scan());
-         out.init("Id: " + pack.id().map(Object::toString).orElse("latest / top"), UiColorPalette.buffer());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: server removed resource pack", UiColorPalette.textBright());
+         out.init("Id: " + pack.id().map(Object::toString).orElse("latest / top"), UiColorPalette.blue());
          return true;
       } else if (packet instanceof ClientboundDisconnectPacket disconnect) {
-         out.init("Status: complete", UiColorPalette.cache());
-         out.init("Meaning: server disconnected the client", UiColorPalette.scan());
-         out.init("Reason: " + load(disconnect.reason()), UiColorPalette.valid());
+         out.init("Status: complete", UiColorPalette.teal());
+         out.init("Meaning: server disconnected the client", UiColorPalette.textBright());
+         out.init("Reason: " + load(disconnect.reason()), UiColorPalette.errorText());
          return true;
       } else {
          return false;
@@ -552,29 +552,29 @@ public final class PacketDetailFormatter {
    private static void init_V_ServerboundContain(
       ServerboundContainerClickPacket click, PacketStateDeltaTracker.Inner_CachePool before, PacketStateDeltaTracker.Inner_CachePool after, PacketDetailFormatter.Inner_StreamUtil out
    ) {
-      out.init("Status: context-aware", UiColorPalette.cache());
-      out.init("Meaning: client clicked inside a handled screen", UiColorPalette.scan());
-      out.init("Container Id: " + click.containerId(), UiColorPalette.buffer());
-      out.init("State Id: " + click.stateId(), UiColorPalette.parse());
-      out.init("Input: " + init_Str_ContainerInput(click.containerInput()) + " (" + click.containerInput() + ")", UiColorPalette.value());
-      out.init("Slot: " + click.slotNum() + " (" + PacketStateDeltaTracker.init_Str_bq_CachePool_I(before, click.slotNum()) + ")", UiColorPalette.scan());
-      out.init("Button: " + init_Str_ContainerInput_I(click.containerInput(), click.buttonNum()), UiColorPalette.scan());
-      out.init("Slot Before: " + before.init(click.slotNum()), UiColorPalette.a());
-      out.init("Slot After: " + after.init(click.slotNum()), UiColorPalette.value());
-      out.init("Cursor Before: " + before.read_Str(), UiColorPalette.a());
-      out.init("Cursor After: " + PacketStateDeltaTracker.init_Str_HashedStack(click.carriedItem()), UiColorPalette.value());
-      out.init("Changed Slots: " + click.changedSlots().size(), UiColorPalette.scan());
+      out.init("Status: context-aware", UiColorPalette.teal());
+      out.init("Meaning: client clicked inside a handled screen", UiColorPalette.textBright());
+      out.init("Container Id: " + click.containerId(), UiColorPalette.blue());
+      out.init("State Id: " + click.stateId(), UiColorPalette.textBody());
+      out.init("Input: " + init_Str_ContainerInput(click.containerInput()) + " (" + click.containerInput() + ")", UiColorPalette.successText());
+      out.init("Slot: " + click.slotNum() + " (" + PacketStateDeltaTracker.init_Str_bq_CachePool_I(before, click.slotNum()) + ")", UiColorPalette.textBright());
+      out.init("Button: " + init_Str_ContainerInput_I(click.containerInput(), click.buttonNum()), UiColorPalette.textBright());
+      out.init("Slot Before: " + before.init(click.slotNum()), UiColorPalette.textMuted());
+      out.init("Slot After: " + after.init(click.slotNum()), UiColorPalette.successText());
+      out.init("Cursor Before: " + before.read_Str(), UiColorPalette.textMuted());
+      out.init("Cursor After: " + PacketStateDeltaTracker.init_Str_HashedStack(click.carriedItem()), UiColorPalette.successText());
+      out.init("Changed Slots: " + click.changedSlots().size(), UiColorPalette.textBright());
       int shown = 0;
 
       for (Entry<HashedStack> slot : click.changedSlots().int2ObjectEntrySet()) {
          if (shown >= 16) {
-            out.init("  ... +" + (click.changedSlots().size() - shown) + " more", UiColorPalette.a());
+            out.init("  ... +" + (click.changedSlots().size() - shown) + " more", UiColorPalette.textMuted());
             break;
          }
 
          out.init(
             "  #" + slot.getIntKey() + " " + PacketStateDeltaTracker.init_Str_bq_CachePool_I(before, slot.getIntKey()) + " -> " + PacketStateDeltaTracker.init_Str_HashedStack(slot.getValue()),
-            UiColorPalette.parse()
+            UiColorPalette.textBody()
          );
          shown++;
       }
@@ -584,96 +584,96 @@ public final class PacketDetailFormatter {
       ClientboundPlayerPositionPacket position, PacketStateDeltaTracker.Inner_CachePool before, PacketStateDeltaTracker.Inner_CachePool after, PacketDetailFormatter.Inner_StreamUtil out
    ) {
       PositionMoveRotation change = position.change();
-      out.init("Status: context-aware", UiColorPalette.cache());
-      out.init("Meaning: server corrected/teleported local player", UiColorPalette.scan());
-      out.init("Teleport Id: " + position.id(), UiColorPalette.buffer());
-      out.init("Relative Flags: " + init_Str_Set(position.relatives()), UiColorPalette.scan());
-      out.init("Raw Position Change: " + init_Str_Vec3(change.position()), UiColorPalette.scan());
-      out.init("Raw Delta Movement: " + init_Str_Vec3(change.deltaMovement()), UiColorPalette.scan());
-      out.init("Raw Rotation: yaw=" + init_Str_F(change.yRot()) + ", pitch=" + init_Str_F(change.xRot()), UiColorPalette.scan());
+      out.init("Status: context-aware", UiColorPalette.teal());
+      out.init("Meaning: server corrected/teleported local player", UiColorPalette.textBright());
+      out.init("Teleport Id: " + position.id(), UiColorPalette.blue());
+      out.init("Relative Flags: " + init_Str_Set(position.relatives()), UiColorPalette.textBright());
+      out.init("Raw Position Change: " + init_Str_Vec3(change.position()), UiColorPalette.textBright());
+      out.init("Raw Delta Movement: " + init_Str_Vec3(change.deltaMovement()), UiColorPalette.textBright());
+      out.init("Raw Rotation: yaw=" + init_Str_F(change.yRot()) + ", pitch=" + init_Str_F(change.xRot()), UiColorPalette.textBright());
       if (before.load_bq_StreamUtil() != null) {
-         out.init("Before Server Pos: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(before.load_bq_StreamUtil()), UiColorPalette.a());
+         out.init("Before Server Pos: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(before.load_bq_StreamUtil()), UiColorPalette.textMuted());
       }
 
       if (after.load_bq_StreamUtil() != null) {
-         out.init("Computed After: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(after.load_bq_StreamUtil()), UiColorPalette.value());
+         out.init("Computed After: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(after.load_bq_StreamUtil()), UiColorPalette.successText());
       }
 
-      out.init("Ack Expected: ServerboundAcceptTeleportation #" + position.id(), UiColorPalette.queue());
+      out.init("Ack Expected: ServerboundAcceptTeleportation #" + position.id(), UiColorPalette.amber());
    }
 
    private static void init_V_ServerboundMovePla(ServerboundMovePlayerPacket move, PacketStateDeltaTracker.Inner_CachePool before, PacketStateDeltaTracker.Inner_CachePool after, PacketDetailFormatter.Inner_StreamUtil out) {
-      out.init("Status: context-aware", UiColorPalette.cache());
-      out.init("Meaning: client player movement update", UiColorPalette.scan());
-      out.init("Variant: " + move.getClass().getSimpleName().replace("ServerboundMovePlayerPacket$", ""), UiColorPalette.scan());
-      out.init("Has Position: " + move.hasPosition(), UiColorPalette.scan());
-      out.init("Has Rotation: " + move.hasRotation(), UiColorPalette.scan());
-      out.init("On Ground: " + move.isOnGround(), UiColorPalette.scan());
-      out.init("Horizontal Collision: " + move.horizontalCollision(), UiColorPalette.scan());
+      out.init("Status: context-aware", UiColorPalette.teal());
+      out.init("Meaning: client player movement update", UiColorPalette.textBright());
+      out.init("Variant: " + move.getClass().getSimpleName().replace("ServerboundMovePlayerPacket$", ""), UiColorPalette.textBright());
+      out.init("Has Position: " + move.hasPosition(), UiColorPalette.textBright());
+      out.init("Has Rotation: " + move.hasRotation(), UiColorPalette.textBright());
+      out.init("On Ground: " + move.isOnGround(), UiColorPalette.textBright());
+      out.init("Horizontal Collision: " + move.horizontalCollision(), UiColorPalette.textBright());
       if (before.init_bq_StreamUtil() != null) {
-         out.init("Before: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(before.init_bq_StreamUtil()), UiColorPalette.a());
+         out.init("Before: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(before.init_bq_StreamUtil()), UiColorPalette.textMuted());
       }
 
       if (after.init_bq_StreamUtil() != null) {
-         out.init("After: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(after.init_bq_StreamUtil()), UiColorPalette.value());
+         out.init("After: " + PacketStateDeltaTracker.init_Str_bq_StreamUtil(after.init_bq_StreamUtil()), UiColorPalette.successText());
          if (before.init_bq_StreamUtil() != null) {
-            out.init("Distance Delta: " + String.format(Locale.ROOT, "%.4f blocks", before.init_bq_StreamUtil().init(after.init_bq_StreamUtil())), UiColorPalette.entry());
+            out.init("Distance Delta: " + String.format(Locale.ROOT, "%.4f blocks", before.init_bq_StreamUtil().init(after.init_bq_StreamUtil())), UiColorPalette.warningYellow());
          }
       }
    }
 
    private static void init_V_ClientboundLoginPa_bh_StreamUtil(ClientboundLoginPacket login, PacketDetailFormatter.Inner_StreamUtil out) {
-      out.init("Status: complete", UiColorPalette.cache());
-      out.init("Meaning: entered play world", UiColorPalette.scan());
-      out.init("Player Entity Id: " + login.playerId(), UiColorPalette.buffer());
-      out.init("Dimension: " + login.commonPlayerSpawnInfo().dimension().identifier(), UiColorPalette.value());
-      out.init("Game Mode: " + login.commonPlayerSpawnInfo().gameType(), UiColorPalette.scan());
-      out.init("Hardcore: " + login.hardcore(), UiColorPalette.scan());
-      out.init("Known Levels: " + login.levels().size(), UiColorPalette.scan());
-      out.init("Chunk Radius: " + login.chunkRadius(), UiColorPalette.scan());
-      out.init("Simulation Distance: " + login.simulationDistance(), UiColorPalette.scan());
-      out.init("Reduced Debug: " + login.reducedDebugInfo(), UiColorPalette.scan());
-      out.init("Secure Chat Enforced: " + login.enforcesSecureChat(), UiColorPalette.scan());
+      out.init("Status: complete", UiColorPalette.teal());
+      out.init("Meaning: entered play world", UiColorPalette.textBright());
+      out.init("Player Entity Id: " + login.playerId(), UiColorPalette.blue());
+      out.init("Dimension: " + login.commonPlayerSpawnInfo().dimension().identifier(), UiColorPalette.successText());
+      out.init("Game Mode: " + login.commonPlayerSpawnInfo().gameType(), UiColorPalette.textBright());
+      out.init("Hardcore: " + login.hardcore(), UiColorPalette.textBright());
+      out.init("Known Levels: " + login.levels().size(), UiColorPalette.textBright());
+      out.init("Chunk Radius: " + login.chunkRadius(), UiColorPalette.textBright());
+      out.init("Simulation Distance: " + login.simulationDistance(), UiColorPalette.textBright());
+      out.init("Reduced Debug: " + login.reducedDebugInfo(), UiColorPalette.textBright());
+      out.init("Secure Chat Enforced: " + login.enforcesSecureChat(), UiColorPalette.textBright());
    }
 
    private static void init_V_bq_DataUtil_bh_StreamUtil(PacketStateDeltaTracker.Inner_DataUtil capture, PacketDetailFormatter.Inner_StreamUtil out) {
       if (capture != null && capture.init_Z()) {
          PacketStateDeltaTracker.Inner_CachePool before = capture.init_bq_CachePool();
          PacketStateDeltaTracker.Inner_CachePool after = capture.load();
-         out.load("Context Status: " + (before.init_Z() ? "tracked" : "started mid-stream / partial"), before.init_Z() ? UiColorPalette.cache() : UiColorPalette.entry());
+         out.load("Context Status: " + (before.init_Z() ? "tracked" : "started mid-stream / partial"), before.init_Z() ? UiColorPalette.teal() : UiColorPalette.warningYellow());
          if (!after.update_Str().isBlank()) {
-            out.load("Protocol State: " + after.update_Str(), UiColorPalette.scan());
+            out.load("Protocol State: " + after.update_Str(), UiColorPalette.textBright());
          }
 
          if (after.init_I() >= 0 || !after.load_Str().isBlank()) {
-            out.load("Screen: #" + after.init_I() + " " + init_Str_Str(after.load_Str()) + " " + after.init_Str(), UiColorPalette.value());
+            out.load("Screen: #" + after.init_I() + " " + init_Str_Str(after.load_Str()) + " " + after.init_Str(), UiColorPalette.successText());
          }
 
          if (!after.write_Str().isBlank()) {
-            out.load("Dimension: " + after.write_Str(), UiColorPalette.value());
+            out.load("Dimension: " + after.write_Str(), UiColorPalette.successText());
          }
 
          if (after.init_Integer() != null && after.load_Integer() != null) {
-            out.load("Chunk Center: " + after.init_Integer() + ", " + after.load_Integer(), UiColorPalette.scan());
+            out.load("Chunk Center: " + after.init_Integer() + ", " + after.load_Integer(), UiColorPalette.textBright());
          }
 
          if (after.read_Integer() != null) {
-            out.load("Chunk Radius: " + after.read_Integer(), UiColorPalette.scan());
+            out.load("Chunk Radius: " + after.read_Integer(), UiColorPalette.textBright());
          }
 
          if (after.write_Integer() != null) {
-            out.load("Simulation Distance: " + after.write_Integer(), UiColorPalette.scan());
+            out.load("Simulation Distance: " + after.write_Integer(), UiColorPalette.textBright());
          }
 
          if (after.sync() >= 0) {
-            out.load("Pending Teleport Ack: " + after.sync(), UiColorPalette.queue());
+            out.load("Pending Teleport Ack: " + after.sync(), UiColorPalette.amber());
          }
 
          if (!capture.init_List().isEmpty()) {
-            out.load("Changes:", UiColorPalette.scan());
+            out.load("Changes:", UiColorPalette.textBright());
 
             for (String change : capture.init_List()) {
-               out.load("  - " + change, UiColorPalette.parse());
+               out.load("  - " + change, UiColorPalette.textBody());
             }
          }
       }
@@ -683,18 +683,18 @@ public final class PacketDetailFormatter {
       if (entry != null && entry.init_Packet != null) {
          PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.init_Packet);
          if (snapshot != null) {
-            out.read("Protocol: " + snapshot.load(), UiColorPalette.parse());
-            out.read("Direction: " + snapshot.init_Str(), "C2S".equalsIgnoreCase(snapshot.init_Str()) ? UiColorPalette.queue() : UiColorPalette.node());
+            out.read("Protocol: " + snapshot.load(), UiColorPalette.textBody());
+            out.read("Direction: " + snapshot.init_Str(), "C2S".equalsIgnoreCase(snapshot.init_Str()) ? UiColorPalette.amber() : UiColorPalette.cyan());
             if (snapshot.init_I() >= 0) {
-               out.read("Packet ID: " + snapshot.init_I(), UiColorPalette.parse());
+               out.read("Packet ID: " + snapshot.init_I(), UiColorPalette.textBody());
             }
 
             if (snapshot.write() != null && !snapshot.write().isBlank()) {
-               out.read("Packet Type: " + snapshot.write(), UiColorPalette.parse());
+               out.read("Packet Type: " + snapshot.write(), UiColorPalette.textBody());
             }
 
             byte[] bytes = snapshot.init_BArr();
-            out.read("Plaintext: " + bytes.length + " bytes " + PacketWireCaptureStore.init(bytes, 48), UiColorPalette.a());
+            out.read("Plaintext: " + bytes.length + " bytes " + PacketWireCaptureStore.init(bytes, 48), UiColorPalette.textMuted());
          }
       }
    }
@@ -706,15 +706,15 @@ public final class PacketDetailFormatter {
          ItemStack stack = items.get(i);
          if (stack != null && !stack.isEmpty()) {
             if (shown == 0) {
-               out.init("Non-empty Preview:", UiColorPalette.scan());
+               out.init("Non-empty Preview:", UiColorPalette.textBright());
             }
 
             if (shown >= 12) {
-               out.init("  ... more non-empty slots hidden", UiColorPalette.a());
+               out.init("  ... more non-empty slots hidden", UiColorPalette.textMuted());
                return;
             }
 
-            out.init("  #" + i + " " + PacketStateDeltaTracker.init_Str_ItemStack(stack), UiColorPalette.parse());
+            out.init("  #" + i + " " + PacketStateDeltaTracker.init_Str_ItemStack(stack), UiColorPalette.textBody());
             shown++;
          }
       }

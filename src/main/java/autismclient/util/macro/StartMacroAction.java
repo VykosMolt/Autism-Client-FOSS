@@ -11,9 +11,9 @@ public class StartMacroAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       if (this.macroName != null && !this.macroName.isBlank()) {
-         if (this.restartIfRunning && MacroExecutor.init_Z_Str(this.macroName)) {
-            MacroExecutor.init_V_Str(this.macroName);
-         } else if (MacroExecutor.init_Z_Str(this.macroName)) {
+         if (this.restartIfRunning && MacroExecutor.isMacroNameRunning(this.macroName)) {
+            MacroExecutor.stopMacroByName(this.macroName);
+         } else if (MacroExecutor.isMacroNameRunning(this.macroName)) {
             return;
          }
 

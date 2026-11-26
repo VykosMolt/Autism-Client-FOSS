@@ -79,7 +79,7 @@ public class AutismMacro {
             this.regeneratePackets();
          }
 
-         return MacroExecutor.init_J_aM(this);
+         return MacroExecutor.startMacro(this);
       } else {
          AutismClientMessaging.sendPrefixed("§cMacro has no actions!");
          return -1L;

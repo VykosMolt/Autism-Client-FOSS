@@ -66,9 +66,9 @@ public class AutismOverlaysScreen extends Screen {
    @Override
    protected void init() {
       super.init();
-      if (!OverlayScreenController.read_Z() && this.init_ak == null && !this.init_Z && this.minecraft != null && this.minecraft.level != null) {
-         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-         if (module != null && module.init_Z()) {
+      if (!OverlayScreenController.shouldInterceptBackgroundScreen() && this.init_ak == null && !this.init_Z && this.minecraft != null && this.minecraft.level != null) {
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+         if (module != null && module.isActive()) {
             try {
                this.init_ak = OverlaySuiteController.init(this.font, this.init_cX);
             } catch (Throwable error) {
@@ -92,7 +92,7 @@ public class AutismOverlaysScreen extends Screen {
 
    @Override
    public void removed() {
-      if (this.init_ak != null && !OverlayScreenController.read_Z()) {
+      if (this.init_ak != null && !OverlayScreenController.shouldInterceptBackgroundScreen()) {
          try {
             this.init_ak.init();
          } catch (Throwable error) {
@@ -109,7 +109,7 @@ public class AutismOverlaysScreen extends Screen {
    public void tick() {
       super.tick();
       if (this.init_cX != null && !this.init_cX.sync_Z() && !this.init_cX.a__Z() && this.minecraft != null && this.minecraft.gui.screen() == this) {
-         OverlayScreenController.init_V(this.minecraft, this.init_Screen);
+         OverlayScreenController.setScreenExplicit(this.minecraft, this.init_Screen);
       }
    }
 
@@ -208,7 +208,7 @@ public class AutismOverlaysScreen extends Screen {
       }
 
       if (this.minecraft != null) {
-         OverlayScreenController.init_V(this.minecraft, this.init_Screen);
+         OverlayScreenController.setScreenExplicit(this.minecraft, this.init_Screen);
       }
    }
 }

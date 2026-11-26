@@ -24,7 +24,7 @@ public class DelayCommand extends Command {
    }
 
    private static int init(String state) {
-      boolean current = AutismSessionState.init_ck().write_Z();
+      boolean current = AutismSessionState.getInstance().isDelayPacketsEnabled();
       if (state != null) {
          String lower = state.toLowerCase();
          if (!lower.equals("on")
@@ -68,9 +68,9 @@ public class DelayCommand extends Command {
       }
 
       boolean target = var10000;
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-      int flushed = module.init_I_Z(target);
-      module.init(target, flushed);
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+      int flushed = module.toggleDelayPackets(target);
+      module.notifyDelayToggle(target, flushed);
       return 1;
    }
 }

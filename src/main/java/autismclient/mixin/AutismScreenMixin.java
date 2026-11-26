@@ -139,7 +139,7 @@ public abstract class AutismScreenMixin {
          return false;
       }
 
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      return module != null && module.init_Z();
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      return module != null && module.isActive();
    }
 }

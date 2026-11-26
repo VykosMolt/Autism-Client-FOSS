@@ -753,7 +753,7 @@ public final class PayloadChannelFilterManager {
          config.save();
       }
 
-      autismclient.modules.ModuleRuntimeManager.init_PoolEntry().update_V();
+      autismclient.modules.ModuleRuntimeManager.getInstance().invalidatePayloadFilterCache();
    }
 
    public static String init_Str_Str(String pattern) {

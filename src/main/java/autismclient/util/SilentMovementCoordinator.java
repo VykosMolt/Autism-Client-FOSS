@@ -36,13 +36,13 @@ public final class SilentMovementCoordinator {
    public static RotationMath.Rotation activeRotation() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null) {
-         RotationMath.Rotation rotation = SilentRotationManager.init_ce_DataUtil();
+         RotationMath.Rotation rotation = SilentRotationManager.getCurrentRotation();
          if (rotation == null) {
             return null;
-         } else if (!AutismLiteVariant.enabled() && "ai-assistant".equals(SilentRotationManager.init_Str())) {
+         } else if (!AutismLiteVariant.enabled() && "ai-assistant".equals(SilentRotationManager.getActiveOwnerId())) {
             return autismclient.ai.AiAssistant.init_ConfigStore().load_Z_23() ? rotation : null;
          } else {
-            return autismclient.modules.al.init_Module_Str(SilentRotationManager.init_Str()) instanceof SilentMovementCoordinator.Participant owner && owner.load_Z_23() ? rotation : null;
+            return autismclient.modules.al.init_Module_Str(SilentRotationManager.getActiveOwnerId()) instanceof SilentMovementCoordinator.Participant owner && owner.load_Z_23() ? rotation : null;
          }
       } else {
          return null;
@@ -61,17 +61,17 @@ public final class SilentMovementCoordinator {
             return input;
          }
 
-         if (SilentRotationManager.load_Z() || shouldSkipMoveFix(rotation)) {
+         if (SilentRotationManager.isVisibleAimActive() || shouldSkipMoveFix(rotation)) {
             combatMoveFixer.init();
             bedNukerMoveFixer.init();
             return input;
          }
 
-         if (!AutismLiteVariant.enabled() && "kb-displacement".equals(SilentRotationManager.init_Str())) {
-            return combatMoveFixer.load(input, autismclient.modules.KBDisplacementModule.init_F_F_2(mc.player.getYRot()), rotation.yaw(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+         if (!AutismLiteVariant.enabled() && "kb-displacement".equals(SilentRotationManager.getActiveOwnerId())) {
+            return combatMoveFixer.load(input, autismclient.modules.KBDisplacementModule.init_F_F_2(mc.player.getYRot()), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.init(mc.player));
          }
 
-         String aimOwner = SilentRotationManager.init_Str();
+         String aimOwner = SilentRotationManager.getActiveOwnerId();
          if ("kill-aura".equals(aimOwner)) {
             if (!AutismLiteVariant.enabled()) {
                Input course = autismclient.modules.KBDisplacementModule.init_Input_Input(input, mc.player.getYRot(), rotation.yaw());
@@ -80,22 +80,22 @@ public final class SilentMovementCoordinator {
                }
             }
 
-            return combatMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+            return combatMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.init(mc.player));
          } else if (!"crystal-aura".equals(aimOwner) && !"anchor-aura".equals(aimOwner)) {
             combatMoveFixer.init();
-            if ("bed-nuker".equals(SilentRotationManager.init_Str())) {
-               return bedNukerMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+            if ("bed-nuker".equals(SilentRotationManager.getActiveOwnerId())) {
+               return bedNukerMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.init(mc.player));
             }
 
             bedNukerMoveFixer.init();
             if (isClutchMoveFixActive()) {
-               return clutchMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.init_ck().state_I());
+               return clutchMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick());
             }
 
             clutchMoveFixer.init();
             return autismclient.modules.ScaffoldModule.init_Input_Input_2(input, mc.player.getYRot(), rotation.yaw());
          } else {
-            return combatMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+            return combatMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.init(mc.player));
          }
       } else {
          return input;
@@ -104,19 +104,19 @@ public final class SilentMovementCoordinator {
 
    public static Input correctInputForYaw(Input input, float referenceYaw, float yaw) {
       Minecraft mc = Minecraft.getInstance();
-      return combatMoveFixer.init(input, referenceYaw, yaw, AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc == null ? null : mc.player));
+      return combatMoveFixer.init(input, referenceYaw, yaw, AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.init(mc == null ? null : mc.player));
    }
 
    private static boolean isClutchMoveFixActive() {
-      return AutismLiteVariant.enabled() ? false : "clutch".equals(SilentRotationManager.init_Str()) && !ClutchModule.sync_Z_10();
+      return AutismLiteVariant.enabled() ? false : "clutch".equals(SilentRotationManager.getActiveOwnerId()) && !ClutchModule.sync_Z_10();
    }
 
    private static boolean shouldSkipMoveFix(RotationMath.Rotation rotation) {
       return rotation == null
             || !(
-               autismclient.modules.al.init_Module_Str(SilentRotationManager.init_Str()) instanceof SilentMovementCoordinator.Participant owner
+               autismclient.modules.al.init_Module_Str(SilentRotationManager.getActiveOwnerId()) instanceof SilentMovementCoordinator.Participant owner
                   && !owner.write_Z_10()
-                  && !SilentRotationManager.init_Z()
+                  && !SilentRotationManager.isReturningToPlayer()
                   && !autismclient.modules.FreecamController.isAiControllingBody()
             )
             || autismclient.modules.al.init_Module_Str("scaffold") instanceof autismclient.modules.ScaffoldModule scaffold && scaffold.isEnabled()
@@ -177,7 +177,7 @@ public final class SilentMovementCoordinator {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && entity == mc.player) {
          lastMoveYaw = yaw;
-         lastMoveTick = AutismSessionState.init_ck().state_I();
+         lastMoveTick = AutismSessionState.getInstance().getClientTick();
       }
    }
 
@@ -200,7 +200,7 @@ public final class SilentMovementCoordinator {
    public static void captureDebugTelemetry(Minecraft mc) {
       if (mc != null && mc.player != null) {
          RotationMath.Rotation live = activeRotation();
-         double wireYaw = ServerRotationTracker.init_ch_CachePool().init_Z() ? ServerRotationTracker.init_ch_CachePool().read() : 0.0 / 0.0;
+         double wireYaw = ServerRotationTracker.getSnapshot().initialized() ? ServerRotationTracker.getSnapshot().currentYaw() : 0.0 / 0.0;
          debugTelemetry = new float[]{lastMoveYaw, (float)wireYaw, live == null ? 0.0F / 0.0F : live.yaw(), lastMoveTick, lastCameraYaw};
       }
    }

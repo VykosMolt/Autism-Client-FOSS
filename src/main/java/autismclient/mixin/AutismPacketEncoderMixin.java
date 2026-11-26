@@ -31,7 +31,7 @@ public abstract class AutismPacketEncoderMixin<T extends PacketListener> {
          original.call(ctx, packet, output);
       } else {
          original.call(ctx, packet, output);
-         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
+         ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
          if (module != null) {
             String protocol = this.protocolInfo.id().id();
             if (PacketCaptureState.init_Z_J(captureState)) {
@@ -39,7 +39,7 @@ public abstract class AutismPacketEncoderMixin<T extends PacketListener> {
             }
 
             if (PacketCaptureState.load(captureState) && autism$isPayloadCarrier(packet)) {
-               module.init(packet, "C2S", protocol, "encoder");
+               module.captureCustomPayloadFromSource(packet, "C2S", protocol, "encoder");
             }
          }
       }

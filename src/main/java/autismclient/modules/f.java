@@ -416,7 +416,7 @@ public final class f {
             && MC.player != null
             && MC.gameMode != null
             && !"Packet".equals(this.choice("mode"))
-            && (autismclient.util.SilentRotationManager.init_Str() == null || !autismclient.util.SilentRotationManager.read_Z())) {
+            && (autismclient.util.SilentRotationManager.getActiveOwnerId() == null || !autismclient.util.SilentRotationManager.hasActiveRotation())) {
             this.init_V_34();
             if (this.load_Z_16()) {
                if (this.bool("anchor")) {
@@ -487,7 +487,7 @@ public final class f {
       }
 
       private boolean read() {
-         if (BlinkPacketManager.load_Z()) {
+         if (BlinkPacketManager.isHoldingActionsOnly()) {
             return false;
          }
 
@@ -501,7 +501,7 @@ public final class f {
             .clip(new ClipContext(MC.player.position(), MC.player.position().subtract(0.0, 5.0, 0.0), Block.OUTLINE, Fluid.NONE, MC.player));
          if (ray != null && ray.getType() == Type.BLOCK) {
             BlockPos target = ray.getBlockPos().above();
-            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                return false;
             }
 
@@ -544,7 +544,7 @@ public final class f {
                   autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, oldSlot);
                }
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
          } else {
             return false;
@@ -552,7 +552,7 @@ public final class f {
       }
 
       private boolean write() {
-         if (BlinkPacketManager.load_Z()) {
+         if (BlinkPacketManager.isHoldingActionsOnly()) {
             return false;
          }
 
@@ -563,7 +563,7 @@ public final class f {
          }
 
          Vec3 preVelocity = MC.player.getDeltaMovement();
-         if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             return false;
          }
 
@@ -590,7 +590,7 @@ public final class f {
                autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, oldSlot);
             }
          } finally {
-            autismclient.util.InventorySlotArbiter.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
       }
 
@@ -655,7 +655,7 @@ public final class f {
       }
 
       private void init_V_34() {
-         if (!BlinkPacketManager.load_Z() && this.init_Z && this.init_BlockPos != null && MC.level != null && MC.player != null && MC.gameMode != null) {
+         if (!BlinkPacketManager.isHoldingActionsOnly() && this.init_Z && this.init_BlockPos != null && MC.level != null && MC.player != null && MC.gameMode != null) {
             if (++this.init_I > 20) {
                this.init_Z = false;
                this.init_BlockPos = null;
@@ -666,7 +666,7 @@ public final class f {
                if (insidePlaced || snowBelow) {
                   int oldSlot = MC.player.getInventory().getSelectedSlot();
                   int bucket = this.init_I_Item_2(Items.BUCKET);
-                  if (bucket >= 0 && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+                  if (bucket >= 0 && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                      try {
                         autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, bucket);
 
@@ -689,7 +689,7 @@ public final class f {
                            autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, oldSlot);
                         }
                      } finally {
-                        autismclient.util.InventorySlotArbiter.read_V(this.id());
+                        autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
                      }
 
                      return;
@@ -703,7 +703,7 @@ public final class f {
          double x = Math.floor(MC.player.getX()) + 0.5;
          double z = Math.floor(MC.player.getZ()) + 0.5;
          MC.player.setPos(x, MC.player.getY(), z);
-         if (!BlinkPacketManager.init_Z() && MC.getConnection() != null) {
+         if (!BlinkPacketManager.isBlinking() && MC.getConnection() != null) {
             MC.getConnection().send(new Pos(MC.player.getX(), MC.player.getY(), MC.player.getZ(), MC.player.onGround(), MC.player.horizontalCollision));
          }
       }
@@ -967,7 +967,7 @@ public final class f {
                this.init_Obj = MC.level;
             }
 
-            if (!AutoTotemModule.init_Z_6() && (autismclient.util.SilentRotationManager.init_Str() == null || !autismclient.util.SilentRotationManager.read_Z())) {
+            if (!AutoTotemModule.init_Z_6() && (autismclient.util.SilentRotationManager.getActiveOwnerId() == null || !autismclient.util.SilentRotationManager.hasActiveRotation())) {
                this.pop();
                if (this.isEnabled()) {
                   if (MC.gui.screen() == null && MC.gui.overlay() == null) {
@@ -1025,7 +1025,7 @@ public final class f {
          if (this.read_Z) {
             if (!this.load_Z_17() || !autismclient.util.MouseMovementRouter.read()) {
                this.init_V_Z_9(false);
-            } else if (autismclient.util.MouseDeltaAccumulator.init(0, AutismSessionState.init_ck().state_I())) {
+            } else if (autismclient.util.MouseDeltaAccumulator.init(0, AutismSessionState.getInstance().getClientTick())) {
                this.init_V_Z_9(true);
             } else {
                this.init_V_D(Math.max(0, this.load_I - 1) + partialTick);
@@ -1036,7 +1036,7 @@ public final class f {
       @Override
       public void onMouseRotation(double deltaYaw, double deltaPitch) {
          if (this.read_Z) {
-            if (autismclient.util.MouseDeltaAccumulator.init(0, AutismSessionState.init_ck().state_I())) {
+            if (autismclient.util.MouseDeltaAccumulator.init(0, AutismSessionState.getInstance().getClientTick())) {
                this.init_V_Z_9(true);
             } else {
                this.init_V_D(Math.max(0, this.load_I - 1));
@@ -1054,7 +1054,7 @@ public final class f {
                }
             }
 
-            this.init_BitSetUtil.init_Z_I_J(this.init_I("catch-delay", "catch-min", "catch-max"), AutismSessionState.init_ck().state_I());
+            this.init_BitSetUtil.init_Z_I_J(this.init_I("catch-delay", "catch-min", "catch-max"), AutismSessionState.getInstance().getClientTick());
          }
       }
 
@@ -1082,19 +1082,19 @@ public final class f {
                return false;
             }
 
-            if (autismclient.util.InventorySlotArbiter.load() == null) {
+            if (autismclient.util.InventorySlotArbiter.getOpenActionGroupOwner() == null) {
                this.load_V_25();
             }
          } else if (packet instanceof ServerboundUseItemOnPacket useOnPacket) {
             if (!this.init_Z
                && !autismclient.util.VirtualInputDispatcher.init_Z_Str(this.id())
-               && autismclient.util.InventorySlotArbiter.load() == null
+               && autismclient.util.InventorySlotArbiter.getOpenActionGroupOwner() == null
                && this.init_Z_InteractionHand(useOnPacket.hand())) {
                this.read_V_17();
                this.sync_I = Math.max(this.sync_I, 3);
             }
          } else if (packet instanceof ServerboundSetCarriedItemPacket carriedPacket) {
-            if (autismclient.util.InventorySlotArbiter.load() != null) {
+            if (autismclient.util.InventorySlotArbiter.getOpenActionGroupOwner() != null) {
                return false;
             }
 
@@ -1194,7 +1194,7 @@ public final class f {
             return null;
          } else if (MC.player.getItemInHand(InteractionHand.MAIN_HAND).getItem() instanceof FishingRodItem) {
             return InteractionHand.MAIN_HAND;
-         } else if (autismclient.util.InventorySlotArbiter.load_Z(this.id())) {
+         } else if (autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id())) {
             return null;
          } else {
             return MC.player.getItemInHand(InteractionHand.OFF_HAND).getItem() instanceof FishingRodItem ? InteractionHand.OFF_HAND : null;
@@ -1218,10 +1218,10 @@ public final class f {
             && !MC.player.isDeadOrDying()
             && !MC.player.isUsingItem()
             && !MC.player.isHandsBusy()
-            && !BlinkPacketManager.load_Z()
+            && !BlinkPacketManager.isHoldingActionsOnly()
             && !AutoTotemModule.init_Z_6()
-            && (autismclient.util.SilentRotationManager.init_Str() == null || !autismclient.util.SilentRotationManager.read_Z())
-            && autismclient.util.InventorySlotArbiter.read_Z(this.id())
+            && (autismclient.util.SilentRotationManager.getActiveOwnerId() == null || !autismclient.util.SilentRotationManager.hasActiveRotation())
+            && autismclient.util.InventorySlotArbiter.canBeginActionGroup(this.id())
             && this.init_Z_38();
       }
 
@@ -1251,7 +1251,7 @@ public final class f {
             return autismclient.util.VirtualInputDispatcher.init(this.id(), this::read_Z_16, sent -> this.init(use, sent));
          }
 
-         if (!al.init_Z_HitResult(MC.hitResult, this.init_InteractionHand, this.id()) && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+         if (!al.init_Z_HitResult(MC.hitResult, this.init_InteractionHand, this.id()) && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             this.init_Z = true;
             this.load_Z = false;
 
@@ -1264,7 +1264,7 @@ public final class f {
                }
             } finally {
                this.init_Z = false;
-               autismclient.util.InventorySlotArbiter.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
 
             this.init(use, dispatched);
@@ -1501,7 +1501,7 @@ public final class f {
             return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
          }
 
-         if (BlinkPacketManager.load_Z()) {
+         if (BlinkPacketManager.isHoldingActionsOnly()) {
             return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
          }
 
@@ -1513,8 +1513,8 @@ public final class f {
          if (this.bool("auto-select-rod")) {
             f.Inner_BufferHelper.Inner_CachePool selected = this.init_f_BufferHelper_Cac();
             if (selected == null || !selected.init_Z() || best.load() > selected.load()) {
-               if (best.init_I() >= 0 && best.init_I() < 9 && !autismclient.util.InventorySlotArbiter.init(best.init_I(), this.id())) {
-                  if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+               if (best.init_I() >= 0 && best.init_I() < 9 && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(best.init_I(), this.id())) {
+                  if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                      return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
                   }
 
@@ -1522,16 +1522,16 @@ public final class f {
                      autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, best.init_I());
                      this.update_I = 1;
                   } finally {
-                     autismclient.util.InventorySlotArbiter.read_V(this.id());
+                     autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
                   }
 
                   return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
                }
 
-               if (best.init_I() >= 9 && best.init_I() < 36 && !autismclient.util.InventorySlotArbiter.init(best.init_I(), this.id())) {
+               if (best.init_I() >= 9 && best.init_I() < 36 && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(best.init_I(), this.id())) {
                   int target = MC.player.getInventory().getSelectedSlot();
-                  if (!autismclient.util.InventorySlotArbiter.init(target, this.id())) {
-                     if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+                  if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(target, this.id())) {
+                     if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                         return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
                      }
 
@@ -1542,7 +1542,7 @@ public final class f {
                            return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
                         }
                      } finally {
-                        autismclient.util.InventorySlotArbiter.read_V(this.id());
+                        autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
                      }
                   }
                }
@@ -1712,7 +1712,7 @@ public final class f {
                   autismclient.util.AutismMacro runtimeMacro = this.init_aM_aM(macro);
                   if (runtimeMacro != null && runtimeMacro.actions != null && !runtimeMacro.actions.isEmpty()) {
                      runtimeMacro.regeneratePackets();
-                     this.init_J = MacroExecutor.init_J_aM_MacroExecutor_Pool(runtimeMacro, MacroExecutor.ExecutionFlags.init_MacroExecutor_Pool());
+                     this.init_J = MacroExecutor.startMacro(runtimeMacro, MacroExecutor.ExecutionFlags.background());
                      if (this.init_J < 0L) {
                         this.load("AutoFish auto stop could not start.");
                      }
@@ -1825,8 +1825,8 @@ public final class f {
 
       private void set() {
          long runId = this.init_J;
-         if (runId >= 0L && MacroExecutor.init_Z_J(runId) && MacroExecutor.load_J() != runId) {
-            MacroExecutor.init_V_J(runId);
+         if (runId >= 0L && MacroExecutor.isRunActive(runId) && MacroExecutor.getCurrentRunId() != runId) {
+            MacroExecutor.stopRun(runId);
          }
 
          this.get();
@@ -1834,8 +1834,8 @@ public final class f {
 
       private void put() {
          long runId = this.init_J;
-         if (runId >= 0L && MacroExecutor.init_Z_J(runId)) {
-            MacroExecutor.init_V_J(runId);
+         if (runId >= 0L && MacroExecutor.isRunActive(runId)) {
+            MacroExecutor.stopRun(runId);
          }
 
          this.get();
@@ -4638,7 +4638,7 @@ public final class f {
             && !FreecamController.isActive()
             && !RemoteViewController.init_Z()
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
-            && !MacroExecutor.write_Z();
+            && !MacroExecutor.isRunning();
       }
 
       private boolean write_Z_8() {
@@ -4843,7 +4843,7 @@ public final class f {
             String simple = packet.getClass().getSimpleName().toLowerCase(Locale.ROOT);
             String full = packet.getClass().getName().toLowerCase(Locale.ROOT);
             Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)packet.getClass();
-            String registry = String.valueOf(PacketTypeRegistry.init_Str_Class(packetClass)).toLowerCase(Locale.ROOT);
+            String registry = String.valueOf(PacketTypeRegistry.getPacketName(packetClass)).toLowerCase(Locale.ROOT);
 
             for (String token : list.split("[,|]")) {
                String needle = token.trim().toLowerCase(Locale.ROOT);
@@ -7219,7 +7219,7 @@ public final class f {
             && (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49())
             && !autismclient.util.ManualInteractionYield.init()
             && this.init_O.init_Z_ItemStack(MC.player.getMainHandItem())
-            && (!this.bool("only-while-moving") || autismclient.util.MouseDeltaAccumulator.init(4, AutismSessionState.init_ck().state_I()))) {
+            && (!this.bool("only-while-moving") || autismclient.util.MouseDeltaAccumulator.init(4, AutismSessionState.getInstance().getClientTick()))) {
             LivingEntity target = this.init_LivingEntity_4();
             if (target == null) {
                this.init_V_46();
@@ -7282,7 +7282,7 @@ public final class f {
          this.init_q_DataUtil.init_q_DataUtil_Vec3_2(eyes, target.getBoundingBox(), autismclient.util.CombatAimEngine.Inner_DataUtil.init(target.getBoundingBox(), point.y));
          this.init_q_DataUtil.write_Z = true;
          this.init_q_DataUtil.open_D = target instanceof Player && this.init_cj.init_Z_LivingEntity(target)
-            ? this.init_cj.init(eyes, this.init_q_DataUtil.init_D, AutismSessionState.init_ck().state_I())
+            ? this.init_cj.init(eyes, this.init_q_DataUtil.init_D, AutismSessionState.getInstance().getClientTick())
             : 0.0;
          if (noCooldown) {
             this.init_q_DataUtil.sync_D = Math.max(2.0, target.hurtTime - 1);
@@ -7393,7 +7393,7 @@ public final class f {
       }
 
       private void init_V_LivingEntity_4(LivingEntity target) {
-         this.init_cj.init(target, AutismSessionState.init_ck().state_I());
+         this.init_cj.init(target, AutismSessionState.getInstance().getClientTick());
          if (target.getId() != this.flush_I) {
             this.flush_I = target.getId();
             this.init_Z = false;
@@ -8147,7 +8147,7 @@ public final class f {
 
             return true;
          } else {
-            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                return false;
             }
 
@@ -8164,7 +8164,7 @@ public final class f {
 
                return true;
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
          }
       }
@@ -8185,7 +8185,7 @@ public final class f {
                return -1;
             }
 
-            if (autismclient.util.InventorySlotArbiter.init(best, this.id())) {
+            if (autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(best, this.id())) {
                return -1;
             }
 
@@ -8199,7 +8199,7 @@ public final class f {
                return -1;
             }
 
-            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                return -1;
             }
 
@@ -8208,7 +8208,7 @@ public final class f {
                   return -1;
                }
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
 
             return selected;
@@ -8445,11 +8445,11 @@ public final class f {
             if (!(packet instanceof ServerboundUseItemOnPacket use && use.hand() == InteractionHand.MAIN_HAND)) {
                return false;
             } else {
-               if (BlinkPacketManager.load_Z()) {
+               if (BlinkPacketManager.isHoldingActionsOnly()) {
                   return false;
                }
 
-               if (autismclient.util.InventorySlotArbiter.load_Z(this.id())) {
+               if (autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id())) {
                   return false;
                }
 

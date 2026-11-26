@@ -29,8 +29,8 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
    }
 
    public static Packet<?> init_Packet_ck_CachePool(AutismSessionState.DelayedPacket qp) {
-      if (qp != null && qp.init_Packet != null) {
-         return qp.init_Z() ? qp.init_Packet : PacketRegenerator.init(qp.init_Packet);
+      if (qp != null && qp.packet != null) {
+         return qp.isExactReplay() ? qp.packet : PacketRegenerator.init(qp.packet);
       } else {
          return null;
       }
@@ -52,7 +52,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
             int repeats = init_I_I_5(this.sendCount);
 
             for (AutismSessionState.DelayedPacket qp : this.packets) {
-               if (qp != null && qp.init_Packet != null) {
+               if (qp != null && qp.packet != null) {
                   for (int k = 0; k < repeats; k++) {
                      try {
                         Packet<?> toSend = init_Packet_ck_CachePool(qp);
@@ -178,8 +178,8 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
          Map<String, Integer> nameCounts = new LinkedHashMap<>();
 
          for (AutismSessionState.DelayedPacket qp : this.packets) {
-            if (qp.init_Packet != null) {
-               String name = PacketNameResolver.init_Str_Packet(qp.init_Packet);
+            if (qp.packet != null) {
+               String name = PacketNameResolver.init_Str_Packet(qp.packet);
                nameCounts.merge(name, 1, Integer::sum);
             }
          }

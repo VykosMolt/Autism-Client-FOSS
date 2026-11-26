@@ -31,7 +31,7 @@ public class WaitForHealthAction implements CaptureOutputAction, MacroAction {
       tag.putFloat("healthThreshold", this.healthThreshold);
       tag.putBoolean("below", this.below);
       tag.putString("comparison", this.init());
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -48,7 +48,7 @@ public class WaitForHealthAction implements CaptureOutputAction, MacroAction {
          this.below = tag.getBooleanOr("below", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 

@@ -43,7 +43,7 @@ public class UseItemPhaseAction implements MacroAction {
 
          try {
             for (int t = 0; t < this.holdTicks; t++) {
-               if (!MacroExecutor.init_Z()) {
+               if (!MacroExecutor.isCurrentRunActive()) {
                   stopped = true;
                   break;
                }

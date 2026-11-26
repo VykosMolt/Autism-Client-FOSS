@@ -33,7 +33,7 @@ public interface MacroExecutionContext {
    void setVariable(String var1, MacroVarValue var2);
 
    default void setVariable(String name, Object value) {
-      this.setVariable(name, MacroVarValue.init_l_Obj(value));
+      this.setVariable(name, MacroVarValue.ofText(value));
    }
 
    void removeVariable(String var1);
@@ -54,12 +54,12 @@ public interface MacroExecutionContext {
 
    default Optional<Integer> resolveInt(String template) {
       MacroTemplateResolver.ResolveResult resolved = this.resolveTemplate(template);
-      if (!resolved.init_Z()) {
+      if (!resolved.success()) {
          return Optional.empty();
       }
 
       try {
-         return Optional.of(Integer.parseInt(resolved.init_Str().trim()));
+         return Optional.of(Integer.parseInt(resolved.value().trim()));
       } catch (NumberFormatException ignored) {
          return Optional.empty();
       }
@@ -67,12 +67,12 @@ public interface MacroExecutionContext {
 
    default Optional<Double> resolveDouble(String template) {
       MacroTemplateResolver.ResolveResult resolved = this.resolveTemplate(template);
-      if (!resolved.init_Z()) {
+      if (!resolved.success()) {
          return Optional.empty();
       }
 
       try {
-         return Optional.of(Double.parseDouble(resolved.init_Str().trim()));
+         return Optional.of(Double.parseDouble(resolved.value().trim()));
       } catch (NumberFormatException ignored) {
          return Optional.empty();
       }
@@ -84,12 +84,12 @@ public interface MacroExecutionContext {
       }
 
       MacroTemplateResolver.ResolveResult resolved = this.resolveTemplate(template);
-      if (!resolved.init_Z()) {
+      if (!resolved.success()) {
          return Optional.empty();
       }
 
       for (E value : type.getEnumConstants()) {
-         if (value.name().equalsIgnoreCase(resolved.init_Str().trim())) {
+         if (value.name().equalsIgnoreCase(resolved.value().trim())) {
             return Optional.of(value);
          }
       }

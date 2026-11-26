@@ -119,11 +119,11 @@ public final class AutoReconnectController {
    }
 
    private static boolean update() {
-      return MacroExecutor.sync_Z();
+      return MacroExecutor.hasRejoiningMacro();
    }
 
    public static void load_V() {
-      Screen screen = OverlayScreenController.init_Screen(init_Minecraft);
+      Screen screen = OverlayScreenController.getActualScreen(init_Minecraft);
       if (screen instanceof DisconnectedScreen) {
          Screen parent = screen instanceof autismclient.mixin.duck.DisconnectedScreenDuck access ? access.autism$parent() : screen;
          init(screen, parent);
@@ -134,7 +134,7 @@ public final class AutoReconnectController {
 
    public static void init(Screen parent) {
       if (init_Z()) {
-         Screen nextParent = parent == null ? OverlayScreenController.init_Screen(init_Minecraft) : parent;
+         Screen nextParent = parent == null ? OverlayScreenController.getActualScreen(init_Minecraft) : parent;
          ConnectScreen.startConnecting(nextParent, init_Minecraft, init_ServerAddress, init_ServerData, false, null);
          init_Screen = null;
          init_I = init_I();

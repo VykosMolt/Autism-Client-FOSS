@@ -309,7 +309,7 @@ public final class NameTagsRenderer {
    }
 
    private static void init_V_J(long tick, int revision, int fontEpoch, boolean group, double groupRadius) {
-      int accent = autismclient.util.UiColorPalette.init();
+      int accent = autismclient.util.UiColorPalette.accent();
       if (tick != load_J || revision != load_I || fontEpoch != read_I || load_Z != init_Z || accent != write_I || !read_List.equals(init_List)) {
          Map<List<Object>, List<NameTagsRenderer.Inner_ConfigStore>> previous = new HashMap<>();
          if (revision == load_I && fontEpoch == read_I && load_Z == init_Z && accent == write_I) {
@@ -335,7 +335,7 @@ public final class NameTagsRenderer {
             }
          }
 
-         Style countStyle = Style.EMPTY.withColor(TextColor.fromRgb(autismclient.util.UiColorPalette.init() & 16777215));
+         Style countStyle = Style.EMPTY.withColor(TextColor.fromRgb(autismclient.util.UiColorPalette.accent() & 16777215));
 
          for (int i = 0; i < itemEntities.size(); i++) {
             try {

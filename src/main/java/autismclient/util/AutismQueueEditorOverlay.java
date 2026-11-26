@@ -95,7 +95,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    public boolean poll_Z_15() {
-      return AutismSessionState.init_ck().chunk();
+      return AutismSessionState.getInstance().isTimedCaptureMode();
    }
 
    @Override
@@ -173,19 +173,19 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    public void update_V_20() {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      shared.start(this.sync_Z);
-      shared.clear(this.flush_I);
-      shared.reset(this.close_I);
+      AutismSessionState shared = AutismSessionState.getInstance();
+      shared.setQueueEditorVisible(this.sync_Z);
+      shared.setQueueEditorX(this.flush_I);
+      shared.setQueueEditorY(this.close_I);
       this.a__V();
    }
 
    public void sync_V_17() {
-      AutismSessionState shared = AutismSessionState.init_ck();
+      AutismSessionState shared = AutismSessionState.getInstance();
       this.b__V();
-      this.sync_Z = shared.value_Z();
-      this.flush_I = shared.start_I();
-      this.close_I = shared.stop_I();
+      this.sync_Z = shared.isQueueEditorVisible();
+      this.flush_I = shared.getQueueEditorX();
+      this.close_I = shared.getQueueEditorY();
    }
 
    private int push_I_23() {
@@ -276,7 +276,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       }
 
       for (AutismSessionState.DelayedPacket packet : queue) {
-         if (packet.init_I() == this.pop) {
+         if (packet.getId() == this.pop) {
             return packet;
          }
       }
@@ -290,10 +290,10 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private List<AutismSessionState.DelayedPacket> init_List_12() {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      List<AutismSessionState.DelayedPacket> queue = shared.read_List();
+      AutismSessionState shared = AutismSessionState.getInstance();
+      List<AutismSessionState.DelayedPacket> queue = shared.getSendingPackets();
       if (queue.isEmpty()) {
-         queue = shared.load_List();
+         queue = shared.getDelayedPackets();
       }
 
       return queue;
@@ -369,11 +369,11 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       for (int i = 1; i < queue.size(); i++) {
          AutismSessionState.DelayedPacket previous = queue.get(i - 1);
          AutismSessionState.DelayedPacket current = queue.get(i);
-         if (previous.load_I() > current.load_I()) {
+         if (previous.getDelay() > current.getDelay()) {
             return false;
          }
 
-         if (previous.load_I() == current.load_I() && previous.init_I() > current.init_I()) {
+         if (previous.getDelay() == current.getDelay() && previous.getId() > current.getId()) {
             return false;
          }
       }
@@ -389,7 +389,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       StringBuilder signature = new StringBuilder(queue.size() * 16);
 
       for (AutismSessionState.DelayedPacket packet : queue) {
-         signature.append(packet.init_I()).append(':').append(packet.load_I()).append(';');
+         signature.append(packet.getId()).append(':').append(packet.getDelay()).append(';');
       }
 
       return signature.toString();
@@ -405,14 +405,14 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void init(AutismSessionState shared) {
-      List<AutismSessionState.DelayedPacket> delayedQueue = shared.load_List();
+      List<AutismSessionState.DelayedPacket> delayedQueue = shared.getDelayedPackets();
       this.init_V(delayedQueue);
       if (delayedQueue.size() >= 2 && this.open_Z && System.currentTimeMillis() - this.init_J >= 800L) {
          if (this.init_Z(delayedQueue)) {
             this.open_Z = false;
          } else {
-            shared.write_V();
-            this.init_Str_2 = this.init_Str(shared.load_List());
+            shared.sortDelayedPacketsByDelay();
+            this.init_Str_2 = this.init_Str(shared.getDelayedPackets());
             this.open_Z = false;
             this.close_Z = true;
          }
@@ -424,7 +424,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          int selectedIndex = -1;
 
          for (int i = 0; i < queue.size(); i++) {
-            if (queue.get(i).init_I() == selectedPacket.init_I()) {
+            if (queue.get(i).getId() == selectedPacket.getId()) {
                selectedIndex = i;
                break;
             }
@@ -449,11 +449,11 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    @Override
    public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       if (this.sync_Z || this.a__Z()) {
-         AutismSessionState shared = AutismSessionState.init_ck();
-         List<AutismSessionState.DelayedPacket> staggeredQueue = shared.read_List();
+         AutismSessionState shared = AutismSessionState.getInstance();
+         List<AutismSessionState.DelayedPacket> staggeredQueue = shared.getSendingPackets();
          if (staggeredQueue.isEmpty()) {
             this.init(shared);
-            this.init_List = shared.load_List();
+            this.init_List = shared.getDelayedPackets();
          } else {
             this.init_List = new ArrayList<>(staggeredQueue);
          }
@@ -498,28 +498,28 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   bi.init("Queue copied.");
                }) + gap;
                bx = this.init(context, bx, row1Y, this.next(), "Paste", mouseX, mouseY, "Replace queue from clipboard", () -> {
-                  if (AutismSessionState.init_ck().read_List().isEmpty()) {
-                     AutismSessionState.DelayedPacket.load_V();
+                  if (AutismSessionState.getInstance().getSendingPackets().isEmpty()) {
+                     AutismSessionState.DelayedPacket.resetIdCounter();
                   }
 
                   List<AutismSessionState.DelayedPacket> newQueue = MacroClipboardCodec.read();
                   if (newQueue != null) {
-                     AutismSessionState.init_ck().load_V_List(newQueue);
+                     AutismSessionState.getInstance().replaceDelayedPackets(newQueue);
                      this.flush_V_16();
                      this.push = 0;
                      AutismClientMessaging.sendPrefixed("§aQueue pasted!");
                   }
                }) + gap;
                bx = this.init(context, bx, row1Y, this.next(), "Dupe", mouseX, mouseY, "Duplicate all packets in the queue", () -> {
-                  List<AutismSessionState.DelayedPacket> currentQueue = AutismSessionState.init_ck().load_List();
+                  List<AutismSessionState.DelayedPacket> currentQueue = AutismSessionState.getInstance().getDelayedPackets();
                   if (!currentQueue.isEmpty()) {
                      List<AutismSessionState.DelayedPacket> duplicatedQueue = new ArrayList<>(currentQueue);
 
                      for (AutismSessionState.DelayedPacket packetx : currentQueue) {
-                        duplicatedQueue.add(new AutismSessionState.DelayedPacket(packetx.init_Packet, packetx.load_I(), packetx.init_ck_BufferHelper()));
+                        duplicatedQueue.add(new AutismSessionState.DelayedPacket(packetx.packet, packetx.getDelay(), packetx.getReplayMode()));
                      }
 
-                     AutismSessionState.init_ck().load_V_List(duplicatedQueue);
+                     AutismSessionState.getInstance().replaceDelayedPackets(duplicatedQueue);
                      this.flush_V_16();
                      AutismClientMessaging.sendPrefixed("§aDuplicated " + currentQueue.size() + " packet(s).");
                   }
@@ -527,9 +527,9 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                bx = this.init(context, bx, row1Y, this.next(), "Ins", mouseX, mouseY, "Insert clipboard packets at the end of the queue", () -> {
                   List<AutismSessionState.DelayedPacket> newPackets = MacroClipboardCodec.read();
                   if (newPackets != null && !newPackets.isEmpty()) {
-                     List<AutismSessionState.DelayedPacket> combinedQueue = new ArrayList<>(AutismSessionState.init_ck().load_List());
+                     List<AutismSessionState.DelayedPacket> combinedQueue = new ArrayList<>(AutismSessionState.getInstance().getDelayedPackets());
                      combinedQueue.addAll(newPackets);
-                     AutismSessionState.init_ck().load_V_List(combinedQueue);
+                     AutismSessionState.getInstance().replaceDelayedPackets(combinedQueue);
                      this.flush_V_16();
                      AutismClientMessaging.sendPrefixed("§aInserted " + newPackets.size() + " packet(s).");
                   }
@@ -548,7 +548,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   mouseY,
                   "Restore the last flushed queue back into the editor",
                   () -> {
-                     if (AutismSessionState.init_ck().poll_Z()) {
+                     if (AutismSessionState.getInstance().restoreLastFlushedQueue()) {
                         this.flush_V_16();
                         this.push = 0;
                         AutismClientMessaging.sendPrefixed("§aRestored - packets will regenerate on send");
@@ -557,8 +557,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                      }
                   }
                );
-               boolean flushOnDelay = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().stop_Z();
-               boolean captureAsExact = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().next_Z();
+               boolean flushOnDelay = autismclient.modules.ModuleRuntimeManager.getInstance().isFlushQueueOnDelayDisable();
+               boolean captureAsExact = autismclient.modules.ModuleRuntimeManager.getInstance().isCaptureAsExact();
                int clearWidth = this.init_I_Str_5("Clear", 42, 58);
                int captureModeBtnWidth = this.next();
                int flushWidth = Math.max(this.init_I_Str_5("FLUSH ON DELAY", 110, 150), rowWidth - clearWidth - captureModeBtnWidth - gap - gap);
@@ -576,9 +576,9 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                      ? "When delay turns off, queued packets auto-flush"
                      : "When delay turns off, keep the queued packets until you flush or clear them",
                   () -> {
-                     autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-                     boolean newValue = !module.stop_Z();
-                     module.flush(newValue);
+                     autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+                     boolean newValue = !module.isFlushQueueOnDelayDisable();
+                     module.setFlushQueueOnDelayDisable(newValue);
                      AutismClientMessaging.sendPrefixed(newValue ? "§aFlush on Delay ON" : "§eFlush on Delay OFF");
                   }
                );
@@ -595,15 +595,15 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   mouseY,
                   captureAsExact ? "Capture as Exact: new packets stored verbatim" : "Capture as Regenerate: new packets rewritten on send",
                   () -> {
-                     autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-                     boolean nowExact = !module.next_Z();
-                     module.close(nowExact);
+                     autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+                     boolean nowExact = !module.isCaptureAsExact();
+                     module.setCaptureAsExact(nowExact);
                      AutismSessionState.ReplayMode bulkMode = nowExact ? AutismSessionState.ReplayMode.EXACT : AutismSessionState.ReplayMode.REGENERATE;
                      int updated = 0;
 
-                     for (AutismSessionState.DelayedPacket qp : AutismSessionState.init_ck().load_List()) {
-                        if (qp.init_ck_BufferHelper() != bulkMode) {
-                           qp.init(bulkMode);
+                     for (AutismSessionState.DelayedPacket qp : AutismSessionState.getInstance().getDelayedPackets()) {
+                        if (qp.getReplayMode() != bulkMode) {
+                           qp.setReplayMode(bulkMode);
                            updated++;
                         }
                      }
@@ -628,14 +628,14 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   mouseY,
                   "Remove all packets from the queue",
                   () -> {
-                     int cleared = AutismSessionState.init_ck().write_I();
+                     int cleared = AutismSessionState.getInstance().cancelAndClearPacketQueues();
                      this.flush_V_16();
                      this.push = 0;
-                     autismclient.modules.ModuleRuntimeManager.init_PoolEntry().read(cleared);
+                     autismclient.modules.ModuleRuntimeManager.getInstance().notifyQueueCleared(cleared);
                   }
                );
-               boolean captureModeOn = AutismSessionState.init_ck().chunk();
-               String delayModeLabel = AutismSessionState.init_ck().init_ck_DataUtil() == AutismSessionState.DelayUnit.TICKS ? "Ticks" : "Ms";
+               boolean captureModeOn = AutismSessionState.getInstance().isTimedCaptureMode();
+               String delayModeLabel = AutismSessionState.getInstance().getDelayUnit() == AutismSessionState.DelayUnit.TICKS ? "Ticks" : "Ms";
                int modeWidth = this.init_I_Str_5(delayModeLabel, 34, 44);
                int captureWidth = this.init_I_Str_5("Capture", 56, 72);
                int plus1Width = this.init_I_Str_5("+1", 22, 28);
@@ -657,8 +657,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   mouseY,
                   "Toggle delay unit: Ticks or milliseconds",
                   () -> {
-                     AutismSessionState.init_ck().flush_V();
-                     String newMode = AutismSessionState.init_ck().init_ck_DataUtil() == AutismSessionState.DelayUnit.TICKS ? "Ticks" : "Ms";
+                     AutismSessionState.getInstance().toggleDelayUnit();
+                     String newMode = AutismSessionState.getInstance().getDelayUnit() == AutismSessionState.DelayUnit.TICKS ? "Ticks" : "Ms";
                      AutismClientMessaging.sendPrefixed("§aDelay mode: " + newMode);
                   }
                );
@@ -674,8 +674,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   mouseY,
                   "Record real timing between captured packets",
                   () -> {
-                     boolean newCapture = !AutismSessionState.init_ck().chunk();
-                     AutismSessionState.init_ck().cache(newCapture);
+                     boolean newCapture = !AutismSessionState.getInstance().isTimedCaptureMode();
+                     AutismSessionState.getInstance().setTimedCaptureMode(newCapture);
                      AutismClientMessaging.sendPrefixed(newCapture ? "§aCapture Real Delays ON" : "§eCapture Real Delays OFF");
                   }
                );
@@ -736,8 +736,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   this.flush_Z ? "Join a world to send queued packets" : "Send all queued packets to the server",
                   () -> {
                      if (!this.flush_Z && init_Minecraft.getConnection() != null) {
-                        int count = AutismSessionState.init_ck().init_I_ClientPacketListen(init_Minecraft.getConnection());
-                        autismclient.modules.ModuleRuntimeManager.init_PoolEntry().load(count);
+                        int count = AutismSessionState.getInstance().flushDelayedPackets(init_Minecraft.getConnection());
+                        autismclient.modules.ModuleRuntimeManager.getInstance().notifyQueueFlushed(count);
                      }
                   }
                );
@@ -814,27 +814,27 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                      int rowY = itemY - 1;
                      if (rowY + this.start_I_14() > clipTop && rowY < clipBottom) {
                         boolean grouped = false;
-                        if (i > 0 && this.init_List.get(i - 1).load_I() == packet.load_I()) {
+                        if (i > 0 && this.init_List.get(i - 1).getDelay() == packet.getDelay()) {
                            grouped = true;
                         }
 
-                        if (i < this.init_List.size() - 1 && this.init_List.get(i + 1).load_I() == packet.load_I()) {
+                        if (i < this.init_List.size() - 1 && this.init_List.get(i + 1).getDelay() == packet.getDelay()) {
                            grouped = true;
                         }
 
-                        int textColor = UiColorPalette.scan();
+                        int textColor = UiColorPalette.textBright();
                         if (grouped) {
-                           if (packet.load_I() != lastDelay) {
+                           if (packet.getDelay() != lastDelay) {
                               groupColorIndex++;
                            }
 
                            textColor = groupColorIndex % 2 == 0 ? -12268289 : -21948;
                         }
 
-                        lastDelay = packet.load_I();
+                        lastDelay = packet.getDelay();
                         int rowX = listX + 1;
                         int rowW = Math.max(36, listContentWidth - 2);
-                        boolean selected = selectedPacket != null && selectedPacket.init_I() == packet.init_I();
+                        boolean selected = selectedPacket != null && selectedPacket.getId() == packet.getId();
                         boolean hovered = mouseX >= rowX && mouseX < rowX + rowW && mouseY >= rowY && mouseY < rowY + this.start_I_14();
                         autismclient.gui.ui.widgets.ListRowRenderer.init(
                            context,
@@ -848,8 +848,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                            selected,
                            grouped ? autismclient.gui.ui.widgets.ListRowRenderer.RowTone.WARNING : autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
                         );
-                        String label = "#" + packet.init_I() + " " + PacketNameResolver.init_Str_Packet(packet.init_Packet);
-                        String delayText = String.valueOf(packet.load_I());
+                        String label = "#" + packet.getId() + " " + PacketNameResolver.init_Str_Packet(packet.packet);
+                        String delayText = String.valueOf(packet.getDelay());
                         int labelMaxWidth = this.open(rowX, rowW);
                         String trimmed = autismclient.gui.f.b.k.init(
                                  this.init_Font, label, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), textColor
@@ -871,7 +871,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                            this.init_Font,
                            trimmed,
                            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-                           selected ? UiColorPalette.table() : textColor,
+                           selected ? UiColorPalette.selectedText() : textColor,
                            rowX + 7,
                            rowTextY,
                            false
@@ -881,7 +881,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                         int buttonY = rowY + Math.max(0, (this.start_I_14() - this.stop()) / 2);
                         int modeBtnW = 14;
                         int modeBtnX = delayBtnX - modeBtnW - 2;
-                        boolean exact = packet.init_Z();
+                        boolean exact = packet.isExactReplay();
                         autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                            context,
                            this.init_Font,
@@ -946,7 +946,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      AutismSessionState shared = AutismSessionState.init_ck();
+      AutismSessionState shared = AutismSessionState.getInstance();
       List<AutismSessionState.DelayedPacket> displayQueue = this.init_List.isEmpty() ? this.init_List_12() : this.init_List;
       int panelHeight = this.update_Z
          ? 14
@@ -991,8 +991,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          for (AutismQueueEditorOverlay.Inner_StreamUtil region : this.read_List) {
             if (region.init(mouseX, mouseY)) {
                if (region.read(mouseX, mouseY) && button == 0) {
-                  shared.init_V_ck_CachePool(region.init_ck_CachePool);
-                  if (this.pop == region.init_ck_CachePool.init_I()) {
+                  shared.removeDelayedPacket(region.init_ck_CachePool);
+                  if (this.pop == region.init_ck_CachePool.getId()) {
                      this.flush_V_16();
                   }
 
@@ -1000,25 +1000,25 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                }
 
                if (region.write(mouseX, mouseY) && button == 0) {
-                  AutismSessionState.ReplayMode next = region.init_ck_CachePool.init_Z() ? AutismSessionState.ReplayMode.REGENERATE : AutismSessionState.ReplayMode.EXACT;
-                  region.init_ck_CachePool.init(next);
+                  AutismSessionState.ReplayMode next = region.init_ck_CachePool.isExactReplay() ? AutismSessionState.ReplayMode.REGENERATE : AutismSessionState.ReplayMode.EXACT;
+                  region.init_ck_CachePool.setReplayMode(next);
                   return true;
                }
 
                if (region.load(mouseX, mouseY)) {
                   if (button == 0) {
-                     shared.init_V_ck_CachePool_I(region.init_ck_CachePool, region.init_ck_CachePool.load_I() + 1);
+                     shared.updateDelayedPacketDelay(region.init_ck_CachePool, region.init_ck_CachePool.getDelay() + 1);
                      return true;
                   }
 
                   if (button == 1) {
-                     shared.init_V_ck_CachePool_I(region.init_ck_CachePool, Math.max(0, region.init_ck_CachePool.load_I() - 1));
+                     shared.updateDelayedPacketDelay(region.init_ck_CachePool, Math.max(0, region.init_ck_CachePool.getDelay() - 1));
                      return true;
                   }
                }
 
                if (button == 0) {
-                  this.pop = this.pop == region.init_ck_CachePool.init_I() ? -1 : region.init_ck_CachePool.init_I();
+                  this.pop = this.pop == region.init_ck_CachePool.getId() ? -1 : region.init_ck_CachePool.getId();
                   return true;
                }
             }
@@ -1133,10 +1133,10 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          AutismClientMessaging.sendPrefixed("§cQueue is empty");
       } else if (this.pop != -1) {
          for (AutismSessionState.DelayedPacket packet : queue) {
-            if (packet.init_I() == this.pop) {
-               packet.init(packet.load_I() + increment);
-               String modeStr = AutismSessionState.init_ck().load_ck_DataUtil() == AutismSessionState.DelayUnit.TICKS ? "ticks" : "ms";
-               AutismClientMessaging.sendPrefixed("§aPacket #" + packet.init_I() + " delay: " + packet.load_I() + " " + modeStr);
+            if (packet.getId() == this.pop) {
+               packet.setDelay(packet.getDelay() + increment);
+               String modeStr = AutismSessionState.getInstance().getEffectiveDelayUnit() == AutismSessionState.DelayUnit.TICKS ? "ticks" : "ms";
+               AutismClientMessaging.sendPrefixed("§aPacket #" + packet.getId() + " delay: " + packet.getDelay() + " " + modeStr);
                return;
             }
          }
@@ -1145,7 +1145,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          AutismClientMessaging.sendPrefixed("§cSelected packet not found");
       } else {
          for (int i = 0; i < queue.size(); i++) {
-            queue.get(i).init(i * increment);
+            queue.get(i).setDelay(i * increment);
          }
 
          AutismClientMessaging.sendPrefixed("§aApplied +" + increment + " incremental delays");

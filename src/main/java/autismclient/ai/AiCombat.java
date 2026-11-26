@@ -194,7 +194,7 @@ final class AiCombat {
 
    static Entity init_Entity(Minecraft mc) {
       if (mc.player != null && mc.level != null) {
-         long now = autismclient.util.AutismSessionState.init_ck().state_I();
+         long now = autismclient.util.AutismSessionState.getInstance().getClientTick();
          if (now != write_J) {
             write_J = now;
             Set<Integer> seen = new HashSet<>();

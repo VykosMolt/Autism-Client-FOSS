@@ -11,6 +11,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public abstract class AutismNoRenderGlintMixin {
    @ModifyVariable(method = "setFoilType", at = @At("HEAD"), argsOnly = true, require = 0)
    private FoilType autism$noGlint(FoilType foilType) {
-      return NoRenderState.tick() ? FoilType.NONE : foilType;
+      return NoRenderState.hideEnchantmentGlint() ? FoilType.NONE : foilType;
    }
 }

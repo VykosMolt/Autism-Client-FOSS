@@ -211,7 +211,7 @@ final class AiScreens {
             }
          case "restore":
          case "load":
-            if (!ModuleRuntimeManager.init_PoolEntry().task()) {
+            if (!ModuleRuntimeManager.getInstance().restoreStoredGuiAsync()) {
                throw new IllegalStateException("No stored GUI to restore");
             }
 
@@ -323,7 +323,7 @@ final class AiScreens {
 
       final int timeout = init(args, 45, 120);
       final Minecraft mc = Minecraft.getInstance();
-      if (autismclient.util.OverlayScreenController.init_Screen(mc) instanceof ConnectScreen) {
+      if (autismclient.util.OverlayScreenController.getActualScreen(mc) instanceof ConnectScreen) {
          throw new IllegalArgumentException("A connection attempt is already in progress");
       }
 
@@ -351,7 +351,7 @@ final class AiScreens {
                   AiJson.objectOf("server", address, "worldObserved", true)
                );
             } else {
-               Screen screen = autismclient.util.OverlayScreenController.init_Screen(mc);
+               Screen screen = autismclient.util.OverlayScreenController.getActualScreen(mc);
                if (screen instanceof DisconnectedScreen disconnected) {
                   String reason = AiScreens.init(AiScreens.init(disconnected), 1024);
                   return this.init(
@@ -385,7 +385,7 @@ final class AiScreens {
          public void cancel() {
             if (!this.init_Z) {
                this.init_Z = true;
-               AiScreens.init(autismclient.util.OverlayScreenController.init_Screen(mc));
+               AiScreens.init(autismclient.util.OverlayScreenController.getActualScreen(mc));
             }
          }
       };

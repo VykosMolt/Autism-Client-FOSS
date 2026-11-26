@@ -27,9 +27,9 @@ public abstract class AutismArmorSlotMixin {
 
    @Unique
    private static boolean autism$armorAllowed() {
-      ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
-      boolean modAllow = mod != null && mod.data();
-      boolean bypass = AutismSessionState.init_ck().close_Z();
+      ModuleRuntimeManager mod = ModuleRuntimeManager.getInstance();
+      boolean modAllow = mod != null && mod.isXCarryUseArmor();
+      boolean bypass = AutismSessionState.getInstance().isArmorSlotBypassEnabled();
       return modAllow || bypass;
    }
 }

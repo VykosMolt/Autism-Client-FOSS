@@ -58,7 +58,7 @@ public final class OverlaySuiteController {
          manager.register(itemNbtInspectOverlay);
       }
 
-      autismclient.modules.ModuleRuntimeManager autismModule = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager autismModule = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (!AutismLiteVariant.enabled()) {
          autismclient.ai.AiAssistant.init_ConfigStore().load_V();
          autismclient.ai.SchematicWorkspace.read_V();
@@ -78,7 +78,7 @@ public final class OverlaySuiteController {
       this.init_AutismLauncherOver.init_V_AutismKeybindOverl(this.init_AutismKeybindOverl);
       this.init_AutismLauncherOver.init_V_Supplier(() -> {
          if (this.init_AutismPacketLogger == null && autismModule != null) {
-            this.init_AutismPacketLogger = autismModule.init_AutismPacketLogger();
+            this.init_AutismPacketLogger = autismModule.getOrCreatePacketLoggerOverlay();
             if (this.init_AutismPacketLogger != null) {
                this.init_AutismPacketLogger.flush_V_13();
             }
@@ -92,7 +92,7 @@ public final class OverlaySuiteController {
       });
       this.init_AutismLauncherOver.load_V_Supplier(() -> {
          if (this.init_AutismServerInfoOv == null) {
-            this.init_AutismServerInfoOv = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_AutismServerInfoOv();
+            this.init_AutismServerInfoOv = autismclient.modules.ModuleRuntimeManager.getInstance().getOrCreateServerInfoOverlay();
          }
 
          if (this.init_AutismServerInfoOv != null) {
@@ -102,7 +102,7 @@ public final class OverlaySuiteController {
          return this.init_AutismServerInfoOv;
       });
       if (this.init_AutismPacketLogger == null && AutismPacketLoggerOverlay.poll_Z_13()) {
-         this.init_AutismPacketLogger = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_AutismPacketLogger();
+         this.init_AutismPacketLogger = autismclient.modules.ModuleRuntimeManager.getInstance().getOrCreatePacketLoggerOverlay();
          if (this.init_AutismPacketLogger != null) {
             this.init_AutismPacketLogger.flush_V_13();
             if (this.init_AutismPacketLogger.sync_Z()) {
@@ -112,7 +112,7 @@ public final class OverlaySuiteController {
       }
 
       if (this.init_AutismServerInfoOv == null && AutismServerInfoOverlay.poll_Z_16()) {
-         this.init_AutismServerInfoOv = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_AutismServerInfoOv();
+         this.init_AutismServerInfoOv = autismclient.modules.ModuleRuntimeManager.getInstance().getOrCreateServerInfoOverlay();
          if (this.init_AutismServerInfoOv != null) {
             this.init_AutismServerInfoOv.update_V_21();
             if (this.init_AutismServerInfoOv.sync_Z()) {
@@ -122,7 +122,7 @@ public final class OverlaySuiteController {
       }
 
       if (!AutismLiteVariant.enabled() && autismModule != null) {
-         AutismOverlay profilesOverlay = autismModule.load_cX();
+         AutismOverlay profilesOverlay = autismModule.getOrCreateProfilesOverlay();
          if (profilesOverlay != null && profilesOverlay.sync_Z()) {
             manager.register(profilesOverlay);
          }

@@ -604,7 +604,7 @@ final class AiSettingsView {
 
          kit.init(
             autismclient.gui.f.NetHelper.init(modelBounds.init() + 2, y, ctrl, ctrl),
-            autismclient.util.GuiIconAtlas.clear,
+            autismclient.util.GuiIconAtlas.REFRESH,
             this.init_av.load(),
             false,
             this.init_av.load() ? "Scanning models..." : "Scan for models",
@@ -735,7 +735,7 @@ final class AiSettingsView {
             String label = armed ? "Click again to remove" : "Remove " + write_List.get(this.init_AiSettings_Provide.ordinal()) + " key";
             kit.init_V_NetHelper_3(
                autismclient.gui.f.NetHelper.init(x, y, kit.load(label) + 12, ctrl),
-               autismclient.util.GuiIconAtlas.open,
+               autismclient.util.GuiIconAtlas.DELETE,
                label,
                autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
                this::poll

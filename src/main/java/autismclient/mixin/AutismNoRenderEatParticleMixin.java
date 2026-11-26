@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderEatParticleMixin {
    @Inject(method = "spawnItemParticles", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noEatParticles(ItemStack stack, int count, CallbackInfo ci) {
-      if (NoRenderState.pop()) {
+      if (NoRenderState.hideEatingParticles()) {
          ci.cancel();
       }
    }

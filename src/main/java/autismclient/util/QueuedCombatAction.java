@@ -115,7 +115,7 @@ public final class QueuedCombatAction {
       final Object init_Obj = this.init_Minecraft.player;
       final Object load_Obj = this.init_Minecraft.level;
       final Object read = this.init_Minecraft.getConnection();
-      final int init_I = AutismSessionState.init_ck().state_I();
+      final int init_I = AutismSessionState.getInstance().getClientTick();
       final int load_I = this.init_Minecraft.player.getInventory().getSelectedSlot();
       final ItemStack init_ItemStack = this.init_Minecraft.player.getMainHandItem().copy();
       final ItemStack load_ItemStack = this.init_Minecraft.player.getOffhandItem().copy();
@@ -140,7 +140,7 @@ public final class QueuedCombatAction {
             && this.init_Minecraft.player == this.init_Obj
             && this.init_Minecraft.level == this.load_Obj
             && this.init_Minecraft.getConnection() == this.read
-            && this.init_I == AutismSessionState.init_ck().state_I()
+            && this.init_I == AutismSessionState.getInstance().getClientTick()
             && this.init_Minecraft.gui.screen() == null
             && this.init_Minecraft.gui.overlay() == null;
       }

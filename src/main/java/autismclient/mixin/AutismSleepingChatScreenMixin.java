@@ -20,8 +20,8 @@ public abstract class AutismSleepingChatScreenMixin extends Screen {
 
    @Inject(method = "init()V", at = @At("TAIL"))
    private void autism$init(CallbackInfo ci) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      if (module != null && module.init_Z()) {
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      if (module != null && module.isActive()) {
          this.addRenderableWidget(new StyledButton(5, 5, 140, 20, Component.literal("Client wake up"), CachePool.Inner_DataUtil.read, button -> BedSleepDesyncHelper.init_V()));
       }
    }

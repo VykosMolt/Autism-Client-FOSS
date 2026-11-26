@@ -125,18 +125,18 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    @Override
    public void onDisable() {
       this.init_V_13();
-      autismclient.util.SilentRotationManager.init(this.id());
-      autismclient.util.InventorySlotArbiter.update_V(this.id());
+      autismclient.util.SilentRotationManager.releaseOwner(this.id());
+      autismclient.util.InventorySlotArbiter.releaseAllClaims(this.id());
    }
 
    @Override
    public void onGameLeft() {
       this.init_V_13();
       if (this.read_Z_6()) {
-         autismclient.util.SilentRotationManager.load_V();
+         autismclient.util.SilentRotationManager.resetAll();
       }
 
-      autismclient.util.InventorySlotArbiter.update_V(this.id());
+      autismclient.util.InventorySlotArbiter.releaseAllClaims(this.id());
    }
 
    private void init_V_13() {
@@ -165,7 +165,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    @Override
    public void tick() {
       if (!this.isEnabled() && MC != null && MC.player != null && this.read_Z_6()) {
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
+         autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
       }
    }
 
@@ -176,12 +176,12 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
    @Override
    public boolean hasDisabledTickWork() {
-      return autismclient.util.SilentRotationManager.read_Z() && this.read_Z_6();
+      return autismclient.util.SilentRotationManager.hasActiveRotation() && this.read_Z_6();
    }
 
    @Override
    public boolean load_Z_23() {
-      return SilentMovementCoordinator.isSafeWalkActive() ? false : autismclient.util.SilentRotationManager.init_Z() || this.isEnabled() && this.init_Z_14();
+      return SilentMovementCoordinator.isSafeWalkActive() ? false : autismclient.util.SilentRotationManager.isReturningToPlayer() || this.isEnabled() && this.init_Z_14();
    }
 
    @Override
@@ -272,15 +272,15 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       this.put = -1;
       this.write_V_6();
       if (this.read_Z_6()) {
-         autismclient.util.SilentRotationManager.init(this.id());
+         autismclient.util.SilentRotationManager.releaseOwner(this.id());
          if (MC != null && MC.player != null) {
-            autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
+            autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
          }
       }
    }
 
    private boolean read_Z_6() {
-      return this.id().equals(autismclient.util.SilentRotationManager.init_Str());
+      return this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
    }
 
    private void init_V_ce_DataUtil(RotationMath.Rotation goal) {
@@ -289,13 +289,13 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
    private void init_V_ce_DataUtil_Z(RotationMath.Rotation goal, boolean pinQuiet) {
       if (goal != null) {
-         autismclient.util.SilentRotationManager.init_V_Str(this.id(), 15, goal);
+         autismclient.util.SilentRotationManager.requestRotation(this.id(), 15, goal);
       } else if (this.read_Z_6()) {
-         autismclient.util.SilentRotationManager.init(this.id());
+         autismclient.util.SilentRotationManager.releaseOwner(this.id());
       }
 
       if (this.read_Z_6()) {
-         autismclient.util.SilentRotationManager.init_V_Str_5(this.id(), MC.player, pinQuiet);
+         autismclient.util.SilentRotationManager.tickPinQuiet(this.id(), MC.player, pinQuiet);
       }
    }
 
@@ -387,7 +387,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (tick - source.read() >= 200) {
          this.init_PathHelper_CachePo = null;
          return null;
@@ -406,10 +406,10 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       if (source.init_InteractionHand() == InteractionHand.OFF_HAND) {
-         if (autismclient.util.InventorySlotArbiter.load_Z(this.id()) || autismclient.util.ClientInteractionOverride.load_Z()) {
+         if (autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id()) || autismclient.util.ClientInteractionOverride.load_Z()) {
             return null;
          }
-      } else if (autismclient.util.InventorySlotArbiter.init(source.load(), this.id())) {
+      } else if (autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(source.load(), this.id())) {
          return null;
       }
 
@@ -508,7 +508,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       ItemStack offhand = MC.player.getOffhandItem();
       if (items.contains(offhand.getItem())
          && (this.init_PathHelper_CachePo == null || !offhand.is(Items.LAVA_BUCKET))
-         && !autismclient.util.InventorySlotArbiter.load_Z(this.id())
+         && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id())
          && !autismclient.util.ClientInteractionOverride.load_Z()) {
          return new AutoTrapModule.Inner_ConfigStore(-1, InteractionHand.OFF_HAND, offhand);
       }
@@ -518,7 +518,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       int bestDistance = 2147483647;
 
       for (int slot = 0; slot < 9; slot++) {
-         if (!autismclient.util.InventorySlotArbiter.init(slot, this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, this.id())) {
             ItemStack stack = MC.player.getInventory().getItem(slot);
             if (items.contains(stack.getItem()) && (this.init_PathHelper_CachePo == null || !stack.is(Items.LAVA_BUCKET))) {
                int distance = Math.abs(slot - selected);
@@ -976,7 +976,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    }
 
    private RotationMath.Rotation init_ce_DataUtil_PathHelper_BufferH(AutoTrapModule.Inner_BufferHelper plan) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (tick == this.start) {
          return null;
       }
@@ -1001,16 +1001,16 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      if (BlinkPacketManager.load_Z()) {
+      if (BlinkPacketManager.isHoldingActionsOnly()) {
          return null;
       }
 
-      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-      if (!wire.init_Z()) {
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+      if (!wire.initialized()) {
          return null;
       }
 
-      RotationMath.Rotation wireRotation = new RotationMath.Rotation(wire.read(), wire.write());
+      RotationMath.Rotation wireRotation = new RotationMath.Rotation(wire.currentYaw(), wire.currentPitch());
       if (!init_Z_F(wireRotation.pitch())) {
          return null;
       }
@@ -1164,12 +1164,12 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
    @Override
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
-      return this.start == AutismSessionState.init_ck().state_I();
+      return this.start == AutismSessionState.getInstance().getClientTick();
    }
 
    @Override
    public boolean shouldCancelAttack(HitResult hitResult) {
-      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.read_Z();
+      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && autismclient.util.SilentRotationManager.hasActiveRotation();
    }
 
    private boolean load(AutoTrapModule.Inner_BufferHelper plan) {
@@ -1192,12 +1192,12 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
    private boolean init_Z_I_I(int slot, int selected) {
       if (!BedDefenderModule.init_Z_10() && !SurroundModule.init_Z_27() && !CrystalAuraModule.init_Z_51() && !AnchorAuraModule.init_Z_2()) {
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          if (tick == this.size) {
             return false;
          }
 
-         if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             return false;
          }
 
@@ -1208,7 +1208,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
             autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
          } finally {
-            autismclient.util.InventorySlotArbiter.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
 
          this.size = tick;
@@ -1248,7 +1248,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
                this.prev = -1;
                this.valid = 0;
             } else if (this.valid > 0 && --this.valid <= 0) {
-               if (!autismclient.util.InventorySlotArbiter.init(this.next, this.id()) && this.init_Z_I_I(this.next, MC.player.getInventory().getSelectedSlot())) {
+               if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.next, this.id()) && this.init_Z_I_I(this.next, MC.player.getInventory().getSelectedSlot())) {
                   this.next = -1;
                   this.prev = -1;
                } else {

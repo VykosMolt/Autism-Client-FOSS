@@ -12,14 +12,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderScreenEffectMixin {
    @Inject(method = "submitFire", at = @At("HEAD"), cancellable = true, require = 0)
    private static void autism$noFireOverlay(CallbackInfo ci) {
-      if (NoRenderState.sync() || AuditClientFixes.isFreecamActive()) {
+      if (NoRenderState.hideFireOverlay() || AuditClientFixes.isFreecamActive()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "submitWater", at = @At("HEAD"), cancellable = true, require = 0)
    private static void autism$noLiquidOverlay(CallbackInfo ci) {
-      if (NoRenderState.flush() || AuditClientFixes.isFreecamActive()) {
+      if (NoRenderState.hideLiquidOverlay() || AuditClientFixes.isFreecamActive()) {
          ci.cancel();
       }
    }

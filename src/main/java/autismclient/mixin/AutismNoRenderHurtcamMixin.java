@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderHurtcamMixin {
    @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noHurtcam(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
-      if (NoRenderState.run()) {
+      if (NoRenderState.hideHurtCam()) {
          ci.cancel();
       }
    }

@@ -498,7 +498,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    ) {
       int safeContinuationOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, continuationOffset);
       if (prefixWidth >= maxWidth) {
-         this.init_V_Str_3(prefix.stripTrailing(), 0, UiColorPalette.pool(), maxWidth, target);
+         this.init_V_Str_3(prefix.stripTrailing(), 0, UiColorPalette.silver(), maxWidth, target);
          this.init_V_Str_3(value, safeContinuationOffset, valueColor, maxWidth, target);
       } else if (value != null && !value.isEmpty()) {
          String remaining = value;
@@ -516,7 +516,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          }
       } else {
          target.add(
-            AutismItemNbtInspectOverlay.Inner_StreamUtil.init(List.of(new ItemNbtInspector.Inner_TaskQueue(prefix, UiColorPalette.pool()), new ItemNbtInspector.Inner_TaskQueue("", valueColor)), 0)
+            AutismItemNbtInspectOverlay.Inner_StreamUtil.init(List.of(new ItemNbtInspector.Inner_TaskQueue(prefix, UiColorPalette.silver()), new ItemNbtInspector.Inner_TaskQueue("", valueColor)), 0)
          );
       }
    }
@@ -616,14 +616,14 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
             target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init(current, continuation ? continuationOffset : 0));
          }
       } else {
-         target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init("", 0, UiColorPalette.a()));
+         target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init("", 0, UiColorPalette.textMuted()));
       }
    }
 
    private AutismItemNbtInspectOverlay.Inner_StreamUtil init_AutismItemNbtInspe_Str(String prefix, String value, int valueColor, int offset) {
       List<ItemNbtInspector.Inner_TaskQueue> tokens = new ArrayList<>();
       if (prefix != null && !prefix.isEmpty()) {
-         tokens.add(new ItemNbtInspector.Inner_TaskQueue(prefix, UiColorPalette.pool()));
+         tokens.add(new ItemNbtInspector.Inner_TaskQueue(prefix, UiColorPalette.silver()));
       }
 
       tokens.add(new ItemNbtInspector.Inner_TaskQueue(value == null ? "" : value, valueColor));
@@ -698,7 +698,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
    private int load(String text) {
       return text != null && !text.isEmpty()
-         ? autismclient.gui.f.b.k.init(this.init_Font, text, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.task())
+         ? autismclient.gui.f.b.k.init(this.init_Font, text, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.softWhite())
          : 0;
    }
 

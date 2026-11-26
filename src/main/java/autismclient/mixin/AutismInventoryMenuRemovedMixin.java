@@ -15,10 +15,10 @@ public abstract class AutismInventoryMenuRemovedMixin {
    @Inject(method = "removed", at = @At("HEAD"), cancellable = true)
    private void autism$skipDrainWhenXCarryForced(Player player, CallbackInfo ci) {
       if (player instanceof LocalPlayer) {
-         AutismSessionState shared = AutismSessionState.init_ck();
-         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-         boolean passive = module != null && module.get_Z();
-         if (passive || shared.sync_Z()) {
+         AutismSessionState shared = AutismSessionState.getInstance();
+         ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+         boolean passive = module != null && module.isXCarryEnabled();
+         if (passive || shared.isXCarryForced()) {
             InventoryMenu self = (InventoryMenu)(Object)this;
             if (player.inventoryMenu == self) {
                ci.cancel();

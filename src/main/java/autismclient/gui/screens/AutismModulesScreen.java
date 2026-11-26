@@ -380,7 +380,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          manager.register(this.init_AutismQueueEditorO);
          this.init_AutismCustomFilter = this.init(AutismCustomFilterOverlay.class, null);
          if (this.init_AutismCustomFilter == null) {
-            OverlayBounds filterLayout = AutismSessionState.init_ck().init_cH_Str("autism-custom-filter");
+            OverlayBounds filterLayout = AutismSessionState.getInstance().getOverlayBounds("autism-custom-filter");
             if (filterLayout != null && filterLayout.visible) {
                this.ensureCustomFilterOverlay(manager);
             }
@@ -417,16 +417,16 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          actionEditor.read_V(true);
          manager.register(actionEditor);
          manager.setHidden(actionEditor, false);
-         autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.getInstance();
          if (global != null) {
-            AutismPacketLoggerOverlay logger = global.init_AutismPacketLogger();
+            AutismPacketLoggerOverlay logger = global.getOrCreatePacketLoggerOverlay();
             if (logger != null) {
                logger.flush_V_13();
                logger.load(true);
                manager.register(logger);
             }
 
-            AutismServerInfoOverlay serverInfo = global.init_AutismServerInfoOv();
+            AutismServerInfoOverlay serverInfo = global.getOrCreateServerInfoOverlay();
             if (serverInfo != null) {
                serverInfo.update_V_21();
                serverInfo.load(true);
@@ -462,7 +462,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          manager.register(this.init_AutismQueueEditorO);
          this.init_AutismCustomFilter = this.init(AutismCustomFilterOverlay.class, null);
          if (this.init_AutismCustomFilter == null) {
-            OverlayBounds filterLayout = AutismSessionState.init_ck().init_cH_Str("autism-custom-filter");
+            OverlayBounds filterLayout = AutismSessionState.getInstance().getOverlayBounds("autism-custom-filter");
             if (filterLayout != null && filterLayout.visible) {
                this.ensureCustomFilterOverlay(manager);
             }
@@ -502,16 +502,16 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          ActionEditorOverlay actionEditor = ActionEditorOverlay.init_ActionEditorOverla_2();
          actionEditor.read_V(false);
          manager.register(actionEditor);
-         autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.getInstance();
          if (global != null) {
-            AutismPacketLoggerOverlay logger = global.init_AutismPacketLogger();
+            AutismPacketLoggerOverlay logger = global.getOrCreatePacketLoggerOverlay();
             if (logger != null) {
                logger.flush_V_13();
                logger.load(false);
                manager.register(logger);
             }
 
-            AutismServerInfoOverlay serverInfo = global.init_AutismServerInfoOv();
+            AutismServerInfoOverlay serverInfo = global.getOrCreateServerInfoOverlay();
             if (serverInfo != null) {
                serverInfo.update_V_21();
                serverInfo.load(false);
@@ -545,10 +545,10 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          }
       }
 
-      autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (global != null) {
-         this.init_V_cX(global.load_AutismPacketLogger());
-         this.init_V_cX(global.load_AutismServerInfoOv());
+         this.init_V_cX(global.getPacketLoggerOverlay());
+         this.init_V_cX(global.getServerInfoOverlay());
       }
 
       this.init_V_cX(AutismMacroEditorOverlay.init_AutismMacroEditorO_2());
@@ -598,8 +598,8 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          || overlay == this.init_AutismCustomFilter
          || this.init_AutismCustomFilter != null && overlay == this.init_AutismCustomFilter.init_AutismCustomFilter()
          || overlay == this.init_AutismKeybindOverl
-         || autismclient.modules.ModuleRuntimeManager.init_PoolEntry() != null && overlay == autismclient.modules.ModuleRuntimeManager.init_PoolEntry().load_AutismPacketLogger()
-         || autismclient.modules.ModuleRuntimeManager.init_PoolEntry() != null && overlay == autismclient.modules.ModuleRuntimeManager.init_PoolEntry().load_AutismServerInfoOv()
+         || autismclient.modules.ModuleRuntimeManager.getInstance() != null && overlay == autismclient.modules.ModuleRuntimeManager.getInstance().getPacketLoggerOverlay()
+         || autismclient.modules.ModuleRuntimeManager.getInstance() != null && overlay == autismclient.modules.ModuleRuntimeManager.getInstance().getServerInfoOverlay()
          || overlay == AutismMacroEditorOverlay.init_AutismMacroEditorO_2()
          || overlay == ActionEditorOverlay.init_ActionEditorOverla_2();
    }
@@ -674,20 +674,20 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
                this.load(this.ensureCustomFilterOverlay(OverlayManager.getInstance()));
                break;
             case "logger":
-               autismclient.modules.ModuleRuntimeManager globalxx = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+               autismclient.modules.ModuleRuntimeManager globalxx = autismclient.modules.ModuleRuntimeManager.getInstance();
                if (globalxx != null) {
-                  this.load(globalxx.init_AutismPacketLogger());
+                  this.load(globalxx.getOrCreatePacketLoggerOverlay());
                }
                break;
             case "server":
-               autismclient.modules.ModuleRuntimeManager globalx = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+               autismclient.modules.ModuleRuntimeManager globalx = autismclient.modules.ModuleRuntimeManager.getInstance();
                if (globalx != null) {
-                  this.load(globalx.init_AutismServerInfoOv());
+                  this.load(globalx.getOrCreateServerInfoOverlay());
                }
                break;
          }
       } else {
-         autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+         autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.getInstance();
          if (global != null) {
             switch (id) {
                case "admin":
@@ -700,7 +700,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
                   this.load(this.init_AutismQueueEditorO);
                   break;
                case "logger":
-                  AutismPacketLoggerOverlay logger = global.init_AutismPacketLogger();
+                  AutismPacketLoggerOverlay logger = global.getOrCreatePacketLoggerOverlay();
                   if (logger != null) {
                      logger.b__V();
                      OverlayManager.getInstance().register(logger);
@@ -711,7 +711,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
                   this.load(this.ensureCustomFilterOverlay(OverlayManager.getInstance()));
                   break;
                case "server":
-                  AutismServerInfoOverlay serverInfo = global.init_AutismServerInfoOv();
+                  AutismServerInfoOverlay serverInfo = global.getOrCreateServerInfoOverlay();
                   if (serverInfo != null) {
                      OverlayManager.getInstance().register(serverInfo);
                      this.load(serverInfo);
@@ -779,7 +779,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
             OverlayManager manager = OverlayManager.getInstance();
             manager.register(editor);
             manager.setHidden(editor, false);
-            if (editor.sync_Z() && AutismSessionState.init_ck().init_aM() != null) {
+            if (editor.sync_Z() && AutismSessionState.getInstance().getEditingMacro() != null) {
                editor.init_V_Z(true);
                manager.bringToFront(editor);
             } else {
@@ -813,14 +813,14 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          actionEditor.read_V(false);
       }
 
-      autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (global != null) {
-         AutismPacketLoggerOverlay logger = global.load_AutismPacketLogger();
+         AutismPacketLoggerOverlay logger = global.getPacketLoggerOverlay();
          if (logger != null) {
             logger.load(false);
          }
 
-         AutismServerInfoOverlay serverInfo = global.load_AutismServerInfoOv();
+         AutismServerInfoOverlay serverInfo = global.getServerInfoOverlay();
          if (serverInfo != null) {
             serverInfo.load(false);
          }
@@ -840,10 +840,10 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       this.read(this.init_AutismCustomFilter);
       this.read(this.init_AutismKeybindOverl);
       this.read(this.init_AutismAdminToolsOv);
-      autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (global != null) {
-         this.read(global.load_AutismPacketLogger());
-         this.read(global.load_AutismServerInfoOv());
+         this.read(global.getPacketLoggerOverlay());
+         this.read(global.getServerInfoOverlay());
       }
 
       this.read(AutismMacroEditorOverlay.init_AutismMacroEditorO_2());

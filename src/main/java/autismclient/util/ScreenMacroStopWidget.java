@@ -21,9 +21,9 @@ public final class ScreenMacroStopWidget {
    }
 
    public static boolean init_Z_Minecraft(Minecraft mc) {
-      if (MacroExecutor.load_Z() && !autismclient.modules.aD.init_Z()) {
-         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-         return module == null || !module.init_Z() || mc.gui.screen() instanceof LevelLoadingScreen;
+      if (MacroExecutor.hasVisibleActiveRun() && !autismclient.modules.aD.init_Z()) {
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+         return module == null || !module.isActive() || mc.gui.screen() instanceof LevelLoadingScreen;
       } else {
          return false;
       }
@@ -46,7 +46,7 @@ public final class ScreenMacroStopWidget {
          int vx = cA.init_I_D(mouseX);
          int vy = cA.init_I_D(mouseY);
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(context, mc.font, vx, vy);
-         autismclient.gui.f.b.CachePool.init(ui, stop, "Stop", GuiIconAtlas.close, autismclient.gui.f.b.CachePool.Inner_DataUtil.update, stop.init_Z(vx, vy), false, 0.0F);
+         autismclient.gui.f.b.CachePool.init(ui, stop, "Stop", GuiIconAtlas.STOP, autismclient.gui.f.b.CachePool.Inner_DataUtil.update, stop.init_Z(vx, vy), false, 0.0F);
          init_NetHelper = stop;
       }
    }
@@ -59,7 +59,7 @@ public final class ScreenMacroStopWidget {
          }
 
          init_NetHelper = null;
-         MacroExecutor.read_V();
+         MacroExecutor.stopAll();
          bi.init("Macro stopped", -14249);
          return true;
       } else {

@@ -11,9 +11,9 @@ public class StopMacroAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       if (this.target == StopMacroAction.Inner_DataUtil.ALL) {
-         MacroExecutor.read_V();
+         MacroExecutor.stopAll();
       } else if (this.target == StopMacroAction.Inner_DataUtil.SELECTED && this.macroName != null && !this.macroName.isBlank()) {
-         MacroExecutor.init_V_Str(this.macroName);
+         MacroExecutor.stopMacroByName(this.macroName);
       }
    }
 

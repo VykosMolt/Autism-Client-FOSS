@@ -83,17 +83,17 @@ public final class MacroStatusHudRenderer {
    }
 
    private static boolean load(Font textRenderer, int panelWidth, int maxLines) {
-      List<MacroExecutor.ActiveRunSnapshot> runs = MacroExecutor.init_List();
+      List<MacroExecutor.ActiveRunSnapshot> runs = MacroExecutor.getActiveRunSnapshots();
       if (runs.isEmpty()) {
          init_V();
          return false;
       }
 
       MacroExecutor.ActiveRunSnapshot primary = runs.get(0);
-      AutismMacro macro = primary.init_aM();
+      AutismMacro macro = primary.macro();
       if (macro != null && macro.actions != null && !macro.actions.isEmpty()) {
          int total = init(primary, macro);
-         int current = Math.max(0, primary.init_I());
+         int current = Math.max(0, primary.currentStep());
          int rowsPerRun = Math.max(2, maxLines / Math.max(1, runs.size()));
          int visibleRows = init(total, rowsPerRun);
          int scroll = init(current, total, rowsPerRun);
@@ -112,7 +112,7 @@ public final class MacroStatusHudRenderer {
 
    private static int init(MacroExecutor.ActiveRunSnapshot run, AutismMacro macro) {
       int actionCount = macro != null && macro.actions != null ? macro.actions.size() : 0;
-      return Math.max(run.load_I(), actionCount);
+      return Math.max(run.totalSteps(), actionCount);
    }
 
    private static int init(int total, int rowsPerRun) {
@@ -127,7 +127,7 @@ public final class MacroStatusHudRenderer {
       if (rowsPerRun == write && runs.size() == init_StrArr.length) {
          for (int i = 0; i < runs.size(); i++) {
             MacroExecutor.ActiveRunSnapshot run = runs.get(i);
-            if (run.init_I() != init_IArr[i] || run.load_I() != load_IArr[i] || run.read() != read_IArr[i] || !Objects.equals(run.init_Str(), init_StrArr[i])) {
+            if (run.currentStep() != init_IArr[i] || run.totalSteps() != load_IArr[i] || run.lastCompletedStep() != read_IArr[i] || !Objects.equals(run.macroName(), init_StrArr[i])) {
                return false;
             }
          }
@@ -159,17 +159,17 @@ public final class MacroStatusHudRenderer {
       ArrayList<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> rows = new ArrayList<>();
 
       for (MacroExecutor.ActiveRunSnapshot run : runs) {
-         AutismMacro macro = run.init_aM();
+         AutismMacro macro = run.macro();
          if (macro != null && macro.actions != null && !macro.actions.isEmpty()) {
             List<MacroAction> actions = macro.actions;
             int total = init(run, macro);
-            int current = Math.max(0, run.init_I());
+            int current = Math.max(0, run.currentStep());
             int visibleRows = init(total, rowsPerRun);
             int scroll = init(current, total, rowsPerRun);
             rows.add(
                new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
                   autismclient.gui.f.b.k.init(
-                     textRenderer, run.init_Str() + "  " + Math.min(current + 1, total) + "/" + total, contentWidth, read_Identifier, read_I
+                     textRenderer, run.macroName() + "  " + Math.min(current + 1, total) + "/" + total, contentWidth, read_Identifier, read_I
                   ),
                   read_Identifier,
                   read_I
@@ -178,7 +178,7 @@ public final class MacroStatusHudRenderer {
 
             for (int i = scroll; i < scroll + visibleRows && i < total && i < actions.size(); i++) {
                MacroAction action = actions.get(i);
-               int color = MacroStepColorHelper.init(i, current, run.read(), nowColor);
+               int color = MacroStepColorHelper.init(i, current, run.lastCompletedStep(), nowColor);
                rows.add(
                   new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
                      autismclient.gui.f.b.k.init(textRenderer, i + 1 + ". " + action.getDisplayName(), contentWidth, load_Identifier, color),
@@ -188,10 +188,10 @@ public final class MacroStatusHudRenderer {
                );
             }
 
-            if (run.load_Str() != null && !run.load_Str().isBlank()) {
+            if (run.statusText() != null && !run.statusText().isBlank()) {
                rows.add(
                   new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
-                     autismclient.gui.f.b.k.init(textRenderer, run.load_Str(), contentWidth, init_Identifier, load_I), init_Identifier, load_I
+                     autismclient.gui.f.b.k.init(textRenderer, run.statusText(), contentWidth, init_Identifier, load_I), init_Identifier, load_I
                   )
                );
             }
@@ -207,14 +207,14 @@ public final class MacroStatusHudRenderer {
 
       for (int i = 0; i < runCount; i++) {
          MacroExecutor.ActiveRunSnapshot run = runs.get(i);
-         init_StrArr[i] = run.init_Str();
-         init_IArr[i] = run.init_I();
-         load_IArr[i] = run.load_I();
-         read_IArr[i] = run.read();
+         init_StrArr[i] = run.macroName();
+         init_IArr[i] = run.currentStep();
+         load_IArr[i] = run.totalSteps();
+         read_IArr[i] = run.lastCompletedStep();
       }
 
-      int primaryTotal = init(primary, primary.init_aM());
-      int primaryCurrent = Math.max(0, primary.init_I());
+      int primaryTotal = init(primary, primary.macro());
+      int primaryCurrent = Math.max(0, primary.currentStep());
       write = rowsPerRun;
       update = primaryCurrent;
       sync = primaryTotal;
@@ -222,7 +222,7 @@ public final class MacroStatusHudRenderer {
       close = init(primaryTotal, rowsPerRun);
       open = panelWidth;
       poll = ThemePaletteManager.generation();
-      init_Str = runs.size() == 1 ? primary.init_Str() : runs.size() + " macros";
+      init_Str = runs.size() == 1 ? primary.macroName() : runs.size() + " macros";
       load_Str = autismclient.gui.f.b.k.init(textRenderer, runs.size() == 1 ? "MACRO" : "MACROS", contentWidth, read_Identifier, read_I);
       init_List = rows;
       load_J = now;

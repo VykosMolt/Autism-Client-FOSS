@@ -241,7 +241,7 @@ public class OverlayManager {
    }
 
    public void clearNonPersistent() {
-      if (!OverlayScreenController.read_Z()) {
+      if (!OverlayScreenController.shouldInterceptBackgroundScreen()) {
          for (AutismOverlay pending : new ArrayList<>(this.closingOverlays)) {
             this.removeImmediate(pending);
          }
@@ -333,7 +333,7 @@ public class OverlayManager {
    }
 
    private boolean isVisibleOnScreen(AutismOverlay overlay, Screen screen) {
-      return !OverlayScreenController.init_Z() && overlay != null && overlay.sync_Z() && !this.isHidden(overlay) && this.isAllowedOnScreen(overlay, screen);
+      return !OverlayScreenController.hasModalScreen() && overlay != null && overlay.sync_Z() && !this.isHidden(overlay) && this.isAllowedOnScreen(overlay, screen);
    }
 
    private AutismOverlay.RenderLayer resolveRenderLayer(AutismOverlay overlay) {
@@ -475,7 +475,7 @@ public class OverlayManager {
          this.setActive(true);
          this.focusedOverlay = overlay;
          this.textInputCacheDirty = true;
-         AutismSessionState.init_ck().init_V_Str(overlay.init_Str());
+         AutismSessionState.getInstance().setActiveOverlayId(overlay.init_Str());
          this.invalidateHoverCache();
          this.keepLaunchersFirst();
          this.saveOrderToSession();
@@ -498,12 +498,12 @@ public class OverlayManager {
          this.restoreFocusFromSession();
          this.keepLaunchersFirst();
       } else {
-         List<String> savedOrder = AutismSessionState.init_ck().init_List();
+         List<String> savedOrder = AutismSessionState.getInstance().getOverlayZOrder();
          if (savedOrder.isEmpty()) {
             this.restoreFocusFromSession();
             this.keepLaunchersFirst();
          } else {
-            String focusedId = AutismSessionState.init_ck().init_Str();
+            String focusedId = AutismSessionState.getInstance().getActiveOverlayId();
             Map<String, Integer> positions = new HashMap<>();
 
             for (int i = 0; i < savedOrder.size(); i++) {
@@ -525,7 +525,7 @@ public class OverlayManager {
    }
 
    private void restoreFocusFromSession() {
-      String focusedId = AutismSessionState.init_ck().init_Str();
+      String focusedId = AutismSessionState.getInstance().getActiveOverlayId();
       if (focusedId.isEmpty()) {
          this.focusedOverlay = null;
       } else {
@@ -551,7 +551,7 @@ public class OverlayManager {
          }
       }
 
-      AutismSessionState.init_ck().init_V_List(order);
+      AutismSessionState.getInstance().setOverlayZOrder(order);
    }
 
    private void keepLaunchersFirst() {
@@ -662,7 +662,7 @@ public class OverlayManager {
          return null;
       }
 
-      OverlayBounds persisted = AutismSessionState.init_ck().init_cH_Str(overlay.init_Str());
+      OverlayBounds persisted = AutismSessionState.getInstance().getOverlayBounds(overlay.init_Str());
       if (persisted == null) {
          return current;
       }
@@ -725,7 +725,7 @@ public class OverlayManager {
    }
 
    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if (!OverlayScreenController.init_Z() && !autismclient.modules.aD.init_Z() && !isLocked()) {
+      if (!OverlayScreenController.hasModalScreen() && !autismclient.modules.aD.init_Z() && !isLocked()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null) {
             this.blurOffscreenOverlays();
@@ -938,7 +938,7 @@ public class OverlayManager {
       if (topOverlay == null) {
          this.blurTextInputs();
          this.focusedOverlay = null;
-         AutismSessionState.init_ck().init_V_Str("");
+         AutismSessionState.getInstance().setActiveOverlayId("");
          this.headerClickCandidate = null;
          this.headerDragExceededThreshold = false;
          this.headerClickStartBounds = null;
@@ -1195,7 +1195,7 @@ public class OverlayManager {
          this.getOrCreateAdapter(focusedTextOverlay).read(keyCode, scanCode, modifiers);
          this.updateFocusedTextCache(focusedTextOverlay);
          this.focusedOverlay = focusedTextOverlay;
-         AutismSessionState.init_ck().init_V_Str(focusedTextOverlay.init_Str());
+         AutismSessionState.getInstance().setActiveOverlayId(focusedTextOverlay.init_Str());
          return true;
       } else {
          AutismOverlay keyboardTarget = this.findKeyboardTarget();
@@ -1219,7 +1219,7 @@ public class OverlayManager {
             this.getOrCreateAdapter(focusedTextOverlay).init(chr, modifiers);
             this.updateFocusedTextCache(focusedTextOverlay);
             this.focusedOverlay = focusedTextOverlay;
-            AutismSessionState.init_ck().init_V_Str(focusedTextOverlay.init_Str());
+            AutismSessionState.getInstance().setActiveOverlayId(focusedTextOverlay.init_Str());
             return true;
          } else {
             AutismOverlay keyboardTarget = this.findKeyboardTarget();
@@ -1286,7 +1286,7 @@ public class OverlayManager {
    public void clearFocus() {
       this.blurTextInputs();
       this.focusedOverlay = null;
-      AutismSessionState.init_ck().init_V_Str("");
+      AutismSessionState.getInstance().setActiveOverlayId("");
    }
 
    private autismclient.gui.ui.widgets.OverlayWindowLayerAdapter getOrCreateAdapter(AutismOverlay overlay) {

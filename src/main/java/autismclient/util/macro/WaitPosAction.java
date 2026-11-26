@@ -43,7 +43,7 @@ public class WaitPosAction implements CaptureOutputAction, MacroAction {
       tag.putFloat("pitch", this.pitch);
       tag.putFloat("rotLeeway", this.rotLeeway);
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -86,7 +86,7 @@ public class WaitPosAction implements CaptureOutputAction, MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 

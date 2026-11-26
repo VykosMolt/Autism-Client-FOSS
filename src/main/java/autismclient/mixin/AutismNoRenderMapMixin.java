@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderMapMixin {
    @Inject(method = "render", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noMapContents(CallbackInfo ci) {
-      if (NoRenderState.node()) {
+      if (NoRenderState.hideMapContents()) {
          ci.cancel();
       }
    }
@@ -25,6 +25,6 @@ public abstract class AutismNoRenderMapMixin {
       require = 0
    )
    private List<MapDecorationRenderState> autism$noMapMarkers(List<MapDecorationRenderState> original) {
-      return NoRenderState.entry() ? List.of() : original;
+      return NoRenderState.hideMapMarkers() ? List.of() : original;
    }
 }

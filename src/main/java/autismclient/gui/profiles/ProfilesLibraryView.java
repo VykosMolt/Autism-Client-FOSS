@@ -159,7 +159,7 @@ public final class ProfilesLibraryView {
             ctx,
             NetHelper.init(right, bar.write(), newW, bar.sync()),
             "New profile",
-            GuiIconAtlas.pop,
+            GuiIconAtlas.PLUS,
             CachePool.Inner_DataUtil.read,
             () -> this.init(ProfilesLibraryView.Inner_StreamUtil.CREATE)
          );
@@ -355,7 +355,7 @@ public final class ProfilesLibraryView {
 
                this.init(ctx, label, tx, rule.write(), remove.read() - tx - 4, this.init_JsonUtil.textPrimary);
                IconButtonRenderer.init(
-                  ctx.init_GuiGraphicsExtract(), this.init_Font, remove, GuiIconAtlas.init_Identifier, this.init_Z_SyncManager_NetHelper(ctx, remove), true, true
+                  ctx.init_GuiGraphicsExtract(), this.init_Font, remove, GuiIconAtlas.CLOSE, this.init_Z_SyncManager_NetHelper(ctx, remove), true, true
                );
                this.init_V_NetHelper_Runnable(remove, () -> this.init_V_AutismProfile_Str(p, pattern));
             }

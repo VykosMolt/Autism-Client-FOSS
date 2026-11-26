@@ -23,7 +23,7 @@ import net.minecraft.network.protocol.ping.PingPacketTypes;
 import net.minecraft.network.protocol.status.StatusPacketTypes;
 
 public final class PacketTypeRegistry {
-   private static final Class<?>[] init_ClassArr = new Class[]{
+   private static final Class<?>[] PACKET_TYPE_HOLDERS = new Class[]{
       HandshakePacketTypes.class,
       StatusPacketTypes.class,
       LoginPacketTypes.class,
@@ -33,15 +33,15 @@ public final class PacketTypeRegistry {
       PingPacketTypes.class,
       GamePacketTypes.class
    };
-   private static final Map<Class<? extends Packet<?>>, String> init_Map;
-   private static final Map<Class<? extends Packet<?>>, String> load;
-   private static final Map<String, Class<? extends Packet<?>>> read;
-   public static final Set<Class<? extends Packet<?>>> init_Set;
+   private static final Map<Class<? extends Packet<?>>, String> S2C_NAMES;
+   private static final Map<Class<? extends Packet<?>>, String> C2S_NAMES;
+   private static final Map<String, Class<? extends Packet<?>>> PACKETS_BY_NAME;
+   public static final Set<Class<? extends Packet<?>>> ALL_PACKETS;
 
    private PacketTypeRegistry() {
    }
 
-   private static void init_V_Class(
+   private static void registerPacketTypeHolder(
       Class<?> holder,
       Map<Class<? extends Packet<?>>, String> s2cPackets,
       Map<Class<? extends Packet<?>>, String> c2sPackets,
@@ -51,7 +51,7 @@ public final class PacketTypeRegistry {
       for (Field field : holder.getDeclaredFields()) {
          int modifiers = field.getModifiers();
          if (Modifier.isStatic(modifiers) && PacketType.class.isAssignableFrom(field.getType())) {
-            Class<? extends Packet<?>> packetClass = init_Class_Field(field);
+            Class<? extends Packet<?>> packetClass = extractPacketClass(field);
             if (packetClass != null) {
                String fieldName = field.getName();
                Map<Class<? extends Packet<?>>, String> target;
@@ -65,9 +65,9 @@ public final class PacketTypeRegistry {
                   target = c2sPackets;
                }
 
-               String primaryName = load(packetClass);
+               String primaryName = formatPrimaryPacketName(packetClass);
                target.putIfAbsent(packetClass, primaryName);
-               init_V_Map(
+               registerAliases(
                   packetsByName,
                   ambiguousAliases,
                   packetClass,
@@ -75,15 +75,15 @@ public final class PacketTypeRegistry {
                   packetClass.getSimpleName(),
                   packetClass.getName(),
                   fieldName,
-                  init_Str_Str(fieldName),
-                  "minecraft:" + init_Str_Str(fieldName)
+                  stripDirectionPrefix(fieldName),
+                  "minecraft:" + stripDirectionPrefix(fieldName)
                );
             }
          }
       }
    }
 
-   private static Class<? extends Packet<?>> init_Class_Field(Field field) {
+   private static Class<? extends Packet<?>> extractPacketClass(Field field) {
       if (!(field.getGenericType() instanceof ParameterizedType parameterizedType)) {
          return null;
       } else {
@@ -94,14 +94,14 @@ public final class PacketTypeRegistry {
       }
    }
 
-   private static String load(Class<?> packetClass) {
+   private static String formatPrimaryPacketName(Class<?> packetClass) {
       Class<?> enclosing = packetClass.getEnclosingClass();
       return enclosing != null && packetClass.getPackageName() != null && packetClass.getPackageName().equals(enclosing.getPackageName())
-         ? load(enclosing) + "." + packetClass.getSimpleName()
+         ? formatPrimaryPacketName(enclosing) + "." + packetClass.getSimpleName()
          : packetClass.getSimpleName();
    }
 
-   private static String init_Str_Str(String fieldName) {
+   private static String stripDirectionPrefix(String fieldName) {
       String name = fieldName;
       if (name.startsWith("CLIENTBOUND_")) {
          name = name.substring("CLIENTBOUND_".length());
@@ -112,27 +112,27 @@ public final class PacketTypeRegistry {
       return name.toLowerCase(Locale.ROOT);
    }
 
-   private static void init_V_Map(
+   private static void registerAliases(
       Map<String, Class<? extends Packet<?>>> target, Set<String> ambiguousAliases, Class<? extends Packet<?>> packetClass, String... aliases
    ) {
       for (String alias : aliases) {
          if (alias != null) {
             String trimmed = alias.trim();
             if (!trimmed.isEmpty()) {
-               init_V_Map_2(target, ambiguousAliases, trimmed, packetClass);
-               init_V_Map_2(target, ambiguousAliases, load(trimmed), packetClass);
+               registerAliasKey(target, ambiguousAliases, trimmed, packetClass);
+               registerAliasKey(target, ambiguousAliases, normalizeAlias(trimmed), packetClass);
                int namespaceSeparator = trimmed.indexOf(58);
                if (namespaceSeparator >= 0 && namespaceSeparator + 1 < trimmed.length()) {
                   String pathOnly = trimmed.substring(namespaceSeparator + 1);
-                  init_V_Map_2(target, ambiguousAliases, pathOnly, packetClass);
-                  init_V_Map_2(target, ambiguousAliases, load(pathOnly), packetClass);
+                  registerAliasKey(target, ambiguousAliases, pathOnly, packetClass);
+                  registerAliasKey(target, ambiguousAliases, normalizeAlias(pathOnly), packetClass);
                }
             }
          }
       }
    }
 
-   private static void init_V_Map_2(
+   private static void registerAliasKey(
       Map<String, Class<? extends Packet<?>>> target, Set<String> ambiguousAliases, String alias, Class<? extends Packet<?>> packetClass
    ) {
       if (!alias.isEmpty() && !ambiguousAliases.contains(alias)) {
@@ -146,16 +146,16 @@ public final class PacketTypeRegistry {
       }
    }
 
-   private static String load(String value) {
+   private static String normalizeAlias(String value) {
       return value.trim().replace('$', '.').replace('_', ' ').replace('-', ' ').replace('/', '.').toLowerCase(Locale.ROOT);
    }
 
-   public static String init_Str_Class(Class<? extends Packet<?>> packetClass) {
-      String name = init_Map.get(packetClass);
-      return name != null ? name : load.get(packetClass);
+   public static String getPacketName(Class<? extends Packet<?>> packetClass) {
+      String name = S2C_NAMES.get(packetClass);
+      return name != null ? name : C2S_NAMES.get(packetClass);
    }
 
-   public static Class<? extends Packet<?>> init_Class_Str(String name) {
+   public static Class<? extends Packet<?>> resolvePacketClass(String name) {
       if (name == null) {
          return null;
       }
@@ -165,12 +165,12 @@ public final class PacketTypeRegistry {
          return null;
       }
 
-      Class<? extends Packet<?>> packet = read.get(trimmed);
+      Class<? extends Packet<?>> packet = PACKETS_BY_NAME.get(trimmed);
       if (packet != null) {
          return packet;
       }
 
-      packet = read.get(load(trimmed));
+      packet = PACKETS_BY_NAME.get(normalizeAlias(trimmed));
       if (packet != null) {
          return packet;
       }
@@ -186,12 +186,12 @@ public final class PacketTypeRegistry {
       return null;
    }
 
-   public static Set<Class<? extends Packet<?>>> init_Set() {
-      return init_Map.keySet();
+   public static Set<Class<? extends Packet<?>>> getS2cPackets() {
+      return S2C_NAMES.keySet();
    }
 
-   public static Set<Class<? extends Packet<?>>> load() {
-      return load.keySet();
+   public static Set<Class<? extends Packet<?>>> getC2sPackets() {
+      return C2S_NAMES.keySet();
    }
 
    static {
@@ -200,18 +200,18 @@ public final class PacketTypeRegistry {
       LinkedHashMap<String, Class<? extends Packet<?>>> packetsByName = new LinkedHashMap<>();
       LinkedHashSet<String> ambiguousAliases = new LinkedHashSet<>();
 
-      for (Class<?> holder : init_ClassArr) {
-         init_V_Class(holder, s2cPackets, c2sPackets, packetsByName, ambiguousAliases);
+      for (Class<?> holder : PACKET_TYPE_HOLDERS) {
+         registerPacketTypeHolder(holder, s2cPackets, c2sPackets, packetsByName, ambiguousAliases);
       }
 
-      init_V_Map(packetsByName, ambiguousAliases, ServerboundPunchPacket.class, "CompatSwingPacket", "HandSwingC2SPacket", "HandSwingC2S");
+      registerAliases(packetsByName, ambiguousAliases, ServerboundPunchPacket.class, "CompatSwingPacket", "HandSwingC2SPacket", "HandSwingC2S");
 
       LinkedHashSet<Class<? extends Packet<?>>> packets = new LinkedHashSet<>();
       packets.addAll(c2sPackets.keySet());
       packets.addAll(s2cPackets.keySet());
-      init_Map = Collections.unmodifiableMap(s2cPackets);
-      load = Collections.unmodifiableMap(c2sPackets);
-      read = Collections.unmodifiableMap(packetsByName);
-      init_Set = Collections.unmodifiableSet(packets);
+      S2C_NAMES = Collections.unmodifiableMap(s2cPackets);
+      C2S_NAMES = Collections.unmodifiableMap(c2sPackets);
+      PACKETS_BY_NAME = Collections.unmodifiableMap(packetsByName);
+      ALL_PACKETS = Collections.unmodifiableSet(packets);
    }
 }

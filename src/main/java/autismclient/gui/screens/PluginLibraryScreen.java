@@ -375,7 +375,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                      .add(
                         autismclient.gui.ui.widgets.OverlayActionButton.init(cursor, btnY, btnH, btnH, Component.empty(), b -> this.init_V_MapStore_StreamUti(row))
                            .init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER)
-                           .init_ByteReader_Identifier(GuiIconAtlas.open)
+                           .init_ByteReader_Identifier(GuiIconAtlas.DELETE)
                      );
                   cursor -= 2;
                }
@@ -554,7 +554,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          String pre = text.substring(0, idx);
          String mid = text.substring(idx, idx + queryLower.length());
          String post = text.substring(idx + queryLower.length());
-         int accent = UiColorPalette.init();
+         int accent = UiColorPalette.accent();
          k.init(graphics, this.font, pre, font, baseColor, x, y, false);
          int midX = x + k.init(this.font, pre, font, baseColor);
          k.init(graphics, this.font, mid, font, accent, midX, y, false);

@@ -161,7 +161,7 @@ public class AutismSettingsScreen extends Screen {
 
    private List<AutismSettingsScreen.BufferHelper> init_List() {
       AutismConfig cfg = AutismConfig.getGlobal();
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
       List<AutismSettingsScreen.BufferHelper> out = new ArrayList<>();
       this.set = this.init("Command Prefix");
 
@@ -243,7 +243,7 @@ public class AutismSettingsScreen extends Screen {
 
    private AutismSettingsScreen.BufferHelper init_DataUtil_BufferHel_PoolEntry(ModuleRuntimeManager module, List<String> prefixes, String current) {
       if (this.init_RefQueue == null) {
-         this.init_RefQueue = new DropdownMenu(NetHelper.init(0, 0, 0, 0), prefixes, current, module::init_V_Str);
+         this.init_RefQueue = new DropdownMenu(NetHelper.init(0, 0, 0, 0), prefixes, current, module::setCommandPrefix);
       } else {
          this.init_RefQueue.init(prefixes);
          this.init_RefQueue.init(current);

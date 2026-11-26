@@ -338,7 +338,7 @@ final class TriggerBotModule extends Module {
 
    private void init(long now, boolean reacted, LivingEntity target) {
       int ticker = ((AutismLivingEntityAccessor)MC.player).autism$getAttackStrengthTicker();
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (this.load_I >= 0 && ticker < this.load_I + (tick - this.read_I)) {
          this.load_V_23();
       }
@@ -415,7 +415,7 @@ final class TriggerBotModule extends Module {
       ValueRange offset = ValueRange.parse(this.value("swing-offset"), load_ValueRange);
       double hesitation = ValueRange.parse(this.value("hesitation"), read_ValueRange).random(this.init_Random) * 0.01;
       this.flush_D = this.init_JsonUtil.init(offset.min(), offset.max(), hesitation);
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (this.flush_I != -2147483648 && tick - this.flush_I <= 2) {
          this.flush_D = -1.0 / 0.0;
       }

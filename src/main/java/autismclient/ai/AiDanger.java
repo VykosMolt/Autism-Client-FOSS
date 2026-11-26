@@ -262,7 +262,7 @@ final class AiDanger {
       }
 
       if (mc.player != null && mc.level != null) {
-         int now = autismclient.util.AutismSessionState.init_ck().state_I();
+         int now = autismclient.util.AutismSessionState.getInstance().getClientTick();
          AiDanger.Inner_BufferHelper cached = load_i_BufferHelper;
          if (cached != null && cached.player() == mc.player && now - update_I < 2) {
             return cached;

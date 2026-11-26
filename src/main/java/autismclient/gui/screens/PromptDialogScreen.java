@@ -50,10 +50,10 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
    protected void init() {
       if (this.init_Str != null && this.init_k == null) {
          this.init_k = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 100, 16, false);
-         this.init_k.load(240);
-         this.init_k.init_V_Str(this.init_Str);
-         this.init_k.push(true);
-         this.init_k.init_Z_KeyEvent(Compat263.newGlfwKeyEvent(65, 0, 2));
+         this.init_k.setMaxLength(240);
+         this.init_k.setValue(this.init_Str);
+         this.init_k.setFocused(true);
+         this.init_k.keyPressed(Compat263.newGlfwKeyEvent(65, 0, 2));
       }
    }
 
@@ -97,10 +97,10 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
          }
 
          if (this.init_k != null) {
-            this.init_k.read(p.read() + 7);
-            this.init_k.write(top);
-            this.init_k.update(p.update() - 14);
-            this.init_k.init_V(g, mx, my, delta);
+            this.init_k.setX(p.read() + 7);
+            this.init_k.setY(top);
+            this.init_k.setWidth(p.update() - 14);
+            this.init_k.render(g, mx, my, delta);
          }
 
          for (int i = 0; i < this.load_List.size(); i++) {
@@ -133,19 +133,19 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
          }
       }
 
-      return this.init_k != null && this.init_k.init_Z_D_2(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse));
+      return this.init_k != null && this.init_k.mouseClicked(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse));
    }
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
       MouseButtonEvent mouse = init_MouseButtonEvent_MouseButtonEvent(event);
-      return this.init_k != null && this.init_k.load(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse));
+      return this.init_k != null && this.init_k.mouseReleased(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse));
    }
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       MouseButtonEvent mouse = init_MouseButtonEvent_MouseButtonEvent(event);
-      return this.init_k != null && this.init_k.init(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse), cA.init_D_D(dx), cA.init_D_D(dy));
+      return this.init_k != null && this.init_k.mouseDragged(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse), cA.init_D_D(dx), cA.init_D_D(dy));
    }
 
    @Override
@@ -160,7 +160,7 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
       }
 
       if (Compat263.keyEventGlfwKey(event) != 257 && Compat263.keyEventGlfwKey(event) != 335) {
-         return this.init_k.init_Z_KeyEvent(event);
+         return this.init_k.keyPressed(event);
       }
 
       this.load_V_17();
@@ -169,11 +169,11 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
 
    @Override
    public boolean charTyped(CharacterEvent event) {
-      return this.init_k != null && this.init_k.init_Z_CharacterEvent(event);
+      return this.init_k != null && this.init_k.charTyped(event);
    }
 
    private void load_V_17() {
-      String value = this.init_k.load_Str().strip();
+      String value = this.init_k.getValue().strip();
       if (!value.isEmpty()) {
          this.init_V_Runnable(() -> this.init_Consumer.accept(value));
       }
@@ -183,10 +183,10 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
       if (!this.init_Z) {
          this.init_Z = true;
          if (this.init_k != null) {
-            this.init_k.push(false);
+            this.init_k.setFocused(false);
          }
 
-         OverlayScreenController.load(this.minecraft, this);
+         OverlayScreenController.closeModalScreen(this.minecraft, this);
          action.run();
       }
    }
@@ -198,9 +198,9 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
 
    @Override
    public void removed() {
-      OverlayScreenController.init_V(this);
+      OverlayScreenController.discardModalScreen(this);
       if (this.init_k != null) {
-         this.init_k.push(false);
+         this.init_k.setFocused(false);
       }
 
       if (!this.init_Z) {

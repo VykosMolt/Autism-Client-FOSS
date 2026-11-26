@@ -253,7 +253,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          true
       );
       int icon = 8;
-      GuiIconAtlas.init(context, running ? GuiIconAtlas.close : GuiIconAtlas.flush, x + (w - icon) / 2, y + (h - icon) / 2, icon, enabled ? -218103809 : 1728053247);
+      GuiIconAtlas.draw(context, running ? GuiIconAtlas.STOP : GuiIconAtlas.PLAY, x + (w - icon) / 2, y + (h - icon) / 2, icon, enabled ? -218103809 : 1728053247);
    }
 
    private void init_V_GuiGraphicsExtract_3(
@@ -277,7 +277,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       );
       int groupW = icon + gap + textW;
       int startX = x + Math.max(2, (w - groupW) / 2);
-      GuiIconAtlas.init(context, iconId, startX, y + (h - icon) / 2, icon, enabled ? -218103809 : 1728053247);
+      GuiIconAtlas.draw(context, iconId, startX, y + (h - icon) / 2, icon, enabled ? -218103809 : 1728053247);
       autismclient.gui.f.b.k.init(
          context,
          this.init_Font,
@@ -1207,9 +1207,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private boolean tick_Z_4() {
-      return this.init_k != null && this.init_k.init_Z()
-         || this.add_I == 1 && this.load_k != null && this.load_k.init_Z()
-         || this.read_k != null && this.read_k.init_Z();
+      return this.init_k != null && this.init_k.isFocused()
+         || this.add_I == 1 && this.load_k != null && this.load_k.isFocused()
+         || this.read_k != null && this.read_k.isFocused();
    }
 
    private boolean run_Z_3() {
@@ -2017,7 +2017,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.init_Font,
          String.valueOf(number),
          this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-         UiColorPalette.bind(),
+         UiColorPalette.textSecondary(),
          this.get_I_10() + 8,
          this.init_I_I_6(top),
          false
@@ -2175,7 +2175,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.init_Map = Collections.emptyMap();
       this.init_a.init_V_List(Collections.emptyList());
       if (this.read_k != null) {
-         this.read_k.push(false);
+         this.read_k.setFocused(false);
       }
 
       this.read_k = null;
@@ -2596,7 +2596,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private void state_V() {
       autismclient.util.macro.DelayPacketsAction action = new autismclient.util.macro.DelayPacketsAction();
-      if (AutismSessionState.init_ck().reset_Z()) {
+      if (AutismSessionState.getInstance().isUseCustomPackets()) {
          action.write();
       } else {
          action.read();
@@ -3316,17 +3316,17 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.init_a.init_V_List(entries);
          this.init_a.init_V_Str("");
          this.read_k = new ThemedTextInputBox(init_Minecraft, this.init_Font, 0, 0, 1, 16, false);
-         this.read_k.init_V_Component(Component.literal("Search..."));
-         this.read_k.init_V_Consumer(ignored -> this.task_V());
+         this.read_k.setPlaceholder(Component.literal("Search..."));
+         this.read_k.setChangedListener(ignored -> this.task_V());
          this.task_V();
          this.buffer = 0;
          this.flush_Z = false;
          if (this.init_k != null) {
-            this.init_k.push(false);
+            this.init_k.setFocused(false);
          }
 
          if (this.load_k != null) {
-            this.load_k.push(false);
+            this.load_k.setFocused(false);
          }
 
          OverlayManager manager = OverlayManager.getInstance();
@@ -3344,7 +3344,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void task_V() {
-      String query = this.read_k == null ? "" : this.read_k.load_Str();
+      String query = this.read_k == null ? "" : this.read_k.getValue();
       this.init_a.init_V_Str(query);
       this.open_List = this.init_a.init_List();
       this.close_List = this.init_List_AutismMacroEditorO_List(this.init_AutismMacroEditorO_3, this.open_List);
@@ -3370,10 +3370,10 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          int pickerX = this.B();
          int pickerY = this.C();
          int pickerW = this.x();
-         this.read_k.read(pickerX + 6);
-         this.read_k.write(pickerY + 21);
-         this.read_k.update(Math.max(1, pickerW - 12));
-         this.read_k.sync(16);
+         this.read_k.setX(pickerX + 6);
+         this.read_k.setY(pickerY + 21);
+         this.read_k.setWidth(Math.max(1, pickerW - 12));
+         this.read_k.setHeight(16);
       }
    }
 
@@ -3711,7 +3711,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.init_AutismMacroEditorO = context == null ? AutismMacroEditorOverlay.EditorMode.NORMAL : context;
       this.init_Consumer = onSaveComplete;
       this.write_Z = true;
-      AutismSessionState.init_ck().init_V_Z(true);
+      AutismSessionState.getInstance().setMacroEditorVisible(true);
       ActionEditorOverlay.init_ActionEditorOverla_2().load_V_Z(this.cache_Z());
       if (macroToEdit == null) {
          this.init_aM = new AutismMacro("");
@@ -3731,7 +3731,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.update_Z = false;
       }
 
-      AutismSessionState.init_ck().init_V_aM(this.init_aM);
+      AutismSessionState.getInstance().setEditingMacro(this.init_aM);
       this.update_J = -1L;
       this.chunk_V();
       this.tick_Z = false;
@@ -3802,18 +3802,18 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          if (this.init_aM != null && this.init_aM.name != null && !this.init_aM.name.isBlank()) {
             AutismMacro persisted = MacroLibraryManager.getInstance().findByName(this.init_aM.name);
             if (this.tick_Z || persisted == null) {
-               MacroExecutor.init_V_Str(this.init_aM.name);
+               MacroExecutor.stopMacroByName(this.init_aM.name);
             }
          }
 
          if (this.read_aM != null && this.read_aM.name != null && !this.read_aM.name.isBlank()) {
             AutismMacro persisted = MacroLibraryManager.getInstance().findByName(this.read_aM.name);
             if (this.tick_Z || persisted == null) {
-               MacroExecutor.init_V_Str(this.read_aM.name);
+               MacroExecutor.stopMacroByName(this.read_aM.name);
             }
          }
       } else {
-         MacroExecutor.load_V_aM(runningMacro);
+         MacroExecutor.stopMacro(runningMacro);
       }
    }
 
@@ -3836,8 +3836,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.scan_V();
       this.load_aM = this.write_Z ? this.init_aM : null;
       this.write_Z = false;
-      AutismSessionState.init_ck().init_V_Z(false);
-      AutismSessionState.init_ck().init_V_aM(null);
+      AutismSessionState.getInstance().setMacroEditorVisible(false);
+      AutismSessionState.getInstance().setEditingMacro(null);
       this.init_aM = null;
       this.read_aM = null;
       this.update_J = -1L;
@@ -3883,10 +3883,10 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void table_V() {
-      long revision = MacroExecutor.init_J();
+      long revision = MacroExecutor.getRunEpoch();
       long runId = this.update_J;
       if (this.close_J != revision || this.open_J != runId) {
-         boolean running = runId >= 0L && MacroExecutor.init_Z_J(runId);
+         boolean running = runId >= 0L && MacroExecutor.isRunActive(runId);
          if (!running && runId >= 0L) {
             this.update_J = -1L;
             runId = -1L;
@@ -3909,11 +3909,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.set_V_5();
       this.reset_V_3();
       if (this.init_k != null) {
-         this.init_k.push(false);
+         this.init_k.setFocused(false);
       }
 
       if (this.load_k != null) {
-         this.load_k.push(false);
+         this.load_k.setFocused(false);
       }
 
       this.flush_Z = false;
@@ -3934,14 +3934,14 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private AutismMacro init_aM() {
-      if (this.read_aM != null && MacroExecutor.init_Z_aM(this.read_aM)) {
+      if (this.read_aM != null && MacroExecutor.isMacroRunning(this.read_aM)) {
          return this.read_aM;
-      } else if (this.init_aM != null && MacroExecutor.init_Z_aM(this.init_aM)) {
+      } else if (this.init_aM != null && MacroExecutor.isMacroRunning(this.init_aM)) {
          return this.init_aM;
-      } else if (this.init_aM != null && this.init_aM.name != null && !this.init_aM.name.isBlank() && MacroExecutor.init_Z_Str(this.init_aM.name)) {
+      } else if (this.init_aM != null && this.init_aM.name != null && !this.init_aM.name.isBlank() && MacroExecutor.isMacroNameRunning(this.init_aM.name)) {
          return this.init_aM;
       } else {
-         return this.read_aM != null && this.read_aM.name != null && !this.read_aM.name.isBlank() && MacroExecutor.init_Z_Str(this.read_aM.name)
+         return this.read_aM != null && this.read_aM.name != null && !this.read_aM.name.isBlank() && MacroExecutor.isMacroNameRunning(this.read_aM.name)
             ? this.read_aM
             : null;
       }
@@ -3951,7 +3951,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       if (this.init_aM != null) {
          this.mark_V();
          if (this.init_aM.actions.isEmpty() && this.state_Z()) {
-            MacroExecutor.init_V_Str(this.init_aM.name);
+            MacroExecutor.stopMacroByName(this.init_aM.name);
          }
 
          this.read(true);
@@ -4023,9 +4023,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    public void sync_V_9() {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      this.tick_I = shared.init_I();
-      this.run_I = shared.load_I();
+      AutismSessionState shared = AutismSessionState.getInstance();
+      this.tick_I = shared.getMacroEditorX();
+      this.run_I = shared.getMacroEditorY();
    }
 
    @Override
@@ -4036,7 +4036,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    @Override
    public void init_V_Z(boolean visible) {
       this.write_Z = visible;
-      AutismSessionState.init_ck().init_V_Z(visible);
+      AutismSessionState.getInstance().setMacroEditorVisible(visible);
       if (visible) {
          this.init_CharEncoder_2.read_CharEncoder(!this.pop_Z);
          OverlayManager.getInstance().bringToFront(this);
@@ -4046,7 +4046,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    public static void flush_V_9() {
-      OverlayScreenController.init_V(init_Minecraft);
+      OverlayScreenController.captureRetainedForegroundIfNeeded(init_Minecraft);
    }
 
    public static void close_V_8() {
@@ -4065,11 +4065,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.push_Z = false;
          this.reset_V_3();
          if (this.init_k != null) {
-            this.init_k.push(false);
+            this.init_k.setFocused(false);
          }
 
          if (this.load_k != null) {
-            this.load_k.push(false);
+            this.load_k.setFocused(false);
          }
 
          if (collapsed) {
@@ -4125,21 +4125,21 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    public boolean write_Z() {
       return !this.write_Z
          ? false
-         : this.init_k != null && this.init_k.init_Z() || this.load_k != null && this.load_k.init_Z() || this.read_k != null && this.read_k.init_Z();
+         : this.init_k != null && this.init_k.isFocused() || this.load_k != null && this.load_k.isFocused() || this.read_k != null && this.read_k.isFocused();
    }
 
    @Override
    public void push_V() {
       if (this.init_k != null) {
-         this.init_k.push(false);
+         this.init_k.setFocused(false);
       }
 
       if (this.load_k != null) {
-         this.load_k.push(false);
+         this.load_k.setFocused(false);
       }
 
       if (this.read_k != null) {
-         this.read_k.push(false);
+         this.read_k.setFocused(false);
       }
    }
 
@@ -4151,15 +4151,15 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    @Override
    public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
       boolean dropdownReleased = autismclient.gui.ui.widgets.DropdownWidget.write(this.sync_List);
-      if (this.read_k != null && this.read_k.load(mouseX, mouseY, button)) {
+      if (this.read_k != null && this.read_k.mouseReleased(mouseX, mouseY, button)) {
          return true;
       }
 
-      if (this.init_k != null && this.init_k.load(mouseX, mouseY, button)) {
+      if (this.init_k != null && this.init_k.mouseReleased(mouseX, mouseY, button)) {
          return true;
       }
 
-      if (this.load_k != null && this.load_k.load(mouseX, mouseY, button)) {
+      if (this.load_k != null && this.load_k.mouseReleased(mouseX, mouseY, button)) {
          return true;
       }
 
@@ -4203,21 +4203,21 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    public void open_V_7() {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      shared.init_V_Z(this.write_Z);
-      shared.init_V_I(this.tick_I);
-      shared.load_V_I(this.run_I);
-      shared.init_V_aM(this.init_aM);
+      AutismSessionState shared = AutismSessionState.getInstance();
+      shared.setMacroEditorVisible(this.write_Z);
+      shared.setMacroEditorX(this.tick_I);
+      shared.setMacroEditorY(this.run_I);
+      shared.setEditingMacro(this.init_aM);
       this.a__V();
    }
 
    public void poll_V_5() {
-      AutismSessionState shared = AutismSessionState.init_ck();
+      AutismSessionState shared = AutismSessionState.getInstance();
       this.b__V();
-      this.write_Z = shared.init_Z();
-      this.tick_I = shared.init_I();
-      this.run_I = shared.load_I();
-      this.init_aM = shared.init_aM();
+      this.write_Z = shared.isMacroEditorVisible();
+      this.tick_I = shared.getMacroEditorX();
+      this.run_I = shared.getMacroEditorY();
+      this.init_aM = shared.getEditingMacro();
       this.init_CharEncoder_2.read_CharEncoder(!this.pop_Z);
       if (this.write_Z && this.init_aM != null) {
          this.add_V_5();
@@ -4263,17 +4263,17 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int nameFieldW = this.get_I - this.store_I() * 2 - (deleteTopW > 0 ? deleteTopW + gap : 0);
       if (this.init_k == null) {
          this.init_k = new ThemedTextInputBox(init_Minecraft, this.init_Font, this.tick_I + this.store_I(), row1Y, nameFieldW, this.c_I(), false);
-         this.init_k.init_V_Component(Component.literal("Macro Name"));
-         this.init_k.init_V_Consumer(text -> {
+         this.init_k.setPlaceholder(Component.literal("Macro Name"));
+         this.init_k.setChangedListener(text -> {
             this.init_aM.name = text;
             this.h_V();
          });
       }
 
-      this.init_k.read(this.tick_I + this.store_I());
-      this.init_k.write(row1Y);
-      this.init_k.update(nameFieldW);
-      this.init_k.init_V_Str(this.init_aM.name);
+      this.init_k.setX(this.tick_I + this.store_I());
+      this.init_k.setY(row1Y);
+      this.init_k.setWidth(nameFieldW);
+      this.init_k.setValue(this.init_aM.name);
       if (!this.update_Z) {
          this.init("Delete", this.tick_I + this.get_I - this.store_I() - deleteTopW, row1Y, deleteTopW, bh, () -> {
             if (this.value_Z() && this.init_aM != null && this.init_aM.name != null && this.init_aM.name.equalsIgnoreCase(JoinMacroController.init_Str())) {
@@ -4320,7 +4320,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          bx, row2Y, loopW, bh, loopOptions, Math.max(0, Math.min(this.add_I, loopOptions.size() - 1)), idx -> {
             this.add_I = Math.max(0, Math.min(idx, loopOptions.size() - 1));
             if (this.add_I != 1 && this.load_k != null) {
-               this.load_k.push(false);
+               this.load_k.setFocused(false);
             }
 
             this.i_V();
@@ -4333,7 +4333,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       if (this.add_I == 1) {
          if (this.load_k == null) {
             this.load_k = new ThemedTextInputBox(init_Minecraft, this.init_Font, bx, row2Y, this.h_I(), this.i_I(), false);
-            this.load_k.init_V_Consumer(text -> {
+            this.load_k.setChangedListener(text -> {
                try {
                   this.init_aM.loopCount = Integer.parseInt(text.replaceAll("[^0-9-]", ""));
                } catch (NumberFormatException var3x) {
@@ -4341,10 +4341,10 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             });
          }
 
-         this.load_k.read(Math.min(bx, this.tick_I + this.get_I - this.store_I() - this.h_I()));
-         this.load_k.write(row2Y);
-         this.load_k.update(this.h_I());
-         this.load_k.init_V_Str(String.valueOf(this.init_aM.loopCount == -1 ? 1 : this.init_aM.loopCount));
+         this.load_k.setX(Math.min(bx, this.tick_I + this.get_I - this.store_I() - this.h_I()));
+         this.load_k.setY(row2Y);
+         this.load_k.setWidth(this.h_I());
+         this.load_k.setValue(String.valueOf(this.init_aM.loopCount == -1 ? 1 : this.init_aM.loopCount));
       }
 
       int builderButtonY = this.pop_I_14();
@@ -4509,16 +4509,16 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private void f_V() {
       if (this.update_J >= 0L) {
-         MacroExecutor.init_V_J(this.update_J);
+         MacroExecutor.stopRun(this.update_J);
       }
 
       AutismMacro runningMacro = this.init_aM();
       if (runningMacro != null) {
-         MacroExecutor.load_V_aM(runningMacro);
+         MacroExecutor.stopMacro(runningMacro);
       } else {
          String name = this.init_aM != null ? this.init_aM.name : "";
          if (name != null && !name.isBlank()) {
-            MacroExecutor.init_V_Str(name);
+            MacroExecutor.stopMacroByName(name);
          }
       }
 
@@ -4608,7 +4608,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
          try {
             if (this.load_k != null) {
-               this.init_aM.loopCount = Integer.parseInt(this.load_k.load_Str());
+               this.init_aM.loopCount = Integer.parseInt(this.load_k.getValue());
             }
          } catch (Exception var2) {
             this.init_aM.loopCount = 1;
@@ -4896,11 +4896,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
             try {
                if (this.init_k != null) {
-                  this.init_k.init_V(context, panelMouseX, panelMouseY, delta);
+                  this.init_k.render(context, panelMouseX, panelMouseY, delta);
                }
 
                if (this.add_I == 1 && this.load_k != null) {
-                  this.load_k.init_V(context, panelMouseX, panelMouseY, delta);
+                  this.load_k.render(context, panelMouseX, panelMouseY, delta);
                }
 
                if (!this.init_Z_Str_3(this.init_aM.name)) {
@@ -4926,7 +4926,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                   this.init_Font,
                   "Step Builder",
                   this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load),
-                  UiColorPalette.parse(),
+                  UiColorPalette.textBody(),
                   this.tick_I + this.store_I() + 2,
                   UiLayoutMath.centerTextY(
                      builderLabelY,
@@ -4946,7 +4946,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                   this.init_Font,
                   "Steps (" + this.init_aM.actions.size() + ")",
                   this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load),
-                  UiColorPalette.parse(),
+                  UiColorPalette.textBody(),
                   this.tick_I + this.store_I() + 2,
                   UiLayoutMath.centerTextY(
                      listLabelY,
@@ -4980,7 +4980,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                }
 
                this.clear_V_4();
-               UiColorPalette.init(context, this.get_I_10(), listY, this.set_I_10(), listHeight, false);
+               UiColorPalette.drawInputFrame(context, this.get_I_10(), listY, this.set_I_10(), listHeight, false);
                autismclient.gui.ui.UiClipStack.getInstance()
                   .push(
                      context,
@@ -5128,11 +5128,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                   if (ix == this.put_I) {
                      this.init(context, b[0], b[1], b[2], b[3], macroCurrentlyRunning, enabled, panelMouseX, panelMouseY);
                   } else if ("Multi".equals(lbl)) {
-                     this.init_V_GuiGraphicsExtract_3(context, b[0], b[1], b[2], b[3], lbl, GuiIconAtlas.flush, variant, enabled, panelMouseX, panelMouseY);
+                     this.init_V_GuiGraphicsExtract_3(context, b[0], b[1], b[2], b[3], lbl, GuiIconAtlas.PLAY, variant, enabled, panelMouseX, panelMouseY);
                   } else if (!"Add Action".equals(lbl) && !"Add Conditional".equals(lbl)) {
                      this.init(context, b[0], b[1], b[2], b[3], lbl, variant, enabled, panelMouseX, panelMouseY);
                   } else {
-                     this.init_V_GuiGraphicsExtract_3(context, b[0], b[1], b[2], b[3], lbl.substring(4), GuiIconAtlas.pop, variant, enabled, panelMouseX, panelMouseY);
+                     this.init_V_GuiGraphicsExtract_3(context, b[0], b[1], b[2], b[3], lbl.substring(4), GuiIconAtlas.PLUS, variant, enabled, panelMouseX, panelMouseY);
                   }
 
                   if (panelMouseX >= b[0] && panelMouseX < b[0] + b[2] && panelMouseY >= b[1] && panelMouseY < b[1] + b[3]) {
@@ -5280,14 +5280,14 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int bodyIndent = groupBody ? 10 : 0;
       boolean hoverRow = interactive && mouseX >= rowLeft - 1 && mouseX <= rowRight + 1 && mouseY >= actionY && mouseY < actionY + this.mark_I();
       boolean selectedRow = interactive && this.read_Z(actionIndex);
-      int bgColor = selectedRow ? ThemePaletteManager.recolor(1715082778, ThemePaletteManager.ColorRole.ACCENT) : (hoverRow ? UiColorPalette.level() : UiColorPalette.flags());
+      int bgColor = selectedRow ? ThemePaletteManager.recolor(1715082778, ThemePaletteManager.ColorRole.ACCENT) : (hoverRow ? UiColorPalette.rowHover() : UiColorPalette.rowSurface());
       autismclient.gui.ui.widgets.PanelSurfaceHelper.init(
          context, rowLeft, actionY + 1, rowRight - rowLeft, this.mark_I() - 2, autismclient.gui.ui.layout.LayoutContext.init(bgColor, alpha)
       );
       AutismMacroEditorOverlay.RowHighlightFlags impact = this.init_AutismMacroEditorO_I(actionIndex);
       if (impact.init_Z) {
          int rh = this.mark_I();
-         int rgb = (impact.read ? UiColorPalette.buffer() : UiColorPalette.queue()) & 16777215;
+         int rgb = (impact.read ? UiColorPalette.blue() : UiColorPalette.amber()) & 16777215;
          int tint = autismclient.gui.ui.layout.LayoutContext.init((impact.load ? 77 : 51) << 24 | rgb, alpha);
          int edge = autismclient.gui.ui.layout.LayoutContext.init(-805306368 | rgb, alpha);
          autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, rowLeft, actionY + 1, rowRight - rowLeft, rh - 2, tint);
@@ -5313,11 +5313,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          int railX = this.get_I_10() + 2 + xOffset;
          int railTop = group.load() ? actionY + 3 : actionY;
          int railBottom = group.read() ? actionY + this.mark_I() - 3 : actionY + this.mark_I();
-         int railColor = autismclient.gui.ui.layout.LayoutContext.init(group.read_Z ? UiColorPalette.node() : this.init_CharEncoder.run(), alpha);
+         int railColor = autismclient.gui.ui.layout.LayoutContext.init(group.read_Z ? UiColorPalette.cyan() : this.init_CharEncoder.run(), alpha);
          autismclient.gui.ui.widgets.PanelSurfaceHelper.read(context, railX, railTop, 2, railBottom - railTop, railColor);
       }
 
-      int badgeColor = group.read_Z ? UiColorPalette.node() : (groupHeader ? this.init_CharEncoder.run() : (conditional ? -30720 : -12268476));
+      int badgeColor = group.read_Z ? UiColorPalette.cyan() : (groupHeader ? this.init_CharEncoder.run() : (conditional ? -30720 : -12268476));
       if (!groupHeader) {
          autismclient.gui.ui.widgets.PanelSurfaceHelper.read(
             context, this.get_I_10() + 2 + xOffset + bodyIndent, actionY + 3, 3, this.mark_I() - 6, autismclient.gui.ui.layout.LayoutContext.init(badgeColor, alpha)
@@ -5329,7 +5329,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.init_Font,
          String.valueOf(actionIndex + 1),
          this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-         autismclient.gui.ui.layout.LayoutContext.init(UiColorPalette.bind(), alpha),
+         autismclient.gui.ui.layout.LayoutContext.init(UiColorPalette.textSecondary(), alpha),
          this.get_I_10() + 8 + xOffset + bodyIndent,
          this.init_I_I_6(actionY),
          false
@@ -5339,7 +5339,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int contentRight = this.read(action, allowMove, allowDuplicate, allowDelete) + xOffset;
       int maxNameW = Math.max(1, contentRight - nameX - 8);
       if (group.init() && !group.init_Str.isEmpty()) {
-         int roleColor = autismclient.gui.ui.layout.LayoutContext.init(group.read_Z ? UiColorPalette.node() : (groupHeader ? -10281 : UiColorPalette.parse()), alpha);
+         int roleColor = autismclient.gui.ui.layout.LayoutContext.init(group.read_Z ? UiColorPalette.cyan() : (groupHeader ? -10281 : UiColorPalette.textBody()), alpha);
          String role = group.init_Str;
          int roleW = autismclient.gui.f.b.k.init(this.init_Font, role, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load), roleColor);
          autismclient.gui.f.b.k.init(
@@ -5386,7 +5386,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                this.level_I(),
                mouseX >= cx && mouseX < cx + this.level_I() && mouseY >= controlY && mouseY < controlY + this.level_I(),
                false,
-               GuiIconAtlas.update
+               GuiIconAtlas.CHEVRON_UP
             );
             cx += this.u();
             this.init(
@@ -5397,7 +5397,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                this.level_I(),
                mouseX >= cx && mouseX < cx + this.level_I() && mouseY >= controlY && mouseY < controlY + this.level_I(),
                false,
-               GuiIconAtlas.write
+               GuiIconAtlas.CHEVRON_DOWN
             );
             cx += this.u();
          }
@@ -5411,7 +5411,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                this.level_I(),
                mouseX >= cx && mouseX < cx + this.level_I() && mouseY >= controlY && mouseY < controlY + this.level_I(),
                false,
-               GuiIconAtlas.push
+               GuiIconAtlas.DUPLICATE
             );
             cx += this.u();
          }
@@ -5426,7 +5426,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                this.level_I(),
                mouseX >= cx && mouseX < cx + this.level_I() && mouseY >= controlY && mouseY < controlY + this.level_I(),
                false,
-               GuiIconAtlas.poll
+               GuiIconAtlas.EDIT
             );
             cx += this.u();
          }
@@ -5440,7 +5440,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                this.level_I(),
                mouseX >= cx && mouseX < cx + this.level_I() && mouseY >= controlY && mouseY < controlY + this.level_I(),
                true,
-               GuiIconAtlas.open
+               GuiIconAtlas.DELETE
             );
          }
       }
@@ -5455,14 +5455,14 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_GuiGraphicsExtract_5(GuiGraphicsExtractor context, int x, int y, boolean hovered) {
-      this.init(context, x, y, 14, 12, hovered, true, GuiIconAtlas.open);
+      this.init(context, x, y, 14, 12, hovered, true, GuiIconAtlas.DELETE);
    }
 
    private void init(GuiGraphicsExtractor context, int x, int y, int width, String label, boolean hovered, boolean selected) {
-      int bg = selected ? UiColorPalette.frame() : (hovered ? UiColorPalette.level() : UiColorPalette.flags());
+      int bg = selected ? UiColorPalette.rowSelected() : (hovered ? UiColorPalette.rowHover() : UiColorPalette.rowSurface());
       autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, x, y, width, 12, bg);
       int textX = x + 3;
-      this.init_V_GuiGraphicsExtract_4(context, label, textX, y + 2, selected ? UiColorPalette.table() : UiColorPalette.b());
+      this.init_V_GuiGraphicsExtract_4(context, label, textX, y + 2, selected ? UiColorPalette.selectedText() : UiColorPalette.menuItemText());
    }
 
    private boolean write_Z_D_D_2(double mouseX, double mouseY) {
@@ -5529,7 +5529,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       );
       this.pool_V();
       if (this.read_k != null) {
-         this.read_k.init_V(context, mouseX, mouseY, 0.0F);
+         this.read_k.render(context, mouseX, mouseY, 0.0F);
       }
 
       int contentX = pickerX + 6;
@@ -5625,12 +5625,12 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int contentW = pickerW - 19;
       int contentH = pickerH - 48;
       this.pool_V();
-      if (this.read_k != null && this.read_k.init_Z_D_2(mouseX, mouseY, button)) {
+      if (this.read_k != null && this.read_k.mouseClicked(mouseX, mouseY, button)) {
          return true;
       }
 
       if (this.read_k != null) {
-         this.read_k.push(false);
+         this.read_k.setFocused(false);
       }
 
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics stepPickerScrollbar = this.load_PoolEntry_DataUtil_2();
@@ -5728,16 +5728,16 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          MouseButtonEvent click = new MouseButtonEvent(mouseX, mouseY, Compat263.newGlfwMouseButtonInfo(button, 0));
          boolean fieldClicked = false;
          boolean stepListLocked = this.queue_Z();
-         if (!stepListLocked && this.init_k.init(click, false)) {
-            this.init_k.push(true);
+         if (!stepListLocked && this.init_k.mouseClicked(click, false)) {
+            this.init_k.setFocused(true);
             if (this.load_k != null) {
-               this.load_k.push(false);
+               this.load_k.setFocused(false);
             }
 
             fieldClicked = true;
-         } else if (!stepListLocked && this.add_I == 1 && this.load_k != null && this.load_k.init(click, false)) {
-            this.load_k.push(true);
-            this.init_k.push(false);
+         } else if (!stepListLocked && this.add_I == 1 && this.load_k != null && this.load_k.mouseClicked(click, false)) {
+            this.load_k.setFocused(true);
+            this.init_k.setFocused(false);
             fieldClicked = true;
          }
 
@@ -5746,9 +5746,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             return true;
          }
 
-         this.init_k.push(false);
+         this.init_k.setFocused(false);
          if (this.load_k != null) {
-            this.load_k.push(false);
+            this.load_k.setFocused(false);
          }
 
          this.a_V();
@@ -6257,13 +6257,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
             return true;
          } else if (this.valid_Z()) {
-            if (this.read_k != null && this.read_k.init_Z()) {
+            if (this.read_k != null && this.read_k.isFocused()) {
                if (keyCode == 256) {
-                  this.read_k.push(false);
+                  this.read_k.setFocused(false);
                   return true;
                }
 
-               if (this.read_k.init_Z_KeyEvent(keyInput)) {
+               if (this.read_k.keyPressed(keyInput)) {
                   return true;
                }
             }
@@ -6314,11 +6314,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             }
 
             if (keyCode == 256) {
-               boolean anyFocused = this.init_k.init_Z() || this.add_I == 1 && this.load_k != null && this.load_k.init_Z();
+               boolean anyFocused = this.init_k.isFocused() || this.add_I == 1 && this.load_k != null && this.load_k.isFocused();
                if (anyFocused) {
-                  this.init_k.push(false);
+                  this.init_k.setFocused(false);
                   if (this.load_k != null) {
-                     this.load_k.push(false);
+                     this.load_k.setFocused(false);
                   }
 
                   return true;
@@ -6343,23 +6343,23 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                }
             } else {
                if (keyCode == 257) {
-                  if (this.init_k.init_Z()) {
-                     this.init_k.push(false);
+                  if (this.init_k.isFocused()) {
+                     this.init_k.setFocused(false);
                      return true;
                   }
 
-                  if (this.add_I == 1 && this.load_k != null && this.load_k.init_Z()) {
-                     this.load_k.push(false);
+                  if (this.add_I == 1 && this.load_k != null && this.load_k.isFocused()) {
+                     this.load_k.setFocused(false);
                      return true;
                   }
                }
 
-               if (this.init_k.init_Z_KeyEvent(keyInput)) {
+               if (this.init_k.keyPressed(keyInput)) {
                   return true;
                } else {
-                  return this.add_I == 1 && this.load_k != null && this.load_k.init_Z_KeyEvent(keyInput)
+                  return this.add_I == 1 && this.load_k != null && this.load_k.keyPressed(keyInput)
                      ? true
-                     : this.init_k.init_Z() || this.add_I == 1 && this.load_k != null && this.load_k.init_Z();
+                     : this.init_k.isFocused() || this.add_I == 1 && this.load_k != null && this.load_k.isFocused();
                }
             }
          } else {
@@ -6379,34 +6379,34 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (this.valid_Z()) {
-         if (this.read_k != null && this.read_k.init_Z()) {
+         if (this.read_k != null && this.read_k.isFocused()) {
             CharacterEvent charInput = new CharacterEvent(chr);
-            if (this.read_k.init_Z_CharacterEvent(charInput)) {
+            if (this.read_k.charTyped(charInput)) {
                return true;
             }
 
-            this.read_k.load(String.valueOf(chr));
+            this.read_k.insertTextIfFocused(String.valueOf(chr));
          }
 
          return true;
       } else {
          CharacterEvent charInput = new CharacterEvent(chr);
-         if (this.init_k.init_Z_CharacterEvent(charInput)) {
+         if (this.init_k.charTyped(charInput)) {
             return true;
          }
 
-         if (this.init_k.init_Z()) {
-            this.init_k.load(String.valueOf(chr));
+         if (this.init_k.isFocused()) {
+            this.init_k.insertTextIfFocused(String.valueOf(chr));
             return true;
          }
 
          if (this.add_I == 1 && this.load_k != null) {
-            if (this.load_k.init_Z_CharacterEvent(charInput)) {
+            if (this.load_k.charTyped(charInput)) {
                return true;
             }
 
-            if (this.load_k.init_Z()) {
-               this.load_k.load(String.valueOf(chr));
+            if (this.load_k.isFocused()) {
+               this.load_k.insertTextIfFocused(String.valueOf(chr));
                return true;
             }
          }
@@ -6463,15 +6463,15 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      if (this.read_k != null && this.read_k.init(mouseX, mouseY, button, deltaX, deltaY)) {
+      if (this.read_k != null && this.read_k.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
          return true;
       }
 
-      if (this.init_k != null && this.init_k.init(mouseX, mouseY, button, deltaX, deltaY)) {
+      if (this.init_k != null && this.init_k.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
          return true;
       }
 
-      if (this.load_k != null && this.load_k.init(mouseX, mouseY, button, deltaX, deltaY)) {
+      if (this.load_k != null && this.load_k.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
          return true;
       }
 

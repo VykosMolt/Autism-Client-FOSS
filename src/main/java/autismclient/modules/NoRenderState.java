@@ -11,303 +11,303 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
 
 public final class NoRenderState {
-   private static volatile boolean f_c_Z;
-   static volatile boolean init_Z;
-   static volatile boolean load_Z;
-   static volatile boolean read;
-   static volatile boolean write;
-   static volatile boolean update;
-   static volatile boolean sync;
-   static volatile boolean flush;
-   static volatile boolean close;
-   static volatile boolean open;
-   static volatile boolean poll;
-   static volatile boolean push;
-   static volatile boolean pop;
-   static volatile boolean tick;
-   static volatile boolean run;
-   static volatile boolean get;
-   static volatile boolean set;
-   static volatile boolean put;
-   static volatile boolean add;
-   static volatile boolean clear;
-   static volatile boolean reset;
-   static volatile boolean start;
-   static volatile boolean stop;
-   static volatile boolean next;
-   static volatile boolean prev;
-   static volatile boolean valid;
-   static volatile boolean size;
-   static volatile boolean data;
-   static volatile boolean value;
-   static volatile boolean cache;
-   static volatile boolean state;
-   static volatile boolean queue;
-   static volatile boolean buffer;
-   static volatile boolean entry;
-   static volatile boolean node;
-   static volatile boolean task;
-   static volatile boolean pool;
-   static volatile boolean index;
-   static volatile boolean count;
-   static volatile boolean flags;
-   static volatile boolean level;
-   static volatile boolean frame;
-   static volatile boolean block;
-   static volatile boolean chunk;
-   static volatile boolean table;
-   static volatile boolean store;
-   static volatile long init_J;
-   static volatile boolean drain;
-   static volatile float init_F;
-   static volatile float load_F;
-   static volatile boolean fill;
-   static volatile boolean mark;
-   static volatile boolean scan;
-   static volatile boolean parse;
-   static volatile boolean bind;
-   static volatile boolean f_a_Z;
-   static volatile boolean f_b_Z;
-   static volatile List<String> init_List = List.of();
-   static volatile List<String> load_List = List.of();
+   private static volatile boolean enabled;
+   static volatile boolean portalOverlay;
+   static volatile boolean spyglassOverlay;
+   static volatile boolean nausea;
+   static volatile boolean pumpkinOverlay;
+   static volatile boolean powderedSnowOverlay;
+   static volatile boolean fireOverlay;
+   static volatile boolean liquidOverlay;
+   static volatile boolean inWallOverlay;
+   static volatile boolean vignette;
+   static volatile boolean guiBackground;
+   static volatile boolean totemAnimation;
+   static volatile boolean eatingParticles;
+   static volatile boolean enchantmentGlint;
+   static volatile boolean hurtCam;
+   static volatile boolean bossBar;
+   static volatile boolean scoreboard;
+   static volatile boolean crosshair;
+   static volatile boolean title;
+   static volatile boolean heldItemName;
+   static volatile boolean disableObfuscation;
+   static volatile boolean potionIcons;
+   static volatile boolean weather;
+   static volatile boolean worldBorder;
+   static volatile boolean blindness;
+   static volatile boolean darkness;
+   static volatile boolean fog;
+   static volatile boolean enchantmentTableBook;
+   static volatile boolean signText;
+   static volatile boolean blockBreakOverlay;
+   static volatile boolean blockBreakParticles;
+   static volatile boolean beaconBeams;
+   static volatile boolean fallingBlocks;
+   static volatile boolean mapMarkers;
+   static volatile boolean mapContents;
+   static volatile boolean banners;
+   static volatile boolean fireworkExplosions;
+   static volatile boolean hideAllParticles;
+   static volatile boolean constantTextureRotations;
+   static volatile boolean sky;
+   static volatile boolean stars;
+   static volatile boolean sun;
+   static volatile boolean moon;
+   static volatile boolean sunriseGlow;
+   static volatile boolean clouds;
+   static volatile boolean forceTimeEnabled;
+   static volatile long forcedTimeTicks;
+   static volatile boolean forceWeatherEnabled;
+   static volatile float forcedRainLevel;
+   static volatile float forcedThunderLevel;
+   static volatile boolean armor;
+   static volatile boolean showInvisibleEntities;
+   static volatile boolean disableGlowing;
+   static volatile boolean spawnerEntities;
+   static volatile boolean deadEntities;
+   static volatile boolean nametags;
+   static volatile boolean dropSpawnPackets;
+   static volatile List<String> hiddenEntities = List.of();
+   static volatile List<String> hiddenBlockEntities = List.of();
 
    private NoRenderState() {
    }
 
-   static void init_V() {
-      f_c_Z = false;
+   static void disable() {
+      enabled = false;
    }
 
-   static void load_V() {
-      f_c_Z = true;
+   static void enable() {
+      enabled = true;
    }
 
-   private static boolean bind() {
+   private static boolean isAllowedByLicense() {
       return AutismLiteVariant.enabled() || autismclient.e.TokenStore.init();
    }
 
-   public static boolean init_Z() {
-      return f_c_Z && bind() && init_Z;
+   public static boolean hidePortalOverlay() {
+      return enabled && isAllowedByLicense() && portalOverlay;
    }
 
-   public static boolean load_Z() {
-      return f_c_Z && bind() && load_Z;
+   public static boolean hideSpyglassOverlay() {
+      return enabled && isAllowedByLicense() && spyglassOverlay;
    }
 
-   public static boolean read() {
-      return f_c_Z && bind() && read;
+   public static boolean hideNausea() {
+      return enabled && isAllowedByLicense() && nausea;
    }
 
-   public static boolean write() {
-      return f_c_Z && bind() && write;
+   public static boolean hidePumpkinOverlay() {
+      return enabled && isAllowedByLicense() && pumpkinOverlay;
    }
 
-   public static boolean update() {
-      return f_c_Z && bind() && update;
+   public static boolean hidePowderedSnowOverlay() {
+      return enabled && isAllowedByLicense() && powderedSnowOverlay;
    }
 
-   public static boolean sync() {
-      return f_c_Z && bind() && sync;
+   public static boolean hideFireOverlay() {
+      return enabled && isAllowedByLicense() && fireOverlay;
    }
 
-   public static boolean flush() {
-      return f_c_Z && bind() && flush;
+   public static boolean hideLiquidOverlay() {
+      return enabled && isAllowedByLicense() && liquidOverlay;
    }
 
-   public static boolean close() {
-      return f_c_Z && bind() && close;
+   public static boolean hideInWallOverlay() {
+      return enabled && isAllowedByLicense() && inWallOverlay;
    }
 
-   public static boolean open() {
-      return f_c_Z && bind() && open;
+   public static boolean hideVignette() {
+      return enabled && isAllowedByLicense() && vignette;
    }
 
-   public static boolean poll() {
-      return f_c_Z && bind() && poll;
+   public static boolean hideGuiBackground() {
+      return enabled && isAllowedByLicense() && guiBackground;
    }
 
-   public static boolean push() {
-      return f_c_Z && bind() && push;
+   public static boolean hideTotemAnimation() {
+      return enabled && isAllowedByLicense() && totemAnimation;
    }
 
-   public static boolean pop() {
-      return f_c_Z && bind() && pop;
+   public static boolean hideEatingParticles() {
+      return enabled && isAllowedByLicense() && eatingParticles;
    }
 
-   public static boolean tick() {
-      return f_c_Z && bind() && tick;
+   public static boolean hideEnchantmentGlint() {
+      return enabled && isAllowedByLicense() && enchantmentGlint;
    }
 
-   public static boolean run() {
-      return f_c_Z && bind() && run;
+   public static boolean hideHurtCam() {
+      return enabled && isAllowedByLicense() && hurtCam;
    }
 
-   public static boolean get() {
-      return f_c_Z && bind() && get;
+   public static boolean hideBossBar() {
+      return enabled && isAllowedByLicense() && bossBar;
    }
 
-   public static boolean set() {
-      return f_c_Z && bind() && set;
+   public static boolean hideScoreboard() {
+      return enabled && isAllowedByLicense() && scoreboard;
    }
 
-   public static boolean put() {
-      return f_c_Z && bind() && put;
+   public static boolean hideCrosshair() {
+      return enabled && isAllowedByLicense() && crosshair;
    }
 
-   public static boolean add() {
-      return f_c_Z && bind() && add;
+   public static boolean hideTitle() {
+      return enabled && isAllowedByLicense() && title;
    }
 
-   public static boolean clear() {
-      return f_c_Z && bind() && clear;
+   public static boolean hideHeldItemName() {
+      return enabled && isAllowedByLicense() && heldItemName;
    }
 
-   public static boolean reset() {
-      return f_c_Z && bind() && reset;
+   public static boolean disableTextObfuscation() {
+      return enabled && isAllowedByLicense() && disableObfuscation;
    }
 
-   public static boolean start() {
-      return f_c_Z && bind() && start;
+   public static boolean hidePotionIcons() {
+      return enabled && isAllowedByLicense() && potionIcons;
    }
 
-   public static boolean stop() {
-      return f_c_Z && bind() && stop;
+   public static boolean hideWeather() {
+      return enabled && isAllowedByLicense() && weather;
    }
 
-   public static boolean next() {
-      return f_c_Z && bind() && next;
+   public static boolean hideWorldBorder() {
+      return enabled && isAllowedByLicense() && worldBorder;
    }
 
-   public static boolean prev() {
-      return f_c_Z && bind() && prev;
+   public static boolean hideBlindness() {
+      return enabled && isAllowedByLicense() && blindness;
    }
 
-   public static boolean valid() {
-      return f_c_Z && bind() && valid;
+   public static boolean hideDarkness() {
+      return enabled && isAllowedByLicense() && darkness;
    }
 
-   public static boolean size() {
-      return f_c_Z && bind() && size;
+   public static boolean hideFog() {
+      return enabled && isAllowedByLicense() && fog;
    }
 
-   public static boolean data() {
-      return f_c_Z && bind() && data;
+   public static boolean hideEnchantmentTableBook() {
+      return enabled && isAllowedByLicense() && enchantmentTableBook;
    }
 
-   public static boolean value() {
-      return f_c_Z && bind() && value;
+   public static boolean hideSignText() {
+      return enabled && isAllowedByLicense() && signText;
    }
 
-   public static boolean cache() {
-      return f_c_Z && bind() && cache;
+   public static boolean hideBlockBreakOverlay() {
+      return enabled && isAllowedByLicense() && blockBreakOverlay;
    }
 
-   public static boolean state() {
-      return f_c_Z && bind() && state;
+   public static boolean hideBlockBreakParticles() {
+      return enabled && isAllowedByLicense() && blockBreakParticles;
    }
 
-   public static boolean queue() {
-      return f_c_Z && bind() && queue;
+   public static boolean hideBeaconBeams() {
+      return enabled && isAllowedByLicense() && beaconBeams;
    }
 
-   public static boolean buffer() {
-      return f_c_Z && bind() && buffer;
+   public static boolean hideFallingBlocks() {
+      return enabled && isAllowedByLicense() && fallingBlocks;
    }
 
-   public static boolean entry() {
-      return f_c_Z && bind() && entry;
+   public static boolean hideMapMarkers() {
+      return enabled && isAllowedByLicense() && mapMarkers;
    }
 
-   public static boolean node() {
-      return f_c_Z && bind() && node;
+   public static boolean hideMapContents() {
+      return enabled && isAllowedByLicense() && mapContents;
    }
 
-   public static boolean task() {
-      return f_c_Z && bind() && task;
+   public static boolean hideBanners() {
+      return enabled && isAllowedByLicense() && banners;
    }
 
-   public static boolean pool() {
-      return f_c_Z && bind() && count;
+   public static boolean useConstantTextureRotations() {
+      return enabled && isAllowedByLicense() && constantTextureRotations;
    }
 
-   public static boolean index() {
-      return f_c_Z && bind() && flags;
+   public static boolean hideSky() {
+      return enabled && isAllowedByLicense() && sky;
    }
 
-   public static boolean count() {
-      return f_c_Z && bind() && level;
+   public static boolean hideStars() {
+      return enabled && isAllowedByLicense() && stars;
    }
 
-   public static boolean flags() {
-      return f_c_Z && bind() && frame;
+   public static boolean hideSun() {
+      return enabled && isAllowedByLicense() && sun;
    }
 
-   public static boolean level() {
-      return f_c_Z && bind() && block;
+   public static boolean hideMoon() {
+      return enabled && isAllowedByLicense() && moon;
    }
 
-   public static boolean frame() {
-      return f_c_Z && bind() && chunk;
+   public static boolean hideSunriseGlow() {
+      return enabled && isAllowedByLicense() && sunriseGlow;
    }
 
-   public static boolean block() {
-      return f_c_Z && bind() && table;
+   public static boolean hideClouds() {
+      return enabled && isAllowedByLicense() && clouds;
    }
 
-   public static boolean chunk() {
-      return f_c_Z && bind() && store;
+   public static boolean isForceTimeEnabled() {
+      return enabled && isAllowedByLicense() && forceTimeEnabled;
    }
 
-   public static long init_J() {
-      return init_J;
+   public static long getForcedTimeTicks() {
+      return forcedTimeTicks;
    }
 
-   public static boolean table() {
-      return f_c_Z && bind() && drain;
+   public static boolean isForceWeatherEnabled() {
+      return enabled && isAllowedByLicense() && forceWeatherEnabled;
    }
 
-   public static float init_F() {
-      return init_F;
+   public static float getForcedRainLevel() {
+      return forcedRainLevel;
    }
 
-   public static float load_F() {
-      return load_F;
+   public static float getForcedThunderLevel() {
+      return forcedThunderLevel;
    }
 
-   public static boolean store() {
-      return f_c_Z && bind() && fill;
+   public static boolean hideArmor() {
+      return enabled && isAllowedByLicense() && armor;
    }
 
-   public static boolean drain() {
-      return f_c_Z && bind() && mark;
+   public static boolean showInvisibleEntities() {
+      return enabled && isAllowedByLicense() && showInvisibleEntities;
    }
 
-   public static boolean fill() {
-      return f_c_Z && bind() && scan;
+   public static boolean disableGlowing() {
+      return enabled && isAllowedByLicense() && disableGlowing;
    }
 
-   public static boolean mark() {
-      return f_c_Z && bind() && parse;
+   public static boolean hideSpawnerEntities() {
+      return enabled && isAllowedByLicense() && spawnerEntities;
    }
 
-   public static boolean scan() {
-      return f_c_Z && bind() && bind;
+   public static boolean hideDeadEntities() {
+      return enabled && isAllowedByLicense() && deadEntities;
    }
 
-   public static boolean parse() {
-      return f_c_Z && bind() && f_a_Z;
+   public static boolean hideNametags() {
+      return enabled && isAllowedByLicense() && nametags;
    }
 
-   public static boolean init(ParticleType<?> type) {
-      if (!f_c_Z || !bind()) {
+   public static boolean shouldHideParticle(ParticleType<?> type) {
+      if (!enabled || !isAllowedByLicense()) {
          return false;
       }
 
-      if (index) {
+      if (hideAllParticles) {
          return true;
       }
 
-      if (pool && type != null) {
+      if (fireworkExplosions && type != null) {
          Identifier id = BuiltInRegistries.PARTICLE_TYPE.getKey(type);
          if (id != null && id.getPath().equals("firework")) {
             return true;
@@ -317,43 +317,43 @@ public final class NoRenderState {
       return false;
    }
 
-   public static boolean init(Entity entity) {
-      return entity != null && init(entity.getType());
+   public static boolean shouldHideEntity(Entity entity) {
+      return entity != null && shouldHideEntityType(entity.getType());
    }
 
-   public static boolean init(EntityType<?> type) {
-      if (f_c_Z && type != null && bind()) {
-         List<String> list = init_List;
+   public static boolean shouldHideEntityType(EntityType<?> type) {
+      if (enabled && type != null && isAllowedByLicense()) {
+         List<String> list = hiddenEntities;
          if (list.isEmpty()) {
             return false;
          }
 
          Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
-         return id != null && init(list, id);
+         return id != null && matchesRegistryList(list, id);
       } else {
          return false;
       }
    }
 
-   public static boolean load(EntityType<?> type) {
-      return f_c_Z && bind() && f_b_Z && init(type);
+   public static boolean shouldDropSpawnPacket(EntityType<?> type) {
+      return enabled && isAllowedByLicense() && dropSpawnPackets && shouldHideEntityType(type);
    }
 
-   public static boolean init(Block block) {
-      if (f_c_Z && block != null && bind()) {
-         List<String> list = load_List;
+   public static boolean shouldHideBlockEntity(Block block) {
+      if (enabled && block != null && isAllowedByLicense()) {
+         List<String> list = hiddenBlockEntities;
          if (list.isEmpty()) {
             return false;
          }
 
          Identifier id = BuiltInRegistries.BLOCK.getKey(block);
-         return id != null && init(list, id);
+         return id != null && matchesRegistryList(list, id);
       } else {
          return false;
       }
    }
 
-   private static boolean init(List<String> list, Identifier id) {
+   private static boolean matchesRegistryList(List<String> list, Identifier id) {
       String full = id.toString();
       String path = id.getPath();
 

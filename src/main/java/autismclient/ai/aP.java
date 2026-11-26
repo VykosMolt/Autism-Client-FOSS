@@ -118,7 +118,7 @@ public final class aP {
          }
 
          autismclient.gui.ui.widgets.TextInputWidget.init_V();
-         autismclient.util.OverlayScreenController.init_V(mc, null);
+         autismclient.util.OverlayScreenController.setScreenExplicit(mc, null);
          mc.mouseHandler.grabMouse();
       }
    }
@@ -392,7 +392,7 @@ public final class aP {
                this.init_Runnable.run();
             }
          } else if (review && this.init_aR.read_Z()) {
-            autismclient.util.OverlayScreenController.init_V(mc, this.init_Screen);
+            autismclient.util.OverlayScreenController.setScreenExplicit(mc, this.init_Screen);
             if (!init_Z_aR(this.init_aR)) {
                AiAssistant.init_ConfigStore().write_V();
             } else {

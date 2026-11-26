@@ -58,7 +58,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @WrapMethod(method = "onButton")
    private void autism$userClick(long window, MouseButtonInfo button, int action, Operation<Void> original) {
-      OverlayScreenController.init_V();
+      OverlayScreenController.beginExplicitTransition();
 
       try {
          if (AutismLiteVariant.enabled()
@@ -69,13 +69,13 @@ public abstract class AutismMouseHandlerMixin {
             return;
          }
       } finally {
-         OverlayScreenController.load_V();
+         OverlayScreenController.endExplicitTransition();
       }
    }
 
    @WrapMethod(method = "onScroll")
    private void autism$userScroll(long window, double x, double y, Operation<Void> original) {
-      OverlayScreenController.init_V();
+      OverlayScreenController.beginExplicitTransition();
 
       try {
          if (AutismLiteVariant.enabled() || window != Minecraft.getInstance().getWindow().handle() || !aP.init_Z_D(y)) {
@@ -83,13 +83,13 @@ public abstract class AutismMouseHandlerMixin {
             return;
          }
       } finally {
-         OverlayScreenController.load_V();
+         OverlayScreenController.endExplicitTransition();
       }
    }
 
    @Inject(method = "grabMouse", at = @At("HEAD"), cancellable = true)
    private void autism$keepEditorCursor(CallbackInfo ci) {
-      if (OverlayScreenController.load_Z()) {
+      if (OverlayScreenController.hasRetainedForeground()) {
          ci.cancel();
       }
    }
@@ -113,7 +113,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @Inject(method = "handleAccumulatedMovement", at = @At("HEAD"))
    private void autism$clearQueuedMouseInputWhenUnavailable(CallbackInfo ci) {
-      MouseDeltaAccumulator.init(this.accumulatedDX, this.accumulatedDY, AutismSessionState.init_ck().state_I());
+      MouseDeltaAccumulator.init(this.accumulatedDX, this.accumulatedDY, AutismSessionState.getInstance().getClientTick());
       if (!AutismLiteVariant.enabled() && this.minecraft.gui.screen() == null && (Math.abs(this.accumulatedDX) > 0.5 || Math.abs(this.accumulatedDY) > 0.5)) {
          AiService ai = AiService.load_cc();
          if (ai != null) {

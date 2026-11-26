@@ -49,7 +49,7 @@ public class MacroCommand extends Command {
                            flag.set(false);
                         }
 
-                        MacroExecutor.init_V_Str(name);
+                        MacroExecutor.stopMacroByName(name);
                         AutismClientMessaging.sendPrefixed("§eStopped: §f" + name);
                         return 1;
                      }
@@ -113,7 +113,7 @@ public class MacroCommand extends Command {
                      long start = System.nanoTime();
                      long waitTimeoutNanos = 86400000000000L;
 
-                     while (MacroExecutor.init_Z_Str(name) && flag.get() && System.nanoTime() - start < waitTimeoutNanos) {
+                     while (MacroExecutor.isMacroNameRunning(name) && flag.get() && System.nanoTime() - start < waitTimeoutNanos) {
                         Thread.sleep(50L);
                      }
 

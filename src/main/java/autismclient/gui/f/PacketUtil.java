@@ -95,7 +95,7 @@ public final class PacketUtil {
    }
 
    public static void read(GuiGraphicsExtractor graphics, NetHelper bounds, int color) {
-      GuiIconAtlas.init(graphics, GuiIconAtlas.init_Identifier, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), color);
+      GuiIconAtlas.draw(graphics, GuiIconAtlas.CLOSE, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), color);
    }
 
    public static void load(GuiGraphicsExtractor graphics, NetHelper bounds, int radius, int color) {
@@ -148,11 +148,11 @@ public final class PacketUtil {
    }
 
    public static void init(GuiGraphicsExtractor graphics, NetHelper bounds, boolean open, int color) {
-      GuiIconAtlas.init(graphics, open ? GuiIconAtlas.write : GuiIconAtlas.sync, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), color);
+      GuiIconAtlas.draw(graphics, open ? GuiIconAtlas.CHEVRON_DOWN : GuiIconAtlas.CHEVRON_RIGHT, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), color);
    }
 
    public static void write(GuiGraphicsExtractor graphics, NetHelper bounds, int color) {
-      GuiIconAtlas.init(graphics, GuiIconAtlas.update, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), color);
+      GuiIconAtlas.draw(graphics, GuiIconAtlas.CHEVRON_UP, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), color);
    }
 
    public static void read(GuiGraphicsExtractor graphics, int x, int y, int h, int color) {
@@ -163,6 +163,6 @@ public final class PacketUtil {
    }
 
    public static void update(GuiGraphicsExtractor graphics, NetHelper bounds, int color) {
-      GuiIconAtlas.init(graphics, GuiIconAtlas.read, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), color);
+      GuiIconAtlas.draw(graphics, GuiIconAtlas.CHECK, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), color);
    }
 }

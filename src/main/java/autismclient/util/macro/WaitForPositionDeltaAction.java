@@ -22,7 +22,7 @@ public class WaitForPositionDeltaAction implements CaptureOutputAction, MacroAct
       tag.putDouble("distance", this.distance);
       tag.putBoolean("horizontalOnly", this.horizontalOnly);
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -35,7 +35,7 @@ public class WaitForPositionDeltaAction implements CaptureOutputAction, MacroAct
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 

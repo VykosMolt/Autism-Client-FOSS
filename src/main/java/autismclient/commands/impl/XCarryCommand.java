@@ -52,9 +52,9 @@ public class XCarryCommand extends Command {
          AbstractContainerMenu container = p.containerMenu;
          int hotbar = p.getInventory().getSelectedSlot();
          int sourceSlotId = 36 + hotbar;
-         AutismSessionState shared = AutismSessionState.init_ck();
-         boolean prevBypass = shared.close_Z();
-         shared.flush(true);
+         AutismSessionState shared = AutismSessionState.getInstance();
+         boolean prevBypass = shared.isArmorSlotBypassEnabled();
+         shared.setArmorSlotBypassEnabled(true);
 
          try {
             mc.gameMode.handleContainerInput(container.containerId, sourceSlotId, 0, ContainerInput.PICKUP, p);
@@ -66,11 +66,11 @@ public class XCarryCommand extends Command {
             String itemName = heldStack.getHoverName().getString();
             String slotName = autismclient.commands.arguments.XCarrySlotArgumentType.init_Str_I(targetSlot);
             LinkedHashSet<Integer> forcedSlots = init(shared);
-            boolean forcedCursor = shared.sync_Z() && shared.flush_Z();
+            boolean forcedCursor = shared.isXCarryForced() && shared.isXCarryCarryCursor();
             if (targetSlot == -2147483648) {
-               shared.init_V_Set_Z(forcedSlots, true);
-               shared.sync(true);
-               shared.update(true);
+               shared.setXCarrySlotMask(forcedSlots, true);
+               shared.setXCarryForced(true);
+               shared.setXCarryActive(true);
                AutismClientMessaging.sendPrefixed("§aHolding §f" + itemName + "§a on cursor (XCarry).");
                return 1;
             }
@@ -90,9 +90,9 @@ public class XCarryCommand extends Command {
                   return 1;
                } else {
                   forcedSlots.add(targetSlot);
-                  shared.init_V_Set_Z(forcedSlots, forcedCursor);
-                  shared.sync(true);
-                  shared.update(true);
+                  shared.setXCarrySlotMask(forcedSlots, forcedCursor);
+                  shared.setXCarryForced(true);
+                  shared.setXCarryActive(true);
                   AutismClientMessaging.sendPrefixed("§aStashed §f" + itemName + "§a into §f" + slotName + "§a.");
                   return 1;
                }
@@ -102,7 +102,7 @@ public class XCarryCommand extends Command {
                return 1;
             }
          } finally {
-            shared.flush(prevBypass);
+            shared.setArmorSlotBypassEnabled(prevBypass);
          }
       } else {
          AutismClientMessaging.sendPrefixed("§cNot in a world.");
@@ -112,8 +112,8 @@ public class XCarryCommand extends Command {
 
    private static LinkedHashSet<Integer> init(AutismSessionState shared) {
       LinkedHashSet<Integer> slots = new LinkedHashSet<>();
-      if (shared != null && shared.sync_Z()) {
-         Set<Integer> existing = shared.init_Set();
+      if (shared != null && shared.isXCarryForced()) {
+         Set<Integer> existing = shared.getXCarrySlotMask();
          if (existing != null) {
             for (Integer slot : existing) {
                if (slot != null && slot >= 0) {

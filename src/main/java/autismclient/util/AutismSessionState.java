@@ -34,144 +34,144 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
 public final class AutismSessionState {
-   private static final AutismSessionState init_ck = new AutismSessionState();
-   private volatile boolean init_Z = true;
-   private volatile boolean load_Z;
-   private volatile boolean read_Z = true;
-   private volatile boolean write_Z = true;
-   private volatile boolean update_Z;
-   private volatile boolean sync_Z;
-   private volatile boolean flush_Z;
-   private volatile boolean close_Z;
-   private volatile boolean open_Z;
-   private volatile Set<Integer> init_Set = Collections.emptySet();
-   private volatile boolean poll_Z;
-   private volatile BlockPos init_BlockPos = null;
-   private volatile String init_Str = "";
-   private volatile InteractionTargetRef init_E = null;
-   private volatile boolean push_Z = false;
-   private final Set<Class<? extends Packet<?>>> load_Set = ConcurrentHashMap.newKeySet();
-   private final Set<Class<? extends Packet<?>>> read_Set = ConcurrentHashMap.newKeySet();
-   private final List<AutismSessionState.DelayedPacket> init_List = new CopyOnWriteArrayList<>();
-   private volatile boolean pop_Z = false;
-   private volatile int init_I = 1;
-   private final List<AutismSessionState.DelayedPacket> load_List = new CopyOnWriteArrayList<>();
-   private final List<AutismSessionState.DelayedPacket> read_List = new CopyOnWriteArrayList<>();
-   private final List<AutismSessionState.DelayedPacket> write_List = new CopyOnWriteArrayList<>();
-   private final AtomicInteger init_AtomicInteger = new AtomicInteger();
-   private int load_I = 0;
-   private volatile ClientPacketListener init_ClientPacketListen = null;
-   private int read_I = 0;
-   private boolean tick_Z = false;
-   private static final int write_I = 32;
-   private final Deque<AutismSessionState.TimingMeasurement> init_Deque = new ArrayDeque<>(32);
-   private volatile AutismSessionState.DelayUnit init_ck_DataUtil = AutismSessionState.DelayUnit.TICKS;
-   private AutismSessionState.DelayUnit load_ck_DataUtil = AutismSessionState.DelayUnit.TICKS;
-   private long init_J = 0L;
-   private int update_I = 0;
-   private long load_J = -1L;
-   private int sync_I = -1;
-   private int flush_I = 0;
-   private String load_Str = null;
-   private Screen init_Screen;
-   private AbstractContainerMenu init_AbstractContainerM;
-   private boolean run_Z = false;
-   private boolean get_Z = false;
-   private int close_I = 500;
-   private int open_I = 5;
-   private String read_Str = "0";
-   private String write_Str = "";
-   private String update_Str = "1";
-   private int poll_I = 0;
-   private int push_I = 0;
-   private boolean set_Z = false;
-   private boolean put_Z = false;
-   private String sync_Str = "";
-   private int pop_I = -1;
-   private String flush_Str = "";
-   private int tick_I = 0;
-   private final List<autismclient.util.macro.CraftAction.Inner_DataUtil> update_List = new ArrayList<>();
-   private int run_I = -1;
-   private int get_I = 0;
-   private boolean add_Z = false;
-   private int set_I = 500;
-   private int put_I = 5;
-   private int add_I = 0;
-   private int clear_I = 0;
-   private boolean clear_Z = false;
-   private String close_Str = "";
-   private String open_Str = "";
-   private String poll_Str = "";
-   private boolean reset_Z = false;
-   private int reset_I = 500;
-   private int start_I = 250;
-   private int stop_I = 0;
-   private String push_Str = "";
-   private boolean start_Z = false;
-   private int next_I = 100;
-   private int prev_I = 100;
-   private int valid_I = 0;
-   private int size_I = 0;
-   private String pop_Str = "";
-   private String tick_Str = "";
-   private volatile String run_Str = "";
-   private volatile String get_Str = "";
-   private int data_I = 50;
-   private int value_I = 252;
-   private int cache_I = 258;
-   private int state_I = 280;
-   private int queue_I = 280;
-   private boolean stop_Z = false;
-   private AutismMacro init_aM = null;
-   private int buffer_I = 400;
-   private int entry_I = 100;
-   private boolean next_Z = false;
-   private volatile boolean prev_Z = false;
-   private volatile int node = 0;
-   private Runnable init_Runnable = null;
-   private final List<AutismSessionState.DelayedPacket> sync_List = new ArrayList<>();
-   private volatile boolean valid_Z = false;
-   private volatile long read_J = -1L;
-   private volatile int task = -1;
-   private volatile int pool = 0;
-   private volatile double init_D = 50.0;
-   private volatile long write_J = -1L;
-   private final Map<String, OverlayBounds> init_Map = new HashMap<>();
-   private final Set<String> write_Set = ConcurrentHashMap.newKeySet();
-   private final Map<String, AutismSessionState.PluginScanResult> load_Map = new HashMap<>();
-   private final List<String> flush_List = new ArrayList<>();
-   private String set_Str = "";
-   private static final boolean size_Z = Boolean.getBoolean("autism.payload.trace");
-   private volatile boolean data_Z = false;
-   private volatile boolean value_Z = false;
-   private volatile boolean cache_Z = false;
-   private volatile boolean state_Z = false;
-   private volatile boolean queue_Z = false;
-   private volatile Consumer<BlockPos> init_Consumer = null;
-   private volatile BiConsumer<BlockPos, Direction> init_BiConsumer = null;
-   private volatile Runnable load_Runnable = null;
-   private volatile Runnable read_Runnable = null;
-   private volatile Consumer<String> load_Consumer = null;
-   private volatile boolean buffer_Z = false;
-   private volatile boolean entry_Z = false;
+   private static final AutismSessionState INSTANCE = new AutismSessionState();
+   private volatile boolean sendPacketsEnabled = true;
+   private volatile boolean delayPacketsEnabled;
+   private volatile boolean allowSignEditing = true;
+   private volatile boolean allowBookEditing = true;
+   private volatile boolean pretendPackAccepted;
+   private volatile boolean autoDenyResourcePack;
+   private volatile boolean xCarryActive;
+   private volatile boolean xCarryForced;
+   private volatile boolean armorSlotBypassEnabled;
+   private volatile Set<Integer> xCarrySlotMask = Collections.emptySet();
+   private volatile boolean xCarryCarryCursor;
+   private volatile BlockPos lastInteractedBlockPos = null;
+   private volatile String lastSentMessage = "";
+   private volatile InteractionTargetRef lastInteractionTarget = null;
+   private volatile boolean useCustomPackets = false;
+   private final Set<Class<? extends Packet<?>>> customC2sPackets = ConcurrentHashMap.newKeySet();
+   private final Set<Class<? extends Packet<?>>> customS2cPackets = ConcurrentHashMap.newKeySet();
+   private final List<AutismSessionState.DelayedPacket> delayedPackets = new CopyOnWriteArrayList<>();
+   private volatile boolean staggeredPacketSend = false;
+   private volatile int staggeredSendDelay = 1;
+   private final List<AutismSessionState.DelayedPacket> sendingPackets = new CopyOnWriteArrayList<>();
+   private final List<AutismSessionState.DelayedPacket> sendingDisplayPackets = new CopyOnWriteArrayList<>();
+   private final List<AutismSessionState.DelayedPacket> lastFlushedPackets = new CopyOnWriteArrayList<>();
+   private final AtomicInteger queueRevision = new AtomicInteger();
+   private int staggeredTickCounter = 0;
+   private volatile ClientPacketListener staggeredSendConnection = null;
+   private int staggeredSendTotalCount = 0;
+   private boolean staggeredHasExplicitDelays = false;
+   private static final int MAX_TIMING_SAMPLES = 32;
+   private final Deque<AutismSessionState.TimingMeasurement> timingMeasurements = new ArrayDeque<>(32);
+   private volatile AutismSessionState.DelayUnit delayUnit = AutismSessionState.DelayUnit.TICKS;
+   private AutismSessionState.DelayUnit activeSendDelayUnit = AutismSessionState.DelayUnit.TICKS;
+   private long staggeredStartNanos = 0L;
+   private int staggeredStartTick = 0;
+   private long liveCaptureLastNanos = -1L;
+   private int liveCaptureLastTick = -1;
+   private int liveCaptureAccumulatedDelay = 0;
+   private String staggeredCompletionMessage = null;
+   private Screen storedGuiScreen;
+   private AbstractContainerMenu storedContainerMenu;
+   private boolean bypassingPacketInterception = false;
+   private boolean fabricatorVisible = false;
+   private int fabricatorX = 500;
+   private int fabricatorY = 5;
+   private String fabricatorSlotInput = "0";
+   private String fabricatorItemInput = "";
+   private String fabricatorCountInput = "1";
+   private int fabricatorActionIndex = 0;
+   private int fabricatorClickModeIndex = 0;
+   private boolean fabricatorDropWholeStack = false;
+   private boolean fabricatorUseMaxAmount = false;
+   private String fabricatorRecipeSearch = "";
+   private int fabricatorSelectedRecipeId = -1;
+   private String fabricatorSelectedRecipeKey = "";
+   private int fabricatorRecipeScrollOffset = 0;
+   private final List<autismclient.util.macro.CraftAction.Inner_DataUtil> fabricatorCraftEntries = new ArrayList<>();
+   private int fabricatorSelectedCraftIndex = -1;
+   private int fabricatorCraftScrollOffset = 0;
+   private boolean lanSyncOverlayVisible = false;
+   private int lanSyncOverlayX = 500;
+   private int lanSyncOverlayY = 5;
+   private int lanSyncActiveTab = 0;
+   private int lanSyncScrollOffset = 0;
+   private boolean lanSyncPerUserMode = false;
+   private String lanSyncSelectedMacroName = "";
+   private String lanSyncExpandedExecutePeer = "";
+   private String lanSyncSelectedPeer = "";
+   private boolean macroListOverlayVisible = false;
+   private int macroListOverlayX = 500;
+   private int macroListOverlayY = 250;
+   private int macroListScrollOffset = 0;
+   private String macroListSearchQuery = "";
+   private boolean queueEditorVisible = false;
+   private int queueEditorX = 100;
+   private int queueEditorY = 100;
+   private int serverInfoActiveTab = 0;
+   private int serverInfoScrollOffset = 0;
+   private String serverInfoSelectedPlugin = "";
+   private String serverInfoStateAddress = "";
+   private volatile String serverDetectedVersion = "";
+   private volatile String serverDetectedVersionAddress = "";
+   private int serverInfoScanDelayMs = 50;
+   private int serverInfoTabWidth = 252;
+   private int serverInfoTabHeight = 258;
+   private int serverInfoPluginsTabWidth = 280;
+   private int serverInfoPluginsTabHeight = 280;
+   private boolean macroEditorVisible = false;
+   private AutismMacro editingMacro = null;
+   private int macroEditorX = 400;
+   private int macroEditorY = 100;
+   private boolean launcherOverlayVisible = false;
+   private volatile boolean gbreakCapturing = false;
+   private volatile int gbreakPacketCount = 0;
+   private Runnable gbreakCaptureCallback = null;
+   private final List<AutismSessionState.DelayedPacket> gbreakCapturedPackets = new ArrayList<>();
+   private volatile boolean timedCaptureMode = false;
+   private volatile long captureStartNanos = -1L;
+   private volatile int captureStartTick = -1;
+   private volatile int clientTick = 0;
+   private volatile double msPerTickEma = 50.0;
+   private volatile long lastTimeUpdateMs = -1L;
+   private final Map<String, OverlayBounds> overlayBoundsById = new HashMap<>();
+   private final Set<String> pinnedOverlayIds = ConcurrentHashMap.newKeySet();
+   private final Map<String, AutismSessionState.PluginScanResult> pluginScanResults = new HashMap<>();
+   private final List<String> overlayZOrder = new ArrayList<>();
+   private String activeOverlayId = "";
+   private static final boolean TRACE_PAYLOADS = Boolean.getBoolean("autism.payload.trace");
+   private volatile boolean dropNextContainerClose = false;
+   private volatile boolean dropNextSignUpdate = false;
+   private volatile boolean dropNextBookEdit = false;
+   private volatile boolean forceNextSignUpdate = false;
+   private volatile boolean forceNextBookEdit = false;
+   private volatile Consumer<BlockPos> blockCaptureCallback = null;
+   private volatile BiConsumer<BlockPos, Direction> blockFaceCaptureCallback = null;
+   private volatile Runnable attackCaptureCallback = null;
+   private volatile Runnable captureCancelCallback = null;
+   private volatile Consumer<String> entityCaptureCallback = null;
+   private volatile boolean captureSpecificEntity = false;
+   private volatile boolean placePreviewActive = false;
 
-   public synchronized void init_V_ck_ConfigStore(AutismSessionState.TimingMeasurement sample) {
+   public synchronized void recordTimingMeasurement(AutismSessionState.TimingMeasurement sample) {
       if (sample != null) {
-         this.init_Deque.addFirst(sample);
+         this.timingMeasurements.addFirst(sample);
 
-         while (this.init_Deque.size() > 32) {
-            this.init_Deque.removeLast();
+         while (this.timingMeasurements.size() > 32) {
+            this.timingMeasurements.removeLast();
          }
       }
    }
 
-   public synchronized AutismSessionState.TimingMeasurement init_ck_ConfigStore_Str(String label) {
+   public synchronized AutismSessionState.TimingMeasurement getLatestTimingMeasurement(String label) {
       if (label == null) {
-         return this.init_Deque.isEmpty() ? null : this.init_Deque.peekFirst();
+         return this.timingMeasurements.isEmpty() ? null : this.timingMeasurements.peekFirst();
       }
 
-      for (AutismSessionState.TimingMeasurement s : this.init_Deque) {
-         if (label.equals(s.init_Str)) {
+      for (AutismSessionState.TimingMeasurement s : this.timingMeasurements) {
+         if (label.equals(s.label)) {
             return s;
          }
       }
@@ -179,11 +179,11 @@ public final class AutismSessionState {
       return null;
    }
 
-   public synchronized List<AutismSessionState.TimingMeasurement> init_List_I(int n) {
-      List<AutismSessionState.TimingMeasurement> out = new ArrayList<>(Math.min(n, this.init_Deque.size()));
+   public synchronized List<AutismSessionState.TimingMeasurement> getRecentTimingMeasurements(int n) {
+      List<AutismSessionState.TimingMeasurement> out = new ArrayList<>(Math.min(n, this.timingMeasurements.size()));
       int i = 0;
 
-      for (AutismSessionState.TimingMeasurement s : this.init_Deque) {
+      for (AutismSessionState.TimingMeasurement s : this.timingMeasurements) {
          if (i++ >= n) {
             break;
          }
@@ -197,210 +197,210 @@ public final class AutismSessionState {
    private AutismSessionState() {
    }
 
-   public static AutismSessionState init_ck() {
-      return init_ck;
+   public static AutismSessionState getInstance() {
+      return INSTANCE;
    }
 
-   public boolean init_Z() {
-      return this.stop_Z;
+   public boolean isMacroEditorVisible() {
+      return this.macroEditorVisible;
    }
 
-   public void init_V_Z(boolean visible) {
-      this.stop_Z = visible;
+   public void setMacroEditorVisible(boolean visible) {
+      this.macroEditorVisible = visible;
    }
 
-   public AutismMacro init_aM() {
-      return this.init_aM;
+   public AutismMacro getEditingMacro() {
+      return this.editingMacro;
    }
 
-   public void init_V_aM(AutismMacro macro) {
-      this.init_aM = macro;
+   public void setEditingMacro(AutismMacro macro) {
+      this.editingMacro = macro;
    }
 
-   public int init_I() {
-      return this.buffer_I;
+   public int getMacroEditorX() {
+      return this.macroEditorX;
    }
 
-   public void init_V_I(int x) {
-      this.buffer_I = x;
+   public void setMacroEditorX(int x) {
+      this.macroEditorX = x;
    }
 
-   public int load_I() {
-      return this.entry_I;
+   public int getMacroEditorY() {
+      return this.macroEditorY;
    }
 
-   public void load_V_I(int y) {
-      this.entry_I = y;
+   public void setMacroEditorY(int y) {
+      this.macroEditorY = y;
    }
 
-   public synchronized OverlayBounds init_cH_Str(String id) {
-      OverlayBounds layout = this.init_Map.get(id);
+   public synchronized OverlayBounds getOverlayBounds(String id) {
+      OverlayBounds layout = this.overlayBoundsById.get(id);
       return layout == null ? null : new OverlayBounds(layout.x, layout.y, layout.width, layout.height, layout.visible, layout.collapsed);
    }
 
-   public boolean init_Z_Str(String id) {
-      return id != null && this.write_Set.contains(id);
+   public boolean isOverlayPinned(String id) {
+      return id != null && this.pinnedOverlayIds.contains(id);
    }
 
-   public void init_V_Str_Z(String id, boolean pinned) {
+   public void setOverlayPinned(String id, boolean pinned) {
       if (id != null && !id.isEmpty()) {
          if (pinned) {
-            this.write_Set.add(id);
+            this.pinnedOverlayIds.add(id);
          } else {
-            this.write_Set.remove(id);
+            this.pinnedOverlayIds.remove(id);
          }
       }
    }
 
-   public synchronized void init_V_Str_cH(String id, OverlayBounds layout) {
+   public synchronized void setOverlayBounds(String id, OverlayBounds layout) {
       if (id != null && !id.isEmpty() && layout != null) {
          OverlayBounds trueGeometry = OverlayManager.getInstance().getStashedBounds(id);
          if (trueGeometry != null) {
             layout = new OverlayBounds(trueGeometry.x, trueGeometry.y, trueGeometry.width, trueGeometry.height, layout.visible, layout.collapsed);
          }
 
-         this.init_Map.put(id, new OverlayBounds(layout.x, layout.y, layout.width, layout.height, layout.visible, layout.collapsed));
+         this.overlayBoundsById.put(id, new OverlayBounds(layout.x, layout.y, layout.width, layout.height, layout.visible, layout.collapsed));
       }
    }
 
-   public synchronized List<String> init_List() {
-      return new ArrayList<>(this.flush_List);
+   public synchronized List<String> getOverlayZOrder() {
+      return new ArrayList<>(this.overlayZOrder);
    }
 
-   public synchronized void init_V_List(List<String> order) {
-      this.flush_List.clear();
+   public synchronized void setOverlayZOrder(List<String> order) {
+      this.overlayZOrder.clear();
       if (order != null) {
          for (String id : order) {
-            if (id != null && !id.isEmpty() && !this.flush_List.contains(id)) {
-               this.flush_List.add(id);
+            if (id != null && !id.isEmpty() && !this.overlayZOrder.contains(id)) {
+               this.overlayZOrder.add(id);
             }
          }
       }
    }
 
-   public synchronized String init_Str() {
-      return this.set_Str == null ? "" : this.set_Str;
+   public synchronized String getActiveOverlayId() {
+      return this.activeOverlayId == null ? "" : this.activeOverlayId;
    }
 
-   public synchronized void init_V_Str(String overlayId) {
-      this.set_Str = overlayId == null ? "" : overlayId.trim();
+   public synchronized void setActiveOverlayId(String overlayId) {
+      this.activeOverlayId = overlayId == null ? "" : overlayId.trim();
    }
 
-   public synchronized AutismSessionState.PluginScanResult init_ck_TaskQueue_Str(String address) {
-      return this.init_ck_TaskQueue_Str_Str(address, "");
+   public synchronized AutismSessionState.PluginScanResult getPluginScanResult(String address) {
+      return this.getPluginScanResult(address, "");
    }
 
-   public synchronized AutismSessionState.PluginScanResult init_ck_TaskQueue_Str_Str(String address, String contextSignature) {
-      String key = init_Str_Str_Str(address, contextSignature);
+   public synchronized AutismSessionState.PluginScanResult getPluginScanResult(String address, String contextSignature) {
+      String key = buildPluginScanKey(address, contextSignature);
       if (key.isEmpty()) {
          return null;
       }
 
-      AutismSessionState.PluginScanResult scan = this.load_Map.get(key);
-      return scan == null ? null : scan.init_ck_TaskQueue();
+      AutismSessionState.PluginScanResult scan = this.pluginScanResults.get(key);
+      return scan == null ? null : scan.copy();
    }
 
-   public synchronized void init(String address, List<String> plugins, Map<String, List<String>> pluginCommands) {
-      this.init(address, "", plugins, pluginCommands, Map.of());
+   public synchronized void savePluginScanResult(String address, List<String> plugins, Map<String, List<String>> pluginCommands) {
+      this.savePluginScanResult(address, "", plugins, pluginCommands, Map.of());
    }
 
-   public synchronized void init(String address, String contextSignature, List<String> plugins, Map<String, List<String>> pluginCommands) {
-      this.init(address, contextSignature, plugins, pluginCommands, Map.of());
+   public synchronized void savePluginScanResult(String address, String contextSignature, List<String> plugins, Map<String, List<String>> pluginCommands) {
+      this.savePluginScanResult(address, contextSignature, plugins, pluginCommands, Map.of());
    }
 
-   public synchronized void init(
+   public synchronized void savePluginScanResult(
       String address, String contextSignature, List<String> plugins, Map<String, List<String>> pluginCommands, Map<String, String> pluginEvidence
    ) {
-      String normalizedAddress = load_Str_Str(address);
-      String normalizedContext = read_Str_Str(contextSignature);
-      String key = init_Str_Str_Str(normalizedAddress, normalizedContext);
+      String normalizedAddress = normalizeServerAddress(address);
+      String normalizedContext = normalizeContextSignature(contextSignature);
+      String key = buildPluginScanKey(normalizedAddress, normalizedContext);
       if (!key.isEmpty()) {
-         this.load_Map.put(key, new AutismSessionState.PluginScanResult(normalizedAddress, normalizedContext, plugins, pluginCommands, pluginEvidence));
+         this.pluginScanResults.put(key, new AutismSessionState.PluginScanResult(normalizedAddress, normalizedContext, plugins, pluginCommands, pluginEvidence));
       }
    }
 
-   public synchronized void load_V_Str(String address) {
-      String normalized = load_Str_Str(address);
+   public synchronized void clearPluginScanResults(String address) {
+      String normalized = normalizeServerAddress(address);
       if (!normalized.isEmpty()) {
-         this.load_Map.keySet().removeIf(key -> key.equals(normalized) || key.startsWith(normalized + "|"));
+         this.pluginScanResults.keySet().removeIf(key -> key.equals(normalized) || key.startsWith(normalized + "|"));
       }
    }
 
-   private static String load_Str_Str(String address) {
+   private static String normalizeServerAddress(String address) {
       return address == null ? "" : address.trim().toLowerCase(Locale.ROOT);
    }
 
-   private static String read_Str_Str(String contextSignature) {
+   private static String normalizeContextSignature(String contextSignature) {
       return contextSignature == null ? "" : contextSignature.trim().toLowerCase(Locale.ROOT);
    }
 
-   private static String init_Str_Str_Str(String address, String contextSignature) {
-      String normalizedAddress = load_Str_Str(address);
+   private static String buildPluginScanKey(String address, String contextSignature) {
+      String normalizedAddress = normalizeServerAddress(address);
       if (normalizedAddress.isEmpty()) {
          return "";
       }
 
-      String normalizedContext = read_Str_Str(contextSignature);
+      String normalizedContext = normalizeContextSignature(contextSignature);
       return normalizedContext.isEmpty() ? normalizedAddress + "|default" : normalizedAddress + "|" + normalizedContext;
    }
 
-   public boolean load_Z() {
-      return this.next_Z;
+   public boolean isLauncherOverlayVisible() {
+      return this.launcherOverlayVisible;
    }
 
-   public void load_V_Z(boolean visible) {
-      this.next_Z = visible;
+   public void setLauncherOverlayVisible(boolean visible) {
+      this.launcherOverlayVisible = visible;
    }
 
-   public boolean read_Z() {
-      return this.init_Z;
+   public boolean isSendPacketsEnabled() {
+      return this.sendPacketsEnabled;
    }
 
-   public void read_V_Z(boolean value) {
-      this.init_Z = value;
+   public void setSendPacketsEnabled(boolean value) {
+      this.sendPacketsEnabled = value;
    }
 
-   public boolean write_Z() {
-      return this.load_Z;
+   public boolean isDelayPacketsEnabled() {
+      return this.delayPacketsEnabled;
    }
 
-   public void write(boolean value) {
+   public void setDelayPacketsEnabled(boolean value) {
       if (!value || !autismclient.modules.aD.read_Z()) {
-         this.load_Z = value;
+         this.delayPacketsEnabled = value;
       }
    }
 
-   public boolean update_Z() {
-      return this.flush_Z;
+   public boolean isXCarryActive() {
+      return this.xCarryActive;
    }
 
-   public void update(boolean value) {
-      this.flush_Z = value;
+   public void setXCarryActive(boolean value) {
+      this.xCarryActive = value;
    }
 
-   public boolean sync_Z() {
-      return this.close_Z;
+   public boolean isXCarryForced() {
+      return this.xCarryForced;
    }
 
-   public void sync(boolean value) {
-      if (!value || this.init_Set != null && !this.init_Set.isEmpty() || this.poll_Z) {
-         this.close_Z = value;
+   public void setXCarryForced(boolean value) {
+      if (!value || this.xCarrySlotMask != null && !this.xCarrySlotMask.isEmpty() || this.xCarryCarryCursor) {
+         this.xCarryForced = value;
          if (!value) {
-            this.init_Set = Collections.emptySet();
-            this.poll_Z = false;
+            this.xCarrySlotMask = Collections.emptySet();
+            this.xCarryCarryCursor = false;
          }
       }
    }
 
-   public Set<Integer> init_Set() {
-      return this.init_Set;
+   public Set<Integer> getXCarrySlotMask() {
+      return this.xCarrySlotMask;
    }
 
-   public boolean flush_Z() {
-      return this.poll_Z;
+   public boolean isXCarryCarryCursor() {
+      return this.xCarryCarryCursor;
    }
 
-   public void init_V_Set_Z(Set<Integer> slotMask, boolean carryCursor) {
+   public void setXCarrySlotMask(Set<Integer> slotMask, boolean carryCursor) {
       LinkedHashSet<Integer> copy = new LinkedHashSet<>();
       if (slotMask != null) {
          for (Integer slot : slotMask) {
@@ -410,14 +410,14 @@ public final class AutismSessionState {
          }
       }
 
-      this.init_Set = Collections.unmodifiableSet(copy);
-      this.poll_Z = carryCursor;
+      this.xCarrySlotMask = Collections.unmodifiableSet(copy);
+      this.xCarryCarryCursor = carryCursor;
    }
 
-   public void load(Set<Integer> slotMask, boolean carryCursor) {
+   public void mergeXCarrySlotMask(Set<Integer> slotMask, boolean carryCursor) {
       LinkedHashSet<Integer> merged = new LinkedHashSet<>();
-      if (this.close_Z && this.init_Set != null) {
-         for (Integer slot : this.init_Set) {
+      if (this.xCarryForced && this.xCarrySlotMask != null) {
+         for (Integer slot : this.xCarrySlotMask) {
             if (slot != null && slot >= 0) {
                merged.add(slot);
             }
@@ -432,68 +432,68 @@ public final class AutismSessionState {
          }
       }
 
-      this.init_Set = Collections.unmodifiableSet(merged);
-      this.poll_Z = this.close_Z && this.poll_Z || carryCursor;
+      this.xCarrySlotMask = Collections.unmodifiableSet(merged);
+      this.xCarryCarryCursor = this.xCarryForced && this.xCarryCarryCursor || carryCursor;
    }
 
-   public boolean close_Z() {
-      return this.open_Z;
+   public boolean isArmorSlotBypassEnabled() {
+      return this.armorSlotBypassEnabled;
    }
 
-   public void flush(boolean value) {
-      this.open_Z = value;
+   public void setArmorSlotBypassEnabled(boolean value) {
+      this.armorSlotBypassEnabled = value;
    }
 
-   public String load_Str() {
-      return this.init_Str == null ? "" : this.init_Str;
+   public String getLastSentMessage() {
+      return this.lastSentMessage == null ? "" : this.lastSentMessage;
    }
 
-   public void read_V_Str(String message) {
-      this.init_Str = message == null ? "" : message;
+   public void setLastSentMessage(String message) {
+      this.lastSentMessage = message == null ? "" : message;
    }
 
-   public BlockPos init_BlockPos() {
-      return this.init_BlockPos;
+   public BlockPos getLastInteractedBlockPos() {
+      return this.lastInteractedBlockPos;
    }
 
-   public void init_V_BlockPos(BlockPos pos) {
-      this.init_BlockPos = pos;
+   public void setLastInteractedBlockPos(BlockPos pos) {
+      this.lastInteractedBlockPos = pos;
    }
 
-   public InteractionTargetRef init_E() {
-      return this.init_E;
+   public InteractionTargetRef getLastInteractionTarget() {
+      return this.lastInteractionTarget;
    }
 
-   public void init_V_E(InteractionTargetRef target) {
-      this.init_E = target;
+   public void setLastInteractionTarget(InteractionTargetRef target) {
+      this.lastInteractionTarget = target;
       if (target != null && target.init_Z()) {
-         this.init_BlockPos = target.init_BlockPos();
+         this.lastInteractedBlockPos = target.init_BlockPos();
       }
    }
 
-   public synchronized List<AutismSessionState.DelayedPacket> load_List() {
-      return new ArrayList<>(this.init_List);
+   public synchronized List<AutismSessionState.DelayedPacket> getDelayedPackets() {
+      return new ArrayList<>(this.delayedPackets);
    }
 
-   public int read_I() {
-      return this.init_AtomicInteger.get();
+   public int getQueueRevision() {
+      return this.queueRevision.get();
    }
 
-   public synchronized AutismSessionState.DelayQueueSnapshot init_ck_StreamUtil_Z_I(boolean sending, int maxLines) {
-      List<AutismSessionState.DelayedPacket> source = sending ? this.load_List : this.init_List;
+   public synchronized AutismSessionState.DelayQueueSnapshot snapshotDelayQueue(boolean sending, int maxLines) {
+      List<AutismSessionState.DelayedPacket> source = sending ? this.sendingPackets : this.delayedPackets;
       int totalCount = source.size();
       if (totalCount != 0 && maxLines > 0) {
          int limit = Math.min(totalCount, maxLines);
          ArrayList<AutismSessionState.DelayedPacket> visiblePackets = new ArrayList<>(limit);
 
          for (AutismSessionState.DelayedPacket packet : source) {
-            if (packet != null && packet.init_Packet != null) {
+            if (packet != null && packet.packet != null) {
                int insertAt = visiblePackets.size();
 
                for (int i = 0; i < visiblePackets.size(); i++) {
                   AutismSessionState.DelayedPacket existing = visiblePackets.get(i);
-                  int byDelay = Integer.compare(existing.load_I(), packet.load_I());
-                  if (byDelay > 0 || byDelay == 0 && existing.init_I() > packet.init_I()) {
+                  int byDelay = Integer.compare(existing.getDelay(), packet.getDelay());
+                  if (byDelay > 0 || byDelay == 0 && existing.getId() > packet.getId()) {
                      insertAt = i;
                      break;
                   }
@@ -516,94 +516,94 @@ public final class AutismSessionState {
       }
    }
 
-   public boolean open_Z() {
-      return !this.init_List.isEmpty();
+   public boolean hasDelayedPackets() {
+      return !this.delayedPackets.isEmpty();
    }
 
-   public synchronized void load_V_List(List<AutismSessionState.DelayedPacket> packets) {
-      this.init_List.clear();
+   public synchronized void replaceDelayedPackets(List<AutismSessionState.DelayedPacket> packets) {
+      this.delayedPackets.clear();
       if (packets != null && !packets.isEmpty()) {
-         this.init_List.addAll(this.init_List_List(packets));
+         this.delayedPackets.addAll(this.cloneAndRenumberQueue(packets));
       }
 
-      this.pop_V();
-      this.set_V();
+      this.resetPacketIdsIfEmpty();
+      this.bumpQueueRevision();
    }
 
-   public synchronized void init_V() {
-      if (!this.init_List.isEmpty()) {
-         this.run_V();
+   public synchronized void clearDelayedPackets() {
+      if (!this.delayedPackets.isEmpty()) {
+         this.archiveCurrentDelayedQueue();
       }
 
-      this.init_List.clear();
-      this.pop_V();
-      this.set_V();
+      this.delayedPackets.clear();
+      this.resetPacketIdsIfEmpty();
+      this.bumpQueueRevision();
    }
 
-   private void pop_V() {
-      if (this.init_List.isEmpty() && this.load_List.isEmpty()) {
-         this.tick_V();
-         AutismSessionState.DelayedPacket.load_V();
-      }
-   }
-
-   private void tick_V() {
-      this.read_J = -1L;
-      this.task = -1;
-   }
-
-   private void run_V() {
-      this.write_List.clear();
-      if (!this.init_List.isEmpty()) {
-         this.write_List.addAll(this.init_List_List(this.init_List));
+   private void resetPacketIdsIfEmpty() {
+      if (this.delayedPackets.isEmpty() && this.sendingPackets.isEmpty()) {
+         this.resetTimedCaptureOrigin();
+         AutismSessionState.DelayedPacket.resetIdCounter();
       }
    }
 
-   private void write(List<AutismSessionState.DelayedPacket> queue) {
-      this.write_List.clear();
+   private void resetTimedCaptureOrigin() {
+      this.captureStartNanos = -1L;
+      this.captureStartTick = -1;
+   }
+
+   private void archiveCurrentDelayedQueue() {
+      this.lastFlushedPackets.clear();
+      if (!this.delayedPackets.isEmpty()) {
+         this.lastFlushedPackets.addAll(this.cloneAndRenumberQueue(this.delayedPackets));
+      }
+   }
+
+   private void archivePacketQueue(List<AutismSessionState.DelayedPacket> queue) {
+      this.lastFlushedPackets.clear();
       if (queue != null && !queue.isEmpty()) {
-         this.write_List.addAll(this.init_List_List(queue));
+         this.lastFlushedPackets.addAll(this.cloneAndRenumberQueue(queue));
       }
    }
 
-   private void get_V() {
-      this.load_List.clear();
-      this.read_List.clear();
-      this.init_ClientPacketListen = null;
-      this.load_I = 0;
-      this.init_J = 0L;
-      this.update_I = 0;
-      this.read_I = 0;
-      this.tick_Z = false;
-      this.load_J = -1L;
-      this.sync_I = -1;
-      this.flush_I = 0;
-      this.load_ck_DataUtil = this.init_ck_DataUtil;
-      this.set_V();
+   private void resetStaggeredSendState() {
+      this.sendingPackets.clear();
+      this.sendingDisplayPackets.clear();
+      this.staggeredSendConnection = null;
+      this.staggeredTickCounter = 0;
+      this.staggeredStartNanos = 0L;
+      this.staggeredStartTick = 0;
+      this.staggeredSendTotalCount = 0;
+      this.staggeredHasExplicitDelays = false;
+      this.liveCaptureLastNanos = -1L;
+      this.liveCaptureLastTick = -1;
+      this.liveCaptureAccumulatedDelay = 0;
+      this.activeSendDelayUnit = this.delayUnit;
+      this.bumpQueueRevision();
    }
 
-   private void set_V() {
-      this.init_AtomicInteger.incrementAndGet();
+   private void bumpQueueRevision() {
+      this.queueRevision.incrementAndGet();
    }
 
-   private boolean store() {
-      return this.init_ClientPacketListen != null && !this.load_List.isEmpty();
+   private boolean isActivelySendingStaggered() {
+      return this.staggeredSendConnection != null && !this.sendingPackets.isEmpty();
    }
 
-   private int init_I_ck_DataUtil(AutismSessionState.DelayUnit mode) {
+   private int computeStaggeredElapsed(AutismSessionState.DelayUnit mode) {
       if (mode == AutismSessionState.DelayUnit.MS) {
-         return this.init_J <= 0L ? 0 : (int)Math.max(0L, (System.nanoTime() - this.init_J) / 1000000L);
+         return this.staggeredStartNanos <= 0L ? 0 : (int)Math.max(0L, (System.nanoTime() - this.staggeredStartNanos) / 1000000L);
       } else {
-         return Math.max(0, this.pool - this.update_I);
+         return Math.max(0, this.clientTick - this.staggeredStartTick);
       }
    }
 
-   private int init_I_List(List<AutismSessionState.DelayedPacket> queue) {
+   private int findMaxPendingDelay(List<AutismSessionState.DelayedPacket> queue) {
       int maxDelay = 0;
       if (queue != null && !queue.isEmpty()) {
          for (AutismSessionState.DelayedPacket qp : queue) {
-            if (qp != null && !qp.load_Z()) {
-               maxDelay = Math.max(maxDelay, qp.load_I());
+            if (qp != null && !qp.isSent()) {
+               maxDelay = Math.max(maxDelay, qp.getDelay());
             }
          }
 
@@ -613,15 +613,15 @@ public final class AutismSessionState {
       }
    }
 
-   private void init_V_List_ck_CachePool(List<AutismSessionState.DelayedPacket> queue, AutismSessionState.DelayedPacket packet) {
+   private void insertSortedByDelay(List<AutismSessionState.DelayedPacket> queue, AutismSessionState.DelayedPacket packet) {
       if (queue != null && packet != null) {
          int insertAt = queue.size();
 
          for (int i = 0; i < queue.size(); i++) {
             AutismSessionState.DelayedPacket existing = queue.get(i);
             if (existing != null) {
-               int byDelay = Integer.compare(existing.load_I(), packet.load_I());
-               if (byDelay > 0 || byDelay == 0 && existing.init_I() > packet.init_I()) {
+               int byDelay = Integer.compare(existing.getDelay(), packet.getDelay());
+               if (byDelay > 0 || byDelay == 0 && existing.getId() > packet.getId()) {
                   insertAt = i;
                   break;
                }
@@ -632,116 +632,116 @@ public final class AutismSessionState {
       }
    }
 
-   private int queue_I() {
-      int elapsed = this.init_I_ck_DataUtil(this.load_ck_DataUtil);
-      if (this.tick_Z || this.valid_Z) {
+   private int computeNextActiveSendDelay() {
+      int elapsed = this.computeStaggeredElapsed(this.activeSendDelayUnit);
+      if (this.staggeredHasExplicitDelays || this.timedCaptureMode) {
          return elapsed;
-      } else if (this.pop_Z) {
-         int tailDelay = this.init_I_List(this.load_List);
-         return Math.max(elapsed, tailDelay) + this.init_I;
+      } else if (this.staggeredPacketSend) {
+         int tailDelay = this.findMaxPendingDelay(this.sendingPackets);
+         return Math.max(elapsed, tailDelay) + this.staggeredSendDelay;
       } else {
          return elapsed;
       }
    }
 
-   private int buffer_I() {
-      if (this.load_ck_DataUtil == AutismSessionState.DelayUnit.MS) {
+   private int advanceLiveCaptureDelay() {
+      if (this.activeSendDelayUnit == AutismSessionState.DelayUnit.MS) {
          long now = System.nanoTime();
-         long reference = this.load_J > 0L ? this.load_J : this.init_J;
+         long reference = this.liveCaptureLastNanos > 0L ? this.liveCaptureLastNanos : this.staggeredStartNanos;
          int delta = reference > 0L ? (int)Math.max(0L, (now - reference) / 1000000L) : 0;
-         this.load_J = now;
-         this.sync_I = this.pool;
-         this.flush_I += delta;
-         return this.flush_I;
+         this.liveCaptureLastNanos = now;
+         this.liveCaptureLastTick = this.clientTick;
+         this.liveCaptureAccumulatedDelay += delta;
+         return this.liveCaptureAccumulatedDelay;
       } else {
-         int tick = this.pool;
-         int reference = this.sync_I >= 0 ? this.sync_I : this.update_I;
+         int tick = this.clientTick;
+         int reference = this.liveCaptureLastTick >= 0 ? this.liveCaptureLastTick : this.staggeredStartTick;
          int delta = Math.max(0, tick - reference);
-         this.sync_I = tick;
-         this.load_J = System.nanoTime();
-         this.flush_I += delta;
-         return this.flush_I;
+         this.liveCaptureLastTick = tick;
+         this.liveCaptureLastNanos = System.nanoTime();
+         this.liveCaptureAccumulatedDelay += delta;
+         return this.liveCaptureAccumulatedDelay;
       }
    }
 
-   public synchronized boolean poll_Z() {
-      if (this.write_List.isEmpty()) {
+   public synchronized boolean restoreLastFlushedQueue() {
+      if (this.lastFlushedPackets.isEmpty()) {
          return false;
       }
 
-      this.init_List.clear();
-      this.tick_V();
-      if (!this.write_List.isEmpty()) {
-         this.init_List.addAll(this.init_List_List(this.write_List));
+      this.delayedPackets.clear();
+      this.resetTimedCaptureOrigin();
+      if (!this.lastFlushedPackets.isEmpty()) {
+         this.delayedPackets.addAll(this.cloneAndRenumberQueue(this.lastFlushedPackets));
       }
 
-      this.set_V();
+      this.bumpQueueRevision();
       return true;
    }
 
-   public synchronized void init_V_Packet(Packet<?> packet) {
-      this.init_V_Packet_ck_BufferHelper(packet, AutismSessionState.ReplayMode.REGENERATE);
+   public synchronized void enqueueDelayedPacket(Packet<?> packet) {
+      this.enqueueDelayedPacket(packet, AutismSessionState.ReplayMode.REGENERATE);
    }
 
-   public synchronized void load_V_Packet(Packet<?> packet) {
-      this.init_V_Packet_ck_BufferHelper(packet, AutismSessionState.ReplayMode.EXACT);
+   public synchronized void enqueueExactPacket(Packet<?> packet) {
+      this.enqueueDelayedPacket(packet, AutismSessionState.ReplayMode.EXACT);
    }
 
-   public synchronized void init_V_Packet_ck_BufferHelper(Packet<?> packet, AutismSessionState.ReplayMode replayMode) {
+   public synchronized void enqueueDelayedPacket(Packet<?> packet, AutismSessionState.ReplayMode replayMode) {
       if (!autismclient.modules.aD.read_Z() && packet != null) {
-         AutismSessionState.ReplayMode mode = this.init_ck_BufferHelper_Packet_ck_BufferHelper(packet, replayMode);
-         if (this.store()) {
-            int activeDelay = this.valid_Z ? this.buffer_I() : this.queue_I();
+         AutismSessionState.ReplayMode mode = this.resolvePacketReplayMode(packet, replayMode);
+         if (this.isActivelySendingStaggered()) {
+            int activeDelay = this.timedCaptureMode ? this.advanceLiveCaptureDelay() : this.computeNextActiveSendDelay();
             AutismSessionState.DelayedPacket queuedPacket = new AutismSessionState.DelayedPacket(packet, activeDelay, mode);
-            this.init_V_List_ck_CachePool(this.load_List, queuedPacket);
-            this.init_V_List_ck_CachePool(this.read_List, queuedPacket);
-            this.read_I++;
-            this.set_V();
+            this.insertSortedByDelay(this.sendingPackets, queuedPacket);
+            this.insertSortedByDelay(this.sendingDisplayPackets, queuedPacket);
+            this.staggeredSendTotalCount++;
+            this.bumpQueueRevision();
             return;
          }
 
          int delay = 0;
-         if (this.valid_Z) {
-            if (this.init_List.isEmpty() && this.load_List.isEmpty()) {
-               this.tick_V();
+         if (this.timedCaptureMode) {
+            if (this.delayedPackets.isEmpty() && this.sendingPackets.isEmpty()) {
+               this.resetTimedCaptureOrigin();
             }
 
-            if (this.init_ck_DataUtil == AutismSessionState.DelayUnit.TICKS) {
-               int tick = this.pool;
-               if (this.task < 0) {
-                  this.task = tick;
+            if (this.delayUnit == AutismSessionState.DelayUnit.TICKS) {
+               int tick = this.clientTick;
+               if (this.captureStartTick < 0) {
+                  this.captureStartTick = tick;
                   delay = 0;
                } else {
-                  delay = tick - this.task;
+                  delay = tick - this.captureStartTick;
                }
             } else {
                long now = System.nanoTime();
-               if (this.read_J < 0L) {
-                  this.read_J = now;
+               if (this.captureStartNanos < 0L) {
+                  this.captureStartNanos = now;
                   delay = 0;
                } else {
-                  delay = (int)((now - this.read_J) / 1000000L);
+                  delay = (int)((now - this.captureStartNanos) / 1000000L);
                }
             }
-         } else if (this.pop_Z) {
-            delay = this.init_List.size() * this.init_I;
+         } else if (this.staggeredPacketSend) {
+            delay = this.delayedPackets.size() * this.staggeredSendDelay;
          }
 
-         this.init_List.add(new AutismSessionState.DelayedPacket(packet, delay, mode));
-         this.set_V();
+         this.delayedPackets.add(new AutismSessionState.DelayedPacket(packet, delay, mode));
+         this.bumpQueueRevision();
       }
    }
 
-   private AutismSessionState.ReplayMode init_ck_BufferHelper_Packet_ck_BufferHelper(Packet<?> packet, AutismSessionState.ReplayMode replayMode) {
+   private AutismSessionState.ReplayMode resolvePacketReplayMode(Packet<?> packet, AutismSessionState.ReplayMode replayMode) {
       AutismSessionState.ReplayMode mode = replayMode == null ? AutismSessionState.ReplayMode.REGENERATE : replayMode;
       return mode == AutismSessionState.ReplayMode.REGENERATE
             && packet instanceof ServerboundContainerClosePacket closePacket
-            && this.init_Z_I(this.init_I_ServerboundContain(closePacket))
+            && this.hasQueuedExactClickForContainer(this.extractContainerId(closePacket))
          ? AutismSessionState.ReplayMode.EXACT
          : mode;
    }
 
-   private int init_I_ServerboundContain(ServerboundContainerClosePacket packet) {
+   private int extractContainerId(ServerboundContainerClosePacket packet) {
       if (packet == null) {
          return -1;
       }
@@ -781,15 +781,15 @@ public final class AutismSessionState {
       return -1;
    }
 
-   private boolean init_Z_I(int containerId) {
-      for (AutismSessionState.DelayedPacket queuedPacket : this.init_List) {
-         if (this.init_Z_ck_CachePool_I(queuedPacket, containerId)) {
+   private boolean hasQueuedExactClickForContainer(int containerId) {
+      for (AutismSessionState.DelayedPacket queuedPacket : this.delayedPackets) {
+         if (this.isExactClickForContainer(queuedPacket, containerId)) {
             return true;
          }
       }
 
-      for (AutismSessionState.DelayedPacket queuedPacket : this.load_List) {
-         if (this.init_Z_ck_CachePool_I(queuedPacket, containerId)) {
+      for (AutismSessionState.DelayedPacket queuedPacket : this.sendingPackets) {
+         if (this.isExactClickForContainer(queuedPacket, containerId)) {
             return true;
          }
       }
@@ -797,166 +797,166 @@ public final class AutismSessionState {
       return false;
    }
 
-   private boolean init_Z_ck_CachePool_I(AutismSessionState.DelayedPacket queuedPacket, int containerId) {
+   private boolean isExactClickForContainer(AutismSessionState.DelayedPacket queuedPacket, int containerId) {
       return queuedPacket != null
-         && queuedPacket.init_Z()
-         && queuedPacket.init_Packet instanceof ServerboundContainerClickPacket clickPacket
+         && queuedPacket.isExactReplay()
+         && queuedPacket.packet instanceof ServerboundContainerClickPacket clickPacket
          && clickPacket.containerId() == containerId;
    }
 
-   public void init_V_Screen_AbstractContainerM(Screen screen, AbstractContainerMenu handler) {
-      this.init_Screen = screen;
-      this.init_AbstractContainerM = handler;
+   public void storeGuiScreen(Screen screen, AbstractContainerMenu handler) {
+      this.storedGuiScreen = screen;
+      this.storedContainerMenu = handler;
    }
 
-   public Screen init_Screen() {
-      return this.init_Screen;
+   public Screen getStoredGuiScreen() {
+      return this.storedGuiScreen;
    }
 
-   public AbstractContainerMenu init_AbstractContainerM() {
-      return this.init_AbstractContainerM;
+   public AbstractContainerMenu getStoredContainerMenu() {
+      return this.storedContainerMenu;
    }
 
-   public synchronized int init_I_ClientPacketListen(ClientPacketListener networkHandler) {
+   public synchronized int flushDelayedPackets(ClientPacketListener networkHandler) {
       if (autismclient.modules.aD.read_Z()) {
          return 0;
       }
 
-      if (!this.load_List.isEmpty()) {
+      if (!this.sendingPackets.isEmpty()) {
          AutismClientMessaging.sendPrefixed("§cAlready sending - wait for current queue to finish");
          return 0;
       }
 
-      this.load_Str = null;
-      int count = this.init_List.size();
+      this.staggeredCompletionMessage = null;
+      int count = this.delayedPackets.size();
       if (count == 0) {
          return 0;
       }
 
-      this.tick_V();
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-      boolean hasDelays = this.init_List.stream().anyMatch(qpx -> qpx.load > 0);
-      if (module.reset_Z() && !hasDelays) {
-         return this.load_I_ClientPacketListen(networkHandler);
+      this.resetTimedCaptureOrigin();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+      boolean hasDelays = this.delayedPackets.stream().anyMatch(qpx -> qpx.delay > 0);
+      if (module.isUseDirectFlush() && !hasDelays) {
+         return this.flushDelayedPacketsDirectly(networkHandler);
       }
 
-      this.run_V();
+      this.archiveCurrentDelayedQueue();
       if (networkHandler != null) {
-         boolean shouldStagger = this.pop_Z || hasDelays;
+         boolean shouldStagger = this.staggeredPacketSend || hasDelays;
          if (shouldStagger) {
-            this.read_List.clear();
-            this.load_List.addAll(this.init_List);
-            this.read_List.addAll(this.init_List);
-            this.init_ClientPacketListen = networkHandler;
-            this.load_I = 0;
-            this.read_I = count;
-            this.tick_Z = hasDelays;
-            this.load_ck_DataUtil = this.init_ck_DataUtil;
-            this.init_J = System.nanoTime();
-            this.update_I = this.pool;
-            this.load_J = this.init_J;
-            this.sync_I = this.update_I;
-            this.flush_I = this.init_I_List(this.load_List);
+            this.sendingDisplayPackets.clear();
+            this.sendingPackets.addAll(this.delayedPackets);
+            this.sendingDisplayPackets.addAll(this.delayedPackets);
+            this.staggeredSendConnection = networkHandler;
+            this.staggeredTickCounter = 0;
+            this.staggeredSendTotalCount = count;
+            this.staggeredHasExplicitDelays = hasDelays;
+            this.activeSendDelayUnit = this.delayUnit;
+            this.staggeredStartNanos = System.nanoTime();
+            this.staggeredStartTick = this.clientTick;
+            this.liveCaptureLastNanos = this.staggeredStartNanos;
+            this.liveCaptureLastTick = this.staggeredStartTick;
+            this.liveCaptureAccumulatedDelay = this.findMaxPendingDelay(this.sendingPackets);
          } else {
-            this.run_Z = true;
+            this.bypassingPacketInterception = true;
 
             try {
-               for (AutismSessionState.DelayedPacket qp : this.init_List) {
-                  if (PacketTypeRegistry.load().contains(qp.init_Packet.getClass())) {
-                     Packet<?> packetToSend = this.init_Packet_ck_CachePool(qp);
+               for (AutismSessionState.DelayedPacket qp : this.delayedPackets) {
+                  if (PacketTypeRegistry.getC2sPackets().contains(qp.packet.getClass())) {
+                     Packet<?> packetToSend = this.preparePacketForSend(qp);
                      if (packetToSend != null) {
                         DirectPacketSender.init(packetToSend);
                      }
                   } else {
-                     AutismClientAddon.LOG.warn("[Autism] Skipped sending invalid C2S packet during flush: {}", qp.init_Packet.getClass().getName());
+                     AutismClientAddon.LOG.warn("[Autism] Skipped sending invalid C2S packet during flush: {}", qp.packet.getClass().getName());
                   }
                }
             } finally {
-               this.run_Z = false;
+               this.bypassingPacketInterception = false;
             }
 
-            AutismSessionState.DelayedPacket.load_V();
+            AutismSessionState.DelayedPacket.resetIdCounter();
          }
       }
 
-      this.init_List.clear();
-      this.set_V();
+      this.delayedPackets.clear();
+      this.bumpQueueRevision();
       return count;
    }
 
-   public void init_V_ClientPacketListen_Packet(ClientPacketListener networkHandler, Packet<?> packet) {
+   public void sendPacketBypassingInterception(ClientPacketListener networkHandler, Packet<?> packet) {
       if (!autismclient.modules.aD.read_Z() && networkHandler != null && packet != null) {
-         this.run_Z = true;
+         this.bypassingPacketInterception = true;
 
          try {
             networkHandler.getConnection().send(packet, null);
          } finally {
-            this.run_Z = false;
+            this.bypassingPacketInterception = false;
          }
       }
    }
 
-   private int load_I_ClientPacketListen(ClientPacketListener networkHandler) {
+   private int flushDelayedPacketsDirectly(ClientPacketListener networkHandler) {
       if (autismclient.modules.aD.read_Z()) {
          return 0;
       }
 
-      int count = this.init_List.size();
+      int count = this.delayedPackets.size();
       if (count == 0) {
          return 0;
       }
 
-      this.run_V();
+      this.archiveCurrentDelayedQueue();
       if (networkHandler != null) {
-         this.run_Z = true;
+         this.bypassingPacketInterception = true;
 
          try {
-            for (AutismSessionState.DelayedPacket qp : this.init_List) {
-               if (PacketTypeRegistry.load().contains(qp.init_Packet.getClass())) {
-                  Packet<?> packetToSend = this.init_Packet_ck_CachePool(qp);
+            for (AutismSessionState.DelayedPacket qp : this.delayedPackets) {
+               if (PacketTypeRegistry.getC2sPackets().contains(qp.packet.getClass())) {
+                  Packet<?> packetToSend = this.preparePacketForSend(qp);
                   if (packetToSend != null) {
                      networkHandler.getConnection().send(packetToSend, null);
                   }
                } else {
-                  AutismClientAddon.LOG.warn("[Autism] Skipped invalid C2S packet during bypass flush: {}", qp.init_Packet.getClass().getName());
+                  AutismClientAddon.LOG.warn("[Autism] Skipped invalid C2S packet during bypass flush: {}", qp.packet.getClass().getName());
                }
             }
          } finally {
-            this.run_Z = false;
+            this.bypassingPacketInterception = false;
          }
       }
 
-      this.init_List.clear();
-      this.pop_V();
-      this.set_V();
+      this.delayedPackets.clear();
+      this.resetPacketIdsIfEmpty();
+      this.bumpQueueRevision();
       return count;
    }
 
-   public synchronized void load_V() {
-      if (!this.init_List.isEmpty()) {
-         List<AutismSessionState.DelayedPacket> newPackets = new ArrayList<>(this.init_List.size());
+   public synchronized void regenerateQueuedPackets() {
+      if (!this.delayedPackets.isEmpty()) {
+         List<AutismSessionState.DelayedPacket> newPackets = new ArrayList<>(this.delayedPackets.size());
          int skipped = 0;
          int deferredClickSlot = 0;
 
-         for (AutismSessionState.DelayedPacket qp : this.init_List) {
-            if (qp.init_Packet instanceof ServerboundContainerClickPacket) {
-               newPackets.add(new AutismSessionState.DelayedPacket(qp.init_Packet, qp.load, qp.init_I, qp.init_ck_BufferHelper));
+         for (AutismSessionState.DelayedPacket qp : this.delayedPackets) {
+            if (qp.packet instanceof ServerboundContainerClickPacket) {
+               newPackets.add(new AutismSessionState.DelayedPacket(qp.packet, qp.delay, qp.id, qp.replayMode));
                deferredClickSlot++;
-            } else if (qp.init_Z()) {
-               newPackets.add(new AutismSessionState.DelayedPacket(qp.init_Packet, qp.load, qp.init_I, qp.init_ck_BufferHelper));
+            } else if (qp.isExactReplay()) {
+               newPackets.add(new AutismSessionState.DelayedPacket(qp.packet, qp.delay, qp.id, qp.replayMode));
             } else {
-               Packet<?> regenerated = PacketRegenerator.init(qp.init_Packet);
+               Packet<?> regenerated = PacketRegenerator.init(qp.packet);
                if (regenerated != null) {
-                  newPackets.add(new AutismSessionState.DelayedPacket(regenerated, qp.load, qp.init_I, qp.init_ck_BufferHelper));
+                  newPackets.add(new AutismSessionState.DelayedPacket(regenerated, qp.delay, qp.id, qp.replayMode));
                } else {
                   skipped++;
                }
             }
          }
 
-         this.init_List.clear();
-         this.init_List.addAll(this.init_List_List(newPackets));
-         this.set_V();
+         this.delayedPackets.clear();
+         this.delayedPackets.addAll(this.cloneAndRenumberQueue(newPackets));
+         this.bumpQueueRevision();
          if (skipped <= 0 && deferredClickSlot <= 0) {
             AutismClientAddon.LOG.info("[Autism] Regenerated {} queued packets (IDs preserved).", newPackets.size());
          } else {
@@ -971,67 +971,67 @@ public final class AutismSessionState {
       }
    }
 
-   public synchronized void read_V() {
+   public synchronized void tickStaggeredSend() {
       if (autismclient.modules.aD.read_Z()) {
-         this.load_List.clear();
-         this.read_List.clear();
-         this.init_ClientPacketListen = null;
-         this.set_V();
-      } else if (!this.load_List.isEmpty() && this.init_ClientPacketListen != null) {
+         this.sendingPackets.clear();
+         this.sendingDisplayPackets.clear();
+         this.staggeredSendConnection = null;
+         this.bumpQueueRevision();
+      } else if (!this.sendingPackets.isEmpty() && this.staggeredSendConnection != null) {
          List<AutismSessionState.DelayedPacket> toRemove = new ArrayList<>();
 
-         for (AutismSessionState.DelayedPacket qp : this.load_List) {
+         for (AutismSessionState.DelayedPacket qp : this.sendingPackets) {
             boolean shouldSend;
-            if (this.load_ck_DataUtil == AutismSessionState.DelayUnit.MS) {
-               long elapsedMs = (System.nanoTime() - this.init_J) / 1000000L;
-               shouldSend = elapsedMs >= qp.load_I() && !qp.load_Z();
+            if (this.activeSendDelayUnit == AutismSessionState.DelayUnit.MS) {
+               long elapsedMs = (System.nanoTime() - this.staggeredStartNanos) / 1000000L;
+               shouldSend = elapsedMs >= qp.getDelay() && !qp.isSent();
             } else {
-               int elapsedTicks = this.pool - this.update_I;
-               shouldSend = elapsedTicks >= qp.load_I() && !qp.load_Z();
+               int elapsedTicks = this.clientTick - this.staggeredStartTick;
+               shouldSend = elapsedTicks >= qp.getDelay() && !qp.isSent();
             }
 
             if (shouldSend) {
-               this.run_Z = true;
+               this.bypassingPacketInterception = true;
 
                try {
-                  if (PacketTypeRegistry.load().contains(qp.init_Packet.getClass())) {
-                     Packet<?> packetToSend = this.init_Packet_ck_CachePool(qp);
+                  if (PacketTypeRegistry.getC2sPackets().contains(qp.packet.getClass())) {
+                     Packet<?> packetToSend = this.preparePacketForSend(qp);
                      if (packetToSend == null) {
-                        qp.init_V();
+                        qp.markSent();
                         toRemove.add(qp);
                      } else {
-                        this.init_ClientPacketListen.getConnection().send(packetToSend, null);
-                        qp.init_V();
+                        this.staggeredSendConnection.getConnection().send(packetToSend, null);
+                        qp.markSent();
                         toRemove.add(qp);
                      }
                   } else {
-                     AutismClientAddon.LOG.warn("[Autism] Skipped sending invalid C2S packet: {}", qp.init_Packet.getClass().getName());
-                     qp.init_V();
+                     AutismClientAddon.LOG.warn("[Autism] Skipped sending invalid C2S packet: {}", qp.packet.getClass().getName());
+                     qp.markSent();
                      toRemove.add(qp);
                   }
                } catch (Exception e) {
-                  qp.init_V();
+                  qp.markSent();
                   toRemove.add(qp);
-                  AutismClientAddon.LOG.error("[Autism] Failed to send queued packet: {}", qp.init_Packet.getClass().getName(), e);
+                  AutismClientAddon.LOG.error("[Autism] Failed to send queued packet: {}", qp.packet.getClass().getName(), e);
                } finally {
-                  this.run_Z = false;
+                  this.bypassingPacketInterception = false;
                }
             }
          }
 
-         this.load_List.removeAll(toRemove);
+         this.sendingPackets.removeAll(toRemove);
          if (!toRemove.isEmpty()) {
-            this.set_V();
+            this.bumpQueueRevision();
          }
 
-         this.load_I++;
-         if (this.load_List.isEmpty()) {
-            int total = this.read_I;
-            String completionMessage = this.run_Str();
-            this.get_V();
-            if (this.init_List.isEmpty()) {
-               this.tick_V();
-               AutismSessionState.DelayedPacket.load_V();
+         this.staggeredTickCounter++;
+         if (this.sendingPackets.isEmpty()) {
+            int total = this.staggeredSendTotalCount;
+            String completionMessage = this.consumeStaggeredCompletionMessage();
+            this.resetStaggeredSendState();
+            if (this.delayedPackets.isEmpty()) {
+               this.resetTimedCaptureOrigin();
+               AutismSessionState.DelayedPacket.resetIdCounter();
             }
 
             if (completionMessage == null || completionMessage.isBlank()) {
@@ -1043,137 +1043,137 @@ public final class AutismSessionState {
       }
    }
 
-   public boolean push_Z() {
-      return !this.load_List.isEmpty() && this.init_ClientPacketListen != null;
+   public boolean isStaggeredSendActive() {
+      return !this.sendingPackets.isEmpty() && this.staggeredSendConnection != null;
    }
 
-   public boolean pop_Z() {
-      return this.load_Z
-         || !this.init_Z
-         || this.push_Z
-         || this.run_Z
-         || this.data_Z
-         || this.value_Z
-         || this.cache_Z
-         || this.state_Z
-         || this.queue_Z
-         || !this.read_Z
-         || !this.write_Z
-         || this.prev_Z
-         || this.valid_Z
-         || this.init_Consumer != null
-         || this.init_BiConsumer != null
-         || this.load_Runnable != null
-         || this.load_Consumer != null
-         || this.read_Runnable != null;
+   public boolean needsPacketInterception() {
+      return this.delayPacketsEnabled
+         || !this.sendPacketsEnabled
+         || this.useCustomPackets
+         || this.bypassingPacketInterception
+         || this.dropNextContainerClose
+         || this.dropNextSignUpdate
+         || this.dropNextBookEdit
+         || this.forceNextSignUpdate
+         || this.forceNextBookEdit
+         || !this.allowSignEditing
+         || !this.allowBookEditing
+         || this.gbreakCapturing
+         || this.timedCaptureMode
+         || this.blockCaptureCallback != null
+         || this.blockFaceCaptureCallback != null
+         || this.attackCaptureCallback != null
+         || this.entityCaptureCallback != null
+         || this.captureCancelCallback != null;
    }
 
-   public boolean tick_Z() {
-      return !this.load_List.isEmpty() && this.init_ClientPacketListen != null;
+   public boolean isSendingQueuedPackets() {
+      return !this.sendingPackets.isEmpty() && this.staggeredSendConnection != null;
    }
 
-   public synchronized void write_V(String message) {
-      this.load_Str = message != null && !message.isBlank() ? message : null;
+   public synchronized void setStaggeredCompletionMessage(String message) {
+      this.staggeredCompletionMessage = message != null && !message.isBlank() ? message : null;
    }
 
-   private String run_Str() {
-      String message = this.load_Str;
-      this.load_Str = null;
+   private String consumeStaggeredCompletionMessage() {
+      String message = this.staggeredCompletionMessage;
+      this.staggeredCompletionMessage = null;
       return message;
    }
 
-   public synchronized List<AutismSessionState.DelayedPacket> read_List() {
-      return new ArrayList<>(this.load_List);
+   public synchronized List<AutismSessionState.DelayedPacket> getSendingPackets() {
+      return new ArrayList<>(this.sendingPackets);
    }
 
-   public boolean run_Z() {
-      return !this.load_List.isEmpty();
+   public boolean hasSendingPackets() {
+      return !this.sendingPackets.isEmpty();
    }
 
-   public synchronized List<AutismSessionState.DelayedPacket> write_List() {
-      return new ArrayList<>(this.read_List);
+   public synchronized List<AutismSessionState.DelayedPacket> getSendingDisplayPackets() {
+      return new ArrayList<>(this.sendingDisplayPackets);
    }
 
-   public synchronized int write_I() {
-      if (!this.load_List.isEmpty()) {
-         int count = this.load_List.size() + this.init_List.size();
-         List<AutismSessionState.DelayedPacket> combined = new ArrayList<>(this.load_List.size() + this.init_List.size());
-         combined.addAll(this.load_List);
-         combined.addAll(this.init_List);
-         this.write(combined);
-         this.load_Str = null;
-         this.get_V();
-         this.init_List.clear();
-         this.pop_V();
+   public synchronized int cancelAndClearPacketQueues() {
+      if (!this.sendingPackets.isEmpty()) {
+         int count = this.sendingPackets.size() + this.delayedPackets.size();
+         List<AutismSessionState.DelayedPacket> combined = new ArrayList<>(this.sendingPackets.size() + this.delayedPackets.size());
+         combined.addAll(this.sendingPackets);
+         combined.addAll(this.delayedPackets);
+         this.archivePacketQueue(combined);
+         this.staggeredCompletionMessage = null;
+         this.resetStaggeredSendState();
+         this.delayedPackets.clear();
+         this.resetPacketIdsIfEmpty();
          return count;
       } else {
-         int count = this.init_List.size();
-         this.init_V();
+         int count = this.delayedPackets.size();
+         this.clearDelayedPackets();
          return count;
       }
    }
 
-   public synchronized void init_V_ck_CachePool(AutismSessionState.DelayedPacket packet) {
+   public synchronized void removeDelayedPacket(AutismSessionState.DelayedPacket packet) {
       if (packet != null) {
-         this.read_List.remove(packet);
-         boolean removedFromStaggered = this.load_List.remove(packet);
-         if (removedFromStaggered && this.load_List.isEmpty()) {
-            this.get_V();
+         this.sendingDisplayPackets.remove(packet);
+         boolean removedFromStaggered = this.sendingPackets.remove(packet);
+         if (removedFromStaggered && this.sendingPackets.isEmpty()) {
+            this.resetStaggeredSendState();
          }
 
          if (!removedFromStaggered) {
-            this.init_List.remove(packet);
-            if (!this.init_List.isEmpty()) {
-               List<AutismSessionState.DelayedPacket> rebuilt = this.init_List_List(this.init_List);
-               this.init_List.clear();
-               this.init_List.addAll(rebuilt);
+            this.delayedPackets.remove(packet);
+            if (!this.delayedPackets.isEmpty()) {
+               List<AutismSessionState.DelayedPacket> rebuilt = this.cloneAndRenumberQueue(this.delayedPackets);
+               this.delayedPackets.clear();
+               this.delayedPackets.addAll(rebuilt);
             }
          }
 
-         this.pop_V();
-         this.set_V();
+         this.resetPacketIdsIfEmpty();
+         this.bumpQueueRevision();
       }
    }
 
-   public synchronized void init_V_ck_CachePool_I(AutismSessionState.DelayedPacket packet, int newDelay) {
+   public synchronized void updateDelayedPacketDelay(AutismSessionState.DelayedPacket packet, int newDelay) {
       if (packet != null) {
-         packet.init(newDelay);
-         this.set_V();
+         packet.setDelay(newDelay);
+         this.bumpQueueRevision();
       }
    }
 
-   public synchronized void write_V() {
-      if (this.init_List.size() >= 2) {
-         List<AutismSessionState.DelayedPacket> ordered = new ArrayList<>(this.init_List);
+   public synchronized void sortDelayedPacketsByDelay() {
+      if (this.delayedPackets.size() >= 2) {
+         List<AutismSessionState.DelayedPacket> ordered = new ArrayList<>(this.delayedPackets);
          ordered.sort((a, b) -> {
-            int byDelay = Integer.compare(a.load_I(), b.load_I());
-            return byDelay != 0 ? byDelay : Integer.compare(a.init_I(), b.init_I());
+            int byDelay = Integer.compare(a.getDelay(), b.getDelay());
+            return byDelay != 0 ? byDelay : Integer.compare(a.getId(), b.getId());
          });
-         this.init_List.clear();
-         this.init_List.addAll(ordered);
-         this.set_V();
+         this.delayedPackets.clear();
+         this.delayedPackets.addAll(ordered);
+         this.bumpQueueRevision();
       }
    }
 
-   private List<AutismSessionState.DelayedPacket> init_List_List(List<AutismSessionState.DelayedPacket> source) {
+   private List<AutismSessionState.DelayedPacket> cloneAndRenumberQueue(List<AutismSessionState.DelayedPacket> source) {
       List<AutismSessionState.DelayedPacket> rebuilt = new ArrayList<>();
       if (source != null && !source.isEmpty()) {
          List<AutismSessionState.DelayedPacket> ordered = new ArrayList<>();
 
          for (AutismSessionState.DelayedPacket qp : source) {
-            if (qp != null && qp.init_Packet != null) {
+            if (qp != null && qp.packet != null) {
                ordered.add(qp);
             }
          }
 
          ordered.sort((a, b) -> {
-            int byDelay = Integer.compare(a.load_I(), b.load_I());
-            return byDelay != 0 ? byDelay : Integer.compare(a.init_I(), b.init_I());
+            int byDelay = Integer.compare(a.getDelay(), b.getDelay());
+            return byDelay != 0 ? byDelay : Integer.compare(a.getId(), b.getId());
          });
-         AutismSessionState.DelayedPacket.load_V();
+         AutismSessionState.DelayedPacket.resetIdCounter();
 
          for (AutismSessionState.DelayedPacket qp : ordered) {
-            rebuilt.add(new AutismSessionState.DelayedPacket(qp.init_Packet, qp.load_I(), qp.init_ck_BufferHelper()));
+            rebuilt.add(new AutismSessionState.DelayedPacket(qp.packet, qp.getDelay(), qp.getReplayMode()));
          }
 
          return rebuilt;
@@ -1182,275 +1182,275 @@ public final class AutismSessionState {
       }
    }
 
-   private Packet<?> init_Packet_ck_CachePool(AutismSessionState.DelayedPacket queuedPacket) {
-      if (queuedPacket != null && queuedPacket.init_Packet != null) {
-         return queuedPacket.init_Z() ? queuedPacket.init_Packet : PacketRegenerator.init(queuedPacket.init_Packet);
+   private Packet<?> preparePacketForSend(AutismSessionState.DelayedPacket queuedPacket) {
+      if (queuedPacket != null && queuedPacket.packet != null) {
+         return queuedPacket.isExactReplay() ? queuedPacket.packet : PacketRegenerator.init(queuedPacket.packet);
       } else {
          return null;
       }
    }
 
-   public boolean get_Z() {
-      return this.run_Z;
+   public boolean isBypassingPacketInterception() {
+      return this.bypassingPacketInterception;
    }
 
-   public void close(boolean value) {
-      this.run_Z = value;
+   public void setBypassingPacketInterception(boolean value) {
+      this.bypassingPacketInterception = value;
    }
 
-   public void update_V() {
-      this.init_Screen = null;
-      this.init_AbstractContainerM = null;
+   public void clearStoredGui() {
+      this.storedGuiScreen = null;
+      this.storedContainerMenu = null;
    }
 
-   public synchronized void sync_V() {
-      this.init_Z = true;
-      this.load_Z = false;
-      this.read_Z = true;
-      this.write_Z = true;
-      this.update_Z = false;
-      this.sync_Z = false;
-      this.flush_Z = false;
-      this.close_Z = false;
-      this.init_BlockPos = null;
-      this.init_E = null;
-      this.init_List.clear();
-      this.load_List.clear();
-      this.read_List.clear();
-      this.init_ClientPacketListen = null;
-      this.load_I = 0;
-      this.read_I = 0;
-      AutismSessionState.DelayedPacket.load_V();
-      this.tick_Z = false;
-      this.init_J = 0L;
-      this.update_I = 0;
-      this.load_J = -1L;
-      this.sync_I = -1;
-      this.flush_I = 0;
-      this.load_ck_DataUtil = AutismSessionState.DelayUnit.TICKS;
-      this.read_J = -1L;
-      this.task = -1;
-      this.set_V();
-      this.init_Screen = null;
-      this.init_AbstractContainerM = null;
-      this.load_Map.clear();
-      this.valid_I = 0;
-      this.size_I = 0;
-      this.pop_Str = "";
-      this.tick_Str = "";
-      this.run_Str = "";
-      this.get_Str = "";
-      this.data_I = 50;
+   public synchronized void resetSessionState() {
+      this.sendPacketsEnabled = true;
+      this.delayPacketsEnabled = false;
+      this.allowSignEditing = true;
+      this.allowBookEditing = true;
+      this.pretendPackAccepted = false;
+      this.autoDenyResourcePack = false;
+      this.xCarryActive = false;
+      this.xCarryForced = false;
+      this.lastInteractedBlockPos = null;
+      this.lastInteractionTarget = null;
+      this.delayedPackets.clear();
+      this.sendingPackets.clear();
+      this.sendingDisplayPackets.clear();
+      this.staggeredSendConnection = null;
+      this.staggeredTickCounter = 0;
+      this.staggeredSendTotalCount = 0;
+      AutismSessionState.DelayedPacket.resetIdCounter();
+      this.staggeredHasExplicitDelays = false;
+      this.staggeredStartNanos = 0L;
+      this.staggeredStartTick = 0;
+      this.liveCaptureLastNanos = -1L;
+      this.liveCaptureLastTick = -1;
+      this.liveCaptureAccumulatedDelay = 0;
+      this.activeSendDelayUnit = AutismSessionState.DelayUnit.TICKS;
+      this.captureStartNanos = -1L;
+      this.captureStartTick = -1;
+      this.bumpQueueRevision();
+      this.storedGuiScreen = null;
+      this.storedContainerMenu = null;
+      this.pluginScanResults.clear();
+      this.serverInfoActiveTab = 0;
+      this.serverInfoScrollOffset = 0;
+      this.serverInfoSelectedPlugin = "";
+      this.serverInfoStateAddress = "";
+      this.serverDetectedVersion = "";
+      this.serverDetectedVersionAddress = "";
+      this.serverInfoScanDelayMs = 50;
    }
 
-   public boolean set_Z() {
-      return this.read_Z;
+   public boolean isSignEditingAllowed() {
+      return this.allowSignEditing;
    }
 
-   public void open(boolean value) {
-      this.read_Z = value;
+   public void setAllowSignEditing(boolean value) {
+      this.allowSignEditing = value;
    }
 
-   public boolean put_Z() {
-      return this.write_Z;
+   public boolean isBookEditingAllowed() {
+      return this.allowBookEditing;
    }
 
-   public void poll(boolean value) {
-      this.write_Z = value;
+   public void setAllowBookEditing(boolean value) {
+      this.allowBookEditing = value;
    }
 
-   public boolean add_Z() {
-      return this.update_Z;
+   public boolean isPretendPackAccepted() {
+      return this.pretendPackAccepted;
    }
 
-   public void push(boolean value) {
-      this.update_Z = value;
+   public void setPretendPackAccepted(boolean value) {
+      this.pretendPackAccepted = value;
    }
 
-   public boolean clear_Z() {
-      return this.sync_Z;
+   public boolean isAutoDenyResourcePack() {
+      return this.autoDenyResourcePack;
    }
 
-   public void pop(boolean value) {
-      this.sync_Z = value;
+   public void setAutoDenyResourcePack(boolean value) {
+      this.autoDenyResourcePack = value;
    }
 
-   public boolean reset_Z() {
-      return this.push_Z;
+   public boolean isUseCustomPackets() {
+      return this.useCustomPackets;
    }
 
-   public void tick(boolean value) {
-      this.push_Z = value;
+   public void setUseCustomPackets(boolean value) {
+      this.useCustomPackets = value;
    }
 
-   public Set<Class<? extends Packet<?>>> load_Set() {
-      return this.load_Set;
+   public Set<Class<? extends Packet<?>>> getCustomC2sPackets() {
+      return this.customC2sPackets;
    }
 
-   public void init_V_Set(Set<Class<? extends Packet<?>>> packets) {
-      this.load_Set.clear();
-      this.load_Set.addAll(packets);
+   public void setCustomC2sPackets(Set<Class<? extends Packet<?>>> packets) {
+      this.customC2sPackets.clear();
+      this.customC2sPackets.addAll(packets);
    }
 
-   public Set<Class<? extends Packet<?>>> read_Set() {
-      return this.read_Set;
+   public Set<Class<? extends Packet<?>>> getCustomS2cPackets() {
+      return this.customS2cPackets;
    }
 
-   public void load_V_Set(Set<Class<? extends Packet<?>>> packets) {
-      this.read_Set.clear();
-      this.read_Set.addAll(packets);
+   public void setCustomS2cPackets(Set<Class<? extends Packet<?>>> packets) {
+      this.customS2cPackets.clear();
+      this.customS2cPackets.addAll(packets);
    }
 
-   public boolean start_Z() {
-      return this.pop_Z;
+   public boolean isStaggeredPacketSend() {
+      return this.staggeredPacketSend;
    }
 
-   public void run(boolean value) {
+   public void setStaggeredPacketSend(boolean value) {
       if (!value || !autismclient.modules.aD.read_Z()) {
-         this.pop_Z = value;
+         this.staggeredPacketSend = value;
       }
    }
 
-   public int update_I() {
-      return this.init_I;
+   public int getStaggeredSendDelay() {
+      return this.staggeredSendDelay;
    }
 
-   public void read_V_I(int delay) {
-      this.init_I = Math.max(1, Math.min(40, delay));
+   public void setStaggeredSendDelay(int delay) {
+      this.staggeredSendDelay = Math.max(1, Math.min(40, delay));
    }
 
-   public AutismSessionState.DelayUnit init_ck_DataUtil() {
-      return this.init_ck_DataUtil;
+   public AutismSessionState.DelayUnit getDelayUnit() {
+      return this.delayUnit;
    }
 
-   public synchronized AutismSessionState.DelayUnit load_ck_DataUtil() {
-      return this.store() ? this.load_ck_DataUtil : this.init_ck_DataUtil;
+   public synchronized AutismSessionState.DelayUnit getEffectiveDelayUnit() {
+      return this.isActivelySendingStaggered() ? this.activeSendDelayUnit : this.delayUnit;
    }
 
-   public void init_V_ck_DataUtil(AutismSessionState.DelayUnit mode) {
-      this.init_ck_DataUtil = mode;
+   public void setDelayUnit(AutismSessionState.DelayUnit mode) {
+      this.delayUnit = mode;
    }
 
-   public void flush_V() {
-      this.init_ck_DataUtil = this.init_ck_DataUtil == AutismSessionState.DelayUnit.TICKS ? AutismSessionState.DelayUnit.MS : AutismSessionState.DelayUnit.TICKS;
+   public void toggleDelayUnit() {
+      this.delayUnit = this.delayUnit == AutismSessionState.DelayUnit.TICKS ? AutismSessionState.DelayUnit.MS : AutismSessionState.DelayUnit.TICKS;
    }
 
-   public boolean stop_Z() {
-      return this.get_Z;
+   public boolean isFabricatorVisible() {
+      return this.fabricatorVisible;
    }
 
-   public void get(boolean visible) {
-      this.get_Z = visible;
+   public void setFabricatorVisible(boolean visible) {
+      this.fabricatorVisible = visible;
    }
 
-   public int sync_I() {
-      return this.close_I;
+   public int getFabricatorX() {
+      return this.fabricatorX;
    }
 
-   public void write(int x) {
-      this.close_I = x;
+   public void setFabricatorX(int x) {
+      this.fabricatorX = x;
    }
 
-   public int flush_I() {
-      return this.open_I;
+   public int getFabricatorY() {
+      return this.fabricatorY;
    }
 
-   public void update(int y) {
-      this.open_I = y;
+   public void setFabricatorY(int y) {
+      this.fabricatorY = y;
    }
 
-   public String read_Str() {
-      return this.read_Str;
+   public String getFabricatorSlotInput() {
+      return this.fabricatorSlotInput;
    }
 
-   public void update(String value) {
-      this.read_Str = value != null ? value : "0";
+   public void setFabricatorSlotInput(String value) {
+      this.fabricatorSlotInput = value != null ? value : "0";
    }
 
-   public String write_Str() {
-      return this.write_Str;
+   public String getFabricatorItemInput() {
+      return this.fabricatorItemInput;
    }
 
-   public void sync(String value) {
-      this.write_Str = value != null ? value : "";
+   public void setFabricatorItemInput(String value) {
+      this.fabricatorItemInput = value != null ? value : "";
    }
 
-   public String update_Str() {
-      return this.update_Str;
+   public String getFabricatorCountInput() {
+      return this.fabricatorCountInput;
    }
 
-   public void flush(String value) {
-      this.update_Str = value != null ? value : "1";
+   public void setFabricatorCountInput(String value) {
+      this.fabricatorCountInput = value != null ? value : "1";
    }
 
-   public int close_I() {
-      return this.poll_I;
+   public int getFabricatorActionIndex() {
+      return this.fabricatorActionIndex;
    }
 
-   public void sync(int index) {
-      this.poll_I = Math.max(0, index);
+   public void setFabricatorActionIndex(int index) {
+      this.fabricatorActionIndex = Math.max(0, index);
    }
 
-   public boolean next_Z() {
-      return this.put_Z;
+   public boolean isFabricatorUseMaxAmount() {
+      return this.fabricatorUseMaxAmount;
    }
 
-   public void set(boolean useMaxAmount) {
-      this.put_Z = useMaxAmount;
+   public void setFabricatorUseMaxAmount(boolean useMaxAmount) {
+      this.fabricatorUseMaxAmount = useMaxAmount;
    }
 
-   public int open_I() {
-      return this.push_I;
+   public int getFabricatorClickModeIndex() {
+      return this.fabricatorClickModeIndex;
    }
 
-   public void flush(int index) {
-      this.push_I = Math.max(0, index);
+   public void setFabricatorClickModeIndex(int index) {
+      this.fabricatorClickModeIndex = Math.max(0, index);
    }
 
-   public boolean prev_Z() {
-      return this.set_Z;
+   public boolean isFabricatorDropWholeStack() {
+      return this.fabricatorDropWholeStack;
    }
 
-   public void put(boolean value) {
-      this.set_Z = value;
+   public void setFabricatorDropWholeStack(boolean value) {
+      this.fabricatorDropWholeStack = value;
    }
 
-   public String sync_Str() {
-      return this.sync_Str;
+   public String getFabricatorRecipeSearch() {
+      return this.fabricatorRecipeSearch;
    }
 
-   public void close(String value) {
-      this.sync_Str = value != null ? value : "";
+   public void setFabricatorRecipeSearch(String value) {
+      this.fabricatorRecipeSearch = value != null ? value : "";
    }
 
-   public int poll_I() {
-      return this.pop_I;
+   public int getFabricatorSelectedRecipeId() {
+      return this.fabricatorSelectedRecipeId;
    }
 
-   public void close(int recipeId) {
-      this.pop_I = recipeId;
+   public void setFabricatorSelectedRecipeId(int recipeId) {
+      this.fabricatorSelectedRecipeId = recipeId;
    }
 
-   public String flush_Str() {
-      return this.flush_Str;
+   public String getFabricatorSelectedRecipeKey() {
+      return this.fabricatorSelectedRecipeKey;
    }
 
-   public void open(String recipeKey) {
-      this.flush_Str = recipeKey != null ? recipeKey : "";
+   public void setFabricatorSelectedRecipeKey(String recipeKey) {
+      this.fabricatorSelectedRecipeKey = recipeKey != null ? recipeKey : "";
    }
 
-   public int push_I() {
-      return this.tick_I;
+   public int getFabricatorRecipeScrollOffset() {
+      return this.fabricatorRecipeScrollOffset;
    }
 
-   public void open(int offset) {
-      this.tick_I = Math.max(0, offset);
+   public void setFabricatorRecipeScrollOffset(int offset) {
+      this.fabricatorRecipeScrollOffset = Math.max(0, offset);
    }
 
-   public synchronized List<autismclient.util.macro.CraftAction.Inner_DataUtil> update_List() {
-      List<autismclient.util.macro.CraftAction.Inner_DataUtil> copies = new ArrayList<>(this.update_List.size());
+   public synchronized List<autismclient.util.macro.CraftAction.Inner_DataUtil> getFabricatorCraftEntries() {
+      List<autismclient.util.macro.CraftAction.Inner_DataUtil> copies = new ArrayList<>(this.fabricatorCraftEntries.size());
 
-      for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : this.update_List) {
+      for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : this.fabricatorCraftEntries) {
          if (entry != null) {
             copies.add(entry.init_SyncManager_DataUt());
          }
@@ -1459,224 +1459,224 @@ public final class AutismSessionState {
       return copies;
    }
 
-   public synchronized void read_V_List(List<autismclient.util.macro.CraftAction.Inner_DataUtil> entries) {
-      this.update_List.clear();
+   public synchronized void setFabricatorCraftEntries(List<autismclient.util.macro.CraftAction.Inner_DataUtil> entries) {
+      this.fabricatorCraftEntries.clear();
       if (entries != null) {
          for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : entries) {
             if (entry != null) {
-               this.update_List.add(entry.init_SyncManager_DataUt());
+               this.fabricatorCraftEntries.add(entry.init_SyncManager_DataUt());
             }
          }
       }
    }
 
-   public int pop_I() {
-      return this.run_I;
+   public int getFabricatorSelectedCraftIndex() {
+      return this.fabricatorSelectedCraftIndex;
    }
 
-   public void poll(int index) {
-      this.run_I = index;
+   public void setFabricatorSelectedCraftIndex(int index) {
+      this.fabricatorSelectedCraftIndex = index;
    }
 
-   public int tick_I() {
-      return this.get_I;
+   public int getFabricatorCraftScrollOffset() {
+      return this.fabricatorCraftScrollOffset;
    }
 
-   public void push(int offset) {
-      this.get_I = Math.max(0, offset);
+   public void setFabricatorCraftScrollOffset(int offset) {
+      this.fabricatorCraftScrollOffset = Math.max(0, offset);
    }
 
-   public boolean valid_Z() {
-      return this.add_Z;
+   public boolean isLanSyncOverlayVisible() {
+      return this.lanSyncOverlayVisible;
    }
 
-   public void add(boolean visible) {
-      this.add_Z = visible;
+   public void setLanSyncOverlayVisible(boolean visible) {
+      this.lanSyncOverlayVisible = visible;
    }
 
-   public int run_I() {
-      return this.set_I;
+   public int getLanSyncOverlayX() {
+      return this.lanSyncOverlayX;
    }
 
-   public void pop(int x) {
-      this.set_I = x;
+   public void setLanSyncOverlayX(int x) {
+      this.lanSyncOverlayX = x;
    }
 
-   public int get_I() {
-      return this.put_I;
+   public int getLanSyncOverlayY() {
+      return this.lanSyncOverlayY;
    }
 
-   public void tick(int y) {
-      this.put_I = y;
+   public void setLanSyncOverlayY(int y) {
+      this.lanSyncOverlayY = y;
    }
 
-   public int set_I() {
-      return this.add_I;
+   public int getLanSyncActiveTab() {
+      return this.lanSyncActiveTab;
    }
 
-   public void run(int activeTab) {
-      this.add_I = Math.max(0, activeTab);
+   public void setLanSyncActiveTab(int activeTab) {
+      this.lanSyncActiveTab = Math.max(0, activeTab);
    }
 
-   public int put_I() {
-      return this.clear_I;
+   public int getLanSyncScrollOffset() {
+      return this.lanSyncScrollOffset;
    }
 
-   public void get(int scrollOffset) {
-      this.clear_I = Math.max(0, scrollOffset);
+   public void setLanSyncScrollOffset(int scrollOffset) {
+      this.lanSyncScrollOffset = Math.max(0, scrollOffset);
    }
 
-   public boolean size_Z() {
-      return this.clear_Z;
+   public boolean isLanSyncPerUserMode() {
+      return this.lanSyncPerUserMode;
    }
 
-   public void clear(boolean perUserMode) {
-      this.clear_Z = perUserMode;
+   public void setLanSyncPerUserMode(boolean perUserMode) {
+      this.lanSyncPerUserMode = perUserMode;
    }
 
-   public String close_Str() {
-      return this.close_Str;
+   public String getLanSyncSelectedMacroName() {
+      return this.lanSyncSelectedMacroName;
    }
 
-   public void poll(String selectedMacroName) {
-      this.close_Str = selectedMacroName == null ? "" : selectedMacroName;
+   public void setLanSyncSelectedMacroName(String selectedMacroName) {
+      this.lanSyncSelectedMacroName = selectedMacroName == null ? "" : selectedMacroName;
    }
 
-   public String open_Str() {
-      return this.open_Str;
+   public String getLanSyncExpandedExecutePeer() {
+      return this.lanSyncExpandedExecutePeer;
    }
 
-   public void push(String expandedExecutePeer) {
-      this.open_Str = expandedExecutePeer == null ? "" : expandedExecutePeer;
+   public void setLanSyncExpandedExecutePeer(String expandedExecutePeer) {
+      this.lanSyncExpandedExecutePeer = expandedExecutePeer == null ? "" : expandedExecutePeer;
    }
 
-   public String poll_Str() {
-      return this.poll_Str;
+   public String getLanSyncSelectedPeer() {
+      return this.lanSyncSelectedPeer;
    }
 
-   public void pop(String selectedPeer) {
-      this.poll_Str = selectedPeer == null ? "" : selectedPeer;
+   public void setLanSyncSelectedPeer(String selectedPeer) {
+      this.lanSyncSelectedPeer = selectedPeer == null ? "" : selectedPeer;
    }
 
-   public boolean data_Z() {
-      return this.reset_Z;
+   public boolean isMacroListOverlayVisible() {
+      return this.macroListOverlayVisible;
    }
 
-   public void reset(boolean visible) {
-      this.reset_Z = visible;
+   public void setMacroListOverlayVisible(boolean visible) {
+      this.macroListOverlayVisible = visible;
    }
 
-   public int add_I() {
-      return this.reset_I;
+   public int getMacroListOverlayX() {
+      return this.macroListOverlayX;
    }
 
-   public void set(int x) {
-      this.reset_I = x;
+   public void setMacroListOverlayX(int x) {
+      this.macroListOverlayX = x;
    }
 
-   public int clear_I() {
-      return this.start_I;
+   public int getMacroListOverlayY() {
+      return this.macroListOverlayY;
    }
 
-   public void put(int y) {
-      this.start_I = y;
+   public void setMacroListOverlayY(int y) {
+      this.macroListOverlayY = y;
    }
 
-   public int reset_I() {
-      return this.stop_I;
+   public int getMacroListScrollOffset() {
+      return this.macroListScrollOffset;
    }
 
-   public void add(int scrollOffset) {
-      this.stop_I = Math.max(0, scrollOffset);
+   public void setMacroListScrollOffset(int scrollOffset) {
+      this.macroListScrollOffset = Math.max(0, scrollOffset);
    }
 
-   public String push_Str() {
-      return this.push_Str;
+   public String getMacroListSearchQuery() {
+      return this.macroListSearchQuery;
    }
 
-   public void tick(String search) {
-      this.push_Str = search == null ? "" : search;
+   public void setMacroListSearchQuery(String search) {
+      this.macroListSearchQuery = search == null ? "" : search;
    }
 
-   public boolean value_Z() {
-      return this.start_Z;
+   public boolean isQueueEditorVisible() {
+      return this.queueEditorVisible;
    }
 
-   public void start(boolean visible) {
-      this.start_Z = visible;
+   public void setQueueEditorVisible(boolean visible) {
+      this.queueEditorVisible = visible;
    }
 
-   public int start_I() {
-      return this.next_I;
+   public int getQueueEditorX() {
+      return this.queueEditorX;
    }
 
-   public void clear(int x) {
-      this.next_I = x;
+   public void setQueueEditorX(int x) {
+      this.queueEditorX = x;
    }
 
-   public int stop_I() {
-      return this.prev_I;
+   public int getQueueEditorY() {
+      return this.queueEditorY;
    }
 
-   public void reset(int y) {
-      this.prev_I = y;
+   public void setQueueEditorY(int y) {
+      this.queueEditorY = y;
    }
 
-   public int next_I() {
-      return this.valid_I;
+   public int getServerInfoActiveTab() {
+      return this.serverInfoActiveTab;
    }
 
-   public void start(int tab) {
-      this.valid_I = Math.max(0, tab);
+   public void setServerInfoActiveTab(int tab) {
+      this.serverInfoActiveTab = Math.max(0, tab);
    }
 
-   public int prev_I() {
-      return this.size_I;
+   public int getServerInfoScrollOffset() {
+      return this.serverInfoScrollOffset;
    }
 
-   public void stop(int offset) {
-      this.size_I = Math.max(0, offset);
+   public void setServerInfoScrollOffset(int offset) {
+      this.serverInfoScrollOffset = Math.max(0, offset);
    }
 
-   public String pop_Str() {
-      return this.pop_Str;
+   public String getServerInfoSelectedPlugin() {
+      return this.serverInfoSelectedPlugin;
    }
 
-   public void run(String plugin) {
-      this.pop_Str = plugin == null ? "" : plugin;
+   public void setServerInfoSelectedPlugin(String plugin) {
+      this.serverInfoSelectedPlugin = plugin == null ? "" : plugin;
    }
 
-   public String tick_Str() {
-      return this.tick_Str;
+   public String getServerInfoStateAddress() {
+      return this.serverInfoStateAddress;
    }
 
-   public void get(String address) {
-      this.tick_Str = load_Str_Str(address);
+   public void setServerInfoStateAddress(String address) {
+      this.serverInfoStateAddress = normalizeServerAddress(address);
    }
 
-   public String init_Str_Str(String address) {
-      String normalizedAddress = load_Str_Str(address);
-      if (this.run_Str == null || this.run_Str.isBlank()) {
+   public String getDetectedServerVersion(String address) {
+      String normalizedAddress = normalizeServerAddress(address);
+      if (this.serverDetectedVersion == null || this.serverDetectedVersion.isBlank()) {
          return "";
       } else if (normalizedAddress.isEmpty()) {
-         return this.run_Str;
+         return this.serverDetectedVersion;
       } else {
-         String normalizedStored = load_Str_Str(this.get_Str);
+         String normalizedStored = normalizeServerAddress(this.serverDetectedVersionAddress);
          if (normalizedStored.isEmpty()) {
-            return this.run_Str;
+            return this.serverDetectedVersion;
          } else {
-            String addrNoPort = this.write_Str(normalizedAddress);
-            String storedNoPort = this.write_Str(normalizedStored);
+            String addrNoPort = this.stripPort(normalizedAddress);
+            String storedNoPort = this.stripPort(normalizedStored);
             if (addrNoPort.equals(storedNoPort)) {
-               return this.run_Str;
+               return this.serverDetectedVersion;
             } else {
-               return normalizedAddress.equals(normalizedStored) ? this.run_Str : "";
+               return normalizedAddress.equals(normalizedStored) ? this.serverDetectedVersion : "";
             }
          }
       }
    }
 
-   private String write_Str(String address) {
+   private String stripPort(String address) {
       if (address != null && !address.isBlank()) {
          int colonIdx = address.lastIndexOf(58);
          if (colonIdx >= 0) {
@@ -1692,182 +1692,182 @@ public final class AutismSessionState {
       }
    }
 
-   public void init_V_Str_Str(String address, String version) {
-      String normalizedAddress = load_Str_Str(address);
-      this.get_Str = normalizedAddress;
-      this.run_Str = version == null ? "" : version.trim();
+   public void setDetectedServerVersion(String address, String version) {
+      String normalizedAddress = normalizeServerAddress(address);
+      this.serverDetectedVersionAddress = normalizedAddress;
+      this.serverDetectedVersion = version == null ? "" : version.trim();
    }
 
-   public void close_V() {
-      this.run_Str = "";
-      this.get_Str = "";
+   public void clearDetectedServerVersion() {
+      this.serverDetectedVersion = "";
+      this.serverDetectedVersionAddress = "";
    }
 
-   public int valid_I() {
-      return this.data_I;
+   public int getServerInfoScanDelayMs() {
+      return this.serverInfoScanDelayMs;
    }
 
-   public void next(int delayMs) {
-      this.data_I = Math.max(10, Math.min(500, delayMs));
+   public void setServerInfoScanDelayMs(int delayMs) {
+      this.serverInfoScanDelayMs = Math.max(10, Math.min(500, delayMs));
    }
 
-   public int size_I() {
-      return this.value_I;
+   public int getServerInfoTabWidth() {
+      return this.serverInfoTabWidth;
    }
 
-   public void prev(int width) {
-      this.value_I = Math.max(252, width);
+   public void setServerInfoTabWidth(int width) {
+      this.serverInfoTabWidth = Math.max(252, width);
    }
 
-   public int data_I() {
-      return this.cache_I;
+   public int getServerInfoTabHeight() {
+      return this.serverInfoTabHeight;
    }
 
-   public void valid(int height) {
-      this.cache_I = Math.max(258, height);
+   public void setServerInfoTabHeight(int height) {
+      this.serverInfoTabHeight = Math.max(258, height);
    }
 
-   public int value_I() {
-      return this.state_I;
+   public int getServerInfoPluginsTabWidth() {
+      return this.serverInfoPluginsTabWidth;
    }
 
-   public void size(int width) {
-      this.state_I = Math.max(280, width);
+   public void setServerInfoPluginsTabWidth(int width) {
+      this.serverInfoPluginsTabWidth = Math.max(280, width);
    }
 
-   public int cache_I() {
-      return this.queue_I;
+   public int getServerInfoPluginsTabHeight() {
+      return this.serverInfoPluginsTabHeight;
    }
 
-   public void data(int height) {
-      this.queue_I = Math.max(280, height);
+   public void setServerInfoPluginsTabHeight(int height) {
+      this.serverInfoPluginsTabHeight = Math.max(280, height);
    }
 
-   public void init_V_Runnable(Runnable onCaptureComplete) {
-      this.prev_Z = true;
-      this.node = 0;
-      this.sync_List.clear();
-      this.init_Runnable = onCaptureComplete;
+   public void startGbreakCapture(Runnable onCaptureComplete) {
+      this.gbreakCapturing = true;
+      this.gbreakPacketCount = 0;
+      this.gbreakCapturedPackets.clear();
+      this.gbreakCaptureCallback = onCaptureComplete;
    }
 
-   public boolean cache_Z() {
-      return this.prev_Z;
+   public boolean isGbreakCapturing() {
+      return this.gbreakCapturing;
    }
 
-   public void read_V_Packet(Packet<?> packet) {
-      if (this.prev_Z) {
-         this.node++;
-         if (size_Z) {
-            AutismClientAddon.LOG.info("[GBreak] Packet #{}: {}", this.node, packet.getClass().getSimpleName());
+   public void onGbreakPacket(Packet<?> packet) {
+      if (this.gbreakCapturing) {
+         this.gbreakPacketCount++;
+         if (TRACE_PAYLOADS) {
+            AutismClientAddon.LOG.info("[GBreak] Packet #{}: {}", this.gbreakPacketCount, packet.getClass().getSimpleName());
          }
 
-         if (this.node == 2) {
-            this.sync_List.clear();
-            this.sync_List.add(new AutismSessionState.DelayedPacket(packet, 0));
-            this.put_V();
+         if (this.gbreakPacketCount == 2) {
+            this.gbreakCapturedPackets.clear();
+            this.gbreakCapturedPackets.add(new AutismSessionState.DelayedPacket(packet, 0));
+            this.finishGbreakCapture();
          }
       }
    }
 
-   public List<AutismSessionState.DelayedPacket> sync_List() {
-      return new ArrayList<>(this.sync_List);
+   public List<AutismSessionState.DelayedPacket> getGbreakCapturedPackets() {
+      return new ArrayList<>(this.gbreakCapturedPackets);
    }
 
-   private void put_V() {
-      this.prev_Z = false;
-      if (this.init_Runnable != null) {
-         this.init_Runnable.run();
-         this.init_Runnable = null;
+   private void finishGbreakCapture() {
+      this.gbreakCapturing = false;
+      if (this.gbreakCaptureCallback != null) {
+         this.gbreakCaptureCallback.run();
+         this.gbreakCaptureCallback = null;
       }
    }
 
-   public void open_V() {
-      this.prev_Z = false;
-      this.node = 0;
-      this.sync_List.clear();
-      this.init_Runnable = null;
+   public void cancelGbreakCapture() {
+      this.gbreakCapturing = false;
+      this.gbreakPacketCount = 0;
+      this.gbreakCapturedPackets.clear();
+      this.gbreakCaptureCallback = null;
    }
 
-   public void stop(boolean v) {
-      this.next(v);
+   public void markDropNextContainerClose(boolean v) {
+      this.setDropNextContainerClose(v);
    }
 
-   public void next(boolean v) {
-      this.data_Z = v;
+   public void setDropNextContainerClose(boolean v) {
+      this.dropNextContainerClose = v;
    }
 
-   public void prev(boolean v) {
-      this.value_Z = v;
+   public void setDropNextSignUpdate(boolean v) {
+      this.dropNextSignUpdate = v;
    }
 
-   public void valid(boolean v) {
-      this.cache_Z = v;
+   public void setDropNextBookEdit(boolean v) {
+      this.dropNextBookEdit = v;
    }
 
-   public void size(boolean v) {
-      this.state_Z = v;
+   public void setForceNextSignUpdate(boolean v) {
+      this.forceNextSignUpdate = v;
    }
 
-   public void data(boolean v) {
-      this.queue_Z = v;
+   public void setForceNextBookEdit(boolean v) {
+      this.forceNextBookEdit = v;
    }
 
-   public boolean state_Z() {
-      boolean v = this.data_Z;
-      this.data_Z = false;
+   public boolean consumeDropNextContainerClose() {
+      boolean v = this.dropNextContainerClose;
+      this.dropNextContainerClose = false;
       return v;
    }
 
-   public boolean queue_Z() {
-      return this.state_Z();
+   public boolean pollDropNextContainerClose() {
+      return this.consumeDropNextContainerClose();
    }
 
-   public boolean buffer_Z() {
-      boolean v = this.value_Z;
-      this.value_Z = false;
+   public boolean consumeDropNextSignUpdate() {
+      boolean v = this.dropNextSignUpdate;
+      this.dropNextSignUpdate = false;
       return v;
    }
 
-   public boolean entry() {
-      boolean v = this.cache_Z;
-      this.cache_Z = false;
+   public boolean consumeDropNextBookEdit() {
+      boolean v = this.dropNextBookEdit;
+      this.dropNextBookEdit = false;
       return v;
    }
 
-   public boolean node() {
-      boolean v = this.state_Z;
-      this.state_Z = false;
+   public boolean consumeForceNextSignUpdate() {
+      boolean v = this.forceNextSignUpdate;
+      this.forceNextSignUpdate = false;
       return v;
    }
 
-   public boolean task() {
-      boolean v = this.queue_Z;
-      this.queue_Z = false;
+   public boolean consumeForceNextBookEdit() {
+      boolean v = this.forceNextBookEdit;
+      this.forceNextBookEdit = false;
       return v;
    }
 
-   public void init_V_Consumer(Consumer<BlockPos> cb) {
-      this.init_Consumer = cb;
+   public void setBlockCaptureCallback(Consumer<BlockPos> cb) {
+      this.blockCaptureCallback = cb;
    }
 
-   public void init_V_BiConsumer(BiConsumer<BlockPos, Direction> cb) {
-      this.init_BiConsumer = cb;
+   public void setBlockFaceCaptureCallback(BiConsumer<BlockPos, Direction> cb) {
+      this.blockFaceCaptureCallback = cb;
    }
 
-   public boolean init_Z_BlockPos(BlockPos pos) {
-      return this.init_Z_BlockPos_Direction(pos, Direction.UP);
+   public boolean dispatchBlockCapture(BlockPos pos) {
+      return this.dispatchBlockCapture(pos, Direction.UP);
    }
 
-   public boolean init_Z_BlockPos_Direction(BlockPos pos, Direction direction) {
-      BiConsumer<BlockPos, Direction> dcb = this.init_BiConsumer;
+   public boolean dispatchBlockCapture(BlockPos pos, Direction direction) {
+      BiConsumer<BlockPos, Direction> dcb = this.blockFaceCaptureCallback;
       if (dcb != null) {
-         this.init_BiConsumer = null;
+         this.blockFaceCaptureCallback = null;
          dcb.accept(pos, direction == null ? Direction.UP : direction);
          return true;
       } else {
-         Consumer<BlockPos> cb = this.init_Consumer;
+         Consumer<BlockPos> cb = this.blockCaptureCallback;
          if (cb != null) {
-            this.init_Consumer = null;
+            this.blockCaptureCallback = null;
             cb.accept(pos);
             return true;
          } else {
@@ -1876,18 +1876,18 @@ public final class AutismSessionState {
       }
    }
 
-   public boolean pool() {
-      return this.init_Consumer != null || this.init_BiConsumer != null;
+   public boolean hasBlockCaptureCallback() {
+      return this.blockCaptureCallback != null || this.blockFaceCaptureCallback != null;
    }
 
-   public void load_V_Runnable(Runnable cb) {
-      this.load_Runnable = cb;
+   public void setAttackCaptureCallback(Runnable cb) {
+      this.attackCaptureCallback = cb;
    }
 
-   public boolean index() {
-      Runnable cb = this.load_Runnable;
+   public boolean triggerAttackCaptureCallback() {
+      Runnable cb = this.attackCaptureCallback;
       if (cb != null) {
-         this.load_Runnable = null;
+         this.attackCaptureCallback = null;
          cb.run();
          return true;
       } else {
@@ -1895,18 +1895,18 @@ public final class AutismSessionState {
       }
    }
 
-   public boolean count() {
-      return this.load_Runnable != null;
+   public boolean hasAttackCaptureCallback() {
+      return this.attackCaptureCallback != null;
    }
 
-   public void read_V_Runnable(Runnable cb) {
-      this.read_Runnable = cb;
+   public void setCaptureCancelCallback(Runnable cb) {
+      this.captureCancelCallback = cb;
    }
 
-   public boolean flags() {
-      Runnable cb = this.read_Runnable;
+   public boolean triggerCaptureCancelCallback() {
+      Runnable cb = this.captureCancelCallback;
       if (cb != null) {
-         this.read_Runnable = null;
+         this.captureCancelCallback = null;
          cb.run();
          return true;
       } else {
@@ -1914,18 +1914,18 @@ public final class AutismSessionState {
       }
    }
 
-   public boolean level() {
-      return this.read_Runnable != null;
+   public boolean hasCaptureCancelCallback() {
+      return this.captureCancelCallback != null;
    }
 
-   public void load_V_Consumer(Consumer<String> cb) {
-      this.load_Consumer = cb;
+   public void setEntityCaptureCallback(Consumer<String> cb) {
+      this.entityCaptureCallback = cb;
    }
 
-   public boolean load_Z_Str(String payload) {
-      Consumer<String> cb = this.load_Consumer;
+   public boolean dispatchEntityCapturePayload(String payload) {
+      Consumer<String> cb = this.entityCaptureCallback;
       if (cb != null) {
-         this.load_Consumer = null;
+         this.entityCaptureCallback = null;
          cb.accept(payload);
          return true;
       } else {
@@ -1933,8 +1933,8 @@ public final class AutismSessionState {
       }
    }
 
-   public boolean init_Z_Entity(Entity targeted) {
-      if (targeted != null && this.load_Consumer != null) {
+   public boolean dispatchEntityCapture(Entity targeted) {
+      if (targeted != null && this.entityCaptureCallback != null) {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && targeted == mc.player) {
             return false;
@@ -1942,82 +1942,82 @@ public final class AutismSessionState {
 
          String typeId = BuiltInRegistries.ENTITY_TYPE.getKey(targeted.getType()).toString();
          String payload;
-         if (this.buffer_Z) {
+         if (this.captureSpecificEntity) {
             String name = targeted.getDisplayName().getString().replaceAll("§.", "").trim();
             payload = "~" + targeted.getStringUUID() + "~" + typeId + "~" + name;
-            this.buffer_Z = false;
+            this.captureSpecificEntity = false;
          } else {
             payload = typeId;
          }
 
-         return this.load_Z_Str(payload);
+         return this.dispatchEntityCapturePayload(payload);
       } else {
          return false;
       }
    }
 
-   public boolean frame() {
-      return this.load_Consumer != null;
+   public boolean hasEntityCaptureCallback() {
+      return this.entityCaptureCallback != null;
    }
 
-   public void value(boolean v) {
-      this.buffer_Z = v;
+   public void setCaptureSpecificEntity(boolean v) {
+      this.captureSpecificEntity = v;
    }
 
-   public boolean block() {
-      return this.buffer_Z;
+   public boolean isCaptureSpecificEntity() {
+      return this.captureSpecificEntity;
    }
 
-   public boolean chunk() {
-      return this.valid_Z;
+   public boolean isTimedCaptureMode() {
+      return this.timedCaptureMode;
    }
 
-   public void cache(boolean v) {
+   public void setTimedCaptureMode(boolean v) {
       if (!v || !autismclient.modules.aD.read_Z()) {
-         this.valid_Z = v;
+         this.timedCaptureMode = v;
          if (v) {
-            this.read_J = -1L;
-            this.task = -1;
+            this.captureStartNanos = -1L;
+            this.captureStartTick = -1;
          }
       }
    }
 
-   public void poll_V() {
+   public void onServerTimeUpdate() {
       long now = System.currentTimeMillis();
-      if (this.write_J > 0L) {
-         long wallDeltaMs = now - this.write_J;
+      if (this.lastTimeUpdateMs > 0L) {
+         long wallDeltaMs = now - this.lastTimeUpdateMs;
          if (wallDeltaMs > 0L) {
             double measured = wallDeltaMs / 20.0;
             measured = Math.max(50.0, Math.min(200.0, measured));
-            this.init_D = this.init_D * 0.3 + measured * 0.7;
+            this.msPerTickEma = this.msPerTickEma * 0.3 + measured * 0.7;
          }
       }
 
-      this.write_J = now;
+      this.lastTimeUpdateMs = now;
    }
 
-   public double init_D() {
-      return this.init_D;
+   public double getEstimatedMsPerTick() {
+      return this.msPerTickEma;
    }
 
-   public double load_D() {
-      return this.write_J <= 0L ? -1.0 : 1000.0 / this.init_D;
+   public double getEstimatedTps() {
+      return this.lastTimeUpdateMs <= 0L ? -1.0 : 1000.0 / this.msPerTickEma;
    }
 
-   public void push_V() {
-      this.pool++;
+   public void incrementClientTick() {
+      this.clientTick++;
    }
 
-   public int state_I() {
-      return this.pool;
+   public int getClientTick() {
+      return this.clientTick;
    }
 
-   public boolean table() {
-      return this.entry_Z;
+   public boolean isPlacePreviewActive() {
+      return this.placePreviewActive;
    }
 
-   public void state(boolean active) {
-      this.entry_Z = active;
+   public void setPlacePreviewActive(boolean active) {
+      this.placePreviewActive = active;
    }
 
    public enum ReplayMode {
@@ -2026,23 +2026,23 @@ public final class AutismSessionState {
    }
 
    public static class DelayedPacket {
-      private static final AtomicInteger init_AtomicInteger = new AtomicInteger(1);
-      public final Packet<?> init_Packet;
-      public final int init_I;
-      private volatile AutismSessionState.ReplayMode init_ck_BufferHelper;
-      private volatile int load;
-      private volatile boolean init_Z;
+      private static final AtomicInteger NEXT_ID = new AtomicInteger(1);
+      public final Packet<?> packet;
+      public final int id;
+      private volatile AutismSessionState.ReplayMode replayMode;
+      private volatile int delay;
+      private volatile boolean sent;
 
       public DelayedPacket(Packet<?> packet, int delay) {
          this(packet, delay, AutismSessionState.ReplayMode.REGENERATE);
       }
 
       public DelayedPacket(Packet<?> packet, int delay, AutismSessionState.ReplayMode replayMode) {
-         this.init_Packet = packet;
-         this.init_I = init_AtomicInteger.getAndIncrement();
-         this.load = delay;
-         this.init_Z = false;
-         this.init_ck_BufferHelper = replayMode == null ? AutismSessionState.ReplayMode.REGENERATE : replayMode;
+         this.packet = packet;
+         this.id = NEXT_ID.getAndIncrement();
+         this.delay = delay;
+         this.sent = false;
+         this.replayMode = replayMode == null ? AutismSessionState.ReplayMode.REGENERATE : replayMode;
       }
 
       public DelayedPacket(Packet<?> packet, int delay, int existingId) {
@@ -2050,67 +2050,67 @@ public final class AutismSessionState {
       }
 
       public DelayedPacket(Packet<?> packet, int delay, int existingId, AutismSessionState.ReplayMode replayMode) {
-         this.init_Packet = packet;
-         this.init_I = existingId;
-         this.load = delay;
-         this.init_Z = false;
-         this.init_ck_BufferHelper = replayMode == null ? AutismSessionState.ReplayMode.REGENERATE : replayMode;
+         this.packet = packet;
+         this.id = existingId;
+         this.delay = delay;
+         this.sent = false;
+         this.replayMode = replayMode == null ? AutismSessionState.ReplayMode.REGENERATE : replayMode;
       }
 
-      public int init_I() {
-         return this.init_I;
+      public int getId() {
+         return this.id;
       }
 
-      public int load_I() {
-         return this.load;
+      public int getDelay() {
+         return this.delay;
       }
 
-      public AutismSessionState.ReplayMode init_ck_BufferHelper() {
-         return this.init_ck_BufferHelper;
+      public AutismSessionState.ReplayMode getReplayMode() {
+         return this.replayMode;
       }
 
-      public boolean init_Z() {
-         return this.init_ck_BufferHelper == AutismSessionState.ReplayMode.EXACT;
+      public boolean isExactReplay() {
+         return this.replayMode == AutismSessionState.ReplayMode.EXACT;
       }
 
-      public synchronized void init(int newDelay) {
-         if (!this.init_Z) {
-            this.load = newDelay;
+      public synchronized void setDelay(int newDelay) {
+         if (!this.sent) {
+            this.delay = newDelay;
          }
       }
 
-      public synchronized void init(AutismSessionState.ReplayMode mode) {
-         if (!this.init_Z) {
-            this.init_ck_BufferHelper = mode == null ? AutismSessionState.ReplayMode.REGENERATE : mode;
+      public synchronized void setReplayMode(AutismSessionState.ReplayMode mode) {
+         if (!this.sent) {
+            this.replayMode = mode == null ? AutismSessionState.ReplayMode.REGENERATE : mode;
          }
       }
 
-      public boolean load_Z() {
-         return this.init_Z;
+      public boolean isSent() {
+         return this.sent;
       }
 
-      synchronized void init_V() {
-         this.init_Z = true;
+      synchronized void markSent() {
+         this.sent = true;
       }
 
-      public static void load_V() {
-         init_AtomicInteger.set(1);
+      public static void resetIdCounter() {
+         NEXT_ID.set(1);
       }
    }
 
    public static final class TimingMeasurement {
-      public final String init_Str;
-      public final long init_J;
-      public final String load_Str;
-      public final String read;
-      public final long load_J;
+      public final String label;
+      public final long deltaMs;
+      public final String startEvent;
+      public final String endEvent;
+      public final long capturedAtMs;
 
       public TimingMeasurement(String label, long deltaMs, String startEvent, String endEvent, long capturedAtMs) {
-         this.init_Str = label == null ? "" : label;
-         this.init_J = deltaMs;
-         this.load_Str = startEvent == null ? "" : startEvent;
-         this.read = endEvent == null ? "" : endEvent;
-         this.load_J = capturedAtMs;
+         this.label = label == null ? "" : label;
+         this.deltaMs = deltaMs;
+         this.startEvent = startEvent == null ? "" : startEvent;
+         this.endEvent = endEvent == null ? "" : endEvent;
+         this.capturedAtMs = capturedAtMs;
       }
    }
 
@@ -2119,51 +2119,51 @@ public final class AutismSessionState {
       MS;
    }
 
-   public record DelayQueueSnapshot(List<AutismSessionState.DelayedPacket> init_List, int init_I) {
+   public record DelayQueueSnapshot(List<AutismSessionState.DelayedPacket> visiblePackets, int totalCount) {
    }
 
    public static final class PluginScanResult {
-      private final String init_Str;
-      private final String load_Str;
-      private final List<String> init_List;
-      private final Map<String, List<String>> init_Map;
-      private final Map<String, String> load_Map;
+      private final String address;
+      private final String contextSignature;
+      private final List<String> plugins;
+      private final Map<String, List<String>> pluginCommands;
+      private final Map<String, String> pluginEvidence;
 
       private PluginScanResult(
          String address, String contextSignature, List<String> plugins, Map<String, List<String>> pluginCommands, Map<String, String> pluginEvidence
       ) {
-         this.init_Str = address;
-         this.load_Str = contextSignature == null ? "" : contextSignature;
-         this.init_List = plugins == null ? List.of() : new ArrayList<>(plugins);
-         this.init_Map = init(pluginCommands);
-         this.load_Map = load(pluginEvidence);
+         this.address = address;
+         this.contextSignature = contextSignature == null ? "" : contextSignature;
+         this.plugins = plugins == null ? List.of() : new ArrayList<>(plugins);
+         this.pluginCommands = copyCommandMap(pluginCommands);
+         this.pluginEvidence = copyEvidenceMap(pluginEvidence);
       }
 
-      public String init_Str() {
-         return this.init_Str;
+      public String getAddress() {
+         return this.address;
       }
 
-      public List<String> init_List() {
-         return new ArrayList<>(this.init_List);
+      public List<String> getPlugins() {
+         return new ArrayList<>(this.plugins);
       }
 
-      public String load_Str() {
-         return this.load_Str;
+      public String getContextSignature() {
+         return this.contextSignature;
       }
 
-      public Map<String, List<String>> init_Map() {
-         return init(this.init_Map);
+      public Map<String, List<String>> getPluginCommands() {
+         return copyCommandMap(this.pluginCommands);
       }
 
-      public Map<String, String> load_Map() {
-         return load(this.load_Map);
+      public Map<String, String> getPluginEvidence() {
+         return copyEvidenceMap(this.pluginEvidence);
       }
 
-      private AutismSessionState.PluginScanResult init_ck_TaskQueue() {
-         return new AutismSessionState.PluginScanResult(this.init_Str, this.load_Str, this.init_List, this.init_Map, this.load_Map);
+      private AutismSessionState.PluginScanResult copy() {
+         return new AutismSessionState.PluginScanResult(this.address, this.contextSignature, this.plugins, this.pluginCommands, this.pluginEvidence);
       }
 
-      private static Map<String, List<String>> init(Map<String, List<String>> source) {
+      private static Map<String, List<String>> copyCommandMap(Map<String, List<String>> source) {
          if (source != null && !source.isEmpty()) {
             Map<String, List<String>> copy = new LinkedHashMap<>();
 
@@ -2179,7 +2179,7 @@ public final class AutismSessionState {
          }
       }
 
-      private static Map<String, String> load(Map<String, String> source) {
+      private static Map<String, String> copyEvidenceMap(Map<String, String> source) {
          if (source != null && !source.isEmpty()) {
             Map<String, String> copy = new LinkedHashMap<>();
 

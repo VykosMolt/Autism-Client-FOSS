@@ -173,9 +173,9 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       if (this.write_Z || this.a__Z()) {
          this.init_List.clear();
-         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-         int wantC2s = this.load(this.init(module.load_Set().size()));
-         int wantS2c = this.load(this.init(module.read_Set().size()));
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+         int wantC2s = this.load(this.init(module.getCustomC2sPacketsCopy().size()));
+         int wantS2c = this.load(this.init(module.getCustomS2cPacketsCopy().size()));
          this.set = this.push_I_5() + wantC2s + wantS2c;
          OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.tick, this.run, this.get, this.set, this.write_Z, this.update_Z));
          this.tick = clamped.x;
@@ -199,9 +199,9 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                   x,
                   y,
                   width,
-                  "Custom Packets " + (module.prev() ? "On" : "Off"),
-                  () -> module.open(!module.prev()),
-                  module.prev(),
+                  "Custom Packets " + (module.isUseCustomPackets() ? "On" : "Off"),
+                  () -> module.setUseCustomPackets(!module.isUseCustomPackets()),
+                  module.isUseCustomPackets(),
                   "custom-filter:enabled"
                );
                int presetsY = y;
@@ -209,7 +209,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                   this.init_AutismCustomFilter_2.load_V_6();
                   OverlayManager.getInstance().bringToFront(this.init_AutismCustomFilter_2);
                }, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true);
-               String counts = "C2S " + module.load_Set().size() + " | S2C " + module.read_Set().size();
+               String counts = "C2S " + module.getCustomC2sPacketsCopy().size() + " | S2C " + module.getCustomS2cPacketsCopy().size();
                int countsW = ThemedTextHelper.init(this.init_Font, counts, ThemedTextHelper.TextTone.MUTED);
                ThemedTextHelper.init(
                   context,
@@ -251,7 +251,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       AutismCustomFilterOverlay.Inner_StreamUtil listState
    ) {
       String label = c2s ? "C2S Packets" : "S2C Packets";
-      Set<Class<? extends Packet<?>>> selectedPackets = c2s ? module.load_Set() : module.read_Set();
+      Set<Class<? extends Packet<?>>> selectedPackets = c2s ? module.getCustomC2sPacketsCopy() : module.getCustomS2cPacketsCopy();
       List<Class<? extends Packet<?>>> filteredPackets = this.init_List_AutismCustomFilter(listState, selectedPackets, searchField.init_Str());
       int headerY = y;
       autismclient.gui.ui.widgets.ListRowRenderer.init(
@@ -278,10 +278,10 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          () -> {
             if (c2s) {
                this.init_AutismPacketSelect
-                  .init_V_BiConsumer_Collection((packetClass, selected) -> this.init_V_Z_2(true, packetClass, selected), module.load_Set());
+                  .init_V_BiConsumer_Collection((packetClass, selected) -> this.init_V_Z_2(true, packetClass, selected), module.getCustomC2sPacketsCopy());
             } else {
                this.init_AutismPacketSelect
-                  .load_V_BiConsumer_Collection((packetClass, selected) -> this.init_V_Z_2(false, packetClass, selected), module.read_Set());
+                  .load_V_BiConsumer_Collection((packetClass, selected) -> this.init_V_Z_2(false, packetClass, selected), module.getCustomS2cPacketsCopy());
             }
          },
          autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY,
@@ -435,25 +435,25 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_Z_Class(boolean c2s, Class<? extends Packet<?>> packetClass) {
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-      Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>(c2s ? module.load_Set() : module.read_Set());
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+      Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>(c2s ? module.getCustomC2sPacketsCopy() : module.getCustomS2cPacketsCopy());
       if (packets.add(packetClass)) {
          if (c2s) {
-            module.init_V_Set(packets);
+            module.setCustomC2sPackets(packets);
          } else {
-            module.load(packets);
+            module.setCustomS2cPackets(packets);
          }
       }
    }
 
    private void load_V_Z_Class(boolean c2s, Class<? extends Packet<?>> packetClass) {
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-      Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>(c2s ? module.load_Set() : module.read_Set());
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+      Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>(c2s ? module.getCustomC2sPacketsCopy() : module.getCustomS2cPacketsCopy());
       if (packets.remove(packetClass)) {
          if (c2s) {
-            module.init_V_Set(packets);
+            module.setCustomC2sPackets(packets);
          } else {
-            module.load(packets);
+            module.setCustomS2cPackets(packets);
          }
       }
    }

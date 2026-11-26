@@ -3911,7 +3911,7 @@ final class AiTools {
       }
 
       final String macroFingerprint = AiJson.sha256Hex(init_JsonObject_aM(macro).toString());
-      final long run = MacroExecutor.init_J_aM_MacroExecutor_Pool(macro, MacroExecutor.ExecutionFlags.init_MacroExecutor_Pool);
+      final long run = MacroExecutor.startMacro(macro, MacroExecutor.ExecutionFlags.DEFAULT);
       if (run < 0L) {
          return AiGameOperations.immediate(
             AiOperation.Status.FAILED,
@@ -3924,7 +3924,7 @@ final class AiTools {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
-            MacroExecutor.MacroRunOutcome outcome = MacroExecutor.init_MacroExecutor_Macr_J(run);
+            MacroExecutor.MacroRunOutcome outcome = MacroExecutor.getRunOutcome(run);
             if (outcome != null) {
                return AiGameOperations.result(
                   outcome.outcome().equals("COMPLETED") ? AiOperation.Status.SUCCEEDED : AiOperation.Status.UNCERTAIN,
@@ -3935,7 +3935,7 @@ final class AiTools {
                this.cancel();
                return AiGameOperations.result(AiOperation.Status.TIMED_OUT, "Macro deadline reached", new JsonObject());
             } else {
-               return !MacroExecutor.init_Z_J(run)
+               return !MacroExecutor.isRunActive(run)
                   ? AiGameOperations.result(AiOperation.Status.UNCERTAIN, "Macro ended without retained outcome", new JsonObject())
                   : AiGameOperations.result(AiOperation.Status.RUNNING, "Macro running", AiJson.objectOf("runId", run));
             }
@@ -3943,7 +3943,7 @@ final class AiTools {
 
          @Override
          public void cancel() {
-            MacroExecutor.init_V_J(run);
+            MacroExecutor.stopRun(run);
          }
       };
    }

@@ -159,7 +159,7 @@ public final class SchematicWorkspace {
    public static void read_V() {
       if (close_Z()) {
          if (init_cV == null || init_cV.init_SchematicLibraryOv == null) {
-            OverlayBounds saved = autismclient.util.AutismSessionState.init_ck().init_cH_Str("schematic-library");
+            OverlayBounds saved = autismclient.util.AutismSessionState.getInstance().getOverlayBounds("schematic-library");
             if (saved == null || !saved.visible) {
                return;
             }
@@ -216,7 +216,7 @@ public final class SchematicWorkspace {
 
       OverlayManager manager = OverlayManager.getInstance();
       if (this.init_Minecraft.gui.screen() == null) {
-         autismclient.util.OverlayScreenController.init_V(this.init_Minecraft, new autismclient.gui.screens.AutismOverlaysScreen(this.init_SchematicLibraryOv, null, false, false));
+         autismclient.util.OverlayScreenController.setScreenExplicit(this.init_Minecraft, new autismclient.gui.screens.AutismOverlaysScreen(this.init_SchematicLibraryOv, null, false, false));
       }
 
       manager.register(this.init_SchematicLibraryOv);
@@ -480,7 +480,7 @@ public final class SchematicWorkspace {
    void init_V_cR_DataUtil(SchematicLibrary.Inner_DataUtil file) {
       if (this.read_Z() && !this.flush_Z() && file != null) {
          PromptDialogScreen screen = new PromptDialogScreen("Rename file", file.name(), name -> this.init_V_cR_DataUtil_Str(file, name));
-         autismclient.util.OverlayScreenController.init_Z(this.init_Minecraft, screen);
+         autismclient.util.OverlayScreenController.openModalScreen(this.init_Minecraft, screen);
       }
    }
 
@@ -527,7 +527,7 @@ public final class SchematicWorkspace {
                this.push();
             }
          });
-         autismclient.util.OverlayScreenController.init_Z(this.init_Minecraft, screen);
+         autismclient.util.OverlayScreenController.openModalScreen(this.init_Minecraft, screen);
       }
    }
 
@@ -703,7 +703,7 @@ public final class SchematicWorkspace {
                this.init_SchematicLibraryOv.init_V_Z(false);
             }
 
-            autismclient.util.OverlayScreenController.init_V(this.init_Minecraft, null);
+            autismclient.util.OverlayScreenController.setScreenExplicit(this.init_Minecraft, null);
          } catch (Exception e) {
             this.read(SchematicLibrary.init_Str_Throwable(e));
          }
@@ -739,7 +739,7 @@ public final class SchematicWorkspace {
                      p.mirror()
                   );
                   this.init_cV_DataUtil = new SchematicWorkspace.Inner_DataUtil(p.id(), AiDirectOps.init_k_StreamUtil("game:build", args));
-                  autismclient.util.OverlayScreenController.init_V(this.init_Minecraft, null);
+                  autismclient.util.OverlayScreenController.setScreenExplicit(this.init_Minecraft, null);
                } catch (Exception e) {
                   this.read(SchematicLibrary.init_Str_Throwable(e));
                }

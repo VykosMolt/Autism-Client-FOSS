@@ -23,12 +23,12 @@ public class BranchAction implements MacroAction {
          return false;
       }
 
-      MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.value, mc);
-      if (!resolution.init_Z()) {
+      MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.resolveTemplate(this.value, mc);
+      if (!resolution.success()) {
          return false;
       }
 
-      String resolved = resolution.init_Str();
+      String resolved = resolution.value();
       boolean var10000;
       switch (this.conditionKind) {
          case ALWAYS:

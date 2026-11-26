@@ -13,19 +13,19 @@ public abstract class AutismNoRenderWeatherStateMixin {
    @Inject(method = "getRainLevel", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$rain(float partialTick, CallbackInfoReturnable<Float> cir) {
       if (this.autism$override()) {
-         cir.setReturnValue(NoRenderState.init_F());
+         cir.setReturnValue(NoRenderState.getForcedRainLevel());
       }
    }
 
    @Inject(method = "getThunderLevel", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$thunder(float partialTick, CallbackInfoReturnable<Float> cir) {
       if (this.autism$override()) {
-         cir.setReturnValue(NoRenderState.load_F());
+         cir.setReturnValue(NoRenderState.getForcedThunderLevel());
       }
    }
 
    @Unique
    private boolean autism$override() {
-      return NoRenderState.table() && ((Level)(Object)this).isClientSide();
+      return NoRenderState.isForceWeatherEnabled() && ((Level)(Object)this).isClientSide();
    }
 }

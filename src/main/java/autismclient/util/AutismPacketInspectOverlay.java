@@ -383,7 +383,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    ) {
       int safeContinuationOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, continuationOffset);
       if (prefixWidth >= maxWidth) {
-         this.init_V_Str_4(prefix.stripTrailing(), 0, UiColorPalette.pool(), maxWidth, target);
+         this.init_V_Str_4(prefix.stripTrailing(), 0, UiColorPalette.silver(), maxWidth, target);
          this.init_V_Str_4(value, safeContinuationOffset, valueColor, maxWidth, target);
       } else if (value != null && !value.isEmpty()) {
          String remaining = value;
@@ -396,11 +396,11 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                current, 0, current.length(), availableWidth, (start, end) -> this.load(current.substring(start, end))
             );
             String part = remaining.substring(0, split).stripTrailing();
-            target.add(new AutismPacketInspectOverlay.Inner_BufferHelper(firstLine ? prefix : null, UiColorPalette.pool(), part, valueColor, offset));
+            target.add(new AutismPacketInspectOverlay.Inner_BufferHelper(firstLine ? prefix : null, UiColorPalette.silver(), part, valueColor, offset));
             remaining = remaining.substring(split).stripLeading();
          }
       } else {
-         target.add(new AutismPacketInspectOverlay.Inner_BufferHelper(prefix, UiColorPalette.pool(), "", valueColor, prefixWidth));
+         target.add(new AutismPacketInspectOverlay.Inner_BufferHelper(prefix, UiColorPalette.silver(), "", valueColor, prefixWidth));
       }
    }
 
@@ -453,7 +453,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             this.init_Font,
             label,
             this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-            view.load() ? UiColorPalette.valid() : UiColorPalette.parse(),
+            view.load() ? UiColorPalette.errorText() : UiColorPalette.textBody(),
             x + 4,
             y + 2,
             false
@@ -1065,7 +1065,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    private int load(String text) {
       return text != null && !text.isEmpty()
-         ? autismclient.gui.f.b.k.init(this.init_Font, text, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.task())
+         ? autismclient.gui.f.b.k.init(this.init_Font, text, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.softWhite())
          : 0;
    }
 
@@ -1177,13 +1177,13 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       int init(Font textRenderer) {
          int width = this.read
             + autismclient.gui.f.b.k.init(
-               textRenderer, this.load_Str, new autismclient.gui.f.b.CharEncoder().init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.task()
+               textRenderer, this.load_Str, new autismclient.gui.f.b.CharEncoder().init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.softWhite()
             );
          if (this.init_Str != null && !this.init_Str.isEmpty()) {
             width = Math.max(
                width,
                autismclient.gui.f.b.k.init(
-                  textRenderer, this.init_Str, new autismclient.gui.f.b.CharEncoder().init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.task()
+                  textRenderer, this.init_Str, new autismclient.gui.f.b.CharEncoder().init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.softWhite()
                )
             );
          }

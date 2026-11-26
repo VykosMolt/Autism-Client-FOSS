@@ -176,7 +176,7 @@ public class AutismMinecraftClientMixin {
    @Inject(method = "tick", at = @At("HEAD"))
    private void autism$onTickHead(CallbackInfo ci) {
       WindowIconManager.read((Minecraft)(Object)this);
-      AutismSessionState.init_ck().push_V();
+      AutismSessionState.getInstance().incrementClientTick();
       VirtualInputDispatcher.open();
       al.update_V();
       ClientInteractionOverride.init_V();
@@ -195,14 +195,14 @@ public class AutismMinecraftClientMixin {
             KBDisplacementModule.load_V_17();
          }
 
-         MacroExecutor.load_V();
+         MacroExecutor.onClientTick();
          VillagerDupeDriver.init_V_Minecraft((Minecraft)(Object)this);
          if (ContainerCloseGuard.init_Z()) {
             ContainerCloseGuard.load_V();
          }
 
-         autismclient.modules.ModuleRuntimeManager autism = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-         if (!aD.init_Z() && autism.valid()) {
+         autismclient.modules.ModuleRuntimeManager autism = autismclient.modules.ModuleRuntimeManager.getInstance();
+         if (!aD.init_Z() && autism.hasCommandBinds()) {
             this.autism$pollCommandBinds(autism);
          }
       }
@@ -212,7 +212,7 @@ public class AutismMinecraftClientMixin {
    private void autism$pollCommandBinds(autismclient.modules.ModuleRuntimeManager module) {
       Minecraft client = (Minecraft)(Object)this;
       if (client.getWindow() != null && !(client.gui.screen() instanceof ChatScreen) && !(client.gui.screen() instanceof SignEditScreen)) {
-         Map<Integer, String> binds = module.init_Map();
+         Map<Integer, String> binds = module.getCommandBinds();
          if (!binds.isEmpty()) {
             long handle = client.getWindow().handle();
 
@@ -271,13 +271,13 @@ public class AutismMinecraftClientMixin {
                cir.setReturnValue(false);
             } else if (RemoteViewController.init_Z()) {
                cir.setReturnValue(false);
-            } else if (AutismSessionState.init_ck().frame()) {
+            } else if (AutismSessionState.getInstance().hasEntityCaptureCallback()) {
                cir.setReturnValue(false);
             } else if (al.init_Z_HitResult(client.hitResult)) {
                cir.setReturnValue(false);
             } else if ((AutismLiteVariant.enabled() || !CombatInteractionController.update()) && !ManualInteractionYield.load()) {
-               if (AutismSessionState.init_ck().count()) {
-                  AutismSessionState.init_ck().index();
+               if (AutismSessionState.getInstance().hasAttackCaptureCallback()) {
+                  AutismSessionState.getInstance().triggerAttackCaptureCallback();
                   cir.setReturnValue(false);
                }
             } else {
@@ -352,16 +352,16 @@ public class AutismMinecraftClientMixin {
             } else if (BlockInspectionService.init_Z(client)) {
                ci.cancel();
             } else {
-               AutismSessionState captureState = AutismSessionState.init_ck();
-               if (captureState.frame()) {
+               AutismSessionState captureState = AutismSessionState.getInstance();
+               if (captureState.hasEntityCaptureCallback()) {
                   if (client.hitResult instanceof EntityHitResult entityHit) {
-                     captureState.init_Z_Entity(entityHit.getEntity());
+                     captureState.dispatchEntityCapture(entityHit.getEntity());
                   }
 
                   ci.cancel();
-               } else if (captureState.pool()) {
+               } else if (captureState.hasBlockCaptureCallback()) {
                   if (client.hitResult instanceof BlockHitResult blockHit) {
-                     captureState.init_Z_BlockPos_Direction(blockHit.getBlockPos(), blockHit.getDirection());
+                     captureState.dispatchBlockCapture(blockHit.getBlockPos(), blockHit.getDirection());
                   }
 
                   ci.cancel();
@@ -487,7 +487,7 @@ public class AutismMinecraftClientMixin {
                return;
             }
 
-            if (AutismSessionState.init_ck().flags()) {
+            if (AutismSessionState.getInstance().triggerCaptureCancelCallback()) {
                ClientInteractionOverride.sync_V();
                VirtualInputDispatcher.poll();
                ci.cancel();
@@ -535,7 +535,7 @@ public class AutismMinecraftClientMixin {
          Minecraft client = (Minecraft)(Object)this;
          if (PayloadStudyTracker.load_Z()) {
             ci.cancel();
-         } else if (AutismSessionState.init_ck().flags()) {
+         } else if (AutismSessionState.getInstance().triggerCaptureCancelCallback()) {
             ci.cancel();
          } else {
             ActionEditorOverlay actionEditor = ActionEditorOverlay.load_ActionEditorOverla();
@@ -546,8 +546,8 @@ public class AutismMinecraftClientMixin {
                   ci.cancel();
                }
             } else if (client.getWindow() != null && !client.getWindow().isFocused()) {
-               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-               if (module != null && module.init_Z() && module.poll_Z()) {
+               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+               if (module != null && module.isActive() && module.isNoPauseOnLostFocus()) {
                   ci.cancel();
                }
             }
@@ -585,7 +585,7 @@ public class AutismMinecraftClientMixin {
    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;runAllTasks()V", shift = Shift.BEFORE))
    private void autism$onPacketProcessFrame(CallbackInfo ci) {
       al.open_V();
-      BlinkPacketManager.write();
+      BlinkPacketManager.processPolicyFlushes();
       VillagerDupeDriver.load_V_Minecraft((Minecraft)(Object)this);
    }
 

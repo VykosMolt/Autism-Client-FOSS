@@ -109,7 +109,7 @@ public final class PacketGateManager {
          read();
          boolean shouldFlush = flushRequested || removed.stream().anyMatch(gate -> gate.init_Z);
          if (shouldFlush && !load_Z()) {
-            AutismSessionState.init_ck().init_I_ClientPacketListen(connection);
+            AutismSessionState.getInstance().flushDelayedPackets(connection);
          }
       } else {
          init(connection);
@@ -142,7 +142,7 @@ public final class PacketGateManager {
          boolean flush = init_ConcurrentHashMap.values().stream().anyMatch(g -> g.init_B_CachePool == PacketGateAction.Inner_CachePool.DELAY && g.init_Z);
          load_V();
          if (flush) {
-            AutismSessionState.init_ck().init_I_ClientPacketListen(connection);
+            AutismSessionState.getInstance().flushDelayedPackets(connection);
          }
       }
    }
@@ -282,7 +282,7 @@ public final class PacketGateManager {
          return true;
       }
 
-      String registry = init_Str(PacketTypeRegistry.init_Str_Class((Class<? extends Packet<?>>)packet.getClass()));
+      String registry = init_Str(PacketTypeRegistry.getPacketName((Class<? extends Packet<?>>)packet.getClass()));
       return init(want, registry);
    }
 

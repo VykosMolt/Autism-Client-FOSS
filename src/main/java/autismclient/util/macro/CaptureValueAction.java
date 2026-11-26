@@ -84,7 +84,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       this.init_V_9();
       CaptureValueAction.Inner_NetHelper preview = this.load_TaskQueue_NetHelpe_Minecraft(mc);
       if (preview.init_Z()) {
-         MacroVariableContext.init_V_Map(preview.init_Map());
+         MacroVariableContext.setAll(preview.init_Map());
       }
 
       return preview;
@@ -96,7 +96,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
 
       if (this.source == CaptureValueAction.Inner_StateCache.RECENT_CHAT) {
-         List<MacroExecutor.LoggedChatMessage> messages = MacroExecutor.load_List();
+         List<MacroExecutor.LoggedChatMessage> messages = MacroExecutor.getRecentChatMessages();
          if (messages.isEmpty()) {
             return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("No recent chat");
          }
@@ -115,7 +115,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
             return current;
          }
 
-         List<MacroExecutor.ChatHistoryEntry> titles = MacroExecutor.read_List();
+         List<MacroExecutor.ChatHistoryEntry> titles = MacroExecutor.getRecentGuiTitles();
 
          for (MacroExecutor.ChatHistoryEntry title : titles) {
             CaptureValueAction.Inner_NetHelper candidate = this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.init_TaskQueue_DataUtil_MacroExecutor_Hash(title));
@@ -153,9 +153,9 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    public CaptureValueAction.Inner_NetHelper init_TaskQueue_NetHelpe_List_Str(List<String> suggestions, String query) {
       CaptureValueAction.Inner_DataUtil captured = this.init_TaskQueue_DataUtil_List_Map(suggestions, Map.of());
       if (captured != null && query != null && !query.isBlank()) {
-         Map<String, MacroVarValue> props = new LinkedHashMap<>(captured.init_l().init_Map());
-         props.put("query", MacroVarValue.init_l_Obj(query));
-         captured = new CaptureValueAction.Inner_DataUtil(captured.init_Str(), MacroVarValue.init(MacroVarValue.ValueType.TEXT, captured.init_l().init_Str(), props));
+         Map<String, MacroVarValue> props = new LinkedHashMap<>(captured.init_l().getProperties());
+         props.put("query", MacroVarValue.ofText(query));
+         captured = new CaptureValueAction.Inner_DataUtil(captured.init_Str(), MacroVarValue.of(MacroVarValue.ValueType.TEXT, captured.init_l().asString(), props));
       }
 
       return this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(captured);
@@ -286,7 +286,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
 
    public CaptureValueAction.Inner_NetHelper init_TaskQueue_NetHelpe() {
       return this.exampleText != null && !this.exampleText.isBlank()
-         ? this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(new CaptureValueAction.Inner_DataUtil(this.exampleText, MacroVarValue.init_l_Obj(this.exampleText)))
+         ? this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(new CaptureValueAction.Inner_DataUtil(this.exampleText, MacroVarValue.ofText(this.exampleText)))
          : CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Enter an example message");
    }
 
@@ -454,9 +454,9 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    }
 
    private static BigDecimal init_BigDecimal(MacroVarValue value, boolean embedded, MacroTemplateResolver.ResolveMode style) {
-      if (value != null && value.init_l_DataUtil() != MacroVarValue.ValueType.SLOT && value.init_l_DataUtil() != MacroVarValue.ValueType.IDENTIFIER) {
+      if (value != null && value.getType() != MacroVarValue.ValueType.SLOT && value.getType() != MacroVarValue.ValueType.IDENTIFIER) {
          try {
-            return new BigDecimal(embedded ? MacroTemplateResolver.init(value.init_Str(), style) : MacroTemplateResolver.load(value.init_Str(), style));
+            return new BigDecimal(embedded ? MacroTemplateResolver.extractNormalizedNumber(value.asString(), style) : MacroTemplateResolver.parseNormalizedNumber(value.asString(), style));
          } catch (IllegalArgumentException ignored) {
             return null;
          }
@@ -505,7 +505,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    }
 
    private static MacroVarValue init_l_l_BigDecimal(MacroVarValue source, BigDecimal number) {
-      return source.init_Map().isEmpty() ? MacroVarValue.init_l_Number(number) : MacroVarValue.init(source.init_l_DataUtil(), MacroTemplateResolver.init(number), source.init_Map());
+      return source.getProperties().isEmpty() ? MacroVarValue.ofNumber(number) : MacroVarValue.of(source.getType(), MacroTemplateResolver.formatBigDecimal(number), source.getProperties());
    }
 
    private CaptureValueAction.Inner_DataUtil init_TaskQueue_DataUtil_Minecraft(Minecraft mc) {
@@ -516,7 +516,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
             if (screen != null && !GuiScreenMatcher.init_Z(screen)) {
                String title = screen.getTitle() == null ? "" : screen.getTitle().getString();
                var10000 = new CaptureValueAction.Inner_DataUtil(
-                  title, MacroVarValue.init(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.init_l_Obj(title), "type", MacroVarValue.init_l_Obj(GuiScreenMatcher.init_Str(screen))))
+                  title, MacroVarValue.of(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.ofText(title), "type", MacroVarValue.ofText(GuiScreenMatcher.init_Str(screen))))
                );
             } else {
                CustomMenuSnapshot menu = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
@@ -525,13 +525,13 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
                } else {
                   String title = menu.title();
                   var10000 = new CaptureValueAction.Inner_DataUtil(
-                     title, MacroVarValue.init(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.init_l_Obj(title), "type", MacroVarValue.init_l_Obj("CUSTOM_MENU")))
+                     title, MacroVarValue.of(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.ofText(title), "type", MacroVarValue.ofText("CUSTOM_MENU")))
                   );
                }
             }
             break;
          case RECENT_CHAT:
-            List<MacroExecutor.LoggedChatMessage> messages = MacroExecutor.load_List();
+            List<MacroExecutor.LoggedChatMessage> messages = MacroExecutor.getRecentChatMessages();
             var10000 = messages.isEmpty() ? null : this.init_TaskQueue_DataUtil_MacroExecutor_Pack(messages.get(0));
             break;
          case SCOREBOARD:
@@ -602,7 +602,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
 
       List<String> pool = this.init_List_List(candidates);
-      CandidatePoolSelector.Inner_BufferHelper state = MacroExecutor.init_ConfigStore_Buffer_MacroAction(this);
+      CandidatePoolSelector.Inner_BufferHelper state = MacroExecutor.getCandidatePoolState(this);
       Optional<CandidatePoolSelector.Inner_StreamUtil> pick = CandidatePoolSelector.init(pool, this.listSelection, this.listPickPosition, state);
       if (pick.isEmpty()) {
          return null;
@@ -611,16 +611,16 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       CandidatePoolSelector.Inner_StreamUtil picked = pick.get();
       String value = this.listStripPrefix ? CandidatePoolSelector.init(picked.init_Str(), this.listFilter, this.listFilterText) : picked.init_Str();
       Map<String, MacroVarValue> props = new LinkedHashMap<>();
-      props.put("index", MacroVarValue.init_l_Number(picked.init_I() + 1));
-      props.put("count", MacroVarValue.init_l_Number(pool.size()));
-      props.put("total", MacroVarValue.init_l_Number(candidates.size()));
-      props.put("list", MacroVarValue.init_l_Obj(String.join(", ", pool)));
+      props.put("index", MacroVarValue.ofNumber(picked.init_I() + 1));
+      props.put("count", MacroVarValue.ofNumber(pool.size()));
+      props.put("total", MacroVarValue.ofNumber(candidates.size()));
+      props.put("list", MacroVarValue.ofText(String.join(", ", pool)));
       String prefix = prefixByValue == null ? null : prefixByValue.get(picked.init_Str());
       if (prefix != null && !prefix.isBlank()) {
-         props.put("prefix", MacroVarValue.init_l_Obj(prefix));
+         props.put("prefix", MacroVarValue.ofText(prefix));
       }
 
-      return new CaptureValueAction.Inner_DataUtil(value, MacroVarValue.init(MacroVarValue.ValueType.TEXT, value, props));
+      return new CaptureValueAction.Inner_DataUtil(value, MacroVarValue.of(MacroVarValue.ValueType.TEXT, value, props));
    }
 
    private CaptureValueAction.Inner_DataUtil init_TaskQueue_DataUtil_MacroExecutor_Pack(MacroExecutor.LoggedChatMessage chat) {
@@ -628,13 +628,13 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          return null;
       }
 
-      String display = chat.read() == null ? "" : chat.read();
+      String display = chat.displayText() == null ? "" : chat.displayText();
       Map<String, MacroVarValue> props = new LinkedHashMap<>();
-      props.put("sender", MacroVarValue.init_l_Obj(chat.init_Str()));
-      props.put("message", MacroVarValue.init_l_Obj(chat.load()));
-      props.put("display", MacroVarValue.init_l_Obj(display));
-      props.put("source", MacroVarValue.init_l_Obj(chat.init_MacroExecutor_Task() == null ? "" : chat.init_MacroExecutor_Task().name()));
-      return new CaptureValueAction.Inner_DataUtil(display, MacroVarValue.init(MacroVarValue.ValueType.TEXT, display, props));
+      props.put("sender", MacroVarValue.ofText(chat.sender()));
+      props.put("message", MacroVarValue.ofText(chat.message()));
+      props.put("display", MacroVarValue.ofText(display));
+      props.put("source", MacroVarValue.ofText(chat.source() == null ? "" : chat.source().name()));
+      return new CaptureValueAction.Inner_DataUtil(display, MacroVarValue.of(MacroVarValue.ValueType.TEXT, display, props));
    }
 
    private CaptureValueAction.Inner_DataUtil init_TaskQueue_DataUtil_MacroExecutor_Hash(MacroExecutor.ChatHistoryEntry gui) {
@@ -642,9 +642,9 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          return null;
       }
 
-      String title = gui.init_Str() == null ? "" : gui.init_Str();
+      String title = gui.title() == null ? "" : gui.title();
       return new CaptureValueAction.Inner_DataUtil(
-         title, MacroVarValue.init(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.init_l_Obj(title), "type", MacroVarValue.init_l_Obj(gui.load() == null ? "" : gui.load())))
+         title, MacroVarValue.of(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.ofText(title), "type", MacroVarValue.ofText(gui.screenType() == null ? "" : gui.screenType())))
       );
    }
 
@@ -654,13 +654,13 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
 
       Map<String, MacroVarValue> props = new LinkedHashMap<>();
-      props.put("line", MacroVarValue.init_l_Obj(line.flush()));
-      props.put("name", MacroVarValue.init_l_Obj(line.update()));
-      props.put("score", MacroVarValue.init_l_Obj(line.sync()));
-      props.put("row", MacroVarValue.init_l_Number(BigDecimal.valueOf(line.init_I() + 1L)));
-      props.put("title", MacroVarValue.init_l_Obj(line.read()));
-      props.put("objective", MacroVarValue.init_l_Obj(line.load()));
-      return new CaptureValueAction.Inner_DataUtil(line.flush(), MacroVarValue.init(MacroVarValue.ValueType.TEXT, line.flush(), props));
+      props.put("line", MacroVarValue.ofText(line.flush()));
+      props.put("name", MacroVarValue.ofText(line.update()));
+      props.put("score", MacroVarValue.ofText(line.sync()));
+      props.put("row", MacroVarValue.ofNumber(BigDecimal.valueOf(line.init_I() + 1L)));
+      props.put("title", MacroVarValue.ofText(line.read()));
+      props.put("objective", MacroVarValue.ofText(line.load()));
+      return new CaptureValueAction.Inner_DataUtil(line.flush(), MacroVarValue.of(MacroVarValue.ValueType.TEXT, line.flush(), props));
    }
 
    private CaptureValueAction.Inner_DataUtil init_TaskQueue_DataUtil_Minecraft_Z(Minecraft mc, boolean playerOnly) {
@@ -716,9 +716,9 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
 
    private CaptureValueAction.Inner_StreamUtil init_TaskQueue_StreamUt_Minecraft(Minecraft mc) {
       if (this.itemFilter != null && !this.itemFilter.isBlank()) {
-         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.itemFilter, mc);
-         return resolution.init_Z()
-            ? new CaptureValueAction.Inner_StreamUtil(true, MacroItemTarget.parse(resolution.init_Str()))
+         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.resolveTemplate(this.itemFilter, mc);
+         return resolution.success()
+            ? new CaptureValueAction.Inner_StreamUtil(true, MacroItemTarget.parse(resolution.value()))
             : new CaptureValueAction.Inner_StreamUtil(false, null);
       } else {
          return new CaptureValueAction.Inner_StreamUtil(true, null);
@@ -733,14 +733,14 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          ItemLore lore = stack.get(DataComponents.LORE);
          String loreText = lore == null ? "" : lore.lines().stream().map(line -> line.getString()).reduce((a, b) -> a + "\n" + b).orElse("");
          Map<String, MacroVarValue> props = new LinkedHashMap<>();
-         props.put("name", MacroVarValue.init_l_Obj(name));
-         props.put("id", MacroVarValue.init_l_Str(itemId));
-         props.put("count", MacroVarValue.init_l_Number(stack.getCount()));
-         props.put("slot", MacroVarValue.init_l_I(visibleSlot));
-         props.put("lore", MacroVarValue.init_l_Obj(loreText));
+         props.put("name", MacroVarValue.ofText(name));
+         props.put("id", MacroVarValue.ofIdentifier(itemId));
+         props.put("count", MacroVarValue.ofNumber(stack.getCount()));
+         props.put("slot", MacroVarValue.ofSlot(visibleSlot));
+         props.put("lore", MacroVarValue.ofText(loreText));
          if (lore != null) {
             for (int i = 0; i < lore.lines().size(); i++) {
-               props.put("lore" + (i + 1), MacroVarValue.init_l_Obj(lore.lines().get(i).getString()));
+               props.put("lore" + (i + 1), MacroVarValue.ofText(lore.lines().get(i).getString()));
             }
          }
 
@@ -760,7 +760,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          }
 
          String text = var10000;
-         return new CaptureValueAction.Inner_DataUtil(text, MacroVarValue.init(MacroVarValue.ValueType.ITEM, text, props));
+         return new CaptureValueAction.Inner_DataUtil(text, MacroVarValue.of(MacroVarValue.ValueType.ITEM, text, props));
       } else {
          return null;
       }
@@ -768,11 +768,11 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
 
    private void init_V_9() {
       if (this.saveAs != null && !this.saveAs.isBlank()) {
-         MacroVariableContext.init_V_Str(this.saveAs);
+         MacroVariableContext.remove(this.saveAs);
       }
 
       for (String name : PatternCaptureMatcher.init(this.matchMode, this.pattern)) {
-         MacroVariableContext.init_V_Str(name);
+         MacroVariableContext.remove(name);
       }
    }
 
@@ -961,7 +961,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       public String init_Str_Str(String variableName) {
          String clean = MacroVariableStore.load(variableName);
          MacroVarValue value = clean.isBlank() ? null : this.init_Map.get(clean);
-         return value == null ? "" : value.init_Str();
+         return value == null ? "" : value.asString();
       }
    }
 

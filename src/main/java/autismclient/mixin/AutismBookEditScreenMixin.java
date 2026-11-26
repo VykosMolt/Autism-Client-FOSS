@@ -81,7 +81,7 @@ public abstract class AutismBookEditScreenMixin extends Screen implements Desync
    @Override
    public void autism$closeWithPacket(boolean notify) {
       if (MC.getConnection() != null) {
-         AutismSessionState.init_ck().data(true);
+         AutismSessionState.getInstance().setForceNextBookEdit(true);
          this.autism$invokeSaveChanges();
       }
 
@@ -113,7 +113,7 @@ public abstract class AutismBookEditScreenMixin extends Screen implements Desync
             AutismClientMessaging.sendPrefixed("Failed to desync: no network.");
          }
       } else {
-         AutismSessionState.init_ck().data(true);
+         AutismSessionState.getInstance().setForceNextBookEdit(true);
          this.autism$invokeSaveChanges();
          if (notify) {
             AutismClientMessaging.sendPrefixed("Book update packet sent; GUI intentionally stays open.");

@@ -169,7 +169,7 @@ public final class PkgCls_a {
          return "Join a world first";
       }
 
-      if (MacroExecutor.write_Z()) {
+      if (MacroExecutor.isRunning()) {
          return "Stop the running macro first";
       }
 
@@ -1334,7 +1334,7 @@ public final class PkgCls_a {
    }
 
    private static String init_Str_a_ConfigStore_Minecraft(PkgCls_a.Inner_ConfigStore job, Minecraft mc) {
-      if (job.init_Z ? MacroExecutor.write_Z() : !MacroExecutor.write_Z()) {
+      if (job.init_Z ? MacroExecutor.isRunning() : !MacroExecutor.isRunning()) {
          if (mc.player != job.init_LocalPlayer || mc.getConnection() != job.init_Obj || mc.level != job.load_Obj) {
             return "player connection changed";
          } else if (job.init_LocalPlayer.isDeadOrDying()) {

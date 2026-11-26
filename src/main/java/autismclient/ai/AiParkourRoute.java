@@ -547,7 +547,7 @@ final class AiParkourRoute implements AiOperation {
          }
 
          Minecraft var22 = Minecraft.getInstance();
-         if (this.putAt_BufferCore == null && !autismclient.util.OverlayScreenController.init_Z()) {
+         if (this.putAt_BufferCore == null && !autismclient.util.OverlayScreenController.hasModalScreen()) {
             autismclient.ai.engine.AiParkourFallWarning.Inner_DataUtil var27 = autismclient.ai.engine.AiParkourFallWarning.putAt_BufferCore_CacheHe_Minecraft_List(
                var22, var20.movements()
             );

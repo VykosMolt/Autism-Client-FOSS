@@ -66,7 +66,7 @@ public class WaitForLanStepAction implements MacroAction {
       }
 
       tag.put("entries", list);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
 
@@ -78,7 +78,7 @@ public class WaitForLanStepAction implements MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
       this.entries.clear();
       if (tag.contains("entries")) {
          for (Tag el : tag.getList("entries").orElse(new ListTag())) {

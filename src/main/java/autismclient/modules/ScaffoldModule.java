@@ -1162,7 +1162,7 @@ public final class ScaffoldModule extends Module {
       }
 
       float requested = read_F_F(this.load_F_2());
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (tick != this.f_u_I) {
          float[] next = init_FArr_F(this.node_F, this.task_F, this.f_t_I, requested);
          this.node_F = next[0];
@@ -1197,7 +1197,7 @@ public final class ScaffoldModule extends Module {
       }
 
       Vec3 delta = MC.player.getDeltaMovement();
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (tick != this.f_ad_I) {
          this.f_ad_I = tick;
          Input keys = MC.player.input == null ? null : MC.player.input.keyPresses;
@@ -1229,7 +1229,7 @@ public final class ScaffoldModule extends Module {
       if (!this.cache_Z()) {
          this.init_aI_HashUtil = null;
          this.g_V();
-      } else if (!BlinkPacketManager.load_Z()) {
+      } else if (!BlinkPacketManager.isHoldingActionsOnly()) {
          this.write_Z = false;
          InteractionHand hand = this.init_InteractionHand();
          if (hand == null) {
@@ -1416,7 +1416,7 @@ public final class ScaffoldModule extends Module {
             } else {
                this.next_V();
             }
-         } else if (BlinkPacketManager.load_Z()) {
+         } else if (BlinkPacketManager.isHoldingActionsOnly()) {
             this.add_Str = "blink-action-only";
             this.init_V_Str_aI_TableIndex("real-wait", this.read_aI_TableIndex);
             this.g_V();
@@ -1515,7 +1515,7 @@ public final class ScaffoldModule extends Module {
                      boolean paceFreesPitch = false;
                      if (clickable != null && this.init_Z_aI_TableIndex_ce_DataUtil(clickable, clickRotation)) {
                         paceFreesPitch = true;
-                        this.f_aV_I = AutismSessionState.init_ck().state_I();
+                        this.f_aV_I = AutismSessionState.getInstance().getClientTick();
                      }
 
                      this.init_ce_DataUtil_ce_DataUtil_Z(this.init_ce_DataUtil_aI_TableIndex(target), load_Z_Z_Z(rayLands || laneRay != null, paceFreesPitch));
@@ -1596,7 +1596,7 @@ public final class ScaffoldModule extends Module {
                         this.f_ag_I = 0;
                         this.f_ah_I = 0;
                         this.f_ar_I = 0;
-                        int tick = AutismSessionState.init_ck().state_I();
+                        int tick = AutismSessionState.getInstance().getClientTick();
                         if (!this.block_Z() && tick == this.f_z_I) {
                            this.add_Str = "sametick";
                            this.init_V_Str_aI_TableIndex("pace-hold", target);
@@ -1605,14 +1605,14 @@ public final class ScaffoldModule extends Module {
                            if (paceFreesPitch || pitchFreed || this.init_Z_aI_TableIndex_ce_DataUtil(target, clickRotation)) {
                               if (target.load().getY() > target.init_BlockPos().getY() || this.write_Z_BlockPos(target.load())) {
                                  this.tick_BlockPos = target.load().immutable();
-                                 this.f_ak_I = AutismSessionState.init_ck().state_I();
+                                 this.f_ak_I = AutismSessionState.getInstance().getClientTick();
                               }
 
                               this.add_Str = !paceFreesPitch && pitchFreed
                                  ? "pace-pfree"
                                  : "pace-" + this.clear_J + (this.f_m_Z ? "/imean" : "/" + this.reset_J + "ms");
                               this.init_V_Str_aI_TableIndex("pace-hold", target);
-                           } else if (BlinkPacketManager.load_Z()) {
+                           } else if (BlinkPacketManager.isHoldingActionsOnly()) {
                               this.add_Str = "blink-action-only";
                               this.init_V_Str_aI_TableIndex("real-wait", target);
                            } else {
@@ -1676,7 +1676,7 @@ public final class ScaffoldModule extends Module {
       this.set_V();
       ScaffoldModule.PlannedPlacement pending = this.read_aI_TableIndex;
       if (pending != null && MC.level != null && MC.player != null) {
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          int age = Math.max(0, tick - this.f_aJ_I);
          BlockPos cell = pending.load();
          boolean solid = this.init_Z_BlockState_BlockPos(MC.level.getBlockState(cell), cell);
@@ -2189,7 +2189,7 @@ public final class ScaffoldModule extends Module {
          && target.init_Direction().getAxis().isHorizontal()
          && !this.sync(target)) {
          this.read_Direction = target.init_Direction();
-         this.f_aC_I = AutismSessionState.init_ck().state_I();
+         this.f_aC_I = AutismSessionState.getInstance().getClientTick();
       }
    }
 
@@ -2202,7 +2202,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean init_Z_Z_Vec3(boolean rising, Vec3 lane) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       boolean starves = init_Z_Direction(this.read_Direction, load_I_I_I(tick, this.f_aC_I), rising, lane);
       if (tick != this.f_aD_I) {
          this.f_aD_I = tick;
@@ -2836,7 +2836,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean init_Z_BlockPos_5(BlockPos support, Direction face, int maxTicks) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (support.equals(this.run_BlockPos) && face == this.load_Direction) {
          if (tick != this.f_an_I) {
             this.f_am_I++;
@@ -2945,12 +2945,12 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean tick_Z_4() {
-      int since = load_I_I_I(AutismSessionState.init_ck().state_I(), this.f_ao_I);
+      int since = load_I_I_I(AutismSessionState.getInstance().getClientTick(), this.f_ao_I);
       return since >= 0 && since <= 150;
    }
 
    private boolean load_Z_Z(boolean wanted) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (this.f_ap_I > 0) {
          if (!wanted && this.f_aq_I >= (this.state_Z ? 3 : 2) && this.run_Z()) {
             this.f_ap_I = 0;
@@ -2992,7 +2992,7 @@ public final class ScaffoldModule extends Module {
 
    private void read_V_BlockPos(BlockPos cell) {
       if (cell != null) {
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          this.init_Map.entrySet().removeIf(entry -> load_I_I_I(tick, entry.getValue()) >= 10);
          if (this.init_Map.size() < 32) {
             this.init_Map.put(cell.immutable(), tick);
@@ -3007,7 +3007,7 @@ public final class ScaffoldModule extends Module {
          Integer marked = this.init_Map.get(cell);
          if (marked == null) {
             return false;
-         } else if (load_I_I_I(AutismSessionState.init_ck().state_I(), marked) >= 10) {
+         } else if (load_I_I_I(AutismSessionState.getInstance().getClientTick(), marked) >= 10) {
             this.init_Map.remove(cell);
             return false;
          } else {
@@ -3127,7 +3127,7 @@ public final class ScaffoldModule extends Module {
                )
             );
             this.f_aX_I = this.f_au_I;
-            this.f_aY_I = AutismSessionState.init_ck().state_I();
+            this.f_aY_I = AutismSessionState.getInstance().getClientTick();
             this.poll_Vec3 = p;
             this.run_Str = (this.put_BlockPos == null ? "--" : this.put_BlockPos.toShortString()) + ":" + this.update_Str;
             this.f_aZ_I = 0;
@@ -3150,7 +3150,7 @@ public final class ScaffoldModule extends Module {
                   "[scaffold-why] t%03d arcend     from=t%03d ticks=%d lines=%d dy=%+.2f dxz=%.2f placed=%d set=%d aim=%d pace=%d notgt=%d drop=%d goal=%s end=%s",
                   this.f_au_I,
                   this.f_aX_I,
-                  this.f_aY_I < 0 ? -1 : AutismSessionState.init_ck().state_I() - this.f_aY_I,
+                  this.f_aY_I < 0 ? -1 : AutismSessionState.getInstance().getClientTick() - this.f_aY_I,
                   this.f_au_I - this.f_aX_I,
                   this.poll_Vec3 == null ? 0.0 / 0.0 : p.y - this.poll_Vec3.y,
                   this.poll_Vec3 == null ? 0.0 / 0.0 : Math.hypot(p.x - this.poll_Vec3.x, p.z - this.poll_Vec3.z),
@@ -3191,7 +3191,7 @@ public final class ScaffoldModule extends Module {
 
          if (!this.f_o_Z && MC.player != null && !MC.player.onGround() && MC.player.fallDistance >= 0.5 && MC.player.getDeltaMovement().y < 0.0) {
             this.f_o_Z = true;
-            int placeAge = this.f_av_I == -2147483648 ? -1 : AutismSessionState.init_ck().state_I() - this.f_av_I;
+            int placeAge = this.f_av_I == -2147483648 ? -1 : AutismSessionState.getInstance().getClientTick() - this.f_av_I;
             ScaffoldModule.PlannedPlacement held = this.read_aI_TableIndex != null ? this.read_aI_TableIndex : this.load_aI_TableIndex;
             AsyncTraceLogger.init(
                String.format(
@@ -3339,7 +3339,7 @@ public final class ScaffoldModule extends Module {
       if (target != null && target.init_BlockHitResult() != null) {
          Vec3 loc = target.init_BlockHitResult().getLocation();
          BlockPos block = target.init_BlockHitResult().getBlockPos();
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          int gap = this.f_av_I == -2147483648 ? -1 : tick - this.f_av_I;
          this.f_av_I = tick;
          RotationMath.Rotation click = this.update_ce_DataUtil;
@@ -3381,7 +3381,7 @@ public final class ScaffoldModule extends Module {
          this.f_by_I++;
       }
 
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       int dt = this.f_bz_I == -2147483648 ? 1 : tick - this.f_bz_I;
       this.f_bz_I = tick;
       return String.format(
@@ -3417,7 +3417,7 @@ public final class ScaffoldModule extends Module {
       int sidewaysImpulse = (emitted.left() ? 1 : 0) - (emitted.right() ? 1 : 0);
       double octant = init_D_I_I(forwardImpulse, sidewaysImpulse);
       double flip = init_D_D_3(this.fill_F);
-      boolean paired = this.f_bE_I == AutismSessionState.init_ck().state_I() - 1;
+      boolean paired = this.f_bE_I == AutismSessionState.getInstance().getClientTick() - 1;
       if (paired && !Double.isNaN(octant) && !Float.isNaN(f_l_F) && !Float.isNaN(this.bind_F)) {
          double residual = Mth.wrapDegrees(f_l_F + octant - this.bind_F);
          double speed = init_D_Z_Z(this.f_q_Z, emitted.sprint());
@@ -3477,7 +3477,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void init_V_aI_TaskTimer(ScaffoldModule.KinematicsSnapshot drift, double laneError, Vec3 pos) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (tick != this.f_bA_I) {
          this.f_bA_I = tick;
          if (!Double.isNaN(drift.write())) {
@@ -3620,7 +3620,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void start_V() {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (tick != this.f_ax_I) {
          this.f_ax_I = tick;
          this.write_V_Str(this.push_Z ? "tick" : "idle");
@@ -3685,7 +3685,7 @@ public final class ScaffoldModule extends Module {
 
    private String flush_Str() {
       ScaffoldModule.RowLockBounds lock = this.flags_Z() ? this.init_aI_FileCache() : null;
-      int age = this.f_aG_I < 0 ? -1 : AutismSessionState.init_ck().state_I() - this.f_aG_I;
+      int age = this.f_aG_I < 0 ? -1 : AutismSessionState.getInstance().getClientTick() - this.f_aG_I;
       String sticky = "stk=" + (this.load_aI_TableIndex == null ? "none" : age + "/" + this.f_aH_I);
       return lock == null
          ? "lock=none " + sticky
@@ -3952,7 +3952,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private RotationMath.Rotation init_ce_DataUtil_ce_DataUtil_Z(RotationMath.Rotation goal, boolean holdPitch) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (this.f_y_I == tick && this.load_ce_DataUtil != null) {
          return this.load_ce_DataUtil;
       }
@@ -4099,16 +4099,16 @@ public final class ScaffoldModule extends Module {
    }
 
    private ScaffoldModule.WireClickRotation init_aI_TextFormat() {
-      return init_aI_TextFormat_ch_CachePool(ServerRotationTracker.init_ch_CachePool());
+      return init_aI_TextFormat_ch_CachePool(ServerRotationTracker.getSnapshot());
    }
 
    static ScaffoldModule.WireClickRotation init_aI_TextFormat_ch_CachePool(ServerRotationTracker.RotationSnapshot snapshot) {
-      if (snapshot != null && snapshot.init_Z() && Float.isFinite(snapshot.read()) && Float.isFinite(snapshot.write())) {
-         RotationMath.Rotation current = new RotationMath.Rotation(snapshot.read(), snapshot.write());
-         RotationMath.Rotation previous = Float.isFinite(snapshot.init_F()) && Float.isFinite(snapshot.load())
-            ? new RotationMath.Rotation(snapshot.init_F(), snapshot.load())
+      if (snapshot != null && snapshot.initialized() && Float.isFinite(snapshot.currentYaw()) && Float.isFinite(snapshot.currentPitch())) {
+         RotationMath.Rotation current = new RotationMath.Rotation(snapshot.currentYaw(), snapshot.currentPitch());
+         RotationMath.Rotation previous = Float.isFinite(snapshot.previousYaw()) && Float.isFinite(snapshot.previousPitch())
+            ? new RotationMath.Rotation(snapshot.previousYaw(), snapshot.previousPitch())
             : current;
-         return new ScaffoldModule.WireClickRotation(previous, current, snapshot.init_I());
+         return new ScaffoldModule.WireClickRotation(previous, current, snapshot.tick());
       } else {
          return null;
       }
@@ -4273,7 +4273,7 @@ public final class ScaffoldModule extends Module {
                || init_Z_KeyMapping(MC.options.keyRight),
             this.init_aI_HashUtil == null ? null : this.init_aI_HashUtil.load(),
             this.read_Vec3_aI_HashUtil(this.init_aI_HashUtil),
-            AutismSessionState.init_ck().state_I(),
+            AutismSessionState.getInstance().getClientTick(),
             this.f_z_I
          );
    }
@@ -4287,12 +4287,12 @@ public final class ScaffoldModule extends Module {
 
    private RotationMath.Rotation write_ce_DataUtil() {
       float pitch = this.count_F;
-      if (Float.isFinite(this.f_c_F) && this.update_Z_I(AutismSessionState.init_ck().state_I())) {
+      if (Float.isFinite(this.f_c_F) && this.update_Z_I(AutismSessionState.getInstance().getClientTick())) {
          pitch = this.f_c_F;
       }
 
       float yaw = this.read_F();
-      if (this.f_aJ_I != AutismSessionState.init_ck().state_I() && this.f_q_I != -1 && this.f_r_I >= 2) {
+      if (this.f_aJ_I != AutismSessionState.getInstance().getClientTick() && this.f_q_I != -1 && this.f_r_I >= 2) {
          int candidateLane = init_I_I_I(this.f_q_I, this.f_s_I);
          if (candidateLane != -1) {
             yaw = read_F_F(init_F_I(candidateLane));
@@ -4491,7 +4491,7 @@ public final class ScaffoldModule extends Module {
             BlockPos groundedSupport = this.init_BlockPos_LocalPlayer(player);
             if (groundedSupport != null) {
                this.flush_BlockPos = groundedSupport.immutable();
-               this.f_ac_I = AutismSessionState.init_ck().state_I();
+               this.f_ac_I = AutismSessionState.getInstance().getClientTick();
             }
          }
 
@@ -5525,7 +5525,7 @@ public final class ScaffoldModule extends Module {
          this.sync_Z = false;
          this.f_bG_I = 0;
          this.f_v_I = 5;
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          this.f_y_I = this.f_T_I == tick ? tick : -2147483648;
          this.f_aV_I = tick;
          this.f_aQ_I = 0;
@@ -5655,7 +5655,7 @@ public final class ScaffoldModule extends Module {
                      return;
                   }
 
-                  this.f_Z_I = AutismSessionState.init_ck().state_I();
+                  this.f_Z_I = AutismSessionState.getInstance().getClientTick();
                }
 
                if (!this.init_Z_LocalPlayer_2(player, first, flatEntry)) {
@@ -6039,7 +6039,7 @@ public final class ScaffoldModule extends Module {
          return false;
       }
 
-      int sinceGrounded = AutismSessionState.init_ck().state_I() - this.f_ac_I;
+      int sinceGrounded = AutismSessionState.getInstance().getClientTick() - this.f_ac_I;
       return sinceGrounded >= 0 && sinceGrounded <= 6 ? !this.init_Z_D(player.getX(), player.getY(), player.getZ(), 2) : false;
    }
 
@@ -6092,7 +6092,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private static void queue_V() {
-      float written = ServerRotationTracker.init_F();
+      float written = ServerRotationTracker.getLastWireYaw();
       if (Float.isFinite(written)) {
          f_l_F = written;
       }
@@ -6116,12 +6116,12 @@ public final class ScaffoldModule extends Module {
          && scaffold.isEnabled()
          && scaffold.frame_Z()
          && scaffold.init_aI_SyncManager == ScaffoldModule.PlacementState.ARMED
-         && scaffold.f_aJ_I == AutismSessionState.init_ck().state_I();
+         && scaffold.f_aJ_I == AutismSessionState.getInstance().getClientTick();
    }
 
    public static boolean load_Z_11() {
       if (AutismLiteVariant.enabled() || !DangerModule.read_Z_22() && !ClutchModule.read_Z_20()) {
-         if (init_Z_26() && !BlinkPacketManager.load_Z()) {
+         if (init_Z_26() && !BlinkPacketManager.isHoldingActionsOnly()) {
             Module module = al.init_Module_Str("scaffold");
             ScaffoldModule scaffold = (ScaffoldModule)module;
             return autismclient.util.VirtualInputDispatcher.init_Z_J(scaffold.put_J);
@@ -6186,7 +6186,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void buffer_V() {
-      if (this.f_aJ_I == AutismSessionState.init_ck().state_I()
+      if (this.f_aJ_I == AutismSessionState.getInstance().getClientTick()
          && this.read_aI_TableIndex != null
          && this.update_ce_DataUtil != null
          && this.init_aI_SyncManager == ScaffoldModule.PlacementState.ARMED) {
@@ -6216,7 +6216,7 @@ public final class ScaffoldModule extends Module {
          if (this.init_aI_CacheEntry != null) {
             ScaffoldModule.LivePlacement prepared = this.init_aI_CacheEntry.init_aI_DataPipe();
             boolean optional = prepared.init_aI_TableIndex().load().equals(this.load_BlockPos);
-            if (optional && this.init_aI_CacheEntry.init_I() == AutismSessionState.init_ck().state_I()) {
+            if (optional && this.init_aI_CacheEntry.init_I() == AutismSessionState.getInstance().getClientTick()) {
                return;
             }
 
@@ -6406,7 +6406,7 @@ public final class ScaffoldModule extends Module {
    private void node_V() {
       if (MC != null && MC.player != null && MC.level != null) {
          this.get_V();
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          if (tick != this.f_bN_I) {
             this.f_bN_I = tick;
             this.task_V();
@@ -6422,7 +6422,7 @@ public final class ScaffoldModule extends Module {
          this.table_V();
          if (this.level_Z()) {
             this.drain_V();
-            int age = Math.max(0, AutismSessionState.init_ck().state_I() - this.f_aJ_I);
+            int age = Math.max(0, AutismSessionState.getInstance().getClientTick() - this.f_aJ_I);
             if (init_Z_aI_SyncManager(this.init_aI_SyncManager, age, this.store_Z, this.f_aK_I)) {
                autismclient.util.VirtualInputDispatcher.update_V();
                this.init_V_Str_3("input-not-consumed");
@@ -6473,7 +6473,7 @@ public final class ScaffoldModule extends Module {
 
    private void pool_V() {
       if (this.stop_Z && this.open_BlockPos != null) {
-         int age = Math.max(0, AutismSessionState.init_ck().state_I() - this.f_aJ_I);
+         int age = Math.max(0, AutismSessionState.getInstance().getClientTick() - this.f_aJ_I);
          ScaffoldModule.PlacementAckStatus status = init_aI_StreamGate_aI_SyncManager(
             this.init_aI_SyncManager,
             age,
@@ -6957,12 +6957,12 @@ public final class ScaffoldModule extends Module {
          return false;
       }
 
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (tick == this.f_z_I || this.poll_Z_3()) {
          return false;
       }
 
-      if (BlinkPacketManager.load_Z()) {
+      if (BlinkPacketManager.isHoldingActionsOnly()) {
          return false;
       }
 
@@ -7009,7 +7009,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void count_V() {
-      if (this.f_aJ_I == AutismSessionState.init_ck().state_I() && this.read_aI_TableIndex != null && this.init_aI_SyncManager == ScaffoldModule.PlacementState.ARMED) {
+      if (this.f_aJ_I == AutismSessionState.getInstance().getClientTick() && this.read_aI_TableIndex != null && this.init_aI_SyncManager == ScaffoldModule.PlacementState.ARMED) {
          if (this.flush(this.read_aI_TableIndex)) {
             MC.hitResult = this.read_aI_TableIndex.init_BlockHitResult();
          } else {
@@ -7347,7 +7347,7 @@ public final class ScaffoldModule extends Module {
    private ScaffoldModule.PlannedPlacement init_aI_TableIndex_aI_TableIndex_Vec3(ScaffoldModule.PlannedPlacement live, Vec3 eye) {
       this.update_Z = false;
       RotationMath.Rotation proposed = this.init_aM()
-         .init(this.poll_ce_DataUtil(), live.init_ce_DataUtil(), false, this.init_RangeSetting.get(), RotationMath.gcdStep(), AutismSessionState.init_ck().state_I());
+         .init(this.poll_ce_DataUtil(), live.init_ce_DataUtil(), false, this.init_RangeSetting.get(), RotationMath.gcdStep(), AutismSessionState.getInstance().getClientTick());
       ScaffoldModule.PlannedPlacement endpoint = new ScaffoldModule.PlannedPlacement(
          live.init_BlockPos(), live.load(), live.init_Direction(), live.init_BlockHitResult(), proposed, live.init_D()
       );
@@ -7762,7 +7762,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean poll_Z(LocalPlayer player) {
-      if (!this.count_Z() && this.f_Z_I != AutismSessionState.init_ck().state_I() && !init_Z_KeyMapping(MC.options.keyShift)) {
+      if (!this.count_Z() && this.f_Z_I != AutismSessionState.getInstance().getClientTick() && !init_Z_KeyMapping(MC.options.keyShift)) {
          AutismLocalPlayerAccessor vanilla = (AutismLocalPlayerAccessor)player;
          return vanilla.autism$isSprintingPossible(player.getAbilities().flying)
             && !player.isMovingSlowly()
@@ -8442,7 +8442,7 @@ public final class ScaffoldModule extends Module {
                   }
 
                   this.node_Z = true;
-                  this.f_Y_I = AutismSessionState.init_ck().state_I();
+                  this.f_Y_I = AutismSessionState.getInstance().getClientTick();
                   this.init_aI_PathHelper = push;
                   this.buffer_Z = !push.init_Z();
                   this.init_aI_KeyHolder = push.init_Z() ? ScaffoldModule.ForwardKeyState.FORWARD : ScaffoldModule.ForwardKeyState.HOLD;
@@ -8495,7 +8495,7 @@ public final class ScaffoldModule extends Module {
    private BlockPos init_BlockPos_LocalPlayer(LocalPlayer player, BlockPos root, int optional) {
       if (!this.stop_Z && this.f_G_I <= 0) {
          ScaffoldModule.WireClickRotation wire = this.init_aI_TextFormat();
-         if (wire != null && wire.init_I() < AutismSessionState.init_ck().state_I()) {
+         if (wire != null && wire.init_I() < AutismSessionState.getInstance().getClientTick()) {
             BlockHitResult ray = init_BlockHitResult_Vec3(player.getEyePosition(), wire.load(), player.blockInteractionRange() - 0.035, MC.level, player);
             if (ray != null && this.init_Z_BlockHitResult_3(ray)) {
                BlockPos placed = ray.getBlockPos().relative(ray.getDirection());
@@ -9277,7 +9277,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean prev_Z() {
-      return this.f_T_I == AutismSessionState.init_ck().state_I();
+      return this.f_T_I == AutismSessionState.getInstance().getClientTick();
    }
 
    private RotationMath.Rotation flush_ce_DataUtil() {
@@ -9285,7 +9285,7 @@ public final class ScaffoldModule extends Module {
          this.write_ce_DataUtil = this.poll_ce_DataUtil();
       }
 
-      this.f_T_I = AutismSessionState.init_ck().state_I();
+      this.f_T_I = AutismSessionState.getInstance().getClientTick();
       this.load_ce_DataUtil = this.write_ce_DataUtil;
       this.f_v_I = 5;
       return this.write_ce_DataUtil;
@@ -9296,14 +9296,14 @@ public final class ScaffoldModule extends Module {
    }
 
    private RotationMath.Rotation init_ce_DataUtil_ce_DataUtil_F(RotationMath.Rotation goal, float cap) {
-      RotationMath.Rotation planned = this.init_aI_CacheEntry != null && this.init_aI_CacheEntry.init_I() == AutismSessionState.init_ck().state_I()
+      RotationMath.Rotation planned = this.init_aI_CacheEntry != null && this.init_aI_CacheEntry.init_I() == AutismSessionState.getInstance().getClientTick()
          ? this.init_aI_CacheEntry.init_aI_DataPipe().init_aI_TableIndex().init_ce_DataUtil()
-         : this.init_aM().init(this.poll_ce_DataUtil(), goal, this.update_Z, this.init_RangeSetting.get(), RotationMath.gcdStep(), AutismSessionState.init_ck().state_I());
+         : this.init_aM().init(this.poll_ce_DataUtil(), goal, this.update_Z, this.init_RangeSetting.get(), RotationMath.gcdStep(), AutismSessionState.getInstance().getClientTick());
       this.write_ce_DataUtil = RotationMath.stepQuantized(this.poll_ce_DataUtil(), planned, cap, cap, RotationMath.gcdStep());
-      this.init_aM().init(this.write_ce_DataUtil, AutismSessionState.init_ck().state_I());
-      this.f_U_I = AutismSessionState.init_ck().state_I();
+      this.init_aM().init(this.write_ce_DataUtil, AutismSessionState.getInstance().getClientTick());
+      this.f_U_I = AutismSessionState.getInstance().getClientTick();
       autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, this.write_ce_DataUtil);
-      this.f_T_I = AutismSessionState.init_ck().state_I();
+      this.f_T_I = AutismSessionState.getInstance().getClientTick();
       this.load_ce_DataUtil = this.write_ce_DataUtil;
       this.f_v_I = 5;
       return this.write_ce_DataUtil;
@@ -9311,13 +9311,13 @@ public final class ScaffoldModule extends Module {
 
    private void read_V_ce_DataUtil(RotationMath.Rotation rotation) {
       this.write_ce_DataUtil = rotation;
-      this.init_aM().init(rotation, AutismSessionState.init_ck().state_I());
+      this.init_aM().init(rotation, AutismSessionState.getInstance().getClientTick());
       autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, rotation);
       this.load_ce_DataUtil = rotation;
       this.f_v_I = 5;
-      this.f_T_I = AutismSessionState.init_ck().state_I();
+      this.f_T_I = AutismSessionState.getInstance().getClientTick();
       this.size_Z = true;
-      this.f_U_I = AutismSessionState.init_ck().state_I();
+      this.f_U_I = AutismSessionState.getInstance().getClientTick();
       this.data_Z = false;
    }
 
@@ -9364,12 +9364,12 @@ public final class ScaffoldModule extends Module {
             }
          }
 
-         if (this.init_aI_CacheEntry != null && this.init_aI_CacheEntry.init_I() < AutismSessionState.init_ck().state_I()) {
+         if (this.init_aI_CacheEntry != null && this.init_aI_CacheEntry.init_I() < AutismSessionState.getInstance().getClientTick()) {
             ScaffoldModule.WireClickRotation wire = this.init_aI_TextFormat();
             if (wire != null
                && init_Z_I_2(
                   this.init_aI_CacheEntry.init_I(),
-                  AutismSessionState.init_ck().state_I(),
+                  AutismSessionState.getInstance().getClientTick(),
                   wire.init_I(),
                   this.init_aI_CacheEntry.init_aI_DataPipe().init_aI_TableIndex().init_ce_DataUtil(),
                   wire.load()
@@ -9421,7 +9421,7 @@ public final class ScaffoldModule extends Module {
       if (this.init_aI_CacheEntry != null) {
          ScaffoldModule.LivePlacement prepared = this.init_aI_CacheEntry.init_aI_DataPipe();
          boolean current = this.init_aI_DataPipe != null && prepared.init_aI_TableIndex().load().equals(this.init_aI_DataPipe.init_aI_TableIndex().load());
-         boolean stillVisible = this.init_aI_CacheEntry.init_I() == AutismSessionState.init_ck().state_I()
+         boolean stillVisible = this.init_aI_CacheEntry.init_I() == AutismSessionState.getInstance().getClientTick()
             || this.init_aI_TableIndex_aI_TableIndex(prepared.init_aI_TableIndex()) != null;
          if (!stillVisible || !current && (!prepared.init_Z() || !this.open_Z(player))) {
             this.init_aI_CacheEntry = null;
@@ -9429,12 +9429,12 @@ public final class ScaffoldModule extends Module {
          }
       }
 
-      if (this.init_aI_CacheEntry != null && this.init_aI_CacheEntry.init_I() < AutismSessionState.init_ck().state_I()) {
+      if (this.init_aI_CacheEntry != null && this.init_aI_CacheEntry.init_I() < AutismSessionState.getInstance().getClientTick()) {
          ScaffoldModule.WireClickRotation wire = this.init_aI_TextFormat();
          if (wire != null
             && init_Z_I_2(
                this.init_aI_CacheEntry.init_I(),
-               AutismSessionState.init_ck().state_I(),
+               AutismSessionState.getInstance().getClientTick(),
                wire.init_I(),
                this.init_aI_CacheEntry.init_aI_DataPipe().init_aI_TableIndex().init_ce_DataUtil(),
                wire.load()
@@ -9679,7 +9679,7 @@ public final class ScaffoldModule extends Module {
             }
          }
 
-         this.init_aI_CacheEntry = new ScaffoldModule.QuantizedPlacement(new ScaffoldModule.LivePlacement(quantized, placement.init_Z()), AutismSessionState.init_ck().state_I());
+         this.init_aI_CacheEntry = new ScaffoldModule.QuantizedPlacement(new ScaffoldModule.LivePlacement(quantized, placement.init_Z()), AutismSessionState.getInstance().getClientTick());
          this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.PLACING;
          return new ScaffoldModule.AimGoal(quantized.init_ce_DataUtil(), ScaffoldModule.AimMode.PLACEMENT);
       } else {
@@ -10174,7 +10174,7 @@ public final class ScaffoldModule extends Module {
       if (!this.count_Z()
          && this.f_A_I <= 1
          && !coast
-         && this.f_Y_I == AutismSessionState.init_ck().state_I()
+         && this.f_Y_I == AutismSessionState.getInstance().getClientTick()
          && this.init_aI_PathHelper != null
          && this.init_aI_PathHelper.init_Z()) {
          return this.read_I_I(player.getInventory().getSelectedSlot()) >= this.init_aI_PathHelper.init_I() + this.init_aN.init_I() + 1;
@@ -10374,7 +10374,7 @@ public final class ScaffoldModule extends Module {
 
    private void poll_V(LocalPlayer player) {
       if (this.push_Z && player != null && !player.onGround() && this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RETURNING && (!this.size_Z || !this.prev_Z())) {
-         if (read_Z_Z(this.prev_Z(), this.f_U_I == AutismSessionState.init_ck().state_I(), this.size_Z)) {
+         if (read_Z_Z(this.prev_Z(), this.f_U_I == AutismSessionState.getInstance().getClientTick(), this.size_Z)) {
             this.f_T_I = -2147483648;
          }
 
@@ -10667,7 +10667,7 @@ public final class ScaffoldModule extends Module {
                   System.nanoTime(),
                   use.hand(),
                   queued,
-                  ServerRotationTracker.init_ch_CachePool()
+                  ServerRotationTracker.getSnapshot()
                )
             );
          }
@@ -10695,9 +10695,9 @@ public final class ScaffoldModule extends Module {
    }
 
    private void init_V_Packet_aI_RenderState(Packet<?> packet, ScaffoldModule.QueuedPacketContext queued) {
-      ServerRotationTracker.RotationSnapshot snapshot = ServerRotationTracker.init_ch_CachePool();
-      RotationMath.Rotation wire = snapshot.init_Z() ? new RotationMath.Rotation(ServerRotationTracker.init_F(), snapshot.write()) : null;
-      int tick = AutismSessionState.init_ck().state_I();
+      ServerRotationTracker.RotationSnapshot snapshot = ServerRotationTracker.getSnapshot();
+      RotationMath.Rotation wire = snapshot.initialized() ? new RotationMath.Rotation(ServerRotationTracker.getLastWireYaw(), snapshot.currentPitch()) : null;
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (packet instanceof ServerboundUseItemOnPacket use && queued != null) {
          BlockHitResult hit = use.hitResult();
          this.init_aO
@@ -10746,7 +10746,7 @@ public final class ScaffoldModule extends Module {
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && scaffold.index_Z() && scaffold.init_aO.init(cell)) {
          BlockPos immutable = cell.immutable();
          scaffold.init_aO
-            .init(new ScaffoldFailureRecorder.Inner_StreamUtil("server-block", AutismSessionState.init_ck().state_I(), -1, immutable, null, null, null, null, null, null, null, state.toString()));
+            .init(new ScaffoldFailureRecorder.Inner_StreamUtil("server-block", AutismSessionState.getInstance().getClientTick(), -1, immutable, null, null, null, null, null, null, null, state.toString()));
          if (state.isAir()) {
             scaffold.init_V_Str("server-sent-air-for-recent-use", immutable, -1);
          }
@@ -10755,7 +10755,7 @@ public final class ScaffoldModule extends Module {
 
    private void init_V_Str(String reason, BlockPos cell, int sequence) {
       if (MC != null && MC.level != null && MC.player != null && this.init_AtomicBoolean.compareAndSet(false, true)) {
-         ScaffoldFailureRecorder.Inner_DataUtil capture = this.init_aO.init(reason, cell, sequence, AutismSessionState.init_ck().state_I(), System.nanoTime());
+         ScaffoldFailureRecorder.Inner_DataUtil capture = this.init_aO.init(reason, cell, sequence, AutismSessionState.getInstance().getClientTick(), System.nanoTime());
          if (capture == null) {
             this.init_AtomicBoolean.set(false);
          } else {
@@ -10892,7 +10892,7 @@ public final class ScaffoldModule extends Module {
          this.drain_Z = result != null && result.consumesAction();
          if (this.index_Z() && this.drain_Z && this.f_C_I >= 0 && !MC.player.hasInfiniteMaterials()) {
             this.load_IArr[this.f_C_I] = Math.max(0, this.load_IArr[this.f_C_I] - 1);
-            this.write_IArr[this.f_C_I] = AutismSessionState.init_ck().state_I();
+            this.write_IArr[this.f_C_I] = AutismSessionState.getInstance().getClientTick();
          }
 
          this.write_Str = result == null ? "null" : result.getClass().getSimpleName().toLowerCase(Locale.ROOT);
@@ -10937,7 +10937,7 @@ public final class ScaffoldModule extends Module {
       ScaffoldModule.PlannedPlacement pending = this.read_aI_TableIndex;
       if (pending != null && this.store_Z && this.init_aI_SyncManager == ScaffoldModule.PlacementState.SENT && MC.level != null) {
          BlockPos cell = pending.load();
-         int age = Math.max(0, AutismSessionState.init_ck().state_I() - this.f_aJ_I);
+         int age = Math.max(0, AutismSessionState.getInstance().getClientTick() - this.f_aJ_I);
          ScaffoldModule.StateDecision decision = init_aI_ConfigStore_aI_SyncManager(
             this.init_aI_SyncManager,
             age,
@@ -10977,7 +10977,7 @@ public final class ScaffoldModule extends Module {
                   return;
                }
 
-               int age = Math.max(0, AutismSessionState.init_ck().state_I() - scaffold.f_aJ_I);
+               int age = Math.max(0, AutismSessionState.getInstance().getClientTick() - scaffold.f_aJ_I);
                ScaffoldModule.StateDecision decision = init_aI_ConfigStore_aI_SyncManager(
                   scaffold.init_aI_SyncManager, age, scaffold.store_Z, scaffold.drain_Z, solid, true
                );
@@ -11008,7 +11008,7 @@ public final class ScaffoldModule extends Module {
             && !RemoteViewController.init_Z()
             && !f.load()
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
-            && !MacroExecutor.write_Z()
+            && !MacroExecutor.isRunning()
             && !AutoTotemModule.init_Z_6()
             && !AutoArmorModule.init_Z_20();
    }
@@ -11039,7 +11039,7 @@ public final class ScaffoldModule extends Module {
    }
 
    public static boolean sync_Z_6() {
-      return f_bO_I == AutismSessionState.init_ck().state_I();
+      return f_bO_I == AutismSessionState.getInstance().getClientTick();
    }
 
    public static Input init_Input_ClientInput_Input_4(ClientInput source, Input original) {
@@ -11061,10 +11061,10 @@ public final class ScaffoldModule extends Module {
          int resets = scaffold.f_v_I;
 
          try {
-            scaffold.load_ce_DataUtil = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+            scaffold.load_ce_DataUtil = autismclient.util.SilentRotationManager.getCurrentRotation();
             scaffold.f_v_I = Math.max(1, resets);
             Input result = load_Input_ClientInput_Input(source, original);
-            f_bO_I = AutismSessionState.init_ck().state_I();
+            f_bO_I = AutismSessionState.getInstance().getClientTick();
             return result;
          } finally {
             scaffold.load_ce_DataUtil = saved;
@@ -11084,7 +11084,7 @@ public final class ScaffoldModule extends Module {
 
    private Input init_Input_ClientInput(ClientInput source, Input original, Input result) {
       LocalPlayer player = MC.player;
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       boolean continuous = this.f_bP_I == tick - 1;
       Vec3 pos = player.position();
       Vec3 vel = player.getDeltaMovement();
@@ -11223,7 +11223,7 @@ public final class ScaffoldModule extends Module {
                Input authored = scaffold.sync(original);
                Input result = scaffold.push_Z ? scaffold.poll(authored) : scaffold.flush(authored);
                if (scaffold.push_Z) {
-                  int inputTick = AutismSessionState.init_ck().state_I();
+                  int inputTick = AutismSessionState.getInstance().getClientTick();
                   if (scaffold.count_Z() || scaffold.f_Z_I == inputTick || init_Z_Z_Input(scaffold.init_aI_KeyHolder == ScaffoldModule.ForwardKeyState.FORWARD, result)) {
                      scaffold.f_aP_I = inputTick;
                   } else if (scaffold.f_aP_I == inputTick) {
@@ -11257,7 +11257,7 @@ public final class ScaffoldModule extends Module {
                }
 
                if (scaffold.table_Z || scaffold.g_Z()) {
-                  scaffold.f_aP_I = AutismSessionState.init_ck().state_I();
+                  scaffold.f_aP_I = AutismSessionState.getInstance().getClientTick();
                   scaffold.open_Str = "reconcile";
                   scaffold.load_Z_Z(true);
                   Input reconciled = new Input(original.forward(), original.backward(), original.left(), original.right(), original.jump(), true, false);
@@ -11341,7 +11341,7 @@ public final class ScaffoldModule extends Module {
                   Input beforeSprint = adjusted;
                   adjusted = init_Input_Input_2(adjusted);
                   scaffold.init_V_Str_2("sprint-drop", beforeSprint, adjusted);
-                  scaffold.f_aP_I = AutismSessionState.init_ck().state_I();
+                  scaffold.f_aP_I = AutismSessionState.getInstance().getClientTick();
                }
 
                Input emitted = scaffold.init_Input_Input_Input(adjusted, original);
@@ -11369,7 +11369,7 @@ public final class ScaffoldModule extends Module {
                            : write_Input_Input(emitted)
                      );
                   if (!load_Z_Input(emitted)) {
-                     scaffold.f_aB_I = AutismSessionState.init_ck().state_I();
+                     scaffold.f_aB_I = AutismSessionState.getInstance().getClientTick();
                   }
 
                   scaffold.init_V_Str_2("brake", beforeBrake, emitted);
@@ -11456,7 +11456,7 @@ public final class ScaffoldModule extends Module {
    private boolean state_Z() {
       this.table_V();
       this.drain_V();
-      boolean ready = this.f_aJ_I == AutismSessionState.init_ck().state_I()
+      boolean ready = this.f_aJ_I == AutismSessionState.getInstance().getClientTick()
          && this.init_aI_SyncManager == ScaffoldModule.PlacementState.PREDICTED
          && !this.table_Z
          && this.read_aI_TableIndex != null
@@ -11798,7 +11798,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private BlockPos load_BlockPos_Vec3(Vec3 position, int riseY, ScaffoldModule.RowLockBounds rowLock) {
-      if (!this.update_Z_I(AutismSessionState.init_ck().state_I())) {
+      if (!this.update_Z_I(AutismSessionState.getInstance().getClientTick())) {
          return null;
       }
 
@@ -11837,7 +11837,7 @@ public final class ScaffoldModule extends Module {
          }
 
          this.data_BlockPos = support;
-         this.f_bQ_I = AutismSessionState.init_ck().state_I();
+         this.f_bQ_I = AutismSessionState.getInstance().getClientTick();
          return true;
       } else {
          return false;
@@ -11864,7 +11864,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean flush(BlockPos cell) {
-      return this.data_BlockPos != null && this.data_BlockPos.equals(cell) && this.f_bQ_I == AutismSessionState.init_ck().state_I();
+      return this.data_BlockPos != null && this.data_BlockPos.equals(cell) && this.f_bQ_I == AutismSessionState.getInstance().getClientTick();
    }
 
    private BlockPos flush_BlockPos() {
@@ -12121,7 +12121,7 @@ public final class ScaffoldModule extends Module {
    private Input sync(Input original) {
       if (this.push_Z && this.init_aI_KeyHolder != ScaffoldModule.ForwardKeyState.RELEASED) {
          Input authored = this.init_Input();
-         if (this.f_Z_I == AutismSessionState.init_ck().state_I()) {
+         if (this.f_Z_I == AutismSessionState.getInstance().getClientTick()) {
             authored = new Input(authored.forward(), authored.backward(), authored.left(), authored.right(), authored.jump(), authored.shift(), false);
          }
 
@@ -12431,7 +12431,7 @@ public final class ScaffoldModule extends Module {
 
    public static float init_F_LocalPlayer_F(LocalPlayer player, float vanillaYaw) {
       RotationMath.Rotation rotation = load_ce_DataUtil_LocalPlayer(player);
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (tick != f_bS_I) {
          f_bS_I = tick;
          float anchor = Float.isNaN(f_l_F) ? vanillaYaw : f_l_F;
@@ -12619,7 +12619,7 @@ public final class ScaffoldModule extends Module {
          BlockPos support = MC.player.onGround() ? scaffold.init_BlockPos_LocalPlayer(MC.player) : null;
          scaffold.block_V();
          scaffold.flush_BlockPos = support;
-         scaffold.f_ac_I = support == null ? -2147483648 : AutismSessionState.init_ck().state_I();
+         scaffold.f_ac_I = support == null ? -2147483648 : AutismSessionState.getInstance().getClientTick();
          if (support != null
             && (
                init_Z_KeyMapping(MC.options.keyUp)
@@ -12663,7 +12663,7 @@ public final class ScaffoldModule extends Module {
          return true;
       }
 
-      int since = AutismSessionState.init_ck().state_I() - this.f_z_I;
+      int since = AutismSessionState.getInstance().getClientTick() - this.f_z_I;
       if (since >= 0 && since <= 20) {
          return true;
       }
@@ -12828,7 +12828,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean open(boolean directionalInput, boolean traced) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (this.f_ay_I != tick) {
          this.f_ay_I = tick;
          this.f_z_D = 0.0 / 0.0;
@@ -12916,7 +12916,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean poll(boolean directionalInput, boolean traced) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (this.f_az_I != tick) {
          this.f_az_I = tick;
          this.level_Z = false;
@@ -13088,7 +13088,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean bind_Z() {
-      int since = AutismSessionState.init_ck().state_I() - this.f_aU_I;
+      int since = AutismSessionState.getInstance().getClientTick() - this.f_aU_I;
       return since >= 0 && since <= 6;
    }
 
@@ -13149,7 +13149,7 @@ public final class ScaffoldModule extends Module {
 
          Input result = init_Input_Input_2(input, MC.player.getYRot(), this.load_ce_DataUtil.yaw());
          if (result != null && !result.forward() && load_Z_Input(input)) {
-            this.f_aP_I = AutismSessionState.init_ck().state_I();
+            this.f_aP_I = AutismSessionState.getInstance().getClientTick();
          }
 
          return result;
@@ -13248,7 +13248,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private Input close(Input input) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       Input result = this.init_bb.load(input, MC.player.getYRot(), this.load_ce_DataUtil.yaw(), tick);
       if (result == null) {
          return null;
@@ -13303,7 +13303,7 @@ public final class ScaffoldModule extends Module {
                      if (coast != null) {
                         this.poll_Str = this.f_t_Z ? "sweep" : "coast";
                         if (!coast.forward()) {
-                           this.f_aP_I = AutismSessionState.init_ck().state_I();
+                           this.f_aP_I = AutismSessionState.getInstance().getClientTick();
                         }
 
                         return coast;
@@ -13329,7 +13329,7 @@ public final class ScaffoldModule extends Module {
          }
 
          if (result != null && !result.forward() && load_Z_Input(input)) {
-            this.f_aP_I = AutismSessionState.init_ck().state_I();
+            this.f_aP_I = AutismSessionState.getInstance().getClientTick();
          }
 
          return result;
@@ -13355,7 +13355,7 @@ public final class ScaffoldModule extends Module {
    }
 
    public static boolean close_Z_4() {
-      return al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.f_aP_I == AutismSessionState.init_ck().state_I();
+      return al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.f_aP_I == AutismSessionState.getInstance().getClientTick();
    }
 
    public static boolean open_Z_3() {
@@ -13411,7 +13411,7 @@ public final class ScaffoldModule extends Module {
                velocity = -velocity;
             }
 
-            int tick = AutismSessionState.init_ck().state_I();
+            int tick = AutismSessionState.getInstance().getClientTick();
             if (this.f_x_I != tick || !Float.isFinite(this.index_F) || Math.abs(Mth.wrapDegrees(this.index_F - this.load_ce_DataUtil.yaw())) > 0.001F) {
                float nextYaw = this.init_aM().init(this.load_ce_DataUtil, this.init_RangeSetting.get(), RotationMath.gcdStep());
                boolean turning = Math.abs(Mth.wrapDegrees(nextYaw - this.load_ce_DataUtil.yaw())) > 4.0F
@@ -13694,7 +13694,7 @@ public final class ScaffoldModule extends Module {
             return null;
          }
 
-         int since = AutismSessionState.init_ck().state_I() - this.f_z_I;
+         int since = AutismSessionState.getInstance().getClientTick() - this.f_z_I;
          if (since >= 0 && since <= 10) {
             BlockPos lastPlaced = this.init_ArrayDeque.peekLast();
             if (lastPlaced == null) {
@@ -13919,7 +13919,7 @@ public final class ScaffoldModule extends Module {
          if (lane == null || init_Z_Vec3_2(lane)) {
             return true;
          } else if (!this.f_c_Z && !this.f_b_Z) {
-            int since = load_I_I_I(AutismSessionState.init_ck().state_I(), this.f_cc_I);
+            int since = load_I_I_I(AutismSessionState.getInstance().getClientTick(), this.f_cc_I);
             return since >= 0 && since <= 30;
          } else {
             return true;
@@ -14505,7 +14505,7 @@ public final class ScaffoldModule extends Module {
       this.get_Str = "--";
       ScaffoldModule.PlannedPlacement target = this.load_aI_TableIndex_ItemStack(stack);
       if (this.flags_Z() && target != null && MC.player != null) {
-         int stampAge = load_I_I_I(AutismSessionState.init_ck().state_I(), this.f_ak_I);
+         int stampAge = load_I_I_I(AutismSessionState.getInstance().getClientTick(), this.f_ak_I);
          boolean stampFresh = this.tick_BlockPos != null && stampAge >= 0 && stampAge <= 8;
          boolean windowAlive = this.init_Z_aI_TableIndex(target)
             || load_Z_Vec3(MC.player.getEyePosition(), target.init_BlockPos(), target.init_Direction(), target.init_ce_DataUtil().yaw(), true);
@@ -14674,7 +14674,7 @@ public final class ScaffoldModule extends Module {
          ScaffoldModule.PlannedPlacement tower = this.init_aI_TableIndex();
          if (tower != null) {
             this.load_aI_TableIndex = tower;
-            this.f_aG_I = AutismSessionState.init_ck().state_I();
+            this.f_aG_I = AutismSessionState.getInstance().getClientTick();
             this.f_aH_I = 0;
             this.stop_Str = "tower:" + tower.load().toShortString();
             return tower;
@@ -14683,7 +14683,7 @@ public final class ScaffoldModule extends Module {
          ScaffoldModule.PlannedPlacement tellyLanding = this.read_aI_TableIndex_Vec3_ItemStack(predicted, stack);
          if (tellyLanding != null) {
             this.load_aI_TableIndex = tellyLanding;
-            this.f_aG_I = AutismSessionState.init_ck().state_I();
+            this.f_aG_I = AutismSessionState.getInstance().getClientTick();
             this.f_aH_I = 0;
             this.stop_Str = "telly-floor:" + tellyLanding.load().toShortString();
             return tellyLanding;
@@ -14691,9 +14691,9 @@ public final class ScaffoldModule extends Module {
 
          ScaffoldModule.PlannedPlacement rescue = this.init_aI_TableIndex_Vec3_ItemStack(predicted, stack);
          if (rescue != null) {
-            this.f_aU_I = AutismSessionState.init_ck().state_I();
+            this.f_aU_I = AutismSessionState.getInstance().getClientTick();
             this.load_aI_TableIndex = rescue;
-            this.f_aG_I = AutismSessionState.init_ck().state_I();
+            this.f_aG_I = AutismSessionState.getInstance().getClientTick();
             this.f_aH_I = 0;
             this.stop_Str = "rescue:" + rescue.load().toShortString();
             return rescue;
@@ -14702,7 +14702,7 @@ public final class ScaffoldModule extends Module {
          ScaffoldModule.PlannedPlacement riser = this.load_aI_TableIndex();
          if (riser != null) {
             this.load_aI_TableIndex = riser;
-            this.f_aG_I = AutismSessionState.init_ck().state_I();
+            this.f_aG_I = AutismSessionState.getInstance().getClientTick();
             this.f_aH_I = 0;
             this.stop_Str = "riser:" + riser.load().toShortString();
             return riser;
@@ -14711,7 +14711,7 @@ public final class ScaffoldModule extends Module {
          ScaffoldModule.PlannedPlacement reservation = this.load_aI_TableIndex_Vec3_ItemStack(predicted, stack);
          if (reservation != null && !this.open(reservation) && !this.poll(reservation)) {
             this.load_aI_TableIndex = reservation;
-            this.f_aG_I = AutismSessionState.init_ck().state_I();
+            this.f_aG_I = AutismSessionState.getInstance().getClientTick();
             this.f_aH_I = 0;
             this.stop_Str = "reserve-" + this.update_Str + ":" + reservation.load().toShortString();
             return reservation;
@@ -14722,9 +14722,9 @@ public final class ScaffoldModule extends Module {
                predicted, this.init_aI_HashUtil == null ? null : this.init_aI_HashUtil.load(), this.queue_Z()
             );
             if (catchBelow != null) {
-               this.f_aU_I = AutismSessionState.init_ck().state_I();
+               this.f_aU_I = AutismSessionState.getInstance().getClientTick();
                this.load_aI_TableIndex = catchBelow;
-               this.f_aG_I = AutismSessionState.init_ck().state_I();
+               this.f_aG_I = AutismSessionState.getInstance().getClientTick();
                this.f_aH_I = 0;
                this.stop_Str = "catch:" + catchBelow.load().toShortString();
                return catchBelow;
@@ -14737,7 +14737,7 @@ public final class ScaffoldModule extends Module {
             ScaffoldModule.PlannedPlacement drift = this.init_aI_TableIndex_BlockPos(predictedBase);
             if (drift != null) {
                this.load_aI_TableIndex = drift;
-               this.f_aG_I = AutismSessionState.init_ck().state_I();
+               this.f_aG_I = AutismSessionState.getInstance().getClientTick();
                this.f_aH_I = 0;
                return drift;
             }
@@ -14765,7 +14765,7 @@ public final class ScaffoldModule extends Module {
          }
 
          this.load_aI_TableIndex = fresh;
-         this.f_aG_I = AutismSessionState.init_ck().state_I();
+         this.f_aG_I = AutismSessionState.getInstance().getClientTick();
          this.f_aH_I = 0;
          return fresh;
       } else {
@@ -14797,7 +14797,7 @@ public final class ScaffoldModule extends Module {
       Vec3 position = MC.player.position();
       Vec3 future = position.add(velocity.x * 2.0, 0.0, velocity.z * 2.0);
       BlockPos foot = BlockPos.containing(future);
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (this.f_bw_I == tick && this.set_BlockPos != null) {
          return new BlockPos(this.set_BlockPos.getX(), foot.getY(), this.set_BlockPos.getZ());
       }
@@ -14858,7 +14858,7 @@ public final class ScaffoldModule extends Module {
       }
 
       this.load_aI_TableIndex = null;
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (this.f_aG_I >= 0 && tick - this.f_aG_I <= 6) {
          BlockPos placed = sticky.load();
          if (!MC.level.isOutsideBuildHeight(placed) && !this.init_Z_BlockState_BlockPos(MC.level.getBlockState(placed), placed)) {
@@ -15137,7 +15137,7 @@ public final class ScaffoldModule extends Module {
       boolean riseAllowed = this.read_Z_Z(jumping);
       boolean preferHeight = gateRise && riseAllowed;
       int footingRow = this.close_I();
-      int planTick = AutismSessionState.init_ck().state_I();
+      int planTick = AutismSessionState.getInstance().getClientTick();
       ScaffoldModule.PlannedPlacement firstPlan = null;
 
       for (BlockPos offset : offsets) {
@@ -15698,7 +15698,7 @@ public final class ScaffoldModule extends Module {
       if (MC.player != null && MC.player.onGround()) {
          int row = this.open_I();
          if (this.f_cb_I != -2147483648 && row > this.f_cb_I) {
-            this.f_cc_I = AutismSessionState.init_ck().state_I();
+            this.f_cc_I = AutismSessionState.getInstance().getClientTick();
          } else if (this.f_cb_I != -2147483648 && row < this.f_cb_I) {
             this.f_cc_I = -2147483648;
          }
@@ -15770,7 +15770,7 @@ public final class ScaffoldModule extends Module {
 
    private void read_V_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (target != null) {
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          if (!init_Z_I_4(this.f_aF_I, tick, this.init_aI_TableIndex == null ? null : this.init_aI_TableIndex.load(), target.load())) {
             this.init_aI_TableIndex = target;
             this.f_aE_I = tick;
@@ -15832,12 +15832,12 @@ public final class ScaffoldModule extends Module {
             } else {
                boolean cellOpen = MC.level.getBlockState(placed).canBeReplaced();
                boolean supported = this.init_Z_BlockState_BlockPos(MC.level.getBlockState(support), support);
-               if (!init_Z_I_3(this.f_aE_I, AutismSessionState.init_ck().state_I(), 3, cellOpen, supported)) {
+               if (!init_Z_I_3(this.f_aE_I, AutismSessionState.getInstance().getClientTick(), 3, cellOpen, supported)) {
                   this.init_aI_TableIndex = null;
                   return null;
                } else {
                   this.frame_Z = true;
-                  this.f_aF_I = AutismSessionState.init_ck().state_I();
+                  this.f_aF_I = AutismSessionState.getInstance().getClientTick();
                   ScaffoldModule.PlannedPlacement resolved = this.write_aI_TableIndex_aI_TableIndex(held);
                   return resolved == null ? held : resolved;
                }
@@ -16237,7 +16237,7 @@ public final class ScaffoldModule extends Module {
       int freshSlot = -1;
       if (this.index_Z() && this.init_aI_NodeWalker != ScaffoldModule.TurnCyclePhase.PLACING && remaining < 8) {
          for (int candidate = 0; candidate < 9; candidate++) {
-            if (candidate != selected && !autismclient.util.InventorySlotArbiter.init(candidate, this.id())) {
+            if (candidate != selected && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(candidate, this.id())) {
                ItemStack stack = MC.player.getInventory().getItem(candidate);
                if (this.init_Z_ItemStack_4(stack)
                   && this.read_I_I(candidate) >= 8
@@ -16264,7 +16264,7 @@ public final class ScaffoldModule extends Module {
             return InteractionHand.MAIN_HAND;
          }
 
-         if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             return null;
          }
 
@@ -16278,7 +16278,7 @@ public final class ScaffoldModule extends Module {
             this.write_Z = true;
             autismclient.util.VirtualInputDispatcher.init_V_I(slot);
          } finally {
-            autismclient.util.InventorySlotArbiter.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
 
          return null;
@@ -16302,7 +16302,7 @@ public final class ScaffoldModule extends Module {
          && al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold) {
          scaffold.c_V();
          scaffold.load_IArr[slot] = Math.max(0, scaffold.load_IArr[slot] - 1);
-         scaffold.write_IArr[slot] = AutismSessionState.init_ck().state_I();
+         scaffold.write_IArr[slot] = AutismSessionState.getInstance().getClientTick();
          scaffold.read_IArr[slot] = sequence;
       }
    }
@@ -16324,7 +16324,7 @@ public final class ScaffoldModule extends Module {
             this.write_IArr[slot] = -2147483648;
          }
 
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          boolean settled = load_Z_I(this.read_IArr[slot], this.f_B_I, this.write_IArr[slot], tick, autismclient.util.macro.ServerTickPhaseTracker.init_I())
             && (this.f_C_I != slot || !this.poll_Z_3());
          this.load_IArr[slot] = init_I_I_2(this.load_IArr[slot], visible, settled);
@@ -16377,7 +16377,7 @@ public final class ScaffoldModule extends Module {
       int best = -1;
 
       for (int slot = 0; slot < 9; slot++) {
-         if (!autismclient.util.InventorySlotArbiter.init(slot, this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, this.id())) {
             ItemStack stack = MC.player.getInventory().getItem(slot);
             int available = this.index_Z() ? this.read_I_I(slot) : stack.getCount();
             if (this.init_Z_ItemStack_4(stack)
@@ -16552,14 +16552,14 @@ public final class ScaffoldModule extends Module {
                this.f_j_I = -1;
                this.f_k_I = -1;
                this.f_l_I = -1;
-            } else if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+            } else if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                this.f_m_I = 1;
             } else {
                try {
                   this.f_k_I = this.f_j_I;
                   autismclient.util.VirtualInputDispatcher.init_V_I(this.f_j_I);
                } finally {
-                  autismclient.util.InventorySlotArbiter.read_V(this.id());
+                  autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
                }
             }
          }
@@ -16714,7 +16714,7 @@ public final class ScaffoldModule extends Module {
             return null;
          }
 
-         int clientTick = AutismSessionState.init_ck().state_I();
+         int clientTick = AutismSessionState.getInstance().getClientTick();
          if (this.f_o_I != clientTick) {
             this.f_o_I = clientTick;
             this.f_n_I++;
@@ -17876,7 +17876,7 @@ public final class ScaffoldModule extends Module {
 
    public static void init_V_F_F(float appliedYaw, float appliedPitch) {
       f_l_F = appliedYaw;
-      f_bS_I = AutismSessionState.init_ck().state_I();
+      f_bS_I = AutismSessionState.getInstance().getClientTick();
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled()) {
          scaffold.init_ce_DataUtil = new RotationMath.Rotation(appliedYaw, appliedPitch);
          scaffold.parse_F = appliedYaw;
@@ -17907,9 +17907,9 @@ public final class ScaffoldModule extends Module {
          }
 
          this.block_V();
-         this.f_z_I = AutismSessionState.init_ck().state_I();
+         this.f_z_I = AutismSessionState.getInstance().getClientTick();
          this.flush_BlockPos = nearbyFooting;
-         this.f_ac_I = nearbyFooting == null ? -2147483648 : AutismSessionState.init_ck().state_I();
+         this.f_ac_I = nearbyFooting == null ? -2147483648 : AutismSessionState.getInstance().getClientTick();
       }
 
       this.fill_V();
@@ -17970,13 +17970,13 @@ public final class ScaffoldModule extends Module {
          && this.f_j_I >= 0
          && MC != null
          && MC.player != null
-         && !MacroExecutor.write_Z()
+         && !MacroExecutor.isRunning()
          && MC.player.getInventory().getSelectedSlot() != this.f_j_I
-         && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+         && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
             autismclient.util.VirtualInputDispatcher.init_V_I(this.f_j_I);
          } finally {
-            autismclient.util.InventorySlotArbiter.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
       }
 

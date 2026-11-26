@@ -490,6 +490,6 @@ public final class PayloadRegistrationManager {
          config.save();
       }
 
-      autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_V_Z(false);
+      autismclient.modules.ModuleRuntimeManager.getInstance().invalidatePayloadFilterCache(false);
    }
 }

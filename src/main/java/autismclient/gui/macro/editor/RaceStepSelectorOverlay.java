@@ -274,7 +274,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    ) {
       boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + 14;
       int bg = hovered ? this.init_CharEncoder_2.next() : this.init_CharEncoder_2.stop();
-      int accent = "Condition".equalsIgnoreCase(option.init()) ? UiColorPalette.node() : UiColorPalette.init();
+      int accent = "Condition".equalsIgnoreCase(option.init()) ? UiColorPalette.cyan() : UiColorPalette.accent();
       PanelSurfaceHelper.init(context, x, y, width, 14, bg);
       PanelSurfaceHelper.read(context, x, y, 2, 14, accent);
       String label = option.init() + " / " + option.read();
@@ -283,7 +283,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       );
       int textY = UiLayoutMath.centerTextY(y, 14, this.init_CharEncoder_2.init_I_l(l.read), this.init_CharEncoder_2.flush());
       k.init(context, this.init_Font, trimmed, this.init_CharEncoder_2.init_Identifier_l(l.read), this.init_CharEncoder_2.load(l.read), x + 6, textY, false);
-      PanelSurfaceHelper.init(context, x + 4, y + 14 - 1, width - 8, UiColorPalette.mark());
+      PanelSurfaceHelper.init(context, x + 4, y + 14 - 1, width - 8, UiColorPalette.subtleDivider());
    }
 
    @Override

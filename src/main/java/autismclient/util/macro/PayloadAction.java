@@ -34,20 +34,20 @@ public class PayloadAction implements MacroAction {
       if (!autismclient.modules.aD.read_Z() && this.init) {
          if (mc != null && mc.getConnection() != null) {
             try {
-               MacroTemplateResolver.ResolveResult channelResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.channel, mc);
-               if (!channelResolution.init_Z() || channelResolution.init_Str().isBlank()) {
+               MacroTemplateResolver.ResolveResult channelResolution = MacroVariableContext.resolveTemplate(this.channel, mc);
+               if (!channelResolution.success() || channelResolution.value().isBlank()) {
                   return;
                }
 
-               String resolvedChannel = channelResolution.init_Str().trim();
+               String resolvedChannel = channelResolution.value().trim();
                String resolvedPayloadData = this.payloadData;
-               if (MacroTemplateResolver.init_Z(this.payloadData)) {
-                  MacroTemplateResolver.ResolveResult payloadResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.payloadData, mc);
-                  if (!payloadResolution.init_Z()) {
+               if (MacroTemplateResolver.containsPlaceholder(this.payloadData)) {
+                  MacroTemplateResolver.ResolveResult payloadResolution = MacroVariableContext.resolveTemplate(this.payloadData, mc);
+                  if (!payloadResolution.success()) {
                      return;
                   }
 
-                  resolvedPayloadData = payloadResolution.init_Str();
+                  resolvedPayloadData = payloadResolution.value();
                }
 
                boolean hasRawPayload = resolvedPayloadData != null && !resolvedPayloadData.isBlank();
@@ -71,7 +71,7 @@ public class PayloadAction implements MacroAction {
                      throw new IllegalArgumentException(String.join("; ", built.load()));
                   }
 
-                  if (!MacroTemplateResolver.init_Z(this.channel)) {
+                  if (!MacroTemplateResolver.containsPlaceholder(this.channel)) {
                      targetChannel = template.init_Str();
                   }
 
@@ -81,7 +81,7 @@ public class PayloadAction implements MacroAction {
                   }
                } else if (useJsonModel) {
                   PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.init_bG_DataUtil(this);
-                  if (!MacroTemplateResolver.init_Z(this.channel)) {
+                  if (!MacroTemplateResolver.containsPlaceholder(this.channel)) {
                      targetChannel = encoded.init_Str();
                   }
 

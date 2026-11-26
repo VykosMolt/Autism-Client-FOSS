@@ -7,57 +7,57 @@ import java.util.Optional;
 import net.minecraft.client.Minecraft;
 
 public final class MacroVariableContext {
-   private static final ThreadLocal<MacroVariableStore> init = ThreadLocal.withInitial(MacroVariableStore::new);
+   private static final ThreadLocal<MacroVariableStore> FALLBACK_STORE = ThreadLocal.withInitial(MacroVariableStore::new);
 
    private MacroVariableContext() {
    }
 
-   public static void init_V() {
-      load().init_V();
+   public static void clear() {
+      activeOrFallbackStore().init_V();
    }
 
-   public static void init_V_Str_Obj(String name, Object value) {
-      init_V_Str_l(name, value instanceof MacroVarValue typed ? typed : MacroVarValue.init_l_Obj(value));
+   public static void set(String name, Object value) {
+      setValue(name, value instanceof MacroVarValue typed ? typed : MacroVarValue.ofText(value));
    }
 
-   public static void init_V_Str_l(String name, MacroVarValue value) {
-      load().init(name, value);
+   public static void setValue(String name, MacroVarValue value) {
+      activeOrFallbackStore().init(name, value);
    }
 
-   public static void init_V_Map(Map<String, MacroVarValue> values) {
-      load().init_V_Map(values);
+   public static void setAll(Map<String, MacroVarValue> values) {
+      activeOrFallbackStore().init_V_Map(values);
    }
 
-   public static void init_V_Str(String name) {
-      load().init_V_Str(name);
+   public static void remove(String name) {
+      activeOrFallbackStore().init_V_Str(name);
    }
 
-   public static String init_Str_Str_Minecraft(String name, Minecraft mc) {
-      MacroTemplateResolver.ResolveResult resolution = MacroTemplateResolver.init_j_CachePool("{" + name + "}", load(), mc);
-      return resolution.init_Z() ? resolution.init_Str() : "";
+   public static String resolveVariable(String name, Minecraft mc) {
+      MacroTemplateResolver.ResolveResult resolution = MacroTemplateResolver.resolve("{" + name + "}", activeOrFallbackStore(), mc);
+      return resolution.success() ? resolution.value() : "";
    }
 
-   public static Optional<MacroVarValue> init_Optional_Str(String name) {
-      return load().init_Optional_Str(name);
+   public static Optional<MacroVarValue> get(String name) {
+      return activeOrFallbackStore().init_Optional_Str(name);
    }
 
-   public static String load(String text, Minecraft mc) {
-      MacroTemplateResolver.ResolveResult resolution = init_j_CachePool_Str_Minecraft(text, mc);
-      return resolution.init_Z() ? resolution.init_Str() : "";
+   public static String resolveString(String text, Minecraft mc) {
+      MacroTemplateResolver.ResolveResult resolution = resolveTemplate(text, mc);
+      return resolution.success() ? resolution.value() : "";
    }
 
-   public static MacroTemplateResolver.ResolveResult init_j_CachePool_Str_Minecraft(String text, Minecraft mc) {
-      return MacroTemplateResolver.init_j_CachePool(text, load(), mc);
+   public static MacroTemplateResolver.ResolveResult resolveTemplate(String text, Minecraft mc) {
+      return MacroTemplateResolver.resolve(text, activeOrFallbackStore(), mc);
    }
 
-   public static boolean init_Z_Str_j_CachePoolArr(String label, MacroTemplateResolver.ResolveResult... resolutions) {
+   public static boolean requireResolved(String label, MacroTemplateResolver.ResolveResult... resolutions) {
       LinkedHashSet<String> missing = new LinkedHashSet<>();
       boolean failed = false;
 
       for (MacroTemplateResolver.ResolveResult resolution : resolutions) {
-         if (resolution != null && !resolution.init_Z()) {
+         if (resolution != null && !resolution.success()) {
             failed = true;
-            missing.addAll(resolution.init_List());
+            missing.addAll(resolution.missingVariables());
          }
       }
 
@@ -69,12 +69,12 @@ public final class MacroVariableContext {
       return false;
    }
 
-   public static MacroVariableStore init_m() {
-      return load();
+   public static MacroVariableStore currentStore() {
+      return activeOrFallbackStore();
    }
 
-   private static MacroVariableStore load() {
-      MacroVariableStore active = MacroExecutor.init_m();
-      return active == null ? init.get() : active;
+   private static MacroVariableStore activeOrFallbackStore() {
+      MacroVariableStore active = MacroExecutor.getCurrentVariableStore();
+      return active == null ? FALLBACK_STORE.get() : active;
    }
 }

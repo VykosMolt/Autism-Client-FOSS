@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderWorldBorderMixin {
    @Inject(method = "render", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noWorldBorder(CallbackInfo ci) {
-      if (NoRenderState.next()) {
+      if (NoRenderState.hideWorldBorder()) {
          ci.cancel();
       }
    }

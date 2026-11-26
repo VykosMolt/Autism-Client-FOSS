@@ -17,6 +17,6 @@ public abstract class AutismNoRenderFogEnvMixin {
       }
 
       Object self = this;
-      return self instanceof BlindnessFogEnvironment && NoRenderState.prev() ? false : !(self instanceof DarknessFogEnvironment) || !NoRenderState.valid();
+      return self instanceof BlindnessFogEnvironment && NoRenderState.hideBlindness() ? false : !(self instanceof DarknessFogEnvironment) || !NoRenderState.hideDarkness();
    }
 }

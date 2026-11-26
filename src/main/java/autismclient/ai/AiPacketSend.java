@@ -35,14 +35,14 @@ public final class AiPacketSend {
          throw new IllegalArgumentException("name is required; resolve packet names with client:packets first");
       }
 
-      Class<? extends Packet<?>> packetClass = autismclient.util.PacketTypeRegistry.init_Class_Str(name);
+      Class<? extends Packet<?>> packetClass = autismclient.util.PacketTypeRegistry.resolvePacketClass(name);
       if (packetClass == null) {
          throw new IllegalArgumentException("Unknown packet '" + name + "'; search exact names with client:packets first");
       }
 
-      if (!autismclient.util.PacketTypeRegistry.load().contains(packetClass)) {
+      if (!autismclient.util.PacketTypeRegistry.getC2sPackets().contains(packetClass)) {
          throw new IllegalArgumentException(
-            autismclient.util.PacketTypeRegistry.init_Set().contains(packetClass)
+            autismclient.util.PacketTypeRegistry.getS2cPackets().contains(packetClass)
                ? name + " is S2C-only; the client cannot originate it"
                : name + " is not registered as a C2S packet"
          );
@@ -55,7 +55,7 @@ public final class AiPacketSend {
          boolean regenerate = AiJson.getBoolean(args, "regenerate", false);
          String mode = AiJson.getString(args, "mode", "send").trim().toLowerCase(Locale.ROOT);
          JsonObject out = new JsonObject();
-         out.addProperty("name", autismclient.util.PacketTypeRegistry.init_Str_Class(packetClass));
+         out.addProperty("name", autismclient.util.PacketTypeRegistry.getPacketName(packetClass));
          out.addProperty("packetClass", packetClass.getName());
          out.addProperty("mode", mode);
          out.addProperty("numericPacketId", AiPacketLog.init(packet.type(), "C2S"));
@@ -74,10 +74,10 @@ public final class AiPacketSend {
                out.addProperty("regenerated", regenerate && wire != packet);
                break;
             case "queue":
-               autismclient.util.AutismSessionState.init_ck().init_V_Packet_ck_BufferHelper(packet, init(regenerate));
+               autismclient.util.AutismSessionState.getInstance().enqueueDelayedPacket(packet, init(regenerate));
                out.addProperty("queued", true);
                out.addProperty("replayMode", init(regenerate).name());
-               out.addProperty("queueSize", autismclient.util.AutismSessionState.init_ck().load_List().size());
+               out.addProperty("queueSize", autismclient.util.AutismSessionState.getInstance().getDelayedPackets().size());
                break;
             case "delay":
                boolean hasMs = args.has("delayMs");
@@ -89,16 +89,16 @@ public final class AiPacketSend {
                int delay = AiJson.getInt(args, hasMs ? "delayMs" : "delayTicks", 0);
                int cap = hasMs ? 300000 : 6000;
                if (delay >= 0 && delay <= cap) {
-                  autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.init_ck();
-                  shared.init_V_ck_DataUtil(hasMs ? autismclient.util.AutismSessionState.DelayUnit.MS : autismclient.util.AutismSessionState.DelayUnit.TICKS);
-                  List<autismclient.util.AutismSessionState.DelayedPacket> queued = shared.load_List();
+                  autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.getInstance();
+                  shared.setDelayUnit(hasMs ? autismclient.util.AutismSessionState.DelayUnit.MS : autismclient.util.AutismSessionState.DelayUnit.TICKS);
+                  List<autismclient.util.AutismSessionState.DelayedPacket> queued = shared.getDelayedPackets();
                   queued.add(new autismclient.util.AutismSessionState.DelayedPacket(packet, delay, init(regenerate)));
-                  shared.load_V_List(queued);
+                  shared.replaceDelayedPackets(queued);
                   out.addProperty("queued", true);
                   out.addProperty("delay", delay);
                   out.addProperty("delayMode", hasMs ? "MS" : "TICKS");
                   out.addProperty("replayMode", init(regenerate).name());
-                  out.addProperty("queueSize", shared.load_List().size());
+                  out.addProperty("queueSize", shared.getDelayedPackets().size());
                   break;
                }
 
@@ -117,15 +117,15 @@ public final class AiPacketSend {
 
    public static JsonObject load_JsonObject(JsonObject args) {
       String action = AiJson.getString(args, "action", "list").trim().toLowerCase(Locale.ROOT);
-      autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.init_ck();
+      autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.getInstance();
       JsonObject var10000;
       switch (action) {
          case "list":
             var10000 = init(shared, args);
             break;
          case "clear":
-            int cleared = shared.load_List().size();
-            shared.init_V();
+            int cleared = shared.getDelayedPackets().size();
+            shared.clearDelayedPackets();
             var10000 = AiJson.objectOf("cleared", cleared, "queueSize", 0);
             break;
          case "flush":
@@ -134,24 +134,24 @@ public final class AiPacketSend {
                throw new IllegalArgumentException("No active server connection; join a world or server first");
             }
 
-            if (shared.tick_Z()) {
+            if (shared.isSendingQueuedPackets()) {
                throw new IllegalStateException("A queued send is already draining; wait for it to finish");
             }
 
-            if (!shared.open_Z()) {
+            if (!shared.hasDelayedPackets()) {
                throw new IllegalArgumentException("The delayed-packet queue is empty");
             }
 
-            int flushed = shared.init_I_ClientPacketListen(mc.getConnection());
-            var10000 = AiJson.objectOf("flushed", flushed, "staggering", shared.tick_Z(), "drained", !shared.tick_Z());
+            int flushed = shared.flushDelayedPackets(mc.getConnection());
+            var10000 = AiJson.objectOf("flushed", flushed, "staggering", shared.isSendingQueuedPackets(), "drained", !shared.isSendingQueuedPackets());
             break;
          case "restore":
          case "restorelastflushed":
-            if (!shared.poll_Z()) {
+            if (!shared.restoreLastFlushedQueue()) {
                throw new IllegalArgumentException("No previously flushed queue to restore");
             }
 
-            var10000 = AiJson.objectOf("restored", true, "queueSize", shared.load_List().size());
+            var10000 = AiJson.objectOf("restored", true, "queueSize", shared.getDelayedPackets().size());
             break;
          default:
             throw new IllegalArgumentException("Unknown queue action '" + action + "' (list|clear|flush|restore)");
@@ -161,7 +161,7 @@ public final class AiPacketSend {
    }
 
    private static JsonObject init(autismclient.util.AutismSessionState shared, JsonObject args) {
-      List<autismclient.util.AutismSessionState.DelayedPacket> packets = shared.load_List();
+      List<autismclient.util.AutismSessionState.DelayedPacket> packets = shared.getDelayedPackets();
       int offset = Math.max(0, AiJson.getInt(args, "offset", 0));
       int limit = Math.max(1, Math.min(AiJson.getInt(args, "limit", 50), 100));
       JsonArray out = new JsonArray();
@@ -169,23 +169,23 @@ public final class AiPacketSend {
 
       for (int i = offset; i < end; i++) {
          autismclient.util.AutismSessionState.DelayedPacket queued = packets.get(i);
-         if (queued != null && queued.init_Packet != null) {
+         if (queued != null && queued.packet != null) {
             out.add(
                AiJson.objectOf(
                   "index",
                   i,
                   "id",
-                  queued.init_I(),
+                  queued.getId(),
                   "name",
-                  init(queued.init_Packet),
+                  init(queued.packet),
                   "packetClass",
-                  queued.init_Packet.getClass().getName(),
+                  queued.packet.getClass().getName(),
                   "delay",
-                  queued.load_I(),
+                  queued.getDelay(),
                   "replayMode",
-                  queued.init_ck_BufferHelper().name(),
+                  queued.getReplayMode().name(),
                   "sent",
-                  queued.load_Z()
+                  queued.isSent()
                )
             );
          }
@@ -201,11 +201,11 @@ public final class AiPacketSend {
          "limit",
          limit,
          "delayMode",
-         shared.init_ck_DataUtil().name(),
+         shared.getDelayUnit().name(),
          "staggering",
-         shared.tick_Z(),
+         shared.isSendingQueuedPackets(),
          "staggeredRemaining",
-         shared.read_List().size()
+         shared.getSendingPackets().size()
       );
    }
 
@@ -252,23 +252,23 @@ public final class AiPacketSend {
                   this.init_Z = true;
                   this.init_J = System.nanoTime() + 30000000000L;
                   this.init_JsonObject = AiPacketSend.load_JsonObject(args);
-                  return !autismclient.util.AutismSessionState.init_ck().tick_Z()
+                  return !autismclient.util.AutismSessionState.getInstance().isSendingQueuedPackets()
                      ? AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Flushed queued packet(s)", this.init_JsonObject)
                      : AiGameOperations.result(AiOperation.Status.RUNNING, "Queue draining", this.init_JsonObject);
                } else {
-                  autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.init_ck();
-                  if (!shared.tick_Z() && !shared.open_Z()) {
+                  autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.getInstance();
+                  if (!shared.isSendingQueuedPackets() && !shared.hasDelayedPackets()) {
                      this.init_JsonObject.addProperty("drained", true);
                      return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Queue drained onto the wire", this.init_JsonObject);
                   } else if (System.nanoTime() > this.init_J) {
                      this.init_JsonObject.addProperty("drained", false);
-                     this.init_JsonObject.addProperty("staggeredRemaining", shared.read_List().size());
+                     this.init_JsonObject.addProperty("staggeredRemaining", shared.getSendingPackets().size());
                      return AiGameOperations.result(
                         AiOperation.Status.UNCERTAIN, "Queue still draining after 30s; inspect client:packet_queue for the remainder", this.init_JsonObject
                      );
                   } else {
                      return AiGameOperations.result(
-                        AiOperation.Status.RUNNING, "Queue draining (" + shared.read_List().size() + " remaining)", this.init_JsonObject
+                        AiOperation.Status.RUNNING, "Queue draining (" + shared.getSendingPackets().size() + " remaining)", this.init_JsonObject
                      );
                   }
                }
@@ -285,7 +285,7 @@ public final class AiPacketSend {
    }
 
    private static String init(Packet<?> packet) {
-      String name = autismclient.util.PacketTypeRegistry.init_Str_Class((Class<? extends Packet<?>>)packet.getClass());
+      String name = autismclient.util.PacketTypeRegistry.getPacketName((Class<? extends Packet<?>>)packet.getClass());
       return name == null ? packet.getClass().getSimpleName() : name;
    }
 

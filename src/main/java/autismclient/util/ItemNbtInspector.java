@@ -48,31 +48,31 @@ public final class ItemNbtInspector {
 
    private static void init_V_ItemStack_az_CachePool(ItemStack stack, ItemNbtInspector.Inner_CachePool builder) {
       if (stack != null && !stack.isEmpty()) {
-         builder.init("Identity", UiColorPalette.index());
-         builder.load("Item: " + BuiltInRegistries.ITEM.getKey(stack.getItem()), UiColorPalette.task());
-         builder.load("Count: " + stack.getCount(), UiColorPalette.parse());
-         builder.load("Hover Name: " + stack.getHoverName().getString(), UiColorPalette.parse());
-         builder.load("Components: " + stack.getComponentsPatch().size() + " non-default", UiColorPalette.a());
+         builder.init("Identity", UiColorPalette.warmWhite());
+         builder.load("Item: " + BuiltInRegistries.ITEM.getKey(stack.getItem()), UiColorPalette.softWhite());
+         builder.load("Count: " + stack.getCount(), UiColorPalette.textBody());
+         builder.load("Hover Name: " + stack.getHoverName().getString(), UiColorPalette.textBody());
+         builder.load("Components: " + stack.getComponentsPatch().size() + " non-default", UiColorPalette.textMuted());
          init_V_az_CachePool_ItemStack(builder, stack);
          Component customName = stack.get(DataComponents.CUSTOM_NAME);
          Component itemName = stack.get(DataComponents.ITEM_NAME);
          ItemLore lore = stack.get(DataComponents.LORE);
          if (customName != null || itemName != null || lore != null && !lore.lines().isEmpty()) {
             builder.init_V();
-            builder.init("Display", UiColorPalette.node());
+            builder.init("Display", UiColorPalette.cyan());
             if (customName != null) {
-               builder.load("Custom Name: " + customName.getString(), UiColorPalette.task());
+               builder.load("Custom Name: " + customName.getString(), UiColorPalette.softWhite());
             }
 
             if (itemName != null) {
-               builder.load("Item Name: " + itemName.getString(), UiColorPalette.parse());
+               builder.load("Item Name: " + itemName.getString(), UiColorPalette.textBody());
             }
 
             if (lore != null && !lore.lines().isEmpty()) {
                int i = 1;
 
                for (Component line : lore.lines()) {
-                  builder.load("Lore " + i++ + ": " + line.getString(), UiColorPalette.parse());
+                  builder.load("Lore " + i++ + ": " + line.getString(), UiColorPalette.textBody());
                }
             }
          }
@@ -81,7 +81,7 @@ public final class ItemNbtInspector {
             builder,
             stack,
             "Model / Visuals",
-            UiColorPalette.node(),
+            UiColorPalette.cyan(),
             init_az_DataUtil_DataComponentType_Str(DataComponents.ITEM_MODEL, "Item Model"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.CUSTOM_MODEL_DATA, "Custom Model Data"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.TOOLTIP_STYLE, "Tooltip Style"),
@@ -96,7 +96,7 @@ public final class ItemNbtInspector {
          ItemAttributeModifiers attributes = stack.get(DataComponents.ATTRIBUTE_MODIFIERS);
          if (attributes != null && !attributes.modifiers().isEmpty()) {
             builder.init_V();
-            builder.init("Attributes", UiColorPalette.queue());
+            builder.init("Attributes", UiColorPalette.amber());
 
             for (net.minecraft.world.item.component.ItemAttributeModifiers.Entry entry : attributes.modifiers()) {
                String attribute = init_Str_Holder(entry.attribute());
@@ -111,7 +111,7 @@ public final class ItemNbtInspector {
                      + ", "
                      + entry.modifier().id()
                      + ")",
-                  UiColorPalette.parse()
+                  UiColorPalette.textBody()
                );
             }
          }
@@ -123,21 +123,21 @@ public final class ItemNbtInspector {
             || stack.has(DataComponents.ENCHANTMENT_GLINT_OVERRIDE)
             || stack.has(DataComponents.RARITY)) {
             builder.init_V();
-            builder.init("Item Rules", UiColorPalette.entry());
+            builder.init("Item Rules", UiColorPalette.warningYellow());
             if (stack.has(DataComponents.MAX_DAMAGE)) {
-               builder.load("Max Damage: " + stack.getMaxDamage(), UiColorPalette.parse());
+               builder.load("Max Damage: " + stack.getMaxDamage(), UiColorPalette.textBody());
             }
 
             if (stack.has(DataComponents.DAMAGE)) {
-               builder.load("Damage: " + stack.getDamageValue(), UiColorPalette.parse());
+               builder.load("Damage: " + stack.getDamageValue(), UiColorPalette.textBody());
             }
 
             if (stack.has(DataComponents.UNBREAKABLE)) {
-               builder.load("Unbreakable: true", UiColorPalette.parse());
+               builder.load("Unbreakable: true", UiColorPalette.textBody());
             }
 
             if (stack.has(DataComponents.MAX_STACK_SIZE)) {
-               builder.load("Max Stack: " + stack.getMaxStackSize(), UiColorPalette.parse());
+               builder.load("Max Stack: " + stack.getMaxStackSize(), UiColorPalette.textBody());
             }
          }
 
@@ -145,7 +145,7 @@ public final class ItemNbtInspector {
             builder,
             stack,
             "Usage / Combat",
-            UiColorPalette.queue(),
+            UiColorPalette.amber(),
             init_az_DataUtil_DataComponentType_Str(DataComponents.USE_EFFECTS, "Use Effects"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.MINIMUM_ATTACK_CHARGE, "Minimum Attack Charge"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.DAMAGE_TYPE, "Damage Type"),
@@ -166,7 +166,7 @@ public final class ItemNbtInspector {
             builder,
             stack,
             "Equipment / Enchanting",
-            UiColorPalette.buffer(),
+            UiColorPalette.blue(),
             init_az_DataUtil_DataComponentType_Str(DataComponents.ENCHANTABLE, "Enchantable"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.EQUIPPABLE, "Equippable"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.REPAIRABLE, "Repairable"),
@@ -183,7 +183,7 @@ public final class ItemNbtInspector {
             builder,
             stack,
             "Placement / Mining",
-            UiColorPalette.entry(),
+            UiColorPalette.warningYellow(),
             init_az_DataUtil_DataComponentType_Str(DataComponents.CAN_PLACE_ON, "Can Place On"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.CAN_BREAK, "Can Break"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.BLOCK_STATE, "Block State"),
@@ -193,14 +193,14 @@ public final class ItemNbtInspector {
          BundleContents bundle = stack.get(DataComponents.BUNDLE_CONTENTS);
          if (container != null || bundle != null) {
             builder.init_V();
-            builder.init("Contents", UiColorPalette.cache());
+            builder.init("Contents", UiColorPalette.teal());
             if (container != null) {
                long count = container.nonEmptyItemCopyStream().count();
-               builder.load("Container Items: " + count, UiColorPalette.parse());
+               builder.load("Container Items: " + count, UiColorPalette.textBody());
             }
 
             if (bundle != null) {
-               builder.load("Bundle Items: " + bundle.size(), UiColorPalette.parse());
+               builder.load("Bundle Items: " + bundle.size(), UiColorPalette.textBody());
             }
          }
 
@@ -208,7 +208,7 @@ public final class ItemNbtInspector {
             builder,
             stack,
             "Containers / Projectiles",
-            UiColorPalette.cache(),
+            UiColorPalette.teal(),
             init_az_DataUtil_DataComponentType_Str(DataComponents.CONTAINER, "Container"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.BUNDLE_CONTENTS, "Bundle Contents"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.CHARGED_PROJECTILES, "Charged Projectiles"),
@@ -222,7 +222,7 @@ public final class ItemNbtInspector {
             || stack.has(DataComponents.MAP_ID)
             || stack.has(DataComponents.BANNER_PATTERNS)) {
             builder.init_V();
-            builder.init("Special Data", UiColorPalette.state());
+            builder.init("Special Data", UiColorPalette.magenta());
             init_V_az_CachePool(builder, stack, DataComponents.BLOCK_ENTITY_DATA, "Block Entity Data");
             init_V_az_CachePool(builder, stack, DataComponents.BUCKET_ENTITY_DATA, "Bucket Entity Data");
             init_V_az_CachePool(builder, stack, DataComponents.ENTITY_DATA, "Entity Data");
@@ -234,7 +234,7 @@ public final class ItemNbtInspector {
             builder,
             stack,
             "Potions / Maps",
-            UiColorPalette.state(),
+            UiColorPalette.magenta(),
             init_az_DataUtil_DataComponentType_Str(DataComponents.POTION_CONTENTS, "Potion Contents"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.POTION_DURATION_SCALE, "Potion Duration Scale"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.SUSPICIOUS_STEW_EFFECTS, "Suspicious Stew Effects"),
@@ -247,7 +247,7 @@ public final class ItemNbtInspector {
             builder,
             stack,
             "Fireworks / Music / Profiles",
-            UiColorPalette.index(),
+            UiColorPalette.warmWhite(),
             init_az_DataUtil_DataComponentType_Str(DataComponents.FIREWORK_EXPLOSION, "Firework Explosion"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.FIREWORKS, "Fireworks"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.PROFILE, "Profile"),
@@ -260,7 +260,7 @@ public final class ItemNbtInspector {
             builder,
             stack,
             "Banners / Decorations",
-            UiColorPalette.node(),
+            UiColorPalette.cyan(),
             init_az_DataUtil_DataComponentType_Str(DataComponents.PROVIDES_BANNER_PATTERNS, "Provides Banner Patterns"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.BANNER_PATTERNS, "Banner Patterns"),
             init_az_DataUtil_DataComponentType_Str(DataComponents.BASE_COLOR, "Base Color"),
@@ -270,28 +270,28 @@ public final class ItemNbtInspector {
          WritableBookContent writable = stack.get(DataComponents.WRITABLE_BOOK_CONTENT);
          if (written != null || writable != null) {
             builder.init_V();
-            builder.init("Book", UiColorPalette.buffer());
+            builder.init("Book", UiColorPalette.blue());
             if (written != null) {
-               builder.load("Title: " + written.title().raw(), UiColorPalette.parse());
-               builder.load("Author: " + written.author(), UiColorPalette.parse());
-               builder.load("Pages: " + written.pages().size(), UiColorPalette.parse());
+               builder.load("Title: " + written.title().raw(), UiColorPalette.textBody());
+               builder.load("Author: " + written.author(), UiColorPalette.textBody());
+               builder.load("Pages: " + written.pages().size(), UiColorPalette.textBody());
             }
 
             if (writable != null) {
-               builder.load("Pages: " + writable.pages().size(), UiColorPalette.parse());
+               builder.load("Pages: " + writable.pages().size(), UiColorPalette.textBody());
             }
          }
 
          CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
          if (customData != null) {
             builder.init_V();
-            builder.init("Custom Data", UiColorPalette.value());
+            builder.init("Custom Data", UiColorPalette.successText());
             CompoundTag tag = customData.copyTag();
             if (tag.isEmpty()) {
-               builder.load("{}", UiColorPalette.a());
+               builder.load("{}", UiColorPalette.textMuted());
             } else {
                for (Entry<String, Tag> entry : tag.entrySet()) {
-                  builder.load(entry.getKey() + ": " + ItemSnbtCodec.init(entry.getValue()), UiColorPalette.parse());
+                  builder.load(entry.getKey() + ": " + ItemSnbtCodec.init(entry.getValue()), UiColorPalette.textBody());
                }
             }
          }
@@ -303,7 +303,7 @@ public final class ItemNbtInspector {
             if (!load(id)) {
                if (!wroteOtherComponents) {
                   builder.init_V();
-                  builder.init("Other Components", UiColorPalette.pool());
+                  builder.init("Other Components", UiColorPalette.silver());
                   wroteOtherComponents = true;
                }
 
@@ -316,13 +316,13 @@ public final class ItemNbtInspector {
             }
          }
       } else {
-         builder.init("Empty", UiColorPalette.valid());
-         builder.load("No item stack was selected.", UiColorPalette.valid());
+         builder.init("Empty", UiColorPalette.errorText());
+         builder.load("No item stack was selected.", UiColorPalette.errorText());
       }
    }
 
    private static void init_V_Str_az_CachePool(String rawSnbt, ItemNbtInspector.Inner_CachePool builder) {
-      builder.init("Raw ItemStack SNBT", UiColorPalette.index());
+      builder.init("Raw ItemStack SNBT", UiColorPalette.warmWhite());
       boolean truncated = rawSnbt != null && rawSnbt.length() > 40000;
       String shown = truncated ? rawSnbt.substring(0, 40000) : rawSnbt;
 
@@ -338,10 +338,10 @@ public final class ItemNbtInspector {
    private static void init_V_az_CachePool(ItemNbtInspector.Inner_CachePool builder, String title, ItemEnchantments enchantments) {
       if (enchantments != null && !enchantments.isEmpty()) {
          builder.init_V();
-         builder.init(title, UiColorPalette.buffer());
+         builder.init(title, UiColorPalette.blue());
 
          for (it.unimi.dsi.fastutil.objects.Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
-            builder.load(init_Str_Holder(entry.getKey()) + ": " + entry.getIntValue(), UiColorPalette.parse());
+            builder.load(init_Str_Holder(entry.getKey()) + ": " + entry.getIntValue(), UiColorPalette.textBody());
          }
       }
    }
@@ -399,7 +399,7 @@ public final class ItemNbtInspector {
 
       if (!ids.isEmpty()) {
          builder.init_V();
-         builder.init("Identity / IDs", UiColorPalette.cache());
+         builder.init("Identity / IDs", UiColorPalette.teal());
          ids.forEach((key, value) -> builder.init(key + ": " + value));
       }
    }
@@ -658,10 +658,10 @@ public final class ItemNbtInspector {
                tokens.add(new ItemNbtInspector.Inner_TaskQueue(text.substring(start, i), fallbackColor));
             } else if (ch != '"' && ch != '\'') {
                if ("{}[](),:=".indexOf(ch) >= 0) {
-                  tokens.add(new ItemNbtInspector.Inner_TaskQueue(String.valueOf(ch), UiColorPalette.pool()));
+                  tokens.add(new ItemNbtInspector.Inner_TaskQueue(String.valueOf(ch), UiColorPalette.silver()));
                   i++;
                } else if (ch == '!') {
-                  tokens.add(new ItemNbtInspector.Inner_TaskQueue("!", UiColorPalette.valid()));
+                  tokens.add(new ItemNbtInspector.Inner_TaskQueue("!", UiColorPalette.errorText()));
                   i++;
                } else {
                   int start = i++;
@@ -696,7 +696,7 @@ public final class ItemNbtInspector {
                      }
                   }
 
-                  tokens.add(new ItemNbtInspector.Inner_TaskQueue(text.substring(start, i), UiColorPalette.cache()));
+                  tokens.add(new ItemNbtInspector.Inner_TaskQueue(text.substring(start, i), UiColorPalette.teal()));
                   break;
                }
             }
@@ -718,16 +718,16 @@ public final class ItemNbtInspector {
 
       if (next >= text.length() || text.charAt(next) != ':' && text.charAt(next) != '=') {
          if (lower.equals("true") || lower.equals("false")) {
-            return UiColorPalette.state();
+            return UiColorPalette.magenta();
          } else if (lower.equals("null")) {
-            return UiColorPalette.a();
+            return UiColorPalette.textMuted();
          } else if (word.matches("[-+]?\\d+(\\.\\d+)?[bBsSlLfFdD]?")) {
-            return UiColorPalette.entry();
+            return UiColorPalette.warningYellow();
          } else {
-            return word.contains(":") ? UiColorPalette.buffer() : fallbackColor;
+            return word.contains(":") ? UiColorPalette.blue() : fallbackColor;
          }
       } else {
-         return UiColorPalette.node();
+         return UiColorPalette.cyan();
       }
    }
 
@@ -755,11 +755,11 @@ public final class ItemNbtInspector {
 
       private void init(String text) {
          String safe = text == null ? "" : text;
-         this.init_List.add(new ItemNbtInspector.Inner_BufferHelper(safe, UiColorPalette.task(), ItemNbtInspector.init_List_Str_I(safe, UiColorPalette.task())));
+         this.init_List.add(new ItemNbtInspector.Inner_BufferHelper(safe, UiColorPalette.softWhite(), ItemNbtInspector.init_List_Str_I(safe, UiColorPalette.softWhite())));
       }
 
       private void init_V() {
-         this.init_List.add(new ItemNbtInspector.Inner_BufferHelper("", UiColorPalette.a()));
+         this.init_List.add(new ItemNbtInspector.Inner_BufferHelper("", UiColorPalette.textMuted()));
       }
 
       private List<ItemNbtInspector.Inner_BufferHelper> init_List() {

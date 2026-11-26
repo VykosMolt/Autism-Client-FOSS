@@ -38,7 +38,7 @@ public abstract class AutismPacketDecoderMixin<T extends PacketListener> {
             int start = Math.max(0, Math.min(outSizeBeforeDecode, out.size()));
             boolean capturePlaintext = PacketCaptureState.init_Z_J(captureState) && incomingPlaintext.length > 0;
             boolean capturePayloads = PacketCaptureState.load(captureState);
-            ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
+            ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
             if (module != null) {
                String protocol = this.protocolInfo.id().id();
 
@@ -49,7 +49,7 @@ public abstract class AutismPacketDecoderMixin<T extends PacketListener> {
                      }
 
                      if (capturePayloads && autism$isPayloadCarrier(packet)) {
-                        module.init(packet, "S2C", protocol, "decoder");
+                        module.captureCustomPayloadFromSource(packet, "S2C", protocol, "decoder");
                      }
                   }
                }

@@ -122,7 +122,7 @@ public final class NoRenderModule extends Module {
 
    @Override
    public void onDisable() {
-      NoRenderState.init_V();
+      NoRenderState.disable();
       load();
    }
 
@@ -149,56 +149,56 @@ public final class NoRenderModule extends Module {
    }
 
    private void init() {
-      NoRenderState.init_Z = this.init_BoolSetting.get();
-      NoRenderState.load_Z = this.load_BoolSetting.get();
-      NoRenderState.read = this.read.get();
-      NoRenderState.write = this.write.get();
-      NoRenderState.update = this.update.get();
-      NoRenderState.sync = this.sync.get();
-      NoRenderState.flush = this.flush.get();
-      NoRenderState.close = this.close.get();
-      NoRenderState.open = this.open.get();
-      NoRenderState.poll = this.poll.get();
-      NoRenderState.push = this.push.get();
-      NoRenderState.pop = this.pop.get();
-      NoRenderState.tick = this.tick.get();
-      NoRenderState.run = this.run.get();
-      NoRenderState.get = this.get.get();
-      NoRenderState.set = this.set.get();
-      NoRenderState.put = this.put.get();
-      NoRenderState.add = this.add.get();
-      NoRenderState.clear = this.clear.get();
-      NoRenderState.reset = this.reset.get();
-      NoRenderState.start = this.start.get();
-      NoRenderState.stop = this.stop.get();
-      NoRenderState.next = this.next.get();
-      NoRenderState.prev = this.prev.get();
-      NoRenderState.valid = this.valid.get();
-      NoRenderState.size = this.size.get();
-      NoRenderState.data = this.data.get();
-      NoRenderState.value = this.value.get();
-      NoRenderState.cache = this.cache.get();
-      NoRenderState.state = this.state.get();
-      NoRenderState.queue = this.queue.get();
-      NoRenderState.buffer = this.buffer.get();
-      NoRenderState.entry = this.entry.get();
-      NoRenderState.node = this.node.get();
-      NoRenderState.task = this.task.get();
-      NoRenderState.pool = this.pool.get();
-      NoRenderState.index = this.index.get();
-      NoRenderState.count = this.count.get();
-      NoRenderState.load_List = this.init_RegistryListSettin.get();
-      NoRenderState.flags = this.flags.get();
-      NoRenderState.level = this.level.get();
-      NoRenderState.frame = this.frame.get();
-      NoRenderState.block = this.block.get();
-      NoRenderState.chunk = this.chunk.get();
-      NoRenderState.table = this.table.get();
+      NoRenderState.portalOverlay = this.init_BoolSetting.get();
+      NoRenderState.spyglassOverlay = this.load_BoolSetting.get();
+      NoRenderState.nausea = this.read.get();
+      NoRenderState.pumpkinOverlay = this.write.get();
+      NoRenderState.powderedSnowOverlay = this.update.get();
+      NoRenderState.fireOverlay = this.sync.get();
+      NoRenderState.liquidOverlay = this.flush.get();
+      NoRenderState.inWallOverlay = this.close.get();
+      NoRenderState.vignette = this.open.get();
+      NoRenderState.guiBackground = this.poll.get();
+      NoRenderState.totemAnimation = this.push.get();
+      NoRenderState.eatingParticles = this.pop.get();
+      NoRenderState.enchantmentGlint = this.tick.get();
+      NoRenderState.hurtCam = this.run.get();
+      NoRenderState.bossBar = this.get.get();
+      NoRenderState.scoreboard = this.set.get();
+      NoRenderState.crosshair = this.put.get();
+      NoRenderState.title = this.add.get();
+      NoRenderState.heldItemName = this.clear.get();
+      NoRenderState.disableObfuscation = this.reset.get();
+      NoRenderState.potionIcons = this.start.get();
+      NoRenderState.weather = this.stop.get();
+      NoRenderState.worldBorder = this.next.get();
+      NoRenderState.blindness = this.prev.get();
+      NoRenderState.darkness = this.valid.get();
+      NoRenderState.fog = this.size.get();
+      NoRenderState.enchantmentTableBook = this.data.get();
+      NoRenderState.signText = this.value.get();
+      NoRenderState.blockBreakOverlay = this.cache.get();
+      NoRenderState.blockBreakParticles = this.state.get();
+      NoRenderState.beaconBeams = this.queue.get();
+      NoRenderState.fallingBlocks = this.buffer.get();
+      NoRenderState.mapMarkers = this.entry.get();
+      NoRenderState.mapContents = this.node.get();
+      NoRenderState.banners = this.task.get();
+      NoRenderState.fireworkExplosions = this.pool.get();
+      NoRenderState.hideAllParticles = this.index.get();
+      NoRenderState.constantTextureRotations = this.count.get();
+      NoRenderState.hiddenBlockEntities = this.init_RegistryListSettin.get();
+      NoRenderState.sky = this.flags.get();
+      NoRenderState.stars = this.level.get();
+      NoRenderState.sun = this.frame.get();
+      NoRenderState.moon = this.block.get();
+      NoRenderState.sunriseGlow = this.chunk.get();
+      NoRenderState.clouds = this.table.get();
       NoRenderModule.Inner_DataUtil tm = this.init_EnumSetting.get();
-      NoRenderState.store = tm != NoRenderModule.Inner_DataUtil.VANILLA;
-      NoRenderState.init_J = this.init(tm);
+      NoRenderState.forceTimeEnabled = tm != NoRenderModule.Inner_DataUtil.VANILLA;
+      NoRenderState.forcedTimeTicks = this.init(tm);
       NoRenderModule.Inner_StreamUtil wm = this.load_EnumSetting.get();
-      NoRenderState.drain = wm != NoRenderModule.Inner_StreamUtil.VANILLA;
+      NoRenderState.forceWeatherEnabled = wm != NoRenderModule.Inner_StreamUtil.VANILLA;
       float var10000;
       switch (wm) {
          case RAIN:
@@ -212,17 +212,17 @@ public final class NoRenderModule extends Module {
             var10000 = 0.0F;
       }
 
-      NoRenderState.init_F = var10000;
-      NoRenderState.load_F = wm == NoRenderModule.Inner_StreamUtil.THUNDER ? 1.0F : 0.0F;
-      NoRenderState.init_List = this.load_RegistryListSettin.get();
-      NoRenderState.f_b_Z = this.store.get();
-      NoRenderState.fill = this.drain.get();
-      NoRenderState.mark = this.fill.get();
-      NoRenderState.scan = this.mark.get();
-      NoRenderState.parse = this.scan.get();
-      NoRenderState.bind = this.parse.get();
-      NoRenderState.f_a_Z = this.bind.get();
-      NoRenderState.load_V();
+      NoRenderState.forcedRainLevel = var10000;
+      NoRenderState.forcedThunderLevel = wm == NoRenderModule.Inner_StreamUtil.THUNDER ? 1.0F : 0.0F;
+      NoRenderState.hiddenEntities = this.load_RegistryListSettin.get();
+      NoRenderState.dropSpawnPackets = this.store.get();
+      NoRenderState.armor = this.drain.get();
+      NoRenderState.showInvisibleEntities = this.fill.get();
+      NoRenderState.disableGlowing = this.mark.get();
+      NoRenderState.spawnerEntities = this.scan.get();
+      NoRenderState.deadEntities = this.parse.get();
+      NoRenderState.nametags = this.bind.get();
+      NoRenderState.enable();
    }
 
    private long init(NoRenderModule.Inner_DataUtil mode) {

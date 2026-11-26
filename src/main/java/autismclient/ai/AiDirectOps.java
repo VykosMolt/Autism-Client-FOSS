@@ -162,7 +162,7 @@ public final class AiDirectOps {
                AiModuleScope.init();
             }
          };
-         AutoCloseable lease = id.equals("client:run_macro") ? () -> {} : MacroExecutor.init_AutoCloseable_Collection(entry.contract().resources());
+         AutoCloseable lease = id.equals("client:run_macro") ? () -> {} : MacroExecutor.acquireExternalResources(entry.contract().resources());
          AiOperation op = AiModuleScope.init_AiOperation_Supplier(() -> {
             prepare.run();
             return AiTools.init_AiOperation_Str(id, effective, ai, null);
@@ -356,7 +356,7 @@ public final class AiDirectOps {
             init_V("emergency key");
          } else if (!a.init_Z) {
             if (a.init_AutoCloseable == null) {
-               a.init_AutoCloseable = MacroExecutor.init_AutoCloseable_Collection(a.init_List);
+               a.init_AutoCloseable = MacroExecutor.acquireExternalResources(a.init_List);
                if (a.init_AutoCloseable == null) {
                   a.read = "Waiting for shared controls";
                   return;

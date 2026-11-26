@@ -32,7 +32,7 @@ public class WaitForCooldownAction implements MacroAction {
       }
 
       tag.putBoolean("checkMainHand", this.checkMainInteractionHand);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
 
@@ -46,7 +46,7 @@ public class WaitForCooldownAction implements MacroAction {
          this.checkMainInteractionHand = tag.getBooleanOr("checkMainHand", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
    @Override

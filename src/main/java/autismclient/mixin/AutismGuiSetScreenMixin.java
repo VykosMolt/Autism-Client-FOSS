@@ -48,7 +48,7 @@ public class AutismGuiSetScreenMixin {
 
    @Inject(method = "screen", at = @At("RETURN"), cancellable = true)
    private void autism$foregroundScreen(CallbackInfoReturnable<Screen> cir) {
-      cir.setReturnValue(OverlayScreenController.init_Screen(cir.getReturnValue()));
+      cir.setReturnValue(OverlayScreenController.resolveEffectiveScreen(cir.getReturnValue()));
    }
 
    @ModifyExpressionValue(
@@ -56,47 +56,47 @@ public class AutismGuiSetScreenMixin {
       at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/Gui;screen:Lnet/minecraft/client/gui/screens/Screen;")
    )
    private Screen autism$renderForeground(Screen actual) {
-      return OverlayScreenController.init_Screen(actual);
+      return OverlayScreenController.resolveEffectiveScreen(actual);
    }
 
    @WrapOperation(method = "setScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;removed()V"))
    private void autism$keepEditorAlive(Screen previous, Operation<Void> original) {
-      if (!OverlayScreenController.init_Z(previous)) {
+      if (!OverlayScreenController.shouldPreserveOnRemove(previous)) {
          original.call(previous);
       }
    }
 
    @WrapMethod(method = "tick")
    private void autism$tickConnectionAndEditor(Operation<Void> original) {
-      OverlayScreenController.read_V();
+      OverlayScreenController.beginRawScreenRead();
 
       try {
          original.call();
       } finally {
-         OverlayScreenController.write();
+         OverlayScreenController.endRawScreenRead();
       }
 
-      OverlayScreenController.load_V(this.screen);
+      OverlayScreenController.tickRetainedForeground(this.screen);
    }
 
    @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
    private void autism$replaceScreen(Screen screen, CallbackInfo ci) {
       if (aD.init_Z()) {
-         OverlayScreenController.update();
+         OverlayScreenController.clearRetainedForeground();
       }
 
       if (!AutismLiteVariant.enabled() && screen instanceof JsonUtil) {
-         OverlayScreenController.update();
+         OverlayScreenController.clearRetainedForeground();
          TextInputWidget.init_V();
-      } else if (!this.autism$replacingScreen && OverlayScreenController.init(this.minecraft, this.screen, screen)) {
+      } else if (!this.autism$replacingScreen && OverlayScreenController.interceptSetScreen(this.minecraft, this.screen, screen)) {
          ci.cancel();
       } else {
-         if (!OverlayScreenController.read_Z()) {
+         if (!OverlayScreenController.shouldInterceptBackgroundScreen()) {
             TextInputWidget.init_V();
          }
 
          if (!this.autism$replacingScreen) {
-            MacroExecutor.init_V_Screen(screen);
+            MacroExecutor.onScreenOpened(screen);
          }
 
          if (!this.autism$replacingScreen && screen != null) {

@@ -54,8 +54,8 @@ public class PacketNameArgumentType implements ArgumentType<String> {
 
       List<PacketNameArgumentType.Inner_DataUtil> rebuilt = new ArrayList<>();
 
-      for (Class<? extends Packet<?>> cls : PacketTypeRegistry.load()) {
-         String name = PacketTypeRegistry.init_Str_Class(cls);
+      for (Class<? extends Packet<?>> cls : PacketTypeRegistry.getC2sPackets()) {
+         String name = PacketTypeRegistry.getPacketName(cls);
          if (name != null) {
             rebuilt.add(new PacketNameArgumentType.Inner_DataUtil(name, name.toLowerCase(Locale.ROOT)));
          }

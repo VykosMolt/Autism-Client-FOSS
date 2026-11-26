@@ -107,7 +107,7 @@ public class WaitMovementAction implements MacroAction {
       tag.putBoolean("horizontalOnly", this.horizontalOnly);
       tag.putString("targetDimension", this.targetDimension == null ? "" : this.targetDimension);
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
 
@@ -130,7 +130,7 @@ public class WaitMovementAction implements MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
    @Override

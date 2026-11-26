@@ -35,7 +35,7 @@ public abstract class AutismClientConfigurationNetworkHandlerMixin {
          for (KnownPack knownPack : packet.knownPacks()) {
             if (knownPack != null) {
                if ("core".equals(knownPack.id())) {
-                  AutismSessionState.init_ck().init_V_Str_Str(serverAddress, knownPack.version());
+                  AutismSessionState.getInstance().setDetectedServerVersion(serverAddress, knownPack.version());
                   break;
                }
 
@@ -46,7 +46,7 @@ public abstract class AutismClientConfigurationNetworkHandlerMixin {
          }
 
          if (capturedVersion != null) {
-            AutismSessionState.init_ck().init_V_Str_Str(serverAddress, capturedVersion);
+            AutismSessionState.getInstance().setDetectedServerVersion(serverAddress, capturedVersion);
          }
 
          if (client != null && client.isSameThread()) {

@@ -92,7 +92,7 @@ public class AutismMultiPlayerGameModeMixin {
 
    @Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
    private void autism$routeBlockCapture(LocalPlayer player, InteractionHand hand, BlockHitResult hit, CallbackInfoReturnable<InteractionResult> cir) {
-      if (hit != null && AutismSessionState.init_ck().pool() && AutismSessionState.init_ck().init_Z_BlockPos_Direction(hit.getBlockPos(), hit.getDirection())) {
+      if (hit != null && AutismSessionState.getInstance().hasBlockCaptureCallback() && AutismSessionState.getInstance().dispatchBlockCapture(hit.getBlockPos(), hit.getDirection())) {
          cir.setReturnValue(InteractionResult.SUCCESS);
       }
    }

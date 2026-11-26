@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderBannerMixin {
    @Inject(method = "submit", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noBanner(CallbackInfo ci) {
-      if (NoRenderState.task()) {
+      if (NoRenderState.hideBanners()) {
          ci.cancel();
       }
    }

@@ -8,7 +8,7 @@ public final class PerTickPlacementLock {
    }
 
    public static synchronized boolean init(String moduleId) {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (tick != init_I) {
          init_Str = moduleId;
          init_I = tick;
@@ -19,6 +19,6 @@ public final class PerTickPlacementLock {
    }
 
    public static synchronized String init() {
-      return AutismSessionState.init_ck().state_I() == init_I ? init_Str : null;
+      return AutismSessionState.getInstance().getClientTick() == init_I ? init_Str : null;
    }
 }

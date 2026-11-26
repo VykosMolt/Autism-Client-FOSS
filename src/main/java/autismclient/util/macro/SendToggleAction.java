@@ -18,8 +18,8 @@ public class SendToggleAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      shared.read_V_Z(this.mode == SendToggleAction.Inner_DataUtil.ENABLE);
+      AutismSessionState shared = AutismSessionState.getInstance();
+      shared.setSendPacketsEnabled(this.mode == SendToggleAction.Inner_DataUtil.ENABLE);
    }
 
    @Override

@@ -149,8 +149,8 @@ public final class LagWatchdogReporter {
          () -> {
             boolean focused = client != null && client.getWindow() != null && client.getWindow().isFocused();
             Screen screen = client == null ? null : client.gui.screen();
-            AutismSessionState shared = AutismSessionState.init_ck();
-            boolean capture = shared != null && (shared.chunk() || shared.level() || shared.count() || shared.pool() || shared.frame() || shared.cache_Z());
+            AutismSessionState shared = AutismSessionState.getInstance();
+            boolean capture = shared != null && (shared.isTimedCaptureMode() || shared.hasCaptureCancelCallback() || shared.hasAttackCaptureCallback() || shared.hasBlockCaptureCallback() || shared.hasEntityCaptureCallback() || shared.isGbreakCapturing());
             return "focused="
                + focused
                + " screen="
@@ -165,11 +165,11 @@ public final class LagWatchdogReporter {
       );
       init(sb, "overlays", () -> OverlayManager.getInstance().debugSummary());
       init(sb, "packetLogger", () -> {
-         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-         AutismPacketLoggerOverlay logger = module == null ? null : module.load_AutismPacketLogger();
+         autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+         AutismPacketLoggerOverlay logger = module == null ? null : module.getPacketLoggerOverlay();
          return logger == null ? "not created" : logger.load_Str_9();
       });
-      init(sb, "macro", () -> MacroExecutor.read_Str() + " pendingConditions=" + MacroWaitRegistry.init_I());
+      init(sb, "macro", () -> MacroExecutor.formatDebugSummary() + " pendingConditions=" + MacroWaitRegistry.init_I());
       init(sb, "antiVanish", autismclient.modules.AntiVanishModule::load_Str);
       init(sb, "hud", () -> {
          return "enabledElements=" + AutismHudManager.init_I() + " activeModules=" + autismclient.modules.al.load_List().size() + " toasts=" + bi.init_I();

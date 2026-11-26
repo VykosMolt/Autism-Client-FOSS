@@ -200,7 +200,7 @@ final class BedMiningEstimator {
    private static int init(BlockState state) {
       int selected = init_Minecraft.player.getInventory().getSelectedSlot();
       int best = autismclient.util.BlockBreakSpeedHelper.init(init_Minecraft, state, 9, true, false);
-      if (best >= 0 && !autismclient.util.InventorySlotArbiter.init(best, "bed-nuker")) {
+      if (best >= 0 && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(best, "bed-nuker")) {
          return autismclient.util.BlockBreakSpeedHelper.init(init_Minecraft, init_Minecraft.player.getInventory().getItem(best), state)
                > Math.max(1.0F, autismclient.util.BlockBreakSpeedHelper.init(init_Minecraft, init_Minecraft.player.getMainHandItem(), state))
             ? best

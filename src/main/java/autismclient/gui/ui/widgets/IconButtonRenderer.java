@@ -50,7 +50,7 @@ public final class IconButtonRenderer {
             context.init_PoolEntry().drawCentered(graphics, glyph, bounds, color);
          } else {
             autismclient.gui.f.NetHelper glyph = init(bounds, 3);
-            GuiIconAtlas.init(graphics, "+".equals(symbol) ? GuiIconAtlas.pop : GuiIconAtlas.tick, glyph.read(), glyph.write(), glyph.update(), glyph.sync(), color);
+            GuiIconAtlas.draw(graphics, "+".equals(symbol) ? GuiIconAtlas.PLUS : GuiIconAtlas.MINUS, glyph.read(), glyph.write(), glyph.update(), glyph.sync(), color);
          }
       }
    }
@@ -97,7 +97,7 @@ public final class IconButtonRenderer {
             size--;
          }
 
-         GuiIconAtlas.init(graphics, icon, bounds.read() + (bounds.update() - size) / 2, bounds.write() + (bounds.sync() - size) / 2, size, color);
+         GuiIconAtlas.draw(graphics, icon, bounds.read() + (bounds.update() - size) / 2, bounds.write() + (bounds.sync() - size) / 2, size, color);
       }
    }
 

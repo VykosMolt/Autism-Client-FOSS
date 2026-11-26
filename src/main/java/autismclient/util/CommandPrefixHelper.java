@@ -14,8 +14,8 @@ public final class CommandPrefixHelper {
    }
 
    public static String init_Str() {
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-      String stored = module == null ? AutismConfig.getGlobal().commandPrefix : module.init_Str();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+      String stored = module == null ? AutismConfig.getGlobal().commandPrefix : module.getCommandPrefix();
       String safeStored = stored == null ? "" : stored;
       String cachedStored = write;
       String cachedPrefix = update;

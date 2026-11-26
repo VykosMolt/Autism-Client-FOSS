@@ -17,8 +17,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AutismRecipeBookScreenMixin {
    @Unique
    private boolean autism$isActive() {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      return module != null && module.init_Z();
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      return module != null && module.isActive();
    }
 
    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)

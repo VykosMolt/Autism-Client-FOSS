@@ -92,7 +92,7 @@ public final class LoggedPacketActions {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be queued.");
          return false;
       } else {
-         AutismSessionState.init_ck().init_V_Packet(entry.init_Packet);
+         AutismSessionState.getInstance().enqueueDelayedPacket(entry.init_Packet);
          AutismClientMessaging.sendPrefixed("Queued: " + entry.load_Str);
          return true;
       }
@@ -204,7 +204,7 @@ public final class LoggedPacketActions {
          return null;
       }
 
-      AutismMacro existingMacro = AutismSessionState.init_ck().init_aM();
+      AutismMacro existingMacro = AutismSessionState.getInstance().getEditingMacro();
       macroEditor.init_V_aM(existingMacro);
       OverlayManager.getInstance().bringToFront(macroEditor);
       return macroEditor;

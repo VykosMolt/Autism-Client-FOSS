@@ -244,12 +244,12 @@ final class AiGhastReflect {
 
          AiGameOperations.snapLookAt(eye.add(this.init_V_StreamUtil.flight.direction.scale(16.0)));
          if (this.init_V_StreamUtil.interceptTicks == 0 && AiDefense.load(this.init_Minecraft, ball)) {
-            autismclient.util.ServerRotationTracker.RotationSnapshot wire = autismclient.util.ServerRotationTracker.init_ch_CachePool();
-            if (!wire.init_Z()) {
+            autismclient.util.ServerRotationTracker.RotationSnapshot wire = autismclient.util.ServerRotationTracker.getSnapshot();
+            if (!wire.initialized()) {
                return null;
             }
 
-            Vec3 direction = Vec3.directionFromRotation(wire.write(), wire.read());
+            Vec3 direction = Vec3.directionFromRotation(wire.currentPitch(), wire.currentYaw());
             if (!init_Z_Vec3(eye, direction, ball.getBoundingBox().inflate(ball.getPickRadius()), AiDefense.init_D(this.init_Minecraft))) {
                return null;
             }

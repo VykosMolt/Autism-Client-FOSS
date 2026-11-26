@@ -43,7 +43,7 @@ public class ServerCommand extends Command {
    }
 
    private static void init(boolean pluginsTab) {
-      AutismServerInfoOverlay overlay = autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_AutismServerInfoOv();
+      AutismServerInfoOverlay overlay = autismclient.modules.ModuleRuntimeManager.getInstance().getOrCreateServerInfoOverlay();
       if (overlay == null) {
          AutismClientMessaging.sendPrefixed("§cServer overlay unavailable.");
       } else {

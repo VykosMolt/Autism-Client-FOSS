@@ -218,7 +218,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    public static boolean init_Z_52() {
       DangerModule danger = init_z();
-      return danger != null && danger.isEnabled() && danger.poll != -2147483648 && ClutchFallPhysics.init_Z_I(AutismSessionState.init_ck().state_I(), danger.poll, 1);
+      return danger != null && danger.isEnabled() && danger.poll != -2147483648 && ClutchFallPhysics.init_Z_I(AutismSessionState.getInstance().getClientTick(), danger.poll, 1);
    }
 
    private boolean pop() {
@@ -272,8 +272,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          && danger.init_Z
          && !aD.init_Z()
          && !FreecamController.isActive()
-         && "danger".equals(autismclient.util.SilentRotationManager.init_Str())
-         && autismclient.util.SilentRotationManager.read_Z();
+         && "danger".equals(autismclient.util.SilentRotationManager.getActiveOwnerId())
+         && autismclient.util.SilentRotationManager.hasActiveRotation();
    }
 
    public static boolean sync_Z_12() {
@@ -347,7 +347,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    @Override
    public boolean load_Z_23() {
-      return (this.init_Z || autismclient.util.SilentRotationManager.init_Z()) && !aD.init_Z() && !FreecamController.isActive();
+      return (this.init_Z || autismclient.util.SilentRotationManager.isReturningToPlayer()) && !aD.init_Z() && !FreecamController.isActive();
    }
 
    @Override
@@ -362,7 +362,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       }
 
       if (!this.isEnabled() && this.init_Z) {
-         this.open = AutismSessionState.init_ck().state_I();
+         this.open = AutismSessionState.getInstance().getClientTick();
          this.flush_V_10();
       }
 
@@ -372,12 +372,12 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    private static boolean tick_Z_8() {
-      return "danger".equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.init_Z();
+      return "danger".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && autismclient.util.SilentRotationManager.isReturningToPlayer();
    }
 
    private void load_V_35() {
       if (!this.init_Z && MC != null && MC.player != null && tick_Z_8()) {
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer("danger", MC.player);
+         autismclient.util.SilentRotationManager.tick("danger", MC.player);
       }
    }
 
@@ -389,9 +389,9 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             this.init_Obj = MC.level;
          }
 
-         int nextTick = AutismSessionState.init_ck().state_I();
+         int nextTick = AutismSessionState.getInstance().getClientTick();
          if (this.init_Z && nextTick - this.open > 1) {
-            autismclient.util.SilentRotationManager.init_V();
+            autismclient.util.SilentRotationManager.syncFromServerRotation();
          }
 
          this.open = nextTick;
@@ -412,9 +412,9 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                if (threat.init_Z && (attempt == null || FireballInterceptMath.init(this.open - attempt.init_I))) {
                   Fireball ball = (Fireball)threat.init_Entity;
                   RotationMath.Rotation goal = this.init_ce_DataUtil_Entity(ball);
-                  ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-                  double yaw = wire.init_Z() ? wire.read() : MC.player.getYRot();
-                  double pitch = wire.init_Z() ? wire.write() : MC.player.getXRot();
+                  ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+                  double yaw = wire.initialized() ? wire.currentYaw() : MC.player.getYRot();
+                  double pitch = wire.initialized() ? wire.currentPitch() : MC.player.getXRot();
                   double strike = FireballInterceptMath.init_D_Vec3(
                      MC.player.getEyePosition(),
                      this.init_Vec3_8(),
@@ -458,10 +458,10 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                if (this.init_Entity != best.init_Entity) {
                   this.init_Entity = best.init_Entity;
                   this.sync = this.open;
-                  autismclient.util.SilentRotationManager.init_V();
+                  autismclient.util.SilentRotationManager.syncFromServerRotation();
                   this.init_Z = true;
                   this.read_ce_DataUtil = null;
-                  this.load_ce_DataUtil = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                  this.load_ce_DataUtil = autismclient.util.SilentRotationManager.getCurrentRotation();
                }
 
                if (this.open - this.sync >= Math.max(12, 14) + 6) {
@@ -470,9 +470,9 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   this.flush_V_10();
                } else {
                   RotationMath.Rotation goal = this.init_ce_DataUtil_Entity(this.init_Entity);
-                  autismclient.util.SilentRotationManager.init_V_Str(this.id(), 40, goal);
+                  autismclient.util.SilentRotationManager.requestRotation(this.id(), 40, goal);
                   this.init_ce_DataUtil = this.load_ce_DataUtil;
-                  RotationMath.Rotation from = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                  RotationMath.Rotation from = autismclient.util.SilentRotationManager.getCurrentRotation();
                   if (from == null) {
                      from = RotationMath.ofPlayer(MC.player);
                   }
@@ -488,21 +488,21 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                      40
                   );
                   if (this.get()) {
-                     autismclient.util.SilentRotationManager.init_V_LocalPlayer_F(
+                     autismclient.util.SilentRotationManager.stepDangerRotation(
                         MC.player, FireballInterceptMath.init(RotationMath.angleDelta(goal.yaw(), from.yaw()), goal.pitch() - from.pitch(), strike, best.init_D, RotationMath.gcdStep())
                      );
                   } else {
                      double deadline = (strike >= 0.0 ? Math.min(strike, best.init_D) : best.init_D) - 2.0;
-                     autismclient.util.SilentRotationManager.init_V_Str_4("danger", MC.player, Double.isFinite(deadline) ? Math.max(1, (int)Math.floor(deadline)) : 1);
+                     autismclient.util.SilentRotationManager.stepUrgentTimed("danger", MC.player, Double.isFinite(deadline) ? Math.max(1, (int)Math.floor(deadline)) : 1);
                   }
 
-                  this.load_ce_DataUtil = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                  this.load_ce_DataUtil = autismclient.util.SilentRotationManager.getCurrentRotation();
                   this.init_Str = "Returning fireball";
                }
             }
          } else {
             if (this.init_Z) {
-               autismclient.util.SilentRotationManager.init_V();
+               autismclient.util.SilentRotationManager.syncFromServerRotation();
             }
 
             this.flush_V_10();
@@ -627,8 +627,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          && !aD.init_Z()
          && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
-         && !MacroExecutor.write_Z()
-         && !BlinkPacketManager.init_Z()
+         && !MacroExecutor.isRunning()
+         && !BlinkPacketManager.isBlinking()
          && !PkgCls_a.init_Z()
          && !autismclient.util.macro.MacroAimController.init_Z()
          && !f.load();
@@ -928,12 +928,12 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          if (previousAttempt != null && !FireballInterceptMath.init(this.open - previousAttempt.init_I)) {
             this.load_Str = "Retry interval";
          } else {
-            RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
-            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
+            RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.getCurrentRotation();
+            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
             if (rotation != null
-               && wire.init_Z()
-               && !(Math.abs(RotationMath.angleDelta(rotation.yaw(), wire.read())) > 0.15)
-               && !(Math.abs(rotation.pitch() - wire.write()) > 0.15)) {
+               && wire.initialized()
+               && !(Math.abs(RotationMath.angleDelta(rotation.yaw(), wire.currentYaw())) > 0.15)
+               && !(Math.abs(rotation.pitch() - wire.currentPitch()) > 0.15)) {
                Vec3 eye = MC.player.getEyePosition();
                double reach = MC.player.entityInteractionRange() - 0.025;
                Vec3 direction = Vec3.directionFromRotation(rotation.pitch(), rotation.yaw());
@@ -946,7 +946,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   this.load_Str = "Live ray or reach";
                } else if (MC.level.clip(new ClipContext(eye, hit.get(), Block.COLLIDER, Fluid.NONE, MC.player)).getType() != Type.MISS) {
                   this.load_Str = "Blocked ray";
-               } else if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+               } else if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                   this.load_Str = "Hand busy";
                } else {
                   try {
@@ -976,7 +976,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                      this.load_Z = true;
                      this.close_V_9();
                   } finally {
-                     autismclient.util.InventorySlotArbiter.read_V(this.id());
+                     autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
                   }
                }
             } else {
@@ -993,7 +993,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             this.init_Z = this.load_Z = false;
             this.init_Entity = null;
          } else if (MC != null && MC.player != null && MC.level != null) {
-            if (!this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
+            if (!this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
                if (!this.load_Z) {
                   this.close_V_9();
                }
@@ -1011,21 +1011,21 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                Module scaffold = al.init_Module_Str("scaffold");
                if (bridgeResume != null || scaffold != null && scaffold.isEnabled()) {
                   RotationMath.Rotation resume = bridgeResume != null ? bridgeResume : RotationMath.ofPlayer(MC.player);
-                  autismclient.util.SilentRotationManager.init_V_Str(this.id(), 40, resume);
-                  autismclient.util.SilentRotationManager.init_V_LocalPlayer_F(MC.player, (float)(180.0 + RotationMath.gcdStep()));
-                  RotationMath.Rotation endpoint = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                  autismclient.util.SilentRotationManager.requestRotation(this.id(), 40, resume);
+                  autismclient.util.SilentRotationManager.stepDangerRotation(MC.player, (float)(180.0 + RotationMath.gcdStep()));
+                  RotationMath.Rotation endpoint = autismclient.util.SilentRotationManager.getCurrentRotation();
                   if (endpoint != null && RotationMath.vectorAngleDegrees(endpoint, resume) <= 1.0F) {
                      if (bridgeResume != null) {
                         ScaffoldModule.init_V_ce_DataUtil_3(endpoint);
                      }
 
-                     autismclient.util.SilentRotationManager.load_V();
+                     autismclient.util.SilentRotationManager.resetAll();
                      this.init_Z = false;
                      this.load_Z = false;
                      this.init_Entity = null;
                   }
                } else {
-                  autismclient.util.SilentRotationManager.init("danger");
+                  autismclient.util.SilentRotationManager.releaseOwner("danger");
                   this.init_Z = false;
                   this.load_Z = false;
                   this.init_Entity = null;
@@ -1051,7 +1051,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       }
 
       if (!danger.init_Z || danger.load_Z) {
-         float progress = (AutismSessionState.init_ck().state_I() - danger.push + partialTick) / 2.0F;
+         float progress = (AutismSessionState.getInstance().getClientTick() - danger.push + partialTick) / 2.0F;
          if (danger.read_ce_DataUtil != null && !(progress >= 1.0F) && !(progress < 0.0F)) {
             progress = progress * progress * (3.0F - 2.0F * progress);
             return RotationMath.lerp(danger.read_ce_DataUtil, new RotationMath.Rotation(MC.player.getYRot(), MC.player.getXRot()), progress);
@@ -1068,7 +1068,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    private void close_V_9() {
-      this.push = AutismSessionState.init_ck().state_I();
+      this.push = AutismSessionState.getInstance().getClientTick();
       this.read_ce_DataUtil = this.load_ce_DataUtil;
    }
 
@@ -1133,8 +1133,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    private void poll_V_6() {
       this.init_v.init_V();
       this.open_V_6();
-      if ("danger".equals(autismclient.util.SilentRotationManager.init_Str())) {
-         autismclient.util.SilentRotationManager.load_V();
+      if ("danger".equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+         autismclient.util.SilentRotationManager.resetAll();
       }
 
       this.init_List = List.of();

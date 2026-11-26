@@ -235,7 +235,7 @@ public final class RollbackAction implements MacroAction {
    }
 
    private static void init() throws InterruptedException {
-      if (autismclient.modules.aD.read_Z() || !MacroExecutor.init_Z() || Thread.currentThread().isInterrupted()) {
+      if (autismclient.modules.aD.read_Z() || !MacroExecutor.isCurrentRunActive() || Thread.currentThread().isInterrupted()) {
          throw new InterruptedException("rollback canceled");
       }
    }

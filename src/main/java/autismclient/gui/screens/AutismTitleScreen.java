@@ -299,7 +299,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       }
 
       String version = "Minecraft " + SharedConstants.getCurrentVersion().name();
-      graphics.text(this.font, version, 2, this.height - 10, UiColorPalette.init());
+      graphics.text(this.font, version, 2, this.height - 10, UiColorPalette.accent());
    }
 
    private SplashRenderer init_SplashRenderer() {
@@ -597,8 +597,8 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       }, Component.literal("Modules & Macros")));
       all.add(new AutismTitleScreen.Inner_TaskQueue("PROFILES", "", autismclient.gui.f.a.DataUtil.add, null, 32, () -> {
          if (!aD.read_Z()) {
-            autismclient.modules.ModuleRuntimeManager mod = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-            AutismOverlay overlay = mod == null ? null : mod.load_cX();
+            autismclient.modules.ModuleRuntimeManager mod = autismclient.modules.ModuleRuntimeManager.getInstance();
+            AutismOverlay overlay = mod == null ? null : mod.getOrCreateProfilesOverlay();
             if (overlay != null) {
                OverlayManager.getInstance().register(overlay);
                ((AutismProfilesOverlay)overlay).load(true);

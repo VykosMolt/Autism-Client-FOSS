@@ -8,56 +8,56 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class MacroVarValue {
-   private final MacroVarValue.ValueType init_l_DataUtil;
-   private final String init_Str;
-   private final Map<String, MacroVarValue> init_Map;
+   private final MacroVarValue.ValueType type;
+   private final String text;
+   private final Map<String, MacroVarValue> properties;
 
    private MacroVarValue(MacroVarValue.ValueType kind, String value, Map<String, MacroVarValue> properties) {
-      this.init_l_DataUtil = kind == null ? MacroVarValue.ValueType.TEXT : kind;
-      this.init_Str = init_Str_Str(value);
-      this.init_Map = properties != null && !properties.isEmpty() ? Collections.unmodifiableMap(new LinkedHashMap<>(properties)) : Map.of();
+      this.type = kind == null ? MacroVarValue.ValueType.TEXT : kind;
+      this.text = sanitizeValue(value);
+      this.properties = properties != null && !properties.isEmpty() ? Collections.unmodifiableMap(new LinkedHashMap<>(properties)) : Map.of();
    }
 
-   public static MacroVarValue init_l_Obj(Object value) {
+   public static MacroVarValue ofText(Object value) {
       return new MacroVarValue(MacroVarValue.ValueType.TEXT, value == null ? "" : String.valueOf(value), Map.of());
    }
 
-   public static MacroVarValue init_l_Number(Number value) {
+   public static MacroVarValue ofNumber(Number value) {
       String rendered = value == null ? "0" : new BigDecimal(value.toString()).stripTrailingZeros().toPlainString();
       return new MacroVarValue(MacroVarValue.ValueType.NUMBER, rendered, Map.of());
    }
 
-   public static MacroVarValue init_l_Str(String value) {
+   public static MacroVarValue ofIdentifier(String value) {
       return new MacroVarValue(MacroVarValue.ValueType.IDENTIFIER, value, Map.of());
    }
 
-   public static MacroVarValue init_l_I(int value) {
+   public static MacroVarValue ofSlot(int value) {
       return new MacroVarValue(MacroVarValue.ValueType.SLOT, Integer.toString(value), Map.of());
    }
 
-   public static MacroVarValue init(MacroVarValue.ValueType kind, String value, Map<String, MacroVarValue> properties) {
+   public static MacroVarValue of(MacroVarValue.ValueType kind, String value, Map<String, MacroVarValue> properties) {
       return new MacroVarValue(kind, value, properties);
    }
 
-   public MacroVarValue.ValueType init_l_DataUtil() {
-      return this.init_l_DataUtil;
+   public MacroVarValue.ValueType getType() {
+      return this.type;
    }
 
-   public String init_Str() {
-      return this.init_Str;
+   public String asString() {
+      return this.text;
    }
 
-   public Map<String, MacroVarValue> init_Map() {
-      return this.init_Map;
+   public Map<String, MacroVarValue> getProperties() {
+      return this.properties;
    }
 
-   public Optional<MacroVarValue> init_Optional_Str(String path) {
+   public Optional<MacroVarValue> resolvePath(String path) {
       if (path != null && !path.isBlank()) {
          MacroVarValue current = this;
 
          for (String segment : path.split("\\.")) {
             if (!segment.isBlank()) {
-               current = current.init_Map.get(segment.toLowerCase(Locale.ROOT));
+               current = current.properties.get(segment.toLowerCase(Locale.ROOT));
                if (current == null) {
                   return Optional.empty();
                }
@@ -70,17 +70,17 @@ public final class MacroVarValue {
       }
    }
 
-   public MacroVarValue init(String name, MacroVarValue property) {
+   public MacroVarValue withProperty(String name, MacroVarValue property) {
       if (name != null && !name.isBlank() && property != null) {
-         Map<String, MacroVarValue> copy = new LinkedHashMap<>(this.init_Map);
+         Map<String, MacroVarValue> copy = new LinkedHashMap<>(this.properties);
          copy.put(name.trim().toLowerCase(Locale.ROOT), property);
-         return new MacroVarValue(this.init_l_DataUtil, this.init_Str, copy);
+         return new MacroVarValue(this.type, this.text, copy);
       } else {
          return this;
       }
    }
 
-   private static String init_Str_Str(String raw) {
+   private static String sanitizeValue(String raw) {
       if (raw != null && !raw.isEmpty()) {
          StringBuilder out = new StringBuilder(Math.min(raw.length(), 4096));
          int offset = 0;

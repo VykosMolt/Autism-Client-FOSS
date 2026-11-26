@@ -28,9 +28,9 @@ public class PacketAction implements MacroAction {
          if (mc.getConnection() == null) {
             AutismClientMessaging.sendPrefixed("§cNo network connection!");
          } else {
-            MacroTemplateResolver.ResolveResult packetDataResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.packetData, mc);
-            if (packetDataResolution.init_Z()) {
-               String resolvedPacketData = packetDataResolution.init_Str();
+            MacroTemplateResolver.ResolveResult packetDataResolution = MacroVariableContext.resolveTemplate(this.packetData, mc);
+            if (packetDataResolution.success()) {
+               String resolvedPacketData = packetDataResolution.value();
                if (resolvedPacketData.isEmpty()) {
                   AutismClientMessaging.sendPrefixed("§cPacket data is empty!");
                } else {

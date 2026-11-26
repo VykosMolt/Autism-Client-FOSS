@@ -118,7 +118,7 @@ public final class GridWalkNavigator {
 
    public static double init_D_BlockPos(BlockPos target) {
       if (target != null && init_Minecraft != null && init_Minecraft.level != null && init_Minecraft.player != null && !write(target)) {
-         int now = AutismSessionState.init_ck().state_I();
+         int now = AutismSessionState.getInstance().getClientTick();
          if (value != now) {
             value = now;
             write_HashMap.clear();
@@ -192,7 +192,7 @@ public final class GridWalkNavigator {
          return false;
       }
 
-      int now = AutismSessionState.init_ck().state_I();
+      int now = AutismSessionState.getInstance().getClientTick();
       if (write(target)) {
          update();
          sync();
@@ -416,7 +416,7 @@ public final class GridWalkNavigator {
    public static void init_V_BlockPos_I(BlockPos target, int ticks) {
       if (target != null && ticks > 0) {
          BlockPos key = target.immutable();
-         update_HashMap.put(key, AutismSessionState.init_ck().state_I());
+         update_HashMap.put(key, AutismSessionState.getInstance().getClientTick());
          sync_HashMap.put(key, ticks);
       }
    }
@@ -431,7 +431,7 @@ public final class GridWalkNavigator {
          return false;
       }
 
-      int age = AutismSessionState.init_ck().state_I() - stamp;
+      int age = AutismSessionState.getInstance().getClientTick() - stamp;
       if (age >= 0 && age <= sync_HashMap.getOrDefault(target, 0)) {
          return true;
       }

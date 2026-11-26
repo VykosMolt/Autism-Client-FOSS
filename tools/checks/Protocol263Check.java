@@ -111,13 +111,13 @@ public final class Protocol263Check {
       PingSpoofScheduler.write();
 
       // 4. ServerboundPunchPacket in PoolEntry, bw registry aliases, and StreamCodec compatibility
-      Field poolSetF = ModuleRuntimeManager.class.getDeclaredField("init_Set");
+      Field poolSetF = ModuleRuntimeManager.class.getDeclaredField("IGNORED_DEFAULT_C2S_PACKETS");
       poolSetF.setAccessible(true);
       Set<Class<?>> poolSet = (Set<Class<?>>) poolSetF.get(null);
       check("PoolEntry ignore set contains ServerboundPunchPacket", poolSet.contains(ServerboundPunchPacket.class));
-      check("bw resolves CompatSwingPacket -> ServerboundPunchPacket", PacketTypeRegistry.init_Class_Str("CompatSwingPacket") == ServerboundPunchPacket.class);
-      check("bw resolves HandSwingC2SPacket -> ServerboundPunchPacket", PacketTypeRegistry.init_Class_Str("HandSwingC2SPacket") == ServerboundPunchPacket.class);
-      check("bw resolves ServerboundAttackPacket", PacketTypeRegistry.init_Class_Str("ServerboundAttackPacket") == ServerboundAttackPacket.class);
+      check("bw resolves CompatSwingPacket -> ServerboundPunchPacket", PacketTypeRegistry.resolvePacketClass("CompatSwingPacket") == ServerboundPunchPacket.class);
+      check("bw resolves HandSwingC2SPacket -> ServerboundPunchPacket", PacketTypeRegistry.resolvePacketClass("HandSwingC2SPacket") == ServerboundPunchPacket.class);
+      check("bw resolves ServerboundAttackPacket", PacketTypeRegistry.resolvePacketClass("ServerboundAttackPacket") == ServerboundAttackPacket.class);
       var buf = Unpooled.buffer();
       boolean codecOk = true;
       try {

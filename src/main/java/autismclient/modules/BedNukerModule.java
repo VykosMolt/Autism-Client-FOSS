@@ -68,7 +68,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    }
 
    private int init_I_14() {
-      return AutismSessionState.init_ck().state_I();
+      return AutismSessionState.getInstance().getClientTick();
    }
 
    public static BedNukerModule init_UtilCore() {
@@ -154,7 +154,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    static boolean flush() {
       if (al.init_Module_Str("bed-nuker") instanceof BedNukerModule m && !init_Z_23()) {
          int slot = m.load_I_7();
-         if (slot >= 0 && !autismclient.util.InventorySlotArbiter.init(slot, m.id()) && autismclient.util.InventorySlotArbiter.write_Z(m.id())) {
+         if (slot >= 0 && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, m.id()) && autismclient.util.InventorySlotArbiter.beginActionGroup(m.id())) {
             try {
                m.read_V_10();
                m.read_I = -1;
@@ -162,7 +162,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                m.init_V_20();
                return true;
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V(m.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(m.id());
             }
          } else {
             return false;
@@ -238,12 +238,12 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    }
 
    private boolean open() {
-      return this.id().equals(autismclient.util.SilentRotationManager.init_Str());
+      return this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
    }
 
    @Override
    public boolean load_Z_23() {
-      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.init_Z() || this.isEnabled() && this.init_I == this.init_I_14());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || this.isEnabled() && this.init_I == this.init_I_14());
    }
 
    private boolean poll() {
@@ -260,7 +260,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          && !FreecamController.isAiControllingBody()
          && !RemoteViewController.init_Z()
          && !PkgCls_a.init_Z()
-         && !MacroExecutor.write_Z()
+         && !MacroExecutor.isRunning()
          && !f.load()
          && MC.gui.screen() == null
          && MC.gui.overlay() == null
@@ -272,10 +272,10 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          && !SurroundModule.init_Z_27()
          && !AnchorAuraModule.init_Z_2()
          && !CrystalAuraModule.init_Z_51()
-         && !"auto-trap".equals(autismclient.util.SilentRotationManager.init_Str())
+         && !"auto-trap".equals(autismclient.util.SilentRotationManager.getActiveOwnerId())
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20()
-         && !BlinkPacketManager.load_Z()
+         && !BlinkPacketManager.isHoldingActionsOnly()
          && !autismclient.util.ManualInteractionYield.init();
    }
 
@@ -415,7 +415,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          } else {
             double budget = KillAuraModule.init_D_9();
             boolean critical = MC.player.getHealth() + MC.player.getAbsorptionAmount() <= 6.0F;
-            RotationMath.Rotation at = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+            RotationMath.Rotation at = autismclient.util.SilentRotationManager.getCurrentRotation();
             BedMiningEstimator.Inner_StreamUtil follow = tracking == null
                ? BedMiningEstimator.init(this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_BlockPos(), this.init_DataPipe_BufferHel.init_Vec3(), 0.0F, nextEye)
                : tracking;
@@ -432,11 +432,11 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             if (!Double.isFinite(budget) || this.init_DataPipe_BufferHel.init_Z() && BedBreachRouteSolver.init(finish, budget, critical)) {
                this.init_I = this.init_I_14();
                this.init_Str = this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_Z() ? "Breaking bed" : "Opening bed";
-               autismclient.util.SilentRotationManager.init_V_Str(this.id(), 12, goal);
+               autismclient.util.SilentRotationManager.requestRotation(this.id(), 12, goal);
                if (!this.open()) {
                   this.read_V_10();
                } else {
-                  autismclient.util.SilentRotationManager.init(this.id(), MC.player, 37.0F, 37.0F);
+                  autismclient.util.SilentRotationManager.tick(this.id(), MC.player, 37.0F, 37.0F);
                   int slot = this.init_DataPipe_BufferHel.init_DataPipe_DataUtil().init_I();
                   if (slot != MC.player.getInventory().getSelectedSlot()) {
                      this.read_V_10();
@@ -445,7 +445,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                         this.init_J = System.nanoTime() + 12000000L;
                      }
 
-                     if (System.nanoTime() >= this.init_J && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+                     if (System.nanoTime() >= this.init_J && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                         try {
                            if (this.load_I_7() < 0) {
                               this.write_I = MC.player.getInventory().getSelectedSlot();
@@ -458,17 +458,17 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                            this.load_Obj = MC.level;
                            this.sync = this.init_I_14();
                         } finally {
-                           autismclient.util.InventorySlotArbiter.read_V(this.id());
+                           autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
                         }
                      }
                   } else {
                      this.read_I = -1;
                   }
 
-                  ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
+                  ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
                   BlockHitResult hit = null;
-                  if (wire.init_Z() && this.load_I != this.init_I_14() && slot == MC.player.getInventory().getSelectedSlot()) {
-                     RotationMath.Rotation written = new RotationMath.Rotation(wire.read(), wire.write());
+                  if (wire.initialized() && this.load_I != this.init_I_14() && slot == MC.player.getInventory().getSelectedSlot()) {
+                     RotationMath.Rotation written = new RotationMath.Rotation(wire.currentYaw(), wire.currentPitch());
                      BlockHitResult before = this.init_BlockHitResult_ce_DataUtil_2(written);
                      this.write_Z = this.init_Z_BlockHitResult_2(before);
                      if (this.write_Z) {
@@ -477,7 +477,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                   }
 
                   this.read_Z = this.write_Z || tracking == null || tracking.init_Z();
-                  double[] lastStep = autismclient.util.SilentRotationManager.init_DArr();
+                  double[] lastStep = autismclient.util.SilentRotationManager.getLastStepDeltas();
                   boolean continuing = current != null && this.init_Z && current.equals(this.load_BlockPos);
                   if (continuing && slot == MC.player.getInventory().getSelectedSlot()) {
                      BlockHitResult visible = this.init_BlockHitResult_ce_DataUtil_2(
@@ -564,9 +564,9 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       this.read_I = -1;
       this.init_Str = reason;
       if (this.open()) {
-         autismclient.util.SilentRotationManager.init(this.id());
+         autismclient.util.SilentRotationManager.releaseOwner(this.id());
          if (pump && MC.player != null) {
-            autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
+            autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
          }
       }
    }
@@ -594,7 +594,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       BedMiningEstimator.init();
       this.init_ValueSink.load();
       if (this.open()) {
-         autismclient.util.SilentRotationManager.load_V();
+         autismclient.util.SilentRotationManager.resetAll();
       }
 
       this.init_Obj = null;
@@ -613,7 +613,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    @Override
    public void tick() {
       if (!this.isEnabled() && this.open() && MC.player != null) {
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
+         autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
       }
    }
 

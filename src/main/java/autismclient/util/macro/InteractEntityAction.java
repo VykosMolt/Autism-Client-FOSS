@@ -44,7 +44,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
    private autismclient.util.InteractionTargetRef init_E() {
       if (this.targetMode == InteractEntityAction.Inner_DataUtil.LAST_TARGET) {
-         return AutismSessionState.init_ck().init_E();
+         return AutismSessionState.getInstance().getLastInteractionTarget();
       }
 
       for (String ref : this.entityTargets) {
@@ -84,7 +84,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
             return sentAny;
          } else {
-            autismclient.util.InteractionTargetRef target = AutismSessionState.init_ck().init_E();
+            autismclient.util.InteractionTargetRef target = AutismSessionState.getInstance().getLastInteractionTarget();
             return target != null && (!this.waitForTarget || target.load_Z(mc)) && target.init_Z_Minecraft(mc);
          }
       } else {
@@ -98,7 +98,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       }
 
       if (this.targetMode == InteractEntityAction.Inner_DataUtil.LAST_TARGET) {
-         autismclient.util.InteractionTargetRef target = AutismSessionState.init_ck().init_E();
+         autismclient.util.InteractionTargetRef target = AutismSessionState.getInstance().getLastInteractionTarget();
          return target != null && target.load_Z(mc);
       }
 

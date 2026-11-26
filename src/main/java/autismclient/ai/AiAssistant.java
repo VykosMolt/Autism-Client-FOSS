@@ -182,8 +182,8 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
             this.read();
          }
 
-         if ("ai-assistant".equals(autismclient.util.SilentRotationManager.init_Str()) || autismclient.util.SilentRotationManager.init_Z()) {
-            autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer("ai-assistant", init_Minecraft.player);
+         if ("ai-assistant".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) || autismclient.util.SilentRotationManager.isReturningToPlayer()) {
+            autismclient.util.SilentRotationManager.tick("ai-assistant", init_Minecraft.player);
          }
       }
    }
@@ -196,6 +196,6 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    @Override
    public boolean load_Z_23() {
-      return autismclient.ai.engine.AiSilentAim.init(autismclient.util.SilentRotationManager.init_Z(), true, autismclient.util.SilentMovementCoordinator.isSafeWalkActive());
+      return autismclient.ai.engine.AiSilentAim.init(autismclient.util.SilentRotationManager.isReturningToPlayer(), true, autismclient.util.SilentMovementCoordinator.isSafeWalkActive());
    }
 }

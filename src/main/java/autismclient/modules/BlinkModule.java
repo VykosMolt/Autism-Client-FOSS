@@ -27,12 +27,12 @@ public final class BlinkModule extends Module {
    @Override
    public void onEnable() {
       this.init();
-      BlinkPacketManager.init_V();
+      BlinkPacketManager.captureOriginSnapshot();
    }
 
    @Override
    public void onDisable() {
-      BlinkPacketManager.load_V();
+      BlinkPacketManager.disableAndFlush();
    }
 
    @Override
@@ -49,26 +49,26 @@ public final class BlinkModule extends Module {
          boolean wasHoldingMovement = BlinkPacketManager.auditHoldingMovement();
          this.init();
          if (!wasHoldingMovement && BlinkPacketManager.auditHoldingMovement()) {
-            BlinkPacketManager.init_V();
+            BlinkPacketManager.captureOriginSnapshot();
          }
       }
    }
 
    @Override
    public String info() {
-      int held = BlinkPacketManager.init_I();
+      int held = BlinkPacketManager.getQueuedPacketCount();
       if (held <= 0) {
          return "";
       }
 
-      int reset = BlinkPacketManager.load_I();
+      int reset = BlinkPacketManager.getAutoReleaseTicksRemaining();
       return reset >= 0 ? held + " | " + String.format(Locale.ROOT, "%.1fs", reset / 20.0) : Integer.toString(held);
    }
 
    private void init() {
-      BlinkPacketManager.load(this.bool("incoming"), this.bool("outgoing"));
-      BlinkPacketManager.read(this.bool("hold-movement"), this.bool("hold-actions"));
-      BlinkPacketManager.init(this.bool("show-position"));
-      BlinkPacketManager.init(this.bool("auto-reset"), this.integer("reset-after"));
+      BlinkPacketManager.setHoldDirections(this.bool("incoming"), this.bool("outgoing"));
+      BlinkPacketManager.setOutgoingHoldTypes(this.bool("hold-movement"), this.bool("hold-actions"));
+      BlinkPacketManager.setShowClone(this.bool("show-position"));
+      BlinkPacketManager.setAutoRelease(this.bool("auto-reset"), this.integer("reset-after"));
    }
 }

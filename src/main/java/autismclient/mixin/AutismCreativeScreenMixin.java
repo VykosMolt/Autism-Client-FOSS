@@ -27,8 +27,8 @@ public abstract class AutismCreativeScreenMixin {
 
    @Inject(method = "checkTabHovering", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$blockCoveredTabHover(GuiGraphicsExtractor graphics, CreativeModeTab tab, int mouseX, int mouseY, CallbackInfoReturnable<Boolean> cir) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      if (module != null && module.init_Z() && OverlayManager.getInstance().isMouseOverCached(mouseX, mouseY)) {
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      if (module != null && module.isActive() && OverlayManager.getInstance().isMouseOverCached(mouseX, mouseY)) {
          cir.setReturnValue(false);
       }
    }
@@ -36,8 +36,8 @@ public abstract class AutismCreativeScreenMixin {
    @Inject(method = "extractTabButton", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$blockCoveredTabCursor(GuiGraphicsExtractor graphics, int mouseX, int mouseY, CreativeModeTab tab, CallbackInfo ci) {
       if (!autism$inSafeRecall.get()) {
-         ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-         if (module != null && module.init_Z() && OverlayManager.getInstance().isMouseOverCached(mouseX, mouseY)) {
+         ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+         if (module != null && module.isActive() && OverlayManager.getInstance().isMouseOverCached(mouseX, mouseY)) {
             autism$inSafeRecall.set(Boolean.TRUE);
 
             try {
@@ -53,40 +53,40 @@ public abstract class AutismCreativeScreenMixin {
 
    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$mouseClicked(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      if (module != null && module.init_Z() && OverlayManager.getInstance().mouseClicked(event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      if (module != null && module.isActive() && OverlayManager.getInstance().mouseClicked(event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
          cir.setReturnValue(true);
       }
    }
 
    @Inject(method = "mouseReleased", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$mouseReleased(MouseButtonEvent event, CallbackInfoReturnable<Boolean> cir) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      if (module != null && module.init_Z() && OverlayManager.getInstance().mouseReleased(event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      if (module != null && module.isActive() && OverlayManager.getInstance().mouseReleased(event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
          cir.setReturnValue(true);
       }
    }
 
    @Inject(method = "mouseDragged", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$mouseDragged(MouseButtonEvent event, double deltaX, double deltaY, CallbackInfoReturnable<Boolean> cir) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      if (module != null && module.init_Z() && OverlayManager.getInstance().mouseDragged(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), deltaX, deltaY)) {
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      if (module != null && module.isActive() && OverlayManager.getInstance().mouseDragged(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), deltaX, deltaY)) {
          cir.setReturnValue(true);
       }
    }
 
    @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, CallbackInfoReturnable<Boolean> cir) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      if (module != null && module.init_Z() && OverlayManager.getInstance().mouseScrolled(mouseX, mouseY, verticalAmount)) {
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      if (module != null && module.isActive() && OverlayManager.getInstance().mouseScrolled(mouseX, mouseY, verticalAmount)) {
          cir.setReturnValue(true);
       }
    }
 
    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$keyPressed(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      if (module != null && module.init_Z() && OverlayManager.getInstance().keyPressed(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      if (module != null && module.isActive() && OverlayManager.getInstance().keyPressed(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input))
          )
        {
          cir.setReturnValue(true);
@@ -95,8 +95,8 @@ public abstract class AutismCreativeScreenMixin {
 
    @Inject(method = "charTyped", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$charTyped(CharacterEvent input, CallbackInfoReturnable<Boolean> cir) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      if (module != null && module.init_Z() && OverlayManager.getInstance().charTyped((char)input.codepoint(), 0)) {
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      if (module != null && module.isActive() && OverlayManager.getInstance().charTyped((char)input.codepoint(), 0)) {
          cir.setReturnValue(true);
       }
    }

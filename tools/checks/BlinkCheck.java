@@ -39,28 +39,28 @@ public final class BlinkCheck {
 
    @SuppressWarnings("unchecked")
    public static void main(String[] args) throws Exception {
-      Method write = BlinkPacketManager.class.getDeclaredMethod("write", Packet.class);
+      Method write = BlinkPacketManager.class.getDeclaredMethod("isHeldActionPacket", Packet.class);
       write.setAccessible(true);
-      Method closePred = BlinkPacketManager.class.getDeclaredMethod("close", Packet.class);
+      Method closePred = BlinkPacketManager.class.getDeclaredMethod("triggersIncomingFlush", Packet.class);
       closePred.setAccessible(true);
-      Method openPred = BlinkPacketManager.class.getDeclaredMethod("open", Packet.class);
+      Method openPred = BlinkPacketManager.class.getDeclaredMethod("isExemptOutgoingChatPacket", Packet.class);
       openPred.setAccessible(true);
-      Method flushPred = BlinkPacketManager.class.getDeclaredMethod("flush", Packet.class);
+      Method flushPred = BlinkPacketManager.class.getDeclaredMethod("isExemptIncomingKeepAlivePacket", Packet.class);
       flushPred.setAccessible(true);
 
-      Field inQueueF = BlinkPacketManager.class.getDeclaredField("init_Queue");
+      Field inQueueF = BlinkPacketManager.class.getDeclaredField("incomingQueue");
       inQueueF.setAccessible(true);
       Queue<Packet<?>> inQueue = (Queue<Packet<?>>) inQueueF.get(null);
 
-      Field outQueueF = BlinkPacketManager.class.getDeclaredField("load_Queue");
+      Field outQueueF = BlinkPacketManager.class.getDeclaredField("outgoingQueue");
       outQueueF.setAccessible(true);
       Queue<Packet<?>> outQueue = (Queue<Packet<?>>) outQueueF.get(null);
 
-      Field inSetF = BlinkPacketManager.class.getDeclaredField("init_Set");
+      Field inSetF = BlinkPacketManager.class.getDeclaredField("reinjectingOutgoingPackets");
       inSetF.setAccessible(true);
       Set<Packet<?>> inSet = (Set<Packet<?>>) inSetF.get(null);
 
-      Field counterF = BlinkPacketManager.class.getDeclaredField("init_AtomicInteger");
+      Field counterF = BlinkPacketManager.class.getDeclaredField("reinjectingOutgoingCount");
       counterF.setAccessible(true);
       AtomicInteger counter = (AtomicInteger) counterF.get(null);
 
@@ -80,56 +80,56 @@ public final class BlinkCheck {
       check("bundled alive health does not trigger close()", !(Boolean) closePred.invoke(null, new ClientboundBundlePacket(List.of(alive))));
 
       // 4. Bare and bundled ClientboundDisconnectPacket drop queues and pass through (never cancelled)
-      BlinkPacketManager.load(true, true);
+      BlinkPacketManager.setHoldDirections(true, true);
       inQueue.add(alive);
       outQueue.add(new ServerboundAttackPacket(7));
-      boolean heldBareDisconnect = BlinkPacketManager.init_Z(new ClientboundDisconnectPacket(Component.literal("kicked")));
+      boolean heldBareDisconnect = BlinkPacketManager.interceptIncoming(new ClientboundDisconnectPacket(Component.literal("kicked")));
       check("bare disconnect passes through", !heldBareDisconnect);
-      check("bare disconnect clears Blink flags and queues", !BlinkPacketManager.init_Z() && inQueue.isEmpty() && outQueue.isEmpty());
+      check("bare disconnect clears Blink flags and queues", !BlinkPacketManager.isBlinking() && inQueue.isEmpty() && outQueue.isEmpty());
 
-      BlinkPacketManager.load(true, true);
+      BlinkPacketManager.setHoldDirections(true, true);
       inQueue.add(alive);
       outQueue.add(new ServerboundAttackPacket(8));
       Packet<?> bundledDisconnect = new ClientboundBundlePacket(List.of(alive, new ClientboundDisconnectPacket(Component.literal("kicked"))));
-      boolean heldBundledDisconnect = BlinkPacketManager.init_Z(bundledDisconnect);
+      boolean heldBundledDisconnect = BlinkPacketManager.interceptIncoming(bundledDisconnect);
       check("bundled disconnect passes through", !heldBundledDisconnect);
-      check("bundled disconnect clears Blink flags and queues", !BlinkPacketManager.init_Z() && inQueue.isEmpty() && outQueue.isEmpty());
+      check("bundled disconnect clears Blink flags and queues", !BlinkPacketManager.isBlinking() && inQueue.isEmpty() && outQueue.isEmpty());
 
       // 5. Mid-blink toggle of incoming/outgoing drains queues cleanly
-      BlinkPacketManager.load(true, true);
-      BlinkPacketManager.read(true, true);
+      BlinkPacketManager.setHoldDirections(true, true);
+      BlinkPacketManager.setOutgoingHoldTypes(true, true);
       check("auditHoldingMovement true when outgoing+hold-movement", BlinkPacketManager.auditHoldingMovement());
       inQueue.add(alive);
       outQueue.add(new ServerboundAttackPacket(9));
-      BlinkPacketManager.load(false, false);
+      BlinkPacketManager.setHoldDirections(false, false);
       check("disabling incoming/outgoing drains stranded queues", inQueue.isEmpty() && outQueue.isEmpty());
       check("auditHoldingMovement false when outgoing disabled", !BlinkPacketManager.auditHoldingMovement());
       check("init_Set and counter clean after drain", inSet.isEmpty() && counter.get() == 0);
 
       // 6. Mid-blink unchecking hold-movement or hold-actions drains load_Queue
-      BlinkPacketManager.load(false, true);
-      BlinkPacketManager.read(true, true);
+      BlinkPacketManager.setHoldDirections(false, true);
+      BlinkPacketManager.setOutgoingHoldTypes(true, true);
       outQueue.add(new ServerboundAttackPacket(10));
-      BlinkPacketManager.read(false, true);
+      BlinkPacketManager.setOutgoingHoldTypes(false, true);
       check("disabling hold-movement mid-blink drains outgoing queue", outQueue.isEmpty());
 
-      BlinkPacketManager.read(true, true);
+      BlinkPacketManager.setOutgoingHoldTypes(true, true);
       outQueue.add(new ServerboundAttackPacket(11));
-      BlinkPacketManager.read(true, false);
+      BlinkPacketManager.setOutgoingHoldTypes(true, false);
       check("disabling hold-actions mid-blink drains outgoing queue", outQueue.isEmpty());
 
       // 7. Bare and bundled ClientboundStartConfigurationPacket drop queues without desyncing flags
-      BlinkPacketManager.load(true, true);
+      BlinkPacketManager.setHoldDirections(true, true);
       inQueue.add(alive);
       outQueue.add(new ServerboundAttackPacket(12));
-      boolean heldStartConfig = BlinkPacketManager.init_Z(ClientboundStartConfigurationPacket.INSTANCE);
+      boolean heldStartConfig = BlinkPacketManager.interceptIncoming(ClientboundStartConfigurationPacket.INSTANCE);
       check("bare ClientboundStartConfigurationPacket passes through", !heldStartConfig);
       check("bare ClientboundStartConfigurationPacket clears queues", inQueue.isEmpty() && outQueue.isEmpty());
 
       inQueue.add(alive);
       outQueue.add(new ServerboundAttackPacket(13));
       Packet<?> bundledStartConfig = new ClientboundBundlePacket(List.of(alive, ClientboundStartConfigurationPacket.INSTANCE));
-      boolean heldBundledStartConfig = BlinkPacketManager.init_Z(bundledStartConfig);
+      boolean heldBundledStartConfig = BlinkPacketManager.interceptIncoming(bundledStartConfig);
       check("bundled ClientboundStartConfigurationPacket passes through", !heldBundledStartConfig);
       check("bundled ClientboundStartConfigurationPacket clears queues", inQueue.isEmpty() && outQueue.isEmpty());
 

@@ -40,7 +40,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       if (this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK) {
          return AimTargetAction.AimTarget.init(this.blockPos);
       } else {
-         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.LAST_TARGET ? AutismSessionState.init_ck().init_E() : this.init_E_2();
+         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.LAST_TARGET ? AutismSessionState.getInstance().getLastInteractionTarget() : this.init_E_2();
          if (target == null) {
             return null;
          } else {
@@ -88,7 +88,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
             return sentAny;
          } else {
-            autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.init_E_BlockPos(this.blockPos) : AutismSessionState.init_ck().init_E();
+            autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.init_E_BlockPos(this.blockPos) : AutismSessionState.getInstance().getLastInteractionTarget();
             return target != null && (!this.waitForTarget || target.load_Z(mc)) && target.init_Z_Minecraft(mc);
          }
       } else {
@@ -118,7 +118,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
          return hasTarget;
       } else {
-         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.init_E_BlockPos(this.blockPos) : AutismSessionState.init_ck().init_E();
+         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.init_E_BlockPos(this.blockPos) : AutismSessionState.getInstance().getLastInteractionTarget();
          return target != null && target.load_Z(mc);
       }
    }

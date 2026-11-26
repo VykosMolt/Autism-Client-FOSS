@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AutismNoRenderParticleMixin {
    @Inject(method = "createParticle", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noParticle(ParticleOptions options, double x, double y, double z, double vx, double vy, double vz, CallbackInfoReturnable<Particle> cir) {
-      if (options != null && NoRenderState.init(options.getType())) {
+      if (options != null && NoRenderState.shouldHideParticle(options.getType())) {
          cir.setReturnValue(null);
       }
    }

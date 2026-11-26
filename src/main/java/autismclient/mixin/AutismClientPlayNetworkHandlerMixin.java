@@ -564,9 +564,9 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleCommands", at = @At("RETURN"))
    private void autism$onCommandTreeApplied(ClientboundCommandsPacket packet, CallbackInfo ci) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
       if (module != null) {
-         AutismServerInfoOverlay overlay = module.load_AutismServerInfoOv();
+         AutismServerInfoOverlay overlay = module.getServerInfoOverlay();
          if (overlay != null) {
             overlay.set_V_9();
          }
@@ -722,7 +722,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleSetTime", at = @At("RETURN"))
    private void yang$onWorldTimeUpdate(ClientboundSetTimePacket packet, CallbackInfo ci) {
       if (!aD.read_Z() && this.autism$packetHooksActive()) {
-         AutismSessionState.init_ck().poll_V();
+         AutismSessionState.getInstance().onServerTimeUpdate();
       }
    }
 
@@ -794,8 +794,8 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Unique
    private boolean autism$packetHooksActive() {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      return module != null && module.read_Z();
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      return module != null && module.needsPacketHooks();
    }
 
    @Unique

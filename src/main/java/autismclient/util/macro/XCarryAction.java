@@ -246,9 +246,9 @@ public class XCarryAction implements MacroAction {
    public void execute(Minecraft mc) {
       if (mc != null && mc.player != null && mc.gameMode != null) {
          this.load_V_4();
-         AutismSessionState shared = AutismSessionState.init_ck();
-         boolean prevBypass = shared.close_Z();
-         shared.flush(true);
+         AutismSessionState shared = AutismSessionState.getInstance();
+         boolean prevBypass = shared.isArmorSlotBypassEnabled();
+         shared.setArmorSlotBypassEnabled(true);
 
          try {
             if (mc.player.containerMenu != mc.player.inventoryMenu) {
@@ -276,7 +276,7 @@ public class XCarryAction implements MacroAction {
             init_Z_InventoryMenu_Minecraft(handler, mc);
             this.init_V_InventoryMenu_Z(handler, true);
          } finally {
-            shared.flush(prevBypass);
+            shared.setArmorSlotBypassEnabled(prevBypass);
          }
       }
    }
@@ -284,7 +284,7 @@ public class XCarryAction implements MacroAction {
    private void init_V_Minecraft_5(Minecraft mc) {
       if (mc.getConnection() != null) {
          this.load_V_4();
-         autismclient.util.InteractionTargetRef containerTarget = AutismSessionState.init_ck().init_E();
+         autismclient.util.InteractionTargetRef containerTarget = AutismSessionState.getInstance().getLastInteractionTarget();
          if (containerTarget != null) {
             InventoryMenu playerHandler = mc.player.inventoryMenu;
             if (!playerHandler.getCarried().isEmpty()) {
@@ -1408,31 +1408,31 @@ public class XCarryAction implements MacroAction {
 
    private void init_V_InventoryMenu_Z(InventoryMenu handler, boolean includeCursor) {
       boolean active = init_Z_InventoryMenu_3(handler, includeCursor, this.init_Set());
-      AutismSessionState shared = AutismSessionState.init_ck();
+      AutismSessionState shared = AutismSessionState.getInstance();
       if (active) {
-         shared.load(this.init_Set(), includeCursor);
-         shared.sync(true);
-         shared.update(true);
+         shared.mergeXCarrySlotMask(this.init_Set(), includeCursor);
+         shared.setXCarryForced(true);
+         shared.setXCarryActive(true);
       } else {
-         if (shared.sync_Z()) {
-            boolean stillHeld = init_Z_InventoryMenu_3(handler, shared.flush_Z(), shared.init_Set());
+         if (shared.isXCarryForced()) {
+            boolean stillHeld = init_Z_InventoryMenu_3(handler, shared.isXCarryCarryCursor(), shared.getXCarrySlotMask());
             if (stillHeld) {
-               shared.update(true);
+               shared.setXCarryActive(true);
                return;
             }
 
-            shared.sync(false);
+            shared.setXCarryForced(false);
          }
 
-         shared.update(false);
+         shared.setXCarryActive(false);
       }
    }
 
    private void init_V_Z_2(boolean includeCursor) {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      shared.load(this.init_Set(), includeCursor);
-      shared.sync(true);
-      shared.update(true);
+      AutismSessionState shared = AutismSessionState.getInstance();
+      shared.mergeXCarrySlotMask(this.init_Set(), includeCursor);
+      shared.setXCarryForced(true);
+      shared.setXCarryActive(true);
    }
 
    public int init_I_5() {

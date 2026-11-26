@@ -86,12 +86,12 @@ public final class ToolsAction implements MacroAction {
                throw new IllegalArgumentException("Choose a waypoint");
             }
 
-            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.waypoint, mc);
-            if (!resolved.init_Z()) {
+            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.resolveTemplate(this.waypoint, mc);
+            if (!resolved.success()) {
                throw new IllegalArgumentException("Waypoint variable has no value");
             }
 
-            args.addProperty("waypoint", resolved.init_Str());
+            args.addProperty("waypoint", resolved.value());
          } else {
             int px = this.f_x_I;
             int py = this.f_y_I;
@@ -122,12 +122,12 @@ public final class ToolsAction implements MacroAction {
          for (Entry<String, JsonElement> entry : object.entrySet()) {
             JsonElement value = entry.getValue();
             if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
-               MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(value.getAsString(), mc);
-               if (!resolved.init_Z()) {
+               MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.resolveTemplate(value.getAsString(), mc);
+               if (!resolved.success()) {
                   throw new IllegalArgumentException("Tool argument has an unset variable: " + entry.getKey());
                }
 
-               entry.setValue(new JsonPrimitive(resolved.init_Str()));
+               entry.setValue(new JsonPrimitive(resolved.value()));
             } else {
                init_V_JsonElement_Minecraft(value, mc);
             }
@@ -136,12 +136,12 @@ public final class ToolsAction implements MacroAction {
          for (int index = 0; index < array.size(); index++) {
             JsonElement value = array.get(index);
             if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
-               MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(value.getAsString(), mc);
-               if (!resolved.init_Z()) {
+               MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.resolveTemplate(value.getAsString(), mc);
+               if (!resolved.success()) {
                   throw new IllegalArgumentException("Tool argument has an unset variable");
                }
 
-               array.set(index, new JsonPrimitive(resolved.init_Str()));
+               array.set(index, new JsonPrimitive(resolved.value()));
             } else {
                init_V_JsonElement_Minecraft(value, mc);
             }
@@ -162,9 +162,9 @@ public final class ToolsAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       if ("RUN".equals(this.operation)) {
-         this.init_k_StreamUtil_Minecraft_J(mc, MacroExecutor.load_J());
+         this.init_k_StreamUtil_Minecraft_J(mc, MacroExecutor.getCurrentRunId());
       } else {
-         MacroToolBridge.init_CompletableFuture(MacroExecutor.load_J(), this.scope, this.operation);
+         MacroToolBridge.init_CompletableFuture(MacroExecutor.getCurrentRunId(), this.scope, this.operation);
       }
    }
 

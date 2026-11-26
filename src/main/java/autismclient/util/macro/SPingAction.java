@@ -38,7 +38,7 @@ public class SPingAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      long owner = MacroExecutor.load_J();
+      long owner = MacroExecutor.getCurrentRunId();
       PingSpoofScheduler.init(owner < 0L ? 0L : owner, Math.max(0, this.pingDelayMs), this.realIncoming, this.realOutgoing, this.init_J_3() * 1000000L);
    }
 

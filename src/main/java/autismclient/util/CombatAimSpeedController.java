@@ -59,31 +59,31 @@ public final class CombatAimSpeedController {
    }
 
    public void init(String owner, int priority, LocalPlayer player, Object enemy, double speed, RotationMath.Rotation goal, boolean pin) {
-      if (!owner.equals(SilentRotationManager.init_Str()) || SilentRotationManager.init_Z()) {
+      if (!owner.equals(SilentRotationManager.getActiveOwnerId()) || SilentRotationManager.isReturningToPlayer()) {
          this.init_V();
       }
 
-      SilentRotationManager.init_V_Str(owner, priority, goal);
-      if (owner.equals(SilentRotationManager.init_Str())) {
-         this.init(enemy, AutismSessionState.init_ck().state_I(), 2);
+      SilentRotationManager.requestRotation(owner, priority, goal);
+      if (owner.equals(SilentRotationManager.getActiveOwnerId())) {
+         this.init(enemy, AutismSessionState.getInstance().getClientTick(), 2);
          if (pin) {
             this.init_q_CachePool.init();
-            SilentRotationManager.init_V_Str_5(owner, player, true);
+            SilentRotationManager.tickPinQuiet(owner, player, true);
          } else {
             double scale = 2.0 * init_D(speed);
-            SilentRotationManager.init_V_Str_aD_DataUtil(owner, (at, yaw, pitch) -> this.init_q_CachePool.init(at, goal, yaw, pitch, scale));
+            SilentRotationManager.setCustomHandStepper(owner, (at, yaw, pitch) -> this.init_q_CachePool.init(at, goal, yaw, pitch, scale));
             float cap = init_F(scale);
-            SilentRotationManager.init(owner, player, cap, cap);
+            SilentRotationManager.tick(owner, player, cap, cap);
          }
       }
    }
 
    public boolean init(String owner, int priority, LocalPlayer player, Object enemy, RotationMath.Rotation wire) {
-      if (wire != null && this.init(enemy, AutismSessionState.init_ck().state_I()) && owner.equals(SilentRotationManager.init_Str()) && !SilentRotationManager.init_Z()) {
-         RotationMath.Rotation current = SilentRotationManager.init_ce_DataUtil();
-         if (current == null || !SilentRotationManager.load_Z() || player.getYRot() == current.yaw() && player.getXRot() == current.pitch()) {
-            SilentRotationManager.init_V_Str(owner, priority, current == null ? wire : current);
-            SilentRotationManager.init_V_Str_5(owner, player, true);
+      if (wire != null && this.init(enemy, AutismSessionState.getInstance().getClientTick()) && owner.equals(SilentRotationManager.getActiveOwnerId()) && !SilentRotationManager.isReturningToPlayer()) {
+         RotationMath.Rotation current = SilentRotationManager.getCurrentRotation();
+         if (current == null || !SilentRotationManager.isVisibleAimActive() || player.getYRot() == current.yaw() && player.getXRot() == current.pitch()) {
+            SilentRotationManager.requestRotation(owner, priority, current == null ? wire : current);
+            SilentRotationManager.tickPinQuiet(owner, player, true);
             this.init_q_CachePool.init();
             return true;
          } else {

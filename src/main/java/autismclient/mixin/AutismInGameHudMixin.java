@@ -79,7 +79,7 @@ public abstract class AutismInGameHudMixin {
    @Unique
    private void autism$renderHudBody(GuiGraphicsExtractor context) {
       if (this.isAutismActive() && (AutismLiteVariant.enabled() || PathHelper.init())) {
-         boolean macroFrameWork = MacroExecutor.flush_Z();
+         boolean macroFrameWork = MacroExecutor.isSmoothLookActive();
          cf.Inner_DataUtil activity = cf.init_cf_DataUtil();
          long hudWork = 31168L;
          boolean aiPlan = !AutismLiteVariant.enabled() && MC.gui.screen() == null && AiVisualization.load_Z();
@@ -87,15 +87,15 @@ public abstract class AutismInGameHudMixin {
          if (macroFrameWork || activity.init(hudWork) || aiPlan || portalGuide) {
             UiClipStack.getInstance().clear(context);
             if (macroFrameWork) {
-               MacroExecutor.init_V_F(1.0F);
+               MacroExecutor.tickSmoothLook(1.0F);
             }
 
             if (!MC.gui.hud.isHidden() && !aD.init_Z()) {
-               AutismSessionState shared = AutismSessionState.init_ck();
+               AutismSessionState shared = AutismSessionState.getInstance();
                Screen screen = MC.gui.screen();
-               boolean macroRunning = MacroExecutor.load_Z();
-               boolean queueSending = shared.run_Z();
-               boolean queueVisible = shared.write_Z() || shared.open_Z() || queueSending;
+               boolean macroRunning = MacroExecutor.hasVisibleActiveRun();
+               boolean queueSending = shared.hasSendingPackets();
+               boolean queueVisible = shared.isDelayPacketsEnabled() || shared.hasDelayedPackets() || queueSending;
                boolean captureActive = this.hasAnyCaptureSession(shared);
                boolean payloadStudyActive = PayloadStudyTracker.init_Z();
                Module hud = activity.init(64L) ? autismclient.modules.al.init_Module_Str("hud") : null;
@@ -122,7 +122,7 @@ public abstract class AutismInGameHudMixin {
                OverlayManager overlayManager = null;
                boolean overlayVisible = false;
                if (screen == null) {
-                  serverInfoOverlay = ModuleRuntimeManager.init_PoolEntry().load_AutismServerInfoOv();
+                  serverInfoOverlay = ModuleRuntimeManager.getInstance().getServerInfoOverlay();
                   serverProbeBannerVisible = serverInfoOverlay != null && serverInfoOverlay.run_Z_5();
                   if (activity.init(256L)) {
                      overlayManager = OverlayManager.getInstance();
@@ -312,16 +312,16 @@ public abstract class AutismInGameHudMixin {
 
    @Unique
    private boolean isAutismActive() {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      return module != null && module.init_Z();
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      return module != null && module.isActive();
    }
 
    @Unique
    private HudBannerSpec captureBannerSpec(AutismSessionState shared, GuiGraphicsExtractor graphics) {
-      boolean blockCap = shared.pool();
-      boolean entityCap = shared.frame();
-      boolean attackCap = shared.count();
-      boolean gbreakCap = shared.cache_Z();
+      boolean blockCap = shared.hasBlockCaptureCallback();
+      boolean entityCap = shared.hasEntityCaptureCallback();
+      boolean attackCap = shared.hasAttackCaptureCallback();
+      boolean gbreakCap = shared.isGbreakCapturing();
       if (!blockCap && !entityCap && !attackCap && !gbreakCap) {
          return null;
       }
@@ -386,7 +386,7 @@ public abstract class AutismInGameHudMixin {
    private boolean hasAnyCaptureSession(AutismSessionState shared) {
       if (shared == null) {
          return false;
-      } else if (!shared.chunk() && !shared.level() && !shared.count() && !shared.pool() && !shared.frame() && !shared.cache_Z()) {
+      } else if (!shared.isTimedCaptureMode() && !shared.hasCaptureCancelCallback() && !shared.hasAttackCaptureCallback() && !shared.hasBlockCaptureCallback() && !shared.hasEntityCaptureCallback() && !shared.isGbreakCapturing()) {
          ActionEditorOverlay editor = ActionEditorOverlay.load_ActionEditorOverla();
          return editor != null && editor.push_Z_2();
       } else {

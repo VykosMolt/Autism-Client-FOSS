@@ -92,13 +92,13 @@ public final class DynamicBindingManager {
       }
 
       for (Entry<String, String> binding : init(action).entrySet()) {
-         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(binding.getValue(), mc);
-         if (!resolution.init_Z()) {
+         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.resolveTemplate(binding.getValue(), mc);
+         if (!resolution.success()) {
             return false;
          }
 
          try {
-            String value = resolution.init_Str().trim();
+            String value = resolution.value().trim();
             if (action instanceof ToolsAction tools && binding.getKey().startsWith("toolArg.")) {
                if (!tools.init_Z_Str_Str_2(binding.getKey(), value)) {
                   return false;
@@ -256,15 +256,15 @@ public final class DynamicBindingManager {
          return fallback;
       }
 
-      MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(template, mc);
-      if (!resolution.init_Z()) {
+      MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.resolveTemplate(template, mc);
+      if (!resolution.success()) {
          throw new DynamicBindingManager.Inner_DataUtil();
       }
 
       try {
-         return Integer.parseInt(resolution.init_Str().trim());
+         return Integer.parseInt(resolution.value().trim());
       } catch (NumberFormatException ignored) {
-         long compact = PayAction.init_J_Str(resolution.init_Str());
+         long compact = PayAction.init_J_Str(resolution.value());
          if (compact <= 2147483647L && compact >= -2147483648L) {
             return (int)compact;
          } else {
@@ -279,13 +279,13 @@ public final class DynamicBindingManager {
          return fallback;
       }
 
-      MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(template, mc);
-      if (!resolution.init_Z()) {
+      MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.resolveTemplate(template, mc);
+      if (!resolution.success()) {
          throw new DynamicBindingManager.Inner_DataUtil();
       }
 
       try {
-         return Double.parseDouble(resolution.init_Str().trim());
+         return Double.parseDouble(resolution.value().trim());
       } catch (NumberFormatException ignored) {
          throw new DynamicBindingManager.Inner_DataUtil();
       }

@@ -43,7 +43,7 @@ final class WorldProjectionHelper {
          float effectScale = state.optionsRenderState.screenEffectScale;
          float portal = Mth.lerp(partialTick, player.oPortalEffectIntensity, player.portalEffectIntensity);
          float nausea = player.getEffectBlendFactor(MobEffects.NAUSEA, partialTick);
-         float spin = NoRenderState.read() ? 0.0F : Math.max(portal, nausea) * (effectScale * effectScale);
+         float spin = NoRenderState.hideNausea() ? 0.0F : Math.max(portal, nausea) * (effectScale * effectScale);
          if (spin > 0.0F) {
             float skew = 5.0F / (spin * spin + 5.0F) - spin * 0.04F;
             skew *= skew;

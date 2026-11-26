@@ -91,11 +91,11 @@ public class WaitForGuiAction implements MacroAction {
 
       String title = screen.getTitle() == null ? "" : screen.getTitle().getString();
       if (this.matchMode == PatternCaptureMatcher.MatchMode.MATCH) {
-         MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiTitle, Minecraft.getInstance());
-         if (!resolved.init_Z()) {
+         MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.resolveTemplate(this.guiTitle, Minecraft.getInstance());
+         if (!resolved.success()) {
             return Optional.empty();
          } else {
-            return !resolved.init_Str().isBlank() && !GuiScreenMatcher.init(screen, this.guiType, resolved.init_Str())
+            return !resolved.value().isBlank() && !GuiScreenMatcher.init(screen, this.guiType, resolved.value())
                ? Optional.empty()
                : Optional.of(this.init(screen, title, Map.of()));
          }
@@ -112,8 +112,8 @@ public class WaitForGuiAction implements MacroAction {
          String title = snapshot.title();
          Map<String, MacroVarValue> captures = Map.of();
          if (this.matchMode == PatternCaptureMatcher.MatchMode.MATCH) {
-            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.guiTitle, Minecraft.getInstance());
-            if (!resolved.init_Z() || !resolved.init_Str().isBlank() && !title.toLowerCase(Locale.ROOT).contains(resolved.init_Str().toLowerCase(Locale.ROOT))) {
+            MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.resolveTemplate(this.guiTitle, Minecraft.getInstance());
+            if (!resolved.success() || !resolved.value().isBlank() && !title.toLowerCase(Locale.ROOT).contains(resolved.value().toLowerCase(Locale.ROOT))) {
                return Optional.empty();
             }
          } else {
@@ -127,7 +127,7 @@ public class WaitForGuiAction implements MacroAction {
 
          Map<String, MacroVarValue> values = new LinkedHashMap<>(captures);
          if (this.saveAs != null && !this.saveAs.isBlank()) {
-            values.put(this.saveAs, MacroVarValue.init(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.init_l_Obj(title), "type", MacroVarValue.init_l_Obj("CUSTOM_MENU"))));
+            values.put(this.saveAs, MacroVarValue.of(MacroVarValue.ValueType.GUI, title, Map.of("title", MacroVarValue.ofText(title), "type", MacroVarValue.ofText("CUSTOM_MENU"))));
          }
 
          return Optional.of(values);
@@ -140,9 +140,9 @@ public class WaitForGuiAction implements MacroAction {
       Map<String, MacroVarValue> values = new LinkedHashMap<>(captures);
       if (this.saveAs != null && !this.saveAs.isBlank()) {
          Map<String, MacroVarValue> properties = new LinkedHashMap<>();
-         properties.put("title", MacroVarValue.init_l_Obj(title));
-         properties.put("type", MacroVarValue.init_l_Obj(GuiScreenMatcher.init_Str(screen)));
-         values.put(this.saveAs, MacroVarValue.init(MacroVarValue.ValueType.GUI, title, properties));
+         properties.put("title", MacroVarValue.ofText(title));
+         properties.put("type", MacroVarValue.ofText(GuiScreenMatcher.init_Str(screen)));
+         values.put(this.saveAs, MacroVarValue.of(MacroVarValue.ValueType.GUI, title, properties));
       }
 
       return values;
@@ -159,7 +159,7 @@ public class WaitForGuiAction implements MacroAction {
       tag.putString("saveAs", this.saveAs == null ? "" : this.saveAs);
       tag.putInt("timeoutMs", this.timeoutMs);
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
 
@@ -187,7 +187,7 @@ public class WaitForGuiAction implements MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
    public void init(CompoundTag tag) {

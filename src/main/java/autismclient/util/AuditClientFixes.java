@@ -42,8 +42,8 @@ public final class AuditClientFixes {
    }
 
    public static boolean isAutismActive() {
-      autismclient.modules.ModuleRuntimeManager var0 = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-      return var0 != null ? var0.init_Z() : false;
+      autismclient.modules.ModuleRuntimeManager var0 = autismclient.modules.ModuleRuntimeManager.getInstance();
+      return var0 != null ? var0.isActive() : false;
    }
 
    public static boolean isXrayOrFreecamOcclusionBypass() {
@@ -55,7 +55,7 @@ public final class AuditClientFixes {
    }
 
    public static boolean isNoRenderInWallOverlay() {
-      return autismclient.modules.NoRenderState.close();
+      return autismclient.modules.NoRenderState.hideInWallOverlay();
    }
 
    public static boolean shouldKeepNoPhysics() {

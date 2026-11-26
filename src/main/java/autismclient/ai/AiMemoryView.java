@@ -208,11 +208,11 @@ final class AiMemoryView {
          int right = row.init() - (icon + 2) * 2;
          kit.init_V_BitSetUtil_NetHelper(this.load_BitSetUtil, autismclient.gui.f.NetHelper.init(x - 2, row.write(), Math.max(20, right - x), rowH));
          kit.init(
-            autismclient.gui.f.NetHelper.init(right + 2, row.write() + 1, icon, icon), autismclient.util.GuiIconAtlas.read, false, false, "Save (Enter)", this::load
+            autismclient.gui.f.NetHelper.init(right + 2, row.write() + 1, icon, icon), autismclient.util.GuiIconAtlas.CHECK, false, false, "Save (Enter)", this::load
          );
          kit.init(
             autismclient.gui.f.NetHelper.init(right + 4 + icon, row.write() + 1, icon, icon),
-            autismclient.util.GuiIconAtlas.init_Identifier,
+            autismclient.util.GuiIconAtlas.CLOSE,
             false,
             false,
             "Cancel (Esc)",
@@ -228,8 +228,8 @@ final class AiMemoryView {
          } else {
             autismclient.gui.f.NetHelper trash = autismclient.gui.f.NetHelper.init(row.init() - icon - 1, row.write() + 1, icon, icon);
             autismclient.gui.f.NetHelper pen = autismclient.gui.f.NetHelper.init(trash.read() - 2 - icon, row.write() + 1, icon, icon);
-            kit.init(pen, autismclient.util.GuiIconAtlas.poll, false, false, "Edit", () -> this.init_V_AiMemoryStore_Memo(memory));
-            kit.init(trash, autismclient.util.GuiIconAtlas.open, false, armed, armed ? "Click again to forget" : "Forget", () -> this.load(id));
+            kit.init(pen, autismclient.util.GuiIconAtlas.EDIT, false, false, "Edit", () -> this.init_V_AiMemoryStore_Memo(memory));
+            kit.init(trash, autismclient.util.GuiIconAtlas.DELETE, false, armed, armed ? "Click again to forget" : "Forget", () -> this.load(id));
             right = pen.read() - 3;
          }
 

@@ -179,7 +179,7 @@ public final class ListRowRenderer {
    }
 
    public static void load(GuiGraphicsExtractor context, int x, int y, int width, int height, boolean hovered) {
-      IconButtonRenderer.init(context, IconButtonRenderer.init(), autismclient.gui.f.NetHelper.init(x, y, width, height), GuiIconAtlas.open, hovered, true, true);
+      IconButtonRenderer.init(context, IconButtonRenderer.init(), autismclient.gui.f.NetHelper.init(x, y, width, height), GuiIconAtlas.DELETE, hovered, true, true);
    }
 
    public static void init(GuiGraphicsExtractor context, int x, int y, int size, String symbol, boolean hovered, boolean danger) {

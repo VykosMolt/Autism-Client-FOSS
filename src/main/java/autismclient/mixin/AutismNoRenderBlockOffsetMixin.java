@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AutismNoRenderBlockOffsetMixin {
    @Inject(method = "getOffset", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noOffset(BlockPos pos, CallbackInfoReturnable<Vec3> cir) {
-      if (NoRenderState.pool()) {
+      if (NoRenderState.useConstantTextureRotations()) {
          cir.setReturnValue(Vec3.ZERO);
       }
    }

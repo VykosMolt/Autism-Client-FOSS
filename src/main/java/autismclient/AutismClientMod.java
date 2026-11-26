@@ -120,7 +120,7 @@ public final class AutismClientMod implements ClientModInitializer {
    public void onInitializeClient() {
       qualificationFlags();
       AutismClientAddon.FOLDER.mkdirs();
-      runSafe("initialize", () -> ModuleRuntimeManager.init_PoolEntry().init_V());
+      runSafe("initialize", () -> ModuleRuntimeManager.getInstance().initialize());
       ModNamespaceCatalog.init_V();
       if (!ProtectorFeatureFlags.read()) {
          VanillaTranslationKeyLoader.init_V();
@@ -171,7 +171,7 @@ public final class AutismClientMod implements ClientModInitializer {
                   SdfShapeRenderer.prewarm();
                   autismclient.gui.sdf.SdfIconRenderer.prewarm();
                   autismclient.gui.sdf.MsdfFontFace.prewarm();
-                  PacketTypeRegistry.load();
+                  PacketTypeRegistry.getC2sPackets();
                } catch (Throwable var1x) {
                }
             }, "Autism-UI-Prewarm");
@@ -207,7 +207,7 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            ModuleRuntimeManager.init_PoolEntry().load_V();
+            ModuleRuntimeManager.getInstance().onClientTick();
          } catch (Throwable t) {
             logTickError("module", t);
          }
@@ -268,13 +268,13 @@ public final class AutismClientMod implements ClientModInitializer {
       });
       ClientTickEvents.END_LEVEL_TICK.register(level -> runSafe("lan.levelTick", () -> LanSyncManager.init_aE().init_V_J(level.getGameTime())));
       ClientConfigurationConnectionEvents.INIT.register((listener, client) -> {
-         runSafe("cfg.preserveUi", () -> OverlayScreenController.init_V(client));
-         runSafe("cfg.hideMenuOverlays", () -> ModuleRuntimeManager.init_PoolEntry().close_V());
-         runSafe("cfg.configStarted", () -> ModuleRuntimeManager.init_PoolEntry().sync_V());
+         runSafe("cfg.preserveUi", () -> OverlayScreenController.captureRetainedForegroundIfNeeded(client));
+         runSafe("cfg.hideMenuOverlays", () -> ModuleRuntimeManager.getInstance().hideProfilesOverlayIfUnretained());
+         runSafe("cfg.configStarted", () -> ModuleRuntimeManager.getInstance().extendJoinProbeWindowAndRefresh());
          runSafe("cfg.joinMacro", () -> JoinMacroController.init(listener));
       });
       ClientConfigurationConnectionEvents.DISCONNECT.register((listener, client) -> {
-         runSafe("cfg.preserveUi", () -> OverlayScreenController.init_V(client));
+         runSafe("cfg.preserveUi", () -> OverlayScreenController.captureRetainedForegroundIfNeeded(client));
          runSafe("cfg.remoteView", () -> RemoteViewController.init(false));
          runSafe("cfg.persist", AutismConfig::enqueuePendingSaveNow);
          runSafe("cfg.pacedTp", () -> PacedTpJobManager.init("connection changed"));
@@ -283,21 +283,21 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("cfg.packFailureGuard", PackFailureGuard::load);
          runSafe("cfg.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.getByListener(listener), null));
          runSafe("cfg.hideOverlays", () -> {
-            if (!OverlayScreenController.load_Z()) {
+            if (!OverlayScreenController.hasRetainedForeground()) {
                OverlayManager.getInstance().minimizeAll();
             }
          });
-         runSafe("cfg.onGameLeft", () -> ModuleRuntimeManager.init_PoolEntry().write_V());
+         runSafe("cfg.onGameLeft", () -> ModuleRuntimeManager.getInstance().onGameLeave());
          runSafe("cfg.joinMacro", JoinMacroController::update);
       });
       ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
          runSafe("join.clientInfo", AuditJoinSend.create(client, handler));
-         runSafe("join.preserveUi", () -> OverlayScreenController.init_V(client));
+         runSafe("join.preserveUi", () -> OverlayScreenController.captureRetainedForegroundIfNeeded(client));
          runSafe("join.pacedTp", () -> PacedTpJobManager.init("connection changed"));
          runSafe("join.movementGrace", NoFallPauseTimer::init_V);
-         runSafe("join.hideMenuOverlays", () -> ModuleRuntimeManager.init_PoolEntry().close_V());
+         runSafe("join.hideMenuOverlays", () -> ModuleRuntimeManager.getInstance().hideProfilesOverlayIfUnretained());
          runSafe("join.remember", () -> AutoReconnectController.init(client.getCurrentServer()));
-         runSafe("join.onGameJoin", () -> ModuleRuntimeManager.init_PoolEntry().read_V());
+         runSafe("join.onGameJoin", () -> ModuleRuntimeManager.getInstance().onGameJoin());
          runSafe("join.joinMacro", JoinMacroController::load_V);
          runSafe("join.surfaceFailures", autismclient.b.DataUtil::load_V);
          runSafe("join.lagWatchdog", LagWatchdogReporter::init);
@@ -305,10 +305,10 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("join.recipes", () -> AutoCraftingEngine.init_V(client));
       });
       ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-         runSafe("leave.preserveUi", () -> OverlayScreenController.init_V(client));
+         runSafe("leave.preserveUi", () -> OverlayScreenController.captureRetainedForegroundIfNeeded(client));
          runSafe("leave.remoteView", () -> RemoteViewController.init(false));
          runSafe("leave.persist", AutismConfig::enqueuePendingSaveNow);
-         runSafe("leave.stopMacro", () -> MacroExecutor.init_V_Z(AutismConfig.getGlobal().stopMacroOnLeave));
+         runSafe("leave.stopMacro", () -> MacroExecutor.onServerDisconnect(AutismConfig.getGlobal().stopMacroOnLeave));
          runSafe("leave.pacedTp", () -> PacedTpJobManager.init("disconnected"));
          runSafe("leave.movementGrace", NoFallPauseTimer::load);
          runSafe("leave.fakeGamemode", FakeGamemodeManager::init_V);
@@ -319,12 +319,12 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("leave.macroEditor", AutismMacroEditorOverlay::flush_V_9);
          runSafe("leave.lanSync", () -> LanSyncManager.init_aE().sync_V());
          runSafe("leave.hideOverlays", () -> {
-            if (!OverlayScreenController.load_Z()) {
+            if (!OverlayScreenController.hasRetainedForeground()) {
                OverlayManager.getInstance().minimizeAll();
             }
          });
          runSafe("leave.joinMacro", JoinMacroController::write);
-         runSafe("leave.onGameLeft", () -> ModuleRuntimeManager.init_PoolEntry().write_V());
+         runSafe("leave.onGameLeft", () -> ModuleRuntimeManager.getInstance().onGameLeave());
          runSafe("leave.pingSpoof", autismclient.util.macro.PingSpoofScheduler::write);
          runSafe("leave.blink", autismclient.modules.BlinkPacketManager::auditDisconnect);
          runSafe("leave.lagWatchdog", LagWatchdogReporter::init);
@@ -333,7 +333,7 @@ public final class AutismClientMod implements ClientModInitializer {
       ItemTooltipCallback.EVENT.register((stack, tooltipContext, tooltipType, lines) -> {
          autismclient.protector.TooltipNbtGuard.init_I(lines);
          autismclient.protector.TooltipNbtGuard.init_Z(lines);
-         ModuleRuntimeManager.init_PoolEntry().init(stack, lines);
+         ModuleRuntimeManager.getInstance().appendItemTooltipLines(stack, lines);
       });
       ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
          try {

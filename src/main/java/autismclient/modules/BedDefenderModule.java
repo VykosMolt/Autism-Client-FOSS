@@ -161,7 +161,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    @Override
    public boolean onPacketSend(Packet<?> packet) {
       if (packet instanceof ServerboundPlayerActionPacket action) {
-         int now = AutismSessionState.init_ck().state_I();
+         int now = AutismSessionState.getInstance().getClientTick();
          switch (action.getAction()) {
             case START_DESTROY_BLOCK:
                this.init_Map.put(action.getPos().immutable(), now + 2);
@@ -256,14 +256,14 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    @Override
    public void onDisable() {
       this.init_V_9();
-      autismclient.util.SilentRotationManager.init(this.id());
+      autismclient.util.SilentRotationManager.releaseOwner(this.id());
    }
 
    @Override
    public void onGameLeft() {
       this.init_V_9();
-      if (this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
-         autismclient.util.SilentRotationManager.load_V();
+      if (this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+         autismclient.util.SilentRotationManager.resetAll();
       }
    }
 
@@ -286,7 +286,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       this.reset = -1;
       this.start = -1;
       this.stop = 0;
-      autismclient.util.InventorySlotArbiter.update_V(this.id());
+      autismclient.util.InventorySlotArbiter.releaseAllClaims(this.id());
    }
 
    public static Input init_Input_ClientInput_Input_2(ClientInput source, Input original) {
@@ -306,7 +306,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    private boolean read_Z_5() {
       if (!this.init_Z) {
          return false;
-      } else if (this.clear != AutismSessionState.init_ck().state_I()) {
+      } else if (this.clear != AutismSessionState.getInstance().getClientTick()) {
          this.init_Z = false;
          return false;
       } else {
@@ -331,13 +331,13 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
    @Override
    public boolean hasDisabledTickWork() {
-      return autismclient.util.SilentRotationManager.read_Z() && this.id().equals(autismclient.util.SilentRotationManager.init_Str());
+      return autismclient.util.SilentRotationManager.hasActiveRotation() && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
    }
 
    @Override
    public void tick() {
-      if (MC != null && MC.player != null && !this.isEnabled() && this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
+      if (MC != null && MC.player != null && !this.isEnabled() && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+         autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
       }
    }
 
@@ -358,15 +358,15 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       if (!(al.init_Module_Str("bed-defender") instanceof BedDefenderModule bed)) {
          return false;
       } else {
-         int var2 = AutismSessionState.init_ck().state_I() - bed.add;
-         return bed.isEnabled() && !autismclient.util.SilentRotationManager.init_Z() && var2 >= 0 && var2 <= 5 && "bed-defender".equals(autismclient.util.SilentRotationManager.init_Str());
+         int var2 = AutismSessionState.getInstance().getClientTick() - bed.add;
+         return bed.isEnabled() && !autismclient.util.SilentRotationManager.isReturningToPlayer() && var2 >= 0 && var2 <= 5 && "bed-defender".equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
       }
    }
 
    @Override
    public boolean load_Z_23() {
       boolean enabled = this.isEnabled();
-      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.flush_Z_2());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || enabled && this.flush_Z_2());
    }
 
    private boolean flush_Z_2() {
@@ -384,7 +384,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
-         && !MacroExecutor.write_Z()
+         && !MacroExecutor.isRunning()
          && !MC.player.isDeadOrDying()
          && !MC.player.isSpectator()
          && (!MC.player.isUsingItem() || KillAuraModule.read_Z_14())
@@ -397,7 +397,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private boolean open_Z() {
-      return this.init_aa_JsonUtil.init(AutismSessionState.init_ck().state_I(), this::poll_Z);
+      return this.init_aa_JsonUtil.init(AutismSessionState.getInstance().getClientTick(), this::poll_Z);
    }
 
    private boolean poll_Z() {
@@ -411,9 +411,9 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
    private void load_V_7() {
       this.add = -2147483648;
-      if (MC != null && MC.player != null && this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
-         autismclient.util.SilentRotationManager.init(this.id());
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
+      if (MC != null && MC.player != null && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+         autismclient.util.SilentRotationManager.releaseOwner(this.id());
+         autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
       }
    }
 
@@ -429,8 +429,8 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             this.init_DyeColor = this.init_DyeColor();
             int slot = this.init_I_I(0);
             ItemStack material = slot < 0 ? ItemStack.EMPTY : MC.player.getInventory().getItem(slot);
-            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-            RotationMath.Rotation wireRotation = wire.init_Z() ? new RotationMath.Rotation(wire.read(), wire.write()) : null;
+            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+            RotationMath.Rotation wireRotation = wire.initialized() ? new RotationMath.Rotation(wire.currentYaw(), wire.currentPitch()) : null;
             RotationMath.Rotation from = wireRotation != null ? wireRotation : RotationMath.ofPlayer(MC.player);
             this.read_V_5();
             this.init_V_ItemStack(material);
@@ -558,7 +558,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private void read_V_5() {
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (tick != this.valid) {
          this.valid = tick;
          this.load_U_StreamUtil.init(16);
@@ -637,7 +637,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
             Set<BlockPos> visited = new HashSet<>(this.init_Set);
             List<BedDefenderModule.Inner_TaskQueue> steps = this.load_List;
-            int now = AutismSessionState.init_ck().state_I();
+            int now = AutismSessionState.getInstance().getClientTick();
             this.init_Map.entrySet().removeIf(entry -> entry.getValue() < now);
             BlockPos mining = MC.gameMode instanceof AutismMultiPlayerGameModeAccessor accessor && MC.gameMode.isDestroying()
                ? accessor.autism$getDestroyBlockPos()
@@ -1114,7 +1114,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          if (slot >= 0 && slot != MC.player.getInventory().getSelectedSlot()) {
             this.init_V_I_3(slot);
          }
-      } else if (BlinkPacketManager.load_Z()) {
+      } else if (BlinkPacketManager.isHoldingActionsOnly()) {
          this.load_V_7();
       } else if (this.read_List.isEmpty() || slot < 0) {
          this.load_V_7();
@@ -1161,7 +1161,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                   }
 
                   this.init_Z = this.pop() && (plan.init_Z() || next != null && next.init_Z());
-                  this.clear = AutismSessionState.init_ck().state_I();
+                  this.clear = AutismSessionState.getInstance().getClientTick();
                   if (fire && aimed) {
                      this.init_V_ListPool_StreamUti_BlockHitResult(plan, hit);
                   } else if (aimed && !slotReady) {
@@ -1174,13 +1174,13 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private boolean init_Z_ce_DataUtil_Z(RotationMath.Rotation goal, boolean holdPitch) {
-      autismclient.util.SilentRotationManager.init_V_Str(this.id(), 30, goal);
-      this.add = AutismSessionState.init_ck().state_I();
-      if (!this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
+      autismclient.util.SilentRotationManager.requestRotation(this.id(), 30, goal);
+      this.add = AutismSessionState.getInstance().getClientTick();
+      if (!this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
          return false;
       }
 
-      autismclient.util.SilentRotationManager.init(this.id(), MC.player, 55.0F, holdPitch ? 0.0F : 55.0F, autismclient.util.RotationStreamPlanner.Inner_StreamUtil.BED_SHELL);
+      autismclient.util.SilentRotationManager.tick(this.id(), MC.player, 55.0F, holdPitch ? 0.0F : 55.0F, autismclient.util.RotationStreamPlanner.Inner_StreamUtil.BED_SHELL);
       return true;
    }
 
@@ -1324,7 +1324,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       AABB playerBox = MC.player.getBoundingBox();
       Vec3 delta = MC.player.getDeltaMovement();
       BlockState placed = material.getItem() instanceof BlockItem blockItem ? blockItem.getBlock().defaultBlockState() : null;
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       StringBuilder trace = null;
       autismclient.util.BlockPlacementPlanner.Query request = this.init_U_StateCache_ce_DataUtil(from, material, sneaking, trace);
       autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
@@ -1637,12 +1637,12 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private boolean run() {
-      return AutismSessionState.init_ck().state_I() != this.put;
+      return AutismSessionState.getInstance().getClientTick() != this.put;
    }
 
    private void init_V_ListPool_StreamUti_BlockHitResult(BedDefenderModule.Inner_StreamUtil plan, BlockHitResult hit) {
       InteractionHand hand = InteractionHand.MAIN_HAND;
-      if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+      if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
             if (!autismclient.util.ClientInteractionOverride.init(hit, hand)) {
                return;
@@ -1657,7 +1657,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             this.write_BlockPos = plan.init_BlockPos();
             this.load_Set.add(plan.init_BlockPos().immutable());
          } finally {
-            autismclient.util.InventorySlotArbiter.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
       }
    }
@@ -1673,17 +1673,17 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private void poll_V() {
-      this.put = AutismSessionState.init_ck().state_I();
+      this.put = AutismSessionState.getInstance().getClientTick();
    }
 
    @Override
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
-      return this.put == AutismSessionState.init_ck().state_I();
+      return this.put == AutismSessionState.getInstance().getClientTick();
    }
 
    @Override
    public boolean shouldCancelAttack(HitResult hitResult) {
-      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.read_Z();
+      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && autismclient.util.SilentRotationManager.hasActiveRotation();
    }
 
    private void init_V_BlockPos(BlockPos cell) {
@@ -1704,7 +1704,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       int best = -1;
 
       for (int slot = 0; slot < 9; slot++) {
-         if (!autismclient.util.InventorySlotArbiter.init(slot, this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, this.id())) {
             ItemStack stack = inventory.getItem(slot);
             if (this.init_Z_ItemStack_I(stack, layer) && (best < 0 || init_Z_ItemStack(stack, inventory.getItem(best), slot == selected, best == selected))) {
                best = slot;
@@ -1736,7 +1736,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private void init_V_I_3(int slot) {
-      if (autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+      if (autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
             int selected = MC.player.getInventory().getSelectedSlot();
             if (this.reset < 0 && this.bool("switch-back")) {
@@ -1746,7 +1746,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
             this.start = slot;
          } finally {
-            autismclient.util.InventorySlotArbiter.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
       }
    }
@@ -1761,14 +1761,14 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             this.start = -1;
          } else {
             boolean fighting = al.init_Module_Str("kill-aura") instanceof KillAuraModule aura && aura.isEnabled();
-            if ((++this.stop >= 6 || fighting) && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+            if ((++this.stop >= 6 || fighting) && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                try {
                   autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, this.reset);
                   this.reset = -1;
                   this.start = -1;
                   this.stop = 0;
                } finally {
-                  autismclient.util.InventorySlotArbiter.read_V(this.id());
+                  autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
                }
             }
          }

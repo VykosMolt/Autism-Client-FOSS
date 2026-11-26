@@ -406,8 +406,8 @@ public class MacroLibraryManager {
    }
 
    private boolean deleteMacroInternal(AutismMacro macro, boolean announce) {
-      if (MacroExecutor.init_Z_Str(macro.name)) {
-         MacroExecutor.init_V_Str(macro.name);
+      if (MacroExecutor.isMacroNameRunning(macro.name)) {
+         MacroExecutor.stopMacroByName(macro.name);
          AutismClientMessaging.sendPrefixed("§eStopped running macro before deletion: " + macro.name);
       }
 
@@ -501,8 +501,8 @@ public class MacroLibraryManager {
    }
 
    public void stopRunningMacro() {
-      if (MacroExecutor.load_Z()) {
-         MacroExecutor.read_V();
+      if (MacroExecutor.hasVisibleActiveRun()) {
+         MacroExecutor.stopAll();
       } else {
          AutismClientMessaging.sendPrefixed("§eNo macro is currently running.");
       }

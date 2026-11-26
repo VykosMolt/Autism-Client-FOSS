@@ -243,12 +243,12 @@ public final class FreecamController {
 
    private static Component formatSpeedMessage(double speed) {
       return Component.empty()
-         .append(styledText("[", autismclient.util.UiColorPalette.a(), false))
-         .append(styledText("AUTISM", autismclient.util.UiColorPalette.init(), true))
-         .append(styledText("] ", autismclient.util.UiColorPalette.a(), false))
-         .append(styledText("Freecam Speed", autismclient.util.UiColorPalette.pool(), true))
-         .append(styledText(": ", autismclient.util.UiColorPalette.a(), false))
-         .append(styledText(formatSpeed(speed), autismclient.util.UiColorPalette.index(), true));
+         .append(styledText("[", autismclient.util.UiColorPalette.textMuted(), false))
+         .append(styledText("AUTISM", autismclient.util.UiColorPalette.accent(), true))
+         .append(styledText("] ", autismclient.util.UiColorPalette.textMuted(), false))
+         .append(styledText("Freecam Speed", autismclient.util.UiColorPalette.silver(), true))
+         .append(styledText(": ", autismclient.util.UiColorPalette.textMuted(), false))
+         .append(styledText(formatSpeed(speed), autismclient.util.UiColorPalette.warmWhite(), true));
    }
 
    private static MutableComponent styledText(String value, int color, boolean bold) {

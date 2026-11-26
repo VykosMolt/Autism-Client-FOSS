@@ -647,7 +647,7 @@ public final class ModulesMenuController {
       int iconSize = Math.min(12, row.sync() - 2);
       int iconX = row.read() + 5;
       int iconY = row.write() + (row.sync() - iconSize) / 2;
-      GuiIconAtlas.init(context.init_GuiGraphicsExtract(), init_Identifier_Str(key), iconX, iconY, iconSize, textColor);
+      GuiIconAtlas.draw(context.init_GuiGraphicsExtract(), init_Identifier_Str(key), iconX, iconY, iconSize, textColor);
       int labelX = iconX + iconSize + 5;
       context.init_PoolEntry().drawEllipsized(context.init_GuiGraphicsExtract(), label, labelX, context.init_PoolEntry().centerTextY(row), row.init() - 5 - labelX, textColor);
       this.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.RAIL_ITEM, row, null, null, key, -1);
@@ -785,7 +785,7 @@ public final class ModulesMenuController {
             context.init_GuiGraphicsExtract(),
             this.init_ConfigStore_Buffer.init_Font(),
             settings,
-            GuiIconAtlas.sync,
+            GuiIconAtlas.CHEVRON_RIGHT,
             settings.init_Z(context.read(), context.write()),
             true,
             false
@@ -891,8 +891,8 @@ public final class ModulesMenuController {
 
    private void init_V_SyncManager(SyncManager context, int x, int y, int w) {
       NetHelper[] toggles = init_NetHelperArr_I(x, y, w, this.start);
-      float sendT = autismclient.gui.ui.ToggleTransitionCache.init("packet:send", AutismSessionState.init_ck().read_Z());
-      float delayT = autismclient.gui.ui.ToggleTransitionCache.init("packet:delay", AutismSessionState.init_ck().write_Z());
+      float sendT = autismclient.gui.ui.ToggleTransitionCache.init("packet:send", AutismSessionState.getInstance().isSendPacketsEnabled());
+      float delayT = autismclient.gui.ui.ToggleTransitionCache.init("packet:delay", AutismSessionState.getInstance().isDelayPacketsEnabled());
       ConnectedButtonRenderer.init(context, toggles[0], "Send", null, toggles[0].init_Z(context.read(), context.write()), sendT, ConnectedButtonRenderer.write);
       this.init_V_ConfigStore_CacheP(ModulesMenuController.Inner_CachePool.UTILITY, toggles[0], null, null, "send", -1);
       ConnectedButtonRenderer.init(context, toggles[1], "Delay", null, toggles[1].init_Z(context.read(), context.write()), delayT, ConnectedButtonRenderer.write);
@@ -2353,7 +2353,7 @@ public final class ModulesMenuController {
             context.init_GuiGraphicsExtract(),
             this.init_ConfigStore_Buffer.init_Font(),
             settings,
-            GuiIconAtlas.sync,
+            GuiIconAtlas.CHEVRON_RIGHT,
             settings.init_Z(context.read(), context.write()),
             true,
             false

@@ -17,7 +17,7 @@ public abstract class AutismNoRenderDeadEntityMixin {
    private void autism$noDeadEntity(
       LivingEntityRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState cameraState, CallbackInfo ci
    ) {
-      if (state != null && state.deathTime > 0.0F && NoRenderState.scan()) {
+      if (state != null && state.deathTime > 0.0F && NoRenderState.hideDeadEntities()) {
          ci.cancel();
       }
    }

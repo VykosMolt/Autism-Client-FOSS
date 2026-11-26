@@ -599,7 +599,7 @@ public final class ClientInteractionOverride {
             read_BlockHitResult = null;
             load_InteractionHand = null;
             write_Str = null;
-            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
+            ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
             if (!AutismLiteVariant.enabled() && "kill-aura".equals(read_Str) && attackHit != null) {
                attackHit = autismclient.modules.KillAuraModule.init_EntityHitResult_EntityHitResult_ch_CachePool(attackHit, wire);
                if (attackHit == null) {
@@ -610,9 +610,9 @@ public final class ClientInteractionOverride {
 
             init_Float = init_Minecraft.player.getYRot();
             init_F = init_Minecraft.player.getXRot();
-            if (wire.init_Z()) {
-               init_Minecraft.player.setYRot(wire.read());
-               init_Minecraft.player.setXRot(wire.write());
+            if (wire.initialized()) {
+               init_Minecraft.player.setYRot(wire.currentYaw());
+               init_Minecraft.player.setXRot(wire.currentPitch());
             }
 
             if (attackHit != null) {

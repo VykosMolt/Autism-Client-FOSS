@@ -12,11 +12,11 @@ public class RestoreGuiAction implements MacroAction, GuiWaitAware {
 
    @Override
    public void execute(Minecraft mc) {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      if (shared.init_Screen() != null && shared.init_AbstractContainerM() != null) {
-         mc.gui.setScreen(shared.init_Screen());
+      AutismSessionState shared = AutismSessionState.getInstance();
+      if (shared.getStoredGuiScreen() != null && shared.getStoredContainerMenu() != null) {
+         mc.gui.setScreen(shared.getStoredGuiScreen());
          if (mc.player != null) {
-            mc.player.containerMenu = shared.init_AbstractContainerM();
+            mc.player.containerMenu = shared.getStoredContainerMenu();
          }
 
          bi.init("GUI restored.", -13248397);

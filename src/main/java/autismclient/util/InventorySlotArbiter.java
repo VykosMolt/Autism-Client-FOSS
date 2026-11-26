@@ -7,81 +7,81 @@ import java.util.Map;
 import java.util.Set;
 
 public final class InventorySlotArbiter {
-   public static final int init_I = 0;
-   public static final int load_I = 100;
-   public static final int read_I = 40;
-   private static final Set<String> init_Set = Set.of("auto-totem", "clutch");
-   private static final Object init_Obj = new Object();
-   private static final Map<Integer, String> init_Map = new HashMap<>();
-   private static String init_Str;
-   private static String load_Str;
-   private static int write_I;
-   private static boolean init_Z;
-   private static String read_Str;
-   private static String write_Str;
-   private static int update;
+   public static final int PRIORITY_NORMAL = 0;
+   public static final int PRIORITY_CRITICAL = 100;
+   public static final int OFFHAND_SLOT_INDEX = 40;
+   private static final Set<String> CRITICAL_MODULES = Set.of("auto-totem", "clutch");
+   private static final Object LOCK = new Object();
+   private static final Map<Integer, String> slotClaims = new HashMap<>();
+   private static String hotbarOwner;
+   private static String actionGroupOwner;
+   private static int actionGroupTick;
+   private static boolean actionGroupOpen;
+   private static String clickOwner;
+   private static String lastClickOwner;
+   private static int lastClickReleaseTick;
 
    private InventorySlotArbiter() {
    }
 
-   public static int init_I(String moduleId) {
-      String id = init_Str(moduleId);
-      return id != null && init_Set.contains(id) ? 100 : 0;
+   public static int getModulePriority(String moduleId) {
+      String id = normalizeModuleId(moduleId);
+      return id != null && CRITICAL_MODULES.contains(id) ? 100 : 0;
    }
 
-   public static boolean init_Z(String moduleId) {
-      String id = init_Str(moduleId);
+   public static boolean claimHotbar(String moduleId) {
+      String id = normalizeModuleId(moduleId);
       if (id == null) {
          return false;
       }
 
-      synchronized (init_Obj) {
-         String owner = write();
-         if (owner != null && !owner.equals(id) && init_I(id) <= init_I(owner)) {
+      synchronized (LOCK) {
+         String owner = getActiveHotbarOwnerLocked();
+         if (owner != null && !owner.equals(id) && getModulePriority(id) <= getModulePriority(owner)) {
             return false;
          }
 
-         init_Str = id;
+         hotbarOwner = id;
          return true;
       }
    }
 
-   public static String init() {
-      synchronized (init_Obj) {
-         return write();
+   public static String getHotbarOwner() {
+      synchronized (LOCK) {
+         return getActiveHotbarOwnerLocked();
       }
    }
 
-   public static boolean load_Z(String moduleId) {
-      String id = init_Str(moduleId);
-      synchronized (init_Obj) {
-         String owner = write();
+   public static boolean isHotbarClaimedByOther(String moduleId) {
+      String id = normalizeModuleId(moduleId);
+      synchronized (LOCK) {
+         String owner = getActiveHotbarOwnerLocked();
          return owner != null && !owner.equals(id);
       }
    }
 
-   public static void init_V(String moduleId) {
-      String id = init_Str(moduleId);
+   public static void releaseHotbar(String moduleId) {
+      String id = normalizeModuleId(moduleId);
       if (id != null) {
-         synchronized (init_Obj) {
-            if (id.equals(init_Str)) {
-               init_Str = null;
+         synchronized (LOCK) {
+            if (id.equals(hotbarOwner)) {
+               hotbarOwner = null;
             }
          }
       }
    }
 
-   public static boolean init_Z(String moduleId, int inventorySlot) {
-      String id = init_Str(moduleId);
-      if (id != null && init_Z(inventorySlot)) {
-         synchronized (init_Obj) {
-            String owner = load(inventorySlot);
-            if (owner != null && !owner.equals(id) && init_I(id) <= init_I(owner)) {
+   public static boolean claimSlot(String moduleId, int inventorySlot) {
+      String id = normalizeModuleId(moduleId);
+      if (id != null && isValidInventorySlot(inventorySlot)) {
+         synchronized (LOCK) {
+            String owner = getActiveSlotOwnerLocked(inventorySlot);
+            if (owner != null && !owner.equals(id) && getModulePriority(id) <= getModulePriority(owner)) {
                return false;
             }
 
-            init_Map.values().removeIf(id::equals);
-            init_Map.put(inventorySlot, id);
+            slotClaims.values().removeIf(id::equals);
+            slotClaims.put(inventorySlot, id);
             return true;
          }
       } else {
@@ -89,50 +89,50 @@ public final class InventorySlotArbiter {
       }
    }
 
-   public static void init_V(String moduleId, int inventorySlot) {
-      String id = init_Str(moduleId);
-      if (id != null && init_Z(inventorySlot)) {
-         synchronized (init_Obj) {
-            if (id.equals(init_Map.get(inventorySlot))) {
-               init_Map.remove(inventorySlot);
+   public static void releaseSlot(String moduleId, int inventorySlot) {
+      String id = normalizeModuleId(moduleId);
+      if (id != null && isValidInventorySlot(inventorySlot)) {
+         synchronized (LOCK) {
+            if (id.equals(slotClaims.get(inventorySlot))) {
+               slotClaims.remove(inventorySlot);
             }
          }
       }
    }
 
-   public static void load_V(String moduleId) {
-      String id = init_Str(moduleId);
+   public static void releaseAllSlots(String moduleId) {
+      String id = normalizeModuleId(moduleId);
       if (id != null) {
-         synchronized (init_Obj) {
-            init_Map.values().removeIf(id::equals);
+         synchronized (LOCK) {
+            slotClaims.values().removeIf(id::equals);
          }
       }
    }
 
-   public static boolean init(int inventorySlot, String exceptModuleId) {
-      if (!init_Z(inventorySlot)) {
+   public static boolean isSlotClaimedByOther(int inventorySlot, String exceptModuleId) {
+      if (!isValidInventorySlot(inventorySlot)) {
          return false;
       }
 
-      String id = init_Str(exceptModuleId);
-      synchronized (init_Obj) {
-         String owner = load(inventorySlot);
+      String id = normalizeModuleId(exceptModuleId);
+      synchronized (LOCK) {
+         String owner = getActiveSlotOwnerLocked(inventorySlot);
          return owner != null && !owner.equals(id);
       }
    }
 
-   public static String init_Str(int inventorySlot) {
-      if (!init_Z(inventorySlot)) {
+   public static String getSlotOwner(int inventorySlot) {
+      if (!isValidInventorySlot(inventorySlot)) {
          return null;
       }
 
-      synchronized (init_Obj) {
-         return load(inventorySlot);
+      synchronized (LOCK) {
+         return getActiveSlotOwnerLocked(inventorySlot);
       }
    }
 
-   public static boolean read_Z(String moduleId) {
-      String id = init_Str(moduleId);
+   public static boolean canBeginActionGroup(String moduleId) {
+      String id = normalizeModuleId(moduleId);
       if (id == null) {
          return false;
       }
@@ -142,16 +142,16 @@ public final class InventorySlotArbiter {
             return false;
          }
 
-         synchronized (init_Obj) {
-            return load(id, AutismSessionState.init_ck().state_I());
+         synchronized (LOCK) {
+            return canAcquireActionGroup(id, AutismSessionState.getInstance().getClientTick());
          }
       } else {
          return false;
       }
    }
 
-   public static boolean write_Z(String moduleId) {
-      String id = init_Str(moduleId);
+   public static boolean beginActionGroup(String moduleId) {
+      String id = normalizeModuleId(moduleId);
       if (id == null) {
          return false;
       }
@@ -161,15 +161,15 @@ public final class InventorySlotArbiter {
             return false;
          }
 
-         synchronized (init_Obj) {
-            int tick = AutismSessionState.init_ck().state_I();
-            if (!load(id, tick)) {
+         synchronized (LOCK) {
+            int tick = AutismSessionState.getInstance().getClientTick();
+            if (!canAcquireActionGroup(id, tick)) {
                return false;
             }
 
-            load_Str = id;
-            write_I = tick;
-            init_Z = true;
+            actionGroupOwner = id;
+            actionGroupTick = tick;
+            actionGroupOpen = true;
             return true;
          }
       } else {
@@ -177,102 +177,102 @@ public final class InventorySlotArbiter {
       }
    }
 
-   public static void read_V(String moduleId) {
-      String id = init_Str(moduleId);
+   public static void endActionGroup(String moduleId) {
+      String id = normalizeModuleId(moduleId);
       if (id != null) {
-         synchronized (init_Obj) {
-            if (id.equals(load_Str)) {
-               init_Z = false;
+         synchronized (LOCK) {
+            if (id.equals(actionGroupOwner)) {
+               actionGroupOpen = false;
             }
          }
       }
    }
 
-   public static String load() {
-      synchronized (init_Obj) {
-         if (init_Z && load_Str != null) {
-            return write_I == AutismSessionState.init_ck().state_I() ? load_Str : null;
+   public static String getOpenActionGroupOwner() {
+      synchronized (LOCK) {
+         if (actionGroupOpen && actionGroupOwner != null) {
+            return actionGroupTick == AutismSessionState.getInstance().getClientTick() ? actionGroupOwner : null;
          } else {
             return null;
          }
       }
    }
 
-   public static boolean update_Z(String moduleId) {
-      String id = init_Str(moduleId);
+   public static boolean claimInventoryClick(String moduleId) {
+      String id = normalizeModuleId(moduleId);
       if (id == null) {
          return false;
       }
 
-      synchronized (init_Obj) {
-         String owner = read();
-         if (owner != null && !owner.equals(id) && init_I(id) <= init_I(owner)) {
+      synchronized (LOCK) {
+         String owner = getActiveClickOwnerLocked();
+         if (owner != null && !owner.equals(id) && getModulePriority(id) <= getModulePriority(owner)) {
             return false;
          }
 
-         read_Str = id;
+         clickOwner = id;
          return true;
       }
    }
 
-   public static void write_V(String moduleId) {
-      String id = init_Str(moduleId);
+   public static void releaseInventoryClick(String moduleId) {
+      String id = normalizeModuleId(moduleId);
       if (id != null) {
-         synchronized (init_Obj) {
-            if (id.equals(read_Str)) {
-               read_Str = null;
-               write_Str = id;
-               update = AutismSessionState.init_ck().state_I();
+         synchronized (LOCK) {
+            if (id.equals(clickOwner)) {
+               clickOwner = null;
+               lastClickOwner = id;
+               lastClickReleaseTick = AutismSessionState.getInstance().getClientTick();
             }
          }
       }
    }
 
-   public static boolean sync(String moduleId) {
-      String id = init_Str(moduleId);
-      synchronized (init_Obj) {
-         if (write_Str == null) {
+   public static boolean didOtherReleaseClickRecently(String moduleId) {
+      String id = normalizeModuleId(moduleId);
+      synchronized (LOCK) {
+         if (lastClickOwner == null) {
             return false;
          } else {
-            int tick = AutismSessionState.init_ck().state_I();
-            if (tick != update && tick != update + 1) {
-               write_Str = null;
+            int tick = AutismSessionState.getInstance().getClientTick();
+            if (tick != lastClickReleaseTick && tick != lastClickReleaseTick + 1) {
+               lastClickOwner = null;
                return false;
             } else {
-               return !write_Str.equals(id);
+               return !lastClickOwner.equals(id);
             }
          }
       }
    }
 
-   public static void update_V(String moduleId) {
-      String id = init_Str(moduleId);
+   public static void releaseAllClaims(String moduleId) {
+      String id = normalizeModuleId(moduleId);
       if (id != null) {
-         synchronized (init_Obj) {
-            if (id.equals(init_Str)) {
-               init_Str = null;
+         synchronized (LOCK) {
+            if (id.equals(hotbarOwner)) {
+               hotbarOwner = null;
             }
 
-            init_Map.values().removeIf(id::equals);
-            if (id.equals(load_Str)) {
-               load_Str = null;
-               init_Z = false;
+            slotClaims.values().removeIf(id::equals);
+            if (id.equals(actionGroupOwner)) {
+               actionGroupOwner = null;
+               actionGroupOpen = false;
             }
 
-            if (id.equals(read_Str)) {
-               read_Str = null;
-               write_Str = id;
-               update = AutismSessionState.init_ck().state_I();
+            if (id.equals(clickOwner)) {
+               clickOwner = null;
+               lastClickOwner = id;
+               lastClickReleaseTick = AutismSessionState.getInstance().getClientTick();
             }
          }
       }
    }
 
-   private static boolean load(String id, int tick) {
-      return init(id, tick, load_Str, write_I, init_Z);
+   private static boolean canAcquireActionGroup(String id, int tick) {
+      return evaluateActionGroupAccess(id, tick, actionGroupOwner, actionGroupTick, actionGroupOpen);
    }
 
-   static boolean init(String id, int tick, String groupOwner, int groupTick, boolean groupOpen) {
+   static boolean evaluateActionGroupAccess(String id, int tick, String groupOwner, int groupTick, boolean groupOpen) {
       if (groupOwner == null || groupTick != tick) {
          return true;
       } else if (id.equals(groupOwner)) {
@@ -280,48 +280,48 @@ public final class InventorySlotArbiter {
       } else if (groupOpen) {
          return false;
       } else {
-         return !"danger".equals(id) && !"clutch".equals(id) ? init_I(id) > init_I(groupOwner) : true;
+         return !"danger".equals(id) && !"clutch".equals(id) ? getModulePriority(id) > getModulePriority(groupOwner) : true;
       }
    }
 
-   private static String read() {
-      if (read_Str != null && !flush(read_Str)) {
-         read_Str = null;
+   private static String getActiveClickOwnerLocked() {
+      if (clickOwner != null && !isModuleEnabled(clickOwner)) {
+         clickOwner = null;
       }
 
-      return read_Str;
+      return clickOwner;
    }
 
-   private static String write() {
-      if (init_Str != null && !flush(init_Str)) {
-         init_Str = null;
+   private static String getActiveHotbarOwnerLocked() {
+      if (hotbarOwner != null && !isModuleEnabled(hotbarOwner)) {
+         hotbarOwner = null;
       }
 
-      return init_Str;
+      return hotbarOwner;
    }
 
-   private static String load(int inventorySlot) {
-      String owner = init_Map.get(inventorySlot);
+   private static String getActiveSlotOwnerLocked(int inventorySlot) {
+      String owner = slotClaims.get(inventorySlot);
       if (owner == null) {
          return null;
-      } else if (!flush(owner)) {
-         init_Map.remove(inventorySlot);
+      } else if (!isModuleEnabled(owner)) {
+         slotClaims.remove(inventorySlot);
          return null;
       } else {
          return owner;
       }
    }
 
-   private static boolean flush(String moduleId) {
+   private static boolean isModuleEnabled(String moduleId) {
       Module module = autismclient.modules.al.init_Module_Str(moduleId);
       return module != null && module.isEnabled();
    }
 
-   private static boolean init_Z(int inventorySlot) {
+   private static boolean isValidInventorySlot(int inventorySlot) {
       return inventorySlot >= 0 && inventorySlot < 41;
    }
 
-   private static String init_Str(String moduleId) {
+   private static String normalizeModuleId(String moduleId) {
       if (moduleId == null) {
          return null;
       }

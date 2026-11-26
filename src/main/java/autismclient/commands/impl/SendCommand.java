@@ -30,20 +30,20 @@ public class SendCommand extends Command {
          ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("packet", autismclient.commands.arguments.PacketNameArgumentType.init_JsonUtil())
                .executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.arguments.PacketNameArgumentType.init(ctx, "packet"), "")))
             .then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("args", StringArgumentType.greedyString()).suggests((ctx, builder) -> {
-               Class<? extends Packet<?>> cls = PacketTypeRegistry.init_Class_Str(autismclient.commands.arguments.PacketNameArgumentType.init(ctx, "packet"));
+               Class<? extends Packet<?>> cls = PacketTypeRegistry.resolvePacketClass(autismclient.commands.arguments.PacketNameArgumentType.init(ctx, "packet"));
                return PacketCommandBuilder.init_CompletableFuture_Class_SuggestionsBuilder(cls, builder);
             }).executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.arguments.PacketNameArgumentType.init(ctx, "packet"), StringArgumentType.getString(ctx, "args"))))
       );
    }
 
    private int init_I_Str_Str_3(String name, String args) {
-      Class<? extends Packet<?>> cls = PacketTypeRegistry.init_Class_Str(name);
+      Class<? extends Packet<?>> cls = PacketTypeRegistry.resolvePacketClass(name);
       if (cls == null) {
          AutismClientMessaging.sendPrefixed("§cUnknown packet: §f" + name);
          return 1;
       }
 
-      if (!PacketTypeRegistry.load().contains(cls)) {
+      if (!PacketTypeRegistry.getC2sPackets().contains(cls)) {
          AutismClientMessaging.sendPrefixed("§cRefusing to send non-C2S packet: §f" + name);
          return 1;
       }
@@ -72,7 +72,7 @@ public class SendCommand extends Command {
             AutismClientMessaging.sendPrefixed("§cNo network connection.");
             return 1;
          } else {
-            AutismSessionState.init_ck().init_V_ClientPacketListen_Packet(conn, result.init_Packet());
+            AutismSessionState.getInstance().sendPacketBypassingInterception(conn, result.init_Packet());
             AutismClientMessaging.sendPrefixed("§aSent §f" + name + "§7 (" + result.load_Str() + ")");
             return 1;
          }

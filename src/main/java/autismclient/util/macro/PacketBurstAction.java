@@ -43,7 +43,7 @@ public class PacketBurstAction implements MacroAction {
    public void execute(Minecraft mc) {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.getConnection() != null) {
          if (this.flushBefore) {
-            AutismSessionState.init_ck().init_I_ClientPacketListen(mc.getConnection());
+            AutismSessionState.getInstance().flushDelayedPackets(mc.getConnection());
          }
 
          int times = this.init_I_7();

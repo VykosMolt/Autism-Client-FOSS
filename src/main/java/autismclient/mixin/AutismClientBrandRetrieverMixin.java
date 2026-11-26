@@ -11,8 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AutismClientBrandRetrieverMixin {
    @Inject(method = "getClientModName", at = @At("HEAD"), cancellable = true, remap = false)
    private static void autism$spoofClientBrand(CallbackInfoReturnable<String> cir) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      if (module != null && module.tick_Z()) {
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      if (module != null && module.isSpoofClientVanilla()) {
          cir.setReturnValue("vanilla");
       }
    }

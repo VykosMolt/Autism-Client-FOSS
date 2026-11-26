@@ -277,7 +277,7 @@ public final class AutoTotemModule extends Module {
       this.add = -1;
       reset = -2147483648;
       start = -2147483648;
-      autismclient.util.InventorySlotArbiter.update_V(this.id());
+      autismclient.util.InventorySlotArbiter.releaseAllClaims(this.id());
    }
 
    @Override
@@ -296,7 +296,7 @@ public final class AutoTotemModule extends Module {
             if (this.push != 0) {
                this.read_V_3();
             } else {
-               int now = AutismSessionState.init_ck().state_I();
+               int now = AutismSessionState.getInstance().getClientTick();
                boolean health = this.bool("health");
                boolean wantTotem = health ? !sync_Z() && this.pop() : true;
                int mode = wantTotem ? 1 : 0;
@@ -322,7 +322,7 @@ public final class AutoTotemModule extends Module {
                this.write_J = -1L;
                boolean timed = this.push();
                if (!timed || now >= this.put) {
-                  boolean handedOver = mode == 1 && autismclient.util.InventorySlotArbiter.sync(this.id());
+                  boolean handedOver = mode == 1 && autismclient.util.InventorySlotArbiter.didOtherReleaseClickRecently(this.id());
                   if (handedOver || System.currentTimeMillis() - this.read_J >= this.integer("switch-delay")) {
                      int fromSlot;
                      if (mode == 1) {
@@ -421,17 +421,17 @@ public final class AutoTotemModule extends Module {
       }
 
       if (tripLive) {
-         autismclient.util.InventorySlotArbiter.init_Z(this.id(), this.sync);
+         autismclient.util.InventorySlotArbiter.claimSlot(this.id(), this.sync);
       } else if (this.push != 0) {
-         autismclient.util.InventorySlotArbiter.init_Z(this.id(), this.pop);
+         autismclient.util.InventorySlotArbiter.claimSlot(this.id(), this.pop);
       } else {
-         autismclient.util.InventorySlotArbiter.load_V(this.id());
+         autismclient.util.InventorySlotArbiter.releaseAllSlots(this.id());
       }
 
       if (!tripLive && this.push == 0 && !this.update_Z_2() && !init_Z_ItemStack_2(MC.player.getOffhandItem())) {
-         autismclient.util.InventorySlotArbiter.init_V(this.id());
+         autismclient.util.InventorySlotArbiter.releaseHotbar(this.id());
       } else {
-         autismclient.util.InventorySlotArbiter.init_Z(this.id());
+         autismclient.util.InventorySlotArbiter.claimHotbar(this.id());
       }
    }
 
@@ -519,11 +519,11 @@ public final class AutoTotemModule extends Module {
 
          String switchMode = this.choice("switch-mode");
          boolean smart = foreign || "Smart".equals(switchMode) && fromSlot >= 0 && fromSlot < 9;
-         if (isTotem && !autismclient.util.InventorySlotArbiter.init_Z(this.id())) {
+         if (isTotem && !autismclient.util.InventorySlotArbiter.claimHotbar(this.id())) {
             return false;
          }
 
-         if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             return false;
          }
 
@@ -545,11 +545,11 @@ public final class AutoTotemModule extends Module {
                switched = var10000;
             }
          } finally {
-            autismclient.util.InventorySlotArbiter.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
 
          if (switched && this.bool("pause-movement")) {
-            start = AutismSessionState.init_ck().state_I() + 1;
+            start = AutismSessionState.getInstance().getClientTick() + 1;
          }
 
          return switched;
@@ -573,7 +573,7 @@ public final class AutoTotemModule extends Module {
             return false;
          }
 
-         if (BlinkPacketManager.load_Z()) {
+         if (BlinkPacketManager.isHoldingActionsOnly()) {
             return false;
          }
 
@@ -587,7 +587,7 @@ public final class AutoTotemModule extends Module {
          if (!pickup) {
             boolean switched = this.init_Z_I_Z_2(fromSlot, isTotem);
             if (switched) {
-               int now = AutismSessionState.init_ck().state_I();
+               int now = AutismSessionState.getInstance().getClientTick();
                this.push = 3;
                this.pop = fromSlot;
                this.run = 0;
@@ -605,11 +605,11 @@ public final class AutoTotemModule extends Module {
                return false;
             }
 
-            if (isTotem && !autismclient.util.InventorySlotArbiter.init_Z(this.id())) {
+            if (isTotem && !autismclient.util.InventorySlotArbiter.claimHotbar(this.id())) {
                return false;
             }
 
-            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                return false;
             }
 
@@ -617,14 +617,14 @@ public final class AutoTotemModule extends Module {
             try {
                clicked = autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
 
             if (!clicked) {
                return false;
             }
 
-            int now = AutismSessionState.init_ck().state_I();
+            int now = AutismSessionState.getInstance().getClientTick();
             this.push = 1;
             this.pop = fromSlot;
             this.run = 1;
@@ -646,22 +646,22 @@ public final class AutoTotemModule extends Module {
             return false;
          }
 
-         if (isTotem && !autismclient.util.InventorySlotArbiter.init_Z(this.id())) {
+         if (isTotem && !autismclient.util.InventorySlotArbiter.claimHotbar(this.id())) {
             return false;
          }
 
          ((AutismMultiPlayerGameModeAccessor)MC.gameMode).autism$ensureHasSentCarriedItem();
-         int now = AutismSessionState.init_ck().state_I();
+         int now = AutismSessionState.getInstance().getClientTick();
          int selected = MC.player.getInventory().getSelectedSlot();
          if (selected == fromSlot) {
-            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                return false;
             }
 
             try {
                connection.send(new ServerboundPlayerActionPacket(Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO, Direction.DOWN));
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
 
             this.init_Item = MC.player.getOffhandItem().getItem();
@@ -671,14 +671,14 @@ public final class AutoTotemModule extends Module {
             this.close_V();
             return true;
          } else {
-            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
                return false;
             }
 
             try {
                connection.send(new ServerboundSetCarriedItemPacket(fromSlot));
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
 
             this.push = 2;
@@ -697,7 +697,7 @@ public final class AutoTotemModule extends Module {
    }
 
    private void read_V_3() {
-      int now = AutismSessionState.init_ck().state_I();
+      int now = AutismSessionState.getInstance().getClientTick();
       reset = now + this.write_I_2();
       if (this.init_DataUtil != null && MC.gui.screen() != this.init_DataUtil) {
          this.init_DataUtil = null;
@@ -706,7 +706,7 @@ public final class AutoTotemModule extends Module {
       if (now >= this.set) {
          if (!this.isEnabled() || this.flush_Z()) {
             this.write_V_3();
-         } else if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+         } else if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             this.set = now + 1;
          } else {
             boolean stepped;
@@ -725,7 +725,7 @@ public final class AutoTotemModule extends Module {
 
                stepped = var10000;
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
 
             if (!stepped) {
@@ -744,7 +744,7 @@ public final class AutoTotemModule extends Module {
    }
 
    private boolean flush_Z() {
-      if (BlinkPacketManager.load_Z()) {
+      if (BlinkPacketManager.isHoldingActionsOnly()) {
          return true;
       } else if (this.push == 2) {
          return MC.getConnection() == null || MC.gameMode == null;
@@ -790,25 +790,25 @@ public final class AutoTotemModule extends Module {
    private void write_V_3() {
       if (this.push == 2) {
          ClientPacketListener connection = MC.getConnection();
-         if (connection != null && this.tick != this.pop && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+         if (connection != null && this.tick != this.pop && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             try {
                connection.send(new ServerboundSetCarriedItemPacket(this.tick));
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
          }
       } else if (MC.player != null && MC.player.containerMenu == MC.player.inventoryMenu && !MC.player.containerMenu.getCarried().isEmpty()) {
          int from = autismclient.util.InventorySlotHelper.toScreenSlot(MC, this.pop);
-         if (from >= 0 && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+         if (from >= 0 && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             try {
                autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);
             } finally {
-               autismclient.util.InventorySlotArbiter.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
          }
       }
 
-      this.put = AutismSessionState.init_ck().state_I() + this.init_I_Str("operation-delay", 0, 2);
+      this.put = AutismSessionState.getInstance().getClientTick() + this.init_I_Str("operation-delay", 0, 2);
       this.init_V_Z_2(true);
       this.update_V_3();
    }
@@ -850,7 +850,7 @@ public final class AutoTotemModule extends Module {
    }
 
    private static void init_V_I_2(int ticks) {
-      reset = AutismSessionState.init_ck().state_I() + ticks;
+      reset = AutismSessionState.getInstance().getClientTick() + ticks;
    }
 
    private ValueRange init_ValueRange_Str(String settingId, int fallbackMin, int fallbackMax) {
@@ -903,7 +903,7 @@ public final class AutoTotemModule extends Module {
       int until = reset;
       if (until != -2147483648 && MC != null && MC.player != null) {
          Module module = al.init_Module_Str("auto-totem");
-         return module != null && module.isEnabled() ? AutismSessionState.init_ck().state_I() <= until : false;
+         return module != null && module.isEnabled() ? AutismSessionState.getInstance().getClientTick() <= until : false;
       } else {
          return false;
       }
@@ -925,7 +925,7 @@ public final class AutoTotemModule extends Module {
 
    private void close_V() {
       if (this.bool("pause-movement")) {
-         start = AutismSessionState.init_ck().state_I() + 1;
+         start = AutismSessionState.getInstance().getClientTick() + 1;
       }
    }
 
@@ -943,7 +943,7 @@ public final class AutoTotemModule extends Module {
          return false;
       }
 
-      int age = AutismSessionState.init_ck().state_I() - until;
+      int age = AutismSessionState.getInstance().getClientTick() - until;
       return age <= 0 && age > -2;
    }
 
@@ -955,7 +955,7 @@ public final class AutoTotemModule extends Module {
       } else if (init_Z_6()) {
          return new Input(false, false, false, false, false, false, false);
       } else {
-         return AutismSessionState.init_ck().state_I() > start ? original : new Input(false, false, false, false, original.jump(), original.shift(), false);
+         return AutismSessionState.getInstance().getClientTick() > start ? original : new Input(false, false, false, false, original.jump(), original.shift(), false);
       }
    }
 
@@ -1068,7 +1068,7 @@ public final class AutoTotemModule extends Module {
          return 0.0F;
       }
 
-      int now = AutismSessionState.init_ck().state_I();
+      int now = AutismSessionState.getInstance().getClientTick();
       if (now - this.stop >= 2) {
          this.stop = now;
          this.read_Map.clear();

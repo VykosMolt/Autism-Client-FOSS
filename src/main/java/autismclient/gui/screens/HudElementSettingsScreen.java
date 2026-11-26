@@ -270,7 +270,7 @@ public class HudElementSettingsScreen extends Screen {
       );
       if (editing) {
          this.init_V(fieldX, y, fieldW, h);
-         this.init_k.init_V(graphics, mx, my, 0.0F);
+         this.init_k.render(graphics, mx, my, 0.0F);
       } else {
          autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(fieldX, y, fieldW, h), 4, -15594224, init_CharEncoder.set());
          this.init(graphics, this.init_Str_EventBus_StreamUti_D(row, value), fieldX, y, fieldW, h, -791321);
@@ -282,10 +282,10 @@ public class HudElementSettingsScreen extends Screen {
          this.init_k = new ThemedTextInputBox(Minecraft.getInstance(), this.font, x, y, w, h, false);
       }
 
-      this.init_k.read(x);
-      this.init_k.write(y);
-      this.init_k.update(w);
-      this.init_k.sync(h);
+      this.init_k.setX(x);
+      this.init_k.setY(y);
+      this.init_k.setWidth(w);
+      this.init_k.setHeight(h);
    }
 
    private void init_V_Str_Str(String key, String value) {
@@ -294,9 +294,9 @@ public class HudElementSettingsScreen extends Screen {
          this.init_k = new ThemedTextInputBox(Minecraft.getInstance(), this.font, 0, 0, 20, this.close(), false);
       }
 
-      this.init_k.init_V_Str(value == null ? "" : value);
-      this.init_k.push(true);
-      this.init_k.flush(this.init_k.load_Str().length());
+      this.init_k.setValue(value == null ? "" : value);
+      this.init_k.setFocused(true);
+      this.init_k.setCursorToEnd(this.init_k.getValue().length());
    }
 
    private void init(GuiGraphicsExtractor graphics, boolean checked, int x, int y, int boxH, String animationKey) {
@@ -415,7 +415,7 @@ public class HudElementSettingsScreen extends Screen {
             return true;
          }
 
-         if (this.load_Str != null && this.init_k != null && this.init_k.init_Z_D_2(mx, my, Compat263.mouseEventGlfwButton(event))) {
+         if (this.load_Str != null && this.init_k != null && this.init_k.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
             return true;
          }
 
@@ -491,7 +491,7 @@ public class HudElementSettingsScreen extends Screen {
          }
 
          if (this.init_k != null) {
-            this.init_k.load(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
+            this.init_k.mouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
          }
 
          return true;
@@ -527,7 +527,7 @@ public class HudElementSettingsScreen extends Screen {
             return true;
          }
 
-         if (this.load_Str != null && this.init_k != null && this.init_k.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
+         if (this.load_Str != null && this.init_k != null && this.init_k.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
             return true;
          }
 
@@ -592,7 +592,7 @@ public class HudElementSettingsScreen extends Screen {
                return true;
             }
 
-            if (this.init_k != null && this.init_k.init_Z_KeyEvent(input)) {
+            if (this.init_k != null && this.init_k.keyPressed(input)) {
                return true;
             }
          }
@@ -612,7 +612,7 @@ public class HudElementSettingsScreen extends Screen {
          return true;
       } else {
          if (this.load_Str != null && this.init_k != null) {
-            this.init_k.init_Z_CharacterEvent(input);
+            this.init_k.charTyped(input);
          }
 
          return true;
@@ -696,7 +696,7 @@ public class HudElementSettingsScreen extends Screen {
       if (row == null) {
          this.write_V();
       } else {
-         String editingText = this.init_k == null ? "" : this.init_k.load_Str();
+         String editingText = this.init_k == null ? "" : this.init_k.getValue();
          if (row.init_EventBus_CachePool == HudElementSettingsScreen.Inner_CachePool.NUMBER) {
             try {
                this.init_V_EventBus_StreamUti_D(row, Double.parseDouble(editingText.trim()));
@@ -711,8 +711,8 @@ public class HudElementSettingsScreen extends Screen {
    private void write_V() {
       this.load_Str = null;
       if (this.init_k != null) {
-         this.init_k.push(false);
-         this.init_k.init_V_Str("");
+         this.init_k.setFocused(false);
+         this.init_k.setValue("");
       }
    }
 

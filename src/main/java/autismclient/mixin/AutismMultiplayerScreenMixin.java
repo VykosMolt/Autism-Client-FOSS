@@ -87,8 +87,8 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
       if (!this.autism$voicePromptChecked) {
          this.autism$voicePromptChecked = true;
          if (!aD.init_Z() && FabricLoader.getInstance().isModLoaded("voicechat")) {
-            ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-            if (module != null && module.tick_Z()) {
+            ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+            if (module != null && module.isSpoofClientVanilla()) {
                AutismConfig config = AutismConfig.getGlobal();
                if (config != null && !config.voiceChatModdedPromptShown) {
                   config.voiceChatModdedPromptShown = true;
@@ -188,9 +188,9 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
       if (this.autism$spoofButton == null) {
          this.autism$spoofButton = this.addRenderableWidget(Button.builder(Component.literal("Client"), ignored -> {
-            ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
+            ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
             if (module != null) {
-               module.update(!module.tick_Z());
+               module.setSpoofClientVanilla(!module.isSpoofClientVanilla());
             }
 
             this.autism$layoutButtons();
@@ -199,9 +199,9 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
       if (this.autism$packsButton == null) {
          this.autism$packsButton = this.addRenderableWidget(Button.builder(Component.literal("Packs"), ignored -> {
-            ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
+            ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
             if (module != null) {
-               module.write(!module.pop_Z());
+               module.setPretendPackAccepted(!module.isPretendPackAccepted());
             }
 
             this.autism$layoutButtons();
@@ -249,16 +249,16 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
    @Unique
    private Component autism$spoofClientLabel(int width) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      boolean enabled = module != null && module.tick_Z();
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      boolean enabled = module != null && module.isSpoofClientVanilla();
       return this.autism$fitLabel(width, enabled ? "Client: Vanilla" : "Client: Modded", enabled ? "Vanilla" : "Modded", "Client");
    }
 
    @Unique
    private Component autism$bypassPacksLabel(int width) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      boolean vanilla = module != null && module.tick_Z();
-      boolean bypass = module != null && module.pop_Z();
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      boolean vanilla = module != null && module.isSpoofClientVanilla();
+      boolean bypass = module != null && module.isPretendPackAccepted();
       String label = autismclient.protector.ProtectorModeDescriptions.init(vanilla, bypass);
       return this.autism$fitLabel(width, label, bypass ? "Bypass" : "Normal", "Packs");
    }
@@ -338,9 +338,9 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
    @Unique
    private void autism$renderButtonGuidance(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      boolean vanilla = module != null && module.tick_Z();
-      boolean bypass = module != null && module.pop_Z();
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      boolean vanilla = module != null && module.isSpoofClientVanilla();
+      boolean bypass = module != null && module.isPretendPackAccepted();
       String guidance = null;
       if (this.autism$spoofButton != null && this.autism$spoofButton.isMouseOver(mouseX, mouseY)) {
          guidance = autismclient.protector.ProtectorModeDescriptions.init(vanilla);

@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderBlockBreakMixin {
    @Inject(method = "submitBlockDestroyAnimation", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noBlockBreakOverlay(CallbackInfo ci) {
-      if (NoRenderState.cache()) {
+      if (NoRenderState.hideBlockBreakOverlay()) {
          ci.cancel();
       }
    }

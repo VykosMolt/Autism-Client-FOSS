@@ -23,7 +23,7 @@ final class AiEventLog {
    }
 
    private static long load() {
-      return autismclient.util.AutismSessionState.init_ck().state_I();
+      return autismclient.util.AutismSessionState.getInstance().getClientTick();
    }
 
    // Clears only on a new server connection, so a dimension change keeps death/item events.

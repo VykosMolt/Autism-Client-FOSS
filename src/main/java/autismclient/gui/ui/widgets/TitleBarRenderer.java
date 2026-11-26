@@ -90,7 +90,7 @@ public final class TitleBarRenderer {
             );
          }
 
-         GuiIconAtlas.init(graphics, GuiIconAtlas.init_Identifier, ix, iy, icon, icon, init(colors.textSecondary, colors.textPrimary, closeT));
+         GuiIconAtlas.draw(graphics, GuiIconAtlas.CLOSE, ix, iy, icon, icon, init(colors.textSecondary, colors.textPrimary, closeT));
       }
    }
 

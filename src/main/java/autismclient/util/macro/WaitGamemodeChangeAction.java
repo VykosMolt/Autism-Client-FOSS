@@ -27,7 +27,7 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
       tag.putBoolean("detectFake", this.detectFake);
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -42,7 +42,7 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 

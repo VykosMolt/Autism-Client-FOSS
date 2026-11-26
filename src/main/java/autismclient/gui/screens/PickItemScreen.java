@@ -86,7 +86,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
          }
 
          this.init_V(x + 4, this.flush(), panelW - 8, this.update());
-         this.init_k.init_V(graphics, mx, my, delta);
+         this.init_k.render(graphics, mx, my, delta);
          autismclient.gui.f.NetHelper list = this.init_NetHelper_5();
          int listX = list.read();
          int listY = list.write();
@@ -176,7 +176,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
          return true;
       }
 
-      if (this.init_k != null && this.init_k.init_Z_D_2(mx, my, Compat263.mouseEventGlfwButton(event))) {
+      if (this.init_k != null && this.init_k.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
          return true;
       }
 
@@ -210,7 +210,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
    public boolean mouseReleased(MouseButtonEvent event) {
       this.init_Z = false;
       if (this.init_k != null) {
-         this.init_k.load(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
+         this.init_k.mouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
       }
 
       return true;
@@ -224,7 +224,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
          this.pop = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_PoolEntry_DataUtil_7(), my, this.tick);
          return true;
       } else {
-         return this.init_k != null && this.init_k.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
+         return this.init_k != null && this.init_k.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
       }
    }
 
@@ -241,14 +241,14 @@ public final class PickItemScreen extends VirtualScaledScreen {
          this.onClose();
          return true;
       } else {
-         return this.init_k != null && this.init_k.init_Z_KeyEvent(input) ? true : true;
+         return this.init_k != null && this.init_k.keyPressed(input) ? true : true;
       }
    }
 
    @Override
    public boolean charTyped(CharacterEvent input) {
       if (this.init_k != null) {
-         this.init_k.init_Z_CharacterEvent(input);
+         this.init_k.charTyped(input);
       }
 
       return true;
@@ -257,9 +257,9 @@ public final class PickItemScreen extends VirtualScaledScreen {
    private void init_V(int x, int y, int w, int h) {
       if (this.init_k == null) {
          this.init_k = new ThemedTextInputBox(Minecraft.getInstance(), this.font, x, y, w, h, true);
-         this.init_k.init_V_Component(Component.literal("Search item id or name"));
-         this.init_k.init_V_Consumer(value -> this.pop = 0);
-         this.init_k.init_V_Predicate(value -> {
+         this.init_k.setPlaceholder(Component.literal("Search item id or name"));
+         this.init_k.setChangedListener(value -> this.pop = 0);
+         this.init_k.setSubmitHandler(value -> {
             List<PickItemScreen.Inner_DataUtil> rows = this.init_List_12();
             if (!rows.isEmpty()) {
                this.init_V_Str_9(rows.get(0).init_Str);
@@ -267,17 +267,17 @@ public final class PickItemScreen extends VirtualScaledScreen {
 
             return true;
          });
-         this.init_k.push(true);
+         this.init_k.setFocused(true);
       }
 
-      this.init_k.read(x);
-      this.init_k.write(y);
-      this.init_k.update(w);
-      this.init_k.sync(h);
+      this.init_k.setX(x);
+      this.init_k.setY(y);
+      this.init_k.setWidth(w);
+      this.init_k.setHeight(h);
    }
 
    private String init_Str_10() {
-      return this.init_k == null ? "" : this.init_k.load_Str();
+      return this.init_k == null ? "" : this.init_k.getValue();
    }
 
    @Override

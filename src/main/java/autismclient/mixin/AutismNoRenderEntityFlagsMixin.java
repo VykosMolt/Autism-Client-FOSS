@@ -12,12 +12,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AutismNoRenderEntityFlagsMixin {
    @ModifyReturnValue(method = "isInvisibleTo", at = @At("RETURN"), require = 0)
    private boolean autism$showInvisible(boolean original) {
-      return original && !NoRenderState.drain();
+      return original && !NoRenderState.showInvisibleEntities();
    }
 
    @Inject(method = "isCurrentlyGlowing", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noGlowing(CallbackInfoReturnable<Boolean> cir) {
-      if (NoRenderState.fill()) {
+      if (NoRenderState.disableGlowing()) {
          cir.setReturnValue(false);
       }
    }

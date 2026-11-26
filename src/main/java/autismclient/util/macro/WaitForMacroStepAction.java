@@ -24,7 +24,7 @@ public class WaitForMacroStepAction implements MacroAction {
       tag.putString("mode", this.mode.name());
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
 
@@ -41,7 +41,7 @@ public class WaitForMacroStepAction implements MacroAction {
 
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       this.init = tag.getBooleanOr("enabled", true);
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
    @Override

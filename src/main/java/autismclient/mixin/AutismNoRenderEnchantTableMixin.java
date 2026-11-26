@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderEnchantTableMixin {
    @Inject(method = "submit", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noEnchantTableBook(CallbackInfo ci) {
-      if (NoRenderState.data()) {
+      if (NoRenderState.hideEnchantmentTableBook()) {
          ci.cancel();
       }
    }

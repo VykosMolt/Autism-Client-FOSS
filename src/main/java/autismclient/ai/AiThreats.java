@@ -202,7 +202,7 @@ final class AiThreats {
    }
 
    static long init_J() {
-      return autismclient.util.AutismSessionState.init_ck().state_I();
+      return autismclient.util.AutismSessionState.getInstance().getClientTick();
    }
 
    static void init_V(Minecraft mc) {

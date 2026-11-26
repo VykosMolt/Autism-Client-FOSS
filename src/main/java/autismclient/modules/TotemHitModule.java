@@ -63,7 +63,7 @@ public final class TotemHitModule extends Module {
 
          for (int slot = 0; slot < 9; slot++) {
             ItemStack stack = MC.player.getInventory().getItem(slot);
-            if (stack.is(ItemTags.SWORDS) && !autismclient.util.InventorySlotArbiter.init(slot, "totem-hit")) {
+            if (stack.is(ItemTags.SWORDS) && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, "totem-hit")) {
                int enchantment = EnchantmentHelper.getItemEnchantmentLevel(knockback, stack);
                if (enchantment > bestLevel) {
                   best = slot;
@@ -81,7 +81,7 @@ public final class TotemHitModule extends Module {
          this.load = best;
          this.init_ItemStack = MC.player.getInventory().getItem(best).copy();
          this.init_I = MC.player.getInventory().getSelectedSlot();
-         this.read = AutismSessionState.init_ck().state_I();
+         this.read = AutismSessionState.getInstance().getClientTick();
          this.write = -2147483648;
          this.init_Z = false;
          return true;
@@ -104,10 +104,10 @@ public final class TotemHitModule extends Module {
          && !aD.init_Z()
          && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
-         && !MacroExecutor.write_Z()
+         && !MacroExecutor.isRunning()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20()
-         && !autismclient.util.SilentRotationManager.read_Z()
+         && !autismclient.util.SilentRotationManager.hasActiveRotation()
          && !ScaffoldModule.update_Z_5();
    }
 
@@ -115,7 +115,7 @@ public final class TotemHitModule extends Module {
    public void preMovementTick() {
       if (!AutismLiteVariant.enabled() && this.init_LivingEntity != null) {
          if (MC.player != null && MC.level == this.init_Obj) {
-            int tick = AutismSessionState.init_ck().state_I();
+            int tick = AutismSessionState.getInstance().getClientTick();
             int selected = MC.player.getInventory().getSelectedSlot();
             if (this.write != -2147483648 && selected != this.load) {
                if (!CrystalAuraModule.init_Z_I_10(selected) && !AnchorAuraModule.init_Z_I(selected) && !KillAuraModule.load_Z_I_3(selected)) {
@@ -130,8 +130,8 @@ public final class TotemHitModule extends Module {
                   if (this.write == -2147483648) {
                      if (selected != this.init_I || !MC.player.getMainHandItem().is(Items.TOTEM_OF_UNDYING)) {
                         this.init_V_24();
-                     } else if (autismclient.util.InventorySlotArbiter.init_Z("totem-hit", this.init_I)
-                        && autismclient.util.InventorySlotArbiter.init_Z("totem-hit", this.load)
+                     } else if (autismclient.util.InventorySlotArbiter.claimSlot("totem-hit", this.init_I)
+                        && autismclient.util.InventorySlotArbiter.claimSlot("totem-hit", this.load)
                         && this.init(this.load)) {
                         this.write = tick;
                         this.init_J = System.nanoTime() + this.integer("switch-delay") * 1000000L;
@@ -151,7 +151,7 @@ public final class TotemHitModule extends Module {
                            && current.getEntity() == this.init_LivingEntity,
                         () -> {
                            this.init_Z = true;
-                           this.update = AutismSessionState.init_ck().state_I() + 1 + (this.integer("return-delay") + 49) / 50;
+                           this.update = AutismSessionState.getInstance().getClientTick() + 1 + (this.integer("return-delay") + 49) / 50;
                         }
                      )) {
                         // Not queued: stop cancelling clicks and return to the totem next tick.
@@ -174,11 +174,11 @@ public final class TotemHitModule extends Module {
    }
 
    private boolean init(int slot) {
-      if (!autismclient.util.InventorySlotArbiter.init(slot, "totem-hit") && autismclient.util.InventorySlotArbiter.write_Z("totem-hit")) {
+      if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, "totem-hit") && autismclient.util.InventorySlotArbiter.beginActionGroup("totem-hit")) {
          try {
             autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
          } finally {
-            autismclient.util.InventorySlotArbiter.read_V("totem-hit");
+            autismclient.util.InventorySlotArbiter.endActionGroup("totem-hit");
          }
 
          return true;
@@ -194,7 +194,7 @@ public final class TotemHitModule extends Module {
       this.init_I = this.load = -1;
       this.init_Z = false;
       this.init_ItemStack = ItemStack.EMPTY;
-      autismclient.util.InventorySlotArbiter.update_V("totem-hit");
+      autismclient.util.InventorySlotArbiter.releaseAllClaims("totem-hit");
    }
 
    @Override

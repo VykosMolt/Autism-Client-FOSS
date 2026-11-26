@@ -6,13 +6,13 @@ final class ListenDuringPreviousSerializer {
    private ListenDuringPreviousSerializer() {
    }
 
-   static void init(CompoundTag tag, MacroAction action) {
+   static void writeToTag(CompoundTag tag, MacroAction action) {
       if (tag != null && action != null) {
          tag.putBoolean("listenDuringPreviousAction", action.listensDuringPreviousAction());
       }
    }
 
-   static void load(CompoundTag tag, MacroAction action) {
+   static void readFromTag(CompoundTag tag, MacroAction action) {
       if (tag != null && action != null) {
          action.setListenDuringPreviousAction(tag.getBooleanOr("listenDuringPreviousAction", false));
       }

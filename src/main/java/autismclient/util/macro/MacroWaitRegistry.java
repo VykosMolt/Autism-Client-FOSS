@@ -566,7 +566,7 @@ public class MacroWaitRegistry {
    private static String init(ItemStack stack) {
       if (stack != null && !stack.isEmpty()) {
          String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-         String rich = MacroExecutor.init_Str_Component(stack.getHoverName());
+         String rich = MacroExecutor.serializeComponentJson(stack.getHoverName());
          String components = String.valueOf(stack.getComponents());
          return id + "|" + stack.getCount() + "|" + (rich == null ? "" : rich) + "|" + components.hashCode();
       } else {
@@ -605,7 +605,7 @@ public class MacroWaitRegistry {
    }
 
    private static boolean init_Z_Str(String searchLower, String[] searchWords, String target) {
-      String normalizedTarget = MacroExecutor.init_Str_Str(target);
+      String normalizedTarget = MacroExecutor.cleanVisibleChatText(target);
       if (!searchLower.isEmpty() && !normalizedTarget.isEmpty()) {
          String tl = normalizedTarget.toLowerCase();
          if (searchLower.equals(tl)) {
@@ -1236,7 +1236,7 @@ public class MacroWaitRegistry {
       final CompletableFuture<Void> init_CompletableFuture;
 
       WaitGuiTitleEntry(String title, Screen prevScreen, CompletableFuture<Void> future) {
-         this.init_Str = MacroExecutor.init_Str_Str(title);
+         this.init_Str = MacroExecutor.cleanVisibleChatText(title);
          this.load = this.init_Str.toLowerCase();
          this.init_StrArr = this.load.isEmpty() ? new String[0] : this.load.split("\\s+");
          this.init_WeakReference = new WeakReference<>(prevScreen);
@@ -1302,7 +1302,7 @@ public class MacroWaitRegistry {
       private boolean load = false;
 
       WaitGuiCloseEntry(String title, CompletableFuture<Void> future) {
-         this.init_Str = MacroExecutor.init_Str_Str(title).toLowerCase();
+         this.init_Str = MacroExecutor.cleanVisibleChatText(title).toLowerCase();
          this.init_StrArr = this.init_Str.isEmpty() ? new String[0] : this.init_Str.split("\\s+");
          this.init_CompletableFuture = future;
       }

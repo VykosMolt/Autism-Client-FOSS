@@ -10,6 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class AutismNoRenderObfuscationMixin {
    @ModifyExpressionValue(method = "getGlyph", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/chat/Style;isObfuscated()Z"), require = 0)
    private boolean autism$noObfuscation(boolean original) {
-      return original && !NoRenderState.reset();
+      return original && !NoRenderState.disableTextObfuscation();
    }
 }

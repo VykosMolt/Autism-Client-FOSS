@@ -79,7 +79,7 @@ public final class AiParkourFallWarning {
    }
 
    public boolean putAt_Z() {
-      return OverlayScreenController.init_Z(this.putAt_Minecraft, this.putAt_RingBuffer);
+      return OverlayScreenController.openModalScreen(this.putAt_Minecraft, this.putAt_RingBuffer);
    }
 
    public void putAt_V() {

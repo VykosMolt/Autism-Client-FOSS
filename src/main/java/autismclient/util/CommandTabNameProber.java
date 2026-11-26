@@ -423,7 +423,7 @@ public final class CommandTabNameProber {
                   for (int k = start; k < end; k++) {
                      int idx = pending.get(k);
                      int requestId = CommandProbeIdAllocator.init();
-                     MacroExecutor.PacketWaiter listener = MacroExecutor.init_MacroExecutor_Even_Predicate(
+                     MacroExecutor.PacketWaiter listener = MacroExecutor.registerIncomingPacketWaiter(
                         packet -> packet instanceof ClientboundCommandSuggestionsPacket replyx && replyx.id() == requestId
                      );
                      listeners.add(listener);
@@ -431,7 +431,7 @@ public final class CommandTabNameProber {
                      try {
                         connection.send(new ServerboundCommandSuggestionPacket(requestId, texts.get(idx)));
                      } catch (Throwable t) {
-                        listener.init_CompletableFuture.complete(null);
+                        listener.future.complete(null);
                      }
 
                      init_V_J(2L);
@@ -449,7 +449,7 @@ public final class CommandTabNameProber {
 
                            for (int k = start; k < end; k++) {
                               int li = k - start;
-                              if (!done[li] && listeners.get(li).init_CompletableFuture.isDone()) {
+                              if (!done[li] && listeners.get(li).future.isDone()) {
                                  done[li] = true;
                                  remaining--;
                                  queries[0]++;
@@ -483,7 +483,7 @@ public final class CommandTabNameProber {
                                        retry.add(pending.get(k));
                                     }
 
-                                    listeners.get(li).init_V();
+                                    listeners.get(li).cancel();
                                  }
                               }
 
@@ -492,7 +492,7 @@ public final class CommandTabNameProber {
                         } else {
                            for (int li = 0; li < listeners.size(); li++) {
                               if (!done[li]) {
-                                 listeners.get(li).init_V();
+                                 listeners.get(li).cancel();
                               }
                            }
                         }
@@ -535,7 +535,7 @@ public final class CommandTabNameProber {
 
    private static List<String> init_List_MacroExecutor_Even(MacroExecutor.PacketWaiter listener) {
       try {
-         Packet<?> reply = listener.init_CompletableFuture.getNow(null);
+         Packet<?> reply = listener.future.getNow(null);
          List<String> out = new ArrayList<>();
          if (reply instanceof ClientboundCommandSuggestionsPacket suggestions && suggestions.suggestions() != null) {
             for (Entry entry : suggestions.suggestions()) {
@@ -549,7 +549,7 @@ public final class CommandTabNameProber {
       } catch (Throwable t) {
          return List.of();
       } finally {
-         listener.init_V();
+         listener.cancel();
       }
    }
 

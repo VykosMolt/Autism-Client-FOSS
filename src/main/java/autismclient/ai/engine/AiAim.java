@@ -203,8 +203,8 @@ public final class AiAim {
             this.settledTicks = this.angularError() <= 1.0 ? this.settledTicks + 1 : 0;
          } else {
             AiSilentAim.init(true);
-            SilentRotationManager.init_V_Str("ai-assistant", 1, this.targetRotation);
-            SilentRotationManager.init(
+            SilentRotationManager.requestRotation("ai-assistant", 1, this.targetRotation);
+            SilentRotationManager.tick(
                "ai-assistant", player, this.aimProfile.yawCap, this.aimProfile.pitchCap, this.aimProfile.streamProfile
             );
             RotationMath.Rotation packetRotation = SilentMovementCoordinator.activeRotation();
@@ -357,8 +357,8 @@ public final class AiAim {
       if (player == null) {
          return Vec3.ZERO;
       } else if (!AutismLiteVariant.enabled() && autismclient.ai.AiClientTick.init()) {
-         ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
-         return !wire.init_Z() ? Vec3.ZERO : Vec3.directionFromRotation(wire.write(), wire.read());
+         ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
+         return !wire.initialized() ? Vec3.ZERO : Vec3.directionFromRotation(wire.currentPitch(), wire.currentYaw());
       } else {
          return player.getLookAngle();
       }

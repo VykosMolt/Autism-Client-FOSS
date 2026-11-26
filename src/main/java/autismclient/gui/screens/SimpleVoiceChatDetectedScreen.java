@@ -56,9 +56,9 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    }
 
    private void init(boolean keepVanillaMode) {
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (module != null) {
-         module.update(keepVanillaMode);
+         module.setSpoofClientVanilla(keepVanillaMode);
       }
 
       this.minecraft.gui.setScreen(this.init_Screen);

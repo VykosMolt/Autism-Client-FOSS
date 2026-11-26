@@ -75,7 +75,7 @@ public class WaitFreeSlotsAction implements MacroAction {
       tag.putInt("slots", Math.max(0, Math.min(36, this.slots)));
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
 
@@ -89,7 +89,7 @@ public class WaitFreeSlotsAction implements MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
    @Override

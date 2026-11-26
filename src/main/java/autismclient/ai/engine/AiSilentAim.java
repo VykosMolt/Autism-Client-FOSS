@@ -22,6 +22,6 @@ public final class AiSilentAim {
 
    public static void init_V() {
       init = false;
-      SilentRotationManager.init("ai-assistant");
+      SilentRotationManager.releaseOwner("ai-assistant");
    }
 }

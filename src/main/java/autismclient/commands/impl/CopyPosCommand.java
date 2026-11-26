@@ -52,7 +52,7 @@ public final class CopyPosCommand extends Command {
    static Component init(String coordinates) {
       return Component.literal(coordinates)
          .withStyle(
-            style -> style.withColor(UiColorPalette.parse())
+            style -> style.withColor(UiColorPalette.textBody())
                .withUnderlined(true)
                .withHoverEvent(new ShowText(Component.literal("Click to copy coordinates")))
                .withClickEvent(new CopyToClipboard(coordinates))

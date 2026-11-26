@@ -72,9 +72,9 @@ public class InventoryAuditAction implements MacroAction {
 
    public void init_V_Minecraft_2(Minecraft mc) throws InterruptedException {
       if (mc != null && mc.player != null) {
-         MacroTemplateResolver.ResolveResult commandResolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.init_Str_2(), mc);
-         if (commandResolution.init_Z()) {
-            String cmd = commandResolution.init_Str().trim();
+         MacroTemplateResolver.ResolveResult commandResolution = MacroVariableContext.resolveTemplate(this.init_Str_2(), mc);
+         if (commandResolution.success()) {
+            String cmd = commandResolution.value().trim();
             if (!cmd.isBlank()) {
                int runIterations = this.load(this.iterations);
                int maxAttempts = Math.max(1, Math.min(this.maxTransferAttempts, 20));
@@ -366,15 +366,15 @@ public class InventoryAuditAction implements MacroAction {
    }
 
    private InventoryAuditAction.Inner_NetHelper sync(Minecraft mc) throws InterruptedException {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      boolean previousDelayPackets = shared.write_Z();
-      boolean previousUseCustomPackets = shared.reset_Z();
-      Set<Class<? extends Packet<?>>> previousC2SPackets = new HashSet<>(shared.load_Set());
-      Set<Class<? extends Packet<?>>> previousS2CPackets = new HashSet<>(shared.read_Set());
-      shared.tick(true);
-      shared.init_V_Set(Set.of(ServerboundContainerClickPacket.class));
-      shared.load_V_Set(Set.of());
-      shared.write(true);
+      AutismSessionState shared = AutismSessionState.getInstance();
+      boolean previousDelayPackets = shared.isDelayPacketsEnabled();
+      boolean previousUseCustomPackets = shared.isUseCustomPackets();
+      Set<Class<? extends Packet<?>>> previousC2SPackets = new HashSet<>(shared.getCustomC2sPackets());
+      Set<Class<? extends Packet<?>>> previousS2CPackets = new HashSet<>(shared.getCustomS2cPackets());
+      shared.setUseCustomPackets(true);
+      shared.setCustomC2sPackets(Set.of(ServerboundContainerClickPacket.class));
+      shared.setCustomS2cPackets(Set.of());
+      shared.setDelayPacketsEnabled(true);
 
       try {
          InventoryAuditAction.Inner_NetHelper transfer = this.push(mc);
@@ -383,7 +383,7 @@ public class InventoryAuditAction implements MacroAction {
          mc.execute(() -> {
             try {
                if (mc.getConnection() != null && mc.player != null) {
-                  flushed[0] = shared.init_I_ClientPacketListen(mc.getConnection());
+                  flushed[0] = shared.flushDelayedPackets(mc.getConnection());
                   if (mc.player.containerMenu != null) {
                      mc.getConnection().send(new ServerboundContainerClosePacket(mc.player.containerMenu.containerId));
                   }
@@ -396,23 +396,23 @@ public class InventoryAuditAction implements MacroAction {
          this.init_V_Minecraft_Z(mc, false);
          return transfer;
       } finally {
-         shared.write(previousDelayPackets);
-         shared.tick(previousUseCustomPackets);
-         shared.init_V_Set(previousC2SPackets);
-         shared.load_V_Set(previousS2CPackets);
+         shared.setDelayPacketsEnabled(previousDelayPackets);
+         shared.setUseCustomPackets(previousUseCustomPackets);
+         shared.setCustomC2sPackets(previousC2SPackets);
+         shared.setCustomS2cPackets(previousS2CPackets);
       }
    }
 
    private InventoryAuditAction.Inner_NetHelper flush(Minecraft mc) throws InterruptedException {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      boolean previousDelayPackets = shared.write_Z();
-      boolean previousUseCustomPackets = shared.reset_Z();
-      Set<Class<? extends Packet<?>>> previousC2SPackets = new HashSet<>(shared.load_Set());
-      Set<Class<? extends Packet<?>>> previousS2CPackets = new HashSet<>(shared.read_Set());
-      shared.tick(true);
-      shared.init_V_Set(Set.of(ServerboundContainerClickPacket.class));
-      shared.load_V_Set(Set.of());
-      shared.write(true);
+      AutismSessionState shared = AutismSessionState.getInstance();
+      boolean previousDelayPackets = shared.isDelayPacketsEnabled();
+      boolean previousUseCustomPackets = shared.isUseCustomPackets();
+      Set<Class<? extends Packet<?>>> previousC2SPackets = new HashSet<>(shared.getCustomC2sPackets());
+      Set<Class<? extends Packet<?>>> previousS2CPackets = new HashSet<>(shared.getCustomS2cPackets());
+      shared.setUseCustomPackets(true);
+      shared.setCustomC2sPackets(Set.of(ServerboundContainerClickPacket.class));
+      shared.setCustomS2cPackets(Set.of());
+      shared.setDelayPacketsEnabled(true);
 
       try {
          InventoryAuditAction.Inner_NetHelper transfer = this.push(mc);
@@ -420,7 +420,7 @@ public class InventoryAuditAction implements MacroAction {
          mc.execute(() -> {
             try {
                if (mc.getConnection() != null && mc.player != null) {
-                  shared.init_I_ClientPacketListen(mc.getConnection());
+                  shared.flushDelayedPackets(mc.getConnection());
                   if (mc.player.containerMenu != null) {
                      mc.getConnection().send(new ServerboundContainerClosePacket(mc.player.containerMenu.containerId));
                   }
@@ -434,10 +434,10 @@ public class InventoryAuditAction implements MacroAction {
          this.init_V_Minecraft_Z(mc, false);
          return transfer;
       } finally {
-         shared.write(previousDelayPackets);
-         shared.tick(previousUseCustomPackets);
-         shared.init_V_Set(previousC2SPackets);
-         shared.load_V_Set(previousS2CPackets);
+         shared.setDelayPacketsEnabled(previousDelayPackets);
+         shared.setUseCustomPackets(previousUseCustomPackets);
+         shared.setCustomC2sPackets(previousC2SPackets);
+         shared.setCustomS2cPackets(previousS2CPackets);
       }
    }
 
@@ -495,15 +495,15 @@ public class InventoryAuditAction implements MacroAction {
    }
 
    private InventoryAuditAction.Inner_NetHelper poll(Minecraft mc) throws InterruptedException {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      boolean previousDelayPackets = shared.write_Z();
-      boolean previousUseCustomPackets = shared.reset_Z();
-      Set<Class<? extends Packet<?>>> previousC2SPackets = new HashSet<>(shared.load_Set());
-      Set<Class<? extends Packet<?>>> previousS2CPackets = new HashSet<>(shared.read_Set());
-      shared.tick(true);
-      shared.init_V_Set(Set.of(ServerboundContainerClickPacket.class));
-      shared.load_V_Set(Set.of());
-      shared.write(true);
+      AutismSessionState shared = AutismSessionState.getInstance();
+      boolean previousDelayPackets = shared.isDelayPacketsEnabled();
+      boolean previousUseCustomPackets = shared.isUseCustomPackets();
+      Set<Class<? extends Packet<?>>> previousC2SPackets = new HashSet<>(shared.getCustomC2sPackets());
+      Set<Class<? extends Packet<?>>> previousS2CPackets = new HashSet<>(shared.getCustomS2cPackets());
+      shared.setUseCustomPackets(true);
+      shared.setCustomC2sPackets(Set.of(ServerboundContainerClickPacket.class));
+      shared.setCustomS2cPackets(Set.of());
+      shared.setDelayPacketsEnabled(true);
 
       try {
          InventoryAuditAction.Inner_NetHelper transfer = this.tick(mc);
@@ -511,7 +511,7 @@ public class InventoryAuditAction implements MacroAction {
          mc.execute(() -> {
             try {
                if (mc.getConnection() != null && mc.player != null) {
-                  shared.init_I_ClientPacketListen(mc.getConnection());
+                  shared.flushDelayedPackets(mc.getConnection());
                   if (mc.player.containerMenu != null) {
                      mc.getConnection().send(new ServerboundContainerClosePacket(mc.player.containerMenu.containerId));
                   }
@@ -524,16 +524,16 @@ public class InventoryAuditAction implements MacroAction {
          this.init_V_Minecraft_Z(mc, false);
          return transfer;
       } finally {
-         shared.write(previousDelayPackets);
-         shared.tick(previousUseCustomPackets);
-         shared.init_V_Set(previousC2SPackets);
-         shared.load_V_Set(previousS2CPackets);
+         shared.setDelayPacketsEnabled(previousDelayPackets);
+         shared.setUseCustomPackets(previousUseCustomPackets);
+         shared.setCustomC2sPackets(previousC2SPackets);
+         shared.setCustomS2cPackets(previousS2CPackets);
       }
    }
 
    private void init_V_Minecraft_Str(Minecraft mc, String cmd) {
       mc.execute(() -> {
-         if (!autismclient.modules.aD.read_Z() && MacroExecutor.init_Z() && mc.getConnection() != null) {
+         if (!autismclient.modules.aD.read_Z() && MacroExecutor.isCurrentRunActive() && mc.getConnection() != null) {
             String clean = cmd.startsWith("/") ? cmd.substring(1) : cmd;
             mc.getConnection().sendCommand(clean);
          }
@@ -542,7 +542,7 @@ public class InventoryAuditAction implements MacroAction {
 
    private void init_V_Minecraft_BlockPos(Minecraft mc, BlockPos pos) {
       mc.execute(() -> {
-         if (!autismclient.modules.aD.read_Z() && MacroExecutor.init_Z() && mc.player != null && mc.getConnection() != null && pos != null) {
+         if (!autismclient.modules.aD.read_Z() && MacroExecutor.isCurrentRunActive() && mc.player != null && mc.getConnection() != null && pos != null) {
             autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_BlockPos(pos);
             if (target != null) {
                target.init_Z_Minecraft(mc);
@@ -757,7 +757,7 @@ public class InventoryAuditAction implements MacroAction {
          try {
             if (mc.player != null) {
                if (!sendPacket) {
-                  AutismSessionState.init_ck().stop(true);
+                  AutismSessionState.getInstance().markDropNextContainerClose(true);
                }
 
                if (mc.player.containerMenu != mc.player.inventoryMenu) {
@@ -1118,7 +1118,7 @@ public class InventoryAuditAction implements MacroAction {
                      AbstractContainerMenu handler = mc.player.containerMenu;
                      if (handler != mc.player.inventoryMenu) {
                         for (int i = 0; i < handler.slots.size(); i++) {
-                           if (!MacroExecutor.init_Z()) {
+                           if (!MacroExecutor.isCurrentRunActive()) {
                               return;
                            }
 
@@ -1178,7 +1178,7 @@ public class InventoryAuditAction implements MacroAction {
                      AbstractContainerMenu handler = mc.player.containerMenu;
 
                      for (int i = 0; i < handler.slots.size(); i++) {
-                        if (!MacroExecutor.init_Z()) {
+                        if (!MacroExecutor.isCurrentRunActive()) {
                            return;
                         }
 
@@ -1264,7 +1264,7 @@ public class InventoryAuditAction implements MacroAction {
    }
 
    private void init_V_4() throws InterruptedException {
-      if (Thread.currentThread().isInterrupted() || !MacroExecutor.init_Z()) {
+      if (Thread.currentThread().isInterrupted() || !MacroExecutor.isCurrentRunActive()) {
          throw new InterruptedException("Macro stopped");
       }
    }

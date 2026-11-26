@@ -28,7 +28,7 @@ public class BundleDupeV2Action implements MacroAction {
       if (!autismclient.modules.aD.read_Z() && this.init_Z(mc)) {
          int cycles = 0;
 
-         while (MacroExecutor.init_Z() && !Thread.currentThread().isInterrupted()) {
+         while (MacroExecutor.isCurrentRunActive() && !Thread.currentThread().isInterrupted()) {
             if (autismclient.modules.aD.read_Z()) {
                return;
             }
@@ -109,7 +109,7 @@ public class BundleDupeV2Action implements MacroAction {
    private void init(Minecraft mc, int handlerSlot) {
       int count = Math.max(1, Math.min(10000, this.bundlePacketCount));
 
-      for (int i = 0; i < count && MacroExecutor.init_Z(); i++) {
+      for (int i = 0; i < count && MacroExecutor.isCurrentRunActive(); i++) {
          mc.getConnection().send(new ServerboundSelectBundleItemPacket(handlerSlot, this.bundleIndex));
       }
    }
@@ -135,7 +135,7 @@ public class BundleDupeV2Action implements MacroAction {
       int remaining = Math.max(0, ms);
       long deadline = System.currentTimeMillis() + remaining;
 
-      while (MacroExecutor.init_Z() && !Thread.currentThread().isInterrupted()) {
+      while (MacroExecutor.isCurrentRunActive() && !Thread.currentThread().isInterrupted()) {
          long left = deadline - System.currentTimeMillis();
          if (left <= 0L) {
             return true;

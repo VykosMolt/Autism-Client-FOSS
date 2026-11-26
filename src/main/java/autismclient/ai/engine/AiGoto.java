@@ -2769,7 +2769,7 @@ public final class AiGoto {
             }
 
             private AiOperation.Result pollOf_AiOperation_Result_3() {
-               if (this.putAt_BufferCore == null && !OverlayScreenController.init_Z()) {
+               if (this.putAt_BufferCore == null && !OverlayScreenController.hasModalScreen()) {
                   AiParkourFallWarning.Inner_DataUtil var1x = AiParkourFallWarning.putAt_BufferCore_CacheHe_Minecraft_List(
                      this.putAt_Minecraft, this.putAt_FileStore_StreamSt.movements()
                   );

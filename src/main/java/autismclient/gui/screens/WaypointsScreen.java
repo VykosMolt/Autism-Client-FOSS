@@ -105,7 +105,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
          int ctl = this.flush_I_9();
          int fieldX = x + 4;
          int fieldY = this.push();
-         this.init_k.init_V(graphics, mx, my, delta);
+         this.init_k.render(graphics, mx, my, delta);
          int addW = this.update_I_14();
          this.init(
             graphics,
@@ -176,11 +176,11 @@ public class WaypointsScreen extends VirtualScaledScreen {
                int nameX = swatchX + 18 + 4;
                ThemedTextInputBox nameField = this.init_Map.get(waypoint.name());
                if (nameField != null) {
-                  nameField.read(nameX);
-                  nameField.write(rowY + 1);
-                  nameField.update(120);
-                  nameField.sync(rowH - 2);
-                  nameField.init_V(graphics, mx, my, delta);
+                  nameField.setX(nameX);
+                  nameField.setY(rowY + 1);
+                  nameField.setWidth(120);
+                  nameField.setHeight(rowH - 2);
+                  nameField.render(graphics, mx, my, delta);
                }
 
                int delX = x + w - 2 - del;
@@ -221,11 +221,11 @@ public class WaypointsScreen extends VirtualScaledScreen {
       int ctl = this.flush_I_9();
       int hexY = swatchY + 10 + 4;
       int hexX = x + 4;
-      this.load_k.read(hexX);
-      this.load_k.write(hexY);
-      this.load_k.update(64);
-      this.load_k.sync(ctl);
-      this.load_k.init_V(graphics, mx, my, delta);
+      this.load_k.setX(hexX);
+      this.load_k.setY(hexY);
+      this.load_k.setWidth(64);
+      this.load_k.setHeight(ctl);
+      this.load_k.render(graphics, mx, my, delta);
       int previewX = hexX + 64 + 4;
       autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(previewX, hexY, 18, ctl), current);
       autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(previewX, hexY, 18, ctl), init_CharEncoder.set());
@@ -282,19 +282,19 @@ public class WaypointsScreen extends VirtualScaledScreen {
       }
 
       this.flush_V_9();
-      if (this.load_Str != null && this.load_k.init_Z_D_2(mx, my, Compat263.mouseEventGlfwButton(event))) {
-         this.init_k.push(false);
+      if (this.load_Str != null && this.load_k.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
+         this.init_k.setFocused(false);
          return true;
       }
 
-      if (this.init_k.init_Z_D_2(mx, my, Compat263.mouseEventGlfwButton(event))) {
-         this.load_k.push(false);
+      if (this.init_k.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
+         this.load_k.setFocused(false);
          return true;
       }
 
       for (String name : this.load_List) {
          ThemedTextInputBox rowField = this.init_Map.get(name);
-         if (rowField != null && rowField.init_Z_D_2(mx, my, Compat263.mouseEventGlfwButton(event))) {
+         if (rowField != null && rowField.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
             this.read(name);
             return true;
          }
@@ -337,8 +337,8 @@ public class WaypointsScreen extends VirtualScaledScreen {
          this.sync_V_11();
       }
 
-      this.init_k.push(false);
-      this.load_k.push(false);
+      this.init_k.setFocused(false);
+      this.load_k.setFocused(false);
       return true;
    }
 
@@ -361,12 +361,12 @@ public class WaypointsScreen extends VirtualScaledScreen {
       int my = cA.init_I_D(event.y());
       this.init_Z = false;
       ThemedTextInputBox focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
-      if (focused != null && focused.load(mx, my, Compat263.mouseEventGlfwButton(event))) {
+      if (focused != null && focused.mouseReleased(mx, my, Compat263.mouseEventGlfwButton(event))) {
          return true;
-      } else if (this.init_k != null && this.init_k.load(mx, my, Compat263.mouseEventGlfwButton(event))) {
+      } else if (this.init_k != null && this.init_k.mouseReleased(mx, my, Compat263.mouseEventGlfwButton(event))) {
          return true;
       } else {
-         return this.load_k != null && this.load_k.load(mx, my, Compat263.mouseEventGlfwButton(event)) ? true : true;
+         return this.load_k != null && this.load_k.mouseReleased(mx, my, Compat263.mouseEventGlfwButton(event)) ? true : true;
       }
    }
 
@@ -375,15 +375,15 @@ public class WaypointsScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       ThemedTextInputBox focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
-      if (focused != null && focused.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
+      if (focused != null && focused.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
          return true;
       }
 
-      if (this.init_k != null && this.init_k.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
+      if (this.init_k != null && this.init_k.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
          return true;
       }
 
-      if (this.load_k != null && this.load_k.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
+      if (this.load_k != null && this.load_k.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
          return true;
       }
 
@@ -410,17 +410,17 @@ public class WaypointsScreen extends VirtualScaledScreen {
          return true;
       } else if (Compat263.keyEventGlfwKey(input) != 257 && Compat263.keyEventGlfwKey(input) != 335) {
          ThemedTextInputBox focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
-         if (focused != null && focused.init_Z_KeyEvent(input)) {
+         if (focused != null && focused.keyPressed(input)) {
             return true;
-         } else if (this.init_k.init_Z_KeyEvent(input)) {
+         } else if (this.init_k.keyPressed(input)) {
             return true;
          } else {
-            return this.load_Str != null && this.load_k.init_Z_KeyEvent(input) ? true : true;
+            return this.load_Str != null && this.load_k.keyPressed(input) ? true : true;
          }
       } else {
          if (this.read_Str != null) {
             this.write_V_15();
-         } else if (this.init_k.init_Z()) {
+         } else if (this.init_k.isFocused()) {
             this.load_V_24();
          }
 
@@ -432,12 +432,12 @@ public class WaypointsScreen extends VirtualScaledScreen {
    public boolean charTyped(CharacterEvent input) {
       this.flush_V_9();
       ThemedTextInputBox focused = this.read_Str == null ? null : this.init_Map.get(this.read_Str);
-      if (focused != null && focused.init_Z_CharacterEvent(input)) {
+      if (focused != null && focused.charTyped(input)) {
          return true;
-      } else if (this.init_k.init_Z_CharacterEvent(input)) {
+      } else if (this.init_k.charTyped(input)) {
          return true;
       } else {
-         return this.load_Str != null && this.load_k.init_Z_CharacterEvent(input) ? true : true;
+         return this.load_Str != null && this.load_k.charTyped(input) ? true : true;
       }
    }
 
@@ -501,10 +501,10 @@ public class WaypointsScreen extends VirtualScaledScreen {
          ThemedTextInputBox field = this.init_Map.get(waypoint.name());
          if (field == null) {
             field = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 1, this.close_I_7() - 2, false);
-            field.load(64);
-            field.init_V_Str(waypoint.name());
-         } else if (!waypoint.name().equals(this.read_Str) && !waypoint.name().equals(field.load_Str())) {
-            field.init_V_Str(waypoint.name());
+            field.setMaxLength(64);
+            field.setValue(waypoint.name());
+         } else if (!waypoint.name().equals(this.read_Str) && !waypoint.name().equals(field.getValue())) {
+            field.setValue(waypoint.name());
          }
 
          alive.put(waypoint.name(), field);
@@ -526,16 +526,16 @@ public class WaypointsScreen extends VirtualScaledScreen {
       this.read_Str = name;
       ThemedTextInputBox field = this.init_Map.get(name);
       if (field != null) {
-         field.push(true);
-         field.flush(field.load_Str().length());
+         field.setFocused(true);
+         field.setCursorToEnd(field.getValue().length());
       }
 
       if (this.init_k != null) {
-         this.init_k.push(false);
+         this.init_k.setFocused(false);
       }
 
       if (this.load_k != null) {
-         this.load_k.push(false);
+         this.load_k.setFocused(false);
       }
    }
 
@@ -545,19 +545,19 @@ public class WaypointsScreen extends VirtualScaledScreen {
          ThemedTextInputBox field = this.init_Map.get(original);
          this.read_Str = null;
          if (field != null) {
-            field.push(false);
-            String renamed = field.load_Str().trim();
+            field.setFocused(false);
+            String renamed = field.getValue().trim();
             if (renamed.equals(original)) {
-               field.init_V_Str(original);
+               field.setValue(original);
             } else if (AutismWaypoints.init_AutismWaypoints().init(this.init_Str, original, renamed)) {
                this.init_Map.remove(original);
                this.init_Map.put(renamed, field);
-               field.init_V_Str(renamed);
+               field.setValue(renamed);
                if (original.equals(this.load_Str)) {
                   this.load_Str = renamed;
                }
             } else {
-               field.init_V_Str(original);
+               field.setValue(original);
             }
          }
       }
@@ -567,8 +567,8 @@ public class WaypointsScreen extends VirtualScaledScreen {
       if (this.read_Str != null) {
          ThemedTextInputBox field = this.init_Map.get(this.read_Str);
          if (field != null) {
-            field.init_V_Str(this.read_Str);
-            field.push(false);
+            field.setValue(this.read_Str);
+            field.setFocused(false);
          }
 
          this.read_Str = null;
@@ -576,7 +576,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
    }
 
    private static boolean init_Z_k(ThemedTextInputBox field, int mx, int my) {
-      return mx >= field.init_I() && mx < field.init_I() + field.read_I() && my >= field.load_I() && my < field.load_I() + field.write();
+      return mx >= field.getX() && mx < field.getX() + field.getWidth() && my >= field.getY() && my < field.getY() + field.getHeight();
    }
 
    private void write(String name) {
@@ -585,19 +585,19 @@ public class WaypointsScreen extends VirtualScaledScreen {
 
       try {
          this.load_k
-            .init_V_Str(String.format(Locale.ROOT, "%06X", AutismWaypoints.init_AutismWaypoints().init_I(this.init_Str, name, write_I_15()) & 16777215));
+            .setValue(String.format(Locale.ROOT, "%06X", AutismWaypoints.init_AutismWaypoints().init_I(this.init_Str, name, write_I_15()) & 16777215));
       } finally {
          this.load_Z = false;
       }
 
-      this.load_k.push(true);
-      this.init_k.push(false);
+      this.load_k.setFocused(true);
+      this.init_k.setFocused(false);
    }
 
    private void sync_V_11() {
       this.load_Str = null;
       if (this.load_k != null) {
-         this.load_k.push(false);
+         this.load_k.setFocused(false);
       }
    }
 
@@ -615,7 +615,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
             this.load_Z = true;
 
             try {
-               this.load_k.init_V_Str(String.format(Locale.ROOT, "%06X", init_IArr[index] & 16777215));
+               this.load_k.setValue(String.format(Locale.ROOT, "%06X", init_IArr[index] & 16777215));
             } finally {
                this.load_Z = false;
             }
@@ -671,15 +671,15 @@ public class WaypointsScreen extends VirtualScaledScreen {
    private void flush_V_9() {
       if (this.init_k == null) {
          this.init_k = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 1, this.flush_I_9(), false);
-         this.init_k.load(64);
-         this.init_k.init_V_Component(Component.literal("Waypoint name"));
+         this.init_k.setMaxLength(64);
+         this.init_k.setPlaceholder(Component.literal("Waypoint name"));
       }
 
       if (this.load_k == null) {
          this.load_k = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 1, this.flush_I_9(), false);
-         this.load_k.load(7);
-         this.load_k.init_V_Component(Component.literal("RRGGBB"));
-         this.load_k.load(text -> {
+         this.load_k.setMaxLength(7);
+         this.load_k.setPlaceholder(Component.literal("RRGGBB"));
+         this.load_k.setFilter(text -> {
             if (text != null && !text.isEmpty()) {
                int start = text.startsWith("#") ? 1 : 0;
                if (text.length() - start > 6) {
@@ -699,16 +699,16 @@ public class WaypointsScreen extends VirtualScaledScreen {
                return true;
             }
          });
-         this.load_k.init_V_Consumer(this::sync);
+         this.load_k.setChangedListener(this::sync);
       }
    }
 
    private void close_V_7() {
       if (this.init_k != null) {
-         this.init_k.read(this.get() + 4);
-         this.init_k.write(this.push());
-         this.init_k.update(Math.max(40, this.put() - this.update_I_14() - 8 - 2));
-         this.init_k.sync(this.flush_I_9());
+         this.init_k.setX(this.get() + 4);
+         this.init_k.setY(this.push());
+         this.init_k.setWidth(Math.max(40, this.put() - this.update_I_14() - 8 - 2));
+         this.init_k.setHeight(this.flush_I_9());
       }
    }
 
@@ -717,13 +717,13 @@ public class WaypointsScreen extends VirtualScaledScreen {
    }
 
    private String init_Str_13() {
-      return this.init_k == null ? "" : this.init_k.load_Str();
+      return this.init_k == null ? "" : this.init_k.getValue();
    }
 
    private void flush(String value) {
       this.flush_V_9();
-      this.init_k.init_V_Str(value == null ? "" : value);
-      this.init_k.flush(this.init_k.load_Str().length());
+      this.init_k.setValue(value == null ? "" : value);
+      this.init_k.setCursorToEnd(this.init_k.getValue().length());
    }
 
    private int sync_I_11() {

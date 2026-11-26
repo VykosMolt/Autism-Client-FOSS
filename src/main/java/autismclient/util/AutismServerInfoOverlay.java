@@ -743,44 +743,44 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    public void write_V_24() {
-      AutismSessionState shared = AutismSessionState.init_ck();
+      AutismSessionState shared = AutismSessionState.getInstance();
       this.flags_V_2();
       String stateAddress = this.load_Str_11();
       if (stateAddress.isEmpty() && this.poll_Str != null) {
          stateAddress = this.poll_Str;
       }
 
-      shared.start(this.start);
-      shared.stop(this.init_CacheEntry.init());
-      shared.run(this.sync_Str);
-      shared.get(stateAddress);
-      shared.next(this.state);
-      shared.prev(this.f_f_I);
-      shared.valid(this.f_g_I);
-      shared.size(this.f_h_I);
-      shared.data(this.f_i_I);
+      shared.setServerInfoActiveTab(this.start);
+      shared.setServerInfoScrollOffset(this.init_CacheEntry.init());
+      shared.setServerInfoSelectedPlugin(this.sync_Str);
+      shared.setServerInfoStateAddress(stateAddress);
+      shared.setServerInfoScanDelayMs(this.state);
+      shared.setServerInfoTabWidth(this.f_f_I);
+      shared.setServerInfoTabHeight(this.f_g_I);
+      shared.setServerInfoPluginsTabWidth(this.f_h_I);
+      shared.setServerInfoPluginsTabHeight(this.f_i_I);
       this.level_V_2();
       this.a__V();
    }
 
    public void update_V_21() {
-      AutismSessionState shared = AutismSessionState.init_ck();
+      AutismSessionState shared = AutismSessionState.getInstance();
       this.b__V();
-      this.start = Math.max(0, Math.min(init_StrArr.length - 1, shared.next_I()));
-      this.state = Math.max(10, Math.min(500, shared.valid_I()));
-      this.f_f_I = Math.max(this.bind_I_2(), shared.size_I());
-      this.f_g_I = Math.max(this.a_I_2(), shared.data_I());
-      this.f_h_I = Math.max(this.b_I_2(), shared.value_I());
-      this.f_i_I = Math.max(this.c_I_2(), shared.cache_I());
+      this.start = Math.max(0, Math.min(init_StrArr.length - 1, shared.getServerInfoActiveTab()));
+      this.state = Math.max(10, Math.min(500, shared.getServerInfoScanDelayMs()));
+      this.f_f_I = Math.max(this.bind_I_2(), shared.getServerInfoTabWidth());
+      this.f_g_I = Math.max(this.a_I_2(), shared.getServerInfoTabHeight());
+      this.f_h_I = Math.max(this.b_I_2(), shared.getServerInfoPluginsTabWidth());
+      this.f_i_I = Math.max(this.c_I_2(), shared.getServerInfoPluginsTabHeight());
       this.frame_V_2();
       String stateAddress = this.load_Str_11();
       if (stateAddress.isEmpty() && this.poll_Str != null) {
          stateAddress = this.poll_Str;
       }
 
-      if (!stateAddress.isEmpty() && stateAddress.equals(shared.tick_Str())) {
-         this.init_CacheEntry.init(shared.prev_I());
-         this.sync_Str = shared.pop_Str();
+      if (!stateAddress.isEmpty() && stateAddress.equals(shared.getServerInfoStateAddress())) {
+         this.init_CacheEntry.init(shared.getServerInfoScrollOffset());
+         this.sync_Str = shared.getServerInfoSelectedPlugin();
          if (this.sync_Str != null && this.sync_Str.isBlank()) {
             this.sync_Str = null;
          }
@@ -806,7 +806,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    public static boolean poll_Z_16() {
-      OverlayBounds layout = AutismSessionState.init_ck().init_cH_Str("autism-serverinfo");
+      OverlayBounds layout = AutismSessionState.getInstance().getOverlayBounds("autism-serverinfo");
       return layout != null && layout.visible;
    }
 
@@ -878,7 +878,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          time = "Day " + dayCount + " (" + String.format("%02d:%02d", hours, minutes) + ")";
       }
 
-      double estimatedTps = AutismSessionState.init_ck().load_D();
+      double estimatedTps = AutismSessionState.getInstance().getEstimatedTps();
       String tps = estimatedTps > 0.0 ? String.format("%.1f", Math.min(20.0, estimatedTps)) : "--";
       this.init_PacketUtil = new autismclient.gui.ui.layout.ColumnLayout();
       this.init_V_Str_2("IP:", displayedAddress, null, () -> this.init_V_Str_10(displayedAddress, "Server address copied.", "Server address unavailable."));
@@ -898,7 +898,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.init_V_Str_9("Players:", players, null);
       this.init_V_Str_9("Protocol:", proto, null);
       if (!"--".equals(versionNote)) {
-         this.init_V_Str_9("Version Note:", versionNote, UiColorPalette.entry());
+         this.init_V_Str_9("Version Note:", versionNote, UiColorPalette.warningYellow());
       }
 
       this.init_V_Str_9("Difficulty:", diff, null);
@@ -1197,7 +1197,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void load_V_2(int delayMs) {
       this.state = Math.max(10, Math.min(500, delayMs));
-      AutismSessionState.init_ck().next(this.state);
+      AutismSessionState.getInstance().setServerInfoScanDelayMs(this.state);
    }
 
    @Override
@@ -1903,19 +1903,19 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private int init_I_AutismServerInfoOv_Z(AutismServerInfoOverlay.MatchConfidence confidence, boolean hovered) {
       if (hovered) {
-         return UiColorPalette.task();
+         return UiColorPalette.softWhite();
       }
 
       int var10000;
       switch (confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence) {
          case EXACT:
-            var10000 = UiColorPalette.cache();
+            var10000 = UiColorPalette.teal();
             break;
          case STRONG:
-            var10000 = UiColorPalette.node();
+            var10000 = UiColorPalette.cyan();
             break;
          case FEATURE:
-            var10000 = UiColorPalette.entry();
+            var10000 = UiColorPalette.warningYellow();
             break;
          case UNKNOWN:
             var10000 = this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
@@ -3598,7 +3598,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private int node_I_2() {
       AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      return session != null && !session.init_Deque.isEmpty() ? UiColorPalette.entry() : UiColorPalette.node();
+      return session != null && !session.init_Deque.isEmpty() ? UiColorPalette.warningYellow() : UiColorPalette.cyan();
    }
 
    private String sync_Str_2() {
@@ -4722,7 +4722,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private String flush_Str_2() {
-      String version = AutismSessionState.init_ck().init_Str_Str(this.open_Str_2());
+      String version = AutismSessionState.getInstance().getDetectedServerVersion(this.open_Str_2());
       if (version != null && !version.isBlank()) {
          return version;
       }
@@ -5010,7 +5010,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             var10000 = -1716016;
             break;
          case GUI:
-            var10000 = UiColorPalette.entry();
+            var10000 = UiColorPalette.warningYellow();
             break;
          case CHANNEL:
             var10000 = this.read_I_4(row.read == null ? null : row.read.replaceFirst("^ch\\s+", ""));
@@ -5134,9 +5134,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          } else if (this.sync_Z_2(lower)) {
             return -7371387;
          } else if (lower.contains("[registered")) {
-            return UiColorPalette.cache();
+            return UiColorPalette.teal();
          } else {
-            return lower.contains("[live") ? UiColorPalette.node() : UiColorPalette.node();
+            return lower.contains("[live") ? UiColorPalette.cyan() : UiColorPalette.cyan();
          }
       }
    }

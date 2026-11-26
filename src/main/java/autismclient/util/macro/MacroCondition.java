@@ -163,7 +163,7 @@ public final class MacroCondition {
 
    private boolean read(Minecraft mc) {
       if (this.init_a_CachePool == MacroCondition.Inner_CachePool.TOOLS) {
-         return MacroToolBridge.init(MacroExecutor.load_J(), this.read, this.update, this.write);
+         return MacroToolBridge.init(MacroExecutor.getCurrentRunId(), this.read, this.update, this.write);
       }
 
       if (mc == null) {
@@ -291,8 +291,8 @@ public final class MacroCondition {
    }
 
    private int init_I_Minecraft(Minecraft mc) {
-      MacroTemplateResolver.ResolveResult r = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.init_Str == null ? "" : this.init_Str, mc);
-      return !r.init_Z() ? 0 : WaitInventoryPredicateAction.init_I_Minecraft_ArrayUtil(mc, MacroItemTarget.parse(r.init_Str()));
+      MacroTemplateResolver.ResolveResult r = MacroVariableContext.resolveTemplate(this.init_Str == null ? "" : this.init_Str, mc);
+      return !r.success() ? 0 : WaitInventoryPredicateAction.init_I_Minecraft_ArrayUtil(mc, MacroItemTarget.parse(r.value()));
    }
 
    private boolean write(Minecraft mc) {
@@ -492,8 +492,8 @@ public final class MacroCondition {
    }
 
    private static String init_Str_Str_Minecraft(String template, Minecraft mc) {
-      MacroTemplateResolver.ResolveResult r = MacroVariableContext.init_j_CachePool_Str_Minecraft(template == null ? "" : template, mc);
-      return r.init_Z() ? r.init_Str() : "";
+      MacroTemplateResolver.ResolveResult r = MacroVariableContext.resolveTemplate(template == null ? "" : template, mc);
+      return r.success() ? r.value() : "";
    }
 
    private static Double init_Double_Str(String s) {

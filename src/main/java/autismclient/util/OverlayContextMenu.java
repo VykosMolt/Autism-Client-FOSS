@@ -148,7 +148,7 @@ public class OverlayContextMenu<T> {
             int iy = this.flush + 2 + i * this.update;
             boolean hov = mx >= this.sync && mx < this.sync + w && my >= iy && my < iy + this.update;
             if (hov) {
-               autismclient.gui.ui.widgets.PanelSurfaceHelper.init(ctx, this.sync + 1, iy, w - 2, this.update, UiColorPalette.g());
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.init(ctx, this.sync + 1, iy, w - 2, this.update, UiColorPalette.contextMenuHoverFill());
             }
 
             int textY = UiLayoutMath.centerTextY(iy, this.update, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
@@ -173,14 +173,14 @@ public class OverlayContextMenu<T> {
             }
 
             String display = autismclient.gui.f.b.k.init(
-               this.init_Font, label, Math.max(1, labelRight - this.sync - 4), this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.b()
+               this.init_Font, label, Math.max(1, labelRight - this.sync - 4), this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.menuItemText()
             );
             autismclient.gui.f.b.k.init(
                ctx,
                this.init_Font,
                display,
                this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-               hov ? -1 : UiColorPalette.b(),
+               hov ? -1 : UiColorPalette.menuItemText(),
                this.sync + 4,
                textY,
                false

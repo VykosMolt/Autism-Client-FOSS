@@ -158,8 +158,8 @@ public final class AutoArmorModule extends Module {
                      MC.gui.setScreen(new InventoryScreen(MC.player));
                      this.init_Z = true;
                   }
-               } else if (!BlinkPacketManager.load_Z()) {
-                  int now = AutismSessionState.init_ck().state_I();
+               } else if (!BlinkPacketManager.isHoldingActionsOnly()) {
+                  int now = AutismSessionState.getInstance().getClientTick();
                   if (now >= this.close) {
                      int timesChanged = MC.player.getInventory().getTimesChanged();
                      if (timesChanged != this.update || now - this.write >= 4) {
@@ -203,20 +203,20 @@ public final class AutoArmorModule extends Module {
                MC.gui.setScreen(new InventoryScreen(MC.player));
                this.init_Z = true;
             }
-         } else if (!BlinkPacketManager.load_Z()) {
+         } else if (!BlinkPacketManager.isHoldingActionsOnly()) {
             this.write_V_9();
          }
       }
    }
 
    private void read_V_9() {
-      int now = AutismSessionState.init_ck().state_I();
+      int now = AutismSessionState.getInstance().getClientTick();
       poll = now + this.init_I_12();
       if (now >= this.flush) {
          if (this.isEnabled()
             && !aD.read_Z()
             && MC.player.containerMenu == MC.player.inventoryMenu
-            && !BlinkPacketManager.load_Z()
+            && !BlinkPacketManager.isHoldingActionsOnly()
             && (!this.bool("not-using-item") || !MC.player.isUsingItem())) {
             if (this.read_Z) {
                AutoArmorModule.Inner_DataUtil rest = this.init_TableIndex_DataUti();
@@ -261,7 +261,7 @@ public final class AutoArmorModule extends Module {
       this.load_Z = false;
       this.read_Z = false;
       this.sync = 0;
-      this.close = AutismSessionState.init_ck().state_I() + this.init_I("operation-delay", 3, 5);
+      this.close = AutismSessionState.getInstance().getClientTick() + this.init_I("operation-delay", 3, 5);
    }
 
    private AutoArmorModule.Inner_DataUtil init_TableIndex_DataUti() {
@@ -278,7 +278,7 @@ public final class AutoArmorModule extends Module {
          autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate = best.get(slot);
          if (candidate != null
             && candidate.init_TaskTimer_StreamUt() != autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR
-            && (candidate.init_I() < 0 || !autismclient.util.InventorySlotArbiter.init(candidate.init_I(), this.id()))) {
+            && (candidate.init_I() < 0 || !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(candidate.init_I(), this.id()))) {
             ItemStack worn = MC.player.getItemBySlot(slot);
             if (worn.isEmpty() || !worn.is(Items.ELYTRA) && !autismclient.util.ArmorEvaluationHelper.load_Z(worn)) {
                return new AutoArmorModule.Inner_DataUtil(slot, candidate, worn);
@@ -331,19 +331,19 @@ public final class AutoArmorModule extends Module {
          return false;
       }
 
-      if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
+      if (!autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          return false;
       }
 
       try {
          boolean clicked = autismclient.util.ContainerClickExecutor.init(MC, menuSlot, button, input);
          if (clicked && this.bool("pause-movement")) {
-            push = AutismSessionState.init_ck().state_I() + 1;
+            push = AutismSessionState.getInstance().getClientTick() + 1;
          }
 
          return clicked;
       } finally {
-         autismclient.util.InventorySlotArbiter.read_V(this.id());
+         autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
       }
    }
 
@@ -378,7 +378,7 @@ public final class AutoArmorModule extends Module {
       int until = poll;
       if (until != -2147483648 && MC != null && MC.player != null) {
          Module module = al.init_Module_Str("auto-armor");
-         return module != null && module.isEnabled() ? AutismSessionState.init_ck().state_I() <= until : false;
+         return module != null && module.isEnabled() ? AutismSessionState.getInstance().getClientTick() <= until : false;
       } else {
          return false;
       }
@@ -409,7 +409,7 @@ public final class AutoArmorModule extends Module {
          return false;
       }
 
-      int age = AutismSessionState.init_ck().state_I() - until;
+      int age = AutismSessionState.getInstance().getClientTick() - until;
       return age <= 0 && age > -2;
    }
 
@@ -423,7 +423,7 @@ public final class AutoArmorModule extends Module {
          if (module == null || !module.isEnabled() || push == -2147483648) {
             return original;
          }
-         return AutismSessionState.init_ck().state_I() > push ? original : new Input(false, false, false, false, original.jump(), original.shift(), false);
+         return AutismSessionState.getInstance().getClientTick() > push ? original : new Input(false, false, false, false, original.jump(), original.shift(), false);
       }
    }
 
@@ -446,7 +446,7 @@ public final class AutoArmorModule extends Module {
          }
       }
 
-      if (!autismclient.util.InventorySlotArbiter.load_Z(this.id())) {
+      if (!autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id())) {
          ItemStack offhand = MC.player.getItemBySlot(EquipmentSlot.OFFHAND);
          if (offhand.is(Items.ELYTRA)) {
             return new autismclient.util.ArmorEvaluationHelper.Inner_DataUtil(offhand, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.INVENTORY, 40);
@@ -532,7 +532,7 @@ public final class AutoArmorModule extends Module {
          public ItemStack init(EquipmentSlot slot) {
             return Module.MC.player.getItemBySlot(slot);
          }
-      }, this.bool("allow-cursed"), !autismclient.util.InventorySlotArbiter.load_Z(this.id()));
+      }, this.bool("allow-cursed"), !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id()));
    }
 
    private static boolean flush_Z_4() {

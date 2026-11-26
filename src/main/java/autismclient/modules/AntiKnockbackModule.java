@@ -53,7 +53,7 @@ public final class AntiKnockbackModule extends Module {
    }
 
    private int init_I_10() {
-      return AutismSessionState.init_ck().state_I();
+      return AutismSessionState.getInstance().getClientTick();
    }
 
    private boolean init_Z_17() {

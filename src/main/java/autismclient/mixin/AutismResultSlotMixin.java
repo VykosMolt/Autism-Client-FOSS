@@ -13,9 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AutismResultSlotMixin {
    @Inject(method = "mayPlace", at = @At("HEAD"), cancellable = true)
    private void autism$xcarryMayPlace(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      if (shared.sync_Z() || module != null && module.get_Z() && module.size()) {
+      AutismSessionState shared = AutismSessionState.getInstance();
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      if (shared.isXCarryForced() || module != null && module.isXCarryEnabled() && module.isXCarryUseCrafting()) {
          cir.setReturnValue(true);
       }
    }

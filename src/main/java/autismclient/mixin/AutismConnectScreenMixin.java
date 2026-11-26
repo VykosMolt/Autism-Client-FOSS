@@ -24,7 +24,7 @@ public abstract class AutismConnectScreenMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Gui;screen()Lnet/minecraft/client/gui/screens/Screen;")
    )
    private static Screen autism$connectionBehindEditor(Screen foreground) {
-      return OverlayScreenController.init_Screen(Minecraft.getInstance());
+      return OverlayScreenController.getActualScreen(Minecraft.getInstance());
    }
 
    @Inject(method = "startConnecting", at = @At("HEAD"))

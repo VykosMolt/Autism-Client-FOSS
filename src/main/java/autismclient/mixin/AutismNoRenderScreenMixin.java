@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderScreenMixin {
    @Inject(method = "extractTransparentBackground", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noGuiBackground(CallbackInfo ci) {
-      if (NoRenderState.poll()) {
+      if (NoRenderState.hideGuiBackground()) {
          ci.cancel();
       }
    }

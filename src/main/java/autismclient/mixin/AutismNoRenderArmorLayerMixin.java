@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderArmorLayerMixin {
    @Inject(method = "submit", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noArmor(CallbackInfo ci) {
-      if (NoRenderState.store()) {
+      if (NoRenderState.hideArmor()) {
          ci.cancel();
       }
    }

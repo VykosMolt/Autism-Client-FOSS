@@ -1206,7 +1206,7 @@ public final class BlockPlacementPlanner {
          return false;
       }
 
-      int tick = AutismSessionState.init_ck().state_I();
+      int tick = AutismSessionState.getInstance().getClientTick();
       if (tick != open) {
          open = tick;
          init_Z = !Leashable.leashableInArea(player, led -> led.getLeashHolder() == player).isEmpty();

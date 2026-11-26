@@ -215,7 +215,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          };
          ClientLevel level = MC.level;
          if (level != null && m.init_Z_LivingEntity_2(target)) {
-            int tick = AutismSessionState.init_ck().state_I();
+            int tick = AutismSessionState.getInstance().getClientTick();
             if (m.init_T.init_Z()) {
                Runnable receipt = autismclient.util.CombatAttackDispatcher.init_Runnable(target);
                if (!m.init_T.init(target, attack, receipt)) {
@@ -231,10 +231,10 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                int fallback = m.init_I_15();
                if (m.init_I != tick && m.write_I != tick && !m.init_Y.init_Z(target.getId(), tick, fallback) && !WTappingModule.load()) {
                   m.init_I = tick;
-                  ServerRotationTracker.RotationSnapshot before = ServerRotationTracker.init_ch_CachePool();
-                  float yaw = ServerRotationTracker.init_F();
-                  float pitch = before.write();
-                  if (before.init_Z() && Float.isFinite(yaw) && Float.isFinite(pitch)) {
+                  ServerRotationTracker.RotationSnapshot before = ServerRotationTracker.getSnapshot();
+                  float yaw = ServerRotationTracker.getLastWireYaw();
+                  float pitch = before.currentPitch();
+                  if (before.initialized() && Float.isFinite(yaw) && Float.isFinite(pitch)) {
                      Packet<?> packet = new ServerboundAttackPacket(target.getId());
                      if (init_Z_Packet_Packet(new Rot(yaw, pitch, player.onGround(), player.horizontalCollision), packet)
                         && init_Z_Packet_Packet(new PosRot(player.position(), yaw, pitch, player.onGround(), player.horizontalCollision), packet)) {
@@ -298,7 +298,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                            Vec3 nextEye = terrain.init_Vec3_F(plan.init_F()).add(0.0, MC.player.getEyeHeight(), 0.0);
                            float inputYaw = SilentMovementCoordinator.getMovementYaw(MC.player);
                            if (!(target.getBoundingBox().move(init_Vec3_LivingEntity_2(target)).distanceToSqr(nextEye) > reach * reach)
-                              && autismclient.util.SilentRotationManager.load(new RotationMath.Rotation(plan.init_F(), terrain.init_F))) {
+                              && autismclient.util.SilentRotationManager.snapKbDisplacementRotation(new RotationMath.Rotation(plan.init_F(), terrain.init_F))) {
                               m.init_V_Str_2("redirect");
                               m.load_ClientLevel = level;
                               m.init_ClientPacketListen = MC.getConnection();
@@ -355,7 +355,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
    }
 
    private void init_V_LivingEntity_2(LivingEntity target) {
-      this.init_Y.init_V(target.getId(), AutismSessionState.init_ck().state_I(), this.init_I_15());
+      this.init_Y.init_V(target.getId(), AutismSessionState.getInstance().getClientTick(), this.init_I_15());
    }
 
    private int init_I_15() {
@@ -404,7 +404,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          return new Vec3(0.0, -0.0784, 0.0);
       }
 
-      int air = Math.max(1, Math.min(60, AutismSessionState.init_ck().state_I() - this.load(target) + Math.max(0, extraAir)));
+      int air = Math.max(1, Math.min(60, AutismSessionState.getInstance().getClientTick() - this.load(target) + Math.max(0, extraAir)));
       double vy = -0.0784;
       double height = body.minY - reference;
 
@@ -439,12 +439,12 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
    private int load(LivingEntity target) {
       Integer seen = this.init_Map.get(target.getId());
-      return seen == null ? AutismSessionState.init_ck().state_I() - 1 : seen;
+      return seen == null ? AutismSessionState.getInstance().getClientTick() - 1 : seen;
    }
 
    private void read_V_11() {
       if (MC.level != null && MC.player != null) {
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          this.init_Map.keySet().removeIf(id -> MC.level.getEntity(id) == null);
          this.load_Map.keySet().removeIf(id -> MC.level.getEntity(id) == null);
 
@@ -479,7 +479,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
    }
 
    private static boolean read_Z_11() {
-      return "kb-displacement".equals(autismclient.util.SilentRotationManager.init_Str());
+      return "kb-displacement".equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
    }
 
    public static boolean init_Z_24() {
@@ -501,7 +501,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
    public static void init_V_21() {
       if (al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m) {
-         m.write_I = AutismSessionState.init_ck().state_I();
+         m.write_I = AutismSessionState.getInstance().getClientTick();
       }
    }
 
@@ -515,16 +515,16 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
       if (read_Z_11() && MC.options.keyUse.isDown()) {
          this.sync_V_5();
-         autismclient.util.SilentRotationManager.load_V();
+         autismclient.util.SilentRotationManager.resetAll();
       } else {
-         int tick = AutismSessionState.init_ck().state_I();
+         int tick = AutismSessionState.getInstance().getClientTick();
          if (this.init_T.init_Z() && tick != this.read_I) {
             this.init_V_Z_5(tick == this.read_I + 1 && this.write_I == this.read_I);
          }
 
          if (!this.init_T.init_Z() && this.update_I != tick) {
-            if (read_Z_11() && !autismclient.util.SilentRotationManager.init_Z()) {
-               autismclient.util.SilentRotationManager.init(this.id());
+            if (read_Z_11() && !autismclient.util.SilentRotationManager.isReturningToPlayer()) {
+               autismclient.util.SilentRotationManager.releaseOwner(this.id());
             }
 
             this.write_V_11();
@@ -534,7 +534,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
    public static void load_V_17() {
       if (read_Z_11() && al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m && !m.init_T.init_Z()) {
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(m.id(), MC.player);
+         autismclient.util.SilentRotationManager.tick(m.id(), MC.player);
       }
    }
 
@@ -575,8 +575,8 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                }
             );
          this.close += queued - count;
-         if (flank && count > 0 && autismclient.util.SilentRotationManager.load(new RotationMath.Rotation(this.update_F, this.sync_F))) {
-            this.update_I = AutismSessionState.init_ck().state_I();
+         if (flank && count > 0 && autismclient.util.SilentRotationManager.snapKbDisplacementRotation(new RotationMath.Rotation(this.update_F, this.sync_F))) {
+            this.update_I = AutismSessionState.getInstance().getClientTick();
          }
 
          if (displaced && count > 0) {
@@ -588,7 +588,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
             }
 
             this.load_Str = String.format(
-               Locale.ROOT, "tick=%d turn=%.1f pitch=%.1f %s%s", AutismSessionState.init_ck().state_I(), this.write_F, this.read_F, this.read_Str, flank ? " flanked" : ""
+               Locale.ROOT, "tick=%d turn=%.1f pitch=%.1f %s%s", AutismSessionState.getInstance().getClientTick(), this.write_F, this.read_F, this.read_Str, flank ? " flanked" : ""
             );
             if (this.load_Z) {
                this.write_J += count;
@@ -609,7 +609,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
    @Override
    public boolean load_Z_23() {
-      return !SilentMovementCoordinator.isSafeWalkActive() && read_Z_11() && (this.init_T.init_Z() || this.update_I == AutismSessionState.init_ck().state_I() || autismclient.util.SilentRotationManager.init_Z());
+      return !SilentMovementCoordinator.isSafeWalkActive() && read_Z_11() && (this.init_T.init_Z() || this.update_I == AutismSessionState.getInstance().getClientTick() || autismclient.util.SilentRotationManager.isReturningToPlayer());
    }
 
    private boolean sync_Z_5() {
@@ -636,7 +636,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          && MC.level != null
          && MC.player != null
          && packet.entityId() != MC.player.getId()) {
-         m.init_Y.init(packet.entityId(), AutismSessionState.init_ck().state_I(), packet.getSource(MC.level).getEntity() == MC.player, m.init_I_15());
+         m.init_Y.init(packet.entityId(), AutismSessionState.getInstance().getClientTick(), packet.getSource(MC.level).getEntity() == MC.player, m.init_I_15());
       }
    }
 
@@ -658,7 +658,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          && !input.shift()) {
          float friction = MC.level.getBlockState(BlockPos.containing(MC.player.getX(), MC.player.getY() - 0.500001, MC.player.getZ())).getBlock().getFriction();
          double drag = MC.player.onGround() ? friction * 0.91 : 0.91;
-         return m.init_U.init(input, MC.player.position(), camera, yaw, drag, AutismSessionState.init_ck().state_I(), keys -> {
+         return m.init_U.init(input, MC.player.position(), camera, yaw, drag, AutismSessionState.getInstance().getClientTick(), keys -> {
             boolean sprint = keys.forward() && !keys.backward() && (MC.player.isSprinting() || MovementModuleHooks.init(input.sprint(), false));
             double speed = MC.player.getAttributeValue(Attributes.MOVEMENT_SPEED);
             if (sprint != MC.player.isSprinting()) {
@@ -676,7 +676,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
    @Override
    public void tick() {
       if (!this.isEnabled() && read_Z_11()) {
-         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
+         autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
       }
 
       if (this.isEnabled()) {
@@ -794,7 +794,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          return false;
       }
 
-      if (SilentMovementCoordinator.activeRotation() != null && !QueuedAttackBuffer.init_Z_Str(autismclient.util.SilentRotationManager.init_Str())) {
+      if (SilentMovementCoordinator.activeRotation() != null && !QueuedAttackBuffer.init_Z_Str(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
          return false;
       }
 
@@ -822,7 +822,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
    private static boolean init_Z_Packet_Packet(Packet<?> look, Packet<?> attack) {
       Module canceller = al.init_Module_Str("packet-canceller");
-      if (!BlinkPacketManager.init_Z() && (!autismclient.util.macro.PingSpoofScheduler.read_Z() || !autismclient.util.macro.PingSpoofScheduler.load_Z()) && !AutismSessionState.init_ck().reset_Z()) {
+      if (!BlinkPacketManager.isBlinking() && (!autismclient.util.macro.PingSpoofScheduler.read_Z() || !autismclient.util.macro.PingSpoofScheduler.load_Z()) && !AutismSessionState.getInstance().isUseCustomPackets()) {
          return canceller == null || !canceller.isEnabled() || !canceller.onPacketSend(look) && !canceller.onPacketSend(attack)
             ? autismclient.util.macro.PacketGateManager.init(look, "C2S") == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.PASS
                && autismclient.util.macro.PacketGateManager.init(attack, "C2S") == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.PASS
@@ -862,7 +862,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       this.sync_V_5();
       this.init_bf.read_V();
       if (read_Z_11()) {
-         autismclient.util.SilentRotationManager.init(this.id());
+         autismclient.util.SilentRotationManager.releaseOwner(this.id());
       }
    }
 
@@ -875,7 +875,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       this.init_Y.init();
       this.load_Map.clear();
       if (read_Z_11()) {
-         autismclient.util.SilentRotationManager.load_V();
+         autismclient.util.SilentRotationManager.resetAll();
       }
    }
 

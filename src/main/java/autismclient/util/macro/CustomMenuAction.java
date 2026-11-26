@@ -25,11 +25,11 @@ public final class CustomMenuAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       long deadline = System.currentTimeMillis() + this.init();
-      boolean gateOnRun = MacroExecutor.init_Z();
+      boolean gateOnRun = MacroExecutor.isCurrentRunActive();
       String lastError = "";
 
       while (System.currentTimeMillis() <= deadline && !Thread.currentThread().isInterrupted()) {
-         if (gateOnRun && !MacroExecutor.init_Z()) {
+         if (gateOnRun && !MacroExecutor.isCurrentRunActive()) {
             return;
          }
 
@@ -49,11 +49,11 @@ public final class CustomMenuAction implements MacroAction {
                if (withSecrets == null) {
                   throw new IllegalStateException("Missing form value");
                } else {
-                  MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.init_j_CachePool_Str_Minecraft(withSecrets, mc);
-                  if (!resolved.init_Z()) {
+                  MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.resolveTemplate(withSecrets, mc);
+                  if (!resolved.success()) {
                      throw new IllegalStateException("Missing macro value");
                   } else {
-                     return resolved.init_Str();
+                     return resolved.value();
                   }
                }
             });

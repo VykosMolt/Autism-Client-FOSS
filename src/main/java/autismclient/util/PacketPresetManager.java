@@ -200,11 +200,11 @@ public class PacketPresetManager {
          return this.init_List;
       }
 
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       List<PacketPresetManager.Inner_DataUtil> entries = new ArrayList<>();
       entries.add(
          new PacketPresetManager.Inner_DataUtil(
-            this.init("Default", (Collection<Class<? extends Packet<?>>>)module.write_Set(), (Collection<Class<? extends Packet<?>>>)module.update_Set()), true
+            this.init("Default", (Collection<Class<? extends Packet<?>>>)module.getDefaultC2sPackets(), (Collection<Class<? extends Packet<?>>>)module.getDefaultS2cPackets()), true
          )
       );
       entries.add(
@@ -375,9 +375,9 @@ public class PacketPresetManager {
    }
 
    private AutismPacketPreset init_AutismPacketPreset(String name) {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      Set<String> c2s = this.init(shared.load_Set());
-      Set<String> s2c = this.init(shared.read_Set());
+      AutismSessionState shared = AutismSessionState.getInstance();
+      Set<String> c2s = this.init(shared.getCustomC2sPackets());
+      Set<String> s2c = this.init(shared.getCustomS2cPackets());
       return new AutismPacketPreset(name, c2s, s2c);
    }
 
@@ -401,20 +401,20 @@ public class PacketPresetManager {
    }
 
    private String init(Class<? extends Packet<?>> packetClass) {
-      String name = PacketTypeRegistry.init_Str_Class(packetClass);
+      String name = PacketTypeRegistry.getPacketName(packetClass);
       return name != null ? name : packetClass.getName();
    }
 
    private Set<Class<? extends Packet<?>>> init(Collection<String> names, boolean c2s) {
       Set<Class<? extends Packet<?>>> resolved = new LinkedHashSet<>();
-      Set<Class<? extends Packet<?>>> pool = c2s ? PacketTypeRegistry.load() : PacketTypeRegistry.init_Set();
+      Set<Class<? extends Packet<?>>> pool = c2s ? PacketTypeRegistry.getC2sPackets() : PacketTypeRegistry.getS2cPackets();
 
       for (String packetName : names) {
          if (packetName != null && !packetName.isBlank()) {
             String resolvedName = this.write_Str(packetName);
-            Class<? extends Packet<?>> packetClass = PacketTypeRegistry.init_Class_Str(resolvedName);
+            Class<? extends Packet<?>> packetClass = PacketTypeRegistry.resolvePacketClass(resolvedName);
             if (packetClass == null) {
-               packetClass = PacketTypeRegistry.init_Class_Str(PacketNameResolver.init_Str_Str(resolvedName));
+               packetClass = PacketTypeRegistry.resolvePacketClass(PacketNameResolver.init_Str_Str(resolvedName));
             }
 
             if (packetClass != null && pool.contains(packetClass)) {
@@ -448,9 +448,9 @@ public class PacketPresetManager {
    }
 
    private void init(AutismPacketPreset preset) {
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-      module.init_V_Set(this.init(preset.c2sPackets, true));
-      module.load(this.init(preset.s2cPackets, false));
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+      module.setCustomC2sPackets(this.init(preset.c2sPackets, true));
+      module.setCustomS2cPackets(this.init(preset.s2cPackets, false));
    }
 
    private String load_Str() {

@@ -27,12 +27,12 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
 
    public boolean init(Minecraft mc) {
       if (mc != null && mc.player != null) {
-         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.itemName, mc);
-         if (!resolution.init_Z()) {
+         MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.resolveTemplate(this.itemName, mc);
+         if (!resolution.success()) {
             return false;
          }
 
-         MacroItemTarget target = MacroItemTarget.parse(resolution.init_Str());
+         MacroItemTarget target = MacroItemTarget.parse(resolution.value());
          this.init_V_Minecraft_ArrayUtil(mc, target);
          boolean var10000;
          switch (this.condition) {
@@ -159,7 +159,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
       tag.putInt("count", this.count);
       tag.putInt("slot", this.slot);
       tag.putInt("timeoutMs", this.timeoutMs);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -171,7 +171,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
       this.count = tag.getIntOr("count", 1);
       this.slot = tag.getIntOr("slot", 0);
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 

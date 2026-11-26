@@ -6,169 +6,169 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 
 public final class OverlayScreenController {
-   private static final autismclient.gui.ui.ForegroundScreenSlot<Screen> init_CachePool = new autismclient.gui.ui.ForegroundScreenSlot<>();
-   private static int init_I;
-   private static int load_I;
-   private static boolean init_Z;
-   private static Screen init_Screen;
-   private static Screen load_Screen;
-   private static Screen read;
-   private static ClientLevel init_ClientLevel;
-   private static boolean load_Z;
+   private static final autismclient.gui.ui.ForegroundScreenSlot<Screen> FOREGROUND_SLOT = new autismclient.gui.ui.ForegroundScreenSlot<>();
+   private static int explicitTransitionDepth;
+   private static int rawScreenReadDepth;
+   private static boolean switchingRetainedScreen;
+   private static Screen lastRequestedBackgroundScreen;
+   private static Screen modalScreen;
+   private static Screen modalParentScreen;
+   private static ClientLevel modalLevel;
+   private static boolean modalTransitionInProgress;
 
    private OverlayScreenController() {
    }
 
-   public static void init_V() {
-      init_I++;
+   public static void beginExplicitTransition() {
+      explicitTransitionDepth++;
    }
 
-   public static void load_V() {
-      init_I = Math.max(0, init_I - 1);
+   public static void endExplicitTransition() {
+      explicitTransitionDepth = Math.max(0, explicitTransitionDepth - 1);
    }
 
-   public static void read_V() {
-      load_I++;
+   public static void beginRawScreenRead() {
+      rawScreenReadDepth++;
    }
 
-   public static void write() {
-      load_I = Math.max(0, load_I - 1);
+   public static void endRawScreenRead() {
+      rawScreenReadDepth = Math.max(0, rawScreenReadDepth - 1);
    }
 
-   public static void init_V(Minecraft client, Screen next) {
-      init_V();
+   public static void setScreenExplicit(Minecraft client, Screen next) {
+      beginExplicitTransition();
 
       try {
          client.gui.setScreen(next);
       } finally {
-         load_V();
+         endExplicitTransition();
       }
    }
 
-   public static Screen init_Screen(Screen actual) {
-      return load_I > 0 || load_Screen != null && actual == load_Screen ? actual : init_CachePool.init_Obj(actual);
+   public static Screen resolveEffectiveScreen(Screen actual) {
+      return rawScreenReadDepth > 0 || modalScreen != null && actual == modalScreen ? actual : FOREGROUND_SLOT.init_Obj(actual);
    }
 
-   public static Screen init_Screen(Minecraft client) {
-      read_V();
+   public static Screen getActualScreen(Minecraft client) {
+      beginRawScreenRead();
 
       try {
          return client.gui.screen();
       } finally {
-         write();
+         endRawScreenRead();
       }
    }
 
-   public static boolean init_Z() {
-      return load_Screen != null;
+   public static boolean hasModalScreen() {
+      return modalScreen != null;
    }
 
-   public static boolean init_Z(Minecraft client, Screen screen) {
-      if (!init_Z() && client != null) {
-         read = init_Screen(client);
-         init_ClientLevel = client.level;
-         load_Screen = screen;
-         load_Z = true;
+   public static boolean openModalScreen(Minecraft client, Screen screen) {
+      if (!hasModalScreen() && client != null) {
+         modalParentScreen = getActualScreen(client);
+         modalLevel = client.level;
+         modalScreen = screen;
+         modalTransitionInProgress = true;
 
          try {
             client.gui.setScreen(screen);
          } finally {
-            load_Z = false;
+            modalTransitionInProgress = false;
          }
 
-         Screen current = init_Screen(client);
+         Screen current = getActualScreen(client);
          if (current == screen) {
             return true;
          }
 
-         if (current == read) {
-            read = null;
+         if (current == modalParentScreen) {
+            modalParentScreen = null;
          }
 
-         init_V(screen);
+         discardModalScreen(screen);
          return false;
       } else {
          return false;
       }
    }
 
-   public static void load(Minecraft client, Screen screen) {
-      if (load_Screen == screen) {
-         Screen parent = client != null && client.level == init_ClientLevel ? read : null;
-         if (client != null && init_Screen(client) == screen) {
+   public static void closeModalScreen(Minecraft client, Screen screen) {
+      if (modalScreen == screen) {
+         Screen parent = client != null && client.level == modalLevel ? modalParentScreen : null;
+         if (client != null && getActualScreen(client) == screen) {
             if (parent == null) {
-               init_V(screen);
+               discardModalScreen(screen);
             } else {
-               load_Screen = null;
-               read = null;
-               init_ClientLevel = null;
+               modalScreen = null;
+               modalParentScreen = null;
+               modalLevel = null;
             }
 
-            load_Z = true;
+            modalTransitionInProgress = true;
 
             try {
                client.gui.setScreen(parent);
             } finally {
-               load_Z = false;
+               modalTransitionInProgress = false;
             }
          } else {
-            init_V(screen);
+            discardModalScreen(screen);
          }
       }
    }
 
-   public static void init_V(Screen screen) {
-      if (load_Screen == screen) {
-         Screen previous = read;
-         load_Screen = null;
-         read = null;
-         init_ClientLevel = null;
-         if (previous != null && previous != init_CachePool.init_Obj()) {
+   public static void discardModalScreen(Screen screen) {
+      if (modalScreen == screen) {
+         Screen previous = modalParentScreen;
+         modalScreen = null;
+         modalParentScreen = null;
+         modalLevel = null;
+         if (previous != null && previous != FOREGROUND_SLOT.init_Obj()) {
             previous.removed();
          }
       }
    }
 
-   public static boolean load_Z() {
-      return init_CachePool.init_Z();
+   public static boolean hasRetainedForeground() {
+      return FOREGROUND_SLOT.init_Z();
    }
 
-   public static boolean read_Z() {
-      return load_Z() && init_I == 0 && !init_Z;
+   public static boolean shouldInterceptBackgroundScreen() {
+      return hasRetainedForeground() && explicitTransitionDepth == 0 && !switchingRetainedScreen;
    }
 
-   private static boolean load_Z(Screen screen) {
+   private static boolean isRetainedForegroundScreen(Screen screen) {
       return AutismLiteVariant.enabled() ? false : screen instanceof autismclient.gui.ui.RetainedForegroundScreen;
    }
 
-   public static void init_V(Minecraft client) {
-      if (!init_CachePool.init_Z() && client != null && !autismclient.modules.aD.init_Z()) {
+   public static void captureRetainedForegroundIfNeeded(Minecraft client) {
+      if (!FOREGROUND_SLOT.init_Z() && client != null && !autismclient.modules.aD.init_Z()) {
          Screen current = client.gui.screen();
-         if (load_Z(current)) {
-            init_CachePool.init_V(current);
+         if (isRetainedForegroundScreen(current)) {
+            FOREGROUND_SLOT.init_V(current);
          }
       }
    }
 
-   public static boolean init(Minecraft client, Screen actual, Screen requested) {
-      if (!init_Z && !load_Z) {
-         if (load_Screen != null && actual == load_Screen && requested != load_Screen) {
-            if (requested == read) {
-               read = null;
+   public static boolean interceptSetScreen(Minecraft client, Screen actual, Screen requested) {
+      if (!switchingRetainedScreen && !modalTransitionInProgress) {
+         if (modalScreen != null && actual == modalScreen && requested != modalScreen) {
+            if (requested == modalParentScreen) {
+               modalParentScreen = null;
             }
 
-            init_V(actual);
+            discardModalScreen(actual);
          }
 
-         if (init_CachePool.init_Z() && (init_I > 0 || load_Z(requested))) {
-            if (requested == init_CachePool.init_Obj()) {
+         if (FOREGROUND_SLOT.init_Z() && (explicitTransitionDepth > 0 || isRetainedForegroundScreen(requested))) {
+            if (requested == FOREGROUND_SLOT.init_Obj()) {
                return true;
             }
 
-            init_Z = true;
+            switchingRetainedScreen = true;
 
             try {
-               Screen previous = init_CachePool.load(load_Z(requested) ? requested : null);
+               Screen previous = FOREGROUND_SLOT.load(isRetainedForegroundScreen(requested) ? requested : null);
                autismclient.gui.ui.widgets.TextInputWidget.init_V();
                if (previous == actual) {
                   return false;
@@ -178,16 +178,16 @@ public final class OverlayScreenController {
                   previous.removed();
                }
 
-               if (init_CachePool.init_Z()) {
+               if (FOREGROUND_SLOT.init_Z()) {
                   requested.added();
                   requested.init(client.getWindow().getGuiScaledWidth(), client.getWindow().getGuiScaledHeight());
                   return true;
                }
 
-               if (!load_Z(requested)) {
+               if (!isRetainedForegroundScreen(requested)) {
                   boolean staleContainer = requested instanceof AbstractContainerScreen<?> container
                      && (client.player == null || container.getMenu() != client.player.inventoryMenu && container.getMenu() != client.player.containerMenu);
-                  if (requested == null || requested == init_Screen || staleContainer) {
+                  if (requested == null || requested == lastRequestedBackgroundScreen || staleContainer) {
                      if (actual == null) {
                         client.mouseHandler.grabMouse();
                      } else {
@@ -198,27 +198,27 @@ public final class OverlayScreenController {
                   }
                }
             } finally {
-               init_Z = false;
+               switchingRetainedScreen = false;
             }
          }
 
-         if (init_I == 0 && !load_Z(requested)) {
-            init_V(client);
+         if (explicitTransitionDepth == 0 && !isRetainedForegroundScreen(requested)) {
+            captureRetainedForegroundIfNeeded(client);
          }
 
-         init_Screen = requested;
+         lastRequestedBackgroundScreen = requested;
          return false;
       } else {
          return false;
       }
    }
 
-   public static boolean init_Z(Screen screen) {
-      return load_Screen != null && load_Z && screen == read || init_CachePool.init_Z() && screen == init_CachePool.init_Obj() && !init_Z;
+   public static boolean shouldPreserveOnRemove(Screen screen) {
+      return modalScreen != null && modalTransitionInProgress && screen == modalParentScreen || FOREGROUND_SLOT.init_Z() && screen == FOREGROUND_SLOT.init_Obj() && !switchingRetainedScreen;
    }
 
-   public static void load_V(Screen actual) {
-      Screen retained = init_CachePool.init_Obj();
+   public static void tickRetainedForeground(Screen actual) {
+      Screen retained = FOREGROUND_SLOT.init_Obj();
       if (retained != null && retained != actual) {
          retained.tick();
       }
@@ -231,13 +231,13 @@ public final class OverlayScreenController {
       }
    }
 
-   public static void update() {
-      Screen old = init_CachePool.load();
+   public static void clearRetainedForeground() {
+      Screen old = FOREGROUND_SLOT.load();
       Minecraft client = Minecraft.getInstance();
-      if (old != null && (client == null || old != init_Screen(client))) {
+      if (old != null && (client == null || old != getActualScreen(client))) {
          old.removed();
       }
 
-      init_Screen = null;
+      lastRequestedBackgroundScreen = null;
    }
 }

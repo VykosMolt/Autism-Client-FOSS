@@ -12,6 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismClientLevelLeaveMixin {
    @Inject(method = "disconnect", at = @At("HEAD"))
    private void autism$notePlayerLeave(Component message, CallbackInfo ci) {
-      MacroExecutor.write_V();
+      MacroExecutor.markManualLevelLeave();
    }
 }

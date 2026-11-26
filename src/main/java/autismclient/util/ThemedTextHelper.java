@@ -23,13 +23,13 @@ public final class ThemedTextHelper {
          case TITLE:
          case LABEL:
          case BODY:
-            var10000 = UiColorPalette.scan();
+            var10000 = UiColorPalette.textBright();
             break;
          case MUTED:
-            var10000 = UiColorPalette.a();
+            var10000 = UiColorPalette.textMuted();
             break;
          case ACCENT:
-            var10000 = UiColorPalette.init();
+            var10000 = UiColorPalette.accent();
             break;
          default:
             throw new MatchException(null, null);

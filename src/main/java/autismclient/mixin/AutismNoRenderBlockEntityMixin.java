@@ -16,7 +16,7 @@ public abstract class AutismNoRenderBlockEntityMixin {
    private void autism$noBlockEntity(
       BlockEntity blockEntity, float partialTick, CrumblingOverlay crumbling, boolean crumblingOnly, CallbackInfoReturnable<BlockEntityRenderState> cir
    ) {
-      if (blockEntity != null && NoRenderState.init(blockEntity.getBlockState().getBlock())) {
+      if (blockEntity != null && NoRenderState.shouldHideBlockEntity(blockEntity.getBlockState().getBlock())) {
          cir.setReturnValue(null);
       }
    }

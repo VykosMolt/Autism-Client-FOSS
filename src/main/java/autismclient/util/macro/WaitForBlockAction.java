@@ -98,7 +98,7 @@ public class WaitForBlockAction implements MacroAction {
 
       tag.put("blockIds", list);
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
 
@@ -151,7 +151,7 @@ public class WaitForBlockAction implements MacroAction {
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
    public enum Inner_DataUtil {

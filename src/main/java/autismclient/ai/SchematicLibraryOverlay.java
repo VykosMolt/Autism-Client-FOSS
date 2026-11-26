@@ -199,13 +199,13 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
    @Override
    public boolean write_Z() {
-      return this.init_k != null && this.init_k.init_Z();
+      return this.init_k != null && this.init_k.isFocused();
    }
 
    @Override
    public void push_V() {
       if (this.init_k != null) {
-         this.init_k.push(false);
+         this.init_k.setFocused(false);
       }
    }
 
@@ -227,15 +227,15 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          if (this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.FILES
             || this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.CAPTURE) {
             this.init_k = new autismclient.util.ThemedTextInputBox(this.init_Minecraft, this.init_Font, 0, 0, 100, 13, false);
-            this.init_k.load(100);
+            this.init_k.setMaxLength(100);
             this.init_k
-               .init_V_Component(
+               .setPlaceholder(
                   Component.literal(
                      this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.FILES ? "Search schematics" : "File name (optional)"
                   )
                );
-            this.init_k.init_V_Str(this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.FILES ? this.load_Str : this.init_cV.init_Str);
-            this.init_k.init_V_Consumer(value -> {
+            this.init_k.setValue(this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.FILES ? this.load_Str : this.init_cV.init_Str);
+            this.init_k.setChangedListener(value -> {
                if (this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.FILES) {
                   this.load_Str = value;
                   this.init_CacheEntry.init(0);
@@ -782,10 +782,10 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
    private void init_V_SyncManager(autismclient.gui.f.SyncManager ui, int x, int y, int width, float delta) {
       if (this.init_k != null) {
-         this.init_k.read(x);
-         this.init_k.write(y);
-         this.init_k.update(width);
-         this.init_k.init_V(ui.init_GuiGraphicsExtract(), ui.read(), ui.write(), delta);
+         this.init_k.setX(x);
+         this.init_k.setY(y);
+         this.init_k.setWidth(width);
+         this.init_k.render(ui.init_GuiGraphicsExtract(), ui.read(), ui.write(), delta);
       }
    }
 
@@ -892,7 +892,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             }
          }
 
-         if (this.init_k != null && this.init_k.init_Z_D_2(x, y, button)) {
+         if (this.init_k != null && this.init_k.mouseClicked(x, y, button)) {
             return true;
          }
 
@@ -951,7 +951,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             this.init_CacheEntry.init_V_PoolEntry_DataUtil(this.init_TextFormat_DataUti.init_PoolEntry_DataUtil(), y, this.run);
             return true;
          } else {
-            return this.init_k != null && this.init_k.init(x, y, button, dx, dy);
+            return this.init_k != null && this.init_k.mouseDragged(x, y, button, dx, dy);
          }
       }
    }
@@ -971,7 +971,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             this.write_Z = false;
             return true;
          } else {
-            return this.init_k != null && this.init_k.load(x, y, button);
+            return this.init_k != null && this.init_k.mouseReleased(x, y, button);
          }
       }
    }
@@ -982,13 +982,13 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          this.update_V_2();
          return true;
       } else {
-         return this.init_Z && !this.load_Z && this.init_k != null && this.init_k.init_Z_KeyEvent(Compat263.newGlfwKeyEvent(key, scan, modifiers));
+         return this.init_Z && !this.load_Z && this.init_k != null && this.init_k.keyPressed(Compat263.newGlfwKeyEvent(key, scan, modifiers));
       }
    }
 
    @Override
    public boolean init_Z_C_I(char value, int modifiers) {
-      return this.init_Z && !this.load_Z && this.init_k != null && this.init_k.init_Z_CharacterEvent(new CharacterEvent(value));
+      return this.init_Z && !this.load_Z && this.init_k != null && this.init_k.charTyped(new CharacterEvent(value));
    }
 
    private record Inner_BufferHelper(autismclient.gui.f.NetHelper bounds, Runnable action) {

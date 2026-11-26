@@ -259,7 +259,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       check.init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY);
       check.init_Z = proxy.init_bW_CachePool != bW.Inner_CachePool.CHECKING;
       autismclient.gui.ui.widgets.OverlayActionButton delete = autismclient.gui.ui.widgets.OverlayActionButton.init(deleteX, btnY, btnH, btnH, Component.empty(), b -> this.load_V_bW(proxy));
-      delete.init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER).init_ByteReader_Identifier(GuiIconAtlas.open);
+      delete.init_ByteReader_ByteReader_StreamU(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER).init_ByteReader_Identifier(GuiIconAtlas.DELETE);
       return new ProxiesScreen.Inner_StreamUtil(proxy, rowY, activeSection, toggle, check, delete);
    }
 

@@ -21,7 +21,7 @@ public class PrefixCommand extends Command {
       });
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("reset").executes(ctx -> {
          String prefix = CommandPrefixHelper.load_Str();
-         autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_V_Str(prefix);
+         autismclient.modules.ModuleRuntimeManager.getInstance().setCommandPrefix(prefix);
          AutismClientMessaging.sendPrefixed("Prefix reset to " + prefix);
          return 1;
       }));
@@ -33,7 +33,7 @@ public class PrefixCommand extends Command {
          }
 
          String selected = CommandPrefixHelper.init_Str(requested);
-         autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_V_Str(selected);
+         autismclient.modules.ModuleRuntimeManager.getInstance().setCommandPrefix(selected);
          AutismClientMessaging.sendPrefixed("Prefix set to " + selected);
          return 1;
       }));

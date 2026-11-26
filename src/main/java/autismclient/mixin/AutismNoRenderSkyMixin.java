@@ -11,42 +11,42 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismNoRenderSkyMixin {
    @Inject(method = "renderSkyDisc", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noSkyDisc(CallbackInfo ci) {
-      if (NoRenderState.index()) {
+      if (NoRenderState.hideSky()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "renderEndSky", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noEndSky(CallbackInfo ci) {
-      if (NoRenderState.index()) {
+      if (NoRenderState.hideSky()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "renderStars", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noStars(CallbackInfo ci) {
-      if (NoRenderState.count()) {
+      if (NoRenderState.hideStars()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "renderSun", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noSun(CallbackInfo ci) {
-      if (NoRenderState.flags()) {
+      if (NoRenderState.hideSun()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "renderMoon", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noMoon(CallbackInfo ci) {
-      if (NoRenderState.level()) {
+      if (NoRenderState.hideMoon()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "renderSunriseAndSunset", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$noSunriseGlow(CallbackInfo ci) {
-      if (NoRenderState.frame()) {
+      if (NoRenderState.hideSunriseGlow()) {
          ci.cancel();
       }
    }

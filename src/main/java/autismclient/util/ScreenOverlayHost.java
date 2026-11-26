@@ -40,8 +40,8 @@ public final class ScreenOverlayHost {
    }
 
    public boolean isActive() {
-      ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-      return module != null && (this.dialogMode ? module.load_Z() : module.init_Z());
+      ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
+      return module != null && (this.dialogMode ? module.isInitializedAndVisible() : module.isActive());
    }
 
    public AutismQueueEditorOverlay queueEditorOverlay() {
@@ -66,7 +66,7 @@ public final class ScreenOverlayHost {
                this.saveDialogOverlays();
             }
          });
-         if (this.isActive() && !OverlayScreenController.read_Z()) {
+         if (this.isActive() && !OverlayScreenController.shouldInterceptBackgroundScreen()) {
             if (!this.overlaysInitialized || !OverlayManager.getInstance().hasOverlays()) {
                try {
                   this.buildOverlays(font);
@@ -77,7 +77,7 @@ public final class ScreenOverlayHost {
                this.launcherOverlay.init_V_Z(true);
             }
          }
-      } else if (this.isActive() && !OverlayScreenController.read_Z()) {
+      } else if (this.isActive() && !OverlayScreenController.shouldInterceptBackgroundScreen()) {
          this.buildOverlays(font);
          this.overlaysInitialized = true;
          ScreenEvents.afterExtract(screen).register((scrn, drawContext, mouseX, mouseY, tickDelta) -> {
@@ -133,7 +133,7 @@ public final class ScreenOverlayHost {
          manager.register(actionEditor);
       }
 
-      ModuleRuntimeManager autismModule = ModuleRuntimeManager.init_PoolEntry();
+      ModuleRuntimeManager autismModule = ModuleRuntimeManager.getInstance();
       this.keybindOverlay = new AutismKeybindOverlay();
       this.keybindOverlay.b__V();
       manager.register(this.keybindOverlay);
@@ -143,7 +143,7 @@ public final class ScreenOverlayHost {
       this.launcherOverlay.init_V_AutismKeybindOverl(this.keybindOverlay);
       this.launcherOverlay.init_V_Supplier(() -> {
          if (this.packetLoggerOverlay == null && autismModule != null) {
-            this.packetLoggerOverlay = autismModule.init_AutismPacketLogger();
+            this.packetLoggerOverlay = autismModule.getOrCreatePacketLoggerOverlay();
             if (this.packetLoggerOverlay != null) {
                this.packetLoggerOverlay.flush_V_13();
             }
@@ -157,9 +157,9 @@ public final class ScreenOverlayHost {
       });
       this.launcherOverlay.load_V_Supplier(() -> {
          if (this.serverInfoOverlay == null) {
-            ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
+            ModuleRuntimeManager mod = ModuleRuntimeManager.getInstance();
             if (mod != null) {
-               this.serverInfoOverlay = mod.init_AutismServerInfoOv();
+               this.serverInfoOverlay = mod.getOrCreateServerInfoOverlay();
             }
          }
 
@@ -170,8 +170,8 @@ public final class ScreenOverlayHost {
          return this.serverInfoOverlay;
       });
       if (this.packetLoggerOverlay == null && AutismPacketLoggerOverlay.poll_Z_13()) {
-         ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
-         this.packetLoggerOverlay = mod == null ? null : mod.init_AutismPacketLogger();
+         ModuleRuntimeManager mod = ModuleRuntimeManager.getInstance();
+         this.packetLoggerOverlay = mod == null ? null : mod.getOrCreatePacketLoggerOverlay();
          if (this.packetLoggerOverlay != null) {
             this.packetLoggerOverlay.flush_V_13();
             if (this.packetLoggerOverlay.sync_Z()) {
@@ -181,8 +181,8 @@ public final class ScreenOverlayHost {
       }
 
       if (this.serverInfoOverlay == null && AutismServerInfoOverlay.poll_Z_16()) {
-         ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
-         this.serverInfoOverlay = mod == null ? null : mod.init_AutismServerInfoOv();
+         ModuleRuntimeManager mod = ModuleRuntimeManager.getInstance();
+         this.serverInfoOverlay = mod == null ? null : mod.getOrCreateServerInfoOverlay();
          if (this.serverInfoOverlay != null) {
             this.serverInfoOverlay.update_V_21();
             if (this.serverInfoOverlay.sync_Z()) {
@@ -192,8 +192,8 @@ public final class ScreenOverlayHost {
       }
 
       if (this.dialogMode && !AutismLiteVariant.enabled()) {
-         ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
-         AutismOverlay profilesOverlay = mod == null ? null : mod.load_cX();
+         ModuleRuntimeManager mod = ModuleRuntimeManager.getInstance();
+         AutismOverlay profilesOverlay = mod == null ? null : mod.getOrCreateProfilesOverlay();
          if (profilesOverlay != null && profilesOverlay.sync_Z()) {
             manager.register(profilesOverlay);
          }
@@ -208,7 +208,7 @@ public final class ScreenOverlayHost {
    }
 
    public void onBookRemoved() {
-      if ((this.overlaysInitialized || this.isActive()) && !OverlayScreenController.read_Z()) {
+      if ((this.overlaysInitialized || this.isActive()) && !OverlayScreenController.shouldInterceptBackgroundScreen()) {
          this.overlaysInitialized = false;
          this.persistOverlays();
          OverlayManager.getInstance().clearNonPersistent();
@@ -216,7 +216,7 @@ public final class ScreenOverlayHost {
    }
 
    private void saveDialogOverlays() {
-      if (this.isActive() && !OverlayScreenController.read_Z()) {
+      if (this.isActive() && !OverlayScreenController.shouldInterceptBackgroundScreen()) {
          try {
             OverlayManager.getInstance().restoreStashedIfFits();
             this.persistOverlays();

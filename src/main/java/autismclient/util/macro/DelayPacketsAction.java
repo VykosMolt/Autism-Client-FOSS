@@ -43,8 +43,8 @@ public class DelayPacketsAction implements MacroAction {
       for (String target : defaultNames) {
          String targetNoSuffix = target.endsWith("Packet") ? target.substring(0, target.length() - 6) : target;
 
-         for (Class<?> clz : PacketTypeRegistry.load()) {
-            String registryName = PacketTypeRegistry.init_Str_Class((Class<? extends Packet<?>>)clz);
+         for (Class<?> clz : PacketTypeRegistry.getC2sPackets()) {
+            String registryName = PacketTypeRegistry.getPacketName((Class<? extends Packet<?>>)clz);
             if (registryName != null && (registryName.equals(target) || registryName.equals(targetNoSuffix))) {
                this.c2sPacketNames.add(PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)clz));
                break;
@@ -56,47 +56,47 @@ public class DelayPacketsAction implements MacroAction {
    public void write() {
       this.c2sPacketNames.clear();
       this.s2cPacketNames.clear();
-      AutismSessionState shared = AutismSessionState.init_ck();
+      AutismSessionState shared = AutismSessionState.getInstance();
 
-      for (Class<?> clz : shared.load_Set()) {
+      for (Class<?> clz : shared.getCustomC2sPackets()) {
          this.c2sPacketNames.add(PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)clz));
       }
 
-      for (Class<?> clz : shared.read_Set()) {
+      for (Class<?> clz : shared.getCustomS2cPackets()) {
          this.s2cPacketNames.add(PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)clz));
       }
    }
 
    @Override
    public void execute(Minecraft mc) {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+      AutismSessionState shared = AutismSessionState.getInstance();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       boolean shouldEnable = this.mode == DelayPacketsAction.Inner_DataUtil.ENABLE;
       int flushed = 0;
       if (!shouldEnable && this.flushOnDisable && mc.getConnection() != null) {
-         flushed = shared.init_I_ClientPacketListen(mc.getConnection());
+         flushed = shared.flushDelayedPackets(mc.getConnection());
       }
 
       if (this.c2sPacketNames.isEmpty() && this.s2cPacketNames.isEmpty()) {
-         shared.init_V_Set(Set.of());
-         shared.load_V_Set(Set.of());
-         shared.tick(false);
-         shared.write(false);
-         module.init(false, flushed);
+         shared.setCustomC2sPackets(Set.of());
+         shared.setCustomS2cPackets(Set.of());
+         shared.setUseCustomPackets(false);
+         shared.setDelayPacketsEnabled(false);
+         module.notifyDelayToggle(false, flushed);
       } else {
          Set<Class<? extends Packet<?>>> resolvedC2S = this.init(this.c2sPacketNames, true);
          Set<Class<? extends Packet<?>>> resolvedS2C = this.init(this.s2cPacketNames, false);
-         shared.init_V_Set(resolvedC2S);
-         shared.load_V_Set(resolvedS2C);
-         shared.tick(true);
-         shared.write(shouldEnable);
-         module.init(shouldEnable, flushed);
+         shared.setCustomC2sPackets(resolvedC2S);
+         shared.setCustomS2cPackets(resolvedS2C);
+         shared.setUseCustomPackets(true);
+         shared.setDelayPacketsEnabled(shouldEnable);
+         module.notifyDelayToggle(shouldEnable, flushed);
       }
    }
 
    private Set<Class<? extends Packet<?>>> init(List<String> names, boolean isC2S) {
       Set<Class<? extends Packet<?>>> result = new HashSet<>();
-      Set<Class<? extends Packet<?>>> pool = isC2S ? PacketTypeRegistry.load() : PacketTypeRegistry.init_Set();
+      Set<Class<? extends Packet<?>>> pool = isC2S ? PacketTypeRegistry.getC2sPackets() : PacketTypeRegistry.getS2cPackets();
 
       for (String name : names) {
          String trimmed = name.trim();

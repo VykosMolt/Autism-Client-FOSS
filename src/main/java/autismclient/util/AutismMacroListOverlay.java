@@ -327,23 +327,23 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    public void write_V_13() {
-      AutismSessionState shared = AutismSessionState.init_ck();
-      shared.reset(this.update_Z);
-      shared.set(this.tick_I);
-      shared.put(this.run_I);
-      shared.add(this.init_CacheEntry.init());
-      shared.tick(this.init_BitSetUtil.init_Str());
+      AutismSessionState shared = AutismSessionState.getInstance();
+      shared.setMacroListOverlayVisible(this.update_Z);
+      shared.setMacroListOverlayX(this.tick_I);
+      shared.setMacroListOverlayY(this.run_I);
+      shared.setMacroListScrollOffset(this.init_CacheEntry.init());
+      shared.setMacroListSearchQuery(this.init_BitSetUtil.init_Str());
       this.a__V();
    }
 
    public void update_V_11() {
-      AutismSessionState shared = AutismSessionState.init_ck();
+      AutismSessionState shared = AutismSessionState.getInstance();
       this.b__V();
-      this.update_Z = shared.data_Z();
-      this.tick_I = shared.add_I();
-      this.run_I = shared.clear_I();
-      this.init_CacheEntry.init(shared.reset_I());
-      this.init_BitSetUtil.init_BitSetUtil_Str(shared.push_Str());
+      this.update_Z = shared.isMacroListOverlayVisible();
+      this.tick_I = shared.getMacroListOverlayX();
+      this.run_I = shared.getMacroListOverlayY();
+      this.init_CacheEntry.init(shared.getMacroListScrollOffset());
+      this.init_BitSetUtil.init_BitSetUtil_Str(shared.getMacroListSearchQuery());
       this.clear_Z = true;
       this.init_CharEncoder_2.read_CharEncoder(!this.sync_Z);
    }
@@ -918,7 +918,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          );
          if (button.init_Identifier != null) {
             int iconSize = 8;
-            GuiIconAtlas.init(context, button.init_Identifier, x + (width - iconSize) / 2, y + (h - iconSize) / 2, iconSize, -218103809);
+            GuiIconAtlas.draw(context, button.init_Identifier, x + (width - iconSize) / 2, y + (h - iconSize) / 2, iconSize, -218103809);
          }
       }
    }
@@ -940,7 +940,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                         running ? autismclient.gui.ui.layout.ButtonNode.Variant.DANGER : autismclient.gui.ui.layout.ButtonNode.Variant.SUCCESS,
                         this.data_I_2(),
                         AutismMacroListOverlay.Inner_BufferHelper.RUN_TOGGLE,
-                        running ? GuiIconAtlas.close : GuiIconAtlas.flush
+                        running ? GuiIconAtlas.STOP : GuiIconAtlas.PLAY
                      )
                   );
             }
@@ -948,7 +948,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             this.write_List
                .add(
                   new AutismMacroListOverlay.Inner_ConfigStore(
-                     "", autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this.data_I_2(), AutismMacroListOverlay.Inner_BufferHelper.EDIT, GuiIconAtlas.poll
+                     "", autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this.data_I_2(), AutismMacroListOverlay.Inner_BufferHelper.EDIT, GuiIconAtlas.EDIT
                   )
                );
             this.write_List
@@ -1029,7 +1029,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                }
 
                if (init_Z_Str_4(item.init_aM.name)) {
-                  MacroExecutor.init_V_Str(item.init_aM.name);
+                  MacroExecutor.stopMacroByName(item.init_aM.name);
                } else {
                   item.init_aM.execute();
                }
@@ -1066,7 +1066,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private static boolean init_Z_Str_4(String name) {
-      return MacroExecutor.init_Z_Str(name);
+      return MacroExecutor.isMacroNameRunning(name);
    }
 
    public void init_V_I_7(int count) {

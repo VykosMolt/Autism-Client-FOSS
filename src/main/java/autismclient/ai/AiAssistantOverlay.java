@@ -343,7 +343,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.init_cE
          .init(
             autismclient.gui.f.NetHelper.init(x, bar.write(), h, h),
-            autismclient.util.GuiIconAtlas.get,
+            autismclient.util.GuiIconAtlas.SESSIONS,
             this.init_ce.init_Z,
             false,
             this.init_ce.init_Z ? "Hide chats" : "Chats",
@@ -355,7 +355,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.init_cE
          .init(
             autismclient.gui.f.NetHelper.init(right, bar.write(), h, h),
-            autismclient.util.GuiIconAtlas.set,
+            autismclient.util.GuiIconAtlas.SETTINGS,
             !inChat,
             false,
             inChat ? "Settings" : "Back to chat (Esc)",
@@ -365,7 +365,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.init_cE
          .init(
             autismclient.gui.f.NetHelper.init(right, bar.write(), h, h),
-            autismclient.util.GuiIconAtlas.add,
+            autismclient.util.GuiIconAtlas.PIN,
             this.write_Z,
             false,
             this.write_Z ? "Pinned: stays open in-game (click to unpin)" : "Pin: keep open after the menu closes",

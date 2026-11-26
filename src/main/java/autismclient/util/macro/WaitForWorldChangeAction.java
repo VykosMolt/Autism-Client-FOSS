@@ -19,7 +19,7 @@ public class WaitForWorldChangeAction implements CaptureOutputAction, MacroActio
       tag.putString("type", this.getType().name());
       tag.putString("targetDimension", this.targetDimension == null ? "" : this.targetDimension);
       tag.putBoolean("enabled", this.init);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -31,7 +31,7 @@ public class WaitForWorldChangeAction implements CaptureOutputAction, MacroActio
          this.init = tag.getBooleanOr("enabled", true);
       }
 
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 

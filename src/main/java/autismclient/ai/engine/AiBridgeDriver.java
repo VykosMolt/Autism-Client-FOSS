@@ -111,9 +111,9 @@ public final class AiBridgeDriver {
 
       this.init_BitSetUtil.init_V();
       AiBridger.Inner_DataUtil currentRot = new AiBridger.Inner_DataUtil(player.getYRot(), player.getXRot());
-      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.init_ch_CachePool();
+      ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
       AiBridger.Inner_DataUtil wireRot = autismclient.ai.AiClientTick.init()
-         ? (wire.init_Z() ? new AiBridger.Inner_DataUtil(wire.read(), wire.write()) : null)
+         ? (wire.initialized() ? new AiBridger.Inner_DataUtil(wire.currentYaw(), wire.currentPitch()) : null)
          : currentRot;
       AiBridger.Inner_StreamUtil cmd = this.init_JsonUtil
          .putAt(

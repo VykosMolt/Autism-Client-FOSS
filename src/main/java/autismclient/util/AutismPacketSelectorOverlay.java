@@ -71,9 +71,9 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
 
    public AutismPacketSelectorOverlay(Font textRenderer) {
       this.init_Font = textRenderer;
-      this.load_List.addAll(PacketTypeRegistry.load());
+      this.load_List.addAll(PacketTypeRegistry.getC2sPackets());
       this.load_List.sort(Comparator.comparing(PacketNameResolver::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
-      this.read_List.addAll(PacketTypeRegistry.init_Set());
+      this.read_List.addAll(PacketTypeRegistry.getS2cPackets());
       this.read_List.sort(Comparator.comparing(PacketNameResolver::init_Str_Class, String.CASE_INSENSITIVE_ORDER));
       this.init_Set.addAll(this.load_List);
       this.write_List.addAll(this.load_List);
@@ -357,8 +357,8 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    private void init_V_GuiGraphicsExtract_9(GuiGraphicsExtractor context, Class<? extends Packet<?>> packetClass, int x, int y, int width, int index) {
       boolean c2s = this.init_Set.contains(packetClass);
       boolean selected = this.poll_Z && this.read_Set.contains(packetClass);
-      int rowColor = selected ? UiColorPalette.init(false) : UiColorPalette.init(c2s, index, false);
-      int color = selected ? UiColorPalette.store() : UiColorPalette.init(c2s, index);
+      int rowColor = selected ? UiColorPalette.filterRowFill(false) : UiColorPalette.packetRowFill(c2s, index, false);
+      int color = selected ? UiColorPalette.filterActiveText() : UiColorPalette.packetRowAccent(c2s, index);
       autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, x, y, width, this.pop_I_22(), rowColor);
       String name = PacketNameResolver.init_Str_Class(packetClass);
       int textWidth = width - 10;
@@ -369,7 +369,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(
          context, this.init_Font, trimmed, this.init_CharEncoder_2.init_Identifier_l(autismclient.gui.f.b.l.read), color, x + 6, textY, false
       );
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, x + 4, y + this.pop_I_22() - 1, width - 8, UiColorPalette.mark());
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, x + 4, y + this.pop_I_22() - 1, width - 8, UiColorPalette.subtleDivider());
    }
 
    private void init(GuiGraphicsExtractor context, int viewX, int viewY, int viewW, int viewH, float uiMouseX, float uiMouseY) {

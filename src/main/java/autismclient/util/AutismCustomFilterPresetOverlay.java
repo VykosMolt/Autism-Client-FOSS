@@ -161,9 +161,9 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                int x = this.flush_I + this.get_I_4();
                int y = this.close_I + 14 + this.set_I_4();
                int width = this.open - this.get_I_4() * 2;
-               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
+               autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
                autismclient.gui.ui.widgets.ListRowRenderer.init(context, this.init_Font, "Preset Name", x, y);
-               String counts = "C2S " + module.load_Set().size() + " | S2C " + module.read_Set().size();
+               String counts = "C2S " + module.getCustomC2sPacketsCopy().size() + " | S2C " + module.getCustomS2cPacketsCopy().size();
                ThemedTextHelper.init(context, this.init_Font, counts, ThemedTextHelper.TextTone.MUTED, x + width - ThemedTextHelper.init(this.init_Font, counts, ThemedTextHelper.TextTone.MUTED), y, false);
                y += this.put();
                this.init_BitSetUtil.init_TableIndex_F(x, y, width, this.start_I_4());
@@ -260,7 +260,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                         selected,
                         row.init_bT_DataUtil.load_Z() ? autismclient.gui.ui.widgets.ListRowRenderer.RowTone.WARNING : autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
                      );
-                     int textColor = selected ? UiColorPalette.table() : (row.init_bT_DataUtil.load_Z() ? -4729601 : UiColorPalette.b());
+                     int textColor = selected ? UiColorPalette.selectedText() : (row.init_bT_DataUtil.load_Z() ? -4729601 : UiColorPalette.menuItemText());
                      String prefix = row.init_bT_DataUtil.load_Z() ? "[DEV] " : "[USR] ";
                      String name = ThemedTextHelper.init(this.init_Font, prefix + row.init_bT_DataUtil.init_Str(), contentWidth - 70, ThemedTextHelper.TextTone.BODY);
                      ThemedTextHelper.init(context, this.init_Font, name, textColor, x + 5, rowTextY, false);
@@ -400,9 +400,9 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
    }
 
    private void close_V_4() {
-      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
-      module.open_V();
-      module.poll_V();
+      autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
+      module.resetCustomC2sPackets();
+      module.resetCustomS2cPackets();
       AutismClientMessaging.sendPrefixed("Reset current filter to default packet lists.");
    }
 

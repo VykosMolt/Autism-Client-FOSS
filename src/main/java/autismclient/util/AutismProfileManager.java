@@ -335,7 +335,7 @@ public final class AutismProfileManager {
                }
             }
 
-            autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_V_AutismConfig(next);
+            autismclient.modules.ModuleRuntimeManager.getInstance().applyConfig(next);
             this.update(p);
             this.load_Str = p.id;
             this.init_Z = false;
@@ -373,7 +373,7 @@ public final class AutismProfileManager {
             }
          }
 
-         autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_V_AutismConfig(next);
+         autismclient.modules.ModuleRuntimeManager.getInstance().applyConfig(next);
          this.load_Str = p.id;
          this.init_Z = false;
          this.init_J++;

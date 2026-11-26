@@ -264,7 +264,7 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
 
       tag.put("rules", list);
       tag.putInt("timeoutMs", this.timeoutMs);
-      ListenDuringPreviousSerializer.init(tag, this);
+      ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
    }
@@ -291,7 +291,7 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
 
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
       this.init_V_11();
-      ListenDuringPreviousSerializer.load(tag, this);
+      ListenDuringPreviousSerializer.readFromTag(tag, this);
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 

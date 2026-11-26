@@ -17,15 +17,15 @@ public final class SelectableListBox<T> {
    private final List<T> init_List = new ArrayList<>();
    private int init_I = -1;
    private boolean init_Z = true;
-   private int load_I = UiColorPalette.update();
-   private int read_I = UiColorPalette.count();
-   private int write_I = UiColorPalette.table();
+   private int load_I = UiColorPalette.inputSurface();
+   private int read_I = UiColorPalette.listBoxSurface();
+   private int write_I = UiColorPalette.selectedText();
    private int update = -1;
-   private int sync = UiColorPalette.bind();
+   private int sync = UiColorPalette.textSecondary();
    private Function<T, String> load_Function;
    private Function<T, Integer> read_Function;
    private Function<T, String> write_Function;
-   private int flush = UiColorPalette.bind();
+   private int flush = UiColorPalette.textSecondary();
 
    public SelectableListBox(
       int x, int y, int width, int height, int rowHeight, int scrollbarWidth, Function<T, String> labelExtractor, BiConsumer<T, Boolean> selectionHandler
