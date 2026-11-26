@@ -313,19 +313,31 @@ public final class AstBatchRenamer {
             Files.writeString(entry.getKey(), sb.toString(), StandardCharsets.UTF_8);
         }
 
-        // 7. Rename / move top-level class files & clean empty source dirs
+        // 7. Rename / move top-level class files via two-phase temp staging (safe for chains/swaps) & clean empty source dirs
         Set<Path> oldDirs = new LinkedHashSet<>();
+        List<Map.Entry<Path, Path>> stagedMoves = new ArrayList<>();
+        int stageIdx = 0;
         for (ClassRename cr : classRenames.values()) {
             Path oldPath = srcRoot.resolve(cr.curClass + ".java");
             Path newPath = srcRoot.resolve(cr.newClass + ".java");
-            if (Files.exists(newPath)) {
+            if (oldPath.equals(newPath)) continue;
+            if (Files.exists(newPath) && !classRenames.containsKey(cr.newClass)) {
                 throw new IllegalStateException("Target file already exists: " + newPath);
             }
-            Files.createDirectories(newPath.getParent());
-            Files.move(oldPath, newPath);
+            Path tmpPath = oldPath.resolveSibling(oldPath.getFileName() + ".astmove." + (stageIdx++));
+            Files.move(oldPath, tmpPath);
+            stagedMoves.add(Map.entry(tmpPath, newPath));
             if (!oldPath.getParent().equals(newPath.getParent())) {
                 oldDirs.add(oldPath.getParent());
             }
+        }
+        for (var mv : stagedMoves) {
+            Path newPath = mv.getValue();
+            if (Files.exists(newPath)) {
+                throw new IllegalStateException("Target file already exists after staging: " + newPath);
+            }
+            Files.createDirectories(newPath.getParent());
+            Files.move(mv.getKey(), newPath);
         }
         for (Path dir : oldDirs) {
             Path cur = dir;
@@ -669,10 +681,12 @@ public final class AstBatchRenamer {
 
                 // Synthesize any extra imports required by partial-package splits
                 if (!extraImports.isEmpty()) {
+                    boolean hadImports = cu.getImports() != null && !cu.getImports().isEmpty();
                     int insertPos = findImportInsertOffset(cu, sp, content);
                     StringBuilder ins = new StringBuilder();
                     boolean needsLeadingNl = insertPos > 0 && content.charAt(insertPos - 1) != '\n';
                     if (needsLeadingNl) ins.append('\n');
+                    if (!hadImports && cu.getPackage() != null) ins.append('\n');
                     for (String impLine : extraImports) {
                         ins.append(impLine).append('\n');
                     }
@@ -680,16 +694,6 @@ public final class AstBatchRenamer {
                 }
             }
         }
-    }
-
-    private static TypeElement topLevelOf(TypeElement te) {
-        Element cur = te;
-        TypeElement top = te;
-        while (cur != null) {
-            if (cur instanceof TypeElement t) top = t;
-            cur = cur.getEnclosingElement();
-        }
-        return top;
     }
 
     private static int findImportInsertOffset(CompilationUnitTree cu, SourcePositions sp, String content) {

@@ -16,7 +16,7 @@ AUTISM Client renders its custom menus, editors, and HUD screens through a virtu
 | **Total (non-excluded GUI)** | **10 / 163** | **60,032** | **153 named**, **10 ABI-pinned** |
 
 ## Frozen & ABI-Pinned GUI Symbols (see [ABI_AND_HAZARDS.md](../ABI_AND_HAZARDS.md))
-- **Hard-frozen files:** `gui/a/DataUtil.java`, `gui/d/JsonUtil.java` (never inspected or modified; sole remaining files in `gui/a/` and `gui/d/`).
+- **Hard-frozen files:** `gui/a/DataUtil.java` (legacy exclusion path), `gui/d/JsonUtil.java` (never inspected or modified; sole remaining file in `gui/d/`).
 - **Compile-time ABI-pinned classes (`10`, all directly referenced by untouched `gui/d/JsonUtil.java` and enforced in `AstBatchRenamer.FROZEN_SYMBOL_EXACT`):**
   - `gui/f/NetHelper` (`UiRect`), `gui/f/PacketUtil` (`UiPrimitives`), `gui/f/SyncManager` (`UiRenderContext`), `gui/f/UiHelper` (`UiContextFactory`)
   - `gui/f/a/DataUtil` (`UiAssetIds`)
