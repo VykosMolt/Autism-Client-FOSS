@@ -4,9 +4,9 @@ import autismclient.ai.aP;
 import autismclient.ai.cc;
 import autismclient.compat263.Compat263;
 import autismclient.compat263.CompatGLFW;
-import autismclient.modules.FieldCache;
-import autismclient.modules.I;
-import autismclient.modules.TableIndex;
+import autismclient.modules.AutoTotemModule;
+import autismclient.modules.FreeLookModule;
+import autismclient.modules.AutoArmorModule;
 import autismclient.modules.aC;
 import autismclient.modules.al;
 import autismclient.util.AutismLiteVariant;
@@ -101,12 +101,12 @@ public abstract class AutismMouseHandlerMixin {
       if (assistX != 0.0 || assistY != 0.0) {
          this.autism$simulatedDX = 0.0;
          this.autism$simulatedDY = 0.0;
-         if (I.init(x, y)) {
+         if (FreeLookModule.init(x, y)) {
             original.call(player, assistX, assistY);
          } else {
             original.call(player, x + assistX, y + assistY);
          }
-      } else if (!I.init(x, y)) {
+      } else if (!FreeLookModule.init(x, y)) {
          original.call(player, x, y);
       }
    }
@@ -176,7 +176,7 @@ public abstract class AutismMouseHandlerMixin {
          }
       }
 
-      if (FieldCache.init_Z_6() || TableIndex.init_Z_20()) {
+      if (AutoTotemModule.init_Z_6() || AutoArmorModule.init_Z_20()) {
          ci.cancel();
       } else if (aC.init_Z_D(yOffset)) {
          ci.cancel();
@@ -198,7 +198,7 @@ public abstract class AutismMouseHandlerMixin {
          this.accumulatedDX = delta.init_D();
          this.accumulatedDY = delta.load();
       } else if (!delta.init_Z()) {
-         if (this.minecraft.player != null && I.init_I_4() != null) {
+         if (this.minecraft.player != null && FreeLookModule.init_I_4() != null) {
             this.autism$simulatedDX = this.autism$simulatedDX + delta.init_D();
             this.autism$simulatedDY = this.autism$simulatedDY + delta.load();
          } else {
@@ -226,7 +226,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @Inject(method = "turnPlayer", at = @At("HEAD"), cancellable = true)
    private void autism$swallowTurnDuringTotemOperation(double deltaTime, CallbackInfo ci) {
-      if (FieldCache.init_Z_6() || TableIndex.load_Z_9()) {
+      if (AutoTotemModule.init_Z_6() || AutoArmorModule.load_Z_9()) {
          this.accumulatedDX = 0.0;
          this.accumulatedDY = 0.0;
          this.autism$simulatedDX = 0.0;

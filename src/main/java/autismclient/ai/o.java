@@ -338,7 +338,7 @@ public final class o {
    private static void init(Minecraft mc, o.Inner_DataUtil a) {
       if (autismclient.modules.aD.init_Z()) {
          init_V("client panic mode");
-      } else if (!autismclient.modules.FieldCache.init_Z_6()) {
+      } else if (!autismclient.modules.AutoTotemModule.init_Z_6()) {
          if (a.init_Obj != null && mc.level != a.init_Obj) {
             if (!init_Z(a.init_Str)) {
                init(a, A.valid, "World or session changed");

@@ -37,7 +37,7 @@ public final class bJ {
    private bJ() {
    }
 
-   public static bJ.Inner_JsonUtil init(autismclient.util.macro.H action) {
+   public static bJ.Inner_JsonUtil init(autismclient.util.macro.PayloadAction action) {
       if (action == null) {
          return init_bJ_JsonUtil();
       }
@@ -194,7 +194,7 @@ public final class bJ {
       return new bJ.Inner_NetHelper(AutismPayloadSupport.init_Str(raw, 96), init_Str(raw), load(raw), read(raw));
    }
 
-   public static void init_V_H_bJ_JsonUtil(autismclient.util.macro.H action, bJ.Inner_JsonUtil template) {
+   public static void init_V_H_bJ_JsonUtil(autismclient.util.macro.PayloadAction action, bJ.Inner_JsonUtil template) {
       if (action != null && template != null) {
          action.channel = template.init_Str();
          action.payloadDirection = template.init_bJ_ConfigStore().name();

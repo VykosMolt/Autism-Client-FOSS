@@ -43,7 +43,7 @@ public final class at {
          } else if (bk.init_bk().update_Z()) {
             return false;
          } else {
-            return !AutismLiteVariant.enabled() && init.gui.screen() instanceof autismclient.gui.d.HashUtil moduleScreen ? !moduleScreen.load_Z_2() : true;
+            return !AutismLiteVariant.enabled() && init.gui.screen() instanceof autismclient.gui.d.AutismModulesScreen moduleScreen ? !moduleScreen.load_Z_2() : true;
          }
       }
    }

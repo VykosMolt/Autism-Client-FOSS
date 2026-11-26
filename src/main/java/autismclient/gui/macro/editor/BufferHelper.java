@@ -1,6 +1,6 @@
 package autismclient.gui.macro.editor;
 
-import autismclient.util.macro.al;
+import autismclient.util.macro.ToolsAction;
 import autismclient.util.macro.k;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -16,7 +16,7 @@ public final class BufferHelper {
    private BufferHelper() {
    }
 
-   public static ActionFieldSchema init(al action) {
+   public static ActionFieldSchema init(ToolsAction action) {
       ActionFieldSchema.Builder builder = ActionFieldSchema.builder().enumField("operation", "Action", "RUN", "WAIT", "STOP", "PAUSE", "RESUME");
       List<String> ids = new ArrayList<>(k.init_List().stream().map(k.Inner_TaskQueue::init).toList());
       if (!ids.contains(action.toolId)) {

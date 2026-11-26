@@ -156,21 +156,21 @@ public final class cL {
       }
    }
 
-   private static autismclient.util.macro.aH init_aH() {
-      autismclient.util.macro.aH action = new autismclient.util.macro.aH();
-      action.countMode = autismclient.util.macro.aH.Inner_StreamUtil.FREE_SLOTS;
-      action.comparison = autismclient.util.macro.aH.Inner_DataUtil.AT_MOST;
+   private static autismclient.util.macro.WaitFreeSlotsAction init_aH() {
+      autismclient.util.macro.WaitFreeSlotsAction action = new autismclient.util.macro.WaitFreeSlotsAction();
+      action.countMode = autismclient.util.macro.WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS;
+      action.comparison = autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST;
       action.slots = 0;
       action.timeoutMs = 0;
       return action;
    }
 
-   private static autismclient.util.macro.ar init_ar() {
-      autismclient.util.macro.ar action = new autismclient.util.macro.ar();
-      action.targetMode = autismclient.util.macro.ar.Inner_CachePool.ITEM;
+   private static autismclient.util.macro.WaitDurabilityAction init_ar() {
+      autismclient.util.macro.WaitDurabilityAction action = new autismclient.util.macro.WaitDurabilityAction();
+      action.targetMode = autismclient.util.macro.WaitDurabilityAction.Inner_CachePool.ITEM;
       action.itemName = "minecraft:fishing_rod";
-      action.measurement = autismclient.util.macro.ar.Inner_StreamUtil.REMAINING;
-      action.comparison = autismclient.util.macro.ar.Inner_DataUtil.AT_MOST;
+      action.measurement = autismclient.util.macro.WaitDurabilityAction.Inner_StreamUtil.REMAINING;
+      action.comparison = autismclient.util.macro.WaitDurabilityAction.Inner_DataUtil.AT_MOST;
       action.value = 2;
       action.useNext = true;
       action.timeoutMs = 0;

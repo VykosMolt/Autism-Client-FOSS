@@ -101,7 +101,7 @@ public final class UiHelper {
          if (friend != mc.player
             && friend.isAlive()
             && !friend.isSpectator()
-            && autismclient.modules.aL.init_Z_Entity_5(friend)
+            && autismclient.modules.TeamsModule.init_Z_Entity_5(friend)
             && !(friend.distanceToSqr(source) > 4.0F * power * power)) {
             double damage = S.read(friend, source, power, options);
             if (!init_Z_D(damage, maximum, S.init_D_LivingEntity(friend))) {

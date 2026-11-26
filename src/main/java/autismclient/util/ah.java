@@ -1,7 +1,7 @@
 package autismclient.util;
 
 import autismclient.modules.Module;
-import autismclient.modules.j;
+import autismclient.modules.ClutchModule;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -137,8 +137,8 @@ public final class ah {
          return false;
       }
 
-      if (AutismLiteVariant.enabled() || !j.init_Z_49() || "clutch".equals(id) || "auto-totem".equals(id) || "danger".equals(id) && j.open_Z_5()) {
-         if (!AutismLiteVariant.enabled() && autismclient.modules.z.sync_Z_12() && !"danger".equals(id) && !"clutch".equals(id) && !"auto-totem".equals(id)) {
+      if (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49() || "clutch".equals(id) || "auto-totem".equals(id) || "danger".equals(id) && ClutchModule.open_Z_5()) {
+         if (!AutismLiteVariant.enabled() && autismclient.modules.DangerModule.sync_Z_12() && !"danger".equals(id) && !"clutch".equals(id) && !"auto-totem".equals(id)) {
             return false;
          }
 
@@ -156,8 +156,8 @@ public final class ah {
          return false;
       }
 
-      if (AutismLiteVariant.enabled() || !j.init_Z_49() || "clutch".equals(id) || "auto-totem".equals(id) || "danger".equals(id) && j.open_Z_5()) {
-         if (!AutismLiteVariant.enabled() && autismclient.modules.z.sync_Z_12() && !"danger".equals(id) && !"clutch".equals(id) && !"auto-totem".equals(id)) {
+      if (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49() || "clutch".equals(id) || "auto-totem".equals(id) || "danger".equals(id) && ClutchModule.open_Z_5()) {
+         if (!AutismLiteVariant.enabled() && autismclient.modules.DangerModule.sync_Z_12() && !"danger".equals(id) && !"clutch".equals(id) && !"auto-totem".equals(id)) {
             return false;
          }
 

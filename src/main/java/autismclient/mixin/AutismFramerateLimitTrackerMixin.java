@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.gui.d.HashUtil;
+import autismclient.gui.d.AutismModulesScreen;
 import autismclient.gui.d.UtilCore;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.macro.BitSetUtil;
@@ -27,7 +27,7 @@ public abstract class AutismFramerateLimitTrackerMixin {
 
       if (minecraft != null) {
          boolean ours = !AutismLiteVariant.enabled()
-            && (minecraft.gui.screen() instanceof UtilCore || minecraft.gui.screen() instanceof HashUtil screen && screen.init_Z_5());
+            && (minecraft.gui.screen() instanceof UtilCore || minecraft.gui.screen() instanceof AutismModulesScreen screen && screen.init_Z_5());
          if (ours) {
             FramerateLimitTracker tracker = (FramerateLimitTracker)(Object)this;
             if (tracker.getThrottleReason() == FramerateThrottleReason.OUT_OF_LEVEL_MENU) {

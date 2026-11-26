@@ -635,7 +635,7 @@ final class AiAssistantOverlay extends autismclient.util.bj {
                   || this.init_F_2.init_Z()
                   || this.init_TaskTimer.init_Z()
             )
-         ? Minecraft.getInstance().gui.screen() instanceof autismclient.gui.d.TaskTimer host && host.init(this)
+         ? Minecraft.getInstance().gui.screen() instanceof autismclient.gui.d.AutismOverlaysScreen host && host.init(this)
          : false;
    }
 

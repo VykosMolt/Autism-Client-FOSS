@@ -1,16 +1,16 @@
 package autismclient.mixin;
 
-import autismclient.modules.G;
-import autismclient.modules.X;
-import autismclient.modules.aA;
-import autismclient.modules.aI;
-import autismclient.modules.aa;
-import autismclient.modules.ac;
+import autismclient.modules.EntityControlModule;
+import autismclient.modules.KBDisplacementModule;
+import autismclient.modules.NoSlowModule;
+import autismclient.modules.ScaffoldModule;
+import autismclient.modules.KillAuraModule;
+import autismclient.modules.LeafDupeModule;
 import autismclient.modules.ai;
 import autismclient.modules.al;
-import autismclient.modules.ax;
+import autismclient.modules.NoPushModule;
 import autismclient.modules.f;
-import autismclient.modules.z;
+import autismclient.modules.DangerModule;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.ci;
 import autismclient.util.cn;
@@ -30,19 +30,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AutismLocalPlayerMovementMixin {
    @Inject(method = "moveTowardsClosestSpace", at = @At("HEAD"), cancellable = true)
    private void autism$noBlockPush(double x, double z, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && ax.init((LocalPlayer)(Object)this, "blocks")) {
+      if (!AutismLiteVariant.enabled() && NoPushModule.init((LocalPlayer)(Object)this, "blocks")) {
          ci.cancel();
       }
    }
 
    @ModifyReturnValue(method = "itemUseSpeedMultiplier", at = @At("RETURN"))
    private float autism$noItemSlowdown(float multiplier) {
-      return !AutismLiteVariant.enabled() && aA.init((LocalPlayer)(Object)this) ? 1.0F : multiplier;
+      return !AutismLiteVariant.enabled() && NoSlowModule.init((LocalPlayer)(Object)this) ? 1.0F : multiplier;
    }
 
    @ModifyReturnValue(method = "isSlowDueToUsingItem", at = @At("RETURN"))
    private boolean autism$allowSprintWhileUsing(boolean slow) {
-      return !AutismLiteVariant.enabled() && slow && aA.init((LocalPlayer)(Object)this) ? false : slow;
+      return !AutismLiteVariant.enabled() && slow && NoSlowModule.init((LocalPlayer)(Object)this) ? false : slow;
    }
 
    @ModifyExpressionValue(
@@ -50,17 +50,17 @@ public class AutismLocalPlayerMovementMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isMovingSlowly()Z")
    )
    private boolean autism$noPostureSlowdown(boolean slow) {
-      return !AutismLiteVariant.enabled() && slow && aA.load((LocalPlayer)(Object)this) ? false : slow;
+      return !AutismLiteVariant.enabled() && slow && NoSlowModule.load((LocalPlayer)(Object)this) ? false : slow;
    }
 
    @ModifyExpressionValue(method = "sendPosition", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getYRot()F"))
    private float autism$scaffoldSilentMovementYaw(float original) {
       LocalPlayer player = (LocalPlayer)(Object)this;
       float fastExp = f.init(player, original);
-      float scaffold = aI.init_F_LocalPlayer_F(player, fastExp);
+      float scaffold = ScaffoldModule.init_F_LocalPlayer_F(player, fastExp);
       float yaw = cn.init(player, scaffold);
       if (!AutismLiteVariant.enabled()) {
-         yaw = ac.init_F_LocalPlayer_F_2(player, yaw);
+         yaw = LeafDupeModule.init_F_LocalPlayer_F_2(player, yaw);
       }
 
       cn.init(yaw);
@@ -71,10 +71,10 @@ public class AutismLocalPlayerMovementMixin {
    private float autism$scaffoldSilentMovementPitch(float original) {
       LocalPlayer player = (LocalPlayer)(Object)this;
       float fastExp = f.load(player, original);
-      float scaffold = aI.load_F_LocalPlayer_F(player, fastExp);
+      float scaffold = ScaffoldModule.load_F_LocalPlayer_F(player, fastExp);
       float pitch = cn.load(player, scaffold);
       if (!AutismLiteVariant.enabled()) {
-         pitch = ac.load_F_LocalPlayer_F_2(player, pitch);
+         pitch = LeafDupeModule.load_F_LocalPlayer_F_2(player, pitch);
       }
 
       cn.load(pitch);
@@ -90,12 +90,12 @@ public class AutismLocalPlayerMovementMixin {
 
    @ModifyExpressionValue(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;canStartSprinting()Z"))
    private boolean autism$sprintDecisionMovementTick(boolean original) {
-      return !AutismLiteVariant.enabled() && z.push() ? false : ai.init(original, true) && !aa.close_Z_6() && !aI.close_Z_4();
+      return !AutismLiteVariant.enabled() && DangerModule.push() ? false : ai.init(original, true) && !KillAuraModule.close_Z_6() && !ScaffoldModule.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Input;sprint()Z"))
    private boolean autism$sprintDecisionInput(boolean original) {
-      return !AutismLiteVariant.enabled() && z.push() ? false : ai.init(original, false) && !aa.close_Z_6() && !aI.close_Z_4();
+      return !AutismLiteVariant.enabled() && DangerModule.push() ? false : ai.init(original, false) && !KillAuraModule.close_Z_6() && !ScaffoldModule.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "sendIsSprintingIfNeeded", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isSprinting()Z"))
@@ -120,7 +120,7 @@ public class AutismLocalPlayerMovementMixin {
 
    @ModifyReturnValue(method = "shouldStopRunSprinting", at = @At("RETURN"))
    private boolean autism$sprintForceStop(boolean shouldStop) {
-      return !AutismLiteVariant.enabled() && z.push() ? true : shouldStop || ai.update() || aa.close_Z_6() || aI.close_Z_4();
+      return !AutismLiteVariant.enabled() && DangerModule.push() ? true : shouldStop || ai.update() || KillAuraModule.close_Z_6() || ScaffoldModule.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "isSprintingPossible", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isMobilityRestricted()Z"))
@@ -130,14 +130,14 @@ public class AutismLocalPlayerMovementMixin {
 
    @Inject(method = "getJumpRidingScale", at = @At("RETURN"), cancellable = true)
    private void autism$entityControlMaxJump(CallbackInfoReturnable<Float> cir) {
-      if (G.load_Z_3()) {
+      if (EntityControlModule.load_Z_3()) {
          cir.setReturnValue(1.0F);
       }
    }
 
    @Inject(method = "jumpableVehicle", at = @At("RETURN"), cancellable = true)
    private void autism$entityControlFlightJump(CallbackInfoReturnable<PlayerRideableJumping> cir) {
-      if (G.read()) {
+      if (EntityControlModule.read()) {
          cir.setReturnValue(null);
       }
    }
@@ -146,7 +146,7 @@ public class AutismLocalPlayerMovementMixin {
    private void autism$networkMovementTickPre(CallbackInfo ci) {
       if ((LocalPlayer)(Object)this == Minecraft.getInstance().player) {
          if (!AutismLiteVariant.enabled()) {
-            ac.init_V_LocalPlayer_2((LocalPlayer)(Object)this);
+            LeafDupeModule.init_V_LocalPlayer_2((LocalPlayer)(Object)this);
          }
 
          al.close_V();
@@ -157,12 +157,12 @@ public class AutismLocalPlayerMovementMixin {
    private void autism$debugRotationTick(CallbackInfo ci) {
       if ((LocalPlayer)(Object)this == Minecraft.getInstance().player) {
          if (!AutismLiteVariant.enabled()) {
-            ac.load_V_LocalPlayer_2((LocalPlayer)(Object)this);
+            LeafDupeModule.load_V_LocalPlayer_2((LocalPlayer)(Object)this);
          }
 
          cn.init(Minecraft.getInstance());
          if (!AutismLiteVariant.enabled()) {
-            X.init_V_21();
+            KBDisplacementModule.init_V_21();
          }
       }
    }

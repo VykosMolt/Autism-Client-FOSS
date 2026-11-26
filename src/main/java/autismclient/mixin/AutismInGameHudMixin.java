@@ -12,7 +12,7 @@ import autismclient.modules.F;
 import autismclient.modules.Module;
 import autismclient.modules.NodeWalker;
 import autismclient.modules.PoolEntry;
-import autismclient.modules.SyncManager;
+import autismclient.modules.AntiVanishModule;
 import autismclient.modules.aD;
 import autismclient.modules.aT;
 import autismclient.modules.aj;
@@ -103,7 +103,7 @@ public abstract class AutismInGameHudMixin {
                boolean esp2dVisible = am.add();
                boolean nametagsVisible = activity.init(128L);
                boolean bedsVisible = activity.init(16384L);
-               boolean antiVanishHudVisible = screen == null && SyncManager.init_Z_19();
+               boolean antiVanishHudVisible = screen == null && AntiVanishModule.init_Z_19();
                boolean mainHudVisible = nativeHudVisible
                   || antiVanishHudVisible
                   || macroRunning

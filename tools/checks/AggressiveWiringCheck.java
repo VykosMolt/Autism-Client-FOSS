@@ -1,9 +1,9 @@
 package autismclient.aggressivepvp;
 
 import autismclient.api.module.Setting;
-import autismclient.modules.FieldCache;
+import autismclient.modules.AutoTotemModule;
 import autismclient.modules.Module;
-import autismclient.modules.t;
+import autismclient.modules.CrystalAuraModule;
 import autismclient.util.AutismConfig;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -93,10 +93,10 @@ public final class AggressiveWiringCheck {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
 
-        t crystalModule = new t();
-        Constructor<FieldCache> fcCtor = FieldCache.class.getDeclaredConstructor();
+        CrystalAuraModule crystalModule = new CrystalAuraModule();
+        Constructor<AutoTotemModule> fcCtor = AutoTotemModule.class.getDeclaredConstructor();
         fcCtor.setAccessible(true);
-        FieldCache totemModule = fcCtor.newInstance();
+        AutoTotemModule totemModule = fcCtor.newInstance();
 
         check("Autism.verified() is true", Autism.verified());
 
@@ -222,20 +222,20 @@ public final class AggressiveWiringCheck {
             check("aggressiveTotemOn true when live", Versions.aggressiveTotemOn());
             ActionWindow.holdInput();
             check("input hold active when Aggressive AutoTotem live", ActionWindow.inputHeld());
-            check("FieldCache.init_Z_6 reflects Aggressive input hold", FieldCache.init_Z_6());
-            check("FieldCache.read_Z_3 reflects Aggressive input hold", FieldCache.read_Z_3());
+            check("AutoTotemModule.init_Z_6 reflects Aggressive input hold", AutoTotemModule.init_Z_6());
+            check("AutoTotemModule.read_Z_3 reflects Aggressive input hold", AutoTotemModule.read_Z_3());
             ActionWindow.releaseHold();
             check("releaseHold clears hold", !ActionWindow.inputHeld());
-            check("FieldCache.init_Z_6 false when Aggressive idle", !FieldCache.init_Z_6());
+            check("AutoTotemModule.init_Z_6 false when Aggressive idle", !AutoTotemModule.init_Z_6());
             Versions.totem.activated = false;
-            check("FieldCache.init_Z_6 does not recurse when running but not activated", !FieldCache.init_Z_6());
+            check("AutoTotemModule.init_Z_6 does not recurse when running but not activated", !AutoTotemModule.init_Z_6());
             Versions.totem.activated = true;
             on[0] = false;
             check("aggressiveTotemOn false when module disabled", !Versions.aggressiveTotemOn());
             on[0] = true;
 
             // Default -> Aggressive switchOver must clear Default CrystalAura switch-back and Default AutoTotem input hold
-            Field tStopField = t.class.getDeclaredField("stop");
+            Field tStopField = CrystalAuraModule.class.getDeclaredField("stop");
             tStopField.setAccessible(true);
             tStopField.setInt(crystalModule, 4);
             crystalModule.setValueTransient("version", "Aggressive");
@@ -244,7 +244,7 @@ public final class AggressiveWiringCheck {
             crystalModule.setValueTransient("version", "Default");
             lifecycle(crystalModule::preMovementTick);
 
-            Field fcStartField = FieldCache.class.getDeclaredField("start");
+            Field fcStartField = AutoTotemModule.class.getDeclaredField("start");
             fcStartField.setAccessible(true);
             fcStartField.setInt(null, 999999);
             totemModule.setValueTransient("version", "Aggressive");

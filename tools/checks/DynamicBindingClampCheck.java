@@ -5,7 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 
 public class DynamicBindingClampCheck {
    public static void main(String[] args) {
-      ao use = new ao();
+      UseItemPhaseAction use = new UseItemPhaseAction();
       check(d.clampToEditorRange(use, "holdTicks", 5000).equals(2000), "holdTicks clamps to 2000");
       check(d.clampToEditorRange(use, "holdTicks", -3).equals(0), "holdTicks clamps to 0");
       check(d.clampToEditorRange(use, "repeat", 0).equals(1), "repeat clamps to 1");
@@ -15,11 +15,11 @@ public class DynamicBindingClampCheck {
       check(d.clampToEditorRange(use, "holdTicks", 5000L).equals(2000L), "long clamps with the int range");
 
       // Through the binding call site (literal templates need no game).
-      ao bound = new ao();
+      UseItemPhaseAction bound = new UseItemPhaseAction();
       d.init_V(bound, "holdTicks", "5000");
-      ByteReader reader = new ByteReader();
+      DisconnectAction reader = new DisconnectAction();
       d.init_V(reader, "tolerance", "250.5");
-      ay health = new ay();
+      WaitForHealthAction health = new WaitForHealthAction();
       d.init_V(health, "healthThreshold", "-4");
       Minecraft noGame = null;
       check(d.init(bound, noGame) && bound.holdTicks == 2000, "bound int field is clamped, got " + bound.holdTicks);
@@ -28,7 +28,7 @@ public class DynamicBindingClampCheck {
 
       CompoundTag fromOldSave = new CompoundTag();
       fromOldSave.putString("type", "USE_ITEM_PHASE");
-      ao loaded = new ao();
+      UseItemPhaseAction loaded = new UseItemPhaseAction();
       loaded.fromTag(fromOldSave);
       check(loaded.useCustomSlotMapping, "missing useCustomSlotMapping defaults to true");
       System.out.println("PASS DynamicBindingClampCheck");

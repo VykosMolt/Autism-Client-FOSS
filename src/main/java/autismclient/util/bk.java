@@ -341,9 +341,9 @@ public class bk {
       Screen screen = mc == null ? null : mc.gui.screen();
       if (overlay != null && overlay.init_cX_DataUtil() == cX.Inner_DataUtil.BACKGROUND_STATUS) {
          return cX.Inner_DataUtil.BACKGROUND_STATUS;
-      } else if (!AutismLiteVariant.enabled() && screen instanceof autismclient.gui.d.HashUtil) {
+      } else if (!AutismLiteVariant.enabled() && screen instanceof autismclient.gui.d.AutismModulesScreen) {
          return cX.Inner_DataUtil.MODULE_MENU;
-      } else if (!(screen instanceof autismclient.gui.d.TaskTimer) && screen != null && !(screen instanceof ChatScreen)) {
+      } else if (!(screen instanceof autismclient.gui.d.AutismOverlaysScreen) && screen != null && !(screen instanceof ChatScreen)) {
          return cX.Inner_DataUtil.CONTAINER_GUI;
       } else {
          return overlay == null ? cX.Inner_DataUtil.HOST_SCREEN : overlay.init_cX_DataUtil();
@@ -360,11 +360,11 @@ public class bk {
          return false;
       }
 
-      if (!AutismLiteVariant.enabled() && screen instanceof autismclient.gui.d.HashUtil) {
+      if (!AutismLiteVariant.enabled() && screen instanceof autismclient.gui.d.AutismModulesScreen) {
          return !this.flush_Z(overlay);
       }
 
-      if (screen instanceof autismclient.gui.d.TaskTimer) {
+      if (screen instanceof autismclient.gui.d.AutismOverlaysScreen) {
          return true;
       }
 

@@ -48,50 +48,50 @@ import autismclient.util.o;
 import autismclient.util.p;
 import autismclient.util.macro.ArrayUtil;
 import autismclient.util.macro.CacheEntry;
-import autismclient.util.macro.G;
-import autismclient.util.macro.H;
-import autismclient.util.macro.K;
-import autismclient.util.macro.L;
-import autismclient.util.macro.ListPool;
+import autismclient.util.macro.PayAction;
+import autismclient.util.macro.PayloadAction;
+import autismclient.util.macro.PlaceAction;
+import autismclient.util.macro.RaceAction;
+import autismclient.util.macro.InventoryAuditAction;
 import autismclient.util.macro.MacroAction;
 import autismclient.util.macro.MacroExecutor;
-import autismclient.util.macro.MapStore;
-import autismclient.util.macro.PacketUtil;
-import autismclient.util.macro.PathHelper;
-import autismclient.util.macro.S;
+import autismclient.util.macro.ItemAction;
+import autismclient.util.macro.DropAction;
+import autismclient.util.macro.InteractEntityAction;
+import autismclient.util.macro.RotateAction;
 import autismclient.util.macro.StreamGate;
 import autismclient.util.macro.UtilCore;
-import autismclient.util.macro.V;
-import autismclient.util.macro.ValueSink;
-import autismclient.util.macro.Y;
-import autismclient.util.macro.a;
-import autismclient.util.macro.aB;
-import autismclient.util.macro.aC;
-import autismclient.util.macro.aD;
-import autismclient.util.macro.aE;
-import autismclient.util.macro.aF;
-import autismclient.util.macro.aG;
-import autismclient.util.macro.aI;
-import autismclient.util.macro.aJ;
-import autismclient.util.macro.aN;
+import autismclient.util.macro.SelectSlotAction;
+import autismclient.util.macro.LookAtBlockAction;
+import autismclient.util.macro.SendPacketAction;
+import autismclient.util.macro.MacroCondition;
+import autismclient.util.macro.WaitForPacketAction;
+import autismclient.util.macro.WaitForPositionDeltaAction;
+import autismclient.util.macro.WaitForSlotChangeAction;
+import autismclient.util.macro.WaitForSoundAction;
+import autismclient.util.macro.WaitForTeleportAction;
+import autismclient.util.macro.WaitForWorldChangeAction;
+import autismclient.util.macro.WaitGamemodeChangeAction;
+import autismclient.util.macro.WaitGuiTypeAction;
+import autismclient.util.macro.WaitPosAction;
 import autismclient.util.macro.aP;
-import autismclient.util.macro.aQ;
-import autismclient.util.macro.ah;
-import autismclient.util.macro.ai;
+import autismclient.util.macro.XCarryAction;
+import autismclient.util.macro.StoreItemAction;
+import autismclient.util.macro.SwapSlotsAction;
 import autismclient.util.macro.ak;
-import autismclient.util.macro.al;
-import autismclient.util.macro.an;
-import autismclient.util.macro.au;
-import autismclient.util.macro.av;
-import autismclient.util.macro.aw;
-import autismclient.util.macro.ax;
-import autismclient.util.macro.ay;
-import autismclient.util.macro.az;
+import autismclient.util.macro.ToolsAction;
+import autismclient.util.macro.UseItemAction;
+import autismclient.util.macro.WaitForChatAction;
+import autismclient.util.macro.WaitForCooldownAction;
+import autismclient.util.macro.WaitForEntityAction;
+import autismclient.util.macro.WaitForGuiAction;
+import autismclient.util.macro.WaitForHealthAction;
+import autismclient.util.macro.WaitForLanStepAction;
 import autismclient.util.macro.d;
 import autismclient.util.macro.m;
-import autismclient.util.macro.r;
-import autismclient.util.macro.v;
-import autismclient.util.macro.z;
+import autismclient.util.macro.MissingAddonAction;
+import autismclient.util.macro.OpenContainerAction;
+import autismclient.util.macro.PacketClickAction;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -261,7 +261,7 @@ public class ActionEditorOverlay extends bj {
    private final Map<String, EventBus> tick_Map = new HashMap<>();
    private final List<MacroExecutor.Inner_PacketUtil> update_List = new ArrayList<>();
    private int f_e_I = 0;
-   private MapStore init_MapStore;
+   private ItemAction init_MapStore;
    private final autismclient.gui.macro.editor.a.StreamUtil init_StreamUtil = new autismclient.gui.macro.editor.a.StreamUtil();
    private String write_Str;
    private final List<autismclient.gui.f.b.SyncManager> sync_List = new ArrayList<>();
@@ -336,7 +336,7 @@ public class ActionEditorOverlay extends bj {
    );
    private List<cX> poll_List;
    private final f init_f = new f(700L, 140.0F, 180.0F, 4, 4, 18);
-   private List<autismclient.util.macro.SyncManager.Inner_DataUtil> push_List;
+   private List<autismclient.util.macro.CraftAction.Inner_DataUtil> push_List;
    private List<J.Inner_TaskQueue> pop_List;
    private List<J.Inner_TaskQueue> tick_List;
    private J.Inner_TaskQueue init_J_TaskQueue;
@@ -344,8 +344,8 @@ public class ActionEditorOverlay extends bj {
    private boolean tick_Z;
    private String update_Str;
    private int[] init_IArr;
-   private PacketUtil init_PacketUtil;
-   private H init_H;
+   private DropAction init_PacketUtil;
+   private PayloadAction init_H;
    private bE init_bE;
    private boolean run_Z = false;
    private ActionEditorOverlay.TaskQueue init_ActionEditorOverla_3 = ActionEditorOverlay.TaskQueue.BINARY_REPLAY;
@@ -365,8 +365,8 @@ public class ActionEditorOverlay extends bj {
    private int f_j_I = -1;
    private int f_k_I = -1;
    private int f_l_I = -1;
-   private List<aD.Inner_DataUtil> run_List;
-   private aD.Inner_StreamUtil init_aD_StreamUtil = aD.Inner_StreamUtil.NOT_EMPTY;
+   private List<WaitForSlotChangeAction.Inner_DataUtil> run_List;
+   private WaitForSlotChangeAction.Inner_StreamUtil init_aD_StreamUtil = WaitForSlotChangeAction.Inner_StreamUtil.NOT_EMPTY;
    private int f_m_I = 1;
    private boolean stop_Z = false;
    private boolean next_Z = false;
@@ -425,8 +425,8 @@ public class ActionEditorOverlay extends bj {
       bJ.Inner_StreamUtil.JSON_TEXT,
       bJ.Inner_StreamUtil.ADVANCED_MIXED
    );
-   private List<az.Inner_DataUtil> clear_List;
-   private List<autismclient.util.macro.aM.Inner_CachePool> reset_List;
+   private List<WaitForLanStepAction.Inner_DataUtil> clear_List;
+   private List<autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool> reset_List;
    private int f_z_I = -1;
    private final List<String> start_List = new ArrayList<>();
    private final Map<String, String> get_Map = new HashMap<>();
@@ -500,7 +500,7 @@ public class ActionEditorOverlay extends bj {
          return false;
       }
 
-      if (action instanceof r) {
+      if (action instanceof MissingAddonAction) {
          return false;
       }
 
@@ -637,7 +637,7 @@ public class ActionEditorOverlay extends bj {
       this.init_AutismPacketSelect.write_V_21();
       this.read(action);
       this.load_V_MacroAction(action);
-      if (action instanceof an useItemAction) {
+      if (action instanceof UseItemAction useItemAction) {
          k slotField = this.init_Map.get("slot");
          if (slotField != null && useItemAction.slot < 0 && !this.init_CompoundTag.contains("slot")) {
             slotField.init_V_Str("");
@@ -648,8 +648,8 @@ public class ActionEditorOverlay extends bj {
       this.init_StreamUtil.init_V();
       this.f_j_I = -1;
       this.f_k_I = -1;
-      if (action instanceof MapStore ia) {
-         this.init_MapStore = new MapStore();
+      if (action instanceof ItemAction ia) {
+         this.init_MapStore = new ItemAction();
          this.init_MapStore.itemNames = new ArrayList<>(ia.itemNames);
          this.init_MapStore.itemTargets = this.init_List_List_List(ia.itemTargets, ia.itemNames);
          this.init_MapStore.itemTimes = new ArrayList<>(ia.itemTimes);
@@ -722,10 +722,10 @@ public class ActionEditorOverlay extends bj {
 
       this.f_l_I = -1;
       this.run_List = new ArrayList<>();
-      this.init_aD_StreamUtil = aD.Inner_StreamUtil.NOT_EMPTY;
+      this.init_aD_StreamUtil = WaitForSlotChangeAction.Inner_StreamUtil.NOT_EMPTY;
       this.f_m_I = 1;
-      if (action instanceof aD wsc) {
-         for (aD.Inner_DataUtil e : wsc.entries) {
+      if (action instanceof WaitForSlotChangeAction wsc) {
+         for (WaitForSlotChangeAction.Inner_DataUtil e : wsc.entries) {
             this.run_List.add(e.init_aD_DataUtil());
          }
       }
@@ -756,11 +756,11 @@ public class ActionEditorOverlay extends bj {
       this.tick_Z = false;
       this.update_Str = null;
       this.init_IArr = null;
-      if (action instanceof autismclient.util.macro.SyncManager craftAction) {
+      if (action instanceof autismclient.util.macro.CraftAction craftAction) {
          this.push_List = craftAction.init_List_6();
 
          for (int i = 0; i < this.push_List.size(); i++) {
-            autismclient.util.macro.SyncManager.Inner_DataUtil entry = this.push_List.get(i);
+            autismclient.util.macro.CraftAction.Inner_DataUtil entry = this.push_List.get(i);
             k f = this.init_k_I(44);
             f.poll(true);
             f.init_V_Str(String.valueOf(entry.read_I));
@@ -779,22 +779,22 @@ public class ActionEditorOverlay extends bj {
          this.tick_List = J.init(this.pop_List, "");
       }
 
-      if (action instanceof aB waitForPacketAction) {
+      if (action instanceof WaitForPacketAction waitForPacketAction) {
          this.write_Map.put("packetNames", this.init_List_List(waitForPacketAction.init()));
          this.load_Map.put("listenDuringPreviousAction", waitForPacketAction.listenDuringPreviousAction);
       }
 
       this.reset_List = null;
       this.f_z_I = -1;
-      if (action instanceof autismclient.util.macro.aM packetMatchAction) {
+      if (action instanceof autismclient.util.macro.WaitPacketMatchAction packetMatchAction) {
          this.reset_List = new ArrayList<>();
 
-         for (autismclient.util.macro.aM.Inner_CachePool rule : packetMatchAction.init_List_9()) {
+         for (autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule : packetMatchAction.init_List_9()) {
             this.reset_List.add(rule.init_aM_CachePool());
          }
 
          if (this.reset_List.isEmpty()) {
-            this.reset_List.add(new autismclient.util.macro.aM.Inner_CachePool());
+            this.reset_List.add(new autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool());
          }
 
          this.f_z_I = 0;
@@ -806,8 +806,8 @@ public class ActionEditorOverlay extends bj {
       }
 
       this.init_PacketUtil = null;
-      if (action instanceof PacketUtil da) {
-         this.init_PacketUtil = new PacketUtil();
+      if (action instanceof DropAction da) {
+         this.init_PacketUtil = new DropAction();
          this.init_PacketUtil.mode = da.mode;
          this.init_PacketUtil.dropCount = da.dropCount;
          this.init_PacketUtil.itemNames = new ArrayList<>(da.itemNames);
@@ -849,7 +849,7 @@ public class ActionEditorOverlay extends bj {
          this.load_Map.put("drop_waitForGuiBefore", da.waitForGuiBefore);
          this.load_Map.put("drop_waitForGuiAfter", da.waitForGuiAfter);
          this.load_Map.put("drop_useHandlerSlots", da.useHandlerSlots);
-         PacketUtil.Inner_DataUtil[] modes = PacketUtil.Inner_DataUtil.values();
+         DropAction.Inner_DataUtil[] modes = DropAction.Inner_DataUtil.values();
          int mi = 0;
 
          for (int i = 0; i < modes.length; i++) {
@@ -865,22 +865,22 @@ public class ActionEditorOverlay extends bj {
 
       this.init_H = null;
       this.init_bE = null;
-      if (action instanceof H pa) {
-         this.init_H = new H();
+      if (action instanceof PayloadAction pa) {
+         this.init_H = new PayloadAction();
          this.init_H.fromTag(pa.toTag());
          this.load_V_H(this.init_H);
       }
 
       this.clear_List = null;
-      if (action instanceof az wls) {
+      if (action instanceof WaitForLanStepAction wls) {
          this.clear_List = new ArrayList<>();
 
-         for (az.Inner_DataUtil e : wls.entries) {
-            this.clear_List.add(new az.Inner_DataUtil(e.init_Str, e.init_I));
+         for (WaitForLanStepAction.Inner_DataUtil e : wls.entries) {
+            this.clear_List.add(new WaitForLanStepAction.Inner_DataUtil(e.init_Str, e.init_I));
          }
 
          for (int i = 0; i < this.clear_List.size(); i++) {
-            az.Inner_DataUtil e = this.clear_List.get(i);
+            WaitForLanStepAction.Inner_DataUtil e = this.clear_List.get(i);
             k uf = this.init_k_I(80);
             uf.init_V_Str(e.init_Str);
             this.init_Map.put("lan_user_" + i, uf);
@@ -906,35 +906,35 @@ public class ActionEditorOverlay extends bj {
       }
 
       this.poll_Z = false;
-      if (action instanceof aE) {
+      if (action instanceof WaitForSoundAction) {
          k search = this.flush_Map.get("soundIds");
          if (search != null) {
             search.init_V_Component(Component.literal("Search sound id..."));
          }
       }
 
-      if (action instanceof aw) {
+      if (action instanceof WaitForEntityAction) {
          k search = this.flush_Map.get("entityIds");
          if (search != null) {
             search.init_V_Component(Component.literal("Search entity type..."));
          }
       }
 
-      if (action instanceof ValueSink) {
+      if (action instanceof LookAtBlockAction) {
          k search = this.flush_Map.get("entityIds");
          if (search != null) {
             search.init_V_Component(Component.literal("Search entity type..."));
          }
       }
 
-      if (action instanceof ah) {
+      if (action instanceof StoreItemAction) {
          k search = this.flush_Map.get("targetItems");
          if (search != null) {
             search.init_V_Component(Component.literal("Search item id..."));
          }
       }
 
-      if (action instanceof ListPool) {
+      if (action instanceof InventoryAuditAction) {
          k search = this.flush_Map.get("targetItems");
          if (search != null) {
             search.init_V_Component(Component.literal("Item name"));
@@ -945,7 +945,7 @@ public class ActionEditorOverlay extends bj {
       this.get_Map.clear();
       this.set_Map.clear();
       this.state_Z = false;
-      if (action instanceof G) {
+      if (action instanceof PayAction) {
          k search = this.flush_Map.get("players");
          if (search != null) {
             search.init_V_Component(Component.literal("Search or add player..."));
@@ -969,7 +969,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (action instanceof au) {
+      if (action instanceof WaitForChatAction) {
          k search = this.init_k_I(180);
          search.init_V_Component(Component.literal("Search recent chat..."));
          this.flush_Map.put("_wait_chat_search", search);
@@ -1012,13 +1012,13 @@ public class ActionEditorOverlay extends bj {
          this.h();
       }
 
-      if (action instanceof ax) {
+      if (action instanceof WaitForGuiAction) {
          k captureName = this.init_k_I(100);
          captureName.init_V_Component(Component.literal("Variable name"));
          this.flush_Map.put("_capture_name", captureName);
       }
 
-      if (action instanceof autismclient.util.macro.TaskQueue) {
+      if (action instanceof autismclient.util.macro.CaptureValueAction) {
          k token = this.init_k_I(180);
          token.open(false);
          token.update(false);
@@ -1029,7 +1029,7 @@ public class ActionEditorOverlay extends bj {
          preview.update(false);
          preview.init_V_Component(Component.literal("Nothing available now"));
          this.flush_Map.put("_capture_preview", preview);
-         this.load_Str = autismclient.util.macro.TaskQueue.init(this.update("exampleText", ""), this.update("selectedText", ""), this.update("saveAs", "value"));
+         this.load_Str = autismclient.util.macro.CaptureValueAction.init(this.update("exampleText", ""), this.update("selectedText", ""), this.update("saveAs", "value"));
          this.read_Str = "";
          this.pop_Z = false;
 
@@ -1044,21 +1044,21 @@ public class ActionEditorOverlay extends bj {
          this.load_Str = "";
       }
 
-      if (action instanceof S) {
+      if (action instanceof RotateAction) {
          this.data_Z = false;
          this.i();
-         S rotateAction = (S)action;
+         RotateAction rotateAction = (RotateAction)action;
          k smoothnessField = this.init_Map.get("smoothness");
-         int smoothness = S.init_I(rotateAction.smoothness);
+         int smoothness = RotateAction.init_I(rotateAction.smoothness);
          this.init_CompoundTag.putInt("smoothness", smoothness);
          if (smoothnessField != null) {
             smoothnessField.init_V_Str(String.valueOf(smoothness));
          }
-      } else if (action instanceof ValueSink lookAtAction) {
+      } else if (action instanceof LookAtBlockAction lookAtAction) {
          this.data_Z = false;
          this.i();
          k smoothnessField = this.init_Map.get("smoothness");
-         int smoothness = S.init_I(lookAtAction.smoothness);
+         int smoothness = RotateAction.init_I(lookAtAction.smoothness);
          this.init_CompoundTag.putInt("smoothness", smoothness);
          if (smoothnessField != null) {
             smoothnessField.init_V_Str(String.valueOf(smoothness));
@@ -1068,11 +1068,11 @@ public class ActionEditorOverlay extends bj {
          this.i();
       }
 
-      if (action instanceof aQ xCarryAction) {
+      if (action instanceof XCarryAction xCarryAction) {
          this.value_Z = false;
          this.j();
          k delayField = this.init_Map.get("safeClickDelayTicks");
-         int safeDelay = aQ.write(xCarryAction.safeClickDelayTicks);
+         int safeDelay = XCarryAction.write(xCarryAction.safeClickDelayTicks);
          this.init_CompoundTag.putInt("safeClickDelayTicks", safeDelay);
          this.init_CompoundTag.putBoolean("safeClickDelayAfterPickup", xCarryAction.safeClickDelayAfterPickup);
          this.init_CompoundTag.putBoolean("safeClickDelayBeforeReturn", xCarryAction.safeClickDelayBeforeReturn);
@@ -1102,13 +1102,13 @@ public class ActionEditorOverlay extends bj {
          slotF.init_V_Component(Component.literal("Slot"));
          slotF.init_V_Consumer(text -> this.table());
          this.init_Map.put("place_itemSlot", slotF);
-         if (action instanceof K placeAction) {
+         if (action instanceof PlaceAction placeAction) {
             this.load_Map.put("place_waitForItem", placeAction.waitForItem);
             this.load_Map.put("place_silentSwitch", placeAction.silentSwitch);
          }
 
          ArrayUtil placeTarget = this.update_Map.get("itemName");
-         if (placeTarget == null && action instanceof K placeAction) {
+         if (placeTarget == null && action instanceof PlaceAction placeAction) {
             placeTarget = this.init_ArrayUtil_ArrayUtil_Str(placeAction.itemTarget, placeAction.itemName);
          }
 
@@ -1121,7 +1121,7 @@ public class ActionEditorOverlay extends bj {
             nameF.init_V_Consumer(text -> this.table());
          }
 
-         if (action instanceof K placeAction && placeAction.blockPos != null) {
+         if (action instanceof PlaceAction placeAction && placeAction.blockPos != null) {
             autismclient.util.au.init(placeAction.blockPos, -50373);
          }
       }
@@ -1137,7 +1137,7 @@ public class ActionEditorOverlay extends bj {
       bk.init_bk().update_V(this);
    }
 
-   public void init_V_H(H action) {
+   public void init_V_H(PayloadAction action) {
       this.init_V_MacroAction(action, null, null);
       this.run_Z = true;
    }
@@ -1148,7 +1148,7 @@ public class ActionEditorOverlay extends bj {
          return false;
       }
 
-      if (!this.run_Z && this.init_H == null && !(this.init_MacroAction instanceof H)) {
+      if (!this.run_Z && this.init_H == null && !(this.init_MacroAction instanceof PayloadAction)) {
          return false;
       }
 
@@ -1434,12 +1434,12 @@ public class ActionEditorOverlay extends bj {
                return true;
             }
 
-            String norm = ah.init_Str_Str_8(rawTarget);
+            String norm = StoreItemAction.init_Str_Str_8(rawTarget);
             if (norm != null && !norm.isBlank()) {
-               String disp = ah.load_Str_Str_3(norm);
+               String disp = StoreItemAction.load_Str_Str_3(norm);
                if (this.f_l_I >= 0 && this.f_l_I < this.run_List.size()) {
                   if (!this.init_Z_Str_I(norm, this.f_l_I)) {
-                     aD.Inner_DataUtil entry = this.run_List.get(this.f_l_I);
+                     WaitForSlotChangeAction.Inner_DataUtil entry = this.run_List.get(this.f_l_I);
                      entry.init_Str = norm;
                      entry.init_ArrayUtil = capturedTarget.init_ArrayUtil();
                      this.init_V_aD_DataUtil(entry);
@@ -1450,7 +1450,7 @@ public class ActionEditorOverlay extends bj {
                } else if (this.push_Z(norm)) {
                   this.init_V_Str_I("Already added: " + disp, -38037);
                } else {
-                  aD.Inner_DataUtil entry = new aD.Inner_DataUtil(norm, this.init_aD_StreamUtil, this.f_m_I);
+                  WaitForSlotChangeAction.Inner_DataUtil entry = new WaitForSlotChangeAction.Inner_DataUtil(norm, this.init_aD_StreamUtil, this.f_m_I);
                   entry.init_ArrayUtil = capturedTarget.init_ArrayUtil();
                   entry.init_Str = norm;
                   this.run_List.add(entry);
@@ -2167,7 +2167,7 @@ public class ActionEditorOverlay extends bj {
          int editGap = 3;
          List<String> actOptions = new ArrayList<>();
 
-         for (N a : MapStore.init_List_4()) {
+         for (N a : ItemAction.init_List_4()) {
             actOptions.add(a.load_Str);
          }
 
@@ -2288,11 +2288,11 @@ public class ActionEditorOverlay extends bj {
    private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
       if (this.init_MapStore != null && this.f_j_I >= 0 && this.f_j_I < this.init_MapStore.itemNames.size()) {
          int gap = 4;
-         MapStore.Inner_DataUtil scope = this.init_MapStore.init_MapStore_DataUtil_I(this.f_j_I);
-         MapStore.Inner_DataUtil[] scopes = MapStore.Inner_DataUtil.values();
+         ItemAction.Inner_DataUtil scope = this.init_MapStore.init_MapStore_DataUtil_I(this.f_j_I);
+         ItemAction.Inner_DataUtil[] scopes = ItemAction.Inner_DataUtil.values();
          List<String> scopeOptions = new ArrayList<>();
 
-         for (MapStore.Inner_DataUtil s : scopes) {
+         for (ItemAction.Inner_DataUtil s : scopes) {
             scopeOptions.add(s.init_Str);
          }
 
@@ -2307,11 +2307,11 @@ public class ActionEditorOverlay extends bj {
             13,
             idx -> this.init_MapStore.init_V_I_MapStore_DataUtil(this.f_j_I, scopes[Math.max(0, Math.min(idx, scopes.length - 1))])
          );
-         MapStore.Inner_CachePool mode = this.init_MapStore.init_MapStore_CachePool_I(this.f_j_I);
-         MapStore.Inner_CachePool[] stackModes = MapStore.Inner_CachePool.values();
+         ItemAction.Inner_CachePool mode = this.init_MapStore.init_MapStore_CachePool_I(this.f_j_I);
+         ItemAction.Inner_CachePool[] stackModes = ItemAction.Inner_CachePool.values();
          List<String> stackOptions = new ArrayList<>();
 
-         for (MapStore.Inner_CachePool m : stackModes) {
+         for (ItemAction.Inner_CachePool m : stackModes) {
             stackOptions.add("Stack: " + m.init_Str);
          }
 
@@ -2319,7 +2319,7 @@ public class ActionEditorOverlay extends bj {
          int stackX = x + invW + gap;
          this.init_V_Str("item_stack", stackOptions, mode.ordinal(), stackX, y + 2, stackW, 13, idx -> {
             while (this.init_MapStore.stackAmountModes.size() <= this.f_j_I) {
-               this.init_MapStore.stackAmountModes.add(MapStore.Inner_CachePool.DEFAULT.ordinal());
+               this.init_MapStore.stackAmountModes.add(ItemAction.Inner_CachePool.DEFAULT.ordinal());
             }
 
             this.init_MapStore.stackAmountModes.set(this.f_j_I, stackModes[Math.max(0, Math.min(idx, stackModes.length - 1))].ordinal());
@@ -2586,7 +2586,7 @@ public class ActionEditorOverlay extends bj {
          for (int i = firstSel; i < this.push_List.size() && i <= craftViewport.tick(); i++) {
             int siy = craftViewport.init_I(i);
             if (siy != -2147483648) {
-               autismclient.util.macro.SyncManager.Inner_DataUtil entry = this.push_List.get(i);
+               autismclient.util.macro.CraftAction.Inner_DataUtil entry = this.push_List.get(i);
                boolean useMax = this.load_Map.getOrDefault("craft_useMax_" + i, false);
                int removeX = x + w - sbGap - removeW;
                int fi = i;
@@ -2716,7 +2716,7 @@ public class ActionEditorOverlay extends bj {
                      this.push_List.removeIf(e -> fOpt.init_Str != null && fOpt.init_Str.equals(e.init_Str) || fOpt.init_I >= 0 && fOpt.init_I == e.init_I);
                      this.set_V_2();
                   } else {
-                     autismclient.util.macro.SyncManager.Inner_DataUtil newEntry = autismclient.util.macro.SyncManager.Inner_DataUtil.init(fOpt, 1, false);
+                     autismclient.util.macro.CraftAction.Inner_DataUtil newEntry = autismclient.util.macro.CraftAction.Inner_DataUtil.init(fOpt, 1, false);
                      this.push_List.add(newEntry);
                      int idx = this.push_List.size() - 1;
                      k f = this.init_k_I(44);
@@ -2751,12 +2751,12 @@ public class ActionEditorOverlay extends bj {
             }
          }
 
-         autismclient.util.macro.SyncManager.Inner_DataUtil newEntry = autismclient.util.macro.SyncManager.Inner_DataUtil.init(
+         autismclient.util.macro.CraftAction.Inner_DataUtil newEntry = autismclient.util.macro.CraftAction.Inner_DataUtil.init(
             this.init_J_TaskQueue, amount, this.tick_Z
          );
 
          for (int i = 0; i < this.push_List.size(); i++) {
-            autismclient.util.macro.SyncManager.Inner_DataUtil existing = this.push_List.get(i);
+            autismclient.util.macro.CraftAction.Inner_DataUtil existing = this.push_List.get(i);
             if (newEntry.init_Str != null && newEntry.init_Str.equals(existing.init_Str) || newEntry.init_I >= 0 && newEntry.init_I == existing.init_I) {
                existing.read_I = newEntry.read_I;
                existing.init_Z = newEntry.init_Z;
@@ -2784,7 +2784,7 @@ public class ActionEditorOverlay extends bj {
       this.init_Map.keySet().removeIf(k -> k.startsWith("craft_amount_"));
 
       for (int i = 0; i < this.push_List.size(); i++) {
-         autismclient.util.macro.SyncManager.Inner_DataUtil entry = this.push_List.get(i);
+         autismclient.util.macro.CraftAction.Inner_DataUtil entry = this.push_List.get(i);
          k f = this.init_k_I(44);
          f.poll(true);
          f.init_V_Str(String.valueOf(entry.read_I));
@@ -2940,14 +2940,14 @@ public class ActionEditorOverlay extends bj {
          : (
             noDropTargets
                ? (
-                  this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.ALL
+                  this.init_PacketUtil.mode == DropAction.Inner_DataUtil.ALL
                      ? "No items selected: Drop All drops the entire main inventory and hotbar."
                      : "No items selected: Times drops the currently held item by the count below."
                )
                : "No row selected. These controls set defaults for newly added rows."
          );
       cy = this.init_I_GuiGraphicsExtract(ctx, x, cy, w, dropHint);
-      boolean dropAllSelected = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.ALL;
+      boolean dropAllSelected = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == DropAction.Inner_DataUtil.ALL;
       String modeLabel = editingSelectedDrop ? "Selected Row" : (noDropTargets ? "No Items" : "Default Mode");
       int lw = this.init_I_I(w, modeLabel, font);
       this.init_V_GuiGraphicsExtract_3(ctx, modeLabel, x, cy, lw, font);
@@ -2970,7 +2970,7 @@ public class ActionEditorOverlay extends bj {
                this.read_V_I_I(this.f_k_I, 0);
             } else {
                this.read_Map.put("drop_mode", 0);
-               this.init_PacketUtil.mode = PacketUtil.Inner_DataUtil.ALL;
+               this.init_PacketUtil.mode = DropAction.Inner_DataUtil.ALL;
             }
 
             this.next_V();
@@ -2992,7 +2992,7 @@ public class ActionEditorOverlay extends bj {
                this.read_V_I_I(this.f_k_I, Math.max(1, this.init_I_I_2(this.f_k_I)));
             } else {
                this.read_Map.put("drop_mode", 1);
-               this.init_PacketUtil.mode = PacketUtil.Inner_DataUtil.TIMES;
+               this.init_PacketUtil.mode = DropAction.Inner_DataUtil.TIMES;
             }
 
             this.next_V();
@@ -3245,7 +3245,7 @@ public class ActionEditorOverlay extends bj {
          k countField = this.init_Map.get("drop_globalCount");
          if (countField != null) {
             boolean editingSelectedDrop = this.f_k_I >= 0 && this.f_k_I < this.init_PacketUtil.itemNames.size();
-            boolean dropAll = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.ALL;
+            boolean dropAll = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == DropAction.Inner_DataUtil.ALL;
             int displayCount = editingSelectedDrop ? Math.max(1, this.init_I_I_2(this.f_k_I)) : Math.max(1, this.init_PacketUtil.dropCount);
             this.valid_Z = true;
             countField.init_V_Str(String.valueOf(displayCount));
@@ -3260,7 +3260,7 @@ public class ActionEditorOverlay extends bj {
          k countField = this.init_Map.get("drop_globalCount");
          if (countField != null) {
             boolean editingSelectedDrop = this.f_k_I >= 0 && this.f_k_I < this.init_PacketUtil.itemNames.size();
-            boolean dropAll = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.ALL;
+            boolean dropAll = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == DropAction.Inner_DataUtil.ALL;
             if (!dropAll) {
                try {
                   int value = Math.max(1, Integer.parseInt(countField.load_Str().strip()));
@@ -3397,7 +3397,7 @@ public class ActionEditorOverlay extends bj {
                } catch (NumberFormatException var8x) {
                }
 
-               this.clear_List.add(new az.Inner_DataUtil(uname, step));
+               this.clear_List.add(new WaitForLanStepAction.Inner_DataUtil(uname, step));
                int idx = this.clear_List.size() - 1;
                k uf2 = this.init_k_I(80);
                uf2.init_V_Str(uname);
@@ -3417,7 +3417,7 @@ public class ActionEditorOverlay extends bj {
       this.init_Map.keySet().removeIf(k -> k.startsWith("lan_user_") || k.startsWith("lan_step_"));
 
       for (int i = 0; i < this.clear_List.size(); i++) {
-         az.Inner_DataUtil e = this.clear_List.get(i);
+         WaitForLanStepAction.Inner_DataUtil e = this.clear_List.get(i);
          k uf = this.init_k_I(80);
          uf.init_V_Str(e.init_Str);
          this.init_Map.put("lan_user_" + i, uf);
@@ -3550,10 +3550,10 @@ public class ActionEditorOverlay extends bj {
       if (this.reset_List.isEmpty()) {
          this.init_I_GuiGraphicsExtract(ctx, x, cy, w, "No packet rules yet. Add C2S or S2C.");
       } else {
-         autismclient.util.macro.aM.Inner_CachePool rule = this.reset_List.get(Math.max(0, this.f_z_I));
+         autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = this.reset_List.get(Math.max(0, this.f_z_I));
          List<String> dirOpts = new ArrayList<>();
 
-         for (autismclient.util.macro.aM.Inner_DataUtil d : autismclient.util.macro.aM.Inner_DataUtil.values()) {
+         for (autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil d : autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.values()) {
             dirOpts.add(d.name());
          }
 
@@ -3567,10 +3567,10 @@ public class ActionEditorOverlay extends bj {
             x,
             cy,
             w,
-            i -> rule.init_aM_DataUtil = autismclient.util.macro.aM.Inner_DataUtil.values()[i]
+            i -> rule.init_aM_DataUtil = autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.values()[i]
          );
          Class<? extends Packet<?>> packetClass = this.init_Class_aM_CachePool(rule);
-         List<String> fieldNames = new ArrayList<>(autismclient.util.macro.aM.init_List(packetClass));
+         List<String> fieldNames = new ArrayList<>(autismclient.util.macro.WaitPacketMatchAction.init_List(packetClass));
          List<String> fieldDisplay = new ArrayList<>();
          fieldDisplay.add("Packet Only");
          fieldDisplay.addAll(fieldNames);
@@ -3578,10 +3578,10 @@ public class ActionEditorOverlay extends bj {
          cy = this.init_I_GuiGraphicsExtract_2(ctx, font, "Field", "_wpm_field", fieldDisplay, fieldIdx, x, cy, w, i -> {
             rule.load = i <= 0 ? "" : fieldNames.get(i - 1);
             if (rule.load.isBlank()) {
-               rule.init_aM_StreamUtil = autismclient.util.macro.aM.Inner_StreamUtil.EXISTS;
+               rule.init_aM_StreamUtil = autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS;
             }
 
-            List<String> vo = autismclient.util.macro.aM.init_List_Class_Str(packetClass, rule.load);
+            List<String> vo = autismclient.util.macro.WaitPacketMatchAction.init_List_Class_Str(packetClass, rule.load);
             if (!vo.isEmpty() && (rule.read == null || rule.read.isBlank() || !vo.contains(rule.read))) {
                rule.read = vo.get(0);
             }
@@ -3591,7 +3591,7 @@ public class ActionEditorOverlay extends bj {
          if (rule.load != null && !rule.load.isBlank()) {
             List<String> opOpts = new ArrayList<>();
 
-            for (autismclient.util.macro.aM.Inner_StreamUtil o : autismclient.util.macro.aM.Inner_StreamUtil.values()) {
+            for (autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil o : autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.values()) {
                opOpts.add(o.name());
             }
 
@@ -3605,10 +3605,10 @@ public class ActionEditorOverlay extends bj {
                x,
                cy,
                w,
-               i -> rule.init_aM_StreamUtil = autismclient.util.macro.aM.Inner_StreamUtil.values()[i]
+               i -> rule.init_aM_StreamUtil = autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.values()[i]
             );
-            if (rule.init_aM_StreamUtil != autismclient.util.macro.aM.Inner_StreamUtil.EXISTS) {
-               List<String> valueOptions = autismclient.util.macro.aM.init_List_Class_Str(packetClass, rule.load);
+            if (rule.init_aM_StreamUtil != autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS) {
+               List<String> valueOptions = autismclient.util.macro.WaitPacketMatchAction.init_List_Class_Str(packetClass, rule.load);
                if (!valueOptions.isEmpty()) {
                   int valIdx = Math.max(0, valueOptions.indexOf(rule.read));
                   cy = this.init_I_GuiGraphicsExtract_2(ctx, font, "Value", "_wpm_value_dd", valueOptions, valIdx, x, cy, w, i -> {
@@ -3699,7 +3699,7 @@ public class ActionEditorOverlay extends bj {
          for (int i = viewport.pop(); i < this.reset_List.size() && i <= viewport.tick(); i++) {
             int iy = viewport.init_I(i);
             if (iy != -2147483648) {
-               autismclient.util.macro.aM.Inner_CachePool rule = this.reset_List.get(i);
+               autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = this.reset_List.get(i);
                boolean selected = i == this.f_z_I;
                boolean hovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
                autismclient.gui.macro.editor.a.CachePool.init(
@@ -3978,7 +3978,7 @@ public class ActionEditorOverlay extends bj {
       );
    }
 
-   private void load_V_H(H seedAction) {
+   private void load_V_H(PayloadAction seedAction) {
       this.init_bE = bE.init_bE_H(seedAction);
       this.init_ActionEditorOverla_2 = null;
       this.write_J = -9223372036854775808L;
@@ -4112,8 +4112,8 @@ public class ActionEditorOverlay extends bj {
          .put("payload_add_type", this.init_I_bJ_BufferHelper(this.init_bJ_BufferHelper_Str(template.init_Str(), suggestedMode, template.init_List())));
    }
 
-   private ActionEditorOverlay.JsonUtil init_ActionEditorOverla_H(H seedAction) {
-      H action = new H();
+   private ActionEditorOverlay.JsonUtil init_ActionEditorOverla_H(PayloadAction seedAction) {
+      PayloadAction action = new PayloadAction();
       if (seedAction != null) {
          action.fromTag(seedAction.toTag());
       }
@@ -4220,7 +4220,7 @@ public class ActionEditorOverlay extends bj {
    private void poll(boolean notifyOnError) {
       k jsonField = this.init_Map.get("payload_json");
       if (jsonField != null) {
-         H preview = new H();
+         PayloadAction preview = new PayloadAction();
          if (this.init_H != null) {
             preview.fromTag(this.init_H.toTag());
          }
@@ -4765,7 +4765,7 @@ public class ActionEditorOverlay extends bj {
          ctx, sendBtns[0], cy, sendBtns[1], 13, sendLbl, ByteReader.Inner_StreamUtil.SUCCESS, !this.close_Z && built.init_Z() && !modelBad, mx, my, () -> {
             if (!this.close_Z) {
                try {
-                  H action = this.load_H();
+                  PayloadAction action = this.load_H();
                   action.execute(init_Minecraft);
                } catch (Exception e) {
                   AutismClientMessaging.sendPrefixed("§cPayload send failed: " + AutismPayloadSupport.init(e));
@@ -5387,7 +5387,7 @@ public class ActionEditorOverlay extends bj {
          return this.load_bJ_JsonUtil();
       }
 
-      H action = new H();
+      PayloadAction action = new PayloadAction();
       if (this.init_H != null) {
          action.fromTag(this.init_H.toTag());
       }
@@ -5422,7 +5422,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private bJ.Inner_JsonUtil load_bJ_JsonUtil() {
-      return this.init_bE == null ? bJ.init(new H()) : this.init_bE.init_bJ_JsonUtil();
+      return this.init_bE == null ? bJ.init(new PayloadAction()) : this.init_bE.init_bJ_JsonUtil();
    }
 
    private void write_V(String line) {
@@ -5567,14 +5567,14 @@ public class ActionEditorOverlay extends bj {
       this.data();
    }
 
-   private H init_H() {
+   private PayloadAction init_H() {
       this.push(true);
       if (this.init_bE != null) {
          if (this.init_bE.flush != null && !this.init_bE.flush.isBlank()) {
             throw new IllegalArgumentException(this.init_bE.flush);
          }
 
-         H action = this.init_bE.init_H_H(this.init_H);
+         PayloadAction action = this.init_bE.init_H_H(this.init_H);
          if (action.channel == null || action.channel.isBlank()) {
             action.channel = "minecraft:brand";
          }
@@ -5587,7 +5587,7 @@ public class ActionEditorOverlay extends bj {
          action.payloadData = AutismPayloadSupport.init_Str(built.init_BArr());
          return action;
       } else {
-         H action = new H();
+         PayloadAction action = new PayloadAction();
          if (this.init_H != null) {
             action.fromTag(this.init_H.toTag());
          }
@@ -5760,7 +5760,7 @@ public class ActionEditorOverlay extends bj {
             ctx, seedBtns[2], cy, seedBtns[3], 13, sendNowLbl, ByteReader.Inner_StreamUtil.SUCCESS, !this.close_Z, mx, my, () -> {
                if (!this.close_Z) {
                   try {
-                     H action = this.load_H();
+                     PayloadAction action = this.load_H();
                      action.execute(init_Minecraft);
                   } catch (Exception e) {
                      AutismClientMessaging.sendPrefixed("§cPayload send failed: " + AutismPayloadSupport.init(e));
@@ -5789,9 +5789,9 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private H load_H() {
+   private PayloadAction load_H() {
       if (this.init_H == null && this.init_MacroAction == null) {
-         H action = new H();
+         PayloadAction action = new PayloadAction();
          if (this.init_H != null) {
             action.fromTag(this.init_H.toTag());
          }
@@ -5944,7 +5944,7 @@ public class ActionEditorOverlay extends bj {
       int[] presetBtns = this.init_IArr_I(x, w, false, "Default", "Module");
       this.init_ByteReader_GuiGraphicsExtract_2(
          ctx, presetBtns[0], y + 2, presetBtns[1], btnH, "Default", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
-            autismclient.util.macro.FileCache tmp = new autismclient.util.macro.FileCache();
+            autismclient.util.macro.DelayPacketsAction tmp = new autismclient.util.macro.DelayPacketsAction();
             tmp.read();
             this.write_Map.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
             this.write_Map.put("s2cPackets", new ArrayList<>(tmp.s2cPacketNames));
@@ -5952,7 +5952,7 @@ public class ActionEditorOverlay extends bj {
       );
       this.init_ByteReader_GuiGraphicsExtract_2(
          ctx, presetBtns[2], y + 2, presetBtns[3], btnH, "Module", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, () -> {
-            autismclient.util.macro.FileCache tmp = new autismclient.util.macro.FileCache();
+            autismclient.util.macro.DelayPacketsAction tmp = new autismclient.util.macro.DelayPacketsAction();
             tmp.write();
             this.write_Map.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
             this.write_Map.put("s2cPackets", new ArrayList<>(tmp.s2cPacketNames));
@@ -6394,7 +6394,7 @@ public class ActionEditorOverlay extends bj {
          return "";
       }
 
-      if (this.init_MacroAction instanceof al && field.key().startsWith("toolArg.")) {
+      if (this.init_MacroAction instanceof ToolsAction && field.key().startsWith("toolArg.")) {
          String name = field.key().substring("toolArg.".length());
          autismclient.util.macro.k.Inner_TaskQueue tool = autismclient.util.macro.k.init_k_TaskQueue(this.tick_Str("toolId"));
          if (tool != null) {
@@ -6604,7 +6604,7 @@ public class ActionEditorOverlay extends bj {
       boolean flatEditable = hasFlatEditor;
       if (hasFlatEditor && stored != null) {
          try {
-            flatEditable = a.init_a_CompoundTag(stored).read_a() != null;
+            flatEditable = MacroCondition.init_a_CompoundTag(stored).read_a() != null;
          } catch (Throwable ignored) {
             flatEditable = true;
          }
@@ -6625,14 +6625,14 @@ public class ActionEditorOverlay extends bj {
          flat.putString("cond_toolFilter", this.tick_Str("cond_toolFilter"));
 
          try {
-            return a.init_a_CompoundTag_Str(flat, "cond_").init_Str();
+            return MacroCondition.init_a_CompoundTag_Str(flat, "cond_").init_Str();
          } catch (Throwable var9) {
          }
       }
 
       if (stored != null) {
          try {
-            return a.init_a_CompoundTag(stored).init_Str();
+            return MacroCondition.init_a_CompoundTag(stored).init_Str();
          } catch (Throwable var8) {
          }
       }
@@ -6710,7 +6710,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private String open_Str() {
-      if (this.init_MacroAction instanceof z pca) {
+      if (this.init_MacroAction instanceof PacketClickAction pca) {
          return pca.target == null ? null : pca.target.init_bo_StreamUtil_bo_DataUtil(this.init_bo_DataUtil()).init_Str();
       } else {
          return null;
@@ -6790,8 +6790,8 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void init_V_GuiGraphicsExtract_4(GuiGraphicsExtractor ctx, int x, int y, int w, int h, int index, String step, boolean hovered) {
-      String canonical = L.load_Str(step);
-      boolean condition = L.init_Z_2(canonical);
+      String canonical = RaceAction.load_Str(step);
+      boolean condition = RaceAction.init_Z_2(canonical);
       int bgColor = hovered ? p.level() : p.flags();
       TableIndex.init(ctx, x, y + 1, w, h - 2, bgColor);
       int badgeColor = condition ? -30720 : -12268476;
@@ -6884,13 +6884,13 @@ public class ActionEditorOverlay extends bj {
    }
 
    private String open_Str(String step) {
-      String canonical = L.load_Str(step);
-      String type = L.init_Str_2(canonical);
-      return (L.init_Z_2(canonical) ? "COND  " : "ACT   ") + type;
+      String canonical = RaceAction.load_Str(step);
+      String type = RaceAction.init_Str_2(canonical);
+      return (RaceAction.init_Z_2(canonical) ? "COND  " : "ACT   ") + type;
    }
 
    private boolean update_Z(String step) {
-      return L.load_Z(L.load_Str(step));
+      return RaceAction.load_Z(RaceAction.load_Str(step));
    }
 
    private int init_I_List(List<String> values) {
@@ -6916,7 +6916,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void sync_V(String fieldKey) {
-      if (this.init_MacroAction instanceof z) {
+      if (this.init_MacroAction instanceof PacketClickAction) {
          this.write_Str = fieldKey;
          D.init(target -> this.init_V_bo_StreamUtil(target));
          this.index();
@@ -6925,7 +6925,7 @@ public class ActionEditorOverlay extends bj {
 
    private void init_V_bo_StreamUtil(bo.Inner_StreamUtil target) {
       if (target != null) {
-         if (this.init_MacroAction instanceof z pca) {
+         if (this.init_MacroAction instanceof PacketClickAction pca) {
             bo.Inner_DataUtil mode = this.init_bo_DataUtil();
             pca.mode = mode.name();
             pca.init(target.init_bo_StreamUtil_bo_DataUtil(mode));
@@ -7195,7 +7195,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private static void init_V_Set(Set<String> tokens, MacroAction action, int limit) {
-      if (action instanceof autismclient.util.macro.TaskQueue capture && tokens.size() < limit) {
+      if (action instanceof autismclient.util.macro.CaptureValueAction capture && tokens.size() < limit) {
          for (String name : UtilCore.init(capture.matchMode, capture.pattern)) {
             if (tokens.size() >= limit) {
                return;
@@ -7214,19 +7214,19 @@ public class ActionEditorOverlay extends bj {
    }
 
    private static void init_V_Set_MacroAction(Set<String> tokens, MacroAction action) {
-      if (action instanceof au chat) {
+      if (action instanceof WaitForChatAction chat) {
          for (String name : UtilCore.init(chat.init_UtilCore_DataUtil(), chat.pattern)) {
             tokens.add("{" + name + "}");
          }
 
          init_V_Set_2(tokens, chat.saveAs, "sender", "message", "display", "source");
-      } else if (action instanceof ax gui) {
+      } else if (action instanceof WaitForGuiAction gui) {
          for (String name : UtilCore.init(gui.matchMode, gui.guiTitle)) {
             tokens.add("{" + name + "}");
          }
 
          init_V_Set_2(tokens, gui.saveAs, "title", "type");
-      } else if (action instanceof autismclient.util.macro.TaskQueue capture) {
+      } else if (action instanceof autismclient.util.macro.CaptureValueAction capture) {
          for (String name : UtilCore.init(capture.matchMode, capture.pattern)) {
             tokens.add("{" + name + "}");
          }
@@ -7247,9 +7247,9 @@ public class ActionEditorOverlay extends bj {
             case HELD_ITEM:
                init_V_Set_2(tokens, capture.saveAs, "name", "id", "count", "slot", "lore", "lore1");
          }
-      } else if (action instanceof V select && select.outputVariable != null && !select.outputVariable.isBlank()) {
+      } else if (action instanceof SelectSlotAction select && select.outputVariable != null && !select.outputVariable.isBlank()) {
          tokens.add("{" + select.outputVariable.trim() + "}");
-      } else if (action instanceof autismclient.util.macro.o variables) {
+      } else if (action instanceof autismclient.util.macro.MacroVariablesAction variables) {
          for (String name : variables.names) {
             if (name != null && !name.isBlank()) {
                tokens.add("{" + name.trim() + "}");
@@ -7257,35 +7257,35 @@ public class ActionEditorOverlay extends bj {
          }
       } else if (action instanceof CacheEntry output) {
          String root = output.load();
-         if (action instanceof ay) {
+         if (action instanceof WaitForHealthAction) {
             init_V_Set_2(tokens, root, "health", "max", "absorption");
-         } else if (action instanceof aw) {
+         } else if (action instanceof WaitForEntityAction) {
             init_V_Set_2(tokens, root, "name", "id", "uuid", "x", "y", "z", "distance");
-         } else if (action instanceof aE) {
+         } else if (action instanceof WaitForSoundAction) {
             init_V_Set_2(tokens, root, "id", "x", "y", "z");
-         } else if (action instanceof aB || action instanceof autismclient.util.macro.aM) {
+         } else if (action instanceof WaitForPacketAction || action instanceof autismclient.util.macro.WaitPacketMatchAction) {
             init_V_Set_2(tokens, root, "name", "class", "direction");
-            if (action instanceof autismclient.util.macro.aM packetMatch) {
+            if (action instanceof autismclient.util.macro.WaitPacketMatchAction packetMatch) {
                String cleanRoot = m.load(root);
                if (!cleanRoot.isBlank()) {
-                  for (autismclient.util.macro.aM.Inner_CachePool rule : packetMatch.init_List_9()) {
+                  for (autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule : packetMatch.init_List_9()) {
                      if (rule.load != null && !rule.load.isBlank()) {
                         tokens.add("{" + cleanRoot + "." + rule.load.trim().toLowerCase(Locale.ROOT) + "}");
                      }
                   }
                }
             }
-         } else if (action instanceof aJ gui) {
+         } else if (action instanceof WaitGuiTypeAction gui) {
             for (String name : UtilCore.init(gui.matchMode, gui.title)) {
                tokens.add("{" + name + "}");
             }
 
             init_V_Set_2(tokens, root, "title", "type");
-         } else if (action instanceof aN || action instanceof aC || action instanceof aF) {
+         } else if (action instanceof WaitPosAction || action instanceof WaitForPositionDeltaAction || action instanceof WaitForTeleportAction) {
             init_V_Set_2(tokens, root, "x", "y", "z", "yaw", "pitch");
-         } else if (action instanceof aG) {
+         } else if (action instanceof WaitForWorldChangeAction) {
             init_V_Set_2(tokens, root, "id", "name");
-         } else if (action instanceof aI) {
+         } else if (action instanceof WaitGamemodeChangeAction) {
             init_V_Set_2(tokens, root, "name");
          } else {
             init_V_Set_2(tokens, root, "name", "id", "count", "slot", "condition");
@@ -7407,7 +7407,7 @@ public class ActionEditorOverlay extends bj {
                this.load(field, bindingField, ctrlX + valueW + 2, y + 2, variableW);
             }
          } else {
-            boolean toolsLabels = this.init_MacroAction instanceof al || key.startsWith("cond_tool");
+            boolean toolsLabels = this.init_MacroAction instanceof ToolsAction || key.startsWith("cond_tool");
             List<String> displayOpts = toolsLabels ? opts.stream().map(value -> BufferHelper.init(key, value)).toList() : opts;
             int ddW = this.init_I_List_I(displayOpts, valueW);
             autismclient.gui.f.b.SyncManager dd = this.run_Map
@@ -7454,7 +7454,7 @@ public class ActionEditorOverlay extends bj {
       int capBtnH = 13;
       int labelW = hasCapture ? w - capBtnW - 4 : w;
       autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label(), font, p.parse(), x, y + 3, false);
-      if (this.init_MacroAction instanceof al && "position".equals(key) && !"OFFSET".equals(this.tick_Str("destination"))) {
+      if (this.init_MacroAction instanceof ToolsAction && "position".equals(key) && !"OFFSET".equals(this.tick_Str("destination"))) {
          int currentW = autismclient.gui.f.b.k.init(this.init_Font, "Use current", font, p.scan()) + 12;
          this.init_ByteReader_GuiGraphicsExtract_2(
             ctx, x + w - currentW, y, currentW, 13, "Use current", ByteReader.Inner_StreamUtil.SECONDARY, init_Minecraft.player != null, mx, my, () -> {
@@ -7562,7 +7562,7 @@ public class ActionEditorOverlay extends bj {
          String slotText = hasSlotField && slotField != null ? slotField.load_Str().strip() : "";
          String entry = write_Str_Str_Str(nameText, slotText);
          if (!entry.isEmpty()) {
-            String normalized = this.put_Z(key) ? this.run_Str(entry) : (this.get_Z(key) ? ah.init_Str_Str_8(entry) : entry);
+            String normalized = this.put_Z(key) ? this.run_Str(entry) : (this.get_Z(key) ? StoreItemAction.init_Str_Str_8(entry) : entry);
             if (normalized != null && !normalized.isBlank() && !normalized.equals(lst.get(editIdx))) {
                lst.set(editIdx, normalized);
                if (this.reset_Z(key)) {
@@ -7611,7 +7611,7 @@ public class ActionEditorOverlay extends bj {
       int itemsY = addY + btnH + 2;
       int selAreaH = 56;
       int delW = 13;
-      int destW = xcarryList ? this.init_I_List_I(aQ.init_List_10(), 62) : 0;
+      int destW = xcarryList ? this.init_I_List_I(XCarryAction.init_List_10(), 62) : 0;
       int amountW = xcarryList ? Math.max(this.write_I("FullStk"), this.write_I("x64")) : 0;
       if (xcarryList) {
          this.sync(lst.size());
@@ -7632,12 +7632,12 @@ public class ActionEditorOverlay extends bj {
             int amountY = itemsY;
             autismclient.gui.f.b.k.init(ctx, this.init_Font, "Amount", this.init_CharEncoder.init_Identifier_l(l.read), p.parse(), x, amountY + 3, false);
             int modeX = x + 52;
-            boolean custom = this.init_aQ_DataUtil_I(editIdx) == aQ.Inner_DataUtil.CUSTOM;
+            boolean custom = this.init_aQ_DataUtil_I(editIdx) == XCarryAction.Inner_DataUtil.CUSTOM;
             int amountBtnW = Math.max(this.write_I("Count"), this.write_I("FullStk"));
             this.init_ByteReader_GuiGraphicsExtract_2(
                ctx, modeX, amountY, amountBtnW, btnH, custom ? "Count" : "FullStk", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
-                  boolean nowCustom = this.init_aQ_DataUtil_I(selectedXCarryIndex) == aQ.Inner_DataUtil.CUSTOM;
-                  this.init_V_I_aQ_DataUtil(selectedXCarryIndex, nowCustom ? aQ.Inner_DataUtil.FULL_STK : aQ.Inner_DataUtil.CUSTOM);
+                  boolean nowCustom = this.init_aQ_DataUtil_I(selectedXCarryIndex) == XCarryAction.Inner_DataUtil.CUSTOM;
+                  this.init_V_I_aQ_DataUtil(selectedXCarryIndex, nowCustom ? XCarryAction.Inner_DataUtil.FULL_STK : XCarryAction.Inner_DataUtil.CUSTOM);
                   k cf = this.init_Map.get(key + "_xcarry_count");
                   if (cf != null) {
                      cf.init_V_Str(String.valueOf(this.write_I(selectedXCarryIndex)));
@@ -7741,9 +7741,9 @@ public class ActionEditorOverlay extends bj {
                if (xcarryList) {
                   int fDestIndex = ri;
                   int dest = this.read_I(fDestIndex);
-                  int[] destValues = aQ.init_IArr();
-                  List<String> destOptions = aQ.init_List_10();
-                  int selectedDestIndex = aQ.init_I_I_6(dest);
+                  int[] destValues = XCarryAction.init_IArr();
+                  List<String> destOptions = XCarryAction.init_List_10();
+                  int selectedDestIndex = XCarryAction.init_I_I_6(dest);
                   String ddKey = key + "_xcarry_dest_" + fDestIndex;
                   int ddX = actionX;
                   int ddY = iy + 1;
@@ -7764,7 +7764,7 @@ public class ActionEditorOverlay extends bj {
                   this.sync_List.add(dd);
                   actionX += destW + 2;
                   int fAmountIndex = ri;
-                  boolean custom = this.init_aQ_DataUtil_I(fAmountIndex) == aQ.Inner_DataUtil.CUSTOM;
+                  boolean custom = this.init_aQ_DataUtil_I(fAmountIndex) == XCarryAction.Inner_DataUtil.CUSTOM;
                   String amountLabel = custom ? "x" + this.write_I(fAmountIndex) : "FullStk";
                   this.init_ByteReader_GuiGraphicsExtract_2(
                      ctx,
@@ -7778,8 +7778,8 @@ public class ActionEditorOverlay extends bj {
                      mx,
                      my,
                      () -> {
-                        boolean nowCustom = this.init_aQ_DataUtil_I(fAmountIndex) == aQ.Inner_DataUtil.CUSTOM;
-                        this.init_V_I_aQ_DataUtil(fAmountIndex, nowCustom ? aQ.Inner_DataUtil.FULL_STK : aQ.Inner_DataUtil.CUSTOM);
+                        boolean nowCustom = this.init_aQ_DataUtil_I(fAmountIndex) == XCarryAction.Inner_DataUtil.CUSTOM;
+                        this.init_V_I_aQ_DataUtil(fAmountIndex, nowCustom ? XCarryAction.Inner_DataUtil.FULL_STK : XCarryAction.Inner_DataUtil.CUSTOM);
                         this.open_Map.put(key, fAmountIndex);
                         k cf = this.init_Map.get(key + "_xcarry_count");
                         if (cf != null) {
@@ -8088,19 +8088,19 @@ public class ActionEditorOverlay extends bj {
 
       String pattern = "";
       UtilCore.Inner_DataUtil mode = UtilCore.Inner_DataUtil.MATCH;
-      if (this.init_MacroAction instanceof au) {
+      if (this.init_MacroAction instanceof WaitForChatAction) {
          k field = this.init_Map.get("pattern");
          pattern = field == null ? "" : field.load_Str();
          mode = this.init_UtilCore_DataUtil();
-      } else if (this.init_MacroAction instanceof ax) {
+      } else if (this.init_MacroAction instanceof WaitForGuiAction) {
          k field = this.init_Map.get("guiTitle");
          pattern = field == null ? "" : field.load_Str();
          mode = this.init_UtilCore_DataUtil();
-      } else if (this.init_MacroAction instanceof aJ) {
+      } else if (this.init_MacroAction instanceof WaitGuiTypeAction) {
          k field = this.init_Map.get("title");
          pattern = field == null ? "" : field.load_Str();
          mode = this.init_UtilCore_DataUtil();
-      } else if (this.init_MacroAction instanceof autismclient.util.macro.TaskQueue) {
+      } else if (this.init_MacroAction instanceof autismclient.util.macro.CaptureValueAction) {
          k field = this.init_Map.get("pattern");
          pattern = field == null ? "" : field.load_Str();
          mode = this.init_UtilCore_DataUtil();
@@ -8146,7 +8146,7 @@ public class ActionEditorOverlay extends bj {
       if (this.init_aM != null && this.init_aM.init_List != null && index >= 0) {
          for (int i = 0; i < Math.min(index, this.init_aM.init_List.size()); i++) {
             MacroAction action = this.init_aM.init_List.get(i);
-            if (action instanceof L race) {
+            if (action instanceof RaceAction race) {
                int end = i + Math.max(0, race.bodyCount);
                if (index > i && index <= end) {
                   return i;
@@ -8487,7 +8487,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (action instanceof al) {
+      if (action instanceof ToolsAction) {
          for (FieldDef field : this.init_ActionFieldSchema.fields()) {
             if (field.key().startsWith("toolArg.")) {
                k input = this.init_Map.get(field.key());
@@ -8507,7 +8507,7 @@ public class ActionEditorOverlay extends bj {
       if (index >= 0 && index < field.enumOptions().size()) {
          boolean changed = index != this.read_Map.getOrDefault(field.key(), 0);
          this.read_Map.put(field.key(), index);
-         if (changed && this.init_MacroAction instanceof al && "toolId".equals(field.key())) {
+         if (changed && this.init_MacroAction instanceof ToolsAction && "toolId".equals(field.key())) {
             this.frame();
             this.init_CompoundTag.putString("argumentsJson", "{}");
 
@@ -8523,7 +8523,7 @@ public class ActionEditorOverlay extends bj {
                }
             }
 
-            al draft = new al();
+            ToolsAction draft = new ToolsAction();
             draft.fromTag(this.init_CompoundTag);
             d.init(draft, this.init_CompoundTag);
             this.init_ActionFieldSchema = BufferHelper.init(draft);
@@ -8592,7 +8592,7 @@ public class ActionEditorOverlay extends bj {
             this.init_CompoundTag = this.init_MapStore.toTag();
          } else if (this.push_List != null) {
             for (int i = 0; i < this.push_List.size(); i++) {
-               autismclient.util.macro.SyncManager.Inner_DataUtil entry = this.push_List.get(i);
+               autismclient.util.macro.CraftAction.Inner_DataUtil entry = this.push_List.get(i);
                k af = this.init_Map.get("craft_amount_" + i);
                if (af != null) {
                   try {
@@ -8606,7 +8606,7 @@ public class ActionEditorOverlay extends bj {
 
             ListTag entryTags = new ListTag();
 
-            for (autismclient.util.macro.SyncManager.Inner_DataUtil entry : this.push_List) {
+            for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : this.push_List) {
                if (entry.init_Z()) {
                   entryTags.add(entry.init_CompoundTag());
                }
@@ -8640,7 +8640,7 @@ public class ActionEditorOverlay extends bj {
                }
             }
 
-            PacketUtil.Inner_DataUtil[] modes = PacketUtil.Inner_DataUtil.values();
+            DropAction.Inner_DataUtil[] modes = DropAction.Inner_DataUtil.values();
             this.init_PacketUtil.mode = modes[Math.min(this.read_Map.getOrDefault("drop_mode", 0), modes.length - 1)];
             this.init_PacketUtil.waitForGuiBefore = this.load_Map.getOrDefault("drop_waitForGuiBefore", false);
             this.init_PacketUtil.waitForGuiAfter = this.load_Map.getOrDefault("drop_waitForGuiAfter", false);
@@ -8662,7 +8662,7 @@ public class ActionEditorOverlay extends bj {
          } else {
             if (this.clear_List != null) {
                for (int i = 0; i < this.clear_List.size(); i++) {
-                  az.Inner_DataUtil e = this.clear_List.get(i);
+                  WaitForLanStepAction.Inner_DataUtil e = this.clear_List.get(i);
                   k uf = this.init_Map.get("lan_user_" + i);
                   if (uf != null) {
                      e.init_Str = uf.load_Str();
@@ -8679,7 +8679,7 @@ public class ActionEditorOverlay extends bj {
 
                ListTag entryList = new ListTag();
 
-               for (az.Inner_DataUtil e : this.clear_List) {
+               for (WaitForLanStepAction.Inner_DataUtil e : this.clear_List) {
                   entryList.add(e.init_CompoundTag());
                }
 
@@ -8726,7 +8726,7 @@ public class ActionEditorOverlay extends bj {
                this.y();
                ListTag rules = new ListTag();
                if (this.reset_List != null) {
-                  for (autismclient.util.macro.aM.Inner_CachePool rule : this.reset_List) {
+                  for (autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule : this.reset_List) {
                      if (rule != null && (rule.init_Str != null && !rule.init_Str.isBlank() || rule.load != null && !rule.load.isBlank())) {
                         rules.add(rule.init_CompoundTag());
                      }
@@ -8762,7 +8762,7 @@ public class ActionEditorOverlay extends bj {
                            this.read_V_Str_Str(key, raw);
                         } else {
                            this.open_V(key);
-                           if (this.init_MacroAction instanceof al && key.startsWith("toolArg.") && raw.isBlank()) {
+                           if (this.init_MacroAction instanceof ToolsAction && key.startsWith("toolArg.") && raw.isBlank()) {
                               this.init_CompoundTag.putString(key, "");
                            } else {
                               try {
@@ -8783,7 +8783,7 @@ public class ActionEditorOverlay extends bj {
                            this.read_V_Str_Str(key, rawDbl);
                         } else {
                            this.open_V(key);
-                           if (this.init_MacroAction instanceof al && key.startsWith("toolArg.") && rawDbl.isBlank()) {
+                           if (this.init_MacroAction instanceof ToolsAction && key.startsWith("toolArg.") && rawDbl.isBlank()) {
                               this.init_CompoundTag.putString(key, "");
                            } else {
                               try {
@@ -8870,7 +8870,7 @@ public class ActionEditorOverlay extends bj {
                if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SLOT_CHANGE) {
                   ListTag nbtEntries = new ListTag();
                   if (this.run_List != null) {
-                     for (aD.Inner_DataUtil e : this.run_List) {
+                     for (WaitForSlotChangeAction.Inner_DataUtil e : this.run_List) {
                         CompoundTag ec = new CompoundTag();
                         ArrayUtil target = e.init_ArrayUtil();
                         if (target.init_Z() || target.update()) {
@@ -8946,7 +8946,7 @@ public class ActionEditorOverlay extends bj {
                }
 
                if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.XCARRY) {
-                  this.init_CompoundTag.putInt("safeClickDelayTicks", aQ.write(this.init_CompoundTag.getIntOr("safeClickDelayTicks", 1)));
+                  this.init_CompoundTag.putInt("safeClickDelayTicks", XCarryAction.write(this.init_CompoundTag.getIntOr("safeClickDelayTicks", 1)));
                   this.init_CompoundTag
                      .putBoolean(
                         "safeClickDelayAfterPickup",
@@ -8998,7 +8998,7 @@ public class ActionEditorOverlay extends bj {
                }
 
                if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_CHAT) {
-                  this.init_CompoundTag.putInt("fuzzyPercent", au.init_I_I_8(this.put_I()));
+                  this.init_CompoundTag.putInt("fuzzyPercent", WaitForChatAction.init_I_I_8(this.put_I()));
                   if (!this.next_Z()) {
                      this.init_CompoundTag.putString("waitGuiName", "");
                   }
@@ -9513,7 +9513,7 @@ public class ActionEditorOverlay extends bj {
          return false;
       }
 
-      if (this.init_MacroAction instanceof al) {
+      if (this.init_MacroAction instanceof ToolsAction) {
          String key = field.key();
          boolean run = "RUN".equals(this.tick_Str("operation"));
          if ((key.startsWith("toolArg.") || "position".equals(key) || "waypoint".equals(key)) && !run) {
@@ -9716,37 +9716,37 @@ public class ActionEditorOverlay extends bj {
 
    private void read(MacroAction action) {
       if (action != null && this.init_CompoundTag != null) {
-         if (action instanceof V selectSlotAction) {
+         if (action instanceof SelectSlotAction selectSlotAction) {
             this.init_V_Str("itemName", selectSlotAction.itemTarget, selectSlotAction.itemName, null);
          }
 
-         if (action instanceof an useItemAction) {
+         if (action instanceof UseItemAction useItemAction) {
             this.init_V_Str("itemName", useItemAction.itemTarget, useItemAction.itemName, "slot");
             if (useItemAction.slot >= 0) {
                this.init_CompoundTag.putInt("slot", useItemAction.slot);
             }
          }
 
-         if (action instanceof av waitForCooldownAction) {
+         if (action instanceof WaitForCooldownAction waitForCooldownAction) {
             this.init_V_Str("itemName", waitForCooldownAction.itemTarget, waitForCooldownAction.itemName, null);
          }
 
-         if (action instanceof autismclient.util.macro.JsonUtil closeGuiAction) {
+         if (action instanceof autismclient.util.macro.CloseGuiAction closeGuiAction) {
             this.init_V_Str("itemName", closeGuiAction.itemTarget, closeGuiAction.itemName, "targetSlot");
          }
 
-         if (action instanceof ai swapSlotsAction) {
+         if (action instanceof SwapSlotsAction swapSlotsAction) {
             this.init_V_Str("fromItemName", swapSlotsAction.fromItemTarget, swapSlotsAction.fromItemName, null);
             this.init_V_Str("toItemName", swapSlotsAction.toItemTarget, swapSlotsAction.toItemName, null);
          }
 
-         if (action instanceof ah storeItemAction) {
+         if (action instanceof StoreItemAction storeItemAction) {
             this.init_V_Str_3("targetItems", storeItemAction.itemTargets, storeItemAction.targetItems);
          }
 
-         if (action instanceof aQ xCarryAction) {
+         if (action instanceof XCarryAction xCarryAction) {
             this.init_V_Str_3("entries", xCarryAction.entryTargets, xCarryAction.entries);
-            this.init_CompoundTag.putInt("safeClickDelayTicks", aQ.write(xCarryAction.safeClickDelayTicks));
+            this.init_CompoundTag.putInt("safeClickDelayTicks", XCarryAction.write(xCarryAction.safeClickDelayTicks));
             this.init_CompoundTag.putBoolean("safeClickDelayAfterPickup", xCarryAction.safeClickDelayAfterPickup);
             this.init_CompoundTag.putBoolean("safeClickDelayBeforeReturn", xCarryAction.safeClickDelayBeforeReturn);
             ListTag destinations = new ListTag();
@@ -9766,11 +9766,11 @@ public class ActionEditorOverlay extends bj {
             this.init_CompoundTag.put("entryAmounts", amounts);
          }
 
-         if (action instanceof ListPool inventoryAuditAction) {
+         if (action instanceof InventoryAuditAction inventoryAuditAction) {
             this.init_V_Str_3("targetItems", inventoryAuditAction.itemTargets, inventoryAuditAction.targetItems);
          }
 
-         if (action instanceof K placeAction) {
+         if (action instanceof PlaceAction placeAction) {
             this.init_V_Str("itemName", placeAction.itemTarget, placeAction.itemName, null);
             this.chunk();
          }
@@ -10041,44 +10041,44 @@ public class ActionEditorOverlay extends bj {
 
    private void drain() {
       if (this.init_MacroAction != null && this.init_CompoundTag != null) {
-         if (this.init_MacroAction instanceof V) {
+         if (this.init_MacroAction instanceof SelectSlotAction) {
             this.init_V_Str_ArrayUtil("itemName", this.init_ArrayUtil_Str_Str("itemName", null));
          }
 
-         if (this.init_MacroAction instanceof an) {
+         if (this.init_MacroAction instanceof UseItemAction) {
             this.init_V_Str_ArrayUtil("itemName", this.init_ArrayUtil_Str_Str("itemName", "slot"));
          }
 
-         if (this.init_MacroAction instanceof av) {
+         if (this.init_MacroAction instanceof WaitForCooldownAction) {
             this.init_V_Str_ArrayUtil("itemName", this.init_ArrayUtil_Str_Str("itemName", null));
          }
 
-         if (this.init_MacroAction instanceof autismclient.util.macro.JsonUtil) {
+         if (this.init_MacroAction instanceof autismclient.util.macro.CloseGuiAction) {
             this.init_V_Str_ArrayUtil("itemName", this.init_ArrayUtil_Str_Str("itemName", "targetSlot"));
          }
 
-         if (this.init_MacroAction instanceof ai) {
+         if (this.init_MacroAction instanceof SwapSlotsAction) {
             this.init_V_Str_ArrayUtil("fromItemName", this.init_ArrayUtil_Str_Str("fromItemName", null));
             this.init_V_Str_ArrayUtil("toItemName", this.init_ArrayUtil_Str_Str("toItemName", null));
          }
 
-         if (this.init_MacroAction instanceof K) {
+         if (this.init_MacroAction instanceof PlaceAction) {
             this.init_V_Str_ArrayUtil("itemName", this.init_ArrayUtil());
             this.init_CompoundTag.remove("slot");
          }
 
-         if (this.init_MacroAction instanceof ah) {
+         if (this.init_MacroAction instanceof StoreItemAction) {
             this.init_V_Str_List("targetItems", this.init_List_Str("targetItems"));
          }
 
-         if (this.init_MacroAction instanceof aQ) {
+         if (this.init_MacroAction instanceof XCarryAction) {
             this.init_V_Str_List("entries", this.init_List_Str("entries"));
             int count = this.write_Map.getOrDefault("entries", Collections.emptyList()).size();
             this.sync(count);
             this.flush(count);
          }
 
-         if (this.init_MacroAction instanceof ListPool) {
+         if (this.init_MacroAction instanceof InventoryAuditAction) {
             this.init_V_Str_List("targetItems", this.init_List_Str("targetItems"));
          }
       }
@@ -10125,7 +10125,7 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private void init_V_aD_DataUtil(aD.Inner_DataUtil e) {
+   private void init_V_aD_DataUtil(WaitForSlotChangeAction.Inner_DataUtil e) {
       k addF = this.flush_Map.get("_wsc_add");
       k slotF = this.init_Map.get("wsc_slot");
       k countF = this.init_Map.get("wsc_count");
@@ -10169,10 +10169,10 @@ public class ActionEditorOverlay extends bj {
          if (addF != null && slotF != null) {
             String nameText = addF.load_Str().strip();
             String slotText = slotF.load_Str().strip();
-            aD.Inner_DataUtil entry = this.run_List.get(this.f_l_I);
+            WaitForSlotChangeAction.Inner_DataUtil entry = this.run_List.get(this.f_l_I);
             ArrayUtil target = this.init_ArrayUtil_Str_2(nameText, slotText, entry.init_ArrayUtil());
             String rawTarget = target.write_Str();
-            String norm = rawTarget.isEmpty() ? "" : ah.init_Str_Str_8(rawTarget);
+            String norm = rawTarget.isEmpty() ? "" : StoreItemAction.init_Str_Str_8(rawTarget);
             if (norm == null) {
                norm = "";
             }
@@ -10212,13 +10212,13 @@ public class ActionEditorOverlay extends bj {
          String slotText = slotF.load_Str().strip();
          ArrayUtil target = this.init_ArrayUtil_Str_2(nameText, slotText, null);
          String rawTarget = target.write_Str();
-         String norm = rawTarget.isEmpty() ? "" : ah.init_Str_Str_8(rawTarget);
+         String norm = rawTarget.isEmpty() ? "" : StoreItemAction.init_Str_Str_8(rawTarget);
          if (norm == null) {
             norm = "";
          }
 
          if (!this.push_Z(norm)) {
-            aD.Inner_DataUtil entry = new aD.Inner_DataUtil(norm, this.init_aD_StreamUtil, this.f_m_I);
+            WaitForSlotChangeAction.Inner_DataUtil entry = new WaitForSlotChangeAction.Inner_DataUtil(norm, this.init_aD_StreamUtil, this.f_m_I);
             entry.init_ArrayUtil = target;
             entry.init_Str = norm;
             this.run_List.add(entry);
@@ -10233,7 +10233,7 @@ public class ActionEditorOverlay extends bj {
          return false;
       }
 
-      for (aD.Inner_DataUtil e : this.run_List) {
+      for (WaitForSlotChangeAction.Inner_DataUtil e : this.run_List) {
          if (e.init_Str.equals(normTarget)) {
             return true;
          }
@@ -10365,7 +10365,7 @@ public class ActionEditorOverlay extends bj {
       if (key != null && entries != null && capturedTarget != null) {
          String normalized = capturedTarget.write_Str();
          if (this.get_Z(key) || this.pop_Z(key)) {
-            normalized = ah.init_Str_Str_8(normalized);
+            normalized = StoreItemAction.init_Str_Str_8(normalized);
          } else if (this.put_Z(key)) {
             normalized = this.run_Str(normalized);
          }
@@ -10489,7 +10489,7 @@ public class ActionEditorOverlay extends bj {
             trimmed = "#" + trimmed;
          }
 
-         return aQ.init_Str_Str_7(trimmed);
+         return XCarryAction.init_Str_Str_7(trimmed);
       } else {
          parsed.init_I = -1;
          String entry = parsed.write_Str();
@@ -10543,7 +10543,7 @@ public class ActionEditorOverlay extends bj {
             entries.add(entry);
             return true;
          } else {
-            entry = ah.init_Str_Str_8(entry);
+            entry = StoreItemAction.init_Str_Str_8(entry);
             if (entry != null && !entry.isBlank() && !entries.contains(entry)) {
                entries.add(entry);
                return true;
@@ -10584,7 +10584,7 @@ public class ActionEditorOverlay extends bj {
          }
       } else {
          if (field != null && (this.get_Z(field.key()) || this.pop_Z(field.key()))) {
-            entry = ah.init_Str_Str_8(entry);
+            entry = StoreItemAction.init_Str_Str_8(entry);
             if (entry == null || entry.isBlank()) {
                return new ActionEditorOverlay.Inner_DataUtil(false, "Could not read that slot target", -38037);
             }
@@ -10602,14 +10602,14 @@ public class ActionEditorOverlay extends bj {
 
    private String read_Str_Str_Str(String key, String entry) {
       if (this.put_Z(key)) {
-         String formatted = aQ.load_Str_Str_2(entry);
+         String formatted = XCarryAction.load_Str_Str_2(entry);
          if (!formatted.isEmpty()) {
             return formatted;
          }
       }
 
       if (this.get_Z(key) || this.pop_Z(key)) {
-         return ah.load_Str_Str_3(entry);
+         return StoreItemAction.load_Str_Str_3(entry);
       } else if (this.add_Z(key)) {
          return this.reset_Str(entry);
       } else {
@@ -10646,7 +10646,7 @@ public class ActionEditorOverlay extends bj {
          ListTag modes = this.init_CompoundTag.getList("entryAmountModes").orElse(new ListTag());
 
          while (modes.size() < count) {
-            modes.add(StringTag.valueOf(aQ.Inner_DataUtil.FULL_STK.name()));
+            modes.add(StringTag.valueOf(XCarryAction.Inner_DataUtil.FULL_STK.name()));
          }
 
          while (modes.size() > count) {
@@ -10707,28 +10707,28 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private aQ.Inner_DataUtil init_aQ_DataUtil_I(int index) {
+   private XCarryAction.Inner_DataUtil init_aQ_DataUtil_I(int index) {
       if (this.init_CompoundTag != null && index >= 0) {
          ListTag list = this.init_CompoundTag.getList("entryAmountModes").orElse(new ListTag());
          if (index >= list.size()) {
-            return aQ.Inner_DataUtil.FULL_STK;
+            return XCarryAction.Inner_DataUtil.FULL_STK;
          }
 
          try {
-            return aQ.Inner_DataUtil.valueOf(list.get(index).asString().orElse(aQ.Inner_DataUtil.FULL_STK.name()));
+            return XCarryAction.Inner_DataUtil.valueOf(list.get(index).asString().orElse(XCarryAction.Inner_DataUtil.FULL_STK.name()));
          } catch (IllegalArgumentException ignored) {
-            return aQ.Inner_DataUtil.FULL_STK;
+            return XCarryAction.Inner_DataUtil.FULL_STK;
          }
       } else {
-         return aQ.Inner_DataUtil.FULL_STK;
+         return XCarryAction.Inner_DataUtil.FULL_STK;
       }
    }
 
-   private void init_V_I_aQ_DataUtil(int index, aQ.Inner_DataUtil mode) {
+   private void init_V_I_aQ_DataUtil(int index, XCarryAction.Inner_DataUtil mode) {
       if (this.init_CompoundTag != null && index >= 0) {
          this.flush(Math.max(index + 1, this.write_Map.getOrDefault("entries", Collections.emptyList()).size()));
          ListTag list = this.init_CompoundTag.getList("entryAmountModes").orElse(new ListTag());
-         list.set(index, StringTag.valueOf((mode == null ? aQ.Inner_DataUtil.FULL_STK : mode).name()));
+         list.set(index, StringTag.valueOf((mode == null ? XCarryAction.Inner_DataUtil.FULL_STK : mode).name()));
          this.init_CompoundTag.put("entryAmountModes", list);
       }
    }
@@ -10920,7 +10920,7 @@ public class ActionEditorOverlay extends bj {
          return new ArrayList<>();
       }
 
-      Y action = new Y();
+      SendPacketAction action = new SendPacketAction();
       action.fromTag(this.init_CompoundTag);
       return new ArrayList<>(action.packets);
    }
@@ -11042,7 +11042,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void a() {
-      if (this.put_Z() && this.init_MacroAction instanceof ValueSink) {
+      if (this.put_Z() && this.init_MacroAction instanceof LookAtBlockAction) {
          Screen previousScreen = init_Minecraft.gui.screen();
          this.index();
          ck state = ck.init_ck();
@@ -11255,7 +11255,7 @@ public class ActionEditorOverlay extends bj {
             "Target Items",
             selected,
             selected::remove,
-            ah::load_Str_Str_3,
+            StoreItemAction::load_Str_Str_3,
             value -> this.init_Component_Str("targetItems", value, selected.indexOf(value)),
             selected::clear,
             "(nothing selected - search, type #slot, or capture)",
@@ -11305,7 +11305,7 @@ public class ActionEditorOverlay extends bj {
             String slotText = storeSlotF.load_Str().strip();
             String entry = write_Str_Str_Str(nameText, slotText);
             if (!entry.isEmpty()) {
-               String normalized = ah.init_Str_Str_8(entry);
+               String normalized = StoreItemAction.init_Str_Str_8(entry);
                if (normalized != null && !normalized.isBlank() && !normalized.equals(selected.get(storeEditIdx))) {
                   selected.set(storeEditIdx, normalized);
                   this.sync_Map.put("targetItems", this.init_List_Str("targetItems"));
@@ -11320,7 +11320,7 @@ public class ActionEditorOverlay extends bj {
                String slotText = fStoreSlotF.load_Str().strip();
                String entry = write_Str_Str_Str(nameText, slotText);
                if (!entry.isEmpty()) {
-                  String normalized = ah.init_Str_Str_8(entry);
+                  String normalized = StoreItemAction.init_Str_Str_8(entry);
                   if (normalized != null && !normalized.isBlank() && !selected.contains(normalized)) {
                      selected.add(normalized);
                      this.sync_Map.put("targetItems", this.init_List_Str("targetItems"));
@@ -11385,7 +11385,7 @@ public class ActionEditorOverlay extends bj {
             "Targets",
             selected,
             selected::remove,
-            ah::load_Str_Str_3,
+            StoreItemAction::load_Str_Str_3,
             value -> this.init_Component_Str("targetItems", value, selected.indexOf(value)),
             selected::clear,
             emptyLabel,
@@ -11452,7 +11452,7 @@ public class ActionEditorOverlay extends bj {
             String slotText = auditSlotF.load_Str().strip();
             String entry = write_Str_Str_Str(nameText, slotText);
             if (!entry.isEmpty()) {
-               String normalized = ah.init_Str_Str_8(entry);
+               String normalized = StoreItemAction.init_Str_Str_8(entry);
                if (normalized != null && !normalized.isBlank() && !normalized.equals(selected.get(auditEditIdx))) {
                   selected.set(auditEditIdx, normalized);
                   this.sync_Map.put("targetItems", this.init_List_Str("targetItems"));
@@ -11475,7 +11475,7 @@ public class ActionEditorOverlay extends bj {
                   String slotText = fAuditSlotF.load_Str().strip();
                   String entryx = write_Str_Str_Str(nameText, slotText);
                   if (!entryx.isEmpty()) {
-                     String normalizedx = ah.init_Str_Str_8(entryx);
+                     String normalizedx = StoreItemAction.init_Str_Str_8(entryx);
                      if (normalizedx != null && !normalizedx.isBlank() && !selected.contains(normalizedx)) {
                         selected.add(normalizedx);
                         this.sync_Map.put("targetItems", this.init_List_Str("targetItems"));
@@ -11560,18 +11560,18 @@ public class ActionEditorOverlay extends bj {
       }
 
       k amountField = this.init_Map.get("amountInput");
-      long amount = G.init_J_Str(amountField != null ? amountField.load_Str() : "");
+      long amount = PayAction.init_J_Str(amountField != null ? amountField.load_Str() : "");
       boolean divide = this.load_Map.getOrDefault("divideEnabled", false);
       int count = selected.size();
       String summary;
       if (count == 0) {
          summary = "Empty list = pays EVERYONE (tab + probed hidden).";
       } else if (divide) {
-         long[] dist = G.init(amount, count);
-         String per = dist[0] == dist[count - 1] ? G.init_Str_J(dist[0]) : G.init_Str_J(dist[count - 1]) + "-" + G.init_Str_J(dist[0]);
-         summary = "Splits " + G.init_Str_J(amount) + " among " + count + " (" + per + " each).";
+         long[] dist = PayAction.init(amount, count);
+         String per = dist[0] == dist[count - 1] ? PayAction.init_Str_J(dist[0]) : PayAction.init_Str_J(dist[count - 1]) + "-" + PayAction.init_Str_J(dist[0]);
+         summary = "Splits " + PayAction.init_Str_J(amount) + " among " + count + " (" + per + " each).";
       } else {
-         summary = "Pays " + count + " x " + G.init_Str_J(amount) + " (" + G.init_Str_J(amount * count) + " total).";
+         summary = "Pays " + count + " x " + PayAction.init_Str_J(amount) + " (" + PayAction.init_Str_J(amount * count) + " total).";
       }
 
       cy = this.init_I_GuiGraphicsExtract(ctx, x, cy, w, summary);
@@ -12030,7 +12030,7 @@ public class ActionEditorOverlay extends bj {
       this.init_V_GuiGraphicsExtract_2(ctx, font, "listenDuringPreviousAction", "Listen During Previous", x, cy, w, mx, my);
       cy += 16;
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "saveAs", x, cy, w, mx, my, delta);
-      List<aD.Inner_DataUtil> entries = this.run_List != null ? this.run_List : new ArrayList<>();
+      List<WaitForSlotChangeAction.Inner_DataUtil> entries = this.run_List != null ? this.run_List : new ArrayList<>();
       if (this.f_l_I >= entries.size()) {
          this.f_l_I = -1;
       }
@@ -12058,7 +12058,7 @@ public class ActionEditorOverlay extends bj {
             int iy = wscViewport.init_I(i);
             if (iy != -2147483648) {
                boolean selected = i == this.f_l_I;
-               aD.Inner_DataUtil e = entries.get(i);
+               WaitForSlotChangeAction.Inner_DataUtil e = entries.get(i);
                Component targetDisp = this.load_Component_ArrayUtil_Str(e.init_ArrayUtil(), "(any slot)");
                String modeSummary = " • " + e.init_Str();
                Component rowLabel = Component.empty().append(targetDisp).append(Component.literal(modeSummary).withStyle(s -> s.withColor(-7829368)));
@@ -12123,20 +12123,20 @@ public class ActionEditorOverlay extends bj {
 
       cy += 16;
       boolean editing = this.f_l_I >= 0 && this.f_l_I < entries.size();
-      aD.Inner_StreamUtil curMode = editing ? entries.get(this.f_l_I).init_aD_StreamUtil : this.init_aD_StreamUtil;
+      WaitForSlotChangeAction.Inner_StreamUtil curMode = editing ? entries.get(this.f_l_I).init_aD_StreamUtil : this.init_aD_StreamUtil;
       int curCount = editing ? entries.get(this.f_l_I).init_I : this.f_m_I;
       int addBtnW = this.write_I("+Add");
       int cntW = 36;
-      aD.Inner_StreamUtil[] modes = aD.Inner_StreamUtil.values();
+      WaitForSlotChangeAction.Inner_StreamUtil[] modes = WaitForSlotChangeAction.Inner_StreamUtil.values();
       List<String> modeOptions = new ArrayList<>();
 
-      for (aD.Inner_StreamUtil m : modes) {
+      for (WaitForSlotChangeAction.Inner_StreamUtil m : modes) {
          modeOptions.add(m.name().replace("_", " "));
       }
 
       int modBtnW = this.init_I_List_I(modeOptions, w - addBtnW - 2 - cntW - 2);
       this.init_V_Str("wsc_mode", modeOptions, curMode.ordinal(), x, cy, modBtnW, 13, idx -> {
-         aD.Inner_StreamUtil chosen = modes[Math.max(0, Math.min(idx, modes.length - 1))];
+         WaitForSlotChangeAction.Inner_StreamUtil chosen = modes[Math.max(0, Math.min(idx, modes.length - 1))];
          if (this.f_l_I >= 0 && this.f_l_I < entries.size()) {
             entries.get(this.f_l_I).init_aD_StreamUtil = chosen;
          } else {
@@ -12145,7 +12145,7 @@ public class ActionEditorOverlay extends bj {
       });
       int cntX = x + modBtnW + 2;
       k countF = this.init_Map.get("wsc_count");
-      boolean countRelevant = curMode == aD.Inner_StreamUtil.COUNT_AT_LEAST || curMode == aD.Inner_StreamUtil.COUNT_BELOW;
+      boolean countRelevant = curMode == WaitForSlotChangeAction.Inner_StreamUtil.COUNT_AT_LEAST || curMode == WaitForSlotChangeAction.Inner_StreamUtil.COUNT_BELOW;
       if (countF != null) {
          if (countRelevant) {
             countF.read(cntX);
@@ -12582,13 +12582,13 @@ public class ActionEditorOverlay extends bj {
 
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "exampleText", x, cy, w, mx, my, delta);
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "selectedText", x, cy, w, mx, my, delta);
-      autismclient.util.macro.TaskQueue draft = this.init_TaskQueue();
+      autismclient.util.macro.CaptureValueAction draft = this.init_TaskQueue();
       String primaryName = this.init_Str_TaskQueue(draft);
       String token = primaryName.isBlank() ? "" : "{" + primaryName + "}";
-      boolean exampleCapture = draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.RECENT_CHAT
-         || draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.GUI_TITLE
-         || draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.SCOREBOARD;
-      autismclient.util.macro.TaskQueue.Inner_NetHelper preview = exampleCapture && !draft.exampleText.isBlank()
+      boolean exampleCapture = draft.source == autismclient.util.macro.CaptureValueAction.Inner_StateCache.RECENT_CHAT
+         || draft.source == autismclient.util.macro.CaptureValueAction.Inner_StateCache.GUI_TITLE
+         || draft.source == autismclient.util.macro.CaptureValueAction.Inner_StateCache.SCOREBOARD;
+      autismclient.util.macro.CaptureValueAction.Inner_NetHelper preview = exampleCapture && !draft.exampleText.isBlank()
          ? draft.init_TaskQueue_NetHelpe()
          : draft.load_TaskQueue_NetHelpe_Minecraft(init_Minecraft);
       String previewText = preview.init_Z() ? preview.init_Str_Str(primaryName) : preview.load();
@@ -12610,16 +12610,16 @@ public class ActionEditorOverlay extends bj {
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "numberModifierAmount", x, cy, w, mx, my, delta);
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "waitForTrigger", x, cy, w, mx, my, delta);
       String behaviorHint;
-      if (draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.COMMAND_AUTOFILL) {
+      if (draft.source == autismclient.util.macro.CaptureValueAction.Inner_StateCache.COMMAND_AUTOFILL) {
          behaviorHint = "Asks server when run";
-      } else if (draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.TABLIST) {
+      } else if (draft.source == autismclient.util.macro.CaptureValueAction.Inner_StateCache.TABLIST) {
          behaviorHint = draft.waitForTrigger ? "Waits for player" : "Picks online player";
       } else {
          behaviorHint = draft.waitForTrigger
-            ? (draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.SCOREBOARD ? "Waits for row change" : "Waits for next match")
+            ? (draft.source == autismclient.util.macro.CaptureValueAction.Inner_StateCache.SCOREBOARD ? "Waits for row change" : "Waits for next match")
             : (
-               draft.source != autismclient.util.macro.TaskQueue.Inner_StateCache.RECENT_CHAT
-                     && draft.source != autismclient.util.macro.TaskQueue.Inner_StateCache.GUI_TITLE
+               draft.source != autismclient.util.macro.CaptureValueAction.Inner_StateCache.RECENT_CHAT
+                     && draft.source != autismclient.util.macro.CaptureValueAction.Inner_StateCache.GUI_TITLE
                   ? "Reads value now"
                   : "Uses newest match"
             );
@@ -12645,7 +12645,7 @@ public class ActionEditorOverlay extends bj {
    private void init_V_MacroExecutor_Pack(MacroExecutor.Inner_PacketUtil entry) {
       if (entry != null) {
          String text = this.init_Str_MacroExecutor_Pack(entry);
-         String suggested = autismclient.util.macro.TaskQueue.init_Str_Str_5(text);
+         String suggested = autismclient.util.macro.CaptureValueAction.init_Str_Str_5(text);
          k exampleField = this.init_Map.get("exampleText");
          k selectedField = this.init_Map.get("selectedText");
          this.push_Z = true;
@@ -12664,7 +12664,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private int write_I(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
-      List<autismclient.util.macro.TaskQueue.Inner_JsonUtil> lines = autismclient.util.macro.TaskQueue.init_List_Minecraft_2(init_Minecraft);
+      List<autismclient.util.macro.CaptureValueAction.Inner_JsonUtil> lines = autismclient.util.macro.CaptureValueAction.init_List_Minecraft_2(init_Minecraft);
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       String title = !lines.isEmpty() && !lines.get(0).read().isBlank() ? "Scoreboard - " + lines.get(0).read() : "Scoreboard";
       autismclient.gui.f.b.k.init(ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, title, w, font, -1), font, p.parse(), x, y + 2, false);
@@ -12687,7 +12687,7 @@ public class ActionEditorOverlay extends bj {
       for (int i = first; i < lines.size() && i <= viewport.tick(); i++) {
          int rowY = viewport.init_I(i);
          if (rowY != -2147483648) {
-            autismclient.util.macro.TaskQueue.Inner_JsonUtil line = lines.get(i);
+            autismclient.util.macro.CaptureValueAction.Inner_JsonUtil line = lines.get(i);
             boolean selected = line.init_Str().equals(selectedKey);
             boolean hovered = mx >= x && mx < x + itemW && my >= rowY && my < rowY + 22;
             TableIndex.init(ctx, x, rowY, itemW, 22, hovered, selected);
@@ -12704,7 +12704,7 @@ public class ActionEditorOverlay extends bj {
                rowY + 11,
                false
             );
-            autismclient.util.macro.TaskQueue.Inner_JsonUtil selectedLine = line;
+            autismclient.util.macro.CaptureValueAction.Inner_JsonUtil selectedLine = line;
             this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(x, rowY, itemW, 22, () -> this.init_V_TaskQueue_JsonUtil(selectedLine)));
          }
       }
@@ -12730,7 +12730,7 @@ public class ActionEditorOverlay extends bj {
       return this.value_List;
    }
 
-   private List<String> init_List_TaskQueue(autismclient.util.macro.TaskQueue draft) {
+   private List<String> init_List_TaskQueue(autismclient.util.macro.CaptureValueAction draft) {
       List<String> names = new ArrayList<>(this.write_List());
       if (!draft.excludeSelf && init_Minecraft.player != null && init_Minecraft.player.getGameProfile() != null) {
          names.add(init_Minecraft.player.getGameProfile().name());
@@ -12741,12 +12741,12 @@ public class ActionEditorOverlay extends bj {
    }
 
    private int set_I() {
-      autismclient.util.macro.TaskQueue draft = this.init_TaskQueue();
+      autismclient.util.macro.CaptureValueAction draft = this.init_TaskQueue();
       return draft.init_List_List(this.init_List_TaskQueue(draft)).size();
    }
 
    private int update_I(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
-      autismclient.util.macro.TaskQueue draft = this.init_TaskQueue();
+      autismclient.util.macro.CaptureValueAction draft = this.init_TaskQueue();
       List<String> names = this.init_List_TaskQueue(draft);
       List<String> pool = draft.init_List_List(names);
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
@@ -12790,14 +12790,14 @@ public class ActionEditorOverlay extends bj {
       return y + listH + 2;
    }
 
-   private void init_V_TaskQueue_JsonUtil(autismclient.util.macro.TaskQueue.Inner_JsonUtil line) {
+   private void init_V_TaskQueue_JsonUtil(autismclient.util.macro.CaptureValueAction.Inner_JsonUtil line) {
       if (line != null) {
          k rowField = this.init_Map.get("scoreboardRow");
          k rowIndexField = this.init_Map.get("scoreboardRowIndex");
          k objectiveField = this.init_Map.get("scoreboardObjective");
          k exampleField = this.init_Map.get("exampleText");
          k selectedField = this.init_Map.get("selectedText");
-         String suggested = autismclient.util.macro.TaskQueue.init_Str_Str_5(line.flush());
+         String suggested = autismclient.util.macro.CaptureValueAction.init_Str_Str_5(line.flush());
          this.push_Z = true;
          if (rowField != null) {
             rowField.init_V_Str(line.init_Str());
@@ -12826,7 +12826,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private String load_Str_FieldDef(FieldDef field) {
-      if ("waitForTrigger".equals(field.key()) && this.init_MacroAction instanceof autismclient.util.macro.TaskQueue) {
+      if ("waitForTrigger".equals(field.key()) && this.init_MacroAction instanceof autismclient.util.macro.CaptureValueAction) {
          String var10000;
          switch (this.tick_Str("source") == null ? "" : this.tick_Str("source")) {
             case "RECENT_CHAT":
@@ -12852,14 +12852,14 @@ public class ActionEditorOverlay extends bj {
          boolean firstFrame = this.read_Str.isEmpty();
          this.read_Str = source;
          if (!firstFrame && !this.pop_Z) {
-            autismclient.util.macro.TaskQueue.Inner_StateCache parsed;
+            autismclient.util.macro.CaptureValueAction.Inner_StateCache parsed;
             try {
-               parsed = autismclient.util.macro.TaskQueue.Inner_StateCache.valueOf(source);
+               parsed = autismclient.util.macro.CaptureValueAction.Inner_StateCache.valueOf(source);
             } catch (IllegalArgumentException ignored) {
                return;
             }
 
-            boolean waits = autismclient.util.macro.TaskQueue.init_Z_TaskQueue_StateCac(parsed);
+            boolean waits = autismclient.util.macro.CaptureValueAction.init_Z_TaskQueue_StateCac(parsed);
             this.load_Map.put("waitForTrigger", waits);
             if (this.init_CompoundTag != null) {
                this.init_CompoundTag.putBoolean("waitForTrigger", waits);
@@ -12869,7 +12869,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void e() {
-      if (!this.push_Z && this.init_MacroAction instanceof autismclient.util.macro.TaskQueue) {
+      if (!this.push_Z && this.init_MacroAction instanceof autismclient.util.macro.CaptureValueAction) {
          String source = this.tick_Str("source");
          if ("GUI_TITLE".equals(source) || "RECENT_CHAT".equals(source) || "SCOREBOARD".equals(source)) {
             String example = this.update("exampleText", "");
@@ -12886,7 +12886,7 @@ public class ActionEditorOverlay extends bj {
                : (this.init_CompoundTag == null ? "" : this.init_CompoundTag.getStringOr("pattern", ""));
             if (current.isBlank() || current.equals(this.load_Str)) {
                if (!example.isBlank() && !selected.isBlank()) {
-                  String generated = autismclient.util.macro.TaskQueue.init(example, selected, variable);
+                  String generated = autismclient.util.macro.CaptureValueAction.init(example, selected, variable);
                   if (!generated.isBlank()) {
                      if (patternField != null) {
                         patternField.init_V_Str(generated);
@@ -12976,11 +12976,11 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private autismclient.util.macro.TaskQueue init_TaskQueue() {
-      autismclient.util.macro.TaskQueue draft = new autismclient.util.macro.TaskQueue();
+   private autismclient.util.macro.CaptureValueAction init_TaskQueue() {
+      autismclient.util.macro.CaptureValueAction draft = new autismclient.util.macro.CaptureValueAction();
 
       try {
-         draft.source = autismclient.util.macro.TaskQueue.Inner_StateCache.valueOf(this.tick_Str("source"));
+         draft.source = autismclient.util.macro.CaptureValueAction.Inner_StateCache.valueOf(this.tick_Str("source"));
       } catch (IllegalArgumentException | NullPointerException var13) {
       }
 
@@ -12990,7 +12990,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       try {
-         draft.itemText = autismclient.util.macro.TaskQueue.Inner_CachePool.valueOf(this.tick_Str("itemText"));
+         draft.itemText = autismclient.util.macro.CaptureValueAction.Inner_CachePool.valueOf(this.tick_Str("itemText"));
       } catch (IllegalArgumentException | NullPointerException var11) {
       }
 
@@ -13009,12 +13009,12 @@ public class ActionEditorOverlay extends bj {
       }
 
       try {
-         draft.numberMode = autismclient.util.macro.TaskQueue.Inner_BufferHelper.valueOf(this.tick_Str("numberMode"));
+         draft.numberMode = autismclient.util.macro.CaptureValueAction.Inner_BufferHelper.valueOf(this.tick_Str("numberMode"));
       } catch (IllegalArgumentException | NullPointerException var9) {
       }
 
       try {
-         draft.numberModifier = autismclient.util.macro.TaskQueue.Inner_TaskQueue.valueOf(this.tick_Str("numberModifier"));
+         draft.numberModifier = autismclient.util.macro.CaptureValueAction.Inner_TaskQueue.valueOf(this.tick_Str("numberModifier"));
       } catch (IllegalArgumentException | NullPointerException var8) {
       }
 
@@ -13069,13 +13069,13 @@ public class ActionEditorOverlay extends bj {
       return draft;
    }
 
-   private String init_Str_TaskQueue(autismclient.util.macro.TaskQueue draft) {
+   private String init_Str_TaskQueue(autismclient.util.macro.CaptureValueAction draft) {
       if (draft == null) {
          return "";
       }
 
-      boolean listSource = draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.COMMAND_AUTOFILL
-         || draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.TABLIST;
+      boolean listSource = draft.source == autismclient.util.macro.CaptureValueAction.Inner_StateCache.COMMAND_AUTOFILL
+         || draft.source == autismclient.util.macro.CaptureValueAction.Inner_StateCache.TABLIST;
       if (!listSource) {
          Set<String> captured = UtilCore.init(draft.matchMode, draft.pattern);
          if (!captured.isEmpty()) {
@@ -13232,7 +13232,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       try {
-         return au.init_I_I_8(Integer.parseInt(field.load_Str().trim()));
+         return WaitForChatAction.init_I_I_8(Integer.parseInt(field.load_Str().trim()));
       } catch (NumberFormatException ignored) {
          return 100;
       }
@@ -13241,7 +13241,7 @@ public class ActionEditorOverlay extends bj {
    private void push(int percent) {
       k field = this.init_Map.get("fuzzyPercent");
       if (field != null) {
-         field.init_V_Str(String.valueOf(au.init_I_I_8(percent)));
+         field.init_V_Str(String.valueOf(WaitForChatAction.init_I_I_8(percent)));
       }
    }
 
@@ -13308,7 +13308,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       try {
-         return S.init_I(Integer.parseInt(field.load_Str().trim()));
+         return RotateAction.init_I(Integer.parseInt(field.load_Str().trim()));
       } catch (NumberFormatException ignored) {
          return 9;
       }
@@ -13317,7 +13317,7 @@ public class ActionEditorOverlay extends bj {
    private void tick(int smoothness) {
       k field = this.init_Map.get("smoothness");
       if (field != null) {
-         field.init_V_Str(String.valueOf(S.init_I(smoothness)));
+         field.init_V_Str(String.valueOf(RotateAction.init_I(smoothness)));
       }
    }
 
@@ -13384,7 +13384,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       try {
-         return aQ.write(Integer.parseInt(field.load_Str().trim()));
+         return XCarryAction.write(Integer.parseInt(field.load_Str().trim()));
       } catch (NumberFormatException ignored) {
          return 1;
       }
@@ -13393,7 +13393,7 @@ public class ActionEditorOverlay extends bj {
    private void get(int ticks) {
       k field = this.init_Map.get("safeClickDelayTicks");
       if (field != null) {
-         field.init_V_Str(String.valueOf(aQ.write(ticks)));
+         field.init_V_Str(String.valueOf(XCarryAction.write(ticks)));
       }
    }
 
@@ -13929,14 +13929,14 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void m() {
-      autismclient.util.macro.FileCache tmp = new autismclient.util.macro.FileCache();
+      autismclient.util.macro.DelayPacketsAction tmp = new autismclient.util.macro.DelayPacketsAction();
       tmp.read();
       this.write_Map.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
       this.write_Map.put("s2cPackets", new ArrayList<>(tmp.s2cPacketNames));
    }
 
    private void n() {
-      autismclient.util.macro.FileCache tmp = new autismclient.util.macro.FileCache();
+      autismclient.util.macro.DelayPacketsAction tmp = new autismclient.util.macro.DelayPacketsAction();
       tmp.write();
       this.write_Map.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
       this.write_Map.put("s2cPackets", new ArrayList<>(tmp.s2cPacketNames));
@@ -14602,7 +14602,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void x() {
-      if (this.put_Z() && this.init_MacroAction instanceof aw) {
+      if (this.put_Z() && this.init_MacroAction instanceof WaitForEntityAction) {
          Screen previousScreen = init_Minecraft.gui.screen();
          this.index();
          ck state = ck.init_ck();
@@ -14665,10 +14665,10 @@ public class ActionEditorOverlay extends bj {
    }
 
    private List<String> sync_List() {
-      boolean supportedAction = this.init_MacroAction instanceof aw
-         || this.init_MacroAction instanceof ValueSink
-         || this.init_MacroAction instanceof v
-         || this.init_MacroAction instanceof PathHelper;
+      boolean supportedAction = this.init_MacroAction instanceof WaitForEntityAction
+         || this.init_MacroAction instanceof LookAtBlockAction
+         || this.init_MacroAction instanceof OpenContainerAction
+         || this.init_MacroAction instanceof InteractEntityAction;
       if (supportedAction && init_Minecraft.player != null && init_Minecraft.level != null) {
          List<String> result = new ArrayList<>();
 
@@ -14869,8 +14869,8 @@ public class ActionEditorOverlay extends bj {
                this.reset_List = new ArrayList<>();
             }
 
-            autismclient.util.macro.aM.Inner_CachePool rule = new autismclient.util.macro.aM.Inner_CachePool();
-            rule.init_aM_DataUtil = c2s ? autismclient.util.macro.aM.Inner_DataUtil.C2S : autismclient.util.macro.aM.Inner_DataUtil.S2C;
+            autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = new autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool();
+            rule.init_aM_DataUtil = c2s ? autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.C2S : autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.S2C;
             String name = bw.init_Str_Class(packetClass);
             rule.init_Str = name != null && !name.isBlank() ? name : bv.init_Str_Class(packetClass);
             this.reset_List.add(rule);
@@ -14923,11 +14923,11 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private String init_Str_aM_CachePool(autismclient.util.macro.aM.Inner_CachePool rule) {
+   private String init_Str_aM_CachePool(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
       return rule != null && rule.load != null && !rule.load.isBlank() ? rule.load : "Packet Only";
    }
 
-   private Component init_Component_aM_CachePool(autismclient.util.macro.aM.Inner_CachePool rule) {
+   private Component init_Component_aM_CachePool(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
       if (rule == null) {
          return Component.literal("(empty)");
       }
@@ -14940,15 +14940,15 @@ public class ActionEditorOverlay extends bj {
       return Component.literal(label);
    }
 
-   private void init_V_aM_CachePool(autismclient.util.macro.aM.Inner_CachePool rule) {
+   private void init_V_aM_CachePool(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
       if (rule != null) {
          Class<? extends Packet<?>> packetClass = this.init_Class_aM_CachePool(rule);
-         List<String> fields = new ArrayList<>(autismclient.util.macro.aM.init_List(packetClass));
+         List<String> fields = new ArrayList<>(autismclient.util.macro.WaitPacketMatchAction.init_List(packetClass));
          fields.add(0, "");
          int idx = fields.indexOf(rule.load == null ? "" : rule.load);
          rule.load = fields.get((idx + 1 + fields.size()) % fields.size());
-         rule.init_aM_StreamUtil = rule.load.isBlank() ? autismclient.util.macro.aM.Inner_StreamUtil.EXISTS : rule.init_aM_StreamUtil;
-         List<String> options = autismclient.util.macro.aM.init_List_Class_Str(packetClass, rule.load);
+         rule.init_aM_StreamUtil = rule.load.isBlank() ? autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS : rule.init_aM_StreamUtil;
+         List<String> options = autismclient.util.macro.WaitPacketMatchAction.init_List_Class_Str(packetClass, rule.load);
          if (!options.isEmpty() && (rule.read == null || rule.read.isBlank() || !options.contains(rule.read))) {
             rule.read = options.get(0);
          }
@@ -14957,12 +14957,12 @@ public class ActionEditorOverlay extends bj {
       }
    }
 
-   private Class<? extends Packet<?>> init_Class_aM_CachePool(autismclient.util.macro.aM.Inner_CachePool rule) {
+   private Class<? extends Packet<?>> init_Class_aM_CachePool(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
       if (rule == null) {
          return null;
       }
 
-      String direction = rule.init_aM_DataUtil == autismclient.util.macro.aM.Inner_DataUtil.ANY ? "" : rule.init_aM_DataUtil.name();
+      String direction = rule.init_aM_DataUtil == autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.ANY ? "" : rule.init_aM_DataUtil.name();
       return this.init_Class_Str_Str(direction, rule.init_Str == null ? "" : rule.init_Str);
    }
 
@@ -14989,10 +14989,10 @@ public class ActionEditorOverlay extends bj {
    }
 
    private String prev(String target) {
-      String normalized = aB.read(target);
+      String normalized = WaitForPacketAction.read(target);
       if (normalized.isEmpty()) {
          return "";
-      } else if (!aB.init(normalized).isEmpty()) {
+      } else if (!WaitForPacketAction.init(normalized).isEmpty()) {
          return normalized;
       } else {
          Class<? extends Packet<?>> packetClass = this.init_Class_Str_Str("", normalized);
@@ -15012,7 +15012,7 @@ public class ActionEditorOverlay extends bj {
 
       for (String target : this.close_List()) {
          String normalized = this.prev(target);
-         if (!normalized.isEmpty() && direction.equalsIgnoreCase(aB.init(normalized))) {
+         if (!normalized.isEmpty() && direction.equalsIgnoreCase(WaitForPacketAction.init(normalized))) {
             filtered.add(normalized);
          }
       }
@@ -15021,11 +15021,11 @@ public class ActionEditorOverlay extends bj {
    }
 
    private String valid(String target) {
-      return aB.write(target);
+      return WaitForPacketAction.write(target);
    }
 
    private void get_V(String direction) {
-      this.close_List().removeIf(target -> direction.equalsIgnoreCase(aB.init(this.prev(target))));
+      this.close_List().removeIf(target -> direction.equalsIgnoreCase(WaitForPacketAction.init(this.prev(target))));
       EventBus vpC2s = this.tick_Map.get("wait_packet_c2s");
       if (vpC2s != null) {
          vpC2s.load_V(0);
@@ -15129,11 +15129,11 @@ public class ActionEditorOverlay extends bj {
          name = bv.init_Str_Class(packetClass);
       }
 
-      return aB.init(direction, name);
+      return WaitForPacketAction.init(direction, name);
    }
 
    private Class<? extends Packet<?>> init_Class_Str_Str(String direction, String target) {
-      String packetName = aB.load(target);
+      String packetName = WaitForPacketAction.load(target);
       if (packetName.isBlank()) {
          return null;
       }
@@ -15571,7 +15571,7 @@ public class ActionEditorOverlay extends bj {
                   if ("RECENT_CHAT".equals(this.tick_Str("source"))) {
                      h += 13 + this.update_I(MacroExecutor.load_List().size()) + 2;
                   } else if ("SCOREBOARD".equals(this.tick_Str("source"))) {
-                     int lineCount = autismclient.util.macro.TaskQueue.init_List_Minecraft_2(init_Minecraft).size();
+                     int lineCount = autismclient.util.macro.CaptureValueAction.init_List_Minecraft_2(init_Minecraft).size();
                      h += 13 + (lineCount <= 0 ? 24 : Math.min(5, lineCount) * 22) + 2;
                   } else if ("TABLIST".equals(this.tick_Str("source"))) {
                      int matchCount = this.set_I();
@@ -15740,11 +15740,11 @@ public class ActionEditorOverlay extends bj {
                               int h = 82 + rows * 14 + 5;
                               if (this.reset_List != null && !this.reset_List.isEmpty()) {
                                  int idx = Math.max(0, Math.min(this.f_z_I, this.reset_List.size() - 1));
-                                 autismclient.util.macro.aM.Inner_CachePool rule = this.reset_List.get(idx);
+                                 autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = this.reset_List.get(idx);
                                  h += 32;
                                  if (rule.load != null && !rule.load.isBlank()) {
                                     h += 16;
-                                    if (rule.init_aM_StreamUtil != autismclient.util.macro.aM.Inner_StreamUtil.EXISTS) {
+                                    if (rule.init_aM_StreamUtil != autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS) {
                                        h += 16;
                                     }
                                  }

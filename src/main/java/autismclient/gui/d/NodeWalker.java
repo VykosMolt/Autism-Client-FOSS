@@ -7,7 +7,7 @@ import autismclient.compat263.Compat263;
 import autismclient.gui.f.b.j;
 import autismclient.gui.f.b.l;
 import autismclient.modules.Module;
-import autismclient.modules.aI;
+import autismclient.modules.ScaffoldModule;
 import autismclient.modules.ap;
 import autismclient.util.M;
 import autismclient.util.Y;
@@ -435,7 +435,7 @@ public class NodeWalker extends KeyHolder {
       List<String> out = new ArrayList<>(valid);
       out.addAll(invalid);
       String encoded = dn.init(out);
-      if (this.init_Screen instanceof HashUtil moduleScreen && moduleScreen.init_Z_5()) {
+      if (this.init_Screen instanceof AutismModulesScreen moduleScreen && moduleScreen.init_Z_5()) {
          this.init_Module.setConfiguredValue(this.init_Setting.id(), encoded);
       } else {
          this.init_Module.setValue(this.init_Setting.id(), encoded);
@@ -588,7 +588,7 @@ public class NodeWalker extends KeyHolder {
                      case NONE:
                         break;
                      case PLACEABLE:
-                        if (!aI.init_Z_Block_3(block)) {
+                        if (!ScaffoldModule.init_Z_Block_3(block)) {
                            return;
                         }
                         break;

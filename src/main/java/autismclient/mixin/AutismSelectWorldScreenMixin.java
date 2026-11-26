@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.c.StreamUtil;
-import autismclient.gui.d.ByteReader;
+import autismclient.gui.d.JoinMacroScreen;
 import autismclient.modules.aD;
 import autismclient.util.aA;
 import autismclient.util.aN;
@@ -56,7 +56,7 @@ public abstract class AutismSelectWorldScreenMixin extends Screen implements Str
       } else {
          if (this.autism$macroButton == null) {
             this.autism$macroButton = this.addRenderableWidget(
-               Button.builder(Component.literal("Macro"), ignored -> this.minecraft.gui.setScreen(new ByteReader(this))).bounds(0, 0, 50, 20).build()
+               Button.builder(Component.literal("Macro"), ignored -> this.minecraft.gui.setScreen(new JoinMacroScreen(this))).bounds(0, 0, 50, 20).build()
             );
          }
 

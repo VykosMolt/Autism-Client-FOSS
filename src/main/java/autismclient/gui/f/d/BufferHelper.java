@@ -20,7 +20,7 @@ import autismclient.gui.f.b.e;
 import autismclient.gui.f.b.g;
 import autismclient.gui.f.b.k;
 import autismclient.modules.Module;
-import autismclient.modules.n;
+import autismclient.modules.CrosshairModule;
 import autismclient.util.ValueSink;
 import autismclient.util.aN;
 import autismclient.util.bv;
@@ -120,7 +120,7 @@ final class BufferHelper {
             listArea = NetHelper.init(listArea.read(), listArea.write() + hintH, listArea.update(), Math.max(0, listArea.sync() - hintH));
          }
 
-         DataUtil preview = module instanceof n ? DataUtil.init(listArea) : null;
+         DataUtil preview = module instanceof CrosshairModule ? DataUtil.init(listArea) : null;
          if (preview != null) {
             listArea = preview.init_NetHelper();
          }
@@ -158,7 +158,7 @@ final class BufferHelper {
          }
 
          this.init_V_SyncManager(context, listArea, contentHeight, scroll);
-         if (preview != null && module instanceof n crosshair) {
+         if (preview != null && module instanceof CrosshairModule crosshair) {
             PathHelper.init(context, preview.load(), crosshair.init_q_DataUtil_m(crosshair.init_m()));
          }
       }

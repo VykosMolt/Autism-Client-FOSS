@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.G;
+import autismclient.modules.EntityControlModule;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -14,6 +14,6 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class AutismSteerableEntityControlMixin {
    @ModifyReturnValue(method = "getControllingPassenger", at = @At("RETURN"))
    private LivingEntity autism$entityControlSteer(LivingEntity original) {
-      return original == null && G.init_Z_Entity_2((Entity)(Object)this) ? Minecraft.getInstance().player : original;
+      return original == null && EntityControlModule.init_Z_Entity_2((Entity)(Object)this) ? Minecraft.getInstance().player : original;
    }
 }

@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.compat263.Compat263;
-import autismclient.modules.M;
+import autismclient.modules.GoldenLeverModule;
 import autismclient.modules.am;
 import com.mojang.blaze3d.vertex.QuadInstance;
 import java.util.List;
@@ -50,7 +50,7 @@ public class AutismModelBlockRendererMixin {
    ) {
       boolean xrayActive = am.read_Z();
       boolean darkenActive = am.write_Z();
-      if (xrayActive || M.init_Z_11() || darkenActive) {
+      if (xrayActive || GoldenLeverModule.init_Z_11() || darkenActive) {
          int alpha = xrayActive ? am.init_I_BlockAndTintGetter(level, pos, state) : -1;
          if (alpha == 0) {
             PACKUTIL_XRAY_ALPHA.set(-1);
@@ -75,7 +75,7 @@ public class AutismModelBlockRendererMixin {
       BlockPos pos,
       CallbackInfo ci
    ) {
-      if (am.read_Z() || M.init_Z_11() || am.write_Z()) {
+      if (am.read_Z() || GoldenLeverModule.init_Z_11() || am.write_Z()) {
          PACKUTIL_XRAY_ALPHA.set(-1);
          PACKUTIL_DARKEN_TINT.set(-1);
       }
@@ -86,7 +86,7 @@ public class AutismModelBlockRendererMixin {
       BlockQuadOutput output, float x, float y, float z, BlockAndTintGetter level, BlockState state, BlockPos pos, BakedQuad quad, CallbackInfo ci
    ) {
       boolean xray = am.read_Z();
-      boolean golden = M.init_Z_11();
+      boolean golden = GoldenLeverModule.init_Z_11();
       boolean darken = am.write_Z();
       if (xray || golden || darken) {
          if (xray) {
@@ -96,7 +96,7 @@ public class AutismModelBlockRendererMixin {
             }
          }
 
-         if (golden && M.init(state)) {
+         if (golden && GoldenLeverModule.init(state)) {
             this.quadInstance.multiplyColor(-11702);
          }
 

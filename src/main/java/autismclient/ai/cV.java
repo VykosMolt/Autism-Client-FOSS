@@ -216,7 +216,7 @@ public final class cV {
 
       bk manager = bk.init_bk();
       if (this.init_Minecraft.gui.screen() == null) {
-         autismclient.util.cx.init_V(this.init_Minecraft, new autismclient.gui.d.TaskTimer(this.init_SchematicLibraryOv, null, false, false));
+         autismclient.util.cx.init_V(this.init_Minecraft, new autismclient.gui.d.AutismOverlaysScreen(this.init_SchematicLibraryOv, null, false, false));
       }
 
       manager.init_V(this.init_SchematicLibraryOv);

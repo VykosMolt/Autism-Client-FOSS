@@ -1,10 +1,10 @@
 package autismclient.mixin;
 
-import autismclient.modules.DataUtil;
-import autismclient.modules.aI;
+import autismclient.modules.AirJumpModule;
+import autismclient.modules.ScaffoldModule;
 import autismclient.modules.ai;
-import autismclient.modules.aw;
-import autismclient.modules.j;
+import autismclient.modules.NoJumpDelayModule;
+import autismclient.modules.ClutchModule;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.cn;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -26,14 +26,14 @@ public class AutismLivingEntityMovementMixin {
 
    @Inject(method = "aiStep", at = @At("HEAD"))
    private void autism$removeGroundJumpDelay(CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && this.noJumpDelay > 0 && (Object)this instanceof LocalPlayer && aw.init((LivingEntity)(Object)this)) {
+      if (!AutismLiteVariant.enabled() && this.noJumpDelay > 0 && (Object)this instanceof LocalPlayer && NoJumpDelayModule.init((LivingEntity)(Object)this)) {
          this.noJumpDelay = 0;
       }
    }
 
    @Inject(method = "aiStep", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/LivingEntity;jumping:Z", opcode = 180))
    private void autism$airJump(CallbackInfo ci) {
-      if (this.jumping && this.noJumpDelay == 0 && DataUtil.init_Z_4()) {
+      if (this.jumping && this.noJumpDelay == 0 && AirJumpModule.init_Z_4()) {
          ((LivingEntity)(Object)this).jumpFromGround();
          this.noJumpDelay = 10;
       }
@@ -41,27 +41,27 @@ public class AutismLivingEntityMovementMixin {
 
    @Inject(method = "jumpFromGround", at = @At("HEAD"))
    private void autism$airJumpConsume(CallbackInfo ci) {
-      DataUtil.init((LivingEntity)(Object)this);
+      AirJumpModule.init((LivingEntity)(Object)this);
    }
 
    @Inject(method = "jumpFromGround", at = @At("RETURN"))
    private void autism$clutchOwnJump(CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         j.init_V_LivingEntity_5((LivingEntity)(Object)this);
+         ClutchModule.init_V_LivingEntity_5((LivingEntity)(Object)this);
       }
    }
 
    @ModifyExpressionValue(method = "jumpFromGround", at = @At(value = "NEW", target = "(DDD)Lnet/minecraft/world/phys/Vec3;"))
    private Vec3 autism$killAuraSilentJump(Vec3 original) {
       LivingEntity entity = (LivingEntity)(Object)this;
-      Vec3 scaffold = aI.init_Vec3_LivingEntity_Vec3_2(entity, original);
+      Vec3 scaffold = ScaffoldModule.init_Vec3_LivingEntity_Vec3_2(entity, original);
       return cn.init(entity, scaffold);
    }
 
    @ModifyExpressionValue(method = "updateFallFlyingMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getXRot()F"))
    private float autism$killAuraSilentGlidePitch(float original) {
       LivingEntity entity = (LivingEntity)(Object)this;
-      float scaffold = aI.init_F_LivingEntity_F(entity, original);
+      float scaffold = ScaffoldModule.init_F_LivingEntity_F(entity, original);
       return cn.init(entity, scaffold);
    }
 
@@ -71,7 +71,7 @@ public class AutismLivingEntityMovementMixin {
    )
    private Vec3 autism$killAuraSilentGlideLook(Vec3 original) {
       LivingEntity entity = (LivingEntity)(Object)this;
-      Vec3 scaffold = aI.load_Vec3_LivingEntity_Vec3(entity, original);
+      Vec3 scaffold = ScaffoldModule.load_Vec3_LivingEntity_Vec3(entity, original);
       return cn.load(entity, scaffold);
    }
 

@@ -23,7 +23,7 @@ import autismclient.gui.f.b.k;
 import autismclient.modules.Module;
 import autismclient.modules.ae;
 import autismclient.modules.al;
-import autismclient.modules.n;
+import autismclient.modules.CrosshairModule;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
@@ -460,7 +460,7 @@ public final class ConfigStore {
          }
 
          this.add = Math.min(this.load_I_SyncManager(context), Math.max(45, width / 3));
-         int contentW = init_I_I(344 + (this.init_Module instanceof n ? 140 : 0));
+         int contentW = init_I_I(344 + (this.init_Module instanceof CrosshairModule ? 140 : 0));
          int w = Math.min(this.add + 1 + contentW + 2, Math.max(160, width - 8));
          int contentWidth = w - this.add - 3;
          List<Module> modules = this.init_Module == null && this.init_StreamUtil == null && !this.update_Z() ? this.init_List() : List.of();
@@ -2399,7 +2399,7 @@ public final class ConfigStore {
       boolean searchable = this.init_BufferHelper.init_Z_Module(module);
       int searchStrip = searchable ? RenderState.init(13) + 8 : 0;
       int maxW = Math.max(160, this.stop - 8);
-      int w = Math.min(init_I_I((searchable ? 360 : 250) + (module instanceof n ? 140 : 0)), maxW);
+      int w = Math.min(init_I_I((searchable ? 360 : 250) + (module instanceof CrosshairModule ? 140 : 0)), maxW);
       int maxBody = Math.max(60, this.next - 12 - this.put);
       int expandedBodyH = Math.min(this.init_BufferHelper.init_I_Module(module) + searchStrip, maxBody);
       int bodyH = Math.round(this.init_I_Str("settings-window", expandedBodyH, layout.collapsed) * this.load_RingBuffer.init_F());

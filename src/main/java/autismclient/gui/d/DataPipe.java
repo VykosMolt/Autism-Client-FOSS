@@ -558,7 +558,7 @@ public class DataPipe extends KeyHolder {
    }
 
    private boolean init_Z_4() {
-      return this.init_Screen instanceof HashUtil moduleScreen && moduleScreen.init_Z_5();
+      return this.init_Screen instanceof AutismModulesScreen moduleScreen && moduleScreen.init_Z_5();
    }
 
    private void init_V_Str_2(String value) {

@@ -1,11 +1,11 @@
 package autismclient.mixin;
 
 import autismclient.ai.cc;
-import autismclient.modules.RenderState;
-import autismclient.modules.aA;
+import autismclient.modules.AntiWebModule;
+import autismclient.modules.NoSlowModule;
 import autismclient.modules.aC;
 import autismclient.modules.ai;
-import autismclient.modules.ax;
+import autismclient.modules.NoPushModule;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.cd;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -30,14 +30,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class AutismEntityMovementMixin {
    @WrapOperation(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;push(DDD)V"))
    private void autism$noEntityPush(Entity receiving, double x, double y, double z, Operation<Void> original) {
-      if (AutismLiteVariant.enabled() || !(receiving instanceof LocalPlayer) || !ax.init(receiving, "entities")) {
+      if (AutismLiteVariant.enabled() || !(receiving instanceof LocalPlayer) || !NoPushModule.init(receiving, "entities")) {
          original.call(receiving, x, y, z);
       }
    }
 
    @WrapOperation(method = "getBlockSpeedFactor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;getSpeedFactor()F"))
    private float autism$noBlockSlowdown(Block block, Operation<Float> original) {
-      return !AutismLiteVariant.enabled() && (Object)this instanceof LocalPlayer && aA.init((Entity)(Object)this, block) ? 1.0F : original.call(block);
+      return !AutismLiteVariant.enabled() && (Object)this instanceof LocalPlayer && NoSlowModule.init((Entity)(Object)this, block) ? 1.0F : original.call(block);
    }
 
    @Inject(method = "makeStuckInBlock", at = @At("HEAD"), cancellable = true)
@@ -45,7 +45,7 @@ public class AutismEntityMovementMixin {
       if (!AutismLiteVariant.enabled()) {
          Entity entity = (Entity)(Object)this;
          if (entity instanceof LocalPlayer
-            && (state.is(Blocks.COBWEB) && RenderState.init_Z(entity) || state.is(Blocks.SWEET_BERRY_BUSH) && aA.init(entity, state.getBlock()))) {
+            && (state.is(Blocks.COBWEB) && AntiWebModule.init_Z(entity) || state.is(Blocks.SWEET_BERRY_BUSH) && NoSlowModule.init(entity, state.getBlock()))) {
             entity.resetFallDistance();
             ci.cancel();
          }

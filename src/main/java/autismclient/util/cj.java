@@ -80,7 +80,7 @@ public final class cj {
 
    public static Vec3 init_Vec3_LivingEntity(LivingEntity entity) {
       if (!AutismLiteVariant.enabled()) {
-         Vec3 observed = autismclient.modules.TaskTimer.init_Vec3_LivingEntity(entity);
+         Vec3 observed = autismclient.modules.BacktrackModule.init_Vec3_LivingEntity(entity);
          if (observed != null) {
             return observed;
          }

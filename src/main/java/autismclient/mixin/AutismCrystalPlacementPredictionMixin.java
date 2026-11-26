@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.t;
+import autismclient.modules.CrystalAuraModule;
 import autismclient.util.AutismLiteVariant;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import java.util.List;
@@ -20,6 +20,6 @@ public class AutismCrystalPlacementPredictionMixin {
       )
    )
    private List<Entity> autism$ownedReplacement(List<Entity> occupants, UseOnContext context) {
-      return !AutismLiteVariant.enabled() ? t.init_List_UseOnContext_List(context, occupants) : occupants;
+      return !AutismLiteVariant.enabled() ? CrystalAuraModule.init_List_UseOnContext_List(context, occupants) : occupants;
    }
 }

@@ -21,13 +21,13 @@ public class PacketGateCheck {
       autismclient.modules.aD.init((autismclient.util.AutismConfig)null);
 
       C.load_V();
-      C.load(gate("g", B.Inner_CachePool.CANCEL), 0L);
+      C.load(gate("g", PacketGateAction.Inner_CachePool.CANCEL), 0L);
       check(C.init_Z(), "owner-0 gate installed");
-      C.load(gate("g", B.Inner_CachePool.DISABLE_GATE), 7L);
+      C.load(gate("g", PacketGateAction.Inner_CachePool.DISABLE_GATE), 7L);
       check(!C.init_Z(), "UNBLOCK from a run removes the owner-0 gate with the same id");
 
-      C.load(gate("g", B.Inner_CachePool.CANCEL), 0L);
-      C.load(gate("run", B.Inner_CachePool.CANCEL), 7L);
+      C.load(gate("g", PacketGateAction.Inner_CachePool.CANCEL), 0L);
+      C.load(gate("run", PacketGateAction.Inner_CachePool.CANCEL), 7L);
       CompatSwingPacket packet = new CompatSwingPacket(InteractionHand.MAIN_HAND);
       check(C.init(packet, "C2S") == C.Inner_StreamUtil.CANCEL, "gates block on the connection they were made on");
 
@@ -45,8 +45,8 @@ public class PacketGateCheck {
       System.out.println("PASS PacketGateCheck");
    }
 
-   private static B gate(String id, B.Inner_CachePool mode) {
-      B gate = new B();
+   private static PacketGateAction gate(String id, PacketGateAction.Inner_CachePool mode) {
+      PacketGateAction gate = new PacketGateAction();
       gate.gateId = id;
       gate.mode = mode;
       return gate;

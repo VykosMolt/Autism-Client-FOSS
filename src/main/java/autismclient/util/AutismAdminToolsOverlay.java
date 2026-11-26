@@ -1313,7 +1313,7 @@ public final class AutismAdminToolsOverlay extends bj {
             case "forceop-preview":
                Minecraft mc = Minecraft.getInstance();
                if (mc != null) {
-                  mc.gui.setScreen(new autismclient.gui.d.SyncManager(mc.gui.screen(), module.init_StrArr_2()));
+                  mc.gui.setScreen(new autismclient.gui.d.ForceOpPreviewScreen(mc.gui.screen(), module.init_StrArr_2()));
                }
          }
       }
@@ -1339,7 +1339,7 @@ public final class AutismAdminToolsOverlay extends bj {
       this.open_V_3();
       Minecraft mc = Minecraft.getInstance();
       if (mc != null) {
-         mc.gui.setScreen(new autismclient.gui.d.TextFormat(mc.gui.screen(), module.value("nbt-item-id"), value -> {
+         mc.gui.setScreen(new autismclient.gui.d.PickItemScreen(mc.gui.screen(), module.value("nbt-item-id"), value -> {
             if (module instanceof f.Inner_DataUtil adminTools) {
                adminTools.init_V_2(value);
                adminTools.sync_V_9();

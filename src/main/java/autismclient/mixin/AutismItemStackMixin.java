@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.M;
+import autismclient.modules.GoldenLeverModule;
 import autismclient.modules.as;
 import autismclient.util.aQ;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
@@ -16,7 +16,7 @@ public class AutismItemStackMixin {
    // One hook, nothing allocated per call. The golden lever's own name is not censored, as before.
    @ModifyReturnValue(method = "getHoverName", at = @At("RETURN"))
    private Component autism$hoverName(Component original) {
-      return M.init((ItemStack)(Object)this) ? M.init_Component() : as.init_Component(original);
+      return GoldenLeverModule.init((ItemStack)(Object)this) ? GoldenLeverModule.init_Component() : as.init_Component(original);
    }
 
    @ModifyReturnValue(method = "getTooltipImage", at = @At("RETURN"))

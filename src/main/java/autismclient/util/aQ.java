@@ -47,7 +47,7 @@ public final class aQ {
    }
 
    public static Optional<TooltipComponent> init(ItemStack stack, Optional<TooltipComponent> original) {
-      if (!original.isPresent() && stack != null && !stack.isEmpty() && autismclient.modules.R.read_Z_7()) {
+      if (!original.isPresent() && stack != null && !stack.isEmpty() && autismclient.modules.InventoryTweaksModule.read_Z_7()) {
          MapId id = stack.get(DataComponents.MAP_ID);
          if (init_MapItemSavedData(id) == null) {
             return original;
@@ -68,7 +68,7 @@ public final class aQ {
 
    private static MapItemSavedData init_MapItemSavedData(MapId id) {
       Minecraft mc = Minecraft.getInstance();
-      if (id != null && mc != null && mc.level != null && autismclient.modules.R.read_Z_7()) {
+      if (id != null && mc != null && mc.level != null && autismclient.modules.InventoryTweaksModule.read_Z_7()) {
          MapItemSavedData data = MapItem.getSavedData(id, mc.level);
          return init_da.init(mc.level, id, data, ck.init_ck().state_I()) ? data : null;
       } else {

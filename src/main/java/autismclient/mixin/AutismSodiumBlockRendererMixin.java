@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.M;
+import autismclient.modules.GoldenLeverModule;
 import autismclient.modules.am;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
@@ -27,7 +27,7 @@ public abstract class AutismSodiumBlockRendererMixin {
    @Inject(method = "renderModel", at = @At("HEAD"), cancellable = true)
    private void autism$xraySodiumBlockStart(BlockStateModel model, BlockState state, BlockPos pos, BlockPos origin, CallbackInfo ci) {
       boolean xrayActive = am.read_Z();
-      boolean goldenLeverActive = M.init_Z_11();
+      boolean goldenLeverActive = GoldenLeverModule.init_Z_11();
       boolean darkenActive = am.write_Z();
       if (!xrayActive && !goldenLeverActive && !darkenActive) {
          this.autism$xrayAlpha = -1;
@@ -35,7 +35,7 @@ public abstract class AutismSodiumBlockRendererMixin {
          this.autism$darkenTint = -1;
       } else {
          this.autism$xrayAlpha = xrayActive ? am.load(state, pos) : -1;
-         this.autism$goldenLever = goldenLeverActive && M.init(state);
+         this.autism$goldenLever = goldenLeverActive && GoldenLeverModule.init(state);
          this.autism$darkenTint = darkenActive ? am.init_I_BlockState_BlockPos(state, pos) : -1;
          if (this.autism$xrayAlpha == 0) {
             ci.cancel();

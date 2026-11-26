@@ -27,30 +27,30 @@ public final class KeyHolder {
                if ((AutismLiteVariant.enabled() || autismclient.e.UiHelper.init()) && !autismclient.modules.aD.init_Z()) {
                   Module module = autismclient.modules.al.init_Module_Str("bed-defender");
                   Minecraft mc = Minecraft.getInstance();
-                  if (module instanceof autismclient.modules.ListPool bed
+                  if (module instanceof autismclient.modules.BedDefenderModule bed
                      && bed.isEnabled()
                      && Boolean.parseBoolean(bed.value("visualize"))
                      && mc.level != null
                      && mc.player != null
                      && !mc.gui.hud.isHidden()) {
-                     List<autismclient.modules.ListPool.Inner_CachePool> cells = bed.init_List_5();
+                     List<autismclient.modules.BedDefenderModule.Inner_CachePool> cells = bed.init_List_5();
                      if (!cells.isEmpty()) {
                         ClientLevel level = mc.level;
                         Vec3 camera = context.levelState().cameraRenderState.pos;
-                        ArrayList<autismclient.modules.ListPool.Inner_CachePool> sorted = new ArrayList<>(cells);
+                        ArrayList<autismclient.modules.BedDefenderModule.Inner_CachePool> sorted = new ArrayList<>(cells);
                         sorted.sort(
-                           Comparator.<autismclient.modules.ListPool.Inner_CachePool>comparingDouble(cell -> cell.init_BlockPos().distToCenterSqr(camera))
+                           Comparator.<autismclient.modules.BedDefenderModule.Inner_CachePool>comparingDouble(cell -> cell.init_BlockPos().distToCenterSqr(camera))
                               .reversed()
                         );
-                        Map<BlockPos, autismclient.modules.ListPool.Inner_CachePool> solid = new HashMap<>();
+                        Map<BlockPos, autismclient.modules.BedDefenderModule.Inner_CachePool> solid = new HashMap<>();
 
-                        for (autismclient.modules.ListPool.Inner_CachePool cell : sorted) {
+                        for (autismclient.modules.BedDefenderModule.Inner_CachePool cell : sorted) {
                            solid.put(cell.init_BlockPos(), cell);
                         }
 
                         int alpha = Math.clamp(Integer.parseInt(bed.value("ghost-opacity")), 5, 80) * 255 / 100;
                         int ghostTint = bed.init_I_6();
-                        int nextLayer = sorted.stream().mapToInt(autismclient.modules.ListPool.Inner_CachePool::init_I).min().orElse(1);
+                        int nextLayer = sorted.stream().mapToInt(autismclient.modules.BedDefenderModule.Inner_CachePool::init_I).min().orElse(1);
                         context.submitNodeCollector()
                            .submitCustomGeometry(
                               context.poseStack(),
@@ -58,7 +58,7 @@ public final class KeyHolder {
                               (pose, buffer) -> {
                                  int quads = 0;
 
-                                 for (autismclient.modules.ListPool.Inner_CachePool cell : sorted) {
+                                 for (autismclient.modules.BedDefenderModule.Inner_CachePool cell : sorted) {
                                     BlockPos p = cell.init_BlockPos();
                                     if (level.isLoaded(p) && level.getBlockState(p).canBeReplaced()) {
                                        float fade = cell.init_I() <= nextLayer ? 1.0F : c.init(Math.sqrt(new AABB(p).distanceToSqr(camera)));
@@ -74,7 +74,7 @@ public final class KeyHolder {
                                              }
 
                                              Direction d = face.init_Direction();
-                                             autismclient.modules.ListPool.Inner_CachePool neighbour = d == null ? null : solid.get(p.relative(d));
+                                             autismclient.modules.BedDefenderModule.Inner_CachePool neighbour = d == null ? null : solid.get(p.relative(d));
                                              if (neighbour == null || cell.init_I() < neighbour.init_I()) {
                                                 float shade = face.load() == null ? 1.0F : level.cardinalLighting().byFace(face.load());
                                                 BlockTintSource tintSource = face.init_I() < 0

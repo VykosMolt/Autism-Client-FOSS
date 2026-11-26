@@ -56,7 +56,7 @@ final class cN {
       JsonArray rows = new JsonArray();
 
       try {
-         for (autismclient.util.macro.TaskQueue.Inner_JsonUtil line : autismclient.util.macro.TaskQueue.init_List_Minecraft_2(mc)) {
+         for (autismclient.util.macro.CaptureValueAction.Inner_JsonUtil line : autismclient.util.macro.CaptureValueAction.init_List_Minecraft_2(mc)) {
             if (rows.size() >= 15) {
                break;
             }

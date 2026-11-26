@@ -109,13 +109,13 @@ final class ad {
             }
 
             Set<Block> targets = selection.init_Set();
-            if (!AutismLiteVariant.enabled() && ClassCache.init_Z_3()) {
+            if (!AutismLiteVariant.enabled() && BedEspModule.init_Z_3()) {
                targets = new LinkedHashSet<>(targets);
                targets.removeIf(blockx -> blockx instanceof BedBlock);
                stamp.append("|bed-esp");
             }
 
-            if (!AutismLiteVariant.enabled() && E.init_Z_5()) {
+            if (!AutismLiteVariant.enabled() && EndPortalModule.init_Z_5()) {
                targets = new LinkedHashSet<>(targets);
                targets.remove(Blocks.END_PORTAL_FRAME);
                stamp.append("|end-portal");

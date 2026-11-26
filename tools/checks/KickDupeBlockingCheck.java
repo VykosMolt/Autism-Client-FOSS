@@ -8,23 +8,23 @@ import java.lang.classfile.instruction.InvokeInstruction;
 
 public class KickDupeBlockingCheck {
    public static void main(String[] args) throws Exception {
-      ao instant = new ao();
-      ao hold = new ao();
+      UseItemPhaseAction instant = new UseItemPhaseAction();
+      UseItemPhaseAction hold = new UseItemPhaseAction();
       hold.holdTicks = 5;
-      ByteReader autoDisconnect = new ByteReader();
-      autoDisconnect.mode = ByteReader.Inner_StreamUtil.AUTO_DISCONNECT;
-      check(!ByteReader.blocksClientThread(instant), "use item without hold must run");
-      check(ByteReader.blocksClientThread(hold), "use item with hold must be skipped");
-      check(ByteReader.blocksClientThread(new BufferHelper()), "bundle dupe must be skipped");
-      check(ByteReader.blocksClientThread(new UiHelper()), "custom menu form must be skipped");
-      check(ByteReader.blocksClientThread(new O()), "report must be skipped");
-      check(ByteReader.blocksClientThread(autoDisconnect), "auto disconnect wait must be skipped");
-      check(!ByteReader.blocksClientThread(new ByteReader()), "plain disconnect must run");
-      check(!ByteReader.blocksClientThread(new B()), "packet gate must run");
+      DisconnectAction autoDisconnect = new DisconnectAction();
+      autoDisconnect.mode = DisconnectAction.Inner_StreamUtil.AUTO_DISCONNECT;
+      check(!DisconnectAction.blocksClientThread(instant), "use item without hold must run");
+      check(DisconnectAction.blocksClientThread(hold), "use item with hold must be skipped");
+      check(DisconnectAction.blocksClientThread(new BundleDupeV2Action()), "bundle dupe must be skipped");
+      check(DisconnectAction.blocksClientThread(new CustomMenuAction()), "custom menu form must be skipped");
+      check(DisconnectAction.blocksClientThread(new ReportAction()), "report must be skipped");
+      check(DisconnectAction.blocksClientThread(autoDisconnect), "auto disconnect wait must be skipped");
+      check(!DisconnectAction.blocksClientThread(new DisconnectAction()), "plain disconnect must run");
+      check(!DisconnectAction.blocksClientThread(new PacketGateAction()), "packet gate must run");
 
       // Running write() needs a connected player, so check its bytecode: the guard is called before each follow-up execute().
       byte[] bytes;
-      try (InputStream in = ByteReader.class.getResourceAsStream("ByteReader.class")) {
+      try (InputStream in = DisconnectAction.class.getResourceAsStream(DisconnectAction.class.getSimpleName() + ".class")) {
          bytes = in.readAllBytes();
       }
       MethodModel write = ClassFile.of().parse(bytes).methods().stream()

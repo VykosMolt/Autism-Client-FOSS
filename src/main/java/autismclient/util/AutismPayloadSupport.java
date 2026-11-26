@@ -762,13 +762,13 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static autismclient.util.macro.H init_H(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static autismclient.util.macro.PayloadAction init_H(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
       AutismPayloadSupport.Inner_StreamUtil snapshot = init_AutismPayloadSuppo(entry);
       if (snapshot == null) {
          return null;
       }
 
-      autismclient.util.macro.H action = new autismclient.util.macro.H();
+      autismclient.util.macro.PayloadAction action = new autismclient.util.macro.PayloadAction();
       action.channel = snapshot.load_Str();
       action.payloadData = init_Str(snapshot.init_BArr());
       action.payloadClassName = "";

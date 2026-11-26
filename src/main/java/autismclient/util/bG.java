@@ -56,7 +56,7 @@ public final class bG {
    private bG() {
    }
 
-   public static void init(autismclient.util.macro.H action, String channel, CustomPacketPayload payload) {
+   public static void init(autismclient.util.macro.PayloadAction action, String channel, CustomPacketPayload payload) {
       if (action != null) {
          action.channel = channel == null ? "" : channel;
          if (payload == null) {
@@ -97,7 +97,7 @@ public final class bG {
       return init("", channel, payload);
    }
 
-   public static String init_Str(autismclient.util.macro.H action) {
+   public static String init_Str(autismclient.util.macro.PayloadAction action) {
       if (action == null) {
          return init("", "");
       }
@@ -131,7 +131,7 @@ public final class bG {
       }
    }
 
-   public static bG.Inner_DataUtil init_bG_DataUtil(autismclient.util.macro.H action) {
+   public static bG.Inner_DataUtil init_bG_DataUtil(autismclient.util.macro.PayloadAction action) {
       if (action == null) {
          throw new IllegalArgumentException("Missing payload action");
       }
@@ -187,7 +187,7 @@ public final class bG {
       return name != null && (name.startsWith("net.minecraft.") || name.startsWith("autismclient."));
    }
 
-   private static bG.Inner_DataUtil init(autismclient.util.macro.H action, JsonObject root, String channel, byte[] rawFallbackBytes) {
+   private static bG.Inner_DataUtil init(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
       if (!init_Z(action.payloadClassName)) {
          return load(action, root, channel, rawFallbackBytes);
       }
@@ -228,7 +228,7 @@ public final class bG {
       return null;
    }
 
-   private static bG.Inner_DataUtil init(autismclient.util.macro.H action, JsonObject root, String channel, Class<?> payloadClass, byte[] rawFallbackBytes) {
+   private static bG.Inner_DataUtil init(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, Class<?> payloadClass, byte[] rawFallbackBytes) {
       int value;
       if (root.has("commandApiValue") && root.get("commandApiValue").isJsonPrimitive()) {
          value = root.get("commandApiValue").getAsInt();
@@ -301,7 +301,7 @@ public final class bG {
       return new bG.Inner_DataUtil(channel, bytes != null ? bytes : rawFallbackBytes);
    }
 
-   private static bG.Inner_DataUtil load(autismclient.util.macro.H action, JsonObject root, String channel, byte[] rawFallbackBytes) {
+   private static bG.Inner_DataUtil load(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
       if (root.has("commandApiValue") && root.get("commandApiValue").isJsonPrimitive()) {
          int value = root.get("commandApiValue").getAsInt();
          return new bG.Inner_DataUtil(channel, AutismPayloadSupport.init_BArr(rawFallbackBytes, value));

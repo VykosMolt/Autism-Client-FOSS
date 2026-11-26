@@ -12,11 +12,11 @@ public final class u {
    }
 
    public static boolean init() {
-      z module = z.init_z();
+      DangerModule module = DangerModule.init_z();
       return module != null && module.isEnabled() && module.bool("bed-warning") && !module.init_List_19().isEmpty();
    }
 
-   static void init(GuiGraphicsExtractor graphics, z module) {
+   static void init(GuiGraphicsExtractor graphics, DangerModule module) {
       Minecraft mc = Minecraft.getInstance();
       if (init() && mc.player != null && mc.gui.screen() == null && !aD.init_Z()) {
          autismclient.util.al.init_V_GuiGraphicsExtract_2(graphics, mc.font, "bed_danger");
@@ -24,7 +24,7 @@ public final class u {
    }
 
    private static u.Inner_DataUtil init_u_DataUtil(Font font) {
-      z module = z.init_z();
+      DangerModule module = DangerModule.init_z();
       List<Component> lines = init()
          ? module.init_List_19().stream().map(group -> group.init(module.bool("bed-distances"))).toList()
          : List.of(Component.literal("Player  20 m").withColor(16755285));

@@ -532,7 +532,7 @@ public final class al {
          return false;
       } else if (screen == null) {
          return true;
-      } else if (screen instanceof autismclient.gui.d.RenderState) {
+      } else if (screen instanceof autismclient.gui.d.AutismHudEditorScreen) {
          return false;
       } else if (screen instanceof ChatScreen) {
          return init_Z_Module(hud, "show-in-chat", false);
@@ -627,7 +627,7 @@ public final class al {
             AutismConfig.HudElementState state = init_AutismConfig_HudEl_Str(id);
             if (state.enabled
                && (editor || !"bed_danger".equals(id))
-               && (editor || !"anti_vanish".equals(id) || autismclient.modules.SyncManager.init_Z_19())
+               && (editor || !"anti_vanish".equals(id) || autismclient.modules.AntiVanishModule.init_Z_19())
                && !flush_Z(id)) {
                al.Inner_CachePool cached = init_al_CachePool_Str_Font(id, font);
                al.Inner_BufferHelper bounds = cached.init_al_TaskQueue().init_al_BufferHelper();
@@ -675,7 +675,7 @@ public final class al {
       if (context != null && font != null && id != null && !autismclient.modules.aD.init_Z()) {
          init_V();
          AutismConfig.HudElementState state = init_AutismConfig_HudEl_Str(id);
-         if (state.enabled && (!"anti_vanish".equals(id) || autismclient.modules.SyncManager.init_Z_19())) {
+         if (state.enabled && (!"anti_vanish".equals(id) || autismclient.modules.AntiVanishModule.init_Z_19())) {
             autismclient.gui.e.SyncManager.init_V_Z(!init_Z());
             init_V_Font_Z(font, false);
 
@@ -1290,12 +1290,12 @@ public final class al {
    }
 
    private static void load(List<al.Inner_NetHelper> lines) {
-      for (autismclient.modules.SyncManager.Inner_StreamUtil entry : autismclient.modules.SyncManager.init_List_8()) {
+      for (autismclient.modules.AntiVanishModule.Inner_StreamUtil entry : autismclient.modules.AntiVanishModule.init_List_8()) {
          lines.add(
             init_al_NetHelper_Str(
                "anti_vanish",
-               autismclient.modules.SyncManager.init_Str_SyncManager_Stream(entry),
-               autismclient.modules.SyncManager.load_Str_SyncManager_Stream(entry)
+               autismclient.modules.AntiVanishModule.init_Str_SyncManager_Stream(entry),
+               autismclient.modules.AntiVanishModule.load_Str_SyncManager_Stream(entry)
             )
          );
       }

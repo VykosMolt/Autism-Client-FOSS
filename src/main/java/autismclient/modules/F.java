@@ -29,18 +29,18 @@ public final class F {
    private F() {
    }
 
-   private static E init_E() {
+   private static EndPortalModule init_E() {
       if (!AutismLiteVariant.enabled() && !autismclient.e.PathHelper.init()) {
          return null;
       } else {
          return init_Minecraft.level != null && init_Minecraft.player != null && !init_Minecraft.gui.hud.isHidden() && !aD.init_Z() && !am.clear()
-            ? E.init_E()
+            ? EndPortalModule.init_E()
             : null;
       }
    }
 
    public static boolean init_Z() {
-      E m = init_E();
+      EndPortalModule m = init_E();
       if (m == null) {
          return false;
       }
@@ -49,7 +49,7 @@ public final class F {
       return !m.init_List_3().isEmpty() || m.write_Z() && target != null || init(m, target, Q.init());
    }
 
-   private static boolean init(E module, Vec3 target, Vec3 camera) {
+   private static boolean init(EndPortalModule module, Vec3 target, Vec3 camera) {
       if (module.sync() && cV.init(camera, target, am.init_I())) {
          int x = (int)Math.floor(target.x) >> 4;
          int z = (int)Math.floor(target.z) >> 4;
@@ -60,12 +60,12 @@ public final class F {
    }
 
    public static boolean load() {
-      E m = init_E();
+      EndPortalModule m = init_E();
       return m != null && m.update_Z() && init_Minecraft.gui.screen() == null;
    }
 
    public static void init(PoseStack matrices) {
-      E module = init_E();
+      EndPortalModule module = init_E();
       if (module != null) {
          Vec3 camera = Q.init();
          Vec3 target = module.init_Vec3();
@@ -127,14 +127,14 @@ public final class F {
       return new AABB(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 0.8125, p.getZ() + 1);
    }
 
-   private static F.Inner_DataUtil init(GuiGraphicsExtractor graphics, E module) {
+   private static F.Inner_DataUtil init(GuiGraphicsExtractor graphics, EndPortalModule module) {
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, init_Minecraft.font, 0, 0);
       Vec3 target = module.init_Vec3();
       float scale = module.init_F();
       String label = module.read_Z_2()
          ? cV.init(target, module.close(), module.open())
          : cV.init(init_Minecraft.player.position(), target, module.close(), module.open());
-      String prompt = cV.init(target != null, E.load_Z(), module.flush());
+      String prompt = cV.init(target != null, EndPortalModule.load_Z(), module.flush());
       if (!prompt.isEmpty()) {
          label = prompt;
       }
@@ -165,7 +165,7 @@ public final class F {
    }
 
    public static autismclient.gui.f.NetHelper init_NetHelper(GuiGraphicsExtractor graphics) {
-      E module = init_E();
+      EndPortalModule module = init_E();
       if (module == null) {
          return autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
       }
@@ -177,7 +177,7 @@ public final class F {
    }
 
    public static void init_V(GuiGraphicsExtractor graphics) {
-      E module = init_E();
+      EndPortalModule module = init_E();
       if (module != null && module.update_Z() && init_Minecraft.gui.screen() == null) {
          F.Inner_DataUtil marker = init(graphics, module);
          if (marker != null) {

@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
-import autismclient.gui.d.HashUtil;
-import autismclient.gui.d.TaskTimer;
+import autismclient.gui.d.AutismModulesScreen;
+import autismclient.gui.d.AutismOverlaysScreen;
 import autismclient.modules.PoolEntry;
 import autismclient.modules.aD;
 import autismclient.util.AutismProfilesOverlay;
@@ -30,7 +30,7 @@ public abstract class AutismTitleScreenSupportMixin extends Screen {
       if (!aD.init_Z()) {
          this.autism$rightButton(Component.literal("Modules & Macros"), 4, b -> {
             if (!aD.read_Z()) {
-               this.minecraft.gui.setScreen(new HashUtil(this, HashUtil.Inner_DataUtil.TITLE_SETUP));
+               this.minecraft.gui.setScreen(new AutismModulesScreen(this, AutismModulesScreen.Inner_DataUtil.TITLE_SETUP));
             }
          });
          this.autism$rightButton(Component.literal("Profiles"), 28, b -> this.autism$openProfilesOverlay());
@@ -68,7 +68,7 @@ public abstract class AutismTitleScreenSupportMixin extends Screen {
                }
 
                overlay.init_V_Z(true);
-               this.minecraft.gui.setScreen(new TaskTimer(overlay, this, true));
+               this.minecraft.gui.setScreen(new AutismOverlaysScreen(overlay, this, true));
             }
          }
       }

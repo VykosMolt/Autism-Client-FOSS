@@ -179,107 +179,107 @@ public final class f {
          al.init_V_Module(new f.Inner_MapStore());
          al.init_V_Module(new f.Inner_MethodUtil());
          al.init_V_Module(new f.Inner_ListPool());
-         al.init_V_Module(new e());
-         al.init_V_Module(new G());
+         al.init_V_Module(new BoatFlyModule());
+         al.init_V_Module(new EntityControlModule());
          al.init_V_Module(new f.Inner_TableIndex());
          al.init_V_Module(new f.Inner_PathHelper());
-         al.init_V_Module(new DataUtil());
-         al.init_V_Module(new aw());
-         al.init_V_Module(new ax());
-         al.init_V_Module(new aA());
-         al.init_V_Module(new RenderState());
-         al.init_V_Module(new N());
-         al.init_V_Module(new aZ());
-         al.init_V_Module(new av());
-         al.init_V_Module(new aF());
-         al.init_V_Module(new CachePool());
-         al.init_V_Module(new bh());
+         al.init_V_Module(new AirJumpModule());
+         al.init_V_Module(new NoJumpDelayModule());
+         al.init_V_Module(new NoPushModule());
+         al.init_V_Module(new NoSlowModule());
+         al.init_V_Module(new AntiWebModule());
+         al.init_V_Module(new HandNoClipModule());
+         al.init_V_Module(new TridentBoostModule());
+         al.init_V_Module(new NoClipModule());
+         al.init_V_Module(new PhaseModule());
+         al.init_V_Module(new AirStuckModule());
+         al.init_V_Module(new WaypointsModule());
          al.init_V_Module(new f.Inner_EventBus());
          al.init_V_Module(new f.Inner_RenderState());
          al.init_V_Module(new f.Inner_StreamUtil());
          al.init_V_Module(new f.Inner_CachePool());
-         al.init_V_Module(new ba());
-         al.init_V_Module(new FieldCache());
-         al.init_V_Module(new j());
-         al.init_V_Module(new StateCache());
-         al.init_V_Module(new bg());
-         al.init_V_Module(new z());
-         al.init_V_Module(new ListPool());
-         al.init_V_Module(new aK());
-         al.init_V_Module(new BufferHelper());
-         al.init_V_Module(new t());
-         al.init_V_Module(new TaskTimer());
-         al.init_V_Module(new aQ());
-         al.init_V_Module(new PathHelper());
-         al.init_V_Module(new UtilCore());
-         al.init_V_Module(new X());
-         al.init_V_Module(new aa());
-         al.init_V_Module(new RingBuffer());
-         al.init_V_Module(new MethodUtil());
-         al.init_V_Module(new bd());
+         al.init_V_Module(new TriggerBotModule());
+         al.init_V_Module(new AutoTotemModule());
+         al.init_V_Module(new ClutchModule());
+         al.init_V_Module(new AntiKnockbackModule());
+         al.init_V_Module(new WTappingModule());
+         al.init_V_Module(new DangerModule());
+         al.init_V_Module(new BedDefenderModule());
+         al.init_V_Module(new SurroundModule());
+         al.init_V_Module(new AnchorAuraModule());
+         al.init_V_Module(new CrystalAuraModule());
+         al.init_V_Module(new BacktrackModule());
+         al.init_V_Module(new TotemHitModule());
+         al.init_V_Module(new AutoTrapModule());
+         al.init_V_Module(new BedNukerModule());
+         al.init_V_Module(new KBDisplacementModule());
+         al.init_V_Module(new KillAuraModule());
+         al.init_V_Module(new AutoFarmModule());
+         al.init_V_Module(new AutoTradeModule());
+         al.init_V_Module(new VillagerDupeModule());
          AutismConfig leafConfig = AutismConfig.getGlobal();
          if (!leafConfig.modules.containsKey("leaf-dupe") && leafConfig.modules.containsKey("exploit-addon:leaf-dupe")) {
             leafConfig.modules.put("leaf-dupe", leafConfig.modules.remove("exploit-addon:leaf-dupe"));
          }
 
-         al.init_V_Module(new ac());
-         al.init_V_Module(new TableIndex());
-         al.init_V_Module(new TokenStore());
-         al.init_V_Module(new CharEncoder());
-         al.init_V_Module(new aR());
+         al.init_V_Module(new LeafDupeModule());
+         al.init_V_Module(new AutoArmorModule());
+         al.init_V_Module(new AutoSignModule());
+         al.init_V_Module(new AutoLoginModule());
+         al.init_V_Module(new TpClickModule());
          init("antibot", true);
-         al.init_V_Module(new NetHelper());
-         al.init_V_Module(new SyncManager());
+         al.init_V_Module(new AntiBotModule());
+         al.init_V_Module(new AntiVanishModule());
          al.init_V_Module(new f.Inner_BufferHelper());
          al.init_V_Module(new f.Inner_PoolEntry());
          al.init_V_Module(new f.Inner_TaskQueue());
-         al.init_V_Module(new aI());
+         al.init_V_Module(new ScaffoldModule());
          al.init_V_Module(new f.Inner_BitSetUtil());
          al.init_V_Module(new f.Inner_CharEncoder());
-         al.init_V_Module(new StreamUtil());
-         al.init_V_Module(new J());
+         al.init_V_Module(new AirPlaceModule());
+         al.init_V_Module(new GhostBlockModule());
          al.init_V_Module(new f.Inner_TokenStore());
          al.init_V_Module(new f.Inner_TaskTimer());
-         al.init_V_Module(new aE());
+         al.init_V_Module(new PayAllModule());
          al.init_V_Module(new f.Inner_StateCache());
          al.init_V_Module(new f.Inner_FieldCache());
          al.init_V_Module(new f.Inner_ConfigStore());
          al.init_V_Module(new f.Inner_HashUtil());
-         al.init_V_Module(new R());
-         al.init_V_Module(new JsonUtil());
-         al.init_V_Module(new aH());
+         al.init_V_Module(new InventoryTweaksModule());
+         al.init_V_Module(new AntiHungerModule());
+         al.init_V_Module(new SafeWalkModule());
          al.init_V_Module(new f.Inner_RefQueue());
          al.init_V_Module(new f.Inner_TextFormat());
          al.init_V_Module(new f.Inner_NetHelper());
          al.init_V_Module(new f.Inner_PacketUtil());
          al.init_V_Module(new f.Inner_UiHelper());
          al.init_V_Module(new f.Inner_KeyHolder());
-         al.init_V_Module(new bi());
-         al.init_V_Module(new K());
+         al.init_V_Module(new WorldModule());
+         al.init_V_Module(new GifModule());
          al.init_V_Module(new f.Inner_ByteReader());
-         al.init_V_Module(new I());
+         al.init_V_Module(new FreeLookModule());
          al.init_V_Module(new f.Inner_SyncManager());
          al.init_V_Module(new f.Inner_RingBuffer());
-         al.init_V_Module(new au());
+         al.init_V_Module(new NameTagsModule());
          al.init_V_Module(new f.Inner_ClassCache());
-         al.init_V_Module(new aS());
+         al.init_V_Module(new TrajectoriesModule());
          al.init_V_Module(new f.Inner_ArrayUtil());
          al.init_V_Module(new f.Inner_JsonUtil());
-         al.init_V_Module(new ClassCache());
-         al.init_V_Module(new E());
-         al.init_V_Module(new P());
-         al.init_V_Module(new ay());
-         al.init_V_Module(new n());
-         al.init_V_Module(new EventBus());
+         al.init_V_Module(new BedEspModule());
+         al.init_V_Module(new EndPortalModule());
+         al.init_V_Module(new HoleEspModule());
+         al.init_V_Module(new NoRenderModule());
+         al.init_V_Module(new CrosshairModule());
+         al.init_V_Module(new AspectRatioModule());
          al.init_V_Module(new f.Inner_NodeWalker());
          al.init_V_Module(new f.Inner_IoWorker());
          al.init_V_Module(new f.Inner_DataUtil());
-         al.init_V_Module(new M());
+         al.init_V_Module(new GoldenLeverModule());
          al.init_V_Module(new as());
          init("teams", true);
-         al.init_V_Module(new aL());
-         al.init_V_Module(new aG());
-         al.init_V_Module(new d());
+         al.init_V_Module(new TeamsModule());
+         al.init_V_Module(new PingSpoofModule());
+         al.init_V_Module(new BlinkModule());
       }
    }
 
@@ -967,7 +967,7 @@ public final class f {
                this.init_Obj = MC.level;
             }
 
-            if (!FieldCache.init_Z_6() && (autismclient.util.aD.init_Str() == null || !autismclient.util.aD.read_Z())) {
+            if (!AutoTotemModule.init_Z_6() && (autismclient.util.aD.init_Str() == null || !autismclient.util.aD.read_Z())) {
                this.pop();
                if (this.isEnabled()) {
                   if (MC.gui.screen() == null && MC.gui.overlay() == null) {
@@ -1219,7 +1219,7 @@ public final class f {
             && !MC.player.isUsingItem()
             && !MC.player.isHandsBusy()
             && !HashUtil.load_Z()
-            && !FieldCache.init_Z_6()
+            && !AutoTotemModule.init_Z_6()
             && (autismclient.util.aD.init_Str() == null || !autismclient.util.aD.read_Z())
             && autismclient.util.ah.read_Z(this.id())
             && this.init_Z_38();
@@ -1663,29 +1663,29 @@ public final class f {
 
       private void init(autismclient.util.aM macro, cL.Inner_DataUtil preset) {
          if (macro != null && macro.init_List != null && !macro.init_List.isEmpty() && preset != null) {
-            if (preset == cL.Inner_DataUtil.FREE_SLOTS && macro.init_List.get(0) instanceof autismclient.util.macro.aH wait) {
+            if (preset == cL.Inner_DataUtil.FREE_SLOTS && macro.init_List.get(0) instanceof autismclient.util.macro.WaitFreeSlotsAction wait) {
                int slots = AuditClientFixes.autoFishMinFreeSlots(this, wait.slots);
-               boolean changed = wait.countMode != autismclient.util.macro.aH.Inner_StreamUtil.FREE_SLOTS
-                  || wait.comparison != autismclient.util.macro.aH.Inner_DataUtil.AT_MOST
+               boolean changed = wait.countMode != autismclient.util.macro.WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS
+                  || wait.comparison != autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST
                   || wait.slots != slots;
-               wait.countMode = autismclient.util.macro.aH.Inner_StreamUtil.FREE_SLOTS;
-               wait.comparison = autismclient.util.macro.aH.Inner_DataUtil.AT_MOST;
+               wait.countMode = autismclient.util.macro.WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS;
+               wait.comparison = autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST;
                wait.slots = slots;
                if (changed) {
                   autismclient.util.aN.init_aN().read_V();
                }
-            } else if (preset == cL.Inner_DataUtil.DURABILITY && macro.init_List.get(0) instanceof autismclient.util.macro.ar wait) {
+            } else if (preset == cL.Inner_DataUtil.DURABILITY && macro.init_List.get(0) instanceof autismclient.util.macro.WaitDurabilityAction wait) {
                int value = Math.max(1, this.integer("min-durability"));
-               boolean changed = wait.targetMode != autismclient.util.macro.ar.Inner_CachePool.ITEM
+               boolean changed = wait.targetMode != autismclient.util.macro.WaitDurabilityAction.Inner_CachePool.ITEM
                   || !"minecraft:fishing_rod".equals(wait.itemName)
-                  || wait.measurement != autismclient.util.macro.ar.Inner_StreamUtil.REMAINING
-                  || wait.comparison != autismclient.util.macro.ar.Inner_DataUtil.AT_MOST
+                  || wait.measurement != autismclient.util.macro.WaitDurabilityAction.Inner_StreamUtil.REMAINING
+                  || wait.comparison != autismclient.util.macro.WaitDurabilityAction.Inner_DataUtil.AT_MOST
                   || wait.value != value
                   || !wait.useNext;
-               wait.targetMode = autismclient.util.macro.ar.Inner_CachePool.ITEM;
+               wait.targetMode = autismclient.util.macro.WaitDurabilityAction.Inner_CachePool.ITEM;
                wait.itemName = "minecraft:fishing_rod";
-               wait.measurement = autismclient.util.macro.ar.Inner_StreamUtil.REMAINING;
-               wait.comparison = autismclient.util.macro.ar.Inner_DataUtil.AT_MOST;
+               wait.measurement = autismclient.util.macro.WaitDurabilityAction.Inner_StreamUtil.REMAINING;
+               wait.comparison = autismclient.util.macro.WaitDurabilityAction.Inner_DataUtil.AT_MOST;
                wait.value = value;
                wait.useNext = true;
                if (changed) {
@@ -2116,11 +2116,11 @@ public final class f {
             || MC.player == null
             || MC.level == null
             || MC.gui.screen() != null
-            || aI.read_Z_12()
-            || aI.update_Z_5()
+            || ScaffoldModule.read_Z_12()
+            || ScaffoldModule.update_Z_5()
             || cn.init_ce_DataUtil() != null
-            || aI.flush_Z_5()
-            || FieldCache.init_Z_6()
+            || ScaffoldModule.flush_Z_5()
+            || AutoTotemModule.init_Z_6()
             || !this.init_O.init_Z_ItemStack(MC.player.getMainHandItem());
       }
 
@@ -4557,7 +4557,7 @@ public final class f {
       public void preMovementTick() {
          if (MC == null || MC.player == null || MC.gameMode == null || MC.getConnection() == null) {
             this.update_V_14();
-         } else if (FieldCache.init_Z_6()) {
+         } else if (AutoTotemModule.init_Z_6()) {
             this.read_V_19();
          } else if (MC.player.isUsingItem()) {
             this.read_V_19();
@@ -4618,7 +4618,7 @@ public final class f {
       }
 
       private boolean load_Z_20() {
-         if (cn.init_ce_DataUtil() == null && !cn.init_Z() && !aI.update_Z_5() && !FieldCache.init_Z_6()) {
+         if (cn.init_ce_DataUtil() == null && !cn.init_Z() && !ScaffoldModule.update_Z_5() && !AutoTotemModule.init_Z_6()) {
             return this.load_Z
                ? this.init_InteractionHand_4() != null && this.load_ce_DataUtil_4() != null && autismclient.util.as.init_Z()
                : this.read && this.sync() && autismclient.util.as.load_Z();
@@ -5477,7 +5477,7 @@ public final class f {
 
       private void init() {
          autismclient.util.al.init_V();
-         MC.gui.setScreen(new autismclient.gui.d.RenderState(MC.gui.screen()));
+         MC.gui.setScreen(new autismclient.gui.d.AutismHudEditorScreen(MC.gui.screen()));
       }
    }
 
@@ -6509,7 +6509,7 @@ public final class f {
             && MC.level != null
             && MC.getConnection() != null
             && this.init_BlockPos != null
-            && !FieldCache.init_Z_6()) {
+            && !AutoTotemModule.init_Z_6()) {
             if (!this.bool("render")) {
                autismclient.util.au.load();
             } else {
@@ -7021,10 +7021,10 @@ public final class f {
          } else {
             int chars = this.integer("characters");
             if (!custom.isBlank() && this.bool("word-wrap")) {
-               pages.addAll(autismclient.util.macro.u.init_List_Font(MC.font, custom, pageCount));
+               pages.addAll(autismclient.util.macro.NbtBookAction.init_List_Font(MC.font, custom, pageCount));
                return pages.isEmpty() ? List.of("Autism") : pages;
             } else {
-               pages.addAll(autismclient.util.macro.u.init_List_Str(custom, pageCount, chars));
+               pages.addAll(autismclient.util.macro.NbtBookAction.init_List_Str(custom, pageCount, chars));
                return pages.isEmpty() ? List.of("Autism") : pages;
             }
          }
@@ -7211,12 +7211,12 @@ public final class f {
             && MC.player != null
             && MC.level != null
             && MC.gui.screen() == null
-            && !aI.read_Z_12()
-            && !aI.update_Z_5()
+            && !ScaffoldModule.read_Z_12()
+            && !ScaffoldModule.update_Z_5()
             && cn.init_ce_DataUtil() == null
-            && !aI.flush_Z_5()
-            && !FieldCache.init_Z_6()
-            && (AutismLiteVariant.enabled() || !j.init_Z_49())
+            && !ScaffoldModule.flush_Z_5()
+            && !AutoTotemModule.init_Z_6()
+            && (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49())
             && !autismclient.util.DataPipe.init()
             && this.init_O.init_Z_ItemStack(MC.player.getMainHandItem())
             && (!this.bool("only-while-moving") || autismclient.util.aZ.init(4, ck.init_ck().state_I()))) {
@@ -7492,7 +7492,7 @@ public final class f {
             return false;
          }
 
-         if (aL.init(entity, "aimassist")) {
+         if (TeamsModule.init(entity, "aimassist")) {
             return false;
          }
 
@@ -8058,12 +8058,12 @@ public final class f {
 
       @Override
       public void tick() {
-         if (!AutismLiteVariant.enabled() && UtilCore.init_Z_23()) {
+         if (!AutismLiteVariant.enabled() && BedNukerModule.init_Z_23()) {
             this.init_V_47();
          } else if (MC.player != null
             && MC.level != null
             && MC.gameMode != null
-            && !FieldCache.init_Z_6()
+            && !AutoTotemModule.init_Z_6()
             && MC.gameMode instanceof AutismMultiPlayerGameModeAccessor accessor) {
             boolean destroying = accessor.autism$isDestroying();
             if (destroying) {
@@ -8453,7 +8453,7 @@ public final class f {
                   return false;
                }
 
-               if (FieldCache.init_Z_6()) {
+               if (AutoTotemModule.init_Z_6()) {
                   return false;
                }
 

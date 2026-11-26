@@ -21,15 +21,15 @@ public final class RenderState {
    private RenderState() {
    }
 
-   public static boolean init(UiHelper action, String title) {
+   public static boolean init(CustomMenuAction action, String title) {
       return true;
    }
 
-   public static String init(UiHelper action) {
+   public static String init(CustomMenuAction action) {
       return "";
    }
 
-   public static RenderState.Inner_DataUtil init(UiHelper action, CustomMenuSnapshot snapshot, Function<String, String> resolver) {
+   public static RenderState.Inner_DataUtil init(CustomMenuAction action, CustomMenuSnapshot snapshot, Function<String, String> resolver) {
       if (action != null && snapshot != null) {
          Function<String, String> safeResolver = resolver == null ? Function.identity() : resolver;
          Map<String, String> values = new LinkedHashMap<>();
@@ -89,7 +89,7 @@ public final class RenderState {
       }
    }
 
-   public static CustomMenuButton init(UiHelper action, List<CustomMenuButton> buttons) {
+   public static CustomMenuButton init(CustomMenuAction action, List<CustomMenuButton> buttons) {
       if (buttons != null && !buttons.isEmpty()) {
          List<CustomMenuButton> usable = new ArrayList<>();
 

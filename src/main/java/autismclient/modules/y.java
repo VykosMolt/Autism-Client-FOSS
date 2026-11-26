@@ -22,7 +22,7 @@ public final class y {
    }
 
    public static void init(GuiGraphicsExtractor graphics) {
-      z danger = z.init_z();
+      DangerModule danger = DangerModule.init_z();
       Minecraft mc = Minecraft.getInstance();
       if (danger != null) {
          u.init(graphics, danger);

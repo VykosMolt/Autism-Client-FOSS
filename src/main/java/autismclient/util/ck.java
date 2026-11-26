@@ -90,7 +90,7 @@ public final class ck {
    private int pop_I = -1;
    private String flush_Str = "";
    private int tick_I = 0;
-   private final List<autismclient.util.macro.SyncManager.Inner_DataUtil> update_List = new ArrayList<>();
+   private final List<autismclient.util.macro.CraftAction.Inner_DataUtil> update_List = new ArrayList<>();
    private int run_I = -1;
    private int get_I = 0;
    private boolean add_Z = false;
@@ -1447,10 +1447,10 @@ public final class ck {
       this.tick_I = Math.max(0, offset);
    }
 
-   public synchronized List<autismclient.util.macro.SyncManager.Inner_DataUtil> update_List() {
-      List<autismclient.util.macro.SyncManager.Inner_DataUtil> copies = new ArrayList<>(this.update_List.size());
+   public synchronized List<autismclient.util.macro.CraftAction.Inner_DataUtil> update_List() {
+      List<autismclient.util.macro.CraftAction.Inner_DataUtil> copies = new ArrayList<>(this.update_List.size());
 
-      for (autismclient.util.macro.SyncManager.Inner_DataUtil entry : this.update_List) {
+      for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : this.update_List) {
          if (entry != null) {
             copies.add(entry.init_SyncManager_DataUt());
          }
@@ -1459,10 +1459,10 @@ public final class ck {
       return copies;
    }
 
-   public synchronized void read_V_List(List<autismclient.util.macro.SyncManager.Inner_DataUtil> entries) {
+   public synchronized void read_V_List(List<autismclient.util.macro.CraftAction.Inner_DataUtil> entries) {
       this.update_List.clear();
       if (entries != null) {
-         for (autismclient.util.macro.SyncManager.Inner_DataUtil entry : entries) {
+         for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : entries) {
             if (entry != null) {
                this.update_List.add(entry.init_SyncManager_DataUt());
             }

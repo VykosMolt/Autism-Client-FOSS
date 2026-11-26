@@ -6,7 +6,7 @@ import autismclient.gui.macro.editor.ActionFieldSchema;
 import autismclient.gui.macro.editor.FieldDef;
 import autismclient.util.macro.MacroAction;
 import autismclient.util.macro.StreamGate;
-import autismclient.util.macro.a;
+import autismclient.util.macro.MacroCondition;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -76,7 +76,7 @@ public final class an {
                   JsonObject supplied = actions.get(i).getAsJsonObject();
                   MacroAction built = macro.init_List.get(i);
                   String type = ag.init_Str_JsonObject(supplied, "type", "");
-                  if (built instanceof autismclient.util.macro.r) {
+                  if (built instanceof autismclient.util.macro.MissingAddonAction) {
                      throw new IllegalArgumentException("Action " + type + " could not be deserialized");
                   }
 
@@ -206,7 +206,7 @@ public final class an {
          if (id.equals("RACE")) {
             if (input.has("triggerType")) {
                try {
-                  autismclient.util.macro.L.Inner_DataUtil.valueOf(ag.init_Str_JsonObject(input, "triggerType", "").trim().toUpperCase(Locale.ROOT));
+                  autismclient.util.macro.RaceAction.Inner_DataUtil.valueOf(ag.init_Str_JsonObject(input, "triggerType", "").trim().toUpperCase(Locale.ROOT));
                } catch (IllegalArgumentException e) {
                   throw new IllegalArgumentException("Unknown RACE triggerType " + ag.init_Str_JsonObject(input, "triggerType", ""));
                }
@@ -314,10 +314,10 @@ public final class an {
          throw new IllegalArgumentException("Condition nesting exceeds 16");
       }
 
-      a.Inner_BufferHelper type = a.Inner_BufferHelper.valueOf(ag.init_Str_JsonObject(node, "node", "GROUP"));
+      MacroCondition.Inner_BufferHelper type = MacroCondition.Inner_BufferHelper.valueOf(ag.init_Str_JsonObject(node, "node", "GROUP"));
       ag.init_Z_JsonObject(node, "negate", false);
-      if (type == a.Inner_BufferHelper.GROUP) {
-         a.Inner_StreamUtil.valueOf(ag.init_Str_JsonObject(node, "combine", "ALL"));
+      if (type == MacroCondition.Inner_BufferHelper.GROUP) {
+         MacroCondition.Inner_StreamUtil.valueOf(ag.init_Str_JsonObject(node, "combine", "ALL"));
          if (!node.has("children") || !node.get("children").isJsonArray() || node.getAsJsonArray("children").isEmpty()) {
             throw new IllegalArgumentException("Condition group must contain at least one explicit child");
          }
@@ -330,9 +330,9 @@ public final class an {
             init(child.getAsJsonObject(), depth + 1);
          }
       } else {
-         a.Inner_CachePool.valueOf(ag.init_Str_JsonObject(node, "kind", "ALWAYS"));
-         a.Inner_ConfigStore.valueOf(ag.init_Str_JsonObject(node, "op", "EQ"));
-         a.Inner_DataUtil.valueOf(ag.init_Str_JsonObject(node, "cmp", "AT_LEAST"));
+         MacroCondition.Inner_CachePool.valueOf(ag.init_Str_JsonObject(node, "kind", "ALWAYS"));
+         MacroCondition.Inner_ConfigStore.valueOf(ag.init_Str_JsonObject(node, "op", "EQ"));
+         MacroCondition.Inner_DataUtil.valueOf(ag.init_Str_JsonObject(node, "cmp", "AT_LEAST"));
          if (node.has("range") && ag.init_D_JsonObject(node, "range", 0.0) < 0.0) {
             throw new IllegalArgumentException("Condition range cannot be negative");
          }

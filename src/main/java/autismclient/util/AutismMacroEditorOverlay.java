@@ -1025,7 +1025,7 @@ public class AutismMacroEditorOverlay extends bj {
          }
 
          for (int i = startIndex; i < endExclusive; i++) {
-            if (this.init_aM.init_List.get(i) instanceof autismclient.util.macro.ListPool auditAction && !auditAction.init_Z_2()) {
+            if (this.init_aM.init_List.get(i) instanceof autismclient.util.macro.InventoryAuditAction auditAction && !auditAction.init_Z_2()) {
                AutismClientMessaging.sendPrefixed("Inventory Audit needs at least one target.");
                return;
             }
@@ -1058,10 +1058,10 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private boolean init_Z_MacroAction_2(MacroAction action) {
-      return !(action instanceof autismclient.util.macro.L)
-         && !(action instanceof autismclient.util.macro.O)
-         && !(action instanceof autismclient.util.macro.B)
-         && !(action instanceof autismclient.util.macro.HashUtil);
+      return !(action instanceof autismclient.util.macro.RaceAction)
+         && !(action instanceof autismclient.util.macro.ReportAction)
+         && !(action instanceof autismclient.util.macro.PacketGateAction)
+         && !(action instanceof autismclient.util.macro.EndPacketGateAction);
    }
 
    private List<MacroAction> init_List_MacroAction(MacroAction primary) {
@@ -1161,10 +1161,10 @@ public class AutismMacroEditorOverlay extends bj {
          String pendingGateId = null;
 
          for (MacroAction action : actions) {
-            if (action instanceof autismclient.util.macro.B gate) {
+            if (action instanceof autismclient.util.macro.PacketGateAction gate) {
                gate.gateId = UUID.randomUUID().toString();
-               pendingGateId = gate.scope == autismclient.util.macro.B.Inner_BufferHelper.MACRO_PASS ? null : gate.gateId;
-            } else if (action instanceof autismclient.util.macro.HashUtil endGate && pendingGateId != null) {
+               pendingGateId = gate.scope == autismclient.util.macro.PacketGateAction.Inner_BufferHelper.MACRO_PASS ? null : gate.gateId;
+            } else if (action instanceof autismclient.util.macro.EndPacketGateAction endGate && pendingGateId != null) {
                endGate.gateId = pendingGateId;
                pendingGateId = null;
             }
@@ -1375,7 +1375,7 @@ public class AutismMacroEditorOverlay extends bj {
          }
 
          for (int i : new ArrayList<>(deleteIndices)) {
-            if (this.init_aM.init_List.get(i) instanceof autismclient.util.macro.t multi) {
+            if (this.init_aM.init_List.get(i) instanceof autismclient.util.macro.MultiAction multi) {
                int count = multi.init(this.init_aM.init_List, i);
 
                for (int j = i + 1; j <= i + count; j++) {
@@ -1384,7 +1384,7 @@ public class AutismMacroEditorOverlay extends bj {
             }
          }
 
-         Map<autismclient.util.macro.t, List<MacroAction>> multiCoverage = this.init_Map();
+         Map<autismclient.util.macro.MultiAction, List<MacroAction>> multiCoverage = this.init_Map();
          int removed = 0;
 
          for (int i : deleteIndices.descendingSet()) {
@@ -1457,7 +1457,7 @@ public class AutismMacroEditorOverlay extends bj {
             return false;
          }
 
-         Map<autismclient.util.macro.t, List<MacroAction>> multiCoverage = this.init_Map();
+         Map<autismclient.util.macro.MultiAction, List<MacroAction>> multiCoverage = this.init_Map();
          Set<MacroAction> movedRefs = Collections.newSetFromMap(new IdentityHashMap<>());
          movedRefs.addAll(this.load_List_3());
          List<MacroAction> rebuilt = new ArrayList<>(this.init_aM.init_List.size());
@@ -1824,15 +1824,15 @@ public class AutismMacroEditorOverlay extends bj {
          }
 
          int moveCount = 1;
-         if (source instanceof autismclient.util.macro.L race) {
+         if (source instanceof autismclient.util.macro.RaceAction race) {
             moveCount = race.init_I_List_I(this.init_aM.init_List, fromIndex) + 1;
-         } else if (source instanceof autismclient.util.macro.O report) {
+         } else if (source instanceof autismclient.util.macro.ReportAction report) {
             moveCount = report.init(this.init_aM.init_List, fromIndex) + 1;
-         } else if (source instanceof autismclient.util.macro.t multi) {
+         } else if (source instanceof autismclient.util.macro.MultiAction multi) {
             moveCount = multi.init(this.init_aM.init_List, fromIndex) + 1;
-         } else if (source instanceof autismclient.util.macro.B) {
+         } else if (source instanceof autismclient.util.macro.PacketGateAction) {
             moveCount = this.sync_I(fromIndex) + 1;
-         } else if (source instanceof autismclient.util.macro.HashUtil) {
+         } else if (source instanceof autismclient.util.macro.EndPacketGateAction) {
             this.sync_V_2(fromIndex, toIndex);
             return;
          }
@@ -1855,7 +1855,7 @@ public class AutismMacroEditorOverlay extends bj {
             insertIndex = toIndex;
          }
 
-         Map<autismclient.util.macro.t, List<MacroAction>> multiCoverage = this.init_Map();
+         Map<autismclient.util.macro.MultiAction, List<MacroAction>> multiCoverage = this.init_Map();
          List<MacroAction> moved = new ArrayList<>(this.init_aM.init_List.subList(fromIndex, fromIndex + moveCount));
          this.init_aM.init_List.subList(fromIndex, fromIndex + moveCount).clear();
          if (insertIndex > fromIndex) {
@@ -1905,7 +1905,7 @@ public class AutismMacroEditorOverlay extends bj {
             selectedSet.addAll(refs);
             int insertPos = this.init_I_Set(selectedSet, sourceIndex, targetIndex);
             if (insertPos >= 0) {
-               Map<autismclient.util.macro.t, List<MacroAction>> multiCoverage = this.init_Map();
+               Map<autismclient.util.macro.MultiAction, List<MacroAction>> multiCoverage = this.init_Map();
                List<MacroAction> remaining = new ArrayList<>(actions.size());
 
                for (MacroAction action : actions) {
@@ -1932,7 +1932,7 @@ public class AutismMacroEditorOverlay extends bj {
       }
 
       for (MacroAction ref : refs) {
-         if (ref instanceof autismclient.util.macro.B || ref instanceof autismclient.util.macro.HashUtil) {
+         if (ref instanceof autismclient.util.macro.PacketGateAction || ref instanceof autismclient.util.macro.EndPacketGateAction) {
             return true;
          }
       }
@@ -2188,20 +2188,20 @@ public class AutismMacroEditorOverlay extends bj {
 
    private void prev_V_3() {
       if (init_Minecraft.player != null) {
-         this.init_V_MacroAction_2(new autismclient.util.macro.S(init_Minecraft.player.getYRot(), init_Minecraft.player.getXRot(), false, 6));
+         this.init_V_MacroAction_2(new autismclient.util.macro.RotateAction(init_Minecraft.player.getYRot(), init_Minecraft.player.getXRot(), false, 6));
       } else {
-         this.init_V_MacroAction_2(new autismclient.util.macro.S(0.0F, 0.0F, false, 6));
+         this.init_V_MacroAction_2(new autismclient.util.macro.RotateAction(0.0F, 0.0F, false, 6));
       }
    }
 
    private void valid_V() {
-      autismclient.util.macro.ValueSink action = new autismclient.util.macro.ValueSink();
+      autismclient.util.macro.LookAtBlockAction action = new autismclient.util.macro.LookAtBlockAction();
       if (init_Minecraft.hitResult != null && init_Minecraft.hitResult.getType() == Type.ENTITY && init_Minecraft.crosshairPickEntity != null) {
-         action.targetMode = autismclient.util.macro.ValueSink.Inner_StreamUtil.ENTITY;
-         action.entityIds.add(autismclient.util.macro.ValueSink.init_Str_Entity(init_Minecraft.crosshairPickEntity));
+         action.targetMode = autismclient.util.macro.LookAtBlockAction.Inner_StreamUtil.ENTITY;
+         action.entityIds.add(autismclient.util.macro.LookAtBlockAction.init_Str_Entity(init_Minecraft.crosshairPickEntity));
       } else if (init_Minecraft.hitResult != null && init_Minecraft.hitResult.getType() == Type.BLOCK) {
          BlockHitResult hit = (BlockHitResult)init_Minecraft.hitResult;
-         action.targetMode = autismclient.util.macro.ValueSink.Inner_StreamUtil.SPECIFIC;
+         action.targetMode = autismclient.util.macro.LookAtBlockAction.Inner_StreamUtil.SPECIFIC;
          action.blockX = hit.getBlockPos().getX();
          action.blockY = hit.getBlockPos().getY();
          action.blockZ = hit.getBlockPos().getZ();
@@ -2215,22 +2215,22 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private boolean write_Z(MacroAction action) {
-      return action instanceof autismclient.util.macro.ay
-         || action instanceof autismclient.util.macro.at
-         || action instanceof autismclient.util.macro.aB
-         || action instanceof autismclient.util.macro.ax
-         || action instanceof autismclient.util.macro.aj
-         || action instanceof autismclient.util.macro.Q
-         || action instanceof autismclient.util.macro.aa
-         || action instanceof autismclient.util.macro.av
-         || action instanceof autismclient.util.macro.aN
-         || action instanceof autismclient.util.macro.au
-         || action instanceof autismclient.util.macro.aw
-         || action instanceof autismclient.util.macro.aD
-         || action instanceof autismclient.util.macro.aE
-         || action instanceof autismclient.util.macro.aG
-         || action instanceof autismclient.util.macro.aC
-         || action instanceof autismclient.util.macro.aF
+      return action instanceof autismclient.util.macro.WaitForHealthAction
+         || action instanceof autismclient.util.macro.WaitForBlockAction
+         || action instanceof autismclient.util.macro.WaitForPacketAction
+         || action instanceof autismclient.util.macro.WaitForGuiAction
+         || action instanceof autismclient.util.macro.TickSyncAction
+         || action instanceof autismclient.util.macro.RevisionSyncAction
+         || action instanceof autismclient.util.macro.ServerTickSyncAction
+         || action instanceof autismclient.util.macro.WaitForCooldownAction
+         || action instanceof autismclient.util.macro.WaitPosAction
+         || action instanceof autismclient.util.macro.WaitForChatAction
+         || action instanceof autismclient.util.macro.WaitForEntityAction
+         || action instanceof autismclient.util.macro.WaitForSlotChangeAction
+         || action instanceof autismclient.util.macro.WaitForSoundAction
+         || action instanceof autismclient.util.macro.WaitForWorldChangeAction
+         || action instanceof autismclient.util.macro.WaitForPositionDeltaAction
+         || action instanceof autismclient.util.macro.WaitForTeleportAction
          || MacroActionRegistry.isCondition(action.getTypeId());
    }
 
@@ -2238,12 +2238,12 @@ public class AutismMacroEditorOverlay extends bj {
       if (this.init_aM != null && bodyIndex > 0 && bodyIndex < this.init_aM.init_List.size()) {
          for (int i = bodyIndex - 1; i >= 0; i--) {
             MacroAction action = this.init_aM.init_List.get(i);
-            if (action instanceof autismclient.util.macro.L race) {
+            if (action instanceof autismclient.util.macro.RaceAction race) {
                int end = i + race.init_I_List_I(this.init_aM.init_List, i);
                return bodyIndex <= end ? i : -1;
             }
 
-            if (action instanceof autismclient.util.macro.O) {
+            if (action instanceof autismclient.util.macro.ReportAction) {
                return -1;
             }
          }
@@ -2258,12 +2258,12 @@ public class AutismMacroEditorOverlay extends bj {
       if (this.init_aM != null && bodyIndex > 0 && bodyIndex < this.init_aM.init_List.size()) {
          for (int i = bodyIndex - 1; i >= 0; i--) {
             MacroAction action = this.init_aM.init_List.get(i);
-            if (action instanceof autismclient.util.macro.O report) {
+            if (action instanceof autismclient.util.macro.ReportAction report) {
                int end = i + report.init(this.init_aM.init_List, i);
                return bodyIndex <= end ? i : -1;
             }
 
-            if (action instanceof autismclient.util.macro.L) {
+            if (action instanceof autismclient.util.macro.RaceAction) {
                return -1;
             }
          }
@@ -2282,12 +2282,12 @@ public class AutismMacroEditorOverlay extends bj {
       if (this.init_aM != null && bodyIndex > 0 && bodyIndex < this.init_aM.init_List.size()) {
          for (int i = bodyIndex - 1; i >= 0; i--) {
             MacroAction action = this.init_aM.init_List.get(i);
-            if (action instanceof autismclient.util.macro.t multi) {
+            if (action instanceof autismclient.util.macro.MultiAction multi) {
                int end = i + multi.init(this.init_aM.init_List, i);
                return bodyIndex <= end ? i : -1;
             }
 
-            if (action instanceof autismclient.util.macro.L || action instanceof autismclient.util.macro.O) {
+            if (action instanceof autismclient.util.macro.RaceAction || action instanceof autismclient.util.macro.ReportAction) {
                return -1;
             }
          }
@@ -2298,8 +2298,8 @@ public class AutismMacroEditorOverlay extends bj {
       }
    }
 
-   private Map<autismclient.util.macro.t, List<MacroAction>> init_Map() {
-      Map<autismclient.util.macro.t, List<MacroAction>> coverage = new IdentityHashMap<>();
+   private Map<autismclient.util.macro.MultiAction, List<MacroAction>> init_Map() {
+      Map<autismclient.util.macro.MultiAction, List<MacroAction>> coverage = new IdentityHashMap<>();
       if (this.init_aM == null) {
          return coverage;
       }
@@ -2307,7 +2307,7 @@ public class AutismMacroEditorOverlay extends bj {
       List<MacroAction> actions = this.init_aM.init_List;
 
       for (int i = 0; i < actions.size(); i++) {
-         if (actions.get(i) instanceof autismclient.util.macro.t multi) {
+         if (actions.get(i) instanceof autismclient.util.macro.MultiAction multi) {
             int count = multi.init(actions, i);
             coverage.put(multi, new ArrayList<>(actions.subList(i + 1, i + 1 + count)));
          }
@@ -2316,12 +2316,12 @@ public class AutismMacroEditorOverlay extends bj {
       return coverage;
    }
 
-   private void init_V_Map_Set(Map<autismclient.util.macro.t, List<MacroAction>> before, Set<MacroAction> moved) {
+   private void init_V_Map_Set(Map<autismclient.util.macro.MultiAction, List<MacroAction>> before, Set<MacroAction> moved) {
       if (this.init_aM != null && before != null && !before.isEmpty()) {
          List<MacroAction> actions = this.init_aM.init_List;
 
-         for (Entry<autismclient.util.macro.t, List<MacroAction>> entry : before.entrySet()) {
-            autismclient.util.macro.t multi = entry.getKey();
+         for (Entry<autismclient.util.macro.MultiAction, List<MacroAction>> entry : before.entrySet()) {
+            autismclient.util.macro.MultiAction multi = entry.getKey();
             int headerIndex = actions.indexOf(multi);
             if (headerIndex >= 0) {
                List<MacroAction> members = entry.getValue();
@@ -2339,9 +2339,9 @@ public class AutismMacroEditorOverlay extends bj {
                if (moved != null) {
                   for (MacroAction action : moved) {
                      if (!members.contains(action)
-                        && !(action instanceof autismclient.util.macro.L)
-                        && !(action instanceof autismclient.util.macro.O)
-                        && !(action instanceof autismclient.util.macro.t)) {
+                        && !(action instanceof autismclient.util.macro.RaceAction)
+                        && !(action instanceof autismclient.util.macro.ReportAction)
+                        && !(action instanceof autismclient.util.macro.MultiAction)) {
                         int pos = actions.indexOf(action);
                         if (pos > headerIndex && pos <= windowEnd) {
                            gained++;
@@ -2358,20 +2358,20 @@ public class AutismMacroEditorOverlay extends bj {
 
    private int sync_I(int headerIndex) {
       if (this.init_aM != null && headerIndex >= 0 && headerIndex < this.init_aM.init_List.size()) {
-         if (!(this.init_aM.init_List.get(headerIndex) instanceof autismclient.util.macro.B gate)) {
+         if (!(this.init_aM.init_List.get(headerIndex) instanceof autismclient.util.macro.PacketGateAction gate)) {
             return 0;
          } else {
-            if (gate.scope == autismclient.util.macro.B.Inner_BufferHelper.MACRO_PASS) {
+            if (gate.scope == autismclient.util.macro.PacketGateAction.Inner_BufferHelper.MACRO_PASS) {
                return 0;
             }
 
             for (int i = headerIndex + 1; i < this.init_aM.init_List.size(); i++) {
                MacroAction action = this.init_aM.init_List.get(i);
-               if (action instanceof autismclient.util.macro.HashUtil) {
+               if (action instanceof autismclient.util.macro.EndPacketGateAction) {
                   return i - headerIndex;
                }
 
-               if (action instanceof autismclient.util.macro.B || action instanceof autismclient.util.macro.L || action instanceof autismclient.util.macro.O) {
+               if (action instanceof autismclient.util.macro.PacketGateAction || action instanceof autismclient.util.macro.RaceAction || action instanceof autismclient.util.macro.ReportAction) {
                   break;
                }
             }
@@ -2387,14 +2387,14 @@ public class AutismMacroEditorOverlay extends bj {
       if (this.init_aM != null && bodyIndex > 0 && bodyIndex < this.init_aM.init_List.size()) {
          for (int i = bodyIndex - 1; i >= 0; i--) {
             MacroAction action = this.init_aM.init_List.get(i);
-            if (action instanceof autismclient.util.macro.B) {
+            if (action instanceof autismclient.util.macro.PacketGateAction) {
                int end = i + this.sync_I(i);
                return bodyIndex <= end ? i : -1;
             }
 
-            if (action instanceof autismclient.util.macro.HashUtil
-               || action instanceof autismclient.util.macro.L
-               || action instanceof autismclient.util.macro.O) {
+            if (action instanceof autismclient.util.macro.EndPacketGateAction
+               || action instanceof autismclient.util.macro.RaceAction
+               || action instanceof autismclient.util.macro.ReportAction) {
                return -1;
             }
          }
@@ -2409,7 +2409,7 @@ public class AutismMacroEditorOverlay extends bj {
       return this.init_aM != null
          && index >= 0
          && index < this.init_aM.init_List.size()
-         && this.init_aM.init_List.get(index) instanceof autismclient.util.macro.HashUtil
+         && this.init_aM.init_List.get(index) instanceof autismclient.util.macro.EndPacketGateAction
          && this.flush_I(index) >= 0;
    }
 
@@ -2429,18 +2429,18 @@ public class AutismMacroEditorOverlay extends bj {
       }
    }
 
-   private void init_V_B(autismclient.util.macro.B gate) {
+   private void init_V_B(autismclient.util.macro.PacketGateAction gate) {
       if (this.init_aM != null && gate != null) {
          int index = this.init_aM.init_List.indexOf(gate);
          if (index >= 0) {
             int end = index + this.sync_I(index);
-            if (gate.scope == autismclient.util.macro.B.Inner_BufferHelper.MACRO_PASS) {
-               if (end > index && end < this.init_aM.init_List.size() && this.init_aM.init_List.get(end) instanceof autismclient.util.macro.HashUtil) {
+            if (gate.scope == autismclient.util.macro.PacketGateAction.Inner_BufferHelper.MACRO_PASS) {
+               if (end > index && end < this.init_aM.init_List.size() && this.init_aM.init_List.get(end) instanceof autismclient.util.macro.EndPacketGateAction) {
                   this.init_aM.init_List.remove(end);
                }
             } else {
-               if (end <= index || end >= this.init_aM.init_List.size() || !(this.init_aM.init_List.get(end) instanceof autismclient.util.macro.HashUtil)) {
-                  this.init_aM.init_List.add(index + 1, new autismclient.util.macro.HashUtil(gate.gateId));
+               if (end <= index || end >= this.init_aM.init_List.size() || !(this.init_aM.init_List.get(end) instanceof autismclient.util.macro.EndPacketGateAction)) {
+                  this.init_aM.init_List.add(index + 1, new autismclient.util.macro.EndPacketGateAction(gate.gateId));
                }
 
                this.size_V();
@@ -2452,9 +2452,9 @@ public class AutismMacroEditorOverlay extends bj {
    private void size_V() {
       if (this.init_aM != null) {
          for (int i = 0; i < this.init_aM.init_List.size(); i++) {
-            if (this.init_aM.init_List.get(i) instanceof autismclient.util.macro.B gate) {
+            if (this.init_aM.init_List.get(i) instanceof autismclient.util.macro.PacketGateAction gate) {
                int end = i + this.sync_I(i);
-               if (end > i && end < this.init_aM.init_List.size() && this.init_aM.init_List.get(end) instanceof autismclient.util.macro.HashUtil endGate) {
+               if (end > i && end < this.init_aM.init_List.size() && this.init_aM.init_List.get(end) instanceof autismclient.util.macro.EndPacketGateAction endGate) {
                   endGate.gateId = gate.gateId != null && !gate.gateId.isBlank() ? gate.gateId : "auto";
                   endGate.flushOnDisable = gate.flushOnDisable;
                }
@@ -2466,17 +2466,17 @@ public class AutismMacroEditorOverlay extends bj {
    private AutismMacroEditorOverlay.Inner_StreamUtil init_AutismMacroEditorO_I_MacroAction(int index, MacroAction action) {
       if (this.init_aM == null || action == null || index < 0 || index >= this.init_aM.init_List.size()) {
          return AutismMacroEditorOverlay.Inner_StreamUtil.init_AutismMacroEditorO;
-      } else if (action instanceof autismclient.util.macro.L race) {
+      } else if (action instanceof autismclient.util.macro.RaceAction race) {
          return new AutismMacroEditorOverlay.Inner_StreamUtil(true, false, false, index, race.init_I_List_I(this.init_aM.init_List, index), 0, "RACE");
-      } else if (action instanceof autismclient.util.macro.O report) {
+      } else if (action instanceof autismclient.util.macro.ReportAction report) {
          return new AutismMacroEditorOverlay.Inner_StreamUtil(true, true, false, index, report.init(this.init_aM.init_List, index), 0, "REPORT");
-      } else if (action instanceof autismclient.util.macro.B) {
+      } else if (action instanceof autismclient.util.macro.PacketGateAction) {
          return new AutismMacroEditorOverlay.Inner_StreamUtil(true, false, true, index, this.sync_I(index), 0, "GATE START");
-      } else if (action instanceof autismclient.util.macro.t multi) {
+      } else if (action instanceof autismclient.util.macro.MultiAction multi) {
          return new AutismMacroEditorOverlay.Inner_StreamUtil(true, false, false, true, index, multi.init(this.init_aM.init_List, index), 0, "MULTI");
       } else {
          int raceHeader = this.read_I_2(index);
-         if (raceHeader >= 0 && this.init_aM.init_List.get(raceHeader) instanceof autismclient.util.macro.L race) {
+         if (raceHeader >= 0 && this.init_aM.init_List.get(raceHeader) instanceof autismclient.util.macro.RaceAction race) {
             int childCount = race.init_I_List_I(this.init_aM.init_List, raceHeader);
             int conditionCount = race.load(this.init_aM.init_List, raceHeader);
             int offset = index - raceHeader;
@@ -2485,7 +2485,7 @@ public class AutismMacroEditorOverlay extends bj {
             );
          } else {
             int reportHeader = this.write_I_2(index);
-            if (reportHeader >= 0 && this.init_aM.init_List.get(reportHeader) instanceof autismclient.util.macro.O report) {
+            if (reportHeader >= 0 && this.init_aM.init_List.get(reportHeader) instanceof autismclient.util.macro.ReportAction report) {
                int childCount = report.init(this.init_aM.init_List, reportHeader);
                int offset = index - reportHeader;
                return new AutismMacroEditorOverlay.Inner_StreamUtil(false, true, false, reportHeader, childCount, offset, offset == 1 ? "START" : "END");
@@ -2494,11 +2494,11 @@ public class AutismMacroEditorOverlay extends bj {
                if (gateHeader >= 0) {
                   int childCount = this.sync_I(gateHeader);
                   int offset = index - gateHeader;
-                  String role = action instanceof autismclient.util.macro.HashUtil ? "GATE END" : "GATED";
+                  String role = action instanceof autismclient.util.macro.EndPacketGateAction ? "GATE END" : "GATED";
                   return new AutismMacroEditorOverlay.Inner_StreamUtil(false, false, true, gateHeader, childCount, offset, role);
                } else {
                   int multiHeader = this.update_I_2(index);
-                  if (multiHeader >= 0 && this.init_aM.init_List.get(multiHeader) instanceof autismclient.util.macro.t multi) {
+                  if (multiHeader >= 0 && this.init_aM.init_List.get(multiHeader) instanceof autismclient.util.macro.MultiAction multi) {
                      int childCount = multi.init(this.init_aM.init_List, multiHeader);
                      int offset = index - multiHeader;
                      return new AutismMacroEditorOverlay.Inner_StreamUtil(false, false, false, true, multiHeader, childCount, offset, "SKIP");
@@ -2514,10 +2514,10 @@ public class AutismMacroEditorOverlay extends bj {
    private boolean update(MacroAction action) {
       if (action == null || !action.isEnabled()) {
          return false;
-      } else if (action instanceof autismclient.util.macro.RingBuffer fps) {
-         return fps.init_RingBuffer_DataUti() != autismclient.util.macro.RingBuffer.Inner_DataUtil.TIMEOUT;
+      } else if (action instanceof autismclient.util.macro.FpsAction fps) {
+         return fps.init_RingBuffer_DataUti() != autismclient.util.macro.FpsAction.Inner_DataUtil.TIMEOUT;
       } else {
-         return action instanceof autismclient.util.macro.T sping ? sping.init_T_DataUtil() != autismclient.util.macro.T.Inner_DataUtil.TIMEOUT : false;
+         return action instanceof autismclient.util.macro.SPingAction sping ? sping.init_T_DataUtil() != autismclient.util.macro.SPingAction.Inner_DataUtil.TIMEOUT : false;
       }
    }
 
@@ -2526,14 +2526,14 @@ public class AutismMacroEditorOverlay extends bj {
          MacroAction action = this.init_aM.init_List.get(headerIndex);
          int last = this.init_aM.init_List.size() - 1;
          int covered;
-         if (action instanceof autismclient.util.macro.RingBuffer fps) {
-            covered = fps.init_RingBuffer_DataUti() == autismclient.util.macro.RingBuffer.Inner_DataUtil.END ? last - headerIndex : fps.init_I_3();
+         if (action instanceof autismclient.util.macro.FpsAction fps) {
+            covered = fps.init_RingBuffer_DataUti() == autismclient.util.macro.FpsAction.Inner_DataUtil.END ? last - headerIndex : fps.init_I_3();
          } else {
-            if (!(action instanceof autismclient.util.macro.T sping)) {
+            if (!(action instanceof autismclient.util.macro.SPingAction sping)) {
                return headerIndex;
             }
 
-            covered = sping.init_T_DataUtil() == autismclient.util.macro.T.Inner_DataUtil.END ? last - headerIndex : sping.init_I_4();
+            covered = sping.init_T_DataUtil() == autismclient.util.macro.SPingAction.Inner_DataUtil.END ? last - headerIndex : sping.init_I_4();
          }
 
          long end = (long)headerIndex + Math.max(0, covered);
@@ -2564,7 +2564,7 @@ public class AutismMacroEditorOverlay extends bj {
          return AutismMacroEditorOverlay.Inner_BufferHelper.init_AutismMacroEditorO;
       }
 
-      boolean ping = this.init_aM.init_List.get(header) instanceof autismclient.util.macro.T;
+      boolean ping = this.init_aM.init_List.get(header) instanceof autismclient.util.macro.SPingAction;
       boolean isHeaderRow = header == index;
       boolean first = index == 0 || this.open(index - 1) < 0;
       boolean last = index >= this.init_aM.init_List.size() - 1 || this.open(index + 1) < 0;
@@ -2572,7 +2572,7 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private void data_V() {
-      autismclient.util.macro.v action = new autismclient.util.macro.v();
+      autismclient.util.macro.OpenContainerAction action = new autismclient.util.macro.OpenContainerAction();
       if (init_Minecraft.hitResult instanceof EntityHitResult) {
          action.init_V_Minecraft_9(init_Minecraft);
       } else if (init_Minecraft.hitResult instanceof BlockHitResult hit) {
@@ -2583,19 +2583,19 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private void value_V() {
-      autismclient.util.macro.PathHelper action = new autismclient.util.macro.PathHelper();
+      autismclient.util.macro.InteractEntityAction action = new autismclient.util.macro.InteractEntityAction();
       action.init_V_Minecraft_3(init_Minecraft);
       this.init_V_MacroAction_2(action);
    }
 
    private void cache_V() {
-      autismclient.util.macro.RefQueue action = new autismclient.util.macro.RefQueue();
-      action.mode = autismclient.util.macro.RefQueue.Inner_DataUtil.OPEN;
+      autismclient.util.macro.InventoryAction action = new autismclient.util.macro.InventoryAction();
+      action.mode = autismclient.util.macro.InventoryAction.Inner_DataUtil.OPEN;
       this.init_V_MacroAction_2(action);
    }
 
    private void state_V() {
-      autismclient.util.macro.FileCache action = new autismclient.util.macro.FileCache();
+      autismclient.util.macro.DelayPacketsAction action = new autismclient.util.macro.DelayPacketsAction();
       if (ck.init_ck().reset_Z()) {
          action.write();
       } else {
@@ -2606,7 +2606,7 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private void queue_V() {
-      autismclient.util.macro.at action = new autismclient.util.macro.at();
+      autismclient.util.macro.WaitForBlockAction action = new autismclient.util.macro.WaitForBlockAction();
       if (init_Minecraft.hitResult != null && init_Minecraft.hitResult.getType() == Type.BLOCK) {
          BlockHitResult hit = (BlockHitResult)init_Minecraft.hitResult;
          action.blockPos = hit.getBlockPos();
@@ -2616,7 +2616,7 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private void buffer_V() {
-      autismclient.util.macro.aw action = new autismclient.util.macro.aw();
+      autismclient.util.macro.WaitForEntityAction action = new autismclient.util.macro.WaitForEntityAction();
       if (init_Minecraft.player != null) {
          action.f_x_D = Math.round(init_Minecraft.player.getX());
          action.f_y_D = Math.round(init_Minecraft.player.getY());
@@ -2627,7 +2627,7 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private void entry_V() {
-      autismclient.util.macro.MethodUtil action = new autismclient.util.macro.MethodUtil();
+      autismclient.util.macro.InstaBreakAction action = new autismclient.util.macro.InstaBreakAction();
       if (init_Minecraft.hitResult != null && init_Minecraft.hitResult.getType() == Type.BLOCK) {
          BlockHitResult hit = (BlockHitResult)init_Minecraft.hitResult;
          action.blockPos = hit.getBlockPos();
@@ -2638,7 +2638,7 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private void node_V() {
-      autismclient.util.macro.CachePool action = new autismclient.util.macro.CachePool();
+      autismclient.util.macro.BreakAction action = new autismclient.util.macro.BreakAction();
       if (init_Minecraft.hitResult != null && init_Minecraft.hitResult.getType() == Type.BLOCK) {
          BlockHitResult hit = (BlockHitResult)init_Minecraft.hitResult;
          action.blockPos = hit.getBlockPos();
@@ -2650,39 +2650,39 @@ public class AutismMacroEditorOverlay extends bj {
 
    private List<MacroAction> update_List_2() {
       List<MacroAction> actions = new ArrayList<>();
-      autismclient.util.macro.DataUtil assertBundle = new autismclient.util.macro.DataUtil();
-      assertBundle.check = autismclient.util.macro.DataUtil.Inner_DataUtil.HAS_BUNDLE;
+      autismclient.util.macro.AssertAction assertBundle = new autismclient.util.macro.AssertAction();
+      assertBundle.check = autismclient.util.macro.AssertAction.Inner_DataUtil.HAS_BUNDLE;
       assertBundle.message = "Must have a bundle";
       actions.add(assertBundle);
-      autismclient.util.macro.ByteReader dupe = new autismclient.util.macro.ByteReader();
-      dupe.mode = autismclient.util.macro.ByteReader.Inner_StreamUtil.KICK_DUPE;
-      dupe.lagMethod = autismclient.util.macro.ByteReader.Inner_BufferHelper.CLICK_SLOT;
-      dupe.kickMethod = autismclient.util.macro.ByteReader.Inner_CachePool.HURT;
+      autismclient.util.macro.DisconnectAction dupe = new autismclient.util.macro.DisconnectAction();
+      dupe.mode = autismclient.util.macro.DisconnectAction.Inner_StreamUtil.KICK_DUPE;
+      dupe.lagMethod = autismclient.util.macro.DisconnectAction.Inner_BufferHelper.CLICK_SLOT;
+      dupe.kickMethod = autismclient.util.macro.DisconnectAction.Inner_CachePool.HURT;
       dupe.packetCount = 200;
       actions.add(dupe);
       return actions;
    }
 
    private List<MacroAction> sync_List_2() {
-      return new ArrayList<>(List.of(new autismclient.util.macro.R()));
+      return new ArrayList<>(List.of(new autismclient.util.macro.RollbackAction()));
    }
 
    private List<MacroAction> flush_List_2() {
       List<MacroAction> actions = new ArrayList<>();
-      autismclient.util.macro.V selectSlotOne = new autismclient.util.macro.V();
+      autismclient.util.macro.SelectSlotAction selectSlotOne = new autismclient.util.macro.SelectSlotAction();
       selectSlotOne.slot = 0;
       actions.add(selectSlotOne);
-      autismclient.util.macro.DataUtil assertBundle = new autismclient.util.macro.DataUtil();
-      assertBundle.check = autismclient.util.macro.DataUtil.Inner_DataUtil.BUNDLE_V2_READY;
+      autismclient.util.macro.AssertAction assertBundle = new autismclient.util.macro.AssertAction();
+      assertBundle.check = autismclient.util.macro.AssertAction.Inner_DataUtil.BUNDLE_V2_READY;
       assertBundle.message = "Slot 1 must contain a one-item bundle and no container GUI can be open";
       actions.add(assertBundle);
-      actions.add(new autismclient.util.macro.BufferHelper());
+      actions.add(new autismclient.util.macro.BundleDupeV2Action());
       return actions;
    }
 
    private List<MacroAction> close_List_2() {
       List<MacroAction> actions = new ArrayList<>();
-      autismclient.util.macro.u book = new autismclient.util.macro.u();
+      autismclient.util.macro.NbtBookAction book = new autismclient.util.macro.NbtBookAction();
       book.pages = 1;
       book.customComponent = "DupersUnited?";
       book.title = "NeedToHave42CharsInHereHAHA123456789012345";
@@ -2697,10 +2697,10 @@ public class AutismMacroEditorOverlay extends bj {
 
    private List<MacroAction> open_List_2() {
       List<MacroAction> actions = new ArrayList<>();
-      autismclient.util.macro.ax waitGui = new autismclient.util.macro.ax();
+      autismclient.util.macro.WaitForGuiAction waitGui = new autismclient.util.macro.WaitForGuiAction();
       waitGui.guiType = "CONTAINER";
       actions.add(waitGui);
-      autismclient.util.macro.MethodUtil mine = new autismclient.util.macro.MethodUtil();
+      autismclient.util.macro.InstaBreakAction mine = new autismclient.util.macro.InstaBreakAction();
       if (init_Minecraft.hitResult != null && init_Minecraft.hitResult.getType() == Type.BLOCK) {
          BlockHitResult hit = (BlockHitResult)init_Minecraft.hitResult;
          mine.blockPos = hit.getBlockPos();
@@ -2711,8 +2711,8 @@ public class AutismMacroEditorOverlay extends bj {
       mine.times = 1;
       mine.delayTicks = 0;
       actions.add(mine);
-      autismclient.util.macro.StateCache clicks = new autismclient.util.macro.StateCache();
-      clicks.slotSource = autismclient.util.macro.StateCache.Inner_StreamUtil.RANGE;
+      autismclient.util.macro.ContainerClickSequenceAction clicks = new autismclient.util.macro.ContainerClickSequenceAction();
+      clicks.slotSource = autismclient.util.macro.ContainerClickSequenceAction.Inner_StreamUtil.RANGE;
       clicks.startSlot = 100;
       clicks.endSlot = 126;
       clicks.containerInput = "QUICK_MOVE";
@@ -2722,12 +2722,12 @@ public class AutismMacroEditorOverlay extends bj {
 
    private List<MacroAction> poll_List_2() {
       List<MacroAction> actions = new ArrayList<>();
-      autismclient.util.macro.V select = new autismclient.util.macro.V();
+      autismclient.util.macro.SelectSlotAction select = new autismclient.util.macro.SelectSlotAction();
       select.itemName = "Trident or bow";
-      select.strategy = autismclient.util.macro.V.Inner_DataUtil.BEST_DURABILITY;
+      select.strategy = autismclient.util.macro.SelectSlotAction.Inner_DataUtil.BEST_DURABILITY;
       actions.add(select);
-      autismclient.util.macro.ao phase = new autismclient.util.macro.ao();
-      phase.phase = autismclient.util.macro.ao.Inner_DataUtil.START_USE;
+      autismclient.util.macro.UseItemPhaseAction phase = new autismclient.util.macro.UseItemPhaseAction();
+      phase.phase = autismclient.util.macro.UseItemPhaseAction.Inner_DataUtil.START_USE;
       phase.holdTicks = 100;
       phase.gateDuringHold = true;
       phase.gatePlayerActions = true;
@@ -2745,7 +2745,7 @@ public class AutismMacroEditorOverlay extends bj {
 
    private List<MacroAction> push_List_2() {
       List<MacroAction> actions = new ArrayList<>();
-      autismclient.util.macro.ac sign = new autismclient.util.macro.ac();
+      autismclient.util.macro.SignEditAction sign = new autismclient.util.macro.SignEditAction();
       sign.guiName = "SIGN";
       sign.waitForGuiBefore = true;
       sign.line1 = "1";
@@ -2757,7 +2757,7 @@ public class AutismMacroEditorOverlay extends bj {
 
    private List<MacroAction> pop_List_2() {
       List<MacroAction> actions = new ArrayList<>();
-      autismclient.util.macro.ac sign = new autismclient.util.macro.ac();
+      autismclient.util.macro.SignEditAction sign = new autismclient.util.macro.SignEditAction();
       sign.guiName = "SIGN";
       sign.waitForGuiBefore = true;
       sign.line1 = "e";
@@ -2769,19 +2769,19 @@ public class AutismMacroEditorOverlay extends bj {
 
    private List<MacroAction> tick_List() {
       List<MacroAction> actions = new ArrayList<>();
-      autismclient.util.macro.DataUtil assertBundle = new autismclient.util.macro.DataUtil();
-      assertBundle.check = autismclient.util.macro.DataUtil.Inner_DataUtil.HELD_ITEM;
+      autismclient.util.macro.AssertAction assertBundle = new autismclient.util.macro.AssertAction();
+      assertBundle.check = autismclient.util.macro.AssertAction.Inner_DataUtil.HELD_ITEM;
       assertBundle.itemName = "Bundle";
       assertBundle.message = "Must hold a bundle";
       actions.add(assertBundle);
-      autismclient.util.macro.y burst = new autismclient.util.macro.y();
-      burst.mode = autismclient.util.macro.y.Inner_DataUtil.BUNDLE_SELECT;
+      autismclient.util.macro.PacketBurstAction burst = new autismclient.util.macro.PacketBurstAction();
+      burst.mode = autismclient.util.macro.PacketBurstAction.Inner_DataUtil.BUNDLE_SELECT;
       burst.count = 1;
       burst.slot = -1;
       burst.bundleIndex = -1337;
       actions.add(burst);
-      autismclient.util.macro.ao use = new autismclient.util.macro.ao();
-      use.phase = autismclient.util.macro.ao.Inner_DataUtil.USE_ONCE;
+      autismclient.util.macro.UseItemPhaseAction use = new autismclient.util.macro.UseItemPhaseAction();
+      use.phase = autismclient.util.macro.UseItemPhaseAction.Inner_DataUtil.USE_ONCE;
       use.itemName = "Bundle";
       actions.add(use);
       return actions;
@@ -2789,276 +2789,276 @@ public class AutismMacroEditorOverlay extends bj {
 
    private List<MacroAction> run_List() {
       List<MacroAction> actions = new ArrayList<>();
-      autismclient.util.macro.aq dupe = new autismclient.util.macro.aq();
+      autismclient.util.macro.VillagerDupeAction dupe = new autismclient.util.macro.VillagerDupeAction();
       dupe.count = 0;
       actions.add(dupe);
       return actions;
    }
 
    private void init_V_List_Str_2(List<MacroAction> actions, String gateId) {
-      autismclient.util.macro.PoolEntry finallyAction = new autismclient.util.macro.PoolEntry();
+      autismclient.util.macro.FinallyAction finallyAction = new autismclient.util.macro.FinallyAction();
       finallyAction.bodyCount = 1;
       actions.add(finallyAction);
-      autismclient.util.macro.HashUtil disable = new autismclient.util.macro.HashUtil(gateId);
+      autismclient.util.macro.EndPacketGateAction disable = new autismclient.util.macro.EndPacketGateAction(gateId);
       actions.add(disable);
    }
 
    private List<AutismMacroEditorOverlay.Inner_NetHelper> init_List_AutismMacroEditorO(AutismMacroEditorOverlay.Inner_JsonUtil mode) {
       List<AutismMacroEditorOverlay.Inner_NetHelper> entries = new ArrayList<>();
       if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.ACTION) {
-         this.init_V_List(entries, "flow", "Chat", "Send a chat message or slash command.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.W()));
+         this.init_V_List(entries, "flow", "Chat", "Send a chat message or slash command.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.SendChatAction()));
          this.init_V_List(
-            entries, "flow", "Delay", "Pause for a time in ms or ticks.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.EventBus(1000))
+            entries, "flow", "Delay", "Pause for a time in ms or ticks.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.DelayAction(1000))
          );
          this.init_V_List(
             entries,
             "flow",
             "FPS",
             "Cap max FPS (0 = freeze). End on a timer, after N following steps, or at the end of the macro.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.RingBuffer())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.FpsAction())
          );
          this.init_V_List(
             entries,
             "flow",
             "Ping",
             "Spoof your ping by adding latency (ms). End on a timer, after N following steps, or at the end of the macro.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.T())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.SPingAction())
          );
          this.init_V_List(
-            entries, "flow", "Repeat", "Repeat the next steps a chosen number of times.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.N())
+            entries, "flow", "Repeat", "Repeat the next steps a chosen number of times.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.RepeatAction())
          );
          this.init_V_List(
             entries,
             "flow",
             "If",
             "Run THEN steps when a condition holds, otherwise the ELSE steps.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.FieldCache())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.IfAction())
          );
          this.init_V_List(
             entries,
             "flow",
             "Goto",
             "Jump: skip ahead, loop back, restart at top, go to a Label, or stop.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.TableIndex())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.FlowAction())
          );
          this.init_V_List(
             entries,
             "flow",
             "Label",
             "Named anchor that Goto can jump to (build loops with Label + Goto).",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.KeyHolder())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.LabelAction())
          );
-         this.init_V_List(entries, "flow", "Stop", "Stop the macro immediately.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ag()));
-         this.init_V_List(entries, "network", "Send Toggle", "Turn packet sending on or off.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.Z()));
+         this.init_V_List(entries, "flow", "Stop", "Stop the macro immediately.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.StopMacroAction()));
+         this.init_V_List(entries, "network", "Send Toggle", "Turn packet sending on or off.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.SendToggleAction()));
          this.init_V_List(entries, "network", "Delay Packets", "Queue packets until you flush them.", this::state_V);
          this.init_V_List(
-            entries, "flow", "Branch", "Run or skip compact step groups.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.StreamUtil())
+            entries, "flow", "Branch", "Run or skip compact step groups.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.BranchAction())
          );
-         this.init_V_List(entries, "flow", "Finally", "Register cleanup rows.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.PoolEntry()));
-         this.init_V_List(entries, "flow", "Variables", "Set macro variables.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.o()));
-         this.init_V_List(entries, "flow", "Capture Value", "Reuse game text later.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.TaskQueue()));
+         this.init_V_List(entries, "flow", "Finally", "Register cleanup rows.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.FinallyAction()));
+         this.init_V_List(entries, "flow", "Variables", "Set macro variables.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.MacroVariablesAction()));
+         this.init_V_List(entries, "flow", "Capture Value", "Reuse game text later.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.CaptureValueAction()));
          this.init_V_List(
             entries,
             "flow",
             "GM",
             "Change game mode for real, or fake it client-side.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.IoWorker())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.FakeGamemodeAction())
          );
          this.init_V_List(
-            entries, "flow", "Save GUI", "Remember the current GUI for later restore.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.U())
+            entries, "flow", "Save GUI", "Remember the current GUI for later restore.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.SaveGuiAction())
          );
-         this.init_V_List(entries, "flow", "Restore GUI", "Reopen the last saved GUI state.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.P()));
+         this.init_V_List(entries, "flow", "Restore GUI", "Reopen the last saved GUI state.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.RestoreGuiAction()));
          this.init_V_List(entries, "movement", "Rotate", "Set player yaw and pitch.", this::prev_V_3);
          this.init_V_List(entries, "movement", "Look At", "Face a specific position, nearest block, or nearest entity.", this::valid_V);
-         this.init_V_List(entries, "movement", "Sneak", "Hold or release sneak.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ad()));
+         this.init_V_List(entries, "movement", "Sneak", "Hold or release sneak.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.SneakAction()));
          this.init_V_List(
-            entries, "movement", "Jump", "Press jump for a chosen duration.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.NodeWalker())
+            entries, "movement", "Jump", "Press jump for a chosen duration.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.JumpAction())
          );
-         this.init_V_List(entries, "movement", "Sprint", "Toggle sprint state.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ae()));
-         this.init_V_List(entries, "movement", "Move", "Walk in a direction for N ticks.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.s()));
+         this.init_V_List(entries, "movement", "Sprint", "Toggle sprint state.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.SprintAction()));
+         this.init_V_List(entries, "movement", "Move", "Walk in a direction for N ticks.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.MoveAction()));
          this.init_V_List(
-            entries, "movement", "VClip", "Vertical clip with configurable packet behavior.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ap())
+            entries, "movement", "VClip", "Vertical clip with configurable packet behavior.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.VClipAction())
          );
          this.init_V_List(
             entries,
             "movement",
             "HClip",
             "Horizontal clip forward with configurable packet behavior.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.TokenStore())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.HClipAction())
          );
-         this.init_V_List(entries, "movement", "TP", "Ground-first HClip teleport.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.w()));
-         this.init_V_List(entries, "movement", "Go To", "Pathfind to a target.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.CharEncoder()));
+         this.init_V_List(entries, "movement", "TP", "Ground-first HClip teleport.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.PacedTpAction()));
+         this.init_V_List(entries, "movement", "Go To", "Pathfind to a target.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.GoToAction()));
          if (!AutismLiteVariant.enabled()) {
             this.init_V_List(
-               entries, "movement", "Tools", "Run a tool, wait for it, or control it.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.al())
+               entries, "movement", "Tools", "Run a tool, wait for it, or control it.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ToolsAction())
             );
          }
 
-         this.init_V_List(entries, "movement", "Mine", "Mine target blocks autonomously.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.q()));
+         this.init_V_List(entries, "movement", "Mine", "Mine target blocks autonomously.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.MineAction()));
          this.init_V_List(
             entries,
             "interaction",
             "Item Click",
             "Click items or slots in open inventories.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.MapStore())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.ItemAction())
          );
          this.init_V_List(
             entries,
             "interaction",
             "Pick Up All",
             "Pick up matching stacks into the carried item.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.I())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.PickUpAllAction())
          );
          this.init_V_List(
-            entries, "interaction", "Use Item", "Use the held item or select one by name.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.an())
+            entries, "interaction", "Use Item", "Use the held item or select one by name.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.UseItemAction())
          );
          this.init_V_List(
-            entries, "interaction", "Use Phase", "Start, release, swing, or use once.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ao())
+            entries, "interaction", "Use Phase", "Start, release, swing, or use once.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.UseItemPhaseAction())
          );
          this.init_V_List(entries, "inventory", "Open Inventory", "Open the player inventory screen.", this::cache_V);
          this.init_V_List(
-            entries, "inventory", "Slot", "Select a hotbar slot or item by name.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.V())
+            entries, "inventory", "Slot", "Select a hotbar slot or item by name.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.SelectSlotAction())
          );
          this.init_V_List(
             entries,
             "interaction",
             "Click Sequence",
             "Click slots, ranges, or lists.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.StateCache())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.ContainerClickSequenceAction())
          );
          this.init_V_List(
             entries,
             "inventory",
             "XCarry",
             "Store four grid items plus one cursor item, or cursor-only when selected.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.aQ())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.XCarryAction())
          );
          this.init_V_List(
-            entries, "inventory", "Drop", "Drop items from chosen slots.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.PacketUtil())
+            entries, "inventory", "Drop", "Drop items from chosen slots.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.DropAction())
          );
-         this.init_V_List(entries, "inventory", "Swap", "Swap two inventory slots.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ai()));
+         this.init_V_List(entries, "inventory", "Swap", "Swap two inventory slots.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.SwapSlotsAction()));
          this.init_V_List(entries, "interaction", "Open Container", "Open a targeted container block.", this::data_V);
          this.init_V_List(entries, "interaction", "Interact Entity", "Right-click a captured entity or block.", this::value_V);
          this.init_V_List(
-            entries, "interaction", "Villager Dupe", "Shear villager trade items", () -> this.init_V_MacroAction_2(new autismclient.util.macro.aq())
+            entries, "interaction", "Villager Dupe", "Shear villager trade items", () -> this.init_V_MacroAction_2(new autismclient.util.macro.VillagerDupeAction())
          );
          this.init_V_List(
-            entries, "interaction", "Wait Villager Item", "Wait for a shearable item", () -> this.init_V_MacroAction_2(new autismclient.util.macro.aO())
+            entries, "interaction", "Wait Villager Item", "Wait for a shearable item", () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitVillagerItemAction())
          );
          this.init_V_List(
             entries,
             "interaction",
             "Place",
             "Place a selected item at a captured block position and face.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.K())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.PlaceAction())
          );
          this.init_V_List(
-            entries, "inventory", "Store", "Move items between player and containers.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ah())
+            entries, "inventory", "Store", "Move items between player and containers.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.StoreItemAction())
          );
          this.init_V_List(
             entries,
             "inventory",
             "Inventory Audit",
             "Snapshot slots, compare after reopen, or run automated dupe tests.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.ListPool())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.InventoryAuditAction())
          );
          this.init_V_List(
-            entries, "inventory", "Rollback", "Duplicate selected local container items.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.R())
+            entries, "inventory", "Rollback", "Duplicate selected local container items.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.RollbackAction())
          );
          this.init_V_List(
-            entries, "inventory", "Trade", "Trade in the open villager screen.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.am())
+            entries, "inventory", "Trade", "Trade in the open villager screen.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.TradeAction())
          );
          this.init_V_List(
-            entries, "inventory", "Craft", "Craft one or more recipes.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.SyncManager())
+            entries, "inventory", "Craft", "Craft one or more recipes.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.CraftAction())
          );
          this.init_V_List(
             entries,
             "interaction",
             "Mouse Click",
             "Simulate mouse clicks in world.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.NetHelper(autismclient.util.macro.NetHelper.Inner_DataUtil.RIGHT))
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.ClickAction(autismclient.util.macro.ClickAction.Inner_DataUtil.RIGHT))
          );
          this.init_V_List(
-            entries, "network", "Packet", "Send captured packets from the queue.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.Y())
+            entries, "network", "Packet", "Send captured packets from the queue.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.SendPacketAction())
          );
          this.init_V_List(entries, "network", "Packet Gate", "Cancel, delay, or allow packet groups.", () -> {
-            autismclient.util.macro.B g = new autismclient.util.macro.B();
+            autismclient.util.macro.PacketGateAction g = new autismclient.util.macro.PacketGateAction();
             g.gateId = UUID.randomUUID().toString();
             boolean wholePassDefault = this.init_aM != null && this.init_aM.init_Z && this.init_aM.init_List.isEmpty();
             if (wholePassDefault) {
-               g.scope = autismclient.util.macro.B.Inner_BufferHelper.MACRO_PASS;
+               g.scope = autismclient.util.macro.PacketGateAction.Inner_BufferHelper.MACRO_PASS;
             }
 
             this.init_V_MacroAction_2(g);
             if (!wholePassDefault) {
-               this.init_V_MacroAction_2(new autismclient.util.macro.HashUtil(g.gateId));
+               this.init_V_MacroAction_2(new autismclient.util.macro.EndPacketGateAction(g.gateId));
             }
          });
-         this.init_V_List(entries, "network", "Packet Burst", "Generate packet bursts.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.y()));
+         this.init_V_List(entries, "network", "Packet Burst", "Generate packet bursts.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.PacketBurstAction()));
          this.init_V_List(
             entries,
             "network",
             "Custom Menu",
             "Fill and submit a server-defined dialog or form.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.UiHelper())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.CustomMenuAction())
          );
          this.init_V_List(
             entries,
             "network",
             "Payload",
             "Send and edit custom payload packets with raw bytes or runtime Java.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.H())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.PayloadAction())
          );
          this.init_V_List(
             entries,
             "network",
             "Close GUI",
             "Close the current screen with optional no-packet mode.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.JsonUtil())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.CloseGuiAction())
          );
          this.init_V_List(
             entries,
             "network",
             "Desync",
             "Create GUI desync without closing locally.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.TextFormat())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.DesyncAction())
          );
-         this.init_V_List(entries, "network", "NBT Book", "Write large custom books.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.u()));
-         this.init_V_List(entries, "network", "Sign Edit", "Send sign update lines.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ac()));
+         this.init_V_List(entries, "network", "NBT Book", "Write large custom books.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.NbtBookAction()));
+         this.init_V_List(entries, "network", "Sign Edit", "Send sign update lines.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.SignEditAction()));
          this.init_V_List(
             entries,
             "network",
             "Disconnect",
             "Disconnect or kick using selected mode.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.ByteReader())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.DisconnectAction())
          );
          this.init_V_List(
             entries,
             "network",
             "Join",
             "Join a server (blank = last) and continue once in (Playable by default).",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.ClassCache())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.JoinAction())
          );
          this.init_V_List(entries, "flow", "Module", "Toggle AUTISM modules.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ak()));
-         this.init_V_List(entries, "flow", "Assert", "Validate preconditions.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.DataUtil()));
-         this.init_V_List(entries, "flow", "Pay", "Send payments to a player list.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.G()));
+         this.init_V_List(entries, "flow", "Assert", "Validate preconditions.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.AssertAction()));
+         this.init_V_List(entries, "flow", "Pay", "Send payments to a player list.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.PayAction()));
          this.init_V_List(entries, "interaction", "InstaBreak", "Instant rebreak for one captured block.", this::entry_V);
          this.init_V_List(entries, "interaction", "Break", "Legit vanilla break with break-progress tracking + optional GUI-race interact.", this::node_V);
          this.init_V_List(
-            entries, "flow", "Race", "Run grouped actions when a condition fires.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.L())
+            entries, "flow", "Race", "Run grouped actions when a condition fires.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.RaceAction())
          );
          this.init_V_List(
             entries,
             "flow",
             "Report",
             "Measure time between macro, packet, GUI, teleport, or position events.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.O())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.ReportAction())
          );
          this.init_V_List(
-            entries, "flow", "Start Macro", "Start another macro from the macro library.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.af())
+            entries, "flow", "Start Macro", "Start another macro from the macro library.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.StartMacroAction())
          );
          this.init_V_List(
-            entries, "flow", "Stop Macro", "Stop this, all, or a selected macro.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ag())
+            entries, "flow", "Stop Macro", "Stop this, all, or a selected macro.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.StopMacroAction())
          );
       } else if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.PRESET) {
          this.init_V_List(entries, "singleplayer", "Rollback", "Local container duplicate", () -> this.write(this.sync_List_2()));
@@ -3077,80 +3077,80 @@ public class AutismMacroEditorOverlay extends bj {
             "player",
             "Health",
             "Pause until your health drops below or rises above a target.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.ay(20.0F, true))
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitForHealthAction(20.0F, true))
          );
          this.init_V_List(
-            entries, "player", "Cooldown", "Pause until an item cooldown is ready.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.av())
+            entries, "player", "Cooldown", "Pause until an item cooldown is ready.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitForCooldownAction())
          );
          this.init_V_List(
             entries,
             "player",
             "Gamemode",
             "Pause until real or optionally fake gamemode changes.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.aI())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitGamemodeChangeAction())
          );
          this.init_V_List(
             entries,
             "inventory",
             "Slot or Item",
             "Pause until slots or inventory contents change.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.aD())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitForSlotChangeAction())
          );
          this.init_V_List(
             entries,
             "inventory",
             "Durability",
             "Pause until a held, selected, or slotted item reaches durability.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.ar())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitDurabilityAction())
          );
          this.init_V_List(
             entries,
             "inventory",
             "Free Slots",
             "Pause until free or filled inventory slots match.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.aH())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitFreeSlotsAction())
          );
          this.init_V_List(
             entries,
             "world",
             "Movement",
             "Pause until a position, move-distance, world change, or teleport — pick the type inside.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.aL())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitMovementAction())
          );
          this.init_V_List(entries, "world", "Block", "Pause until a block is placed or broken.", this::queue_V);
          this.init_V_List(entries, "world", "Entity", "Pause until a matching entity appears.", this::buffer_V);
-         this.init_V_List(entries, "world", "Sound", "Pause until a matching sound plays.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.aE()));
-         this.init_V_List(entries, "gui_chat", "GUI", "Pause until a GUI opens or closes.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ax()));
-         this.init_V_List(entries, "gui_chat", "Chat", "Pause until chat matches a pattern.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.au()));
-         this.init_V_List(entries, "sync", "LAN", "Pause until a LAN peer reaches a step.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.az()));
+         this.init_V_List(entries, "world", "Sound", "Pause until a matching sound plays.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitForSoundAction()));
+         this.init_V_List(entries, "gui_chat", "GUI", "Pause until a GUI opens or closes.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitForGuiAction()));
+         this.init_V_List(entries, "gui_chat", "Chat", "Pause until chat matches a pattern.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitForChatAction()));
+         this.init_V_List(entries, "sync", "LAN", "Pause until a LAN peer reaches a step.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitForLanStepAction()));
          this.init_V_List(
             entries,
             "sync",
             "Macro",
             "Pause until another macro starts, completes a step, or finishes.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.aA())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitForMacroStepAction())
          );
          this.init_V_List(
             entries,
             "packets",
             "Packet",
             "Pause until a chosen C2S or S2C packet appears.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.aB(""))
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitForPacketAction(""))
          );
          this.init_V_List(
-            entries, "packets", "Packet Match", "Pause for packet plus field predicate.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.aM())
+            entries, "packets", "Packet Match", "Pause for packet plus field predicate.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitPacketMatchAction())
          );
          this.init_V_List(
             entries,
             "inventory",
             "Inventory",
             "Pause for item, count, slot, cursor, or fullness.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.aK())
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.WaitInventoryPredicateAction())
          );
-         this.init_V_List(entries, "sync", "Tick Sync", "Wait for the next client tick.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.aj()));
-         this.init_V_List(entries, "sync", "Revision Sync", "Wait for handler revision sync.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.Q()));
+         this.init_V_List(entries, "sync", "Tick Sync", "Wait for the next client tick.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.TickSyncAction()));
+         this.init_V_List(entries, "sync", "Revision Sync", "Wait for handler revision sync.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.RevisionSyncAction()));
          this.init_V_List(
-            entries, "sync", "Server Sync", "Wait for the server tick tracker.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.aa())
+            entries, "sync", "Server Sync", "Wait for the server tick tracker.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ServerTickSyncAction())
          );
       }
 
@@ -4588,7 +4588,7 @@ public class AutismMacroEditorOverlay extends bj {
       }
 
       for (MacroAction action : this.init_aM.init_List) {
-         if (action instanceof autismclient.util.macro.ListPool auditAction && !auditAction.init_Z_2()) {
+         if (action instanceof autismclient.util.macro.InventoryAuditAction auditAction && !auditAction.init_Z_2()) {
             return "Inventory Audit needs at least one target.";
          }
       }
@@ -4649,13 +4649,13 @@ public class AutismMacroEditorOverlay extends bj {
 
    private void load_V_MacroAction_2(MacroAction action) {
       if (!this.queue_Z()) {
-         if (action instanceof autismclient.util.macro.L race) {
+         if (action instanceof autismclient.util.macro.RaceAction race) {
             this.init_V_L(race);
-         } else if (action instanceof autismclient.util.macro.O report) {
+         } else if (action instanceof autismclient.util.macro.ReportAction report) {
             this.init_V_O(report);
          } else {
-            if (action instanceof autismclient.util.macro.B) {
-               this.init_V_B((autismclient.util.macro.B)action);
+            if (action instanceof autismclient.util.macro.PacketGateAction) {
+               this.init_V_B((autismclient.util.macro.PacketGateAction)action);
             }
 
             this.fill_V();
@@ -4663,7 +4663,7 @@ public class AutismMacroEditorOverlay extends bj {
       }
    }
 
-   private void init_V_L(autismclient.util.macro.L race) {
+   private void init_V_L(autismclient.util.macro.RaceAction race) {
       if (this.init_aM != null && race != null) {
          int index = this.init_aM.init_List.indexOf(race);
          if (index < 0) {
@@ -4674,8 +4674,8 @@ public class AutismMacroEditorOverlay extends bj {
             boolean[] reused = new boolean[Math.max(0, oldCount)];
 
             for (String step : race.read()) {
-               boolean conditionStep = autismclient.util.macro.L.init_Z_2(step);
-               String typeName = autismclient.util.macro.L.init_Str_2(step);
+               boolean conditionStep = autismclient.util.macro.RaceAction.init_Z_2(step);
+               String typeName = autismclient.util.macro.RaceAction.init_Str_2(step);
                MacroAction kept = null;
 
                for (int offset = 1; offset <= oldCount && index + offset < this.init_aM.init_List.size(); offset++) {
@@ -4684,9 +4684,9 @@ public class AutismMacroEditorOverlay extends bj {
                      MacroAction oldAction = this.init_aM.init_List.get(index + offset);
                      if (oldAction != null) {
                         boolean sameType = conditionStep
-                           ? autismclient.util.macro.L.init_Z(oldAction)
-                              && autismclient.util.macro.L.init_L_DataUtil(oldAction).name().equalsIgnoreCase(typeName)
-                           : autismclient.util.macro.L.load(oldAction) && oldAction.getTypeId().equalsIgnoreCase(typeName);
+                           ? autismclient.util.macro.RaceAction.init_Z(oldAction)
+                              && autismclient.util.macro.RaceAction.init_L_DataUtil(oldAction).name().equalsIgnoreCase(typeName)
+                           : autismclient.util.macro.RaceAction.load(oldAction) && oldAction.getTypeId().equalsIgnoreCase(typeName);
                         if (sameType) {
                            kept = oldAction;
                            reused[reuseIndex] = true;
@@ -4696,7 +4696,7 @@ public class AutismMacroEditorOverlay extends bj {
                   }
                }
 
-               replacement.add(kept != null ? kept : autismclient.util.macro.L.init_MacroAction(step));
+               replacement.add(kept != null ? kept : autismclient.util.macro.RaceAction.init_MacroAction(step));
             }
 
             if (oldCount > 0) {
@@ -4707,7 +4707,7 @@ public class AutismMacroEditorOverlay extends bj {
             race.raceSteps = new ArrayList<>(race.read());
             race.load_V();
             race.conditionType = race.conditionTypes.isEmpty() ? "" : race.conditionTypes.get(0);
-            race.triggerAction = race.conditionTypes.isEmpty() ? new autismclient.util.macro.EventBus(0) : race.init_MacroAction();
+            race.triggerAction = race.conditionTypes.isEmpty() ? new autismclient.util.macro.DelayAction(0) : race.init_MacroAction();
             race.actionType = race.actionTypes.isEmpty() ? autismclient.util.macro.StreamGate.PACKET_CLICK.name() : race.actionTypes.get(0);
             race.bodyCount = replacement.size();
             this.fill_V();
@@ -4715,7 +4715,7 @@ public class AutismMacroEditorOverlay extends bj {
       }
    }
 
-   private void init_V_O(autismclient.util.macro.O report) {
+   private void init_V_O(autismclient.util.macro.ReportAction report) {
       if (this.init_aM != null && report != null) {
          int index = this.init_aM.init_List.indexOf(report);
          if (index < 0) {
@@ -4725,14 +4725,14 @@ public class AutismMacroEditorOverlay extends bj {
             MacroAction oldStart = oldCount >= 1 && index + 1 < this.init_aM.init_List.size() ? this.init_aM.init_List.get(index + 1) : null;
             MacroAction oldEnd = oldCount >= 2 && index + 2 < this.init_aM.init_List.size() ? this.init_aM.init_List.get(index + 2) : null;
             MacroAction newStart = report.load_MacroAction_2();
-            if (oldStart != null && autismclient.util.macro.L.load(oldStart) && oldStart.getTypeId().equalsIgnoreCase(report.startActionType)) {
+            if (oldStart != null && autismclient.util.macro.RaceAction.load(oldStart) && oldStart.getTypeId().equalsIgnoreCase(report.startActionType)) {
                newStart = oldStart;
             }
 
             MacroAction newEnd = report.read_MacroAction();
             if (oldEnd != null
-               && autismclient.util.macro.L.init_Z(oldEnd)
-               && autismclient.util.macro.L.init_L_DataUtil(oldEnd).name().equalsIgnoreCase(report.endConditionType)) {
+               && autismclient.util.macro.RaceAction.init_Z(oldEnd)
+               && autismclient.util.macro.RaceAction.init_L_DataUtil(oldEnd).name().equalsIgnoreCase(report.endConditionType)) {
                newEnd = oldEnd;
             }
 
@@ -5271,12 +5271,12 @@ public class AutismMacroEditorOverlay extends bj {
       boolean groupBody = group.init() && !group.init_Z;
       boolean multiBody = group.write && !group.init_Z;
       boolean groupHeader = group.init() && group.init_Z;
-      boolean gateEnd = group.read_Z && action instanceof autismclient.util.macro.HashUtil;
+      boolean gateEnd = group.read_Z && action instanceof autismclient.util.macro.EndPacketGateAction;
       boolean allowMove = !groupBody || multiBody || gateEnd;
       boolean allowDuplicate = (!group.init() || multiBody)
-         && !(action instanceof autismclient.util.macro.B)
-         && !(action instanceof autismclient.util.macro.HashUtil);
-      boolean allowDelete = (!groupBody || multiBody) && !(action instanceof autismclient.util.macro.HashUtil);
+         && !(action instanceof autismclient.util.macro.PacketGateAction)
+         && !(action instanceof autismclient.util.macro.EndPacketGateAction);
+      boolean allowDelete = (!groupBody || multiBody) && !(action instanceof autismclient.util.macro.EndPacketGateAction);
       int bodyIndent = groupBody ? 10 : 0;
       boolean hoverRow = interactive && mouseX >= rowLeft - 1 && mouseX <= rowRight + 1 && mouseY >= actionY && mouseY < actionY + this.mark_I();
       boolean selectedRow = interactive && this.read_Z(actionIndex);
@@ -5356,7 +5356,7 @@ public class AutismMacroEditorOverlay extends bj {
          maxNameW = Math.max(1, contentRight - nameX - 8);
       }
 
-      int nameColor = action instanceof autismclient.util.macro.r ? -6645094 : -1;
+      int nameColor = action instanceof autismclient.util.macro.MissingAddonAction ? -6645094 : -1;
       String displayName = autismclient.gui.f.b.k.init(
          this.init_Font,
          label,
@@ -5811,12 +5811,12 @@ public class AutismMacroEditorOverlay extends bj {
                AutismMacroEditorOverlay.Inner_StreamUtil group = this.init_AutismMacroEditorO_I_MacroAction(index, action);
                boolean groupBody = group.init() && !group.init_Z;
                boolean multiBody = group.write && !group.init_Z;
-               boolean gateEnd = group.read_Z && action instanceof autismclient.util.macro.HashUtil;
+               boolean gateEnd = group.read_Z && action instanceof autismclient.util.macro.EndPacketGateAction;
                boolean allowMove = !groupBody || multiBody || gateEnd;
                boolean allowDuplicate = (!group.init() || multiBody)
-                  && !(action instanceof autismclient.util.macro.B)
-                  && !(action instanceof autismclient.util.macro.HashUtil);
-               boolean allowDelete = (!groupBody || multiBody) && !(action instanceof autismclient.util.macro.HashUtil);
+                  && !(action instanceof autismclient.util.macro.PacketGateAction)
+                  && !(action instanceof autismclient.util.macro.EndPacketGateAction);
+               boolean allowDelete = (!groupBody || multiBody) && !(action instanceof autismclient.util.macro.EndPacketGateAction);
                int actionY = y + index * this.mark_I();
                if (!this.init_Z_I_2(actionY)) {
                   return true;
@@ -5847,13 +5847,13 @@ public class AutismMacroEditorOverlay extends bj {
                      if (index < this.init_aM.init_List.size() - 1) {
                         this.count_V();
                         int target = index + 1;
-                        if (action instanceof autismclient.util.macro.L race) {
+                        if (action instanceof autismclient.util.macro.RaceAction race) {
                            target = Math.min(this.init_aM.init_List.size() - 1, index + race.init_I_List_I(this.init_aM.init_List, index) + 1);
-                        } else if (action instanceof autismclient.util.macro.O report) {
+                        } else if (action instanceof autismclient.util.macro.ReportAction report) {
                            target = Math.min(this.init_aM.init_List.size() - 1, index + report.init(this.init_aM.init_List, index) + 1);
-                        } else if (action instanceof autismclient.util.macro.t multi) {
+                        } else if (action instanceof autismclient.util.macro.MultiAction multi) {
                            target = Math.min(this.init_aM.init_List.size() - 1, index + multi.init(this.init_aM.init_List, index) + 1);
-                        } else if (action instanceof autismclient.util.macro.B) {
+                        } else if (action instanceof autismclient.util.macro.PacketGateAction) {
                            target = Math.min(this.init_aM.init_List.size() - 1, index + this.sync_I(index) + 1);
                         }
 
@@ -5951,15 +5951,15 @@ public class AutismMacroEditorOverlay extends bj {
          if (copy != null) {
             this.init_aM.init_List.add(index + 1, copy);
             int header = this.read_I_2(index);
-            if (header >= 0 && this.init_aM.init_List.get(header) instanceof autismclient.util.macro.L race) {
+            if (header >= 0 && this.init_aM.init_List.get(header) instanceof autismclient.util.macro.RaceAction race) {
                race.bodyCount = Math.max(0, race.bodyCount + 1);
             } else {
                int reportHeader = this.write_I_2(index);
-               if (reportHeader >= 0 && this.init_aM.init_List.get(reportHeader) instanceof autismclient.util.macro.O report) {
+               if (reportHeader >= 0 && this.init_aM.init_List.get(reportHeader) instanceof autismclient.util.macro.ReportAction report) {
                   report.conditionCount = Math.max(0, report.conditionCount + 1);
                } else {
                   int multiHeader = this.update_I_2(index);
-                  if (multiHeader >= 0 && this.init_aM.init_List.get(multiHeader) instanceof autismclient.util.macro.t multi) {
+                  if (multiHeader >= 0 && this.init_aM.init_List.get(multiHeader) instanceof autismclient.util.macro.MultiAction multi) {
                      multi.stepCount = Math.max(0, multi.stepCount + 1);
                   }
                }
@@ -5974,7 +5974,7 @@ public class AutismMacroEditorOverlay extends bj {
       if (!this.queue_Z() && this.init_aM != null && index >= 0 && index < this.init_aM.init_List.size() && !this.flush_Z(index)) {
          MacroAction action = this.init_aM.init_List.get(index);
          ActionEditorOverlay editor = ActionEditorOverlay.load_ActionEditorOverla();
-         if (action instanceof autismclient.util.macro.L race) {
+         if (action instanceof autismclient.util.macro.RaceAction race) {
             int count = race.init_I_List_I(this.init_aM.init_List, index);
             int end = Math.min(this.init_aM.init_List.size(), index + count + 1);
             if (editor != null) {
@@ -5985,7 +5985,7 @@ public class AutismMacroEditorOverlay extends bj {
 
             this.init_aM.init_List.subList(index, end).clear();
             this.fill_V();
-         } else if (action instanceof autismclient.util.macro.O report) {
+         } else if (action instanceof autismclient.util.macro.ReportAction report) {
             int count = report.init(this.init_aM.init_List, index);
             int end = Math.min(this.init_aM.init_List.size(), index + count + 1);
             if (editor != null) {
@@ -5996,7 +5996,7 @@ public class AutismMacroEditorOverlay extends bj {
 
             this.init_aM.init_List.subList(index, end).clear();
             this.fill_V();
-         } else if (action instanceof autismclient.util.macro.B) {
+         } else if (action instanceof autismclient.util.macro.PacketGateAction) {
             int count = this.sync_I(index);
             int end = Math.min(this.init_aM.init_List.size(), index + count + 1);
             if (editor != null) {
@@ -6007,7 +6007,7 @@ public class AutismMacroEditorOverlay extends bj {
 
             this.init_aM.init_List.subList(index, end).clear();
             this.fill_V();
-         } else if (action instanceof autismclient.util.macro.t) {
+         } else if (action instanceof autismclient.util.macro.MultiAction) {
             if (editor != null) {
                editor.init_V_MacroAction(action);
             }
@@ -6023,15 +6023,15 @@ public class AutismMacroEditorOverlay extends bj {
             int reportHeader = header < 0 ? this.write_I_2(index) : -1;
             int multiHeader = header < 0 && reportHeader < 0 ? this.update_I_2(index) : -1;
             this.init_aM.init_List.remove(index);
-            if (header >= 0 && header < this.init_aM.init_List.size() && this.init_aM.init_List.get(header) instanceof autismclient.util.macro.L race) {
+            if (header >= 0 && header < this.init_aM.init_List.size() && this.init_aM.init_List.get(header) instanceof autismclient.util.macro.RaceAction race) {
                race.bodyCount = Math.max(0, race.bodyCount - 1);
             } else if (reportHeader >= 0
                && reportHeader < this.init_aM.init_List.size()
-               && this.init_aM.init_List.get(reportHeader) instanceof autismclient.util.macro.O report) {
+               && this.init_aM.init_List.get(reportHeader) instanceof autismclient.util.macro.ReportAction report) {
                report.conditionCount = Math.max(0, report.conditionCount - 1);
             } else if (multiHeader >= 0
                && multiHeader < this.init_aM.init_List.size()
-               && this.init_aM.init_List.get(multiHeader) instanceof autismclient.util.macro.t multi) {
+               && this.init_aM.init_List.get(multiHeader) instanceof autismclient.util.macro.MultiAction multi) {
                multi.stepCount = Math.max(0, multi.stepCount - 1);
             }
 

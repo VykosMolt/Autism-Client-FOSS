@@ -46,7 +46,7 @@ public final class D {
    }
 
    public static boolean init() {
-      z danger = z.init_z();
+      DangerModule danger = DangerModule.init_z();
       return danger != null && danger.isEnabled() && !aD.init_Z() && danger.open_Z_6();
    }
 
@@ -54,7 +54,7 @@ public final class D {
       if (init()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null && mc.level != null) {
-            z danger = z.init_z();
+            DangerModule danger = DangerModule.init_z();
             Vec3 camera = Q.init();
             float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
             PkgCls_c buffers = init_c_DataUtil.init();

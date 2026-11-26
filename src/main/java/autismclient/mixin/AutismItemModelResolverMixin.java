@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.M;
+import autismclient.modules.GoldenLeverModule;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.world.entity.ItemOwner;
@@ -25,8 +25,8 @@ public class AutismItemModelResolverMixin {
       int seed,
       CallbackInfo ci
    ) {
-      if (M.init(item)) {
-         M.init(output);
+      if (GoldenLeverModule.init(item)) {
+         GoldenLeverModule.init(output);
       }
    }
 }

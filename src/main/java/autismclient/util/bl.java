@@ -11,7 +11,7 @@ public final class bl {
    private bl() {
    }
 
-   public static bl.Inner_StreamUtil init(autismclient.util.macro.w action, String owner) {
+   public static bl.Inner_StreamUtil init(autismclient.util.macro.PacedTpAction action, String owner) {
       long id = init_AtomicLong.incrementAndGet();
       bl.Inner_StreamUtil handle = new bl.Inner_StreamUtil(id, owner == null ? "" : owner);
       init_dc.init(id, handle.init_Str(), 300000L);

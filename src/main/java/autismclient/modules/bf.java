@@ -53,7 +53,7 @@ final class bf {
          && target.level() == init_Minecraft.level
          && !target.isSpectator()
          && (!this.init_bf_DataUtil.init_Z() || target instanceof Player)
-         && !aL.init_Z_Entity_5(target)
+         && !TeamsModule.init_Z_Entity_5(target)
          && !ByteReader.init_Z(target)) {
          long now = System.nanoTime();
          int chance = this.init_bf_DataUtil.init_I();
@@ -142,7 +142,7 @@ final class bf {
             target instanceof LivingEntity living
                && living.isAlive()
                && target.getUUID().equals(this.init_UUID)
-               && !aL.init_Z_Entity_5(living)
+               && !TeamsModule.init_Z_Entity_5(living)
                && !ByteReader.init_Z(living)
          )) {
             this.init_be.init_V();
@@ -193,7 +193,7 @@ final class bf {
          && !init_Minecraft.player.isSpectator()
          && !init_Minecraft.player.isUsingItem()
          && !autismclient.util.DataPipe.init()
-         && !(init_Minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor digging && digging.autism$isDestroying() && !UtilCore.read_Z_10())
+         && !(init_Minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor digging && digging.autism$isDestroying() && !BedNukerModule.read_Z_10())
          && !init_Minecraft.player.isPassenger()
          && !init_Minecraft.player.getAbilities().flying
          && !init_Minecraft.player.isFallFlying()
@@ -206,11 +206,11 @@ final class bf {
          && !aC.write()) {
          Module scaffold = al.init_Module_Str("scaffold");
          return (scaffold == null || !scaffold.isEnabled())
-            && !j.init_Z_49()
-            && !z.sync_Z_12()
-            && !UtilCore.init_Z_23()
-            && !FieldCache.init_Z_6()
-            && !TableIndex.init_Z_20()
+            && !ClutchModule.init_Z_49()
+            && !DangerModule.sync_Z_12()
+            && !BedNukerModule.init_Z_23()
+            && !AutoTotemModule.init_Z_6()
+            && !AutoArmorModule.init_Z_20()
             && !autismclient.util.macro.g.init_Z()
             && !cn.init_Z();
       } else {

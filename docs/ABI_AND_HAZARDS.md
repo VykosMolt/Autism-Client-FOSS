@@ -21,6 +21,10 @@ Every rule below MUST be respected by all deobfuscation tooling and manual refac
 ### Compile-Time & Runtime ABI Pins
 - `autismclient/util/Q.java` — empty no-op stub required by untouched `modules/al.java`.
 - `autismclient/util/mm/a/StreamUtil.java` — hashing helpers called by frozen `autismclient/a/CachePool`.
+- **Compile-time frozen classes** (directly referenced by untouched `modules/al.java`; verified by `:compileJava`):
+  - `autismclient/modules/f` (multi-module registration container)
+  - `autismclient/modules/as`
+  - `autismclient/util/macro/ak` (also has frozen inner enum `ak$Inner_StreamUtil`)
 - **Compile-time frozen enum constants** (directly referenced by untouched `.java` files; verified by `:compileJava`):
   - `autismclient/gui/f/b/CachePool$Inner_DataUtil` (referenced by `gui/d/JsonUtil.java`)
   - `autismclient/gui/f/b/l` (referenced by `gui/d/JsonUtil.java`)

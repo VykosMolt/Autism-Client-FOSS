@@ -8,15 +8,15 @@ import autismclient.gui.StreamUtil;
 import autismclient.gui.d.RefQueue;
 import autismclient.gui.d.UtilCore;
 import autismclient.gui.macro.editor.ActionEditorOverlay;
-import autismclient.modules.FieldCache;
+import autismclient.modules.AutoTotemModule;
 import autismclient.modules.HashUtil;
-import autismclient.modules.N;
-import autismclient.modules.TableIndex;
-import autismclient.modules.X;
+import autismclient.modules.HandNoClipModule;
+import autismclient.modules.AutoArmorModule;
+import autismclient.modules.KBDisplacementModule;
 import autismclient.modules.aC;
 import autismclient.modules.aD;
-import autismclient.modules.aI;
-import autismclient.modules.aa;
+import autismclient.modules.ScaffoldModule;
+import autismclient.modules.KillAuraModule;
 import autismclient.modules.ah;
 import autismclient.modules.ai;
 import autismclient.modules.al;
@@ -192,7 +192,7 @@ public class AutismMinecraftClientMixin {
          TaskQueue.init((Minecraft)(Object)this);
          ai.init_V();
          if (!AutismLiteVariant.enabled()) {
-            X.load_V_17();
+            KBDisplacementModule.load_V_17();
          }
 
          MacroExecutor.load_V();
@@ -297,7 +297,7 @@ public class AutismMinecraftClientMixin {
          ci.cancel();
       } else if (autismclient.util.ai.init((Minecraft)(Object)this)) {
          ci.cancel();
-      } else if (FieldCache.init_Z_6() || TableIndex.init_Z_20()) {
+      } else if (AutoTotemModule.init_Z_6() || AutoArmorModule.init_Z_20()) {
          ci.cancel();
       } else if (!s.close_Z() && DataPipe.load()) {
          ci.cancel();
@@ -308,7 +308,7 @@ public class AutismMinecraftClientMixin {
    private void autism$manualCombatUse(Operation<Void> original) {
       if (!AutismLiteVariant.enabled()) {
          Minecraft client = (Minecraft)(Object)this;
-         if (!s.read_Z() && client.player != null && client.hitResult instanceof EntityHitResult && aa.init_Z_31()) {
+         if (!s.read_Z() && client.player != null && client.hitResult instanceof EntityHitResult && KillAuraModule.init_Z_31()) {
             HitResult previous = client.hitResult;
             client.hitResult = BlockHitResult.miss(client.player.getEyePosition(), Direction.DOWN, client.player.blockPosition());
 
@@ -371,7 +371,7 @@ public class AutismMinecraftClientMixin {
                   if (!f.read()) {
                      ci.cancel();
                   }
-               } else if (aI.init_Z_26() && !aI.load_Z_11()) {
+               } else if (ScaffoldModule.init_Z_26() && !ScaffoldModule.load_Z_11()) {
                   ci.cancel();
                }
             }
@@ -409,7 +409,7 @@ public class AutismMinecraftClientMixin {
 
       Minecraft client = (Minecraft)(Object)this;
       HitResult hit = DataPipe.init(client, original);
-      return !AutismLiteVariant.enabled() ? N.init(client, hit, true, true) : hit;
+      return !AutismLiteVariant.enabled() ? HandNoClipModule.init(client, hit, true, true) : hit;
    }
 
    @ModifyExpressionValue(
@@ -423,7 +423,7 @@ public class AutismMinecraftClientMixin {
 
       Minecraft client = (Minecraft)(Object)this;
       HitResult hit = DataPipe.init(client, original);
-      return !AutismLiteVariant.enabled() ? N.init(client, hit, true, true) : hit;
+      return !AutismLiteVariant.enabled() ? HandNoClipModule.init(client, hit, true, true) : hit;
    }
 
    @ModifyExpressionValue(
@@ -433,10 +433,10 @@ public class AutismMinecraftClientMixin {
    private HitResult autism$useOnlyWhatTheCameraSees(HitResult original) {
       if (!AutismLiteVariant.enabled() && ListPool.flush()) {
          return original;
-      } else if (!s.flush_Z() && !aI.init_Z_26()) {
+      } else if (!s.flush_Z() && !ScaffoldModule.init_Z_26()) {
          Minecraft client = (Minecraft)(Object)this;
          HitResult hit = DataPipe.init(client, original);
-         return !AutismLiteVariant.enabled() ? N.init(client, hit, false, false) : hit;
+         return !AutismLiteVariant.enabled() ? HandNoClipModule.init(client, hit, false, false) : hit;
       } else {
          return original;
       }
@@ -457,7 +457,7 @@ public class AutismMinecraftClientMixin {
 
    @Inject(method = "handleKeybinds", at = @At("HEAD"), cancellable = true)
    private void autism$cancelCaptureOnEscape(CallbackInfo ci) {
-      aI.write_V_12();
+      ScaffoldModule.write_V_12();
       if (!AutismLiteVariant.enabled()) {
          ListPool.init_V((Minecraft)(Object)this);
       }
@@ -520,7 +520,7 @@ public class AutismMinecraftClientMixin {
          }
 
          if (!AutismLiteVariant.enabled()) {
-            aa.read_V_14();
+            KillAuraModule.read_V_14();
          }
 
          if (!AutismLiteVariant.enabled()) {

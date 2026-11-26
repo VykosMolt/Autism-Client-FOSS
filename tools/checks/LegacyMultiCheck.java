@@ -23,37 +23,37 @@ public final class LegacyMultiCheck {
 
       aM saved = new aM("Legacy Multi fixture");
       saved.init_List.add(aM.init_MacroAction_CompoundTag(legacy));
-      saved.init_List.add(new EventBus(0));
-      saved.init_List.add(new ClassCache());
-      saved.init_List.add(new L());
-      saved.init_List.add(new EventBus(0));
+      saved.init_List.add(new DelayAction(0));
+      saved.init_List.add(new JoinAction());
+      saved.init_List.add(new RaceAction());
+      saved.init_List.add(new DelayAction(0));
       CompoundTag before = saved.load_CompoundTag();
 
       aM running = saved.init_aM();
-      check(running.init_List.get(0) instanceof t, "normal macro codec reads the legacy header");
+      check(running.init_List.get(0) instanceof MultiAction, "normal macro codec reads the legacy header");
       check(legacy.equals(running.init_List.get(0).toTag()), "legacy account and scope fields round-trip");
       check(MacroExecutor.suppressLegacyMultiSteps(running.init_List), "run reports a legacy block");
       check(running.init_List.size() == saved.init_List.size(), "run keeps physical indices");
       check(!running.init_List.get(1).isEnabled(), "covered action is disabled");
-      check(!running.init_List.get(2).isEnabled() && !ClassCache.init(running.init_List, 0, false), "covered actions cannot affect Join lookahead");
-      check(running.init_List.get(3) instanceof L && running.init_List.get(4) instanceof EventBus, "scope stops at the next block and preserves its rows");
+      check(!running.init_List.get(2).isEnabled() && !JoinAction.init(running.init_List, 0, false), "covered actions cannot affect Join lookahead");
+      check(running.init_List.get(3) instanceof RaceAction && running.init_List.get(4) instanceof DelayAction, "scope stops at the next block and preserves its rows");
       check(before.equals(saved.load_CompoundTag()), "preparing the run leaves saved macro data intact");
 
-      t disabled = new t() {
+      MultiAction disabled = new MultiAction() {
          @Override
          public boolean isEnabled() {
             return false;
          }
       };
-      t truncated = new t();
+      MultiAction truncated = new MultiAction();
       truncated.stepCount = 10;
-      MacroAction probe = new EventBus(0) {
+      MacroAction probe = new DelayAction(0) {
          @Override
          public void execute(Minecraft mc) {
             throw new AssertionError("A covered action executed after direct dispatch");
          }
       };
-      KeyHolder label = new KeyHolder();
+      LabelAction label = new LabelAction();
       label.name = "inside Multi";
       List<MacroAction> direct = new ArrayList<>(List.of(disabled, probe, label, truncated, probe));
       disabled.stepCount = 10;
@@ -64,10 +64,10 @@ public final class LegacyMultiCheck {
          "covered labels remain valid jump targets and are excluded from action collectors");
       direct.get(1).execute(null);
       direct.get(4).execute(null);
-      check(!MacroExecutor.suppressLegacyMultiSteps(List.of(new EventBus(0))), "ordinary macros require no suppression");
+      check(!MacroExecutor.suppressLegacyMultiSteps(List.of(new DelayAction(0))), "ordinary macros require no suppression");
 
-      t coversJoin = new t();
-      List<MacroAction> breakSteps = new ArrayList<>(List.of(new autismclient.util.macro.CachePool(), coversJoin, new ClassCache(), new W()));
+      MultiAction coversJoin = new MultiAction();
+      List<MacroAction> breakSteps = new ArrayList<>(List.of(new autismclient.util.macro.BreakAction(), coversJoin, new JoinAction(), new SendChatAction()));
       MacroExecutor.suppressLegacyMultiSteps(breakSteps);
       var collectBreakSteps = MacroExecutor.class.getDeclaredMethod("init_MacroExecutor_Stat_List_I", List.class, int.class);
       collectBreakSteps.setAccessible(true);

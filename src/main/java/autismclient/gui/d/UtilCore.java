@@ -551,7 +551,7 @@ public class UtilCore extends Screen implements TaskQueue {
             UtilCore.Inner_StreamUtil openManager = new UtilCore.Inner_StreamUtil(
                   this.state + 5, this.queue + this.entry - 5 - 16, this.buffer - 10, 16, Component.literal("OPEN MANAGER"), true, () -> {
                      if (!aD.read_Z()) {
-                        this.minecraft.gui.setScreen(new HashUtil(this, HashUtil.Inner_DataUtil.TITLE_SETUP));
+                        this.minecraft.gui.setScreen(new AutismModulesScreen(this, AutismModulesScreen.Inner_DataUtil.TITLE_SETUP));
                      }
                   }
                )
@@ -592,7 +592,7 @@ public class UtilCore extends Screen implements TaskQueue {
       );
       all.add(new UtilCore.Inner_TaskQueue("MODULES", "", autismclient.gui.f.a.DataUtil.pop, null, 32, () -> {
          if (!aD.read_Z()) {
-            this.minecraft.gui.setScreen(new HashUtil(this, HashUtil.Inner_DataUtil.TITLE_SETUP));
+            this.minecraft.gui.setScreen(new AutismModulesScreen(this, AutismModulesScreen.Inner_DataUtil.TITLE_SETUP));
          }
       }, Component.literal("Modules & Macros")));
       all.add(new UtilCore.Inner_TaskQueue("PROFILES", "", autismclient.gui.f.a.DataUtil.add, null, 32, () -> {
@@ -603,7 +603,7 @@ public class UtilCore extends Screen implements TaskQueue {
                bk.init_bk().init_V(overlay);
                ((AutismProfilesOverlay)overlay).load(true);
                overlay.init_V_Z(true);
-               this.minecraft.gui.setScreen(new TaskTimer(overlay, this, true));
+               this.minecraft.gui.setScreen(new AutismOverlaysScreen(overlay, this, true));
             }
          }
       }, Component.literal("Profiles")));

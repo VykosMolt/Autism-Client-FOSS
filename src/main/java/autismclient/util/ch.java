@@ -1,6 +1,6 @@
 package autismclient.util;
 
-import autismclient.modules.j;
+import autismclient.modules.ClutchModule;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -20,7 +20,7 @@ public final class ch {
 
    public static void init(Packet<?> packet) {
       if (!AutismLiteVariant.enabled()) {
-         j.init_V_Packet_2(packet);
+         ClutchModule.init_V_Packet_2(packet);
       }
 
       if (packet instanceof ServerboundMovePlayerPacket movement) {

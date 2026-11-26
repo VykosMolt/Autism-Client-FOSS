@@ -167,8 +167,8 @@ public final class aj {
             for (Entity entity : init_Minecraft.level.entitiesForRendering()) {
                try {
                   if (entity != self && !ByteReader.load_Z(entity)) {
-                     boolean friend = aL.init_Z_Entity_5(entity);
-                     if (!friend || aL.read_Z_Str("nametags")) {
+                     boolean friend = TeamsModule.init_Z_Entity_5(entity);
+                     if (!friend || TeamsModule.read_Z_Str("nametags")) {
                         double x = Mth.lerp(tickDelta, entity.xOld, entity.getX());
                         double y = Mth.lerp(tickDelta, entity.yOld, entity.getY());
                         double z = Mth.lerp(tickDelta, entity.zOld, entity.getZ());
@@ -258,7 +258,7 @@ public final class aj {
          return false;
       }
 
-      if (aL.init_Z_Entity_5(entity) && !aL.read_Z_Str("nametags")) {
+      if (TeamsModule.init_Z_Entity_5(entity) && !TeamsModule.read_Z_Str("nametags")) {
          return false;
       }
 
@@ -882,7 +882,7 @@ public final class aj {
          boolean showEnchantments
       ) {
          int meters = showDistance ? (int)dist : -1;
-         int tint = friend ? aL.init_I_18() : 0;
+         int tint = friend ? TeamsModule.init_I_18() : 0;
          boolean fontChanged = this.load_I != epoch || this.init_Z != aj.init_Z;
          boolean refreshGear = this.init_J != now || this.init_I != settings || fontChanged;
          if (refreshGear || meters != this.read_I || tint != this.update) {

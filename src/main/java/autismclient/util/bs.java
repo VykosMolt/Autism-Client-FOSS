@@ -108,7 +108,7 @@ public final class bs {
             AutismClientMessaging.sendPrefixed("§cCannot open the macro editor.");
             return false;
          } else {
-            autismclient.util.macro.Y action = new autismclient.util.macro.Y();
+            autismclient.util.macro.SendPacketAction action = new autismclient.util.macro.SendPacketAction();
             action.waitForGuiBefore = false;
             action.waitForGuiAfter = false;
             action.guiName = "";
@@ -131,16 +131,16 @@ public final class bs {
             AutismClientMessaging.sendPrefixed("§cCannot open the macro editor.");
             return false;
          } else {
-            String target = autismclient.util.macro.aB.init(entry.init_Str, entry.load_Str);
+            String target = autismclient.util.macro.WaitForPacketAction.init(entry.init_Str, entry.load_Str);
             if (target.isEmpty()) {
                AutismClientMessaging.sendPrefixed("§cCannot add this packet as a wait condition.");
                return false;
             } else {
-               autismclient.util.macro.aB action = new autismclient.util.macro.aB(target);
+               autismclient.util.macro.WaitForPacketAction action = new autismclient.util.macro.WaitForPacketAction(target);
                action.packetNames.add(target);
                macroEditor.init_V_MacroAction_2(action);
                bk.init_bk().update_V(macroEditor);
-               AutismClientMessaging.sendPrefixed("Added wait condition: " + autismclient.util.macro.aB.write(target));
+               AutismClientMessaging.sendPrefixed("Added wait condition: " + autismclient.util.macro.WaitForPacketAction.write(target));
                return true;
             }
          }
@@ -152,7 +152,7 @@ public final class bs {
          AutismClientMessaging.sendPrefixed("§cOnly captured C2S custom payload packets can be edited.");
          return false;
       } else {
-         autismclient.util.macro.H action = AutismPayloadSupport.init_H(entry);
+         autismclient.util.macro.PayloadAction action = AutismPayloadSupport.init_H(entry);
          if (action == null) {
             AutismClientMessaging.sendPrefixed("§cFailed to seed payload editor from packet.");
             return false;
@@ -174,7 +174,7 @@ public final class bs {
             AutismClientMessaging.sendPrefixed("§cCannot open the macro editor.");
             return false;
          } else {
-            autismclient.util.macro.H action = AutismPayloadSupport.init_H(entry);
+            autismclient.util.macro.PayloadAction action = AutismPayloadSupport.init_H(entry);
             if (action == null) {
                AutismClientMessaging.sendPrefixed("§cFailed to create payload action from packet.");
                return false;

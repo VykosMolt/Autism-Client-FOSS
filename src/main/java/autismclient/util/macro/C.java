@@ -22,21 +22,21 @@ public final class C {
    private C() {
    }
 
-   public static void init(B action) {
+   public static void init(PacketGateAction action) {
       init(action, 0L);
    }
 
-   public static void init(B action, long ownerRunId) {
+   public static void init(PacketGateAction action, long ownerRunId) {
       if (!autismclient.modules.aD.read_Z()) {
          load(action, ownerRunId);
       }
    }
 
-   static void load(B action, long ownerRunId) {
+   static void load(PacketGateAction action, long ownerRunId) {
       if (action != null) {
          ownerRunId = Math.max(0L, ownerRunId);
          String id = action.gateId != null && !action.gateId.isBlank() ? action.gateId.trim() : "auto";
-         if (action.mode == B.Inner_CachePool.DISABLE_GATE) {
+         if (action.mode == PacketGateAction.Inner_CachePool.DISABLE_GATE) {
             init(id, ownerRunId);
          } else {
             String key = init(ownerRunId, id);
@@ -139,7 +139,7 @@ public final class C {
       if (autismclient.modules.aD.read_Z()) {
          load_V();
       } else {
-         boolean flush = init_ConcurrentHashMap.values().stream().anyMatch(g -> g.init_B_CachePool == B.Inner_CachePool.DELAY && g.init_Z);
+         boolean flush = init_ConcurrentHashMap.values().stream().anyMatch(g -> g.init_B_CachePool == PacketGateAction.Inner_CachePool.DELAY && g.init_Z);
          load_V();
          if (flush) {
             ck.init_ck().init_I_ClientPacketListen(connection);
@@ -154,7 +154,7 @@ public final class C {
    }
 
    private static boolean load_Z() {
-      return init_ConcurrentHashMap.values().stream().anyMatch(g -> g.init_B_CachePool == B.Inner_CachePool.DELAY);
+      return init_ConcurrentHashMap.values().stream().anyMatch(g -> g.init_B_CachePool == PacketGateAction.Inner_CachePool.DELAY);
    }
 
    private static String init_Str() {
@@ -297,14 +297,14 @@ public final class C {
    public static final class Inner_DataUtil {
       public final long init_J;
       public final String init_Str;
-      public final B.Inner_CachePool init_B_CachePool;
+      public final PacketGateAction.Inner_CachePool init_B_CachePool;
       public final ArrayList<String> init_ArrayList;
       public final boolean init_Z;
       final String[] init_StrArr;
       final boolean load;
       final ClientPacketListener connection;
 
-      Inner_DataUtil(long ownerRunId, String id, B.Inner_CachePool mode, ArrayList<String> packets, boolean flushOnDisable) {
+      Inner_DataUtil(long ownerRunId, String id, PacketGateAction.Inner_CachePool mode, ArrayList<String> packets, boolean flushOnDisable) {
          this.connection = Minecraft.getInstance().getConnection();
          this.init_J = ownerRunId;
          this.init_Str = id;

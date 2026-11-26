@@ -1,0 +1,91 @@
+package autismclient.util.macro;
+
+import java.util.Locale;
+import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.CompoundTag;
+
+public class WaitForHealthAction implements CacheEntry, MacroAction {
+   public static final String COMPARISON_DROPS_BELOW = "Drops Below";
+   public static final String COMPARISON_RISES_ABOVE = "Rises Above";
+   public float healthThreshold = 20.0F;
+   public boolean below = true;
+   public boolean listenDuringPreviousAction = false;
+   public String saveAs = "";
+
+   public WaitForHealthAction() {
+   }
+
+   public WaitForHealthAction(float healthThreshold, boolean below) {
+      this.healthThreshold = healthThreshold;
+      this.below = below;
+   }
+
+   @Override
+   public void execute(Minecraft mc) {
+   }
+
+   @Override
+   public CompoundTag toTag() {
+      CompoundTag tag = new CompoundTag();
+      tag.putString("type", this.getType().name());
+      tag.putFloat("healthThreshold", this.healthThreshold);
+      tag.putBoolean("below", this.below);
+      tag.putString("comparison", this.init());
+      p.init(tag, this);
+      tag.putString("saveAs", this.saveAs);
+      return tag;
+   }
+
+   @Override
+   public void fromTag(CompoundTag tag) {
+      if (tag.contains("healthThreshold")) {
+         this.healthThreshold = tag.getFloatOr("healthThreshold", 20.0F);
+      }
+
+      if (tag.contains("comparison")) {
+         this.below = "Drops Below".equals(tag.getStringOr("comparison", "Drops Below"));
+      } else if (tag.contains("below")) {
+         this.below = tag.getBooleanOr("below", true);
+      }
+
+      p.load(tag, this);
+      this.saveAs = tag.getStringOr("saveAs", "");
+   }
+
+   @Override
+   public StreamGate getType() {
+      return StreamGate.WAIT_HEALTH;
+   }
+
+   @Override
+   public String getDisplayName() {
+      return "Wait HP: " + this.init() + " " + this.read();
+   }
+
+   @Override
+   public String getIcon() {
+      return "HP";
+   }
+
+   public String init() {
+      return this.below ? "Drops Below" : "Rises Above";
+   }
+
+   public String read() {
+      return String.format(Locale.ROOT, "%.1f", this.healthThreshold);
+   }
+
+   public String write() {
+      return this.below ? "Waiting for health to drop below " + this.read() : "Waiting for health to rise above " + this.read();
+   }
+
+   @Override
+   public String load() {
+      return this.saveAs;
+   }
+
+   @Override
+   public void a_(String name) {
+      this.saveAs = name == null ? "" : name;
+   }
+}

@@ -144,7 +144,7 @@ public final class aA {
 
             while (prefix < copy.init_List.size()) {
                MacroAction action = copy.init_List.get(prefix);
-               if (action instanceof autismclient.util.macro.UiHelper) {
+               if (action instanceof autismclient.util.macro.CustomMenuAction) {
                   sawCustomMenu = true;
                } else if (!init_Z(action)) {
                   break;
@@ -171,7 +171,7 @@ public final class aA {
    }
 
    private static boolean init_Z(MacroAction action) {
-      return action instanceof autismclient.util.macro.ax || action instanceof autismclient.util.macro.aJ || action instanceof autismclient.util.macro.EventBus;
+      return action instanceof autismclient.util.macro.WaitForGuiAction || action instanceof autismclient.util.macro.WaitGuiTypeAction || action instanceof autismclient.util.macro.DelayAction;
    }
 
    public static boolean read_Z() {
@@ -219,7 +219,7 @@ public final class aA {
                if (Thread.currentThread().isInterrupted()) {
                   return;
                }
-            } else if (macroAction instanceof autismclient.util.macro.UiHelper action) {
+            } else if (macroAction instanceof autismclient.util.macro.CustomMenuAction action) {
                long deadline = System.currentTimeMillis() + action.init();
                Minecraft mc = Minecraft.getInstance();
                CustomMenuSnapshot snapshot = null;
@@ -288,11 +288,11 @@ public final class aA {
 
    private static void init_V(MacroAction action) {
       long timeoutMs;
-      if (action instanceof autismclient.util.macro.ax w) {
+      if (action instanceof autismclient.util.macro.WaitForGuiAction w) {
          timeoutMs = w.timeoutMs > 0 ? w.timeoutMs : 30000L;
       } else {
-         if (!(action instanceof autismclient.util.macro.aJ w)) {
-            if (action instanceof autismclient.util.macro.EventBus d) {
+         if (!(action instanceof autismclient.util.macro.WaitGuiTypeAction w)) {
+            if (action instanceof autismclient.util.macro.DelayAction d) {
                long ms = d.useTicks ? d.delayTicks * 50L : d.delayMs;
                init(Math.max(0L, Math.min(120000L, ms)));
                return;

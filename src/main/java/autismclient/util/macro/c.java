@@ -5,7 +5,7 @@ public final class c {
    }
 
    public static boolean init(MacroAction action) {
-      return action != null && !(action instanceof EventBus) && L.init_Z(action);
+      return action != null && !(action instanceof DelayAction) && RaceAction.init_Z(action);
    }
 
    public static boolean init(autismclient.util.aM macro) {

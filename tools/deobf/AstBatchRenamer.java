@@ -24,12 +24,20 @@ public final class AstBatchRenamer {
         "autismclient/e/", "autismclient/sys/", "autismclient/obf/", "autismclient/a/",
         "autismclient/util/mm/guardian/", "autismclient/api/", "autismclient/ai/"
     );
-    private static final Set<String> FROZEN_EXACT = Set.of(
+    // Never read or edit these source files at all (untouched integrity / attestation layer)
+    private static final Set<String> UNTOUCHABLE_SOURCE_EXACT = Set.of(
         "autismclient/modules/al",
         "autismclient/util/AutismLiteVariant",
         "autismclient/util/bX",
         "autismclient/gui/a/DataUtil",
-        "autismclient/gui/d/JsonUtil",
+        "autismclient/gui/d/JsonUtil"
+    );
+    // Non-integrity files whose OWN class name is compile-time ABI-pinned by untouched files
+    // (cannot be renamed themselves, but references inside them to OTHER renamed classes must still be updated!)
+    private static final Set<String> FROZEN_SYMBOL_EXACT = Set.of(
+        "autismclient/modules/f",
+        "autismclient/modules/as",
+        "autismclient/util/macro/ak",
         "autismclient/util/Q",
         "autismclient/util/mm/a/StreamUtil"
     );
@@ -48,7 +56,7 @@ public final class AstBatchRenamer {
         if (internal == null) return true;
         if (FROZEN_ENUMS.contains(internal)) return true;
         String base = internal.contains("$") ? internal.substring(0, internal.indexOf('$')) : internal;
-        if (FROZEN_EXACT.contains(base)) return true;
+        if (UNTOUCHABLE_SOURCE_EXACT.contains(base) || FROZEN_SYMBOL_EXACT.contains(base)) return true;
         for (String p : FROZEN_PREFIXES) {
             if (base.startsWith(p)) return true;
         }
@@ -63,7 +71,7 @@ public final class AstBatchRenamer {
         if (internal.startsWith("autismclient/e/") || internal.startsWith("autismclient/sys/")
             || internal.startsWith("autismclient/obf/") || internal.startsWith("autismclient/a/")
             || internal.startsWith("autismclient/util/mm/guardian/")) return true;
-        if (FROZEN_EXACT.contains(internal)) return true;
+        if (UNTOUCHABLE_SOURCE_EXACT.contains(internal)) return true;
         return false;
     }
 

@@ -89,8 +89,8 @@ public class aM {
    public void load_V() {
       if (this.init_List != null) {
          for (MacroAction action : this.init_List) {
-            if (action instanceof autismclient.util.macro.Y) {
-               ((autismclient.util.macro.Y)action).init_V_10();
+            if (action instanceof autismclient.util.macro.SendPacketAction) {
+               ((autismclient.util.macro.SendPacketAction)action).init_V_10();
             }
          }
       }
@@ -170,7 +170,7 @@ public class aM {
             autismclient.util.macro.StreamGate type = autismclient.util.macro.StreamGate.valueOf(typeName);
             MacroAction action = init_MacroAction_StreamGate(type);
             if (type == autismclient.util.macro.StreamGate.WAIT_ITEM) {
-               ((autismclient.util.macro.aD)action).init(actionTag);
+               ((autismclient.util.macro.WaitForSlotChangeAction)action).init(actionTag);
             } else {
                action.fromTag(actionTag);
             }
@@ -182,7 +182,7 @@ public class aM {
          } catch (Throwable t) {
             String typeName = actionTag.getStringOr("type", "");
             AutismClientAddon.LOG.warn("[Macros] Failed to deserialize action '{}'; preserving its data", typeName, t);
-            return new autismclient.util.macro.r(typeName.isBlank() ? "invalid:action" : typeName, actionTag.copy());
+            return new autismclient.util.macro.MissingAddonAction(typeName.isBlank() ? "invalid:action" : typeName, actionTag.copy());
          }
       } else {
          return null;
@@ -228,311 +228,311 @@ public class aM {
       MacroAction var10000;
       switch (type) {
          case DELAY:
-            var10000 = new autismclient.util.macro.EventBus();
+            var10000 = new autismclient.util.macro.DelayAction();
             break;
          case PACKET:
-            var10000 = new autismclient.util.macro.x();
+            var10000 = new autismclient.util.macro.PacketAction();
             break;
          case PACKET_CLICK:
-            var10000 = new autismclient.util.macro.z();
+            var10000 = new autismclient.util.macro.PacketClickAction();
             break;
          case WAIT_PACKET:
-            var10000 = new autismclient.util.macro.aB();
+            var10000 = new autismclient.util.macro.WaitForPacketAction();
             break;
          case WAIT_HEALTH:
-            var10000 = new autismclient.util.macro.ay();
+            var10000 = new autismclient.util.macro.WaitForHealthAction();
             break;
          case WAIT_ITEM:
          case WAIT_SLOT_CHANGE:
-            var10000 = new autismclient.util.macro.aD();
+            var10000 = new autismclient.util.macro.WaitForSlotChangeAction();
             break;
          case WAIT_BLOCK:
-            var10000 = new autismclient.util.macro.at();
+            var10000 = new autismclient.util.macro.WaitForBlockAction();
             break;
          case WAIT_GUI:
-            var10000 = new autismclient.util.macro.ax();
+            var10000 = new autismclient.util.macro.WaitForGuiAction();
             break;
          case CUSTOM_MENU:
-            var10000 = new autismclient.util.macro.UiHelper();
+            var10000 = new autismclient.util.macro.CustomMenuAction();
             break;
          case CLICK:
-            var10000 = new autismclient.util.macro.NetHelper();
+            var10000 = new autismclient.util.macro.ClickAction();
             break;
          case ROTATE:
-            var10000 = new autismclient.util.macro.S();
+            var10000 = new autismclient.util.macro.RotateAction();
             break;
          case USE_ITEM:
-            var10000 = new autismclient.util.macro.an();
+            var10000 = new autismclient.util.macro.UseItemAction();
             break;
          case INVENTORY:
-            var10000 = new autismclient.util.macro.RefQueue();
+            var10000 = new autismclient.util.macro.InventoryAction();
             break;
          case SEND_PACKET:
-            var10000 = new autismclient.util.macro.Y();
+            var10000 = new autismclient.util.macro.SendPacketAction();
             break;
          case CRAFT:
-            var10000 = new autismclient.util.macro.SyncManager();
+            var10000 = new autismclient.util.macro.CraftAction();
             break;
          case TRADE:
-            var10000 = new autismclient.util.macro.am();
+            var10000 = new autismclient.util.macro.TradeAction();
             break;
          case SELECT_SLOT:
-            var10000 = new autismclient.util.macro.V();
+            var10000 = new autismclient.util.macro.SelectSlotAction();
             break;
          case XCARRY:
-            var10000 = new autismclient.util.macro.aQ();
+            var10000 = new autismclient.util.macro.XCarryAction();
             break;
          case DROP:
-            var10000 = new autismclient.util.macro.PacketUtil();
+            var10000 = new autismclient.util.macro.DropAction();
             break;
          case ITEM:
-            var10000 = new autismclient.util.macro.MapStore();
+            var10000 = new autismclient.util.macro.ItemAction();
             break;
          case PICK_UP_ALL:
-            var10000 = new autismclient.util.macro.I();
+            var10000 = new autismclient.util.macro.PickUpAllAction();
             break;
          case TICK_SYNC:
-            var10000 = new autismclient.util.macro.aj();
+            var10000 = new autismclient.util.macro.TickSyncAction();
             break;
          case REVISION_SYNC:
-            var10000 = new autismclient.util.macro.Q();
+            var10000 = new autismclient.util.macro.RevisionSyncAction();
             break;
          case SERVER_TICK_SYNC:
-            var10000 = new autismclient.util.macro.aa();
+            var10000 = new autismclient.util.macro.ServerTickSyncAction();
             break;
          case CLOSE_GUI:
-            var10000 = new autismclient.util.macro.JsonUtil();
+            var10000 = new autismclient.util.macro.CloseGuiAction();
             break;
          case SWAP_SLOTS:
-            var10000 = new autismclient.util.macro.ai();
+            var10000 = new autismclient.util.macro.SwapSlotsAction();
             break;
          case WAIT_COOLDOWN:
-            var10000 = new autismclient.util.macro.av();
+            var10000 = new autismclient.util.macro.WaitForCooldownAction();
             break;
          case GO_TO:
-            var10000 = new autismclient.util.macro.CharEncoder();
+            var10000 = new autismclient.util.macro.GoToAction();
             break;
          case WAIT_POS:
-            var10000 = new autismclient.util.macro.aN();
+            var10000 = new autismclient.util.macro.WaitPosAction();
             break;
          case PAYLOAD:
-            var10000 = new autismclient.util.macro.H();
+            var10000 = new autismclient.util.macro.PayloadAction();
             break;
          case DISCONNECT:
-            var10000 = new autismclient.util.macro.ByteReader();
+            var10000 = new autismclient.util.macro.DisconnectAction();
             break;
          case JOIN:
-            var10000 = new autismclient.util.macro.ClassCache();
+            var10000 = new autismclient.util.macro.JoinAction();
             break;
          case TOGGLE_MODULE:
             var10000 = new autismclient.util.macro.ak();
             break;
          case START_MACRO:
-            var10000 = new autismclient.util.macro.af();
+            var10000 = new autismclient.util.macro.StartMacroAction();
             break;
          case TOOLS:
-            var10000 = new autismclient.util.macro.al();
+            var10000 = new autismclient.util.macro.ToolsAction();
             break;
          case STOP_MACRO:
-            var10000 = new autismclient.util.macro.ag();
+            var10000 = new autismclient.util.macro.StopMacroAction();
             break;
          case SNEAK:
-            var10000 = new autismclient.util.macro.ad();
+            var10000 = new autismclient.util.macro.SneakAction();
             break;
          case JUMP:
-            var10000 = new autismclient.util.macro.NodeWalker();
+            var10000 = new autismclient.util.macro.JumpAction();
             break;
          case SPRINT:
-            var10000 = new autismclient.util.macro.ae();
+            var10000 = new autismclient.util.macro.SprintAction();
             break;
          case MOVE:
-            var10000 = new autismclient.util.macro.s();
+            var10000 = new autismclient.util.macro.MoveAction();
             break;
          case LOOK_AT_BLOCK:
-            var10000 = new autismclient.util.macro.ValueSink();
+            var10000 = new autismclient.util.macro.LookAtBlockAction();
             break;
          case REPEAT:
-            var10000 = new autismclient.util.macro.N();
+            var10000 = new autismclient.util.macro.RepeatAction();
             break;
          case WAIT_CHAT:
-            var10000 = new autismclient.util.macro.au();
+            var10000 = new autismclient.util.macro.WaitForChatAction();
             break;
          case WAIT_ENTITY:
-            var10000 = new autismclient.util.macro.aw();
+            var10000 = new autismclient.util.macro.WaitForEntityAction();
             break;
          case OPEN_CONTAINER:
-            var10000 = new autismclient.util.macro.v();
+            var10000 = new autismclient.util.macro.OpenContainerAction();
             break;
          case INTERACT_ENTITY:
-            var10000 = new autismclient.util.macro.PathHelper();
+            var10000 = new autismclient.util.macro.InteractEntityAction();
             break;
          case DESYNC:
-            var10000 = new autismclient.util.macro.TextFormat();
+            var10000 = new autismclient.util.macro.DesyncAction();
             break;
          case RESTORE_GUI:
-            var10000 = new autismclient.util.macro.P();
+            var10000 = new autismclient.util.macro.RestoreGuiAction();
             break;
          case SAVE_GUI:
-            var10000 = new autismclient.util.macro.U();
+            var10000 = new autismclient.util.macro.SaveGuiAction();
             break;
          case SEND_TOGGLE:
-            var10000 = new autismclient.util.macro.Z();
+            var10000 = new autismclient.util.macro.SendToggleAction();
             break;
          case DELAY_PACKETS:
-            var10000 = new autismclient.util.macro.FileCache();
+            var10000 = new autismclient.util.macro.DelayPacketsAction();
             break;
          case INVENTORY_AUDIT:
-            var10000 = new autismclient.util.macro.ListPool();
+            var10000 = new autismclient.util.macro.InventoryAuditAction();
             break;
          case STORE_ITEM:
-            var10000 = new autismclient.util.macro.ah();
+            var10000 = new autismclient.util.macro.StoreItemAction();
             break;
          case WAIT_SOUND:
-            var10000 = new autismclient.util.macro.aE();
+            var10000 = new autismclient.util.macro.WaitForSoundAction();
             break;
          case MINE:
-            var10000 = new autismclient.util.macro.q();
+            var10000 = new autismclient.util.macro.MineAction();
             break;
          case INSTA_BREAK:
-            var10000 = new autismclient.util.macro.MethodUtil();
+            var10000 = new autismclient.util.macro.InstaBreakAction();
             break;
          case BREAK:
-            var10000 = new autismclient.util.macro.CachePool();
+            var10000 = new autismclient.util.macro.BreakAction();
             break;
          case PAY:
-            var10000 = new autismclient.util.macro.G();
+            var10000 = new autismclient.util.macro.PayAction();
             break;
          case NBT_BOOK:
-            var10000 = new autismclient.util.macro.u();
+            var10000 = new autismclient.util.macro.NbtBookAction();
             break;
          case SEND_CHAT:
-            var10000 = new autismclient.util.macro.W();
+            var10000 = new autismclient.util.macro.SendChatAction();
             break;
          case WAIT_LAN_STEP:
-            var10000 = new autismclient.util.macro.az();
+            var10000 = new autismclient.util.macro.WaitForLanStepAction();
             break;
          case WAIT_MACRO_STEP:
-            var10000 = new autismclient.util.macro.aA();
+            var10000 = new autismclient.util.macro.WaitForMacroStepAction();
             break;
          case WAIT_WORLD_CHANGE:
-            var10000 = new autismclient.util.macro.aG();
+            var10000 = new autismclient.util.macro.WaitForWorldChangeAction();
             break;
          case WAIT_POSITION_DELTA:
-            var10000 = new autismclient.util.macro.aC();
+            var10000 = new autismclient.util.macro.WaitForPositionDeltaAction();
             break;
          case WAIT_TELEPORT:
-            var10000 = new autismclient.util.macro.aF();
+            var10000 = new autismclient.util.macro.WaitForTeleportAction();
             break;
          case WAIT_GAMEMODE_CHANGE:
-            var10000 = new autismclient.util.macro.aI();
+            var10000 = new autismclient.util.macro.WaitGamemodeChangeAction();
             break;
          case WAIT_MOVEMENT:
-            var10000 = new autismclient.util.macro.aL();
+            var10000 = new autismclient.util.macro.WaitMovementAction();
             break;
          case RACE:
-            var10000 = new autismclient.util.macro.L();
+            var10000 = new autismclient.util.macro.RaceAction();
             break;
          case REPORT:
-            var10000 = new autismclient.util.macro.O();
+            var10000 = new autismclient.util.macro.ReportAction();
             break;
          case VCLIP:
-            var10000 = new autismclient.util.macro.ap();
+            var10000 = new autismclient.util.macro.VClipAction();
             break;
          case HCLIP:
-            var10000 = new autismclient.util.macro.TokenStore();
+            var10000 = new autismclient.util.macro.HClipAction();
             break;
          case TP:
-            var10000 = new autismclient.util.macro.w();
+            var10000 = new autismclient.util.macro.PacedTpAction();
             break;
          case PACKET_GATE:
-            var10000 = new autismclient.util.macro.B();
+            var10000 = new autismclient.util.macro.PacketGateAction();
             break;
          case END_PACKET_GATE:
-            var10000 = new autismclient.util.macro.HashUtil();
+            var10000 = new autismclient.util.macro.EndPacketGateAction();
             break;
          case PACKET_BURST:
-            var10000 = new autismclient.util.macro.y();
+            var10000 = new autismclient.util.macro.PacketBurstAction();
             break;
          case CONTAINER_CLICK_SEQUENCE:
-            var10000 = new autismclient.util.macro.StateCache();
+            var10000 = new autismclient.util.macro.ContainerClickSequenceAction();
             break;
          case ASSERT:
-            var10000 = new autismclient.util.macro.DataUtil();
+            var10000 = new autismclient.util.macro.AssertAction();
             break;
          case USE_ITEM_PHASE:
-            var10000 = new autismclient.util.macro.ao();
+            var10000 = new autismclient.util.macro.UseItemPhaseAction();
             break;
          case SEND_COMMAND_PACKET:
-            var10000 = new autismclient.util.macro.X();
+            var10000 = new autismclient.util.macro.SendCommandPacketAction();
             break;
          case WAIT_PACKET_MATCH:
-            var10000 = new autismclient.util.macro.aM();
+            var10000 = new autismclient.util.macro.WaitPacketMatchAction();
             break;
          case WAIT_INVENTORY_PREDICATE:
-            var10000 = new autismclient.util.macro.aK();
+            var10000 = new autismclient.util.macro.WaitInventoryPredicateAction();
             break;
          case WAIT_DURABILITY:
-            var10000 = new autismclient.util.macro.ar();
+            var10000 = new autismclient.util.macro.WaitDurabilityAction();
             break;
          case WAIT_FREE_SLOTS:
-            var10000 = new autismclient.util.macro.aH();
+            var10000 = new autismclient.util.macro.WaitFreeSlotsAction();
             break;
          case WAIT_ENTITY_TARGET:
-            var10000 = new autismclient.util.macro.as();
+            var10000 = new autismclient.util.macro.WaitEntityTargetAction();
             break;
          case WAIT_GUI_TYPE:
-            var10000 = new autismclient.util.macro.aJ();
+            var10000 = new autismclient.util.macro.WaitGuiTypeAction();
             break;
          case BRANCH:
-            var10000 = new autismclient.util.macro.StreamUtil();
+            var10000 = new autismclient.util.macro.BranchAction();
             break;
          case FINALLY:
-            var10000 = new autismclient.util.macro.PoolEntry();
+            var10000 = new autismclient.util.macro.FinallyAction();
             break;
          case MACRO_VARIABLES:
-            var10000 = new autismclient.util.macro.o();
+            var10000 = new autismclient.util.macro.MacroVariablesAction();
             break;
          case CAPTURE_VALUE:
-            var10000 = new autismclient.util.macro.TaskQueue();
+            var10000 = new autismclient.util.macro.CaptureValueAction();
             break;
          case FAKE_GAMEMODE:
-            var10000 = new autismclient.util.macro.IoWorker();
+            var10000 = new autismclient.util.macro.FakeGamemodeAction();
             break;
          case BUNDLE_DUPE_V2:
-            var10000 = new autismclient.util.macro.BufferHelper();
+            var10000 = new autismclient.util.macro.BundleDupeV2Action();
             break;
          case ROLLBACK:
-            var10000 = new autismclient.util.macro.R();
+            var10000 = new autismclient.util.macro.RollbackAction();
             break;
          case PLACE:
-            var10000 = new autismclient.util.macro.K();
+            var10000 = new autismclient.util.macro.PlaceAction();
             break;
          case SIGN_EDIT:
-            var10000 = new autismclient.util.macro.ac();
+            var10000 = new autismclient.util.macro.SignEditAction();
             break;
          case FPS:
-            var10000 = new autismclient.util.macro.RingBuffer();
+            var10000 = new autismclient.util.macro.FpsAction();
             break;
          case SPING:
-            var10000 = new autismclient.util.macro.T();
+            var10000 = new autismclient.util.macro.SPingAction();
             break;
          case IF:
-            var10000 = new autismclient.util.macro.FieldCache();
+            var10000 = new autismclient.util.macro.IfAction();
             break;
          case FLOW:
-            var10000 = new autismclient.util.macro.TableIndex();
+            var10000 = new autismclient.util.macro.FlowAction();
             break;
          case LABEL:
-            var10000 = new autismclient.util.macro.KeyHolder();
+            var10000 = new autismclient.util.macro.LabelAction();
             break;
          case MULTI:
-            var10000 = new autismclient.util.macro.t();
+            var10000 = new autismclient.util.macro.MultiAction();
             break;
          case VILLAGER_DUPE:
-            var10000 = new autismclient.util.macro.aq();
+            var10000 = new autismclient.util.macro.VillagerDupeAction();
             break;
          case WAIT_VILLAGER_ITEM:
-            var10000 = new autismclient.util.macro.aO();
+            var10000 = new autismclient.util.macro.WaitVillagerItemAction();
             break;
          default:
             throw new MatchException(null, null);
@@ -565,16 +565,16 @@ public class aM {
          }
       }
 
-      return new autismclient.util.macro.r(typeName, actionTag.copy());
+      return new autismclient.util.macro.MissingAddonAction(typeName, actionTag.copy());
    }
 
    private static MacroAction init(String typeName, CompoundTag actionTag) {
       if ("WAIT_ENTITY_TARGET".equals(typeName)) {
-         autismclient.util.macro.aw migrated = new autismclient.util.macro.aw();
+         autismclient.util.macro.WaitForEntityAction migrated = new autismclient.util.macro.WaitForEntityAction();
          migrated.init(actionTag);
          return migrated;
       } else if ("WAIT_GUI_TYPE".equals(typeName)) {
-         autismclient.util.macro.ax migrated = new autismclient.util.macro.ax();
+         autismclient.util.macro.WaitForGuiAction migrated = new autismclient.util.macro.WaitForGuiAction();
          migrated.init(actionTag);
          return migrated;
       } else {
@@ -585,9 +585,9 @@ public class aM {
    private void read() {
       if (this.init_List != null && !this.init_List.isEmpty()) {
          for (int i = 0; i < this.init_List.size(); i++) {
-            if (this.init_List.get(i) instanceof autismclient.util.macro.L race && race.init_Z()) {
+            if (this.init_List.get(i) instanceof autismclient.util.macro.RaceAction race && race.init_Z()) {
                int inserted = 0;
-               autismclient.util.macro.z packetClick = race.init_z();
+               autismclient.util.macro.PacketClickAction packetClick = race.init_z();
                if (packetClick != null) {
                   this.init_List.add(i + 1, packetClick);
                   inserted++;
@@ -596,7 +596,7 @@ public class aM {
                if (race.load_Z()) {
                   for (int j = i + 1 + inserted; j < this.init_List.size(); j++) {
                      MacroAction candidate = this.init_List.get(j);
-                     if (!autismclient.util.macro.L.load(candidate)) {
+                     if (!autismclient.util.macro.RaceAction.load(candidate)) {
                         break;
                      }
 

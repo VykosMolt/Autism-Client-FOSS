@@ -307,7 +307,7 @@ public final class as {
             write = true;
          }
 
-         if (!AutismLiteVariant.enabled() && autismclient.modules.UtilCore.init_Z_23()) {
+         if (!AutismLiteVariant.enabled() && autismclient.modules.BedNukerModule.init_Z_23()) {
             init_I = -1;
             load_I = -1;
          }

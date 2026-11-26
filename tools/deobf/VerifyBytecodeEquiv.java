@@ -57,9 +57,9 @@ public final class VerifyBytecodeEquiv {
             }
         }
         List<FieldNode> fields = new ArrayList<>(cn.fields);
-        fields.sort(Comparator.comparing((FieldNode f) -> f.name).thenComparing(f -> f.desc));
+        fields.sort(Comparator.comparing((FieldNode f) -> normalizeSwitchMap(f.name)).thenComparing(f -> f.desc));
         for (FieldNode f : fields) {
-            sb.append("F:").append(f.access).append('|').append(f.name).append('|').append(f.desc)
+            sb.append("F:").append(f.access).append('|').append(normalizeSwitchMap(f.name)).append('|').append(f.desc)
               .append('|').append(f.value).append('\n');
         }
         List<MethodNode> methods = new ArrayList<>(cn.methods);
@@ -74,10 +74,17 @@ public final class VerifyBytecodeEquiv {
             for (String line : sw.toString().split("\n")) {
                 String tr = line.trim();
                 if (tr.startsWith("LINENUMBER ") || tr.startsWith("LOCALVARIABLE ")) continue;
+                if (tr.contains(".$SwitchMap$")) {
+                    tr = tr.replaceAll("\\.\\$SwitchMap\\$[A-Za-z0-9_$]+", ".\\$SwitchMap\\$<NORM>");
+                }
                 sb.append("  ").append(tr).append('\n');
             }
         }
         return sb.toString();
+    }
+
+    private static String normalizeSwitchMap(String name) {
+        return name.startsWith("$SwitchMap$") ? "$SwitchMap$<NORM>" : name;
     }
 
     public static void main(String[] args) throws Exception {

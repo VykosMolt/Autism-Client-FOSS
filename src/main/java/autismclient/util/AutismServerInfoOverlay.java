@@ -5282,7 +5282,7 @@ public class AutismServerInfoOverlay extends bj {
       if (!target.isBlank()) {
          ActionEditorOverlay existing = ActionEditorOverlay.load_ActionEditorOverla();
          if (existing == null || !existing.init_Z_Str(target)) {
-            autismclient.util.macro.H action = new autismclient.util.macro.H();
+            autismclient.util.macro.PayloadAction action = new autismclient.util.macro.PayloadAction();
             action.channel = target;
             action.payloadDirection = "C2S";
             action.sourceDirection = "C2S";

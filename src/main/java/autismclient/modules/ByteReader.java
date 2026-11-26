@@ -66,17 +66,17 @@ public final class ByteReader {
    private static final Set<UUID> open_Set = new HashSet<>();
    private static final Set<UUID> poll = new HashSet<>();
    private static Object load_Obj;
-   private static NetHelper init_NetHelper;
+   private static AntiBotModule init_NetHelper;
    private static int open_I = -1;
 
    private ByteReader() {
    }
 
-   private static NetHelper init_NetHelper() {
+   private static AntiBotModule init_NetHelper() {
       int rev = al.init_I();
       if (rev != open_I) {
          Module m = al.init_Module_Str("antibot");
-         init_NetHelper = m instanceof NetHelper a && m.isEnabled() ? a : null;
+         init_NetHelper = m instanceof AntiBotModule a && m.isEnabled() ? a : null;
          open_I = rev;
       }
 
@@ -84,7 +84,7 @@ public final class ByteReader {
    }
 
    public static boolean init_Z(Entity entity) {
-      NetHelper m = init_NetHelper();
+      AntiBotModule m = init_NetHelper();
       if (m == null) {
          return false;
       }
@@ -193,7 +193,7 @@ public final class ByteReader {
       }
    }
 
-   private static String init_Str(Player player, NetHelper m) {
+   private static String init_Str(Player player, AntiBotModule m) {
       int id = player.getId();
       if (init_Map().getOrDefault(id, 0) == 1) {
          return "duplicate name";
@@ -241,7 +241,7 @@ public final class ByteReader {
       }
    }
 
-   private static boolean init_Z(Player player, NetHelper m) {
+   private static boolean init_Z(Player player, AntiBotModule m) {
       return ConfigStore.init_Z_Str_Str(m.load_ChoiceSetting.get(), init(player.getItemBySlot(EquipmentSlot.HEAD)))
          && ConfigStore.init_Z_Str_Str(m.read_ChoiceSetting.get(), init(player.getItemBySlot(EquipmentSlot.CHEST)))
          && ConfigStore.init_Z_Str_Str(m.write_ChoiceSetting.get(), init(player.getItemBySlot(EquipmentSlot.LEGS)))
@@ -272,7 +272,7 @@ public final class ByteReader {
    }
 
    public static void init_V() {
-      NetHelper m = init_NetHelper();
+      AntiBotModule m = init_NetHelper();
       if (m != null && init_Minecraft.level != null && init_Minecraft.player != null) {
          write();
          update();
@@ -411,7 +411,7 @@ public final class ByteReader {
    }
 
    public static void load_V(Entity entity) {
-      NetHelper m = init_NetHelper();
+      AntiBotModule m = init_NetHelper();
       if (m != null
          && m.init_Z(m.init_BoolSetting)
          && init_Minecraft.level != null

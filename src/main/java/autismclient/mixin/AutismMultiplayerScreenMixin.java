@@ -1,10 +1,10 @@
 package autismclient.mixin;
 
 import autismclient.c.StreamUtil;
-import autismclient.gui.d.ArrayUtil;
-import autismclient.gui.d.ByteReader;
-import autismclient.gui.d.MapStore;
-import autismclient.gui.d.a;
+import autismclient.gui.d.ProxiesScreen;
+import autismclient.gui.d.JoinMacroScreen;
+import autismclient.gui.d.PluginLibraryScreen;
+import autismclient.gui.d.SimpleVoiceChatDetectedScreen;
 import autismclient.gui.f.RenderState;
 import autismclient.gui.f.UiHelper;
 import autismclient.gui.f.b.h;
@@ -96,7 +96,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
                   Screen parent = this;
                   this.minecraft.execute(() -> {
                      if (this.minecraft.gui.screen() == parent) {
-                        this.minecraft.gui.setScreen(new a(parent));
+                        this.minecraft.gui.setScreen(new SimpleVoiceChatDetectedScreen(parent));
                      }
                   });
                }
@@ -176,13 +176,13 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
    private void autism$ensureOwnedButtons() {
       if (this.autism$joinMacroButton == null) {
          this.autism$joinMacroButton = this.addRenderableWidget(
-            Button.builder(Component.literal("Macro"), ignored -> this.minecraft.gui.setScreen(new ByteReader(this))).bounds(0, 0, 50, 20).build()
+            Button.builder(Component.literal("Macro"), ignored -> this.minecraft.gui.setScreen(new JoinMacroScreen(this))).bounds(0, 0, 50, 20).build()
          );
       }
 
       if (this.autism$proxiesButton == null) {
          this.autism$proxiesButton = this.addRenderableWidget(
-            Button.builder(Component.literal("Proxies"), ignored -> this.minecraft.gui.setScreen(new ArrayUtil(this))).bounds(0, 0, 60, 20).build()
+            Button.builder(Component.literal("Proxies"), ignored -> this.minecraft.gui.setScreen(new ProxiesScreen(this))).bounds(0, 0, 60, 20).build()
          );
       }
 
@@ -217,7 +217,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
 
    @Unique
    private void autism$openPluginLibrary() {
-      this.minecraft.gui.setScreen(new MapStore(this));
+      this.minecraft.gui.setScreen(new PluginLibraryScreen(this));
    }
 
    @Unique

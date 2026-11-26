@@ -601,7 +601,7 @@ public final class s {
             write_Str = null;
             ch.Inner_CachePool wire = ch.init_ch_CachePool();
             if (!AutismLiteVariant.enabled() && "kill-aura".equals(read_Str) && attackHit != null) {
-               attackHit = autismclient.modules.aa.init_EntityHitResult_EntityHitResult_ch_CachePool(attackHit, wire);
+               attackHit = autismclient.modules.KillAuraModule.init_EntityHitResult_EntityHitResult_ch_CachePool(attackHit, wire);
                if (attackHit == null) {
                   read_Str = null;
                   return;

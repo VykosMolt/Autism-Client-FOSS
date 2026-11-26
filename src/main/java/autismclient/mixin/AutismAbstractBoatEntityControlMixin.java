@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.G;
+import autismclient.modules.EntityControlModule;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,7 +13,7 @@ public abstract class AutismAbstractBoatEntityControlMixin {
       at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/vehicle/boat/AbstractBoat;inputLeft:Z", opcode = 180)
    )
    private boolean autism$lockLeftTurn(boolean original) {
-      return G.init_Z_7() ? false : original;
+      return EntityControlModule.init_Z_7() ? false : original;
    }
 
    @ModifyExpressionValue(
@@ -21,6 +21,6 @@ public abstract class AutismAbstractBoatEntityControlMixin {
       at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/vehicle/boat/AbstractBoat;inputRight:Z", opcode = 180)
    )
    private boolean autism$lockRightTurn(boolean original) {
-      return G.init_Z_7() ? false : original;
+      return EntityControlModule.init_Z_7() ? false : original;
    }
 }

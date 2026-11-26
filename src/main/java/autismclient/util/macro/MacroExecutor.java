@@ -168,7 +168,7 @@ public class MacroExecutor {
    private static volatile double init_D;
    private static volatile int sync_I;
    private static final CopyOnWriteArrayList<MacroAction> load_CopyOnWriteArrayLi;
-   private static final ConcurrentHashMap<s, int[]> load_ConcurrentHashMap;
+   private static final ConcurrentHashMap<MoveAction, int[]> load_ConcurrentHashMap;
    private static final ThreadLocal<MacroExecutor.Inner_IoWorker> read_ThreadLocal;
    private static final ThreadLocal<Integer> write_ThreadLocal;
    private static final int flush_I = 100000;
@@ -211,7 +211,7 @@ public class MacroExecutor {
       LinkedHashMap<String, Integer> built = new LinkedHashMap<>();
 
       for (int k = 0; k < macro.init_List.size(); k++) {
-         if (macro.init_List.get(k) instanceof KeyHolder la) {
+         if (macro.init_List.get(k) instanceof LabelAction la) {
             String key = la.init();
             if (!key.isEmpty() && !built.containsKey(key)) {
                built.put(key, k);
@@ -223,7 +223,7 @@ public class MacroExecutor {
       return built;
    }
 
-   private static Integer init_Integer_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex run, autismclient.util.aM macro, int i, TableIndex flow, Minecraft mc) {
+   private static Integer init_Integer_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex run, autismclient.util.aM macro, int i, FlowAction flow, Minecraft mc) {
       Integer var10000;
       switch (flow.target) {
          case STOP:
@@ -245,11 +245,11 @@ public class MacroExecutor {
             var10000 = Math.max(1, flow.amount) - 1;
             break;
          case LABEL:
-            String name = KeyHolder.init(n.load(flow.labelName, mc));
+            String name = LabelAction.init(n.load(flow.labelName, mc));
             Integer idx = init_Map_MacroExecutor_Tabl_aM(run, macro).get(name);
             if (idx == null) {
                AutismClientMessaging.sendPrefixed("§eFlow: label '" + flow.labelName + "' not found.");
-               var10000 = flow.onMissingLabel == TableIndex.Inner_DataUtil.STOP ? null : i + 1;
+               var10000 = flow.onMissingLabel == FlowAction.Inner_DataUtil.STOP ? null : i + 1;
             } else {
                var10000 = idx;
             }
@@ -261,7 +261,7 @@ public class MacroExecutor {
       return var10000;
    }
 
-   private static int init_I_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex run, autismclient.util.aM macro, int currentI, TableIndex flow, Minecraft mc) {
+   private static int init_I_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex run, autismclient.util.aM macro, int currentI, FlowAction flow, Minecraft mc) {
       run.write_I = -1;
       run.update = 0;
       Integer dest = init_Integer_MacroExecutor_Tabl(run, macro, currentI, flow, mc);
@@ -312,7 +312,7 @@ public class MacroExecutor {
       return run != null ? run.init_CopyOnWriteArrayLi : load_CopyOnWriteArrayLi;
    }
 
-   private static ConcurrentHashMap<s, int[]> init_ConcurrentHashMap() {
+   private static ConcurrentHashMap<MoveAction, int[]> init_ConcurrentHashMap() {
       MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
       return run != null ? run.init_ConcurrentHashMap : load_ConcurrentHashMap;
    }
@@ -638,17 +638,17 @@ public class MacroExecutor {
          for (int j = currentIndex + 1; j < actions.size(); j++) {
             MacroAction candidate = actions.get(j);
             MacroAction boundary = originalMacroStep(candidate);
-            if (boundary instanceof ByteReader
-               || boundary instanceof ClassCache
-               || boundary instanceof L
-               || boundary instanceof O
-               || boundary instanceof N
-               || boundary instanceof StreamUtil
-               || boundary instanceof PoolEntry) {
+            if (boundary instanceof DisconnectAction
+               || boundary instanceof JoinAction
+               || boundary instanceof RaceAction
+               || boundary instanceof ReportAction
+               || boundary instanceof RepeatAction
+               || boundary instanceof BranchAction
+               || boundary instanceof FinallyAction) {
                break;
             }
 
-            if (candidate != null && candidate.isEnabled() && L.load(candidate)) {
+            if (candidate != null && candidate.isEnabled() && RaceAction.load(candidate)) {
                collected.add(candidate);
                lastIndex = j;
             }
@@ -778,7 +778,7 @@ public class MacroExecutor {
       }
 
       for (MacroAction action : load_CopyOnWriteArrayLi) {
-         if (action instanceof s || action instanceof NodeWalker || action instanceof ad || action instanceof ae) {
+         if (action instanceof MoveAction || action instanceof JumpAction || action instanceof SneakAction || action instanceof SprintAction) {
             return true;
          }
       }
@@ -791,7 +791,7 @@ public class MacroExecutor {
                }
 
                for (MacroAction action : run.init_CopyOnWriteArrayLi) {
-                  if (action instanceof s || action instanceof NodeWalker || action instanceof ad || action instanceof ae) {
+                  if (action instanceof MoveAction || action instanceof JumpAction || action instanceof SneakAction || action instanceof SprintAction) {
                      return true;
                   }
                }
@@ -864,11 +864,11 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_ConcurrentHashMap(ConcurrentHashMap<s, int[]> moves, Minecraft mc, MacroExecutor.Inner_TableIndex owner) {
+   private static void init_V_ConcurrentHashMap(ConcurrentHashMap<MoveAction, int[]> moves, Minecraft mc, MacroExecutor.Inner_TableIndex owner) {
       if (moves != null && !moves.isEmpty() && mc != null) {
-         List<s> toRelease = new ArrayList<>(moves.keySet());
+         List<MoveAction> toRelease = new ArrayList<>(moves.keySet());
          mc.execute(() -> {
-            for (s move : toRelease) {
+            for (MoveAction move : toRelease) {
                try {
                   init_V_MacroExecutor_Tabl(owner, move, mc);
                } catch (Exception var6) {
@@ -878,13 +878,13 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex owner, s move, Minecraft mc) {
+   private static void init_V_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex owner, MoveAction move, Minecraft mc) {
       if (move != null && mc != null && !init_Z_DataPipe_DataUtil(DataPipe.Inner_DataUtil.INPUT)) {
          boolean stillOwned = false;
          synchronized (init_Obj) {
             for (MacroExecutor.Inner_TableIndex active : init_LinkedHashMap.values()) {
                if (active != owner && active.init_AtomicBoolean.get()) {
-                  for (s other : active.init_ConcurrentHashMap.keySet()) {
+                  for (MoveAction other : active.init_ConcurrentHashMap.keySet()) {
                      if (other.direction == move.direction) {
                         stillOwned = true;
                         break;
@@ -899,7 +899,7 @@ public class MacroExecutor {
          }
 
          if (!stillOwned && owner != null) {
-            for (s other : load_ConcurrentHashMap.keySet()) {
+            for (MoveAction other : load_ConcurrentHashMap.keySet()) {
                if (other.direction == move.direction) {
                   stillOwned = true;
                   break;
@@ -924,14 +924,14 @@ public class MacroExecutor {
 
    private static void load_V_Minecraft(Minecraft mc) {
       if (!init_Z_DataPipe_DataUtil(DataPipe.Inner_DataUtil.INPUT) && mc != null && mc.options != null && mc.options.keyShift != null) {
-         boolean held = init_Z_Class(ad.class);
+         boolean held = init_Z_Class(SneakAction.class);
          mc.options.keyShift.setDown(held);
       }
    }
 
    private static void read(Minecraft mc) {
       if (!init_Z_DataPipe_DataUtil(DataPipe.Inner_DataUtil.INPUT) && mc != null) {
-         boolean held = init_Z_Class(ae.class);
+         boolean held = init_Z_Class(SprintAction.class);
          if (mc.options != null && mc.options.keySprint != null) {
             mc.options.keySprint.setDown(held);
          }
@@ -1000,13 +1000,13 @@ public class MacroExecutor {
    static boolean suppressLegacyMultiSteps(List<MacroAction> actions) {
       boolean hasLegacyMulti = false;
       for (int index = 0; index < actions.size(); index++) {
-         if (actions.get(index) instanceof t multi) {
+         if (actions.get(index) instanceof MultiAction multi) {
             hasLegacyMulti = true;
             int lastCovered = index + multi.init(actions, index);
             for (int row = index + 1; row <= lastCovered; row++) {
                MacroAction step = actions.get(row);
                // Keep label identity for jumps while suppressing it in action collectors.
-               if (step instanceof KeyHolder label) {
+               if (step instanceof LabelAction label) {
                   label.setEnabled(false);
                } else {
                   actions.set(row, new SkippedLegacyMultiStep(step));
@@ -1221,8 +1221,8 @@ public class MacroExecutor {
                                  }
                               }
 
-                              for (Entry<s, int[]> entry : init_ConcurrentHashMap().entrySet()) {
-                                 s bma = entry.getKey();
+                              for (Entry<MoveAction, int[]> entry : init_ConcurrentHashMap().entrySet()) {
+                                 MoveAction bma = entry.getKey();
                                  int[] ticks = entry.getValue();
                                  if (ticks[0] > 0) {
                                     bma.execute(mc);
@@ -1292,12 +1292,12 @@ public class MacroExecutor {
                   runState.update = 0;
                } else {
                   MacroAction action = macro.init_List.get(i);
-                  if (action instanceof t multi) {
+                  if (action instanceof MultiAction multi) {
                      i += multi.init(macro.init_List, i);
                   } else if (!action.isEnabled()) {
-                     if (action instanceof L disabledRace) {
+                     if (action instanceof RaceAction disabledRace) {
                         i += disabledRace.init_I_List_I(macro.init_List, i);
-                     } else if (action instanceof O disabledReport) {
+                     } else if (action instanceof ReportAction disabledReport) {
                         i += disabledReport.init(macro.init_List, i);
                      }
                   } else if (d.init(action, mc) && init_Z_MacroAction_Minecraft(action, mc)) {
@@ -1305,7 +1305,7 @@ public class MacroExecutor {
                         load_V_MacroAction(action);
                      }
 
-                     if (action instanceof StreamUtil branch) {
+                     if (action instanceof BranchAction branch) {
                         boolean branchMatches = branch.init(mc);
                         if (branchMatches) {
                            runState.write_I = i + 1 + Math.max(0, branch.thenSteps);
@@ -1313,7 +1313,7 @@ public class MacroExecutor {
                         } else {
                            i += Math.max(0, branch.thenSteps);
                         }
-                     } else if (action instanceof PoolEntry cleanup) {
+                     } else if (action instanceof FinallyAction cleanup) {
                         int bodyCount = Math.max(0, cleanup.bodyCount);
                         runState.load_CopyOnWriteArrayLi.clear();
 
@@ -1325,7 +1325,7 @@ public class MacroExecutor {
                         }
 
                         i += bodyCount;
-                     } else if (action instanceof FieldCache ifA) {
+                     } else if (action instanceof IfAction ifA) {
                         runState.write_I = -1;
                         runState.update = 0;
                         if (ifA.init(mc)) {
@@ -1334,8 +1334,8 @@ public class MacroExecutor {
                         } else {
                            i += Math.max(0, ifA.thenSteps);
                         }
-                     } else if (!(action instanceof KeyHolder)) {
-                        if (action instanceof TableIndex flow) {
+                     } else if (!(action instanceof LabelAction)) {
+                        if (action instanceof FlowAction flow) {
                            if (flow.init(mc)) {
                               int newI = init_I_MacroExecutor_Tabl(runState, macro, i, flow, mc);
                               if (newI == -2147483648) {
@@ -1353,23 +1353,23 @@ public class MacroExecutor {
                            try {
                               if (read_Z(mc, action)) {
                                  load_V_Minecraft_MacroAction(mc, action);
-                                 CompletableFuture<Void> postGuiFuture = !(action instanceof MapStore) && !(action instanceof PacketUtil) && !write(action)
+                                 CompletableFuture<Void> postGuiFuture = !(action instanceof ItemAction) && !(action instanceof DropAction) && !write(action)
                                     ? write(mc, action)
                                     : null;
-                                 if (burstMode && action instanceof Y) {
-                                    List<Y> packetBatch = new ArrayList<>();
+                                 if (burstMode && action instanceof SendPacketAction) {
+                                    List<SendPacketAction> packetBatch = new ArrayList<>();
 
                                     int batchEnd;
-                                    for (batchEnd = i; batchEnd < macro.init_List.size() && macro.init_List.get(batchEnd) instanceof Y; batchEnd++) {
-                                       packetBatch.add((Y)macro.init_List.get(batchEnd));
+                                    for (batchEnd = i; batchEnd < macro.init_List.size() && macro.init_List.get(batchEnd) instanceof SendPacketAction; batchEnd++) {
+                                       packetBatch.add((SendPacketAction)macro.init_List.get(batchEnd));
                                     }
 
                                     init_V_Minecraft_List(mc, packetBatch);
                                     i = batchEnd - 1;
                                  } else {
-                                    if (action instanceof al tools) {
+                                    if (action instanceof ToolsAction tools) {
                                        init_V_Minecraft_al(mc, tools);
-                                    } else if (action instanceof EventBus da) {
+                                    } else if (action instanceof DelayAction da) {
                                        if (da.useTicks) {
                                           for (int t = 0; t < da.delayTicks && close_Z(); t++) {
                                              CompletableFuture<Void> future = b.load_CompletableFuture();
@@ -1378,12 +1378,12 @@ public class MacroExecutor {
                                        } else {
                                           sleep(da.delayMs);
                                        }
-                                    } else if (action instanceof UiHelper customMenu) {
+                                    } else if (action instanceof CustomMenuAction customMenu) {
                                        load_V_Str(customMenu.getDisplayName());
                                        customMenu.execute(mc);
-                                    } else if (action instanceof RingBuffer fps) {
+                                    } else if (action instanceof FpsAction fps) {
                                        load_V_Str(fps.getDisplayName());
-                                       if (fps.init_RingBuffer_DataUti() == RingBuffer.Inner_DataUtil.TIMEOUT) {
+                                       if (fps.init_RingBuffer_DataUti() == FpsAction.Inner_DataUtil.TIMEOUT) {
                                           init_V_MacroExecutor_Tabl(runState);
                                           long fpsDurationNanos = fps.init_J_2() * 1000000L;
                                           long fpsDeadline = System.nanoTime() + fpsDurationNanos;
@@ -1400,16 +1400,16 @@ public class MacroExecutor {
                                              runState.load_J = 0L;
                                           }
                                        } else {
-                                          int covered = fps.init_RingBuffer_DataUti() == RingBuffer.Inner_DataUtil.END
+                                          int covered = fps.init_RingBuffer_DataUti() == FpsAction.Inner_DataUtil.END
                                              ? macro.init_List.size() - 1 - i
                                              : fps.init_I_3();
                                           int endIndex = init_I_aM(macro, i, covered);
                                           init_V_MacroExecutor_Tabl(runState, i, endIndex, Math.max(1, fps.maxFps));
                                           runState.load_J = 0L;
                                        }
-                                    } else if (action instanceof T sping) {
+                                    } else if (action instanceof SPingAction sping) {
                                        load_V_Str(sping.getDisplayName());
-                                       if (sping.init_T_DataUtil() == T.Inner_DataUtil.TIMEOUT) {
+                                       if (sping.init_T_DataUtil() == SPingAction.Inner_DataUtil.TIMEOUT) {
                                           load_V_MacroExecutor_Tabl(runState);
                                           long spingDurationNanos = sping.init_J_3() * 1000000L;
                                           long spingDeadline = System.nanoTime() + spingDurationNanos;
@@ -1426,14 +1426,14 @@ public class MacroExecutor {
                                              runState.read_J = 0L;
                                           }
                                        } else {
-                                          int covered = sping.init_T_DataUtil() == T.Inner_DataUtil.END ? macro.init_List.size() - 1 - i : sping.init_I_4();
+                                          int covered = sping.init_T_DataUtil() == SPingAction.Inner_DataUtil.END ? macro.init_List.size() - 1 - i : sping.init_I_4();
                                           int endIndex = init_I_aM(macro, i, covered);
                                           init_V_MacroExecutor_Tabl(
                                              runState, i, endIndex, Math.max(0, sping.pingDelayMs), sping.realIncoming, sping.realOutgoing
                                           );
                                           runState.read_J = 0L;
                                        }
-                                    } else if (action instanceof aB packetAction) {
+                                    } else if (action instanceof WaitForPacketAction packetAction) {
                                        packetAction.matchedPacket = null;
                                        packetAction.matchedDirection = "";
                                        MacroExecutor.Inner_TableIndex packetRun = init_ThreadLocal.get();
@@ -1468,41 +1468,41 @@ public class MacroExecutor {
                                        }
 
                                        init_V_aB(packetAction);
-                                    } else if (action instanceof aM wpma) {
+                                    } else if (action instanceof WaitPacketMatchAction wpma) {
                                        load_V_Str(wpma.getDisplayName());
                                        if (!init_Z_MacroAction_J(wpma, wpma.timeoutMs)) {
                                           init_V_aM_2(wpma);
                                        }
-                                    } else if (action instanceof aK wipa) {
+                                    } else if (action instanceof WaitInventoryPredicateAction wipa) {
                                        load_V_Str(wipa.getDisplayName());
                                        if (!init_Z_MacroAction_J(wipa, wipa.timeoutMs)) {
                                           init_V_BooleanSupplier_I(() -> wipa.init(mc), wipa.timeoutMs);
                                        }
-                                    } else if (action instanceof ar wda) {
+                                    } else if (action instanceof WaitDurabilityAction wda) {
                                        load_V_Str(wda.getDisplayName());
                                        if (wda.useNext) {
                                           init_V_Minecraft_ar(mc, wda);
                                        } else if (!init_Z_MacroAction_J(wda, wda.timeoutMs)) {
                                           init_V_BooleanSupplier_I(() -> wda.init(mc), wda.timeoutMs);
                                        }
-                                    } else if (action instanceof aH wfsa) {
+                                    } else if (action instanceof WaitFreeSlotsAction wfsa) {
                                        load_V_Str(wfsa.getDisplayName());
                                        if (!init_Z_MacroAction_J(wfsa, wfsa.timeoutMs)) {
                                           init_V_BooleanSupplier_I(() -> wfsa.init(mc), wfsa.timeoutMs);
                                        }
-                                    } else if (action instanceof as weta) {
+                                    } else if (action instanceof WaitEntityTargetAction weta) {
                                        load_V_Str(weta.getDisplayName());
                                        if (!init_Z_MacroAction_J(weta, weta.timeoutMs)) {
                                           init_V_BooleanSupplier_I(() -> weta.init(mc), weta.timeoutMs);
                                        }
-                                    } else if (action instanceof aJ wgta) {
+                                    } else if (action instanceof WaitGuiTypeAction wgta) {
                                        load_V_Str(wgta.getDisplayName());
                                        if (!load_Z_MacroAction(wgta)) {
                                           init_V_MacroAction(wgta);
                                        }
 
                                        if (!init_Z_MacroAction_J(wgta, wgta.timeoutMs)) {
-                                          if (wgta.waitMode == aJ.Inner_DataUtil.CLOSE) {
+                                          if (wgta.waitMode == WaitGuiTypeAction.Inner_DataUtil.CLOSE) {
                                              init_V_BooleanSupplier_I(init_BooleanSupplier_aJ_Minecraft(wgta, mc), wgta.timeoutMs);
                                              read_V(wgta);
                                           } else {
@@ -1514,7 +1514,7 @@ public class MacroExecutor {
                                              read_V(wgta);
                                           }
                                        }
-                                    } else if (action instanceof ay wh) {
+                                    } else if (action instanceof WaitForHealthAction wh) {
                                        load_V_Str(wh.write());
 
                                        try {
@@ -1524,7 +1524,7 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var248) {
                                        }
-                                    } else if (action instanceof at wba) {
+                                    } else if (action instanceof WaitForBlockAction wba) {
                                        load_V_Str(wba.getDisplayName());
 
                                        try {
@@ -1534,13 +1534,13 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var247) {
                                        }
-                                    } else if (action instanceof ax wga) {
+                                    } else if (action instanceof WaitForGuiAction wga) {
                                        if (!load_Z_MacroAction(wga)) {
                                           init_V_MacroAction(wga);
                                        }
 
                                        if (!init_Z_MacroAction_J(wga, 0L)) {
-                                          if (wga.waitMode == ax.Inner_DataUtil.CLOSE) {
+                                          if (wga.waitMode == WaitForGuiAction.Inner_DataUtil.CLOSE) {
                                              load_V_Str("Waiting for GUI close: " + wga.guiTitle);
                                              init_V_BooleanSupplier_I(init_BooleanSupplier_ax_Minecraft(wga, mc), wga.timeoutMs);
                                              read_V(wga);
@@ -1554,7 +1554,7 @@ public class MacroExecutor {
                                              read_V(wga);
                                           }
                                        }
-                                    } else if (action instanceof av wca) {
+                                    } else if (action instanceof WaitForCooldownAction wca) {
                                        ArrayUtil cooldownTarget = init_ArrayUtil_ArrayUtil_Str(wca.itemTarget, wca.itemName).init_ArrayUtil_Minecraft(mc);
                                        if (cooldownTarget == null) {
                                           continue;
@@ -1573,7 +1573,7 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var246) {
                                        }
-                                    } else if (action instanceof aN wpa) {
+                                    } else if (action instanceof WaitPosAction wpa) {
                                        load_V_Str("Waiting for Pos: " + String.format("%.0f, %.0f, %.0f", wpa.f_x_D, wpa.f_y_D, wpa.f_z_D));
 
                                        try {
@@ -1585,7 +1585,7 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var245) {
                                        }
-                                    } else if (action instanceof NodeWalker ja) {
+                                    } else if (action instanceof JumpAction ja) {
                                        mc.execute(() -> ja.execute(mc));
                                        if (ja.tap) {
                                           CompletableFuture<Void> tickFuture = b.load_CompletableFuture();
@@ -1598,12 +1598,12 @@ public class MacroExecutor {
                                        }
 
                                        mc.execute(() -> ja.init(mc));
-                                    } else if (action instanceof ad sna) {
+                                    } else if (action instanceof SneakAction sna) {
                                        if (sna.persistent && sna.sneak) {
-                                          init_CopyOnWriteArrayLi().removeIf(p -> p instanceof ad);
+                                          init_CopyOnWriteArrayLi().removeIf(p -> p instanceof SneakAction);
                                           init_CopyOnWriteArrayLi().add(sna);
                                        } else if (!sna.sneak) {
-                                          init_CopyOnWriteArrayLi().removeIf(p -> p instanceof ad);
+                                          init_CopyOnWriteArrayLi().removeIf(p -> p instanceof SneakAction);
                                        }
 
                                        if (!sna.persistent && sna.sneak) {
@@ -1611,12 +1611,12 @@ public class MacroExecutor {
                                        } else {
                                           load_V_Minecraft(mc, () -> load_V_Minecraft(mc), sna.h_());
                                        }
-                                    } else if (action instanceof ae spa) {
+                                    } else if (action instanceof SprintAction spa) {
                                        if (spa.persistent && spa.sprint) {
-                                          init_CopyOnWriteArrayLi().removeIf(p -> p instanceof ae);
+                                          init_CopyOnWriteArrayLi().removeIf(p -> p instanceof SprintAction);
                                           init_CopyOnWriteArrayLi().add(spa);
                                        } else if (!spa.sprint) {
-                                          init_CopyOnWriteArrayLi().removeIf(p -> p instanceof ae);
+                                          init_CopyOnWriteArrayLi().removeIf(p -> p instanceof SprintAction);
                                        }
 
                                        if (!spa.persistent && spa.sprint) {
@@ -1624,44 +1624,44 @@ public class MacroExecutor {
                                        } else {
                                           load_V_Minecraft(mc, () -> read(mc), spa.h_());
                                        }
-                                    } else if (action instanceof ByteReader da2) {
+                                    } else if (action instanceof DisconnectAction da2) {
                                        init_V_MacroExecutor_Tabl_2(runState, i + 1, macro.init_List.size(), macro.init_Str);
-                                       if (da2.mode == ByteReader.Inner_StreamUtil.DISCONNECT) {
+                                       if (da2.mode == DisconnectAction.Inner_StreamUtil.DISCONNECT) {
                                           if (da2.delayMs > 0) {
                                              sleep(da2.delayMs);
                                           }
 
                                           mc.execute(() -> da2.execute(mc));
-                                       } else if (da2.mode == ByteReader.Inner_StreamUtil.AUTO_DISCONNECT) {
+                                       } else if (da2.mode == DisconnectAction.Inner_StreamUtil.AUTO_DISCONNECT) {
                                           load_V_Str("Auto Disconnect: waiting for " + da2.trigger.name() + "...");
                                           da2.execute(mc);
                                           load_V_Str("Auto Disconnect: executed");
-                                       } else if (da2.mode == ByteReader.Inner_StreamUtil.KICK_DUPE && da2.useNextAction) {
+                                       } else if (da2.mode == DisconnectAction.Inner_StreamUtil.KICK_DUPE && da2.useNextAction) {
                                           List<MacroAction> nextActs = new ArrayList<>();
                                           int lastSkip = -1;
 
                                           for (int j = i + 1; j < macro.init_List.size(); j++) {
                                              MacroAction candidate = macro.init_List.get(j);
                                              MacroAction boundary = originalMacroStep(candidate);
-                                             if (boundary instanceof ByteReader || boundary instanceof ClassCache) {
+                                             if (boundary instanceof DisconnectAction || boundary instanceof JoinAction) {
                                                 break;
                                              }
 
                                              if (candidate.isEnabled()
-                                                && !(candidate instanceof t)
-                                                && !(candidate instanceof EventBus)
-                                                && !(candidate instanceof ay)
-                                                && !(candidate instanceof at)
-                                                && !(candidate instanceof ax)
-                                                && !(candidate instanceof av)
-                                                && !(candidate instanceof aN)
-                                                && !(candidate instanceof aL)
-                                                && !(candidate instanceof aw)
-                                                && !(candidate instanceof aE)
-                                                && !(candidate instanceof aD)
-                                                && !(candidate instanceof aB)
-                                                && !(candidate instanceof au)
-                                                && !(candidate instanceof CharEncoder)) {
+                                                && !(candidate instanceof MultiAction)
+                                                && !(candidate instanceof DelayAction)
+                                                && !(candidate instanceof WaitForHealthAction)
+                                                && !(candidate instanceof WaitForBlockAction)
+                                                && !(candidate instanceof WaitForGuiAction)
+                                                && !(candidate instanceof WaitForCooldownAction)
+                                                && !(candidate instanceof WaitPosAction)
+                                                && !(candidate instanceof WaitMovementAction)
+                                                && !(candidate instanceof WaitForEntityAction)
+                                                && !(candidate instanceof WaitForSoundAction)
+                                                && !(candidate instanceof WaitForSlotChangeAction)
+                                                && !(candidate instanceof WaitForPacketAction)
+                                                && !(candidate instanceof WaitForChatAction)
+                                                && !(candidate instanceof GoToAction)) {
                                                 nextActs.add(candidate);
                                                 lastSkip = j;
                                              }
@@ -1676,7 +1676,7 @@ public class MacroExecutor {
                                           mc.execute(() -> da2.execute(mc));
                                        }
 
-                                       if (!ClassCache.init(macro.init_List, i + 1, macro.init_Z)) {
+                                       if (!JoinAction.init(macro.init_List, i + 1, macro.init_Z)) {
                                           flush_V();
                                           break;
                                        }
@@ -1684,9 +1684,9 @@ public class MacroExecutor {
                                        runState.init_Z = true;
                                        String statusBeforeLeave = runState.read_Str;
                                        load_V_Str("Leaving the server");
-                                       ClassCache.init_V_Minecraft_J(mc, 10000L);
+                                       JoinAction.init_V_Minecraft_J(mc, 10000L);
                                        load_V_Str(statusBeforeLeave);
-                                    } else if (action instanceof ClassCache join) {
+                                    } else if (action instanceof JoinAction join) {
                                        String statusBefore = runState.read_Str;
                                        runState.init_Z = true;
 
@@ -1704,17 +1704,17 @@ public class MacroExecutor {
 
                                        load_V_Str(statusBefore);
                                        init_V_MacroExecutor_Tabl_2(runState, i + 1, macro.init_List.size(), macro.init_Str);
-                                    } else if (action instanceof L race) {
+                                    } else if (action instanceof RaceAction race) {
                                        int bodyCount = init_I_Minecraft(mc, module, macro.init_List, i, race);
                                        if (bodyCount > 0) {
                                           i += bodyCount;
                                        }
-                                    } else if (action instanceof O reportAction) {
+                                    } else if (action instanceof ReportAction reportAction) {
                                        int conditionCount = init_I_Minecraft_3(mc, macro.init_List, i, reportAction);
                                        if (conditionCount > 0) {
                                           i += conditionCount;
                                        }
-                                    } else if (action instanceof u nba) {
+                                    } else if (action instanceof NbtBookAction nba) {
                                        int totalBooks = Math.max(1, nba.bookCount);
                                        long delayMs = Math.max(1, nba.delayTicks) * 50L;
                                        boolean signedAny = false;
@@ -1737,9 +1737,9 @@ public class MacroExecutor {
                                        if (signedAny && nba.disconnectAfter) {
                                           mc.execute(() -> nba.init_V_Minecraft_8(mc));
                                        }
-                                    } else if (action instanceof CharEncoder ga) {
+                                    } else if (action instanceof GoToAction ga) {
                                        init_V_Minecraft_CharEncoder(mc, ga);
-                                    } else if (action instanceof s ma) {
+                                    } else if (action instanceof MoveAction ma) {
                                        if (ma.nonBlocking) {
                                           mc.execute(() -> ma.execute(mc));
                                           init_ConcurrentHashMap().put(ma, new int[]{ma.durationTicks - 1});
@@ -1753,8 +1753,8 @@ public class MacroExecutor {
                                           MacroExecutor.Inner_TableIndex movementRun = init_ThreadLocal.get();
                                           mc.execute(() -> init_V_MacroExecutor_Tabl(movementRun, ma, mc));
                                        }
-                                    } else if (action instanceof ValueSink la) {
-                                       ValueSink.Inner_DataUtil rotationTarget = init_ValueSink_DataUtil_Minecraft_ValueSink(mc, la);
+                                    } else if (action instanceof LookAtBlockAction la) {
+                                       LookAtBlockAction.Inner_DataUtil rotationTarget = init_ValueSink_DataUtil_Minecraft_ValueSink(mc, la);
                                        if (rotationTarget == null) {
                                           continue;
                                        }
@@ -1772,7 +1772,7 @@ public class MacroExecutor {
                                              }
                                           });
                                        }
-                                    } else if (action instanceof N ra) {
+                                    } else if (action instanceof RepeatAction ra) {
                                        int startIdx = i + 1;
                                        int endIdx = Math.min(startIdx + ra.stepCount, macro.init_List.size());
 
@@ -1797,14 +1797,14 @@ public class MacroExecutor {
                                        }
 
                                        i = endIdx - 1;
-                                    } else if (action instanceof TaskQueue captureValue) {
+                                    } else if (action instanceof CaptureValueAction captureValue) {
                                        read(mc, captureValue);
-                                    } else if (action instanceof au wca) {
+                                    } else if (action instanceof WaitForChatAction wca) {
                                        load_V_Str("Waiting for chat: " + wca.pattern);
                                        if (!init_Z_MacroAction_J(wca, wca.timeoutMs)) {
                                           init_V_au(wca);
                                        }
-                                    } else if (action instanceof aw wea) {
+                                    } else if (action instanceof WaitForEntityAction wea) {
                                        load_V_Str(wea.getDisplayName());
 
                                        try {
@@ -1813,7 +1813,7 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var242) {
                                        }
-                                    } else if (action instanceof aE wsa) {
+                                    } else if (action instanceof WaitForSoundAction wsa) {
                                        String sndDesc = wsa.soundIds.isEmpty() ? "any" : wsa.soundIds.get(0);
                                        load_V_Str("Waiting for sound: " + sndDesc);
 
@@ -1824,11 +1824,11 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var241) {
                                        }
-                                    } else if (action instanceof q mna) {
+                                    } else if (action instanceof MineAction mna) {
                                        init_V_Minecraft_q(mc, mna);
-                                    } else if (action instanceof MethodUtil) {
-                                       init_V_Minecraft_MethodUtil(mc, (MethodUtil)action);
-                                    } else if (action instanceof CachePool breakAction) {
+                                    } else if (action instanceof InstaBreakAction) {
+                                       init_V_Minecraft_MethodUtil(mc, (InstaBreakAction)action);
+                                    } else if (action instanceof BreakAction breakAction) {
                                        MacroExecutor.Inner_StateCache nextActions = MacroExecutor.Inner_StateCache.init_MacroExecutor_Stat();
                                        if (breakAction.interact && breakAction.runNextSteps) {
                                           nextActions = init_MacroExecutor_Stat_List_I(macro.init_List, i);
@@ -1839,7 +1839,7 @@ public class MacroExecutor {
                                        if (breakAction.load() && nextActions.init_I() > i) {
                                           i = nextActions.init_I();
                                        }
-                                    } else if (action instanceof aD wsca) {
+                                    } else if (action instanceof WaitForSlotChangeAction wsca) {
                                        load_V_Str(wsca.getDisplayName());
 
                                        try {
@@ -1849,7 +1849,7 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var240) {
                                        }
-                                    } else if (action instanceof aG world) {
+                                    } else if (action instanceof WaitForWorldChangeAction world) {
                                        load_V_Str(world.getDisplayName());
 
                                        try {
@@ -1859,7 +1859,7 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var239) {
                                        }
-                                    } else if (action instanceof aC wpda) {
+                                    } else if (action instanceof WaitForPositionDeltaAction wpda) {
                                        load_V_Str(wpda.getDisplayName());
 
                                        try {
@@ -1869,7 +1869,7 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var238) {
                                        }
-                                    } else if (action instanceof aF teleport) {
+                                    } else if (action instanceof WaitForTeleportAction teleport) {
                                        load_V_Str(teleport.getDisplayName());
 
                                        try {
@@ -1879,7 +1879,7 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var237) {
                                        }
-                                    } else if (action instanceof aI gm) {
+                                    } else if (action instanceof WaitGamemodeChangeAction gm) {
                                        load_V_Str(gm.getDisplayName());
 
                                        try {
@@ -1889,7 +1889,7 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var236) {
                                        }
-                                    } else if (action instanceof aL wm) {
+                                    } else if (action instanceof WaitMovementAction wm) {
                                        load_V_Str(wm.getDisplayName());
 
                                        try {
@@ -1899,7 +1899,7 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var235) {
                                        }
-                                    } else if (action instanceof az wla) {
+                                    } else if (action instanceof WaitForLanStepAction wla) {
                                        load_V_Str(wla.getDisplayName());
 
                                        try {
@@ -1909,16 +1909,16 @@ public class MacroExecutor {
                                           }
                                        } catch (CancellationException var234) {
                                        }
-                                    } else if (action instanceof aA wma) {
+                                    } else if (action instanceof WaitForMacroStepAction wma) {
                                        load_V_Str(wma.getDisplayName());
                                        if (!init_Z_MacroAction_J(wma, wma.timeoutMs)) {
                                           init_V_aA(wma);
                                        }
                                     } else {
-                                       if (action instanceof ag) {
+                                       if (action instanceof StopMacroAction) {
                                           load_V_Str("Stopping Macro");
-                                          ag stopAction = (ag)action;
-                                          if (stopAction.target != ag.Inner_DataUtil.SELF) {
+                                          StopMacroAction stopAction = (StopMacroAction)action;
+                                          if (stopAction.target != StopMacroAction.Inner_DataUtil.SELF) {
                                              stopAction.execute(mc);
                                           } else {
                                              init_V_MacroExecutor_Tabl_2(runState, i + 1, macro.init_List.size(), macro.init_Str);
@@ -1927,7 +1927,7 @@ public class MacroExecutor {
                                           break;
                                        }
 
-                                       if (action instanceof aj tsa) {
+                                       if (action instanceof TickSyncAction tsa) {
                                           if (mc.level == null) {
                                              continue;
                                           }
@@ -1945,7 +1945,7 @@ public class MacroExecutor {
                                              i += load_I_aM(macro, i + 1, preGenerated.size());
                                              AutismClientMessaging.sendPrefixed("Tick sync: " + preGenerated.size() + " pkts sent");
                                           }
-                                       } else if (action instanceof Q rsa) {
+                                       } else if (action instanceof RevisionSyncAction rsa) {
                                           if (mc.player == null || mc.player.containerMenu == null) {
                                              continue;
                                           }
@@ -1969,7 +1969,7 @@ public class MacroExecutor {
                                              i += load_I_aM(macro, i + 1, preGenerated.size());
                                              AutismClientMessaging.sendPrefixed("Rev sync: " + preGenerated.size() + " pkts sent");
                                           }
-                                       } else if (action instanceof aa stsa) {
+                                       } else if (action instanceof ServerTickSyncAction stsa) {
                                           if (mc.getConnection() == null) {
                                              continue;
                                           }
@@ -2016,7 +2016,7 @@ public class MacroExecutor {
                                              long actualDelay = (System.nanoTime() - optimalTime) / 1000000L;
                                              AutismClientMessaging.sendPrefixed("ServerSync: " + preGenerated.size() + " pkts (+" + actualDelay + "ms)");
                                           }
-                                       } else if (action instanceof S ra) {
+                                       } else if (action instanceof RotateAction ra) {
                                           if (ra.smooth) {
                                              init_V_F(ra.yaw, ra.pitch, ra.init());
                                              if (ra.waitForCompletion) {
@@ -2025,10 +2025,10 @@ public class MacroExecutor {
                                           } else {
                                              mc.execute(() -> action.execute(mc));
                                           }
-                                       } else if (action instanceof w pacedTp) {
+                                       } else if (action instanceof PacedTpAction pacedTp) {
                                           init_V_Minecraft_w(mc, pacedTp);
-                                       } else if (action instanceof ValueSink la) {
-                                          ValueSink.Inner_DataUtil rotationTarget = init_ValueSink_DataUtil_Minecraft_ValueSink(mc, la);
+                                       } else if (action instanceof LookAtBlockAction la) {
+                                          LookAtBlockAction.Inner_DataUtil rotationTarget = init_ValueSink_DataUtil_Minecraft_ValueSink(mc, la);
                                           if (rotationTarget == null) {
                                              continue;
                                           }
@@ -2046,9 +2046,9 @@ public class MacroExecutor {
                                                 }
                                              });
                                           }
-                                       } else if (action instanceof an) {
-                                          init_V_Minecraft_an(mc, (an)action);
-                                       } else if (action instanceof MapStore ia) {
+                                       } else if (action instanceof UseItemAction) {
+                                          init_V_Minecraft_an(mc, (UseItemAction)action);
+                                       } else if (action instanceof ItemAction ia) {
                                           if (ia.waitForItem || !ia.itemNames.isEmpty()) {
                                              try {
                                                 load_V_Minecraft_MapStore(mc, ia);
@@ -2062,10 +2062,10 @@ public class MacroExecutor {
                                           } else {
                                              init_V_Minecraft_3(mc, action, "ItemAction");
                                           }
-                                       } else if (!(action instanceof PacketUtil) && !(action instanceof ai)) {
-                                          if (action instanceof SyncManager craftAction) {
+                                       } else if (!(action instanceof DropAction) && !(action instanceof SwapSlotsAction)) {
+                                          if (action instanceof CraftAction craftAction) {
                                              init_V_Minecraft_SyncManager(mc, craftAction);
-                                          } else if (action instanceof Y) {
+                                          } else if (action instanceof SendPacketAction) {
                                              if (module != null && module.add_Z()) {
                                                 try {
                                                    action.execute(mc);
@@ -2081,8 +2081,8 @@ public class MacroExecutor {
                                                    }
                                                 });
                                              }
-                                          } else if (action instanceof ah sia) {
-                                             load_V_Str((sia.mode == ah.Inner_DataUtil.LOOT ? "Looting" : "Storing") + (sia.persistent ? " ∞" : ""));
+                                          } else if (action instanceof StoreItemAction sia) {
+                                             load_V_Str((sia.mode == StoreItemAction.Inner_DataUtil.LOOT ? "Looting" : "Storing") + (sia.persistent ? " ∞" : ""));
                                              if (sia.persistent) {
                                                 while (close_Z()) {
                                                    try {
@@ -2101,14 +2101,14 @@ public class MacroExecutor {
                                                    AutismClientMessaging.sendPrefixed("Store error: " + e.getMessage());
                                                 }
                                              }
-                                          } else if (action instanceof NetHelper ca) {
+                                          } else if (action instanceof ClickAction ca) {
                                              init_V_Minecraft_NetHelper(mc, ca);
-                                          } else if (action instanceof G) {
-                                             init_V_Minecraft_G(mc, (G)action);
-                                          } else if (action instanceof aQ xsa) {
-                                             if (xsa.mode == aQ.Inner_StreamUtil.PUT_IN
-                                                && (xsa.transferMode == aQ.Inner_ConfigStore.CLICK || xsa.transferMode == aQ.Inner_ConfigStore.SAFE_CLICK)) {
-                                                if (xsa.transferMode == aQ.Inner_ConfigStore.SAFE_CLICK) {
+                                          } else if (action instanceof PayAction) {
+                                             init_V_Minecraft_G(mc, (PayAction)action);
+                                          } else if (action instanceof XCarryAction xsa) {
+                                             if (xsa.mode == XCarryAction.Inner_StreamUtil.PUT_IN
+                                                && (xsa.transferMode == XCarryAction.Inner_ConfigStore.CLICK || xsa.transferMode == XCarryAction.Inner_ConfigStore.SAFE_CLICK)) {
+                                                if (xsa.transferMode == XCarryAction.Inner_ConfigStore.SAFE_CLICK) {
                                                    load_V_Str("XCarry Safe");
                                                    load_V_Minecraft_aQ(mc, xsa);
                                                 } else {
@@ -2140,8 +2140,8 @@ public class MacroExecutor {
                                                    }
                                                 });
                                              }
-                                          } else if (action instanceof ListPool auditAction
-                                             && (auditAction.mode == ListPool.Inner_BufferHelper.DUPE || auditAction.mode == ListPool.Inner_BufferHelper.DUPE_SPAM)) {
+                                          } else if (action instanceof InventoryAuditAction auditAction
+                                             && (auditAction.mode == InventoryAuditAction.Inner_BufferHelper.DUPE || auditAction.mode == InventoryAuditAction.Inner_BufferHelper.DUPE_SPAM)) {
                                              load_V_Str("Dupe: " + auditAction.dupeVector.name() + " " + auditAction.openMode.name());
 
                                              try {
@@ -2149,14 +2149,14 @@ public class MacroExecutor {
                                              } catch (Exception e) {
                                                 AutismClientMessaging.sendPrefixed("§cDupe error: " + e.getMessage());
                                              }
-                                          } else if (action instanceof StateCache sequence) {
+                                          } else if (action instanceof ContainerClickSequenceAction sequence) {
                                              init_V_Minecraft_StateCache(mc, sequence);
-                                          } else if (action instanceof y burst) {
+                                          } else if (action instanceof PacketBurstAction burst) {
                                              init_V_Minecraft_y(mc, burst);
-                                          } else if (action instanceof BufferHelper bundleV2) {
+                                          } else if (action instanceof BundleDupeV2Action bundleV2) {
                                              load_V_Str("Bundle Dupe V2");
                                              bundleV2.execute(mc);
-                                          } else if (action instanceof R rollback) {
+                                          } else if (action instanceof RollbackAction rollback) {
                                              load_V_Str("Rollback");
 
                                              try {
@@ -2164,19 +2164,19 @@ public class MacroExecutor {
                                              } catch (Exception e) {
                                                 AutismClientMessaging.sendPrefixed("§cRollback failed: " + init_Str_Throwable(e));
                                              }
-                                          } else if (action instanceof B pga) {
+                                          } else if (action instanceof PacketGateAction pga) {
                                              init_V_Minecraft_B(mc, pga);
                                           } else if (write(action)) {
                                              postGuiFuture = read_CompletableFuture(mc, action);
-                                          } else if (action instanceof o || action instanceof DataUtil) {
+                                          } else if (action instanceof MacroVariablesAction || action instanceof AssertAction) {
                                              action.execute(mc);
-                                          } else if (action instanceof ao phaseAction) {
+                                          } else if (action instanceof UseItemPhaseAction phaseAction) {
                                              init_V_Minecraft_ao(mc, phaseAction);
                                           } else if (action instanceof ContextMacroAction contextAction) {
                                              init_V_ContextMacroAction(contextAction);
-                                          } else if (action instanceof K placeInteract && placeInteract.interact) {
+                                          } else if (action instanceof PlaceAction placeInteract && placeInteract.interact) {
                                              init_V_Minecraft_K(mc, placeInteract);
-                                          } else if (action instanceof K place && place.waitForItem) {
+                                          } else if (action instanceof PlaceAction place && place.waitForItem) {
                                              ArrayUtil placeTarget = place.init_ArrayUtil().init_ArrayUtil_Minecraft(mc);
                                              if (placeTarget == null) {
                                                 postGuiFuture = null;
@@ -2191,7 +2191,7 @@ public class MacroExecutor {
                                                 }
 
                                                 if (close_Z()) {
-                                                   K fPlace = place;
+                                                   PlaceAction fPlace = place;
                                                    load_V_Minecraft(mc, () -> {
                                                       if (!autismclient.modules.aD.read_Z()) {
                                                          try {
@@ -2226,7 +2226,7 @@ public class MacroExecutor {
                                              init_V_Minecraft_3(mc, action, action.getDisplayName());
                                           }
                                        } else {
-                                          if (action instanceof PacketUtil dropAction) {
+                                          if (action instanceof DropAction dropAction) {
                                              postGuiFuture = write(mc, dropAction);
                                           }
 
@@ -2381,8 +2381,8 @@ public class MacroExecutor {
       }
 
       return read_ConcurrentHashMap.computeIfAbsent(target, t -> {
-         String expectedName = aB.load(t);
-         return new MacroExecutor.Inner_FileCache(aB.init(t), expectedName, write(expectedName));
+         String expectedName = WaitForPacketAction.load(t);
+         return new MacroExecutor.Inner_FileCache(WaitForPacketAction.init(t), expectedName, write(expectedName));
       });
    }
 
@@ -2421,7 +2421,7 @@ public class MacroExecutor {
       MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
       if (run != null) {
          CompletableFuture<Void> future = new CompletableFuture<>();
-         String normalizedTarget = aB.read(target);
+         String normalizedTarget = WaitForPacketAction.read(target);
          synchronized (run.init_Obj) {
             run.init_AtomicReference.set(normalizedTarget);
             run.init_CompletableFuture = future;
@@ -2429,7 +2429,7 @@ public class MacroExecutor {
          }
 
          try {
-            load_V_Str(normalizedTarget.isEmpty() ? "Waiting for packet: Any" : "Waiting for packet: " + aB.write(normalizedTarget));
+            load_V_Str(normalizedTarget.isEmpty() ? "Waiting for packet: Any" : "Waiting for packet: " + WaitForPacketAction.write(normalizedTarget));
             init_V_CompletableFuture(future);
          } finally {
             synchronized (run.init_Obj) {
@@ -2442,7 +2442,7 @@ public class MacroExecutor {
          }
       } else {
          CompletableFuture<Void> future = new CompletableFuture<>();
-         String normalizedTarget = aB.read(target);
+         String normalizedTarget = WaitForPacketAction.read(target);
          synchronized (load_Obj) {
             load_AtomicReference.set(normalizedTarget);
             init_AtomicReference.set("");
@@ -2451,7 +2451,7 @@ public class MacroExecutor {
          }
 
          try {
-            load_V_Str(normalizedTarget.isEmpty() ? "Waiting for packet: Any" : "Waiting for packet: " + aB.write(normalizedTarget));
+            load_V_Str(normalizedTarget.isEmpty() ? "Waiting for packet: Any" : "Waiting for packet: " + WaitForPacketAction.write(normalizedTarget));
             init_V_CompletableFuture(future);
          } finally {
             synchronized (load_Obj) {
@@ -2465,7 +2465,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_au(au wca) {
+   private static void init_V_au(WaitForChatAction wca) {
       MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
       if (run != null) {
          init_V_MacroAction(wca);
@@ -2495,7 +2495,7 @@ public class MacroExecutor {
          read_AtomicReference.set(init_Str_Str(wca.pattern));
          write_AtomicReference.set(wca.patternJson == null ? "" : wca.patternJson);
          write_AtomicBoolean.set(wca.useRegex);
-         init_AtomicInteger.set(au.init_I_I_8(wca.fuzzyPercent));
+         init_AtomicInteger.set(WaitForChatAction.init_I_I_8(wca.fuzzyPercent));
          update_AtomicReference.set("");
 
          try {
@@ -2515,7 +2515,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_TaskQueue(TaskQueue action) {
+   private static void init_V_TaskQueue(CaptureValueAction action) {
       if (action != null) {
          MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
          init_V_MacroAction(action);
@@ -2534,7 +2534,7 @@ public class MacroExecutor {
                   capture.init_MacroExecutor_Task(),
                   System.currentTimeMillis()
                );
-               TaskQueue.Inner_NetHelper preview = action.init_TaskQueue_NetHelpe_MacroExecutor_Pack(message);
+               CaptureValueAction.Inner_NetHelper preview = action.init_TaskQueue_NetHelpe_MacroExecutor_Pack(message);
                if (!preview.init_Z()) {
                   return false;
                }
@@ -2599,7 +2599,7 @@ public class MacroExecutor {
       return query;
    }
 
-   private static List<String> init_List_ClientPacketListen(ClientPacketListener connection, TaskQueue action, String query, List<String> base) {
+   private static List<String> init_List_ClientPacketListen(ClientPacketListener connection, CaptureValueAction action, String query, List<String> base) {
       if (!action.autofillCacheList && base.size() < 1000) {
          return base;
       }
@@ -2657,8 +2657,8 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_MacroExecutor_Tabl_3(MacroExecutor.Inner_TableIndex run, TaskQueue action, List<String> suggestions, String query) {
-      TaskQueue.Inner_NetHelper preview = action.init_TaskQueue_NetHelpe_List_Str(suggestions, query);
+   private static void init_V_MacroExecutor_Tabl_3(MacroExecutor.Inner_TableIndex run, CaptureValueAction action, List<String> suggestions, String query) {
+      CaptureValueAction.Inner_NetHelper preview = action.init_TaskQueue_NetHelpe_List_Str(suggestions, query);
       if (preview.init_Z()) {
          if (run != null) {
             run.init_m.init_V_Map(preview.init_Map());
@@ -2721,7 +2721,7 @@ public class MacroExecutor {
       return pending;
    }
 
-   private static void init_V_Minecraft_TaskQueue(Minecraft mc, TaskQueue action) {
+   private static void init_V_Minecraft_TaskQueue(Minecraft mc, CaptureValueAction action) {
       MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
       init_V_MacroAction(action);
       j.Inner_CachePool resolved = n.init_j_CachePool_Str_Minecraft(action.autofillCommand, mc);
@@ -2804,7 +2804,7 @@ public class MacroExecutor {
       return all;
    }
 
-   private static void load_V_Minecraft_TaskQueue(Minecraft mc, TaskQueue action) {
+   private static void load_V_Minecraft_TaskQueue(Minecraft mc, CaptureValueAction action) {
       MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
       init_V_MacroAction(action);
       ClientPacketListener connection = mc.getConnection();
@@ -2861,33 +2861,33 @@ public class MacroExecutor {
       return out;
    }
 
-   private static void read(Minecraft mc, TaskQueue action) {
+   private static void read(Minecraft mc, CaptureValueAction action) {
       if (action != null) {
          String modifierError = action.init_Str_4();
          if (!modifierError.isBlank()) {
             load_V_Str("Capture failed: " + modifierError);
             bi.write("Capture Value: " + modifierError);
-         } else if (action.source == TaskQueue.Inner_StateCache.COMMAND_AUTOFILL) {
+         } else if (action.source == CaptureValueAction.Inner_StateCache.COMMAND_AUTOFILL) {
             load_V_Str("Requesting command suggestions");
             init_V_Minecraft_TaskQueue(mc, action);
             load_V_TaskQueue(action);
-         } else if (action.source == TaskQueue.Inner_StateCache.NAMESCRAPE) {
+         } else if (action.source == CaptureValueAction.Inner_StateCache.NAMESCRAPE) {
             load_V_Str("Scraping player names");
             load_V_Minecraft_TaskQueue(mc, action);
             load_V_TaskQueue(action);
          } else if (action.waitForTrigger) {
-            TaskQueue.Inner_StateCache source = action.source == null ? TaskQueue.Inner_StateCache.GUI_TITLE : action.source;
+            CaptureValueAction.Inner_StateCache source = action.source == null ? CaptureValueAction.Inner_StateCache.GUI_TITLE : action.source;
             load_V_Str("Waiting for capture: " + source.name().toLowerCase(Locale.ROOT).replace('_', ' '));
-            if (source == TaskQueue.Inner_StateCache.RECENT_CHAT) {
+            if (source == CaptureValueAction.Inner_StateCache.RECENT_CHAT) {
                init_V_TaskQueue(action);
-            } else if (source == TaskQueue.Inner_StateCache.SCOREBOARD) {
+            } else if (source == CaptureValueAction.Inner_StateCache.SCOREBOARD) {
                update(mc, action);
             } else {
                write(mc, action);
             }
          } else {
             MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
-            AtomicReference<TaskQueue.Inner_NetHelper> result = new AtomicReference<>(TaskQueue.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Not available"));
+            AtomicReference<CaptureValueAction.Inner_NetHelper> result = new AtomicReference<>(CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Not available"));
             long deadline = System.nanoTime() + 300000000L;
 
             while (close_Z()) {
@@ -2908,7 +2908,7 @@ public class MacroExecutor {
                pop();
             }
 
-            TaskQueue.Inner_NetHelper preview = result.get();
+            CaptureValueAction.Inner_NetHelper preview = result.get();
             if (!preview.init_Z()) {
                load_V_Str("Capture failed: " + preview.load());
                bi.write("Capture " + init_Str_TaskQueue(action) + ": " + preview.load());
@@ -2917,7 +2917,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void load_V_TaskQueue(TaskQueue action) {
+   private static void load_V_TaskQueue(CaptureValueAction action) {
       String name = m.load(action.saveAs);
       if (!name.isBlank() && !n.init_Optional_Str(name).isPresent()) {
          load_V_Str("Capture failed: nothing captured");
@@ -2925,19 +2925,19 @@ public class MacroExecutor {
       }
    }
 
-   private static String init_Str_TaskQueue(TaskQueue action) {
+   private static String init_Str_TaskQueue(CaptureValueAction action) {
       String name = m.load(action.saveAs);
       return name.isBlank() ? "value" : "{" + name + "}";
    }
 
-   private static void write(Minecraft mc, TaskQueue action) {
+   private static void write(Minecraft mc, CaptureValueAction action) {
       MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
       init_V_MacroAction(action);
       String lastMessage = "";
 
       while (close_Z()) {
-         TaskQueue.Inner_NetHelper preview = load_Obj_Minecraft(
-            mc, () -> action.read_TaskQueue_NetHelpe(mc), TaskQueue.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Not available")
+         CaptureValueAction.Inner_NetHelper preview = load_Obj_Minecraft(
+            mc, () -> action.read_TaskQueue_NetHelpe(mc), CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Not available")
          );
          if (preview.init_Z()) {
             if (run != null) {
@@ -2958,7 +2958,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void update(Minecraft mc, TaskQueue action) {
+   private static void update(Minecraft mc, CaptureValueAction action) {
       MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
       init_V_MacroAction(action);
       String trackedKey = action.scoreboardRow;
@@ -2972,7 +2972,7 @@ public class MacroExecutor {
          final String keySnapshot0 = trackedKey;
          final int rowSnapshot = trackedRow;
          final String objectiveSnapshot = trackedObjective;
-         TaskQueue.Inner_JsonUtil line = load_Obj_Minecraft(mc, () -> action.init(mc, keySnapshot0, rowSnapshot, objectiveSnapshot), null);
+         CaptureValueAction.Inner_JsonUtil line = load_Obj_Minecraft(mc, () -> action.init(mc, keySnapshot0, rowSnapshot, objectiveSnapshot), null);
          if (line != null) {
             String keySnapshot = line.flush() == null ? "" : line.flush();
             if (!baselineReady) {
@@ -2982,7 +2982,7 @@ public class MacroExecutor {
                previousText = keySnapshot;
                baselineReady = true;
             } else if (!keySnapshot.equals(previousText)) {
-               TaskQueue.Inner_NetHelper preview = action.init_TaskQueue_NetHelpe_TaskQueue_JsonUtil(line);
+               CaptureValueAction.Inner_NetHelper preview = action.init_TaskQueue_NetHelpe_TaskQueue_JsonUtil(line);
                if (preview.init_Z()) {
                   if (run != null) {
                      run.init_m.init_V_Map(preview.init_Map());
@@ -3022,7 +3022,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_w(Minecraft mc, w action) {
+   private static void init_V_Minecraft_w(Minecraft mc, PacedTpAction action) {
       AtomicReference<bl.Inner_StreamUtil> handleRef = new AtomicReference<>();
       init_V_Minecraft_Runnable(mc, () -> handleRef.set(bl.init(action, "macro")));
       bl.Inner_StreamUtil handle = handleRef.get();
@@ -3085,7 +3085,7 @@ public class MacroExecutor {
       }
    }
 
-   private static BooleanSupplier init_BooleanSupplier_ax_Minecraft(ax action, Minecraft mc) {
+   private static BooleanSupplier init_BooleanSupplier_ax_Minecraft(WaitForGuiAction action, Minecraft mc) {
       AtomicBoolean sawMatchingGui = new AtomicBoolean(action.init(mc));
       return () -> {
          Optional<Map<String, l>> capture = mc == null ? Optional.empty() : action.init(mc.gui.screen());
@@ -3100,7 +3100,7 @@ public class MacroExecutor {
       };
    }
 
-   private static BooleanSupplier init_BooleanSupplier_aJ_Minecraft(aJ action, Minecraft mc) {
+   private static BooleanSupplier init_BooleanSupplier_aJ_Minecraft(WaitGuiTypeAction action, Minecraft mc) {
       AtomicBoolean sawMatchingGui = new AtomicBoolean(action.init_Z_3(mc));
       return () -> {
          Optional<Map<String, l>> capture = action.init_Optional(mc);
@@ -3115,7 +3115,7 @@ public class MacroExecutor {
       };
    }
 
-   private static void init_V_Minecraft_ar(Minecraft mc, ar action) {
+   private static void init_V_Minecraft_ar(Minecraft mc, WaitDurabilityAction action) {
       AtomicReference<MacroExecutor.Inner_JsonUtil> sessionRef = new AtomicReference<>();
       long start = System.currentTimeMillis();
 
@@ -3132,7 +3132,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_Minecraft_ar(Minecraft mc, ar action) {
+   private static boolean init_Z_Minecraft_ar(Minecraft mc, WaitDurabilityAction action) {
       if (action != null && action.useNext) {
          MacroExecutor.Inner_JsonUtil session = init_MacroExecutor_Json_Minecraft_ar(mc, action);
          if (session == null || session.read) {
@@ -3158,7 +3158,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_Minecraft_8(Minecraft mc, ar action, AtomicReference<MacroExecutor.Inner_JsonUtil> sessionRef) {
+   private static boolean init_Z_Minecraft_8(Minecraft mc, WaitDurabilityAction action, AtomicReference<MacroExecutor.Inner_JsonUtil> sessionRef) {
       if (mc != null && mc.player != null && action != null) {
          MacroExecutor.Inner_JsonUtil session = sessionRef.get();
          if (session == null) {
@@ -3182,7 +3182,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_Minecraft_7(Minecraft mc, ar action, MacroExecutor.Inner_JsonUtil session) {
+   private static boolean init_Z_Minecraft_7(Minecraft mc, WaitDurabilityAction action, MacroExecutor.Inner_JsonUtil session) {
       ItemStack stack = init_ItemStack_Minecraft_I(mc, session.init_I);
       if (session.init_Str.isBlank() && init_Z_ar(action, session, stack)) {
          session.init_Str = init_Str_ItemStack(stack);
@@ -3204,7 +3204,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_Minecraft_3(Minecraft mc, ar action, MacroExecutor.Inner_JsonUtil session, int excludeSlot) {
+   private static boolean init_Z_Minecraft_3(Minecraft mc, WaitDurabilityAction action, MacroExecutor.Inner_JsonUtil session, int excludeSlot) {
       MacroExecutor.Inner_NetHelper replacement = init_MacroExecutor_NetH_Minecraft(mc, action, session, excludeSlot);
       if (replacement == null) {
          return true;
@@ -3213,11 +3213,11 @@ public class MacroExecutor {
       }
    }
 
-   private static MacroExecutor.Inner_JsonUtil init_MacroExecutor_Json_Minecraft_ar(Minecraft mc, ar action) {
+   private static MacroExecutor.Inner_JsonUtil init_MacroExecutor_Json_Minecraft_ar(Minecraft mc, WaitDurabilityAction action) {
       if (mc != null && mc.player != null && action != null) {
          MacroExecutor.Inner_JsonUtil session = new MacroExecutor.Inner_JsonUtil();
          session.load_I = Math.max(0, Math.min(8, mc.player.getInventory().getSelectedSlot()));
-         ArrayUtil target = action.targetMode == ar.Inner_CachePool.ITEM ? ArrayUtil.update(action.itemName) : new ArrayUtil();
+         ArrayUtil target = action.targetMode == WaitDurabilityAction.Inner_CachePool.ITEM ? ArrayUtil.update(action.itemName) : new ArrayUtil();
          session.init_ArrayUtil = target;
          switch (action.targetMode) {
             case SLOT:
@@ -3250,7 +3250,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_4(Minecraft mc, ar action, MacroExecutor.Inner_JsonUtil session) {
+   private static void init_V_Minecraft_4(Minecraft mc, WaitDurabilityAction action, MacroExecutor.Inner_JsonUtil session) {
       int selected = Math.max(0, Math.min(8, mc.player.getInventory().getSelectedSlot()));
       ItemStack main = mc.player.getInventory().getItem(selected);
       if (main != null && !main.isEmpty() && main.isDamageableItem()) {
@@ -3267,7 +3267,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_4(Minecraft mc, ar action, MacroExecutor.Inner_JsonUtil session, ArrayUtil target) {
+   private static void init_V_Minecraft_4(Minecraft mc, WaitDurabilityAction action, MacroExecutor.Inner_JsonUtil session, ArrayUtil target) {
       if (target != null && target.init_Z()) {
          session.init_I = Math.max(0, Math.min(40, target.init_I));
          session.init_Z = true;
@@ -3297,7 +3297,7 @@ public class MacroExecutor {
       }
    }
 
-   private static int init_I_Minecraft_2(Minecraft mc, ar action, String lockedRegistryId, ArrayUtil target) {
+   private static int init_I_Minecraft_2(Minecraft mc, WaitDurabilityAction action, String lockedRegistryId, ArrayUtil target) {
       if (mc != null && mc.player != null) {
          int selected = Math.max(0, Math.min(8, mc.player.getInventory().getSelectedSlot()));
          if (init_Z_Minecraft_2(mc, action, lockedRegistryId, target, selected)) {
@@ -3310,10 +3310,10 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_ar(ar action, MacroExecutor.Inner_JsonUtil session, ItemStack stack) {
+   private static boolean init_Z_ar(WaitDurabilityAction action, MacroExecutor.Inner_JsonUtil session, ItemStack stack) {
       if (stack != null && !stack.isEmpty() && stack.isDamageableItem()) {
          return action != null
-               && action.targetMode == ar.Inner_CachePool.ITEM
+               && action.targetMode == WaitDurabilityAction.Inner_CachePool.ITEM
                && session != null
                && session.init_ArrayUtil != null
                && session.init_ArrayUtil.update()
@@ -3324,7 +3324,7 @@ public class MacroExecutor {
       }
    }
 
-   private static int load(Minecraft mc, ar action, String lockedRegistryId, ArrayUtil target) {
+   private static int load(Minecraft mc, WaitDurabilityAction action, String lockedRegistryId, ArrayUtil target) {
       if (mc != null && mc.player != null) {
          int selected = Math.max(0, Math.min(8, mc.player.getInventory().getSelectedSlot()));
          if (init_Z_Minecraft_2(mc, action, lockedRegistryId, target, selected)) {
@@ -3349,7 +3349,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_Minecraft_2(Minecraft mc, ar action, String lockedRegistryId, ArrayUtil target, int slot) {
+   private static boolean init_Z_Minecraft_2(Minecraft mc, WaitDurabilityAction action, String lockedRegistryId, ArrayUtil target, int slot) {
       ItemStack stack = init_ItemStack_Minecraft_I(mc, slot);
       if (stack != null && !stack.isEmpty() && stack.isDamageableItem()) {
          return lockedRegistryId != null && !lockedRegistryId.isBlank() && !init_Z_ItemStack_Str(stack, lockedRegistryId)
@@ -3376,7 +3376,7 @@ public class MacroExecutor {
    }
 
    private static MacroExecutor.Inner_NetHelper init_MacroExecutor_NetH_Minecraft(
-      Minecraft mc, ar action, MacroExecutor.Inner_JsonUtil session, int excludeSlot
+      Minecraft mc, WaitDurabilityAction action, MacroExecutor.Inner_JsonUtil session, int excludeSlot
    ) {
       if (mc != null && mc.player != null && action != null && session != null && !session.init_Str.isBlank()) {
          MacroExecutor.Inner_NetHelper hotbar = null;
@@ -3410,7 +3410,7 @@ public class MacroExecutor {
       }
    }
 
-   private static MacroExecutor.Inner_NetHelper init_MacroExecutor_NetH_Minecraft(Minecraft mc, ar action, String registryId, int slot, int excludeSlot) {
+   private static MacroExecutor.Inner_NetHelper init_MacroExecutor_NetH_Minecraft(Minecraft mc, WaitDurabilityAction action, String registryId, int slot, int excludeSlot) {
       if (slot == excludeSlot) {
          return null;
       } else {
@@ -3551,29 +3551,29 @@ public class MacroExecutor {
    }
 
    private static boolean init_Z_MacroAction(MacroAction action) {
-      return action instanceof aB
-         || action instanceof aM
-         || action instanceof au
-         || action instanceof ax
-         || action instanceof aJ
-         || action instanceof aE
-         || action instanceof aD
-         || action instanceof aK
-         || action instanceof ar
-         || action instanceof aH
-         || action instanceof ay
-         || action instanceof at
-         || action instanceof aw
-         || action instanceof as
-         || action instanceof av
-         || action instanceof aN
-         || action instanceof aC
-         || action instanceof aF
-         || action instanceof aI
-         || action instanceof aG
-         || action instanceof aL
-         || action instanceof az
-         || action instanceof aA;
+      return action instanceof WaitForPacketAction
+         || action instanceof WaitPacketMatchAction
+         || action instanceof WaitForChatAction
+         || action instanceof WaitForGuiAction
+         || action instanceof WaitGuiTypeAction
+         || action instanceof WaitForSoundAction
+         || action instanceof WaitForSlotChangeAction
+         || action instanceof WaitInventoryPredicateAction
+         || action instanceof WaitDurabilityAction
+         || action instanceof WaitFreeSlotsAction
+         || action instanceof WaitForHealthAction
+         || action instanceof WaitForBlockAction
+         || action instanceof WaitForEntityAction
+         || action instanceof WaitEntityTargetAction
+         || action instanceof WaitForCooldownAction
+         || action instanceof WaitPosAction
+         || action instanceof WaitForPositionDeltaAction
+         || action instanceof WaitForTeleportAction
+         || action instanceof WaitGamemodeChangeAction
+         || action instanceof WaitForWorldChangeAction
+         || action instanceof WaitMovementAction
+         || action instanceof WaitForLanStepAction
+         || action instanceof WaitForMacroStepAction;
    }
 
    private static MacroExecutor.Inner_ByteReader init_MacroExecutor_Byte_MacroAction(MacroAction action) {
@@ -3603,30 +3603,30 @@ public class MacroExecutor {
    }
 
    private static MacroExecutor.Inner_ByteReader init_MacroExecutor_Byte_Minecraft_MacroAction(Minecraft mc, MacroAction action) {
-      if (action instanceof aB packetAction) {
+      if (action instanceof WaitForPacketAction packetAction) {
          List<String> targets = packetAction.init();
          String firstTarget = targets.isEmpty() ? "" : targets.get(0);
          return init_MacroExecutor_Byte_MacroAction(packetAction, firstTarget, 1);
-      } else if (action instanceof aM packetMatch) {
+      } else if (action instanceof WaitPacketMatchAction packetMatch) {
          return init_MacroExecutor_Byte_aM(packetMatch);
-      } else if (action instanceof aK inv) {
+      } else if (action instanceof WaitInventoryPredicateAction inv) {
          inv.init();
          return init_MacroExecutor_Byte_MacroAction_2(action, () -> inv.init(mc), inv.timeoutMs);
-      } else if (action instanceof ar durability) {
+      } else if (action instanceof WaitDurabilityAction durability) {
          return durability.useNext ? null : init_MacroExecutor_Byte_MacroAction_2(action, () -> init_Z_Minecraft_ar(mc, durability), durability.timeoutMs);
-      } else if (action instanceof aH freeSlots) {
+      } else if (action instanceof WaitFreeSlotsAction freeSlots) {
          return init_MacroExecutor_Byte_MacroAction_2(action, () -> freeSlots.init(mc), freeSlots.timeoutMs);
-      } else if (action instanceof as entityTarget) {
+      } else if (action instanceof WaitEntityTargetAction entityTarget) {
          return init_MacroExecutor_Byte_MacroAction_2(action, () -> entityTarget.init(mc), entityTarget.timeoutMs);
-      } else if (action instanceof aJ guiType) {
+      } else if (action instanceof WaitGuiTypeAction guiType) {
          return init_MacroExecutor_Byte_MacroAction_2(
-            action, guiType.waitMode == aJ.Inner_DataUtil.CLOSE ? init_BooleanSupplier_aJ_Minecraft(guiType, mc) : () -> {
+            action, guiType.waitMode == WaitGuiTypeAction.Inner_DataUtil.CLOSE ? init_BooleanSupplier_aJ_Minecraft(guiType, mc) : () -> {
                Optional<Map<String, l>> capture = guiType.init_Optional(mc);
                capture.ifPresent(values -> init_V_MacroAction_Map(guiType, (Map<String, l>)values));
                return capture.isPresent();
             }, guiType.timeoutMs
          );
-      } else if (action instanceof au chat) {
+      } else if (action instanceof WaitForChatAction chat) {
          MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
          MacroExecutor.Inner_EventBus listener = init_MacroExecutor_Even_Predicate(packet -> {
             MacroExecutor.Inner_ConfigStore capture = init_MacroExecutor_Conf_Packet(packet);
@@ -3647,9 +3647,9 @@ public class MacroExecutor {
          }
 
          return new MacroExecutor.Inner_ByteReader(action, future, listener::init_V, 0);
-      } else if (action instanceof aA macroStep) {
+      } else if (action instanceof WaitForMacroStepAction macroStep) {
          return init_MacroExecutor_Byte_MacroAction_2(action, () -> init_Z_aA(macroStep), macroStep.timeoutMs);
-      } else if (action instanceof az lanStep) {
+      } else if (action instanceof WaitForLanStepAction lanStep) {
          CompletableFuture<Void> future = b.init(lanStep);
          return new MacroExecutor.Inner_ByteReader(action, future, () -> {
             if (!future.isDone()) {
@@ -3662,7 +3662,7 @@ public class MacroExecutor {
             return null;
          }
 
-         int timeout = action instanceof au chat ? chat.timeoutMs : 0;
+         int timeout = action instanceof WaitForChatAction chat ? chat.timeoutMs : 0;
          if (timeout > 0) {
             future.completeOnTimeout(null, timeout, TimeUnit.MILLISECONDS);
          }
@@ -3687,16 +3687,16 @@ public class MacroExecutor {
    }
 
    private static void init_V_MacroAction(MacroAction action, Packet<?> packet, String direction) {
-      if (action instanceof aB wait) {
+      if (action instanceof WaitForPacketAction wait) {
          wait.matchedPacket = packet;
          wait.matchedDirection = direction == null ? "" : direction;
-      } else if (action instanceof aM wait) {
+      } else if (action instanceof WaitPacketMatchAction wait) {
          wait.matchedPacket = packet;
          wait.matchedDirection = direction == null ? "" : direction;
       }
    }
 
-   private static void init_V_aB(aB action) {
+   private static void init_V_aB(WaitForPacketAction action) {
       MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
       if (action != null && run != null && run.init_Packet != null) {
          action.matchedPacket = run.init_Packet;
@@ -3708,7 +3708,7 @@ public class MacroExecutor {
       MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
       if (run != null && action != null) {
          run.load_Map.remove(action);
-         if (action instanceof au chat) {
+         if (action instanceof WaitForChatAction chat) {
             for (String name : UtilCore.init(chat.init_UtilCore_DataUtil(), chat.pattern)) {
                run.init_m.init_V_Str(name);
             }
@@ -3716,7 +3716,7 @@ public class MacroExecutor {
             if (chat.saveAs != null && !chat.saveAs.isBlank()) {
                run.init_m.init_V_Str(chat.saveAs);
             }
-         } else if (action instanceof ax gui) {
+         } else if (action instanceof WaitForGuiAction gui) {
             for (String name : UtilCore.init(gui.matchMode, gui.guiTitle)) {
                run.init_m.init_V_Str(name);
             }
@@ -3724,7 +3724,7 @@ public class MacroExecutor {
             if (gui.saveAs != null && !gui.saveAs.isBlank()) {
                run.init_m.init_V_Str(gui.saveAs);
             }
-         } else if (action instanceof aJ gui) {
+         } else if (action instanceof WaitGuiTypeAction gui) {
             for (String name : UtilCore.init(gui.matchMode, gui.title)) {
                run.init_m.init_V_Str(name);
             }
@@ -3732,7 +3732,7 @@ public class MacroExecutor {
             if (gui.saveAs != null && !gui.saveAs.isBlank()) {
                run.init_m.init_V_Str(gui.saveAs);
             }
-         } else if (action instanceof TaskQueue capture) {
+         } else if (action instanceof CaptureValueAction capture) {
             for (String name : UtilCore.init(capture.matchMode, capture.pattern)) {
                run.init_m.init_V_Str(name);
             }
@@ -3751,16 +3751,16 @@ public class MacroExecutor {
             n.init_V_Str(name);
          }
 
-         if (action instanceof aE sound) {
+         if (action instanceof WaitForSoundAction sound) {
             sound.matchedSoundId = "";
          }
 
-         if (action instanceof aB packet) {
+         if (action instanceof WaitForPacketAction packet) {
             packet.matchedPacket = null;
             packet.matchedDirection = "";
          }
 
-         if (action instanceof aM packet) {
+         if (action instanceof WaitPacketMatchAction packet) {
             packet.matchedPacket = null;
             packet.matchedDirection = "";
          }
@@ -3780,7 +3780,7 @@ public class MacroExecutor {
    }
 
    private static l init_l_MacroAction_Minecraft(MacroAction action, Minecraft mc) {
-      if (action instanceof ay healthAction && mc != null && mc.player != null) {
+      if (action instanceof WaitForHealthAction healthAction && mc != null && mc.player != null) {
          float health = mc.player.getHealth();
          return (healthAction.below ? health >= healthAction.healthThreshold : health <= healthAction.healthThreshold)
             ? null
@@ -3796,7 +3796,7 @@ public class MacroExecutor {
                   l.init_l_Number(mc.player.getAbsorptionAmount())
                )
             );
-      } else if (action instanceof aw entityAction) {
+      } else if (action instanceof WaitForEntityAction entityAction) {
          Entity entity = entityAction.init_Entity(mc);
          if (entity == null) {
             return null;
@@ -3824,7 +3824,7 @@ public class MacroExecutor {
                l.init_l_Number(distance)
             )
          );
-      } else if (action instanceof aE sound) {
+      } else if (action instanceof WaitForSoundAction sound) {
          return sound.matchedSoundId != null && !sound.matchedSoundId.isBlank()
             ? l.init(
                l.Inner_DataUtil.IDENTIFIER,
@@ -3841,28 +3841,28 @@ public class MacroExecutor {
                )
             )
             : null;
-      } else if (action instanceof aB packet) {
+      } else if (action instanceof WaitForPacketAction packet) {
          return init_l_Packet_Str(packet.matchedPacket, packet.matchedDirection);
-      } else if (action instanceof aM packet) {
+      } else if (action instanceof WaitPacketMatchAction packet) {
          return init_l_Packet_Str(packet.matchedPacket, packet.matchedDirection);
-      } else if (action instanceof aK inventory) {
+      } else if (action instanceof WaitInventoryPredicateAction inventory) {
          return !inventory.init(mc) ? null : init_l_Minecraft(mc, inventory.itemName, inventory.slot, inventory.condition.name());
-      } else if (action instanceof aD slotWait) {
+      } else if (action instanceof WaitForSlotChangeAction slotWait) {
          if (slotWait.entries.isEmpty()) {
             return init_l_Minecraft(mc, "", -1, "slot_change");
          }
 
          ArrayUtil target = slotWait.entries.get(0).init_ArrayUtil().init_ArrayUtil_Minecraft(mc);
          return target == null ? null : init_l_Minecraft_ArrayUtil(mc, target);
-      } else if (action instanceof aN || action instanceof aF || action instanceof aC) {
+      } else if (action instanceof WaitPosAction || action instanceof WaitForTeleportAction || action instanceof WaitForPositionDeltaAction) {
          return init_l_Minecraft(mc);
-      } else if (action instanceof aG && mc != null && mc.level != null) {
+      } else if (action instanceof WaitForWorldChangeAction && mc != null && mc.level != null) {
          String dimension = mc.level.dimension().identifier().toString();
          return l.init(l.Inner_DataUtil.IDENTIFIER, dimension, Map.of("id", l.init_l_Str(dimension), "name", l.init_l_Obj(dimension)));
-      } else if (action instanceof aI && mc != null && mc.gameMode != null) {
+      } else if (action instanceof WaitGamemodeChangeAction && mc != null && mc.gameMode != null) {
          String mode = mc.gameMode.getPlayerMode().getName();
-         aI wait = (aI)action;
-         return wait.match == aI.Inner_DataUtil.TO_MODE && !wait.init(mc.gameMode.getPlayerMode())
+         WaitGamemodeChangeAction wait = (WaitGamemodeChangeAction)action;
+         return wait.match == WaitGamemodeChangeAction.Inner_DataUtil.TO_MODE && !wait.init(mc.gameMode.getPlayerMode())
             ? null
             : l.init(l.Inner_DataUtil.TEXT, mode, Map.of("name", l.init_l_Obj(mode)));
       } else {
@@ -4050,8 +4050,8 @@ public class MacroExecutor {
    }
 
    private static MacroExecutor.Inner_ByteReader init_MacroExecutor_Byte_MacroAction(MacroAction action, String target, int completedPacketTargets) {
-      String normalizedTarget = aB.read(target);
-      String direction = aB.init(normalizedTarget);
+      String normalizedTarget = WaitForPacketAction.read(target);
+      String direction = WaitForPacketAction.init(normalizedTarget);
       CompletableFuture<Packet<?>> matched = new CompletableFuture<>();
       MacroExecutor.Inner_EventBus send = null;
       MacroExecutor.Inner_EventBus recv = null;
@@ -4088,11 +4088,11 @@ public class MacroExecutor {
       }, completedPacketTargets);
    }
 
-   private static MacroExecutor.Inner_ByteReader init_MacroExecutor_Byte_aM(aM action) {
+   private static MacroExecutor.Inner_ByteReader init_MacroExecutor_Byte_aM(WaitPacketMatchAction action) {
       MacroExecutor.Inner_EventBus send = null;
       MacroExecutor.Inner_EventBus recv = null;
       CompletableFuture<Packet<?>> matched = new CompletableFuture<>();
-      if (action.direction != aM.Inner_DataUtil.S2C) {
+      if (action.direction != WaitPacketMatchAction.Inner_DataUtil.S2C) {
          send = load_MacroExecutor_Even_Predicate(packet -> action.init_Z_Packet_Str(packet, "C2S"));
          send.init_CompletableFuture.thenAccept(packet -> {
             init_V_MacroAction(action, (Packet<?>)packet, "C2S");
@@ -4100,7 +4100,7 @@ public class MacroExecutor {
          });
       }
 
-      if (action.direction != aM.Inner_DataUtil.C2S) {
+      if (action.direction != WaitPacketMatchAction.Inner_DataUtil.C2S) {
          recv = init_MacroExecutor_Even_Predicate(packet -> action.init_Z_Packet_Str(packet, "S2C"));
          recv.init_CompletableFuture.thenAccept(packet -> {
             init_V_MacroAction(action, (Packet<?>)packet, "S2C");
@@ -4133,13 +4133,13 @@ public class MacroExecutor {
       }, 0);
    }
 
-   private static void init_V_aM_2(aM action) {
+   private static void init_V_aM_2(WaitPacketMatchAction action) {
       if (action != null) {
          MacroExecutor.Inner_EventBus send = null;
          MacroExecutor.Inner_EventBus recv = null;
 
          try {
-            if (action.direction != aM.Inner_DataUtil.S2C) {
+            if (action.direction != WaitPacketMatchAction.Inner_DataUtil.S2C) {
                send = load_MacroExecutor_Even_Predicate(packet -> {
                   boolean matches = action.init_Z_Packet_Str(packet, "C2S");
                   if (matches) {
@@ -4150,7 +4150,7 @@ public class MacroExecutor {
                });
             }
 
-            if (action.direction != aM.Inner_DataUtil.C2S) {
+            if (action.direction != WaitPacketMatchAction.Inner_DataUtil.C2S) {
                recv = init_MacroExecutor_Even_Predicate(packet -> {
                   boolean matches = action.init_Z_Packet_Str(packet, "S2C");
                   if (matches) {
@@ -4191,23 +4191,23 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_B(Minecraft mc, B action) {
+   private static void init_V_Minecraft_B(Minecraft mc, PacketGateAction action) {
       if (action != null) {
          action.execute(mc);
-         if (action.mode != B.Inner_CachePool.DISABLE_GATE) {
+         if (action.mode != PacketGateAction.Inner_CachePool.DISABLE_GATE) {
             switch (action.durationMode) {
                case UNTIL_PACKET:
-                  aM wait = new aM();
-                  aM.Inner_DataUtil var10001;
+                  WaitPacketMatchAction wait = new WaitPacketMatchAction();
+                  WaitPacketMatchAction.Inner_DataUtil var10001;
                   switch (action.direction) {
                      case C2S:
-                        var10001 = aM.Inner_DataUtil.C2S;
+                        var10001 = WaitPacketMatchAction.Inner_DataUtil.C2S;
                         break;
                      case S2C:
-                        var10001 = aM.Inner_DataUtil.S2C;
+                        var10001 = WaitPacketMatchAction.Inner_DataUtil.S2C;
                         break;
                      case ANY:
-                        var10001 = aM.Inner_DataUtil.ANY;
+                        var10001 = WaitPacketMatchAction.Inner_DataUtil.ANY;
                         break;
                      default:
                         throw new MatchException(null, null);
@@ -4218,7 +4218,7 @@ public class MacroExecutor {
                      ? action.untilPacketName
                      : (action.packetNames.isEmpty() ? "" : action.packetNames.get(0));
                   wait.fieldName = action.untilPacketField;
-                  wait.operator = i.init(aM.Inner_StreamUtil.class, action.untilPacketOperator, aM.Inner_StreamUtil.EXISTS);
+                  wait.operator = i.init(WaitPacketMatchAction.Inner_StreamUtil.class, action.untilPacketOperator, WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
                   wait.value = action.untilPacketValue;
                   wait.timeoutMs = Math.max(0, action.durationValue);
                   init_V_aM_2(wait);
@@ -4229,8 +4229,8 @@ public class MacroExecutor {
                   load_V_Minecraft_B(mc, action);
                   break;
                case UNTIL_INVENTORY:
-                  aK wait2 = new aK();
-                  wait2.condition = i.init(aK.Inner_DataUtil.class, action.untilInventoryCondition, aK.Inner_DataUtil.ITEM_EXISTS);
+                  WaitInventoryPredicateAction wait2 = new WaitInventoryPredicateAction();
+                  wait2.condition = i.init(WaitInventoryPredicateAction.Inner_DataUtil.class, action.untilInventoryCondition, WaitInventoryPredicateAction.Inner_DataUtil.ITEM_EXISTS);
                   wait2.itemName = action.untilInventoryItem;
                   wait2.count = action.untilInventoryCount;
                   wait2.slot = action.untilInventorySlot;
@@ -4243,7 +4243,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void load_V_Minecraft_B(Minecraft mc, B action) {
+   private static void load_V_Minecraft_B(Minecraft mc, PacketGateAction action) {
       C.init(
          action.gateId != null && !action.gateId.isBlank() ? action.gateId : "auto", load_J(), mc == null ? null : mc.getConnection(), action.flushOnDisable
       );
@@ -4266,7 +4266,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_aA(aA action) {
+   private static void init_V_aA(WaitForMacroStepAction action) {
       long startMs = System.currentTimeMillis();
 
       while (close_Z()) {
@@ -4283,7 +4283,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_aA(aA action) {
+   private static boolean init_Z_aA(WaitForMacroStepAction action) {
       String target = action.macroName == null ? "" : action.macroName.trim();
       if (target.isEmpty()) {
          return true;
@@ -4313,10 +4313,10 @@ public class MacroExecutor {
          }
       }
 
-      return action.mode == aA.Inner_DataUtil.FINISHED;
+      return action.mode == WaitForMacroStepAction.Inner_DataUtil.FINISHED;
    }
 
-   private static int init_I_Minecraft(Minecraft mc, autismclient.modules.PoolEntry module, List<MacroAction> actions, int headerIndex, L race) {
+   private static int init_I_Minecraft(Minecraft mc, autismclient.modules.PoolEntry module, List<MacroAction> actions, int headerIndex, RaceAction race) {
       int bodyCount = race.init_I_List_I(actions, headerIndex);
       List<MacroAction> conditions = new ArrayList<>();
       List<MacroAction> bodyActions = new ArrayList<>();
@@ -4324,9 +4324,9 @@ public class MacroExecutor {
       for (int offset = 1; offset <= bodyCount && headerIndex + offset < actions.size(); offset++) {
          MacroAction child = actions.get(headerIndex + offset);
          if (child != null && child.isEnabled()) {
-            if (L.init_Z(child)) {
+            if (RaceAction.init_Z(child)) {
                conditions.add(child);
-            } else if (L.load(child)) {
+            } else if (RaceAction.load(child)) {
                bodyActions.add(child);
             }
          }
@@ -4431,12 +4431,12 @@ public class MacroExecutor {
       }
    }
 
-   private static int init_I_Minecraft_3(Minecraft mc, List<MacroAction> actions, int headerIndex, O report) {
+   private static int init_I_Minecraft_3(Minecraft mc, List<MacroAction> actions, int headerIndex, ReportAction report) {
       int conditionCount = report.init(actions, headerIndex);
       if (conditionCount >= 2 && headerIndex + 2 < actions.size()) {
          MacroAction startCondition = actions.get(headerIndex + 1);
          MacroAction endCondition = actions.get(headerIndex + 2);
-         if (L.load(startCondition) && L.init_Z(endCondition)) {
+         if (RaceAction.load(startCondition) && RaceAction.init_Z(endCondition)) {
             int timeoutMs = Math.max(100, report.timeoutMs);
             String label = report.reportLabel != null && !report.reportLabel.isBlank() ? report.reportLabel.trim() : "Report";
             load_V_Str("Report: start " + startCondition.getDisplayName());
@@ -4468,7 +4468,7 @@ public class MacroExecutor {
             }
 
             return conditionCount;
-         } else if (L.init_Z(startCondition) && L.init_Z(endCondition)) {
+         } else if (RaceAction.init_Z(startCondition) && RaceAction.init_Z(endCondition)) {
             int timeoutMs = Math.max(100, report.timeoutMs);
             long startWaitNanos = System.nanoTime();
             load_V_Str("Report: waiting start " + startCondition.getDisplayName());
@@ -4514,8 +4514,8 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_Minecraft_L(Minecraft mc, L race) {
-      MacroAction trigger = race.triggerAction == null ? new EventBus(0) : race.triggerAction;
+   private static boolean init_Z_Minecraft_L(Minecraft mc, RaceAction race) {
+      MacroAction trigger = race.triggerAction == null ? new DelayAction(0) : race.triggerAction;
       int timeoutMs = Math.max(0, race.timeoutMs);
       return init_Z_Minecraft_4(mc, trigger, timeoutMs);
    }
@@ -4556,14 +4556,14 @@ public class MacroExecutor {
             EnumSet<DataPipe.Inner_DataUtil> heldResources = EnumSet.noneOf(DataPipe.Inner_DataUtil.class);
 
             try {
-               if (bodyActions.stream().noneMatch(al.class::isInstance)) {
+               if (bodyActions.stream().noneMatch(ToolsAction.class::isInstance)) {
                   heldResources = init_EnumSet_EnumSet(init_EnumSet_List(bodyActions));
                }
 
                Throwable firstFailure = null;
 
                for (MacroAction body : bodyActions) {
-                  if (body != null && body.isEnabled() && L.load(body)) {
+                  if (body != null && body.isEnabled() && RaceAction.load(body)) {
                      if (run != null && !run.init_AtomicBoolean.get()) {
                         bodyFuture.cancel(true);
                         return;
@@ -4609,27 +4609,27 @@ public class MacroExecutor {
    }
 
    private static void init_V_Minecraft_MacroAction(Minecraft mc, MacroAction body) {
-      if (body != null && body.isEnabled() && L.load(body) && d.init(body, mc)) {
+      if (body != null && body.isEnabled() && RaceAction.load(body) && d.init(body, mc)) {
          body.execute(mc);
       }
    }
 
    private static boolean read_Z(MacroAction action) {
-      if (action instanceof W chat) {
+      if (action instanceof SendChatAction chat) {
          return !chat.read_Z() && !chat.write_Z();
       } else {
-         return action instanceof Y sendPacket ? !sendPacket.read_Z() && !sendPacket.write_Z() : action instanceof z;
+         return action instanceof SendPacketAction sendPacket ? !sendPacket.read_Z() && !sendPacket.write_Z() : action instanceof PacketClickAction;
       }
    }
 
    private static CompletableFuture<MacroExecutor.Inner_SyncManager> init_CompletableFuture_MacroAction(MacroAction action) {
-      if (action instanceof z) {
+      if (action instanceof PacketClickAction) {
          return init_MacroExecutor_Fiel_Predicate(packet -> packet instanceof ServerboundContainerClickPacket).init_CompletableFuture;
-      } else if (action instanceof MapStore) {
+      } else if (action instanceof ItemAction) {
          return init_MacroExecutor_Fiel_Predicate(packet -> packet instanceof ServerboundContainerClickPacket).init_CompletableFuture;
-      } else if (action instanceof JsonUtil) {
+      } else if (action instanceof CloseGuiAction) {
          return init_MacroExecutor_Fiel_Predicate(packet -> packet instanceof ServerboundContainerClosePacket).init_CompletableFuture;
-      } else if (action instanceof W) {
+      } else if (action instanceof SendChatAction) {
          return init_MacroExecutor_Fiel_Predicate(
                packet -> packet instanceof ServerboundChatPacket
                   || packet instanceof ServerboundChatCommandPacket
@@ -4637,7 +4637,7 @@ public class MacroExecutor {
             )
             .init_CompletableFuture;
       } else {
-         return !(action instanceof Y) && !(action instanceof H) ? null : init_MacroExecutor_Fiel_Predicate(packet -> true).init_CompletableFuture;
+         return !(action instanceof SendPacketAction) && !(action instanceof PayloadAction) ? null : init_MacroExecutor_Fiel_Predicate(packet -> true).init_CompletableFuture;
       }
    }
 
@@ -4708,7 +4708,7 @@ public class MacroExecutor {
    private static CompletableFuture<MacroExecutor.Inner_SyncManager> init_CompletableFuture_Minecraft_MacroAction(Minecraft mc, MacroAction trigger) {
       if (trigger == null) {
          return CompletableFuture.completedFuture(new MacroExecutor.Inner_SyncManager(null, "condition", System.nanoTime(), null));
-      } else if (trigger instanceof au chat) {
+      } else if (trigger instanceof WaitForChatAction chat) {
          m context = init_m();
          AtomicReference<Map<String, l>> captures = new AtomicReference<>(Map.of());
          MacroExecutor.Inner_FieldCache listener = init_MacroExecutor_Fiel_MacroExecutor_Meth((packet, direction, now) -> {
@@ -4734,7 +4734,7 @@ public class MacroExecutor {
             );
          out.whenComplete((v, e) -> listener.init());
          return out;
-      } else if (trigger instanceof aB packetAction) {
+      } else if (trigger instanceof WaitForPacketAction packetAction) {
          List<String> targets = packetAction.init();
          CompletableFuture<MacroExecutor.Inner_SyncManager> matched = new CompletableFuture<>();
          MacroExecutor.Inner_FieldCache recv = init_MacroExecutor_Fiel_MacroExecutor_Meth((packet, direction, now) -> {
@@ -4770,7 +4770,7 @@ public class MacroExecutor {
             send.init();
          });
          return matched;
-      } else if (trigger instanceof aG world) {
+      } else if (trigger instanceof WaitForWorldChangeAction world) {
          CompletableFuture<MacroExecutor.Inner_SyncManager> done = new CompletableFuture<>();
          CompletableFuture<Void> tickFuture = b.init(world);
          MacroExecutor.Inner_FieldCache worldListener = init_MacroExecutor_Fiel_MacroExecutor_Meth((packet, direction, now) -> init_Z_Packet(packet));
@@ -4799,7 +4799,7 @@ public class MacroExecutor {
             }
          });
          return done;
-      } else if (trigger instanceof aF teleport) {
+      } else if (trigger instanceof WaitForTeleportAction teleport) {
          Vec3 origin = mc.player == null ? Vec3.ZERO : mc.player.position();
          CompletableFuture<MacroExecutor.Inner_SyncManager> done = new CompletableFuture<>();
          MacroExecutor.Inner_FieldCache teleListener = init_MacroExecutor_Fiel_MacroExecutor_Meth(
@@ -4857,11 +4857,11 @@ public class MacroExecutor {
    }
 
    private static CompletableFuture<?> load_CompletableFuture_Minecraft_MacroAction(Minecraft mc, MacroAction trigger) {
-      if (trigger instanceof aL wm) {
+      if (trigger instanceof WaitMovementAction wm) {
          return load_CompletableFuture_Minecraft_MacroAction(mc, wm.init_MacroAction_3());
-      } else if (trigger instanceof aI gm) {
+      } else if (trigger instanceof WaitGamemodeChangeAction gm) {
          return b.init(gm);
-      } else if (trigger instanceof EventBus delay) {
+      } else if (trigger instanceof DelayAction delay) {
          MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
          return CompletableFuture.runAsync(() -> init_V_MacroExecutor_Tabl_Runnable(run, () -> {
             if (delay.useTicks) {
@@ -4872,7 +4872,7 @@ public class MacroExecutor {
                sleep(Math.max(0, delay.delayMs));
             }
          }));
-      } else if (trigger instanceof ax gui) {
+      } else if (trigger instanceof WaitForGuiAction gui) {
          CompletableFuture<MacroExecutor.Inner_SyncManager> done = new CompletableFuture<>();
          MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
          Thread worker = new Thread(() -> init_V_MacroExecutor_Tabl_Runnable(run, () -> {
@@ -4885,11 +4885,11 @@ public class MacroExecutor {
                if (captured.isPresent()) {
                   saw = true;
                   observed = captured.get();
-                  if (gui.waitMode == ax.Inner_DataUtil.OPEN) {
+                  if (gui.waitMode == WaitForGuiAction.Inner_DataUtil.OPEN) {
                      done.complete(new MacroExecutor.Inner_SyncManager(null, "GUI", System.nanoTime(), null, observed));
                      return;
                   }
-               } else if (saw && gui.waitMode == ax.Inner_DataUtil.CLOSE) {
+               } else if (saw && gui.waitMode == WaitForGuiAction.Inner_DataUtil.CLOSE) {
                   done.complete(new MacroExecutor.Inner_SyncManager(null, "GUI close", System.nanoTime(), null, observed));
                   return;
                }
@@ -4906,7 +4906,7 @@ public class MacroExecutor {
          worker.start();
          done.whenComplete((v, e) -> worker.interrupt());
          return done;
-      } else if (trigger instanceof au chat) {
+      } else if (trigger instanceof WaitForChatAction chat) {
          m context = init_m();
          MacroExecutor.Inner_EventBus listener = init_MacroExecutor_Even_Predicate(packet -> {
             MacroExecutor.Inner_ConfigStore capture = init_MacroExecutor_Conf_Packet(packet);
@@ -4914,7 +4914,7 @@ public class MacroExecutor {
          });
          listener.init_CompletableFuture.whenComplete((v, e) -> listener.init_V());
          return listener.init_CompletableFuture;
-      } else if (trigger instanceof aB packetAction) {
+      } else if (trigger instanceof WaitForPacketAction packetAction) {
          List<String> targets = packetAction.init();
          CompletableFuture<Packet<?>> matched = new CompletableFuture<>();
          MacroExecutor.Inner_EventBus recv = init_MacroExecutor_Even_Predicate(packet -> {
@@ -4950,30 +4950,30 @@ public class MacroExecutor {
             send.init_V();
          });
          return matched;
-      } else if (trigger instanceof ay health) {
+      } else if (trigger instanceof WaitForHealthAction health) {
          return b.init_CompletableFuture_F_Z(health.healthThreshold, health.below);
-      } else if (trigger instanceof at block) {
+      } else if (trigger instanceof WaitForBlockAction block) {
          return b.init(block);
-      } else if (trigger instanceof av cooldown) {
+      } else if (trigger instanceof WaitForCooldownAction cooldown) {
          ArrayUtil target = init_ArrayUtil_ArrayUtil_Str(cooldown.itemTarget, cooldown.itemName);
          return b.init_CompletableFuture_ArrayUtil_Z(target, cooldown.checkMainInteractionHand);
-      } else if (trigger instanceof aN pos) {
+      } else if (trigger instanceof WaitPosAction pos) {
          return b.init(pos.f_x_D, pos.f_y_D, pos.f_z_D, pos.leeway, pos.checkRotation, pos.yaw, pos.pitch, pos.rotLeeway);
-      } else if (trigger instanceof aw entity) {
+      } else if (trigger instanceof WaitForEntityAction entity) {
          return init_CompletableFuture_BooleanSupplier_I(() -> entity.init_Z_5(Minecraft.getInstance()), entity.timeoutMs);
-      } else if (trigger instanceof aE sound) {
+      } else if (trigger instanceof WaitForSoundAction sound) {
          return b.init(sound);
-      } else if (trigger instanceof aD slot) {
+      } else if (trigger instanceof WaitForSlotChangeAction slot) {
          return b.init(slot);
-      } else if (trigger instanceof ar durability) {
+      } else if (trigger instanceof WaitDurabilityAction durability) {
          return init_CompletableFuture_BooleanSupplier_I(() -> init_Z_Minecraft_ar(Minecraft.getInstance(), durability), durability.timeoutMs);
-      } else if (trigger instanceof aH freeSlots) {
+      } else if (trigger instanceof WaitFreeSlotsAction freeSlots) {
          return init_CompletableFuture_BooleanSupplier_I(() -> freeSlots.init(Minecraft.getInstance()), freeSlots.timeoutMs);
-      } else if (trigger instanceof aj) {
+      } else if (trigger instanceof TickSyncAction) {
          return b.load_CompletableFuture();
-      } else if (trigger instanceof aa serverTick) {
+      } else if (trigger instanceof ServerTickSyncAction serverTick) {
          return b.init_CompletableFuture_I(serverTick.bufferMs, serverTick.maxWaitMs, serverTick.ignorePing);
-      } else if (trigger instanceof aG world) {
+      } else if (trigger instanceof WaitForWorldChangeAction world) {
          CompletableFuture<Void> done = new CompletableFuture<>();
          CompletableFuture<Void> tickFuture = b.init(world);
          MacroExecutor.Inner_EventBus worldListener = init_MacroExecutor_Even_Predicate(MacroExecutor::init_Z_Packet);
@@ -5002,9 +5002,9 @@ public class MacroExecutor {
             }
          });
          return done;
-      } else if (trigger instanceof aC delta) {
+      } else if (trigger instanceof WaitForPositionDeltaAction delta) {
          return b.init_CompletableFuture_D_Z(delta.distance, delta.horizontalOnly);
-      } else if (trigger instanceof aF teleport) {
+      } else if (trigger instanceof WaitForTeleportAction teleport) {
          Vec3 origin = mc.player == null ? Vec3.ZERO : mc.player.position();
          CompletableFuture<Void> done = new CompletableFuture<>();
          MacroExecutor.Inner_EventBus teleListener = init_MacroExecutor_Even_Predicate(
@@ -5027,7 +5027,7 @@ public class MacroExecutor {
             }
          });
          return done;
-      } else if (trigger instanceof Q) {
+      } else if (trigger instanceof RevisionSyncAction) {
          MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
          return CompletableFuture.runAsync(() -> init_V_MacroExecutor_Tabl_Runnable(run, () -> init_V_Minecraft_2(mc, trigger, null)));
       } else {
@@ -5051,7 +5051,7 @@ public class MacroExecutor {
       return future.isDone() && !future.isCancelled() && close_Z();
    }
 
-   private static void init_V_Minecraft_al(Minecraft mc, al action) {
+   private static void init_V_Minecraft_al(Minecraft mc, ToolsAction action) {
       if (!k.init_Z()) {
          throw new IllegalStateException("Tools requires the full client");
       }
@@ -5119,7 +5119,7 @@ public class MacroExecutor {
       init_V_al(action, result.join(), run);
    }
 
-   private static void init_V_al(al action, k.Inner_CachePool outcome, MacroExecutor.Inner_TableIndex run) {
+   private static void init_V_al(ToolsAction action, k.Inner_CachePool outcome, MacroExecutor.Inner_TableIndex run) {
       if (action.saveAs != null && !action.saveAs.isBlank()) {
          n.init_V_Str_Obj(action.saveAs, outcome.load());
       }
@@ -5139,7 +5139,7 @@ public class MacroExecutor {
    }
 
    private static void init_V_Minecraft_2(Minecraft mc, MacroAction action, autismclient.modules.PoolEntry module) {
-      if (action instanceof t || action instanceof SkippedLegacyMultiStep) {
+      if (action instanceof MultiAction || action instanceof SkippedLegacyMultiStep) {
          return;
       }
       if (d.init(action, mc) && init_Z_MacroAction_Minecraft(action, mc)) {
@@ -5149,12 +5149,12 @@ public class MacroExecutor {
          try {
             if (read_Z(mc, action)) {
                load_V_Minecraft_MacroAction(mc, action);
-               CompletableFuture<Void> postGuiFuture = !(action instanceof MapStore) && !(action instanceof PacketUtil) && !write(action)
+               CompletableFuture<Void> postGuiFuture = !(action instanceof ItemAction) && !(action instanceof DropAction) && !write(action)
                   ? write(mc, action)
                   : null;
-               if (action instanceof al tools) {
+               if (action instanceof ToolsAction tools) {
                   init_V_Minecraft_al(mc, tools);
-               } else if (action instanceof EventBus da) {
+               } else if (action instanceof DelayAction da) {
                   if (da.useTicks) {
                      for (int t = 0; t < da.delayTicks && close_Z(); t++) {
                         CompletableFuture<Void> tf = b.load_CompletableFuture();
@@ -5163,10 +5163,10 @@ public class MacroExecutor {
                   } else {
                      sleep(da.delayMs);
                   }
-               } else if (action instanceof UiHelper customMenu) {
+               } else if (action instanceof CustomMenuAction customMenu) {
                   load_V_Str(customMenu.getDisplayName());
                   customMenu.execute(mc);
-               } else if (action instanceof aB packetAction) {
+               } else if (action instanceof WaitForPacketAction packetAction) {
                   packetAction.matchedPacket = null;
                   packetAction.matchedDirection = "";
                   MacroExecutor.Inner_TableIndex packetRun = init_ThreadLocal.get();
@@ -5189,29 +5189,29 @@ public class MacroExecutor {
                   }
 
                   init_V_aB(packetAction);
-               } else if (action instanceof aM wpma) {
+               } else if (action instanceof WaitPacketMatchAction wpma) {
                   load_V_Str(wpma.getDisplayName());
                   init_V_aM_2(wpma);
-               } else if (action instanceof aK wipa) {
+               } else if (action instanceof WaitInventoryPredicateAction wipa) {
                   load_V_Str(wipa.getDisplayName());
                   init_V_BooleanSupplier_I(() -> wipa.init(mc), wipa.timeoutMs);
-               } else if (action instanceof ar wda) {
+               } else if (action instanceof WaitDurabilityAction wda) {
                   load_V_Str(wda.getDisplayName());
                   if (wda.useNext) {
                      init_V_Minecraft_ar(mc, wda);
                   } else {
                      init_V_BooleanSupplier_I(() -> wda.init(mc), wda.timeoutMs);
                   }
-               } else if (action instanceof aH wfsa) {
+               } else if (action instanceof WaitFreeSlotsAction wfsa) {
                   load_V_Str(wfsa.getDisplayName());
                   init_V_BooleanSupplier_I(() -> wfsa.init(mc), wfsa.timeoutMs);
-               } else if (action instanceof as weta) {
+               } else if (action instanceof WaitEntityTargetAction weta) {
                   load_V_Str(weta.getDisplayName());
                   init_V_BooleanSupplier_I(() -> weta.init(mc), weta.timeoutMs);
-               } else if (action instanceof aJ wgta) {
+               } else if (action instanceof WaitGuiTypeAction wgta) {
                   load_V_Str(wgta.getDisplayName());
                   init_V_MacroAction(wgta);
-                  if (wgta.waitMode == aJ.Inner_DataUtil.CLOSE) {
+                  if (wgta.waitMode == WaitGuiTypeAction.Inner_DataUtil.CLOSE) {
                      init_V_BooleanSupplier_I(init_BooleanSupplier_aJ_Minecraft(wgta, mc), wgta.timeoutMs);
                   } else {
                      init_V_BooleanSupplier_I(() -> {
@@ -5222,11 +5222,11 @@ public class MacroExecutor {
                   }
 
                   read_V(wgta);
-               } else if (action instanceof B pga) {
+               } else if (action instanceof PacketGateAction pga) {
                   init_V_Minecraft_B(mc, pga);
                } else if (write(action)) {
                   postGuiFuture = read_CompletableFuture(mc, action);
-               } else if (action instanceof ay wh) {
+               } else if (action instanceof WaitForHealthAction wh) {
                   load_V_Str(wh.write());
 
                   try {
@@ -5234,7 +5234,7 @@ public class MacroExecutor {
                      init_V_CompletableFuture(future);
                   } catch (CancellationException var113) {
                   }
-               } else if (action instanceof at wba) {
+               } else if (action instanceof WaitForBlockAction wba) {
                   load_V_Str(wba.getDisplayName());
 
                   try {
@@ -5242,9 +5242,9 @@ public class MacroExecutor {
                      init_V_CompletableFuture(future);
                   } catch (CancellationException var112) {
                   }
-               } else if (action instanceof ax wga) {
+               } else if (action instanceof WaitForGuiAction wga) {
                   init_V_MacroAction(wga);
-                  if (wga.waitMode == ax.Inner_DataUtil.CLOSE) {
+                  if (wga.waitMode == WaitForGuiAction.Inner_DataUtil.CLOSE) {
                      load_V_Str("Waiting for GUI close: " + wga.guiTitle);
                      init_V_BooleanSupplier_I(init_BooleanSupplier_ax_Minecraft(wga, mc), wga.timeoutMs);
                   } else {
@@ -5257,7 +5257,7 @@ public class MacroExecutor {
                   }
 
                   read_V(wga);
-               } else if (action instanceof av wca) {
+               } else if (action instanceof WaitForCooldownAction wca) {
                   ArrayUtil cooldownTarget = init_ArrayUtil_ArrayUtil_Str(wca.itemTarget, wca.itemName).init_ArrayUtil_Minecraft(mc);
                   if (cooldownTarget == null) {
                      return;
@@ -5271,7 +5271,7 @@ public class MacroExecutor {
                      init_V_CompletableFuture(future);
                   } catch (CancellationException var111) {
                   }
-               } else if (action instanceof aN wpa) {
+               } else if (action instanceof WaitPosAction wpa) {
                   load_V_Str("Waiting for Pos: " + String.format("%.0f, %.0f, %.0f", wpa.f_x_D, wpa.f_y_D, wpa.f_z_D));
 
                   try {
@@ -5279,19 +5279,19 @@ public class MacroExecutor {
                      init_V_CompletableFuture(future);
                   } catch (CancellationException var110) {
                   }
-               } else if (action instanceof TaskQueue captureValue) {
+               } else if (action instanceof CaptureValueAction captureValue) {
                   read(mc, captureValue);
-               } else if (action instanceof au wca) {
+               } else if (action instanceof WaitForChatAction wca) {
                   load_V_Str("Waiting for chat: " + wca.pattern);
                   init_V_au(wca);
-               } else if (action instanceof aw wea) {
+               } else if (action instanceof WaitForEntityAction wea) {
                   load_V_Str(wea.getDisplayName());
 
                   try {
                      init_V_BooleanSupplier_I(() -> wea.init_Z_5(mc), wea.timeoutMs);
                   } catch (CancellationException var109) {
                   }
-               } else if (action instanceof aE wsa) {
+               } else if (action instanceof WaitForSoundAction wsa) {
                   String sndDesc = wsa.soundIds.isEmpty() ? "any" : wsa.soundIds.get(0);
                   load_V_Str("Waiting for sound: " + sndDesc);
 
@@ -5300,7 +5300,7 @@ public class MacroExecutor {
                      init_V_CompletableFuture(future);
                   } catch (CancellationException var108) {
                   }
-               } else if (action instanceof aD wsca) {
+               } else if (action instanceof WaitForSlotChangeAction wsca) {
                   load_V_Str(wsca.getDisplayName());
 
                   try {
@@ -5308,7 +5308,7 @@ public class MacroExecutor {
                      init_V_CompletableFuture(future);
                   } catch (CancellationException var107) {
                   }
-               } else if (action instanceof aG world) {
+               } else if (action instanceof WaitForWorldChangeAction world) {
                   load_V_Str(world.getDisplayName());
 
                   try {
@@ -5316,7 +5316,7 @@ public class MacroExecutor {
                      load_Z_CompletableFuture_J(future, 0L);
                   } catch (CancellationException var106) {
                   }
-               } else if (action instanceof aC wpda) {
+               } else if (action instanceof WaitForPositionDeltaAction wpda) {
                   load_V_Str(wpda.getDisplayName());
 
                   try {
@@ -5324,7 +5324,7 @@ public class MacroExecutor {
                      init_V_CompletableFuture(future);
                   } catch (CancellationException var105) {
                   }
-               } else if (action instanceof aF teleport) {
+               } else if (action instanceof WaitForTeleportAction teleport) {
                   load_V_Str(teleport.getDisplayName());
 
                   try {
@@ -5332,7 +5332,7 @@ public class MacroExecutor {
                      load_Z_CompletableFuture_J(future, 0L);
                   } catch (CancellationException var104) {
                   }
-               } else if (action instanceof aI gm) {
+               } else if (action instanceof WaitGamemodeChangeAction gm) {
                   load_V_Str(gm.getDisplayName());
 
                   try {
@@ -5340,7 +5340,7 @@ public class MacroExecutor {
                      load_Z_CompletableFuture_J(future, gm.timeoutMs);
                   } catch (CancellationException var103) {
                   }
-               } else if (action instanceof aL wm) {
+               } else if (action instanceof WaitMovementAction wm) {
                   load_V_Str(wm.getDisplayName());
 
                   try {
@@ -5348,7 +5348,7 @@ public class MacroExecutor {
                      load_Z_CompletableFuture_J(future, 0L);
                   } catch (CancellationException var102) {
                   }
-               } else if (action instanceof az wla) {
+               } else if (action instanceof WaitForLanStepAction wla) {
                   load_V_Str(wla.getDisplayName());
 
                   try {
@@ -5356,12 +5356,12 @@ public class MacroExecutor {
                      init_V_CompletableFuture(future);
                   } catch (CancellationException var101) {
                   }
-               } else if (action instanceof aA wma) {
+               } else if (action instanceof WaitForMacroStepAction wma) {
                   load_V_Str(wma.getDisplayName());
                   init_V_aA(wma);
-               } else if (action instanceof CharEncoder ga) {
+               } else if (action instanceof GoToAction ga) {
                   init_V_Minecraft_CharEncoder(mc, ga);
-               } else if (action instanceof s ma) {
+               } else if (action instanceof MoveAction ma) {
                   if (ma.nonBlocking) {
                      mc.execute(() -> ma.execute(mc));
                      init_ConcurrentHashMap().put(ma, new int[]{ma.durationTicks - 1});
@@ -5375,8 +5375,8 @@ public class MacroExecutor {
                      MacroExecutor.Inner_TableIndex movementRun = init_ThreadLocal.get();
                      mc.execute(() -> init_V_MacroExecutor_Tabl(movementRun, ma, mc));
                   }
-               } else if (action instanceof ValueSink la) {
-                  ValueSink.Inner_DataUtil rotationTarget = init_ValueSink_DataUtil_Minecraft_ValueSink(mc, la);
+               } else if (action instanceof LookAtBlockAction la) {
+                  LookAtBlockAction.Inner_DataUtil rotationTarget = init_ValueSink_DataUtil_Minecraft_ValueSink(mc, la);
                   if (rotationTarget == null) {
                      return;
                   }
@@ -5394,7 +5394,7 @@ public class MacroExecutor {
                         }
                      });
                   }
-               } else if (action instanceof S ra) {
+               } else if (action instanceof RotateAction ra) {
                   if (ra.smooth) {
                      init_V_F(ra.yaw, ra.pitch, ra.init());
                      if (ra.waitForCompletion) {
@@ -5403,17 +5403,17 @@ public class MacroExecutor {
                   } else {
                      mc.execute(() -> action.execute(mc));
                   }
-               } else if (action instanceof q mna) {
+               } else if (action instanceof MineAction mna) {
                   init_V_Minecraft_q(mc, mna);
-               } else if (action instanceof MethodUtil) {
-                  init_V_Minecraft_MethodUtil(mc, (MethodUtil)action);
-               } else if (action instanceof CachePool) {
-                  init_V_Minecraft_CachePool(mc, (CachePool)action);
-               } else if (action instanceof K) {
-                  init_V_Minecraft_K(mc, (K)action);
-               } else if (action instanceof an) {
-                  init_V_Minecraft_an(mc, (an)action);
-               } else if (action instanceof NodeWalker ja) {
+               } else if (action instanceof InstaBreakAction) {
+                  init_V_Minecraft_MethodUtil(mc, (InstaBreakAction)action);
+               } else if (action instanceof BreakAction) {
+                  init_V_Minecraft_CachePool(mc, (BreakAction)action);
+               } else if (action instanceof PlaceAction) {
+                  init_V_Minecraft_K(mc, (PlaceAction)action);
+               } else if (action instanceof UseItemAction) {
+                  init_V_Minecraft_an(mc, (UseItemAction)action);
+               } else if (action instanceof JumpAction ja) {
                   mc.execute(() -> ja.execute(mc));
                   if (ja.tap) {
                      CompletableFuture<Void> tickFuture = b.load_CompletableFuture();
@@ -5426,12 +5426,12 @@ public class MacroExecutor {
                   }
 
                   mc.execute(() -> ja.init(mc));
-               } else if (action instanceof ad sna) {
+               } else if (action instanceof SneakAction sna) {
                   if (sna.persistent && sna.sneak) {
-                     init_CopyOnWriteArrayLi().removeIf(p -> p instanceof ad);
+                     init_CopyOnWriteArrayLi().removeIf(p -> p instanceof SneakAction);
                      init_CopyOnWriteArrayLi().add(sna);
                   } else if (!sna.sneak) {
-                     init_CopyOnWriteArrayLi().removeIf(p -> p instanceof ad);
+                     init_CopyOnWriteArrayLi().removeIf(p -> p instanceof SneakAction);
                   }
 
                   if (!sna.persistent && sna.sneak) {
@@ -5439,12 +5439,12 @@ public class MacroExecutor {
                   } else {
                      load_V_Minecraft(mc, () -> load_V_Minecraft(mc), sna.h_());
                   }
-               } else if (action instanceof ae spa) {
+               } else if (action instanceof SprintAction spa) {
                   if (spa.persistent && spa.sprint) {
-                     init_CopyOnWriteArrayLi().removeIf(p -> p instanceof ae);
+                     init_CopyOnWriteArrayLi().removeIf(p -> p instanceof SprintAction);
                      init_CopyOnWriteArrayLi().add(spa);
                   } else if (!spa.sprint) {
-                     init_CopyOnWriteArrayLi().removeIf(p -> p instanceof ae);
+                     init_CopyOnWriteArrayLi().removeIf(p -> p instanceof SprintAction);
                   }
 
                   if (!spa.persistent && spa.sprint) {
@@ -5452,7 +5452,7 @@ public class MacroExecutor {
                   } else {
                      load_V_Minecraft(mc, () -> read(mc), spa.h_());
                   }
-               } else if (action instanceof u nba) {
+               } else if (action instanceof NbtBookAction nba) {
                   int totalBooks = Math.max(1, nba.bookCount);
                   long delayMs = Math.max(1, nba.delayTicks) * 50L;
                   boolean signedAny = false;
@@ -5481,7 +5481,7 @@ public class MacroExecutor {
                   if (signedAny && nba.disconnectAfter) {
                      mc.execute(() -> nba.init_V_Minecraft_8(mc));
                   }
-               } else if (action instanceof MapStore ia) {
+               } else if (action instanceof ItemAction ia) {
                   if (ia.waitForItem || !ia.itemNames.isEmpty()) {
                      try {
                         load_V_Minecraft_MapStore(mc, ia);
@@ -5491,8 +5491,8 @@ public class MacroExecutor {
 
                   postGuiFuture = write(mc, ia);
                   init_V_Minecraft_3(mc, action, "ItemAction");
-               } else if (!(action instanceof PacketUtil) && !(action instanceof ai)) {
-                  if (action instanceof Y) {
+               } else if (!(action instanceof DropAction) && !(action instanceof SwapSlotsAction)) {
+                  if (action instanceof SendPacketAction) {
                      if (module != null && module.add_Z()) {
                         try {
                            action.execute(mc);
@@ -5508,14 +5508,14 @@ public class MacroExecutor {
                            }
                         });
                      }
-                  } else if (action instanceof NetHelper ca) {
+                  } else if (action instanceof ClickAction ca) {
                      init_V_Minecraft_NetHelper(mc, ca);
-                  } else if (action instanceof G) {
-                     init_V_Minecraft_G(mc, (G)action);
-                  } else if (action instanceof aQ xsa) {
-                     if (xsa.mode == aQ.Inner_StreamUtil.PUT_IN
-                        && (xsa.transferMode == aQ.Inner_ConfigStore.CLICK || xsa.transferMode == aQ.Inner_ConfigStore.SAFE_CLICK)) {
-                        if (xsa.transferMode == aQ.Inner_ConfigStore.SAFE_CLICK) {
+                  } else if (action instanceof PayAction) {
+                     init_V_Minecraft_G(mc, (PayAction)action);
+                  } else if (action instanceof XCarryAction xsa) {
+                     if (xsa.mode == XCarryAction.Inner_StreamUtil.PUT_IN
+                        && (xsa.transferMode == XCarryAction.Inner_ConfigStore.CLICK || xsa.transferMode == XCarryAction.Inner_ConfigStore.SAFE_CLICK)) {
+                        if (xsa.transferMode == XCarryAction.Inner_ConfigStore.SAFE_CLICK) {
                            load_V_Str("XCarry Safe");
                            load_V_Minecraft_aQ(mc, xsa);
                         } else {
@@ -5547,10 +5547,10 @@ public class MacroExecutor {
                            }
                         });
                      }
-                  } else if (action instanceof SyncManager) {
-                     init_V_Minecraft_SyncManager(mc, (SyncManager)action);
-                  } else if (action instanceof ah sia) {
-                     load_V_Str((sia.mode == ah.Inner_DataUtil.LOOT ? "Looting" : "Storing") + (sia.persistent ? " ∞" : ""));
+                  } else if (action instanceof CraftAction) {
+                     init_V_Minecraft_SyncManager(mc, (CraftAction)action);
+                  } else if (action instanceof StoreItemAction sia) {
+                     load_V_Str((sia.mode == StoreItemAction.Inner_DataUtil.LOOT ? "Looting" : "Storing") + (sia.persistent ? " ∞" : ""));
                      if (sia.persistent) {
                         while (close_Z()) {
                            try {
@@ -5569,8 +5569,8 @@ public class MacroExecutor {
                            AutismClientMessaging.sendPrefixed("Store error: " + e.getMessage());
                         }
                      }
-                  } else if (action instanceof ListPool auditAction
-                     && (auditAction.mode == ListPool.Inner_BufferHelper.DUPE || auditAction.mode == ListPool.Inner_BufferHelper.DUPE_SPAM)) {
+                  } else if (action instanceof InventoryAuditAction auditAction
+                     && (auditAction.mode == InventoryAuditAction.Inner_BufferHelper.DUPE || auditAction.mode == InventoryAuditAction.Inner_BufferHelper.DUPE_SPAM)) {
                      load_V_Str("Dupe: " + auditAction.dupeVector.name() + " " + auditAction.openMode.name());
 
                      try {
@@ -5578,11 +5578,11 @@ public class MacroExecutor {
                      } catch (Throwable t) {
                         AutismClientMessaging.sendPrefixed("§cDupe error: " + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage()));
                      }
-                  } else if (action instanceof StateCache sequence) {
+                  } else if (action instanceof ContainerClickSequenceAction sequence) {
                      init_V_Minecraft_StateCache(mc, sequence);
-                  } else if (action instanceof y burst) {
+                  } else if (action instanceof PacketBurstAction burst) {
                      init_V_Minecraft_y(mc, burst);
-                  } else if (action instanceof aj tsa) {
+                  } else if (action instanceof TickSyncAction tsa) {
                      if (mc.level == null) {
                         return;
                      }
@@ -5604,7 +5604,7 @@ public class MacroExecutor {
 
                         AutismClientMessaging.sendPrefixed("Tick sync: " + preGenerated.size() + " pkts sent");
                      }
-                  } else if (action instanceof Q rsa) {
+                  } else if (action instanceof RevisionSyncAction rsa) {
                      if (mc.player == null || mc.player.containerMenu == null) {
                         return;
                      }
@@ -5627,7 +5627,7 @@ public class MacroExecutor {
 
                         AutismClientMessaging.sendPrefixed("Rev sync: " + preGenerated.size() + " pkts sent");
                      }
-                  } else if (action instanceof aa stsa) {
+                  } else if (action instanceof ServerTickSyncAction stsa) {
                      if (mc.getConnection() == null) {
                         return;
                      }
@@ -5676,10 +5676,10 @@ public class MacroExecutor {
                         long actualDelay = (System.nanoTime() - optimalTime) / 1000000L;
                         AutismClientMessaging.sendPrefixed("ServerSync: " + preGenerated.size() + " pkts (+" + actualDelay + "ms)");
                      }
-                  } else if (action instanceof BufferHelper bundleV2) {
+                  } else if (action instanceof BundleDupeV2Action bundleV2) {
                      load_V_Str("Bundle Dupe V2");
                      bundleV2.execute(mc);
-                  } else if (action instanceof R rollback) {
+                  } else if (action instanceof RollbackAction rollback) {
                      load_V_Str("Rollback");
 
                      try {
@@ -5687,13 +5687,13 @@ public class MacroExecutor {
                      } catch (Exception e) {
                         AutismClientMessaging.sendPrefixed("§cRollback failed: " + init_Str_Throwable(e));
                      }
-                  } else if (action instanceof ag stopAction) {
-                     if (stopAction.target == ag.Inner_DataUtil.SELF) {
+                  } else if (action instanceof StopMacroAction stopAction) {
+                     if (stopAction.target == StopMacroAction.Inner_DataUtil.SELF) {
                         flush_V();
                      } else {
                         stopAction.execute(mc);
                      }
-                  } else if (action instanceof ao phaseAction) {
+                  } else if (action instanceof UseItemPhaseAction phaseAction) {
                      init_V_Minecraft_ao(mc, phaseAction);
                   } else if (action instanceof ContextMacroAction contextAction) {
                      init_V_ContextMacroAction(contextAction);
@@ -5716,7 +5716,7 @@ public class MacroExecutor {
                      init_V_Minecraft_3(mc, action, action.getDisplayName());
                   }
                } else {
-                  if (action instanceof PacketUtil dropAction) {
+                  if (action instanceof DropAction dropAction) {
                      postGuiFuture = write(mc, dropAction);
                   }
 
@@ -5758,18 +5758,18 @@ public class MacroExecutor {
    }
 
    private static boolean init_Z_MacroAction_Minecraft(MacroAction action, Minecraft mc) {
-      if (action instanceof au chat && chat.init_UtilCore_DataUtil() == UtilCore.Inner_DataUtil.MATCH) {
+      if (action instanceof WaitForChatAction chat && chat.init_UtilCore_DataUtil() == UtilCore.Inner_DataUtil.MATCH) {
          return n.init_j_CachePool_Str_Minecraft(chat.pattern, mc).init_Z();
-      } else if (action instanceof ax gui && gui.matchMode == UtilCore.Inner_DataUtil.MATCH) {
+      } else if (action instanceof WaitForGuiAction gui && gui.matchMode == UtilCore.Inner_DataUtil.MATCH) {
          return n.init_j_CachePool_Str_Minecraft(gui.guiTitle, mc).init_Z();
-      } else if (action instanceof aJ gui && gui.matchMode == UtilCore.Inner_DataUtil.MATCH) {
+      } else if (action instanceof WaitGuiTypeAction gui && gui.matchMode == UtilCore.Inner_DataUtil.MATCH) {
          return n.init_j_CachePool_Str_Minecraft(gui.title, mc).init_Z();
-      } else if (action instanceof aK inventory) {
+      } else if (action instanceof WaitInventoryPredicateAction inventory) {
          return n.init_j_CachePool_Str_Minecraft(inventory.itemName, mc).init_Z();
-      } else if (action instanceof ar durability && durability.targetMode == ar.Inner_CachePool.ITEM) {
+      } else if (action instanceof WaitDurabilityAction durability && durability.targetMode == WaitDurabilityAction.Inner_CachePool.ITEM) {
          return n.init_j_CachePool_Str_Minecraft(durability.itemName, mc).init_Z();
       } else {
-         return action instanceof as entity ? n.init_j_CachePool_Str_Minecraft(entity.entityId, mc).init_Z() : true;
+         return action instanceof WaitEntityTargetAction entity ? n.init_j_CachePool_Str_Minecraft(entity.entityId, mc).init_Z() : true;
       }
    }
 
@@ -5779,16 +5779,16 @@ public class MacroExecutor {
    }
 
    private static boolean write(MacroAction action) {
-      return action instanceof v || action instanceof PathHelper;
+      return action instanceof OpenContainerAction || action instanceof InteractEntityAction;
    }
 
    private static CompletableFuture<Void> read_CompletableFuture(Minecraft mc, MacroAction action) {
       boolean var10000;
       switch (action) {
-         case v open:
+         case OpenContainerAction open:
             var10000 = open.waitForTarget;
             break;
-         case PathHelper interact:
+         case InteractEntityAction interact:
             var10000 = interact.waitForTarget;
             break;
          default:
@@ -5832,10 +5832,10 @@ public class MacroExecutor {
 
    private static boolean init_Z_Minecraft_MacroAction(Minecraft mc, MacroAction action) {
       return load_Obj_Minecraft(mc, () -> {
-         if (action instanceof v open) {
+         if (action instanceof OpenContainerAction open) {
             return open.load(mc);
          } else {
-            return action instanceof PathHelper interact ? interact.load(mc) : true;
+            return action instanceof InteractEntityAction interact ? interact.load(mc) : true;
          }
       }, Boolean.FALSE);
    }
@@ -5843,9 +5843,9 @@ public class MacroExecutor {
    private static boolean load_Z_Minecraft_MacroAction(Minecraft mc, MacroAction action) {
       return init_Obj_Minecraft(mc, () -> {
          try {
-            if (action instanceof v open) {
+            if (action instanceof OpenContainerAction open) {
                return open.init_Z_Minecraft_4(mc);
-            } else if (action instanceof PathHelper interact) {
+            } else if (action instanceof InteractEntityAction interact) {
                return interact.init_Z_Minecraft(mc);
             } else {
                action.execute(mc);
@@ -5982,7 +5982,7 @@ public class MacroExecutor {
       return action instanceof E ordered && ordered.h_();
    }
 
-   private static void init_V_Minecraft_MapStore(Minecraft mc, MapStore ia) {
+   private static void init_V_Minecraft_MapStore(Minecraft mc, ItemAction ia) {
       load_V_Str(ia.getDisplayName());
       List<Runnable> plan = load_Obj_Minecraft(mc, () -> ia.init_List_Minecraft(mc), Collections.emptyList());
       if (plan != null && !plan.isEmpty()) {
@@ -6033,7 +6033,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_ao(Minecraft mc, ao action) {
+   private static void init_V_Minecraft_ao(Minecraft mc, UseItemPhaseAction action) {
       int times = action.init_I_6();
 
       for (int i = 0; i < times && close_Z(); i++) {
@@ -6085,7 +6085,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_NetHelper(Minecraft mc, NetHelper action) {
+   private static void init_V_Minecraft_NetHelper(Minecraft mc, ClickAction action) {
       int times = Math.max(1, action.clickCount);
       init_V_Minecraft_5(mc, () -> {
          for (int c = 0; c < times && close_Z(); c++) {
@@ -6100,18 +6100,18 @@ public class MacroExecutor {
    }
 
    private static boolean sync(MacroAction action) {
-      return !(action instanceof MapStore)
-            && !(action instanceof PacketUtil)
-            && !(action instanceof ai)
-            && !(action instanceof NetHelper)
-            && !(action instanceof aQ)
-         ? action instanceof ah storeItemAction && !storeItemAction.persistent
+      return !(action instanceof ItemAction)
+            && !(action instanceof DropAction)
+            && !(action instanceof SwapSlotsAction)
+            && !(action instanceof ClickAction)
+            && !(action instanceof XCarryAction)
+         ? action instanceof StoreItemAction storeItemAction && !storeItemAction.persistent
          : true;
    }
 
-   private static void init_V_Minecraft_ah(Minecraft mc, ah action) {
+   private static void init_V_Minecraft_ah(Minecraft mc, StoreItemAction action) {
       if (action != null) {
-         int delayTicks = ah.init_I_I_7(action.delayTicks);
+         int delayTicks = StoreItemAction.init_I_I_7(action.delayTicks);
          if (delayTicks <= 0) {
             init_V_Minecraft_Runnable(mc, () -> action.init_V_Minecraft_6(mc));
          } else {
@@ -6138,12 +6138,12 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_an(Minecraft mc, an action) {
+   private static void init_V_Minecraft_an(Minecraft mc, UseItemAction action) {
       if (action != null) {
          boolean sneaking = action.sneak;
 
          try {
-            if (action.useMode == an.Inner_DataUtil.CUSTOM_HOLD) {
+            if (action.useMode == UseItemAction.Inner_DataUtil.CUSTOM_HOLD) {
                init_V_Minecraft_5(mc, () -> {
                   try {
                      if (sneaking) {
@@ -6208,7 +6208,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_StateCache(Minecraft mc, StateCache action) {
+   private static void init_V_Minecraft_StateCache(Minecraft mc, ContainerClickSequenceAction action) {
       if (action != null) {
          List<Integer> slots = action.init();
          int repeats = Math.max(1, action.repeatCount);
@@ -6233,7 +6233,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_y(Minecraft mc, y action) {
+   private static void init_V_Minecraft_y(Minecraft mc, PacketBurstAction action) {
       if (action != null && mc != null && mc.getConnection() != null) {
          if (action.flushBefore) {
             ck.init_ck().init_I_ClientPacketListen(mc.getConnection());
@@ -6268,7 +6268,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_aQ(Minecraft mc, aQ xsa) {
+   private static void init_V_Minecraft_aQ(Minecraft mc, XCarryAction xsa) {
       if (mc != null && mc.player != null && mc.gameMode != null) {
          if (xsa.init_Z_7()) {
             load_V_Str("XCarry Cursor");
@@ -6346,7 +6346,7 @@ public class MacroExecutor {
                int xCarryAttempts = 0;
 
                while (close_Z() && xCarryAttempts++ < 512) {
-                  aQ.Inner_CachePool move = load_Obj_Minecraft(
+                  XCarryAction.Inner_CachePool move = load_Obj_Minecraft(
                      mc, () -> mc.player == null ? null : xsa.init_aQ_CachePool_InventoryMenu(mc.player.inventoryMenu), null
                   );
                   if (move == null) {
@@ -6366,7 +6366,7 @@ public class MacroExecutor {
                      if (mc.player != null && mc.gameMode != null) {
                         InventoryMenu handler = mc.player.inventoryMenu;
                         mc.player.containerMenu = handler;
-                        return aQ.init(handler, mc, move.init, move.load, move.read);
+                        return XCarryAction.init(handler, mc, move.init, move.load, move.read);
                      } else {
                         return false;
                      }
@@ -6399,7 +6399,7 @@ public class MacroExecutor {
 
                init_V_Minecraft_Runnable(mc, () -> {
                   if (mc.player != null) {
-                     boolean active = aQ.init_Z_InventoryMenu_3(mc.player.inventoryMenu, xsa.carryCursor, xsa.init_Set());
+                     boolean active = XCarryAction.init_Z_InventoryMenu_3(mc.player.inventoryMenu, xsa.carryCursor, xsa.init_Set());
                      ck shared = ck.init_ck();
                      if (active) {
                         shared.load(xsa.init_Set(), xsa.carryCursor);
@@ -6419,7 +6419,7 @@ public class MacroExecutor {
 
                         autismclient.util.E containerTarget = containerTargetRef.get();
                         if (containerTarget != null) {
-                           aQ.init_V_Minecraft_E(mc, containerTarget);
+                           XCarryAction.init_V_Minecraft_E(mc, containerTarget);
                         }
                      }
                   });
@@ -6434,7 +6434,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void load_V_Minecraft_aQ(Minecraft mc, aQ xsa) {
+   private static void load_V_Minecraft_aQ(Minecraft mc, XCarryAction xsa) {
       if (mc != null && mc.player != null && mc.gameMode != null) {
          if (xsa.init_Z_7()) {
             load_V_Str("XCarry Safe: Cursor");
@@ -6494,21 +6494,21 @@ public class MacroExecutor {
                }
 
                init_V_Minecraft_Runnable(mc, xsa::init_V_12);
-               int safeDelayTicks = aQ.write(xsa.safeClickDelayTicks);
+               int safeDelayTicks = XCarryAction.write(xsa.safeClickDelayTicks);
                boolean delayAfterPickup = xsa.safeClickDelayAfterPickup;
                boolean delayBeforeReturn = xsa.safeClickDelayBeforeReturn;
                int attempts = 0;
 
                while (close_Z() && attempts++ < 512) {
-                  List<aQ.Inner_CachePool> group = load_Obj_Minecraft(mc, () -> init_List_Minecraft_aQ(mc, xsa), List.of());
+                  List<XCarryAction.Inner_CachePool> group = load_Obj_Minecraft(mc, () -> init_List_Minecraft_aQ(mc, xsa), List.of());
                   if (group.isEmpty()) {
                      break;
                   }
 
-                  aQ.Inner_CachePool first = group.get(0);
+                  XCarryAction.Inner_CachePool first = group.get(0);
                   int total = 0;
 
-                  for (aQ.Inner_CachePool move : group) {
+                  for (XCarryAction.Inner_CachePool move : group) {
                      total += Math.max(0, move.read());
                   }
 
@@ -6521,7 +6521,7 @@ public class MacroExecutor {
 
                init_V_Minecraft_Runnable(mc, () -> {
                   if (mc.player != null) {
-                     boolean active = aQ.init_Z_InventoryMenu_3(mc.player.inventoryMenu, xsa.carryCursor, xsa.init_Set());
+                     boolean active = XCarryAction.init_Z_InventoryMenu_3(mc.player.inventoryMenu, xsa.carryCursor, xsa.init_Set());
                      ck shared = ck.init_ck();
                      if (active) {
                         shared.load(xsa.init_Set(), xsa.carryCursor);
@@ -6541,7 +6541,7 @@ public class MacroExecutor {
 
                         autismclient.util.E containerTarget = containerTargetRef.get();
                         if (containerTarget != null) {
-                           aQ.init_V_Minecraft_E(mc, containerTarget);
+                           XCarryAction.init_V_Minecraft_E(mc, containerTarget);
                         }
                      }
                   });
@@ -6556,15 +6556,15 @@ public class MacroExecutor {
       }
    }
 
-   private static List<aQ.Inner_CachePool> init_List_Minecraft_aQ(Minecraft mc, aQ xsa) {
+   private static List<XCarryAction.Inner_CachePool> init_List_Minecraft_aQ(Minecraft mc, XCarryAction xsa) {
       if (mc != null && mc.player != null && xsa != null) {
          InventoryMenu handler = mc.player.inventoryMenu;
-         List<aQ.Inner_CachePool> planned = xsa.init_List_InventoryMenu(handler);
+         List<XCarryAction.Inner_CachePool> planned = xsa.init_List_InventoryMenu(handler);
          if (planned.isEmpty()) {
             return List.of();
          }
 
-         aQ.Inner_CachePool first = planned.get(0);
+         XCarryAction.Inner_CachePool first = planned.get(0);
          if (first == null) {
             return List.of();
          }
@@ -6575,10 +6575,10 @@ public class MacroExecutor {
                return List.of();
             }
 
-            ArrayList<aQ.Inner_CachePool> group = new ArrayList<>();
+            ArrayList<XCarryAction.Inner_CachePool> group = new ArrayList<>();
             int remainingSource = source.getCount();
 
-            for (aQ.Inner_CachePool move : planned) {
+            for (XCarryAction.Inner_CachePool move : planned) {
                if (move == null
                   || move.init() != first.init()
                   || move.read() <= 0
@@ -6600,7 +6600,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_Minecraft_3(Minecraft mc, List<aQ.Inner_CachePool> group, int delayTicks, boolean delayAfterPickup, boolean delayBeforeReturn) {
+   private static boolean init_Z_Minecraft_3(Minecraft mc, List<XCarryAction.Inner_CachePool> group, int delayTicks, boolean delayAfterPickup, boolean delayBeforeReturn) {
       if (mc != null && mc.player != null && mc.gameMode != null && group != null && !group.isEmpty()) {
          MacroExecutor.Inner_RingBuffer snapshot = load_Obj_Minecraft(
             mc, () -> init_MacroExecutor_Ring_Minecraft_List(mc, group), MacroExecutor.Inner_RingBuffer.init()
@@ -6618,14 +6618,14 @@ public class MacroExecutor {
 
    private static MacroExecutor.Inner_RingBuffer init_MacroExecutor_Ring_Minecraft(
       Minecraft mc,
-      List<aQ.Inner_CachePool> group,
+      List<XCarryAction.Inner_CachePool> group,
       MacroExecutor.Inner_RingBuffer snapshot,
       int delayTicks,
       boolean delayAfterPickup,
       boolean delayBeforeReturn
    ) {
       if (mc != null && mc.player != null && mc.gameMode != null && group != null && !group.isEmpty() && snapshot != null && snapshot.init_Z) {
-         aQ.Inner_CachePool first = group.get(0);
+         XCarryAction.Inner_CachePool first = group.get(0);
          if (!Boolean.TRUE.equals(load_Obj_Minecraft(mc, () -> {
             InventoryMenu handler = mc.player == null ? null : mc.player.inventoryMenu;
             return handler != null && handler.getCarried().isEmpty() && init_Z_InventoryMenu_2(handler, group, snapshot);
@@ -6665,7 +6665,7 @@ public class MacroExecutor {
                dragClicks.add(new MacroExecutor.Inner_BitSetUtil(first.init(), 0, ContainerInput.PICKUP));
                dragClicks.add(new MacroExecutor.Inner_BitSetUtil(-999, start, ContainerInput.QUICK_CRAFT));
 
-               for (aQ.Inner_CachePool move : group) {
+               for (XCarryAction.Inner_CachePool move : group) {
                   if (move != null) {
                      dragClicks.add(new MacroExecutor.Inner_BitSetUtil(move.load(), add, ContainerInput.QUICK_CRAFT));
                   }
@@ -6680,7 +6680,7 @@ public class MacroExecutor {
             }
 
             for (int i = nextDragIndex; i < group.size(); i++) {
-               aQ.Inner_CachePool move = group.get(i);
+               XCarryAction.Inner_CachePool move = group.get(i);
                if (i > nextDragIndex || nextDragIndex > 0) {
                   read(delayTicks);
                }
@@ -6721,7 +6721,7 @@ public class MacroExecutor {
 
                init_V_I_Z(delayTicks, true);
             } else {
-               aQ.Inner_CachePool firstMove = group.get(0);
+               XCarryAction.Inner_CachePool firstMove = group.get(0);
                int firstButton = firstMove.read() >= snapshot.init_I ? 0 : 1;
                if (!init_Z_Minecraft_MacroExecutor_BitSArr(
                   mc,
@@ -6743,7 +6743,7 @@ public class MacroExecutor {
             }
 
             for (int i = nextMoveIndex; i < group.size(); i++) {
-               aQ.Inner_CachePool move = group.get(i);
+               XCarryAction.Inner_CachePool move = group.get(i);
                if (move != null && move.read() > 0 && !init_Z_Minecraft(mc, move.load(), move.read(), delayTicks)) {
                   return MacroExecutor.Inner_RingBuffer.init();
                }
@@ -6814,11 +6814,11 @@ public class MacroExecutor {
       }
    }
 
-   private static MacroExecutor.Inner_RingBuffer init_MacroExecutor_Ring_Minecraft_List(Minecraft mc, List<aQ.Inner_CachePool> group) {
+   private static MacroExecutor.Inner_RingBuffer init_MacroExecutor_Ring_Minecraft_List(Minecraft mc, List<XCarryAction.Inner_CachePool> group) {
       if (mc != null && mc.player != null && group != null && !group.isEmpty()) {
          InventoryMenu handler = mc.player.inventoryMenu;
          if (handler != null && handler.getCarried().isEmpty()) {
-            aQ.Inner_CachePool first = group.get(0);
+            XCarryAction.Inner_CachePool first = group.get(0);
             if (first.init() >= 0 && first.init() < handler.slots.size()) {
                Slot sourceSlot = handler.slots.get(first.init());
                ItemStack source = sourceSlot.getItem();
@@ -6830,7 +6830,7 @@ public class MacroExecutor {
                LinkedHashMap<Integer, Integer> startCounts = new LinkedHashMap<>();
                LinkedHashMap<Integer, Integer> expectedCounts = new LinkedHashMap<>();
 
-               for (aQ.Inner_CachePool move : group) {
+               for (XCarryAction.Inner_CachePool move : group) {
                   if (move == null || move.init() != first.init()) {
                      return MacroExecutor.Inner_RingBuffer.init();
                   }
@@ -6862,7 +6862,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_InventoryMenu_5(InventoryMenu handler, ItemStack source, aQ.Inner_CachePool move) {
+   private static boolean init_Z_InventoryMenu_5(InventoryMenu handler, ItemStack source, XCarryAction.Inner_CachePool move) {
       if (handler != null && source != null && !source.isEmpty() && move != null && move.read() > 0) {
          if (move.load() < 0 || move.load() >= handler.slots.size()) {
             return false;
@@ -6899,13 +6899,13 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_InventoryMenu_2(InventoryMenu handler, List<aQ.Inner_CachePool> group, MacroExecutor.Inner_RingBuffer snapshot) {
+   private static boolean init_Z_InventoryMenu_2(InventoryMenu handler, List<XCarryAction.Inner_CachePool> group, MacroExecutor.Inner_RingBuffer snapshot) {
       if (handler != null && group != null && snapshot != null && snapshot.init_Z) {
-         aQ.Inner_CachePool first = group.isEmpty() ? null : group.get(0);
+         XCarryAction.Inner_CachePool first = group.isEmpty() ? null : group.get(0);
          if (first != null && first.init() >= 0 && first.init() < handler.slots.size()) {
             ItemStack source = handler.slots.get(first.init()).getItem();
             if (!source.isEmpty() && source.getCount() == snapshot.init_I && ItemStack.isSameItemSameComponents(source, snapshot.init_ItemStack)) {
-               for (aQ.Inner_CachePool move : group) {
+               for (XCarryAction.Inner_CachePool move : group) {
                   if (move != null && move.init() == first.init()) {
                      int current = init_I_InventoryMenu_I(handler, move.load());
                      Integer expectedStart = snapshot.init_Map.get(move.load());
@@ -6935,12 +6935,12 @@ public class MacroExecutor {
    }
 
    private static MacroExecutor.Inner_CharEncoder init_MacroExecutor_Char_InventoryMenu(
-      InventoryMenu handler, List<aQ.Inner_CachePool> group, MacroExecutor.Inner_RingBuffer snapshot
+      InventoryMenu handler, List<XCarryAction.Inner_CachePool> group, MacroExecutor.Inner_RingBuffer snapshot
    ) {
       if (handler != null && group != null && group.size() >= 2 && snapshot != null && snapshot.init_Z) {
          LinkedHashMap<Integer, Integer> desiredAdds = new LinkedHashMap<>();
 
-         for (aQ.Inner_CachePool move : group) {
+         for (XCarryAction.Inner_CachePool move : group) {
             if (move != null && move.read() > 0) {
                if (move.load() >= 0 && move.load() < handler.slots.size()) {
                   Slot targetSlot = handler.slots.get(move.load());
@@ -7098,7 +7098,7 @@ public class MacroExecutor {
    }
 
    private static void read(int delayTicks) {
-      int ticks = aQ.write(delayTicks);
+      int ticks = XCarryAction.write(delayTicks);
 
       for (int i = 0; i < ticks && close_Z(); i++) {
          pop();
@@ -7384,7 +7384,7 @@ public class MacroExecutor {
       init_V_CompletableFuture(tickFuture);
    }
 
-   private static void init_V_Minecraft_MethodUtil(Minecraft mc, MethodUtil action) {
+   private static void init_V_Minecraft_MethodUtil(Minecraft mc, InstaBreakAction action) {
       if (mc != null && mc.player != null && mc.level != null && mc.getConnection() != null && mc.gameMode != null) {
          BlockPos target = action.blockPos == null ? BlockPos.ZERO : action.blockPos;
          Direction direction = action.direction == null ? Direction.UP : action.direction;
@@ -7488,7 +7488,7 @@ public class MacroExecutor {
       return run != null && run.load_aM != null && run.load_aM.init_List != null ? run.load_aM.init_List.contains(action) : true;
    }
 
-   private static boolean init_Z_Minecraft_MethodUtil(Minecraft mc, MethodUtil action) {
+   private static boolean init_Z_Minecraft_MethodUtil(Minecraft mc, InstaBreakAction action) {
       return init_Obj_Minecraft(mc, () -> {
          if (mc.player == null) {
             return false;
@@ -7544,7 +7544,7 @@ public class MacroExecutor {
       }, tickAligned);
    }
 
-   private static void init_V_Minecraft_CachePool(Minecraft mc, CachePool action) {
+   private static void init_V_Minecraft_CachePool(Minecraft mc, BreakAction action) {
       if (mc != null && mc.player != null && mc.level != null && mc.getConnection() != null && mc.gameMode != null) {
          BlockPos target = action.blockPos == null ? BlockPos.ZERO : action.blockPos;
          Direction direction = action.direction == null ? Direction.UP : action.direction;
@@ -7633,7 +7633,7 @@ public class MacroExecutor {
    }
 
    private static int init_I_Minecraft(
-      Minecraft mc, CachePool action, BlockPos pos, Direction dir, boolean[] started, boolean[] nextStepsFired, boolean[] missingNextStepsWarned
+      Minecraft mc, BreakAction action, BlockPos pos, Direction dir, boolean[] started, boolean[] nextStepsFired, boolean[] missingNextStepsWarned
    ) {
       MacroExecutor.Inner_CachePool plan = load_Obj_Minecraft(
          mc, () -> init_MacroExecutor_Cach_Minecraft(mc, action, pos), new MacroExecutor.Inner_CachePool(-1, false, false)
@@ -7652,7 +7652,7 @@ public class MacroExecutor {
       return init_Obj_Minecraft(mc, () -> init_I_Minecraft_2(mc, action, pos, dir, started), -1, action.h_());
    }
 
-   private static MacroExecutor.Inner_CachePool init_MacroExecutor_Cach_Minecraft(Minecraft mc, CachePool action, BlockPos pos) {
+   private static MacroExecutor.Inner_CachePool init_MacroExecutor_Cach_Minecraft(Minecraft mc, BreakAction action, BlockPos pos) {
       if (mc.level == null || mc.gameMode == null || mc.player == null || mc.getConnection() == null) {
          return new MacroExecutor.Inner_CachePool(-1, false, false);
       }
@@ -7689,7 +7689,7 @@ public class MacroExecutor {
       return new MacroExecutor.Inner_CachePool(0, instant, interactFirst);
    }
 
-   private static int init_I_Minecraft_2(Minecraft mc, CachePool action, BlockPos pos, Direction dir, boolean[] started) {
+   private static int init_I_Minecraft_2(Minecraft mc, BreakAction action, BlockPos pos, Direction dir, boolean[] started) {
       if (mc.level == null || mc.gameMode == null || mc.player == null || mc.getConnection() == null) {
          return -1;
       }
@@ -7709,7 +7709,7 @@ public class MacroExecutor {
       }
    }
 
-   private static int load(Minecraft mc, CachePool action, BlockPos pos, Direction dir, boolean[] started) {
+   private static int load(Minecraft mc, BreakAction action, BlockPos pos, Direction dir, boolean[] started) {
       if (mc.level != null && mc.gameMode != null && mc.player != null && mc.getConnection() != null) {
          BlockState state = mc.level.getBlockState(pos);
          if (!state.isAir() && !mc.level.isOutsideBuildHeight(pos)) {
@@ -7752,7 +7752,7 @@ public class MacroExecutor {
    }
 
    private static int init_I_Minecraft_2(
-      Minecraft mc, CachePool action, BlockPos pos, Direction dir, boolean[] nextStepsFired, boolean[] missingNextStepsWarned
+      Minecraft mc, BreakAction action, BlockPos pos, Direction dir, boolean[] nextStepsFired, boolean[] missingNextStepsWarned
    ) {
       MacroExecutor.Inner_StreamUtil plan = load_Obj_Minecraft(
          mc, () -> init_MacroExecutor_Stre_Minecraft(mc, action, pos), new MacroExecutor.Inner_StreamUtil(-1, false, false)
@@ -7779,7 +7779,7 @@ public class MacroExecutor {
       return init_Obj_Minecraft(mc, () -> init_I_Minecraft(mc, action, pos, dir), -1, action.h_());
    }
 
-   private static MacroExecutor.Inner_StreamUtil init_MacroExecutor_Stre_Minecraft(Minecraft mc, CachePool action, BlockPos pos) {
+   private static MacroExecutor.Inner_StreamUtil init_MacroExecutor_Stre_Minecraft(Minecraft mc, BreakAction action, BlockPos pos) {
       if (mc.level != null && mc.gameMode != null && mc.player != null && mc.getConnection() != null) {
          BlockState state = mc.level.getBlockState(pos);
          if (state.isAir()) {
@@ -7798,7 +7798,7 @@ public class MacroExecutor {
       }
    }
 
-   private static int init_I_Minecraft(Minecraft mc, CachePool action, BlockPos pos, Direction dir) {
+   private static int init_I_Minecraft(Minecraft mc, BreakAction action, BlockPos pos, Direction dir) {
       if (mc.level == null || mc.gameMode == null || mc.player == null || mc.getConnection() == null) {
          return -1;
       }
@@ -7817,7 +7817,7 @@ public class MacroExecutor {
       return mc.level.getBlockState(pos).isAir() ? 1 : 0;
    }
 
-   private static int load(Minecraft mc, CachePool action, BlockPos pos, Direction dir) {
+   private static int load(Minecraft mc, BreakAction action, BlockPos pos, Direction dir) {
       if (mc.level != null && mc.gameMode != null && mc.player != null && mc.getConnection() != null) {
          BlockState state = mc.level.getBlockState(pos);
          if (state.isAir()) {
@@ -7852,7 +7852,7 @@ public class MacroExecutor {
       }
    }
 
-   private static int load(Minecraft mc, CachePool action, BlockPos pos, Direction dir, boolean[] nextStepsFired, boolean[] missingNextStepsWarned) {
+   private static int load(Minecraft mc, BreakAction action, BlockPos pos, Direction dir, boolean[] nextStepsFired, boolean[] missingNextStepsWarned) {
       boolean willBreak = Boolean.TRUE.equals(load_Obj_Minecraft(mc, () -> {
          if (mc.level != null && mc.player != null) {
             BlockState state = mc.level.getBlockState(pos);
@@ -7885,7 +7885,7 @@ public class MacroExecutor {
       return broke;
    }
 
-   private static int read(Minecraft mc, CachePool action, BlockPos pos, Direction dir) {
+   private static int read(Minecraft mc, BreakAction action, BlockPos pos, Direction dir) {
       boolean willBreak = Boolean.TRUE.equals(load_Obj_Minecraft(mc, () -> {
          if (mc.level != null && mc.player != null) {
             BlockState s = mc.level.getBlockState(pos);
@@ -7963,7 +7963,7 @@ public class MacroExecutor {
       return progress > 0.0F && progress + 2.0F * delta >= 1.0F;
    }
 
-   private static void init_V_Minecraft_3(Minecraft mc, CachePool action, boolean[] fired, boolean[] missingWarned) {
+   private static void init_V_Minecraft_3(Minecraft mc, BreakAction action, boolean[] fired, boolean[] missingWarned) {
       if (fired == null || !fired[0]) {
          List<MacroAction> actions = action.init_List();
          if (actions != null && !actions.isEmpty()) {
@@ -7999,7 +7999,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void load(Minecraft mc, CachePool action, boolean[] fired, boolean[] missingWarned) {
+   private static void load(Minecraft mc, BreakAction action, boolean[] fired, boolean[] missingWarned) {
       if (action.interact && action.runNextSteps && action.interactTiming != null) {
          switch (action.interactTiming) {
             case AFTER:
@@ -8145,7 +8145,7 @@ public class MacroExecutor {
    }
 
    public static void load_V() {
-      if (!autismclient.modules.FieldCache.init_Z_6()) {
+      if (!autismclient.modules.AutoTotemModule.init_Z_6()) {
          Runnable task;
          while ((task = init_ConcurrentLinkedQu.poll()) != null) {
             try {
@@ -8241,7 +8241,7 @@ public class MacroExecutor {
       return result.get();
    }
 
-   private static void init_V_Minecraft_K(Minecraft mc, K action) {
+   private static void init_V_Minecraft_K(Minecraft mc, PlaceAction action) {
       if (mc != null && mc.player != null && mc.level != null) {
          ArrayUtil target = action.init_ArrayUtil().init_ArrayUtil_Minecraft(mc);
          if (target != null) {
@@ -8349,7 +8349,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void load_V_Minecraft_MapStore(Minecraft mc, MapStore ia) {
+   private static void load_V_Minecraft_MapStore(Minecraft mc, ItemAction ia) {
       if (ia != null) {
          List<ArrayUtil> targets = init_List_Minecraft(mc, ia.itemTargets, ia.itemNames);
          if (targets.isEmpty()) {
@@ -8434,10 +8434,10 @@ public class MacroExecutor {
       return legacy == null ? "" : legacy;
    }
 
-   private static void init_V_Minecraft_SyncManager(Minecraft mc, SyncManager craftAction) {
+   private static void init_V_Minecraft_SyncManager(Minecraft mc, CraftAction craftAction) {
       if (craftAction != null && craftAction.init_Z_5()) {
          for (int index = 0; index < craftAction.entries.size(); index++) {
-            SyncManager.Inner_DataUtil entry = craftAction.entries.get(index);
+            CraftAction.Inner_DataUtil entry = craftAction.entries.get(index);
             if (entry != null && entry.init_Z()) {
                load_V_Str(
                   entry.init_Z
@@ -8483,7 +8483,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_CharEncoder(Minecraft mc, CharEncoder goToAction) {
+   private static void init_V_Minecraft_CharEncoder(Minecraft mc, GoToAction goToAction) {
       load_V_Str(String.format("Going to %.0f,%.0f,%.0f", goToAction.f_x_D, goToAction.f_y_D, goToAction.f_z_D));
       if (mc.player != null && mc.level != null) {
          BlockPos target = new BlockPos((int)Math.floor(goToAction.f_x_D), (int)Math.floor(goToAction.f_y_D), (int)Math.floor(goToAction.f_z_D));
@@ -8539,7 +8539,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void init_V_Minecraft_q(Minecraft mc, q mineAction) {
+   private static void init_V_Minecraft_q(Minecraft mc, MineAction mineAction) {
       String mineDesc = mineAction.targetBlocks.isEmpty() ? "none" : mineAction.targetBlocks.get(0);
       load_V_Str("Mining: " + mineDesc);
       if (!mineAction.targetBlocks.isEmpty()) {
@@ -8864,8 +8864,8 @@ public class MacroExecutor {
       return used;
    }
 
-   private static void init_V_Minecraft_G(Minecraft mc, G payAction) {
-      payAction.delayMs = G.init_I_I(payAction.delayMs);
+   private static void init_V_Minecraft_G(Minecraft mc, PayAction payAction) {
+      payAction.delayMs = PayAction.init_I_I(payAction.delayMs);
       List<String> targets = new ArrayList<>();
 
       for (String player : payAction.players) {
@@ -8887,8 +8887,8 @@ public class MacroExecutor {
       if (!targets.isEmpty() && mc.getConnection() != null) {
          j.Inner_CachePool amountResolution = n.init_j_CachePool_Str_Minecraft(payAction.amountInput, mc);
          if (amountResolution.init_Z()) {
-            long resolvedAmount = Math.max(0L, G.init_J_Str(amountResolution.init_Str()));
-            long[] dividedAmounts = payAction.divideEnabled ? G.init(resolvedAmount, targets.size()) : null;
+            long resolvedAmount = Math.max(0L, PayAction.init_J_Str(amountResolution.init_Str()));
+            long[] dividedAmounts = payAction.divideEnabled ? PayAction.init(resolvedAmount, targets.size()) : null;
             int sent = 0;
 
             for (int i = 0; i < targets.size() && close_Z(); i++) {
@@ -8896,7 +8896,7 @@ public class MacroExecutor {
                long perAmount = dividedAmounts != null ? dividedAmounts[i] : resolvedAmount;
                if (perAmount > 0L) {
                   String amountValue = String.valueOf(perAmount);
-                  String amountLabel = G.init_Str_J(perAmount);
+                  String amountLabel = PayAction.init_Str_J(perAmount);
                   String template = payAction.commandTemplate != null && !payAction.commandTemplate.isBlank()
                      ? payAction.commandTemplate
                      : "/pay <player> <amount>";
@@ -8933,7 +8933,7 @@ public class MacroExecutor {
                         sent++;
                         if (payAction.confirmMacro != null && !payAction.confirmMacro.isBlank()) {
                            load_V_Str("Confirming " + player);
-                           G.init(payAction.confirmMacro, () -> !close_Z());
+                           PayAction.init(payAction.confirmMacro, () -> !close_Z());
                         }
                      }
                   }
@@ -9114,7 +9114,7 @@ public class MacroExecutor {
       for (MacroExecutor.Inner_TableIndex run : write_List()) {
          if (run.init_AtomicBoolean.get()) {
             boolean rejoins = init_Z_MacroExecutor_Tabl(run);
-            if (!ClassCache.init(playerLeft, stopOnLeave, rejoins)) {
+            if (!JoinAction.init(playerLeft, stopOnLeave, rejoins)) {
                init_V_MacroExecutor_Tabl_Z(run, true);
             } else {
                anyKept = true;
@@ -9146,7 +9146,7 @@ public class MacroExecutor {
    }
 
    private static boolean init_Z_MacroExecutor_Tabl(MacroExecutor.Inner_TableIndex run) {
-      return run != null && run.load_aM != null && ClassCache.init(run.load_aM.init_List, run.init_I, run.load_aM.init_Z);
+      return run != null && run.load_aM != null && JoinAction.init(run.load_aM.init_List, run.init_I, run.load_aM.init_Z);
    }
 
    public static void init_V_Str(String macroName) {
@@ -9622,15 +9622,15 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_au_MacroExecutor_Conf(au action, MacroExecutor.Inner_ConfigStore capture) {
+   private static boolean init_Z_au_MacroExecutor_Conf(WaitForChatAction action, MacroExecutor.Inner_ConfigStore capture) {
       return init_Optional_au(action, capture, init_m()).isPresent();
    }
 
-   private static Optional<Map<String, l>> init_Optional_au_MacroExecutor_Conf(au action, MacroExecutor.Inner_ConfigStore capture) {
+   private static Optional<Map<String, l>> init_Optional_au_MacroExecutor_Conf(WaitForChatAction action, MacroExecutor.Inner_ConfigStore capture) {
       return init_Optional_au(action, capture, init_m());
    }
 
-   private static Optional<Map<String, l>> init_Optional_au(au action, MacroExecutor.Inner_ConfigStore capture, m context) {
+   private static Optional<Map<String, l>> init_Optional_au(WaitForChatAction action, MacroExecutor.Inner_ConfigStore capture, m context) {
       if (action != null && capture != null) {
          UtilCore.Inner_DataUtil mode = action.init_UtilCore_DataUtil();
          if (mode == UtilCore.Inner_DataUtil.MATCH && action.patternJson != null && !action.patternJson.isBlank() && capture.init_Component() != null) {
@@ -9657,7 +9657,7 @@ public class MacroExecutor {
             Optional<UtilCore.Inner_StreamUtil> result = messageResult.isPresent() ? messageResult : UtilCore.init(mode, pattern, capture.read());
             return result.map(value -> init_Map_au(action, capture, value.init_Map()));
          } else {
-            int threshold = au.init_I_I_8(action.fuzzyPercent);
+            int threshold = WaitForChatAction.init_I_I_8(action.fuzzyPercent);
             boolean matched = init_Z_Str(pattern, capture.load(), threshold) || init_Z_Str(pattern, capture.read(), threshold);
             return matched ? Optional.of(init_Map_au(action, capture, Map.of())) : Optional.empty();
          }
@@ -9666,7 +9666,7 @@ public class MacroExecutor {
       }
    }
 
-   private static Map<String, l> init_Map_au(au action, MacroExecutor.Inner_ConfigStore capture, Map<String, l> captures) {
+   private static Map<String, l> init_Map_au(WaitForChatAction action, MacroExecutor.Inner_ConfigStore capture, Map<String, l> captures) {
       Map<String, l> values = new LinkedHashMap<>(captures);
       if (action.saveAs != null && !action.saveAs.isBlank()) {
          Map<String, l> properties = new LinkedHashMap<>();
@@ -10614,9 +10614,9 @@ public class MacroExecutor {
       }
    }
 
-   private static ValueSink.Inner_DataUtil init_ValueSink_DataUtil_Minecraft_ValueSink(Minecraft mc, ValueSink action) {
+   private static LookAtBlockAction.Inner_DataUtil init_ValueSink_DataUtil_Minecraft_ValueSink(Minecraft mc, LookAtBlockAction action) {
       if (mc != null && action != null) {
-         AtomicReference<ValueSink.Inner_DataUtil> targetRef = new AtomicReference<>();
+         AtomicReference<LookAtBlockAction.Inner_DataUtil> targetRef = new AtomicReference<>();
          CountDownLatch latch = new CountDownLatch(1);
          mc.execute(() -> {
             try {
@@ -10639,14 +10639,14 @@ public class MacroExecutor {
       read_V();
    }
 
-   private static void init_V_Minecraft_List(Minecraft mc, List<Y> batch) {
+   private static void init_V_Minecraft_List(Minecraft mc, List<SendPacketAction> batch) {
       if (mc.getConnection() == null) {
          AutismClientMessaging.sendPrefixed("§cNo network connection for burst!");
       } else {
          List<ck.Inner_CachePool> allQueuedPackets = new ArrayList<>();
 
-         for (Y action : batch) {
-            int repeats = Y.init_I_I_5(action.sendCount);
+         for (SendPacketAction action : batch) {
+            int repeats = SendPacketAction.init_I_I_5(action.sendCount);
 
             for (int k = 0; k < repeats; k++) {
                allQueuedPackets.addAll(action.init_List_8());
@@ -10657,7 +10657,7 @@ public class MacroExecutor {
             List<Packet<?>> regeneratedPackets = new ArrayList<>(allQueuedPackets.size());
 
             for (ck.Inner_CachePool qp : allQueuedPackets) {
-               Packet<?> resolved = Y.init_Packet_ck_CachePool(qp);
+               Packet<?> resolved = SendPacketAction.init_Packet_ck_CachePool(qp);
                if (resolved != null) {
                   regeneratedPackets.add(resolved);
                }
@@ -10692,11 +10692,11 @@ public class MacroExecutor {
 
       for (int j = startIdx; j < maxIdx; j++) {
          MacroAction act = macro.init_List.get(j);
-         if (!(act instanceof Y spa)) {
+         if (!(act instanceof SendPacketAction spa)) {
             break;
          }
 
-         int repeats = Y.init_I_I_5(spa.sendCount);
+         int repeats = SendPacketAction.init_I_I_5(spa.sendCount);
 
          for (ck.Inner_CachePool qp : spa.init_List_8()) {
             if (qp.init_Packet != null) {
@@ -10715,7 +10715,7 @@ public class MacroExecutor {
          ClientPacketListener handler = mc.getConnection();
 
          for (ck.Inner_CachePool qp : packets) {
-            Packet<?> toSend = Y.init_Packet_ck_CachePool(qp);
+            Packet<?> toSend = SendPacketAction.init_Packet_ck_CachePool(qp);
             if (toSend != null) {
                handler.send(toSend);
             }
@@ -10744,11 +10744,11 @@ public class MacroExecutor {
 
       for (int j = startIdx; j < endIdx && packetsRemaining > 0; j++) {
          MacroAction act = macro.init_List.get(j);
-         if (!(act instanceof Y spa)) {
+         if (!(act instanceof SendPacketAction spa)) {
             break;
          }
 
-         int actionPackets = spa.init_List_8().size() * Y.init_I_I_5(spa.sendCount);
+         int actionPackets = spa.init_List_8().size() * SendPacketAction.init_I_I_5(spa.sendCount);
          packetsRemaining -= actionPackets;
          actionsToSkip++;
       }
@@ -11360,7 +11360,7 @@ public class MacroExecutor {
       final AtomicBoolean load_AtomicBoolean = new AtomicBoolean(false);
       volatile String init_Str = "CANCELLED";
       final CopyOnWriteArrayList<MacroAction> init_CopyOnWriteArrayLi = new CopyOnWriteArrayList<>();
-      final ConcurrentHashMap<s, int[]> init_ConcurrentHashMap = new ConcurrentHashMap<>();
+      final ConcurrentHashMap<MoveAction, int[]> init_ConcurrentHashMap = new ConcurrentHashMap<>();
       final CopyOnWriteArrayList<MacroAction> load_CopyOnWriteArrayLi = new CopyOnWriteArrayList<>();
       final Object init_Obj = new Object();
       final AtomicBoolean read_AtomicBoolean = new AtomicBoolean(false);
@@ -11369,7 +11369,7 @@ public class MacroExecutor {
       volatile Packet<?> init_Packet = null;
       volatile String load_Str = "";
       final AtomicBoolean write_AtomicBoolean = new AtomicBoolean(false);
-      volatile au init_au = null;
+      volatile WaitForChatAction init_au = null;
       volatile CompletableFuture<Void> load_CompletableFuture = null;
       volatile AiOperation init_AiOperation = null;
       volatile AiOperation.Result init_AiOperation_Result = null;

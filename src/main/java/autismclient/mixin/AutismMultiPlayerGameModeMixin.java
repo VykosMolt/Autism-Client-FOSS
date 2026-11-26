@@ -2,14 +2,14 @@ package autismclient.mixin;
 
 import autismclient.ai.aF;
 import autismclient.modules.ByteReader;
-import autismclient.modules.TaskTimer;
-import autismclient.modules.UtilCore;
-import autismclient.modules.X;
-import autismclient.modules.aI;
+import autismclient.modules.BacktrackModule;
+import autismclient.modules.BedNukerModule;
+import autismclient.modules.KBDisplacementModule;
+import autismclient.modules.ScaffoldModule;
 import autismclient.modules.af;
 import autismclient.modules.al;
-import autismclient.modules.bg;
-import autismclient.modules.j;
+import autismclient.modules.WTappingModule;
+import autismclient.modules.ClutchModule;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.W;
 import autismclient.util.ci;
@@ -42,11 +42,11 @@ public class AutismMultiPlayerGameModeMixin {
    @WrapMethod(method = "attack(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;)V")
    private void autism$displaceKnockback(Player player, Entity target, Operation<Void> original) {
       if (!AutismLiteVariant.enabled()) {
-         if (TaskTimer.init_Z_Player_Entity(player, target)) {
+         if (BacktrackModule.init_Z_Player_Entity(player, target)) {
             return;
          }
 
-         X.init_V_Player(player, target, () -> original.call(player, target));
+         KBDisplacementModule.init_V_Player(player, target, () -> original.call(player, target));
       } else {
          original.call(player, target);
       }
@@ -68,7 +68,7 @@ public class AutismMultiPlayerGameModeMixin {
    private void autism$recordCombatEngagement(Player player, Entity entity, CallbackInfo ci) {
       autismclient.util.ci.load(player);
       if (!AutismLiteVariant.enabled()) {
-         bg.init(player, entity);
+         WTappingModule.init(player, entity);
          r.init(player, entity);
          t.init(player, entity);
          ByteReader.init_V(entity);
@@ -77,7 +77,7 @@ public class AutismMultiPlayerGameModeMixin {
 
    @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
    private void autism$onStartDestroyBlock(BlockPos pos, Direction direction, CallbackInfoReturnable<Boolean> cir) {
-      if (!AutismLiteVariant.enabled() && !UtilCore.close()) {
+      if (!AutismLiteVariant.enabled() && !BedNukerModule.close()) {
          cir.setReturnValue(false);
       } else {
          if (al.init_Z_BlockPos_Direction(pos, direction)) {
@@ -85,7 +85,7 @@ public class AutismMultiPlayerGameModeMixin {
          }
 
          if (!AutismLiteVariant.enabled() && !cir.isCancelled()) {
-            UtilCore.init_V_BlockPos_3(pos);
+            BedNukerModule.init_V_BlockPos_3(pos);
          }
       }
    }
@@ -108,9 +108,9 @@ public class AutismMultiPlayerGameModeMixin {
    private void autism$observeVanillaUseItemOnResult(
       LocalPlayer player, InteractionHand hand, BlockHitResult hit, CallbackInfoReturnable<InteractionResult> cir
    ) {
-      aI.init_V_InteractionHand(hand, hit, cir.getReturnValue());
+      ScaffoldModule.init_V_InteractionHand(hand, hit, cir.getReturnValue());
       if (!AutismLiteVariant.enabled()) {
-         j.init_V_InteractionHand_2(hand, hit, cir.getReturnValue());
+         ClutchModule.init_V_InteractionHand_2(hand, hit, cir.getReturnValue());
       }
 
       if (hit != null && cir.getReturnValue() != null && cir.getReturnValue().consumesAction()) {
@@ -142,7 +142,7 @@ public class AutismMultiPlayerGameModeMixin {
       )
    )
    private float autism$modifyFastBreakDestroyProgress(float original, BlockPos pos, Direction direction) {
-      return !AutismLiteVariant.enabled() && UtilCore.read_Z_10() ? UtilCore.init_F_F_BlockPos(original, pos) : al.init_F_F_BlockPos(original, pos);
+      return !AutismLiteVariant.enabled() && BedNukerModule.read_Z_10() ? BedNukerModule.init_F_F_BlockPos(original, pos) : al.init_F_F_BlockPos(original, pos);
    }
 
    @Inject(method = "setLocalMode(Lnet/minecraft/world/level/GameType;)V", at = @At("RETURN"))

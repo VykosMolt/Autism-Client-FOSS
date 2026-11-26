@@ -245,7 +245,7 @@ public class AutismKeybindOverlay extends bj {
    }
 
    private void update_V_7() {
-      init_Minecraft.gui.setScreen(new autismclient.gui.d.CacheEntry(init_Minecraft.gui.screen()));
+      init_Minecraft.gui.setScreen(new autismclient.gui.d.ThemeColorScreen(init_Minecraft.gui.screen()));
    }
 
    private void sync_V_6() {

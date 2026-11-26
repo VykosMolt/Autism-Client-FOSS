@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.t;
+import autismclient.modules.CrystalAuraModule;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.model.object.crystal.EndCrystalModel;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,7 +15,7 @@ public abstract class AutismCrystalViewModelMixin {
       require = 0
    )
    private float autism$crystalBounce(float original) {
-      return t.open() ? original * t.write_F_2() : original;
+      return CrystalAuraModule.open() ? original * CrystalAuraModule.write_F_2() : original;
    }
 
    @ModifyVariable(
@@ -24,6 +24,6 @@ public abstract class AutismCrystalViewModelMixin {
       require = 0
    )
    private float autism$crystalSpin(float animationAngle) {
-      return t.open() ? animationAngle * t.read_F_3() : animationAngle;
+      return CrystalAuraModule.open() ? animationAngle * CrystalAuraModule.read_F_3() : animationAngle;
    }
 }

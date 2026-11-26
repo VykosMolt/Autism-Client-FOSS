@@ -101,7 +101,7 @@ public final class aC {
    }
 
    private static LivingEntity init(Module module) {
-      return module instanceof autismclient.modules.aa aura ? aura.init_LivingEntity_3() : null;
+      return module instanceof autismclient.modules.KillAuraModule aura ? aura.init_LivingEntity_3() : null;
    }
 
    private static void init(Pose pose, VertexConsumer buffer, AABB box, int color) {

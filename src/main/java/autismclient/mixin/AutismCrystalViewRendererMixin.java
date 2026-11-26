@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.t;
+import autismclient.modules.CrystalAuraModule;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -16,11 +16,11 @@ public abstract class AutismCrystalViewRendererMixin {
       require = 0
    )
    private void autism$crystalScale(PoseStack instance, float x, float y, float z, Operation<Void> original) {
-      if (!t.open()) {
+      if (!CrystalAuraModule.open()) {
          original.call(instance, x, y, z);
       } else {
-         instance.translate(0.0F, t.load_F_5(), 0.0F);
-         float scale = t.init_F_9();
+         instance.translate(0.0F, CrystalAuraModule.load_F_5(), 0.0F);
+         float scale = CrystalAuraModule.init_F_9();
          original.call(instance, x * scale, y * scale, z * scale);
       }
    }

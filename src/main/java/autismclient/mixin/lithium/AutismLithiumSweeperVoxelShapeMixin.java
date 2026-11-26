@@ -1,7 +1,7 @@
 package autismclient.mixin.lithium;
 
-import autismclient.modules.DataUtil;
-import autismclient.modules.aF;
+import autismclient.modules.AirJumpModule;
+import autismclient.modules.PhaseModule;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.caffeinemc.mods.lithium.common.entity.movement.ChunkAwareBlockCollisionSweeper;
@@ -39,6 +39,6 @@ public abstract class AutismLithiumSweeperVoxelShapeMixin extends ChunkAwareBloc
       if (!(this.context instanceof EntityCollisionContext ecc) || ecc.getEntity() != mc.player) {
          return original;
       }
-      return aF.init(DataUtil.init(original, this.pos), state, this.pos);
+      return PhaseModule.init(AirJumpModule.init(original, this.pos), state, this.pos);
    }
 }

@@ -41,7 +41,7 @@ public final class bE {
       this.init_J++;
    }
 
-   public static bE init_bE_H(autismclient.util.macro.H action) {
+   public static bE init_bE_H(autismclient.util.macro.PayloadAction action) {
       bE model = new bE();
       if (action == null) {
          model.init_List = new ArrayList<>(bJ.init_bJ_JsonUtil().init_List());
@@ -83,8 +83,8 @@ public final class bE {
       return model;
    }
 
-   public autismclient.util.macro.H init_H_H(autismclient.util.macro.H base) {
-      autismclient.util.macro.H action = new autismclient.util.macro.H();
+   public autismclient.util.macro.PayloadAction init_H_H(autismclient.util.macro.PayloadAction base) {
+      autismclient.util.macro.PayloadAction action = new autismclient.util.macro.PayloadAction();
       if (base != null) {
          action.fromTag(base.toTag());
       }

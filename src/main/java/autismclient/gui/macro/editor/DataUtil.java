@@ -4,7 +4,7 @@ import autismclient.api.macro.MacroActionRegistry;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.macro.MacroAction;
 import autismclient.util.macro.StreamGate;
-import autismclient.util.macro.al;
+import autismclient.util.macro.ToolsAction;
 import autismclient.util.macro.k;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +52,7 @@ public final class DataUtil {
    public static ActionFieldSchema init(MacroAction action) {
       if (action == null) {
          return init_ActionFieldSchema;
-      } else if (action instanceof al tools) {
+      } else if (action instanceof ToolsAction tools) {
          return BufferHelper.init(tools);
       } else {
          StreamGate type = action.getType();

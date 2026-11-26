@@ -1,10 +1,10 @@
 package autismclient.mixin;
 
 import autismclient.ai.a.AiCameraTurn;
-import autismclient.modules.EventBus;
-import autismclient.modules.I;
+import autismclient.modules.AspectRatioModule;
+import autismclient.modules.FreeLookModule;
 import autismclient.modules.aC;
-import autismclient.modules.z;
+import autismclient.modules.DangerModule;
 import autismclient.util.AuditClientFixes;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.ce;
@@ -36,7 +36,7 @@ public abstract class AutismCameraMixin {
    @ModifyArgs(method = "setupPerspective", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/Projection;setupPerspective(FFFFF)V"))
    private void autism$aspectRatio(Args args) {
       if (!AutismLiteVariant.enabled()) {
-         args.set(3, EventBus.init(args.<Float>get(3), args.<Float>get(4)));
+         args.set(3, AspectRatioModule.init(args.<Float>get(3), args.<Float>get(4)));
       }
    }
 
@@ -49,14 +49,14 @@ public abstract class AutismCameraMixin {
             return;
          }
 
-         ce.Inner_DataUtil rotation = z.init_ce_DataUtil_F_2(partialTick);
+         ce.Inner_DataUtil rotation = DangerModule.init_ce_DataUtil_F_2(partialTick);
          if (rotation == null
             && mc.player != null
             && mc.options.getCameraType().isFirstPerson()
             && mc.gui.screen() == null
             && !mc.player.isPassenger()
             && !aC.init_Z()
-            && I.init_I_4() == null) {
+            && FreeLookModule.init_I_4() == null) {
             rotation = AiCameraTurn.putAt(mc.player);
          } else {
             AiCameraTurn.putAt(null);
@@ -104,7 +104,7 @@ public abstract class AutismCameraMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;alignWithEntity(F)V", shift = Shift.AFTER)
    )
    private void autism$freeLookCamera(DeltaTracker deltaTracker, CallbackInfo ci) {
-      I freeLook = I.init_I_4();
+      FreeLookModule freeLook = FreeLookModule.init_I_4();
       if (freeLook != null && !aC.init_Z()) {
          float partialTicks = deltaTracker.getGameTimeDeltaPartialTick(true);
          this.detached = true;

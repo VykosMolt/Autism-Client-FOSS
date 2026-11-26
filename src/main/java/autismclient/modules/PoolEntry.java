@@ -390,7 +390,7 @@ public final class PoolEntry {
                || shared.frame()
                || bI.init_Z()
                || am.add()
-               || SyncManager.init_Z_19()
+               || AntiVanishModule.init_Z_19()
                || autismclient.util.bi.init_Z()
                || serverInfo != null && serverInfo.run_Z_5()
          );
@@ -1631,7 +1631,7 @@ public final class PoolEntry {
          return true;
       }
 
-      autismclient.gui.d.TaskTimer host = new autismclient.gui.d.TaskTimer(overlay, null, false, true);
+      autismclient.gui.d.AutismOverlaysScreen host = new autismclient.gui.d.AutismOverlaysScreen(overlay, null, false, true);
       cx.init_V(init_Minecraft, host);
       if (init_Minecraft.gui.screen() != host) {
          return false;
@@ -1746,7 +1746,7 @@ public final class PoolEntry {
          } else {
             boolean active = false;
             if (this.get_Z() && init_Minecraft.player != null && init_Minecraft.player.inventoryMenu != null) {
-               active = autismclient.util.macro.aQ.init_Z_InventoryMenu_Z(init_Minecraft.player.inventoryMenu, true);
+               active = autismclient.util.macro.XCarryAction.init_Z_InventoryMenu_Z(init_Minecraft.player.inventoryMenu, true);
             }
 
             shared.update(active);
@@ -1859,7 +1859,7 @@ public final class PoolEntry {
          if (cfg.keybindModuleMenu != -1) {
             boolean pressed = this.init_Z_I(cfg.keybindModuleMenu);
             if (pressed && !this.open && init_Minecraft.gui.screen() == null && !AutismLiteVariant.enabled()) {
-               init_Minecraft.gui.setScreen(new autismclient.gui.d.HashUtil(null));
+               init_Minecraft.gui.setScreen(new autismclient.gui.d.AutismModulesScreen(null));
             }
 
             this.open = pressed;

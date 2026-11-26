@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.RenderState;
+import autismclient.modules.AntiWebModule;
 import autismclient.modules.am;
 import autismclient.util.AutismLiteVariant;
 import net.minecraft.client.player.LocalPlayer;
@@ -26,7 +26,7 @@ public abstract class AutismBlockBehaviourMixin {
          && state.is(Blocks.COBWEB)
          && context instanceof EntityCollisionContext entity
          && entity.getEntity() instanceof LocalPlayer
-         && RenderState.load(entity.getEntity())) {
+         && AntiWebModule.load(entity.getEntity())) {
          cir.setReturnValue(Shapes.block());
       }
    }

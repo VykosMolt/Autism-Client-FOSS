@@ -194,7 +194,7 @@ public final class o {
                   return 0;
                } else {
                   boolean inReach = from.distanceTo(hit.getLocation()) <= reach;
-                  if (aL.init_Z_Entity_5(entity)) {
+                  if (TeamsModule.init_Z_Entity_5(entity)) {
                      return inReach ? look.write_I() : 0;
                   } else if (!(entity instanceof Enemy) && !(entity instanceof Player)) {
                      return inReach ? look.write_I() : 0;

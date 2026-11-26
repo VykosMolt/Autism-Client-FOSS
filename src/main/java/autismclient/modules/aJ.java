@@ -44,13 +44,13 @@ public final class aJ {
          return false;
       }
 
-      bi w = init_bi();
+      WorldModule w = init_bi();
       return w != null && w.isEnabled() && w.bool("skybox") && Minecraft.getInstance().level != null;
    }
 
    public static void init(float partialTick) {
       Minecraft mc = Minecraft.getInstance();
-      bi w = init_bi();
+      WorldModule w = init_bi();
       if (mc.level != null && w != null) {
          boolean recolor = w.bool("skybox-recolor");
          int customColor = am.init_I_Module(w, "skybox-color", -50373);
@@ -103,7 +103,7 @@ public final class aJ {
       return Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/background/" + name + ".png");
    }
 
-   private static bi init_bi() {
-      return al.init_Module_Str("world") instanceof bi w ? w : null;
+   private static WorldModule init_bi() {
+      return al.init_Module_Str("world") instanceof WorldModule w ? w : null;
    }
 }

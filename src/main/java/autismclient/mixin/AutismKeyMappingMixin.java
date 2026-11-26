@@ -4,8 +4,8 @@ import autismclient.compat263.Compat263;
 import autismclient.compat263.CompatGLFW;
 import autismclient.mixin.accessor.AutismKeyboardHandlerAccessor;
 import autismclient.mixin.accessor.AutismMouseHandlerAccessor;
-import autismclient.modules.FieldCache;
-import autismclient.modules.TableIndex;
+import autismclient.modules.AutoTotemModule;
+import autismclient.modules.AutoArmorModule;
 import autismclient.modules.aC;
 import autismclient.modules.al;
 import autismclient.util.aB;
@@ -189,7 +189,7 @@ public abstract class AutismKeyMappingMixin implements aB {
 
    @Inject(method = "consumeClick", at = @At("HEAD"), cancellable = true)
    private void autism$consumeHotbarKeysDuringTotemOperation(CallbackInfoReturnable<Boolean> cir) {
-      if (FieldCache.init_Z_6() || TableIndex.init_Z_20()) {
+      if (AutoTotemModule.init_Z_6() || AutoArmorModule.init_Z_20()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.options != null) {
             KeyMapping self = (KeyMapping)(Object)this;

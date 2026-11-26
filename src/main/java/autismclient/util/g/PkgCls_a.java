@@ -1,6 +1,6 @@
 package autismclient.util.g;
 
-import autismclient.modules.aR;
+import autismclient.modules.TpClickModule;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
@@ -10,7 +10,7 @@ import autismclient.util.bl;
 import autismclient.util.macro.A;
 import autismclient.util.macro.F;
 import autismclient.util.macro.MacroExecutor;
-import autismclient.util.macro.w;
+import autismclient.util.macro.PacedTpAction;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -182,7 +182,7 @@ public final class PkgCls_a {
       return init_Str_Vec3(request.init_Vec3(), request.init_I(), request.load(), vehicle != null);
    }
 
-   public static PkgCls_a.Inner_StateCache init_a_StateCache_w_bl_StreamUtil(w action, bl.Inner_StreamUtil handle) {
+   public static PkgCls_a.Inner_StateCache init_a_StateCache_w_bl_StreamUtil(PacedTpAction action, bl.Inner_StreamUtil handle) {
       Minecraft mc = Minecraft.getInstance();
       LocalPlayer player = mc == null ? null : mc.player;
       if (handle == null || action == null || player == null || mc.getConnection() == null || player.level() == null) {
@@ -247,7 +247,7 @@ public final class PkgCls_a {
    public static void init_V_Minecraft(Minecraft mc) {
       PkgCls_a.Inner_ConfigStore job = init_a_ConfigStore;
       boolean settling = job != null && job.close != 0L;
-      boolean blockInput = job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && mc != null && !settling && aR.init_Z_30();
+      boolean blockInput = job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && mc != null && !settling && TpClickModule.init_Z_30();
       if (blockInput) {
          load(mc);
          init_Z = true;
@@ -1112,7 +1112,7 @@ public final class PkgCls_a {
    private static boolean load(PkgCls_a.Inner_ConfigStore job, PkgCls_a.Inner_TaskQueue frame) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.getConnection() != null && mc.player != null) {
-         boolean noFall = job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && aR.load_Z_12();
+         boolean noFall = job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && TpClickModule.load_Z_12();
          boolean previousOwnedSend = write();
 
          try {
@@ -1145,7 +1145,7 @@ public final class PkgCls_a {
    }
 
    private static Vec3 init_Vec3_a_ConfigStore_Vec3(PkgCls_a.Inner_ConfigStore job, Vec3 position) {
-      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && aR.read()) {
+      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && TpClickModule.read()) {
          long now = System.currentTimeMillis();
          if (now - job.tick < 1000L) {
             return position;

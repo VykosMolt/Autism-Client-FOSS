@@ -101,7 +101,7 @@ public class b {
       return future;
    }
 
-   public static CompletableFuture<Void> init(at action) {
+   public static CompletableFuture<Void> init(WaitForBlockAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       b.Inner_StreamUtil condition = new b.Inner_StreamUtil(action, future);
       init_List.add(condition);
@@ -145,10 +145,10 @@ public class b {
    }
 
    public static CompletableFuture<Void> init_CompletableFuture() {
-      return init(new aG());
+      return init(new WaitForWorldChangeAction());
    }
 
-   public static CompletableFuture<Void> init(aG action) {
+   public static CompletableFuture<Void> init(WaitForWorldChangeAction action) {
       Minecraft mc = Minecraft.getInstance();
       CompletableFuture<Void> future = new CompletableFuture<>();
       b.Inner_PoolEntry condition = new b.Inner_PoolEntry(init_Str(mc), action == null ? "" : action.targetDimension, future);
@@ -156,7 +156,7 @@ public class b {
       return future;
    }
 
-   public static CompletableFuture<Void> init(aI action) {
+   public static CompletableFuture<Void> init(WaitGamemodeChangeAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       b.Inner_ConfigStore condition = new b.Inner_ConfigStore(action, autismclient.util.W.init_W_StreamUtil(), future);
       init_List.add(condition);
@@ -468,7 +468,7 @@ public class b {
       return future;
    }
 
-   public static CompletableFuture<Void> init(aw action) {
+   public static CompletableFuture<Void> init(WaitForEntityAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       b.Inner_BufferHelper condition = new b.Inner_BufferHelper(action, future);
       init_List.add(condition);
@@ -499,10 +499,10 @@ public class b {
    }
 
    public static CompletableFuture<Void> init_CompletableFuture(int slotNumber) {
-      return init(new aD(slotNumber));
+      return init(new WaitForSlotChangeAction(slotNumber));
    }
 
-   public static CompletableFuture<Void> init(aE action) {
+   public static CompletableFuture<Void> init(WaitForSoundAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       init_List.add(new b.Inner_PacketUtil(action, future));
       return future;
@@ -528,7 +528,7 @@ public class b {
       }
    }
 
-   public static CompletableFuture<Void> init(aD action) {
+   public static CompletableFuture<Void> init(WaitForSlotChangeAction action) {
       Minecraft mc = Minecraft.getInstance();
       Map<Integer, String> initialNames = new HashMap<>();
       Map<Integer, Integer> initialCounts = new HashMap<>();
@@ -537,9 +537,9 @@ public class b {
             AbstractContainerMenu handler = mc.player.containerMenu;
 
             for (int i = 0; i < action.entries.size(); i++) {
-               aD.Inner_DataUtil e = action.entries.get(i);
+               WaitForSlotChangeAction.Inner_DataUtil e = action.entries.get(i);
                ArrayUtil entryTarget = e.init_ArrayUtil();
-               if (e.init_aD_StreamUtil == aD.Inner_StreamUtil.ANY_CHANGE && entryTarget != null && entryTarget.init_Z()) {
+               if (e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE && entryTarget != null && entryTarget.init_Z()) {
                   int slotNum = entryTarget.init_I;
                   int handlerSlot = autismclient.util.aw.read_I(mc, slotNum);
                   if (handler != null && handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
@@ -554,7 +554,7 @@ public class b {
       CompletableFuture<Void> future = new CompletableFuture<>();
       b.Inner_ByteReader condition = new b.Inner_ByteReader(action, initialNames, initialCounts, future);
       init_List.add(condition);
-      boolean hasAnyChange = action.entries.stream().anyMatch(e -> e.init_aD_StreamUtil == aD.Inner_StreamUtil.ANY_CHANGE);
+      boolean hasAnyChange = action.entries.stream().anyMatch(e -> e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE);
       if (!hasAnyChange && init_Z_Minecraft_b_EventBus(mc, condition)) {
          condition.init_V();
          init_List.remove(condition);
@@ -574,7 +574,7 @@ public class b {
       }
    }
 
-   public static CompletableFuture<Void> init(az action) {
+   public static CompletableFuture<Void> init(WaitForLanStepAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       b.Inner_RenderState cond = new b.Inner_RenderState(action, future);
       if (cond.load_Z()) {
@@ -678,13 +678,13 @@ public class b {
    }
 
    static class Inner_BufferHelper implements b.Inner_EventBus {
-      final aw init_aw;
+      final WaitForEntityAction init_aw;
       final Set<String> init_Set;
       final Set<String> load;
       final double init_D;
       final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_BufferHelper(aw action, CompletableFuture<Void> future) {
+      Inner_BufferHelper(WaitForEntityAction action, CompletableFuture<Void> future) {
          this.init_aw = action;
          this.init_Set = new HashSet<>();
          this.load = new HashSet<>();
@@ -786,12 +786,12 @@ public class b {
    }
 
    static class Inner_ByteReader implements b.Inner_EventBus {
-      final aD init_aD;
+      final WaitForSlotChangeAction init_aD;
       final Map<Integer, String> init_Map;
       final Map<Integer, Integer> load;
       final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_ByteReader(aD action, Map<Integer, String> initialNames, Map<Integer, Integer> initialCounts, CompletableFuture<Void> future) {
+      Inner_ByteReader(WaitForSlotChangeAction action, Map<Integer, String> initialNames, Map<Integer, Integer> initialCounts, CompletableFuture<Void> future) {
          this.init_aD = action;
          this.init_Map = initialNames;
          this.load = initialCounts;
@@ -799,7 +799,7 @@ public class b {
       }
 
       Inner_ByteReader(int slotNumber, String initialItemName, int initialCount, CompletableFuture<Void> future) {
-         aD a = new aD(slotNumber);
+         WaitForSlotChangeAction a = new WaitForSlotChangeAction(slotNumber);
          this.init_aD = a;
          this.init_Map = new HashMap<>();
          this.load = new HashMap<>();
@@ -832,7 +832,7 @@ public class b {
          return true;
       }
 
-      private boolean init(Minecraft mc, AbstractContainerMenu handler, aD.Inner_DataUtil e, int entryIdx) {
+      private boolean init(Minecraft mc, AbstractContainerMenu handler, WaitForSlotChangeAction.Inner_DataUtil e, int entryIdx) {
          ArrayUtil entryTarget = e.init_ArrayUtil();
          if (entryTarget == null) {
             entryTarget = new ArrayUtil();
@@ -841,17 +841,17 @@ public class b {
          if (entryTarget.init_Z()) {
             int slotNum = entryTarget.init_I;
             if (handler == null) {
-               return e.init_aD_StreamUtil == aD.Inner_StreamUtil.IS_EMPTY;
+               return e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY;
             } else {
                int handlerSlot = autismclient.util.aw.read_I(mc, slotNum);
                if (handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
                   ItemStack stack = handler.slots.get(handlerSlot).getItem();
                   return this.init(stack, entryTarget, slotNum, e, entryIdx);
                } else {
-                  return e.init_aD_StreamUtil == aD.Inner_StreamUtil.IS_EMPTY;
+                  return e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY;
                }
             }
-         } else if (e.init_aD_StreamUtil == aD.Inner_StreamUtil.IS_EMPTY) {
+         } else if (e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY) {
             if (handler != null) {
                for (Slot s : handler.slots) {
                   if (s != null && !s.getItem().isEmpty()) {
@@ -896,7 +896,7 @@ public class b {
          }
       }
 
-      private boolean init(ItemStack stack, ArrayUtil target, int visibleSlot, aD.Inner_DataUtil e, int entryIdx) {
+      private boolean init(ItemStack stack, ArrayUtil target, int visibleSlot, WaitForSlotChangeAction.Inner_DataUtil e, int entryIdx) {
          boolean nameMatches = target == null || !target.update() || !stack.isEmpty() && target.init_Z_ItemStack_I(stack, visibleSlot);
          boolean var10000;
          switch (e.init_aD_StreamUtil) {
@@ -996,13 +996,13 @@ public class b {
    }
 
    static class Inner_ConfigStore implements b.Inner_EventBus {
-      final aI init_aI;
+      final WaitGamemodeChangeAction init_aI;
       final autismclient.util.W.Inner_StreamUtil init_W_StreamUtil;
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean init_Z = false;
 
-      Inner_ConfigStore(aI action, autismclient.util.W.Inner_StreamUtil baseline, CompletableFuture<Void> future) {
-         this.init_aI = action == null ? new aI() : action;
+      Inner_ConfigStore(WaitGamemodeChangeAction action, autismclient.util.W.Inner_StreamUtil baseline, CompletableFuture<Void> future) {
+         this.init_aI = action == null ? new WaitGamemodeChangeAction() : action;
          this.init_W_StreamUtil = baseline == null ? autismclient.util.W.init_W_StreamUtil() : baseline;
          this.init_CompletableFuture = future;
       }
@@ -1345,11 +1345,11 @@ public class b {
    }
 
    static class Inner_PacketUtil implements b.Inner_EventBus {
-      final aE init_aE;
+      final WaitForSoundAction init_aE;
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean init_Z = false;
 
-      Inner_PacketUtil(aE action, CompletableFuture<Void> future) {
+      Inner_PacketUtil(WaitForSoundAction action, CompletableFuture<Void> future) {
          this.init_aE = action;
          this.init_CompletableFuture = future;
       }
@@ -1461,11 +1461,11 @@ public class b {
    }
 
    static class Inner_RenderState implements b.Inner_EventBus {
-      final az init_az;
+      final WaitForLanStepAction init_az;
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean init_Z = false;
 
-      Inner_RenderState(az action, CompletableFuture<Void> future) {
+      Inner_RenderState(WaitForLanStepAction action, CompletableFuture<Void> future) {
          this.init_az = action;
          this.init_CompletableFuture = future;
       }
@@ -1488,7 +1488,7 @@ public class b {
 
          int peerCount = sync.load_I();
 
-         for (az.Inner_DataUtil req : this.init_az.entries) {
+         for (WaitForLanStepAction.Inner_DataUtil req : this.init_az.entries) {
             String targetUser = req.init_Str;
             if (peerCount <= 2 && !targetUser.isEmpty()) {
                boolean nameExists = false;
@@ -1615,11 +1615,11 @@ public class b {
    }
 
    static class Inner_StreamUtil implements b.Inner_EventBus {
-      final at init_at;
+      final WaitForBlockAction init_at;
       final Set<String> init_Set;
       final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_StreamUtil(at action, CompletableFuture<Void> future) {
+      Inner_StreamUtil(WaitForBlockAction action, CompletableFuture<Void> future) {
          this.init_at = action;
          this.init_Set = new HashSet<>(action.blockIds);
          this.init_CompletableFuture = future;
@@ -1628,7 +1628,7 @@ public class b {
       @Override
       public boolean init_Z_Minecraft(Minecraft mc) {
          if (mc.level != null && mc.player != null) {
-            boolean destroyed = this.init_at.waitBehavior == at.Inner_StreamUtil.DESTROYED;
+            boolean destroyed = this.init_at.waitBehavior == WaitForBlockAction.Inner_StreamUtil.DESTROYED;
             boolean anyBlock = this.init_at.anyBlock;
             switch (this.init_at.checkMode) {
                case AT_POSITION:

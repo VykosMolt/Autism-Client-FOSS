@@ -89,7 +89,7 @@ public class AutismFabricatorOverlay extends bj {
    private final autismclient.gui.f.b.CacheEntry init_CacheEntry = new autismclient.gui.f.b.CacheEntry();
    private J.Inner_TaskQueue init_J_TaskQueue = null;
    private ItemStack init_ItemStack = ItemStack.EMPTY;
-   private final List<autismclient.util.macro.SyncManager.Inner_DataUtil> open_List = new ArrayList<>();
+   private final List<autismclient.util.macro.CraftAction.Inner_DataUtil> open_List = new ArrayList<>();
    private int data = -1;
    private int value = 0;
    private final autismclient.gui.f.b.CacheEntry load_CacheEntry = new autismclient.gui.f.b.CacheEntry();
@@ -1239,27 +1239,27 @@ public class AutismFabricatorOverlay extends bj {
       this.sync_Str = "";
    }
 
-   private J.Inner_TaskQueue init_J_TaskQueue_SyncManager_DataUt(autismclient.util.macro.SyncManager.Inner_DataUtil entry) {
+   private J.Inner_TaskQueue init_J_TaskQueue_SyncManager_DataUt(autismclient.util.macro.CraftAction.Inner_DataUtil entry) {
       return entry == null ? null : J.init(this.flush_List, entry.init_Str, entry.init_I);
    }
 
-   private autismclient.util.macro.SyncManager.Inner_DataUtil init_SyncManager_DataUt() {
+   private autismclient.util.macro.CraftAction.Inner_DataUtil init_SyncManager_DataUt() {
       if (this.init_J_TaskQueue != null && !this.init_ItemStack.isEmpty()) {
          int configuredAmount = this.store();
-         return configuredAmount <= 0 ? null : autismclient.util.macro.SyncManager.Inner_DataUtil.init(this.init_J_TaskQueue, configuredAmount, this.push_Z);
+         return configuredAmount <= 0 ? null : autismclient.util.macro.CraftAction.Inner_DataUtil.init(this.init_J_TaskQueue, configuredAmount, this.push_Z);
       } else {
          return null;
       }
    }
 
-   private autismclient.util.macro.SyncManager.Inner_DataUtil load_SyncManager_DataUt() {
+   private autismclient.util.macro.CraftAction.Inner_DataUtil load_SyncManager_DataUt() {
       return this.data >= 0 && this.data < this.open_List.size() ? this.open_List.get(this.data) : null;
    }
 
    private void init_V_I_2(int index) {
       if (index >= 0 && index < this.open_List.size()) {
          this.data = index;
-         autismclient.util.macro.SyncManager.Inner_DataUtil entry = this.open_List.get(index);
+         autismclient.util.macro.CraftAction.Inner_DataUtil entry = this.open_List.get(index);
          if (entry != null) {
             this.push_Z = entry.init_Z;
             this.write_Str = String.valueOf(Math.max(1, entry.read_I));
@@ -1291,14 +1291,14 @@ public class AutismFabricatorOverlay extends bj {
    }
 
    private void set_V_3() {
-      autismclient.util.macro.SyncManager.Inner_DataUtil draft = this.init_SyncManager_DataUt();
+      autismclient.util.macro.CraftAction.Inner_DataUtil draft = this.init_SyncManager_DataUt();
       if (draft == null) {
          this.init_V_Str_ChatFormatting("Select a recipe and amount first", ChatFormatting.RED);
       } else {
          int existingIndex = -1;
 
          for (int i = 0; i < this.open_List.size(); i++) {
-            autismclient.util.macro.SyncManager.Inner_DataUtil existing = this.open_List.get(i);
+            autismclient.util.macro.CraftAction.Inner_DataUtil existing = this.open_List.get(i);
             if (existing != null
                && (!draft.init_Str.isBlank() && draft.init_Str.equalsIgnoreCase(existing.init_Str) || draft.init_I >= 0 && draft.init_I == existing.init_I)) {
                existingIndex = i;
@@ -1336,11 +1336,11 @@ public class AutismFabricatorOverlay extends bj {
       }
    }
 
-   private List<autismclient.util.macro.SyncManager.Inner_DataUtil> load_List_2() {
+   private List<autismclient.util.macro.CraftAction.Inner_DataUtil> load_List_2() {
       if (!this.open_List.isEmpty()) {
-         List<autismclient.util.macro.SyncManager.Inner_DataUtil> copies = new ArrayList<>(this.open_List.size());
+         List<autismclient.util.macro.CraftAction.Inner_DataUtil> copies = new ArrayList<>(this.open_List.size());
 
-         for (autismclient.util.macro.SyncManager.Inner_DataUtil entry : this.open_List) {
+         for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : this.open_List) {
             if (entry != null && entry.init_Z()) {
                copies.add(entry.init_SyncManager_DataUt());
             }
@@ -1348,23 +1348,23 @@ public class AutismFabricatorOverlay extends bj {
 
          return copies;
       } else {
-         autismclient.util.macro.SyncManager.Inner_DataUtil draft = this.init_SyncManager_DataUt();
+         autismclient.util.macro.CraftAction.Inner_DataUtil draft = this.init_SyncManager_DataUt();
          return draft == null ? List.of() : List.of(draft);
       }
    }
 
-   private autismclient.util.macro.SyncManager init_SyncManager() {
-      List<autismclient.util.macro.SyncManager.Inner_DataUtil> activeEntries = this.load_List_2();
+   private autismclient.util.macro.CraftAction init_SyncManager() {
+      List<autismclient.util.macro.CraftAction.Inner_DataUtil> activeEntries = this.load_List_2();
       if (activeEntries.isEmpty()) {
          return null;
       }
 
-      autismclient.util.macro.SyncManager action = new autismclient.util.macro.SyncManager();
+      autismclient.util.macro.CraftAction action = new autismclient.util.macro.CraftAction();
       action.init(activeEntries);
       return action;
    }
 
-   private Component init_Component_SyncManager_DataUt(autismclient.util.macro.SyncManager.Inner_DataUtil entry) {
+   private Component init_Component_SyncManager_DataUt(autismclient.util.macro.CraftAction.Inner_DataUtil entry) {
       if (entry != null && entry.init_Z()) {
          J.Inner_TaskQueue option = this.init_J_TaskQueue_SyncManager_DataUt(entry);
          String amount = entry.init_Z ? "Max" : "x" + Math.max(1, entry.read_I);
@@ -1884,7 +1884,7 @@ public class AutismFabricatorOverlay extends bj {
    private void init_V_AutismMacroEditorO(AutismMacroEditorOverlay macroEditor) {
       try {
          if (this.poll_Z_5()) {
-            autismclient.util.macro.SyncManager craftAction = this.init_SyncManager();
+            autismclient.util.macro.CraftAction craftAction = this.init_SyncManager();
             if (craftAction != null && craftAction.init_Z_5()) {
                macroEditor.init_V_MacroAction_2(craftAction);
                return;
@@ -1913,7 +1913,7 @@ public class AutismFabricatorOverlay extends bj {
                return;
             }
 
-            autismclient.util.macro.z action = new autismclient.util.macro.z(target, repeats, false);
+            autismclient.util.macro.PacketClickAction action = new autismclient.util.macro.PacketClickAction(target, repeats, false);
             macroEditor.init_V_MacroAction_2(action);
             this.init_V_Str_ChatFormatting("Added Packet Click action to macro!", ChatFormatting.GREEN);
             return;
@@ -1927,9 +1927,9 @@ public class AutismFabricatorOverlay extends bj {
          }
 
          if (this.init_AutismFabricatorOv == AutismFabricatorOverlay.Inner_DataUtil.DROP) {
-            autismclient.util.macro.PacketUtil dropAction = new autismclient.util.macro.PacketUtil();
+            autismclient.util.macro.DropAction dropAction = new autismclient.util.macro.DropAction();
             dropAction.useHandlerSlots = true;
-            dropAction.mode = this.flush_Z ? autismclient.util.macro.PacketUtil.Inner_DataUtil.ALL : autismclient.util.macro.PacketUtil.Inner_DataUtil.TIMES;
+            dropAction.mode = this.flush_Z ? autismclient.util.macro.DropAction.Inner_DataUtil.ALL : autismclient.util.macro.DropAction.Inner_DataUtil.TIMES;
             dropAction.dropCount = this.flush_Z ? 0 : repeats;
             String entry = enteredSlot != null ? "#" + enteredSlot + (!itemName.isEmpty() ? "|" + itemName : "") : itemName;
             if (!entry.isBlank()) {
@@ -1945,7 +1945,7 @@ public class AutismFabricatorOverlay extends bj {
             return;
          }
 
-         autismclient.util.macro.MapStore itemAction = new autismclient.util.macro.MapStore();
+         autismclient.util.macro.ItemAction itemAction = new autismclient.util.macro.ItemAction();
          itemAction.actionIndex = this.init_AutismFabricatorOv.init_N(this.flush_Z).ordinal();
          itemAction.button = this.pool();
          itemAction.times = repeats;
@@ -2117,7 +2117,7 @@ public class AutismFabricatorOverlay extends bj {
    }
 
    private void flush(boolean queue) {
-      List<autismclient.util.macro.SyncManager.Inner_DataUtil> entries = this.load_List_2();
+      List<autismclient.util.macro.CraftAction.Inner_DataUtil> entries = this.load_List_2();
       if (entries.isEmpty()) {
          this.init_V_Str_ChatFormatting("Select a recipe or add a craft entry first", ChatFormatting.RED);
       } else if (!queue) {
@@ -2128,7 +2128,7 @@ public class AutismFabricatorOverlay extends bj {
             Thread craftThread = new Thread(() -> {
                J.Inner_CachePool result = null;
 
-               for (autismclient.util.macro.SyncManager.Inner_DataUtil entryx : entries) {
+               for (autismclient.util.macro.CraftAction.Inner_DataUtil entryx : entries) {
                   J.Inner_TaskQueue optionx = J.init(init_Minecraft, entryx.init_Str);
                   if (optionx == null) {
                      optionx = J.init(init_Minecraft, entryx.init_I);
@@ -2166,7 +2166,7 @@ public class AutismFabricatorOverlay extends bj {
       } else {
          int queuedClicks = 0;
 
-         for (autismclient.util.macro.SyncManager.Inner_DataUtil entry : entries) {
+         for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : entries) {
             J.Inner_TaskQueue option = J.init(init_Minecraft, entry.init_Str);
             if (option == null) {
                option = J.init(init_Minecraft, entry.init_I);

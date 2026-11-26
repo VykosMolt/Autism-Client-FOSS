@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.TaskTimer;
+import autismclient.modules.BacktrackModule;
 import autismclient.util.AutismLiteVariant;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.Packet;
@@ -31,7 +31,7 @@ public class AutismBacktrackPacketMixin {
    private static final String THREAD = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V";
 
    private void autism$backtrack(Packet<?> packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && TaskTimer.init_Z_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet)) {
+      if (!AutismLiteVariant.enabled() && BacktrackModule.init_Z_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet)) {
          ci.cancel();
       }
    }

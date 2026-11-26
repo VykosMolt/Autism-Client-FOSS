@@ -99,7 +99,7 @@ public final class d {
 
          try {
             String value = resolution.init_Str().trim();
-            if (action instanceof al tools && binding.getKey().startsWith("toolArg.")) {
+            if (action instanceof ToolsAction tools && binding.getKey().startsWith("toolArg.")) {
                if (!tools.init_Z_Str_Str_2(binding.getKey(), value)) {
                   return false;
                }
@@ -264,7 +264,7 @@ public final class d {
       try {
          return Integer.parseInt(resolution.init_Str().trim());
       } catch (NumberFormatException ignored) {
-         long compact = G.init_J_Str(resolution.init_Str());
+         long compact = PayAction.init_J_Str(resolution.init_Str());
          if (compact <= 2147483647L && compact >= -2147483648L) {
             return (int)compact;
          } else {

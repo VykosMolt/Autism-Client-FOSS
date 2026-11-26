@@ -48,8 +48,8 @@ final class StreamGate {
          init_Obj = init_Minecraft.level;
       }
 
-      boolean ideal = !ClassCache.init_ClassCache_CachePo().init_Z();
-      List<ItemStack> recommended = ideal ? ClassCache.load_List() : List.of();
+      boolean ideal = !BedEspModule.init_ClassCache_CachePo().init_Z();
+      List<ItemStack> recommended = ideal ? BedEspModule.load_List() : List.of();
       Map<BlockPos, Double> actualCosts = ideal ? new HashMap<>() : null;
       Map<BlockState, Double> idealCosts = ideal ? new HashMap<>() : null;
       BlockState state = init_Minecraft.level.getBlockState(bed);
@@ -86,7 +86,7 @@ final class StreamGate {
                if (!shape.isEmpty()) {
                   List<AABB> boxes = shape.toAabbs().stream().map(b -> b.move(p)).toList();
                   boolean target = p.equals(bed) || paired && p.equals(other);
-                  boolean breakable = target || ClassCache.init_Z_Block(block.getBlock());
+                  boolean breakable = target || BedEspModule.init_Z_Block(block.getBlock());
                   int slot = init_Minecraft.player.getInventory().getSelectedSlot();
                   double ticks = 1.0 / 0.0;
                   if (breakable) {
@@ -152,7 +152,7 @@ final class StreamGate {
       }
 
       BlockState state = init_Minecraft.level.getBlockState(pos);
-      if (!state.isAir() && (state.getBlock() instanceof BedBlock || ClassCache.init_Z_Block(state.getBlock()))) {
+      if (!state.isAir() && (state.getBlock() instanceof BedBlock || BedEspModule.init_Z_Block(state.getBlock()))) {
          Vec3 eye = init_Minecraft.player.getEyePosition();
          List<AABB> boxes = state.getShape(init_Minecraft.level, pos, CollisionContext.of(init_Minecraft.player))
             .toAabbs()
@@ -265,7 +265,7 @@ final class StreamGate {
          speed /= 5.0;
       }
 
-      return ClassCache.init(
+      return BedEspModule.init(
          state.getDestroySpeed(init_Minecraft.level, pos), speed, !state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state), false
       );
    }

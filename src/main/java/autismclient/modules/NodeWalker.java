@@ -28,13 +28,13 @@ public final class NodeWalker {
    private NodeWalker() {
    }
 
-   private static List<ClassCache.Inner_DataUtil> init_List() {
-      ClassCache esp = ClassCache.init_ClassCache();
+   private static List<BedEspModule.Inner_DataUtil> init_List() {
+      BedEspModule esp = BedEspModule.init_ClassCache();
       if (esp != null) {
          return esp.init_List_2();
       }
 
-      ClassCache.Inner_DataUtil target = UtilCore.init_ClassCache_DataUti();
+      BedEspModule.Inner_DataUtil target = BedNukerModule.init_ClassCache_DataUti();
       return target == null ? List.of() : List.of(target);
    }
 
@@ -53,11 +53,11 @@ public final class NodeWalker {
       if (init_Z()) {
          Vec3 camera = Q.init();
          PkgCls_c source = init_c_DataUtil.init();
-         List<ClassCache.Inner_DataUtil> beds = init_List();
-         boolean path = ClassCache.init_ClassCache_CachePo().load();
+         List<BedEspModule.Inner_DataUtil> beds = init_List();
+         boolean path = BedEspModule.init_ClassCache_CachePo().load();
          VertexConsumer fill = source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
-         for (ClassCache.Inner_DataUtil bed : beds) {
+         for (BedEspModule.Inner_DataUtil bed : beds) {
             int rgb = bed.init_DyeColor().getTextureDiffuseColor();
             cI.init(matrices.last(), fill, bed.init_AABB().move(camera.scale(-1.0)), init(rgb, 32));
             if (path && bed.init_Z()) {
@@ -69,7 +69,7 @@ public final class NodeWalker {
 
          VertexConsumer lines = source.init(autismclient.render.AutismRenderTypes.tracerEspLines());
 
-         for (ClassCache.Inner_DataUtil bed : beds) {
+         for (BedEspModule.Inner_DataUtil bed : beds) {
             cI.init(
                matrices.last(), lines, bed.init_AABB().inflate(0.004).move(camera.scale(-1.0)), init(bed.init_DyeColor().getTextureDiffuseColor(), 204), 1.5F
             );
@@ -87,7 +87,7 @@ public final class NodeWalker {
    }
 
    public static void init(GuiGraphicsExtractor graphics) {
-      if (init_Z() && ClassCache.init_ClassCache_CachePo().read()) {
+      if (init_Z() && BedEspModule.init_ClassCache_CachePo().read()) {
          Matrix4f matrix = new Matrix4f();
          if (Q.init(matrix)) {
             Vec3 camera = Q.init();
@@ -104,7 +104,7 @@ public final class NodeWalker {
             );
             int iconSize = Math.min(12, rowHeight - 2);
 
-            for (ClassCache.Inner_DataUtil bed : init_List()) {
+            for (BedEspModule.Inner_DataUtil bed : init_List()) {
                double distance = Math.sqrt(bed.init_AABB().distanceToSqr(camera));
                float alpha = c.init(distance);
                if (!(alpha < 0.005F)) {
@@ -118,7 +118,7 @@ public final class NodeWalker {
                      widths[0] = width + 4;
 
                      for (int i = 0; i < bed.init_List().size(); i++) {
-                        ClassCache.Inner_StreamUtil material = bed.init_List().get(i);
+                        BedEspModule.Inner_StreamUtil material = bed.init_List().get(i);
                         widths[i + 1] = ui.init_PoolEntry().init(material.init_Str())
                            + 3
                            + ui.init_PoolEntry().init("x" + material.init_I())
@@ -167,7 +167,7 @@ public final class NodeWalker {
                         }
                         int row = rowHeight;
 
-                        for (ClassCache.Inner_StreamUtil material : bed.init_List()) {
+                        for (BedEspModule.Inner_StreamUtil material : bed.init_List()) {
                            String amount = "x" + material.init_I();
                            int rowWidth = ui.init_PoolEntry().init(material.init_Str())
                               + 3

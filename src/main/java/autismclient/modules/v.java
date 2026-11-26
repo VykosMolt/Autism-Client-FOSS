@@ -79,7 +79,7 @@ final class v {
       return List.copyOf(result);
    }
 
-   void init_V_Minecraft_z(Minecraft mc, z module) {
+   void init_V_Minecraft_z(Minecraft mc, DangerModule module) {
       if (module.bool("bed-warning") && mc.level != null && mc.player != null && mc.player.isAlive() && !mc.player.isSpectator()) {
          PlayerTeam ownTeam = mc.player.getTeam();
          TextColor ownRgb = ownTeam == null ? null : ownTeam.getColor().map(TeamColor::textColor).orElse(null);
@@ -135,7 +135,7 @@ final class v {
                      DyeColor dye = b.load(account, display, player.getDisplayName(), fallback == null ? null : fallback.getValue());
                      if (this.init_v_CachePool.init(player.getUUID(), team == null ? null : team.getName(), dye, this.init_I, 20)
                         && (module.bool("bed-include-team") || dye != own && (team == null || team != mc.player.getTeam()))
-                        && (module.bool("bed-include-friends") || !aL.init_Z_Entity_5(player) || dye == own)) {
+                        && (module.bool("bed-include-friends") || !TeamsModule.init_Z_Entity_5(player) || dye == own)) {
                         int tint = at.init_I(account, display, fallback);
                         String key = dye != null ? "color:" + dye.getName() : (team != null ? "team:" + team.getName() : "player:" + player.getUUID());
                         people.add(

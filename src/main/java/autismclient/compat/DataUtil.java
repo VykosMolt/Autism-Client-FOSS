@@ -1,7 +1,7 @@
 package autismclient.compat;
 
 import autismclient.compat263.Compat263;
-import autismclient.gui.d.CacheEntry;
+import autismclient.gui.d.ThemeColorScreen;
 import autismclient.gui.f.HashUtil;
 import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.PacketUtil;
@@ -202,8 +202,8 @@ public class DataUtil extends Screen {
          out.add(this.init_DataUtil_BufferHel(i));
       }
 
-      out.add(this.init("Theme Color", () -> this.minecraft.gui.setScreen(new CacheEntry(this))));
-      out.add(this.init("Addons", () -> this.minecraft.gui.setScreen(new autismclient.gui.d.CachePool(this))));
+      out.add(this.init("Theme Color", () -> this.minecraft.gui.setScreen(new ThemeColorScreen(this))));
+      out.add(this.init("Addons", () -> this.minecraft.gui.setScreen(new autismclient.gui.d.AddonsScreen(this))));
       out.add(this.init("Discord", () -> aJ.init_V("https://discord.com/invite/JZ7XgUCtBu")));
       return out;
    }

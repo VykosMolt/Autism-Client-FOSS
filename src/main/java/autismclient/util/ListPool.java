@@ -94,8 +94,8 @@ public final class ListPool {
          && !f.load()
          && !cn.init_Z()
          && !autismclient.modules.HashUtil.init_Z()
-         && !autismclient.modules.FieldCache.init_Z_6()
-         && !autismclient.modules.TableIndex.init_Z_20();
+         && !autismclient.modules.AutoTotemModule.init_Z_6()
+         && !autismclient.modules.AutoArmorModule.init_Z_20();
    }
 
    private static boolean read_Z(Minecraft mc) {
@@ -119,7 +119,7 @@ public final class ListPool {
             init_V();
          }
 
-         if (autismclient.modules.aa.init_Z_31()) {
+         if (autismclient.modules.KillAuraModule.init_Z_31()) {
             init_V();
             return false;
          }
@@ -155,7 +155,7 @@ public final class ListPool {
             init_ClientLevel = mc.level;
             load_Z = true;
             write_I = tick;
-            autismclient.modules.aa.init_V_27();
+            autismclient.modules.KillAuraModule.init_V_27();
             if (!init_LocalPlayer.isUsingItem() || pressed) {
                update_Z = false;
             } else if (!update_Z) {
@@ -202,7 +202,7 @@ public final class ListPool {
                ce.Inner_DataUtil written = wire.init_Z() ? new ce.Inner_DataUtil(Float.isFinite(yaw) ? yaw : wire.read(), wire.write()) : null;
                boolean ready = tick > read_I && written != null && init_Z(mc, written);
                write_V(mc);
-               if (!autismclient.modules.aa.init_Z_ce_DataUtil(ready ? written : read_ce_DataUtil, init_q_DataUtil, ready)) {
+               if (!autismclient.modules.KillAuraModule.init_Z_ce_DataUtil(ready ? written : read_ce_DataUtil, init_q_DataUtil, ready)) {
                   init_V();
                   return false;
                }
@@ -269,7 +269,7 @@ public final class ListPool {
 
    public static void init_V(Minecraft mc) {
       if (mc.options != null && open() && load_Z(mc)) {
-         if (autismclient.modules.aa.init_Z_31()) {
+         if (autismclient.modules.KillAuraModule.init_Z_31()) {
             sync_Z = false;
          } else {
             AutismKeyMappingAccessor key = init_AutismKeyMappingAc(mc);
@@ -332,8 +332,8 @@ public final class ListPool {
       if (!read_Z
          && open()
          && !s.flush_Z()
-         && !autismclient.modules.aa.init_Z_31()
-         && !autismclient.modules.aI.init_Z_26()
+         && !autismclient.modules.KillAuraModule.init_Z_31()
+         && !autismclient.modules.ScaffoldModule.init_Z_26()
          && !f.load()
          && !autismclient.modules.aD.init_Z()
          && !autismclient.modules.aC.init_Z()

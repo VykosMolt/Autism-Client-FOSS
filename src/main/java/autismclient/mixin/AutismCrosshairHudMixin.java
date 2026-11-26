@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.aa;
+import autismclient.modules.KillAuraModule;
 import autismclient.modules.o;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -26,7 +26,7 @@ public abstract class AutismCrosshairHudMixin {
       GuiGraphicsExtractor graphics, RenderPipeline pipeline, Identifier sprite, int x, int y, int width, int height, Operation<Void> original
    ) {
       if ("hud/crosshair".equals(sprite.getPath())) {
-         aa.init_V_GuiGraphicsExtract(graphics);
+         KillAuraModule.init_V_GuiGraphicsExtract(graphics);
          if (o.init(graphics)) {
             return;
          }

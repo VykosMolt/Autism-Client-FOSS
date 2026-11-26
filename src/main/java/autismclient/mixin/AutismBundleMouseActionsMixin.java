@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.R;
+import autismclient.modules.InventoryTweaksModule;
 import net.minecraft.client.gui.BundleMouseActions;
 import net.minecraft.world.item.BundleItem;
 import net.minecraft.world.item.ItemStack;
@@ -16,6 +16,6 @@ public abstract class AutismBundleMouseActionsMixin {
       require = 0
    )
    private int autism$uncapBundleScroll(ItemStack stack) {
-      return R.init_I_ItemStack_I(stack, BundleItem.getNumberOfItemsToShow(stack));
+      return InventoryTweaksModule.init_I_ItemStack_I(stack, BundleItem.getNumberOfItemsToShow(stack));
    }
 }

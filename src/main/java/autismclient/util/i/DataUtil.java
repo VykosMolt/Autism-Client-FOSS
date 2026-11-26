@@ -2,7 +2,7 @@ package autismclient.util.i;
 
 import autismclient.AutismClientAddon;
 import autismclient.compat263.Compat263;
-import autismclient.modules.FieldCache;
+import autismclient.modules.AutoTotemModule;
 import autismclient.modules.aD;
 import autismclient.util.ah;
 import autismclient.util.aw;
@@ -104,7 +104,7 @@ public final class DataUtil {
    }
 
    public static void init_V_Minecraft(Minecraft mc) {
-      if (!init_List.isEmpty() && !FieldCache.init_Z_6()) {
+      if (!init_List.isEmpty() && !AutoTotemModule.init_Z_6()) {
          for (Predicate<Minecraft> driver : init_List) {
             boolean keep = false;
 
