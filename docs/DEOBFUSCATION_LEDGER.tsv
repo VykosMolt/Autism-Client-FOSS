@@ -3767,3 +3767,4 @@ Phase9C	C	autismclient/util/macro/MacroWaitRegistry$Inner_SyncManager	autismclie
 Phase9C	C	autismclient/util/macro/MacroWaitRegistry$Inner_TaskQueue	autismclient/util/macro/MacroWaitRegistry$WaitScreenChangeEntry	autismclient/util/macro/b$TaskQueue	source-inspection:nested-monolith	applied
 Phase9C	C	autismclient/util/macro/MacroWaitRegistry$Inner_TextFormat	autismclient/util/macro/MacroWaitRegistry$WaitServerTickSyncEntry	autismclient/util/macro/b$TextFormat	source-inspection:nested-monolith	applied
 Phase9C	C	autismclient/util/macro/MacroWaitRegistry$Inner_UiHelper	autismclient/util/macro/MacroWaitRegistry$WaitInventoryItemEntry	autismclient/util/macro/b$UiHelper	source-inspection:nested-monolith	applied
+Phase9C	C	autismclient/ai/print/PrintCore$I$CellUserCount	autismclient/ai/print/PrintCore$I$ScoredClick	autismclient/ai/b/UiHelper$I$DataUtil	audit-fix:PrintCore$I$ScoredClick	applied

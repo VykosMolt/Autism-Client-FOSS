@@ -1,6 +1,6 @@
 # 61-Package Directory (AUTISM Client 5.8-26.3)
 
-Counts reflect the post-Phase-8 working tree (`1,484 / 1,520` non-excluded files named; `365` classes consolidated out of `24` single-letter packages into semantic packages; all `36` remaining obfuscated top-level classes are compile-time ABI-pinned/attestation). The `1,520` non-excluded total (`625,298` LOC across `58` non-excluded packages) excludes hard-frozen integrity paths (`e/`, `sys/`, `obf/`, `a/`, `util/mm/guardian/`, and the `5` untouched individual integrity files; `a/` and `util/mm/guardian*` are listed separately in the Frozen section below, totaling `61` documented packages).
+Counts reflect the post-Phase-9 working tree (`1,484 / 1,520` non-excluded top-level files named; `365` classes consolidated out of `24` single-letter packages into semantic packages; `1,922` enum constants restored; `398` shared-hub and monolith `Inner_*` nested classes named; all `36` remaining obfuscated top-level classes are compile-time ABI-pinned/attestation). The `1,520` non-excluded total (`625,298` LOC across `58` non-excluded packages) excludes hard-frozen integrity paths (`e/`, `sys/`, `obf/`, `a/`, `util/mm/guardian/`, and the `5` untouched individual integrity files; `a/` and `util/mm/guardian*` are listed separately in the Frozen section below, totaling `61` documented packages).
 
 ## Frozen / Stable Packages
 | Package | Files | LOC | Status | Description |

@@ -463,10 +463,16 @@ public final class AstBatchRenamer {
                             String left = full.substring(0, dot);
                             String right = full.substring(dot + 1);
                             if (imp.isStatic()) {
-                                // import static pkg.Enum.OLD_CONST; or import static pkg.OldClass.*; or import static pkg.OldClass.Inner.member;
+                                // import static pkg.Enum.OLD_CONST; or import static pkg.Outer.OldInner; or import static pkg.OldClass.*;
                                 EnumRename er = findEnumImport(left, right, enumRenames);
                                 if (er != null) {
                                     addMemberSelectEdit(cu, sp, content, ms, er.curConst, er.newConst, "static-import-enum", edits);
+                                }
+                                if (!"*".equals(right)) {
+                                    ClassRename directStaticCr = lookupClassByDotted(full, classRenames);
+                                    if (directStaticCr != null) {
+                                        addClassMoveOrRenameImportEdits(cu, sp, content, ms, directStaticCr, "static-import-pkg", "static-import-class", edits);
+                                    }
                                 }
                                 ExpressionTree expr = ms.getExpression();
                                 while (expr instanceof MemberSelectTree ems) {
@@ -593,11 +599,17 @@ public final class AstBatchRenamer {
                                         int s = (int) sp.getStartPosition(cu, node);
                                         int e = (int) sp.getEndPosition(cu, node);
                                         if (s >= 0 && e > s) {
-                                            int brace = content.indexOf('{', s);
-                                            int paren = content.indexOf('(', s);
-                                            int limit = (paren > s && (brace < 0 || paren < brace)) ? paren : brace;
-                                            if (limit > s && limit <= e) {
-                                                int tokStart = findLastIdentToken(content, s, limit, oldSimple);
+                                            int searchStart = s;
+                                            ModifiersTree mods = node.getModifiers();
+                                            if (mods != null && !mods.getAnnotations().isEmpty()) {
+                                                int modEnd = (int) sp.getEndPosition(cu, mods);
+                                                if (modEnd > searchStart && modEnd < e) searchStart = modEnd;
+                                            }
+                                            int brace = content.indexOf('{', searchStart);
+                                            int paren = content.indexOf('(', searchStart);
+                                            int limit = (paren > searchStart && (brace < 0 || paren < brace)) ? paren : brace;
+                                            if (limit > searchStart && limit <= e) {
+                                                int tokStart = findLastIdentToken(content, searchStart, limit, oldSimple);
                                                 if (tokStart >= 0) {
                                                     edits.add(new TextEdit(tokStart, tokStart + oldSimple.length(), oldSimple, newSimple, "ctor-decl"));
                                                 }

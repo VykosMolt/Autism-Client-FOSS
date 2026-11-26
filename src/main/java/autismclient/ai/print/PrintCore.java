@@ -16357,7 +16357,7 @@ public final class PrintCore {
       final IntArrayList load_IntArrayList;
       final IntArrayList read_IntArrayList = new IntArrayList();
       final List<BlockState> init_List = new ArrayList<>();
-      final List<PrintCore.I.CellUserCount> load_List = new ArrayList<>();
+      final List<PrintCore.I.ScoredClick> load_List = new ArrayList<>();
       final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
       final PrintClicks.Inner_DataUtil init_ConfigStore_DataUt = new PrintClicks.Inner_DataUtil(40000);
       final int init_I;
@@ -16368,7 +16368,7 @@ public final class PrintCore {
       PrintCore.b init_UiHelper_b;
       PrintCore.aI init_UiHelper_aI;
       PrintCore.f init_UiHelper_f;
-      PrintCore.I.CellUserCount init_UiHelper_I_DataUti;
+      PrintCore.I.ScoredClick init_UiHelper_I_DataUti;
       boolean init_Z;
       boolean load_Z;
       PrintCore.StanceRouteCandidate init_UiHelper_PacketUti;
@@ -16462,10 +16462,10 @@ public final class PrintCore {
                               double key = (t.pos().getY() - this.init_I) * 1000.0
                                  - Math.floor(Math.sqrt(dx * dx + dz * dz)) * 10.0
                                  + Math.abs(PrintGeometry.init_F(this.init_F, click.yaw())) / 36.0F;
-                              this.load_List.add(new PrintCore.I.CellUserCount(at, key, click));
+                              this.load_List.add(new PrintCore.I.ScoredClick(at, key, click));
                            }
                         } else {
-                           this.load_List.sort(Comparator.comparingDouble(PrintCore.I.CellUserCount::score).thenComparingInt(PrintCore.I.CellUserCount::index));
+                           this.load_List.sort(Comparator.comparingDouble(PrintCore.I.ScoredClick::score).thenComparingInt(PrintCore.I.ScoredClick::index));
                            this.write = 0;
                            this.load_I = 1;
                         }
@@ -16567,7 +16567,7 @@ public final class PrintCore {
          }
       }
 
-      record CellUserCount(int index, double score, autismclient.ai.print.PrintClicks.Inner_StreamUtil click) {
+      record ScoredClick(int index, double score, autismclient.ai.print.PrintClicks.Inner_StreamUtil click) {
       }
    }
 

@@ -444,7 +444,7 @@ C	autismclient/ai/b/UiHelper$EventBus	autismclient/ai/print/PrintCore$TempScaffo
 C	autismclient/ai/b/UiHelper$FieldCache	autismclient/ai/print/PrintCore$ClusterWorkContext
 C	autismclient/ai/b/UiHelper$FileCache	autismclient/ai/print/PrintCore$CellEditSnapshot
 C	autismclient/ai/b/UiHelper$HashUtil	autismclient/ai/print/PrintCore$BatchClickPlanner
-C	autismclient/ai/b/UiHelper$I$DataUtil	autismclient/ai/print/PrintCore$I$CellUserCount
+C	autismclient/ai/b/UiHelper$I$DataUtil	autismclient/ai/print/PrintCore$I$ScoredClick
 C	autismclient/ai/b/UiHelper$IoWorker	autismclient/ai/print/PrintCore$ChunkFlightStep
 C	autismclient/ai/b/UiHelper$JsonUtil	autismclient/ai/print/PrintCore$EvidenceWaitStep
 C	autismclient/ai/b/UiHelper$KeyHolder$DataUtil	autismclient/ai/print/PrintCore$KeyHolder$SearchDepthCell
@@ -6710,7 +6710,7 @@ F	autismclient/ai/b/UiHelper$I	init	F	autismclient/ai/print/PrintCore$I	init_F	F
 F	autismclient/ai/b/UiHelper$I	init	I	autismclient/ai/print/PrintCore$I	init_I	I
 F	autismclient/ai/b/UiHelper$I	init	J	autismclient/ai/print/PrintCore$I	init_J	J
 F	autismclient/ai/b/UiHelper$I	init	Lautismclient/ai/b/ConfigStore$DataUtil;	autismclient/ai/print/PrintCore$I	init_ConfigStore_DataUt	Lautismclient/ai/print/PrintClicks$Inner_DataUtil;
-F	autismclient/ai/b/UiHelper$I	init	Lautismclient/ai/b/UiHelper$I$DataUtil;	autismclient/ai/print/PrintCore$I	init_UiHelper_I_DataUti	Lautismclient/ai/print/PrintCore$I$CellUserCount;
+F	autismclient/ai/b/UiHelper$I	init	Lautismclient/ai/b/UiHelper$I$DataUtil;	autismclient/ai/print/PrintCore$I	init_UiHelper_I_DataUti	Lautismclient/ai/print/PrintCore$I$ScoredClick;
 F	autismclient/ai/b/UiHelper$I	init	Lautismclient/ai/b/UiHelper$PacketUtil;	autismclient/ai/print/PrintCore$I	init_UiHelper_PacketUti	Lautismclient/ai/print/PrintCore$StanceRouteCandidate;
 F	autismclient/ai/b/UiHelper$I	init	Lautismclient/ai/b/UiHelper$RenderState;	autismclient/ai/print/PrintCore$I	init_UiHelper_RenderSta	Lautismclient/ai/print/PrintCore$ReachGridCache;
 F	autismclient/ai/b/UiHelper$I	init	Lautismclient/ai/b/UiHelper$aI;	autismclient/ai/print/PrintCore$I	init_UiHelper_aI	Lautismclient/ai/print/PrintCore$aI;
