@@ -72,6 +72,9 @@ if (useLocalCp) {
         }
     }
 }
+def localMcJar = useLocalCp ? localCpJars.find { it.name.startsWith('minecraft-') && it.name.endsWith('-client.jar') } : null
+def accessWidenerSourceJar = localMcJar ?: minecraftClientJar
+def compileLocalCpJars = localMcJar != null ? localCpJars.collect { it == localMcJar ? minecraftWidenedJar : it } : localCpJars
 
 def sha1Of = { File f ->
     def md = MessageDigest.getInstance('SHA-1')
@@ -121,8 +124,8 @@ tasks.register('applyAccessWidener', Exec) {
     group = 'build setup'
     description = "Applies autism.accesswidener to the Minecraft ${minecraftVersion} client JAR."
     dependsOn tasks.named('downloadMinecraftClient')
-    enabled = !useLocalCp
-    inputs.file(minecraftClientJar)
+    enabled = !useLocalCp || localMcJar != null
+    inputs.file(accessWidenerSourceJar)
     inputs.file(accessWidenerFile)
     inputs.file(file('tools/ApplyAccessWidener.java'))
     inputs.files(configurations.asmTools)
@@ -132,7 +135,7 @@ tasks.register('applyAccessWidener', Exec) {
             "${System.getProperty('java.home')}/bin/java",
             '-cp', configurations.asmTools.asPath,
             file('tools/ApplyAccessWidener.java').absolutePath,
-            minecraftClientJar.absolutePath,
+            accessWidenerSourceJar.absolutePath,
             accessWidenerFile.absolutePath,
             minecraftWidenedJar.absolutePath
         )
@@ -248,7 +251,7 @@ dependencies {
     compileOnly('org.lwjgl:lwjgl-tinyfd:3.4.1') { transitive = false }
 
     if (useLocalCp) {
-        compileOnly files(localCpJars)
+        compileOnly files(compileLocalCpJars)
     } else {
         compileOnly files(minecraftWidenedJar)
     }

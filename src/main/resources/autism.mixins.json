@@ -142,7 +142,6 @@
     "AutismKeyboardHandlerMixin",
     "accessor.AutismScreenAccessor",
     "accessor.AutismBlockItemAccessor",
-    "accessor.AutismWindowAccessor",
     "accessor.AutismGameRendererAccessor",
     "accessor.AutismKeyMappingAccessor",
     "accessor.AutismDialogScreenAccessor",

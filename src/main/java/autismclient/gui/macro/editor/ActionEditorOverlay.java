@@ -466,32 +466,6 @@ public class ActionEditorOverlay extends bj {
       return init_ActionEditorOverla_4;
    }
 
-   public CompoundTag init_CompoundTag_Str(String key, String value, boolean openMenu, boolean scrollEnd) {
-      return new CompoundTag();
-   }
-
-   public autismclient.gui.f.b.SyncManager init_SyncManager_Str(String key) {
-      return null;
-   }
-
-   public CompoundTag init_CompoundTag_Str(String thenSteps) {
-      if (AutismLiteVariant.enabled()) {
-         return new CompoundTag();
-      }
-
-      if (!Boolean.getBoolean("autism.ui.continuity.check")) {
-         return new CompoundTag();
-      }
-
-      if (thenSteps != null && this.init_Map.get("thenSteps") != null) {
-         this.init_Map.get("thenSteps").init_V_Str(thenSteps);
-      }
-
-      this.variableWarningStale = true;
-      this.frame();
-      return this.init_CompoundTag.copy();
-   }
-
    private static boolean init_Z_StreamGate(StreamGate type) {
       if (type == null) {
          return false;

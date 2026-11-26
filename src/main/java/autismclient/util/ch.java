@@ -23,14 +23,6 @@ public final class ch {
          j.init_V_Packet_2(packet);
       }
 
-      if (!AutismLiteVariant.enabled()) {
-         w.init(packet);
-      }
-
-      if (!AutismLiteVariant.enabled()) {
-         v.init(packet);
-      }
-
       if (packet instanceof ServerboundMovePlayerPacket movement) {
          Vec3 position = null;
          if (movement.hasPosition()) {

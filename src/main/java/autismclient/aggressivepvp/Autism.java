@@ -9,7 +9,6 @@ import autismclient.modules.al;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.aD;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.Connection;
 import net.minecraft.world.entity.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,11 +28,6 @@ public final class Autism {
     /** The AUTISM module that holds the look this tick, or null. */
     public static String aimOwner() {
         return aD.init_Str();
-    }
-
-    /** One of AUTISM's extra-account connections, not the player's own. */
-    public static boolean extraConnection(Connection connection) {
-        return false;
     }
 
     /** Left alone by AUTISM's own Crystal Aura: a bot (AntiBot) or a friend Teams protects from attacks. */

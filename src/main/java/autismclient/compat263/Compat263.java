@@ -129,7 +129,6 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class Compat263 {
-   private static final Method WINDOW_FB_RESIZE;
    private static final Supplier<String> AUTISM_PASS_NAME;
    private static final MethodHandle SET_SECTION_DIRTY_URGENT = findSetSectionDirtyUrgent();
 
@@ -138,19 +137,6 @@ public final class Compat263 {
 
    public static float zeroFloat(Object var0) {
       return 0.0F;
-   }
-
-   public static void noopBool(Object var0, boolean var1) {
-   }
-
-   public static void windowFramebufferResize(Object var0, long var1, int var3, int var4) {
-      try {
-         Method var5 = WINDOW_FB_RESIZE;
-         if (var5 != null) {
-            var5.invoke(var0, var3, var4);
-         }
-      } catch (Throwable var6) {
-      }
    }
 
    private static MethodHandle findSetSectionDirtyUrgent() {
@@ -233,11 +219,6 @@ public final class Compat263 {
 
    public static CompatItemInHandRenderer getItemInHandRenderer(Object var0) {
       return CompatItemInHandRenderer.INSTANCE;
-   }
-
-   public static boolean loadMacIcon(Supplier<?> var0) {
-      var0.get();
-      return true;
    }
 
    public static boolean isKeyDown(Window var0, int var1) {
@@ -451,14 +432,6 @@ public final class Compat263 {
 
    public static float getAttackAnim(LivingEntity var0, float var1) {
       return var0 == null ? 0.0F : var0.getSwingAnimation(var1);
-   }
-
-   public static boolean isSwinging(LivingEntity var0) {
-      return var0 != null && var0.isSwinging();
-   }
-
-   public static int swingTime(LivingEntity var0) {
-      return var0 != null && var0.isSwinging() ? 1 : 0;
    }
 
    public static boolean drop(LocalPlayer var0, boolean var1) {
@@ -828,15 +801,6 @@ public final class Compat263 {
    }
 
    static {
-      Method var0 = null;
-
-      try {
-         var0 = Window.class.getDeclaredMethod("onFramebufferResize", int.class, int.class);
-         var0.setAccessible(true);
-      } catch (Throwable var7) {
-      }
-
-      WINDOW_FB_RESIZE = var0;
       AUTISM_PASS_NAME = Compat263::lambda$static$0;
    }
 

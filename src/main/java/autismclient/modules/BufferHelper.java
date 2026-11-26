@@ -137,7 +137,6 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
    private autismclient.util.S.Inner_CachePool init_S_CachePool;
    private final Map<BlockPos, autismclient.util.S.Inner_CachePool> load_Map;
    private String read_Str;
-   private StringBuilder init_StringBuilder;
    private final Map<String, Integer> read_Map;
 
    private static int init_I() {
@@ -1303,10 +1302,6 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
          .init_U_StateCache_Vec3(player.getEyePosition().add(player.getDeltaMovement()))
          .init_U_StateCache_Z(player.isSecondaryUseActive())
          .load(false);
-      if (autismclient.util.w.write()) {
-         request.init_U_StateCache_StringBuilder(this.init_StringBuilder = new StringBuilder());
-      }
-
       return request;
    }
 
@@ -1320,10 +1315,6 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
          .init_U_StateCache_Vec3(player.getEyePosition().add(player.getDeltaMovement()))
          .init_U_StateCache_Z(player.isSecondaryUseActive())
          .load(false);
-      if (autismclient.util.w.write()) {
-         request.init_U_StateCache_StringBuilder(this.init_StringBuilder = new StringBuilder());
-      }
-
       return request;
    }
 

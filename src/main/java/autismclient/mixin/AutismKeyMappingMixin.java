@@ -8,10 +8,8 @@ import autismclient.modules.FieldCache;
 import autismclient.modules.TableIndex;
 import autismclient.modules.aC;
 import autismclient.modules.al;
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.aB;
 import autismclient.util.bA;
-import autismclient.util.w;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.platform.InputConstants.Key;
 import com.mojang.blaze3d.platform.InputConstants.Type;
@@ -140,13 +138,6 @@ public abstract class AutismKeyMappingMixin implements aB {
    @Unique
    @Override
    public boolean autism$isActuallyDown() {
-      if (!AutismLiteVariant.enabled()) {
-         Boolean injected = w.init((KeyMapping)(Object)this);
-         if (injected != null) {
-            return injected;
-         }
-      }
-
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.getWindow() != null) {
          Window window = mc.getWindow();

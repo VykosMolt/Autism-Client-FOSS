@@ -17,7 +17,6 @@ import autismclient.util.ba;
 import autismclient.util.cf;
 import autismclient.util.ck;
 import autismclient.util.cx;
-import autismclient.util.w;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -92,28 +91,6 @@ public abstract class AutismMouseHandlerMixin {
    private void autism$keepEditorCursor(CallbackInfo ci) {
       if (cx.load_Z()) {
          ci.cancel();
-      }
-   }
-
-   @WrapOperation(
-      method = "grabMouse",
-      at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/InputConstants;grabMouse(Lcom/mojang/blaze3d/platform/Window;DD)V"),
-      require = 0
-   )
-   private void autism$qualificationGrabCursor(Window window, double x, double y, Operation<Void> original) {
-      if (AutismLiteVariant.enabled() || !w.load()) {
-         original.call(window, x, y);
-      }
-   }
-
-   @WrapOperation(
-      method = "releaseMouse",
-      at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/InputConstants;releaseMouse(Lcom/mojang/blaze3d/platform/Window;DD)V"),
-      require = 0
-   )
-   private void autism$qualificationReleaseCursor(Window window, double x, double y, Operation<Void> original) {
-      if (AutismLiteVariant.enabled() || !w.load()) {
-         original.call(window, x, y);
       }
    }
 

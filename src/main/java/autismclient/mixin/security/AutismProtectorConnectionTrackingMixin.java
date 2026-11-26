@@ -1,6 +1,5 @@
 package autismclient.mixin.security;
 
-import autismclient.AutismClientAddon;
 import autismclient.g.BufferHelper;
 import autismclient.g.HashUtil;
 import io.netty.channel.ChannelFutureListener;
@@ -29,15 +28,6 @@ public class AutismProtectorConnectionTrackingMixin {
    private void autism$onChannelActive(ChannelHandlerContext context, CallbackInfo ci) {
       SocketAddress peerAddress = context != null && context.channel() != null ? context.channel().remoteAddress() : null;
       this.autism$context(peerAddress, false);
-      if (!System.getProperty("autism.privacy.compat.dir", "").isBlank()) {
-         AutismClientAddon.LOG
-            .info(
-               "[Privacy-compat] channel active: flow={}, mode={}, local={}",
-               ((Connection)(Object)this).getReceiving(),
-               this.autism$privacyContext.init_BufferHelper_Cache(),
-               this.autism$privacyContext.read()
-            );
-      }
    }
 
    @Inject(method = "initiateServerboundConnection", at = @At("HEAD"))

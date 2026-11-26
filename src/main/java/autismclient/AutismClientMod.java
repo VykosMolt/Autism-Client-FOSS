@@ -13,7 +13,6 @@ import autismclient.g.MethodUtil;
 import autismclient.g.PathHelper;
 import autismclient.gui.e.BufferHelper;
 import autismclient.gui.f.b.k;
-import autismclient.modules.ArrayUtil;
 import autismclient.modules.IoWorker;
 import autismclient.modules.P;
 import autismclient.modules.PoolEntry;
@@ -24,10 +23,8 @@ import autismclient.util.AuditJoinSend;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismMacroEditorOverlay;
-import autismclient.util.H;
 import autismclient.util.J;
 import autismclient.util.KeyHolder;
-import autismclient.util.NodeWalker;
 import autismclient.util.StreamGate;
 import autismclient.util.W;
 import autismclient.util.aA;
@@ -36,10 +33,8 @@ import autismclient.util.aE;
 import autismclient.util.aF;
 import autismclient.util.aN;
 import autismclient.util.aQ;
-import autismclient.util.aX;
 import autismclient.util.ad;
 import autismclient.util.au;
-import autismclient.util.bU;
 import autismclient.util.bk;
 import autismclient.util.bl;
 import autismclient.util.bw;
@@ -48,11 +43,7 @@ import autismclient.util.cJ;
 import autismclient.util.cd;
 import autismclient.util.cg;
 import autismclient.util.co;
-import autismclient.util.cv;
 import autismclient.util.cx;
-import autismclient.util.cy;
-import autismclient.util.v;
-import autismclient.util.w;
 import autismclient.util.c.CachePool;
 import autismclient.util.macro.MacroExecutor;
 import java.io.BufferedReader;
@@ -154,19 +145,6 @@ public final class AutismClientMod implements ClientModInitializer {
       }
 
       aC.init_V();
-      if (!AutismLiteVariant.enabled()) {
-         H.init();
-         v.init_V();
-         w.init_V();
-         NodeWalker.init();
-         ArrayUtil.init();
-         autismclient.modules.H.init();
-         aX.init_V();
-         bU.init();
-         cv.init_V();
-         cy.init_V();
-      }
-
       P.init_V_12();
       autismclient.commands.DataUtil.init_V();
       if (!AutismLiteVariant.enabled()) {

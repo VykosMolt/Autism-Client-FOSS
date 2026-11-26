@@ -1,6 +1,5 @@
 package autismclient.mixin;
 
-import autismclient.aggressivepvp.Autism;
 import autismclient.aggressivepvp.Versions;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -18,7 +17,7 @@ public abstract class AggressiveConnectionMixin {
     // TAIL on 3-arg send: catches direct 3-arg sends too, and packets AUTISM cancels at 2-arg or 3-arg HEAD never reach here
     @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lio/netty/channel/ChannelFutureListener;Z)V", at = @At("TAIL"))
     private void ap$sent(Packet<?> packet, ChannelFutureListener listener, boolean flush, CallbackInfo ci) {
-        if (!Autism.extraConnection((Connection) (Object) this)) Versions.onSend(packet);
+        Versions.onSend(packet);
     }
 
     @Inject(
@@ -26,7 +25,6 @@ public abstract class AggressiveConnectionMixin {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/network/Connection;genericsFtw(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;)V")
     )
     private void ap$received(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
-        if (Autism.extraConnection((Connection) (Object) this)) return;
         if (packet instanceof ClientboundBundlePacket bundle) {
             for (Packet<?> inner : bundle.subPackets()) Versions.onReceive(inner);
         } else {

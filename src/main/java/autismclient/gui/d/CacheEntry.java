@@ -8,7 +8,6 @@ import autismclient.gui.f.b.k;
 import autismclient.modules.Module;
 import autismclient.modules.al;
 import autismclient.util.AutismConfig;
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.bi;
 import autismclient.util.cA;
 import autismclient.util.ct;
@@ -76,25 +75,6 @@ public class CacheEntry extends Screen {
       init_V_AutismConfig_Theme_AutismConfig_Theme(this.init_AutismConfig.themeColors, this.init_AutismConfig_Theme);
       this.load_V();
       this.read_V();
-   }
-
-   public String init_Str_Str(String value) {
-      if (AutismLiteVariant.enabled()) {
-         return "";
-      }
-
-      if (!Boolean.getBoolean("autism.ui.continuity.check")) {
-         return "";
-      }
-
-      String hex = value == null ? "" : value.strip().replaceFirst("^#", "");
-      if (hex.matches("[0-9a-fA-F]{6}")) {
-         this.init_AutismConfig_Theme.accent = 0xFF000000 | Integer.parseInt(hex, 16);
-         this.load_V();
-         this.read_V();
-      }
-
-      return String.format(Locale.ROOT, "#%06X", this.init_AutismConfig_Theme.accent & 16777215);
    }
 
    @Override

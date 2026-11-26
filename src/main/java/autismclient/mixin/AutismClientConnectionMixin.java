@@ -30,7 +30,6 @@ import autismclient.util.ci;
 import autismclient.util.ck;
 import autismclient.util.cn;
 import autismclient.util.m;
-import autismclient.util.w;
 import autismclient.util.y;
 import autismclient.util.b.CachePool;
 import autismclient.util.e.DataUtil;
@@ -296,10 +295,6 @@ public abstract class AutismClientConnectionMixin {
    @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lio/netty/channel/ChannelFutureListener;)V", at = @At("HEAD"), cancellable = true)
    private void yang$onSendPacket(Packet<?> packet, ChannelFutureListener listener, CallbackInfo ci) {
          aI.init_V_Packet(packet);
-         if (!AutismLiteVariant.enabled()) {
-            w.load(packet);
-         }
-
          this.autism$trackSentMessage(packet);
          this.autism$ensureSpoofPipelineFilter();
          if (packet instanceof ServerboundResourcePackPacket resourcePackPacket) {
@@ -675,10 +670,6 @@ public abstract class AutismClientConnectionMixin {
    @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lio/netty/channel/ChannelFutureListener;Z)V", at = @At("HEAD"), cancellable = true)
    private void autism$onSendPacketWithFlush(Packet<?> packet, ChannelFutureListener listener, boolean flush, CallbackInfo ci) {
          aI.init_V_Packet(packet);
-         if (!AutismLiteVariant.enabled()) {
-            w.load(packet);
-         }
-
          this.autism$trackSentMessage(packet);
          this.autism$ensureSpoofPipelineFilter();
          if (packet instanceof ServerboundResourcePackPacket resourcePackPacket && RefQueue.init(resourcePackPacket)) {

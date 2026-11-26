@@ -21,8 +21,6 @@ import autismclient.util.ck;
 import autismclient.util.cn;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.Window;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -107,7 +105,6 @@ import net.minecraft.world.scores.Scoreboard;
 
 public final class aa extends Module implements cn.Inner_DataUtil {
    private String init_Str = "not_evaluated";
-   private JsonArray init_JsonArray;
    private int push_I = -1;
    static final int init_I = 10;
    static final double init_D = 0.5;
@@ -466,20 +463,12 @@ public final class aa extends Module implements cn.Inner_DataUtil {
          this.init_Str = "paused";
          this.push_I = -1;
          this.load_Str = "not_evaluated";
-         this.init_JsonArray = null;
-         if (!AutismLiteVariant.enabled()) {
-            this.init_JsonArray = autismclient.util.v.init_Z() ? new JsonArray() : null;
-         }
-
          this.write_Z = true;
 
          try {
             this.write_V_14();
          } finally {
             this.write_Z = false;
-            if (!AutismLiteVariant.enabled() && autismclient.util.v.init_Z()) {
-               this.get_V_2();
-            }
          }
       }
    }
@@ -1310,20 +1299,6 @@ public final class aa extends Module implements cn.Inner_DataUtil {
                why = "arc";
             }
 
-            if (!AutismLiteVariant.enabled() && this.init_JsonArray != null && this.init_JsonArray.size() < 32) {
-               JsonObject observation = new JsonObject();
-               observation.addProperty("entity_id", enemy.getId());
-               observation.add("eye", autismclient.util.v.load(eye));
-               observation.add("view", autismclient.util.v.init(view));
-               observation.add("victim_box", autismclient.util.v.init(body));
-               observation.addProperty("near", Math.sqrt(distance));
-               observation.addProperty("min_reach", reach[0]);
-               observation.addProperty("reach", reach[1]);
-               observation.addProperty("margin", reach[2] + 0.5);
-               observation.addProperty("result", why);
-               this.init_JsonArray.add(observation);
-            }
-
             if ("threat".equals(why) && distance < bestDistance) {
                best = enemy;
                bestDistance = distance;
@@ -1431,58 +1406,6 @@ public final class aa extends Module implements cn.Inner_DataUtil {
 
    public int load_I_10() {
       return this.count;
-   }
-
-   private void get_V_2() {
-      if (!AutismLiteVariant.enabled()) {
-         try {
-            JsonObject row = autismclient.util.v.init_JsonObject("aura_decision");
-            row.add("self", autismclient.util.v.init_JsonObject(MC.player));
-            row.addProperty("target_id", this.init_LivingEntity == null ? -1 : this.init_LivingEntity.getId());
-            row.addProperty("threat_id", this.load_LivingEntity == null ? -1 : this.load_LivingEntity.getId());
-            row.addProperty("attack_decision", this.init_Str);
-            row.addProperty("guard_decision", this.load_Str);
-            row.addProperty("guard_requested", this.init_InteractionHand != null);
-            row.addProperty("guard_owned", this.push_Z_3());
-            row.addProperty("guard_use_dispatched", autismclient.util.s.init_Z(this.id()));
-            row.addProperty("guard_release_tick", this.pool);
-            row.addProperty("ticks_until_own_hit", this.push_I);
-            row.addProperty("block_hit", this.bool("block-hit"));
-            row.addProperty("block_hit_after_hit", this.bool("block-hit-after-hit"));
-            row.addProperty("block_hit_respect_cps", this.bool("block-hit-cps"));
-            row.addProperty("block_hit_cps_active", this.pop_Z_2());
-            row.addProperty("auto_block", this.bool("block-hit"));
-            row.addProperty("perfect_hit", this.bool("block-hit"));
-            row.addProperty("charge", MC.player.getAttackStrengthScale(0.5F));
-            row.addProperty("attack_delay", this.load_F_3());
-            row.addProperty("ticker", this.update_I_2());
-            row.addProperty("post_use_suppress", this.data);
-            row.addProperty("crit_wait_start", this.state);
-            row.addProperty("reach", this.write_D());
-            row.add("threats", this.init_JsonArray == null ? new JsonArray() : this.init_JsonArray);
-            if (this.init_LivingEntity != null) {
-               row.add("target", autismclient.util.v.init_JsonObject(this.init_LivingEntity));
-               row.add("hit_window", this.init_l_BufferHelper.init_JsonObject_UUID_I(this.init_LivingEntity.getUUID(), ck.init_ck().state_I()));
-               ce.Inner_DataUtil rotation = autismclient.util.aD.init_ce_DataUtil();
-               if (rotation == null) {
-                  rotation = ce.init(MC.player);
-               }
-
-               row.addProperty("aim_yaw", rotation.init());
-               row.addProperty("aim_pitch", rotation.load());
-               EntityHitResult hit = this.init_EntityHitResult_Entity(this.init_LivingEntity, rotation, this.write_D(), 0.0);
-               row.addProperty("ray_hits_target", hit != null);
-               row.addProperty("item_range_legal", hit != null && this.init_Z_ItemStack_Vec3(MC.player.getMainHandItem(), hit.getLocation()));
-               if (hit != null) {
-                  row.add("ray_hit", autismclient.util.v.load(hit.getLocation()));
-               }
-            }
-
-            autismclient.util.v.init(row);
-         } catch (RuntimeException failure) {
-            autismclient.util.v.init(failure);
-         }
-      }
    }
 
    static boolean init_Z_ItemStack_6(ItemStack stack) {

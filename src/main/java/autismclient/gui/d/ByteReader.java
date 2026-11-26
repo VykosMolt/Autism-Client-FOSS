@@ -15,8 +15,6 @@ import autismclient.util.k;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.IntConsumer;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -28,7 +26,7 @@ import net.minecraft.network.chat.Component;
 public final class ByteReader extends KeyHolder {
    private static final int init_I = 382;
    private static final int load_I = 3;
-   private static final String[] init_StrArr = new String[]{"Edit", "Create", "Passwords"};
+   private static final String[] init_StrArr = new String[]{"Edit", "Create", "Password"};
    private final Screen init_Screen;
    private final List<ByteReader.Inner_StreamUtil> init_List = new ArrayList<>();
    private final List<ByteReader.Inner_DataUtil> load_List = new ArrayList<>();
@@ -141,22 +139,15 @@ public final class ByteReader extends KeyHolder {
       x += this.init_I_Str_3("Edit") + 2;
       this.init_V_I(x, y, 0, ctl, "Create", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read, true, () -> this.init_V_aM_2(null));
       x += this.init_I_Str_3("Create") + 2;
-      this.init_V_I(x, y, 0, ctl, "Passwords", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, true, this::load_V_4);
+      this.init_V_I(x, y, 0, ctl, "Password", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, true, this::load_V_4);
    }
 
    private void load_V_4() {
-      String accountId = "default";
-      autismclient.util.g.DataUtil draft = new autismclient.util.g.DataUtil(
-         List.of(new autismclient.util.g.DataUtil.Inner_DataUtil(accountId, "", "")),
-         Map.of(accountId, aA.init_Map()),
-         autismclient.util.g.DataUtil.Inner_StreamUtil.load,
-         ""
-      );
-      this.minecraft.gui.setScreen(new UiHelper(this, draft, Set.of(accountId), updated -> {
-         if (!aA.init(updated.init_Map_Str(accountId))) {
+      this.minecraft.gui.setScreen(new UiHelper(this, aA.init_Map(), updated -> {
+         if (!aA.init(updated)) {
             bi.write("Secure encryption is unavailable; values were not saved.");
          }
-      }, true));
+      }));
    }
 
    private void init(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {

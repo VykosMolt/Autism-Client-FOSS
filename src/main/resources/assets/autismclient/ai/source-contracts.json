@@ -2161,12 +2161,6 @@
       "documentationSource": "feature-owned JavaDoc; execution schema is read from the runtime registry",
       "notes": ""
     },
-    "src/main/java/autismclient/commands/impl/CombatLogCommand.java": {
-      "className": "autismclient.commands.impl.CombatLogCommand",
-      "sha256": "c0b4fcd613f0c89c17495ca6636c9791da396e69b8a1819005f70f314b6ab6d3",
-      "documentationSource": "feature-owned JavaDoc; execution schema is read from the runtime registry",
-      "notes": "Local opt-in match recording: start [label], mark <note>, status, stop. Stop exports one ZIP asynchronously under config/autism/combat-logs. Does not enable modules or tune combat automatically."
-    },
     "src/main/java/autismclient/commands/impl/CommandsCommand.java": {
       "className": "autismclient.commands.impl.CommandsCommand",
       "sha256": "cdff246f1ceb662985223ff44c94b1f22fe6bbb6f2034e64f7577849640b796e",
@@ -2508,12 +2502,6 @@
       "sha256": "a9bf12733244332e91a45fa46afb02aae697eccf8b5a48bee3633549bba99edf",
       "documentationSource": "feature-owned JavaDoc; execution schema is read from the runtime registry",
       "notes": ""
-    },
-    "src/main/java/autismclient/modules/ChamsModule.java": {
-      "className": "autismclient.modules.ChamsModule",
-      "sha256": "c2a958f0c83317449d4165403d718e3338fa11c2bb14fe479fae16c1ba8ddb21",
-      "documentationSource": "feature-owned JavaDoc; execution schema is read from the runtime registry",
-      "notes": "Chams: renders selected entities through walls, like ESP, but as the actual model. In \"Colored\" style the model is drawn twice - a bright colour where it's visible and a solid colour where it's hidden behind blocks (default bright green / dark red). \"Texture\" style draws the real model see-through with no tint. An armor toggle controls whether worn equipment gets the same treatment. <p>All the work is a per-entity decision computed once per frame (in {@code extractEntity}) and two extra model submissions through memoized render types, so it stays cheap even for hundreds of players. See {@code AutismChamsLivingEntityMixin} / {@code AutismChamsEquipmentLayerMixin} / {@code AutismChamsRenderTypes}."
     },
     "src/main/java/autismclient/modules/ClutchModule.java": {
       "className": "autismclient.modules.ClutchModule",

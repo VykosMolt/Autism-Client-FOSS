@@ -158,7 +158,6 @@ public final class j extends Module implements cn.Inner_DataUtil {
    private int level;
    private String load_Str = "Idle";
    private String read_Str = "Idle";
-   private String write_Str = "";
    private BlockHitResult init_BlockHitResult;
    private BlockPos update_BlockPos;
    private int frame = -1;
@@ -171,7 +170,6 @@ public final class j extends Module implements cn.Inner_DataUtil {
    private static final int table = 3;
    private static final int store = 8;
    private final j.Inner_StreamUtil init_j_StreamUtil = new j.Inner_StreamUtil();
-   private String update_Str = "";
 
    public j() {
       super("clutch", "Clutch", ae.init_ae, "Saves you from knockback falls");
@@ -426,7 +424,6 @@ public final class j extends Module implements cn.Inner_DataUtil {
          Vec3 before = clutch.init_Vec3 == null ? Vec3.ZERO : clutch.init_Vec3;
          clutch.init_Vec3 = null;
          Vec3 push = MC.player.getDeltaMovement().subtract(before);
-         autismclient.util.w.init("motion", before, MC.player.getDeltaMovement());
          boolean impulse = i.init_Z_Vec3(before, MC.player.getDeltaMovement(), i.init_Z_I(clutch.read_I_9(), clutch.reset, 3));
          if (impulse) {
             clutch.clear = clutch.read_I_9();
@@ -1246,7 +1243,6 @@ public final class j extends Module implements cn.Inner_DataUtil {
 
                            j.Inner_DataUtil next = this.init_j_DataUtil_j_BufferHelper(route, link, this.prev);
                            if (next == null && !route.init_Z() && !this.close_Z) {
-                              String rejectedTrace = this.write_Str;
                               j.Inner_BufferHelper alternate = this.init_j_BufferHelper_i_ConfigStore(
                                  forecast, this.prev, null, route.init_k_JsonUtil().load(), Set.of(link.init_BlockPos())
                               );
@@ -1263,8 +1259,6 @@ public final class j extends Module implements cn.Inner_DataUtil {
                                        this.load_BlockPos = route.init_k_JsonUtil().init_BlockPos();
                                        this.cache = this.load_BlockPos.getY();
                                     }
-                                 } else if (!rejectedTrace.isEmpty()) {
-                                    this.write_Str = rejectedTrace + " alternate: " + this.write_Str;
                                  }
                               }
                            }
@@ -2079,7 +2073,6 @@ public final class j extends Module implements cn.Inner_DataUtil {
    private List<AABB> init_List_Z(boolean optional) {
       int lead = Mth.clamp(Mth.ceil(autismclient.util.macro.ab.init_I() / 50.0F) + 4, 4, 10);
       List<AABB> others = new ArrayList<>();
-      StringBuilder trace = autismclient.util.w.read() ? new StringBuilder("lead=" + lead + " optional=" + optional) : null;
 
       for (Entity entity : MC.level
          .getEntities(MC.player, MC.player.getBoundingBox().inflate(10.0), candidate -> candidate.blocksBuilding && candidate.isAlive())) {
@@ -2090,24 +2083,6 @@ public final class j extends Module implements cn.Inner_DataUtil {
             : Vec3.ZERO;
          AABB swept = optional ? i.load(entity.getBoundingBox(), latest, step, lead) : i.init_AABB_AABB(entity.getBoundingBox(), latest, step, lead);
          others.add(swept);
-         if (trace != null) {
-            trace.append(" | ")
-               .append(entity.getId())
-               .append(' ')
-               .append(entity.getType().toShortString())
-               .append(" drawn=")
-               .append(entity.getBoundingBox())
-               .append(" offset=")
-               .append(latest)
-               .append(" step=")
-               .append(step)
-               .append(" swept=")
-               .append(swept);
-         }
-      }
-
-      if (trace != null) {
-         this.update_Str = trace.toString();
       }
 
       return others;
@@ -2226,7 +2201,6 @@ public final class j extends Module implements cn.Inner_DataUtil {
       autismclient.util.U.Inner_NetHelper placement = autismclient.util.U.init(stack, MC.player, InteractionHand.MAIN_HAND);
       ce.Inner_DataUtil from = this.init_ce_DataUtil_6();
       autismclient.util.U.Inner_StreamUtil budget = new autismclient.util.U.Inner_StreamUtil(24);
-      StringBuilder trace = autismclient.util.w.read() ? new StringBuilder() : null;
       boolean sneaking = MC.player.isSecondaryUseActive();
       Vec3 eye = this.close_Z ? MC.player.getEyePosition() : route.init(at);
       Vec3 leadEye = !this.close_Z && !route.init_k_JsonUtil().init_Z_2() && !route.init_k_JsonUtil().read() ? route.init(at + 1) : eye;
@@ -2241,7 +2215,6 @@ public final class j extends Module implements cn.Inner_DataUtil {
             .load(false)
             .load(!route.init_k_JsonUtil().load() && route.load().isEmpty() ? 1.0 / 0.0 : 0.02)
             .init_U_StateCache_U_StreamUtil(budget)
-            .init_U_StateCache_StringBuilder(trace)
       );
       if (candidate == null) {
          candidate = autismclient.util.U.init_U_CachePool(
@@ -2253,12 +2226,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
                .load(false)
                .load(!route.init_k_JsonUtil().load() && route.load().isEmpty() ? 1.0 / 0.0 : 0.02)
                .init_U_StateCache_U_StreamUtil(budget)
-               .init_U_StateCache_StringBuilder(trace)
          );
-      }
-
-      if (trace != null) {
-         this.write_Str = link + " at=" + at + " eye=" + eye + " result=" + (candidate != null) + " " + trace;
       }
 
       Direction nextFace = route.init_k_JsonUtil().init_List().size() > 1
@@ -2598,20 +2566,6 @@ public final class j extends Module implements cn.Inner_DataUtil {
 
    private boolean init_Z_Str_3(String reason) {
       this.read_Str = reason;
-      if (autismclient.util.w.read() && this.init_j_DataUtil != null && this.init_j_ConfigStore != null) {
-         Vec3 eye = this.init_j_ConfigStore.init_Vec3.add(0.0, this.init_j_ConfigStore.init_D, 0.0);
-         BlockHitResult ray = this.init_BlockHitResult_Vec3(eye, this.init_j_ConfigStore.init_ce_DataUtil, MC.player.blockInteractionRange() - 0.03);
-         this.write_Str = this.write_Str
-            + " | refused="
-            + reason
-            + " wireEye="
-            + eye
-            + " wireAim="
-            + this.init_j_ConfigStore.init_ce_DataUtil
-            + " wireHit="
-            + (ray == null ? "miss" : ray.getBlockPos() + "/" + ray.getDirection() + "/" + ray.getLocation());
-      }
-
       return false;
    }
 

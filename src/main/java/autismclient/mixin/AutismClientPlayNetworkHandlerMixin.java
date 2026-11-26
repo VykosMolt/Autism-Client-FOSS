@@ -33,8 +33,6 @@ import autismclient.util.cf;
 import autismclient.util.ci;
 import autismclient.util.ck;
 import autismclient.util.dm;
-import autismclient.util.v;
-import autismclient.util.w;
 import autismclient.util.e.DataUtil;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.h.CachePool;
@@ -57,11 +55,9 @@ import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.network.protocol.game.ClientboundDamageEventPacket;
 import net.minecraft.network.protocol.game.ClientboundDisguisedChatPacket;
-import net.minecraft.network.protocol.game.ClientboundEntityEventPacket;
 import net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.network.protocol.game.ClientboundForgetLevelChunkPacket;
-import net.minecraft.network.protocol.game.ClientboundHurtAnimationPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
@@ -140,46 +136,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleAnimate", at = @At("RETURN"))
    private void autism$combatAnimation(ClientboundAnimatePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         v.load(packet);
-      }
-
-      if (!AutismLiteVariant.enabled()) {
          SyncManager.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
-      }
-   }
-
-   @Inject(method = "handleSetEntityMotion", at = @At("RETURN"))
-   private void autism$combatMotion(ClientboundSetEntityMotionPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled()) {
-         v.load(packet);
-      }
-   }
-
-   @Inject(method = "handleDamageEvent", at = @At("RETURN"))
-   private void autism$combatDamage(ClientboundDamageEventPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled()) {
-         v.load(packet);
-      }
-   }
-
-   @Inject(method = "handleHurtAnimation", at = @At("RETURN"))
-   private void autism$combatHurt(ClientboundHurtAnimationPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled()) {
-         v.load(packet);
-      }
-   }
-
-   @Inject(method = "handleEntityEvent", at = @At("RETURN"))
-   private void autism$combatEvent(ClientboundEntityEventPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled()) {
-         v.load(packet);
-      }
-   }
-
-   @Inject(method = "handleSetHealth", at = @At("RETURN"))
-   private void autism$combatHealth(ClientboundSetHealthPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled()) {
-         v.load(packet);
       }
    }
 
@@ -419,7 +376,6 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          bg.init(packet);
          X.init_V_ClientboundDamageE_2(packet);
          Minecraft mc = Minecraft.getInstance();
-         w.init(packet);
          LocalPlayer player = mc.player;
          if (player != null && mc.level != null && packet.entityId() == player.getId() && mc.level.getEntity(packet.entityId()) == player) {
             ca.init(mc.level, player, player.getUUID(), player.tickCount, player.getHealth(), packet.getSource(mc.level).is(DamageTypes.ON_FIRE));
@@ -431,7 +387,6 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    private void autism$clutchExplosion(ClientboundExplodePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
          j.init_V_ClientboundExplode(packet);
-         w.init(packet);
       }
    }
 
@@ -443,7 +398,6 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
             ca.init(mc.level, mc.player, mc.player.getUUID(), mc.player.tickCount, mc.player.getHealth());
          }
 
-         w.init(packet);
          if (packet.getHealth() <= 0.0F) {
             ca.load_V();
          }
@@ -559,10 +513,6 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleMovePlayer", at = @At("RETURN"))
    private void autism$onServerPositionCorrection(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled()) {
-         v.load(packet);
-      }
-
       dm.load_V();
       Minecraft mc = Minecraft.getInstance();
       this.autism$restoreView(mc);
@@ -733,10 +683,6 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleSoundEvent", at = @At("RETURN"))
    private void yang$onPlaySound(ClientboundSoundPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled()) {
-         v.load(packet);
-      }
-
       if (!aD.read_Z()) {
          boolean macroWaits = b.read_Z();
          boolean moduleHooks = cf.init_Z_J(32L);
@@ -754,10 +700,6 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleSoundEntityEvent", at = @At("RETURN"))
    private void autism$onPlayEntitySound(ClientboundSoundEntityPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled()) {
-         v.load(packet);
-      }
-
       if (!aD.read_Z() && b.read_Z()) {
          try {
             Minecraft mc = Minecraft.getInstance();

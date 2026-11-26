@@ -4052,22 +4052,6 @@ public class AutismMacroEditorOverlay extends bj {
    public static void close_V_8() {
    }
 
-   public String init_Str_Str_4(String name) {
-      if (AutismLiteVariant.enabled()) {
-         return "";
-      }
-
-      if (Boolean.getBoolean("autism.ui.continuity.check") && this.init_k != null) {
-         if (name != null) {
-            this.init_k.init_V_Str(name);
-         }
-
-         return this.init_k.load_Str();
-      } else {
-         return "";
-      }
-   }
-
    @Override
    public boolean flush_Z() {
       return this.pop_Z;

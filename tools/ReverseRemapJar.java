@@ -116,7 +116,21 @@ public final class ReverseRemapJar {
                 String hit = revClassMap.get(internalName);
                 if (hit != null) return hit;
                 String norm = normalizeLocalOwner(internalName);
-                return revClassMap.getOrDefault(norm, internalName);
+                hit = revClassMap.get(norm);
+                if (hit != null) return hit;
+                // Outer-class prefix fallback for anonymous/nested classes (e.g. RenamedClass$1 -> orig$1)
+                if (internalName != null) {
+                    int idx = internalName.lastIndexOf('$');
+                    while (idx > 0) {
+                        String outer = internalName.substring(0, idx);
+                        String mappedOuter = revClassMap.get(outer);
+                        if (mappedOuter != null) {
+                            return mappedOuter + internalName.substring(idx);
+                        }
+                        idx = internalName.lastIndexOf('$', idx - 1);
+                    }
+                }
+                return internalName;
             }
 
             @Override

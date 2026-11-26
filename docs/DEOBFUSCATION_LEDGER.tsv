@@ -1,0 +1,3 @@
+# AUTISM Client Deobfuscation Ledger
+# Columns: phase	kind	old_symbol	new_symbol	orig_abi_symbol	evidence	status
+# Kinds: E (enum constant), C (class), F (field), M (method), P (package)
