@@ -864,7 +864,6 @@ C	autismclient/gui/d/TableIndex$StreamUtil	autismclient/gui/d/TableIndex$Inner_S
 C	autismclient/gui/d/TextFormat$CachePool	autismclient/gui/d/PickItemScreen$Inner_CachePool
 C	autismclient/gui/d/TextFormat$DataUtil	autismclient/gui/d/PickItemScreen$Inner_DataUtil
 C	autismclient/gui/d/TextFormat$StreamUtil	autismclient/gui/d/PickItemScreen$Inner_StreamUtil
-C	autismclient/gui/d/UiHelper$DataUtil	autismclient/gui/d/LoginPasswordScreen$Inner_DataUtil
 C	autismclient/gui/d/UtilCore$BufferHelper	autismclient/gui/d/UtilCore$Inner_BufferHelper
 C	autismclient/gui/d/UtilCore$CachePool	autismclient/gui/d/UtilCore$Inner_CachePool
 C	autismclient/gui/d/UtilCore$ConfigStore	autismclient/gui/d/UtilCore$Inner_ConfigStore
@@ -1418,7 +1417,6 @@ C	autismclient/util/E$DataUtil	autismclient/util/E$Inner_DataUtil
 C	autismclient/util/EventBus$DataUtil	autismclient/util/EventBus$Inner_DataUtil
 C	autismclient/util/EventBus$StreamUtil	autismclient/util/EventBus$Inner_StreamUtil
 C	autismclient/util/F$DataUtil	autismclient/util/F$Inner_DataUtil
-C	autismclient/util/H$DataUtil	autismclient/util/H$Inner_DataUtil
 C	autismclient/util/HashUtil$DataUtil	autismclient/util/HashUtil$Inner_DataUtil
 C	autismclient/util/I$BufferHelper	autismclient/util/I$Inner_BufferHelper
 C	autismclient/util/I$CachePool	autismclient/util/I$Inner_CachePool
@@ -1511,7 +1509,6 @@ C	autismclient/util/aV$DataUtil	autismclient/util/aV$Inner_DataUtil
 C	autismclient/util/aW$CachePool	autismclient/util/aW$Inner_CachePool
 C	autismclient/util/aW$DataUtil	autismclient/util/aW$Inner_DataUtil
 C	autismclient/util/aW$StreamUtil	autismclient/util/aW$Inner_StreamUtil
-C	autismclient/util/aX$DataUtil	autismclient/util/aX$Inner_DataUtil
 C	autismclient/util/aY$DataUtil	autismclient/util/aY$Inner_DataUtil
 C	autismclient/util/aa$DataUtil	autismclient/util/aa$Inner_DataUtil
 C	autismclient/util/aa$StreamUtil	autismclient/util/aa$Inner_StreamUtil
@@ -1538,8 +1535,6 @@ C	autismclient/util/al$SyncManager	autismclient/util/al$Inner_SyncManager
 C	autismclient/util/al$TaskQueue	autismclient/util/al$Inner_TaskQueue
 C	autismclient/util/al$TextFormat	autismclient/util/al$Inner_TextFormat
 C	autismclient/util/al$UiHelper	autismclient/util/al$Inner_UiHelper
-C	autismclient/util/ao$DataUtil	autismclient/util/ao$Inner_DataUtil
-C	autismclient/util/ao$StreamUtil	autismclient/util/ao$Inner_StreamUtil
 C	autismclient/util/ap$BufferHelper	autismclient/util/ap$Inner_BufferHelper
 C	autismclient/util/ap$CachePool	autismclient/util/ap$Inner_CachePool
 C	autismclient/util/ap$ConfigStore	autismclient/util/ap$Inner_ConfigStore
@@ -1708,8 +1703,6 @@ C	autismclient/util/cu$CachePool	autismclient/util/cu$Inner_CachePool
 C	autismclient/util/cu$ConfigStore	autismclient/util/cu$Inner_ConfigStore
 C	autismclient/util/cu$DataUtil	autismclient/util/cu$Inner_DataUtil
 C	autismclient/util/cu$StreamUtil	autismclient/util/cu$Inner_StreamUtil
-C	autismclient/util/cv$DataUtil	autismclient/util/cv$Inner_DataUtil
-C	autismclient/util/cy$DataUtil	autismclient/util/cy$Inner_DataUtil
 C	autismclient/util/d	autismclient/util/PkgCls_d
 C	autismclient/util/d/DataUtil$DataUtil	autismclient/util/d/DataUtil$Inner_DataUtil
 C	autismclient/util/d/DataUtil$StreamUtil	autismclient/util/d/DataUtil$Inner_StreamUtil
@@ -1784,8 +1777,6 @@ C	autismclient/util/g/ClassCache$TokenStore	autismclient/util/g/ClassCache$Inner
 C	autismclient/util/g/ClassCache$UiHelper	autismclient/util/g/ClassCache$Inner_UiHelper
 C	autismclient/util/g/ConfigStore$DataUtil	autismclient/util/g/ConfigStore$Inner_DataUtil
 C	autismclient/util/g/ConfigStore$StreamUtil	autismclient/util/g/ConfigStore$Inner_StreamUtil
-C	autismclient/util/g/DataUtil$DataUtil	autismclient/util/g/DataUtil$Inner_DataUtil
-C	autismclient/util/g/DataUtil$StreamUtil	autismclient/util/g/DataUtil$Inner_StreamUtil
 C	autismclient/util/g/EventBus$DataUtil	autismclient/util/g/EventBus$Inner_DataUtil
 C	autismclient/util/g/FieldCache$BufferHelper	autismclient/util/g/FieldCache$Inner_BufferHelper
 C	autismclient/util/g/FieldCache$CachePool	autismclient/util/g/FieldCache$Inner_CachePool
@@ -9893,8 +9884,6 @@ F	autismclient/compat/a/DataUtil$StreamUtil	init	Ljava/net/InetSocketAddress;	au
 F	autismclient/compat/a/DataUtil$StreamUtil	init	Ljava/net/Socket;	autismclient/compat/a/DataUtil$StreamUtil	init_Socket	Ljava/net/Socket;
 F	autismclient/compat/a/DataUtil$StreamUtil	init	Ljava/util/concurrent/ScheduledFuture;	autismclient/compat/a/DataUtil$StreamUtil	init_ScheduledFuture	Ljava/util/concurrent/ScheduledFuture;
 F	autismclient/compat/a/DataUtil$StreamUtil	init	Z	autismclient/compat/a/DataUtil$StreamUtil	init_Z	Z
-F	autismclient/d/DataUtil	init	I	autismclient/d/DataUtil	init_I	I
-F	autismclient/d/DataUtil	init	Lnet/minecraft/ChatFormatting;	autismclient/d/DataUtil	init_ChatFormatting	Lnet/minecraft/ChatFormatting;
 F	autismclient/f/DataUtil	init	D	autismclient/f/DataUtil	init_D	D
 F	autismclient/f/DataUtil	init	F	autismclient/f/DataUtil	init_F	F
 F	autismclient/f/DataUtil	init	I	autismclient/f/DataUtil	init_I	I
@@ -10902,8 +10891,6 @@ F	autismclient/gui/d/FieldCache$DataUtil	init	Ljava/lang/String;	autismclient/gu
 F	autismclient/gui/d/FieldCache$StreamUtil	init	I	autismclient/gui/d/FieldCache$Inner_StreamUtil	init_I	I
 F	autismclient/gui/d/FieldCache$StreamUtil	init	Lautismclient/gui/d/FieldCache$DataUtil;	autismclient/gui/d/FieldCache$Inner_StreamUtil	init_FieldCache_DataUti	Lautismclient/gui/d/FieldCache$Inner_DataUtil;
 F	autismclient/gui/d/FieldCache$StreamUtil	init	Lautismclient/gui/f/b/ByteReader;	autismclient/gui/d/FieldCache$Inner_StreamUtil	init_ByteReader	Lautismclient/gui/f/b/ByteReader;
-F	autismclient/gui/d/FileCache	init	I	autismclient/gui/d/FileCache	init_I	I
-F	autismclient/gui/d/FileCache	init	Lnet/minecraft/resources/Identifier;	autismclient/gui/d/FileCache	init_Identifier	Lnet/minecraft/resources/Identifier;
 F	autismclient/gui/d/HashUtil	init	J	autismclient/gui/d/AutismModulesScreen	init_J	J
 F	autismclient/gui/d/HashUtil	init	Lautismclient/gui/d/HashUtil$DataUtil;	autismclient/gui/d/AutismModulesScreen	init_HashUtil_DataUtil	Lautismclient/gui/d/AutismModulesScreen$Inner_DataUtil;
 F	autismclient/gui/d/HashUtil	init	Lautismclient/gui/f/d/ConfigStore;	autismclient/gui/d/AutismModulesScreen	init_ConfigStore	Lautismclient/gui/f/d/ConfigStore;
@@ -12337,17 +12324,6 @@ F	autismclient/modules/A$StreamUtil	init	Ljava/lang/String;	autismclient/modules
 F	autismclient/modules/A$StreamUtil	init	Lnet/minecraft/world/item/ItemStack;	autismclient/modules/A$Inner_StreamUtil	init_ItemStack	Lnet/minecraft/world/item/ItemStack;
 F	autismclient/modules/A$StreamUtil	load	Lautismclient/modules/A$StreamUtil;	autismclient/modules/A$Inner_StreamUtil	ARROW	Lautismclient/modules/A$Inner_StreamUtil;
 F	autismclient/modules/A$StreamUtil	load	Ljava/lang/String;	autismclient/modules/A$Inner_StreamUtil	load_Str	Ljava/lang/String;
-F	autismclient/modules/ArrayUtil	init	I	autismclient/modules/ArrayUtil	init_I	I
-F	autismclient/modules/ArrayUtil	init	Lautismclient/modules/ClassCache$DataUtil;	autismclient/modules/ArrayUtil	init_ClassCache_DataUti	Lautismclient/modules/BedEspModule$Inner_DataUtil;
-F	autismclient/modules/ArrayUtil	init	Lautismclient/modules/ClassCache;	autismclient/modules/ArrayUtil	init_ClassCache	Lautismclient/modules/BedEspModule;
-F	autismclient/modules/ArrayUtil	init	Lautismclient/modules/ListPool;	autismclient/modules/ArrayUtil	init_ListPool	Lautismclient/modules/BedDefenderModule;
-F	autismclient/modules/ArrayUtil	init	Lcom/google/gson/JsonObject;	autismclient/modules/ArrayUtil	init_JsonObject	Lcom/google/gson/JsonObject;
-F	autismclient/modules/ArrayUtil	init	Ljava/nio/file/Path;	autismclient/modules/ArrayUtil	init_Path	Ljava/nio/file/Path;
-F	autismclient/modules/ArrayUtil	init	Ljava/util/concurrent/CompletableFuture;	autismclient/modules/ArrayUtil	init_CompletableFuture	Ljava/util/concurrent/CompletableFuture;
-F	autismclient/modules/ArrayUtil	init	Lnet/minecraft/core/BlockPos;	autismclient/modules/ArrayUtil	init_BlockPos	Lnet/minecraft/core/BlockPos;
-F	autismclient/modules/ArrayUtil	init	Z	autismclient/modules/ArrayUtil	init_Z	Z
-F	autismclient/modules/ArrayUtil	load	I	autismclient/modules/ArrayUtil	load_I	I
-F	autismclient/modules/ArrayUtil	load	Lnet/minecraft/core/BlockPos;	autismclient/modules/ArrayUtil	load_BlockPos	Lnet/minecraft/core/BlockPos;
 F	autismclient/modules/BitSetUtil	close	I	autismclient/modules/BitSetUtil	close_I	I
 F	autismclient/modules/BitSetUtil	close	J	autismclient/modules/BitSetUtil	close_J	J
 F	autismclient/modules/BitSetUtil	flush	I	autismclient/modules/BitSetUtil	flush_I	I
@@ -12613,17 +12589,6 @@ F	autismclient/modules/G	init	Ljava/lang/String;	autismclient/modules/EntityCont
 F	autismclient/modules/G	init	Ljava/util/Set;	autismclient/modules/EntityControlModule	init_Set	Ljava/util/Set;
 F	autismclient/modules/G	init	Z	autismclient/modules/EntityControlModule	init_Z	Z
 F	autismclient/modules/G	init	[Ljava/lang/String;	autismclient/modules/EntityControlModule	init_StrArr	[Ljava/lang/String;
-F	autismclient/modules/H	init	I	autismclient/modules/H	init_I	I
-F	autismclient/modules/H	init	Lautismclient/modules/Module;	autismclient/modules/H	init_Module	Lautismclient/modules/Module;
-F	autismclient/modules/H	init	Lcom/google/gson/JsonArray;	autismclient/modules/H	init_JsonArray	Lcom/google/gson/JsonArray;
-F	autismclient/modules/H	init	Lcom/google/gson/JsonObject;	autismclient/modules/H	init_JsonObject	Lcom/google/gson/JsonObject;
-F	autismclient/modules/H	init	Ljava/util/concurrent/CompletableFuture;	autismclient/modules/H	init_CompletableFuture	Ljava/util/concurrent/CompletableFuture;
-F	autismclient/modules/H	init	Lnet/minecraft/network/protocol/game/ClientboundBlockUpdatePacket;	autismclient/modules/H	init_ClientboundBlockUp	Lnet/minecraft/network/protocol/game/ClientboundBlockUpdatePacket;
-F	autismclient/modules/H	init	Z	autismclient/modules/H	init_Z	Z
-F	autismclient/modules/H	load	I	autismclient/modules/H	load_I	I
-F	autismclient/modules/H	load	Lautismclient/modules/Module;	autismclient/modules/H	load_Module	Lautismclient/modules/Module;
-F	autismclient/modules/H	load	Ljava/util/concurrent/CompletableFuture;	autismclient/modules/H	load_CompletableFuture	Ljava/util/concurrent/CompletableFuture;
-F	autismclient/modules/H	load	Z	autismclient/modules/H	load_Z	Z
 F	autismclient/modules/HashUtil	init	D	autismclient/modules/HashUtil	init_D	D
 F	autismclient/modules/HashUtil	init	F	autismclient/modules/HashUtil	init_F	F
 F	autismclient/modules/HashUtil	init	I	autismclient/modules/HashUtil	init_I	I
@@ -15722,19 +15687,6 @@ F	autismclient/modules/v$StreamUtil	init	I	autismclient/modules/v$Inner_StreamUt
 F	autismclient/modules/v$StreamUtil	init	Ljava/lang/String;	autismclient/modules/v$Inner_StreamUtil	init_Str	Ljava/lang/String;
 F	autismclient/modules/v$StreamUtil	init	Ljava/util/UUID;	autismclient/modules/v$Inner_StreamUtil	init_UUID	Ljava/util/UUID;
 F	autismclient/modules/v$StreamUtil	init	Lnet/minecraft/network/chat/Component;	autismclient/modules/v$Inner_StreamUtil	init_Component	Lnet/minecraft/network/chat/Component;
-F	autismclient/modules/w	init	I	autismclient/modules/w	init_I	I
-F	autismclient/modules/w	init	Ljava/lang/String;	autismclient/modules/w	init_Str	Ljava/lang/String;
-F	autismclient/modules/w	init	Ljava/util/List;	autismclient/modules/w	init_List	Ljava/util/List;
-F	autismclient/modules/w	init	Ljava/util/Map;	autismclient/modules/w	init_Map	Ljava/util/Map;
-F	autismclient/modules/w	init	Lnet/minecraft/core/BlockPos;	autismclient/modules/w	init_BlockPos	Lnet/minecraft/core/BlockPos;
-F	autismclient/modules/w	init	Lnet/minecraft/world/scores/PlayerTeam;	autismclient/modules/w	init_PlayerTeam	Lnet/minecraft/world/scores/PlayerTeam;
-F	autismclient/modules/w	init	Z	autismclient/modules/w	init_Z	Z
-F	autismclient/modules/w	load	I	autismclient/modules/w	load_I	I
-F	autismclient/modules/w	load	Ljava/util/List;	autismclient/modules/w	load_List	Ljava/util/List;
-F	autismclient/modules/w	load	Ljava/util/Map;	autismclient/modules/w	load_Map	Ljava/util/Map;
-F	autismclient/modules/w	load	Z	autismclient/modules/w	load_Z	Z
-F	autismclient/modules/w	read	Ljava/util/Map;	autismclient/modules/w	read_Map	Ljava/util/Map;
-F	autismclient/modules/w	read	Z	autismclient/modules/w	read_Z	Z
 F	autismclient/modules/x	init	I	autismclient/modules/x	init_I	I
 F	autismclient/modules/x	init	J	autismclient/modules/x	init_J	J
 F	autismclient/modules/x	init	Lautismclient/modules/x$StreamUtil;	autismclient/modules/x	init_x_StreamUtil	Lautismclient/modules/x$Inner_StreamUtil;
@@ -17025,13 +16977,6 @@ F	autismclient/util/G	init	J	autismclient/util/G	init_J	J
 F	autismclient/util/G	init	[J	autismclient/util/G	init_JArr	[J
 F	autismclient/util/G	load	I	autismclient/util/G	load_I	I
 F	autismclient/util/G	load	[J	autismclient/util/G	load_JArr	[J
-F	autismclient/util/H	init	I	autismclient/util/H	init_I	I
-F	autismclient/util/H	init	Z	autismclient/util/H	init_Z	Z
-F	autismclient/util/H	load	I	autismclient/util/H	load_I	I
-F	autismclient/util/H	load	Z	autismclient/util/H	load_Z	Z
-F	autismclient/util/H$DataUtil	init	I	autismclient/util/H$Inner_DataUtil	init_I	I
-F	autismclient/util/H$DataUtil	init	Ljava/lang/String;	autismclient/util/H$Inner_DataUtil	init_Str	Ljava/lang/String;
-F	autismclient/util/H$DataUtil	init	Lnet/minecraft/world/item/Item;	autismclient/util/H$Inner_DataUtil	init_Item	Lnet/minecraft/world/item/Item;
 F	autismclient/util/HashUtil$DataUtil	init	Lnet/minecraft/core/BlockPos;	autismclient/util/HashUtil$Inner_DataUtil	init_BlockPos	Lnet/minecraft/core/BlockPos;
 F	autismclient/util/HashUtil$DataUtil	init	Lnet/minecraft/core/Direction;	autismclient/util/HashUtil$Inner_DataUtil	init_Direction	Lnet/minecraft/core/Direction;
 F	autismclient/util/HashUtil$DataUtil	init	Lnet/minecraft/world/phys/AABB;	autismclient/util/HashUtil$Inner_DataUtil	init_AABB	Lnet/minecraft/world/phys/AABB;
@@ -17206,28 +17151,6 @@ F	autismclient/util/N	load	Lautismclient/util/N;	autismclient/util/N	QUICK_MOVE	
 F	autismclient/util/N	load	Ljava/lang/String;	autismclient/util/N	load_Str	Ljava/lang/String;
 F	autismclient/util/NetHelper	init	I	autismclient/util/NetHelper	init_I	I
 F	autismclient/util/NetHelper	init	Ljava/util/Map;	autismclient/util/NetHelper	init_Map	Ljava/util/Map;
-F	autismclient/util/NodeWalker	close	I	autismclient/util/NodeWalker	close_I	I
-F	autismclient/util/NodeWalker	close	Z	autismclient/util/NodeWalker	close_Z	Z
-F	autismclient/util/NodeWalker	flush	I	autismclient/util/NodeWalker	flush_I	I
-F	autismclient/util/NodeWalker	flush	Z	autismclient/util/NodeWalker	flush_Z	Z
-F	autismclient/util/NodeWalker	init	I	autismclient/util/NodeWalker	init_I	I
-F	autismclient/util/NodeWalker	init	Lautismclient/modules/ListPool;	autismclient/util/NodeWalker	init_ListPool	Lautismclient/modules/BedDefenderModule;
-F	autismclient/util/NodeWalker	init	Lcom/google/gson/JsonArray;	autismclient/util/NodeWalker	init_JsonArray	Lcom/google/gson/JsonArray;
-F	autismclient/util/NodeWalker	init	Ljava/util/concurrent/CompletableFuture;	autismclient/util/NodeWalker	init_CompletableFuture	Ljava/util/concurrent/CompletableFuture;
-F	autismclient/util/NodeWalker	init	Lnet/minecraft/core/BlockPos;	autismclient/util/NodeWalker	init_BlockPos	Lnet/minecraft/core/BlockPos;
-F	autismclient/util/NodeWalker	init	Z	autismclient/util/NodeWalker	init_Z	Z
-F	autismclient/util/NodeWalker	init	[Ljava/lang/String;	autismclient/util/NodeWalker	init_StrArr	[Ljava/lang/String;
-F	autismclient/util/NodeWalker	load	I	autismclient/util/NodeWalker	load_I	I
-F	autismclient/util/NodeWalker	load	Lcom/google/gson/JsonArray;	autismclient/util/NodeWalker	load_JsonArray	Lcom/google/gson/JsonArray;
-F	autismclient/util/NodeWalker	load	Z	autismclient/util/NodeWalker	load_Z	Z
-F	autismclient/util/NodeWalker	read	I	autismclient/util/NodeWalker	read_I	I
-F	autismclient/util/NodeWalker	read	Z	autismclient/util/NodeWalker	read_Z	Z
-F	autismclient/util/NodeWalker	sync	I	autismclient/util/NodeWalker	sync_I	I
-F	autismclient/util/NodeWalker	sync	Z	autismclient/util/NodeWalker	sync_Z	Z
-F	autismclient/util/NodeWalker	update	I	autismclient/util/NodeWalker	update_I	I
-F	autismclient/util/NodeWalker	update	Z	autismclient/util/NodeWalker	update_Z	Z
-F	autismclient/util/NodeWalker	write	I	autismclient/util/NodeWalker	write_I	I
-F	autismclient/util/NodeWalker	write	Z	autismclient/util/NodeWalker	write_Z	Z
 F	autismclient/util/P	init	I	autismclient/util/P	init_I	I
 F	autismclient/util/P	init	Ljava/lang/String;	autismclient/util/P	init_Str	Ljava/lang/String;
 F	autismclient/util/PathHelper	init	I	autismclient/util/PathHelper	init_I	I
@@ -17405,8 +17328,6 @@ F	autismclient/util/U$TaskQueue	init	Lnet/minecraft/world/phys/AABB;	autismclien
 F	autismclient/util/U$TaskQueue	init	Z	autismclient/util/U$Inner_TaskQueue	init_Z	Z
 F	autismclient/util/U$TaskQueue	load	D	autismclient/util/U$Inner_TaskQueue	load_D	D
 F	autismclient/util/U$TaskQueue	load	Lnet/minecraft/core/BlockPos;	autismclient/util/U$Inner_TaskQueue	load_BlockPos	Lnet/minecraft/core/BlockPos;
-F	autismclient/util/UtilCore	init	J	autismclient/util/UtilCore	init_J	J
-F	autismclient/util/UtilCore	init	Z	autismclient/util/UtilCore	init_Z	Z
 F	autismclient/util/V	init	D	autismclient/util/V	init_D	D
 F	autismclient/util/V	init	J	autismclient/util/V	init_J	J
 F	autismclient/util/V	init	Lautismclient/util/V$DataUtil;	autismclient/util/V	init_V_DataUtil	Lautismclient/util/V$Inner_DataUtil;
@@ -17863,18 +17784,6 @@ F	autismclient/util/aW$DataUtil	init	I	autismclient/util/aW$Inner_DataUtil	init_
 F	autismclient/util/aW$DataUtil	init	Ljava/lang/String;	autismclient/util/aW$Inner_DataUtil	init_Str	Ljava/lang/String;
 F	autismclient/util/aW$StreamUtil	init	J	autismclient/util/aW$Inner_StreamUtil	init_J	J
 F	autismclient/util/aW$StreamUtil	init	Ljava/lang/String;	autismclient/util/aW$Inner_StreamUtil	init_Str	Ljava/lang/String;
-F	autismclient/util/aX	init	I	autismclient/util/aX	init_I	I
-F	autismclient/util/aX	init	Lcom/google/gson/JsonArray;	autismclient/util/aX	init_JsonArray	Lcom/google/gson/JsonArray;
-F	autismclient/util/aX	init	Ljava/lang/String;	autismclient/util/aX	init_Str	Ljava/lang/String;
-F	autismclient/util/aX	init	Ljava/util/Deque;	autismclient/util/aX	init_Deque	Ljava/util/Deque;
-F	autismclient/util/aX	init	Lnet/minecraft/client/gui/screens/Screen;	autismclient/util/aX	init_Screen	Lnet/minecraft/client/gui/screens/Screen;
-F	autismclient/util/aX	init	Z	autismclient/util/aX	init_Z	Z
-F	autismclient/util/aX	load	I	autismclient/util/aX	load_I	I
-F	autismclient/util/aX	load	Lcom/google/gson/JsonArray;	autismclient/util/aX	load_JsonArray	Lcom/google/gson/JsonArray;
-F	autismclient/util/aX	load	Z	autismclient/util/aX	load_Z	Z
-F	autismclient/util/aX$DataUtil	init	I	autismclient/util/aX$Inner_DataUtil	init_I	I
-F	autismclient/util/aX$DataUtil	init	Ljava/lang/String;	autismclient/util/aX$Inner_DataUtil	init_Str	Ljava/lang/String;
-F	autismclient/util/aX$DataUtil	init	Ljava/util/function/Consumer;	autismclient/util/aX$Inner_DataUtil	init_Consumer	Ljava/util/function/Consumer;
 F	autismclient/util/aY	init	Lautismclient/util/aY$DataUtil;	autismclient/util/aY	init_aY_DataUtil	Lautismclient/util/aY$Inner_DataUtil;
 F	autismclient/util/aY	init	Ljava/lang/String;	autismclient/util/aY	init_Str	Ljava/lang/String;
 F	autismclient/util/aY$DataUtil	init	Ljava/lang/Object;	autismclient/util/aY$Inner_DataUtil	init_Obj	Ljava/lang/Object;
@@ -18226,9 +18135,6 @@ F	autismclient/util/an	read	D	autismclient/util/an	read_D	D
 F	autismclient/util/an	read	Z	autismclient/util/an	read_Z	Z
 F	autismclient/util/an	write	D	autismclient/util/an	write_D	D
 F	autismclient/util/an	write	Z	autismclient/util/an	write_Z	Z
-F	autismclient/util/ao$DataUtil	init	D	autismclient/util/ao$Inner_DataUtil	init_D	D
-F	autismclient/util/ao$DataUtil	init	I	autismclient/util/ao$Inner_DataUtil	init_I	I
-F	autismclient/util/ao$DataUtil	init	J	autismclient/util/ao$Inner_DataUtil	init_J	J
 F	autismclient/util/ap$BufferHelper	init	D	autismclient/util/ap$Inner_BufferHelper	init_D	D
 F	autismclient/util/ap$BufferHelper	init	Lautismclient/util/ap$StreamUtil;	autismclient/util/ap$Inner_BufferHelper	init_ap_StreamUtil	Lautismclient/util/ap$Inner_StreamUtil;
 F	autismclient/util/ap$CachePool	init	D	autismclient/util/ap$Inner_CachePool	init_D	D
@@ -18526,14 +18432,6 @@ F	autismclient/util/bT	load	Ljava/lang/String;	autismclient/util/bT	load_Str	Lja
 F	autismclient/util/bT	load	Ljava/util/List;	autismclient/util/bT	load_List	Ljava/util/List;
 F	autismclient/util/bT$DataUtil	init	Lautismclient/util/AutismPacketPreset;	autismclient/util/bT$Inner_DataUtil	init_AutismPacketPreset	Lautismclient/util/AutismPacketPreset;
 F	autismclient/util/bT$DataUtil	init	Z	autismclient/util/bT$Inner_DataUtil	init_Z	Z
-F	autismclient/util/bU	init	I	autismclient/util/bU	init_I	I
-F	autismclient/util/bU	init	Ljava/lang/String;	autismclient/util/bU	init_Str	Ljava/lang/String;
-F	autismclient/util/bU	init	Ljava/nio/file/Path;	autismclient/util/bU	init_Path	Ljava/nio/file/Path;
-F	autismclient/util/bU	init	Ljava/util/UUID;	autismclient/util/bU	init_UUID	Ljava/util/UUID;
-F	autismclient/util/bU	init	Z	autismclient/util/bU	init_Z	Z
-F	autismclient/util/bU	load	I	autismclient/util/bU	load_I	I
-F	autismclient/util/bU	load	Ljava/lang/String;	autismclient/util/bU	load_Str	Ljava/lang/String;
-F	autismclient/util/bU	load	Z	autismclient/util/bU	load_Z	Z
 F	autismclient/util/bV	init	J	autismclient/util/bV	init_J	J
 F	autismclient/util/bV	init	Lautismclient/util/AutismConfig;	autismclient/util/bV	init_AutismConfig	Lautismclient/util/AutismConfig;
 F	autismclient/util/bV	init	Lautismclient/util/bV;	autismclient/util/bV	init_bV	Lautismclient/util/bV;
@@ -19083,17 +18981,6 @@ F	autismclient/util/cP$DataUtil	init	Lnet/minecraft/world/phys/AABB;	autismclien
 F	autismclient/util/cP$DataUtil	init	Lnet/minecraft/world/phys/Vec3;	autismclient/util/cP$Inner_DataUtil	init_Vec3	Lnet/minecraft/world/phys/Vec3;
 F	autismclient/util/cP$StreamUtil	init	J	autismclient/util/cP$Inner_StreamUtil	init_J	J
 F	autismclient/util/cP$StreamUtil	init	Lnet/minecraft/world/phys/Vec3;	autismclient/util/cP$Inner_StreamUtil	init_Vec3	Lnet/minecraft/world/phys/Vec3;
-F	autismclient/util/cQ	init	J	autismclient/util/cQ	init_J	J
-F	autismclient/util/cQ	init	Lcom/google/gson/Gson;	autismclient/util/cQ	init_Gson	Lcom/google/gson/Gson;
-F	autismclient/util/cQ	init	Lcom/google/gson/JsonObject;	autismclient/util/cQ	init_JsonObject	Lcom/google/gson/JsonObject;
-F	autismclient/util/cQ	init	Ljava/lang/String;	autismclient/util/cQ	init_Str	Ljava/lang/String;
-F	autismclient/util/cQ	init	Ljava/nio/file/Path;	autismclient/util/cQ	init_Path	Ljava/nio/file/Path;
-F	autismclient/util/cQ	init	Ljava/util/concurrent/ArrayBlockingQueue;	autismclient/util/cQ	init_ArrayBlockingQueue	Ljava/util/concurrent/ArrayBlockingQueue;
-F	autismclient/util/cQ	init	Ljava/util/concurrent/CompletableFuture;	autismclient/util/cQ	init_CompletableFuture	Ljava/util/concurrent/CompletableFuture;
-F	autismclient/util/cQ	init	Ljava/util/concurrent/atomic/AtomicLong;	autismclient/util/cQ	init_AtomicLong	Ljava/util/concurrent/atomic/AtomicLong;
-F	autismclient/util/cQ	init	Z	autismclient/util/cQ	init_Z	Z
-F	autismclient/util/cQ	load	J	autismclient/util/cQ	load_J	J
-F	autismclient/util/cQ	load	Ljava/nio/file/Path;	autismclient/util/cQ	load_Path	Ljava/nio/file/Path;
 F	autismclient/util/cR	init	J	autismclient/util/cR	init_J	J
 F	autismclient/util/cR	init	Ljava/util/Map;	autismclient/util/cR	init_Map	Ljava/util/Map;
 F	autismclient/util/cR$DataUtil	init	Lautismclient/util/cS;	autismclient/util/cR$Inner_DataUtil	init_cS	Lautismclient/util/cS;
@@ -19341,15 +19228,6 @@ F	autismclient/util/ck$TaskQueue	init	Ljava/util/List;	autismclient/util/ck$Inne
 F	autismclient/util/ck$TaskQueue	init	Ljava/util/Map;	autismclient/util/ck$Inner_TaskQueue	init_Map	Ljava/util/Map;
 F	autismclient/util/ck$TaskQueue	load	Ljava/lang/String;	autismclient/util/ck$Inner_TaskQueue	load_Str	Ljava/lang/String;
 F	autismclient/util/ck$TaskQueue	load	Ljava/util/Map;	autismclient/util/ck$Inner_TaskQueue	load_Map	Ljava/util/Map;
-F	autismclient/util/cl	init	F	autismclient/util/cl	init_F	F
-F	autismclient/util/cl	init	I	autismclient/util/cl	init_I	I
-F	autismclient/util/cl	init	J	autismclient/util/cl	init_J	J
-F	autismclient/util/cl	init	[Lnet/minecraft/world/item/ItemStack;	autismclient/util/cl	init_ItemStackArr	[Lnet/minecraft/world/item/ItemStack;
-F	autismclient/util/cl	load	F	autismclient/util/cl	load_F	F
-F	autismclient/util/cl	load	I	autismclient/util/cl	load_I	I
-F	autismclient/util/cl	load	J	autismclient/util/cl	load_J	J
-F	autismclient/util/cl	read	F	autismclient/util/cl	read_F	F
-F	autismclient/util/cl	read	I	autismclient/util/cl	read_I	I
 F	autismclient/util/cn	init	F	autismclient/util/cn	init_F	F
 F	autismclient/util/cn	init	I	autismclient/util/cn	init_I	I
 F	autismclient/util/cn	init	Lautismclient/util/bb;	autismclient/util/cn	init_bb	Lautismclient/util/bb;
@@ -19463,9 +19341,6 @@ F	autismclient/util/cu$CachePool	init	Lnet/minecraft/resources/Identifier;	autis
 F	autismclient/util/cu$CachePool	init	Z	autismclient/util/cu$Inner_CachePool	init_Z	Z
 F	autismclient/util/cu$DataUtil	init	I	autismclient/util/cu$Inner_DataUtil	init_I	I
 F	autismclient/util/cu$DataUtil	init	Lnet/minecraft/resources/Identifier;	autismclient/util/cu$Inner_DataUtil	init_Identifier	Lnet/minecraft/resources/Identifier;
-F	autismclient/util/cv	init	I	autismclient/util/cv	init_I	I
-F	autismclient/util/cv	init	Lcom/google/gson/JsonArray;	autismclient/util/cv	init_JsonArray	Lcom/google/gson/JsonArray;
-F	autismclient/util/cv	init	Z	autismclient/util/cv	init_Z	Z
 F	autismclient/util/cw	init	I	autismclient/util/cw	init_I	I
 F	autismclient/util/cw	init	J	autismclient/util/cw	init_J	J
 F	autismclient/util/cw	init	Ljava/util/concurrent/BlockingQueue;	autismclient/util/cw	init_BlockingQueue	Ljava/util/concurrent/BlockingQueue;
@@ -19478,13 +19353,6 @@ F	autismclient/util/cx	init	Z	autismclient/util/cx	init_Z	Z
 F	autismclient/util/cx	load	I	autismclient/util/cx	load_I	I
 F	autismclient/util/cx	load	Lnet/minecraft/client/gui/screens/Screen;	autismclient/util/cx	load_Screen	Lnet/minecraft/client/gui/screens/Screen;
 F	autismclient/util/cx	load	Z	autismclient/util/cx	load_Z	Z
-F	autismclient/util/cy	init	I	autismclient/util/cy	init_I	I
-F	autismclient/util/cy	init	Lautismclient/gui/d/HashUtil;	autismclient/util/cy	init_HashUtil	Lautismclient/gui/d/AutismModulesScreen;
-F	autismclient/util/cy	init	Lautismclient/util/macro/FieldCache;	autismclient/util/cy	init_FieldCache	Lautismclient/util/macro/IfAction;
-F	autismclient/util/cy	init	Lcom/google/gson/JsonArray;	autismclient/util/cy	init_JsonArray	Lcom/google/gson/JsonArray;
-F	autismclient/util/cy	init	Ljava/lang/Object;	autismclient/util/cy	init_Obj	Ljava/lang/Object;
-F	autismclient/util/cy	init	Ljava/lang/String;	autismclient/util/cy	init_Str	Ljava/lang/String;
-F	autismclient/util/cy	init	Z	autismclient/util/cy	init_Z	Z
 F	autismclient/util/cz	init	I	autismclient/util/cz	init_I	I
 F	autismclient/util/cz	init	Lnet/minecraft/resources/Identifier;	autismclient/util/cz	init_Identifier	Lnet/minecraft/resources/Identifier;
 F	autismclient/util/d	init	I	autismclient/util/PkgCls_d	init_I	I
@@ -20091,10 +19959,6 @@ F	autismclient/util/g/ConfigStore	init	Ljava/util/Map;	autismclient/util/g/Confi
 F	autismclient/util/g/ConfigStore$DataUtil	init	I	autismclient/util/g/ConfigStore$Inner_DataUtil	init_I	I
 F	autismclient/util/g/ConfigStore$DataUtil	init	Lautismclient/util/bZ;	autismclient/util/g/ConfigStore$Inner_DataUtil	init_bZ	Lautismclient/util/bZ;
 F	autismclient/util/g/ConfigStore$DataUtil	init	Ljava/lang/String;	autismclient/util/g/ConfigStore$Inner_DataUtil	init_Str	Ljava/lang/String;
-F	autismclient/util/g/DataUtil	init	Lautismclient/util/g/DataUtil$StreamUtil;	autismclient/util/g/DataUtil	init_DataUtil_StreamUti	Lautismclient/util/g/DataUtil$Inner_StreamUtil;
-F	autismclient/util/g/DataUtil	init	Ljava/lang/String;	autismclient/util/g/DataUtil	init_Str	Ljava/lang/String;
-F	autismclient/util/g/DataUtil	init	Ljava/util/List;	autismclient/util/g/DataUtil	init_List	Ljava/util/List;
-F	autismclient/util/g/DataUtil	init	Ljava/util/Map;	autismclient/util/g/DataUtil	init_Map	Ljava/util/Map;
 F	autismclient/util/g/FieldCache	init	I	autismclient/util/g/FieldCache	init_I	I
 F	autismclient/util/g/FieldCache	init	Lautismclient/util/g/CachePool;	autismclient/util/g/FieldCache	init_CachePool	Lautismclient/util/g/CachePool;
 F	autismclient/util/g/FieldCache	init	Lautismclient/util/g/FieldCache$CachePool;	autismclient/util/g/FieldCache	init_FieldCache_CachePo	Lautismclient/util/g/FieldCache$Inner_CachePool;
@@ -22124,83 +21988,6 @@ F	autismclient/util/t	init	I	autismclient/util/t	init_I	I
 F	autismclient/util/t	init	J	autismclient/util/t	init_J	J
 F	autismclient/util/t	init	Ljava/lang/ref/WeakReference;	autismclient/util/t	init_WeakReference	Ljava/lang/ref/WeakReference;
 F	autismclient/util/t	init	Ljava/util/Map;	autismclient/util/t	init_Map	Ljava/util/Map;
-F	autismclient/util/v	init	F	autismclient/util/v	init_F	F
-F	autismclient/util/v	init	I	autismclient/util/v	init_I	I
-F	autismclient/util/v	init	J	autismclient/util/v	init_J	J
-F	autismclient/util/v	init	Lautismclient/util/cQ;	autismclient/util/v	init_cQ	Lautismclient/util/cQ;
-F	autismclient/util/v	init	Ljava/lang/Object;	autismclient/util/v	init_Obj	Ljava/lang/Object;
-F	autismclient/util/v	init	Ljava/lang/String;	autismclient/util/v	init_Str	Ljava/lang/String;
-F	autismclient/util/v	init	Ljava/nio/file/Path;	autismclient/util/v	init_Path	Ljava/nio/file/Path;
-F	autismclient/util/v	init	Ljava/util/List;	autismclient/util/v	init_List	Ljava/util/List;
-F	autismclient/util/v	init	Ljava/util/concurrent/atomic/AtomicLong;	autismclient/util/v	init_AtomicLong	Ljava/util/concurrent/atomic/AtomicLong;
-F	autismclient/util/v	init	Lnet/minecraft/world/phys/Vec3;	autismclient/util/v	init_Vec3	Lnet/minecraft/world/phys/Vec3;
-F	autismclient/util/v	init	Z	autismclient/util/v	init_Z	Z
-F	autismclient/util/v	load	F	autismclient/util/v	load_F	F
-F	autismclient/util/v	load	I	autismclient/util/v	load_I	I
-F	autismclient/util/v	load	J	autismclient/util/v	load_J	J
-F	autismclient/util/v	load	Ljava/lang/Object;	autismclient/util/v	load_Obj	Ljava/lang/Object;
-F	autismclient/util/v	load	Z	autismclient/util/v	load_Z	Z
-F	autismclient/util/w	close	Ljava/io/BufferedWriter;	autismclient/util/w	close_BufferedWriter	Ljava/io/BufferedWriter;
-F	autismclient/util/w	close	Ljava/lang/String;	autismclient/util/w	close_Str	Ljava/lang/String;
-F	autismclient/util/w	flush	I	autismclient/util/w	flush_I	I
-F	autismclient/util/w	flush	Ljava/io/BufferedWriter;	autismclient/util/w	flush_BufferedWriter	Ljava/io/BufferedWriter;
-F	autismclient/util/w	flush	Ljava/lang/String;	autismclient/util/w	flush_Str	Ljava/lang/String;
-F	autismclient/util/w	init	D	autismclient/util/w	init_D	D
-F	autismclient/util/w	init	F	autismclient/util/w	init_F	F
-F	autismclient/util/w	init	I	autismclient/util/w	init_I	I
-F	autismclient/util/w	init	J	autismclient/util/w	init_J	J
-F	autismclient/util/w	init	Lcom/google/gson/JsonObject;	autismclient/util/w	init_JsonObject	Lcom/google/gson/JsonObject;
-F	autismclient/util/w	init	Ljava/io/BufferedWriter;	autismclient/util/w	init_BufferedWriter	Ljava/io/BufferedWriter;
-F	autismclient/util/w	init	Ljava/lang/String;	autismclient/util/w	init_Str	Ljava/lang/String;
-F	autismclient/util/w	init	Ljava/lang/reflect/Method;	autismclient/util/w	init_Method	Ljava/lang/reflect/Method;
-F	autismclient/util/w	init	Ljava/nio/file/Path;	autismclient/util/w	init_Path	Ljava/nio/file/Path;
-F	autismclient/util/w	init	Ljava/util/IdentityHashMap;	autismclient/util/w	init_IdentityHashMap	Ljava/util/IdentityHashMap;
-F	autismclient/util/w	init	Ljava/util/Map;	autismclient/util/w	init_Map	Ljava/util/Map;
-F	autismclient/util/w	init	Ljava/util/concurrent/ConcurrentLinkedQueue;	autismclient/util/w	init_ConcurrentLinkedQu	Ljava/util/concurrent/ConcurrentLinkedQueue;
-F	autismclient/util/w	init	Ljava/util/concurrent/ConcurrentMap;	autismclient/util/w	init_ConcurrentMap	Ljava/util/concurrent/ConcurrentMap;
-F	autismclient/util/w	init	Ljava/util/concurrent/atomic/AtomicLong;	autismclient/util/w	init_AtomicLong	Ljava/util/concurrent/atomic/AtomicLong;
-F	autismclient/util/w	init	Lnet/minecraft/world/phys/Vec3;	autismclient/util/w	init_Vec3	Lnet/minecraft/world/phys/Vec3;
-F	autismclient/util/w	init	Z	autismclient/util/w	init_Z	Z
-F	autismclient/util/w	init	[I	autismclient/util/w	init_IArr	[I
-F	autismclient/util/w	init	[J	autismclient/util/w	init_JArr	[J
-F	autismclient/util/w	init	[Ljava/lang/String;	autismclient/util/w	init_StrArr	[Ljava/lang/String;
-F	autismclient/util/w	load	D	autismclient/util/w	load_D	D
-F	autismclient/util/w	load	F	autismclient/util/w	load_F	F
-F	autismclient/util/w	load	I	autismclient/util/w	load_I	I
-F	autismclient/util/w	load	Ljava/io/BufferedWriter;	autismclient/util/w	load_BufferedWriter	Ljava/io/BufferedWriter;
-F	autismclient/util/w	load	Ljava/lang/String;	autismclient/util/w	load_Str	Ljava/lang/String;
-F	autismclient/util/w	load	Ljava/util/Map;	autismclient/util/w	load_Map	Ljava/util/Map;
-F	autismclient/util/w	load	Ljava/util/concurrent/ConcurrentLinkedQueue;	autismclient/util/w	load_ConcurrentLinkedQu	Ljava/util/concurrent/ConcurrentLinkedQueue;
-F	autismclient/util/w	load	Ljava/util/concurrent/ConcurrentMap;	autismclient/util/w	load_ConcurrentMap	Ljava/util/concurrent/ConcurrentMap;
-F	autismclient/util/w	load	Ljava/util/concurrent/atomic/AtomicLong;	autismclient/util/w	load_AtomicLong	Ljava/util/concurrent/atomic/AtomicLong;
-F	autismclient/util/w	load	Z	autismclient/util/w	load_Z	Z
-F	autismclient/util/w	open	Ljava/io/BufferedWriter;	autismclient/util/w	open_BufferedWriter	Ljava/io/BufferedWriter;
-F	autismclient/util/w	open	Ljava/lang/String;	autismclient/util/w	open_Str	Ljava/lang/String;
-F	autismclient/util/w	poll	Ljava/io/BufferedWriter;	autismclient/util/w	poll_BufferedWriter	Ljava/io/BufferedWriter;
-F	autismclient/util/w	poll	Ljava/lang/String;	autismclient/util/w	poll_Str	Ljava/lang/String;
-F	autismclient/util/w	push	Ljava/io/BufferedWriter;	autismclient/util/w	push_BufferedWriter	Ljava/io/BufferedWriter;
-F	autismclient/util/w	push	Ljava/lang/String;	autismclient/util/w	push_Str	Ljava/lang/String;
-F	autismclient/util/w	read	D	autismclient/util/w	read_D	D
-F	autismclient/util/w	read	I	autismclient/util/w	read_I	I
-F	autismclient/util/w	read	Ljava/io/BufferedWriter;	autismclient/util/w	read_BufferedWriter	Ljava/io/BufferedWriter;
-F	autismclient/util/w	read	Ljava/lang/String;	autismclient/util/w	read_Str	Ljava/lang/String;
-F	autismclient/util/w	read	Ljava/util/Map;	autismclient/util/w	read_Map	Ljava/util/Map;
-F	autismclient/util/w	read	Ljava/util/concurrent/ConcurrentLinkedQueue;	autismclient/util/w	read_ConcurrentLinkedQu	Ljava/util/concurrent/ConcurrentLinkedQueue;
-F	autismclient/util/w	read	Ljava/util/concurrent/ConcurrentMap;	autismclient/util/w	read_ConcurrentMap	Ljava/util/concurrent/ConcurrentMap;
-F	autismclient/util/w	read	Z	autismclient/util/w	read_Z	Z
-F	autismclient/util/w	sync	I	autismclient/util/w	sync_I	I
-F	autismclient/util/w	sync	Ljava/io/BufferedWriter;	autismclient/util/w	sync_BufferedWriter	Ljava/io/BufferedWriter;
-F	autismclient/util/w	sync	Ljava/lang/String;	autismclient/util/w	sync_Str	Ljava/lang/String;
-F	autismclient/util/w	update	I	autismclient/util/w	update_I	I
-F	autismclient/util/w	update	Ljava/io/BufferedWriter;	autismclient/util/w	update_BufferedWriter	Ljava/io/BufferedWriter;
-F	autismclient/util/w	update	Ljava/lang/String;	autismclient/util/w	update_Str	Ljava/lang/String;
-F	autismclient/util/w	update	Z	autismclient/util/w	update_Z	Z
-F	autismclient/util/w	write	D	autismclient/util/w	write_D	D
-F	autismclient/util/w	write	I	autismclient/util/w	write_I	I
-F	autismclient/util/w	write	Ljava/io/BufferedWriter;	autismclient/util/w	write_BufferedWriter	Ljava/io/BufferedWriter;
-F	autismclient/util/w	write	Ljava/lang/String;	autismclient/util/w	write_Str	Ljava/lang/String;
-F	autismclient/util/w	write	Ljava/util/concurrent/ConcurrentLinkedQueue;	autismclient/util/w	write_ConcurrentLinkedQu	Ljava/util/concurrent/ConcurrentLinkedQueue;
-F	autismclient/util/w	write	Z	autismclient/util/w	write_Z	Z
 F	autismclient/util/y	init	I	autismclient/util/y	init_I	I
 F	autismclient/util/y	init	Ljava/util/concurrent/atomic/AtomicInteger;	autismclient/util/y	init_AtomicInteger	Ljava/util/concurrent/atomic/AtomicInteger;
 F	autismclient/util/z	init	I	autismclient/util/z	init_I	I
@@ -29322,7 +29109,6 @@ M	autismclient/gui/d/UiHelper	update	()I	autismclient/gui/d/LoginPasswordScreen	
 M	autismclient/gui/d/UiHelper	update	()V	autismclient/gui/d/LoginPasswordScreen	update_V_13	()V
 M	autismclient/gui/d/UiHelper	write	()I	autismclient/gui/d/LoginPasswordScreen	write_I_14	()I
 M	autismclient/gui/d/UiHelper	write	()V	autismclient/gui/d/LoginPasswordScreen	write_V_14	()V
-M	autismclient/gui/d/UiHelper$DataUtil	init	()I	autismclient/gui/d/LoginPasswordScreen$Inner_DataUtil	init_I	()I
 M	autismclient/gui/d/UtilCore	init	()I	autismclient/gui/d/UtilCore	init_I	()I
 M	autismclient/gui/d/UtilCore	init	()Ljava/lang/String;	autismclient/gui/d/UtilCore	init_Str	()Ljava/lang/String;
 M	autismclient/gui/d/UtilCore	init	()Ljava/util/List;	autismclient/gui/d/UtilCore	init_List	()Ljava/util/List;
@@ -34767,8 +34553,6 @@ M	autismclient/modules/v$StreamUtil	init	()I	autismclient/modules/v$Inner_Stream
 M	autismclient/modules/v$StreamUtil	init	()Ljava/lang/String;	autismclient/modules/v$Inner_StreamUtil	init_Str	()Ljava/lang/String;
 M	autismclient/modules/v$StreamUtil	init	()Ljava/util/UUID;	autismclient/modules/v$Inner_StreamUtil	init_UUID	()Ljava/util/UUID;
 M	autismclient/modules/v$StreamUtil	init	()Lnet/minecraft/network/chat/Component;	autismclient/modules/v$Inner_StreamUtil	init_Component	()Lnet/minecraft/network/chat/Component;
-M	autismclient/modules/w	init	(Lnet/minecraft/client/Minecraft;Ljava/lang/String;)V	autismclient/modules/w	init_V_Minecraft_Str	(Lnet/minecraft/client/Minecraft;Ljava/lang/String;)V
-M	autismclient/modules/w	init	(Lnet/minecraft/client/Minecraft;Z)Lautismclient/modules/w;	autismclient/modules/w	init_w_Minecraft_Z	(Lnet/minecraft/client/Minecraft;Z)Lautismclient/modules/w;
 M	autismclient/modules/x	init	()V	autismclient/modules/x	init_V	()V
 M	autismclient/modules/x	init	()[[D	autismclient/modules/x	init_DArr2	()[[D
 M	autismclient/modules/x	init	(Lnet/minecraft/world/level/Level;Ljava/util/List;)Ljava/util/List;	autismclient/modules/x	init_List_Level_List	(Lnet/minecraft/world/level/Level;Ljava/util/List;)Ljava/util/List;
@@ -36935,8 +36719,6 @@ M	autismclient/util/BitSetUtil	update	()Ljava/lang/String;	autismclient/util/Bit
 M	autismclient/util/BitSetUtil	update	()Z	autismclient/util/BitSetUtil	update_Z	()Z
 M	autismclient/util/BitSetUtil	write	()Ljava/lang/String;	autismclient/util/BitSetUtil	write_Str	()Ljava/lang/String;
 M	autismclient/util/BitSetUtil	write	()Z	autismclient/util/BitSetUtil	write_Z	()Z
-M	autismclient/util/BufferHelper	init	(Ljava/lang/String;)Ljava/lang/String;	autismclient/util/BufferHelper	init_Str	(Ljava/lang/String;)Ljava/lang/String;
-M	autismclient/util/BufferHelper	init	(Ljava/lang/String;)Z	autismclient/util/BufferHelper	init_Z	(Ljava/lang/String;)Z
 M	autismclient/util/CacheEntry	init	(Ljava/util/List;)Ljava/util/List;	autismclient/util/CacheEntry	init_List	(Ljava/util/List;)Ljava/util/List;
 M	autismclient/util/CacheEntry	init	(Ljava/util/List;)V	autismclient/util/CacheEntry	init_V	(Ljava/util/List;)V
 M	autismclient/util/CacheEntry$DataUtil	init	()Ljava/lang/String;	autismclient/util/CacheEntry$Inner_DataUtil	init_Str	()Ljava/lang/String;
@@ -37039,12 +36821,6 @@ M	autismclient/util/G	init	()I	autismclient/util/G	init_I	()I
 M	autismclient/util/G	init	()V	autismclient/util/G	init_V	()V
 M	autismclient/util/G	load	()I	autismclient/util/G	load_I	()I
 M	autismclient/util/G	load	()V	autismclient/util/G	load_V	()V
-M	autismclient/util/H	init	(Lnet/minecraft/client/Minecraft;)I	autismclient/util/H	init_I	(Lnet/minecraft/client/Minecraft;)I
-M	autismclient/util/H	init	(Lnet/minecraft/client/Minecraft;)V	autismclient/util/H	init_V	(Lnet/minecraft/client/Minecraft;)V
-M	autismclient/util/H	init	(Lnet/minecraft/client/Minecraft;)Z	autismclient/util/H	init_Z	(Lnet/minecraft/client/Minecraft;)Z
-M	autismclient/util/H$DataUtil	init	()I	autismclient/util/H$Inner_DataUtil	init_I	()I
-M	autismclient/util/H$DataUtil	init	()Ljava/lang/String;	autismclient/util/H$Inner_DataUtil	init_Str	()Ljava/lang/String;
-M	autismclient/util/H$DataUtil	init	()Lnet/minecraft/world/item/Item;	autismclient/util/H$Inner_DataUtil	init_Item	()Lnet/minecraft/world/item/Item;
 M	autismclient/util/HashUtil$DataUtil	init	()Lnet/minecraft/core/BlockPos;	autismclient/util/HashUtil$Inner_DataUtil	init_BlockPos	()Lnet/minecraft/core/BlockPos;
 M	autismclient/util/HashUtil$DataUtil	init	()Lnet/minecraft/core/Direction;	autismclient/util/HashUtil$Inner_DataUtil	init_Direction	()Lnet/minecraft/core/Direction;
 M	autismclient/util/HashUtil$DataUtil	init	()Lnet/minecraft/world/phys/AABB;	autismclient/util/HashUtil$Inner_DataUtil	init_AABB	()Lnet/minecraft/world/phys/AABB;
@@ -37461,8 +37237,6 @@ M	autismclient/util/U$TaskQueue	load	()D	autismclient/util/U$Inner_TaskQueue	loa
 M	autismclient/util/U$TaskQueue	load	()Lnet/minecraft/core/BlockPos;	autismclient/util/U$Inner_TaskQueue	load_BlockPos	()Lnet/minecraft/core/BlockPos;
 M	autismclient/util/UiHelper	init	(DDD)Z	autismclient/util/UiHelper	init_Z_D	(DDD)Z
 M	autismclient/util/UiHelper	init	(IIZ)Z	autismclient/util/UiHelper	init_Z_I	(IIZ)Z
-M	autismclient/util/UtilCore	init	()J	autismclient/util/UtilCore	init_J	()J
-M	autismclient/util/UtilCore	init	()V	autismclient/util/UtilCore	init_V	()V
 M	autismclient/util/V	init	()D	autismclient/util/V	init_D	()D
 M	autismclient/util/V	init	()V	autismclient/util/V	init_V	()V
 M	autismclient/util/V	init	()Z	autismclient/util/V	init_Z	()Z
@@ -37856,23 +37630,6 @@ M	autismclient/util/aW$DataUtil	init	()Ljava/lang/String;	autismclient/util/aW$I
 M	autismclient/util/aW$DataUtil	init	()Z	autismclient/util/aW$Inner_DataUtil	init_Z	()Z
 M	autismclient/util/aW$StreamUtil	init	()J	autismclient/util/aW$Inner_StreamUtil	init_J	()J
 M	autismclient/util/aW$StreamUtil	init	()Z	autismclient/util/aW$Inner_StreamUtil	init_Z	()Z
-M	autismclient/util/aX	init	()V	autismclient/util/aX	init_V	()V
-M	autismclient/util/aX	init	(ILjava/lang/String;Ljava/util/function/Consumer;)V	autismclient/util/aX	init_V_I	(ILjava/lang/String;Ljava/util/function/Consumer;)V
-M	autismclient/util/aX	init	(Ljava/lang/String;)V	autismclient/util/aX	init_V_Str	(Ljava/lang/String;)V
-M	autismclient/util/aX	init	(Ljava/lang/String;Ljava/util/function/Function;Ljava/util/function/Consumer;)V	autismclient/util/aX	init_V_Str	(Ljava/lang/String;Ljava/util/function/Function;Ljava/util/function/Consumer;)V
-M	autismclient/util/aX	init	(Ljava/lang/String;Ljava/util/function/Supplier;Lautismclient/gui/d/HashUtil$DataUtil;)V	autismclient/util/aX	init_V_Str_2	(Ljava/lang/String;Ljava/util/function/Supplier;Lautismclient/gui/d/AutismModulesScreen$Inner_DataUtil;)V
-M	autismclient/util/aX	init	(Ljava/lang/String;[Lautismclient/util/cX;)V	autismclient/util/aX	init_V_Str_cXArr	(Ljava/lang/String;[Lautismclient/util/cX;)V
-M	autismclient/util/aX	init	(Ljava/lang/String;[Ljava/lang/Object;)V	autismclient/util/aX	init_V_Str_ObjArr	(Ljava/lang/String;[Ljava/lang/Object;)V
-M	autismclient/util/aX	init	(Lnet/minecraft/client/Minecraft;)V	autismclient/util/aX	init_V_Minecraft	(Lnet/minecraft/client/Minecraft;)V
-M	autismclient/util/aX	init	(Lnet/minecraft/client/Minecraft;DD)V	autismclient/util/aX	init_V_Minecraft	(Lnet/minecraft/client/Minecraft;DD)V
-M	autismclient/util/aX	init	(Lnet/minecraft/client/Minecraft;I)V	autismclient/util/aX	init_V_Minecraft_I	(Lnet/minecraft/client/Minecraft;I)V
-M	autismclient/util/aX	init	(Lnet/minecraft/client/Minecraft;II)V	autismclient/util/aX	init_V_Minecraft_2	(Lnet/minecraft/client/Minecraft;II)V
-M	autismclient/util/aX	init	(Lnet/minecraft/client/Minecraft;Lautismclient/util/cX;)V	autismclient/util/aX	init_V_Minecraft_cX	(Lnet/minecraft/client/Minecraft;Lautismclient/util/cX;)V
-M	autismclient/util/aX	init	(Lnet/minecraft/client/Minecraft;Ljava/lang/String;)V	autismclient/util/aX	init_V_Minecraft_Str	(Lnet/minecraft/client/Minecraft;Ljava/lang/String;)V
-M	autismclient/util/aX	init	(Lnet/minecraft/client/Minecraft;Ljava/lang/String;Z)V	autismclient/util/aX	init_V_Minecraft_3	(Lnet/minecraft/client/Minecraft;Ljava/lang/String;Z)V
-M	autismclient/util/aX$DataUtil	init	()I	autismclient/util/aX$Inner_DataUtil	init_I	()I
-M	autismclient/util/aX$DataUtil	init	()Ljava/lang/String;	autismclient/util/aX$Inner_DataUtil	init_Str	()Ljava/lang/String;
-M	autismclient/util/aX$DataUtil	init	()Ljava/util/function/Consumer;	autismclient/util/aX$Inner_DataUtil	init_Consumer	()Ljava/util/function/Consumer;
 M	autismclient/util/aY	init	(Ljava/lang/String;)V	autismclient/util/aY	init_V	(Ljava/lang/String;)V
 M	autismclient/util/aY	init	(Ljava/lang/String;)Z	autismclient/util/aY	init_Z	(Ljava/lang/String;)Z
 M	autismclient/util/aY$DataUtil	init	()Ljava/lang/Object;	autismclient/util/aY$Inner_DataUtil	init_Obj	()Ljava/lang/Object;
@@ -38197,10 +37954,6 @@ M	autismclient/util/an	init	()V	autismclient/util/an	init_V	()V
 M	autismclient/util/an	init	()Z	autismclient/util/an	init_Z	()Z
 M	autismclient/util/an	init	(D)D	autismclient/util/an	init_D_D	(D)D
 M	autismclient/util/an	init	(Z)V	autismclient/util/an	init_V_Z	(Z)V
-M	autismclient/util/ao	init	(DDD)D	autismclient/util/ao	init_D_D	(DDD)D
-M	autismclient/util/ao	init	(DLautismclient/util/ao$StreamUtil;J)J	autismclient/util/ao	init_J_D	(DLautismclient/util/ao$Inner_StreamUtil;J)J
-M	autismclient/util/ao$DataUtil	init	()J	autismclient/util/ao$Inner_DataUtil	init_J	()J
-M	autismclient/util/ao$DataUtil	init	()V	autismclient/util/ao$Inner_DataUtil	init_V	()V
 M	autismclient/util/ap	init	(D)D	autismclient/util/ap	init_D_D	(D)D
 M	autismclient/util/ap	init	(D)Z	autismclient/util/ap	init_Z_D	(D)Z
 M	autismclient/util/ap	init	(DID)D	autismclient/util/ap	init_D_D	(DID)D
@@ -39613,11 +39366,6 @@ M	autismclient/util/cP$DataUtil	init	()Lnet/minecraft/world/phys/AABB;	autismcli
 M	autismclient/util/cP$DataUtil	init	()Lnet/minecraft/world/phys/Vec3;	autismclient/util/cP$Inner_DataUtil	init_Vec3	()Lnet/minecraft/world/phys/Vec3;
 M	autismclient/util/cP$StreamUtil	init	()J	autismclient/util/cP$Inner_StreamUtil	init_J	()J
 M	autismclient/util/cP$StreamUtil	init	()Lnet/minecraft/world/phys/Vec3;	autismclient/util/cP$Inner_StreamUtil	init_Vec3	()Lnet/minecraft/world/phys/Vec3;
-M	autismclient/util/cQ	init	()J	autismclient/util/cQ	init_J	()J
-M	autismclient/util/cQ	init	()Ljava/nio/file/Path;	autismclient/util/cQ	init_Path	()Ljava/nio/file/Path;
-M	autismclient/util/cQ	init	()Ljava/util/concurrent/CompletableFuture;	autismclient/util/cQ	init_CompletableFuture	()Ljava/util/concurrent/CompletableFuture;
-M	autismclient/util/cQ	init	()V	autismclient/util/cQ	init_V	()V
-M	autismclient/util/cQ	init	()Z	autismclient/util/cQ	init_Z	()Z
 M	autismclient/util/cR	init	()I	autismclient/util/cR	init_I	()I
 M	autismclient/util/cR	init	()Z	autismclient/util/cR	init_Z	()Z
 M	autismclient/util/cS	init	()I	autismclient/util/cS	init_I	()I
@@ -39966,8 +39714,6 @@ M	autismclient/util/ck$TaskQueue	init	()Ljava/util/List;	autismclient/util/ck$In
 M	autismclient/util/ck$TaskQueue	init	()Ljava/util/Map;	autismclient/util/ck$Inner_TaskQueue	init_Map	()Ljava/util/Map;
 M	autismclient/util/ck$TaskQueue	load	()Ljava/lang/String;	autismclient/util/ck$Inner_TaskQueue	load_Str	()Ljava/lang/String;
 M	autismclient/util/ck$TaskQueue	load	()Ljava/util/Map;	autismclient/util/ck$Inner_TaskQueue	load_Map	()Ljava/util/Map;
-M	autismclient/util/cl	init	(Lnet/minecraft/world/item/ItemStack;)I	autismclient/util/cl	init_I	(Lnet/minecraft/world/item/ItemStack;)I
-M	autismclient/util/cl	init	(Lnet/minecraft/world/item/ItemStack;)Z	autismclient/util/cl	init_Z	(Lnet/minecraft/world/item/ItemStack;)Z
 M	autismclient/util/cn	init	()F	autismclient/util/cn	init_F	()F
 M	autismclient/util/cn	init	()Lautismclient/util/ce$DataUtil;	autismclient/util/cn	init_ce_DataUtil	()Lautismclient/util/ce$Inner_DataUtil;
 M	autismclient/util/cn	init	()Z	autismclient/util/cn	init_Z	()Z
@@ -40110,20 +39856,6 @@ M	autismclient/util/cu$CachePool	load	()I	autismclient/util/cu$Inner_CachePool	l
 M	autismclient/util/cu$CachePool	load	()V	autismclient/util/cu$Inner_CachePool	load_V	()V
 M	autismclient/util/cu$DataUtil	init	()I	autismclient/util/cu$Inner_DataUtil	init_I	()I
 M	autismclient/util/cu$DataUtil	init	()Lnet/minecraft/resources/Identifier;	autismclient/util/cu$Inner_DataUtil	init_Identifier	()Lnet/minecraft/resources/Identifier;
-M	autismclient/util/cv	init	()V	autismclient/util/cv	init_V	()V
-M	autismclient/util/cv	init	(ILjava/lang/String;)Lautismclient/util/macro/al;	autismclient/util/cv	init_al_I_Str	(ILjava/lang/String;)Lautismclient/util/macro/ToolsAction;
-M	autismclient/util/cv	init	(J)V	autismclient/util/cv	init_V_J	(J)V
-M	autismclient/util/cv	init	(Ljava/lang/String;)Lautismclient/util/macro/FieldCache;	autismclient/util/cv	init_FieldCache_Str	(Ljava/lang/String;)Lautismclient/util/macro/IfAction;
-M	autismclient/util/cv	init	(Ljava/lang/String;)Lautismclient/util/macro/W;	autismclient/util/cv	init_W_Str	(Ljava/lang/String;)Lautismclient/util/macro/SendChatAction;
-M	autismclient/util/cv	init	(Ljava/lang/String;)Lautismclient/util/macro/al;	autismclient/util/cv	init_al_Str	(Ljava/lang/String;)Lautismclient/util/macro/ToolsAction;
-M	autismclient/util/cv	init	(Ljava/lang/String;Lautismclient/util/cv$DataUtil;)V	autismclient/util/cv	init_V_Str_cv_DataUtil	(Ljava/lang/String;Lautismclient/util/cv$Inner_DataUtil;)V
-M	autismclient/util/cv	init	(Ljava/util/function/BooleanSupplier;Ljava/lang/String;)V	autismclient/util/cv	init_V_BooleanSupplier_Str	(Ljava/util/function/BooleanSupplier;Ljava/lang/String;)V
-M	autismclient/util/cv	init	(Lnet/minecraft/client/Minecraft;)V	autismclient/util/cv	init_V_Minecraft	(Lnet/minecraft/client/Minecraft;)V
-M	autismclient/util/cv	init	(Lnet/minecraft/client/Minecraft;I)Lautismclient/util/macro/k$StreamUtil;	autismclient/util/cv	init_k_StreamUtil_Minecraft_I	(Lnet/minecraft/client/Minecraft;I)Lautismclient/util/macro/k$Inner_StreamUtil;
-M	autismclient/util/cv	init	(Lnet/minecraft/client/Minecraft;Ljava/lang/String;[Lautismclient/util/macro/MacroAction;)J	autismclient/util/cv	init_J_Minecraft	(Lnet/minecraft/client/Minecraft;Ljava/lang/String;[Lautismclient/util/macro/MacroAction;)J
-M	autismclient/util/cv	init	(Lnet/minecraft/client/Minecraft;Ljava/util/function/Supplier;)Ljava/lang/Object;	autismclient/util/cv	init_Obj_Minecraft_Supplier	(Lnet/minecraft/client/Minecraft;Ljava/util/function/Supplier;)Ljava/lang/Object;
-M	autismclient/util/cv	init	(Lnet/minecraft/client/Minecraft;Ljava/util/function/Supplier;)Z	autismclient/util/cv	init_Z_Minecraft_Supplier	(Lnet/minecraft/client/Minecraft;Ljava/util/function/Supplier;)Z
-M	autismclient/util/cv	init	(ZLjava/lang/String;)V	autismclient/util/cv	init_V_Z_Str	(ZLjava/lang/String;)V
 M	autismclient/util/cx	init	()V	autismclient/util/cx	init_V	()V
 M	autismclient/util/cx	init	()Z	autismclient/util/cx	init_Z	()Z
 M	autismclient/util/cx	init	(Lnet/minecraft/client/Minecraft;)Lnet/minecraft/client/gui/screens/Screen;	autismclient/util/cx	init_Screen	(Lnet/minecraft/client/Minecraft;)Lnet/minecraft/client/gui/screens/Screen;
@@ -40139,21 +39871,6 @@ M	autismclient/util/cx	load	(Lnet/minecraft/client/gui/screens/Screen;)V	autismc
 M	autismclient/util/cx	load	(Lnet/minecraft/client/gui/screens/Screen;)Z	autismclient/util/cx	load_Z	(Lnet/minecraft/client/gui/screens/Screen;)Z
 M	autismclient/util/cx	read	()V	autismclient/util/cx	read_V	()V
 M	autismclient/util/cx	read	()Z	autismclient/util/cx	read_Z	()Z
-M	autismclient/util/cy	init	()Lautismclient/util/AutismMacroListOverlay;	autismclient/util/cy	init_AutismMacroListOve	()Lautismclient/util/AutismMacroListOverlay;
-M	autismclient/util/cy	init	()Lautismclient/util/cX;	autismclient/util/cy	init_cX	()Lautismclient/util/cX;
-M	autismclient/util/cy	init	()V	autismclient/util/cy	init_V	()V
-M	autismclient/util/cy	init	(Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;	autismclient/util/cy	init_Obj_Obj_Class	(Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
-M	autismclient/util/cy	init	(Ljava/lang/String;)J	autismclient/util/cy	init_J_Str	(Ljava/lang/String;)J
-M	autismclient/util/cy	init	(Ljava/lang/String;Lautismclient/util/cy$DataUtil;)V	autismclient/util/cy	init_V_Str_cy_DataUtil	(Ljava/lang/String;Lautismclient/util/cy$Inner_DataUtil;)V
-M	autismclient/util/cy	init	(Ljava/util/function/BooleanSupplier;Ljava/lang/String;)V	autismclient/util/cy	init_V_BooleanSupplier_Str	(Ljava/util/function/BooleanSupplier;Ljava/lang/String;)V
-M	autismclient/util/cy	init	(Lnet/minecraft/client/Minecraft;)Lautismclient/util/AutismMacroListOverlay;	autismclient/util/cy	init_AutismMacroListOve_Minecraft	(Lnet/minecraft/client/Minecraft;)Lautismclient/util/AutismMacroListOverlay;
-M	autismclient/util/cy	init	(Lnet/minecraft/client/Minecraft;)V	autismclient/util/cy	init_V_Minecraft	(Lnet/minecraft/client/Minecraft;)V
-M	autismclient/util/cy	init	(Lnet/minecraft/client/Minecraft;I)V	autismclient/util/cy	init_V_Minecraft_I	(Lnet/minecraft/client/Minecraft;I)V
-M	autismclient/util/cy	init	(Lnet/minecraft/client/Minecraft;Ljava/lang/String;)V	autismclient/util/cy	init_V_Minecraft_Str	(Lnet/minecraft/client/Minecraft;Ljava/lang/String;)V
-M	autismclient/util/cy	init	(Lnet/minecraft/client/Minecraft;Ljava/util/function/Supplier;)Ljava/lang/Object;	autismclient/util/cy	init_Obj_Minecraft_Supplier	(Lnet/minecraft/client/Minecraft;Ljava/util/function/Supplier;)Ljava/lang/Object;
-M	autismclient/util/cy	init	(Lnet/minecraft/client/Minecraft;Ljava/util/function/Supplier;)Z	autismclient/util/cy	init_Z_Minecraft_Supplier	(Lnet/minecraft/client/Minecraft;Ljava/util/function/Supplier;)Z
-M	autismclient/util/cy	init	(Lnet/minecraft/client/Minecraft;[Ljava/lang/String;)V	autismclient/util/cy	init_V_Minecraft_StrArr	(Lnet/minecraft/client/Minecraft;[Ljava/lang/String;)V
-M	autismclient/util/cy	init	(ZLjava/lang/String;)V	autismclient/util/cy	init_V_Z_Str	(ZLjava/lang/String;)V
 M	autismclient/util/d	init	()I	autismclient/util/PkgCls_d	init_I	()I
 M	autismclient/util/d	init	()Ljava/lang/String;	autismclient/util/PkgCls_d	init_Str	()Ljava/lang/String;
 M	autismclient/util/d	load	()I	autismclient/util/PkgCls_d	load_I	()I
@@ -40873,24 +40590,6 @@ M	autismclient/util/g/ConfigStore$DataUtil	init	()Ljava/lang/String;	autismclien
 M	autismclient/util/g/DataPipe	init	(J)I	autismclient/util/g/DataPipe	init_I	(J)I
 M	autismclient/util/g/DataPipe	init	(J)V	autismclient/util/g/DataPipe	init_V	(J)V
 M	autismclient/util/g/DataPipe	init	(J)Z	autismclient/util/g/DataPipe	init_Z	(J)Z
-M	autismclient/util/g/DataUtil	init	()Lautismclient/util/g/DataUtil$StreamUtil;	autismclient/util/g/DataUtil	init_DataUtil_StreamUti	()Lautismclient/util/g/DataUtil$Inner_StreamUtil;
-M	autismclient/util/g/DataUtil	init	()Lautismclient/util/g/DataUtil;	autismclient/util/g/DataUtil	init_DataUtil	()Lautismclient/util/g/DataUtil;
-M	autismclient/util/g/DataUtil	init	()Lautismclient/util/g/MethodUtil;	autismclient/util/g/DataUtil	init_MethodUtil	()Lautismclient/util/g/MethodUtil;
-M	autismclient/util/g/DataUtil	init	()Ljava/lang/String;	autismclient/util/g/DataUtil	init_Str	()Ljava/lang/String;
-M	autismclient/util/g/DataUtil	init	()Ljava/util/List;	autismclient/util/g/DataUtil	init_List	()Ljava/util/List;
-M	autismclient/util/g/DataUtil	init	(Lautismclient/util/g/DataUtil$StreamUtil;)V	autismclient/util/g/DataUtil	init_V_DataUtil_StreamUti	(Lautismclient/util/g/DataUtil$Inner_StreamUtil;)V
-M	autismclient/util/g/DataUtil	init	(Lautismclient/util/g/MethodUtil;Ljava/util/Set;)Lautismclient/util/g/DataUtil;	autismclient/util/g/DataUtil	init_DataUtil_MethodUtil_Set	(Lautismclient/util/g/MethodUtil;Ljava/util/Set;)Lautismclient/util/g/DataUtil;
-M	autismclient/util/g/DataUtil	init	(Ljava/lang/String;)Ljava/lang/String;	autismclient/util/g/DataUtil	init_Str_Str	(Ljava/lang/String;)Ljava/lang/String;
-M	autismclient/util/g/DataUtil	init	(Ljava/lang/String;)Ljava/util/Map;	autismclient/util/g/DataUtil	init_Map_Str	(Ljava/lang/String;)Ljava/util/Map;
-M	autismclient/util/g/DataUtil	init	(Ljava/lang/String;)Ljava/util/Set;	autismclient/util/g/DataUtil	init_Set_Str	(Ljava/lang/String;)Ljava/util/Set;
-M	autismclient/util/g/DataUtil	init	(Ljava/lang/String;)V	autismclient/util/g/DataUtil	init_V_Str	(Ljava/lang/String;)V
-M	autismclient/util/g/DataUtil	init	(Ljava/lang/String;Ljava/lang/String;)V	autismclient/util/g/DataUtil	init_V_Str_Str	(Ljava/lang/String;Ljava/lang/String;)V
-M	autismclient/util/g/DataUtil	init	(Ljava/util/Collection;Ljava/util/Set;)Lautismclient/util/g/DataUtil;	autismclient/util/g/DataUtil	init_DataUtil_Collection_Set	(Ljava/util/Collection;Ljava/util/Set;)Lautismclient/util/g/DataUtil;
-M	autismclient/util/g/DataUtil	init	(Ljava/util/Collection;Ljava/util/Set;)Ljava/util/List;	autismclient/util/g/DataUtil	init_List_Collection_Set	(Ljava/util/Collection;Ljava/util/Set;)Ljava/util/List;
-M	autismclient/util/g/DataUtil	init	(Ljava/util/Map;)Ljava/util/Map;	autismclient/util/g/DataUtil	init_Map_Map	(Ljava/util/Map;)Ljava/util/Map;
-M	autismclient/util/g/DataUtil	init	(Ljava/util/Set;)Ljava/util/Set;	autismclient/util/g/DataUtil	init_Set_Set	(Ljava/util/Set;)Ljava/util/Set;
-M	autismclient/util/g/DataUtil	load	(Ljava/lang/String;)Ljava/lang/String;	autismclient/util/g/DataUtil	load_Str_Str	(Ljava/lang/String;)Ljava/lang/String;
-M	autismclient/util/g/DataUtil	load	(Ljava/lang/String;)V	autismclient/util/g/DataUtil	load_V_Str	(Ljava/lang/String;)V
 M	autismclient/util/g/EventBus	close	()Ljava/lang/String;	autismclient/util/g/EventBus	close_Str	()Ljava/lang/String;
 M	autismclient/util/g/EventBus	close	()Z	autismclient/util/g/EventBus	close_Z	()Z
 M	autismclient/util/g/EventBus	flush	()J	autismclient/util/g/EventBus	flush_J	()J
@@ -43902,21 +43601,6 @@ M	autismclient/util/s	write	()V	autismclient/util/s	write_V	()V
 M	autismclient/util/s	write	()Z	autismclient/util/s	write_Z	()Z
 M	autismclient/util/u	init	(Lnet/minecraft/world/entity/LivingEntity;)D	autismclient/util/u	init_D	(Lnet/minecraft/world/entity/LivingEntity;)D
 M	autismclient/util/u	init	(Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/world/item/component/AttackRange;	autismclient/util/u	init_AttackRange	(Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/world/item/component/AttackRange;
-M	autismclient/util/v	init	()Lcom/google/gson/JsonObject;	autismclient/util/v	init_JsonObject	()Lcom/google/gson/JsonObject;
-M	autismclient/util/v	init	()Ljava/lang/String;	autismclient/util/v	init_Str	()Ljava/lang/String;
-M	autismclient/util/v	init	()V	autismclient/util/v	init_V	()V
-M	autismclient/util/v	init	()Z	autismclient/util/v	init_Z	()Z
-M	autismclient/util/v	init	(Ljava/lang/String;)Lcom/google/gson/JsonObject;	autismclient/util/v	init_JsonObject	(Ljava/lang/String;)Lcom/google/gson/JsonObject;
-M	autismclient/util/v	init	(Ljava/lang/String;)Ljava/lang/String;	autismclient/util/v	init_Str	(Ljava/lang/String;)Ljava/lang/String;
-M	autismclient/util/v	init	(Ljava/lang/String;)V	autismclient/util/v	init_V	(Ljava/lang/String;)V
-M	autismclient/util/v	init	(Ljava/lang/String;)Z	autismclient/util/v	init_Z	(Ljava/lang/String;)Z
-M	autismclient/util/v	init	(Lnet/minecraft/world/entity/LivingEntity;)Lcom/google/gson/JsonObject;	autismclient/util/v	init_JsonObject	(Lnet/minecraft/world/entity/LivingEntity;)Lcom/google/gson/JsonObject;
-M	autismclient/util/v	init	(Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/world/phys/Vec3;	autismclient/util/v	init_Vec3	(Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/world/phys/Vec3;
-M	autismclient/util/w	init	()Ljava/lang/String;	autismclient/util/w	init_Str	()Ljava/lang/String;
-M	autismclient/util/w	init	()V	autismclient/util/w	init_V	()V
-M	autismclient/util/w	init	()Z	autismclient/util/w	init_Z	()Z
-M	autismclient/util/w	init	(Lnet/minecraft/client/Minecraft;)Lcom/google/gson/JsonObject;	autismclient/util/w	init_JsonObject	(Lnet/minecraft/client/Minecraft;)Lcom/google/gson/JsonObject;
-M	autismclient/util/w	init	(Lnet/minecraft/client/Minecraft;)V	autismclient/util/w	init_V	(Lnet/minecraft/client/Minecraft;)V
 M	autismclient/util/z	init	()Ljava/lang/Object;	autismclient/util/z	init_Obj	()Ljava/lang/Object;
 M	autismclient/util/z	init	()Ljava/lang/String;	autismclient/util/z	init_Str	()Ljava/lang/String;
 M	autismclient/util/z	init	()Ljava/util/List;	autismclient/util/z	init_List	()Ljava/util/List;

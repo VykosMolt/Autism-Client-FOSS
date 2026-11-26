@@ -62,17 +62,33 @@ def integrityStubs = file('stubs/integrity-stubs.jar')
 def integrityOverlay = file('precompiled/integrity-classes.jar')
 
 def cpFile = file(System.getenv('CP26_3') ?: 'cp26.3.txt')
-def useLocalCp = cpFile.exists()
+def useLocalCp = cpFile.isFile()
 def localCpJars = []
 if (useLocalCp) {
-    cpFile.text.trim().split(':').each { p ->
-        def f = file(p.trim())
-        if (f.exists() && f.name.endsWith('.jar') && !f.name.startsWith('AUTISM')) {
-            localCpJars << f
+    cpFile.text.trim().split(File.pathSeparator).each { p ->
+        def trimmed = p.trim()
+        if (!trimmed.isEmpty()) {
+            def f = file(trimmed)
+            if (f.exists() && f.name.endsWith('.jar') && !f.name.startsWith('AUTISM')) {
+                localCpJars << f
+            }
         }
     }
 }
-def localMcJar = useLocalCp ? localCpJars.find { it.name.startsWith('minecraft-') && it.name.endsWith('-client.jar') } : null
+def isMinecraftClientJar = { File f ->
+    if (f == null || !f.isFile()) return false
+    try {
+        new ZipFile(f).withCloseable { zf ->
+            zf.getEntry('net/minecraft/client/Minecraft.class') != null
+        }
+    } catch (Throwable ignored) {
+        false
+    }
+}
+def localMcJar = useLocalCp ? localCpJars.find(isMinecraftClientJar) : null
+if (useLocalCp && localMcJar == null) {
+    throw new GradleException("Local classpath file ${cpFile} does not contain a valid Minecraft client JAR (remove it or update CP26_3).")
+}
 def accessWidenerSourceJar = localMcJar ?: minecraftClientJar
 def compileLocalCpJars = localMcJar != null ? localCpJars.collect { it == localMcJar ? minecraftWidenedJar : it } : localCpJars
 
@@ -251,9 +267,9 @@ dependencies {
     compileOnly('org.lwjgl:lwjgl-tinyfd:3.4.1') { transitive = false }
 
     if (useLocalCp) {
-        compileOnly files(compileLocalCpJars)
+        compileOnly files(compileLocalCpJars) { builtBy tasks.named('applyAccessWidener') }
     } else {
-        compileOnly files(minecraftWidenedJar)
+        compileOnly files(minecraftWidenedJar) { builtBy tasks.named('applyAccessWidener') }
     }
 
     compileOnly files('stubs/compat-stubs.jar')

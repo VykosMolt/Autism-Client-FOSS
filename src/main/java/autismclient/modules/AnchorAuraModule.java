@@ -137,7 +137,6 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
    private autismclient.util.S.Inner_CachePool init_S_CachePool;
    private final Map<BlockPos, autismclient.util.S.Inner_CachePool> load_Map;
    private String read_Str;
-   private final Map<String, Integer> read_Map;
 
    private static int init_I() {
       return autismclient.util.FileCache.init_I_I(autismclient.util.macro.ab.init_I());
@@ -148,7 +147,6 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
       this.init_S_CachePool = autismclient.util.S.Inner_CachePool.init_S_CachePool;
       this.load_Map = new HashMap<>();
       this.read_Str = "";
-      this.read_Map = new HashMap<>();
       this.add(new BoolSetting("place", "Place", true).description("Place new respawn anchors.").build());
       this.add(new BoolSetting("charge", "Charge", true).description("Charge anchors with glowstone.").build());
       this.add(new BoolSetting("detonate", "Detonate", true).description("Detonate charged anchors.").build());
@@ -1789,12 +1787,7 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
       return efficient ? rank.load() - 2.5 * rank.read() : rank.load();
    }
 
-   private void init_V_Str(String reason) {
-      this.read_Map.merge(reason, 1, Integer::sum);
-   }
-
    private AnchorAuraModule.Inner_CachePool init_BufferHelper_Cache_LivingEntity(LivingEntity enemy, double range, autismclient.util.U.Inner_StreamUtil budget) {
-      this.read_Map.clear();
       if (this.init_I_Predicate(AnchorAuraModule::read_Z_ItemStack) >= 0 && this.init_I_Predicate(AnchorAuraModule::init_Z_ItemStack) >= 0) {
          LocalPlayer player = MC.player;
          Vec3 eye = player.getEyePosition();
@@ -1813,39 +1806,28 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
          for (int i = 0; i + 2 < offsets.length; i += 3) {
             cursor.set(origin.getX() + offsets[i], origin.getY() + offsets[i + 1], origin.getZ() + offsets[i + 2]);
             BlockPos anchorCell = cursor.above();
-            if (this.flush(anchorCell)) {
-               if (this.init_Map.containsKey(cursor) || this.init_Map.containsKey(anchorCell)) {
-                  this.init_V_Str("banned");
-               } else if (this.read_Z_BlockPos(anchorCell)
-                  && this.init_Z_BlockPos_AABB(anchorCell, nextBox)
-                  && this.init_Z_BlockState(obsidian, cursor, nextBox)) {
-                  Vec3 centre = init_Vec3_BlockPos(anchorCell);
-                  if (this.bool("only-above") && centre.y < enemy.getY()) {
-                     this.init_V_Str("above");
-                  } else {
-                     double distanceSq = eye.distanceToSqr(centre);
-                     if (distanceSq > rangeSq) {
-                        this.init_V_Str("reach");
-                     } else {
-                        autismclient.util.S.Inner_CachePool supported = this.init_S_CachePool_BlockPos(anchorCell).init(cursor.immutable());
-                        if (autismclient.util.S.load_D(enemy, centre, 5.0F, supported.init(lead)) < floor) {
-                           this.init_V_Str("bound");
-                        } else {
-                           if (++evaluated > 32) {
-                              break;
-                           }
+            if (this.flush(anchorCell)
+               && !this.init_Map.containsKey(cursor)
+               && !this.init_Map.containsKey(anchorCell)
+               && this.read_Z_BlockPos(anchorCell)
+               && this.init_Z_BlockPos_AABB(anchorCell, nextBox)
+               && this.init_Z_BlockState(obsidian, cursor, nextBox)) {
+               Vec3 centre = init_Vec3_BlockPos(anchorCell);
+               if (!(this.bool("only-above") && centre.y < enemy.getY())) {
+                  double distanceSq = eye.distanceToSqr(centre);
+                  if (!(distanceSq > rangeSq)) {
+                     autismclient.util.S.Inner_CachePool supported = this.init_S_CachePool_BlockPos(anchorCell).init(cursor.immutable());
+                     if (!(autismclient.util.S.load_D(enemy, centre, 5.0F, supported.init(lead)) < floor)) {
+                        if (++evaluated > 32) {
+                           break;
+                        }
 
-                           autismclient.util.S.Inner_BufferHelper rank = this.init_S_BufferHelper_LivingEntity(enemy, centre, supported, lead);
-                           if (!this.init_Z_S_BufferHelper(rank)) {
-                              this.init_V_Str(String.format(Locale.ROOT, "damage:%.1f/%.1f", rank.load(), rank.read()));
-                           } else {
-                              accepted.add(new AnchorAuraModule.Inner_TaskQueue(anchorCell.immutable(), cursor.immutable(), rank, distanceSq));
-                           }
+                        autismclient.util.S.Inner_BufferHelper rank = this.init_S_BufferHelper_LivingEntity(enemy, centre, supported, lead);
+                        if (this.init_Z_S_BufferHelper(rank)) {
+                           accepted.add(new AnchorAuraModule.Inner_TaskQueue(anchorCell.immutable(), cursor.immutable(), rank, distanceSq));
                         }
                      }
                   }
-               } else {
-                  this.init_V_Str("geometry");
                }
             }
          }
@@ -1862,13 +1844,10 @@ public final class AnchorAuraModule extends Module implements cn.Inner_DataUtil 
             if (plan != null) {
                return plan;
             }
-
-            this.init_V_Str("scan");
          }
 
          return null;
       } else {
-         this.init_V_Str("material");
          return null;
       }
    }

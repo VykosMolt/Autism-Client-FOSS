@@ -48,20 +48,21 @@ public final class LoginPasswordScreen extends KeyHolder {
       this.clearWidgets();
       LoginPasswordScreen.Layout l = this.computeLayout();
       int innerX = l.x() + 6;
-      int innerW = l.w() - 12;
+      int innerW = Math.max(1, l.w() - 12);
       int gap = 2;
       int ctrlH = this.read_I_16();
       int step = ctrlH + gap;
       int fieldY = l.contentTop();
       int revealW = Math.max(this.init_I_Str_19("Show"), this.init_I_Str_19("Hide"));
+      revealW = Math.max(1, Math.min(revealW, innerW - gap - 1));
       String existing = this.init_EditBox != null ? this.init_EditBox.getValue() : Objects.requireNonNullElse(this.init_Map.get("password"), "");
-      this.init_EditBox = new StateCache(this.font, innerX, fieldY, Math.max(40, innerW - revealW - gap), ctrlH, Component.literal("Password"));
+      int editW = Math.max(1, innerW - revealW - gap);
+      this.init_EditBox = new StateCache(this.font, innerX, fieldY, editW, ctrlH, Component.literal("Password"));
       this.init_EditBox.setMaxLength(16);
       this.init_EditBox.setHint(Component.literal("Type a password"));
       this.load_V_23();
       this.init_EditBox.setValue(existing);
       this.addRenderableWidget(this.init_EditBox);
-      this.setInitialFocus(this.init_EditBox);
       this.addRenderableWidget(
          new StreamGate(
             innerX + innerW - revealW,
@@ -83,25 +84,39 @@ public final class LoginPasswordScreen extends KeyHolder {
       } else {
          int half = Math.max(1, (innerW - gap) / 2);
          this.init(innerX, y, half, "Generate Random", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, b -> this.update_V_13());
-         this.init(innerX + half + gap, y, innerW - half - gap, "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.read_V_16());
+         this.init(innerX + half + gap, y, Math.max(1, innerW - half - gap), "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.read_V_16());
       }
 
       y += step;
-      this.sync = y + 4;
+      this.sync = y + (l.h() < 110 ? 2 : 4);
       int saveW = this.init_I_Str_19("Save");
       int backW = this.init_I_Str_19("Back");
       int footerRight = l.x() + l.w();
-      this.init(footerRight - backW - gap - saveW, l.footerY(), saveW, "Save", autismclient.gui.f.b.CachePool.Inner_DataUtil.write, b -> this.close());
-      this.init(footerRight - backW, l.footerY(), backW, "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.onClose());
+      if (saveW + gap + backW <= l.w()) {
+         this.init(footerRight - backW - gap - saveW, l.footerY(), saveW, "Save", autismclient.gui.f.b.CachePool.Inner_DataUtil.write, b -> this.close());
+         this.init(footerRight - backW, l.footerY(), backW, "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.onClose());
+      } else {
+         int half = Math.max(1, (l.w() - gap) / 2);
+         this.init(l.x(), l.footerY(), half, "Save", autismclient.gui.f.b.CachePool.Inner_DataUtil.write, b -> this.close());
+         this.init(l.x() + half + gap, l.footerY(), Math.max(1, l.w() - half - gap), "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.onClose());
+      }
+   }
+
+   @Override
+   protected void setInitialFocus() {
+      if (this.init_EditBox != null) {
+         this.setInitialFocus(this.init_EditBox);
+      }
    }
 
    private LoginPasswordScreen.Layout computeLayout() {
-      int margin = 12;
       int sw = this.init_I();
       int sh = this.load_I();
-      int panelW = Math.max(200, Math.min(360, sw - margin * 2));
-      int panelX = (sw - panelW) / 2;
-      int footerY = sh - margin - this.read_I_16();
+      int margin = sw < 224 || sh < 150 ? 4 : 12;
+      int panelW = Math.max(1, Math.min(360, sw - margin * 2));
+      int panelX = Math.max(0, (sw - panelW) / 2);
+      int ctrlH = this.read_I_16();
+      int footerY = Math.max(margin, sh - margin - ctrlH);
       int availH = Math.max(1, footerY - 4 - margin);
       int panelH = Math.min(180, availH);
       int panelY = Math.max(margin, (footerY - 4 - panelH) / 2);
@@ -234,8 +249,8 @@ public final class LoginPasswordScreen extends KeyHolder {
          int titleY = this.init_I_I_I_10(l.y() + 6, this.write_I_14());
          this.init(graphics, "Login Password", l.x() + 6, titleY, textColor);
          int textX = l.x() + 6;
-         int textW = l.w() - 12;
-         int maxTextY = l.bottom() - 6;
+         int textW = Math.max(1, l.w() - 12);
+         int maxTextY = l.bottom() - (l.h() < 110 ? 3 : 6);
          List<FormattedCharSequence> statusLines = this.read_Str.isBlank() ? List.of() : this.font.split(FormattedText.of(this.read_Str), textW);
          int statusReserve = statusLines.isEmpty() ? 0 : statusLines.size() * 10 + 4;
          int helpLimitY = maxTextY - statusReserve;

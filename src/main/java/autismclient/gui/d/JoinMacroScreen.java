@@ -95,7 +95,11 @@ public final class JoinMacroScreen extends KeyHolder {
             "Back",
             autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
             true,
-            () -> this.minecraft.gui.setScreen(this.init_Screen)
+            () -> {
+               if (this.minecraft != null) {
+                  this.minecraft.gui.setScreen(this.init_Screen);
+               }
+            }
          );
          autismclient.gui.f.PacketUtil.load(
             graphics,
@@ -143,11 +147,13 @@ public final class JoinMacroScreen extends KeyHolder {
    }
 
    private void load_V_4() {
-      this.minecraft.gui.setScreen(new LoginPasswordScreen(this, aA.init_Map(), updated -> {
-         if (!aA.init(updated)) {
-            bi.write("Secure encryption is unavailable; values were not saved.");
-         }
-      }));
+      if (this.minecraft != null) {
+         this.minecraft.gui.setScreen(new LoginPasswordScreen(this, aA.init_Map(), updated -> {
+            if (!aA.init(updated)) {
+               bi.write("Secure encryption is unavailable; values were not saved.");
+            }
+         }));
+      }
    }
 
    private void init(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -514,7 +520,9 @@ public final class JoinMacroScreen extends KeyHolder {
             return true;
          }
 
-         this.minecraft.gui.setScreen(this.init_Screen);
+         if (this.minecraft != null) {
+            this.minecraft.gui.setScreen(this.init_Screen);
+         }
          return true;
       } else {
          return true;

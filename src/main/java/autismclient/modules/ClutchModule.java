@@ -157,7 +157,6 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    private int flags;
    private int level;
    private String load_Str = "Idle";
-   private String read_Str = "Idle";
    private BlockHitResult init_BlockHitResult;
    private BlockPos update_BlockPos;
    private int frame = -1;
@@ -2382,7 +2381,6 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                   this.frame = this.init_j_DataUtil.load_I;
                   this.block = -1;
                   this.chunk = this.read_I_9();
-                  this.read_Str = "Placed";
                   this.run = this.read_I_9();
                   this.level++;
                   this.load_Map.put(placedCell, this.read_I_9());
@@ -2565,7 +2563,6 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean init_Z_Str_3(String reason) {
-      this.read_Str = reason;
       return false;
    }
 

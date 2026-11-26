@@ -489,7 +489,6 @@ autismclient/gui/d/TableIndex$DataUtil	init;init;load;read;init;init
 autismclient/gui/d/TableIndex$StreamUtil	init;init;load
 autismclient/gui/d/TextFormat$DataUtil	init;load;read;init
 autismclient/gui/d/TextFormat$StreamUtil	init;init;load;read;write;init
-autismclient/gui/d/UiHelper$DataUtil	init;load;read;write;update;sync;flush;close
 autismclient/gui/d/UtilCore$BufferHelper	init;init
 autismclient/gui/d/UtilCore$CachePool	init
 autismclient/gui/d/UtilCore$ConfigStore	init;init
@@ -794,7 +793,6 @@ autismclient/util/ConfigStore$DataUtil	init;init
 autismclient/util/DataUtil$BufferHelper	init;init;load;init
 autismclient/util/DataUtil$DataUtil	init;init;init
 autismclient/util/DataUtil$StreamUtil	init;init;load;init;init
-autismclient/util/H$DataUtil	init;init;init;load
 autismclient/util/HashUtil$DataUtil	init;load;init;init
 autismclient/util/I$BufferHelper	init;init
 autismclient/util/I$CachePool	init;load;read;init;write;update;sync
@@ -836,7 +834,6 @@ autismclient/util/aK$DataUtil	init;init;init;load;init;init
 autismclient/util/aQ$StreamUtil	init
 autismclient/util/aW$CachePool	init;load
 autismclient/util/aW$DataUtil	init;init
-autismclient/util/aX$DataUtil	init;init;init
 autismclient/util/aY$DataUtil	init;load;read;init
 autismclient/util/aa$StreamUtil	init;init;init;load;init;init
 autismclient/util/aj$BufferHelper	init;init
@@ -995,7 +992,6 @@ autismclient/util/g/ClassCache$TaskTimer	init;load;read;init
 autismclient/util/g/ClassCache$UiHelper	init;init;init;load;read;load
 autismclient/util/g/ConfigStore$DataUtil	init;init;init;load;read
 autismclient/util/g/ConfigStore$StreamUtil	init
-autismclient/util/g/DataUtil$DataUtil	init;load;read
 autismclient/util/g/FieldCache$BufferHelper	init;load;read
 autismclient/util/g/FileCache$StreamUtil	init;init;load;init;read;write;load;update;sync;load
 autismclient/util/g/IoWorker$BufferHelper	init;init

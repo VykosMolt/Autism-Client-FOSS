@@ -124,6 +124,9 @@ public final class ReverseRemapJar {
                     while (idx > 0) {
                         String outer = internalName.substring(0, idx);
                         String mappedOuter = revClassMap.get(outer);
+                        if (mappedOuter == null) {
+                            mappedOuter = revClassMap.get(normalizeLocalOwner(outer));
+                        }
                         if (mappedOuter != null) {
                             return mappedOuter + internalName.substring(idx);
                         }
@@ -204,7 +207,9 @@ public final class ReverseRemapJar {
                 String origName = revRemapper.map(entry.getKey());
                 if (integrityClasses.contains(origName)) continue;
                 String zipPath = origName + ".class";
-                if (!written.add(zipPath)) continue;
+                if (!written.add(zipPath)) {
+                    throw new IllegalStateException("Reverse-remap collision on " + zipPath + " from compiled class " + entry.getKey());
+                }
                 byte[] remapped = remapClass(entry.getValue(), revRemapper);
                 Map<String, String> enumMap = enumRuntimeNames.get(origName);
                 if (enumMap != null) {
@@ -261,7 +266,10 @@ public final class ReverseRemapJar {
                 if (innerName != null && mappedName != null) {
                     int dollar = mappedName.lastIndexOf('$');
                     if (dollar >= 0 && dollar + 1 < mappedName.length()) {
-                        mappedInner = mappedName.substring(dollar + 1);
+                        String tail = mappedName.substring(dollar + 1);
+                        int k = 0;
+                        while (k < tail.length() && Character.isDigit(tail.charAt(k))) k++;
+                        mappedInner = (k > 0 && k < tail.length()) ? tail.substring(k) : tail;
                     }
                 }
                 super.cv.visitInnerClass(mappedName, mappedOuter, mappedInner, access);

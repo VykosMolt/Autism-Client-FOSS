@@ -1,6 +1,5 @@
 package autismclient.modules;
 
-import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -288,31 +287,6 @@ final class l {
       void load() {
          this.init_Map.clear();
          this.init_D = 1.0;
-      }
-
-      JsonObject init_JsonObject_UUID_I(UUID id, int tick) {
-         JsonObject result = new JsonObject();
-         l.Inner_BufferHelper.Inner_DataUtil w = this.init_Map.get(id);
-         result.addProperty("known", w != null);
-         if (w == null) {
-            return result;
-         }
-
-         result.addProperty("sent_tick", w.load_I);
-         result.addProperty("last_attempt_tick", w.sync);
-         result.addProperty("pending_until", w.write);
-         result.addProperty("immune_until", w.update);
-         result.addProperty("confirmed", w.init_Z);
-         result.addProperty("retry_used", w.read_Z);
-         result.addProperty("first_hit_confirmed", init_Z_l_BufferHelper_Dat_I(w, tick));
-         result.addProperty("first_hit_tick", w.poll);
-         result.addProperty("first_hit_expires_tick", w.poll == -2147483648 ? -1L : w.poll + 60L);
-         result.addProperty("damage_estimate", w.init_D);
-         result.addProperty("damage_ticks", w.open);
-         result.addProperty("roll_tick", w.flush);
-         result.addProperty("wait_chance", w.close);
-         result.addProperty("extra_click", w.load_Z);
-         return result;
       }
 
       private static final class Inner_DataUtil {

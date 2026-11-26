@@ -1282,9 +1282,6 @@ autismclient/util/aj$StreamUtil	init	ONE_BY_ONE_BEDROCK
 autismclient/util/aj$StreamUtil	load	ONE_BY_ONE
 autismclient/util/aj$StreamUtil	read	ONE_BY_TWO
 autismclient/util/aj$StreamUtil	write	TWO_BY_TWO
-autismclient/util/ao$StreamUtil	init	NONE
-autismclient/util/ao$StreamUtil	load	RANDOM
-autismclient/util/ao$StreamUtil	read	RANDOM_PLUS
 autismclient/util/ap$StreamUtil	init	STANDARD
 autismclient/util/ap$StreamUtil	load	DANGER_RETURN
 autismclient/util/ap$StreamUtil	read	TELLY_FLICK
@@ -1516,9 +1513,6 @@ autismclient/util/g/ClassCache$TextFormat	init	SYNCING
 autismclient/util/g/ClassCache$TextFormat	load	INVENTORY
 autismclient/util/g/ClassCache$TextFormat	read	CONTAINER
 autismclient/util/g/ClassCache$TextFormat	write	SYNTHETIC
-autismclient/util/g/DataUtil$StreamUtil	init	Off
-autismclient/util/g/DataUtil$StreamUtil	load	Auto
-autismclient/util/g/DataUtil$StreamUtil	read	Custom
 autismclient/util/g/EventBus$DataUtil	init	READY
 autismclient/util/g/EventBus$DataUtil	load	WAITING
 autismclient/util/g/EventBus$DataUtil	read	BLOCKED

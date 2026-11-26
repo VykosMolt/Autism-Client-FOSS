@@ -34,7 +34,7 @@ Every rule below MUST be respected by all deobfuscation tooling and manual refac
 - Runtime binary compatibility with untouched integrity bytecode and binary addons is preserved via `tools/ReverseRemapJar.java` + synced `mappings/disambig.tsv`.
 
 ## 2. Public Addon API (Frozen)
-- `autismclient.api.*` (60 files) is already 100% readable and represents the external addon contract. Do not rename classes, methods, or fields in `autismclient.api.*`.
+- `autismclient.api.*` (54 files) is already 100% readable and represents the external addon contract. Do not rename classes, methods, or fields in `autismclient.api.*`.
 
 ## 3. AI Subsystem (Deferred)
 - `autismclient.ai`, `autismclient.ai.a`, `autismclient.ai.b`, and `src/main/resources/autism-ai/worker.jar` are intentionally untouched during non-AI deobfuscation.
@@ -51,12 +51,12 @@ There are **zero** `@SerializedName` annotations in the codebase. Every field on
 - `autismclient.ai.{AiSettings, AiToolSettings, AiMemoryStore.Memory, AiRegions.Region}` (AI deferred)
 
 ## 5. `Enum.name()` & `Enum.valueOf()` Serialization
-- `mappings/enum-names.tsv` stores the exact original runtime `Enum.name()` strings (`2,187` constants across `413` non-integrity enums).
+- `mappings/enum-names.tsv` stores the exact original runtime `Enum.name()` strings (`2,190` constants across `413` enums).
 - Renaming an enum constant in source is **only** permitted when renaming it to its exact string in `mappings/enum-names.tsv` AND syncing its `F` row in `mappings/disambig.tsv`.
-- `StreamGate.f_W_StreamGate` (`MULTI`) and inert `util/macro/t.java` remain intact for readable legacy Multi blocks (`tools/checks/LegacyMultiCheck.java`).
+- `StreamGate.MULTI` and inert `util/macro/MultiAction.java` remain intact for readable legacy Multi blocks (`tools/checks/LegacyMultiCheck.java`).
 
 ## 6. Java `record` Component Names
-- `mappings/record-names.tsv` (`1,129` entries) is validated strictly by `ReverseRemapJar.restoreRecordNames` (throws `IllegalStateException` on component count mismatch).
+- `mappings/record-names.tsv` (`1,124` entries) is validated strictly by `ReverseRemapJar.restoreRecordNames` (throws `IllegalStateException` on component count mismatch).
 - Never alter record component order/count during pure deobfuscation; sync `mappings/disambig.tsv` + `mappings/record-names.tsv` whenever renaming a record class or component.
 
 ## 7. Internal Reflection Lock (`MacroAction` Public Fields)

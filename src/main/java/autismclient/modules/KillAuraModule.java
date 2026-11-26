@@ -104,8 +104,6 @@ import net.minecraft.world.scores.ReadOnlyScoreInfo;
 import net.minecraft.world.scores.Scoreboard;
 
 public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
-   private String init_Str = "not_evaluated";
-   private int push_I = -1;
    static final int init_I = 10;
    static final double init_D = 0.5;
    static final double load_D = 2.0;
@@ -194,7 +192,6 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
    private ItemStack load_ItemStack = ItemStack.EMPTY;
    private int index = -1;
    private int count;
-   private String load_Str = "";
    private boolean write_Z;
    private String read_Str = "";
    private Set<String> init_Set = Set.of();
@@ -460,9 +457,6 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
    @Override
    public void preMovementTick() {
       if (MC != null && MC.player != null && MC.level != null) {
-         this.init_Str = "paused";
-         this.push_I = -1;
-         this.load_Str = "not_evaluated";
          this.write_Z = true;
 
          try {
@@ -479,7 +473,6 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
       if (MC.gui.screen() == null && MC.gui.overlay() == null && (AutismLiteVariant.enabled() || !autismclient.ai.aP.load_Z())) {
          if (!cn.init_Z() && !ScaffoldModule.update_Z_5()) {
             if (!AutismLiteVariant.enabled() && autismclient.util.ListPool.write()) {
-               this.load_Str = "manualInteraction";
                this.load_V_Z_2(false);
                this.init_LivingEntity = null;
                this.init_Vec3 = null;
@@ -520,7 +513,6 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
                      this.init_aa_CachePool.load_V();
                      this.add_V_2();
                      this.init_V_LivingEntity_3(this.init_LivingEntity);
-                     this.init_Str = "displacement";
                   } else {
                      this.init_aa_CachePool.init_V();
                      this.add_V_2();
@@ -574,9 +566,6 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
                      }
                   }
                } else {
-                  this.load_Str = this.poll_Z_4()
-                     ? "physicalUse"
-                     : (usingItem ? "usingItem" : (throwable ? "throwable" : (wrongItem ? "wrongItem" : "blockIntent")));
                   this.load_V_Z_2(this.poll_Z_4());
                   this.init_LivingEntity = null;
                   this.init_aa_ConfigStore.read_V();
@@ -1128,7 +1117,6 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
          if (threat == null || hand == null) {
             this.load_V_Z_2(false);
          } else if (!AutismLiteVariant.enabled() && ClutchModule.read_Z_20()) {
-            this.load_Str = "clutch";
             this.load_V_Z_2(false);
          } else {
             if (this.init_InteractionHand != null && hand != this.init_InteractionHand) {
@@ -1137,7 +1125,6 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
 
             int raise = init_I_ItemStack_2(MC.player.getItemInHand(hand));
             int ownHit = this.read_I_6();
-            this.push_I = ownHit;
             l.Inner_CachePool decision = this.pop_Z_2()
                ? l.init(true, this.init_InteractionHand != null, raise, ownHit)
                : l.init_l_CachePool_Z(true, this.init_InteractionHand != null, MC.player.hurtTime, raise, ownHit);
@@ -1146,31 +1133,24 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
             }
 
             if (decision == l.Inner_CachePool.DOWN) {
-               this.load_Str = this.init_InteractionHand != null ? "releaseForHit" : "attackSoon";
                this.load_V_Z_2(false);
             } else if (this.init_InteractionHand != null
                && MC.player.isUsingItem()
                && MC.player.getUseItem().has(DataComponents.CONSUMABLE)
                && MC.player.getUseItemRemainingTicks() <= 2) {
-               this.load_Str = "renew";
                this.load_V_Z_2(false);
             } else if (autismclient.util.ah.read_Z(this.id())
                && (hand != InteractionHand.OFF_HAND || !autismclient.util.ah.load_Z(this.id()))
                && autismclient.util.s.init(this.id(), hand)) {
-               this.load_Str = "held";
                this.init_InteractionHand = hand;
                this.init_ItemStack = MC.player.getItemInHand(hand);
                this.node = MC.player.getInventory().getSelectedSlot();
                this.task = threat.getId();
             } else {
-               this.load_Str = "holdRefused";
                this.load_V_Z_2(false);
             }
          }
       } else {
-         this.load_Str = !this.clear_Z_2()
-            ? "canRun"
-            : (this.get_I == 0 ? "attack" : (this.add_I == 0 ? "whiff" : (autismclient.util.s.close_Z() ? "keyAttack" : "other")));
          this.load_V_Z_2(this.poll_Z_4());
       }
    }
@@ -1219,11 +1199,8 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
 
    private void run_V_2() {
       this.load_InteractionHand = this.bool("block-hit") && this.clear_Z_2() ? this.init_InteractionHand_2() : null;
-      this.load_Str = this.load_InteractionHand == null ? "noHand" : "";
       this.load_LivingEntity = this.load_InteractionHand == null ? null : this.init_LivingEntity_ItemStack(MC.player.getItemInHand(this.load_InteractionHand));
-      if (this.load_LivingEntity != null) {
-         this.load_Str = "threat";
-      } else {
+      if (this.load_LivingEntity == null) {
          this.load_V_Z_2(this.poll_Z_4());
       }
 
@@ -1278,7 +1255,6 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
       AABB body = MC.player.getBoundingBox();
       LivingEntity best = null;
       double bestDistance = 1.7976931348623157E308;
-      double nearestRejected = 1.7976931348623157E308;
 
       for (Entity entity : MC.level.entitiesForRendering()) {
          if (entity instanceof LivingEntity enemy && this.load_Z_LivingEntity(enemy)) {
@@ -1286,25 +1262,14 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
             Vec3 view = load_Vec3_LivingEntity(enemy);
             double[] reach = init_DArr_LivingEntity(enemy);
             double distance = body.distanceToSqr(eye);
-            String why = "threat";
-            if (!l.init_Z_Vec3(eye, body, reach[0], reach[1] + 0.5, reach[2])) {
-               why = "far";
-            } else if (!l.init(eye, view, body)) {
-               why = "facing";
-            } else if (!this.init_Z_LivingEntity(enemy, eye, body)) {
-               why = "sight";
-            } else if (!this.init_l_BufferHelper.init_Z(enemy.getUUID(), enemy.hurtTime, ck.init_ck().state_I(), this.bool("block-hit-after-hit"))) {
-               why = "beforeHit";
-            } else if (!everySide && !init_Z_BlocksAttacks(blocks, MC.player.getEyePosition(), eye, yaw)) {
-               why = "arc";
-            }
-
-            if ("threat".equals(why) && distance < bestDistance) {
+            if (l.init_Z_Vec3(eye, body, reach[0], reach[1] + 0.5, reach[2])
+               && l.init(eye, view, body)
+               && this.init_Z_LivingEntity(enemy, eye, body)
+               && this.init_l_BufferHelper.init_Z(enemy.getUUID(), enemy.hurtTime, ck.init_ck().state_I(), this.bool("block-hit-after-hit"))
+               && (everySide || init_Z_BlocksAttacks(blocks, MC.player.getEyePosition(), eye, yaw))
+               && distance < bestDistance) {
                best = enemy;
                bestDistance = distance;
-            } else if (!"threat".equals(why) && distance < nearestRejected) {
-               nearestRejected = distance;
-               this.load_Str = why;
             }
          }
       }
@@ -2713,10 +2678,8 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
          if (this.push_Z_3()) {
             this.load_V_Z_2(false);
             this.init_aa_CachePool.write_V();
-            this.init_Str = "guard_release";
          } else if (ck.init_ck().state_I() == this.pool) {
             this.init_aa_CachePool.write_V();
-            this.init_Str = "guard_release";
          } else if (!MC.player.isBlocking() && !MC.player.isUsingItem()) {
             this.init_aa_CachePool.init_V_BooleanSupplier(attack);
          }
@@ -3448,7 +3411,6 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
       }
 
       void init_V_Str(String how) {
-         KillAuraModule.this.init_Str = how;
          if (this.init_I > 0) {
             this.write(how);
             this.init_I--;
@@ -3464,7 +3426,6 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
       }
 
       void load(String why) {
-         KillAuraModule.this.init_Str = "lost:" + why;
          if (this.init_I > 0) {
             this.init_Str = why;
          }
@@ -3482,7 +3443,6 @@ public final class KillAuraModule extends Module implements cn.Inner_DataUtil {
 
       private void write(String key) {
          this.init_Map.merge(key, 1, Integer::sum);
-         KillAuraModule.this.init_Str = key;
       }
 
       String init_Str_Z(boolean reset) {
