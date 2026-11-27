@@ -3056,7 +3056,7 @@ public final class AiPathfinder {
 
             for (int var18 = 0; var18 < EIGHT_DIRS.length; var18++) {
                BlockPos var19 = var3.offset(EIGHT_DIRS[var18][0], 0, EIGHT_DIRS[var18][1]);
-               if (!isFlatRunupCell(var0, var19, var5) && isJumpClearCell(var0, var19) && isJumpClearCell(var0, var19.above())) {
+               if (!isFlatWalkableCell(var0, var19, var5) && isJumpClearCell(var0, var19) && isJumpClearCell(var0, var19.above())) {
                   var72 |= 1 << var18;
                }
             }
@@ -3141,8 +3141,8 @@ public final class AiPathfinder {
 
                                  BlockPos var51 = var75.offset(-var29.stepX(), 0, -var29.stepZ());
                                  if (Math.max(Math.abs(var51.getX() - var3.getX()), Math.abs(var51.getZ() - var3.getZ())) >= 2
-                                    && isFlatRunupCell(var0, var51, var43)
-                                    && (!var0.requireJumpRunup || isFlatRunupCell(var0, var51.offset(-var29.stepX(), 0, -var29.stepZ()), var43))) {
+                                    && isFlatWalkableCell(var0, var51, var43)
+                                    && (!var0.allowDeepPlatformLanding || isFlatWalkableCell(var0, var51.offset(-var29.stepX(), 0, -var29.stepZ()), var43))) {
                                     break;
                                  }
 
@@ -3416,11 +3416,11 @@ public final class AiPathfinder {
             boolean var15 = var25.margin() < -0.04
                || var2.dx() == 0
                || var2.dz() == 0
-               || isFlatRunupCell(var0, var4.offset(var2.dx(), 0, 0), var5)
+               || isFlatWalkableCell(var0, var4.offset(var2.dx(), 0, 0), var5)
                   && Math.abs(surfaceY(var4.getY(), var0.probePos(var4.offset(var2.dx(), -1, 0))) - var5) < 1.0E-6
-               || isFlatRunupCell(var0, var4.offset(0, 0, var2.dz()), var5)
+               || isFlatWalkableCell(var0, var4.offset(0, 0, var2.dz()), var5)
                   && Math.abs(surfaceY(var4.getY(), var0.probePos(var4.offset(0, -1, var2.dz()))) - var5) < 1.0E-6;
-            if (var15 && !var1.contains(var28.asLong()) && isFlatRunupCell(var0, var28, var5) && Math.abs(surfaceY(var28.getY(), var31) - var5) < 1.0E-6) {
+            if (var15 && !var1.contains(var28.asLong()) && isFlatWalkableCell(var0, var28, var5) && Math.abs(surfaceY(var28.getY(), var31) - var5) < 1.0E-6) {
                AiJumpSolver.JumpPlan var34 = var10
                   ? AiWallJump.putAt_IoUtil_TextState_TokenCore_TaskStat_3(var0.plannerWorld(), var3, var5, var28, var2.approach())
                   : var0.solveJumpCached(var3, var2.sourceY(), var28, var5, var25.approach(), var2.sprint());
@@ -3536,7 +3536,7 @@ public final class AiPathfinder {
 
                int var9 = Math.abs(var7) > Math.abs(var8) ? Integer.signum(var7) : 0;
                int var10 = var9 == 0 ? Integer.signum(var8) : 0;
-               if (isFlatRunupCell(var0, var5.offset(var9, 0, var10), var3.landY())) {
+               if (isFlatWalkableCell(var0, var5.offset(var9, 0, var10), var3.landY())) {
                   return null;
                }
 
@@ -3706,7 +3706,7 @@ public final class AiPathfinder {
          throw new IllegalArgumentException("not a neighbour: " + var0 + "," + var1);
       }
 
-      static boolean isFlatRunupCell(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, double var2) {
+      static boolean isFlatWalkableCell(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, double var2) {
          AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var0.apply(var1);
          AiPathfinder.CellInfo var5 = (AiPathfinder.CellInfo)var0.apply(var1.below());
          return isStandable(var4, (AiPathfinder.CellInfo)var0.apply(var1.above()), var5) && !var4.water()
@@ -3722,7 +3722,7 @@ public final class AiPathfinder {
             for (int var8 = 1; var8 < var7; var8++) {
                int var9 = var1.getX() + (int)Math.round((double)var5 * var8 / var7);
                int var10 = var1.getZ() + (int)Math.round((double)var6 * var8 / var7);
-               if (!isFlatRunupCell(var0, new BlockPos(var9, var1.getY(), var10), var3)) {
+               if (!isFlatWalkableCell(var0, new BlockPos(var9, var1.getY(), var10), var3)) {
                   return true;
                }
             }
@@ -3730,7 +3730,7 @@ public final class AiPathfinder {
             return false;
          } else {
             return var5 != 0 && var6 != 0
-               ? !isFlatRunupCell(var0, var1.offset(var5, 0, 0), var3) || !isFlatRunupCell(var0, var1.offset(0, 0, var6), var3)
+               ? !isFlatWalkableCell(var0, var1.offset(var5, 0, 0), var3) || !isFlatWalkableCell(var0, var1.offset(0, 0, var6), var3)
                : false;
          }
       }
@@ -4318,7 +4318,7 @@ public final class AiPathfinder {
          private final int maxCacheCapacity;
          int queryFlags;
          AiPathfinder.UiHelper incomingMove;
-         boolean requireJumpRunup;
+         boolean allowDeepPlatformLanding;
          NavigationOpenSet.Inner_DataUtil activeNode;
          static final int EDIT_TRAIL_DEPTH = 6;
          long blockQueries;
@@ -4687,7 +4687,7 @@ public final class AiPathfinder {
                }
 
                if (var7 > 0.0 && var22) {
-                  AiJumpSolver.JumpPlan var36 = this.solveManeuverCached(var17, var1, var2, var4, var5, var7, var10, var9, var18);
+                  AiJumpSolver.JumpPlan var36 = this.solveDirectJumpCached(var17, var1, var2, var4, var5, var7, var10, var9, var18);
                   AiJumpSolver.JumpPlan var37 = var36;
                   if (var37 == null || var37.margin() < -0.04) {
                      AiJumpSolver.JumpPlan var39 = this.solveJumpCached(var1, var2, var4, var5, 0.0, var9);
@@ -4810,7 +4810,7 @@ public final class AiPathfinder {
             }
          }
 
-         private AiJumpSolver.JumpPlan solveManeuverCached(
+         private AiJumpSolver.JumpPlan solveDirectJumpCached(
             AiPlannerWorld var1, BlockPos var2, double var3, BlockPos var5, double var6, double var8, long var10, boolean var12, long var13
          ) {
             long var15 = var1.putAt_J_BlockPos(var2, var5, false) * 31L
@@ -5297,7 +5297,7 @@ public final class AiPathfinder {
          BlockPos var4 = var1.deeper();
          if (this.corridorTarget == null && this.searchBounds == null || this.isWithinSearchBox(var3) || this.isWithinSearchBox(var4)) {
             if (this.blacklistedCells.contains(var4.asLong())
-               || !AiPathfinder.MoveGenerator.isFlatRunupCell(this.cachedGrid, var4, var1.targetY())
+               || !AiPathfinder.MoveGenerator.isFlatWalkableCell(this.cachedGrid, var4, var1.targetY())
                || Math.abs(
                      AiPathfinder.MoveGenerator.surfaceY(var4.getY(), this.cachedGrid.probePos(var4.below()))
                         - var1.targetY()
@@ -8159,7 +8159,7 @@ public final class AiPathfinder {
                   var60.searchBounds = AiPathfinder.PathBounds.around(var34);
                }
 
-               var60.cachedGrid.requireJumpRunup = var35 == 2;
+               var60.cachedGrid.allowDeepPlatformLanding = var35 == 2;
                var60.openSet.init(var35 == 1 ? 1.55 : 2.05);
                var60.cachedGrid.limitJumpDropDepth = false;
                var60.cachedGrid.quickJumpMode = false;

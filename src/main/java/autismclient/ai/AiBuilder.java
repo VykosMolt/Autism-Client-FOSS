@@ -1123,7 +1123,7 @@ final class AiBuilder {
       }
    }
 
-   static boolean hasChestPartnerLoaded(AiBuilder.CellSpec cell, BlockPos pos, BlockGetter world) {
+   static boolean hasUnpairedChestPartner(AiBuilder.CellSpec cell, BlockPos pos, BlockGetter world) {
       Direction side = chestPartnerDirection(cell);
       if (side == null) {
          return false;
@@ -1156,7 +1156,7 @@ final class AiBuilder {
       }
 
       AiBuilder.OrientationKind strategy = facingOrientationKind(cell, block);
-      boolean pairing = block instanceof ChestBlock && hasChestPartnerLoaded(cell, pos, world);
+      boolean pairing = block instanceof ChestBlock && hasUnpairedChestPartner(cell, pos, world);
       if (pairing) {
          clickFace = chestPartnerDirection(cell).getOpposite();
          strategy = AiBuilder.OrientationKind.UNSUPPORTED;
@@ -1740,7 +1740,7 @@ final class AiBuilder {
          ordered = new ArrayList<>(topologicalSupportOrder(blueprint, ordered, neighbor -> AiTerrain.isLoaded(mc.level, neighbor) && hasSolidSupportShape(mc.level, neighbor)));
       }
 
-      ordered = new ArrayList<>(orderByFacingSupport(ordered));
+      ordered = new ArrayList<>(deferFacingBlockers(ordered));
       HashMap<Long, AiBuilder.CellSpec> crops = new HashMap<>();
 
       for (AiBuilder.CellSpec cell : ordered) {
@@ -1768,7 +1768,7 @@ final class AiBuilder {
       return orderFluidsAfterContainment(seeded);
    }
 
-   static List<AiBuilder.CellSpec> orderByFacingSupport(List<AiBuilder.CellSpec> ordered) {
+   static List<AiBuilder.CellSpec> deferFacingBlockers(List<AiBuilder.CellSpec> ordered) {
       int n = ordered.size();
       if (n < 2) {
          return ordered;
@@ -1956,7 +1956,7 @@ final class AiBuilder {
          }
 
          for (Direction direction : Direction.values()) {
-            if ((required[i] == null || required[i] == direction) && requiresSupportOnSide(cell, block, direction)) {
+            if ((required[i] == null || required[i] == direction) && allowsSupportOnSide(cell, block, direction)) {
                BlockPos neighbor = positions[i].relative(direction);
                if (observedSupport.test(neighbor)) {
                   queued[i] = true;
@@ -1978,7 +1978,7 @@ final class AiBuilder {
                if (next != null
                   && !queued[next]
                   && (required[next] == null || required[next] == direction.getOpposite())
-                  && requiresSupportOnSide(ordered.get(next), resolveBlock(ordered.get(next)), direction.getOpposite())) {
+                  && allowsSupportOnSide(ordered.get(next), resolveBlock(ordered.get(next)), direction.getOpposite())) {
                   queued[next] = true;
                   ready.add(next);
                }
@@ -1995,7 +1995,7 @@ final class AiBuilder {
       return frontier;
    }
 
-   static boolean requiresSupportOnSide(AiBuilder.CellSpec cell, Block block, Direction supportDirection) {
+   static boolean allowsSupportOnSide(AiBuilder.CellSpec cell, Block block, Direction supportDirection) {
       if (block instanceof ShulkerBoxBlock && cell.properties().containsKey("facing")) {
          Direction facing = Direction.byName(cell.properties().get("facing"));
          return facing != null && supportDirection == facing.getOpposite();
@@ -3250,7 +3250,7 @@ final class AiBuilder {
                   BlockState requested = AiBuilder.toBlockState(cell);
                   if (!Block.isShapeFullBlock(requested.getCollisionShape(mc.level, at)) || block instanceof FallingBlock) {
                      for (Direction direction : Direction.values()) {
-                        if (AiBuilder.requiresSupportOnSide(cell, block, direction)) {
+                        if (AiBuilder.allowsSupportOnSide(cell, block, direction)) {
                            BlockPos support = at.relative(direction);
                            if (!mc.level.getBlockState(support).getCollisionShape(mc.level, support).isEmpty()) {
                               this.open_Set.add(support.asLong());
@@ -3885,7 +3885,7 @@ final class AiBuilder {
                                  && (
                                     !schematic
                                        || !AiBuilder.matchesIgnoringUnpairedChest(cell, live)
-                                       || AiBuilder.isUnpairedDoubleChest(cell, live) && AiBuilder.hasChestPartnerLoaded(cell, pos, mc.level)
+                                       || AiBuilder.isUnpairedDoubleChest(cell, live) && AiBuilder.hasUnpairedChestPartner(cell, pos, mc.level)
                                  )) {
                               if (schematic
                                  && this.close_Z
@@ -4118,7 +4118,7 @@ final class AiBuilder {
                                        boolean supportReady = AiBuilder.isDoubleSlabCell(cell) && live.getBlock() == targetBlock;
 
                                        for (Direction direction : Direction.values()) {
-                                          if (AiBuilder.requiresSupportOnSide(cell, targetBlock, direction)
+                                          if (AiBuilder.allowsSupportOnSide(cell, targetBlock, direction)
                                              && AiBuilder.hasSolidSupportShape(mc.level, pos.relative(direction))) {
                                              supportReady = true;
                                           }
@@ -4128,7 +4128,7 @@ final class AiBuilder {
                                           boolean planned = false;
 
                                           for (Direction direction : Direction.values()) {
-                                             planned |= AiBuilder.requiresSupportOnSide(cell, targetBlock, direction)
+                                             planned |= AiBuilder.allowsSupportOnSide(cell, targetBlock, direction)
                                                 && this.close_Set.contains(pos.relative(direction).asLong());
                                           }
 
@@ -4498,7 +4498,7 @@ final class AiBuilder {
                                                             && (
                                                                strategy != AiBuilder.OrientationKind.CHEST_PAIR
                                                                   || !AiBuilder.isUnpairedDoubleChest(cell, predicted)
-                                                                  || AiBuilder.hasChestPartnerLoaded(cell, pos, mc.level)
+                                                                  || AiBuilder.hasUnpairedChestPartner(cell, pos, mc.level)
                                                             )) {
                                                             Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)predicted.getBlock()
                                                                .getStateDefinition()
@@ -6066,7 +6066,7 @@ final class AiBuilder {
                HashSet<Long> supports = new HashSet<>();
 
                for (Direction direction : Direction.values()) {
-                  if (AiBuilder.requiresSupportOnSide(cell, targetBlock, direction)) {
+                  if (AiBuilder.allowsSupportOnSide(cell, targetBlock, direction)) {
                      supports.add(pos.relative(direction).asLong());
                   }
                }
@@ -6431,7 +6431,7 @@ final class AiBuilder {
                }
 
                for (Direction direction : directions) {
-                  if (AiBuilder.requiresSupportOnSide(cell, block, direction)) {
+                  if (AiBuilder.allowsSupportOnSide(cell, block, direction)) {
                      BlockPos support = pos.relative(direction);
                      BlockState state = mc.level.getBlockState(support);
                      if (!protectedNow.contains(support.asLong())
@@ -6691,7 +6691,7 @@ final class AiBuilder {
                   wantedFace = Direction.byName(facingProp);
                }
 
-               boolean pairing = target instanceof ChestBlock && AiBuilder.hasChestPartnerLoaded(cell, pos, mc.level);
+               boolean pairing = target instanceof ChestBlock && AiBuilder.hasUnpairedChestPartner(cell, pos, mc.level);
                if (pairing) {
                   wantedFace = AiBuilder.chestPartnerDirection(cell).getOpposite();
                }
@@ -7396,7 +7396,7 @@ final class AiBuilder {
                            boolean supported = false;
 
                            for (Direction direction : Direction.values()) {
-                              if (AiBuilder.requiresSupportOnSide(next, nextBlock, direction) && AiBuilder.hasSolidSupportShape(mc.level, at.relative(direction))) {
+                              if (AiBuilder.allowsSupportOnSide(next, nextBlock, direction) && AiBuilder.hasSolidSupportShape(mc.level, at.relative(direction))) {
                                  supported = true;
                               }
                            }

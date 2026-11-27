@@ -73,7 +73,7 @@ public final class AiJumpSolver {
                         break;
                      }
 
-                     AiJumpSolver.UiHelper var26 = solveTakeoffAllowEarlyCoast(var0, var23, var7.yaw(), true, var6.cell(), var6.surface());
+                     AiJumpSolver.UiHelper var26 = solveTakeoffNoStrafe(var0, var23, var7.yaw(), true, var6.cell(), var6.surface());
                      if (var26.margin() < 0.07 || var26.runTicks() > 5) {
                         break;
                      }
@@ -1343,7 +1343,7 @@ public final class AiJumpSolver {
       return true;
    }
 
-   static AiJumpSolver.UiHelper solveTakeoffAllowEarlyCoast(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5) {
+   static AiJumpSolver.UiHelper solveTakeoffNoStrafe(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5) {
       return solveTakeoff(var0, var1, var2, var3, var4, var5, 40, true);
    }
 
@@ -1945,7 +1945,7 @@ public final class AiJumpSolver {
          return null;
       }
 
-      AiJumpSolver.UiHelper var10 = solveTakeoffAllowEarlyCoast(var0, var1, var6, true, var2, var3);
+      AiJumpSolver.UiHelper var10 = solveTakeoffNoStrafe(var0, var1, var6, true, var2, var3);
       int var11 = var8.ticks() + var9.ticks();
       if (var10.margin() >= -0.12 && var11 >= var10.runTicks() + var10.flightTicks()) {
          return null;
