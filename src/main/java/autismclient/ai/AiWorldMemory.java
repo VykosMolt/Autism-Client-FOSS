@@ -63,7 +63,7 @@ final class AiWorldMemory {
    static void init(Minecraft mc) {
       if (mc.level != null && mc.player != null) {
          load(mc);
-         long now = AiThreats.init_J();
+         long now = AiThreats.currentClientTick();
          if (now >= write_J) {
             write_J = now + 200L;
             load();
@@ -74,7 +74,7 @@ final class AiWorldMemory {
             int cx = mc.player.getBlockX() >> 4;
             int cz = mc.player.getBlockZ() >> 4;
 
-            for (int[] offset : AiWorldScan.init(6)) {
+            for (int[] offset : AiWorldScan.sortedChunkOffsets(6)) {
                int x = cx + offset[0];
                int z = cz + offset[1];
                LevelChunk live = mc.level.getChunkSource().getChunk(x, z, ChunkStatus.FULL, false);
@@ -173,8 +173,8 @@ final class AiWorldMemory {
    }
 
    private static void load(Minecraft mc) {
-      String current = AiWorldIdentity.init(mc);
-      String dim = AiWorldIdentity.load(mc);
+      String current = AiWorldIdentity.currentWorldKey(mc);
+      String dim = AiWorldIdentity.currentDimensionId(mc);
       if (init_Obj != mc.level || load_Obj != mc.getConnection() || !init_Str.equals(current) || !load_Str.equals(dim)) {
          init_V();
          init_Obj = mc.level;
@@ -183,14 +183,14 @@ final class AiWorldMemory {
          load_Str = dim;
       }
 
-      AiService service = AiService.load_cc();
+      AiService service = AiService.getExistingInstance();
       if (!init_Z && service != null && init_Obj != null) {
          String requestedWorld = init_Str;
          String requestedDimension = load_Str;
          Object requestedLevel = init_Obj;
          Object requestedConnection = load_Obj;
          long requestedGeneration = read_J;
-         init_Z = service.init_Z_Str(
+         init_Z = service.loadDiscoveryMemory(
             init_Str,
             load_Str,
             stored -> {
@@ -200,8 +200,8 @@ final class AiWorldMemory {
                   && load_Obj == requestedConnection
                   && client.level == requestedLevel
                   && client.getConnection() == requestedConnection
-                  && AiWorldIdentity.init(client).equals(requestedWorld)
-                  && AiWorldIdentity.load(client).equals(requestedDimension)) {
+                  && AiWorldIdentity.currentWorldKey(client).equals(requestedWorld)
+                  && AiWorldIdentity.currentDimensionId(client).equals(requestedDimension)) {
                   for (JsonElement entry : stored) {
                      try {
                         JsonObject saved = entry.getAsJsonObject();
@@ -216,7 +216,7 @@ final class AiWorldMemory {
                                  if (observed >= 0L && observed <= System.currentTimeMillis()) {
                                     AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4));
                                     if ((indexed == null || !indexed.init_Map.containsKey(pos.asLong()))
-                                       && (!AiTerrain.isLoaded(client.level, pos) || block.equals(AiWorldScan.init(client.level.getBlockState(pos))))) {
+                                       && (!AiTerrain.isLoaded(client.level, pos) || block.equals(AiWorldScan.blockId(client.level.getBlockState(pos))))) {
                                        load_Map.put(pos.asLong(), new AiWorldMemory.Inner_StreamUtil(pos, category, block, -1L, -1L, observed));
                                     }
                                  }
@@ -258,7 +258,7 @@ final class AiWorldMemory {
    }
 
    private static void load() {
-      AiService service = AiService.load_cc();
+      AiService service = AiService.getExistingInstance();
       if (service != null && init_Obj != null && load_Z) {
          Map<Long, AiWorldMemory.Inner_StreamUtil> sampled = new LinkedHashMap<>();
          int examined = 0;
@@ -296,7 +296,7 @@ final class AiWorldMemory {
             }
          }
 
-         service.init_V_Str(init_Str, load_Str, saved);
+         service.saveDiscoveryMemory(init_Str, load_Str, saved);
       }
    }
 
@@ -359,11 +359,11 @@ final class AiWorldMemory {
       Minecraft mc = Minecraft.getInstance();
       return AiJson.objectOf(
          "world",
-         AiWorldIdentity.init(mc),
+         AiWorldIdentity.currentWorldKey(mc),
          "dimension",
-         AiWorldIdentity.load(mc),
+         AiWorldIdentity.currentDimensionId(mc),
          "tick",
-         AiThreats.init_J(),
+         AiThreats.currentClientTick(),
          "clientLoadedBlocks",
          true,
          "trackedEntities",
@@ -385,7 +385,7 @@ final class AiWorldMemory {
          "seedPredictionPermittedForSpeedrun",
          false,
          "worldScope",
-         AiWorldIdentity.init(mc).contains("/session/") ? "session" : "saved-world",
+         AiWorldIdentity.currentWorldKey(mc).contains("/session/") ? "session" : "saved-world",
          "indexCellBudgetPerTick",
          4096,
          "indexTimeBudgetNanos",
@@ -403,7 +403,7 @@ final class AiWorldMemory {
          int cz = mc.player.getBlockZ() >> 4;
 
          label41:
-         for (int[] offset : AiWorldScan.init(radiusChunks)) {
+         for (int[] offset : AiWorldScan.sortedChunkOffsets(radiusChunks)) {
             AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(cx + offset[0], cz + offset[1]));
             if (chunk != null) {
                int found = 0;
@@ -464,7 +464,7 @@ final class AiWorldMemory {
             for (AiWorldMemory.Inner_StreamUtil fact : entry.getValue().init_Map.values()) {
                if ((requested.isEmpty() || requested.equals(fact.category))
                   && !(fact.pos.distSqr(origin) > (double)radius * radius)
-                  && (!loaded || fact.block.equals(AiWorldScan.init(mc.level.getBlockState(fact.pos))))) {
+                  && (!loaded || fact.block.equals(AiWorldScan.blockId(mc.level.getBlockState(fact.pos))))) {
                   found.add(fact);
                }
             }
@@ -474,7 +474,7 @@ final class AiWorldMemory {
             if ((requested.isEmpty() || requested.equals(fact.category)) && !(fact.pos.distSqr(origin) > (double)radius * radius)) {
                AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(fact.pos.getX() >> 4, fact.pos.getZ() >> 4));
                if ((indexed == null || !indexed.init_Map.containsKey(fact.pos.asLong()))
-                  && (!AiTerrain.isLoaded(mc.level, fact.pos) || fact.block.equals(AiWorldScan.init(mc.level.getBlockState(fact.pos))))) {
+                  && (!AiTerrain.isLoaded(mc.level, fact.pos) || fact.block.equals(AiWorldScan.blockId(mc.level.getBlockState(fact.pos))))) {
                   found.add(fact);
                }
             }
@@ -507,7 +507,7 @@ final class AiWorldMemory {
                      "position",
                      entity.blockPosition().toShortString(),
                      "observedTick",
-                     AiThreats.init_J(),
+                     AiThreats.currentClientTick(),
                      "source",
                      "tracked-client-entity",
                      "knowledge",
@@ -592,7 +592,7 @@ final class AiWorldMemory {
          "availability",
          live ? "client-loaded" : "unavailable",
          "observedTick",
-         live ? AiThreats.init_J() : fact.tick,
+         live ? AiThreats.currentClientTick() : fact.tick,
          "observedAtMs",
          live ? System.currentTimeMillis() : fact.observedAtMillis,
          "source",
@@ -643,7 +643,7 @@ final class AiWorldMemory {
             );
          }
 
-         if (List.of("diamond", "iron", "gold").contains(fact.category) && AiWorldScan.init(state).contains("ore")) {
+         if (List.of("diamond", "iron", "gold").contains(fact.category) && AiWorldScan.blockId(state).contains("ore")) {
             out.add("observedVein", load(mc, fact));
          }
 
@@ -657,7 +657,7 @@ final class AiWorldMemory {
          }
 
          if (mc.level.getBlockEntity(fact.pos) instanceof SpawnerBlockEntity spawner) {
-            out.addProperty("spawnerMob", AiWorldScan.init(spawner));
+            out.addProperty("spawnerMob", AiWorldScan.spawnerEntityId(spawner));
          }
 
          for (Direction direction : Plane.HORIZONTAL) {
@@ -699,7 +699,7 @@ final class AiWorldMemory {
                partial = true;
             } else {
                BlockState state = mc.level.getBlockState(pos);
-               if (anchor.category.equals(init_Str(state)) && AiWorldScan.init(state).contains("ore")) {
+               if (anchor.category.equals(init_Str(state)) && AiWorldScan.blockId(state).contains("ore")) {
                   cells.add(pos.toShortString());
 
                   for (Direction direction : Direction.values()) {
@@ -725,7 +725,7 @@ final class AiWorldMemory {
    }
 
    static void load(BlockPos at) {
-      init_Map.put(autismclient.ai.engine.AiGridRevisions.init_J(at.getX() >> 4, at.getZ() >> 4), AiThreats.init_J() + 600L);
+      init_Map.put(autismclient.ai.engine.AiGridRevisions.init_J(at.getX() >> 4, at.getZ() >> 4), AiThreats.currentClientTick() + 600L);
       if (init_Map.size() > 256) {
          init_Map.remove(init_Map.keySet().iterator().next());
       }
@@ -754,7 +754,7 @@ final class AiWorldMemory {
                   int x = cx + direction.getStepX();
                   int z = cz + direction.getStepZ();
                   long key = autismclient.ai.engine.AiGridRevisions.init_J(x, z);
-                  if (init_Map.getOrDefault(key, 0L) <= AiThreats.init_J() && !init_LinkedHashMap.containsKey(key)) {
+                  if (init_Map.getOrDefault(key, 0L) <= AiThreats.currentClientTick() && !init_LinkedHashMap.containsKey(key)) {
                      borders.add(new BlockPos((cx << 4) + 8 + direction.getStepX() * 7, mc.player.getBlockY(), (cz << 4) + 8 + direction.getStepZ() * 7));
                   }
                }
@@ -813,7 +813,7 @@ final class AiWorldMemory {
                .put(
                   pos.asLong(),
                   new AiWorldMemory.Inner_StreamUtil(
-                     pos.immutable(), category, AiWorldScan.init(state), AiThreats.init_J(), autismclient.ai.engine.AiGridRevisions.init_J(), System.currentTimeMillis()
+                     pos.immutable(), category, AiWorldScan.blockId(state), AiThreats.currentClientTick(), autismclient.ai.engine.AiGridRevisions.init_J(), System.currentTimeMillis()
                   )
                );
             AiWorldMemory.load_J++;

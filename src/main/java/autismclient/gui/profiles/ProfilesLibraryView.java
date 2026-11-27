@@ -825,7 +825,7 @@ public final class ProfilesLibraryView {
 
    private autismclient.gui.ui.layout.LayoutContext init_SyncManager_GuiGraphicsExtract(GuiGraphicsExtractor g, int mx, int my) {
       return new autismclient.gui.ui.layout.LayoutContext(
-         g, this.init_Font, autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(1.0F), this.init_CharEncoder, mx, my, this.init_F
+         g, this.init_Font, autismclient.gui.ui.layout.LayoutViewport.create(1.0F), this.init_CharEncoder, mx, my, this.init_F
       );
    }
 

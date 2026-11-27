@@ -588,7 +588,7 @@ final class AiFurnaceWork implements AiOperation {
             );
          }
       };
-      return AiGoto.init(
+      return AiGoto.travelToCompat(
          to,
          0.6,
          false,

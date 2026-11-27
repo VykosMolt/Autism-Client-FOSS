@@ -30,7 +30,7 @@ public final class PrintItemFrame implements PrintMachineJob {
    public PrintItemFrame(PrintEnv env, PrintItemFrame.Inner_StreamUtil spec) {
       this.init_EventBus = env;
       this.init_RingBuffer_StreamU = spec;
-      this.init_Obj = env.init_Obj();
+      this.init_Obj = env.worldToken();
       this.init_Item = spec.entityId().equals("minecraft:glow_item_frame") ? Items.GLOW_ITEM_FRAME : Items.ITEM_FRAME;
    }
 
@@ -84,7 +84,7 @@ public final class PrintItemFrame implements PrintMachineJob {
    }
 
    private boolean open() {
-      return this.init_Obj != null && this.init_Obj == this.init_EventBus.init_Obj();
+      return this.init_Obj != null && this.init_Obj == this.init_EventBus.worldToken();
    }
 
    private static boolean init_Z_ItemStack_ItemStack(ItemStack a, ItemStack b) {
@@ -119,16 +119,16 @@ public final class PrintItemFrame implements PrintMachineJob {
          return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.CONFLICT;
       }
 
-      if (!this.init_EventBus.load_Z(this.init_RingBuffer_StreamU.cell()) || !this.init_EventBus.load_Z(this.init_RingBuffer_StreamU.support())) {
+      if (!this.init_EventBus.hasChunkAt(this.init_RingBuffer_StreamU.cell()) || !this.init_EventBus.hasChunkAt(this.init_RingBuffer_StreamU.support())) {
          return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.PREPARING;
       }
 
-      if (!this.matchesSource(this.init_EventBus.init_BlockState_BlockPos(this.init_RingBuffer_StreamU.support()))) {
+      if (!this.matchesSource(this.init_EventBus.getBlockState(this.init_RingBuffer_StreamU.support()))) {
          this.init_Str = "The block the frame hangs on is missing at " + this.init_RingBuffer_StreamU.support().toShortString();
          return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.CONFLICT;
       }
 
-      List<PrintItemFrame.Inner_DataUtil> seen = this.init_EventBus.init_List_BlockPos(this.init_RingBuffer_StreamU.cell());
+      List<PrintItemFrame.Inner_DataUtil> seen = this.init_EventBus.itemFramesAt(this.init_RingBuffer_StreamU.cell());
       if (seen == null) {
          return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.PREPARING;
       }
@@ -139,7 +139,7 @@ public final class PrintItemFrame implements PrintMachineJob {
       }
 
       if (ours == null) {
-         if (!this.init_EventBus.init_BlockState_BlockPos(this.init_RingBuffer_StreamU.cell()).canBeReplaced()) {
+         if (!this.init_EventBus.getBlockState(this.init_RingBuffer_StreamU.cell()).canBeReplaced()) {
             this.init_Str = "A block fills the frame's cell " + this.init_RingBuffer_StreamU.cell().toShortString();
             return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.CONFLICT;
          } else {
@@ -180,7 +180,7 @@ public final class PrintItemFrame implements PrintMachineJob {
          return false;
       }
 
-      ItemStack held = this.init_EventBus.init_ItemStack_I(this.init_EventBus.read_I());
+      ItemStack held = this.init_EventBus.getInventoryItem(this.init_EventBus.getSelectedHotbarSlot());
       if (this.init_RingBuffer_CachePo == PrintItemFrame.Inner_CachePool.HANG && !held.is(this.init_Item)) {
          this.init_Str = "The frame item is not held";
          return false;
@@ -192,7 +192,7 @@ public final class PrintItemFrame implements PrintMachineJob {
          return false;
       }
 
-      List<PrintItemFrame.Inner_DataUtil> seen = this.init_EventBus.init_List_BlockPos(this.init_RingBuffer_StreamU.cell());
+      List<PrintItemFrame.Inner_DataUtil> seen = this.init_EventBus.itemFramesAt(this.init_RingBuffer_StreamU.cell());
       if (seen == null) {
          return false;
       }
@@ -210,7 +210,7 @@ public final class PrintItemFrame implements PrintMachineJob {
       this.init_Set = Set.copyOf(ids);
       this.init_I = rotation;
       this.init_ItemStack = held.copy();
-      this.init_J = this.init_EventBus.load_J();
+      this.init_J = this.init_EventBus.nanoTime();
       this.init_Str = this.init_RingBuffer_CachePo == PrintItemFrame.Inner_CachePool.HANG
          ? "Waiting for the hung frame"
          : (this.init_RingBuffer_CachePo == PrintItemFrame.Inner_CachePool.FILL ? "Waiting for the frame to take its item" : "Waiting for the frame's item to turn");
@@ -229,7 +229,7 @@ public final class PrintItemFrame implements PrintMachineJob {
          return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.UNCERTAIN;
       }
 
-      List<PrintItemFrame.Inner_DataUtil> seen = this.init_EventBus.init_List_BlockPos(this.init_RingBuffer_StreamU.cell());
+      List<PrintItemFrame.Inner_DataUtil> seen = this.init_EventBus.itemFramesAt(this.init_RingBuffer_StreamU.cell());
       if (seen != null) {
          PrintItemFrame.Inner_DataUtil ours = this.init(seen);
          boolean var10000;
@@ -260,7 +260,7 @@ public final class PrintItemFrame implements PrintMachineJob {
          }
       }
 
-      if (this.init_EventBus.load_J() - this.init_J >= 5000000000L) {
+      if (this.init_EventBus.nanoTime() - this.init_J >= 5000000000L) {
          this.init_Str = "No receipt for the frame click at " + this.init_RingBuffer_StreamU.cell().toShortString() + "; not repeating it";
          return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.UNCERTAIN;
       } else {
@@ -279,7 +279,7 @@ public final class PrintItemFrame implements PrintMachineJob {
          return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.UNCERTAIN;
       }
 
-      List<PrintItemFrame.Inner_DataUtil> seen = this.init_EventBus.init_List_BlockPos(this.init_RingBuffer_StreamU.cell());
+      List<PrintItemFrame.Inner_DataUtil> seen = this.init_EventBus.itemFramesAt(this.init_RingBuffer_StreamU.cell());
       if (seen == null) {
          return PrintMachineJob.JobStatus.PREPARING;
       }

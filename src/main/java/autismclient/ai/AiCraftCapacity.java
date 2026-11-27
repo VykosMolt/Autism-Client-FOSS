@@ -91,7 +91,7 @@ final class AiCraftCapacity {
                      || AiJson.getBoolean(evidence, "reobserveBeforeResuming", false)
                      || AiJson.getBoolean(evidence, "interruptedActionNeedsReconciliation", false)
                );
-            this.init_AiOperation_Result = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(this.read_Z, this.init_AiOperation_Result);
+            this.init_AiOperation_Result = AiGuardLayer.wrapPendingTermination(this.read_Z, this.init_AiOperation_Result);
             this.init_AiOperation.cancel();
             if (this.init_Z) {
                return this.init(this.init_AiOperation_Result);

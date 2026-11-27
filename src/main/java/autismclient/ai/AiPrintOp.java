@@ -126,7 +126,7 @@ final class AiPrintOp implements AiOperation {
       this.init_bj = new AiPrintSupply(blueprint, power.clearTerrain());
       this.init_Z = !power.clearTerrain();
       this.init_List = preparedTargets;
-      this.init_DataUtil.init_V_Z(power.assumeFly());
+      this.init_DataUtil.setFlightAllowed(power.assumeFly());
       this.init_UiHelper = autismclient.ai.print.PrintCore.init_UiHelper_EventBus(this.init_DataUtil, AiPrintRules.init_bi, this.init_List, geometry);
       this.load_a_StreamUtil = AiScaffold.init(AiBuilder.init_Path(blueprint), List.of());
       this.init_ArrayDeque.addAll(this.load_a_StreamUtil.init_List());
@@ -148,11 +148,11 @@ final class AiPrintOp implements AiOperation {
 
       this.init_UiHelper.start_Z = Boolean.getBoolean("autism.ai.print.trace");
       this.init_Consumer = pos -> {
-         this.init_DataUtil.load_V(pos);
+         this.init_DataUtil.notifyBlockChanged(pos);
          this.init_bj.load(pos);
       };
       this.init_LongConsumer = key -> {
-         this.init_DataUtil.init_V_J(key);
+         this.init_DataUtil.notifyChunkChanged(key);
          this.init_bj.init_V_J(key);
       };
       this.load_J = Math.max(0, timeoutSeconds) * 1000000000L;
@@ -210,16 +210,16 @@ final class AiPrintOp implements AiOperation {
 
       AiMenuClose.Inner_StreamUtil menuClose = AiMenuClose.init_aq_StreamUtil();
       if (menuClose != AiMenuClose.Inner_StreamUtil.READY) {
-         this.init_DataUtil.read_V();
+         this.init_DataUtil.releaseControls();
          return menuClose == AiMenuClose.Inner_StreamUtil.UNCERTAIN
             ? this.init(AiOperation.Status.UNCERTAIN, "The server did not reconcile the closed storage menu. Inspect the inventory before resuming.", AiFailure.UNKNOWN)
             : this.init_AiOperation_Result_Str_9("Waiting for the server to close the storage menu");
       }
 
-      if (!this.init_DataUtil.read_Z()) {
-         this.init_DataUtil.read_V();
-         return this.init_DataUtil.init_Str() != null
-            ? this.init(this.init_DataUtil.write_Z() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, this.init_DataUtil.init_Str(), AiFailure.UNKNOWN)
+      if (!this.init_DataUtil.isHandReady()) {
+         this.init_DataUtil.releaseControls();
+         return this.init_DataUtil.handSwapError() != null
+            ? this.init(this.init_DataUtil.hasPendingHandSwap() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, this.init_DataUtil.handSwapError(), AiFailure.UNKNOWN)
             : this.init_AiOperation_Result_Str_9("Waiting for the server to confirm the hand swap");
       }
 
@@ -232,23 +232,23 @@ final class AiPrintOp implements AiOperation {
       }
 
       if (!this.init_bj.load_Z()) {
-         this.init_DataUtil.read_V();
+         this.init_DataUtil.releaseControls();
          return this.init_AiOperation_Result_Str_9(this.init_bj.init_Str());
       }
 
       if (this.init_UiHelper.init_Z()) {
          this.read_J++;
-         this.init_DataUtil.init_V();
-         this.init_DataUtil.init_V_SyncManager(this.init_UiHelper.read_SyncManager());
+         this.init_DataUtil.advanceTick();
+         this.init_DataUtil.applyControls(this.init_UiHelper.read_SyncManager());
          return this.init_AiOperation_Result_Str_9(this.init_UiHelper.load_Str());
       }
 
       if (this.init_Minecraft.gui.screen() instanceof AbstractSignEditScreen editor) {
          try {
-            if (this.init_DataUtil.init_Z_BlockPos(AiPrintSupply.init_BlockPos_AbstractSignEditSc(editor))) {
+            if (this.init_DataUtil.consumePlacedSign(AiPrintSupply.init_BlockPos_AbstractSignEditSc(editor))) {
                AiPrintSupply.init_V_AbstractSignEditSc(editor, this.init_TableIndex_DataUti.origin(), this.init_TableIndex_ConfigS.signText());
                this.init_Minecraft.gui.setScreen(null);
-               this.init_DataUtil.load_V();
+               this.init_DataUtil.clearRecentClick();
             }
          } catch (ReflectiveOperationException | RuntimeException failure) {
             return this.init(AiOperation.Status.FAILED, "Could not apply the schematic's sign text", AiFailure.EXECUTION_FAILED);
@@ -256,9 +256,9 @@ final class AiPrintOp implements AiOperation {
       }
 
       autismclient.ai.engine.AiRoutePolicy.putAt(this.init_bj.init_Set()::contains);
-      if (!this.init_DataUtil.update_Z()) {
+      if (!this.init_DataUtil.isCreativeMode()) {
          AiOperation.Result guarded = this.init_Y
-            .init_AiOperation_Result_AiOperation(
+            .tick(
                this,
                this::write_V_6,
                () -> this.load_J == 0L ? 120 : (int)Math.max(1L, Math.min(2147483647L, (this.load_J - (System.nanoTime() - this.init_J)) / 1000000000L))
@@ -271,9 +271,9 @@ final class AiPrintOp implements AiOperation {
 
             return this.init_AiOperation_Result_Str_9("Survival: " + guarded.message());
          }
-      } else if (this.init_Y.init_Z()) {
-         boolean pending = this.init_Y.read();
-         this.init_Y.init_V();
+      } else if (this.init_Y.isActive()) {
+         boolean pending = this.init_Y.requiresReconciliation();
+         this.init_Y.cancel();
          if (pending) {
             return this.init(AiOperation.Status.UNCERTAIN, "Game mode changed during an unconfirmed survival action", AiFailure.UNKNOWN);
          }
@@ -291,7 +291,7 @@ final class AiPrintOp implements AiOperation {
 
       if (this.init_AiOperation != null
          && this.init_Item != null
-         && this.init_DataUtil.update_Z()
+         && this.init_DataUtil.isCreativeMode()
          && this.init_AiOperation.canInterruptNow()
          && !this.init_AiOperation.requiresReconciliationAfterEmergency()) {
          this.init_AiOperation.cancel();
@@ -314,25 +314,25 @@ final class AiPrintOp implements AiOperation {
             && this.init_Minecraft.gui.screen() instanceof AbstractContainerScreen<?> opened
             && !(opened instanceof InventoryScreen)
             && this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu
-            && this.init_DataUtil.init_Z()) {
+            && this.init_DataUtil.hasRecentClick()) {
             AiPrintOp.Inner_DataUtil.init("[AI] print v2: closing {} the build opened", opened.getClass().getSimpleName());
             AiMenuClose.init_Z();
-            this.init_DataUtil.load_V();
-            this.init_DataUtil.read_V();
+            this.init_DataUtil.clearRecentClick();
+            this.init_DataUtil.releaseControls();
             return this.init_AiOperation_Result_Str_9("Waiting for the server to close the storage menu");
          }
 
          if (this.init_Minecraft.gui.screen() != null && !this.init_UiHelper.write_Z()) {
-            this.init_DataUtil.read_V();
+            this.init_DataUtil.releaseControls();
             return this.init_AiOperation_Result_Str_9("Paused while a screen is open");
          }
 
-         if (this.init_DataUtil.poll() && !this.init_DataUtil.flush() && !this.init_UiHelper.write_Z()) {
-            this.init_DataUtil.read_V();
+         if (this.init_DataUtil.isFlying() && !this.init_DataUtil.canUseFlight() && !this.init_UiHelper.write_Z()) {
+            this.init_DataUtil.releaseControls();
             return this.init_AiOperation_Result_Str_9("Paused: land or disable native flight before continuing ground construction");
          }
 
-         if (!this.init_DataUtil.update_Z()
+         if (!this.init_DataUtil.isCreativeMode()
             && !this.init_UiHelper.read_Z()
             && !this.init_UiHelper.flush_Z()
             && this.init_Minecraft.player.getFoodData().getFoodLevel() <= 14
@@ -389,12 +389,12 @@ final class AiPrintOp implements AiOperation {
          }
 
          this.read_J++;
-         this.init_DataUtil.init_V();
+         this.init_DataUtil.advanceTick();
          autismclient.ai.print.PrintControls controls = this.init_UiHelper.read_SyncManager();
          ItemStack requestedContents = this.init_UiHelper.init_ItemStack();
          if (!requestedContents.isEmpty()) {
             this.init_ItemStack = requestedContents;
-            this.init_DataUtil.init_V_SyncManager(controls);
+            this.init_DataUtil.applyControls(controls);
             return this.init_AiOperation_Result_Str_9("Preparing carried stock for saved container contents");
          }
 
@@ -402,20 +402,20 @@ final class AiPrintOp implements AiOperation {
             return this.init(AiOperation.Status.FAILED, "Free one inventory or offhand slot so the builder can use an empty hand", AiFailure.INVENTORY_FULL);
          }
 
-         if (!this.init_DataUtil.update_Z() && this.init_UiHelper.load_Item() != null) {
+         if (!this.init_DataUtil.isCreativeMode() && this.init_UiHelper.load_Item() != null) {
             this.load_Item = this.init_UiHelper.load_Item();
             this.load_I = AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.load_Item);
-            this.init_DataUtil.init_V_SyncManager(controls);
+            this.init_DataUtil.applyControls(controls);
             return this.init_AiOperation_Result_Str_9("Preparing to recover " + init_Str_Item(this.load_Item));
          }
 
-         if (!this.init_DataUtil.update_Z() && this.init_UiHelper.init_Z_Item(this.init_UiHelper.init_Item())) {
-            this.init_DataUtil.init_V_SyncManager(controls);
+         if (!this.init_DataUtil.isCreativeMode() && this.init_UiHelper.init_Z_Item(this.init_UiHelper.init_Item())) {
+            this.init_DataUtil.applyControls(controls);
             return this.init_AiOperation_Result_Str_9("Recovering temporary " + init_Str_Item(this.init_UiHelper.init_Item()));
          }
 
-         if (this.init_DataUtil.update_Z() || !this.init_bj.init_Z_Item(this.init_UiHelper.init_Item())) {
-            this.init_DataUtil.init_V_SyncManager(controls);
+         if (this.init_DataUtil.isCreativeMode() || !this.init_bj.init_Z_Item(this.init_UiHelper.init_Item())) {
+            this.init_DataUtil.applyControls(controls);
             if (this.read_J % 4L == 0L) {
                AiVisualization.init(this, this.init_TableIndex_DataUti.origin(), this.init_TableIndex_DataUti.cells(), this.init_UiHelper.update_I(), false, true);
             }
@@ -457,7 +457,7 @@ final class AiPrintOp implements AiOperation {
             }
 
             this.init_Item = this.init_bj.init_Item();
-            this.init_DataUtil.init_V_SyncManager(controls);
+            this.init_DataUtil.applyControls(controls);
             return this.init_AiOperation_Result_Str_9("Preparing to fetch " + init_Str_Item(this.init_Item));
          }
       }
@@ -468,10 +468,10 @@ final class AiPrintOp implements AiOperation {
 
       for (int checked = 0; checked < count; checked++) {
          BlockPos position = this.init_ArrayDeque.removeFirst();
-         if (!this.init_DataUtil.load_Z(position)) {
+         if (!this.init_DataUtil.hasChunkAt(position)) {
             this.init_ArrayDeque.addLast(position);
          } else {
-            BlockState state = this.init_DataUtil.init_BlockState_BlockPos(position);
+            BlockState state = this.init_DataUtil.getBlockState(position);
             if (AiScaffold.init(this.load_a_StreamUtil.init(position), state.getBlock())) {
                this.init_UiHelper.init_V_BlockPos_BlockState(position, state);
             } else {
@@ -516,19 +516,19 @@ final class AiPrintOp implements AiOperation {
 
    private AiOperation.Result load(String message) {
       this.read_J++;
-      this.init_DataUtil.init_V();
+      this.init_DataUtil.advanceTick();
       this.read_Z = true;
       autismclient.ai.print.PrintControls controls = this.init_UiHelper.init_SyncManager();
       if (controls == null) {
          return this.init(AiOperation.Status.FAILED, "No safe landing before the next build maintenance action", AiFailure.UNREACHABLE);
       }
 
-      this.init_DataUtil.init_V_SyncManager(controls);
+      this.init_DataUtil.applyControls(controls);
       return this.init_AiOperation_Result_Str_9(message);
    }
 
    private AiOperation.Result load_AiOperation_Result_14() {
-      if ((this.init_DataUtil.update_Z() || AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.init_Item) > 0) && this.init_UiHelper.close_Z()) {
+      if ((this.init_DataUtil.isCreativeMode() || AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.init_Item) > 0) && this.init_UiHelper.close_Z()) {
          this.init_bj.load_V();
          this.init_Item = null;
          this.init_UiHelper.load_V();
@@ -536,7 +536,7 @@ final class AiPrintOp implements AiOperation {
       }
 
       this.read_J++;
-      this.init_DataUtil.init_V();
+      this.init_DataUtil.advanceTick();
       boolean portableHere = this.init_UiHelper.close_Z()
          && this.init_bj.read_Z()
          && AiCarriedShulker.init_BlockPos_Minecraft_Set(this.init_Minecraft, this.init_Set_7()) != null;
@@ -545,12 +545,12 @@ final class AiPrintOp implements AiOperation {
          return this.init(AiOperation.Status.FAILED, "No safe route from the work station to shulker stock", AiFailure.UNREACHABLE);
       }
 
-      this.init_DataUtil.init_V_SyncManager(controls);
+      this.init_DataUtil.applyControls(controls);
       if (!portableHere && !this.init_UiHelper.open_Z()) {
          return this.init_AiOperation_Result_Str_9("Returning to ground for " + init_Str_Item(this.init_Item));
       }
 
-      if (!this.init_DataUtil.update_Z() && AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.init_Item) <= 0) {
+      if (!this.init_DataUtil.isCreativeMode() && AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.init_Item) <= 0) {
          this.init_I = AiPrintSupply.load(this.init_Minecraft.player.getInventory(), this.init_Item);
          if (!this.init_bj.load(16384)) {
             return this.init_AiOperation_Result_Str_9("Checking shulker stock for " + init_Str_Item(this.init_Item));
@@ -606,12 +606,12 @@ final class AiPrintOp implements AiOperation {
          return this.init_AiOperation_Result_Str_9("Recovered temporary material; resuming construction");
       } else {
          this.read_J++;
-         this.init_DataUtil.init_V();
+         this.init_DataUtil.advanceTick();
          autismclient.ai.print.PrintControls controls = this.init_UiHelper.init_SyncManager();
          if (controls == null) {
             return this.init(AiOperation.Status.FAILED, "No safe landing before recovering temporary material", AiFailure.UNREACHABLE);
          } else {
-            this.init_DataUtil.init_V_SyncManager(controls);
+            this.init_DataUtil.applyControls(controls);
             if (!this.init_UiHelper.close_Z()) {
                return this.init_AiOperation_Result_Str_9("Settling before recovering " + init_Str_Item(this.load_Item));
             } else {
@@ -642,13 +642,13 @@ final class AiPrintOp implements AiOperation {
       }
 
       this.read_J++;
-      this.init_DataUtil.init_V();
+      this.init_DataUtil.advanceTick();
       autismclient.ai.print.PrintControls controls = this.init_UiHelper.load_SyncManager();
       if (controls == null) {
          return this.init_AiOperation_Result_Z_Str(false, "No safe stock route for the optional saved contents");
       }
 
-      this.init_DataUtil.init_V_SyncManager(controls);
+      this.init_DataUtil.applyControls(controls);
       if (!this.init_UiHelper.open_Z()) {
          return this.init_AiOperation_Result_Str_9("Returning to a safe stock workstation for saved contents");
       }
@@ -733,7 +733,7 @@ final class AiPrintOp implements AiOperation {
    }
 
    private void init_V_AiOperation(AiOperation operation) {
-      this.init_DataUtil.read_V();
+      this.init_DataUtil.releaseControls();
       this.init_a_StreamUtil = AiScaffold.init_a_StreamUtil();
       this.init_AiOperation = operation;
    }
@@ -822,7 +822,7 @@ final class AiPrintOp implements AiOperation {
                this.init_bj.init_V();
                this.init_Item = null;
                return this.init_AiOperation_Result_Str_9("Shulker stock received; resuming construction");
-            } else if (this.init_DataUtil.update_Z()) {
+            } else if (this.init_DataUtil.isCreativeMode()) {
                this.init_bj.load_V();
                this.init_Item = null;
                return this.init_AiOperation_Result_Str_9("Creative inventory is available; resuming construction");
@@ -840,7 +840,7 @@ final class AiPrintOp implements AiOperation {
    }
 
    private void write_V_6() {
-      this.init_DataUtil.read_V();
+      this.init_DataUtil.releaseControls();
       if (this.init_UiHelper.read_Z()) {
          this.init_UiHelper.init_V();
          this.sync_Z = true;
@@ -967,15 +967,15 @@ final class AiPrintOp implements AiOperation {
       o.addProperty("terrainCleared", this.init_bj.load_I);
       o.addProperty("soilCollected", this.init_I_28());
       o.addProperty("soilBroken", this.update_I);
-      o.addProperty("interactionAwaitingAck", this.init_DataUtil.init_EventBus_StreamUti() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.PENDING);
+      o.addProperty("interactionAwaitingAck", this.init_DataUtil.interactionReceiptState() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.PENDING);
       o.addProperty(
          "recoveryRequired",
          AiMenuClose.load()
             || this.update_Z
             || this.sync_Z
             || this.init_UiHelper.update_Z()
-            || this.init_DataUtil.write_Z()
-            || this.init_DataUtil.init_EventBus_StreamUti() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.UNCERTAIN
+            || this.init_DataUtil.hasPendingHandSwap()
+            || this.init_DataUtil.interactionReceiptState() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.UNCERTAIN
       );
       if (this.init_JsonObject != null) {
          o.add("externalWork", this.init_JsonObject.deepCopy());
@@ -1001,9 +1001,9 @@ final class AiPrintOp implements AiOperation {
       return !AiMenuClose.load()
          && !this.update_Z
          && !this.sync_Z
-         && !this.init_DataUtil.write_Z()
+         && !this.init_DataUtil.hasPendingHandSwap()
          && !this.init_UiHelper.read_Z()
-         && this.init_Y.load()
+         && this.init_Y.canInterruptNow()
          && (
             this.init_AiOperation != null
                ? this.init_AiOperation.canInterruptNow()
@@ -1013,11 +1013,11 @@ final class AiPrintOp implements AiOperation {
 
    @Override
    public boolean requiresReconciliationAfterEmergency() {
-      return this.init_Y.read()
+      return this.init_Y.requiresReconciliation()
          || AiMenuClose.load()
          || this.update_Z
          || this.sync_Z
-         || this.init_DataUtil.write_Z()
+         || this.init_DataUtil.hasPendingHandSwap()
          || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
          || this.init_UiHelper.read_Z()
          || this.init_AiOperation == null && this.init_UiHelper.sync_Z();
@@ -1034,16 +1034,16 @@ final class AiPrintOp implements AiOperation {
          this.open = true;
          this.init_UiHelper.init_V();
          this.update_V_4();
-         this.sync_Z = this.sync_Z | this.init_Y.read();
-         this.init_Y.init_V();
-         this.sync_Z = this.sync_Z | this.init_Y.read();
+         this.sync_Z = this.sync_Z | this.init_Y.requiresReconciliation();
+         this.init_Y.cancel();
+         this.sync_Z = this.sync_Z | this.init_Y.requiresReconciliation();
          this.read_V_8();
          autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
          autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(0L);
          autismclient.ai.engine.AiRoutePolicy.putAt_V();
          AiServerEvidence.removeBlockObserver(this.init_Consumer);
          AiServerEvidence.removeChunkObserver(this.init_LongConsumer);
-         this.init_DataUtil.read_V();
+         this.init_DataUtil.releaseControls();
          this.load_a_StreamUtil.close();
          if (this.init_Minecraft.player == this.init_LocalPlayer
             && this.init_Minecraft.player != null
@@ -1106,7 +1106,7 @@ final class AiPrintOp implements AiOperation {
             return this.init(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Local soil gathering timed out", "{}", List.of(), AiFailure.TIMEOUT));
          }
 
-         if (AiPrintSupply.load(AiPrintOp.this.init_Minecraft.player.getInventory(), Items.DIRT) >= this.update && !this.init_bb.init_Z(this.init_AiOperation)) {
+         if (AiPrintSupply.load(AiPrintOp.this.init_Minecraft.player.getInventory(), Items.DIRT) >= this.update && !this.init_bb.requiresReconciliation(this.init_AiOperation)) {
             return this.init(new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Collected the required soil", "{}", List.of()));
          }
 
@@ -1134,21 +1134,21 @@ final class AiPrintOp implements AiOperation {
             );
          }
 
-         AiOperation.Result result = this.init_bb.init_AiOperation_Result(this.init_AiOperation);
+         AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
          if (!result.terminal()) {
             return this.init(result.message());
          }
 
          AiOperation completed = this.init_AiOperation;
          this.init_AiOperation = null;
-         this.init_bb.init_V(completed);
+         this.init_bb.cancelChild(completed);
          if (result.status() != AiOperation.Status.SUCCEEDED) {
             AiPrintOp.this.init_Set.add(this.init_BlockPos.asLong());
             if (AiPrintOp.this.init_UiHelper.start_Z) {
                AiPrintOp.Inner_DataUtil.init("[AI] print v2: local soil at {} skipped: {}", this.init_BlockPos.toShortString(), result.message());
             }
 
-            return result.status() == AiOperation.Status.FAILED && !this.init_bb.init_Z(completed) && ++this.load < 24
+            return result.status() == AiOperation.Status.FAILED && !this.init_bb.requiresReconciliation(completed) && ++this.load < 24
                ? this.init("Skipped an unreachable soil block; trying another")
                : this.init(result);
          } else {
@@ -1168,7 +1168,7 @@ final class AiPrintOp implements AiOperation {
       }
 
       private AiOperation.Result init(AiOperation.Result result) {
-         result = this.init_bb.init(result, this.requiresReconciliationAfterEmergency());
+         result = this.init_bb.finalizeResult(result, this.requiresReconciliationAfterEmergency());
          this.init_Z = true;
          return result;
       }
@@ -1176,17 +1176,17 @@ final class AiPrintOp implements AiOperation {
       @Override
       public void cancel() {
          this.init_Z = true;
-         this.init_bb.init_V(this.init_AiOperation);
+         this.init_bb.cancelChild(this.init_AiOperation);
       }
 
       @Override
       public boolean canInterruptNow() {
-         return !this.init_bb.init_Z(this.init_AiOperation) && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+         return !this.init_bb.requiresReconciliation(this.init_AiOperation) && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
       }
 
       @Override
       public boolean requiresReconciliationAfterEmergency() {
-         return this.init_bb.init_Z(this.init_AiOperation);
+         return this.init_bb.requiresReconciliation(this.init_AiOperation);
       }
    }
 }

@@ -128,7 +128,7 @@ final class AiRide {
                      double reach = Math.max(3.0, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE));
                      if (mc.player.distanceTo(this.init_Entity) > reach * 0.9) {
                         if (this.init_AiOperation == null) {
-                           this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(
+                           this.init_AiOperation = AiGoto.travelToCompat(
                               this.init_Entity.blockPosition(), 1.8, false, false, true, Math.min(120, this.init_I_26())
                            );
                         }

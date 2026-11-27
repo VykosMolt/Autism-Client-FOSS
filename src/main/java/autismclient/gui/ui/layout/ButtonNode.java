@@ -183,13 +183,13 @@ public class ButtonNode extends LayoutNode {
 
    @Override
    public float init_F_SyncManager(LayoutContext context) {
-      int measureHeight = this.load_I > 0 ? this.load_I : context.init_CharEncoder().update();
-      Identifier font = this.init_Identifier_CharEncoder_I(context.init_CharEncoder(), measureHeight);
-      int scaledHorizontalPadding = context.init_CharEncoder().load(this.init_I);
-      int scaledIconSize = context.init_CharEncoder().load(this.write_I);
-      int scaledIconGap = context.init_CharEncoder().load(this.update_I);
+      int measureHeight = this.load_I > 0 ? this.load_I : context.theme().update();
+      Identifier font = this.init_Identifier_CharEncoder_I(context.theme(), measureHeight);
+      int scaledHorizontalPadding = context.theme().load(this.init_I);
+      int scaledIconSize = context.theme().load(this.write_I);
+      int scaledIconGap = context.theme().load(this.update_I);
       float fittedWidth = UiLayoutMath.measurePaddedWidthFloat(
-         context.init_Font(), this.init_Str, font, context.init_CharEncoder().load(l.read), scaledHorizontalPadding, this.sync_F, this.flush
+         context.font(), this.init_Str, font, context.theme().load(l.read), scaledHorizontalPadding, this.sync_F, this.flush
       );
       if (this.init_Identifier != null) {
          fittedWidth += scaledIconSize + scaledIconGap;
@@ -200,8 +200,8 @@ public class ButtonNode extends LayoutNode {
 
    @Override
    public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      int resolvedFixedHeight = this.load_I > 0 ? this.load_I : context.init_CharEncoder().update();
-      int contentHeight = context.init_CharEncoder().init_I_l(this.init_l) + context.init_CharEncoder().load(4);
+      int resolvedFixedHeight = this.load_I > 0 ? this.load_I : context.theme().update();
+      int contentHeight = context.theme().init_I_l(this.init_l) + context.theme().load(4);
       return Math.max(12, Math.max(resolvedFixedHeight, contentHeight));
    }
 
@@ -212,7 +212,7 @@ public class ButtonNode extends LayoutNode {
          int drawY = Math.round(this.load_F);
          int drawW = Math.round(this.read_F);
          int drawH = Math.round(this.write);
-         boolean hovered = this.load_Z && this.init_Z_F_F(context.init_F(), context.load());
+         boolean hovered = this.load_Z && this.init_Z_F_F(context.mouseX(), context.mouseY());
          if (this.write_Z) {
             this.load(context, drawX, drawY, drawW, drawH, hovered);
          } else {
@@ -223,7 +223,7 @@ public class ButtonNode extends LayoutNode {
 
    private void init_V_SyncManager(LayoutContext context, int drawX, int drawY, int drawW, int drawH, boolean hovered) {
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(
-         context.init_GuiGraphicsExtract(), context.init_Font(), Math.round(context.init_F()), Math.round(context.load())
+         context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
       );
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH);
       autismclient.gui.f.b.CachePool.Inner_DataUtil buttonTone = this.init_CachePool_DataUtil();
@@ -234,13 +234,13 @@ public class ButtonNode extends LayoutNode {
       }
 
       if (!this.load_Z) {
-         autismclient.gui.f.PacketUtil.init(context.init_GuiGraphicsExtract(), bounds.init(1), 1711276032);
+         autismclient.gui.f.PacketUtil.init(context.graphics(), bounds.init(1), 1711276032);
       }
    }
 
    private void load(LayoutContext context, int drawX, int drawY, int drawW, int drawH, boolean hovered) {
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(
-         context.init_GuiGraphicsExtract(), context.init_Font(), Math.round(context.init_F()), Math.round(context.load())
+         context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
       );
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH);
       if (this.update_Z) {

@@ -58,93 +58,93 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
 public final class PrintView implements SignalGetter {
-   static final BlockState init_BlockState = Blocks.BARRIER.defaultBlockState();
-   private final PrintEnv init_EventBus;
-   private final Long2ObjectOpenHashMap<BlockState> read_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-   private final Long2LongOpenHashMap write_Long2LongOpenHashM = new Long2LongOpenHashMap();
-   private final Long2ObjectOpenHashMap<ArrayDeque<PrintView.Inner_DataUtil>> write_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-   private final LongOpenHashSet load_LongOpenHashSet = new LongOpenHashSet();
-   private final MutableBlockPos init_BlockPos_MutableBl = new MutableBlockPos();
-   private final Long2ObjectOpenHashMap<BlockState> update_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-   private boolean write_Z;
-   static final int init_I = 32768;
-   static final int load_I = 65536;
-   static final int read_I = 8192;
-   private final Long2ObjectLinkedOpenHashMap<PrintView.Inner_NetHelper> init_Long2ObjectLinkedO = new Long2ObjectLinkedOpenHashMap<>();
-   static final int write_I = 512;
-   static final int update_I = 1048576;
-   private static final int close_I = 256;
-   private final int open_I;
-   private int poll_I;
-   long init_J;
-   long load_J;
-   private long flush_J;
-   private long close_J;
-   private final ArrayList<PrintView.Inner_TaskQueue> init_ArrayList = new ArrayList<>();
-   private final ArrayList<PrintView.Inner_ConfigStore> load_ArrayList = new ArrayList<>();
-   private final ArrayList<PrintView.Inner_StreamUtil> read_ArrayList = new ArrayList<>();
-   private boolean update_Z;
-   private final IdentityHashMap<BlockState, List<AABB>> init_IdentityHashMap = new IdentityHashMap<>();
-   private long open_J;
-   final Map<PrintNav.Inner_CachePool, List<PrintNav.Inner_BufferHelper>> init_Map = new LinkedHashMap<>();
-   final Long2ObjectOpenHashMap<Direction> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-   long read_J;
-   long write_J;
-   final Long2LongOpenHashMap init_Long2LongOpenHashM = new Long2LongOpenHashMap();
-   final Long2LongOpenHashMap load_Long2LongOpenHashM = new Long2LongOpenHashMap();
-   final Long2ObjectOpenHashMap<LongArrayList> load_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-   final Long2LongOpenHashMap read_Long2LongOpenHashM = new Long2LongOpenHashMap();
-   static final int sync_I = 64;
-   private long poll_J;
-   private long push_J;
-   private final long[] init_JArr = new long[4096];
-   private int push_I;
-   private int pop_I;
-   private long pop_J;
-   static final boolean init_Z = !"false".equals(System.getProperty("autism.ai.print.feetCache", "true"));
-   private static final int tick_I = 1;
-   private static final int run_I = 3;
-   private final Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> load_Long2ObjectLinkedO = new Long2ObjectLinkedOpenHashMap<>();
-   private final Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> read_Long2ObjectLinkedO = new Long2ObjectLinkedOpenHashMap<>();
-   long update_J;
-   long sync_J;
-   private long tick_J;
-   private int get;
-   private long run_J;
-   static final int flush_I = 24;
-   final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
-   private LevelReader init_LevelReader;
-   public boolean load_Z;
-   static final double init_D = 0.03;
-   static final boolean read_Z = Boolean.getBoolean("autism.ai.print.vanillaRays");
-   private final IdentityHashMap<BlockState, List<AABB>> load_IdentityHashMap = new IdentityHashMap<>();
-   private final IdentityHashMap<BlockState, List<AABB>> read_IdentityHashMap = new IdentityHashMap<>();
+   static final BlockState UNLOADED_SENTINEL = Blocks.BARRIER.defaultBlockState();
+   private final PrintEnv env;
+   private final Long2ObjectOpenHashMap<BlockState> hypotheticalBlocks = new Long2ObjectOpenHashMap<>();
+   private final Long2LongOpenHashMap hypotheticalColumnMasks = new Long2LongOpenHashMap();
+   private final Long2ObjectOpenHashMap<ArrayDeque<PrintView.Inner_DataUtil>> hypotheticalUndoStacks = new Long2ObjectOpenHashMap<>();
+   private final LongOpenHashSet ownedTemporaryBlocks = new LongOpenHashSet();
+   private final MutableBlockPos scratchPos = new MutableBlockPos();
+   private final Long2ObjectOpenHashMap<BlockState> snapshotStateCache = new Long2ObjectOpenHashMap<>();
+   private boolean snapshotCacheActive;
+   static final int MAX_SNAPSHOT_STATES = 32768;
+   static final int MAX_STANDABLE_CACHE = 65536;
+   static final int MAX_CLICK_POINTS_CACHE = 8192;
+   private final Long2ObjectLinkedOpenHashMap<PrintView.Inner_NetHelper> standableHeightCache = new Long2ObjectLinkedOpenHashMap<>();
+   static final int MAX_RECEIPT_CELLS = 512;
+   static final int DEFAULT_RECEIPT_BUDGET = 1048576;
+   private static final int MAX_FORWARDED_RECEIPTS = 256;
+   private final int geometryInputBudget;
+   private int retainedReceiptCells;
+   long standableCacheHits;
+   long standableCacheMisses;
+   private long viewRevision;
+   private long worldMutationRevision;
+   private final ArrayList<PrintView.Inner_TaskQueue> activeReadTrackers = new ArrayList<>();
+   private final ArrayList<PrintView.Inner_ConfigStore> activeNativeTrackers = new ArrayList<>();
+   private final ArrayList<PrintView.Inner_StreamUtil> activeDynamicShapeTrackers = new ArrayList<>();
+   private boolean suppressDynamicShapeTracking;
+   private final IdentityHashMap<BlockState, List<AABB>> collisionBoxesCache = new IdentityHashMap<>();
+   private long untrackedReadCount;
+   final Map<PrintNav.Inner_CachePool, List<PrintNav.Inner_BufferHelper>> diagonalJumpProofCache = new LinkedHashMap<>();
+   final Long2ObjectOpenHashMap<Direction> requiredInteractFaces = new Long2ObjectOpenHashMap<>();
+   long diagonalJumpCacheMisses;
+   long diagonalJumpCacheHits;
+   final Long2LongOpenHashMap bucketRemovalRevision = new Long2LongOpenHashMap();
+   final Long2LongOpenHashMap bucketAdditionRevision = new Long2LongOpenHashMap();
+   final Long2ObjectOpenHashMap<LongArrayList> bucketAdditionLogs = new Long2ObjectOpenHashMap<>();
+   final Long2LongOpenHashMap bucketOverflowRevision = new Long2LongOpenHashMap();
+   static final int MAX_BUCKET_LOG_ENTRIES = 64;
+   private long liveChangeRevision;
+   private long ringChangeRevision;
+   private final long[] recentChangedRing = new long[4096];
+   private int recentChangedHead;
+   private int recentChangedCount;
+   private long ringResetRevision;
+   static final boolean FEET_CACHE_ENABLED = !"false".equals(System.getProperty("autism.ai.print.feetCache", "true"));
+   private static final int CLICK_CACHE_XY_RADIUS = 1;
+   private static final int CLICK_CACHE_Y_RADIUS = 3;
+   private final Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> coarseClickCache = new Long2ObjectLinkedOpenHashMap<>();
+   private final Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> detailedClickCache = new Long2ObjectLinkedOpenHashMap<>();
+   long clickCacheHits;
+   long clickCacheMisses;
+   private long workUnits;
+   private int workAccountingPauseDepth;
+   private long raycastCount;
+   static final int RAYCAST_WORK_COST = 24;
+   final LongOpenHashSet observedLavaCells = new LongOpenHashSet();
+   private LevelReader survivalReaderProxy;
+   public boolean requireDropOvershootSafety;
+   static final double MIN_SUPPORT_AREA = 0.03;
+   static final boolean USE_VANILLA_RAYS = Boolean.getBoolean("autism.ai.print.vanillaRays");
+   private final IdentityHashMap<BlockState, List<AABB>> outlineBoxesCache = new IdentityHashMap<>();
+   private final IdentityHashMap<BlockState, List<AABB>> interactionBoxesCache = new IdentityHashMap<>();
 
-   PrintView.Inner_JsonUtil init_ArrayUtil_JsonUtil() {
+   PrintView.Inner_JsonUtil openSnapshotScope() {
       return new PrintView.Inner_JsonUtil();
    }
 
-   long init_J() {
-      return this.open_J;
+   long untrackedReadCount() {
+      return this.untrackedReadCount;
    }
 
-   Direction init_Direction_BlockPos(BlockPos pos) {
-      return this.init_Long2ObjectOpenHas.get(pos.asLong());
+   Direction getRequiredInteractFace(BlockPos pos) {
+      return this.requiredInteractFaces.get(pos.asLong());
    }
 
-   public long load_J() {
-      return this.flush_J;
+   public long viewRevision() {
+      return this.viewRevision;
    }
 
-   long read_J() {
-      return this.close_J;
+   long worldMutationRevision() {
+      return this.worldMutationRevision;
    }
 
-   boolean init_Z_Long2ObjectMap(Long2ObjectMap<BlockState> expected) {
-      return init_Z_Long2ObjectMap_Long2ObjectMap(this.read_Long2ObjectOpenHas, expected);
+   boolean matchesHypotheses(Long2ObjectMap<BlockState> expected) {
+      return mapsEqual(this.hypotheticalBlocks, expected);
    }
 
-   static boolean init_Z_Long2ObjectMap_Long2ObjectMap(Long2ObjectMap<BlockState> actual, Long2ObjectMap<BlockState> expected) {
+   static boolean mapsEqual(Long2ObjectMap<BlockState> actual, Long2ObjectMap<BlockState> expected) {
       if (actual == expected) {
          return true;
       }
@@ -167,23 +167,23 @@ public final class PrintView implements SignalGetter {
       return true;
    }
 
-   boolean init_Z() {
-      return !this.read_Long2ObjectOpenHas.isEmpty();
+   boolean hasHypotheses() {
+      return !this.hypotheticalBlocks.isEmpty();
    }
 
-   boolean init_Z_Long2ObjectMap(Long2ObjectMap<BlockState> expected, BlockPos c, int radius) {
-      if (this.read_Long2ObjectOpenHas.isEmpty() && expected.isEmpty()) {
+   boolean matchesHypothesesNear(Long2ObjectMap<BlockState> expected, BlockPos c, int radius) {
+      if (this.hypotheticalBlocks.isEmpty() && expected.isEmpty()) {
          return true;
       }
 
-      for (Entry<BlockState> e : this.read_Long2ObjectOpenHas.long2ObjectEntrySet()) {
-         if (init_Z_J(e.getLongKey(), c, radius) && expected.get(e.getLongKey()) != e.getValue()) {
+      for (Entry<BlockState> e : this.hypotheticalBlocks.long2ObjectEntrySet()) {
+         if (isWithinChebyshev(e.getLongKey(), c, radius) && expected.get(e.getLongKey()) != e.getValue()) {
             return false;
          }
       }
 
       for (Entry<BlockState> e : expected.long2ObjectEntrySet()) {
-         if (init_Z_J(e.getLongKey(), c, radius) && this.read_Long2ObjectOpenHas.get(e.getLongKey()) != e.getValue()) {
+         if (isWithinChebyshev(e.getLongKey(), c, radius) && this.hypotheticalBlocks.get(e.getLongKey()) != e.getValue()) {
             return false;
          }
       }
@@ -191,25 +191,25 @@ public final class PrintView implements SignalGetter {
       return true;
    }
 
-   private static boolean init_Z_J(long key, BlockPos c, int radius) {
+   private static boolean isWithinChebyshev(long key, BlockPos c, int radius) {
       return Math.abs(BlockPos.getX(key) - c.getX()) <= radius
          && Math.abs(BlockPos.getY(key) - c.getY()) <= radius
          && Math.abs(BlockPos.getZ(key) - c.getZ()) <= radius;
    }
 
-   public void init_V_Long2ObjectMap(Long2ObjectMap<BlockState> into) {
-      into.putAll(this.read_Long2ObjectOpenHas);
+   public void copyHypothesesInto(Long2ObjectMap<BlockState> into) {
+      into.putAll(this.hypotheticalBlocks);
    }
 
-   long init_J_BlockPos_I(BlockPos c, int radius) {
-      if (this.read_Long2ObjectOpenHas.isEmpty()) {
+   long hashHypothesesNear(BlockPos c, int radius) {
+      if (this.hypotheticalBlocks.isEmpty()) {
          return 0L;
       }
 
       long hash = 0L;
 
-      for (Entry<BlockState> e : this.read_Long2ObjectOpenHas.long2ObjectEntrySet()) {
-         if (init_Z_J(e.getLongKey(), c, radius)) {
+      for (Entry<BlockState> e : this.hypotheticalBlocks.long2ObjectEntrySet()) {
+         if (isWithinChebyshev(e.getLongKey(), c, radius)) {
             long h = e.getLongKey() * -4658895280553007687L + Block.getId(e.getValue());
             hash += (h ^ h >>> 31) * -7723592293110705685L;
          }
@@ -218,12 +218,12 @@ public final class PrintView implements SignalGetter {
       return hash;
    }
 
-   void init_V_LongSet(LongSet into) {
-      into.addAll(this.load_LongOpenHashSet);
+   void copyOwnedTemporariesInto(LongSet into) {
+      into.addAll(this.ownedTemporaryBlocks);
    }
 
-   boolean init_Z_LongSet(LongSet expected) {
-      return this.load_LongOpenHashSet.equals(expected);
+   boolean matchesOwnedTemporaries(LongSet expected) {
+      return this.ownedTemporaryBlocks.equals(expected);
    }
 
    public PrintView(PrintEnv env) {
@@ -232,77 +232,77 @@ public final class PrintView implements SignalGetter {
 
    PrintView(PrintEnv env, int geometryInputBudget) {
       if (geometryInputBudget >= 0 && geometryInputBudget <= 1048576) {
-         this.init_EventBus = env;
-         this.open_I = geometryInputBudget;
+         this.env = env;
+         this.geometryInputBudget = geometryInputBudget;
       } else {
          throw new IllegalArgumentException("Invalid native geometry receipt budget");
       }
    }
 
-   public void init_V_J(long key) {
-      this.flush_J++;
-      this.close_J++;
-      this.sync(key);
-      this.update(key);
-      this.init_V_J_Z(key, false);
+   public void onWorldBlockRemoved(long key) {
+      this.viewRevision++;
+      this.worldMutationRevision++;
+      this.recordLiveChange(key);
+      this.invalidateAround(key);
+      this.recordBucketMutation(key, false);
    }
 
-   public void load_V_J(long key) {
-      this.flush_J++;
-      this.close_J++;
-      this.sync(key);
-      this.update(key);
-      this.init_V_J_Z(key, true);
+   public void onWorldBlockAdded(long key) {
+      this.viewRevision++;
+      this.worldMutationRevision++;
+      this.recordLiveChange(key);
+      this.invalidateAround(key);
+      this.recordBucketMutation(key, true);
    }
 
-   private void init_V_J_Z(long key, boolean addition) {
+   private void recordBucketMutation(long key, boolean addition) {
       long bucket = BlockPos.asLong(BlockPos.getX(key) >> 2, BlockPos.getY(key) >> 2, BlockPos.getZ(key) >> 2);
-      (addition ? this.load_Long2LongOpenHashM : this.init_Long2LongOpenHashM).put(bucket, this.close_J);
+      (addition ? this.bucketAdditionRevision : this.bucketRemovalRevision).put(bucket, this.worldMutationRevision);
       if (addition) {
-         LongArrayList log = this.load_Long2ObjectOpenHas.computeIfAbsent(bucket, k -> new LongArrayList());
-         log.add(this.close_J);
+         LongArrayList log = this.bucketAdditionLogs.computeIfAbsent(bucket, k -> new LongArrayList());
+         log.add(this.worldMutationRevision);
          log.add(key);
          if (log.size() > 128) {
-            this.read_Long2LongOpenHashM.put(bucket, Math.max(this.read_Long2LongOpenHashM.get(bucket), log.getLong(0)));
+            this.bucketOverflowRevision.put(bucket, Math.max(this.bucketOverflowRevision.get(bucket), log.getLong(0)));
             log.removeElements(0, 2);
          }
       }
    }
 
-   public void read(long key) {
-      this.sync(key);
-      this.update_Long2ObjectOpenHas.remove(key);
+   public void onLiveStateChanged(long key) {
+      this.recordLiveChange(key);
+      this.snapshotStateCache.remove(key);
    }
 
-   private void sync(long key) {
-      this.poll_J++;
-      this.write(key);
+   private void recordLiveChange(long key) {
+      this.liveChangeRevision++;
+      this.appendChangeRing(key);
    }
 
-   void write(long key) {
-      this.push_J++;
-      this.init_JArr[this.push_I] = key;
-      this.push_I = (this.push_I + 1) % this.init_JArr.length;
-      this.pop_I = Math.min(this.pop_I + 1, this.init_JArr.length);
+   void appendChangeRing(long key) {
+      this.ringChangeRevision++;
+      this.recentChangedRing[this.recentChangedHead] = key;
+      this.recentChangedHead = (this.recentChangedHead + 1) % this.recentChangedRing.length;
+      this.recentChangedCount = Math.min(this.recentChangedCount + 1, this.recentChangedRing.length);
    }
 
-   long write_J() {
-      return this.poll_J;
+   long liveChangeRevision() {
+      return this.liveChangeRevision;
    }
 
-   long update_J() {
-      return this.push_J;
+   long ringChangeRevision() {
+      return this.ringChangeRevision;
    }
 
-   boolean init_Z_J_Long2ObjectMap(long since, Long2ObjectMap<BlockState> inputs) {
-      long changes = this.push_J - since;
+   boolean areInputsStillValid(long since, Long2ObjectMap<BlockState> inputs) {
+      long changes = this.ringChangeRevision - since;
       if (since >= 0L && changes >= 0L) {
-         if (since >= this.pop_J && changes <= this.pop_I) {
-            int cursor = this.push_I;
+         if (since >= this.ringResetRevision && changes <= this.recentChangedCount) {
+            int cursor = this.recentChangedHead;
 
             for (long changed = 0L; changed < changes; changed++) {
-               cursor = (cursor + this.init_JArr.length - 1) % this.init_JArr.length;
-               long key = this.init_JArr[cursor];
+               cursor = (cursor + this.recentChangedRing.length - 1) % this.recentChangedRing.length;
+               long key = this.recentChangedRing[cursor];
                BlockState wanted = inputs.get(key);
                if (wanted != null && this.getBlockState(BlockPos.of(key)) != wanted) {
                   return false;
@@ -324,74 +324,74 @@ public final class PrintView implements SignalGetter {
       }
    }
 
-   public void update(long key) {
-      this.update_Long2ObjectOpenHas.remove(key);
+   public void invalidateAround(long key) {
+      this.snapshotStateCache.remove(key);
       int x = BlockPos.getX(key);
       int y = BlockPos.getY(key);
       int z = BlockPos.getZ(key);
 
       for (int dy = -3; dy <= 2; dy++) {
-         this.flush(BlockPos.asLong(x, y + dy, z));
+         this.evictStandableEntry(BlockPos.asLong(x, y + dy, z));
       }
 
       for (int dx = -1; dx <= 1; dx++) {
          for (int dz = -1; dz <= 1; dz++) {
             for (int dy = -4; dy <= 1; dy++) {
-               this.flush(BlockPos.asLong(x + dx, y + dy, z + dz));
+               this.evictStandableEntry(BlockPos.asLong(x + dx, y + dy, z + dz));
             }
          }
       }
 
-      if (!this.load_Long2ObjectLinkedO.isEmpty() || !this.read_Long2ObjectLinkedO.isEmpty()) {
+      if (!this.coarseClickCache.isEmpty() || !this.detailedClickCache.isEmpty()) {
          for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                for (int dy = -3; dy <= 3; dy++) {
                   long s = BlockPos.asLong(x + dx, y + dy, z + dz);
-                  this.init_V_Long2ObjectLinkedO_J(this.load_Long2ObjectLinkedO, s);
-                  this.init_V_Long2ObjectLinkedO_J(this.read_Long2ObjectLinkedO, s);
+                  this.evictClickEntry(this.coarseClickCache, s);
+                  this.evictClickEntry(this.detailedClickCache, s);
                }
             }
          }
       }
    }
 
-   public void init_V() {
-      this.init_Long2ObjectLinkedO.clear();
-      this.load_Long2ObjectLinkedO.clear();
-      this.read_Long2ObjectLinkedO.clear();
-      this.poll_I = 0;
+   public void clearGeometryCaches() {
+      this.standableHeightCache.clear();
+      this.coarseClickCache.clear();
+      this.detailedClickCache.clear();
+      this.retainedReceiptCells = 0;
    }
 
-   void load_V() {
-      this.update_Long2ObjectOpenHas.clear();
-      this.flush_J++;
-      this.close_J++;
-      this.poll_J++;
-      this.pop_J = ++this.push_J;
-      this.push_I = this.pop_I = 0;
-      this.init_V();
-      this.init_Map.clear();
-      this.init_Long2LongOpenHashM.clear();
-      this.load_Long2LongOpenHashM.clear();
-      this.load_Long2ObjectOpenHas.clear();
-      this.read_Long2LongOpenHashM.clear();
-      this.init_Long2LongOpenHashM.defaultReturnValue(this.close_J);
+   void resetAllCaches() {
+      this.snapshotStateCache.clear();
+      this.viewRevision++;
+      this.worldMutationRevision++;
+      this.liveChangeRevision++;
+      this.ringResetRevision = ++this.ringChangeRevision;
+      this.recentChangedHead = this.recentChangedCount = 0;
+      this.clearGeometryCaches();
+      this.diagonalJumpProofCache.clear();
+      this.bucketRemovalRevision.clear();
+      this.bucketAdditionRevision.clear();
+      this.bucketAdditionLogs.clear();
+      this.bucketOverflowRevision.clear();
+      this.bucketRemovalRevision.defaultReturnValue(this.worldMutationRevision);
    }
 
-   @Nullable List<Vec3> init_List_J(long key, double feetY, boolean detailed) {
+   @Nullable List<Vec3> getCachedClickPoints(long key, double feetY, boolean detailed) {
       int x = BlockPos.getX(key);
       int y = BlockPos.getY(key);
       int z = BlockPos.getZ(key);
-      if (!this.read_Long2ObjectOpenHas.isEmpty() && this.load_Z(x, y, z)) {
+      if (!this.hypotheticalBlocks.isEmpty() && this.hasHypothesisNearClickCell(x, y, z)) {
          return null;
       }
 
-      Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> map = detailed ? this.read_Long2ObjectLinkedO : this.load_Long2ObjectLinkedO;
+      Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> map = detailed ? this.detailedClickCache : this.coarseClickCache;
       PrintView.Inner_CachePool entry = map.getAndMoveToLast(key);
-      boolean needsInputs = this.read_Z();
+      boolean needsInputs = this.needsGeometryInputTracking();
       if (entry != null && entry.feetY() == feetY && entry.points() != null) {
-         if (entry.inputs() == null && !needsInputs || entry.inputs() != null && this.load_Z_ArrayUtil_BufferHe(entry.inputs())) {
-            this.update_J++;
+         if (entry.inputs() == null && !needsInputs || entry.inputs() != null && this.validateAndForwardReceipt(entry.inputs())) {
+            this.clickCacheHits++;
             return entry.points();
          }
 
@@ -402,24 +402,24 @@ public final class PrintView implements SignalGetter {
 
       if (entry != null && entry.feetY() == feetY) {
          if (!needsInputs) {
-            long before = this.open_J;
+            long before = this.untrackedReadCount;
             List<Vec3> all = PrintClicks.load(this, key, feetY, detailed);
-            this.sync_J++;
-            if (this.open_J == before) {
-               this.init(map, key, feetY, all, null);
+            this.clickCacheMisses++;
+            if (this.untrackedReadCount == before) {
+               this.putClickCacheEntry(map, key, feetY, all, null);
             } else {
-               this.init_V_Long2ObjectLinkedO_J(map, key);
+               this.evictClickEntry(map, key);
             }
 
             return all;
          } else {
             try (PrintView.Inner_ConfigStore reads = new PrintView.Inner_ConfigStore()) {
                List<Vec3> all = PrintClicks.load(this, key, feetY, detailed);
-               this.sync_J++;
-               if (reads.init()) {
-                  this.init(map, key, feetY, all, this.init_ArrayUtil_BufferHe_ArrayUtil_ConfigSt(reads));
-               } else if (reads.init_J != this.open_J) {
-                  this.init_V_Long2ObjectLinkedO_J(map, key);
+               this.clickCacheMisses++;
+               if (reads.isPure()) {
+                  this.putClickCacheEntry(map, key, feetY, all, this.buildReceiptFromTracker(reads));
+               } else if (reads.startUntrackedCount != this.untrackedReadCount) {
+                  this.evictClickEntry(map, key);
                }
 
                return all;
@@ -427,109 +427,109 @@ public final class PrintView implements SignalGetter {
          }
       } else {
          if (entry == null && map.size() >= 8192) {
-            this.init_V_Long2ObjectLinkedO_J(map, map.firstLongKey());
+            this.evictClickEntry(map, map.firstLongKey());
          }
 
-         this.init_V_Long2ObjectLinkedO_J(map, key);
+         this.evictClickEntry(map, key);
          map.putAndMoveToLast(key, new PrintView.Inner_CachePool(feetY, null, null));
          return null;
       }
    }
 
-   private boolean read_Z() {
-      return !this.read_Long2ObjectOpenHas.isEmpty() || !this.init_ArrayList.isEmpty() || !this.load_ArrayList.isEmpty();
+   private boolean needsGeometryInputTracking() {
+      return !this.hypotheticalBlocks.isEmpty() || !this.activeReadTrackers.isEmpty() || !this.activeNativeTrackers.isEmpty();
    }
 
-   private void init(
+   private void putClickCacheEntry(
       Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> map, long key, double feetY, List<Vec3> points, PrintView.@Nullable Inner_BufferHelper inputs
    ) {
-      this.init_V_Long2ObjectLinkedO_J(map, key);
-      if (inputs != null && !this.init_Z_I(inputs.cells().length)) {
+      this.evictClickEntry(map, key);
+      if (inputs != null && !this.ensureReceiptBudget(inputs.cells().length)) {
          inputs = null;
       }
 
       map.putAndMoveToLast(key, new PrintView.Inner_CachePool(feetY, points, inputs));
       if (inputs != null) {
-         this.poll_I = this.poll_I + inputs.cells().length;
+         this.retainedReceiptCells = this.retainedReceiptCells + inputs.cells().length;
       }
    }
 
-   private void init_V_J(long key, double height, PrintView.@Nullable Inner_BufferHelper inputs) {
-      this.flush(key);
-      if (this.init_Long2ObjectLinkedO.size() >= 65536) {
-         this.flush(this.init_Long2ObjectLinkedO.firstLongKey());
+   private void putStandableCacheEntry(long key, double height, PrintView.@Nullable Inner_BufferHelper inputs) {
+      this.evictStandableEntry(key);
+      if (this.standableHeightCache.size() >= 65536) {
+         this.evictStandableEntry(this.standableHeightCache.firstLongKey());
       }
 
-      if (inputs != null && !this.init_Z_I(inputs.cells().length)) {
+      if (inputs != null && !this.ensureReceiptBudget(inputs.cells().length)) {
          inputs = null;
       }
 
-      this.init_Long2ObjectLinkedO.putAndMoveToLast(key, new PrintView.Inner_NetHelper(height, inputs));
+      this.standableHeightCache.putAndMoveToLast(key, new PrintView.Inner_NetHelper(height, inputs));
       if (inputs != null) {
-         this.poll_I = this.poll_I + inputs.cells().length;
+         this.retainedReceiptCells = this.retainedReceiptCells + inputs.cells().length;
       }
    }
 
-   private void flush(long key) {
-      PrintView.Inner_NetHelper removed = this.init_Long2ObjectLinkedO.remove(key);
+   private void evictStandableEntry(long key) {
+      PrintView.Inner_NetHelper removed = this.standableHeightCache.remove(key);
       if (removed != null && removed.inputs() != null) {
-         this.poll_I = this.poll_I - removed.inputs().cells().length;
+         this.retainedReceiptCells = this.retainedReceiptCells - removed.inputs().cells().length;
       }
    }
 
-   private void init_V_Long2ObjectLinkedO_J(Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> map, long key) {
+   private void evictClickEntry(Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> map, long key) {
       PrintView.Inner_CachePool removed = map.remove(key);
       if (removed != null && removed.inputs() != null) {
-         this.poll_I = this.poll_I - removed.inputs().cells().length;
+         this.retainedReceiptCells = this.retainedReceiptCells - removed.inputs().cells().length;
       }
    }
 
-   private boolean init_Z_I(int count) {
-      if (count > this.open_I) {
+   private boolean ensureReceiptBudget(int count) {
+      if (count > this.geometryInputBudget) {
          return false;
       }
 
-      for (int evictions = 0; this.poll_I + count > this.open_I && evictions < 32; evictions++) {
-         if (!this.init_Long2ObjectLinkedO.isEmpty()) {
-            this.flush(this.init_Long2ObjectLinkedO.firstLongKey());
-         } else if (this.read_Long2ObjectLinkedO.isEmpty() || !this.load_Long2ObjectLinkedO.isEmpty() && (evictions & 1) != 0) {
-            if (this.load_Long2ObjectLinkedO.isEmpty()) {
+      for (int evictions = 0; this.retainedReceiptCells + count > this.geometryInputBudget && evictions < 32; evictions++) {
+         if (!this.standableHeightCache.isEmpty()) {
+            this.evictStandableEntry(this.standableHeightCache.firstLongKey());
+         } else if (this.detailedClickCache.isEmpty() || !this.coarseClickCache.isEmpty() && (evictions & 1) != 0) {
+            if (this.coarseClickCache.isEmpty()) {
                return false;
             }
 
-            this.init_V_Long2ObjectLinkedO_J(this.load_Long2ObjectLinkedO, this.load_Long2ObjectLinkedO.firstLongKey());
+            this.evictClickEntry(this.coarseClickCache, this.coarseClickCache.firstLongKey());
          } else {
-            this.init_V_Long2ObjectLinkedO_J(this.read_Long2ObjectLinkedO, this.read_Long2ObjectLinkedO.firstLongKey());
+            this.evictClickEntry(this.detailedClickCache, this.detailedClickCache.firstLongKey());
          }
       }
 
-      return this.poll_I + count <= this.open_I;
+      return this.retainedReceiptCells + count <= this.geometryInputBudget;
    }
 
-   private PrintView.@Nullable Inner_BufferHelper init_ArrayUtil_BufferHe_ArrayUtil_ConfigSt(PrintView.Inner_ConfigStore reads) {
-      if (!reads.load()) {
+   private PrintView.@Nullable Inner_BufferHelper buildReceiptFromTracker(PrintView.Inner_ConfigStore reads) {
+      if (!reads.canBuildReceipt()) {
          return null;
       }
 
-      long[] cells = reads.init_LongOpenHashSet.toLongArray();
+      long[] cells = reads.readCells.toLongArray();
       Arrays.sort(cells);
       return new PrintView.Inner_BufferHelper(cells);
    }
 
-   private boolean init_Z_ArrayUtil_BufferHe(PrintView.Inner_BufferHelper inputs) {
-      if (this.read_Long2ObjectOpenHas.isEmpty()) {
+   private boolean receiptOverlapsHypotheses(PrintView.Inner_BufferHelper inputs) {
+      if (this.hypotheticalBlocks.isEmpty()) {
          return false;
       }
 
-      if (this.read_Long2ObjectOpenHas.size() < inputs.cells().length) {
-         for (long key : this.read_Long2ObjectOpenHas.keySet()) {
+      if (this.hypotheticalBlocks.size() < inputs.cells().length) {
+         for (long key : this.hypotheticalBlocks.keySet()) {
             if (Arrays.binarySearch(inputs.cells(), key) >= 0) {
                return true;
             }
          }
       } else {
          for (long key : inputs.cells()) {
-            if (this.read_Long2ObjectOpenHas.containsKey(key)) {
+            if (this.hypotheticalBlocks.containsKey(key)) {
                return true;
             }
          }
@@ -538,31 +538,31 @@ public final class PrintView implements SignalGetter {
       return false;
    }
 
-   private boolean load_Z_ArrayUtil_BufferHe(PrintView.@Nullable Inner_BufferHelper inputs) {
+   private boolean validateAndForwardReceipt(PrintView.@Nullable Inner_BufferHelper inputs) {
       if (inputs == null) {
          return false;
       }
 
-      if (this.init_Z_ArrayUtil_BufferHe(inputs)) {
+      if (this.receiptOverlapsHypotheses(inputs)) {
          return false;
       }
 
-      if (this.init_ArrayList.isEmpty() && this.load_ArrayList.isEmpty()) {
+      if (this.activeReadTrackers.isEmpty() && this.activeNativeTrackers.isEmpty()) {
          return true;
       }
 
       boolean forwarding = false;
 
-      for (int i = 0; i < this.init_ArrayList.size(); i++) {
-         if (!this.init_ArrayList.get(i).init_Z(inputs)) {
+      for (int i = 0; i < this.activeReadTrackers.size(); i++) {
+         if (!this.activeReadTrackers.get(i).hasForwarded(inputs)) {
             forwarding = true;
             break;
          }
       }
 
       if (!forwarding) {
-         for (int i = 0; i < this.load_ArrayList.size(); i++) {
-            if (!this.load_ArrayList.get(i).init_Z(inputs)) {
+         for (int i = 0; i < this.activeNativeTrackers.size(); i++) {
+            if (!this.activeNativeTrackers.get(i).hasForwarded(inputs)) {
                forwarding = true;
                break;
             }
@@ -576,18 +576,18 @@ public final class PrintView implements SignalGetter {
       for (long key : inputs.cells()) {
          boolean needed = false;
 
-         for (int i = 0; i < this.init_ArrayList.size(); i++) {
-            PrintView.Inner_TaskQueue reads = this.init_ArrayList.get(i);
-            if (!reads.init_Z(inputs) && !reads.init_Long2ObjectOpenHas.containsKey(key)) {
+         for (int i = 0; i < this.activeReadTrackers.size(); i++) {
+            PrintView.Inner_TaskQueue reads = this.activeReadTrackers.get(i);
+            if (!reads.hasForwarded(inputs) && !reads.recordedStates.containsKey(key)) {
                needed = true;
                break;
             }
          }
 
          if (!needed) {
-            for (int i = 0; i < this.load_ArrayList.size(); i++) {
-               PrintView.Inner_ConfigStore reads = this.load_ArrayList.get(i);
-               if (!reads.init_Z(inputs) && !reads.init_LongOpenHashSet.contains(key)) {
+            for (int i = 0; i < this.activeNativeTrackers.size(); i++) {
+               PrintView.Inner_ConfigStore reads = this.activeNativeTrackers.get(i);
+               if (!reads.hasForwarded(inputs) && !reads.readCells.contains(key)) {
                   needed = true;
                   break;
                }
@@ -596,45 +596,45 @@ public final class PrintView implements SignalGetter {
 
          if (needed) {
             BlockPos pos = BlockPos.of(key);
-            if (this.get == 0) {
-               this.tick_J++;
+            if (this.workAccountingPauseDepth == 0) {
+               this.workUnits++;
             }
 
-            BlockState live = this.init_BlockState_BlockPos(pos);
-            if (live == init_BlockState) {
+            BlockState live = this.getLiveBlockState(pos);
+            if (live == UNLOADED_SENTINEL) {
                return false;
             }
 
-            for (int i = 0; i < this.init_ArrayList.size(); i++) {
-               PrintView.Inner_TaskQueue reads = this.init_ArrayList.get(i);
-               if (!reads.init_Z(inputs)) {
-                  reads.init(pos, live);
+            for (int i = 0; i < this.activeReadTrackers.size(); i++) {
+               PrintView.Inner_TaskQueue reads = this.activeReadTrackers.get(i);
+               if (!reads.hasForwarded(inputs)) {
+                  reads.recordPosWithLive(pos, live);
                }
             }
 
-            for (int i = 0; i < this.load_ArrayList.size(); i++) {
-               PrintView.Inner_ConfigStore reads = this.load_ArrayList.get(i);
-               if (!reads.init_Z(inputs)) {
-                  reads.init(key);
+            for (int i = 0; i < this.activeNativeTrackers.size(); i++) {
+               PrintView.Inner_ConfigStore reads = this.activeNativeTrackers.get(i);
+               if (!reads.hasForwarded(inputs)) {
+                  reads.recordRead(key);
                }
             }
          }
       }
 
-      for (int i = 0; i < this.init_ArrayList.size(); i++) {
-         this.init_ArrayList.get(i).init_V(inputs);
+      for (int i = 0; i < this.activeReadTrackers.size(); i++) {
+         this.activeReadTrackers.get(i).markForwarded(inputs);
       }
 
-      for (int i = 0; i < this.load_ArrayList.size(); i++) {
-         this.load_ArrayList.get(i).init_V(inputs);
+      for (int i = 0; i < this.activeNativeTrackers.size(); i++) {
+         this.activeNativeTrackers.get(i).markForwarded(inputs);
       }
 
       return true;
    }
 
-   private boolean load_Z(int x, int y, int z) {
-      if (this.read_Long2ObjectOpenHas.size() <= 32) {
-         for (long k : this.read_Long2ObjectOpenHas.keySet()) {
+   private boolean hasHypothesisNearClickCell(int x, int y, int z) {
+      if (this.hypotheticalBlocks.size() <= 32) {
+         for (long k : this.hypotheticalBlocks.keySet()) {
             int dx = BlockPos.getX(k) - x;
             int dy = BlockPos.getY(k) - y;
             int dz = BlockPos.getZ(k) - z;
@@ -648,7 +648,7 @@ public final class PrintView implements SignalGetter {
          for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                for (int dy = -3; dy <= 3; dy++) {
-                  if (this.read_Long2ObjectOpenHas.containsKey(BlockPos.asLong(x + dx, y + dy, z + dz))) {
+                  if (this.hypotheticalBlocks.containsKey(BlockPos.asLong(x + dx, y + dy, z + dz))) {
                      return true;
                   }
                }
@@ -659,117 +659,117 @@ public final class PrintView implements SignalGetter {
       }
    }
 
-   public long sync() {
-      return this.tick_J;
+   public long workUnits() {
+      return this.workUnits;
    }
 
-   public long flush() {
-      return this.run_J;
+   public long raycastCount() {
+      return this.raycastCount;
    }
 
-   public void read_V() {
-      this.get++;
+   public void pauseWorkAccounting() {
+      this.workAccountingPauseDepth++;
    }
 
-   public void write_V() {
-      this.get--;
+   public void resumeWorkAccounting() {
+      this.workAccountingPauseDepth--;
    }
 
    @Override
    public BlockState getBlockState(BlockPos pos) {
-      if (this.get == 0) {
-         this.tick_J++;
+      if (this.workAccountingPauseDepth == 0) {
+         this.workUnits++;
       }
 
-      for (int i = 0; i < this.init_ArrayList.size(); i++) {
-         this.init_ArrayList.get(i).init(pos);
+      for (int i = 0; i < this.activeReadTrackers.size(); i++) {
+         this.activeReadTrackers.get(i).recordPos(pos);
       }
 
-      for (int i = 0; i < this.load_ArrayList.size(); i++) {
-         this.load_ArrayList.get(i).init(pos.asLong());
+      for (int i = 0; i < this.activeNativeTrackers.size(); i++) {
+         this.activeNativeTrackers.get(i).recordRead(pos.asLong());
       }
 
-      if (!this.read_Long2ObjectOpenHas.isEmpty()) {
-         BlockState assumed = this.read_Long2ObjectOpenHas.get(pos.asLong());
+      if (!this.hypotheticalBlocks.isEmpty()) {
+         BlockState assumed = this.hypotheticalBlocks.get(pos.asLong());
          if (assumed != null) {
             return assumed;
          }
       }
 
-      return this.init_BlockState_BlockPos(pos);
+      return this.getLiveBlockState(pos);
    }
 
-   private BlockState init_BlockState_BlockPos(BlockPos pos) {
-      if (pos.getY() < this.init_EventBus.init_I() || pos.getY() >= this.init_EventBus.load_I()) {
-         return pos.getY() < this.init_EventBus.init_I() ? init_BlockState : Blocks.AIR.defaultBlockState();
+   private BlockState getLiveBlockState(BlockPos pos) {
+      if (pos.getY() < this.env.getMinY() || pos.getY() >= this.env.getMaxY()) {
+         return pos.getY() < this.env.getMinY() ? UNLOADED_SENTINEL : Blocks.AIR.defaultBlockState();
       }
 
-      if (!this.init_EventBus.load_Z(pos)) {
-         this.update_Long2ObjectOpenHas.remove(pos.asLong());
-         this.open_J++;
-         return init_BlockState;
+      if (!this.env.hasChunkAt(pos)) {
+         this.snapshotStateCache.remove(pos.asLong());
+         this.untrackedReadCount++;
+         return UNLOADED_SENTINEL;
       }
 
-      if (!this.write_Z) {
-         return this.init_BlockState_BlockPos_BlockState(pos, this.init_EventBus.init_BlockState_BlockPos(pos));
+      if (!this.snapshotCacheActive) {
+         return this.trackLavaObservation(pos, this.env.getBlockState(pos));
       }
 
       long key = pos.asLong();
-      BlockState state = this.update_Long2ObjectOpenHas.get(key);
+      BlockState state = this.snapshotStateCache.get(key);
       if (state == null) {
-         state = this.init_BlockState_BlockPos_BlockState(pos, this.init_EventBus.init_BlockState_BlockPos(pos));
-         if (this.update_Long2ObjectOpenHas.size() >= 32768) {
-            this.update_Long2ObjectOpenHas.clear();
+         state = this.trackLavaObservation(pos, this.env.getBlockState(pos));
+         if (this.snapshotStateCache.size() >= 32768) {
+            this.snapshotStateCache.clear();
          }
 
-         this.update_Long2ObjectOpenHas.put(key, state);
+         this.snapshotStateCache.put(key, state);
       }
 
       return state;
    }
 
-   private BlockState init_BlockState_BlockPos_BlockState(BlockPos pos, BlockState state) {
+   private BlockState trackLavaObservation(BlockPos pos, BlockState state) {
       if (state.getFluidState().getType().isSame(Fluids.LAVA)) {
-         this.init_LongOpenHashSet.add(pos.asLong());
-      } else if (!this.init_LongOpenHashSet.isEmpty()) {
-         this.init_LongOpenHashSet.remove(pos.asLong());
+         this.observedLavaCells.add(pos.asLong());
+      } else if (!this.observedLavaCells.isEmpty()) {
+         this.observedLavaCells.remove(pos.asLong());
       }
 
       return state;
    }
 
-   PrintView.Inner_TaskQueue init_ArrayUtil_TaskQueu() {
+   PrintView.Inner_TaskQueue openReadTracker() {
       PrintView.Inner_TaskQueue reads = new PrintView.Inner_TaskQueue(false);
-      this.init_ArrayList.add(reads);
+      this.activeReadTrackers.add(reads);
       return reads;
    }
 
-   PrintView.Inner_TaskQueue load_ArrayUtil_TaskQueu() {
+   PrintView.Inner_TaskQueue createRetainedReadTracker() {
       return new PrintView.Inner_TaskQueue(true);
    }
 
-   void init_V_ArrayUtil_TaskQueu(PrintView.Inner_TaskQueue inputs) {
-      if (!this.init_ArrayList.isEmpty() || !this.load_ArrayList.isEmpty()) {
-         for (long key : inputs.init_Long2ObjectOpenHas.keySet()) {
+   void replayTrackedReads(PrintView.Inner_TaskQueue inputs) {
+      if (!this.activeReadTrackers.isEmpty() || !this.activeNativeTrackers.isEmpty()) {
+         for (long key : inputs.recordedStates.keySet()) {
             this.getBlockState(BlockPos.of(key));
          }
       }
    }
 
-   private void init_V_BlockState_BlockPos(BlockState state, BlockPos pos) {
-      if (!this.update_Z && !this.read_ArrayList.isEmpty() && state != init_BlockState) {
+   private void recordDynamicShapeRead(BlockState state, BlockPos pos) {
+      if (!this.suppressDynamicShapeTracking && !this.activeDynamicShapeTrackers.isEmpty() && state != UNLOADED_SENTINEL) {
          Block block = state.getBlock();
          if ((block instanceof MovingPistonBlock || block instanceof ShulkerBoxBlock)
-            && (!this.init_Z_BlockPos(pos) || state == this.init_EventBus.init_BlockState_BlockPos(pos))) {
-            for (int i = 0; i < this.read_ArrayList.size(); i++) {
-               this.read_ArrayList.get(i).init_LongOpenHashSet.add(pos.asLong());
+            && (!this.hasHypothesisAt(pos) || state == this.env.getBlockState(pos))) {
+            for (int i = 0; i < this.activeDynamicShapeTrackers.size(); i++) {
+               this.activeDynamicShapeTrackers.get(i).pendingDynamicCells.add(pos.asLong());
             }
          }
       }
    }
 
-   public BlockState init_BlockState_I(int x, int y, int z) {
-      return this.getBlockState(this.init_BlockPos_MutableBl.set(x, y, z));
+   public BlockState getBlockStateAt(int x, int y, int z) {
+      return this.getBlockState(this.scratchPos.set(x, y, z));
    }
 
    @Override
@@ -779,68 +779,68 @@ public final class PrintView implements SignalGetter {
 
    @Override
    public @Nullable BlockEntity getBlockEntity(BlockPos pos) {
-      this.open_J++;
-      if (!this.init_EventBus.load_Z(pos)) {
+      this.untrackedReadCount++;
+      if (!this.env.hasChunkAt(pos)) {
          return null;
       }
 
-      BlockState assumed = this.read_Long2ObjectOpenHas.get(pos.asLong());
-      if (assumed != null && assumed != this.init_EventBus.init_BlockState_BlockPos(pos)) {
+      BlockState assumed = this.hypotheticalBlocks.get(pos.asLong());
+      if (assumed != null && assumed != this.env.getBlockState(pos)) {
          return null;
       }
 
-      this.init_V_BlockState_BlockPos(assumed == null ? this.init_EventBus.init_BlockState_BlockPos(pos) : assumed, pos);
-      return this.init_EventBus.init_BlockEntity_BlockPos(pos);
+      this.recordDynamicShapeRead(assumed == null ? this.env.getBlockState(pos) : assumed, pos);
+      return this.env.getBlockEntity(pos);
    }
 
    @Override
    public int getHeight() {
-      return this.init_EventBus.load_I() - this.init_EventBus.init_I();
+      return this.env.getMaxY() - this.env.getMinY();
    }
 
    @Override
    public int getMinY() {
-      return this.init_EventBus.init_I();
+      return this.env.getMinY();
    }
 
-   private BlockState load_BlockState_BlockPos(BlockPos pos) {
+   private BlockState requireKnownBlockState(BlockPos pos) {
       BlockState state = this.getBlockState(pos);
-      if (state == init_BlockState) {
+      if (state == UNLOADED_SENTINEL) {
          throw new UnsupportedOperationException("Unknown hypothetical support");
       } else {
          return state;
       }
    }
 
-   boolean init_Z_BlockState_BlockPos(BlockState state, BlockPos pos) {
-      if (this.init_LevelReader == null) {
-         this.init_LevelReader = (LevelReader)Proxy.newProxyInstance(
+   boolean canHypotheticallySurvive(BlockState state, BlockPos pos) {
+      if (this.survivalReaderProxy == null) {
+         this.survivalReaderProxy = (LevelReader)Proxy.newProxyInstance(
             LevelReader.class.getClassLoader(),
             new Class[]{LevelReader.class},
             (proxy, method, args) -> {
                Object var10000;
                switch (method.getName()) {
                   case "getBlockState":
-                     var10000 = this.load_BlockState_BlockPos((BlockPos)args[0]);
+                     var10000 = this.requireKnownBlockState((BlockPos)args[0]);
                      break;
                   case "getFluidState":
-                     var10000 = this.load_BlockState_BlockPos((BlockPos)args[0]).getFluidState();
+                     var10000 = this.requireKnownBlockState((BlockPos)args[0]).getFluidState();
                      break;
                   case "getBlockEntity":
                      if (method.getParameterCount() != 1) {
                         var10000 = InvocationHandler.invokeDefault(proxy, method, args);
                      } else {
-                        this.load_BlockState_BlockPos((BlockPos)args[0]);
+                        this.requireKnownBlockState((BlockPos)args[0]);
                         var10000 = this.getBlockEntity((BlockPos)args[0]);
                      }
                      break;
                   case "isEmptyBlock":
-                     var10000 = this.load_BlockState_BlockPos((BlockPos)args[0]).isAir();
+                     var10000 = this.requireKnownBlockState((BlockPos)args[0]).isAir();
                      break;
                   case "hasChunkAt":
                      var10000 = args.length == 1
-                        ? this.init_EventBus.load_Z((BlockPos)args[0])
-                        : this.init_EventBus.load_Z(new BlockPos((Integer)args[0], this.init_EventBus.init_I(), (Integer)args[1]));
+                        ? this.env.hasChunkAt((BlockPos)args[0])
+                        : this.env.hasChunkAt(new BlockPos((Integer)args[0], this.env.getMinY(), (Integer)args[1]));
                      break;
                   case "isUnobstructed":
                      throw new UnsupportedOperationException("No hypothetical entity clearance");
@@ -877,58 +877,58 @@ public final class PrintView implements SignalGetter {
       }
 
       try {
-         return state.canSurvive(this.init_LevelReader, pos);
+         return state.canSurvive(this.survivalReaderProxy, pos);
       } catch (UnsupportedOperationException unavailable) {
          return false;
       }
    }
 
-   public void init_V_BlockPos_BlockState(BlockPos pos, BlockState state) {
-      this.init_V_BlockPos(pos, state, false);
+   public void pushHypothesis(BlockPos pos, BlockState state) {
+      this.pushHypothesisInternal(pos, state, false);
    }
 
-   public void load(BlockPos pos, BlockState state) {
-      this.init_V_BlockPos(pos, state, true);
+   public void pushTemporaryHypothesis(BlockPos pos, BlockState state) {
+      this.pushHypothesisInternal(pos, state, true);
    }
 
-   public boolean init_Z_BlockPos(BlockPos pos) {
-      return this.read_Long2ObjectOpenHas.containsKey(pos.asLong());
+   public boolean hasHypothesisAt(BlockPos pos) {
+      return this.hypotheticalBlocks.containsKey(pos.asLong());
    }
 
-   public boolean load_Z_BlockPos(BlockPos pos) {
-      return this.load_LongOpenHashSet.contains(pos.asLong());
+   public boolean isOwnedTemporaryAt(BlockPos pos) {
+      return this.ownedTemporaryBlocks.contains(pos.asLong());
    }
 
-   private void init_V_BlockPos(BlockPos pos, BlockState state, boolean ownedTemporary) {
-      this.flush_J++;
+   private void pushHypothesisInternal(BlockPos pos, BlockState state, boolean ownedTemporary) {
+      this.viewRevision++;
       long key = pos.asLong();
-      BlockState old = this.read_Long2ObjectOpenHas.put(key, state);
+      BlockState old = this.hypotheticalBlocks.put(key, state);
       if (old == null) {
-         this.load(key, true);
+         this.updateHypothesisColumnMask(key, true);
       }
 
       if (old != null) {
-         this.write_Long2ObjectOpenHas
+         this.hypotheticalUndoStacks
             .computeIfAbsent(key, ignored -> new ArrayDeque<>())
-            .push(new PrintView.Inner_DataUtil(old, this.load_LongOpenHashSet.contains(key)));
+            .push(new PrintView.Inner_DataUtil(old, this.ownedTemporaryBlocks.contains(key)));
       }
 
       if (ownedTemporary) {
-         this.load_LongOpenHashSet.add(key);
+         this.ownedTemporaryBlocks.add(key);
       } else {
-         this.load_LongOpenHashSet.remove(key);
+         this.ownedTemporaryBlocks.remove(key);
       }
    }
 
-   public boolean read(BlockPos pos) {
-      if (this.read_Long2ObjectOpenHas.isEmpty()) {
+   public boolean hasNoHypothesisInNeighborhood(BlockPos pos) {
+      if (this.hypotheticalBlocks.isEmpty()) {
          return true;
       }
 
       for (int dx = -1; dx <= 1; dx++) {
          for (int dy = -1; dy <= 1; dy++) {
             for (int dz = -1; dz <= 1; dz++) {
-               if (this.read_Long2ObjectOpenHas.containsKey(BlockPos.asLong(pos.getX() + dx, pos.getY() + dy, pos.getZ() + dz))) {
+               if (this.hypotheticalBlocks.containsKey(BlockPos.asLong(pos.getX() + dx, pos.getY() + dy, pos.getZ() + dz))) {
                   return false;
                }
             }
@@ -938,95 +938,95 @@ public final class PrintView implements SignalGetter {
       return true;
    }
 
-   public void init_V_BlockPos(BlockPos pos) {
-      this.flush_J++;
+   public void popHypothesis(BlockPos pos) {
+      this.viewRevision++;
       long key = pos.asLong();
-      ArrayDeque<PrintView.Inner_DataUtil> stack = this.write_Long2ObjectOpenHas.get(key);
+      ArrayDeque<PrintView.Inner_DataUtil> stack = this.hypotheticalUndoStacks.get(key);
       if (stack == null) {
-         if (this.read_Long2ObjectOpenHas.remove(key) != null) {
-            this.load(key, false);
+         if (this.hypotheticalBlocks.remove(key) != null) {
+            this.updateHypothesisColumnMask(key, false);
          }
 
-         this.load_LongOpenHashSet.remove(key);
+         this.ownedTemporaryBlocks.remove(key);
       } else {
          PrintView.Inner_DataUtil old = stack.pop();
-         this.read_Long2ObjectOpenHas.put(key, old.state());
+         this.hypotheticalBlocks.put(key, old.state());
          if (old.temporary()) {
-            this.load_LongOpenHashSet.add(key);
+            this.ownedTemporaryBlocks.add(key);
          } else {
-            this.load_LongOpenHashSet.remove(key);
+            this.ownedTemporaryBlocks.remove(key);
          }
 
          if (stack.isEmpty()) {
-            this.write_Long2ObjectOpenHas.remove(key);
+            this.hypotheticalUndoStacks.remove(key);
          }
       }
    }
 
-   public void update_V() {
-      if (!this.read_Long2ObjectOpenHas.isEmpty()) {
-         this.flush_J++;
+   public void clearHypotheses() {
+      if (!this.hypotheticalBlocks.isEmpty()) {
+         this.viewRevision++;
       }
 
-      this.read_Long2ObjectOpenHas.clear();
-      this.write_Long2LongOpenHashM.clear();
-      this.write_Long2ObjectOpenHas.clear();
-      this.load_LongOpenHashSet.clear();
+      this.hypotheticalBlocks.clear();
+      this.hypotheticalColumnMasks.clear();
+      this.hypotheticalUndoStacks.clear();
+      this.ownedTemporaryBlocks.clear();
    }
 
-   private void load(long key, boolean present) {
+   private void updateHypothesisColumnMask(long key, boolean present) {
       int y = BlockPos.getY(key);
       long column = BlockPos.asLong(BlockPos.getX(key), y >> 6, BlockPos.getZ(key));
       long bit = 1L << y;
-      long before = this.write_Long2LongOpenHashM.get(column);
+      long before = this.hypotheticalColumnMasks.get(column);
       long after = present ? before | bit : before & ~bit;
       if (after == 0L) {
-         this.write_Long2LongOpenHashM.remove(column);
+         this.hypotheticalColumnMasks.remove(column);
       } else {
-         this.write_Long2LongOpenHashM.put(column, after);
+         this.hypotheticalColumnMasks.put(column, after);
       }
    }
 
-   public int init_I() {
-      return this.read_Long2ObjectOpenHas.size();
+   public int hypothesisCount() {
+      return this.hypotheticalBlocks.size();
    }
 
-   public boolean load_Z() {
-      return !this.read_Long2ObjectOpenHas.isEmpty();
+   public boolean hasAnyHypothesis() {
+      return !this.hypotheticalBlocks.isEmpty();
    }
 
-   public VoxelShape init_VoxelShape_BlockPos(BlockPos pos) {
+   public VoxelShape getCollisionShape(BlockPos pos) {
       BlockState state = this.getBlockState(pos);
-      this.init_V_BlockState_BlockPos(state, pos);
+      this.recordDynamicShapeRead(state, pos);
       return state.getCollisionShape(this, pos);
    }
 
-   List<AABB> init_List_BlockState_BlockPos(BlockState state, BlockPos pos) {
+   List<AABB> getCollisionBoxesForState(BlockState state, BlockPos pos) {
       if (state.getBlock().hasDynamicShape()) {
-         this.open_J++;
-         this.init_V_BlockState_BlockPos(state, pos);
+         this.untrackedReadCount++;
+         this.recordDynamicShapeRead(state, pos);
          return state.getCollisionShape(this, pos).toAabbs();
       } else {
-         return this.init_IdentityHashMap.computeIfAbsent(state, key -> List.copyOf(key.getCollisionShape(this, pos).toAabbs()));
+         return this.collisionBoxesCache.computeIfAbsent(state, key -> List.copyOf(key.getCollisionShape(this, pos).toAabbs()));
       }
    }
 
-   List<AABB> init_List_BlockPos(BlockPos pos) {
-      return this.init_List_BlockState_BlockPos(this.getBlockState(pos), pos);
+   List<AABB> getCollisionBoxesAt(BlockPos pos) {
+      return this.getCollisionBoxesForState(this.getBlockState(pos), pos);
    }
 
-   public VoxelShape load_VoxelShape_BlockPos(BlockPos pos) {
+   public VoxelShape getOutlineShape(BlockPos pos) {
       return this.getBlockState(pos).getShape(this, pos);
    }
 
-   public boolean init_Z_AABB(AABB box) {
+   public boolean isBoxClear(AABB box) {
       AABB inset = box.deflate(1.0E-6);
-      int x0 = init_I_D(box.minX);
-      int x1 = init_I_D(box.maxX - 1.0E-7);
-      int y0 = init_I_D(box.minY);
-      int y1 = init_I_D(box.maxY - 1.0E-7);
-      int z0 = init_I_D(box.minZ);
-      int z1 = init_I_D(box.maxZ - 1.0E-7);
+      int x0 = floorInt(box.minX);
+      int x1 = floorInt(box.maxX - 1.0E-7);
+      int y0 = floorInt(box.minY);
+      int y1 = floorInt(box.maxY - 1.0E-7);
+      int z0 = floorInt(box.minZ);
+      int z1 = floorInt(box.maxZ - 1.0E-7);
       MutableBlockPos p = new MutableBlockPos();
 
       for (int x = x0; x <= x1; x++) {
@@ -1035,7 +1035,7 @@ public final class PrintView implements SignalGetter {
                p.set(x, y, z);
                BlockState state = this.getBlockState(p);
                if (!state.isAir()) {
-                  for (AABB b : this.init_List_BlockState_BlockPos(state, p)) {
+                  for (AABB b : this.getCollisionBoxesForState(state, p)) {
                      if (b.move(x, y, z).intersects(inset)) {
                         return false;
                      }
@@ -1048,14 +1048,14 @@ public final class PrintView implements SignalGetter {
       return true;
    }
 
-   public List<AABB> init_List_AABB(AABB query) {
+   public List<AABB> collectCollisions(AABB query) {
       List<AABB> out = new ArrayList<>();
-      int x0 = init_I_D(query.minX);
-      int x1 = init_I_D(query.maxX);
-      int y0 = init_I_D(query.minY) - 1;
-      int y1 = init_I_D(query.maxY);
-      int z0 = init_I_D(query.minZ);
-      int z1 = init_I_D(query.maxZ);
+      int x0 = floorInt(query.minX);
+      int x1 = floorInt(query.maxX);
+      int y0 = floorInt(query.minY) - 1;
+      int y1 = floorInt(query.maxY);
+      int z0 = floorInt(query.minZ);
+      int z1 = floorInt(query.maxZ);
       MutableBlockPos p = new MutableBlockPos();
 
       for (int x = x0; x <= x1; x++) {
@@ -1064,7 +1064,7 @@ public final class PrintView implements SignalGetter {
                p.set(x, y, z);
                BlockState state = this.getBlockState(p);
                if (!state.isAir()) {
-                  for (AABB b : this.init_List_BlockState_BlockPos(state, p)) {
+                  for (AABB b : this.getCollisionBoxesForState(state, p)) {
                      AABB moved = b.move(x, y, z);
                      if (moved.intersects(query)) {
                         out.add(moved);
@@ -1078,7 +1078,7 @@ public final class PrintView implements SignalGetter {
       return out;
    }
 
-   public boolean load_Z_AABB(AABB box) {
+   public boolean intersectsHazard(AABB box) {
       AABB b = box.deflate(0.001);
 
       for (BlockPos q : BlockPos.betweenClosed(BlockPos.containing(b.minX, b.minY, b.minZ), BlockPos.containing(b.maxX, b.maxY, b.maxZ))) {
@@ -1089,7 +1089,7 @@ public final class PrintView implements SignalGetter {
                if (b.minY < q.getY() + fluid.getHeight(this, q)) {
                   return true;
                }
-            } else if (init_Z_BlockState(s)) {
+            } else if (isHazardBlock(s)) {
                return true;
             }
          }
@@ -1098,7 +1098,7 @@ public final class PrintView implements SignalGetter {
       return false;
    }
 
-   public static boolean init_Z_BlockState(BlockState state) {
+   public static boolean isHazardBlock(BlockState state) {
       if (state.isAir()) {
          return false;
       }
@@ -1119,42 +1119,42 @@ public final class PrintView implements SignalGetter {
          || b instanceof PointedDripstoneBlock;
    }
 
-   public double init_D_I_2(int x, int y, int z) {
-      if (!this.read_Long2ObjectOpenHas.isEmpty() && this.read(x, y, z)) {
-         return this.load_D(x, y, z);
+   public double standingHeightAt(int x, int y, int z) {
+      if (!this.hypotheticalBlocks.isEmpty() && this.hasHypothesisNearStandCell(x, y, z)) {
+         return this.computeStandingHeight(x, y, z);
       }
 
       long key = BlockPos.asLong(x, y, z);
-      PrintView.Inner_NetHelper cached = this.init_Long2ObjectLinkedO.getAndMoveToLast(key);
-      boolean needsInputs = this.read_Z();
+      PrintView.Inner_NetHelper cached = this.standableHeightCache.getAndMoveToLast(key);
+      boolean needsInputs = this.needsGeometryInputTracking();
       if (cached != null) {
-         if (cached.inputs() == null && !needsInputs || cached.inputs() != null && this.load_Z_ArrayUtil_BufferHe(cached.inputs())) {
-            this.init_J++;
+         if (cached.inputs() == null && !needsInputs || cached.inputs() != null && this.validateAndForwardReceipt(cached.inputs())) {
+            this.standableCacheHits++;
             return cached.height();
          }
 
          if (cached.inputs() != null) {
-            return this.load_D(x, y, z);
+            return this.computeStandingHeight(x, y, z);
          }
       }
 
       if (!needsInputs) {
-         long before = this.open_J;
-         double height = this.load_D(x, y, z);
-         this.load_J++;
-         if (this.open_J == before) {
-            this.init_V_J(key, height, null);
+         long before = this.untrackedReadCount;
+         double height = this.computeStandingHeight(x, y, z);
+         this.standableCacheMisses++;
+         if (this.untrackedReadCount == before) {
+            this.putStandableCacheEntry(key, height, null);
          }
 
          return height;
       } else {
          try (PrintView.Inner_ConfigStore reads = new PrintView.Inner_ConfigStore()) {
-            double h = this.load_D(x, y, z);
-            this.load_J++;
-            if (reads.init()) {
-               this.init_V_J(key, h, this.init_ArrayUtil_BufferHe_ArrayUtil_ConfigSt(reads));
-            } else if (reads.init_J != this.open_J) {
-               this.flush(key);
+            double h = this.computeStandingHeight(x, y, z);
+            this.standableCacheMisses++;
+            if (reads.isPure()) {
+               this.putStandableCacheEntry(key, h, this.buildReceiptFromTracker(reads));
+            } else if (reads.startUntrackedCount != this.untrackedReadCount) {
+               this.evictStandableEntry(key);
             }
 
             return h;
@@ -1162,9 +1162,9 @@ public final class PrintView implements SignalGetter {
       }
    }
 
-   private boolean read(int x, int y, int z) {
-      if (this.read_Long2ObjectOpenHas.size() <= 2) {
-         for (long k : this.read_Long2ObjectOpenHas.keySet()) {
+   private boolean hasHypothesisNearStandCell(int x, int y, int z) {
+      if (this.hypotheticalBlocks.size() <= 2) {
+         for (long k : this.hypotheticalBlocks.keySet()) {
             int dx = BlockPos.getX(k) - x;
             int dy = BlockPos.getY(k) - y;
             int dz = BlockPos.getZ(k) - z;
@@ -1185,11 +1185,11 @@ public final class PrintView implements SignalGetter {
 
          for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
-               if ((this.write_Long2LongOpenHashM.get(BlockPos.asLong(x + dx, lowSection, z + dz)) & lowMask) != 0L) {
+               if ((this.hypotheticalColumnMasks.get(BlockPos.asLong(x + dx, lowSection, z + dz)) & lowMask) != 0L) {
                   return true;
                }
 
-               if (highMask != 0L && (this.write_Long2LongOpenHashM.get(BlockPos.asLong(x + dx, highSection, z + dz)) & highMask) != 0L) {
+               if (highMask != 0L && (this.hypotheticalColumnMasks.get(BlockPos.asLong(x + dx, highSection, z + dz)) & highMask) != 0L) {
                   return true;
                }
             }
@@ -1199,7 +1199,7 @@ public final class PrintView implements SignalGetter {
       }
    }
 
-   private double load_D(int x, int y, int z) {
+   private double computeStandingHeight(int x, int y, int z) {
       MutableBlockPos p = new MutableBlockPos();
       double cx = x + 0.5;
       double cz = z + 0.5;
@@ -1210,15 +1210,15 @@ public final class PrintView implements SignalGetter {
          p.set(x, y + dy, z);
          BlockState state = this.getBlockState(p);
          if (!state.isAir()) {
-            if (state == init_BlockState) {
+            if (state == UNLOADED_SENTINEL) {
                return 0.0 / 0.0;
             }
 
-            if (init_Z_BlockState(state)) {
+            if (isHazardBlock(state)) {
                return 0.0 / 0.0;
             }
 
-            for (AABB b : this.init_List_BlockState_BlockPos(state, p)) {
+            for (AABB b : this.getCollisionBoxesForState(state, p)) {
                if (!(b.maxX + x <= cx - 0.3) && !(b.minX + x >= cx + 0.3) && !(b.maxZ + z <= cz - 0.3) && !(b.minZ + z >= cz + 0.3)) {
                   double bt = b.maxY + y + dy;
                   double ox = Math.min(b.maxX + x, cx + 0.3) - Math.max(b.minX + x, cx - 0.3);
@@ -1242,14 +1242,14 @@ public final class PrintView implements SignalGetter {
          return 0.0 / 0.0;
       }
 
-      if (!this.init_Z_AABB(PrintGeometry.init(cx, top, cz, false)) && !this.init_Z_AABB(PrintGeometry.init(cx, top, cz, true))) {
+      if (!this.isBoxClear(PrintGeometry.init(cx, top, cz, false)) && !this.isBoxClear(PrintGeometry.init(cx, top, cz, true))) {
          return 0.0 / 0.0;
       }
 
       for (int dy = 0; dy <= 2; dy++) {
          p.set(x, y + dy, z);
          BlockState state = this.getBlockState(p);
-         if (init_Z_BlockState(state) || !state.getFluidState().isEmpty() || state == init_BlockState) {
+         if (isHazardBlock(state) || !state.getFluidState().isEmpty() || state == UNLOADED_SENTINEL) {
             return 0.0 / 0.0;
          }
       }
@@ -1268,11 +1268,11 @@ public final class PrintView implements SignalGetter {
       return top;
    }
 
-   public boolean init_Z_I(int x, int y, int z) {
-      return !Double.isNaN(this.init_D_I_2(x, y, z));
+   public boolean isStandable(int x, int y, int z) {
+      return !Double.isNaN(this.standingHeightAt(x, y, z));
    }
 
-   public double init_D_I(int x, int z, double feet) {
+   public double supportAreaAtCell(int x, int z, double feet) {
       MutableBlockPos p = new MutableBlockPos();
       double cx = x + 0.5;
       double cz = z + 0.5;
@@ -1282,8 +1282,8 @@ public final class PrintView implements SignalGetter {
       for (int y = cy - 1; y <= cy; y++) {
          p.set(x, y, z);
          BlockState state = this.getBlockState(p);
-         if (!state.isAir() && state != init_BlockState) {
-            for (AABB b : this.init_List_BlockState_BlockPos(state, p)) {
+         if (!state.isAir() && state != UNLOADED_SENTINEL) {
+            for (AABB b : this.getCollisionBoxesForState(state, p)) {
                double top = b.maxY + y;
                if (!(top > feet + 1.0E-6) && !(top < feet - 0.6)) {
                   double ox = Math.min(b.maxX + x, cx + 0.3) - Math.max(b.minX + x, cx - 0.3);
@@ -1299,17 +1299,17 @@ public final class PrintView implements SignalGetter {
       return area;
    }
 
-   double init_D_D(double cx, double cz, double feet) {
+   double supportAreaAtPoint(double cx, double cz, double feet) {
       double area = 0.0;
-      int cy = init_I_D(feet - 1.0E-6);
+      int cy = floorInt(feet - 1.0E-6);
 
-      for (int x = init_I_D(cx - 0.3); x <= init_I_D(cx + 0.3); x++) {
-         for (int z = init_I_D(cz - 0.3); z <= init_I_D(cz + 0.3); z++) {
+      for (int x = floorInt(cx - 0.3); x <= floorInt(cx + 0.3); x++) {
+         for (int z = floorInt(cz - 0.3); z <= floorInt(cz + 0.3); z++) {
             for (int y = cy - 1; y <= cy; y++) {
                BlockPos p = new BlockPos(x, y, z);
                BlockState state = this.getBlockState(p);
-               if (!state.isAir() && state != init_BlockState) {
-                  for (AABB b : this.init_List_BlockState_BlockPos(state, p)) {
+               if (!state.isAir() && state != UNLOADED_SENTINEL) {
+                  for (AABB b : this.getCollisionBoxesForState(state, p)) {
                      double top = b.maxY + y;
                      if (!(Math.abs(top - feet) > 1.0E-6)) {
                         double ox = Math.min(b.maxX + x, cx + 0.3) - Math.max(b.minX + x, cx - 0.3);
@@ -1327,22 +1327,22 @@ public final class PrintView implements SignalGetter {
       return area;
    }
 
-   public boolean write(BlockPos pos) {
+   public boolean isFullSolidBlock(BlockPos pos) {
       BlockState state = this.getBlockState(pos);
-      return state != init_BlockState && state.isCollisionShapeFullBlock(this, pos);
+      return state != UNLOADED_SENTINEL && state.isCollisionShapeFullBlock(this, pos);
    }
 
-   public boolean update(BlockPos pos) {
+   public boolean isPassableCell(BlockPos pos) {
       BlockState state = this.getBlockState(pos);
-      if (state == init_BlockState) {
+      if (state == UNLOADED_SENTINEL) {
          return false;
       } else {
-         return state.isAir() ? true : state.getCollisionShape(this, pos).isEmpty() && state.getFluidState().isEmpty() && !init_Z_BlockState(state);
+         return state.isAir() ? true : state.getCollisionShape(this, pos).isEmpty() && state.getFluidState().isEmpty() && !isHazardBlock(state);
       }
    }
 
-   public boolean sync(BlockPos pos) {
-      if (!this.update(pos)) {
+   public boolean isEmptyOutlineCell(BlockPos pos) {
+      if (!this.isPassableCell(pos)) {
          return false;
       }
 
@@ -1350,21 +1350,21 @@ public final class PrintView implements SignalGetter {
       return state.isAir() || state.getShape(this, pos).isEmpty();
    }
 
-   public @Nullable BlockHitResult init_BlockHitResult_Vec3_Vec3(Vec3 eye, Vec3 to) {
-      if (this.get == 0) {
-         this.run_J++;
-         this.tick_J += 24L;
+   public @Nullable BlockHitResult raycastBlock(Vec3 eye, Vec3 to) {
+      if (this.workAccountingPauseDepth == 0) {
+         this.raycastCount++;
+         this.workUnits += 24L;
       }
 
-      return read_Z ? this.load(eye, to) : this.read(eye, to);
+      return USE_VANILLA_RAYS ? this.raycastVanilla(eye, to) : this.raycastFastDda(eye, to);
    }
 
-   @Nullable BlockHitResult load(Vec3 eye, Vec3 to) {
+   @Nullable BlockHitResult raycastVanilla(Vec3 eye, Vec3 to) {
       BlockHitResult hit = this.clip(new ClipContext(eye, to, net.minecraft.world.level.ClipContext.Block.OUTLINE, Fluid.NONE, CollisionContext.empty()));
       return hit.getType() == Type.MISS ? null : hit;
    }
 
-   @Nullable BlockHitResult read(Vec3 from, Vec3 to) {
+   @Nullable BlockHitResult raycastFastDda(Vec3 from, Vec3 to) {
       if (from.equals(to)) {
          return null;
       }
@@ -1379,7 +1379,7 @@ public final class PrintView implements SignalGetter {
       int y = Mth.floor(fromY);
       int z = Mth.floor(fromZ);
       MutableBlockPos pos = new MutableBlockPos(x, y, z);
-      BlockHitResult first = this.init_BlockHitResult_Vec3(from, to, pos);
+      BlockHitResult first = this.clipCell(from, to, pos);
       if (first != null) {
          return first;
       }
@@ -1414,7 +1414,7 @@ public final class PrintView implements SignalGetter {
             tZ += tDeltaZ;
          }
 
-         BlockHitResult hit = this.init_BlockHitResult_Vec3(from, to, pos.set(x, y, z));
+         BlockHitResult hit = this.clipCell(from, to, pos.set(x, y, z));
          if (hit != null) {
             return hit;
          }
@@ -1423,33 +1423,33 @@ public final class PrintView implements SignalGetter {
       return null;
    }
 
-   public List<AABB> load(BlockState state, BlockPos pos) {
-      if (load_Z_BlockState(state)) {
+   public List<AABB> getOutlineBoxes(BlockState state, BlockPos pos) {
+      if (hasDynamicOutlineShape(state)) {
          return state.getShape(this, pos).toAabbs();
       }
 
-      List<AABB> boxes = this.load_IdentityHashMap.get(state);
+      List<AABB> boxes = this.outlineBoxesCache.get(state);
       if (boxes == null) {
          boxes = state.getShape(this, pos).toAabbs();
-         this.load_IdentityHashMap.put(state, boxes);
+         this.outlineBoxesCache.put(state, boxes);
       }
 
       return boxes;
    }
 
-   private static boolean load_Z_BlockState(BlockState state) {
+   private static boolean hasDynamicOutlineShape(BlockState state) {
       Block block = state.getBlock();
       return state.hasOffsetFunction() || block instanceof MovingPistonBlock || block instanceof ShulkerBoxBlock;
    }
 
-   private @Nullable BlockHitResult init_BlockHitResult_Vec3(Vec3 from, Vec3 to, MutableBlockPos cursor) {
+   private @Nullable BlockHitResult clipCell(Vec3 from, Vec3 to, MutableBlockPos cursor) {
       BlockState state = this.getBlockState(cursor);
       if (state.isAir()) {
          return null;
       }
 
       BlockPos pos = cursor.immutable();
-      if (load_Z_BlockState(state)) {
+      if (hasDynamicOutlineShape(state)) {
          BlockHitResult result = state.getShape(this, pos).clip(from, to, pos);
          if (result != null) {
             BlockHitResult hitOverride = state.getInteractionShape(this, pos).clip(from, to, pos);
@@ -1460,15 +1460,15 @@ public final class PrintView implements SignalGetter {
 
          return result;
       } else {
-         BlockHitResult result = init(this.load(state, pos), from, to, pos);
+         BlockHitResult result = clipBoxes(this.getOutlineBoxes(state, pos), from, to, pos);
          if (result != null) {
-            List<AABB> interaction = this.read_IdentityHashMap.get(state);
+            List<AABB> interaction = this.interactionBoxesCache.get(state);
             if (interaction == null) {
                interaction = state.getInteractionShape(this, pos).toAabbs();
-               this.read_IdentityHashMap.put(state, interaction);
+               this.interactionBoxesCache.put(state, interaction);
             }
 
-            BlockHitResult hitOverride = init(interaction, from, to, pos);
+            BlockHitResult hitOverride = clipBoxes(interaction, from, to, pos);
             if (hitOverride != null && hitOverride.getLocation().subtract(from).lengthSqr() < result.getLocation().subtract(from).lengthSqr()) {
                return result.withDirection(hitOverride.getDirection());
             }
@@ -1478,7 +1478,7 @@ public final class PrintView implements SignalGetter {
       }
    }
 
-   private static @Nullable BlockHitResult init(List<AABB> boxes, Vec3 from, Vec3 to, BlockPos pos) {
+   private static @Nullable BlockHitResult clipBoxes(List<AABB> boxes, Vec3 from, Vec3 to, BlockPos pos) {
       if (boxes.isEmpty()) {
          return null;
       }
@@ -1502,11 +1502,11 @@ public final class PrintView implements SignalGetter {
       return AABB.clip(boxes, from, to, pos);
    }
 
-   public @Nullable BlockHitResult write(Vec3 eye, Vec3 to) {
-      return this.init_BlockHitResult_Vec3_Vec3(eye, to);
+   public @Nullable BlockHitResult raycastOutline(Vec3 eye, Vec3 to) {
+      return this.raycastBlock(eye, to);
    }
 
-   public AiPhysics.PhysicsWorld init_NodeWalker_CachePo() {
+   public AiPhysics.PhysicsWorld asPhysicsWorld() {
       final PrintView view = this;
       return new AiPhysics.PhysicsWorld() {
          private final Long2ObjectOpenHashMap<List<AABB>> init = new Long2ObjectOpenHashMap<>();
@@ -1515,7 +1515,7 @@ public final class PrintView implements SignalGetter {
             return this.init.computeIfAbsent(BlockPos.asLong(x, y, z), key -> {
                BlockPos at = BlockPos.of(key);
                BlockState state = view.getBlockState(at);
-               return state.isAir() ? List.of() : view.init_List_BlockState_BlockPos(state, at).stream().map(box -> box.move(at)).toList();
+               return state.isAir() ? List.of() : view.getCollisionBoxesForState(state, at).stream().map(box -> box.move(at)).toList();
             });
          }
 
@@ -1523,9 +1523,9 @@ public final class PrintView implements SignalGetter {
          public List<AABB> init_List(AABB query) {
             List<AABB> out = new ArrayList<>();
 
-            for (int x = PrintView.init_I_D(query.minX); x <= PrintView.init_I_D(query.maxX); x++) {
-               for (int y = PrintView.init_I_D(query.minY) - 1; y <= PrintView.init_I_D(query.maxY); y++) {
-                  for (int z = PrintView.init_I_D(query.minZ); z <= PrintView.init_I_D(query.maxZ); z++) {
+            for (int x = PrintView.floorInt(query.minX); x <= PrintView.floorInt(query.maxX); x++) {
+               for (int y = PrintView.floorInt(query.minY) - 1; y <= PrintView.floorInt(query.maxY); y++) {
+                  for (int z = PrintView.floorInt(query.minZ); z <= PrintView.floorInt(query.maxZ); z++) {
                      for (AABB box : this.init_List_2(x, y, z)) {
                         if (box.intersects(query)) {
                            out.add(box);
@@ -1540,27 +1540,27 @@ public final class PrintView implements SignalGetter {
 
          @Override
          public double init_D_I(int x, int y, int z) {
-            return view.init_BlockState_I(x, y, z).getBlock().getFriction();
+            return view.getBlockStateAt(x, y, z).getBlock().getFriction();
          }
 
          @Override
          public double load_D(int x, int y, int z) {
-            return view.init_BlockState_I(x, y, z).getBlock().getSpeedFactor();
+            return view.getBlockStateAt(x, y, z).getBlock().getSpeedFactor();
          }
 
          @Override
          public double write_D(int x, int y, int z) {
-            return view.init_BlockState_I(x, y, z).getBlock().getJumpFactor();
+            return view.getBlockStateAt(x, y, z).getBlock().getJumpFactor();
          }
 
          @Override
          public boolean sync(int x, int y, int z) {
-            return view.init_BlockState_I(x, y, z).is(BlockTags.CLIMBABLE);
+            return view.getBlockStateAt(x, y, z).is(BlockTags.CLIMBABLE);
          }
 
          @Override
          public double read_D(int x, int y, int z) {
-            Block block = view.init_BlockState_I(x, y, z).getBlock();
+            Block block = view.getBlockStateAt(x, y, z).getBlock();
             return block instanceof SlimeBlock ? 1.0 : (block instanceof BedBlock ? 0.75 : 0.0);
          }
 
@@ -1573,10 +1573,10 @@ public final class PrintView implements SignalGetter {
          public int init_I(AABB box) {
             int hold = 0;
 
-            for (int x = PrintView.init_I_D(box.minX); x <= PrintView.init_I_D(box.maxX); x++) {
-               for (int y = PrintView.init_I_D(box.minY); y <= PrintView.init_I_D(box.maxY); y++) {
-                  for (int z = PrintView.init_I_D(box.minZ); z <= PrintView.init_I_D(box.maxZ); z++) {
-                     Block block = view.init_BlockState_I(x, y, z).getBlock();
+            for (int x = PrintView.floorInt(box.minX); x <= PrintView.floorInt(box.maxX); x++) {
+               for (int y = PrintView.floorInt(box.minY); y <= PrintView.floorInt(box.maxY); y++) {
+                  for (int z = PrintView.floorInt(box.minZ); z <= PrintView.floorInt(box.maxZ); z++) {
+                     Block block = view.getBlockStateAt(x, y, z).getBlock();
                      if (block instanceof WebBlock) {
                         return 1;
                      }
@@ -1593,26 +1593,26 @@ public final class PrintView implements SignalGetter {
 
          @Override
          public boolean init_Z_I(int x, int y, int z) {
-            return view.init_BlockState_I(x, y, z).getFluidState().getType().isSame(Fluids.LAVA);
+            return view.getBlockStateAt(x, y, z).getFluidState().getType().isSame(Fluids.LAVA);
          }
 
          @Override
          public boolean load_Z(int x, int y, int z) {
-            return view.init_BlockState_I(x, y, z).getFluidState().getType().isSame(Fluids.WATER);
+            return view.getBlockStateAt(x, y, z).getFluidState().getType().isSame(Fluids.WATER);
          }
 
          @Override
          public boolean read_Z(int x, int y, int z) {
-            return PrintView.init_Z_BlockState(view.init_BlockState_I(x, y, z));
+            return PrintView.isHazardBlock(view.getBlockStateAt(x, y, z));
          }
       };
    }
 
-   public static int init_I_D(double v) {
+   public static int floorInt(double v) {
       return (int)Math.floor(v);
    }
 
-   public static Vec3 init_Vec3_BlockPos(BlockPos p) {
+   public static Vec3 blockCenter(BlockPos p) {
       return new Vec3(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
    }
 
@@ -1623,57 +1623,57 @@ public final class PrintView implements SignalGetter {
    }
 
    private final class Inner_ConfigStore implements AutoCloseable {
-      private final long init_J = PrintView.this.open_J;
-      final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
-      private @Nullable IdentityHashMap<PrintView.Inner_BufferHelper, Boolean> init_IdentityHashMap;
-      boolean init_Z;
-      boolean load;
+      private final long startUntrackedCount = PrintView.this.untrackedReadCount;
+      final LongOpenHashSet readCells = new LongOpenHashSet();
+      private @Nullable IdentityHashMap<PrintView.Inner_BufferHelper, Boolean> forwardedReceipts;
+      boolean overflowed;
+      boolean touchedHypothesis;
 
       Inner_ConfigStore() {
-         PrintView.this.load_ArrayList.add(this);
+         PrintView.this.activeNativeTrackers.add(this);
       }
 
-      void init(long key) {
-         if (PrintView.this.read_Long2ObjectOpenHas.containsKey(key)) {
-            this.load = true;
+      void recordRead(long key) {
+         if (PrintView.this.hypotheticalBlocks.containsKey(key)) {
+            this.touchedHypothesis = true;
          }
 
-         if (!this.init_Z && !this.init_LongOpenHashSet.contains(key)) {
-            if (this.init_LongOpenHashSet.size() >= 512) {
-               this.init_Z = true;
+         if (!this.overflowed && !this.readCells.contains(key)) {
+            if (this.readCells.size() >= 512) {
+               this.overflowed = true;
             } else {
-               this.init_LongOpenHashSet.add(key);
+               this.readCells.add(key);
             }
          }
       }
 
-      boolean init() {
-         return !this.load && PrintView.this.open_J == this.init_J;
+      boolean isPure() {
+         return !this.touchedHypothesis && PrintView.this.untrackedReadCount == this.startUntrackedCount;
       }
 
-      boolean load() {
-         return !this.init_Z && this.init();
+      boolean canBuildReceipt() {
+         return !this.overflowed && this.isPure();
       }
 
-      boolean init_Z(PrintView.Inner_BufferHelper inputs) {
-         return this.init_Z || this.init_IdentityHashMap != null && this.init_IdentityHashMap.containsKey(inputs);
+      boolean hasForwarded(PrintView.Inner_BufferHelper inputs) {
+         return this.overflowed || this.forwardedReceipts != null && this.forwardedReceipts.containsKey(inputs);
       }
 
-      void init_V(PrintView.Inner_BufferHelper inputs) {
-         if (!this.init_Z) {
-            if (this.init_IdentityHashMap == null) {
-               this.init_IdentityHashMap = new IdentityHashMap<>();
+      void markForwarded(PrintView.Inner_BufferHelper inputs) {
+         if (!this.overflowed) {
+            if (this.forwardedReceipts == null) {
+               this.forwardedReceipts = new IdentityHashMap<>();
             }
 
-            if (this.init_IdentityHashMap.size() < 256) {
-               this.init_IdentityHashMap.put(inputs, Boolean.TRUE);
+            if (this.forwardedReceipts.size() < 256) {
+               this.forwardedReceipts.put(inputs, Boolean.TRUE);
             }
          }
       }
 
       @Override
       public void close() {
-         PrintView.this.load_ArrayList.remove(this);
+         PrintView.this.activeNativeTrackers.remove(this);
       }
    }
 
@@ -1682,18 +1682,18 @@ public final class PrintView implements SignalGetter {
 
    final class Inner_JsonUtil implements AutoCloseable {
       private Inner_JsonUtil() {
-         if (PrintView.this.write_Z) {
+         if (PrintView.this.snapshotCacheActive) {
             throw new IllegalStateException("Nested planner snapshot");
          }
 
-         PrintView.this.update_Long2ObjectOpenHas.clear();
-         PrintView.this.write_Z = true;
+         PrintView.this.snapshotStateCache.clear();
+         PrintView.this.snapshotCacheActive = true;
       }
 
       @Override
       public void close() {
-         PrintView.this.write_Z = false;
-         PrintView.this.update_Long2ObjectOpenHas.clear();
+         PrintView.this.snapshotCacheActive = false;
+         PrintView.this.snapshotStateCache.clear();
       }
    }
 
@@ -1701,49 +1701,49 @@ public final class PrintView implements SignalGetter {
    }
 
    final class Inner_StreamUtil {
-      private final Long2ObjectOpenHashMap<PrintView.Inner_StreamUtil.Inner_DataUtil> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-      private final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
-      private boolean init_Z;
+      private final Long2ObjectOpenHashMap<PrintView.Inner_StreamUtil.Inner_DataUtil> verifiedDynamicShapes = new Long2ObjectOpenHashMap<>();
+      private final LongOpenHashSet pendingDynamicCells = new LongOpenHashSet();
+      private boolean invalidated;
 
-      PrintView.Inner_StreamUtil.Inner_StreamUtil_2 init_ArrayUtil_StreamUt() {
+      PrintView.Inner_StreamUtil.Inner_StreamUtil_2 attach() {
          return new PrintView.Inner_StreamUtil.Inner_StreamUtil_2();
       }
 
-      boolean init_Z() {
-         if (this.init_Z) {
+      boolean verifyStillValid() {
+         if (this.invalidated) {
             return false;
          }
 
-         boolean previous = PrintView.this.update_Z;
-         PrintView.this.update_Z = true;
+         boolean previous = PrintView.this.suppressDynamicShapeTracking;
+         PrintView.this.suppressDynamicShapeTracking = true;
 
          try {
-            for (Entry<PrintView.Inner_StreamUtil.Inner_DataUtil> entry : this.init_Long2ObjectOpenHas.long2ObjectEntrySet()) {
-               if (!entry.getValue().equals(this.init(entry.getLongKey()))) {
-                  return !(this.init_Z = true);
+            for (Entry<PrintView.Inner_StreamUtil.Inner_DataUtil> entry : this.verifiedDynamicShapes.long2ObjectEntrySet()) {
+               if (!entry.getValue().equals(this.snapshotDynamicCell(entry.getLongKey()))) {
+                  return !(this.invalidated = true);
                }
             }
 
-            for (long key : this.init_LongOpenHashSet) {
-               PrintView.Inner_StreamUtil.Inner_DataUtil now = this.init(key);
+            for (long key : this.pendingDynamicCells) {
+               PrintView.Inner_StreamUtil.Inner_DataUtil now = this.snapshotDynamicCell(key);
                if (now == null) {
-                  return !(this.init_Z = true);
+                  return !(this.invalidated = true);
                }
 
-               this.init_Long2ObjectOpenHas.putIfAbsent(key, now);
+               this.verifiedDynamicShapes.putIfAbsent(key, now);
             }
 
-            this.init_LongOpenHashSet.clear();
+            this.pendingDynamicCells.clear();
             return true;
          } finally {
-            PrintView.this.update_Z = previous;
+            PrintView.this.suppressDynamicShapeTracking = previous;
          }
       }
 
-      private PrintView.Inner_StreamUtil.Inner_DataUtil init(long key) {
+      private PrintView.Inner_StreamUtil.Inner_DataUtil snapshotDynamicCell(long key) {
          BlockPos pos = BlockPos.of(key);
          BlockState state = PrintView.this.getBlockState(pos);
-         return state == PrintView.init_BlockState
+         return state == PrintView.UNLOADED_SENTINEL
             ? null
             : new PrintView.Inner_StreamUtil.Inner_DataUtil(state, List.copyOf(state.getCollisionShape(PrintView.this, pos).toAabbs()));
       }
@@ -1752,91 +1752,91 @@ public final class PrintView implements SignalGetter {
       }
 
       final class Inner_StreamUtil_2 implements AutoCloseable {
-         final boolean init = !PrintView.this.read_ArrayList.contains(Inner_StreamUtil.this);
+         final boolean added = !PrintView.this.activeDynamicShapeTrackers.contains(Inner_StreamUtil.this);
 
          Inner_StreamUtil_2() {
-            if (this.init) {
-               PrintView.this.read_ArrayList.add(Inner_StreamUtil.this);
+            if (this.added) {
+               PrintView.this.activeDynamicShapeTrackers.add(Inner_StreamUtil.this);
             }
          }
 
          @Override
          public void close() {
-            if (this.init) {
-               PrintView.this.read_ArrayList.remove(Inner_StreamUtil.this);
+            if (this.added) {
+               PrintView.this.activeDynamicShapeTrackers.remove(Inner_StreamUtil.this);
             }
          }
       }
    }
 
    final class Inner_TaskQueue implements AutoCloseable {
-      private final long init_J = PrintView.this.open_J;
-      final Long2ObjectOpenHashMap<BlockState> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-      final Long2ObjectOpenHashMap<BlockState> load = new Long2ObjectOpenHashMap<>(PrintView.this.read_Long2ObjectOpenHas);
-      private final @Nullable LongOpenHashSet init_LongOpenHashSet;
-      private @Nullable IdentityHashMap<PrintView.Inner_BufferHelper, Boolean> init_IdentityHashMap;
-      boolean init_Z;
+      private final long startUntrackedCount = PrintView.this.untrackedReadCount;
+      final Long2ObjectOpenHashMap<BlockState> recordedStates = new Long2ObjectOpenHashMap<>();
+      final Long2ObjectOpenHashMap<BlockState> capturedHypotheses = new Long2ObjectOpenHashMap<>(PrintView.this.hypotheticalBlocks);
+      private final @Nullable LongOpenHashSet capturedTemporaries;
+      private @Nullable IdentityHashMap<PrintView.Inner_BufferHelper, Boolean> forwardedReceipts;
+      boolean overflowed;
 
       Inner_TaskQueue(boolean retained) {
-         this.init_LongOpenHashSet = retained ? new LongOpenHashSet(PrintView.this.load_LongOpenHashSet) : null;
+         this.capturedTemporaries = retained ? new LongOpenHashSet(PrintView.this.ownedTemporaryBlocks) : null;
       }
 
-      PrintView.Inner_TaskQueue.Inner_DataUtil init_ArrayUtil_TaskQueu() {
+      PrintView.Inner_TaskQueue.Inner_DataUtil attach() {
          return new PrintView.Inner_TaskQueue.Inner_DataUtil();
       }
 
-      boolean init_Z() {
-         return !this.init_Z && PrintView.this.open_J == this.init_J;
+      boolean isComplete() {
+         return !this.overflowed && PrintView.this.untrackedReadCount == this.startUntrackedCount;
       }
 
-      private void init(BlockPos pos) {
-         this.init(pos, null);
+      private void recordPos(BlockPos pos) {
+         this.recordPosWithLive(pos, null);
       }
 
-      private void init(BlockPos pos, @Nullable BlockState live) {
+      private void recordPosWithLive(BlockPos pos, @Nullable BlockState live) {
          long key = pos.asLong();
-         if (!this.init_Z && !this.init_Long2ObjectOpenHas.containsKey(key)) {
-            if (this.init_Long2ObjectOpenHas.size() >= 8192) {
-               this.init_Z = true;
+         if (!this.overflowed && !this.recordedStates.containsKey(key)) {
+            if (this.recordedStates.size() >= 8192) {
+               this.overflowed = true;
             } else {
-               BlockState state = this.load.get(key);
-               this.init_Long2ObjectOpenHas.put(key, state != null ? state : (live != null ? live : PrintView.this.init_BlockState_BlockPos(pos)));
+               BlockState state = this.capturedHypotheses.get(key);
+               this.recordedStates.put(key, state != null ? state : (live != null ? live : PrintView.this.getLiveBlockState(pos)));
             }
          }
       }
 
-      boolean init_Z(PrintView.Inner_BufferHelper inputs) {
-         return this.init_Z || this.init_IdentityHashMap != null && this.init_IdentityHashMap.containsKey(inputs);
+      boolean hasForwarded(PrintView.Inner_BufferHelper inputs) {
+         return this.overflowed || this.forwardedReceipts != null && this.forwardedReceipts.containsKey(inputs);
       }
 
-      void init_V(PrintView.Inner_BufferHelper inputs) {
-         if (!this.init_Z) {
-            if (this.init_IdentityHashMap == null) {
-               this.init_IdentityHashMap = new IdentityHashMap<>();
+      void markForwarded(PrintView.Inner_BufferHelper inputs) {
+         if (!this.overflowed) {
+            if (this.forwardedReceipts == null) {
+               this.forwardedReceipts = new IdentityHashMap<>();
             }
 
-            if (this.init_IdentityHashMap.size() < 256) {
-               this.init_IdentityHashMap.put(inputs, Boolean.TRUE);
+            if (this.forwardedReceipts.size() < 256) {
+               this.forwardedReceipts.put(inputs, Boolean.TRUE);
             }
          }
       }
 
       @Override
       public void close() {
-         PrintView.this.init_ArrayList.remove(this);
+         PrintView.this.activeReadTrackers.remove(this);
       }
 
       final class Inner_DataUtil implements AutoCloseable {
-         private final boolean init;
-         private boolean load;
+         private final boolean added;
+         private boolean closed;
 
          private Inner_DataUtil() {
-            if (Inner_TaskQueue.this.init_LongOpenHashSet != null
-               && PrintView.this.init_Z_Long2ObjectMap(Inner_TaskQueue.this.load)
-               && PrintView.this.init_Z_LongSet(Inner_TaskQueue.this.init_LongOpenHashSet)) {
-               this.init = !PrintView.this.init_ArrayList.contains(Inner_TaskQueue.this);
-               if (this.init) {
-                  PrintView.this.init_ArrayList.add(Inner_TaskQueue.this);
+            if (Inner_TaskQueue.this.capturedTemporaries != null
+               && PrintView.this.matchesHypotheses(Inner_TaskQueue.this.capturedHypotheses)
+               && PrintView.this.matchesOwnedTemporaries(Inner_TaskQueue.this.capturedTemporaries)) {
+               this.added = !PrintView.this.activeReadTrackers.contains(Inner_TaskQueue.this);
+               if (this.added) {
+                  PrintView.this.activeReadTrackers.add(Inner_TaskQueue.this);
                }
             } else {
                throw new IllegalStateException("A retained native receipt requires its original outer hypotheses");
@@ -1845,11 +1845,11 @@ public final class PrintView implements SignalGetter {
 
          @Override
          public void close() {
-            if (!this.load && this.init) {
-               PrintView.this.init_ArrayList.remove(Inner_TaskQueue.this);
+            if (!this.closed && this.added) {
+               PrintView.this.activeReadTrackers.remove(Inner_TaskQueue.this);
             }
 
-            this.load = true;
+            this.closed = true;
          }
       }
    }

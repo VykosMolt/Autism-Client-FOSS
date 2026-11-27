@@ -6,53 +6,53 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.phys.BlockHitResult;
 
 public final class PrintControls {
-   public boolean init_Z;
-   public boolean load_Z;
-   public boolean read_Z;
-   public boolean write_Z;
-   public boolean update;
-   public boolean sync;
-   public boolean flush;
-   public boolean close;
-   public float init_F = 0.0F / 0.0F;
-   public float load_F = 0.0F / 0.0F;
-   public int init_I = -1;
-   public int load_I = -1;
-   public int read_I = -1;
-   public int write_I = -1;
-   public BlockHitResult init_BlockHitResult;
-   public boolean open;
-   public UUID init_UUID;
-   public boolean poll;
-   public BlockPos init_BlockPos;
-   public Direction init_Direction;
+   public boolean forward;
+   public boolean back;
+   public boolean left;
+   public boolean right;
+   public boolean jump;
+   public boolean sneak;
+   public boolean sprint;
+   public boolean fly;
+   public float yaw = 0.0F / 0.0F;
+   public float pitch = 0.0F / 0.0F;
+   public int selectHotbarSlot = -1;
+   public int postClickHotbarSlot = -1;
+   public int swapSourceSlot = -1;
+   public int swapHotbarSlot = -1;
+   public BlockHitResult clickHit;
+   public boolean trackInteractionReceipt;
+   public UUID interactEntityUuid;
+   public boolean useHeldItem;
+   public BlockPos digPos;
+   public Direction digFace;
 
-   public static PrintControls init_SyncManager() {
+   public static PrintControls idle() {
       return new PrintControls();
    }
 
-   public boolean init_Z() {
-      return this.init_Z || this.load_Z || this.read_Z || this.write_Z || this.update;
+   public boolean hasMovementInput() {
+      return this.forward || this.back || this.left || this.right || this.jump;
    }
 
-   public PrintControls init(float yaw, float pitch) {
-      this.init_F = yaw;
-      this.load_F = pitch;
+   public PrintControls withLook(float yaw, float pitch) {
+      this.yaw = yaw;
+      this.pitch = pitch;
       return this;
    }
 
-   public PrintControls init(PrintMover.Inner_StreamUtil keys) {
+   public PrintControls withMoveKeys(PrintMover.Inner_StreamUtil keys) {
       if (keys == null) {
          return this;
       }
 
-      this.init_Z = keys.forward();
-      this.load_Z = keys.back();
-      this.read_Z = keys.left();
-      this.write_Z = keys.right();
-      this.update = keys.jump();
-      this.sync = keys.sneak();
-      this.flush = keys.sprint();
+      this.forward = keys.forward();
+      this.back = keys.back();
+      this.left = keys.left();
+      this.right = keys.right();
+      this.jump = keys.jump();
+      this.sneak = keys.sneak();
+      this.sprint = keys.sprint();
       return this;
    }
 }

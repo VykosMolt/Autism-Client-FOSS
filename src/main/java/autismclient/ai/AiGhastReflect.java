@@ -606,7 +606,7 @@ final class AiGhastReflect {
       for (Entity mob : this.init_Minecraft.level.entitiesForRendering()) {
          if (mob instanceof LivingEntity
             && mob != this.init_Minecraft.player
-            && AiThreats.init_Z(this.init_Minecraft, mob)
+            && AiThreats.isActiveThreat(this.init_Minecraft, mob)
             && landing.intersects(mob.getBoundingBox().inflate(1.2))) {
             return false;
          }

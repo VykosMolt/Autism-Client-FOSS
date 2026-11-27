@@ -53,8 +53,8 @@ public final class FreecamController {
          return false;
       }
 
-      AiService ai = AiService.load_cc();
-      return ai != null && ai.open_Z() || autismclient.ai.AiDirectOps.load_Z();
+      AiService ai = AiService.getExistingInstance();
+      return ai != null && ai.isActivelyDriving() || autismclient.ai.AiDirectOps.load_Z();
    }
 
    public static boolean shouldSuppressKey(KeyMapping mapping) {

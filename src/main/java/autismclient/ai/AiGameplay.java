@@ -399,7 +399,7 @@ final class AiGameplay {
                         ItemStack output = menu.getResultSlot().getItem();
                         if (!output.isEmpty() && BuiltInRegistries.ITEM.getKey(output.getItem()).toString().equals(item)) {
                            this.load_J = AiServerEvidence.containerRevision(this.read);
-                           AiContainerTransactions.init(this.read, menu.getResultSlot().index, 0, ContainerInput.QUICK_MOVE);
+                           AiContainerTransactions.sendPredictedClick(this.read, menu.getResultSlot().index, 0, ContainerInput.QUICK_MOVE);
                            this.write = 2;
                            this.update = 0;
                            this.flush = count;
@@ -487,18 +487,18 @@ final class AiGameplay {
                   return this.init(AiGameOperations.result(AiOperation.Status.TIMED_OUT, "Drop collection stopped before verified pickup", new JsonObject()));
                }
 
-               if (AiGameplay.init_I(ids) >= target && !this.init_bb.init_Z(this.init()) && !this.init_K.read()) {
+               if (AiGameplay.init_I(ids) >= target && !this.init_bb.requiresReconciliation(this.init()) && !this.init_K.read()) {
                   return this.init(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
                }
 
                if (!this.load) {
-                  AiOperation.Result r = this.init_bb.init_AiOperation_Result(this.init_T_DataUtil);
+                  AiOperation.Result r = this.init_bb.tickChild(this.init_T_DataUtil);
                   if (!r.terminal()) {
                      return r;
                   }
 
                   this.read = this.read | this.init_T_DataUtil.init_Z;
-                  this.init_bb.init_V(this.init_T_DataUtil);
+                  this.init_bb.cancelChild(this.init_T_DataUtil);
                   if (r.status() != AiOperation.Status.SUCCEEDED) {
                      return this.init(r);
                   }
@@ -532,14 +532,14 @@ final class AiGameplay {
                      AiOperation.Status.RUNNING, this.init_K.init_Str(), AiJson.objectOf("firesExtinguished", this.init_K.init_I())
                   );
                } else {
-                  AiOperation.Result r = this.init_bb.init_AiOperation_Result(this.init_AiOperation);
+                  AiOperation.Result r = this.init_bb.tickChild(this.init_AiOperation);
                   if (!r.terminal()) {
                      return r;
                   } else {
-                     this.init_bb.init_V(this.init_AiOperation);
-                     if (AiGameplay.init_I(ids) >= target && !this.init_bb.init_Z(this.init_AiOperation)) {
+                     this.init_bb.cancelChild(this.init_AiOperation);
+                     if (AiGameplay.init_I(ids) >= target && !this.init_bb.requiresReconciliation(this.init_AiOperation)) {
                         return this.init(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
-                     } else if (r.failure() == AiFailure.INVENTORY_FULL && !this.init_bb.init_Z(this.init_AiOperation) && !this.read && !this.write) {
+                     } else if (r.failure() == AiFailure.INVENTORY_FULL && !this.init_bb.requiresReconciliation(this.init_AiOperation) && !this.read && !this.write) {
                         this.write = true;
                         this.init_AiOperation = null;
                         this.load = false;
@@ -553,7 +553,7 @@ final class AiGameplay {
             }
 
             AiOperation.Result init(AiOperation.Result result) {
-               result = this.init_bb.init(result, this.requiresReconciliationAfterEmergency());
+               result = this.init_bb.finalizeResult(result, this.requiresReconciliationAfterEmergency());
                JsonObject data = AiRunResources.parseEvidenceJson(result.dataJson());
                data.addProperty("item", item);
                data.addProperty("count", AiGameplay.init_I(ids));
@@ -565,26 +565,26 @@ final class AiGameplay {
 
             @Override
             public boolean canInterruptNow() {
-               return !this.init_bb.init_Z(this.init()) && this.init_K.load_Z() && (this.init() == null || this.init().canInterruptNow());
+               return !this.init_bb.requiresReconciliation(this.init()) && this.init_K.load_Z() && (this.init() == null || this.init().canInterruptNow());
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.init_bb.init_Z(this.init()) || this.init_K.read();
+               return this.init_bb.requiresReconciliation(this.init()) || this.init_K.read();
             }
 
             @Override
             public void cancel() {
                if (!this.init_Z) {
                   this.init_Z = true;
-                  this.init_bb.init(this.init_K.read());
+                  this.init_bb.markReconciliationPending(this.init_K.read());
                   this.init_K.init_V();
-                  this.init_bb.init_V(this.init_AiOperation);
-                  this.init_bb.init_V(this.init_T_DataUtil);
+                  this.init_bb.cancelChild(this.init_AiOperation);
+                  this.init_bb.cancelChild(this.init_T_DataUtil);
                }
             }
          };
-         return AiPreparationReceipt.init(collection, autismclient.ai.engine.AiMotionSafety::isPlayerSupported, () -> mc.player == player && mc.level == world, deadline);
+         return AiPreparationReceipt.awaitSupportedHandoff(collection, autismclient.ai.engine.AiMotionSafety::isPlayerSupported, () -> mc.player == player && mc.level == world, deadline);
       } else {
          throw new IllegalArgumentException("Expected item registry id and count 1..2304");
       }
@@ -945,7 +945,7 @@ final class AiGameplay {
             }
 
             void init(int slot, int button, ContainerInput type) {
-               AiContainerTransactions.init(this.load_I, slot, button, type);
+               AiContainerTransactions.sendPredictedClick(this.load_I, slot, button, type);
                this.open++;
             }
 
@@ -1041,8 +1041,8 @@ final class AiGameplay {
             final BlockPos init_BlockPos = this.init_Minecraft.player.blockPosition();
             final Object init_Obj = this.init_Minecraft.level;
             final Object load_Obj = this.init_Minecraft.getConnection();
-            final String init_Str = AiWorldIdentity.init(this.init_Minecraft);
-            final String load_Str = AiWorldIdentity.load(this.init_Minecraft);
+            final String init_Str = AiWorldIdentity.currentWorldKey(this.init_Minecraft);
+            final String load_Str = AiWorldIdentity.currentDimensionId(this.init_Minecraft);
             final int init_I = radius * 2 + 1;
             final int load_I = 49;
             final int read = this.init_I * this.init_I * 49;
@@ -1304,7 +1304,7 @@ final class AiGameplay {
             return this.init(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Inventory can accept the pickup", new JsonObject()));
          }
 
-         if ((this.init_AiOperation == null || this.init_AiOperation.canInterruptNow() && !this.init_bb.init_Z(this.init_AiOperation))
+         if ((this.init_AiOperation == null || this.init_AiOperation.canInterruptNow() && !this.init_bb.requiresReconciliation(this.init_AiOperation))
             && !this.load_BooleanSupplier.getAsBoolean()) {
             return AiGameOperations.result(AiOperation.Status.RUNNING, "Settling before making pickup room", new JsonObject());
          }
@@ -1314,17 +1314,17 @@ final class AiGameplay {
             this.init_AiOperation = this.init_Supplier.get();
          }
 
-         AiOperation.Result result = this.init_bb.init_AiOperation_Result(this.init_AiOperation);
+         AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
          if (!result.terminal()) {
             return result;
          }
 
-         this.init_bb.init_V(this.init_AiOperation);
-         if (!this.init_bb.init_Z(this.init_AiOperation)
+         this.init_bb.cancelChild(this.init_AiOperation);
+         if (!this.init_bb.requiresReconciliation(this.init_AiOperation)
             && (result.status() == AiOperation.Status.SUCCEEDED || result.failure() == AiFailure.INVENTORY_FULL)
             && this.init_BooleanSupplier.getAsBoolean()) {
             result = new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Inventory can accept the pickup", result.dataJson(), result.evidence());
-         } else if (!this.init_bb.init_Z(this.init_AiOperation) && result.status() == AiOperation.Status.SUCCEEDED) {
+         } else if (!this.init_bb.requiresReconciliation(this.init_AiOperation) && result.status() == AiOperation.Status.SUCCEEDED) {
             result = AiOperation.Result.failed(AiFailure.INVENTORY_FULL, "Pickup room was refilled before preparation completed", result.dataJson());
          }
 
@@ -1332,26 +1332,26 @@ final class AiGameplay {
       }
 
       AiOperation.Result init(AiOperation.Result result) {
-         this.init_AiOperation_Result = this.init_bb.init(result, this.init_bb.init_Z(this.init_AiOperation));
+         this.init_AiOperation_Result = this.init_bb.finalizeResult(result, this.init_bb.requiresReconciliation(this.init_AiOperation));
          this.cancel();
          return this.init_AiOperation_Result;
       }
 
       @Override
       public boolean canInterruptNow() {
-         return !this.init_bb.init_Z(this.init_AiOperation) && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+         return !this.init_bb.requiresReconciliation(this.init_AiOperation) && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
       }
 
       @Override
       public boolean requiresReconciliationAfterEmergency() {
-         return this.init_bb.init_Z(this.init_AiOperation);
+         return this.init_bb.requiresReconciliation(this.init_AiOperation);
       }
 
       @Override
       public void cancel() {
          if (!this.load_Z) {
             this.load_Z = true;
-            this.init_bb.init_V(this.init_AiOperation);
+            this.init_bb.cancelChild(this.init_AiOperation);
          }
       }
    }

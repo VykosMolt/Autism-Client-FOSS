@@ -13,72 +13,72 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 
 final class AiUiKit {
-   static final int init_I = -10497050;
-   static final int load_I = -14249;
-   static final int read_I = 24;
-   final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
-   private final List<AiUiKit.Inner_DataUtil> init_List = new ArrayList<>();
-   private final List<AiUiKit.Inner_CachePool> load_List = new ArrayList<>();
-   private final List<AiUiKit.Inner_StreamUtil> read_List = new ArrayList<>();
-   private final ArrayDeque<autismclient.gui.f.NetHelper> init_ArrayDeque = new ArrayDeque<>();
-   private AiUiKit.Inner_StreamUtil init_cE_StreamUtil;
-   GuiGraphicsExtractor init_GuiGraphicsExtract;
-   autismclient.gui.f.SyncManager init_SyncManager;
-   autismclient.gui.ui.UiColorScheme init_JsonUtil;
-   autismclient.gui.ui.layout.LayoutContext init_SyncManager_2;
-   Font init_Font;
-   int write;
-   int update;
-   int sync;
-   int flush;
+   static final int STATUS_OK_COLOR = -10497050;
+   static final int STATUS_WARN_COLOR = -14249;
+   static final int WHEEL_SCROLL_STEP_PX = 24;
+   final autismclient.gui.f.b.CharEncoder theme = new autismclient.gui.f.b.CharEncoder();
+   private final List<AiUiKit.Inner_DataUtil> hitRegions = new ArrayList<>();
+   private final List<AiUiKit.Inner_CachePool> scrollRegions = new ArrayList<>();
+   private final List<AiUiKit.Inner_StreamUtil> activeScrollbars = new ArrayList<>();
+   private final ArrayDeque<autismclient.gui.f.NetHelper> clipStack = new ArrayDeque<>();
+   private AiUiKit.Inner_StreamUtil draggingScroll;
+   GuiGraphicsExtractor graphics;
+   autismclient.gui.f.SyncManager renderContext;
+   autismclient.gui.ui.UiColorScheme colors;
+   autismclient.gui.ui.layout.LayoutContext layoutContext;
+   Font font;
+   int mouseX;
+   int mouseY;
+   int rawMouseX;
+   int rawMouseY;
 
-   void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean pointerBlocked, float delta) {
-      this.init_GuiGraphicsExtract = graphics;
-      this.init_Font = Minecraft.getInstance().font;
-      this.sync = mouseX;
-      this.flush = mouseY;
-      this.write = pointerBlocked ? -10000 : mouseX;
-      this.update = pointerBlocked ? -10000 : mouseY;
-      this.init_SyncManager = autismclient.gui.f.UiHelper.init(graphics, this.init_Font, this.write, this.update);
-      this.init_JsonUtil = this.init_SyncManager.init_TableIndex().colors();
-      this.init_SyncManager_2 = new autismclient.gui.ui.layout.LayoutContext(
-         graphics, this.init_Font, autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(2.0F), this.init_CharEncoder, this.write, this.update, delta
+   void beginFrame(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean pointerBlocked, float delta) {
+      this.graphics = graphics;
+      this.font = Minecraft.getInstance().font;
+      this.rawMouseX = mouseX;
+      this.rawMouseY = mouseY;
+      this.mouseX = pointerBlocked ? -10000 : mouseX;
+      this.mouseY = pointerBlocked ? -10000 : mouseY;
+      this.renderContext = autismclient.gui.f.UiHelper.init(graphics, this.font, this.mouseX, this.mouseY);
+      this.colors = this.renderContext.init_TableIndex().colors();
+      this.layoutContext = new autismclient.gui.ui.layout.LayoutContext(
+         graphics, this.font, autismclient.gui.ui.layout.LayoutViewport.create(2.0F), this.theme, this.mouseX, this.mouseY, delta
       );
-      this.init_List.clear();
-      this.load_List.clear();
-      this.read_List.clear();
-      this.init_ArrayDeque.clear();
+      this.hitRegions.clear();
+      this.scrollRegions.clear();
+      this.activeScrollbars.clear();
+      this.clipStack.clear();
    }
 
-   boolean init_Z() {
-      return this.init_SyncManager_2 != null;
+   boolean isInitialized() {
+      return this.layoutContext != null;
    }
 
-   static int init_I() {
+   static int toolbarHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
-   static int load_I() {
+   static int inputHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
-   static int read() {
+   static int rowHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
-   static int write() {
+   static int lineHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(10);
    }
 
-   int init_I_Str(String text) {
-      return this.init_SyncManager.init_PoolEntry().measureWidth(text);
+   int measureTextWidth(String text) {
+      return this.renderContext.init_PoolEntry().measureWidth(text);
    }
 
-   int load(String label) {
-      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(this.init_I_Str(label));
+   int measureButtonWidth(String label) {
+      return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(this.measureTextWidth(label));
    }
 
-   static autismclient.gui.f.NetHelper init_NetHelper_NetHelper_NetHelper(autismclient.gui.f.NetHelper a, autismclient.gui.f.NetHelper b) {
+   static autismclient.gui.f.NetHelper intersectBounds(autismclient.gui.f.NetHelper a, autismclient.gui.f.NetHelper b) {
       int x = Math.max(a.read(), b.read());
       int y = Math.max(a.write(), b.write());
       int r = Math.min(a.init(), b.init());
@@ -86,130 +86,130 @@ final class AiUiKit {
       return autismclient.gui.f.NetHelper.init(x, y, Math.max(0, r - x), Math.max(0, btm - y));
    }
 
-   void init_V_NetHelper(autismclient.gui.f.NetHelper bounds) {
-      autismclient.gui.f.NetHelper clip = this.init_ArrayDeque.isEmpty() ? bounds : init_NetHelper_NetHelper_NetHelper(this.init_ArrayDeque.peek(), bounds);
-      this.init_ArrayDeque.push(clip);
-      UiClipStack.getInstance().push(this.init_GuiGraphicsExtract, clip);
+   void pushClip(autismclient.gui.f.NetHelper bounds) {
+      autismclient.gui.f.NetHelper clip = this.clipStack.isEmpty() ? bounds : intersectBounds(this.clipStack.peek(), bounds);
+      this.clipStack.push(clip);
+      UiClipStack.getInstance().push(this.graphics, clip);
    }
 
-   void init_V() {
-      this.init_ArrayDeque.pop();
-      UiClipStack.getInstance().pop(this.init_GuiGraphicsExtract);
+   void popClip() {
+      this.clipStack.pop();
+      UiClipStack.getInstance().pop(this.graphics);
    }
 
-   private autismclient.gui.f.NetHelper init_NetHelper_NetHelper(autismclient.gui.f.NetHelper bounds) {
-      return this.init_ArrayDeque.isEmpty() ? bounds : init_NetHelper_NetHelper_NetHelper(this.init_ArrayDeque.peek(), bounds);
+   private autismclient.gui.f.NetHelper clipBounds(autismclient.gui.f.NetHelper bounds) {
+      return this.clipStack.isEmpty() ? bounds : intersectBounds(this.clipStack.peek(), bounds);
    }
 
-   boolean init_Z_NetHelper(autismclient.gui.f.NetHelper bounds) {
-      autismclient.gui.f.NetHelper c = this.init_NetHelper_NetHelper(bounds);
-      return c.update() > 0 && c.sync() > 0 && c.init_Z(this.write, this.update);
+   boolean isHovered(autismclient.gui.f.NetHelper bounds) {
+      autismclient.gui.f.NetHelper c = this.clipBounds(bounds);
+      return c.update() > 0 && c.sync() > 0 && c.init_Z(this.mouseX, this.mouseY);
    }
 
-   boolean load_Z(autismclient.gui.f.NetHelper bounds) {
-      autismclient.gui.f.NetHelper c = this.init_NetHelper_NetHelper(bounds);
+   boolean isVisibleInClip(autismclient.gui.f.NetHelper bounds) {
+      autismclient.gui.f.NetHelper c = this.clipBounds(bounds);
       return c.update() > 0 && c.sync() > 0;
    }
 
-   void init_V_NetHelper_Runnable(autismclient.gui.f.NetHelper bounds, Runnable left) {
-      this.init_V_NetHelper(bounds, left, null, null);
+   void addClickRegion(autismclient.gui.f.NetHelper bounds, Runnable left) {
+      this.addInteractiveRegion(bounds, left, null, null);
    }
 
-   void init_V_NetHelper(autismclient.gui.f.NetHelper bounds, Runnable left, Runnable right, String tip) {
-      autismclient.gui.f.NetHelper c = this.init_NetHelper_NetHelper(bounds);
+   void addInteractiveRegion(autismclient.gui.f.NetHelper bounds, Runnable left, Runnable right, String tip) {
+      autismclient.gui.f.NetHelper c = this.clipBounds(bounds);
       if (c.update() > 0 && c.sync() > 0) {
-         this.init_List.add(new AiUiKit.Inner_DataUtil(c, left, right, tip, null));
+         this.hitRegions.add(new AiUiKit.Inner_DataUtil(c, left, right, tip, null));
       }
    }
 
-   void load_V(autismclient.gui.f.NetHelper bounds) {
-      this.init_V_NetHelper(bounds, () -> {}, () -> {}, null);
+   void blockClicks(autismclient.gui.f.NetHelper bounds) {
+      this.addInteractiveRegion(bounds, () -> {}, () -> {}, null);
    }
 
-   void init_V_NetHelper_Str(autismclient.gui.f.NetHelper bounds, String tip) {
-      this.init_V_NetHelper(bounds, null, null, tip);
+   void addTooltipRegion(autismclient.gui.f.NetHelper bounds, String tip) {
+      this.addInteractiveRegion(bounds, null, null, tip);
    }
 
-   void init_V_cE_StreamUtil(AiUiKit.Inner_StreamUtil scroll) {
-      this.load_List.add(new AiUiKit.Inner_CachePool(scroll.init_NetHelper(), scroll));
-      if (scroll.init_PoolEntry_DataUtil != null && scroll.init_PoolEntry_DataUtil.isScrollable()) {
-         this.read_List.add(scroll);
+   void registerScrollPane(AiUiKit.Inner_StreamUtil scroll) {
+      this.scrollRegions.add(new AiUiKit.Inner_CachePool(scroll.viewportBounds(), scroll));
+      if (scroll.metrics != null && scroll.metrics.isScrollable()) {
+         this.activeScrollbars.add(scroll);
       }
    }
 
-   void read(autismclient.gui.f.NetHelper bounds) {
-      this.load_List.add(new AiUiKit.Inner_CachePool(bounds, null));
+   void blockScroll(autismclient.gui.f.NetHelper bounds) {
+      this.scrollRegions.add(new AiUiKit.Inner_CachePool(bounds, null));
    }
 
-   void load(AiUiKit.Inner_StreamUtil scroll) {
-      if (scroll.init_PoolEntry_DataUtil != null) {
+   void drawScrollbar(AiUiKit.Inner_StreamUtil scroll) {
+      if (scroll.metrics != null) {
          ScrollbarMetricsHelper.render(
-            this.init_GuiGraphicsExtract, scroll.init_PoolEntry_DataUtil, scroll.init_PoolEntry_DataUtil.containsTrack(this.write, this.update), scroll.init_Z()
+            this.graphics, scroll.metrics, scroll.metrics.containsTrack(this.mouseX, this.mouseY), scroll.isDragging()
          );
       }
    }
 
-   void init_V_BitSetUtil_NetHelper(autismclient.gui.ui.widgets.TextInputWidget field, autismclient.gui.f.NetHelper bounds) {
+   void drawTextInput(autismclient.gui.ui.widgets.TextInputWidget field, autismclient.gui.f.NetHelper bounds) {
       field.init_TableIndex_F(bounds.read(), bounds.write(), bounds.update(), bounds.sync());
-      field.init_V_SyncManager(this.init_SyncManager_2);
-      autismclient.gui.f.NetHelper c = this.init_NetHelper_NetHelper(bounds);
+      field.init_V_SyncManager(this.layoutContext);
+      autismclient.gui.f.NetHelper c = this.clipBounds(bounds);
       if (c.update() > 0 && c.sync() > 0) {
-         this.init_List.add(new AiUiKit.Inner_DataUtil(c, null, null, null, field));
+         this.hitRegions.add(new AiUiKit.Inner_DataUtil(c, null, null, null, field));
       }
    }
 
-   void init_V_NetHelper_2(autismclient.gui.f.NetHelper bounds, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, Runnable action) {
-      this.init_V_NetHelper(bounds, label, tone, action, null);
+   void drawButton(autismclient.gui.f.NetHelper bounds, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, Runnable action) {
+      this.drawButton(bounds, label, tone, action, null);
    }
 
-   void init_V_NetHelper(autismclient.gui.f.NetHelper bounds, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, Runnable action, String tip) {
+   void drawButton(autismclient.gui.f.NetHelper bounds, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, Runnable action, String tip) {
       boolean colored = tone == autismclient.gui.f.b.CachePool.Inner_DataUtil.read
          || tone == autismclient.gui.f.b.CachePool.Inner_DataUtil.write
          || tone == autismclient.gui.f.b.CachePool.Inner_DataUtil.update;
-      autismclient.gui.f.b.CachePool.init(this.init_SyncManager, bounds, label, tone, this.init_Z_NetHelper(bounds), colored);
-      this.init_V_NetHelper(bounds, action, null, tip);
+      autismclient.gui.f.b.CachePool.init(this.renderContext, bounds, label, tone, this.isHovered(bounds), colored);
+      this.addInteractiveRegion(bounds, action, null, tip);
    }
 
-   void init_V_NetHelper_3(
+   void drawIconLabelButton(
       autismclient.gui.f.NetHelper bounds, Identifier icon, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, Runnable action
    ) {
       boolean colored = tone == autismclient.gui.f.b.CachePool.Inner_DataUtil.read
          || tone == autismclient.gui.f.b.CachePool.Inner_DataUtil.write
          || tone == autismclient.gui.f.b.CachePool.Inner_DataUtil.update;
-      autismclient.gui.f.b.CachePool.init(this.init_SyncManager, bounds, label, icon, tone, this.init_Z_NetHelper(bounds), colored, colored ? 1.0F : 0.0F);
-      this.init_V_NetHelper_Runnable(bounds, action);
+      autismclient.gui.f.b.CachePool.init(this.renderContext, bounds, label, icon, tone, this.isHovered(bounds), colored, colored ? 1.0F : 0.0F);
+      this.addClickRegion(bounds, action);
    }
 
-   void init(autismclient.gui.f.NetHelper bounds, Identifier icon, boolean selected, boolean danger, String tip, Runnable action) {
-      autismclient.gui.ui.widgets.IconButtonRenderer.init(this.init_GuiGraphicsExtract, this.init_Font, bounds, icon, this.init_Z_NetHelper(bounds), true, danger);
+   void drawIconButton(autismclient.gui.f.NetHelper bounds, Identifier icon, boolean selected, boolean danger, String tip, Runnable action) {
+      autismclient.gui.ui.widgets.IconButtonRenderer.init(this.graphics, this.font, bounds, icon, this.isHovered(bounds), true, danger);
       if (selected) {
          int radius = Math.min(3, Math.max(2, Math.min(bounds.update(), bounds.sync()) / 3));
-         PacketUtil.load(this.init_GuiGraphicsExtract, bounds, radius, PacketUtil.init(this.init_JsonUtil.accent, 0.14F), this.init_JsonUtil.accent);
+         PacketUtil.load(this.graphics, bounds, radius, PacketUtil.init(this.colors.accent, 0.14F), this.colors.accent);
       }
 
-      this.init_V_NetHelper(bounds, action, null, tip);
+      this.addInteractiveRegion(bounds, action, null, tip);
    }
 
-   void init_V_NetHelper_2(autismclient.gui.f.NetHelper bounds, String label, boolean value, String key, Runnable action) {
-      autismclient.gui.ui.widgets.ToggleSwitchRenderer.init(this.init_SyncManager, bounds, label, value, this.init_Z_NetHelper(bounds), "ai:" + key);
-      this.init_V_NetHelper_Runnable(bounds, action);
+   void drawToggleSwitch(autismclient.gui.f.NetHelper bounds, String label, boolean value, String key, Runnable action) {
+      autismclient.gui.ui.widgets.ToggleSwitchRenderer.init(this.renderContext, bounds, label, value, this.isHovered(bounds), "ai:" + key);
+      this.addClickRegion(bounds, action);
    }
 
-   void init_V_Str(String text, int x, int y, int color) {
-      this.init_SyncManager.init_PoolEntry().draw(this.init_GuiGraphicsExtract, text, x, y, color);
+   void drawText(String text, int x, int y, int color) {
+      this.renderContext.init_PoolEntry().draw(this.graphics, text, x, y, color);
    }
 
-   void init_V_Str_2(String text, int x, int y, int maxWidth, int color) {
-      this.init_SyncManager.init_PoolEntry().drawEllipsized(this.init_GuiGraphicsExtract, text, x, y, maxWidth, color);
+   void drawEllipsizedText(String text, int x, int y, int maxWidth, int color) {
+      this.renderContext.init_PoolEntry().drawEllipsized(this.graphics, text, x, y, maxWidth, color);
    }
 
-   void init_V_Str_3(String text, autismclient.gui.f.NetHelper row, int x, int maxWidth, int color) {
-      this.init_SyncManager.init_PoolEntry().drawEllipsized(this.init_GuiGraphicsExtract, text, x, this.init_SyncManager.init_PoolEntry().centerTextY(row), maxWidth, color);
+   void drawCenteredRowText(String text, autismclient.gui.f.NetHelper row, int x, int maxWidth, int color) {
+      this.renderContext.init_PoolEntry().drawEllipsized(this.graphics, text, x, this.renderContext.init_PoolEntry().centerTextY(row), maxWidth, color);
    }
 
-   String init_Str_Str_I(String text, int maxWidth) {
+   String ellipsizeLeft(String text, int maxWidth) {
       String flat = text.replace('\n', ' ').trim();
-      if (this.init_I_Str(flat) <= maxWidth) {
+      if (this.measureTextWidth(flat) <= maxWidth) {
          return flat;
       }
 
@@ -218,7 +218,7 @@ final class AiUiKit {
 
       while (lo < hi) {
          int mid = lo + hi >>> 1;
-         if (this.init_I_Str("..." + flat.substring(mid)) <= maxWidth) {
+         if (this.measureTextWidth("..." + flat.substring(mid)) <= maxWidth) {
             hi = mid;
          } else {
             lo = mid + 1;
@@ -228,26 +228,26 @@ final class AiUiKit {
       return "..." + flat.substring(Math.min(lo, flat.length()));
    }
 
-   void init_V_I(int cx, int cy, float r, int color) {
-      PacketUtil.init_V_GuiGraphicsExtract(this.init_GuiGraphicsExtract, cx, cy, r, color);
+   void drawStatusDot(int cx, int cy, float r, int color) {
+      PacketUtil.init_V_GuiGraphicsExtract(this.graphics, cx, cy, r, color);
    }
 
-   boolean init_Z_D(double x, double y, int button, List<autismclient.gui.ui.widgets.TextInputWidget> fields) {
+   boolean mouseClicked(double x, double y, int button, List<autismclient.gui.ui.widgets.TextInputWidget> fields) {
       int ix = (int)x;
       int iy = (int)y;
 
-      for (int i = this.read_List.size() - 1; i >= 0 && button == 0; i--) {
-         AiUiKit.Inner_StreamUtil s = this.read_List.get(i);
-         if (s.init_PoolEntry_DataUtil.containsTrack(x, y)) {
-            s.write = s.init_PoolEntry_DataUtil.containsThumb(x, y) ? iy - s.init_PoolEntry_DataUtil.thumbY() : s.init_PoolEntry_DataUtil.thumbHeight() / 2;
-            this.init_cE_StreamUtil = s;
-            this.init_Z_D(y);
+      for (int i = this.activeScrollbars.size() - 1; i >= 0 && button == 0; i--) {
+         AiUiKit.Inner_StreamUtil s = this.activeScrollbars.get(i);
+         if (s.metrics.containsTrack(x, y)) {
+            s.dragGrabOffset = s.metrics.containsThumb(x, y) ? iy - s.metrics.thumbY() : s.metrics.thumbHeight() / 2;
+            this.draggingScroll = s;
+            this.mouseDragged(y);
             return true;
          }
       }
 
-      for (int i = this.init_List.size() - 1; i >= 0; i--) {
-         AiUiKit.Inner_DataUtil hit = this.init_List.get(i);
+      for (int i = this.hitRegions.size() - 1; i >= 0; i--) {
+         AiUiKit.Inner_DataUtil hit = this.hitRegions.get(i);
          if (hit.bounds().init_Z(ix, iy)) {
             if (hit.field() != null) {
                for (autismclient.gui.ui.widgets.TextInputWidget other : fields) {
@@ -257,7 +257,7 @@ final class AiUiKit {
                }
 
                if (button == 0) {
-                  hit.field().init_Z_SyncManager_2(this.init_SyncManager_2, (float)x, (float)y, button);
+                  hit.field().init_Z_SyncManager_2(this.layoutContext, (float)x, (float)y, button);
                }
 
                return true;
@@ -285,32 +285,32 @@ final class AiUiKit {
       return false;
    }
 
-   boolean init_Z_D(double y) {
-      if (this.init_cE_StreamUtil == null) {
+   boolean mouseDragged(double y) {
+      if (this.draggingScroll == null) {
          return false;
       }
 
-      this.init_cE_StreamUtil.init_I = ScrollbarMetricsHelper.scrollOffsetForMouseY(this.init_cE_StreamUtil.init_PoolEntry_DataUtil, y, this.init_cE_StreamUtil.write);
-      this.init_cE_StreamUtil.init_Z = this.init_cE_StreamUtil.init_I >= this.init_cE_StreamUtil.init_I();
+      this.draggingScroll.offset = ScrollbarMetricsHelper.scrollOffsetForMouseY(this.draggingScroll.metrics, y, this.draggingScroll.dragGrabOffset);
+      this.draggingScroll.followBottom = this.draggingScroll.offset >= this.draggingScroll.maxScroll();
       return true;
    }
 
-   boolean load_Z() {
-      if (this.init_cE_StreamUtil == null) {
+   boolean mouseReleased() {
+      if (this.draggingScroll == null) {
          return false;
       }
 
-      this.init_cE_StreamUtil.write = -1;
-      this.init_cE_StreamUtil = null;
+      this.draggingScroll.dragGrabOffset = -1;
+      this.draggingScroll = null;
       return true;
    }
 
-   boolean init(double x, double y, double amount) {
-      for (int i = this.load_List.size() - 1; i >= 0; i--) {
-         AiUiKit.Inner_CachePool s = this.load_List.get(i);
+   boolean mouseScrolled(double x, double y, double amount) {
+      for (int i = this.scrollRegions.size() - 1; i >= 0; i--) {
+         AiUiKit.Inner_CachePool s = this.scrollRegions.get(i);
          if (s.bounds().init_Z((int)x, (int)y)) {
             if (s.scroll() != null) {
-               s.scroll().init(amount);
+               s.scroll().scrollByWheel(amount);
             }
 
             return true;
@@ -320,12 +320,12 @@ final class AiUiKit {
       return false;
    }
 
-   void load_V() {
-      for (int i = this.init_List.size() - 1; i >= 0; i--) {
-         AiUiKit.Inner_DataUtil hit = this.init_List.get(i);
-         if (hit.bounds().init_Z(this.write, this.update)) {
+   void renderHoveredTooltip() {
+      for (int i = this.hitRegions.size() - 1; i >= 0; i--) {
+         AiUiKit.Inner_DataUtil hit = this.hitRegions.get(i);
+         if (hit.bounds().init_Z(this.mouseX, this.mouseY)) {
             if (hit.tip() != null && !hit.tip().isBlank()) {
-               autismclient.gui.ui.widgets.TooltipRenderer.init(this.init_SyncManager, hit.tip(), this.write, this.update);
+               autismclient.gui.ui.widgets.TooltipRenderer.init(this.renderContext, hit.tip(), this.mouseX, this.mouseY);
             }
 
             if (hit.tip() != null || hit.left() != null || hit.field() != null) {
@@ -335,7 +335,7 @@ final class AiUiKit {
       }
    }
 
-   static autismclient.gui.sdf.MsdfFontFace init_ConfigStore_I(int style) {
+   static autismclient.gui.sdf.MsdfFontFace fontFaceForStyle(int style) {
       if ((style & 1) != 0) {
          return autismclient.gui.sdf.MsdfFontFace.TITLE;
       } else {
@@ -343,26 +343,26 @@ final class AiUiKit {
       }
    }
 
-   static float init_F_I(int style) {
+   static float fontSizeForStyle(int style) {
       float body = autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(autismclient.gui.sdf.MsdfFontFace.BODY);
       return (style & 16) != 0 ? body * 1.15F : body;
    }
 
-   void init_V_Str(String text, float x, int y, int style, int color) {
+   void drawStyledSpan(String text, float x, int y, int style, int color) {
       if (!text.isEmpty()) {
-         autismclient.gui.sdf.MsdfFontFace face = init_ConfigStore_I(style);
+         autismclient.gui.sdf.MsdfFontFace face = fontFaceForStyle(style);
          if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, text)) {
-            float size = init_F_I(style);
+            float size = fontSizeForStyle(style);
             autismclient.gui.sdf.MsdfTextRenderer.draw(
-               this.init_GuiGraphicsExtract, face, text, x, autismclient.gui.sdf.MsdfTextRenderer.alignToVanillaTop(face, y, size), size, color, false
+               this.graphics, face, text, x, autismclient.gui.sdf.MsdfTextRenderer.alignToVanillaTop(face, y, size), size, color, false
             );
          } else {
-            this.init_GuiGraphicsExtract.text(this.init_Font, text, Math.round(x), y, color, false);
+            this.graphics.text(this.font, text, Math.round(x), y, color, false);
          }
       }
    }
 
-   static AiTranscriptLayout.Inner_ConfigStore init_cC_ConfigStore_Font(final Font font) {
+   static AiTranscriptLayout.Inner_ConfigStore createTextMeasurer(final Font font) {
       return new AiTranscriptLayout.Inner_ConfigStore() {
          @Override
          public int init(String text, int start, int end) {
@@ -372,11 +372,11 @@ final class AiUiKit {
          @Override
          public int init(String text, int start, int end, int style) {
             String part = text.substring(start, end);
-            autismclient.gui.sdf.MsdfFontFace face = AiUiKit.init_ConfigStore_I(style);
+            autismclient.gui.sdf.MsdfFontFace face = AiUiKit.fontFaceForStyle(style);
             if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, part)) {
                autismclient.gui.sdf.MsdfFontAtlas msdf = face.init_StreamUtil();
                if (msdf != null) {
-                  return (int)Math.ceil(msdf.init(part, AiUiKit.init_F_I(style)) - 1.0E-4);
+                  return (int)Math.ceil(msdf.init(part, AiUiKit.fontSizeForStyle(style)) - 1.0E-4);
                }
             }
 
@@ -385,7 +385,7 @@ final class AiUiKit {
       };
    }
 
-   static String init_Str_J_J(long at, long now) {
+   static String formatRelativeAge(long at, long now) {
       long s = Math.max(0L, (now - at) / 1000L);
       if (s < 60L) {
          return "now";
@@ -400,7 +400,7 @@ final class AiUiKit {
       return h < 48L ? h + "h" : h / 24L + "d";
    }
 
-   static String init_Str_J(long n) {
+   static String formatCompactCount(long n) {
       if (n >= 1000000L) {
          return String.format(Locale.ROOT, "%.1fM", n / 1000000.0);
       } else if (n >= 10000L) {
@@ -410,7 +410,7 @@ final class AiUiKit {
       }
    }
 
-   static String init_Str_Str(String text) {
+   static String flattenSingleLine(String text) {
       return text == null ? "" : text.replace('\n', ' ').trim();
    }
 
@@ -421,53 +421,53 @@ final class AiUiKit {
    }
 
    static final class Inner_StreamUtil {
-      int init_I;
-      boolean init_Z;
-      private int load;
-      private int read;
-      private int write = -1;
-      private autismclient.gui.f.NetHelper init_NetHelper = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-      private ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil;
+      int offset;
+      boolean followBottom;
+      private int contentHeight;
+      private int viewportHeight;
+      private int dragGrabOffset = -1;
+      private autismclient.gui.f.NetHelper viewportBounds = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
+      private ScrollbarMetricsHelper.Metrics metrics;
 
       Inner_StreamUtil(boolean follow) {
-         this.init_Z = follow;
+         this.followBottom = follow;
       }
 
-      int init_I() {
-         return Math.max(0, this.load - this.read);
+      int maxScroll() {
+         return Math.max(0, this.contentHeight - this.viewportHeight);
       }
 
-      void init(autismclient.gui.f.NetHelper viewport, int content) {
-         this.init_NetHelper = viewport;
-         this.load = content;
-         this.read = viewport.sync();
-         this.init_I = this.init_Z ? this.init_I() : Math.max(0, Math.min(this.init_I, this.init_I()));
-         this.init_PoolEntry_DataUtil = ScrollbarMetricsHelper.compute(
-            content, this.read, viewport.init() - 6, viewport.write(), 6, viewport.sync(), this.init_I
+      void layout(autismclient.gui.f.NetHelper viewport, int content) {
+         this.viewportBounds = viewport;
+         this.contentHeight = content;
+         this.viewportHeight = viewport.sync();
+         this.offset = this.followBottom ? this.maxScroll() : Math.max(0, Math.min(this.offset, this.maxScroll()));
+         this.metrics = ScrollbarMetricsHelper.compute(
+            content, this.viewportHeight, viewport.init() - 6, viewport.write(), 6, viewport.sync(), this.offset
          );
       }
 
-      void init(double amount) {
-         this.init_I = Math.max(0, Math.min(this.init_I(), this.init_I - (int)Math.round(amount * 24.0)));
-         this.init_Z = this.init_I >= this.init_I();
+      void scrollByWheel(double amount) {
+         this.offset = Math.max(0, Math.min(this.maxScroll(), this.offset - (int)Math.round(amount * 24.0)));
+         this.followBottom = this.offset >= this.maxScroll();
       }
 
-      void init_V() {
-         this.init_Z = true;
-         this.init_I = 2147483647;
+      void scrollToBottom() {
+         this.followBottom = true;
+         this.offset = 2147483647;
       }
 
-      void load() {
-         this.init_Z = false;
-         this.init_I = 0;
+      void scrollToTop() {
+         this.followBottom = false;
+         this.offset = 0;
       }
 
-      boolean init_Z() {
-         return this.write >= 0;
+      boolean isDragging() {
+         return this.dragGrabOffset >= 0;
       }
 
-      autismclient.gui.f.NetHelper init_NetHelper() {
-         return this.init_NetHelper;
+      autismclient.gui.f.NetHelper viewportBounds() {
+         return this.viewportBounds;
       }
    }
 }

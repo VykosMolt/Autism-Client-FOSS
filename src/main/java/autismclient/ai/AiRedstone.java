@@ -96,7 +96,7 @@ final class AiRedstone {
                            }
 
                            if (this.init_AiOperation == null) {
-                              this.init_AiOperation = AiGoto.init_AiOperation(pos, Math.min(120, this.init_I_25()));
+                              this.init_AiOperation = AiGoto.approachBlockCompat(pos, Math.min(120, this.init_I_25()));
                            }
 
                            AiOperation.Result legResult = this.init_AiOperation.tick();

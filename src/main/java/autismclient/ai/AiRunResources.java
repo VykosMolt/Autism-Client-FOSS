@@ -243,7 +243,7 @@ public final class AiRunResources {
 
    static Object beginCampaign() {
       campaignToken = new Object();
-      campaignWorldId = AiWorldIdentity.init(Minecraft.getInstance());
+      campaignWorldId = AiWorldIdentity.currentWorldKey(Minecraft.getInstance());
       campaignConnection = Minecraft.getInstance().getConnection();
       refreshReservations();
       return campaignToken;
@@ -251,7 +251,7 @@ public final class AiRunResources {
 
    static boolean isCampaignActive() {
       Minecraft mc = Minecraft.getInstance();
-      return campaignToken != null && mc.player != null && mc.level != null && campaignConnection == mc.getConnection() && campaignWorldId.equals(AiWorldIdentity.init(mc));
+      return campaignToken != null && mc.player != null && mc.level != null && campaignConnection == mc.getConnection() && campaignWorldId.equals(AiWorldIdentity.currentWorldKey(mc));
    }
 
    static void refreshReservations() {

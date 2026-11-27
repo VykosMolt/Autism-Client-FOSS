@@ -1,56 +1,56 @@
 package autismclient.gui.ui.widgets;
 
 public final class ScrollOffsetController {
-   private int init = 0;
+   private int offset = 0;
 
-   public void init(int offset) {
-      this.init = Math.max(0, offset);
+   public void setOffsetUnclamped(int offset) {
+      this.offset = Math.max(0, offset);
    }
 
-   public void init_V_I_I(int offset, int maxScroll) {
-      this.init = init_I_I_I(offset, maxScroll);
+   public void setOffset(int offset, int maxScroll) {
+      this.offset = clampOffset(offset, maxScroll);
    }
 
-   public void load(int offset, int maxScroll) {
-      this.init = init_I_I_I(offset, maxScroll);
+   public void jumpTo(int offset, int maxScroll) {
+      this.offset = clampOffset(offset, maxScroll);
    }
 
-   public void init_V_D(double amount, float stepPixels, int maxScroll) {
-      this.init_V_I_I(this.init - Math.round((float)amount * stepPixels), maxScroll);
+   public void scrollByWheel(double amount, float stepPixels, int maxScroll) {
+      this.setOffset(this.offset - Math.round((float)amount * stepPixels), maxScroll);
    }
 
-   public void init_V_PoolEntry_DataUtil(ScrollbarMetricsHelper.Metrics metrics, double mouseY, int grabOffset) {
+   public void dragToMouseY(ScrollbarMetricsHelper.Metrics metrics, double mouseY, int grabOffset) {
       if (metrics == null) {
-         this.load(0, 0);
+         this.jumpTo(0, 0);
       } else {
-         this.init_V_I_I(ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, mouseY, grabOffset), metrics.maxScroll());
+         this.setOffset(ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, mouseY, grabOffset), metrics.maxScroll());
       }
    }
 
-   public void init(ScrollbarMetricsHelper.Metrics metrics, double mouseY, int grabOffset, int stepSize) {
+   public void dragToMouseYStepped(ScrollbarMetricsHelper.Metrics metrics, double mouseY, int grabOffset, int stepSize) {
       if (metrics == null) {
-         this.load(0, 0);
+         this.jumpTo(0, 0);
       } else {
          int rawScroll = ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, mouseY, grabOffset);
          int steppedScroll = rawScroll / stepSize * stepSize;
-         this.init_V_I_I(steppedScroll, metrics.maxScroll());
+         this.setOffset(steppedScroll, metrics.maxScroll());
       }
    }
 
-   public int init_I_F_I(float delta, int maxScroll) {
-      this.init = init_I_I_I(this.init, maxScroll);
-      return this.init;
+   public int tickAndClamp(float delta, int maxScroll) {
+      this.offset = clampOffset(this.offset, maxScroll);
+      return this.offset;
    }
 
-   public int init() {
-      return this.init;
+   public int getOffset() {
+      return this.offset;
    }
 
-   public int load() {
-      return this.init;
+   public int getTargetOffset() {
+      return this.offset;
    }
 
-   private static int init_I_I_I(int value, int max) {
+   private static int clampOffset(int value, int max) {
       return Math.max(0, Math.min(max, value));
    }
 }

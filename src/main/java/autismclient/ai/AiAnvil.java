@@ -159,7 +159,7 @@ final class AiAnvil {
                            this.init_ItemStack = out.copy();
                            this.poll = AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem()).toString());
                            this.load_J = AiServerEvidence.containerRevision(menu.containerId);
-                           AiContainerTransactions.init(menu.containerId, 2, 0, ContainerInput.QUICK_MOVE);
+                           AiContainerTransactions.sendPredictedClick(menu.containerId, 2, 0, ContainerInput.QUICK_MOVE);
                            return this.init("Taking the result");
                         }
                      }
@@ -195,8 +195,8 @@ final class AiAnvil {
                if (slot >= 0) {
                   this.init(itemId, slot);
                   int menuSlot = this.init(slot);
-                  AiContainerTransactions.init(menu.containerId, menuSlot, 0, ContainerInput.PICKUP);
-                  AiContainerTransactions.init(menu.containerId, targetSlot, 0, ContainerInput.PICKUP);
+                  AiContainerTransactions.sendPredictedClick(menu.containerId, menuSlot, 0, ContainerInput.PICKUP);
+                  AiContainerTransactions.sendPredictedClick(menu.containerId, targetSlot, 0, ContainerInput.PICKUP);
                   this.update++;
                }
             }
@@ -256,14 +256,14 @@ final class AiAnvil {
                         return this.init(AiOperation.Status.FAILED, "No free supported spot next to the player for an anvil");
                      }
 
-                     this.init_DataPipe.init_V_BlockPos_Item(spot, BuiltInRegistries.ITEM.getOptional(Identifier.parse("minecraft:anvil")).orElseThrow());
+                     this.init_DataPipe.start(spot, BuiltInRegistries.ITEM.getOptional(Identifier.parse("minecraft:anvil")).orElseThrow());
                      this.init_Z = true;
                      this.read_I = 0;
                   }
 
-                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
                   if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
-                     this.init_BlockPos = this.init_DataPipe.init_BlockPos();
+                     this.init_BlockPos = this.init_DataPipe.targetPos();
                      this.init_Z = false;
                      return this.init("Anvil placed");
                   }
@@ -273,7 +273,7 @@ final class AiAnvil {
                   }
 
                   this.init_Z = false;
-                  return this.init(AiOperation.Status.FAILED, "Could not place an anvil: " + this.init_DataPipe.init_Str());
+                  return this.init(AiOperation.Status.FAILED, "Could not place an anvil: " + this.init_DataPipe.failureReason());
                } else {
                   double reach = Math.max(4.5, this.init_Minecraft.player.blockInteractionRange());
                   if (this.init_Minecraft.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(this.init_BlockPos)) > reach * reach) {
@@ -393,7 +393,7 @@ final class AiAnvil {
                if (!this.load_Z) {
                   this.load_Z = true;
                   this.init_DataUtil.clear();
-                  this.init_DataPipe.init_V();
+                  this.init_DataPipe.reset();
                   if (this.init_Minecraft.player != null && this.init_Minecraft.player.containerMenu instanceof AnvilMenu) {
                      this.init_Minecraft.player.closeContainer();
                   }

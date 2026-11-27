@@ -118,7 +118,7 @@ final class AiRecover {
                   } else {
                      ItemEntity nearest = this.init_ItemEntity();
                      if (nearest != null && mc.player.distanceToSqr(nearest) > 2.25) {
-                        this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(
+                        this.init_AiOperation = AiGoto.travelToCompat(
                            nearest.blockPosition(), 1.0, false, false, true, Math.min(30, this.init_I_24())
                         );
                         return this.init("Collecting a straggler drop");

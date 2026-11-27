@@ -19,26 +19,26 @@ final class PrintFailedWalks {
    }
 
    boolean init(PrintView view, long from, double fromFeet, long to, double toFeet) {
-      if (!view.load_Z()
+      if (!view.hasAnyHypothesis()
          && Double.isFinite(fromFeet)
          && Double.isFinite(toFeet)
          && Math.abs(BlockPos.getX(from) - BlockPos.getX(to)) <= 1
          && Math.abs(BlockPos.getZ(from) - BlockPos.getZ(to)) <= 1
          && from != to
          && !(Math.abs(fromFeet - toFeet) > 3.0)) {
-         try (PrintView.Inner_TaskQueue reads = view.init_ArrayUtil_TaskQueu()) {
-            int minY = PrintView.init_I_D(Math.min(fromFeet, toFeet)) - 1;
+         try (PrintView.Inner_TaskQueue reads = view.openReadTracker()) {
+            int minY = PrintView.floorInt(Math.min(fromFeet, toFeet)) - 1;
             int maxY = (int)Math.ceil(Math.max(fromFeet, toFeet) + 1.8 + 1.25);
 
             for (int x = Math.min(BlockPos.getX(from), BlockPos.getX(to)) - 1; x <= Math.max(BlockPos.getX(from), BlockPos.getX(to)) + 1; x++) {
                for (int z = Math.min(BlockPos.getZ(from), BlockPos.getZ(to)) - 1; z <= Math.max(BlockPos.getZ(from), BlockPos.getZ(to)) + 1; z++) {
                   for (int y = minY; y <= maxY; y++) {
-                     view.init_List_BlockPos(new BlockPos(x, y, z));
+                     view.getCollisionBoxesAt(new BlockPos(x, y, z));
                   }
                }
             }
 
-            if (!reads.init_Z()) {
+            if (!reads.isComplete()) {
                return false;
             }
 
@@ -47,7 +47,7 @@ final class PrintFailedWalks {
                this.init_LinkedHashMap.remove(this.init_LinkedHashMap.keySet().iterator().next());
             }
 
-            this.init_LinkedHashMap.put(edge, new Long2ObjectOpenHashMap<>(reads.init_Long2ObjectOpenHas));
+            this.init_LinkedHashMap.put(edge, new Long2ObjectOpenHashMap<>(reads.recordedStates));
             return true;
          }
       } else {
@@ -64,7 +64,7 @@ final class PrintFailedWalks {
 
       for (Entry<BlockState> entry : reads.long2ObjectEntrySet()) {
          if (view.getBlockState(BlockPos.of(entry.getLongKey())) != entry.getValue()) {
-            if (!view.load_Z()) {
+            if (!view.hasAnyHypothesis()) {
                this.init_LinkedHashMap.remove(edge);
             }
 

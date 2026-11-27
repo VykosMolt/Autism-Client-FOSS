@@ -108,7 +108,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          int editorY = tipY + Math.max(1, maxTipLines) * lineH + 2;
          int editorH = Math.max(42, footerTop + pad - 2 - editorY);
          this.init_BitSetUtil.init_TableIndex_F(x + pad, editorY, w - pad * 2, editorH);
-         autismclient.gui.ui.layout.LayoutViewport viewport = autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(1.0F);
+         autismclient.gui.ui.layout.LayoutViewport viewport = autismclient.gui.ui.layout.LayoutViewport.create(1.0F);
          this.init_SyncManager = new autismclient.gui.ui.layout.LayoutContext(graphics, this.font, viewport, init_CharEncoder, mx, my, delta);
          this.init_BitSetUtil.init_V_SyncManager(this.init_SyncManager);
          int buttonY = footerTop + pad;

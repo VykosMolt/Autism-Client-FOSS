@@ -27,7 +27,7 @@ public final class LayoutTreeHost {
    }
 
    public LayoutViewport init_RingBuffer() {
-      return LayoutViewport.init_RingBuffer_F(this.init_F);
+      return LayoutViewport.create(this.init_F);
    }
 
    public void init(GuiGraphicsExtractor drawContext, int mouseX, int mouseY, float delta) {
@@ -35,16 +35,16 @@ public final class LayoutTreeHost {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.font != null) {
             LayoutViewport viewport = this.init_RingBuffer();
-            viewport.init_V_GuiGraphicsExtract(drawContext);
+            viewport.pushTransform(drawContext);
 
             try {
                LayoutContext context = new LayoutContext(
-                  drawContext, mc.font, viewport, this.init_CharEncoder, viewport.init_F_D(mouseX), viewport.load(mouseY), delta
+                  drawContext, mc.font, viewport, this.init_CharEncoder, viewport.toUiX(mouseX), viewport.toUiY(mouseY), delta
                );
                this.init(context, viewport);
                this.init_TableIndex.init_V_SyncManager(context);
             } finally {
-               viewport.load(drawContext);
+               viewport.popTransform(drawContext);
             }
          }
       }
@@ -56,7 +56,7 @@ public final class LayoutTreeHost {
 
    private void init(LayoutContext context, LayoutViewport viewport) {
       long revision = LayoutNode.init_J();
-      boolean viewportChanged = Float.compare(this.load, viewport.init()) != 0 || Float.compare(this.read, viewport.load()) != 0;
+      boolean viewportChanged = Float.compare(this.load, viewport.width()) != 0 || Float.compare(this.read, viewport.height()) != 0;
       boolean rootBoundsChanged = Float.compare(this.write, this.init_TableIndex.load_F()) != 0
          || Float.compare(this.update, this.init_TableIndex.read_F()) != 0
          || Float.compare(this.sync, this.init_TableIndex.write_F()) != 0
@@ -64,8 +64,8 @@ public final class LayoutTreeHost {
       if (viewportChanged || rootBoundsChanged || revision != this.init_J) {
          this.init_TableIndex.read_V_SyncManager(context);
          this.init_J = LayoutNode.init_J();
-         this.load = viewport.init();
-         this.read = viewport.load();
+         this.load = viewport.width();
+         this.read = viewport.height();
          this.write = this.init_TableIndex.load_F();
          this.update = this.init_TableIndex.read_F();
          this.sync = this.init_TableIndex.write_F();
@@ -99,8 +99,8 @@ public final class LayoutTreeHost {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.font != null) {
             LayoutViewport viewport = this.init_RingBuffer();
-            LayoutContext context = new LayoutContext(null, mc.font, viewport, this.init_CharEncoder, viewport.init_F_D(mouseX), viewport.load(mouseY), 0.0F);
-            return this.init_TableIndex.init_Z_SyncManager_2(context, viewport.init_F_D(mouseX), viewport.load(mouseY), button);
+            LayoutContext context = new LayoutContext(null, mc.font, viewport, this.init_CharEncoder, viewport.toUiX(mouseX), viewport.toUiY(mouseY), 0.0F);
+            return this.init_TableIndex.init_Z_SyncManager_2(context, viewport.toUiX(mouseX), viewport.toUiY(mouseY), button);
          } else {
             return false;
          }
@@ -114,8 +114,8 @@ public final class LayoutTreeHost {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.font != null) {
             LayoutViewport viewport = this.init_RingBuffer();
-            LayoutContext context = new LayoutContext(null, mc.font, viewport, this.init_CharEncoder, viewport.init_F_D(mouseX), viewport.load(mouseY), 0.0F);
-            return this.init_TableIndex.load_Z_SyncManager(context, viewport.init_F_D(mouseX), viewport.load(mouseY), button);
+            LayoutContext context = new LayoutContext(null, mc.font, viewport, this.init_CharEncoder, viewport.toUiX(mouseX), viewport.toUiY(mouseY), 0.0F);
+            return this.init_TableIndex.load_Z_SyncManager(context, viewport.toUiX(mouseX), viewport.toUiY(mouseY), button);
          } else {
             return false;
          }
@@ -129,10 +129,10 @@ public final class LayoutTreeHost {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.font != null) {
             LayoutViewport viewport = this.init_RingBuffer();
-            LayoutContext context = new LayoutContext(null, mc.font, viewport, this.init_CharEncoder, viewport.init_F_D(mouseX), viewport.load(mouseY), 0.0F);
+            LayoutContext context = new LayoutContext(null, mc.font, viewport, this.init_CharEncoder, viewport.toUiX(mouseX), viewport.toUiY(mouseY), 0.0F);
             return this.init_TableIndex
                .init_Z_SyncManager(
-                  context, viewport.init_F_D(mouseX), viewport.load(mouseY), button, (float)(deltaX / viewport.read()), (float)(deltaY / viewport.write())
+                  context, viewport.toUiX(mouseX), viewport.toUiY(mouseY), button, (float)(deltaX / viewport.scaleX()), (float)(deltaY / viewport.scaleY())
                );
          } else {
             return false;
@@ -147,8 +147,8 @@ public final class LayoutTreeHost {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.font != null) {
             LayoutViewport viewport = this.init_RingBuffer();
-            LayoutContext context = new LayoutContext(null, mc.font, viewport, this.init_CharEncoder, viewport.init_F_D(mouseX), viewport.load(mouseY), 0.0F);
-            return this.init_TableIndex.init_Z_SyncManager(context, viewport.init_F_D(mouseX), viewport.load(mouseY), (float)amount);
+            LayoutContext context = new LayoutContext(null, mc.font, viewport, this.init_CharEncoder, viewport.toUiX(mouseX), viewport.toUiY(mouseY), 0.0F);
+            return this.init_TableIndex.init_Z_SyncManager(context, viewport.toUiX(mouseX), viewport.toUiY(mouseY), (float)amount);
          } else {
             return false;
          }

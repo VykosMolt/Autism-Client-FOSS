@@ -262,7 +262,7 @@ final class AiBuilder {
             );
       }
 
-      String world = AiJson.sha256Hex(AiWorldIdentity.init(mc) + "/" + AiWorldIdentity.load(mc));
+      String world = AiJson.sha256Hex(AiWorldIdentity.currentWorldKey(mc) + "/" + AiWorldIdentity.currentDimensionId(mc));
       return mc.gameDirectory.toPath().resolve("config/autism/ai/scaffold-jobs").resolve(world).resolve(AiJson.sha256Hex(identity.toString()) + ".json");
    }
 
@@ -3310,7 +3310,7 @@ final class AiBuilder {
             }
 
             void init_V_10() {
-               autismclient.ai.engine.AiRestock.init(Map.of());
+               autismclient.ai.engine.AiRestock.reserveItemsForJob(Map.of());
                autismclient.ai.engine.AiRoutePolicy.putAt(Set.of());
                autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
                autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(0L);
@@ -3362,7 +3362,7 @@ final class AiBuilder {
                   }
                }
 
-               autismclient.ai.engine.AiRestock.init(this.close_Map);
+               autismclient.ai.engine.AiRestock.reserveItemsForJob(this.close_Map);
                autismclient.ai.engine.AiRoutePolicy.putAt(this.clear_Set);
                autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(3000000000L);
                if (schematic) {
@@ -3404,7 +3404,7 @@ final class AiBuilder {
 
                AiOperation.Result r = !this.clear_Z && this.init_Y != null && System.nanoTime() <= this.init_J
                   ? this.init_Y
-                     .init_AiOperation_Result_AiOperation(this, this::poll, () -> Math.max(1, (int)((this.init_J - System.nanoTime()) / 1000000000L)))
+                     .tick(this, this::poll, () -> Math.max(1, (int)((this.init_J - System.nanoTime()) / 1000000000L)))
                   : null;
                if (r != null && r.terminal()) {
                   this.cancel();
@@ -3830,7 +3830,7 @@ final class AiBuilder {
                      } else {
                         if (!schematic && this.init_List.size() - this.data <= 8 && this.load_Z_4()) {
                            this.add_Z = true;
-                           this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(blueprint.origin().below().north(3), 1.5, true, false, false, 20);
+                           this.init_AiOperation = AiGoto.travelToCompat(blueprint.origin().below().north(3), 1.5, true, false, false, 20);
                            return this.init_AiOperation_Result_5("Stepping out of the closing structure");
                         }
 
@@ -3848,7 +3848,7 @@ final class AiBuilder {
                            BlockPos worker = mc.player.blockPosition();
                            BlockPos stance = new BlockPos(worker.getX(), blueprint.origin().getY() + 2, worker.getZ());
                            this.put_Z = this.run_Z = true;
-                           this.init_AiOperation = AiGoto.init(
+                           this.init_AiOperation = AiGoto.travelToCompat(
                               stance,
                               0.25,
                               true,
@@ -3858,7 +3858,7 @@ final class AiBuilder {
                               autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                               true,
                               2.0,
-                              AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
+                              AiGoto.protectingCellsAboveYCompat(
                                  autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(stance, 0.25),
                                  keep,
                                  blueprint.origin().getY() - 2
@@ -4439,8 +4439,8 @@ final class AiBuilder {
                                                          if (schematic) {
                                                             this.load_V(pos);
                                                          } else {
-                                                            this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(
-                                                               AiGoto.init_BlockPos(pos.relative(look.getOpposite(), 3), 8), 0.6, true, false, false, 25
+                                                            this.init_AiOperation = AiGoto.travelToCompat(
+                                                               AiGoto.findStandableNearCompat(pos.relative(look.getOpposite(), 3), 8), 0.6, true, false, false, 25
                                                             );
                                                          }
 
@@ -4569,8 +4569,8 @@ final class AiBuilder {
                                                 }
 
                                                 this.init_AiOperation = schematic
-                                                   ? AiGoto.init_AiOperation_BlockPos_5(pos, item, 10, this.init_AABB, this.init_Set_2())
-                                                   : AiGoto.init_AiOperation_BlockPos_3(pos, item, 10, this.init_AABB);
+                                                   ? AiGoto.approachSchematicPlacementCompat(pos, item, 10, this.init_AABB, this.init_Set_2())
+                                                   : AiGoto.approachToPlaceCompat(pos, item, 10, this.init_AABB);
                                                 return this.init_AiOperation_Result_5("Stepping out of the placement cell");
                                              }
 
@@ -4835,7 +4835,7 @@ final class AiBuilder {
                }
 
                if (this.init_Z_4(this.load_BlockPos())) {
-                  this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(this.load_BlockPos(), 0.6, false, false, false, 15);
+                  this.init_AiOperation = AiGoto.travelToCompat(this.load_BlockPos(), 0.6, false, false, false, 15);
                } else if (!schematic
                   || !reason.contains("face") && !reason.contains("placement context")
                   || !this.close(this.init_List.get(this.data), this.load_BlockPos())
@@ -5023,7 +5023,7 @@ final class AiBuilder {
 
                         if (stance != null) {
                            this.get_Set.add(stance.asLong());
-                           this.close_AiOperation = AiGoto.init_AiOperation_BlockPos(stance, 0.35, false, false, false, 10);
+                           this.close_AiOperation = AiGoto.travelToCompat(stance, 0.35, false, false, false, 10);
                            return this.init_AiOperation_Result_5("Moving off the temporary support");
                         }
                      }
@@ -5111,7 +5111,7 @@ final class AiBuilder {
                                        beside.toShortString()
                                     );
                                  this.write_BlockPos = null;
-                                 this.push_AiOperation = AiGoto.init_AiOperation_BlockPos(beside, 0.35, false, false, false, 10);
+                                 this.push_AiOperation = AiGoto.travelToCompat(beside, 0.35, false, false, false, 10);
                                  return this.init_AiOperation_Result_5("Stepping beside a temporary support to remove it");
                               }
                            }
@@ -5351,7 +5351,7 @@ final class AiBuilder {
                         this.run_Set.add(column);
                         this.read_Map.merge(column, ceiling.getY(), Math::min);
                         BlockPos exit = new BlockPos(worker.getX(), roof + 1, worker.getZ());
-                        this.open_AiOperation = AiGoto.init(
+                        this.open_AiOperation = AiGoto.travelToCompat(
                            exit,
                            0.25,
                            true,
@@ -5361,7 +5361,7 @@ final class AiBuilder {
                            autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                            true,
                            2.0,
-                           AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
+                           AiGoto.protectingCellsAboveYCompat(
                               autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(exit, 0.25),
                               this.load_Set(),
                               blueprint.origin().getY()
@@ -5385,7 +5385,7 @@ final class AiBuilder {
                      }
 
                      this.run_Set.add(column);
-                     this.open_AiOperation = AiGoto.init(
+                     this.open_AiOperation = AiGoto.travelToCompat(
                         doorExit,
                         0.25,
                         true,
@@ -5395,7 +5395,7 @@ final class AiBuilder {
                         autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                         true,
                         2.0,
-                        AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
+                        AiGoto.protectingCellsAboveYCompat(
                            autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(doorExit, 0.25),
                            this.load_Set(),
                            blueprint.origin().getY()
@@ -5885,7 +5885,7 @@ final class AiBuilder {
                   }
                }
 
-               if (recovery && this.close_Z && AiGoto.init_I(autismclient.ai.engine.AiStance.init(mc)) >= 3 && this.flush(worker) && this.close(worker)) {
+               if (recovery && this.close_Z && AiGoto.recentNoRouteCountCompat(autismclient.ai.engine.AiStance.init(mc)) >= 3 && this.flush(worker) && this.close(worker)) {
                   Integer before = this.read_Map.get(BlockPos.asLong(worker.getX(), 0, worker.getZ()));
                   if (before == null || before > blueprint.origin().getY()) {
                      AutismClientAddon.LOG.info("[AI] build: stranded on the work at {}; its column opens down to the ground", worker.toShortString());
@@ -6295,7 +6295,7 @@ final class AiBuilder {
                   }
                };
                AutismClientAddon.LOG.info("[AI] build: closed in at {}; breaking out (try {})", mc.player.blockPosition().toShortString(), this.mark);
-               return AiGoto.init(
+               return AiGoto.travelToCompat(
                   mc.player.blockPosition(),
                   1.5,
                   true,
@@ -6305,7 +6305,7 @@ final class AiBuilder {
                   autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                   true,
                   2.0,
-                  AiGoto.read(outside, keep)
+                  AiGoto.protectingCellsCompat(outside, keep)
                );
             }
 
@@ -6565,7 +6565,7 @@ final class AiBuilder {
                   }
 
                   this.run_Z = true;
-                  this.init_AiOperation = AiGoto.init(
+                  this.init_AiOperation = AiGoto.travelToCompat(
                      best,
                      0.35,
                      true,
@@ -6575,7 +6575,7 @@ final class AiBuilder {
                      autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                      true,
                      2.0,
-                     AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
+                     AiGoto.protectingCellsAboveYCompat(
                         autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(best, 0.35), protectedNow, blueprint.origin().getY()
                      )
                   );
@@ -7275,7 +7275,7 @@ final class AiBuilder {
                                     new AABB(pos.getX() + 0.2, pos.getY() + 1, pos.getZ() + 0.2, pos.getX() + 0.8, pos.getY() + 2.8, pos.getZ() + 0.8)
                                  )) {
                               this.write_Z = true;
-                              this.init_AiOperation = AiGoto.init(
+                              this.init_AiOperation = AiGoto.travelToCompat(
                                  pos,
                                  0.45,
                                  false,
@@ -7285,7 +7285,7 @@ final class AiBuilder {
                                  autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                                  true,
                                  2.0,
-                                 AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
+                                 AiGoto.protectingCellsAboveYCompat(
                                     autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(pos, 0.45), this.init_Set_2(), pos.getY()
                                  )
                               );
@@ -7297,7 +7297,7 @@ final class AiBuilder {
                               && !occupied.canBeReplaced()
                               && occupied.getFluidState().isEmpty()
                               && !AiBuilder.init_Z(this.init_List.get(this.data))) {
-                              this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(pos, 30, this.init_Set_2());
+                              this.init_AiOperation = AiGoto.approachBlockCompat(pos, 30, this.init_Set_2());
                               return;
                            }
 
@@ -7348,8 +7348,8 @@ final class AiBuilder {
                                  .init_AiOperation_I(30, batchKeep, this.init_Set_TableIndex_StreamU_BlockPos(cell, pos));
                            } else {
                               this.init_AiOperation = this.bind > 0
-                                 ? AiGoto.load(pos, block.asItem(), 30, this.init_AABB)
-                                 : AiGoto.init_AiOperation_BlockPos_3(pos, block.asItem(), 30, this.init_AABB);
+                                 ? AiGoto.approachToPlaceWithDigCompat(pos, block.asItem(), 30, this.init_AABB)
+                                 : AiGoto.approachToPlaceCompat(pos, block.asItem(), 30, this.init_AABB);
                            }
 
                            return;
@@ -7964,12 +7964,12 @@ final class AiBuilder {
             AiOperation.Result init_AiOperation_Result_AiOperation_Status(AiOperation.Status status, String message, JsonObject data) {
                boolean pendingEffects = this.requiresReconciliationAfterEmergency();
                this.cancel();
-               return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pendingEffects, AiGameOperations.result(status, message, data));
+               return AiGuardLayer.wrapPendingTermination(pendingEffects, AiGameOperations.result(status, message, data));
             }
 
             @Override
             public boolean canInterruptNow() {
-               if (this.init_Y != null && !this.init_Y.load()) {
+               if (this.init_Y != null && !this.init_Y.canInterruptNow()) {
                   return false;
                }
 
@@ -8000,7 +8000,7 @@ final class AiBuilder {
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               if (this.init_Y != null && this.init_Y.read()) {
+               if (this.init_Y != null && this.init_Y.requiresReconciliation()) {
                   return true;
                }
 
@@ -8157,7 +8157,7 @@ final class AiBuilder {
                AiVisualization.init_V(this);
                if (!this.clear_Z) {
                   if (this.init_Y != null) {
-                     this.init_Y.init_V();
+                     this.init_Y.cancel();
                   }
 
                   this.push();

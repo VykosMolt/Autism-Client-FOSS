@@ -560,7 +560,7 @@ public final class AiExcavate {
          if (this.init_StreamUtil != null && !this.init_StreamUtil.load_Z()) {
             if (!this.load_Z) {
                if (this.load_AiOperation == null) {
-                  this.load_AiOperation = AiGoto.init_AiOperation_BlockPos(this.init_BlockPos, 1.5, false, false, false, 20);
+                  this.load_AiOperation = AiGoto.travelToCompat(this.init_BlockPos, 1.5, false, false, false, 20);
                }
 
                AiOperation.Result r = this.load_AiOperation.tick();
@@ -651,7 +651,7 @@ public final class AiExcavate {
             } else {
                this.close = 0;
                this.read_Z = true;
-               this.read_AiOperation = AiGoto.init_AiOperation_BlockPos(drop.blockPosition(), 1.2, true, true, true, this.init(8));
+               this.read_AiOperation = AiGoto.travelToCompat(drop.blockPosition(), 1.2, true, true, true, this.init(8));
                return this.load("Collecting drops");
             }
          }

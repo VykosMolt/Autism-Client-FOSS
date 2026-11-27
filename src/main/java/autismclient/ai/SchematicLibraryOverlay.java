@@ -79,7 +79,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                }
             }
 
-            this.init_CacheEntry.init(0);
+            this.init_CacheEntry.setOffsetUnclamped(0);
          }
       );
       this.load_RefQueue = new autismclient.gui.ui.widgets.DropdownMenu(
@@ -93,7 +93,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                }
             }
 
-            this.init_CacheEntry.init(0);
+            this.init_CacheEntry.setOffsetUnclamped(0);
          }
       );
       this.init_cV = workspace;
@@ -238,7 +238,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             this.init_k.setChangedListener(value -> {
                if (this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.FILES) {
                   this.load_Str = value;
-                  this.init_CacheEntry.init(0);
+                  this.init_CacheEntry.setOffsetUnclamped(0);
                } else {
                   this.init_cV.init_Str = value;
                }
@@ -251,7 +251,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       if (this.init_SchematicLibraryOv_2 != value) {
          this.init_SchematicLibraryOv_2 = value;
          this.update_V_2();
-         this.init_CacheEntry.init(0);
+         this.init_CacheEntry.setOffsetUnclamped(0);
          this.write_Z = false;
          this.write_V_2();
       }
@@ -790,9 +790,9 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    private void init(autismclient.gui.f.SyncManager ui, int x, int y, int w, int h, int count, BiConsumer<Integer, autismclient.gui.f.NetHelper> render) {
-      this.init_TextFormat_DataUti = autismclient.gui.ui.widgets.ScrollListLayout.init(x, y, w, h, count, 20, 21, this.init_CacheEntry.init(), 6, 4, 2, 4, true);
+      this.init_TextFormat_DataUti = autismclient.gui.ui.widgets.ScrollListLayout.init(x, y, w, h, count, 20, 21, this.init_CacheEntry.getOffset(), 6, 4, 2, 4, true);
       this.load_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, h);
-      this.init_CacheEntry.init_V_I_I(this.init_TextFormat_DataUti.poll(), this.init_TextFormat_DataUti.open());
+      this.init_CacheEntry.setOffset(this.init_TextFormat_DataUti.poll(), this.init_TextFormat_DataUti.open());
       this.init_TextFormat_DataUti.init(ui.init_GuiGraphicsExtract(), false);
       if (this.init_TextFormat_DataUti.flush() >= 4) {
          this.init_TextFormat_DataUti.init(ui.init_GuiGraphicsExtract());
@@ -834,7 +834,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    private void init_V_SyncManager_4(autismclient.gui.f.SyncManager ui, String label, int x, int y, int width) {
-      autismclient.gui.ui.widgets.ListRowRenderer.init(ui.init_GuiGraphicsExtract(), this.init_Font, label, x, y, width);
+      autismclient.gui.ui.widgets.ListRowRenderer.drawEmptyPlaceholder(ui.init_GuiGraphicsExtract(), this.init_Font, label, x, y, width);
    }
 
    private void init_V_SyncManager_5(autismclient.gui.f.SyncManager ui, String text, int x, int y, int width, int color) {
@@ -902,7 +902,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             && this.init_TextFormat_DataUti.init_PoolEntry_DataUtil().containsTrack(x, y)) {
             ScrollbarMetricsHelper.Metrics bar = this.init_TextFormat_DataUti.init_PoolEntry_DataUtil();
             this.run = bar.containsThumb(x, y) ? y - bar.thumbY() : bar.thumbHeight() / 2;
-            this.init_CacheEntry.init_V_PoolEntry_DataUtil(bar, y, this.run);
+            this.init_CacheEntry.dragToMouseY(bar, y, this.run);
             this.write_Z = true;
             return true;
          }
@@ -928,7 +928,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          menu.init_EventBus_I((int)x, (int)y, amount);
          return true;
       } else if (this.init_Z && !this.load_Z && this.init_TextFormat_DataUti != null && this.load_NetHelper.init_Z((int)x, (int)y)) {
-         this.init_CacheEntry.init_V_D(amount, 42.0F, this.init_TextFormat_DataUti.open());
+         this.init_CacheEntry.scrollByWheel(amount, 42.0F, this.init_TextFormat_DataUti.open());
          return true;
       } else {
          return false;
@@ -948,7 +948,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             menu.init_EventBus_I((int)x, (int)y, button, dx, dy);
             return true;
          } else if (this.write_Z && this.init_TextFormat_DataUti != null) {
-            this.init_CacheEntry.init_V_PoolEntry_DataUtil(this.init_TextFormat_DataUti.init_PoolEntry_DataUtil(), y, this.run);
+            this.init_CacheEntry.dragToMouseY(this.init_TextFormat_DataUti.init_PoolEntry_DataUtil(), y, this.run);
             return true;
          } else {
             return this.init_k != null && this.init_k.mouseDragged(x, y, button, dx, dy);

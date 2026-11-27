@@ -6,50 +6,50 @@ import java.util.function.BooleanSupplier;
 import java.util.function.LongSupplier;
 
 final class AiPreparationReceipt {
-   private boolean init_Z;
-   private AiOperation.Result init_AiOperation_Result;
+   private boolean reconciliationPending;
+   private AiOperation.Result lastChildResult;
 
-   AiOperation.Result init_AiOperation_Result(AiOperation child) {
+   AiOperation.Result tickChild(AiOperation child) {
       boolean before = child.requiresReconciliationAfterEmergency();
-      this.init_AiOperation_Result = child.tick();
-      if (!this.init_AiOperation_Result.terminal()) {
-         return this.init_AiOperation_Result;
+      this.lastChildResult = child.tick();
+      if (!this.lastChildResult.terminal()) {
+         return this.lastChildResult;
       }
 
-      this.init_Z = this.init_Z
-         | (child.requiresReconciliationAfterEmergency() || this.init_AiOperation_Result.status() != AiOperation.Status.SUCCEEDED && before);
-      return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(this.init_Z, this.init_AiOperation_Result);
+      this.reconciliationPending = this.reconciliationPending
+         | (child.requiresReconciliationAfterEmergency() || this.lastChildResult.status() != AiOperation.Status.SUCCEEDED && before);
+      return AiGuardLayer.wrapPendingTermination(this.reconciliationPending, this.lastChildResult);
    }
 
-   boolean init_Z(AiOperation child) {
-      return this.init_Z || child != null && child.requiresReconciliationAfterEmergency();
+   boolean requiresReconciliation(AiOperation child) {
+      return this.reconciliationPending || child != null && child.requiresReconciliationAfterEmergency();
    }
 
-   AiOperation.Result init() {
-      return this.init_AiOperation_Result;
+   AiOperation.Result lastChildResult() {
+      return this.lastChildResult;
    }
 
-   void init(boolean currentPending) {
-      this.init_Z |= currentPending;
+   void markReconciliationPending(boolean currentPending) {
+      this.reconciliationPending |= currentPending;
    }
 
-   AiOperation.Result init(AiOperation.Result result, boolean currentPending) {
-      this.init(currentPending);
-      return AiMiningPreparation.init(result, this.init_Z, this.init_AiOperation_Result);
+   AiOperation.Result finalizeResult(AiOperation.Result result, boolean currentPending) {
+      this.markReconciliationPending(currentPending);
+      return AiMiningPreparation.init(result, this.reconciliationPending, this.lastChildResult);
    }
 
-   void init_V(AiOperation child) {
-      this.init_Z = this.init_Z | this.init_Z(child);
+   void cancelChild(AiOperation child) {
+      this.reconciliationPending = this.reconciliationPending | this.requiresReconciliation(child);
       if (child != null) {
          child.cancel();
       }
    }
 
-   static AiOperation init(AiOperation child, BooleanSupplier supported, BooleanSupplier valid, long deadline) {
-      return init(child, supported, valid, deadline, System::nanoTime);
+   static AiOperation awaitSupportedHandoff(AiOperation child, BooleanSupplier supported, BooleanSupplier valid, long deadline) {
+      return awaitSupportedHandoff(child, supported, valid, deadline, System::nanoTime);
    }
 
-   static AiOperation init(final AiOperation child, final BooleanSupplier supported, final BooleanSupplier valid, final long deadline, final LongSupplier now) {
+   static AiOperation awaitSupportedHandoff(final AiOperation child, final BooleanSupplier supported, final BooleanSupplier valid, final long deadline, final LongSupplier now) {
       return new AiOperation() {
          final AiPreparationReceipt init_bb = new AiPreparationReceipt();
          AiOperation.Result init_AiOperation_Result;
@@ -75,12 +75,12 @@ final class AiPreparationReceipt {
             }
 
             if (this.init_AiOperation_Result == null) {
-               AiOperation.Result result = this.init_bb.init_AiOperation_Result(child);
+               AiOperation.Result result = this.init_bb.tickChild(child);
                if (!result.terminal()) {
                   return result;
                }
 
-               this.init_bb.init_V(child);
+               this.init_bb.cancelChild(child);
                if (result.status() != AiOperation.Status.SUCCEEDED) {
                   return this.init(result);
                }
@@ -88,7 +88,7 @@ final class AiPreparationReceipt {
                this.init_AiOperation_Result = result;
             }
 
-            return supported.getAsBoolean() && !this.init_bb.init_Z(child)
+            return supported.getAsBoolean() && !this.init_bb.requiresReconciliation(child)
                ? this.init(this.init_AiOperation_Result)
                : new AiOperation.Result(
                   AiOperation.Status.RUNNING,
@@ -99,25 +99,25 @@ final class AiPreparationReceipt {
          }
 
          AiOperation.Result init(AiOperation.Result result) {
-            this.load = this.init_bb.init(result, this.init_bb.init_Z(child));
-            this.init_bb.init_V(child);
+            this.load = this.init_bb.finalizeResult(result, this.init_bb.requiresReconciliation(child));
+            this.init_bb.cancelChild(child);
             return this.load;
          }
 
          @Override
          public boolean canInterruptNow() {
-            return !this.init_bb.init_Z(child)
+            return !this.init_bb.requiresReconciliation(child)
                && (this.load != null || (this.init_AiOperation_Result == null ? child.canInterruptNow() : supported.getAsBoolean()));
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_bb.init_Z(child);
+            return this.init_bb.requiresReconciliation(child);
          }
 
          @Override
          public void cancel() {
-            this.init_bb.init_V(child);
+            this.init_bb.cancelChild(child);
             this.init_Z = true;
          }
       };

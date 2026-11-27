@@ -163,7 +163,7 @@ final class AiForage {
          }
 
          if (AiRunResources.countUsableItem("minecraft:bow", 24) > 0 && AiRunResources.totalArrowCount() < 24 && AiCraft.countItem("minecraft:feather") > 0 && AiCraft.countItem("minecraft:flint") == 0) {
-            BlockPos gravel = AiWorldScan.init_BlockPos_Predicate_I(s -> s.is(Blocks.GRAVEL), 2);
+            BlockPos gravel = AiWorldScan.findNearestBlock(s -> s.is(Blocks.GRAVEL), 2);
             if (gravel != null && gravel.distSqr(mc.player.blockPosition()) <= range * range) {
                int want = Math.min(4, Math.min(AiCraft.countItem("minecraft:feather"), (24 - AiRunResources.totalArrowCount() + 3) / 4));
                return AiObtain.init(AiJson.objectOf("item", "minecraft:flint", "count", want, "radius", (int)Math.ceil(range), "timeoutSeconds", 45));
@@ -171,7 +171,7 @@ final class AiForage {
          }
 
          if (init_I() < 7) {
-            BlockPos bed = AiWorldScan.init_BlockPos_Predicate_I(s -> s.getBlock() instanceof BedBlock && s.getValue(BedBlock.PART) == BedPart.HEAD, 4);
+            BlockPos bed = AiWorldScan.findNearestBlock(s -> s.getBlock() instanceof BedBlock && s.getValue(BedBlock.PART) == BedPart.HEAD, 4);
             if (bed != null && bed.distSqr(mc.player.blockPosition()) <= range * range * 4.0) {
                String id = BuiltInRegistries.ITEM.getKey(mc.level.getBlockState(bed).getBlock().asItem()).toString();
                int want = AiCraft.countItem(id) + 1;
@@ -224,7 +224,7 @@ final class AiForage {
          BlockPos best = null;
          double bestD = Math.min(range, 24.0) * Math.min(range, 24.0);
 
-         for (BlockPos p : AiWorldScan.init(s -> s.getFluidState().isSource() && s.getFluidState().is(FluidTags.WATER) && s.getBlock() == Blocks.WATER, 2, 8, 64)) {
+         for (BlockPos p : AiWorldScan.findBlocks(s -> s.getFluidState().isSource() && s.getFluidState().is(FluidTags.WATER) && s.getBlock() == Blocks.WATER, 2, 8, 64)) {
             if (mc.level.getBlockState(p.above()).isAir()) {
                double d = p.distSqr(feet);
                if (d < bestD) {
@@ -240,7 +240,7 @@ final class AiForage {
 
          BlockPos source = best;
          return AiNetherRun.init_AiOperation_AiOperation_Supplier(
-            AiGoto.init(source.above(), 3.0, false, false, false, 30, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true),
+            AiGoto.travelToCompat(source.above(), 3.0, false, false, false, 30, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true),
             () -> AiBucket.init(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 10))
          );
       } else {
@@ -249,7 +249,7 @@ final class AiForage {
    }
 
    static Entity init_Entity_Minecraft(Minecraft mc, String type, double range) {
-      for (Entity e : AiWorldScan.init_List_Str_D(type, range)) {
+      for (Entity e : AiWorldScan.findEntitiesByType(type, range)) {
          if (!(e instanceof AgeableMob mob && mob.isBaby()) && AiCombat.init_Z_Minecraft_Entity(mc, e)) {
             return e;
          }
@@ -463,7 +463,7 @@ final class AiForage {
    static AiOperation read(double range) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.onGround() && write(mc, mc.player.blockPosition())) {
-         for (Entity e : AiWorldScan.init_List_Str_D("minecraft:enderman", range)) {
+         for (Entity e : AiWorldScan.findEntitiesByType("minecraft:enderman", range)) {
             if (Math.abs(e.getY() - mc.player.getY()) <= 12.0 && mc.player.hasLineOfSight(e)) {
                return AiNetherRun.init(
                   init_AiOperation_I(e.getId(), p -> write(mc, p), () -> {}),

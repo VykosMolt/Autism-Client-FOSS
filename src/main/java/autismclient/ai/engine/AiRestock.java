@@ -22,22 +22,22 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class AiRestock {
-   public static final long init_J = 2000000000L;
-   static final int init_I = 40;
-   static final int load_I = 2;
-   private static volatile int write_I;
-   private static volatile long load_J;
-   public static final int read_I = 3;
-   private static volatile int update_I;
-   private static volatile long read_J;
-   private static volatile int sync_I;
-   private static volatile long write_J;
-   private static volatile Map<Item, Integer> init_Map = Map.of();
-   private static volatile long update_J;
-   static final List<String> init_List = List.of(
+   public static final long SWAP_RETRY_COOLDOWN_NANOS = 2000000000L;
+   static final int MAX_WAIT_TICKS = 40;
+   static final int MAX_ATTEMPTS = 2;
+   private static volatile int jobWoodReserve;
+   private static volatile long jobWoodReserveUntilNanos;
+   public static final int BASE_STONE_RESERVE = 3;
+   private static volatile int jobStoneReserve;
+   private static volatile long jobStoneReserveUntilNanos;
+   private static volatile int jobStrikeReserve;
+   private static volatile long jobStrikeReserveUntilNanos;
+   private static volatile Map<Item, Integer> jobItemReserves = Map.of();
+   private static volatile long jobItemReservesUntilNanos;
+   static final List<String> PRIMARY_SCAFFOLD_BLOCKS = List.of(
       "minecraft:dirt", "minecraft:cobblestone", "minecraft:cobbled_deepslate", "minecraft:netherrack", "minecraft:stone", "minecraft:end_stone"
    );
-   static final List<String> load_List = List.of(
+   static final List<String> SECONDARY_SCAFFOLD_BLOCKS = List.of(
       "minecraft:granite",
       "minecraft:diorite",
       "minecraft:andesite",
@@ -63,36 +63,36 @@ public final class AiRestock {
       "minecraft:bricks",
       "minecraft:nether_bricks"
    );
-   private final AiRestock.Inner_StreamUtil init_UtilCore_StreamUti;
-   private final LongSupplier init_LongSupplier;
-   private final LongSupplier load_LongSupplier;
-   private AiRestock.Inner_BufferHelper init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.IDLE;
-   private String init_Str;
-   private int flush_I = -1;
-   private int close = -1;
-   private int open;
-   private int poll;
-   private long sync_J = -1L;
-   private long flush_J;
-   private int push;
+   private final AiRestock.Inner_StreamUtil slotOps;
+   private final LongSupplier inventoryRevisionSupplier;
+   private final LongSupplier clockNanos;
+   private AiRestock.Inner_BufferHelper state = AiRestock.Inner_BufferHelper.IDLE;
+   private String expectedItemId;
+   private int backpackSlot = -1;
+   private int hotbarSlot = -1;
+   private int attemptCount;
+   private int waitTicks;
+   private long sentRevision = -1L;
+   private long nextAttemptAfterNanos;
+   private int completedSwapCount;
 
-   public static void init(int planks) {
-      write_I = Math.max(0, planks);
-      load_J = planks > 0 ? System.nanoTime() + 3000000000L : 0L;
+   public static void reserveWoodForJob(int planks) {
+      jobWoodReserve = Math.max(0, planks);
+      jobWoodReserveUntilNanos = planks > 0 ? System.nanoTime() + 3000000000L : 0L;
    }
 
-   public static int init_I() {
-      int job = System.nanoTime() < load_J ? write_I : 0;
-      return Math.max(job, load_I());
+   public static int reservedWood() {
+      int job = System.nanoTime() < jobWoodReserveUntilNanos ? jobWoodReserve : 0;
+      return Math.max(job, baseWoodReserve());
    }
 
-   public static int init(Inventory inventory) {
-      int reserve = init_I();
-      int wood = load(inventory);
+   public static int availableSpareWood(Inventory inventory) {
+      int reserve = reservedWood();
+      int wood = totalWoodUnits(inventory);
       return reserve <= 0 ? wood : Math.max(0, wood - reserve);
    }
 
-   public static int load(Inventory inventory) {
+   public static int totalWoodUnits(Inventory inventory) {
       int wood = 0;
 
       for (int slot = 0; slot < 36; slot++) {
@@ -107,7 +107,7 @@ public final class AiRestock {
       return wood;
    }
 
-   public static int load_I() {
+   public static int baseWoodReserve() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null && !mc.player.hasInfiniteMaterials()) {
          Inventory inventory = mc.player.getInventory();
@@ -123,63 +123,63 @@ public final class AiRestock {
             }
          }
 
-         return init(sticks, table);
+         return computeBaseWoodReserve(sticks, table);
       } else {
          return 0;
       }
    }
 
-   static int init(int sticks, boolean tableCarried) {
+   static int computeBaseWoodReserve(int sticks, boolean tableCarried) {
       return (sticks >= 2 ? 0 : 2) + (tableCarried ? 0 : 4);
    }
 
-   public static int read() {
+   public static int baseStoneReserve() {
       Minecraft mc = Minecraft.getInstance();
       return mc != null && mc.player != null && !mc.player.hasInfiniteMaterials() ? 3 : 0;
    }
 
-   public static void load(int blocks) {
-      update_I = Math.max(0, blocks);
-      read_J = blocks > 0 ? System.nanoTime() + 3000000000L : 0L;
+   public static void reserveStoneForJob(int blocks) {
+      jobStoneReserve = Math.max(0, blocks);
+      jobStoneReserveUntilNanos = blocks > 0 ? System.nanoTime() + 3000000000L : 0L;
    }
 
-   public static int write() {
-      int job = System.nanoTime() < read_J ? update_I : 0;
-      return Math.max(job, read());
+   public static int reservedStone() {
+      int job = System.nanoTime() < jobStoneReserveUntilNanos ? jobStoneReserve : 0;
+      return Math.max(job, baseStoneReserve());
    }
 
-   public static void read(int strikes) {
-      sync_I = Math.max(0, strikes);
-      write_J = strikes > 0 ? System.nanoTime() + 3000000000L : 0L;
+   public static void reserveStrikesForJob(int strikes) {
+      jobStrikeReserve = Math.max(0, strikes);
+      jobStrikeReserveUntilNanos = strikes > 0 ? System.nanoTime() + 3000000000L : 0L;
    }
 
-   public static int update() {
-      return System.nanoTime() < write_J ? sync_I : 0;
+   public static int reservedStrikes() {
+      return System.nanoTime() < jobStrikeReserveUntilNanos ? jobStrikeReserve : 0;
    }
 
-   public static boolean init(ItemStack stack) {
+   public static boolean isStoneBlock(ItemStack stack) {
       return stack.is(Items.COBBLESTONE) || stack.is(Items.COBBLED_DEEPSLATE) || stack.is(Items.BLACKSTONE);
    }
 
-   public static int read(Inventory inventory) {
+   public static int availableSpareStone(Inventory inventory) {
       int stone = 0;
 
       for (int slot = 0; slot < 36; slot++) {
-         if (init(inventory.getItem(slot))) {
+         if (isStoneBlock(inventory.getItem(slot))) {
             stone += inventory.getItem(slot).getCount();
          }
       }
 
-      return Math.max(0, stone - write());
+      return Math.max(0, stone - reservedStone());
    }
 
-   public static void init(Map<Item, Integer> counts) {
-      init_Map = Map.copyOf(counts);
-      update_J = counts.isEmpty() ? 0L : System.nanoTime() + 3000000000L;
+   public static void reserveItemsForJob(Map<Item, Integer> counts) {
+      jobItemReserves = Map.copyOf(counts);
+      jobItemReservesUntilNanos = counts.isEmpty() ? 0L : System.nanoTime() + 3000000000L;
    }
 
-   public static int init(Item item) {
-      int held = System.nanoTime() < update_J ? init_Map.getOrDefault(item, 0) : 0;
+   public static int reservedItemCount(Item item) {
+      int held = System.nanoTime() < jobItemReservesUntilNanos ? jobItemReserves.getOrDefault(item, 0) : 0;
       if (!AutismLiteVariant.enabled()) {
          held = Math.max(held, AiRunResources.mandatoryReservedCount(item));
       }
@@ -187,12 +187,12 @@ public final class AiRestock {
       return held;
    }
 
-   public static boolean init(ItemStack stack, Inventory inventory) {
-      return init_Z_ItemStack(stack, inventory, false);
+   public static boolean canSpendStack(ItemStack stack, Inventory inventory) {
+      return canSpendStack(stack, inventory, false);
    }
 
-   public static boolean init_Z_ItemStack(ItemStack stack, Inventory inventory, boolean survival) {
-      int held = init(stack.getItem());
+   public static boolean canSpendStack(ItemStack stack, Inventory inventory, boolean survival) {
+      int held = reservedItemCount(stack.getItem());
       if (held > 0) {
          int count = 0;
 
@@ -208,19 +208,19 @@ public final class AiRestock {
       }
 
       if (stack.is(ItemTags.PLANKS)) {
-         int reserve = survival ? sync() : init_I();
-         return reserve <= 0 || load(inventory) > reserve;
+         int reserve = survival ? activeJobWoodReserve() : reservedWood();
+         return reserve <= 0 || totalWoodUnits(inventory) > reserve;
       }
 
-      if (!init(stack)) {
+      if (!isStoneBlock(stack)) {
          return true;
       }
 
-      int reserve = survival ? flush() : write();
+      int reserve = survival ? activeJobStoneReserve() : reservedStone();
       int stone = 0;
 
       for (int slot = 0; slot < 36; slot++) {
-         if (init(inventory.getItem(slot))) {
+         if (isStoneBlock(inventory.getItem(slot))) {
             stone += inventory.getItem(slot).getCount();
          }
       }
@@ -228,7 +228,7 @@ public final class AiRestock {
       return reserve <= 0 || stone > reserve;
    }
 
-   public static boolean load(ItemStack stack, Inventory inventory) {
+   public static boolean isConsumableBuildingBlock(ItemStack stack, Inventory inventory) {
       if (!(stack.getItem() instanceof BlockItem block)) {
          return false;
       } else {
@@ -242,31 +242,31 @@ public final class AiRestock {
          }
 
          String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
-         return path.endsWith("_ore") || path.equals("ancient_debris") || path.startsWith("raw_") && path.endsWith("_block") ? false : init(stack, inventory);
+         return path.endsWith("_ore") || path.equals("ancient_debris") || path.startsWith("raw_") && path.endsWith("_block") ? false : canSpendStack(stack, inventory);
       }
    }
 
-   public static int sync() {
-      return System.nanoTime() < load_J ? write_I : 0;
+   public static int activeJobWoodReserve() {
+      return System.nanoTime() < jobWoodReserveUntilNanos ? jobWoodReserve : 0;
    }
 
-   public static int flush() {
-      return System.nanoTime() < read_J ? update_I : 0;
+   public static int activeJobStoneReserve() {
+      return System.nanoTime() < jobStoneReserveUntilNanos ? jobStoneReserve : 0;
    }
 
-   public static int init_I(String itemId) {
+   public static int scaffoldRank(String itemId) {
       if (itemId == null) {
          return -1;
       } else {
-         int index = init_List.indexOf(itemId);
+         int index = PRIMARY_SCAFFOLD_BLOCKS.indexOf(itemId);
          if (index >= 0) {
             return index;
          } else {
-            index = load_List.indexOf(itemId);
+            index = SECONDARY_SCAFFOLD_BLOCKS.indexOf(itemId);
             if (index >= 0) {
-               return init_List.size() + index;
+               return PRIMARY_SCAFFOLD_BLOCKS.size() + index;
             } else {
-               int tail = init_List.size() + load_List.size();
+               int tail = PRIMARY_SCAFFOLD_BLOCKS.size() + SECONDARY_SCAFFOLD_BLOCKS.size();
                if (itemId.startsWith("minecraft:") && itemId.endsWith("terracotta") && !itemId.endsWith("glazed_terracotta")) {
                   return tail;
                } else {
@@ -277,8 +277,8 @@ public final class AiRestock {
       }
    }
 
-   public static boolean init_Z(String itemId) {
-      return init_I(itemId) >= 0;
+   public static boolean isScaffoldBlockId(String itemId) {
+      return scaffoldRank(itemId) >= 0;
    }
 
    public AiRestock(final Minecraft mc) {
@@ -296,7 +296,7 @@ public final class AiRestock {
                   return false;
                }
 
-               AiContainerTransactions.init(mc.player.containerMenu.containerId, slot, hotbarSlot, ContainerInput.SWAP);
+               AiContainerTransactions.sendPredictedClick(mc.player.containerMenu.containerId, slot, hotbarSlot, ContainerInput.SWAP);
                return true;
             } else {
                return false;
@@ -316,90 +316,90 @@ public final class AiRestock {
    }
 
    public AiRestock(AiRestock.Inner_StreamUtil slots, LongSupplier inventoryRevision, LongSupplier clock) {
-      this.init_UtilCore_StreamUti = slots;
-      this.init_LongSupplier = inventoryRevision;
-      this.load_LongSupplier = clock;
+      this.slotOps = slots;
+      this.inventoryRevisionSupplier = inventoryRevision;
+      this.clockNanos = clock;
    }
 
-   public AiRestock.Inner_BufferHelper init_UtilCore_BufferHel() {
-      return this.init_UtilCore_BufferHel;
+   public AiRestock.Inner_BufferHelper state() {
+      return this.state;
    }
 
-   public boolean init_Z() {
-      return this.init_UtilCore_BufferHel == AiRestock.Inner_BufferHelper.RUNNING;
+   public boolean isRunning() {
+      return this.state == AiRestock.Inner_BufferHelper.RUNNING;
    }
 
-   public boolean load_Z() {
-      return this.init_UtilCore_BufferHel != AiRestock.Inner_BufferHelper.SUCCEEDED
-         && this.sync_J >= 0L
-         && (!this.init_UtilCore_StreamUti.init(this.close, this.init_Str) || this.init_LongSupplier.getAsLong() <= this.sync_J);
+   public boolean needsReconciliation() {
+      return this.state != AiRestock.Inner_BufferHelper.SUCCEEDED
+         && this.sentRevision >= 0L
+         && (!this.slotOps.init(this.hotbarSlot, this.expectedItemId) || this.inventoryRevisionSupplier.getAsLong() <= this.sentRevision);
    }
 
-   public int close() {
-      return this.push;
+   public int completedSwapCount() {
+      return this.completedSwapCount;
    }
 
-   public void init_V_I(int backpackSlot, int hotbarSlot, String expectedItem) {
-      this.flush_I = backpackSlot;
-      this.close = hotbarSlot;
-      this.init_Str = expectedItem;
-      this.open = 0;
-      this.poll = 0;
-      this.sync_J = -1L;
-      this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.RUNNING;
+   public void startSwap(int backpackSlot, int hotbarSlot, String expectedItem) {
+      this.backpackSlot = backpackSlot;
+      this.hotbarSlot = hotbarSlot;
+      this.expectedItemId = expectedItem;
+      this.attemptCount = 0;
+      this.waitTicks = 0;
+      this.sentRevision = -1L;
+      this.state = AiRestock.Inner_BufferHelper.RUNNING;
    }
 
-   public void init_V() {
-      this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.IDLE;
-      this.init_Str = null;
-      this.flush_I = -1;
-      this.close = -1;
-      this.sync_J = -1L;
+   public void reset() {
+      this.state = AiRestock.Inner_BufferHelper.IDLE;
+      this.expectedItemId = null;
+      this.backpackSlot = -1;
+      this.hotbarSlot = -1;
+      this.sentRevision = -1L;
    }
 
-   public AiRestock.Inner_BufferHelper load_UtilCore_BufferHel() {
-      if (this.init_UtilCore_BufferHel != AiRestock.Inner_BufferHelper.RUNNING) {
-         return this.init_UtilCore_BufferHel;
+   public AiRestock.Inner_BufferHelper tick() {
+      if (this.state != AiRestock.Inner_BufferHelper.RUNNING) {
+         return this.state;
       }
 
-      if (this.sync_J < 0L) {
-         if (this.open >= 2) {
-            this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.FAILED;
-            return this.init_UtilCore_BufferHel;
-         } else if (this.load_LongSupplier.getAsLong() < this.flush_J) {
-            return this.init_UtilCore_BufferHel;
-         } else if (!this.init_UtilCore_StreamUti.init()) {
-            this.open++;
-            return this.init_UtilCore_BufferHel;
+      if (this.sentRevision < 0L) {
+         if (this.attemptCount >= 2) {
+            this.state = AiRestock.Inner_BufferHelper.FAILED;
+            return this.state;
+         } else if (this.clockNanos.getAsLong() < this.nextAttemptAfterNanos) {
+            return this.state;
+         } else if (!this.slotOps.init()) {
+            this.attemptCount++;
+            return this.state;
          } else {
-            long revision = this.init_LongSupplier.getAsLong();
-            if (!this.init_UtilCore_StreamUti.init(this.flush_I, this.close)) {
-               this.open++;
-               return this.init_UtilCore_BufferHel;
+            long revision = this.inventoryRevisionSupplier.getAsLong();
+            if (!this.slotOps.init(this.backpackSlot, this.hotbarSlot)) {
+               this.attemptCount++;
+               return this.state;
             } else {
-               this.open++;
-               this.sync_J = revision;
-               this.flush_J = this.load_LongSupplier.getAsLong() + 2000000000L;
-               this.poll = 0;
-               return this.init_UtilCore_BufferHel;
+               this.attemptCount++;
+               this.sentRevision = revision;
+               this.nextAttemptAfterNanos = this.clockNanos.getAsLong() + 2000000000L;
+               this.waitTicks = 0;
+               return this.state;
             }
          }
       } else {
-         if (this.init_UtilCore_StreamUti.init(this.close, this.init_Str) && this.init_LongSupplier.getAsLong() > this.sync_J) {
-            this.push++;
-            this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.SUCCEEDED;
-            return this.init_UtilCore_BufferHel;
+         if (this.slotOps.init(this.hotbarSlot, this.expectedItemId) && this.inventoryRevisionSupplier.getAsLong() > this.sentRevision) {
+            this.completedSwapCount++;
+            this.state = AiRestock.Inner_BufferHelper.SUCCEEDED;
+            return this.state;
          }
 
-         if (++this.poll > 40) {
-            this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.FAILED;
+         if (++this.waitTicks > 40) {
+            this.state = AiRestock.Inner_BufferHelper.FAILED;
          }
 
-         return this.init_UtilCore_BufferHel;
+         return this.state;
       }
    }
 
-   public static int init(List<AiRestock.Inner_CachePool> backpack, String lastUsedId) {
+   public static int pickBestBackpackSlot(List<AiRestock.Inner_CachePool> backpack, String lastUsedId) {
       int best = -1;
       int bestRank = 2147483647;
       int bestCount = -1;
@@ -411,7 +411,7 @@ public final class AiRestock {
             if (lastUsedId != null && view.itemId().equals(lastUsedId)) {
                rank = 0;
             } else {
-               int index = init_I(view.itemId());
+               int index = scaffoldRank(view.itemId());
                if (index < 0) {
                   continue;
                }
@@ -430,7 +430,7 @@ public final class AiRestock {
       return best;
    }
 
-   public static int init(List<AiRestock.Inner_DataUtil> hotbar) {
+   public static int pickTargetHotbarSlot(List<AiRestock.Inner_DataUtil> hotbar) {
       for (int i = 0; i < hotbar.size(); i++) {
          if (hotbar.get(i).empty()) {
             return i;

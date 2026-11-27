@@ -70,47 +70,47 @@ import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class AiGoto {
-   private static final ItemStack[] putAt_ItemStackArr = new ItemStack[9];
-   private static volatile long fill = -9223372036854775808L;
-   private static volatile int flowState;
-   private static volatile long readEx;
-   public static final String putAt_Str = "Player is wedged in solid blocks";
-   static final boolean putAt_Z = Boolean.getBoolean("autism.ai.snapshotGrid");
-   static final long putAt_J = 30000000000L;
-   private static volatile long value;
+   private static final ItemStack[] EMPTY_HOTBAR = new ItemStack[9];
+   private static volatile long lastNoRoutePosKey = -9223372036854775808L;
+   private static volatile int recentNoRouteCount;
+   private static volatile long lastNoRouteNanos;
+   public static final String WEDGED_ERROR_MESSAGE = "Player is wedged in solid blocks";
+   static final boolean SNAPSHOT_GRID_ENABLED = Boolean.getBoolean("autism.ai.snapshotGrid");
+   static final long NO_ROUTE_MEMORY_NANOS = 30000000000L;
+   private static volatile long lastDebugLogNanos;
 
    private AiGoto() {
    }
 
-   static boolean putAt(AiWrExecutor.Inner_TableCache var0, Vec3 var1) {
+   static boolean isWrStopped(AiWrExecutor.Inner_TableCache var0, Vec3 var1) {
       return var0 != AiWrExecutor.Inner_TableCache.fill && var1.horizontalDistanceSqr() <= 4.0E-4;
    }
 
-   private static void putAt_V(BlockPos var0) {
+   private static void recordNoRouteFailure(BlockPos var0) {
       long var1 = System.nanoTime();
-      if (var0.asLong() == fill && var1 - readEx < 30000000000L) {
-         flowState++;
+      if (var0.asLong() == lastNoRoutePosKey && var1 - lastNoRouteNanos < 30000000000L) {
+         recentNoRouteCount++;
       } else {
-         fill = var0.asLong();
-         flowState = 1;
+         lastNoRoutePosKey = var0.asLong();
+         recentNoRouteCount = 1;
       }
 
-      readEx = var1;
+      lastNoRouteNanos = var1;
    }
 
-   public static int flowState(BlockPos var0) {
-      return var0.asLong() == fill && System.nanoTime() - readEx < 30000000000L ? flowState : 0;
+   public static int recentNoRouteCount(BlockPos var0) {
+      return var0.asLong() == lastNoRoutePosKey && System.nanoTime() - lastNoRouteNanos < 30000000000L ? recentNoRouteCount : 0;
    }
 
-   static boolean putAt_Z_FileStore_TokenCod(AiPathfinder.PathGoal var0, boolean var1, boolean var2, BlockPos var3) {
+   static boolean canPlaceSupportForGoal(AiPathfinder.PathGoal var0, boolean var1, boolean var2, BlockPos var3) {
       return (var1 || var2) && var0.readEx_Z_BlockPos(var3);
    }
 
-   static boolean putAt(AiPathfinder.PathResult var0) {
+   static boolean isExhaustedEmptyPath(AiPathfinder.PathResult var0) {
       return var0.exhausted() && var0.movements().isEmpty();
    }
 
-   static boolean putAt_Z_VoxelShape(VoxelShape var0, VoxelShape var1, VoxelShape var2) {
+   static boolean hasNonFullStandingShape(VoxelShape var0, VoxelShape var1, VoxelShape var2) {
       if (var0.isEmpty()) {
          return true;
       }
@@ -124,18 +124,18 @@ public final class AiGoto {
       return false;
    }
 
-   static boolean putAt(VoxelShape var0, VoxelShape var1) {
+   static boolean isTallSupportBelowAir(VoxelShape var0, VoxelShape var1) {
       return var0.isEmpty() && !var1.isEmpty() && var1.max(Axis.Y) > 1.0;
    }
 
-   public static BlockPos putAt_BlockPos(BlockPos var0, int var1) {
-      if (putAt_Z(var0)) {
+   public static BlockPos findStandableNear(BlockPos var0, int var1) {
+      if (isStandable(var0)) {
          return var0;
       }
 
       for (int[] var5 : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
          BlockPos var6 = var0.offset(var5[0], 0, var5[1]);
-         if (putAt_Z(var6)) {
+         if (isStandable(var6)) {
             return var6;
          }
       }
@@ -143,11 +143,11 @@ public final class AiGoto {
       for (int var7 = 1; var7 <= var1; var7++) {
          BlockPos var8 = var0.above(var7);
          BlockPos var9 = var0.below(var7);
-         if (putAt_Z(var8)) {
+         if (isStandable(var8)) {
             return var8;
          }
 
-         if (putAt_Z(var9)) {
+         if (isStandable(var9)) {
             return var9;
          }
       }
@@ -155,18 +155,18 @@ public final class AiGoto {
       return var0;
    }
 
-   public static boolean putAt_Z(BlockPos var0) {
+   public static boolean isStandable(BlockPos var0) {
       Minecraft var1 = Minecraft.getInstance();
       return var1.level == null
          ? false
          : AiPathfinder.MoveGenerator.putAt_Z_FileStore_BitCache(
-            AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(var1, var1.level, var0, putAt_ItemStackArr),
-            AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(var1, var1.level, var0.above(), putAt_ItemStackArr),
-            AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(var1, var1.level, var0.below(), putAt_ItemStackArr)
+            AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(var1, var1.level, var0, EMPTY_HOTBAR),
+            AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(var1, var1.level, var0.above(), EMPTY_HOTBAR),
+            AiPathfinder.LiveGridView.putAt_FileStore_BitCache_Minecraft(var1, var1.level, var0.below(), EMPTY_HOTBAR)
          );
    }
 
-   static BlockPos putAt(BlockPos var0, Predicate<BlockPos> var1) {
+   static BlockPos findNearestMatchingNeighbor(BlockPos var0, Predicate<BlockPos> var1) {
       BlockPos var2 = null;
       double var3 = 1.7976931348623157E308;
 
@@ -190,23 +190,23 @@ public final class AiGoto {
       return var2;
    }
 
-   public static AiGoto.GotoOp putAt_HashEntry_TaskStat_BlockPos(
+   public static AiGoto.GotoOp createPersistentOp(
       BlockPos var0, AiPathfinder.PathGoal var1, int var2, AiGoto.GotoOptions var3
    ) {
-      return putAt(var0, 0.6, true, true, true, var2, AiPathfinder.RouteStrategy.SAFEST, true, 2.0, var1, var3, true);
+      return createGotoOp(var0, 0.6, true, true, true, var2, AiPathfinder.RouteStrategy.SAFEST, true, 2.0, var1, var3, true);
    }
 
-   public static void putAt_V_HashEntry_TaskStat(AiGoto.GotoOp var0, Function<Predicate<AABB>, Vec3> var1, Runnable var2) {
+   public static void attachWalkingWork(AiGoto.GotoOp var0, Function<Predicate<AABB>, Vec3> var1, Runnable var2) {
       if (!AutismLiteVariant.enabled()) {
          AiWalkingWork.putAt(var0, var1, var2);
       }
    }
 
-   public static AiGoto.GotoOp putAt_HashEntry_TaskStat_BlockPos(BlockPos var0, AiPathfinder.PathGoal var1, int var2) {
-      return putAt(var0, 0.6, true, true, true, var2, AiPathfinder.RouteStrategy.SAFEST, true, 2.0, var1, AiGoto.GotoOptions.DEFAULT, true);
+   public static AiGoto.GotoOp createPersistentOp(BlockPos var0, AiPathfinder.PathGoal var1, int var2) {
+      return createGotoOp(var0, 0.6, true, true, true, var2, AiPathfinder.RouteStrategy.SAFEST, true, 2.0, var1, AiGoto.GotoOptions.DEFAULT, true);
    }
 
-   static boolean putAt(Entity var0) {
+   static boolean isUnprovokedNeutralMob(Entity var0) {
       if (var0 instanceof ZombifiedPiglin var3) {
          return !var3.isAggressive();
       } else if (!(var0 instanceof Enderman var1)) {
@@ -216,14 +216,14 @@ public final class AiGoto {
       }
    }
 
-   public static AiOperation putAt(JsonObject var0) {
-      return putAt_AiOperation_JsonObject(var0, 0, null);
+   public static AiOperation fromJson(JsonObject var0) {
+      return fromJsonWithPlan(var0, 0, null);
    }
 
-   public static AiOperation putAt_AiOperation_JsonObject(JsonObject var0, int var1, AiGoto.WaypointPlan var2) {
+   public static AiOperation fromJsonWithPlan(JsonObject var0, int var1, AiGoto.WaypointPlan var2) {
       Minecraft var3 = Minecraft.getInstance();
       if (var3.player != null && var3.level != null) {
-         BlockPos var4 = putAt(var0, var3);
+         BlockPos var4 = resolveTargetFromJson(var0, var3);
          double var5 = Math.max(0.6, Math.min(8.0, AiJson.getDouble(var0, "radius", 1.5)));
          boolean var7 = !AutismLiteVariant.enabled() && AiJson.getBoolean(var0, "parkour", false);
          boolean var8 = !var7 && AiJson.getBoolean(var0, "allowDig", true);
@@ -245,7 +245,7 @@ public final class AiGoto {
          );
          int var18 = var7 ? AiJson.getInt(var0, "parkourSpeed", -1) : -1;
          if (!var7 || !var0.has("parkourSpeed") || var18 >= 0 && var18 <= 2) {
-            AiGoto.GotoOp var19 = putAt(
+            AiGoto.GotoOp var19 = createGotoOpFull(
                var4,
                var5,
                var8,
@@ -266,7 +266,7 @@ public final class AiGoto {
                var18,
                var7 && AiJson.getBoolean(var0, "parkourRecordPace", false)
             );
-            return !AutismLiteVariant.enabled() && var13 ? putAt(var19, var4) : var19;
+            return !AutismLiteVariant.enabled() && var13 ? andInteractOnArrival(var19, var4) : var19;
          } else {
             throw new IllegalArgumentException("Parkour speed must be 0, 1 or 2");
          }
@@ -275,7 +275,7 @@ public final class AiGoto {
       }
    }
 
-   static BlockPos putAt(JsonObject var0, Minecraft var1) {
+   static BlockPos resolveTargetFromJson(JsonObject var0, Minecraft var1) {
       BlockPos var2 = var1.player.blockPosition();
       if (var0.has("x") && var0.has("y") && var0.has("z")) {
          return new BlockPos(AiJson.getInt(var0, "x", 0), AiJson.getInt(var0, "y", 0), AiJson.getInt(var0, "z", 0));
@@ -283,7 +283,7 @@ public final class AiGoto {
 
       if (var0.has("x") && var0.has("z")) {
          BlockPos var13 = new BlockPos(AiJson.getInt(var0, "x", 0), var2.getY(), AiJson.getInt(var0, "z", 0));
-         BlockPos var15 = putAt_BlockPos(var13, 24);
+         BlockPos var15 = findStandableNear(var13, 24);
          return var15 != null ? var15 : var13;
       }
 
@@ -296,7 +296,7 @@ public final class AiGoto {
       if (var0.has("direction")) {
          double var12 = AiJson.getDouble(var0, "distance", 10.0);
          if (var12 > 0.0 && !(var12 > 512.0)) {
-            return var2.offset(putAt_BlockPos_Str(AiJson.getString(var0, "direction", ""), var1.player.getYRot(), var12));
+            return var2.offset(directionOffset(AiJson.getString(var0, "direction", ""), var1.player.getYRot(), var12));
          } else {
             throw new IllegalArgumentException("distance must be 1-512 blocks");
          }
@@ -340,7 +340,7 @@ public final class AiGoto {
       }
    }
 
-   static BlockPos putAt_BlockPos_Str(String var0, float var1, double var2) {
+   static BlockPos directionOffset(String var0, float var1, double var2) {
       String var4 = var0.toLowerCase(Locale.ROOT).trim();
       double var5 = -Math.sin(Math.toRadians(var1));
       double var7 = Math.cos(Math.toRadians(var1));
@@ -406,7 +406,7 @@ public final class AiGoto {
       return new BlockPos((int)Math.round(var9 * var2), (int)Math.round(var13), (int)Math.round(var11 * var2));
    }
 
-   static boolean putAt(Block var0) {
+   static boolean isInteractableStationBlock(Block var0) {
       String var1 = BuiltInRegistries.BLOCK.getKey(var0).toString();
       boolean var10000;
       switch (var1) {
@@ -441,7 +441,7 @@ public final class AiGoto {
       return var10000;
    }
 
-   static AiOperation putAt(final AiOperation var0, final BlockPos var1) {
+   static AiOperation andInteractOnArrival(final AiOperation var0, final BlockPos var1) {
       return new AiOperation() {
          private AiOperation fill;
 
@@ -458,7 +458,7 @@ public final class AiGoto {
                   return var1x;
                } else {
                   Minecraft var2 = Minecraft.getInstance();
-                  if (var2.level != null && AiGoto.putAt(var2.level.getBlockState(var1).getBlock())) {
+                  if (var2.level != null && AiGoto.isInteractableStationBlock(var2.level.getBlockState(var1).getBlock())) {
                      this.fill = AiOps.init_AiOperation(var1);
                      return new AiOperation.Result(AiOperation.Status.RUNNING, "Arrived at target; opening the block", "{}", List.of());
                   } else {
@@ -488,33 +488,33 @@ public final class AiGoto {
       };
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos(BlockPos var0, double var1, boolean var3, boolean var4, boolean var5, int var6) {
+   public static AiOperation travelTo(BlockPos var0, double var1, boolean var3, boolean var4, boolean var5, int var6) {
       Minecraft var7 = Minecraft.getInstance();
       boolean var8 = var7.level == null || var7.level.dimension() == Level.OVERWORLD;
-      return putAt(var0, var1, var3, var4, var5, var6, var8 ? AiPathfinder.RouteStrategy.FASTEST : AiPathfinder.RouteStrategy.SAFEST);
+      return travelTo(var0, var1, var3, var4, var5, var6, var8 ? AiPathfinder.RouteStrategy.FASTEST : AiPathfinder.RouteStrategy.SAFEST);
    }
 
-   public static AiOperation putAt_AiOperation(BlockPos var0, int var1) {
-      return putAt_AiOperation_BlockPos(var0, var1, Set.of());
+   public static AiOperation approachBlock(BlockPos var0, int var1) {
+      return approachBlock(var0, var1, Set.of());
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos(BlockPos var0, int var1, Set<Long> var2) {
-      return fill(var0, var1, var2, true);
+   public static AiOperation approachBlock(BlockPos var0, int var1, Set<Long> var2) {
+      return approachBlockToInteract(var0, var1, var2, true);
    }
 
-   public static AiOperation fill(BlockPos var0, int var1) {
-      return fill(var0, var1, Set.of());
+   public static AiOperation approachFluidSource(BlockPos var0, int var1) {
+      return approachFluidSource(var0, var1, Set.of());
    }
 
-   public static AiOperation fill(BlockPos var0, int var1, Set<Long> var2) {
-      return putAt_AiOperation_BlockPos_2(var0, var1, var2, false);
+   public static AiOperation approachFluidSource(BlockPos var0, int var1, Set<Long> var2) {
+      return approachFluidSource(var0, var1, var2, false);
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_2(BlockPos var0, int var1, Set<Long> var2, boolean var3) {
-      return putAt_AiOperation_BlockPos_3(var0, var1, var2, var3, Set.of());
+   public static AiOperation approachFluidSource(BlockPos var0, int var1, Set<Long> var2, boolean var3) {
+      return approachFluidSource(var0, var1, var2, var3, Set.of());
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_3(BlockPos var0, int var1, Set<Long> var2, boolean var3, Set<Long> var4) {
+   public static AiOperation approachFluidSource(BlockPos var0, int var1, Set<Long> var2, boolean var3, Set<Long> var4) {
       Minecraft var5 = Minecraft.getInstance();
       AiGoto.MultiTargetGoal var6 = new AiGoto.MultiTargetGoal(
          var0,
@@ -524,16 +524,16 @@ public final class AiGoto {
          ConcurrentHashMap.newKeySet(),
          var5.level.getFluidState(var0).is(FluidTags.WATER)
       );
-      AiPathfinder.PathGoal var7 = putAt(var2.isEmpty() ? var6 : readEx(var6, var2), var4);
-      return putAt(var0, 0.6, true, var3, var3, var1, AiPathfinder.RouteStrategy.SAFEST, true, 2.0, var3 ? putAt(var7) : var7);
+      AiPathfinder.PathGoal var7 = excludingStandCells(var2.isEmpty() ? var6 : protectingCells(var6, var2), var4);
+      return travelTo(var0, 0.6, true, var3, var3, var1, AiPathfinder.RouteStrategy.SAFEST, true, 2.0, var3 ? withoutParkourMoves(var7) : var7);
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos(BlockPos var0, double var1, int var3, Set<Long> var4) {
-      return putAt_AiOperation_BlockPos(var0, var1, var3, var4, Set.of());
+   public static AiOperation approachWithinRadius(BlockPos var0, double var1, int var3, Set<Long> var4) {
+      return approachWithinRadius(var0, var1, var3, var4, Set.of());
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos(BlockPos var0, double var1, int var3, Set<Long> var4, Set<Long> var5) {
-      return putAt(
+   public static AiOperation approachWithinRadius(BlockPos var0, double var1, int var3, Set<Long> var4, Set<Long> var5) {
+      return travelTo(
          var0,
          var1,
          true,
@@ -543,11 +543,11 @@ public final class AiGoto {
          AiPathfinder.RouteStrategy.SAFEST,
          true,
          2.0,
-         putAt(putAt(readEx(AiPathfinder.PathGoal.putAt_FileStore_TokenCod_BlockPos_D(var0, var1), var4), var5))
+         withoutParkourMoves(excludingStandCells(protectingCells(AiPathfinder.PathGoal.putAt_FileStore_TokenCod_BlockPos_D(var0, var1), var4), var5))
       );
    }
 
-   public static AiPathfinder.PathGoal putAt(final AiPathfinder.PathGoal var0, Set<Long> var1) {
+   public static AiPathfinder.PathGoal excludingStandCells(final AiPathfinder.PathGoal var0, Set<Long> var1) {
       if (var1.isEmpty()) {
          return var0;
       }
@@ -616,12 +616,12 @@ public final class AiGoto {
 
          @Override
          public AiPathfinder.PathGoal putAt_FileStore_TokenCod_FileStore_TextStor(AiPathfinder.GridView var1) {
-            return AiGoto.putAt(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1), var2);
+            return AiGoto.excludingStandCells(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1), var2);
          }
       };
    }
 
-   static AiPathfinder.PathGoal putAt(final AiPathfinder.PathGoal var0) {
+   static AiPathfinder.PathGoal withoutParkourMoves(final AiPathfinder.PathGoal var0) {
       return new AiGoto.WrappedGoal() {
          @Override
          public AiPathfinder.PathGoal putAt_FileStore_TokenCod() {
@@ -680,7 +680,7 @@ public final class AiGoto {
 
          @Override
          public AiPathfinder.PathGoal putAt_FileStore_TokenCod_FileStore_TextStor(AiPathfinder.GridView var1) {
-            return AiGoto.putAt(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1));
+            return AiGoto.withoutParkourMoves(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1));
          }
 
          @Override
@@ -694,7 +694,7 @@ public final class AiGoto {
       };
    }
 
-   public static AiOperation putAt(List<BlockPos> var0, int var1) {
+   public static AiOperation approachAnyWaterSource(List<BlockPos> var0, int var1) {
       if (var0.isEmpty()) {
          throw new IllegalArgumentException("No water source candidates");
       }
@@ -703,20 +703,20 @@ public final class AiGoto {
       AiGoto.MultiTargetGoal var3 = new AiGoto.MultiTargetGoal(
          var0, var2.player.blockInteractionRange() - 0.35, var2.player.getEyeHeight(), null, ConcurrentHashMap.newKeySet(), true
       );
-      return putAt((BlockPos)var0.getFirst(), 0.6, true, true, true, var1, AiPathfinder.RouteStrategy.SAFEST, true, 2.0, var3);
+      return travelTo((BlockPos)var0.getFirst(), 0.6, true, true, true, var1, AiPathfinder.RouteStrategy.SAFEST, true, 2.0, var3);
    }
 
-   public static AiOperation fill(BlockPos var0, int var1, Set<Long> var2, boolean var3) {
-      return putAt_AiOperation_BlockPos_4(var0, var1, var2, var3, null);
+   public static AiOperation approachBlockToInteract(BlockPos var0, int var1, Set<Long> var2, boolean var3) {
+      return approachBlockToInteract(var0, var1, var2, var3, null);
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_4(BlockPos var0, int var1, Set<Long> var2, boolean var3, Direction var4) {
-      return putAt_AiOperation_BlockPos_3(var0, var1, var2, var3, var4, 0.25);
+   public static AiOperation approachBlockToInteract(BlockPos var0, int var1, Set<Long> var2, boolean var3, Direction var4) {
+      return approachBlockToInteract(var0, var1, var2, var3, var4, 0.25);
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_3(BlockPos var0, int var1, Set<Long> var2, boolean var3, Direction var4, double var5) {
+   public static AiOperation approachBlockToInteract(BlockPos var0, int var1, Set<Long> var2, boolean var3, Direction var4, double var5) {
       Minecraft var7 = Minecraft.getInstance();
-      return putAt(
+      return travelTo(
          var0,
          0.6,
          true,
@@ -726,27 +726,27 @@ public final class AiGoto {
          AiPathfinder.RouteStrategy.FASTEST,
          true,
          2.0,
-         readEx(new InteractionGoal(var0, Math.max(1.5, var7.player.blockInteractionRange() - var5), AiBlockInteraction.conservativeEyePos(var7).y - var7.player.getY(), var4), var2)
+         protectingCells(new InteractionGoal(var0, Math.max(1.5, var7.player.blockInteractionRange() - var5), AiBlockInteraction.conservativeEyePos(var7).y - var7.player.getY(), var4), var2)
       );
    }
 
-   public static AiOperation readEx(BlockPos var0, int var1, Set<Long> var2, boolean var3) {
-      return putAt_AiOperation_BlockPos_2(var0, var1, var2, var3, 0.25);
+   public static AiOperation approachBlockToBreak(BlockPos var0, int var1, Set<Long> var2, boolean var3) {
+      return approachBlockToBreak(var0, var1, var2, var3, 0.25);
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_2(BlockPos var0, int var1, Set<Long> var2, boolean var3, double var4) {
-      return putAt_AiOperation_BlockPos_2(var0, var1, var2, var3, var4, false);
+   public static AiOperation approachBlockToBreak(BlockPos var0, int var1, Set<Long> var2, boolean var3, double var4) {
+      return approachBlockToBreak(var0, var1, var2, var3, var4, false);
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_2(BlockPos var0, int var1, Set<Long> var2, boolean var3, double var4, boolean var6) {
+   public static AiOperation approachBlockToBreak(BlockPos var0, int var1, Set<Long> var2, boolean var3, double var4, boolean var6) {
       Minecraft var7 = Minecraft.getInstance();
-      AiPathfinder.PathGoal var8 = readEx(
+      AiPathfinder.PathGoal var8 = protectingCells(
          new InteractionGoal(var0, Math.max(1.5, var7.player.blockInteractionRange() - var4), AiBlockInteraction.conservativeEyePos(var7).y - var7.player.getY()).init_q(), var2
       );
-      return putAt(var0, 0.6, true, var3, var3, var1, AiPathfinder.RouteStrategy.FASTEST, true, 2.0, var6 ? fill(var8) : var8);
+      return travelTo(var0, 0.6, true, var3, var3, var1, AiPathfinder.RouteStrategy.FASTEST, true, 2.0, var6 ? requiringDryStandCell(var8) : var8);
    }
 
-   static AiPathfinder.PathGoal fill(final AiPathfinder.PathGoal var0) {
+   static AiPathfinder.PathGoal requiringDryStandCell(final AiPathfinder.PathGoal var0) {
       return new AiGoto.WrappedGoal() {
          @Override
          public AiPathfinder.PathGoal putAt_FileStore_TokenCod() {
@@ -805,7 +805,7 @@ public final class AiGoto {
 
          @Override
          public AiPathfinder.PathGoal putAt_FileStore_TokenCod_FileStore_TextStor(AiPathfinder.GridView var1) {
-            return AiGoto.fill(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1));
+            return AiGoto.requiringDryStandCell(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1));
          }
 
          @Override
@@ -815,25 +815,25 @@ public final class AiGoto {
       };
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_2(BlockPos var0, Item var1, int var2) {
-      return putAt_AiOperation_BlockPos_3(var0, var1, var2, null);
+   public static AiOperation approachToPlace(BlockPos var0, Item var1, int var2) {
+      return approachToPlace(var0, var1, var2, null);
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_3(BlockPos var0, Item var1, int var2, AABB var3) {
-      return putAt_AiOperation_BlockPos_6(var0, var1, var2, var3, true);
+   public static AiOperation approachToPlace(BlockPos var0, Item var1, int var2, AABB var3) {
+      return approachToPlace(var0, var1, var2, var3, true);
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_6(BlockPos var0, Item var1, int var2, AABB var3, boolean var4) {
-      return putAt_AiOperation_BlockPos_5(var0, var1, var2, var3, var4, Set.of());
+   public static AiOperation approachToPlace(BlockPos var0, Item var1, int var2, AABB var3, boolean var4) {
+      return approachToPlace(var0, var1, var2, var3, var4, Set.of());
    }
 
-   public static AiOperation putAt(BlockPos var0, Item var1, int var2, AABB var3, boolean var4, Set<Long> var5, Set<Long> var6) {
+   public static AiOperation approachToPlace(BlockPos var0, Item var1, int var2, AABB var3, boolean var4, Set<Long> var5, Set<Long> var6) {
       Minecraft var7 = Minecraft.getInstance();
-      AiPathfinder.PathGoal var8 = readEx(new PlacementGoal(var0, var1, var7.player.blockInteractionRange() - 0.25, var7.player.getEyeHeight(), var3), var5);
-      return putAt(var0, 0.6, false, !var4, !var4, var2, AiPathfinder.RouteStrategy.FASTEST, true, 2.0, fill(var8, var6));
+      AiPathfinder.PathGoal var8 = protectingCells(new PlacementGoal(var0, var1, var7.player.blockInteractionRange() - 0.25, var7.player.getEyeHeight(), var3), var5);
+      return travelTo(var0, 0.6, false, !var4, !var4, var2, AiPathfinder.RouteStrategy.FASTEST, true, 2.0, avoidingStandBodyCells(var8, var6));
    }
 
-   static AiPathfinder.PathGoal fill(final AiPathfinder.PathGoal var0, final Set<Long> var1) {
+   static AiPathfinder.PathGoal avoidingStandBodyCells(final AiPathfinder.PathGoal var0, final Set<Long> var1) {
       return var1.isEmpty() ? var0 : new AiGoto.WrappedGoal() {
          @Override
          public AiPathfinder.PathGoal putAt_FileStore_TokenCod() {
@@ -896,7 +896,7 @@ public final class AiGoto {
 
          @Override
          public AiPathfinder.PathGoal putAt_FileStore_TokenCod_FileStore_TextStor(AiPathfinder.GridView var1x) {
-            return AiGoto.fill(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1x), var1);
+            return AiGoto.avoidingStandBodyCells(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1x), var1);
          }
 
          @Override
@@ -916,9 +916,9 @@ public final class AiGoto {
       };
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_5(BlockPos var0, Item var1, int var2, AABB var3, boolean var4, Set<Long> var5) {
+   public static AiOperation approachToPlace(BlockPos var0, Item var1, int var2, AABB var3, boolean var4, Set<Long> var5) {
       Minecraft var6 = Minecraft.getInstance();
-      return putAt(
+      return travelTo(
          var0,
          0.6,
          false,
@@ -928,13 +928,13 @@ public final class AiGoto {
          AiPathfinder.RouteStrategy.FASTEST,
          true,
          2.0,
-         readEx(new PlacementGoal(var0, var1, var6.player.blockInteractionRange() - 0.25, var6.player.getEyeHeight(), var3), var5)
+         protectingCells(new PlacementGoal(var0, var1, var6.player.blockInteractionRange() - 0.25, var6.player.getEyeHeight(), var3), var5)
       );
    }
 
-   public static AiOperation fill(BlockPos var0, Item var1, int var2, AABB var3) {
+   public static AiOperation approachToPlaceWithDig(BlockPos var0, Item var1, int var2, AABB var3) {
       Minecraft var4 = Minecraft.getInstance();
-      return putAt(
+      return travelTo(
          var0,
          0.6,
          true,
@@ -948,15 +948,15 @@ public final class AiGoto {
       );
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_5(BlockPos var0, Item var1, int var2, AABB var3, Set<Long> var4) {
-      return putAt_AiOperation_BlockPos_4(var0, var1, var2, var3, var4, null);
+   public static AiOperation approachSchematicPlacement(BlockPos var0, Item var1, int var2, AABB var3, Set<Long> var4) {
+      return approachSchematicPlacement(var0, var1, var2, var3, var4, null);
    }
 
-   public static AiPathfinder.PathGoal readEx(AiPathfinder.PathGoal var0, Set<Long> var1) {
-      return putAt_FileStore_TokenCod_FileStore_TokenCod(var0, var1, -2147483648);
+   public static AiPathfinder.PathGoal protectingCells(AiPathfinder.PathGoal var0, Set<Long> var1) {
+      return protectingCellsAboveY(var0, var1, -2147483648);
    }
 
-   static AiPathfinder.PathGoal readEx(AiPathfinder.PathGoal var0) {
+   static AiPathfinder.PathGoal unwrapGoal(AiPathfinder.PathGoal var0) {
       while (var0 instanceof AiGoto.WrappedGoal) {
          AiGoto.WrappedGoal var1 = (AiGoto.WrappedGoal)var0;
          var0 = var1.putAt_FileStore_TokenCod();
@@ -965,7 +965,7 @@ public final class AiGoto {
       return var0;
    }
 
-   public static AiPathfinder.PathGoal putAt_FileStore_TokenCod_FileStore_TokenCod(
+   public static AiPathfinder.PathGoal protectingCellsAboveY(
       final AiPathfinder.PathGoal var0, final Set<Long> var1, final int var2
    ) {
       return var1.isEmpty() && var2 == -2147483648 ? var0 : new AiGoto.WrappedGoal() {
@@ -1026,7 +1026,7 @@ public final class AiGoto {
 
          @Override
          public AiPathfinder.PathGoal putAt_FileStore_TokenCod_FileStore_TextStor(AiPathfinder.GridView var1x) {
-            return AiGoto.putAt_FileStore_TokenCod_FileStore_TokenCod(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1x), var1, var2);
+            return AiGoto.protectingCellsAboveY(var0.putAt_FileStore_TokenCod_FileStore_TextStor(var1x), var1, var2);
          }
 
          @Override
@@ -1036,15 +1036,15 @@ public final class AiGoto {
       };
    }
 
-   public static AiOperation putAt_AiOperation_BlockPos_4(BlockPos var0, Item var1, int var2, AABB var3, Set<Long> var4, PlacementGoal.PlaceConstraint var5) {
-      return putAt_AiOperation_List(List.of(new PlacementGoal.PlacementRequest(var0, var1, var5)), var2, var3, var4);
+   public static AiOperation approachSchematicPlacement(BlockPos var0, Item var1, int var2, AABB var3, Set<Long> var4, PlacementGoal.PlaceConstraint var5) {
+      return approachSchematicBatch(List.of(new PlacementGoal.PlacementRequest(var0, var1, var5)), var2, var3, var4);
    }
 
-   public static AiOperation putAt_AiOperation_List(List<PlacementGoal.PlacementRequest> var0, int var1, AABB var2, Set<Long> var3) {
-      return putAt_AiOperation_List(var0, var1, var2, var3, Set.of());
+   public static AiOperation approachSchematicBatch(List<PlacementGoal.PlacementRequest> var0, int var1, AABB var2, Set<Long> var3) {
+      return approachSchematicBatch(var0, var1, var2, var3, Set.of());
    }
 
-   public static AiOperation putAt_AiOperation_List(List<PlacementGoal.PlacementRequest> var0, int var1, AABB var2, Set<Long> var3, Set<Long> var4) {
+   public static AiOperation approachSchematicBatch(List<PlacementGoal.PlacementRequest> var0, int var1, AABB var2, Set<Long> var3, Set<Long> var4) {
       if (AutismLiteVariant.enabled()) {
          throw new IllegalStateException("Schematic construction is unavailable in Autism Lite");
       } else {
@@ -1052,21 +1052,21 @@ public final class AiGoto {
       }
    }
 
-   public static AiOperation putAt(BlockPos var0, double var1, boolean var3, boolean var4, boolean var5, int var6, AiPathfinder.RouteStrategy var7) {
-      return putAt(var0, var1, var3, var4, var5, var6, var7, false);
+   public static AiOperation travelTo(BlockPos var0, double var1, boolean var3, boolean var4, boolean var5, int var6, AiPathfinder.RouteStrategy var7) {
+      return travelTo(var0, var1, var3, var4, var5, var6, var7, false);
    }
 
-   public static AiOperation putAt(BlockPos var0, double var1, boolean var3, boolean var4, boolean var5, int var6, AiPathfinder.RouteStrategy var7, boolean var8) {
-      return putAt(var0, var1, var3, var4, var5, var6, var7, var8, 2.0);
+   public static AiOperation travelTo(BlockPos var0, double var1, boolean var3, boolean var4, boolean var5, int var6, AiPathfinder.RouteStrategy var7, boolean var8) {
+      return travelTo(var0, var1, var3, var4, var5, var6, var7, var8, 2.0);
    }
 
-   public static AiOperation putAt(
+   public static AiOperation travelTo(
       BlockPos var0, double var1, boolean var3, boolean var4, boolean var5, int var6, AiPathfinder.RouteStrategy var7, boolean var8, double var9
    ) {
-      return putAt(var0, var1, var3, var4, var5, var6, var7, var8, var9, null);
+      return travelTo(var0, var1, var3, var4, var5, var6, var7, var8, var9, null);
    }
 
-   public static AiOperation putAt(
+   public static AiOperation travelTo(
       BlockPos var0,
       double var1,
       boolean var3,
@@ -1078,10 +1078,10 @@ public final class AiGoto {
       double var9,
       AiPathfinder.PathGoal var11
    ) {
-      return putAt(var0, var1, var3, var4, var5, var6, var7, var8, var9, var11, AiGoto.GotoOptions.DEFAULT);
+      return travelTo(var0, var1, var3, var4, var5, var6, var7, var8, var9, var11, AiGoto.GotoOptions.DEFAULT);
    }
 
-   public static AiOperation putAt(
+   public static AiOperation travelTo(
       BlockPos var0,
       double var1,
       boolean var3,
@@ -1094,10 +1094,10 @@ public final class AiGoto {
       AiPathfinder.PathGoal var11,
       AiGoto.GotoOptions var12
    ) {
-      return putAt(var0, var1, var3, var4, var5, var6, var7, var8, var9, var11, var12, false);
+      return createGotoOp(var0, var1, var3, var4, var5, var6, var7, var8, var9, var11, var12, false);
    }
 
-   public static AiGoto.GotoOp putAt(
+   public static AiGoto.GotoOp createGotoOp(
       BlockPos var0,
       double var1,
       boolean var3,
@@ -1111,10 +1111,10 @@ public final class AiGoto {
       AiGoto.GotoOptions var12,
       boolean var13
    ) {
-      return putAt(var0, var1, var3, var4, var5, var6, var7, var8, var9, var11, var12, var13, false);
+      return createGotoOpInternal(var0, var1, var3, var4, var5, var6, var7, var8, var9, var11, var12, var13, false);
    }
 
-   private static AiGoto.GotoOp putAt(
+   private static AiGoto.GotoOp createGotoOpInternal(
       BlockPos var0,
       double var1,
       boolean var3,
@@ -1129,10 +1129,10 @@ public final class AiGoto {
       boolean var13,
       boolean var14
    ) {
-      return putAt(var0, var1, var3, var4, var5, var6, var7, var8, var9, var11, var12, var13, var14, false, false, 0, null, -1, false);
+      return createGotoOpFull(var0, var1, var3, var4, var5, var6, var7, var8, var9, var11, var12, var13, var14, false, false, 0, null, -1, false);
    }
 
-   private static AiGoto.GotoOp putAt(
+   private static AiGoto.GotoOp createGotoOpFull(
       final BlockPos var0,
       double var1,
       final boolean var3,
@@ -1165,7 +1165,7 @@ public final class AiGoto {
             final Object putAt_Obj = this.putAt_Minecraft.level;
             final BlockPos putAt_BlockPos = this.readEx_BlockPos_5();
             final int flowTemp = this.putAt_Minecraft.player.getInventory().getSelectedSlot();
-            final AiPathfinder.GridView putAt_FileStore_TextStor = AiGoto.putAt_Z
+            final AiPathfinder.GridView putAt_FileStore_TextStor = AiGoto.SNAPSHOT_GRID_ENABLED
                ? new AiPathfinder.LiveGridView(this.putAt_Minecraft, this.putAt_BlockPos, var0, this.fill_ItemStackArr(), AiChunkMemory.init_StateCache())
                : new AiLiveGrid(this.putAt_Minecraft, this.fill_ItemStackArr(), AiChunkMemory.init_StateCache());
             AiPathfinder.PathGoal putAt_FileStore_TokenCod = var11 != null
@@ -1314,7 +1314,7 @@ public final class AiGoto {
 
                   if (this.state_BlockPos != null) {
                      AiPlacer.PlaceStatus var14x = this.flushOf_I < 60
-                        ? this.putAt_FilePool.init_DataPipe_DataUtil()
+                        ? this.putAt_FilePool.tick()
                         : AiPlacer.PlaceStatus.FAILED;
                      this.flushOf_I++;
                      if (var14x == AiPlacer.PlaceStatus.WORKING) {
@@ -1332,7 +1332,7 @@ public final class AiGoto {
                            "[AI] travel: water at {} {} ({})",
                            this.state_BlockPos.toShortString(),
                            var14x == AiPlacer.PlaceStatus.PLACED ? "blocked" : "not blocked",
-                           var14x == AiPlacer.PlaceStatus.PLACED ? "replanning" : this.putAt_FilePool.init_Str()
+                           var14x == AiPlacer.PlaceStatus.PLACED ? "replanning" : this.putAt_FilePool.failureReason()
                         );
                      this.state_BlockPos = null;
                      this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache.putAt_BlockPos());
@@ -1437,7 +1437,7 @@ public final class AiGoto {
                            if (!var15
                               && this.closeOf_I < 2
                               && this.putAt_Minecraft.player.onGround()
-                              && AiGoto.putAt(
+                              && AiGoto.isTallSupportBelowAir(
                                  this.putAt_Minecraft
                                     .level
                                     .getBlockState(this.putAt_Minecraft.player.blockPosition().below())
@@ -1563,7 +1563,7 @@ public final class AiGoto {
                                     return this.value_AiOperation_Result_10();
                                  }
 
-                                 if (AiGoto.putAt(var11x)) {
+                                 if (AiGoto.isExhaustedEmptyPath(var11x)) {
                                     return this.putAt(
                                        autismclient.ai.AiFailure.TIMEOUT,
                                        var14
@@ -1659,7 +1659,7 @@ public final class AiGoto {
                                     return this.value_AiOperation_Result_10();
                                  }
 
-                                 if (AiGoto.putAt(var20x)) {
+                                 if (AiGoto.isExhaustedEmptyPath(var20x)) {
                                     return this.putAt(autismclient.ai.AiFailure.TIMEOUT, "Route search budget exhausted before a route could be proved");
                                  }
 
@@ -2190,7 +2190,7 @@ public final class AiGoto {
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.putAt_RingCache.prev_Z() || this.putAt_FilePool.load_Z();
+               return this.putAt_RingCache.prev_Z() || this.putAt_FilePool.needsReconciliation();
             }
 
             @Override
@@ -2322,8 +2322,8 @@ public final class AiGoto {
                }
 
                if (var2.startsWith("No route toward the target")) {
-                  AiGoto.putAt_V(this.putAt_RingCache.putAt_BlockPos());
-                  if (Boolean.getBoolean("autism.ai.schematics") && AiGoto.flowState(this.putAt_RingCache.putAt_BlockPos()) == 1) {
+                  AiGoto.recordNoRouteFailure(this.putAt_RingCache.putAt_BlockPos());
+                  if (Boolean.getBoolean("autism.ai.schematics") && AiGoto.recentNoRouteCount(this.putAt_RingCache.putAt_BlockPos()) == 1) {
                      this.prevEx_V_7();
                   }
                }
@@ -2348,7 +2348,7 @@ public final class AiGoto {
                   this.frameOf = true;
                   if (var11 instanceof PlacementGoal var8x && var8x.init_AABB() != null && !var8x.load()) {
                      AABB var9x = var8x.init_AABB();
-                     BlockPos var10 = AiGoto.putAt_BlockPos(
+                     BlockPos var10 = AiGoto.findStandableNear(
                         new BlockPos((int)Math.floor(var9x.minX) - 2, this.putAt_Minecraft.player.blockPosition().getY(), (int)Math.floor(var9x.getCenter().z)),
                         12
                      );
@@ -2532,7 +2532,7 @@ public final class AiGoto {
                               && var2 == null
                               && this.putAt_Minecraft.level.getFluidState(var9x).is(FluidTags.WATER)
                               && this.putAt_Minecraft.level.getBlockState(var9x).canBeReplaced()) {
-                              if (!AiGoto.putAt_Z_FileStore_TokenCod(this.putAt_FileStore_TokenCod, var4, var5, var9x)) {
+                              if (!AiGoto.canPlaceSupportForGoal(this.putAt_FileStore_TokenCod, var4, var5, var9x)) {
                                  this.stateOf_I++;
                               } else {
                                  var2 = var9x.immutable();
@@ -2552,8 +2552,8 @@ public final class AiGoto {
 
                   for (int var13x = 0; var13x < 36; var13x++) {
                      ItemStack var14x = var10.getItem(var13x);
-                     if (var14x.getItem() instanceof BlockItem var15x && !(var15x.getBlock() instanceof FallingBlock) && AiRestock.init(var14x, var10)) {
-                        int var17x = AiRestock.init_I(BuiltInRegistries.ITEM.getKey(var14x.getItem()).toString());
+                     if (var14x.getItem() instanceof BlockItem var15x && !(var15x.getBlock() instanceof FallingBlock) && AiRestock.canSpendStack(var14x, var10)) {
+                        int var17x = AiRestock.scaffoldRank(BuiltInRegistries.ITEM.getKey(var14x.getItem()).toString());
                         if (var17x >= 0 && var17x < var12x) {
                            var12x = var17x;
                            var11x = var14x.getItem();
@@ -2569,7 +2569,7 @@ public final class AiGoto {
                   this.state_BlockPos = var2;
                   this.flushOf_I = 0;
                   this.putAt_RingCache.pollAt_Z();
-                  this.putAt_FilePool.init_V_BlockPos_Item(var2, var11x);
+                  this.putAt_FilePool.start(var2, var11x);
                   AutismClientAddon.LOG.info("[AI] travel: no way out of {} beside water; blocking the water at {}", var1x.toShortString(), var2.toShortString());
                   return this.fill("Blocking the water at " + var2.toShortString());
                } else {
@@ -2668,7 +2668,7 @@ public final class AiGoto {
                this.putAt_Minecraft.options.keyDown.setDown(false);
                this.putAt_Minecraft.options.keyLeft.setDown(false);
                this.putAt_Minecraft.options.keyRight.setDown(false);
-               BlockPos var1x = AiGoto.putAt(
+               BlockPos var1x = AiGoto.findNearestMatchingNeighbor(
                   this.putAt_Minecraft.player.blockPosition(),
                   var1xx -> this.putAt_Minecraft.level.getBlockState(var1xx).getCollisionShape(this.putAt_Minecraft.level, var1xx).isEmpty()
                      && this.putAt_Minecraft.level.getFluidState(var1xx).isEmpty()
@@ -2846,8 +2846,8 @@ public final class AiGoto {
                      this.prevEx_V_7();
                   }
 
-                  if (this.putAt_Minecraft.level != null && System.nanoTime() - AiGoto.value > 10000000000L) {
-                     AiGoto.value = System.nanoTime();
+                  if (this.putAt_Minecraft.level != null && System.nanoTime() - AiGoto.lastDebugLogNanos > 10000000000L) {
+                     AiGoto.lastDebugLogNanos = System.nanoTime();
                      AutismClientAddon.LOG.info(
                            "[AI] no route from {} to {}: {}",
                            this.putAt_RingCache.putAt_BlockPos().toShortString(),
@@ -2976,7 +2976,7 @@ public final class AiGoto {
                   } else if (this.putAt_Z_ItemStack_2(var5x)) {
                      if (var5x.is(ItemTags.PLANKS)) {
                         var2 += var5x.getCount();
-                     } else if (AiRestock.init(var5x)) {
+                     } else if (AiRestock.isStoneBlock(var5x)) {
                         var3x += var5x.getCount();
                      } else {
                         var1x += var5x.getCount();
@@ -2984,13 +2984,13 @@ public final class AiGoto {
                   }
                }
 
-               var1x += AiRestock.write() > 0 ? Math.min(var3x, AiRestock.read(this.putAt_Minecraft.player.getInventory())) : var3x;
+               var1x += AiRestock.reservedStone() > 0 ? Math.min(var3x, AiRestock.availableSpareStone(this.putAt_Minecraft.player.getInventory())) : var3x;
                if (!AutismLiteVariant.enabled()) {
                   var2 += AiPlanks.init(this.putAt_Minecraft.player.getInventory());
                }
 
-               if (AiRestock.init_I() > 0) {
-                  var2 = Math.min(var2, AiRestock.init(this.putAt_Minecraft.player.getInventory()));
+               if (AiRestock.reservedWood() > 0) {
+                  var2 = Math.min(var2, AiRestock.availableSpareWood(this.putAt_Minecraft.player.getInventory()));
                }
 
                return var1x + var2;
@@ -3000,7 +3000,7 @@ public final class AiGoto {
                if (this.prevEx_I_3() < 0 && (!var8 || this.value_I_5() < 0)) {
                   return AutismLiteVariant.enabled()
                      ? false
-                     : AiPlanks.init(this.putAt_Minecraft.player.getInventory()) > 0 && AiRestock.init(this.putAt_Minecraft.player.getInventory()) > 0;
+                     : AiPlanks.init(this.putAt_Minecraft.player.getInventory()) > 0 && AiRestock.availableSpareWood(this.putAt_Minecraft.player.getInventory()) > 0;
                } else {
                   return true;
                }
@@ -3011,7 +3011,7 @@ public final class AiGoto {
 
                for (int var2 = 9; var2 < 36; var2++) {
                   ItemStack var3x = this.putAt_Minecraft.player.getInventory().getItem(var2);
-                  if (var3x.getItem() instanceof BlockItem var4x && AiRestock.init(var3x, this.putAt_Minecraft.player.getInventory())) {
+                  if (var3x.getItem() instanceof BlockItem var4x && AiRestock.canSpendStack(var3x, this.putAt_Minecraft.player.getInventory())) {
                      var1x.add(
                         new AiRestock.Inner_CachePool(
                            BuiltInRegistries.ITEM.getKey(var3x.getItem()).toString(),
@@ -3028,7 +3028,7 @@ public final class AiGoto {
                   }
                }
 
-               int var6x = AiRestock.init(var1x, null);
+               int var6x = AiRestock.pickBestBackpackSlot(var1x, null);
                return var6x < 0 ? -1 : 9 + var6x;
             }
 
@@ -3064,7 +3064,7 @@ public final class AiGoto {
                ArrayList<Double> var5x = new ArrayList<>();
 
                for (Entity var7x : this.putAt_Minecraft.level.entitiesForRendering()) {
-                  if (var7x instanceof Enemy && var7x.isAlive() && var7x.distanceToSqr(this.putAt_Minecraft.player) <= 576.0 && !AiGoto.putAt(var7x)) {
+                  if (var7x instanceof Enemy && var7x.isAlive() && var7x.distanceToSqr(this.putAt_Minecraft.player) <= 576.0 && !AiGoto.isUnprovokedNeutralMob(var7x)) {
                      var2.add(var7x.blockPosition());
                      if (var7x instanceof PiglinBrute || var7x instanceof Hoglin || var7x instanceof Zoglin || var7x instanceof WitherSkeleton) {
                         var3x.add(var7x.blockPosition());
@@ -3221,8 +3221,8 @@ public final class AiGoto {
 
             boolean putAt_Z_ItemStack_2(ItemStack var1) {
                return var1.getItem() instanceof BlockItem var2
-                  && AiRestock.init_Z(BuiltInRegistries.ITEM.getKey(var1.getItem()).toString())
-                  && AiRestock.init(var1, this.putAt_Minecraft.player.getInventory())
+                  && AiRestock.isScaffoldBlockId(BuiltInRegistries.ITEM.getKey(var1.getItem()).toString())
+                  && AiRestock.canSpendStack(var1, this.putAt_Minecraft.player.getInventory())
                   && !(var2.getBlock() instanceof FallingBlock)
                   && var2.getBlock().defaultBlockState().isCollisionShapeFullBlock(this.putAt_Minecraft.level, this.putAt_Minecraft.player.blockPosition())
                   && !var2.getBlock().defaultBlockState().hasBlockEntity();
@@ -3255,7 +3255,7 @@ public final class AiGoto {
             }
 
             boolean prev_Z_8() {
-               AiPathfinder.PathGoal var1x = AiGoto.readEx(this.putAt_FileStore_TokenCod);
+               AiPathfinder.PathGoal var1x = AiGoto.unwrapGoal(this.putAt_FileStore_TokenCod);
                if ((this.chunkAt_Z_6() || var1x instanceof AiGoto.MultiTargetGoal var2 && var2.putAt_Z && this.putAt_Minecraft.player.isInWater())
                   && !this.putAt_RingCache.state_Z()
                   && !this.putAt_RingCache.closeOf_Z()) {
@@ -3275,7 +3275,7 @@ public final class AiGoto {
 
                      return false;
                   } else if (var1x instanceof PlacementGoal var6x) {
-                     return !AiGoto.putAt(this.putAt_RingCache.putAt_RingCache_TableCac(), this.putAt_Minecraft.player.getDeltaMovement())
+                     return !AiGoto.isWrStopped(this.putAt_RingCache.putAt_RingCache_TableCac(), this.putAt_Minecraft.player.getDeltaMovement())
                         ? false
                         : var6x.init(this.putAt_Minecraft);
                   } else if (var1x instanceof InteractionGoal var3x) {
@@ -3345,7 +3345,7 @@ public final class AiGoto {
                LocalPlayer var1x = this.putAt_Minecraft.player;
                if (var1x.onGround() && this.putAt_Minecraft.level.noCollision(var1x, var1x.getBoundingBox().deflate(0.001))) {
                   BlockPos var2 = var1x.blockPosition();
-                  if (!AiGoto.putAt_Z_VoxelShape(
+                  if (!AiGoto.hasNonFullStandingShape(
                      this.putAt_Minecraft.level.getBlockState(var2.below()).getCollisionShape(this.putAt_Minecraft.level, var2.below()),
                      this.putAt_Minecraft.level.getBlockState(var2).getCollisionShape(this.putAt_Minecraft.level, var2),
                      this.putAt_Minecraft.level.getBlockState(var2.above()).getCollisionShape(this.putAt_Minecraft.level, var2.above())
@@ -3577,7 +3577,7 @@ public final class AiGoto {
             }
 
             boolean pollOf_Z_2() {
-               if (AiGoto.readEx(this.putAt_FileStore_TokenCod) instanceof PlacementGoal var3x) {
+               if (AiGoto.unwrapGoal(this.putAt_FileStore_TokenCod) instanceof PlacementGoal var3x) {
                   BlockPos var6x = this.putAt_RingCache.putAt_BlockPos();
                   if (!this.chunkAt_Z_6() || !this.putAt_FileStore_TokenCod.isInGoal(var6x.getX(), var6x.getY(), var6x.getZ())) {
                      return false;
@@ -3591,7 +3591,7 @@ public final class AiGoto {
                      return true;
                   }
 
-                  if (!AiGoto.putAt(this.putAt_RingCache.putAt_RingCache_TableCac(), this.putAt_Minecraft.player.getDeltaMovement())) {
+                  if (!AiGoto.isWrStopped(this.putAt_RingCache.putAt_RingCache_TableCac(), this.putAt_Minecraft.player.getDeltaMovement())) {
                      AiMotionSafety.releaseMovementKeys();
                      return true;
                   }
@@ -3604,7 +3604,7 @@ public final class AiGoto {
                   AutismClientAddon.LOG.info("[AI] stance {} cannot place at {}; picking another", var6x.toShortString(), var0.toShortString());
                   this.putAt_FileStore_TaskStat.putAt(var6x);
                   return true;
-               } else if (AiGoto.readEx(this.putAt_FileStore_TokenCod) instanceof InteractionGoal var1x && this.chunkAt_Z_6() && var1x.init_I() < 16) {
+               } else if (AiGoto.unwrapGoal(this.putAt_FileStore_TokenCod) instanceof InteractionGoal var1x && this.chunkAt_Z_6() && var1x.init_I() < 16) {
                   BlockPos var5x = this.putAt_RingCache.putAt_BlockPos();
                   if (!this.putAt_FileStore_TokenCod.isInGoal(var5x.getX(), var5x.getY(), var5x.getZ())) {
                      return false;
@@ -3668,7 +3668,7 @@ public final class AiGoto {
                }
 
                AiPathfinder.SearchStats var2 = this.putAt_FileStore_TaskStat.putAt_FileStore_RingBuff();
-               if (AiGoto.readEx(this.putAt_FileStore_TokenCod) instanceof AiGoto.MultiTargetGoal var3x && var3x.fill_BlockPos != null) {
+               if (AiGoto.unwrapGoal(this.putAt_FileStore_TokenCod) instanceof AiGoto.MultiTargetGoal var3x && var3x.fill_BlockPos != null) {
                   var1x.addProperty("fluidSourceX", var3x.fill_BlockPos.getX());
                   var1x.addProperty("fluidSourceY", var3x.fill_BlockPos.getY());
                   var1x.addProperty("fluidSourceZ", var3x.fill_BlockPos.getZ());
@@ -4217,102 +4217,102 @@ public final class AiGoto {
    }
 
    // 5.3 external ABI bridges for untouched top-level ai/* and MacroExecutor callers
-   public static int init_I(BlockPos feet) { return flowState(feet); }
-   public static BlockPos init_BlockPos(BlockPos target, int range) { return putAt_BlockPos(target, range); }
-   public static boolean init_Z(BlockPos cell) { return putAt_Z(cell); }
-   public static AiGoto.GotoOp init_HashUtil_CachePool_BlockPos(BlockPos anchor, AiPathfinder.PathGoal goal, int timeoutSeconds, AiGoto.GotoOptions options) {
-      return putAt_HashEntry_TaskStat_BlockPos(anchor, goal, timeoutSeconds, options);
+   public static int recentNoRouteCountCompat(BlockPos feet) { return recentNoRouteCount(feet); }
+   public static BlockPos findStandableNearCompat(BlockPos target, int range) { return findStandableNear(target, range); }
+   public static boolean isStandableCompat(BlockPos cell) { return isStandable(cell); }
+   public static AiGoto.GotoOp createPersistentOpCompat(BlockPos anchor, AiPathfinder.PathGoal goal, int timeoutSeconds, AiGoto.GotoOptions options) {
+      return createPersistentOp(anchor, goal, timeoutSeconds, options);
    }
-   public static void init_V_HashUtil_CachePool(AiGoto.GotoOp travel, Function<Predicate<AABB>, Vec3> look, Runnable click) {
-      putAt_V_HashEntry_TaskStat(travel, look, click);
+   public static void attachWalkingWorkCompat(AiGoto.GotoOp travel, Function<Predicate<AABB>, Vec3> look, Runnable click) {
+      attachWalkingWork(travel, look, click);
    }
-   public static AiGoto.GotoOp init_HashUtil_CachePool_BlockPos(BlockPos anchor, AiPathfinder.PathGoal goal, int timeoutSeconds) {
-      return putAt_HashEntry_TaskStat_BlockPos(anchor, goal, timeoutSeconds);
+   public static AiGoto.GotoOp createPersistentOpCompat(BlockPos anchor, AiPathfinder.PathGoal goal, int timeoutSeconds) {
+      return createPersistentOp(anchor, goal, timeoutSeconds);
    }
-   public static AiOperation init(JsonObject args) { return putAt(args); }
-   public static AiOperation init_AiOperation_BlockPos(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds) {
-      return putAt_AiOperation_BlockPos(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds);
+   public static AiOperation fromJsonCompat(JsonObject args) { return fromJson(args); }
+   public static AiOperation travelToCompat(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds) {
+      return travelTo(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds);
    }
-   public static AiOperation init_AiOperation(BlockPos target, int timeoutSeconds) { return putAt_AiOperation(target, timeoutSeconds); }
-   public static AiOperation init_AiOperation_BlockPos(BlockPos target, int timeoutSeconds, Set<Long> protectedCells) {
-      return putAt_AiOperation_BlockPos(target, timeoutSeconds, protectedCells);
+   public static AiOperation approachBlockCompat(BlockPos target, int timeoutSeconds) { return approachBlock(target, timeoutSeconds); }
+   public static AiOperation approachBlockCompat(BlockPos target, int timeoutSeconds, Set<Long> protectedCells) {
+      return approachBlock(target, timeoutSeconds, protectedCells);
    }
-   public static AiOperation load(BlockPos source, int seconds) { return fill(source, seconds); }
-   public static AiOperation load(BlockPos source, int seconds, Set<Long> protectedCells) { return fill(source, seconds, protectedCells); }
-   public static AiOperation init_AiOperation_BlockPos_2(BlockPos source, int seconds, Set<Long> protectedCells, boolean supportedAccess) {
-      return putAt_AiOperation_BlockPos_2(source, seconds, protectedCells, supportedAccess);
+   public static AiOperation approachFluidSourceCompat(BlockPos source, int seconds) { return approachFluidSource(source, seconds); }
+   public static AiOperation approachFluidSourceCompat(BlockPos source, int seconds, Set<Long> protectedCells) { return approachFluidSource(source, seconds, protectedCells); }
+   public static AiOperation approachFluidSourceCompat(BlockPos source, int seconds, Set<Long> protectedCells, boolean supportedAccess) {
+      return approachFluidSource(source, seconds, protectedCells, supportedAccess);
    }
-   public static AiOperation init_AiOperation_BlockPos_3(BlockPos source, int seconds, Set<Long> protectedCells, boolean supportedAccess, Set<Long> forbiddenCells) {
-      return putAt_AiOperation_BlockPos_3(source, seconds, protectedCells, supportedAccess, forbiddenCells);
+   public static AiOperation approachFluidSourceCompat(BlockPos source, int seconds, Set<Long> protectedCells, boolean supportedAccess, Set<Long> forbiddenCells) {
+      return approachFluidSource(source, seconds, protectedCells, supportedAccess, forbiddenCells);
    }
-   public static AiOperation init_AiOperation_BlockPos(BlockPos target, double radius, int seconds, Set<Long> protectedCells) {
-      return putAt_AiOperation_BlockPos(target, radius, seconds, protectedCells);
+   public static AiOperation approachWithinRadiusCompat(BlockPos target, double radius, int seconds, Set<Long> protectedCells) {
+      return approachWithinRadius(target, radius, seconds, protectedCells);
    }
-   public static AiOperation init_AiOperation_BlockPos(BlockPos target, double radius, int seconds, Set<Long> protectedCells, Set<Long> forbiddenCells) {
-      return putAt_AiOperation_BlockPos(target, radius, seconds, protectedCells, forbiddenCells);
+   public static AiOperation approachWithinRadiusCompat(BlockPos target, double radius, int seconds, Set<Long> protectedCells, Set<Long> forbiddenCells) {
+      return approachWithinRadius(target, radius, seconds, protectedCells, forbiddenCells);
    }
-   public static AiPathfinder.PathGoal init(final AiPathfinder.PathGoal delegate, Set<Long> cells) { return putAt(delegate, cells); }
-   public static AiOperation init(List<BlockPos> sources, int seconds) { return putAt(sources, seconds); }
-   public static AiOperation load(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold) {
-      return fill(target, timeoutSeconds, protectedCells, allowScaffold);
+   public static AiPathfinder.PathGoal excludingStandCellsCompat(final AiPathfinder.PathGoal delegate, Set<Long> cells) { return excludingStandCells(delegate, cells); }
+   public static AiOperation approachAnyWaterSourceCompat(List<BlockPos> sources, int seconds) { return approachAnyWaterSource(sources, seconds); }
+   public static AiOperation approachBlockToInteractCompat(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold) {
+      return approachBlockToInteract(target, timeoutSeconds, protectedCells, allowScaffold);
    }
-   public static AiOperation init_AiOperation_BlockPos_4(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold, Direction requiredFace) {
-      return putAt_AiOperation_BlockPos_4(target, timeoutSeconds, protectedCells, allowScaffold, requiredFace);
+   public static AiOperation approachBlockToInteractCompat(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold, Direction requiredFace) {
+      return approachBlockToInteract(target, timeoutSeconds, protectedCells, allowScaffold, requiredFace);
    }
-   public static AiOperation init_AiOperation_BlockPos_3(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold, Direction requiredFace, double slack) {
-      return putAt_AiOperation_BlockPos_3(target, timeoutSeconds, protectedCells, allowScaffold, requiredFace, slack);
+   public static AiOperation approachBlockToInteractCompat(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold, Direction requiredFace, double slack) {
+      return approachBlockToInteract(target, timeoutSeconds, protectedCells, allowScaffold, requiredFace, slack);
    }
-   public static AiOperation read(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold) {
-      return readEx(target, timeoutSeconds, protectedCells, allowScaffold);
+   public static AiOperation approachBlockToBreakCompat(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold) {
+      return approachBlockToBreak(target, timeoutSeconds, protectedCells, allowScaffold);
    }
-   public static AiOperation init_AiOperation_BlockPos_2(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold, double slack) {
-      return putAt_AiOperation_BlockPos_2(target, timeoutSeconds, protectedCells, allowScaffold, slack);
+   public static AiOperation approachBlockToBreakCompat(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold, double slack) {
+      return approachBlockToBreak(target, timeoutSeconds, protectedCells, allowScaffold, slack);
    }
-   public static AiOperation init_AiOperation_BlockPos_2(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold, double slack, boolean dry) {
-      return putAt_AiOperation_BlockPos_2(target, timeoutSeconds, protectedCells, allowScaffold, slack, dry);
+   public static AiOperation approachBlockToBreakCompat(BlockPos target, int timeoutSeconds, Set<Long> protectedCells, boolean allowScaffold, double slack, boolean dry) {
+      return approachBlockToBreak(target, timeoutSeconds, protectedCells, allowScaffold, slack, dry);
    }
-   public static AiOperation init_AiOperation_BlockPos_2(BlockPos target, Item item, int timeoutSeconds) { return putAt_AiOperation_BlockPos_2(target, item, timeoutSeconds); }
-   public static AiOperation init_AiOperation_BlockPos_3(BlockPos target, Item item, int timeoutSeconds, AABB workVolume) { return putAt_AiOperation_BlockPos_3(target, item, timeoutSeconds, workVolume); }
-   public static AiOperation init_AiOperation_BlockPos_6(BlockPos target, Item item, int timeoutSeconds, AABB workVolume, boolean walkOnly) { return putAt_AiOperation_BlockPos_6(target, item, timeoutSeconds, workVolume, walkOnly); }
-   public static AiOperation init(BlockPos target, Item item, int timeoutSeconds, AABB workVolume, boolean walkOnly, Set<Long> keep, Set<Long> noStand) {
-      return putAt(target, item, timeoutSeconds, workVolume, walkOnly, keep, noStand);
+   public static AiOperation approachToPlaceCompat(BlockPos target, Item item, int timeoutSeconds) { return approachToPlace(target, item, timeoutSeconds); }
+   public static AiOperation approachToPlaceCompat(BlockPos target, Item item, int timeoutSeconds, AABB workVolume) { return approachToPlace(target, item, timeoutSeconds, workVolume); }
+   public static AiOperation approachToPlaceCompat(BlockPos target, Item item, int timeoutSeconds, AABB workVolume, boolean walkOnly) { return approachToPlace(target, item, timeoutSeconds, workVolume, walkOnly); }
+   public static AiOperation approachToPlaceCompat(BlockPos target, Item item, int timeoutSeconds, AABB workVolume, boolean walkOnly, Set<Long> keep, Set<Long> noStand) {
+      return approachToPlace(target, item, timeoutSeconds, workVolume, walkOnly, keep, noStand);
    }
-   public static AiOperation init_AiOperation_BlockPos_5(BlockPos target, Item item, int timeoutSeconds, AABB workVolume, boolean walkOnly, Set<Long> keep) {
-      return putAt_AiOperation_BlockPos_5(target, item, timeoutSeconds, workVolume, walkOnly, keep);
+   public static AiOperation approachToPlaceCompat(BlockPos target, Item item, int timeoutSeconds, AABB workVolume, boolean walkOnly, Set<Long> keep) {
+      return approachToPlace(target, item, timeoutSeconds, workVolume, walkOnly, keep);
    }
-   public static AiOperation load(BlockPos target, Item item, int timeoutSeconds, AABB workVolume) { return fill(target, item, timeoutSeconds, workVolume); }
-   public static AiOperation init_AiOperation_BlockPos_5(BlockPos target, Item item, int timeoutSeconds, AABB volume, Set<Long> cells) {
-      return putAt_AiOperation_BlockPos_5(target, item, timeoutSeconds, volume, cells);
+   public static AiOperation approachToPlaceWithDigCompat(BlockPos target, Item item, int timeoutSeconds, AABB workVolume) { return approachToPlaceWithDig(target, item, timeoutSeconds, workVolume); }
+   public static AiOperation approachSchematicPlacementCompat(BlockPos target, Item item, int timeoutSeconds, AABB volume, Set<Long> cells) {
+      return approachSchematicPlacement(target, item, timeoutSeconds, volume, cells);
    }
-   public static AiPathfinder.PathGoal read(AiPathfinder.PathGoal delegate, Set<Long> cells) { return readEx(delegate, cells); }
-   public static AiPathfinder.PathGoal init_ClassCache_JsonUti_ClassCache_JsonUti(final AiPathfinder.PathGoal delegate, final Set<Long> cells, final int minimumDigY) {
-      return putAt_FileStore_TokenCod_FileStore_TokenCod(delegate, cells, minimumDigY);
+   public static AiPathfinder.PathGoal protectingCellsCompat(AiPathfinder.PathGoal delegate, Set<Long> cells) { return protectingCells(delegate, cells); }
+   public static AiPathfinder.PathGoal protectingCellsAboveYCompat(final AiPathfinder.PathGoal delegate, final Set<Long> cells, final int minimumDigY) {
+      return protectingCellsAboveY(delegate, cells, minimumDigY);
    }
-   public static AiOperation init_AiOperation_BlockPos_4(BlockPos target, Item item, int timeoutSeconds, AABB volume, Set<Long> cells, PlacementGoal.PlaceConstraint constraint) {
-      return putAt_AiOperation_BlockPos_4(target, item, timeoutSeconds, volume, cells, constraint);
+   public static AiOperation approachSchematicPlacementCompat(BlockPos target, Item item, int timeoutSeconds, AABB volume, Set<Long> cells, PlacementGoal.PlaceConstraint constraint) {
+      return approachSchematicPlacement(target, item, timeoutSeconds, volume, cells, constraint);
    }
-   public static AiOperation init_AiOperation_List(List<PlacementGoal.PlacementRequest> batch, int timeoutSeconds, AABB volume, Set<Long> cells) {
-      return putAt_AiOperation_List(batch, timeoutSeconds, volume, cells);
+   public static AiOperation approachSchematicBatchCompat(List<PlacementGoal.PlacementRequest> batch, int timeoutSeconds, AABB volume, Set<Long> cells) {
+      return approachSchematicBatch(batch, timeoutSeconds, volume, cells);
    }
-   public static AiOperation init_AiOperation_List(List<PlacementGoal.PlacementRequest> batch, int timeoutSeconds, AABB volume, Set<Long> cells, Set<Long> avoid) {
-      return putAt_AiOperation_List(batch, timeoutSeconds, volume, cells, avoid);
+   public static AiOperation approachSchematicBatchCompat(List<PlacementGoal.PlacementRequest> batch, int timeoutSeconds, AABB volume, Set<Long> cells, Set<Long> avoid) {
+      return approachSchematicBatch(batch, timeoutSeconds, volume, cells, avoid);
    }
-   public static AiOperation init(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy) {
-      return putAt(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy);
+   public static AiOperation travelToCompat(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy) {
+      return travelTo(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy);
    }
-   public static AiOperation init(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy, boolean allowParkour) {
-      return putAt(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy, allowParkour);
+   public static AiOperation travelToCompat(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy, boolean allowParkour) {
+      return travelTo(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy, allowParkour);
    }
-   public static AiOperation init(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy, boolean allowParkour, double breakReluctance) {
-      return putAt(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy, allowParkour, breakReluctance);
+   public static AiOperation travelToCompat(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy, boolean allowParkour, double breakReluctance) {
+      return travelTo(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy, allowParkour, breakReluctance);
    }
-   public static AiOperation init(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy, boolean allowParkour, double breakReluctance, AiPathfinder.PathGoal customGoal) {
-      return putAt(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy, allowParkour, breakReluctance, customGoal);
+   public static AiOperation travelToCompat(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy, boolean allowParkour, double breakReluctance, AiPathfinder.PathGoal customGoal) {
+      return travelTo(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy, allowParkour, breakReluctance, customGoal);
    }
-   public static AiOperation init(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy, boolean allowParkour, double breakReluctance, AiPathfinder.PathGoal customGoal, AiGoto.GotoOptions options) {
-      return putAt(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy, allowParkour, breakReluctance, customGoal, options);
+   public static AiOperation travelToCompat(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy, boolean allowParkour, double breakReluctance, AiPathfinder.PathGoal customGoal, AiGoto.GotoOptions options) {
+      return travelTo(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy, allowParkour, breakReluctance, customGoal, options);
    }
-   public static AiGoto.GotoOp init(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy, boolean allowParkour, double breakReluctance, AiPathfinder.PathGoal customGoal, AiGoto.GotoOptions options, boolean persistent) {
-      return putAt(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy, allowParkour, breakReluctance, customGoal, options, persistent);
+   public static AiGoto.GotoOp createGotoOpCompat(BlockPos target, double radius, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds, AiPathfinder.RouteStrategy strategy, boolean allowParkour, double breakReluctance, AiPathfinder.PathGoal customGoal, AiGoto.GotoOptions options, boolean persistent) {
+      return createGotoOp(target, radius, allowDig, allowPillar, allowBridge, timeoutSeconds, strategy, allowParkour, breakReluctance, customGoal, options, persistent);
    }
 }

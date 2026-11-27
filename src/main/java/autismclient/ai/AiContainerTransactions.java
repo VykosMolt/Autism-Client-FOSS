@@ -18,29 +18,29 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public final class AiContainerTransactions {
-   private static AiContainerTransactions.Inner_DataUtil init_b_DataUtil;
-   private static boolean init_Z;
+   private static AiContainerTransactions.Inner_DataUtil activeReceipt;
+   private static boolean ignoreNextSwapUpdatesForTest;
 
    private AiContainerTransactions() {
    }
 
-   public static int init(int applied) {
+   public static int mismatchStateId(int applied) {
       return (applied ^ 16384) & 32767;
    }
 
-   public static AiContainerTransactions.Inner_DataUtil init(AbstractContainerMenu menu, int source, int destination, int hotbar) {
+   public static AiContainerTransactions.Inner_DataUtil sendVerifiedSwap(AbstractContainerMenu menu, int source, int destination, int hotbar) {
       ItemStack from = menu.getSlot(source).getItem();
       ItemStack to = menu.getSlot(destination).getItem();
       return menu.getCarried().isEmpty() && !ItemStack.matches(from, to)
-         ? init(menu, source, hotbar, ContainerInput.SWAP, Map.of(source, to, destination, from), ItemStack.EMPTY, true)
+         ? sendVerifiedClick(menu, source, hotbar, ContainerInput.SWAP, Map.of(source, to, destination, from), ItemStack.EMPTY, true)
          : null;
    }
 
-   static AiContainerTransactions.Inner_DataUtil init(AbstractContainerMenu menu, int slot, int button, Map<Integer, ItemStack> expected, ItemStack cursor) {
-      return init(menu, slot, button, ContainerInput.PICKUP, expected, cursor, false);
+   static AiContainerTransactions.Inner_DataUtil sendVerifiedPickup(AbstractContainerMenu menu, int slot, int button, Map<Integer, ItemStack> expected, ItemStack cursor) {
+      return sendVerifiedClick(menu, slot, button, ContainerInput.PICKUP, expected, cursor, false);
    }
 
-   private static AiContainerTransactions.Inner_DataUtil init(
+   private static AiContainerTransactions.Inner_DataUtil sendVerifiedClick(
       AbstractContainerMenu menu, int slot, int button, ContainerInput type, Map<Integer, ItemStack> expected, ItemStack cursor, boolean swap
    ) {
       Minecraft mc = Minecraft.getInstance();
@@ -50,15 +50,15 @@ public final class AiContainerTransactions {
          return null;
       }
 
-      if (init_b_DataUtil != null && init_b_DataUtil.init_AbstractContainerM == menu && !init_b_DataUtil.load(now)) {
+      if (activeReceipt != null && activeReceipt.menu == menu && !activeReceipt.isTimedOut(now)) {
          return null;
       }
 
       AiContainerTransactions.Inner_DataUtil receipt = new AiContainerTransactions.Inner_DataUtil(menu, expected, cursor, swap, now);
       if (swap) {
-         receipt.init_I = button;
-         receipt.write = init_Z;
-         init_Z = false;
+         receipt.swapHotbarButton = button;
+         receipt.ignoreUpdates = ignoreNextSwapUpdatesForTest;
+         ignoreNextSwapUpdatesForTest = false;
       }
 
       connection.send(
@@ -72,92 +72,92 @@ public final class AiContainerTransactions {
             HashedStack.create(menu.getCarried(), connection.decoratedHashOpsGenenerator())
          )
       );
-      init_b_DataUtil = receipt;
+      activeReceipt = receipt;
       return receipt;
    }
 
-   public static void init(int id, int slot, ItemStack stack) {
-      AiContainerTransactions.Inner_DataUtil receipt = init_b_DataUtil();
-      if (receipt != null && !receipt.write) {
-         if (receipt.init_AbstractContainerM.containerId == id) {
-            receipt.init(slot, stack);
+   public static void onContainerSetSlot(int id, int slot, ItemStack stack) {
+      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
+      if (receipt != null && !receipt.ignoreUpdates) {
+         if (receipt.menu.containerId == id) {
+            receipt.recordSlotUpdate(slot, stack);
          } else {
             LocalPlayer player = Minecraft.getInstance().player;
             if (id == player.inventoryMenu.containerId && slot >= 0 && slot < player.inventoryMenu.slots.size()) {
                Slot cell = player.inventoryMenu.getSlot(slot);
                if (cell.container == player.getInventory()) {
-                  init(cell.getContainerSlot(), stack);
+                  onPlayerInventorySlot(cell.getContainerSlot(), stack);
                }
             }
          }
       }
    }
 
-   public static void init(int slot, ItemStack stack) {
-      AiContainerTransactions.Inner_DataUtil receipt = init_b_DataUtil();
-      if (receipt != null && !receipt.write) {
+   public static void onPlayerInventorySlot(int slot, ItemStack stack) {
+      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
+      if (receipt != null && !receipt.ignoreUpdates) {
          Inventory inventory = Minecraft.getInstance().player.getInventory();
 
-         for (int index : receipt.load_Map.keySet()) {
-            Slot cell = receipt.init_AbstractContainerM.getSlot(index);
+         for (int index : receipt.expectedSlots.keySet()) {
+            Slot cell = receipt.menu.getSlot(index);
             if (cell.container == inventory && cell.getContainerSlot() == slot) {
-               receipt.init(index, stack);
+               receipt.recordSlotUpdate(index, stack);
             }
          }
       }
    }
 
-   public static void init(ItemStack stack) {
-      AiContainerTransactions.Inner_DataUtil receipt = init_b_DataUtil();
+   public static void onCarriedSlot(ItemStack stack) {
+      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
       if (receipt != null) {
-         receipt.init(stack);
+         receipt.recordCursorUpdate(stack);
       }
    }
 
-   public static void init(int id, List<ItemStack> stacks, ItemStack carried) {
+   public static void onContainerSetContent(int id, List<ItemStack> stacks, ItemStack carried) {
       AiMenuClose.init(id, carried.isEmpty());
-      AiContainerTransactions.Inner_DataUtil receipt = init_b_DataUtil();
-      if (receipt != null && receipt.init_AbstractContainerM.containerId == id) {
-         receipt.init(stacks, carried);
+      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
+      if (receipt != null && receipt.menu.containerId == id) {
+         receipt.recordFullSync(stacks, carried);
       }
    }
 
-   private static AiContainerTransactions.Inner_DataUtil init_b_DataUtil() {
-      if (init_b_DataUtil == null) {
+   private static AiContainerTransactions.Inner_DataUtil currentActiveReceipt() {
+      if (activeReceipt == null) {
          return null;
       }
 
       LocalPlayer player = Minecraft.getInstance().player;
-      if (player == null || player.containerMenu != init_b_DataUtil.init_AbstractContainerM) {
-         init_b_DataUtil = null;
+      if (player == null || player.containerMenu != activeReceipt.menu) {
+         activeReceipt = null;
       }
 
-      return init_b_DataUtil;
+      return activeReceipt;
    }
 
-   public static void init_V() {
-      AiContainerTransactions.Inner_DataUtil receipt = init_b_DataUtil();
-      if (receipt != null && receipt.load_Z) {
-         receipt.load(Minecraft.getInstance().player.containerMenu, System.nanoTime());
+   public static void tickActiveSwap() {
+      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
+      if (receipt != null && receipt.isSwap) {
+         receipt.pollAndResync(Minecraft.getInstance().player.containerMenu, System.nanoTime());
       }
    }
 
-   static boolean init_Z() {
-      AiContainerTransactions.Inner_DataUtil receipt = init_b_DataUtil();
-      return receipt != null && receipt.load_Z;
+   static boolean hasActiveSwap() {
+      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
+      return receipt != null && receipt.isSwap;
    }
 
-   static void load() {
-      init_Z = true;
+   static void suppressNextSwapUpdatesForTest() {
+      ignoreNextSwapUpdatesForTest = true;
    }
 
-   static void read() {
-      init_b_DataUtil = null;
-      init_Z = false;
+   static void clearAll() {
+      activeReceipt = null;
+      ignoreNextSwapUpdatesForTest = false;
       AiMenuClose.init_V();
    }
 
-   public static void init(int containerId, int slot, int button, ContainerInput type) {
+   public static void sendPredictedClick(int containerId, int slot, int button, ContainerInput type) {
       Minecraft mc = Minecraft.getInstance();
       LocalPlayer player = mc.player;
       ClientPacketListener connection = mc.getConnection();
@@ -187,7 +187,7 @@ public final class AiContainerTransactions {
             connection.send(
                new ServerboundContainerClickPacket(
                   containerId,
-                  init(menu.getStateId()),
+                  mismatchStateId(menu.getStateId()),
                   (short)slot,
                   (byte)button,
                   type,
@@ -204,111 +204,111 @@ public final class AiContainerTransactions {
    }
 
    public static final class Inner_DataUtil {
-      private static final long init_J = 8000000000L;
-      private static final long load_J = 750000000L;
-      private final AbstractContainerMenu init_AbstractContainerM;
-      private final Map<Integer, ItemStack> init_Map = new HashMap<>();
-      private final Map<Integer, ItemStack> load_Map = new HashMap<>();
-      private final Map<Integer, ItemStack> read_Map = new HashMap<>();
-      private final ItemStack init_ItemStack;
-      private final boolean init_Z;
-      private final boolean load_Z;
-      private final long read_J;
-      private ItemStack load_ItemStack;
-      private AiContainerTransactions.Inner_StreamUtil init_b_StreamUtil;
-      private int init_I = -1;
-      private boolean read_Z;
-      private boolean write;
+      private static final long TIMEOUT_NANOS = 8000000000L;
+      private static final long RESYNC_DELAY_NANOS = 750000000L;
+      private final AbstractContainerMenu menu;
+      private final Map<Integer, ItemStack> initialSlots = new HashMap<>();
+      private final Map<Integer, ItemStack> expectedSlots = new HashMap<>();
+      private final Map<Integer, ItemStack> confirmedSlotUpdates = new HashMap<>();
+      private final ItemStack expectedCursor;
+      private final boolean cursorChanged;
+      private final boolean isSwap;
+      private final long startedAtNanos;
+      private ItemStack confirmedCursorUpdate;
+      private AiContainerTransactions.Inner_StreamUtil terminalState;
+      private int swapHotbarButton = -1;
+      private boolean resyncRequested;
+      private boolean ignoreUpdates;
 
       Inner_DataUtil(AbstractContainerMenu menu, Map<Integer, ItemStack> expected, ItemStack cursor, boolean swap, long started) {
-         this.init_AbstractContainerM = menu;
+         this.menu = menu;
          expected.forEach((slot, stack) -> {
-            this.init_Map.put(slot, menu.getSlot(slot).getItem().copy());
-            this.load_Map.put(slot, stack.copy());
+            this.initialSlots.put(slot, menu.getSlot(slot).getItem().copy());
+            this.expectedSlots.put(slot, stack.copy());
          });
-         this.init_ItemStack = cursor.copy();
-         this.init_Z = !ItemStack.matches(cursor, menu.getCarried());
-         this.load_Z = swap;
-         this.read_J = started;
+         this.expectedCursor = cursor.copy();
+         this.cursorChanged = !ItemStack.matches(cursor, menu.getCarried());
+         this.isSwap = swap;
+         this.startedAtNanos = started;
       }
 
-      void init(int slot, ItemStack stack) {
-         if (this.load_Map.containsKey(slot)) {
-            this.read_Map.put(slot, stack.copy());
+      void recordSlotUpdate(int slot, ItemStack stack) {
+         if (this.expectedSlots.containsKey(slot)) {
+            this.confirmedSlotUpdates.put(slot, stack.copy());
          }
       }
 
-      void init(ItemStack stack) {
-         this.load_ItemStack = stack.copy();
+      void recordCursorUpdate(ItemStack stack) {
+         this.confirmedCursorUpdate = stack.copy();
       }
 
-      void init(List<ItemStack> stacks, ItemStack carried) {
-         if (stacks.size() == this.init_AbstractContainerM.slots.size()) {
-            this.load_Map.keySet().forEach(slot -> this.init(slot, stacks.get(slot)));
-            this.init(carried);
+      void recordFullSync(List<ItemStack> stacks, ItemStack carried) {
+         if (stacks.size() == this.menu.slots.size()) {
+            this.expectedSlots.keySet().forEach(slot -> this.recordSlotUpdate(slot, stacks.get(slot)));
+            this.recordCursorUpdate(carried);
          }
       }
 
-      public AiContainerTransactions.Inner_StreamUtil init(AbstractContainerMenu current, long now) {
-         if (this.init_b_StreamUtil != null) {
-            return this.init_b_StreamUtil;
+      public AiContainerTransactions.Inner_StreamUtil checkStatus(AbstractContainerMenu current, long now) {
+         if (this.terminalState != null) {
+            return this.terminalState;
          }
 
-         if (current != this.init_AbstractContainerM) {
-            return this.init(AiContainerTransactions.Inner_StreamUtil.UNCERTAIN);
+         if (current != this.menu) {
+            return this.complete(AiContainerTransactions.Inner_StreamUtil.UNCERTAIN);
          }
 
-         if (ItemStack.matches(this.init_ItemStack, this.init_AbstractContainerM.getCarried())
-            && (this.load_ItemStack == null ? !this.init_Z : ItemStack.matches(this.init_ItemStack, this.load_ItemStack))) {
+         if (ItemStack.matches(this.expectedCursor, this.menu.getCarried())
+            && (this.confirmedCursorUpdate == null ? !this.cursorChanged : ItemStack.matches(this.expectedCursor, this.confirmedCursorUpdate))) {
             boolean confirmed = true;
-            boolean exchanged = this.load_Z;
+            boolean exchanged = this.isSwap;
             boolean preserved = false;
 
-            for (Entry<Integer, ItemStack> entry : this.load_Map.entrySet()) {
+            for (Entry<Integer, ItemStack> entry : this.expectedSlots.entrySet()) {
                int slot = entry.getKey();
                ItemStack wanted = entry.getValue();
-               ItemStack actual = this.init_AbstractContainerM.getSlot(slot).getItem();
-               ItemStack update = this.read_Map.get(slot);
+               ItemStack actual = this.menu.getSlot(slot).getItem();
+               ItemStack update = this.confirmedSlotUpdates.get(slot);
                boolean matches = ItemStack.matches(wanted, actual);
                boolean authoritative = update != null && ItemStack.matches(update, actual);
-               confirmed &= matches && (authoritative || update == null && ItemStack.matches(wanted, this.init_Map.get(slot)));
-               exchanged &= authoritative && !ItemStack.matches(actual, this.init_Map.get(slot));
+               confirmed &= matches && (authoritative || update == null && ItemStack.matches(wanted, this.initialSlots.get(slot)));
+               exchanged &= authoritative && !ItemStack.matches(actual, this.initialSlots.get(slot));
                preserved |= matches;
             }
 
             if (confirmed) {
-               return this.init(AiContainerTransactions.Inner_StreamUtil.CONFIRMED);
+               return this.complete(AiContainerTransactions.Inner_StreamUtil.CONFIRMED);
             }
 
             if (exchanged && preserved) {
-               return this.init(AiContainerTransactions.Inner_StreamUtil.SWAPPED_DIFFERENT_STACK);
+               return this.complete(AiContainerTransactions.Inner_StreamUtil.SWAPPED_DIFFERENT_STACK);
             }
          }
 
-         return this.load(now) ? this.init(AiContainerTransactions.Inner_StreamUtil.UNCERTAIN) : AiContainerTransactions.Inner_StreamUtil.WAITING;
+         return this.isTimedOut(now) ? this.complete(AiContainerTransactions.Inner_StreamUtil.UNCERTAIN) : AiContainerTransactions.Inner_StreamUtil.WAITING;
       }
 
-      public AiContainerTransactions.Inner_StreamUtil load(AbstractContainerMenu current, long now) {
-         AiContainerTransactions.Inner_StreamUtil state = this.init(current, now);
-         if (state == AiContainerTransactions.Inner_StreamUtil.WAITING && this.init_I >= 0 && this.init(now)) {
+      public AiContainerTransactions.Inner_StreamUtil pollAndResync(AbstractContainerMenu current, long now) {
+         AiContainerTransactions.Inner_StreamUtil state = this.checkStatus(current, now);
+         if (state == AiContainerTransactions.Inner_StreamUtil.WAITING && this.swapHotbarButton >= 0 && this.shouldSendSwapResync(now)) {
             Minecraft mc = Minecraft.getInstance();
             LocalPlayer player = mc.player;
             ClientPacketListener connection = mc.getConnection();
             if (player != null
                && connection != null
-               && player.inventoryMenu == this.init_AbstractContainerM
-               && player.containerMenu == this.init_AbstractContainerM
-               && this.init_AbstractContainerM.getCarried().isEmpty()) {
-               int slot = 36 + this.init_I;
-               Slot cell = this.init_AbstractContainerM.getSlot(slot);
-               if (cell.container == player.getInventory() && cell.getContainerSlot() == this.init_I) {
-                  this.read_Z = true;
+               && player.inventoryMenu == this.menu
+               && player.containerMenu == this.menu
+               && this.menu.getCarried().isEmpty()) {
+               int slot = 36 + this.swapHotbarButton;
+               Slot cell = this.menu.getSlot(slot);
+               if (cell.container == player.getInventory() && cell.getContainerSlot() == this.swapHotbarButton) {
+                  this.resyncRequested = true;
                   connection.send(
                      new ServerboundContainerClickPacket(
-                        this.init_AbstractContainerM.containerId,
-                        AiContainerTransactions.init(this.init_AbstractContainerM.getStateId()),
+                        this.menu.containerId,
+                        AiContainerTransactions.mismatchStateId(this.menu.getStateId()),
                         (short)slot,
-                        (byte)this.init_I,
+                        (byte)this.swapHotbarButton,
                         ContainerInput.SWAP,
                         new Int2ObjectOpenHashMap<>(),
                         HashedStack.create(ItemStack.EMPTY, connection.decoratedHashOpsGenenerator())
@@ -326,20 +326,20 @@ public final class AiContainerTransactions {
          }
       }
 
-      boolean init(long now) {
-         return this.load_Z && !this.read_Z && this.init_b_StreamUtil == null && now - this.read_J >= 750000000L && !this.load(now);
+      boolean shouldSendSwapResync(long now) {
+         return this.isSwap && !this.resyncRequested && this.terminalState == null && now - this.startedAtNanos >= 750000000L && !this.isTimedOut(now);
       }
 
-      private boolean load(long now) {
-         return now - this.read_J >= 8000000000L;
+      private boolean isTimedOut(long now) {
+         return now - this.startedAtNanos >= 8000000000L;
       }
 
-      private AiContainerTransactions.Inner_StreamUtil init(AiContainerTransactions.Inner_StreamUtil state) {
-         if (AiContainerTransactions.init_b_DataUtil == this) {
-            AiContainerTransactions.init_b_DataUtil = null;
+      private AiContainerTransactions.Inner_StreamUtil complete(AiContainerTransactions.Inner_StreamUtil state) {
+         if (AiContainerTransactions.activeReceipt == this) {
+            AiContainerTransactions.activeReceipt = null;
          }
 
-         this.init_b_StreamUtil = state;
+         this.terminalState = state;
          return state;
       }
    }

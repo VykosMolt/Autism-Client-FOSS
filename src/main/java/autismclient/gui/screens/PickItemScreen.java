@@ -134,7 +134,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
       boolean selected = entry.init_Str.equals(this.init_Str);
       int rowH = this.sync();
       boolean over = mx >= x && mx < x + w && my >= y && my < y + rowH;
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, y, w, rowH - 1, selected ? -1440345836 : (over ? -1441000940 : -1441722092));
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, y, w, rowH - 1, selected ? -1440345836 : (over ? -1441000940 : -1441722092));
       this.init(graphics, entry.init_ItemStack, x + 2, y + Math.max(0, (rowH - 1 - 16) / 2));
       int textX = x + 2 + 16 + 4;
       int textMax = Math.max(1, w - (textX - x) - 4);

@@ -141,7 +141,7 @@ public final class AiDirectOps {
 
          boolean action = entry.contract().classification() != AiCapabilityDescriptor.Classification.OBSERVE;
          List<String> requiredResources = id.equals("client:run_macro") ? List.of() : entry.contract().resources();
-         if (action && AiService.read_Z_Str(id)) {
+         if (action && AiService.isGameplayActionOperation(id)) {
             Minecraft client = Minecraft.getInstance();
             if (client.player != null && client.player.isPassenger()) {
                throw new IllegalStateException("Dismount first (game:ride action:dismount) before " + id + "; movement keys would steer the mount");
@@ -374,7 +374,7 @@ public final class AiDirectOps {
                if (hazard == null
                   && a.load_AiOperation != null
                   && a.load_Str.equals("food")
-                  && AiService.init_Z_Z(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
+                  && AiService.isSafeStanceForReflex(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
                   if (AiDodge.init(mc, false)) {
                      init(
                         a,
@@ -390,10 +390,10 @@ public final class AiDirectOps {
 
                if (a.load_AiOperation == null
                   && hazard == null
-                  && AiService.init_Z_Str(a.init_Str)
+                  && AiService.isInterruptibleOperation(a.init_Str)
                   && mc.player.isInWall()
-                  && AiService.init_Z_Z(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
-                  AiOperation.Result interrupted = AiService.init_AiOperation_Result_AiOperation(
+                  && AiService.isSafeStanceForReflex(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
+                  AiOperation.Result interrupted = AiService.interruptedFailureResult(
                      a.init_AiOperation, AiFailure.ENVIRONMENTAL_HAZARD, "Suffocating inside a block; observe the obstruction before restarting"
                   );
                   a.init_AiOperation.cancel();
@@ -403,9 +403,9 @@ public final class AiDirectOps {
                }
 
                if (a.load_AiOperation == null
-                  && AiService.init_Z_Str(a.init_Str)
+                  && AiService.isInterruptibleOperation(a.init_Str)
                   && !AiGuard.isSuppressed()
-                  && AiService.init_Z_Z(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
+                  && AiService.isSafeStanceForReflex(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
                   boolean projectile = AiDodge.init(mc, mc.player.getDeltaMovement().horizontalDistance() >= 0.12);
                   if (projectile) {
                      init(
@@ -488,7 +488,7 @@ public final class AiDirectOps {
 
    private static void init(AiDirectOps.Inner_DataUtil a, AiOperation defense, String kind, AiFailure cause, String reason) {
       if (a.init_AiOperation_Result == null) {
-         a.init_AiOperation_Result = AiService.init_AiOperation_Result_AiOperation(a.init_AiOperation, cause, "Work interrupted: " + reason);
+         a.init_AiOperation_Result = AiService.interruptedFailureResult(a.init_AiOperation, cause, "Work interrupted: " + reason);
       }
 
       if (a.load_AiOperation != null) {
@@ -554,7 +554,7 @@ public final class AiDirectOps {
          data.add("interruptedWork", AiRunResources.parseEvidenceJson(interrupted.dataJson()));
       }
 
-      return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
+      return AiGuardLayer.wrapPendingTermination(
          pending, new AiOperation.Result(AiOperation.Status.CANCELLED, message, data.toString(), List.of(), cause)
       );
    }
@@ -733,9 +733,9 @@ public final class AiDirectOps {
    }
 
    public static AiSettings init_AiSettings() {
-      AiService existing = AiService.load_cc();
+      AiService existing = AiService.getExistingInstance();
       if (existing != null) {
-         return existing.init_AiSettings();
+         return existing.getSettings();
       }
 
       try {
@@ -746,9 +746,9 @@ public final class AiDirectOps {
    }
 
    public static void init(Consumer<AiSettings> edit) {
-      AiService existing = AiService.load_cc();
+      AiService existing = AiService.getExistingInstance();
       if (existing != null) {
-         existing.init_V_Consumer(edit);
+         existing.editSettingsAsync(edit);
       } else {
          try {
             AiSettings s;

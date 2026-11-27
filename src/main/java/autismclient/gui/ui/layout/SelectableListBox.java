@@ -67,8 +67,8 @@ public final class SelectableListBox<T> {
    }
 
    private void write_V() {
-      int contentHeight = this.init_List.size() * this.init_EventBus.flush();
-      this.init_EventBus.init_V(contentHeight);
+      int contentHeight = this.init_List.size() * this.init_EventBus.getRowHeight();
+      this.init_EventBus.setContentHeight(contentHeight);
    }
 
    public void init_V(int index) {
@@ -114,43 +114,43 @@ public final class SelectableListBox<T> {
    }
 
    public void init(GuiGraphicsExtractor ctx, Font textRenderer, double mouseX, double mouseY) {
-      this.init_EventBus.init_V_GuiGraphicsExtract_2(ctx, this.load_I, this.read_I);
+      this.init_EventBus.beginFrame(ctx, this.load_I, this.read_I);
 
       try {
          this.load(ctx, textRenderer, mouseX, mouseY);
       } finally {
-         this.init_EventBus.init(ctx);
+         this.init_EventBus.endFrame(ctx);
       }
 
-      this.init_EventBus.init_V_GuiGraphicsExtract(ctx, mouseX, mouseY);
+      this.init_EventBus.renderScrollbar(ctx, mouseX, mouseY);
    }
 
    public void init_V_GuiGraphicsExtract(
       GuiGraphicsExtractor ctx, Font textRenderer, double mouseX, double mouseY, SelectableListBox.Inner_DataUtil<T> customRenderer
    ) {
-      this.init_EventBus.init_V_GuiGraphicsExtract_2(ctx, this.load_I, this.read_I);
+      this.init_EventBus.beginFrame(ctx, this.load_I, this.read_I);
 
       try {
-         this.init_EventBus.init_V_GuiGraphicsExtract_3(ctx, this.init_List.size(), (index, bounds) -> {
+         this.init_EventBus.forEachVisibleRow(ctx, this.init_List.size(), (index, bounds) -> {
             T item = this.init_List.get(index);
             boolean isSelected = index == this.init_I;
-            boolean isHovered = this.init_Z && this.init(mouseX, mouseY, bounds.init, bounds.load, bounds.read, bounds.write);
-            int originalY = this.init_EventBus.init_I(index);
-            customRenderer.init(ctx, textRenderer, item, index, isSelected, isHovered, bounds.init, bounds.load, bounds.read, bounds.write, originalY);
+            boolean isHovered = this.init_Z && this.init(mouseX, mouseY, bounds.x, bounds.y, bounds.width, bounds.height);
+            int originalY = this.init_EventBus.getRowY(index);
+            customRenderer.init(ctx, textRenderer, item, index, isSelected, isHovered, bounds.x, bounds.y, bounds.width, bounds.height, originalY);
          });
       } finally {
-         this.init_EventBus.init(ctx);
+         this.init_EventBus.endFrame(ctx);
       }
 
-      this.init_EventBus.init_V_GuiGraphicsExtract(ctx, mouseX, mouseY);
+      this.init_EventBus.renderScrollbar(ctx, mouseX, mouseY);
    }
 
    private void load(GuiGraphicsExtractor ctx, Font textRenderer, double mouseX, double mouseY) {
-      this.init_EventBus.init_V_GuiGraphicsExtract_3(ctx, this.init_List.size(), (index, bounds) -> {
+      this.init_EventBus.forEachVisibleRow(ctx, this.init_List.size(), (index, bounds) -> {
          T item = this.init_List.get(index);
          boolean isSelected = index == this.init_I;
-         boolean isHovered = this.init_Z && this.init(mouseX, mouseY, bounds.init, bounds.load, bounds.read, bounds.write);
-         autismclient.gui.ui.widgets.PanelSurfaceHelper.init(ctx, bounds.init, bounds.load, bounds.read, bounds.write, isHovered, isSelected);
+         boolean isHovered = this.init_Z && this.init(mouseX, mouseY, bounds.x, bounds.y, bounds.width, bounds.height);
+         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, bounds.x, bounds.y, bounds.width, bounds.height, isHovered, isSelected);
          int textColor;
          if (!this.init_Z) {
             textColor = this.sync;
@@ -160,9 +160,9 @@ public final class SelectableListBox<T> {
             textColor = this.update;
          }
 
-         int availableWidth = bounds.read - 12;
-         int textX = bounds.init + 6;
-         int textY = UiLayoutMath.centerTextY(bounds.load, bounds.write, 9, 0);
+         int availableWidth = bounds.width - 12;
+         int textX = bounds.x + 6;
+         int textY = UiLayoutMath.centerTextY(bounds.y, bounds.height, 9, 0);
          String label = this.init_Function.apply(item);
          if (label != null && !label.isEmpty()) {
             int reservedWidth = 0;
@@ -188,7 +188,7 @@ public final class SelectableListBox<T> {
 
             if (secondary != null && !secondary.isEmpty()) {
                int secondaryWidth = textRenderer.width(secondary);
-               int secondaryX = bounds.init + bounds.read - secondaryWidth - 6;
+               int secondaryX = bounds.x + bounds.width - secondaryWidth - 6;
                ThemedTextHelper.init(ctx, textRenderer, secondary, this.flush, secondaryX, textY, false);
             }
          }
@@ -200,13 +200,13 @@ public final class SelectableListBox<T> {
          return false;
       }
 
-      if (this.init_EventBus.init_Z_D_2(mouseX, mouseY, button)) {
+      if (this.init_EventBus.mouseClicked(mouseX, mouseY, button)) {
          return true;
       }
 
-      if (this.init_EventBus.init_Z_D_D(mouseX, mouseY)) {
-         int relativeY = (int)Math.round(mouseY) - this.init_EventBus.load_I() - 1 + this.init_EventBus.open();
-         int rowIndex = relativeY / this.init_EventBus.flush();
+      if (this.init_EventBus.containsPoint(mouseX, mouseY)) {
+         int relativeY = (int)Math.round(mouseY) - this.init_EventBus.getY() - 1 + this.init_EventBus.getScrollOffset();
+         int rowIndex = relativeY / this.init_EventBus.getRowHeight();
          if (rowIndex >= 0 && rowIndex < this.init_List.size()) {
             this.init_V(rowIndex);
             return true;
@@ -217,28 +217,28 @@ public final class SelectableListBox<T> {
    }
 
    public void load_V() {
-      this.init_EventBus.read_V();
+      this.init_EventBus.mouseReleased();
    }
 
    public void init_V(double mouseX, double mouseY) {
-      this.init_EventBus.init_V_D_D(mouseX, mouseY);
+      this.init_EventBus.mouseDragged(mouseX, mouseY);
    }
 
    public boolean init_Z_D(double mouseX, double mouseY, double amount) {
-      return this.init_EventBus.init_Z_D(mouseX, mouseY, amount);
+      return this.init_EventBus.mouseScrolled(mouseX, mouseY, amount);
    }
 
    public void read_V() {
       if (this.init_I >= 0) {
-         int rowTop = this.init_I * this.init_EventBus.flush();
-         int rowBottom = rowTop + this.init_EventBus.flush();
-         int viewTop = this.init_EventBus.open();
-         int viewHeight = this.init_EventBus.write_I() - 2;
+         int rowTop = this.init_I * this.init_EventBus.getRowHeight();
+         int rowBottom = rowTop + this.init_EventBus.getRowHeight();
+         int viewTop = this.init_EventBus.getScrollOffset();
+         int viewHeight = this.init_EventBus.getHeight() - 2;
          int viewBottom = viewTop + viewHeight;
          if (rowTop < viewTop) {
-            this.init_EventBus.load_V(rowTop);
+            this.init_EventBus.setScrollOffset(rowTop);
          } else if (rowBottom > viewBottom) {
-            this.init_EventBus.load_V(rowBottom - viewHeight);
+            this.init_EventBus.setScrollOffset(rowBottom - viewHeight);
          }
       }
    }
@@ -260,51 +260,51 @@ public final class SelectableListBox<T> {
    }
 
    public int read_I() {
-      return this.init_EventBus.init_I();
+      return this.init_EventBus.getX();
    }
 
    public int write_I() {
-      return this.init_EventBus.load_I();
+      return this.init_EventBus.getY();
    }
 
    public int update() {
-      return this.init_EventBus.read_I();
+      return this.init_EventBus.getWidth();
    }
 
    public int sync() {
-      return this.init_EventBus.write_I();
+      return this.init_EventBus.getHeight();
    }
 
    public int flush() {
-      return this.init_EventBus.update();
+      return this.init_EventBus.getRowWidthWithScrollbar();
    }
 
    public int close() {
-      return this.init_EventBus.flush();
+      return this.init_EventBus.getRowHeight();
    }
 
    public int open() {
-      return this.init_EventBus.open();
+      return this.init_EventBus.getScrollOffset();
    }
 
    public void load(int offset) {
-      this.init_EventBus.load_V(offset);
+      this.init_EventBus.setScrollOffset(offset);
    }
 
    public void read(int rows) {
-      this.init_EventBus.read_V(rows);
+      this.init_EventBus.scrollByRows(rows);
    }
 
    public boolean init_Z(double x, double y) {
-      return this.init_EventBus.init_Z_D_D(x, y);
+      return this.init_EventBus.containsPoint(x, y);
    }
 
    public boolean read_Z() {
-      return this.init_EventBus.init_Z();
+      return this.init_EventBus.isDraggingScrollbar();
    }
 
    public boolean load(double mouseX, double mouseY) {
-      return this.init_EventBus.load(mouseX, mouseY);
+      return this.init_EventBus.isOverScrollbar(mouseX, mouseY);
    }
 
    @FunctionalInterface

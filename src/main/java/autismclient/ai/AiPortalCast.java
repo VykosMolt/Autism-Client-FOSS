@@ -350,8 +350,8 @@ final class AiPortalCast {
 
       keep.add(face.support().asLong());
       keep.add(face.support().relative(face.face()).asLong());
-      autismclient.ai.engine.AiPathfinder.PathGoal goal = AiGoto.read(new autismclient.ai.engine.InteractionGoal(face.support(), reach, eyeHeight, face.face()), keep);
-      return lava ? AiGoto.init(goal, init_Set(face.support().relative(face.face()))) : goal;
+      autismclient.ai.engine.AiPathfinder.PathGoal goal = AiGoto.protectingCellsCompat(new autismclient.ai.engine.InteractionGoal(face.support(), reach, eyeHeight, face.face()), keep);
+      return lava ? AiGoto.excludingStandCellsCompat(goal, init_Set(face.support().relative(face.face()))) : goal;
    }
 
    static boolean init(BlockPos feet, BlockPos pourCell) {
@@ -912,7 +912,7 @@ final class AiPortalCast {
                            return this.init(AiFailure.MISSING_MATERIALS, "Out of throwaway blocks for the mold at " + mold.toShortString(), this.init_JsonObject_2("minecraft:dirt"));
                         }
 
-                        if (!mold.equals(this.init_DataPipe.init_BlockPos()) && !this.init_Z_7(mold)) {
+                        if (!mold.equals(this.init_DataPipe.targetPos()) && !this.init_Z_7(mold)) {
                            BlockPos support = this.init(mold, step);
                            if (support != null && this.sync_Set.add(support)) {
                               List<BlockPos> withSupport = new ArrayList<>(this.load_List);
@@ -923,23 +923,23 @@ final class AiPortalCast {
                            }
                         }
 
-                        if (!mold.equals(this.init_DataPipe.init_BlockPos())) {
-                           this.init_DataPipe.init_V_BlockPos_Item(mold, item);
+                        if (!mold.equals(this.init_DataPipe.targetPos())) {
+                           this.init_DataPipe.start(mold, item);
                         }
 
-                        autismclient.ai.engine.AiPlacer.PlaceStatus placed = this.init_DataPipe.init_DataPipe_DataUtil();
+                        autismclient.ai.engine.AiPlacer.PlaceStatus placed = this.init_DataPipe.tick();
                         if (placed != autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                            if (placed == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED) {
                               if (!this.init_Set.contains(mold)) {
                                  this.init_Set.add(mold);
-                                 this.init_DataPipe.init_V();
-                                 this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_6(mold, item, 30, null, false);
+                                 this.init_DataPipe.reset();
+                                 this.init_AiOperation = AiGoto.approachToPlaceCompat(mold, item, 30, null, false);
                                  this.init_Z = true;
                                  return this.load("Moving to reach the mold block at " + mold.toShortString());
                               }
 
                               return this.init(
-                                 AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the mold block at " + mold.toShortString() + ": " + this.init_DataPipe.init_Str(), null
+                                 AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the mold block at " + mold.toShortString() + ": " + this.init_DataPipe.failureReason(), null
                               );
                            }
 
@@ -1142,7 +1142,7 @@ final class AiPortalCast {
                   BlockPos portalCell = this.init_BlockPos_9();
                   if (portalCell != null) {
                      this.update_Z = true;
-                     AiRunTrace.init_V_Str_Str("portal_lit", this.load_BlockPos.toShortString() + " cast:" + this.run + " litWith:" + this.load_Str);
+                     AiRunTrace.recordGlobalSplit("portal_lit", this.load_BlockPos.toShortString() + " cast:" + this.run + " litWith:" + this.load_Str);
                      return this.init(AiOperation.Status.SUCCEEDED, "Portal cast and lit at " + this.load_BlockPos.toShortString());
                   }
 
@@ -1224,17 +1224,17 @@ final class AiPortalCast {
                         return this.load("Lost the doorway wood");
                      }
 
-                     if (!this.load_BlockPos.equals(this.init_DataPipe.init_BlockPos())) {
-                        this.init_DataPipe.init_V_BlockPos_Item(this.load_BlockPos, wood);
+                     if (!this.load_BlockPos.equals(this.init_DataPipe.targetPos())) {
+                        this.init_DataPipe.start(this.load_BlockPos, wood);
                      }
 
-                     autismclient.ai.engine.AiPlacer.PlaceStatus placed = this.init_DataPipe.init_DataPipe_DataUtil();
+                     autismclient.ai.engine.AiPlacer.PlaceStatus placed = this.init_DataPipe.tick();
                      if (placed == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                         this.clear = 1;
                         return this.load("Doorway wood placed");
                      } else {
                         return placed == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED
-                           ? this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the doorway wood: " + this.init_DataPipe.init_Str(), null)
+                           ? this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the doorway wood: " + this.init_DataPipe.failureReason(), null)
                            : this.load("Placing the doorway wood");
                      }
                   } else if (this.clear == 1) {
@@ -1257,11 +1257,11 @@ final class AiPortalCast {
                            return this.init(AiFailure.MISSING_MATERIALS, "No throwaway block for the fire-spread mold", this.init_JsonObject_2("minecraft:dirt"));
                         }
 
-                        if (!mold.equals(this.init_DataPipe.init_BlockPos())) {
-                           this.init_DataPipe.init_V_BlockPos_Item(mold, moldItem);
+                        if (!mold.equals(this.init_DataPipe.targetPos())) {
+                           this.init_DataPipe.start(mold, moldItem);
                         }
 
-                        autismclient.ai.engine.AiPlacer.PlaceStatus placed = this.init_DataPipe.init_DataPipe_DataUtil();
+                        autismclient.ai.engine.AiPlacer.PlaceStatus placed = this.init_DataPipe.tick();
                         if (placed == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                            this.clear = 2;
                            this.pop = 0;
@@ -1269,7 +1269,7 @@ final class AiPortalCast {
                            return this.load("Fire-spread mold placed");
                         } else {
                            return placed == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED
-                              ? this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the fire-spread mold: " + this.init_DataPipe.init_Str(), null)
+                              ? this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the fire-spread mold: " + this.init_DataPipe.failureReason(), null)
                               : this.load("Placing the fire-spread mold");
                         }
                      } else {
@@ -1366,7 +1366,7 @@ final class AiPortalCast {
                      return this.init(AiFailure.TIMEOUT, "No time remains to reach the required pour face", null);
                   }
 
-                  AiOperation child = AiGoto.init(
+                  AiOperation child = AiGoto.travelToCompat(
                      face.support(),
                      0.6,
                      true,
@@ -1477,7 +1477,7 @@ final class AiPortalCast {
                   if (!r.terminal()) {
                      return this.load(what);
                   } else {
-                     r = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
+                     r = AiGuardLayer.wrapPendingTermination(
                         r.status() != AiOperation.Status.SUCCEEDED && (pending || this.init_AiOperation.requiresReconciliationAfterEmergency()), r
                      );
                      this.init_AiOperation.cancel();
@@ -1508,7 +1508,7 @@ final class AiPortalCast {
                      return null;
                   }
 
-                  r = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
+                  r = AiGuardLayer.wrapPendingTermination(
                      r.status() != AiOperation.Status.SUCCEEDED && (pending || this.load_AiOperation.requiresReconciliationAfterEmergency()), r
                   );
                   this.load_AiOperation.cancel();
@@ -1604,7 +1604,7 @@ final class AiPortalCast {
                      if (AiGameState.countInventoryItem(id) > 0) {
                         Item item = BuiltInRegistries.ITEM.getOptional(Identifier.parse(id)).orElse(null);
                         if (item instanceof BlockItem
-                           && (ids != AiPortalCast.init_List || autismclient.ai.engine.AiRestock.init(item.getDefaultInstance(), this.init_Minecraft.player.getInventory()))) {
+                           && (ids != AiPortalCast.init_List || autismclient.ai.engine.AiRestock.canSpendStack(item.getDefaultInstance(), this.init_Minecraft.player.getInventory()))) {
                            return item;
                         }
                      }
@@ -1805,7 +1805,7 @@ final class AiPortalCast {
                      }
                   }
 
-                  return AiGoto.init(
+                  return AiGoto.travelToCompat(
                      target,
                      radius,
                      true,
@@ -1815,7 +1815,7 @@ final class AiPortalCast {
                      autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                      true,
                      2.0,
-                     AiGoto.read(autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(target, radius), keep)
+                     AiGoto.protectingCellsCompat(autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(target, radius), keep)
                   );
                }
 
@@ -1978,7 +1978,7 @@ final class AiPortalCast {
 
                boolean init_Z_19() {
                   return this.init_aX_JsonUtil.init_Z()
-                     || this.init_DataPipe.load_Z()
+                     || this.init_DataPipe.needsReconciliation()
                      || this.init_aX_StateCache != null && this.init_aX_StateCache.requiresReconciliationAfterEmergency()
                      || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
                      || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency()
@@ -1990,7 +1990,7 @@ final class AiPortalCast {
                   return !this.write_Z
                      && !this.init_aX_RenderState.init()
                      && !this.init_aX_JsonUtil.init_Z()
-                     && !this.init_DataPipe.load_Z()
+                     && !this.init_DataPipe.needsReconciliation()
                      && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
                      && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())
                      && (this.init_aX_StateCache == null || this.init_aX_StateCache.canInterruptNow())
@@ -2004,7 +2004,7 @@ final class AiPortalCast {
                         this.write_Z
                            || this.init_aX_RenderState.init()
                            || this.init_aX_JsonUtil.init_Z()
-                           || this.init_DataPipe.load_Z()
+                           || this.init_DataPipe.needsReconciliation()
                            || this.init_aX_StateCache != null && this.init_aX_StateCache.requiresReconciliationAfterEmergency()
                            || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
                            || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency()
@@ -2017,7 +2017,7 @@ final class AiPortalCast {
                   if (!this.sync_Z) {
                      this.sync_Z = true;
                      this.init_DataUtil.clear();
-                     this.init_DataPipe.init_V();
+                     this.init_DataPipe.reset();
                      if (this.init_aX_StateCache != null) {
                         this.init_aX_StateCache.cancel();
                      }
@@ -2186,33 +2186,33 @@ final class AiPortalCast {
             return this.init(AiOperation.Result.timedOut(AiFailure.TIMEOUT, "Pour face approach exceeded its bounded deadline", "{}"));
          }
 
-         AiOperation.Result result = this.init_bb.init_AiOperation_Result(this.init_AiOperation);
-         return result.terminal() ? this.init(this.init_bb.init()) : result;
+         AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
+         return result.terminal() ? this.init(this.init_bb.lastChildResult()) : result;
       }
 
       private AiOperation.Result init(AiOperation.Result result) {
-         this.init_AiOperation_Result = this.init_bb.init(result, this.init_bb.init_Z(this.init_AiOperation));
-         this.init_bb.init_V(this.init_AiOperation);
+         this.init_AiOperation_Result = this.init_bb.finalizeResult(result, this.init_bb.requiresReconciliation(this.init_AiOperation));
+         this.init_bb.cancelChild(this.init_AiOperation);
          return this.init_AiOperation_Result;
       }
 
       AiOperation.Result init() {
-         return this.init_AiOperation_Result == null ? this.init_bb.init() : this.init_AiOperation_Result;
+         return this.init_AiOperation_Result == null ? this.init_bb.lastChildResult() : this.init_AiOperation_Result;
       }
 
       @Override
       public boolean canInterruptNow() {
-         return !this.init_bb.init_Z(this.init_AiOperation) && (this.init_AiOperation_Result != null || this.init_AiOperation.canInterruptNow());
+         return !this.init_bb.requiresReconciliation(this.init_AiOperation) && (this.init_AiOperation_Result != null || this.init_AiOperation.canInterruptNow());
       }
 
       @Override
       public boolean requiresReconciliationAfterEmergency() {
-         return this.init_bb.init_Z(this.init_AiOperation);
+         return this.init_bb.requiresReconciliation(this.init_AiOperation);
       }
 
       @Override
       public void cancel() {
-         this.init_bb.init_V(this.init_AiOperation);
+         this.init_bb.cancelChild(this.init_AiOperation);
          this.init_Z = true;
       }
    }
@@ -2234,7 +2234,7 @@ final class AiPortalCast {
       AiOperation.Result init(boolean unconfirmed, AiOperation.Result result) {
          this.load = unconfirmed || result.status() == AiOperation.Status.UNCERTAIN;
          this.init = true;
-         return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(unconfirmed, result);
+         return AiGuardLayer.wrapPendingTermination(unconfirmed, result);
       }
 
       boolean init(boolean activePending) {

@@ -56,7 +56,7 @@ final class AiCover {
             final Object init_Obj = mc.level;
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             int init_I;
-            final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().init_DataPipe();
+            final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().fast();
             final Set<Long> init_Set = new HashSet<>();
             final Set<Integer> load_Set = new HashSet<>();
             AiGoto.GotoOp init_HashUtil_CachePool;
@@ -139,7 +139,7 @@ final class AiCover {
                Entity striker = this.init_Entity_7();
                if (!sealOnly && striker != null) {
                   this.update();
-                  if (this.init_Z && this.init_DataPipe.load_Z()) {
+                  if (this.init_Z && this.init_DataPipe.needsReconciliation()) {
                      return this.init_AiOperation_Result_37();
                   }
 
@@ -147,7 +147,7 @@ final class AiCover {
                      || !this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
                      this.write();
                      if (this.init_Z) {
-                        this.init_DataPipe.init_V();
+                        this.init_DataPipe.reset();
                         this.init_Z = false;
                      }
 
@@ -206,7 +206,7 @@ final class AiCover {
                         || AiCombat.init(seer)
                         || seer instanceof Creeper
                         || this.init_I_2(shooters) > 1
-                        || seer instanceof Blaze && !AiThreats.init_Z() && (mc.player.getHealth() < 16.0F || AiWorldScan.init_List_Str_D("minecraft:blaze", 16.0).size() > 1)) {
+                        || seer instanceof Blaze && !AiThreats.isLegacyCombatEnabled() && (mc.player.getHealth() < 16.0F || AiWorldScan.findEntitiesByType("minecraft:blaze", 16.0).size() > 1)) {
                         if (this.init_Z) {
                            return this.init_AiOperation_Result_37();
                         }
@@ -304,7 +304,7 @@ final class AiCover {
                                  stances.size(),
                                  stances.get(0).toShortString()
                               );
-                           this.init_HashUtil_CachePool = AiGoto.init(
+                           this.init_HashUtil_CachePool = AiGoto.createGotoOpCompat(
                               feet,
                               0.6,
                               !creeper,
@@ -355,7 +355,7 @@ final class AiCover {
                      this.load_Z = false;
                      this.load_I++;
                      if (this.init_Z) {
-                        this.init_DataPipe.init_V();
+                        this.init_DataPipe.reset();
                         this.init_Z = false;
                      }
 
@@ -407,7 +407,7 @@ final class AiCover {
 
             AiOperation.Result init_AiOperation_Result_37() {
                this.init_V_29();
-               autismclient.ai.engine.AiPlacer.PlaceStatus s = this.init_DataPipe.init_DataPipe_DataUtil();
+               autismclient.ai.engine.AiPlacer.PlaceStatus s = this.init_DataPipe.tick();
                if (s == autismclient.ai.engine.AiPlacer.PlaceStatus.WORKING) {
                   return this.init("Putting a block between the " + this.init_Str + " and me");
                }
@@ -416,9 +416,9 @@ final class AiCover {
                if (s == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                   this.write_I++;
                   AutismClientAddon.LOG
-                     .info("[AI] cover: shield block at {} against the {}", this.init_DataPipe.init_BlockPos().toShortString(), this.init_Str);
+                     .info("[AI] cover: shield block at {} against the {}", this.init_DataPipe.targetPos().toShortString(), this.init_Str);
                } else {
-                  AutismClientAddon.LOG.info("[AI] cover: shield placement failed: {}", this.init_DataPipe.load_Str());
+                  AutismClientAddon.LOG.info("[AI] cover: shield placement failed: {}", this.init_DataPipe.statusSummary());
                   this.load_Z = false;
                   this.write_I = 6;
                }
@@ -451,7 +451,7 @@ final class AiCover {
                   );
                }
 
-               this.init_DataPipe.init_V_BlockPos_Item(cell, block);
+               this.init_DataPipe.start(cell, block);
                this.init_Z = true;
                this.load_Z = true;
                this.init_V_29();
@@ -536,7 +536,7 @@ final class AiCover {
                double bestDistance = 3.0;
 
                for (Entity entity : mc.level.entitiesForRendering()) {
-                  if (entity instanceof Enemy && entity.isAlive() && !(entity instanceof Creeper) && AiThreats.init_Z(mc, entity)) {
+                  if (entity instanceof Enemy && entity.isAlive() && !(entity instanceof Creeper) && AiThreats.isActiveThreat(mc, entity)) {
                      double d = entity.distanceTo(mc.player);
                      if (d <= bestDistance && mc.player.hasLineOfSight(entity)) {
                         best = entity;
@@ -558,7 +558,7 @@ final class AiCover {
                this.init_DataUtil.tick();
                boolean onTarget = this.init_DataUtil.isAimedAtEntity(mob);
                if (onTarget && mc.player.getAttackStrengthScale(0.0F) >= 0.92F) {
-                  AiRunTrace.init_V_Str_JsonObject(
+                  AiRunTrace.emitServiceEvent(
                      "cover_attack",
                      AiJson.objectOf(
                         "targetId",
@@ -647,7 +647,7 @@ final class AiCover {
                this.write();
                this.update();
                if (this.init_Z) {
-                  this.init_DataPipe.init_V();
+                  this.init_DataPipe.reset();
                   this.init_Z = false;
                }
 
@@ -657,14 +657,14 @@ final class AiCover {
 
             @Override
             public boolean canInterruptNow() {
-               return (!this.init_Z || !this.init_DataPipe.load_Z())
+               return (!this.init_Z || !this.init_DataPipe.needsReconciliation())
                   && (this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.canInterruptNow())
                   && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.init_Z && this.init_DataPipe.load_Z()
+               return this.init_Z && this.init_DataPipe.needsReconciliation()
                   || this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency()
                   || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
             }
@@ -676,7 +676,7 @@ final class AiCover {
                this.write_Z = true;
                this.write();
                this.update();
-               this.init_DataPipe.init_V();
+               this.init_DataPipe.reset();
                this.init_DataUtil.clear();
             }
          };

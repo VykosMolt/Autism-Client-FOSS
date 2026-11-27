@@ -74,8 +74,8 @@ public final class aP {
 
    private static void init_V_aR_Runnable(AiPlacementSession placement, Runnable done) {
       Minecraft mc = Minecraft.getInstance();
-      AiService service = AiService.load_cc();
-      if (placement.read_Z() && !AiDirectOps.load_Z() && (service == null || !service.open_Z())) {
+      AiService service = AiService.getExistingInstance();
+      if (placement.read_Z() && !AiDirectOps.load_Z() && (service == null || !service.isActivelyDriving())) {
          if (!init_Z) {
             init_Z = true;
             ClientTickEvents.END_CLIENT_TICK.register(client -> load_V());

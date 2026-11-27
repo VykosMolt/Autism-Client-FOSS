@@ -253,8 +253,8 @@ final class AiCombat {
             }
 
             boolean hasShield = AiDefense.init_Z(mc);
-            Entity shooter = !hasShield ? null : (AiThreats.init_Z() ? AiCombat.init_Entity(mc) : AiThreats.init(mc, 12));
-            AiProjectiles.IncomingProjectile coming = hasShield && !AiThreats.init_Z() ? AiCombat.load(mc) : null;
+            Entity shooter = !hasShield ? null : (AiThreats.isLegacyCombatEnabled() ? AiCombat.init_Entity(mc) : AiThreats.findImminentShooter(mc, 12));
+            AiProjectiles.IncomingProjectile coming = hasShield && !AiThreats.isLegacyCombatEnabled() ? AiCombat.load(mc) : null;
             if (coming != null) {
                this.init_DataUtil
                   .aimAt(AiCombat.init_Vec3_Minecraft_Vec3(mc, shooter == null ? null : autismclient.ai.engine.AiAim.bestEntityAimPoint(shooter)));
@@ -334,8 +334,8 @@ final class AiCombat {
 
    static boolean init_Z_Minecraft_Entity(Minecraft mc, Entity entity) {
       if (mc.player != null && entity != null && entity.isAlive()) {
-         double gap = entity instanceof Mob mob ? AiThreats.init(mob, mc.player.getBoundingBox()) : 0.0;
-         return init_Z_Z(init(entity), entity.distanceToSqr(mc.player), gap, load(entity), AiThreats.init_Z());
+         double gap = entity instanceof Mob mob ? AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox()) : 0.0;
+         return init_Z_Z(init(entity), entity.distanceToSqr(mc.player), gap, load(entity), AiThreats.isLegacyCombatEnabled());
       } else {
          return false;
       }
@@ -545,8 +545,8 @@ final class AiCombat {
          final String healWith = AiJson.getString(args, "healWith", "");
          final AiItems.ItemSpec healTarget = healWith.isBlank() ? null : AiItems.resolveItem(healWith);
          final AiCombat.Inner_CachePool priority = AiCombat.Inner_CachePool.init(AiJson.getString(args, "priority", "nearest"));
-         AiService service = AiService.load_cc();
-         final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
+         AiService service = AiService.getExistingInstance();
+         final boolean silentAim = service != null && service.getSettings().aiSilentAim;
          final Set<EntityType<?>> types = explicitId >= 0 ? Set.of() : init(spec);
          final Set<String> sheepColors = new HashSet<>();
 
@@ -609,7 +609,7 @@ final class AiCombat {
             int reset;
             boolean poll_Z;
             boolean push_Z;
-            final autismclient.ai.engine.AiPlacer init_DataPipe_2 = new autismclient.ai.engine.AiPlacer().init_DataPipe();
+            final autismclient.ai.engine.AiPlacer init_DataPipe_2 = new autismclient.ai.engine.AiPlacer().fast();
             boolean pop_Z;
             Entity load_Entity;
             int start;
@@ -663,7 +663,7 @@ final class AiCombat {
                   mc.options.keyShift.setDown(true);
                }
 
-               if (!AiThreats.init_Z() && !this.open_Z && mc.player.onGround() && AiEndRun.init_Z(mc)) {
+               if (!AiThreats.isLegacyCombatEnabled() && !this.open_Z && mc.player.onGround() && AiEndRun.init_Z(mc)) {
                   BlockPos out = AiEndRun.init_BlockPos(mc);
                   if (out != null) {
                      this.flush();
@@ -679,7 +679,7 @@ final class AiCombat {
                   }
                }
 
-               if (!AiThreats.init_Z() && !this.open_Z) {
+               if (!AiThreats.isLegacyCombatEnabled() && !this.open_Z) {
                   Creeper blast = AiCombat.init_Creeper(mc);
                   if (blast != null && (blast != this.init_Entity || blast.getSwelling(1.0F) >= 0.08F)) {
                      this.write_Z = this.write_Z | this.requiresReconciliationAfterEmergency();
@@ -725,7 +725,7 @@ final class AiCombat {
                      }
                   }
 
-                  if (!AiThreats.init_Z() && this.canInterruptNow() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
+                  if (!AiThreats.isLegacyCombatEnabled() && this.canInterruptNow() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
                      AiProjectiles.IncomingProjectile shot = AiCombat.init_by_StreamUtil(mc);
                      if (shot != null && AiCombat.init(shot) <= 8 && (!AiDefense.init(mc, mc.level.getEntity(shot.entityId())) || !AiDefense.init(mc, AiCombat.init(shot)))) {
                         this.flush();
@@ -868,7 +868,7 @@ final class AiCombat {
                         return this.load("Defensive threat left; reacquiring the requested target");
                      }
 
-                     if (!AiThreats.init_Z() && !this.init_Z && --this.update_I <= 0) {
+                     if (!AiThreats.isLegacyCombatEnabled() && !this.init_Z && --this.update_I <= 0) {
                         this.update_I = 4;
                         Entity striker = this.load_Entity_2();
                         if (striker != null && striker != this.init_Entity && !this.load_Z(this.init_Entity)) {
@@ -883,23 +883,23 @@ final class AiCombat {
                      this.write_V_3();
                      double distance = mc.player.distanceTo(this.init_Entity);
                      double reach = AiDefense.init_D(mc);
-                     boolean creeperSwing = !AiThreats.init_Z()
+                     boolean creeperSwing = !AiThreats.isLegacyCombatEnabled()
                         && this.init_Entity instanceof Creeper early
                         && early.getSwelling(1.0F) < 0.08F
                         && mc.player.getAttackStrengthScale(0.0F) >= 0.92F
                         && this.init_Entity.getBoundingBox().distanceToSqr(mc.player.getEyePosition())
                            <= AiCombat.init_D_D_Z(reach, false) * AiCombat.init_D_D_Z(reach, false);
-                     if (!creeperSwing && this.init_Entity instanceof Creeper creeper && creeper.getSwellDir() > 0 && distance < (AiThreats.init_Z() ? 6.0 : 7.5)) {
+                     if (!creeperSwing && this.init_Entity instanceof Creeper creeper && creeper.getSwellDir() > 0 && distance < (AiThreats.isLegacyCombatEnabled() ? 6.0 : 7.5)) {
                         this.flush();
                         this.load_V(this.init_Entity);
-                        if (AiThreats.init_Z()) {
+                        if (AiThreats.isLegacyCombatEnabled()) {
                            this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.init_Entity));
                            this.init_DataUtil.tick();
                         }
 
                         return this.load("Backing out of creeper blast range");
                      } else {
-                        if (!AiThreats.init_Z() && AiDefense.init_Z(mc)) {
+                        if (!AiThreats.isLegacyCombatEnabled() && AiDefense.init_Z(mc)) {
                            AiProjectiles.IncomingProjectile coming = AiCombat.load(mc);
                            int in = coming == null ? 2147483647 : AiCombat.init(coming);
                            boolean raised = mc.player.isUsingItem() && mc.player.getUseItem().is(Items.SHIELD);
@@ -971,7 +971,7 @@ final class AiCombat {
                               this.read_I = 0;
                               this.write_I = 0;
                               this.write_V_3();
-                              if (!AiThreats.init_Z()) {
+                              if (!AiThreats.isLegacyCombatEnabled()) {
                                  return this.init_AiOperation_Result_Vec3(hitPoint);
                               }
 
@@ -1036,8 +1036,8 @@ final class AiCombat {
                         } else if (this.open_Z || hold) {
                            this.close();
                            boolean hasShield = AiDefense.init_Z(mc);
-                           Entity shooter = hasShield ? (AiThreats.init_Z() ? AiCombat.init_Entity(mc) : AiThreats.init(mc, 12)) : null;
-                           AiProjectiles.IncomingProjectile coming = hasShield && !AiThreats.init_Z() ? AiCombat.load(mc) : null;
+                           Entity shooter = hasShield ? (AiThreats.isLegacyCombatEnabled() ? AiCombat.init_Entity(mc) : AiThreats.findImminentShooter(mc, 12)) : null;
+                           AiProjectiles.IncomingProjectile coming = hasShield && !AiThreats.isLegacyCombatEnabled() ? AiCombat.load(mc) : null;
                            if (coming != null) {
                               this.init_DataUtil
                                  .aimAt(
@@ -1060,17 +1060,17 @@ final class AiCombat {
                         } else if (!approach) {
                            this.close();
                            return this.init(AiFailure.UNREACHABLE, "Target is out of reach and approach is disabled");
-                        } else if (!AiThreats.init_Z()
-                           && AiThreats.load(AiThreats.init_cv_DataUtil(this.init_Entity))
+                        } else if (!AiThreats.isLegacyCombatEnabled()
+                           && AiThreats.isMeleeThreat(AiThreats.classify(this.init_Entity))
                            && distance < 7.0
-                           && AiThreats.init(this.init_Entity, 3)
+                           && AiThreats.hasBeenApproachingFor(this.init_Entity, 3)
                            && mc.player.hasLineOfSight(this.init_Entity)) {
                            this.flush();
                            this.close();
                            this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.init_Entity));
                            this.init_DataUtil.tick();
                            return this.load("Letting the " + BuiltInRegistries.ENTITY_TYPE.getKey(this.init_Entity.getType()).getPath() + " come");
-                        } else if (!AiThreats.init_Z() && types.isEmpty() && explicitId < 0 && this.init_Entity instanceof Enderman && distance > 10.0) {
+                        } else if (!AiThreats.isLegacyCombatEnabled() && types.isEmpty() && explicitId < 0 && this.init_Entity instanceof Enderman && distance > 10.0) {
                            Entity dropped = this.init_Entity;
                            this.init_Entity = null;
                            this.flush();
@@ -1092,10 +1092,10 @@ final class AiCombat {
                double recharge = 20.0 / Math.max(0.1, mc.player.getAttributeValue(Attributes.ATTACK_SPEED));
                double readyIn = Math.max(0.0, (0.92F - strength) * recharge);
                boolean ready = strength >= 0.92F;
-               AiThreats.Inner_DataUtil profile = AiThreats.init_cv_DataUtil(this.init_Entity);
-               Entity volley = shield ? AiThreats.init(mc, 12) : null;
-               if (volley == null || volley == this.init_Entity && ready && AiThreats.init_I(mc, volley) > 11) {
-                  if (!AiThreats.init_Z() && !this.open_Z && !hold && AiThreats.load(profile)) {
+               AiThreats.Inner_DataUtil profile = AiThreats.classify(this.init_Entity);
+               Entity volley = shield ? AiThreats.findImminentShooter(mc, 12) : null;
+               if (volley == null || volley == this.init_Entity && ready && AiThreats.ticksUntilRangedShot(mc, volley) > 11) {
+                  if (!AiThreats.isLegacyCombatEnabled() && !this.open_Z && !hold && AiThreats.isMeleeThreat(profile)) {
                      double knock = profile == AiThreats.Inner_DataUtil.HOGLIN ? 6.0 : 2.5;
                      if (this.init(mc.player.getX(), mc.player.getZ(), knock)) {
                         int side = this.init_I_D(knock);
@@ -1119,13 +1119,13 @@ final class AiCombat {
                      }
                   }
 
-                  double gap = this.init_Entity instanceof Mob mob ? AiThreats.init(mob, mc.player.getBoundingBox()) : 10.0;
+                  double gap = this.init_Entity instanceof Mob mob ? AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox()) : 10.0;
                   double reach = AiDefense.init_D(mc);
                   double slack = AiCombat.init_D_D_Z(reach, this.open_Z || hold)
                      - Math.sqrt(this.init_Entity.getBoundingBox().distanceToSqr(mc.player.getEyePosition()));
-                  boolean meleeMob = AiThreats.load(profile) && !this.open_Z;
-                  boolean kite = meleeMob && AiThreats.init_D(this.init_Entity) < 0.19;
-                  boolean cornered = kite && !AiThreats.init_Z() && !this.open_Z && !this.init_Z_Entity(this.init_Entity);
+                  boolean meleeMob = AiThreats.isMeleeThreat(profile) && !this.open_Z;
+                  boolean kite = meleeMob && AiThreats.estimateThreatSpeedScore(this.init_Entity) < 0.19;
+                  boolean cornered = kite && !AiThreats.isLegacyCombatEnabled() && !this.open_Z && !this.init_Z_Entity(this.init_Entity);
                   if (cornered) {
                      kite = false;
                   }
@@ -1167,8 +1167,8 @@ final class AiCombat {
                               return this.load("Out of the creeper's blast");
                            }
 
-                           if (AiThreats.load(AiThreats.init_cv_DataUtil(other)) && AiThreats.init_Z(mc, other)) {
-                              double g = AiThreats.init(mob, mc.player.getBoundingBox());
+                           if (AiThreats.isMeleeThreat(AiThreats.classify(other)) && AiThreats.isActiveThreat(mc, other)) {
+                              double g = AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox());
                               if (g < crowdGap) {
                                  crowdGap = g;
                                  crowd = other;
@@ -1182,7 +1182,7 @@ final class AiCombat {
                         double attackRange = AiCombat.init_D_D_Z(AiDefense.init_D(mc), this.open_Z || hold);
                         boolean otherHittable = mc.player.hasLineOfSight(crowd)
                            && crowd.getBoundingBox().distanceToSqr(mc.player.getEyePosition()) <= attackRange * attackRange;
-                        if (!AiThreats.init_Z()
+                        if (!AiThreats.isLegacyCombatEnabled()
                            && (!room || ++this.value > 10)
                            && AiCombatPriority.init_Z_D_2(gap, crowdGap, this.sync_I - this.flush_I, slack >= 0.0, otherHittable)) {
                            this.value = 0;
@@ -1214,7 +1214,7 @@ final class AiCombat {
                         this.read_V_4();
                         return this.load("Waiting out the attack cooldown");
                      } else {
-                        int radial = AiCombat.init_I_D(gap, slack, readyIn, AiThreats.init_D(this.init_Entity), kite);
+                        int radial = AiCombat.init_I_D(gap, slack, readyIn, AiThreats.estimateThreatSpeedScore(this.init_Entity), kite);
                         this.init_V_I(radial);
                         if (cornered && radial == 0 && slack > 0.2 && readyIn <= 7.0 && this.write_Z_2()) {
                            this.read_V_4();
@@ -1378,8 +1378,8 @@ final class AiCombat {
                double reach = AiDefense.init_D(mc);
                double horizontal = Math.hypot(this.init_Entity.getX() - mc.player.getX(), this.init_Entity.getZ() - mc.player.getZ());
                BlockPos goalCell = this.init_Entity.blockPosition();
-               if (!AiThreats.init_Z()) {
-                  Entity due = AiDefense.init_Z(mc) ? AiThreats.init(mc, 12) : null;
+               if (!AiThreats.isLegacyCombatEnabled()) {
+                  Entity due = AiDefense.init_Z(mc) ? AiThreats.findImminentShooter(mc, 12) : null;
                   if (due != null) {
                      this.flush();
                      this.init_V_13();
@@ -1408,14 +1408,14 @@ final class AiCombat {
                   || this.init_Entity instanceof Phantom
                   || this.init_Entity instanceof Vex
                   || this.init_Entity.isNoGravity();
-               AiCombat.Inner_DataUtil plan = goalCell != this.init_Entity.blockPosition() || !AiThreats.init_Z() && !flier
+               AiCombat.Inner_DataUtil plan = goalCell != this.init_Entity.blockPosition() || !AiThreats.isLegacyCombatEnabled() && !flier
                   ? AiCombat.Inner_DataUtil.GROUND
                   : AiCombat.init(this.init_Entity.onGround(), horizontal, this.init_Entity.getY() - mc.player.getY(), reach);
                if (plan == AiCombat.Inner_DataUtil.UNREACHABLE) {
-                  if (!AiThreats.init_Z() && this.init_Entity instanceof Blaze) {
+                  if (!AiThreats.isLegacyCombatEnabled() && this.init_Entity instanceof Blaze) {
                      this.flush();
                      this.init_V_13();
-                     Entity due = AiDefense.init_Z(mc) ? AiThreats.init(mc, 12) : null;
+                     Entity due = AiDefense.init_Z(mc) ? AiThreats.findImminentShooter(mc, 12) : null;
                      this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(due != null ? due : this.init_Entity));
                      this.init_DataUtil.tick();
                      boolean up = due != null;
@@ -1440,7 +1440,7 @@ final class AiCombat {
 
                   if (this.init_AiOperation == null) {
                      this.close_Z = obstructed;
-                     this.init_AiOperation = AiGoto.init(
+                     this.init_AiOperation = AiGoto.travelToCompat(
                         goalCell, obstructed ? 1.2 : 2.0, true, true, true, 8, autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST
                      );
                      this.flush_Z = false;
@@ -1484,8 +1484,8 @@ final class AiCombat {
 
             AiOperation.Result load(double distance, boolean stepUp) {
                this.flush();
-               if (!AiThreats.init_Z() && AiDefense.init_Z(mc)) {
-                  Entity due = AiThreats.init(mc, 12);
+               if (!AiThreats.isLegacyCombatEnabled() && AiDefense.init_Z(mc)) {
+                  Entity due = AiThreats.findImminentShooter(mc, 12);
                   double reach = AiDefense.init_D(mc);
                   if (due != null
                      && (due != this.init_Entity || Math.sqrt(this.init_Entity.getBoundingBox().distanceToSqr(mc.player.getEyePosition())) > reach + 1.2)) {
@@ -1565,11 +1565,11 @@ final class AiCombat {
                         return this.init_AiOperation_Result_Str_5("no hotbar construction blocks to pillar with");
                      }
 
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(under.above(needed), 0.8, false, true, false, 8);
+                     this.init_AiOperation = AiGoto.travelToCompat(under.above(needed), 0.8, false, true, false, 8);
                      this.flush_Z = true;
                      this.tick += needed;
                   } else {
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(under, 1.2, false, false, false, 8);
+                     this.init_AiOperation = AiGoto.travelToCompat(under, 1.2, false, false, false, 8);
                      this.flush_Z = false;
                   }
                }
@@ -1619,7 +1619,7 @@ final class AiCombat {
             boolean init_Z_11() {
                for (int slot = 0; slot < 9; slot++) {
                   ItemStack stack = mc.player.getInventory().getItem(slot);
-                  if (stack.getItem() instanceof BlockItem && autismclient.ai.engine.AiRestock.init_Z(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
+                  if (stack.getItem() instanceof BlockItem && autismclient.ai.engine.AiRestock.isScaffoldBlockId(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
                      return true;
                   }
                }
@@ -1628,7 +1628,7 @@ final class AiCombat {
             }
 
             AiOperation.Result init_AiOperation_Result_9() {
-               if (!AiThreats.init_Z() && this.size <= 400) {
+               if (!AiThreats.isLegacyCombatEnabled() && this.size <= 400) {
                   Entity blaze = null;
                   double wait = radius + 16.0;
 
@@ -1658,7 +1658,7 @@ final class AiCombat {
                   this.size++;
                   this.flush();
                   this.init_V_13();
-                  Entity due = AiDefense.init_Z(mc) ? AiThreats.init(mc, 12) : null;
+                  Entity due = AiDefense.init_Z(mc) ? AiThreats.findImminentShooter(mc, 12) : null;
                   this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(due != null ? due : blaze));
                   this.init_DataUtil.tick();
                   boolean up = due != null;
@@ -1946,18 +1946,18 @@ final class AiCombat {
 
                   for (Entity entity : mc.level.entitiesForRendering()) {
                      if (entity != mc.player && entity.isAlive() && entity instanceof LivingEntity living && this.read(entity)) {
-                        if (!AiThreats.init_Z() && AiCombat.load(entity) && entity instanceof Mob swimmer && AiThreats.init(swimmer, mc.player.getBoundingBox()) > 1.0) {
+                        if (!AiThreats.isLegacyCombatEnabled() && AiCombat.load(entity) && entity instanceof Mob swimmer && AiThreats.horizontalGapToAttackBox(swimmer, mc.player.getBoundingBox()) > 1.0) {
                            AiCombat.init_V_Entity_J(entity, now + 15000000000L);
                         } else if (AiCombat.init_Z_Minecraft_Entity(mc, entity)) {
                            double distanceSq = entity.distanceToSqr(mc.player);
                            if (!(distanceSq > radius * radius)) {
-                              if (!AiThreats.init_Z() && !entity.onGround() && entity.getBoundingBox().minY - mc.player.getEyeY() > eyeReach) {
+                              if (!AiThreats.isLegacyCombatEnabled() && !entity.onGround() && entity.getBoundingBox().minY - mc.player.getEyeY() > eyeReach) {
                                  distanceSq += 400.0;
                               }
 
                               found.add(entity);
                               candidates.add(
-                                 new AiCombat.Inner_StreamUtil(distanceSq, living.getHealth(), living.getMaxHealth(), AiThreats.init_Z(mc, entity), AiThreats.init_Z(entity))
+                                 new AiCombat.Inner_StreamUtil(distanceSq, living.getHealth(), living.getMaxHealth(), AiThreats.isActiveThreat(mc, entity), AiThreats.recentlyDamagedPlayer(entity))
                               );
                            }
                         }
@@ -1992,9 +1992,9 @@ final class AiCombat {
 
                for (Entity entity : mc.level.entitiesForRendering()) {
                   if (entity instanceof Mob mob && mob.isAlive() && entity instanceof Enemy && !(mob.distanceToSqr(mc.player) > 36.0)) {
-                     AiThreats.Inner_DataUtil profile = AiThreats.init_cv_DataUtil(entity);
-                     if ((AiThreats.load(profile) || profile == AiThreats.Inner_DataUtil.BLAZE) && AiThreats.init_Z(mc, entity) && mc.player.hasLineOfSight(entity)) {
-                        double gap = AiThreats.init(mob, mc.player.getBoundingBox());
+                     AiThreats.Inner_DataUtil profile = AiThreats.classify(entity);
+                     if ((AiThreats.isMeleeThreat(profile) || profile == AiThreats.Inner_DataUtil.BLAZE) && AiThreats.isActiveThreat(mc, entity) && mc.player.hasLineOfSight(entity)) {
+                        double gap = AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox());
                         if (gap < bestGap) {
                            bestGap = gap;
                            best = entity;
@@ -2022,7 +2022,7 @@ final class AiCombat {
                   this.read_I = this.open_I = 0;
                   this.next = 0;
                   this.init_Vec3 = null;
-                  AiRunTrace.init_V_Str_JsonObject(
+                  AiRunTrace.emitServiceEvent(
                      "combat_target_switch",
                      AiJson.objectOf(
                         "from", previous == null ? -1 : previous.getId(), "to", next.getId(), "reason", why, "defensiveDetour", this.init_Z, "heldTicks", 12
@@ -2032,7 +2032,7 @@ final class AiCombat {
             }
 
             boolean load_Z(Entity entity) {
-               return entity instanceof Mob mob && mob.isAlive() && AiThreats.init(mob, mc.player.getBoundingBox()) < 0.5;
+               return entity instanceof Mob mob && mob.isAlive() && AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox()) < 0.5;
             }
 
             boolean read(Entity entity) {
@@ -2042,8 +2042,8 @@ final class AiCombat {
                      ? types.contains(entity.getType())
                      : entity instanceof Enemy
                         && (
-                           AiThreats.init_Z()
-                              || AiThreats.init_cv_DataUtil(entity) != AiThreats.Inner_DataUtil.AVOID && (!AiThreats.init(AiThreats.init_cv_DataUtil(entity)) || AiThreats.init_Z(mc, entity))
+                           AiThreats.isLegacyCombatEnabled()
+                              || AiThreats.classify(entity) != AiThreats.Inner_DataUtil.AVOID && (!AiThreats.isNormallyPassiveOrNeutral(AiThreats.classify(entity)) || AiThreats.isActiveThreat(mc, entity))
                         );
                } else {
                   return false;
@@ -2174,7 +2174,7 @@ final class AiCombat {
                      this.run = 0;
                      this.prev = 0;
                      if (this.pop_Z) {
-                        this.init_DataPipe_2.init_V();
+                        this.init_DataPipe_2.reset();
                         this.pop_Z = false;
                      }
 
@@ -2242,7 +2242,7 @@ final class AiCombat {
                         }
                      }
 
-                     this.update_AiOperation = AiGoto.init_AiOperation_BlockPos(this.init_BlockPos.above(perch), 0.5, false, true, false, 4);
+                     this.update_AiOperation = AiGoto.travelToCompat(this.init_BlockPos.above(perch), 0.5, false, true, false, 4);
                   }
 
                   AiOperation.Result r = this.update_AiOperation.tick();
@@ -2319,7 +2319,7 @@ final class AiCombat {
                      return shielding;
                   }
                } else if (this.pop_Z) {
-                  this.init_DataPipe_2.init_V();
+                  this.init_DataPipe_2.reset();
                   this.pop_Z = false;
                }
 
@@ -2468,7 +2468,7 @@ final class AiCombat {
                   for (Entity entity : mc.level.entitiesForRendering()) {
                      if (entity instanceof Enemy && entity.isAlive() && !autismclient.ai.engine.AiSight.init(entity) && mc.player.distanceTo(entity) <= 3.2) {
                         if (this.pop_Z) {
-                           this.init_DataPipe_2.init_V();
+                           this.init_DataPipe_2.reset();
                            this.pop_Z = false;
                         }
 
@@ -2479,8 +2479,8 @@ final class AiCombat {
 
                if (this.pop_Z) {
                   if (this.open_Z
-                     && this.init_DataPipe_2.init_BlockPos() != null
-                     && mc.player.getBoundingBox().intersects(new AABB(this.init_DataPipe_2.init_BlockPos()))
+                     && this.init_DataPipe_2.targetPos() != null
+                     && mc.player.getBoundingBox().intersects(new AABB(this.init_DataPipe_2.targetPos()))
                      && this.stop < 40
                      && mc.player.onGround()) {
                      double x = this.init_BlockPos.getX() + 0.5;
@@ -2492,9 +2492,9 @@ final class AiCombat {
 
                   if (this.open_Z
                      && this.stop < 12
-                     && this.init_DataPipe_2.init_BlockPos() != null
-                     && !autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(this.init_DataPipe_2.init_BlockPos(), AiShield.init(mc))) {
-                     BlockPos cell = this.init_DataPipe_2.init_BlockPos();
+                     && this.init_DataPipe_2.targetPos() != null
+                     && !autismclient.ai.engine.AiPlacer.canPlaceFromHere(this.init_DataPipe_2.targetPos(), AiShield.init(mc))) {
+                     BlockPos cell = this.init_DataPipe_2.targetPos();
                      if (mc.player.onGround()) {
                         Vec3 edge = AiCombat.init_Vec3_BlockPos_Vec3(this.init_BlockPos, Vec3.atCenterOf(cell));
                         double x = edge.x;
@@ -2512,7 +2512,7 @@ final class AiCombat {
                      mc.options.keyShift.setDown(true);
                   }
 
-                  autismclient.ai.engine.AiPlacer.PlaceStatus s = this.init_DataPipe_2.init_DataPipe_DataUtil();
+                  autismclient.ai.engine.AiPlacer.PlaceStatus s = this.init_DataPipe_2.tick();
                   if (s == autismclient.ai.engine.AiPlacer.PlaceStatus.WORKING) {
                      return this.load("Shielding the pillar from the " + BuiltInRegistries.ENTITY_TYPE.getKey(shooter.getType()).getPath());
                   }
@@ -2526,13 +2526,13 @@ final class AiCombat {
                      AutismClientAddon.LOG
                         .info(
                            "[AI] fight: shield block at {} against the {}",
-                           this.init_DataPipe_2.init_BlockPos().toShortString(),
+                           this.init_DataPipe_2.targetPos().toShortString(),
                            BuiltInRegistries.ENTITY_TYPE.getKey(shooter.getType()).getPath()
                         );
                   } else if (this.poll_Z) {
                      if (Boolean.getBoolean("autism.navigation.debug")) {
                         AutismClientAddon.LOG
-                           .info("[AI] fight: backstop failed at {}: {}", this.init_DataPipe_2.init_BlockPos(), this.init_DataPipe_2.init_Str());
+                           .info("[AI] fight: backstop failed at {}: {}", this.init_DataPipe_2.targetPos(), this.init_DataPipe_2.failureReason());
                      }
 
                      this.push_Z = true;
@@ -2541,8 +2541,8 @@ final class AiCombat {
                         AutismClientAddon.LOG
                            .info(
                               "[AI] fight: shield failed at {}: {} (body {})",
-                              this.init_DataPipe_2.init_BlockPos(),
-                              this.init_DataPipe_2.init_Str(),
+                              this.init_DataPipe_2.targetPos(),
+                              this.init_DataPipe_2.failureReason(),
                               mc.player.position()
                            );
                      }
@@ -2569,7 +2569,7 @@ final class AiCombat {
                      this.prev = 8;
                      return null;
                   } else {
-                     this.init_DataPipe_2.init_V_BlockPos_Item(cell, block);
+                     this.init_DataPipe_2.start(cell, block);
                      this.load_Entity = shooter;
                      this.start = 0;
                      this.pop_Z = true;
@@ -2603,19 +2603,19 @@ final class AiCombat {
                boolean pending = this.requiresReconciliationAfterEmergency();
                JsonObject data = this.init_JsonObject_23();
                this.cancel();
-               return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pending, new AiOperation.Result(status, message, data.toString(), List.of()));
+               return AiGuardLayer.wrapPendingTermination(pending, new AiOperation.Result(status, message, data.toString(), List.of()));
             }
 
             AiOperation.Result init(AiFailure code, String message) {
                boolean pending = this.requiresReconciliationAfterEmergency();
                JsonObject data = this.init_JsonObject_23();
                this.cancel();
-               return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pending, AiOperation.Result.failed(code, message, data.toString()));
+               return AiGuardLayer.wrapPendingTermination(pending, AiOperation.Result.failed(code, message, data.toString()));
             }
 
             @Override
             public boolean canInterruptNow() {
-               return !this.init_DataPipe_2.load_Z()
+               return !this.init_DataPipe_2.needsReconciliation()
                   && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
                   && (this.update_AiOperation == null || this.update_AiOperation.canInterruptNow())
                   && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())
@@ -2626,7 +2626,7 @@ final class AiCombat {
             @Override
             public boolean requiresReconciliationAfterEmergency() {
                return this.write_Z
-                  || this.init_DataPipe_2.load_Z()
+                  || this.init_DataPipe_2.needsReconciliation()
                   || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
                   || this.update_AiOperation != null && this.update_AiOperation.requiresReconciliationAfterEmergency()
                   || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency()
@@ -2665,7 +2665,7 @@ final class AiCombat {
                   }
 
                   if (this.pop_Z) {
-                     this.init_DataPipe_2.init_V();
+                     this.init_DataPipe_2.reset();
                      this.pop_Z = false;
                   }
 

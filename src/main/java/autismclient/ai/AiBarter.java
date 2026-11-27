@@ -166,7 +166,7 @@ final class AiBarter {
                               + this.open
                               + " barter(s), gold left "
                               + AiGameState.countMainInventoryItem("minecraft:gold_ingot");
-                           AiRunTrace.init_V_Str_Str("pearls_met", detail);
+                           AiRunTrace.recordGlobalSplit("pearls_met", detail);
                            return this.init_AiOperation_Result_AiOperation_Status_Str_2(AiOperation.Status.SUCCEEDED, "Pearl target met: " + detail);
                         case GOLD_OUT:
                            if (this.open > 0) {
@@ -266,7 +266,7 @@ final class AiBarter {
                   this.init_BlockPos = this.init_Piglin.blockPosition();
                   if (mc.player.distanceToSqr(this.init_Piglin) > 16.0) {
                      if (this.init_AiOperation == null) {
-                        this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(
+                        this.init_AiOperation = AiGoto.travelToCompat(
                            this.init_Piglin.blockPosition(), 3.0, true, true, true, Math.min(60, this.read_I_2())
                         );
                      }
@@ -377,7 +377,7 @@ final class AiBarter {
                            this.load_V_3();
                            this.run = AiGameState.countMainInventoryItem("minecraft:gold_ingot");
                            this.load_J = AiServerEvidence.inventoryRevision();
-                           AiContainerTransactions.init(mc.player.containerMenu.containerId, this.init_I_I(slot), 0, ContainerInput.THROW);
+                           AiContainerTransactions.sendPredictedClick(mc.player.containerMenu.containerId, this.init_I_I(slot), 0, ContainerInput.THROW);
                            return this.init_AiOperation_Result_Str_2("Throwing one gold ingot at the piglin");
                         }
                      }

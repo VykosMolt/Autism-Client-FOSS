@@ -34,7 +34,7 @@ final class AiNetherStructures {
    }
 
    private static void init(Minecraft mc) {
-      String world = AiWorldIdentity.init(mc);
+      String world = AiWorldIdentity.currentWorldKey(mc);
       if (!world.equals(init_Str) || mc.getConnection() != init_Obj) {
          init_aC_StreamUtil.init();
          init_Str = world;
@@ -110,8 +110,8 @@ final class AiNetherStructures {
       if (init_aC_DataUtil != null
          && init_WeakReference.get() == mc.level
          && init_aC_DataUtil.at.distSqr(at) < 64.0
-         && AiThreats.init_J() - load >= 0L
-         && AiThreats.init_J() - load < 100L
+         && AiThreats.currentClientTick() - load >= 0L
+         && AiThreats.currentClientTick() - load < 100L
          && init_aC_DataUtil.revision == autismclient.ai.engine.AiGridRevisions.init_J()) {
          return init_aC_DataUtil;
       }
@@ -167,8 +167,8 @@ final class AiNetherStructures {
          }
       }
 
-      int brutes = (int)AiWorldScan.init_List_Str_D("minecraft:piglin_brute", 64.0).stream().filter(e -> e.blockPosition().distSqr(at) < 784.0).count();
-      int hoglins = (int)AiWorldScan.init_List_Str_D("minecraft:hoglin", 64.0).stream().filter(e -> e.blockPosition().distSqr(at) < 784.0).count();
+      int brutes = (int)AiWorldScan.findEntitiesByType("minecraft:piglin_brute", 64.0).stream().filter(e -> e.blockPosition().distSqr(at) < 784.0).count();
+      int hoglins = (int)AiWorldScan.findEntitiesByType("minecraft:hoglin", 64.0).stream().filter(e -> e.blockPosition().distSqr(at) < 784.0).count();
       double confidence = bricks < 32 || gold <= 0 && chests <= 0 && brutes <= 0 ? (bricks >= 32 ? 0.35 : 0.0) : 0.8;
       JsonArray variants = new JsonArray();
       if (confidence >= 0.5) {
@@ -189,7 +189,7 @@ final class AiNetherStructures {
          }
       }
 
-      load = AiThreats.init_J();
+      load = AiThreats.currentClientTick();
       init_aC_DataUtil = new AiNetherStructures.Inner_DataUtil(
          at.immutable(),
          bricks,
@@ -203,8 +203,8 @@ final class AiNetherStructures {
          partial,
          confidence,
          variants,
-         AiWorldIdentity.init(mc),
-         AiWorldIdentity.load(mc),
+         AiWorldIdentity.currentWorldKey(mc),
+         AiWorldIdentity.currentDimensionId(mc),
          load,
          autismclient.ai.engine.AiGridRevisions.init_J()
       );

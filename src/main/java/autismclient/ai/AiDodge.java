@@ -341,7 +341,7 @@ final class AiDodge {
                            boolean contact = false;
 
                            for (Entity mob : this.init_Minecraft.level.entitiesForRendering()) {
-                              if (mob instanceof LivingEntity && AiThreats.init_Z(this.init_Minecraft, mob) && landing.intersects(mob.getBoundingBox().inflate(1.2))) {
+                              if (mob instanceof LivingEntity && AiThreats.isActiveThreat(this.init_Minecraft, mob) && landing.intersects(mob.getBoundingBox().inflate(1.2))) {
                                  contact = true;
                                  break;
                               }

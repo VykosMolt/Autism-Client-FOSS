@@ -214,7 +214,7 @@ final class AiDragon {
          }
       }
 
-      return best == null ? null : AiGuard.allowDuringLowHealth(AiGoto.init(best, 0.35, true, true, false, 6, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
+      return best == null ? null : AiGuard.allowDuringLowHealth(AiGoto.travelToCompat(best, 0.35, true, true, false, 6, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
    }
 
    static boolean init_Z(double x, double z, List<double[]> clouds) {
@@ -284,8 +284,8 @@ final class AiDragon {
          final boolean melee = AiJson.getBoolean(args, "melee", true);
          final boolean bow = AiJson.getBoolean(args, "bow", true);
          final int timeoutSeconds = Math.max(30, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 900)));
-         AiService service = AiService.load_cc();
-         final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
+         AiService service = AiService.getExistingInstance();
+         final boolean silentAim = service != null && service.getSettings().aiSilentAim;
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final Object init_Obj = mc.level;
@@ -558,7 +558,7 @@ final class AiDragon {
                   this.init_q_StreamUtil.load(AiDragon.Inner_DataUtil.CHARGE_DODGE, this.sync_AiOperation);
                   this.sync_AiOperation = null;
                   return this.init("Clear of the charge");
-               } else if (!AiThreats.init_Z() && "ChargingPlayer".equals(this.init_Str)) {
+               } else if (!AiThreats.isLegacyCombatEnabled() && "ChargingPlayer".equals(this.init_Str)) {
                   Vec3 v = dragon.getDeltaMovement();
                   double speed = Math.hypot(v.x, v.z);
                   if (speed < 0.05) {
@@ -611,7 +611,7 @@ final class AiDragon {
                      }
 
                      this.load_V_15();
-                     this.sync_AiOperation = AiGoto.init(best, 0.8, false, false, false, 5, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true);
+                     this.sync_AiOperation = AiGoto.travelToCompat(best, 0.8, false, false, false, 5, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true);
                      AiSpeedrun.init_V_Str_ObjArr(
                         "[AI] dragon: charging at the player ({} off its line); stepping to {}", String.format(Locale.ROOT, "%.1f", off), best.toShortString()
                      );
@@ -640,7 +640,7 @@ final class AiDragon {
                   this.update_AiOperation = null;
                   return this.init("Clear of the dragon's body");
                } else {
-                  if (AiThreats.init_Z()) {
+                  if (AiThreats.isLegacyCombatEnabled()) {
                      return null;
                   }
 
@@ -904,7 +904,7 @@ final class AiDragon {
                         return this.init(AiFailure.TIMEOUT, "Too little time left to clear the remaining crystals");
                      }
 
-                     this.init_AiOperation = AiCrystals.init(AiJson.objectOf("timeoutSeconds", this.init(600), "skipCaged", !AiThreats.init_Z()));
+                     this.init_AiOperation = AiCrystals.init(AiJson.objectOf("timeoutSeconds", this.init(600), "skipCaged", !AiThreats.isLegacyCombatEnabled()));
                   }
 
                   AiOperation.Result r = this.init_q_StreamUtil.init_AiOperation_Result_q_DataUtil_AiOperation(AiDragon.Inner_DataUtil.LEG, this.init_AiOperation);
@@ -922,7 +922,7 @@ final class AiDragon {
                      return this.init(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Dragon fight cancelled");
                   }
 
-                  if (r.failure() == AiFailure.MISSING_MATERIALS && !AiThreats.init_Z()) {
+                  if (r.failure() == AiFailure.MISSING_MATERIALS && !AiThreats.isLegacyCombatEnabled()) {
                      this.init_V(r);
                      int shortage = AiDragon.init_I(AiRunResources.parseEvidenceJson(r.dataJson()));
                      if (shortage > 0 && this.put < 3 && this.read_I_7() >= 45) {
@@ -936,7 +936,7 @@ final class AiDragon {
                            AiOperation.Status.FAILED, AiFailure.MISSING_MATERIALS, "Crystal construction remains short; bounded local recovery is unavailable: " + r.message()
                         );
                      }
-                  } else if ((r.status() == AiOperation.Status.FAILED || r.status() == AiOperation.Status.TIMED_OUT) && !AiThreats.init_Z() && !this.load_Z_16()) {
+                  } else if ((r.status() == AiOperation.Status.FAILED || r.status() == AiOperation.Status.TIMED_OUT) && !AiThreats.isLegacyCombatEnabled() && !this.load_Z_16()) {
                      if (mc.player.getHealth() < 16.0F) {
                         return this.init(AiFailure.LOW_HEALTH, "Health " + String.format("%.1f", mc.player.getHealth()) + ": healing before the caged crystals");
                      }
@@ -1026,7 +1026,7 @@ final class AiDragon {
                            this.load_V_15();
                         }
 
-                        this.init_AiOperation = AiGoto.init(
+                        this.init_AiOperation = AiGoto.travelToCompat(
                            near, 1.5, false, true, true, this.init(20), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
                         this.sync_Z = true;
@@ -1123,7 +1123,7 @@ final class AiDragon {
                      }
 
                      if (this.close_BlockPos != null && mc.player.position().distanceToSqr(Vec3.atBottomCenterOf(this.close_BlockPos)) > 0.48999999999999994) {
-                        this.init_AiOperation = AiGoto.init(
+                        this.init_AiOperation = AiGoto.travelToCompat(
                            this.close_BlockPos, 0.3, false, true, true, this.init(15), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
                         this.update_Z = true;
@@ -1286,7 +1286,7 @@ final class AiDragon {
                }
 
                if (this.init_AiOperation == null) {
-                  this.init_AiOperation = AiGoto.init(
+                  this.init_AiOperation = AiGoto.travelToCompat(
                      this.read_BlockPos, 0.8, false, true, true, this.init(30), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                   );
                }
@@ -1388,9 +1388,9 @@ final class AiDragon {
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = mc.player.getInventory().getItem(slot);
                   if (!stack.isEmpty()
-                     && AiRunResources.countUsableItem(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), 0) > autismclient.ai.engine.AiRestock.init(stack.getItem())) {
+                     && AiRunResources.countUsableItem(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), 0) > autismclient.ai.engine.AiRestock.reservedItemCount(stack.getItem())) {
                      String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-                     int rank = autismclient.ai.engine.AiRestock.init_I(id);
+                     int rank = autismclient.ai.engine.AiRestock.scaffoldRank(id);
                      if (id.equals("minecraft:end_stone") || id.equals("minecraft:obsidian")) {
                         rank = 0;
                      }
@@ -1438,7 +1438,7 @@ final class AiDragon {
                      return this.init("Holding for the head");
                   }
 
-                  this.init_AiOperation = AiGoto.init(
+                  this.init_AiOperation = AiGoto.travelToCompat(
                      support.above(), 0.8, false, true, true, this.init(20), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                   );
                }
@@ -1668,7 +1668,7 @@ final class AiDragon {
                      BlockPos out = this.init(danger, zones);
                      if (out != null) {
                         this.init_AiOperation = AiGuard.allowDuringLowHealth(
-                           AiGoto.init(out, 0.35, false, false, false, this.init(8), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true)
+                           AiGoto.travelToCompat(out, 0.35, false, false, false, this.init(8), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true)
                         );
                         this.get = 2;
                      }
@@ -1677,7 +1677,7 @@ final class AiDragon {
                   if (this.init_AiOperation == null && this.get == 0) {
                      BlockPos near = this.sync_BlockPos();
                      if (near != null && Math.hypot(mc.player.getX() - (near.getX() + 0.5), mc.player.getZ() - (near.getZ() + 0.5)) > 2.5) {
-                        this.init_AiOperation = AiGoto.init(
+                        this.init_AiOperation = AiGoto.travelToCompat(
                            near, 0.8, false, false, false, this.init(10), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
                         this.get = 3;
@@ -1728,7 +1728,7 @@ final class AiDragon {
                      && Math.abs(mc.player.getY() - this.flush_BlockPos.getY()) < 0.6;
                   if (!there && (!inReach || !mc.player.onGround())) {
                      if (this.init_AiOperation == null) {
-                        this.init_AiOperation = AiGoto.init(
+                        this.init_AiOperation = AiGoto.travelToCompat(
                            this.flush_BlockPos, 0.3, false, false, false, this.init(10), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
                         this.get = 1;
@@ -1895,7 +1895,7 @@ final class AiDragon {
                         return this.init("Holding by the fountain for the next perch (" + this.init_Str + ")");
                      }
 
-                     this.init_AiOperation = AiGoto.init(
+                     this.init_AiOperation = AiGoto.travelToCompat(
                         support.above(), 1.5, false, true, true, this.init(30), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                      );
                   }
@@ -1931,11 +1931,11 @@ final class AiDragon {
             }
 
             boolean init_Z_27() {
-               if (!AiThreats.init_Z() && !this.load_Z_16()) {
+               if (!AiThreats.isLegacyCombatEnabled() && !this.load_Z_16()) {
                   return false;
                }
 
-               if (!AiThreats.init_Z() && AiDragon.init_Z_I_I(this.set, this.load_I_15())) {
+               if (!AiThreats.isLegacyCombatEnabled() && AiDragon.init_Z_I_I(this.set, this.load_I_15())) {
                   return this.load_Z_16();
                }
 
@@ -2555,7 +2555,7 @@ final class AiDragon {
 
             AiOperation.Result load(String message) {
                this.pop_Z = true;
-               AiRunTrace.init_V_Str_Str("dragon_dead", "beds " + this.init_I + ", bow " + this.load_I + ", melee " + this.read_I + ", perches " + this.write_I);
+               AiRunTrace.recordGlobalSplit("dragon_dead", "beds " + this.init_I + ", bow " + this.load_I + ", melee " + this.read_I + ", perches " + this.write_I);
                return this.init(AiOperation.Status.SUCCEEDED, null, message);
             }
 
@@ -2672,7 +2672,7 @@ final class AiDragon {
          AiOperation.Result result = child.tick();
          this.init_EnumMap.put(role, new AiDragon.Inner_StreamUtil.Inner_DataUtil(child, result));
          if (result.terminal()) {
-            result = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(init_Z_AiOperation_AiOperation_Result(child, result), result);
+            result = AiGuardLayer.wrapPendingTermination(init_Z_AiOperation_AiOperation_Result(child, result), result);
          }
 
          return result;

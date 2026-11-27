@@ -128,7 +128,7 @@ final class AiFurnaceReturn implements AiOperation {
          autismclient.ai.engine.AiPathfinder.PathGoal interaction = new autismclient.ai.engine.InteractionGoal(
             this.init_BlockPos, Math.max(1.5, this.init_Minecraft.player.blockInteractionRange() - 0.25), this.init_Minecraft.player.getEyeHeight()
          );
-         this.init_AiOperation = AiGoto.init(
+         this.init_AiOperation = AiGoto.travelToCompat(
             this.init_BlockPos,
             0.6,
             this.init_Z,

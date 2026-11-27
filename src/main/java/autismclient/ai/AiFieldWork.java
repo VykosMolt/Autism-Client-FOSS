@@ -241,7 +241,7 @@ final class AiFieldWork {
                this.pop = 0;
                if (!this.write_Z) {
                   if (this.init_AiOperation == null) {
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(BlockPos.containing(path.getFirst()), 1.2, false, false, false, 60);
+                     this.init_AiOperation = AiGoto.travelToCompat(BlockPos.containing(path.getFirst()), 1.2, false, false, false, 60);
                   }
 
                   AiOperation.Result r = this.init_AiOperation.tick();
@@ -468,7 +468,7 @@ final class AiFieldWork {
 
          void init(Vec3 point) {
             if (!AiFieldWork.init(mc, point) && this.init_AiOperation == null) {
-               this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(BlockPos.containing(point), 0.65, false, false, false, 20);
+               this.init_AiOperation = AiGoto.travelToCompat(BlockPos.containing(point), 0.65, false, false, false, 20);
             }
          }
 
@@ -774,7 +774,7 @@ final class AiFieldWork {
 
                if (!this.init_Z) {
                   if (this.init_AiOperation == null) {
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(BlockPos.containing(path.getFirst()), 1.2, false, false, false, 60);
+                     this.init_AiOperation = AiGoto.travelToCompat(BlockPos.containing(path.getFirst()), 1.2, false, false, false, 60);
                   }
 
                   AiOperation.Result r = this.init_AiOperation.tick();
@@ -874,7 +874,7 @@ final class AiFieldWork {
                      BlockPos missed = this.flush >= 2 && this.push < 6 ? this.init(seeds) : null;
                      if (missed != null) {
                         this.push++;
-                        this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(missed.above(), 1.6, false, false, false, 20);
+                        this.init_AiOperation = AiGoto.travelToCompat(missed.above(), 1.6, false, false, false, 20);
                         return this.init("Walking to a plot the lines missed at " + missed.toShortString());
                      }
 
@@ -1095,7 +1095,7 @@ final class AiFieldWork {
 
          void init(Vec3 target) {
             if (!AiFieldWork.init(mc, target) && this.init_AiOperation == null) {
-               this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(BlockPos.containing(target), 0.65, false, false, false, 20);
+               this.init_AiOperation = AiGoto.travelToCompat(BlockPos.containing(target), 0.65, false, false, false, 20);
             }
          }
 

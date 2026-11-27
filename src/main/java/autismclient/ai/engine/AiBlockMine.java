@@ -850,7 +850,7 @@ public final class AiBlockMine {
                   return this.init_AiOperation != null
                      ? this.init_AiOperation.canInterruptNow()
                      : (this.read_BlockPos == null || !this.read_RefQueue_DataUtil.init_Z_BlockPos(this.read_BlockPos))
-                        && !this.init_DataPipe.load_Z()
+                        && !this.init_DataPipe.needsReconciliation()
                         && (this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.load_Z_8());
                }
             }
@@ -860,7 +860,7 @@ public final class AiBlockMine {
                return this.sync_Z
                   || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
                   || this.read_BlockPos != null && this.read_RefQueue_DataUtil.init_Z_BlockPos(this.read_BlockPos)
-                  || this.init_DataPipe.load_Z()
+                  || this.init_DataPipe.needsReconciliation()
                   || this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency();
             }
 
@@ -1039,13 +1039,13 @@ public final class AiBlockMine {
                            || held > 0 && this.push_I >= Math.max(1, held - this.load_I_6())
                            || this.init_Z(drops) && !this.write_Z_3();
                         if (this.update_BlockPos != null) {
-                           AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                           AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
                            if (status == AiPlacer.PlaceStatus.WORKING) {
                               return this.init_AiOperation_Result_6("Blocking the water next to " + this.sync_BlockPos.toShortString());
                            }
 
                            if (status == AiPlacer.PlaceStatus.FAILED) {
-                              this.init(this.sync_BlockPos, "could not block the water beside it (" + this.init_DataPipe.init_Str() + ")");
+                              this.init(this.sync_BlockPos, "could not block the water beside it (" + this.init_DataPipe.failureReason() + ")");
                            }
 
                            this.update_BlockPos = null;
@@ -1126,7 +1126,7 @@ public final class AiBlockMine {
                                  this.read_RefQueue_DataUtil.init_V();
                                  this.update_BlockPos = water;
                                  this.sync_BlockPos = inReach;
-                                 this.init_DataPipe.init_V_BlockPos_Item(water, item);
+                                 this.init_DataPipe.start(water, item);
                                  AutismClientAddon.LOG
                                     .info("[AI] block mine {}: blocking water at {} before breaking {}", label, water.toShortString(), inReach.toShortString());
                                  return this.init_AiOperation_Result_6("Blocking the water next to " + inReach.toShortString());
@@ -1691,8 +1691,8 @@ public final class AiBlockMine {
                         );
                   }
 
-                  this.init_HashUtil_CachePool = AiGoto.init_HashUtil_CachePool_BlockPos(
-                     mc.player.blockPosition(), AiGoto.read(goal, protectedCells), (int)Math.max(20L, (deadline - System.nanoTime()) / 1000000000L)
+                  this.init_HashUtil_CachePool = AiGoto.createPersistentOpCompat(
+                     mc.player.blockPosition(), AiGoto.protectingCellsCompat(goal, protectedCells), (int)Math.max(20L, (deadline - System.nanoTime()) / 1000000000L)
                   );
                   this.init_HashUtil_CachePool.init_V_BiPredicate(this.init_BiPredicate);
 
@@ -1708,7 +1708,7 @@ public final class AiBlockMine {
                   }
 
                   if (changed) {
-                     this.init_HashUtil_CachePool.init_V_ClassCache_JsonUti(AiGoto.read(goal, protectedCells));
+                     this.init_HashUtil_CachePool.init_V_ClassCache_JsonUti(AiGoto.protectingCellsCompat(goal, protectedCells));
                   }
                }
 
@@ -3354,8 +3354,8 @@ public final class AiBlockMine {
                   ItemStack stack = inventory.getItem(slot);
                   if (stack.getItem() instanceof BlockItem block
                      && !(block.getBlock() instanceof FallingBlock)
-                     && AiRestock.init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) >= 0
-                     && AiRestock.init(stack, inventory)) {
+                     && AiRestock.scaffoldRank(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) >= 0
+                     && AiRestock.canSpendStack(stack, inventory)) {
                      return true;
                   }
                }
@@ -3394,8 +3394,8 @@ public final class AiBlockMine {
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = inventory.getItem(slot);
                   if (stack.getItem() instanceof BlockItem block && !(block.getBlock() instanceof FallingBlock)) {
-                     int rank = AiRestock.init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-                     if (rank >= 0 && rank < bestRank && AiRestock.init(stack, inventory)) {
+                     int rank = AiRestock.scaffoldRank(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+                     if (rank >= 0 && rank < bestRank && AiRestock.canSpendStack(stack, inventory)) {
                         bestRank = rank;
                         best = stack.getItem();
                      }
@@ -3492,7 +3492,7 @@ public final class AiBlockMine {
 
                this.init_RefQueue_DataUtil.init_V();
                this.load_RefQueue_DataUtil.init_V();
-               this.init_DataPipe.init_V();
+               this.init_DataPipe.reset();
                this.update_BlockPos = null;
                this.init_DataUtil.clear();
                AiMotionSafety.releaseMovementKeys();

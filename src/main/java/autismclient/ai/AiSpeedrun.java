@@ -209,7 +209,7 @@ final class AiSpeedrun {
 
       int y = mc.level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
       BlockPos surface = new BlockPos(column.getX(), y, column.getZ());
-      return AiGoto.init_Z(surface)
+      return AiGoto.isStandableCompat(surface)
             && mc.level.getFluidState(surface).isEmpty()
             && mc.level.getFluidState(surface.above()).isEmpty()
             && !mc.level.getBlockState(surface.below()).is(BlockTags.LEAVES)
@@ -256,7 +256,7 @@ final class AiSpeedrun {
          return new AiOperation() {
             final AiRunDiagnostics init_bJ = AiRunDiagnostics.init_bJ();
             final Object init_Obj = AiRunResources.beginCampaign();
-            final String init_Str = AiWorldIdentity.init(mc);
+            final String init_Str = AiWorldIdentity.currentWorldKey(mc);
             final UUID init_UUID = mc.player.getUUID();
             final Object load_Obj = mc.getConnection();
             final long init_J = AiServerEvidence.deathRevision();
@@ -282,7 +282,7 @@ final class AiSpeedrun {
             final AiSpeedrun.Inner_DataUtil init_cl_DataUtil = new AiSpeedrun.Inner_DataUtil();
             int load_I;
             long update_J;
-            String load_Str = AiWorldIdentity.load(mc);
+            String load_Str = AiWorldIdentity.currentDimensionId(mc);
             int read_I;
             int write_I;
             int update_I;
@@ -398,7 +398,7 @@ final class AiSpeedrun {
             public AiOperation.Result tick() {
                this.init_bJ.init(this.init_cl_BufferHelper == null ? "START" : this.init_cl_BufferHelper.name(), this.write_Str);
                if (mc.player != null && mc.level != null) {
-                  if (!this.init_Str.equals(AiWorldIdentity.init(mc)) || this.load_Obj != mc.getConnection() || !this.init_UUID.equals(mc.player.getUUID())) {
+                  if (!this.init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) || this.load_Obj != mc.getConnection() || !this.init_UUID.equals(mc.player.getUUID())) {
                      return this.init(AiOperation.Status.CANCELLED, "World or player identity changed; revalidate before resuming");
                   }
 
@@ -408,7 +408,7 @@ final class AiSpeedrun {
                         AiGoal.init(this, 0, "Beating the game", AiGoal.load(this.init_cl_BufferHelper.name()), "");
                      }
 
-                     String dimension = AiWorldIdentity.load(mc);
+                     String dimension = AiWorldIdentity.currentDimensionId(mc);
                      if (!this.load_Str.equals(dimension)) {
                         this.load_Str = dimension;
                         this.read_Z = false;
@@ -438,8 +438,8 @@ final class AiSpeedrun {
                            String.format("%.1f", mc.player.getHealth()),
                            this.init_J_2(),
                            AiSpeedrun.init_Str_Str(this.write_Str),
-                           AiWorldScan.init_List_Str_D("minecraft:enderman", 64.0).size(),
-                           AiWorldScan.init_List_Str_D("minecraft:piglin", 64.0).size(),
+                           AiWorldScan.findEntitiesByType("minecraft:enderman", 64.0).size(),
+                           AiWorldScan.findEntitiesByType("minecraft:piglin", 64.0).size(),
                            AiCraft.countItem("minecraft:ender_pearl"),
                            AiCraft.countItem("minecraft:blaze_rod"),
                            AiCraft.countItem("minecraft:ender_eye"),
@@ -481,7 +481,7 @@ final class AiSpeedrun {
                         && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.NETHER
                         && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.STRONGHOLD
                         && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.END) {
-                        this.load_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", "campaign emergency", AiGuardLayer.init_AiOperation_Minecraft(mc));
+                        this.load_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", "campaign emergency", AiGuardLayer.createEmergencyEscapeOp(mc));
                         if (this.load_AiOperation != null) {
                            this.tick_Z = this.init_AiOperation.requiresReconciliationAfterEmergency();
                            this.init_AiOperation.cancel();
@@ -524,7 +524,7 @@ final class AiSpeedrun {
                      }
 
                      if (this.init_AiOperation != null && this.pop_Z) {
-                        AiOperation.Result g = this.init_Y.init_AiOperation_Result_AiOperation(this.init_AiOperation, () -> {
+                        AiOperation.Result g = this.init_Y.tick(this.init_AiOperation, () -> {
                            this.init_AiOperation.cancel();
                            this.init_AiOperation = null;
                            this.pop_Z = false;
@@ -577,7 +577,7 @@ final class AiSpeedrun {
                            this.init_JsonArray.remove(0);
                         }
 
-                        AiRunTrace.init_V_Str_JsonObject("speedrun_leg", this.init_JsonArray.get(this.init_JsonArray.size() - 1).getAsJsonObject());
+                        AiRunTrace.emitServiceEvent("speedrun_leg", this.init_JsonArray.get(this.init_JsonArray.size() - 1).getAsJsonObject());
                         if (r.status() == AiOperation.Status.CANCELLED) {
                            return this.init(AiOperation.Status.CANCELLED, "Cancelled during " + this.init_cl_BufferHelper);
                         }
@@ -691,7 +691,7 @@ final class AiSpeedrun {
                      if (!mc.player.onGround() && !mc.player.isInWater() && !mc.player.onClimbable()) {
                         return this.init_AiOperation_Result_13("Landing");
                      } else {
-                        AiOperation.Result g = this.init_Y.init_AiOperation_Result_AiOperation(null, () -> {}, this::read_I_6);
+                        AiOperation.Result g = this.init_Y.tick(null, () -> {}, this::read_I_6);
                         if (g != null) {
                            this.write_Str = g.message();
                            return g;
@@ -730,7 +730,7 @@ final class AiSpeedrun {
                      return true;
                   }
 
-                  for (Entity e : AiWorldScan.init_List_Str_D("minecraft:enderman", 32.0)) {
+                  for (Entity e : AiWorldScan.findEntitiesByType("minecraft:enderman", 32.0)) {
                      if (mc.player.hasLineOfSight(e)) {
                         return true;
                      }
@@ -816,7 +816,7 @@ final class AiSpeedrun {
 
                int x = feet.getX() + best[0] * 6;
                int z = feet.getZ() + best[1] * 6;
-               return AiGoto.init(
+               return AiGoto.travelToCompat(
                   new BlockPos(x, feet.getY(), z),
                   2.0,
                   true,
@@ -900,7 +900,7 @@ final class AiSpeedrun {
                      AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun: stepping clear of the portal to {}", clear.toShortString());
                      return this.init(
                         this.init_cl_BufferHelper == null ? AiSpeedrun.Inner_BufferHelper.WOOD : this.init_cl_BufferHelper,
-                        AiGoto.init_AiOperation_BlockPos(clear, 0.6, true, false, false, 20),
+                        AiGoto.travelToCompat(clear, 0.6, true, false, false, 20),
                         null
                      );
                   }
@@ -1214,7 +1214,7 @@ final class AiSpeedrun {
                   this.init_cl_BufferHelper = next;
                   this.write_J = System.nanoTime();
                   AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun phase {}: at {} after {} s", next, mc.player.blockPosition().toShortString(), this.init_J_2());
-                  AiRunTrace.init_V_Str_JsonObject(
+                  AiRunTrace.emitServiceEvent(
                      "speedrun_phase",
                      AiJson.objectOf(
                         "phase",
@@ -1222,7 +1222,7 @@ final class AiSpeedrun {
                         "world",
                         this.init_Str,
                         "dimension",
-                        AiWorldIdentity.load(mc),
+                        AiWorldIdentity.currentDimensionId(mc),
                         "at",
                         mc.player.blockPosition().toShortString(),
                         "elapsedSeconds",
@@ -1275,7 +1275,7 @@ final class AiSpeedrun {
                   "world",
                   this.init_Str,
                   "dimension",
-                  AiWorldIdentity.load(mc),
+                  AiWorldIdentity.currentDimensionId(mc),
                   "simulationTicks",
                   autismclient.util.AutismSessionState.getInstance().getClientTick() - this.init_I,
                   "resources",
@@ -1300,11 +1300,11 @@ final class AiSpeedrun {
             }
 
             void init_V_5(String status) {
-               AiService service = AiService.load_cc();
+               AiService service = AiService.getExistingInstance();
                if (service != null) {
                   JsonObject snapshot = this.init_JsonObject_51();
                   snapshot.addProperty("status", status);
-                  service.load_V_JsonObject(snapshot);
+                  service.saveSpeedrunCheckpoint(snapshot);
                }
             }
 
@@ -1322,7 +1322,7 @@ final class AiSpeedrun {
                   this.init_AiOperation = null;
                }
 
-               this.init_Y.init_V();
+               this.init_Y.cancel();
                if (this.load_AiOperation != null) {
                   this.load_AiOperation.cancel();
                   this.load_AiOperation = null;
@@ -1331,7 +1331,7 @@ final class AiSpeedrun {
                this.init_V_5(status.name());
                JsonObject finalData = this.init_JsonObject_51();
                finalData.add("diagnostics", debug);
-               AiRunTrace.init_V_Str_JsonObject("speedrun_outcome", AiJson.objectOf("status", status.name(), "message", message, "report", finalData));
+               AiRunTrace.emitServiceEvent("speedrun_outcome", AiJson.objectOf("status", status.name(), "message", message, "report", finalData));
                this.load_V_13();
                AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun {} after {} s: {}", status, this.init_J_2(), message);
                return AiGameOperations.result(status, message, finalData);
@@ -1349,14 +1349,14 @@ final class AiSpeedrun {
             public boolean canInterruptNow() {
                return (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
                   && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())
-                  && this.init_Y.load();
+                  && this.init_Y.canInterruptNow();
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
                return this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
                   || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency()
-                  || this.init_Y.read();
+                  || this.init_Y.requiresReconciliation();
             }
 
             @Override
@@ -1370,7 +1370,7 @@ final class AiSpeedrun {
                      this.init_AiOperation = null;
                   }
 
-                  this.init_Y.init_V();
+                  this.init_Y.cancel();
                   if (this.load_AiOperation != null) {
                      this.load_AiOperation.cancel();
                      this.load_AiOperation = null;
@@ -1466,7 +1466,7 @@ final class AiSpeedrun {
                      BlockPos stand = pos.relative(side).offset(0, dy, 0);
                      if (Math.abs(stand.getY() - mc.player.getBlockY()) <= 3
                         && mc.level.hasChunkAt(stand)
-                        && AiGoto.init_Z(stand)
+                        && AiGoto.isStandableCompat(stand)
                         && mc.level.getFluidState(stand).isEmpty()
                         && mc.level.getFluidState(stand.above()).isEmpty()) {
                         BlockState floor = mc.level.getBlockState(stand.below());
@@ -1522,7 +1522,7 @@ final class AiSpeedrun {
             }
 
             int have = AiRunResources.totalSafeFoodItems();
-            if (have >= items && this.canInterruptNow() && !this.requiresReconciliationAfterEmergency() && !this.init_Y.init_Z()) {
+            if (have >= items && this.canInterruptNow() && !this.requiresReconciliationAfterEmergency() && !this.init_Y.isActive()) {
                return this.init(AiOperation.Status.SUCCEEDED, "Food in the bag: " + have);
             }
 
@@ -1535,11 +1535,11 @@ final class AiSpeedrun {
                );
             }
 
-            if (!this.init_Str.equals("cook") && !this.init_Y.init_Z() && mc.player.getFoodData().getFoodLevel() <= 16) {
+            if (!this.init_Str.equals("cook") && !this.init_Y.isActive() && mc.player.getFoodData().getFoodLevel() <= 16) {
                AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
                int raw = AiSpeedrun.init_Map().values().stream().mapToInt(Integer::intValue).sum();
-               boolean quiet = this.init_Y.load()
-                  && !this.init_Y.read()
+               boolean quiet = this.init_Y.canInterruptNow()
+                  && !this.init_Y.requiresReconciliation()
                   && vitals.hostilesNear() == 0
                   && !vitals.underAttack()
                   && mc.player.getHealth() >= 10.0F
@@ -1558,7 +1558,7 @@ final class AiSpeedrun {
                }
             }
 
-            AiOperation.Result guarded = this.init_Y.init_AiOperation_Result_AiOperation(this.init_AiOperation, this::init_V_27, this::init_I_35);
+            AiOperation.Result guarded = this.init_Y.tick(this.init_AiOperation, this::init_V_27, this::init_I_35);
             if (guarded != null) {
                this.init_AiOperation_Result = guarded;
                if (!guarded.terminal()) {
@@ -1651,7 +1651,7 @@ final class AiSpeedrun {
                   this.init_Supplier = () -> AiRunDiagnostics.init_AiOperation_Str(
                      "food_trip",
                      "walk to observed hay",
-                     AiGoto.init(
+                     AiGoto.travelToCompat(
                         stand,
                         1.0,
                         false,
@@ -1715,7 +1715,7 @@ final class AiSpeedrun {
                   this.init_Supplier = () -> AiRunDiagnostics.init_AiOperation_Str(
                      "food_trip",
                      "explore " + x + "," + z,
-                     AiGoto.init(
+                     AiGoto.travelToCompat(
                         surface,
                         2.0,
                         false,
@@ -1765,7 +1765,7 @@ final class AiSpeedrun {
                "hayTrips",
                this.update,
                "survivalActive",
-               this.init_Y.init_Z()
+               this.init_Y.isActive()
             );
          }
 
@@ -1814,7 +1814,7 @@ final class AiSpeedrun {
 
          AiOperation.Result init(AiOperation.Status status, String message, JsonObject receipt, AiOperation.Result actual) {
             this.init_cl_CachePool.init_V_AiOperation(this.init_AiOperation);
-            this.init_cl_CachePool.init(this.init_Y.read(), this.init_AiOperation_Result);
+            this.init_cl_CachePool.init(this.init_Y.requiresReconciliation(), this.init_AiOperation_Result);
             AiOperation.Result result = this.init_cl_CachePool.init(status, message, receipt, actual);
             this.cancel();
             AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun food trip {}: {}", result.status(), result.message());
@@ -1823,22 +1823,22 @@ final class AiSpeedrun {
 
          @Override
          public boolean canInterruptNow() {
-            return !this.init_cl_CachePool.init() && this.init_Y.load() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+            return !this.init_cl_CachePool.init() && this.init_Y.canInterruptNow() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
             return this.init_cl_CachePool.init()
-               || this.init_Y.read()
+               || this.init_Y.requiresReconciliation()
                || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
          }
 
          @Override
          public void cancel() {
             this.init_cl_CachePool.init_V_AiOperation(this.init_AiOperation);
-            this.init_cl_CachePool.init(this.init_Y.read(), this.init_AiOperation_Result);
+            this.init_cl_CachePool.init(this.init_Y.requiresReconciliation(), this.init_AiOperation_Result);
             this.load_Z = true;
-            this.init_Y.init_V();
+            this.init_Y.cancel();
             this.init_V_27();
             this.init_Supplier = null;
          }
@@ -1946,7 +1946,7 @@ final class AiSpeedrun {
          AiOperation.Result result = child.tick();
          boolean after = child.requiresReconciliationAfterEmergency();
          if (result.terminal()) {
-            result = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
+            result = AiGuardLayer.wrapPendingTermination(
                transfer && (after || result.status() != AiOperation.Status.SUCCEEDED && before) || init_Z_AiOperation_Result(result), result
             );
          }

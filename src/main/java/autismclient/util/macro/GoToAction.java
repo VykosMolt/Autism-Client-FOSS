@@ -29,7 +29,7 @@ public class GoToAction implements MacroAction {
          Runnable start = () -> {
             try {
                MacroExecutor.trackAiOperation(
-                  autismclient.ai.engine.AiGoto.init_AiOperation_BlockPos(
+                  autismclient.ai.engine.AiGoto.travelToCompat(
                      new BlockPos((int)Math.floor(this.f_x_D), (int)Math.floor(this.f_y_D), (int)Math.floor(this.f_z_D)),
                      this.arrivalRadius,
                      false,

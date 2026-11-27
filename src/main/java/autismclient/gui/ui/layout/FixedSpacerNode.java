@@ -8,11 +8,11 @@ public class FixedSpacerNode extends LayoutNode {
 
    @Override
    public float init_F_SyncManager(LayoutContext context) {
-      return context.init_CharEncoder().init_F_F(this.read_F);
+      return context.theme().init_F_F(this.read_F);
    }
 
    @Override
    public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      return context.init_CharEncoder().init_F_F(this.write);
+      return context.theme().init_F_F(this.write);
    }
 }

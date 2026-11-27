@@ -136,7 +136,7 @@ public final class AiInventoryController implements AiOperation {
          }
 
          if (this.init_b_DataUtil != null) {
-            AiContainerTransactions.Inner_StreamUtil state = this.init_b_DataUtil.init(menu, System.nanoTime());
+            AiContainerTransactions.Inner_StreamUtil state = this.init_b_DataUtil.checkStatus(menu, System.nanoTime());
             if (state == AiContainerTransactions.Inner_StreamUtil.WAITING) {
                return this.init("Waiting for the server's storage slots and cursor");
             }
@@ -367,7 +367,7 @@ public final class AiInventoryController implements AiOperation {
    private boolean init_Z_I(int slot, int button, ItemStack from, ItemStack to, ItemStack cursor) {
       this.load_J = AiServerEvidence.inventoryRevision();
       AbstractContainerMenu menu = this.init_Minecraft.player.containerMenu;
-      this.init_b_DataUtil = AiContainerTransactions.init(menu, slot, button, Map.of(this.read_I, from, this.write_I, to), cursor);
+      this.init_b_DataUtil = AiContainerTransactions.sendVerifiedPickup(menu, slot, button, Map.of(this.read_I, from, this.write_I, to), cursor);
       if (this.init_b_DataUtil == null) {
          return false;
       }

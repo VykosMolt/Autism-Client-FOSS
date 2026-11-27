@@ -8491,7 +8491,7 @@ public class MacroExecutor {
          int timeoutSeconds = Math.max(1, goToAction.timeoutMs / 1000);
          MacroExecutor.MacroRun run = init_ThreadLocal.get();
          AiOperation op = init_AiOperation_Minecraft(
-            mc, run, () -> autismclient.ai.engine.AiGoto.init_AiOperation_BlockPos(target, radius, false, true, true, timeoutSeconds), false
+            mc, run, () -> autismclient.ai.engine.AiGoto.travelToCompat(target, radius, false, true, true, timeoutSeconds), false
          );
          if (op == null) {
             AutismClientMessaging.sendPrefixed("Failed to start navigation.");

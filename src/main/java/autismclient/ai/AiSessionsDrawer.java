@@ -37,7 +37,7 @@ final class AiSessionsDrawer {
       this.init_Z = !this.init_Z;
       if (this.init_Z) {
          this.init_cF.init_V();
-         this.init_cE_StreamUtil.load();
+         this.init_cE_StreamUtil.scrollToTop();
       } else {
          this.load();
       }
@@ -78,13 +78,13 @@ final class AiSessionsDrawer {
 
          int w = Math.max(110, Math.min(160, area.update() * 2 / 5));
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(area.read(), area.write(), Math.min(w, area.update()), area.sync());
-         kit.load_V(this.init_NetHelper);
-         kit.read(this.init_NetHelper);
-         autismclient.gui.f.b.BufferHelper.init(kit.init_SyncManager, this.init_NetHelper);
+         kit.blockClicks(this.init_NetHelper);
+         kit.blockScroll(this.init_NetHelper);
+         autismclient.gui.f.b.BufferHelper.init(kit.renderContext, this.init_NetHelper);
          autismclient.gui.f.NetHelper inner = this.init_NetHelper.init(4);
-         int ctrl = AiUiKit.init_I();
+         int ctrl = AiUiKit.toolbarHeight();
          int y = inner.write();
-         kit.init_V_NetHelper_3(
+         kit.drawIconLabelButton(
             autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), ctrl),
             autismclient.util.GuiIconAtlas.PLUS,
             "New chat",
@@ -94,7 +94,7 @@ final class AiSessionsDrawer {
          y += ctrl + 2;
          List<AiSessions.Inner_StreamUtil> sessions = this.init_cF.update_List;
          if (sessions.size() > 8) {
-            kit.init_V_BitSetUtil_NetHelper(this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), ctrl));
+            kit.drawTextInput(this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), ctrl));
             y += ctrl + 2;
          } else if (!this.init_BitSetUtil.init_Str().isEmpty() || this.init_BitSetUtil.load_Z()) {
             this.init_BitSetUtil.init_BitSetUtil_Str("");
@@ -103,18 +103,18 @@ final class AiSessionsDrawer {
 
          List<AiSessions.Inner_StreamUtil> rows = this.init_List_List_Str(sessions, this.init_BitSetUtil.init_Str());
          autismclient.gui.f.NetHelper list = autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), Math.max(0, inner.load() - y));
-         int rowH = AiUiKit.load_I();
+         int rowH = AiUiKit.inputHeight();
          int step = rowH + 1;
-         this.init_cE_StreamUtil.init(list, rows.size() * step);
-         kit.init_V_cE_StreamUtil(this.init_cE_StreamUtil);
+         this.init_cE_StreamUtil.layout(list, rows.size() * step);
+         kit.registerScrollPane(this.init_cE_StreamUtil);
          if (rows.isEmpty()) {
-            kit.init_V_Str_2(sessions.isEmpty() ? "No chats yet" : "No matches", list.read() + 4, list.write() + 3, list.update() - 8, kit.init_JsonUtil.textSecondary);
+            kit.drawEllipsizedText(sessions.isEmpty() ? "No chats yet" : "No matches", list.read() + 4, list.write() + 3, list.update() - 8, kit.colors.textSecondary);
          } else {
-            kit.init_V_NetHelper(list);
-            int rowW = list.update() - (this.init_cE_StreamUtil.init_I() > 0 ? 7 : 0);
+            kit.pushClip(list);
+            int rowW = list.update() - (this.init_cE_StreamUtil.maxScroll() > 0 ? 7 : 0);
 
-            for (int i = Math.max(0, this.init_cE_StreamUtil.init_I / step); i < rows.size(); i++) {
-               int ry = list.write() - this.init_cE_StreamUtil.init_I + i * step;
+            for (int i = Math.max(0, this.init_cE_StreamUtil.offset / step); i < rows.size(); i++) {
+               int ry = list.write() - this.init_cE_StreamUtil.offset + i * step;
                if (ry >= list.load()) {
                   break;
                }
@@ -122,46 +122,46 @@ final class AiSessionsDrawer {
                this.init(kit, rows.get(i), autismclient.gui.f.NetHelper.init(list.read(), ry, rowW, rowH), now);
             }
 
-            kit.init_V();
-            kit.load(this.init_cE_StreamUtil);
+            kit.popClip();
+            kit.drawScrollbar(this.init_cE_StreamUtil);
          }
       }
    }
 
    private void init(AiUiKit kit, AiSessions.Inner_StreamUtil meta, autismclient.gui.f.NetHelper row, long now) {
-      autismclient.gui.ui.UiColorScheme colors = kit.init_JsonUtil;
+      autismclient.gui.ui.UiColorScheme colors = kit.colors;
       String id = meta.id();
       boolean active = id.equals(this.init_cF.read_Str);
-      boolean hovered = kit.init_Z_NetHelper(row);
+      boolean hovered = kit.isHovered(row);
       boolean armed = id.equals(this.load_Str);
       if (active) {
-         PacketUtil.load(kit.init_GuiGraphicsExtract, row, 3, PacketUtil.init(colors.accent, 0.16F));
+         PacketUtil.load(kit.graphics, row, 3, PacketUtil.init(colors.accent, 0.16F));
       } else if (hovered) {
-         PacketUtil.load(kit.init_GuiGraphicsExtract, row, 3, colors.cardSurfaceElevated);
+         PacketUtil.load(kit.graphics, row, 3, colors.cardSurfaceElevated);
       }
 
-      kit.init_V_NetHelper(row, () -> this.init_V_Str(id), () -> this.init_AiAssistantOverlay.init(id), null);
-      kit.init_V_I(
+      kit.addInteractiveRegion(row, () -> this.init_V_Str(id), () -> this.init_AiAssistantOverlay.init(id), null);
+      kit.drawStatusDot(
          row.read() + 5, row.write() + row.sync() / 2, 2.0F, AiChatView.init_I_cE_Str(kit, active ? this.init_cF.init_cc_FileCache.name() : meta.state())
       );
       int textX = row.read() + 11;
       int icon = row.sync() - 2;
       if (id.equals(this.init_Str)) {
-         kit.init_V_BitSetUtil_NetHelper(this.load_BitSetUtil, autismclient.gui.f.NetHelper.init(textX - 2, row.write(), row.init() - textX + 2, row.sync()));
+         kit.drawTextInput(this.load_BitSetUtil, autismclient.gui.f.NetHelper.init(textX - 2, row.write(), row.init() - textX + 2, row.sync()));
       } else {
          int right = row.init() - 3;
          if (!hovered && !armed) {
-            String age = AiUiKit.init_Str_J_J(meta.lastActiveAt(), now);
-            int ageW = kit.init_I_Str(age);
-            kit.init_V_Str_3(age, row, right - ageW, ageW, colors.textMuted);
+            String age = AiUiKit.formatRelativeAge(meta.lastActiveAt(), now);
+            int ageW = kit.measureTextWidth(age);
+            kit.drawCenteredRowText(age, row, right - ageW, ageW, colors.textMuted);
             right -= ageW + 4;
          } else {
             autismclient.gui.f.NetHelper trash = autismclient.gui.f.NetHelper.init(row.init() - icon - 1, row.write() + 1, icon, icon);
-            kit.init(trash, autismclient.util.GuiIconAtlas.DELETE, false, armed, armed ? "Click again to delete" : "Delete chat", () -> this.load(id));
+            kit.drawIconButton(trash, autismclient.util.GuiIconAtlas.DELETE, false, armed, armed ? "Click again to delete" : "Delete chat", () -> this.load(id));
             right = trash.read() - 3;
          }
 
-         kit.init_V_Str_3(init_Str_cd_StreamUtil(meta), row, textX, Math.max(1, right - textX), active ? colors.textPrimary : colors.textSecondary);
+         kit.drawCenteredRowText(init_Str_cd_StreamUtil(meta), row, textX, Math.max(1, right - textX), active ? colors.textPrimary : colors.textSecondary);
       }
    }
 
@@ -194,7 +194,7 @@ final class AiSessionsDrawer {
    }
 
    private void read() {
-      this.init_cc.run_Str();
+      this.init_cc.createSession();
       this.load();
       this.init_cF.init_V();
       this.init_AiAssistantOverlay.write_V();
@@ -202,7 +202,7 @@ final class AiSessionsDrawer {
 
    private void init_V_Str(String id) {
       if (!id.equals(this.init_cF.read_Str)) {
-         this.init_cc.load_V_Str(id);
+         this.init_cc.switchSession(id);
       }
 
       this.load();
@@ -215,7 +215,7 @@ final class AiSessionsDrawer {
          this.load_J = System.currentTimeMillis();
       } else {
          this.load_Str = null;
-         this.init_cc.read_V_Str(id);
+         this.init_cc.deleteSession(id);
          this.init_cF.init_V();
          autismclient.util.bi.load("Chat deleted");
       }
@@ -238,7 +238,7 @@ final class AiSessionsDrawer {
             this.init_AiAssistantOverlay.init(this.load_BitSetUtil);
             break;
          case 1:
-            if (!this.init_cc.write_Z_Str(id)) {
+            if (!this.init_cc.branchSession(id)) {
                autismclient.util.bi.read("Nothing to branch yet");
             } else {
                autismclient.util.bi.load("Branched into a new chat");
@@ -248,7 +248,7 @@ final class AiSessionsDrawer {
             this.init_cF.init_V();
             break;
          case 2:
-            this.init_cc.read_V_Str(id);
+            this.init_cc.deleteSession(id);
             this.init_cF.init_V();
             autismclient.util.bi.load("Chat deleted");
       }
@@ -260,7 +260,7 @@ final class AiSessionsDrawer {
       this.init_Str = null;
       this.load_BitSetUtil.init_V_Z(false);
       if (id != null && !text.isEmpty()) {
-         this.init_cc.load_V_Str_Str(id, text);
+         this.init_cc.renameSession(id, text);
          this.init_cF.init_V();
       }
    }

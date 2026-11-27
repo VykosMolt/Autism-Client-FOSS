@@ -42,19 +42,19 @@ public class SurfaceBox extends LayoutContainer {
 
    @Override
    public float init_F_SyncManager(LayoutContext context) {
-      EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
       return scaledPadding.init_I() + this.init_PacketUtil.init_F_SyncManager(context);
    }
 
    @Override
    public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
       return scaledPadding.load() + this.init_PacketUtil.init_F_SyncManager_F(context, Math.max(0.0F, availableWidth - scaledPadding.init_I()));
    }
 
    @Override
    protected void load_V(LayoutContext context) {
-      EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
       this.init_PacketUtil
          .init_TableIndex_F(
             this.init_F + scaledPadding.read(),
@@ -72,20 +72,20 @@ public class SurfaceBox extends LayoutContainer {
          int drawY = Math.round(this.load_F);
          int drawW = Math.round(this.read_F);
          int drawH = Math.round(this.write);
-         int fill = this.write_Z ? drawContext.init_CharEncoder().poll() : drawContext.init_CharEncoder().push();
-         int border = this.write_Z ? drawContext.init_CharEncoder().get() : drawContext.init_CharEncoder().set();
+         int fill = this.write_Z ? drawContext.theme().poll() : drawContext.theme().push();
+         int border = this.write_Z ? drawContext.theme().get() : drawContext.theme().set();
          autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH);
          if (this.sync && this.update_Z) {
-            autismclient.gui.f.PacketUtil.read(drawContext.init_GuiGraphicsExtract(), bounds, 5, drawContext.init_I_I(fill), drawContext.init_I_I(border));
+            autismclient.gui.f.PacketUtil.read(drawContext.graphics(), bounds, 5, drawContext.applyAlpha(fill), drawContext.applyAlpha(border));
          } else if (this.sync) {
-            autismclient.gui.f.PacketUtil.load(drawContext.init_GuiGraphicsExtract(), bounds, 5, drawContext.init_I_I(fill));
+            autismclient.gui.f.PacketUtil.load(drawContext.graphics(), bounds, 5, drawContext.applyAlpha(fill));
          } else if (this.update_Z) {
-            autismclient.gui.f.PacketUtil.load(drawContext.init_GuiGraphicsExtract(), bounds, 5, 0, drawContext.init_I_I(border));
+            autismclient.gui.f.PacketUtil.load(drawContext.graphics(), bounds, 5, 0, drawContext.applyAlpha(border));
          }
 
          super.init_V_SyncManager(drawContext);
          if (!this.write_Z) {
-            autismclient.gui.f.PacketUtil.load(drawContext.init_GuiGraphicsExtract(), bounds, 5, drawContext.init_I_I(603979776));
+            autismclient.gui.f.PacketUtil.load(drawContext.graphics(), bounds, 5, drawContext.applyAlpha(603979776));
          }
       }
    }

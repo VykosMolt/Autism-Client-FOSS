@@ -163,7 +163,7 @@ public final class AiSchematicApproach implements AiOperation {
                      boolean edits = !station.probe.load_Z;
                      int seconds = Math.max(1, (int)Math.ceil((this.init_J - System.nanoTime()) / 1.0E9));
                      AiGoto.GotoOptions options = new AiGoto.GotoOptions(true, this.init_Function == null, 3, false, true, true);
-                     this.init_AiOperation = AiGoto.init(
+                     this.init_AiOperation = AiGoto.travelToCompat(
                         station.probe.init_BlockPos,
                         0.6,
                         edits,

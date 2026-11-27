@@ -96,8 +96,8 @@ public final class AiFallGuard {
             && mc.level.dimension() == Level.END) {
             boolean drivenNow = System.nanoTime() - init_J < 250000000L;
             if (!drivenNow) {
-               AiService service = AiService.load_cc();
-               drivenNow = service != null && service.open_Z() || autismclient.ai.AiDirectOps.load_Z();
+               AiService service = AiService.getExistingInstance();
+               drivenNow = service != null && service.isActivelyDriving() || autismclient.ai.AiDirectOps.load_Z();
             }
 
             if (drivenNow) {
@@ -120,8 +120,8 @@ public final class AiFallGuard {
             long now = System.nanoTime();
             boolean driven = now - init_J < 250000000L;
             if (!driven) {
-               AiService service = AiService.load_cc();
-               driven = service != null && service.open_Z() || autismclient.ai.AiDirectOps.load_Z();
+               AiService service = AiService.getExistingInstance();
+               driven = service != null && service.isActivelyDriving() || autismclient.ai.AiDirectOps.load_Z();
             }
 
             if (!driven) {

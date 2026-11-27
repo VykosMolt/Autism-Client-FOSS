@@ -245,7 +245,7 @@ final class AiTidy {
                         this.load_I = worst.slot();
                         this.init_cx_StreamUtil = worst;
                         this.write = AiCraft.countItem(worst.item());
-                        AiContainerTransactions.init(mc.player.containerMenu.containerId, AiTidy.init(mc, worst.slot()), 1, ContainerInput.THROW);
+                        AiContainerTransactions.sendPredictedClick(mc.player.containerMenu.containerId, AiTidy.init(mc, worst.slot()), 1, ContainerInput.THROW);
                         return this.init("Dropping " + worst.count() + " " + worst.item());
                      }
                   } else {
@@ -359,8 +359,8 @@ final class AiTidy {
          }
       }
 
-      int wood = autismclient.ai.engine.AiRestock.load(inventory);
-      int keptWood = autismclient.ai.engine.AiRestock.init_I();
+      int wood = autismclient.ai.engine.AiRestock.totalWoodUnits(inventory);
+      int keptWood = autismclient.ai.engine.AiRestock.reservedWood();
       int sticks = 0;
       int stone = 0;
 
@@ -368,7 +368,7 @@ final class AiTidy {
          ItemStack stack = inventory.getItem(slot);
          if (stack.is(Items.STICK)) {
             sticks += stack.getCount();
-         } else if (autismclient.ai.engine.AiRestock.init(stack)) {
+         } else if (autismclient.ai.engine.AiRestock.isStoneBlock(stack)) {
             stone += stack.getCount();
          }
       }
@@ -376,12 +376,12 @@ final class AiTidy {
       for (int slot = 0; slot < 36; slot++) {
          ItemStack stack = inventory.getItem(slot);
          if (!stack.isEmpty() && slot != selected && !init_Z(stack, keep)) {
-            int reserved = Math.max(AiRunResources.totalReservedCount(stack.getItem()), autismclient.ai.engine.AiRestock.init(stack.getItem()));
+            int reserved = Math.max(AiRunResources.totalReservedCount(stack.getItem()), autismclient.ai.engine.AiRestock.reservedItemCount(stack.getItem()));
             if ((reserved <= 0 || AiGameState.countMainInventoryItem(load_Str(stack)) - stack.getCount() >= reserved) && (!init_Z(stack) || blocks - stack.getCount() >= 64)) {
                int stackWood = stack.is(ItemTags.PLANKS) ? stack.getCount() : (stack.is(ItemTags.LOGS) ? 4 * stack.getCount() : 0);
                if ((stackWood <= 0 || wood - stackWood >= keptWood)
                   && (!stack.is(Items.STICK) || sticks - stack.getCount() >= 2)
-                  && (!autismclient.ai.engine.AiRestock.init(stack) || stone - stack.getCount() >= autismclient.ai.engine.AiRestock.read())) {
+                  && (!autismclient.ai.engine.AiRestock.isStoneBlock(stack) || stone - stack.getCount() >= autismclient.ai.engine.AiRestock.baseStoneReserve())) {
                   int rank = init_I(stack, held);
                   ranked.add(new AiTidy.Inner_StreamUtil(slot, load_Str(stack), stack.getCount(), rank));
                }

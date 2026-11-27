@@ -117,8 +117,8 @@ public final class AiAddons {
    }
 
    private static boolean auditAddonExecutionAllowed() {
-      AiService controller = AiService.load_cc();
-      return controller == null || controller.init_AiSettings().unrestrictedScripts;
+      AiService controller = AiService.getExistingInstance();
+      return controller == null || controller.getSettings().unrestrictedScripts;
    }
 
    private static boolean auditIsExistingAutismAddonJar(Path jarPath, String expectedId) {

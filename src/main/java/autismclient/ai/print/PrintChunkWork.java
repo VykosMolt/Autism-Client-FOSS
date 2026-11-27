@@ -83,7 +83,7 @@ final class PrintChunkWork {
    }
 
    boolean init_Z_CachePool_StreamUt(PrintChunkWork.Inner_StreamUtil chunk) {
-      return this.init_UiHelper.init_EventBus.load_Z(this.init_UiHelper.init_ListPoolArr[chunk.init_IntArrayList.getInt(0)].pos());
+      return this.init_UiHelper.init_EventBus.hasChunkAt(this.init_UiHelper.init_ListPoolArr[chunk.init_IntArrayList.getInt(0)].pos());
    }
 
    void init_V_J(long key) {

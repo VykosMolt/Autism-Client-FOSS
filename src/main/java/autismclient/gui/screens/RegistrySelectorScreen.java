@@ -198,7 +198,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private void init(GuiGraphicsExtractor graphics, String label, int x, int y, int w, int groupH) {
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.load(graphics, x, y, w, groupH - 1);
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.drawSectionHeader(graphics, x, y, w, groupH - 1);
       this.load(graphics, label, x + 4, this.init_I_I_I_6(y, groupH - 1), read_I_10(), w - 8);
    }
 
@@ -218,7 +218,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       String id = entry == null ? value : entry.init_Str;
       int rowH = this.poll();
       boolean over = mx >= x && mx < x + w && my >= y && my < y + rowH;
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, y, w, rowH - 1, over ? -1441000940 : -1441722092);
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, y, w, rowH - 1, over ? -1441000940 : -1441722092);
       int textX = x + 4;
       if (entry != null && !invalid) {
          this.init(graphics, entry, x + 2, y + Math.max(0, (rowH - 1 - 16) / 2));
@@ -241,9 +241,9 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
 
       if (type == RegistrySelectorScreen.Inner_CachePool.ADD) {
-         autismclient.gui.ui.widgets.ListRowRenderer.init(graphics, actionX, actionY, actionW, actionW, "+", over, false);
+         autismclient.gui.ui.widgets.ListRowRenderer.drawSymbolButton(graphics, actionX, actionY, actionW, actionW, "+", over, false);
       } else {
-         autismclient.gui.ui.widgets.ListRowRenderer.load(graphics, actionX, actionY, actionW, actionW, over);
+         autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButton(graphics, actionX, actionY, actionW, actionW, over);
       }
 
       this.load_List.add(new RegistrySelectorScreen.Inner_StreamUtil(type, x, y, w, rowH, value));

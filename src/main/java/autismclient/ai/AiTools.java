@@ -2768,11 +2768,11 @@ final class AiTools {
          this.init_bH.load();
       }
 
-      if (this.init_cc.update_Z() && !AiService.init_Set.contains(tool) && !"perform".equals(tool)) {
+      if (this.init_cc.isPlanPendingOrPlanning() && !AiService.READ_ONLY_TOOLS.contains(tool) && !"perform".equals(tool)) {
          return AiJson.objectOf("status", "FAILED", "error", "Plan mode: research and plan first; the user approves before any action");
       }
 
-      if (this.init_cc.update_Z() && "perform".equals(tool)) {
+      if (this.init_cc.isPlanPendingOrPlanning() && "perform".equals(tool)) {
          return AiJson.objectOf("status", "FAILED", "error", "Plan mode: no capabilities may be performed until the user approves the plan");
       }
 
@@ -2817,10 +2817,10 @@ final class AiTools {
          case "catalog_search": {
             JsonObject var44 = AiJson.objectOf(
                "revision",
-               this.init_cc.init_AiCatalog_Snapshot().revision(),
+               this.init_cc.getCatalogSnapshot().revision(),
                "entries",
                this.init_cc
-                  .init_AiCatalog_Snapshot()
+                  .getCatalogSnapshot()
                   .search(AiJson.getString(args, "query", ""), AiJson.getInt(args, "offset", 0), AiJson.getInt(args, "limit", 12))
             );
             JsonObject var45 = var44;
@@ -2877,7 +2877,7 @@ final class AiTools {
          }
          case "perform":
             String id = AiJson.getString(args, "id", "");
-            AiCatalog.Entry entry = this.init_cc.init_AiCatalog_Snapshot().get(id);
+            AiCatalog.Entry entry = this.init_cc.getCatalogSnapshot().get(id);
             if (entry == null) {
                throw new IllegalArgumentException("Unknown capability " + id + this.load(id));
             }
@@ -2967,7 +2967,7 @@ final class AiTools {
                   "recipes",
                   recipes,
                   "session",
-                  this.init_cc.init_AiObservation().session(),
+                  this.init_cc.getLatestObservation().session(),
                   "message",
                   "Recipe snapshot inspected; server execution still requires verification"
                );
@@ -3022,7 +3022,7 @@ final class AiTools {
          }
          case "memory_search": {
             JsonObject var28 = AiJson.objectOf(
-               "memories", this.init_cc.init_AiMemoryStore().init(this.init_cc.poll_Str(), AiJson.getString(args, "query", ""), 20)
+               "memories", this.init_cc.getMemoryStore().init(this.init_cc.getDimensionId(), AiJson.getString(args, "query", ""), 20)
             );
             JsonObject var29 = var28;
             var10000 = var29;
@@ -3042,27 +3042,27 @@ final class AiTools {
                throw new IllegalArgumentException("Use procedure_save with successful operation evidence IDs to save executable procedures");
             }
 
-            String memoryScope = kind == AiMemoryStore.Inner_DataUtil.USER ? "user" : this.init_cc.poll_Str();
+            String memoryScope = kind == AiMemoryStore.Inner_DataUtil.USER ? "user" : this.init_cc.getDimensionId();
             String text = AiJson.getString(args, "text", "");
             String payload = AiJson.getString(args, "payload", "");
             String evidence = AiJson.getString(args, "evidenceId", "");
 
             AiMemoryStore.Memory memory;
             try {
-               memory = this.init_cc.init_AiMemoryStore().init(kind, memoryScope, text, evidence, this.init_cc.init_AiCatalog_Snapshot().revision(), payload);
+               memory = this.init_cc.getMemoryStore().init(kind, memoryScope, text, evidence, this.init_cc.getCatalogSnapshot().revision(), payload);
             } catch (IllegalArgumentException e) {
                String fallback = !this.init_cc.init_Z() && kind != AiMemoryStore.Inner_DataUtil.HYPOTHESIS
                   ? (
                      kind == AiMemoryStore.Inner_DataUtil.USER
                         ? this.init_cc.push_Str()
-                        : (this.init_cc.init_AiObservation() == null ? null : this.init_cc.init_AiObservation().id())
+                        : (this.init_cc.getLatestObservation() == null ? null : this.init_cc.getLatestObservation().id())
                   )
                   : null;
                if (fallback == null || fallback.equals(evidence)) {
                   throw e;
                }
 
-               memory = this.init_cc.init_AiMemoryStore().init(kind, memoryScope, text, fallback, this.init_cc.init_AiCatalog_Snapshot().revision(), payload);
+               memory = this.init_cc.getMemoryStore().init(kind, memoryScope, text, fallback, this.init_cc.getCatalogSnapshot().revision(), payload);
             }
 
             JsonObject var27 = AiJson.objectOf("memory", memory);
@@ -3111,7 +3111,7 @@ final class AiTools {
          .init_Obj_J_Supplier(
             generation,
             () -> {
-               AiCatalog.Entry e = this.init_cc.init_AiCatalog_Snapshot().get(id);
+               AiCatalog.Entry e = this.init_cc.getCatalogSnapshot().get(id);
                if (e == null) {
                   throw new IllegalArgumentException("Unknown capability");
                }
@@ -3175,7 +3175,7 @@ final class AiTools {
    private String load(String id) {
       List<String> ids = new ArrayList<>();
 
-      for (AiCatalog.Entry e : this.init_cc.init_AiCatalog_Snapshot().search(id.replace(':', ' ').replace('_', ' '), 0, 3)) {
+      for (AiCatalog.Entry e : this.init_cc.getCatalogSnapshot().search(id.replace(':', ' ').replace('_', ' '), 0, 3)) {
          ids.add(e.contract().id());
       }
 
@@ -3186,7 +3186,7 @@ final class AiTools {
       String filter = category.trim().toLowerCase(Locale.ROOT);
       TreeMap<String, JsonArray> grouped = new TreeMap<>();
 
-      for (AiCatalog.Entry entry : this.init_cc.init_AiCatalog_Snapshot().entries()) {
+      for (AiCatalog.Entry entry : this.init_cc.getCatalogSnapshot().entries()) {
          AiCapabilityDescriptor contract = entry.contract();
          if (filter.isEmpty() || contract.family().equals(filter)) {
             grouped.computeIfAbsent(contract.family(), f -> new JsonArray())
@@ -3196,7 +3196,7 @@ final class AiTools {
 
       JsonObject categories = new JsonObject();
       grouped.forEach(categories::add);
-      return AiJson.objectOf("revision", this.init_cc.init_AiCatalog_Snapshot().revision(), "categories", categories);
+      return AiJson.objectOf("revision", this.init_cc.getCatalogSnapshot().revision(), "categories", categories);
    }
 
    public static String init_Str_Str(String purpose) {
@@ -3213,7 +3213,7 @@ final class AiTools {
       if (args.has("macro") && args.get("macro").isJsonObject()) {
          JsonObject data = args.getAsJsonObject("macro");
          String existing = this.init_cc.init_Obj_J_Supplier(generation, () -> {
-            autismclient.util.AutismMacro validated = AiMacroValidator.init(data, this.init_cc.init_AiCatalog_Snapshot());
+            autismclient.util.AutismMacro validated = AiMacroValidator.init(data, this.init_cc.getCatalogSnapshot());
             autismclient.util.AutismMacro old = autismclient.util.MacroLibraryManager.getInstance().findByName(validated.name);
             return old == null ? "" : init_JsonObject_aM(old).toString();
          });
@@ -3229,7 +3229,7 @@ final class AiTools {
             .init_Obj_J_Supplier(
                generation,
                () -> {
-                  autismclient.util.AutismMacro macro = AiMacroValidator.init(data, this.init_cc.init_AiCatalog_Snapshot());
+                  autismclient.util.AutismMacro macro = AiMacroValidator.init(data, this.init_cc.getCatalogSnapshot());
                   autismclient.util.MacroLibraryManager manager = autismclient.util.MacroLibraryManager.getInstance();
                   autismclient.util.AutismMacro old = manager.findByName(macro.name);
                   if (!existing.equals(old == null ? "" : init_JsonObject_aM(old).toString())) {
@@ -3325,10 +3325,10 @@ final class AiTools {
       AiOperation var10000;
       switch (id) {
          case "game:navigate":
-            var10000 = AiGoto.init(args);
+            var10000 = AiGoto.fromJsonCompat(args);
             break;
          case "game:goto":
-            var10000 = !args.has("checkpoints") && !AiParkourRoute.putAt_Z_JsonObject(args) ? AiGoto.init(args) : new AiParkourRoute(args);
+            var10000 = !args.has("checkpoints") && !AiParkourRoute.putAt_Z_JsonObject(args) ? AiGoto.fromJsonCompat(args) : new AiParkourRoute(args);
             break;
          case "game:follow":
             var10000 = AiFollow.init(args);
@@ -3644,13 +3644,13 @@ final class AiTools {
             action.addProperty("type", id.substring(6));
             action.remove("timeoutSeconds");
             autismclient.util.AutismMacro m = AiMacroValidator.init(
-               AiJson.objectOf("name", "AI operation " + UUID.randomUUID(), "actions", List.of(action)), this.init_cc.init_AiCatalog_Snapshot()
+               AiJson.objectOf("name", "AI operation " + UUID.randomUUID(), "actions", List.of(action)), this.init_cc.getCatalogSnapshot()
             );
             return this.init_AiOperation_aM_JsonObject(m, args);
          }
       }
 
-      return init_AiOperation_Str(id, args, this.init_cc.init_AiSettings(), this.init_cc.init_AiObservation());
+      return init_AiOperation_Str(id, args, this.init_cc.getSettings(), this.init_cc.getLatestObservation());
    }
 
    static AiOperation init_AiOperation_Str(String id, JsonObject args, AiSettings settings, AiObservation observation) {
@@ -3901,7 +3901,7 @@ final class AiTools {
    }
 
    private AiOperation init_AiOperation_aM_JsonObject(autismclient.util.AutismMacro macro, JsonObject args) {
-      return init_AiOperation_aM(macro, args, this.init_cc.init_AiSettings());
+      return init_AiOperation_aM(macro, args, this.init_cc.getSettings());
    }
 
    static AiOperation init_AiOperation_aM(autismclient.util.AutismMacro macro, JsonObject args, AiSettings settings) {

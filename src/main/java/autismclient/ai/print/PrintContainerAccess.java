@@ -24,7 +24,7 @@ public final class PrintContainerAccess {
       }
 
       AABB lid = init(state, at);
-      return (body == null || !lid.intersects(body)) && view.init_Z_AABB(lid);
+      return (body == null || !lid.intersects(body)) && view.isBoxClear(lid);
    }
 
    public static boolean init(Level level, BlockPos at) {

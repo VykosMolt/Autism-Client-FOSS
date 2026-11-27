@@ -84,8 +84,8 @@ final class PrintClicks {
    }
 
    static boolean init_Z_ArrayUtil(PrintView view, PrintEnv env, PrintTarget target, PrintClicks.Inner_CachePool mode) {
-      Vec3 eye = env.load_Vec3();
-      BlockHitResult hit = view.write(eye, eye.add(PrintGeometry.init_Vec3(env.write_F(), env.update_F()).scale(4.5)));
+      Vec3 eye = env.serverEyePos();
+      BlockHitResult hit = view.raycastOutline(eye, eye.add(PrintGeometry.init_Vec3(env.serverYaw(), env.serverPitch()).scale(4.5)));
       if (hit != null && !(hit.getLocation().distanceTo(eye) > 4.4)) {
          BlockState state = view.getBlockState(hit.getBlockPos());
          boolean waterloggable = state.getBlock() instanceof LiquidBlockContainer && init(target) == Items.WATER_BUCKET;
@@ -125,11 +125,11 @@ final class PrintClicks {
    }
 
    private static boolean load(BlockState state) {
-      return state != PrintView.init_BlockState && (state.canBeReplaced() || state.isAir());
+      return state != PrintView.UNLOADED_SENTINEL && (state.canBeReplaced() || state.isAir());
    }
 
    private static boolean read(BlockState state) {
-      return state != PrintView.init_BlockState && !state.isAir() && !state.canBeReplaced();
+      return state != PrintView.UNLOADED_SENTINEL && !state.isAir() && !state.canBeReplaced();
    }
 
    private static boolean init(BlockState wanted, Direction face, PlacementGoal.@Nullable PlaceConstraint constraint) {
@@ -147,7 +147,7 @@ final class PrintClicks {
          BlockPos support = target.pos().relative(direction);
          if ((requiredSupport == null || support.equals(requiredSupport)) && init(target.wanted(), direction.getOpposite(), constraint)) {
             BlockState state = view.getBlockState(support);
-            if (read(state) && !view.load(state, support).isEmpty()) {
+            if (read(state) && !view.getOutlineBoxes(state, support).isEmpty()) {
                return true;
             }
          }
@@ -234,7 +234,7 @@ final class PrintClicks {
       }
 
       Vec3 direction = point.subtract(eye).normalize();
-      BlockHitResult hit = view.init_BlockHitResult_Vec3_Vec3(eye, point.add(direction.scale(0.02)));
+      BlockHitResult hit = view.raycastBlock(eye, point.add(direction.scale(0.02)));
       if (hit != null && hit.getBlockPos().equals(click.support()) && hit.getDirection() == click.face() && !(hit.getLocation().distanceToSqr(point) >= 4.0E-4)
          )
        {
@@ -244,7 +244,7 @@ final class PrintClicks {
          }
 
          if (init(click.target(), null)) {
-            BlockState predicted = env.init(click.item(), hit, yaw, pitch, click.crouch(), click.target().pos());
+            BlockState predicted = env.predictPlacedState(click.item(), hit, yaw, pitch, click.crouch(), click.target().pos());
             if (predicted == null || !init(view, rules, click.target(), predicted, rail)) {
                return false;
             }
@@ -272,7 +272,7 @@ final class PrintClicks {
       PlacementGoal.@Nullable PlaceConstraint constraint
    ) {
       if (!budget.init() && load(view.getBlockState(target.pos()))) {
-         boolean compact = crouch && !env.flush();
+         boolean compact = crouch && !env.canUseFlight();
          AABB body = PrintGeometry.init(feet.x, feet.y, feet.z, compact);
          if (!budget.init(view, body)) {
             return null;
@@ -280,7 +280,7 @@ final class PrintClicks {
 
          Vec3 eye = PrintGeometry.init(feet, compact);
          budget.init_I++;
-         BlockHitResult hit = view.init_BlockHitResult_Vec3_Vec3(eye, eye.add(PrintGeometry.init_Vec3(yaw, pitch).scale(reach)));
+         BlockHitResult hit = view.raycastBlock(eye, eye.add(PrintGeometry.init_Vec3(yaw, pitch).scale(reach)));
          if (hit != null
             && hit.getBlockPos().relative(hit.getDirection()).equals(target.pos())
             && !(hit.getLocation().distanceTo(eye) > reach)
@@ -300,7 +300,7 @@ final class PrintClicks {
             BlockState predicted;
             if (exact) {
                budget.load++;
-               predicted = env.init(item, hit, yaw, pitch, crouch, target.pos());
+               predicted = env.predictPlacedState(item, hit, yaw, pitch, crouch, target.pos());
             } else {
                predicted = init_BlockState(view, target);
             }
@@ -373,7 +373,7 @@ final class PrintClicks {
       PlacementGoal.PlaceConstraint constraint,
       @Nullable BlockPos requiredSupport
    ) {
-      return init(view, env, rules, target, item, mode, feet, crouch, exact, budget, reach, constraint, requiredSupport, env.flush());
+      return init(view, env, rules, target, item, mode, feet, crouch, exact, budget, reach, constraint, requiredSupport, env.canUseFlight());
    }
 
    static PrintClicks.@Nullable Inner_StreamUtil init(
@@ -391,8 +391,8 @@ final class PrintClicks {
       @Nullable BlockPos requiredSupport
    ) {
       PrintClicks.Inner_StreamUtil click = init(view, env, rules, target, item, mode, feet, crouch, false, budget, reach, constraint, requiredSupport, false);
-      if (click != null && mode == PrintClicks.Inner_CachePool.PLACE && !view.init_Z()) {
-         BlockState placed = env.init(item, click.result(), click.yaw(), click.pitch(), click.crouch(), target.pos());
+      if (click != null && mode == PrintClicks.Inner_CachePool.PLACE && !view.hasHypotheses()) {
+         BlockState placed = env.predictPlacedState(item, click.result(), click.yaw(), click.pitch(), click.crouch(), target.pos());
          if (placed != null && init_Z_ArrayUtil_3(view, rules, target, placed) && placed != click.predicted()) {
             boolean compact = click.eye().y - feet.y < 1.61;
             return init_Z_ArrayUtil_5(view, placed, target.pos(), PrintGeometry.init(feet.x, feet.y, feet.z, compact))
@@ -440,13 +440,13 @@ final class PrintClicks {
 
       Vec3 eye = PrintGeometry.init(feet, compact);
       BlockPos cell = target.pos();
-      if (eye.distanceToSqr(PrintView.init_Vec3_BlockPos(cell)) > init(reach + 0.9)) {
+      if (eye.distanceToSqr(PrintView.blockCenter(cell)) > init(reach + 0.9)) {
          return null;
       }
 
       if (mode != PrintClicks.Inner_CachePool.INTERACT && mode != PrintClicks.Inner_CachePool.WATERLOG && mode != PrintClicks.Inner_CachePool.DIG) {
          BlockState here = view.getBlockState(cell);
-         if (here == PrintView.init_BlockState) {
+         if (here == PrintView.UNLOADED_SENTINEL) {
             return null;
          }
 
@@ -473,7 +473,7 @@ final class PrintClicks {
                                  || !(supportState.getBlock() instanceof LiquidBlockContainer)
                                  || item != Items.WATER_BUCKET
                            )) {
-                           List<AABB> outline = view.load(supportState, support);
+                           List<AABB> outline = view.getOutlineBoxes(supportState, support);
                            if (!outline.isEmpty()) {
                               for (AABB box : outline) {
                                  AABB b = box.move(support);
@@ -501,7 +501,7 @@ final class PrintClicks {
 
                                           budget.init_I++;
                                           Vec3 dir = point.subtract(eye).normalize();
-                                          BlockHitResult hit = view.init_BlockHitResult_Vec3_Vec3(eye, point.add(dir.scale(0.02)));
+                                          BlockHitResult hit = view.raycastBlock(eye, point.add(dir.scale(0.02)));
                                           if (hit != null
                                              && hit.getBlockPos().equals(support)
                                              && hit.getDirection() == face
@@ -512,7 +512,7 @@ final class PrintClicks {
                                              }
 
                                              if (exact) {
-                                                BlockHitResult wire = view.init_BlockHitResult_Vec3_Vec3(
+                                                BlockHitResult wire = view.raycastBlock(
                                                    eye, eye.add(PrintGeometry.init_Vec3(yaw, pitch).scale(reach))
                                                 );
                                                 if (wire == null || !wire.getBlockPos().equals(support) || wire.getDirection() != face) {
@@ -531,7 +531,7 @@ final class PrintClicks {
 
                                              if (exact) {
                                                 budget.load++;
-                                                predicted = env.init(item, hit, yaw, pitch, crouch, cell);
+                                                predicted = env.predictPlacedState(item, hit, yaw, pitch, crouch, cell);
                                                 if (predicted == null || !init(view, rules, target, predicted, railShape)) {
                                                    continue;
                                                 }
@@ -632,7 +632,7 @@ final class PrintClicks {
 
             for (int dy = -1; dy <= 1; dy++) {
                BlockState state = view.getBlockState(neighbor.offset(0, dy, 0));
-               if (state == PrintView.init_BlockState) {
+               if (state == PrintView.UNLOADED_SENTINEL) {
                   return null;
                }
 
@@ -660,7 +660,7 @@ final class PrintClicks {
          for (int dy : new int[]{0, 1, -1}) {
             BlockPos candidate = neighbor.offset(0, dy, 0);
             BlockState other = view.getBlockState(candidate);
-            if (other == PrintView.init_BlockState) {
+            if (other == PrintView.UNLOADED_SENTINEL) {
                return true;
             }
 
@@ -804,7 +804,7 @@ final class PrintClicks {
          }
       }
 
-      List<AABB> outline = view.load(state, cell);
+      List<AABB> outline = view.getOutlineBoxes(state, cell);
       if (outline.isEmpty()) {
          return null;
       }
@@ -817,7 +817,7 @@ final class PrintClicks {
          return null;
       }
 
-      Direction only = mode == PrintClicks.Inner_CachePool.INTERACT ? view.init_Direction_BlockPos(cell) : null;
+      Direction only = mode == PrintClicks.Inner_CachePool.INTERACT ? view.getRequiredInteractFace(cell) : null;
 
       for (AABB box : outline) {
          AABB b = box.move(cell);
@@ -835,7 +835,7 @@ final class PrintClicks {
                      if (!(eye.distanceToSqr(point) > init(reach))) {
                         budget.init_I++;
                         Vec3 dir = point.subtract(eye).normalize();
-                        BlockHitResult hit = view.init_BlockHitResult_Vec3_Vec3(eye, point.add(dir.scale(0.02)));
+                        BlockHitResult hit = view.raycastBlock(eye, point.add(dir.scale(0.02)));
                         if (hit != null && hit.getBlockPos().equals(cell) && hit.getDirection() == face) {
                            float yaw = PrintGeometry.init(eye, point);
                            float pitch = PrintGeometry.load(eye, point);
@@ -843,7 +843,7 @@ final class PrintClicks {
                               return new PrintClicks.Inner_StreamUtil(target, mode, item, cell, hit.getDirection(), hit, eye, feet, crouch, yaw, pitch, null);
                            }
 
-                           BlockHitResult wire = view.init_BlockHitResult_Vec3_Vec3(eye, eye.add(PrintGeometry.init_Vec3(yaw, pitch).scale(reach)));
+                           BlockHitResult wire = view.raycastBlock(eye, eye.add(PrintGeometry.init_Vec3(yaw, pitch).scale(reach)));
                            if (wire != null
                               && wire.getBlockPos().equals(cell)
                               && init_Z_ArrayUtil(view, env, rules, target, item, wire, yaw, pitch, crouch, exact)) {
@@ -869,8 +869,8 @@ final class PrintClicks {
          return false;
       } else {
          BlockState var17 = null;
-         if (exact && !view.init_Z()) {
-            var17 = env.init(item, hit, yaw, pitch, crouch, target.pos());
+         if (exact && !view.hasHypotheses()) {
+            var17 = env.predictPlacedState(item, hit, yaw, pitch, crouch, target.pos());
          } else {
             for (Direction direction : AiPlacementContext.init(yaw, pitch)) {
                var17 = block.getStateForPlacement(live, view, target.pos(), direction);
@@ -903,8 +903,8 @@ final class PrintClicks {
    }
 
    static List<Vec3> init(PrintView view, long stanceKey, double feetY, boolean detailed, Vec3 current) {
-      if (current == null && PrintView.init_Z) {
-         List<Vec3> cached = view.init_List_J(stanceKey, feetY, detailed);
+      if (current == null && PrintView.FEET_CACHE_ENABLED) {
+         List<Vec3> cached = view.getCachedClickPoints(stanceKey, feetY, detailed);
          if (cached != null) {
             return cached;
          }
@@ -1005,7 +1005,7 @@ final class PrintClicks {
    }
 
    static boolean load(PrintView view, BlockState state, BlockPos cell, AABB body) {
-      for (AABB box : view.init_List_BlockState_BlockPos(state, cell)) {
+      for (AABB box : view.getCollisionBoxesForState(state, cell)) {
          if (box.move(cell).intersects(body.deflate(1.0E-4))) {
             return true;
          }
@@ -1173,11 +1173,11 @@ final class PrintClicks {
             }
 
             AABB body = PrintGeometry.init(feet.x, this.init_D, feet.z, true);
-            if (this.init_ArrayUtil.init_Z_AABB(body)
-               && !this.init_ArrayUtil.load_Z_AABB(body)
-               && !PrintView.init_Z_BlockState(this.init_ArrayUtil.getBlockState(BlockPos.containing(feet.x, this.init_D - 0.2, feet.z)))) {
+            if (this.init_ArrayUtil.isBoxClear(body)
+               && !this.init_ArrayUtil.intersectsHazard(body)
+               && !PrintView.isHazardBlock(this.init_ArrayUtil.getBlockState(BlockPos.containing(feet.x, this.init_D - 0.2, feet.z)))) {
                AABB under = new AABB(body.minX, this.init_D - 0.01, body.minZ, body.maxX, this.init_D - 0.001, body.maxZ);
-               if (!this.init_ArrayUtil.init_Z_AABB(under) && this.init(feet)) {
+               if (!this.init_ArrayUtil.isBoxClear(under) && this.init(feet)) {
                   this.init_ArrayList.add(feet);
                }
             }
@@ -1188,7 +1188,7 @@ final class PrintClicks {
          double cx = this.init_I + 0.5;
          double cz = this.load_I + 0.5;
          if (this.load_List == null) {
-            this.load_List = this.init_ArrayUtil.init_List_AABB(new AABB(cx - 1.55, this.init_D - 0.01, cz - 1.55, cx + 1.55, this.init_D + 1.5, cz + 1.55));
+            this.load_List = this.init_ArrayUtil.collectCollisions(new AABB(cx - 1.55, this.init_D - 0.01, cz - 1.55, cx + 1.55, this.init_D + 1.5, cz + 1.55));
          }
 
          ArrayList<PrintClicks.Inner_BufferHelper.Inner_DataUtil> footing = new ArrayList<>();
@@ -1261,7 +1261,7 @@ final class PrintClicks {
             this.init_I + 0.5 - 0.3, this.init_D - 0.01, this.load_I + 0.5 - 0.3, this.init_I + 0.5 + 0.3, this.init_D - 0.001, this.load_I + 0.5 + 0.3
          );
 
-         for (AABB floor : this.init_ArrayUtil.init_List_AABB(under)) {
+         for (AABB floor : this.init_ArrayUtil.collectCollisions(under)) {
             if (!(Math.abs(floor.maxY - this.init_D) > 1.0E-6)) {
                xs.add(floor.minX - 0.015);
                xs.add(floor.maxX + 0.015);
@@ -1356,13 +1356,13 @@ final class PrintClicks {
       }
 
       boolean init(PrintView view, AABB body) {
-         if (this.init_ArrayUtil != view || this.init_J != view.load_J()) {
+         if (this.init_ArrayUtil != view || this.init_J != view.viewRevision()) {
             this.init_Map.clear();
             this.init_ArrayUtil = view;
-            this.init_J = view.load_J();
+            this.init_J = view.viewRevision();
          }
 
-         return this.init_Map.computeIfAbsent(body, box -> view.init_Z_AABB(box.deflate(0.001)));
+         return this.init_Map.computeIfAbsent(body, box -> view.isBoxClear(box.deflate(0.001)));
       }
    }
 

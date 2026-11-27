@@ -16,94 +16,94 @@ import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class AiRunTrace {
-   static final long init_J = 4000000L;
-   static final int init_I = 1000000;
-   private static AiRunTrace init_bL;
-   private final Path init_Path;
-   private final Path load_Path;
-   private final long load_J;
-   private long read;
-   private final List<AiRunTrace.Inner_DataUtil> init_List = new CopyOnWriteArrayList<>();
-   private BufferedWriter init_BufferedWriter;
-   private long write;
+   static final long DEFAULT_ROTATE_BYTES = 4000000L;
+   static final int MAX_LINE_CHARS = 1000000;
+   private static AiRunTrace activeTrace;
+   private final Path traceFile;
+   private final Path rotatedFile;
+   private final long startedAtMs;
+   private long rotateLimitBytes;
+   private final List<AiRunTrace.Inner_DataUtil> splits = new CopyOnWriteArrayList<>();
+   private BufferedWriter writer;
+   private long bytesWritten;
 
    AiRunTrace(Path file, long startedAt, long limit) {
-      this.init_Path = file;
-      this.load_Path = Path.of(file + ".1");
-      this.load_J = startedAt;
-      this.read = limit;
+      this.traceFile = file;
+      this.rotatedFile = Path.of(file + ".1");
+      this.startedAtMs = startedAt;
+      this.rotateLimitBytes = limit;
    }
 
-   static synchronized AiRunTrace init_bL_Path_Str(Path aiDirectory, String sessionId) {
-      AiRunTrace previous = init_bL;
+   static synchronized AiRunTrace startSession(Path aiDirectory, String sessionId) {
+      AiRunTrace previous = activeTrace;
       if (previous != null) {
-         previous.flush();
+         previous.closeWriter();
       }
 
-      init_bL = new AiRunTrace(aiDirectory.resolve("trace").resolve("ai-trace-" + sessionId + ".jsonl"), System.currentTimeMillis(), 4000000L);
-      return init_bL;
+      activeTrace = new AiRunTrace(aiDirectory.resolve("trace").resolve("ai-trace-" + sessionId + ".jsonl"), System.currentTimeMillis(), 4000000L);
+      return activeTrace;
    }
 
-   public static synchronized AiRunTrace init_bL() {
-      return init_bL;
+   public static synchronized AiRunTrace current() {
+      return activeTrace;
    }
 
-   static synchronized void init_V() {
-      AiRunTrace t = init_bL;
-      init_bL = null;
+   static synchronized void stopSession() {
+      AiRunTrace t = activeTrace;
+      activeTrace = null;
       if (t != null) {
-         t.flush();
+         t.closeWriter();
       }
    }
 
-   public static void init_V_Str_Str(String name, String detail) {
-      AiRunTrace t = init_bL();
+   public static void recordGlobalSplit(String name, String detail) {
+      AiRunTrace t = current();
       if (t != null) {
-         t.read(name, detail);
+         t.recordSplit(name, detail);
       }
    }
 
-   public static void init_V_Str_JsonObject(String kind, JsonObject data) {
-      AiService service = AiService.load_cc();
+   public static void emitServiceEvent(String kind, JsonObject data) {
+      AiService service = AiService.getExistingInstance();
       if (service != null) {
-         service.init_V_Str_JsonObject(kind, data);
+         service.appendTraceEvent(kind, data);
       }
    }
 
-   synchronized void load(String kind, JsonObject data) {
-      this.read(kind, data);
+   synchronized void appendEvent(String kind, JsonObject data) {
+      this.writeEventLine(kind, data);
    }
 
-   public Path init_Path() {
-      return this.init_Path;
+   public Path filePath() {
+      return this.traceFile;
    }
 
-   synchronized void load() {
-      this.read = Math.max(this.read, 64000000L);
+   synchronized void expandLimitForLongRun() {
+      this.rotateLimitBytes = Math.max(this.rotateLimitBytes, 64000000L);
    }
 
-   public List<AiRunTrace.Inner_DataUtil> init_List() {
-      return List.copyOf(this.init_List);
+   public List<AiRunTrace.Inner_DataUtil> getSplits() {
+      return List.copyOf(this.splits);
    }
 
-   long init_J() {
-      return this.load_J;
+   long startedAtMs() {
+      return this.startedAtMs;
    }
 
-   public synchronized void init_V_Str_I(String objective, int taskMinutes) {
-      this.read("task_start", AiJson.objectOf("objective", objective, "taskMinutes", taskMinutes));
+   public synchronized void recordTaskStart(String objective, int taskMinutes) {
+      this.writeEventLine("task_start", AiJson.objectOf("objective", objective, "taskMinutes", taskMinutes));
    }
 
-   public synchronized void init_V_J_J(long latencyMs, long estTokens) {
-      this.read("provider_request", AiJson.objectOf("latencyMs", latencyMs, "estTokens", estTokens));
+   public synchronized void recordProviderRequest(long latencyMs, long estTokens) {
+      this.writeEventLine("provider_request", AiJson.objectOf("latencyMs", latencyMs, "estTokens", estTokens));
    }
 
-   public synchronized void init(String name) {
-      this.read("tool_call", AiJson.objectOf("name", name));
+   public synchronized void recordToolCall(String name) {
+      this.writeEventLine("tool_call", AiJson.objectOf("name", name));
    }
 
-   public synchronized void init_V_Str(String name, String status, String failureCode, long durationMs) {
-      this.read(
+   public synchronized void recordToolResult(String name, String status, String failureCode, long durationMs) {
+      this.writeEventLine(
          "tool_result",
          failureCode != null && !failureCode.isBlank()
             ? AiJson.objectOf("name", name, "status", status, "failureCode", failureCode, "durationMs", durationMs)
@@ -111,34 +111,34 @@ public final class AiRunTrace {
       );
    }
 
-   public synchronized void load(String kind) {
-      this.read("op_interrupt", AiJson.objectOf("kind", kind));
+   public synchronized void recordOpInterrupt(String kind) {
+      this.writeEventLine("op_interrupt", AiJson.objectOf("kind", kind));
    }
 
-   public synchronized void read() {
-      this.read("death", new JsonObject());
+   public synchronized void recordDeath() {
+      this.writeEventLine("death", new JsonObject());
    }
 
-   public synchronized void write() {
-      this.read("respawn", new JsonObject());
+   public synchronized void recordRespawn() {
+      this.writeEventLine("respawn", new JsonObject());
    }
 
-   public synchronized void load(String from, String to) {
-      this.read("dimension_change", AiJson.objectOf("from", from, "to", to));
+   public synchronized void recordDimensionChange(String from, String to) {
+      this.writeEventLine("dimension_change", AiJson.objectOf("from", from, "to", to));
    }
 
-   public synchronized void read(String name, String detail) {
-      this.init_List.add(new AiRunTrace.Inner_DataUtil(name, Math.max(0L, System.currentTimeMillis() - this.load_J), detail == null ? "" : detail));
-      this.read(
+   public synchronized void recordSplit(String name, String detail) {
+      this.splits.add(new AiRunTrace.Inner_DataUtil(name, Math.max(0L, System.currentTimeMillis() - this.startedAtMs), detail == null ? "" : detail));
+      this.writeEventLine(
          "split", detail != null && !detail.isBlank() ? AiJson.objectOf("name", name, "detail", detail) : AiJson.objectOf("name", name)
       );
    }
 
-   public synchronized void read(String outcome) {
-      this.read("finish", AiJson.objectOf("outcome", outcome));
+   public synchronized void recordFinish(String outcome) {
+      this.writeEventLine("finish", AiJson.objectOf("outcome", outcome));
    }
 
-   static String init_Str_J(long ts, long startedAt, String kind, JsonObject data) {
+   static String formatEventLine(long ts, long startedAt, String kind, JsonObject data) {
       JsonObject o = new JsonObject();
       if (data != null) {
          for (Entry<String, JsonElement> e : data.entrySet()) {
@@ -152,69 +152,69 @@ public final class AiRunTrace {
       return AiJson.GSON.toJson(o);
    }
 
-   static boolean init(long written, long incomingBytes, long limit) {
+   static boolean shouldRotate(long written, long incomingBytes, long limit) {
       return written > 0L && written + incomingBytes > limit;
    }
 
-   private void read(String kind, JsonObject data) {
+   private void writeEventLine(String kind, JsonObject data) {
       try {
-         String line = init_Str_J(System.currentTimeMillis(), this.load_J, kind, data);
+         String line = formatEventLine(System.currentTimeMillis(), this.startedAtMs, kind, data);
          byte[] bytes = (line + "\n").getBytes(StandardCharsets.UTF_8);
-         this.update();
-         if (init(this.write, bytes.length, this.read)) {
-            this.sync();
-            this.update();
+         this.ensureWriterOpen();
+         if (shouldRotate(this.bytesWritten, bytes.length, this.rotateLimitBytes)) {
+            this.rotateFiles();
+            this.ensureWriterOpen();
          }
 
-         this.init_BufferedWriter.write(line);
-         this.init_BufferedWriter.newLine();
-         this.init_BufferedWriter.flush();
-         this.write += bytes.length;
+         this.writer.write(line);
+         this.writer.newLine();
+         this.writer.flush();
+         this.bytesWritten += bytes.length;
       } catch (Exception var5) {
       }
    }
 
-   private void update() throws IOException {
-      if (this.init_BufferedWriter == null) {
-         Files.createDirectories(this.init_Path.getParent());
-         AiJson.auditPrivateFile(this.init_Path);
-         this.write = Files.isRegularFile(this.init_Path) ? Files.size(this.init_Path) : 0L;
-         this.init_BufferedWriter = Files.newBufferedWriter(this.init_Path, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+   private void ensureWriterOpen() throws IOException {
+      if (this.writer == null) {
+         Files.createDirectories(this.traceFile.getParent());
+         AiJson.auditPrivateFile(this.traceFile);
+         this.bytesWritten = Files.isRegularFile(this.traceFile) ? Files.size(this.traceFile) : 0L;
+         this.writer = Files.newBufferedWriter(this.traceFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
       }
    }
 
-   private void sync() throws IOException {
-      this.flush();
+   private void rotateFiles() throws IOException {
+      this.closeWriter();
       for (int i = 2; i >= 1; i--) {
-         Path older = Path.of(this.init_Path + "." + i);
+         Path older = Path.of(this.traceFile + "." + i);
          if (Files.exists(older)) {
-            Files.move(older, Path.of(this.init_Path + "." + (i + 1)), StandardCopyOption.REPLACE_EXISTING);
+            Files.move(older, Path.of(this.traceFile + "." + (i + 1)), StandardCopyOption.REPLACE_EXISTING);
          }
       }
 
-      Files.move(this.init_Path, this.load_Path, StandardCopyOption.REPLACE_EXISTING);
-      this.write = 0L;
+      Files.move(this.traceFile, this.rotatedFile, StandardCopyOption.REPLACE_EXISTING);
+      this.bytesWritten = 0L;
    }
 
-   private synchronized void flush() {
-      if (this.init_BufferedWriter != null) {
+   private synchronized void closeWriter() {
+      if (this.writer != null) {
          try {
-            this.init_BufferedWriter.close();
+            this.writer.close();
          } catch (IOException var2) {
          }
 
-         this.init_BufferedWriter = null;
+         this.writer = null;
       }
    }
 
-   public synchronized List<String> init(int n) {
+   public synchronized List<String> tailLines(int n) {
       if (n <= 0) {
          return List.of();
       }
 
       List<String> lines = new ArrayList<>();
 
-      for (Path path : List.of(this.load_Path, this.init_Path)) {
+      for (Path path : List.of(this.rotatedFile, this.traceFile)) {
          if (Files.isRegularFile(path)) {
             String line;
             try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {

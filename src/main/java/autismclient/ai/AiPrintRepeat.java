@@ -93,7 +93,7 @@ final class AiPrintRepeat implements AiOperation {
          }
 
          if (this.init_AiOperation != null) {
-            AiOperation.Result r = this.init_bb.init_AiOperation_Result(this.init_AiOperation);
+            AiOperation.Result r = this.init_bb.tickChild(this.init_AiOperation);
             this.load_Z = true;
             if (!r.terminal()) {
                return this.init("Building copy " + (this.init_I + 1) + " of " + this.init_Str_16());
@@ -300,7 +300,7 @@ final class AiPrintRepeat implements AiOperation {
       }
 
       this.cancel();
-      boolean pending = this.init_bb.init_Z(null);
+      boolean pending = this.init_bb.requiresReconciliation(null);
       data.addProperty("clocksVerified", this.open);
       data.addProperty("clockItemsVerified", this.poll);
       data.addProperty("machineComplete", status == AiOperation.Status.SUCCEEDED && this.sync == 0 && !pending);
@@ -309,10 +309,10 @@ final class AiPrintRepeat implements AiOperation {
    }
 
    static AiOperation.Result init_AiOperation_Result_AiOperation_Result_bb(AiOperation.Result result, AiPreparationReceipt receipt) {
-      boolean pending = receipt.init_Z(null);
+      boolean pending = receipt.requiresReconciliation(null);
       JsonObject data = AiRunResources.parseEvidenceJson(result.dataJson());
-      if (receipt.init() != null) {
-         JsonObject childData = AiRunResources.parseEvidenceJson(receipt.init().dataJson());
+      if (receipt.lastChildResult() != null) {
+         JsonObject childData = AiRunResources.parseEvidenceJson(receipt.lastChildResult().dataJson());
          if (childData.has("machineRecovery")) {
             data.add("machineRecovery", childData.get("machineRecovery").deepCopy());
          }
@@ -327,20 +327,20 @@ final class AiPrintRepeat implements AiOperation {
          }
       }
 
-      return receipt.init(new AiOperation.Result(result.status(), result.message(), data.toString(), result.evidence(), result.failure()), pending);
+      return receipt.finalizeResult(new AiOperation.Result(result.status(), result.message(), data.toString(), result.evidence(), result.failure()), pending);
    }
 
    static void init_V_bb_AiOperation(AiPreparationReceipt receipt, AiOperation child) {
-      receipt.init_V(child);
+      receipt.cancelChild(child);
       if (child != null) {
-         receipt.init(child.requiresReconciliationAfterEmergency());
+         receipt.markReconciliationPending(child.requiresReconciliationAfterEmergency());
       }
    }
 
    private void init_V_24() {
       if (this.init_AiOperation != null) {
-         if (this.load_Z && this.init_bb.init() != null) {
-            JsonObject legData = AiRunResources.parseEvidenceJson(this.init_bb.init().dataJson());
+         if (this.load_Z && this.init_bb.lastChildResult() != null) {
+            JsonObject legData = AiRunResources.parseEvidenceJson(this.init_bb.lastChildResult().dataJson());
             this.load_I = this.load_I + AiJson.getInt(legData, "placed", 0);
             this.read_I = this.read_I + AiJson.getInt(legData, "skipped", 0);
             this.write = this.write + AiJson.getInt(legData, "failedTotal", 0);
@@ -379,12 +379,12 @@ final class AiPrintRepeat implements AiOperation {
 
    @Override
    public boolean canInterruptNow() {
-      return !this.init_bb.init_Z(this.init_AiOperation) && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+      return !this.init_bb.requiresReconciliation(this.init_AiOperation) && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
    }
 
    @Override
    public boolean requiresReconciliationAfterEmergency() {
-      return this.init_bb.init_Z(this.init_AiOperation);
+      return this.init_bb.requiresReconciliation(this.init_AiOperation);
    }
 
    @Override

@@ -305,7 +305,7 @@ final class AiPrintSupply {
                items.add(AiJson.objectOf("item", BuiltInRegistries.ITEM.getKey(this.init_bj_TaskQueue.init_Item).toString(), "count", need));
                AiOperation approach = AiTerrain.isLoaded(this.init_Minecraft.level, source) && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.init_Minecraft, source) != null
                   ? null
-                  : AiContainer.init(AiGoto.load(source, 60, keep, false));
+                  : AiContainer.init(AiGoto.approachBlockToInteractCompat(source, 60, keep, false));
                return new AiPrintSupply.Inner_NetHelper(
                   approach,
                   () -> !AiTerrain.isLoaded(this.init_Minecraft.level, source)
@@ -1102,7 +1102,7 @@ final class AiPrintSupply {
          }
 
          if (this.init_AiOperation != null) {
-            AiOperation.Result result = this.init_bb.init_AiOperation_Result(this.init_AiOperation);
+            AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
             if (!result.terminal()) {
                return result;
             }
@@ -1134,25 +1134,25 @@ final class AiPrintSupply {
             this.load_AiOperation = this.load_Supplier.get();
          }
 
-         AiOperation.Result result = this.init_bb.init_AiOperation_Result(this.load_AiOperation);
+         AiOperation.Result result = this.init_bb.tickChild(this.load_AiOperation);
          return result.terminal() ? this.init(result) : result;
       }
 
       private AiOperation.Result init(AiOperation.Result result) {
          boolean pending = this.requiresReconciliationAfterEmergency();
          this.init();
-         this.init_AiOperation_Result = this.init_bb.init(result, pending);
+         this.init_AiOperation_Result = this.init_bb.finalizeResult(result, pending);
          return this.init_AiOperation_Result;
       }
 
       private void init() {
          if (this.init_AiOperation != null) {
-            this.init_bb.init_V(this.init_AiOperation);
+            this.init_bb.cancelChild(this.init_AiOperation);
             this.init_AiOperation = null;
          }
 
          if (this.load_AiOperation != null) {
-            this.init_bb.init_V(this.load_AiOperation);
+            this.init_bb.cancelChild(this.load_AiOperation);
             this.load_AiOperation = null;
          }
       }
@@ -1168,14 +1168,14 @@ final class AiPrintSupply {
 
       @Override
       public boolean canInterruptNow() {
-         return !this.init_bb.init_Z(null)
+         return !this.init_bb.requiresReconciliation(null)
             && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
             && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow());
       }
 
       @Override
       public boolean requiresReconciliationAfterEmergency() {
-         return this.init_bb.init_Z(this.init_AiOperation) || this.init_bb.init_Z(this.load_AiOperation);
+         return this.init_bb.requiresReconciliation(this.init_AiOperation) || this.init_bb.requiresReconciliation(this.load_AiOperation);
       }
    }
 

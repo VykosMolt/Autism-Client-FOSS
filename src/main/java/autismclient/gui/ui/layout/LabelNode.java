@@ -53,12 +53,12 @@ public class LabelNode extends LayoutNode {
 
    @Override
    public float init_F_SyncManager(LayoutContext context) {
-      return k.init(context.init_Font(), this.init_Str, context.init_CharEncoder().init_Identifier_l(this.init_l), context.init_CharEncoder().load(this.init_l));
+      return k.init(context.font(), this.init_Str, context.theme().init_Identifier_l(this.init_l), context.theme().load(this.init_l));
    }
 
    @Override
    public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      return context.init_CharEncoder().init_I_l_I(this.init_l, 3);
+      return context.theme().init_I_l_I(this.init_l, 3);
    }
 
    @Override
@@ -67,22 +67,22 @@ public class LabelNode extends LayoutNode {
          String displayComponent = this.init_Str;
          if (this.update_Z && this.read_F > 0.0F) {
             displayComponent = k.init(
-               context.init_Font(),
+               context.font(),
                this.init_Str,
                Math.round(this.read_F),
-               context.init_CharEncoder().init_Identifier_l(this.init_l),
-               context.init_CharEncoder().load(this.init_l)
+               context.theme().init_Identifier_l(this.init_l),
+               context.theme().load(this.init_l)
             );
          }
 
          k.init(
-            context.init_GuiGraphicsExtract(),
-            context.init_Font(),
+            context.graphics(),
+            context.font(),
             displayComponent,
-            context.init_CharEncoder().init_Identifier_l(this.init_l),
-            context.init_I_I(context.init_CharEncoder().load(this.init_l)),
+            context.theme().init_Identifier_l(this.init_l),
+            context.applyAlpha(context.theme().load(this.init_l)),
             Math.round(this.init_F),
-            UiLayoutMath.centerTextY(Math.round(this.load_F), Math.round(this.write), context.init_CharEncoder().init_I_l(this.init_l), context.init_CharEncoder().flush()),
+            UiLayoutMath.centerTextY(Math.round(this.load_F), Math.round(this.write), context.theme().init_I_l(this.init_l), context.theme().flush()),
             this.write_Z
          );
       }

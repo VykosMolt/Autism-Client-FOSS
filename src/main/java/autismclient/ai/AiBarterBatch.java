@@ -116,10 +116,10 @@ final class AiBarterBatch {
                   return this.init(AiOperation.Status.SUCCEEDED, "Pearl inventory target met after " + this.write_I + " confirmed barters");
                }
 
-               if (AiWorldScan.init_List_Str_D("minecraft:piglin_brute", 12.0).isEmpty() && AiWorldScan.init_List_Str_D("minecraft:hoglin", 8.0).isEmpty()) {
+               if (AiWorldScan.findEntitiesByType("minecraft:piglin_brute", 12.0).isEmpty() && AiWorldScan.findEntitiesByType("minecraft:hoglin", 8.0).isEmpty()) {
                   if (AiBarterBatch.init_Z(mc)) {
                      AiOperation.Result survival = this.init_Y
-                        .init_AiOperation_Result_AiOperation(this.init_Z_4() ? this.load_AiOperation : this.init_AiOperation, () -> {
+                        .tick(this.init_Z_4() ? this.load_AiOperation : this.init_AiOperation, () -> {
                            if (this.init_AiOperation != null) {
                               this.init_AiOperation.cancel();
                               this.init_AiOperation = null;
@@ -277,7 +277,7 @@ final class AiBarterBatch {
                                  this.init_AiOperation = AiEquip.init(AiJson.objectOf("what", "minecraft:gold_ingot"));
                               } else if (this.init_Map.isEmpty()) {
                                  this.load_Piglin = partner;
-                                 this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(partner.blockPosition(), 2.5, true, false, false, 40);
+                                 this.init_AiOperation = AiGoto.travelToCompat(partner.blockPosition(), 2.5, true, false, false, 40);
                               }
 
                               if (this.init_AiOperation != null) {
@@ -394,7 +394,7 @@ final class AiBarterBatch {
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
-               AiOperation.Result result = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
+               AiOperation.Result result = AiGuardLayer.wrapPendingTermination(
                   this.requiresReconciliationAfterEmergency(), AiGameOperations.result(status, message, this.init_JsonObject_11())
                );
                this.cancel();
@@ -403,12 +403,12 @@ final class AiBarterBatch {
 
             @Override
             public boolean canInterruptNow() {
-               return !this.init_Z_4() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow()) && this.init_Y.load();
+               return !this.init_Z_4() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow()) && this.init_Y.canInterruptNow();
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.init_Z_4() || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency() || this.init_Y.read();
+               return this.init_Z_4() || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency() || this.init_Y.requiresReconciliation();
             }
 
             @Override
@@ -420,7 +420,7 @@ final class AiBarterBatch {
                      this.init_AiOperation = null;
                   }
 
-                  this.init_Y.init_V();
+                  this.init_Y.cancel();
                   this.init_DataUtil.clear();
                   if (mc.player != null && mc.level == this.init_Obj) {
                      AiItems.selectOrMoveToHotbar(this.init_I);

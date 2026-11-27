@@ -22,159 +22,159 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class AiPlacer {
-   private static final int read = 80;
-   private static final int write = 2;
-   private static final int update = 48;
-   static final int init_I = 12;
-   private int sync;
-   private final AiAim init_DataUtil = new AiAim();
-   private BlockPos init_BlockPos;
-   private Block init_Block;
-   private Item init_Item;
-   private ItemStack init_ItemStack = ItemStack.EMPTY;
-   private int flush = -1;
-   private AiContainerTransactions.Inner_DataUtil init_b_DataUtil;
-   private BlockPlacementPlanner.PlacementPlan init_U_CachePool;
-   private int close;
-   private int open;
-   private boolean init_Z;
-   private long init_J;
-   private String init_Str = "";
-   static final int load = 1024;
-   private BlockPlacementPlanner.RejectReason init_U_JsonUtil;
+   private static final int MAX_TICKS = 80;
+   private static final int CONFIRM_TICKS = 2;
+   private static final int PLAN_RAY_BUDGET = 48;
+   static final int MAX_NO_FACE_TICKS = 12;
+   private int noFaceTicks;
+   private final AiAim aim = new AiAim();
+   private BlockPos targetPos;
+   private Block targetBlock;
+   private Item targetItem;
+   private ItemStack exactStack = ItemStack.EMPTY;
+   private int swapDestHotbarSlot = -1;
+   private AiContainerTransactions.Inner_DataUtil pendingContainerSwap;
+   private BlockPlacementPlanner.PlacementPlan currentPlan;
+   private int elapsedTicks;
+   private int presentTicks;
+   private boolean clicked;
+   private long initialBlockRevision;
+   private String failureReason = "";
+   static final int PROBE_RAY_BUDGET = 1024;
+   private BlockPlacementPlanner.RejectReason lastRejectReason;
 
    public AiPlacer() {
-      this.init_U_JsonUtil = BlockPlacementPlanner.RejectReason.NONE;
-      this.init_DataUtil.setProfile(AiAim.AimProfile.NORMAL);
+      this.lastRejectReason = BlockPlacementPlanner.RejectReason.NONE;
+      this.aim.setProfile(AiAim.AimProfile.NORMAL);
    }
 
-   public AiPlacer init_DataPipe() {
-      this.init_DataUtil.setProfile(AiAim.AimProfile.FAST);
+   public AiPlacer fast() {
+      this.aim.setProfile(AiAim.AimProfile.FAST);
       return this;
    }
 
-   public void init_V_BlockPos_Item(BlockPos target, Item placeable) {
-      this.init_BlockPos = target == null ? null : target.immutable();
-      this.init_Item = placeable;
-      this.init_ItemStack = ItemStack.EMPTY;
-      this.flush = -1;
-      this.init_b_DataUtil = null;
-      this.init_Block = placeable instanceof BlockItem blockItem ? blockItem.getBlock() : null;
-      this.init_U_CachePool = null;
-      this.close = 0;
-      this.sync = 0;
-      this.open = 0;
-      this.init_Z = false;
-      this.init_J = target == null ? 0L : AiServerEvidence.blockRevision(target);
-      this.init_Str = "";
-      this.init_U_JsonUtil = BlockPlacementPlanner.RejectReason.NONE;
-      this.init_DataUtil.clear();
+   public void start(BlockPos target, Item placeable) {
+      this.targetPos = target == null ? null : target.immutable();
+      this.targetItem = placeable;
+      this.exactStack = ItemStack.EMPTY;
+      this.swapDestHotbarSlot = -1;
+      this.pendingContainerSwap = null;
+      this.targetBlock = placeable instanceof BlockItem blockItem ? blockItem.getBlock() : null;
+      this.currentPlan = null;
+      this.elapsedTicks = 0;
+      this.noFaceTicks = 0;
+      this.presentTicks = 0;
+      this.clicked = false;
+      this.initialBlockRevision = target == null ? 0L : AiServerEvidence.blockRevision(target);
+      this.failureReason = "";
+      this.lastRejectReason = BlockPlacementPlanner.RejectReason.NONE;
+      this.aim.clear();
    }
 
-   public void init_V_BlockPos_ItemStack(BlockPos target, ItemStack stack) {
+   public void startWithExactStack(BlockPos target, ItemStack stack) {
       if (stack != null && !stack.isEmpty()) {
-         this.init_V_BlockPos_Item(target, stack.getItem());
-         this.init_ItemStack = stack.copy();
+         this.start(target, stack.getItem());
+         this.exactStack = stack.copy();
       } else {
          throw new IllegalArgumentException("A placement stack is required");
       }
    }
 
-   public BlockPos init_BlockPos() {
-      return this.init_BlockPos;
+   public BlockPos targetPos() {
+      return this.targetPos;
    }
 
-   public boolean init_Z() {
-      return this.init_Z;
+   public boolean hasClicked() {
+      return this.clicked;
    }
 
-   public boolean load_Z() {
-      if (this.init_b_DataUtil != null) {
+   public boolean needsReconciliation() {
+      if (this.pendingContainerSwap != null) {
          return true;
       }
 
-      if (!this.init_Z) {
+      if (!this.clicked) {
          return false;
       }
 
       Minecraft mc = Minecraft.getInstance();
       return mc == null
          || mc.level == null
-         || this.init_BlockPos == null
-         || mc.level.getBlockState(this.init_BlockPos).getBlock() != this.init_Block
-         || AiServerEvidence.blockRevision(this.init_BlockPos) <= this.init_J;
+         || this.targetPos == null
+         || mc.level.getBlockState(this.targetPos).getBlock() != this.targetBlock
+         || AiServerEvidence.blockRevision(this.targetPos) <= this.initialBlockRevision;
    }
 
-   public String init_Str() {
-      return this.init_Str;
+   public String failureReason() {
+      return this.failureReason;
    }
 
-   public AiPlacer.PlaceStatus init_DataPipe_DataUtil() {
+   public AiPlacer.PlaceStatus tick() {
       Minecraft mc = Minecraft.getInstance();
-      if (this.init_BlockPos == null || mc.player == null || mc.level == null) {
-         return this.init("No placement target");
+      if (this.targetPos == null || mc.player == null || mc.level == null) {
+         return this.fail("No placement target");
       }
 
-      if (this.init_Block == null) {
-         return this.init("Item has no placeable block form");
+      if (this.targetBlock == null) {
+         return this.fail("Item has no placeable block form");
       }
 
-      if (this.init_b_DataUtil != null) {
-         AiContainerTransactions.Inner_StreamUtil state = this.init_b_DataUtil.load(mc.player.containerMenu, System.nanoTime());
+      if (this.pendingContainerSwap != null) {
+         AiContainerTransactions.Inner_StreamUtil state = this.pendingContainerSwap.pollAndResync(mc.player.containerMenu, System.nanoTime());
          if (state == AiContainerTransactions.Inner_StreamUtil.WAITING) {
             return AiPlacer.PlaceStatus.WORKING;
          }
 
          if (state == AiContainerTransactions.Inner_StreamUtil.UNCERTAIN) {
-            return this.init("The server did not confirm the portable container swap");
+            return this.fail("The server did not confirm the portable container swap");
          }
 
-         this.init_b_DataUtil = null;
-         if (!ItemStack.matches(mc.player.getInventory().getItem(this.flush), this.init_ItemStack)) {
-            return this.init("The server swapped a different portable container stack");
+         this.pendingContainerSwap = null;
+         if (!ItemStack.matches(mc.player.getInventory().getItem(this.swapDestHotbarSlot), this.exactStack)) {
+            return this.fail("The server swapped a different portable container stack");
          }
 
-         InventorySlotHelper.selectHotbarSlot(mc, this.flush);
+         InventorySlotHelper.selectHotbarSlot(mc, this.swapDestHotbarSlot);
          return AiPlacer.PlaceStatus.WORKING;
       } else {
          if (!AutismLiteVariant.enabled()) {
-            AiVisualization.init(this, this.init_BlockPos, this.init_Block.defaultBlockState());
+            AiVisualization.init(this, this.targetPos, this.targetBlock.defaultBlockState());
          }
 
-         if (mc.level.getBlockState(this.init_BlockPos).getBlock() != this.init_Block) {
-            this.open = 0;
-            if (++this.close > 80) {
-               return this.init(
-                  this.init_Z
-                     ? "Placement did not take effect at " + this.init_BlockPos.toShortString()
+         if (mc.level.getBlockState(this.targetPos).getBlock() != this.targetBlock) {
+            this.presentTicks = 0;
+            if (++this.elapsedTicks > 80) {
+               return this.fail(
+                  this.clicked
+                     ? "Placement did not take effect at " + this.targetPos.toShortString()
                      : "No reachable support face for "
-                        + this.init_BlockPos.toShortString()
+                        + this.targetPos.toShortString()
                         + " ("
-                        + this.init_U_JsonUtil
+                        + this.lastRejectReason
                         + "; "
-                        + mc.level.getBlockState(this.init_BlockPos).getBlock().getName().getString()
+                        + mc.level.getBlockState(this.targetPos).getBlock().getName().getString()
                         + " on "
-                        + mc.level.getBlockState(this.init_BlockPos.below()).getBlock().getName().getString()
+                        + mc.level.getBlockState(this.targetPos.below()).getBlock().getName().getString()
                         + ")"
                );
             }
 
             if (mc.player.containerMenu != mc.player.inventoryMenu) {
-               return this.init("A container screen blocks placement");
+               return this.fail("A container screen blocks placement");
             }
 
-            if (!this.init_ItemStack.isEmpty()) {
-               if (this.init_Z) {
+            if (!this.exactStack.isEmpty()) {
+               if (this.clicked) {
                   return AiPlacer.PlaceStatus.WORKING;
                }
 
                if (!mc.player.containerMenu.getCarried().isEmpty()) {
-                  return this.init("Clear the cursor before placing the portable container");
+                  return this.fail("Clear the cursor before placing the portable container");
                }
 
-               int slot = init_I_Container_ItemStack(mc.player.getInventory(), this.init_ItemStack);
+               int slot = findMatchingSlot(mc.player.getInventory(), this.exactStack);
                if (slot < 0) {
-                  return this.init("The selected portable container changed or left the inventory");
+                  return this.fail("The selected portable container changed or left the inventory");
                }
 
                if (slot >= 9) {
@@ -187,10 +187,10 @@ public final class AiPlacer {
                      }
                   }
 
-                  this.flush = destination;
-                  this.init_b_DataUtil = AiContainerTransactions.init(mc.player.inventoryMenu, slot == 40 ? 45 : slot, 36 + destination, destination);
-                  if (this.init_b_DataUtil == null) {
-                     return this.init("Could not start the portable container swap");
+                  this.swapDestHotbarSlot = destination;
+                  this.pendingContainerSwap = AiContainerTransactions.sendVerifiedSwap(mc.player.inventoryMenu, slot == 40 ? 45 : slot, 36 + destination, destination);
+                  if (this.pendingContainerSwap == null) {
+                     return this.fail("Could not start the portable container swap");
                   }
 
                   return AiPlacer.PlaceStatus.WORKING;
@@ -201,51 +201,51 @@ public final class AiPlacer {
                   return AiPlacer.PlaceStatus.WORKING;
                }
             } else {
-               AiItems.ItemSpec held = AiItems.resolve(BuiltInRegistries.ITEM.getKey(this.init_Item).toString());
+               AiItems.ItemSpec held = AiItems.resolve(BuiltInRegistries.ITEM.getKey(this.targetItem).toString());
                if (AiItems.equipHotbar(held) < 0) {
-                  return this.init("No " + BuiltInRegistries.ITEM.getKey(this.init_Item) + " in inventory");
+                  return this.fail("No " + BuiltInRegistries.ITEM.getKey(this.targetItem) + " in inventory");
                }
             }
 
-            if (this.init_U_CachePool == null || !mc.level.getBlockState(this.init_U_CachePool.init_U_TaskQueue().load_BlockPos()).canOcclude()) {
-               this.init_U_CachePool = this.init(mc);
-               if (this.init_U_CachePool == null) {
-                  return ++this.sync >= 12 && !this.init_Z
-                     ? this.init("No reachable support face for " + this.init_BlockPos.toShortString() + " (" + this.init_U_JsonUtil + ")")
+            if (this.currentPlan == null || !mc.level.getBlockState(this.currentPlan.init_U_TaskQueue().load_BlockPos()).canOcclude()) {
+               this.currentPlan = this.planPlacement(mc);
+               if (this.currentPlan == null) {
+                  return ++this.noFaceTicks >= 12 && !this.clicked
+                     ? this.fail("No reachable support face for " + this.targetPos.toShortString() + " (" + this.lastRejectReason + ")")
                      : AiPlacer.PlaceStatus.WORKING;
                }
 
-               this.sync = 0;
+               this.noFaceTicks = 0;
             }
 
-            this.init_DataUtil.aimAt(this.init_U_CachePool.init_U_DataUtil().init_Vec3());
-            this.init_DataUtil.tick();
-            if (!AiAim.isLookingAtBlock(this.init_U_CachePool.init_BlockHitResult().getBlockPos())) {
+            this.aim.aimAt(this.currentPlan.init_U_DataUtil().init_Vec3());
+            this.aim.tick();
+            if (!AiAim.isLookingAtBlock(this.currentPlan.init_BlockHitResult().getBlockPos())) {
                return AiPlacer.PlaceStatus.WORKING;
             }
 
             BlockHitResult ray = AiAim.raycastLookBlock();
             BlockHitResult click = ray != null
-                  && ray.getBlockPos().equals(this.init_U_CachePool.init_BlockHitResult().getBlockPos())
-                  && ray.getDirection() == this.init_U_CachePool.init_BlockHitResult().getDirection()
+                  && ray.getBlockPos().equals(this.currentPlan.init_BlockHitResult().getBlockPos())
+                  && ray.getDirection() == this.currentPlan.init_BlockHitResult().getDirection()
                ? ray
-               : this.init_U_CachePool.init_BlockHitResult();
+               : this.currentPlan.init_BlockHitResult();
             mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, click);
             Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
-            this.init_Z = true;
-            this.init_U_CachePool = null;
+            this.clicked = true;
+            this.currentPlan = null;
             return AiPlacer.PlaceStatus.WORKING;
          } else {
-            if (!this.init_ItemStack.isEmpty() && !this.init_Z) {
-               return this.init("Another block occupied the portable container's cell");
+            if (!this.exactStack.isEmpty() && !this.clicked) {
+               return this.fail("Another block occupied the portable container's cell");
             }
 
-            if (++this.open < 2 || this.init_Z && AiServerEvidence.blockRevision(this.init_BlockPos) <= this.init_J) {
-               return ++this.close > 80 ? this.init("Placement was not confirmed by the server") : AiPlacer.PlaceStatus.WORKING;
+            if (++this.presentTicks < 2 || this.clicked && AiServerEvidence.blockRevision(this.targetPos) <= this.initialBlockRevision) {
+               return ++this.elapsedTicks > 80 ? this.fail("Placement was not confirmed by the server") : AiPlacer.PlaceStatus.WORKING;
             }
 
-            if (this.init_Z && !this.init_Block.defaultBlockState().hasBlockEntity() && this.init_Block != Blocks.CRAFTING_TABLE) {
-               AiEditLedger.write_V(this.init_BlockPos);
+            if (this.clicked && !this.targetBlock.defaultBlockState().hasBlockEntity() && this.targetBlock != Blocks.CRAFTING_TABLE) {
+               AiEditLedger.write_V(this.targetPos);
             }
 
             return AiPlacer.PlaceStatus.PLACED;
@@ -253,31 +253,31 @@ public final class AiPlacer {
       }
    }
 
-   public void init_V() {
-      this.init_DataUtil.clear();
-      this.init_BlockPos = null;
+   public void reset() {
+      this.aim.clear();
+      this.targetPos = null;
    }
 
-   private BlockPlacementPlanner.PlacementPlan init(Minecraft mc) {
+   private BlockPlacementPlanner.PlacementPlan planPlacement(Minecraft mc) {
       Vec3 eye = mc.player.getEyePosition();
       double reach = mc.player.blockInteractionRange();
       BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(
-            this.init_BlockPos,
+            this.targetPos,
             eye,
             reach,
-            BlockPlacementPlanner.init(this.init_ItemStack.isEmpty() ? new ItemStack(this.init_Item) : this.init_ItemStack.copy(), mc.player, InteractionHand.MAIN_HAND)
+            BlockPlacementPlanner.init(this.exactStack.isEmpty() ? new ItemStack(this.targetItem) : this.exactStack.copy(), mc.player, InteractionHand.MAIN_HAND)
          )
          .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.RayBudget(48));
       BlockPlacementPlanner.RejectReason[] refusal = new BlockPlacementPlanner.RejectReason[1];
       BlockPlacementPlanner.PlacementPlan best = BlockPlacementPlanner.init(request, refusal);
       if (best == null && refusal[0] != null) {
-         this.init_U_JsonUtil = refusal[0];
+         this.lastRejectReason = refusal[0];
       }
 
       return best;
    }
 
-   static int init_I_Container_ItemStack(Container inventory, ItemStack wanted) {
+   static int findMatchingSlot(Container inventory, ItemStack wanted) {
       for (int slot = 0; slot < Math.min(36, inventory.getContainerSize()); slot++) {
          if (ItemStack.matches(inventory.getItem(slot), wanted)) {
             return slot;
@@ -287,22 +287,22 @@ public final class AiPlacer {
       return inventory.getContainerSize() > 40 && ItemStack.matches(inventory.getItem(40), wanted) ? 40 : -1;
    }
 
-   public String load_Str() {
+   public String statusSummary() {
       return (
-            this.init_Z
+            this.clicked
                ? "clicked, no block yet"
                : (
-                  this.init_U_CachePool == null
-                     ? "no face (" + this.init_U_JsonUtil + ")"
-                     : "turning to " + this.init_U_CachePool.init_BlockHitResult().getBlockPos().toShortString()
+                  this.currentPlan == null
+                     ? "no face (" + this.lastRejectReason + ")"
+                     : "turning to " + this.currentPlan.init_BlockHitResult().getBlockPos().toShortString()
                )
          )
          + " after "
-         + this.close
+         + this.elapsedTicks
          + " ticks";
    }
 
-   public static boolean init_Z_BlockPos_Item(BlockPos target, Item placeable) {
+   public static boolean canPlaceFromHere(BlockPos target, Item placeable) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && target != null && placeable instanceof BlockItem) {
          BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(
@@ -315,8 +315,8 @@ public final class AiPlacer {
       }
    }
 
-   private AiPlacer.PlaceStatus init(String reason) {
-      this.init_Str = reason;
+   private AiPlacer.PlaceStatus fail(String reason) {
+      this.failureReason = reason;
       return AiPlacer.PlaceStatus.FAILED;
    }
 

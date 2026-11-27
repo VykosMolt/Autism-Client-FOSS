@@ -165,13 +165,13 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       if (this.init_AtomicReference != null && this.init_AutismPacketLogger != null) {
          PacketInspectorEngine.PayloadAnalysis next = this.init_AtomicReference.get();
          if (next != null && next != this.init_bu_SyncManager) {
-            int oldScroll = this.init_EventBus != null ? this.init_EventBus.open() : this.run;
+            int oldScroll = this.init_EventBus != null ? this.init_EventBus.getScrollOffset() : this.run;
             this.init_bu_SyncManager = next;
             this.init_bu_JsonUtil = this.init_bu_JsonUtil();
             this.run = Math.max(0, oldScroll);
             this.flush_Z = true;
             if (this.init_EventBus != null) {
-               this.init_EventBus.load_V(this.run);
+               this.init_EventBus.setScrollOffset(this.run);
             }
          }
       }
@@ -185,7 +185,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    private void load(boolean keepScroll) {
       this.open_V_9();
-      int oldScroll = keepScroll && this.init_EventBus != null ? this.init_EventBus.open() : 0;
+      int oldScroll = keepScroll && this.init_EventBus != null ? this.init_EventBus.getScrollOffset() : 0;
       this.init_Str_2 = this.init_Str_bu_JsonUtil_AutismPacketLogger(null, this.init_AutismPacketLogger);
       this.run = keepScroll ? Math.max(0, oldScroll) : init_Map.getOrDefault(this.init_Str_2, 0);
       this.init_EventBus = null;
@@ -235,31 +235,31 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
                this.init_V(innerWidth);
                if (this.init_List.isEmpty()) {
-                  autismclient.gui.ui.widgets.ListRowRenderer.init(context, this.init_Font, "No inspection data.", listX, listY, listWidth);
+                  autismclient.gui.ui.widgets.ListRowRenderer.drawEmptyPlaceholder(context, this.init_Font, "No inspection data.", listX, listY, listWidth);
                } else {
                   int contentHeight = this.init_List.size() * lineH;
                   if (this.init_EventBus == null
-                     || this.init_EventBus.init_I() != listX
-                     || this.init_EventBus.load_I() != listY
-                     || this.init_EventBus.read_I() != listWidth
-                     || this.init_EventBus.write_I() != listHeight) {
-                     int previousScrollOffset = this.init_EventBus != null ? this.init_EventBus.open() : this.run;
+                     || this.init_EventBus.getX() != listX
+                     || this.init_EventBus.getY() != listY
+                     || this.init_EventBus.getWidth() != listWidth
+                     || this.init_EventBus.getHeight() != listHeight) {
+                     int previousScrollOffset = this.init_EventBus != null ? this.init_EventBus.getScrollOffset() : this.run;
                      this.init_EventBus = new autismclient.gui.ui.layout.ScrollableListView(listX, listY, listWidth, listHeight, lineH, 4);
-                     this.init_EventBus.init_V(contentHeight);
-                     this.init_EventBus.load_V(previousScrollOffset);
-                     this.run = this.init_EventBus.open();
+                     this.init_EventBus.setContentHeight(contentHeight);
+                     this.init_EventBus.setScrollOffset(previousScrollOffset);
+                     this.run = this.init_EventBus.getScrollOffset();
                   }
 
-                  this.init_EventBus.init_V(contentHeight);
-                  if (this.run > 0 && this.init_EventBus.open() == 0) {
-                     this.init_EventBus.load_V(this.run);
+                  this.init_EventBus.setContentHeight(contentHeight);
+                  if (this.run > 0 && this.init_EventBus.getScrollOffset() == 0) {
+                     this.init_EventBus.setScrollOffset(this.run);
                   }
 
-                  this.init_EventBus.init_V_GuiGraphicsExtract_2(context, this.init_CharEncoder.set(), this.init_CharEncoder.reset());
+                  this.init_EventBus.beginFrame(context, this.init_CharEncoder.set(), this.init_CharEncoder.reset());
 
                   try {
                      this.init_EventBus
-                        .init_V_GuiGraphicsExtract_3(
+                        .forEachVisibleRow(
                            context,
                            this.init_List.size(),
                            (idx, bnd) -> {
@@ -268,15 +268,15 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                                  context,
                                  ln,
                                  innerX,
-                                 UiLayoutMath.centerTextY(bnd.load, lineH, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush())
+                                 UiLayoutMath.centerTextY(bnd.y, lineH, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush())
                               );
                            }
                         );
                   } finally {
-                     this.init_EventBus.init(context);
+                     this.init_EventBus.endFrame(context);
                   }
 
-                  this.init_EventBus.init_V_GuiGraphicsExtract(context, mouseX, mouseY);
+                  this.init_EventBus.renderScrollbar(context, mouseX, mouseY);
                }
 
                int footerY = this.poll + this.pop - this.set_I_14() + this.queue();
@@ -518,8 +518,8 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          int listWidth = this.push - this.put() * 2;
          if (button == 0
             && this.init_EventBus != null
-            && this.init_EventBus.init_Z_D_D(mouseX, mouseY)
-            && this.init_EventBus.init_Z_D_2(mouseX, mouseY, button)) {
+            && this.init_EventBus.containsPoint(mouseX, mouseY)
+            && this.init_EventBus.mouseClicked(mouseX, mouseY, button)) {
             return true;
          }
 
@@ -548,7 +548,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          this.a__V();
          return true;
       } else if (button == 0 && this.init_EventBus != null) {
-         this.init_EventBus.read_V();
+         this.init_EventBus.mouseReleased();
          this.open_V_9();
          return true;
       } else {
@@ -560,7 +560,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    @Override
    public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (this.init_EventBus != null) {
-         this.init_EventBus.init_V_D_D(mouseX, mouseY);
+         this.init_EventBus.mouseDragged(mouseX, mouseY);
          this.open_V_9();
       }
 
@@ -584,7 +584,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          if (mouseX < listX || mouseX > listX + listWidth || mouseY < listY || mouseY > listY + listHeight) {
             return false;
          } else if (this.init_EventBus != null) {
-            boolean handled = this.init_EventBus.init_Z_D(mouseX, mouseY, amount);
+            boolean handled = this.init_EventBus.mouseScrolled(mouseX, mouseY, amount);
             this.open_V_9();
             return handled;
          } else {
@@ -912,7 +912,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    private void open_V_9() {
       if (this.init_Str_2 != null && !this.init_Str_2.isEmpty()) {
-         int offset = this.init_EventBus != null ? this.init_EventBus.open() : this.run;
+         int offset = this.init_EventBus != null ? this.init_EventBus.getScrollOffset() : this.run;
          this.run = Math.max(0, offset);
          init_Map.put(this.init_Str_2, this.run);
       }

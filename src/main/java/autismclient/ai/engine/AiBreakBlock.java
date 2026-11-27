@@ -180,7 +180,7 @@ public final class AiBreakBlock {
             }
 
             this.init();
-            this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_2(
+            this.init_AiOperation = AiGoto.approachBlockToBreakCompat(
                target,
                (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L),
                protectedCells,

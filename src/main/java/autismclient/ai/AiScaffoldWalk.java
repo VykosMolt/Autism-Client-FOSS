@@ -99,7 +99,7 @@ final class AiScaffoldWalk {
                      && !(block.getBlock() instanceof FallingBlock)
                      && block.getBlock().defaultBlockState().isCollisionShapeFullBlock(mc.level, mc.player.blockPosition())
                      && !block.getBlock().defaultBlockState().hasBlockEntity()
-                     && autismclient.ai.engine.AiRestock.load(stack, mc.player.getInventory());
+                     && autismclient.ai.engine.AiRestock.isConsumableBuildingBlock(stack, mc.player.getInventory());
                   view.add(new AiTelly.Inner_DataUtil(construction, construction ? stack.getCount() : 0));
                }
 

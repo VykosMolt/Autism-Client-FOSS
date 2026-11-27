@@ -128,7 +128,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
                int rowY = contentY + i * rowH;
                if (rowY + rowH > innerY && rowY < innerY + innerH) {
                   int color = i % 2 == 0 ? -10046721 : -24474;
-                  autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, innerX, rowY, innerW - 8, rowH, false, false);
+                  autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(graphics, innerX, rowY, innerW - 8, rowH, false, false);
                   String text = k.init(this.font, this.init_List.get(i), innerW - 8 - 8, init_CharEncoder.init_Identifier_l(l.read), color);
                   this.init(graphics, text, innerX + 4, UiLayoutMath.centerTextY(rowY, rowH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush()), color, innerW - 8 - 8);
                }

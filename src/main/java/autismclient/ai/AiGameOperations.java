@@ -232,7 +232,7 @@ final class AiGameOperations {
 
                Direction face = args.has("face") ? Direction.valueOf(AiJson.getString(args, "face", "UP").toUpperCase(Locale.ROOT)) : null;
                if (this.init_AiOperation == null && autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, target, face) == null) {
-                  this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_4(target, 30, protectedCells, true, face);
+                  this.init_AiOperation = AiGoto.approachBlockToInteractCompat(target, 30, protectedCells, true, face);
                }
 
                if (this.init_AiOperation != null) {
@@ -482,7 +482,7 @@ final class AiGameOperations {
             int button = AiJson.getInt(args, "button", 0);
             if (button >= 0 && button <= 8) {
                AiOperation expected = args.has("expected") ? new AiExpectations(args) : null;
-               AiContainerTransactions.init(container, slot, button, type);
+               AiContainerTransactions.sendPredictedClick(container, slot, button, type);
                return expected != null
                   ? expected
                   : immediate(
@@ -632,9 +632,9 @@ final class AiGameOperations {
                   }
 
                   String regionCell = AiRegions.init(this.read_BlockPos.getX(), this.read_BlockPos.getZ());
-                  AiService service = AiService.load_cc();
+                  AiService service = AiService.getExistingInstance();
                   if (!regionCell.equals(this.load_Str) && service != null) {
-                     service.init(this.read_BlockPos, this.read_I, this.write_I, this.update, this.sync, villagers, this.init_Str);
+                     service.recordSurveyRegion(this.read_BlockPos, this.read_I, this.write_I, this.update, this.sync, villagers, this.init_Str);
                   }
 
                   this.load_Str = regionCell;
@@ -646,7 +646,7 @@ final class AiGameOperations {
                      && this.flush >= 2
                      && this.close >= 16) {
                      this.write_BlockPos = this.read_BlockPos;
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(this.write_BlockPos, 3.0, false, false, false, 60);
+                     this.init_AiOperation = AiGoto.travelToCompat(this.write_BlockPos, 3.0, false, false, false, 60);
                      return AiGameOperations.result(
                         AiOperation.Status.RUNNING,
                         "Village evidence cluster found; checking arrival",
@@ -689,7 +689,7 @@ final class AiGameOperations {
                   if (service != null) {
                      HashSet<String> excluded = new HashSet<>(this.init_Set);
                      excluded.addAll(this.load_Set);
-                     int[] frontier = AiRegions.init(service.load_List(), excluded, this.init_BlockPos.getX(), this.init_BlockPos.getZ(), this.init_I)
+                     int[] frontier = AiRegions.init(service.getDimensionRegions(), excluded, this.init_BlockPos.getX(), this.init_BlockPos.getZ(), this.init_I)
                         .stream()
                         .filter(px -> !this.load_Set.contains(AiRegions.init(px[0], px[2])))
                         .min(Comparator.comparingDouble(px -> this.init_Minecraft.player.position().distanceToSqr(px[0], px[1], px[2])))

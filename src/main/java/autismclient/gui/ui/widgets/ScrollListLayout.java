@@ -96,16 +96,16 @@ public final class ScrollListLayout {
       ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil
    ) {
       public void init(GuiGraphicsExtractor graphics, boolean focused) {
-         ListRowRenderer.init(graphics, this.init_I, this.load, this.read, this.write, focused);
+         ListRowRenderer.drawListFrame(graphics, this.init_I, this.load, this.read, this.write, focused);
       }
 
       public void init(GuiGraphicsExtractor graphics) {
-         autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(1.0F)
-            .init(graphics, this.init_I + this.pop, this.load + this.pop, this.init_I + this.pop + this.push, this.load + this.pop + this.flush);
+         autismclient.gui.ui.layout.LayoutViewport.create(1.0F)
+            .pushClip(graphics, this.init_I + this.pop, this.load + this.pop, this.init_I + this.pop + this.push, this.load + this.pop + this.flush);
       }
 
       public void load(GuiGraphicsExtractor graphics) {
-         autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(1.0F).read(graphics);
+         autismclient.gui.ui.layout.LayoutViewport.create(1.0F).popClip(graphics);
       }
 
       public void init(int rowCount, BiConsumer<Integer, Integer> consumer) {

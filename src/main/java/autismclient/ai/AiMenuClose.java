@@ -89,7 +89,7 @@ public final class AiMenuClose {
       if (state == AiMenuClose.Inner_StreamUtil.WAITING && player != null && mc.getConnection() != null) {
          if (receipt.init_Z && receipt.load_Packet == null && player.inventoryMenu.getCarried().isEmpty()) {
             ServerboundContainerClickPacket packet = new ServerboundContainerClickPacket(
-               0, AiContainerTransactions.init(player.inventoryMenu.getStateId()), (short)36, (byte)0, ContainerInput.SWAP, new Int2ObjectOpenHashMap<>(), HashedStack.EMPTY
+               0, AiContainerTransactions.mismatchStateId(player.inventoryMenu.getStateId()), (short)36, (byte)0, ContainerInput.SWAP, new Int2ObjectOpenHashMap<>(), HashedStack.EMPTY
             );
             receipt.load_Packet = packet;
             mc.getConnection().send(packet);

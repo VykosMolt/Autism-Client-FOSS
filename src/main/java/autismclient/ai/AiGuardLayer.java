@@ -9,111 +9,111 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 final class AiGuardLayer {
-   private final AiGuard.GuardPolicy init_X_CachePool;
-   private final String init_Str;
-   private AiOperation init_AiOperation;
-   private AiFireControl init_K;
-   private AiOperation load_AiOperation;
-   private String load_Str = "";
-   private long init_J;
-   private boolean init_Z;
-   private boolean load_Z;
-   private boolean read;
-   private boolean write;
-   private boolean update;
-   private boolean sync;
-   private boolean flush;
-   private boolean close;
-   private AiGuard.GuardAction init_X_DataUtil = AiGuard.GuardAction.NONE;
-   private Object init_Obj;
-   private Object load_Obj;
-   private final Vec3[] init_Vec3Arr = new Vec3[10];
-   private int init_I;
-   private long load_J = -1L;
+   private final AiGuard.GuardPolicy policy;
+   private final String ownerLabel;
+   private AiOperation activeGuardOp;
+   private AiFireControl fireControl;
+   private AiOperation waterDouseOp;
+   private String activeReason = "";
+   private long lastFireStepFailNanos;
+   private boolean activeCombat;
+   private boolean activeFlee;
+   private boolean loggedSprintPast;
+   private boolean activeHazardEscape;
+   private boolean activeLavaEscape;
+   private boolean activeBreatheEscape;
+   private boolean activePowderEscape;
+   private boolean reconciliationPending;
+   private AiGuard.GuardAction activeGuardAction = AiGuard.GuardAction.NONE;
+   private Object trackedLevel;
+   private Object trackedPlayer;
+   private final Vec3[] recentPositions = new Vec3[10];
+   private int positionRingIndex;
+   private long lastPositionSampleTick = -1L;
 
    AiGuardLayer(AiGuard.GuardPolicy policy, String owner) {
-      this.init_X_CachePool = policy;
-      this.init_Str = owner;
+      this.policy = policy;
+      this.ownerLabel = owner;
    }
 
-   boolean init_Z() {
-      return this.init_AiOperation != null || this.init_K != null || this.load_AiOperation != null;
+   boolean isActive() {
+      return this.activeGuardOp != null || this.fireControl != null || this.waterDouseOp != null;
    }
 
-   boolean load() {
-      return !this.close
-         && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
-         && (this.init_K == null || this.init_K.load_Z())
-         && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow());
+   boolean canInterruptNow() {
+      return !this.reconciliationPending
+         && (this.activeGuardOp == null || this.activeGuardOp.canInterruptNow())
+         && (this.fireControl == null || this.fireControl.load_Z())
+         && (this.waterDouseOp == null || this.waterDouseOp.canInterruptNow());
    }
 
-   boolean read() {
-      return this.close
-         || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-         || this.init_K != null && this.init_K.read()
-         || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency();
+   boolean requiresReconciliation() {
+      return this.reconciliationPending
+         || this.activeGuardOp != null && this.activeGuardOp.requiresReconciliationAfterEmergency()
+         || this.fireControl != null && this.fireControl.read()
+         || this.waterDouseOp != null && this.waterDouseOp.requiresReconciliationAfterEmergency();
    }
 
-   AiOperation.Result init_AiOperation_Result_AiOperation(AiOperation leg, Runnable cancelLeg, IntSupplier remainingSeconds) {
+   AiOperation.Result tick(AiOperation leg, Runnable cancelLeg, IntSupplier remainingSeconds) {
       AiGuard.suppressBriefly();
       Minecraft zoneClient = Minecraft.getInstance();
       if (zoneClient.player != null && zoneClient.level != null && zoneClient.player.isAlive()) {
-         if (this.init_Obj != zoneClient.level || this.load_Obj != zoneClient.player) {
-            boolean reconcile = this.read() || this.close;
-            this.init_V();
-            this.init_Obj = zoneClient.level;
-            this.load_Obj = zoneClient.player;
+         if (this.trackedLevel != zoneClient.level || this.trackedPlayer != zoneClient.player) {
+            boolean reconcile = this.requiresReconciliation() || this.reconciliationPending;
+            this.cancel();
+            this.trackedLevel = zoneClient.level;
+            this.trackedPlayer = zoneClient.player;
             if (reconcile) {
-               return init_AiOperation_Result_Z(
-                  true, "world or player changed", init_AiOperation_Result_Str("Observe pending changes in the new context before restarting work")
+               return wrapUncertainResult(
+                  true, "world or player changed", runningResult("Observe pending changes in the new context before restarting work")
                );
             }
          }
 
-         Vec3 motion = this.init_Vec3_Vec3(zoneClient.player.position());
-         boolean environmentDamage = AiService.init_Z_Player(zoneClient.player);
+         Vec3 motion = this.sampleAverageVelocity(zoneClient.player.position());
+         boolean environmentDamage = AiService.isPlayerVulnerable(zoneClient.player);
          boolean interruptedMeal = false;
-         if (environmentDamage && !AiThreats.init_Z() && !this.update && zoneClient.player != null && AiLavaEscape.init_Z(zoneClient)) {
-            this.init_V_AiOperation_Runnable(leg, cancelLeg);
-            this.load_Z = false;
-            this.init_Z = false;
-            this.load_Str = "in lava";
-            this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", this.init_Str + ": " + this.load_Str, AiLavaEscape.init());
-            this.write = true;
-            this.update = true;
-            AiSpeedrun.init_V_Str_ObjArr("[AI] {}: in lava at {}; swimming out", this.init_Str, zoneClient.player.blockPosition().toShortString());
-            return this.init_AiOperation_Result();
+         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeLavaEscape && zoneClient.player != null && AiLavaEscape.init_Z(zoneClient)) {
+            this.preemptForHazard(leg, cancelLeg);
+            this.activeFlee = false;
+            this.activeCombat = false;
+            this.activeReason = "in lava";
+            this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, AiLavaEscape.init());
+            this.activeHazardEscape = true;
+            this.activeLavaEscape = true;
+            AiSpeedrun.init_V_Str_ObjArr("[AI] {}: in lava at {}; swimming out", this.ownerLabel, zoneClient.player.blockPosition().toShortString());
+            return this.tickActiveGuardOp();
          }
 
-         if (environmentDamage && !AiThreats.init_Z() && !this.sync && !this.update && zoneClient.player != null && AiBreathe.init(zoneClient.player)) {
-            this.init_V_AiOperation_Runnable(leg, cancelLeg);
-            this.load_Z = false;
-            this.init_Z = false;
-            this.load_Str = "out of air";
-            this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str(
-               "survival", this.init_Str + ": " + this.load_Str, AiBreathe.init(AiJson.objectOf("timeoutSeconds", 25))
+         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeBreatheEscape && !this.activeLavaEscape && zoneClient.player != null && AiBreathe.init(zoneClient.player)) {
+            this.preemptForHazard(leg, cancelLeg);
+            this.activeFlee = false;
+            this.activeCombat = false;
+            this.activeReason = "out of air";
+            this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str(
+               "survival", this.ownerLabel + ": " + this.activeReason, AiBreathe.init(AiJson.objectOf("timeoutSeconds", 25))
             );
-            this.write = true;
-            this.sync = true;
+            this.activeHazardEscape = true;
+            this.activeBreatheEscape = true;
             AiSpeedrun.init_V_Str_ObjArr(
                "[AI] {}: out of air at {} (air {}); swimming up",
-               this.init_Str,
+               this.ownerLabel,
                zoneClient.player.blockPosition().toShortString(),
                zoneClient.player.getAirSupply()
             );
-            return this.init_AiOperation_Result();
+            return this.tickActiveGuardOp();
          }
 
-         if (environmentDamage && !AiThreats.init_Z() && !this.update && !this.sync && !this.flush && AiPowderEscape.init_Z(zoneClient)) {
-            this.init_V_AiOperation_Runnable(leg, cancelLeg);
-            this.load_Z = this.init_Z = false;
-            this.load_Str = "in powder snow";
-            this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", this.init_Str + ": " + this.load_Str, AiPowderEscape.init());
-            this.write = this.flush = true;
-            return this.init_AiOperation_Result();
+         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeLavaEscape && !this.activeBreatheEscape && !this.activePowderEscape && AiPowderEscape.init_Z(zoneClient)) {
+            this.preemptForHazard(leg, cancelLeg);
+            this.activeFlee = this.activeCombat = false;
+            this.activeReason = "in powder snow";
+            this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, AiPowderEscape.init());
+            this.activeHazardEscape = this.activePowderEscape = true;
+            return this.tickActiveGuardOp();
          }
 
-         if (!AiThreats.init_Z() && !this.write && zoneClient.player != null) {
+         if (!AiThreats.isLegacyCombatEnabled() && !this.activeHazardEscape && zoneClient.player != null) {
             AiOperation out = AiDragonZones.init_Z(zoneClient) ? AiDragonZones.load(zoneClient) : null;
             boolean cloud = false;
             if (out == null && !zoneClient.player.isInWater() && AiDragon.init_Z(zoneClient)) {
@@ -126,195 +126,195 @@ final class AiGuardLayer {
             }
 
             if (out != null) {
-               this.init_V_AiOperation_Runnable(leg, cancelLeg);
-               this.load_Z = false;
-               this.init_Z = false;
-               this.load_Str = cloud ? "in a lingering cloud" : "in the dragon's wing push";
-               this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", this.init_Str + ": " + this.load_Str, out);
-               this.write = true;
-               AiSpeedrun.init_V_Str_ObjArr("[AI] {}: {} at {}; stepping out", this.init_Str, this.load_Str, zoneClient.player.blockPosition().toShortString());
-               return this.init_AiOperation_Result();
+               this.preemptForHazard(leg, cancelLeg);
+               this.activeFlee = false;
+               this.activeCombat = false;
+               this.activeReason = cloud ? "in a lingering cloud" : "in the dragon's wing push";
+               this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, out);
+               this.activeHazardEscape = true;
+               AiSpeedrun.init_V_Str_ObjArr("[AI] {}: {} at {}; stepping out", this.ownerLabel, this.activeReason, zoneClient.player.blockPosition().toShortString());
+               return this.tickActiveGuardOp();
             }
          }
 
          if (environmentDamage
-            && this.load_AiOperation == null
+            && this.waterDouseOp == null
             && zoneClient.player != null
             && !zoneClient.player.isInWater()
             && (zoneClient.player.isOnFire() || AiEndRun.init_Z(zoneClient))) {
-            this.load_AiOperation = AiEndRun.init_AiOperation(zoneClient);
+            this.waterDouseOp = AiEndRun.init_AiOperation(zoneClient);
          }
 
-         if (this.load_AiOperation != null) {
-            AiOperation.Result doused = this.load_AiOperation.tick();
+         if (this.waterDouseOp != null) {
+            AiOperation.Result doused = this.waterDouseOp.tick();
             if (!doused.terminal()) {
                return AiGameOperations.result(
                   AiOperation.Status.RUNNING,
-                  "Dousing body fire before " + this.init_Str + ": " + doused.message(),
+                  "Dousing body fire before " + this.ownerLabel + ": " + doused.message(),
                   AiJson.objectOf("legPreserved", true)
                );
             }
 
-            this.load_AiOperation.cancel();
-            this.load_AiOperation = null;
+            this.waterDouseOp.cancel();
+            this.waterDouseOp = null;
             if (doused.status() != AiOperation.Status.SUCCEEDED) {
                AiSpeedrun.init_V_Str_ObjArr("[AI] guard: water douse failed ({}); falling back to fire control", doused.message());
             }
          }
 
-         boolean pendingBodyFire = this.init_K != null && this.init_K.init_Z();
-         if (!AiThreats.init_Z()
-            && !this.write
+         boolean pendingBodyFire = this.fireControl != null && this.fireControl.init_Z();
+         if (!AiThreats.isLegacyCombatEnabled()
+            && !this.activeHazardEscape
             && zoneClient.player != null
             && !zoneClient.player.isInWater()
             && (
                pendingBodyFire
                   || zoneClient.player.containerMenu == zoneClient.player.inventoryMenu
                      && (leg == null || !leg.requiresReconciliationAfterEmergency())
-                     && (this.init_AiOperation == null || !this.init_AiOperation.requiresReconciliationAfterEmergency())
+                     && (this.activeGuardOp == null || !this.activeGuardOp.requiresReconciliationAfterEmergency())
                      && zoneClient.player.getHealth() >= 8.0F
                      && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()
                      && AiEndRun.init_Z(zoneClient)
             )) {
-            if (this.init_K == null) {
-               this.init_K = new AiFireControl(true);
+            if (this.fireControl == null) {
+               this.fireControl = new AiFireControl(true);
             }
 
-            if (this.init_K.init(false, null)) {
+            if (this.fireControl.init(false, null)) {
                return AiGameOperations.result(
                   AiOperation.Status.RUNNING,
-                  "Extinguish body fire before resuming " + this.init_Str + ": " + this.init_K.init_Str(),
-                  AiJson.objectOf("firesExtinguished", this.init_K.init_I(), "legPreserved", true)
+                  "Extinguish body fire before resuming " + this.ownerLabel + ": " + this.fireControl.init_Str(),
+                  AiJson.objectOf("firesExtinguished", this.fireControl.init_I(), "legPreserved", true)
                );
             }
          }
 
-         if (this.init_K != null && !this.init_K.init_Z()) {
-            this.init_K.init_V();
-            this.init_K = null;
+         if (this.fireControl != null && !this.fireControl.init_Z()) {
+            this.fireControl.init_V();
+            this.fireControl = null;
          }
 
-         if (environmentDamage && !AiThreats.init_Z() && !this.write && zoneClient.player != null && !zoneClient.player.isInWater() && AiEndRun.init_Z(zoneClient)) {
-            boolean stepFailedLately = System.nanoTime() - this.init_J < 3000000000L;
+         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeHazardEscape && zoneClient.player != null && !zoneClient.player.isInWater() && AiEndRun.init_Z(zoneClient)) {
+            boolean stepFailedLately = System.nanoTime() - this.lastFireStepFailNanos < 3000000000L;
             AiOperation out = stepFailedLately ? null : AiEndRun.load_AiOperation(zoneClient);
             if (out != null) {
-               this.init_V_AiOperation_Runnable(leg, cancelLeg);
-               this.load_Z = false;
-               this.init_Z = false;
-               this.load_Str = "standing in fire";
-               this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", this.init_Str + ": " + this.load_Str, out);
-               this.write = true;
-               return this.init_AiOperation_Result();
+               this.preemptForHazard(leg, cancelLeg);
+               this.activeFlee = false;
+               this.activeCombat = false;
+               this.activeReason = "standing in fire";
+               this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, out);
+               this.activeHazardEscape = true;
+               return this.tickActiveGuardOp();
             }
 
             if (AiEndRun.load_Z(zoneClient)) {
-               return init_AiOperation_Result_Str("Interrupted: putting out the fire");
+               return runningResult("Interrupted: putting out the fire");
             }
          }
 
          Minecraft client = Minecraft.getInstance();
-         if (environmentDamage && !AiThreats.init_Z() && !this.write && !client.player.isInWater() && (AiEndRun.init_Z(client) || client.player.isOnFire())) {
+         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeHazardEscape && !client.player.isInWater() && (AiEndRun.init_Z(client) || client.player.isOnFire())) {
             AiOperation out = client.player.isOnFire() ? AiEndRun.init_AiOperation(client) : null;
-            if (out == null && AiEndRun.init_Z(client) && System.nanoTime() - this.init_J >= 3000000000L) {
+            if (out == null && AiEndRun.init_Z(client) && System.nanoTime() - this.lastFireStepFailNanos >= 3000000000L) {
                out = AiEndRun.load_AiOperation(client);
             }
 
             if (out == null && AiEndRun.init_Z(client) && AiEndRun.load_Z(client)) {
-               this.init_V_AiOperation_Runnable(leg, cancelLeg);
-               return init_AiOperation_Result_Str("Interrupted: putting out the fire");
+               this.preemptForHazard(leg, cancelLeg);
+               return runningResult("Interrupted: putting out the fire");
             }
 
             if (out != null) {
-               this.load_Z = false;
-               this.init_Z = false;
-               this.load_Str = "on fire";
-               this.init_V_AiOperation_Runnable(leg, cancelLeg);
-               this.write = true;
-               this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", this.init_Str + ": " + this.load_Str, out);
-               return this.init_AiOperation_Result();
+               this.activeFlee = false;
+               this.activeCombat = false;
+               this.activeReason = "on fire";
+               this.preemptForHazard(leg, cancelLeg);
+               this.activeHazardEscape = true;
+               this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, out);
+               return this.tickActiveGuardOp();
             }
          }
 
-         if (!AiThreats.init_Z() && this.init_AiOperation != null && !this.write && AiCombatPriority.init(this.init_X_DataUtil) && AiDodge.init(zoneClient, false)) {
-            this.init_V_AiOperation_Runnable(leg, cancelLeg);
-            this.init_Z = this.load_Z = false;
-            this.load_Str = "incoming projectile during maintenance";
-            this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str(
-               "survival", this.init_Str + ": " + this.load_Str, AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 6))
+         if (!AiThreats.isLegacyCombatEnabled() && this.activeGuardOp != null && !this.activeHazardEscape && AiCombatPriority.init(this.activeGuardAction) && AiDodge.init(zoneClient, false)) {
+            this.preemptForHazard(leg, cancelLeg);
+            this.activeCombat = this.activeFlee = false;
+            this.activeReason = "incoming projectile during maintenance";
+            this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str(
+               "survival", this.ownerLabel + ": " + this.activeReason, AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 6))
             );
-            return this.init_AiOperation_Result();
+            return this.tickActiveGuardOp();
          }
 
-         if (this.init_AiOperation != null
-            && !this.write
-            && this.init_AiOperation.canInterruptNow()
-            && !this.init_AiOperation.requiresReconciliationAfterEmergency()
+         if (this.activeGuardOp != null
+            && !this.activeHazardEscape
+            && this.activeGuardOp.canInterruptNow()
+            && !this.activeGuardOp.requiresReconciliationAfterEmergency()
             && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
             AiGuard.StatusSnapshot live = AiGuard.sampleStatus();
-            AiGuard.GuardAction next = AiGuard.decide(this.init_X_CachePool_Minecraft(zoneClient), live).action();
-            if (AiCombatPriority.init_Z_X_DataUtil(this.init_X_DataUtil, next, live.hostilesNear())
-               || this.init_X_DataUtil == AiGuard.GuardAction.EAT && AiSurvival.init_Entity(zoneClient) != null) {
-               AiRunTrace.init_V_Str_JsonObject(
+            AiGuard.GuardAction next = AiGuard.decide(this.effectivePolicy(zoneClient), live).action();
+            if (AiCombatPriority.init_Z_X_DataUtil(this.activeGuardAction, next, live.hostilesNear())
+               || this.activeGuardAction == AiGuard.GuardAction.EAT && AiSurvival.init_Entity(zoneClient) != null) {
+               AiRunTrace.emitServiceEvent(
                   "survival_reprioritize",
                   AiJson.objectOf(
-                     "owner", this.init_Str, "from", this.init_X_DataUtil.name(), "to", next.name(), "health", live.health(), "hostiles", live.hostilesNear()
+                     "owner", this.ownerLabel, "from", this.activeGuardAction.name(), "to", next.name(), "health", live.health(), "hostiles", live.hostilesNear()
                   )
                );
-               interruptedMeal = this.init_X_DataUtil == AiGuard.GuardAction.EAT && AiSurvival.init_Entity(zoneClient) != null;
-               this.init_AiOperation.cancel();
-               this.init_AiOperation = null;
-               this.init_X_DataUtil = AiGuard.GuardAction.NONE;
-               this.init_Z = this.load_Z = false;
+               interruptedMeal = this.activeGuardAction == AiGuard.GuardAction.EAT && AiSurvival.init_Entity(zoneClient) != null;
+               this.activeGuardOp.cancel();
+               this.activeGuardOp = null;
+               this.activeGuardAction = AiGuard.GuardAction.NONE;
+               this.activeCombat = this.activeFlee = false;
             }
          }
 
-         if (this.init_AiOperation != null) {
-            return this.init_AiOperation_Result();
+         if (this.activeGuardOp != null) {
+            return this.tickActiveGuardOp();
          }
 
          if (autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && (leg == null || leg.canInterruptNow())) {
             AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
             boolean moving = motion.horizontalDistance() >= 0.12;
-            if (!AiThreats.init_Z() && !AiCover.init(Minecraft.getInstance()) && !AiBlazeFight.init() && AiDodge.init(Minecraft.getInstance(), moving)) {
-               this.load_Z = false;
-               this.init_Z = false;
-               this.load_Str = "incoming projectile";
+            if (!AiThreats.isLegacyCombatEnabled() && !AiCover.init(Minecraft.getInstance()) && !AiBlazeFight.init() && AiDodge.init(Minecraft.getInstance(), moving)) {
+               this.activeFlee = false;
+               this.activeCombat = false;
+               this.activeReason = "incoming projectile";
                if (leg != null) {
-                  this.close = this.close | leg.requiresReconciliationAfterEmergency();
+                  this.reconciliationPending = this.reconciliationPending | leg.requiresReconciliationAfterEmergency();
                   cancelLeg.run();
                }
 
-               this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str(
-                  "survival", this.init_Str + ": projectile dodge", AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 6))
+               this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str(
+                  "survival", this.ownerLabel + ": projectile dodge", AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 6))
                );
-               return this.init_AiOperation_Result();
-            } else if (!AiThreats.init_Z() && vitals.hostilesNear() > 0 && leg != null && vitals.health() >= 8.0F && AiGuard.canSprintPastThreats(Minecraft.getInstance(), motion)) {
-               if (!this.read) {
-                  AiSpeedrun.init_V_Str_ObjArr("[AI] {}: guard leaves {} behind (on the move)", this.init_Str, AiGuard.threatSummary);
+               return this.tickActiveGuardOp();
+            } else if (!AiThreats.isLegacyCombatEnabled() && vitals.hostilesNear() > 0 && leg != null && vitals.health() >= 8.0F && AiGuard.canSprintPastThreats(Minecraft.getInstance(), motion)) {
+               if (!this.loggedSprintPast) {
+                  AiSpeedrun.init_V_Str_ObjArr("[AI] {}: guard leaves {} behind (on the move)", this.ownerLabel, AiGuard.threatSummary);
                }
 
-               this.read = true;
+               this.loggedSprintPast = true;
                return null;
             } else {
-               this.read = false;
-               if (!AiThreats.init_Z() && AiDragon.init_Z(Minecraft.getInstance())) {
+               this.loggedSprintPast = false;
+               if (!AiThreats.isLegacyCombatEnabled() && AiDragon.init_Z(Minecraft.getInstance())) {
                   AiOperation out = AiDragon.init_AiOperation(Minecraft.getInstance());
                   if (out != null) {
-                     this.load_Z = false;
-                     this.init_Z = false;
-                     this.load_Str = "in a lingering cloud";
+                     this.activeFlee = false;
+                     this.activeCombat = false;
+                     this.activeReason = "in a lingering cloud";
                      if (leg != null) {
-                        this.close = this.close | leg.requiresReconciliationAfterEmergency();
+                        this.reconciliationPending = this.reconciliationPending | leg.requiresReconciliationAfterEmergency();
                         cancelLeg.run();
                      }
 
-                     this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", this.init_Str + ": " + this.load_Str, out);
-                     return this.init_AiOperation_Result();
+                     this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, out);
+                     return this.tickActiveGuardOp();
                   }
                }
 
                Minecraft mc = Minecraft.getInstance();
-               AiGuard.GuardPolicy policy = this.init_X_CachePool_Minecraft(mc);
+               AiGuard.GuardPolicy policy = this.effectivePolicy(mc);
                boolean unsafeMeal = interruptedMeal || AiGuard.decide(policy, vitals).action() == AiGuard.GuardAction.EAT && AiSurvival.init_Entity(mc) != null;
                AiOperation action = unsafeMeal
                   ? AiSurvival.init_AiOperation_Minecraft(mc, policy, remainingSeconds.getAsInt())
@@ -323,94 +323,94 @@ final class AiGuardLayer {
                   return null;
                }
 
-               this.init_X_DataUtil = unsafeMeal ? AiGuard.GuardAction.FIGHT : AiGuard.decide(policy, vitals).action();
-               this.load_Z = AiGuard.fleeActive;
-               if (this.load_Z) {
-                  this.init_X_DataUtil = AiGuard.GuardAction.FLEE;
+               this.activeGuardAction = unsafeMeal ? AiGuard.GuardAction.FIGHT : AiGuard.decide(policy, vitals).action();
+               this.activeFlee = AiGuard.fleeActive;
+               if (this.activeFlee) {
+                  this.activeGuardAction = AiGuard.GuardAction.FLEE;
                }
 
-               this.init_Z = !this.load_Z && this.init_X_DataUtil == AiGuard.GuardAction.FIGHT;
-               this.load_Str = unsafeMeal ? "nearby enemy prevents a safe meal" : AiGuard.decisionReason(policy, vitals);
-               AiSpeedrun.init_V_Str_ObjArr("[AI] {}: guard steps in ({}, health {})", this.init_Str, this.load_Str, (int)vitals.health());
+               this.activeCombat = !this.activeFlee && this.activeGuardAction == AiGuard.GuardAction.FIGHT;
+               this.activeReason = unsafeMeal ? "nearby enemy prevents a safe meal" : AiGuard.decisionReason(policy, vitals);
+               AiSpeedrun.init_V_Str_ObjArr("[AI] {}: guard steps in ({}, health {})", this.ownerLabel, this.activeReason, (int)vitals.health());
                if (leg != null) {
-                  this.close = this.close | leg.requiresReconciliationAfterEmergency();
+                  this.reconciliationPending = this.reconciliationPending | leg.requiresReconciliationAfterEmergency();
                   cancelLeg.run();
                }
 
-               this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", this.init_Str + ": " + this.load_Str, action);
-               return this.init_AiOperation_Result();
+               this.activeGuardOp = AiRunDiagnostics.init_AiOperation_Str("survival", this.ownerLabel + ": " + this.activeReason, action);
+               return this.tickActiveGuardOp();
             }
          } else {
             return null;
          }
       } else {
-         boolean reconcile = this.read();
-         this.init_V();
+         boolean reconcile = this.requiresReconciliation();
+         this.cancel();
          AiOperation.Result ended = AiGameOperations.result(AiOperation.Status.CANCELLED, "Survival layer lost the living player", new JsonObject());
-         return reconcile ? init_AiOperation_Result_Z(true, "player unavailable", ended) : ended;
+         return reconcile ? wrapUncertainResult(true, "player unavailable", ended) : ended;
       }
    }
 
-   private AiGuard.GuardPolicy init_X_CachePool_Minecraft(Minecraft mc) {
-      return mc.level.dimension() == Level.OVERWORLD ? this.init_X_CachePool : this.init_X_CachePool.withoutFlee();
+   private AiGuard.GuardPolicy effectivePolicy(Minecraft mc) {
+      return mc.level.dimension() == Level.OVERWORLD ? this.policy : this.policy.withoutFlee();
    }
 
-   private Vec3 init_Vec3_Vec3(Vec3 here) {
-      long tick = AiThreats.init_J();
-      Vec3 previous = this.init_Vec3Arr[(this.init_I + this.init_Vec3Arr.length - 1) % this.init_Vec3Arr.length];
-      if (tick < this.load_J || tick - this.load_J > 1L || previous != null && here.distanceToSqr(previous) > 64.0) {
-         Arrays.fill(this.init_Vec3Arr, null);
+   private Vec3 sampleAverageVelocity(Vec3 here) {
+      long tick = AiThreats.currentClientTick();
+      Vec3 previous = this.recentPositions[(this.positionRingIndex + this.recentPositions.length - 1) % this.recentPositions.length];
+      if (tick < this.lastPositionSampleTick || tick - this.lastPositionSampleTick > 1L || previous != null && here.distanceToSqr(previous) > 64.0) {
+         Arrays.fill(this.recentPositions, null);
       }
 
-      if (tick != this.load_J) {
-         this.init_Vec3Arr[this.init_I] = here;
-         this.init_I = (this.init_I + 1) % this.init_Vec3Arr.length;
-         this.load_J = tick;
+      if (tick != this.lastPositionSampleTick) {
+         this.recentPositions[this.positionRingIndex] = here;
+         this.positionRingIndex = (this.positionRingIndex + 1) % this.recentPositions.length;
+         this.lastPositionSampleTick = tick;
       }
 
-      Vec3 past = this.init_Vec3Arr[this.init_I];
-      return past == null ? Vec3.ZERO : here.subtract(past).scale(1.0 / (this.init_Vec3Arr.length - 1));
+      Vec3 past = this.recentPositions[this.positionRingIndex];
+      return past == null ? Vec3.ZERO : here.subtract(past).scale(1.0 / (this.recentPositions.length - 1));
    }
 
-   private void init_V_AiOperation_Runnable(AiOperation leg, Runnable cancelLeg) {
-      this.close = this.close | this.read();
-      if (this.init_AiOperation != null) {
-         this.init_AiOperation.cancel();
-         this.init_AiOperation = null;
+   private void preemptForHazard(AiOperation leg, Runnable cancelLeg) {
+      this.reconciliationPending = this.reconciliationPending | this.requiresReconciliation();
+      if (this.activeGuardOp != null) {
+         this.activeGuardOp.cancel();
+         this.activeGuardOp = null;
       } else if (leg != null) {
-         this.close = this.close | leg.requiresReconciliationAfterEmergency();
+         this.reconciliationPending = this.reconciliationPending | leg.requiresReconciliationAfterEmergency();
          cancelLeg.run();
       }
 
-      if (this.init_K != null) {
-         this.init_K.init_V();
-         this.init_K = null;
+      if (this.fireControl != null) {
+         this.fireControl.init_V();
+         this.fireControl = null;
       }
 
-      this.init_X_DataUtil = AiGuard.GuardAction.NONE;
-      this.write = this.update = this.sync = this.flush = false;
+      this.activeGuardAction = AiGuard.GuardAction.NONE;
+      this.activeHazardEscape = this.activeLavaEscape = this.activeBreatheEscape = this.activePowderEscape = false;
    }
 
-   private AiOperation.Result init_AiOperation_Result() {
-      AiOperation.Result r = this.init_AiOperation.tick();
+   private AiOperation.Result tickActiveGuardOp() {
+      AiOperation.Result r = this.activeGuardOp.tick();
       if (!r.terminal()) {
-         return init_AiOperation_Result_Str("Interrupted: " + this.load_Str + " - " + r.message());
+         return runningResult("Interrupted: " + this.activeReason + " - " + r.message());
       }
 
-      this.init_AiOperation.cancel();
-      this.init_AiOperation = null;
-      this.init_X_DataUtil = AiGuard.GuardAction.NONE;
-      if (!this.close && r.status() != AiOperation.Status.UNCERTAIN) {
-         if (this.write && "standing in fire".equals(this.load_Str) && r.status() != AiOperation.Status.SUCCEEDED) {
-            this.init_J = System.nanoTime();
+      this.activeGuardOp.cancel();
+      this.activeGuardOp = null;
+      this.activeGuardAction = AiGuard.GuardAction.NONE;
+      if (!this.reconciliationPending && r.status() != AiOperation.Status.UNCERTAIN) {
+         if (this.activeHazardEscape && "standing in fire".equals(this.activeReason) && r.status() != AiOperation.Status.SUCCEEDED) {
+            this.lastFireStepFailNanos = System.nanoTime();
          }
 
-         if (this.write) {
-            this.write = false;
-            this.update = false;
-            this.sync = false;
-            this.flush = false;
-            return init_AiOperation_Result_Str("Back to work after " + this.load_Str);
+         if (this.activeHazardEscape) {
+            this.activeHazardEscape = false;
+            this.activeLavaEscape = false;
+            this.activeBreatheEscape = false;
+            this.activePowderEscape = false;
+            return runningResult("Back to work after " + this.activeReason);
          }
 
          if (r.status() != AiOperation.Status.SUCCEEDED) {
@@ -419,50 +419,50 @@ final class AiGuardLayer {
 
          if (AiGuard.perchCombatActive && r.status() != AiOperation.Status.SUCCEEDED) {
             AiGuard.notePerchBackoff();
-         } else if (this.init_Z && r.status() != AiOperation.Status.SUCCEEDED && !AiGuard.burrowActive && !AiGuard.coverActive) {
+         } else if (this.activeCombat && r.status() != AiOperation.Status.SUCCEEDED && !AiGuard.burrowActive && !AiGuard.coverActive) {
             AiGuard.noteCombatBackoff();
          }
 
-         if (this.load_Z && (r.status() != AiOperation.Status.SUCCEEDED || AiGuard.sampleStatus().hostilesNear() > 0)) {
+         if (this.activeFlee && (r.status() != AiOperation.Status.SUCCEEDED || AiGuard.sampleStatus().hostilesNear() > 0)) {
             AiGuard.noteRetreatBlocked();
          }
 
-         AiSpeedrun.init_V_Str_ObjArr("[AI] {}: guard {} after {}: {}", this.init_Str, r.status(), this.load_Str, AiSpeedrun.init_Str_Str(r.message()));
-         return init_AiOperation_Result_Str("Back to work after " + this.load_Str);
+         AiSpeedrun.init_V_Str_ObjArr("[AI] {}: guard {} after {}: {}", this.ownerLabel, r.status(), this.activeReason, AiSpeedrun.init_Str_Str(r.message()));
+         return runningResult("Back to work after " + this.activeReason);
       } else {
-         AiOperation.Result uncertain = init_AiOperation_Result_Z(this.close, this.load_Str, r);
-         this.close = false;
-         this.write = this.update = this.sync = this.flush = false;
+         AiOperation.Result uncertain = wrapUncertainResult(this.reconciliationPending, this.activeReason, r);
+         this.reconciliationPending = false;
+         this.activeHazardEscape = this.activeLavaEscape = this.activeBreatheEscape = this.activePowderEscape = false;
          return uncertain;
       }
    }
 
-   void init_V() {
-      if (this.init_AiOperation != null) {
-         this.init_AiOperation.cancel();
-         this.init_AiOperation = null;
+   void cancel() {
+      if (this.activeGuardOp != null) {
+         this.activeGuardOp.cancel();
+         this.activeGuardOp = null;
       }
 
-      if (this.init_K != null) {
-         this.init_K.init_V();
-         this.init_K = null;
+      if (this.fireControl != null) {
+         this.fireControl.init_V();
+         this.fireControl = null;
       }
 
-      if (this.load_AiOperation != null) {
-         this.load_AiOperation.cancel();
-         this.load_AiOperation = null;
+      if (this.waterDouseOp != null) {
+         this.waterDouseOp.cancel();
+         this.waterDouseOp = null;
       }
 
-      this.init_X_DataUtil = AiGuard.GuardAction.NONE;
-      this.init_Z = this.load_Z = this.read = this.write = this.update = this.sync = this.flush = this.close = false;
-      this.load_Str = "";
-      this.init_J = 0L;
-      Arrays.fill(this.init_Vec3Arr, null);
-      this.init_I = 0;
-      this.load_J = -1L;
+      this.activeGuardAction = AiGuard.GuardAction.NONE;
+      this.activeCombat = this.activeFlee = this.loggedSprintPast = this.activeHazardEscape = this.activeLavaEscape = this.activeBreatheEscape = this.activePowderEscape = this.reconciliationPending = false;
+      this.activeReason = "";
+      this.lastFireStepFailNanos = 0L;
+      Arrays.fill(this.recentPositions, null);
+      this.positionRingIndex = 0;
+      this.lastPositionSampleTick = -1L;
    }
 
-   static AiOperation.Result init_AiOperation_Result_Z(boolean pending, String reason, AiOperation.Result result) {
+   static AiOperation.Result wrapUncertainResult(boolean pending, String reason, AiOperation.Result result) {
       JsonObject data = AiRunResources.parseEvidenceJson(result.dataJson());
       data.addProperty("survivalReason", reason);
       data.addProperty("survivalStatus", result.status().name());
@@ -473,7 +473,7 @@ final class AiGuardLayer {
       return new AiOperation.Result(AiOperation.Status.UNCERTAIN, message, data.toString(), result.evidence(), result.failure());
    }
 
-   static AiOperation.Result init_AiOperation_Result_Z_AiOperation_Result(boolean pending, AiOperation.Result result) {
+   static AiOperation.Result wrapPendingTermination(boolean pending, AiOperation.Result result) {
       if (!result.terminal()) {
          throw new IllegalArgumentException("A terminal result is required");
       }
@@ -495,8 +495,8 @@ final class AiGuardLayer {
       );
    }
 
-   static AiOperation init_AiOperation_Minecraft(Minecraft mc) {
-      if (mc.player == null || mc.level == null || !AiService.init_Z_Player(mc.player) || AiThreats.init_Z()) {
+   static AiOperation createEmergencyEscapeOp(Minecraft mc) {
+      if (mc.player == null || mc.level == null || !AiService.isPlayerVulnerable(mc.player) || AiThreats.isLegacyCombatEnabled()) {
          return null;
       } else if (AiLavaEscape.init_Z(mc)) {
          return AiLavaEscape.init();
@@ -513,7 +513,7 @@ final class AiGuardLayer {
       }
    }
 
-   private static AiOperation.Result init_AiOperation_Result_Str(String message) {
+   private static AiOperation.Result runningResult(String message) {
       return AiGameOperations.result(AiOperation.Status.RUNNING, message, new JsonObject());
    }
 }

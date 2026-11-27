@@ -33,7 +33,7 @@ final class PrintFlight {
    }
 
    static boolean init(PrintView view, Vec3 point) {
-      if (view.init_LongOpenHashSet.isEmpty()) {
+      if (view.observedLavaCells.isEmpty()) {
          return false;
       }
 
@@ -48,7 +48,7 @@ final class PrintFlight {
       for (int x = x0; x <= x1; x++) {
          for (int y = y0; y <= y1; y++) {
             for (int z = z0; z <= z1; z++) {
-               if (view.init_LongOpenHashSet.contains(BlockPos.asLong(x, y, z))) {
+               if (view.observedLavaCells.contains(BlockPos.asLong(x, y, z))) {
                   return true;
                }
             }
@@ -60,13 +60,13 @@ final class PrintFlight {
 
    static boolean load(PrintView view, Vec3 point) {
       AABB box = PrintGeometry.init(point.x, point.y, point.z, false);
-      if (!view.init_Z_AABB(box)) {
+      if (!view.isBoxClear(box)) {
          return false;
       }
 
       for (BlockPos p : BlockPos.betweenClosed(BlockPos.containing(box.minX, box.minY, box.minZ), BlockPos.containing(box.maxX, box.maxY, box.maxZ))) {
          BlockState state = view.getBlockState(p);
-         if (state == PrintView.init_BlockState || PrintView.init_Z_BlockState(state)) {
+         if (state == PrintView.UNLOADED_SENTINEL || PrintView.isHazardBlock(state)) {
             return false;
          }
       }
@@ -98,11 +98,11 @@ final class PrintFlight {
                   position.set(x, y, z);
                   BlockState state = view.getBlockState(position);
                   if (!state.isAir()) {
-                     if ((state == PrintView.init_BlockState || PrintView.init_Z_BlockState(state)) && init_Z_Vec3(start, end, init_AABB, x, y, z, -1.0E-7)) {
+                     if ((state == PrintView.UNLOADED_SENTINEL || PrintView.isHazardBlock(state)) && init_Z_Vec3(start, end, init_AABB, x, y, z, -1.0E-7)) {
                         return position.immutable();
                      }
 
-                     for (AABB box : view.init_List_BlockState_BlockPos(state, position)) {
+                     for (AABB box : view.getCollisionBoxesForState(state, position)) {
                         if (init_Z_Vec3(start, end, box, x, y, z, 1.0E-6)) {
                            return position.immutable();
                         }
@@ -267,7 +267,7 @@ final class PrintFlight {
    }
 
    static PrintMover.Inner_StreamUtil init(PrintEnv env, Vec3 goal) {
-      return init(env, goal, env.init_F());
+      return init(env, goal, env.playerYaw());
    }
 
    static PrintMover.Inner_StreamUtil init(PrintEnv env, Vec3 goal, float yaw) {
@@ -291,18 +291,18 @@ final class PrintFlight {
    }
 
    private static PrintMover.Inner_StreamUtil init_CharEncoder_Stream_EventBus_2(PrintEnv env, Vec3 goal, float yaw, Predicate<Vec3> nextStep) {
-      AiPhysics.MotionState body = env.init_NodeWalker_StreamU();
+      AiPhysics.MotionState body = env.playerMotionState();
       double dx = goal.x - body.x();
       double dz = goal.z - body.z();
       double distance = Math.hypot(dx, dz);
-      double speed = env.sync_F();
+      double speed = env.flyingSpeed();
       if (speed > 0.0 && Double.isFinite(speed)) {
-         double maxSpeed = speed * 0.98 * 0.91 / 0.09 * (env.push() ? 2 : 1);
+         double maxSpeed = speed * 0.98 * 0.91 / 0.09 * (env.canSprint() ? 2 : 1);
          double wantedSpeed = Math.min(maxSpeed, Math.sqrt(2.0 * speed * 0.98 * Math.max(0.0, distance - 0.6)));
          double vx = distance < 1.0E-8 ? 0.0 : dx / distance * wantedSpeed;
          double vz = distance < 1.0E-8 ? 0.0 : dz / distance * wantedSpeed;
          double vy = Math.copySign(Math.min(speed * 4.5, Math.abs(goal.y - body.y()) * 0.55), goal.y - body.y());
-         boolean sprintAllowed = env.push() && distance > 1.0 && (-Math.sin(Math.toRadians(yaw)) * dx + Math.cos(Math.toRadians(yaw)) * dz) / distance > 0.7;
+         boolean sprintAllowed = env.canSprint() && distance > 1.0 && (-Math.sin(Math.toRadians(yaw)) * dx + Math.cos(Math.toRadians(yaw)) * dz) / distance > 0.7;
 
          record Inner_DataUtil(PrintMover.Inner_StreamUtil keys, AiPhysics.MotionState next, double score) {
          }
@@ -316,7 +316,7 @@ final class PrintFlight {
                      PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(
                         forward > 0, forward < 0, side > 0, side < 0, vertical > 0, vertical < 0, sprint > 0
                      );
-                     AiPhysics.MotionState next = init_NodeWalker_StreamU_NodeWalker_StreamU(body, keys, yaw, env.sync_F(), env.init_NodeWalker_CachePo());
+                     AiPhysics.MotionState next = init_NodeWalker_StreamU_NodeWalker_StreamU(body, keys, yaw, env.flyingSpeed(), env.livePhysicsWorld());
                      double value = Math.pow(next.vx() - vx, 2.0)
                         + Math.pow(next.vz() - vz, 2.0)
                         + Math.pow(next.vy() - vy, 2.0)
@@ -336,13 +336,13 @@ final class PrintFlight {
                boolean safe = true;
 
                for (int tick = 0; tick <= 25; tick++) {
-                  if (init(env.init_NodeWalker_CachePo(), prior, next)) {
+                  if (init(env.livePhysicsWorld(), prior, next)) {
                      safe = false;
                      break;
                   }
 
                   prior = next;
-                  next = init_NodeWalker_StreamU_NodeWalker_StreamU(next, PrintMover.Inner_StreamUtil.NONE, yaw, env.sync_F(), env.init_NodeWalker_CachePo());
+                  next = init_NodeWalker_StreamU_NodeWalker_StreamU(next, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), env.livePhysicsWorld());
                }
 
                if (safe) {
@@ -380,8 +380,8 @@ final class PrintFlight {
    private static PrintMover.Inner_StreamUtil init_CharEncoder_Stream_EventBus(
       PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep, boolean transit
    ) {
-      AiPhysics.MotionState body = env.init_NodeWalker_StreamU();
-      AiPhysics.PhysicsWorld world = env.init_NodeWalker_CachePo();
+      AiPhysics.MotionState body = env.playerMotionState();
+      AiPhysics.PhysicsWorld world = env.livePhysicsWorld();
       if (body.position().distanceToSqr(goal) > 4.0) {
          PrintMover.Inner_StreamUtil travel = init_CharEncoder_Stream_EventBus_2(env, goal, yaw, nextStep);
          if (travel != null) {
@@ -397,7 +397,7 @@ final class PrintFlight {
 
          while (true) {
             if (tick < 25) {
-               coast = init_NodeWalker_StreamU_NodeWalker_StreamU(coast, PrintMover.Inner_StreamUtil.NONE, yaw, env.sync_F(), world);
+               coast = init_NodeWalker_StreamU_NodeWalker_StreamU(coast, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), world);
                if (!PrintMover.init(world, body, coast) && (tick != 0 || nextStep == null || nextStep.test(coast.position()))) {
                   tick++;
                   continue;
@@ -428,7 +428,7 @@ final class PrintFlight {
                PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(
                   forward > 0, forward < 0, side > 0, side < 0, vertical > 0, vertical < 0, false
                );
-               AiPhysics.MotionState next = init_NodeWalker_StreamU_NodeWalker_StreamU(body, keys, yaw, env.sync_F(), world);
+               AiPhysics.MotionState next = init_NodeWalker_StreamU_NodeWalker_StreamU(body, keys, yaw, env.flyingSpeed(), world);
                if (!PrintMover.init(world, body, next) && (nextStep == null || nextStep.test(next.position()))) {
                   double distance = next.position().distanceToSqr(goal);
                   double fineValue = distance + 2.0 * (next.vx() * next.vx() + next.vy() * next.vy() + next.vz() * next.vz());
@@ -436,7 +436,7 @@ final class PrintFlight {
                   boolean safe = true;
 
                   for (int i = 0; i < 25; i++) {
-                     next = init_NodeWalker_StreamU_NodeWalker_StreamU(next, PrintMover.Inner_StreamUtil.NONE, yaw, env.sync_F(), world);
+                     next = init_NodeWalker_StreamU_NodeWalker_StreamU(next, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), world);
                      if (PrintMover.init(world, body, next)) {
                         safe = false;
                         break;
@@ -563,9 +563,9 @@ final class PrintFlight {
       }
 
       void init(long workBudget) {
-         long started = this.init_ArrayUtil.sync();
+         long started = this.init_ArrayUtil.workUnits();
 
-         while (!this.load_Z && this.init_ArrayUtil.sync() - started < workBudget) {
+         while (!this.load_Z && this.init_ArrayUtil.workUnits() - started < workBudget) {
             if (!this.init_Z && this.init_Vec3 == null && this.load_I >= 256) {
                this.init_Z = true;
                if (this.init_Set.size() <= 64) {
@@ -574,7 +574,7 @@ final class PrintFlight {
             }
 
             if (this.init_TextFormat_ConfigS != null && !this.init_TextFormat_ConfigS.init_Z) {
-               this.init_TextFormat_ConfigS.init(workBudget - (this.init_ArrayUtil.sync() - started));
+               this.init_TextFormat_ConfigS.init(workBudget - (this.init_ArrayUtil.workUnits() - started));
                if (!this.init_TextFormat_ConfigS.init_Z) {
                   return;
                }
@@ -660,10 +660,10 @@ final class PrintFlight {
          }
 
          void init(long allowance) {
-            long started = Inner_ConfigStore.this.init_ArrayUtil.sync();
+            long started = Inner_ConfigStore.this.init_ArrayUtil.workUnits();
             int structural = 0;
 
-            while (!this.init_Z && structural++ < 1024 && Inner_ConfigStore.this.init_ArrayUtil.sync() - started < allowance) {
+            while (!this.init_Z && structural++ < 1024 && Inner_ConfigStore.this.init_ArrayUtil.workUnits() - started < allowance) {
                if (this.init_Iterator.hasNext()) {
                   long key = this.init_Iterator.next();
                   if (!this.init_LongOpenHashSet.contains(key) && PrintFlight.load(Inner_ConfigStore.this.init_ArrayUtil, PrintFlight.init(key))) {

@@ -618,7 +618,7 @@ final class AiObtain {
                                           needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 1600 / burnDivisor);
                                        } else {
                                           fuelId = "planks";
-                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 300 / burnDivisor) + autismclient.ai.engine.AiRestock.init_I();
+                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 300 / burnDivisor) + autismclient.ai.engine.AiRestock.reservedWood();
                                        }
                                     } else {
                                        fuelId = BuiltInRegistries.ITEM.getKey(fuel).toString();
@@ -736,7 +736,7 @@ final class AiObtain {
                   Entity far = this.init(mobs, 160.0);
                   if (far != null && mc.player.distanceTo(far) > 40.0) {
                      this.load_Str = "walk to the " + BuiltInRegistries.ENTITY_TYPE.getKey(far.getType()).getPath() + " and hunt";
-                     AiOperation walk = AiGoto.init_AiOperation_BlockPos(far.blockPosition(), 8.0, true, true, true, legSeconds);
+                     AiOperation walk = AiGoto.travelToCompat(far.blockPosition(), 8.0, true, true, true, legSeconds);
                      return this.init(AiNetherRun.init_AiOperation_AiOperation_Supplier(walk, () -> this.init(mobs, fightArgs)));
                   } else {
                      return this.init(this.init(mobs, fightArgs));
@@ -1067,7 +1067,7 @@ final class AiObtain {
                                  );
                               }
 
-                              this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(
+                              this.init_AiOperation = AiGoto.travelToCompat(
                                  new BlockPos(this.init_BlockPos.getX(), nextY, this.init_BlockPos.getZ()), 2.5, true, true, true, AiObtain.init(init_I_19())
                               );
                               return AiGameOperations.result(AiOperation.Status.RUNNING, "Descending to Y=" + nextY + " toward " + blockId, new JsonObject());
@@ -1566,7 +1566,7 @@ final class AiObtain {
                return this.init(AiOperation.Status.RUNNING, "No safe ground that way; trying another bearing");
             }
 
-            this.init_AiOperation = AiGoto.init(
+            this.init_AiOperation = AiGoto.travelToCompat(
                surface,
                2.0,
                false,

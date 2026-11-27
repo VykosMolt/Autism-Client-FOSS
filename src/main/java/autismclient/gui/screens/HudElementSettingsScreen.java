@@ -174,9 +174,9 @@ public class HudElementSettingsScreen extends Screen {
    private void init(GuiGraphicsExtractor graphics, String label, int x, int y, int w) {
       int boxY = y + 2;
       int boxH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, boxY, w, boxH, init_I_I(1142492176));
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, boxY, w, init_I_I(1720655652));
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, boxY + boxH - 1, w, init_I_I(1720655652));
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, boxY, w, boxH, init_I_I(1142492176));
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.drawDividerColored(graphics, x, boxY, w, init_I_I(1720655652));
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.drawDividerColored(graphics, x, boxY + boxH - 1, w, init_I_I(1720655652));
       this.init(graphics, label, x + 4, this.init_I_I_I(boxY, boxH), init_I(), w - 8);
    }
 
@@ -186,7 +186,7 @@ public class HudElementSettingsScreen extends Screen {
       int ctrlY = y + (rowH - ctrlH) / 2;
       int textY = this.init_I_I_I(y, rowH);
       boolean over = this.init(mx, my, x, y, w, rowH);
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, y, w, rowH, over ? init_I_I(1714756383) : 856888344);
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, y, w, rowH, over ? init_I_I(1714756383) : 856888344);
       int labelColW = this.push();
       this.init(graphics, row.load_Str, x + 4, textY, -791321, labelColW - 8);
       int valueX = x + labelColW;
@@ -363,7 +363,7 @@ public class HudElementSettingsScreen extends Screen {
             if (this.init_Z(cy, rowStep, viewTop, viewBottom)) {
                boolean selected = hidden.contains(module.id());
                boolean over = this.init(mx, my, rowX, cy, rowW, rowH);
-               autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, rowX, cy, rowW, rowH, over ? init_I_I(1714756383) : 856888344);
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, rowX, cy, rowW, rowH, over ? init_I_I(1714756383) : 856888344);
                this.init(graphics, module.name(), rowX + 4, this.init_I_I_I(cy, rowH), selected ? -791321 : init_I(), rowW - 20 - 12);
                this.init(graphics, selected, rowX + rowW - 4 - 20, cy, rowH, "hud-hidden-modules:" + module.id());
             }

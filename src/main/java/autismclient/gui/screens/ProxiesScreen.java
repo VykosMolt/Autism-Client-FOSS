@@ -91,7 +91,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       this.sync_EditBox.setResponder(value -> {
          this.init_Str = init_Str_Str(value);
          this.update_I = 0;
-         this.init_CacheEntry.load(0, 0);
+         this.init_CacheEntry.jumpTo(0, 0);
          this.load_V();
       });
       this.init_V_Z(!this.init_Z());
@@ -218,7 +218,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
          boolean hasActiveSection = proxies.size() > this.init_List().size();
          int maxScroll = this.init_I_I(proxies.size());
          this.update_I = load(this.update_I, maxScroll);
-         this.init_CacheEntry.load(this.update_I, maxScroll);
+         this.init_CacheEntry.jumpTo(this.update_I, maxScroll);
          int pitch = this.update_I();
          int rowH = this.write_I();
          int top = this.valid();
@@ -267,7 +267,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       autismclient.gui.ui.widgets.OverlayActionButton button = autismclient.gui.ui.widgets.OverlayActionButton.init(x, y, width, this.read_I(), Component.literal(label), b -> {
          this.init_ArrayUtil_DataUtil = value;
          this.update_I = 0;
-         this.init_CacheEntry.load(0, 0);
+         this.init_CacheEntry.jumpTo(0, 0);
          this.load_V();
       });
       button.init_ByteReader_ByteReader_StreamU(
@@ -281,7 +281,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       super.tick();
       int maxScroll = this.init_I_I(this.load_List().size());
       this.update_I = load(this.update_I, maxScroll);
-      this.init_CacheEntry.load(this.update_I, maxScroll);
+      this.init_CacheEntry.jumpTo(this.update_I, maxScroll);
       ProxyListManager.Inner_TaskQueue status = ProxyListManager.init_bY().init_bY_TaskQueue();
       if (status.load_J() != this.init_J) {
          this.init_J = status.load_J();
@@ -341,7 +341,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       if (sectionsAfter != sectionsBefore) {
          int maxScroll = this.init_I_I(this.load_List().size());
          this.update_I = load(this.update_I + (sectionsAfter - sectionsBefore) * this.update_I(), maxScroll);
-         this.init_CacheEntry.load(this.update_I, maxScroll);
+         this.init_CacheEntry.jumpTo(this.update_I, maxScroll);
       }
    }
 
@@ -454,7 +454,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
          this.init_bW = null;
          this.run_V();
          this.update_I = 0;
-         this.init_CacheEntry.load(0, 0);
+         this.init_CacheEntry.jumpTo(0, 0);
          this.init_V_Str_I(removed == 0 ? "Proxy list is already empty." : "Cleared " + removed + " proxies.", removed == 0 ? GuiColorPalette.close : GuiColorPalette.open);
          this.load_V();
       }
@@ -520,7 +520,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
                if (finished.init_J() == generation && !finished.read_Z()) {
                   this.init_V_Str_I("Imported " + finished.read_I() + " proxies.", finished.read_I() > 0 ? GuiColorPalette.open : -14249);
                   this.update_I = 0;
-                  this.init_CacheEntry.load(0, 0);
+                  this.init_CacheEntry.jumpTo(0, 0);
                }
 
                this.load_V();
@@ -821,7 +821,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
                ? Math.max(0, (int)Math.round(virtualEvent.y()) - scrollbar.thumbY())
                : scrollbar.thumbHeight() / 2;
             this.update_I = load(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.maxScroll());
-            this.init_CacheEntry.load(this.update_I, scrollbar.maxScroll());
+            this.init_CacheEntry.jumpTo(this.update_I, scrollbar.maxScroll());
             this.load_V();
             this.set_V();
             return true;
@@ -889,7 +889,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       if (this.init_Z) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I(this.load_List().size());
          this.update_I = load(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.maxScroll());
-         this.init_CacheEntry.load(this.update_I, scrollbar.maxScroll());
+         this.init_CacheEntry.jumpTo(this.update_I, scrollbar.maxScroll());
          this.load_V();
          return true;
       } else {
@@ -913,7 +913,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
 
          int next = this.update_I - (int)Math.signum(scrollY) * this.update_I();
          this.update_I = load(next, maxScroll);
-         this.init_CacheEntry.init_V_I_I(this.update_I, maxScroll);
+         this.init_CacheEntry.setOffset(this.update_I, maxScroll);
          this.load_V();
          return true;
       } else {
@@ -1245,7 +1245,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       int trackHeight = this.data();
       int maxScroll = this.init_I_I(rows);
       this.update_I = load(this.update_I, maxScroll);
-      this.init_CacheEntry.load(this.update_I, maxScroll);
+      this.init_CacheEntry.jumpTo(this.update_I, maxScroll);
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, this.data(), this.value(), trackY, 6, trackHeight, this.update_I);
    }
 

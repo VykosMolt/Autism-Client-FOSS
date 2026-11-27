@@ -49,70 +49,70 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class LivePrintEnv implements PrintEnv {
-   private final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final int load_I = 65536;
-   private static final int read_I = 4096;
-   private final LongLinkedOpenHashSet init_LongLinkedOpenHash = new LongLinkedOpenHashSet();
-   private final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
-   private boolean init_Z;
-   private long read_J;
-   private BlockPos init_BlockPos;
-   private boolean load_Z = true;
-   private final PrintCreativeStock init_RenderState = new PrintCreativeStock();
-   private final PrintInteractionReceipt init_TableIndex = new PrintInteractionReceipt();
-   private boolean read_Z;
-   private boolean write_Z;
-   private Item init_Item;
-   private String init_Str;
-   private AiContainerTransactions.Inner_DataUtil init_b_DataUtil;
-   private int write_I;
-   private int update_I;
-   private int sync;
-   private String load_Str;
-   private int flush = -2147483648;
-   final LivePrintEnv.Inner_DataUtil init_DataUtil_DataUtil = new LivePrintEnv.Inner_DataUtil();
-   static final int init_I = 65536;
-   private final Long2ObjectLinkedOpenHashMap<BlockState> init_Long2ObjectLinkedO = new Long2ObjectLinkedOpenHashMap<>();
-   private int close;
-   private static final boolean update_Z = Boolean.getBoolean("autism.ai.print.trace");
+   private final Minecraft mc = Minecraft.getInstance();
+   private static final int MAX_BLOCK_CHANGE_QUEUE = 65536;
+   private static final int MAX_CHUNK_CHANGE_QUEUE = 4096;
+   private final LongLinkedOpenHashSet pendingBlockChanges = new LongLinkedOpenHashSet();
+   private final LongOpenHashSet pendingChunkChanges = new LongOpenHashSet();
+   private boolean chunkChangeOverflow;
+   private long tickCounter;
+   private BlockPos activeDigPos;
+   private boolean controlsReleased = true;
+   private final PrintCreativeStock creativeStock = new PrintCreativeStock();
+   private final PrintInteractionReceipt interactionReceipt = new PrintInteractionReceipt();
+   private boolean flightSuppressed;
+   private boolean flightAllowedByConfig;
+   private Item lastRequestedCreativeItem;
+   private String creativeStockError;
+   private AiContainerTransactions.Inner_DataUtil pendingHandSwap;
+   private int pendingSwapSourceSlot;
+   private int pendingSwapHotbarSlot;
+   private int mismatchedSwapCount;
+   private String handSwapError;
+   private int recentClickUntilTick = -2147483648;
+   final LivePrintEnv.Inner_DataUtil recentPlacedSigns = new LivePrintEnv.Inner_DataUtil();
+   static final int MAX_KNOWN_STATES = 65536;
+   private final Long2ObjectLinkedOpenHashMap<BlockState> knownBlockStates = new Long2ObjectLinkedOpenHashMap<>();
+   private int traceRefusalLogCount;
+   private static final boolean TRACE_ENABLED = Boolean.getBoolean("autism.ai.print.trace");
 
    @Override
-   public void init_V_BlockPos_BlockState(BlockPos position, BlockState state) {
+   public void recordPlacedBlock(BlockPos position, BlockState state) {
       AiScaffold.init(position, state.getBlock());
    }
 
    @Override
-   public void init_V_BlockPos(BlockPos position) {
+   public void clearPlacedBlock(BlockPos position) {
       AiScaffold.init_V(position);
    }
 
    @Override
-   public boolean init_Z_BlockPos_Map(BlockPos position, Map<Integer, ItemStack> saved) {
+   public boolean preloadContainerSlots(BlockPos position, Map<Integer, ItemStack> saved) {
       return false;
    }
 
    @Override
-   public Object init_Obj() {
-      return this.init_Minecraft == null ? null : this.init_Minecraft.level;
+   public Object worldToken() {
+      return this.mc == null ? null : this.mc.level;
    }
 
    @Override
-   public PrintEnv.Inner_StreamUtil init_EventBus_StreamUti() {
+   public PrintEnv.Inner_StreamUtil interactionReceiptState() {
       return AiMenuClose.load()
          ? PrintEnv.Inner_StreamUtil.PENDING
-         : this.init_TableIndex
+         : this.interactionReceipt
             .init(
-               this.init_Minecraft.level,
-               this.init_Minecraft.player,
-               autismclient.util.villager.BlockChangeAckTracker.init_Z(this.init_Minecraft.level, this.init_TableIndex.init()),
-               this.load_J()
+               this.mc.level,
+               this.mc.player,
+               autismclient.util.villager.BlockChangeAckTracker.init_Z(this.mc.level, this.interactionReceipt.init()),
+               this.nanoTime()
             );
    }
 
    @Override
-   public String init_Str_BlockPos(BlockPos cell) {
-      if (this.init_Minecraft != null && this.init_Minecraft.level != null) {
-         for (Entity entity : this.init_Minecraft.level.getEntities(this.init_LocalPlayer(), new AABB(cell).deflate(0.001))) {
+   public String blockingEntityName(BlockPos cell) {
+      if (this.mc != null && this.mc.level != null) {
+         for (Entity entity : this.mc.level.getEntities(this.player(), new AABB(cell).deflate(0.001))) {
             if (entity.blocksBuilding && !entity.isRemoved()) {
                return entity.getType().getDescription().getString();
             }
@@ -125,11 +125,11 @@ public final class LivePrintEnv implements PrintEnv {
    }
 
    @Override
-   public List<PrintItemFrame.Inner_DataUtil> init_List_BlockPos(BlockPos cell) {
-      return this.init_Minecraft != null
-            && this.init_Minecraft.level != null
-            && this.init_Minecraft.level.getChunkSource().hasChunk(cell.getX() >> 4, cell.getZ() >> 4)
-         ? this.init_Minecraft
+   public List<PrintItemFrame.Inner_DataUtil> itemFramesAt(BlockPos cell) {
+      return this.mc != null
+            && this.mc.level != null
+            && this.mc.level.getChunkSource().hasChunk(cell.getX() >> 4, cell.getZ() >> 4)
+         ? this.mc
             .level
             .getEntitiesOfClass(ItemFrame.class, new AABB(cell).inflate(0.5))
             .stream()
@@ -148,17 +148,17 @@ public final class LivePrintEnv implements PrintEnv {
    }
 
    @Override
-   public List<PrintRailVehicle.Inner_DataUtil> load_List(BlockPos rail) {
-      if (this.init_Minecraft != null && this.init_Minecraft.level != null) {
+   public List<PrintRailVehicle.Inner_DataUtil> nearbyMinecarts(BlockPos rail) {
+      if (this.mc != null && this.mc.level != null) {
          for (int x = rail.getX() - 2 >> 4; x <= rail.getX() + 2 >> 4; x++) {
             for (int z = rail.getZ() - 2 >> 4; z <= rail.getZ() + 2 >> 4; z++) {
-               if (!this.init_Minecraft.level.getChunkSource().hasChunk(x, z)) {
+               if (!this.mc.level.getChunkSource().hasChunk(x, z)) {
                   return null;
                }
             }
          }
 
-         return this.init_Minecraft
+         return this.mc
             .level
             .getEntitiesOfClass(AbstractMinecart.class, new AABB(rail).inflate(2.0))
             .stream()
@@ -174,36 +174,36 @@ public final class LivePrintEnv implements PrintEnv {
       }
    }
 
-   public void load_V(BlockPos pos) {
-      synchronized (this.init_LongLinkedOpenHash) {
-         if (this.init_LongLinkedOpenHash.size() < 65536) {
-            this.init_LongLinkedOpenHash.add(pos.asLong());
+   public void notifyBlockChanged(BlockPos pos) {
+      synchronized (this.pendingBlockChanges) {
+         if (this.pendingBlockChanges.size() < 65536) {
+            this.pendingBlockChanges.add(pos.asLong());
          } else {
-            this.init_V_J((long)(pos.getX() >> 4) << 32 | pos.getZ() >> 4 & 4294967295L);
+            this.notifyChunkChanged((long)(pos.getX() >> 4) << 32 | pos.getZ() >> 4 & 4294967295L);
          }
       }
    }
 
-   public void init_V_J(long key) {
-      synchronized (this.init_LongLinkedOpenHash) {
-         if (!this.init_Z) {
-            if (this.init_LongOpenHashSet.size() < 4096) {
-               this.init_LongOpenHashSet.add(key);
+   public void notifyChunkChanged(long key) {
+      synchronized (this.pendingBlockChanges) {
+         if (!this.chunkChangeOverflow) {
+            if (this.pendingChunkChanges.size() < 4096) {
+               this.pendingChunkChanges.add(key);
             } else {
-               this.init_Z = true;
-               this.init_LongOpenHashSet.clear();
+               this.chunkChangeOverflow = true;
+               this.pendingChunkChanges.clear();
             }
          }
       }
    }
 
    @Override
-   public void init_V_LongConsumer(LongConsumer changed) {
+   public void drainChunkChanges(LongConsumer changed) {
       long[] drained;
-      synchronized (this.init_LongLinkedOpenHash) {
-         drained = this.init_Z ? new long[]{-9223372036854775808L} : this.init_LongOpenHashSet.toLongArray();
-         this.init_Z = false;
-         this.init_LongOpenHashSet.clear();
+      synchronized (this.pendingBlockChanges) {
+         drained = this.chunkChangeOverflow ? new long[]{-9223372036854775808L} : this.pendingChunkChanges.toLongArray();
+         this.chunkChangeOverflow = false;
+         this.pendingChunkChanges.clear();
       }
 
       for (long key : drained) {
@@ -211,94 +211,94 @@ public final class LivePrintEnv implements PrintEnv {
       }
    }
 
-   public void init_V() {
-      this.read_J++;
-      this.init_Item = null;
-      this.init_Str = null;
+   public void advanceTick() {
+      this.tickCounter++;
+      this.lastRequestedCreativeItem = null;
+      this.creativeStockError = null;
    }
 
-   public Item init_Item() {
-      return this.init_Item;
+   public Item lastRequestedCreativeItem() {
+      return this.lastRequestedCreativeItem;
    }
 
-   public boolean init_Z() {
-      return this.init_LocalPlayer() != null && this.init_LocalPlayer().tickCount <= this.flush;
+   public boolean hasRecentClick() {
+      return this.player() != null && this.player().tickCount <= this.recentClickUntilTick;
    }
 
-   public void load_V() {
-      this.flush = -2147483648;
+   public void clearRecentClick() {
+      this.recentClickUntilTick = -2147483648;
    }
 
-   public boolean init_Z_BlockPos(BlockPos pos) {
-      return this.init_DataUtil_DataUtil.init_Z(pos);
+   public boolean consumePlacedSign(BlockPos pos) {
+      return this.recentPlacedSigns.consume(pos);
    }
 
-   private LocalPlayer init_LocalPlayer() {
-      return this.init_Minecraft.player;
-   }
-
-   @Override
-   public BlockState init_BlockState_BlockPos(BlockPos pos) {
-      return this.init_Minecraft.level.getBlockState(pos);
+   private LocalPlayer player() {
+      return this.mc.player;
    }
 
    @Override
-   public BlockEntity init_BlockEntity_BlockPos(BlockPos pos) {
-      return this.init_Minecraft.level.getBlockEntity(pos);
+   public BlockState getBlockState(BlockPos pos) {
+      return this.mc.level.getBlockState(pos);
    }
 
    @Override
-   public boolean load_Z(BlockPos pos) {
-      return this.init_Minecraft.level.hasChunkAt(pos);
+   public BlockEntity getBlockEntity(BlockPos pos) {
+      return this.mc.level.getBlockEntity(pos);
    }
 
    @Override
-   public int init_I() {
-      return this.init_Minecraft.level.getMinY();
+   public boolean hasChunkAt(BlockPos pos) {
+      return this.mc.level.hasChunkAt(pos);
    }
 
    @Override
-   public int load_I() {
-      return this.init_Minecraft.level.getMinY() + this.init_Minecraft.level.getHeight();
+   public int getMinY() {
+      return this.mc.level.getMinY();
    }
 
    @Override
-   public void load(LongConsumer changed) {
-      this.init_V_EventBus_DataUtil((key, before) -> changed.accept(key));
+   public int getMaxY() {
+      return this.mc.level.getMinY() + this.mc.level.getHeight();
    }
 
    @Override
-   public void init_V_EventBus_DataUtil(PrintEnv.Inner_DataUtil changed) {
-      this.init_Z_EventBus_DataUtil_I(changed, 2147483647);
+   public void drainBlockChanges(LongConsumer changed) {
+      this.drainBlockChangesWithPrior((key, before) -> changed.accept(key));
    }
 
    @Override
-   public boolean init_Z_EventBus_DataUtil_I(PrintEnv.Inner_DataUtil changed, int budget) {
+   public void drainBlockChangesWithPrior(PrintEnv.Inner_DataUtil changed) {
+      this.drainBlockChangesBudgeted(changed, 2147483647);
+   }
+
+   @Override
+   public boolean drainBlockChangesBudgeted(PrintEnv.Inner_DataUtil changed, int budget) {
       long[] drained;
-      synchronized (this.init_LongLinkedOpenHash) {
-         drained = new long[Math.min(this.init_LongLinkedOpenHash.size(), Math.max(0, budget))];
+      synchronized (this.pendingBlockChanges) {
+         drained = new long[Math.min(this.pendingBlockChanges.size(), Math.max(0, budget))];
 
          for (int i = 0; i < drained.length; i++) {
-            drained[i] = this.init_LongLinkedOpenHash.removeFirstLong();
+            drained[i] = this.pendingBlockChanges.removeFirstLong();
          }
       }
 
-      if (this.init_Minecraft.level == null) {
+      if (this.mc.level == null) {
          return true;
       }
 
       for (long key : drained) {
          BlockPos pos = BlockPos.of(key);
-         if (this.init_Minecraft.level.hasChunkAt(pos)) {
-            BlockState now = this.init_Minecraft.level.getBlockState(pos);
-            BlockState before = this.init_Long2ObjectLinkedO.putAndMoveToLast(key, now);
+         if (this.mc.level.hasChunkAt(pos)) {
+            BlockState now = this.mc.level.getBlockState(pos);
+            BlockState before = this.knownBlockStates.putAndMoveToLast(key, now);
             BlockState prior = AiServerEvidence.consumePreChangeState(key);
             if (before == null && prior != null && prior != now) {
                before = prior;
             }
 
-            if (this.init_Long2ObjectLinkedO.size() > 65536) {
-               this.init_Long2ObjectLinkedO.removeFirst();
+            if (this.knownBlockStates.size() > 65536) {
+               this.knownBlockStates.removeFirst();
             }
 
             if (before == null || before != now || now.hasBlockEntity()) {
@@ -307,114 +307,114 @@ public final class LivePrintEnv implements PrintEnv {
          }
       }
 
-      synchronized (this.init_LongLinkedOpenHash) {
-         return this.init_LongLinkedOpenHash.isEmpty();
+      synchronized (this.pendingBlockChanges) {
+         return this.pendingBlockChanges.isEmpty();
       }
    }
 
    @Override
-   public AiPhysics.MotionState init_NodeWalker_StreamU() {
-      return AiPhysics.MotionState.of(this.init_LocalPlayer());
+   public AiPhysics.MotionState playerMotionState() {
+      return AiPhysics.MotionState.of(this.player());
    }
 
    @Override
-   public AiPhysics.PhysicsWorld init_NodeWalker_CachePo() {
-      return AiPhysics.createLiveWorld(this.init_Minecraft.level, this.init_LocalPlayer());
+   public AiPhysics.PhysicsWorld livePhysicsWorld() {
+      return AiPhysics.createLiveWorld(this.mc.level, this.player());
    }
 
    @Override
-   public float init_F() {
-      return this.init_LocalPlayer().getYRot();
+   public float playerYaw() {
+      return this.player().getYRot();
    }
 
    @Override
-   public float load_F() {
-      return this.init_LocalPlayer().getXRot();
+   public float playerPitch() {
+      return this.player().getXRot();
    }
 
    @Override
-   public double init_D() {
-      return this.init_LocalPlayer().getEyeHeight();
+   public double playerEyeHeight() {
+      return this.player().getEyeHeight();
    }
 
    @Override
-   public float read_F() {
-      return this.init_LocalPlayer().getHealth();
+   public float playerHealth() {
+      return this.player().getHealth();
    }
 
    @Override
-   public Vec3 init_Vec3() {
+   public Vec3 serverFeetPos() {
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
-      return wire.position() != null ? wire.position() : this.init_LocalPlayer().position();
+      return wire.position() != null ? wire.position() : this.player().position();
    }
 
    @Override
-   public float write_F() {
+   public float serverYaw() {
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
-      return wire.initialized() && Float.isFinite(wire.currentYaw()) ? wire.currentYaw() : this.init_LocalPlayer().getYRot();
+      return wire.initialized() && Float.isFinite(wire.currentYaw()) ? wire.currentYaw() : this.player().getYRot();
    }
 
    @Override
-   public float update_F() {
+   public float serverPitch() {
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
-      return wire.initialized() && Float.isFinite(wire.currentPitch()) ? wire.currentPitch() : this.init_LocalPlayer().getXRot();
+      return wire.initialized() && Float.isFinite(wire.currentPitch()) ? wire.currentPitch() : this.player().getXRot();
    }
 
    @Override
-   public boolean load_Z() {
-      return this.init_LocalPlayer().getLastSentInput().shift();
+   public boolean isServerSneaking() {
+      return this.player().getLastSentInput().shift();
    }
 
    @Override
-   public Vec3 load_Vec3() {
-      return this.init_Vec3().add(0.0, this.init_LocalPlayer().getEyeHeight(), 0.0);
+   public Vec3 serverEyePos() {
+      return this.serverFeetPos().add(0.0, this.player().getEyeHeight(), 0.0);
    }
 
    @Override
-   public AABB init_AABB() {
-      return this.init_LocalPlayer().getDimensions(this.init_LocalPlayer().getPose()).makeBoundingBox(this.init_Vec3());
+   public AABB serverPlayerBox() {
+      return this.player().getDimensions(this.player().getPose()).makeBoundingBox(this.serverFeetPos());
    }
 
    @Override
-   public ItemStack init_ItemStack_I(int index) {
-      return this.init_LocalPlayer().getInventory().getItem(index);
+   public ItemStack getInventoryItem(int index) {
+      return this.player().getInventory().getItem(index);
    }
 
    @Override
-   public int read_I() {
-      return this.init_LocalPlayer().getInventory().getSelectedSlot();
+   public int getSelectedHotbarSlot() {
+      return this.player().getInventory().getSelectedSlot();
    }
 
    @Override
-   public boolean read_Z() {
+   public boolean isHandReady() {
       if (AiMenuClose.load()) {
          return false;
       }
 
-      if (this.load_Str != null) {
+      if (this.handSwapError != null) {
          return false;
       }
 
-      if (this.init_b_DataUtil == null) {
+      if (this.pendingHandSwap == null) {
          return true;
       }
 
-      LocalPlayer p = this.init_LocalPlayer();
-      AiContainerTransactions.Inner_StreamUtil state = this.init_b_DataUtil.load(p == null ? null : p.containerMenu, this.load_J());
+      LocalPlayer p = this.player();
+      AiContainerTransactions.Inner_StreamUtil state = this.pendingHandSwap.pollAndResync(p == null ? null : p.containerMenu, this.nanoTime());
       switch (state) {
          case WAITING:
             return false;
          case UNCERTAIN:
-            this.load_Str = "The server did not confirm the builder's hand swap. Check the inventory and cursor before resuming.";
+            this.handSwapError = "The server did not confirm the builder's hand swap. Check the inventory and cursor before resuming.";
             return false;
          case CONFIRMED:
          case SWAPPED_DIFFERENT_STACK:
-            this.init_RenderState.init(this.write_I, this.update_I);
-            p.getInventory().setSelectedSlot(this.update_I);
-            this.init_b_DataUtil = null;
-            this.sync = state == AiContainerTransactions.Inner_StreamUtil.CONFIRMED ? 0 : this.sync + 1;
-            if (this.sync >= 3) {
-               this.load_Str = "The server repeatedly changed the requested hand stack. Check the inventory before resuming.";
+            this.creativeStock.init(this.pendingSwapSourceSlot, this.pendingSwapHotbarSlot);
+            p.getInventory().setSelectedSlot(this.pendingSwapHotbarSlot);
+            this.pendingHandSwap = null;
+            this.mismatchedSwapCount = state == AiContainerTransactions.Inner_StreamUtil.CONFIRMED ? 0 : this.mismatchedSwapCount + 1;
+            if (this.mismatchedSwapCount >= 3) {
+               this.handSwapError = "The server repeatedly changed the requested hand stack. Check the inventory before resuming.";
                return false;
             }
 
@@ -424,61 +424,61 @@ public final class LivePrintEnv implements PrintEnv {
       }
    }
 
-   public String init_Str() {
-      return this.load_Str;
+   public String handSwapError() {
+      return this.handSwapError;
    }
 
-   public boolean write_Z() {
-      return this.init_b_DataUtil != null;
-   }
-
-   @Override
-   public boolean update_Z() {
-      return this.init_LocalPlayer() != null
-         && this.init_Minecraft.gameMode != null
-         && this.init_LocalPlayer().getAbilities().instabuild
-         && this.init_Minecraft.gameMode.getPlayerMode() == GameType.CREATIVE;
+   public boolean hasPendingHandSwap() {
+      return this.pendingHandSwap != null;
    }
 
    @Override
-   public boolean init_Z_ItemStack(ItemStack stack) {
-      return autismclient.util.BlockBreakSpeedHelper.init_Z(this.init_Minecraft, stack);
-   }
-
-   public void init_V_Z(boolean value) {
-      this.write_Z = value;
+   public boolean isCreativeMode() {
+      return this.player() != null
+         && this.mc.gameMode != null
+         && this.player().getAbilities().instabuild
+         && this.mc.gameMode.getPlayerMode() == GameType.CREATIVE;
    }
 
    @Override
-   public boolean sync_Z() {
-      boolean allowed = this.init_LocalPlayer() != null
-         && this.init_Minecraft.gameMode != null
+   public boolean isInstantBreakTool(ItemStack stack) {
+      return autismclient.util.BlockBreakSpeedHelper.init_Z(this.mc, stack);
+   }
+
+   public void setFlightAllowed(boolean value) {
+      this.flightAllowedByConfig = value;
+   }
+
+   @Override
+   public boolean isFlightPermitted() {
+      boolean allowed = this.player() != null
+         && this.mc.gameMode != null
          && PrintFlightPermission.init(
-            this.write_Z,
-            this.init_Minecraft.gameMode.getPlayerMode(),
-            this.init_LocalPlayer().getAbilities().mayfly,
-            this.init_LocalPlayer().getAbilities().instabuild
+            this.flightAllowedByConfig,
+            this.mc.gameMode.getPlayerMode(),
+            this.player().getAbilities().mayfly,
+            this.player().getAbilities().instabuild
          );
       if (!allowed) {
-         this.read_Z = false;
+         this.flightSuppressed = false;
       }
 
       return allowed;
    }
 
    @Override
-   public boolean flush() {
-      return this.sync_Z() && !this.read_Z;
+   public boolean canUseFlight() {
+      return this.isFlightPermitted() && !this.flightSuppressed;
    }
 
    @Override
-   public boolean close() {
-      if (!this.flush()) {
+   public boolean suppressFlight() {
+      if (!this.canUseFlight()) {
          return false;
       }
 
-      this.read_Z = true;
-      LocalPlayer p = this.init_LocalPlayer();
+      this.flightSuppressed = true;
+      LocalPlayer p = this.player();
       if (p.getAbilities().flying) {
          p.getAbilities().flying = false;
          p.onUpdateAbilities();
@@ -488,28 +488,28 @@ public final class LivePrintEnv implements PrintEnv {
    }
 
    @Override
-   public boolean open() {
-      if (!this.read_Z) {
+   public boolean unsuppressFlight() {
+      if (!this.flightSuppressed) {
          return false;
       }
 
-      this.read_Z = false;
-      return this.flush();
+      this.flightSuppressed = false;
+      return this.canUseFlight();
    }
 
    @Override
-   public boolean poll() {
-      return this.init_LocalPlayer() != null && this.init_LocalPlayer().getAbilities().flying;
+   public boolean isFlying() {
+      return this.player() != null && this.player().getAbilities().flying;
    }
 
    @Override
-   public float sync_F() {
-      return this.init_LocalPlayer() == null ? 0.05F : this.init_LocalPlayer().getAbilities().getFlyingSpeed();
+   public float flyingSpeed() {
+      return this.player() == null ? 0.05F : this.player().getAbilities().getFlyingSpeed();
    }
 
    @Override
-   public boolean push() {
-      LocalPlayer p = this.init_LocalPlayer();
+   public boolean canSprint() {
+      LocalPlayer p = this.player();
       if (p != null && !p.isPassenger() && !p.isFallFlying() && !p.isMovingSlowly()) {
          AutismLocalPlayerAccessor nativePlayer = (AutismLocalPlayerAccessor)p;
          return nativePlayer.autism$isSprintingPossible(true) && !nativePlayer.autism$isSlowDueToUsingItem();
@@ -519,19 +519,19 @@ public final class LivePrintEnv implements PrintEnv {
    }
 
    @Override
-   public String load_Str() {
-      return this.init_Str;
+   public String creativeStockError() {
+      return this.creativeStockError;
    }
 
    @Override
-   public void init_V_Item(Item item) {
-      this.init_Item = item;
-      LocalPlayer p = this.init_LocalPlayer();
+   public void requestCreativeItem(Item item) {
+      this.lastRequestedCreativeItem = item;
+      LocalPlayer p = this.player();
       if (p != null
-         && this.init_Minecraft.gameMode != null
+         && this.mc.gameMode != null
          && p.getAbilities().instabuild
-         && this.init_Minecraft.gameMode.getPlayerMode() == GameType.CREATIVE
-         && this.init_Minecraft.gui.screen() == null
+         && this.mc.gameMode.getPlayerMode() == GameType.CREATIVE
+         && this.mc.gui.screen() == null
          && p.containerMenu == p.inventoryMenu) {
          for (int i = 0; i < 36; i++) {
             if (p.getInventory().getItem(i).is(item)) {
@@ -539,54 +539,54 @@ public final class LivePrintEnv implements PrintEnv {
             }
          }
 
-         int slot = this.init_RenderState.load(i -> p.getInventory().getItem(i));
+         int slot = this.creativeStock.load(i -> p.getInventory().getItem(i));
          if (slot < 0) {
-            this.init_Str = "Free one inventory or offhand slot for automatic Creative materials";
+            this.creativeStockError = "Free one inventory or offhand slot for automatic Creative materials";
          } else {
             ItemStack stack = item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item, Math.min(64, item.getDefaultMaxStackSize()));
-            this.init(p, slot, stack);
+            this.setCreativeSlot(p, slot, stack);
          }
       }
    }
 
-   public boolean load(ItemStack stack) {
-      return this.init_Z_ItemStack_Predicate(stack, held -> ItemStack.isSameItemSameComponents(stack, held));
+   public boolean giveCreativeStack(ItemStack stack) {
+      return this.giveCreativeStackReserved(stack, held -> ItemStack.isSameItemSameComponents(stack, held));
    }
 
-   public boolean init_Z_ItemStack_Predicate(ItemStack stack, Predicate<ItemStack> reserved) {
-      LocalPlayer p = this.init_LocalPlayer();
-      if (p != null && this.update_Z() && this.init_Minecraft.gui.screen() == null && p.containerMenu == p.inventoryMenu) {
-         int slot = this.init_RenderState.init(i -> p.getInventory().getItem(i), reserved);
+   public boolean giveCreativeStackReserved(ItemStack stack, Predicate<ItemStack> reserved) {
+      LocalPlayer p = this.player();
+      if (p != null && this.isCreativeMode() && this.mc.gui.screen() == null && p.containerMenu == p.inventoryMenu) {
+         int slot = this.creativeStock.init(i -> p.getInventory().getItem(i), reserved);
          if (slot < 0) {
             return false;
          }
 
-         this.init(p, slot, stack.copy());
+         this.setCreativeSlot(p, slot, stack.copy());
          return true;
       } else {
          return false;
       }
    }
 
-   private void init(LocalPlayer p, int slot, ItemStack stack) {
+   private void setCreativeSlot(LocalPlayer p, int slot, ItemStack stack) {
       p.getInventory().setItem(slot, stack);
-      this.init_Minecraft.gameMode.handleCreativeModeItemAdd(stack.copy(), init_I_I(slot));
-      this.init_RenderState.init(slot, stack);
+      this.mc.gameMode.handleCreativeModeItemAdd(stack.copy(), toInventoryMenuSlot(slot));
+      this.creativeStock.init(slot, stack);
    }
 
    @Override
-   public boolean pop() {
+   public boolean isFallGuardActive() {
       return autismclient.ai.engine.AiFallGuard.init_Z();
    }
 
    @Override
-   public BlockState init(Item item, BlockHitResult hit, float yaw, float pitch, boolean sneak, BlockPos at) {
+   public BlockState predictPlacedState(Item item, BlockHitResult hit, float yaw, float pitch, boolean sneak, BlockPos at) {
       if (!(item instanceof BlockItem blockItem)) {
          return null;
       } else {
-         AiPlacementContext context = new AiPlacementContext(this.init_LocalPlayer(), new ItemStack(item), hit, yaw, pitch, sneak);
+         AiPlacementContext context = new AiPlacementContext(this.player(), new ItemStack(item), hit, yaw, pitch, sneak);
          if (context.canPlace() && context.getClickedPos().equals(at)) {
-            LocalPlayer p = this.init_LocalPlayer();
+            LocalPlayer p = this.player();
             AABB box = p == null ? null : p.getBoundingBox();
             if (p != null) {
                p.setBoundingBox(
@@ -603,10 +603,10 @@ public final class LivePrintEnv implements PrintEnv {
                }
             }
 
-            if (update_Z && this.close++ < 400 && (state == null || !state.canSurvive(this.init_Minecraft.level, at))) {
+            if (TRACE_ENABLED && this.traceRefusalLogCount++ < 400 && (state == null || !state.canSurvive(this.mc.level, at))) {
                StringBuilder blockers = new StringBuilder();
 
-               for (Entity entity : this.init_Minecraft.level.getEntities(null, new AABB(at))) {
+               for (Entity entity : this.mc.level.getEntities(null, new AABB(at))) {
                   blockers.append(' ')
                      .append(entity.getType().toShortString())
                      .append(entity.blocksBuilding ? "!" : "")
@@ -614,7 +614,7 @@ public final class LivePrintEnv implements PrintEnv {
                      .append(entity.getBoundingBox());
                }
 
-               this.init_V_Str(
+               this.logTrace(
                   "placement refused: state "
                      + state
                      + " for "
@@ -622,16 +622,16 @@ public final class LivePrintEnv implements PrintEnv {
                      + " at "
                      + at.toShortString()
                      + " on "
-                     + this.init_Minecraft.level.getBlockState(hit.getBlockPos())
+                     + this.mc.level.getBlockState(hit.getBlockPos())
                      + " entities"
                      + blockers
                );
             }
 
-            return state != null && state.canSurvive(this.init_Minecraft.level, at) ? state : null;
+            return state != null && state.canSurvive(this.mc.level, at) ? state : null;
          } else {
-            if (update_Z && this.close++ < 400) {
-               this.init_V_Str(
+            if (TRACE_ENABLED && this.traceRefusalLogCount++ < 400) {
+               this.logTrace(
                   "placement refused: canPlace "
                      + context.canPlace()
                      + " clicked "
@@ -639,9 +639,9 @@ public final class LivePrintEnv implements PrintEnv {
                      + " wanted "
                      + at.toShortString()
                      + " on "
-                     + this.init_Minecraft.level.getBlockState(hit.getBlockPos())
+                     + this.mc.level.getBlockState(hit.getBlockPos())
                      + " in "
-                     + this.init_Minecraft.level.getBlockState(at)
+                     + this.mc.level.getBlockState(at)
                );
             }
 
@@ -651,69 +651,69 @@ public final class LivePrintEnv implements PrintEnv {
    }
 
    @Override
-   public boolean init_Z_BlockState_BlockPos(BlockState state, BlockPos pos) {
-      return state.canSurvive(this.init_Minecraft.level, pos);
+   public boolean canBlockSurvive(BlockState state, BlockPos pos) {
+      return state.canSurvive(this.mc.level, pos);
    }
 
    @Override
-   public void init_V_SyncManager(PrintControls c) {
-      LocalPlayer p = this.init_LocalPlayer();
-      if (p != null && this.init_Minecraft.gameMode != null) {
+   public void applyControls(PrintControls c) {
+      LocalPlayer p = this.player();
+      if (p != null && this.mc.gameMode != null) {
          if (AiMenuClose.load()) {
-            this.read_V();
-         } else if (!PrintFlightPermission.init(c.close, this.flush(), p.getAbilities().flying)) {
-            this.read_V();
+            this.releaseControls();
+         } else if (!PrintFlightPermission.init(c.fly, this.canUseFlight(), p.getAbilities().flying)) {
+            this.releaseControls();
          } else {
             ((AutismPlayerAccessor)p).autism$setJumpTriggerTime(0);
-            if (c.close) {
+            if (c.fly) {
                if (!p.getAbilities().flying) {
                   p.getAbilities().flying = true;
                   p.onUpdateAbilities();
                }
 
-               if (!c.flush) {
+               if (!c.sprint) {
                   p.setSprinting(false);
                }
             }
 
-            Options o = this.init_Minecraft.options;
-            o.keyUp.setDown(c.init_Z);
-            o.keyDown.setDown(c.load_Z);
-            o.keyLeft.setDown(c.read_Z);
-            o.keyRight.setDown(c.write_Z);
-            o.keyJump.setDown(c.update);
-            o.keyShift.setDown(c.sync);
-            o.keySprint.setDown(c.flush);
-            this.load_Z = false;
-            if (c.read_I >= 0 && c.write_I >= 0 && this.init_Minecraft.gui.screen() == null) {
-               if (this.read_Z()) {
-                  this.write_I = c.read_I;
-                  this.update_I = c.write_I;
-                  this.init_b_DataUtil = AiContainerTransactions.init(p.inventoryMenu, init_I_I(this.write_I), init_I_I(this.update_I), this.update_I);
-                  if (this.init_b_DataUtil == null) {
-                     this.load_Str = "The builder could not start a hand swap. Check the inventory and clear the cursor.";
+            Options o = this.mc.options;
+            o.keyUp.setDown(c.forward);
+            o.keyDown.setDown(c.back);
+            o.keyLeft.setDown(c.left);
+            o.keyRight.setDown(c.right);
+            o.keyJump.setDown(c.jump);
+            o.keyShift.setDown(c.sneak);
+            o.keySprint.setDown(c.sprint);
+            this.controlsReleased = false;
+            if (c.swapSourceSlot >= 0 && c.swapHotbarSlot >= 0 && this.mc.gui.screen() == null) {
+               if (this.isHandReady()) {
+                  this.pendingSwapSourceSlot = c.swapSourceSlot;
+                  this.pendingSwapHotbarSlot = c.swapHotbarSlot;
+                  this.pendingHandSwap = AiContainerTransactions.sendVerifiedSwap(p.inventoryMenu, toInventoryMenuSlot(this.pendingSwapSourceSlot), toInventoryMenuSlot(this.pendingSwapHotbarSlot), this.pendingSwapHotbarSlot);
+                  if (this.pendingHandSwap == null) {
+                     this.handSwapError = "The builder could not start a hand swap. Check the inventory and clear the cursor.";
                   }
                }
             } else {
-               if (c.init_I >= 0 && c.init_I < 9) {
-                  p.getInventory().setSelectedSlot(c.init_I);
+               if (c.selectHotbarSlot >= 0 && c.selectHotbarSlot < 9) {
+                  p.getInventory().setSelectedSlot(c.selectHotbarSlot);
                }
 
-               if (c.init_BlockHitResult != null && this.init_Minecraft.gui.screen() == null) {
-                  this.sync = 0;
-                  this.flush = p.tickCount + 12;
+               if (c.clickHit != null && this.mc.gui.screen() == null) {
+                  this.mismatchedSwapCount = 0;
+                  this.recentClickUntilTick = p.tickCount + 12;
                   BlockPos signPos = p.getMainHandItem().getItem() instanceof BlockItem item && item.getBlock() instanceof SignBlock
-                     ? new BlockPlaceContext(p, InteractionHand.MAIN_HAND, p.getMainHandItem(), c.init_BlockHitResult).getClickedPos().immutable()
+                     ? new BlockPlaceContext(p, InteractionHand.MAIN_HAND, p.getMainHandItem(), c.clickHit).getClickedPos().immutable()
                      : null;
-                  BlockStatePredictionHandler prediction = ((AutismClientLevelPredictionAccessor)this.init_Minecraft.level).autism$getBlockPredictionHandler();
+                  BlockStatePredictionHandler prediction = ((AutismClientLevelPredictionAccessor)this.mc.level).autism$getBlockPredictionHandler();
                   int beforeSequence = prediction.currentSequence();
-                  InteractionResult result = this.init_Minecraft.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, c.init_BlockHitResult);
-                  if (c.open || !c.close) {
-                     this.init_TableIndex.init(this.init_Minecraft.level, p, beforeSequence, prediction.currentSequence(), this.load_J());
+                  InteractionResult result = this.mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, c.clickHit);
+                  if (c.trackInteractionReceipt || !c.fly) {
+                     this.interactionReceipt.init(this.mc.level, p, beforeSequence, prediction.currentSequence(), this.nanoTime());
                   }
 
                   if (signPos != null && result.consumesAction()) {
-                     this.init_DataUtil_DataUtil.init_V(signPos);
+                     this.recentPlacedSigns.record(signPos);
                   }
 
                   if (result.consumesAction()) {
@@ -721,24 +721,24 @@ public final class LivePrintEnv implements PrintEnv {
                   }
 
                   if (result.consumesAction()
-                     && c.load_I >= 0
-                     && c.load_I < 9
-                     && this.init_Minecraft.gui.screen() == null
+                     && c.postClickHotbarSlot >= 0
+                     && c.postClickHotbarSlot < 9
+                     && this.mc.gui.screen() == null
                      && p.containerMenu == p.inventoryMenu
                      && !AiMenuClose.load()) {
-                     p.getInventory().setSelectedSlot(c.load_I);
+                     p.getInventory().setSelectedSlot(c.postClickHotbarSlot);
                   }
 
-                  BlockPos placed = c.init_BlockHitResult.getBlockPos().relative(c.init_BlockHitResult.getDirection());
-                  this.load_V(placed);
-                  this.load_V(c.init_BlockHitResult.getBlockPos());
+                  BlockPos placed = c.clickHit.getBlockPos().relative(c.clickHit.getDirection());
+                  this.notifyBlockChanged(placed);
+                  this.notifyBlockChanged(c.clickHit.getBlockPos());
                }
 
-               if (c.init_UUID != null && this.init_Minecraft.gui.screen() == null) {
+               if (c.interactEntityUuid != null && this.mc.gui.screen() == null) {
                   Entity target = null;
 
-                  for (Entity entity : this.init_Minecraft.level.entitiesForRendering()) {
-                     if (entity.getUUID().equals(c.init_UUID)) {
+                  for (Entity entity : this.mc.level.entitiesForRendering()) {
+                     if (entity.getUUID().equals(c.interactEntityUuid)) {
                         target = entity;
                         break;
                      }
@@ -746,71 +746,71 @@ public final class LivePrintEnv implements PrintEnv {
 
                   if (target != null && !target.isRemoved()) {
                      Vec3 at = target.getBoundingBox().getCenter();
-                     InteractionResult result = this.init_Minecraft.gameMode.interact(p, target, new EntityHitResult(target, at), InteractionHand.MAIN_HAND);
+                     InteractionResult result = this.mc.gameMode.interact(p, target, new EntityHitResult(target, at), InteractionHand.MAIN_HAND);
                      if (result.consumesAction()) {
                         Compat263.swing(p, InteractionHand.MAIN_HAND);
                      }
                   }
                }
 
-               if (c.poll && this.init_Minecraft.gui.screen() == null) {
-                  InteractionResult result = this.init_Minecraft.gameMode.useItem(p, InteractionHand.MAIN_HAND);
+               if (c.useHeldItem && this.mc.gui.screen() == null) {
+                  InteractionResult result = this.mc.gameMode.useItem(p, InteractionHand.MAIN_HAND);
                   if (result.consumesAction()) {
                      Compat263.swing(p, InteractionHand.MAIN_HAND);
                   }
                }
 
-               if (!Float.isNaN(c.init_F)) {
-                  p.setYRot(c.init_F);
-                  p.setYHeadRot(c.init_F);
+               if (!Float.isNaN(c.yaw)) {
+                  p.setYRot(c.yaw);
+                  p.setYHeadRot(c.yaw);
                }
 
-               if (!Float.isNaN(c.load_F)) {
-                  p.setXRot(Math.max(-90.0F, Math.min(90.0F, c.load_F)));
+               if (!Float.isNaN(c.pitch)) {
+                  p.setXRot(Math.max(-90.0F, Math.min(90.0F, c.pitch)));
                }
 
-               if (c.init_BlockPos != null && this.init_Minecraft.gui.screen() == null) {
+               if (c.digPos != null && this.mc.gui.screen() == null) {
                   BlockAttackGraceWindow.init(p);
-                  if (!c.init_BlockPos.equals(this.init_BlockPos)) {
-                     this.init_Minecraft.gameMode.startDestroyBlock(c.init_BlockPos, c.init_Direction);
-                     this.init_BlockPos = c.init_BlockPos;
+                  if (!c.digPos.equals(this.activeDigPos)) {
+                     this.mc.gameMode.startDestroyBlock(c.digPos, c.digFace);
+                     this.activeDigPos = c.digPos;
                   } else {
-                     this.init_Minecraft.gameMode.continueDestroyBlock(c.init_BlockPos, c.init_Direction);
+                     this.mc.gameMode.continueDestroyBlock(c.digPos, c.digFace);
                   }
 
                   Compat263.swing(p, InteractionHand.MAIN_HAND);
                   if (Boolean.getBoolean("autism.ai.print.trace")
-                     && this.init_Minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor dig
+                     && this.mc.gameMode instanceof AutismMultiPlayerGameModeAccessor dig
                      && p.tickCount % 20 == 0) {
                      AutismClientAddon.LOG
                         .info(
                            "[AI] print: live dig {} progress={} delay={} destroying={} held={} block={}",
-                           c.init_BlockPos.toShortString(),
+                           c.digPos.toShortString(),
                            dig.autism$getDestroyProgress(),
                            dig.autism$getDestroyDelay(),
                            dig.autism$isDestroying(),
                            p.getMainHandItem(),
-                           this.init_Minecraft.level.getBlockState(c.init_BlockPos)
+                           this.mc.level.getBlockState(c.digPos)
                         );
                   }
 
-                  this.load_V(c.init_BlockPos);
-               } else if (this.init_BlockPos != null) {
-                  this.init_Minecraft.gameMode.stopDestroyBlock();
-                  this.init_BlockPos = null;
+                  this.notifyBlockChanged(c.digPos);
+               } else if (this.activeDigPos != null) {
+                  this.mc.gameMode.stopDestroyBlock();
+                  this.activeDigPos = null;
                }
             }
          }
       }
    }
 
-   static int init_I_I(int inventorySlot) {
+   static int toInventoryMenuSlot(int inventorySlot) {
       return inventorySlot == 40 ? 45 : (inventorySlot < 9 ? inventorySlot + 36 : inventorySlot);
    }
 
-   public void read_V() {
-      if (!this.load_Z && this.init_Minecraft.options != null) {
-         Options o = this.init_Minecraft.options;
+   public void releaseControls() {
+      if (!this.controlsReleased && this.mc.options != null) {
+         Options o = this.mc.options;
          o.keyUp.setDown(false);
          o.keyDown.setDown(false);
          o.keyLeft.setDown(false);
@@ -818,43 +818,43 @@ public final class LivePrintEnv implements PrintEnv {
          o.keyJump.setDown(false);
          o.keyShift.setDown(false);
          o.keySprint.setDown(false);
-         if (this.init_BlockPos != null && this.init_Minecraft.gameMode != null) {
-            this.init_Minecraft.gameMode.stopDestroyBlock();
+         if (this.activeDigPos != null && this.mc.gameMode != null) {
+            this.mc.gameMode.stopDestroyBlock();
          }
 
-         this.init_BlockPos = null;
-         this.load_Z = true;
+         this.activeDigPos = null;
+         this.controlsReleased = true;
       }
    }
 
    @Override
-   public long init_J() {
-      return this.read_J;
+   public long currentTick() {
+      return this.tickCounter;
    }
 
    @Override
-   public long load_J() {
+   public long nanoTime() {
       return System.nanoTime();
    }
 
    @Override
-   public void init_V_Str(String message) {
+   public void logTrace(String message) {
       AutismClientAddon.LOG.info("[AI] print: {}", message);
    }
 
    static final class Inner_DataUtil {
-      private final LinkedHashSet<Long> init = new LinkedHashSet<>();
+      private final LinkedHashSet<Long> signPositions = new LinkedHashSet<>();
 
-      void init_V(BlockPos pos) {
-         this.init.add(pos.asLong());
+      void record(BlockPos pos) {
+         this.signPositions.add(pos.asLong());
 
-         while (this.init.size() > 64) {
-            this.init.removeFirst();
+         while (this.signPositions.size() > 64) {
+            this.signPositions.removeFirst();
          }
       }
 
-      boolean init_Z(BlockPos pos) {
-         return this.init.remove(pos.asLong());
+      boolean consume(BlockPos pos) {
+         return this.signPositions.remove(pos.asLong());
       }
    }
 }

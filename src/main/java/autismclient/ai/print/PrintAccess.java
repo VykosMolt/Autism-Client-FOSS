@@ -174,7 +174,7 @@ final class PrintAccess {
    }
 
    PrintAccess.Inner_ConfigStore init_StreamUtil_ConfigS_BlockPos_2(BlockPos start, double feet, IntArrayList goals, BlockState tempState) {
-      return new PrintAccess.Inner_ConfigStore(start, feet, goals, tempState, this.init_ArrayUtil::sync);
+      return new PrintAccess.Inner_ConfigStore(start, feet, goals, tempState, this.init_ArrayUtil::workUnits);
    }
 
    PrintAccess.Inner_ConfigStore init_StreamUtil_ConfigS_BlockPos(BlockPos start, double feet, IntArrayList goals) {
@@ -194,7 +194,7 @@ final class PrintAccess {
    PrintAccess.Inner_ConfigStore init_StreamUtil_ConfigS_BlockPos(
       BlockPos start, double feet, IntArrayList goals, BlockState tempState, PrintNav.Inner_TaskQueue reach
    ) {
-      if (reach.init_J != start.asLong()) {
+      if (reach.startKey != start.asLong()) {
          throw new IllegalArgumentException("Column reach starts elsewhere");
       }
 
@@ -205,7 +205,7 @@ final class PrintAccess {
       session.init_PriorityQueue.clear();
       session.init_Long2DoubleOpenHas.clear();
       session.init_TokenStore_TaskQue = reach;
-      session.init_LongIterator = reach.init_Long2DoubleOpenHas.keySet().iterator();
+      session.init_LongIterator = reach.costByCell.keySet().iterator();
       return session;
    }
 
@@ -214,7 +214,7 @@ final class PrintAccess {
       this.push_Z = true;
       this.pop = true;
       this.write_I = 0;
-      return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), null, this.init_ArrayUtil::sync);
+      return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), null, this.init_ArrayUtil::workUnits);
    }
 
    PrintAccess.Inner_ConfigStore init_StreamUtil_ConfigS_BlockPos_3(BlockPos start, double feet, BlockState tempState, boolean groundOnly, int maxTemps) {
@@ -222,7 +222,7 @@ final class PrintAccess {
       this.poll_Z = true;
       this.push_Z = groundOnly;
       this.write_I = maxTemps;
-      return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), tempState, this.init_ArrayUtil::sync);
+      return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), tempState, this.init_ArrayUtil::workUnits);
    }
 
    PrintAccess.Inner_ConfigStore init_StreamUtil_ConfigS_BlockPos_3(
@@ -233,7 +233,7 @@ final class PrintAccess {
       this.run = false;
       this.load_LongOpenHashSet = standOn ? new LongOpenHashSet(temps) : null;
       this.update_J = avoidSwap;
-      return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), tempState, this.init_ArrayUtil::sync);
+      return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), tempState, this.init_ArrayUtil::workUnits);
    }
 
    PrintAccess.Inner_ConfigStore init_StreamUtil_ConfigS_BlockPos(
@@ -244,7 +244,7 @@ final class PrintAccess {
       this.tick = false;
       this.run = true;
       this.update_J = avoidSwap;
-      return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), tempState, this.init_ArrayUtil::sync);
+      return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), tempState, this.init_ArrayUtil::workUnits);
    }
 
    PrintAccess.Inner_BufferHelper init_StreamUtil_BufferH_BlockPos(BlockPos start, double startFeet, IntArrayList goals, BlockState tempState, int maxNodes) {
@@ -273,12 +273,12 @@ final class PrintAccess {
       int expanded = 0;
       PrintAccess.Inner_CachePool closest = root;
       double closestH = this.init_D_J_IntArrayList(root.key, goals);
-      long work0 = this.init_ArrayUtil.sync();
+      long work0 = this.init_ArrayUtil.workUnits();
 
       while (!open.isEmpty()) {
          PrintAccess.Inner_CachePool n = (PrintAccess.Inner_CachePool)open.poll()[1];
          if (!(n.g > best.get(n.key) + 1.0E-9)) {
-            if (!this.poll_Z && this.init_ArrayUtil.sync() - work0 > this.init_J) {
+            if (!this.poll_Z && this.init_ArrayUtil.workUnits() - work0 > this.init_J) {
                this.init_Str = "work budget after " + expanded + " nodes, closest " + BlockPos.of(closest.key).toShortString() + " h " + (int)closestH;
                return null;
             }
@@ -411,7 +411,7 @@ final class PrintAccess {
       this.load_LongArrayList = new LongArrayList(cells);
       this.init_BlockState = state;
       this.init_Item = item;
-      return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), pathState, this.init_ArrayUtil::sync);
+      return new PrintAccess.Inner_ConfigStore(start, feet, new IntArrayList(), pathState, this.init_ArrayUtil::workUnits);
    }
 
    PrintAccess.Inner_BufferHelper init_StreamUtil_BufferH_BlockPos_2(
@@ -434,7 +434,7 @@ final class PrintAccess {
 
    private long init_J_StreamUtil_CachePo_ConfigStore_DataUt(PrintAccess.Inner_CachePool n, PrintClicks.Inner_DataUtil budget) {
       this.init_ConfigStore_Stream = null;
-      long started = this.init_ArrayUtil.sync();
+      long started = this.init_ArrayUtil.workUnits();
       int x = BlockPos.getX(n.key);
       int y = BlockPos.getY(n.key);
       int z = BlockPos.getZ(n.key);
@@ -469,7 +469,7 @@ final class PrintAccess {
                      if (click != null) {
                         PrintCore.P proof = this.init_UiHelper.new P(click, this.init_UiHelper.init_TokenStore_TaskQue);
 
-                        while (!proof.init_Z && this.init_ArrayUtil.sync() - started <= this.init_J && !budget.init()) {
+                        while (!proof.init_Z && this.init_ArrayUtil.workUnits() - started <= this.init_J && !budget.init()) {
                            proof.init(1L);
                         }
 
@@ -735,20 +735,20 @@ final class PrintAccess {
          if (s.kind == PrintAccess.Inner_StreamUtil.PILLAR || s.kind == PrintAccess.Inner_StreamUtil.BRIDGE) {
             int i = this.init_UiHelper.init_Long2IntOpenHashMa.get(s.block);
             if (s.own && i >= 0) {
-               this.init_ArrayUtil.init_V_BlockPos_BlockState(BlockPos.of(s.block), this.init_UiHelper.init_ListPoolArr[i].wanted());
+               this.init_ArrayUtil.pushHypothesis(BlockPos.of(s.block), this.init_UiHelper.init_ListPoolArr[i].wanted());
             } else {
-               this.init_ArrayUtil.load(BlockPos.of(s.block), this.init_BlockState());
+               this.init_ArrayUtil.pushTemporaryHypothesis(BlockPos.of(s.block), this.init_BlockState());
             }
 
             assumed.add(s.block);
          } else if (s.kind == PrintAccess.Inner_StreamUtil.DIG || s.kind == PrintAccess.Inner_StreamUtil.BREAK) {
-            this.init_ArrayUtil.init_V_BlockPos_BlockState(BlockPos.of(s.block), Blocks.AIR.defaultBlockState());
+            this.init_ArrayUtil.pushHypothesis(BlockPos.of(s.block), Blocks.AIR.defaultBlockState());
             assumed.add(s.block);
          } else if (s.kind == PrintAccess.Inner_StreamUtil.TUNNEL) {
             long head = BlockPos.offset(s.block, Direction.UP);
-            this.init_ArrayUtil.init_V_BlockPos_BlockState(BlockPos.of(s.block), Blocks.AIR.defaultBlockState());
+            this.init_ArrayUtil.pushHypothesis(BlockPos.of(s.block), Blocks.AIR.defaultBlockState());
             assumed.add(s.block);
-            this.init_ArrayUtil.init_V_BlockPos_BlockState(BlockPos.of(head), Blocks.AIR.defaultBlockState());
+            this.init_ArrayUtil.pushHypothesis(BlockPos.of(head), Blocks.AIR.defaultBlockState());
             assumed.add(head);
          }
       }
@@ -758,7 +758,7 @@ final class PrintAccess {
 
    private void init_V_LongArrayList(LongArrayList assumed) {
       for (int i = assumed.size() - 1; i >= 0; i--) {
-         this.init_ArrayUtil.init_V_BlockPos(BlockPos.of(assumed.getLong(i)));
+         this.init_ArrayUtil.popHypothesis(BlockPos.of(assumed.getLong(i)));
       }
    }
 
@@ -838,7 +838,7 @@ final class PrintAccess {
             if (s.kind == PrintAccess.Inner_StreamUtil.WALK) {
                int tx = BlockPos.getX(at.key);
                int tz = BlockPos.getZ(at.key);
-               if (Double.isNaN(PrintNav.init_D_ArrayUtil(this.init_ArrayUtil, tx, tz, at.feet, fx, fz, from.feet, tx != fx && tz != fz))) {
+               if (Double.isNaN(PrintNav.stepCost(this.init_ArrayUtil, tx, tz, at.feet, fx, fz, from.feet, tx != fx && tz != fz))) {
                   return false;
                }
             } else {
@@ -846,10 +846,10 @@ final class PrintAccess {
                   return false;
                }
 
-               this.init_ArrayUtil.init_V_BlockPos(BlockPos.of(assumed.removeLong(assumed.size() - 1)));
+               this.init_ArrayUtil.popHypothesis(BlockPos.of(assumed.removeLong(assumed.size() - 1)));
             }
 
-            double h = this.init_ArrayUtil.init_D_I_2(fx, fy, fz);
+            double h = this.init_ArrayUtil.standingHeightAt(fx, fy, fz);
             if (Double.isNaN(h) || Math.abs(h - from.feet) > 0.001) {
                return false;
             }
@@ -965,7 +965,7 @@ final class PrintAccess {
             boolean waterlog = !pour && this.init_UiHelper.init_BArr[g] == 2;
             if (!pour && !waterlog || this.init_UiHelper.init_Z_J_ListPool(n.key, tg)) {
                for (Vec3 feet : points) {
-                  boolean exact = !pour && !waterlog && this.init_ArrayUtil.read(p);
+                  boolean exact = !pour && !waterlog && this.init_ArrayUtil.hasNoHypothesisInNeighborhood(p);
                   PrintClicks.Inner_StreamUtil geo = !pour && !waterlog
                      ? PrintClicks.init(
                         this.init_ArrayUtil,
@@ -1036,7 +1036,7 @@ final class PrintAccess {
                      4.1000000000000005
                   )
                   != null) {
-                  this.init_ArrayUtil.init_V_BlockPos_BlockState(sn, tempState);
+                  this.init_ArrayUtil.pushHypothesis(sn, tempState);
 
                   try {
                      PrintClicks.Inner_StreamUtil targetClick = PrintClicks.init_ConfigStore_Stream_ArrayUtil_2(
@@ -1076,7 +1076,7 @@ final class PrintAccess {
                         if (this.init_UiHelper.start_Z) {
                            this.init_UiHelper
                               .init_EventBus
-                              .init_V_Str(
+                              .logTrace(
                                  "access support " + sn.toShortString() + " for " + p.toShortString() + " from " + from + " crouch=" + targetClick.crouch()
                               );
                         }
@@ -1085,7 +1085,7 @@ final class PrintAccess {
                      }
                      break;
                   } finally {
-                     this.init_ArrayUtil.init_V_BlockPos(sn);
+                     this.init_ArrayUtil.popHypothesis(sn);
                   }
                }
             }
@@ -1122,8 +1122,8 @@ final class PrintAccess {
       LongArrayList assumed = this.init_LongArrayList_StreamUtil_CachePo(n);
 
       try {
-         int highestWalk = PrintNav.init_I_ArrayUtil(this.init_ArrayUtil, x, z, h);
-         int lowestWalk = PrintView.init_I_D(h - 3.0);
+         int highestWalk = PrintNav.maxReachableStepY(this.init_ArrayUtil, x, z, h);
+         int lowestWalk = PrintView.floorInt(h - 3.0);
          if (!this.open_Z || this.init_Z_StreamUtil_CachePo_IntArrayList(n, goals)) {
             for (int[] d : init_IArr2) {
                int nx = x + d[0];
@@ -1131,9 +1131,9 @@ final class PrintAccess {
 
                for (int ny = highestWalk; ny >= lowestWalk; ny--) {
                   if (bounds.contains(nx, ny, nz)) {
-                     double h2 = this.init_ArrayUtil.init_D_I_2(nx, ny, nz);
+                     double h2 = this.init_ArrayUtil.standingHeightAt(nx, ny, nz);
                      if (!Double.isNaN(h2)) {
-                        double step = PrintNav.init_D_ArrayUtil(this.init_ArrayUtil, x, z, h, nx, nz, h2, d[0] != 0 && d[1] != 0);
+                        double step = PrintNav.stepCost(this.init_ArrayUtil, x, z, h, nx, nz, h2, d[0] != 0 && d[1] != 0);
                         if (!Double.isNaN(step)) {
                            this.init_V_StreamUtil_CachePo(
                               new PrintAccess.Inner_CachePool(
@@ -1167,8 +1167,8 @@ final class PrintAccess {
          if (canConstruct
             && this.init_UiHelper.init_Z_I_2(x, py, z)
             && bounds.contains(x, py + 1, z)
-            && this.init_ArrayUtil.sync(feetCell.above())
-            && this.init_ArrayUtil.sync(feetCell.above(2))
+            && this.init_ArrayUtil.isEmptyOutlineCell(feetCell.above())
+            && this.init_ArrayUtil.isEmptyOutlineCell(feetCell.above(2))
             && !this.init_UiHelper.sync_LongOpenHashSet.contains(feetCell.asLong())) {
             int i = this.init_UiHelper.init_Long2IntOpenHashMa.get(feetCell.asLong());
             boolean own = i >= 0
@@ -1213,12 +1213,12 @@ final class PrintAccess {
                      if (bounds.contains(stand.getX(), stand.getY(), stand.getZ())) {
                         BlockState there = this.init_ArrayUtil.getBlockState(cell);
                         if ((there.isAir() || there.canBeReplaced())
-                           && this.init_ArrayUtil.update(stand)
-                           && this.init_ArrayUtil.update(stand.above())
+                           && this.init_ArrayUtil.isPassableCell(stand)
+                           && this.init_ArrayUtil.isPassableCell(stand.above())
                            && this.init_ArrayUtil.getBlockState(floor).isFaceSturdy(this.init_ArrayUtil, floor, d)) {
                            double off = 0.75;
                            AABB lean = PrintGeometry.init(x + 0.5 + d.getStepX() * off, h, z + 0.5 + d.getStepZ() * off, true);
-                           if (this.init_ArrayUtil.init_Z_AABB(lean)) {
+                           if (this.init_ArrayUtil.isBoxClear(lean)) {
                               int i = this.init_UiHelper.init_Long2IntOpenHashMa.get(cell.asLong());
                               boolean own = i >= 0 && this.init_UiHelper.init_BArr[i] == 0 && this.init_Z_I_Direction(i, d) && this.init_UiHelper.read_Z_I(i);
                               boolean buries = !own && !this.init_Z_BlockPos(cell);
@@ -1257,17 +1257,17 @@ final class PrintAccess {
                }
             }
 
-            if (canConstruct && tempState != null && n.temps < this.write_I && this.init_ArrayUtil.init_D_I(x, z, h) >= 0.3) {
+            if (canConstruct && tempState != null && n.temps < this.write_I && this.init_ArrayUtil.supportAreaAtCell(x, z, h) >= 0.3) {
                for (Direction d : Plane.HORIZONTAL) {
-                  BlockPos cell = new BlockPos(x, PrintView.init_I_D(h - 0.001) - 1, z).relative(d);
+                  BlockPos cell = new BlockPos(x, PrintView.floorInt(h - 0.001) - 1, z).relative(d);
                   BlockPos stand = cell.above();
                   int i = this.init_UiHelper.init_Long2IntOpenHashMa.get(cell.asLong());
                   if (bounds.contains(stand.getX(), stand.getY(), stand.getZ())
                      && this.init_UiHelper.pop_Z_I(i)
                      && !this.init_UiHelper.read_LongOpenHashSet.contains(cell.asLong())
                      && this.init_ArrayUtil.getBlockState(cell).isAir()
-                     && this.init_ArrayUtil.update(stand)
-                     && this.init_ArrayUtil.update(stand.above())
+                     && this.init_ArrayUtil.isPassableCell(stand)
+                     && this.init_ArrayUtil.isPassableCell(stand.above())
                      && this.init_Z_BlockPos(cell)
                      && !this.init_Z_BlockPos_Z(cell, true)
                      && this.init_Z_BlockPos_BlockState(cell, tempState)) {
@@ -1308,16 +1308,16 @@ final class PrintAccess {
 
             long under = BlockPos.asLong(x, y - 1, z);
             if (h == y
-               && (this.init_UiHelper.init_Long2ObjectOpenHas.containsKey(under) || this.init_ArrayUtil.load_Z_BlockPos(BlockPos.of(under)))
+               && (this.init_UiHelper.init_Long2ObjectOpenHas.containsKey(under) || this.init_ArrayUtil.isOwnedTemporaryAt(BlockPos.of(under)))
                && (this.poll_Z || !this.init_UiHelper.load_Z_J_J(under, n.key))
                && !this.init_UiHelper.sync_Z_J(under)
                && (!this.pop || this.init_UiHelper.init_Z_BlockPos(BlockPos.of(under)))
                && this.init_UiHelper.init_BlockPos_BlockPos(BlockPos.of(under)) != null) {
-               this.init_ArrayUtil.init_V_BlockPos_BlockState(BlockPos.of(under), Blocks.AIR.defaultBlockState());
+               this.init_ArrayUtil.pushHypothesis(BlockPos.of(under), Blocks.AIR.defaultBlockState());
 
                try {
                   for (int ny = y - 1; ny >= y - 3; ny--) {
-                     double landing = this.init_ArrayUtil.init_D_I_2(x, ny, z);
+                     double landing = this.init_ArrayUtil.standingHeightAt(x, ny, z);
                      if (!Double.isNaN(landing)) {
                         if (!(h - landing > 3.000001)) {
                            long to = BlockPos.asLong(x, ny, z);
@@ -1339,7 +1339,7 @@ final class PrintAccess {
                      }
                   }
                } finally {
-                  this.init_ArrayUtil.init_V_BlockPos(BlockPos.of(under));
+                  this.init_ArrayUtil.popHypothesis(BlockPos.of(under));
                }
             }
 
@@ -1371,16 +1371,16 @@ final class PrintAccess {
          BlockPos f = new BlockPos(x + d.getStepX(), y, z + d.getStepZ());
          BlockPos head = f.above();
          if (bounds.contains(f.getX(), f.getY(), f.getZ())) {
-            boolean fs = !this.init_ArrayUtil.init_VoxelShape_BlockPos(f).isEmpty() || !this.init_ArrayUtil.load_VoxelShape_BlockPos(f).isEmpty();
-            boolean hs = !this.init_ArrayUtil.init_VoxelShape_BlockPos(head).isEmpty() || !this.init_ArrayUtil.load_VoxelShape_BlockPos(head).isEmpty();
+            boolean fs = !this.init_ArrayUtil.getCollisionShape(f).isEmpty() || !this.init_ArrayUtil.getOutlineShape(f).isEmpty();
+            boolean hs = !this.init_ArrayUtil.getCollisionShape(head).isEmpty() || !this.init_ArrayUtil.getOutlineShape(head).isEmpty();
             if ((fs || hs) && (!fs || this.init_UiHelper.open_Z_BlockPos(f)) && (!hs || this.init_UiHelper.open_Z_BlockPos(head))) {
-               this.init_ArrayUtil.init_V_BlockPos_BlockState(f, air);
-               this.init_ArrayUtil.init_V_BlockPos_BlockState(head, air);
+               this.init_ArrayUtil.pushHypothesis(f, air);
+               this.init_ArrayUtil.pushHypothesis(head, air);
 
                try {
-                  double h2 = this.init_ArrayUtil.init_D_I_2(f.getX(), f.getY(), f.getZ());
+                  double h2 = this.init_ArrayUtil.standingHeightAt(f.getX(), f.getY(), f.getZ());
                   if (!Double.isNaN(h2) && !(Math.abs(h2 - h) > 0.6)) {
-                     double step = PrintNav.init_D_ArrayUtil(this.init_ArrayUtil, x, z, h, f.getX(), f.getZ(), h2, false);
+                     double step = PrintNav.stepCost(this.init_ArrayUtil, x, z, h, f.getX(), f.getZ(), h2, false);
                      if (!Double.isNaN(step)) {
                         this.init_V_StreamUtil_CachePo(
                            new PrintAccess.Inner_CachePool(
@@ -1398,8 +1398,8 @@ final class PrintAccess {
                      }
                   }
                } finally {
-                  this.init_ArrayUtil.init_V_BlockPos(head);
-                  this.init_ArrayUtil.init_V_BlockPos(f);
+                  this.init_ArrayUtil.popHypothesis(head);
+                  this.init_ArrayUtil.popHypothesis(f);
                }
             }
          }
@@ -1408,14 +1408,14 @@ final class PrintAccess {
       BlockPos under = new BlockPos(x, y - 1, z);
       if (h == y
          && !this.init_UiHelper.init_Long2ObjectOpenHas.containsKey(under.asLong())
-         && !this.init_ArrayUtil.load_Z_BlockPos(under)
+         && !this.init_ArrayUtil.isOwnedTemporaryAt(under)
          && this.init_UiHelper.open_Z_BlockPos(under)
          && (this.poll_Z || !this.init_UiHelper.load_Z_J_J(under.asLong(), n.key))) {
-         this.init_ArrayUtil.init_V_BlockPos_BlockState(under, air);
+         this.init_ArrayUtil.pushHypothesis(under, air);
 
          try {
             for (int yy = y - 1; yy >= y - 1 - 3; yy--) {
-               double h2 = this.init_ArrayUtil.init_D_I_2(x, yy, z);
+               double h2 = this.init_ArrayUtil.standingHeightAt(x, yy, z);
                if (!Double.isNaN(h2)) {
                   if (!(h - h2 > 3.000001)) {
                      this.init_V_StreamUtil_CachePo(
@@ -1437,12 +1437,12 @@ final class PrintAccess {
                   break;
                }
 
-               if (!this.init_ArrayUtil.update(new BlockPos(x, yy, z))) {
+               if (!this.init_ArrayUtil.isPassableCell(new BlockPos(x, yy, z))) {
                   break;
                }
             }
          } finally {
-            this.init_ArrayUtil.init_V_BlockPos(under);
+            this.init_ArrayUtil.popHypothesis(under);
          }
       }
    }
@@ -1513,7 +1513,7 @@ final class PrintAccess {
 
          for (int d = 1; d <= 3; d++) {
             BlockPos q = cell.below(d);
-            if (!this.init_ArrayUtil.init_VoxelShape_BlockPos(q).isEmpty() || init_Z_StreamUtil_CachePo_BlockPos(n, cell) && read(n, q)) {
+            if (!this.init_ArrayUtil.getCollisionShape(q).isEmpty() || init_Z_StreamUtil_CachePo_BlockPos(n, cell) && read(n, q)) {
                return false;
             }
          }
@@ -1713,7 +1713,7 @@ final class PrintAccess {
             Math.max(b.maxY(), start.getY()),
             Math.max(b.maxZ(), start.getZ())
          );
-         this.update = PrintAccess.this.init_ArrayUtil.read_J();
+         this.update = PrintAccess.this.init_ArrayUtil.worldMutationRevision();
          if (!goals.isEmpty()) {
             PrintAccess.this.load_I = PrintAccess.init_I_UiHelper_IntArrayList(PrintAccess.this.init_UiHelper, goals);
          }
@@ -1735,7 +1735,7 @@ final class PrintAccess {
 
       private boolean init(PrintAccess.Inner_CachePool n) {
          PrintNav.Inner_TaskQueue reach = PrintAccess.this.init_UiHelper.init_TokenStore_TaskQue;
-         if (reach != null && n.temps == 0 && reach.init_Z(n.key) && !(Math.abs(reach.load(n.key) - n.feet) > 1.0E-6)) {
+         if (reach != null && n.temps == 0 && reach.isReachable(n.key) && !(Math.abs(reach.feetYOf(n.key) - n.feet) > 1.0E-6)) {
             for (PrintAccess.Inner_CachePool at = n; at != null && at.via != null; at = at.parent) {
                if (at.via.kind != PrintAccess.Inner_StreamUtil.WALK || at.via.block != -9223372036854775808L) {
                   return false;
@@ -1806,7 +1806,7 @@ final class PrintAccess {
             return this.init_StreamUtil_TaskQue;
          }
 
-         if (PrintAccess.this.init_ArrayUtil.read_J() != this.update) {
+         if (PrintAccess.this.init_ArrayUtil.worldMutationRevision() != this.update) {
             return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
          }
 
@@ -1867,7 +1867,7 @@ final class PrintAccess {
                }
 
                if (this.init_StreamUtil_ConfigS_3 == null) {
-                  long w0 = PrintAccess.this.init_ArrayUtil.sync();
+                  long w0 = PrintAccess.this.init_ArrayUtil.workUnits();
                   if (PrintAccess.this.init_LongArrayList != null) {
                      this.init_StreamUtil_ConfigS_2.init(Math.max(1L, allowanceWork - (this.init_LongSupplier.getAsLong() - started)));
                      this.read++;
@@ -1884,10 +1884,10 @@ final class PrintAccess {
                   }
 
                   this.init_JArr[this.init_StreamUtil_ConfigS_2.read_I] = this.init_JArr[this.init_StreamUtil_ConfigS_2.read_I]
-                     + (PrintAccess.this.init_ArrayUtil.sync() - w0);
+                     + (PrintAccess.this.init_ArrayUtil.workUnits() - w0);
                   PrintAccess.this.init_UiHelper.pop_JArr[this.init_StreamUtil_ConfigS_2.read_I] = PrintAccess.this.init_UiHelper.pop_JArr[this.init_StreamUtil_ConfigS_2
                         .read_I]
-                     + (PrintAccess.this.init_ArrayUtil.sync() - w0);
+                     + (PrintAccess.this.init_ArrayUtil.workUnits() - w0);
                }
 
                worked = true;
@@ -1909,11 +1909,11 @@ final class PrintAccess {
                      this.init_UiHelper_b = PrintAccess.this.init_UiHelper.new b();
                   }
 
-                  long w1 = PrintAccess.this.init_ArrayUtil.sync();
+                  long w1 = PrintAccess.this.init_ArrayUtil.workUnits();
                   PrintAccess.Inner_TaskQueue proof = this.init_StreamUtil_ConfigS_3
                      .init(Math.max(1L, allowanceWork - (this.init_LongSupplier.getAsLong() - started)));
-                  this.init_JArr[4] = this.init_JArr[4] + (PrintAccess.this.init_ArrayUtil.sync() - w1);
-                  PrintAccess.this.init_UiHelper.pop_JArr[4] = PrintAccess.this.init_UiHelper.pop_JArr[4] + (PrintAccess.this.init_ArrayUtil.sync() - w1);
+                  this.init_JArr[4] = this.init_JArr[4] + (PrintAccess.this.init_ArrayUtil.workUnits() - w1);
+                  PrintAccess.this.init_UiHelper.pop_JArr[4] = PrintAccess.this.init_UiHelper.pop_JArr[4] + (PrintAccess.this.init_ArrayUtil.workUnits() - w1);
                   if (proof == PrintAccess.Inner_TaskQueue.SEARCHING) {
                      return this.init_StreamUtil_TaskQue;
                   }
@@ -1958,12 +1958,12 @@ final class PrintAccess {
                }
 
                if (this.init_StreamUtil_ConfigS_2.load_I >= 0 || this.init_StreamUtil_ConfigS_2.init_Z) {
-                  long w2 = PrintAccess.this.init_ArrayUtil.sync();
+                  long w2 = PrintAccess.this.init_ArrayUtil.workUnits();
                   PrintAccess.this.init_V_StreamUtil_CachePo(
                      this.init_StreamUtil_CachePo, this.init_IntArrayList, this.init_BlockState, this.init_PriorityQueue, this.init_Long2DoubleOpenHas
                   );
-                  this.init_JArr[0] = this.init_JArr[0] + (PrintAccess.this.init_ArrayUtil.sync() - w2);
-                  PrintAccess.this.init_UiHelper.pop_JArr[0] = PrintAccess.this.init_UiHelper.pop_JArr[0] + (PrintAccess.this.init_ArrayUtil.sync() - w2);
+                  this.init_JArr[0] = this.init_JArr[0] + (PrintAccess.this.init_ArrayUtil.workUnits() - w2);
+                  PrintAccess.this.init_UiHelper.pop_JArr[0] = PrintAccess.this.init_UiHelper.pop_JArr[0] + (PrintAccess.this.init_ArrayUtil.workUnits() - w2);
                   this.load_J++;
                   this.init_StreamUtil_CachePo = null;
                   this.init_StreamUtil_ConfigS_2 = null;
@@ -1984,11 +1984,11 @@ final class PrintAccess {
             }
 
             long key = this.init_LongIterator.nextLong();
-            if (this.init_TokenStore_TaskQue.init_Long2IntOpenHashMa.get(key) != 0 || PrintAccess.this.init_UiHelper.update_LongOpenHashSet.contains(key)) {
+            if (this.init_TokenStore_TaskQue.pillarCountByCell.get(key) != 0 || PrintAccess.this.init_UiHelper.update_LongOpenHashSet.contains(key)) {
                return;
             }
 
-            double height = this.init_TokenStore_TaskQue.load(key);
+            double height = this.init_TokenStore_TaskQue.feetYOf(key);
             int x = BlockPos.getX(key);
             int z = BlockPos.getZ(key);
             boolean relevant = false;
@@ -2010,7 +2010,7 @@ final class PrintAccess {
                   return;
                }
 
-               this.init_List = this.init_TokenStore_TaskQue.init_List(key);
+               this.init_List = this.init_TokenStore_TaskQue.reconstructPath(key);
                this.init_I = 0;
                this.load_StreamUtil_CachePo = new PrintAccess.Inner_CachePool(PrintAccess.this.write_J, this.init_D, 0.0, null, null, 0);
                break;
@@ -2029,16 +2029,16 @@ final class PrintAccess {
             int nx = BlockPos.getX(to);
             int ny = BlockPos.getY(to);
             int nz = BlockPos.getZ(to);
-            double height = PrintAccess.this.init_ArrayUtil.init_D_I_2(nx, ny, nz);
+            double height = PrintAccess.this.init_ArrayUtil.standingHeightAt(nx, ny, nz);
             if (Math.abs(nx - x) <= 1
                && Math.abs(nz - z) <= 1
                && (nx != x || nz != z)
                && PrintAccess.this.init_TokenStore_DataUti.contains(nx, ny, nz)
                && !Double.isNaN(height)
-               && !(Math.abs(height - this.init_TokenStore_TaskQue.load(to)) > 1.0E-6)
+               && !(Math.abs(height - this.init_TokenStore_TaskQue.feetYOf(to)) > 1.0E-6)
                && !PrintAccess.this.init_UiHelper.init_Z_J(this.load_StreamUtil_CachePo.key, this.load_StreamUtil_CachePo.feet, to, height)
                && !PrintAccess.this.init_UiHelper.update_LongOpenHashSet.contains(to)) {
-               double cost = PrintNav.init_D_ArrayUtil(
+               double cost = PrintNav.stepCost(
                   PrintAccess.this.init_ArrayUtil, x, z, this.load_StreamUtil_CachePo.feet, nx, nz, height, nx != x && nz != z
                );
                if (Double.isNaN(cost)) {
@@ -2081,12 +2081,12 @@ final class PrintAccess {
             this.init_BlockPos = support;
             this.init_BlockState = support == null ? null : PrintAccess.this.init_BlockState();
             if (support != null) {
-               PrintAccess.this.init_ArrayUtil.load(support, this.init_BlockState);
+               PrintAccess.this.init_ArrayUtil.pushTemporaryHypothesis(support, this.init_BlockState);
             }
 
             try {
                BlockState proposed = click.predicted() == null ? click.target().wanted() : click.predicted();
-               this.init_UiHelper_aI = PrintAccess.this.init_UiHelper.init_EventBus.flush()
+               this.init_UiHelper_aI = PrintAccess.this.init_UiHelper.init_EventBus.canUseFlight()
                   ? null
                   : PrintAccess.this.init_UiHelper.new aI(
                      click.feet(), PrintAccess.this.init_UiHelper.init_TokenStore_TaskQue, click.target().pos(), proposed, starts
@@ -2094,7 +2094,7 @@ final class PrintAccess {
                this.init_UiHelper_D = PrintAccess.this.init_UiHelper.new D(click.target().pos(), proposed);
             } finally {
                if (support != null) {
-                  PrintAccess.this.init_ArrayUtil.init_V_BlockPos(support);
+                  PrintAccess.this.init_ArrayUtil.popHypothesis(support);
                }
             }
          }
@@ -2105,14 +2105,14 @@ final class PrintAccess {
             }
 
             if (this.init_BlockPos != null) {
-               PrintAccess.this.init_ArrayUtil.load(this.init_BlockPos, this.init_BlockState);
+               PrintAccess.this.init_ArrayUtil.pushTemporaryHypothesis(this.init_BlockPos, this.init_BlockState);
             }
 
             try {
                return (this.init_UiHelper_aI == null || this.init_UiHelper_aI.init()) && this.init_UiHelper_D.init();
             } finally {
                if (this.init_BlockPos != null) {
-                  PrintAccess.this.init_ArrayUtil.init_V_BlockPos(this.init_BlockPos);
+                  PrintAccess.this.init_ArrayUtil.popHypothesis(this.init_BlockPos);
                }
             }
          }
@@ -2121,9 +2121,9 @@ final class PrintAccess {
             if (!this.init()) {
                this.read = this.init_Z = true;
             } else if (!this.init_Z) {
-               long started = PrintAccess.this.init_ArrayUtil.sync();
+               long started = PrintAccess.this.init_ArrayUtil.workUnits();
                if (this.init_BlockPos != null) {
-                  PrintAccess.this.init_ArrayUtil.load(this.init_BlockPos, this.init_BlockState);
+                  PrintAccess.this.init_ArrayUtil.pushTemporaryHypothesis(this.init_BlockPos, this.init_BlockState);
                }
 
                try {
@@ -2147,7 +2147,7 @@ final class PrintAccess {
                      }
                   }
 
-                  this.init_UiHelper_D.init(Math.max(1L, allowance - (PrintAccess.this.init_ArrayUtil.sync() - started)));
+                  this.init_UiHelper_D.init(Math.max(1L, allowance - (PrintAccess.this.init_ArrayUtil.workUnits() - started)));
                   if (!this.init_UiHelper_D.read_Z) {
                      if (this.init_UiHelper_D.init_Z) {
                         this.load = this.init_UiHelper_D.load_Z;
@@ -2161,7 +2161,7 @@ final class PrintAccess {
                   return;
                } finally {
                   if (this.init_BlockPos != null) {
-                     PrintAccess.this.init_ArrayUtil.init_V_BlockPos(this.init_BlockPos);
+                     PrintAccess.this.init_ArrayUtil.popHypothesis(this.init_BlockPos);
                   }
                }
             }
@@ -2520,7 +2520,7 @@ final class PrintAccess {
                            && !PrintClicks.init_Z_ArrayUtil_2(
                               PrintAccess.this.init_ArrayUtil,
                               target,
-                              PrintAccess.this.init_ArrayUtil.read(target.pos()) ? null : PrintAccess.this.init_UiHelper.init_u_DataUtil_I(g),
+                              PrintAccess.this.init_ArrayUtil.hasNoHypothesisInNeighborhood(target.pos()) ? null : PrintAccess.this.init_UiHelper.init_u_DataUtil_I(g),
                               null
                            )) {
                            long pair = PrintCore.init_J_I_J(g, this.init_StreamUtil_CachePo.key);
@@ -2535,7 +2535,7 @@ final class PrintAccess {
                      if (this.init_Iterator.hasNext()) {
                         Vec3 position = this.init_Iterator.next();
                         if (!pour && !waterlog) {
-                           boolean exact = PrintAccess.this.init_ArrayUtil.read(target.pos());
+                           boolean exact = PrintAccess.this.init_ArrayUtil.hasNoHypothesisInNeighborhood(target.pos());
                            PrintMachineJob job = PrintAccess.this.init_UiHelper.init_BitSetUtil_I(g);
                            PrintRules.Inner_CachePool interaction = job != null
                               ? new PrintRules.Inner_CachePool(job.item(), job.description())
@@ -2734,7 +2734,7 @@ final class PrintAccess {
                      this.init_StreamUtil_ConfigS = null;
                   }
 
-                  try (PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = this.init_UiHelper_b.init_ArrayUtil_StreamUt.init_ArrayUtil_StreamUt()) {
+                  try (PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = this.init_UiHelper_b.init_ArrayUtil_StreamUt.attach()) {
                      if (this.init_BlockPos == null) {
                         if (this.init_I == Direction.values().length) {
                            this.init_Z = true;
@@ -2777,7 +2777,7 @@ final class PrintAccess {
                         return;
                      }
 
-                     PrintAccess.this.init_ArrayUtil.load(this.init_BlockPos, this.init_BlockState);
+                     PrintAccess.this.init_ArrayUtil.pushTemporaryHypothesis(this.init_BlockPos, this.init_BlockState);
 
                      PrintClicks.Inner_StreamUtil sourceClick;
                      try {
@@ -2809,7 +2809,7 @@ final class PrintAccess {
                            }
                         }
                      } finally {
-                        PrintAccess.this.init_ArrayUtil.init_V_BlockPos(this.init_BlockPos);
+                        PrintAccess.this.init_ArrayUtil.popHypothesis(this.init_BlockPos);
                      }
 
                      if (sourceClick != null) {
@@ -2817,7 +2817,7 @@ final class PrintAccess {
                      }
                   }
 
-                  if (!this.init_UiHelper_b.init_ArrayUtil_StreamUt.init_Z()) {
+                  if (!this.init_UiHelper_b.init_ArrayUtil_StreamUt.verifyStillValid()) {
                      Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
                   }
                }
@@ -3133,10 +3133,10 @@ final class PrintAccess {
                return PrintAccess.Inner_TaskQueue.INVALIDATED;
             }
 
-            long started = PrintAccess.this.init_ArrayUtil.sync();
+            long started = PrintAccess.this.init_ArrayUtil.workUnits();
 
             do {
-               long left = Math.max(1L, allowance - (PrintAccess.this.init_ArrayUtil.sync() - started));
+               long left = Math.max(1L, allowance - (PrintAccess.this.init_ArrayUtil.workUnits() - started));
                if (this.init_I == 0) {
                   if (!this.init_Z) {
                      this.init_I = 3;
@@ -3209,7 +3209,7 @@ final class PrintAccess {
                      }
                   }
                }
-            } while (PrintAccess.this.init_ArrayUtil.sync() - started < allowance);
+            } while (PrintAccess.this.init_ArrayUtil.workUnits() - started < allowance);
 
             return PrintAccess.Inner_TaskQueue.SEARCHING;
          }
@@ -3248,7 +3248,7 @@ final class PrintAccess {
 
                try (PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = Inner_ConfigStore.this.init_UiHelper_b
                      .init_ArrayUtil_StreamUt
-                     .init_ArrayUtil_StreamUt()) {
+                     .attach()) {
                   PrintAccess.Inner_NetHelper step = this.load_StreamUtil_CachePo.via;
                   PrintAccess.Inner_CachePool from = this.load_StreamUtil_CachePo.parent;
                   int fx = BlockPos.getX(from.key);
@@ -3260,12 +3260,12 @@ final class PrintAccess {
                         return;
                      }
 
-                     PrintAccess.this.init_ArrayUtil.init_V_BlockPos(BlockPos.of(assumed.removeLong(assumed.size() - 1)));
+                     PrintAccess.this.init_ArrayUtil.popHypothesis(BlockPos.of(assumed.removeLong(assumed.size() - 1)));
                   } else {
                      int tx = BlockPos.getX(this.load_StreamUtil_CachePo.key);
                      int tz = BlockPos.getZ(this.load_StreamUtil_CachePo.key);
                      if (Double.isNaN(
-                        PrintNav.init_D_ArrayUtil(
+                        PrintNav.stepCost(
                            PrintAccess.this.init_ArrayUtil, tx, tz, this.load_StreamUtil_CachePo.feet, fx, fz, from.feet, tx != fx && tz != fz
                         )
                      )) {
@@ -3274,7 +3274,7 @@ final class PrintAccess {
                      }
                   }
 
-                  double height = PrintAccess.this.init_ArrayUtil.init_D_I_2(fx, fy, fz);
+                  double height = PrintAccess.this.init_ArrayUtil.standingHeightAt(fx, fy, fz);
                   if (!Double.isNaN(height) && !(Math.abs(height - from.feet) > 0.001)) {
                      this.load_StreamUtil_CachePo = from;
                      if (this.load_StreamUtil_CachePo.parent == null) {
@@ -3306,9 +3306,9 @@ final class PrintAccess {
       }
 
       void init(long allowance) {
-         long started = PrintAccess.this.init_ArrayUtil.sync();
+         long started = PrintAccess.this.init_ArrayUtil.workUnits();
 
-         while (!this.init_Z && PrintAccess.this.init_ArrayUtil.sync() - started < allowance) {
+         while (!this.init_Z && PrintAccess.this.init_ArrayUtil.workUnits() - started < allowance) {
             if (this.init_I == this.init_StreamUtil_BufferH.steps().size()) {
                LongArrayList assumed = PrintAccess.this.init_LongArrayList_StreamUtil_CachePo(this.init_StreamUtil_CachePo);
 

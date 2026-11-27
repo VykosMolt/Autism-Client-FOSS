@@ -628,7 +628,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
 
    public boolean prev_Z() {
       return this.putAt_BlockPos != null && (this.putAt_Minecraft.level == null || !this.readEx(this.putAt_BlockPos))
-         || this.putAt_SyncCore != null && this.putAt_SyncCore.init_Z()
+         || this.putAt_SyncCore != null && this.putAt_SyncCore.isRunning()
          || this.putAt_AiOperation != null
          || this.nextBy_I > 0;
    }
@@ -883,7 +883,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                         return;
                      }
 
-                     if (this.putAt_SyncCore != null && this.putAt_SyncCore.init_Z()) {
+                     if (this.putAt_SyncCore != null && this.putAt_SyncCore.isRunning()) {
                         this.nextBy();
                         this.store_V();
                         return;
@@ -2308,7 +2308,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          if (this.putAt_AiOperation != null) {
             this.stateOf_V();
             return true;
-         } else if (this.putAt_SyncCore != null && this.putAt_SyncCore.init_Z()) {
+         } else if (this.putAt_SyncCore != null && this.putAt_SyncCore.isRunning()) {
             this.store_V();
             return true;
          } else if (!this.flushOf_Z() && !this.stateOf_Z()) {
@@ -2924,8 +2924,8 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             && var6.getBlock().defaultBlockState().isCollisionShapeFullBlock(this.putAt_Minecraft.level, this.putAt_Minecraft.player.blockPosition())
             && !var6.getBlock().defaultBlockState().hasBlockEntity()) {
             String var9 = BuiltInRegistries.ITEM.getKey(var5.getItem()).toString();
-            int var8 = AiRestock.init_I(var9);
-            if (var8 >= 0 && AiRestock.init(var5, this.putAt_Minecraft.player.getInventory())) {
+            int var8 = AiRestock.scaffoldRank(var9);
+            if (var8 >= 0 && AiRestock.canSpendStack(var5, this.putAt_Minecraft.player.getInventory())) {
                if (var9.equals(this.putAt_Str)) {
                   var8 = -1;
                }
@@ -2952,7 +2952,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             && var4.getBlock().defaultBlockState().isCollisionShapeFullBlock(this.putAt_Minecraft.level, this.putAt_Minecraft.player.blockPosition())
             && !var4.getBlock().defaultBlockState().hasBlockEntity()) {
             String var6 = BuiltInRegistries.ITEM.getKey(var3.getItem()).toString();
-            if (AiRestock.init_I(var6) >= 0 && AiRestock.init(var3, this.putAt_Minecraft.player.getInventory())) {
+            if (AiRestock.scaffoldRank(var6) >= 0 && AiRestock.canSpendStack(var3, this.putAt_Minecraft.player.getInventory())) {
                var1 += var3.getCount();
             }
          }
@@ -2985,7 +2985,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          this.putAt_SyncCore = new AiRestock(this.putAt_Minecraft);
       }
 
-      if (!this.putAt_SyncCore.init_Z() && !this.pollAt_Z) {
+      if (!this.putAt_SyncCore.isRunning() && !this.pollAt_Z) {
          ArrayList var2 = new ArrayList(27);
 
          for (int var3 = 9; var3 < 36; var3++) {
@@ -3004,7 +3004,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                return false;
             }
          } else {
-            var7 = AiRestock.init(var2, this.putAt_Str);
+            var7 = AiRestock.pickBestBackpackSlot(var2, this.putAt_Str);
          }
 
          if (var7 < 0) {
@@ -3020,13 +3020,13 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             );
          }
 
-         int var9 = AiRestock.init(var8);
+         int var9 = AiRestock.pickTargetHotbarSlot(var8);
          if (var9 < 0) {
             return false;
          }
 
          String var10 = var1 != null ? BuiltInRegistries.ITEM.getKey(var1).toString() : ((AiRestock.Inner_CachePool)var2.get(var7)).itemId();
-         this.putAt_SyncCore.init_V_I(9 + var7, var9, var10);
+         this.putAt_SyncCore.startSwap(9 + var7, var9, var10);
          return true;
       } else {
          return false;
@@ -3042,7 +3042,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          return false;
       }
 
-      if (AiRestock.init(this.putAt_Minecraft.player.getInventory()) <= 0) {
+      if (AiRestock.availableSpareWood(this.putAt_Minecraft.player.getInventory()) <= 0) {
          return false;
       }
 
@@ -3062,7 +3062,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private boolean value(BlockPos var1) {
-      if (this.closeOf_Z && this.putAt_SyncCore != null && !this.putAt_SyncCore.init_Z() && !this.pollAt_Z) {
+      if (this.closeOf_Z && this.putAt_SyncCore != null && !this.putAt_SyncCore.isRunning() && !this.pollAt_Z) {
          BlockState var2 = this.putAt_Minecraft.level.getBlockState(var1);
          int var3 = autismclient.util.BlockBreakSpeedHelper.init(this.putAt_Minecraft, var2, 9, false);
          if (var3 < 0
@@ -3071,7 +3071,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                && !this.putAt_Minecraft.player.getInventory().getItem(var3).isCorrectToolForDrops(var2)) {
             if (ToolUpkeep.init(this.putAt_List_BlockState(var2)) instanceof ToolUpkeep.Inner_DataUtil.Inner_CachePool var4) {
                int var6 = var4.backpackSlot();
-               this.putAt_SyncCore.init_V_I(
+               this.putAt_SyncCore.startSwap(
                      var6,
                      this.putAt_Minecraft.player.getInventory().getSelectedSlot(),
                      BuiltInRegistries.ITEM.getKey(this.putAt_Minecraft.player.getInventory().getItem(var6).getItem()).toString()
@@ -3089,7 +3089,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private AiRestock.Inner_CachePool putAt_SyncCore_JsonCache_ItemStack(ItemStack var1) {
-      return var1.getItem() instanceof BlockItem var2 && AiRestock.init(var1, this.putAt_Minecraft.player.getInventory())
+      return var1.getItem() instanceof BlockItem var2 && AiRestock.canSpendStack(var1, this.putAt_Minecraft.player.getInventory())
          ? new AiRestock.Inner_CachePool(
             BuiltInRegistries.ITEM.getKey(var1.getItem()).toString(),
             var1.getCount(),
@@ -3133,14 +3133,14 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private void store_V() {
-      switch (this.putAt_SyncCore.load_UtilCore_BufferHel()) {
+      switch (this.putAt_SyncCore.tick()) {
          case SUCCEEDED:
             this.poolEx++;
-            this.putAt_SyncCore.init_V();
+            this.putAt_SyncCore.reset();
             break;
          case FAILED:
             this.pollAt_Z = true;
-            this.putAt_SyncCore.init_V();
+            this.putAt_SyncCore.reset();
       }
    }
 
@@ -3386,7 +3386,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       AiMotionSafety.releaseMovementKeys();
       this.fill_BlockPos = null;
       if (this.putAt_SyncCore != null) {
-         this.putAt_SyncCore.init_V();
+         this.putAt_SyncCore.reset();
       }
 
       if (this.putAt_AiOperation != null) {

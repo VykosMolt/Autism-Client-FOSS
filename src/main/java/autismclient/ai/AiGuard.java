@@ -230,14 +230,14 @@ final class AiGuard {
 
    static boolean canStandGroundOutnumbered(AiGuard.StatusSnapshot vitals) {
       Minecraft mc = Minecraft.getInstance();
-      return !AiThreats.init_Z() && mc != null && mc.player != null ? mc.player.getArmorValue() >= 12 && vitals.health() >= 12.0F && vitals.hostilesNear() < 5 : false;
+      return !AiThreats.isLegacyCombatEnabled() && mc != null && mc.player != null ? mc.player.getArmorValue() >= 12 && vitals.health() >= 12.0F && vitals.hostilesNear() < 5 : false;
    }
 
    static boolean hasAvoidableThreatNearby() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null && mc.level != null) {
          for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity.isAlive() && entity.distanceToSqr(mc.player) < 256.0 && AiThreats.init_cv_DataUtil(entity) == AiThreats.Inner_DataUtil.AVOID && AiThreats.init_Z(mc, entity)) {
+            if (entity.isAlive() && entity.distanceToSqr(mc.player) < 256.0 && AiThreats.classify(entity) == AiThreats.Inner_DataUtil.AVOID && AiThreats.isActiveThreat(mc, entity)) {
                return true;
             }
          }
@@ -363,8 +363,8 @@ final class AiGuard {
          ItemStack stack = inventory.getItem(slot);
          if (stack.getItem() instanceof BlockItem block
             && !(block.getBlock() instanceof FallingBlock)
-            && autismclient.ai.engine.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) >= 0
-            && autismclient.ai.engine.AiRestock.init(stack, inventory)) {
+            && autismclient.ai.engine.AiRestock.scaffoldRank(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) >= 0
+            && autismclient.ai.engine.AiRestock.canSpendStack(stack, inventory)) {
             n += stack.getCount();
          }
       }
@@ -507,19 +507,19 @@ final class AiGuard {
 
                   if ((
                         !AiCombat.init(entity)
-                           || !(entity.distanceToSqr(mc.player) >= 9.0) && !(entity instanceof Mob mob && AiThreats.init(mob, mc.player.getBoundingBox()) > 1.0)
+                           || !(entity.distanceToSqr(mc.player) >= 9.0) && !(entity instanceof Mob mob && AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox()) > 1.0)
                      )
                      && (!(entity instanceof Creeper) || mc.player.hasLineOfSight(entity))) {
                      if (entity instanceof Enemy
                         && entity.distanceToSqr(mc.player) < 49.0
                         && (entity.distanceToSqr(mc.player) < 9.0 || mc.player.hasLineOfSight(entity))
-                        && (AiThreats.init_Z() || AiThreats.init_Z(mc, entity))) {
+                        && (AiThreats.isLegacyCombatEnabled() || AiThreats.isActiveThreat(mc, entity))) {
                         hostiles++;
-                        if (AiThreats.init_Z() ? !(entity instanceof Zombie) : !isPerchableMeleeMob(entity)) {
+                        if (AiThreats.isLegacyCombatEnabled() ? !(entity instanceof Zombie) : !isPerchableMeleeMob(entity)) {
                            zombiesOnly = false;
                         }
 
-                        if (!AiThreats.init_Z() && isHeavyNetherMob(entity)) {
+                        if (!AiThreats.isLegacyCombatEnabled() && isHeavyNetherMob(entity)) {
                            heavy = true;
                         }
 
@@ -528,9 +528,9 @@ final class AiGuard {
                         }
 
                         kinds.merge(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).getPath(), 1, Integer::sum);
-                     } else if (isAngryEnderman(entity, mc) && entity.distanceToSqr(mc.player) < Math.pow(AiThreats.init_Z() ? 24.0 : 6.0, 2.0)) {
+                     } else if (isAngryEnderman(entity, mc) && entity.distanceToSqr(mc.player) < Math.pow(AiThreats.isLegacyCombatEnabled() ? 24.0 : 6.0, 2.0)) {
                         hostiles++;
-                        if (!AiThreats.init_Z()) {
+                        if (!AiThreats.isLegacyCombatEnabled()) {
                            zombiesOnly = false;
                         }
                      }
@@ -584,8 +584,8 @@ final class AiGuard {
          double health = mc.player.getHealth();
 
          for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity instanceof Mob mob && mob.isAlive() && !(mob.distanceToSqr(mc.player) > 256.0) && AiThreats.init_Z(mc, mob)) {
-               AiThreats.Inner_DataUtil p = AiThreats.init_cv_DataUtil(mob);
+            if (entity instanceof Mob mob && mob.isAlive() && !(mob.distanceToSqr(mc.player) > 256.0) && AiThreats.isActiveThreat(mc, mob)) {
+               AiThreats.Inner_DataUtil p = AiThreats.classify(mob);
                double dx = mob.getX() - mc.player.getX();
                double dz = mob.getZ() - mc.player.getZ();
                double d = Math.hypot(dx, dz);
@@ -600,8 +600,8 @@ final class AiGuard {
                         return false;
                      }
                   } else {
-                     if (AiThreats.load(p) && !(AiThreats.init_D(mob) > Math.max(0.2, speed * 0.85))) {
-                        if (!ahead && !(AiThreats.init(mob, mc.player.getBoundingBox()) < 1.2)) {
+                     if (AiThreats.isMeleeThreat(p) && !(AiThreats.estimateThreatSpeedScore(mob) > Math.max(0.2, speed * 0.85))) {
+                        if (!ahead && !(AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox()) < 1.2)) {
                            continue;
                         }
 
@@ -638,7 +638,7 @@ final class AiGuard {
          Entity only = null;
 
          for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity instanceof Enemy && entity.isAlive() && !(entity.distanceToSqr(mc.player) > 256.0) && AiThreats.init_Z(mc, entity)) {
+            if (entity instanceof Enemy && entity.isAlive() && !(entity.distanceToSqr(mc.player) > 256.0) && AiThreats.isActiveThreat(mc, entity)) {
                if (only != null) {
                   return false;
                }
@@ -660,8 +660,8 @@ final class AiGuard {
             if (entity instanceof Enemy
                && entity.isAlive()
                && entity.distanceToSqr(mc.player) < 9.0
-               && AiThreats.load(AiThreats.init_cv_DataUtil(entity))
-               && AiThreats.init_Z(mc, entity)) {
+               && AiThreats.isMeleeThreat(AiThreats.classify(entity))
+               && AiThreats.isActiveThreat(mc, entity)) {
                return true;
             }
          }
@@ -677,7 +677,7 @@ final class AiGuard {
          return false;
       } else {
          if (enderman.isCreepy()) {
-            return AiThreats.init_Z() || AiThreats.init_Z(mc, entity);
+            return AiThreats.isLegacyCombatEnabled() || AiThreats.isActiveThreat(mc, entity);
          }
 
          EntityReference<LivingEntity> angerTarget = enderman.getPersistentAngerTarget();
@@ -754,10 +754,10 @@ final class AiGuard {
          || blocks < 3
          || perchBackoff
          || !canBuildCombatPerch()
-         || !AiThreats.init_Z() && !heavyMeleePresent && Minecraft.getInstance().player.getArmorValue() >= 12 && !(vitals.health() < 12.0F)) {
+         || !AiThreats.isLegacyCombatEnabled() && !heavyMeleePresent && Minecraft.getInstance().player.getArmorValue() >= 12 && !(vitals.health() < 12.0F)) {
          perchCombatActive = false;
          coverActive = false;
-         if ((action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE) && !AiThreats.init_Z() && vitals.health() <= 12.0F) {
+         if ((action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE) && !AiThreats.isLegacyCombatEnabled() && vitals.health() <= 12.0F) {
             AiOperation ward = createEndermanWaterWard();
             if (ward != null) {
                burrowActive = false;
@@ -766,8 +766,8 @@ final class AiGuard {
             }
          }
 
-         boolean striking = !AiThreats.init_Z() && isMeleeThreatStriking();
-         boolean swarmed = !AiThreats.init_Z()
+         boolean striking = !AiThreats.isLegacyCombatEnabled() && isMeleeThreatStriking();
+         boolean swarmed = !AiThreats.isLegacyCombatEnabled()
             && vitals.hostilesNear() >= 3
             && rangedHostileCount >= 1
             && vitals.health() < 14.0F
@@ -786,7 +786,7 @@ final class AiGuard {
                && Math.abs(shooter.getY() - self.getY()) <= 3.0
                && !AiCombat.init(shooter);
             boolean blazeShooter = shooter instanceof Blaze;
-            if (blazeShooter && !AiThreats.init_Z() && (vitals.health() < 14.0F || AiWorldScan.init_List_Str_D("minecraft:blaze", 16.0).size() > 1)) {
+            if (blazeShooter && !AiThreats.isLegacyCombatEnabled() && (vitals.health() < 14.0F || AiWorldScan.findEntitiesByType("minecraft:blaze", 16.0).size() > 1)) {
                upClose = false;
             }
 
@@ -797,7 +797,7 @@ final class AiGuard {
                return allowDuringLowHealth(AiSurvival.load(AiJson.objectOf("radius", 16.0, "distance", 28, "timeoutSeconds", Math.max(15, Math.min(60, budgetSeconds)))));
             }
 
-            boolean blazeCharge = blazeShooter && !AiThreats.init_Z();
+            boolean blazeCharge = blazeShooter && !AiThreats.isLegacyCombatEnabled();
             if (shouldChargeShooter(policy, vitals, upClose, nearestShooterApproachable || hunt, rangedHostileCount) && (!blazeCharge || !(vitals.health() < 12.0F))) {
                burrowActive = false;
                AiOperation charge = blazeCharge
@@ -829,7 +829,7 @@ final class AiGuard {
             }
          }
 
-         boolean lavaBeside = creeperNearby && !AiThreats.init_Z() && hasLavaWithin(5);
+         boolean lavaBeside = creeperNearby && !AiThreats.isLegacyCombatEnabled() && hasLavaWithin(5);
          boolean armouredCreeper = creeperNearby && vitals.hostilesNear() <= 1 && vitals.hasWeapon() && vitals.health() >= 16.0F && canStandGroundOutnumbered(vitals) && !lavaBeside;
          if (creeperNearby && !armouredCreeper && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE)) {
             long now = System.nanoTime();
@@ -846,13 +846,13 @@ final class AiGuard {
             action = AiGuard.GuardAction.FLEE;
          }
 
-         if (!AiThreats.init_Z() && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.NONE) && hasAvoidableThreatNearby()) {
+         if (!AiThreats.isLegacyCombatEnabled() && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.NONE) && hasAvoidableThreatNearby()) {
             action = policy.flee() ? AiGuard.GuardAction.FLEE : action;
          }
 
          boolean hide = action == AiGuard.GuardAction.FLEE && (isUnderground() || blockedRetreat)
             || action == AiGuard.GuardAction.FIGHT && isUnderground() && (rangedHostileCount > 0 || skeletonNearby || vitals.hostilesNear() >= 2 || vitals.health() < 12.0F)
-            || !AiThreats.init_Z()
+            || !AiThreats.isLegacyCombatEnabled()
                && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE)
                && vitals.hostilesNear() >= 3
                && rangedHostileCount >= 1
@@ -869,7 +869,7 @@ final class AiGuard {
             hide = false;
          }
 
-         if (hide && !AiThreats.init_Z() && isMeleeThreatStriking()) {
+         if (hide && !AiThreats.isLegacyCombatEnabled() && isMeleeThreatStriking()) {
             hide = false;
             if (action == AiGuard.GuardAction.FLEE || action == AiGuard.GuardAction.NONE) {
                action = AiGuard.GuardAction.FIGHT;

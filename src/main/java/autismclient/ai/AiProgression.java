@@ -570,10 +570,10 @@ final class AiProgression {
          final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
          Object init_Obj = mc.level;
          final Object load_Obj = mc.getConnection();
-         final String load_Str = AiWorldIdentity.init(mc);
+         final String load_Str = AiWorldIdentity.currentWorldKey(mc);
          final UUID init_UUID = mc.player == null ? null : mc.player.getUUID();
          final long load_J = AiServerEvidence.deathRevision();
-         String read_Str = AiWorldIdentity.load(mc);
+         String read_Str = AiWorldIdentity.currentDimensionId(mc);
          final JsonArray init_JsonArray = new JsonArray();
          JsonObject init_JsonObject = new JsonObject();
          final Map<String, Integer> init_Map = new HashMap<>();
@@ -788,7 +788,7 @@ final class AiProgression {
                || mc.player == null
                || mc.level == null
                || mc.getConnection() != this.load_Obj
-               || !this.load_Str.equals(AiWorldIdentity.init(mc))
+               || !this.load_Str.equals(AiWorldIdentity.currentWorldKey(mc))
                || !mc.player.getUUID().equals(this.init_UUID)) {
                return this.init(AiOperation.Status.CANCELLED, "Progression world/player changed");
             }
@@ -796,7 +796,7 @@ final class AiProgression {
             if (mc.player.isAlive() && this.load_J == AiServerEvidence.deathRevision()) {
                if (mc.level != this.init_Obj) {
                   boolean expected = this.read_Str.equals("minecraft:overworld")
-                     && AiWorldIdentity.load(mc).equals("minecraft:the_nether")
+                     && AiWorldIdentity.currentDimensionId(mc).equals("minecraft:the_nether")
                      && this.init_AiOperation != null
                      && (this.write_Str.equals("nether") || this.write_Str.equals("smith-ingot"));
                   if (!expected) {
@@ -804,7 +804,7 @@ final class AiProgression {
                   }
 
                   this.init_Obj = mc.level;
-                  this.read_Str = AiWorldIdentity.load(mc);
+                  this.read_Str = AiWorldIdentity.currentDimensionId(mc);
                   this.init_BlockPos = null;
                   this.load_BlockPos = null;
                   this.close_Str = "";
@@ -814,11 +814,11 @@ final class AiProgression {
                   this.load_Map.clear();
                }
 
-               autismclient.ai.engine.AiRestock.init(this.sync_I);
-               autismclient.ai.engine.AiRestock.load(this.flush_I);
+               autismclient.ai.engine.AiRestock.reserveWoodForJob(this.sync_I);
+               autismclient.ai.engine.AiRestock.reserveStoneForJob(this.flush_I);
                boolean preservingIron = this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()
                   && AiProgression.init_bx_CachePool(mc) == AiProgression.Inner_CachePool.IRON;
-               autismclient.ai.engine.AiRestock.read(preservingIron ? 48 : 0);
+               autismclient.ai.engine.AiRestock.reserveStrikesForJob(preservingIron ? 48 : 0);
                if (System.nanoTime() > this.init_J) {
                   return this.init(
                      this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN, "Ran out of time at: " + this.update_Str
@@ -904,7 +904,7 @@ final class AiProgression {
                      AiOperation.Result r;
                      try {
                         r = this.write_Str.equals("pack-table-completion")
-                           ? this.init_bb.init_AiOperation_Result(this.init_AiOperation)
+                           ? this.init_bb.tickChild(this.init_AiOperation)
                            : this.init_AiOperation.tick();
                      } finally {
                         if (allowHurt) {
@@ -922,7 +922,7 @@ final class AiProgression {
                      }
 
                      if (this.write_Str.equals("pack-table-completion")) {
-                        this.init_bb.init_V(this.init_AiOperation);
+                        this.init_bb.cancelChild(this.init_AiOperation);
                      } else {
                         this.init_AiOperation.cancel();
                      }
@@ -2145,10 +2145,10 @@ final class AiProgression {
 
          AiOperation.Result init(String key, String label, AiOperation op) {
             this.sync_I = this.init(this.load_bx_CachePool(), AiCraft.countItem("minecraft:crafting_table") > 0);
-            autismclient.ai.engine.AiRestock.init(this.sync_I);
+            autismclient.ai.engine.AiRestock.reserveWoodForJob(this.sync_I);
             this.flush_I = this.init_I_29()
                + (this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal() && AiProgression.init_bx_CachePool(mc) == AiProgression.Inner_CachePool.IRON ? 3 : 0);
-            autismclient.ai.engine.AiRestock.load(this.flush_I);
+            autismclient.ai.engine.AiRestock.reserveStoneForJob(this.flush_I);
             this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("progression", key + ": " + label, op);
             this.write_Str = key;
             this.update_Str = label;
@@ -2319,18 +2319,18 @@ final class AiProgression {
 
          AiOperation.Result init(AiOperation.Status status, String message, AiFailure failure) {
             AiVisualization.init_V(this);
-            autismclient.ai.engine.AiRestock.init(0);
-            autismclient.ai.engine.AiRestock.load(0);
-            autismclient.ai.engine.AiRestock.read(0);
+            autismclient.ai.engine.AiRestock.reserveWoodForJob(0);
+            autismclient.ai.engine.AiRestock.reserveStoneForJob(0);
+            autismclient.ai.engine.AiRestock.reserveStrikesForJob(0);
             AiOperation.Result result = AiGameOperations.result(status, message, this.init_JsonObject_45());
             if (failure != null) {
                result = new AiOperation.Result(result.status(), result.message(), result.dataJson(), result.evidence(), failure);
             }
 
-            result = this.init_bb.init(result, this.write_Str.equals("pack-table-completion") && this.init_bb.init_Z(this.init_AiOperation));
+            result = this.init_bb.finalizeResult(result, this.write_Str.equals("pack-table-completion") && this.init_bb.requiresReconciliation(this.init_AiOperation));
             if (this.init_AiOperation != null) {
                if (this.write_Str.equals("pack-table-completion")) {
-                  this.init_bb.init_V(this.init_AiOperation);
+                  this.init_bb.cancelChild(this.init_AiOperation);
                } else {
                   this.init_AiOperation.cancel();
                }
@@ -2348,14 +2348,14 @@ final class AiProgression {
 
          @Override
          public boolean canInterruptNow() {
-            return !this.init_bb.init_Z(null)
+            return !this.init_bb.requiresReconciliation(null)
                && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
                && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow());
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_bb.init_Z(null)
+            return this.init_bb.requiresReconciliation(null)
                || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
                || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency();
          }
@@ -2368,12 +2368,12 @@ final class AiProgression {
          public void cancel() {
             this.push_Z = true;
             AiVisualization.init_V(this);
-            autismclient.ai.engine.AiRestock.init(0);
-            autismclient.ai.engine.AiRestock.load(0);
-            autismclient.ai.engine.AiRestock.read(0);
+            autismclient.ai.engine.AiRestock.reserveWoodForJob(0);
+            autismclient.ai.engine.AiRestock.reserveStoneForJob(0);
+            autismclient.ai.engine.AiRestock.reserveStrikesForJob(0);
             if (this.init_AiOperation != null) {
                if (this.write_Str.equals("pack-table-completion")) {
-                  this.init_bb.init_V(this.init_AiOperation);
+                  this.init_bb.cancelChild(this.init_AiOperation);
                } else {
                   this.init_AiOperation.cancel();
                }
@@ -2440,11 +2440,11 @@ final class AiProgression {
             return AiGameplay.write(AiJson.objectOf("item", "minecraft:crafting_table", "count", 1, "timeoutSeconds", Math.min(90, seconds)));
          } else {
             BlockPos feet = mc.player.blockPosition();
-            List<BlockPos> tables = AiWorldScan.init(s -> s.is(Blocks.CRAFTING_TABLE), 4, 4, 32)
+            List<BlockPos> tables = AiWorldScan.findBlocks(s -> s.is(Blocks.CRAFTING_TABLE), 4, 4, 32)
                .stream()
                .filter(pos -> mc.level.hasChunkAt(pos) && mc.level.getBlockState(pos).is(Blocks.CRAFTING_TABLE))
                .toList();
-            List<BlockPos> logs = !carryRequired && load() < 4 ? AiWorldScan.init(s -> s.is(BlockTags.LOGS), 4, 4, 32) : List.of();
+            List<BlockPos> logs = !carryRequired && load() < 4 ? AiWorldScan.findBlocks(s -> s.is(BlockTags.LOGS), 4, 4, 32) : List.of();
             BlockPos best = init_BlockPos_BlockPos(feet, tables, logs, load(), seconds, carryRequired);
             if (observed == null
                || best != null && !(dropCost < 3.0 + init_D_D(best.getX() - feet.getX(), best.getY() - feet.getY(), best.getZ() - feet.getZ()))) {
@@ -2500,12 +2500,12 @@ final class AiProgression {
                if (this.read_AiOperation == null) {
                   if (!this.init_Z) {
                      if (this.init_AiOperation != null) {
-                        AiOperation.Result ready = this.init_bb.init_AiOperation_Result(this.init_AiOperation);
+                        AiOperation.Result ready = this.init_bb.tickChild(this.init_AiOperation);
                         if (!ready.terminal()) {
                            return ready;
                         }
 
-                        this.init_bb.init_V(this.init_AiOperation);
+                        this.init_bb.cancelChild(this.init_AiOperation);
                         this.init_AiOperation = null;
                         if (ready.status() != AiOperation.Status.SUCCEEDED) {
                            return this.init(ready);
@@ -2528,7 +2528,7 @@ final class AiProgression {
                         );
                      }
 
-                     AiOperation.Result r = this.init_bb.init_AiOperation_Result(this.load_AiOperation);
+                     AiOperation.Result r = this.init_bb.tickChild(this.load_AiOperation);
                      if (!r.terminal()) {
                         return r;
                      }
@@ -2567,7 +2567,7 @@ final class AiProgression {
                   this.read_AiOperation = AiGameplay.write(AiJson.objectOf("item", item, "count", this.init_I + 1, "timeoutSeconds", Math.min(15, remaining)));
                }
 
-               AiOperation.Result result = this.init_bb.init_AiOperation_Result(this.read_AiOperation);
+               AiOperation.Result result = this.init_bb.tickChild(this.read_AiOperation);
                return result.terminal() ? this.init(result) : result;
             } else {
                return this.init(AiGameOperations.result(AiOperation.Status.TIMED_OUT, "Station recovery stopped before verified pickup", new JsonObject()));
@@ -2586,7 +2586,7 @@ final class AiProgression {
                   : AiJson.objectOf("item", item, "count", live.getItem().getCount(), "x", live.getX(), "y", live.getY(), "z", live.getZ())
             );
             result = new AiOperation.Result(result.status(), result.message(), data.toString(), result.evidence(), result.failure());
-            result = this.init_bb.init(result, this.requiresReconciliationAfterEmergency());
+            result = this.init_bb.finalizeResult(result, this.requiresReconciliationAfterEmergency());
             this.load_Z = true;
             return result;
          }
@@ -2611,27 +2611,27 @@ final class AiProgression {
 
          @Override
          public boolean canInterruptNow() {
-            return !this.init_bb.init_Z(this.init_AiOperation_3())
+            return !this.init_bb.requiresReconciliation(this.init_AiOperation_3())
                && (this.load_Z || !this.init_Z && (this.init_AiOperation_3() == null || this.init_AiOperation_3().canInterruptNow()));
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
             return AiProgression.init(
-               !this.load_Z && this.init_Z, AiCraft.countItem(item) > this.init_I, this.init_ItemEntity_2() != null, this.init_bb.init_Z(this.init_AiOperation_3())
+               !this.load_Z && this.init_Z, AiCraft.countItem(item) > this.init_I, this.init_ItemEntity_2() != null, this.init_bb.requiresReconciliation(this.init_AiOperation_3())
             );
          }
 
          @Override
          public void cancel() {
-            this.init_bb.init(this.requiresReconciliationAfterEmergency());
+            this.init_bb.markReconciliationPending(this.requiresReconciliationAfterEmergency());
             this.read_Z = true;
-            this.init_bb.init_V(this.init_AiOperation);
-            this.init_bb.init_V(this.load_AiOperation);
-            this.init_bb.init_V(this.read_AiOperation);
+            this.init_bb.cancelChild(this.init_AiOperation);
+            this.init_bb.cancelChild(this.load_AiOperation);
+            this.init_bb.cancelChild(this.read_AiOperation);
          }
       };
-      return AiPreparationReceipt.init(recovery, autismclient.ai.engine.AiMotionSafety::isPlayerSupported, () -> mc.player == stationPlayer && mc.level == stationWorld, stationDeadline);
+      return AiPreparationReceipt.awaitSupportedHandoff(recovery, autismclient.ai.engine.AiMotionSafety::isPlayerSupported, () -> mc.player == stationPlayer && mc.level == stationWorld, stationDeadline);
    }
 
    static double init_D_D(double dx, double dy, double dz) {

@@ -74,8 +74,8 @@ public class LabeledControlRow extends LayoutContainer {
 
    @Override
    public float init_F_SyncManager(LayoutContext context) {
-      EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
-      int scaledGap = context.init_CharEncoder().load(this.init_I);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
+      int scaledGap = context.theme().load(this.init_I);
       float total = scaledPadding.init_I();
       total += this.load_F(context);
       if (this.init_TableIndex != null && this.init_TableIndex.write_Z() && this.load_TableIndex != null && this.load_TableIndex.write_Z()) {
@@ -91,7 +91,7 @@ public class LabeledControlRow extends LayoutContainer {
 
    @Override
    public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
       float labelHeight = this.init_TableIndex != null && this.init_TableIndex.write_Z()
          ? this.init_TableIndex.init_F_SyncManager_F(context, availableWidth)
          : 0.0F;
@@ -103,8 +103,8 @@ public class LabeledControlRow extends LayoutContainer {
 
    @Override
    protected void load_V(LayoutContext context) {
-      EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
-      int scaledGap = context.init_CharEncoder().load(this.init_I);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
+      int scaledGap = context.theme().load(this.init_I);
       float innerX = this.init_F + scaledPadding.read();
       float innerY = this.load_F + scaledPadding.write();
       float innerWidth = Math.max(0.0F, this.read_F - scaledPadding.init_I());

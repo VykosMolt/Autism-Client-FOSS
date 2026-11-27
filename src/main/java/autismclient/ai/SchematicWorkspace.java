@@ -811,7 +811,7 @@ public final class SchematicWorkspace {
          this.init_cP_DataUtil = null;
          this.init_ClientLevel = this.init_Minecraft.level;
          this.write_Str = this.init_ClientLevel == null ? "" : init_Str_Minecraft(this.init_Minecraft);
-         this.update_Str = this.init_ClientLevel == null ? "" : AiWorldIdentity.load(this.init_Minecraft);
+         this.update_Str = this.init_ClientLevel == null ? "" : AiWorldIdentity.currentDimensionId(this.init_Minecraft);
          this.init_Set.clear();
          this.close = "";
          this.flush = "";
@@ -1015,11 +1015,11 @@ public final class SchematicWorkspace {
 
    private static String init_Str_Minecraft(Minecraft mc) {
       if (mc.hasSingleplayerServer()) {
-         return AiWorldIdentity.init(mc);
+         return AiWorldIdentity.currentWorldKey(mc);
       }
 
       ServerData server = mc.getCurrentServer();
-      return server != null && !server.ip.isBlank() ? "server/" + AiJson.sha256Hex(server.ip.trim().toLowerCase(Locale.ROOT)) : AiWorldIdentity.init(mc);
+      return server != null && !server.ip.isBlank() ? "server/" + AiJson.sha256Hex(server.ip.trim().toLowerCase(Locale.ROOT)) : AiWorldIdentity.currentWorldKey(mc);
    }
 
    private BlockPos init_BlockPos_Z_D(boolean surface, double depth) {

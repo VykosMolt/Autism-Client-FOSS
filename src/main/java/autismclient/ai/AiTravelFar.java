@@ -56,9 +56,9 @@ final class AiTravelFar {
                   if (!this.load) {
                      this.load = true;
                      if (this.init_Minecraft.player.blockPosition().distSqr(target) > 4096.0) {
-                        AiService service = AiService.load_cc();
+                        AiService service = AiService.getExistingInstance();
                         if (service != null) {
-                           List<AiRegions.Region> observations = service.load_List();
+                           List<AiRegions.Region> observations = service.getDimensionRegions();
                            int x = this.init_Minecraft.player.blockPosition().getX();
                            int z = this.init_Minecraft.player.blockPosition().getZ();
                            if (observations.size() >= 2) {
@@ -124,10 +124,10 @@ final class AiTravelFar {
                      }
 
                      if (!finalTarget || groundTarget) {
-                        legTarget = AiGoto.init_BlockPos(legTarget, 24);
+                        legTarget = AiGoto.findStandableNearCompat(legTarget, 24);
                      }
 
-                     this.init_AiOperation = AiGoto.init(legTarget, legRadius, allowDig, allowPillar, allowBridge, this.init(), strategy);
+                     this.init_AiOperation = AiGoto.travelToCompat(legTarget, legRadius, allowDig, allowPillar, allowBridge, this.init(), strategy);
                   }
 
                   return this.init("Continuing the next route leg");

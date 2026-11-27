@@ -440,7 +440,7 @@ final class AiCraft {
                   }
 
                   this.read_I++;
-                  this.write_AiOperation = AiGoto.init_AiOperation(
+                  this.write_AiOperation = AiGoto.approachBlockCompat(
                      standing, (int)Math.max(10L, Math.min(90L, (this.init_J - System.nanoTime()) / 1000000000L))
                   );
                   return this.init("Walking to the crafting table at " + standing.toShortString());
@@ -589,7 +589,7 @@ final class AiCraft {
                   }
 
                   AiOperation.Result result = this.init_AiOperation_Result == null
-                     ? AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(this.load_Z, new AiOperation.Result(status, message, data.toString(), List.of()))
+                     ? AiGuardLayer.wrapPendingTermination(this.load_Z, new AiOperation.Result(status, message, data.toString(), List.of()))
                      : AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, data, this.load_Z, this.init_AiOperation_Result);
                   if (this.init_AiOperation_Result != null) {
                      result = new AiOperation.Result(
@@ -607,7 +607,7 @@ final class AiCraft {
                      this.load_Z = this.load_Z | this.requiresReconciliationAfterEmergency();
                      this.init_Z = true;
                      AiVisualization.init_V(this);
-                     this.init_DataPipe.init_V();
+                     this.init_DataPipe.reset();
                      if (this.init_cn != null) {
                         this.init_cn.init_V();
                         this.init_cn = null;
@@ -731,7 +731,7 @@ final class AiCraft {
                            return this.init(AiOperation.Status.FAILED, "Stonecutting input exhausted", AiJson.objectOf("missing", missing));
                         } else {
                            this.load_J = AiServerEvidence.containerRevision(menu.containerId);
-                           AiContainerTransactions.init(menu.containerId, this.init(slot), 0, ContainerInput.QUICK_MOVE);
+                           AiContainerTransactions.sendPredictedClick(menu.containerId, this.init(slot), 0, ContainerInput.QUICK_MOVE);
                            return this.init("Loading the stonecutter");
                         }
                      } else {
@@ -753,7 +753,7 @@ final class AiCraft {
                         this.load_J = AiServerEvidence.containerRevision(menu.containerId);
                         this.update = AiCraft.countItem(outputId);
                         this.sync = result.getCount();
-                        AiContainerTransactions.init(menu.containerId, 1, 0, ContainerInput.QUICK_MOVE);
+                        AiContainerTransactions.sendPredictedClick(menu.containerId, 1, 0, ContainerInput.QUICK_MOVE);
                         return this.init("Cutting " + this.read + "/" + wanted);
                      }
                   }
@@ -907,7 +907,7 @@ final class AiCraft {
             if (!this.load_Z) {
                this.load_Z = true;
                this.init_DataUtil.clear();
-               this.init_DataPipe.init_V();
+               this.init_DataPipe.reset();
                if (this.init_cn != null) {
                   this.init_cn.init_V();
                }

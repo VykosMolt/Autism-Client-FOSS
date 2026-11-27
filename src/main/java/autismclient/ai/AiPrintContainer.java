@@ -246,11 +246,11 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          for (Direction direction : Direction.values()) {
             for (int distance = 1; distance <= 2; distance++) {
                BlockPos at = half.relative(direction, distance);
-               if (!this.init_DataUtil.load_Z(at)) {
+               if (!this.init_DataUtil.hasChunkAt(at)) {
                   return false;
                }
 
-               BlockState state = this.init_DataUtil.init_BlockState_BlockPos(at);
+               BlockState state = this.init_DataUtil.getBlockState(at);
                if (state.is(Blocks.COMPARATOR) && state.getValue(ComparatorBlock.FACING) == direction.getOpposite()) {
                   return false;
                }
@@ -304,7 +304,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    private boolean poll_Z_2() {
       if (this.init_BlockState.is(Blocks.CHEST) && !this.sync_Z && !this.load_Map.isEmpty() && this.open()) {
-         long tick = this.init_DataUtil.init_J();
+         long tick = this.init_DataUtil.currentTick();
          if (this.sync_J == -9223372036854775808L) {
             this.sync_J = this.update_J = tick;
 
@@ -320,8 +320,8 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
             for (Direction side : Direction.values()) {
                BlockPos at = destination.relative(side);
-               if (this.init_DataUtil.load_Z(at)) {
-                  BlockState state = this.init_DataUtil.init_BlockState_BlockPos(at);
+               if (this.init_DataUtil.hasChunkAt(at)) {
+                  BlockState state = this.init_DataUtil.getBlockState(at);
                   if (state.is(Blocks.HOPPER)
                      && state.getValue(BlockStateProperties.FACING_HOPPER) == side.getOpposite()
                      && this.read_Map.putIfAbsent(at, distance) == null) {
@@ -368,7 +368,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
       for (int checked = 0; checked < 32 && this.init_Iterator.hasNext(); checked++) {
          BlockPos hopper = this.init_Iterator.next();
-         if (this.init_DataUtil.load_Z(hopper) && this.init_DataUtil.init_BlockState_BlockPos(hopper).is(Blocks.HOPPER)) {
+         if (this.init_DataUtil.hasChunkAt(hopper) && this.init_DataUtil.getBlockState(hopper).is(Blocks.HOPPER)) {
             AABB column = new AABB(
                hopper.getX() - 0.25, hopper.getY(), hopper.getZ() - 0.25, hopper.getX() + 1.25, this.init_Minecraft.level.getMaxY(), hopper.getZ() + 1.25
             );
@@ -378,7 +378,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                if (this.load_Map.getOrDefault(stack.getItem(), 0) > 0
                   && ItemStack.isSameItemSameComponents(stack, new ItemStack(stack.getItem()))
                   && (entity.getDeltaMovement().y < -0.001 || entity.getY() < hopper.getY() + 2)) {
-                  this.update_J = this.init_DataUtil.init_J();
+                  this.update_J = this.init_DataUtil.currentTick();
                   this.init_Iterator = null;
                   return false;
                }
@@ -400,7 +400,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          if (!autismclient.ai.print.PrintContainerAccess.init(this.init_Minecraft.level, this.init_BlockPos)) {
             return false;
          } else {
-            BlockState actual = this.init_DataUtil.init_BlockState_BlockPos(this.init_BlockPos);
+            BlockState actual = this.init_DataUtil.getBlockState(this.init_BlockPos);
             if (this.load_Z && actual.getValue(BlockStateProperties.ENABLED)) {
                return false;
             } else {
@@ -419,11 +419,11 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    private boolean tick() {
-      if (!this.init_DataUtil.load_Z(this.init_BlockPos)) {
+      if (!this.init_DataUtil.hasChunkAt(this.init_BlockPos)) {
          return false;
       }
 
-      BlockState actual = this.init_DataUtil.init_BlockState_BlockPos(this.init_BlockPos);
+      BlockState actual = this.init_DataUtil.getBlockState(this.init_BlockPos);
       return AiSavedContents.init(this.init_BlockState, actual, this.read_Z)
          && (!this.load_Z || this.init_Z && !this.flush || !actual.getValue(BlockStateProperties.ENABLED));
    }
@@ -447,17 +447,17 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          );
       }
 
-      if (!this.init_DataUtil.load_Z(this.init_BlockPos)) {
+      if (!this.init_DataUtil.hasChunkAt(this.init_BlockPos)) {
          return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING, "Waiting for the saved container chunk");
       }
 
       if (!this.tick()) {
-         if (this.load_Z && AiSavedContents.init(this.init_BlockState, this.init_DataUtil.init_BlockState_BlockPos(this.init_BlockPos), this.read_Z)) {
+         if (this.load_Z && AiSavedContents.init(this.init_BlockState, this.init_DataUtil.getBlockState(this.init_BlockPos), this.read_Z)) {
             if (this.read_J == -9223372036854775808L) {
-               this.read_J = this.init_DataUtil.init_J();
+               this.read_J = this.init_DataUtil.currentTick();
             }
 
-            return this.init_DataUtil.init_J() - this.read_J >= 100L
+            return this.init_DataUtil.currentTick() - this.read_J >= 100L
                ? this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
                   autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT, "The captured hopper is still unlocked at " + this.init_BlockPos.toShortString()
                )
@@ -477,7 +477,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
             );
          }
 
-         if (!this.write_Z && this.init_DataUtil.init_Z_BlockPos_Map(this.init_BlockPos, this.init_Map)) {
+         if (!this.write_Z && this.init_DataUtil.preloadContainerSlots(this.init_BlockPos, this.init_Map)) {
             return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
                autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING, "Waiting for the qualification inventory supply receipt"
             );
@@ -486,7 +486,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          if (this.init_Minecraft.gui.screen() == null
             && this.init_Minecraft.player.containerMenu == this.init_Minecraft.player.inventoryMenu
             && this.init_Minecraft.player.inventoryMenu.getCarried().isEmpty()) {
-            if (this.init_DataUtil.update_Z()) {
+            if (this.init_DataUtil.isCreativeMode()) {
                ArrayList<ItemStack> deficits = new ArrayList<>();
 
                for (ItemStack wanted : this.init_Map.values()) {
@@ -502,7 +502,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   int need = wanted.getCount();
 
                   for (int index = 0; index < 36 && need > 0; index++) {
-                     ItemStack held = this.init_DataUtil.init_ItemStack_I(index);
+                     ItemStack held = this.init_DataUtil.getInventoryItem(index);
                      if (ItemStack.isSameItemSameComponents(wanted, held)) {
                         need -= held.getCount();
                      }
@@ -512,15 +512,15 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                      List<Integer> snapshot = deficits.stream()
                         .map(
                            required -> IntStream.range(0, 36)
-                              .filter(index -> ItemStack.isSameItemSameComponents(required, this.init_DataUtil.init_ItemStack_I(index)))
-                              .map(index -> this.init_DataUtil.init_ItemStack_I(index).getCount())
+                              .filter(index -> ItemStack.isSameItemSameComponents(required, this.init_DataUtil.getInventoryItem(index)))
+                              .map(index -> this.init_DataUtil.getInventoryItem(index).getCount())
                               .sum()
                         )
                         .toList();
                      if (this.init_HashSet.add(snapshot)
                         && this.init_HashSet.size() <= 128
                         && this.init_DataUtil
-                           .init_Z_ItemStack_Predicate(
+                           .giveCreativeStackReserved(
                               wanted.copyWithCount(Math.min(need, wanted.getMaxStackSize())),
                               heldx -> deficits.stream().anyMatch(required -> ItemStack.isSameItemSameComponents(required, heldx))
                            )) {
@@ -547,10 +547,10 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public boolean beginDispatch() {
-      if (this.prepare() == autismclient.ai.print.PrintMachineJob.JobStatus.READY && !this.init_DataUtil.load_Z()) {
+      if (this.prepare() == autismclient.ai.print.PrintMachineJob.JobStatus.READY && !this.init_DataUtil.isServerSneaking()) {
          this.init_J = System.nanoTime();
          this.load_J = AiServerEvidence.inventoryRevision();
-         this.sync_Z = this.init_DataUtil.update_Z();
+         this.sync_Z = this.init_DataUtil.isCreativeMode();
          this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
             autismclient.ai.print.PrintMachineJob.JobStatus.SENT, "Waiting for the container menu and its server contents"
          );
@@ -566,7 +566,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          return this.init_BitSetUtil_DataUti;
       }
 
-      if (this.pop() && this.init_DataUtil.update_Z() == this.sync_Z && this.tick()) {
+      if (this.pop() && this.init_DataUtil.isCreativeMode() == this.sync_Z && this.tick()) {
          if (this.init_AbstractContainerM == null) {
             if (this.init_Minecraft.gui.screen() == null && this.init_Minecraft.player.containerMenu == this.init_Minecraft.player.inventoryMenu) {
                if (System.nanoTime() - this.init_J < 5000000000L) {
@@ -770,7 +770,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                      );
                   }
 
-                  if (this.load_Z && this.init_DataUtil.init_BlockState_BlockPos(this.init_BlockPos).getValue(BlockStateProperties.ENABLED)) {
+                  if (this.load_Z && this.init_DataUtil.getBlockState(this.init_BlockPos).getValue(BlockStateProperties.ENABLED)) {
                      this.update_V();
                      return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
                         autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT,
@@ -820,7 +820,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                         this.load_List = null;
                         this.read_List = null;
                         this.read_I = 0;
-                        this.update_J = this.init_DataUtil.init_J();
+                        this.update_J = this.init_DataUtil.currentTick();
                         return this.init_BitSetUtil_DataUti;
                      }
 
@@ -927,7 +927,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    private void update_V() {
       if (this.init_Minecraft.player.containerMenu == this.init_AbstractContainerM && this.init_AbstractContainerM.getCarried().isEmpty()) {
          AiMenuClose.init_Z();
-         this.init_DataUtil.load_V();
+         this.init_DataUtil.clearRecentClick();
       }
    }
 

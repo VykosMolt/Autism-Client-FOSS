@@ -157,7 +157,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
       }
 
-      if (!AutismLiteVariant.enabled() && AiService.load_cc() != null) {
+      if (!AutismLiteVariant.enabled() && AiService.getExistingInstance() != null) {
          AiServerEvidence.recordServerMessage(packet.content().getString());
          AiChatLedger.init(packet.content(), "SERVER");
       }
@@ -165,7 +165,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handlePlayerChat", at = @At("RETURN"))
    private void autism$aiPlayerChat(ClientboundPlayerChatPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && AiService.load_cc() != null) {
+      if (!AutismLiteVariant.enabled() && AiService.getExistingInstance() != null) {
          Component content = packet.unsignedContent().orElse(Component.literal(packet.body().content()));
          AiChatLedger.init(content, packet.sender(), packet.chatType().name().getString());
       }
@@ -173,7 +173,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleDisguisedChat", at = @At("RETURN"))
    private void autism$aiDisguisedChat(ClientboundDisguisedChatPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && AiService.load_cc() != null) {
+      if (!AutismLiteVariant.enabled() && AiService.getExistingInstance() != null) {
          AiChatLedger.load(packet.message(), packet.chatType().name().getString());
       }
    }
@@ -314,7 +314,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    private void autism$aiSlotApplied(ClientboundContainerSetSlotPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
          AiServerEvidence.bumpInventoryRevision();
-         AiContainerTransactions.init(packet.getContainerId(), packet.getSlot(), packet.getItem());
+         AiContainerTransactions.onContainerSetSlot(packet.getContainerId(), packet.getSlot(), packet.getItem());
       }
    }
 
@@ -322,7 +322,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    private void autism$aiInventoryApplied(ClientboundSetPlayerInventoryPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
          AiServerEvidence.bumpInventoryRevision();
-         AiContainerTransactions.init(packet.slot(), packet.contents());
+         AiContainerTransactions.onPlayerInventorySlot(packet.slot(), packet.contents());
       }
    }
 
@@ -332,7 +332,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       AutoCraftingEngine.init_V(packet.containerId());
       if (!AutismLiteVariant.enabled()) {
          AiServerEvidence.recordContainerContents(packet.containerId(), packet.items());
-         AiContainerTransactions.init(packet.containerId(), packet.items(), packet.carriedItem());
+         AiContainerTransactions.onContainerSetContent(packet.containerId(), packet.items(), packet.carriedItem());
       }
    }
 
@@ -660,7 +660,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleSetCursorItem", at = @At("RETURN"))
    private void autism$onSetCursorItem(ClientboundSetCursorItemPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         AiContainerTransactions.init(packet.contents());
+         AiContainerTransactions.onCarriedSlot(packet.contents());
       }
 
       if (!aD.read_Z()) {

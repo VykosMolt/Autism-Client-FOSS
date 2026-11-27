@@ -48,10 +48,10 @@ final class AiRunDiagnostics {
          init_bJ.init_Z = true;
       }
 
-      init_bJ = new AiRunDiagnostics(AiRunTrace::init_V_Str_JsonObject, System::currentTimeMillis);
-      AiRunTrace trace = AiRunTrace.init_bL();
+      init_bJ = new AiRunDiagnostics(AiRunTrace::emitServiceEvent, System::currentTimeMillis);
+      AiRunTrace trace = AiRunTrace.current();
       if (trace != null) {
-         trace.load();
+         trace.expandLimitForLongRun();
       }
 
       return init_bJ;
@@ -272,9 +272,9 @@ final class AiRunDiagnostics {
             }
 
             this.init(hurt ? "speedrun_damage_snapshot" : "speedrun_snapshot", snapshot);
-            AiService service = AiService.load_cc();
+            AiService service = AiService.getExistingInstance();
             if (service != null) {
-               service.read_V_JsonObject(snapshot);
+               service.saveSpeedrunDiagnostics(snapshot);
             }
          } catch (RuntimeException failure) {
             this.init("speedrun_diagnostic_error", AiJson.objectOf("message", init(failure.toString())));
@@ -292,9 +292,9 @@ final class AiRunDiagnostics {
 
       snapshot.addProperty("status", status);
       this.init("speedrun_final_snapshot", snapshot);
-      AiService service = AiService.load_cc();
+      AiService service = AiService.getExistingInstance();
       if (service != null) {
-         service.read_V_JsonObject(snapshot);
+         service.saveSpeedrunDiagnostics(snapshot);
       }
 
       this.init_Z = true;
@@ -451,7 +451,7 @@ final class AiRunDiagnostics {
          "tick",
          p.tickCount,
          "dimension",
-         AiWorldIdentity.load(mc),
+         AiWorldIdentity.currentDimensionId(mc),
          "x",
          p.getX(),
          "y",

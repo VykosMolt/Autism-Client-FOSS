@@ -95,7 +95,7 @@ public final class EditorListRowHelper {
       }
 
       int color = var10000;
-      ListRowRenderer.init(
+      ListRowRenderer.drawIconRow(
          graphics,
          font,
          label,
@@ -127,15 +127,15 @@ public final class EditorListRowHelper {
    public static void init(
       GuiGraphicsExtractor graphics, Font font, Component label, NetHelper bounds, boolean hovered, boolean selected, int textColor, boolean minecraftText
    ) {
-      ListRowRenderer.init(graphics, font, label, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), hovered, selected, textColor, minecraftText);
+      ListRowRenderer.drawColoredRow(graphics, font, label, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), hovered, selected, textColor, minecraftText);
    }
 
    public static void init(GuiGraphicsExtractor graphics, NetHelper bounds, boolean hovered) {
-      ListRowRenderer.load(graphics, bounds.read(), bounds.write() + 1, bounds.update(), Math.max(1, bounds.sync() - 2), hovered);
+      ListRowRenderer.drawDeleteButton(graphics, bounds.read(), bounds.write() + 1, bounds.update(), Math.max(1, bounds.sync() - 2), hovered);
    }
 
    public static void init(GuiGraphicsExtractor graphics, NetHelper bounds, String symbol, boolean hovered, boolean danger) {
-      ListRowRenderer.init(graphics, bounds.read(), bounds.write(), bounds.update(), symbol, hovered, danger);
+      ListRowRenderer.drawSymbolButtonSquare(graphics, bounds.read(), bounds.write(), bounds.update(), symbol, hovered, danger);
    }
 
    public record Inner_DataUtil(NetHelper init, NetHelper load, NetHelper read, NetHelper write) {

@@ -25,9 +25,9 @@ final class PrintFrontierWalk {
       this.read_I = chunkMaxX;
       this.write = chunkMaxZ;
       this.init_D = this.init_D(start.asLong());
-      boolean supported = !Double.isNaN(view.init_D_I_2(start.getX(), start.getY(), start.getZ()));
+      boolean supported = !Double.isNaN(view.standingHeightAt(start.getX(), start.getY(), start.getZ()));
       this.init_TokenStore_NetHelp = new PrintNav.Inner_NetHelper(view, start, searchBounds, maxNodes, null, null, this::init_Z);
-      this.init_TokenStore_TaskQue = this.init_TokenStore_NetHelp.init_TokenStore_TaskQue;
+      this.init_TokenStore_TaskQue = this.init_TokenStore_NetHelp.result;
       if (!supported) {
          this.init_Z = this.load_Z = true;
       }
@@ -43,7 +43,7 @@ final class PrintFrontierWalk {
 
    private boolean init_Z(long key) {
       double distance = this.init_D(key);
-      double cost = this.init_TokenStore_NetHelp.init_TokenStore_TaskQue.init_D(key);
+      double cost = this.init_TokenStore_NetHelp.result.costOf(key);
       if (distance < this.load_D - 1.0E-7 || Math.abs(distance - this.load_D) <= 1.0E-7 && cost < this.read_D) {
          this.load_J = key;
          this.load_D = distance;
@@ -55,12 +55,12 @@ final class PrintFrontierWalk {
 
    void init_V(long workBudget) {
       if (!this.init_Z) {
-         this.init_TokenStore_NetHelp.init_LongOpenHashSet = this.init_LongOpenHashSet;
-         this.init_TokenStore_NetHelp.init(workBudget);
-         if (this.init_TokenStore_NetHelp.init_Z) {
+         this.init_TokenStore_NetHelp.avoidCells = this.init_LongOpenHashSet;
+         this.init_TokenStore_NetHelp.advance(workBudget);
+         if (this.init_TokenStore_NetHelp.finished) {
             this.init_Z = true;
-            if (this.init_TokenStore_NetHelp.init_J != -9223372036854775808L) {
-               this.init_J = this.init_TokenStore_NetHelp.init_J;
+            if (this.init_TokenStore_NetHelp.matchedGoalKey != -9223372036854775808L) {
+               this.init_J = this.init_TokenStore_NetHelp.matchedGoalKey;
             } else if (this.load_J != -9223372036854775808L && this.init_D - this.load_D >= 2.0) {
                this.init_J = this.load_J;
             }

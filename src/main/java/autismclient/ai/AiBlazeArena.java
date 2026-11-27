@@ -39,7 +39,7 @@ final class AiBlazeArena implements AiOperation {
    private AiOperation init_AiOperation;
    private AiOperation load_AiOperation;
    private final Set<BlockPos> init_Set = new HashSet<>();
-   private final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().init_DataPipe();
+   private final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().fast();
    private final AiFireControl init_K = new AiFireControl();
    private final long init_J;
    private int write;
@@ -112,7 +112,7 @@ final class AiBlazeArena implements AiOperation {
       this.init_I = this.init_List.size();
       this.init_List.addAll(init_List_BlockPos(spawner));
 
-      for (Entity e : AiWorldScan.init_List_Str_D("minecraft:blaze", 20.0)) {
+      for (Entity e : AiWorldScan.findEntitiesByType("minecraft:blaze", 20.0)) {
          if (!(e.distanceToSqr(this.init_Minecraft.player) < 25.0) && this.init_Minecraft.player.hasLineOfSight(e)) {
             Vec3 line = e.getEyePosition().subtract(this.init_Minecraft.player.getEyePosition()).normalize();
             BlockPos screen = BlockPos.containing(this.init_Minecraft.player.position().add(line.x * 2.0, 0.0, line.z * 2.0));
@@ -163,11 +163,11 @@ final class AiBlazeArena implements AiOperation {
 
       if (this.init_Minecraft.level.getBlockState(this.init_BlockPos).is(Blocks.SPAWNER)
          && this.init_Minecraft.level.getBlockEntity(this.init_BlockPos) instanceof SpawnerBlockEntity be
-         && "minecraft:blaze".equals(AiWorldScan.init(be))) {
+         && "minecraft:blaze".equals(AiWorldScan.spawnerEntityId(be))) {
          if (!this.init_Z_7()
             && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
             && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())) {
-            for (Entity e : AiWorldScan.init_List_Str_D("minecraft:blaze", 5.0)) {
+            for (Entity e : AiWorldScan.findEntitiesByType("minecraft:blaze", 5.0)) {
                if (e instanceof Blaze && AiDefense.load(this.init_Minecraft, e) || e.distanceToSqr(this.init_Minecraft.player) < 9.0) {
                   return this.init(AiOperation.Status.SUCCEEDED, "A blaze is in melee range; prioritize its kill over more construction");
                }
@@ -223,7 +223,7 @@ final class AiBlazeArena implements AiOperation {
             }
 
             if (this.init_AiOperation == null) {
-               this.init_AiOperation = AiGoto.init(
+               this.init_AiOperation = AiGoto.travelToCompat(
                   stand,
                   0.6,
                   false,
@@ -273,9 +273,9 @@ final class AiBlazeArena implements AiOperation {
                   return this.init(AiOperation.Status.SUCCEEDED, "No expendable nonflammable blocks; use existing fortress cover");
                }
 
-               if (!autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(cell, material)) {
+               if (!autismclient.ai.engine.AiPlacer.canPlaceFromHere(cell, material)) {
                   if (this.write >= this.init_I && this.init_Set.add(cell)) {
-                     this.load_AiOperation = AiGoto.init_AiOperation_BlockPos_2(cell, material, 2);
+                     this.load_AiOperation = AiGoto.approachToPlaceCompat(cell, material, 2);
                      return this.init_AiOperation_Result_Str_4("Find a visible support face without more scaffolding");
                   }
 
@@ -288,11 +288,11 @@ final class AiBlazeArena implements AiOperation {
                   return this.init_AiOperation_Result_Str_4("Keep a partial cap where no legal support side is reachable");
                }
 
-               this.init_DataPipe.init_V_BlockPos_Item(cell, material);
+               this.init_DataPipe.start(cell, material);
                this.init_Z = true;
             }
 
-            autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+            autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
             if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.WORKING) {
                if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                   this.update++;
@@ -308,7 +308,7 @@ final class AiBlazeArena implements AiOperation {
                         "result",
                         status,
                         "reason",
-                        status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED ? this.init_DataPipe.init_Str() : "server block change confirmed",
+                        status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED ? this.init_DataPipe.failureReason() : "server block change confirmed",
                         "body",
                         this.init_Minecraft.player.position().toString(),
                         "eyeY",
@@ -319,7 +319,7 @@ final class AiBlazeArena implements AiOperation {
                         this.init_Minecraft.player.getDeltaMovement().toString()
                      )
                   );
-               this.init_DataPipe.init_V();
+               this.init_DataPipe.reset();
                this.init_Z = false;
                this.write++;
             }
@@ -434,7 +434,7 @@ final class AiBlazeArena implements AiOperation {
    }
 
    private boolean init_Z_7() {
-      return this.init_Z && this.init_DataPipe.load_Z();
+      return this.init_Z && this.init_DataPipe.needsReconciliation();
    }
 
    @Override
@@ -456,7 +456,7 @@ final class AiBlazeArena implements AiOperation {
    @Override
    public void cancel() {
       this.load_Z = true;
-      this.init_DataPipe.init_V();
+      this.init_DataPipe.reset();
       this.init_K.init_V();
       if (this.init_AiOperation != null) {
          this.init_AiOperation.cancel();

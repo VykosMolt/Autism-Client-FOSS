@@ -118,7 +118,7 @@ public final class MiningCost {
          }
       }
 
-      if (tool >= 0 && inventory.getItem(tool).is(Items.IRON_PICKAXE) && init_Z_I(init(inventory.getItem(tool)), AiRestock.update(), true, init(state))) {
+      if (tool >= 0 && inventory.getItem(tool).is(Items.IRON_PICKAXE) && init_Z_I(init(inventory.getItem(tool)), AiRestock.reservedStrikes(), true, init(state))) {
          for (int slot = 0; slot < slots; slot++) {
             ItemStack stack = inventory.getItem(slot);
             if (stack.is(Items.STONE_PICKAXE) && AiItems.hasEnoughDurability(stack, 2) && accepted.test(state, stack)) {
@@ -206,7 +206,7 @@ public final class MiningCost {
          }
 
          return new MiningCost.Inner_DataUtil(
-            haste, fatigue, player.getAttributeValue(Attributes.BLOCK_BREAK_SPEED), player.hasInfiniteMaterials(), AiRestock.update(), stone
+            haste, fatigue, player.getAttributeValue(Attributes.BLOCK_BREAK_SPEED), player.hasInfiniteMaterials(), AiRestock.reservedStrikes(), stone
          );
       }
    }

@@ -413,7 +413,7 @@ final class AiNetherEntry {
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final long load_J = System.currentTimeMillis();
-            final String init_Str = AiWorldIdentity.init(mc);
+            final String init_Str = AiWorldIdentity.currentWorldKey(mc);
             final Object init_Obj = mc.getConnection();
             final UUID init_UUID = mc.player == null ? null : mc.player.getUUID();
             final long read_J = AiServerEvidence.deathRevision();
@@ -497,7 +497,7 @@ final class AiNetherEntry {
             }
 
             boolean init_Z(int radius) {
-               for (BlockPos pos : AiWorldScan.init(autismclient.modules.am.init_I(), 2, 32)) {
+               for (BlockPos pos : AiWorldScan.findExposedLavaSources(autismclient.modules.am.init_I(), 2, 32)) {
                   if (pos.distSqr(mc.player.blockPosition()) <= (double)radius * radius) {
                      return true;
                   }
@@ -509,7 +509,7 @@ final class AiNetherEntry {
             @Override
             public AiOperation.Result tick() {
                if (!this.sync_Z && mc.player != null && mc.level != null) {
-                  if (this.init_Obj != mc.getConnection() || !this.init_Str.equals(AiWorldIdentity.init(mc)) || !mc.player.getUUID().equals(this.init_UUID)) {
+                  if (this.init_Obj != mc.getConnection() || !this.init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) || !mc.player.getUUID().equals(this.init_UUID)) {
                      return this.init_AiOperation_Result_AiOperation_Status_2(
                         AiOperation.Status.UNCERTAIN, null, "World, connection or player changed during Nether entry"
                      );
@@ -525,7 +525,7 @@ final class AiNetherEntry {
                      );
                   }
 
-                  autismclient.ai.engine.AiRestock.init(Map.of(Items.OBSIDIAN, 64));
+                  autismclient.ai.engine.AiRestock.reserveItemsForJob(Map.of(Items.OBSIDIAN, 64));
                   if (System.nanoTime() > this.init_J) {
                      return this.init_AiOperation_Result_AiOperation_Status_2(
                         this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN,
@@ -1362,7 +1362,7 @@ final class AiNetherEntry {
                      BlockPos open = null;
                      int checked = 0;
 
-                     for (BlockPos pos : AiWorldScan.init(autismclient.modules.am.init_I(), 2, 32)) {
+                     for (BlockPos pos : AiWorldScan.findExposedLavaSources(autismclient.modules.am.init_I(), 2, 32)) {
                         if (!AiNetherEntry.init_Z(pos)) {
                            if (open == null) {
                               open = pos;
@@ -1480,7 +1480,7 @@ final class AiNetherEntry {
                            this.update_BlockPos = new BlockPos(at.getX() + dx * 64, at.getY(), at.getZ() + dz * 64);
                            this.load_Str = "game:goto";
                            this.init(AiNetherEntry.init_JsonObject_Str("game:goto", "STARTED", "", null));
-                           this.init_AiOperation = AiGoto.init(
+                           this.init_AiOperation = AiGoto.travelToCompat(
                               this.update_BlockPos,
                               0.6,
                               true,
@@ -1683,7 +1683,7 @@ final class AiNetherEntry {
             }
 
             AiOperation.Result open_AiOperation_Result_2() {
-               if (this.init_bb.init_Z(null)) {
+               if (this.init_bb.requiresReconciliation(null)) {
                   return this.init_AiOperation_Result_AiOperation_Status_2(
                      AiOperation.Status.UNCERTAIN, null, "The entry food action was interrupted before its server effects were confirmed"
                   );
@@ -1730,12 +1730,12 @@ final class AiNetherEntry {
                }
 
                if (this.update_AiOperation != null) {
-                  AiOperation.Result f = this.init_bb.init_AiOperation_Result(this.update_AiOperation);
+                  AiOperation.Result f = this.init_bb.tickChild(this.update_AiOperation);
                   if (!f.terminal()) {
                      return this.write("Food for the Nether: " + f.message());
                   }
 
-                  this.init_bb.init_V(this.update_AiOperation);
+                  this.init_bb.cancelChild(this.update_AiOperation);
                   this.update_AiOperation = null;
                   if (f.status() == AiOperation.Status.UNCERTAIN) {
                      return this.init_AiOperation_Result_AiOperation_Status_2(AiOperation.Status.UNCERTAIN, null, f.message());
@@ -1837,7 +1837,7 @@ final class AiNetherEntry {
                      this.run_Z = false;
                      this.load_Str = "game:goto";
                      this.init(AiNetherEntry.init_JsonObject_Str("game:goto", "STARTED", "", null));
-                     this.init_AiOperation = AiGoto.init(
+                     this.init_AiOperation = AiGoto.travelToCompat(
                         lit, 3.0, true, true, true, this.read_I(240), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true, 2.0
                      );
                      return this.write("Back to the portal built at " + lit.toShortString());
@@ -2034,7 +2034,7 @@ final class AiNetherEntry {
                if (this.init_AiOperation == null) {
                   this.load_Str = "game:goto";
                   this.init(AiNetherEntry.init_JsonObject_Str("game:goto", "STARTED", "", null));
-                  this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(target, radius, false, true, true, uncapped ? this.read_I(cap) : this.load_I(cap));
+                  this.init_AiOperation = AiGoto.travelToCompat(target, radius, false, true, true, uncapped ? this.read_I(cap) : this.load_I(cap));
                }
 
                return this.poll_AiOperation_Result();
@@ -2044,7 +2044,7 @@ final class AiNetherEntry {
                if (this.init_AiOperation == null) {
                   this.load_Str = "game:goto";
                   this.init(AiNetherEntry.init_JsonObject_Str("game:goto", "STARTED", "", null));
-                  this.init_AiOperation = AiGoto.init(target, 3.0, true, true, true, this.load_I(cap), autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST);
+                  this.init_AiOperation = AiGoto.travelToCompat(target, 3.0, true, true, true, this.load_I(cap), autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST);
                }
 
                return this.poll_AiOperation_Result();
@@ -2166,7 +2166,7 @@ final class AiNetherEntry {
                BlockPos origin = mc.player.blockPosition();
 
                for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-24, -8, -24), origin.offset(24, 8, 24))) {
-                  if (AiTerrain.isLoaded(mc.level, pos) && AiWorldScan.init_Z_ClientLevel_BlockPos(mc.level, pos) && !AiNetherEntry.init_Z(pos)) {
+                  if (AiTerrain.isLoaded(mc.level, pos) && AiWorldScan.isExposedLavaSource(mc.level, pos) && !AiNetherEntry.init_Z(pos)) {
                      return true;
                   }
                }
@@ -2246,7 +2246,7 @@ final class AiNetherEntry {
                      if (this.init_AiOperation == null) {
                         this.load_Str = "game:goto";
                         this.init(AiNetherEntry.init_JsonObject_Str("game:goto", "STARTED", "", null));
-                        this.init_AiOperation = AiGoto.init(
+                        this.init_AiOperation = AiGoto.travelToCompat(
                            begun,
                            3.0,
                            true,
@@ -2256,7 +2256,7 @@ final class AiNetherEntry {
                            autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                            true,
                            2.0,
-                           AiGoto.read(
+                           AiGoto.protectingCellsCompat(
                               autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(begun, 3.0), AiDimension.init_Set(begun, AiDimension.init_Direction)
                            )
                         );
@@ -2475,7 +2475,7 @@ final class AiNetherEntry {
                List<BlockPos> open = new ArrayList<>();
 
                for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-24, -8, -24), origin.offset(24, 8, 24))) {
-                  if (AiTerrain.isLoaded(mc.level, pos) && AiWorldScan.init_Z_ClientLevel_BlockPos(mc.level, pos) && !AiNetherEntry.init_Z(pos)) {
+                  if (AiTerrain.isLoaded(mc.level, pos) && AiWorldScan.isExposedLavaSource(mc.level, pos) && !AiNetherEntry.init_Z(pos)) {
                      open.add(pos.immutable());
                   }
                }
@@ -2509,7 +2509,7 @@ final class AiNetherEntry {
 
                for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-24, -8, -24), origin.offset(24, 8, 24))) {
                   if (AiTerrain.isLoaded(mc.level, pos)
-                     && AiWorldScan.init_Z_ClientLevel_BlockPos(mc.level, pos)
+                     && AiWorldScan.isExposedLavaSource(mc.level, pos)
                      && !AiNetherEntry.init_Z(pos)
                      && (best == null || origin.distSqr(pos) < origin.distSqr(best))) {
                      best = pos.immutable();
@@ -2559,11 +2559,11 @@ final class AiNetherEntry {
                   this.load_JsonArray.remove(0);
                }
 
-               AiRunTrace.init_V_Str_Str("nether_entry_phase", next.name().toLowerCase(Locale.ROOT));
+               AiRunTrace.recordGlobalSplit("nether_entry_phase", next.name().toLowerCase(Locale.ROOT));
             }
 
             void init(AiNetherEntry.Inner_CachePool p, String reason) {
-               AiRunTrace.init_V_Str_Str(
+               AiRunTrace.recordGlobalSplit(
                   "nether_entry_phase", "FAILED " + p.name().toLowerCase(Locale.ROOT) + ": " + (reason.length() > 80 ? reason.substring(0, 80) : reason)
                );
             }
@@ -2663,7 +2663,7 @@ final class AiNetherEntry {
                   this.init_aA_CachePool = null;
                }
 
-               AiRunTrace.init_V_Str_Str("nether_entered", mc.player.blockPosition().toShortString());
+               AiRunTrace.recordGlobalSplit("nether_entered", mc.player.blockPosition().toShortString());
                return this.init_AiOperation_Result_AiOperation_Status_2(AiOperation.Status.SUCCEEDED, null, message);
             }
 
@@ -2738,9 +2738,9 @@ final class AiNetherEntry {
                   out.add("leg", this.load_JsonObject);
                }
 
-               if (this.init_bb.init() != null) {
-                  out.add("entryFoodChild", AiRunResources.compactEvidenceJson(this.init_bb.init().dataJson()));
-                  out.addProperty("entryFoodChildStatus", this.init_bb.init().status().name());
+               if (this.init_bb.lastChildResult() != null) {
+                  out.add("entryFoodChild", AiRunResources.compactEvidenceJson(this.init_bb.lastChildResult().dataJson()));
+                  out.addProperty("entryFoodChildStatus", this.init_bb.lastChildResult().status().name());
                }
 
                if (this.flush_Str != null) {
@@ -2768,7 +2768,7 @@ final class AiNetherEntry {
                AiOperation.Result result = failure == null
                   ? new AiOperation.Result(status, message, data.toString(), List.of())
                   : new AiOperation.Result(status, message, data.toString(), List.of(), failure);
-               result = this.init_bb.init(result, this.init_bb.init_Z(this.update_AiOperation));
+               result = this.init_bb.finalizeResult(result, this.init_bb.requiresReconciliation(this.update_AiOperation));
                result = this.init_aA_DataUtil.init_AiOperation_Result_AiOperation_Result_A(result, failure);
                this.cancel();
                return result;
@@ -2776,7 +2776,7 @@ final class AiNetherEntry {
 
             void write_V_5() {
                if (this.update_AiOperation != null) {
-                  this.init_bb.init_V(this.update_AiOperation);
+                  this.init_bb.cancelChild(this.update_AiOperation);
                   this.update_AiOperation = null;
                }
 
@@ -2796,7 +2796,7 @@ final class AiNetherEntry {
                this.init_aA_DataUtil
                   .init_V_AiOperationArr(this.init_AiOperation, this.write_AiOperation, this.sync_AiOperation, this.load_AiOperation, this.read_AiOperation);
                if (this.update_AiOperation != null) {
-                  this.init_bb.init_V(this.update_AiOperation);
+                  this.init_bb.cancelChild(this.update_AiOperation);
                   this.update_AiOperation = null;
                }
 
@@ -2828,7 +2828,7 @@ final class AiNetherEntry {
             @Override
             public boolean canInterruptNow() {
                return !this.init_aA_DataUtil.init_Z()
-                  && !this.init_bb.init_Z(this.update_AiOperation)
+                  && !this.init_bb.requiresReconciliation(this.update_AiOperation)
                   && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
                   && (this.update_AiOperation == null || this.update_AiOperation.canInterruptNow())
                   && (this.write_AiOperation == null || this.write_AiOperation.canInterruptNow())
@@ -2841,7 +2841,7 @@ final class AiNetherEntry {
             public boolean requiresReconciliationAfterEmergency() {
                return this.init_aA_DataUtil.init_Z()
                   || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-                  || this.init_bb.init_Z(this.update_AiOperation)
+                  || this.init_bb.requiresReconciliation(this.update_AiOperation)
                   || this.write_AiOperation != null && this.write_AiOperation.requiresReconciliationAfterEmergency()
                   || this.sync_AiOperation != null && this.sync_AiOperation.requiresReconciliationAfterEmergency()
                   || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency()
@@ -2877,7 +2877,7 @@ final class AiNetherEntry {
             boolean needsObservation = child.requiresReconciliationAfterEmergency()
                || actual.status() != AiOperation.Status.SUCCEEDED && before
                || init_Z_AiOperation_Result(actual);
-            actual = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(needsObservation, actual);
+            actual = AiGuardLayer.wrapPendingTermination(needsObservation, actual);
             this.init_V_AiOperation(child, needsObservation, actual);
          }
 

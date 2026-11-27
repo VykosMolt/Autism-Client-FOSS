@@ -43,12 +43,12 @@ final class AiPrintClock {
 
          @Override
          public boolean init() {
-            return env.update_Z();
+            return env.isCreativeMode();
          }
 
          @Override
          public boolean init_Z(ItemStack material) {
-            return mc.player == originalPlayer && env.load(material);
+            return mc.player == originalPlayer && env.giveCreativeStack(material);
          }
 
          @Override
@@ -60,10 +60,10 @@ final class AiPrintClock {
          public boolean load() {
             if (mc.player == originalPlayer && originalPlayer != null) {
                if (this.init == null) {
-                  this.init = env.update_Z();
+                  this.init = env.isCreativeMode();
                }
 
-               return this.init == env.update_Z();
+               return this.init == env.isCreativeMode();
             } else {
                return false;
             }
@@ -88,9 +88,9 @@ final class AiPrintClock {
       Inner_DataUtil(autismclient.ai.print.LivePrintEnv env, autismclient.ai.print.PrintClockSpec spec, boolean powered) {
          this.init_DataUtil = env;
          this.init_NetHelper = spec;
-         this.init_Obj = env.init_Obj();
+         this.init_Obj = env.worldToken();
          this.load_Obj = Minecraft.getInstance().player;
-         this.load_Z = env.update_Z();
+         this.load_Z = env.isCreativeMode();
          this.init_Z = powered;
          this.init_BlockState = spec.source().get(spec.lever());
          this.load_BlockState = this.init_BlockState.setValue(BlockStateProperties.POWERED, powered);
@@ -99,8 +99,8 @@ final class AiPrintClock {
       boolean init_Z() {
          return this.load_Obj != null
             && Minecraft.getInstance().player == this.load_Obj
-            && this.init_DataUtil.init_Obj() == this.init_Obj
-            && this.init_DataUtil.update_Z() == this.load_Z;
+            && this.init_DataUtil.worldToken() == this.init_Obj
+            && this.init_DataUtil.isCreativeMode() == this.load_Z;
       }
 
       @Override
@@ -135,8 +135,8 @@ final class AiPrintClock {
             return this.init_BitSetUtil_DataUti;
          }
 
-         if (this.init_Z() && this.init_DataUtil.load_Z(this.position())) {
-            BlockState actual = this.init_DataUtil.init_BlockState_BlockPos(this.position());
+         if (this.init_Z() && this.init_DataUtil.hasChunkAt(this.position())) {
+            BlockState actual = this.init_DataUtil.getBlockState(this.position());
             if (actual != this.init_BlockState && actual != this.init_BlockState.setValue(BlockStateProperties.POWERED, true)) {
                return this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT;
             } else if (actual == this.load_BlockState) {
@@ -160,10 +160,10 @@ final class AiPrintClock {
       @Override
       public boolean beginDispatch() {
          if (this.prepare() == autismclient.ai.print.PrintMachineJob.JobStatus.READY
-            && !this.init_DataUtil.load_Z()
-            && !this.init_NetHelper.sweptVolume().intersects(this.init_DataUtil.init_AABB())) {
+            && !this.init_DataUtil.isServerSneaking()
+            && !this.init_NetHelper.sweptVolume().intersects(this.init_DataUtil.serverPlayerBox())) {
             this.init_J = AiServerEvidence.blockRevision(this.position());
-            this.load_J = this.init_DataUtil.load_J();
+            this.load_J = this.init_DataUtil.nanoTime();
             this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.SENT;
             this.init_Str = "Waiting for the clock lever's native server receipt";
             return true;
@@ -187,9 +187,9 @@ final class AiPrintClock {
          if (reply == null
             || reply.revision() <= this.init_J
             || reply.state() != this.load_BlockState
-            || this.init_DataUtil.init_BlockState_BlockPos(this.position()) != this.load_BlockState
-            || this.init_Z && !this.init_NetHelper.holding(this.init_DataUtil::init_BlockState_BlockPos)) {
-            if (this.init_DataUtil.load_J() - this.load_J >= 5000000000L) {
+            || this.init_DataUtil.getBlockState(this.position()) != this.load_BlockState
+            || this.init_Z && !this.init_NetHelper.holding(this.init_DataUtil::getBlockState)) {
+            if (this.init_DataUtil.nanoTime() - this.load_J >= 5000000000L) {
                this.init_Str = "Clock control was not acknowledged; do not repeat the toggle";
                return this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
             } else {

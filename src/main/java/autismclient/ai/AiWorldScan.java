@@ -28,7 +28,7 @@ final class AiWorldScan {
    private AiWorldScan() {
    }
 
-   static List<int[]> init(int radiusChunks) {
+   static List<int[]> sortedChunkOffsets(int radiusChunks) {
       List<int[]> out = new ArrayList<>();
 
       for (int dx = -radiusChunks; dx <= radiusChunks; dx++) {
@@ -41,7 +41,7 @@ final class AiWorldScan {
       return out;
    }
 
-   static List<BlockPos> init(Predicate<BlockState> target, int radiusChunks, int perChunk, int cap) {
+   static List<BlockPos> findBlocks(Predicate<BlockState> target, int radiusChunks, int perChunk, int cap) {
       List<BlockPos> indexed = AiWorldMemory.init(target, radiusChunks, perChunk, cap);
       if (!indexed.isEmpty()) {
          return indexed;
@@ -54,7 +54,7 @@ final class AiWorldScan {
          int pcx = mc.player.blockPosition().getX() >> 4;
          int pcz = mc.player.blockPosition().getZ() >> 4;
 
-         for (int[] c : init(radiusChunks)) {
+         for (int[] c : sortedChunkOffsets(radiusChunks)) {
             if (out.size() >= cap) {
                break;
             }
@@ -94,7 +94,7 @@ final class AiWorldScan {
       }
    }
 
-   static List<BlockPos> init(int radiusChunks, int perChunk, int cap) {
+   static List<BlockPos> findExposedLavaSources(int radiusChunks, int perChunk, int cap) {
       Minecraft mc = Minecraft.getInstance();
       ClientLevel level = mc.level;
       List<BlockPos> out = new ArrayList<>();
@@ -104,7 +104,7 @@ final class AiWorldScan {
          int pcz = mc.player.blockPosition().getZ() >> 4;
          MutableBlockPos above = new MutableBlockPos();
 
-         for (int[] c : init(radiusChunks)) {
+         for (int[] c : sortedChunkOffsets(radiusChunks)) {
             if (out.size() >= cap) {
                break;
             }
@@ -144,17 +144,17 @@ final class AiWorldScan {
       }
    }
 
-   static boolean init_Z_ClientLevel_BlockPos(ClientLevel level, BlockPos pos) {
+   static boolean isExposedLavaSource(ClientLevel level, BlockPos pos) {
       FluidState fluid = level.getFluidState(pos);
       return fluid.isSource() && fluid.is(FluidTags.LAVA) && level.getBlockState(pos.above()).isAir();
    }
 
-   static BlockPos init_BlockPos_Predicate_I(Predicate<BlockState> target, int radiusChunks) {
-      List<BlockPos> hits = init(target, radiusChunks, 4, 64);
+   static BlockPos findNearestBlock(Predicate<BlockState> target, int radiusChunks) {
+      List<BlockPos> hits = findBlocks(target, radiusChunks, 4, 64);
       return hits.isEmpty() ? null : hits.get(0);
    }
 
-   static List<BlockPos> init_List_Str_I(String mobId, int radiusChunks) {
+   static List<BlockPos> findMobSpawners(String mobId, int radiusChunks) {
       Minecraft mc = Minecraft.getInstance();
       ClientLevel level = mc.level;
       List<BlockPos> out = new ArrayList<>();
@@ -162,12 +162,12 @@ final class AiWorldScan {
          int pcx = mc.player.blockPosition().getX() >> 4;
          int pcz = mc.player.blockPosition().getZ() >> 4;
 
-         for (int[] c : init(radiusChunks)) {
+         for (int[] c : sortedChunkOffsets(radiusChunks)) {
             LevelChunk chunk = level.getChunkSource().getChunk(pcx + c[0], pcz + c[1], ChunkStatus.FULL, false);
             if (chunk != null) {
                for (Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
                   BlockEntity be = entry.getValue();
-                  if (be instanceof SpawnerBlockEntity spawner && mobId.equals(init(spawner))) {
+                  if (be instanceof SpawnerBlockEntity spawner && mobId.equals(spawnerEntityId(spawner))) {
                      out.add(entry.getKey());
                   }
                }
@@ -182,7 +182,7 @@ final class AiWorldScan {
       }
    }
 
-   static String init(SpawnerBlockEntity spawner) {
+   static String spawnerEntityId(SpawnerBlockEntity spawner) {
       try {
          SpawnData data = ((AutismBaseSpawnerAccessor)spawner.getSpawner()).autism$getNextSpawnData();
          if (data == null) {
@@ -196,7 +196,7 @@ final class AiWorldScan {
       }
    }
 
-   static List<Entity> init_List_Str_D(String typeId, double range) {
+   static List<Entity> findEntitiesByType(String typeId, double range) {
       Minecraft mc = Minecraft.getInstance();
       List<Entity> out = new ArrayList<>();
       if (mc.level != null && mc.player != null) {
@@ -213,7 +213,7 @@ final class AiWorldScan {
       }
    }
 
-   static String init(BlockState state) {
+   static String blockId(BlockState state) {
       return BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
    }
 }

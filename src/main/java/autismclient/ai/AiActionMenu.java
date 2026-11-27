@@ -44,7 +44,7 @@ final class AiActionMenu {
    private final AiViewState init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
    private final Runnable init_Runnable;
-   private final AiIntents.Inner_StreamUtil init_ad_StreamUtil = AiService.init_ad_StreamUtil();
+   private final AiIntents.Inner_StreamUtil init_ad_StreamUtil = AiService.createWaypointResolver();
    final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget().init_BitSetUtil_I(64);
    final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget()
       .init_BitSetUtil_I(4)
@@ -175,19 +175,19 @@ final class AiActionMenu {
    }
 
    int init_I() {
-      int target = AiUiKit.init_I() * 2
-         + AiUiKit.read() * 3
-         + 3 * AiUiKit.load_I()
+      int target = AiUiKit.toolbarHeight() * 2
+         + AiUiKit.rowHeight() * 3
+         + 3 * AiUiKit.inputHeight()
          + 10
          + 4
-         + (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE ? AiUiKit.init_I() + 2 : 0);
+         + (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE ? AiUiKit.toolbarHeight() + 2 : 0);
       return this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.OPTIONS && this.init_StreamUtil_DataUti.init_Z
          ? Math.max(
             target,
             this.load_I()
                + (
                   this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
-                     ? Math.min(this.read_I(), AiUiKit.read() * 3 + AiUiKit.init_I() * 6 + 14)
+                     ? Math.min(this.read_I(), AiUiKit.rowHeight() * 3 + AiUiKit.toolbarHeight() * 6 + 14)
                      : this.read_I()
                )
          )
@@ -195,37 +195,37 @@ final class AiActionMenu {
    }
 
    private int load_I() {
-      return AiUiKit.read() * 3 + AiUiKit.init_I() + 8;
+      return AiUiKit.rowHeight() * 3 + AiUiKit.toolbarHeight() + 8;
    }
 
    private int read_I() {
       if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z) {
-         return AiUiKit.read() * 4 + AiUiKit.init_I() * 2 + 12;
+         return AiUiKit.rowHeight() * 4 + AiUiKit.toolbarHeight() * 2 + 12;
       } else {
          return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD
-            ? AiUiKit.read() * 6 + AiUiKit.init_I() * 4 + 16
+            ? AiUiKit.rowHeight() * 6 + AiUiKit.toolbarHeight() * 4 + 16
             : (
                this.init_StreamUtil_DataUti.init_Z
-                  ? AiUiKit.read() * 2
-                     + AiUiKit.init_I() * 3
+                  ? AiUiKit.rowHeight() * 2
+                     + AiUiKit.toolbarHeight() * 3
                      + 6
                      + (
                         this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
-                           ? AiUiKit.read() + 2 + this.read_Map.size() * (AiUiKit.init_I() + 2)
+                           ? AiUiKit.rowHeight() + 2 + this.read_Map.size() * (AiUiKit.toolbarHeight() + 2)
                            : 0
                      )
-                  : AiUiKit.read() * 2 + 2
+                  : AiUiKit.rowHeight() * 2 + 2
             );
       }
    }
 
    int init_I_I(int width) {
-      int h = AiUiKit.init_I();
-      int line = AiUiKit.read();
+      int h = AiUiKit.toolbarHeight();
+      int line = AiUiKit.rowHeight();
       int var10000;
       switch (this.init_StreamUtil_BufferH) {
          case HOME:
-            var10000 = line * 2 + 6 + (this.write_List().size() + (width >= 440 ? 2 : 1)) / (width >= 440 ? 3 : 2) * (h + AiUiKit.write() + 4 + 4);
+            var10000 = line * 2 + 6 + (this.write_List().size() + (width >= 440 ? 2 : 1)) / (width >= 440 ? 3 : 2) * (h + AiUiKit.lineHeight() + 4 + 4);
             break;
          case TARGET:
             var10000 = 0;
@@ -297,22 +297,22 @@ final class AiActionMenu {
          this.read_Str = "World changed. Choose the action again.";
       }
 
-      int h = AiUiKit.init_I();
-      int line = AiUiKit.read();
+      int h = AiUiKit.toolbarHeight();
+      int line = AiUiKit.rowHeight();
       autismclient.gui.f.NetHelper title = autismclient.gui.f.NetHelper.init(area.read(), area.write(), area.update(), line);
-      kit.init_V_Str_3(
+      kit.drawCenteredRowText(
          this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.HOME
             ? "What would you like to do?"
             : this.init_StreamUtil_DataUti.init_Str + " / " + this.init_Str(),
          title,
          title.read(),
          title.update(),
-         kit.init_JsonUtil.textPrimary
+         kit.colors.textPrimary
       );
       int top = title.load() + 2;
       if (this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.HOME) {
          autismclient.gui.f.NetHelper trail = autismclient.gui.f.NetHelper.init(area.read(), top, area.update(), line);
-         kit.init_V_Str_3("Choose action  /  Choose target  /  Options  /  Review", trail, trail.read(), trail.update(), kit.init_JsonUtil.textSecondary);
+         kit.drawCenteredRowText("Choose action  /  Choose target  /  Options  /  Review", trail, trail.read(), trail.update(), kit.colors.textSecondary);
          top += line + 2;
       }
 
@@ -321,17 +321,17 @@ final class AiActionMenu {
          area.read(), this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.HOME ? area.load() - line : footer.write() - 2 - line, area.update(), line
       );
       autismclient.gui.f.NetHelper body = autismclient.gui.f.NetHelper.init(area.read(), top, area.update(), Math.max(0, note.write() - 2 - top));
-      kit.init_V_NetHelper(body);
+      kit.pushClip(body);
       switch (this.init_StreamUtil_BufferH) {
          case HOME:
             this.init_V_cE_NetHelper(kit, body);
             break;
          case TARGET:
-            int importW = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD ? kit.load(this.init_Z ? "Loading..." : "Import") + 2 : 0;
+            int importW = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD ? kit.measureButtonWidth(this.init_Z ? "Loading..." : "Import") + 2 : 0;
             this.init_BitSetUtil.load_BitSetUtil_Str(this.init_StreamUtil_DataUti.read_Str);
-            kit.init_V_BitSetUtil_NetHelper(this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(body.read(), body.write(), body.update() - importW, h));
+            kit.drawTextInput(this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(body.read(), body.write(), body.update() - importW, h));
             if (importW > 0) {
-               kit.init_V_NetHelper_2(
+               kit.drawButton(
                   autismclient.gui.f.NetHelper.init(body.init() - importW + 2, body.write(), importW - 2, h),
                   this.init_Z ? "Loading..." : "Import",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
@@ -341,24 +341,24 @@ final class AiActionMenu {
 
             int listTop = body.write() + h + 2;
             if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE) {
-               int clearW = kit.load("Clear");
-               int selectedW = kit.load(this.read_Z ? "Show all" : "Selected");
+               int clearW = kit.measureButtonWidth("Clear");
+               int selectedW = kit.measureButtonWidth(this.read_Z ? "Show all" : "Selected");
                autismclient.gui.f.NetHelper summary = autismclient.gui.f.NetHelper.init(
                   body.read(), listTop, Math.max(0, body.update() - clearW - selectedW - 4), h
                );
                String text = this.read_Map.isEmpty() ? "Click blocks to select them" : this.read_Map.size() + " selected: " + this.read_Str();
-               kit.init_V_Str_3(text, summary, summary.read(), summary.update(), kit.init_JsonUtil.textSecondary);
-               kit.init_V_NetHelper_Str(summary, text);
-               kit.init_V_NetHelper_2(
+               kit.drawCenteredRowText(text, summary, summary.read(), summary.update(), kit.colors.textSecondary);
+               kit.addTooltipRegion(summary, text);
+               kit.drawButton(
                   autismclient.gui.f.NetHelper.init(body.init() - clearW - selectedW - 2, listTop, selectedW, h),
                   this.read_Z ? "Show all" : "Selected",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
                   () -> {
                      this.read_Z = !this.read_Z;
-                     this.init_cE_StreamUtil.load();
+                     this.init_cE_StreamUtil.scrollToTop();
                   }
                );
-               kit.init_V_NetHelper_2(
+               kit.drawButton(
                   autismclient.gui.f.NetHelper.init(body.init() - clearW, listTop, clearW, h),
                   "Clear",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
@@ -374,7 +374,7 @@ final class AiActionMenu {
             List<AiActionMenu.Inner_CachePool> rows = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE && this.read_Z
                ? List.copyOf(this.read_Map.values())
                : this.read_List();
-            this.write_I = Math.max(1, (body.load() - listTop) / AiUiKit.load_I());
+            this.write_I = Math.max(1, (body.load() - listTop) / AiUiKit.inputHeight());
             this.init_V_cE_2(kit, autismclient.gui.f.NetHelper.init(body.read(), listTop, body.update(), Math.max(0, body.load() - listTop)), rows);
             break;
          case OPTIONS:
@@ -384,7 +384,7 @@ final class AiActionMenu {
             this.read(kit, body);
       }
 
-      kit.init_V();
+      kit.popClip();
       String noteText = !this.read_Str.isEmpty()
          ? this.read_Str
          : (
@@ -405,15 +405,15 @@ final class AiActionMenu {
                      )
                )
          );
-      kit.init_V_Str_3(noteText, note, note.read(), note.update(), this.read_Str.isEmpty() ? kit.init_JsonUtil.textSecondary : kit.init_JsonUtil.danger);
-      kit.init_V_NetHelper_Str(note, noteText);
+      kit.drawCenteredRowText(noteText, note, note.read(), note.update(), this.read_Str.isEmpty() ? kit.colors.textSecondary : kit.colors.danger);
+      kit.addTooltipRegion(note, noteText);
       if (this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.HOME) {
-         int w = kit.load("Back");
-         kit.init_V_NetHelper_2(
+         int w = kit.measureButtonWidth("Back");
+         kit.drawButton(
             autismclient.gui.f.NetHelper.init(footer.read(), footer.write(), w, h), "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::close
          );
          String label = this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.REVIEW ? (this.init_cF.init_Z() ? "Replace task" : "Start") : "Next";
-         int nextW = kit.load(label);
+         int nextW = kit.measureButtonWidth(label);
          this.init(
             kit,
             autismclient.gui.f.NetHelper.init(footer.init() - nextW, footer.write(), nextW, h),
@@ -458,77 +458,77 @@ final class AiActionMenu {
 
    private void init(AiUiKit kit, autismclient.gui.f.NetHelper b, String text, boolean enabled, Runnable action) {
       autismclient.gui.f.b.CachePool.init(
-         kit.init_SyncManager,
+         kit.renderContext,
          b,
          text,
          enabled ? autismclient.gui.f.b.CachePool.Inner_DataUtil.read : autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-         enabled && kit.init_Z_NetHelper(b),
+         enabled && kit.isHovered(b),
          enabled
       );
       if (enabled) {
-         kit.init_V_NetHelper(b, action, null, null);
+         kit.addInteractiveRegion(b, action, null, null);
       } else {
-         kit.load_V(b);
+         kit.blockClicks(b);
       }
    }
 
    private void init_V_cE_NetHelper(AiUiKit kit, autismclient.gui.f.NetHelper area) {
       List<AiActionMenu.Inner_DataUtil> actions = this.write_List();
       int columns = area.update() >= 440 ? 3 : 2;
-      int rowH = AiUiKit.init_I() + AiUiKit.write() + 2 + 4;
+      int rowH = AiUiKit.toolbarHeight() + AiUiKit.lineHeight() + 2 + 4;
       int rows = (actions.size() + columns - 1) / columns;
-      this.load_cE_StreamUtil.init(area, rows * (rowH + 2));
-      kit.init_V_cE_StreamUtil(this.load_cE_StreamUtil);
-      int available = area.update() - (this.load_cE_StreamUtil.init_I() > 0 ? 7 : 0);
+      this.load_cE_StreamUtil.layout(area, rows * (rowH + 2));
+      kit.registerScrollPane(this.load_cE_StreamUtil);
+      int available = area.update() - (this.load_cE_StreamUtil.maxScroll() > 0 ? 7 : 0);
       int w = (available - 2 * (columns - 1)) / columns;
 
       for (int i = 0; i < actions.size(); i++) {
          AiActionMenu.Inner_DataUtil a = actions.get(i);
          autismclient.gui.f.NetHelper b = autismclient.gui.f.NetHelper.init(
-            area.read() + i % columns * (w + 2), area.write() + i / columns * (rowH + 2) - this.load_cE_StreamUtil.init_I, w, rowH
+            area.read() + i % columns * (w + 2), area.write() + i / columns * (rowH + 2) - this.load_cE_StreamUtil.offset, w, rowH
          );
          if (b.load() > area.write() && b.write() < area.load()) {
-            kit.init_V_NetHelper(
-               autismclient.gui.f.NetHelper.init(b.read(), b.write(), b.update(), AiUiKit.init_I()),
+            kit.drawButton(
+               autismclient.gui.f.NetHelper.init(b.read(), b.write(), b.update(), AiUiKit.toolbarHeight()),
                a.init_Str,
                autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
                () -> this.init_V_StreamUtil_DataUti(a),
                a.write_Str
             );
-            kit.init_V_Str_3(
+            kit.drawCenteredRowText(
                a.write_Str,
-               autismclient.gui.f.NetHelper.init(b.read(), b.write() + AiUiKit.init_I(), b.update(), AiUiKit.write() + 4),
+               autismclient.gui.f.NetHelper.init(b.read(), b.write() + AiUiKit.toolbarHeight(), b.update(), AiUiKit.lineHeight() + 4),
                b.read() + 3,
                b.update() - 6,
-               kit.init_JsonUtil.textSecondary
+               kit.colors.textSecondary
             );
          }
       }
 
-      kit.load(this.load_cE_StreamUtil);
+      kit.drawScrollbar(this.load_cE_StreamUtil);
    }
 
    private void load(AiUiKit kit, autismclient.gui.f.NetHelper area) {
-      int h = AiUiKit.init_I();
-      int line = AiUiKit.read();
+      int h = AiUiKit.toolbarHeight();
+      int line = AiUiKit.rowHeight();
       int contentH = this.read_I();
-      this.read_cE_StreamUtil.init(area, contentH);
-      kit.init_V_cE_StreamUtil(this.read_cE_StreamUtil);
-      int w = area.update() - (this.read_cE_StreamUtil.init_I() > 0 ? 7 : 0);
+      this.read_cE_StreamUtil.layout(area, contentH);
+      kit.registerScrollPane(this.read_cE_StreamUtil);
+      int w = area.update() - (this.read_cE_StreamUtil.maxScroll() > 0 ? 7 : 0);
       int x = area.read();
-      int y = area.write() - this.read_cE_StreamUtil.init_I;
-      kit.init_V_Str_3(
+      int y = area.write() - this.read_cE_StreamUtil.offset;
+      kit.drawCenteredRowText(
          this.init_StreamUtil_CachePo == null ? this.init_StreamUtil_DataUti.write_Str : this.read_Str(),
          autismclient.gui.f.NetHelper.init(x, y, w, line),
          x,
          w,
-         kit.init_JsonUtil.textPrimary
+         kit.colors.textPrimary
       );
       y += line + 2;
       if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z) {
-         kit.init_V_Str_3("Crop: " + this.read_Str(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textPrimary);
+         kit.drawCenteredRowText("Crop: " + this.read_Str(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textPrimary);
          int var23 = y + line + 2;
-         kit.init_V_NetHelper_2(
+         kit.drawToggleSwitch(
             autismclient.gui.f.NetHelper.init(x, var23, w, h),
             "Soul sand for nether wart",
             AiFarmArea.init_Z(this.write_Str),
@@ -561,30 +561,30 @@ final class AiActionMenu {
             this::flush
          );
          int var25 = var24 + h + 2;
-         kit.init_V_Str_3(
+         kit.drawCenteredRowText(
             this.init_E == null ? "Select the exact field footprint in the world." : this.init_E.write_Str(),
             autismclient.gui.f.NetHelper.init(x, var25, w, line),
             x,
             w,
-            kit.init_JsonUtil.textSecondary
+            kit.colors.textSecondary
          );
          y = var25 + line + 2;
-         kit.init_V_Str_3(
+         kit.drawCenteredRowText(
             AiFarmArea.init_Z(this.write_Str) ? "No water, slabs or hoe needed." : "Farmland crops use dirt, water and a hoe.",
             autismclient.gui.f.NetHelper.init(x, y, w, line),
             x,
             w,
-            kit.init_JsonUtil.textSecondary
+            kit.colors.textSecondary
          );
       } else if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD && this.init_bW != null) {
-         kit.init_V_Str_3(this.init_bW.write_Str_2(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textSecondary);
+         kit.drawCenteredRowText(this.init_bW.write_Str_2(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textSecondary);
          y += line;
-         kit.init_V_Str_3(
+         kit.drawCenteredRowText(
             "Size " + this.init_bW.update_Str() + " / origin " + this.load_Str(),
             autismclient.gui.f.NetHelper.init(x, y, w, line),
             x,
             w,
-            kit.init_JsonUtil.textSecondary
+            kit.colors.textSecondary
          );
          y += line + 2;
          int half = (w - 2) / 2;
@@ -596,7 +596,7 @@ final class AiActionMenu {
             () -> aP.init_V_bW_Runnable(this.init_bW, () -> {})
          );
          if (this.init_cF.init_Z() || AiDirectOps.load_Z()) {
-            kit.init_V_NetHelper_Str(autismclient.gui.f.NetHelper.init(x, y, half, h), "Pause the current action before choosing a placement in world");
+            kit.addTooltipRegion(autismclient.gui.f.NetHelper.init(x, y, half, h), "Pause the current action before choosing a placement in world");
          }
 
          this.init(
@@ -607,24 +607,24 @@ final class AiActionMenu {
             this.init_bW::flush
          );
          int var18 = y + h + 2;
-         kit.init_V_Str_3(
-            "Compare edits within 24 blocks. All four rotations.", autismclient.gui.f.NetHelper.init(x, var18, w, line), x, w, kit.init_JsonUtil.textSecondary
+         kit.drawCenteredRowText(
+            "Compare edits within 24 blocks. All four rotations.", autismclient.gui.f.NetHelper.init(x, var18, w, line), x, w, kit.colors.textSecondary
          );
          int var19 = var18 + line + 2;
-         kit.init_V_NetHelper_2(
+         kit.drawButton(
             autismclient.gui.f.NetHelper.init(x, var19, half, h),
             "Rotate: " + this.init_bW.init_I(),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
             this.init_bW::sync_V
          );
-         kit.init_V_NetHelper_2(
+         kit.drawButton(
             autismclient.gui.f.NetHelper.init(x + half + 2, var19, half, h),
             "Mirror: " + this.init_bW.read_Str(),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
             this.init_bW::init_V
          );
          int var20 = var19 + h + 2;
-         kit.init_V_NetHelper_2(
+         kit.drawToggleSwitch(
             autismclient.gui.f.NetHelper.init(x, var20, w, h),
             "Clear natural terrain in empty space",
             this.init_bW.write_Z_2(),
@@ -633,19 +633,19 @@ final class AiActionMenu {
          );
          int var21 = var20 + h + 2;
          autismclient.gui.f.NetHelper flyToggle = autismclient.gui.f.NetHelper.init(x, var21, w, h);
-         kit.init_V_NetHelper_2(flyToggle, "Assume Fly", this.init_bW.update_Z(), "local-assume-fly", () -> this.init_bW.read(!this.init_bW.update_Z()));
-         kit.init_V_NetHelper_Str(
+         kit.drawToggleSwitch(flyToggle, "Assume Fly", this.init_bW.update_Z(), "local-assume-fly", () -> this.init_bW.read(!this.init_bW.update_Z()));
+         kit.addTooltipRegion(
             flyToggle,
             "Use native flight already granted in Survival, including singleplayer. Never grants flight or items. Without permission, use ground movement."
          );
          int var22 = var21 + h + 2;
          autismclient.gui.f.NetHelper flyHint = autismclient.gui.f.NetHelper.init(x, var22, w, line);
-         kit.init_V_Str_3(this.init_bW.load_Str_2(), flyHint, x, w, kit.init_JsonUtil.textSecondary);
-         kit.init_V_NetHelper_Str(flyHint, this.init_bW.load_Str_2());
+         kit.drawCenteredRowText(this.init_bW.load_Str_2(), flyHint, x, w, kit.colors.textSecondary);
+         kit.addTooltipRegion(flyHint, this.init_bW.load_Str_2());
          y = var22 + line + 2;
-         kit.init_V_Str_3("Get missing materials before starting this build.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textSecondary);
+         kit.drawCenteredRowText("Get missing materials before starting this build.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textSecondary);
       } else if (this.init_StreamUtil_DataUti.init_Z) {
-         kit.init_V_Str_3(
+         kit.drawCenteredRowText(
             (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE ? "Default per block" : "Amount")
                + " (1 to "
                + this.write_I()
@@ -653,18 +653,18 @@ final class AiActionMenu {
             autismclient.gui.f.NetHelper.init(x, y, w, line),
             x,
             w,
-            kit.init_JsonUtil.textSecondary
+            kit.colors.textSecondary
          );
          y += line;
          this.load_BitSetUtil.load_BitSetUtil_Str(this.init_StreamUtil_CachePo == null ? "Auto" : this.write_Str());
-         kit.init_V_BitSetUtil_NetHelper(this.load_BitSetUtil, autismclient.gui.f.NetHelper.init(x, y, w, h));
+         kit.drawTextInput(this.load_BitSetUtil, autismclient.gui.f.NetHelper.init(x, y, w, h));
          y += h + 2;
          String[] values = new String[]{"Auto", "1", "16", "64"};
          int cell = (w - 6) / 4;
 
          for (int i = 0; i < values.length; i++) {
             String value = values[i];
-            kit.init_V_NetHelper_2(
+            kit.drawButton(
                autismclient.gui.f.NetHelper.init(x + i * (cell + 2), y, cell, h), value, autismclient.gui.f.b.CachePool.Inner_DataUtil.init, () -> {
                   this.load_BitSetUtil.init_BitSetUtil_Str(value.equals("Auto") ? "" : value);
                   this.read_Str = "";
@@ -674,11 +674,11 @@ final class AiActionMenu {
 
          y += h + 2;
          if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.GET) {
-            kit.init_V_Str_3(
-               "Always collect the requested amount in addition to inventory.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textSecondary
+            kit.drawCenteredRowText(
+               "Always collect the requested amount in addition to inventory.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textSecondary
             );
          } else if (this.read_Z()) {
-            kit.init_V_NetHelper_2(
+            kit.drawToggleSwitch(
                autismclient.gui.f.NetHelper.init(x, y, w, h),
                this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.CRAFT ? "Craft extra items" : "Smelt extra items",
                this.load_Z,
@@ -686,44 +686,44 @@ final class AiActionMenu {
                () -> this.load_Z = !this.load_Z
             );
          } else {
-            kit.init_V_Str_3(
+            kit.drawCenteredRowText(
                this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                   ? "Each type has its own quota; nearest unfinished type first."
                   : "Uses the selected action's normal quantity rules.",
                autismclient.gui.f.NetHelper.init(x, y, w, line),
                x,
                w,
-               kit.init_JsonUtil.textSecondary
+               kit.colors.textSecondary
             );
          }
       } else {
-         kit.init_V_Str_3(this.init_StreamUtil_DataUti.write_Str, autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textSecondary);
+         kit.drawCenteredRowText(this.init_StreamUtil_DataUti.write_Str, autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textSecondary);
       }
 
       if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE) {
          y += line + 2;
-         kit.init_V_Str_3("Individual amounts (optional)", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textSecondary);
+         kit.drawCenteredRowText("Individual amounts (optional)", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textSecondary);
          y += line + 2;
          int fieldW = Math.min(88, w / 3);
 
          for (Entry<String, AiActionMenu.Inner_CachePool> entry : this.read_Map.entrySet()) {
             autismclient.gui.ui.widgets.TextInputWidget field = this.init_BitSetUtil_Str(entry.getKey());
             field.load_BitSetUtil_Str(this.load_BitSetUtil.init_Str().isBlank() ? this.write_Str() : this.load_BitSetUtil.init_Str());
-            kit.init_V_Str_3(entry.getValue().label(), autismclient.gui.f.NetHelper.init(x, y, w - fieldW - 2, h), x, w - fieldW - 2, kit.init_JsonUtil.textPrimary);
-            kit.init_V_BitSetUtil_NetHelper(field, autismclient.gui.f.NetHelper.init(x + w - fieldW, y, fieldW, h));
+            kit.drawCenteredRowText(entry.getValue().label(), autismclient.gui.f.NetHelper.init(x, y, w - fieldW - 2, h), x, w - fieldW - 2, kit.colors.textPrimary);
+            kit.drawTextInput(field, autismclient.gui.f.NetHelper.init(x + w - fieldW, y, fieldW, h));
             y += h + 2;
          }
       }
 
-      kit.load(this.read_cE_StreamUtil);
+      kit.drawScrollbar(this.read_cE_StreamUtil);
    }
 
    private void read(AiUiKit kit, autismclient.gui.f.NetHelper area) {
-      int line = AiUiKit.read();
+      int line = AiUiKit.rowHeight();
       int y = area.write();
       int x = area.read();
       int w = area.update();
-      autismclient.gui.f.b.BufferHelper.init(kit.init_SyncManager, area);
+      autismclient.gui.f.b.BufferHelper.init(kit.renderContext, area);
       x += 5;
       y += 4;
       w -= 10;
@@ -786,17 +786,17 @@ final class AiActionMenu {
          lines = extended.toArray(String[]::new);
       }
 
-      this.read_cE_StreamUtil.init(area, lines.length * line + 8);
-      kit.init_V_cE_StreamUtil(this.read_cE_StreamUtil);
-      y -= this.read_cE_StreamUtil.init_I;
+      this.read_cE_StreamUtil.layout(area, lines.length * line + 8);
+      kit.registerScrollPane(this.read_cE_StreamUtil);
+      y -= this.read_cE_StreamUtil.offset;
 
       for (String text : lines) {
-         kit.init_V_Str_3(text, autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.textPrimary);
-         kit.init_V_NetHelper_Str(autismclient.gui.f.NetHelper.init(x, y, w, line), text);
+         kit.drawCenteredRowText(text, autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textPrimary);
+         kit.addTooltipRegion(autismclient.gui.f.NetHelper.init(x, y, w, line), text);
          y += line;
       }
 
-      kit.load(this.read_cE_StreamUtil);
+      kit.drawScrollbar(this.read_cE_StreamUtil);
    }
 
    private String load_Str() {
@@ -863,49 +863,49 @@ final class AiActionMenu {
 
    private void init_V_cE_2(AiUiKit kit, autismclient.gui.f.NetHelper frame, List<AiActionMenu.Inner_CachePool> rows) {
       if (frame.sync() >= 8) {
-         autismclient.gui.ui.widgets.ListRowRenderer.init(
-            kit.init_GuiGraphicsExtract, frame.read(), frame.write(), frame.update(), frame.sync(), this.init_BitSetUtil.load_Z()
+         autismclient.gui.ui.widgets.ListRowRenderer.drawListFrame(
+            kit.graphics, frame.read(), frame.write(), frame.update(), frame.sync(), this.init_BitSetUtil.load_Z()
          );
          autismclient.gui.f.NetHelper inner = frame.init(2);
-         int rowH = AiUiKit.load_I();
-         this.init_cE_StreamUtil.init(inner, rows.size() * rowH);
-         kit.init_V_cE_StreamUtil(this.init_cE_StreamUtil);
+         int rowH = AiUiKit.inputHeight();
+         this.init_cE_StreamUtil.layout(inner, rows.size() * rowH);
+         kit.registerScrollPane(this.init_cE_StreamUtil);
          if (rows.isEmpty()) {
-            autismclient.gui.ui.widgets.ListRowRenderer.init(kit.init_GuiGraphicsExtract, kit.init_Font, this.update_Str(), inner.read(), inner.write(), inner.update());
+            autismclient.gui.ui.widgets.ListRowRenderer.drawEmptyPlaceholder(kit.graphics, kit.font, this.update_Str(), inner.read(), inner.write(), inner.update());
          } else {
-            kit.init_V_NetHelper(inner);
-            int w = inner.update() - (this.init_cE_StreamUtil.init_I() > 0 ? 7 : 0);
+            kit.pushClip(inner);
+            int w = inner.update() - (this.init_cE_StreamUtil.maxScroll() > 0 ? 7 : 0);
 
-            for (int i = Math.max(0, this.init_cE_StreamUtil.init_I / rowH); i < rows.size(); i++) {
-               int ry = inner.write() - this.init_cE_StreamUtil.init_I + i * rowH;
+            for (int i = Math.max(0, this.init_cE_StreamUtil.offset / rowH); i < rows.size(); i++) {
+               int ry = inner.write() - this.init_cE_StreamUtil.offset + i * rowH;
                if (ry >= inner.load()) {
                   break;
                }
 
                AiActionMenu.Inner_CachePool row = rows.get(i);
                autismclient.gui.f.NetHelper b = autismclient.gui.f.NetHelper.init(inner.read(), ry, w, rowH);
-               autismclient.gui.ui.widgets.ListRowRenderer.init(
-                  kit.init_GuiGraphicsExtract,
-                  kit.init_Font,
+               autismclient.gui.ui.widgets.ListRowRenderer.drawIconRow(
+                  kit.graphics,
+                  kit.font,
                   Component.literal(row.label()),
                   row.icon(),
                   b.read(),
                   b.write(),
                   b.update(),
                   b.sync(),
-                  kit.init_Z_NetHelper(b),
+                  kit.isHovered(b),
                   this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                      ? this.read_Map.containsKey(this.init_Str_StreamUtil_CachePo(row))
                      : i == this.read_I,
-                  kit.init_JsonUtil.textPrimary,
+                  kit.colors.textPrimary,
                   false
                );
                int index = i;
-               kit.init_V_NetHelper(b, () -> this.load(index), null, null);
+               kit.addInteractiveRegion(b, () -> this.load(index), null, null);
             }
 
-            kit.init_V();
-            kit.load(this.init_cE_StreamUtil);
+            kit.popClip();
+            kit.drawScrollbar(this.init_cE_StreamUtil);
          }
       }
    }
@@ -974,16 +974,16 @@ final class AiActionMenu {
          List<AiActionMenu.Inner_CachePool> rows = this.load_List();
          if (!rows.isEmpty()) {
             this.read_I = Math.max(0, Math.min(rows.size() - 1, this.read_I + delta));
-            int rowH = AiUiKit.load_I();
+            int rowH = AiUiKit.inputHeight();
             int top = this.read_I * rowH;
-            int shown = this.init_cE_StreamUtil.init_NetHelper().sync();
-            if (top < this.init_cE_StreamUtil.init_I) {
-               this.init_cE_StreamUtil.init_I = top;
-            } else if (top + rowH > this.init_cE_StreamUtil.init_I + shown) {
-               this.init_cE_StreamUtil.init_I = top + rowH - shown;
+            int shown = this.init_cE_StreamUtil.viewportBounds().sync();
+            if (top < this.init_cE_StreamUtil.offset) {
+               this.init_cE_StreamUtil.offset = top;
+            } else if (top + rowH > this.init_cE_StreamUtil.offset + shown) {
+               this.init_cE_StreamUtil.offset = top + rowH - shown;
             }
 
-            this.init_cE_StreamUtil.init_Z = false;
+            this.init_cE_StreamUtil.followBottom = false;
          }
       }
    }
@@ -1040,11 +1040,11 @@ final class AiActionMenu {
          this.read_I = 0;
          this.write_List = List.of();
          this.read_List = null;
-         this.init_cE_StreamUtil.load();
+         this.init_cE_StreamUtil.scrollToTop();
       }
 
       this.init_StreamUtil_BufferH = next.init() ? AiActionMenu.Inner_BufferHelper.TARGET : AiActionMenu.Inner_BufferHelper.REVIEW;
-      this.read_cE_StreamUtil.load();
+      this.read_cE_StreamUtil.scrollToTop();
       if (next.init()) {
          this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
       } else {
@@ -1127,7 +1127,7 @@ final class AiActionMenu {
          }
 
          this.init_V();
-         this.read_cE_StreamUtil.load();
+         this.read_cE_StreamUtil.scrollToTop();
       }
    }
 
@@ -1172,7 +1172,7 @@ final class AiActionMenu {
    private void close() {
       this.read_Str = "";
       this.init_V();
-      this.read_cE_StreamUtil.load();
+      this.read_cE_StreamUtil.scrollToTop();
       if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.REVIEW) {
          this.init_StreamUtil_BufferH = this.init_StreamUtil_DataUti.init() ? AiActionMenu.Inner_BufferHelper.OPTIONS : AiActionMenu.Inner_BufferHelper.HOME;
       } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.OPTIONS) {
@@ -1310,7 +1310,7 @@ final class AiActionMenu {
                            + this.init_bW.read_Str()
                            + ")"
                   );
-               this.init_cc.init_V_Str_2(label, step.capability(), step.arguments());
+               this.init_cc.submitBuiltInAction(label, step.capability(), step.arguments());
                if (this.init_E != null) {
                   this.init_E.read_V();
                   this.init_E = null;
@@ -1360,7 +1360,7 @@ final class AiActionMenu {
    }
 
    private void push() {
-      this.init_cc.update_V();
+      this.init_cc.stopTask();
       this.init_cF.init_V();
    }
 
@@ -1437,7 +1437,7 @@ final class AiActionMenu {
 
       if (!q.equals(this.load_Str) || this.init_StreamUtil_DataUti != this.load_StreamUtil_DataUti) {
          this.read_I = 0;
-         this.init_cE_StreamUtil.load();
+         this.init_cE_StreamUtil.scrollToTop();
          this.load_Str = q;
          this.load_StreamUtil_DataUti = this.init_StreamUtil_DataUti;
       }

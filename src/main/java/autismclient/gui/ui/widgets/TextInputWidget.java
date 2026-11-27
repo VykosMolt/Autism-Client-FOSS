@@ -344,16 +344,16 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
 
       Identifier font = this.init_Identifier_SyncManager(context);
-      int scaledHorizontalPadding = context.init_CharEncoder().load(this.read_I);
-      int frameInset = context.init_CharEncoder().load(2);
+      int scaledHorizontalPadding = context.theme().load(this.read_I);
+      int frameInset = context.theme().load(2);
       int innerW = this.init_I_I(fieldWidth, scaledHorizontalPadding, frameInset);
-      int bodyColor = context.init_CharEncoder().load(this.init_l);
-      return Math.max(1, this.init_List_Font(context.init_Font(), font, bodyColor, innerW, this.init_BitSetUtil_StreamU_Str(this.init_Str)).size());
+      int bodyColor = context.theme().load(this.init_l);
+      return Math.max(1, this.init_List_Font(context.font(), font, bodyColor, innerW, this.init_BitSetUtil_StreamU_Str(this.init_Str)).size());
    }
 
    public int load(autismclient.gui.ui.layout.LayoutContext context, int rows) {
-      int lineHeight = context.init_CharEncoder().init_I_l(this.init_l) + context.init_CharEncoder().load(1);
-      return Math.max(1, rows) * lineHeight + context.init_CharEncoder().load(6);
+      int lineHeight = context.theme().init_I_l(this.init_l) + context.theme().load(1);
+      return Math.max(1, rows) * lineHeight + context.theme().load(6);
    }
 
    public TextInputWidget flush(boolean historyNavigationEnabled) {
@@ -409,14 +409,14 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
 
       Identifier font = this.init_Identifier_SyncManager(context);
-      int color = context.init_CharEncoder().load(this.init_l);
-      return UiLayoutMath.measurePaddedWidthFloat(context.init_Font(), sample, font, color, context.init_CharEncoder().load(this.read_I + 2), this.flush_F, this.close_F);
+      int color = context.theme().load(this.init_l);
+      return UiLayoutMath.measurePaddedWidthFloat(context.font(), sample, font, color, context.theme().load(this.read_I + 2), this.flush_F, this.close_F);
    }
 
    @Override
    public float init_F_SyncManager_F(autismclient.gui.ui.layout.LayoutContext context, float availableWidth) {
-      int resolvedFixedHeight = this.write_I > 0 ? this.write_I : Math.max(context.init_CharEncoder().update(), context.init_CharEncoder().load(16));
-      int contentHeight = context.init_CharEncoder().init_I_l(this.init_l) + context.init_CharEncoder().load(5);
+      int resolvedFixedHeight = this.write_I > 0 ? this.write_I : Math.max(context.theme().update(), context.theme().load(16));
+      int contentHeight = context.theme().init_I_l(this.init_l) + context.theme().load(5);
       return Math.max(12, Math.max(resolvedFixedHeight, contentHeight));
    }
 
@@ -427,46 +427,46 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          int drawY = Math.round(this.load_F);
          int drawW = Math.round(this.read_F);
          int drawH = Math.round(this.write);
-         boolean hovered = this.init_Z_F_F(context.init_F(), context.load());
-         float hover = this.init_F_Z_F(hovered, context.read());
+         boolean hovered = this.init_Z_F_F(context.mouseX(), context.mouseY());
+         float hover = this.init_F_Z_F(hovered, context.delta());
          Identifier font = this.init_Identifier_SyncManager(context);
-         int fontHeight = context.init_CharEncoder().init_I_l(this.init_l);
-         int scaledHorizontalPadding = context.init_CharEncoder().load(this.read_I);
-         int textYOffsetPx = context.init_CharEncoder().open() + this.update_I - 1;
-         int contentInset = context.init_CharEncoder().load(3);
-         int frameInset = context.init_CharEncoder().load(2);
-         int lineSpacing = context.init_CharEncoder().load(1);
-         int bodyColor = context.init_CharEncoder().load(this.init_l);
-         int placeholderColor = context.init_CharEncoder().load(this.load_l);
-         int bg = this.flush_I != 0 ? this.flush_I : (this.close_Z && this.flush_Z ? context.init_CharEncoder().start() : context.init_CharEncoder().reset());
-         int border = this.write_Z && this.close_Z && this.flush_Z ? context.init_CharEncoder().run() : context.init_CharEncoder().set();
+         int fontHeight = context.theme().init_I_l(this.init_l);
+         int scaledHorizontalPadding = context.theme().load(this.read_I);
+         int textYOffsetPx = context.theme().open() + this.update_I - 1;
+         int contentInset = context.theme().load(3);
+         int frameInset = context.theme().load(2);
+         int lineSpacing = context.theme().load(1);
+         int bodyColor = context.theme().load(this.init_l);
+         int placeholderColor = context.theme().load(this.load_l);
+         int bg = this.flush_I != 0 ? this.flush_I : (this.close_Z && this.flush_Z ? context.theme().start() : context.theme().reset());
+         int border = this.write_Z && this.close_Z && this.flush_Z ? context.theme().run() : context.theme().set();
          int innerW = this.init_I_I(drawW, scaledHorizontalPadding, frameInset);
          TextInputWidget.Inner_StreamUtil richMetrics = this.init_Str.isEmpty() ? null : this.init_BitSetUtil_StreamU_Str(this.init_Str);
          if (!this.pop_Z) {
-            this.init_V_Font(context.init_Font(), font, bodyColor, innerW, richMetrics);
+            this.init_V_Font(context.font(), font, bodyColor, innerW, richMetrics);
          }
 
          autismclient.gui.f.NetHelper fieldBounds = autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH);
          int radius = this.sync_I;
          if (this.update_Z) {
-            autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), fieldBounds, radius, context.init_I_I(bg), context.init_I_I(border));
+            autismclient.gui.f.PacketUtil.load(context.graphics(), fieldBounds, radius, context.applyAlpha(bg), context.applyAlpha(border));
          } else {
-            autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), fieldBounds, context.init_I_I(border));
+            autismclient.gui.f.PacketUtil.load(context.graphics(), fieldBounds, context.applyAlpha(border));
          }
 
          if (this.write_Z && this.sync_Z && hover > 0.0F && !this.close_Z) {
             int hoverTint = ThemePaletteManager.recolor((int)(hover * 14.0F) << 24 | 16723759, ThemePaletteManager.ColorRole.ACCENT);
-            autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), fieldBounds.init(1), Math.max(0, radius - 1), context.init_I_I(hoverTint));
+            autismclient.gui.f.PacketUtil.load(context.graphics(), fieldBounds.init(1), Math.max(0, radius - 1), context.applyAlpha(hoverTint));
          }
 
          if (!this.write_Z) {
-            autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), fieldBounds.init(1), Math.max(0, radius - 1), context.init_I_I(1712592152));
+            autismclient.gui.f.PacketUtil.load(context.graphics(), fieldBounds.init(1), Math.max(0, radius - 1), context.applyAlpha(1712592152));
          } else if (this.close_Z && this.flush_Z) {
             autismclient.gui.f.PacketUtil.load(
-               context.init_GuiGraphicsExtract(),
+               context.graphics(),
                fieldBounds.init(1),
                Math.max(0, radius - 1),
-               context.init_I_I(ThemePaletteManager.recolor(318716731, ThemePaletteManager.ColorRole.ACCENT))
+               context.applyAlpha(ThemePaletteManager.recolor(318716731, ThemePaletteManager.ColorRole.ACCENT))
             );
          }
 
@@ -474,56 +474,56 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          if (this.init_Str.isEmpty()) {
             if (this.pop_Z) {
                int textY = drawY + contentInset + textYOffsetPx;
-               context.init_RingBuffer().init(context.init_GuiGraphicsExtract(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
+               context.viewport().pushClip(context.graphics(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
 
                try {
-                  for (String line : this.load(context.init_Font(), font, placeholderColor, this.load_Str, innerW)) {
+                  for (String line : this.load(context.font(), font, placeholderColor, this.load_Str, innerW)) {
                      if (textY + fontHeight > drawY + drawH - frameInset) {
                         break;
                      }
 
-                     k.init(context.init_GuiGraphicsExtract(), context.init_Font(), line, font, context.init_I_I(placeholderColor), textX, textY, false);
+                     k.init(context.graphics(), context.font(), line, font, context.applyAlpha(placeholderColor), textX, textY, false);
                      textY += fontHeight + lineSpacing;
                   }
                } finally {
-                  context.init_RingBuffer().read(context.init_GuiGraphicsExtract());
+                  context.viewport().popClip(context.graphics());
                }
 
                if (this.close_Z && this.flush_Z()) {
-                  context.init_GuiGraphicsExtract()
+                  context.graphics()
                      .fill(
                         textX,
                         drawY + contentInset,
                         textX + 1,
                         drawY + contentInset + fontHeight,
-                        context.init_I_I(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
+                        context.applyAlpha(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
                      );
                }
             } else {
                int textY = UiLayoutMath.centerTextY(drawY, drawH, fontHeight, textYOffsetPx);
-               String displayPlaceholder = k.init(context.init_Font(), this.load_Str, innerW, font, placeholderColor);
-               k.init(context.init_GuiGraphicsExtract(), context.init_Font(), displayPlaceholder, font, context.init_I_I(placeholderColor), textX, textY, false);
+               String displayPlaceholder = k.init(context.font(), this.load_Str, innerW, font, placeholderColor);
+               k.init(context.graphics(), context.font(), displayPlaceholder, font, context.applyAlpha(placeholderColor), textX, textY, false);
                if (this.close_Z && this.flush_Z()) {
-                  context.init_GuiGraphicsExtract()
+                  context.graphics()
                      .fill(
                         textX,
                         drawY + contentInset,
                         textX + 1,
                         drawY + drawH - contentInset,
-                        context.init_I_I(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
+                        context.applyAlpha(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
                      );
                }
             }
          } else if (this.pop_Z) {
-            List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.init_Font(), font, bodyColor, innerW, richMetrics);
+            List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
             int lineHeight = fontHeight + lineSpacing;
-            int visibleLineCount = Math.max(1, Math.max(1, drawH - context.init_CharEncoder().load(6)) / lineHeight);
+            int visibleLineCount = Math.max(1, Math.max(1, drawH - context.theme().load(6)) / lineHeight);
             this.init_V_I_List(visibleLineCount, wrappedLines);
             int selectionStart = Math.min(this.close_I, this.open_I);
             int selectionEnd = Math.max(this.close_I, this.open_I);
             int startLine = Math.min(this.push_I, Math.max(0, wrappedLines.size() - 1));
             int endLine = Math.min(wrappedLines.size(), startLine + visibleLineCount);
-            context.init_RingBuffer().init(context.init_GuiGraphicsExtract(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
+            context.viewport().pushClip(context.graphics(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
 
             try {
                int lineY = drawY + contentInset + textYOffsetPx;
@@ -535,23 +535,23 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                      int visibleSelectionEnd = Math.min(selectionEnd, line.read());
                      if (visibleSelectionStart < visibleSelectionEnd) {
                         int selectionX = textX
-                           + this.init(context.init_Font(), font, bodyColor, this.init_Str, richMetrics, line.init(), visibleSelectionStart);
-                        int selectionW = this.init(context.init_Font(), font, bodyColor, this.init_Str, richMetrics, visibleSelectionStart, visibleSelectionEnd);
-                        context.init_GuiGraphicsExtract()
+                           + this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, line.init(), visibleSelectionStart);
+                        int selectionW = this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, visibleSelectionStart, visibleSelectionEnd);
+                        context.graphics()
                            .fill(
                               selectionX,
                               lineY - 1,
                               selectionX + selectionW,
                               lineY + fontHeight + lineSpacing,
-                              context.init_I_I(ThemePaletteManager.recolor(1728006730, ThemePaletteManager.ColorRole.ACCENT))
+                              context.applyAlpha(ThemePaletteManager.recolor(1728006730, ThemePaletteManager.ColorRole.ACCENT))
                            );
                      }
                   }
 
                   if (richMetrics != null) {
                      this.init(
-                        context.init_GuiGraphicsExtract(),
-                        context.init_Font(),
+                        context.graphics(),
+                        context.font(),
                         font,
                         bodyColor,
                         this.init_Str,
@@ -563,13 +563,13 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                      );
                   } else {
                      String lineComponent = this.init_Str.substring(line.init(), line.read());
-                     this.init(context.init_GuiGraphicsExtract(), context.init_Font(), lineComponent, font, context.init_I_I(bodyColor), textX, lineY);
+                     this.init(context.graphics(), context.font(), lineComponent, font, context.applyAlpha(bodyColor), textX, lineY);
                   }
 
                   lineY += lineHeight;
                }
             } finally {
-               context.init_RingBuffer().read(context.init_GuiGraphicsExtract());
+               context.viewport().popClip(context.graphics());
             }
 
             if (this.close_Z && this.flush_Z()) {
@@ -577,15 +577,15 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                if (cursorLine >= startLine && cursorLine < endLine) {
                   TextInputWidget.Inner_CachePool line = wrappedLines.get(cursorLine);
                   int visibleCursor = Math.min(this.close_I, this.init_I_BitSetUtil_CachePo(line));
-                  int caretX = textX + this.init(context.init_Font(), font, bodyColor, this.init_Str, richMetrics, line.init(), visibleCursor);
+                  int caretX = textX + this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, line.init(), visibleCursor);
                   int caretY = drawY + contentInset + textYOffsetPx + (cursorLine - startLine) * lineHeight;
-                  context.init_GuiGraphicsExtract()
+                  context.graphics()
                      .fill(
                         caretX,
                         caretY - 1,
                         caretX + 1,
                         caretY + fontHeight + lineSpacing,
-                        context.init_I_I(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
+                        context.applyAlpha(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
                      );
                }
             }
@@ -593,63 +593,63 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
             this.init_V_SyncManager(context, drawX, drawY, drawW, drawH, lineHeight, visibleLineCount, wrappedLines.size());
          } else {
             int textY = UiLayoutMath.centerTextY(drawY, drawH, fontHeight, textYOffsetPx);
-            int visibleEnd = this.init_I_Font_2(context.init_Font(), font, bodyColor, innerW, richMetrics);
+            int visibleEnd = this.init_I_Font_2(context.font(), font, bodyColor, innerW, richMetrics);
             int selectionStart = Math.min(this.close_I, this.open_I);
             int selectionEnd = Math.max(this.close_I, this.open_I);
             if (selectionStart != selectionEnd) {
                int visibleSelectionStart = Math.max(selectionStart, this.poll_I);
                int visibleSelectionEnd = Math.min(selectionEnd, visibleEnd);
                if (visibleSelectionStart < visibleSelectionEnd) {
-                  int selectionX = textX + this.init(context.init_Font(), font, bodyColor, this.init_Str, richMetrics, this.poll_I, visibleSelectionStart);
-                  int selectionW = this.init(context.init_Font(), font, bodyColor, this.init_Str, richMetrics, visibleSelectionStart, visibleSelectionEnd);
-                  context.init_GuiGraphicsExtract()
+                  int selectionX = textX + this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, this.poll_I, visibleSelectionStart);
+                  int selectionW = this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, visibleSelectionStart, visibleSelectionEnd);
+                  context.graphics()
                      .fill(
                         selectionX,
                         drawY + 2,
                         selectionX + selectionW,
                         drawY + drawH - 2,
-                        context.init_I_I(ThemePaletteManager.recolor(1728006730, ThemePaletteManager.ColorRole.ACCENT))
+                        context.applyAlpha(ThemePaletteManager.recolor(1728006730, ThemePaletteManager.ColorRole.ACCENT))
                      );
                }
             }
 
             if (richMetrics != null) {
-               context.init_RingBuffer().init(context.init_GuiGraphicsExtract(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
+               context.viewport().pushClip(context.graphics(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
 
                try {
                   this.init(
-                     context.init_GuiGraphicsExtract(), context.init_Font(), font, bodyColor, this.init_Str, richMetrics, this.poll_I, visibleEnd, textX, textY
+                     context.graphics(), context.font(), font, bodyColor, this.init_Str, richMetrics, this.poll_I, visibleEnd, textX, textY
                   );
                } finally {
-                  context.init_RingBuffer().read(context.init_GuiGraphicsExtract());
+                  context.viewport().popClip(context.graphics());
                }
             } else {
-               context.init_RingBuffer().init(context.init_GuiGraphicsExtract(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
+               context.viewport().pushClip(context.graphics(), drawX + 1, drawY + 1, drawX + drawW - 1, drawY + drawH - 1);
 
                try {
                   this.init(
-                     context.init_GuiGraphicsExtract(),
-                     context.init_Font(),
+                     context.graphics(),
+                     context.font(),
                      this.init_Str.substring(this.poll_I, visibleEnd),
                      font,
-                     context.init_I_I(bodyColor),
+                     context.applyAlpha(bodyColor),
                      textX,
                      textY
                   );
                } finally {
-                  context.init_RingBuffer().read(context.init_GuiGraphicsExtract());
+                  context.viewport().popClip(context.graphics());
                }
             }
 
             if (this.close_Z && this.flush_Z()) {
-               int caretX = textX + this.init(context.init_Font(), font, bodyColor, this.init_Str, richMetrics, this.poll_I, this.close_I);
-               context.init_GuiGraphicsExtract()
+               int caretX = textX + this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, this.poll_I, this.close_I);
+               context.graphics()
                   .fill(
                      caretX,
                      drawY + contentInset,
                      caretX + 1,
                      drawY + drawH - contentInset,
-                     context.init_I_I(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
+                     context.applyAlpha(ThemePaletteManager.recolor(-4627, ThemePaletteManager.ColorRole.TEXT))
                   );
             }
          }
@@ -673,30 +673,30 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
 
       this.init_V_Z(true);
       this.push_Z = true;
-      int innerW = this.init_I_I(Math.round(this.read_F), context.init_CharEncoder().load(this.read_I), context.init_CharEncoder().load(2));
+      int innerW = this.init_I_I(Math.round(this.read_F), context.theme().load(this.read_I), context.theme().load(2));
       Identifier font = this.init_Identifier_SyncManager(context);
-      int bodyColor = context.init_CharEncoder().load(this.init_l);
+      int bodyColor = context.theme().load(this.init_l);
       TextInputWidget.Inner_StreamUtil richMetrics = this.init_BitSetUtil_StreamU_Str(this.init_Str);
       int clickCursor;
       if (this.pop_Z) {
-         List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.init_Font(), font, bodyColor, innerW, richMetrics);
-         int lineHeight = context.init_CharEncoder().init_I_l(this.init_l) + context.init_CharEncoder().load(1);
-         int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.init_CharEncoder().load(6)) / lineHeight);
+         List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
+         int lineHeight = context.theme().init_I_l(this.init_l) + context.theme().load(1);
+         int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.theme().load(6)) / lineHeight);
          this.init_V_I_List(visibleLineCount, wrappedLines);
          clickCursor = this.init_I_Font(
-            context.init_Font(),
+            context.font(),
             font,
             bodyColor,
-            mouseX - (this.init_F + context.init_CharEncoder().load(this.read_I)),
+            mouseX - (this.init_F + context.theme().load(this.read_I)),
             mouseY - this.load_F_SyncManager(context),
             lineHeight,
             wrappedLines,
             richMetrics
          );
       } else {
-         this.init_V_Font(context.init_Font(), font, bodyColor, innerW, richMetrics);
+         this.init_V_Font(context.font(), font, bodyColor, innerW, richMetrics);
          clickCursor = this.init_I_Font(
-            context.init_Font(), font, bodyColor, mouseX - (this.init_F + context.init_CharEncoder().load(this.read_I)), richMetrics
+            context.font(), font, bodyColor, mouseX - (this.init_F + context.theme().load(this.read_I)), richMetrics
          );
       }
 
@@ -742,28 +742,28 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
 
       if (this.write_Z && this.close_Z && this.push_Z && button == 0) {
          Identifier font = this.init_Identifier_SyncManager(context);
-         int bodyColor = context.init_CharEncoder().load(this.init_l);
-         int innerW = this.init_I_I(Math.round(this.read_F), context.init_CharEncoder().load(this.read_I), context.init_CharEncoder().load(2));
+         int bodyColor = context.theme().load(this.init_l);
+         int innerW = this.init_I_I(Math.round(this.read_F), context.theme().load(this.read_I), context.theme().load(2));
          TextInputWidget.Inner_StreamUtil richMetrics = this.init_BitSetUtil_StreamU_Str(this.init_Str);
          if (this.pop_Z) {
-            List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.init_Font(), font, bodyColor, innerW, richMetrics);
-            int lineHeight = context.init_CharEncoder().init_I_l(this.init_l) + context.init_CharEncoder().load(1);
-            int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.init_CharEncoder().load(6)) / lineHeight);
+            List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
+            int lineHeight = context.theme().init_I_l(this.init_l) + context.theme().load(1);
+            int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.theme().load(6)) / lineHeight);
             this.init_V_I_List(visibleLineCount, wrappedLines);
             this.close_I = this.init_I_Font(
-               context.init_Font(),
+               context.font(),
                font,
                bodyColor,
-               mouseX - (this.init_F + context.init_CharEncoder().load(this.read_I)),
+               mouseX - (this.init_F + context.theme().load(this.read_I)),
                mouseY - this.load_F_SyncManager(context),
                lineHeight,
                wrappedLines,
                richMetrics
             );
          } else {
-            this.init_V_Font(context.init_Font(), font, bodyColor, innerW, richMetrics);
+            this.init_V_Font(context.font(), font, bodyColor, innerW, richMetrics);
             this.close_I = this.init_I_Font(
-               context.init_Font(), font, bodyColor, mouseX - (this.init_F + context.init_CharEncoder().load(this.read_I)), richMetrics
+               context.font(), font, bodyColor, mouseX - (this.init_F + context.theme().load(this.read_I)), richMetrics
             );
          }
 
@@ -789,7 +789,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
             Math.max(1, drawH - 4),
             this.push_I * lineHeight
          );
-         ScrollbarMetricsHelper.render(context.init_GuiGraphicsExtract(), metrics, metrics.containsTrack(context.init_F(), context.load()), this.open_Z);
+         ScrollbarMetricsHelper.render(context.graphics(), metrics, metrics.containsTrack(context.mouseX(), context.mouseY()), this.open_Z);
       }
    }
 
@@ -822,14 +822,14 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
 
       Identifier font = this.init_Identifier_SyncManager(context);
-      int bodyColor = context.init_CharEncoder().load(this.init_l);
-      int innerW = this.init_I_I(Math.round(this.read_F), context.init_CharEncoder().load(this.read_I), context.init_CharEncoder().load(2));
+      int bodyColor = context.theme().load(this.init_l);
+      int innerW = this.init_I_I(Math.round(this.read_F), context.theme().load(this.read_I), context.theme().load(2));
       TextInputWidget.Inner_StreamUtil richMetrics = this.init_BitSetUtil_StreamU_Str(this.init_Str);
       List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_Str.isEmpty()
-         ? this.init_List_Font_2(context.init_Font(), font, bodyColor, this.load_Str, innerW)
-         : this.init_List_Font(context.init_Font(), font, bodyColor, innerW, richMetrics);
-      int lineHeight = context.init_CharEncoder().init_I_l(this.init_l) + context.init_CharEncoder().load(1);
-      int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.init_CharEncoder().load(6)) / lineHeight);
+         ? this.init_List_Font_2(context.font(), font, bodyColor, this.load_Str, innerW)
+         : this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
+      int lineHeight = context.theme().init_I_l(this.init_l) + context.theme().load(1);
+      int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.theme().load(6)) / lineHeight);
       int maxStart = Math.max(0, wrappedLines.size() - visibleLineCount);
       ScrollbarMetricsHelper.Metrics metrics = ScrollbarMetricsHelper.compute(
          Math.max(lineHeight, wrappedLines.size() * lineHeight),
@@ -865,12 +865,12 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    public boolean init_Z_SyncManager(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, float amount) {
       if (this.pop_Z && this.init_Z_F_F(mouseX, mouseY)) {
          Identifier font = this.init_Identifier_SyncManager(context);
-         int bodyColor = context.init_CharEncoder().load(this.init_l);
-         int innerW = this.init_I_I(Math.round(this.read_F), context.init_CharEncoder().load(this.read_I), context.init_CharEncoder().load(2));
+         int bodyColor = context.theme().load(this.init_l);
+         int innerW = this.init_I_I(Math.round(this.read_F), context.theme().load(this.read_I), context.theme().load(2));
          TextInputWidget.Inner_StreamUtil richMetrics = this.init_BitSetUtil_StreamU_Str(this.init_Str);
-         List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.init_Font(), font, bodyColor, innerW, richMetrics);
-         int lineHeight = context.init_CharEncoder().init_I_l(this.init_l) + context.init_CharEncoder().load(1);
-         int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.init_CharEncoder().load(6)) / lineHeight);
+         List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
+         int lineHeight = context.theme().init_I_l(this.init_l) + context.theme().load(1);
+         int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.write) - context.theme().load(6)) / lineHeight);
          int maxStart = Math.max(0, wrappedLines.size() - visibleLineCount);
          if (maxStart <= 0) {
             return false;
@@ -1105,7 +1105,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    private Identifier init_Identifier_SyncManager(autismclient.gui.ui.layout.LayoutContext context) {
-      return this.init_Identifier != null ? this.init_Identifier : context.init_CharEncoder().init_Identifier_l(l.read);
+      return this.init_Identifier != null ? this.init_Identifier : context.theme().init_Identifier_l(l.read);
    }
 
    private boolean flush_Z() {
@@ -1507,7 +1507,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    private float load_F_SyncManager(autismclient.gui.ui.layout.LayoutContext context) {
-      return this.load_F + context.init_CharEncoder().load(3) + context.init_CharEncoder().open() + this.update_I - 1.0F;
+      return this.load_F + context.theme().load(3) + context.theme().open() + this.update_I - 1.0F;
    }
 
    private int init_I_Font(
@@ -1554,19 +1554,19 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
 
    private void init_V_SyncManager(autismclient.gui.ui.layout.LayoutContext context, int direction, boolean keepSelection) {
       Identifier font = this.init_Identifier_SyncManager(context);
-      int bodyColor = context.init_CharEncoder().load(this.init_l);
-      int innerW = this.init_I_I(Math.round(this.read_F), context.init_CharEncoder().load(this.read_I), context.init_CharEncoder().load(2));
+      int bodyColor = context.theme().load(this.init_l);
+      int innerW = this.init_I_I(Math.round(this.read_F), context.theme().load(this.read_I), context.theme().load(2));
       TextInputWidget.Inner_StreamUtil richMetrics = this.init_BitSetUtil_StreamU_Str(this.init_Str);
-      List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.init_Font(), font, bodyColor, innerW, richMetrics);
+      List<TextInputWidget.Inner_CachePool> wrappedLines = this.init_List_Font(context.font(), font, bodyColor, innerW, richMetrics);
       if (!wrappedLines.isEmpty()) {
          int currentLineIndex = this.init_I_List_I(wrappedLines, this.close_I);
          int targetLineIndex = Math.max(0, Math.min(wrappedLines.size() - 1, currentLineIndex + direction));
          if (targetLineIndex != currentLineIndex) {
             TextInputWidget.Inner_CachePool currentLine = wrappedLines.get(currentLineIndex);
             int visibleCursor = Math.min(this.close_I, this.init_I_BitSetUtil_CachePo(currentLine));
-            int cursorX = this.init(context.init_Font(), font, bodyColor, this.init_Str, richMetrics, currentLine.init(), visibleCursor);
+            int cursorX = this.init(context.font(), font, bodyColor, this.init_Str, richMetrics, currentLine.init(), visibleCursor);
             TextInputWidget.Inner_CachePool targetLine = wrappedLines.get(targetLineIndex);
-            int targetCursor = this.init_I_Font(context.init_Font(), font, bodyColor, cursorX, targetLine, richMetrics);
+            int targetCursor = this.init_I_Font(context.font(), font, bodyColor, cursorX, targetLine, richMetrics);
             this.load(targetCursor, keepSelection);
          }
       }

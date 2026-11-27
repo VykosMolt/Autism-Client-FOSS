@@ -140,7 +140,7 @@ final class AiParallelSmelt implements AiOperation {
          );
       }
 
-      AiOperation.Result reflex = this.init_Y.init_AiOperation_Result_AiOperation(this, () -> {
+      AiOperation.Result reflex = this.init_Y.tick(this, () -> {
          if (this.init_AiOperation != null) {
             this.init_AiOperation.cancel();
             this.init_AiOperation = null;
@@ -427,14 +427,14 @@ final class AiParallelSmelt implements AiOperation {
 
    @Override
    public boolean canInterruptNow() {
-      return this.init_Y.load()
+      return this.init_Y.canInterruptNow()
          && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
          && (this.init_cn == null || this.init_cn.init_Z());
    }
 
    @Override
    public boolean requiresReconciliationAfterEmergency() {
-      return this.init_Y.read()
+      return this.init_Y.requiresReconciliation()
          || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
          || this.init_cn != null && this.init_cn.load_Z();
    }
@@ -443,7 +443,7 @@ final class AiParallelSmelt implements AiOperation {
    public void cancel() {
       this.load_Z = true;
       AiVisualization.init_V(this);
-      this.init_Y.init_V();
+      this.init_Y.cancel();
       if (this.init_AiOperation != null) {
          this.init_AiOperation.cancel();
       }

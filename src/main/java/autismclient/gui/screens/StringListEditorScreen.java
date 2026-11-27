@@ -221,10 +221,10 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             layout.init(rows.size(), (i, rowY) -> {
                String value = rows.get(i);
                boolean over = mx >= x && mx < x + w && my >= rowY && my < rowY + rowH;
-               autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, rowY, w, rowH - 1, over ? -1441000940 : -1441722092);
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, rowY, w, rowH - 1, over ? -1441000940 : -1441722092);
                int delY = rowY + (rowH - delH) / 2;
                this.init(graphics, value, x + 4, this.init_I_I_I_4(rowY, rowH - 1), -791321, textW - 4);
-               autismclient.gui.ui.widgets.ListRowRenderer.load(graphics, delX, delY, delW, delH, over);
+               autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButton(graphics, delX, delY, delW, delH, over);
                int index = this.init(rows, allValues, i);
                this.init_List.add(new StringListEditorScreen.Inner_StreamUtil(StringListEditorScreen.Inner_CachePool.EDIT_ENTRY, x, rowY, Math.max(1, textW), rowH, index));
                this.init_List.add(new StringListEditorScreen.Inner_StreamUtil(StringListEditorScreen.Inner_CachePool.REMOVE, delX, delY, delW, delH, index));
@@ -247,7 +247,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             boolean over = mx >= x && mx < x + w && my >= rowY && my < rowY + rowH;
             int ty = this.init_I_I_I_4(rowY, rowH - 1);
             if (row.load_Str() == null) {
-               autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, rowY, w, rowH - 1, over ? -1441000940 : -1441327333);
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, rowY, w, rowH - 1, over ? -1441000940 : -1441327333);
                String count = row.init_I() + "/" + row.load_I();
                int countW = autismclient.gui.f.b.k.init(this.font, count, init_CharEncoder.init_Identifier_l(l.read), 0);
                this.init(graphics, row.init_Str(), x + 4, ty, -791321, w - countW - 12);
@@ -255,7 +255,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                this.init_List.add(new StringListEditorScreen.Inner_StreamUtil(StringListEditorScreen.Inner_CachePool.TOGGLE_RANK, x, rowY, w, rowH, i));
             } else {
                boolean picked = row.init_I() > 0;
-               autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, rowY, w, rowH - 1, over ? -1441000940 : -1441722092);
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, rowY, w, rowH - 1, over ? -1441000940 : -1441722092);
                this.init(graphics, (picked ? "[x] " : "[ ] ") + row.load_Str(), x + 8, ty, picked ? -791321 : read_I_6(), w - 12);
                this.init_List.add(new StringListEditorScreen.Inner_StreamUtil(StringListEditorScreen.Inner_CachePool.TOGGLE_PLAYER, x, rowY, w, rowH, i));
             }
@@ -282,7 +282,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                int y = popupY + 1 + i * rowH;
                boolean selected = idx == this.tick;
                boolean over = mx >= popupX && mx < popupX + popupW && my >= y && my < y + rowH;
-               autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, popupX + 1, y, popupW - 2, rowH - 1, !selected && !over ? -1441722092 : -1441000940);
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, popupX + 1, y, popupW - 2, rowH - 1, !selected && !over ? -1441722092 : -1441000940);
                this.init(graphics, suggestion, popupX + 4, this.init_I_I_I_4(y, rowH - 1), -791321, popupW - 8);
                this.init_List.add(new StringListEditorScreen.Inner_StreamUtil(StringListEditorScreen.Inner_CachePool.SUGGESTION, popupX + 1, y, popupW - 2, rowH, idx));
             }

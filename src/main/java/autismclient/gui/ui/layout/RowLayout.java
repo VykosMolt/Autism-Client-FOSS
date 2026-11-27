@@ -50,8 +50,8 @@ public class RowLayout extends LayoutContainer {
 
    @Override
    public float init_F_SyncManager(LayoutContext context) {
-      EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
-      int scaledGap = context.init_CharEncoder().load(this.init_I);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
+      int scaledGap = context.theme().load(this.init_I);
       float total = scaledPadding.init_I();
       int visibleCount = 0;
 
@@ -71,7 +71,7 @@ public class RowLayout extends LayoutContainer {
 
    @Override
    public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
       float tallest = 0.0F;
 
       for (LayoutNode child : this.init_List) {
@@ -85,8 +85,8 @@ public class RowLayout extends LayoutContainer {
 
    @Override
    protected void load_V(LayoutContext context) {
-      EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
-      int scaledGap = context.init_CharEncoder().load(this.init_I);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
+      int scaledGap = context.theme().load(this.init_I);
       float innerX = this.init_F + scaledPadding.read();
       float innerY = this.load_F + scaledPadding.write();
       float innerWidth = Math.max(0.0F, this.read_F - scaledPadding.init_I());
@@ -131,23 +131,23 @@ public class RowLayout extends LayoutContainer {
          super.init_V_SyncManager(context);
          this.write(context);
          if (this.write_Z) {
-            float hover = this.init_F_Z_F(this.init_Z_F_F(context.init_F(), context.load()), context.read());
-            if (hover <= 0.0F || context.init_GuiGraphicsExtract() == null) {
+            float hover = this.init_F_Z_F(this.init_Z_F_F(context.mouseX(), context.mouseY()), context.delta());
+            if (hover <= 0.0F || context.graphics() == null) {
                return;
             }
 
-            EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
+            EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
             int drawX = Math.round(this.init_F + scaledPadding.read());
-            int drawY = Math.round(this.load_F + this.write - context.init_CharEncoder().load(1));
+            int drawY = Math.round(this.load_F + this.write - context.theme().load(1));
             float underlineAreaWidth = Math.max(this.sync, this.read_F - scaledPadding.init_I());
             int underlineWidth = Math.max(1, Math.round(underlineAreaWidth * hover));
             int underlineX = drawX + Math.max(0, Math.round((underlineAreaWidth - underlineWidth) / 2.0F));
-            context.init_GuiGraphicsExtract()
+            context.graphics()
                .fill(
                   underlineX,
                   drawY,
                   underlineX + underlineWidth,
-                  drawY + context.init_CharEncoder().load(1),
+                  drawY + context.theme().load(1),
                   ThemePaletteManager.recolor(this.load_I, ThemePaletteManager.ColorRole.ACCENT)
                );
          }
@@ -155,7 +155,7 @@ public class RowLayout extends LayoutContainer {
    }
 
    private void write(LayoutContext context) {
-      if (context.init_GuiGraphicsExtract() != null) {
+      if (context.graphics() != null) {
          autismclient.gui.f.SyncManager ui = null;
          LayoutNode previous = null;
 
@@ -168,7 +168,7 @@ public class RowLayout extends LayoutContainer {
                   && Math.abs(left.load_F() + left.write_F() - right.load_F()) <= 0.5F) {
                   if (ui == null) {
                      ui = autismclient.gui.f.UiHelper.init(
-                        context.init_GuiGraphicsExtract(), context.init_Font(), Math.round(context.init_F()), Math.round(context.load())
+                        context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
                      );
                   }
 

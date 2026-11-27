@@ -236,7 +236,7 @@ final class AiSchematicActions {
    ) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         AiOperation init_AiOperation = AiGoto.init_AiOperation_BlockPos(top, 0.25, false, false, false, 20);
+         AiOperation init_AiOperation = AiGoto.travelToCompat(top, 0.25, false, false, false, 20);
          final long init_J = System.nanoTime() + 40000000000L;
          boolean init_Z;
 
@@ -647,7 +647,7 @@ final class AiSchematicActions {
             }
 
             AiOperation init(BlockPos feet, Set<Long> keep) {
-               return AiGoto.init(
+               return AiGoto.travelToCompat(
                   feet,
                   0.25,
                   true,
@@ -657,7 +657,7 @@ final class AiSchematicActions {
                   autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                   true,
                   2.0,
-                  AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
+                  AiGoto.protectingCellsAboveYCompat(
                      autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(feet, 0.25), keep, blueprint.origin().getY()
                   )
                );
@@ -875,7 +875,7 @@ final class AiSchematicActions {
          return true;
       } else {
          return !s.isAir() && s.getFluidState().isEmpty() && !s.hasBlockEntity()
-            ? autismclient.ai.engine.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(s.getBlock().asItem()).toString()) >= 0
+            ? autismclient.ai.engine.AiRestock.scaffoldRank(BuiltInRegistries.ITEM.getKey(s.getBlock().asItem()).toString()) >= 0
             : false;
       }
    }
@@ -1128,7 +1128,7 @@ final class AiSchematicActions {
                      );
                      return AiGameOperations.result(AiOperation.Status.RUNNING, "Restoring waterlogging with a bucket", new JsonObject());
                   } else {
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(target, 30, protectedCells);
+                     this.init_AiOperation = AiGoto.approachBlockCompat(target, 30, protectedCells);
                      return AiGameOperations.result(AiOperation.Status.RUNNING, "Approaching the waterlogged block", new JsonObject());
                   }
                } else {
@@ -1358,7 +1358,7 @@ final class AiSchematicActions {
 
                      if (live.isAir() || live.canBeReplaced() || !live.getFluidState().isEmpty()) {
                         if (AiBucket.init(mc, target, false, fluid.equals("water")) == null) {
-                           this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_3(target.below(), 30, protectedCells, true, Direction.UP, 1.0);
+                           this.init_AiOperation = AiGoto.approachBlockToInteractCompat(target.below(), 30, protectedCells, true, Direction.UP, 1.0);
                            return this.init_AiOperation_Result_11("Approaching a visible receiving face for the water cell");
                         } else {
                            this.init_AiOperation = AiBucket.init(
@@ -1392,7 +1392,7 @@ final class AiSchematicActions {
                               BlockHitResult top = autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, target, Direction.UP);
                               if ((top == null || mc.player.getEyePosition().distanceTo(top.getLocation()) > mc.player.blockInteractionRange() - 0.3)
                                  && this.read++ < 3) {
-                                 this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_3(target, 30, protectedCells, true, Direction.UP, 1.25);
+                                 this.init_AiOperation = AiGoto.approachBlockToInteractCompat(target, 30, protectedCells, true, Direction.UP, 1.25);
                                  return this.init_AiOperation_Result_11("Approaching the soil's top face");
                               } else {
                                  this.init_AiOperation = this.init(target, id.equals("minecraft:farmland") ? "hoe" : "shovel", true);
@@ -1408,7 +1408,7 @@ final class AiSchematicActions {
                                  this.init_AiOperation = this.init_AiOperation("fill");
                                  return this.init_AiOperation_Result_11("Lifting the water to expose the soil");
                               } else {
-                                 this.init_AiOperation = AiGoto.init(
+                                 this.init_AiOperation = AiGoto.travelToCompat(
                                     above,
                                     0.45,
                                     false,
@@ -1418,7 +1418,7 @@ final class AiSchematicActions {
                                     autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                                     true,
                                     2.0,
-                                    AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
+                                    AiGoto.protectingCellsAboveYCompat(
                                        autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(above, 0.45),
                                        protectedCells,
                                        target.getY()
@@ -1516,7 +1516,7 @@ final class AiSchematicActions {
 
          AiOperation init(BlockPos pos, String item, boolean top) {
             if (!top && mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) > 16.0) {
-               return AiGoto.init_AiOperation_BlockPos(pos, 30, protectedCells);
+               return AiGoto.approachBlockCompat(pos, 30, protectedCells);
             }
 
             int slot = AiItems.equipHotbar(AiItems.resolveItem(item));
@@ -1596,10 +1596,10 @@ final class AiSchematicActions {
 
    static AiOperation init_AiOperation_BlockPos(final BlockPos support, final BlockPos target, final Set<Long> protectedCells, int minimumDigY) {
       final Minecraft mc = Minecraft.getInstance();
-      autismclient.ai.engine.AiPathfinder.PathGoal goal = AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
+      autismclient.ai.engine.AiPathfinder.PathGoal goal = AiGoto.protectingCellsAboveYCompat(
          autismclient.ai.engine.AiPathfinder.PathGoal.init_ClassCache_JsonUti_BlockPos_D(support.above(), 0.6), protectedCells, minimumDigY
       );
-      final Supplier<AiOperation> climb = () -> AiGoto.init(
+      final Supplier<AiOperation> climb = () -> AiGoto.travelToCompat(
          support.above(), 0.6, true, true, true, 120, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true, 2.0, goal
       );
       return new AiOperation() {
@@ -1629,7 +1629,7 @@ final class AiSchematicActions {
                      && mc.level.getBlockState(support).getFluidState().isEmpty()
                      && autismclient.ai.engine.PlacementGoal.init(mc, support, Items.DIRT, null, 72) != null) {
                      this.load_J = AiServerEvidence.blockRevision(support);
-                     this.init_DataPipe.init_V_BlockPos_Item(support, Items.DIRT);
+                     this.init_DataPipe.start(support, Items.DIRT);
                      this.read = true;
                   } else {
                      this.init_AiOperation = climb.get();
@@ -1637,16 +1637,16 @@ final class AiSchematicActions {
                }
 
                if (this.read) {
-                  switch (this.init_DataPipe.init_DataPipe_DataUtil()) {
+                  switch (this.init_DataPipe.tick()) {
                      case WORKING:
                         return this.init("Placing the reachable temporary support without climbing onto it");
                      case PLACED:
                         Block live = mc.level.getBlockState(support).getBlock();
-                        AiSchematicActions.init(support, live, AiSchematicActions.init_Z_Z(this.init_DataPipe.init_Z(), live, this.load_J, AiServerEvidence.blockRevision(support)));
+                        AiSchematicActions.init(support, live, AiSchematicActions.init_Z_Z(this.init_DataPipe.hasClicked(), live, this.load_J, AiServerEvidence.blockRevision(support)));
                         return this.init(AiOperation.Status.SUCCEEDED, "Reachable temporary support verified");
                      case FAILED:
-                        this.update = this.init_DataPipe.init_Z();
-                        this.init_DataPipe.init_V();
+                        this.update = this.init_DataPipe.hasClicked();
+                        this.init_DataPipe.reset();
                         this.read = false;
                         this.init_AiOperation = climb.get();
                   }
@@ -1721,7 +1721,7 @@ final class AiSchematicActions {
          @Override
          public void cancel() {
             this.init_Z = true;
-            this.init_DataPipe.init_V();
+            this.init_DataPipe.reset();
             if (this.init_AiOperation != null) {
                this.init_AiOperation.cancel();
             }

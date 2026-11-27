@@ -72,8 +72,8 @@ public class AutismEntityMovementMixin {
          } else if (RemoteViewController.init_Z()) {
             ci.cancel();
          } else if (!AutismLiteVariant.enabled()) {
-            AiService ai = AiService.load_cc();
-            if (ai != null && ai.close_Z()) {
+            AiService ai = AiService.getExistingInstance();
+            if (ai != null && ai.isBlockingManualInput()) {
                ci.cancel();
             }
          }

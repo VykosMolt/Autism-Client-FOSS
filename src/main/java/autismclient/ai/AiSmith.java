@@ -166,7 +166,7 @@ final class AiSmith {
                         this.init_ItemStack = out.copy();
                         this.close = AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem()).toString());
                         this.load_J = AiServerEvidence.containerRevision(menu.containerId);
-                        AiContainerTransactions.init(menu.containerId, 3, 0, ContainerInput.QUICK_MOVE);
+                        AiContainerTransactions.sendPredictedClick(menu.containerId, 3, 0, ContainerInput.QUICK_MOVE);
                         return this.init("Taking the result");
                      }
                   }
@@ -205,8 +205,8 @@ final class AiSmith {
                if (slot >= 0) {
                   this.init(itemId, slot);
                   int menuSlot = this.init(slot);
-                  AiContainerTransactions.init(menu.containerId, menuSlot, 0, ContainerInput.PICKUP);
-                  AiContainerTransactions.init(menu.containerId, targetSlot, 0, ContainerInput.PICKUP);
+                  AiContainerTransactions.sendPredictedClick(menu.containerId, menuSlot, 0, ContainerInput.PICKUP);
+                  AiContainerTransactions.sendPredictedClick(menu.containerId, targetSlot, 0, ContainerInput.PICKUP);
                   this.write++;
                }
             }
@@ -267,14 +267,14 @@ final class AiSmith {
                      }
 
                      this.init_DataPipe
-                        .init_V_BlockPos_Item(spot, BuiltInRegistries.ITEM.getOptional(Identifier.parse("minecraft:smithing_table")).orElseThrow());
+                        .start(spot, BuiltInRegistries.ITEM.getOptional(Identifier.parse("minecraft:smithing_table")).orElseThrow());
                      this.init_Z = true;
                      this.load_I = 0;
                   }
 
-                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
                   if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
-                     this.init_BlockPos = this.init_DataPipe.init_BlockPos();
+                     this.init_BlockPos = this.init_DataPipe.targetPos();
                      this.init_Z = false;
                      return this.init("Smithing table placed");
                   }
@@ -284,7 +284,7 @@ final class AiSmith {
                   }
 
                   this.init_Z = false;
-                  return this.init(AiOperation.Status.FAILED, "Could not place a smithing table: " + this.init_DataPipe.init_Str());
+                  return this.init(AiOperation.Status.FAILED, "Could not place a smithing table: " + this.init_DataPipe.failureReason());
                } else {
                   double reach = Math.max(4.5, this.init_Minecraft.player.blockInteractionRange());
                   if (this.init_Minecraft.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(this.init_BlockPos)) > reach * reach) {
@@ -403,7 +403,7 @@ final class AiSmith {
                if (!this.load_Z) {
                   this.load_Z = true;
                   this.init_DataUtil.clear();
-                  this.init_DataPipe.init_V();
+                  this.init_DataPipe.reset();
                   if (this.init_Minecraft.player != null && this.init_Minecraft.player.containerMenu instanceof SmithingMenu) {
                      this.init_Minecraft.player.closeContainer();
                   }

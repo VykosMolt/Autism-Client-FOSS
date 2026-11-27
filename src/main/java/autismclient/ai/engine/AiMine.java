@@ -289,7 +289,7 @@ public final class AiMine {
                            return this.init_AiOperation_Result_7("Collecting drops");
                         }
 
-                        this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(drop.blockPosition(), 1.0, true, true, true, this.init_I(25));
+                        this.init_AiOperation = AiGoto.travelToCompat(drop.blockPosition(), 1.0, true, true, true, this.init_I(25));
                         return this.init_AiOperation_Result_7("Collecting drops");
                      }
 
@@ -371,7 +371,7 @@ public final class AiMine {
                      this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
                   }
 
-                  this.init_AiOperation = AiGoto.init_AiOperation(this.load_BlockPos, this.init_I(120));
+                  this.init_AiOperation = AiGoto.approachBlockCompat(this.load_BlockPos, this.init_I(120));
                   return this.init_AiOperation_Result_7("Travelling to " + this.load_BlockPos.toShortString());
                }
             }
@@ -585,7 +585,7 @@ public final class AiMine {
                      int constructionBlocks = 0;
 
                      for (ItemStack stack : tools) {
-                        if (AiRestock.init_Z(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
+                        if (AiRestock.isScaffoldBlockId(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
                            constructionBlocks += stack.getCount();
                         }
                      }
@@ -710,7 +710,7 @@ public final class AiMine {
                   for (int steps = Math.max(ax, az); i < steps; i++) {
                      x += Integer.signum(dx);
                      z += Integer.signum(dz);
-                     if (!AiGoto.init_Z(new BlockPos(x, from.getY(), z))) {
+                     if (!AiGoto.isStandableCompat(new BlockPos(x, from.getY(), z))) {
                         return false;
                      }
                   }

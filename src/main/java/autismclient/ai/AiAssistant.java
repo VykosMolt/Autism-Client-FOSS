@@ -46,7 +46,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
                   AiMenuClose.init_aq_StreamUtil();
                }
 
-               AiContainerTransactions.init_V();
+               AiContainerTransactions.tickActiveSwap();
                assistant.tick();
             } catch (Throwable error) {
                long now = System.currentTimeMillis();
@@ -85,7 +85,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
    public void write_V() {
       if (!autismclient.modules.aD.init_Z() && autismclient.e.SyncManager.init()) {
          if (this.init_AiAssistantOverlay == null) {
-            this.init_AiAssistantOverlay = new AiAssistantOverlay(AiService.init_cc());
+            this.init_AiAssistantOverlay = new AiAssistantOverlay(AiService.getInstance());
          }
 
          OverlayManager manager = OverlayManager.getInstance();
@@ -189,8 +189,8 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
    }
 
    private void run() {
-      if (AiService.load_cc() != null) {
-         AiService.load_cc().sync_V();
+      if (AiService.getExistingInstance() != null) {
+         AiService.getExistingInstance().onWorldDisconnect();
       }
    }
 

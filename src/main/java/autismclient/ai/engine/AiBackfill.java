@@ -149,11 +149,11 @@ public final class AiBackfill {
             }
 
             this.update = this.init_Minecraft.player.getInventory().getSelectedSlot();
-            this.init_DataPipe.init_V_BlockPos_Item(this.init_BlockPos, this.init_Minecraft.player.getInventory().getItem(slot).getItem());
+            this.init_DataPipe.start(this.init_BlockPos, this.init_Minecraft.player.getInventory().getItem(slot).getItem());
             this.load_Z = true;
          }
 
-         switch (this.init_DataPipe.init_DataPipe_DataUtil()) {
+         switch (this.init_DataPipe.tick()) {
             case PLACED:
                this.init(true);
                break;
@@ -176,7 +176,7 @@ public final class AiBackfill {
       this.init_Set.remove(this.init_BlockPos.asLong());
       this.init_BlockPos = null;
       this.write = 0;
-      this.init_DataPipe.init_V();
+      this.init_DataPipe.reset();
       this.load_Z = false;
       if (this.update >= 0 && this.init_Minecraft.player != null) {
          this.init_Minecraft.player.getInventory().setSelectedSlot(this.update);
@@ -191,7 +191,7 @@ public final class AiBackfill {
          this.init(false);
       }
 
-      this.init_DataPipe.init_V();
+      this.init_DataPipe.reset();
       this.load_Z = false;
    }
 
@@ -202,11 +202,11 @@ public final class AiBackfill {
          hotbar.add(this.init(this.init_Minecraft.player.getInventory().getItem(slot)));
       }
 
-      return AiRestock.init(hotbar, null);
+      return AiRestock.pickBestBackpackSlot(hotbar, null);
    }
 
    private AiRestock.Inner_CachePool init(ItemStack stack) {
-      return stack.getItem() instanceof BlockItem block && AiRestock.init(stack, this.init_Minecraft.player.getInventory())
+      return stack.getItem() instanceof BlockItem block && AiRestock.canSpendStack(stack, this.init_Minecraft.player.getInventory())
          ? new AiRestock.Inner_CachePool(
             BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),
             stack.getCount(),

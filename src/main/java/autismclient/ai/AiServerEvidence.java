@@ -357,7 +357,7 @@ public final class AiServerEvidence {
       containerRevisions.clear();
       containerReplyCounts.clear();
       containerReplyHistory.clear();
-      AiContainerTransactions.read();
+      AiContainerTransactions.clearAll();
       entityVelocities.clear();
       resetBurnTracker();
       velocityRevisionCounter++;

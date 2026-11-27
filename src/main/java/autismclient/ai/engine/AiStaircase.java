@@ -307,7 +307,7 @@ public final class AiStaircase {
       return new AiOperation() {
          AiOperation init_AiOperation = mc.player.blockPosition().equals(top)
             ? null
-            : AiGoto.init_AiOperation_BlockPos(top, 0.5, true, false, false, Math.max(10, timeoutSeconds / 2));
+            : AiGoto.travelToCompat(top, 0.5, true, false, false, Math.max(10, timeoutSeconds / 2));
          AiGoto.GotoOp init_HashUtil_CachePool;
 
          @Override
@@ -333,7 +333,7 @@ public final class AiStaircase {
 
             if (this.init_HashUtil_CachePool == null) {
                AutismClientAddon.LOG.info("[AI] shaft: from {} down to y {}", mc.player.blockPosition().toShortString(), bottomY);
-               this.init_HashUtil_CachePool = AiGoto.init_HashUtil_CachePool_BlockPos(
+               this.init_HashUtil_CachePool = AiGoto.createPersistentOpCompat(
                   mc.player.blockPosition(), goal, (int)Math.max(10L, (deadline - System.nanoTime()) / 1000000000L)
                );
             }
@@ -583,7 +583,7 @@ public final class AiStaircase {
       final long deadline = System.nanoTime() + Math.max(10, timeoutSeconds) * 1000000000L;
       return new AiOperation() {
          AiOperation init_AiOperation = approach != null && !mc.player.blockPosition().equals(approach)
-            ? AiGoto.init_AiOperation_BlockPos(approach, 0.5, true, false, false, Math.max(10, timeoutSeconds / 2))
+            ? AiGoto.travelToCompat(approach, 0.5, true, false, false, Math.max(10, timeoutSeconds / 2))
             : null;
          AiGoto.GotoOp init_HashUtil_CachePool;
 
@@ -611,7 +611,7 @@ public final class AiStaircase {
             if (this.init_HashUtil_CachePool == null) {
                AutismClientAddon.LOG
                   .info("[AI] staircase: {} steps from {} to {}", steps.size(), mc.player.blockPosition().toShortString(), goal.init_BlockPos.toShortString());
-               this.init_HashUtil_CachePool = AiGoto.init_HashUtil_CachePool_BlockPos(
+               this.init_HashUtil_CachePool = AiGoto.createPersistentOpCompat(
                   mc.player.blockPosition(), goal, (int)Math.max(10L, (deadline - System.nanoTime()) / 1000000000L)
                );
             }

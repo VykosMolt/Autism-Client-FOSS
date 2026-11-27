@@ -181,7 +181,7 @@ public final class AiSeek {
                   return this.init("Walk-only route failed; retrying with digging allowed");
                }
             } else {
-               this.init_AiOperation = AiGoto.init(
+               this.init_AiOperation = AiGoto.travelToCompat(
                   this.init_BlockPos, 2.0, this.load > 0 || this.init_Z_14(), false, false, this.init_I_16(), this.init_ClassCache_IoWorke
                );
                return this.init(this.load == 0 ? "Travelling to " + this.init_BlockPos.toShortString() : "Retrying with digging allowed");

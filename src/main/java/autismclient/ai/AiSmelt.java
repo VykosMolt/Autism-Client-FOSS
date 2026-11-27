@@ -224,7 +224,7 @@ final class AiSmelt {
                      );
                   }
 
-                  int planks = (int)Math.ceil(heat / (300.0 / divisor)) + autismclient.ai.engine.AiRestock.init_I();
+                  int planks = (int)Math.ceil(heat / (300.0 / divisor)) + autismclient.ai.engine.AiRestock.reservedWood();
                   return AiObtain.init(AiJson.objectOf("item", "planks", "count", planks, "timeoutSeconds", seconds));
                }
 
@@ -249,7 +249,7 @@ final class AiSmelt {
                      );
                   }
 
-                  AiOperation.Result guarded = this.init_Y.init_AiOperation_Result_AiOperation(this, this::init_V_25, this::init_I_33);
+                  AiOperation.Result guarded = this.init_Y.tick(this, this::init_V_25, this::init_I_33);
                   if (guarded != null) {
                      if (!guarded.terminal()) {
                         return this.init(guarded.message());
@@ -474,7 +474,7 @@ final class AiSmelt {
                      BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, this.load_BlockPos);
                      if (interactionHit == null) {
                         if (this.init_AiOperation == null) {
-                           this.init_AiOperation = AiGoto.init_AiOperation(this.load_BlockPos, Math.min(120, this.init_I_33()));
+                           this.init_AiOperation = AiGoto.approachBlockCompat(this.load_BlockPos, Math.min(120, this.init_I_33()));
                         }
 
                         AiOperation.Result legResult = this.init_AiOperation.tick();
@@ -643,7 +643,7 @@ final class AiSmelt {
 
                   this.read_Z = false;
                   this.init_DataUtil.clear();
-                  this.init_DataPipe.init_V();
+                  this.init_DataPipe.reset();
                   this.load_I = 0;
                   if (mc.player == this.init_LocalPlayer && mc.player.containerMenu instanceof AbstractFurnaceMenu) {
                      mc.player.closeContainer();
@@ -655,7 +655,7 @@ final class AiSmelt {
                   if (!this.write_Z) {
                      this.write_Z = true;
                      AiVisualization.init_V(this);
-                     this.init_Y.init_V();
+                     this.init_Y.cancel();
                      if (this.init_Q != null) {
                         this.init_Q.cancel();
                         this.init_Q = null;
@@ -672,7 +672,7 @@ final class AiSmelt {
                      }
 
                      this.init_DataUtil.clear();
-                     this.init_DataPipe.init_V();
+                     this.init_DataPipe.reset();
                      if (mc.player == this.init_LocalPlayer && mc.player.containerMenu instanceof AbstractFurnaceMenu) {
                         mc.player.closeContainer();
                      }
@@ -695,7 +695,7 @@ final class AiSmelt {
 
                @Override
                public boolean canInterruptNow() {
-                  return this.init_Y.load()
+                  return this.init_Y.canInterruptNow()
                      && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())
                      && (this.init_Q == null || this.init_Q.canInterruptNow())
                      && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
@@ -704,7 +704,7 @@ final class AiSmelt {
 
                @Override
                public boolean requiresReconciliationAfterEmergency() {
-                  return this.init_Y.read()
+                  return this.init_Y.requiresReconciliation()
                      || this.init_Q != null && this.init_Q.requiresReconciliationAfterEmergency()
                      || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency()
                      || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
@@ -725,7 +725,7 @@ final class AiSmelt {
          ? AiObtain.init(AiJson.objectOf("item", "minecraft:coal", "count", (int)Math.ceil(items / 8.0), "additional", true, "timeoutSeconds", seconds))
          : AiObtain.init(
             AiJson.objectOf(
-               "item", "planks", "count", (int)Math.ceil(items * 200 / 300.0) + autismclient.ai.engine.AiRestock.init_I(), "timeoutSeconds", seconds
+               "item", "planks", "count", (int)Math.ceil(items * 200 / 300.0) + autismclient.ai.engine.AiRestock.reservedWood(), "timeoutSeconds", seconds
             )
          );
       final JsonObject retry = args.deepCopy();
@@ -916,7 +916,7 @@ final class AiSmelt {
 
       List<Inner_StreamUtil> fuels = new ArrayList<>();
       Inventory inventory = mc.player.getInventory();
-      int spareWood = autismclient.ai.engine.AiRestock.init(inventory);
+      int spareWood = autismclient.ai.engine.AiRestock.availableSpareWood(inventory);
 
       for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
          ItemStack stack = inventory.getItem(slot);
@@ -979,7 +979,7 @@ final class AiSmelt {
       if (mc.player != null && fuel != null) {
          int count = Math.max(0, AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(fuel).toString()) - AiRunResources.mandatoryReservedCount(fuel));
          ItemStack stack = new ItemStack(fuel);
-         int spareWood = autismclient.ai.engine.AiRestock.init(mc.player.getInventory());
+         int spareWood = autismclient.ai.engine.AiRestock.availableSpareWood(mc.player.getInventory());
          if (stack.is(ItemTags.PLANKS)) {
             return Math.min(count, spareWood);
          } else if (stack.is(ItemTags.LOGS)) {

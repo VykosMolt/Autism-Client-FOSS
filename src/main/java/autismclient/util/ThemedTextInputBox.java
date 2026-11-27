@@ -380,13 +380,13 @@ public class ThemedTextInputBox {
 
    private autismclient.gui.ui.layout.LayoutContext createInputLayoutContext() {
       return new autismclient.gui.ui.layout.LayoutContext(
-         null, this.font, autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(2.0F), THEME, 0.0F, 0.0F, 0.0F
+         null, this.font, autismclient.gui.ui.layout.LayoutViewport.create(2.0F), THEME, 0.0F, 0.0F, 0.0F
       );
    }
 
    private autismclient.gui.ui.layout.LayoutContext createRenderLayoutContext(GuiGraphicsExtractor drawContext, int mouseX, int mouseY, float delta) {
       return new autismclient.gui.ui.layout.LayoutContext(
-         drawContext, this.font, autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(2.0F), THEME, mouseX, mouseY, delta
+         drawContext, this.font, autismclient.gui.ui.layout.LayoutViewport.create(2.0F), THEME, mouseX, mouseY, delta
       );
    }
 }

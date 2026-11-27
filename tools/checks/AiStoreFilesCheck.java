@@ -47,7 +47,7 @@ public class AiStoreFilesCheck {
       Path trace = dir.resolve("trace/ai-trace-s.jsonl");
       AiRunTrace t = new AiRunTrace(trace, System.currentTimeMillis(), 300L);
       for (int i = 0; i < 20; i++) {
-         t.read("split-" + i, "y".repeat(100));
+         t.recordSplit("split-" + i, "y".repeat(100));
       }
 
       for (String suffix : List.of("", ".1", ".2", ".3")) {

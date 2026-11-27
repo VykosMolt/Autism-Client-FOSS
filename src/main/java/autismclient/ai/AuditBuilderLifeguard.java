@@ -42,9 +42,9 @@ public final class AuditBuilderLifeguard {
          active = true;
          activeTicks = 0;
          land = null;
-         AiService assistant = AiService.load_cc();
+         AiService assistant = AiService.getExistingInstance();
          if (assistant != null) {
-            assistant.update_V();
+            assistant.stopTask();
             LOG.info("lifeguard: stopped the AI operation");
          }
          LOG.info("lifeguard: taking over at {} (air {}, health {})", p.blockPosition().toShortString(), p.getAirSupply(), p.getHealth());

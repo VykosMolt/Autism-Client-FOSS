@@ -237,7 +237,7 @@ final class AiTrade {
                               this.load_J = AiServerEvidence.containerRevision(this.init_I);
                               this.init_ItemStack = result.copy();
                               this.close = this.init_I(result);
-                              AiContainerTransactions.init(this.init_I, 2, 0, ContainerInput.QUICK_MOVE);
+                              AiContainerTransactions.sendPredictedClick(this.init_I, 2, 0, ContainerInput.QUICK_MOVE);
                               return this.init_AiOperation_Result_12("Taking trade " + (this.sync + 1) + "/" + count);
                            } else {
                               return ++this.write > 30
@@ -288,7 +288,7 @@ final class AiTrade {
                double reach = Math.max(3.0, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE));
                if (mc.player.distanceTo(this.init_Entity) > reach * 0.9) {
                   if (this.init_AiOperation == null) {
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(
+                     this.init_AiOperation = AiGoto.travelToCompat(
                         this.init_Entity.blockPosition(), 2.0, false, false, true, Math.min(120, this.init_I_31())
                      );
                   }
@@ -438,7 +438,7 @@ final class AiTrade {
                if (this.push != 0) {
                   if (this.push == 1) {
                      if (this.init_AiOperation == null && autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, this.init_BlockPos) == null) {
-                        this.init_AiOperation = AiGoto.init_AiOperation(this.init_BlockPos, Math.min(60, this.init_I_31()));
+                        this.init_AiOperation = AiGoto.approachBlockCompat(this.init_BlockPos, Math.min(60, this.init_I_31()));
                         return this.init_AiOperation_Result_12("Approaching the job-site block");
                      }
 
@@ -472,7 +472,7 @@ final class AiTrade {
                      ItemEntity drop = this.init_ItemEntity(itemId);
                      if (drop != null && mc.player.distanceToSqr(drop) > 2.25) {
                         if (this.init_AiOperation == null) {
-                           this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(drop.blockPosition(), 1.6, false, false, false, 25);
+                           this.init_AiOperation = AiGoto.travelToCompat(drop.blockPosition(), 1.6, false, false, false, 25);
                         }
 
                         AiOperation.Result legResult = this.init_AiOperation.tick();
@@ -487,13 +487,13 @@ final class AiTrade {
                      return this.init_AiOperation_Result_12("Collecting the job-site block");
                   } else {
                      if (this.push == 3) {
-                        this.init_DataPipe.init_V_BlockPos_Item(this.init_BlockPos, this.init_Item);
+                        this.init_DataPipe.start(this.init_BlockPos, this.init_Item);
                         this.push = 4;
                         return this.init_AiOperation_Result_12("Replacing the job-site block");
                      }
 
                      if (this.push == 4) {
-                        autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                        autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
                         if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                            this.poll++;
                            this.push = 0;
@@ -503,7 +503,7 @@ final class AiTrade {
                         } else {
                            return status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.pop <= 100
                               ? this.init_AiOperation_Result_12("Replacing the job-site block")
-                              : this.init(AiFailure.UNREACHABLE, "Could not replace the job-site block: " + this.init_DataPipe.init_Str());
+                              : this.init(AiFailure.UNREACHABLE, "Could not replace the job-site block: " + this.init_DataPipe.failureReason());
                         }
                      } else {
                         return null;
@@ -664,7 +664,7 @@ final class AiTrade {
                   this.init_Z = true;
                   this.init_DataUtil.clear();
                   this.init_RefQueue_DataUtil.init_V();
-                  this.init_DataPipe.init_V();
+                  this.init_DataPipe.reset();
                   if (this.init_AiOperation != null) {
                      this.init_AiOperation.cancel();
                      this.init_AiOperation = null;

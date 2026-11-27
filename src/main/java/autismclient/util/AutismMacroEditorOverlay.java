@@ -2007,11 +2007,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_GuiGraphicsExtract_6(GuiGraphicsExtractor context, MacroAction action, int top, int number) {
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(
          context, this.get_I_10() + 1, top + 1, this.chunk_I() - this.get_I_10() - 1, this.mark_I() - 2, this.init_CharEncoder.read(4607322)
       );
       int badgeColor = this.write_Z(action) ? -30720 : -12268476;
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.read(context, this.get_I_10() + 2, top + 3, 3, this.mark_I() - 6, badgeColor);
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(context, this.get_I_10() + 2, top + 3, 3, this.mark_I() - 6, badgeColor);
       autismclient.gui.f.b.k.init(
          context,
          this.init_Font,
@@ -4873,8 +4873,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             this.bind_V();
          }
 
-         float uiMouseX = viewport.init_F_D(mouseX);
-         float uiMouseY = viewport.load(mouseY);
+         float uiMouseX = viewport.toUiX(mouseX);
+         float uiMouseY = viewport.toUiY(mouseY);
          boolean active = OverlayManager.getInstance().isFocused(this) || OverlayManager.getInstance().isTopmost(this);
          boolean headerHovered = uiMouseX >= this.tick_I
             && uiMouseX < this.tick_I + this.get_I
@@ -4892,7 +4892,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          int bodyClipTop = this.run_I + this.init_CharEncoder.load();
          int bodyClipBottom = this.init_CharEncoder_2.init_I_2();
          if (bodyClipBottom > bodyClipTop + 1) {
-            viewport.init(context, this.tick_I, bodyClipTop, this.tick_I + this.get_I, bodyClipBottom);
+            viewport.pushClip(context, this.tick_I, bodyClipTop, this.tick_I + this.get_I, bodyClipBottom);
 
             try {
                if (this.init_k != null) {
@@ -4958,7 +4958,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                );
                if (stepListLocked) {
                   String lockText = "Running - list locked";
-                  int lockColor = autismclient.gui.ui.layout.LayoutContext.init(-24416, 0.86F);
+                  int lockColor = autismclient.gui.ui.layout.LayoutContext.scaleAlpha(-24416, 0.86F);
                   int lockW = autismclient.gui.f.b.k.init(
                      this.init_Font, lockText, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load), lockColor
                   );
@@ -5085,7 +5085,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                      if (insertSlot >= 0) {
                         int insertY = y + insertSlot * this.mark_I();
                         if (insertY >= listClipTop - 2 && insertY <= listClipBottom + 2) {
-                           autismclient.gui.ui.widgets.PanelSurfaceHelper.init(
+                           autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(
                               context, this.get_I_10() + 2, insertY - 1, this.chunk_I() - this.get_I_10() - 3, 2, this.init_CharEncoder.run()
                            );
                         }
@@ -5149,7 +5149,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                   autismclient.gui.ui.widgets.DropdownWidget.load(context, this.init_Font, this.sync_List, mouseX, mouseY);
                }
             } finally {
-               viewport.read(context);
+               viewport.popClip(context);
             }
 
             if (!this.pop_Z && !this.sync_List.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.init_Z_List(this.sync_List)) {
@@ -5205,7 +5205,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.PacketUtil.init(context, autismclient.gui.f.NetHelper.init(x, y, width, height), fillColor, borderColor);
       if (emphasis > 0.0F) {
          int hoverTint = (int)Math.min(30.0F, hover * 18.0F) << 24 | categoryRgb;
-         autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, x + 1, y + 1, width - 2, height - 2, hoverTint);
+         autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(context, x + 1, y + 1, width - 2, height - 2, hoverTint);
       }
 
       String label = entry.load == null ? "" : entry.load;
@@ -5281,23 +5281,23 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       boolean hoverRow = interactive && mouseX >= rowLeft - 1 && mouseX <= rowRight + 1 && mouseY >= actionY && mouseY < actionY + this.mark_I();
       boolean selectedRow = interactive && this.read_Z(actionIndex);
       int bgColor = selectedRow ? ThemePaletteManager.recolor(1715082778, ThemePaletteManager.ColorRole.ACCENT) : (hoverRow ? UiColorPalette.rowHover() : UiColorPalette.rowSurface());
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(
-         context, rowLeft, actionY + 1, rowRight - rowLeft, this.mark_I() - 2, autismclient.gui.ui.layout.LayoutContext.init(bgColor, alpha)
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(
+         context, rowLeft, actionY + 1, rowRight - rowLeft, this.mark_I() - 2, autismclient.gui.ui.layout.LayoutContext.scaleAlpha(bgColor, alpha)
       );
       AutismMacroEditorOverlay.RowHighlightFlags impact = this.init_AutismMacroEditorO_I(actionIndex);
       if (impact.init_Z) {
          int rh = this.mark_I();
          int rgb = (impact.read ? UiColorPalette.blue() : UiColorPalette.amber()) & 16777215;
-         int tint = autismclient.gui.ui.layout.LayoutContext.init((impact.load ? 77 : 51) << 24 | rgb, alpha);
-         int edge = autismclient.gui.ui.layout.LayoutContext.init(-805306368 | rgb, alpha);
-         autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, rowLeft, actionY + 1, rowRight - rowLeft, rh - 2, tint);
-         autismclient.gui.ui.widgets.PanelSurfaceHelper.read(context, rowLeft, actionY + 1, 1, rh - 2, edge);
+         int tint = autismclient.gui.ui.layout.LayoutContext.scaleAlpha((impact.load ? 77 : 51) << 24 | rgb, alpha);
+         int edge = autismclient.gui.ui.layout.LayoutContext.scaleAlpha(-805306368 | rgb, alpha);
+         autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(context, rowLeft, actionY + 1, rowRight - rowLeft, rh - 2, tint);
+         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(context, rowLeft, actionY + 1, 1, rh - 2, edge);
          if (impact.write) {
-            autismclient.gui.ui.widgets.PanelSurfaceHelper.read(context, rowLeft, actionY + 1, rowRight - rowLeft, 1, edge);
+            autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(context, rowLeft, actionY + 1, rowRight - rowLeft, 1, edge);
          }
 
          if (impact.update) {
-            autismclient.gui.ui.widgets.PanelSurfaceHelper.read(context, rowLeft, actionY + rh - 2, rowRight - rowLeft, 1, edge);
+            autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(context, rowLeft, actionY + rh - 2, rowRight - rowLeft, 1, edge);
          }
       }
 
@@ -5305,7 +5305,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          autismclient.gui.f.PacketUtil.load(
             context,
             autismclient.gui.f.NetHelper.init(rowLeft, actionY + 1, rowRight - rowLeft, this.mark_I() - 2),
-            autismclient.gui.ui.layout.LayoutContext.init(ThemePaletteManager.recolor(-42149, ThemePaletteManager.ColorRole.OUTLINE), alpha)
+            autismclient.gui.ui.layout.LayoutContext.scaleAlpha(ThemePaletteManager.recolor(-42149, ThemePaletteManager.ColorRole.OUTLINE), alpha)
          );
       }
 
@@ -5313,14 +5313,14 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          int railX = this.get_I_10() + 2 + xOffset;
          int railTop = group.load() ? actionY + 3 : actionY;
          int railBottom = group.read() ? actionY + this.mark_I() - 3 : actionY + this.mark_I();
-         int railColor = autismclient.gui.ui.layout.LayoutContext.init(group.read_Z ? UiColorPalette.cyan() : this.init_CharEncoder.run(), alpha);
-         autismclient.gui.ui.widgets.PanelSurfaceHelper.read(context, railX, railTop, 2, railBottom - railTop, railColor);
+         int railColor = autismclient.gui.ui.layout.LayoutContext.scaleAlpha(group.read_Z ? UiColorPalette.cyan() : this.init_CharEncoder.run(), alpha);
+         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(context, railX, railTop, 2, railBottom - railTop, railColor);
       }
 
       int badgeColor = group.read_Z ? UiColorPalette.cyan() : (groupHeader ? this.init_CharEncoder.run() : (conditional ? -30720 : -12268476));
       if (!groupHeader) {
-         autismclient.gui.ui.widgets.PanelSurfaceHelper.read(
-            context, this.get_I_10() + 2 + xOffset + bodyIndent, actionY + 3, 3, this.mark_I() - 6, autismclient.gui.ui.layout.LayoutContext.init(badgeColor, alpha)
+         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(
+            context, this.get_I_10() + 2 + xOffset + bodyIndent, actionY + 3, 3, this.mark_I() - 6, autismclient.gui.ui.layout.LayoutContext.scaleAlpha(badgeColor, alpha)
          );
       }
 
@@ -5329,7 +5329,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.init_Font,
          String.valueOf(actionIndex + 1),
          this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-         autismclient.gui.ui.layout.LayoutContext.init(UiColorPalette.textSecondary(), alpha),
+         autismclient.gui.ui.layout.LayoutContext.scaleAlpha(UiColorPalette.textSecondary(), alpha),
          this.get_I_10() + 8 + xOffset + bodyIndent,
          this.init_I_I_6(actionY),
          false
@@ -5339,7 +5339,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int contentRight = this.read(action, allowMove, allowDuplicate, allowDelete) + xOffset;
       int maxNameW = Math.max(1, contentRight - nameX - 8);
       if (group.init() && !group.init_Str.isEmpty()) {
-         int roleColor = autismclient.gui.ui.layout.LayoutContext.init(group.read_Z ? UiColorPalette.cyan() : (groupHeader ? -10281 : UiColorPalette.textBody()), alpha);
+         int roleColor = autismclient.gui.ui.layout.LayoutContext.scaleAlpha(group.read_Z ? UiColorPalette.cyan() : (groupHeader ? -10281 : UiColorPalette.textBody()), alpha);
          String role = group.init_Str;
          int roleW = autismclient.gui.f.b.k.init(this.init_Font, role, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load), roleColor);
          autismclient.gui.f.b.k.init(
@@ -5362,14 +5362,14 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          label,
          maxNameW,
          this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-         autismclient.gui.ui.layout.LayoutContext.init(nameColor, alpha)
+         autismclient.gui.ui.layout.LayoutContext.scaleAlpha(nameColor, alpha)
       );
       autismclient.gui.f.b.k.init(
          context,
          this.init_Font,
          displayName,
          this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-         autismclient.gui.ui.layout.LayoutContext.init(nameColor, alpha),
+         autismclient.gui.ui.layout.LayoutContext.scaleAlpha(nameColor, alpha),
          nameX,
          this.init_I_I_6(actionY),
          false
@@ -5460,7 +5460,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private void init(GuiGraphicsExtractor context, int x, int y, int width, String label, boolean hovered, boolean selected) {
       int bg = selected ? UiColorPalette.rowSelected() : (hovered ? UiColorPalette.rowHover() : UiColorPalette.rowSurface());
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(context, x, y, width, 12, bg);
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(context, x, y, width, 12, bg);
       int textX = x + 3;
       this.init_V_GuiGraphicsExtract_4(context, label, textX, y + 2, selected ? UiColorPalette.selectedText() : UiColorPalette.menuItemText());
    }

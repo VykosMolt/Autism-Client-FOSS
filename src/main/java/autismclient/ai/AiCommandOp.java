@@ -160,9 +160,9 @@ public final class AiCommandOp {
                   if (!this.init_Z) {
                      if (parsed.chat()) {
                         this.init_Minecraft.getConnection().sendChat(parsed.send());
-                        AiService service = AiService.load_cc();
+                        AiService service = AiService.getExistingInstance();
                         if (service != null) {
-                           service.update_V_Str(parsed.send());
+                           service.forwardChatMessage(parsed.send());
                         }
                      } else {
                         this.init_Minecraft.getConnection().sendCommand(parsed.send());

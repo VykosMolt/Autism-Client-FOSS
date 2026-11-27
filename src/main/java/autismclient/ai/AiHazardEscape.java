@@ -55,7 +55,7 @@ final class AiHazardEscape {
             }
 
             String next = AiHazardEscape.init(mc);
-            if (next == null && !this.init_Y.init_Z()) {
+            if (next == null && !this.init_Y.isActive()) {
                return this.init(AiOperation.Status.SUCCEEDED, "Immediate environmental danger cleared");
             }
 
@@ -64,10 +64,10 @@ final class AiHazardEscape {
             }
 
             AiOperation.Result result = this.init_Y
-               .init_AiOperation_Result_AiOperation(null, () -> {}, () -> Math.max(1, (int)((this.init_J - System.nanoTime()) / 1000000000L)));
+               .tick(null, () -> {}, () -> Math.max(1, (int)((this.init_J - System.nanoTime()) / 1000000000L)));
             if (result != null) {
                if (result.terminal()) {
-                  this.init_Y.init_V();
+                  this.init_Y.cancel();
                }
 
                return result;
@@ -77,27 +77,27 @@ final class AiHazardEscape {
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
-            boolean pending = this.init_Y.read();
-            this.init_Y.init_V();
-            return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
+            boolean pending = this.init_Y.requiresReconciliation();
+            this.init_Y.cancel();
+            return AiGuardLayer.wrapPendingTermination(
                pending, AiGameOperations.result(status, message, AiJson.objectOf("hazard", this.init_Str, "reobserveBeforeResuming", true))
             );
          }
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_Y.load();
+            return this.init_Y.canInterruptNow();
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_Y.read();
+            return this.init_Y.requiresReconciliation();
          }
 
          @Override
          public void cancel() {
             this.init_Z = true;
-            this.init_Y.init_V();
+            this.init_Y.cancel();
          }
       };
    }

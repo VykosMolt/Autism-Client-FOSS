@@ -148,7 +148,7 @@ public class OverlayContextMenu<T> {
             int iy = this.flush + 2 + i * this.update;
             boolean hov = mx >= this.sync && mx < this.sync + w && my >= iy && my < iy + this.update;
             if (hov) {
-               autismclient.gui.ui.widgets.PanelSurfaceHelper.init(ctx, this.sync + 1, iy, w - 2, this.update, UiColorPalette.contextMenuHoverFill());
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(ctx, this.sync + 1, iy, w - 2, this.update, UiColorPalette.contextMenuHoverFill());
             }
 
             int textY = UiLayoutMath.centerTextY(iy, this.update, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());

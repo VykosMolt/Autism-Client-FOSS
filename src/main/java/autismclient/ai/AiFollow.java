@@ -34,8 +34,8 @@ final class AiFollow {
          final double distance = Math.max(1.0, Math.min(8.0, AiJson.getDouble(args, "distance", 2.5)));
          final Integer timeout = args.has("timeoutSeconds") ? Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 60))) : null;
          final long deadline = timeout == null ? 9223372036854775807L : System.nanoTime() + timeout.intValue() * 1000000000L;
-         AiService service = AiService.load_cc();
-         final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
+         AiService service = AiService.getExistingInstance();
+         final boolean silentAim = service != null && service.getSettings().aiSilentAim;
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
@@ -93,7 +93,7 @@ final class AiFollow {
                      this.init_V_6();
                      this.init_BlockPos = this.init_Entity.blockPosition();
                      this.load = 0;
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(this.init_BlockPos, distance, false, false, false, this.init_I_7());
+                     this.init_AiOperation = AiGoto.travelToCompat(this.init_BlockPos, distance, false, false, false, this.init_I_7());
                   }
 
                   AiOperation.Result r = this.init_AiOperation.tick();

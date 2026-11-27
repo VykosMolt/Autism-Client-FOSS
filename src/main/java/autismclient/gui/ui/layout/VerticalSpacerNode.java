@@ -15,6 +15,6 @@ public class VerticalSpacerNode extends LayoutNode {
 
    @Override
    public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      return context.init_CharEncoder().init_F_F(this.sync);
+      return context.theme().init_F_F(this.sync);
    }
 }

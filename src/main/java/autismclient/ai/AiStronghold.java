@@ -64,11 +64,11 @@ final class AiStronghold {
             || AiJson.getBoolean(receipt, "reobserveBeforeResuming", false);
       }
 
-      return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pending, AiGameOperations.result(status, message, evidence));
+      return AiGuardLayer.wrapPendingTermination(pending, AiGameOperations.result(status, message, evidence));
    }
 
    private static AiEyeNavigation init(Minecraft mc) {
-      String world = AiWorldIdentity.init(mc);
+      String world = AiWorldIdentity.currentWorldKey(mc);
       if (init_z == null || !world.equals(init_Str) || init_Obj != mc.getConnection()) {
          init_Str = world;
          init_Obj = mc.getConnection();
@@ -92,7 +92,7 @@ final class AiStronghold {
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final AiEyeNavigation init_z = AiStronghold.init(mc);
             final AiStrongholdSearch.Inner_DataUtil init_cp_DataUtil = new AiStrongholdSearch.Inner_DataUtil();
-            final String init_Str = AiWorldIdentity.init(mc);
+            final String init_Str = AiWorldIdentity.currentWorldKey(mc);
             final Object init_Obj = mc.getConnection();
             final UUID init_UUID = mc.player.getUUID();
             final long load_J = AiServerEvidence.deathRevision();
@@ -277,7 +277,7 @@ final class AiStronghold {
             @Override
             public AiOperation.Result tick() {
                if (mc.player != null && mc.level != null) {
-                  if (!this.init_Str.equals(AiWorldIdentity.init(mc)) || this.init_Obj != mc.getConnection()) {
+                  if (!this.init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) || this.init_Obj != mc.getConnection()) {
                      return this.init(AiOperation.Status.CANCELLED, "World or connection changed during stronghold navigation");
                   }
 
@@ -317,7 +317,7 @@ final class AiStronghold {
                         }
 
                         AiOperation.Result g = this.init_Y
-                           .init_AiOperation_Result_AiOperation(this.sync_Z ? this.load_AiOperation : this.init_AiOperation, () -> {
+                           .tick(this.sync_Z ? this.load_AiOperation : this.init_AiOperation, () -> {
                               if (this.sync_Z) {
                                  this.load_AiOperation.cancel();
                               } else {
@@ -347,7 +347,7 @@ final class AiStronghold {
                                  return this.load(this.load_Str + ": " + r.message());
                               }
 
-                              r = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(this.init_AiOperation.requiresReconciliationAfterEmergency(), r);
+                              r = AiGuardLayer.wrapPendingTermination(this.init_AiOperation.requiresReconciliationAfterEmergency(), r);
                               this.init_V_28();
                               AiSpeedrun.init_V_Str_ObjArr("[AI] stronghold step {}: {} - {}", r.status(), this.load_Str, AiSpeedrun.init_Str_Str(r.message()));
                               this.init_JsonArray
@@ -461,8 +461,8 @@ final class AiStronghold {
                   return this.init("secure travel food", AiSpeedrun.init_AiOperation_I_I(goal, 120));
                } else {
                   this.add = 0;
-                  if (this.prev < 2 && !AiWorldScan.init_List_Str_D("minecraft:silverfish", 12.0).isEmpty()) {
-                     BlockPos spawner = AiWorldScan.init_List_Str_I("minecraft:silverfish", 2)
+                  if (this.prev < 2 && !AiWorldScan.findEntitiesByType("minecraft:silverfish", 12.0).isEmpty()) {
+                     BlockPos spawner = AiWorldScan.findMobSpawners("minecraft:silverfish", 2)
                         .stream()
                         .filter(p -> p.distSqr(mc.player.blockPosition()) <= 144.0)
                         .findFirst()
@@ -481,12 +481,12 @@ final class AiStronghold {
                      }
                   }
 
-                  BlockPos portal = AiWorldScan.init_BlockPos_Predicate_I(s -> s.is(Blocks.END_PORTAL), 4);
+                  BlockPos portal = AiWorldScan.findNearestBlock(s -> s.is(Blocks.END_PORTAL), 4);
                   if (portal != null) {
                      AiEndPortal.Inner_StreamUtil verified = AiEndPortal.init_t_StreamUtil(portal);
                      if (verified == null) {
                         if (portal.distSqr(mc.player.blockPosition()) > 36.0) {
-                           return this.init("inspect the portal without entering", AiGoto.init_AiOperation_BlockPos(portal, 3.0, true, true, true, 90));
+                           return this.init("inspect the portal without entering", AiGoto.travelToCompat(portal, 3.0, true, true, true, 90));
                         }
 
                         return this.init(AiOperation.Status.UNCERTAIN, "End portal lacks a fully loaded inward-facing ring and nine active cells");
@@ -509,7 +509,7 @@ final class AiStronghold {
                         "activeInteriorCells",
                         9,
                         "observedTick",
-                        AiThreats.init_J(),
+                        AiThreats.currentClientTick(),
                         "geometryVerified",
                         true
                      );
@@ -601,7 +601,7 @@ final class AiStronghold {
                         int z = this.load_BlockPos.getZ() + (int)Math.round(Math.sin(a) * 72.0);
                         return this.init(
                            "look for the End kit round the portal (" + AiForage.init_Str() + ", leg " + this.poll + ")",
-                           AiGoto.init(
+                           AiGoto.travelToCompat(
                               new BlockPos(x, mc.player.getBlockY(), z),
                               4.0,
                               true,
@@ -659,7 +659,7 @@ final class AiStronghold {
                         this.run++;
                         return this.init(
                            "to the portal frame at " + stance.toShortString(),
-                           AiGoto.init(
+                           AiGoto.travelToCompat(
                               stance,
                               0.5,
                               true,
@@ -678,7 +678,7 @@ final class AiStronghold {
                      if (portal != null) {
                         return this.init(
                            "into the end portal at " + portal.toShortString(),
-                           AiGoto.init(
+                           AiGoto.travelToCompat(
                               portal,
                               0.6,
                               true,
@@ -694,7 +694,7 @@ final class AiStronghold {
                         );
                      }
 
-                     BlockPos frame = AiWorldScan.init_BlockPos_Predicate_I(s -> s.is(Blocks.END_PORTAL_FRAME), 12);
+                     BlockPos frame = AiWorldScan.findNearestBlock(s -> s.is(Blocks.END_PORTAL_FRAME), 12);
                      if (frame != null) {
                         if (this.write_BlockPos == null) {
                            AiSpeedrun.init_V_Str_ObjArr("[AI] stronghold: portal frame seen at {} after {} throws", frame.toShortString(), this.sync_I);
@@ -738,7 +738,7 @@ final class AiStronghold {
                               int z = frame.getZ() + (int)Math.round(Math.sin(a) * 80.0);
                               return this.init(
                                  "look for endermen near the room (" + empty.size() + " frames empty, " + eyes + " eyes)",
-                                 AiGoto.init(
+                                 AiGoto.travelToCompat(
                                     new BlockPos(x, mc.player.getBlockY(), z),
                                     4.0,
                                     true,
@@ -777,7 +777,7 @@ final class AiStronghold {
 
                                     return escape != null
                                        ? this.init(
-                                          "leave the pocket along supported terrain", AiGoto.init_AiOperation_BlockPos(escape, 1.0, true, true, false, 30)
+                                          "leave the pocket along supported terrain", AiGoto.travelToCompat(escape, 1.0, true, true, false, 30)
                                        )
                                        : this.init(
                                           AiOperation.Status.UNCERTAIN, "Portal approach is enclosed; no observed supported escape, so no blind downward dig"
@@ -785,7 +785,7 @@ final class AiStronghold {
                                  } else {
                                     return this.init(
                                        "walk to the portal frame at " + target.toShortString(),
-                                       AiGoto.init(
+                                       AiGoto.travelToCompat(
                                           target,
                                           2.5,
                                           true,
@@ -819,7 +819,7 @@ final class AiStronghold {
                                        this.get++;
                                        return this.init(
                                           "to a stance over the frame at " + target.toShortString(),
-                                          AiGoto.init(
+                                          AiGoto.travelToCompat(
                                              stance,
                                              0.4,
                                              true,
@@ -841,7 +841,7 @@ final class AiStronghold {
                            }
                         } else {
                            return this.stop++ < 3 && mc.player.blockPosition().distSqr(frame) > 36.0
-                              ? this.init("load the complete portal room", AiGoto.init_AiOperation_BlockPos(frame, 3.0, true, true, true, 120))
+                              ? this.init("load the complete portal room", AiGoto.travelToCompat(frame, 3.0, true, true, true, 120))
                               : this.init(AiOperation.Status.UNCERTAIN, "Observed frame is not a complete loaded inward-facing twelve-frame ring");
                         }
                      } else {
@@ -896,7 +896,7 @@ final class AiStronghold {
                                        int z = this.read_BlockPos.getZ() + (int)Math.round(Math.sin(a) * 80.0);
                                        return this.init(
                                           "look for endermen for the eyes (no pearls)",
-                                          AiGoto.init(
+                                          AiGoto.travelToCompat(
                                              new BlockPos(x, mc.player.getBlockY(), z),
                                              4.0,
                                              true,
@@ -934,7 +934,7 @@ final class AiStronghold {
                                  int tz = (int)Math.floor(at.z + this.load_Vec3.z * 12.0);
                                  return this.init(
                                     "step out from under the trees",
-                                    AiNetherRun.init(AiGoto.init_HashUtil_CachePool_BlockPos(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.Inner_NetHelper(tx, tz, 3), 30))
+                                    AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.Inner_NetHelper(tx, tz, 3), 30))
                                  );
                               } else {
                                  return !this.init_Z_5("minecraft:ender_eye")
@@ -958,7 +958,7 @@ final class AiStronghold {
                                  int sz = (int)Math.floor(side.z);
                                  return this.init(
                                     "establish a lateral Eye baseline",
-                                    AiNetherRun.init(AiGoto.init_HashUtil_CachePool_BlockPos(new BlockPos(sx, (int)at.y, sz), new AiNetherRun.Inner_NetHelper(sx, sz, 8), 90))
+                                    AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(sx, (int)at.y, sz), new AiNetherRun.Inner_NetHelper(sx, sz, 8), 90))
                                  );
                               }
                            }
@@ -990,7 +990,7 @@ final class AiStronghold {
                            this.read_Z = false;
                            return this.init(
                               "follow the bearing toward " + tx + ", " + tz,
-                              AiNetherRun.init(AiGoto.init_HashUtil_CachePool_BlockPos(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.Inner_NetHelper(tx, tz, 12), 120, dry))
+                              AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.Inner_NetHelper(tx, tz, 12), 120, dry))
                            );
                         }
                      }
@@ -1166,7 +1166,7 @@ final class AiStronghold {
                               line != null ? this.init_z_StreamUtil.load() : this.write_Vec3,
                               line != null ? line.scale(Math.max(4.0, moved)) : now.subtract(this.write_Vec3)
                            );
-                        AiRunTrace.init_V_Str_JsonObject(
+                        AiRunTrace.emitServiceEvent(
                            "eye_bearing",
                            AiJson.objectOf(
                               "throw",
@@ -1414,10 +1414,10 @@ final class AiStronghold {
                boolean pending = this.requiresReconciliationAfterEmergency();
                this.init_co_DataUtil.init_V(this.init_AiOperation);
                this.init_co_DataUtil.init(pending, child);
-               this.init_co_DataUtil.init(this.init_Y.read(), this.init_AiOperation_Result);
+               this.init_co_DataUtil.init(this.init_Y.requiresReconciliation(), this.init_AiOperation_Result);
                AiOperation.Result result = this.init_co_DataUtil.init(status, message, this.init_JsonObject_53(), child);
                this.init_V_28();
-               this.init_Y.init_V();
+               this.init_Y.cancel();
                this.init_DataUtil.clear();
                return result;
             }
@@ -1435,7 +1435,7 @@ final class AiStronghold {
                   && !this.sync_Z
                   && !this.init_co_StreamUtil.init_Z()
                   && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
-                  && this.init_Y.load();
+                  && this.init_Y.canInterruptNow();
             }
 
             @Override
@@ -1443,14 +1443,14 @@ final class AiStronghold {
                return this.init_co_DataUtil.init()
                   || this.init_co_StreamUtil.init_Z()
                   || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-                  || this.init_Y.read();
+                  || this.init_Y.requiresReconciliation();
             }
 
             @Override
             public void cancel() {
-               this.init_co_DataUtil.init(this.init_Y.read(), this.init_AiOperation_Result);
+               this.init_co_DataUtil.init(this.init_Y.requiresReconciliation(), this.init_AiOperation_Result);
                this.init_V_28();
-               this.init_Y.init_V();
+               this.init_Y.cancel();
                this.init_DataUtil.clear();
             }
          };
@@ -1507,7 +1507,7 @@ final class AiStronghold {
                || this.init_AiOperation_Result.status() != AiOperation.Status.SUCCEEDED && before
                || AiJson.getBoolean(data, "interruptedActionNeedsReconciliation", false)
                || AiJson.getBoolean(data, "reobserveBeforeResuming", false);
-            this.init_AiOperation_Result = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(needsObservation, this.init_AiOperation_Result);
+            this.init_AiOperation_Result = AiGuardLayer.wrapPendingTermination(needsObservation, this.init_AiOperation_Result);
             this.init(needsObservation, this.init_AiOperation_Result);
          }
 

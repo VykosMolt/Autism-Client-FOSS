@@ -308,8 +308,8 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       if (this.init_Z || this.a__Z()) {
          this.write_Str = null;
          autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-         float uiMouseX = viewport.init_F_D(mouseX);
-         float uiMouseY = viewport.load(mouseY);
+         float uiMouseX = viewport.toUiX(mouseX);
+         float uiMouseY = viewport.toUiY(mouseY);
          int contentWidth = this.tick_I_9();
          this.read_I = this.init_I_I_I(contentWidth, contentWidth);
          boolean active = OverlayManager.getInstance().isFocused(this) || OverlayManager.getInstance().isTopmost(this);
@@ -339,13 +339,13 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          this.init_TextFormat.init(context, mouseX, mouseY, delta);
          if (!this.load_Z && this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
             context.nextStratum();
-            viewport.init_V_GuiGraphicsExtract(context);
+            viewport.pushTransform(context);
 
             try {
                this.init_RefQueue
                   .init_V_SyncManager(autismclient.gui.f.UiHelper.init(context, init_Minecraft.font, Math.round(uiMouseX), Math.round(uiMouseY)));
             } finally {
-               viewport.load(context);
+               viewport.popTransform(context);
             }
          }
 
@@ -357,7 +357,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor context, autismclient.gui.ui.layout.LayoutViewport viewport, String text, float uiX, float uiY) {
-      viewport.init_V_GuiGraphicsExtract(context);
+      viewport.pushTransform(context);
 
       try {
          TooltipRenderer.init(
@@ -368,7 +368,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
             this.reset()
          );
       } finally {
-         viewport.load(context);
+         viewport.popTransform(context);
       }
    }
 
@@ -383,8 +383,8 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
 
       autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-      float uiMouseX = viewport.init_F_D(mouseX);
-      float uiMouseY = viewport.load(mouseY);
+      float uiMouseX = viewport.toUiX(mouseX);
+      float uiMouseY = viewport.toUiY(mouseY);
       if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
          autismclient.gui.ui.UiInputResult result = this.init_RefQueue.init_EventBus_I_2(Math.round(uiMouseX), Math.round(uiMouseY), button);
          if (!this.init_RefQueue.init_Z_2()) {
@@ -461,7 +461,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
    public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
       if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
          autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-         return this.init_RefQueue.load(Math.round(viewport.init_F_D(mouseX)), Math.round(viewport.load(mouseY)), button) == autismclient.gui.ui.UiInputResult.HANDLED;
+         return this.init_RefQueue.load(Math.round(viewport.toUiX(mouseX)), Math.round(viewport.toUiY(mouseY)), button) == autismclient.gui.ui.UiInputResult.HANDLED;
       } else if (this.write_Z) {
          this.write_Z = false;
          this.a__V();
@@ -479,7 +479,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
    public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
          autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-         return this.init_RefQueue.init_EventBus_I(Math.round(viewport.init_F_D(mouseX)), Math.round(viewport.load(mouseY)), button, deltaX, deltaY)
+         return this.init_RefQueue.init_EventBus_I(Math.round(viewport.toUiX(mouseX)), Math.round(viewport.toUiY(mouseY)), button, deltaX, deltaY)
             == autismclient.gui.ui.UiInputResult.HANDLED;
       }
 
@@ -487,7 +487,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          if (this.sync_Z) {
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics bodyBar = this.init_CharEncoder_2.init_PoolEntry_DataUtil();
             if (bodyBar != null) {
-               this.init_CharEncoder_2.init(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(bodyBar, this.init_TextFormat.init_RingBuffer().load(mouseY), this.reset));
+               this.init_CharEncoder_2.init(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(bodyBar, this.init_TextFormat.init_RingBuffer().toUiY(mouseY), this.reset));
             }
 
             return true;
@@ -496,8 +496,8 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          }
       } else {
          autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-         float uiMouseX = viewport.init_F_D(mouseX);
-         float uiMouseY = viewport.load(mouseY);
+         float uiMouseX = viewport.toUiX(mouseX);
+         float uiMouseY = viewport.toUiY(mouseY);
          OverlayBounds clamped = this.init_cH_cH(
             new OverlayBounds(Math.round(uiMouseX - this.load_F), Math.round(uiMouseY - this.read_F), this.read_I, this.write, this.init_Z, this.load_Z)
          );
@@ -518,7 +518,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          return false;
       } else if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
          autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-         return this.init_RefQueue.init_EventBus_I(Math.round(viewport.init_F_D(mouseX)), Math.round(viewport.load(mouseY)), amount)
+         return this.init_RefQueue.init_EventBus_I(Math.round(viewport.toUiX(mouseX)), Math.round(viewport.toUiY(mouseY)), amount)
             == autismclient.gui.ui.UiInputResult.HANDLED;
       } else if (this.init_TextFormat.init_Z_D(mouseX, mouseY, amount)) {
          return true;
@@ -565,8 +565,8 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
 
       autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-      float uiX = viewport.init_F_D(mouseX);
-      float uiY = viewport.load(mouseY);
+      float uiX = viewport.toUiX(mouseX);
+      float uiY = viewport.toUiY(mouseY);
       return uiX >= this.init_I_2 && uiX < this.init_I_2 + this.read_I && uiY >= this.load_I && uiY < this.load_I + this.write;
    }
 
@@ -577,7 +577,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
 
       autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-      return this.init_Z_F_F_2(viewport.init_F_D(mouseX), viewport.load(mouseY));
+      return this.init_Z_F_F_2(viewport.toUiX(mouseX), viewport.toUiY(mouseY));
    }
 
    private boolean init_Z_F_F_2(float uiMouseX, float uiMouseY) {
@@ -640,8 +640,8 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
    private OverlayBounds init_cH_cH(OverlayBounds bounds) {
       autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       int margin = 4;
-      int viewportW = Math.round(viewport.init());
-      int viewportH = Math.round(viewport.load());
+      int viewportW = Math.round(viewport.width());
+      int viewportH = Math.round(viewport.height());
       int availableW = Math.max(1, viewportW - margin * 2);
       int availableH = Math.max(this.init_CharEncoder.load(), viewportH - margin * 2);
       int width = Math.max(Math.min(this.init_I(), availableW), Math.min(bounds.width, availableW));
@@ -881,10 +881,10 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       public void init_V_SyncManager(autismclient.gui.ui.layout.LayoutContext context) {
          this.init_PoolEntry.init(autismclient.gui.f.b.l.read);
          super.init_V_SyncManager(context);
-         if (this.init_PoolEntry.init_Z_F_F(context.init_F(), context.load())) {
+         if (this.init_PoolEntry.init_Z_F_F(context.mouseX(), context.mouseY())) {
             AutismKeybindOverlay.this.write_Str = this.init_AutismKeybindOverl.load;
-            AutismKeybindOverlay.this.sync_F = context.init_F() + AutismKeybindOverlay.this.stop();
-            AutismKeybindOverlay.this.flush_F = context.load() - AutismKeybindOverlay.this.next();
+            AutismKeybindOverlay.this.sync_F = context.mouseX() + AutismKeybindOverlay.this.stop();
+            AutismKeybindOverlay.this.flush_F = context.mouseY() - AutismKeybindOverlay.this.next();
          }
       }
 
@@ -954,10 +954,10 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
                csgo ? autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY : autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY
             );
          super.init_V_SyncManager(context);
-         if (this.init_Z_F_F(context.init_F(), context.load())) {
+         if (this.init_Z_F_F(context.mouseX(), context.mouseY())) {
             AutismKeybindOverlay.this.write_Str = "DEFAULT: movable category panels. CSGO: one window with a category sidebar. Changes apply immediately.";
-            AutismKeybindOverlay.this.sync_F = context.init_F() + AutismKeybindOverlay.this.stop();
-            AutismKeybindOverlay.this.flush_F = context.load() - AutismKeybindOverlay.this.next();
+            AutismKeybindOverlay.this.sync_F = context.mouseX() + AutismKeybindOverlay.this.stop();
+            AutismKeybindOverlay.this.flush_F = context.mouseY() - AutismKeybindOverlay.this.next();
          }
       }
    }
@@ -1029,10 +1029,10 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
                scale != 1.0 ? autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY : autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY
             );
          super.init_V_SyncManager(context);
-         if (this.init_PoolEntry.init_Z_F_F(context.init_F(), context.load())) {
+         if (this.init_PoolEntry.init_Z_F_F(context.mouseX(), context.mouseY())) {
             AutismKeybindOverlay.this.write_Str = "Scales the custom UI font only (layout stays on Overlay Scale). Left-click increases, right-click decreases.";
-            AutismKeybindOverlay.this.sync_F = context.init_F() + AutismKeybindOverlay.this.stop();
-            AutismKeybindOverlay.this.flush_F = context.load() - AutismKeybindOverlay.this.next();
+            AutismKeybindOverlay.this.sync_F = context.mouseX() + AutismKeybindOverlay.this.stop();
+            AutismKeybindOverlay.this.flush_F = context.mouseY() - AutismKeybindOverlay.this.next();
          }
       }
 
@@ -1099,7 +1099,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          boolean on = this.init_BooleanSupplier.getAsBoolean();
          this.init_PoolEntry.init_V_SyncManager(context);
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(
-            context.init_GuiGraphicsExtract(), context.init_Font(), Math.round(context.init_F()), Math.round(context.load())
+            context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
          );
          autismclient.gui.f.NetHelper pillBounds = autismclient.gui.f.NetHelper.init(
             Math.round(this.init_ByteReader.load_F()),
@@ -1108,10 +1108,10 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
             Math.round(this.init_ByteReader.update_F())
          );
          ToggleSwitchRenderer.init(ui, pillBounds, on, pillBounds.init_Z(ui.read(), ui.write()), "keybind:" + this.init_Str);
-         if (this.init_PoolEntry.init_Z_F_F(context.init_F(), context.load())) {
+         if (this.init_PoolEntry.init_Z_F_F(context.mouseX(), context.mouseY())) {
             AutismKeybindOverlay.this.write_Str = this.init_Str;
-            AutismKeybindOverlay.this.sync_F = context.init_F() + AutismKeybindOverlay.this.stop();
-            AutismKeybindOverlay.this.flush_F = context.load() - AutismKeybindOverlay.this.next();
+            AutismKeybindOverlay.this.sync_F = context.mouseX() + AutismKeybindOverlay.this.stop();
+            AutismKeybindOverlay.this.flush_F = context.mouseY() - AutismKeybindOverlay.this.next();
          }
       }
    }
@@ -1166,10 +1166,10 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
                scale > 1.0 ? autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY : autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY
             );
          super.init_V_SyncManager(context);
-         if (this.init_PoolEntry.init_Z_F_F(context.init_F(), context.load())) {
+         if (this.init_PoolEntry.init_Z_F_F(context.mouseX(), context.mouseY())) {
             AutismKeybindOverlay.this.write_Str = "Scales every Autism overlay/window. Left-click increases, right-click decreases. 1x is default; 1.5x/2x are for 4K/high-DPI screens.";
-            AutismKeybindOverlay.this.sync_F = context.init_F() + AutismKeybindOverlay.this.stop();
-            AutismKeybindOverlay.this.flush_F = context.load() - AutismKeybindOverlay.this.next();
+            AutismKeybindOverlay.this.sync_F = context.mouseX() + AutismKeybindOverlay.this.stop();
+            AutismKeybindOverlay.this.flush_F = context.mouseY() - AutismKeybindOverlay.this.next();
          }
       }
 
@@ -1214,10 +1214,10 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(
                Math.round(this.init_F), Math.round(this.load_F), Math.round(this.read_F), Math.round(this.write)
             );
-            boolean hovered = this.load_Z && this.init_Z_F_F(context.init_F(), context.load());
+            boolean hovered = this.load_Z && this.init_Z_F_F(context.mouseX(), context.mouseY());
             autismclient.gui.ui.widgets.KeybindButtonRenderer.init(
                autismclient.gui.f.UiHelper.init(
-                  context.init_GuiGraphicsExtract(), context.init_Font(), Math.round(context.init_F()), Math.round(context.load())
+                  context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
                ),
                bounds,
                this.init_IntSupplier.getAsInt(),
@@ -1269,8 +1269,8 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          int controlH = Math.min(rowH, AutismKeybindOverlay.queue());
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(rowX + Math.max(0, rowW - controlW), rowY + (rowH - controlH) / 2, controlW, controlH);
          autismclient.gui.f.b.k.init(
-            context.init_GuiGraphicsExtract(),
-            context.init_Font(),
+            context.graphics(),
+            context.font(),
             "Command Prefix",
             AutismKeybindOverlay.this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
             AutismKeybindOverlay.this.init_CharEncoder.load(autismclient.gui.f.b.l.read),
@@ -1283,10 +1283,10 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          );
          String value = CommandPrefixHelper.init_Str();
          autismclient.gui.ui.widgets.WidgetRenderFacade.init(
-            autismclient.gui.f.UiHelper.init(context.init_GuiGraphicsExtract(), context.init_Font(), Math.round(context.init_F()), Math.round(context.load())),
+            autismclient.gui.f.UiHelper.init(context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())),
             this.init_NetHelper,
             value,
-            this.init_NetHelper.init_Z(Math.round(context.init_F()), Math.round(context.load())),
+            this.init_NetHelper.init_Z(Math.round(context.mouseX()), Math.round(context.mouseY())),
             AutismKeybindOverlay.this.init_RefQueue != null && AutismKeybindOverlay.this.init_RefQueue.init_Z_2()
          );
       }

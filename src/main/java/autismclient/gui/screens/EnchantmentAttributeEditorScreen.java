@@ -100,7 +100,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
          int y = Math.max(margin, (sh - h) / 2);
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my);
          this.init_SyncManager = new autismclient.gui.ui.layout.LayoutContext(
-            graphics, this.font, autismclient.gui.ui.layout.LayoutViewport.init_RingBuffer_F(1.0F), init_CharEncoder, mx, my, delta
+            graphics, this.font, autismclient.gui.ui.layout.LayoutViewport.create(1.0F), init_CharEncoder, mx, my, delta
          );
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), -1728053248);
          autismclient.gui.f.NetHelper panel = autismclient.gui.f.NetHelper.init(x, y, w, h);
@@ -320,7 +320,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
                Math.max(1, remove.read() - gap - bounds.read() - pad),
                ui.init_TableIndex().colors().textPrimary
             );
-         autismclient.gui.ui.widgets.ListRowRenderer.load(ui.init_GuiGraphicsExtract(), remove.read(), remove.write(), remove.update(), remove.sync(), remove.init_Z(mx, my));
+         autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButton(ui.init_GuiGraphicsExtract(), remove.read(), remove.write(), remove.update(), remove.sync(), remove.init_Z(mx, my));
          this.sync_List.add(new EnchantmentAttributeEditorScreen.Inner_CachePool(bounds, index, remove));
       }
    }

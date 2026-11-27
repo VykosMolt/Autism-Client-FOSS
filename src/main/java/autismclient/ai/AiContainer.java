@@ -47,34 +47,34 @@ final class AiContainer {
                return this.init_AiOperation_Result;
             }
 
-            AiOperation.Result result = this.init_bb.init_AiOperation_Result(route);
-            this.init_bb.init(result.status() == AiOperation.Status.UNCERTAIN);
+            AiOperation.Result result = this.init_bb.tickChild(route);
+            this.init_bb.markReconciliationPending(result.status() == AiOperation.Status.UNCERTAIN);
             if (!result.terminal()) {
                return result;
             }
 
-            this.init_AiOperation_Result = this.init_bb.init(result, this.init_bb.init_Z(route));
-            this.init_bb.init_V(route);
+            this.init_AiOperation_Result = this.init_bb.finalizeResult(result, this.init_bb.requiresReconciliation(route));
+            this.init_bb.cancelChild(route);
             return this.init_AiOperation_Result;
          }
 
          @Override
          public void cancel() {
-            this.init_bb.init_V(route);
+            this.init_bb.cancelChild(route);
             if (this.init_AiOperation_Result == null) {
                this.init_AiOperation_Result = this.init_bb
-                  .init(new AiOperation.Result(AiOperation.Status.CANCELLED, "Container navigation cancelled", "{}", List.of()), this.init_bb.init_Z(null));
+                  .finalizeResult(new AiOperation.Result(AiOperation.Status.CANCELLED, "Container navigation cancelled", "{}", List.of()), this.init_bb.requiresReconciliation(null));
             }
          }
 
          @Override
          public boolean canInterruptNow() {
-            return !this.init_bb.init_Z(route) && (this.init_AiOperation_Result != null || route.canInterruptNow());
+            return !this.init_bb.requiresReconciliation(route) && (this.init_AiOperation_Result != null || route.canInterruptNow());
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_bb.init_Z(route);
+            return this.init_bb.requiresReconciliation(route);
          }
       };
    }
@@ -255,7 +255,7 @@ final class AiContainer {
                                     Set.of(next.slot())
                                  );
                               } else {
-                                 AiContainerTransactions.init(this.load_I, next.slot(), 0, ContainerInput.QUICK_MOVE);
+                                 AiContainerTransactions.sendPredictedClick(this.load_I, next.slot(), 0, ContainerInput.QUICK_MOVE);
                               }
                            }
 
@@ -295,7 +295,7 @@ final class AiContainer {
                         return this.init(AiOperation.Status.FAILED, "Container is out of reach and navigate is disabled");
                      }
 
-                     this.init_AiOperation = AiContainer.init(AiGoto.load(pos, Math.min(120, timeoutSeconds), protectedCells, false));
+                     this.init_AiOperation = AiContainer.init(AiGoto.approachBlockToInteractCompat(pos, Math.min(120, timeoutSeconds), protectedCells, false));
                      return this.init("Travelling to the container");
                   } else {
                      if (!AiTerrain.isLoaded(mc.level, pos)) {
@@ -478,7 +478,7 @@ final class AiContainer {
                this.write_Z = this.write_Z | status == AiOperation.Status.UNCERTAIN;
                boolean pending = this.requiresReconciliationAfterEmergency();
                this.cancel();
-               return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
+               return AiGuardLayer.wrapPendingTermination(
                   pending || this.write_Z, new AiOperation.Result(status, message, data.toString(), List.of())
                );
             }

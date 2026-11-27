@@ -204,12 +204,12 @@ public final class AddonsScreen extends VirtualScaledScreen {
          this.init_Z = false;
          this.init_Str = this.load_Str;
          this.write_I = 0;
-         this.init_CacheEntry.load(0, 0);
+         this.init_CacheEntry.jumpTo(0, 0);
          this.read_V_3();
          this.load_V_5();
       }
 
-      this.init_CacheEntry.init_I_F_I(1.0F, 1);
+      this.init_CacheEntry.tickAndClamp(1.0F, 1);
    }
 
    @Override
@@ -256,7 +256,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
       int pitch = this.close_I_2();
       int maxScroll = this.init_I_I_3(reports.size());
       this.write_I = init_I_I(this.write_I, pitch, maxScroll);
-      this.init_CacheEntry.load(this.write_I, maxScroll);
+      this.init_CacheEntry.jumpTo(this.write_I, maxScroll);
       int first = this.write_I / pitch;
       int top = this.start();
       int bottom = this.stop();
@@ -405,7 +405,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
          this.load_Z = true;
          this.sync = scrollbar.containsThumb(virtual.x(), virtual.y()) ? Math.max(0, (int)Math.round(virtual.y()) - scrollbar.thumbY()) : scrollbar.thumbHeight() / 2;
          this.write_I = init_I_I(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.maxScroll());
-         this.init_CacheEntry.load(this.write_I, scrollbar.maxScroll());
+         this.init_CacheEntry.jumpTo(this.write_I, scrollbar.maxScroll());
          return true;
       } else {
          autismclient.b.DataUtil.StreamUtil row = this.init_DataUtil_StreamUti_D_D(virtual.x(), virtual.y());
@@ -436,7 +436,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
       if (this.load_Z) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
          this.write_I = init_I_I(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.maxScroll());
-         this.init_CacheEntry.load(this.write_I, scrollbar.maxScroll());
+         this.init_CacheEntry.jumpTo(this.write_I, scrollbar.maxScroll());
          return true;
       } else {
          return super.mouseDragged(virtual, cA.init_D_D(dx), cA.init_D_D(dy));
@@ -454,7 +454,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
          }
 
          this.write_I = init_I_I(this.write_I - (int)Math.signum(scrollY) * this.close_I_2(), this.close_I_2(), maxScroll);
-         this.init_CacheEntry.init_V_I_I(this.write_I, maxScroll);
+         this.init_CacheEntry.setOffset(this.write_I, maxScroll);
          return true;
       } else {
          return super.mouseScrolled(x, y, scrollX, scrollY);

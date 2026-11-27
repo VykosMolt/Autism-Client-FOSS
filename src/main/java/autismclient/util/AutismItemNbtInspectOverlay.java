@@ -182,29 +182,29 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   int maxTextWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.init(listWidth, this.put());
                   this.init_V_I_3(maxTextWidth);
                   if (this.init_EventBus == null
-                     || this.init_EventBus.init_I() != listX
-                     || this.init_EventBus.load_I() != listY
-                     || this.init_EventBus.read_I() != listWidth
-                     || this.init_EventBus.write_I() != listHeight) {
-                     int oldScroll = this.init_EventBus == null ? 0 : this.init_EventBus.open();
+                     || this.init_EventBus.getX() != listX
+                     || this.init_EventBus.getY() != listY
+                     || this.init_EventBus.getWidth() != listWidth
+                     || this.init_EventBus.getHeight() != listHeight) {
+                     int oldScroll = this.init_EventBus == null ? 0 : this.init_EventBus.getScrollOffset();
                      this.init_EventBus = new autismclient.gui.ui.layout.ScrollableListView(listX, listY, listWidth, listHeight, lineH, 4);
-                     this.init_EventBus.load_V(oldScroll);
+                     this.init_EventBus.setScrollOffset(oldScroll);
                   }
 
-                  this.init_EventBus.init_V(this.init_List.size() * lineH);
-                  this.init_EventBus.init_V_GuiGraphicsExtract_2(context, this.init_CharEncoder.set(), this.init_CharEncoder.reset());
+                  this.init_EventBus.setContentHeight(this.init_List.size() * lineH);
+                  this.init_EventBus.beginFrame(context, this.init_CharEncoder.set(), this.init_CharEncoder.reset());
 
                   try {
-                     this.init_EventBus.init_V_GuiGraphicsExtract_3(context, this.init_List.size(), (idx, bnd) -> {
+                     this.init_EventBus.forEachVisibleRow(context, this.init_List.size(), (idx, bnd) -> {
                         AutismItemNbtInspectOverlay.Inner_StreamUtil line = this.init_List.get(idx);
-                        int y = UiLayoutMath.centerTextY(bnd.load, lineH, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
+                        int y = UiLayoutMath.centerTextY(bnd.y, lineH, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
                         this.init_V_GuiGraphicsExtract_3(context, line, textX, y);
                      });
                   } finally {
-                     this.init_EventBus.init(context);
+                     this.init_EventBus.endFrame(context);
                   }
 
-                  this.init_EventBus.init_V_GuiGraphicsExtract(context, mouseX, mouseY);
+                  this.init_EventBus.renderScrollbar(context, mouseX, mouseY);
                   autismclient.gui.f.b.k.init(
                      context,
                      this.init_Font,
@@ -235,7 +235,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   return;
                }
 
-               autismclient.gui.ui.widgets.ListRowRenderer.init(
+               autismclient.gui.ui.widgets.ListRowRenderer.drawEmptyPlaceholder(
                   context,
                   this.init_Font,
                   "No item selected.",
@@ -283,14 +283,14 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   this.sync_Z = "Raw".equals(tab.init_Str());
                   this.write_Z = true;
                   if (this.init_EventBus != null) {
-                     this.init_EventBus.load_V(0);
+                     this.init_EventBus.setScrollOffset(0);
                   }
 
                   return true;
                }
             }
 
-            if (this.init_EventBus != null && this.init_EventBus.init_Z_D_D(mouseX, mouseY) && this.init_EventBus.init_Z_D_2(mouseX, mouseY, button)) {
+            if (this.init_EventBus != null && this.init_EventBus.containsPoint(mouseX, mouseY) && this.init_EventBus.mouseClicked(mouseX, mouseY, button)) {
                return true;
             }
 
@@ -315,7 +315,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          this.a__V();
          return true;
       } else if (button == 0 && this.init_EventBus != null) {
-         this.init_EventBus.read_V();
+         this.init_EventBus.mouseReleased();
          return true;
       } else {
          this.flush_Z = false;
@@ -326,7 +326,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    @Override
    public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
       if (this.init_EventBus != null) {
-         this.init_EventBus.init_V_D_D(mouseX, mouseY);
+         this.init_EventBus.mouseDragged(mouseX, mouseY);
       }
 
       if (this.init_Z && button == 0 && this.flush_Z) {
@@ -339,8 +339,8 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
-      return this.init_Z && !this.load_Z && this.init_EventBus != null && this.init_EventBus.init_Z_D_D(mouseX, mouseY)
-         ? this.init_EventBus.init_Z_D(mouseX, mouseY, amount)
+      return this.init_Z && !this.load_Z && this.init_EventBus != null && this.init_EventBus.containsPoint(mouseX, mouseY)
+         ? this.init_EventBus.mouseScrolled(mouseX, mouseY, amount)
          : false;
    }
 

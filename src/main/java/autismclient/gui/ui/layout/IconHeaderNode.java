@@ -31,7 +31,7 @@ public final class IconHeaderNode extends LayoutNode {
 
    @Override
    public float init_F_SyncManager(LayoutContext context) {
-      int textWidth = autismclient.gui.f.UiHelper.init(context.init_Font()).measureWidth(this.init_Str);
+      int textWidth = autismclient.gui.f.UiHelper.init(context.font()).measureWidth(this.init_Str);
       return textWidth + (this.init_Identifier != null ? this.init_I + this.load_I : 0);
    }
 
@@ -49,7 +49,7 @@ public final class IconHeaderNode extends LayoutNode {
          if (this.write_Z) {
             ConnectedButtonRenderer.init(
                autismclient.gui.f.UiHelper.init(
-                  context.init_GuiGraphicsExtract(), context.init_Font(), Math.round(context.init_F()), Math.round(context.load())
+                  context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
                ),
                autismclient.gui.f.NetHelper.init(drawX, drawY, Math.round(this.read_F), drawH),
                this.init_Str,
@@ -59,17 +59,17 @@ public final class IconHeaderNode extends LayoutNode {
             int contentX = drawX;
             if (this.init_Identifier != null) {
                int iconY = drawY + Math.max(1, (drawH - this.init_I) / 2);
-               context.init(ThemeTextureRecolorer.init(this.init_Identifier, ThemePaletteManager.ColorRole.ACCENT), drawX, iconY, drawX + this.init_I, iconY + this.init_I);
+               context.blitTexture(ThemeTextureRecolorer.init(this.init_Identifier, ThemePaletteManager.ColorRole.ACCENT), drawX, iconY, drawX + this.init_I, iconY + this.init_I);
                contentX += this.init_I + this.load_I;
             }
 
-            autismclient.gui.f.UiHelper.init(context.init_Font())
+            autismclient.gui.f.UiHelper.init(context.font())
                .draw(
-                  context.init_GuiGraphicsExtract(),
+                  context.graphics(),
                   this.init_Str,
                   contentX,
                   drawY + Math.max(1, (drawH - 9) / 2),
-                  context.init_I_I(ThemePaletteManager.recolor(-791321, ThemePaletteManager.ColorRole.TEXT))
+                  context.applyAlpha(ThemePaletteManager.recolor(-791321, ThemePaletteManager.ColorRole.TEXT))
                );
          }
       }

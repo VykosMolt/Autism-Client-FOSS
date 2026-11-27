@@ -163,7 +163,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
                AutismWaypoints.Waypoint waypoint = rows.get(i);
                this.load_List.add(waypoint.name());
                boolean over = mx >= x && mx < x + w && my >= rowY && my < rowY + rowH;
-               autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, x, rowY, w, rowH, over ? -1441000940 : -1441722092);
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, rowY, w, rowH, over ? -1441000940 : -1441722092);
                int swatchX = x + 3;
                int swatchY = rowY + (rowH - 10) / 2;
                boolean swatchOver = mx >= swatchX && mx < swatchX + 18 && my >= swatchY && my < swatchY + 10;
@@ -187,7 +187,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
                int delY = rowY + (rowH - del) / 2;
                int coordsX = nameX + 120 + 8;
                this.init(graphics, waypoint.x() + " " + waypoint.y() + " " + waypoint.z(), coordsX, this.init_I_6(rowY, rowH), read_I_17(), delX - 4 - coordsX);
-               autismclient.gui.ui.widgets.ListRowRenderer.load(graphics, delX, delY, del, del, over);
+               autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButton(graphics, delX, delY, del, del, over);
                this.init_List.add(new WaypointsScreen.Inner_DataUtil(WaypointsScreen.Inner_StreamUtil.ROW, x, rowY, w, rowH, waypoint.name()));
                this.init_List.add(new WaypointsScreen.Inner_DataUtil(WaypointsScreen.Inner_StreamUtil.SWATCH, swatchX, swatchY, 18, 10, waypoint.name()));
                this.init_List.add(new WaypointsScreen.Inner_DataUtil(WaypointsScreen.Inner_StreamUtil.REMOVE, delX, delY, del, del, waypoint.name()));

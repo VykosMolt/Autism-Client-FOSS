@@ -53,34 +53,34 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 final class AiThreats {
-   static final double init_D = Math.sqrt(2.0399999618530273) - 0.6000000238418579;
-   static final int init_I = 160;
-   static final int load_I = 60;
-   static final int read_I = 12;
-   private static final Map<Integer, Long> init_Map = new HashMap<>();
-   private static final Map<Integer, Long> load_Map = new HashMap<>();
-   private static final Map<Integer, Long> read_Map = new HashMap<>();
-   private static final Map<Integer, Double> write_Map = new HashMap<>();
-   private static long init_J = -9223372036854775808L;
-   private static int write_I;
-   private static Object init_Obj;
-   private static Object load_Obj;
-   private static final Map<Integer, UUID> update = new HashMap<>();
-   private static final Map<Integer, Long> sync = new HashMap<>();
-   private static final Set<Integer> init_Set = new HashSet<>();
-   private static final Map<Integer, Long> flush = new HashMap<>();
-   private static final Map<Integer, String> close = new HashMap<>();
-   private static final Set<Integer> load_Set = new HashSet<>();
-   private static long load_J = -9223372036854775808L;
+   static final double DEFAULT_MELEE_REACH = Math.sqrt(2.0399999618530273) - 0.6000000238418579;
+   static final int RECENT_ATTACKER_TICKS = 160;
+   static final int RECENT_AGGRESSIVE_TICKS = 60;
+   static final int APPROACH_WINDOW_TICKS = 12;
+   private static final Map<Integer, Long> lastDamagedPlayerTick = new HashMap<>();
+   private static final Map<Integer, Long> lastAggressiveTick = new HashMap<>();
+   private static final Map<Integer, Long> approachingSinceTick = new HashMap<>();
+   private static final Map<Integer, Double> lastDistanceByEntity = new HashMap<>();
+   private static long lastObservedTick = -9223372036854775808L;
+   private static int lastPlayerHurtTime;
+   private static Object trackedLevel;
+   private static Object trackedPlayer;
+   private static final Map<Integer, UUID> entityUuidById = new HashMap<>();
+   private static final Map<Integer, Long> blazeFireStartTick = new HashMap<>();
+   private static final Set<Integer> loggedAngryEndermen = new HashSet<>();
+   private static final Map<Integer, Long> lastEndermanStareTick = new HashMap<>();
+   private static final Map<Integer, String> lastEndermanStareContext = new HashMap<>();
+   private static final Set<Integer> seenUnlitBlazes = new HashSet<>();
+   private static long lastBlazePruneTick = -9223372036854775808L;
 
    private AiThreats() {
    }
 
-   static boolean init_Z() {
+   static boolean isLegacyCombatEnabled() {
       return Boolean.getBoolean("autism.ai.combat.legacy");
    }
 
-   static AiThreats.Inner_DataUtil init_cv_DataUtil(Entity e) {
+   static AiThreats.Inner_DataUtil classify(Entity e) {
       String type = BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).getPath();
       if (!type.equals("guardian") && !type.equals("breeze") && !type.equals("vindicator")) {
          if (e instanceof LivingEntity rider) {
@@ -136,7 +136,7 @@ final class AiThreats {
       }
    }
 
-   static boolean init(AiThreats.Inner_DataUtil p) {
+   static boolean isNormallyPassiveOrNeutral(AiThreats.Inner_DataUtil p) {
       return p == AiThreats.Inner_DataUtil.ENDERMAN
          || p == AiThreats.Inner_DataUtil.ZOMBIFIED_PIGLIN
          || p == AiThreats.Inner_DataUtil.PIGLIN
@@ -144,7 +144,7 @@ final class AiThreats {
          || p == AiThreats.Inner_DataUtil.PASSIVE;
    }
 
-   static boolean load(AiThreats.Inner_DataUtil p) {
+   static boolean isMeleeThreat(AiThreats.Inner_DataUtil p) {
       boolean var10000;
       switch (p) {
          case ZOMBIE:
@@ -172,7 +172,7 @@ final class AiThreats {
       return var10000;
    }
 
-   static double init_D(Entity e) {
+   static double estimateThreatSpeedScore(Entity e) {
       if (e instanceof LivingEntity living) {
          double speed = living.getAttributeValue(Attributes.MOVEMENT_SPEED);
          if (e.getVehicle() instanceof LivingEntity mount) {
@@ -185,13 +185,13 @@ final class AiThreats {
       }
    }
 
-   static double init(Mob mob) {
+   static double meleeReach(Mob mob) {
       AttackRange range = mob.getActiveItem().get(DataComponents.ATTACK_RANGE);
-      return range == null ? init_D : range.effectiveMaxRange(mob);
+      return range == null ? DEFAULT_MELEE_REACH : range.effectiveMaxRange(mob);
    }
 
-   static double init(Mob mob, AABB player) {
-      AABB attack = mob.getBoundingBox().inflate(init(mob), 0.0, init(mob));
+   static double horizontalGapToAttackBox(Mob mob, AABB player) {
+      AABB attack = mob.getBoundingBox().inflate(meleeReach(mob), 0.0, meleeReach(mob));
       if (!(attack.maxY < player.minY) && !(attack.minY > player.maxY)) {
          double gx = Math.max(attack.minX - player.maxX, player.minX - attack.maxX);
          double gz = Math.max(attack.minZ - player.maxZ, player.minZ - attack.maxZ);
@@ -201,53 +201,53 @@ final class AiThreats {
       }
    }
 
-   static long init_J() {
+   static long currentClientTick() {
       return autismclient.util.AutismSessionState.getInstance().getClientTick();
    }
 
-   static void init_V(Minecraft mc) {
+   static void observeTick(Minecraft mc) {
       if (mc.player != null && mc.level != null) {
-         if (init_Obj != mc.level || load_Obj != mc.player) {
-            init_Obj = mc.level;
-            load_Obj = mc.player;
-            init_Map.clear();
-            load_Map.clear();
-            read_Map.clear();
-            write_Map.clear();
-            update.clear();
-            init_Set.clear();
-            flush.clear();
-            close.clear();
-            write_I = 0;
-            init_J = -9223372036854775808L;
-            sync.clear();
-            load_Set.clear();
-            load_J = -9223372036854775808L;
+         if (trackedLevel != mc.level || trackedPlayer != mc.player) {
+            trackedLevel = mc.level;
+            trackedPlayer = mc.player;
+            lastDamagedPlayerTick.clear();
+            lastAggressiveTick.clear();
+            approachingSinceTick.clear();
+            lastDistanceByEntity.clear();
+            entityUuidById.clear();
+            loggedAngryEndermen.clear();
+            lastEndermanStareTick.clear();
+            lastEndermanStareContext.clear();
+            lastPlayerHurtTime = 0;
+            lastObservedTick = -9223372036854775808L;
+            blazeFireStartTick.clear();
+            seenUnlitBlazes.clear();
+            lastBlazePruneTick = -9223372036854775808L;
          }
 
-         long tick = init_J();
-         if (tick != init_J) {
-            init_J = tick;
+         long tick = currentClientTick();
+         if (tick != lastObservedTick) {
+            lastObservedTick = tick;
 
             for (Entity entity : mc.level.entitiesForRendering()) {
                if (entity instanceof Mob mob && mob.isAlive()) {
-                  UUID previousIdentity = update.put(mob.getId(), mob.getUUID());
+                  UUID previousIdentity = entityUuidById.put(mob.getId(), mob.getUUID());
                   if (previousIdentity != null && !previousIdentity.equals(mob.getUUID())) {
-                     init_Map.remove(mob.getId());
-                     load_Map.remove(mob.getId());
-                     read_Map.remove(mob.getId());
-                     write_Map.remove(mob.getId());
-                     init_Set.remove(mob.getId());
-                     flush.remove(mob.getId());
-                     close.remove(mob.getId());
-                     sync.remove(mob.getId());
-                     load_Set.remove(mob.getId());
+                     lastDamagedPlayerTick.remove(mob.getId());
+                     lastAggressiveTick.remove(mob.getId());
+                     approachingSinceTick.remove(mob.getId());
+                     lastDistanceByEntity.remove(mob.getId());
+                     loggedAngryEndermen.remove(mob.getId());
+                     lastEndermanStareTick.remove(mob.getId());
+                     lastEndermanStareContext.remove(mob.getId());
+                     blazeFireStartTick.remove(mob.getId());
+                     seenUnlitBlazes.remove(mob.getId());
                   }
 
                   double d = mob.distanceTo(mc.player);
                   if (!(d > 48.0)) {
                      if (mob.isAggressive()) {
-                        load_Map.put(mob.getId(), tick);
+                        lastAggressiveTick.put(mob.getId(), tick);
                      }
 
                      if (mob instanceof Enderman enderman) {
@@ -255,12 +255,12 @@ final class AiThreats {
                         Vec3 to0 = new Vec3(enderman.getX() - mc.player.getX(), enderman.getEyeY() - eye0.y, enderman.getZ() - mc.player.getZ());
                         double len0 = to0.length();
                         if (len0 > 0.001 && len0 < 64.0 && mc.player.getViewVector(1.0F).normalize().dot(to0.scale(1.0 / len0)) > 1.0 - 0.025 / len0) {
-                           flush.put(mob.getId(), tick);
-                           close.put(mob.getId(), autismclient.ai.engine.AiMotionAudit.init_Str() + "; " + autismclient.ai.engine.AiAim.lastDebugState());
+                           lastEndermanStareTick.put(mob.getId(), tick);
+                           lastEndermanStareContext.put(mob.getId(), autismclient.ai.engine.AiMotionAudit.init_Str() + "; " + autismclient.ai.engine.AiAim.lastDebugState());
                         }
 
-                        if (enderman.isCreepy() && init_Set.add(mob.getId())) {
-                           Long stared = flush.get(mob.getId());
+                        if (enderman.isCreepy() && loggedAngryEndermen.add(mob.getId())) {
+                           Long stared = lastEndermanStareTick.get(mob.getId());
                            AutismClientAddon.LOG
                               .info(
                                  "[AI] enderman angered: last stare {} ticks ago, last hurt by the player {}, during '{}'",
@@ -269,7 +269,7 @@ final class AiThreats {
                                  autismclient.ai.engine.AiMotionAudit.init_Str()
                                     + "; "
                                     + autismclient.ai.engine.AiAim.lastDebugState()
-                                    + (close.containsKey(mob.getId()) ? "; stared during: " + close.get(mob.getId()) : "")
+                                    + (lastEndermanStareContext.containsKey(mob.getId()) ? "; stared during: " + lastEndermanStareContext.get(mob.getId()) : "")
                               );
                            to0 = mc.player.getEyePosition();
                            Vec3 to = new Vec3(enderman.getX() - mc.player.getX(), enderman.getEyeY() - to0.y, enderman.getZ() - mc.player.getZ());
@@ -309,46 +309,46 @@ final class AiThreats {
                               );
                            }
                         } else if (!enderman.isCreepy()) {
-                           init_Set.remove(mob.getId());
+                           loggedAngryEndermen.remove(mob.getId());
                         }
                      }
 
-                     Double before = write_Map.put(mob.getId(), d);
+                     Double before = lastDistanceByEntity.put(mob.getId(), d);
                      if (before != null && before - d > 0.05) {
-                        read_Map.merge(mob.getId(), tick, (old, t) -> (Long)old);
+                        approachingSinceTick.merge(mob.getId(), tick, (old, t) -> (Long)old);
                      } else if (before != null && before - d < 0.01) {
-                        read_Map.remove(mob.getId());
+                        approachingSinceTick.remove(mob.getId());
                      }
                   }
                }
             }
 
             int hurt = mc.player.hurtTime;
-            if (hurt > write_I && hurt >= mc.player.hurtDuration - 1) {
+            if (hurt > lastPlayerHurtTime && hurt >= mc.player.hurtDuration - 1) {
                DamageSource source = mc.player.getLastDamageSource();
                if (source != null && source.getEntity() != null) {
-                  init_Map.put(source.getEntity().getId(), tick);
+                  lastDamagedPlayerTick.put(source.getEntity().getId(), tick);
                }
             }
 
-            write_I = hurt;
+            lastPlayerHurtTime = hurt;
             if (tick % 200L == 0L) {
-               update.keySet().removeIf(id -> !(mc.level.getEntity(id) instanceof Mob m && m.isAlive()));
-               init_Set.retainAll(update.keySet());
-               flush.keySet().retainAll(update.keySet());
-               close.keySet().retainAll(update.keySet());
-               sync.keySet().retainAll(update.keySet());
-               load_Set.retainAll(update.keySet());
-               init_Map.values().removeIf(t -> tick - t > 160L);
-               load_Map.values().removeIf(t -> tick - t > 60L);
-               write_Map.keySet().removeIf(id -> mc.level.getEntity(id) == null);
-               read_Map.keySet().removeIf(id -> mc.level.getEntity(id) == null);
+               entityUuidById.keySet().removeIf(id -> !(mc.level.getEntity(id) instanceof Mob m && m.isAlive()));
+               loggedAngryEndermen.retainAll(entityUuidById.keySet());
+               lastEndermanStareTick.keySet().retainAll(entityUuidById.keySet());
+               lastEndermanStareContext.keySet().retainAll(entityUuidById.keySet());
+               blazeFireStartTick.keySet().retainAll(entityUuidById.keySet());
+               seenUnlitBlazes.retainAll(entityUuidById.keySet());
+               lastDamagedPlayerTick.values().removeIf(t -> tick - t > 160L);
+               lastAggressiveTick.values().removeIf(t -> tick - t > 60L);
+               lastDistanceByEntity.keySet().removeIf(id -> mc.level.getEntity(id) == null);
+               approachingSinceTick.keySet().removeIf(id -> mc.level.getEntity(id) == null);
             }
          }
       }
    }
 
-   static boolean init_Z(Minecraft mc) {
+   static boolean isWearingGoldArmor(Minecraft mc) {
       if (mc.player == null) {
          return false;
       }
@@ -363,36 +363,36 @@ final class AiThreats {
       return false;
    }
 
-   static boolean init_Z(Entity e) {
-      Long t = init_Map.get(e.getId());
-      return t != null && init_J() - t <= 160L;
+   static boolean recentlyDamagedPlayer(Entity e) {
+      Long t = lastDamagedPlayerTick.get(e.getId());
+      return t != null && currentClientTick() - t <= 160L;
    }
 
-   static boolean load(Entity e) {
-      Long t = flush.get(e.getId());
-      return t != null && init_J() - t < 40L;
+   static boolean recentlyStaredAtEnderman(Entity e) {
+      Long t = lastEndermanStareTick.get(e.getId());
+      return t != null && currentClientTick() - t < 40L;
    }
 
-   static boolean read(Entity e) {
-      Long t = load_Map.get(e.getId());
-      return t != null && init_J() - t <= 60L;
+   static boolean recentlyAggressive(Entity e) {
+      Long t = lastAggressiveTick.get(e.getId());
+      return t != null && currentClientTick() - t <= 60L;
    }
 
-   static boolean init(Entity e, int ticks) {
-      Long since = read_Map.get(e.getId());
-      return since != null && init_J() - since >= ticks;
+   static boolean hasBeenApproachingFor(Entity e, int ticks) {
+      Long since = approachingSinceTick.get(e.getId());
+      return since != null && currentClientTick() - since >= ticks;
    }
 
-   static boolean init_Z(Minecraft mc, Entity e) {
-      init_V(mc);
+   static boolean isActiveThreat(Minecraft mc, Entity e) {
+      observeTick(mc);
       if (!(e instanceof LivingEntity living && living.isAlive() && e != mc.player)) {
          return false;
-      } else if (init_Z(e)) {
+      } else if (recentlyDamagedPlayer(e)) {
          return true;
       } else if (e instanceof Mob mob && mob.getTarget() != null && mob.getTarget() != mc.player) {
          return false;
       } else {
-         AiThreats.Inner_DataUtil p = init_cv_DataUtil(e);
+         AiThreats.Inner_DataUtil p = classify(e);
          double d = e.distanceTo(mc.player);
          boolean sight = d < 48.0 && mc.player.hasLineOfSight(e);
          boolean var10000;
@@ -401,11 +401,11 @@ final class AiThreats {
             case BABY_ZOMBIE:
             case SPIDER:
             case WITHER_SKELETON:
-               var10000 = d < 3.0 && sight || sight && d < 20.0 && (read(e) || init(e, 6));
+               var10000 = d < 3.0 && sight || sight && d < 20.0 && (recentlyAggressive(e) || hasBeenApproachingFor(e, 6));
                break;
             case SKELETON:
             case CROSSBOW:
-               var10000 = read(e) && sight && d < 24.0;
+               var10000 = recentlyAggressive(e) && sight && d < 24.0;
                break;
             case CREEPER:
                if (sight && d < 16.0 || e instanceof Creeper c && c.getSwellDir() > 0) {
@@ -416,7 +416,7 @@ final class AiThreats {
                var10000 = false;
                break;
             case ENDERMAN:
-               if (init_Z(e) || e instanceof Enderman m && m.isCreepy() && (init(e, 4) || load(e) || e.distanceToSqr(mc.player) < 6.25)) {
+               if (recentlyDamagedPlayer(e) || e instanceof Enderman m && m.isCreepy() && (hasBeenApproachingFor(e, 4) || recentlyStaredAtEnderman(e) || e.distanceToSqr(mc.player) < 6.25)) {
                   var10000 = true;
                   break;
                }
@@ -435,14 +435,14 @@ final class AiThreats {
                var10000 = false;
                break;
             case PIGLIN:
-               var10000 = init_Z(mc) ? init_Z(e) : read(e);
+               var10000 = isWearingGoldArmor(mc) ? recentlyDamagedPlayer(e) : recentlyAggressive(e);
                break;
             case BRUTE:
             case HOGLIN:
-               var10000 = read(e) || p == AiThreats.Inner_DataUtil.BRUTE && (d < 8.0 || sight && d < 12.0);
+               var10000 = recentlyAggressive(e) || p == AiThreats.Inner_DataUtil.BRUTE && (d < 8.0 || sight && d < 12.0);
                break;
             case ZOMBIFIED_PIGLIN:
-               var10000 = init_Z(e);
+               var10000 = recentlyDamagedPlayer(e);
                break;
             case CUBE:
                var10000 = d < 8.0;
@@ -457,14 +457,14 @@ final class AiThreats {
                var10000 = d < 24.0;
                break;
             case OTHER_HOSTILE:
-               var10000 = d < 4.0 && sight || read(e) && sight && d < 16.0;
+               var10000 = d < 4.0 && sight || recentlyAggressive(e) && sight && d < 16.0;
                break;
             case NEUTRAL:
             case PASSIVE:
                var10000 = false;
                break;
             case AVOID:
-               var10000 = sight && d < 20.0 || read(e);
+               var10000 = sight && d < 20.0 || recentlyAggressive(e);
                break;
             default:
                throw new MatchException(null, null);
@@ -474,26 +474,26 @@ final class AiThreats {
       }
    }
 
-   static int init_I(Minecraft mc, Entity e) {
-      init_V(mc);
+   static int ticksUntilRangedShot(Minecraft mc, Entity e) {
+      observeTick(mc);
       if (e instanceof AbstractSkeleton s && s.isUsingItem() && s.getUseItem().is(Items.BOW)) {
          return Math.max(0, 20 - s.getTicksUsingItem());
-      } else if (e instanceof Mob m && m.getMainHandItem().is(Items.CROSSBOW) && CrossbowItem.isCharged(m.getMainHandItem()) && read(e)) {
+      } else if (e instanceof Mob m && m.getMainHandItem().is(Items.CROSSBOW) && CrossbowItem.isCharged(m.getMainHandItem()) && recentlyAggressive(e)) {
          return 4;
       } else if (e instanceof Ghast g && g.isCharging()) {
          return 8;
       } else if (e instanceof Blaze) {
-         long tick = init_J();
-         if (tick != load_J) {
-            load_J = tick;
-            sync.keySet().removeIf(id -> !(mc.level.getEntity(id) instanceof Blaze b && b.isOnFire()));
+         long tick = currentClientTick();
+         if (tick != lastBlazePruneTick) {
+            lastBlazePruneTick = tick;
+            blazeFireStartTick.keySet().removeIf(id -> !(mc.level.getEntity(id) instanceof Blaze b && b.isOnFire()));
          }
 
          if (!e.isOnFire()) {
-            load_Set.add(e.getId());
+            seenUnlitBlazes.add(e.getId());
             return -1;
          } else {
-            long since = sync.computeIfAbsent(e.getId(), id -> load_Set.contains(id) ? tick : tick - 60L);
+            long since = blazeFireStartTick.computeIfAbsent(e.getId(), id -> seenUnlitBlazes.contains(id) ? tick : tick - 60L);
             return (int)Math.max(0L, 60L - (tick - since));
          }
       } else {
@@ -501,9 +501,9 @@ final class AiThreats {
       }
    }
 
-   static Entity init(Minecraft mc, int within) {
+   static Entity findImminentShooter(Minecraft mc, int within) {
       if (mc.player != null && mc.level != null) {
-         init_V(mc);
+         observeTick(mc);
          Entity best = null;
          int bestIn = 2147483647;
 
@@ -511,7 +511,7 @@ final class AiThreats {
             if (entity instanceof Mob && entity.isAlive()) {
                double d2 = entity.distanceToSqr(mc.player);
                if (!(d2 > 1600.0)) {
-                  int in = init_I(mc, entity);
+                  int in = ticksUntilRangedShot(mc, entity);
                   if (in >= 0 && in <= within && (!(entity instanceof Blaze) || !(d2 < 4.840000000000001)) && mc.player.hasLineOfSight(entity) && in < bestIn) {
                      bestIn = in;
                      best = entity;
@@ -526,7 +526,7 @@ final class AiThreats {
       }
    }
 
-   static Vec3 init(Vec3 v) {
+   static Vec3 horizontalUnit(Vec3 v) {
       double l = Math.hypot(v.x, v.z);
       return l < 1.0E-6 ? Vec3.ZERO : new Vec3(v.x / l, 0.0, v.z / l);
    }

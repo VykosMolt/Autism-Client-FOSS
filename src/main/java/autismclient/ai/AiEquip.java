@@ -126,7 +126,7 @@ final class AiEquip {
                            int menuSlot = autismclient.util.InventorySlotHelper.toScreenSlot(mc, source);
                            this.init_Z = menuSlot >= 0;
                            if (this.init_Z) {
-                              AiContainerTransactions.init(mc.player.inventoryMenu.containerId, menuSlot, 40, ContainerInput.SWAP);
+                              AiContainerTransactions.sendPredictedClick(mc.player.inventoryMenu.containerId, menuSlot, 40, ContainerInput.SWAP);
                            }
 
                            if (!this.init_Z) {
@@ -245,7 +245,7 @@ final class AiEquip {
                      }
 
                      this.init_J = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
-                     AiContainerTransactions.init(mc.player.inventoryMenu.containerId, menuSlot, this.init_I, ContainerInput.SWAP);
+                     AiContainerTransactions.sendPredictedClick(mc.player.inventoryMenu.containerId, menuSlot, this.init_I, ContainerInput.SWAP);
                      this.load_Z = true;
                      return AiGameOperations.result(AiOperation.Status.RUNNING, "Moving " + description + " into the hotbar", this.init());
                   } else {
@@ -383,7 +383,7 @@ final class AiEquip {
                   }
 
                   this.init_J = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
-                  AiContainerTransactions.init(mc.player.containerMenu.containerId, move.menuSlot(), move.button(), move.input());
+                  AiContainerTransactions.sendPredictedClick(mc.player.containerMenu.containerId, move.menuSlot(), move.button(), move.input());
                   this.init_EquipmentSlot = move.slot();
                   this.init_ItemStack = mc.player.getItemBySlot(this.init_EquipmentSlot).copy();
                   this.init_Z = true;

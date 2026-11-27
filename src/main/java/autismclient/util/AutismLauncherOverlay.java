@@ -523,8 +523,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          this.add_V_4();
          this.prev = this.push_I_13();
          autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-         float uiMouseX = viewport.init_F_D(mouseX);
-         float uiMouseY = viewport.load(mouseY);
+         float uiMouseX = viewport.toUiX(mouseX);
+         float uiMouseY = viewport.toUiY(mouseY);
          autismclient.gui.ui.layout.LayoutContext metrics = new autismclient.gui.ui.layout.LayoutContext(
             context, init_Minecraft.font, viewport, this.init_CharEncoder, uiMouseX, uiMouseY, delta
          );
@@ -548,8 +548,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          return false;
       } else {
          autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-         float uiMouseX = viewport.init_F_D(mouseX);
-         float uiMouseY = viewport.load(mouseY);
+         float uiMouseX = viewport.toUiX(mouseX);
+         float uiMouseY = viewport.toUiY(mouseY);
          if (button == 0 && this.init_Z_F_F_3(uiMouseX, uiMouseY) && this.init_DataUtil != null) {
             this.close_Z = true;
             this.open_Z = false;
@@ -584,8 +584,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       }
 
       autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-      float uiMouseX = viewport.init_F_D(mouseX);
-      float uiMouseY = viewport.load(mouseY);
+      float uiMouseX = viewport.toUiX(mouseX);
+      float uiMouseY = viewport.toUiY(mouseY);
       OverlayBounds clamped = this.init_cH_cH_2(
          new OverlayBounds(
             Math.round(uiMouseX - this.load_F),
@@ -659,8 +659,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       }
 
       autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-      float uiX = viewport.init_F_D(mouseX);
-      float uiY = viewport.load(mouseY);
+      float uiX = viewport.toUiX(mouseX);
+      float uiY = viewport.toUiY(mouseY);
       return uiX >= this.stop && uiX < this.stop + this.prev && uiY >= this.next && uiY < this.next + this.valid;
    }
 
@@ -671,7 +671,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       }
 
       autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
-      return this.init_Z_F_F_3(viewport.init_F_D(mouseX), viewport.load(mouseY));
+      return this.init_Z_F_F_3(viewport.toUiX(mouseX), viewport.toUiY(mouseY));
    }
 
    @Override
@@ -720,8 +720,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    private OverlayBounds init_cH_cH_2(OverlayBounds bounds) {
       autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       int margin = 4;
-      int viewportW = Math.round(viewport.init());
-      int viewportH = Math.round(viewport.load());
+      int viewportW = Math.round(viewport.width());
+      int viewportH = Math.round(viewport.height());
       int availableW = Math.max(1, viewportW - margin * 2);
       int availableH = Math.max(this.prev(), viewportH - margin * 2);
       int width = Math.max(Math.min(this.init_I(), availableW), Math.min(bounds.width, availableW));

@@ -242,7 +242,7 @@ final class AiBrew {
                   if (!bottle.isEmpty() && !AiBrew.init(bottle).equals(this.init_StrArr[slot])) {
                      this.init_JsonArray.add(bottle.getHoverName().getString());
                      this.update_I++;
-                     AiContainerTransactions.init(menu.containerId, slot, 0, ContainerInput.QUICK_MOVE);
+                     AiContainerTransactions.sendPredictedClick(menu.containerId, slot, 0, ContainerInput.QUICK_MOVE);
                   }
                }
             }
@@ -323,7 +323,7 @@ final class AiBrew {
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = this.init_Minecraft.player.getInventory().getItem(slot);
                   if (!stack.isEmpty() && stack.is(Items.POTION) && (inputType.isEmpty() || AiBrew.init(stack).equals(inputType))) {
-                     AiContainerTransactions.init(menu.containerId, this.init(slot), 0, ContainerInput.QUICK_MOVE);
+                     AiContainerTransactions.sendPredictedClick(menu.containerId, this.init(slot), 0, ContainerInput.QUICK_MOVE);
                      return true;
                   }
                }
@@ -337,7 +337,7 @@ final class AiBrew {
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = this.init_Minecraft.player.getInventory().getItem(slot);
                   if (!stack.isEmpty() && BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().equals(itemId)) {
-                     AiContainerTransactions.init(menu.containerId, this.init(slot), 0, ContainerInput.QUICK_MOVE);
+                     AiContainerTransactions.sendPredictedClick(menu.containerId, this.init(slot), 0, ContainerInput.QUICK_MOVE);
                      return true;
                   }
                }
@@ -373,14 +373,14 @@ final class AiBrew {
                      }
 
                      this.init_DataPipe
-                        .init_V_BlockPos_Item(spot, BuiltInRegistries.ITEM.getOptional(Identifier.parse("minecraft:brewing_stand")).orElseThrow());
+                        .start(spot, BuiltInRegistries.ITEM.getOptional(Identifier.parse("minecraft:brewing_stand")).orElseThrow());
                      this.init_Z = true;
                      this.load_I = 0;
                   }
 
-                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
                   if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
-                     this.init_BlockPos = this.init_DataPipe.init_BlockPos();
+                     this.init_BlockPos = this.init_DataPipe.targetPos();
                      this.init_Z = false;
                      return this.init("Brewing stand placed");
                   }
@@ -390,7 +390,7 @@ final class AiBrew {
                   }
 
                   this.init_Z = false;
-                  return this.init(AiOperation.Status.FAILED, "Could not place a brewing stand: " + this.init_DataPipe.init_Str());
+                  return this.init(AiOperation.Status.FAILED, "Could not place a brewing stand: " + this.init_DataPipe.failureReason());
                } else {
                   double reach = Math.max(4.5, this.init_Minecraft.player.blockInteractionRange());
                   if (this.init_Minecraft.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(this.init_BlockPos)) > reach * reach) {
@@ -498,7 +498,7 @@ final class AiBrew {
                if (!this.load_Z) {
                   this.load_Z = true;
                   this.init_DataUtil.clear();
-                  this.init_DataPipe.init_V();
+                  this.init_DataPipe.reset();
                }
             }
          };

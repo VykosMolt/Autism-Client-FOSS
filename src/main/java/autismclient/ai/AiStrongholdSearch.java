@@ -68,7 +68,7 @@ final class AiStrongholdSearch {
                return this.init(AiOperation.Status.FAILED, "Player died in the stronghold search");
             }
 
-            BlockPos frame = AiWorldScan.init_BlockPos_Predicate_I(s -> s.is(Blocks.END_PORTAL_FRAME), 12);
+            BlockPos frame = AiWorldScan.findNearestBlock(s -> s.is(Blocks.END_PORTAL_FRAME), 12);
             if (frame != null) {
                return this.init(AiOperation.Status.SUCCEEDED, "Portal-frame evidence loaded at " + frame.toShortString());
             }
@@ -133,7 +133,7 @@ final class AiStrongholdSearch {
 
                this.load_BlockPos = feet;
                this.init_I++;
-               this.init_AiOperation = AiGoto.init(
+               this.init_AiOperation = AiGoto.travelToCompat(
                   this.init_BlockPos,
                   1.2,
                   true,
@@ -155,7 +155,7 @@ final class AiStrongholdSearch {
          }
 
          BlockPos init_BlockPos_16() {
-            for (BlockPos evidence : AiWorldScan.init(AiStrongholdSearch::init, 8, 16, 256)) {
+            for (BlockPos evidence : AiWorldScan.findBlocks(AiStrongholdSearch::init, 8, 16, 256)) {
                if (!(Math.hypot(evidence.getX() - lead.x, evidence.getZ() - lead.z) > 240.0)) {
                   BlockPos candidate = this.init_BlockPos_7(evidence.above());
                   if (candidate != null && !this.init_Set.contains(AiStrongholdSearch.init(candidate)) && !this.load_Set.contains(AiStrongholdSearch.init(candidate))) {
@@ -260,7 +260,7 @@ final class AiStrongholdSearch {
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
-            AiOperation.Result result = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
+            AiOperation.Result result = AiGuardLayer.wrapPendingTermination(
                this.requiresReconciliationAfterEmergency(), AiGameOperations.result(status, message, this.init_JsonObject_54())
             );
             this.cancel();
@@ -289,7 +289,7 @@ final class AiStrongholdSearch {
    }
 
    static AiOperation.Result init(String message, JsonObject data, boolean pending) {
-      return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pending, AiOperation.Result.failed(AiFailure.TARGET_NOT_FOUND, message, data.toString()));
+      return AiGuardLayer.wrapPendingTermination(pending, AiOperation.Result.failed(AiFailure.TARGET_NOT_FOUND, message, data.toString()));
    }
 
    static final class Inner_DataUtil {

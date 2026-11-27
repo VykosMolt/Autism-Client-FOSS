@@ -63,12 +63,12 @@ final class AiObsidian {
 
          @Override
          public boolean canInterruptNow() {
-            return !this.init_bb.init_Z(this.init_AiOperation) && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+            return !this.init_bb.requiresReconciliation(this.init_AiOperation) && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_bb.init_Z(this.init_AiOperation);
+            return this.init_bb.requiresReconciliation(this.init_AiOperation);
          }
 
          @Override
@@ -87,12 +87,12 @@ final class AiObsidian {
                }
 
                if (this.init_AiOperation != null) {
-                  AiOperation.Result result = this.init_bb.init_AiOperation_Result(this.init_AiOperation);
+                  AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
                   if (!result.terminal()) {
                      return result;
                   }
 
-                  this.init_bb.init_V(this.init_AiOperation);
+                  this.init_bb.cancelChild(this.init_AiOperation);
                   this.init_AiOperation = null;
                   if (result.status() == AiOperation.Status.UNCERTAIN) {
                      return this.init(AiOperation.Status.UNCERTAIN, result.message());
@@ -210,7 +210,7 @@ final class AiObsidian {
 
                   if (this.init_I == 0) {
                      this.init_Str = "approach";
-                     this.init_AiOperation = AiGoto.init(this.init_List, Math.min(45, AiObsidian.init_I_J(this.init_J)));
+                     this.init_AiOperation = AiGoto.approachAnyWaterSourceCompat(this.init_List, Math.min(45, AiObsidian.init_I_J(this.init_J)));
                   } else {
                      this.init_Str = "fill";
                      this.init_AiOperation = AiBucket.init(
@@ -253,17 +253,17 @@ final class AiObsidian {
                "carriedTable",
                AiCraft.countItem("minecraft:crafting_table") > 0,
                "lastChild",
-               this.init_bb.init() == null ? new JsonObject() : AiRunResources.parseEvidenceJson(this.init_bb.init().dataJson())
+               this.init_bb.lastChildResult() == null ? new JsonObject() : AiRunResources.parseEvidenceJson(this.init_bb.lastChildResult().dataJson())
             );
             AiOperation.Result result = AiGameOperations.result(status, message, data);
-            result = this.init_bb.init(result, this.requiresReconciliationAfterEmergency());
+            result = this.init_bb.finalizeResult(result, this.requiresReconciliationAfterEmergency());
             this.cancel();
             return result;
          }
 
          @Override
          public void cancel() {
-            this.init_bb.init_V(this.init_AiOperation);
+            this.init_bb.cancelChild(this.init_AiOperation);
             this.init_Z = true;
          }
       };
@@ -400,7 +400,7 @@ final class AiObsidian {
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_DataPipe.load_Z()
+            return this.init_DataPipe.needsReconciliation()
                || this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.VERIFY
                || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
          }
@@ -538,17 +538,17 @@ final class AiObsidian {
                      }
 
                      this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.GO_SOURCE;
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_3(
+                     this.init_AiOperation = AiGoto.approachFluidSourceCompat(
                         this.init_BlockPos, Math.min(60, AiObsidian.init_I_J(this.init_J)), this.init_Set_5(), true, this.load_Set_3()
                      );
                      break;
                   case GO_SOURCE:
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_3(
+                     this.init_AiOperation = AiGoto.approachFluidSourceCompat(
                         this.init_BlockPos, Math.min(60, AiObsidian.init_I_J(this.init_J)), this.init_Set_5(), true, this.load_Set_3()
                      );
                      break;
                   case REFILL:
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_3(
+                     this.init_AiOperation = AiGoto.approachFluidSourceCompat(
                         this.init_BlockPos, Math.min(60, AiObsidian.init_I_J(this.init_J)), this.init_Set_5(), true, this.load_Set_3()
                      );
                      break;
@@ -556,7 +556,7 @@ final class AiObsidian {
                      this.init_AiOperation = this.init("fill", "lava", this.init_BlockPos);
                      break;
                   case RETURN:
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(this.read_BlockPos, 0.25, 30, this.init_Set_5(), this.load_Set_3());
+                     this.init_AiOperation = AiGoto.approachWithinRadiusCompat(this.read_BlockPos, 0.25, 30, this.init_Set_5(), this.load_Set_3());
                      break;
                   case SITE:
                      if (!this.init_Minecraft.player.onGround()) {
@@ -644,24 +644,24 @@ final class AiObsidian {
                            } else {
                               if (!this.load_Z) {
                                  Item item = AiCraft.countItem("minecraft:cobblestone") > 0 ? Items.COBBLESTONE : Items.DIRT;
-                                 if (!autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(cell, item) && this.load_Set.add(cell)) {
+                                 if (!autismclient.ai.engine.AiPlacer.canPlaceFromHere(cell, item) && this.load_Set.add(cell)) {
                                     this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.WALL_APPROACH;
-                                    this.init_AiOperation = AiGoto.init(
+                                    this.init_AiOperation = AiGoto.approachToPlaceCompat(
                                        cell, item, Math.min(30, AiObsidian.init_I_J(this.init_J)), null, false, this.init_Set_5(), this.load_Set_3()
                                     );
                                     break;
                                  }
 
-                                 this.init_DataPipe.init_V_BlockPos_Item(cell, item);
+                                 this.init_DataPipe.start(cell, item);
                                  this.load_Z = true;
                               }
 
-                              switch (this.init_DataPipe.init_DataPipe_DataUtil()) {
+                              switch (this.init_DataPipe.tick()) {
                                  case WORKING:
                                     return AiObsidian.init_AiOperation_Result_Str("Sealing the casting mold");
                                  case FAILED:
-                                    String why = this.init_DataPipe.init_Str();
-                                    this.init_DataPipe.init_V();
+                                    String why = this.init_DataPipe.failureReason();
+                                    this.init_DataPipe.reset();
                                     this.load_Z = false;
                                     if (this.read_I == 0 && this.init_BlockPos != null && this.init_Set.size() < 6) {
                                        this.init_Set.add(this.init_BlockPos);
@@ -678,7 +678,7 @@ final class AiObsidian {
                                  case PLACED:
                                     this.init_List.add(cell);
                                     this.init_I++;
-                                    this.init_DataPipe.init_V();
+                                    this.init_DataPipe.reset();
                                     this.load_Z = false;
                               }
                            }
@@ -686,7 +686,7 @@ final class AiObsidian {
                      }
                      break;
                   case WORK:
-                     this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(this.read_BlockPos, 0.25, 30, this.init_Set_5(), this.load_Set_3());
+                     this.init_AiOperation = AiGoto.approachWithinRadiusCompat(this.read_BlockPos, 0.25, 30, this.init_Set_5(), this.load_Set_3());
                      break;
                   case POUR_WATER:
                      if (!this.write()) {
@@ -1051,7 +1051,7 @@ final class AiObsidian {
                this.init_AiOperation.cancel();
             }
 
-            this.init_DataPipe.init_V();
+            this.init_DataPipe.reset();
             this.init_V_19();
          }
       };

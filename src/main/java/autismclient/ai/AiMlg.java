@@ -609,7 +609,7 @@ final class AiMlg {
             return false;
          }
 
-         AiContainerTransactions.init(player.containerMenu.containerId, from, to, ContainerInput.SWAP);
+         AiContainerTransactions.sendPredictedClick(player.containerMenu.containerId, from, to, ContainerInput.SWAP);
          return true;
       } else {
          return false;

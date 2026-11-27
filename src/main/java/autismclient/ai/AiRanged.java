@@ -49,8 +49,8 @@ final class AiRanged {
          final double radius = Math.max(4.0, Math.min(48.0, AiJson.getDouble(args, "radius", 32.0)));
          final int timeoutSeconds = Math.max(5, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 120)));
          final Set<EntityType<?>> types = explicitId >= 0 ? Set.of() : AiCombat.init(spec);
-         AiService service = AiService.load_cc();
-         final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
+         AiService service = AiService.getExistingInstance();
+         final boolean silentAim = service != null && service.getSettings().aiSilentAim;
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();

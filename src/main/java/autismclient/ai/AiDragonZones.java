@@ -257,7 +257,7 @@ public final class AiDragonZones {
             }
          }
 
-         return best == null ? null : AiGuard.allowDuringLowHealth(AiGoto.init(best, 0.35, false, false, false, 6, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
+         return best == null ? null : AiGuard.allowDuringLowHealth(AiGoto.travelToCompat(best, 0.35, false, false, false, 6, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
       } else {
          return null;
       }

@@ -117,7 +117,7 @@ final class AiSleep {
                         BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, this.init_BlockPos);
                         if (interactionHit == null) {
                            if (this.init_AiOperation == null) {
-                              this.init_AiOperation = AiGoto.init_AiOperation(this.init_BlockPos, Math.min(120, this.init_I_32()));
+                              this.init_AiOperation = AiGoto.approachBlockCompat(this.init_BlockPos, Math.min(120, this.init_I_32()));
                            }
 
                            AiOperation.Result legResult = this.init_AiOperation.tick();
@@ -185,7 +185,7 @@ final class AiSleep {
                            return this.init(AiOperation.Status.FAILED, "No free supported spot next to the player for a bed");
                         }
 
-                        this.init_DataPipe.init_V_BlockPos_Item(spot, carried);
+                        this.init_DataPipe.start(spot, carried);
                         this.init_Z = true;
                         this.load_I = 0;
                         return this.init("Placing a bed");
@@ -197,10 +197,10 @@ final class AiSleep {
             }
 
             AiOperation.Result init_AiOperation_Result_31() {
-               autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+               autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
                if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                   this.init_Z = false;
-                  this.init_BlockPos = this.init_DataPipe.init_BlockPos();
+                  this.init_BlockPos = this.init_DataPipe.targetPos();
                   return this.init("Bed placed");
                }
 
@@ -209,7 +209,7 @@ final class AiSleep {
                }
 
                this.init_Z = false;
-               return this.init(AiOperation.Status.FAILED, "Could not place a bed: " + this.init_DataPipe.init_Str());
+               return this.init(AiOperation.Status.FAILED, "Could not place a bed: " + this.init_DataPipe.failureReason());
             }
 
             BlockPos init_BlockPos_12() {
@@ -293,7 +293,7 @@ final class AiSleep {
                if (!this.read_Z) {
                   this.read_Z = true;
                   this.init_DataUtil.clear();
-                  this.init_DataPipe.init_V();
+                  this.init_DataPipe.reset();
                   if (this.init_AiOperation != null) {
                      this.init_AiOperation.cancel();
                      this.init_AiOperation = null;

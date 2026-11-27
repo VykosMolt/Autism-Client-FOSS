@@ -89,7 +89,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class AiService {
-   public static final Set<String> init_Set = Set.of(
+   public static final Set<String> READ_ONLY_TOOLS = Set.of(
       "observe",
       "screenshot",
       "catalog_search",
@@ -229,7 +229,7 @@ public final class AiService {
       return init_Z_cc_FileCache(s) || s == AiService.RunState.CHATTING;
    }
 
-   public static synchronized AiService init_cc() {
+   public static synchronized AiService getInstance() {
       if (init_cc == null) {
          init_cc = new AiService();
       }
@@ -237,7 +237,7 @@ public final class AiService {
       return init_cc;
    }
 
-   public static AiService load_cc() {
+   public static AiService getExistingInstance() {
       return init_cc;
    }
 
@@ -285,7 +285,7 @@ public final class AiService {
       return false;
    }
 
-   static boolean init_Z_Z(boolean onGround, boolean inWater, boolean onClimbable) {
+   static boolean isSafeStanceForReflex(boolean onGround, boolean inWater, boolean onClimbable) {
       return onGround || inWater || onClimbable;
    }
 
@@ -293,7 +293,7 @@ public final class AiService {
       return worstSource > 0.0F && autismclient.util.ExplosionDamageCalculator.load(worstSource);
    }
 
-   static boolean init_Z_Str(String id) {
+   static boolean isInterruptibleOperation(String id) {
       return Set.of(
             "game:navigate",
             "game:goto",
@@ -353,7 +353,7 @@ public final class AiService {
       return hostilesWithin6 > 0 && (health <= 8.0F || millisSinceDamage < 3000L);
    }
 
-   static AiOperation.Result init_AiOperation_Result_AiOperation(AiOperation operation, AiFailure cause, String message) {
+   static AiOperation.Result interruptedFailureResult(AiOperation operation, AiFailure cause, String message) {
       boolean pending = operation.requiresReconciliationAfterEmergency();
       return new AiOperation.Result(
          pending ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED,
@@ -414,7 +414,7 @@ public final class AiService {
       return executing && !planMode && overworld && !hasBedOrShelter && !pendingIsModelOp && init_Z_J(dayTime);
    }
 
-   static boolean read_Z_Str(String id) {
+   static boolean isGameplayActionOperation(String id) {
       return Set.of(
             "game:navigate",
             "game:goto",
@@ -474,7 +474,7 @@ public final class AiService {
    }
 
    static String init_Str_Player(Player player) {
-      if (!init_Z_Player(player)) {
+      if (!isPlayerVulnerable(player)) {
          return null;
       } else if (player.isOnFire() && !player.hasEffect(MobEffects.FIRE_RESISTANCE)) {
          return "on fire";
@@ -487,7 +487,7 @@ public final class AiService {
       }
    }
 
-   static boolean init_Z_Player(Player player) {
+   static boolean isPlayerVulnerable(Player player) {
       return player != null && !player.getAbilities().invulnerable;
    }
 
@@ -508,7 +508,7 @@ public final class AiService {
                      this.init_AiSettings = AiSettings.load(this.init_AiMemoryStore.init_Path());
                   } catch (Exception e) {
                      this.push_Str = "AI settings: " + e.getMessage();
-                     this.init_V_Str_Str("error", this.push_Str);
+                     this.appendTranscript("error", this.push_Str);
                   }
 
                   this.init_AiMemoryStore.init_V();
@@ -524,7 +524,7 @@ public final class AiService {
                      try {
                         this.init_cd.init_List();
                      } catch (Exception e) {
-                        this.init_V_Str_Str("error", "Could not remove empty sessions: " + e.getMessage());
+                        this.appendTranscript("error", "Could not remove empty sessions: " + e.getMessage());
                      }
 
                      Path task = this.init_AiMemoryStore.init_Path().resolve("task.json");
@@ -538,9 +538,9 @@ public final class AiService {
                            );
                            this.init_cd.init_V_cd_DataUtil(migrated);
                            Files.delete(task);
-                           this.init_V_Str_Str("system", "Previous task migrated into session '" + migrated.load_Str + "'");
+                           this.appendTranscript("system", "Previous task migrated into session '" + migrated.load_Str + "'");
                         } catch (Exception e) {
-                           this.init_V_Str_Str("error", "Could not migrate previous task.json: " + e.getMessage());
+                           this.appendTranscript("error", "Could not migrate previous task.json: " + e.getMessage());
                         }
                      }
 
@@ -562,17 +562,17 @@ public final class AiService {
                         this.write_Str = restored.init_Str;
                         this.init_cc_FileCache = init_cc_FileCache_cc_RenderState(restored);
                         if (this.init_cc_FileCache == AiService.RunState.PAUSED) {
-                           this.init_V_Str_Str("system", "Previous objective restored paused. Resume after joining the correct world.");
+                           this.appendTranscript("system", "Previous objective restored paused. Resume after joining the correct world.");
                         }
                      }
                   }
 
                   if (!this.init_AiMemoryStore.init_Str().isBlank()) {
-                     this.init_V_Str_Str("system", this.init_AiMemoryStore.init_Str());
+                     this.appendTranscript("system", this.init_AiMemoryStore.init_Str());
                   }
                } catch (Exception e) {
                   this.push_Str = e.getMessage();
-                  this.init_V_Str_Str("error", "AI persistence: " + e.getMessage());
+                  this.appendTranscript("error", "AI persistence: " + e.getMessage());
                } finally {
                   this.load_Z = true;
                }
@@ -584,21 +584,21 @@ public final class AiService {
       return this.init_Map.get(this.write_Str);
    }
 
-   public AiService.RunState init_cc_FileCache() {
+   public AiService.RunState getRunState() {
       return this.init_cc_FileCache;
    }
 
-   public boolean read_Z() {
+   public boolean isChatModeActive() {
       AiChatMode lane = this.init_FieldCache;
       return lane != null && lane.init_Z();
    }
 
-   public String init_Str() {
+   public String getChatModeSummary() {
       AiChatMode lane = this.init_FieldCache;
       return lane == null ? "Chat mode off" : lane.init_Str();
    }
 
-   public JsonObject init_JsonObject() {
+   public JsonObject getChatModeStatusJson() {
       AiChatMode lane = this.init_FieldCache;
       if (lane != null) {
          return lane.init_JsonObject();
@@ -609,12 +609,12 @@ public final class AiService {
    }
 
    boolean write_Z() {
-      return this.load_Z && this.push_Str.isEmpty() && !this.init_AiCatalog_Snapshot().entries().isEmpty();
+      return this.load_Z && this.push_Str.isEmpty() && !this.getCatalogSnapshot().entries().isEmpty();
    }
 
    void init_V() {
       AiObservation snapshot = AiGameState.observe(this.flush_Str, this.close_Str, "qualification-smoke");
-      AiCatalog.Snapshot contracts = this.init_AiCatalog_Snapshot();
+      AiCatalog.Snapshot contracts = this.getCatalogSnapshot();
       this.init_ExecutorService
          .execute(
             () -> {
@@ -654,7 +654,7 @@ public final class AiService {
          );
    }
 
-   public String load_Str() {
+   public String getObjective() {
       return this.init_cc_RenderState().update_Str;
    }
 
@@ -662,11 +662,11 @@ public final class AiService {
       return this.init_cc_RenderState().close_Str;
    }
 
-   public String write_Str() {
+   public String getPlanNotes() {
       return this.init_cc_RenderState().sync_Str;
    }
 
-   public String update_Str() {
+   public String getTaskStateJson() {
       return this.init_cc_RenderState().init_JsonObject.toString();
    }
 
@@ -678,56 +678,56 @@ public final class AiService {
       return this.poll_Str;
    }
 
-   public String close_Str() {
+   public String getPerfMetricsJson() {
       return this.load_JsonObject.toString();
    }
 
-   public List<String> init_List() {
+   public List<String> getQueuedObjectives() {
       return List.copyOf(this.init_cc_RenderState().init_Deque);
    }
 
-   public void init_V_Str(String text) {
+   public void enqueueObjective(String text) {
       if (text != null && !text.isBlank()) {
          AiService.SessionState s = this.init_cc_RenderState();
          if (text.length() <= 16000 && s.init_Deque.size() < 20) {
             s.init_Deque.add(text);
-            this.init_V_Str_Str("system", "Objective queued: " + text);
+            this.appendTranscript("system", "Objective queued: " + text);
             this.put_V();
          } else {
-            this.init_V_Str_Str("error", "Objective queue limit reached");
+            this.appendTranscript("error", "Objective queue limit reached");
          }
       }
    }
 
-   public String open_Str() {
+   public String getStatusLine() {
       return this.sync_Str;
    }
 
-   public long init_J() {
+   public long getRequestCount() {
       return this.init_cc_RenderState().read_J;
    }
 
-   public long load_J() {
+   public long getTokenCount() {
       return this.init_cc_RenderState().write_J;
    }
 
-   public int init_I() {
+   public int getTaskMaxMinutes() {
       return this.init_cc_RenderState().init_I;
    }
 
-   public long read_J() {
+   public long getElapsedTaskMillis() {
       return this.write_J() / 1000000L;
    }
 
-   public AiSettings init_AiSettings() {
+   public AiSettings getSettings() {
       return this.init_AiSettings.copy();
    }
 
-   List<AiRegions.Region> load_List() {
+   List<AiRegions.Region> getDimensionRegions() {
       return this.init_AiRegions.init(this.close_Str);
    }
 
-   void init(BlockPos position, int beds, int bells, int paths, int farmland, int villagers, String from) {
+   void recordSurveyRegion(BlockPos position, int beds, int bells, int paths, int farmland, int villagers, String from) {
       String evidenceId = UUID.randomUUID().toString();
       AiRegions.Region region = new AiRegions.Region(
          this.close_Str,
@@ -750,24 +750,24 @@ public final class AiService {
          try {
             this.init_AiMemoryStore.init(proof);
          } catch (Exception e) {
-            this.init_V_Str_Str("error", e.getMessage());
+            this.appendTranscript("error", e.getMessage());
          }
       });
    }
 
-   public AiMemoryStore init_AiMemoryStore() {
+   public AiMemoryStore getMemoryStore() {
       return this.init_AiMemoryStore;
    }
 
-   public AiCatalog.Snapshot init_AiCatalog_Snapshot() {
+   public AiCatalog.Snapshot getCatalogSnapshot() {
       return this.init_AiCatalog.init_AiCatalog_Snapshot();
    }
 
-   public String poll_Str() {
+   public String getDimensionId() {
       return this.close_Str;
    }
 
-   public AiObservation init_AiObservation() {
+   public AiObservation getLatestObservation() {
       return this.init_AiObservation;
    }
 
@@ -776,16 +776,16 @@ public final class AiService {
       return u == null ? null : u.id();
    }
 
-   public List<AiService.TranscriptEntry> read_List() {
+   public List<AiService.TranscriptEntry> getTranscript() {
       AiService.SessionState s = this.init_cc_RenderState();
       return s == null ? List.of() : List.copyOf(s.load_List);
    }
 
-   public void init_V_Str_Str(String role, String text) {
-      this.init_V_Str_3(role, text, "");
+   public void appendTranscript(String role, String text) {
+      this.appendTranscript(role, text, "");
    }
 
-   public void init_V_Str_3(String role, String text, String detail) {
+   public void appendTranscript(String role, String text, String detail) {
       this.init_V_cc_RenderState(this.init_cc_RenderState(), role, text, detail);
    }
 
@@ -811,7 +811,7 @@ public final class AiService {
       }
    }
 
-   public List<AiSessions.Inner_StreamUtil> write_List() {
+   public List<AiSessions.Inner_StreamUtil> listSessions() {
       AiSessions storeRef = this.init_cd;
       List<AiSessions.Inner_StreamUtil> metas = new ArrayList<>();
       if (storeRef != null) {
@@ -845,11 +845,11 @@ public final class AiService {
       return List.copyOf(metas);
    }
 
-   public String pop_Str() {
+   public String getActiveSessionId() {
       return this.write_Str;
    }
 
-   public String tick_Str() {
+   public String getActiveSessionTitle() {
       AiService.SessionState s = this.init_cc_RenderState();
       return s == null ? "" : s.load_Str;
    }
@@ -883,7 +883,7 @@ public final class AiService {
       return var10000;
    }
 
-   public synchronized String run_Str() {
+   public synchronized String createSession() {
       if (this.load_Z && this.init_cd != null) {
          AiService.SessionState current = this.init_cc_RenderState();
          if (current != null && init_Z_cc_RenderState(current) && !init_Z_cc_FileCache(this.init_cc_FileCache)) {
@@ -891,7 +891,7 @@ public final class AiService {
             return current.init_Str;
          }
 
-         this.sync_V_Str("Chat mode stopped: session switched");
+         this.stopChatMode("Chat mode stopped: session switched");
          if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
             this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "Session switched; task paused");
          }
@@ -900,7 +900,7 @@ public final class AiService {
          this.init_V_cc_RenderState(new AiService.SessionState(UUID.randomUUID().toString(), System.currentTimeMillis()));
          return this.write_Str;
       } else {
-         this.init_V_Str_Str("system", "AI storage is still loading");
+         this.appendTranscript("system", "AI storage is still loading");
          return null;
       }
    }
@@ -924,7 +924,7 @@ public final class AiService {
       this.read_V_cc_RenderState(target);
    }
 
-   public synchronized void load_V_Str(String id) {
+   public synchronized void switchSession(String id) {
       if (id != null && !id.equals(this.write_Str)) {
          if (this.load_Z && this.init_cd != null) {
             AiService.SessionState loaded = this.init_Map.get(id);
@@ -938,7 +938,7 @@ public final class AiService {
                   try {
                      target = this.init_cc_RenderState_cd_DataUtil(storeRef.init_cd_DataUtil_Str(id));
                   } catch (Exception e) {
-                     this.init_V_Str_Str("error", "Could not load session: " + e.getMessage());
+                     this.appendTranscript("error", "Could not load session: " + e.getMessage());
                      return;
                   }
 
@@ -953,13 +953,13 @@ public final class AiService {
                });
             }
          } else {
-            this.init_V_Str_Str("system", "AI storage is still loading");
+            this.appendTranscript("system", "AI storage is still loading");
          }
       }
    }
 
    private void load_V_cc_RenderState(AiService.SessionState target) {
-      this.sync_V_Str("Chat mode stopped: session switched");
+      this.stopChatMode("Chat mode stopped: session switched");
       if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
          this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "Switched to another session; task paused");
       }
@@ -968,9 +968,9 @@ public final class AiService {
       this.init_V_cc_RenderState(target);
    }
 
-   public synchronized void load_V_Str_Str(String id, String title) {
+   public synchronized void renameSession(String id, String title) {
       if (id == null || title == null || title.isBlank()) {
-         this.init_V_Str_Str("error", "Session title is blank");
+         this.appendTranscript("error", "Session title is blank");
       } else if (this.load_Z && this.init_cd != null) {
          String clean = title.trim();
          if (clean.length() > 96) {
@@ -989,22 +989,22 @@ public final class AiService {
                   try {
                      storeRef.init_V_Str_Str(id, name);
                   } catch (Exception e) {
-                     this.init_V_Str_Str("error", "Rename session: " + e.getMessage());
+                     this.appendTranscript("error", "Rename session: " + e.getMessage());
                   }
                }
             });
          }
       } else {
-         this.init_V_Str_Str("system", "AI storage is still loading");
+         this.appendTranscript("system", "AI storage is still loading");
       }
    }
 
-   public synchronized void read_V_Str(String id) {
+   public synchronized void deleteSession(String id) {
       if (id != null) {
          if (this.load_Z && this.init_cd != null) {
             this.load_Set.add(id);
             if (id.equals(this.write_Str)) {
-               this.sync_V_Str("Chat mode stopped: session deleted");
+               this.stopChatMode("Chat mode stopped: session deleted");
                if (init_Z_cc_FileCache(this.init_cc_FileCache) || this.init_cc_FileCache == AiService.RunState.PAUSED) {
                   this.init_V_cc_FileCache_Str(AiService.RunState.IDLE, "Session deleted");
                }
@@ -1013,7 +1013,7 @@ public final class AiService {
                AiService.SessionState target = next == null ? null : this.init_Map.get(next);
                this.init_V_cc_RenderState(target != null ? target : new AiService.SessionState(UUID.randomUUID().toString(), System.currentTimeMillis()));
                if (next != null && target == null) {
-                  this.load_V_Str(next);
+                  this.switchSession(next);
                }
             }
 
@@ -1023,16 +1023,16 @@ public final class AiService {
                try {
                   storeRef.init_V_Str(id);
                } catch (Exception e) {
-                  this.init_V_Str_Str("error", "Delete session: " + e.getMessage());
+                  this.appendTranscript("error", "Delete session: " + e.getMessage());
                }
             });
          } else {
-            this.init_V_Str_Str("system", "AI storage is still loading");
+            this.appendTranscript("system", "AI storage is still loading");
          }
       }
    }
 
-   public synchronized boolean write_Z_Str(String id) {
+   public synchronized boolean branchSession(String id) {
       if (id == null) {
          return false;
       }
@@ -1044,7 +1044,7 @@ public final class AiService {
          }
 
          if (id.equals(this.write_Str)) {
-            this.sync_V_Str("Chat mode stopped: session branched");
+            this.stopChatMode("Chat mode stopped: session branched");
          }
 
          if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
@@ -1061,7 +1061,7 @@ public final class AiService {
             try {
                fork = this.init_cc_RenderState_cd_DataUtil(storeRef.load_cd_DataUtil(id));
             } catch (Exception e) {
-               this.init_V_Str_Str("error", "Branch session: " + e.getMessage());
+               this.appendTranscript("error", "Branch session: " + e.getMessage());
                return;
             }
 
@@ -1074,7 +1074,7 @@ public final class AiService {
          });
          return true;
       } else {
-         this.init_V_Str_Str("system", "AI storage is still loading");
+         this.appendTranscript("system", "AI storage is still loading");
          return false;
       }
    }
@@ -1085,7 +1085,7 @@ public final class AiService {
 
       try {
          if (!drained.await(15L, TimeUnit.SECONDS)) {
-            this.init_V_Str_Str("error", "Storage flush timed out");
+            this.appendTranscript("error", "Storage flush timed out");
          }
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
@@ -1096,11 +1096,11 @@ public final class AiService {
       this.init_cc_RenderState().init_Z = true;
    }
 
-   public void write_V_Str(String prompt) {
+   public void submitPrompt(String prompt) {
       this.load_V_Str_JsonObject(prompt, null);
    }
 
-   public void init_V_Str_2(String label, String capability, JsonObject arguments) {
+   public void submitBuiltInAction(String label, String capability, JsonObject arguments) {
       if (!this.init_AiSettings.builtIn) {
          throw new IllegalStateException("Select the Built-In provider first");
       }
@@ -1119,8 +1119,8 @@ public final class AiService {
 
       JsonObject local = AiLocalRequest.init(label, capability, arguments);
       if (capability.equals("game:build") || capability.equals("game:goto") || capability.equals("game:farm") && arguments.has("from")) {
-         local.addProperty("placementWorld", AiWorldIdentity.init(Minecraft.getInstance()));
-         local.addProperty("placementDimension", AiWorldIdentity.load(Minecraft.getInstance()));
+         local.addProperty("placementWorld", AiWorldIdentity.currentWorldKey(Minecraft.getInstance()));
+         local.addProperty("placementDimension", AiWorldIdentity.currentDimensionId(Minecraft.getInstance()));
       }
 
       if (capability.equals("game:build") && arguments.has("schematic")) {
@@ -1136,34 +1136,34 @@ public final class AiService {
 
    private void load_V_Str_JsonObject(String prompt, JsonObject localAction) {
       if (!AutismLiteVariant.enabled() && !autismclient.e.SyncManager.init()) {
-         this.init_V_Str_Str("error", "Autism is locked: early access requires the donator role.");
+         this.appendTranscript("error", "Autism is locked: early access requires the donator role.");
       } else if (prompt != null && !prompt.isBlank()) {
          if (prompt.length() > 16000) {
-            this.init_V_Str_Str("error", "Request exceeds 16,000 characters");
+            this.appendTranscript("error", "Request exceeds 16,000 characters");
          } else if (!this.load_Z) {
-            this.init_V_Str_Str("system", "AI storage is still loading");
+            this.appendTranscript("system", "AI storage is still loading");
          } else if (!this.push_Str.isEmpty()) {
-            this.init_V_Str_Str("error", "Resolve AI settings/memory error first: " + this.push_Str);
+            this.appendTranscript("error", "Resolve AI settings/memory error first: " + this.push_Str);
          } else {
             AiService.SessionState s = this.init_cc_RenderState();
             if (this.init_cc_UiHelper != null) {
-               this.open(prompt);
-            } else if (AiChatPolicy.read(prompt) && this.read_Z() && !AiChatPolicy.write(prompt)) {
-               this.init_V_Str_Str("user", prompt);
-               this.sync_V_Str("Chat mode stopped by user");
+               this.answerPendingQuestion(prompt);
+            } else if (AiChatPolicy.read(prompt) && this.isChatModeActive() && !AiChatPolicy.write(prompt)) {
+               this.appendTranscript("user", prompt);
+               this.stopChatMode("Chat mode stopped by user");
             } else {
                if (init_Z_cc_FileCache(this.init_cc_FileCache) && this.init_AiSettings.builtIn) {
                   this.init_V_cc_FileCache_Str(AiService.RunState.IDLE, "Replaced by a new request");
                }
 
                if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
-                  if (!AiChatPolicy.load_Z(prompt) || AiChatPolicy.read(prompt) || this.update_Z() || this.init_AiSettings.planMode || this.init_AiSettings.builtIn
+                  if (!AiChatPolicy.load_Z(prompt) || AiChatPolicy.read(prompt) || this.isPlanPendingOrPlanning() || this.init_AiSettings.planMode || this.init_AiSettings.builtIn
                      )
                    {
                      s.init_I = AiTaskDuration.init(prompt, s.init_I);
                      s.init_Queue.add(prompt);
                      s.init(prompt);
-                     this.init_V_Str_Str("user", prompt);
+                     this.appendTranscript("user", prompt);
                      this.sync_Str = "Objective amended; releasing the previous operation before replanning";
                      Minecraft.getInstance().execute(this::run_V);
                      AiScriptHost script = this.init_bZ;
@@ -1171,14 +1171,14 @@ public final class AiService {
                         Thread.ofVirtual().start(script::init);
                      }
                   } else if (AiChatPolicy.write(prompt)) {
-                     this.init_V_Str_Str("user", prompt);
+                     this.appendTranscript("user", prompt);
                      this.close_Z(prompt);
                      s.init_I = AiTaskDuration.init(prompt, s.init_I);
                      s.init_Queue.add(prompt);
                      s.init(prompt);
                      this.sync_Str = "Chat mode updated; the work request will be planned at the next action boundary";
                   } else {
-                     this.init_V_Str_Str("user", prompt);
+                     this.appendTranscript("user", prompt);
                      if (this.close_Z(prompt)) {
                         this.sync_Str = "Chat mode updated; the running operation continues";
                      }
@@ -1186,11 +1186,11 @@ public final class AiService {
                } else {
                   if (AiChatPolicy.load_Z(prompt)
                      && !AiChatPolicy.read(prompt)
-                     && !this.update_Z()
+                     && !this.isPlanPendingOrPlanning()
                      && !this.init_AiSettings.planMode
                      && !this.init_AiSettings.builtIn) {
-                     if (this.init_cc_FileCache == AiService.RunState.CHATTING && this.read_Z() && !AiChatPolicy.write(prompt)) {
-                        this.init_V_Str_Str("user", prompt);
+                     if (this.init_cc_FileCache == AiService.RunState.CHATTING && this.isChatModeActive() && !AiChatPolicy.write(prompt)) {
+                        this.appendTranscript("user", prompt);
                         this.close_Z(prompt);
                         return;
                      }
@@ -1228,12 +1228,12 @@ public final class AiService {
                   s.flush_Str = "";
                   s.init_List.clear();
                   s.init(this.init_AiSettings.planMode && !this.init_AiSettings.builtIn);
-                  AiRunTrace.init_bL_Path_Str(this.init_AiMemoryStore.init_Path(), s.init_Str).init_V_Str_I(prompt, s.init_I);
+                  AiRunTrace.startSession(this.init_AiMemoryStore.init_Path(), s.init_Str).recordTaskStart(prompt, s.init_I);
                   if (s.load_Str.isBlank() || s.load_Str.equals("New session")) {
                      s.load_Str = AiSessions.init_Str_Str(prompt);
                   }
 
-                  this.init_V_Str_Str("user", prompt);
+                  this.appendTranscript("user", prompt);
                   this.load_V_Z(false);
                }
             }
@@ -1241,13 +1241,13 @@ public final class AiService {
       }
    }
 
-   public JsonObject init_JsonObject_Str(String instructions) {
+   public JsonObject startChatMode(String instructions) {
       String text = instructions == null ? "" : instructions.trim();
       if (text.isEmpty()) {
-         return this.load_JsonObject_Str(this.init_Str());
+         return this.load_JsonObject_Str(this.getChatModeSummary());
       }
 
-      this.init_V_Str_Str("user", "Keep chatting: " + text);
+      this.appendTranscript("user", "Keep chatting: " + text);
 
       try {
          AiChatPolicy.Inner_DataUtil base = AiChatPolicy.Inner_DataUtil.defaults(text);
@@ -1263,14 +1263,14 @@ public final class AiService {
          );
          return this.init_JsonObject_Str_JsonObject("Chat mode is active", this.init_JsonObject_PathHelper_DataUti(config, null, false));
       } catch (Exception error) {
-         this.init_V_Str_Str("error", "Chat mode: " + error.getMessage());
+         this.appendTranscript("error", "Chat mode: " + error.getMessage());
          return AiJson.objectOf("status", "FAILED", "error", Objects.toString(error.getMessage(), "Chat mode could not start"), "active", false);
       }
    }
 
    private boolean close_Z(String objective) {
       if (this.init_AiSettings.builtIn) {
-         this.init_V_Str_Str("warning", "Chat mode needs an API provider: select one in AI settings (Built-In has no model to chat with).");
+         this.appendTranscript("warning", "Chat mode needs an API provider: select one in AI settings (Built-In has no model to chat with).");
          return false;
       }
 
@@ -1289,7 +1289,7 @@ public final class AiService {
          this.init_JsonObject_PathHelper_DataUti(config, null, true);
          return true;
       } catch (Exception error) {
-         this.init_V_Str_Str("error", "Chat mode: " + error.getMessage());
+         this.appendTranscript("error", "Chat mode: " + error.getMessage());
          return false;
       }
    }
@@ -1321,7 +1321,7 @@ public final class AiService {
          AiChatMode lane = this.init_FieldCache;
          if (lane != null && lane.init_Z()) {
             lane.init_V_PathHelper_DataUti(config);
-            this.init_V_Str_Str(
+            this.appendTranscript(
                "system",
                note != null && !note.isBlank() ? note : "Chat mode updated; it keeps answering player chat in the background without touching movement."
             );
@@ -1347,7 +1347,7 @@ public final class AiService {
             throw failure;
          }
 
-         this.init_V_Str_Str(
+         this.appendTranscript(
             "system",
             note != null && !note.isBlank()
                ? note
@@ -1371,10 +1371,10 @@ public final class AiService {
       }
 
       if (action.equals("status")) {
-         return this.load_JsonObject_Str(this.init_Str());
+         return this.load_JsonObject_Str(this.getChatModeSummary());
       } else if (action.equals("stop")) {
-         this.sync_V_Str("Chat mode stopped by the assistant");
-         return this.load_JsonObject_Str(this.init_Str());
+         this.stopChatMode("Chat mode stopped by the assistant");
+         return this.load_JsonObject_Str(this.getChatModeSummary());
       } else if (!action.equals("start")) {
          throw new IllegalArgumentException("chat_keep action must be start, stop or status (got '" + action + "')");
       } else {
@@ -1405,29 +1405,29 @@ public final class AiService {
                }
 
                mc.getConnection().sendChat(text);
-               this.update_V_Str(text);
-               return AiJson.objectOf("status", "SUCCEEDED", "message", "Chat line sent", "text", text, "backgroundChat", this.read_Z());
+               this.forwardChatMessage(text);
+               return AiJson.objectOf("status", "SUCCEEDED", "message", "Chat line sent", "text", text, "backgroundChat", this.isChatModeActive());
             });
          }
       }
    }
 
    private JsonObject load_JsonObject_Str(String message) {
-      return this.init_JsonObject_Str_JsonObject(message, this.init_JsonObject());
+      return this.init_JsonObject_Str_JsonObject(message, this.getChatModeStatusJson());
    }
 
    private JsonObject init_JsonObject_Str_JsonObject(String message, JsonObject chat) {
       return AiJson.objectOf("status", "SUCCEEDED", "message", message, "chat", chat);
    }
 
-   void update_V_Str(String text) {
+   void forwardChatMessage(String text) {
       AiChatMode lane = this.init_FieldCache;
       if (lane != null && lane.init_Z()) {
          lane.init_V_Str(text);
       }
    }
 
-   public void sync_V_Str(String reason) {
+   public void stopChatMode(String reason) {
       AiChatMode lane = this.init_FieldCache;
       if (lane != null) {
          lane.load(reason != null && !reason.isBlank() ? reason : "Chat mode stopped");
@@ -1457,7 +1457,7 @@ public final class AiService {
    }
 
    private synchronized void pop_V() {
-      if (this.read_Z()
+      if (this.isChatModeActive()
          && (
             this.init_cc_FileCache == AiService.RunState.COMPLETED
                || this.init_cc_FileCache == AiService.RunState.ANSWERED
@@ -1465,7 +1465,7 @@ public final class AiService {
          )) {
          this.load_cc_FileCache = this.init_cc_FileCache;
          this.init_cc_FileCache = AiService.RunState.CHATTING;
-         this.sync_Str = this.init_Str();
+         this.sync_Str = this.getChatModeSummary();
       }
    }
 
@@ -1481,7 +1481,7 @@ public final class AiService {
          this.sync_Str = line;
       }
 
-      this.init_V_Str_Str("system", line);
+      this.appendTranscript("system", line);
       this.put_V();
    }
 
@@ -1503,11 +1503,11 @@ public final class AiService {
       this.init_ExecutorService.execute(() -> this.init_V_J(g, resume, note));
    }
 
-   public void read_V() {
+   public void resumeTask() {
       if (AutismLiteVariant.enabled() || autismclient.e.SyncManager.init()) {
          AiService.SessionState s = this.init_cc_RenderState();
          if (s != null && s.read_Z) {
-            this.init_V_Str_Str("system", "A plan awaits approval; approve or reject it instead of resuming");
+            this.appendTranscript("system", "A plan awaits approval; approve or reject it instead of resuming");
          } else if ((
                this.init_cc_FileCache == AiService.RunState.PAUSED
                   || this.init_cc_FileCache == AiService.RunState.BLOCKED
@@ -1520,21 +1520,21 @@ public final class AiService {
       }
    }
 
-   public boolean update_Z() {
+   public boolean isPlanPendingOrPlanning() {
       AiService.SessionState s = this.init_cc_RenderState();
       return this.init_cc_FileCache == AiService.RunState.PLANNING || this.init_cc_FileCache == AiService.RunState.PAUSED && s != null && s.read_Z;
    }
 
-   public boolean sync_Z() {
+   public boolean isAwaitingPlanApproval() {
       AiService.SessionState s = this.init_cc_RenderState();
       return s != null && s.read_Z;
    }
 
-   public synchronized boolean flush_Z() {
+   public synchronized boolean approvePlan() {
       AiService.SessionState s = this.init_cc_RenderState();
       if (s != null && s.read_Z) {
          s.init();
-         this.init_V_Str_Str("system", "Plan approved; execution started");
+         this.appendTranscript("system", "Plan approved; execution started");
          this.put_V();
          this.init_V_Z_Str(true, "The user approved the plan above. Execute it faithfully and report any deviation.");
          return true;
@@ -1543,29 +1543,29 @@ public final class AiService {
       }
    }
 
-   public synchronized boolean update_Z_Str(String feedback) {
+   public synchronized boolean rejectPlan(String feedback) {
       AiService.SessionState s = this.init_cc_RenderState();
       if (s == null || !s.read_Z) {
          return false;
       } else if (feedback != null && !feedback.isBlank()) {
          s.read(feedback.trim());
-         this.init_V_Str_Str("user", feedback.trim());
+         this.appendTranscript("user", feedback.trim());
          this.put_V();
          this.load_V_Z(true);
          return true;
       } else {
-         this.init_V_Str_Str("error", "Plan rejection needs feedback for the planner");
+         this.appendTranscript("error", "Plan rejection needs feedback for the planner");
          return false;
       }
    }
 
-   public void write_V() {
-      this.sync_V_Str("Chat mode stopped by user");
+   public void pauseTask() {
+      this.stopChatMode("Chat mode stopped by user");
       this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "Paused by user");
    }
 
-   public void update_V() {
-      this.sync_V_Str("Chat mode stopped by user");
+   public void stopTask() {
+      this.stopChatMode("Chat mode stopped by user");
       this.init_V_cc_FileCache_Str(AiService.RunState.IDLE, "Stopped by user");
    }
 
@@ -1577,7 +1577,7 @@ public final class AiService {
       this.init_cc_FileCache = next;
       this.sync_Str = reason;
       if (next == AiService.RunState.PAUSED) {
-         this.init_V_Str_Str("system", reason);
+         this.appendTranscript("system", reason);
          System.out.println("[AI task] PAUSED: " + reason);
       }
 
@@ -1595,20 +1595,20 @@ public final class AiService {
       this.put_V();
    }
 
-   public void sync_V() {
-      this.sync_V_Str("Chat mode stopped: left the world");
+   public void onWorldDisconnect() {
+      this.stopChatMode("Chat mode stopped: left the world");
       if (init_Z_cc_FileCache(this.init_cc_FileCache) && !this.init_AiSettings.autoRejoin) {
          this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "World changed; reobserve before resuming");
       }
    }
 
-   void flush_V() {
+   void onClientTick() {
       long start = System.nanoTime();
 
       try {
          if (autismclient.modules.aD.init_Z()) {
-            if (this.read_Z()) {
-               this.sync_V_Str("Chat mode stopped: client panic mode");
+            if (this.isChatModeActive()) {
+               this.stopChatMode("Chat mode stopped: client panic mode");
             }
 
             if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
@@ -1617,7 +1617,7 @@ public final class AiService {
          }
 
          if (!autismclient.modules.AutoTotemModule.init_Z_6()) {
-            this.close_V();
+            this.tickClientState();
          }
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("[AI] tick failed", t);
@@ -1645,7 +1645,7 @@ public final class AiService {
       }
    }
 
-   public void close_V() {
+   public void tickClientState() {
       Minecraft mc = Minecraft.getInstance();
       // Early returns below skip the auto-swim block, so release a stale jump here.
       if (this.update_Z && !this.auditAfloat(mc)) {
@@ -1655,8 +1655,8 @@ public final class AiService {
       if (this.load_Z) {
          if (mc.level != this.init_Obj) {
             String previousDimension = this.init_Obj instanceof Level previous ? previous.dimension().identifier().toString() : "offline";
-            if (this.read_Z()) {
-               this.sync_V_Str("Chat mode stopped: world/session changed");
+            if (this.isChatModeActive()) {
+               this.stopChatMode("Chat mode stopped: world/session changed");
             }
 
             AiServerEvidence.clearAll();
@@ -1667,15 +1667,15 @@ public final class AiService {
             this.flush_Str = UUID.randomUUID().toString();
             this.update_Map = null;
             AiEventLog.init_x().auditReset(mc.getConnection());
-            AiEventLog.init_x().init("dimension_changed", AiJson.objectOf("dimension", AiWorldIdentity.load(mc)));
-            AiRunTrace trace = AiRunTrace.init_bL();
+            AiEventLog.init_x().init("dimension_changed", AiJson.objectOf("dimension", AiWorldIdentity.currentDimensionId(mc)));
+            AiRunTrace trace = AiRunTrace.current();
             if (trace != null && (init_Z_cc_FileCache(this.init_cc_FileCache) || this.init_cc_FileCache == AiService.RunState.PAUSED)) {
-               String nowDimension = AiWorldIdentity.load(mc);
-               trace.load(previousDimension, nowDimension);
+               String nowDimension = AiWorldIdentity.currentDimensionId(mc);
+               trace.recordDimensionChange(previousDimension, nowDimension);
                if ("minecraft:the_nether".equals(nowDimension)) {
-                  trace.read("nether entered", "");
+                  trace.recordSplit("nether entered", "");
                } else if ("minecraft:the_end".equals(nowDimension)) {
-                  trace.read("end entered", "");
+                  trace.recordSplit("end entered", "");
                }
             }
 
@@ -1695,7 +1695,7 @@ public final class AiService {
 
                this.init_cz.init_V();
                this.init_cc_RenderState().flush_Str = "";
-               this.init_V_Str_Str("system", "World/session changed; the objective continues and the scope re-bases on the next observation.");
+               this.appendTranscript("system", "World/session changed; the objective continues and the scope re-bases on the next observation.");
                String note = this.init_cc_RenderState().sync_Str
                   + "\nThe world or session changed (kick, rejoin, or world switch); the scope re-bases automatically - re-observe before continuing.";
                this.close_V(note.length() > 11900 ? note.substring(note.length() - 11900) : note);
@@ -1703,17 +1703,17 @@ public final class AiService {
                this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "World/session changed");
             }
 
-            this.pop_Str = mc.player == null ? "offline" : this.init_AiMemoryStore.init_Str(AiWorldIdentity.init(mc));
-            this.close_Str = this.pop_Str + "/dimension/" + AiWorldIdentity.load(mc);
+            this.pop_Str = mc.player == null ? "offline" : this.init_AiMemoryStore.init_Str(AiWorldIdentity.currentWorldKey(mc));
+            this.close_Str = this.pop_Str + "/dimension/" + AiWorldIdentity.currentDimensionId(mc);
          }
 
          if (this.load_Z) {
             AiChatMode chatLane = this.init_FieldCache;
             if (chatLane != null && chatLane.init_Z()) {
                if (!AutismLiteVariant.enabled() && !autismclient.e.CharEncoder.init()) {
-                  this.sync_V_Str("Chat mode stopped: Autism is locked");
+                  this.stopChatMode("Chat mode stopped: Autism is locked");
                } else if (this.init_AiSettings.builtIn) {
-                  this.sync_V_Str("Chat mode stopped: the provider switched to Built-In");
+                  this.stopChatMode("Chat mode stopped: the provider switched to Built-In");
                } else {
                   if (this.init_cc_FileCache == AiService.RunState.COMPLETED
                      || this.init_cc_FileCache == AiService.RunState.ANSWERED
@@ -1729,7 +1729,7 @@ public final class AiService {
                try {
                   this.init_AiCatalog.init_V();
                } catch (Exception e) {
-                  this.init_V_Str_Str("error", "Catalog: " + e.getMessage());
+                  this.appendTranscript("error", "Catalog: " + e.getMessage());
                }
             }
 
@@ -1739,9 +1739,9 @@ public final class AiService {
 
             this.init_V_Minecraft(mc);
             if (load_Z_cc_FileCache(this.init_cc_FileCache) && mc.player != null && !mc.player.isAlive()) {
-               AiRunTrace trace = AiRunTrace.init_bL();
+               AiRunTrace trace = AiRunTrace.current();
                if (trace != null) {
-                  trace.read();
+                  trace.recordDeath();
                }
 
                if (this.init_cc_FileCache != AiService.RunState.CHATTING) {
@@ -1771,7 +1771,7 @@ public final class AiService {
                      this.init_AiSettings.autoRespawn ? "Player died; respawning and resuming automatically" : "Player died; task paused"
                   );
                   this.read_Z = true;
-                  this.tick_Str = AiWorldIdentity.load(mc);
+                  this.tick_Str = AiWorldIdentity.currentDimensionId(mc);
                   if (this.init_AiSettings.autoRespawn) {
                      this.sync_J = System.currentTimeMillis() + 1500L;
                   }
@@ -1789,8 +1789,8 @@ public final class AiService {
                if (this.init_AiSettings.autoRespawn && this.sync_J == 0L) {
                   this.sync_J = System.currentTimeMillis() + 1500L;
                   this.read_Z = true;
-                  this.tick_Str = AiWorldIdentity.load(mc);
-                  this.init_V_Str_Str("system", "Player died while chatting; respawning automatically and keeping the conversation.");
+                  this.tick_Str = AiWorldIdentity.currentDimensionId(mc);
+                  this.appendTranscript("system", "Player died while chatting; respawning automatically and keeping the conversation.");
                }
             }
 
@@ -1807,14 +1807,14 @@ public final class AiService {
                   String diedIn = this.tick_Str;
                   this.read_Z = false;
                   this.tick_Str = null;
-                  AiRunTrace trace = AiRunTrace.init_bL();
+                  AiRunTrace trace = AiRunTrace.current();
                   if (trace != null) {
-                     trace.write();
+                     trace.recordRespawn();
                   }
 
                   if (this.init_cc_FileCache == AiService.RunState.CHATTING) {
-                     this.init_V_Str_Str("system", "Respawned after dying; chat continues.");
-                     this.sync_Str = this.init_Str();
+                     this.appendTranscript("system", "Respawned after dying; chat continues.");
+                     this.sync_Str = this.getChatModeSummary();
                   } else {
                      int hostilesNear = 0;
 
@@ -1824,8 +1824,8 @@ public final class AiService {
                         }
                      }
 
-                     boolean stabilize = init_Z_I(hostilesNear, AiWorldIdentity.load(mc).equals(diedIn), true, this.init_AiSettings.planMode);
-                     this.init_V_Str_Str(
+                     boolean stabilize = init_Z_I(hostilesNear, AiWorldIdentity.currentDimensionId(mc).equals(diedIn), true, this.init_AiSettings.planMode);
+                     this.appendTranscript(
                         "system",
                         "Respawned after dying; the objective resumes with fresh observations"
                            + (stabilize ? " (moved to safety first)" : "")
@@ -1836,7 +1836,7 @@ public final class AiService {
                         + (stabilize ? " near hostile mobs; a host-parked flee moved the player to safety before anything else ran" : "")
                         + "; the death position and carried items were recorded; game:recover walks back and collects them, but the drops despawn five minutes after the death.";
                      this.close_V(note.length() > 11900 ? note.substring(note.length() - 11900) : note);
-                     this.read_V();
+                     this.resumeTask();
                      if (stabilize) {
                         this.load_V_Minecraft(mc);
                      }
@@ -1846,13 +1846,13 @@ public final class AiService {
 
             if (mc.player != null && init_Z_cc_FileCache(this.init_cc_FileCache, this.flush_J, System.currentTimeMillis(), this.init_AiSettings.planMode)) {
                this.flush_J = 0L;
-               AiRunTrace trace = AiRunTrace.init_bL();
+               AiRunTrace trace = AiRunTrace.current();
                if (trace != null) {
-                  trace.load("threat_escalation_resume");
+                  trace.recordOpInterrupt("threat_escalation_resume");
                }
 
-               this.init_V_Str_Str("system", "Auto-resuming after the threat pause.");
-               this.read_V();
+               this.appendTranscript("system", "Auto-resuming after the threat pause.");
+               this.resumeTask();
             }
 
             if (init_Z_cc_FileCache(this.init_cc_FileCache) && this.write_J() > this.init_cc_RenderState().init_I * 60000000000L) {
@@ -1865,7 +1865,7 @@ public final class AiService {
                         try {
                            AiJson.writeAtomicJson(this.init_AiMemoryStore.init_Path().resolve("qualification-performance.json"), this.load_JsonObject);
                         } catch (Exception ex) {
-                           this.init_V_Str_Str("error", ex.getMessage());
+                           this.appendTranscript("error", ex.getMessage());
                         }
                      }
                   });
@@ -1873,7 +1873,7 @@ public final class AiService {
                      try {
                         this.init_AiRegions.load(this.init_AiMemoryStore.init_Path());
                      } catch (Exception ex) {
-                        this.init_V_Str_Str("error", "Region persistence: " + ex.getMessage());
+                        this.appendTranscript("error", "Region persistence: " + ex.getMessage());
                      }
                   });
                   if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
@@ -1886,7 +1886,7 @@ public final class AiService {
                }
 
                if (load_Z_cc_FileCache(this.init_cc_FileCache) && CompatGLFW.glfwGetKey(mc.getWindow().handle(), this.init_AiSettings.emergencyKey) == 1) {
-                  this.update_V();
+                  this.stopTask();
                } else {
                   if (load_Z_cc_FileCache(this.init_cc_FileCache) && mc.player != null && mc.player.isAlive()) {
                      float health = mc.player.getHealth();
@@ -1906,7 +1906,7 @@ public final class AiService {
                         AiService.ActiveOperation falling = this.init_cc_SyncManager;
                         if (falling == null || !falling.id().equals("game:mlg")) {
                            if (falling != null) {
-                              AiOperation.Result interruption = init_AiOperation_Result_AiOperation(
+                              AiOperation.Result interruption = interruptedFailureResult(
                                  falling.operation(), AiFailure.ENVIRONMENTAL_HAZARD, "Falling: the landing is being clutched"
                               );
                               this.init_V_cc_SyncManager_Z(falling, true);
@@ -1933,7 +1933,7 @@ public final class AiService {
                         && (hazardPending == null || !hazardPending.id().equals("game:escape_hazard"))
                         && (hazardPending == null || hazardPending.resources().contains("INPUT"))) {
                         if (hazardPending != null) {
-                           AiOperation.Result interruption = init_AiOperation_Result_AiOperation(
+                           AiOperation.Result interruption = interruptedFailureResult(
                               hazardPending.operation(), AiFailure.ENVIRONMENTAL_HAZARD, "Environmental emergency: " + urgentHazard
                            );
                            this.init_V_cc_SyncManager_Z(hazardPending, true);
@@ -1955,28 +1955,28 @@ public final class AiService {
 
                      AiService.ActiveOperation threatPending = this.init_cc_SyncManager;
                      if (threatPending != null
-                        && init_Z_Str(threatPending.id())
+                        && isInterruptibleOperation(threatPending.id())
                         && !AiGuard.isSuppressed()
-                        && init_Z_Z(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
+                        && isSafeStanceForReflex(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
                         long now = System.currentTimeMillis();
                         String hazard = init_Str_Player(mc.player);
                         if (hazard != null) {
                            boolean announce = now - this.run_J > 10000L;
                            this.run_J = now;
-                           AiOperation.Result interrupted = init_AiOperation_Result_AiOperation(
+                           AiOperation.Result interrupted = interruptedFailureResult(
                               threatPending.operation(), AiFailure.ENVIRONMENTAL_HAZARD, "Environmental hazard interrupted the operation: the player is " + hazard
                            );
                            this.init_V_cc_SyncManager_Z(threatPending, true);
                            threatPending.result().complete(interrupted);
                            this.init_cc_SyncManager = null;
                            AiEventLog.init_x().init("hazard_interrupt", AiJson.objectOf("hazard", hazard));
-                           AiRunTrace trace = AiRunTrace.init_bL();
+                           AiRunTrace trace = AiRunTrace.current();
                            if (trace != null) {
-                              trace.load("hazard");
+                              trace.recordOpInterrupt("hazard");
                            }
 
                            if (announce) {
-                              this.init_V_Str_Str(
+                              this.appendTranscript(
                                  "system",
                                  "Environmental hazard: the player is "
                                     + hazard
@@ -1997,11 +1997,11 @@ public final class AiService {
                         int ranged = 0;
 
                         for (Entity e : mc.level.entitiesForRendering()) {
-                           if (e instanceof Enemy && e.isAlive() && e.distanceToSqr(mc.player) < 36.0 && AiThreats.init_Z(mc, e)) {
+                           if (e instanceof Enemy && e.isAlive() && e.distanceToSqr(mc.player) < 36.0 && AiThreats.isActiveThreat(mc, e)) {
                               hostiles++;
                            }
 
-                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.engine.AiSight.init(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.init_Z(mc, e)) {
+                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.engine.AiSight.init(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.isActiveThreat(mc, e)) {
                               ranged++;
                            }
                         }
@@ -2028,7 +2028,7 @@ public final class AiService {
                               this.init_Deque.pollFirst();
                            }
 
-                           AiOperation.Result interrupted = init_AiOperation_Result_AiOperation(
+                           AiOperation.Result interrupted = interruptedFailureResult(
                               threatPending.operation(), AiFailure.THREAT_INTERRUPT, "Threat interrupted the operation; controls released for combat or evasion"
                            );
                            this.init_V_cc_SyncManager_Z(threatPending, true);
@@ -2039,9 +2039,9 @@ public final class AiService {
                                  "threat_interrupt",
                                  AiJson.objectOf("hostiles", hostiles, "ranged", ranged, "lethal", lethalImminent, "projectile", projectileThreat)
                               );
-                           AiRunTrace trace = AiRunTrace.init_bL();
+                           AiRunTrace trace = AiRunTrace.current();
                            if (trace != null) {
-                              trace.load("threat");
+                              trace.recordOpInterrupt("threat");
                            }
 
                            if (!projectileThreat && this.init_Deque.size() >= 3) {
@@ -2066,7 +2066,7 @@ public final class AiService {
                               this.init_Deque.clear();
                               this.flush_J = System.currentTimeMillis();
                               if (trace != null) {
-                                 trace.load("threat_escalation_pause");
+                                 trace.recordOpInterrupt("threat_escalation_pause");
                               }
 
                               return;
@@ -2085,7 +2085,7 @@ public final class AiService {
                            }
 
                            if (announce) {
-                              this.init_V_Str_Str(
+                              this.appendTranscript(
                                  "system",
                                  lethalImminent
                                     ? "Threat interruption: predicted lethal damage ("
@@ -2132,13 +2132,13 @@ public final class AiService {
                               "food_reflex",
                               "Critical hunger - eating safely before resuming work."
                            );
-                           AiRunTrace trace = AiRunTrace.init_bL();
+                           AiRunTrace trace = AiRunTrace.current();
                            if (trace != null) {
-                              trace.load("hunger");
+                              trace.recordOpInterrupt("hunger");
                            }
 
                            if (announce) {
-                              this.init_V_Str_Str(
+                              this.appendTranscript(
                                  "system",
                                  "Hunger interruption: food level is "
                                     + food
@@ -2155,16 +2155,16 @@ public final class AiService {
                         && !this.init_AiSettings.planMode
                         && !AiGuard.isSuppressed()
                         && idleNow - this.set_J > 1000L
-                        && init_Z_Z(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
+                        && isSafeStanceForReflex(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
                         int hostiles = 0;
                         int ranged = 0;
 
                         for (Entity e : mc.level.entitiesForRendering()) {
-                           if (e instanceof Enemy && e.isAlive() && e.distanceToSqr(mc.player) < 36.0 && AiThreats.init_Z(mc, e)) {
+                           if (e instanceof Enemy && e.isAlive() && e.distanceToSqr(mc.player) < 36.0 && AiThreats.isActiveThreat(mc, e)) {
                               hostiles++;
                            }
 
-                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.engine.AiSight.init(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.init_Z(mc, e)) {
+                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.engine.AiSight.init(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.isActiveThreat(mc, e)) {
                               ranged++;
                            }
                         }
@@ -2221,9 +2221,9 @@ public final class AiService {
                         )) {
                         this.close_J = dayIndex;
                         this.open_J = nowMs;
-                        AiRunTrace trace = AiRunTrace.init_bL();
+                        AiRunTrace trace = AiRunTrace.current();
                         if (trace != null) {
-                           trace.read("night_burrow", "");
+                           trace.recordSplit("night_burrow", "");
                         }
                      }
                   }
@@ -2238,8 +2238,8 @@ public final class AiService {
                         this.init_V_cc_SyncManager_Z(reflex, true);
                         reflex.result().complete(AiOperation.Result.failed(AiFailure.ENVIRONMENTAL_HAZARD, "Out of air", "{}"));
                         this.init_cc_SyncManager = null;
-                     } else if (reflex != null && !reflex.hostParked() && !init_Z_Str(reflex.id())) {
-                        AiOperation.Result interrupted = init_AiOperation_Result_AiOperation(
+                     } else if (reflex != null && !reflex.hostParked() && !isInterruptibleOperation(reflex.id())) {
+                        AiOperation.Result interrupted = interruptedFailureResult(
                            reflex.operation(), AiFailure.ENVIRONMENTAL_HAZARD, "Out of air under water: stopped to swim up; run it again from the surface"
                         );
                         this.init_V_cc_SyncManager_Z(reflex, true);
@@ -2276,9 +2276,9 @@ public final class AiService {
                         )) {
                         this.poll_J = dayIndex;
                         this.push_J = nowMs;
-                        AiRunTrace trace = AiRunTrace.init_bL();
+                        AiRunTrace trace = AiRunTrace.current();
                         if (trace != null) {
-                           trace.read("night_sleep", "");
+                           trace.recordSplit("night_sleep", "");
                         }
                      }
                   }
@@ -2339,7 +2339,7 @@ public final class AiService {
                                  }
 
                                  if (this.init_cc_FileCache == AiService.RunState.CHATTING && current.hostParked()) {
-                                    this.sync_Str = this.init_Str();
+                                    this.sync_Str = this.getChatModeSummary();
                                  }
 
                                  current.result().complete(result);
@@ -2370,7 +2370,7 @@ public final class AiService {
       return "game:speedrun".equals(operationId);
    }
 
-   public void flush_V(String reason) {
+   public void pauseOnUserInput(String reason) {
       if (!Boolean.getBoolean("autism.ai.livetask")
          && this.init_AiSettings.stopOnInput
          && !autismclient.modules.FreecamController.isActive()
@@ -2380,12 +2380,12 @@ public final class AiService {
       }
    }
 
-   public boolean close_Z() {
+   public boolean isBlockingManualInput() {
       AiService.ActiveOperation p = this.init_cc_SyncManager;
       return !this.init_AiSettings.stopOnInput && p != null && load_Z_cc_FileCache(this.init_cc_FileCache) && p.resources().contains("INPUT");
    }
 
-   public boolean open_Z() {
+   public boolean isActivelyDriving() {
       return init_Z_cc_FileCache(this.init_cc_FileCache)
          || this.sync_I > 0
          || this.init_cc_SyncManager != null && this.init_cc_SyncManager.resources().contains("INPUT");
@@ -2519,7 +2519,7 @@ public final class AiService {
                current.operation().cancel();
             }
          } catch (Throwable e) {
-            this.init_V_Str_Str("error", "Operation cleanup: " + e.getMessage());
+            this.appendTranscript("error", "Operation cleanup: " + e.getMessage());
          } finally {
             if (current.resources().contains("INPUT")) {
                autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
@@ -2534,7 +2534,7 @@ public final class AiService {
             try {
                current.lease().close();
             } catch (Exception e) {
-               this.init_V_Str_Str("error", "Resource release: " + e.getMessage());
+               this.appendTranscript("error", "Resource release: " + e.getMessage());
             } finally {
                if (input) {
                   this.sync_I--;
@@ -2588,7 +2588,7 @@ public final class AiService {
          health, armed, this.init_AiSettings.planMode, interrupted != null && interrupted.hostParked() && !interrupted.id().equals("game:eat")
       );
       Entity mealThreat = interrupted != null && interrupted.id().equals("game:eat") ? AiSurvival.init_Entity(mc) : null;
-      if (mealThreat != null && AiThreats.init_cv_DataUtil(mealThreat) == AiThreats.Inner_DataUtil.AVOID && !reflex.isEmpty()) {
+      if (mealThreat != null && AiThreats.classify(mealThreat) == AiThreats.Inner_DataUtil.AVOID && !reflex.isEmpty()) {
          reflex = "game:flee";
       }
 
@@ -2635,7 +2635,7 @@ public final class AiService {
    }
 
    private boolean init_Z_Minecraft(Minecraft mc, String id, JsonObject args, String traceKind, String chatLine) {
-      AiCatalog.Entry entry = this.init_AiCatalog_Snapshot().get(id);
+      AiCatalog.Entry entry = this.getCatalogSnapshot().get(id);
       if (entry != null && this.init_cc_SyncManager == null) {
          LocalPlayer rider = mc.player;
          if (rider != null && !rider.isPassenger() && !rider.isFallFlying()) {
@@ -2673,12 +2673,12 @@ public final class AiService {
                this.init_cc_SyncManager = new AiService.ActiveOperation(
                   this.init_AtomicLong.get(), id, entry.fingerprint(), op, new CompletableFuture<>(), lease, entry.contract().resources(), true
                );
-               AiRunTrace trace = AiRunTrace.init_bL();
+               AiRunTrace trace = AiRunTrace.current();
                if (trace != null) {
-                  trace.load(traceKind);
+                  trace.recordOpInterrupt(traceKind);
                }
 
-               this.init_V_Str_Str("system", chatLine);
+               this.appendTranscript("system", chatLine);
                return true;
             }
          } else {
@@ -2772,7 +2772,7 @@ public final class AiService {
       try {
          this.init_AiMemoryStore.init(o);
       } catch (IOException e) {
-         this.init_V_Str_Str("error", "Observation retained in this session; journal write failed: " + e.getMessage());
+         this.appendTranscript("error", "Observation retained in this session; journal write failed: " + e.getMessage());
       }
 
       return o;
@@ -2807,7 +2807,7 @@ public final class AiService {
       CompletableFuture<AiOperation.Result> future = this.init_Obj_J_Supplier(
          g,
          () -> {
-            AiCatalog.Entry fresh = this.init_AiCatalog_Snapshot().get(id);
+            AiCatalog.Entry fresh = this.getCatalogSnapshot().get(id);
             if (fresh == null || !fresh.fingerprint().equals(fingerprint)) {
                throw new IllegalArgumentException("Capability changed before dispatch; inspect it again");
             }
@@ -2816,7 +2816,7 @@ public final class AiService {
                throw new IllegalStateException("Another operation owns client controls");
             }
 
-            if (read_Z_Str(id)) {
+            if (isGameplayActionOperation(id)) {
                LocalPlayer rider = Minecraft.getInstance().player;
                if (rider != null && rider.isPassenger()) {
                   throw new IllegalStateException("Dismount first (game:ride action:dismount) before " + id + "; movement keys would steer the mount");
@@ -2834,7 +2834,7 @@ public final class AiService {
 
             AutoCloseable lease = () -> {};
             if (!id.startsWith("macro:") && !id.equals("client:run_macro")) {
-               lease = MacroExecutor.acquireExternalResources(this.init_AiCatalog_Snapshot().get(id).contract().resources());
+               lease = MacroExecutor.acquireExternalResources(this.getCatalogSnapshot().get(id).contract().resources());
                if (lease == null) {
                   throw new IllegalStateException("Another controller owns required macro resources");
                }
@@ -2912,11 +2912,11 @@ public final class AiService {
                   this.close_Str,
                   "Observed successful capability " + id + ": " + result.message(),
                   evidence.id(),
-                  this.init_AiCatalog_Snapshot().revision(),
+                  this.getCatalogSnapshot().revision(),
                   result.dataJson()
                );
          } catch (Exception e) {
-            this.init_V_Str_Str("error", "Verified result retained; memory could not be saved: " + e.getMessage());
+            this.appendTranscript("error", "Verified result retained; memory could not be saved: " + e.getMessage());
          }
       }
 
@@ -2945,7 +2945,7 @@ public final class AiService {
          entry.addProperty("sessionId", this.write_Str);
          this.init_AiMemoryStore.init_V_Str_JsonElement("operation", entry);
       } catch (IOException e) {
-         this.init_V_Str_Str("error", "Operation journal write failed: " + e.getMessage());
+         this.appendTranscript("error", "Operation journal write failed: " + e.getMessage());
       }
 
       return output;
@@ -3135,12 +3135,12 @@ public final class AiService {
                   "user",
                   text,
                   this.load_AiObservation.id(),
-                  this.init_AiCatalog_Snapshot().revision(),
+                  this.getCatalogSnapshot().revision(),
                   "Explicit user statement; newer corrections take precedence"
                );
          }
       } catch (Exception e) {
-         this.init_V_Str_Str("error", "User statement is available for this task; memory write failed: " + e.getMessage());
+         this.appendTranscript("error", "User statement is available for this task; memory write failed: " + e.getMessage());
       }
    }
 
@@ -3184,7 +3184,7 @@ public final class AiService {
    }
 
    private AiService.PromptContextBundle init_cc_NetHelper_cc_RenderState(AiService.SessionState s, boolean planning, int promptBudget) {
-      AiCatalog.Snapshot contracts = this.init_AiCatalog_Snapshot();
+      AiCatalog.Snapshot contracts = this.getCatalogSnapshot();
       List<AiMemoryStore.Memory> memories = this.init_AiMemoryStore.init_List_Str_Str(this.close_Str, s.update_Str + " " + String.join(" ", s.init_List));
       int systemChars = (int)Math.min(2147483647L, (long)(promptBudget * 3.5 * 0.6));
       AiContext.Inner_StreamUtil prompt = AiContext.init(
@@ -3364,7 +3364,7 @@ public final class AiService {
                   throw new IllegalStateException("Task request limit reached");
                }
 
-               String revision = this.init_AiCatalog_Snapshot().revision();
+               String revision = this.getCatalogSnapshot().revision();
                transport.init_V_List_Str(
                   history,
                   AiContext.init(
@@ -3449,9 +3449,9 @@ public final class AiService {
                s.open_J = s.open_J + usage.cacheWriteTokens();
                s.poll = s.poll + usage.outputTokens();
                s.pop = usage.promptTokens() > 0L ? usage.promptTokens() : AiContext.init_J(sent);
-               AiRunTrace trace = AiRunTrace.init_bL();
+               AiRunTrace trace = AiRunTrace.current();
                if (trace != null) {
-                  trace.init_V_J_J((System.nanoTime() - providerStarted) / 1000000L, estTokens);
+                  trace.recordProviderRequest((System.nanoTime() - providerStarted) / 1000000L, estTokens);
                }
 
                if (!finishedByTool[0]) {
@@ -3529,9 +3529,9 @@ public final class AiService {
                this.init_cc_FileCache = AiService.RunState.FAILED;
                this.sync_Str = Objects.toString(e.getMessage(), "AI task failed");
                this.init_V_cc_RenderState(s, "error", this.sync_Str);
-               AiRunTrace trace = AiRunTrace.init_bL();
+               AiRunTrace trace = AiRunTrace.current();
                if (trace != null) {
-                  trace.read("failed");
+                  trace.recordFinish("failed");
                }
             }
          } finally {
@@ -3567,7 +3567,7 @@ public final class AiService {
                   String next = s.init_Deque.poll();
                   Minecraft.getInstance().execute(() -> {
                      if (s.init_Str.equals(this.write_Str) && !init_Z_cc_FileCache(this.init_cc_FileCache)) {
-                        this.write_V_Str(next);
+                        this.submitPrompt(next);
                      } else {
                         s.init_Deque.offerFirst(next);
                      }
@@ -3638,10 +3638,10 @@ public final class AiService {
 
    private JsonObject init_JsonObject_cc_RenderState(AiService.SessionState s, String sid, AiProvider.Inner_DataUtil call, long g) {
       this.init_V_J(g);
-      AiRunTrace trace = AiRunTrace.init_bL();
+      AiRunTrace trace = AiRunTrace.current();
       long toolStarted = System.nanoTime();
       if (trace != null) {
-         trace.init(call.name());
+         trace.recordToolCall(call.name());
       }
 
       JsonObject result;
@@ -3684,7 +3684,7 @@ public final class AiService {
       }
 
       if (trace != null) {
-         trace.init_V_Str(
+         trace.recordToolResult(
             call.name(),
             AiJson.getString(result, "status", AiJson.getString(result, "outcome", "returned")),
             result.has("failure") && result.get("failure").isJsonObject() ? AiJson.getString(result.getAsJsonObject("failure"), "code", "") : "",
@@ -3698,7 +3698,7 @@ public final class AiService {
    private AiService.CompletionNote init_cc_TaskQueue_J(long g, AiService.SessionState s, boolean builtIn) {
       if (builtIn && s.init_JsonObject.has("builtInAction")) {
          JsonObject local = s.init_JsonObject.getAsJsonObject("builtInAction");
-         if (!AiLocalRequest.init(local, AiWorldIdentity.init(Minecraft.getInstance()), AiWorldIdentity.load(Minecraft.getInstance()))) {
+         if (!AiLocalRequest.init(local, AiWorldIdentity.currentWorldKey(Minecraft.getInstance()), AiWorldIdentity.currentDimensionId(Minecraft.getInstance()))) {
             return this.init_cc_TaskQueue_J(
                g, s, AiService.RunState.BLOCKED, "warning", "This placement belongs to another world or dimension. Select the destination again."
             );
@@ -3724,7 +3724,7 @@ public final class AiService {
 
       AiIntents.Inner_CachePool plan = builtIn && s.init_JsonObject.has("builtInAction")
          ? AiLocalRequest.init(s.init_JsonObject.getAsJsonObject("builtInAction"))
-         : AiIntents.init_ad_CachePool(s.update_Str, init_ad_StreamUtil());
+         : AiIntents.init_ad_CachePool(s.update_Str, createWaypointResolver());
       if (plan.steps().isEmpty()) {
          return new AiService.CompletionNote(false, null);
       }
@@ -3856,9 +3856,9 @@ public final class AiService {
             }
 
             this.init_V_cc_RenderState(s, "success", "Done without an AI turn: " + String.join("; ", what));
-            AiRunTrace trace = AiRunTrace.init_bL();
+            AiRunTrace trace = AiRunTrace.current();
             if (trace != null) {
-               trace.read("completed");
+               trace.recordFinish("completed");
             }
 
             this.init_V_J_cc_RenderState(g, s);
@@ -4098,9 +4098,9 @@ public final class AiService {
       }
 
       this.init_V_cc_RenderState(s, role, text);
-      AiRunTrace trace = AiRunTrace.init_bL();
+      AiRunTrace trace = AiRunTrace.current();
       if (trace != null) {
-         trace.read(end == AiService.RunState.FAILED ? "failed" : "blocked");
+         trace.recordFinish(end == AiService.RunState.FAILED ? "failed" : "blocked");
       }
 
       this.init_V_J_cc_RenderState(g, s);
@@ -4210,7 +4210,7 @@ public final class AiService {
       }
    }
 
-   static AiIntents.Inner_StreamUtil init_ad_StreamUtil() {
+   static AiIntents.Inner_StreamUtil createWaypointResolver() {
       return new AiIntents.Inner_StreamUtil(name -> {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null && mc.level != null) {
@@ -4325,9 +4325,9 @@ public final class AiService {
             String kind = AiJson.getString(p, "kind", "");
             if (unmet == null
                && (kind.equals("beat_game") || kind.equals("stat") && "minecraft.killed:minecraft.ender_dragon".equals(AiJson.getString(p, "stat", "")))) {
-               AiRunTrace trace = AiRunTrace.init_bL();
+               AiRunTrace trace = AiRunTrace.current();
                if (trace != null) {
-                  trace.read("dragon dead", "");
+                  trace.recordSplit("dragon dead", "");
                }
             }
          }
@@ -4349,7 +4349,7 @@ public final class AiService {
             s.load(text);
             this.init_cc_FileCache = AiService.RunState.PAUSED;
             this.sync_Str = "Plan awaiting user approval";
-            this.init_V_Str_Str("assistant", text);
+            this.appendTranscript("assistant", text);
             return AiJson.objectOf("outcome", outcome, "message", text);
          }
 
@@ -4359,13 +4359,13 @@ public final class AiService {
          this.init_V_cc_RenderState(s, "warning", "Objective blocked");
       }
 
-      AiRunTrace trace = AiRunTrace.init_bL();
+      AiRunTrace trace = AiRunTrace.current();
       if (trace != null) {
-         trace.read(outcome);
+         trace.recordFinish(outcome);
       }
 
       this.sync_Str = text;
-      this.init_V_Str_Str("assistant", text);
+      this.appendTranscript("assistant", text);
       return AiJson.objectOf("outcome", outcome, "message", text);
    }
 
@@ -4443,7 +4443,7 @@ public final class AiService {
       }
    }
 
-   public static String init_Str_cc_JsonUtil(AiService.TranscriptEntry message) {
+   public static String extractToolStatus(AiService.TranscriptEntry message) {
       if (message != null && "tool".equals(message.role()) && !message.detail().isBlank()) {
          try {
             JsonObject d = AiJson.parseObject(message.detail());
@@ -4456,11 +4456,11 @@ public final class AiService {
       }
    }
 
-   public AiService.UserPromptQuestion init_cc_UiHelper() {
+   public AiService.UserPromptQuestion getPendingQuestion() {
       return this.init_cc_UiHelper;
    }
 
-   public void init_V_Str_List(String text, List<String> options) {
+   public void setPendingQuestion(String text, List<String> options) {
       synchronized (this.load_Obj) {
          this.init_cc_UiHelper = text != null && !text.isBlank()
             ? new AiService.UserPromptQuestion(text, options == null ? List.of() : List.copyOf(options), System.currentTimeMillis())
@@ -4469,7 +4469,7 @@ public final class AiService {
       }
    }
 
-   public void open(String text) {
+   public void answerPendingQuestion(String text) {
       String a = text == null ? "" : text.trim();
       if (!a.isEmpty()) {
          synchronized (this.load_Obj) {
@@ -4482,7 +4482,7 @@ public final class AiService {
             this.load_Obj.notifyAll();
          }
 
-         this.init_V_Str_Str("user", a);
+         this.appendTranscript("user", a);
       }
    }
 
@@ -4857,7 +4857,7 @@ public final class AiService {
                   try {
                      storeRef.init_V_cd_DataUtil(data);
                   } catch (Exception e) {
-                     this.init_V_Str_Str("error", "Could not save session: " + e.getMessage());
+                     this.appendTranscript("error", "Could not save session: " + e.getMessage());
                   }
                }
             });
@@ -4869,7 +4869,7 @@ public final class AiService {
       this.read_V_cc_RenderState(this.init_cc_RenderState());
    }
 
-   public void init_V_AiSettings(AiSettings next) {
+   public void saveSettings(AiSettings next) {
       if (next != null) {
          AiSettings draft = next.copy();
          this.load_ExecutorService.execute(() -> {
@@ -4890,43 +4890,43 @@ public final class AiService {
                this.push_Str = "";
                if (connectionChanged) {
                   if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
-                     this.init_V_Str_Str("system", "Provider settings saved; they apply to the next task");
+                     this.appendTranscript("system", "Provider settings saved; they apply to the next task");
                   }
 
-                  if (this.read_Z()) {
-                     this.sync_V_Str("Chat mode stopped: provider settings changed");
+                  if (this.isChatModeActive()) {
+                     this.stopChatMode("Chat mode stopped: provider settings changed");
                   }
 
-                  this.open_V();
+                  this.startConnectionTest();
                }
             } catch (Exception e) {
-               this.init_V_Str_Str("error", e.getMessage());
+               this.appendTranscript("error", e.getMessage());
             }
          });
       }
    }
 
-   public List<String> update_List() {
+   public List<String> getAvailableEffortLevels() {
       AiSettings s = this.init_AiSettings;
       return s.builtIn ? List.of() : AiSettings.effortLevels(s.provider, s.model);
    }
 
-   public String get_Str() {
+   public String getEffectiveEffortLevel() {
       AiSettings s = this.init_AiSettings;
       return AiSettings.nearestEffort(AiSettings.effortLevels(s.provider, s.model), s.effort);
    }
 
-   public void poll(String effort) {
+   public void setEffortLevel(String effort) {
       String level = effort == null ? "" : effort.trim().toLowerCase(Locale.ROOT);
       if (AiSettings.EFFORTS.contains(level)) {
          AiSettings live = this.init_AiSettings.copy();
          live.effort = level;
          this.init_AiSettings = live;
-         this.init_V_Consumer(s -> s.effort = level);
+         this.editSettingsAsync(s -> s.effort = level);
       }
    }
 
-   public boolean flush_Z(String providerId) {
+   public boolean selectProvider(String providerId) {
       AiSettings.Provider next;
       try {
          next = AiSettings.Provider.valueOf(providerId.trim().toUpperCase(Locale.ROOT));
@@ -4936,19 +4936,19 @@ public final class AiService {
 
       AiSettings draft = this.init_AiSettings.withProvider(next);
       draft.builtIn = false;
-      this.init_V_AiSettings(draft);
+      this.saveSettings(draft);
       return true;
    }
 
-   public void push(String model) {
+   public void selectModel(String model) {
       if (model != null && !model.isBlank()) {
          AiSettings draft = this.init_AiSettings.copy();
          draft.model = model.trim();
-         this.init_V_AiSettings(draft);
+         this.saveSettings(draft);
       }
    }
 
-   public boolean init_Z_Str_Str(String providerId, String key) {
+   public boolean setProviderKey(String providerId, String key) {
       String id;
       try {
          id = AiSettings.Provider.valueOf(providerId.trim().toUpperCase(Locale.ROOT)).name();
@@ -4962,7 +4962,7 @@ public final class AiService {
          try {
             draft.setKey(id, key.trim());
          } catch (Exception e) {
-            this.init_V_Str_Str("error", "Could not seal the provider key: " + e.getMessage());
+            this.appendTranscript("error", "Could not seal the provider key: " + e.getMessage());
             return false;
          }
 
@@ -4970,18 +4970,18 @@ public final class AiService {
             draft.builtIn = false;
          }
 
-         this.init_V_AiSettings(draft);
+         this.saveSettings(draft);
          return true;
       } else {
          return false;
       }
    }
 
-   public boolean init_Z_AiSettings_Provide(AiSettings.Provider provider) {
+   public boolean hasProviderKey(AiSettings.Provider provider) {
       return provider != null && this.init_AiSettings.hasKey(provider.name());
    }
 
-   public void init_V_Consumer(Consumer<AiSettings> edit) {
+   public void editSettingsAsync(Consumer<AiSettings> edit) {
       this.load_ExecutorService.execute(() -> {
          try {
             AiSettings next = this.init_AiSettings.copy();
@@ -4989,17 +4989,17 @@ public final class AiService {
             next.save(this.init_AiMemoryStore.init_Path());
             this.init_AiSettings = next.copy();
          } catch (Exception e) {
-            this.init_V_Str_Str("error", "Could not save AI settings: " + e.getMessage());
+            this.appendTranscript("error", "Could not save AI settings: " + e.getMessage());
          }
       });
    }
 
-   public AiService.ProviderTestState init_cc_BufferHelper() {
+   public AiService.ProviderTestState getProviderTestState() {
       AiService.ProviderTestResult c = this.init_cc_ConfigStore();
       return c == null ? AiService.ProviderTestState.UNKNOWN : c.state();
    }
 
-   public String set_Str() {
+   public String getProviderTestDetail() {
       AiService.ProviderTestResult c = this.init_cc_ConfigStore();
       return c == null ? "" : c.detail();
    }
@@ -5014,9 +5014,9 @@ public final class AiService {
       return s.provider.name() + "|" + s.endpoint + "|" + s.model + "|" + s.keyMarker(s.provider.name());
    }
 
-   public void open_V() {
+   public void startConnectionTest() {
       if (!this.load_Z) {
-         this.init_V_Str_Str("system", "AI storage is still loading");
+         this.appendTranscript("system", "AI storage is still loading");
       } else if (!this.init_AiSettings.builtIn) {
          AiSettings snapshot = this.init_AiSettings.copy();
          String fingerprint = init_Str_AiSettings(snapshot);
@@ -5028,11 +5028,11 @@ public final class AiService {
             try {
                this.init_V_AiSettings_BooleanSupplier(snapshot, expired);
                this.init_V_J(probe, snapshot.provider, fingerprint, AiService.ProviderTestState.OK, "Round trip passed (" + snapshot.model + ")");
-               this.init_V_Str_Str("system", "Connection OK: tool-result round trip passed (" + snapshot.model + "). Model remains unqualified for gameplay.");
+               this.appendTranscript("system", "Connection OK: tool-result round trip passed (" + snapshot.model + "). Model remains unqualified for gameplay.");
             } catch (CancellationException e) {
                if (probe == this.load_AtomicLong.get()) {
                   this.init_V_J(probe, snapshot.provider, fingerprint, AiService.ProviderTestState.FAILED, "Timed out");
-                  this.init_V_Str_Str("error", "Connection test timed out");
+                  this.appendTranscript("error", "Connection test timed out");
                }
             } catch (Exception e) {
                String alt = snapshot.provider == AiSettings.Provider.DASHSCOPE ? AiSettings.alternateDashScopeEndpoint(snapshot.endpoint) : null;
@@ -5044,14 +5044,14 @@ public final class AiService {
                      this.init_V_AiSettings_BooleanSupplier(regional, expired);
                      this.init_V_AiSettings(snapshot, alt, probe);
                      this.init_V_J(probe, snapshot.provider, init_Str_AiSettings(regional), AiService.ProviderTestState.OK, "Round trip passed on " + alt);
-                     this.init_V_Str_Str("system", "Connection OK: tool-result round trip passed after switching the DashScope region to " + alt + ".");
+                     this.appendTranscript("system", "Connection OK: tool-result round trip passed after switching the DashScope region to " + alt + ".");
                   } catch (Exception second) {
                      this.init_V_J(probe, snapshot.provider, fingerprint, AiService.ProviderTestState.FAILED, "Both DashScope regions failed: " + second.getMessage());
-                     this.init_V_Str_Str("error", "Connection test failed on both DashScope regions: " + second.getMessage());
+                     this.appendTranscript("error", "Connection test failed on both DashScope regions: " + second.getMessage());
                   }
                } else {
                   this.init_V_J(probe, snapshot.provider, fingerprint, AiService.ProviderTestState.FAILED, Objects.toString(e.getMessage(), "Connection failed"));
-                  this.init_V_Str_Str("error", "Connection test failed: " + e.getMessage());
+                  this.appendTranscript("error", "Connection test failed: " + e.getMessage());
                }
             }
          });
@@ -5076,7 +5076,7 @@ public final class AiService {
             next.save(this.init_AiMemoryStore.init_Path());
             this.init_AiSettings = next.copy();
          } catch (Exception e) {
-            this.init_V_Str_Str("error", "DashScope region worked but could not be saved: " + e.getMessage());
+            this.appendTranscript("error", "DashScope region worked but could not be saved: " + e.getMessage());
          }
       });
    }
@@ -5109,9 +5109,9 @@ public final class AiService {
       }
    }
 
-   public void pop(String providerId) {
-      if (this.read_Z() && providerId != null && providerId.equalsIgnoreCase(this.init_AiSettings.provider.name())) {
-         this.sync_V_Str("Chat mode stopped: the provider key was removed");
+   public void removeProviderKey(String providerId) {
+      if (this.isChatModeActive() && providerId != null && providerId.equalsIgnoreCase(this.init_AiSettings.provider.name())) {
+         this.stopChatMode("Chat mode stopped: the provider key was removed");
       }
 
       this.load_ExecutorService
@@ -5123,44 +5123,44 @@ public final class AiService {
                   next.save(this.init_AiMemoryStore.init_Path());
                   this.init_AiSettings = next.copy();
                   this.push_Str = "";
-                  this.init_V_Str_Str(
+                  this.appendTranscript(
                      "system",
                      "Provider key removed" + (init_Z_cc_FileCache(this.init_cc_FileCache) ? "; the running task keeps its connection until it ends" : "")
                   );
                } catch (Exception e) {
-                  this.init_V_Str_Str("error", "Could not remove provider key: " + e.getMessage());
+                  this.appendTranscript("error", "Could not remove provider key: " + e.getMessage());
                }
             }
          );
    }
 
-   public AiService.TokenUsage init_cc_ByteReader() {
+   public AiService.TokenUsage getTokenUsage() {
       AiService.SessionState s = this.init_cc_RenderState();
       return s == null
          ? new AiService.TokenUsage(0L, 0L, 0L, 0L, 0L, this.init_AiSettings.contextTokens, 0L)
          : new AiService.TokenUsage(s.flush_J, s.close_J, s.open_J, s.poll, s.pop, this.init_AiSettings.contextTokens, s.push);
    }
 
-   public List<String> sync_List() {
+   public List<String> getSteeringNotes() {
       AiService.SessionState s = this.init_cc_RenderState();
       return s == null ? List.of() : List.copyOf(s.init_List);
    }
 
-   public List<AiMemoryStore.Memory> init_List_Str(String query) {
+   public List<AiMemoryStore.Memory> searchMemories(String query) {
       return this.init_AiMemoryStore.load(this.pop_Str, query);
    }
 
-   public void tick(String id) {
+   public void forgetMemory(String id) {
       this.load_ExecutorService.execute(() -> {
          try {
             this.init_AiMemoryStore.load_V_Str(id);
          } catch (Exception e) {
-            this.init_V_Str_Str("error", e.getMessage());
+            this.appendTranscript("error", e.getMessage());
          }
       });
    }
 
-   void load_V_JsonObject(JsonObject snapshot) {
+   void saveSpeedrunCheckpoint(JsonObject snapshot) {
       JsonObject saved = snapshot.deepCopy();
       Path destination = this.init_AiMemoryStore.init_Path().resolve("speedrun-checkpoint.json");
       this.load_ExecutorService.execute(() -> {
@@ -5172,7 +5172,7 @@ public final class AiService {
       });
    }
 
-   void read_V_JsonObject(JsonObject snapshot) {
+   void saveSpeedrunDiagnostics(JsonObject snapshot) {
       JsonObject saved = snapshot.deepCopy();
       Path destination = this.init_AiMemoryStore.init_Path().resolve("speedrun-debug-latest.json");
       this.load_ExecutorService.execute(() -> {
@@ -5184,27 +5184,27 @@ public final class AiService {
       });
    }
 
-   void init_V_Str_JsonArray(String world, JsonArray links) {
+   void savePortalMemory(String world, JsonArray links) {
       this.init_V_Str("portal-memory", world, "links", links);
    }
 
-   boolean init_Z_Str_Consumer(String world, Consumer<JsonArray> loaded) {
+   boolean loadPortalMemory(String world, Consumer<JsonArray> loaded) {
       return this.init_Z_Str("portal-memory", world, "links", loaded);
    }
 
-   void load_V_Str_JsonArray(String world, JsonArray receipts) {
+   void saveNetherRouteMemory(String world, JsonArray receipts) {
       this.init_V_Str("nether-route-memory", world, "receipts", receipts);
    }
 
-   boolean load_Z_Str_Consumer(String world, Consumer<JsonArray> loaded) {
+   boolean loadNetherRouteMemory(String world, Consumer<JsonArray> loaded) {
       return this.init_Z_Str("nether-route-memory", world, "receipts", loaded);
    }
 
-   void init_V_Str(String world, String dimension, JsonArray facts) {
+   void saveDiscoveryMemory(String world, String dimension, JsonArray facts) {
       this.init_V_Str("discovery-memory", world + "/dimension/" + dimension, "facts", facts);
    }
 
-   boolean init_Z_Str(String world, String dimension, Consumer<JsonArray> loaded) {
+   boolean loadDiscoveryMemory(String world, String dimension, Consumer<JsonArray> loaded) {
       return this.init_Z_Str("discovery-memory", world + "/dimension/" + dimension, "facts", loaded);
    }
 
@@ -5285,17 +5285,17 @@ public final class AiService {
       }
    }
 
-   void init_V_Str_JsonObject(String kind, JsonObject evidence) {
-      AiRunTrace trace = AiRunTrace.init_bL();
+   void appendTraceEvent(String kind, JsonObject evidence) {
+      AiRunTrace trace = AiRunTrace.current();
       if (trace != null) {
          JsonObject saved = evidence.deepCopy();
          saved.addProperty("simulationTick", autismclient.util.AutismSessionState.getInstance().getClientTick());
          saved.addProperty("observedAtMs", System.currentTimeMillis());
-         this.load_ExecutorService.execute(() -> trace.load(kind, saved));
+         this.load_ExecutorService.execute(() -> trace.appendEvent(kind, saved));
       }
    }
 
-   public void write(String id, String text) {
+   public void correctMemory(String id, String text) {
       this.load_ExecutorService
          .execute(
             () -> {
@@ -5321,14 +5321,14 @@ public final class AiService {
                         old.scope(),
                         text,
                         proof.id(),
-                        this.init_AiCatalog_Snapshot().revision(),
+                        this.getCatalogSnapshot().revision(),
                         "User correction; reobserve world facts before relying on them"
                      );
                   if (!saved.id().equals(id)) {
                      try {
                         this.init_AiMemoryStore.load_V_Str(id);
                      } catch (Exception e) {
-                        this.init_V_Str_Str(
+                        this.appendTranscript(
                            "error",
                            "Correction saved as a new memory but the original could not be removed; both may appear until it is forgotten manually: "
                               + e.getMessage()
@@ -5336,23 +5336,23 @@ public final class AiService {
                      }
                   }
 
-                  this.init_V_Str_Str("system", "Memory correction saved");
+                  this.appendTranscript("system", "Memory correction saved");
                } catch (Exception e) {
-                  this.init_V_Str_Str("error", "Memory correction: " + e.getMessage());
+                  this.appendTranscript("error", "Memory correction: " + e.getMessage());
                }
             }
          );
    }
 
-   public List<AiService.AttachmentRef> flush_List() {
+   public List<AiService.AttachmentRef> getAttachments() {
       return this.load_List;
    }
 
-   public String put_Str() {
+   public String getAttachmentPreview() {
       return this.open_Str;
    }
 
-   public void poll_V() {
+   public void refreshAttachments() {
       this.load_ExecutorService
          .execute(
             () -> {
@@ -5375,13 +5375,13 @@ public final class AiService {
                   this.load_List = List.copyOf(found);
                   this.open_Str = "Select generated source or a preserved macro revision.";
                } catch (Exception e) {
-                  this.init_V_Str_Str("error", e.getMessage());
+                  this.appendTranscript("error", e.getMessage());
                }
             }
          );
    }
 
-   public void run(String relative) {
+   public void loadAttachmentPreview(String relative) {
       this.load_ExecutorService.execute(() -> {
          try {
             Path root = this.init_AiMemoryStore.init_Path().toAbsolutePath().normalize();
@@ -5401,13 +5401,13 @@ public final class AiService {
       });
    }
 
-   public void init_V_Z(boolean worldOnly) {
+   public void clearWorldMemory(boolean worldOnly) {
       if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
-         this.write_V();
+         this.pauseTask();
       }
 
-      String worldKey = Minecraft.getInstance().player == null ? "offline" : AiWorldIdentity.init(Minecraft.getInstance());
-      String dimension = AiWorldIdentity.load(Minecraft.getInstance());
+      String worldKey = Minecraft.getInstance().player == null ? "offline" : AiWorldIdentity.currentWorldKey(Minecraft.getInstance());
+      String dimension = AiWorldIdentity.currentDimensionId(Minecraft.getInstance());
       AiPortalLinks.init_V(worldOnly ? worldKey : null);
       AiWorldMemory.init(worldOnly ? worldKey : null);
       this.load_ExecutorService.execute(() -> {
@@ -5445,7 +5445,7 @@ public final class AiService {
                this.init_AiMemoryStore.init_V(worldKey);
                Minecraft.getInstance().execute(() -> {
                   Minecraft mc = Minecraft.getInstance();
-                  if (mc.player != null && AiWorldIdentity.init(mc).equals(worldKey) && AiWorldIdentity.load(mc).equals(dimension)) {
+                  if (mc.player != null && AiWorldIdentity.currentWorldKey(mc).equals(worldKey) && AiWorldIdentity.currentDimensionId(mc).equals(dimension)) {
                      this.pop_Str = this.init_AiMemoryStore.init_Str(worldKey);
                      this.close_Str = this.pop_Str + "/dimension/" + dimension;
                   }
@@ -5454,9 +5454,9 @@ public final class AiService {
                this.init_AiMemoryStore.load();
             }
 
-            this.init_V_Str_Str("system", "Memory reset");
+            this.appendTranscript("system", "Memory reset");
          } catch (Exception e) {
-            this.init_V_Str_Str("error", e.getMessage());
+            this.appendTranscript("error", e.getMessage());
          }
       });
    }
@@ -5837,7 +5837,7 @@ public final class AiService {
                            }
                         }
                      } catch (Exception e) {
-                        AiService.this.init_V_Str_Str("error", "Transcript write failed: " + e.getMessage());
+                        AiService.this.appendTranscript("error", "Transcript write failed: " + e.getMessage());
                      }
                   }
                });

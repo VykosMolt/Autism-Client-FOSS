@@ -119,7 +119,7 @@ final class AiCrystals {
       } else if (ranged) {
          return "shoot";
       } else {
-         return AiThreats.init_Z() ? null : "cage";
+         return AiThreats.isLegacyCombatEnabled() ? null : "cage";
       }
    }
 
@@ -165,8 +165,8 @@ final class AiCrystals {
       if (mc.player != null && mc.level != null) {
          final int timeoutSeconds = Math.max(30, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 600)));
          final boolean skipCaged = AiJson.getBoolean(args, "skipCaged", false);
-         AiService service = AiService.load_cc();
-         final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
+         AiService service = AiService.getExistingInstance();
+         final boolean silentAim = service != null && service.getSettings().aiSilentAim;
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
@@ -220,7 +220,7 @@ final class AiCrystals {
                      );
                   }
 
-                  if (!AiThreats.init_Z()
+                  if (!AiThreats.isLegacyCombatEnabled()
                      && this.init_Z_26()
                      && this.init_h_StreamUtil != AiCrystals.Inner_StreamUtil.DESCEND
                      && this.init_h_DataUtil != null
@@ -240,7 +240,7 @@ final class AiCrystals {
                      }
                   }
 
-                  if (!AiThreats.init_Z()
+                  if (!AiThreats.isLegacyCombatEnabled()
                      && this.load_Z
                      && this.init_h_DataUtil != null
                      && mc.player.getY() > this.flush + 4
@@ -332,7 +332,7 @@ final class AiCrystals {
                if (next == null) {
                   if (targets.isEmpty()) {
                      if (this.init_I > 0) {
-                        AiRunTrace.init_V_Str_Str("clear_crystals", this.init_I + " cleared");
+                        AiRunTrace.recordGlobalSplit("clear_crystals", this.init_I + " cleared");
                      }
 
                      return this.init(
@@ -383,11 +383,11 @@ final class AiCrystals {
                      return this.init(next, "cage", "caged_skipped");
                   }
 
-                  if ("cage".equals(chosen) && !AiThreats.init_Z() && mc.player.getHealth() < 16.0F) {
+                  if ("cage".equals(chosen) && !AiThreats.isLegacyCombatEnabled() && mc.player.getHealth() < 16.0F) {
                      return this.init(next, "cage", "heal_first");
                   }
 
-                  if ("cage".equals(chosen) && !AiThreats.init_Z() && this.init(24.0, 60)) {
+                  if ("cage".equals(chosen) && !AiThreats.isLegacyCombatEnabled() && this.init(24.0, 60)) {
                      return this.init(next, "cage", "dragon_near");
                   }
 
@@ -434,7 +434,7 @@ final class AiCrystals {
                   }
 
                   this.init_BlockPos = stand;
-                  this.init_AiOperation = AiGoto.init(
+                  this.init_AiOperation = AiGoto.travelToCompat(
                      stand, 1.5, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                   );
                }
@@ -534,8 +534,8 @@ final class AiCrystals {
                   } else {
                      return this.init(this.init_h_DataUtil, "melee", "no_ranged");
                   }
-               } else if (!this.read_Z_11() || !AiThreats.init_Z() && this.load_Z && !this.load(entity)) {
-                  if (!this.write_Z_8() || this.load_Z && !AiThreats.init_Z()) {
+               } else if (!this.read_Z_11() || !AiThreats.isLegacyCombatEnabled() && this.load_Z && !this.load(entity)) {
+                  if (!this.write_Z_8() || this.load_Z && !AiThreats.isLegacyCombatEnabled()) {
                      return this.load_Z ? this.init(this.init_h_DataUtil, "lethal_blast") : this.init(this.init_h_DataUtil, "melee", "lethal_blast");
                   }
 
@@ -573,7 +573,7 @@ final class AiCrystals {
                   int[] side = AiCrystals.init(mc.player.getX() - (this.init_h_DataUtil.x() + 0.5), mc.player.getZ() - (this.init_h_DataUtil.z() + 0.5));
                   this.init_BlockPos = new BlockPos(this.init_h_DataUtil.x() + side[0] * 3, this.init_h_DataUtil.y(), this.init_h_DataUtil.z() + side[1] * 3);
                   this.load_BlockPos = new BlockPos(this.init_h_DataUtil.x() + side[0] * 2, this.init_h_DataUtil.y(), this.init_h_DataUtil.z() + side[1] * 2);
-                  this.init_AiOperation = AiGoto.init(
+                  this.init_AiOperation = AiGoto.travelToCompat(
                      this.init_BlockPos, 0.7, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                   );
                }
@@ -639,7 +639,7 @@ final class AiCrystals {
                   this.load_BlockPos = null;
                }
 
-               if (!AiThreats.init_Z() && this.read_BlockPos != null) {
+               if (!AiThreats.isLegacyCombatEnabled() && this.read_BlockPos != null) {
                   BlockPos eyeBar = this.read_BlockPos.above();
                   if (this.read(eyeBar)) {
                      if (this.init_AiOperation == null) {
@@ -699,8 +699,8 @@ final class AiCrystals {
                   }
                }
 
-               if (!this.read_Z_11() || !AiThreats.init_Z() && this.load_Z && !this.load(entity)) {
-                  if (AiThreats.init_Z() && this.write_Z_8()) {
+               if (!this.read_Z_11() || !AiThreats.isLegacyCombatEnabled() && this.load_Z && !this.load(entity)) {
+                  if (AiThreats.isLegacyCombatEnabled() && this.write_Z_8()) {
                      this.init_Str = "cage_shoot";
                      this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SHOOT;
                      return this.load("Blast lethal point-blank; shooting through the opening");
@@ -721,7 +721,7 @@ final class AiCrystals {
                } else if (this.load_Z_15()) {
                   return this.open();
                } else {
-                  return this.push < 2 && ("mlg".equals(AiCrystals.init_Str(AiCrystals.init(mc.player))) || !AiThreats.init_Z() && AiGameState.countInventoryItem("minecraft:water_bucket") > 0)
+                  return this.push < 2 && ("mlg".equals(AiCrystals.init_Str(AiCrystals.init(mc.player))) || !AiThreats.isLegacyCombatEnabled() && AiGameState.countInventoryItem("minecraft:water_bucket") > 0)
                      ? this.init_AiOperation_Result_BlockPos(feet)
                      : this.load_AiOperation_Result_3(feet);
                }
@@ -817,7 +817,7 @@ final class AiCrystals {
                      )
                   );
                this.init_I++;
-               AiRunTrace.init_V_Str_Str("crystal", (this.init_Str.isEmpty() ? "shoot" : this.init_Str) + " #" + t.entityId());
+               AiRunTrace.recordGlobalSplit("crystal", (this.init_Str.isEmpty() ? "shoot" : this.init_Str) + " #" + t.entityId());
                if (this.load_Z && !this.load_Z_15()) {
                   this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.DESCEND;
                   this.close = 0;
@@ -997,7 +997,7 @@ final class AiCrystals {
             }
 
             boolean read_Z_11() {
-               if (AiThreats.init_Z()) {
+               if (AiThreats.isLegacyCombatEnabled()) {
                   return !AiDanger.init_i_DataUtil_Minecraft(mc).lethal();
                }
 
@@ -1073,7 +1073,7 @@ final class AiCrystals {
                   ItemStack stack = mc.player.getInventory().getItem(slot);
                   if (!stack.isEmpty()) {
                      String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-                     int rank = autismclient.ai.engine.AiRestock.init_I(id);
+                     int rank = autismclient.ai.engine.AiRestock.scaffoldRank(id);
                      if (rank >= 0 && rank < bestRank) {
                         bestRank = rank;
                         best = id;
@@ -1089,7 +1089,7 @@ final class AiCrystals {
 
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = mc.player.getInventory().getItem(slot);
-                  if (!stack.isEmpty() && autismclient.ai.engine.AiRestock.init_Z(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
+                  if (!stack.isEmpty() && autismclient.ai.engine.AiRestock.isScaffoldBlockId(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
                      total += stack.getCount();
                   }
                }

@@ -12,15 +12,15 @@ import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.world.level.storage.LevelResource;
 
 public final class AiWorldIdentity {
-   private static Object init_Obj;
-   private static Object load_Obj;
-   private static String init_Str = "";
-   private static String load_Str = "";
+   private static Object cachedIntegratedServer;
+   private static Object cachedConnection;
+   private static String cachedLocalWorldKey = "";
+   private static String cachedRemoteWorldKey = "";
 
    private AiWorldIdentity() {
    }
 
-   static String init(Path path, String name) {
+   static String localWorldPrefix(Path path, String name) {
       String normalized = path.toAbsolutePath().normalize().toString();
       if (System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win")) {
          normalized = normalized.toLowerCase(Locale.ROOT);
@@ -29,46 +29,46 @@ public final class AiWorldIdentity {
       return "local/" + AiJson.sha256Hex(normalized) + "/" + name;
    }
 
-   public static synchronized String init(Minecraft mc) {
+   public static synchronized String currentWorldKey(Minecraft mc) {
       IntegratedServer server = mc.getSingleplayerServer();
       if (server != null) {
-         if (init_Obj != server) {
-            init_Obj = server;
+         if (cachedIntegratedServer != server) {
+            cachedIntegratedServer = server;
             Path root = server.getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();
-            String base = init(root, server.getWorldData().getLevelName());
+            String base = localWorldPrefix(root, server.getWorldData().getLevelName());
 
             try {
                BasicFileAttributes attributes = Files.readAttributes(root, BasicFileAttributes.class);
-               init_Str = attributes.creationTime().toMillis() > 0L
+               cachedLocalWorldKey = attributes.creationTime().toMillis() > 0L
                   ? base + "/created/" + AiJson.sha256Hex(attributes.creationTime().toString())
                   : base + "/session/" + UUID.randomUUID();
             } catch (IOException | SecurityException unavailable) {
-               init_Str = base + "/session/" + UUID.randomUUID();
+               cachedLocalWorldKey = base + "/session/" + UUID.randomUUID();
             }
          }
 
-         return init_Str;
+         return cachedLocalWorldKey;
       } else {
-         init_Obj = null;
-         init_Str = "";
+         cachedIntegratedServer = null;
+         cachedLocalWorldKey = "";
          ServerData remote = mc.getCurrentServer();
          Object connection = mc.getConnection();
          if (connection == null && mc.level == null) {
-            load_Obj = null;
-            load_Str = "";
+            cachedConnection = null;
+            cachedRemoteWorldKey = "";
             return "offline";
          }
 
-         if (load_Obj != connection || load_Str.isEmpty()) {
-            load_Obj = connection;
-            load_Str = (remote != null ? "server/" + remote.ip.trim().toLowerCase(Locale.ROOT) : "unidentified") + "/session/" + UUID.randomUUID();
+         if (cachedConnection != connection || cachedRemoteWorldKey.isEmpty()) {
+            cachedConnection = connection;
+            cachedRemoteWorldKey = (remote != null ? "server/" + remote.ip.trim().toLowerCase(Locale.ROOT) : "unidentified") + "/session/" + UUID.randomUUID();
          }
 
-         return load_Str;
+         return cachedRemoteWorldKey;
       }
    }
 
-   public static String load(Minecraft mc) {
+   public static String currentDimensionId(Minecraft mc) {
       return mc.level == null ? "offline" : mc.level.dimension().identifier().toString();
    }
 }

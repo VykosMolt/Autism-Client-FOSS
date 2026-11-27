@@ -763,7 +763,7 @@ final class AiFarmBuild {
                this.load_Z = true;
                this.init_AiOperation = Math.sqrt(mc.player.blockPosition().distSqr(this.init_BlockPos)) > 96.0
                   ? AiTravelFar.init(this.init_BlockPos, 3.0, true, true, true, true, 900)
-                  : AiGoto.init_AiOperation_BlockPos(this.init_BlockPos, 3.0, true, true, true, 300);
+                  : AiGoto.travelToCompat(this.init_BlockPos, 3.0, true, true, true, 300);
                return this.init_AiOperation_Result_3("Walking back to where the farm goes");
             }
 
@@ -1376,7 +1376,7 @@ final class AiFarmBuild {
 
          AiOperation init(final List<BlockPos> sources) {
             return new AiOperation() {
-               AiOperation init_AiOperation = AiGoto.init(sources, 120);
+               AiOperation init_AiOperation = AiGoto.approachAnyWaterSourceCompat(sources, 120);
                boolean init_Z;
                BlockPos init_BlockPos = sources.getFirst();
 
@@ -1438,7 +1438,7 @@ final class AiFarmBuild {
                      this.init_AiOperation = floor != null
                            && !(mc.player.getEyePosition().distanceTo(floor.getLocation()) > mc.player.blockInteractionRange() - 1.0)
                         ? this.init()
-                        : AiGoto.init_AiOperation_BlockPos_3(cell.below(), 30, init_Set(cell), true, Direction.UP, 1.5);
+                        : AiGoto.approachBlockToInteractCompat(cell.below(), 30, init_Set(cell), true, Direction.UP, 1.5);
                   }
 
                   AiOperation.Result r = this.init_AiOperation.tick();

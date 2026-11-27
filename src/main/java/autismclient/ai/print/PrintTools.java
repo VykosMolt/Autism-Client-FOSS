@@ -52,7 +52,7 @@ final class PrintTools {
 
       for (int slot = 0; slot <= 40; slot++) {
          if (slot != 36 && slot != 37 && slot != 38 && slot != 39) {
-            ItemStack stack = env.init_ItemStack_I(slot);
+            ItemStack stack = env.getInventoryItem(slot);
             if (!stack.isEmpty()
                && AiItems.hasEnoughDurability(stack, 2)
                && (!state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state))
@@ -81,7 +81,7 @@ final class PrintTools {
          return Items.AIR;
       }
 
-      if (env.update_Z()) {
+      if (env.isCreativeMode()) {
          return blockItem;
       }
 
@@ -89,16 +89,16 @@ final class PrintTools {
       if (!state.requiresCorrectToolForDrops() || !stack.isEmpty() && stack.isCorrectToolForDrops(state)) {
          Block block = state.getBlock();
          if (block == Blocks.BEE_NEST) {
-            return env.init_Z_ItemStack(stack) ? blockItem : Items.AIR;
+            return env.isInstantBreakTool(stack) ? blockItem : Items.AIR;
          }
 
          if (!(block instanceof LeavesBlock)) {
             Item infested = init(block);
             if (infested != null) {
-               return env.init_Z_ItemStack(stack) ? infested : Items.AIR;
+               return env.isInstantBreakTool(stack) ? infested : Items.AIR;
             }
 
-            if (env.init_Z_ItemStack(stack)) {
+            if (env.isInstantBreakTool(stack)) {
                return blockItem;
             }
 
@@ -150,7 +150,7 @@ final class PrintTools {
             String id = BuiltInRegistries.ITEM.getKey(blockItem).toString();
             return AiItems.requiresSilkTouchOrUnobtainable(id) ? Items.AIR : blockItem;
          } else {
-            return !env.init_Z_ItemStack(stack) && !stack.is(Items.SHEARS) ? Items.AIR : blockItem;
+            return !env.isInstantBreakTool(stack) && !stack.is(Items.SHEARS) ? Items.AIR : blockItem;
          }
       } else {
          return Items.AIR;
@@ -215,7 +215,7 @@ final class PrintTools {
 
       for (int slot = 0; slot <= 40; slot++) {
          if (slot != 36 && slot != 37 && slot != 38 && slot != 39) {
-            ItemStack stack = env.init_ItemStack_I(slot);
+            ItemStack stack = env.getInventoryItem(slot);
             if (!stack.isEmpty()) {
                Item item = stack.getItem();
                if (!avoid.contains(item) && stock.applyAsInt(item) > 0 && seen.add(item) && item instanceof BlockItem blockItem) {
@@ -235,7 +235,7 @@ final class PrintTools {
                               if (!(hardness < 0.0F)) {
                                  boolean correct = !state.requiresCorrectToolForDrops() || fastest != null && fastest.stack().isCorrectToolForDrops(state);
                                  float progress = hardness == 0.0F ? 1.0F : speed / hardness / (correct ? 30.0F : 100.0F);
-                                 if (env.update_Z() || !(progress < 0.005F)) {
+                                 if (env.isCreativeMode() || !(progress < 0.005F)) {
                                     int rank = init(item, needed, sameItem, state, speed);
                                     if (best == null || rank < bestRank) {
                                        best = new PrintTools.Inner_DataUtil(

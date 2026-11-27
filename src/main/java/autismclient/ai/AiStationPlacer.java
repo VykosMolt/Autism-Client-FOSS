@@ -77,7 +77,7 @@ final class AiStationPlacer {
          if (this.init_List == null) {
             this.init_List = new ArrayList<>(AiCraft.candidatePlacementSpots());
             this.load_I = 0;
-            this.init_List.removeIf(spotx -> !spotx.equals(this.init_BlockPos) && !autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(spotx, this.init_Item));
+            this.init_List.removeIf(spotx -> !spotx.equals(this.init_BlockPos) && !autismclient.ai.engine.AiPlacer.canPlaceFromHere(spotx, this.init_Item));
             if (this.init_BlockPos != null && this.init_List.remove(this.init_BlockPos)) {
                this.init_List = new ArrayList<>(this.init_List);
                this.init_List.add(0, this.init_BlockPos);
@@ -122,15 +122,15 @@ final class AiStationPlacer {
             return AiStationPlacer.Inner_DataUtil.FAILED;
          }
 
-         this.init_DataPipe.init_V_BlockPos_Item(this.init_List.get(this.load_I), this.init_Item);
+         this.init_DataPipe.start(this.init_List.get(this.load_I), this.init_Item);
          this.init_Z = true;
          this.read_I = 0;
       }
 
-      autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+      autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
       if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
          this.init_Z = false;
-         this.load_BlockPos = this.init_DataPipe.init_BlockPos();
+         this.load_BlockPos = this.init_DataPipe.targetPos();
          return AiStationPlacer.Inner_DataUtil.PLACED;
       } else if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.read_I <= 60) {
          this.read_Str = "Placing a " + this.init_Str;
@@ -138,9 +138,9 @@ final class AiStationPlacer {
       } else {
          this.init_Z = false;
          this.load_Str = status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED
-            ? this.init_DataPipe.init_Str()
-            : "not placed within 60 ticks: " + this.init_DataPipe.load_Str();
-         this.init_DataPipe.init_V();
+            ? this.init_DataPipe.failureReason()
+            : "not placed within 60 ticks: " + this.init_DataPipe.statusSummary();
+         this.init_DataPipe.reset();
          AutismClientAddon.LOG
             .info("[AI] {} spot {} unusable after {} ticks: {}", this.init_Str, this.init_List.get(this.load_I).toShortString(), this.read_I, this.load_Str);
          this.load_I++;
@@ -177,7 +177,7 @@ final class AiStationPlacer {
 
       AutismClientAddon.LOG.info("[AI] no spot for a {} here, moving to {}", this.init_Str, open.toShortString());
       this.init(open);
-      this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(open, 0.6, true, false, false, 30);
+      this.init_AiOperation = AiGoto.travelToCompat(open, 0.6, true, false, false, 30);
       this.read_Str = "No room for a " + this.init_Str + " here; moving to " + open.toShortString();
       return true;
    }
@@ -204,7 +204,7 @@ final class AiStationPlacer {
 
                for (int drop = 1; drop <= 3; drop++) {
                   BlockPos below = cell.below(drop);
-                  if (AiGoto.init_Z(below)) {
+                  if (AiGoto.isStandableCompat(below)) {
                      landing = true;
                      break;
                   }
@@ -327,19 +327,19 @@ final class AiStationPlacer {
    }
 
    boolean init_Z() {
-      return !this.init_DataPipe.load_Z()
+      return !this.init_DataPipe.needsReconciliation()
          && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
          && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow());
    }
 
    boolean load_Z() {
-      return this.init_DataPipe.load_Z()
+      return this.init_DataPipe.needsReconciliation()
          || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
          || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency();
    }
 
    void init_V() {
-      this.init_DataPipe.init_V();
+      this.init_DataPipe.reset();
       if (this.init_AiOperation != null) {
          this.init_AiOperation.cancel();
          this.init_AiOperation = null;

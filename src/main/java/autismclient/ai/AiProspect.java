@@ -216,7 +216,7 @@ final class AiProspect {
                      this.init_BlockPos = this.init_BlockPos_10();
                      if (this.init_BlockPos != null) {
                         this.init_Set.add(this.init_BlockPos.asLong());
-                        this.load_AiOperation = AiGoto.init_AiOperation_BlockPos(this.init_BlockPos, 3.5, true, true, true, Math.min(240, this.init_I_30()));
+                        this.load_AiOperation = AiGoto.travelToCompat(this.init_BlockPos, 3.5, true, true, true, Math.min(240, this.init_I_30()));
                         return this.init("Travelling to predicted " + kind + " at " + this.init_BlockPos.toShortString());
                      } else if (this.init_List.isEmpty()) {
                         this.init_bz_1_DataUtil = Inner_DataUtil.LOCATE;

@@ -135,8 +135,8 @@ final class AiShield {
       for (int slot = 0; slot < 36; slot++) {
          ItemStack stack = inventory.getItem(slot);
          if (stack.getItem() instanceof BlockItem item && !(item.getBlock() instanceof FallingBlock)) {
-            int rank = autismclient.ai.engine.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-            if (rank >= 0 && rank < bestRank && autismclient.ai.engine.AiRestock.init_Z_ItemStack(stack, inventory, true)) {
+            int rank = autismclient.ai.engine.AiRestock.scaffoldRank(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+            if (rank >= 0 && rank < bestRank && autismclient.ai.engine.AiRestock.canSpendStack(stack, inventory, true)) {
                best = stack.getItem();
                bestRank = rank;
             }

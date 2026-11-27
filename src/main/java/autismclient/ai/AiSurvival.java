@@ -60,8 +60,8 @@ final class AiSurvival {
             if (entity instanceof Mob mob && mob.isAlive() && !(mob instanceof Ghast) && (mob.getTarget() == null || mob.getTarget() == mc.player)) {
                double distance = mob.distanceToSqr(mc.player);
                if (!(distance >= best) && mc.player.hasLineOfSight(mob)) {
-                  boolean engaged = AiThreats.init_Z(mc, mob);
-                  if (engaged || AiCombatPriority.init(AiThreats.init_cv_DataUtil(mob)) && !(mob instanceof Piglin)) {
+                  boolean engaged = AiThreats.isActiveThreat(mc, mob);
+                  if (engaged || AiCombatPriority.init(AiThreats.classify(mob)) && !(mob instanceof Piglin)) {
                      nearest = mob;
                      best = distance;
                   }
@@ -87,7 +87,7 @@ final class AiSurvival {
 
       AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
       Entity threat = init_Entity(mc);
-      if (threat != null && AiThreats.init_cv_DataUtil(threat) == AiThreats.Inner_DataUtil.AVOID) {
+      if (threat != null && AiThreats.classify(threat) == AiThreats.Inner_DataUtil.AVOID) {
          return load(AiJson.objectOf("radius", 12, "distance", 12, "timeoutSeconds", 15));
       }
 
@@ -213,7 +213,7 @@ final class AiSurvival {
                            }
 
                            if (!Inventory.isHotbarSlot(slot)) {
-                              AiContainerTransactions.init(this.init_Minecraft.player.containerMenu.containerId, slot, inventory.getSelectedSlot(), ContainerInput.SWAP);
+                              AiContainerTransactions.sendPredictedClick(this.init_Minecraft.player.containerMenu.containerId, slot, inventory.getSelectedSlot(), ContainerInput.SWAP);
                               this.load_Z = true;
                               return this.init("Moving food to the hotbar");
                            }
@@ -491,11 +491,11 @@ final class AiSurvival {
 
                      while (this.load_I < this.init_List.size()) {
                         BlockPos candidate = this.init_List.get(this.load_I);
-                        BlockPos grounded = AiGoto.init_BlockPos(candidate, 2);
+                        BlockPos grounded = AiGoto.findStandableNearCompat(candidate, 2);
                         if (grounded != null
                            && !grounded.equals(this.init_Minecraft.player.blockPosition())
                            && AiSurvival.init_Z_Vec3(this.init_Minecraft.player.position(), Vec3.atBottomCenterOf(grounded), escapeThreats)
-                           && AiGoto.init_Z(grounded)
+                           && AiGoto.isStandableCompat(grounded)
                            && (
                               AiCombat.init_Z_Minecraft_BlockPos(this.init_Minecraft, grounded)
                                  || this.init_Minecraft.level.getFluidState(grounded).is(FluidTags.WATER)
@@ -540,7 +540,7 @@ final class AiSurvival {
                         }
                      } else {
                         int remaining = (int)Math.max(1L, (deadline - System.nanoTime()) / 1000000000L);
-                        this.init_AiOperation = AiGoto.init(
+                        this.init_AiOperation = AiGoto.travelToCompat(
                            target,
                            0.6,
                            false,

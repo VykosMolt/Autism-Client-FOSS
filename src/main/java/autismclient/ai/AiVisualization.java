@@ -106,9 +106,9 @@ public final class AiVisualization {
             }
 
             if (++push % 5 == 0) {
-               AiService s = AiService.load_cc();
+               AiService s = AiService.getExistingInstance();
                if (s != null) {
-                  init_AiSettings = s.init_AiSettings();
+                  init_AiSettings = s.getSettings();
                } else if (!init_Map.isEmpty() && System.nanoTime() - sync_J > 5000000000L) {
                   init_AiSettings = AiDirectOps.init_AiSettings();
                   sync_J = System.nanoTime();

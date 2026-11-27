@@ -54,14 +54,14 @@ final class PrintFlightWorkstations {
       double low = BlockPos.getY(key);
       double high = low + 1.0;
       AABB column = new AABB(center.x - 0.3, low, center.z - 0.3, center.x + 0.3, high + 1.8, center.z + 0.3);
-      ArrayList<AABB> boxes = new ArrayList<>(view.init_List_AABB(column));
+      ArrayList<AABB> boxes = new ArrayList<>(view.collectCollisions(column));
       if (mode == PrintClicks.Inner_CachePool.PLACE) {
          BlockState placed = target.wanted();
          if (placed.hasProperty(BlockStateProperties.OPEN)) {
             placed = placed.setValue(BlockStateProperties.OPEN, false);
          }
 
-         for (AABB box : view.init_List_BlockState_BlockPos(placed, target.pos())) {
+         for (AABB box : view.getCollisionBoxesForState(placed, target.pos())) {
             boxes.add(box.move(target.pos()));
          }
       }

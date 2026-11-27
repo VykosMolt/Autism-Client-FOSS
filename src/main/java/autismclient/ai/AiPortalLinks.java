@@ -34,7 +34,7 @@ final class AiPortalLinks {
    }
 
    private static void init_V() {
-      String current = AiWorldIdentity.init(Minecraft.getInstance());
+      String current = AiWorldIdentity.currentWorldKey(Minecraft.getInstance());
       if (!init_Str.equals(current) || init_Obj != Minecraft.getInstance().getConnection()) {
          init_Str = current;
          init_Obj = Minecraft.getInstance().getConnection();
@@ -46,22 +46,22 @@ final class AiPortalLinks {
 
       ClientLevel level = Minecraft.getInstance().level;
       if (level != null) {
-         init_Map.put(AiWorldIdentity.load(Minecraft.getInstance()), level.dimensionType().coordinateScale());
+         init_Map.put(AiWorldIdentity.currentDimensionId(Minecraft.getInstance()), level.dimensionType().coordinateScale());
       }
 
-      AiService service = AiService.load_cc();
+      AiService service = AiService.getExistingInstance();
       if (!init_Z && service != null && init_Obj != null) {
          String requestedWorld = init_Str;
          Object requestedConnection = init_Obj;
          long requestedGeneration = init_J;
-         init_Z = service.init_Z_Str_Consumer(
+         init_Z = service.loadPortalMemory(
             init_Str,
             stored -> {
                if (init_J == requestedGeneration
                   && init_Str.equals(requestedWorld)
                   && init_Obj == requestedConnection
                   && Minecraft.getInstance().getConnection() == requestedConnection
-                  && AiWorldIdentity.init(Minecraft.getInstance()).equals(requestedWorld)) {
+                  && AiWorldIdentity.currentWorldKey(Minecraft.getInstance()).equals(requestedWorld)) {
                   for (JsonElement entry : stored) {
                      try {
                         JsonObject saved = entry.getAsJsonObject();
@@ -106,7 +106,7 @@ final class AiPortalLinks {
                   }
 
                   init_List.sort(Comparator.comparingLong(AiPortalLinks.Inner_DataUtil::observedAtMillis));
-                  service.init_V_Str_JsonArray(init_Str, load());
+                  service.savePortalMemory(init_Str, load());
                }
             }
          );
@@ -139,7 +139,7 @@ final class AiPortalLinks {
                entrance.immutable(),
                to,
                arrival.immutable(),
-               AiThreats.init_J(),
+               AiThreats.currentClientTick(),
                System.currentTimeMillis(),
                false,
                safe,
@@ -147,7 +147,7 @@ final class AiPortalLinks {
                init(arrival)
             )
          );
-         AiRunTrace.init_V_Str_JsonObject(
+         AiRunTrace.emitServiceEvent(
             "portal_link",
             AiJson.objectOf("from", from, "entrance", entrance.toShortString(), "to", to, "arrival", arrival.toShortString(), "safe", safe)
          );
@@ -157,9 +157,9 @@ final class AiPortalLinks {
             init_List.remove(0);
          }
 
-         AiService service = AiService.load_cc();
+         AiService service = AiService.getExistingInstance();
          if (service != null) {
-            service.init_V_Str_JsonArray(init_Str, load());
+            service.savePortalMemory(init_Str, load());
          }
       }
    }
@@ -198,7 +198,7 @@ final class AiPortalLinks {
                "kind",
                endPortal == null ? "arrival_position" : "end_portal",
                "dimension",
-               AiWorldIdentity.load(mc),
+               AiWorldIdentity.currentDimensionId(mc),
                "arrival",
                near.toShortString(),
                "activeCellsInLocalScan",
@@ -206,7 +206,7 @@ final class AiPortalLinks {
                "partialCoverage",
                partial,
                "observedTick",
-               AiThreats.init_J(),
+               AiThreats.currentClientTick(),
                "geometryVerified",
                false
             );
@@ -276,7 +276,7 @@ final class AiPortalLinks {
                "observed",
                true,
                "dimension",
-               AiWorldIdentity.load(mc),
+               AiWorldIdentity.currentDimensionId(mc),
                "axis",
                axis.getName(),
                "activeCells",
@@ -296,7 +296,7 @@ final class AiPortalLinks {
                "normalObsidianFrameConfirmed",
                frameComplete,
                "observedTick",
-               AiThreats.init_J()
+               AiThreats.currentClientTick()
             );
          }
       } else {
@@ -384,7 +384,7 @@ final class AiPortalLinks {
       init_V();
       Minecraft mc = Minecraft.getInstance();
       return mc.player != null && mc.level != null
-         ? init(load(), AiWorldIdentity.load(mc), mc.player.blockPosition(), radius, at -> !AiTerrain.isLoaded(mc.level, at) || mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL))
+         ? init(load(), AiWorldIdentity.currentDimensionId(mc), mc.player.blockPosition(), radius, at -> !AiTerrain.isLoaded(mc.level, at) || mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL))
          : null;
    }
 

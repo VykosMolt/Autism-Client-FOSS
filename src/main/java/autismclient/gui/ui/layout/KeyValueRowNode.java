@@ -68,8 +68,8 @@ public class KeyValueRowNode extends LayoutNode {
    @Override
    public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
       int baselineHeight = 12;
-      int labelHeight = context.init_CharEncoder().init_I_l(this.init_l) + context.init_CharEncoder().load(3);
-      int valueHeight = context.init_CharEncoder().init_I_l(this.load_l) + context.init_CharEncoder().load(3);
+      int labelHeight = context.theme().init_I_l(this.init_l) + context.theme().load(3);
+      int valueHeight = context.theme().init_I_l(this.load_l) + context.theme().load(3);
       return Math.max(baselineHeight, Math.max(labelHeight, valueHeight));
    }
 
@@ -80,57 +80,57 @@ public class KeyValueRowNode extends LayoutNode {
          int drawY = Math.round(this.load_F);
          int drawW = Math.round(this.read_F);
          int drawH = Math.round(this.write);
-         int minSegment = context.init_CharEncoder().load(24);
+         int minSegment = context.theme().load(24);
          int labelW = Math.round(Math.min(this.sync, Math.max(minSegment, drawW - minSegment)));
          int valueX = drawX + labelW;
          int valueW = Math.max(1, drawW - labelW);
          boolean clickable = this.init_Z_4();
-         boolean hovered = clickable && this.init_Z_F_F(context.init_F(), context.load());
+         boolean hovered = clickable && this.init_Z_F_F(context.mouseX(), context.mouseY());
          if (hovered) {
-            context.init_GuiGraphicsExtract()
-               .fill(drawX, drawY, drawX + drawW, drawY + drawH, context.init_I_I(ThemePaletteManager.recolor(339024671, ThemePaletteManager.ColorRole.ACCENT)));
+            context.graphics()
+               .fill(drawX, drawY, drawX + drawW, drawY + drawH, context.applyAlpha(ThemePaletteManager.recolor(339024671, ThemePaletteManager.ColorRole.ACCENT)));
          }
 
          int labelColor = clickable && hovered
-            ? UiLayoutMath.lerpColor(context.init_CharEncoder().load(this.init_l), ThemePaletteManager.recolor(-791321, ThemePaletteManager.ColorRole.TEXT), 0.35F)
-            : context.init_CharEncoder().load(this.init_l);
-         int valueColor = this.init_Integer != null ? this.init_Integer : context.init_CharEncoder().load(this.load_l);
+            ? UiLayoutMath.lerpColor(context.theme().load(this.init_l), ThemePaletteManager.recolor(-791321, ThemePaletteManager.ColorRole.TEXT), 0.35F)
+            : context.theme().load(this.init_l);
+         int valueColor = this.init_Integer != null ? this.init_Integer : context.theme().load(this.load_l);
          if (clickable && hovered) {
             valueColor = UiLayoutMath.lerpColor(valueColor, ThemePaletteManager.recolor(-2314, ThemePaletteManager.ColorRole.TEXT), 0.28F);
          }
 
-         int labelTextY = UiLayoutMath.centerTextY(drawY, drawH, context.init_CharEncoder().init_I_l(this.init_l), context.init_CharEncoder().flush() + this.init_I);
-         int valueTextY = UiLayoutMath.centerTextY(drawY, drawH, context.init_CharEncoder().init_I_l(this.load_l), context.init_CharEncoder().flush() + this.init_I);
+         int labelTextY = UiLayoutMath.centerTextY(drawY, drawH, context.theme().init_I_l(this.init_l), context.theme().flush() + this.init_I);
+         int valueTextY = UiLayoutMath.centerTextY(drawY, drawH, context.theme().init_I_l(this.load_l), context.theme().flush() + this.init_I);
          String displayLabel = k.init(
-            context.init_Font(),
+            context.font(),
             this.init_Str,
-            Math.max(1, labelW - context.init_CharEncoder().load(4)),
-            context.init_CharEncoder().init_Identifier_l(this.init_l),
+            Math.max(1, labelW - context.theme().load(4)),
+            context.theme().init_Identifier_l(this.init_l),
             labelColor
          );
          String displayValue = k.init(
-            context.init_Font(),
+            context.font(),
             this.load_Str,
-            Math.max(1, valueW - context.init_CharEncoder().load(2)),
-            context.init_CharEncoder().init_Identifier_l(this.load_l),
+            Math.max(1, valueW - context.theme().load(2)),
+            context.theme().init_Identifier_l(this.load_l),
             valueColor
          );
          k.init(
-            context.init_GuiGraphicsExtract(),
-            context.init_Font(),
+            context.graphics(),
+            context.font(),
             displayLabel,
-            context.init_CharEncoder().init_Identifier_l(this.init_l),
-            context.init_I_I(labelColor),
+            context.theme().init_Identifier_l(this.init_l),
+            context.applyAlpha(labelColor),
             drawX,
             labelTextY,
             false
          );
          k.init(
-            context.init_GuiGraphicsExtract(),
-            context.init_Font(),
+            context.graphics(),
+            context.font(),
             displayValue,
-            context.init_CharEncoder().init_Identifier_l(this.load_l),
-            context.init_I_I(valueColor),
+            context.theme().init_Identifier_l(this.load_l),
+            context.applyAlpha(valueColor),
             valueX,
             valueTextY,
             false

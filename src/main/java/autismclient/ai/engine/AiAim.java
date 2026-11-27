@@ -33,9 +33,9 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 public final class AiAim {
-   private static final double load_D = 1.0;
-   private static final double read_D = 64.0;
-   static final float init_F = 7.0F;
+   private static final double SETTLED_TOLERANCE_DEG = 1.0;
+   private static final double ENDERMAN_STARE_MAX_DIST = 64.0;
+   static final float ENDERMAN_YAW_NUDGE_DEG = 7.0F;
    private RotationMath.Rotation targetRotation;
    private static volatile String lastDebugState = "";
    private Vec3 targetPoint;
@@ -43,9 +43,9 @@ public final class AiAim {
    private AiAim.AimProfile aimProfile = AiAim.AimProfile.NORMAL;
    private int settledTicks;
    private boolean silent;
-   static final double init_D = 0.4;
-   static final float load_F = 3.0F;
-   static final float read_F = 0.5F;
+   static final double STEEP_VERTICAL_MIN_DELTA = 0.4;
+   static final float MIN_STEP_DEG = 3.0F;
+   static final float STEP_FRACTION = 0.5F;
    private int lastInstanceStepTick = -2147483648;
    private static int lastGlobalStepTick = -2147483648;
 

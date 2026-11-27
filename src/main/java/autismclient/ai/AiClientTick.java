@@ -31,9 +31,9 @@ public final class AiClientTick {
          try {
             AiMacroTools.init_V_Minecraft(client);
             AiDirectOps.init(client);
-            AiService service = AiService.load_cc();
+            AiService service = AiService.getExistingInstance();
             if (service != null) {
-               service.flush_V();
+               service.onClientTick();
             }
          } catch (Throwable error) {
             auditLogFailure("AI tick failed", error);

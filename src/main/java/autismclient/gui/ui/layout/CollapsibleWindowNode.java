@@ -201,8 +201,8 @@ public class CollapsibleWindowNode extends LayoutContainer {
          this.init_PoolEntry_DataUtil = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.computeFloat(
             Math.round(this.close_F), Math.round(this.sync_F), bodyX + bodyW - 6 - inset, bodyY + inset, 6, Math.max(1, bodyH - inset * 2), this.flush_F
          );
-         boolean hovered = this.init_PoolEntry_DataUtil.containsTrack(context.init_F(), context.load());
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(context.init_GuiGraphicsExtract(), this.init_PoolEntry_DataUtil, hovered, this.push);
+         boolean hovered = this.init_PoolEntry_DataUtil.containsTrack(context.mouseX(), context.mouseY());
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(context.graphics(), this.init_PoolEntry_DataUtil, hovered, this.push);
       } else {
          this.init_PoolEntry_DataUtil = null;
       }
@@ -214,14 +214,14 @@ public class CollapsibleWindowNode extends LayoutContainer {
 
    @Override
    public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      int headerH = Math.max(context.init_CharEncoder().load(), context.init_CharEncoder().init_I_l_I(this.init_l, 4));
+      int headerH = Math.max(context.theme().load(), context.theme().init_I_l_I(this.init_l, 4));
       float bodyHeight = this.write_Z ? this.init_PacketUtil.init_F_SyncManager_F(context, availableWidth) : 0.0F;
       return headerH + bodyHeight;
    }
 
    @Override
    protected void load_V(LayoutContext context) {
-      int headerH = Math.max(context.init_CharEncoder().load(), context.init_CharEncoder().init_I_l_I(this.init_l, 4));
+      int headerH = Math.max(context.theme().load(), context.theme().init_I_l_I(this.init_l, 4));
       if (this.write_Z) {
          this.sync_F = Math.max(0.0F, this.write - headerH);
       }
@@ -250,7 +250,7 @@ public class CollapsibleWindowNode extends LayoutContainer {
          int drawX = Math.round(this.init_F);
          int drawY = Math.round(this.load_F);
          int drawW = Math.round(this.read_F);
-         int headerH = Math.max(context.init_CharEncoder().load(), context.init_CharEncoder().init_I_l_I(this.init_l, 4));
+         int headerH = Math.max(context.theme().load(), context.theme().init_I_l_I(this.init_l, 4));
          if (this.write_Z) {
             this.sync_F = Math.max(0.0F, this.write - headerH);
          }
@@ -262,7 +262,7 @@ public class CollapsibleWindowNode extends LayoutContainer {
          this.init_PacketUtil.load_TableIndex_Z(this.write_Z || reveal > 0.0F);
          WindowFrameRenderer.init(
             autismclient.gui.f.UiHelper.init(
-               drawContext.init_GuiGraphicsExtract(), drawContext.init_Font(), Math.round(context.init_F()), Math.round(context.load())
+               drawContext.graphics(), drawContext.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
             ),
             autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH),
             this.init_Str,
@@ -271,22 +271,22 @@ public class CollapsibleWindowNode extends LayoutContainer {
             this.open,
             this.sync_Z,
             this.update_Z,
-            Math.max(4, context.init_CharEncoder().load(this.init_I)),
-            Math.max(34, context.init_CharEncoder().load(this.load_I)),
+            Math.max(4, context.theme().load(this.init_I)),
+            Math.max(34, context.theme().load(this.load_I)),
             headerH
          );
          if (reveal > 0.0F) {
             int clipTop = Math.round(this.load_F + headerH);
             int clipBottom = drawY + drawH;
             if (clipBottom > clipTop) {
-               drawContext.init_RingBuffer()
-                  .init(drawContext.init_GuiGraphicsExtract(), this.init_F, this.load_F + headerH, this.init_F + this.read_F, clipBottom);
+               drawContext.viewport()
+                  .pushClip(drawContext.graphics(), this.init_F, this.load_F + headerH, this.init_F + this.read_F, clipBottom);
 
                try {
                   super.init_V_SyncManager(drawContext);
                   this.init(drawContext, drawX, drawY + headerH, drawW, clipBottom - (drawY + headerH));
                } finally {
-                  drawContext.init_RingBuffer().read(drawContext.init_GuiGraphicsExtract());
+                  drawContext.viewport().popClip(drawContext.graphics());
                }
             }
          }
@@ -297,7 +297,7 @@ public class CollapsibleWindowNode extends LayoutContainer {
 
          if (!this.update_Z) {
             autismclient.gui.f.PacketUtil.load(
-               drawContext.init_GuiGraphicsExtract(),
+               drawContext.graphics(),
                autismclient.gui.f.NetHelper.init(drawX + 1, drawY + 1, Math.max(0, drawW - 2), Math.max(0, drawH - 2)),
                7,
                603979776

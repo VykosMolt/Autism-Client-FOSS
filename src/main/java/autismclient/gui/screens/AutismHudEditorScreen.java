@@ -258,9 +258,9 @@ public class AutismHudEditorScreen extends Screen {
          for (String id : init_StrArr2[col]) {
             boolean over = this.init(mx, my, colX, cy, p.update, p.close - 2);
             boolean enabled = AutismHudManager.init_AutismConfig_HudEl_Str(id).enabled;
-            autismclient.gui.ui.widgets.PanelSurfaceHelper.init(graphics, colX, cy, p.update, p.close - 2, over ? 1714756383 : 856888344);
+            autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, colX, cy, p.update, p.close - 2, over ? 1714756383 : 856888344);
             if (enabled) {
-               autismclient.gui.ui.widgets.PanelSurfaceHelper.read(graphics, colX + 1, cy + 1, 3, p.close - 4, -10682470);
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(graphics, colX + 1, cy + 1, 3, p.close - 4, -10682470);
             }
 
             this.init(graphics, AutismHudManager.init_Str_Str(id), colX + 7, this.load(cy, p.close - 2), enabled ? -791321 : init_I(), p.update - 9);

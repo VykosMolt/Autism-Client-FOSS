@@ -31,8 +31,8 @@ public class ColumnLayout extends LayoutContainer {
 
    @Override
    public float init_F_SyncManager_F(LayoutContext context, float availableWidth) {
-      EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
-      int scaledGap = context.init_CharEncoder().load(this.init_I);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
+      int scaledGap = context.theme().load(this.init_I);
       float innerWidth = Math.max(0.0F, availableWidth - scaledPadding.init_I());
       float total = scaledPadding.write() + scaledPadding.sync();
       boolean first = true;
@@ -53,8 +53,8 @@ public class ColumnLayout extends LayoutContainer {
 
    @Override
    protected void load_V(LayoutContext context) {
-      EdgeInsets scaledPadding = context.init_CharEncoder().init_IoWorker_IoWorker(this.init_IoWorker);
-      int scaledGap = context.init_CharEncoder().load(this.init_I);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
+      int scaledGap = context.theme().load(this.init_I);
       float innerX = this.init_F + scaledPadding.read();
       float cursorY = this.load_F + scaledPadding.write();
       float innerWidth = Math.max(0.0F, this.read_F - scaledPadding.init_I());

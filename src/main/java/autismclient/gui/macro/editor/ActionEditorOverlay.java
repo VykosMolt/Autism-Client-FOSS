@@ -1640,7 +1640,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, int bodyTop, int bodyBtm) {
       if (this.isLegacyMulti()) {
-         ListRowRenderer.init(
+         ListRowRenderer.drawEmptyPlaceholder(
             context, this.init_Font, "Legacy Multi is unsupported. This block and its steps are skipped when the macro runs.",
             this.bind + 6, bodyTop + 4, this.f_b_I - 12
          );
@@ -2015,19 +2015,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int selAreaH = 56;
       int sbX = x + w - 5;
       ScrollableListView itemViewport = this.init_EventBus_Map(this.tick_Map, "_item_entries", x, cy, w, selAreaH, 14, 5);
-      itemViewport.init_V(this.init_MapStore.itemNames.size() * 14);
-      itemViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      itemViewport.setContentHeight(this.init_MapStore.itemNames.size() * 14);
+      itemViewport.renderScrollbar(ctx, mx, my);
       ContainerClickType[] ACTIONS = ContainerClickType.values();
       int sbGap = 7;
       int delW = 13;
       int itemW = w - sbGap - delW - 2;
       if (!this.init_MapStore.itemNames.isEmpty()) {
-         itemViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int firstVis = itemViewport.pop();
-         int iy0 = cy - itemViewport.open() % 14;
+         itemViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int firstVis = itemViewport.getFirstVisibleRow();
+         int iy0 = cy - itemViewport.getScrollOffset() % 14;
 
-         for (int i = firstVis; i < this.init_MapStore.itemNames.size() && i <= itemViewport.tick(); i++) {
-            int iy = itemViewport.init_I(i);
+         for (int i = firstVis; i < this.init_MapStore.itemNames.size() && i <= itemViewport.getLastVisibleRow(); i++) {
+            int iy = itemViewport.getRowY(i);
             if (iy != -2147483648) {
                String entry = this.init_MapStore.itemNames.get(i);
                int eiActIdx = this.init_MapStore.load_I(i);
@@ -2111,20 +2111,20 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      this.write_V_3();
                      ScrollableListView vp = this.tick_Map.get("_item_entries");
                      if (vp != null) {
-                        vp.read_V(-1);
+                        vp.scrollByRows(-1);
                      }
                   });
                }
             }
          }
 
-         itemViewport.init(ctx);
+         itemViewport.endFrame(ctx);
       } else {
-         ListRowRenderer.init(ctx, this.init_Font, "No rows yet. Add an item or exact slot.", x, cy, w - 5 - 1);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, "No rows yet. Add an item or exact slot.", x, cy, w - 5 - 1);
       }
 
       cy += selAreaH;
-      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.divider());
+      PanelSurfaceHelper.drawDividerColored(ctx, x, cy + 2, w, UiColorPalette.divider());
       cy += 6;
       int addPickW = this.init_I_StreamUtil(CaptureMode.ITEM_SLOT, null, null);
       String addLbl = this.f_j_I >= 0 ? "New" : "+Add";
@@ -2569,22 +2569,22 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             this.set_V_2();
             ScrollableListView craftVp = this.tick_Map.get("_craft_entries");
             if (craftVp != null) {
-               craftVp.load_V(0);
+               craftVp.setScrollOffset(0);
             }
          }
       );
       cy += 14;
       int selAreaH = 56;
       ScrollableListView craftViewport = this.init_EventBus_Map(this.tick_Map, "_craft_entries", x, cy, w, selAreaH, 14, 5);
-      craftViewport.init_V(this.push_List.size() * 14);
-      craftViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      craftViewport.setContentHeight(this.push_List.size() * 14);
+      craftViewport.renderScrollbar(ctx, mx, my);
       int sbGap = 7;
       if (!this.push_List.isEmpty()) {
-         craftViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int firstSel = craftViewport.pop();
+         craftViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int firstSel = craftViewport.getFirstVisibleRow();
 
-         for (int i = firstSel; i < this.push_List.size() && i <= craftViewport.tick(); i++) {
-            int siy = craftViewport.init_I(i);
+         for (int i = firstSel; i < this.push_List.size() && i <= craftViewport.getLastVisibleRow(); i++) {
+            int siy = craftViewport.getRowY(i);
             if (siy != -2147483648) {
                autismclient.util.macro.CraftAction.Inner_DataUtil entry = this.push_List.get(i);
                boolean useMax = this.load_Map.getOrDefault("craft_useMax_" + i, false);
@@ -2595,7 +2595,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   this.set_V_2();
                   ScrollableListView vp = this.tick_Map.get("_craft_entries");
                   if (vp != null) {
-                     vp.read_V(-1);
+                     vp.scrollByRows(-1);
                   }
                });
                int maxX = removeX - 3 - maxTogW;
@@ -2640,13 +2640,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         craftViewport.init(ctx);
+         craftViewport.endFrame(ctx);
       } else {
-         ListRowRenderer.init(ctx, this.init_Font, "No craft entries yet.", x, cy, w - 5 - 1);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, "No craft entries yet.", x, cy, w - 5 - 1);
       }
 
       cy += selAreaH;
-      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.divider());
+      PanelSurfaceHelper.drawDividerColored(ctx, x, cy + 2, w, UiColorPalette.divider());
       cy += 6;
       int refreshW = this.write_I("Reload");
       ThemedTextInputBox srchF = this.flush_Map.get("_craft_search");
@@ -2673,12 +2673,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       List<AutoCraftingEngine.CraftOption> filtered = this.tick_List != null ? this.tick_List : List.of();
       int recipeListH = 52;
       ScrollableListView recipeViewport = this.init_EventBus_Map(this.close_Map, "_craft_recipe_browser", x, cy, w, recipeListH, 13, 5);
-      recipeViewport.init_V(filtered.size() * 13);
+      recipeViewport.setContentHeight(filtered.size() * 13);
       this.init_IArr = new int[]{cy, recipeListH};
-      recipeViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      recipeViewport.renderScrollbar(ctx, mx, my);
       int recW = w - 5 - 1;
       if (filtered.isEmpty()) {
-         ListRowRenderer.init(
+         ListRowRenderer.drawEmptyPlaceholder(
             ctx,
             this.init_Font,
             this.pop_List != null && !this.pop_List.isEmpty() ? "No recipes match the search." : "No crafting recipes loaded. Use Reload.",
@@ -2687,11 +2687,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             recW
          );
       } else {
-         recipeViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int firstRec = recipeViewport.pop();
+         recipeViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int firstRec = recipeViewport.getFirstVisibleRow();
 
-         for (int i = firstRec; i < filtered.size() && i <= recipeViewport.tick(); i++) {
-            int ry = recipeViewport.init_I(i);
+         for (int i = firstRec; i < filtered.size() && i <= recipeViewport.getLastVisibleRow(); i++) {
+            int ry = recipeViewport.getRowY(i);
             if (ry != -2147483648) {
                AutoCraftingEngine.CraftOption opt = filtered.get(i);
                boolean inList = this.push_List
@@ -2729,7 +2729,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         recipeViewport.init(ctx);
+         recipeViewport.endFrame(ctx);
       }
    }
 
@@ -2825,17 +2825,17 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy += 14;
       int selAreaH = 56;
       ScrollableListView dropViewport = this.init_EventBus_Map(this.tick_Map, "_drop_entries", x, cy, w, selAreaH, 14, 5);
-      dropViewport.init_V(this.init_PacketUtil.itemNames.size() * 14);
-      dropViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      dropViewport.setContentHeight(this.init_PacketUtil.itemNames.size() * 14);
+      dropViewport.renderScrollbar(ctx, mx, my);
       int sbGap = 7;
       int delW = 13;
       int dropItemW = w - sbGap - delW - 2;
       if (!this.init_PacketUtil.itemNames.isEmpty()) {
-         dropViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int firstVis = dropViewport.pop();
+         dropViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int firstVis = dropViewport.getFirstVisibleRow();
 
-         for (int i = firstVis; i < this.init_PacketUtil.itemNames.size() && i <= dropViewport.tick(); i++) {
-            int iy = dropViewport.init_I(i);
+         for (int i = firstVis; i < this.init_PacketUtil.itemNames.size() && i <= dropViewport.getLastVisibleRow(); i++) {
+            int iy = dropViewport.getRowY(i);
             if (iy != -2147483648) {
                String entry = this.init_PacketUtil.itemNames.get(i);
                boolean selected = i == this.f_k_I;
@@ -2887,20 +2887,20 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      this.put_V();
                      ScrollableListView vp = this.tick_Map.get("_drop_entries");
                      if (vp != null) {
-                        vp.read_V(-1);
+                        vp.scrollByRows(-1);
                      }
                   });
                }
             }
          }
 
-         dropViewport.init(ctx);
+         dropViewport.endFrame(ctx);
       } else {
-         ListRowRenderer.init(ctx, this.init_Font, "Optional: add items/slots, or use the fallback below.", x, cy, w - 5 - 1);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, "Optional: add items/slots, or use the fallback below.", x, cy, w - 5 - 1);
       }
 
       cy += selAreaH;
-      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.divider());
+      PanelSurfaceHelper.drawDividerColored(ctx, x, cy + 2, w, UiColorPalette.divider());
       cy += 6;
       int addPickW = this.init_I_StreamUtil(CaptureMode.ITEM_SLOT, null, null);
       String addLbl = this.f_k_I >= 0 ? "New" : "+Add";
@@ -3315,11 +3315,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          ScrollableListView lanViewport = null;
          if (hasEntries) {
             lanViewport = this.init_EventBus_Map(this.tick_Map, "_lan_entries", x, cy, w, selAreaH, 14, 5);
-            lanViewport.init_V(this.clear_List.size() * 14);
+            lanViewport.setContentHeight(this.clear_List.size() * 14);
          }
 
          if (hasEntries && lanViewport != null) {
-            lanViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+            lanViewport.renderScrollbar(ctx, mx, my);
          }
 
          int sbGap = 7;
@@ -3330,13 +3330,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int stepX = removeX - gapPx - stepW;
          int userW = stepX - x - gapPx;
          if (hasEntries && lanViewport != null) {
-            lanViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-            int firstVis = lanViewport.pop();
+            lanViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+            int firstVis = lanViewport.getFirstVisibleRow();
 
-            for (int i = firstVis; i < this.clear_List.size() && i <= lanViewport.tick(); i++) {
-               int iy = lanViewport.init_I(i);
+            for (int i = firstVis; i < this.clear_List.size() && i <= lanViewport.getLastVisibleRow(); i++) {
+               int iy = lanViewport.getRowY(i);
                if (iy != -2147483648) {
-                  PanelSurfaceHelper.read(ctx, x, iy, stepX - gapPx - x, 13);
+                  PanelSurfaceHelper.drawInputPill(ctx, x, iy, stepX - gapPx - x, 13);
                   ThemedTextInputBox uf = this.init_Map.get("lan_user_" + i);
                   if (uf != null) {
                      uf.setX(x);
@@ -3359,19 +3359,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      this.valid();
                      ScrollableListView vp = this.tick_Map.get("_lan_entries");
                      if (vp != null) {
-                        vp.read_V(-1);
+                        vp.scrollByRows(-1);
                      }
                   });
                }
             }
 
-            lanViewport.init(ctx);
+            lanViewport.endFrame(ctx);
          } else {
-            ListRowRenderer.init(ctx, this.init_Font, "No peer filters yet.", x, cy, w - 5 - 1);
+            ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, "No peer filters yet.", x, cy, w - 5 - 1);
          }
 
          cy += selAreaH;
-         PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.divider());
+         PanelSurfaceHelper.drawDividerColored(ctx, x, cy + 2, w, UiColorPalette.divider());
          cy += 6;
          int addBtnW = this.write_I("+Add");
          ThemedTextInputBox newUF = this.flush_Map.get("_lan_user_add");
@@ -3482,12 +3482,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.close_List().clear();
          ScrollableListView vpC2s = this.tick_Map.get("wait_packet_c2s");
          if (vpC2s != null) {
-            vpC2s.load_V(0);
+            vpC2s.setScrollOffset(0);
          }
 
          ScrollableListView vpS2c = this.tick_Map.get("wait_packet_s2c");
          if (vpS2c != null) {
-            vpS2c.load_V(0);
+            vpS2c.setScrollOffset(0);
          }
       });
       cy += 20;
@@ -3688,16 +3688,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int listH = rows * 14;
       int delW = 13;
       if (this.reset_List.isEmpty()) {
-         ListRowRenderer.init(ctx, this.init_Font, "No packet rules selected.", x, y, w - 5 - 1);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, "No packet rules selected.", x, y, w - 5 - 1);
       } else {
          ScrollableListView viewport = this.init_EventBus_Map(this.tick_Map, "_wpm_rules", x, y, w, listH, 14, 5);
-         viewport.init_V(this.reset_List.size() * 14);
-         viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+         viewport.setContentHeight(this.reset_List.size() * 14);
+         viewport.renderScrollbar(ctx, mx, my);
          int rowW = w - 5 - 1 - delW - 2;
-         viewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
+         viewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
 
-         for (int i = viewport.pop(); i < this.reset_List.size() && i <= viewport.tick(); i++) {
-            int iy = viewport.init_I(i);
+         for (int i = viewport.getFirstVisibleRow(); i < this.reset_List.size() && i <= viewport.getLastVisibleRow(); i++) {
+            int iy = viewport.getRowY(i);
             if (iy != -2147483648) {
                autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = this.reset_List.get(i);
                boolean selected = i == this.f_z_I;
@@ -3729,7 +3729,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         viewport.init(ctx);
+         viewport.endFrame(ctx);
       }
    }
 
@@ -3766,7 +3766,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             this.write(updated);
          }
       });
-      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.divider());
+      PanelSurfaceHelper.drawDividerColored(ctx, x, cy + 2, w, UiColorPalette.divider());
       cy += 6;
       ThemedTextInputBox nameField = this.init_Map.get("customName");
       if (nameField != null) {
@@ -3833,7 +3833,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       });
       this.init_V_GuiGraphicsExtract(ctx, clearBtns[2], cy, clearBtns[3], 13, "GBreak", mx, my, this::bind);
       cy += 20;
-      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.divider());
+      PanelSurfaceHelper.drawDividerColored(ctx, x, cy + 2, w, UiColorPalette.divider());
       cy += 6;
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Current Queue (" + finalQueuePackets.size() + ")", font, UiColorPalette.textBody(), x, cy + 2, false);
       cy += 14;
@@ -3862,8 +3862,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       int listH = 56;
       ScrollableListView packetViewport = this.init_EventBus_Map(this.tick_Map, listKey, x, y, w, listH, 14, 5);
-      packetViewport.init_V(packets.size() * 14);
-      packetViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      packetViewport.setContentHeight(packets.size() * 14);
+      packetViewport.renderScrollbar(ctx, mx, my);
       int removeW = removable ? 13 : 0;
       int modeW = removable ? 14 : 0;
       int textW = w - 5 - 2 - (removable ? removeW + 2 + modeW + 2 : 0);
@@ -3872,11 +3872,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return y + listH;
       }
 
-      packetViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-      int firstVis = packetViewport.pop();
+      packetViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+      int firstVis = packetViewport.getFirstVisibleRow();
 
-      for (int i = firstVis; i < packets.size() && i <= packetViewport.tick(); i++) {
-         int iy = packetViewport.init_I(i);
+      for (int i = firstVis; i < packets.size() && i <= packetViewport.getLastVisibleRow(); i++) {
+         int iy = packetViewport.getRowY(i);
          if (iy != -2147483648) {
             AutismSessionState.DelayedPacket qp = packets.get(i);
             String pname = qp != null && qp.packet != null ? PacketNameResolver.init_Str_Packet(qp.packet) : "???";
@@ -3928,7 +3928,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      packetViewport.init(ctx);
+      packetViewport.endFrame(ctx);
       return y + listH;
    }
 
@@ -6738,21 +6738,21 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int rowH = 14;
       int visibleRows = 4;
       ScrollableListView viewport = this.init_EventBus_Map(this.tick_Map, key + "_race", x, listY, w, visibleRows * rowH, rowH, 5);
-      viewport.init_V(values.size() * rowH);
-      viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      viewport.setContentHeight(values.size() * rowH);
+      viewport.renderScrollbar(ctx, mx, my);
       if (values.isEmpty()) {
          String hint = "Use +Cond for waits or +Act for batch actions.";
-         ListRowRenderer.init(ctx, this.init_Font, hint, x, listY, w - 5 - 1);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, hint, x, listY, w - 5 - 1);
       } else {
          int buttonW = 12;
          int rowGap = 2;
          int buttonArea = buttonW * 3 + rowGap * 2;
          int rowTextW = Math.max(20, w - 5 - buttonArea - 7);
-         viewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int first = viewport.pop();
+         viewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int first = viewport.getFirstVisibleRow();
 
-         for (int vi = first; vi < values.size() && vi <= viewport.tick(); vi++) {
-            int rowY = viewport.init_I(vi);
+         for (int vi = first; vi < values.size() && vi <= viewport.getLastVisibleRow(); vi++) {
+            int rowY = viewport.getRowY(vi);
             if (rowY != -2147483648) {
                String value = values.get(vi);
                boolean hovered = mx >= x && mx < x + rowTextW && my >= rowY && my < rowY + rowH;
@@ -6785,7 +6785,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         viewport.init(ctx);
+         viewport.endFrame(ctx);
       }
    }
 
@@ -6793,9 +6793,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       String canonical = RaceAction.load_Str(step);
       boolean condition = RaceAction.init_Z_2(canonical);
       int bgColor = hovered ? UiColorPalette.rowHover() : UiColorPalette.rowSurface();
-      PanelSurfaceHelper.init(ctx, x, y + 1, w, h - 2, bgColor);
+      PanelSurfaceHelper.fillRect(ctx, x, y + 1, w, h - 2, bgColor);
       int badgeColor = condition ? -30720 : -12268476;
-      PanelSurfaceHelper.read(ctx, x + 1, y + 3, 3, h - 6, badgeColor);
+      PanelSurfaceHelper.drawAccentBar(ctx, x + 1, y + 3, 3, h - 6, badgeColor);
       int numberColor = UiColorPalette.textSecondary();
       autismclient.gui.f.b.k.init(
          ctx,
@@ -7319,7 +7319,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label(), font, UiColorPalette.textBody(), x, y + 2, false);
       int badgeW = Math.min(150, Math.max(60, w / 2));
       int badgeX = x + w - badgeW;
-      PanelSurfaceHelper.read(ctx, badgeX, y + 1, badgeW, 14);
+      PanelSurfaceHelper.drawInputPill(ctx, badgeX, y + 1, badgeW, 14);
       String selectedLabel = current.isBlank() ? "No macro selected" : current;
       String selectedTrimmed = autismclient.gui.f.b.k.init(this.init_Font, selectedLabel, badgeW - 6, font, -1);
       autismclient.gui.f.b.k.init(ctx, this.init_Font, selectedTrimmed, font, current.isBlank() ? UiColorPalette.textMuted() : UiColorPalette.textBright(), badgeX + 3, y + 3, false);
@@ -7328,19 +7328,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int itemW = w - 5 - 1;
       String viewportKey = "macro_select_" + field.key();
       ScrollableListView viewport = this.init_EventBus_Map(this.tick_Map, viewportKey, x, listY, w, listH, 14, 5);
-      viewport.init_V(macros.size() * 14);
-      viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      viewport.setContentHeight(macros.size() * 14);
+      viewport.renderScrollbar(ctx, mx, my);
       if (macros.isEmpty()) {
-         PanelSurfaceHelper.init(ctx, x, listY, itemW, 13, false, false);
-         ListRowRenderer.init(ctx, this.init_Font, "No saved macros", x, listY, itemW);
+         PanelSurfaceHelper.drawCardRow(ctx, x, listY, itemW, 13, false, false);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, "No saved macros", x, listY, itemW);
       } else {
-         viewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int first = viewport.pop();
+         viewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int first = viewport.getFirstVisibleRow();
 
-         for (int i = first; i < macros.size() && i <= viewport.tick(); i++) {
+         for (int i = first; i < macros.size() && i <= viewport.getLastVisibleRow(); i++) {
             MacroFolderLayout.Inner_DataUtil folderRow = macros.get(i);
             String macroName = folderRow.init_Str();
-            int iy = viewport.init_I(i);
+            int iy = viewport.getRowY(i);
             if (iy != -2147483648) {
                if (folderRow.init_Z()) {
                   autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, iy, itemW, 14);
@@ -7376,7 +7376,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         viewport.init(ctx);
+         viewport.endFrame(ctx);
       }
    }
 
@@ -7666,16 +7666,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       ScrollableListView strViewport = this.init_EventBus_Map(this.tick_Map, key, x, itemsY, w, selAreaH, 14, 5);
-      strViewport.init_V(filtered.size() * 14);
-      strViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      strViewport.setContentHeight(filtered.size() * 14);
+      strViewport.renderScrollbar(ctx, mx, my);
       if (!filtered.isEmpty()) {
          int rowAreaW = Math.max(24, w - 5 - 1 - delW - 2 - (destW > 0 ? destW + 2 : 0) - (amountW > 0 ? amountW + 2 : 0));
-         strViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int firstVi = strViewport.pop();
+         strViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int firstVi = strViewport.getFirstVisibleRow();
 
-         for (int vi = firstVi; vi < filtered.size() && vi <= strViewport.tick(); vi++) {
+         for (int vi = firstVi; vi < filtered.size() && vi <= strViewport.getLastVisibleRow(); vi++) {
             int ri = filtered.get(vi);
-            int iy = strViewport.init_I(vi);
+            int iy = strViewport.getRowY(vi);
             if (iy != -2147483648) {
                Component displayValue = this.init_Component_Str(key, lst.get(ri), ri);
                boolean selected = editable && ri == editIdx;
@@ -7810,7 +7810,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                   ScrollableListView vp = this.tick_Map.get(key);
                   if (vp != null) {
-                     vp.read_V(-1);
+                     vp.scrollByRows(-1);
                   }
 
                   if (this.reset_Z(key)) {
@@ -7820,11 +7820,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         strViewport.init(ctx);
+         strViewport.endFrame(ctx);
       } else if (emptyHint != null && !emptyHint.isBlank()) {
          int itemW = w - 5 - 1;
-         PanelSurfaceHelper.init(ctx, x, itemsY, itemW, 12, false, false);
-         ListRowRenderer.init(ctx, this.init_Font, emptyHint, x, itemsY, itemW);
+         PanelSurfaceHelper.drawCardRow(ctx, x, itemsY, itemW, 12, false, false);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, emptyHint, x, itemsY, itemW);
       }
    }
 
@@ -7851,15 +7851,15 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int delW = 13;
       int selAreaH = 56;
       ScrollableListView catSelViewport = this.init_EventBus_Map(this.tick_Map, key, x, cy, w, selAreaH, 14, 5);
-      catSelViewport.init_V(sel.size() * 14);
-      catSelViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      catSelViewport.setContentHeight(sel.size() * 14);
+      catSelViewport.renderScrollbar(ctx, mx, my);
       if (!sel.isEmpty()) {
          int delX = x + w - 5 - 2 - delW;
-         catSelViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int firstSel = catSelViewport.pop();
+         catSelViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int firstSel = catSelViewport.getFirstVisibleRow();
 
-         for (int i = firstSel; i < sel.size() && i <= catSelViewport.tick(); i++) {
-            int siy = catSelViewport.init_I(i);
+         for (int i = firstSel; i < sel.size() && i <= catSelViewport.getLastVisibleRow(); i++) {
+            int siy = catSelViewport.getRowY(i);
             if (siy != -2147483648) {
                String display = RegistryDisplayNameCache.load(sel.get(i));
                autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
@@ -7877,19 +7877,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   sel.remove(fi);
                   ScrollableListView vp = this.tick_Map.get(key);
                   if (vp != null) {
-                     vp.read_V(-1);
+                     vp.scrollByRows(-1);
                   }
                });
             }
          }
 
-         catSelViewport.init(ctx);
+         catSelViewport.endFrame(ctx);
       } else {
-         ListRowRenderer.init(ctx, this.init_Font, "(none selected)", x, cy, w - 5 - 1);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, "(none selected)", x, cy, w - 5 - 1);
       }
 
       cy += selAreaH;
-      PanelSurfaceHelper.init(ctx, x, cy + 1, w, UiColorPalette.divider());
+      PanelSurfaceHelper.drawDividerColored(ctx, x, cy + 1, w, UiColorPalette.divider());
       cy += 5;
       if (af != null) {
          af.setX(x);
@@ -7918,13 +7918,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       );
       int catItemW = w - 5 - 1;
       ScrollableListView catViewport = this.init_EventBus_Map(this.close_Map, key, x, cy, w, 60, 13, 5);
-      catViewport.init_V(filtered.size() * 13);
-      catViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
-      catViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-      int firstItem = catViewport.pop();
+      catViewport.setContentHeight(filtered.size() * 13);
+      catViewport.renderScrollbar(ctx, mx, my);
+      catViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+      int firstItem = catViewport.getFirstVisibleRow();
 
-      for (int i = firstItem; i < filtered.size() && i <= catViewport.tick(); i++) {
-         int iy = catViewport.init_I(i);
+      for (int i = firstItem; i < filtered.size() && i <= catViewport.getLastVisibleRow(); i++) {
+         int iy = catViewport.getRowY(i);
          if (iy != -2147483648) {
             String id = filtered.get(i);
             String display = RegistryDisplayNameCache.load(id);
@@ -7952,7 +7952,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      catViewport.init(ctx);
+      catViewport.endFrame(ctx);
    }
 
    private void pool() {
@@ -7975,7 +7975,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.run_Z || this.isLegacyMulti()) {
          int closeW = this.write_I("Close");
          int closeX = this.bind + (this.f_b_I - closeW) / 2;
-         PanelSurfaceHelper.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, UiColorPalette.divider());
+         PanelSurfaceHelper.drawDividerColored(ctx, this.bind + 4, footerY, this.f_b_I - 8, UiColorPalette.divider());
          this.init_ByteReader_GuiGraphicsExtract_2(
             ctx, closeX, btnY, closeW, btnH, "Close", OverlayActionButton.ButtonTone.SECONDARY, true, mx, my, () -> this.set(false)
          );
@@ -7990,7 +7990,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          int total = cancelW + saveW + gap;
          int sx = this.bind + (this.f_b_I - total) / 2;
-         PanelSurfaceHelper.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, UiColorPalette.divider());
+         PanelSurfaceHelper.drawDividerColored(ctx, this.bind + 4, footerY, this.f_b_I - 8, UiColorPalette.divider());
          if (!variableWarning.isBlank()) {
             Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
             String text = autismclient.gui.f.b.k.init(this.init_Font, variableWarning, this.f_b_I - 8, font, -1);
@@ -9175,15 +9175,15 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       if (bodyInputAllowed) {
          for (ScrollableListView vp : this.tick_Map.values()) {
-            if (vp.load(mx, my)) {
-               vp.init_Z_D_2(mx, my, button);
+            if (vp.isOverScrollbar(mx, my)) {
+               vp.mouseClicked(mx, my, button);
                return true;
             }
          }
 
          for (ScrollableListView vp : this.close_Map.values()) {
-            if (vp.load(mx, my)) {
-               vp.init_Z_D_2(mx, my, button);
+            if (vp.isOverScrollbar(mx, my)) {
+               vp.mouseClicked(mx, my, button);
                return true;
             }
          }
@@ -9233,15 +9233,15 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       boolean consumed = false;
 
       for (ScrollableListView vp : this.tick_Map.values()) {
-         if (vp.init_Z()) {
-            vp.read_V();
+         if (vp.isDraggingScrollbar()) {
+            vp.mouseReleased();
             consumed = true;
          }
       }
 
       for (ScrollableListView vp : this.close_Map.values()) {
-         if (vp.init_Z()) {
-            vp.read_V();
+         if (vp.isDraggingScrollbar()) {
+            vp.mouseReleased();
             consumed = true;
          }
       }
@@ -9342,15 +9342,15 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       for (ScrollableListView vp : this.tick_Map.values()) {
-         if (vp.init_Z()) {
-            vp.init_V_D_D(mx, my);
+         if (vp.isDraggingScrollbar()) {
+            vp.mouseDragged(mx, my);
             return true;
          }
       }
 
       for (ScrollableListView vp : this.close_Map.values()) {
-         if (vp.init_Z()) {
-            vp.init_V_D_D(mx, my);
+         if (vp.isDraggingScrollbar()) {
+            vp.mouseDragged(mx, my);
             return true;
          }
       }
@@ -9397,16 +9397,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             for (Entry<String, ScrollableListView> entry : this.tick_Map.entrySet()) {
                ScrollableListView vp = entry.getValue();
-               if (vp.init_Z_D_D(mx, my)) {
-                  vp.init_Z_D(mx, my, amount);
+               if (vp.containsPoint(mx, my)) {
+                  vp.mouseScrolled(mx, my, amount);
                   return true;
                }
             }
 
             for (Entry<String, ScrollableListView> entry : this.close_Map.entrySet()) {
                ScrollableListView vp = entry.getValue();
-               if (vp.init_Z_D_D(mx, my)) {
-                  vp.init_Z_D(mx, my, amount);
+               if (vp.containsPoint(mx, my)) {
+                  vp.mouseScrolled(mx, my, amount);
                   return true;
                }
             }
@@ -11096,7 +11096,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          selected.remove(value);
          ScrollableListView vp = this.tick_Map.get("wait_sound_selected");
          if (vp != null) {
-            vp.read_V(-1);
+            vp.scrollByRows(-1);
          }
       }, RegistryDisplayNameCache::write, "(any sound - add to filter)");
       ThemedTextInputBox search = this.flush_Map.get("soundIds");
@@ -11617,8 +11617,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int rowH = 13;
       List<ActionEditorOverlay.Inner_BufferHelper> entries = this.load_List_Str(query);
       if (entries.isEmpty()) {
-         PanelSurfaceHelper.init(ctx, x, y, w, 12, false, false);
-         ListRowRenderer.init(ctx, this.init_Font, "No players found", x, y, w);
+         PanelSurfaceHelper.drawCardRow(ctx, x, y, w, 12, false, false);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, "No players found", x, y, w);
          return y + rowH;
       }
 
@@ -11697,23 +11697,23 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          selected.clear();
          ScrollableListView vp = this.tick_Map.get("toggle_module_selected");
          if (vp != null) {
-            vp.load_V(0);
+            vp.setScrollOffset(0);
          }
       });
       cy += 14;
       int listH = 56;
       int itemW = w - 5 - 1;
       ScrollableListView toggleViewport = this.init_EventBus_Map(this.tick_Map, "toggle_module_selected", x, cy, w, listH, 14, 5);
-      toggleViewport.init_V(selected.size() * 14);
-      toggleViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      toggleViewport.setContentHeight(selected.size() * 14);
+      toggleViewport.renderScrollbar(ctx, mx, my);
       if (selected.isEmpty()) {
-         ListRowRenderer.init(ctx, this.init_Font, "Pick modules below.", x, cy, itemW);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, "Pick modules below.", x, cy, itemW);
       } else {
-         toggleViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int first = toggleViewport.pop();
+         toggleViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int first = toggleViewport.getFirstVisibleRow();
 
-         for (int i = first; i < selected.size() && i <= toggleViewport.tick(); i++) {
-            int iy = toggleViewport.init_I(i);
+         for (int i = first; i < selected.size() && i <= toggleViewport.getLastVisibleRow(); i++) {
+            int iy = toggleViewport.getRowY(i);
             if (iy != -2147483648) {
                ak.Inner_DataUtil entry = selected.get(i);
                int removeW = 13;
@@ -11750,14 +11750,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      selected.remove(entryIndex);
                      ScrollableListView vp = this.tick_Map.get("toggle_module_selected");
                      if (vp != null) {
-                        vp.read_V(-1);
+                        vp.scrollByRows(-1);
                      }
                   }
                });
             }
          }
 
-         toggleViewport.init(ctx);
+         toggleViewport.endFrame(ctx);
       }
 
       cy += listH + 4;
@@ -11825,8 +11825,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor ctx, int x, int y, int w, String listKey, int visibleRows, String message) {
       int listH = visibleRows * 13;
       int itemW = w - 5 - 1;
-      PanelSurfaceHelper.init(ctx, x, y, itemW, 12, false, false);
-      ListRowRenderer.init(ctx, this.init_Font, this.write_Str(message), x, y, itemW);
+      PanelSurfaceHelper.drawCardRow(ctx, x, y, itemW, 12, false, false);
+      ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, this.write_Str(message), x, y, itemW);
    }
 
    private void b() {
@@ -11836,7 +11836,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.state_Z = true;
       ScrollableListView vp = this.close_Map.get("pay_players_scan");
       if (vp != null) {
-         vp.load_V(0);
+         vp.setScrollOffset(0);
       }
 
       for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(init_Minecraft)) {
@@ -11899,12 +11899,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.stop_List.clear();
       ScrollableListView autismVp = this.close_Map.get("toggle_module_autism_registry");
       if (autismVp != null) {
-         autismVp.load_V(0);
+         autismVp.setScrollOffset(0);
       }
 
       ScrollableListView emptyVp = this.close_Map.get("toggle_module_registry_empty");
       if (emptyVp != null) {
-         emptyVp.load_V(0);
+         emptyVp.setScrollOffset(0);
       }
 
       for (String moduleName : autismclient.util.CommandPrefixHelper.read_List()) {
@@ -12048,14 +12048,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int rowW = w - 5 - 1 - delW - 2;
       int selAreaH = 56;
       ScrollableListView wscViewport = this.init_EventBus_Map(this.tick_Map, "_wsc_entries", x, cy, w, selAreaH, 14, 5);
-      wscViewport.init_V(entries.size() * 14);
-      wscViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      wscViewport.setContentHeight(entries.size() * 14);
+      wscViewport.renderScrollbar(ctx, mx, my);
       if (!entries.isEmpty()) {
-         wscViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int firstVis = wscViewport.pop();
+         wscViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int firstVis = wscViewport.getFirstVisibleRow();
 
-         for (int i = firstVis; i < entries.size() && i <= wscViewport.tick(); i++) {
-            int iy = wscViewport.init_I(i);
+         for (int i = firstVis; i < entries.size() && i <= wscViewport.getLastVisibleRow(); i++) {
+            int iy = wscViewport.getRowY(i);
             if (iy != -2147483648) {
                boolean selected = i == this.f_l_I;
                WaitForSlotChangeAction.Inner_DataUtil e = entries.get(i);
@@ -12088,19 +12088,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   entries.remove(fi);
                   ScrollableListView vp = this.tick_Map.get("_wsc_entries");
                   if (vp != null) {
-                     vp.read_V(-1);
+                     vp.scrollByRows(-1);
                   }
                });
             }
          }
 
-         wscViewport.init(ctx);
+         wscViewport.endFrame(ctx);
       } else {
-         ListRowRenderer.init(ctx, this.init_Font, "No entries yet. Add an item or slot below.", x, cy, w - 5 - 1);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, "No entries yet. Add an item or slot below.", x, cy, w - 5 - 1);
       }
 
       cy += selAreaH;
-      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.divider());
+      PanelSurfaceHelper.drawDividerColored(ctx, x, cy + 2, w, UiColorPalette.divider());
       cy += 6;
       ThemedTextInputBox wscAddF = this.flush_Map.get("_wsc_add");
       ThemedTextInputBox wscSlotF = this.init_Map.get("wsc_slot");
@@ -12159,7 +12159,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             countF.render(ctx, mx, my, delta);
          } else {
-            PanelSurfaceHelper.read(ctx, cntX, cy, cntW, 13);
+            PanelSurfaceHelper.drawInputPill(ctx, cntX, cy, cntW, 13);
             this.sync_V(ctx, cntX, cy, cntW, 13, -14018022);
             autismclient.gui.f.b.k.init(ctx, this.init_Font, "-", font, UiColorPalette.textSecondary(), cntX + (cntW - this.init_I_Identifier_Str(font, "-")) / 2, cy + 3, false);
          }
@@ -12394,7 +12394,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "fromUseItemName", x, cy, w, mx, my, delta);
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "fromItemName", x, cy, w, mx, my, delta);
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "fromSlot", x, cy, w, mx, my, delta);
-      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.divider());
+      PanelSurfaceHelper.drawDividerColored(ctx, x, cy + 2, w, UiColorPalette.divider());
       cy += 8;
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "To", font, UiColorPalette.textBody(), x, cy + 2, false);
       cy += 16;
@@ -12672,26 +12672,26 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int listH = lines.isEmpty() ? 24 : Math.min(5, lines.size()) * 22;
       int itemW = Math.max(1, w - 5 - 1);
       ScrollableListView viewport = this.init_EventBus_Map(this.tick_Map, "capture_value_scoreboard", x, y, w, listH, 22, 5);
-      viewport.init_V(lines.size() * 22);
-      viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      viewport.setContentHeight(lines.size() * 22);
+      viewport.renderScrollbar(ctx, mx, my);
       if (lines.isEmpty()) {
-         PanelSurfaceHelper.init(ctx, x, y, itemW, 24, false, false);
+         PanelSurfaceHelper.drawCardRow(ctx, x, y, itemW, 24, false, false);
          autismclient.gui.f.b.k.init(ctx, this.init_Font, "No scoreboard", font, UiColorPalette.textSecondary(), x + 3, y + 7, false);
          return y + 24 + 2;
       }
 
       String selectedKey = this.update("scoreboardRow", "");
-      viewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-      int first = viewport.pop();
+      viewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+      int first = viewport.getFirstVisibleRow();
 
-      for (int i = first; i < lines.size() && i <= viewport.tick(); i++) {
-         int rowY = viewport.init_I(i);
+      for (int i = first; i < lines.size() && i <= viewport.getLastVisibleRow(); i++) {
+         int rowY = viewport.getRowY(i);
          if (rowY != -2147483648) {
             autismclient.util.macro.CaptureValueAction.Inner_JsonUtil line = lines.get(i);
             boolean selected = line.init_Str().equals(selectedKey);
             boolean hovered = mx >= x && mx < x + itemW && my >= rowY && my < rowY + 22;
-            PanelSurfaceHelper.init(ctx, x, rowY, itemW, 22, hovered, selected);
-            PanelSurfaceHelper.read(ctx, x, rowY + 2, 3, 18, selected ? -13248397 : -3376606);
+            PanelSurfaceHelper.drawCardRow(ctx, x, rowY, itemW, 22, hovered, selected);
+            PanelSurfaceHelper.drawAccentBar(ctx, x, rowY + 2, 3, 18, selected ? -13248397 : -3376606);
             String rowLabel = "Row " + (line.init_I() + 1);
             autismclient.gui.f.b.k.init(ctx, this.init_Font, rowLabel, font, UiColorPalette.textSecondary(), x + 6, rowY + 2, false);
             autismclient.gui.f.b.k.init(
@@ -12709,7 +12709,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      viewport.init(ctx);
+      viewport.endFrame(ctx);
       return y + listH + 2;
    }
 
@@ -12755,23 +12755,23 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int listH = pool.isEmpty() ? 24 : Math.min(5, pool.size()) * 14;
       int itemW = Math.max(1, w - 5 - 1);
       ScrollableListView viewport = this.init_EventBus_Map(this.tick_Map, "capture_value_tablist", x, y, w, listH, 14, 5);
-      viewport.init_V(pool.size() * 14);
-      viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      viewport.setContentHeight(pool.size() * 14);
+      viewport.renderScrollbar(ctx, mx, my);
       if (pool.isEmpty()) {
-         PanelSurfaceHelper.init(ctx, x, y, itemW, 24, false, false);
+         PanelSurfaceHelper.drawCardRow(ctx, x, y, itemW, 24, false, false);
          autismclient.gui.f.b.k.init(ctx, this.init_Font, "No matches", font, UiColorPalette.textSecondary(), x + 3, y + 7, false);
          return y + 24 + 2;
       }
 
-      viewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-      int first = viewport.pop();
+      viewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+      int first = viewport.getFirstVisibleRow();
 
-      for (int i = first; i < pool.size() && i <= viewport.tick(); i++) {
-         int rowY = viewport.init_I(i);
+      for (int i = first; i < pool.size() && i <= viewport.getLastVisibleRow(); i++) {
+         int rowY = viewport.getRowY(i);
          if (rowY != -2147483648) {
             String name = pool.get(i);
             boolean hovered = mx >= x && mx < x + itemW && my >= rowY && my < rowY + 14;
-            PanelSurfaceHelper.init(ctx, x, rowY, itemW, 14, hovered, false);
+            PanelSurfaceHelper.drawCardRow(ctx, x, rowY, itemW, 14, hovered, false);
             autismclient.gui.f.b.k.init(
                ctx,
                this.init_Font,
@@ -12786,7 +12786,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      viewport.init(ctx);
+      viewport.endFrame(ctx);
       return y + listH + 2;
    }
 
@@ -13657,20 +13657,20 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       listH = Math.max(24, Math.min(listH, desiredListH));
       int itemW = w - 5 - 1;
       ScrollableListView chatViewport = this.init_EventBus_Map(this.tick_Map, viewportKey, x, y, w, listH, 34, 5);
-      chatViewport.init_V(values.size() * 34);
-      chatViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      chatViewport.setContentHeight(values.size() * 34);
+      chatViewport.renderScrollbar(ctx, mx, my);
       if (values.isEmpty()) {
-         PanelSurfaceHelper.init(ctx, x, y, itemW, 24, false, false);
+         PanelSurfaceHelper.drawCardRow(ctx, x, y, itemW, 24, false, false);
          String firstLine = "capture_value_recent".equals(viewportKey) ? "No recent chat yet." : "No recent messages matched your search.";
          String secondLine = "capture_value_recent".equals(viewportKey) ? "Send or receive a message first." : "Send or receive chat first, then pick it here.";
          autismclient.gui.f.b.k.init(ctx, this.init_Font, firstLine, font, UiColorPalette.textSecondary(), x + 3, y + 3, false);
          autismclient.gui.f.b.k.init(ctx, this.init_Font, secondLine, font, UiColorPalette.textSecondary(), x + 3, y + 13, false);
       } else {
-         chatViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int first = chatViewport.pop();
+         chatViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int first = chatViewport.getFirstVisibleRow();
 
-         for (int i = first; i < values.size() && i <= chatViewport.tick(); i++) {
-            int iy = chatViewport.init_I(i);
+         for (int i = first; i < values.size() && i <= chatViewport.getLastVisibleRow(); i++) {
+            int iy = chatViewport.getRowY(i);
             if (iy != -2147483648) {
                int itemH = 34;
                if (iy + itemH > y + listH) {
@@ -13680,7 +13680,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                if (itemH > 0) {
                   MacroExecutor.LoggedChatMessage value = values.get(i);
                   boolean hovered = mx >= x && mx < x + itemW && my >= iy && my < iy + itemH;
-                  PanelSurfaceHelper.init(ctx, x, iy, itemW, itemH, hovered, false);
+                  PanelSurfaceHelper.drawCardRow(ctx, x, iy, itemW, itemH, hovered, false);
                   int border = value.source() == MacroExecutor.ChatSenderKind.SERVER
                      ? (hovered ? -20134 : -3376606)
                      : (hovered ? -8597761 : -11627064);
@@ -13710,7 +13710,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         chatViewport.init(ctx);
+         chatViewport.endFrame(ctx);
       }
    }
 
@@ -14373,26 +14373,26 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.open_Map.put(listKey, -1);
          ScrollableListView vp = this.tick_Map.get(listKey);
          if (vp != null) {
-            vp.load_V(0);
+            vp.setScrollOffset(0);
          }
       });
       y += 14;
       int listH = 56;
       int itemW = w - 5 - 1;
       ScrollableListView simpleViewport = this.init_EventBus_Map(this.tick_Map, listKey, x, y, w, listH, 14, 5);
-      simpleViewport.init_V(values.size() * 14);
-      simpleViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      simpleViewport.setContentHeight(values.size() * 14);
+      simpleViewport.renderScrollbar(ctx, mx, my);
       if (values.isEmpty()) {
-         PanelSurfaceHelper.init(ctx, x, y, itemW, 12, false, false);
-         ListRowRenderer.init(ctx, this.init_Font, emptyLabel, x, y, itemW);
+         PanelSurfaceHelper.drawCardRow(ctx, x, y, itemW, 12, false, false);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, emptyLabel, x, y, itemW);
          return y + listH + 4;
       }
 
-      simpleViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-      int first = simpleViewport.pop();
+      simpleViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+      int first = simpleViewport.getFirstVisibleRow();
 
-      for (int i = first; i < values.size() && i <= simpleViewport.tick(); i++) {
-         int iy = simpleViewport.init_I(i);
+      for (int i = first; i < values.size() && i <= simpleViewport.getLastVisibleRow(); i++) {
+         int iy = simpleViewport.getRowY(i);
          if (iy != -2147483648) {
             T value = values.get(i);
             int removeW = 13;
@@ -14448,13 +14448,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                ScrollableListView vp = this.tick_Map.get(listKey);
                if (vp != null) {
-                  vp.read_V(-1);
+                  vp.scrollByRows(-1);
                }
             });
          }
       }
 
-      simpleViewport.init(ctx);
+      simpleViewport.endFrame(ctx);
       return y + listH + 4;
    }
 
@@ -14492,17 +14492,17 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int listH = visibleRows * rowH;
       int itemW = w - 5 - 1;
       ScrollableListView regViewport = this.init_EventBus_Map(this.close_Map, listKey, x, y, w, listH, rowH, 5);
-      regViewport.init_V(values.size() * rowH);
-      regViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
+      regViewport.setContentHeight(values.size() * rowH);
+      regViewport.renderScrollbar(ctx, mx, my);
       if (values.isEmpty()) {
-         PanelSurfaceHelper.init(ctx, x, y, itemW, 12, false, false);
-         ListRowRenderer.init(ctx, this.init_Font, "No matches", x, y, itemW);
+         PanelSurfaceHelper.drawCardRow(ctx, x, y, itemW, 12, false, false);
+         ListRowRenderer.drawEmptyPlaceholder(ctx, this.init_Font, "No matches", x, y, itemW);
       } else {
-         regViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
-         int first = regViewport.pop();
+         regViewport.beginFrame(ctx, this.init_CharEncoder.set(), 905969664);
+         int first = regViewport.getFirstVisibleRow();
 
-         for (int i = first; i < values.size() && i <= regViewport.tick(); i++) {
-            int iy = regViewport.init_I(i);
+         for (int i = first; i < values.size() && i <= regViewport.getLastVisibleRow(); i++) {
+            int iy = regViewport.getRowY(i);
             if (iy != -2147483648) {
                T value = values.get(i);
                String display = formatter.apply(value);
@@ -14525,7 +14525,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         regViewport.init(ctx);
+         regViewport.endFrame(ctx);
       }
    }
 
@@ -15028,12 +15028,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.close_List().removeIf(target -> direction.equalsIgnoreCase(WaitForPacketAction.init(this.prev(target))));
       ScrollableListView vpC2s = this.tick_Map.get("wait_packet_c2s");
       if (vpC2s != null) {
-         vpC2s.load_V(0);
+         vpC2s.setScrollOffset(0);
       }
 
       ScrollableListView vpS2c = this.tick_Map.get("wait_packet_s2c");
       if (vpS2c != null) {
-         vpS2c.load_V(0);
+         vpS2c.setScrollOffset(0);
       }
    }
 
@@ -15946,7 +15946,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private ScrollableListView init_EventBus_Map(Map<String, ScrollableListView> viewports, String key, int x, int y, int width, int height, int rowHeight, int scrollbarWidth) {
       ScrollableListView vp = viewports.get(key);
-      if (vp == null || vp.init_I() != x || vp.load_I() != y || vp.read_I() != width || vp.write_I() != height) {
+      if (vp == null || vp.getX() != x || vp.getY() != y || vp.getWidth() != width || vp.getHeight() != height) {
          vp = new ScrollableListView(x, y, width, height, rowHeight, scrollbarWidth);
          viewports.put(key, vp);
       }

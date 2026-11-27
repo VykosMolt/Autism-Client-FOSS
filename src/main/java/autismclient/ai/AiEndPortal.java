@@ -220,7 +220,7 @@ final class AiEndPortal {
 
          AiOperation.Result init(AiOperation.Status status, String message) {
             this.init_DataUtil.clear();
-            return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
+            return AiGuardLayer.wrapPendingTermination(
                this.init_t_DataUtil.load(),
                AiGameOperations.result(
                   status,

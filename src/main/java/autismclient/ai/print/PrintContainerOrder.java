@@ -30,7 +30,7 @@ public final class PrintContainerOrder {
    public PrintContainerOrder(PrintEnv env, Function<BlockPos, BlockState> planned) {
       this.init_EventBus = env;
       this.init_Function = planned;
-      this.init_Obj = env.init_Obj();
+      this.init_Obj = env.worldToken();
    }
 
    public void init(PrintMachineJob job) {
@@ -49,18 +49,18 @@ public final class PrintContainerOrder {
    public void load(PrintMachineJob job) {
       long key = job.position().asLong();
       this.init_Long2ObjectLinkedO.remove(key);
-      if (!job.load_Z() || !this.init_EventBus.load_Z(job.position()) || !job.matchesSource(this.init_EventBus.init_BlockState_BlockPos(job.position()))) {
+      if (!job.load_Z() || !this.init_EventBus.hasChunkAt(job.position()) || !job.matchesSource(this.init_EventBus.getBlockState(job.position()))) {
          this.init_V(job.position());
       } else if (this.read()) {
          PrintContainerOrder.Inner_DataUtil previous = this.init_Long2ObjectOpenHas.get(key);
-         if (previous == null || !this.init(previous, this.init_EventBus.init_BlockState_BlockPos(job.position()))) {
+         if (previous == null || !this.init(previous, this.init_EventBus.getBlockState(job.position()))) {
             this.init_V(job.position());
             if (this.read()) {
                LongOpenHashSet dependencies = new LongOpenHashSet();
                if (this.init(job.position(), dependencies)) {
                   dependencies.remove(key);
                   this.init_Long2ObjectOpenHas
-                     .put(key, new PrintContainerOrder.Inner_DataUtil(this.init_EventBus.init_BlockState_BlockPos(job.position()), dependencies.toLongArray(), job));
+                     .put(key, new PrintContainerOrder.Inner_DataUtil(this.init_EventBus.getBlockState(job.position()), dependencies.toLongArray(), job));
 
                   for (long dependency : dependencies) {
                      this.load.computeIfAbsent(dependency, ignored -> new LongOpenHashSet()).add(key);
@@ -73,7 +73,7 @@ public final class PrintContainerOrder {
 
    public void init(long key) {
       this.init(
-         key, null, this.init_EventBus.load_Z(BlockPos.of(key)) ? this.init_EventBus.init_BlockState_BlockPos(BlockPos.of(key)) : PrintView.init_BlockState
+         key, null, this.init_EventBus.hasChunkAt(BlockPos.of(key)) ? this.init_EventBus.getBlockState(BlockPos.of(key)) : PrintView.UNLOADED_SENTINEL
       );
    }
 
@@ -133,12 +133,12 @@ public final class PrintContainerOrder {
    }
 
    public boolean read() {
-      if (this.init_EventBus.init_Obj() != this.init_Obj) {
+      if (this.init_EventBus.worldToken() != this.init_Obj) {
          return false;
       }
 
-      if (this.init_J != this.init_EventBus.init_J()) {
-         this.init_J = this.init_EventBus.init_J();
+      if (this.init_J != this.init_EventBus.currentTick()) {
+         this.init_J = this.init_EventBus.currentTick();
 
          for (int i = 0; i < 128 && !this.init_LongLinkedOpenHash.isEmpty(); i++) {
             long changed = this.init_LongLinkedOpenHash.removeFirstLong();
@@ -179,10 +179,10 @@ public final class PrintContainerOrder {
    }
 
    private boolean init(BlockPos at, LongOpenHashSet dependencies) {
-      if (!this.init_EventBus.load_Z(at)) {
+      if (!this.init_EventBus.hasChunkAt(at)) {
          return false;
       } else {
-         BlockState state = this.init_EventBus.init_BlockState_BlockPos(at);
+         BlockState state = this.init_EventBus.getBlockState(at);
          BlockState wanted = this.init_Function.apply(at);
          if (state.is(Blocks.HOPPER)
             && (state.getValue(HopperBlock.ENABLED) || wanted.is(Blocks.HOPPER) && wanted.getValue(HopperBlock.ENABLED))
@@ -203,11 +203,11 @@ public final class PrintContainerOrder {
          dependencies.add(at.asLong());
       }
 
-      if (!this.init_EventBus.load_Z(at)) {
+      if (!this.init_EventBus.hasChunkAt(at)) {
          return this.read(at, dependencies);
       }
 
-      BlockState state = this.init_EventBus.init_BlockState_BlockPos(at);
+      BlockState state = this.init_EventBus.getBlockState(at);
       BlockState wanted = this.init_Function.apply(at);
       boolean active = state.is(Blocks.HOPPER) && state.getValue(HopperBlock.ENABLED) || wanted.is(Blocks.HOPPER) && wanted.getValue(HopperBlock.ENABLED);
       return !active || this.read(at, dependencies);
@@ -220,8 +220,8 @@ public final class PrintContainerOrder {
 
       PrintContainerOrder.Inner_DataUtil receipt = this.init_Long2ObjectOpenHas.get(at.asLong());
       BlockState state;
-      if (this.init_EventBus.load_Z(at)) {
-         state = this.init_EventBus.init_BlockState_BlockPos(at);
+      if (this.init_EventBus.hasChunkAt(at)) {
+         state = this.init_EventBus.getBlockState(at);
          BlockState wanted = this.init_Function.apply(at);
          if (!state.hasBlockEntity() && !wanted.hasBlockEntity()) {
             return true;
@@ -245,7 +245,7 @@ public final class PrintContainerOrder {
          }
 
          PrintContainerOrder.Inner_DataUtil other = this.init_Long2ObjectOpenHas.get(partner.asLong());
-         if (other == null || !this.init(other, this.init_EventBus.load_Z(partner) ? this.init_EventBus.init_BlockState_BlockPos(partner) : other.source())) {
+         if (other == null || !this.init(other, this.init_EventBus.hasChunkAt(partner) ? this.init_EventBus.getBlockState(partner) : other.source())) {
             return false;
          }
       }

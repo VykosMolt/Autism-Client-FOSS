@@ -317,7 +317,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       this.tick = shared.getLanSyncOverlayY();
       this.valid = Math.max(0, Math.min(init_StrArr.length - 1, shared.getLanSyncActiveTab()));
       this.size = Math.max(0, shared.getLanSyncScrollOffset());
-      this.init_CacheEntry.init(this.size);
+      this.init_CacheEntry.setOffsetUnclamped(this.size);
       this.open_Z = shared.isLanSyncPerUserMode();
       this.init_Str_2 = init_Str_Str_3(shared.getLanSyncSelectedMacroName());
       this.load_Str = init_Str_Str_3(shared.getLanSyncExpandedExecutePeer());
@@ -338,7 +338,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          contentY,
          4,
          contentHeight,
-         this.init_CacheEntry.init_I_F_I(0.0F, Math.max(0, totalContentHeight - contentHeight))
+         this.init_CacheEntry.tickAndClamp(0.0F, Math.max(0, totalContentHeight - contentHeight))
       );
    }
 
@@ -591,8 +591,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                   int tabContentY = this.pop_I_12();
                   int actualTabContentH = this.init_I_I_5(panelHeight);
                   this.size = Math.max(0, Math.min(this.size, this.data));
-                  this.init_CacheEntry.init_V_I_I(this.size, this.data);
-                  this.value = this.init_CacheEntry.init_I_F_I(delta, this.data);
+                  this.init_CacheEntry.setOffset(this.size, this.data);
+                  this.value = this.init_CacheEntry.tickAndClamp(delta, this.data);
                   this.data = 0;
                   autismclient.gui.ui.UiClipStack.getInstance().push(ctx, autismclient.gui.f.NetHelper.init(this.pop, tabContentY, this.run, actualTabContentH));
                   switch (this.valid) {
@@ -721,7 +721,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(tx, y, tabW, this.put, () -> {
             this.valid = tabIdx;
             this.size = 0;
-            this.init_CacheEntry.load(0, 0);
+            this.init_CacheEntry.jumpTo(0, 0);
             this.sync_V_7();
             this.flush_V_7();
             this.read_V_5();
@@ -786,7 +786,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
          for (LanSyncManager.Inner_TaskQueue sr : history) {
             int dotColor = this.init_I_D(sr.init());
-            autismclient.gui.ui.widgets.PanelSurfaceHelper.read(ctx, dotX, cy + 2, 6, 6, dotColor);
+            autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(ctx, dotX, cy + 2, 6, 6, dotColor);
             dotX += 9;
          }
 
@@ -884,7 +884,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       for (LanSyncManager.Inner_DataUtil client : sortedClients) {
          boolean isSelected = client.init_Str.equals(this.read_Str);
          boolean isHov = this.init(mx, my, lx - 2, cy, this.run - this.start * 2 + 4, this.clear);
-         autismclient.gui.ui.widgets.ListRowRenderer.init(
+         autismclient.gui.ui.widgets.ListRowRenderer.drawRow(
             ctx, this.init_Font, "", lx - 2, cy, rowWidth, this.clear, isHov, isSelected, autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
          );
          autismclient.gui.ui.widgets.GlyphIndicatorRenderer.init(
@@ -899,7 +899,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          );
          LanSyncManager.Inner_CachePool status = sync.init_aE_CachePool_Str(client.init_Str);
          int dotColor = status == LanSyncManager.Inner_CachePool.HEALTHY ? -11141291 : (status == LanSyncManager.Inner_CachePool.STALE ? -22016 : -7829368);
-         autismclient.gui.ui.widgets.PanelSurfaceHelper.read(ctx, lx + 10, cy + 4, 5, 5, dotColor);
+         autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(ctx, lx + 10, cy + 4, 5, 5, dotColor);
          boolean isSelf = client.init_Str.equals(sync.load_Str());
          int nameColor = isHov ? -2245633 : (client.init_Z ? -22016 : -1);
          int rightReserve = 4;
@@ -952,7 +952,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          cy += this.clear + 1;
          if (isSelected) {
             int detailH = this.add_I_8();
-            autismclient.gui.ui.widgets.PanelSurfaceHelper.load(ctx, lx + 4, cy, this.pop + this.run - this.start - lx - 8, detailH, UiColorPalette.inputSurface());
+            autismclient.gui.ui.widgets.PanelSurfaceHelper.drawElevatedPanel(ctx, lx + 4, cy, this.pop + this.run - this.start - lx - 8, detailH, UiColorPalette.inputSurface());
             int dx = lx + 10;
             int dy = cy + 4;
             this.init(ctx, "Status: " + status.name(), autismclient.gui.f.b.l.read, status == LanSyncManager.Inner_CachePool.HEALTHY ? -11141291 : -22016, dx, dy);
@@ -981,7 +981,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             ctrlX += btnS + 2;
             String valStr = offset + "ms";
             int valW = autismclient.gui.f.b.k.init(this.init_Font, valStr, init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), -1) + 8;
-            autismclient.gui.ui.widgets.PanelSurfaceHelper.read(ctx, ctrlX, dy, valW, btnS);
+            autismclient.gui.ui.widgets.PanelSurfaceHelper.drawInputPill(ctx, ctrlX, dy, valW, btnS);
             this.init(ctx, valStr, autismclient.gui.f.b.l.read, -1, ctrlX + 4, UiLayoutMath.centerTextY(dy, btnS, 9, 0));
             ctrlX += valW + 2;
             autismclient.gui.ui.widgets.IconButtonRenderer.init(
@@ -1127,7 +1127,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.open_Z = !this.open_Z;
          this.load_Str = null;
          this.size = 0;
-         this.init_CacheEntry.load(0, 0);
+         this.init_CacheEntry.jumpTo(0, 0);
          this.sync_V_7();
          this.flush_V_7();
          if (this.open_Z) {
@@ -1157,7 +1157,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          cy += this.add + 4;
       }
 
-      autismclient.gui.ui.widgets.PanelSurfaceHelper.init(ctx, lx - 2, cy, this.pop + this.run - this.start - lx + 4);
+      autismclient.gui.ui.widgets.PanelSurfaceHelper.drawDivider(ctx, lx - 2, cy, this.pop + this.run - this.start - lx + 4);
       cy += 4;
       LanSyncManager.Inner_JsonUtil state = sync.init_aE_JsonUtil();
       String stateStr = this.init_Str_aE_JsonUtil_aE(state, sync);
@@ -1188,7 +1188,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    private int init(GuiGraphicsExtractor ctx, int mx, int my, int cy, int lx, int btnW, LanSyncManager sync) {
-      autismclient.gui.ui.widgets.ListRowRenderer.init(ctx, this.init_Font, "Local Macros", lx, cy);
+      autismclient.gui.ui.widgets.ListRowRenderer.drawHeaderTitle(ctx, this.init_Font, "Local Macros", lx, cy);
       cy += 12;
       List<AutismMacro> localMacros = MacroLibraryManager.getInstance().getMacros();
       if (localMacros.isEmpty()) {
@@ -1312,18 +1312,18 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       int perUserListContentHeight = this.load(sync);
       this.index = this.write(perUserListContentHeight);
       if (this.init_EventBus == null
-         || this.init_EventBus.init_I() != this.node
-         || this.init_EventBus.load_I() != this.task
-         || this.init_EventBus.read_I() != this.pool
-         || this.init_EventBus.write_I() != this.index) {
+         || this.init_EventBus.getX() != this.node
+         || this.init_EventBus.getY() != this.task
+         || this.init_EventBus.getWidth() != this.pool
+         || this.init_EventBus.getHeight() != this.index) {
          this.init_EventBus = new autismclient.gui.ui.layout.ScrollableListView(this.node, this.task, this.pool, this.index, this.run_I_10(), 3);
       }
 
-      this.init_EventBus.init_V(perUserListContentHeight);
-      int drawScroll = this.init_EventBus.open();
+      this.init_EventBus.setContentHeight(perUserListContentHeight);
+      int drawScroll = this.init_EventBus.getScrollOffset();
       int clipTop = this.task + 1;
       int clipBottom = this.task + this.index - 1;
-      int rowPitch = this.init_EventBus.flush();
+      int rowPitch = this.init_EventBus.getRowHeight();
       autismclient.gui.f.PacketUtil.init(
          ctx, autismclient.gui.f.NetHelper.init(this.node, this.task, this.pool, this.index), init_CharEncoder.reset(), init_CharEncoder.set()
       );
@@ -1352,7 +1352,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                int rowTop = Math.max(cy, clipTop);
                int rowBottom = Math.min(cy + rowPitch, clipBottom);
                if (rowBottom > rowTop) {
-                  autismclient.gui.ui.widgets.PanelSurfaceHelper.init(ctx, this.node + 1, rowTop, this.pool - 2, rowBottom - rowTop, rowHov, isExpanded);
+                  autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.node + 1, rowTop, this.pool - 2, rowBottom - rowTop, rowHov, isExpanded);
                   int chevronY = Math.max(cy + 3, clipTop + 1);
                   if (chevronY < clipBottom - 10) {
                      autismclient.gui.ui.widgets.GlyphIndicatorRenderer.init(
@@ -1480,7 +1480,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                         int rowTop = Math.max(cy, clipTop);
                         int rowBottom = Math.min(cy + rowPitch, clipBottom);
                         if (rowBottom > rowTop) {
-                           autismclient.gui.ui.widgets.PanelSurfaceHelper.init(ctx, detailLx - 2, rowTop, detailRx - detailLx + 2, rowBottom - rowTop, true, false);
+                           autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, detailLx - 2, rowTop, detailRx - detailLx + 2, rowBottom - rowTop, true, false);
                            int textY = Math.max(cy + 3, clipTop + 1);
                            if (textY < clipBottom - 2) {
                               this.init(ctx, "No macros available", autismclient.gui.f.b.l.write, UiColorPalette.textSecondary(), detailLx, textY);
@@ -1499,7 +1499,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.UiClipStack.getInstance().pop(ctx);
       }
 
-      this.init_EventBus.init_V_GuiGraphicsExtract(ctx, mx, my);
+      this.init_EventBus.renderScrollbar(ctx, mx, my);
       cy = this.task + this.index;
       AutismLANSyncOverlay.Inner_DataUtil var51 = this.init_AutismLANSyncOverl_aE(sync);
       LinkedHashSet<String> var521 = this.init_LinkedHashSet_AutismLANSyncOverl(var51);
@@ -1692,7 +1692,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       }
 
       boolean mHov = this.init(mx, my, detailLx - 2, cy, assignW, rowPitch);
-      autismclient.gui.ui.widgets.ListRowRenderer.init(
+      autismclient.gui.ui.widgets.ListRowRenderer.drawRow(
          ctx,
          this.init_Font,
          "",
@@ -1840,7 +1840,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                this.close_Z = true;
                this.cache = Math.max(0, (int)Math.round(mouseY) - scrollbarMetrics.thumbY());
                this.size = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, (int)Math.round(mouseY), this.cache);
-               this.init_CacheEntry.load(this.size, scrollbarMetrics.maxScroll());
+               this.init_CacheEntry.jumpTo(this.size, scrollbarMetrics.maxScroll());
                this.read_V_5();
                return true;
             }
@@ -1866,8 +1866,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                && this.valid == 2
                && this.open_Z
                && this.push_Z_6()
-               && this.init_EventBus.init_Z_D_D(mouseX, mouseY)
-               && this.init_EventBus.init_Z_D_2(mouseX, mouseY, button)) {
+               && this.init_EventBus.containsPoint(mouseX, mouseY)
+               && this.init_EventBus.mouseClicked(mouseX, mouseY, button)) {
                return true;
             }
 
@@ -1893,7 +1893,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          }
 
          if (this.push_Z_6()) {
-            this.init_EventBus.read_V();
+            this.init_EventBus.mouseReleased();
          }
 
          if (this.close_Z) {
@@ -1919,13 +1919,13 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          int tabContentH = this.init_I_I_5(panelHeight);
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil_I_I(tabContentY, tabContentH);
          this.size = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, (int)Math.round(mouseY), this.cache);
-         this.init_CacheEntry.load(this.size, scrollbarMetrics.maxScroll());
+         this.init_CacheEntry.jumpTo(this.size, scrollbarMetrics.maxScroll());
          return true;
       } else if (this.poll_Z_7() && this.init_RenderState.read_Z()) {
          this.init_RenderState.init_V(mouseX, mouseY);
          return true;
-      } else if (this.push_Z_6() && this.init_EventBus.init_Z()) {
-         this.init_EventBus.init_V_D_D(mouseX, mouseY);
+      } else if (this.push_Z_6() && this.init_EventBus.isDraggingScrollbar()) {
+         this.init_EventBus.mouseDragged(mouseX, mouseY);
          return true;
       } else if (this.write_Z) {
          OverlayBounds nextBounds = this.clampToScreen(
@@ -1965,7 +1965,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       }
 
       if (this.valid == 2 && this.open_Z && this.push_Z_6()) {
-         return this.init_EventBus.init_Z_D(mouseX, mouseY, amount);
+         return this.init_EventBus.mouseScrolled(mouseX, mouseY, amount);
       }
 
       this.size = Math.max(0, Math.min(this.data, this.size - (int)(amount * this.clear)));

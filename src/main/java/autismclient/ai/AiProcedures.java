@@ -38,7 +38,7 @@ final class AiProcedures {
                   "evidenceId",
                   proof,
                   "scope",
-                  this.init_cc.poll_Str(),
+                  this.init_cc.getDimensionId(),
                   "recordedResult",
                   result.get("data")
                )
@@ -60,11 +60,11 @@ final class AiProcedures {
 
             for (JsonElement id : ids) {
                JsonObject step = this.init_Map.get(id.getAsString());
-               if (step == null || !AiJson.getString(step, "scope", "").equals(this.init_cc.poll_Str())) {
+               if (step == null || !AiJson.getString(step, "scope", "").equals(this.init_cc.getDimensionId())) {
                   throw new IllegalArgumentException("Procedure step lacks a recorded successful operation in this world");
                }
 
-               init(step, this.init_cc.init_AiCatalog_Snapshot());
+               init(step, this.init_cc.getCatalogSnapshot());
                steps.add(step.deepCopy());
                if (first.isEmpty()) {
                   first = id.getAsString();
@@ -82,13 +82,13 @@ final class AiProcedures {
                "Fresh world observation and current contract validation required; success is reverified on every replay"
             );
             AiMemoryStore.Memory record = this.init_cc
-               .init_AiMemoryStore()
+               .getMemoryStore()
                .init(
                   AiMemoryStore.Inner_DataUtil.PROCEDURE,
-                  this.init_cc.poll_Str(),
+                  this.init_cc.getDimensionId(),
                   name,
                   first,
-                  this.init_cc.init_AiCatalog_Snapshot().revision(),
+                  this.init_cc.getCatalogSnapshot().revision(),
                   payload.toString()
                );
             return AiJson.objectOf("saved", true, "procedure", record);
@@ -107,7 +107,7 @@ final class AiProcedures {
 
       try {
          for (JsonElement step : payload.getAsJsonArray("steps")) {
-            init(step.getAsJsonObject(), this.init_cc.init_AiCatalog_Snapshot());
+            init(step.getAsJsonObject(), this.init_cc.getCatalogSnapshot());
          }
       } catch (Exception e) {
          reasons.add(e.getMessage());
@@ -132,16 +132,16 @@ final class AiProcedures {
       JsonObject payload = AiJson.parseObject(record.payload());
       if (AiJson.getInt(payload, "version", 0) == 1 && AiJson.getString(payload, "kind", "").equals("verified-operations")) {
          for (JsonElement step : payload.getAsJsonArray("steps")) {
-            init(step.getAsJsonObject(), this.init_cc.init_AiCatalog_Snapshot());
+            init(step.getAsJsonObject(), this.init_cc.getCatalogSnapshot());
          }
 
          this.init_cc.init_AiObservation_J_Str(generation, "procedure-revalidation");
          JsonArray results = new JsonArray();
          Path checkpoint = this.init_cc
-            .init_AiMemoryStore()
+            .getMemoryStore()
             .init_Path()
             .resolve("procedure-runs")
-            .resolve(AiJson.sha256Hex(this.init_cc.read_Str() + this.init_cc.poll_Str() + id) + ".json");
+            .resolve(AiJson.sha256Hex(this.init_cc.read_Str() + this.init_cc.getDimensionId() + id) + ".json");
          JsonArray steps = payload.getAsJsonArray("steps");
          String fingerprint = AiJson.sha256Hex(record.payload());
          AiProcedures.Inner_DataUtil resume = init_bw_DataUtil_Path(checkpoint, fingerprint, steps.size());
@@ -152,7 +152,7 @@ final class AiProcedures {
             AiMemoryStore.init_V_Path_I(checkpoint.getParent(), 64);
             this.init_cc.init_V_J(generation);
             JsonObject step = raw.getAsJsonObject();
-            init(step, this.init_cc.init_AiCatalog_Snapshot());
+            init(step, this.init_cc.getCatalogSnapshot());
             JsonObject result = tools.init_JsonObject_Str(
                "perform",
                AiJson.objectOf("id", step.get("id"), "fingerprint", step.get("fingerprint"), "arguments", step.get("arguments")),
@@ -236,10 +236,10 @@ final class AiProcedures {
 
    private AiMemoryStore.Memory init_AiMemoryStore_Memo_Str(String id) {
       return this.init_cc
-         .init_AiMemoryStore()
+         .getMemoryStore()
          .init_List()
          .stream()
-         .filter(m -> m.id().equals(id) && m.scope().equals(this.init_cc.poll_Str()) && m.kind() == AiMemoryStore.Inner_DataUtil.PROCEDURE)
+         .filter(m -> m.id().equals(id) && m.scope().equals(this.init_cc.getDimensionId()) && m.kind() == AiMemoryStore.Inner_DataUtil.PROCEDURE)
          .findFirst()
          .orElseThrow(() -> new IllegalArgumentException("No reusable procedure in this world scope"));
    }

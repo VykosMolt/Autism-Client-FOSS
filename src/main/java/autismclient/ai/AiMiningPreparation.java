@@ -77,7 +77,7 @@ public final class AiMiningPreparation {
 
    public static AiOperation.Result init(AiOperation.Result result, boolean pending, AiOperation.Result child) {
       if (child == result) {
-         return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pending, result);
+         return AiGuardLayer.wrapPendingTermination(pending, result);
       }
 
       AiOperation.Result captured = AiNetherRun.init_AiOperation_Result_AiOperation_Status(

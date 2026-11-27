@@ -137,7 +137,7 @@ final class AiSettingsView {
    void init_V() {
       this.init_EnumSet.addAll(EnumSet.allOf(AiSettingsView.Inner_CachePool.class));
       this.init_EnumSet.remove(AiSettingsView.Inner_CachePool.VISUALS);
-      this.init_cE_StreamUtil.load();
+      this.init_cE_StreamUtil.scrollToTop();
    }
 
    private static autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_I(int max) {
@@ -326,7 +326,7 @@ final class AiSettingsView {
          return this.init_BitSetUtil.init_Str().trim();
       }
 
-      AiSettings saved = this.init_cc.init_AiSettings();
+      AiSettings saved = this.init_cc.getSettings();
       return !this.write_Str.isEmpty() && this.write_Str.equals(saved.keyMarker(this.init_AiSettings_Provide.name()))
          ? ""
          : saved.key(this.init_AiSettings_Provide.name());
@@ -472,7 +472,7 @@ final class AiSettingsView {
       if (this.update_Z) {
          this.update_Z = false;
          int value = this.write_I;
-         this.init_cc.init_V_Consumer(s -> s.ghostOpacity = value);
+         this.init_cc.editSettingsAsync(s -> s.ghostOpacity = value);
          this.flush_J = System.currentTimeMillis() + 1500L;
          this.init_cF.init_V();
       }
@@ -519,7 +519,7 @@ final class AiSettingsView {
          if (keyCode != 256 && keyCode != -1) {
             this.load_I = keyCode;
             this.update_J = System.currentTimeMillis() + 1500L;
-            this.init_cc.init_V_Consumer(s -> s.emergencyKey = keyCode);
+            this.init_cc.editSettingsAsync(s -> s.emergencyKey = keyCode);
             this.init_cF.init_V();
             return true;
          } else {
@@ -529,7 +529,7 @@ final class AiSettingsView {
    }
 
    void init_V_cE(AiUiKit kit) {
-      autismclient.gui.ui.widgets.DropdownWidget.read(kit.init_GuiGraphicsExtract, kit.init_Font, this.sync_List, kit.sync, kit.flush);
+      autismclient.gui.ui.widgets.DropdownWidget.read(kit.graphics, kit.font, this.sync_List, kit.rawMouseX, kit.rawMouseY);
    }
 
    void init_V_cE(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
@@ -542,33 +542,33 @@ final class AiSettingsView {
          this.init_V_Z(false);
       }
 
-      int ctrl = AiUiKit.init_I();
+      int ctrl = AiUiKit.toolbarHeight();
       autismclient.gui.f.NetHelper footer = autismclient.gui.f.NetHelper.init(area.read(), area.load() - ctrl, area.update(), ctrl);
       autismclient.gui.f.NetHelper list = autismclient.gui.f.NetHelper.init(
          area.read(), area.write(), area.update(), Math.max(0, footer.write() - 2 - area.write())
       );
-      this.init_cE_StreamUtil.init(list, this.read_I);
-      kit.init_V_cE_StreamUtil(this.init_cE_StreamUtil);
-      kit.init_V_NetHelper(list);
+      this.init_cE_StreamUtil.layout(list, this.read_I);
+      kit.registerScrollPane(this.init_cE_StreamUtil);
+      kit.pushClip(list);
       int x = list.read();
       int w = list.update() - 6 - 3;
       int labelW = 0;
 
       for (String label : init_StrArr) {
-         labelW = Math.max(labelW, kit.init_I_Str(label));
+         labelW = Math.max(labelW, kit.measureTextWidth(label));
       }
 
       labelW = Math.min(labelW + 10, w * 2 / 5);
-      int y = list.write() - this.init_cE_StreamUtil.init_I;
+      int y = list.write() - this.init_cE_StreamUtil.offset;
       int start = y;
       AiSettings live = this.init_cF.init_AiSettings;
-      boolean hasKey = this.init_cc.init_Z_AiSettings_Provide(this.init_AiSettings_Provide);
+      boolean hasKey = this.init_cc.hasProviderKey(this.init_AiSettings_Provide);
       y = this.init(kit, AiSettingsView.Inner_CachePool.PROVIDER, x, y, w);
       if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.PROVIDER)) {
          autismclient.gui.f.NetHelper field = this.init(kit, "Provider", x, y, w, labelW);
          this.init_SyncManager.init_SyncManager_I(field.read(), field.write(), field.update(), field.sync());
-         if (kit.load_Z(field)) {
-            kit.init_V_NetHelper_Runnable(
+         if (kit.isVisibleInClip(field)) {
+            kit.addClickRegion(
                field,
                () -> autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(
                   this.sync_List, this.init_AiAssistantOverlay.read_I(), this.init_AiAssistantOverlay.write_I(), 0
@@ -578,21 +578,21 @@ final class AiSettingsView {
 
          y += ctrl + 2;
          if (this.read_Z) {
-            kit.init_V_Str_2("Runs in the client. Instant, free, no API.", x + 5, y + 1, w - 10, kit.init_JsonUtil.textSecondary);
-            y += AiUiKit.write();
-            autismclient.gui.ui.widgets.DropdownWidget.load(kit.init_GuiGraphicsExtract, kit.init_Font, List.of(this.init_SyncManager), kit.write, kit.update);
+            kit.drawEllipsizedText("Runs in the client. Instant, free, no API.", x + 5, y + 1, w - 10, kit.colors.textSecondary);
+            y += AiUiKit.lineHeight();
+            autismclient.gui.ui.widgets.DropdownWidget.load(kit.graphics, kit.font, List.of(this.init_SyncManager), kit.mouseX, kit.mouseY);
             y += 4;
          }
       }
 
       if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.PROVIDER) && !this.read_Z) {
          this.init_BitSetUtil.load_BitSetUtil_Str(hasKey ? "Key saved - type to replace" : "Paste your API key");
-         kit.init_V_BitSetUtil_NetHelper(this.init_BitSetUtil, this.init(kit, "API key", x, y, w, labelW));
+         kit.drawTextInput(this.init_BitSetUtil, this.init(kit, "API key", x, y, w, labelW));
          y += ctrl + 2;
          autismclient.gui.f.NetHelper modelBounds = this.init(kit, "Model", x, y, w - (ctrl + 2), labelW);
          this.load_SyncManager.init_SyncManager_I(modelBounds.read(), modelBounds.write(), modelBounds.update(), modelBounds.sync());
-         if (kit.load_Z(modelBounds)) {
-            kit.init_V_NetHelper(
+         if (kit.isVisibleInClip(modelBounds)) {
+            kit.addInteractiveRegion(
                modelBounds,
                () -> autismclient.gui.ui.widgets.DropdownWidget.init_Z_List_2(
                   this.sync_List, this.init_AiAssistantOverlay.read_I(), this.init_AiAssistantOverlay.write_I(), 0
@@ -602,7 +602,7 @@ final class AiSettingsView {
             );
          }
 
-         kit.init(
+         kit.drawIconButton(
             autismclient.gui.f.NetHelper.init(modelBounds.init() + 2, y, ctrl, ctrl),
             autismclient.util.GuiIconAtlas.REFRESH,
             this.init_av.load(),
@@ -610,12 +610,12 @@ final class AiSettingsView {
             this.init_av.load() ? "Scanning models..." : "Scan for models",
             () -> this.init_V_Z(true)
          );
-         autismclient.gui.ui.widgets.DropdownWidget.load(kit.init_GuiGraphicsExtract, kit.init_Font, this.sync_List, kit.write, kit.update);
+         autismclient.gui.ui.widgets.DropdownWidget.load(kit.graphics, kit.font, this.sync_List, kit.mouseX, kit.mouseY);
          y += ctrl + 2;
          String status = this.init_av.load() ? "Scanning models..." : this.read_Str;
          if (!status.isBlank()) {
-            kit.init_V_Str_2(status, x + 5, y + 1, w - 10, this.init_Z ? kit.init_JsonUtil.danger : kit.init_JsonUtil.textSecondary);
-            y += AiUiKit.write() + 2;
+            kit.drawEllipsizedText(status, x + 5, y + 1, w - 10, this.init_Z ? kit.colors.danger : kit.colors.textSecondary);
+            y += AiUiKit.lineHeight() + 2;
          }
 
          y += 2;
@@ -638,35 +638,35 @@ final class AiSettingsView {
          }
 
          int opacity = this.write_I >= 0 && (this.update_Z || now < this.flush_J) ? this.write_I : AiVisualization.load(live.ghostOpacity);
-         kit.init_V_Str_3("Ghost opacity: " + opacity + "%", autismclient.gui.f.NetHelper.init(x, y, w, ctrl), x + 5, w, kit.init_JsonUtil.textPrimary);
+         kit.drawCenteredRowText("Ghost opacity: " + opacity + "%", autismclient.gui.f.NetHelper.init(x, y, w, ctrl), x + 5, w, kit.colors.textPrimary);
          y += ctrl + 2;
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, ctrl);
-         if (kit.load_Z(this.init_NetHelper)) {
-            autismclient.gui.ui.widgets.SliderRenderer.init(kit.init_SyncManager, this.init_NetHelper, opacity / 100.0, kit.init_Z_NetHelper(this.init_NetHelper));
-            kit.init_V_NetHelper(this.init_NetHelper, () -> {
+         if (kit.isVisibleInClip(this.init_NetHelper)) {
+            autismclient.gui.ui.widgets.SliderRenderer.init(kit.renderContext, this.init_NetHelper, opacity / 100.0, kit.isHovered(this.init_NetHelper));
+            kit.addInteractiveRegion(this.init_NetHelper, () -> {
                this.update_Z = true;
                this.init_V_D(this.init_AiAssistantOverlay.read_I());
             }, null, "Drag to adjust all textured ghost blocks");
          }
 
          y += ctrl + 2;
-         kit.init_V_NetHelper(
+         kit.drawButton(
             autismclient.gui.f.NetHelper.init(x, y, w, ctrl),
             "Ghost limit: " + AiVisualization.init_I(live.visualizationBlocks),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
             () -> {
-               this.init_cc.init_V_Consumer(s -> s.visualizationBlocks = s.visualizationBlocks < 1024 ? 1024 : (s.visualizationBlocks < 2048 ? 2048 : 512));
+               this.init_cc.editSettingsAsync(s -> s.visualizationBlocks = s.visualizationBlocks < 1024 ? 1024 : (s.visualizationBlocks < 2048 ? 2048 : 512));
                this.init_cF.init_V();
             },
             "512 / 1024 / 2048 blocks. Large plans keep their full bounding frame."
          );
          y += ctrl + 2;
-         kit.init_V_NetHelper_2(
+         kit.drawButton(
             autismclient.gui.f.NetHelper.init(x, y, w, ctrl),
             "Visual distance: " + live.visualizationDistance + " blocks",
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
             () -> {
-               this.init_cc.init_V_Consumer(s -> s.visualizationDistance = s.visualizationDistance < 96 ? 96 : (s.visualizationDistance < 160 ? 160 : 64));
+               this.init_cc.editSettingsAsync(s -> s.visualizationDistance = s.visualizationDistance < 96 ? 96 : (s.visualizationDistance < 160 ? 160 : 64));
                this.init_cF.init_V();
             }
          );
@@ -677,8 +677,8 @@ final class AiSettingsView {
          int[] colors = new int[]{-12067963, -11093505, -20923, -885830};
 
          for (int i = 0; i < legend.length; i++) {
-            kit.init_V_Str_3(legend[i], autismclient.gui.f.NetHelper.init(x, y, w, AiUiKit.read()), x + 5, w - 10, colors[i]);
-            y += AiUiKit.read();
+            kit.drawCenteredRowText(legend[i], autismclient.gui.f.NetHelper.init(x, y, w, AiUiKit.rowHeight()), x + 5, w - 10, colors[i]);
+            y += AiUiKit.rowHeight();
          }
       }
 
@@ -689,8 +689,8 @@ final class AiSettingsView {
             y = this.init_I_cE(kit, flag, live, x, y, w, now);
          }
 
-         kit.init_V_Str_2("Off = legit human movement only", x + 5, y + 1, w - 10, kit.init_JsonUtil.textSecondary);
-         y += AiUiKit.write() + 2;
+         kit.drawEllipsizedText("Off = legit human movement only", x + 5, y + 1, w - 10, kit.colors.textSecondary);
+         y += AiUiKit.lineHeight() + 2;
       }
 
       y += 2;
@@ -711,30 +711,30 @@ final class AiSettingsView {
       if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.ADVANCED)) {
          if (!this.read_Z) {
             this.read_BitSetUtil.load_BitSetUtil_Str(this.init_AiSettings_Provide.endpoint);
-            kit.init_V_BitSetUtil_NetHelper(this.read_BitSetUtil, this.init(kit, "Endpoint", x, y, w, labelW));
+            kit.drawTextInput(this.read_BitSetUtil, this.init(kit, "Endpoint", x, y, w, labelW));
             y += ctrl + 2;
             this.load_BitSetUtil.load_BitSetUtil_Str(live.hasKey("BRAVE") ? "Key saved - type to replace" : "Brave Search API key");
-            kit.init_V_BitSetUtil_NetHelper(this.load_BitSetUtil, this.init(kit, "Search key", x, y, w, labelW));
+            kit.drawTextInput(this.load_BitSetUtil, this.init(kit, "Search key", x, y, w, labelW));
             y += ctrl + 2;
          }
 
          autismclient.gui.f.NetHelper stopRow = autismclient.gui.f.NetHelper.init(x, y, w, ctrl);
-         kit.init_V_Str_3("Stop key", stopRow, x + 5, labelW - 5, kit.init_JsonUtil.textPrimary);
-         autismclient.gui.f.NetHelper bind = autismclient.gui.f.NetHelper.init(x + labelW, y, Math.max(34, kit.load("F10") + 10), ctrl);
-         autismclient.gui.ui.widgets.KeybindButtonRenderer.init(kit.init_SyncManager, bind, this.init_I_AiSettings_J(live, now), this.write_Z, kit.init_Z_NetHelper(bind));
-         kit.init_V_NetHelper(bind, () -> this.write_Z = !this.write_Z, null, this.write_Z ? "Press a key, Esc cancels" : "Emergency stop key");
+         kit.drawCenteredRowText("Stop key", stopRow, x + 5, labelW - 5, kit.colors.textPrimary);
+         autismclient.gui.f.NetHelper bind = autismclient.gui.f.NetHelper.init(x + labelW, y, Math.max(34, kit.measureButtonWidth("F10") + 10), ctrl);
+         autismclient.gui.ui.widgets.KeybindButtonRenderer.init(kit.renderContext, bind, this.init_I_AiSettings_J(live, now), this.write_Z, kit.isHovered(bind));
+         kit.addInteractiveRegion(bind, () -> this.write_Z = !this.write_Z, null, this.write_Z ? "Press a key, Esc cancels" : "Emergency stop key");
          y += ctrl + 2;
          if (!this.read_Z) {
             y = this.init_I_cE(kit, init_cf_DataUtil, live, x, y, w, now);
-            kit.init_V_Str_2("Scripts can read and change anything on this PC", x + 5, y + 1, w - 10, kit.init_JsonUtil.danger);
-            y += AiUiKit.write() + 2;
+            kit.drawEllipsizedText("Scripts can read and change anything on this PC", x + 5, y + 1, w - 10, kit.colors.danger);
+            y += AiUiKit.lineHeight() + 2;
          }
 
          if (hasKey && !this.read_Z) {
             boolean armed = now - this.sync_J < 3000L;
             String label = armed ? "Click again to remove" : "Remove " + write_List.get(this.init_AiSettings_Provide.ordinal()) + " key";
-            kit.init_V_NetHelper_3(
-               autismclient.gui.f.NetHelper.init(x, y, kit.load(label) + 12, ctrl),
+            kit.drawIconLabelButton(
+               autismclient.gui.f.NetHelper.init(x, y, kit.measureButtonWidth(label) + 12, ctrl),
                autismclient.util.GuiIconAtlas.DELETE,
                label,
                autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
@@ -746,8 +746,8 @@ final class AiSettingsView {
 
       if (!this.read_Z) {
          y += 4;
-         kit.init_V_NetHelper_2(
-            autismclient.gui.f.NetHelper.init(x, y, kit.load("Manage memory"), ctrl),
+         kit.drawButton(
+            autismclient.gui.f.NetHelper.init(x, y, kit.measureButtonWidth("Manage memory"), ctrl),
             "Manage memory",
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
             this.init_AiAssistantOverlay::read_V
@@ -756,27 +756,27 @@ final class AiSettingsView {
       }
 
       this.read_I = y - start;
-      kit.init_V();
-      kit.load(this.init_cE_StreamUtil);
+      kit.popClip();
+      kit.drawScrollbar(this.init_cE_StreamUtil);
       this.init_V_cE_2(kit, footer, live);
    }
 
    private autismclient.gui.f.NetHelper init(AiUiKit kit, String label, int x, int y, int w, int labelW) {
-      autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(x, y, w, AiUiKit.init_I());
-      kit.init_V_Str_3(label, row, x + 5, labelW - 5, kit.init_JsonUtil.textPrimary);
-      return autismclient.gui.f.NetHelper.init(x + labelW, y, Math.max(20, w - labelW), AiUiKit.init_I());
+      autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(x, y, w, AiUiKit.toolbarHeight());
+      kit.drawCenteredRowText(label, row, x + 5, labelW - 5, kit.colors.textPrimary);
+      return autismclient.gui.f.NetHelper.init(x + labelW, y, Math.max(20, w - labelW), AiUiKit.toolbarHeight());
    }
 
    private int init_I_cE_2(AiUiKit kit, String label, autismclient.gui.ui.widgets.TextInputWidget field, int x, int y, int w, int labelW) {
-      kit.init_V_BitSetUtil_NetHelper(field, this.init(kit, label, x, y, w, labelW));
-      return y + AiUiKit.init_I() + 2;
+      kit.drawTextInput(field, this.init(kit, label, x, y, w, labelW));
+      return y + AiUiKit.toolbarHeight() + 2;
    }
 
    private int init(AiUiKit kit, AiSettingsView.Inner_CachePool section, int x, int y, int w) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, w, autismclient.gui.ui.UiDensityMetrics.scaledHeight(12));
       boolean folded = this.init_EnumSet.contains(section);
-      autismclient.gui.ui.widgets.GroupHeaderRenderer.init(kit.init_SyncManager, bounds, section.init_Str, folded, kit.init_Z_NetHelper(bounds));
-      kit.init_V_NetHelper_Runnable(bounds, () -> {
+      autismclient.gui.ui.widgets.GroupHeaderRenderer.init(kit.renderContext, bounds, section.init_Str, folded, kit.isHovered(bounds));
+      kit.addClickRegion(bounds, () -> {
          if (!this.init_EnumSet.remove(section)) {
             this.init_EnumSet.add(section);
          }
@@ -788,11 +788,11 @@ final class AiSettingsView {
 
    private int init_I_cE(AiUiKit kit, AiSettingsView.Inner_DataUtil flag, AiSettings live, int x, int y, int w, long now) {
       boolean value = this.init_Z_cf_DataUtil(flag, live, now);
-      autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(x, y, w, AiUiKit.load_I());
-      kit.init_V_NetHelper_2(row, flag.label(), value, flag.key(), () -> {
+      autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(x, y, w, AiUiKit.inputHeight());
+      kit.drawToggleSwitch(row, flag.label(), value, flag.key(), () -> {
          boolean next = !value;
          this.init_Map.put(flag.key(), new AiSettingsView.Inner_StreamUtil(next, System.currentTimeMillis() + 1500L));
-         this.init_cc.init_V_Consumer(s -> flag.set().accept(s, next));
+         this.init_cc.editSettingsAsync(s -> flag.set().accept(s, next));
          this.init_cF.init_V();
       });
       return y + row.sync() + 2;
@@ -830,8 +830,8 @@ final class AiSettingsView {
       int ctrl = footer.sync();
       int x = footer.read();
       boolean dirty = this.sync_Z();
-      int saveW = kit.load("Save");
-      kit.init_V_NetHelper(
+      int saveW = kit.measureButtonWidth("Save");
+      kit.drawButton(
          autismclient.gui.f.NetHelper.init(x, footer.write(), saveW, ctrl),
          "Save",
          dirty ? autismclient.gui.f.b.CachePool.Inner_DataUtil.read : autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
@@ -840,8 +840,8 @@ final class AiSettingsView {
       );
       x += saveW + 2;
       if (!this.read_Z) {
-         int testW = kit.load("Test");
-         kit.init_V_NetHelper(
+         int testW = kit.measureButtonWidth("Test");
+         kit.drawButton(
             autismclient.gui.f.NetHelper.init(x, footer.write(), testW, ctrl),
             "Test",
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
@@ -858,10 +858,10 @@ final class AiSettingsView {
       int color;
       if (!this.update_Str.isEmpty()) {
          text = this.update_Str;
-         color = kit.init_JsonUtil.danger;
+         color = kit.colors.danger;
       } else if (this.read_Z) {
          text = live.builtIn ? "Built-In: no API, no tokens" : "Save to use Built-In";
-         color = live.builtIn ? kit.init_JsonUtil.success : kit.init_JsonUtil.textSecondary;
+         color = live.builtIn ? kit.colors.success : kit.colors.textSecondary;
       } else {
          String var10000;
          switch (this.init_cF.init_cc_BufferHelper) {
@@ -885,16 +885,16 @@ final class AiSettingsView {
          int var16;
          switch (this.init_cF.init_cc_BufferHelper) {
             case OK:
-               var16 = kit.init_JsonUtil.success;
+               var16 = kit.colors.success;
                break;
             case FAILED:
-               var16 = kit.init_JsonUtil.danger;
+               var16 = kit.colors.danger;
                break;
             case TESTING:
-               var16 = kit.init_JsonUtil.textSecondary;
+               var16 = kit.colors.textSecondary;
                break;
             case UNKNOWN:
-               var16 = this.init_cF.read_Z ? kit.init_JsonUtil.textSecondary : -14249;
+               var16 = this.init_cF.read_Z ? kit.colors.textSecondary : -14249;
                break;
             default:
                throw new MatchException(null, null);
@@ -904,19 +904,19 @@ final class AiSettingsView {
       }
 
       if (limit - x >= 20) {
-         kit.init_V_I(x + 3, footer.write() + ctrl / 2, 2.5F, color);
+         kit.drawStatusDot(x + 3, footer.write() + ctrl / 2, 2.5F, color);
          autismclient.gui.f.NetHelper status = autismclient.gui.f.NetHelper.init(x, footer.write(), limit - x, ctrl);
-         kit.init_V_Str_3(text, status, x + 9, limit - x - 9, color);
+         kit.drawCenteredRowText(text, status, x + 9, limit - x - 9, color);
          String detail = this.update_Str.isEmpty() ? this.init_cF.flush_Str : this.update_Str;
          if (!detail.isBlank()) {
-            kit.init_V_NetHelper_Str(status, detail);
+            kit.addTooltipRegion(status, detail);
          }
       }
    }
 
    private void close() {
       if (this.sync_Z()) {
-         AiSettings next = this.init_cc.init_AiSettings();
+         AiSettings next = this.init_cc.getSettings();
 
          for (AiSettingsView.Inner_DataUtil flag : load_List()) {
             AiSettingsView.Inner_StreamUtil p = this.init_Map.get(flag.key());
@@ -971,7 +971,7 @@ final class AiSettingsView {
             return;
          }
 
-         this.init_cc.init_V_AiSettings(next);
+         this.init_cc.saveSettings(next);
          this.load_BitSetUtil.init_BitSetUtil_Str("");
          this.load_Str = next.model;
          this.load_Z = true;
@@ -1004,7 +1004,7 @@ final class AiSettingsView {
          this.update_Str = "Add an API key first";
       } else {
          this.update_Str = "";
-         this.init_cc.open_V();
+         this.init_cc.startConnectionTest();
          this.init_cF.init_V();
       }
    }
@@ -1015,12 +1015,12 @@ final class AiSettingsView {
          this.sync_J = now;
       } else {
          this.sync_J = 0L;
-         this.write_Str = this.init_cc.init_AiSettings().keyMarker(this.init_AiSettings_Provide.name());
+         this.write_Str = this.init_cc.getSettings().keyMarker(this.init_AiSettings_Provide.name());
          this.load_Z = true;
          this.init_BitSetUtil.init_BitSetUtil_Str("");
          this.load_Z = false;
          this.sync_V();
-         this.init_cc.pop(this.init_AiSettings_Provide.name());
+         this.init_cc.removeProviderKey(this.init_AiSettings_Provide.name());
          this.init_cF.init_V();
          autismclient.util.bi.load("Key removed");
       }

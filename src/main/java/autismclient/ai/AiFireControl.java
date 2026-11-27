@@ -134,7 +134,7 @@ final class AiFireControl {
                   }
 
                   if (this.init_AiOperation == null) {
-                     this.init_AiOperation = AiGoto.init(
+                     this.init_AiOperation = AiGoto.travelToCompat(
                         best,
                         3.0,
                         false,
@@ -191,7 +191,7 @@ final class AiFireControl {
                   this.init_Minecraft.gameMode.startDestroyBlock(best, Direction.UP);
                   Compat263.swing(this.init_Minecraft.player, InteractionHand.MAIN_HAND);
                   this.init_Minecraft.player.resetAttackStrengthTicker();
-                  AiRunTrace.init_V_Str_JsonObject("blaze_fire_extinguish", AiJson.objectOf("at", best.toShortString(), "priority", "before-combat-and-loot"));
+                  AiRunTrace.emitServiceEvent("blaze_fire_extinguish", AiJson.objectOf("at", best.toShortString(), "priority", "before-combat-and-loot"));
                   return true;
                }
             }

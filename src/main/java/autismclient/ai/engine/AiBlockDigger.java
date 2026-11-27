@@ -160,8 +160,8 @@ public final class AiBlockDigger {
          && this.putAt_Minecraft.level != null
          && this.putAt_Minecraft.gameMode != null
          && this.putAt_Minecraft.level.getChunkSource().getChunk(var1.getX() >> 4, var1.getZ() >> 4, ChunkStatus.FULL, false) != null) {
-         if (this.putAt_SyncCore.init_Z()) {
-            AiRestock.Inner_BufferHelper var4 = this.putAt_SyncCore.load_UtilCore_BufferHel();
+         if (this.putAt_SyncCore.isRunning()) {
+            AiRestock.Inner_BufferHelper var4 = this.putAt_SyncCore.tick();
             if (var4 == AiRestock.Inner_BufferHelper.FAILED) {
                this.putAt_V();
                return this.putAt_JsonCache_CacheHel_Str("tool swap failed");
@@ -171,7 +171,7 @@ public final class AiBlockDigger {
                return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
             }
 
-            this.putAt_SyncCore.init_V();
+            this.putAt_SyncCore.reset();
          }
 
          if (this.prevEx_Z && var1.equals(this.putAt_BlockPos)) {
@@ -249,7 +249,7 @@ public final class AiBlockDigger {
                   if (var17 >= 9) {
                      String var19 = BuiltInRegistries.ITEM.getKey(this.putAt_Minecraft.player.getInventory().getItem(var17).getItem()).toString();
                      this.putAt_V();
-                     this.putAt_SyncCore.init_V_I(var17, this.putAt_Minecraft.player.getInventory().getSelectedSlot(), var19);
+                     this.putAt_SyncCore.startSwap(var17, this.putAt_Minecraft.player.getInventory().getSelectedSlot(), var19);
                      return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
                   }
 
@@ -359,7 +359,7 @@ public final class AiBlockDigger {
                      } else {
                         if (var5 >= 9) {
                            String var16 = BuiltInRegistries.ITEM.getKey(this.putAt_Minecraft.player.getInventory().getItem(var5).getItem()).toString();
-                           this.putAt_SyncCore.init_V_I(var5, this.putAt_Minecraft.player.getInventory().getSelectedSlot(), var16);
+                           this.putAt_SyncCore.startSwap(var5, this.putAt_Minecraft.player.getInventory().getSelectedSlot(), var16);
                            return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
                         }
 
@@ -792,7 +792,7 @@ public final class AiBlockDigger {
 
       this.state = 0;
       this.fill_BlockPos = null;
-      this.putAt_SyncCore.init_V();
+      this.putAt_SyncCore.reset();
       if (this.prevEx_Z && this.putAt_BlockPos != null && this.putAt_BlockState != null && this.putAt_Minecraft.level != null) {
          if (this.putAt_Minecraft.level.getBlockState(this.putAt_BlockPos).isAir()) {
             AiEditLedger.init(this.putAt_BlockPos, this.putAt_BlockState);

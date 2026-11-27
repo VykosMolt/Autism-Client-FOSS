@@ -156,7 +156,7 @@ final class AiNetherRun {
          final int pearls = Math.max(0, Math.min(32, AiJson.getInt(args, "pearls", 16)));
          final int timeoutSeconds = Math.max(120, Math.min(5400, AiJson.getInt(args, "timeoutSeconds", 2400)));
          BlockPos portal = init(mc, mc.player.blockPosition(), 8);
-         final String currentWorld = AiWorldIdentity.init(mc);
+         final String currentWorld = AiWorldIdentity.currentWorldKey(mc);
          if (portal != null) {
             init_BlockPos = portal;
          }
@@ -262,7 +262,7 @@ final class AiNetherRun {
             }
 
             boolean init_Z_D(double range) {
-               for (Entity e : AiWorldScan.init_List_Str_D("minecraft:piglin", range)) {
+               for (Entity e : AiWorldScan.findEntitiesByType("minecraft:piglin", range)) {
                   if (e instanceof Piglin p && p.getOffhandItem().isEmpty() && AiNetherStructures.init_Z(mc, p)) {
                      return true;
                   }
@@ -304,11 +304,11 @@ final class AiNetherRun {
             }
 
             BlockPos init(Predicate<BlockState> kind, boolean block) {
-               if (!this.init_Z_16() && (!block || AiWorldScan.init_List_Str_D("minecraft:piglin_brute", 40.0).isEmpty())) {
+               if (!this.init_Z_16() && (!block || AiWorldScan.findEntitiesByType("minecraft:piglin_brute", 40.0).isEmpty())) {
                   long now = System.nanoTime();
                   List<BlockPos> observed = new ArrayList<>();
 
-                  for (BlockPos at : AiWorldScan.init(kind, 2, 16, 128)) {
+                  for (BlockPos at : AiWorldScan.findBlocks(kind, 2, 16, 128)) {
                      if (at.distSqr(mc.player.blockPosition()) > 576.0) {
                         break;
                      }
@@ -331,7 +331,7 @@ final class AiNetherRun {
 
                   vein.init(present, atxx -> !allowed.test(atxx) || AiTerrain.isLoaded(mc.level, atxx) && !kind.test(mc.level.getBlockState(atxx)));
                   if (vein.init_Z() && vein.init(now, true, 250000000L)) {
-                     AiRunTrace.init_V_Str_JsonObject(
+                     AiRunTrace.emitServiceEvent(
                         "nether_gold_batch",
                         AiJson.objectOf("transition", "complete", "kind", block ? "block" : "ore", "anchor", vein.init_BlockPos().toShortString())
                      );
@@ -352,7 +352,7 @@ final class AiNetherRun {
                      }
 
                      vein.init(seed, observed, allowed);
-                     AiRunTrace.init_V_Str_JsonObject(
+                     AiRunTrace.emitServiceEvent(
                         "nether_gold_batch",
                         AiJson.objectOf(
                            "transition", "start", "kind", block ? "block" : "ore", "anchor", seed.toShortString(), "remaining", vein.init_I()
@@ -369,7 +369,7 @@ final class AiNetherRun {
                   }
 
                   if (best != null) {
-                     AiRunTrace.init_V_Str_JsonObject(
+                     AiRunTrace.emitServiceEvent(
                         "nether_gold_target",
                         AiJson.objectOf(
                            "kind",
@@ -427,7 +427,7 @@ final class AiNetherRun {
             @Override
             public AiOperation.Result tick() {
                if (mc.player != null && mc.level != null) {
-                  if (!this.init_Str.equals(AiWorldIdentity.init(mc)) || this.init_Obj != mc.getConnection()) {
+                  if (!this.init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) || this.init_Obj != mc.getConnection()) {
                      return this.init(AiOperation.Status.CANCELLED, "World or connection changed during Nether expedition");
                   }
 
@@ -444,13 +444,13 @@ final class AiNetherRun {
                         this.init_I_18() + " of " + this.size + " blaze rods, " + this.load_I_11() + " of " + pearls + " pearls"
                      );
                      if (++this.get_I % 200 == 0 && mc.level.dimension() == Level.NETHER) {
-                        BlockPos seen = AiWorldScan.init_BlockPos_Predicate_I(AiNetherRun.load_Predicate, 12);
+                        BlockPos seen = AiWorldScan.findNearestBlock(AiNetherRun.load_Predicate, 12);
                         if (seen != null && AiNetherRun.load_List.stream().noneMatch(w -> w.distSqr(seen) < 2304.0)) {
                            AiNetherRun.load_List.add(seen.immutable());
                         }
                      }
 
-                     autismclient.ai.engine.AiRestock.init(Map.of(Items.OBSIDIAN, 64));
+                     autismclient.ai.engine.AiRestock.reserveItemsForJob(Map.of(Items.OBSIDIAN, 64));
                      if (System.nanoTime() > this.init_J) {
                         return this.init(
                            this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN,
@@ -495,14 +495,14 @@ final class AiNetherRun {
                            return this.init(AiOperation.Status.UNCERTAIN, "Nether dimension changed outside the expected return action");
                         }
                      } else {
-                        if (!AiThreats.init_Z()) {
+                        if (!AiThreats.isLegacyCombatEnabled()) {
                            autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(5000000000L);
                         }
 
                         if (this.init_aB_TaskQueue == AiNetherRun.Inner_TaskQueue.RODS
                            && this.init_AiOperation != null
                            && AiNetherRun.init(this.load_Str)
-                           && !this.init_Y.init_Z()
+                           && !this.init_Y.isActive()
                            && this.init_AiOperation.canInterruptNow()
                            && System.nanoTime() > this.open_J
                            && this.init_I_18() < this.size
@@ -545,12 +545,12 @@ final class AiNetherRun {
                            }
                         }
 
-                        if (this.init_Y.init_Z()
+                        if (this.init_Y.isActive()
                            || !this.load_Str.startsWith("fight a blaze")
                            || mc.player.getHealth() < 10.0F
                            || AiEndRun.init_Z(mc)
                            || mc.player.isInLava()) {
-                           AiOperation.Result g = this.init_Y.init_AiOperation_Result_AiOperation(this.init_AiOperation, () -> {
+                           AiOperation.Result g = this.init_Y.tick(this.init_AiOperation, () -> {
                               this.init_V_18();
                               if (this.init_AiOperation != null && this.load_Str.startsWith("barter") && this.init_AiOperation_Result != null) {
                                  this.load(this.init_AiOperation_Result);
@@ -622,7 +622,7 @@ final class AiNetherRun {
                   if (ore != null) {
                      this.open_I++;
                      this.pop_I = AiCraft.countItem("minecraft:gold_nugget") + 9 * AiCraft.countItem("minecraft:gold_ingot");
-                     AiRunTrace.init_V_Str_JsonObject("nether_leg_resume", AiJson.objectOf("kind", "gold", "target", ore.toShortString()));
+                     AiRunTrace.emitServiceEvent("nether_leg_resume", AiJson.objectOf("kind", "gold", "target", ore.toShortString()));
                      return this.init(
                         label,
                         AiNetherRun.read(
@@ -645,7 +645,7 @@ final class AiNetherRun {
                      int id = this.init_I;
                      this.init_I = -1;
                      this.flush_J = System.nanoTime();
-                     AiRunTrace.init_V_Str_JsonObject("nether_leg_resume", AiJson.objectOf("kind", "blaze", "entityId", id));
+                     AiRunTrace.emitServiceEvent("nether_leg_resume", AiJson.objectOf("kind", "blaze", "entityId", id));
                      return this.init(
                         "fight a blaze",
                         AiNetherRun.init(
@@ -833,8 +833,8 @@ final class AiNetherRun {
                   int pearlsNow = this.load_I_11();
                   boolean pearlGround = false;
                   if (pearlPhaseReady && pearlsNow == 0 && !this.init_aB_CachePool.load_Z) {
-                     BlockPos forest = AiWorldScan.init_BlockPos_Predicate_I(AiNetherRun.load_Predicate, 3);
-                     pearlGround = AiWorldScan.init_List_Str_D("minecraft:enderman", 32.0).size() >= 2
+                     BlockPos forest = AiWorldScan.findNearestBlock(AiNetherRun.load_Predicate, 3);
+                     pearlGround = AiWorldScan.findEntitiesByType("minecraft:enderman", 32.0).size() >= 2
                         || forest != null && forest.distSqr(mc.player.blockPosition()) <= 1600.0;
                   }
 
@@ -922,7 +922,7 @@ final class AiNetherRun {
                   if (mc.player.getHealth() < 14.0F && (System.nanoTime() > this.update_J || mc.player.getHealth() < 10.0F)) {
                      this.update_J = System.nanoTime() + 30000000000L;
                      if ((mc.player.getHealth() < 10.0F || this.read_Z_7())
-                        && (!AiWorldScan.init_List_Str_D("minecraft:blaze", 24.0).isEmpty() || !AiWorldScan.init_List_Str_D("minecraft:wither_skeleton", 16.0).isEmpty())) {
+                        && (!AiWorldScan.findEntitiesByType("minecraft:blaze", 24.0).isEmpty() || !AiWorldScan.findEntitiesByType("minecraft:wither_skeleton", 16.0).isEmpty())) {
                         return this.init("hide and heal", AiCover.init(AiJson.objectOf("healTo", 18, "timeoutSeconds", 90)));
                      }
 
@@ -969,7 +969,7 @@ final class AiNetherRun {
                      && System.nanoTime() > this.get_J
                      && !AiForage.write(mc, mc.player.blockPosition())
                      && AiForage.load(mc, mc.player.blockPosition())
-                     && !AiWorldScan.init_List_Str_D("minecraft:enderman", 32.0).isEmpty()) {
+                     && !AiWorldScan.findEntitiesByType("minecraft:enderman", 32.0).isEmpty()) {
                      this.get_J = System.nanoTime() + 10000000000L;
                      BlockPos under = mc.player.blockPosition().below();
                      return this.init(
@@ -987,13 +987,13 @@ final class AiNetherRun {
                      && mc.player.onGround()
                      && System.nanoTime() > this.run_J
                      && !AiForage.write(mc, mc.player.blockPosition())
-                     && AiWorldScan.init_List_Str_D("minecraft:enderman", 24.0).size() >= 2) {
+                     && AiWorldScan.findEntitiesByType("minecraft:enderman", 24.0).size() >= 2) {
                      this.run_J = System.nanoTime() + 15000000000L;
                      BlockPos footing = this.init_BlockPos_I(12);
                      if (footing != null) {
                         return this.init(
                            "to ledge-free footing at " + footing.toShortString(),
-                           AiGoto.init(
+                           AiGoto.travelToCompat(
                               footing,
                               0.5,
                               true,
@@ -1062,7 +1062,7 @@ final class AiNetherRun {
                      this.init_aB_TaskQueue = AiNetherRun.Inner_TaskQueue.FORTRESS;
                      if (this.load_BlockPos == null || System.nanoTime() > this.read_J) {
                         this.read_J = System.nanoTime() + 2000000000L;
-                        List<BlockPos> found = AiWorldScan.init_List_Str_I("minecraft:blaze", 12);
+                        List<BlockPos> found = AiWorldScan.findMobSpawners("minecraft:blaze", 12);
                         this.load_BlockPos = null;
                         long now = System.nanoTime();
 
@@ -1085,7 +1085,7 @@ final class AiNetherRun {
                      if (this.load_BlockPos != null) {
                         if (mc.player.distanceToSqr(Vec3.atCenterOf(this.load_BlockPos)) <= 256.0
                            && mc.level.getBlockEntity(this.load_BlockPos) instanceof SpawnerBlockEntity block
-                           && "minecraft:blaze".equals(AiWorldScan.init(block))) {
+                           && "minecraft:blaze".equals(AiWorldScan.spawnerEntityId(block))) {
                            this.write_BlockPos = this.load_BlockPos.immutable();
                            if (!this.write_BlockPos.equals(AiNetherRun.load_BlockPos)) {
                               AiNetherRun.load_BlockPos = this.write_BlockPos;
@@ -1119,7 +1119,7 @@ final class AiNetherRun {
                            if (System.nanoTime() - this.set_J > 150000000000L) {
                               this.set_J = System.nanoTime();
                               this.valid++;
-                              int around = AiWorldScan.init_List_Str_D("minecraft:blaze", 24.0).size();
+                              int around = AiWorldScan.findEntitiesByType("minecraft:blaze", 24.0).size();
                               if (blaze != null && around <= 2 && mc.player.getHealth() >= 16.0F && this.valid <= 2) {
                                  AiSpeedrun.init_V_Str_ObjArr(
                                     "[AI] nether: no rod for {} s at the spawner at {}; going after the blaze at {}",
@@ -1161,7 +1161,7 @@ final class AiNetherRun {
                                     around
                                  );
 
-                                 for (BlockPos other : AiWorldScan.init_List_Str_I("minecraft:blaze", 12)) {
+                                 for (BlockPos other : AiWorldScan.findMobSpawners("minecraft:blaze", 12)) {
                                     if (other.distSqr(this.load_BlockPos) <= 576.0) {
                                        this.read_Set.add(other.asLong());
                                     }
@@ -1193,7 +1193,7 @@ final class AiNetherRun {
                                  this.next++;
                                  return this.init(
                                     "away from the lava round the spawner to " + wait.toShortString(),
-                                    AiGoto.init(
+                                    AiGoto.travelToCompat(
                                        wait,
                                        0.5,
                                        true,
@@ -1269,7 +1269,7 @@ final class AiNetherRun {
                               if (stand != null && !stand.equals(mc.player.blockPosition())) {
                                  return this.init(
                                     "walk to a stand by the blaze spawner at " + stand.toShortString(),
-                                    AiGoto.init(
+                                    AiGoto.travelToCompat(
                                        stand, 0.5, true, true, true, 90, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.GotoOptions.DEFAULT
                                     )
                                  );
@@ -1280,7 +1280,7 @@ final class AiNetherRun {
                                  && (this.init_D_BlockPos(this.load_BlockPos) > 2.5 || Math.abs(mc.player.getY() - this.load_BlockPos.getY()) > 2.0)) {
                                  return this.init(
                                     "walk to the blaze spawner at " + this.load_BlockPos.toShortString(),
-                                    AiGoto.init(
+                                    AiGoto.travelToCompat(
                                        this.load_BlockPos,
                                        2.0,
                                        true,
@@ -1301,7 +1301,7 @@ final class AiNetherRun {
                                  if (wait != null) {
                                     return this.init(
                                        "wait for blazes away from the lava at " + wait.toShortString(),
-                                       AiGoto.init(
+                                       AiGoto.travelToCompat(
                                           wait,
                                           0.5,
                                           true,
@@ -1336,18 +1336,18 @@ final class AiNetherRun {
                            return this.init(
                               "walk to the blaze spawner for verification",
                               stand != null
-                                 ? AiGoto.init(stand, 0.8, true, true, true, 90, this.init_ClassCache_IoWorke(), true)
+                                 ? AiGoto.travelToCompat(stand, 0.8, true, true, true, 90, this.init_ClassCache_IoWorke(), true)
                                  : this.init_AiOperation_BlockPos_2(this.load_BlockPos)
                            );
                         }
                      } else {
-                        BlockPos bricks = AiWorldScan.init_BlockPos_Predicate_I(AiNetherRun.init_Predicate, 12);
+                        BlockPos bricks = AiWorldScan.findNearestBlock(AiNetherRun.init_Predicate, 12);
                         if (bricks != null && this.read(bricks)) {
                            return this.init("head for the fortress at " + bricks.toShortString(), this.init_AiOperation_BlockPos_2(bricks));
                         } else if (bricks != null && this.init_Set.add(bricks.asLong() >> 6)) {
                            AiOperation.Result walk = this.init(
                               "walk into the fortress at " + bricks.toShortString(),
-                              AiGoto.init(
+                              AiGoto.travelToCompat(
                                  bricks, 6.0, true, true, true, 180, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.GotoOptions.DEFAULT
                               )
                            );
@@ -1454,7 +1454,7 @@ final class AiNetherRun {
                            return this.init(
                               "fight an enderman",
                               AiNetherRun.init_AiOperation_AiOperation_Supplier(
-                                 AiGoto.init(
+                                 AiGoto.travelToCompat(
                                     far.blockPosition(),
                                     6.0,
                                     true,
@@ -1483,7 +1483,7 @@ final class AiNetherRun {
                            );
                         }
 
-                        BlockPos warped = AiWorldScan.init_BlockPos_Predicate_I(AiNetherRun.load_Predicate, 12);
+                        BlockPos warped = AiWorldScan.findNearestBlock(AiNetherRun.load_Predicate, 12);
                         if (warped != null && this.init_Set.contains(warped.asLong() >> 6)) {
                            warped = null;
                         }
@@ -1503,7 +1503,7 @@ final class AiNetherRun {
                         if (warped != null && this.init_D_BlockPos(warped) > 12.0 && this.init_Set.add(warped.asLong() >> 6)) {
                            AiOperation.Result walk = this.init(
                               "walk into the warped forest at " + warped.toShortString(),
-                              AiGoto.init(
+                              AiGoto.travelToCompat(
                                  warped, 6.0, true, true, true, 180, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.GotoOptions.DEFAULT
                               )
                            );
@@ -1516,7 +1516,7 @@ final class AiNetherRun {
                            this.reset = 0;
                         }
 
-                        if (!AiWorldScan.init_List_Str_D("minecraft:enderman", 48.0).isEmpty() && this.reset < 24) {
+                        if (!AiWorldScan.findEntitiesByType("minecraft:enderman", 48.0).isEmpty() && this.reset < 24) {
                            if (!AiForage.init(mc, mc.player.blockPosition())
                               && mc.player.onGround()
                               && AiForage.load(mc, mc.player.blockPosition())
@@ -1542,8 +1542,8 @@ final class AiNetherRun {
                            return this.init("wait for the endermen to come round (" + this.reset + " of 24)", AiCombat.init(100));
                         }
 
-                        if (this.load_I < 14 || this.init_aB_CachePool.load_Z && AiWorldScan.init_List_Str_D("minecraft:enderman", 32.0).size() >= 2) {
-                           if (this.load_I >= 14 && !AiWorldScan.init_List_Str_D("minecraft:enderman", 32.0).isEmpty()) {
+                        if (this.load_I < 14 || this.init_aB_CachePool.load_Z && AiWorldScan.findEntitiesByType("minecraft:enderman", 32.0).size() >= 2) {
+                           if (this.load_I >= 14 && !AiWorldScan.findEntitiesByType("minecraft:enderman", 32.0).isEmpty()) {
                               return this.init("wait for the endermen to come round", AiCombat.init(40));
                            }
 
@@ -1581,7 +1581,7 @@ final class AiNetherRun {
                   ? nearby
                   : this.init_aB_BufferHelper
                      .init(
-                        () -> AiWorldScan.init_BlockPos_Predicate_I(s -> s.is(Blocks.NETHER_PORTAL), 12),
+                        () -> AiWorldScan.findNearestBlock(s -> s.is(Blocks.NETHER_PORTAL), 12),
                         at -> AiTerrain.isLoaded(mc.level, at) && mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL)
                      );
                this.init_BlockPos = AiNetherRun.init(loadedPortal, AiPortalLinks.init(2147483647), this.init_BlockPos, at -> AiNetherRun.init_Z_Minecraft_BlockPos(mc, at));
@@ -1610,7 +1610,7 @@ final class AiNetherRun {
                   }
 
                   this.load_Z = true;
-                  AiRunTrace.init_V_Str_JsonObject(
+                  AiRunTrace.emitServiceEvent(
                      "nether_exit_plan",
                      AiJson.objectOf(
                         "choice", "remote_frame", "entryKnown", false, "loadedPortalSearchCompleted", this.init_aB_BufferHelper.init(), "predictionOnly", true
@@ -1647,7 +1647,7 @@ final class AiNetherRun {
                               )
                               : this.init(
                                  "walk back to the portal at " + door.toShortString(),
-                                 AiGoto.init(
+                                 AiGoto.travelToCompat(
                                     door, 1.0, true, true, true, 300, this.init_ClassCache_IoWorke(), true, 2.0, null, AiGoto.GotoOptions.DEFAULT
                                  )
                               );
@@ -1655,7 +1655,7 @@ final class AiNetherRun {
                      } else {
                         return this.init(
                            "walk back toward the entry portal at " + this.init_BlockPos.toShortString(),
-                           AiGoto.init(
+                           AiGoto.travelToCompat(
                               this.init_BlockPos,
                               3.0,
                               true,
@@ -1676,7 +1676,7 @@ final class AiNetherRun {
                      }
 
                      this.load_Z = true;
-                     AiRunTrace.init_V_Str_JsonObject(
+                     AiRunTrace.emitServiceEvent(
                         "nether_exit_plan",
                         AiJson.objectOf(
                            "choice",
@@ -1720,7 +1720,7 @@ final class AiNetherRun {
 
                int best = -1;
                int bestUnseen = -1;
-               BlockPos bastion = AiWorldScan.init_BlockPos_Predicate_I(AiNetherRun.read_Predicate, 12);
+               BlockPos bastion = AiWorldScan.findNearestBlock(AiNetherRun.read_Predicate, 12);
                if (bastion != null && AiNetherStructures.init_aC_DataUtil(bastion).confidence() < 0.5) {
                   bastion = null;
                }
@@ -1768,7 +1768,7 @@ final class AiNetherRun {
                this.update_BlockPos = to;
                AiOperation.Result leg = this.init(
                   "explore for " + what + " toward " + to.toShortString(),
-                  AiGoto.init_HashUtil_CachePool_BlockPos(to, new AiNetherRun.Inner_NetHelper(to.getX(), to.getZ(), 10), 90),
+                  AiGoto.createPersistentOpCompat(to, new AiNetherRun.Inner_NetHelper(to.getX(), to.getZ(), 10), 90),
                   0,
                   true
                );
@@ -1831,7 +1831,7 @@ final class AiNetherRun {
                double bearing = Math.atan2(dz, dx) + Math.toRadians(45.0) * turn;
                int x = mc.player.getBlockX() + (int)Math.round(Math.cos(bearing) * 48.0);
                int z = mc.player.getBlockZ() + (int)Math.round(Math.sin(bearing) * 48.0);
-               return AiGoto.init(
+               return AiGoto.travelToCompat(
                   new BlockPos(x, mc.player.getBlockY(), z),
                   4.0,
                   true,
@@ -1928,7 +1928,7 @@ final class AiNetherRun {
             Entity init_Entity_I(int radius) {
                long now = System.nanoTime();
 
-               for (Entity e : AiWorldScan.init_List_Str_D("minecraft:enderman", radius)) {
+               for (Entity e : AiWorldScan.findEntitiesByType("minecraft:enderman", radius)) {
                   Long until = this.load_Map.get(e.getId());
                   if ((until == null || now >= until)
                      && !(e.getY() < mc.player.getY() - 16.0)
@@ -1952,7 +1952,7 @@ final class AiNetherRun {
 
                long now = System.nanoTime();
 
-               for (Entity e : AiWorldScan.init_List_Str_D("minecraft:enderman", radius)) {
+               for (Entity e : AiWorldScan.findEntitiesByType("minecraft:enderman", radius)) {
                   Long until = this.load_Map.get(e.getId());
                   if ((until == null || now >= until) && this.write(e.blockPosition())) {
                      return e;
@@ -2077,7 +2077,7 @@ final class AiNetherRun {
             Entity load(int radius) {
                Entity best = null;
 
-               for (Entity e : AiWorldScan.init_List_Str_D("minecraft:blaze", radius)) {
+               for (Entity e : AiWorldScan.findEntitiesByType("minecraft:blaze", radius)) {
                   if (e.isAlive() && !this.init_Z_Entity_2(e) && (best == null || e.distanceToSqr(mc.player) < best.distanceToSqr(mc.player))) {
                      best = e;
                   }
@@ -2087,7 +2087,7 @@ final class AiNetherRun {
             }
 
             boolean read_Z_7() {
-               List<Entity> blazes = AiWorldScan.init_List_Str_D("minecraft:blaze", 24.0);
+               List<Entity> blazes = AiWorldScan.findEntitiesByType("minecraft:blaze", 24.0);
                if (blazes.size() >= 2) {
                   return true;
                }
@@ -2125,7 +2125,7 @@ final class AiNetherRun {
             Entity read(int radius) {
                Entity best = null;
 
-               for (Entity e : AiWorldScan.init_List_Str_D("minecraft:blaze", radius)) {
+               for (Entity e : AiWorldScan.findEntitiesByType("minecraft:blaze", radius)) {
                   if (e.isAlive()
                      && !this.init_Z_Entity_2(e)
                      && mc.player.hasLineOfSight(e)
@@ -2140,7 +2140,7 @@ final class AiNetherRun {
             int init_I_I_2(int radius) {
                int n = 0;
 
-               for (Entity e : AiWorldScan.init_List_Str_D("minecraft:blaze", radius)) {
+               for (Entity e : AiWorldScan.findEntitiesByType("minecraft:blaze", radius)) {
                   if (mc.player.hasLineOfSight(e)) {
                      n++;
                   }
@@ -2165,7 +2165,7 @@ final class AiNetherRun {
                if (this.load_BlockPos != null && AiTerrain.isLoaded(mc.level, this.load_BlockPos)) {
                   if (mc.level.getBlockEntity(this.load_BlockPos) instanceof SpawnerBlockEntity block) {
                      AutismBaseSpawnerAccessor var4 = (AutismBaseSpawnerAccessor)block.getSpawner();
-                     int nearby = (int)AiWorldScan.init_List_Str_D("minecraft:blaze", 32.0)
+                     int nearby = (int)AiWorldScan.findEntitiesByType("minecraft:blaze", 32.0)
                         .stream()
                         .filter(e -> e.blockPosition().distSqr(this.load_BlockPos) < 256.0)
                         .count();
@@ -2173,7 +2173,7 @@ final class AiNetherRun {
                         "loaded",
                         true,
                         "mob",
-                        AiWorldScan.init(block),
+                        AiWorldScan.spawnerEntityId(block),
                         "clientDelay",
                         var4.autism$getSpawnDelay(),
                         "clientActivationRange",
@@ -2207,7 +2207,7 @@ final class AiNetherRun {
                   }
 
                   this.put_J = now + 1000000000L;
-                  List<Entity> nearby = AiWorldScan.init_List_Str_D("minecraft:enderman", 48.0);
+                  List<Entity> nearby = AiWorldScan.findEntitiesByType("minecraft:enderman", 48.0);
                   JsonArray candidates = new JsonArray();
 
                   for (Entity target : nearby) {
@@ -2338,18 +2338,18 @@ final class AiNetherRun {
                   this.init_AiOperation = null;
                }
 
-               this.init_Y.init_V();
+               this.init_Y.cancel();
                return result;
             }
 
             @Override
             public boolean canInterruptNow() {
-               return !this.sync_Z && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow()) && this.init_Y.load();
+               return !this.sync_Z && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow()) && this.init_Y.canInterruptNow();
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.sync_Z || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency() || this.init_Y.read();
+               return this.sync_Z || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency() || this.init_Y.requiresReconciliation();
             }
 
             @Override
@@ -2361,7 +2361,7 @@ final class AiNetherRun {
                   this.init_AiOperation = null;
                }
 
-               this.init_Y.init_V();
+               this.init_Y.cancel();
             }
          };
       } else {
@@ -2394,7 +2394,7 @@ final class AiNetherRun {
 
    private static void read() {
       Minecraft mc = Minecraft.getInstance();
-      String currentWorld = AiWorldIdentity.init(mc);
+      String currentWorld = AiWorldIdentity.currentWorldKey(mc);
       if (!currentWorld.equals(init_Str) || read_Obj != mc.getConnection()) {
          init_Str = currentWorld;
          read_Obj = mc.getConnection();
@@ -2413,19 +2413,19 @@ final class AiNetherRun {
          read_Z = false;
       }
 
-      AiService service = AiService.load_cc();
+      AiService service = AiService.getExistingInstance();
       if (!load_Z && service != null && mc.getConnection() != null) {
          String requestedWorld = init_Str;
          Object requestedConnection = read_Obj;
          long generation = flush_J;
-         load_Z = service.load_Z_Str_Consumer(
+         load_Z = service.loadNetherRouteMemory(
             requestedWorld,
             entries -> {
                if (generation == flush_J
                   && requestedWorld.equals(init_Str)
                   && read_Obj == requestedConnection
                   && mc.getConnection() == requestedConnection
-                  && AiWorldIdentity.init(mc).equals(requestedWorld)) {
+                  && AiWorldIdentity.currentWorldKey(mc).equals(requestedWorld)) {
                   for (JsonElement entry : entries) {
                      AiNetherRun.Inner_ConfigStore receipt = entry.isJsonObject() ? init_aB_ConfigStore(entry.getAsJsonObject()) : null;
                      if (receipt != null) {
@@ -2434,7 +2434,7 @@ final class AiNetherRun {
                            load_BlockPos = receipt.spawner();
                         }
 
-                        AiRunTrace.init_V_Str_JsonObject("nether_route_history", receipt.data());
+                        AiRunTrace.emitServiceEvent("nether_route_history", receipt.data());
                      }
                   }
                }
@@ -2444,11 +2444,11 @@ final class AiNetherRun {
    }
 
    private static void write() {
-      AiService service = AiService.load_cc();
+      AiService service = AiService.getExistingInstance();
       if (service != null && push > 0 && load_BlockPos != null) {
          JsonArray receipts = new JsonArray();
          receipts.add(new AiNetherRun.Inner_ConfigStore(push, load_BlockPos, System.currentTimeMillis()).data());
-         service.load_V_Str_JsonArray(init_Str, receipts);
+         service.saveNetherRouteMemory(init_Str, receipts);
       }
    }
 
@@ -2465,7 +2465,7 @@ final class AiNetherRun {
    static boolean load_Z() {
       read();
       Minecraft mc = Minecraft.getInstance();
-      if (mc.player != null && mc.level != null && init_Str.equals(AiWorldIdentity.init(mc)) && read_Obj == mc.getConnection()) {
+      if (mc.player != null && mc.level != null && init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) && read_Obj == mc.getConnection()) {
          return read_Z
             ? true
             : init(load_BlockPos != null, push > 0, AiRunResources.isCampaignActive(), AiRunResources.blazePowderEquivalents(), 16, AiCraft.countItem("minecraft:ender_eye") + AiCraft.countItem("minecraft:ender_pearl"));
@@ -2606,7 +2606,7 @@ final class AiNetherRun {
       boolean pending = child.requiresReconciliationAfterEmergency()
          || AiJson.getBoolean(evidence, "interruptedActionNeedsReconciliation", false)
          || AiJson.getBoolean(evidence, "reobserveBeforeResuming", false);
-      AiOperation.Result captured = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pending, result);
+      AiOperation.Result captured = AiGuardLayer.wrapPendingTermination(pending, result);
       child.cancel();
       return captured;
    }
@@ -2627,7 +2627,7 @@ final class AiNetherRun {
             || AiJson.getBoolean(evidence, "reobserveBeforeResuming", false);
       }
 
-      return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pending, AiGameOperations.result(status, message, data));
+      return AiGuardLayer.wrapPendingTermination(pending, AiGameOperations.result(status, message, data));
    }
 
    static AiOperation init(
@@ -2707,7 +2707,7 @@ final class AiNetherRun {
 
          AiOperation.Result init(AiOperation.Result result) {
             this.init_Z = this.requiresReconciliationAfterEmergency();
-            this.init_AiOperation_Result = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(this.init_Z, result);
+            this.init_AiOperation_Result = AiGuardLayer.wrapPendingTermination(this.init_Z, result);
             mining.cancel();
             return this.init_AiOperation_Result;
          }

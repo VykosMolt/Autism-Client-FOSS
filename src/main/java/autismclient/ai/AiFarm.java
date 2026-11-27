@@ -711,7 +711,7 @@ final class AiFarm {
                      }
                   } else {
                      this.get = 0;
-                     return this.init(AiGoto.init_BlockPos(BlockPos.containing(entity.position().add(0.0, 0.2, 0.0)), 24), 0.7, 45, "Sweeping up the drops");
+                     return this.init(AiGoto.findStandableNearCompat(BlockPos.containing(entity.position().add(0.0, 0.2, 0.0)), 24), 0.7, 45, "Sweeping up the drops");
                   }
                } else if (this.load(cell) && this.load(w)) {
                   switch (w.kind()) {
@@ -791,11 +791,11 @@ final class AiFarm {
                   }
                } else {
                   if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
-                     return this.init(AiGoto.init_BlockPos(w.cell(), 24), 0.45, 30, "Lining up the replant face");
+                     return this.init(AiGoto.findStandableNearCompat(w.cell(), 24), 0.45, 30, "Lining up the replant face");
                   }
 
                   int[] column = AiFarm.init_IArr2[this.run++ % AiFarm.init_IArr2.length];
-                  BlockPos stance = AiGoto.init_BlockPos(new BlockPos(cell.getX() + column[0], cell.getY() - 1, cell.getZ() + column[1]), 24);
+                  BlockPos stance = AiGoto.findStandableNearCompat(new BlockPos(cell.getX() + column[0], cell.getY() - 1, cell.getZ() + column[1]), 24);
                   return this.init(stance, 2.0, 60, "Moving into reach of " + cell.toShortString());
                }
             }
@@ -808,7 +808,7 @@ final class AiFarm {
                   this.load_D = -1.0;
                   return this.read(message);
                } else {
-                  this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(stance, range, false, false, false, timeoutSeconds);
+                  this.init_AiOperation = AiGoto.travelToCompat(stance, range, false, false, false, timeoutSeconds);
                   return this.read(message);
                }
             }
@@ -824,7 +824,7 @@ final class AiFarm {
                BlockPos feet = this.init_Minecraft.player.blockPosition();
                int sx = Integer.signum(this.write_BlockPos.getX() - feet.getX());
                int sz = Integer.signum(this.write_BlockPos.getZ() - feet.getZ());
-               boolean blocked = (sx != 0 || sz != 0) && !AiGoto.init_Z(feet.offset(sx, 0, sz));
+               boolean blocked = (sx != 0 || sz != 0) && !AiGoto.isStandableCompat(feet.offset(sx, 0, sz));
                if (this.load_D >= 0.0 && distSqr > this.load_D - 0.004) {
                   if (++this.open > 40) {
                      blocked = true;
@@ -871,7 +871,7 @@ final class AiFarm {
                   for (int steps = Math.max(ax, az); i < steps; i++) {
                      x += Integer.signum(dx);
                      z += Integer.signum(dz);
-                     if (!AiGoto.init_Z(new BlockPos(x, from.getY(), z))) {
+                     if (!AiGoto.isStandableCompat(new BlockPos(x, from.getY(), z))) {
                         return false;
                      }
                   }
@@ -1256,7 +1256,7 @@ final class AiFarm {
                   double reach = Math.max(3.0, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE));
                   if (mc.player.distanceTo(this.init_Entity) > reach * 0.9) {
                      if (this.init_AiOperation == null) {
-                        this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(this.init_Entity.blockPosition(), 1.8, false, false, true, 20);
+                        this.init_AiOperation = AiGoto.travelToCompat(this.init_Entity.blockPosition(), 1.8, false, false, true, 20);
                      }
 
                      AiOperation.Result legResult = this.init_AiOperation.tick();

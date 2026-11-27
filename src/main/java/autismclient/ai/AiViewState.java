@@ -47,41 +47,41 @@ final class AiViewState {
          if (now >= this.update_J) {
             this.update_J = now + 100L;
             this.init_I++;
-            AiService.RunState next = this.init_cc.init_cc_FileCache();
+            AiService.RunState next = this.init_cc.getRunState();
             boolean wasWorking = this.init_Z();
             this.init_cc_FileCache = next;
-            this.init_Z = this.init_cc.sync_Z();
+            this.init_Z = this.init_cc.isAwaitingPlanApproval();
             if (this.init_Z() && !wasWorking) {
                this.init_J = now;
             }
 
-            this.init_Str = AiUiKit.init_Str_Str(this.init_Z() ? AiGoal.init(this.init_cc.open_Str()) : this.init_cc.open_Str());
-            this.load_Str = this.init_cc.tick_Str();
-            this.read_Str = this.init_cc.pop_Str();
-            this.write_Str = this.init_cc.load_Str();
-            this.update_Str = this.init_cc.write_Str();
-            this.init_List = this.init_cc.read_List();
-            this.load_List = this.init_cc.init_List();
-            this.read_List = this.init_cc.sync_List();
-            this.init_cc_ByteReader = this.init_cc.init_cc_ByteReader();
-            this.write_List = this.init_cc.update_List();
-            this.sync_Str = this.init_cc.get_Str();
-            this.init_cc_BufferHelper = this.init_cc.init_cc_BufferHelper();
-            this.flush_Str = this.init_cc.set_Str();
-            this.load_Z = this.init_cc.read_Z();
-            this.close = this.init_cc.init_Str();
-            this.init_cc_UiHelper = this.init_cc.init_cc_UiHelper();
+            this.init_Str = AiUiKit.flattenSingleLine(this.init_Z() ? AiGoal.init(this.init_cc.getStatusLine()) : this.init_cc.getStatusLine());
+            this.load_Str = this.init_cc.getActiveSessionTitle();
+            this.read_Str = this.init_cc.getActiveSessionId();
+            this.write_Str = this.init_cc.getObjective();
+            this.update_Str = this.init_cc.getPlanNotes();
+            this.init_List = this.init_cc.getTranscript();
+            this.load_List = this.init_cc.getQueuedObjectives();
+            this.read_List = this.init_cc.getSteeringNotes();
+            this.init_cc_ByteReader = this.init_cc.getTokenUsage();
+            this.write_List = this.init_cc.getAvailableEffortLevels();
+            this.sync_Str = this.init_cc.getEffectiveEffortLevel();
+            this.init_cc_BufferHelper = this.init_cc.getProviderTestState();
+            this.flush_Str = this.init_cc.getProviderTestDetail();
+            this.load_Z = this.init_cc.isChatModeActive();
+            this.close = this.init_cc.getChatModeSummary();
+            this.init_cc_UiHelper = this.init_cc.getPendingQuestion();
          }
 
          if (now >= this.sync_J) {
             this.sync_J = now + 250L;
-            this.init_AiSettings = this.init_cc.init_AiSettings();
-            this.read_Z = this.init_cc.init_Z_AiSettings_Provide(this.init_AiSettings.provider);
+            this.init_AiSettings = this.init_cc.getSettings();
+            this.read_Z = this.init_cc.hasProviderKey(this.init_AiSettings.provider);
          }
 
          if (wantSessions && now >= this.flush_J) {
             this.flush_J = now + 500L;
-            this.update_List = this.init_cc.write_List();
+            this.update_List = this.init_cc.listSessions();
          }
       } catch (RuntimeException ignored) {
          this.update_J = 0L;

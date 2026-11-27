@@ -85,7 +85,7 @@ final class AiPotion {
                }
 
                if (!Inventory.isHotbarSlot(slot)) {
-                  AiContainerTransactions.init(mc.player.containerMenu.containerId, slot, inventory.getSelectedSlot(), ContainerInput.SWAP);
+                  AiContainerTransactions.sendPredictedClick(mc.player.containerMenu.containerId, slot, inventory.getSelectedSlot(), ContainerInput.SWAP);
                   this.init_Z = true;
                   return this.init("Moving the potion to the hand");
                }

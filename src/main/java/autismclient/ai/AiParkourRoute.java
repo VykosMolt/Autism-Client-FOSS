@@ -137,7 +137,7 @@ final class AiParkourRoute implements AiOperation {
                var3.addProperty("interactOnArrival", false);
             }
 
-            this.putAt_AiOperation = autismclient.ai.engine.AiGoto.putAt_AiOperation_JsonObject(var3, this.flowState, this.putAt_HashEntry_TableCac);
+            this.putAt_AiOperation = autismclient.ai.engine.AiGoto.fromJsonWithPlan(var3, this.flowState, this.putAt_HashEntry_TableCac);
          }
 
          var10 = this.putAt_AiOperation.tick();
@@ -675,7 +675,7 @@ final class AiParkourRoute implements AiOperation {
          var9.addProperty("interactOnArrival", false);
       }
 
-      this.fill_AiOperation = autismclient.ai.engine.AiGoto.putAt(var9);
+      this.fill_AiOperation = autismclient.ai.engine.AiGoto.fromJson(var9);
       return new AiOperation.Result(
          AiOperation.Status.RUNNING, "Checkpoint " + (this.pollAt_I + 1) + "/" + this.putAt_List.size() + " · ordinary leg", "{}", List.of()
       );

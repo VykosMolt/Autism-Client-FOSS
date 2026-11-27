@@ -243,7 +243,7 @@ final class AiLavaEscape {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-         final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().init_DataPipe();
+         final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().fast();
          BlockPos init_BlockPos;
          List<BlockPos> init_List;
          int init_I = -1;
@@ -276,9 +276,9 @@ final class AiLavaEscape {
 
                BlockPos at = mc.player.blockPosition();
                if (this.read_Z) {
-                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
                   if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
-                     this.init_DataPipe.init_V();
+                     this.init_DataPipe.reset();
                      this.read_Z = false;
                      this.write_Z = true;
                      this.load_Z = false;
@@ -288,10 +288,10 @@ final class AiLavaEscape {
                      }
 
                      if (Boolean.getBoolean("autism.ai.quick")) {
-                        System.out.println("[AI quick] lava refuge stopped: " + this.init_DataPipe.load_Str() + "; " + this.init_DataPipe.init_Str());
+                        System.out.println("[AI quick] lava refuge stopped: " + this.init_DataPipe.statusSummary() + "; " + this.init_DataPipe.failureReason());
                      }
 
-                     this.init_DataPipe.init_V();
+                     this.init_DataPipe.reset();
                      this.read_Z = false;
                      this.write_Z = true;
                   }
@@ -302,13 +302,13 @@ final class AiLavaEscape {
                      ItemStack stack = mc.player.getInventory().getItem(slot);
                      if (stack.getItem() instanceof BlockItem block
                         && !stack.isEmpty()
-                        && autismclient.ai.engine.AiRestock.init_Z_ItemStack(stack, mc.player.getInventory(), true)
-                        && autismclient.ai.engine.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) >= 0) {
+                        && autismclient.ai.engine.AiRestock.canSpendStack(stack, mc.player.getInventory(), true)
+                        && autismclient.ai.engine.AiRestock.scaffoldRank(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) >= 0) {
                         for (BlockPos refuge : this.init_List) {
                            if (!refuge.equals(at)
                               && !mc.level.getBlockState(refuge.below()).getCollisionShape(mc.level, refuge.below()).isEmpty()
                               && mc.level.isUnobstructed(block.getBlock().defaultBlockState(), refuge, CollisionContext.placementContext(mc.player))) {
-                              this.init_DataPipe.init_V_BlockPos_ItemStack(refuge, stack.copy());
+                              this.init_DataPipe.startWithExactStack(refuge, stack.copy());
                               this.read_Z = true;
                               this.write_I = 0;
                               return AiGameOperations.result(AiOperation.Status.RUNNING, "Placing a lava refuge", new JsonObject());

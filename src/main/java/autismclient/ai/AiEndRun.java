@@ -147,7 +147,7 @@ final class AiEndRun {
          }
       }
 
-      return best == null ? null : AiGuard.allowDuringLowHealth(AiGoto.init(best, 0.45, false, false, false, 5, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
+      return best == null ? null : AiGuard.allowDuringLowHealth(AiGoto.travelToCompat(best, 0.45, false, false, false, 5, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
    }
 
    static AiOperation init(final Minecraft mc, final BlockPos portal) {
@@ -156,13 +156,13 @@ final class AiEndRun {
          final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          int init_I;
          boolean init_Z;
-         final String init_Str = AiWorldIdentity.init(mc);
+         final String init_Str = AiWorldIdentity.currentWorldKey(mc);
          final Object init_Obj = mc.getConnection();
 
          @Override
          public AiOperation.Result tick() {
             if (!this.init_Z && mc.player != null && mc.level != null) {
-               if (!this.init_Str.equals(AiWorldIdentity.init(mc)) || this.init_Obj != mc.getConnection() || !mc.player.isAlive()) {
+               if (!this.init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) || this.init_Obj != mc.getConnection() || !mc.player.isAlive()) {
                   return this.init(AiOperation.Status.CANCELLED, "Portal traversal player or world changed");
                }
 
@@ -222,7 +222,7 @@ final class AiEndRun {
          final int timeoutSeconds = Math.max(120, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 1800)));
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final String init_Str = AiWorldIdentity.init(mc);
+            final String init_Str = AiWorldIdentity.currentWorldKey(mc);
             final Object init_Obj = mc.getConnection();
             final UUID init_UUID = mc.player.getUUID();
             final long load_J = AiServerEvidence.deathRevision();
@@ -257,7 +257,7 @@ final class AiEndRun {
             @Override
             public AiOperation.Result tick() {
                if (mc.player != null && mc.level != null) {
-                  if (!this.init_Str.equals(AiWorldIdentity.init(mc)) || this.init_Obj != mc.getConnection()) {
+                  if (!this.init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) || this.init_Obj != mc.getConnection()) {
                      return this.init(AiOperation.Status.CANCELLED, "End run connection changed");
                   }
 
@@ -308,11 +308,11 @@ final class AiEndRun {
                            this.load_BlockPos = this.read();
                         }
 
-                        boolean liveDragon = !AiWorldScan.init_List_Str_D("minecraft:ender_dragon", 256.0).isEmpty();
+                        boolean liveDragon = !AiWorldScan.findEntitiesByType("minecraft:ender_dragon", 256.0).isEmpty();
                         this.load_Z = this.load_Z | (!liveDragon && this.load_BlockPos_7() != null);
                         if (!this.load_Str.startsWith("fight the dragon")) {
                            AiOperation.Result g = this.init_Y
-                              .init_AiOperation_Result_AiOperation(
+                              .tick(
                                  this.init_AiOperation, this::init_V_33, () -> (int)Math.max(10L, (this.init_J - System.nanoTime()) / 1000000000L)
                               );
                            if (g != null) {
@@ -420,7 +420,7 @@ final class AiEndRun {
                   this.write_J = System.nanoTime() + 3000000000L;
                   return this.init(
                      "to the heal spot at " + this.read_BlockPos.toShortString(),
-                     AiGuard.allowDuringLowHealth(AiGoto.init(this.read_BlockPos, 0.6, true, true, true, 40, autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST, true))
+                     AiGuard.allowDuringLowHealth(AiGoto.travelToCompat(this.read_BlockPos, 0.6, true, true, true, 40, autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST, true))
                   );
                } else if (mc.player.getFoodData().getFoodLevel() < 20 && AiSurvival.init(mc.player.getInventory()) >= 0) {
                   return this.init("eat before the fight", AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 20)));
@@ -510,7 +510,7 @@ final class AiEndRun {
                      "active",
                      true,
                      "observedTick",
-                     AiThreats.init_J()
+                     AiThreats.currentClientTick()
                   );
                }
 
@@ -525,7 +525,7 @@ final class AiEndRun {
                   this.write_I++;
                   return this.init(
                      "into the exit portal at " + portal.toShortString(),
-                     AiGoto.init(
+                     AiGoto.travelToCompat(
                         portal,
                         0.6,
                         true,
@@ -566,7 +566,7 @@ final class AiEndRun {
                if (fromCentre > 32.0) {
                   return this.init(
                      "cross to the main island",
-                     AiGoto.init(
+                     AiGoto.travelToCompat(
                         new BlockPos(fx, (int)mc.player.getY(), fz),
                         1.0,
                         true,
@@ -630,7 +630,7 @@ final class AiEndRun {
             }
 
             BlockPos read() {
-               BlockPos rock = AiWorldScan.init_BlockPos_Predicate_I(s -> s.is(Blocks.BEDROCK), 12);
+               BlockPos rock = AiWorldScan.findNearestBlock(s -> s.is(Blocks.BEDROCK), 12);
                if (rock != null && !(Math.hypot(rock.getX(), rock.getZ()) > 32.0)) {
                   for (BlockPos p : BlockPos.betweenClosed(rock.offset(-4, -5, -4), rock.offset(4, 5, 4))) {
                      if (mc.level.getBlockState(p).is(Blocks.BEDROCK)
@@ -699,26 +699,26 @@ final class AiEndRun {
                AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, this.init_JsonObject_61(), pending, child);
                this.init_Z = this.init_Z | (pending || AiJson.getBoolean(AiRunResources.parseEvidenceJson(result.dataJson()), "reobserveBeforeResuming", false));
                this.init_V_33();
-               this.init_Y.init_V();
+               this.init_Y.cancel();
                autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
                return result;
             }
 
             @Override
             public boolean canInterruptNow() {
-               return !this.init_Z && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow()) && this.init_Y.load();
+               return !this.init_Z && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow()) && this.init_Y.canInterruptNow();
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.init_Z || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency() || this.init_Y.read();
+               return this.init_Z || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency() || this.init_Y.requiresReconciliation();
             }
 
             @Override
             public void cancel() {
                this.init_Z = this.init_Z | this.requiresReconciliationAfterEmergency();
                this.init_V_33();
-               this.init_Y.init_V();
+               this.init_Y.cancel();
                autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
             }
          };
