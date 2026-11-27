@@ -25,30 +25,30 @@ public final class LeafDupePacketTracker {
    private static final long init_J = 2000L;
    private static BlockPos init_BlockPos;
    private static BlockPos load_BlockPos;
-   private static boolean init_Z;
-   private static BlockPos read_BlockPos;
+   private static boolean fullyBroken;
+   private static BlockPos currentTarget;
    private static BlockPos write;
-   private static double init_D;
-   private static long load_J;
-   private static int init_I = -1;
-   private static long read_J;
-   private static final Map<Packet<?>, LeafDupePacketTracker.Inner_StreamUtil> load_Map = new WeakHashMap<>();
-   static final Map<Long, LeafDupePacketTracker.Inner_DataUtil> init_Map = new HashMap<>();
+   private static double breakDamage;
+   private static long breakStartMs;
+   private static int lastCarriedSlot = -1;
+   private static long breakGeneration;
+   private static final Map<Packet<?>, LeafDupePacketTracker.Inner_StreamUtil> receipts = new WeakHashMap<>();
+   static final Map<Long, LeafDupePacketTracker.Inner_DataUtil> predictions = new HashMap<>();
 
    private LeafDupePacketTracker() {
    }
 
-   public static synchronized BlockPos init_BlockPos() {
-      return read_BlockPos;
+   public static synchronized BlockPos currentTarget() {
+      return currentTarget;
    }
 
    public static synchronized int trackedSlot() {
-      return init_I;
+      return lastCarriedSlot;
    }
 
    public static synchronized void init(int slot) {
       if (slot >= 0 && slot < 9) {
-         init_I = slot;
+         lastCarriedSlot = slot;
       }
    }
 
@@ -61,7 +61,7 @@ public final class LeafDupePacketTracker {
          && !(damage <= 0.0)
          && !(damage >= 1.0)) {
          LeafDupePacketTracker.Inner_StreamUtil receipt = new LeafDupePacketTracker.Inner_StreamUtil(scope, slot, damage, null);
-         load_Map.put(packet, receipt);
+         receipts.put(packet, receipt);
          return receipt;
       } else {
          throw new IllegalArgumentException("Unsafe automatic start");
@@ -74,13 +74,13 @@ public final class LeafDupePacketTracker {
 
    public static synchronized LeafDupePacketTracker.Inner_StreamUtil init(ServerboundSetCarriedItemPacket packet, Object scope, LeafDupePacketTracker.Inner_StreamUtil previous) {
       LeafDupePacketTracker.Inner_StreamUtil receipt = new LeafDupePacketTracker.Inner_StreamUtil(scope, packet.getSlot(), 0.0 / 0.0, previous);
-      load_Map.put(packet, receipt);
+      receipts.put(packet, receipt);
       return receipt;
    }
 
    public static synchronized LeafDupePacketTracker.Inner_StreamUtil init(ServerboundUseItemOnPacket packet, Object scope, int slot, LeafDupePacketTracker.Inner_StreamUtil previous) {
       LeafDupePacketTracker.Inner_StreamUtil receipt = new LeafDupePacketTracker.Inner_StreamUtil(scope, slot, 0.0 / 0.0, previous);
-      load_Map.put(packet, receipt);
+      receipts.put(packet, receipt);
       return receipt;
    }
 
@@ -90,12 +90,12 @@ public final class LeafDupePacketTracker {
       }
 
       LeafDupePacketTracker.Inner_StreamUtil receipt = new LeafDupePacketTracker.Inner_StreamUtil(scope, slot, 0.0 / 0.0, previous);
-      load_Map.put(packet, receipt);
+      receipts.put(packet, receipt);
       return receipt;
    }
 
    public static synchronized LeafDupePacketTracker.Inner_StreamUtil receiptFor(Packet<?> packet) {
-      return load_Map.get(packet);
+      return receipts.get(packet);
    }
 
    public static synchronized boolean init(Packet<?> packet, boolean scopeValid) {
@@ -103,7 +103,7 @@ public final class LeafDupePacketTracker {
    }
 
    static synchronized boolean init(Packet<?> packet, boolean scopeValid, long now) {
-      LeafDupePacketTracker.Inner_StreamUtil receipt = load_Map.get(packet);
+      LeafDupePacketTracker.Inner_StreamUtil receipt = receipts.get(packet);
       if (receipt == null) {
          return true;
       }
@@ -115,9 +115,9 @@ public final class LeafDupePacketTracker {
       if (scopeValid
          && !receipt.load_Z
          && !receipt.init(now)
-         && (receipt.init_DataUtil_StreamUti == null || receipt.init_DataUtil_StreamUti.init_Z && !receipt.init_DataUtil_StreamUti.load_Z)
-         && (packet instanceof ServerboundSetCarriedItemPacket || init_I == receipt.init_I)) {
-         if (packet instanceof ServerboundSetCarriedItemPacket && init_I == receipt.init_I) {
+         && (receipt.previous == null || receipt.previous.init_Z && !receipt.previous.load_Z)
+         && (packet instanceof ServerboundSetCarriedItemPacket || lastCarriedSlot == receipt.slot)) {
+         if (packet instanceof ServerboundSetCarriedItemPacket && lastCarriedSlot == receipt.slot) {
             receipt.load_Z = true;
             return false;
          } else {
@@ -130,18 +130,18 @@ public final class LeafDupePacketTracker {
    }
 
    public static synchronized boolean init(LeafDupePacketTracker.Inner_StreamUtil receipt, BlockPos target) {
-      return receipt != null && receipt.init_Z && !receipt.load_Z && receipt.load_J == read_J && target.equals(read_BlockPos);
+      return receipt != null && receipt.init_Z && !receipt.load_Z && receipt.generation == breakGeneration && target.equals(currentTarget);
    }
 
    public static synchronized boolean init(BlockPos pos) {
-      return !pos.equals(load_BlockPos) && !init_Z && !pos.equals(init_BlockPos);
+      return !pos.equals(load_BlockPos) && !fullyBroken && !pos.equals(init_BlockPos);
    }
 
    public static synchronized long waitMs() {
       if (write == null) {
          return 0L;
       } else {
-         return init_D <= 0.0 ? 9223372036854775807L : init(System.currentTimeMillis(), init_D, load_J);
+         return breakDamage <= 0.0 ? 9223372036854775807L : init(System.currentTimeMillis(), breakDamage, breakStartMs);
       }
    }
 
@@ -151,11 +151,11 @@ public final class LeafDupePacketTracker {
    }
 
    public static synchronized boolean load(BlockPos pos) {
-      LeafDupePacketTracker.Inner_DataUtil prediction = init_Map.get(pos.asLong());
+      LeafDupePacketTracker.Inner_DataUtil prediction = predictions.get(pos.asLong());
       if (prediction == null) {
          return false;
-      } else if (System.currentTimeMillis() - prediction.init_J > 2000L) {
-         init_Map.remove(pos.asLong());
+      } else if (System.currentTimeMillis() - prediction.sentAtMs > 2000L) {
+         predictions.remove(pos.asLong());
          return false;
       } else {
          return true;
@@ -173,11 +173,11 @@ public final class LeafDupePacketTracker {
    }
 
    static synchronized void init_V(Packet<?> packet) {
-      LeafDupePacketTracker.Inner_StreamUtil receipt = load_Map.get(packet);
+      LeafDupePacketTracker.Inner_StreamUtil receipt = receipts.get(packet);
       if (packet instanceof ServerboundSetCarriedItemPacket carried) {
          init(carried.getSlot());
       } else if (packet instanceof ServerboundPlayerActionPacket action) {
-         init(action, receipt == null ? null : receipt.init_D);
+         init(action, receipt == null ? null : receipt.damage);
       } else if (packet instanceof ServerboundMovePlayerPacket || packet instanceof CompatSwingPacket) {
          write();
       } else if (packet instanceof ServerboundPongPacket pong) {
@@ -185,7 +185,7 @@ public final class LeafDupePacketTracker {
       }
 
       if (receipt != null) {
-         receipt.load_J = read_J;
+         receipt.generation = breakGeneration;
          receipt.init_Z = true;
       }
    }
@@ -199,15 +199,15 @@ public final class LeafDupePacketTracker {
       long now = System.currentTimeMillis();
       switch (packet.getAction()) {
          case START_DESTROY_BLOCK:
-            read_J++;
+            breakGeneration++;
             double damage = preparedDamage == null ? init(pos, false) : preparedDamage;
-            init_Z = damage >= 1.0;
+            fullyBroken = damage >= 1.0;
             load_BlockPos = null;
             init_BlockPos = pos;
-            read_BlockPos = damage < 1.0 ? pos : null;
-            load_J = now - (write == null ? 50L : 0L);
+            currentTarget = damage < 1.0 ? pos : null;
+            breakStartMs = now - (write == null ? 50L : 0L);
             write = pos;
-            init_D = damage;
+            breakDamage = damage;
             break;
          case ABORT_DESTROY_BLOCK:
             load_BlockPos = pos;
@@ -215,30 +215,30 @@ public final class LeafDupePacketTracker {
             break;
          case STOP_DESTROY_BLOCK:
             if (write != null) {
-               load_J = now;
+               breakStartMs = now;
             }
 
             Minecraft mc = Minecraft.getInstance();
-            if (mc == null || mc.level == null || init_Map.containsKey(pos.asLong())) {
+            if (mc == null || mc.level == null || predictions.containsKey(pos.asLong())) {
                return;
             }
 
             BlockState state = mc.level.getBlockState(pos);
             boolean predictable = !state.isAir() && state.getDestroySpeed(mc.level, pos) != -1.0F && state.getFluidState().isEmpty();
             if (predictable) {
-               init_Map.put(pos.asLong(), new LeafDupePacketTracker.Inner_DataUtil(packet.getSequence(), now));
+               predictions.put(pos.asLong(), new LeafDupePacketTracker.Inner_DataUtil(packet.getSequence(), now));
             }
       }
    }
 
    private static synchronized void write() {
       if (write != null) {
-         init_D = Math.max(init_D, init(write, true));
+         breakDamage = Math.max(breakDamage, init(write, true));
       }
    }
 
    static synchronized void load(int id) {
-      init_Map.values().removeIf(prediction -> prediction.init_Integer != null && prediction.init_Integer == id);
+      predictions.values().removeIf(prediction -> prediction.entityId != null && prediction.entityId == id);
    }
 
    public static void load(Packet<?> packet) {
@@ -250,46 +250,46 @@ public final class LeafDupePacketTracker {
    }
 
    static synchronized void read(int sequence) {
-      for (LeafDupePacketTracker.Inner_DataUtil prediction : init_Map.values()) {
-         if (prediction.init_I <= sequence) {
+      for (LeafDupePacketTracker.Inner_DataUtil prediction : predictions.values()) {
+         if (prediction.sequence <= sequence) {
             prediction.init_Z = true;
          }
       }
    }
 
    static synchronized void write(int id) {
-      for (LeafDupePacketTracker.Inner_DataUtil prediction : init_Map.values()) {
-         if (prediction.init_Z && prediction.init_Integer == null) {
-            prediction.init_Integer = id;
+      for (LeafDupePacketTracker.Inner_DataUtil prediction : predictions.values()) {
+         if (prediction.init_Z && prediction.entityId == null) {
+            prediction.entityId = id;
          }
       }
    }
 
    public static synchronized void reset() {
       load();
-      init_I = -1;
+      lastCarriedSlot = -1;
    }
 
    public static synchronized void load() {
-      for (LeafDupePacketTracker.Inner_StreamUtil receipt : load_Map.values()) {
+      for (LeafDupePacketTracker.Inner_StreamUtil receipt : receipts.values()) {
          receipt.markConsumed();
       }
 
-      read_J++;
+      breakGeneration++;
       init_BlockPos = null;
       load_BlockPos = null;
-      init_Z = false;
-      read_BlockPos = null;
+      fullyBroken = false;
+      currentTarget = null;
       write = null;
-      init_D = 0.0;
-      load_J = 0L;
-      init_Map.clear();
+      breakDamage = 0.0;
+      breakStartMs = 0L;
+      predictions.clear();
    }
 
    private static double init(BlockPos pos, boolean predictionAware) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null && mc.level != null) {
-         if (predictionAware && init_Map.containsKey(pos.asLong())) {
+         if (predictionAware && predictions.containsKey(pos.asLong())) {
             return 1.0 / 0.0;
          }
 
@@ -302,75 +302,75 @@ public final class LeafDupePacketTracker {
 
    public static synchronized void read() {
       long now = System.currentTimeMillis();
-      init_Map.values().removeIf(prediction -> now - prediction.init_J > 2000L);
+      predictions.values().removeIf(prediction -> now - prediction.sentAtMs > 2000L);
    }
 
    public static final class Inner_CachePool {
-      private final WeakReference<Object> init_WeakReference;
-      private final Vec3 init_Vec3;
+      private final WeakReference<Object> owner;
+      private final Vec3 eye;
       private final Vec3 load;
 
       public Inner_CachePool(Object owner, Vec3 eye, Vec3 serverEye) {
-         this.init_WeakReference = new WeakReference<>(owner);
-         this.init_Vec3 = eye;
+         this.owner = new WeakReference<>(owner);
+         this.eye = eye;
          this.load = serverEye;
       }
 
       public Object init() {
-         return this.init_WeakReference.get();
+         return this.owner.get();
       }
 
       public boolean init(Object currentOwner, Vec3 currentEye, Vec3 currentServerEye) {
          return currentOwner != null
-            && currentOwner == this.init_WeakReference.get()
-            && this.init_Vec3.distanceToSqr(currentEye) < 1.0E-8
+            && currentOwner == this.owner.get()
+            && this.eye.distanceToSqr(currentEye) < 1.0E-8
             && this.load.distanceToSqr(currentServerEye) < 1.0E-8;
       }
    }
 
    static final class Inner_DataUtil {
-      final int init_I;
-      final long init_J;
+      final int sequence;
+      final long sentAtMs;
       boolean init_Z;
-      Integer init_Integer;
+      Integer entityId;
 
       Inner_DataUtil(int sequence, long sentAt) {
-         this.init_I = sequence;
-         this.init_J = sentAt;
+         this.sequence = sequence;
+         this.sentAtMs = sentAt;
       }
    }
 
    public static final class Inner_StreamUtil {
-      private final Object init_Obj;
-      private final int init_I;
-      private final double init_D;
-      private final LeafDupePacketTracker.Inner_StreamUtil init_DataUtil_StreamUti;
-      private final long init_J = System.nanoTime();
+      private final Object scope;
+      private final int slot;
+      private final double damage;
+      private final LeafDupePacketTracker.Inner_StreamUtil previous;
+      private final long createdNanos = System.nanoTime();
       private volatile boolean init_Z;
       private volatile boolean load_Z;
-      private long load_J;
+      private long generation;
 
       private Inner_StreamUtil(Object scope, int slot, double damage, LeafDupePacketTracker.Inner_StreamUtil previous) {
-         this.init_Obj = scope;
-         this.init_I = slot;
-         this.init_D = damage;
-         this.init_DataUtil_StreamUti = previous;
+         this.scope = scope;
+         this.slot = slot;
+         this.damage = damage;
+         this.previous = previous;
       }
 
       public Object proof() {
-         return this.init_Obj;
+         return this.scope;
       }
 
       public int slot() {
-         return this.init_I;
+         return this.slot;
       }
 
-      public long init_J() {
-         return this.init_J;
+      public long createdNanos() {
+         return this.createdNanos;
       }
 
       public boolean init(long now) {
-         return now - this.init_J > 250000000L;
+         return now - this.createdNanos > 250000000L;
       }
 
       public boolean isSent() {

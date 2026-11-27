@@ -33,7 +33,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
    @Override
    public void execute(Minecraft mc) {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.getConnection() != null) {
-         BlockPos pos = this.init_BlockPos_Minecraft(mc);
+         BlockPos pos = this.targetPos(mc);
          if (pos != null) {
             MacroTemplateResolver.ResolveResult resolvedLine1 = MacroVariableContext.resolveTemplate(this.line1, mc);
             MacroTemplateResolver.ResolveResult resolvedLine2 = MacroVariableContext.resolveTemplate(this.line2, mc);
@@ -53,7 +53,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
                   .send(
                      Compat263.newSignUpdatePacket(
                         pos,
-                        this.init_Z_Minecraft_2(mc),
+                        this.editsFrontText(mc),
                         resolvedLine1.value(),
                         resolvedLine2.value(),
                         resolvedLine3.value(),
@@ -88,7 +88,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
       }
    }
 
-   private BlockPos init_BlockPos_Minecraft(Minecraft mc) {
+   private BlockPos targetPos(Minecraft mc) {
       if (this.targetMode == SignEditAction.Inner_StreamUtil.MANUAL_POS) {
          return new BlockPos(this.f_x_I, this.f_y_I, this.f_z_I);
       } else if (this.targetMode == SignEditAction.Inner_StreamUtil.LAST_INTERACTED_BLOCK) {
@@ -98,7 +98,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
       }
    }
 
-   private boolean init_Z_Minecraft_2(Minecraft mc) {
+   private boolean editsFrontText(Minecraft mc) {
       return this.targetMode == SignEditAction.Inner_StreamUtil.CURRENT_SIGN_GUI && mc.gui.screen() instanceof SignEditScreenAccessor access ? access.autism$isFrontText() : this.frontText;
    }
 

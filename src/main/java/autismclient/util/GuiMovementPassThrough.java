@@ -18,8 +18,8 @@ import net.minecraft.client.gui.screens.inventory.StructureBlockEditScreen;
 import net.minecraft.client.input.KeyEvent;
 
 public final class GuiMovementPassThrough {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final Set<KeyMapping> init_Set = Collections.newSetFromMap(new IdentityHashMap<>());
+   private static final Minecraft MINECRAFT = Minecraft.getInstance();
+   private static final Set<KeyMapping> heldKeys = Collections.newSetFromMap(new IdentityHashMap<>());
 
    private GuiMovementPassThrough() {
    }
@@ -28,33 +28,33 @@ public final class GuiMovementPassThrough {
       if (input == null) {
          return false;
       } else if (autismclient.modules.AutoTotemModule.init_Z_6()) {
-         load_V();
+         releaseAll();
          return false;
       } else {
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
          if (module == null || !module.isActive() || !module.isInventoryMoveEnabled()) {
-            load_V();
+            releaseAll();
             return false;
          } else if (MacroExecutor.isHoldingMovementInput()) {
-            load_V();
+            releaseAll();
             return false;
-         } else if (!init_Z()) {
-            load_V();
+         } else if (!isPassThroughScreen()) {
+            releaseAll();
             return false;
          } else if (OverlayManager.getInstance().hasFocusedTextInput()) {
-            load_V();
+            releaseAll();
             return false;
-         } else if (init_Minecraft != null && init_Minecraft.options != null) {
+         } else if (MINECRAFT != null && MINECRAFT.options != null) {
             boolean handled = false;
-            handled |= init(init_Minecraft.options.keyUp, input, pressed);
-            handled |= init(init_Minecraft.options.keyDown, input, pressed);
-            handled |= init(init_Minecraft.options.keyLeft, input, pressed);
-            handled |= init(init_Minecraft.options.keyRight, input, pressed);
-            handled |= init(init_Minecraft.options.keyJump, input, pressed);
-            handled |= init(init_Minecraft.options.keyShift, input, pressed);
-            return handled | init(init_Minecraft.options.keySprint, input, pressed);
+            handled |= init(MINECRAFT.options.keyUp, input, pressed);
+            handled |= init(MINECRAFT.options.keyDown, input, pressed);
+            handled |= init(MINECRAFT.options.keyLeft, input, pressed);
+            handled |= init(MINECRAFT.options.keyRight, input, pressed);
+            handled |= init(MINECRAFT.options.keyJump, input, pressed);
+            handled |= init(MINECRAFT.options.keyShift, input, pressed);
+            return handled | init(MINECRAFT.options.keySprint, input, pressed);
          } else {
-            load_V();
+            releaseAll();
             return false;
          }
       }
@@ -62,46 +62,46 @@ public final class GuiMovementPassThrough {
 
    public static void tick() {
       if (load_Z()) {
-         init(init_Minecraft.options.keyUp);
-         init(init_Minecraft.options.keyDown);
-         init(init_Minecraft.options.keyLeft);
-         init(init_Minecraft.options.keyRight);
-         init(init_Minecraft.options.keyJump);
-         init(init_Minecraft.options.keyShift);
-         init(init_Minecraft.options.keySprint);
+         init(MINECRAFT.options.keyUp);
+         init(MINECRAFT.options.keyDown);
+         init(MINECRAFT.options.keyLeft);
+         init(MINECRAFT.options.keyRight);
+         init(MINECRAFT.options.keyJump);
+         init(MINECRAFT.options.keyShift);
+         init(MINECRAFT.options.keySprint);
       }
    }
 
-   public static void load_V() {
-      if (init_Minecraft != null && init_Minecraft.options != null) {
-         load(init_Minecraft.options.keyUp);
-         load(init_Minecraft.options.keyDown);
-         load(init_Minecraft.options.keyLeft);
-         load(init_Minecraft.options.keyRight);
-         load(init_Minecraft.options.keyJump);
-         load(init_Minecraft.options.keyShift);
-         load(init_Minecraft.options.keySprint);
+   public static void releaseAll() {
+      if (MINECRAFT != null && MINECRAFT.options != null) {
+         load(MINECRAFT.options.keyUp);
+         load(MINECRAFT.options.keyDown);
+         load(MINECRAFT.options.keyLeft);
+         load(MINECRAFT.options.keyRight);
+         load(MINECRAFT.options.keyJump);
+         load(MINECRAFT.options.keyShift);
+         load(MINECRAFT.options.keySprint);
       }
    }
 
    public static void read() {
-      if (init_Minecraft != null && init_Minecraft.options != null) {
+      if (MINECRAFT != null && MINECRAFT.options != null) {
          if (autismclient.modules.AutoTotemModule.init_Z_6()) {
-            load_V();
+            releaseAll();
          } else if (OverlayManager.getInstance().hasFocusedTextInput()
-            || init_Minecraft.gui.screen() instanceof ChatScreen
-            || init_Minecraft.gui.screen() instanceof AbstractSignEditScreen
-            || init_Minecraft.gui.screen() instanceof BookEditScreen
-            || init_Minecraft.gui.screen() != null && !init_Z()) {
-            load_V();
+            || MINECRAFT.gui.screen() instanceof ChatScreen
+            || MINECRAFT.gui.screen() instanceof AbstractSignEditScreen
+            || MINECRAFT.gui.screen() instanceof BookEditScreen
+            || MINECRAFT.gui.screen() != null && !isPassThroughScreen()) {
+            releaseAll();
          } else {
-            init(init_Minecraft.options.keyUp);
-            init(init_Minecraft.options.keyDown);
-            init(init_Minecraft.options.keyLeft);
-            init(init_Minecraft.options.keyRight);
-            init(init_Minecraft.options.keyJump);
-            init(init_Minecraft.options.keyShift);
-            init(init_Minecraft.options.keySprint);
+            init(MINECRAFT.options.keyUp);
+            init(MINECRAFT.options.keyDown);
+            init(MINECRAFT.options.keyLeft);
+            init(MINECRAFT.options.keyRight);
+            init(MINECRAFT.options.keyJump);
+            init(MINECRAFT.options.keyShift);
+            init(MINECRAFT.options.keySprint);
          }
       }
    }
@@ -117,9 +117,9 @@ public final class GuiMovementPassThrough {
 
       binding.setDown(pressed);
       if (pressed) {
-         init_Set.add(binding);
+         heldKeys.add(binding);
       } else {
-         init_Set.remove(binding);
+         heldKeys.remove(binding);
       }
 
       return true;
@@ -128,25 +128,25 @@ public final class GuiMovementPassThrough {
    private static void init(KeyMapping binding) {
       if (binding != null && !autismclient.modules.FreecamController.shouldSuppressKey(binding)) {
          boolean physical = KeyMappingControl.of(binding).autism$isActuallyDown();
-         boolean pressed = physical || binding == init_Minecraft.options.keyShift && autismclient.modules.al.tick_Z();
+         boolean pressed = physical || binding == MINECRAFT.options.keyShift && autismclient.modules.al.tick_Z();
          binding.setDown(pressed);
          if (physical) {
-            init_Set.add(binding);
+            heldKeys.add(binding);
          } else {
-            init_Set.remove(binding);
+            heldKeys.remove(binding);
          }
       }
    }
 
    private static void load(KeyMapping binding) {
-      if (binding != null && init_Set.remove(binding)) {
+      if (binding != null && heldKeys.remove(binding)) {
          binding.setDown(false);
       }
    }
 
-   private static boolean init_Z() {
-      if (init_Minecraft != null && init_Minecraft.gui.screen() != null) {
-         Screen screen = init_Minecraft.gui.screen();
+   private static boolean isPassThroughScreen() {
+      if (MINECRAFT != null && MINECRAFT.gui.screen() != null) {
+         Screen screen = MINECRAFT.gui.screen();
          if (!(screen instanceof AbstractContainerScreen)) {
             return false;
          } else if (screen instanceof AnvilScreen) {
@@ -163,36 +163,36 @@ public final class GuiMovementPassThrough {
 
    private static boolean load_Z() {
       if (autismclient.modules.AutoTotemModule.init_Z_6()) {
-         load_V();
+         releaseAll();
          return false;
       }
 
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (module == null || !module.isActive() || !module.isInventoryMoveEnabled()) {
-         load_V();
+         releaseAll();
          return false;
       }
 
       if (MacroExecutor.isHoldingMovementInput()) {
-         load_V();
+         releaseAll();
          return false;
       }
 
-      if (!init_Z()) {
-         load_V();
+      if (!isPassThroughScreen()) {
+         releaseAll();
          return false;
       }
 
       if (OverlayManager.getInstance().hasFocusedTextInput()) {
-         load_V();
+         releaseAll();
          return false;
       }
 
-      if (init_Minecraft != null && init_Minecraft.options != null) {
+      if (MINECRAFT != null && MINECRAFT.options != null) {
          return true;
       }
 
-      load_V();
+      releaseAll();
       return false;
    }
 }

@@ -12,9 +12,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class FarmCropCatalog {
-   private static final Set<Block> init_Set = init_Set_BlockArr(Blocks.SUGAR_CANE, Blocks.CACTUS, Blocks.BAMBOO);
-   private static final Set<Block> load = init_Set_BlockArr(Blocks.PUMPKIN, Blocks.MELON, Blocks.SUGAR_CANE, Blocks.CACTUS, Blocks.BAMBOO);
-   private static final Map<Block, Item> init_Map = Map.ofEntries(
+   private static final Set<Block> STACKING_CROPS = identitySet(Blocks.SUGAR_CANE, Blocks.CACTUS, Blocks.BAMBOO);
+   private static final Set<Block> load = identitySet(Blocks.PUMPKIN, Blocks.MELON, Blocks.SUGAR_CANE, Blocks.CACTUS, Blocks.BAMBOO);
+   private static final Map<Block, Item> SEEDS = Map.ofEntries(
       Map.entry(Blocks.WHEAT, Items.WHEAT_SEEDS),
       Map.entry(Blocks.CARROTS, Items.CARROT),
       Map.entry(Blocks.POTATOES, Items.POTATO),
@@ -23,7 +23,7 @@ public final class FarmCropCatalog {
       Map.entry(Blocks.COCOA, Items.COCOA_BEANS),
       Map.entry(Blocks.SWEET_BERRY_BUSH, Items.SWEET_BERRIES)
    );
-   private static final Set<Block> read = init_Set_BlockArr(
+   private static final Set<Block> read = identitySet(
       Blocks.WHEAT,
       Blocks.CARROTS,
       Blocks.POTATOES,
@@ -46,14 +46,14 @@ public final class FarmCropCatalog {
    }
 
    public static boolean load(Block block) {
-      return block != null && init_Set.contains(block);
+      return block != null && STACKING_CROPS.contains(block);
    }
 
    public static boolean read(Block block) {
       return block != null && load.contains(block);
    }
 
-   public static Set<Block> init_Set() {
+   public static Set<Block> allCrops() {
       return read;
    }
 
@@ -67,15 +67,15 @@ public final class FarmCropCatalog {
       } else if (crop == Blocks.SWEET_BERRY_BUSH) {
          return below.is(BlockTags.SUPPORTS_VEGETATION);
       } else {
-         return !init_Map.containsKey(crop) ? false : below.is(Blocks.FARMLAND) || below.is(BlockTags.SUPPORTS_CROPS);
+         return !SEEDS.containsKey(crop) ? false : below.is(Blocks.FARMLAND) || below.is(BlockTags.SUPPORTS_CROPS);
       }
    }
 
    public static Item seedFor(Block crop) {
-      return crop == null ? null : init_Map.get(crop);
+      return crop == null ? null : SEEDS.get(crop);
    }
 
-   private static Set<Block> init_Set_BlockArr(Block... blocks) {
+   private static Set<Block> identitySet(Block... blocks) {
       Set<Block> set = Collections.newSetFromMap(new IdentityHashMap<>());
       Collections.addAll(set, blocks);
       return Collections.unmodifiableSet(set);

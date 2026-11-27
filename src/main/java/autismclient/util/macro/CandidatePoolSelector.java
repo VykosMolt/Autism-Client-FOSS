@@ -168,8 +168,8 @@ public final class CandidatePoolSelector {
                if (state == null) {
                   var10000 = 0;
                } else {
-                  int next = Math.floorMod(state.init_I, pool.size());
-                  state.init_I = next + 1;
+                  int next = Math.floorMod(state.nextIndex, pool.size());
+                  state.nextIndex = next + 1;
                   var10000 = next;
                }
                break;
@@ -180,13 +180,13 @@ public final class CandidatePoolSelector {
                   List<Integer> unused = new ArrayList<>();
 
                   for (int i = 0; i < pool.size(); i++) {
-                     if (!state.init_Set.contains(init(pool.get(i)))) {
+                     if (!state.used.contains(init(pool.get(i)))) {
                         unused.add(i);
                      }
                   }
 
                   if (unused.isEmpty()) {
-                     state.init_Set.clear();
+                     state.used.clear();
 
                      for (int i = 0; i < pool.size(); i++) {
                         unused.add(i);
@@ -194,7 +194,7 @@ public final class CandidatePoolSelector {
                   }
 
                   int picked = unused.get(ThreadLocalRandom.current().nextInt(unused.size()));
-                  state.init_Set.add(init(pool.get(picked)));
+                  state.used.add(init(pool.get(picked)));
                   var10000 = picked;
                }
                break;
@@ -223,8 +223,8 @@ public final class CandidatePoolSelector {
    }
 
    public static final class Inner_BufferHelper {
-      int init_I;
-      final Set<String> init_Set = new HashSet<>();
+      int nextIndex;
+      final Set<String> used = new HashSet<>();
    }
 
    public enum Inner_CachePool {
@@ -245,6 +245,6 @@ public final class CandidatePoolSelector {
       REGEX;
    }
 
-   public record Inner_StreamUtil(String value, int index, List<String> init_List) {
+   public record Inner_StreamUtil(String value, int index, List<String> pool) {
    }
 }

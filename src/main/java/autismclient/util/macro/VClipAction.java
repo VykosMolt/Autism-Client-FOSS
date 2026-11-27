@@ -27,14 +27,14 @@ public class VClipAction implements MacroAction {
    public boolean updateLocalPosition = true;
    public boolean tryVehicleFirst = true;
    public boolean forceGrounded = true;
-   private boolean init_Z = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
       VClipAction.Inner_CachePool options = new VClipAction.Inner_CachePool();
       options.mode = this.mode;
-      options.init_D = this.deltaY;
-      options.init_Z = this.useSegmented;
+      options.deltaY = this.deltaY;
+      options.segmented = this.useSegmented;
       options.segmentBlocks = this.segmentBlocks;
       options.maxPackets = this.maxPackets;
       options.updateLocalPosition = this.updateLocalPosition;
@@ -50,23 +50,23 @@ public class VClipAction implements MacroAction {
 
       if (mc != null && mc.player != null && mc.getConnection() != null) {
          LocalPlayer player = mc.player;
-         double blocks = options.init_D;
+         double blocks = options.deltaY;
          if (options.mode != VClipAction.Inner_StreamUtil.MANUAL) {
             VClipAction.Inner_DataUtil target = init(player, options.mode);
-            if (!target.init_Z()) {
+            if (!target.found()) {
                if (options.update) {
-                  AutismClientMessaging.sendPrefixed("§cVClip: " + target.init_Str());
+                  AutismClientMessaging.sendPrefixed("§cVClip: " + target.message());
                }
 
-               return new VClipAction.Inner_BufferHelper(false, 0, target.init_Str());
+               return new VClipAction.Inner_BufferHelper(false, 0, target.message());
             }
 
-            blocks = target.init_D();
+            blocks = target.blocks();
          }
 
          int segment = Math.max(1, options.segmentBlocks);
          int maxPackets = Math.max(1, options.maxPackets);
-         int packetsRequired = options.init_Z ? (int)Math.ceil(Math.abs(blocks) / segment) : 1;
+         int packetsRequired = options.segmented ? (int)Math.ceil(Math.abs(blocks) / segment) : 1;
          if (packetsRequired > maxPackets) {
             packetsRequired = 1;
          }
@@ -99,7 +99,7 @@ public class VClipAction implements MacroAction {
             boolean grounded = options.write || player.onGround();
             boolean horizontalCollision = player.horizontalCollision;
             if (blocks < -3.0) {
-               int padding = options.init_Z ? Math.max(0, packetsRequired - 1) : 0;
+               int padding = options.segmented ? Math.max(0, packetsRequired - 1) : 0;
                packetsRequired = init(mc, player, x, y, z, blocks, padding, options.updateLocalPosition);
             } else {
                player.resetFallDistance();
@@ -111,7 +111,7 @@ public class VClipAction implements MacroAction {
                init(mc, new Pos(x, y + blocks, z, grounded, horizontalCollision));
                if (options.updateLocalPosition) {
                   player.setPos(x, y + blocks, z);
-                  init_V(player);
+                  resetFall(player);
                }
             }
          }
@@ -136,13 +136,13 @@ public class VClipAction implements MacroAction {
 
    private static VClipAction.Inner_DataUtil init(LocalPlayer player, VClipAction.Inner_StreamUtil mode) {
       if (mode == VClipAction.Inner_StreamUtil.TOP) {
-         return init_ap_DataUtil(player);
+         return findTarget(player);
       } else {
          return mode == VClipAction.Inner_StreamUtil.BOTTOM ? load(player) : new VClipAction.Inner_DataUtil(true, 0.0, "manual");
       }
    }
 
-   private static VClipAction.Inner_DataUtil init_ap_DataUtil(LocalPlayer player) {
+   private static VClipAction.Inner_DataUtil findTarget(LocalPlayer player) {
       Vec3 start = player.position();
       Vec3 candidate = TpRoutePlanner.update(TpRoutePlanner.entityView(player), start, 128.0);
       return candidate != null ? new VClipAction.Inner_DataUtil(true, candidate.y - start.y, "top") : new VClipAction.Inner_DataUtil(false, 0.0, "no direct safe top target");
@@ -178,7 +178,7 @@ public class VClipAction implements MacroAction {
 
    private static int init(Minecraft mc, LocalPlayer player, double x, double y, double z, double blocks, int paddingPackets, boolean updateLocalPosition) {
       double targetY = y + blocks;
-      init_V(player);
+      resetFall(player);
       int sent = 0;
 
       for (int i = 0; i < paddingPackets; i++) {
@@ -198,7 +198,7 @@ public class VClipAction implements MacroAction {
 
       if (updateLocalPosition) {
          player.setPos(x, targetY, z);
-         init_V(player);
+         resetFall(player);
       }
 
       return sent;
@@ -212,7 +212,7 @@ public class VClipAction implements MacroAction {
       }
    }
 
-   private static void init_V(LocalPlayer player) {
+   private static void resetFall(LocalPlayer player) {
       player.resetFallDistance();
       Vec3 velocity = player.getDeltaMovement();
       if (velocity.y < 0.0) {
@@ -232,7 +232,7 @@ public class VClipAction implements MacroAction {
       tag.putBoolean("updateLocalPosition", this.updateLocalPosition);
       tag.putBoolean("tryVehicleFirst", this.tryVehicleFirst);
       tag.putBoolean("forceGrounded", this.forceGrounded);
-      tag.putBoolean("enabled", this.init_Z);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -247,7 +247,7 @@ public class VClipAction implements MacroAction {
       this.tryVehicleFirst = tag.getBooleanOr("tryVehicleFirst", true);
       this.forceGrounded = tag.getBooleanOr("forceGrounded", true);
       if (tag.contains("enabled")) {
-         this.init_Z = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -272,12 +272,12 @@ public class VClipAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init_Z;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init_Z = e;
+      this.enabled = e;
    }
 
    private static VClipAction.Inner_StreamUtil init(String value) {
@@ -288,13 +288,13 @@ public class VClipAction implements MacroAction {
       }
    }
 
-   public record Inner_BufferHelper(boolean init_Z, int init_I, String init_Str) {
+   public record Inner_BufferHelper(boolean success, int init_I, String message) {
    }
 
    public static final class Inner_CachePool {
       public VClipAction.Inner_StreamUtil mode = VClipAction.Inner_StreamUtil.MANUAL;
-      public double init_D = 0.0;
-      public boolean init_Z = true;
+      public double deltaY = 0.0;
+      public boolean segmented = true;
       public int segmentBlocks = 10;
       public int maxPackets = 20;
       public boolean updateLocalPosition = true;
@@ -304,17 +304,17 @@ public class VClipAction implements MacroAction {
 
       public static VClipAction.Inner_CachePool init(double blocks) {
          VClipAction.Inner_CachePool options = new VClipAction.Inner_CachePool();
-         options.init_D = blocks;
+         options.deltaY = blocks;
          return options;
       }
 
       public VClipAction.Inner_CachePool init() {
-         this.init_Z = false;
+         this.segmented = false;
          return this;
       }
    }
 
-   private record Inner_DataUtil(boolean init_Z, double init_D, String init_Str) {
+   private record Inner_DataUtil(boolean found, double blocks, String message) {
    }
 
    public enum Inner_StreamUtil {

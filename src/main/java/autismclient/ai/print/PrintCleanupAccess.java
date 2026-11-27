@@ -27,30 +27,30 @@ import net.minecraft.world.phys.Vec3;
 final class PrintCleanupAccess {
    private static final int init_I = 128;
    private static final int load_I = 8192;
-   final PrintCore init_UiHelper;
-   final Long2ObjectOpenHashMap<PrintCleanupAccess.Inner_StreamUtil> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-   final Int2ObjectOpenHashMap<LongOpenHashSet> init_Int2ObjectOpenHash = new Int2ObjectOpenHashMap<>();
-   final Long2ObjectOpenHashMap<LongOpenHashSet> load_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-   final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
+   final PrintCore core;
+   final Long2ObjectOpenHashMap<PrintCleanupAccess.Inner_StreamUtil> entries = new Long2ObjectOpenHashMap<>();
+   final Int2ObjectOpenHashMap<LongOpenHashSet> keysByOwner = new Int2ObjectOpenHashMap<>();
+   final Long2ObjectOpenHashMap<LongOpenHashSet> dependentsByRead = new Long2ObjectOpenHashMap<>();
+   final LongOpenHashSet dirtyKeys = new LongOpenHashSet();
    final LongOpenHashSet load_LongOpenHashSet = new LongOpenHashSet();
    final LongOpenHashSet read_LongOpenHashSet = new LongOpenHashSet();
-   long init_J;
+   long revision;
    long load_J;
    long read_J;
    private long write;
    private long update;
    private long sync;
-   private boolean init_Z;
-   private final LinkedHashMap<Long, PrintCleanupAccess.Inner_CachePool> init_LinkedHashMap = new LinkedHashMap<>(16, 0.75F, true);
+   private boolean creativeMode;
+   private final LinkedHashMap<Long, PrintCleanupAccess.Inner_CachePool> blockGuards = new LinkedHashMap<>(16, 0.75F, true);
 
    PrintCleanupAccess(PrintCore core) {
-      this.init_UiHelper = core;
+      this.core = core;
    }
 
    void init(long key, int owner) {
-      PrintCleanupAccess.Inner_StreamUtil entry = this.init_Long2ObjectOpenHas.get(key);
-      if (entry != null && entry.init_I == owner) {
-         if (this.init_UiHelper.env.isCreativeMode()) {
+      PrintCleanupAccess.Inner_StreamUtil entry = this.entries.get(key);
+      if (entry != null && entry.owner == owner) {
+         if (this.core.env.isCreativeMode()) {
             entry.init_Z = true;
          }
       } else {
@@ -58,94 +58,94 @@ final class PrintCleanupAccess {
             this.load(key);
          }
 
-         this.init_Long2ObjectOpenHas.put(key, new PrintCleanupAccess.Inner_StreamUtil(key, owner));
-         this.init_Long2ObjectOpenHas.get(key).init_Z = this.init_UiHelper.env.isCreativeMode();
-         this.init_Long2ObjectOpenHas.get(key).read = this.write;
-         this.init_Int2ObjectOpenHash.computeIfAbsent(owner, ignored -> new LongOpenHashSet()).add(key);
+         this.entries.put(key, new PrintCleanupAccess.Inner_StreamUtil(key, owner));
+         this.entries.get(key).init_Z = this.core.env.isCreativeMode();
+         this.entries.get(key).read = this.write;
+         this.keysByOwner.computeIfAbsent(owner, ignored -> new LongOpenHashSet()).add(key);
          this.markEntryDirty(key);
-         this.init_J++;
+         this.revision++;
       }
    }
 
    void markEntryDirty(long key) {
-      PrintCleanupAccess.Inner_StreamUtil entry = this.init_Long2ObjectOpenHas.get(key);
-      if (entry != null && this.init_UiHelper.env.isCreativeMode()) {
+      PrintCleanupAccess.Inner_StreamUtil entry = this.entries.get(key);
+      if (entry != null && this.core.env.isCreativeMode()) {
          entry.init_Z = true;
       }
 
-      if (entry != null && this.init_Z_BufferHelper_Strea(entry)) {
-         this.init_LongOpenHashSet.add(key);
-         this.init_J++;
+      if (entry != null && this.isOwnedTemporary(entry)) {
+         this.dirtyKeys.add(key);
+         this.revision++;
       }
    }
 
    void markOwnerEntriesDirty(int owner) {
-      LongOpenHashSet keys = this.init_Int2ObjectOpenHash.get(owner);
+      LongOpenHashSet keys = this.keysByOwner.get(owner);
       if (keys != null) {
          for (long key : keys) {
-            this.init_LongOpenHashSet.add(key);
+            this.dirtyKeys.add(key);
          }
 
-         this.init_J++;
+         this.revision++;
       }
    }
 
    void load(long key) {
-      PrintCleanupAccess.Inner_StreamUtil entry = this.init_Long2ObjectOpenHas.remove(key);
+      PrintCleanupAccess.Inner_StreamUtil entry = this.entries.remove(key);
       if (entry != null) {
-         this.init_V_BufferHelper_Strea(entry);
-         LongOpenHashSet keys = this.init_Int2ObjectOpenHash.get(entry.init_I);
+         this.unlinkCertificate(entry);
+         LongOpenHashSet keys = this.keysByOwner.get(entry.owner);
          if (keys != null && keys.remove(key) && keys.isEmpty()) {
-            this.init_Int2ObjectOpenHash.remove(entry.init_I);
+            this.keysByOwner.remove(entry.owner);
          }
 
-         this.init_LongOpenHashSet.remove(key);
+         this.dirtyKeys.remove(key);
          this.load_LongOpenHashSet.remove(key);
          this.read_LongOpenHashSet.remove(key);
-         this.init_J++;
+         this.revision++;
       }
    }
 
    void read(long key) {
-      LongOpenHashSet keys = this.load_Long2ObjectOpenHas.get(key);
+      LongOpenHashSet keys = this.dependentsByRead.get(key);
       if (keys != null) {
-         this.init_LongOpenHashSet.addAll(keys);
-         this.init_J++;
+         this.dirtyKeys.addAll(keys);
+         this.revision++;
       }
    }
 
    void init() {
       this.update++;
-      this.init_J++;
+      this.revision++;
    }
 
-   private boolean init_Z_BufferHelper_Strea(PrintCleanupAccess.Inner_StreamUtil entry) {
-      return entry.init_I >= 0
-         && entry.init_I < this.init_UiHelper.cellStates.length
-         && this.init_UiHelper.cellStates[entry.init_I] == 3
-         && this.init_UiHelper.temporaryBlocks.containsKey(entry.cellKey);
+   private boolean isOwnedTemporary(PrintCleanupAccess.Inner_StreamUtil entry) {
+      return entry.owner >= 0
+         && entry.owner < this.core.cellStates.length
+         && this.core.cellStates[entry.owner] == 3
+         && this.core.temporaryBlocks.containsKey(entry.cellKey);
    }
 
-   private void init_V_BufferHelper_Strea(PrintCleanupAccess.Inner_StreamUtil entry) {
-      if (entry.init_BufferHelper_DataU != null) {
-         for (long key : entry.init_BufferHelper_DataU.reads.keySet()) {
-            LongOpenHashSet keys = this.load_Long2ObjectOpenHas.get(key);
+   private void unlinkCertificate(PrintCleanupAccess.Inner_StreamUtil entry) {
+      if (entry.certificate != null) {
+         for (long key : entry.certificate.reads.keySet()) {
+            LongOpenHashSet keys = this.dependentsByRead.get(key);
             if (keys != null && keys.remove(entry.cellKey) && keys.isEmpty()) {
-               this.load_Long2ObjectOpenHas.remove(key);
+               this.dependentsByRead.remove(key);
             }
          }
       }
    }
 
    private void init(PrintCleanupAccess.Inner_StreamUtil entry, PrintCleanupAccess.Inner_DataUtil certificate) {
-      this.init_V_BufferHelper_Strea(entry);
-      entry.init_BufferHelper_DataU = certificate;
+      this.unlinkCertificate(entry);
+      entry.certificate = certificate;
 
       for (long key : certificate.reads.keySet()) {
-         this.load_Long2ObjectOpenHas.computeIfAbsent(key, ignored -> new LongOpenHashSet()).add(entry.cellKey);
+         this.dependentsByRead.computeIfAbsent(key, ignored -> new LongOpenHashSet()).add(entry.cellKey);
       }
 
-      this.init_LongOpenHashSet.remove(entry.cellKey);
+      this.dirtyKeys.remove(entry.cellKey);
       this.read_LongOpenHashSet.remove(entry.cellKey);
       if (certificate.stable) {
          this.load_LongOpenHashSet.remove(entry.cellKey);
@@ -155,42 +155,42 @@ final class PrintCleanupAccess {
    }
 
    PrintCleanupAccess.Inner_CachePool newCleanupProof(BlockPos position, BlockState state) {
-      if (this.init_Z != this.init_UiHelper.env.isCreativeMode()) {
-         this.init_Z = this.init_UiHelper.env.isCreativeMode();
-         if (this.init_Z) {
+      if (this.creativeMode != this.core.env.isCreativeMode()) {
+         this.creativeMode = this.core.env.isCreativeMode();
+         if (this.creativeMode) {
             this.update++;
             this.write++;
          }
 
-         this.init_J++;
+         this.revision++;
       }
 
       return new PrintCleanupAccess.Inner_CachePool(position, state);
    }
 
    boolean wouldBlockCleanup(BlockPos position, BlockState state) {
-      if (this.init_Long2ObjectOpenHas.isEmpty()) {
+      if (this.entries.isEmpty()) {
          return false;
       }
 
-      PrintCleanupAccess.Inner_CachePool guard = this.init_LinkedHashMap.get(position.asLong());
-      if (guard == null || guard.init_BlockState != state || !guard.init()) {
+      PrintCleanupAccess.Inner_CachePool guard = this.blockGuards.get(position.asLong());
+      if (guard == null || guard.state != state || !guard.init()) {
          guard = this.newCleanupProof(position, state);
-         if (this.init_LinkedHashMap.size() >= 64) {
-            this.init_LinkedHashMap.remove(this.init_LinkedHashMap.keySet().iterator().next());
+         if (this.blockGuards.size() >= 64) {
+            this.blockGuards.remove(this.blockGuards.keySet().iterator().next());
          }
 
-         this.init_LinkedHashMap.put(position.asLong(), guard);
+         this.blockGuards.put(position.asLong(), guard);
       }
 
-      if (!guard.update && !this.init_UiHelper.isBudgetSpent()) {
-         guard.init(this.init_UiHelper.workBudget());
+      if (!guard.update && !this.core.isBudgetSpent()) {
+         guard.init(this.core.workBudget());
       }
 
       return guard.flush || !guard.update || guard.sync;
    }
 
-   private static boolean init_Z_BlockState(BlockState state) {
+   private static boolean isConnectingBlock(BlockState state) {
       Block block = state.getBlock();
       return block instanceof FenceBlock
          || block instanceof WallBlock
@@ -201,12 +201,12 @@ final class PrintCleanupAccess {
    }
 
    final class Inner_BufferHelper {
-      final long init_J;
-      final PrintCleanupAccess.Inner_DataUtil init_BufferHelper_DataU;
+      final long key;
+      final PrintCleanupAccess.Inner_DataUtil certificate;
       final Long2ObjectOpenHashMap<BlockState> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
       final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
       LongIterator init_LongIterator;
-      final PrintView.Inner_StreamUtil init_ArrayUtil_StreamUt = PrintCleanupAccess.this.init_UiHelper.view.new Inner_StreamUtil();
+      final PrintView.Inner_StreamUtil init_ArrayUtil_StreamUt = PrintCleanupAccess.this.core.view.new Inner_StreamUtil();
       int init_I;
       int load_I;
       Vec3 init_Vec3;
@@ -216,16 +216,16 @@ final class PrintCleanupAccess {
       boolean write = true;
 
       Inner_BufferHelper(long key, PrintCleanupAccess.Inner_DataUtil certificate) {
-         this.init_J = key;
-         this.init_BufferHelper_DataU = certificate;
+         this.key = key;
+         this.certificate = certificate;
          PrintCleanupAccess.this.read_J++;
       }
 
       PrintCleanupAccess.Inner_DataUtil init() {
          return new PrintCleanupAccess.Inner_DataUtil(
-            this.init_BufferHelper_DataU.point,
-            this.init_BufferHelper_DataU.before,
-            this.init_BufferHelper_DataU.after,
+            this.certificate.point,
+            this.certificate.before,
+            this.certificate.after,
             this.init_Long2ObjectOpenHas,
             this.init_LongOpenHashSet,
             this.write
@@ -250,48 +250,48 @@ final class PrintCleanupAccess {
       }
 
       private void load(long allowance) {
-         long started = PrintCleanupAccess.this.init_UiHelper.view.workUnits();
+         long started = PrintCleanupAccess.this.core.view.workUnits();
          boolean dependencyOnly = this.init_I == 3;
 
          try (
-            PrintView.Inner_TaskQueue capture = PrintCleanupAccess.this.init_UiHelper.view.openReadTracker();
+            PrintView.Inner_TaskQueue capture = PrintCleanupAccess.this.core.view.openReadTracker();
             PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = this.init_ArrayUtil_StreamUt.attach();
          ) {
             try {
-               for (int steps = 0; steps < 128 && PrintCleanupAccess.this.init_UiHelper.view.workUnits() - started < Math.max(1L, allowance); steps++) {
+               for (int steps = 0; steps < 128 && PrintCleanupAccess.this.core.view.workUnits() - started < Math.max(1L, allowance); steps++) {
                   if (this.init_I == 3) {
                      if (this.init_LongIterator == null) {
                         this.init_LongIterator = this.init_LongOpenHashSet.iterator();
                      }
 
                      if (!this.init_LongIterator.hasNext()) {
-                        this.load_Z = PrintCleanupAccess.this.init_UiHelper.load_Z_BlockPos(BlockPos.of(this.init_J));
+                        this.load_Z = PrintCleanupAccess.this.core.load_Z_BlockPos(BlockPos.of(this.key));
                         this.init_Z = true;
                         return;
                      }
 
-                     PrintCleanupAccess.this.init_UiHelper.view.getBlockState(BlockPos.of(this.init_LongIterator.nextLong()));
+                     PrintCleanupAccess.this.core.view.getBlockState(BlockPos.of(this.init_LongIterator.nextLong()));
                   } else if (this.init_I == 0) {
-                     BlockPos pos = BlockPos.of(this.init_J);
-                     if (!PrintCleanupAccess.this.init_UiHelper.env.hasChunkAt(pos)
-                        || !PrintCleanupAccess.this.init_UiHelper.temporaryBlocks.containsKey(this.init_J)
-                        || !PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.init_UiHelper.view, this.init_BufferHelper_DataU.point)
-                        || !PrintCleanupAccess.this.init_UiHelper.load_Z_BlockPos(pos)) {
+                     BlockPos pos = BlockPos.of(this.key);
+                     if (!PrintCleanupAccess.this.core.env.hasChunkAt(pos)
+                        || !PrintCleanupAccess.this.core.temporaryBlocks.containsKey(this.key)
+                        || !PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.core.view, this.certificate.point)
+                        || !PrintCleanupAccess.this.core.load_Z_BlockPos(pos)) {
                         this.init_Z = true;
                         return;
                      }
 
                      PrintTarget target = new PrintTarget(
-                        -1, pos, PrintCleanupAccess.this.init_UiHelper.view.getBlockState(pos), PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null
+                        -1, pos, PrintCleanupAccess.this.core.view.getBlockState(pos), PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null
                      );
                      if (PrintClicks.findClick(
-                           PrintCleanupAccess.this.init_UiHelper.view,
-                           PrintCleanupAccess.this.init_UiHelper.env,
-                           PrintCleanupAccess.this.init_UiHelper.rules,
+                           PrintCleanupAccess.this.core.view,
+                           PrintCleanupAccess.this.core.env,
+                           PrintCleanupAccess.this.core.rules,
                            target,
                            Items.DIAMOND_PICKAXE,
                            PrintClicks.Inner_CachePool.DIG,
-                           this.init_BufferHelper_DataU.point,
+                           this.certificate.point,
                            false,
                            false,
                            new PrintClicks.Inner_DataUtil(2000),
@@ -303,19 +303,19 @@ final class PrintCleanupAccess {
                      }
 
                      this.init_I = 1;
-                     this.init_Vec3 = this.init_BufferHelper_DataU.point;
+                     this.init_Vec3 = this.certificate.point;
                   } else {
-                     PrintFlight.Inner_BufferHelper route = this.init_I == 1 ? this.init_BufferHelper_DataU.before : this.init_BufferHelper_DataU.after;
+                     PrintFlight.Inner_BufferHelper route = this.init_I == 1 ? this.certificate.before : this.certificate.after;
                      boolean removed = this.init_I == 2;
                      if (removed) {
-                        PrintCleanupAccess.this.init_UiHelper.view.pushHypothesis(BlockPos.of(this.init_J), Blocks.AIR.defaultBlockState());
+                        PrintCleanupAccess.this.core.view.pushHypothesis(BlockPos.of(this.key), Blocks.AIR.defaultBlockState());
                      }
 
                      try {
                         if (this.load_I < route.points().size()) {
                            Vec3 next = route.points().get(this.load_I++);
-                           if (!PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.init_UiHelper.view, this.init_Vec3)
-                              || !PrintFlight.isFlightSegmentClear(PrintCleanupAccess.this.init_UiHelper.view, this.init_Vec3, next)) {
+                           if (!PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.core.view, this.init_Vec3)
+                              || !PrintFlight.isFlightSegmentClear(PrintCleanupAccess.this.core.view, this.init_Vec3, next)) {
                               this.init_Z = true;
                               return;
                            }
@@ -329,11 +329,11 @@ final class PrintCleanupAccess {
 
                            this.init_I = 2;
                            this.load_I = 0;
-                           this.init_Vec3 = this.init_BufferHelper_DataU.point;
+                           this.init_Vec3 = this.certificate.point;
                         }
                      } finally {
                         if (removed) {
-                           PrintCleanupAccess.this.init_UiHelper.view.popHypothesis(BlockPos.of(this.init_J));
+                           PrintCleanupAccess.this.core.view.popHypothesis(BlockPos.of(this.key));
                         }
                      }
                   }
@@ -353,7 +353,7 @@ final class PrintCleanupAccess {
                      this.read = this.init_Z = true;
                   }
 
-                  if (!dependencyOnly && PrintCleanupAccess.init_Z_BlockState(read.getValue())) {
+                  if (!dependencyOnly && PrintCleanupAccess.isConnectingBlock(read.getValue())) {
                      for (Direction direction : Direction.values()) {
                         if (this.init_LongOpenHashSet.size() >= 8192) {
                            this.write = false;
@@ -370,19 +370,19 @@ final class PrintCleanupAccess {
    }
 
    final class Inner_CachePool {
-      final BlockPos init_BlockPos;
-      final BlockState init_BlockState;
-      final long init_J = PrintCleanupAccess.this.init_UiHelper.view.worldMutationRevision();
-      final long load_J = PrintCleanupAccess.this.init_J;
+      final BlockPos position;
+      final BlockState state;
+      final long worldRevision = PrintCleanupAccess.this.core.view.worldMutationRevision();
+      final long cleanupRevision = PrintCleanupAccess.this.revision;
       final long read_J = PrintCleanupAccess.this.update;
-      final boolean init_Z = PrintCleanupAccess.this.init_UiHelper.env.isCreativeMode();
+      final boolean creativeMode = PrintCleanupAccess.this.core.env.isCreativeMode();
       final boolean load_Z;
       final PrintView.Inner_StreamUtil init_ArrayUtil_StreamUt;
-      final Long2ObjectOpenHashMap<BlockState> init_Long2ObjectOpenHas;
-      final LongOpenHashSet init_LongOpenHashSet;
+      final Long2ObjectOpenHashMap<BlockState> hypotheses;
+      final LongOpenHashSet ownedTemporaries;
       final LongOpenHashSet load_LongOpenHashSet;
       final LongArrayList candidateKeys;
-      final boolean read_Z;
+      final boolean viewClean;
       LongIterator init_LongIterator;
       LongIterator load_LongIterator;
       int init_I;
@@ -391,49 +391,49 @@ final class PrintCleanupAccess {
       PrintCleanupAccess.Inner_StreamUtil currentEntry;
       PrintCleanupAccess.Inner_ConfigStore init_BufferHelper_Confi;
       PrintCleanupAccess.Inner_BufferHelper init_BufferHelper_Buffe;
-      PrintCleanupAccess.Inner_DataUtil init_BufferHelper_DataU;
+      PrintCleanupAccess.Inner_DataUtil certificate;
       boolean write;
       boolean update;
       boolean sync;
       boolean flush;
 
       Inner_CachePool(BlockPos position, BlockState state) {
-         this.load_Z = PrintCleanupAccess.this.init_Long2ObjectOpenHas.isEmpty();
-         this.init_ArrayUtil_StreamUt = PrintCleanupAccess.this.init_UiHelper.view.new Inner_StreamUtil();
-         this.init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-         this.init_LongOpenHashSet = new LongOpenHashSet();
+         this.load_Z = PrintCleanupAccess.this.entries.isEmpty();
+         this.init_ArrayUtil_StreamUt = PrintCleanupAccess.this.core.view.new Inner_StreamUtil();
+         this.hypotheses = new Long2ObjectOpenHashMap<>();
+         this.ownedTemporaries = new LongOpenHashSet();
          this.load_LongOpenHashSet = new LongOpenHashSet();
          this.candidateKeys = new LongArrayList();
-         this.init_BlockPos = position;
-         this.init_BlockState = state;
-         PrintCleanupAccess.this.init_UiHelper.view.copyHypothesesInto(this.init_Long2ObjectOpenHas);
-         PrintCleanupAccess.this.init_UiHelper.view.copyOwnedTemporariesInto(this.init_LongOpenHashSet);
-         this.read_Z = this.init_Long2ObjectOpenHas.isEmpty() && this.init_LongOpenHashSet.isEmpty();
+         this.position = position;
+         this.state = state;
+         PrintCleanupAccess.this.core.view.copyHypothesesInto(this.hypotheses);
+         PrintCleanupAccess.this.core.view.copyOwnedTemporariesInto(this.ownedTemporaries);
+         this.viewClean = this.hypotheses.isEmpty() && this.ownedTemporaries.isEmpty();
          this.update = this.load_Z;
       }
 
       boolean init() {
          return !this.flush
-            && this.load_J == PrintCleanupAccess.this.init_J
+            && this.cleanupRevision == PrintCleanupAccess.this.revision
             && (
                this.load_Z
-                  || this.init_J == PrintCleanupAccess.this.init_UiHelper.view.worldMutationRevision()
+                  || this.worldRevision == PrintCleanupAccess.this.core.view.worldMutationRevision()
                      && this.read_J == PrintCleanupAccess.this.update
-                     && this.init_Z == PrintCleanupAccess.this.init_UiHelper.env.isCreativeMode()
-                     && PrintCleanupAccess.this.init_UiHelper.view.matchesHypotheses(this.init_Long2ObjectOpenHas)
-                     && PrintCleanupAccess.this.init_UiHelper.view.matchesOwnedTemporaries(this.init_LongOpenHashSet)
+                     && this.creativeMode == PrintCleanupAccess.this.core.env.isCreativeMode()
+                     && PrintCleanupAccess.this.core.view.matchesHypotheses(this.hypotheses)
+                     && PrintCleanupAccess.this.core.view.matchesOwnedTemporaries(this.ownedTemporaries)
                      && this.init_ArrayUtil_StreamUt.verifyStillValid()
             );
       }
 
       private boolean init(PrintCleanupAccess.Inner_DataUtil certificate) {
-         for (long key : this.init_Long2ObjectOpenHas.keySet()) {
+         for (long key : this.hypotheses.keySet()) {
             if (certificate.reads.containsKey(key)) {
                return true;
             }
          }
 
-         for (long key : this.init_LongOpenHashSet) {
+         for (long key : this.ownedTemporaries) {
             if (certificate.reads.containsKey(key)) {
                return true;
             }
@@ -457,16 +457,16 @@ final class PrintCleanupAccess {
       }
 
       private void load(long allowance) {
-         long started = PrintCleanupAccess.this.init_UiHelper.view.workUnits();
+         long started = PrintCleanupAccess.this.core.view.workUnits();
          long deadline = System.nanoTime() + 2000000L;
 
          for (int steps = 0;
             steps < 128
-               && PrintCleanupAccess.this.init_UiHelper.view.workUnits() - started < Math.max(1L, allowance)
+               && PrintCleanupAccess.this.core.view.workUnits() - started < Math.max(1L, allowance)
                && (steps == 0 || System.nanoTime() < deadline);
             steps++
          ) {
-            long left = Math.min(8192L, Math.max(1L, allowance - (PrintCleanupAccess.this.init_UiHelper.view.workUnits() - started)));
+            long left = Math.min(8192L, Math.max(1L, allowance - (PrintCleanupAccess.this.core.view.workUnits() - started)));
             if (this.init_I < 6) {
                if (this.load_LongIterator != null) {
                   if (!this.load_LongIterator.hasNext()) {
@@ -483,12 +483,12 @@ final class PrintCleanupAccess {
                      switch (this.init_I) {
                         case 0:
                            var10001 = (PrintCleanupAccess.this.sync != this.read_J
-                                 ? PrintCleanupAccess.this.init_Long2ObjectOpenHas.keySet()
-                                 : PrintCleanupAccess.this.init_LongOpenHashSet)
+                                 ? PrintCleanupAccess.this.entries.keySet()
+                                 : PrintCleanupAccess.this.dirtyKeys)
                               .iterator();
                            break;
                         case 1:
-                           var10001 = PrintCleanupAccess.this.load_Long2ObjectOpenHas.getOrDefault(this.init_BlockPos.asLong(), new LongOpenHashSet()).iterator();
+                           var10001 = PrintCleanupAccess.this.dependentsByRead.getOrDefault(this.position.asLong(), new LongOpenHashSet()).iterator();
                            break;
                         case 2:
                            var10001 = PrintCleanupAccess.this.load_LongOpenHashSet.iterator();
@@ -497,10 +497,10 @@ final class PrintCleanupAccess {
                            var10001 = PrintCleanupAccess.this.read_LongOpenHashSet.iterator();
                            break;
                         case 4:
-                           var10001 = this.init_Long2ObjectOpenHas.keySet().iterator();
+                           var10001 = this.hypotheses.keySet().iterator();
                            break;
                         default:
-                           var10001 = this.init_LongOpenHashSet.iterator();
+                           var10001 = this.ownedTemporaries.iterator();
                      }
 
                      this.init_LongIterator = var10001;
@@ -512,7 +512,7 @@ final class PrintCleanupAccess {
                   } else {
                      long key = this.init_LongIterator.nextLong();
                      if (this.init_I >= 4) {
-                        LongOpenHashSet linked = PrintCleanupAccess.this.load_Long2ObjectOpenHas.get(key);
+                        LongOpenHashSet linked = PrintCleanupAccess.this.dependentsByRead.get(key);
                         if (linked != null) {
                            this.load_LongIterator = linked.iterator();
                         }
@@ -524,7 +524,7 @@ final class PrintCleanupAccess {
             } else {
                if (this.currentEntry == null) {
                   if (this.candidateCursor >= this.candidateKeys.size()) {
-                     if (this.read_Z) {
+                     if (this.viewClean) {
                         PrintCleanupAccess.this.sync = this.read_J;
                      }
 
@@ -532,44 +532,44 @@ final class PrintCleanupAccess {
                      return;
                   }
 
-                  this.currentEntry = PrintCleanupAccess.this.init_Long2ObjectOpenHas.get(this.candidateKeys.getLong(this.candidateCursor++));
+                  this.currentEntry = PrintCleanupAccess.this.entries.get(this.candidateKeys.getLong(this.candidateCursor++));
                   if (this.currentEntry == null
-                     || !PrintCleanupAccess.this.init_Z_BufferHelper_Strea(this.currentEntry)
-                     || this.currentEntry.cellKey == this.init_BlockPos.asLong()) {
+                     || !PrintCleanupAccess.this.isOwnedTemporary(this.currentEntry)
+                     || this.currentEntry.cellKey == this.position.asLong()) {
                      this.currentEntry = null;
                      continue;
                   }
 
-                  if (this.init_Z) {
+                  if (this.creativeMode) {
                      this.currentEntry.init_Z = true;
                   }
 
-                  this.init_BufferHelper_DataU = this.currentEntry.init_BufferHelper_DataU;
-                  this.write = this.init_BufferHelper_DataU != null
+                  this.certificate = this.currentEntry.certificate;
+                  this.write = this.certificate != null
                      && (
-                        !this.init_BufferHelper_DataU.stable
-                           || this.init_BufferHelper_DataU.reads.containsKey(this.init_BlockPos.asLong())
-                           || this.init(this.init_BufferHelper_DataU)
+                        !this.certificate.stable
+                           || this.certificate.reads.containsKey(this.position.asLong())
+                           || this.init(this.certificate)
                      );
-                  if (!this.init_Z
-                     && this.init_BufferHelper_DataU == null
+                  if (!this.creativeMode
+                     && this.certificate == null
                      && !this.currentEntry.init_Z
                      && this.currentEntry.read >= PrintCleanupAccess.this.write) {
                      this.currentEntry = null;
                      continue;
                   }
 
-                  if (this.init_BufferHelper_DataU == null
-                     && this.currentEntry.load == this.init_J
-                     && !PrintCleanupAccess.this.init_LongOpenHashSet.contains(this.currentEntry.cellKey)) {
+                  if (this.certificate == null
+                     && this.currentEntry.load == this.worldRevision
+                     && !PrintCleanupAccess.this.dirtyKeys.contains(this.currentEntry.cellKey)) {
                      this.sync = this.update = true;
-                     PrintCleanupAccess.this.init_UiHelper.cleanupCandidates.add(this.currentEntry.cellKey);
+                     PrintCleanupAccess.this.core.cleanupCandidates.add(this.currentEntry.cellKey);
                      return;
                   }
 
                   this.stage = 0;
-                  if (this.init_BufferHelper_DataU != null) {
-                     this.init_BufferHelper_Buffe = PrintCleanupAccess.this.new Inner_BufferHelper(this.currentEntry.cellKey, this.init_BufferHelper_DataU);
+                  if (this.certificate != null) {
+                     this.init_BufferHelper_Buffe = PrintCleanupAccess.this.new Inner_BufferHelper(this.currentEntry.cellKey, this.certificate);
                   } else {
                      this.init_BufferHelper_Confi = PrintCleanupAccess.this.new Inner_ConfigStore(this.currentEntry.cellKey, null);
                   }
@@ -588,12 +588,12 @@ final class PrintCleanupAccess {
                      }
 
                      if (this.init_BufferHelper_Buffe.load_Z) {
-                        this.init_BufferHelper_DataU = this.init_BufferHelper_Buffe.init();
+                        this.certificate = this.init_BufferHelper_Buffe.init();
                      } else {
                         this.init_BufferHelper_Confi = PrintCleanupAccess.this.new Inner_ConfigStore(
-                           this.currentEntry.cellKey, this.init_BufferHelper_DataU.point
+                           this.currentEntry.cellKey, this.certificate.point
                         );
-                        this.init_BufferHelper_DataU = null;
+                        this.certificate = null;
                      }
 
                      this.init_BufferHelper_Buffe = null;
@@ -610,44 +610,44 @@ final class PrintCleanupAccess {
                         continue;
                      }
 
-                     this.init_BufferHelper_DataU = this.init_BufferHelper_Confi.init_BufferHelper_DataU;
-                     if (this.init_BufferHelper_DataU == null) {
-                        if (this.read_Z && !this.init_BufferHelper_Confi.load_Z) {
-                           this.currentEntry.load = this.init_J;
+                     this.certificate = this.init_BufferHelper_Confi.init_BufferHelper_DataU;
+                     if (this.certificate == null) {
+                        if (this.viewClean && !this.init_BufferHelper_Confi.load_Z) {
+                           this.currentEntry.load = this.worldRevision;
                            PrintCleanupAccess.this.read_LongOpenHashSet.add(this.currentEntry.cellKey);
-                           PrintCleanupAccess.this.init_LongOpenHashSet.remove(this.currentEntry.cellKey);
+                           PrintCleanupAccess.this.dirtyKeys.remove(this.currentEntry.cellKey);
                         }
 
                         this.sync = this.update = true;
-                        PrintCleanupAccess.this.init_UiHelper.cleanupCandidates.add(this.currentEntry.cellKey);
+                        PrintCleanupAccess.this.core.cleanupCandidates.add(this.currentEntry.cellKey);
                         return;
                      }
 
                      this.init_BufferHelper_Confi = null;
                   }
 
-                  if (this.read_Z) {
-                     PrintCleanupAccess.this.init(this.currentEntry, this.init_BufferHelper_DataU);
+                  if (this.viewClean) {
+                     PrintCleanupAccess.this.init(this.currentEntry, this.certificate);
                   }
 
-                  if (PrintCleanupAccess.this.init_UiHelper.view.getBlockState(this.init_BlockPos) != this.init_BlockState
+                  if (PrintCleanupAccess.this.core.view.getBlockState(this.position) != this.state
                      && (
-                        this.init_BufferHelper_DataU.neighbors.contains(this.init_BlockPos.asLong())
-                           || !this.init_BufferHelper_DataU.stable && this.init_BufferHelper_DataU.reads.size() >= 8192
+                        this.certificate.neighbors.contains(this.position.asLong())
+                           || !this.certificate.stable && this.certificate.reads.size() >= 8192
                      )) {
                      this.sync = this.update = true;
-                     PrintCleanupAccess.this.init_UiHelper.cleanupCandidates.add(this.currentEntry.cellKey);
+                     PrintCleanupAccess.this.core.cleanupCandidates.add(this.currentEntry.cellKey);
                      return;
                   }
 
-                  if (this.init_BufferHelper_DataU.stable && !this.init_BufferHelper_DataU.reads.containsKey(this.init_BlockPos.asLong())) {
+                  if (this.certificate.stable && !this.certificate.reads.containsKey(this.position.asLong())) {
                      this.currentEntry = null;
                   } else {
                      this.stage = 1;
-                     this.init_BufferHelper_Buffe = PrintCleanupAccess.this.new Inner_BufferHelper(this.currentEntry.cellKey, this.init_BufferHelper_DataU);
+                     this.init_BufferHelper_Buffe = PrintCleanupAccess.this.new Inner_BufferHelper(this.currentEntry.cellKey, this.certificate);
                   }
                } else {
-                  PrintCleanupAccess.this.init_UiHelper.view.pushHypothesis(this.init_BlockPos, this.init_BlockState);
+                  PrintCleanupAccess.this.core.view.pushHypothesis(this.position, this.state);
 
                   try {
                      if (this.init_BufferHelper_Buffe != null) {
@@ -660,7 +660,7 @@ final class PrintCleanupAccess {
                               } else {
                                  this.init_BufferHelper_Buffe = null;
                                  this.init_BufferHelper_Confi = PrintCleanupAccess.this.new Inner_ConfigStore(
-                                    this.currentEntry.cellKey, this.init_BufferHelper_DataU.point
+                                    this.currentEntry.cellKey, this.certificate.point
                                  );
                               }
                            }
@@ -688,9 +688,9 @@ final class PrintCleanupAccess {
                      }
 
                      this.sync = this.update = true;
-                     PrintCleanupAccess.this.init_UiHelper.cleanupCandidates.add(this.currentEntry.cellKey);
+                     PrintCleanupAccess.this.core.cleanupCandidates.add(this.currentEntry.cellKey);
                   } finally {
-                     PrintCleanupAccess.this.init_UiHelper.view.popHypothesis(this.init_BlockPos);
+                     PrintCleanupAccess.this.core.view.popHypothesis(this.position);
                   }
 
                   return;
@@ -701,10 +701,10 @@ final class PrintCleanupAccess {
    }
 
    final class Inner_ConfigStore {
-      final long init_J;
-      final PrintTarget init_ListPool;
-      final ArrayList<Long> init_ArrayList = new ArrayList<>();
-      final PrintClicks.Inner_DataUtil init_ConfigStore_DataUt = new PrintClicks.Inner_DataUtil(18000);
+      final long key;
+      final PrintTarget target;
+      final ArrayList<Long> workstations = new ArrayList<>();
+      final PrintClicks.Inner_DataUtil clickBudget = new PrintClicks.Inner_DataUtil(18000);
       List<Vec3> init_List;
       Vec3 init_Vec3;
       PrintCore.h init_UiHelper_h;
@@ -713,7 +713,7 @@ final class PrintCleanupAccess {
       int init_I;
       int load_I;
       int read_I;
-      final PrintView.Inner_StreamUtil init_ArrayUtil_StreamUt = PrintCleanupAccess.this.init_UiHelper.view.new Inner_StreamUtil();
+      final PrintView.Inner_StreamUtil init_ArrayUtil_StreamUt = PrintCleanupAccess.this.core.view.new Inner_StreamUtil();
       boolean init_Z;
       boolean load_Z;
       boolean read_Z;
@@ -721,15 +721,15 @@ final class PrintCleanupAccess {
       PrintCleanupAccess.Inner_DataUtil init_BufferHelper_DataU;
 
       Inner_ConfigStore(long key, Vec3 preferred) {
-         this.init_J = key;
+         this.key = key;
          BlockPos pos = BlockPos.of(key);
-         this.init_ListPool = new PrintTarget(
-            -1, pos, PrintCleanupAccess.this.init_UiHelper.view.getBlockState(pos), PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null
+         this.target = new PrintTarget(
+            -1, pos, PrintCleanupAccess.this.core.view.getBlockState(pos), PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null
          );
-         this.init_ArrayList.addAll(PrintFlightWorkstations.init(pos));
-         this.init_ArrayList.sort(Comparator.<Long>comparingDouble(k -> BlockPos.of(k).distToCenterSqr(Vec3.atCenterOf(pos))).thenComparingLong(k -> k));
+         this.workstations.addAll(PrintFlightWorkstations.init(pos));
+         this.workstations.sort(Comparator.<Long>comparingDouble(k -> BlockPos.of(k).distToCenterSqr(Vec3.atCenterOf(pos))).thenComparingLong(k -> k));
          if (preferred == null) {
-            PrintCore.at recovery = PrintCleanupAccess.this.init_UiHelper.recoveries.get(key);
+            PrintCore.at recovery = PrintCleanupAccess.this.core.recoveries.get(key);
             if (recovery != null) {
                preferred = recovery.work();
             }
@@ -746,12 +746,12 @@ final class PrintCleanupAccess {
          if (!this.init_ArrayUtil_StreamUt.verifyStillValid()) {
             this.read_Z = this.init_Z = true;
          } else {
-            long transientBefore = PrintCleanupAccess.this.init_UiHelper.view.untrackedReadCount();
+            long transientBefore = PrintCleanupAccess.this.core.view.untrackedReadCount();
 
             try (PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = this.init_ArrayUtil_StreamUt.attach()) {
                this.load(allowance);
             } finally {
-               this.load_Z = this.load_Z | PrintCleanupAccess.this.init_UiHelper.view.untrackedReadCount() != transientBefore;
+               this.load_Z = this.load_Z | PrintCleanupAccess.this.core.view.untrackedReadCount() != transientBefore;
                if (!this.init_ArrayUtil_StreamUt.verifyStillValid()) {
                   this.read_Z = this.init_Z = true;
                   this.init_BufferHelper_DataU = null;
@@ -761,17 +761,17 @@ final class PrintCleanupAccess {
       }
 
       private void load(long allowance) {
-         long started = PrintCleanupAccess.this.init_UiHelper.view.workUnits();
+         long started = PrintCleanupAccess.this.core.view.workUnits();
          if (!this.write) {
             this.write = true;
-            if (!PrintCleanupAccess.this.init_UiHelper.load_Z_BlockPos(this.init_ListPool.pos())) {
+            if (!PrintCleanupAccess.this.core.load_Z_BlockPos(this.target.pos())) {
                this.init_Z = true;
                return;
             }
          }
 
-         for (int steps = 0; !this.init_Z && steps < 128 && PrintCleanupAccess.this.init_UiHelper.view.workUnits() - started < Math.max(1L, allowance); steps++) {
-            long left = Math.max(1L, allowance - (PrintCleanupAccess.this.init_UiHelper.view.workUnits() - started));
+         for (int steps = 0; !this.init_Z && steps < 128 && PrintCleanupAccess.this.core.view.workUnits() - started < Math.max(1L, allowance); steps++) {
+            long left = Math.max(1L, allowance - (PrintCleanupAccess.this.core.view.workUnits() - started));
             if (this.init_BufferHelper_Buffe != null) {
                this.init_BufferHelper_Buffe.init(left);
                if (this.init_BufferHelper_Buffe.read) {
@@ -797,39 +797,39 @@ final class PrintCleanupAccess {
 
             if (this.init_Vec3 == null) {
                if (this.init_List == null || this.load_I >= this.init_List.size()) {
-                  if (this.init_I >= this.init_ArrayList.size() || this.init_ConfigStore_DataUt.isExhausted()) {
-                     this.load_Z = this.load_Z | this.init_ConfigStore_DataUt.isExhausted();
+                  if (this.init_I >= this.workstations.size() || this.clickBudget.isExhausted()) {
+                     this.load_Z = this.load_Z | this.clickBudget.isExhausted();
                      this.init_Z = true;
                      return;
                   }
 
-                  long at = this.init_ArrayList.get(this.init_I++);
-                  if (PrintCleanupAccess.this.init_UiHelper.view.getBlockState(BlockPos.of(at)) == PrintView.UNLOADED_SENTINEL) {
+                  long at = this.workstations.get(this.init_I++);
+                  if (PrintCleanupAccess.this.core.view.getBlockState(BlockPos.of(at)) == PrintView.UNLOADED_SENTINEL) {
                      this.load_Z = true;
                   }
 
-                  this.init_List = PrintFlightWorkstations.init(PrintCleanupAccess.this.init_UiHelper.view, this.init_ListPool, PrintClicks.Inner_CachePool.DIG, at);
+                  this.init_List = PrintFlightWorkstations.init(PrintCleanupAccess.this.core.view, this.target, PrintClicks.Inner_CachePool.DIG, at);
                   this.load_I = 0;
                   continue;
                }
 
                this.init_Vec3 = this.init_List.get(this.load_I++);
-               if (!PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.init_UiHelper.view, this.init_Vec3)) {
+               if (!PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.core.view, this.init_Vec3)) {
                   this.init_Vec3 = null;
                   continue;
                }
 
                PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
-                  PrintCleanupAccess.this.init_UiHelper.view,
-                  PrintCleanupAccess.this.init_UiHelper.env,
-                  PrintCleanupAccess.this.init_UiHelper.rules,
-                  this.init_ListPool,
+                  PrintCleanupAccess.this.core.view,
+                  PrintCleanupAccess.this.core.env,
+                  PrintCleanupAccess.this.core.rules,
+                  this.target,
                   Items.DIAMOND_PICKAXE,
                   PrintClicks.Inner_CachePool.DIG,
                   this.init_Vec3,
                   false,
                   false,
-                  this.init_ConfigStore_DataUt,
+                  this.clickBudget,
                   4.1000000000000005
                );
                if (click == null) {
@@ -837,7 +837,7 @@ final class PrintCleanupAccess {
                   continue;
                }
 
-               this.init_UiHelper_h = PrintCleanupAccess.this.init_UiHelper.new h(this.init_Vec3);
+               this.init_UiHelper_h = PrintCleanupAccess.this.core.new h(this.init_Vec3);
                this.read_I = 1;
             }
 
@@ -855,10 +855,10 @@ final class PrintCleanupAccess {
                   this.read_I = 2;
                }
             } else {
-               PrintCleanupAccess.this.init_UiHelper.view.pushHypothesis(this.init_ListPool.pos(), Blocks.AIR.defaultBlockState());
+               PrintCleanupAccess.this.core.view.pushHypothesis(this.target.pos(), Blocks.AIR.defaultBlockState());
 
                try {
-                  if (!PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.init_UiHelper.view, this.init_Vec3)) {
+                  if (!PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.core.view, this.init_Vec3)) {
                      this.init_Vec3 = null;
                      this.init_UiHelper_h = this.load_UiHelper_h = null;
                      this.read_I = 0;
@@ -866,7 +866,7 @@ final class PrintCleanupAccess {
                   }
 
                   if (this.load_UiHelper_h == null) {
-                     this.load_UiHelper_h = PrintCleanupAccess.this.init_UiHelper.new h(this.init_Vec3);
+                     this.load_UiHelper_h = PrintCleanupAccess.this.core.new h(this.init_Vec3);
                   }
 
                   this.load_UiHelper_h.init(left);
@@ -874,12 +874,12 @@ final class PrintCleanupAccess {
                      return;
                   }
                } finally {
-                  PrintCleanupAccess.this.init_UiHelper.view.popHypothesis(this.init_ListPool.pos());
+                  PrintCleanupAccess.this.core.view.popHypothesis(this.target.pos());
                }
 
                if (this.load_UiHelper_h.result != null) {
                   this.init_BufferHelper_Buffe = PrintCleanupAccess.this.new Inner_BufferHelper(
-                     this.init_J,
+                     this.key,
                      new PrintCleanupAccess.Inner_DataUtil(
                         this.init_Vec3,
                         this.init_UiHelper_h.result,
@@ -919,15 +919,15 @@ final class PrintCleanupAccess {
 
    static final class Inner_StreamUtil {
       final long cellKey;
-      int init_I;
-      PrintCleanupAccess.Inner_DataUtil init_BufferHelper_DataU;
+      int owner;
+      PrintCleanupAccess.Inner_DataUtil certificate;
       long load = -9223372036854775808L;
       long read;
       boolean init_Z;
 
       Inner_StreamUtil(long key, int owner) {
          this.cellKey = key;
-         this.init_I = owner;
+         this.owner = owner;
       }
    }
 }

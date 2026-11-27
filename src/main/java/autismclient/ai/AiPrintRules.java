@@ -57,7 +57,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    private AiPrintRules() {
    }
 
-   public static List<autismclient.ai.print.PrintTarget> init_List_Path(Path file, BlockPos origin, int rotation, String mirror) {
+   public static List<autismclient.ai.print.PrintTarget> targetsFromFile(Path file, BlockPos origin, int rotation, String mirror) {
       AiSchematic.Inner_BufferHelper loaded = AiSchematic.load(file, origin, rotation, mirror, false, 2097152);
       return init(AiBuilder.normalizeSchematicBlueprint(loaded.blueprint()));
    }
@@ -84,7 +84,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
       return new AiPrintRules.Inner_DataUtil(init(normalized), actions.vehicles(), hoppers, actions.outcomes(), Map.copyOf(contents), actions);
    }
 
-   public static Map<Long, ListTag> init_Map_Path(Path file, BlockPos origin, int rotation, String mirror) {
+   public static Map<Long, ListTag> containerContentsFromFile(Path file, BlockPos origin, int rotation, String mirror) {
       AiSchematic.Inner_BufferHelper loaded = AiSchematic.load(file, origin, rotation, mirror, false, 2097152);
       HashMap<Long, ListTag> out = new HashMap<>();
       BlockPos o = loaded.blueprint().origin();
@@ -111,7 +111,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
       return (stacks + 26) / 27;
    }
 
-   public static List<Item> init_List(autismclient.ai.print.PrintTarget target) {
+   public static List<Item> materials(autismclient.ai.print.PrintTarget target) {
       return target.cell() instanceof AiBuilder.CellSpec cell ? AiSchematicActions.materials(cell) : List.of();
    }
 
@@ -138,7 +138,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
          LinkedHashMap<String, String> props = new LinkedHashMap<>();
 
          for (Property<?> property : state.getProperties()) {
-            props.put(property.getName(), init_Str_BlockState_Property(state, property));
+            props.put(property.getName(), propertyValue(state, property));
          }
 
          BlockPos p = e.getKey();
@@ -152,7 +152,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
       return init(AiBuilder.normalizeSchematicBlueprint(new AiBuilder.Blueprint(origin, cells)));
    }
 
-   private static <T extends Comparable<T>> String init_Str_BlockState_Property(BlockState state, Property<T> property) {
+   private static <T extends Comparable<T>> String propertyValue(BlockState state, Property<T> property) {
       return property.getName(state.getValue(property));
    }
 
@@ -225,13 +225,13 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
       return var10000;
    }
 
-   private static AiBuilder.CellSpec init_TableIndex_StreamU(autismclient.ai.print.PrintTarget target) {
+   private static AiBuilder.CellSpec cellSpec(autismclient.ai.print.PrintTarget target) {
       return (AiBuilder.CellSpec)target.cell();
    }
 
    @Override
    public boolean isFinished(autismclient.ai.print.PrintTarget target, BlockState live) {
-      AiBuilder.CellSpec cell = init_TableIndex_StreamU(target);
+      AiBuilder.CellSpec cell = cellSpec(target);
       if (target.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID && target.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW) {
          if ((!cell.block().equals("minecraft:dirt") || !cell.properties().isEmpty()) && !cell.block().equals("minecraft:grass_block")
             || !live.is(Blocks.DIRT) && !live.is(Blocks.GRASS_BLOCK)) {
@@ -258,7 +258,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
 
    @Override
    public boolean isPlacedCorrectly(autismclient.ai.print.PrintTarget target, BlockState live) {
-      AiBuilder.CellSpec cell = init_TableIndex_StreamU(target);
+      AiBuilder.CellSpec cell = cellSpec(target);
       switch (target.kind()) {
          case SOIL:
             return live.is(Blocks.DIRT) || AiBuilder.matchesExactCell(cell, live);
@@ -313,7 +313,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
 
    @Override
    public autismclient.ai.print.PrintRules.Inner_CachePool nextInteraction(autismclient.ai.print.PrintTarget target, BlockState live) {
-      AiBuilder.CellSpec cell = init_TableIndex_StreamU(target);
+      AiBuilder.CellSpec cell = cellSpec(target);
       Block block = live.getBlock();
       if (needsBulbPulse(target.wanted(), live)) {
          return new autismclient.ai.print.PrintRules.Inner_CachePool(Items.REDSTONE_BLOCK, "lit");
@@ -469,7 +469,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
 
    @Override
    public boolean isWaterlogMissing(autismclient.ai.print.PrintTarget target, BlockState live) {
-      AiBuilder.CellSpec cell = init_TableIndex_StreamU(target);
+      AiBuilder.CellSpec cell = cellSpec(target);
       return "true".equals(cell.properties().get("waterlogged"))
          && live.hasProperty(BlockStateProperties.WATERLOGGED)
          && !live.getValue(BlockStateProperties.WATERLOGGED);
@@ -477,7 +477,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
 
    public static boolean placeableFromAbove(autismclient.ai.print.PrintTarget target) {
       if (target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE && target.cell() != null) {
-         AiBuilder.CellSpec cell = init_TableIndex_StreamU(target);
+         AiBuilder.CellSpec cell = cellSpec(target);
          Block block = target.wanted().getBlock();
          BlockState defaults = block.defaultBlockState();
 
@@ -540,7 +540,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    public static autismclient.ai.engine.PlacementGoal.PlaceConstraint clickConstraint(autismclient.ai.print.PrintTarget target, BlockGetter world) {
       if (target.cell() != null && target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE) {
          try {
-            return AiBuilder.buildPlaceConstraint(init_TableIndex_StreamU(target), target.wanted().getBlock(), target.pos(), world);
+            return AiBuilder.buildPlaceConstraint(cellSpec(target), target.wanted().getBlock(), target.pos(), world);
          } catch (RuntimeException e) {
             return null;
          }

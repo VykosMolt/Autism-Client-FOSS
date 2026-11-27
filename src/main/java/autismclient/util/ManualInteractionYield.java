@@ -33,11 +33,11 @@ public final class ManualInteractionYield {
    private static final long init_J = 1500000000L;
    private static int update = -2147483648;
    private static int sync;
-   private static boolean init_Z;
+   private static boolean yielding;
    private static int flush;
    private static int close;
    private static int open;
-   private static BlockPos init_BlockPos;
+   private static BlockPos cameraBlock;
    private static int poll;
 
    private ManualInteractionYield() {
@@ -45,12 +45,12 @@ public final class ManualInteractionYield {
 
    public static boolean init() {
       load(Minecraft.getInstance());
-      return init_Z;
+      return yielding;
    }
 
    public static boolean load() {
       load(Minecraft.getInstance());
-      return init_Z && read() && flush < 25;
+      return yielding && read() && flush < 25;
    }
 
    private static boolean read() {
@@ -73,7 +73,7 @@ public final class ManualInteractionYield {
                open = Math.min(2, open + init(use));
             }
          } else {
-            if (!init_Z || !read()) {
+            if (!yielding || !read()) {
                flush = 0;
             }
 
@@ -95,7 +95,7 @@ public final class ManualInteractionYield {
       if (mc == null || !(mc.player != null && silentPick instanceof BlockHitResult blockPick) || blockPick.getType() != Type.BLOCK) {
          return silentPick;
       } else if (!SilentMovementCoordinator.isSafeWalkActive() && SilentMovementCoordinator.activeRotation() != null) {
-         BlockHitResult camera = init_BlockHitResult(mc);
+         BlockHitResult camera = crosshairBlock(mc);
          if (camera != null && camera.getBlockPos().equals(blockPick.getBlockPos())) {
             return silentPick;
          }
@@ -120,16 +120,16 @@ public final class ManualInteractionYield {
 
                boolean attackDown = KeyMappingControl.of(mc.options.keyAttack).autism$isActuallyDown();
                boolean useDown = KeyMappingControl.of(mc.options.keyUse).autism$isActuallyDown();
-               BlockHitResult camera = !attackDown && !useDown ? null : init_BlockHitResult(mc);
+               BlockHitResult camera = !attackDown && !useDown ? null : crosshairBlock(mc);
                if (attackDown && camera != null) {
-                  if (camera.getBlockPos().equals(init_BlockPos)) {
+                  if (camera.getBlockPos().equals(cameraBlock)) {
                      poll++;
                   } else {
-                     init_BlockPos = camera.getBlockPos().immutable();
+                     cameraBlock = camera.getBlockPos().immutable();
                      poll = 1;
                   }
                } else {
-                  init_BlockPos = null;
+                  cameraBlock = null;
                   poll = 0;
                }
 
@@ -138,15 +138,15 @@ public final class ManualInteractionYield {
                boolean auraUse = !AutismLiteVariant.enabled() && CombatInteractionController.sync();
                boolean direct = mining || useDown && !auraUse && camera != null && init(mc, camera);
                sync = init(sync, direct);
-               init_Z = direct || sync > 0;
-               if (!init_Z) {
+               yielding = direct || sync > 0;
+               if (!yielding) {
                   flush = 0;
                }
             } else {
                sync = 0;
-               init_Z = false;
+               yielding = false;
                flush = 0;
-               init_BlockPos = null;
+               cameraBlock = null;
                poll = 0;
             }
          }
@@ -166,7 +166,7 @@ public final class ManualInteractionYield {
       return direct ? 8 : Math.max(0, grace - 1);
    }
 
-   static BlockHitResult init_BlockHitResult(Minecraft mc) {
+   static BlockHitResult crosshairBlock(Minecraft mc) {
       LocalPlayer player = mc.player;
       if (player != null && mc.level != null) {
          Vec3 eye = player.getEyePosition();

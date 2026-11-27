@@ -25,16 +25,16 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.HitResult;
 
 public final class AutoArmorModule extends Module {
-   private static final EquipmentSlot[] init_EquipmentSlotArr = autismclient.util.ArmorEvaluationHelper.ARMOR_SLOTS;
-   private static final Map<EquipmentSlot, Integer> init_Map = new EnumMap<>(EquipmentSlot.class);
-   private int init_I;
-   private int load_I = -1;
+   private static final EquipmentSlot[] ARMOR_SLOTS = autismclient.util.ArmorEvaluationHelper.ARMOR_SLOTS;
+   private static final Map<EquipmentSlot, Integer> ARMOR_MENU_SLOTS = new EnumMap<>(EquipmentSlot.class);
+   private int cooldownTicks;
+   private int lastArmorValue = -1;
    private boolean init_Z;
    private static final int read_I = 4;
    private int write = -4;
    private int update = -1;
-   private final Map<String, String> load_Map = new HashMap<>();
-   private final Map<String, ValueRange> read_Map = new HashMap<>();
+   private final Map<String, String> rawRangeValues = new HashMap<>();
+   private final Map<String, ValueRange> rangeCache = new HashMap<>();
    private boolean load_Z;
    private boolean read_Z;
    private int sync;
@@ -44,14 +44,14 @@ public final class AutoArmorModule extends Module {
    private static volatile int poll = -2147483648;
    private static volatile int push = -2147483648;
 
-   private ValueRange init_ValueRange(String settingId, int fallbackMin, int fallbackMax) {
+   private ValueRange rangeSetting(String settingId, int fallbackMin, int fallbackMax) {
       String raw = this.value(settingId);
-      String previous = this.load_Map.put(settingId, raw);
+      String previous = this.rawRangeValues.put(settingId, raw);
       if (previous == null || !previous.equals(raw)) {
-         this.read_Map.put(settingId, ValueRange.parse(raw, new ValueRange(fallbackMin, fallbackMax)).clamp(0.0, 10.0));
+         this.rangeCache.put(settingId, ValueRange.parse(raw, new ValueRange(fallbackMin, fallbackMax)).clamp(0.0, 10.0));
       }
 
-      return this.read_Map.get(settingId);
+      return this.rangeCache.get(settingId);
    }
 
    AutoArmorModule() {
@@ -110,23 +110,23 @@ public final class AutoArmorModule extends Module {
 
    @Override
    public void onDisable() {
-      this.init_V_18();
+      this.resetState();
       this.close();
    }
 
    @Override
    public void onGameLeft() {
-      this.init_V_18();
+      this.resetState();
       this.init_Z = false;
    }
 
-   private void init_V_18() {
+   private void resetState() {
       if (this.load_Z && this.sync > 0) {
-         this.update_V_8();
+         this.closeInventory();
       }
 
-      this.init_I = 0;
-      this.load_I = -1;
+      this.cooldownTicks = 0;
+      this.lastArmorValue = -1;
       this.load_Z = false;
       this.read_Z = false;
       this.sync = 0;
@@ -140,7 +140,7 @@ public final class AutoArmorModule extends Module {
    @Override
    public void preMovementTick() {
       if (MC != null && MC.player != null && MC.level != null && !aD.read_Z() && !MC.player.isSpectator()) {
-         this.sync_V_4();
+         this.trackArmorValue();
          if (this.load_Z) {
             if (AutoTotemModule.init_Z_6()) {
                this.init(true);
@@ -148,13 +148,13 @@ public final class AutoArmorModule extends Module {
                this.read_V_9();
             }
          } else if (!AutoTotemModule.init_Z_6()) {
-            if (!this.update_Z_4()) {
+            if (!this.hasAnyDelay()) {
                this.load_V_15();
             } else if (MC.player.containerMenu != MC.player.inventoryMenu) {
                this.flush_V_4();
             } else if (!this.bool("not-using-item") || !MC.player.isUsingItem()) {
-               if (this.bool("no-movement") && flush_Z_4()) {
-                  if (this.read_Z_9()) {
+               if (this.bool("no-movement") && isMovingInput()) {
+                  if (this.shouldAutoOpenInventory()) {
                      MC.gui.setScreen(new InventoryScreen(MC.player));
                      this.init_Z = true;
                   }
@@ -165,7 +165,7 @@ public final class AutoArmorModule extends Module {
                      if (timesChanged != this.update || now - this.write >= 4) {
                         this.update = timesChanged;
                         this.write = now;
-                        if (this.init_TableIndex_DataUti() == null) {
+                        if (this.findBestMove() == null) {
                            if (this.init_Z) {
                               this.close();
                            }
@@ -173,7 +173,7 @@ public final class AutoArmorModule extends Module {
                            this.open = -1;
                         } else {
                            if (this.open < 0) {
-                              this.open = now + this.init_I("reaction", 3, 7);
+                              this.open = now + this.randomDelay("reaction", 3, 7);
                            }
 
                            if (now >= this.open) {
@@ -193,25 +193,25 @@ public final class AutoArmorModule extends Module {
    }
 
    private void load_V_15() {
-      if (this.init_I > 0) {
-         this.init_I--;
+      if (this.cooldownTicks > 0) {
+         this.cooldownTicks--;
       } else if (MC.player.containerMenu != MC.player.inventoryMenu) {
          this.flush_V_4();
       } else if (!this.bool("not-using-item") || !MC.player.isUsingItem()) {
-         if (this.bool("no-movement") && flush_Z_4()) {
-            if (this.read_Z_9()) {
+         if (this.bool("no-movement") && isMovingInput()) {
+            if (this.shouldAutoOpenInventory()) {
                MC.gui.setScreen(new InventoryScreen(MC.player));
                this.init_Z = true;
             }
          } else if (!BlinkPacketManager.isHoldingActionsOnly()) {
-            this.write_V_9();
+            this.tryEquipBest();
          }
       }
    }
 
    private void read_V_9() {
       int now = AutismSessionState.getInstance().getClientTick();
-      poll = now + this.init_I_12();
+      poll = now + this.clickDelay();
       if (now >= this.flush) {
          if (this.isEnabled()
             && !aD.read_Z()
@@ -219,10 +219,10 @@ public final class AutoArmorModule extends Module {
             && !BlinkPacketManager.isHoldingActionsOnly()
             && (!this.bool("not-using-item") || !MC.player.isUsingItem())) {
             if (this.read_Z) {
-               AutoArmorModule.Inner_DataUtil rest = this.init_TableIndex_DataUti();
+               AutoArmorModule.Inner_DataUtil rest = this.findBestMove();
                if (rest == null) {
                   if (this.sync > 0) {
-                     this.update_V_8();
+                     this.closeInventory();
                   }
 
                   this.init(false);
@@ -232,19 +232,19 @@ public final class AutoArmorModule extends Module {
                this.read_Z = false;
             }
 
-            AutoArmorModule.Inner_DataUtil move = this.init_TableIndex_DataUti();
+            AutoArmorModule.Inner_DataUtil move = this.findBestMove();
             if (move == null) {
                this.read_Z = true;
-               this.flush = now + this.init_I("close-delay", 3, 5);
-            } else if (!this.init(move.init_EquipmentSlot(), move.init_TaskTimer_DataUtil(), move.init_ItemStack())) {
+               this.flush = now + this.randomDelay("close-delay", 3, 5);
+            } else if (!this.init(move.slot(), move.candidate(), move.stack())) {
                this.flush = now + 1;
             } else {
                this.sync++;
-               if (this.init_TableIndex_DataUti() != null) {
-                  this.flush = now + this.init_I("click-delay", 3, 5);
+               if (this.findBestMove() != null) {
+                  this.flush = now + this.randomDelay("click-delay", 3, 5);
                } else {
                   this.read_Z = true;
-                  this.flush = now + this.init_I("close-delay", 3, 5);
+                  this.flush = now + this.randomDelay("close-delay", 3, 5);
                }
             }
          } else {
@@ -255,16 +255,16 @@ public final class AutoArmorModule extends Module {
 
    private void init(boolean aborted) {
       if (aborted && this.sync > 0) {
-         this.update_V_8();
+         this.closeInventory();
       }
 
       this.load_Z = false;
       this.read_Z = false;
       this.sync = 0;
-      this.close = AutismSessionState.getInstance().getClientTick() + this.init_I("operation-delay", 3, 5);
+      this.close = AutismSessionState.getInstance().getClientTick() + this.randomDelay("operation-delay", 3, 5);
    }
 
-   private AutoArmorModule.Inner_DataUtil init_TableIndex_DataUti() {
+   private AutoArmorModule.Inner_DataUtil findBestMove() {
       int threshold = this.bool("save-armor") ? this.integer("durability-threshold") : -2147483648;
       Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = this.init(threshold);
       if (this.bool("prefer-elytra")) {
@@ -274,7 +274,7 @@ public final class AutoArmorModule extends Module {
          }
       }
 
-      for (EquipmentSlot slot : init_EquipmentSlotArr) {
+      for (EquipmentSlot slot : ARMOR_SLOTS) {
          autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate = best.get(slot);
          if (candidate != null
             && candidate.kind() != autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR
@@ -289,31 +289,31 @@ public final class AutoArmorModule extends Module {
       return null;
    }
 
-   private boolean read_Z_9() {
-      return this.bool("save-armor") && this.bool("auto-open-inventory") && MC.gui.screen() == null && !write_Z_4() && this.sync_Z_4();
+   private boolean shouldAutoOpenInventory() {
+      return this.bool("save-armor") && this.bool("auto-open-inventory") && MC.gui.screen() == null && !isInvMoveEnabled() && this.hasLowDurabilityArmor();
    }
 
-   private static boolean write_Z_4() {
+   private static boolean isInvMoveEnabled() {
       Module module = al.init_Module_Str("inv-move");
       return module != null && module.isEnabled();
    }
 
-   private void write_V_9() {
-      AutoArmorModule.Inner_DataUtil move = this.init_TableIndex_DataUti();
-      if (move != null && this.init(move.init_EquipmentSlot(), move.init_TaskTimer_DataUtil(), move.init_ItemStack())) {
-         this.init_I = 1;
+   private void tryEquipBest() {
+      AutoArmorModule.Inner_DataUtil move = this.findBestMove();
+      if (move != null && this.init(move.slot(), move.candidate(), move.stack())) {
+         this.cooldownTicks = 1;
       } else {
          if (this.init_Z) {
             this.close();
          }
 
-         this.init_I = 1;
+         this.cooldownTicks = 1;
       }
    }
 
    private boolean init(EquipmentSlot slot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate, ItemStack worn) {
       boolean occupied = !worn.isEmpty();
-      int armorMenuSlot = init_Map.get(slot);
+      int armorMenuSlot = ARMOR_MENU_SLOTS.get(slot);
       boolean hotbarFast = candidate.kind() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && this.bool("hotbar");
       if (!occupied) {
          return hotbarFast ? this.init(armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP) : this.init(this.init(candidate), 0, ContainerInput.QUICK_MOVE);
@@ -347,26 +347,26 @@ public final class AutoArmorModule extends Module {
       }
    }
 
-   private int init_I(String settingId, int fallbackMin, int fallbackMax) {
-      return (int)Math.round(this.init_ValueRange(settingId, fallbackMin, fallbackMax).random(ThreadLocalRandom.current()));
+   private int randomDelay(String settingId, int fallbackMin, int fallbackMax) {
+      return (int)Math.round(this.rangeSetting(settingId, fallbackMin, fallbackMax).random(ThreadLocalRandom.current()));
    }
 
-   private double init_D_Str_I_2(String settingId, int fallbackMax) {
-      return this.init_ValueRange(settingId, 0, fallbackMax).max();
+   private double rangeMax(String settingId, int fallbackMax) {
+      return this.rangeSetting(settingId, 0, fallbackMax).max();
    }
 
-   private boolean update_Z_4() {
-      return this.init_D_Str_I_2("click-delay", 5) > 0.0
-         || this.init_D_Str_I_2("close-delay", 5) > 0.0
-         || this.init_D_Str_I_2("operation-delay", 5) > 0.0
-         || this.init_D_Str_I_2("reaction", 7) > 0.0;
+   private boolean hasAnyDelay() {
+      return this.rangeMax("click-delay", 5) > 0.0
+         || this.rangeMax("close-delay", 5) > 0.0
+         || this.rangeMax("operation-delay", 5) > 0.0
+         || this.rangeMax("reaction", 7) > 0.0;
    }
 
-   private int init_I_12() {
-      return Math.max(1, this.init_I("click-delay", 3, 5));
+   private int clickDelay() {
+      return Math.max(1, this.randomDelay("click-delay", 3, 5));
    }
 
-   private void update_V_8() {
+   private void closeInventory() {
       if (MC != null && MC.player != null && MC.getConnection() != null && MC.gui.screen() == null) {
          if (MC.player.containerMenu == MC.player.inventoryMenu) {
             MC.getConnection().send(new ServerboundContainerClosePacket(MC.player.containerMenu.containerId));
@@ -456,37 +456,37 @@ public final class AutoArmorModule extends Module {
       return null;
    }
 
-   private void sync_V_4() {
+   private void trackArmorValue() {
       if (!this.bool("save-armor")) {
-         this.load_I = -1;
+         this.lastArmorValue = -1;
       } else {
          int current = MC.player.getArmorValue();
          boolean handledScreen = MC.gui.screen() instanceof AbstractContainerScreen && !(MC.gui.screen() instanceof InventoryScreen);
-         if (handledScreen && this.load_I >= 0 && current < this.load_I && this.bool("auto-open-inventory")) {
+         if (handledScreen && this.lastArmorValue >= 0 && current < this.lastArmorValue && this.bool("auto-open-inventory")) {
             Screen screen = MC.gui.screen();
             if (screen != null) {
                screen.onClose();
             }
          }
 
-         this.load_I = current;
+         this.lastArmorValue = current;
       }
    }
 
    private void flush_V_4() {
-      if (this.bool("save-armor") && this.bool("auto-open-inventory") && this.sync_Z_4()) {
+      if (this.bool("save-armor") && this.bool("auto-open-inventory") && this.hasLowDurabilityArmor()) {
          Screen screen = MC.gui.screen();
          if (screen instanceof AbstractContainerScreen && !(screen instanceof InventoryScreen)) {
             screen.onClose();
-            this.init_I = Math.max(1, this.init_I("click-delay", 3, 5));
+            this.cooldownTicks = Math.max(1, this.randomDelay("click-delay", 3, 5));
          }
       }
    }
 
-   private boolean sync_Z_4() {
+   private boolean hasLowDurabilityArmor() {
       int threshold = this.integer("durability-threshold");
 
-      for (EquipmentSlot slot : init_EquipmentSlotArr) {
+      for (EquipmentSlot slot : ARMOR_SLOTS) {
          ItemStack worn = MC.player.getItemBySlot(slot);
          if (!worn.isEmpty()
             && autismclient.util.ArmorEvaluationHelper.isArmor(worn)
@@ -518,10 +518,10 @@ public final class AutoArmorModule extends Module {
    }
 
    private Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> init(int threshold) {
-      return autismclient.util.ArmorEvaluationHelper.bestBySlot(this.init_Map(), threshold);
+      return autismclient.util.ArmorEvaluationHelper.bestBySlot(this.armorCandidates(), threshold);
    }
 
-   private Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> init_Map() {
+   private Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> armorCandidates() {
       return autismclient.util.ArmorEvaluationHelper.candidatesBySlot(new autismclient.util.ArmorEvaluationHelper.Inner_BufferHelper() {
          @Override
          public ItemStack init(int index) {
@@ -535,18 +535,18 @@ public final class AutoArmorModule extends Module {
       }, this.bool("allow-cursed"), !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id()));
    }
 
-   private static boolean flush_Z_4() {
+   private static boolean isMovingInput() {
       Input input = MC.player.input.keyPresses;
       return input.forward() || input.backward() || input.left() || input.right() || input.jump();
    }
 
    static {
-      init_Map.put(EquipmentSlot.HEAD, 5);
-      init_Map.put(EquipmentSlot.CHEST, 6);
-      init_Map.put(EquipmentSlot.LEGS, 7);
-      init_Map.put(EquipmentSlot.FEET, 8);
+      ARMOR_MENU_SLOTS.put(EquipmentSlot.HEAD, 5);
+      ARMOR_MENU_SLOTS.put(EquipmentSlot.CHEST, 6);
+      ARMOR_MENU_SLOTS.put(EquipmentSlot.LEGS, 7);
+      ARMOR_MENU_SLOTS.put(EquipmentSlot.FEET, 8);
    }
 
-   private record Inner_DataUtil(EquipmentSlot init_EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil init_TaskTimer_DataUtil, ItemStack init_ItemStack) {
+   private record Inner_DataUtil(EquipmentSlot slot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate, ItemStack stack) {
    }
 }

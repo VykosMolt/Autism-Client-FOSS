@@ -33,10 +33,10 @@ public final class FrameEspCatalog {
    );
    public static final String DEFAULT_IDS;
    public static final int DEFAULT_COLOR = -859848769;
-   private static final Map<String, FrameEspCatalog.Inner_StreamUtil> init_Map = new LinkedHashMap<>();
+   private static final Map<String, FrameEspCatalog.Inner_StreamUtil> TARGETS_BY_ID = new LinkedHashMap<>();
    private static volatile String read;
-   private static volatile List<String> load_List = List.of();
-   private static volatile FrameEspCatalog.Inner_CachePool init_ah_CachePool;
+   private static volatile List<String> selectedIds = List.of();
+   private static volatile FrameEspCatalog.Inner_CachePool currentSnapshot;
 
    private FrameEspCatalog() {
    }
@@ -57,11 +57,11 @@ public final class FrameEspCatalog {
             }
          }
 
-         load_List = List.copyOf(ids);
+         selectedIds = List.copyOf(ids);
          read = value;
       }
 
-      return load_List;
+      return selectedIds;
    }
 
    public static boolean isSelected(Module module, String itemId) {
@@ -69,27 +69,27 @@ public final class FrameEspCatalog {
    }
 
    public static boolean isKnown(String itemId) {
-      return itemId != null && init_Map.containsKey(itemId.toLowerCase(Locale.ROOT));
+      return itemId != null && TARGETS_BY_ID.containsKey(itemId.toLowerCase(Locale.ROOT));
    }
 
    public static int defaultColor(String itemId) {
-      FrameEspCatalog.Inner_StreamUtil target = itemId == null ? null : init_Map.get(itemId.toLowerCase(Locale.ROOT));
+      FrameEspCatalog.Inner_StreamUtil target = itemId == null ? null : TARGETS_BY_ID.get(itemId.toLowerCase(Locale.ROOT));
       if (target != null) {
          return target.defaultColor();
       }
 
-      Item item = init_Item(itemId);
+      Item item = parseItem(itemId);
       return item == null ? -859848769 : -872415232 | am.init(new ItemStack(item));
    }
 
-   public static int init_I(Module module, String itemId) {
+   public static int colorFor(Module module, String itemId) {
       String key = "color-" + itemId;
       String stored = module == null ? "" : module.value(key);
       int fallback = defaultColor(itemId);
       return stored != null && !stored.isBlank() ? am.init_I_Module(module, key, fallback) : fallback;
    }
 
-   static Item init_Item(String itemId) {
+   static Item parseItem(String itemId) {
       if (itemId != null && !itemId.isBlank()) {
          Identifier identifier = Identifier.tryParse(itemId.contains(":") ? itemId : "minecraft:" + itemId);
          return identifier == null ? null : BuiltInRegistries.ITEM.getOptional(identifier).orElse(null);
@@ -99,21 +99,21 @@ public final class FrameEspCatalog {
    }
 
    static FrameEspCatalog.Inner_CachePool snapshot() {
-      FrameEspCatalog.Inner_CachePool current = init_ah_CachePool;
+      FrameEspCatalog.Inner_CachePool current = currentSnapshot;
       int revision = al.init_I();
       boolean hidden = am.init_Z();
-      if (current.init_I() == revision && current.init_Z() == hidden) {
+      if (current.revision() == revision && current.hidden() == hidden) {
          return current;
       }
 
       synchronized (FrameEspCatalog.class) {
-         current = init_ah_CachePool;
-         if (current.init_I() == revision && current.init_Z() == hidden) {
+         current = currentSnapshot;
+         if (current.revision() == revision && current.hidden() == hidden) {
             return current;
          }
 
          current = init(revision, hidden);
-         init_ah_CachePool = current;
+         currentSnapshot = current;
          return current;
       }
    }
@@ -128,9 +128,9 @@ public final class FrameEspCatalog {
          Map<Item, Integer> colors = new IdentityHashMap<>();
 
          for (String id : init(module)) {
-            Item item = init_Item(id);
+            Item item = parseItem(id);
             if (item != null) {
-               colors.put(item, init_I(module, id));
+               colors.put(item, colorFor(module, id));
             }
          }
 
@@ -158,7 +158,7 @@ public final class FrameEspCatalog {
       if (stack.isEmpty()) {
          return snapshot.close() ? snapshot.load_I() : 0;
       } else {
-         Integer color = snapshot.init_Map().get(stack.getItem());
+         Integer color = snapshot.colors().get(stack.getItem());
          if (color != null) {
             return color;
          } else {
@@ -243,7 +243,7 @@ public final class FrameEspCatalog {
       StringBuilder def = new StringBuilder();
 
       for (FrameEspCatalog.Inner_StreamUtil target : TARGETS) {
-         init_Map.put(target.id(), target);
+         TARGETS_BY_ID.put(target.id(), target);
          if (def.length() > 0) {
             def.append('|');
          }
@@ -252,12 +252,12 @@ public final class FrameEspCatalog {
       }
 
       DEFAULT_IDS = def.toString();
-      init_ah_CachePool = FrameEspCatalog.Inner_CachePool.init(-2147483648, false);
+      currentSnapshot = FrameEspCatalog.Inner_CachePool.init(-2147483648, false);
    }
 
    record Inner_CachePool(
-      int init_I,
-      boolean init_Z,
+      int revision,
+      boolean hidden,
       boolean load_Z,
       boolean read,
       boolean write,
@@ -266,7 +266,7 @@ public final class FrameEspCatalog {
       boolean flush,
       boolean close,
       int load_I,
-      Map<Item, Integer> init_Map
+      Map<Item, Integer> colors
    ) {
       static FrameEspCatalog.Inner_CachePool init(int revision, boolean hidden) {
          return new FrameEspCatalog.Inner_CachePool(revision, hidden, false, false, false, false, false, false, false, 0, Map.of());

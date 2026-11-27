@@ -11,9 +11,9 @@ import org.jspecify.annotations.Nullable;
 public record TexturedQuadRenderState(
    RenderPipeline init_RenderPipeline,
    TextureSetup init_TextureSetup,
-   Matrix3x2fc init_Matrix3x2fc,
-   float[] init_FArr,
-   int init_I,
+   Matrix3x2fc pose,
+   float[] quads,
+   int quadCount,
    int load_I,
    int read,
    float init_F,
@@ -76,21 +76,21 @@ public record TexturedQuadRenderState(
 
    @Override
    public void buildVertices(VertexConsumer consumer) {
-      for (int i = 0; i < this.init_I; i++) {
+      for (int i = 0; i < this.quadCount; i++) {
          int o = i * 8;
-         int top = this.init(this.init_FArr[o + 1]);
-         int bottom = this.init(this.init_FArr[o + 3]);
-         consumer.addVertexWith2DPose(this.init_Matrix3x2fc, this.init_FArr[o], this.init_FArr[o + 1])
-            .setUv(this.init_FArr[o + 4], this.init_FArr[o + 5])
+         int top = this.init(this.quads[o + 1]);
+         int bottom = this.init(this.quads[o + 3]);
+         consumer.addVertexWith2DPose(this.pose, this.quads[o], this.quads[o + 1])
+            .setUv(this.quads[o + 4], this.quads[o + 5])
             .setColor(top);
-         consumer.addVertexWith2DPose(this.init_Matrix3x2fc, this.init_FArr[o], this.init_FArr[o + 3])
-            .setUv(this.init_FArr[o + 4], this.init_FArr[o + 7])
+         consumer.addVertexWith2DPose(this.pose, this.quads[o], this.quads[o + 3])
+            .setUv(this.quads[o + 4], this.quads[o + 7])
             .setColor(bottom);
-         consumer.addVertexWith2DPose(this.init_Matrix3x2fc, this.init_FArr[o + 2], this.init_FArr[o + 3])
-            .setUv(this.init_FArr[o + 6], this.init_FArr[o + 7])
+         consumer.addVertexWith2DPose(this.pose, this.quads[o + 2], this.quads[o + 3])
+            .setUv(this.quads[o + 6], this.quads[o + 7])
             .setColor(bottom);
-         consumer.addVertexWith2DPose(this.init_Matrix3x2fc, this.init_FArr[o + 2], this.init_FArr[o + 1])
-            .setUv(this.init_FArr[o + 6], this.init_FArr[o + 5])
+         consumer.addVertexWith2DPose(this.pose, this.quads[o + 2], this.quads[o + 1])
+            .setUv(this.quads[o + 6], this.quads[o + 5])
             .setColor(top);
       }
    }

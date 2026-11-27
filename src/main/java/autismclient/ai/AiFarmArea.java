@@ -10,12 +10,12 @@ import net.minecraft.core.BlockPos;
 final class AiFarmArea {
    static final String FARMLAND = "farmland";
    static final String load = "soul_sand";
-   private static final Set<String> init_Set = Set.of("minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots");
+   private static final Set<String> FARMLAND_CROPS = Set.of("minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots");
 
    private AiFarmArea() {
    }
 
-   static boolean init_Z(JsonObject args) {
+   static boolean hasCorners(JsonObject args) {
       boolean from = args.has("from");
       boolean to = args.has("to");
       if (from != to) {
@@ -26,7 +26,7 @@ final class AiFarmArea {
    }
 
    static AiFarmArea.Inner_DataUtil fromArgs(JsonObject args) {
-      return !init_Z(args) ? null : new AiFarmArea.Inner_DataUtil(init_BlockPos(args.getAsJsonObject("from"), "from"), init_BlockPos(args.getAsJsonObject("to"), "to"));
+      return !hasCorners(args) ? null : new AiFarmArea.Inner_DataUtil(parseCorner(args.getAsJsonObject("from"), "from"), parseCorner(args.getAsJsonObject("to"), "to"));
    }
 
    static String substrateFor(JsonObject args, String cropBlock) {
@@ -70,7 +70,7 @@ final class AiFarmArea {
    static String defaultSubstrate(String cropBlock) {
       if ("minecraft:nether_wart".equals(cropBlock)) {
          return "soul_sand";
-      } else if (init_Set.contains(cropBlock)) {
+      } else if (FARMLAND_CROPS.contains(cropBlock)) {
          return "farmland";
       } else {
          throw new IllegalArgumentException("Build supports wheat, carrots, potatoes, beetroots and nether wart");
@@ -89,7 +89,7 @@ final class AiFarmArea {
       return isSoulSand(substrate) ? "minecraft:soul_sand" : "minecraft:farmland";
    }
 
-   private static BlockPos init_BlockPos(JsonObject value, String name) {
+   private static BlockPos parseCorner(JsonObject value, String name) {
       if (value == null) {
          throw new IllegalArgumentException("Missing farm corner " + name);
       }

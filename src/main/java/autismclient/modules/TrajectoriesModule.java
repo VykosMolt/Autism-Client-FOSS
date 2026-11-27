@@ -32,10 +32,10 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class TrajectoriesModule extends Module {
-   private TrajectoriesModule.Inner_DataUtil init_aS_DataUtil;
-   private ItemStack init_ItemStack = ItemStack.EMPTY;
-   private List<TrajectoriesModule.Inner_ConfigStore> init_List = List.of();
-   private int init_I;
+   private TrajectoriesModule.Inner_DataUtil lastFrame;
+   private ItemStack lastStack = ItemStack.EMPTY;
+   private List<TrajectoriesModule.Inner_ConfigStore> flights = List.of();
+   private int color;
    private List<TrajectoriesModule.Inner_CachePool> load = List.of();
 
    public TrajectoriesModule() {
@@ -70,17 +70,17 @@ public final class TrajectoriesModule extends Module {
       return this.load;
    }
 
-   private void init_V_26() {
-      this.init_aS_DataUtil = null;
-      this.init_ItemStack = ItemStack.EMPTY;
-      this.init_List = List.of();
+   private void clearFrame() {
+      this.lastFrame = null;
+      this.lastStack = ItemStack.EMPTY;
+      this.flights = List.of();
       this.load = List.of();
    }
 
    @Override
    public void tick() {
-      if (this.init_aS_DataUtil != null && (MC == null || MC.level != this.init_aS_DataUtil.init_Obj() || MC.player != this.init_aS_DataUtil.init_Player())) {
-         this.init_V_26();
+      if (this.lastFrame != null && (MC == null || MC.level != this.lastFrame.level() || MC.player != this.lastFrame.player())) {
+         this.clearFrame();
       }
 
       if (!AutismLiteVariant.enabled()) {
@@ -95,7 +95,7 @@ public final class TrajectoriesModule extends Module {
 
    @Override
    public void onDisable() {
-      this.init_V_26();
+      this.clearFrame();
       ar.init_V_List(List.of());
       if (!AutismLiteVariant.enabled()) {
          TrajectoryStateCache.reset();
@@ -104,7 +104,7 @@ public final class TrajectoriesModule extends Module {
 
    public static void computePaths(float partialTick) {
       if (al.init_Module_Str("trajectories") instanceof TrajectoriesModule trajectories && trajectories.isEnabled()) {
-         trajectories.load = trajectories.init_List_F_2(partialTick);
+         trajectories.load = trajectories.computeTrajectories(partialTick);
          if (!AutismLiteVariant.enabled()) {
             TrajectoryStateCache.init(MC, trajectories.load);
          }
@@ -115,12 +115,12 @@ public final class TrajectoriesModule extends Module {
       }
    }
 
-   private List<TrajectoriesModule.Inner_CachePool> init_List_F_2(float partialTick) {
+   private List<TrajectoriesModule.Inner_CachePool> computeTrajectories(float partialTick) {
       if (MC != null && MC.player != null && MC.level != null && !MC.player.isSpectator() && MC.player.isAlive()) {
          Player player = MC.player;
-         InteractionHand hand = init_InteractionHand_Player_2(player);
+         InteractionHand hand = projectileHand(player);
          ItemStack stack = player.getItemInHand(hand);
-         TrajectoriesModule.Inner_StreamUtil item = init_aS_StreamUtil_ItemStack(stack);
+         TrajectoriesModule.Inner_StreamUtil item = projectileKind(stack);
          if (item != null && this.bool(item.init())) {
             float yaw = player.getYRot();
             float pitch = player.getXRot();
@@ -158,7 +158,7 @@ public final class TrajectoriesModule extends Module {
                hand,
                player.fishing != null
             );
-            if (!frame.equals(this.init_aS_DataUtil) || !ItemStack.matches(stack, this.init_ItemStack)) {
+            if (!frame.equals(this.lastFrame) || !ItemStack.matches(stack, this.lastStack)) {
                List<TrajectoriesModule.Inner_ConfigStore> flights = new ArrayList<>(3);
 
                for (ProjectileBallistics.Inner_BufferHelper shot : ProjectileBallistics.init(player, stack, true, true)) {
@@ -172,10 +172,10 @@ public final class TrajectoriesModule extends Module {
                   }
                }
 
-               this.init_List = List.copyOf(flights);
-               this.init_I = init(item, stack);
-               this.init_aS_DataUtil = frame;
-               this.init_ItemStack = stack.copy();
+               this.flights = List.copyOf(flights);
+               this.color = init(item, stack);
+               this.lastFrame = frame;
+               this.lastStack = stack.copy();
             }
 
             Vec3 interpolated = player.tickCount == 0
@@ -186,21 +186,21 @@ public final class TrajectoriesModule extends Module {
                   Math.fma(partialTick, player.getZ() - player.zOld, player.zOld)
                );
             Vec3 offset = interpolated.subtract(player.position());
-            List<TrajectoriesModule.Inner_CachePool> result = new ArrayList<>(this.init_List.size());
+            List<TrajectoriesModule.Inner_CachePool> result = new ArrayList<>(this.flights.size());
 
-            for (TrajectoriesModule.Inner_ConfigStore visual : this.init_List) {
-               ProjectileBallistics.Inner_CachePool flight = visual.init_aX_CachePool();
+            for (TrajectoriesModule.Inner_ConfigStore visual : this.flights) {
+               ProjectileBallistics.Inner_CachePool flight = visual.flight();
                result.add(
                   new TrajectoriesModule.Inner_CachePool(
                      flight.points(),
                      flight.hit(),
                      offset,
                      item,
-                     visual.init_Z() ? -13684 : this.init_I,
+                     visual.init_Z() ? -13684 : this.color,
                      visual.init_Z(),
                      result.isEmpty(),
                      visual.init_aS_BufferHelper(),
-                     item == TrajectoriesModule.Inner_StreamUtil.PEARL && flight.hit() != null ? init_Vec3_aX_CachePool(flight) : null
+                     item == TrajectoriesModule.Inner_StreamUtil.PEARL && flight.hit() != null ? impactPoint(flight) : null
                   )
                );
             }
@@ -210,12 +210,12 @@ public final class TrajectoriesModule extends Module {
             return List.of();
          }
       } else {
-         this.init_V_26();
+         this.clearFrame();
          return List.of();
       }
    }
 
-   static Vec3 init_Vec3_aX_CachePool(ProjectileBallistics.Inner_CachePool flight) {
+   static Vec3 impactPoint(ProjectileBallistics.Inner_CachePool flight) {
       return flight.hit() != null && flight.points().size() >= 2 ? flight.points().get(flight.points().size() - 2) : null;
    }
 
@@ -315,16 +315,16 @@ public final class TrajectoriesModule extends Module {
       }
    }
 
-   private static InteractionHand init_InteractionHand_Player_2(Player player) {
+   private static InteractionHand projectileHand(Player player) {
       if (player.isUsingItem()) {
          return player.getUsedItemHand();
       }
 
       ItemStack main = player.getMainHandItem();
-      return init_aS_StreamUtil_ItemStack(main) == null && main.getUseDuration(player) <= 0 ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+      return projectileKind(main) == null && main.getUseDuration(player) <= 0 ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
    }
 
-   static TrajectoriesModule.Inner_StreamUtil init_aS_StreamUtil_ItemStack(ItemStack stack) {
+   static TrajectoriesModule.Inner_StreamUtil projectileKind(ItemStack stack) {
       TrajectoriesModule.Inner_StreamUtil var10000;
       switch (stack.getItem()) {
          case BowItem ignored:
@@ -386,12 +386,12 @@ public final class TrajectoriesModule extends Module {
    ) {
    }
 
-   private record Inner_ConfigStore(ProjectileBallistics.Inner_CachePool init_aX_CachePool, boolean init_Z, TrajectoriesModule.Inner_BufferHelper init_aS_BufferHelper) {
+   private record Inner_ConfigStore(ProjectileBallistics.Inner_CachePool flight, boolean init_Z, TrajectoriesModule.Inner_BufferHelper init_aS_BufferHelper) {
    }
 
    private record Inner_DataUtil(
-      Object init_Obj,
-      Player init_Player,
+      Object level,
+      Player player,
       int init_I,
       Vec3 init_Vec3,
       double init_D,

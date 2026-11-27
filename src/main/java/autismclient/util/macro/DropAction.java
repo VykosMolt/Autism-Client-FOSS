@@ -32,7 +32,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       }
    }
 
-   public boolean init_Z_4() {
+   public boolean hasTargetFilter() {
       for (MacroItemTarget target : this.load()) {
          if (target != null && (target.hasItemFilter() || target.hasSlot())) {
             return true;
@@ -42,7 +42,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       return false;
    }
 
-   public List<MacroItemTarget> init_List_5() {
+   public List<MacroItemTarget> targets() {
       return List.copyOf(this.load());
    }
 
@@ -50,7 +50,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    public void execute(Minecraft mc) {
       if (mc.player != null && mc.gameMode != null) {
          List<MacroItemTarget> targets = this.load();
-         if (!this.init_Z_4()) {
+         if (!this.hasTargetFilter()) {
             if (this.mode == DropAction.Inner_DataUtil.ALL) {
                for (int i = 0; i < 36; i++) {
                   if (!mc.player.getInventory().getItem(i).isEmpty()) {
@@ -78,10 +78,10 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
             }
          } else if (!targets.isEmpty()) {
             for (int ei = 0; ei < targets.size(); ei++) {
-               MacroItemTarget entryTarget = this.init_ArrayUtil_I_2(ei).resolveTemplates(mc);
+               MacroItemTarget entryTarget = this.targetAt(ei).resolveTemplates(mc);
                if (entryTarget != null) {
                   int count = this.getItemCount(ei);
-                  String entryName = init_Str_Str_3(entryTarget.toSpecString());
+                  String entryName = entrySpec(entryTarget.toSpecString());
                   int configuredSlot = entryTarget.hasSlot() ? entryTarget.slot : -1;
                   if (configuredSlot >= 0 && !entryName.isEmpty()) {
                      this.init(mc, configuredSlot, entryTarget, count);
@@ -276,7 +276,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
          }
       }
 
-      this.init_V_7();
+      this.syncItemNames();
       this.itemCounts.clear();
       if (tag.contains("itemCounts")) {
          for (Tag el : tag.getList("itemCounts").orElse(new ListTag())) {
@@ -315,8 +315,8 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       }
 
       String e0 = targets.get(0).toSpecString();
-      int slot = init_I_Str_2(e0);
-      String itemName = init_Str_Str_3(e0);
+      int slot = entrySlot(e0);
+      String itemName = entrySpec(e0);
       String first;
       if (slot >= 0 && !itemName.isEmpty()) {
          first = "\"" + itemName + "\" @ Slot " + slot;
@@ -349,7 +349,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       this.init = e;
    }
 
-   private static int init_I_Str_2(String entry) {
+   private static int entrySlot(String entry) {
       if (entry != null && entry.startsWith("#")) {
          int separator = entry.indexOf(124);
          String raw = separator >= 0 ? entry.substring(1, separator) : entry.substring(1);
@@ -364,7 +364,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       }
    }
 
-   private static String init_Str_Str_3(String entry) {
+   private static String entrySpec(String entry) {
       if (entry == null || entry.isBlank()) {
          return "";
       }
@@ -392,12 +392,12 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       return this.itemTargets;
    }
 
-   private MacroItemTarget init_ArrayUtil_I_2(int index) {
+   private MacroItemTarget targetAt(int index) {
       List<MacroItemTarget> targets = this.load();
       return index >= 0 && index < targets.size() ? targets.get(index) : new MacroItemTarget();
    }
 
-   private void init_V_7() {
+   private void syncItemNames() {
       this.itemNames.clear();
 
       for (MacroItemTarget target : this.itemTargets) {

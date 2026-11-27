@@ -29,8 +29,8 @@ public final class ProxyConnectivityTester {
                if (second.success()) {
                   return second;
                } else {
-                  return (first.init_ca_StreamUtil() == ProxyConnectivityTester.Inner_StreamUtil.REFUSED || first.init_ca_StreamUtil() == ProxyConnectivityTester.Inner_StreamUtil.TIMEOUT)
-                        && second.init_ca_StreamUtil() == ProxyConnectivityTester.Inner_StreamUtil.OFFLINE
+                  return (first.outcome() == ProxyConnectivityTester.Inner_StreamUtil.REFUSED || first.outcome() == ProxyConnectivityTester.Inner_StreamUtil.TIMEOUT)
+                        && second.outcome() == ProxyConnectivityTester.Inner_StreamUtil.OFFLINE
                      ? first
                      : second;
                }
@@ -233,7 +233,7 @@ public final class ProxyConnectivityTester {
       return out;
    }
 
-   public record Inner_DataUtil(boolean success, long latencyMs, ProxyProtocolType protocol, ProxyConnectivityTester.Inner_StreamUtil init_ca_StreamUtil) {
+   public record Inner_DataUtil(boolean success, long latencyMs, ProxyProtocolType protocol, ProxyConnectivityTester.Inner_StreamUtil outcome) {
       public Inner_DataUtil(boolean ok, long latencyMs, ProxyProtocolType workingType) {
          this(ok, latencyMs, workingType, ok ? ProxyConnectivityTester.Inner_StreamUtil.VERIFIED : ProxyConnectivityTester.Inner_StreamUtil.OFFLINE);
       }

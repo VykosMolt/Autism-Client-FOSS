@@ -15,19 +15,19 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
 
 public final class VillagerTradeSession {
-   private static VillagerTradeSession init_CachePool;
-   private final TradeOfferFilter init_StreamUtil;
-   private final int init_I;
-   private final int load_I;
-   private final int read_I;
+   private static VillagerTradeSession active;
+   private final TradeOfferFilter filter;
+   private final int limit;
+   private final int delayTicks;
+   private final int timeoutTicks;
    private final int write;
    private final int update;
-   private VillagerTradeSession.Inner_DataUtil init_CachePool_DataUtil;
-   private Object init_Obj;
-   private Object load_Obj;
+   private VillagerTradeSession.Inner_DataUtil view;
+   private Object boundMenu;
+   private Object boundLevel;
    private Object read_Obj;
-   private VillagerTradeSession.Inner_StreamUtil init_CachePool_StreamUt = VillagerTradeSession.Inner_StreamUtil.SELECT;
-   private VillagerTradeSession.Inner_CachePool init_CachePool_CachePoo = VillagerTradeSession.Inner_CachePool.RUNNING;
+   private VillagerTradeSession.Inner_StreamUtil phase = VillagerTradeSession.Inner_StreamUtil.SELECT;
+   private VillagerTradeSession.Inner_CachePool status = VillagerTradeSession.Inner_CachePool.RUNNING;
    private int sync;
    private int flush;
    private int close;
@@ -37,32 +37,32 @@ public final class VillagerTradeSession {
    private int pop;
    private int tick;
    private ItemStack init_ItemStack = ItemStack.EMPTY;
-   private ItemStack load_ItemStack = ItemStack.EMPTY;
+   private ItemStack serverCursor = ItemStack.EMPTY;
    private int run;
    private int get;
-   private String init_Str = "Selecting trade";
-   private MerchantOffer init_MerchantOffer;
+   private String message = "Selecting trade";
+   private MerchantOffer offer;
    private int set;
 
    public VillagerTradeSession(TradeOfferFilter filter, int limit, int delay, int timeout, int budget, int reserve) {
-      this.init_StreamUtil = filter;
-      this.init_I = Math.max(1, Math.min(10000, limit));
-      this.load_I = Math.max(1, Math.min(200, delay));
-      this.read_I = Math.max(20, Math.min(1200, timeout));
+      this.filter = filter;
+      this.limit = Math.max(1, Math.min(10000, limit));
+      this.delayTicks = Math.max(1, Math.min(200, delay));
+      this.timeoutTicks = Math.max(20, Math.min(1200, timeout));
       this.write = Math.max(0, budget);
       this.update = Math.max(0, reserve);
    }
 
    public static boolean isRunning() {
-      return init_CachePool != null;
+      return active != null;
    }
 
    public boolean isFinished() {
-      return this.init_CachePool_CachePoo != VillagerTradeSession.Inner_CachePool.RUNNING;
+      return this.status != VillagerTradeSession.Inner_CachePool.RUNNING;
    }
 
    public VillagerTradeSession.Inner_CachePool status() {
-      return this.init_CachePool_CachePoo;
+      return this.status;
    }
 
    public int traded() {
@@ -74,29 +74,29 @@ public final class VillagerTradeSession {
    }
 
    public String message() {
-      return this.init_Str;
+      return this.message;
    }
 
    public boolean reserve() {
-      if (init_CachePool != null && init_CachePool != this) {
+      if (active != null && active != this) {
          this.init(VillagerTradeSession.Inner_CachePool.BUSY, "Another trade is running");
          return false;
       } else {
-         init_CachePool = this;
+         active = this;
          return true;
       }
    }
 
    public void cancel() {
-      if (this.init_CachePool_DataUtil != null) {
-         this.init_CachePool_DataUtil.init_V();
+      if (this.view != null) {
+         this.view.close();
       }
    }
 
    public static void onContainerContent(ClientboundContainerSetContentPacket packet) {
-      VillagerTradeSession session = init_CachePool;
-      if (session != null && session.init_CachePool_DataUtil != null && packet.containerId() == session.init_CachePool_DataUtil.init_I()) {
-         session.load_ItemStack = packet.carriedItem().copy();
+      VillagerTradeSession session = active;
+      if (session != null && session.view != null && packet.containerId() == session.view.containerId()) {
+         session.serverCursor = packet.carriedItem().copy();
          int count = 0;
 
          for (int i = 3; i < Math.min(39, packet.items().size()); i++) {
@@ -113,22 +113,22 @@ public final class VillagerTradeSession {
 
    public VillagerTradeSession.Inner_CachePool tick(final Minecraft mc) {
       if (this.isFinished()) {
-         return this.init_CachePool_CachePoo;
+         return this.status;
       } else {
          return mc.player != null
                && mc.gameMode != null
                && mc.getConnection() != null
                && mc.level != null
                && mc.player.containerMenu instanceof MerchantMenu current
-            ? this.init_CachePool_CachePoo_CachePool_DataUtil(
+            ? this.step(
                new VillagerTradeSession.Inner_DataUtil() {
                   @Override
-                  public Object init_Obj() {
+                  public Object menu() {
                      return current;
                   }
 
                   @Override
-                  public Object load_Obj() {
+                  public Object level() {
                      return mc.level;
                   }
 
@@ -138,27 +138,27 @@ public final class VillagerTradeSession {
                   }
 
                   @Override
-                  public int init_I() {
+                  public int containerId() {
                      return current.containerId;
                   }
 
                   @Override
-                  public List<MerchantOffer> init_List() {
+                  public List<MerchantOffer> offers() {
                      return current.getOffers();
                   }
 
                   @Override
-                  public ItemStack init_ItemStack(int slot) {
+                  public ItemStack slotItem(int slot) {
                      return current.getSlot(slot).getItem();
                   }
 
                   @Override
-                  public ItemStack init_ItemStack() {
+                  public ItemStack carried() {
                      return current.getCarried();
                   }
 
                   @Override
-                  public int load_I() {
+                  public int slotCount() {
                      return current.slots.size();
                   }
 
@@ -172,7 +172,7 @@ public final class VillagerTradeSession {
                   }
 
                   @Override
-                  public void init_V(int index) {
+                  public void selectTrade(int index) {
                      current.setSelectionHint(index);
                      mc.getConnection().send(new ServerboundSelectTradePacket(index));
                   }
@@ -188,7 +188,7 @@ public final class VillagerTradeSession {
                   }
 
                   @Override
-                  public void init_V() {
+                  public void close() {
                      if (mc.player != null && mc.player.containerMenu == current) {
                         mc.player.closeContainer();
                      }
@@ -199,40 +199,40 @@ public final class VillagerTradeSession {
       }
    }
 
-   VillagerTradeSession.Inner_CachePool init_CachePool_CachePoo_CachePool_DataUtil(VillagerTradeSession.Inner_DataUtil current) {
+   VillagerTradeSession.Inner_CachePool step(VillagerTradeSession.Inner_DataUtil current) {
       if (this.isFinished()) {
-         return this.init_CachePool_CachePoo;
+         return this.status;
       }
 
-      if (init_CachePool != null && init_CachePool != this) {
+      if (active != null && active != this) {
          return this.init(VillagerTradeSession.Inner_CachePool.BUSY, "Another trade is running");
       }
 
-      if (this.init_Obj == null) {
-         if (!current.init_ItemStack().isEmpty()) {
+      if (this.boundMenu == null) {
+         if (!current.carried().isEmpty()) {
             return this.init(VillagerTradeSession.Inner_CachePool.CURSOR_BUSY, "Empty the cursor first");
          }
 
-         this.init_CachePool_DataUtil = current;
-         this.init_Obj = current.init_Obj();
-         this.load_Obj = current.load_Obj();
+         this.view = current;
+         this.boundMenu = current.menu();
+         this.boundLevel = current.level();
          this.read_Obj = current.read();
-         init_CachePool = this;
+         active = this;
       }
 
-      if (this.init_Obj == current.init_Obj() && this.load_Obj == current.load_Obj() && this.read_Obj == current.read()) {
-         this.init_CachePool_DataUtil = current;
-         if (this.init_CachePool_StreamUt != VillagerTradeSession.Inner_StreamUtil.TAKE && this.init_CachePool_StreamUt != VillagerTradeSession.Inner_StreamUtil.STORED) {
-            if (this.init_CachePool_StreamUt == VillagerTradeSession.Inner_StreamUtil.DELAY) {
-               if (++this.sync >= this.load_I) {
-                  this.init_CachePool_StreamUt = VillagerTradeSession.Inner_StreamUtil.SELECT;
+      if (this.boundMenu == current.menu() && this.boundLevel == current.level() && this.read_Obj == current.read()) {
+         this.view = current;
+         if (this.phase != VillagerTradeSession.Inner_StreamUtil.TAKE && this.phase != VillagerTradeSession.Inner_StreamUtil.STORED) {
+            if (this.phase == VillagerTradeSession.Inner_StreamUtil.DELAY) {
+               if (++this.sync >= this.delayTicks) {
+                  this.phase = VillagerTradeSession.Inner_StreamUtil.SELECT;
                   this.sync = 0;
                }
 
-               return this.init_CachePool_CachePoo;
-            } else if (this.init_CachePool_StreamUt == VillagerTradeSession.Inner_StreamUtil.SELECT) {
-               if (this.init_CachePool_DataUtil.init_List().isEmpty() && ++this.sync < this.read_I) {
-                  return this.init_CachePool_CachePoo;
+               return this.status;
+            } else if (this.phase == VillagerTradeSession.Inner_StreamUtil.SELECT) {
+               if (this.view.offers().isEmpty() && ++this.sync < this.timeoutTicks) {
+                  return this.status;
                }
 
                boolean match = false;
@@ -240,15 +240,15 @@ public final class VillagerTradeSession {
                boolean budgetOk = false;
                this.open = -1;
 
-               for (int i = 0; i < this.init_CachePool_DataUtil.init_List().size(); i++) {
-                  MerchantOffer offer = this.init_CachePool_DataUtil.init_List().get(i);
-                  if (this.init_StreamUtil.matches(offer, i)) {
+               for (int i = 0; i < this.view.offers().size(); i++) {
+                  MerchantOffer offer = this.view.offers().get(i);
+                  if (this.filter.matches(offer, i)) {
                      match = true;
                      if (!offer.isOutOfStock()) {
                         stock = true;
-                        if (TradeOfferFilter.init(TradeOfferFilter.init(offer), this.close, this.write, this.read_I(), this.update)) {
+                        if (TradeOfferFilter.init(TradeOfferFilter.init(offer), this.close, this.write, this.emeraldCount(), this.update)) {
                            budgetOk = true;
-                           if (this.init_Z_MerchantOffer(offer)) {
+                           if (this.hasPayment(offer)) {
                               this.open = i;
                               break;
                            }
@@ -266,35 +266,35 @@ public final class VillagerTradeSession {
                   );
                }
 
-               if (!this.init_CachePool_DataUtil.init_ItemStack().isEmpty()) {
+               if (!this.view.carried().isEmpty()) {
                   return this.init(VillagerTradeSession.Inner_CachePool.CURSOR_BUSY, "Cursor changed");
                }
 
-               this.init_CachePool_DataUtil.init_V(this.open);
-               this.init_CachePool_StreamUt = VillagerTradeSession.Inner_StreamUtil.FILL;
+               this.view.selectTrade(this.open);
+               this.phase = VillagerTradeSession.Inner_StreamUtil.FILL;
                this.sync = 0;
-               this.init_Str = "Filling offer " + (this.open + 1);
-               return this.init_CachePool_CachePoo;
-            } else if (this.init_CachePool_StreamUt == VillagerTradeSession.Inner_StreamUtil.FILL) {
-               if (this.open >= this.init_CachePool_DataUtil.init_List().size()) {
+               this.message = "Filling offer " + (this.open + 1);
+               return this.status;
+            } else if (this.phase == VillagerTradeSession.Inner_StreamUtil.FILL) {
+               if (this.open >= this.view.offers().size()) {
                   return this.init(VillagerTradeSession.Inner_CachePool.NO_MATCH, "Offers changed");
                }
 
-               MerchantOffer offer = this.init_CachePool_DataUtil.init_List().get(this.open);
-               if (!this.init_StreamUtil.matches(offer, this.open) || offer.isOutOfStock()) {
+               MerchantOffer offer = this.view.offers().get(this.open);
+               if (!this.filter.matches(offer, this.open) || offer.isOutOfStock()) {
                   return this.init(VillagerTradeSession.Inner_CachePool.NO_MATCH, "Offer changed");
                }
 
-               if (!this.init_CachePool_DataUtil.init_ItemStack().isEmpty()) {
+               if (!this.view.carried().isEmpty()) {
                   return this.init(VillagerTradeSession.Inner_CachePool.CURSOR_BUSY, "Cursor changed");
                }
 
-               ItemStack output = this.init_CachePool_DataUtil.init_ItemStack(2);
+               ItemStack output = this.view.slotItem(2);
                if (ItemStack.matches(output, offer.getResult())
-                  && offer.satisfiedBy(this.init_CachePool_DataUtil.init_ItemStack(0), this.init_CachePool_DataUtil.init_ItemStack(1))) {
+                  && offer.satisfiedBy(this.view.slotItem(0), this.view.slotItem(1))) {
                   this.init_ItemStack = output.copy();
                   this.poll = TradeOfferFilter.init(offer);
-                  if (!TradeOfferFilter.init(this.poll, this.close, this.write, this.read_I(), this.update)) {
+                  if (!TradeOfferFilter.init(this.poll, this.close, this.write, this.emeraldCount(), this.update)) {
                      return this.init(VillagerTradeSession.Inner_CachePool.BUDGET, "Emerald limit reached");
                   }
 
@@ -302,18 +302,18 @@ public final class VillagerTradeSession {
                      return this.init(VillagerTradeSession.Inner_CachePool.INVENTORY_FULL, "Inventory full");
                   }
 
-                  this.init_MerchantOffer = offer;
+                  this.offer = offer;
                   this.set = offer.getUses();
                   this.init_V_I(2);
-                  this.init_CachePool_StreamUt = VillagerTradeSession.Inner_StreamUtil.TAKE;
-                  this.init_Str = "Confirming purchase";
-                  return this.init_CachePool_CachePoo;
+                  this.phase = VillagerTradeSession.Inner_StreamUtil.TAKE;
+                  this.message = "Confirming purchase";
+                  return this.status;
                } else {
-                  return ++this.sync >= this.read_I ? this.init(VillagerTradeSession.Inner_CachePool.MISSING_INPUTS, "Payment was not filled") : this.init_CachePool_CachePoo;
+                  return ++this.sync >= this.timeoutTicks ? this.init(VillagerTradeSession.Inner_CachePool.MISSING_INPUTS, "Payment was not filled") : this.status;
                }
             } else {
-               if (this.init_CachePool_StreamUt == VillagerTradeSession.Inner_StreamUtil.STORE) {
-                  ItemStack cursor = this.init_CachePool_DataUtil.init_ItemStack();
+               if (this.phase == VillagerTradeSession.Inner_StreamUtil.STORE) {
+                  ItemStack cursor = this.view.carried();
                   if (cursor.isEmpty() || !ItemStack.isSameItemSameComponents(cursor, this.init_ItemStack)) {
                      return this.init(VillagerTradeSession.Inner_CachePool.UNCERTAIN, "Cursor changed during trade");
                   }
@@ -326,53 +326,53 @@ public final class VillagerTradeSession {
 
                   int room = this.init(slot, this.init_ItemStack);
                   this.push = Math.max(0, this.init_ItemStack.getCount() - room);
-                  this.run = this.init_I_ItemStack(this.init_ItemStack);
+                  this.run = this.countInInventory(this.init_ItemStack);
                   this.init_V_I(slot);
-                  this.init_CachePool_StreamUt = VillagerTradeSession.Inner_StreamUtil.STORED;
-                  this.init_Str = "Storing purchase";
+                  this.phase = VillagerTradeSession.Inner_StreamUtil.STORED;
+                  this.message = "Storing purchase";
                }
 
-               return this.init_CachePool_CachePoo;
+               return this.status;
             }
          } else {
             if (this.pop > this.tick) {
-               if (this.init_CachePool_StreamUt == VillagerTradeSession.Inner_StreamUtil.TAKE) {
-                  if (!ItemStack.matches(this.load_ItemStack, this.init_ItemStack)) {
+               if (this.phase == VillagerTradeSession.Inner_StreamUtil.TAKE) {
+                  if (!ItemStack.matches(this.serverCursor, this.init_ItemStack)) {
                      return this.init(VillagerTradeSession.Inner_CachePool.REJECTED, "Purchase was not confirmed");
                   }
 
                   this.flush++;
                   this.close = this.close + this.poll;
-                  if (this.init_CachePool_DataUtil.init_List().contains(this.init_MerchantOffer) && this.init_MerchantOffer.getUses() == this.set) {
-                     this.init_MerchantOffer.increaseUses();
+                  if (this.view.offers().contains(this.offer) && this.offer.getUses() == this.set) {
+                     this.offer.increaseUses();
                   }
 
-                  this.init_CachePool_StreamUt = VillagerTradeSession.Inner_StreamUtil.STORE;
+                  this.phase = VillagerTradeSession.Inner_StreamUtil.STORE;
                } else {
                   boolean cursorMatches = this.push == 0
-                     ? this.load_ItemStack.isEmpty()
-                     : ItemStack.isSameItemSameComponents(this.load_ItemStack, this.init_ItemStack) && this.load_ItemStack.getCount() == this.push;
+                     ? this.serverCursor.isEmpty()
+                     : ItemStack.isSameItemSameComponents(this.serverCursor, this.init_ItemStack) && this.serverCursor.getCount() == this.push;
                   if (!cursorMatches || this.get != this.run + this.init_ItemStack.getCount() - this.push) {
                      return this.init(VillagerTradeSession.Inner_CachePool.UNCERTAIN, "Inventory transfer was not confirmed");
                   }
 
                   if (this.push == 0) {
-                     if (this.flush >= this.init_I) {
+                     if (this.flush >= this.limit) {
                         return this.init(VillagerTradeSession.Inner_CachePool.COMPLETE, "Completed " + this.flush + " trades");
                      }
 
-                     this.init_CachePool_StreamUt = VillagerTradeSession.Inner_StreamUtil.DELAY;
+                     this.phase = VillagerTradeSession.Inner_StreamUtil.DELAY;
                   } else {
-                     this.init_CachePool_StreamUt = VillagerTradeSession.Inner_StreamUtil.STORE;
+                     this.phase = VillagerTradeSession.Inner_StreamUtil.STORE;
                   }
                }
 
                this.sync = 0;
-            } else if (++this.sync >= this.read_I) {
+            } else if (++this.sync >= this.timeoutTicks) {
                return this.init(VillagerTradeSession.Inner_CachePool.UNCERTAIN, "Server confirmation timed out; purchase not repeated");
             }
 
-            return this.init_CachePool_CachePoo;
+            return this.status;
          }
       } else {
          return this.init(VillagerTradeSession.Inner_CachePool.CANCELLED, "Trade screen changed");
@@ -382,16 +382,16 @@ public final class VillagerTradeSession {
    private void init_V_I(int slot) {
       this.tick = this.pop;
       this.sync = 0;
-      this.init_CachePool_DataUtil.load(slot);
+      this.view.load(slot);
    }
 
-   private boolean init_Z_MerchantOffer(MerchantOffer offer) {
+   private boolean hasPayment(MerchantOffer offer) {
       int a = 0;
       int b = 0;
 
-      for (int i = 0; i < Math.min(39, this.init_CachePool_DataUtil.load_I()); i++) {
+      for (int i = 0; i < Math.min(39, this.view.slotCount()); i++) {
          if (i != 2) {
-            ItemStack stack = this.init_CachePool_DataUtil.init_ItemStack(i);
+            ItemStack stack = this.view.slotItem(i);
             if (offer.getItemCostA().test(stack)) {
                a += stack.getCount();
             }
@@ -407,24 +407,24 @@ public final class VillagerTradeSession {
          : a >= offer.getCostA().getCount() && b >= offer.getCostB().getCount();
    }
 
-   private int read_I() {
+   private int emeraldCount() {
       int count = 0;
 
-      for (int i = 0; i < Math.min(39, this.init_CachePool_DataUtil.load_I()); i++) {
-         if (i != 2 && this.init_CachePool_DataUtil.init_ItemStack(i).is(Items.EMERALD)) {
-            count += this.init_CachePool_DataUtil.init_ItemStack(i).getCount();
+      for (int i = 0; i < Math.min(39, this.view.slotCount()); i++) {
+         if (i != 2 && this.view.slotItem(i).is(Items.EMERALD)) {
+            count += this.view.slotItem(i).getCount();
          }
       }
 
       return count;
    }
 
-   private int init_I_ItemStack(ItemStack stack) {
+   private int countInInventory(ItemStack stack) {
       int count = 0;
 
-      for (int i = 3; i < Math.min(39, this.init_CachePool_DataUtil.load_I()); i++) {
-         if (ItemStack.isSameItemSameComponents(this.init_CachePool_DataUtil.init_ItemStack(i), stack)) {
-            count += this.init_CachePool_DataUtil.init_ItemStack(i).getCount();
+      for (int i = 3; i < Math.min(39, this.view.slotCount()); i++) {
+         if (ItemStack.isSameItemSameComponents(this.view.slotItem(i), stack)) {
+            count += this.view.slotItem(i).getCount();
          }
       }
 
@@ -432,13 +432,13 @@ public final class VillagerTradeSession {
    }
 
    private int init(int index, ItemStack stack) {
-      return this.init_CachePool_DataUtil.init(index, stack);
+      return this.view.init(index, stack);
    }
 
    private int load(ItemStack stack) {
       int room = 0;
 
-      for (int i = 3; i < Math.min(39, this.init_CachePool_DataUtil.load_I()); i++) {
+      for (int i = 3; i < Math.min(39, this.view.slotCount()); i++) {
          room += this.init(i, stack);
       }
 
@@ -446,13 +446,13 @@ public final class VillagerTradeSession {
    }
 
    private int read(ItemStack stack) {
-      for (int i = 3; i < Math.min(39, this.init_CachePool_DataUtil.load_I()); i++) {
-         if (!this.init_CachePool_DataUtil.init_ItemStack(i).isEmpty() && this.init(i, stack) > 0) {
+      for (int i = 3; i < Math.min(39, this.view.slotCount()); i++) {
+         if (!this.view.slotItem(i).isEmpty() && this.init(i, stack) > 0) {
             return i;
          }
       }
 
-      for (int i = 3; i < Math.min(39, this.init_CachePool_DataUtil.load_I()); i++) {
+      for (int i = 3; i < Math.min(39, this.view.slotCount()); i++) {
          if (this.init(i, stack) > 0) {
             return i;
          }
@@ -466,32 +466,32 @@ public final class VillagerTradeSession {
    }
 
    void load_V() {
-      if (this.init_CachePool_DataUtil != null
+      if (this.view != null
          && (
-            !this.init_CachePool_DataUtil.init_ItemStack().isEmpty()
-               || (!this.isFinished() || this.init_CachePool_CachePoo == VillagerTradeSession.Inner_CachePool.UNCERTAIN)
-                  && (this.init_CachePool_StreamUt == VillagerTradeSession.Inner_StreamUtil.TAKE || this.init_CachePool_StreamUt == VillagerTradeSession.Inner_StreamUtil.STORED)
+            !this.view.carried().isEmpty()
+               || (!this.isFinished() || this.status == VillagerTradeSession.Inner_CachePool.UNCERTAIN)
+                  && (this.phase == VillagerTradeSession.Inner_StreamUtil.TAKE || this.phase == VillagerTradeSession.Inner_StreamUtil.STORED)
          )) {
-         this.init_CachePool_DataUtil.init_V();
+         this.view.close();
       }
 
       if (!this.isFinished()) {
          this.init(VillagerTradeSession.Inner_CachePool.CANCELLED, "Trade cancelled");
       }
 
-      if (init_CachePool == this) {
-         init_CachePool = null;
+      if (active == this) {
+         active = null;
       }
    }
 
    private VillagerTradeSession.Inner_CachePool init(VillagerTradeSession.Inner_CachePool value, String message) {
-      this.init_CachePool_CachePoo = value;
-      this.init_Str = message;
-      if (init_CachePool == this) {
-         init_CachePool = null;
+      this.status = value;
+      this.message = message;
+      if (active == this) {
+         active = null;
       }
 
-      return this.init_CachePool_CachePoo;
+      return this.status;
    }
 
    public enum Inner_CachePool {
@@ -511,29 +511,29 @@ public final class VillagerTradeSession {
    }
 
    interface Inner_DataUtil {
-      Object init_Obj();
+      Object menu();
 
-      Object load_Obj();
+      Object level();
 
       Object read();
 
-      int init_I();
+      int containerId();
 
-      List<MerchantOffer> init_List();
+      List<MerchantOffer> offers();
 
-      ItemStack init_ItemStack(int var1);
+      ItemStack slotItem(int var1);
 
-      ItemStack init_ItemStack();
+      ItemStack carried();
 
-      int load_I();
+      int slotCount();
 
       int init(int var1, ItemStack var2);
 
-      void init_V(int var1);
+      void selectTrade(int var1);
 
       void load(int var1);
 
-      void init_V();
+      void close();
    }
 
    private enum Inner_StreamUtil {

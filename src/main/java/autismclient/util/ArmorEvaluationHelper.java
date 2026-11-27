@@ -32,17 +32,17 @@ public final class ArmorEvaluationHelper {
       EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
    };
    private static final float init_F = 6.0F;
-   private static final ResourceKey<Enchantment>[] init_ResourceKeyArr = init_ResourceKeyArr_ResourceKeyArr(
+   private static final ResourceKey<Enchantment>[] PROTECTION_ENCHANTS = keys(
       Enchantments.PROTECTION, Enchantments.PROJECTILE_PROTECTION, Enchantments.FIRE_PROTECTION, Enchantments.BLAST_PROTECTION
    );
-   private static final float[] init_FArr = new float[]{1.2F, 0.4F, 0.39F, 0.38F};
-   private static final float[] load_FArr = new float[]{0.04F, 0.08F, 0.15F, 0.08F};
-   private static final ResourceKey<Enchantment>[] load_ResourceKeyArr = init_ResourceKeyArr_ResourceKeyArr(
+   private static final float[] PROTECTION_WEIGHTS = new float[]{1.2F, 0.4F, 0.39F, 0.38F};
+   private static final float[] PROTECTION_FACTORS = new float[]{0.04F, 0.08F, 0.15F, 0.08F};
+   private static final ResourceKey<Enchantment>[] load_ResourceKeyArr = keys(
       Enchantments.FEATHER_FALLING, Enchantments.THORNS, Enchantments.RESPIRATION, Enchantments.AQUA_AFFINITY, Enchantments.UNBREAKING
    );
    private static final float[] read = new float[]{3.0F, 1.0F, 0.1F, 0.05F, 0.01F};
-   private static final Map<ResourceKey<Enchantment>, Holder<Enchantment>> init_Map = new HashMap<>();
-   private static Level init_Level;
+   private static final Map<ResourceKey<Enchantment>, Holder<Enchantment>> enchantHolders = new HashMap<>();
+   private static Level enchantHolderLevel;
 
    private ArmorEvaluationHelper() {
    }
@@ -53,36 +53,36 @@ public final class ArmorEvaluationHelper {
       Map<EquipmentSlot, List<ArmorEvaluationHelper.Inner_DataUtil>> byType = new EnumMap<>(EquipmentSlot.class);
 
       for (int inv = 0; inv < 9; inv++) {
-         init_V_Map(byType, stacks.init(inv), inv, ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR, allowCursed);
+         addCandidate(byType, stacks.init(inv), inv, ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR, allowCursed);
       }
 
       for (int inv = 9; inv < 36; inv++) {
-         init_V_Map(byType, stacks.init(inv), inv, ArmorEvaluationHelper.Inner_StreamUtil.INVENTORY, allowCursed);
+         addCandidate(byType, stacks.init(inv), inv, ArmorEvaluationHelper.Inner_StreamUtil.INVENTORY, allowCursed);
       }
 
       if (offhandAvailable) {
-         init_V_Map(byType, stacks.init(EquipmentSlot.OFFHAND), 40, ArmorEvaluationHelper.Inner_StreamUtil.INVENTORY, allowCursed);
+         addCandidate(byType, stacks.init(EquipmentSlot.OFFHAND), 40, ArmorEvaluationHelper.Inner_StreamUtil.INVENTORY, allowCursed);
       }
 
       for (EquipmentSlot slot : ARMOR_SLOTS) {
-         init_V_Map(byType, stacks.init(slot), -1, ArmorEvaluationHelper.Inner_StreamUtil.ARMOR, allowCursed);
+         addCandidate(byType, stacks.init(slot), -1, ArmorEvaluationHelper.Inner_StreamUtil.ARMOR, allowCursed);
       }
 
       return byType;
    }
 
-   private static void init_V_Map(
+   private static void addCandidate(
       Map<EquipmentSlot, List<ArmorEvaluationHelper.Inner_DataUtil>> byType, ItemStack stack, int invIndex, ArmorEvaluationHelper.Inner_StreamUtil kind, boolean allowCursed
    ) {
       if (stack != null && !stack.isEmpty() && isArmor(stack) && (kind == ArmorEvaluationHelper.Inner_StreamUtil.ARMOR || allowCursed || !hasBindingCurse(stack))) {
          EquipmentSlot slot = slotOf(stack);
-         if (slot != null && init_Z_EquipmentSlot(slot)) {
+         if (slot != null && isManagedSlot(slot)) {
             byType.computeIfAbsent(slot, ignored -> new ArrayList<>()).add(new ArmorEvaluationHelper.Inner_DataUtil(stack, slot, kind, invIndex));
          }
       }
    }
 
-   private static boolean init_Z_EquipmentSlot(EquipmentSlot slot) {
+   private static boolean isManagedSlot(EquipmentSlot slot) {
       for (EquipmentSlot managed : ARMOR_SLOTS) {
          if (managed == slot) {
             return true;
@@ -98,17 +98,17 @@ public final class ArmorEvaluationHelper {
       for (Entry<EquipmentSlot, List<ArmorEvaluationHelper.Inner_DataUtil>> entry : byType.entrySet()) {
          current.put(
             entry.getKey(),
-            init_TaskTimer_DataUtil_List_Comparator(entry.getValue(), Comparator.comparingDouble(c -> load(c.stack(), entry.getKey())))
+            best(entry.getValue(), Comparator.comparingDouble(c -> load(c.stack(), entry.getKey())))
          );
       }
 
       for (int pass = 0; pass < 2; pass++) {
          Map<EquipmentSlot, ArmorEvaluationHelper.Inner_CachePool> kit = init_Map_Map(current);
-         Comparator<ArmorEvaluationHelper.Inner_DataUtil> comparator = init_Comparator_Map_I(kit, threshold);
+         Comparator<ArmorEvaluationHelper.Inner_DataUtil> comparator = candidateOrder(kit, threshold);
          Map<EquipmentSlot, ArmorEvaluationHelper.Inner_DataUtil> next = new EnumMap<>(EquipmentSlot.class);
 
          for (Entry<EquipmentSlot, List<ArmorEvaluationHelper.Inner_DataUtil>> entry : byType.entrySet()) {
-            next.put(entry.getKey(), init_TaskTimer_DataUtil_List_Comparator(entry.getValue(), comparator));
+            next.put(entry.getKey(), best(entry.getValue(), comparator));
          }
 
          current = next;
@@ -124,7 +124,7 @@ public final class ArmorEvaluationHelper {
       for (Entry<EquipmentSlot, ArmorEvaluationHelper.Inner_DataUtil> entry : current.entrySet()) {
          ArmorEvaluationHelper.Inner_DataUtil candidate = entry.getValue();
          if (candidate != null) {
-            totalDefense += init_D_ItemStack_EquipmentSlot(candidate.stack(), entry.getKey());
+            totalDefense += armorValue(candidate.stack(), entry.getKey());
             totalToughness += load(candidate.stack(), entry.getKey());
          }
       }
@@ -133,7 +133,7 @@ public final class ArmorEvaluationHelper {
 
       for (Entry<EquipmentSlot, ArmorEvaluationHelper.Inner_DataUtil> entry : current.entrySet()) {
          ArmorEvaluationHelper.Inner_DataUtil candidate = entry.getValue();
-         double defense = candidate == null ? 0.0 : init_D_ItemStack_EquipmentSlot(candidate.stack(), entry.getKey());
+         double defense = candidate == null ? 0.0 : armorValue(candidate.stack(), entry.getKey());
          double toughness = candidate == null ? 0.0 : load(candidate.stack(), entry.getKey());
          kit.put(entry.getKey(), new ArmorEvaluationHelper.Inner_CachePool(totalDefense - defense, totalToughness - toughness));
       }
@@ -141,35 +141,35 @@ public final class ArmorEvaluationHelper {
       return kit;
    }
 
-   private static Comparator<ArmorEvaluationHelper.Inner_DataUtil> init_Comparator_Map_I(Map<EquipmentSlot, ArmorEvaluationHelper.Inner_CachePool> kit, int threshold) {
-      Comparator<ArmorEvaluationHelper.Inner_DataUtil> byReduction = Comparator.comparingDouble(c -> init_D_D(init_D_TaskTimer_DataUtil_Map(c, kit)));
+   private static Comparator<ArmorEvaluationHelper.Inner_DataUtil> candidateOrder(Map<EquipmentSlot, ArmorEvaluationHelper.Inner_CachePool> kit, int threshold) {
+      Comparator<ArmorEvaluationHelper.Inner_DataUtil> byReduction = Comparator.comparingDouble(c -> round3(init_D_TaskTimer_DataUtil_Map(c, kit)));
       return Comparator.<ArmorEvaluationHelper.Inner_DataUtil, Boolean>comparing(c -> remainingDurability(c.stack()) > threshold)
          .thenComparing(byReduction.reversed())
-         .thenComparingDouble(c -> init_D_D(load_D(c.stack())))
-         .thenComparingInt(c -> load_I(c.stack()))
+         .thenComparingDouble(c -> round3(load_D(c.stack())))
+         .thenComparingInt(c -> enchantmentCount(c.stack()))
          .thenComparingInt(c -> read(c.stack()))
          .thenComparing(c -> c.kind() == ArmorEvaluationHelper.Inner_StreamUtil.ARMOR)
          .thenComparing(c -> c.kind() == ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR);
    }
 
    private static double init_D_TaskTimer_DataUtil_Map(ArmorEvaluationHelper.Inner_DataUtil candidate, Map<EquipmentSlot, ArmorEvaluationHelper.Inner_CachePool> kit) {
-      ArmorEvaluationHelper.Inner_CachePool param = kit.getOrDefault(candidate.init_EquipmentSlot(), ArmorEvaluationHelper.Inner_CachePool.init_TaskTimer_CachePoo);
-      double defense = param.init_D + init_D_ItemStack_EquipmentSlot(candidate.stack(), candidate.init_EquipmentSlot());
-      double toughness = param.load + load(candidate.stack(), candidate.init_EquipmentSlot());
-      return init_D_D(6.0, defense, toughness) * (1.0 - init_D_ItemStack(candidate.stack()));
+      ArmorEvaluationHelper.Inner_CachePool param = kit.getOrDefault(candidate.slot(), ArmorEvaluationHelper.Inner_CachePool.EMPTY);
+      double defense = param.defense + armorValue(candidate.stack(), candidate.slot());
+      double toughness = param.load + load(candidate.stack(), candidate.slot());
+      return damageReduction(6.0, defense, toughness) * (1.0 - protectionScore(candidate.stack()));
    }
 
-   static double init_D_D(double damage, double defense, double toughness) {
+   static double damageReduction(double damage, double defense, double toughness) {
       double f = 2.0 + toughness / 4.0;
       double g = load(defense - damage / f, defense * 0.2, 20.0);
       return 1.0 - g / 25.0;
    }
 
-   private static double init_D_ItemStack(ItemStack stack) {
+   private static double protectionScore(ItemStack stack) {
       double sum = 0.0;
 
-      for (int i = 0; i < init_ResourceKeyArr.length; i++) {
-         sum += init_I_ItemStack_ResourceKey(stack, init_ResourceKeyArr[i]) * init_FArr[i] * load_FArr[i];
+      for (int i = 0; i < PROTECTION_ENCHANTS.length; i++) {
+         sum += enchantLevel(stack, PROTECTION_ENCHANTS[i]) * PROTECTION_WEIGHTS[i] * PROTECTION_FACTORS[i];
       }
 
       return sum;
@@ -179,7 +179,7 @@ public final class ArmorEvaluationHelper {
       double sum = 0.0;
 
       for (int i = 0; i < load_ResourceKeyArr.length; i++) {
-         sum += init_I_ItemStack_ResourceKey(stack, load_ResourceKeyArr[i]) * read[i];
+         sum += enchantLevel(stack, load_ResourceKeyArr[i]) * read[i];
       }
 
       return sum;
@@ -195,15 +195,15 @@ public final class ArmorEvaluationHelper {
       return equippable == null ? null : equippable.slot();
    }
 
-   static double init_D_ItemStack_EquipmentSlot(ItemStack stack, EquipmentSlot slot) {
-      return init_D_ItemStack(stack, Attributes.ARMOR, slot);
+   static double armorValue(ItemStack stack, EquipmentSlot slot) {
+      return attributeValue(stack, Attributes.ARMOR, slot);
    }
 
    static double load(ItemStack stack, EquipmentSlot slot) {
-      return init_D_ItemStack(stack, Attributes.ARMOR_TOUGHNESS, slot);
+      return attributeValue(stack, Attributes.ARMOR_TOUGHNESS, slot);
    }
 
-   private static double init_D_ItemStack(ItemStack stack, Holder<Attribute> attribute, EquipmentSlot slot) {
+   private static double attributeValue(ItemStack stack, Holder<Attribute> attribute, EquipmentSlot slot) {
       Attribute value = attribute.value();
       double base = value.getDefaultValue();
       ItemAttributeModifiers modifiers = stack.get(DataComponents.ATTRIBUTE_MODIFIERS);
@@ -214,7 +214,7 @@ public final class ArmorEvaluationHelper {
       return stack.getMaxDamage() - stack.getDamageValue();
    }
 
-   private static int load_I(ItemStack stack) {
+   private static int enchantmentCount(ItemStack stack) {
       ItemEnchantments enchantments = stack.get(DataComponents.ENCHANTMENTS);
       return enchantments == null ? 0 : enchantments.size();
    }
@@ -225,18 +225,18 @@ public final class ArmorEvaluationHelper {
    }
 
    public static boolean hasBindingCurse(ItemStack stack) {
-      return init_I_ItemStack_ResourceKey(stack, Enchantments.BINDING_CURSE) > 0;
+      return enchantLevel(stack, Enchantments.BINDING_CURSE) > 0;
    }
 
-   private static int init_I_ItemStack_ResourceKey(ItemStack stack, ResourceKey<Enchantment> key) {
+   private static int enchantLevel(ItemStack stack, ResourceKey<Enchantment> key) {
       try {
          Minecraft mc = Minecraft.getInstance();
-         if (init_Level != mc.level) {
-            init_Level = mc.level;
-            init_Map.clear();
+         if (enchantHolderLevel != mc.level) {
+            enchantHolderLevel = mc.level;
+            enchantHolders.clear();
          }
 
-         Holder<Enchantment> holder = init_Map.computeIfAbsent(
+         Holder<Enchantment> holder = enchantHolders.computeIfAbsent(
             key, k -> mc.level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow((ResourceKey<Enchantment>)k)
          );
          return EnchantmentHelper.getItemEnchantmentLevel(holder, stack);
@@ -245,7 +245,7 @@ public final class ArmorEvaluationHelper {
       }
    }
 
-   private static ArmorEvaluationHelper.Inner_DataUtil init_TaskTimer_DataUtil_List_Comparator(
+   private static ArmorEvaluationHelper.Inner_DataUtil best(
       List<ArmorEvaluationHelper.Inner_DataUtil> candidates, Comparator<ArmorEvaluationHelper.Inner_DataUtil> comparator
    ) {
       ArmorEvaluationHelper.Inner_DataUtil best = null;
@@ -259,7 +259,7 @@ public final class ArmorEvaluationHelper {
       return best;
    }
 
-   private static double init_D_D(double value) {
+   private static double round3(double value) {
       return Math.round(value * 1000.0) / 1000.0;
    }
 
@@ -268,7 +268,7 @@ public final class ArmorEvaluationHelper {
    }
 
    @SafeVarargs
-   private static ResourceKey<Enchantment>[] init_ResourceKeyArr_ResourceKeyArr(ResourceKey<Enchantment>... keys) {
+   private static ResourceKey<Enchantment>[] keys(ResourceKey<Enchantment>... keys) {
       return keys;
    }
 
@@ -278,11 +278,11 @@ public final class ArmorEvaluationHelper {
       ItemStack init(EquipmentSlot var1);
    }
 
-   private record Inner_CachePool(double init_D, double load) {
-      private static final ArmorEvaluationHelper.Inner_CachePool init_TaskTimer_CachePoo = new ArmorEvaluationHelper.Inner_CachePool(0.0, 0.0);
+   private record Inner_CachePool(double defense, double load) {
+      private static final ArmorEvaluationHelper.Inner_CachePool EMPTY = new ArmorEvaluationHelper.Inner_CachePool(0.0, 0.0);
    }
 
-   public record Inner_DataUtil(ItemStack stack, EquipmentSlot init_EquipmentSlot, ArmorEvaluationHelper.Inner_StreamUtil kind, int inventorySlot) {
+   public record Inner_DataUtil(ItemStack stack, EquipmentSlot slot, ArmorEvaluationHelper.Inner_StreamUtil kind, int inventorySlot) {
    }
 
    public enum Inner_StreamUtil {

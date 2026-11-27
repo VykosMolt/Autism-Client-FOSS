@@ -50,69 +50,69 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 public final class PacketStateDeltaTracker {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Minecraft MINECRAFT = Minecraft.getInstance();
    public static final PacketStateDeltaTracker.Inner_DataUtil EMPTY_CAPTURE = new PacketStateDeltaTracker.Inner_DataUtil(
       PacketStateDeltaTracker.Inner_CachePool.EMPTY, PacketStateDeltaTracker.Inner_CachePool.EMPTY, List.of(), false
    );
    private boolean init_Z;
-   private int init_I = -1;
-   private int load_I = -1;
-   private String init_Str = "";
-   private String load_Str = "";
-   private int read_I = -1;
-   private int write_I = -1;
-   private String read_Str = "unknown";
-   private int update_I = -1;
+   private int containerId = -1;
+   private int stateId = -1;
+   private String menuType = "";
+   private String menuTitle = "";
+   private int totalSlots = -1;
+   private int inventoryStart = -1;
+   private String cursorItem = "unknown";
+   private int selectedSlot = -1;
    private PacketStateDeltaTracker.Inner_StreamUtil init_bq_StreamUtil;
    private PacketStateDeltaTracker.Inner_StreamUtil load_bq_StreamUtil;
    private int sync = -1;
-   private String write_Str = "";
-   private Integer init_Integer;
-   private Integer load_Integer;
-   private Integer read_Integer;
-   private Integer write_Integer;
-   private String update_Str = "unknown";
-   private final Map<Integer, String> init_Map = new LinkedHashMap<>();
+   private String dimension = "";
+   private Integer chunkCenterX;
+   private Integer chunkCenterZ;
+   private Integer chunkRadius;
+   private Integer simulationDistance;
+   private String phase = "unknown";
+   private final Map<Integer, String> containerSlots = new LinkedHashMap<>();
    private final Map<Integer, String> load_Map = new LinkedHashMap<>();
 
    public synchronized void reset() {
       this.init_Z = false;
-      this.init_I = -1;
-      this.load_I = -1;
-      this.init_Str = "";
-      this.load_Str = "";
-      this.read_I = -1;
-      this.write_I = -1;
-      this.read_Str = "unknown";
-      this.update_I = -1;
+      this.containerId = -1;
+      this.stateId = -1;
+      this.menuType = "";
+      this.menuTitle = "";
+      this.totalSlots = -1;
+      this.inventoryStart = -1;
+      this.cursorItem = "unknown";
+      this.selectedSlot = -1;
       this.init_bq_StreamUtil = null;
       this.load_bq_StreamUtil = null;
       this.sync = -1;
-      this.write_Str = "";
-      this.init_Integer = null;
-      this.load_Integer = null;
-      this.read_Integer = null;
-      this.write_Integer = null;
-      this.update_Str = "unknown";
-      this.init_Map.clear();
+      this.dimension = "";
+      this.chunkCenterX = null;
+      this.chunkCenterZ = null;
+      this.chunkRadius = null;
+      this.simulationDistance = null;
+      this.phase = "unknown";
+      this.containerSlots.clear();
       this.load_Map.clear();
    }
 
    public synchronized PacketStateDeltaTracker.Inner_DataUtil capture(Packet<?> packet, String direction) {
-      if (!init_Z_Packet(packet)) {
+      if (!isTrackedPacket(packet)) {
          return EMPTY_CAPTURE;
       }
 
       this.load();
-      PacketStateDeltaTracker.Inner_CachePool before = this.init_bq_CachePool();
+      PacketStateDeltaTracker.Inner_CachePool before = this.snapshot();
       List<String> changes = new ArrayList<>();
-      this.init_V_Packet(packet, direction == null ? "" : direction.toUpperCase(Locale.ROOT), changes);
-      PacketStateDeltaTracker.Inner_CachePool after = this.init_bq_CachePool();
+      this.applyPacket(packet, direction == null ? "" : direction.toUpperCase(Locale.ROOT), changes);
+      PacketStateDeltaTracker.Inner_CachePool after = this.snapshot();
       this.init_Z = true;
       return new PacketStateDeltaTracker.Inner_DataUtil(before, after, List.copyOf(changes), true);
    }
 
-   public static boolean init_Z_Packet(Packet<?> packet) {
+   public static boolean isTrackedPacket(Packet<?> packet) {
       return packet == null
          ? false
          : packet instanceof ClientboundOpenScreenPacket
@@ -145,114 +145,114 @@ public final class PacketStateDeltaTracker {
             || packet instanceof ClientboundDisconnectPacket;
    }
 
-   private void init_V_Packet(Packet<?> packet, String direction, List<String> changes) {
+   private void applyPacket(Packet<?> packet, String direction, List<String> changes) {
       if (packet instanceof ClientboundLoginPacket login) {
          this.read();
-         this.update_Str = "play";
-         this.write_Str = String.valueOf(login.commonPlayerSpawnInfo().dimension().identifier());
-         this.read_Integer = login.chunkRadius();
-         this.write_Integer = login.simulationDistance();
-         changes.add("Entered world " + this.write_Str + " as entity #" + login.playerId());
+         this.phase = "play";
+         this.dimension = String.valueOf(login.commonPlayerSpawnInfo().dimension().identifier());
+         this.chunkRadius = login.chunkRadius();
+         this.simulationDistance = login.simulationDistance();
+         changes.add("Entered world " + this.dimension + " as entity #" + login.playerId());
       } else if (packet instanceof ClientboundRespawnPacket respawn) {
          this.read();
-         this.update_Str = "play";
-         this.write_Str = String.valueOf(respawn.commonPlayerSpawnInfo().dimension().identifier());
-         changes.add("Respawned / switched world to " + this.write_Str);
+         this.phase = "play";
+         this.dimension = String.valueOf(respawn.commonPlayerSpawnInfo().dimension().identifier());
+         changes.add("Respawned / switched world to " + this.dimension);
       } else if (packet instanceof ClientboundTransferPacket transfer) {
          this.read();
-         this.update_Str = "transfer " + transfer.host() + ":" + transfer.port();
+         this.phase = "transfer " + transfer.host() + ":" + transfer.port();
          changes.add("Server transfer to " + transfer.host() + ":" + transfer.port());
       } else if (packet instanceof ClientboundStartConfigurationPacket) {
-         this.update_Str = "configuration";
+         this.phase = "configuration";
          changes.add("Server moved connection into configuration phase");
       } else if (packet instanceof ClientboundFinishConfigurationPacket) {
-         this.update_Str = "configuration finished";
+         this.phase = "configuration finished";
          changes.add("Configuration phase finished");
       } else if (packet instanceof ClientboundDisconnectPacket) {
          changes.add("Disconnected; tracked packet context cleared");
          this.reset();
       } else if (packet instanceof ClientboundOpenScreenPacket open) {
-         this.init_I = open.getContainerId();
-         this.load_I = -1;
-         this.init_Str = load(open.getType());
-         this.load_Str = open.getTitle() == null ? "" : open.getTitle().getString();
-         this.read_I = -1;
-         this.write_I = -1;
-         this.init_Map.clear();
-         changes.add("Opened container #" + this.init_I + " " + init_Str_Str(this.load_Str));
+         this.containerId = open.getContainerId();
+         this.stateId = -1;
+         this.menuType = load(open.getType());
+         this.menuTitle = open.getTitle() == null ? "" : open.getTitle().getString();
+         this.totalSlots = -1;
+         this.inventoryStart = -1;
+         this.containerSlots.clear();
+         changes.add("Opened container #" + this.containerId + " " + quote(this.menuTitle));
       } else if (packet instanceof ClientboundContainerSetContentPacket content) {
-         this.init_I = content.containerId();
-         this.load_I = content.stateId();
-         this.read_I = content.items().size();
-         this.write_I = init_I_I_I(this.init_I, this.read_I);
-         this.init_Map.clear();
+         this.containerId = content.containerId();
+         this.stateId = content.stateId();
+         this.totalSlots = content.items().size();
+         this.inventoryStart = playerInventoryStart(this.containerId, this.totalSlots);
+         this.containerSlots.clear();
 
          for (int i = 0; i < content.items().size(); i++) {
-            this.init_Map.put(i, describeStack(content.items().get(i)));
+            this.containerSlots.put(i, describeStack(content.items().get(i)));
          }
 
-         this.read_Str = describeStack(content.carriedItem());
-         changes.add("Synced " + this.read_I + " slots (" + init_I_List(content.items()) + " non-empty)");
+         this.cursorItem = describeStack(content.carriedItem());
+         changes.add("Synced " + this.totalSlots + " slots (" + countNonEmpty(content.items()) + " non-empty)");
       } else if (packet instanceof ClientboundContainerSetSlotPacket slot) {
-         this.load_I = slot.getStateId();
-         String previous = this.init_Str_I(slot.getSlot());
+         this.stateId = slot.getStateId();
+         String previous = this.slotDescription(slot.getSlot());
          String next = describeStack(slot.getItem());
          if (slot.getContainerId() == -1) {
-            this.read_Str = next;
+            this.cursorItem = next;
             changes.add("Cursor changed " + previous + " -> " + next);
          } else if (slot.getContainerId() == -2) {
             this.load_Map.put(slot.getSlot(), next);
             changes.add("Player inventory slot " + slot.getSlot() + " changed " + previous + " -> " + next);
          } else {
-            if (this.init_I < 0) {
-               this.init_I = slot.getContainerId();
+            if (this.containerId < 0) {
+               this.containerId = slot.getContainerId();
             }
 
-            this.init_Map.put(slot.getSlot(), next);
+            this.containerSlots.put(slot.getSlot(), next);
             changes.add("Slot " + slot.getSlot() + " changed " + previous + " -> " + next);
          }
       } else if (packet instanceof ClientboundSetCursorItemPacket cursor) {
-         String previous = this.read_Str;
-         this.read_Str = describeStack(cursor.contents());
-         changes.add("Cursor changed " + previous + " -> " + this.read_Str);
+         String previous = this.cursorItem;
+         this.cursorItem = describeStack(cursor.contents());
+         changes.add("Cursor changed " + previous + " -> " + this.cursorItem);
       } else if (packet instanceof ClientboundSetPlayerInventoryPacket inventory) {
          String previous = this.load_Map.getOrDefault(inventory.slot(), "unknown");
          String next = describeStack(inventory.contents());
          this.load_Map.put(inventory.slot(), next);
          changes.add("Player inventory slot " + inventory.slot() + " changed " + previous + " -> " + next);
       } else if (packet instanceof ClientboundSetHeldSlotPacket held) {
-         int previous = this.update_I;
-         this.update_I = held.slot();
-         changes.add("Held hotbar slot changed " + previous + " -> " + this.update_I);
+         int previous = this.selectedSlot;
+         this.selectedSlot = held.slot();
+         changes.add("Held hotbar slot changed " + previous + " -> " + this.selectedSlot);
       } else if (packet instanceof ServerboundSetCarriedItemPacket carried) {
-         int previous = this.update_I;
-         this.update_I = carried.getSlot();
-         changes.add("Client selected hotbar slot " + previous + " -> " + this.update_I);
+         int previous = this.selectedSlot;
+         this.selectedSlot = carried.getSlot();
+         changes.add("Client selected hotbar slot " + previous + " -> " + this.selectedSlot);
       } else if (packet instanceof ServerboundContainerClickPacket click) {
-         this.init_I = click.containerId();
-         this.load_I = click.stateId();
-         this.init_V_Int2ObjectMap(click.changedSlots());
-         this.read_Str = describeHashedStack(click.carriedItem());
+         this.containerId = click.containerId();
+         this.stateId = click.stateId();
+         this.recordChangedSlots(click.changedSlots());
+         this.cursorItem = describeHashedStack(click.carriedItem());
          changes.add(
-            "Client " + init_Str_ContainerInput(click.containerInput()) + " on slot " + click.slotNum() + " changed " + click.changedSlots().size() + " slots"
+            "Client " + describeInput(click.containerInput()) + " on slot " + click.slotNum() + " changed " + click.changedSlots().size() + " slots"
          );
       } else if (packet instanceof ServerboundContainerClosePacket || packet instanceof ClientboundContainerClosePacket) {
-         changes.add("Closed container #" + this.init_I);
+         changes.add("Closed container #" + this.containerId);
          this.read();
       } else if (packet instanceof ServerboundMovePlayerPacket move) {
-         PacketStateDeltaTracker.Inner_StreamUtil before = this.init_bq_StreamUtil == null ? init_bq_StreamUtil() : this.init_bq_StreamUtil;
-         double x = move.getX(before == null ? 0.0 : before.init_D());
-         double y = move.getY(before == null ? 0.0 : before.load_D());
+         PacketStateDeltaTracker.Inner_StreamUtil before = this.init_bq_StreamUtil == null ? currentPlayerPose() : this.init_bq_StreamUtil;
+         double x = move.getX(before == null ? 0.0 : before.x());
+         double y = move.getY(before == null ? 0.0 : before.y());
          double z = move.getZ(before == null ? 0.0 : before.read());
-         float yaw = move.getYRot(before == null ? 0.0F : before.init_F());
-         float pitch = move.getXRot(before == null ? 0.0F : before.load_F());
+         float yaw = move.getYRot(before == null ? 0.0F : before.yaw());
+         float pitch = move.getXRot(before == null ? 0.0F : before.pitch());
          this.init_bq_StreamUtil = new PacketStateDeltaTracker.Inner_StreamUtil(x, y, z, yaw, pitch, move.hasPosition(), move.hasRotation());
          if (before != null) {
-            changes.add("Client move delta " + init_Str_D(before.init(this.init_bq_StreamUtil)) + " blocks");
+            changes.add("Client move delta " + format3(before.init(this.init_bq_StreamUtil)) + " blocks");
          }
       } else if (packet instanceof ClientboundPlayerPositionPacket position) {
-         PacketStateDeltaTracker.Inner_StreamUtil base = this.load_bq_StreamUtil == null ? init_bq_StreamUtil() : this.load_bq_StreamUtil;
-         PacketStateDeltaTracker.Inner_StreamUtil next = init_bq_StreamUtil_bq_StreamUtil(base, position.change(), position.relatives());
+         PacketStateDeltaTracker.Inner_StreamUtil base = this.load_bq_StreamUtil == null ? currentPlayerPose() : this.load_bq_StreamUtil;
+         PacketStateDeltaTracker.Inner_StreamUtil next = applyRelative(base, position.change(), position.relatives());
          this.load_bq_StreamUtil = next;
          this.sync = position.id();
          changes.add("Server correction/teleport #" + this.sync + " -> " + formatPosition(next));
@@ -262,15 +262,15 @@ public final class PacketStateDeltaTracker {
             this.sync = -1;
          }
       } else if (packet instanceof ClientboundSetChunkCacheCenterPacket center) {
-         this.init_Integer = center.getX();
-         this.load_Integer = center.getZ();
-         changes.add("Chunk cache center -> " + this.init_Integer + ", " + this.load_Integer);
+         this.chunkCenterX = center.getX();
+         this.chunkCenterZ = center.getZ();
+         changes.add("Chunk cache center -> " + this.chunkCenterX + ", " + this.chunkCenterZ);
       } else if (packet instanceof ClientboundSetChunkCacheRadiusPacket radius) {
-         this.read_Integer = radius.getRadius();
-         changes.add("Chunk cache radius -> " + this.read_Integer);
+         this.chunkRadius = radius.getRadius();
+         changes.add("Chunk cache radius -> " + this.chunkRadius);
       } else if (packet instanceof ClientboundSetSimulationDistancePacket sim) {
-         this.write_Integer = sim.simulationDistance();
-         changes.add("Simulation distance -> " + this.write_Integer);
+         this.simulationDistance = sim.simulationDistance();
+         changes.add("Simulation distance -> " + this.simulationDistance);
       } else if (packet instanceof ClientboundForgetLevelChunkPacket forget) {
          changes.add("Unload chunk " + forget.pos().x() + ", " + forget.pos().z());
       } else if (packet instanceof ClientboundLevelChunkWithLightPacket chunk) {
@@ -286,75 +286,75 @@ public final class PacketStateDeltaTracker {
 
    private void load() {
       if (this.init_bq_StreamUtil == null) {
-         this.init_bq_StreamUtil = init_bq_StreamUtil();
+         this.init_bq_StreamUtil = currentPlayerPose();
       }
 
       if (this.load_bq_StreamUtil == null) {
-         this.load_bq_StreamUtil = init_bq_StreamUtil();
+         this.load_bq_StreamUtil = currentPlayerPose();
       }
 
-      if (this.update_I < 0 && init_Minecraft != null && init_Minecraft.player != null) {
+      if (this.selectedSlot < 0 && MINECRAFT != null && MINECRAFT.player != null) {
          try {
-            this.update_I = init_Minecraft.player.getInventory().getSelectedSlot();
+            this.selectedSlot = MINECRAFT.player.getInventory().getSelectedSlot();
          } catch (Throwable var2) {
          }
       }
    }
 
-   private PacketStateDeltaTracker.Inner_CachePool init_bq_CachePool() {
+   private PacketStateDeltaTracker.Inner_CachePool snapshot() {
       return new PacketStateDeltaTracker.Inner_CachePool(
          this.init_Z,
-         this.init_I,
-         this.load_I,
-         this.init_Str,
-         this.load_Str,
-         this.read_I,
-         this.write_I,
-         this.read_Str,
-         this.update_I,
+         this.containerId,
+         this.stateId,
+         this.menuType,
+         this.menuTitle,
+         this.totalSlots,
+         this.inventoryStart,
+         this.cursorItem,
+         this.selectedSlot,
          this.init_bq_StreamUtil,
          this.load_bq_StreamUtil,
          this.sync,
-         this.write_Str,
-         this.init_Integer,
-         this.load_Integer,
-         this.read_Integer,
-         this.write_Integer,
-         this.update_Str,
-         Collections.unmodifiableMap(new LinkedHashMap<>(this.init_Map)),
+         this.dimension,
+         this.chunkCenterX,
+         this.chunkCenterZ,
+         this.chunkRadius,
+         this.simulationDistance,
+         this.phase,
+         Collections.unmodifiableMap(new LinkedHashMap<>(this.containerSlots)),
          Collections.unmodifiableMap(new LinkedHashMap<>(this.load_Map))
       );
    }
 
    private void read() {
-      this.init_I = -1;
-      this.load_I = -1;
-      this.init_Str = "";
-      this.load_Str = "";
-      this.read_I = -1;
-      this.write_I = -1;
-      this.read_Str = "unknown";
-      this.init_Map.clear();
+      this.containerId = -1;
+      this.stateId = -1;
+      this.menuType = "";
+      this.menuTitle = "";
+      this.totalSlots = -1;
+      this.inventoryStart = -1;
+      this.cursorItem = "unknown";
+      this.containerSlots.clear();
    }
 
-   private void init_V_Int2ObjectMap(Int2ObjectMap<HashedStack> changedSlots) {
+   private void recordChangedSlots(Int2ObjectMap<HashedStack> changedSlots) {
       if (changedSlots != null) {
          for (Entry<HashedStack> entry : changedSlots.int2ObjectEntrySet()) {
-            this.init_Map.put(entry.getIntKey(), describeHashedStack(entry.getValue()));
+            this.containerSlots.put(entry.getIntKey(), describeHashedStack(entry.getValue()));
          }
       }
    }
 
-   private String init_Str_I(int slot) {
+   private String slotDescription(int slot) {
       if (slot < 0) {
          return "outside";
       }
 
-      String value = this.init_Map.get(slot);
+      String value = this.containerSlots.get(slot);
       return value != null ? value : this.load_Map.getOrDefault(slot, "unknown");
    }
 
-   private static int init_I_I_I(int containerId, int totalSlots) {
+   private static int playerInventoryStart(int containerId, int totalSlots) {
       if (totalSlots < 0) {
          return -1;
       } else if (containerId == 0) {
@@ -364,7 +364,7 @@ public final class PacketStateDeltaTracker {
       }
    }
 
-   private static int init_I_List(List<ItemStack> stacks) {
+   private static int countNonEmpty(List<ItemStack> stacks) {
       int count = 0;
       if (stacks != null) {
          for (ItemStack stack : stacks) {
@@ -387,7 +387,7 @@ public final class PacketStateDeltaTracker {
             String display = stack.getHoverName() == null ? "" : stack.getHoverName().getString();
             String vanilla = stack.getItem().getName(stack).getString();
             if (!display.isBlank() && !Objects.equals(display, vanilla)) {
-               out.append(" [").append(init_Str_Str_I(display, 48)).append(']');
+               out.append(" [").append(truncate(display, 48)).append(']');
             }
          } catch (Throwable var6) {
          }
@@ -412,29 +412,29 @@ public final class PacketStateDeltaTracker {
          return "empty";
       } else if (stack instanceof ActualItem actual) {
          String id = actual.item().unwrapKey().map(key -> key.identifier().toString()).orElseGet(() -> load(actual.item()));
-         return actual.count() + "x " + id + init_Str_Obj(actual.components());
+         return actual.count() + "x " + id + componentsSuffix(actual.components());
       } else {
          return load(stack);
       }
    }
 
-   private static String init_Str_Obj(Object components) {
+   private static String componentsSuffix(Object components) {
       String value = load(components);
       return value != null && !value.isBlank() && !"HashedPatchMap[hashedPatches={}]".equals(value) ? " components" : "";
    }
 
-   private static PacketStateDeltaTracker.Inner_StreamUtil init_bq_StreamUtil_bq_StreamUtil(PacketStateDeltaTracker.Inner_StreamUtil base, PositionMoveRotation change, Set<Relative> relatives) {
+   private static PacketStateDeltaTracker.Inner_StreamUtil applyRelative(PacketStateDeltaTracker.Inner_StreamUtil base, PositionMoveRotation change, Set<Relative> relatives) {
       Vec3 pos = change.position();
       Vec3 delta = change.deltaMovement();
       float yaw = change.yRot();
       float pitch = change.xRot();
       if (base != null && relatives != null) {
          if (relatives.contains(Relative.X)) {
-            pos = new Vec3(base.init_D() + pos.x, pos.y, pos.z);
+            pos = new Vec3(base.x() + pos.x, pos.y, pos.z);
          }
 
          if (relatives.contains(Relative.Y)) {
-            pos = new Vec3(pos.x, base.load_D() + pos.y, pos.z);
+            pos = new Vec3(pos.x, base.y() + pos.y, pos.z);
          }
 
          if (relatives.contains(Relative.Z)) {
@@ -442,26 +442,26 @@ public final class PacketStateDeltaTracker {
          }
 
          if (relatives.contains(Relative.Y_ROT)) {
-            yaw += base.init_F();
+            yaw += base.yaw();
          }
 
          if (relatives.contains(Relative.X_ROT)) {
-            pitch += base.load_F();
+            pitch += base.pitch();
          }
       }
 
       return new PacketStateDeltaTracker.Inner_StreamUtil(pos.x, pos.y, pos.z, yaw, pitch, true, true);
    }
 
-   private static PacketStateDeltaTracker.Inner_StreamUtil init_bq_StreamUtil() {
-      if (init_Minecraft != null && init_Minecraft.player != null) {
+   private static PacketStateDeltaTracker.Inner_StreamUtil currentPlayerPose() {
+      if (MINECRAFT != null && MINECRAFT.player != null) {
          try {
             return new PacketStateDeltaTracker.Inner_StreamUtil(
-               init_Minecraft.player.getX(),
-               init_Minecraft.player.getY(),
-               init_Minecraft.player.getZ(),
-               init_Minecraft.player.getYRot(),
-               init_Minecraft.player.getXRot(),
+               MINECRAFT.player.getX(),
+               MINECRAFT.player.getY(),
+               MINECRAFT.player.getZ(),
+               MINECRAFT.player.getYRot(),
+               MINECRAFT.player.getXRot(),
                true,
                true
             );
@@ -473,7 +473,7 @@ public final class PacketStateDeltaTracker {
       }
    }
 
-   private static String init_Str_ContainerInput(ContainerInput input) {
+   private static String describeInput(ContainerInput input) {
       if (input == null) {
          return "clicked";
       }
@@ -508,7 +508,7 @@ public final class PacketStateDeltaTracker {
       return var10000;
    }
 
-   private static String init_Str_D(double value) {
+   private static String format3(double value) {
       return String.format(Locale.ROOT, "%.3f", value);
    }
 
@@ -518,11 +518,11 @@ public final class PacketStateDeltaTracker {
          : String.format(
             Locale.ROOT,
             "x=%.3f, y=%.3f, z=%.3f, yaw=%.2f, pitch=%.2f",
-            position.init_D(),
-            position.load_D(),
+            position.x(),
+            position.y(),
             position.read(),
-            position.init_F(),
-            position.load_F()
+            position.yaw(),
+            position.pitch()
          );
    }
 
@@ -548,11 +548,11 @@ public final class PacketStateDeltaTracker {
       }
    }
 
-   private static String init_Str_Str(String value) {
-      return value != null && !value.isBlank() ? "\"" + init_Str_Str_I(value, 72) + "\"" : "\"\"";
+   private static String quote(String value) {
+      return value != null && !value.isBlank() ? "\"" + truncate(value, 72) + "\"" : "\"\"";
    }
 
-   private static String init_Str_Str_I(String value, int max) {
+   private static String truncate(String value, int max) {
       if (value == null) {
          return "";
       } else {
@@ -575,7 +575,7 @@ public final class PacketStateDeltaTracker {
    public record Inner_CachePool(
       boolean tracked,
       int containerId,
-      int load_I,
+      int stateId,
       String menuType,
       String screenTitle,
       int totalSlots,
@@ -591,7 +591,7 @@ public final class PacketStateDeltaTracker {
       Integer chunkRadius,
       Integer simulationDistance,
       String protocolState,
-      Map<Integer, String> init_Map,
+      Map<Integer, String> slotItems,
       Map<Integer, String> inventoryItems
    ) {
       public static final PacketStateDeltaTracker.Inner_CachePool EMPTY = new PacketStateDeltaTracker.Inner_CachePool(
@@ -604,7 +604,7 @@ public final class PacketStateDeltaTracker {
          carriedItem = carriedItem == null ? "unknown" : carriedItem;
          dimension = dimension == null ? "" : dimension;
          protocolState = protocolState == null ? "unknown" : protocolState;
-         init_Map = init_Map == null ? Map.of() : Map.copyOf(init_Map);
+         slotItems = slotItems == null ? Map.of() : Map.copyOf(slotItems);
          inventoryItems = inventoryItems == null ? Map.of() : Map.copyOf(inventoryItems);
       }
 
@@ -613,7 +613,7 @@ public final class PacketStateDeltaTracker {
             return "outside";
          }
 
-         String value = this.init_Map.get(slot);
+         String value = this.slotItems.get(slot);
          return value != null ? value : this.inventoryItems.getOrDefault(slot, "unknown");
       }
    }
@@ -626,14 +626,14 @@ public final class PacketStateDeltaTracker {
       }
    }
 
-   public record Inner_StreamUtil(double init_D, double load_D, double read, float init_F, float load_F, boolean init_Z, boolean load_Z) {
+   public record Inner_StreamUtil(double x, double y, double read, float yaw, float pitch, boolean hasPosition, boolean hasRotation) {
       public double init(PacketStateDeltaTracker.Inner_StreamUtil other) {
          if (other == null) {
             return 0.0;
          }
 
-         double dx = this.init_D - other.init_D;
-         double dy = this.load_D - other.load_D;
+         double dx = this.x - other.x;
+         double dy = this.y - other.y;
          double dz = this.read - other.read;
          return Math.sqrt(dx * dx + dy * dy + dz * dz);
       }

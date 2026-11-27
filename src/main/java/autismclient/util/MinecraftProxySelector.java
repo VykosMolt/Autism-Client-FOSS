@@ -9,7 +9,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 
 public final class MinecraftProxySelector {
-   private static final ProxySelector init_ProxySelector = new ProxySelector() {
+   private static final ProxySelector SELECTOR = new ProxySelector() {
       @Override
       public List<Proxy> select(URI uri) {
          if (uri == null) {
@@ -33,7 +33,7 @@ public final class MinecraftProxySelector {
       return mc == null ? Proxy.NO_PROXY : mc.getProxy();
    }
 
-   public static ProxySelector init_ProxySelector() {
-      return init_ProxySelector;
+   public static ProxySelector selector() {
+      return SELECTOR;
    }
 }

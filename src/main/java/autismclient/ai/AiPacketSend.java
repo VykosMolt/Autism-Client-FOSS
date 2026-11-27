@@ -20,7 +20,7 @@ public final class AiPacketSend {
    private AiPacketSend() {
    }
 
-   public static JsonObject init_JsonObject(JsonObject args) {
+   public static JsonObject sendPacket(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc == null || mc.getConnection() == null) {
          throw new IllegalArgumentException("No active server connection; join a world or server first");
@@ -213,7 +213,7 @@ public final class AiPacketSend {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
-            JsonObject result = AiPacketSend.init_JsonObject(args);
+            JsonObject result = AiPacketSend.sendPacket(args);
             boolean sent = result.has("sent") && result.get("sent").getAsBoolean();
             return AiGameOperations.result(
                sent ? AiOperation.Status.UNCERTAIN : AiOperation.Status.SUCCEEDED,

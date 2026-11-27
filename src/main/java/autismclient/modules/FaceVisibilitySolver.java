@@ -95,57 +95,57 @@ final class FaceVisibilitySolver {
    }
 
    static final class Inner_StreamUtil {
-      private final Vec3 init_Vec3;
-      private final AABB init_AABB;
-      private final Axis init_Direction_Axis;
-      private final Axis load_Direction_Axis;
-      private final Axis read_Direction_Axis;
-      private final double init_D;
-      private final double load_D;
-      private final double read_D;
+      private final Vec3 eye;
+      private final AABB face;
+      private final Axis normalAxis;
+      private final Axis uAxis;
+      private final Axis vAxis;
+      private final double planeCoord;
+      private final double eyeOffset;
+      private final double facingSign;
       private final double write;
       private final double update;
       private final double sync;
-      private final Area init_Area;
+      private final Area visibleArea;
 
       private Inner_StreamUtil(Vec3 eye, AABB face, Direction side, List<AABB> hard) {
-         this.init_Vec3 = eye;
-         this.init_AABB = face;
-         this.init_Direction_Axis = side.getAxis();
-         this.load_Direction_Axis = this.init_Direction_Axis == Axis.X ? Axis.Y : Axis.X;
-         this.read_Direction_Axis = this.init_Direction_Axis == Axis.Z ? Axis.Y : Axis.Z;
-         this.init_D = side.getAxisDirection() == AxisDirection.POSITIVE ? face.max(this.init_Direction_Axis) : face.min(this.init_Direction_Axis);
-         this.load_D = this.init_D - FaceVisibilitySolver.init(eye, this.init_Direction_Axis);
-         this.read_D = Math.signum(this.load_D);
-         this.write = Math.abs(this.load_D);
-         this.update = FaceVisibilitySolver.init(eye, this.load_Direction_Axis) - face.min(this.load_Direction_Axis);
-         this.sync = FaceVisibilitySolver.init(eye, this.read_Direction_Axis) - face.min(this.read_Direction_Axis);
-         double width = face.max(this.load_Direction_Axis) - face.min(this.load_Direction_Axis);
-         double height = face.max(this.read_Direction_Axis) - face.min(this.read_Direction_Axis);
+         this.eye = eye;
+         this.face = face;
+         this.normalAxis = side.getAxis();
+         this.uAxis = this.normalAxis == Axis.X ? Axis.Y : Axis.X;
+         this.vAxis = this.normalAxis == Axis.Z ? Axis.Y : Axis.Z;
+         this.planeCoord = side.getAxisDirection() == AxisDirection.POSITIVE ? face.max(this.normalAxis) : face.min(this.normalAxis);
+         this.eyeOffset = this.planeCoord - FaceVisibilitySolver.init(eye, this.normalAxis);
+         this.facingSign = Math.signum(this.eyeOffset);
+         this.write = Math.abs(this.eyeOffset);
+         this.update = FaceVisibilitySolver.init(eye, this.uAxis) - face.min(this.uAxis);
+         this.sync = FaceVisibilitySolver.init(eye, this.vAxis) - face.min(this.vAxis);
+         double width = face.max(this.uAxis) - face.min(this.uAxis);
+         double height = face.max(this.vAxis) - face.min(this.vAxis);
          double inset = Math.min(1.0E-5, Math.min(width, height) / 8.0);
-         this.init_Area = !(this.write < 1.0E-7) && !(this.read_D * side.getAxisDirection().getStep() > 0.0) && !(width < 1.0E-7) && !(height < 1.0E-7)
+         this.visibleArea = !(this.write < 1.0E-7) && !(this.facingSign * side.getAxisDirection().getStep() > 0.0) && !(width < 1.0E-7) && !(height < 1.0E-7)
             ? new Area(new java.awt.geom.Rectangle2D.Double(inset, inset, width - 2.0 * inset, height - 2.0 * inset))
             : new Area();
-         this.init(this.init_Area, hard);
+         this.init(this.visibleArea, hard);
       }
 
       private void init(Area open, List<AABB> blockers) {
          if (!open.isEmpty()) {
             for (AABB box : blockers) {
-               double a = (box.min(this.init_Direction_Axis) - FaceVisibilitySolver.init(this.init_Vec3, this.init_Direction_Axis)) * this.read_D;
-               double b = (box.max(this.init_Direction_Axis) - FaceVisibilitySolver.init(this.init_Vec3, this.init_Direction_Axis)) * this.read_D;
+               double a = (box.min(this.normalAxis) - FaceVisibilitySolver.init(this.eye, this.normalAxis)) * this.facingSign;
+               double b = (box.max(this.normalAxis) - FaceVisibilitySolver.init(this.eye, this.normalAxis)) * this.facingSign;
                double near = Math.max(1.0E-7, Math.min(a, b));
                double far = Math.min(this.write - 1.0E-7, Math.max(a, b));
                if (!(near >= far)) {
                   ArrayList<FaceVisibilitySolver.Inner_CachePool> projected = new ArrayList<>(8);
 
                   for (double n : new double[]{near, far}) {
-                     for (double x : new double[]{box.min(this.load_Direction_Axis), box.max(this.load_Direction_Axis)}) {
-                        for (double y : new double[]{box.min(this.read_Direction_Axis), box.max(this.read_Direction_Axis)}) {
+                     for (double x : new double[]{box.min(this.uAxis), box.max(this.uAxis)}) {
+                        for (double y : new double[]{box.min(this.vAxis), box.max(this.vAxis)}) {
                            projected.add(
                               new FaceVisibilitySolver.Inner_CachePool(
-                                 this.update + (x - FaceVisibilitySolver.init(this.init_Vec3, this.load_Direction_Axis)) * this.write / n,
-                                 this.sync + (y - FaceVisibilitySolver.init(this.init_Vec3, this.read_Direction_Axis)) * this.write / n
+                                 this.update + (x - FaceVisibilitySolver.init(this.eye, this.uAxis)) * this.write / n,
+                                 this.sync + (y - FaceVisibilitySolver.init(this.eye, this.vAxis)) * this.write / n
                               )
                            );
                         }
@@ -175,11 +175,11 @@ final class FaceVisibilitySolver {
       }
 
       List<Vec3> init(List<AABB> blockers, Vec3 preferred) {
-         if (this.init_Area.isEmpty()) {
+         if (this.visibleArea.isEmpty()) {
             return List.of();
          }
 
-         Area open = new Area(this.init_Area);
+         Area open = new Area(this.visibleArea);
          this.init(open, blockers);
          if (open.isEmpty()) {
             return List.of();
@@ -208,8 +208,8 @@ final class FaceVisibilitySolver {
 
          ArrayList<Double> ys = new ArrayList<>(levels);
          ArrayList<Vec3> points = new ArrayList<>();
-         double wantedU = FaceVisibilitySolver.init(preferred, this.load_Direction_Axis) - this.init_AABB.min(this.load_Direction_Axis);
-         double wantedV = FaceVisibilitySolver.init(preferred, this.read_Direction_Axis) - this.init_AABB.min(this.read_Direction_Axis);
+         double wantedU = FaceVisibilitySolver.init(preferred, this.uAxis) - this.face.min(this.uAxis);
+         double wantedV = FaceVisibilitySolver.init(preferred, this.vAxis) - this.face.min(this.vAxis);
 
          for (int i = 1; i < ys.size(); i++) {
             double low = ys.get(i - 1);
@@ -234,12 +234,12 @@ final class FaceVisibilitySolver {
                      if (open.contains(x, y)) {
                         points.add(
                            FaceVisibilitySolver.init(
-                              this.init_Direction_Axis,
-                              this.load_Direction_Axis,
-                              this.read_Direction_Axis,
-                              this.init_D,
-                              this.init_AABB.min(this.load_Direction_Axis) + x,
-                              this.init_AABB.min(this.read_Direction_Axis) + y
+                              this.normalAxis,
+                              this.uAxis,
+                              this.vAxis,
+                              this.planeCoord,
+                              this.face.min(this.uAxis) + x,
+                              this.face.min(this.vAxis) + y
                            )
                         );
                         double closeX = Math.clamp(wantedU, left + (right - left) * 0.2, right - (right - left) * 0.2);
@@ -247,12 +247,12 @@ final class FaceVisibilitySolver {
                         if (open.contains(closeX, closeY)) {
                            points.add(
                               FaceVisibilitySolver.init(
-                                 this.init_Direction_Axis,
-                                 this.load_Direction_Axis,
-                                 this.read_Direction_Axis,
-                                 this.init_D,
-                                 this.init_AABB.min(this.load_Direction_Axis) + closeX,
-                                 this.init_AABB.min(this.read_Direction_Axis) + closeY
+                                 this.normalAxis,
+                                 this.uAxis,
+                                 this.vAxis,
+                                 this.planeCoord,
+                                 this.face.min(this.uAxis) + closeX,
+                                 this.face.min(this.vAxis) + closeY
                               )
                            );
                         }

@@ -5,14 +5,14 @@ import java.math.RoundingMode;
 
 public final class ClickTimingMath {
    public static final long init_J = 1000000000L;
-   private static final BigDecimal init_BigDecimal = BigDecimal.valueOf(1000000000L);
+   private static final BigDecimal NANOS_PER_SECOND = BigDecimal.valueOf(1000000000L);
 
    private ClickTimingMath() {
    }
 
    public static long init(double cps) {
       if (cps > 0.0 && !Double.isInfinite(cps)) {
-         return init_BigDecimal.divide(new BigDecimal(Double.toString(cps)), 0, RoundingMode.CEILING).longValueExact();
+         return NANOS_PER_SECOND.divide(new BigDecimal(Double.toString(cps)), 0, RoundingMode.CEILING).longValueExact();
       } else {
          throw new IllegalArgumentException("cps " + cps);
       }

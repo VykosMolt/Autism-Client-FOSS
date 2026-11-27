@@ -18,7 +18,7 @@ public final class TridentBoostModule extends Module {
    }
 
    public static boolean init_Z(Player player) {
-      TridentBoostModule module = init_aZ(player);
+      TridentBoostModule module = activeFor(player);
       if (module != null && !player.isPassenger()) {
          synchronized (module.init) {
             Long last = module.init.get(player);
@@ -30,7 +30,7 @@ public final class TridentBoostModule extends Module {
    }
 
    public static void init_V(Player player) {
-      TridentBoostModule module = init_aZ(player);
+      TridentBoostModule module = activeFor(player);
       if (module != null) {
          synchronized (module.init) {
             module.init.put(player, System.nanoTime());
@@ -38,7 +38,7 @@ public final class TridentBoostModule extends Module {
       }
    }
 
-   private static TridentBoostModule init_aZ(Player player) {
+   private static TridentBoostModule activeFor(Player player) {
       LocalPlayer local = MC.player;
       if (local != null && !aD.read_Z()) {
          if (player == local

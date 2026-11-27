@@ -14,7 +14,7 @@ public final class NativeImageMipmapBuilder {
 
       try {
          while (Math.max(current.getWidth(), current.getHeight()) > maxTop && (current.getWidth() > 1 || current.getHeight() > 1)) {
-            NativeImage next = init_NativeImage(current);
+            NativeImage next = halfSize(current);
             if (current != base) {
                current.close();
             }
@@ -28,7 +28,7 @@ public final class NativeImageMipmapBuilder {
          levels.add(current);
 
          while (current.getWidth() > 1 || current.getHeight() > 1) {
-            current = init_NativeImage(current);
+            current = halfSize(current);
             levels.add(current);
          }
 
@@ -46,7 +46,7 @@ public final class NativeImageMipmapBuilder {
       }
    }
 
-   public static NativeImage init_NativeImage(NativeImage src) {
+   public static NativeImage halfSize(NativeImage src) {
       int w = Math.max(1, src.getWidth() / 2);
       int h = Math.max(1, src.getHeight() / 2);
       NativeImage out = new NativeImage(w, h, true);

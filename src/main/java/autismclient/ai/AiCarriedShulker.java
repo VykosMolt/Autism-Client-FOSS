@@ -51,67 +51,67 @@ import net.minecraft.world.phys.Vec3;
 final class AiCarriedShulker implements AiOperation {
    static final int init_I = 27;
    static final int load_I = 2;
-   private final Minecraft init_Minecraft = Minecraft.getInstance();
-   private final Object init_Obj = this.init_Minecraft.level;
-   private final Object load_Obj = this.init_Minecraft.player;
-   private final Object read_Obj = this.init_Minecraft.getConnection();
-   private final ItemStack init_ItemStack;
-   private final Item init_Item;
-   private final ItemStack load_ItemStack;
-   private final int read_I;
-   private final Set<Long> init_Set;
-   private final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
-   private final AiPreparationReceipt init_bb = new AiPreparationReceipt();
-   private final long init_J = System.nanoTime() + 120000000000L;
-   private AiCarriedShulker.Inner_StreamUtil init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.PLACE;
-   private BlockPos init_BlockPos;
-   private BlockState init_BlockState;
-   private BlockState load_BlockState;
-   private Object write_Obj;
-   private AiOperation init_AiOperation;
-   private ShulkerBoxMenu init_ShulkerBoxMenu;
+   private final Minecraft mc = Minecraft.getInstance();
+   private final Object startLevel = this.mc.level;
+   private final Object startPlayer = this.mc.player;
+   private final Object startConnection = this.mc.getConnection();
+   private final ItemStack box;
+   private final Item item;
+   private final ItemStack exactMaterial;
+   private final int wanted;
+   private final Set<Long> protectedCells;
+   private final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer();
+   private final AiPreparationReceipt receipt = new AiPreparationReceipt();
+   private final long deadlineNanos = System.nanoTime() + 120000000000L;
+   private AiCarriedShulker.Inner_StreamUtil stage = AiCarriedShulker.Inner_StreamUtil.PLACE;
+   private BlockPos boxPos;
+   private BlockState boxState;
+   private BlockState supportState;
+   private Object boxEntity;
+   private AiOperation child;
+   private ShulkerBoxMenu menu;
    private CompletableFuture<Boolean> init_CompletableFuture;
-   private List<ItemStack> init_List;
-   private List<ItemStack> load_List;
+   private List<ItemStack> menuSnapshot;
+   private List<ItemStack> inventoryBefore;
    private List<ItemStack> read_List;
-   private ItemStack read_ItemStack = ItemStack.EMPTY;
-   private AiOperation.Result init_AiOperation_Result;
-   private AiOperation.Result load_AiOperation_Result;
-   private int write_I;
+   private ItemStack remainingBox = ItemStack.EMPTY;
+   private AiOperation.Result finalResult;
+   private AiOperation.Result transferResult;
+   private int countBefore;
    private int update;
    private int sync;
    private int flush;
    private int close = -1;
    private int open;
    private int poll;
-   private long load_J;
-   private long read_J;
-   private long write_J;
+   private long inventoryRevision;
+   private long blockRevision;
+   private long inventoryRevisionAtPlace;
    private AiCarriedShulker.Inner_DataUtil init_BitSetUtil_DataUti;
-   private boolean init_Z;
-   private boolean load_Z;
-   private boolean read_Z;
-   private boolean write_Z;
+   private boolean placed;
+   private boolean recovered;
+   private boolean cancelled;
+   private boolean placementStarted;
    private int push = -1;
 
-   static boolean init_Z_ItemStack(ItemStack stack) {
+   static boolean isShulkerBox(ItemStack stack) {
       return !stack.isEmpty() && stack.getCount() == 1 && stack.getItem() instanceof BlockItem block && block.getBlock() instanceof ShulkerBoxBlock;
    }
 
-   static List<ItemStack> init_List_ItemStack(ItemStack box) {
+   static List<ItemStack> contents(ItemStack box) {
       NonNullList<ItemStack> result = NonNullList.withSize(27, ItemStack.EMPTY);
       box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyInto(result);
       return result;
    }
 
-   static int init_I_ItemStack_Item(ItemStack box, Item item) {
-      if (!init_Z_ItemStack(box)) {
+   static int countInBox(ItemStack box, Item item) {
+      if (!isShulkerBox(box)) {
          return 0;
       }
 
       int count = 0;
 
-      for (ItemStack stack : init_List_ItemStack(box)) {
+      for (ItemStack stack : contents(box)) {
          if (stack.is(item)) {
             count += stack.getCount();
          }
@@ -120,11 +120,11 @@ final class AiCarriedShulker implements AiOperation {
       return count;
    }
 
-   static int init_I_ItemStack_ItemStack(ItemStack box, ItemStack wanted) {
-      if (init_Z_ItemStack(box) && !wanted.isEmpty()) {
+   static int countExactInBox(ItemStack box, ItemStack wanted) {
+      if (isShulkerBox(box) && !wanted.isEmpty()) {
          int count = 0;
 
-         for (ItemStack stack : init_List_ItemStack(box)) {
+         for (ItemStack stack : contents(box)) {
             if (ItemStack.isSameItemSameComponents(stack, wanted)) {
                count += stack.getCount();
             }
@@ -150,7 +150,7 @@ final class AiCarriedShulker implements AiOperation {
             if (!tried.stream().anyMatch(previous -> ItemStack.matches(previous, stack))) {
                Item supplied = requireCapacity ? init(inventory, stack, item) : item;
                if (supplied != null) {
-                  int count = init_I_ItemStack_Item(stack, supplied);
+                  int count = countInBox(stack, supplied);
                   if (requireCapacity && count > 0) {
                      count = init(inventory, stack, supplied, count, true);
                   }
@@ -168,11 +168,11 @@ final class AiCarriedShulker implements AiOperation {
    }
 
    static Item init(Container inventory, ItemStack box, Item wanted) {
-      if (!init_Z_ItemStack(box)) {
+      if (!isShulkerBox(box)) {
          return null;
       }
 
-      if (init_I_ItemStack_Item(box, wanted) > 0 && init(inventory, box, wanted, 1, true) > 0) {
+      if (countInBox(box, wanted) > 0 && init(inventory, box, wanted, 1, true) > 0) {
          return wanted;
       }
 
@@ -180,7 +180,7 @@ final class AiCarriedShulker implements AiOperation {
          return null;
       }
 
-      for (ItemStack stored : init_List_ItemStack(box)) {
+      for (ItemStack stored : contents(box)) {
          if (autismclient.ai.print.PrintCore.matchesItem(stored, wanted) && init(inventory, box, stored.getItem(), 1, true) > 0) {
             return stored.getItem();
          }
@@ -197,8 +197,8 @@ final class AiCarriedShulker implements AiOperation {
             ItemStack stack = inventory.getItem(slot);
             if (!stack.isEmpty()) {
                counts.merge(stack.getItem(), stack.getCount(), Integer::sum);
-               if (includeBoxes && init_Z_ItemStack(stack)) {
-                  for (ItemStack stored : init_List_ItemStack(stack)) {
+               if (includeBoxes && isShulkerBox(stack)) {
+                  for (ItemStack stored : contents(stack)) {
                      if (!stored.isEmpty()) {
                         counts.merge(stored.getItem(), stored.getCount(), Integer::sum);
                      }
@@ -219,7 +219,7 @@ final class AiCarriedShulker implements AiOperation {
          if (slot < 36 || slot == 40) {
             ItemStack stack = inventory.getItem(slot);
             if (!tried.stream().anyMatch(previous -> ItemStack.matches(previous, stack))) {
-               int count = init_I_ItemStack_ItemStack(stack, wanted);
+               int count = countExactInBox(stack, wanted);
                if (count > bestCount) {
                   best = stack;
                   bestCount = count;
@@ -240,7 +240,7 @@ final class AiCarriedShulker implements AiOperation {
    }
 
    private static int init(Container inventory, ItemStack box, Predicate<ItemStack> matches, int wanted, boolean beforePlacement) {
-      if (wanted > 0 && init_Z_ItemStack(box) && inventory.getContainerSize() >= 36) {
+      if (wanted > 0 && isShulkerBox(box) && inventory.getContainerSize() >= 36) {
          ArrayList<ItemStack> slots = new ArrayList<>(36);
 
          for (int i = 0; i < 36; i++) {
@@ -297,7 +297,7 @@ final class AiCarriedShulker implements AiOperation {
          }
 
          int accepted = 0;
-         List<ItemStack> stored = init_List_ItemStack(box);
+         List<ItemStack> stored = contents(box);
 
          for (int sourcePass = 0; sourcePass < 2; sourcePass++) {
             for (ItemStack stack : stored) {
@@ -334,7 +334,7 @@ final class AiCarriedShulker implements AiOperation {
       }
    }
 
-   static ItemStack init_ItemStack_ItemStack_List(ItemStack original, List<ItemStack> remaining) {
+   static ItemStack withContents(ItemStack original, List<ItemStack> remaining) {
       ItemStack result = original.copyWithCount(1);
       result.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(remaining));
       return result;
@@ -374,7 +374,7 @@ final class AiCarriedShulker implements AiOperation {
       }
    }
 
-   static List<ItemStack> init_List_Container(Container inventory) {
+   static List<ItemStack> snapshot(Container inventory) {
       ArrayList<ItemStack> contents = new ArrayList<>(inventory.getContainerSize());
 
       for (int i = 0; i < inventory.getContainerSize(); i++) {
@@ -440,11 +440,11 @@ final class AiCarriedShulker implements AiOperation {
    }
 
    static boolean init(List<ItemStack> before, List<ItemStack> after, ItemStack returning) {
-      if (init_Z_ItemStack(returning) && before.size() == after.size()) {
+      if (isShulkerBox(returning) && before.size() == after.size()) {
          ArrayList<ItemStack> expected = new ArrayList<>();
 
          for (int i = 0; i < before.size(); i++) {
-            if ((i < 36 || i == 40) && init_Z_ItemStack(before.get(i))) {
+            if ((i < 36 || i == 40) && isShulkerBox(before.get(i))) {
                expected.add(before.get(i));
             }
          }
@@ -452,7 +452,7 @@ final class AiCarriedShulker implements AiOperation {
          expected.add(returning);
 
          for (int i = 0; i < after.size(); i++) {
-            if ((i < 36 || i == 40) && init_Z_ItemStack(after.get(i))) {
+            if ((i < 36 || i == 40) && isShulkerBox(after.get(i))) {
                ItemStack current = after.get(i);
                int match = -1;
 
@@ -555,7 +555,7 @@ final class AiCarriedShulker implements AiOperation {
       return true;
    }
 
-   static BlockPos init_BlockPos_BlockPos_Vec3(BlockPos box, Vec3 drop) {
+   static BlockPos clampDropCell(BlockPos box, Vec3 drop) {
       return box.offset(Math.clamp(Mth.floor(drop.x) - box.getX(), -2, 2), 0, Math.clamp(Mth.floor(drop.z) - box.getZ(), -2, 2));
    }
 
@@ -608,143 +608,143 @@ final class AiCarriedShulker implements AiOperation {
    }
 
    private AiCarriedShulker(ItemStack box, Item item, ItemStack exactMaterial, int wanted, Set<Long> protectedCells) {
-      this.init_ItemStack = box.copy();
-      this.init_Item = item;
-      this.read_I = Math.max(1, wanted);
-      this.init_Set = protectedCells;
-      this.load_ItemStack = exactMaterial.copyWithCount(1);
-      if (!init_Z_ItemStack(box) || (exactMaterial.isEmpty() ? init_I_ItemStack_Item(box, item) : init_I_ItemStack_ItemStack(box, exactMaterial)) == 0) {
+      this.box = box.copy();
+      this.item = item;
+      this.wanted = Math.max(1, wanted);
+      this.protectedCells = protectedCells;
+      this.exactMaterial = exactMaterial.copyWithCount(1);
+      if (!isShulkerBox(box) || (exactMaterial.isEmpty() ? countInBox(box, item) : countExactInBox(box, exactMaterial)) == 0) {
          throw new IllegalArgumentException("The selected shulker has no requested stock");
       }
    }
 
    private int init_I_Z(boolean beforePlacement) {
-      return this.load_ItemStack.isEmpty()
-         ? init(this.init_Minecraft.player.getInventory(), this.init_ItemStack, this.init_Item, this.read_I, beforePlacement)
-         : init(this.init_Minecraft.player.getInventory(), this.init_ItemStack, this.load_ItemStack, this.read_I, beforePlacement);
+      return this.exactMaterial.isEmpty()
+         ? init(this.mc.player.getInventory(), this.box, this.item, this.wanted, beforePlacement)
+         : init(this.mc.player.getInventory(), this.box, this.exactMaterial, this.wanted, beforePlacement);
    }
 
-   private int init_I() {
-      return this.load_ItemStack.isEmpty()
-         ? AiPrintSupply.init(this.init_Minecraft.player.getInventory(), this.init_Item)
-         : AiInventoryController.countMatching(this.init_Minecraft.player.getInventory(), this.load_ItemStack);
+   private int carriedCount() {
+      return this.exactMaterial.isEmpty()
+         ? AiPrintSupply.init(this.mc.player.getInventory(), this.item)
+         : AiInventoryController.countMatching(this.mc.player.getInventory(), this.exactMaterial);
    }
 
    @Override
    public AiOperation.Result tick() {
-      if (this.init_AiOperation_Result != null) {
-         return this.init_AiOperation_Result;
+      if (this.finalResult != null) {
+         return this.finalResult;
       }
 
-      if (this.read_Z) {
-         return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.CANCELLED, "Portable stock was cancelled");
+      if (this.cancelled) {
+         return this.finish(AiOperation.Status.CANCELLED, "Portable stock was cancelled");
       }
 
-      if (this.init_Minecraft.level != this.init_Obj
-         || this.init_Minecraft.player != this.load_Obj
-         || this.init_Minecraft.getConnection() != this.read_Obj
-         || this.init_Minecraft.player == null
-         || !this.init_Minecraft.player.isAlive()) {
-         return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.UNCERTAIN, "Portable stock context changed");
+      if (this.mc.level != this.startLevel
+         || this.mc.player != this.startPlayer
+         || this.mc.getConnection() != this.startConnection
+         || this.mc.player == null
+         || !this.mc.player.isAlive()) {
+         return this.finish(AiOperation.Status.UNCERTAIN, "Portable stock context changed");
       }
 
-      if (this.init_Minecraft.player.hasInfiniteMaterials()) {
-         return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.UNCERTAIN, "Game mode changed before the carried shulker was recovered");
+      if (this.mc.player.hasInfiniteMaterials()) {
+         return this.finish(AiOperation.Status.UNCERTAIN, "Game mode changed before the carried shulker was recovered");
       }
 
-      if (System.nanoTime() >= this.init_J) {
-         return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.TIMED_OUT, "Portable stock recovery deadline reached");
+      if (System.nanoTime() >= this.deadlineNanos) {
+         return this.finish(AiOperation.Status.TIMED_OUT, "Portable stock recovery deadline reached");
       }
 
-      if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.APPROACH
-         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.PLACE
-         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL
-         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.PICKUP
-         || this.init_Z()
-         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.BREAK
-            && this.init_AiOperation != null
-            && this.init_Minecraft.level.getBlockState(this.init_BlockPos).isAir()) {
-         if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.APPROACH) {
-            AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
+      if (this.stage == AiCarriedShulker.Inner_StreamUtil.APPROACH
+         || this.stage == AiCarriedShulker.Inner_StreamUtil.PLACE
+         || this.stage == AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL
+         || this.stage == AiCarriedShulker.Inner_StreamUtil.PICKUP
+         || this.boxStillPlaced()
+         || this.stage == AiCarriedShulker.Inner_StreamUtil.BREAK
+            && this.child != null
+            && this.mc.level.getBlockState(this.boxPos).isAir()) {
+         if (this.stage == AiCarriedShulker.Inner_StreamUtil.APPROACH) {
+            AiOperation.Result result = this.receipt.tickChild(this.child);
             if (!result.terminal()) {
-               return this.init_AiOperation_Result_Str("Moving to a safe existing shulker recovery area");
+               return this.running("Moving to a safe existing shulker recovery area");
             }
 
-            this.init_bb.cancelChild(this.init_AiOperation);
-            this.init_AiOperation = null;
+            this.receipt.cancelChild(this.child);
+            this.child = null;
             if (result.status() != AiOperation.Status.SUCCEEDED) {
-               return this.init_AiOperation_Result_AiOperation_Status_Str(result.status(), "Could not reach a safe shulker recovery area");
+               return this.finish(result.status(), "Could not reach a safe shulker recovery area");
             }
 
-            this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.PLACE;
-            return this.init_AiOperation_Result_Str("Rechecking the shulker recovery area after arrival");
+            this.stage = AiCarriedShulker.Inner_StreamUtil.PLACE;
+            return this.running("Rechecking the shulker recovery area after arrival");
          } else {
-            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.PLACE) {
-               return this.init_AiOperation_Result_2();
+            if (this.stage == AiCarriedShulker.Inner_StreamUtil.PLACE) {
+               return this.tickPlace();
             }
 
-            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.OPEN) {
-               return this.load_AiOperation_Result_2();
+            if (this.stage == AiCarriedShulker.Inner_StreamUtil.OPEN) {
+               return this.tickWithdraw();
             }
 
-            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.WITHDRAW) {
+            if (this.stage == AiCarriedShulker.Inner_StreamUtil.WITHDRAW) {
                return this.read_AiOperation_Result();
             }
 
-            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.CLOSE) {
-               if (this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu) {
-                  return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.UNCERTAIN, "Another menu opened during shulker recovery");
+            if (this.stage == AiCarriedShulker.Inner_StreamUtil.CLOSE) {
+               if (this.mc.player.containerMenu != this.mc.player.inventoryMenu) {
+                  return this.finish(AiOperation.Status.UNCERTAIN, "Another menu opened during shulker recovery");
                }
 
-               if (++this.open < 10 || this.write_Obj instanceof ShulkerBoxBlockEntity shulker && !shulker.isClosed()) {
-                  return this.init_AiOperation_Result_Str("Waiting for the shulker lid to close");
+               if (++this.open < 10 || this.boxEntity instanceof ShulkerBoxBlockEntity shulker && !shulker.isClosed()) {
+                  return this.running("Waiting for the shulker lid to close");
                }
 
                if (!this.read_Z()) {
-                  return this.init_AiOperation_Result_AiOperation_Status_Str(
+                  return this.finish(
                      AiOperation.Status.UNCERTAIN, "The stock box recovery area or reserved pickup capacity changed; box left placed"
                   );
                }
 
-               this.sync = init_I_Container_ItemStack(this.init_Minecraft.player.getInventory(), this.read_ItemStack);
-               this.read_List = init_List_Container(this.init_Minecraft.player.getInventory());
-               this.load_J = AiServerEvidence.inventoryRevision();
-               this.read_J = AiServerEvidence.blockRevision(this.init_BlockPos);
-               this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(this.init_BlockPos, 25, true, this.init_Set, false);
-               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.BREAK;
-               return this.init_AiOperation_Result_Str("Recovering the owned stock shulker");
-            } else if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.BREAK) {
-               if (this.init_Z() && !this.read_Z()) {
-                  return this.init_AiOperation_Result_AiOperation_Status_Str(
+               this.sync = countExactInInventory(this.mc.player.getInventory(), this.remainingBox);
+               this.read_List = snapshot(this.mc.player.getInventory());
+               this.inventoryRevision = AiServerEvidence.inventoryRevision();
+               this.blockRevision = AiServerEvidence.blockRevision(this.boxPos);
+               this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(this.boxPos, 25, true, this.protectedCells, false);
+               this.stage = AiCarriedShulker.Inner_StreamUtil.BREAK;
+               return this.running("Recovering the owned stock shulker");
+            } else if (this.stage == AiCarriedShulker.Inner_StreamUtil.BREAK) {
+               if (this.boxStillPlaced() && !this.read_Z()) {
+                  return this.finish(
                      AiOperation.Status.UNCERTAIN, "Stock recovery is no longer safe; further breaking stopped"
                   );
                }
 
-               AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
+               AiOperation.Result result = this.receipt.tickChild(this.child);
                if (!result.terminal()) {
-                  return this.init_AiOperation_Result_Str(result.message());
+                  return this.running(result.message());
                }
 
-               this.init_bb.cancelChild(this.init_AiOperation);
-               this.init_AiOperation = null;
+               this.receipt.cancelChild(this.child);
+               this.child = null;
                if (result.status() != AiOperation.Status.SUCCEEDED) {
-                  return this.init_AiOperation_Result_AiOperation_Status_Str(
+                  return this.finish(
                      AiOperation.Status.UNCERTAIN, "The stock shulker break did not finish: " + result.message()
                   );
                }
 
-               this.init_BitSetUtil_DataUti = new AiCarriedShulker.Inner_DataUtil(this.read_J, System.nanoTime());
-               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL;
-               return this.init_AiOperation_Result_Str("Waiting for the server to confirm the stock shulker removal");
-            } else if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL) {
+               this.init_BitSetUtil_DataUti = new AiCarriedShulker.Inner_DataUtil(this.blockRevision, System.nanoTime());
+               this.stage = AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL;
+               return this.running("Waiting for the server to confirm the stock shulker removal");
+            } else if (this.stage == AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL) {
                AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2 observed = this.init_BitSetUtil_DataUti
-                  .init(AiTerrain.isLoaded(this.init_Minecraft.level, this.init_BlockPos), AiServerEvidence.lastBlockUpdate(this.init_BlockPos), System.nanoTime());
+                  .init(AiTerrain.isLoaded(this.mc.level, this.boxPos), AiServerEvidence.lastBlockUpdate(this.boxPos), System.nanoTime());
                if (observed == AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.WAITING) {
-                  return this.init_AiOperation_Result_Str("Waiting for the server to confirm the stock shulker removal");
+                  return this.running("Waiting for the server to confirm the stock shulker removal");
                }
 
                if (observed != AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.CONFIRMED) {
-                  return this.init_AiOperation_Result_AiOperation_Status_Str(
+                  return this.finish(
                      AiOperation.Status.UNCERTAIN,
                      observed == AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.REJECTED
                         ? "The server did not confirm an empty stock shulker cell; inspect the placed box"
@@ -752,59 +752,59 @@ final class AiCarriedShulker implements AiOperation {
                   );
                }
 
-               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.PICKUP;
-               return this.init_AiOperation_Result_Str("Locating the observed stock shulker drop");
+               this.stage = AiCarriedShulker.Inner_StreamUtil.PICKUP;
+               return this.running("Locating the observed stock shulker drop");
             } else {
                if (!init(
-                  this.init_Minecraft.level,
-                  p -> AiTerrain.isLoaded(this.init_Minecraft.level, p),
-                  this.init_BlockPos,
-                  this.init_Minecraft.player.getBoundingBox(),
-                  this.init_Set,
+                  this.mc.level,
+                  p -> AiTerrain.isLoaded(this.mc.level, p),
+                  this.boxPos,
+                  this.mc.player.getBoundingBox(),
+                  this.protectedCells,
                   false
                )) {
-                  return this.init_AiOperation_Result_AiOperation_Status_Str(
+                  return this.finish(
                      AiOperation.Status.UNCERTAIN, "The shulker pickup area changed; no unsafe recovery route will be attempted"
                   );
                }
 
-               if (this.init_AiOperation != null) {
-                  AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
+               if (this.child != null) {
+                  AiOperation.Result result = this.receipt.tickChild(this.child);
                   if (!result.terminal()) {
-                     return this.init_AiOperation_Result_Str(result.message());
+                     return this.running(result.message());
                   }
 
-                  this.init_bb.cancelChild(this.init_AiOperation);
-                  this.init_AiOperation = null;
+                  this.receipt.cancelChild(this.child);
+                  this.child = null;
                   if (result.status() != AiOperation.Status.SUCCEEDED) {
-                     return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.UNCERTAIN, "Could not reach the dropped stock shulker");
+                     return this.finish(AiOperation.Status.UNCERTAIN, "Could not reach the dropped stock shulker");
                   }
                }
 
-               if (AiServerEvidence.inventoryRevision() > this.load_J
-                  && init_I_Container_ItemStack(this.init_Minecraft.player.getInventory(), this.read_ItemStack) == this.sync + 1
-                  && this.init_Minecraft.player.onGround()
-                  && this.init_Minecraft.player.getDeltaMovement().horizontalDistanceSqr() <= 4.0E-4) {
-                  if (!init(this.read_List, init_List_Container(this.init_Minecraft.player.getInventory()), this.read_ItemStack)) {
-                     return this.init_AiOperation_Result_AiOperation_Status_Str(
+               if (AiServerEvidence.inventoryRevision() > this.inventoryRevision
+                  && countExactInInventory(this.mc.player.getInventory(), this.remainingBox) == this.sync + 1
+                  && this.mc.player.onGround()
+                  && this.mc.player.getDeltaMovement().horizontalDistanceSqr() <= 4.0E-4) {
+                  if (!init(this.read_List, snapshot(this.mc.player.getInventory()), this.remainingBox)) {
+                     return this.finish(
                         AiOperation.Status.UNCERTAIN, "The recovered box or the other carried shulkers changed during pickup"
                      );
                   }
 
-                  this.load_Z = true;
-                  return this.init_AiOperation_Result_AiOperation_Status_Str(
+                  this.recovered = true;
+                  return this.finish(
                      this.update > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
                      this.update > 0 ? "Material withdrawn and stock shulker recovered" : "Stock shulker recovered without a material transfer"
                   );
                } else {
                   ItemEntity dropped = null;
 
-                  for (ItemEntity candidate : this.init_Minecraft.level.getEntitiesOfClass(ItemEntity.class, init_AABB_BlockPos(this.init_BlockPos))) {
-                     if (ItemStack.matches(candidate.getItem(), this.read_ItemStack)
+                  for (ItemEntity candidate : this.mc.level.getEntitiesOfClass(ItemEntity.class, pickupArea(this.boxPos))) {
+                     if (ItemStack.matches(candidate.getItem(), this.remainingBox)
                         && !candidate.isRemoved()
                         && (this.push < 0 || candidate.getId() == this.push)) {
                         if (dropped != null) {
-                           return this.init_AiOperation_Result_AiOperation_Status_Str(
+                           return this.finish(
                               AiOperation.Status.UNCERTAIN, "More than one indistinguishable stock drop appeared; inspect recovery"
                            );
                         }
@@ -814,26 +814,26 @@ final class AiCarriedShulker implements AiOperation {
                   }
 
                   if (dropped == null) {
-                     return this.init_AiOperation_Result_Str("Waiting for the stock shulker entity or its inventory receipt");
+                     return this.running("Waiting for the stock shulker entity or its inventory receipt");
                   }
 
                   this.push = dropped.getId();
                   AABB dropBounds = dropped.getBoundingBox();
-                  if (dropBounds.minX < this.init_BlockPos.getX() - 2
-                     || dropBounds.maxX > this.init_BlockPos.getX() + 2 + 1
-                     || dropBounds.minZ < this.init_BlockPos.getZ() - 2
-                     || dropBounds.maxZ > this.init_BlockPos.getZ() + 2 + 1) {
-                     return this.init_AiOperation_Result_AiOperation_Status_Str(
+                  if (dropBounds.minX < this.boxPos.getX() - 2
+                     || dropBounds.maxX > this.boxPos.getX() + 2 + 1
+                     || dropBounds.minZ < this.boxPos.getZ() - 2
+                     || dropBounds.maxZ > this.boxPos.getZ() + 2 + 1) {
+                     return this.finish(
                         AiOperation.Status.UNCERTAIN, "The stock drop moved beyond the proved landing floor; no edge chase will be attempted"
                      );
                   }
 
-                  if (this.init_Minecraft.player.getBoundingBox().inflate(1.0, 0.5, 1.0).intersects(dropped.getBoundingBox())) {
-                     return this.init_AiOperation_Result_Str("Waiting for the nearby stock shulker pickup receipt");
+                  if (this.mc.player.getBoundingBox().inflate(1.0, 0.5, 1.0).intersects(dropped.getBoundingBox())) {
+                     return this.running("Waiting for the nearby stock shulker pickup receipt");
                   }
 
-                  BlockPos target = init_BlockPos_BlockPos_Vec3(this.init_BlockPos, dropped.position());
-                  this.init_AiOperation = AiGoto.travelToCompat(
+                  BlockPos target = clampDropCell(this.boxPos, dropped.position());
+                  this.child = AiGoto.travelToCompat(
                      target,
                      0.6,
                      false,
@@ -843,47 +843,47 @@ final class AiCarriedShulker implements AiOperation {
                      autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                      false,
                      2.0,
-                     init_ClassCache_JsonUti_BlockPos_BlockPos(this.init_BlockPos, target),
+                     init_ClassCache_JsonUti_BlockPos_BlockPos(this.boxPos, target),
                      new AiGoto.GotoOptions(false, false, 0, true, false, false)
                   );
-                  return this.init_AiOperation_Result_Str("Walking inside the safe area to the observed stock shulker");
+                  return this.running("Walking inside the safe area to the observed stock shulker");
                }
             }
          }
       } else {
-         return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.UNCERTAIN, "The placed stock box changed before recovery");
+         return this.finish(AiOperation.Status.UNCERTAIN, "The placed stock box changed before recovery");
       }
    }
 
-   private AiOperation.Result init_AiOperation_Result_2() {
-      if (!this.write_Z) {
-         if (!this.init_Minecraft.player.onGround()) {
-            return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.FAILED, "A supported stance is needed for portable stock");
+   private AiOperation.Result tickPlace() {
+      if (!this.placementStarted) {
+         if (!this.mc.player.onGround()) {
+            return this.finish(AiOperation.Status.FAILED, "A supported stance is needed for portable stock");
          }
 
-         if (this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu
-            || !this.init_Minecraft.player.inventoryMenu.getCarried().isEmpty()) {
-            return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.FAILED, "Close the menu and clear the cursor before portable stock");
+         if (this.mc.player.containerMenu != this.mc.player.inventoryMenu
+            || !this.mc.player.inventoryMenu.getCarried().isEmpty()) {
+            return this.finish(AiOperation.Status.FAILED, "Close the menu and clear the cursor before portable stock");
          }
 
          if (this.init_I_Z(true) == 0) {
-            return this.init_AiOperation_Result_AiOperation_Status_Str(
+            return this.finish(
                AiOperation.Status.FAILED, "Free one inventory slot for material while keeping room to recover the shulker"
             );
          }
 
-         BlockPos feet = this.init_Minecraft.player.blockPosition();
-         this.init_BlockPos = init_BlockPos_Minecraft_Set(this.init_Minecraft, this.init_Set);
-         if (this.init_BlockPos == null) {
+         BlockPos feet = this.mc.player.blockPosition();
+         this.boxPos = init_BlockPos_Minecraft_Set(this.mc, this.protectedCells);
+         if (this.boxPos == null) {
             for (int radius = 3; radius <= 8; radius++) {
                for (Direction side : Plane.HORIZONTAL) {
                   BlockPos candidate = feet.relative(side, radius);
                   BlockPos stance = candidate.relative(side.getOpposite());
-                  AABB body = this.init_Minecraft.player.getBoundingBox().move(Vec3.atBottomCenterOf(stance).subtract(this.init_Minecraft.player.position()));
-                  if (init(this.init_Minecraft.level, p -> AiTerrain.isLoaded(this.init_Minecraft.level, p), candidate, body, this.init_Set)
-                     && this.init_Z_BlockPos(candidate)) {
-                     this.init_BlockPos = candidate.immutable();
-                     this.init_AiOperation = AiGoto.travelToCompat(
+                  AABB body = this.mc.player.getBoundingBox().move(Vec3.atBottomCenterOf(stance).subtract(this.mc.player.position()));
+                  if (init(this.mc.level, p -> AiTerrain.isLoaded(this.mc.level, p), candidate, body, this.protectedCells)
+                     && this.noItemsNear(candidate)) {
+                     this.boxPos = candidate.immutable();
+                     this.child = AiGoto.travelToCompat(
                         stance,
                         0.6,
                         false,
@@ -893,89 +893,89 @@ final class AiCarriedShulker implements AiOperation {
                         autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                         false,
                         2.0,
-                        AiGoto.protectingCellsCompat(autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(stance, 0.6), this.init_Set),
+                        AiGoto.protectingCellsCompat(autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(stance, 0.6), this.protectedCells),
                         new AiGoto.GotoOptions(false, false, 0, true, false, false)
                      );
-                     this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.APPROACH;
-                     return this.init_AiOperation_Result_Str("Moving to an existing flat area before placing the stock shulker");
+                     this.stage = AiCarriedShulker.Inner_StreamUtil.APPROACH;
+                     return this.running("Moving to an existing flat area before placing the stock shulker");
                   }
                }
             }
          }
 
-         if (this.init_BlockPos == null) {
-            return this.init_AiOperation_Result_AiOperation_Status_Str(
+         if (this.boxPos == null) {
+            return this.finish(
                AiOperation.Status.FAILED, "No clear flat shulker recovery area nearby; stock box kept in inventory"
             );
          }
 
          if (!init(
-               this.init_Minecraft.level,
-               p -> AiTerrain.isLoaded(this.init_Minecraft.level, p),
-               this.init_BlockPos,
-               this.init_Minecraft.player.getBoundingBox(),
-               this.init_Set
+               this.mc.level,
+               p -> AiTerrain.isLoaded(this.mc.level, p),
+               this.boxPos,
+               this.mc.player.getBoundingBox(),
+               this.protectedCells
             )
-            || !this.init_Z_BlockPos(this.init_BlockPos)) {
-            return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.FAILED, "The selected shulker recovery area is no longer clear");
+            || !this.noItemsNear(this.boxPos)) {
+            return this.finish(AiOperation.Status.FAILED, "The selected shulker recovery area is no longer clear");
          }
 
-         this.load_BlockState = this.init_Minecraft.level.getBlockState(this.init_BlockPos.below());
-         this.flush = init_I_Container_ItemStack(this.init_Minecraft.player.getInventory(), this.init_ItemStack);
-         this.init_DataPipe.startWithExactStack(this.init_BlockPos, this.init_ItemStack);
-         this.write_Z = true;
+         this.supportState = this.mc.level.getBlockState(this.boxPos.below());
+         this.flush = countExactInInventory(this.mc.player.getInventory(), this.box);
+         this.placer.startWithExactStack(this.boxPos, this.box);
+         this.placementStarted = true;
       }
 
-      if (this.init_DataPipe.hasClicked()
+      if (this.placer.hasClicked()
          || init(
-               this.init_Minecraft.level,
-               p -> AiTerrain.isLoaded(this.init_Minecraft.level, p),
-               this.init_BlockPos,
-               this.init_Minecraft.player.getBoundingBox(),
-               this.init_Set
+               this.mc.level,
+               p -> AiTerrain.isLoaded(this.mc.level, p),
+               this.boxPos,
+               this.mc.player.getBoundingBox(),
+               this.protectedCells
             )
-            && this.init_Z_BlockPos(this.init_BlockPos)) {
-         autismclient.ai.engine.AiPlacer.PlaceStatus placed = this.init_DataPipe.tick();
-         this.init_Z = this.init_Z | this.init_DataPipe.hasClicked();
+            && this.noItemsNear(this.boxPos)) {
+         autismclient.ai.engine.AiPlacer.PlaceStatus placed = this.placer.tick();
+         this.placed = this.placed | this.placer.hasClicked();
          if (placed == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED) {
-            return this.init_AiOperation_Result_AiOperation_Status_Str(
-               this.init_Z ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, this.init_DataPipe.failureReason()
+            return this.finish(
+               this.placed ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, this.placer.failureReason()
             );
          } else if (placed != autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
-            return this.init_AiOperation_Result_Str("Placing the selected stock shulker");
+            return this.running("Placing the selected stock shulker");
          } else {
-            this.init_BlockState = this.init_Minecraft.level.getBlockState(this.init_BlockPos);
-            this.write_Obj = this.init_Minecraft.level.getBlockEntity(this.init_BlockPos);
-            if (this.write_Obj != null && this.init_BlockState.getValue(ShulkerBoxBlock.FACING) == Direction.UP) {
-               this.init_DataPipe.reset();
-               this.write_J = AiServerEvidence.inventoryRevision();
-               this.init_AiOperation = AiContainer.init(
+            this.boxState = this.mc.level.getBlockState(this.boxPos);
+            this.boxEntity = this.mc.level.getBlockEntity(this.boxPos);
+            if (this.boxEntity != null && this.boxState.getValue(ShulkerBoxBlock.FACING) == Direction.UP) {
+               this.placer.reset();
+               this.inventoryRevisionAtPlace = AiServerEvidence.inventoryRevision();
+               this.child = AiContainer.init(
                   AiJson.objectOf(
                      "action",
                      "inspect",
                      "x",
-                     this.init_BlockPos.getX(),
+                     this.boxPos.getX(),
                      "y",
-                     this.init_BlockPos.getY(),
+                     this.boxPos.getY(),
                      "z",
-                     this.init_BlockPos.getZ(),
+                     this.boxPos.getZ(),
                      "navigate",
                      false,
                      "timeoutSeconds",
                      20
                   ),
-                  this.init_Set
+                  this.protectedCells
                );
-               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.OPEN;
-               return this.init_AiOperation_Result_Str("Opening the placed stock shulker");
+               this.stage = AiCarriedShulker.Inner_StreamUtil.OPEN;
+               return this.running("Opening the placed stock shulker");
             } else {
-               return this.init_AiOperation_Result_AiOperation_Status_Str(
+               return this.finish(
                   AiOperation.Status.UNCERTAIN, "The stock shulker did not retain its verified upward opening"
                );
             }
          }
       } else {
-         return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.FAILED, "The selected portable stock site changed");
+         return this.finish(AiOperation.Status.FAILED, "The selected portable stock site changed");
       }
    }
 
@@ -990,7 +990,7 @@ final class AiCarriedShulker implements AiOperation {
                   if (Math.max(Math.abs(dx), Math.abs(dz)) == radius) {
                      BlockPos at = feet.offset(dx, 0, dz);
                      if (init(mc.level, p -> AiTerrain.isLoaded(mc.level, p), at, body, protectedCells)
-                        && mc.level.getEntitiesOfClass(ItemEntity.class, init_AABB_BlockPos(at).inflate(1.0)).isEmpty()) {
+                        && mc.level.getEntitiesOfClass(ItemEntity.class, pickupArea(at).inflate(1.0)).isEmpty()) {
                         return at;
                      }
                   }
@@ -1004,25 +1004,25 @@ final class AiCarriedShulker implements AiOperation {
       }
    }
 
-   private AiOperation.Result load_AiOperation_Result_2() {
-      if (this.init_AiOperation != null) {
-         AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
+   private AiOperation.Result tickWithdraw() {
+      if (this.child != null) {
+         AiOperation.Result result = this.receipt.tickChild(this.child);
          if (!result.terminal()) {
-            return this.init_AiOperation_Result_Str(result.message());
+            return this.running(result.message());
          }
 
-         this.init_bb.cancelChild(this.init_AiOperation);
-         this.init_AiOperation = null;
-         if (result.status() != AiOperation.Status.SUCCEEDED || !(this.init_Minecraft.player.containerMenu instanceof ShulkerBoxMenu opened)) {
-            return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.UNCERTAIN, "The stock shulker menu was not confirmed");
+         this.receipt.cancelChild(this.child);
+         this.child = null;
+         if (result.status() != AiOperation.Status.SUCCEEDED || !(this.mc.player.containerMenu instanceof ShulkerBoxMenu opened)) {
+            return this.finish(AiOperation.Status.UNCERTAIN, "The stock shulker menu was not confirmed");
          }
 
-         this.init_ShulkerBoxMenu = opened;
-         IntegratedServer server = this.init_Minecraft.getSingleplayerServer();
+         this.menu = opened;
+         IntegratedServer server = this.mc.getSingleplayerServer();
          if (server != null) {
-            UUID uuid = this.init_Minecraft.player.getUUID();
-            ResourceKey<Level> dimension = this.init_Minecraft.level.dimension();
-            int id = this.init_ShulkerBoxMenu.containerId;
+            UUID uuid = this.mc.player.getUUID();
+            ResourceKey<Level> dimension = this.mc.level.dimension();
+            int id = this.menu.containerId;
             this.init_CompletableFuture = server.submit(
                () -> {
                   ServerPlayer actor = server.getPlayerList().getPlayer(uuid);
@@ -1031,30 +1031,30 @@ final class AiCarriedShulker implements AiOperation {
                      && actor.containerMenu.containerId == id
                      && actor.containerMenu instanceof ShulkerBoxMenu
                      && actor.containerMenu.getSlot(0).container instanceof ShulkerBoxBlockEntity shulker
-                     && shulker.getBlockPos().equals(this.init_BlockPos);
+                     && shulker.getBlockPos().equals(this.boxPos);
                }
             );
          }
       }
 
-      if (this.init_Minecraft.player.containerMenu != this.init_ShulkerBoxMenu) {
-         return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.UNCERTAIN, "The claimed stock shulker menu changed");
+      if (this.mc.player.containerMenu != this.menu) {
+         return this.finish(AiOperation.Status.UNCERTAIN, "The claimed stock shulker menu changed");
       }
 
-      if (AiServerEvidence.containerRevision(this.init_ShulkerBoxMenu.containerId) <= this.write_J || this.init_CompletableFuture != null && !this.init_CompletableFuture.isDone()) {
-         return this.init_AiOperation_Result_Str("Waiting for the stock shulker server contents");
+      if (AiServerEvidence.containerRevision(this.menu.containerId) <= this.inventoryRevisionAtPlace || this.init_CompletableFuture != null && !this.init_CompletableFuture.isDone()) {
+         return this.running("Waiting for the stock shulker server contents");
       }
 
       if (this.init_CompletableFuture == null
          || !this.init_CompletableFuture.isCompletedExceptionally() && Boolean.TRUE.equals(this.init_CompletableFuture.getNow(false))) {
-         this.init_List = this.init_List();
-         if (init(init_List_ItemStack(this.init_ItemStack), this.init_List, this.init_Item, 0)
-            && this.init_ShulkerBoxMenu.getCarried().isEmpty()
-            && init_I_Container_ItemStack(this.init_Minecraft.player.getInventory(), this.init_ItemStack) == this.flush - 1) {
+         this.menuSnapshot = this.menuContents();
+         if (init(contents(this.box), this.menuSnapshot, this.item, 0)
+            && this.menu.getCarried().isEmpty()
+            && countExactInInventory(this.mc.player.getInventory(), this.box) == this.flush - 1) {
             Set<Integer> destinations = new HashSet<>();
 
-            for (Slot slot : this.init_ShulkerBoxMenu.slots) {
-               if (slot.container == this.init_Minecraft.player.getInventory() && slot.getContainerSlot() < 36) {
+            for (Slot slot : this.menu.slots) {
+               if (slot.container == this.mc.player.getInventory() && slot.getContainerSlot() < 36) {
                   if (this.close < 0 && slot.getItem().isEmpty()) {
                      this.close = slot.getContainerSlot();
                   } else {
@@ -1065,144 +1065,144 @@ final class AiCarriedShulker implements AiOperation {
 
             int amount = this.init_I_Z(false);
             if (this.close >= 0 && amount != 0) {
-               this.load_List = init_List_Container(this.init_Minecraft.player.getInventory());
-               this.write_I = this.init_I();
+               this.inventoryBefore = snapshot(this.mc.player.getInventory());
+               this.countBefore = this.carriedCount();
                HashSet<Integer> sources = new HashSet<>();
 
                for (int i = 0; i < 27; i++) {
-                  if (this.load_ItemStack.isEmpty() || ItemStack.isSameItemSameComponents(this.init_List.get(i), this.load_ItemStack)) {
+                  if (this.exactMaterial.isEmpty() || ItemStack.isSameItemSameComponents(this.menuSnapshot.get(i), this.exactMaterial)) {
                      sources.add(i);
                   }
                }
 
-               int inventoryTarget = this.load_ItemStack.isEmpty()
-                  ? AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(this.init_Item).toString()) + amount
-                  : this.write_I + amount;
-               this.init_AiOperation = this.load_ItemStack.isEmpty()
+               int inventoryTarget = this.exactMaterial.isEmpty()
+                  ? AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(this.item).toString()) + amount
+                  : this.countBefore + amount;
+               this.child = this.exactMaterial.isEmpty()
                   ? new AiInventoryController(
                      AiJson.objectOf(
                         "item",
-                        BuiltInRegistries.ITEM.getKey(this.init_Item).toString(),
+                        BuiltInRegistries.ITEM.getKey(this.item).toString(),
                         "count",
                         inventoryTarget,
                         "containerId",
-                        this.init_ShulkerBoxMenu.containerId,
+                        this.menu.containerId,
                         "timeoutSeconds",
                         80
                      ),
                      sources,
                      destinations
                   )
-                  : new AiInventoryController(this.init_ShulkerBoxMenu.containerId, this.load_ItemStack, inventoryTarget, sources, destinations);
-               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.WITHDRAW;
-               return this.init_AiOperation_Result_Str("Withdrawing building material from the carried shulker");
+                  : new AiInventoryController(this.menu.containerId, this.exactMaterial, inventoryTarget, sources, destinations);
+               this.stage = AiCarriedShulker.Inner_StreamUtil.WITHDRAW;
+               return this.running("Withdrawing building material from the carried shulker");
             } else {
                return this.write();
             }
          } else {
-            return this.init_AiOperation_Result_AiOperation_Status_Str(
+            return this.finish(
                AiOperation.Status.UNCERTAIN, "The opened stock shulker does not match the selected inventory box"
             );
          }
       } else {
-         return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.UNCERTAIN, "The native stock menu belongs to another shulker");
+         return this.finish(AiOperation.Status.UNCERTAIN, "The native stock menu belongs to another shulker");
       }
    }
 
    private AiOperation.Result read_AiOperation_Result() {
-      if (this.init_Minecraft.player.containerMenu == this.init_ShulkerBoxMenu && this.load_Z()) {
-         AiOperation.Result result = this.init_bb.tickChild(this.init_AiOperation);
+      if (this.mc.player.containerMenu == this.menu && this.load_Z()) {
+         AiOperation.Result result = this.receipt.tickChild(this.child);
          if (!result.terminal()) {
-            return this.init_AiOperation_Result_Str(result.message());
+            return this.running(result.message());
          } else {
-            this.load_AiOperation_Result = result;
-            this.init_bb.cancelChild(this.init_AiOperation);
-            this.init_AiOperation = null;
-            if (!this.init_bb.requiresReconciliation(null) && result.status() != AiOperation.Status.UNCERTAIN && this.init_ShulkerBoxMenu.getCarried().isEmpty()) {
-               this.update = this.init_I() - this.write_I;
-               List<ItemStack> remainingStock = this.init_List();
-               List<ItemStack> inventoryAfter = init_List_Container(this.init_Minecraft.player.getInventory());
+            this.transferResult = result;
+            this.receipt.cancelChild(this.child);
+            this.child = null;
+            if (!this.receipt.requiresReconciliation(null) && result.status() != AiOperation.Status.UNCERTAIN && this.menu.getCarried().isEmpty()) {
+               this.update = this.carriedCount() - this.countBefore;
+               List<ItemStack> remainingStock = this.menuContents();
+               List<ItemStack> inventoryAfter = snapshot(this.mc.player.getInventory());
                return (
-                     this.load_ItemStack.isEmpty()
-                        ? !init(this.init_List, remainingStock, this.load_List, inventoryAfter, this.init_Item, this.update)
-                        : !init(this.init_List, remainingStock, this.load_List, inventoryAfter, this.load_ItemStack, this.update)
+                     this.exactMaterial.isEmpty()
+                        ? !init(this.menuSnapshot, remainingStock, this.inventoryBefore, inventoryAfter, this.item, this.update)
+                        : !init(this.menuSnapshot, remainingStock, this.inventoryBefore, inventoryAfter, this.exactMaterial, this.update)
                   )
-                  ? this.init_AiOperation_Result_AiOperation_Status_Str(
+                  ? this.finish(
                      AiOperation.Status.UNCERTAIN, "The shulker and inventory do not reconcile to the confirmed withdrawal"
                   )
                   : this.write();
             } else {
-               return this.init_AiOperation_Result_AiOperation_Status_Str(
+               return this.finish(
                   AiOperation.Status.UNCERTAIN, "The shulker transfer needs reconciliation before recovery"
                );
             }
          }
       } else {
-         return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.UNCERTAIN, "Stock menu or reserved pickup space changed");
+         return this.finish(AiOperation.Status.UNCERTAIN, "Stock menu or reserved pickup space changed");
       }
    }
 
    private AiOperation.Result write() {
-      this.read_ItemStack = init_ItemStack_ItemStack_List(this.init_ItemStack, this.init_List());
+      this.remainingBox = withContents(this.box, this.menuContents());
       if (!AiMenuClose.closeMenu()) {
-         return this.init_AiOperation_Result_AiOperation_Status_Str(
+         return this.finish(
             AiOperation.Status.UNCERTAIN, "The stock menu could not close with a reconciled empty cursor"
          );
       }
 
-      this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.CLOSE;
-      return this.init_AiOperation_Result_Str("Closing the stock shulker before recovery");
+      this.stage = AiCarriedShulker.Inner_StreamUtil.CLOSE;
+      return this.running("Closing the stock shulker before recovery");
    }
 
-   private boolean init_Z() {
-      return this.init_BlockPos != null
-         && AiTerrain.isLoaded(this.init_Minecraft.level, this.init_BlockPos)
-         && this.init_Minecraft.level.getBlockState(this.init_BlockPos).equals(this.init_BlockState)
-         && this.init_Minecraft.level.getBlockEntity(this.init_BlockPos) == this.write_Obj;
+   private boolean boxStillPlaced() {
+      return this.boxPos != null
+         && AiTerrain.isLoaded(this.mc.level, this.boxPos)
+         && this.mc.level.getBlockState(this.boxPos).equals(this.boxState)
+         && this.mc.level.getBlockEntity(this.boxPos) == this.boxEntity;
    }
 
    private boolean load_Z() {
-      return init(this.init_Minecraft.player.getInventory(), this.close, this.read_ItemStack.isEmpty() ? this.init_ItemStack : this.read_ItemStack);
+      return init(this.mc.player.getInventory(), this.close, this.remainingBox.isEmpty() ? this.box : this.remainingBox);
    }
 
-   private static AABB init_AABB_BlockPos(BlockPos at) {
+   private static AABB pickupArea(BlockPos at) {
       return new AABB(at).inflate(2.0, 1.0, 2.0);
    }
 
-   private boolean init_Z_BlockPos(BlockPos at) {
-      return this.init_Minecraft.level.getEntitiesOfClass(ItemEntity.class, init_AABB_BlockPos(at).inflate(1.0)).isEmpty();
+   private boolean noItemsNear(BlockPos at) {
+      return this.mc.level.getEntitiesOfClass(ItemEntity.class, pickupArea(at).inflate(1.0)).isEmpty();
    }
 
    private boolean read_Z() {
-      return this.init_Minecraft.player.onGround()
-         && !this.init_Minecraft.player.getAbilities().flying
+      return this.mc.player.onGround()
+         && !this.mc.player.getAbilities().flying
          && this.load_Z()
-         && this.init_Minecraft.player.containerMenu == this.init_Minecraft.player.inventoryMenu
-         && this.init_Minecraft.player.inventoryMenu.getCarried().isEmpty()
-         && this.init_Minecraft.level.getBlockState(this.init_BlockPos.below()).equals(this.load_BlockState)
+         && this.mc.player.containerMenu == this.mc.player.inventoryMenu
+         && this.mc.player.inventoryMenu.getCarried().isEmpty()
+         && this.mc.level.getBlockState(this.boxPos.below()).equals(this.supportState)
          && init(
-            this.init_Minecraft.level,
-            p -> AiTerrain.isLoaded(this.init_Minecraft.level, p),
-            this.init_BlockPos,
-            this.init_Minecraft.player.getBoundingBox(),
-            this.init_Set,
+            this.mc.level,
+            p -> AiTerrain.isLoaded(this.mc.level, p),
+            this.boxPos,
+            this.mc.player.getBoundingBox(),
+            this.protectedCells,
             true
          )
-         && this.init_Z_BlockPos(this.init_BlockPos)
-         && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.init_Minecraft, this.init_BlockPos) != null;
+         && this.noItemsNear(this.boxPos)
+         && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.mc, this.boxPos) != null;
    }
 
-   private List<ItemStack> init_List() {
+   private List<ItemStack> menuContents() {
       ArrayList<ItemStack> result = new ArrayList<>(27);
 
       for (int i = 0; i < 27; i++) {
-         result.add(this.init_ShulkerBoxMenu.getSlot(i).getItem().copy());
+         result.add(this.menu.getSlot(i).getItem().copy());
       }
 
       return result;
    }
 
-   static int init_I_Container_ItemStack(Container inventory, ItemStack wanted) {
+   static int countExactInInventory(Container inventory, ItemStack wanted) {
       int count = 0;
 
       for (int i = 0; i < Math.min(41, inventory.getContainerSize()); i++) {
@@ -1214,27 +1214,27 @@ final class AiCarriedShulker implements AiOperation {
       return count;
    }
 
-   private JsonObject init_JsonObject_3() {
+   private JsonObject evidence() {
       JsonObject data = AiJson.objectOf(
          "carriedShulker",
          true,
          "recovered",
-         this.load_Z,
+         this.recovered,
          "withdrawn",
          this.update,
          "recoveryRequired",
-         this.init_Z && !this.load_Z,
+         this.placed && !this.recovered,
          "stage",
-         this.init_BitSetUtil_StreamU.name(),
+         this.stage.name(),
          "exactComponents",
-         !this.load_ItemStack.isEmpty()
+         !this.exactMaterial.isEmpty()
       );
-      if (this.init_BlockPos != null) {
-         data.add("stockPosition", AiJson.objectOf("x", this.init_BlockPos.getX(), "y", this.init_BlockPos.getY(), "z", this.init_BlockPos.getZ()));
+      if (this.boxPos != null) {
+         data.add("stockPosition", AiJson.objectOf("x", this.boxPos.getX(), "y", this.boxPos.getY(), "z", this.boxPos.getZ()));
       }
 
-      if (this.load_AiOperation_Result != null) {
-         data.add("transfer", AiJson.parseObject(this.load_AiOperation_Result.dataJson()));
+      if (this.transferResult != null) {
+         data.add("transfer", AiJson.parseObject(this.transferResult.dataJson()));
       }
 
       if (this.push >= 0) {
@@ -1244,39 +1244,39 @@ final class AiCarriedShulker implements AiOperation {
       return data;
    }
 
-   private AiOperation.Result init_AiOperation_Result_Str(String message) {
-      return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_3().toString(), List.of());
+   private AiOperation.Result running(String message) {
+      return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.evidence().toString(), List.of());
    }
 
-   private AiOperation.Result init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status status, String message) {
+   private AiOperation.Result finish(AiOperation.Status status, String message) {
       boolean pending = this.requiresReconciliationAfterEmergency();
-      this.init_bb.cancelChild(this.init_AiOperation);
-      this.init_AiOperation = null;
-      this.init_DataPipe.reset();
-      this.init_AiOperation_Result = this.init_bb.finalizeResult(new AiOperation.Result(status, message, this.init_JsonObject_3().toString(), List.of()), pending);
-      return this.init_AiOperation_Result;
+      this.receipt.cancelChild(this.child);
+      this.child = null;
+      this.placer.reset();
+      this.finalResult = this.receipt.finalizeResult(new AiOperation.Result(status, message, this.evidence().toString(), List.of()), pending);
+      return this.finalResult;
    }
 
    @Override
    public boolean canInterruptNow() {
-      return !this.requiresReconciliationAfterEmergency() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+      return !this.requiresReconciliationAfterEmergency() && (this.child == null || this.child.canInterruptNow());
    }
 
    @Override
    public boolean requiresReconciliationAfterEmergency() {
-      return this.init_Z && !this.load_Z
-         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.PLACE && this.init_DataPipe.needsReconciliation()
-         || this.init_bb.requiresReconciliation(this.init_AiOperation);
+      return this.placed && !this.recovered
+         || this.stage == AiCarriedShulker.Inner_StreamUtil.PLACE && this.placer.needsReconciliation()
+         || this.receipt.requiresReconciliation(this.child);
    }
 
    @Override
    public void cancel() {
-      if (!this.read_Z) {
-         this.init_bb.markReconciliationPending(this.requiresReconciliationAfterEmergency());
-         this.read_Z = true;
-         this.init_bb.cancelChild(this.init_AiOperation);
-         this.init_AiOperation = null;
-         this.init_DataPipe.reset();
+      if (!this.cancelled) {
+         this.receipt.markReconciliationPending(this.requiresReconciliationAfterEmergency());
+         this.cancelled = true;
+         this.receipt.cancelChild(this.child);
+         this.child = null;
+         this.placer.reset();
       }
    }
 

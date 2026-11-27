@@ -18,9 +18,9 @@ import java.util.regex.Pattern;
 
 public final class PluginSignatureCatalog {
    private static final int init_I = 512;
-   private static final Pattern init_Pattern = Pattern.compile("(?i)\\b[a-z0-9_.-]{2,64}:[a-z0-9_./-]{1,128}\\b");
-   private static final Map<String, PluginSignatureCatalog.Inner_ConfigStore> init_Map = new HashMap<>();
-   private static final Map<String, String> load_Map = Map.ofEntries(
+   private static final Pattern CHANNEL_PATTERN = Pattern.compile("(?i)\\b[a-z0-9_.-]{2,64}:[a-z0-9_./-]{1,128}\\b");
+   private static final Map<String, PluginSignatureCatalog.Inner_ConfigStore> serverStates = new HashMap<>();
+   private static final Map<String, String> NAMESPACE_ALIASES = Map.ofEntries(
       Map.entry("vv", "ViaVersion"),
       Map.entry("viaversion", "ViaVersion"),
       Map.entry("viabackwards", "ViaBackwards"),
@@ -183,7 +183,7 @@ public final class PluginSignatureCatalog {
       Map.entry("labymod3", "LabyMod"),
       Map.entry("essential", "Essential")
    );
-   private static final Set<String> init_Set = Set.of("minecraft", "brigadier", "autism", "autismclient", "c");
+   private static final Set<String> IGNORED_NAMESPACES = Set.of("minecraft", "brigadier", "autism", "autismclient", "c");
    private static final Set<String> load_Set = Set.of(
       "minecraft:register", "minecraft:unregister", "register", "unregister", "minecraft:brand", "brand", "bungeecord", "bungeecord:main"
    );
@@ -203,11 +203,11 @@ public final class PluginSignatureCatalog {
 
       int colon = normalized.indexOf(58);
       if (colon <= 0) {
-         return read_Z(normalized);
+         return isInfrastructureChannel(normalized);
       }
 
       String namespace = normalized.substring(0, colon);
-      return !init_Set.contains(namespace);
+      return !IGNORED_NAMESPACES.contains(namespace);
    }
 
    public static synchronized boolean init(String serverAddress, String brand, AutismPayloadSupport.PayloadEntry snapshot) {
@@ -224,15 +224,15 @@ public final class PluginSignatureCatalog {
          return false;
       }
 
-      PluginSignatureCatalog.Inner_ConfigStore state = init_Map.computeIfAbsent(addressKey, unused -> new PluginSignatureCatalog.Inner_ConfigStore());
-      state.init_Str = sync(brand);
+      PluginSignatureCatalog.Inner_ConfigStore state = serverStates.computeIfAbsent(addressKey, unused -> new PluginSignatureCatalog.Inner_ConfigStore());
+      state.brand = sync(brand);
       boolean changed = false;
       String channel = write(snapshot.channel());
       if (!channel.isBlank() && isKnownPluginChannel(channel)) {
          changed |= state.init(channel, snapshot.direction());
       }
 
-      if (load_Z(channel)) {
+      if (isRegisterChannel(channel)) {
          for (String registered : init(snapshot.rawBytes())) {
             if (isKnownPluginChannel(registered)) {
                changed |= state.load(registered, snapshot.direction());
@@ -247,23 +247,23 @@ public final class PluginSignatureCatalog {
       }
 
       if (changed) {
-         state.init_J++;
+         state.revision++;
       }
 
       return changed;
    }
 
    public static synchronized List<PluginSignatureCatalog.Inner_CachePool> fingerprints(String serverAddress, String brand) {
-      PluginSignatureCatalog.Inner_ConfigStore state = init_Map.get(update(serverAddress));
+      PluginSignatureCatalog.Inner_ConfigStore state = serverStates.get(update(serverAddress));
       if (state == null) {
          return List.of();
       }
 
       Map<String, PluginSignatureCatalog.Inner_StreamUtil> byPlugin = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-      for (PluginSignatureCatalog.Inner_DataUtil stats : state.init_List()) {
-         if (stats.init_Z()) {
-            PluginSignatureCatalog.Inner_BufferHelper identity = init_bQ_BufferHelper(stats.init_Str);
+      for (PluginSignatureCatalog.Inner_DataUtil stats : state.channelStats()) {
+         if (stats.seenS2C()) {
+            PluginSignatureCatalog.Inner_BufferHelper identity = identify(stats.channel);
             if (identity != null && !identity.init().isBlank() && !identity.load().isBlank()) {
                PluginSignatureCatalog.Inner_StreamUtil acc = byPlugin.computeIfAbsent(identity.load(), unused -> new PluginSignatureCatalog.Inner_StreamUtil(identity.init(), identity.load()));
                acc.init(stats);
@@ -285,17 +285,17 @@ public final class PluginSignatureCatalog {
    }
 
    public static synchronized long revision(String serverAddress, String brand) {
-      PluginSignatureCatalog.Inner_ConfigStore state = init_Map.get(update(serverAddress));
-      return state == null ? 0L : state.init_J;
+      PluginSignatureCatalog.Inner_ConfigStore state = serverStates.get(update(serverAddress));
+      return state == null ? 0L : state.revision;
    }
 
    public static synchronized String init_Str(String serverAddress, String brand) {
-      PluginSignatureCatalog.Inner_ConfigStore state = init_Map.get(update(serverAddress));
+      PluginSignatureCatalog.Inner_ConfigStore state = serverStates.get(update(serverAddress));
       if (state == null) {
          return "";
       }
 
-      List<String> channels = new ArrayList<>(state.init_Set());
+      List<String> channels = new ArrayList<>(state.allChannels());
       channels.sort(String.CASE_INSENSITIVE_ORDER);
       if (channels.size() > 96) {
          channels = new ArrayList<>(channels.subList(0, 96));
@@ -305,10 +305,10 @@ public final class PluginSignatureCatalog {
    }
 
    public static synchronized void init() {
-      init_Map.clear();
+      serverStates.clear();
    }
 
-   private static boolean load_Z(String channel) {
+   private static boolean isRegisterChannel(String channel) {
       String normalized = write(channel);
       return "minecraft:register".equals(normalized)
          || "register".equals(normalized)
@@ -316,7 +316,7 @@ public final class PluginSignatureCatalog {
          || "unregister".equals(normalized);
    }
 
-   private static boolean read_Z(String channel) {
+   private static boolean isInfrastructureChannel(String channel) {
       String normalized = write(channel);
       return "bungeecord".equals(normalized) || "register".equals(normalized) || "unregister".equals(normalized);
    }
@@ -328,7 +328,7 @@ public final class PluginSignatureCatalog {
 
          for (String part : text.split("[\\u0000\\r\\n\\t ,;]+")) {
             String token = write(part);
-            if (!token.isBlank() && (token.indexOf(58) > 0 || read_Z(token))) {
+            if (!token.isBlank() && (token.indexOf(58) > 0 || isInfrastructureChannel(token))) {
                channels.add(token);
             }
          }
@@ -343,7 +343,7 @@ public final class PluginSignatureCatalog {
    private static List<String> load(byte[] rawBytes) {
       if (rawBytes != null && rawBytes.length != 0) {
          String text = new String(rawBytes, StandardCharsets.UTF_8);
-         Matcher matcher = init_Pattern.matcher(text);
+         Matcher matcher = CHANNEL_PATTERN.matcher(text);
          LinkedHashSet<String> channels = new LinkedHashSet<>();
 
          while (matcher.find()) {
@@ -363,7 +363,7 @@ public final class PluginSignatureCatalog {
       }
    }
 
-   private static PluginSignatureCatalog.Inner_BufferHelper init_bQ_BufferHelper(String channel) {
+   private static PluginSignatureCatalog.Inner_BufferHelper identify(String channel) {
       String normalized = write(channel);
       if (normalized.isBlank()) {
          return null;
@@ -380,25 +380,25 @@ public final class PluginSignatureCatalog {
          }
 
          String namespace = normalized.substring(0, colon);
-         if (init_Set.contains(namespace)) {
+         if (IGNORED_NAMESPACES.contains(namespace)) {
             return null;
          }
 
-         String alias = load_Map.get(namespace);
+         String alias = NAMESPACE_ALIASES.get(namespace);
          if (alias != null) {
             return new PluginSignatureCatalog.Inner_BufferHelper(alias, namespace);
          }
 
-         String presetLabel = load_Str(normalized);
+         String presetLabel = presetName(normalized);
          return presetLabel != null && !presetLabel.isBlank()
             ? new PluginSignatureCatalog.Inner_BufferHelper(presetLabel, namespace)
-            : new PluginSignatureCatalog.Inner_BufferHelper(read_Str(namespace), namespace);
+            : new PluginSignatureCatalog.Inner_BufferHelper(prettyNamespace(namespace), namespace);
       } else {
          return null;
       }
    }
 
-   private static String load_Str(String channel) {
+   private static String presetName(String channel) {
       for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
          if (PayloadChannelFilterManager.isExactPluginChannel(preset) && PayloadChannelFilterManager.matchesPreset(preset, channel)) {
             return preset.load();
@@ -408,7 +408,7 @@ public final class PluginSignatureCatalog {
       return null;
    }
 
-   private static String read_Str(String namespace) {
+   private static String prettyNamespace(String namespace) {
       String clean = namespace == null ? "" : namespace.trim();
       if (clean.isBlank()) {
          return "";
@@ -464,7 +464,7 @@ public final class PluginSignatureCatalog {
          clean = clean.substring(0, colon);
       }
 
-      String alias = load_Map.get(clean);
+      String alias = NAMESPACE_ALIASES.get(clean);
       return alias != null ? flush(alias) : flush(clean);
    }
 
@@ -476,14 +476,14 @@ public final class PluginSignatureCatalog {
 
       LinkedHashSet<String> namespaces = new LinkedHashSet<>();
 
-      for (Entry<String, String> entry : load_Map.entrySet()) {
+      for (Entry<String, String> entry : NAMESPACE_ALIASES.entrySet()) {
          if (canonicalName(entry.getKey()).equals(canonical) || canonicalName(entry.getValue()).equals(canonical)) {
             namespaces.add(entry.getKey());
          }
       }
 
       String fromName = close(pluginName);
-      if (!fromName.isBlank() && !init_Set.contains(fromName)) {
+      if (!fromName.isBlank() && !IGNORED_NAMESPACES.contains(fromName)) {
          namespaces.add(fromName);
       }
 
@@ -552,15 +552,15 @@ public final class PluginSignatureCatalog {
    }
 
    private static final class Inner_ConfigStore {
-      String init_Str = "";
-      long init_J;
-      final Set<String> init_Set = new LinkedHashSet<>();
+      String brand = "";
+      long revision;
+      final Set<String> liveChannels = new LinkedHashSet<>();
       final Set<String> load = new LinkedHashSet<>();
       final Set<String> read = new LinkedHashSet<>();
-      final Map<String, PluginSignatureCatalog.Inner_DataUtil> init_Map = new LinkedHashMap<>();
+      final Map<String, PluginSignatureCatalog.Inner_DataUtil> statsByChannel = new LinkedHashMap<>();
 
       boolean init(String channel, String direction) {
-         return this.init(this.init_Set, channel, "live", direction);
+         return this.init(this.liveChannels, channel, "live", direction);
       }
 
       boolean load(String channel, String direction) {
@@ -571,16 +571,16 @@ public final class PluginSignatureCatalog {
          return this.init(this.read, channel, "embedded", direction);
       }
 
-      Set<String> init_Set() {
+      Set<String> allChannels() {
          LinkedHashSet<String> out = new LinkedHashSet<>();
-         out.addAll(this.init_Set);
+         out.addAll(this.liveChannels);
          out.addAll(this.load);
          out.addAll(this.read);
          return Collections.unmodifiableSet(out);
       }
 
-      List<PluginSignatureCatalog.Inner_DataUtil> init_List() {
-         return List.copyOf(this.init_Map.values());
+      List<PluginSignatureCatalog.Inner_DataUtil> channelStats() {
+         return List.copyOf(this.statsByChannel.values());
       }
 
       private boolean init(Set<String> set, String channel, String source, String direction) {
@@ -589,29 +589,29 @@ public final class PluginSignatureCatalog {
             return false;
          }
 
-         if (this.init_Set.size() + this.load.size() + this.read.size() >= 512
-            && !this.init_Set.contains(normalized)
+         if (this.liveChannels.size() + this.load.size() + this.read.size() >= 512
+            && !this.liveChannels.contains(normalized)
             && !this.load.contains(normalized)
             && !this.read.contains(normalized)) {
             return false;
          }
 
-         PluginSignatureCatalog.Inner_DataUtil stats = this.init_Map.computeIfAbsent(normalized, PluginSignatureCatalog.Inner_DataUtil::new);
-         int beforeScore = stats.init_I();
+         PluginSignatureCatalog.Inner_DataUtil stats = this.statsByChannel.computeIfAbsent(normalized, PluginSignatureCatalog.Inner_DataUtil::new);
+         int beforeScore = stats.score();
          stats.init(source, direction);
-         return set.add(normalized) || stats.init_I() != beforeScore;
+         return set.add(normalized) || stats.score() != beforeScore;
       }
    }
 
    private static final class Inner_DataUtil {
-      final String init_Str;
-      int init_I;
+      final String channel;
+      int liveCount;
       int load;
       int read;
-      final Set<String> init_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+      final Set<String> directions = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
       Inner_DataUtil(String channel) {
-         this.init_Str = PluginSignatureCatalog.write(channel);
+         this.channel = PluginSignatureCatalog.write(channel);
       }
 
       void init(String source, String direction) {
@@ -623,42 +623,42 @@ public final class PluginSignatureCatalog {
                this.read++;
                break;
             default:
-               this.init_I++;
+               this.liveCount++;
          }
 
          if (direction != null && !direction.isBlank()) {
-            this.init_Set.add(direction.trim().toUpperCase(Locale.ROOT));
+            this.directions.add(direction.trim().toUpperCase(Locale.ROOT));
          }
       }
 
-      int init_I() {
-         return this.init_I * 4 + this.load * 3 + this.read;
+      int score() {
+         return this.liveCount * 4 + this.load * 3 + this.read;
       }
 
-      int load_I() {
-         return this.init_I > 0 ? 4 : (this.load > 0 ? 3 : (this.read > 0 ? 1 : 0));
+      int confidence() {
+         return this.liveCount > 0 ? 4 : (this.load > 0 ? 3 : (this.read > 0 ? 1 : 0));
       }
 
-      String init_Str() {
-         return this.init_I > 0 ? "live" : (this.load > 0 ? "registered" : (this.read > 0 ? "embedded" : ""));
+      String source() {
+         return this.liveCount > 0 ? "live" : (this.load > 0 ? "registered" : (this.read > 0 ? "embedded" : ""));
       }
 
-      boolean init_Z() {
-         return this.init_Set.contains("S2C");
+      boolean seenS2C() {
+         return this.directions.contains("S2C");
       }
 
-      String load_Str() {
-         StringBuilder sb = new StringBuilder(this.init_Str);
-         String source = this.init_Str();
+      String describe() {
+         StringBuilder sb = new StringBuilder(this.channel);
+         String source = this.source();
          if (!source.isBlank()) {
             sb.append(" [").append(source);
          }
 
-         if (!this.init_Set.isEmpty()) {
-            sb.append(" ").append(String.join("/", this.init_Set));
+         if (!this.directions.isEmpty()) {
+            sb.append(" ").append(String.join("/", this.directions));
          }
 
-         int count = this.init_I + this.load + this.read;
+         int count = this.liveCount + this.load + this.read;
          if (count > 1) {
             sb.append(" x").append(count);
          }
@@ -672,30 +672,30 @@ public final class PluginSignatureCatalog {
    }
 
    private static final class Inner_StreamUtil {
-      final String init_Str;
+      final String key;
       String load;
-      int init_I;
+      int totalScore;
       String read = "";
-      final Set<String> init_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+      final Set<String> descriptions = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
       Inner_StreamUtil(String displayName, String key) {
          this.load = displayName == null ? "" : displayName;
-         this.init_Str = key == null ? "" : key;
+         this.key = key == null ? "" : key;
       }
 
       void init(PluginSignatureCatalog.Inner_DataUtil stats) {
-         if (stats != null && stats.init_Str != null && !stats.init_Str.isBlank()) {
-            this.init_I = this.init_I + stats.init_I();
-            if (this.read.isBlank() || stats.load_I() > this.init(this.read)) {
-               this.read = stats.init_Str();
+         if (stats != null && stats.channel != null && !stats.channel.isBlank()) {
+            this.totalScore = this.totalScore + stats.score();
+            if (this.read.isBlank() || stats.confidence() > this.init(this.read)) {
+               this.read = stats.source();
             }
 
-            this.init_Set.add(stats.load_Str());
+            this.descriptions.add(stats.describe());
          }
       }
 
       PluginSignatureCatalog.Inner_CachePool init() {
-         return new PluginSignatureCatalog.Inner_CachePool(this.load, this.init_Str, List.copyOf(this.init_Set), this.init_I, this.read);
+         return new PluginSignatureCatalog.Inner_CachePool(this.load, this.key, List.copyOf(this.descriptions), this.totalScore, this.read);
       }
 
       private int init(String source) {

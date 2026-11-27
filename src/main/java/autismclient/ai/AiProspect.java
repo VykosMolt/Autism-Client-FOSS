@@ -26,26 +26,26 @@ final class AiProspect {
    private static final int load_I = 24;
    private static final double init_D = 3.5;
    private static final int read = 90;
-   private static final Map<String, String> init_Map = new LinkedHashMap<>();
-   private static final Map<String, String> load_Map = new LinkedHashMap<>();
+   private static final Map<String, String> ITEM_KINDS = new LinkedHashMap<>();
+   private static final Map<String, String> BLOCK_KINDS = new LinkedHashMap<>();
 
    private AiProspect() {
    }
 
    static boolean canProspect(AiItems.ItemSpec target) {
-      return init_Str(target) != null;
+      return oreKindFor(target) != null;
    }
 
-   static String init_Str(AiItems.ItemSpec target) {
+   static String oreKindFor(AiItems.ItemSpec target) {
       for (String id : target.itemIds()) {
-         String kind = init_Map.get(id);
+         String kind = ITEM_KINDS.get(id);
          if (kind != null) {
             return kind;
          }
       }
 
       for (String id : target.blockIds()) {
-         String kind = load_Map.get(id);
+         String kind = BLOCK_KINDS.get(id);
          if (kind != null) {
             return kind;
          }
@@ -54,9 +54,9 @@ final class AiProspect {
       return null;
    }
 
-   static List<String> init_List(String kind) {
+   static List<String> oreBlocksFor(String kind) {
       List<String> blocks = new ArrayList<>();
-      load_Map.forEach((block, family) -> {
+      BLOCK_KINDS.forEach((block, family) -> {
          if (family.equals(kind)) {
             blocks.add(block);
          }
@@ -64,7 +64,7 @@ final class AiProspect {
       return blocks;
    }
 
-   static String init_Str(String kind) {
+   static String oreBlockId(String kind) {
       return kind.equals("ancient_debris") ? "ancient_debris" : kind + "_ore";
    }
 
@@ -73,10 +73,10 @@ final class AiProspect {
       if (mc.player != null && mc.level != null) {
          final String spec = AiJson.getString(args, "item", "");
          final AiItems.ItemSpec target = AiItems.resolve(spec);
-         final String kind = init_Str(target);
+         final String kind = oreKindFor(target);
          if (kind == null) {
             throw new IllegalArgumentException(
-               "'" + spec + "' is not a seed-simulated ore; prospectable families: " + String.join(", ", new LinkedHashSet<>(init_Map.values()))
+               "'" + spec + "' is not a seed-simulated ore; prospectable families: " + String.join(", ", new LinkedHashSet<>(ITEM_KINDS.values()))
             );
          }
 
@@ -84,21 +84,21 @@ final class AiProspect {
          boolean additional = AiJson.getBoolean(args, "additional", false);
          final int timeoutSeconds = Math.max(30, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 900)));
          final int maxDistance = Math.max(16, Math.min(512, AiJson.getInt(args, "maxDistance", 256)));
-         final List<String> oreBlocks = init_List(kind);
+         final List<String> oreBlocks = oreBlocksFor(kind);
          final int held = AiItems.countInInventory(target);
          final int goal = additional ? held + requested : requested;
          return new AiOperation() {
-            final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final List<BlockPos> init_List = new ArrayList<>();
-            final Set<Long> init_Set = new LinkedHashSet<>();
+            final long deadlineNanos = System.nanoTime() + timeoutSeconds * 1000000000L;
+            final List<BlockPos> candidates = new ArrayList<>();
+            final Set<Long> visited = new LinkedHashSet<>();
             final JsonArray init_JsonArray = new JsonArray();
-            final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard();
+            final AiGuard.GuardPolicy guardPolicy = AiGuard.GuardPolicy.standard();
             AiOperation init_AiOperation;
             AiOperation load_AiOperation;
             AiOperation read;
             String init_Str = "";
             int init_I;
-            Inner_DataUtil init_bz_1_DataUtil = Inner_DataUtil.LOCATE;
+            Inner_DataUtil phase = Inner_DataUtil.LOCATE;
             BlockPos init_BlockPos;
             String load_Str = "";
             boolean init_Z;
@@ -106,7 +106,7 @@ final class AiProspect {
             @Override
             public AiOperation.Result tick() {
                if (!this.init_Z && mc.player != null && mc.level != null) {
-                  if (System.nanoTime() > this.init_J) {
+                  if (System.nanoTime() > this.deadlineNanos) {
                      return this.init(
                         AiItems.countInInventory(target) > held ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
                         "Prospect deadline reached with " + AiItems.countInInventory(target) + "/" + goal
@@ -144,12 +144,12 @@ final class AiProspect {
                      }
 
                      this.init(AiJson.parseObject(result.dataJson()).getAsJsonObject());
-                     if (this.init_List.isEmpty()) {
+                     if (this.candidates.isEmpty()) {
                         return this.init(AiOperation.Status.FAILED, "No predicted " + kind + " within " + maxDistance + " blocks of the player");
                      }
 
-                     this.init_bz_1_DataUtil = Inner_DataUtil.TRAVEL;
-                     return this.init("Located " + this.init_List.size() + " predicted " + kind + " site(s)");
+                     this.phase = Inner_DataUtil.TRAVEL;
+                     return this.init("Located " + this.candidates.size() + " predicted " + kind + " site(s)");
                   } else if (this.load_AiOperation != null) {
                      AiOperation.Result result = this.load_AiOperation.tick();
                      if (!result.terminal()) {
@@ -164,7 +164,7 @@ final class AiProspect {
                               "site",
                               this.init_BlockPos == null ? "" : this.init_BlockPos.toShortString(),
                               "phase",
-                              this.init_bz_1_DataUtil.name(),
+                              this.phase.name(),
                               "status",
                               result.status().name(),
                               "message",
@@ -179,47 +179,47 @@ final class AiProspect {
                         return this.init(AiOperation.Status.SUCCEEDED, "Obtained " + goal + " " + spec);
                      }
 
-                     if (this.init_bz_1_DataUtil == Inner_DataUtil.TRAVEL) {
+                     if (this.phase == Inner_DataUtil.TRAVEL) {
                         if (result.status() != AiOperation.Status.SUCCEEDED) {
                            this.load_Str = "travel: " + result.message();
                            this.init_BlockPos = null;
-                           this.init_bz_1_DataUtil = Inner_DataUtil.TRAVEL;
+                           this.phase = Inner_DataUtil.TRAVEL;
                            return this.init("Site unreachable; trying the next prediction");
                         } else {
-                           this.init_bz_1_DataUtil = Inner_DataUtil.EXTRACT;
+                           this.phase = Inner_DataUtil.EXTRACT;
                            return this.init("Arrived; extracting " + kind);
                         }
                      } else {
                         this.load_Str = "extract: " + result.message();
                         this.init_BlockPos = null;
-                        this.init_bz_1_DataUtil = Inner_DataUtil.TRAVEL;
+                        this.phase = Inner_DataUtil.TRAVEL;
                         return this.init("Site exhausted; trying the next prediction");
                      }
-                  } else if (this.init_bz_1_DataUtil == Inner_DataUtil.LOCATE) {
+                  } else if (this.phase == Inner_DataUtil.LOCATE) {
                      this.init_AiOperation = AiOracle.create(AiJson.objectOf("query", kind, "cap", 16));
                      return this.init("Predicting " + kind + " positions from the world seed");
-                  } else if (this.init_bz_1_DataUtil == Inner_DataUtil.EXTRACT) {
+                  } else if (this.phase == Inner_DataUtil.EXTRACT) {
                      this.load_AiOperation = autismclient.ai.engine.AiMine.init(
                         AiJson.objectOf(
                            "block",
-                           AiProspect.init_Str(kind),
+                           AiProspect.oreBlockId(kind),
                            "count",
                            Math.max(1, goal - AiItems.countInInventory(target)),
                            "radius",
                            24,
                            "timeoutSeconds",
-                           Math.min(90, this.init_I_30())
+                           Math.min(90, this.secondsLeft())
                         )
                      );
                      return this.init("Extracting " + kind + " around " + (this.init_BlockPos == null ? "the area" : this.init_BlockPos.toShortString()));
                   } else {
-                     this.init_BlockPos = this.init_BlockPos_10();
+                     this.init_BlockPos = this.nearestCandidate();
                      if (this.init_BlockPos != null) {
-                        this.init_Set.add(this.init_BlockPos.asLong());
-                        this.load_AiOperation = AiGoto.travelToCompat(this.init_BlockPos, 3.5, true, true, true, Math.min(240, this.init_I_30()));
+                        this.visited.add(this.init_BlockPos.asLong());
+                        this.load_AiOperation = AiGoto.travelToCompat(this.init_BlockPos, 3.5, true, true, true, Math.min(240, this.secondsLeft()));
                         return this.init("Travelling to predicted " + kind + " at " + this.init_BlockPos.toShortString());
-                     } else if (this.init_List.isEmpty()) {
-                        this.init_bz_1_DataUtil = Inner_DataUtil.LOCATE;
+                     } else if (this.candidates.isEmpty()) {
+                        this.phase = Inner_DataUtil.LOCATE;
                         return this.init("Re-predicting from the new position");
                      } else {
                         return this.init(
@@ -245,12 +245,12 @@ final class AiProspect {
                   return this.init("Resuming after " + this.init_Str);
                } else {
                   AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
-                  AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, vitals, this.init_I_30());
+                  AiOperation action = AiGuard.createResponseOperation(this.guardPolicy, vitals, this.secondsLeft());
                   if (action == null) {
                      return null;
                   }
 
-                  this.init_Str = AiGuard.decisionReason(this.init_X_CachePool, vitals);
+                  this.init_Str = AiGuard.decisionReason(this.guardPolicy, vitals);
                   this.init_I++;
                   if (this.load_AiOperation != null) {
                      this.load_AiOperation.cancel();
@@ -292,7 +292,7 @@ final class AiProspect {
             }
 
             void init(JsonObject data) {
-               this.init_List.clear();
+               this.candidates.clear();
                if (data.has("positions") && data.get("positions").isJsonArray()) {
                   for (JsonElement element : data.getAsJsonArray("positions")) {
                      if (element.isJsonObject()) {
@@ -300,20 +300,20 @@ final class AiProspect {
                         BlockPos pos = new BlockPos(
                            AiJson.getInt(entry, "x", 0), AiJson.getInt(entry, "y", 0), AiJson.getInt(entry, "z", 0)
                         );
-                        if (!this.init_Set.contains(pos.asLong()) && !(mc.player.blockPosition().distSqr(pos) > (double)maxDistance * maxDistance)) {
-                           this.init_List.add(pos);
+                        if (!this.visited.contains(pos.asLong()) && !(mc.player.blockPosition().distSqr(pos) > (double)maxDistance * maxDistance)) {
+                           this.candidates.add(pos);
                         }
                      }
                   }
                }
             }
 
-            BlockPos init_BlockPos_10() {
+            BlockPos nearestCandidate() {
                BlockPos best = null;
                double bestDistance = 1.7976931348623157E308;
 
-               for (BlockPos candidate : this.init_List) {
-                  if (!this.init_Set.contains(candidate.asLong())) {
+               for (BlockPos candidate : this.candidates) {
+                  if (!this.visited.contains(candidate.asLong())) {
                      double distance = mc.player.blockPosition().distSqr(candidate);
                      if (distance < bestDistance) {
                         bestDistance = distance;
@@ -323,17 +323,17 @@ final class AiProspect {
                }
 
                if (best != null) {
-                  this.init_List.remove(best);
+                  this.candidates.remove(best);
                }
 
                return best;
             }
 
-            int init_I_30() {
-               return (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
+            int secondsLeft() {
+               return (int)Math.max(1L, (this.deadlineNanos - System.nanoTime()) / 1000000000L);
             }
 
-            JsonObject init_JsonObject_46() {
+            JsonObject evidence() {
                JsonObject out = AiJson.objectOf(
                   "item",
                   spec,
@@ -346,11 +346,11 @@ final class AiProspect {
                   "startedWith",
                   held,
                   "phase",
-                  this.init_bz_1_DataUtil.name().toLowerCase(Locale.ROOT),
+                  this.phase.name().toLowerCase(Locale.ROOT),
                   "sitesRemaining",
-                  this.init_List.size(),
+                  this.candidates.size(),
                   "sitesTried",
-                  this.init_Set.size()
+                  this.visited.size()
                );
                if (this.init_BlockPos != null) {
                   out.addProperty("site", this.init_BlockPos.toShortString());
@@ -363,7 +363,7 @@ final class AiProspect {
             }
 
             AiOperation.Result init(String message) {
-               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_46().toString(), List.of());
+               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.evidence().toString(), List.of());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
@@ -371,7 +371,7 @@ final class AiProspect {
             }
 
             AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
-               JsonObject data = this.init_JsonObject_46();
+               JsonObject data = this.evidence();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
                      data.add(entry.getKey(), entry.getValue());
@@ -415,38 +415,38 @@ final class AiProspect {
    }
 
    static {
-      init_Map.put("minecraft:coal", "coal");
-      init_Map.put("minecraft:raw_iron", "iron");
-      init_Map.put("minecraft:iron_ingot", "iron");
-      init_Map.put("minecraft:raw_copper", "copper");
-      init_Map.put("minecraft:copper_ingot", "copper");
-      init_Map.put("minecraft:raw_gold", "gold");
-      init_Map.put("minecraft:gold_ingot", "gold");
-      init_Map.put("minecraft:redstone", "redstone");
-      init_Map.put("minecraft:lapis_lazuli", "lapis");
-      init_Map.put("minecraft:diamond", "diamond");
-      init_Map.put("minecraft:emerald", "emerald");
-      init_Map.put("minecraft:quartz", "quartz");
-      init_Map.put("minecraft:ancient_debris", "ancient_debris");
-      init_Map.put("minecraft:netherite_scrap", "ancient_debris");
-      load_Map.put("minecraft:coal_ore", "coal");
-      load_Map.put("minecraft:deepslate_coal_ore", "coal");
-      load_Map.put("minecraft:iron_ore", "iron");
-      load_Map.put("minecraft:deepslate_iron_ore", "iron");
-      load_Map.put("minecraft:copper_ore", "copper");
-      load_Map.put("minecraft:deepslate_copper_ore", "copper");
-      load_Map.put("minecraft:gold_ore", "gold");
-      load_Map.put("minecraft:deepslate_gold_ore", "gold");
-      load_Map.put("minecraft:nether_gold_ore", "gold");
-      load_Map.put("minecraft:redstone_ore", "redstone");
-      load_Map.put("minecraft:deepslate_redstone_ore", "redstone");
-      load_Map.put("minecraft:lapis_ore", "lapis");
-      load_Map.put("minecraft:deepslate_lapis_ore", "lapis");
-      load_Map.put("minecraft:diamond_ore", "diamond");
-      load_Map.put("minecraft:deepslate_diamond_ore", "diamond");
-      load_Map.put("minecraft:emerald_ore", "emerald");
-      load_Map.put("minecraft:deepslate_emerald_ore", "emerald");
-      load_Map.put("minecraft:nether_quartz_ore", "quartz");
-      load_Map.put("minecraft:ancient_debris", "ancient_debris");
+      ITEM_KINDS.put("minecraft:coal", "coal");
+      ITEM_KINDS.put("minecraft:raw_iron", "iron");
+      ITEM_KINDS.put("minecraft:iron_ingot", "iron");
+      ITEM_KINDS.put("minecraft:raw_copper", "copper");
+      ITEM_KINDS.put("minecraft:copper_ingot", "copper");
+      ITEM_KINDS.put("minecraft:raw_gold", "gold");
+      ITEM_KINDS.put("minecraft:gold_ingot", "gold");
+      ITEM_KINDS.put("minecraft:redstone", "redstone");
+      ITEM_KINDS.put("minecraft:lapis_lazuli", "lapis");
+      ITEM_KINDS.put("minecraft:diamond", "diamond");
+      ITEM_KINDS.put("minecraft:emerald", "emerald");
+      ITEM_KINDS.put("minecraft:quartz", "quartz");
+      ITEM_KINDS.put("minecraft:ancient_debris", "ancient_debris");
+      ITEM_KINDS.put("minecraft:netherite_scrap", "ancient_debris");
+      BLOCK_KINDS.put("minecraft:coal_ore", "coal");
+      BLOCK_KINDS.put("minecraft:deepslate_coal_ore", "coal");
+      BLOCK_KINDS.put("minecraft:iron_ore", "iron");
+      BLOCK_KINDS.put("minecraft:deepslate_iron_ore", "iron");
+      BLOCK_KINDS.put("minecraft:copper_ore", "copper");
+      BLOCK_KINDS.put("minecraft:deepslate_copper_ore", "copper");
+      BLOCK_KINDS.put("minecraft:gold_ore", "gold");
+      BLOCK_KINDS.put("minecraft:deepslate_gold_ore", "gold");
+      BLOCK_KINDS.put("minecraft:nether_gold_ore", "gold");
+      BLOCK_KINDS.put("minecraft:redstone_ore", "redstone");
+      BLOCK_KINDS.put("minecraft:deepslate_redstone_ore", "redstone");
+      BLOCK_KINDS.put("minecraft:lapis_ore", "lapis");
+      BLOCK_KINDS.put("minecraft:deepslate_lapis_ore", "lapis");
+      BLOCK_KINDS.put("minecraft:diamond_ore", "diamond");
+      BLOCK_KINDS.put("minecraft:deepslate_diamond_ore", "diamond");
+      BLOCK_KINDS.put("minecraft:emerald_ore", "emerald");
+      BLOCK_KINDS.put("minecraft:deepslate_emerald_ore", "emerald");
+      BLOCK_KINDS.put("minecraft:nether_quartz_ore", "quartz");
+      BLOCK_KINDS.put("minecraft:ancient_debris", "ancient_debris");
    }
 }

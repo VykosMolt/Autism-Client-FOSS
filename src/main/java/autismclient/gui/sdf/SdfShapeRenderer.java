@@ -29,16 +29,16 @@ public final class SdfShapeRenderer {
    private static final int load_I = 64;
    private static final int read_I = 12;
    private static final int write = 20;
-   private static final int[] init_IArr = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
-   private static final int update = 64 * init_IArr.length;
+   private static final int[] TILE_RADII = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
+   private static final int update = 64 * TILE_RADII.length;
    private static final int sync = 128;
-   private static final Identifier init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "ui/sdf_shapes");
-   private static volatile SdfShapeRenderer.Inner_StreamUtil init_BufferHelper_Strea;
+   private static final Identifier ATLAS_ID = Identifier.fromNamespaceAndPath("autismclient", "ui/sdf_shapes");
+   private static volatile SdfShapeRenderer.Inner_StreamUtil atlasInstance;
    private static volatile boolean init_Z;
    private static final int flush = 512;
    private static final int close = 10;
-   private static final LinkedHashMap<SdfShapeRenderer.Inner_DataUtil, SdfShapeRenderer.Inner_StreamUtil> init_LinkedHashMap = new LinkedHashMap<>(16, 0.75F, true);
-   private static final ArrayDeque<SdfShapeRenderer.Inner_StreamUtil> init_ArrayDeque = new ArrayDeque<>();
+   private static final LinkedHashMap<SdfShapeRenderer.Inner_DataUtil, SdfShapeRenderer.Inner_StreamUtil> shapeCache = new LinkedHashMap<>(16, 0.75F, true);
+   private static final ArrayDeque<SdfShapeRenderer.Inner_StreamUtil> retiredAtlases = new ArrayDeque<>();
    private static boolean load_Z;
    private static boolean read_Z;
    private static int open;
@@ -49,14 +49,14 @@ public final class SdfShapeRenderer {
    }
 
    public static boolean isAvailable() {
-      return SdfRenderPipelines.isAvailable() && init_BufferHelper_Strea() != null;
+      return SdfRenderPipelines.isAvailable() && atlas() != null;
    }
 
    public static void init(GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int color) {
       float r = Math.min(radius, Math.min(w, h) * 0.5F);
       if (!(w <= 0.0F) && !(h <= 0.0F) && (color & 0xFF000000) != 0) {
          if (!(r < 0.75F) && isAvailable()) {
-            init_V_GuiGraphicsExtract_2(graphics, init_I(r), x, y, w, h, r, color, false, false);
+            drawTile(graphics, bestTile(r), x, y, w, h, r, color, false, false);
          } else {
             graphics.fill(Math.round(x), Math.round(y), Math.round(x + w), Math.round(y + h), color);
          }
@@ -68,7 +68,7 @@ public final class SdfShapeRenderer {
       if (!(w <= 0.0F) && !(h <= 0.0F) && border >>> 24 != 0) {
          float r = Math.min(radius, Math.min(w, h) * 0.5F);
          if (!(r < 0.75F) && isAvailable()) {
-            init_V_GuiGraphicsExtract_2(graphics, init_I(r), x, y, w, h, r, border, true, false);
+            drawTile(graphics, bestTile(r), x, y, w, h, r, border, true, false);
          } else {
             int left = Math.round(x);
             int top = Math.round(y);
@@ -95,7 +95,7 @@ public final class SdfShapeRenderer {
       if (!(w <= 0.0F) && !(h <= 0.0F)) {
          float r = Math.min(radius, Math.min(w, h) * 0.5F);
          if (!(r < 0.75F) && isAvailable()) {
-            int tile = init_I(r);
+            int tile = bestTile(r);
             if ((topFill | bottomFill) >>> 24 != 0) {
                init(graphics, tile, x, y, w, h, r, topFill, bottomFill, false, false);
             }
@@ -127,7 +127,7 @@ public final class SdfShapeRenderer {
          if (!isAvailable()) {
             graphics.fill(Math.round(cx - r), Math.round(cy - r), Math.round(cx + r), Math.round(cy + r), color);
          } else {
-            init_V_GuiGraphicsExtract_2(graphics, init_IArr.length - 1, cx - r, cy - r, r * 2.0F, r * 2.0F, r, color, false, false);
+            drawTile(graphics, TILE_RADII.length - 1, cx - r, cy - r, r * 2.0F, r * 2.0F, r, color, false, false);
          }
       }
    }
@@ -136,7 +136,7 @@ public final class SdfShapeRenderer {
       if (!(w <= 0.0F) && !(h <= 0.0F) && color >>> 24 != 0) {
          float r = Math.min(radius, Math.min(w, h) * 0.5F);
          if (!(r < 0.75F) && isAvailable()) {
-            init_V_GuiGraphicsExtract_2(graphics, init_I(r), x, y, w, h, r, color, false, true);
+            drawTile(graphics, bestTile(r), x, y, w, h, r, color, false, true);
          } else {
             graphics.fill(Math.round(x), Math.round(y), Math.round(x + w), Math.round(y + h), color);
          }
@@ -197,14 +197,14 @@ public final class SdfShapeRenderer {
                SdfShapeRenderer.Inner_DataUtil key = new SdfShapeRenderer.Inner_DataUtil(values, List.copyOf(sizes), r);
                if (!load_Z) {
                   ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-                     while (!init_ArrayDeque.isEmpty()) {
-                        init_ArrayDeque.removeFirst().close();
+                     while (!retiredAtlases.isEmpty()) {
+                        retiredAtlases.removeFirst().close();
                      }
                   });
                   load_Z = true;
                }
 
-               SdfShapeRenderer.Inner_StreamUtil shape = init_LinkedHashMap.get(key);
+               SdfShapeRenderer.Inner_StreamUtil shape = shapeCache.get(key);
                if (shape == null) {
                   NativeImage pixels = null;
 
@@ -221,14 +221,14 @@ public final class SdfShapeRenderer {
                      return;
                   }
 
-                  init_LinkedHashMap.put(key, shape);
+                  shapeCache.put(key, shape);
                   open = open + shape.init;
 
-                  while (init_LinkedHashMap.size() > 1 && (init_LinkedHashMap.size() > 512 || open > 4194304)) {
-                     Iterator<SdfShapeRenderer.Inner_StreamUtil> iterator = init_LinkedHashMap.values().iterator();
+                  while (shapeCache.size() > 1 && (shapeCache.size() > 512 || open > 4194304)) {
+                     Iterator<SdfShapeRenderer.Inner_StreamUtil> iterator = shapeCache.values().iterator();
                      SdfShapeRenderer.Inner_StreamUtil retired = iterator.next();
                      open = open - retired.init;
-                     init_ArrayDeque.add(retired);
+                     retiredAtlases.add(retired);
                      iterator.remove();
                   }
                }
@@ -306,7 +306,7 @@ public final class SdfShapeRenderer {
                distance = -distance;
             }
 
-            MemoryUtil.memPutByte(base + i, init_B(distance));
+            MemoryUtil.memPutByte(base + i, distanceToAlpha(distance));
          }
       }
 
@@ -315,18 +315,18 @@ public final class SdfShapeRenderer {
 
    public static void reset() {
       read_Z = false;
-      init_LinkedHashMap.values().forEach(AbstractTexture::close);
-      init_LinkedHashMap.clear();
+      shapeCache.values().forEach(AbstractTexture::close);
+      shapeCache.clear();
       open = 0;
 
-      while (!init_ArrayDeque.isEmpty()) {
-         init_ArrayDeque.removeFirst().close();
+      while (!retiredAtlases.isEmpty()) {
+         retiredAtlases.removeFirst().close();
       }
 
-      SdfShapeRenderer.Inner_StreamUtil old = init_BufferHelper_Strea;
+      SdfShapeRenderer.Inner_StreamUtil old = atlasInstance;
       if (old != null) {
          try {
-            Minecraft.getInstance().getTextureManager().release(init_Identifier);
+            Minecraft.getInstance().getTextureManager().release(ATLAS_ID);
          } catch (Throwable var3) {
          }
       }
@@ -338,16 +338,16 @@ public final class SdfShapeRenderer {
          }
       }
 
-      init_BufferHelper_Strea = null;
+      atlasInstance = null;
       init_Z = false;
    }
 
-   private static int init_I(float radius) {
+   private static int bestTile(float radius) {
       int best = 0;
       float bestScore = 3.4028235E38F;
 
-      for (int i = 0; i < init_IArr.length; i++) {
-         float ratio = radius / init_IArr[i];
+      for (int i = 0; i < TILE_RADII.length; i++) {
+         float ratio = radius / TILE_RADII[i];
          float score = Math.abs((float)(Math.log(ratio) / Math.log(2.0)));
          if (score < bestScore) {
             bestScore = score;
@@ -358,7 +358,7 @@ public final class SdfShapeRenderer {
       return best;
    }
 
-   private static void init_V_GuiGraphicsExtract_2(
+   private static void drawTile(
       GuiGraphicsExtractor graphics, int tile, float x, float y, float w, float h, float r, int color, boolean outline, boolean topOnly
    ) {
       init(graphics, tile, x, y, w, h, r, color, color, outline, topOnly);
@@ -367,9 +367,9 @@ public final class SdfShapeRenderer {
    private static void init(
       GuiGraphicsExtractor graphics, int tile, float x, float y, float w, float h, float r, int topColor, int bottomColor, boolean outline, boolean topOnly
    ) {
-      SdfShapeRenderer.Inner_StreamUtil atlas = init_BufferHelper_Strea();
+      SdfShapeRenderer.Inner_StreamUtil atlas = atlas();
       if (atlas != null) {
-         int rTile = init_IArr[tile];
+         int rTile = TILE_RADII[tile];
          float corner = Math.min(r, Math.min(w, h) * 0.5F);
          float[] xs = init(x, w, corner);
          float[] ys = init(y, h, corner);
@@ -453,11 +453,11 @@ public final class SdfShapeRenderer {
    }
 
    public static void prewarm() {
-      if (init_BufferHelper_Strea == null && !init_Z && prewarmedImage == null) {
+      if (atlasInstance == null && !init_Z && prewarmedImage == null) {
          try {
-            NativeImage built = init_NativeImage();
+            NativeImage built = buildAtlasImage();
             synchronized (SdfShapeRenderer.class) {
-               if (init_BufferHelper_Strea == null && !init_Z && prewarmedImage == null) {
+               if (atlasInstance == null && !init_Z && prewarmedImage == null) {
                   prewarmedImage = built;
                } else {
                   built.close();
@@ -468,22 +468,22 @@ public final class SdfShapeRenderer {
       }
    }
 
-   private static SdfShapeRenderer.Inner_StreamUtil init_BufferHelper_Strea() {
-      SdfShapeRenderer.Inner_StreamUtil current = init_BufferHelper_Strea;
+   private static SdfShapeRenderer.Inner_StreamUtil atlas() {
+      SdfShapeRenderer.Inner_StreamUtil current = atlasInstance;
       if (current == null && !init_Z) {
          synchronized (SdfShapeRenderer.class) {
-            current = init_BufferHelper_Strea;
+            current = atlasInstance;
             if (current == null && !init_Z) {
                try {
                   NativeImage pixels = prewarmedImage;
                   prewarmedImage = null;
                   if (pixels == null) {
-                     pixels = init_NativeImage();
+                     pixels = buildAtlasImage();
                   }
 
                   current = new SdfShapeRenderer.Inner_StreamUtil(pixels);
-                  Minecraft.getInstance().getTextureManager().register(init_Identifier, current);
-                  init_BufferHelper_Strea = current;
+                  Minecraft.getInstance().getTextureManager().register(ATLAS_ID, current);
+                  atlasInstance = current;
                } catch (Throwable t) {
                   init_Z = true;
                   return null;
@@ -495,22 +495,22 @@ public final class SdfShapeRenderer {
       return current;
    }
 
-   private static NativeImage init_NativeImage() {
+   private static NativeImage buildAtlasImage() {
       NativeImage image = new NativeImage(Format.LUMINANCE, update, 128, false);
       long base = image.getPointer();
 
-      for (int t = 0; t < init_IArr.length; t++) {
-         float r = init_IArr[t];
+      for (int t = 0; t < TILE_RADII.length; t++) {
+         float r = TILE_RADII[t];
 
          for (int py = 0; py < 64; py++) {
             for (int px = 0; px < 64; px++) {
                float cx = px + 0.5F - 32.0F;
                float cy = py + 0.5F - 32.0F;
-               float dist = init_F_F(cx, cy, 20.0F, 20.0F, r);
-               float inner = init_F_F(cx, cy, 19.0F, 19.0F, Math.max(0.0F, r - 1.0F));
+               float dist = roundedBoxDistance(cx, cy, 20.0F, 20.0F, r);
+               float inner = roundedBoxDistance(cx, cy, 19.0F, 19.0F, Math.max(0.0F, r - 1.0F));
                long offset = (long)py * update + t * 64 + px;
-               MemoryUtil.memPutByte(base + offset, init_B(dist));
-               MemoryUtil.memPutByte(base + 64L * update + offset, init_B(Math.max(dist, -inner)));
+               MemoryUtil.memPutByte(base + offset, distanceToAlpha(dist));
+               MemoryUtil.memPutByte(base + 64L * update + offset, distanceToAlpha(Math.max(dist, -inner)));
             }
          }
       }
@@ -518,11 +518,11 @@ public final class SdfShapeRenderer {
       return image;
    }
 
-   private static byte init_B(float distance) {
+   private static byte distanceToAlpha(float distance) {
       return (byte)Math.clamp(Math.round((0.5F - distance / 16.0F) * 255.0F), 0, 255);
    }
 
-   private static float init_F_F(float px, float py, float bx, float by, float r) {
+   private static float roundedBoxDistance(float px, float py, float bx, float by, float r) {
       float qx = Math.abs(px) - (bx - r);
       float qy = Math.abs(py) - (by - r);
       float ax = Math.max(qx, 0.0F);

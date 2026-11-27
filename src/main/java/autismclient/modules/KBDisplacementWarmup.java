@@ -45,12 +45,12 @@ final class KBDisplacementWarmup {
    }
 
    private static final class Inner_DataUtil implements KnockbackThrowPlanner.Inner_UiHelper {
-      final AABB init_AABB;
-      final List<VoxelShape> init_List;
+      final AABB platform;
+      final List<VoxelShape> shapes;
 
       Inner_DataUtil(int width) {
-         this.init_AABB = new AABB(0.5 - width / 2.0, 9.0, -40.0, 0.5 + width / 2.0, 10.0, 40.0);
-         this.init_List = List.of(Shapes.create(this.init_AABB));
+         this.platform = new AABB(0.5 - width / 2.0, 9.0, -40.0, 0.5 + width / 2.0, 10.0, 40.0);
+         this.shapes = List.of(Shapes.create(this.platform));
       }
 
       @Override
@@ -60,18 +60,18 @@ final class KBDisplacementWarmup {
 
       @Override
       public Vec3 init_Vec3_AABB_Vec3(AABB body, Vec3 v) {
-         double y = Shapes.collide(Axis.Y, body, this.init_List, v.y);
+         double y = Shapes.collide(Axis.Y, body, this.shapes, v.y);
          body = body.move(0.0, y, 0.0);
          double x;
          double z;
          if (Math.abs(v.x) < Math.abs(v.z)) {
-            z = Shapes.collide(Axis.Z, body, this.init_List, v.z);
+            z = Shapes.collide(Axis.Z, body, this.shapes, v.z);
             body = body.move(0.0, 0.0, z);
-            x = Shapes.collide(Axis.X, body, this.init_List, v.x);
+            x = Shapes.collide(Axis.X, body, this.shapes, v.x);
          } else {
-            x = Shapes.collide(Axis.X, body, this.init_List, v.x);
+            x = Shapes.collide(Axis.X, body, this.shapes, v.x);
             body = body.move(x, 0.0, 0.0);
-            z = Shapes.collide(Axis.Z, body, this.init_List, v.z);
+            z = Shapes.collide(Axis.Z, body, this.shapes, v.z);
          }
 
          return new Vec3(x, y, z);
@@ -82,17 +82,17 @@ final class KBDisplacementWarmup {
          return false;
       }
 
-      private boolean init_Z_D(double minX, double maxX, double minZ, double maxZ) {
-         return maxX > this.init_AABB.minX + 0.001
-            && minX < this.init_AABB.maxX - 0.001
-            && maxZ > this.init_AABB.minZ + 0.001
-            && minZ < this.init_AABB.maxZ - 0.001;
+      private boolean overlapsPlatform(double minX, double maxX, double minZ, double maxZ) {
+         return maxX > this.platform.minX + 0.001
+            && minX < this.platform.maxX - 0.001
+            && maxZ > this.platform.minZ + 0.001
+            && minZ < this.platform.maxZ - 0.001;
       }
 
       @Override
       public KnockbackThrowPlanner.Inner_CachePool init_W_CachePool_AABB(AABB body) {
-         boolean under = this.init_AABB.maxY <= body.minY + 0.01 && this.init_Z_D(body.minX, body.maxX, body.minZ, body.maxZ);
-         return under ? new KnockbackThrowPlanner.Inner_CachePool(this.init_AABB.maxY, false, false, true) : new KnockbackThrowPlanner.Inner_CachePool(0.0, true, false, true);
+         boolean under = this.platform.maxY <= body.minY + 0.01 && this.overlapsPlatform(body.minX, body.maxX, body.minZ, body.maxZ);
+         return under ? new KnockbackThrowPlanner.Inner_CachePool(this.platform.maxY, false, false, true) : new KnockbackThrowPlanner.Inner_CachePool(0.0, true, false, true);
       }
 
       @Override
@@ -102,9 +102,9 @@ final class KBDisplacementWarmup {
 
       @Override
       public TerrainDropGrid.Inner_StreamUtil init_V_StreamUtil_I(int x, int z, int base, double stepTop) {
-         boolean cell = this.init_Z_D(x, x + 1, z, z + 1);
-         long walls = cell ? TerrainDropGrid.init_J_I(base, this.init_AABB.minY, this.init_AABB.maxY) : 0L;
-         return new TerrainDropGrid.Inner_StreamUtil(walls, 0L, cell ? this.init_AABB.maxY : -1.0 / 0.0, (byte)(cell ? 1 : 2), 0.6F);
+         boolean cell = this.overlapsPlatform(x, x + 1, z, z + 1);
+         long walls = cell ? TerrainDropGrid.init_J_I(base, this.platform.minY, this.platform.maxY) : 0L;
+         return new TerrainDropGrid.Inner_StreamUtil(walls, 0L, cell ? this.platform.maxY : -1.0 / 0.0, (byte)(cell ? 1 : 2), 0.6F);
       }
    }
 }

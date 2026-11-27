@@ -25,14 +25,14 @@ import net.minecraft.world.phys.HitResult.Type;
 public final class CombatInteractionController {
    private static final int init_I = 20;
    private static final long init_J = 1250000000L;
-   private static LocalPlayer init_LocalPlayer;
-   private static ClientPacketListener init_ClientPacketListen;
-   private static ClientLevel init_ClientLevel;
-   private static RotationMath.Rotation init_ce_DataUtil;
-   private static ItemStack init_ItemStack = ItemStack.EMPTY;
-   private static ItemStack load_ItemStack = ItemStack.EMPTY;
-   private static int load_I;
-   private static int read_I;
+   private static LocalPlayer trackedPlayer;
+   private static ClientPacketListener trackedConnection;
+   private static ClientLevel trackedLevel;
+   private static RotationMath.Rotation silentRotation;
+   private static ItemStack mainHandSnapshot = ItemStack.EMPTY;
+   private static ItemStack offHandSnapshot = ItemStack.EMPTY;
+   private static int selectedSlotSnapshot;
+   private static int captureTick;
    private static int write_I = -2147483648;
    private static int update_I = -2147483648;
    private static int sync_I;
@@ -44,13 +44,13 @@ public final class CombatInteractionController {
    private static boolean sync_Z;
    private static boolean flush;
    private static boolean close;
-   private static HitResult init_HitResult;
-   private static BlockState init_BlockState;
-   private static Vec3 init_Vec3;
-   private static RotationMath.Rotation load_ce_DataUtil;
-   private static RotationMath.Rotation read_ce_DataUtil;
-   private static long load_J;
-   private static final CombatAimEngine.Inner_DataUtil init_q_DataUtil = new CombatAimEngine.Inner_DataUtil();
+   private static HitResult capturedHit;
+   private static BlockState capturedBlockState;
+   private static Vec3 hitOffset;
+   private static RotationMath.Rotation capturedRotation;
+   private static RotationMath.Rotation aimRotation;
+   private static long captureNanos;
+   private static final CombatAimEngine.Inner_DataUtil aimState = new CombatAimEngine.Inner_DataUtil();
 
    private static boolean close() {
       Module aura = autismclient.modules.al.init_Module_Str("kill-aura");
@@ -74,7 +74,7 @@ public final class CombatInteractionController {
       return aura != null && aura.isEnabled() && "Block".equals(aura.value("interactions"));
    }
 
-   private static boolean load_Z(Minecraft mc) {
+   private static boolean canInteract(Minecraft mc) {
       return mc.player != null
          && mc.level != null
          && mc.gameMode != null
@@ -98,24 +98,24 @@ public final class CombatInteractionController {
          && !autismclient.modules.AutoArmorModule.init_Z_20();
    }
 
-   private static boolean read_Z(Minecraft mc) {
+   private static boolean isUseKeyPhysicallyDown(Minecraft mc) {
       return mc.options != null && KeyMappingControl.of(mc.options.keyUse).autism$physicalForBody();
    }
 
-   private static AutismKeyMappingAccessor init_AutismKeyMappingAc(Minecraft mc) {
+   private static AutismKeyMappingAccessor useKeyAccessor(Minecraft mc) {
       return (AutismKeyMappingAccessor)mc.options.keyUse;
    }
 
    public static boolean read() {
       Minecraft mc = Minecraft.getInstance();
-      return mc.options != null && init_AutismKeyMappingAc(mc).autism$clickCount() > 0 && !ClientInteractionOverride.ownsUseInput();
+      return mc.options != null && useKeyAccessor(mc).autism$clickCount() > 0 && !ClientInteractionOverride.ownsUseInput();
    }
 
    public static boolean write() {
       Minecraft mc = Minecraft.getInstance();
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (open() && load_Z(mc) && !load()) {
-         if (init_LocalPlayer != null && (init_LocalPlayer != mc.player || init_ClientPacketListen != mc.getConnection() || init_ClientLevel != mc.level)) {
+      if (open() && canInteract(mc) && !load()) {
+         if (trackedPlayer != null && (trackedPlayer != mc.player || trackedConnection != mc.getConnection() || trackedLevel != mc.level)) {
             reset();
          }
 
@@ -124,7 +124,7 @@ public final class CombatInteractionController {
             return false;
          }
 
-         boolean pressed = read_Z(mc);
+         boolean pressed = isUseKeyPhysicallyDown(mc);
          boolean edge = read();
          if (sync_Z) {
             if (pressed && !edge) {
@@ -145,64 +145,64 @@ public final class CombatInteractionController {
          }
 
          if (pressed || init_Z || load_Z && mc.player.isUsingItem()) {
-            if (load_Z && !write_Z(mc) && !pressed) {
+            if (load_Z && !isSameHeldState(mc) && !pressed) {
                update_V(mc);
                return false;
             }
 
-            init_LocalPlayer = mc.player;
-            init_ClientPacketListen = mc.getConnection();
-            init_ClientLevel = mc.level;
+            trackedPlayer = mc.player;
+            trackedConnection = mc.getConnection();
+            trackedLevel = mc.level;
             load_Z = true;
             write_I = tick;
             autismclient.modules.KillAuraModule.init_V_27();
-            if (!init_LocalPlayer.isUsingItem() || pressed) {
+            if (!trackedPlayer.isUsingItem() || pressed) {
                update_Z = false;
             } else if (!update_Z) {
                update_Z = true;
-               init_ce_DataUtil = null;
-               init_HitResult = null;
+               silentRotation = null;
+               capturedHit = null;
             }
 
-            if (init_ce_DataUtil == null || !write_Z(mc) || flush && !init_LocalPlayer.isUsingItem()) {
+            if (silentRotation == null || !isSameHeldState(mc) || flush && !trackedPlayer.isUsingItem()) {
                if (close()) {
-                  read_V(mc);
+                  captureUseState(mc);
                } else {
-                  read_ce_DataUtil = init_ce_DataUtil(mc);
-                  read_I = tick;
+                  aimRotation = init_ce_DataUtil(mc);
+                  captureTick = tick;
                }
 
-               load_I = init_LocalPlayer.getInventory().getSelectedSlot();
-               init_ItemStack = init_LocalPlayer.getMainHandItem().copy();
-               load_ItemStack = init_LocalPlayer.getOffhandItem().copy();
+               selectedSlotSnapshot = trackedPlayer.getInventory().getSelectedSlot();
+               mainHandSnapshot = trackedPlayer.getMainHandItem().copy();
+               offHandSnapshot = trackedPlayer.getOffhandItem().copy();
                flush = false;
             }
 
             if (close()) {
-               if (!flush && !update_Z(mc) || update_Z && init(tick) || !init_LocalPlayer.isUsingItem() && init(tick)) {
+               if (!flush && !update_Z(mc) || update_Z && init(tick) || !trackedPlayer.isUsingItem() && init(tick)) {
                   update_V(mc);
                   return false;
                }
 
-               if (!flush && !update_Z && RotationMath.angularDistance(load_ce_DataUtil, RotationMath.ofPlayer(init_LocalPlayer)) > 8.0F) {
+               if (!flush && !update_Z && RotationMath.angularDistance(capturedRotation, RotationMath.ofPlayer(trackedPlayer)) > 8.0F) {
                   update_V(mc);
                   return false;
                }
 
-               if (init_LocalPlayer.isUsingItem() && !update_Z) {
-                  load_ce_DataUtil = RotationMath.ofPlayer(init_LocalPlayer);
-                  init_HitResult = null;
-                  read_ce_DataUtil = load_ce_DataUtil;
-               } else if (init_HitResult != null && init_HitResult.getType() != Type.MISS) {
-                  read_ce_DataUtil = RotationMath.lookAt(init_Vec3(), init_LocalPlayer.getEyePosition());
+               if (trackedPlayer.isUsingItem() && !update_Z) {
+                  capturedRotation = RotationMath.ofPlayer(trackedPlayer);
+                  capturedHit = null;
+                  aimRotation = capturedRotation;
+               } else if (capturedHit != null && capturedHit.getType() != Type.MISS) {
+                  aimRotation = RotationMath.lookAt(targetPoint(), trackedPlayer.getEyePosition());
                }
 
                ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
                float yaw = ServerRotationTracker.getLastWireYaw();
                RotationMath.Rotation written = wire.initialized() ? new RotationMath.Rotation(Float.isFinite(yaw) ? yaw : wire.currentYaw(), wire.currentPitch()) : null;
-               boolean ready = tick > read_I && written != null && init_Z(mc, written);
+               boolean ready = tick > captureTick && written != null && init_Z(mc, written);
                write_V(mc);
-               if (!autismclient.modules.KillAuraModule.init_Z_ce_DataUtil(ready ? written : read_ce_DataUtil, init_q_DataUtil, ready)) {
+               if (!autismclient.modules.KillAuraModule.init_Z_ce_DataUtil(ready ? written : aimRotation, aimState, ready)) {
                   reset();
                   return false;
                }
@@ -211,28 +211,28 @@ public final class CombatInteractionController {
                   close = false;
                }
             } else {
-               if (!update_Z && init_ce_DataUtil != null && !load(mc, init_ce_DataUtil)) {
-                  if (!pressed && !init_LocalPlayer.isUsingItem()) {
+               if (!update_Z && silentRotation != null && !load(mc, silentRotation)) {
+                  if (!pressed && !trackedPlayer.isUsingItem()) {
                      update_V(mc);
                      return false;
                   }
 
-                  read_ce_DataUtil = init_ce_DataUtil(mc);
-                  read_I = tick;
+                  aimRotation = init_ce_DataUtil(mc);
+                  captureTick = tick;
                }
 
-               if (update_Z && tick - read_I > 20) {
+               if (update_Z && tick - captureTick > 20) {
                   update_V(mc);
                   return false;
                }
 
-               if (!SilentRotationManager.snapKillAuraRotation(read_ce_DataUtil)) {
+               if (!SilentRotationManager.snapKillAuraRotation(aimRotation)) {
                   reset();
                   return false;
                }
             }
 
-            init_ce_DataUtil = SilentRotationManager.getCurrentRotation();
+            silentRotation = SilentRotationManager.getCurrentRotation();
             return true;
          } else {
             reset();
@@ -247,9 +247,9 @@ public final class CombatInteractionController {
    public static boolean update() {
       Minecraft mc = Minecraft.getInstance();
       return load_Z
-         && init_LocalPlayer == mc.player
-         && init_ClientPacketListen == mc.getConnection()
-         && init_ClientLevel == mc.level
+         && trackedPlayer == mc.player
+         && trackedConnection == mc.getConnection()
+         && trackedLevel == mc.level
          && write_I == AutismSessionState.getInstance().getClientTick()
          && open();
    }
@@ -260,19 +260,19 @@ public final class CombatInteractionController {
 
    private static boolean poll() {
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
-      return init_ce_DataUtil != null
+      return silentRotation != null
          && wire.initialized()
-         && Math.abs(RotationMath.angleDelta(wire.currentYaw(), init_ce_DataUtil.yaw())) < 0.001F
-         && Math.abs(wire.currentPitch() - init_ce_DataUtil.pitch()) < 0.001F
-         && AutismSessionState.getInstance().getClientTick() > read_I;
+         && Math.abs(RotationMath.angleDelta(wire.currentYaw(), silentRotation.yaw())) < 0.001F
+         && Math.abs(wire.currentPitch() - silentRotation.pitch()) < 0.001F
+         && AutismSessionState.getInstance().getClientTick() > captureTick;
    }
 
    public static void tick(Minecraft mc) {
-      if (mc.options != null && open() && load_Z(mc)) {
+      if (mc.options != null && open() && canInteract(mc)) {
          if (autismclient.modules.KillAuraModule.init_Z_31()) {
             sync_Z = false;
          } else {
-            AutismKeyMappingAccessor key = init_AutismKeyMappingAc(mc);
+            AutismKeyMappingAccessor key = useKeyAccessor(mc);
             if (sync_Z) {
                if (!read()) {
                   key.autism$setClickCount(0);
@@ -285,10 +285,10 @@ public final class CombatInteractionController {
             if (close() && update() && !flush && !update_Z(mc)) {
                update_V(mc);
             } else if (!update()) {
-               if (!load() && (key.autism$clickCount() > 0 || read_Z(mc))) {
-                  init_LocalPlayer = mc.player;
-                  init_ClientPacketListen = mc.getConnection();
-                  init_ClientLevel = mc.level;
+               if (!load() && (key.autism$clickCount() > 0 || isUseKeyPhysicallyDown(mc))) {
+                  trackedPlayer = mc.player;
+                  trackedConnection = mc.getConnection();
+                  trackedLevel = mc.level;
                   if (!init_Z) {
                      sync_I = AutismSessionState.getInstance().getClientTick();
                   }
@@ -306,7 +306,7 @@ public final class CombatInteractionController {
                   key.autism$setClickCount(0);
                }
 
-               if (poll() && write_Z(mc) && (update_Z || init_Z(mc, init_ce_DataUtil))) {
+               if (poll() && isSameHeldState(mc) && (update_Z || init_Z(mc, silentRotation))) {
                   if (init_Z) {
                      key.autism$setClickCount(1);
                   }
@@ -347,15 +347,15 @@ public final class CombatInteractionController {
 
    public static CombatInteractionController.Inner_DataUtil frame(Minecraft mc) {
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (!load() && !sync_Z && load_Z(mc) && update_I != tick) {
+      if (!load() && !sync_Z && canInteract(mc) && update_I != tick) {
          if (!close() || update_Z(mc) && !init(tick)) {
-            if (update() && poll() && write_Z(mc) && init_Z(mc, init_ce_DataUtil)) {
-               HitResult hit = init_HitResult(mc, init_ce_DataUtil);
+            if (update() && poll() && isSameHeldState(mc) && init_Z(mc, silentRotation)) {
+               HitResult hit = raycastAt(mc, silentRotation);
                CombatInteractionController.Inner_DataUtil frame = new CombatInteractionController.Inner_DataUtil(
-                  init_LocalPlayer, mc.hitResult, init_LocalPlayer.getYRot(), init_LocalPlayer.getXRot()
+                  trackedPlayer, mc.hitResult, trackedPlayer.getYRot(), trackedPlayer.getXRot()
                );
-               init_LocalPlayer.setYRot(init_ce_DataUtil.yaw());
-               init_LocalPlayer.setXRot(init_ce_DataUtil.pitch());
+               trackedPlayer.setYRot(silentRotation.yaw());
+               trackedPlayer.setXRot(silentRotation.pitch());
                mc.hitResult = hit;
                read_Z = true;
                init_Z = false;
@@ -383,46 +383,46 @@ public final class CombatInteractionController {
       return read_Z;
    }
 
-   private static boolean write_Z(Minecraft mc) {
-      return init_LocalPlayer == mc.player
-         && load_I == init_LocalPlayer.getInventory().getSelectedSlot()
-         && ItemStack.isSameItemSameComponents(init_ItemStack, init_LocalPlayer.getMainHandItem())
-         && ItemStack.isSameItemSameComponents(load_ItemStack, init_LocalPlayer.getOffhandItem());
+   private static boolean isSameHeldState(Minecraft mc) {
+      return trackedPlayer == mc.player
+         && selectedSlotSnapshot == trackedPlayer.getInventory().getSelectedSlot()
+         && ItemStack.isSameItemSameComponents(mainHandSnapshot, trackedPlayer.getMainHandItem())
+         && ItemStack.isSameItemSameComponents(offHandSnapshot, trackedPlayer.getOffhandItem());
    }
 
-   private static void read_V(Minecraft mc) {
-      load_ce_DataUtil = RotationMath.ofPlayer(init_LocalPlayer);
-      init_HitResult = init_LocalPlayer.isUsingItem() ? null : init_HitResult(mc, load_ce_DataUtil);
-      init_Vec3 = init_HitResult == null
+   private static void captureUseState(Minecraft mc) {
+      capturedRotation = RotationMath.ofPlayer(trackedPlayer);
+      capturedHit = trackedPlayer.isUsingItem() ? null : raycastAt(mc, capturedRotation);
+      hitOffset = capturedHit == null
          ? null
-         : (init_HitResult instanceof EntityHitResult entity ? entity.getLocation().subtract(entity.getEntity().position()) : init_HitResult.getLocation());
-      init_BlockState = init_HitResult instanceof BlockHitResult block && block.getType() == Type.BLOCK ? mc.level.getBlockState(block.getBlockPos()) : null;
-      read_ce_DataUtil = load_ce_DataUtil;
-      read_I = AutismSessionState.getInstance().getClientTick();
-      load_J = System.nanoTime();
+         : (capturedHit instanceof EntityHitResult entity ? entity.getLocation().subtract(entity.getEntity().position()) : capturedHit.getLocation());
+      capturedBlockState = capturedHit instanceof BlockHitResult block && block.getType() == Type.BLOCK ? mc.level.getBlockState(block.getBlockPos()) : null;
+      aimRotation = capturedRotation;
+      captureTick = AutismSessionState.getInstance().getClientTick();
+      captureNanos = System.nanoTime();
       close = true;
    }
 
    private static boolean init(int tick) {
-      return load_J != 0L && (tick - read_I > 20 || System.nanoTime() - load_J > 1250000000L);
+      return captureNanos != 0L && (tick - captureTick > 20 || System.nanoTime() - captureNanos > 1250000000L);
    }
 
-   private static Vec3 init_Vec3() {
-      return init_HitResult instanceof EntityHitResult hit ? hit.getEntity().position().add(init_Vec3) : init_Vec3;
+   private static Vec3 targetPoint() {
+      return capturedHit instanceof EntityHitResult hit ? hit.getEntity().position().add(hitOffset) : hitOffset;
    }
 
    private static boolean update_Z(Minecraft mc) {
-      if (init_HitResult != null && init_HitResult.getType() != Type.MISS) {
-         if (init_HitResult instanceof EntityHitResult entity
+      if (capturedHit != null && capturedHit.getType() != Type.MISS) {
+         if (capturedHit instanceof EntityHitResult entity
             && (entity.getEntity().isRemoved() || entity.getEntity().level() != mc.level || !entity.getEntity().isPickable())) {
             return false;
-         } else if (init_HitResult instanceof BlockHitResult block && !mc.level.getBlockState(block.getBlockPos()).equals(init_BlockState)) {
+         } else if (capturedHit instanceof BlockHitResult block && !mc.level.getBlockState(block.getBlockPos()).equals(capturedBlockState)) {
             return false;
          } else {
-            Vec3 eye = init_LocalPlayer.getEyePosition();
-            Vec3 point = init_Vec3();
-            double reach = init_HitResult.getType() == Type.BLOCK ? init_LocalPlayer.blockInteractionRange() : init_LocalPlayer.entityInteractionRange();
-            return point != null && !(eye.distanceToSqr(point) > (reach - 0.035) * (reach - 0.035)) ? init(init_HitResult(mc, RotationMath.lookAt(point, eye))) : false;
+            Vec3 eye = trackedPlayer.getEyePosition();
+            Vec3 point = targetPoint();
+            double reach = capturedHit.getType() == Type.BLOCK ? trackedPlayer.blockInteractionRange() : trackedPlayer.entityInteractionRange();
+            return point != null && !(eye.distanceToSqr(point) > (reach - 0.035) * (reach - 0.035)) ? init(raycastAt(mc, RotationMath.lookAt(point, eye))) : false;
          }
       } else {
          return true;
@@ -430,13 +430,13 @@ public final class CombatInteractionController {
    }
 
    private static boolean init(HitResult hit) {
-      if (init_HitResult != null && hit != null && init_HitResult.getType() == hit.getType()) {
-         if (init_HitResult instanceof EntityHitResult expected && hit instanceof EntityHitResult actual) {
+      if (capturedHit != null && hit != null && capturedHit.getType() == hit.getType()) {
+         if (capturedHit instanceof EntityHitResult expected && hit instanceof EntityHitResult actual) {
             return expected.getEntity() == actual.getEntity();
          } else {
-            return init_HitResult instanceof BlockHitResult expected && hit instanceof BlockHitResult actual
+            return capturedHit instanceof BlockHitResult expected && hit instanceof BlockHitResult actual
                ? expected.getBlockPos().equals(actual.getBlockPos()) && expected.getDirection() == actual.getDirection()
-               : init_HitResult.getType() == Type.MISS;
+               : capturedHit.getType() == Type.MISS;
          }
       } else {
          return false;
@@ -447,55 +447,55 @@ public final class CombatInteractionController {
       if (!close()) {
          return load(mc, at);
       } else {
-         return init_HitResult != null && init_HitResult.getType() != Type.MISS
-            ? init(init_HitResult(mc, at))
-            : RotationMath.angularDistance(read_ce_DataUtil, at) <= Math.max(0.2, RotationMath.gcdStep() * 1.5) && (init_HitResult == null || init_HitResult(mc, at).getType() == Type.MISS);
+         return capturedHit != null && capturedHit.getType() != Type.MISS
+            ? init(raycastAt(mc, at))
+            : RotationMath.angularDistance(aimRotation, at) <= Math.max(0.2, RotationMath.gcdStep() * 1.5) && (capturedHit == null || raycastAt(mc, at).getType() == Type.MISS);
       }
    }
 
    private static void write_V(Minecraft mc) {
-      Vec3 eye = init_LocalPlayer.getEyePosition();
-      Vec3 point = init_HitResult != null && init_HitResult.getType() != Type.MISS
-         ? init_Vec3()
-         : eye.add(Vec3.directionFromRotation(read_ce_DataUtil.pitch(), read_ce_DataUtil.yaw()).scale(3.0));
-      AABB box = init_HitResult instanceof EntityHitResult entity
+      Vec3 eye = trackedPlayer.getEyePosition();
+      Vec3 point = capturedHit != null && capturedHit.getType() != Type.MISS
+         ? targetPoint()
+         : eye.add(Vec3.directionFromRotation(aimRotation.pitch(), aimRotation.yaw()).scale(3.0));
+      AABB box = capturedHit instanceof EntityHitResult entity
          ? entity.getEntity().getBoundingBox()
          : (
-            init_HitResult instanceof BlockHitResult block && block.getType() == Type.BLOCK
+            capturedHit instanceof BlockHitResult block && block.getType() == Type.BLOCK
                ? new AABB(block.getBlockPos())
                : new AABB(point, point).inflate(0.1)
          );
-      init_q_DataUtil.setTarget(eye, box, point);
-      init_q_DataUtil.targetYaw = read_ce_DataUtil.yaw();
-      init_q_DataUtil.targetPitch = read_ce_DataUtil.pitch();
-      init_q_DataUtil.yawHalfWidth = Math.max(0.25, Math.min(2.5, init_q_DataUtil.yawHalfWidth));
-      init_q_DataUtil.pitchUpHalfWidth = init_q_DataUtil.pitchDownHalfWidth = Math.max(0.25, Math.min(1.5, init_q_DataUtil.yawHalfWidth));
-      init_q_DataUtil.allowExcursion = false;
-      init_q_DataUtil.clampInsideBox = true;
-      init_q_DataUtil.compensateObserverMotion = !close;
-      init_q_DataUtil.allowPromptFlick = true;
-      init_q_DataUtil.instantPromptFlick = true;
-      init_q_DataUtil.prioritizeStrike = true;
-      init_q_DataUtil.ticksUntilAttack = 0.0;
-      init_q_DataUtil.comboCount = 0;
-      init_q_DataUtil.inAttackWindow = false;
-      init_q_DataUtil.gcdStep = RotationMath.gcdStep();
-      init_q_DataUtil.maxAccelUp = 18.0;
-      init_q_DataUtil.forceWhiff = false;
-      init_q_DataUtil.legacyNoCooldown = LegacyCombatDetector.init(init_LocalPlayer);
-      init_q_DataUtil.targetChanged = close;
+      aimState.setTarget(eye, box, point);
+      aimState.targetYaw = aimRotation.yaw();
+      aimState.targetPitch = aimRotation.pitch();
+      aimState.yawHalfWidth = Math.max(0.25, Math.min(2.5, aimState.yawHalfWidth));
+      aimState.pitchUpHalfWidth = aimState.pitchDownHalfWidth = Math.max(0.25, Math.min(1.5, aimState.yawHalfWidth));
+      aimState.allowExcursion = false;
+      aimState.clampInsideBox = true;
+      aimState.compensateObserverMotion = !close;
+      aimState.allowPromptFlick = true;
+      aimState.instantPromptFlick = true;
+      aimState.prioritizeStrike = true;
+      aimState.ticksUntilAttack = 0.0;
+      aimState.comboCount = 0;
+      aimState.inAttackWindow = false;
+      aimState.gcdStep = RotationMath.gcdStep();
+      aimState.maxAccelUp = 18.0;
+      aimState.forceWhiff = false;
+      aimState.legacyNoCooldown = LegacyCombatDetector.init(trackedPlayer);
+      aimState.targetChanged = close;
    }
 
    private static void update_V(Minecraft mc) {
-      boolean held = read_Z(mc);
+      boolean held = isUseKeyPhysicallyDown(mc);
       if (mc.options != null) {
-         init_AutismKeyMappingAc(mc).autism$setClickCount(0);
+         useKeyAccessor(mc).autism$setClickCount(0);
       }
 
       reset();
-      init_LocalPlayer = mc.player;
-      init_ClientPacketListen = mc.getConnection();
-      init_ClientLevel = mc.level;
+      trackedPlayer = mc.player;
+      trackedConnection = mc.getConnection();
+      trackedLevel = mc.level;
       sync_Z = held;
    }
 
@@ -534,8 +534,8 @@ public final class CombatInteractionController {
    }
 
    private static boolean load(Minecraft mc, RotationMath.Rotation at) {
-      HitResult wanted = init_HitResult(mc, RotationMath.ofPlayer(mc.player));
-      HitResult actual = init_HitResult(mc, at);
+      HitResult wanted = raycastAt(mc, RotationMath.ofPlayer(mc.player));
+      HitResult actual = raycastAt(mc, at);
       if (wanted.getType() != actual.getType()) {
          return false;
       } else if (wanted instanceof BlockHitResult a && actual instanceof BlockHitResult b && wanted.getType() == Type.BLOCK) {
@@ -547,7 +547,7 @@ public final class CombatInteractionController {
       }
    }
 
-   private static HitResult init_HitResult(Minecraft mc, RotationMath.Rotation at) {
+   private static HitResult raycastAt(Minecraft mc, RotationMath.Rotation at) {
       Vec3 eye = mc.player.getEyePosition();
       Vec3 look = Vec3.directionFromRotation(at.pitch(), at.yaw());
       double blockReach = mc.player.blockInteractionRange();
@@ -576,30 +576,30 @@ public final class CombatInteractionController {
    public static void reset() {
       load_Z = false;
       init_Z = false;
-      init_ce_DataUtil = null;
-      init_LocalPlayer = null;
-      init_ClientPacketListen = null;
-      init_ClientLevel = null;
+      silentRotation = null;
+      trackedPlayer = null;
+      trackedConnection = null;
+      trackedLevel = null;
       update_Z = false;
       sync_Z = false;
-      init_HitResult = null;
-      init_Vec3 = null;
-      read_ce_DataUtil = null;
-      load_ce_DataUtil = null;
-      init_BlockState = null;
-      load_J = 0L;
+      capturedHit = null;
+      hitOffset = null;
+      aimRotation = null;
+      capturedRotation = null;
+      capturedBlockState = null;
+      captureNanos = 0L;
       flush = false;
-      init_ItemStack = load_ItemStack = ItemStack.EMPTY;
+      mainHandSnapshot = offHandSnapshot = ItemStack.EMPTY;
       update_I = -2147483648;
       write_I = -2147483648;
    }
 
-   public record Inner_DataUtil(LocalPlayer init_LocalPlayer, HitResult init_HitResult, float init_F, float load) {
+   public record Inner_DataUtil(LocalPlayer player, HitResult hit, float yaw, float load) {
       public void init(Minecraft mc) {
-         this.init_LocalPlayer.setYRot(this.init_F);
-         this.init_LocalPlayer.setXRot(this.load);
-         if (mc.player == this.init_LocalPlayer) {
-            mc.hitResult = this.init_HitResult;
+         this.player.setYRot(this.yaw);
+         this.player.setXRot(this.load);
+         if (mc.player == this.player) {
+            mc.hitResult = this.hit;
          }
 
          CombatInteractionController.read_Z = false;

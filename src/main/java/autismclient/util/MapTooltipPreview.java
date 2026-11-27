@@ -18,14 +18,14 @@ import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 public final class MapTooltipPreview {
    private static final int init_I = 128;
    private static final int load = 2;
-   private static final MapNonEmptyCache init_da = new MapNonEmptyCache();
-   private static final MapRenderState init_MapRenderState = new MapRenderState();
-   private static MapId init_MapId;
+   private static final MapNonEmptyCache nonEmptyCache = new MapNonEmptyCache();
+   private static final MapRenderState RENDER_STATE = new MapRenderState();
+   private static MapId cachedId;
    private static int read = -2147483648;
-   private static MapItemSavedData init_MapItemSavedData;
-   private static Object init_Obj;
-   private static MapTooltipPreview.Inner_StreamUtil init_aQ_StreamUtil;
-   private static MapTooltipPreview.Inner_DataUtil init_aQ_DataUtil;
+   private static MapItemSavedData cachedData;
+   private static Object cachedLevel;
+   private static MapTooltipPreview.Inner_StreamUtil cachedTooltip;
+   private static MapTooltipPreview.Inner_DataUtil cachedComponent;
 
    private MapTooltipPreview() {
    }
@@ -35,12 +35,12 @@ public final class MapTooltipPreview {
          if (!(data instanceof MapTooltipPreview.Inner_StreamUtil tooltip)) {
             return null;
          } else {
-            if (init_aQ_DataUtil == null || !tooltip.equals(init_aQ_StreamUtil)) {
-               init_aQ_StreamUtil = tooltip;
-               init_aQ_DataUtil = new MapTooltipPreview.Inner_DataUtil(tooltip.init());
+            if (cachedComponent == null || !tooltip.equals(cachedTooltip)) {
+               cachedTooltip = tooltip;
+               cachedComponent = new MapTooltipPreview.Inner_DataUtil(tooltip.init());
             }
 
-            return init_aQ_DataUtil;
+            return cachedComponent;
          }
       });
       ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> load());
@@ -49,69 +49,69 @@ public final class MapTooltipPreview {
    public static Optional<TooltipComponent> init(ItemStack stack, Optional<TooltipComponent> original) {
       if (!original.isPresent() && stack != null && !stack.isEmpty() && autismclient.modules.InventoryTweaksModule.isMapPreviewEnabled()) {
          MapId id = stack.get(DataComponents.MAP_ID);
-         if (init_MapItemSavedData(id) == null) {
+         if (mapData(id) == null) {
             return original;
          }
 
-         MapTooltipPreview.Inner_StreamUtil cached = init_aQ_StreamUtil;
+         MapTooltipPreview.Inner_StreamUtil cached = cachedTooltip;
          return Optional.of(cached != null && cached.init().equals(id) ? cached : new MapTooltipPreview.Inner_StreamUtil(id));
       } else {
          return original;
       }
    }
 
-   private static int init_I() {
+   private static int previewSize() {
       Minecraft mc = Minecraft.getInstance();
       int height = mc == null ? 0 : mc.getWindow().getGuiScaledHeight();
       return height * 2 >= 640 ? 128 : 64;
    }
 
-   private static MapItemSavedData init_MapItemSavedData(MapId id) {
+   private static MapItemSavedData mapData(MapId id) {
       Minecraft mc = Minecraft.getInstance();
       if (id != null && mc != null && mc.level != null && autismclient.modules.InventoryTweaksModule.isMapPreviewEnabled()) {
          MapItemSavedData data = MapItem.getSavedData(id, mc.level);
-         return init_da.init(mc.level, id, data, AutismSessionState.getInstance().getClientTick()) ? data : null;
+         return nonEmptyCache.init(mc.level, id, data, AutismSessionState.getInstance().getClientTick()) ? data : null;
       } else {
          return null;
       }
    }
 
    public static void invalidate(MapId id) {
-      init_da.init(id);
-      if (id != null && id.equals(init_MapId)) {
-         init_MapItemSavedData = null;
+      nonEmptyCache.init(id);
+      if (id != null && id.equals(cachedId)) {
+         cachedData = null;
       }
    }
 
    private static void load() {
-      init_da.init();
-      init_MapId = null;
-      init_MapItemSavedData = null;
-      init_Obj = null;
+      nonEmptyCache.init();
+      cachedId = null;
+      cachedData = null;
+      cachedLevel = null;
       read = -2147483648;
-      init_MapRenderState.texture = null;
-      init_MapRenderState.decorations.clear();
-      init_aQ_StreamUtil = null;
-      init_aQ_DataUtil = null;
+      RENDER_STATE.texture = null;
+      RENDER_STATE.decorations.clear();
+      cachedTooltip = null;
+      cachedComponent = null;
    }
 
    private static MapItemSavedData load(MapId id) {
       Minecraft mc = Minecraft.getInstance();
-      MapItemSavedData data = init_MapItemSavedData(id);
+      MapItemSavedData data = mapData(id);
       if (data == null) {
          return null;
       }
 
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (id.equals(init_MapId) && tick == read && init_Obj == mc.level && init_MapItemSavedData == data) {
+      if (id.equals(cachedId) && tick == read && cachedLevel == mc.level && cachedData == data) {
          return data;
       }
 
-      mc.getMapRenderer().extractRenderState(id, data, init_MapRenderState);
-      init_Obj = mc.level;
-      init_MapId = id;
+      mc.getMapRenderer().extractRenderState(id, data, RENDER_STATE);
+      cachedLevel = mc.level;
+      cachedId = id;
       read = tick;
-      init_MapItemSavedData = data;
+      cachedData = data;
       return data;
    }
 
@@ -124,12 +124,12 @@ public final class MapTooltipPreview {
 
       @Override
       public int getHeight(Font font) {
-         return MapTooltipPreview.init_MapItemSavedData(this.init) == null ? 0 : MapTooltipPreview.init_I() + 4;
+         return MapTooltipPreview.mapData(this.init) == null ? 0 : MapTooltipPreview.previewSize() + 4;
       }
 
       @Override
       public int getWidth(Font font) {
-         return MapTooltipPreview.init_MapItemSavedData(this.init) == null ? 0 : MapTooltipPreview.init_I();
+         return MapTooltipPreview.mapData(this.init) == null ? 0 : MapTooltipPreview.previewSize();
       }
 
       @Override
@@ -139,13 +139,13 @@ public final class MapTooltipPreview {
                return;
             }
 
-            float scale = MapTooltipPreview.init_I() / 128.0F;
+            float scale = MapTooltipPreview.previewSize() / 128.0F;
             graphics.pose().pushMatrix();
 
             try {
                graphics.pose().translate(x, y + 2);
                graphics.pose().scale(scale, scale);
-               graphics.map(MapTooltipPreview.init_MapRenderState);
+               graphics.map(MapTooltipPreview.RENDER_STATE);
             } finally {
                graphics.pose().popMatrix();
             }

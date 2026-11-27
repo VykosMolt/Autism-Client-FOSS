@@ -47,23 +47,23 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.storage.TagValueOutput;
 
 final class SchematicCapture {
-   private final ClientLevel init_ClientLevel;
-   private final IntegratedServer init_IntegratedServer;
-   private final List<SchematicCapture.Inner_CachePool> init_List;
-   private final Map<Long, SchematicCapture.Inner_CachePool> init_Map = new HashMap<>();
-   private final Path load_Path;
-   private final String read_Str;
-   private final boolean read_Z;
-   private int load_I;
-   private int read_I;
-   private List<BlockPos> load_List;
-   private int write_I;
-   private List<Integer> read_List;
-   private int update_I;
+   private final ClientLevel level;
+   private final IntegratedServer server;
+   private final List<SchematicCapture.Inner_CachePool> chunks;
+   private final Map<Long, SchematicCapture.Inner_CachePool> chunksByPos = new HashMap<>();
+   private final Path folder;
+   private final String name;
+   private final boolean includeEntities;
+   private int chunkIndex;
+   private int sectionY;
+   private List<BlockPos> blockEntityPositions;
+   private int blockEntityIndex;
+   private List<Integer> entityIds;
+   private int entityIndex;
    private boolean update_Z;
    private boolean sync_Z;
-   private CompletableFuture<Boolean> init_CompletableFuture;
-   private int sync_I;
+   private CompletableFuture<Boolean> serverTask;
+   private int serverChunkIndex;
    private int flush;
    private List<BlockPos> write_List;
    volatile boolean cancelled;
@@ -72,15 +72,15 @@ final class SchematicCapture {
    volatile String stage = "Copying chunks";
    volatile String error = "";
    volatile Path savedPath;
-   private Future<?> init_Future;
+   private Future<?> saveTask;
 
    SchematicCapture(Minecraft mc, Path folder, String name, SchematicCapture.Inner_DataUtil selection, boolean includeEntities) {
       if (mc.level != null && mc.player != null) {
-         this.init_ClientLevel = mc.level;
-         this.init_IntegratedServer = mc.getSingleplayerServer();
-         this.load_Path = folder;
-         this.read_Str = normalizeName(name);
-         this.read_Z = includeEntities;
+         this.level = mc.level;
+         this.server = mc.getSingleplayerServer();
+         this.folder = folder;
+         this.name = normalizeName(name);
+         this.includeEntities = includeEntities;
          ArrayList<LevelChunk> chunks = new ArrayList<>();
          if (selection != null) {
             if (selection.volume() < 1L || selection.volume() > 134217728L) {
@@ -94,7 +94,7 @@ final class SchematicCapture {
 
             for (int cx = minCx; cx <= maxCx; cx++) {
                for (int cz = minCz; cz <= maxCz; cz++) {
-                  LevelChunk live = this.init_ClientLevel.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
+                  LevelChunk live = this.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
                   if (live == null) {
                      throw new IllegalArgumentException("A selected chunk is outside view distance");
                   }
@@ -103,7 +103,7 @@ final class SchematicCapture {
                }
             }
          } else {
-            chunks.addAll(SchematicWorkspace.loadedChunks(this.init_ClientLevel));
+            chunks.addAll(SchematicWorkspace.loadedChunks(this.level));
             chunks.sort(Comparator.<LevelChunk>comparingInt(c -> c.getPos().x()).thenComparingInt(c -> c.getPos().z()));
          }
 
@@ -114,13 +114,13 @@ final class SchematicCapture {
             int x0 = chunkPos.x() << 4;
             int z0 = chunkPos.z() << 4;
             SchematicCapture.Inner_DataUtil fullArea = new SchematicCapture.Inner_DataUtil(
-               new BlockPos(x0, this.init_ClientLevel.getMinY(), z0), new BlockPos(x0 + 15, this.init_ClientLevel.getMaxY(), z0 + 15)
+               new BlockPos(x0, this.level.getMinY(), z0), new BlockPos(x0 + 15, this.level.getMaxY(), z0 + 15)
             );
             SchematicCapture.Inner_DataUtil area = selection == null ? fullArea : fullArea.intersection(selection);
             if (area != null) {
                SchematicCapture.Inner_CachePool chunk = new SchematicCapture.Inner_CachePool(chunkPos, area);
                captured.add(chunk);
-               this.init_Map.put(chunkPos.pack(), chunk);
+               this.chunksByPos.put(chunkPos.pack(), chunk);
             }
          }
 
@@ -128,8 +128,8 @@ final class SchematicCapture {
             throw new IllegalArgumentException("No loaded chunks in this area");
          }
 
-         this.init_List = List.copyOf(captured);
-         this.read_I = this.init_List.get(0).area.min.getY() >> 4;
+         this.chunks = List.copyOf(captured);
+         this.sectionY = this.chunks.get(0).area.min.getY() >> 4;
       } else {
          throw new IllegalStateException("Join a world first");
       }
@@ -137,8 +137,8 @@ final class SchematicCapture {
 
    void cancel() {
       this.cancelled = true;
-      if (this.init_Future != null) {
-         this.init_Future.cancel(true);
+      if (this.saveTask != null) {
+         this.saveTask.cancel(true);
       }
 
       this.stage = "Cancelled";
@@ -146,59 +146,59 @@ final class SchematicCapture {
 
    void tick(Minecraft mc) {
       if (!this.finished && !this.cancelled && !this.update_Z) {
-         if (mc.level != this.init_ClientLevel) {
+         if (mc.level != this.level) {
             this.cancel();
          } else {
             long deadline = System.nanoTime() + 1500000L;
 
             try {
                do {
-                  if (this.load_I < this.init_List.size()) {
-                     SchematicCapture.Inner_CachePool target = this.init_List.get(this.load_I);
-                     LevelChunk live = this.init_ClientLevel
+                  if (this.chunkIndex < this.chunks.size()) {
+                     SchematicCapture.Inner_CachePool target = this.chunks.get(this.chunkIndex);
+                     LevelChunk live = this.level
                         .getChunkSource()
                         .getChunk(target.chunkPos.x(), target.chunkPos.z(), ChunkStatus.FULL, false);
                      if (live == null) {
                         throw new IllegalStateException("A chunk unloaded during capture; save again");
                      }
 
-                     if (this.read_I <= target.area.max.getY() >> 4) {
-                        int index = live.getSectionIndex(this.read_I << 4);
+                     if (this.sectionY <= target.area.max.getY() >> 4) {
+                        int index = live.getSectionIndex(this.sectionY << 4);
                         LevelChunkSection section = live.getSections()[index];
                         if (section != null && !section.hasOnlyAir()) {
-                           target.init_Map.put(this.read_I, section.getStates().copy());
+                           target.init_Map.put(this.sectionY, section.getStates().copy());
                         }
 
-                        this.read_I++;
+                        this.sectionY++;
                         this.progress = Math.max(
                            this.progress,
                            (int)(
                               65.0
                                  * (
-                                    this.load_I
-                                       + (double)(this.read_I - (target.area.min.getY() >> 4))
+                                    this.chunkIndex
+                                       + (double)(this.sectionY - (target.area.min.getY() >> 4))
                                           / Math.max(1, (target.area.max.getY() >> 4) - (target.area.min.getY() >> 4) + 1)
                                  )
-                                 / this.init_List.size()
+                                 / this.chunks.size()
                            )
                         );
-                     } else if (this.init_IntegratedServer != null) {
-                        this.load_I++;
-                        if (this.load_I < this.init_List.size()) {
-                           this.read_I = this.init_List.get(this.load_I).area.min.getY() >> 4;
+                     } else if (this.server != null) {
+                        this.chunkIndex++;
+                        if (this.chunkIndex < this.chunks.size()) {
+                           this.sectionY = this.chunks.get(this.chunkIndex).area.min.getY() >> 4;
                         }
                      } else {
-                        if (this.load_List == null) {
-                           this.load_List = List.copyOf(live.getBlockEntities().keySet());
-                           this.write_I = 0;
+                        if (this.blockEntityPositions == null) {
+                           this.blockEntityPositions = List.copyOf(live.getBlockEntities().keySet());
+                           this.blockEntityIndex = 0;
                         }
 
-                        if (this.write_I < this.load_List.size()) {
-                           BlockPos p = this.load_List.get(this.write_I++);
+                        if (this.blockEntityIndex < this.blockEntityPositions.size()) {
+                           BlockPos p = this.blockEntityPositions.get(this.blockEntityIndex++);
                            if (target.area.contains(p.getX(), p.getY(), p.getZ())) {
-                              BlockEntity be = this.init_ClientLevel.getBlockEntity(p);
+                              BlockEntity be = this.level.getBlockEntity(p);
                               if (be != null) {
-                                 CompoundTag tag = be.saveWithFullMetadata(this.init_ClientLevel.registryAccess());
+                                 CompoundTag tag = be.saveWithFullMetadata(this.level.registryAccess());
                                  tag.putInt("x", p.getX() - target.area.min.getX());
                                  tag.putInt("y", p.getY() - target.area.min.getY());
                                  tag.putInt("z", p.getZ() - target.area.min.getZ());
@@ -206,55 +206,55 @@ final class SchematicCapture {
                               }
                            }
                         } else {
-                           this.load_I++;
-                           this.load_List = null;
-                           if (this.load_I < this.init_List.size()) {
-                              this.read_I = this.init_List.get(this.load_I).area.min.getY() >> 4;
+                           this.chunkIndex++;
+                           this.blockEntityPositions = null;
+                           if (this.chunkIndex < this.chunks.size()) {
+                              this.sectionY = this.chunks.get(this.chunkIndex).area.min.getY() >> 4;
                            }
                         }
                      }
-                  } else if (this.init_IntegratedServer != null && !this.sync_Z) {
-                     if (this.init_CompletableFuture != null && !this.init_CompletableFuture.isDone()) {
+                  } else if (this.server != null && !this.sync_Z) {
+                     if (this.serverTask != null && !this.serverTask.isDone()) {
                         return;
                      }
 
-                     if (this.init_CompletableFuture == null || !this.init_CompletableFuture.join()) {
+                     if (this.serverTask == null || !this.serverTask.join()) {
                         this.stage = "Copying block data";
-                        this.init_CompletableFuture = this.init_IntegratedServer.submit(this::init_Z);
+                        this.serverTask = this.server.submit(this::captureOnServer);
                         return;
                      }
 
-                     this.init_CompletableFuture = null;
+                     this.serverTask = null;
                      this.sync_Z = true;
                   } else {
-                     if (!this.read_Z) {
+                     if (!this.includeEntities) {
                         this.load();
                         return;
                      }
 
-                     if (this.read_List == null) {
-                        this.read_List = new ArrayList<>();
+                     if (this.entityIds == null) {
+                        this.entityIds = new ArrayList<>();
 
-                        for (Entity entity : this.init_ClientLevel.entitiesForRendering()) {
+                        for (Entity entity : this.level.entitiesForRendering()) {
                            if (!(entity instanceof Player) && !entity.isPassenger()) {
-                              this.read_List.add(entity.getId());
-                              if (this.read_List.size() > 16384) {
+                              this.entityIds.add(entity.getId());
+                              if (this.entityIds.size() > 16384) {
                                  throw new IllegalArgumentException("Too many loaded entities");
                               }
                            }
                         }
                      }
 
-                     if (this.update_I >= this.read_List.size()) {
+                     if (this.entityIndex >= this.entityIds.size()) {
                         this.load();
                         return;
                      }
 
-                     Entity entity = this.init_ClientLevel.getEntity(this.read_List.get(this.update_I++));
+                     Entity entity = this.level.getEntity(this.entityIds.get(this.entityIndex++));
                      if (entity != null) {
-                        SchematicCapture.Inner_CachePool target = this.init_Map.get(ChunkPos.pack(entity.getBlockX() >> 4, entity.getBlockZ() >> 4));
+                        SchematicCapture.Inner_CachePool target = this.chunksByPos.get(ChunkPos.pack(entity.getBlockX() >> 4, entity.getBlockZ() >> 4));
                         if (target != null && target.area.contains(entity.getX(), entity.getY(), entity.getZ())) {
-                           TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, this.init_ClientLevel.registryAccess());
+                           TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, this.level.registryAccess());
                            if (entity.save(output)) {
                               CompoundTag tag = output.buildResult();
                               init(tag, target.area.min);
@@ -273,16 +273,16 @@ final class SchematicCapture {
       }
    }
 
-   private boolean init_Z() {
-      ServerLevel level = this.init_IntegratedServer.getLevel(this.init_ClientLevel.dimension());
+   private boolean captureOnServer() {
+      ServerLevel level = this.server.getLevel(this.level.dimension());
       if (level == null) {
          throw new IllegalStateException("World changed during capture");
       }
 
       long deadline = System.nanoTime() + 1200000L;
 
-      while (this.sync_I < this.init_List.size() && !this.cancelled && System.nanoTime() < deadline) {
-         SchematicCapture.Inner_CachePool target = this.init_List.get(this.sync_I);
+      while (this.serverChunkIndex < this.chunks.size() && !this.cancelled && System.nanoTime() < deadline) {
+         SchematicCapture.Inner_CachePool target = this.chunks.get(this.serverChunkIndex);
          ChunkAccess live = level.getChunkSource().getChunk(target.chunkPos.x(), target.chunkPos.z(), ChunkStatus.FULL, false);
          if (live == null) {
             throw new IllegalStateException("A chunk unloaded during capture; save again");
@@ -295,7 +295,7 @@ final class SchematicCapture {
 
          if (this.flush >= this.write_List.size()) {
             this.write_List = null;
-            this.sync_I++;
+            this.serverChunkIndex++;
          } else {
             BlockPos at = this.write_List.get(this.flush++);
             if (target.area.contains(at.getX(), at.getY(), at.getZ())) {
@@ -312,16 +312,16 @@ final class SchematicCapture {
          }
       }
 
-      return this.sync_I == this.init_List.size();
+      return this.serverChunkIndex == this.chunks.size();
    }
 
    private void load() {
       this.update_Z = true;
       this.progress = 70;
       this.stage = "Packing schematic";
-      this.init_Future = SchematicLibrary.EXECUTOR.submit(() -> {
+      this.saveTask = SchematicLibrary.EXECUTOR.submit(() -> {
          try {
-            this.savedPath = init(this.load_Path, this.read_Str, this.init_List, true, p -> {
+            this.savedPath = init(this.folder, this.name, this.chunks, true, p -> {
                this.progress = 70 + p / 5;
                this.read();
             });

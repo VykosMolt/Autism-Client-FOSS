@@ -34,7 +34,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
    @Override
    public AimTargetAction.AimTarget getAimTarget(Minecraft mc) {
-      autismclient.util.InteractionTargetRef target = this.init_E();
+      autismclient.util.InteractionTargetRef target = this.resolveTarget();
       if (target == null) {
          return null;
       } else {
@@ -42,7 +42,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       }
    }
 
-   private autismclient.util.InteractionTargetRef init_E() {
+   private autismclient.util.InteractionTargetRef resolveTarget() {
       if (this.targetMode == InteractEntityAction.Inner_DataUtil.LAST_TARGET) {
          return AutismSessionState.getInstance().getLastInteractionTarget();
       }
@@ -128,7 +128,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       }
    }
 
-   private String init_Str_Str_4(String ref) {
+   private String describeRef(String ref) {
       if (ref == null || ref.isBlank()) {
          return "(none)";
       } else if (ref.startsWith("~")) {
@@ -204,7 +204,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       } else if (this.entityTargets.isEmpty()) {
          targetLabel = "(none)";
       } else if (this.entityTargets.size() == 1) {
-         targetLabel = this.init_Str_Str_4(this.entityTargets.get(0));
+         targetLabel = this.describeRef(this.entityTargets.get(0));
       } else {
          targetLabel = this.entityTargets.size() + " entities";
       }

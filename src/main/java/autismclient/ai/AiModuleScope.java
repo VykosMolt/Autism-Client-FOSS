@@ -8,10 +8,10 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 final class AiModuleScope implements AiOperation {
-   private static final ThreadLocal<AiModuleScope> init_ThreadLocal = new ThreadLocal<>();
-   private final List<AutoCloseable> init_List = new ArrayList<>();
-   private AiOperation init_AiOperation;
-   private boolean init_Z;
+   private static final ThreadLocal<AiModuleScope> CURRENT = new ThreadLocal<>();
+   private final List<AutoCloseable> controls = new ArrayList<>();
+   private AiOperation operation;
+   private boolean closed;
    private boolean load;
 
    static AiOperation wrap(Supplier<AiOperation> factory) {
@@ -20,24 +20,24 @@ final class AiModuleScope implements AiOperation {
 
    static AiOperation load(Supplier<AiOperation> factory) {
       AiModuleScope scope = new AiModuleScope();
-      AiModuleScope previous = init_ThreadLocal.get();
-      init_ThreadLocal.set(scope);
+      AiModuleScope previous = CURRENT.get();
+      CURRENT.set(scope);
 
       try {
-         scope.init_AiOperation = Objects.requireNonNull(factory.get());
+         scope.operation = Objects.requireNonNull(factory.get());
          return scope;
       } catch (Throwable error) {
-         scope.init_V_Throwable(error);
+         scope.closeAll(error);
          throw error;
       } finally {
-         init_V_ax(previous);
+         restore(previous);
       }
    }
 
-   static <T extends AutoCloseable> T init_AutoCloseable_AutoCloseable(T control) {
-      AiModuleScope scope = init_ThreadLocal.get();
+   static <T extends AutoCloseable> T register(T control) {
+      AiModuleScope scope = CURRENT.get();
       if (scope != null) {
-         if (scope.init_Z) {
+         if (scope.closed) {
             try {
                control.close();
             } catch (Exception cleanup) {
@@ -47,14 +47,14 @@ final class AiModuleScope implements AiOperation {
             throw new IllegalStateException("Operation module scope is closed");
          }
 
-         scope.init_List.add(control);
+         scope.controls.add(control);
       }
 
       return control;
    }
 
    static autismclient.modules.ScopedToggleOverride.Inner_StreamUtil init(Module module, boolean enabled) {
-      return init_AutoCloseable_AutoCloseable(module.borrowEnabled(enabled));
+      return register(module.borrowEnabled(enabled));
    }
 
    static void init() {
@@ -68,18 +68,18 @@ final class AiModuleScope implements AiOperation {
 
    @Override
    public AiOperation.Result tick() {
-      if (this.init_Z) {
+      if (this.closed) {
          return new AiOperation.Result(AiOperation.Status.CANCELLED, "Operation has released its modules", "{}", List.of());
       }
 
-      AiModuleScope previous = init_ThreadLocal.get();
-      init_ThreadLocal.set(this);
+      AiModuleScope previous = CURRENT.get();
+      CURRENT.set(this);
 
       try {
-         AiOperation.Result result = this.init_AiOperation.tick();
+         AiOperation.Result result = this.operation.tick();
          if (result.terminal()) {
             this.load();
-            this.init_V_Throwable(null);
+            this.closeAll(null);
          }
 
          return result;
@@ -92,28 +92,28 @@ final class AiModuleScope implements AiOperation {
             }
          }
 
-         this.init_V_Throwable(error);
+         this.closeAll(error);
          throw error;
       } finally {
-         init_V_ax(previous);
+         restore(previous);
       }
    }
 
    @Override
    public boolean canInterruptNow() {
-      return this.init_AiOperation.canInterruptNow();
+      return this.operation.canInterruptNow();
    }
 
    @Override
    public boolean requiresReconciliationAfterEmergency() {
-      return this.init_AiOperation.requiresReconciliationAfterEmergency();
+      return this.operation.requiresReconciliationAfterEmergency();
    }
 
    @Override
    public void cancel() {
-      if (!this.init_Z) {
-         AiModuleScope previous = init_ThreadLocal.get();
-         init_ThreadLocal.set(this);
+      if (!this.closed) {
+         AiModuleScope previous = CURRENT.get();
+         CURRENT.set(this);
          Throwable failed = null;
 
          try {
@@ -123,9 +123,9 @@ final class AiModuleScope implements AiOperation {
             throw error;
          } finally {
             try {
-               this.init_V_Throwable(failed);
+               this.closeAll(failed);
             } finally {
-               init_V_ax(previous);
+               restore(previous);
             }
          }
       }
@@ -134,18 +134,18 @@ final class AiModuleScope implements AiOperation {
    private void load() {
       if (!this.load) {
          this.load = true;
-         this.init_AiOperation.cancel();
+         this.operation.cancel();
       }
    }
 
-   private void init_V_Throwable(Throwable failure) {
-      if (!this.init_Z) {
-         this.init_Z = true;
+   private void closeAll(Throwable failure) {
+      if (!this.closed) {
+         this.closed = true;
          Throwable first = failure;
 
-         for (int i = this.init_List.size() - 1; i >= 0; i--) {
+         for (int i = this.controls.size() - 1; i >= 0; i--) {
             try {
-               this.init_List.get(i).close();
+               this.controls.get(i).close();
             } catch (Throwable error) {
                if (first == null) {
                   first = error;
@@ -155,18 +155,18 @@ final class AiModuleScope implements AiOperation {
             }
          }
 
-         this.init_List.clear();
+         this.controls.clear();
          if (failure == null && first != null) {
             throw new IllegalStateException("Module cleanup failed", first);
          }
       }
    }
 
-   private static void init_V_ax(AiModuleScope previous) {
+   private static void restore(AiModuleScope previous) {
       if (previous == null) {
-         init_ThreadLocal.remove();
+         CURRENT.remove();
       } else {
-         init_ThreadLocal.set(previous);
+         CURRENT.set(previous);
       }
    }
 }

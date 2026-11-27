@@ -14,8 +14,8 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 public class ModuleArgumentType implements ArgumentType<String> {
-   private static volatile int init_I = -2147483648;
-   private static volatile List<ModuleArgumentType.Inner_DataUtil> init_List = List.of();
+   private static volatile int cachedRevision = -2147483648;
+   private static volatile List<ModuleArgumentType.Inner_DataUtil> cachedEntries = List.of();
 
    public static ModuleArgumentType module() {
       return new ModuleArgumentType();
@@ -37,7 +37,7 @@ public class ModuleArgumentType implements ArgumentType<String> {
    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (ModuleArgumentType.Inner_DataUtil candidate : init_List()) {
+      for (ModuleArgumentType.Inner_DataUtil candidate : entries()) {
          if (candidate.load().startsWith(remaining)) {
             builder.suggest(candidate.init());
          }
@@ -54,10 +54,10 @@ public class ModuleArgumentType implements ArgumentType<String> {
       return builder.buildFuture();
    }
 
-   private static List<ModuleArgumentType.Inner_DataUtil> init_List() {
+   private static List<ModuleArgumentType.Inner_DataUtil> entries() {
       int revision = al.init_I();
-      List<ModuleArgumentType.Inner_DataUtil> hit = init_List;
-      if (init_I == revision) {
+      List<ModuleArgumentType.Inner_DataUtil> hit = cachedEntries;
+      if (cachedRevision == revision) {
          return hit;
       }
 
@@ -71,8 +71,8 @@ public class ModuleArgumentType implements ArgumentType<String> {
       }
 
       hit = List.copyOf(rebuilt);
-      init_List = hit;
-      init_I = revision;
+      cachedEntries = hit;
+      cachedRevision = revision;
       return hit;
    }
 

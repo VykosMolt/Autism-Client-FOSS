@@ -63,7 +63,7 @@ public final class CustomPayloadFilter {
             return init_IoWorker_DataUtil;
          }
 
-         Identifier id = init_Identifier(payload);
+         Identifier id = payloadId(payload);
          if (vanillaMode) {
             return load_IoWorker_DataUtil;
          }
@@ -109,7 +109,7 @@ public final class CustomPayloadFilter {
       }
    }
 
-   private static Identifier init_Identifier(CustomPacketPayload payload) {
+   private static Identifier payloadId(CustomPacketPayload payload) {
       try {
          Type<?> type = payload.type();
          if (type != null) {
@@ -134,9 +134,9 @@ public final class CustomPayloadFilter {
                );
          }
       } else {
-         List<Identifier> channels = init_List(payload);
+         List<Identifier> channels = registeredChannels(payload);
          if (channels == null) {
-            init(connection, "uninspectable " + payload.getClass().getName() + " on " + init_Identifier(payload));
+            init(connection, "uninspectable " + payload.getClass().getName() + " on " + payloadId(payload));
             return init_IoWorker_DataUtil;
          }
 
@@ -151,7 +151,7 @@ public final class CustomPayloadFilter {
       }
    }
 
-   private static List<Identifier> init_List(CustomPacketPayload payload) {
+   private static List<Identifier> registeredChannels(CustomPacketPayload payload) {
       try {
          Method method = payload.getClass().getMethod("channels");
          if (method.invoke(payload) instanceof List<?> list) {

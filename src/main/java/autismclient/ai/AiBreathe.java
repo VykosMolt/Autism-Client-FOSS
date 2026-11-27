@@ -56,8 +56,8 @@ public final class AiBreathe {
          }
 
          return new AiOperation() {
-            final long init_J = System.nanoTime() + seconds * 1000000000L;
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+            final long deadlineNanos = System.nanoTime() + seconds * 1000000000L;
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
             BlockPos init_BlockPos;
             List<BlockPos> init_List = new ArrayList<>();
             int init_I;
@@ -72,7 +72,7 @@ public final class AiBreathe {
                      return this.init(AiOperation.Status.SUCCEEDED, "Breathing again (air " + player.getAirSupply() + "/" + player.getMaxAirSupply() + ")");
                   }
 
-                  if (System.nanoTime() > this.init_J) {
+                  if (System.nanoTime() > this.deadlineNanos) {
                      return this.init(AiOperation.Status.FAILED, "Could not reach air in time (air " + player.getAirSupply() + ")");
                   }
 
@@ -97,10 +97,10 @@ public final class AiBreathe {
                      && (this.init_BlockPos == null || this.init_List.size() > 5)
                      && roofState.getDestroySpeed(mc.level, roof) >= 0.0F
                      && roofState.getDestroySpeed(mc.level, roof) <= 3.0F
-                     && AiBreathe.init_Z(mc, roof)) {
+                     && AiBreathe.hasAirAbove(mc, roof)) {
                      mc.options.keyUp.setDown(false);
-                     this.init_DataUtil.aimAt(Vec3.atCenterOf(roof));
-                     this.init_DataUtil.tick();
+                     this.aim.aimAt(Vec3.atCenterOf(roof));
+                     this.aim.tick();
                      int slot = AiItems.bestToolFor(roofState, 36);
                      if (slot >= 0 && player.getInventory().getSelectedSlot() != slot) {
                         AiItems.selectOrMoveToHotbar(slot);
@@ -128,8 +128,8 @@ public final class AiBreathe {
                      }
 
                      Vec3 target = Vec3.atCenterOf(step);
-                     this.init_DataUtil.aimAt(target);
-                     this.init_DataUtil.tick();
+                     this.aim.aimAt(target);
+                     this.aim.tick();
                      double flat = Math.hypot(target.x - player.getX(), target.z - player.getZ());
                      boolean boxBlocked = !mc.level.noCollision(player, player.getBoundingBox().move(0.0, 0.6, 0.0));
                      mc.options.keyUp.setDown(flat > 0.4 || boxBlocked && flat > 0.08);
@@ -152,7 +152,7 @@ public final class AiBreathe {
             void init() {
                mc.options.keyJump.setDown(false);
                mc.options.keyUp.setDown(false);
-               this.init_DataUtil.clear();
+               this.aim.clear();
             }
 
             @Override
@@ -166,7 +166,7 @@ public final class AiBreathe {
       }
    }
 
-   static boolean init_Z(Minecraft mc, BlockPos roof) {
+   static boolean hasAirAbove(Minecraft mc, BlockPos roof) {
       for (int dy = 1; dy <= 4; dy++) {
          BlockPos c = roof.above(dy);
          boolean water = mc.level.getFluidState(c).is(FluidTags.WATER);
@@ -183,7 +183,7 @@ public final class AiBreathe {
       return false;
    }
 
-   static BlockPos init_BlockPos(Minecraft mc, BlockPos feet) {
+   static BlockPos findAirPocket(Minecraft mc, BlockPos feet) {
       return init(mc, feet, new ArrayList<>());
    }
 

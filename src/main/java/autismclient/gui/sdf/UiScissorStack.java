@@ -18,7 +18,7 @@ public final class UiScissorStack {
    static void init(ScreenRectangle rectangle, ScreenRectangle rootWhenStackEmpty) {
       ScreenRectangle parent = init.peekLast();
       if (parent == null) {
-         parent = rootWhenStackEmpty != null ? rootWhenStackEmpty : load_ScreenRectangle();
+         parent = rootWhenStackEmpty != null ? rootWhenStackEmpty : fullScreen();
       }
 
       ScreenRectangle intersection = rectangle.intersection(parent);
@@ -43,7 +43,7 @@ public final class UiScissorStack {
       init.clear();
    }
 
-   private static ScreenRectangle load_ScreenRectangle() {
+   private static ScreenRectangle fullScreen() {
       Minecraft minecraft = Minecraft.getInstance();
       return new ScreenRectangle(0, 0, minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
    }

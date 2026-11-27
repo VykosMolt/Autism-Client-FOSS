@@ -52,125 +52,125 @@ import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 
 public class AutismServerInfoOverlay extends DraggableOverlayWindow {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final Logger init_Logger = LogUtils.getLogger();
-   private static final String init_Str_2 = "autism-serverinfo";
+   private static final Minecraft MC = Minecraft.getInstance();
+   private static final Logger LOGGER = LogUtils.getLogger();
+   private static final String OVERLAY_ID = "autism-serverinfo";
    private static final int flush_I = 12;
    private static final int close_I = 10;
    private static final int open_I = 3;
    private static final float init_F_2 = 3.0F;
-   private int poll_I = 350;
-   private int push_I = 30;
-   private int pop_I = 236;
-   private int tick_I;
-   private int run_I = 246;
+   private int overlayX = 350;
+   private int overlayY = 30;
+   private int overlayWidth = 236;
+   private int viewportTopOffset;
+   private int overlayHeight = 246;
    private static final int get_I = 16;
    private static final int set_I = 8;
-   private boolean write_Z = false;
-   private boolean update_Z = false;
-   private boolean sync_Z = false;
-   private boolean flush_Z = false;
-   private double init_D;
-   private double load_D;
-   private float load_F;
-   private float read_F;
-   private int put_I;
-   private int add_I;
-   private boolean close_Z = false;
-   private final Font init_Font;
-   private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
-   private final autismclient.gui.ui.layout.CollapsibleWindowNode init_CharEncoder_2 = new autismclient.gui.ui.layout.CollapsibleWindowNode("Server Info");
-   private final autismclient.gui.ui.layout.LayoutTreeHost init_TextFormat = new autismclient.gui.ui.layout.LayoutTreeHost(this.init_CharEncoder, this.init_CharEncoder_2);
-   private final AutismServerInfoOverlay.TabBarNode init_AutismServerInfoOv_4 = new AutismServerInfoOverlay.TabBarNode();
-   private final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget();
-   private final AutismServerInfoOverlay.SliderNode init_AutismServerInfoOv_5 = new AutismServerInfoOverlay.SliderNode();
-   private final AutismServerInfoOverlay.ProgressBarNode init_AutismServerInfoOv_2 = new AutismServerInfoOverlay.ProgressBarNode();
-   private final autismclient.gui.ui.layout.VerticalSpacerNode init_BitSetUtil_2 = new autismclient.gui.ui.layout.VerticalSpacerNode();
-   private autismclient.gui.ui.layout.ColumnLayout init_PacketUtil;
-   private boolean open_Z = false;
-   private int clear_I = 0;
-   private long init_J = 0L;
-   private static final String[] init_StrArr = new String[]{"Info", "Plugins"};
+   private boolean overlayVisible = false;
+   private boolean overlayCollapsed = false;
+   private boolean configurationOnly = false;
+   private boolean dragging = false;
+   private double dragOffsetX;
+   private double dragOffsetY;
+   private float dragStartMouseX;
+   private float dragStartMouseY;
+   private int dragStartX;
+   private int dragStartY;
+   private boolean dragMoved = false;
+   private final Font textRenderer;
+   private final autismclient.gui.f.b.CharEncoder theme = new autismclient.gui.f.b.CharEncoder();
+   private final autismclient.gui.ui.layout.CollapsibleWindowNode windowNode = new autismclient.gui.ui.layout.CollapsibleWindowNode("Server Info");
+   private final autismclient.gui.ui.layout.LayoutTreeHost layoutHost = new autismclient.gui.ui.layout.LayoutTreeHost(this.theme, this.windowNode);
+   private final AutismServerInfoOverlay.TabBarNode tabBar = new AutismServerInfoOverlay.TabBarNode();
+   private final autismclient.gui.ui.widgets.TextInputWidget searchInput = new autismclient.gui.ui.widgets.TextInputWidget();
+   private final AutismServerInfoOverlay.SliderNode scanDelaySlider = new AutismServerInfoOverlay.SliderNode();
+   private final AutismServerInfoOverlay.ProgressBarNode progressBar = new AutismServerInfoOverlay.ProgressBarNode();
+   private final autismclient.gui.ui.layout.VerticalSpacerNode listViewportSpacer = new autismclient.gui.ui.layout.VerticalSpacerNode();
+   private autismclient.gui.ui.layout.ColumnLayout infoRowsColumn;
+   private boolean draggingScrollbar = false;
+   private int scrollbarGrabOffset = 0;
+   private long lastLayoutRebuildMs = 0L;
+   private static final String[] TAB_LABELS = new String[]{"Info", "Plugins"};
    private int start = 0;
-   private final List<AutismServerInfoOverlay.ClickHotspot> init_List = new ArrayList<>();
-   private volatile String load_Str = null;
-   private volatile String read_Str = null;
-   private volatile boolean push_Z = false;
+   private final List<AutismServerInfoOverlay.ClickHotspot> clickHotspots = new ArrayList<>();
+   private volatile String dnsResult = null;
+   private volatile String dnsHost = null;
+   private volatile boolean dnsLookupRunning = false;
    private final Set<String> auditDnsRunning = ConcurrentHashMap.newKeySet();
-   private final List<String> load_List = new ArrayList<>();
-   private final Map<String, List<String>> init_Map = new LinkedHashMap<>();
-   private final Map<String, List<String>> load_Map = new LinkedHashMap<>();
-   private final Map<String, List<String>> read_Map = new LinkedHashMap<>();
-   private List<AutismServerInfoOverlay.DetailRow> read_List = List.of();
-   private String write_Str = null;
-   private String update_Str = null;
+   private final List<String> detectedPlugins = new ArrayList<>();
+   private final Map<String, List<String>> pluginCommands = new LinkedHashMap<>();
+   private final Map<String, List<String>> pluginChannels = new LinkedHashMap<>();
+   private final Map<String, List<String>> pluginGuis = new LinkedHashMap<>();
+   private List<AutismServerInfoOverlay.DetailRow> detailRows = List.of();
+   private String detailRowsQuery = null;
+   private String detailRowsSelectedKey = null;
    private int stop = -1;
-   private int[] init_IArr = new int[0];
+   private int[] detailRowOffsets = new int[0];
    private int next = 0;
    private int prev = 0;
    private int valid = 0;
    private int size = -1;
-   private Map<String, AutismServerInfoOverlay.DetectedPluginEntry> write_Map = Map.of();
+   private Map<String, AutismServerInfoOverlay.DetectedPluginEntry> detectedPluginDetails = Map.of();
    private int data = -1;
-   private final autismclient.gui.ui.widgets.ScrollOffsetController init_CacheEntry = new autismclient.gui.ui.widgets.ScrollOffsetController();
+   private final autismclient.gui.ui.widgets.ScrollOffsetController scroll = new autismclient.gui.ui.widgets.ScrollOffsetController();
    private int value = 0;
-   private String sync_Str = null;
+   private String selectedPlugin = null;
    private int state = 50;
-   private boolean pop_Z = false;
+   private boolean scanDone = false;
    private boolean tick_Z = false;
-   private AutismServerInfoOverlay.ActiveScanSession init_AutismServerInfoOv_3;
-   private long read_J = 1L;
-   private final ServerScanIdAllocator init_bR = new ServerScanIdAllocator();
-   private AutismServerInfoOverlay.ScanStatus init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.NONE;
-   private String close_Str = "";
+   private AutismServerInfoOverlay.ActiveScanSession activeScan;
+   private long nextScanGeneration = 1L;
+   private final ServerScanIdAllocator scanIdAllocator = new ServerScanIdAllocator();
+   private AutismServerInfoOverlay.ScanStatus scanStatus = AutismServerInfoOverlay.ScanStatus.NONE;
+   private String scanIssue = "";
    private int queue;
    private int buffer;
    private int entry;
    private int node;
-   private final Set<String> load_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<String, AutismServerInfoOverlay.EvidenceSource> update_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<String, AutismServerInfoOverlay.EvidenceSource> sync_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<String, AutismServerInfoOverlay.MatchConfidence> flush_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<String, AutismServerInfoOverlay.DetectionType> close_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<String, List<String>> open_Map = new LinkedHashMap<>();
+   private final Set<String> observedCommandTokens = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<String, AutismServerInfoOverlay.EvidenceSource> pluginEvidence = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<String, AutismServerInfoOverlay.EvidenceSource> pluginCopyEvidence = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<String, AutismServerInfoOverlay.MatchConfidence> pluginConfidence = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<String, AutismServerInfoOverlay.DetectionType> pluginDetectionTypes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<String, List<String>> pluginCopyCommands = new LinkedHashMap<>();
    private final Map<String, AutismServerInfoOverlay.PluginAccumulator> poll_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<String, AutismServerInfoOverlay.PluginAccumulator> push_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<Integer, AutismServerInfoOverlay.ProbeSpec> pop_Map = new LinkedHashMap<>();
-   private final Deque<AutismServerInfoOverlay.CommandHistoryEntry> init_Deque = new ArrayDeque<>();
-   private static final long write_J = 250L;
+   private final Map<String, AutismServerInfoOverlay.PluginAccumulator> legacyPluginEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<Integer, AutismServerInfoOverlay.ProbeSpec> userProbesById = new LinkedHashMap<>();
+   private final Deque<AutismServerInfoOverlay.CommandHistoryEntry> commandHistory = new ArrayDeque<>();
+   private static final long OBSERVATION_FLUSH_INTERVAL_MS = 250L;
    private static final int task = 8192;
    private static final int pool = 1000;
    private static final int index = 256;
    private static final int count = 64;
    private final List<AutismServerInfoOverlay.ProbeObservation> write_List = new ArrayList<>();
-   private final List<AutismServerInfoOverlay.CommandEvidence> update_List = new ArrayList<>();
-   private boolean run_Z = false;
-   private long update_J = 0L;
-   private final Set<String> read_Set = new HashSet<>();
-   private boolean get_Z = false;
-   private boolean set_Z = true;
+   private final List<AutismServerInfoOverlay.CommandEvidence> pendingCommandEvidence = new ArrayList<>();
+   private boolean observationsDirty = false;
+   private long lastObservationFlushMs = 0L;
+   private final Set<String> reportedFailureStages = new HashSet<>();
+   private boolean completionAnnounced = false;
+   private boolean layoutDirty = true;
    private boolean put_Z = false;
    private int flags = 50;
-   private String open_Str = null;
-   private String poll_Str = null;
-   private String push_Str = "";
-   private String pop_Str = "";
-   private String tick_Str = "";
-   private String run_Str = "";
-   private String get_Str = "";
-   private boolean add_Z = true;
-   private long sync_J = -1L;
-   private static final long flush_J = 700L;
-   private static final long close_J = 12000L;
+   private String requestedScanContext = null;
+   private String scanAddress = null;
+   private String lastSeenAddress = "";
+   private String contextSignature = "";
+   private String signatureCacheAddress = "";
+   private String signatureCacheBrand = "";
+   private String cachedContextSignature = "";
+   private boolean contextSignatureDirty = true;
+   private long catalogRevision = -1L;
+   private static final long RESPONSE_QUIET_MS = 700L;
+   private static final long MIN_SCAN_TIMEOUT_MS = 12000L;
    private static final int level = 50;
    private static final int frame = 10;
    private static final int block = 500;
-   private static final long open_J = 5184000000L;
+   private static final long PLUGIN_SCAN_CACHE_MAX_AGE_MS = 5184000000L;
    private static final long poll_J = 450L;
-   private static final long push_J = 1400L;
-   private static final String set_Str = "hybrid-plugin-scan-v12";
-   private static final boolean clear_Z = Boolean.getBoolean("autism.plugin.scan.trace");
-   private static final long pop_J = 1500L;
+   private static final long PROBE_SETTLE_WINDOW_MS = 1400L;
+   private static final String UNUSED_SCAN_VERSION_TAG = "hybrid-plugin-scan-v12";
+   private static final boolean TRACE_PLUGIN_SCAN = Boolean.getBoolean("autism.plugin.scan.trace");
+   private static final long COMMAND_HISTORY_WINDOW_MS = 1500L;
    private static final int chunk = 256;
    private static final int table = 24;
    private static final int store = 12;
@@ -185,11 +185,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private static final int f_c_I = 280;
    private static final int f_d_I = 200;
    private static final int f_e_I = 12;
-   private int f_f_I = 200;
-   private int f_g_I = 258;
-   private int f_h_I = 200;
-   private int f_i_I = 280;
-   private static final String[] load_StrArr = new String[]{
+   private int infoTabWidth = 200;
+   private int infoTabHeight = 258;
+   private int pluginsTabWidth = 200;
+   private int pluginsTabHeight = 280;
+   private static final String[] PROBED_NAMESPACES = new String[]{
       "essentials",
       "essentialsx",
       "worldedit",
@@ -339,9 +339,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       "plinko",
       "casebattle"
    };
-   private static final String[] read_StrArr = new String[]{"/plugins ", "/pl ", "/bukkit:plugins ", "/bukkit:pl "};
-   private static final String[] update_StrArr = new String[]{"/help ", "/? ", "/bukkit:help ", "/minecraft:help "};
-   private static final String[] sync_StrArr = new String[]{
+   private static final String[] PLUGIN_LIST_COMMANDS = new String[]{"/plugins ", "/pl ", "/bukkit:plugins ", "/bukkit:pl "};
+   private static final String[] HELP_COMMANDS = new String[]{"/help ", "/? ", "/bukkit:help ", "/minecraft:help "};
+   private static final String[] VERSION_PROBE_PLUGINS = new String[]{
       "essentials",
       "essentialsx",
       "worldedit",
@@ -378,7 +378,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       "spark",
       "proantitab"
    };
-   private static final Set<String> write_Set = Set.of(
+   private static final Set<String> SERVER_META_COMMANDS = Set.of(
       "aliases",
       "bukkit:aliases",
       "icanhasbukkit",
@@ -397,8 +397,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       "bukkit:help",
       "minecraft:help"
    );
-   private static final String put_Str = "abcdefghijklmnopqrstuvwxyz0123456789";
-   private static final Map<String, String> tick_Map = Map.ofEntries(
+   private static final String PROBE_PREFIX_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+   private static final Map<String, String> PLUGIN_ALIASES = Map.ofEntries(
       Map.entry("lp", "luckperms"),
       Map.entry("we", "worldedit"),
       Map.entry("rg", "worldguard"),
@@ -503,7 +503,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       Map.entry("verus", "verus"),
       Map.entry("ncp", "nocheatplus")
    );
-   private static final Map<String, String> run_Map = Map.ofEntries(
+   private static final Map<String, String> FEATURE_KEYWORDS = Map.ofEntries(
       Map.entry("shop", "Shop"),
       Map.entry("shops", "Shop"),
       Map.entry("store", "Shop"),
@@ -581,7 +581,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       Map.entry("kit", "Kits"),
       Map.entry("kits", "Kits")
    );
-   private static final Set<String> update_Set = Set.of(
+   private static final Set<String> ANTICHEAT_PLUGINS = Set.of(
       "nocheatplus",
       "aac",
       "spartan",
@@ -605,8 +605,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       "thotpatrol",
       "alice"
    );
-   private static final Set<String> sync_Set = Set.of("minecraft", "brigadier", "bukkit", "spigot", "paper", "purpur", "velocity", "bungeecord", "waterfall");
-   private static final Set<String> flush_Set = Set.of(
+   private static final Set<String> PLATFORM_NAMESPACES = Set.of("minecraft", "brigadier", "bukkit", "spigot", "paper", "purpur", "velocity", "bungeecord", "waterfall");
+   private static final Set<String> VANILLA_COMMANDS = Set.of(
       "advancement",
       "attribute",
       "ban",
@@ -694,115 +694,115 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    );
    private static final int f_j_I = -46261;
 
-   private void init_V_Str_Throwable(String stage, Throwable t) {
-      if (this.read_Set.add(stage)) {
-         init_Logger.warn("Server info overlay '{}' failed; further errors for this stage are suppressed", stage, t);
+   private void reportStageFailure(String stage, Throwable t) {
+      if (this.reportedFailureStages.add(stage)) {
+         LOGGER.warn("Server info overlay '{}' failed; further errors for this stage are suppressed", stage, t);
       }
    }
 
    public AutismServerInfoOverlay(Font textRenderer) {
-      this.init_Font = textRenderer;
-      this.stop_V_7();
+      this.textRenderer = textRenderer;
+      this.setupLayout();
    }
 
    public void load(boolean configurationOnly) {
-      if (this.sync_Z != configurationOnly) {
-         this.sync_Z = configurationOnly;
+      if (this.configurationOnly != configurationOnly) {
+         this.configurationOnly = configurationOnly;
          if (configurationOnly) {
-            this.read_V_3("main menu");
+            this.cancelScan("main menu");
          }
 
-         this.prev_V_7();
+         this.requestLayoutRebuild();
       }
    }
 
-   private void stop_V_7() {
-      this.init_CharEncoder_2.setCenterTitle(false);
-      this.init_CharEncoder_2.setTitleTone(autismclient.gui.f.b.l.load);
-      this.init_CharEncoder_2.setHeaderButtons(true, true);
-      this.init_CharEncoder_2.setTitleInsets(this.task_I_2() + 1, this.task_I_2() + this.k() + this.l() + this.m() + 12);
-      this.init_CharEncoder_2.body().init(this.pool_I_2()).init(autismclient.gui.ui.layout.EdgeInsets.uniform(this.task_I_2()));
-      this.init_AutismServerInfoOv_4
-         .init_AutismServerInfoOv_StrArr(init_StrArr)
-         .init_AutismServerInfoOv_I(this.start)
-         .init_AutismServerInfoOv_IntConsumer(this::init_V_I_9);
-      this.init_BitSetUtil
+   private void setupLayout() {
+      this.windowNode.setCenterTitle(false);
+      this.windowNode.setTitleTone(autismclient.gui.f.b.l.load);
+      this.windowNode.setHeaderButtons(true, true);
+      this.windowNode.setTitleInsets(this.contentPadding() + 1, this.contentPadding() + this.k() + this.l() + this.m() + 12);
+      this.windowNode.body().init(this.contentGap()).init(autismclient.gui.ui.layout.EdgeInsets.uniform(this.contentPadding()));
+      this.tabBar
+         .setTabs(TAB_LABELS)
+         .setActiveIndex(this.start)
+         .setOnSelect(this::onTabSelected);
+      this.searchInput
          .setPlaceholder("Search plugins...")
-         .setPreferredWidth(this.drain_I_2())
-         .setFixedHeight(this.index_I_2())
+         .setPreferredWidth(this.minSearchWidth())
+         .setFixedHeight(this.searchHeight())
          .setOnChange(text -> {
-            this.init_CacheEntry.jumpTo(0, 0);
-            this.prev_V_7();
+            this.scroll.jumpTo(0, 0);
+            this.requestLayoutRebuild();
          });
-      this.init_AutismServerInfoOv_5
-         .init_AutismServerInfoOv(10.0F, 500.0F)
-         .init_AutismServerInfoOv(10.0F)
-         .load_AutismServerInfoOv(this.state)
-         .init(value -> this.load_V_2(Math.round(value)));
-      this.init_AutismServerInfoOv_2.init(0.0F);
+      this.scanDelaySlider
+         .setRange(10.0F, 500.0F)
+         .setStep(10.0F)
+         .setValue(this.state)
+         .init(value -> this.setScanDelayMs(Math.round(value)));
+      this.progressBar.init(0.0F);
    }
 
    public void saveState() {
       AutismSessionState shared = AutismSessionState.getInstance();
-      this.flags_V_2();
-      String stateAddress = this.load_Str_11();
-      if (stateAddress.isEmpty() && this.poll_Str != null) {
-         stateAddress = this.poll_Str;
+      this.saveTabSize();
+      String stateAddress = this.normalizedServerAddress();
+      if (stateAddress.isEmpty() && this.scanAddress != null) {
+         stateAddress = this.scanAddress;
       }
 
       shared.setServerInfoActiveTab(this.start);
-      shared.setServerInfoScrollOffset(this.init_CacheEntry.getOffset());
-      shared.setServerInfoSelectedPlugin(this.sync_Str);
+      shared.setServerInfoScrollOffset(this.scroll.getOffset());
+      shared.setServerInfoSelectedPlugin(this.selectedPlugin);
       shared.setServerInfoStateAddress(stateAddress);
       shared.setServerInfoScanDelayMs(this.state);
-      shared.setServerInfoTabWidth(this.f_f_I);
-      shared.setServerInfoTabHeight(this.f_g_I);
-      shared.setServerInfoPluginsTabWidth(this.f_h_I);
-      shared.setServerInfoPluginsTabHeight(this.f_i_I);
-      this.level_V_2();
+      shared.setServerInfoTabWidth(this.infoTabWidth);
+      shared.setServerInfoTabHeight(this.infoTabHeight);
+      shared.setServerInfoPluginsTabWidth(this.pluginsTabWidth);
+      shared.setServerInfoPluginsTabHeight(this.pluginsTabHeight);
+      this.saveScanToConfig();
       this.saveBounds();
    }
 
    public void restoreState() {
       AutismSessionState shared = AutismSessionState.getInstance();
       this.loadBounds();
-      this.start = Math.max(0, Math.min(init_StrArr.length - 1, shared.getServerInfoActiveTab()));
+      this.start = Math.max(0, Math.min(TAB_LABELS.length - 1, shared.getServerInfoActiveTab()));
       this.state = Math.max(10, Math.min(500, shared.getServerInfoScanDelayMs()));
-      this.f_f_I = Math.max(this.bind_I_2(), shared.getServerInfoTabWidth());
-      this.f_g_I = Math.max(this.a_I_2(), shared.getServerInfoTabHeight());
-      this.f_h_I = Math.max(this.b_I_2(), shared.getServerInfoPluginsTabWidth());
-      this.f_i_I = Math.max(this.c_I_2(), shared.getServerInfoPluginsTabHeight());
-      this.frame_V_2();
-      String stateAddress = this.load_Str_11();
-      if (stateAddress.isEmpty() && this.poll_Str != null) {
-         stateAddress = this.poll_Str;
+      this.infoTabWidth = Math.max(this.bind_I_2(), shared.getServerInfoTabWidth());
+      this.infoTabHeight = Math.max(this.a_I_2(), shared.getServerInfoTabHeight());
+      this.pluginsTabWidth = Math.max(this.b_I_2(), shared.getServerInfoPluginsTabWidth());
+      this.pluginsTabHeight = Math.max(this.c_I_2(), shared.getServerInfoPluginsTabHeight());
+      this.syncServerContext();
+      String stateAddress = this.normalizedServerAddress();
+      if (stateAddress.isEmpty() && this.scanAddress != null) {
+         stateAddress = this.scanAddress;
       }
 
       if (!stateAddress.isEmpty() && stateAddress.equals(shared.getServerInfoStateAddress())) {
-         this.init_CacheEntry.setOffsetUnclamped(shared.getServerInfoScrollOffset());
-         this.sync_Str = shared.getServerInfoSelectedPlugin();
-         if (this.sync_Str != null && this.sync_Str.isBlank()) {
-            this.sync_Str = null;
+         this.scroll.setOffsetUnclamped(shared.getServerInfoScrollOffset());
+         this.selectedPlugin = shared.getServerInfoSelectedPlugin();
+         if (this.selectedPlugin != null && this.selectedPlugin.isBlank()) {
+            this.selectedPlugin = null;
          }
 
-         if (this.sync_Str != null && !this.flush_Z_2(this.sync_Str)) {
-            this.sync_Str = null;
+         if (this.selectedPlugin != null && !this.isDetected(this.selectedPlugin)) {
+            this.selectedPlugin = null;
          }
       } else {
-         this.init_CacheEntry.jumpTo(0, 0);
-         this.sync_Str = null;
+         this.scroll.jumpTo(0, 0);
+         this.selectedPlugin = null;
       }
 
       if (this.start == 0) {
          this.count_V_2();
       } else if (this.tick_Z) {
          this.task_V_2();
-      } else if (!this.pop_Z) {
+      } else if (!this.scanDone) {
          this.node_V_2();
       }
 
-      this.init_AutismServerInfoOv_4.init_AutismServerInfoOv_I(this.start);
-      this.init_AutismServerInfoOv_5.load_AutismServerInfoOv(this.state);
+      this.tabBar.setActiveIndex(this.start);
+      this.scanDelaySlider.setValue(this.state);
    }
 
    public static boolean isSavedVisible() {
@@ -810,17 +810,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return layout != null && layout.visible;
    }
 
-   private void init_V_I_9(int tabIdx) {
-      this.flags_V_2();
-      this.start = Math.max(0, Math.min(init_StrArr.length - 1, tabIdx));
-      this.init_AutismServerInfoOv_4.init_AutismServerInfoOv_I(this.start);
-      this.init_CacheEntry.jumpTo(0, 0);
-      this.sync_Str = null;
+   private void onTabSelected(int tabIdx) {
+      this.saveTabSize();
+      this.start = Math.max(0, Math.min(TAB_LABELS.length - 1, tabIdx));
+      this.tabBar.setActiveIndex(this.start);
+      this.scroll.jumpTo(0, 0);
+      this.selectedPlugin = null;
       if (this.start == 0) {
          this.count_V_2();
       } else if (this.tick_Z) {
          this.task_V_2();
-      } else if (!this.pop_Z) {
+      } else if (!this.scanDone) {
          this.node_V_2();
       } else {
          this.pool_V_2();
@@ -829,50 +829,50 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.saveState();
    }
 
-   private void next_V_7() {
-      this.set_Z = false;
-      this.init_CharEncoder_2.body().clearChildren();
-      this.init_AutismServerInfoOv_4.init_AutismServerInfoOv_I(this.start);
-      this.init_AutismServerInfoOv_5.load_AutismServerInfoOv(this.state);
-      this.init_AutismServerInfoOv_2.init(this.init_F_2());
+   private void rebuildLayout() {
+      this.layoutDirty = false;
+      this.windowNode.body().clearChildren();
+      this.tabBar.setActiveIndex(this.start);
+      this.scanDelaySlider.setValue(this.state);
+      this.progressBar.init(this.scanProgress());
       if (!this.tick_Z) {
-         this.init_CharEncoder_2.body().addChild(this.init_AutismServerInfoOv_4);
+         this.windowNode.body().addChild(this.tabBar);
       }
 
       if (this.start == 0) {
-         this.valid_V_4();
-      } else if (!this.pop_Z && !this.tick_Z) {
-         this.size_V_3();
+         this.buildInfoTab();
+      } else if (!this.scanDone && !this.tick_Z) {
+         this.buildProbeSetupSection();
       } else if (this.tick_Z) {
-         this.data_V_3();
+         this.buildScanProgressSection();
       } else {
-         this.value_V_2();
+         this.buildPluginResultsSection();
       }
    }
 
-   private void prev_V_7() {
-      this.set_Z = true;
+   private void requestLayoutRebuild() {
+      this.layoutDirty = true;
    }
 
-   private void valid_V_4() {
-      ServerData entry = init_Minecraft.getCurrentServer();
-      String displayedAddress = this.open_Str_2();
+   private void buildInfoTab() {
+      ServerData entry = MC.getCurrentServer();
+      String displayedAddress = this.displayedAddress();
       String realIp = this.pop(displayedAddress);
       String software = this.load(entry);
       String versionNote = this.read(entry);
       String ping = entry != null ? entry.ping + " ms" : "--";
       String players = "--";
-      if (init_Minecraft.getConnection() != null) {
-         int online = init_Minecraft.getConnection().getListedOnlinePlayers().size();
+      if (MC.getConnection() != null) {
+         int online = MC.getConnection().getListedOnlinePlayers().size();
          players = entry != null && entry.players != null ? online + " / " + entry.players.max() : String.valueOf(online);
       }
 
       String proto = entry != null ? String.valueOf(entry.protocol) : "--";
-      String diff = init_Minecraft.level != null ? init_Minecraft.level.getDifficulty().getDisplayName().getString() : "--";
+      String diff = MC.level != null ? MC.level.getDifficulty().getDisplayName().getString() : "--";
       String time = "--";
-      if (init_Minecraft.level != null) {
-         long dayCount = init_Minecraft.level.getOverworldClockTime() / 24000L;
-         long timeOfDay = init_Minecraft.level.getOverworldClockTime() % 24000L;
+      if (MC.level != null) {
+         long dayCount = MC.level.getOverworldClockTime() / 24000L;
+         long timeOfDay = MC.level.getOverworldClockTime() % 24000L;
          int hours = (int)((timeOfDay / 1000L + 6L) % 24L);
          int minutes = (int)(timeOfDay % 1000L * 60L / 1000L);
          time = "Day " + dayCount + " (" + String.format("%02d:%02d", hours, minutes) + ")";
@@ -880,71 +880,71 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       double estimatedTps = AutismSessionState.getInstance().getEstimatedTps();
       String tps = estimatedTps > 0.0 ? String.format("%.1f", Math.min(20.0, estimatedTps)) : "--";
-      this.init_PacketUtil = new autismclient.gui.ui.layout.ColumnLayout();
-      this.init_V_Str_2("IP:", displayedAddress, null, () -> this.init_V_Str_10(displayedAddress, "Server address copied.", "Server address unavailable."));
+      this.infoRowsColumn = new autismclient.gui.ui.layout.ColumnLayout();
+      this.addInfoRow("IP:", displayedAddress, null, () -> this.copyToClipboard(displayedAddress, "Server address copied.", "Server address unavailable."));
       String host = this.push(displayedAddress);
-      if (!host.isBlank() && (!host.equals(realIp) || this.push_Z)) {
-         this.init_V_Str_2("Real IP:", realIp, null, this::bind_V_2);
+      if (!host.isBlank() && (!host.equals(realIp) || this.dnsLookupRunning)) {
+         this.addInfoRow("Real IP:", realIp, null, this::copyRealIp);
       }
 
-      this.init_V_Str_9("Version:", this.init_Str_ServerData(entry), null);
-      this.init_V_Str_9("Real Version:", this.flush_Str_2(), null);
-      this.init_V_Str_9("Brand:", this.close_Str_2(), null);
+      this.addInfoRow("Version:", this.reportedVersion(entry), null);
+      this.addInfoRow("Real Version:", this.detectedVersion(), null);
+      this.addInfoRow("Brand:", this.serverBrand(), null);
       if (!"--".equals(software)) {
-         this.init_V_Str_9("Software:", software, null);
+         this.addInfoRow("Software:", software, null);
       }
 
-      this.init_V_Str_9("Ping:", ping, null);
-      this.init_V_Str_9("Players:", players, null);
-      this.init_V_Str_9("Protocol:", proto, null);
+      this.addInfoRow("Ping:", ping, null);
+      this.addInfoRow("Players:", players, null);
+      this.addInfoRow("Protocol:", proto, null);
       if (!"--".equals(versionNote)) {
-         this.init_V_Str_9("Version Note:", versionNote, UiColorPalette.warningYellow());
+         this.addInfoRow("Version Note:", versionNote, UiColorPalette.warningYellow());
       }
 
-      this.init_V_Str_9("Difficulty:", diff, null);
-      this.init_V_Str_9("World:", this.push_Str_2(), null);
-      this.init_V_Str_9("Time:", time, null);
-      this.init_V_Str_9("TPS:", tps, null);
-      List<String> detectedAcs = this.init_List_13();
+      this.addInfoRow("Difficulty:", diff, null);
+      this.addInfoRow("World:", this.worldName(), null);
+      this.addInfoRow("Time:", time, null);
+      this.addInfoRow("TPS:", tps, null);
+      List<String> detectedAcs = this.detectedAnticheats();
       if (this.tick_Z) {
-         this.init_V_Str_9("AntiCheats:", "Scanning...", ThemePaletteManager.recolor(-48060, ThemePaletteManager.ColorRole.DANGER));
-      } else if (!this.pop_Z) {
-         this.init_V_Str_9("AntiCheats:", "Probe Plugins First", ThemePaletteManager.recolor(-48060, ThemePaletteManager.ColorRole.DANGER));
+         this.addInfoRow("AntiCheats:", "Scanning...", ThemePaletteManager.recolor(-48060, ThemePaletteManager.ColorRole.DANGER));
+      } else if (!this.scanDone) {
+         this.addInfoRow("AntiCheats:", "Probe Plugins First", ThemePaletteManager.recolor(-48060, ThemePaletteManager.ColorRole.DANGER));
       } else if (detectedAcs.isEmpty()) {
-         this.init_V_Str_9("AntiCheats:", "None detected", null);
+         this.addInfoRow("AntiCheats:", "None detected", null);
       } else {
-         this.init_V_Str_9("AntiCheats:", String.join(", ", detectedAcs), ThemePaletteManager.recolor(-48060, ThemePaletteManager.ColorRole.DANGER));
+         this.addInfoRow("AntiCheats:", String.join(", ", detectedAcs), ThemePaletteManager.recolor(-48060, ThemePaletteManager.ColorRole.DANGER));
       }
 
-      this.init_CharEncoder_2.body().addChild(this.init_PacketUtil);
-      this.init_PacketUtil = null;
-      this.init_CharEncoder_2.body().addChild(new autismclient.gui.ui.layout.FixedSpacerNode(0.0F, 2.0F));
-      this.init_CharEncoder_2
+      this.windowNode.body().addChild(this.infoRowsColumn);
+      this.infoRowsColumn = null;
+      this.windowNode.body().addChild(new autismclient.gui.ui.layout.FixedSpacerNode(0.0F, 2.0F));
+      this.windowNode
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.ButtonNode("Copy Report", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::d_V_2)
-               .setFixedHeight(this.count_I_2())
+            new autismclient.gui.ui.layout.ButtonNode("Copy Report", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::copyServerInfo)
+               .setFixedHeight(this.buttonHeight())
          );
    }
 
-   private void init_V_Str_9(String label, String value, Integer valueColor) {
-      this.init_V_Str_2(label, value, valueColor, null);
+   private void addInfoRow(String label, String value, Integer valueColor) {
+      this.addInfoRow(label, value, valueColor, null);
    }
 
-   private void init_V_Str_2(String label, String value, Integer valueColor, Runnable onPress) {
+   private void addInfoRow(String label, String value, Integer valueColor, Runnable onPress) {
       autismclient.gui.ui.layout.KeyValueRowNode row = new autismclient.gui.ui.layout.KeyValueRowNode(label, value)
-         .setLabelWidth(this.push_I_24())
+         .setLabelWidth(this.infoLabelWidth())
          .setValueColor(valueColor)
          .setOnPress(onPress);
-      if (this.init_PacketUtil != null) {
-         this.init_PacketUtil.addChild(row);
+      if (this.infoRowsColumn != null) {
+         this.infoRowsColumn.addChild(row);
       } else {
-         this.init_CharEncoder_2.body().addChild(row);
+         this.windowNode.body().addChild(row);
       }
    }
 
-   private int push_I_24() {
-      return this.init_I_StrArr_2(
+   private int infoLabelWidth() {
+      return this.widestLabel(
          "IP:",
          "Real IP:",
          "Version:",
@@ -963,162 +963,162 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       );
    }
 
-   private void size_V_3() {
-      this.init_CharEncoder_2.body().addChild(this.init_ByteReader());
-      this.init_CharEncoder_2
+   private void buildProbeSetupSection() {
+      this.windowNode.body().addChild(this.createAutoProbeButton());
+      this.windowNode
          .body()
          .addChild(new autismclient.gui.ui.layout.LabelNode("Auto-Scans on join.", autismclient.gui.f.b.l.write));
-      this.init_CharEncoder_2.body().addChild(new autismclient.gui.ui.layout.FixedSpacerNode(0.0F, 2.0F));
-      this.init_CharEncoder_2
+      this.windowNode.body().addChild(new autismclient.gui.ui.layout.FixedSpacerNode(0.0F, 2.0F));
+      this.windowNode
          .body()
          .addChild(new autismclient.gui.ui.layout.LabelNode("Start probing manually", autismclient.gui.f.b.l.write));
-      this.init_CharEncoder_2
+      this.windowNode
          .body()
-         .addChild(new autismclient.gui.ui.layout.KeyValueRowNode("Delay:", this.state + " ms").setLabelWidth(this.frame_I_2()));
-      this.init_CharEncoder_2.body().addChild(this.init_AutismServerInfoOv_5);
-      this.init_CharEncoder_2.body().addChild(new autismclient.gui.ui.layout.LabelNode("Default: 50 ms", autismclient.gui.f.b.l.write));
-      this.init_CharEncoder_2
+         .addChild(new autismclient.gui.ui.layout.KeyValueRowNode("Delay:", this.state + " ms").setLabelWidth(this.delayLabelWidth()));
+      this.windowNode.body().addChild(this.scanDelaySlider);
+      this.windowNode.body().addChild(new autismclient.gui.ui.layout.LabelNode("Default: 50 ms", autismclient.gui.f.b.l.write));
+      this.windowNode
          .body()
          .addChild(new autismclient.gui.ui.layout.LabelNode("If you get kicked increase the delay.", autismclient.gui.f.b.l.write));
       autismclient.gui.ui.layout.ButtonNode startProbe = new autismclient.gui.ui.layout.ButtonNode(
-         this.sync_Z ? "Join a Server to Probe" : "Start Probing", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::mark_V_2
+         this.configurationOnly ? "Join a Server to Probe" : "Start Probing", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::rescan
       );
-      startProbe.setFixedHeight(this.count_I_2());
-      startProbe.setEnabled(!this.sync_Z);
-      this.init_CharEncoder_2.body().addChild(startProbe);
-      if (!this.load_List.isEmpty()) {
-         this.init_CharEncoder_2
+      startProbe.setFixedHeight(this.buttonHeight());
+      startProbe.setEnabled(!this.configurationOnly);
+      this.windowNode.body().addChild(startProbe);
+      if (!this.detectedPlugins.isEmpty()) {
+         this.windowNode
             .body()
             .addChild(new autismclient.gui.ui.layout.ButtonNode("Back to Results", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
                this.put_Z = false;
-               this.pop_Z = true;
+               this.scanDone = true;
                this.tick_Z = false;
                this.pool_V_2();
                this.saveState();
-            }).setFixedHeight(this.count_I_2()));
+            }).setFixedHeight(this.buttonHeight()));
       }
    }
 
-   private void data_V_3() {
-      int progressPercent = Math.max(0, Math.min(100, Math.round(this.init_F_2() * 100.0F)));
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      this.init_CharEncoder_2
+   private void buildScanProgressSection() {
+      int progressPercent = Math.max(0, Math.min(100, Math.round(this.scanProgress() * 100.0F)));
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      this.windowNode
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("State:", this.update_Str_3()).setLabelWidth(this.block_I_2()).setValueColor(this.node_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("State:", this.scanPhaseText()).setLabelWidth(this.progressLabelWidth()).setValueColor(this.scanPhaseColor())
          );
-      this.init_CharEncoder_2
+      this.windowNode
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Sent:", this.state_I_2() + "/" + Math.max(1, this.cache_I_2())).setLabelWidth(this.block_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Sent:", this.sentProbeCount() + "/" + Math.max(1, this.totalProbeCount())).setLabelWidth(this.progressLabelWidth())
          );
-      this.init_CharEncoder_2
+      this.windowNode
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Replies:", this.queue_I_2() + "/" + Math.max(1, this.cache_I_2())).setLabelWidth(this.block_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Replies:", this.replyProbeCount() + "/" + Math.max(1, this.totalProbeCount())).setLabelWidth(this.progressLabelWidth())
          );
-      this.init_CharEncoder_2
+      this.windowNode
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Retries:", Integer.toString(session == null ? 0 : session.write_I)).setLabelWidth(this.block_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Retries:", Integer.toString(session == null ? 0 : session.retryCount)).setLabelWidth(this.progressLabelWidth())
          );
-      this.init_CharEncoder_2
+      this.windowNode
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Failed:", Integer.toString(session == null ? 0 : session.update)).setLabelWidth(this.block_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Failed:", Integer.toString(session == null ? 0 : session.update)).setLabelWidth(this.progressLabelWidth())
          );
-      int foundCount = this.entry_I_2();
-      this.init_CharEncoder_2
+      int foundCount = this.foundCount();
+      this.windowNode
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Found:", foundCount + " plugin" + (foundCount == 1 ? "" : "s")).setLabelWidth(this.block_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Found:", foundCount + " plugin" + (foundCount == 1 ? "" : "s")).setLabelWidth(this.progressLabelWidth())
          );
-      this.init_CharEncoder_2
+      this.windowNode
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Progress:", progressPercent + "%").setLabelWidth(this.block_I_2()).setValueColor(this.node_I_2())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Progress:", progressPercent + "%").setLabelWidth(this.progressLabelWidth()).setValueColor(this.scanPhaseColor())
          );
-      this.init_CharEncoder_2.body().addChild(this.init_AutismServerInfoOv_2);
+      this.windowNode.body().addChild(this.progressBar);
    }
 
-   private void value_V_2() {
-      this.init_CharEncoder_2.body().addChild(this.init_ByteReader());
-      this.init_BitSetUtil.setPreferredWidth(Math.max(this.drain_I_2(), this.pop_I - this.fill_I_2()));
-      this.init_CharEncoder_2.body().addChild(this.init_BitSetUtil);
+   private void buildPluginResultsSection() {
+      this.windowNode.body().addChild(this.createAutoProbeButton());
+      this.searchInput.setPreferredWidth(Math.max(this.minSearchWidth(), this.overlayWidth - this.fill_I_2()));
+      this.windowNode.body().addChild(this.searchInput);
       autismclient.gui.ui.layout.StretchRowLayout buttons = new autismclient.gui.ui.layout.StretchRowLayout().init(this.flags_I_2());
       buttons.addChild(
-         new autismclient.gui.ui.layout.ButtonNode("Rescan", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> this.queue_V_2())
-            .setFixedHeight(this.count_I_2())
+         new autismclient.gui.ui.layout.ButtonNode("Rescan", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> this.resetToSetup())
+            .setFixedHeight(this.buttonHeight())
       );
       buttons.addChild(
-         new autismclient.gui.ui.layout.ButtonNode("Copy Plugins", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::e_V_2)
-            .setFixedHeight(this.count_I_2())
+         new autismclient.gui.ui.layout.ButtonNode("Copy Plugins", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::copyPlugins)
+            .setFixedHeight(this.buttonHeight())
       );
-      this.init_CharEncoder_2.body().addChild(buttons);
-      String query = this.init_BitSetUtil.getValue().toLowerCase(Locale.ROOT);
+      this.windowNode.body().addChild(buttons);
+      String query = this.searchInput.getValue().toLowerCase(Locale.ROOT);
       int filteredCount = 0;
 
-      for (AutismServerInfoOverlay.DetectedPluginEntry detail : this.init_Collection()) {
+      for (AutismServerInfoOverlay.DetectedPluginEntry detail : this.rebuildPluginDetails()) {
          if (detail != null && (query.isEmpty() || detail.update.contains(query))) {
             filteredCount++;
          }
       }
 
-      String header = this.load_List.isEmpty() ? "No plugins detected" : "Detected: " + filteredCount + " plugin" + (filteredCount == 1 ? "" : "s");
-      this.init_CharEncoder_2.body().addChild(new autismclient.gui.ui.layout.LabelNode(header, autismclient.gui.f.b.l.write));
-      this.init_CharEncoder_2.body().addChild(this.init_BitSetUtil_2);
-      this.tick_I = this.init_I_BitSetUtil_I(this.init_BitSetUtil_2, this.valid_I_4());
-      float viewportHeight = Math.max(this.load_F(), this.run_I - this.tick_I);
-      this.init_BitSetUtil_2.init(viewportHeight);
+      String header = this.detectedPlugins.isEmpty() ? "No plugins detected" : "Detected: " + filteredCount + " plugin" + (filteredCount == 1 ? "" : "s");
+      this.windowNode.body().addChild(new autismclient.gui.ui.layout.LabelNode(header, autismclient.gui.f.b.l.write));
+      this.windowNode.body().addChild(this.listViewportSpacer);
+      this.viewportTopOffset = this.measureSlotOffset(this.listViewportSpacer, this.estimateListViewportTop());
+      float viewportHeight = Math.max(this.minViewportHeight(), this.overlayHeight - this.viewportTopOffset);
+      this.listViewportSpacer.init(viewportHeight);
    }
 
-   private int init_I_BitSetUtil_I(autismclient.gui.ui.layout.VerticalSpacerNode slot, int fallback) {
+   private int measureSlotOffset(autismclient.gui.ui.layout.VerticalSpacerNode slot, int fallback) {
       slot.init(0.0F);
-      int measured = Math.round(this.init_TextFormat.measureHeight(this.pop_I));
+      int measured = Math.round(this.layoutHost.measureHeight(this.overlayWidth));
       return measured > 0 ? measured : fallback;
    }
 
-   private autismclient.gui.ui.layout.ButtonNode init_ByteReader() {
+   private autismclient.gui.ui.layout.ButtonNode createAutoProbeButton() {
       boolean autoOn = AutismConfig.getGlobal().autoProbePlugins;
       return new autismclient.gui.ui.layout.ButtonNode(
             "Auto Probe: " + (autoOn ? "ON" : "OFF"),
             autoOn ? autismclient.gui.ui.layout.ButtonNode.Variant.SUCCESS : autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY,
-            this::state_V_2
+            this::toggleAutoProbe
          )
-         .setFixedHeight(this.count_I_2());
+         .setFixedHeight(this.buttonHeight());
    }
 
-   private void state_V_2() {
+   private void toggleAutoProbe() {
       AutismConfig cfg = AutismConfig.getGlobal();
       cfg.autoProbePlugins = !cfg.autoProbePlugins;
       cfg.save();
-      this.open_Str = null;
-      this.prev_V_7();
+      this.requestedScanContext = null;
+      this.requestLayoutRebuild();
       this.saveState();
    }
 
-   private void queue_V_2() {
-      this.read_V_3("setup");
-      this.pop_Z = false;
+   private void resetToSetup() {
+      this.cancelScan("setup");
+      this.scanDone = false;
       this.put_Z = true;
-      this.get_Z = false;
-      this.sync_Str = null;
-      this.init_BitSetUtil.setValue("");
-      this.init_BitSetUtil.setFocused(false);
-      this.init_CacheEntry.jumpTo(0, 0);
+      this.completionAnnounced = false;
+      this.selectedPlugin = null;
+      this.searchInput.setValue("");
+      this.searchInput.setFocused(false);
+      this.scroll.jumpTo(0, 0);
       this.start = 1;
       this.node_V_2();
       this.saveState();
    }
 
-   private String load_Str_11() {
-      ServerData entry = init_Minecraft.getCurrentServer();
+   private String normalizedServerAddress() {
+      ServerData entry = MC.getCurrentServer();
       if (entry != null && entry.ip != null && !entry.ip.isBlank()) {
          return entry.ip.trim().toLowerCase(Locale.ROOT);
       }
 
-      if (init_Minecraft.getConnection() != null && init_Minecraft.getConnection().getConnection() != null) {
-         SocketAddress address = init_Minecraft.getConnection().getConnection().getRemoteAddress();
+      if (MC.getConnection() != null && MC.getConnection().getConnection() != null) {
+         SocketAddress address = MC.getConnection().getConnection().getRemoteAddress();
          if (address instanceof InetSocketAddress inet) {
             String host = inet.getHostString();
             if ((host == null || host.isBlank()) && inet.getAddress() != null) {
@@ -1139,20 +1139,20 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return "";
    }
 
-   private String init_Str_Str_6(String signature) {
+   private String normalizeSignature(String signature) {
       return signature == null ? "" : signature.trim().toLowerCase(Locale.ROOT);
    }
 
-   private String read_Str_8() {
-      if (init_Minecraft.getConnection() == null) {
+   private String computeContextSignature() {
+      if (MC.getConnection() == null) {
          return "";
       }
 
-      String currentAddress = this.load_Str_11();
-      String brand = init_Minecraft.getConnection().serverBrand();
+      String currentAddress = this.normalizedServerAddress();
+      String brand = MC.getConnection().serverBrand();
       String normalizedBrand = brand == null ? "" : brand.trim().toLowerCase(Locale.ROOT);
-      if (!this.add_Z && currentAddress.equals(this.tick_Str) && normalizedBrand.equals(this.run_Str)) {
-         return this.get_Str;
+      if (!this.contextSignatureDirty && currentAddress.equals(this.signatureCacheAddress) && normalizedBrand.equals(this.signatureCacheBrand)) {
+         return this.cachedContextSignature;
       }
 
       List<String> parts = new ArrayList<>();
@@ -1162,7 +1162,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       try {
-         CommandDispatcher<?> dispatcher = init_Minecraft.getConnection().getCommands();
+         CommandDispatcher<?> dispatcher = MC.getConnection().getCommands();
          if (dispatcher != null) {
             RootCommandNode<?> root = dispatcher.getRoot();
             if (root != null && !root.getChildren().isEmpty()) {
@@ -1184,18 +1184,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       } catch (Exception var11) {
       }
 
-      this.tick_Str = currentAddress;
-      this.run_Str = normalizedBrand;
-      this.get_Str = this.init_Str_Str_6(String.join("|", parts));
-      this.add_Z = false;
-      return this.get_Str;
+      this.signatureCacheAddress = currentAddress;
+      this.signatureCacheBrand = normalizedBrand;
+      this.cachedContextSignature = this.normalizeSignature(String.join("|", parts));
+      this.contextSignatureDirty = false;
+      return this.cachedContextSignature;
    }
 
-   private void buffer_V_2() {
-      this.add_Z = true;
+   private void invalidateContextSignature() {
+      this.contextSignatureDirty = true;
    }
 
-   private void load_V_2(int delayMs) {
+   private void setScanDelayMs(int delayMs) {
       this.state = Math.max(10, Math.min(500, delayMs));
       AutismSessionState.getInstance().setServerInfoScanDelayMs(this.state);
    }
@@ -1205,12 +1205,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return true;
    }
 
-   private int pop_I_24() {
-      return this.resolveWindowWidth(this.get_I_20(), this.get_I_20());
+   private int computeWidth() {
+      return this.resolveWindowWidth(this.computeMinWidth(), this.computeMinWidth());
    }
 
-   private boolean clear_Z_4() {
-      return this.start == 1 && this.pop_Z && !this.tick_Z;
+   private boolean isPluginResultsView() {
+      return this.start == 1 && this.scanDone && !this.tick_Z;
    }
 
    private int tick_I_22() {
@@ -1219,56 +1219,56 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    @Override
    protected int getResizeMinHeight() {
-      return this.clear_Z_4() && this.tick_I > 0 ? Math.max(this.getMinHeight(), this.tick_I + Math.round(this.load_F())) : this.getMinHeight();
+      return this.isPluginResultsView() && this.viewportTopOffset > 0 ? Math.max(this.getMinHeight(), this.viewportTopOffset + Math.round(this.minViewportHeight())) : this.getMinHeight();
    }
 
    @Override
    protected void onSizeChanged() {
       if (!this.hasCustomStoredSize()) {
-         this.pop_I = this.get_I_20();
+         this.overlayWidth = this.computeMinWidth();
       }
 
-      this.prev_V_7();
+      this.requestLayoutRebuild();
    }
 
-   private void entry_V_2() {
-      OverlayBounds clamped = this.init_cH_cH_5(new OverlayBounds(this.poll_I, this.push_I, this.pop_I, this.run_I, this.write_Z, this.update_Z));
-      this.poll_I = clamped.x;
-      this.push_I = clamped.y;
-      this.pop_I = clamped.width;
-      this.run_I = clamped.height;
+   private void applyClampedBounds() {
+      OverlayBounds clamped = this.clampBounds(new OverlayBounds(this.overlayX, this.overlayY, this.overlayWidth, this.overlayHeight, this.overlayVisible, this.overlayCollapsed));
+      this.overlayX = clamped.x;
+      this.overlayY = clamped.y;
+      this.overlayWidth = clamped.width;
+      this.overlayHeight = clamped.height;
    }
 
    private void node_V_2() {
-      this.pop_I = this.pop_I_24();
-      this.run_I = this.next_I_7();
-      this.entry_V_2();
-      this.prev_V_7();
+      this.overlayWidth = this.computeWidth();
+      this.overlayHeight = this.next_I_7();
+      this.applyClampedBounds();
+      this.requestLayoutRebuild();
    }
 
    private void task_V_2() {
-      this.pop_I = this.pop_I_24();
-      this.run_I = this.prev_I_6();
-      this.entry_V_2();
-      this.prev_V_7();
+      this.overlayWidth = this.computeWidth();
+      this.overlayHeight = this.prev_I_6();
+      this.applyClampedBounds();
+      this.requestLayoutRebuild();
    }
 
    private void pool_V_2() {
-      this.pop_I = this.pop_I_24();
-      this.run_I = this.tick_I_22();
-      this.entry_V_2();
-      this.prev_V_7();
+      this.overlayWidth = this.computeWidth();
+      this.overlayHeight = this.tick_I_22();
+      this.applyClampedBounds();
+      this.requestLayoutRebuild();
    }
 
    private void count_V_2() {
-      this.pop_I = this.pop_I_24();
-      this.run_I = this.stop_I_7();
-      this.entry_V_2();
-      this.prev_V_7();
+      this.overlayWidth = this.computeWidth();
+      this.overlayHeight = this.stop_I_7();
+      this.applyClampedBounds();
+      this.requestLayoutRebuild();
    }
 
-   private int get_I_20() {
-      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
+   private int computeMinWidth() {
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       return Math.max(this.bind_I_2(), Math.min(this.mark_I_2(), Math.round(viewport.width())));
    }
 
@@ -1277,40 +1277,40 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int put_I_8() {
-      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       int viewportHeight = Math.round(viewport.height());
       return Math.max(this.set_I_20(), viewportHeight - 28);
    }
 
    private int stop_I_7() {
-      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       int measured = Math.max(this.a_I_2(), this.size_I_3());
       return Math.max(this.a_I_2(), Math.min(measured, Math.max(this.a_I_2(), Math.round(viewport.height()) - this.f())));
    }
 
    private int next_I_7() {
-      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
-      int measured = Math.max(this.d_I_2(), this.init_I_I_3(1, false, false, Math.max(this.pop_I, this.scan_I_2())));
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
+      int measured = Math.max(this.d_I_2(), this.measureHeightFor(1, false, false, Math.max(this.overlayWidth, this.scan_I_2())));
       return Math.min(measured, Math.max(this.d_I_2(), Math.round(viewport.height()) - this.f()));
    }
 
    private int prev_I_6() {
-      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
-      int measured = Math.max(this.e_I_2(), this.init_I_I_3(1, false, true, Math.max(this.pop_I, this.parse_I_2())));
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
+      int measured = Math.max(this.e_I_2(), this.measureHeightFor(1, false, true, Math.max(this.overlayWidth, this.parse_I_2())));
       return Math.min(measured, Math.max(this.e_I_2(), Math.round(viewport.height()) - this.f()));
    }
 
-   private int valid_I_4() {
-      int contentPadding = this.task_I_2() * 2;
-      int contentGap = this.pool_I_2() * 5;
-      int autoToggleHeight = this.count_I_2();
-      int searchHeight = this.index_I_2();
-      int buttonRowHeight = this.count_I_2();
-      int headerLabelHeight = this.init_CharEncoder.init_I_l_I(autismclient.gui.f.b.l.write, 3);
-      return this.init_CharEncoder.load()
+   private int estimateListViewportTop() {
+      int contentPadding = this.contentPadding() * 2;
+      int contentGap = this.contentGap() * 5;
+      int autoToggleHeight = this.buttonHeight();
+      int searchHeight = this.searchHeight();
+      int buttonRowHeight = this.buttonHeight();
+      int headerLabelHeight = this.theme.init_I_l_I(autismclient.gui.f.b.l.write, 3);
+      return this.theme.load()
          + contentPadding
          + contentGap
-         + this.level_I_2()
+         + this.tabBarHeight()
          + autoToggleHeight
          + searchHeight
          + buttonRowHeight
@@ -1318,35 +1318,35 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int size_I_3() {
-      return Math.max(this.a_I_2(), this.init_I_I_3(0, this.pop_Z, this.tick_Z, Math.max(this.bind_I_2(), this.pop_I)));
+      return Math.max(this.a_I_2(), this.measureHeightFor(0, this.scanDone, this.tick_Z, Math.max(this.bind_I_2(), this.overlayWidth)));
    }
 
-   private int init_I_I_3(int tab, boolean scanDone, boolean scanInProgress, int measureWidth) {
+   private int measureHeightFor(int tab, boolean scanDone, boolean scanInProgress, int measureWidth) {
       int previousTab = this.start;
-      boolean previousScanDone = this.pop_Z;
+      boolean previousScanDone = this.scanDone;
       boolean previousScanInProgress = this.tick_Z;
       this.start = tab;
-      this.pop_Z = scanDone;
+      this.scanDone = scanDone;
       this.tick_Z = scanInProgress;
-      this.next_V_7();
-      int measured = Math.round(this.init_TextFormat.measureHeight(measureWidth));
+      this.rebuildLayout();
+      int measured = Math.round(this.layoutHost.measureHeight(measureWidth));
       this.start = previousTab;
-      this.pop_Z = previousScanDone;
+      this.scanDone = previousScanDone;
       this.tick_Z = previousScanInProgress;
-      this.next_V_7();
+      this.rebuildLayout();
       return measured;
    }
 
    private int data_I_3() {
       int rowCount = 12;
-      String displayedAddress = this.open_Str_2();
+      String displayedAddress = this.displayedAddress();
       String host = this.push(displayedAddress);
       String realIp = this.pop(displayedAddress);
-      if (!host.isBlank() && (!host.equals(realIp) || this.push_Z)) {
+      if (!host.isBlank() && (!host.equals(realIp) || this.dnsLookupRunning)) {
          rowCount++;
       }
 
-      ServerData entry = init_Minecraft.getCurrentServer();
+      ServerData entry = MC.getCurrentServer();
       String software = this.load(entry);
       if (!"--".equals(software)) {
          rowCount++;
@@ -1357,57 +1357,57 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          rowCount++;
       }
 
-      int contentHeight = this.level_I_2() + rowCount * 12 + 2 + this.count_I_2();
-      return this.init_CharEncoder.load() + this.task_I_2() * 2 + this.pool_I_2() * 3 + contentHeight;
+      int contentHeight = this.tabBarHeight() + rowCount * 12 + 2 + this.buttonHeight();
+      return this.theme.load() + this.contentPadding() * 2 + this.contentGap() * 3 + contentHeight;
    }
 
-   private void flags_V_2() {
+   private void saveTabSize() {
       if (this.start == 0) {
-         this.f_f_I = Math.max(this.bind_I_2(), this.pop_I);
-         this.f_g_I = Math.max(this.data_I_3(), this.run_I);
-         this.f_h_I = Math.max(this.f_h_I, this.f_f_I);
-      } else if (this.pop_Z && !this.tick_Z) {
-         this.f_h_I = Math.max(this.b_I_2(), this.pop_I);
-         this.f_i_I = Math.max(this.set_I_20(), Math.min(this.put_I_8(), this.run_I));
-         this.f_f_I = Math.max(this.f_f_I, this.f_h_I);
+         this.infoTabWidth = Math.max(this.bind_I_2(), this.overlayWidth);
+         this.infoTabHeight = Math.max(this.data_I_3(), this.overlayHeight);
+         this.pluginsTabWidth = Math.max(this.pluginsTabWidth, this.infoTabWidth);
+      } else if (this.scanDone && !this.tick_Z) {
+         this.pluginsTabWidth = Math.max(this.b_I_2(), this.overlayWidth);
+         this.pluginsTabHeight = Math.max(this.set_I_20(), Math.min(this.put_I_8(), this.overlayHeight));
+         this.infoTabWidth = Math.max(this.infoTabWidth, this.pluginsTabWidth);
       }
    }
 
-   private void init_V_Str_Str_3(String address, String contextSignature) {
-      this.pop_Z = false;
+   private void resetForServer(String address, String contextSignature) {
+      this.scanDone = false;
       this.put_Z = false;
-      this.read_V_3("clear");
-      this.init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.NONE;
-      this.close_Str = "";
+      this.cancelScan("clear");
+      this.scanStatus = AutismServerInfoOverlay.ScanStatus.NONE;
+      this.scanIssue = "";
       this.queue = 0;
       this.buffer = 0;
       this.entry = 0;
       this.node = 0;
-      this.get_Z = false;
-      this.load_Set.clear();
-      this.update_Map.clear();
-      this.sync_Map.clear();
-      this.open_Map.clear();
-      this.flush_Map.clear();
-      this.close_Map.clear();
+      this.completionAnnounced = false;
+      this.observedCommandTokens.clear();
+      this.pluginEvidence.clear();
+      this.pluginCopyEvidence.clear();
+      this.pluginCopyCommands.clear();
+      this.pluginConfidence.clear();
+      this.pluginDetectionTypes.clear();
       this.poll_Map.clear();
-      this.push_Map.clear();
-      this.poll_Str = address;
-      this.pop_Str = this.init_Str_Str_6(contextSignature);
-      this.load_List.clear();
-      this.init_Map.clear();
-      this.load_Map.clear();
-      this.read_Map.clear();
-      this.a_V_2();
-      this.init_CacheEntry.jumpTo(0, 0);
-      this.sync_Str = null;
-      this.sync_J = -1L;
-      this.pop_Map.clear();
-      this.init_Deque.clear();
-      this.buffer_V_2();
+      this.legacyPluginEntries.clear();
+      this.scanAddress = address;
+      this.contextSignature = this.normalizeSignature(contextSignature);
+      this.detectedPlugins.clear();
+      this.pluginCommands.clear();
+      this.pluginChannels.clear();
+      this.pluginGuis.clear();
+      this.invalidateDetails();
+      this.scroll.jumpTo(0, 0);
+      this.selectedPlugin = null;
+      this.catalogRevision = -1L;
+      this.userProbesById.clear();
+      this.commandHistory.clear();
+      this.invalidateContextSignature();
    }
 
-   private boolean init_Z_Str_Str_3(String address, String contextSignature) {
+   private boolean loadCachedScan(String address, String contextSignature) {
       AutismConfig.PluginScanCacheEntry cached = AutismConfig.getGlobal().getPluginScan(address, contextSignature);
       if (cached == null) {
          cached = AutismConfig.getGlobal().getPluginScanByAddress(address);
@@ -1417,7 +1417,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      this.load_List.clear();
+      this.detectedPlugins.clear();
       if (cached.plugins != null) {
          int kept = 0;
 
@@ -1426,101 +1426,101 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                break;
             }
 
-            this.load_List.add(plugin);
+            this.detectedPlugins.add(plugin);
          }
       }
 
-      this.init_Map.clear();
+      this.pluginCommands.clear();
       if (cached.commands != null) {
-         this.init_Map.putAll(cached.commands);
+         this.pluginCommands.putAll(cached.commands);
       }
 
-      this.load_Map.clear();
+      this.pluginChannels.clear();
       if (cached.channels != null) {
-         this.load_Map.putAll(cached.channels);
+         this.pluginChannels.putAll(cached.channels);
       }
 
-      this.read_Map.clear();
+      this.pluginGuis.clear();
       if (cached.guis != null) {
-         this.read_Map.putAll(cached.guis);
+         this.pluginGuis.putAll(cached.guis);
       }
 
-      this.open_Map.clear();
+      this.pluginCopyCommands.clear();
       if (cached.copyCommands != null) {
-         this.open_Map.putAll(cached.copyCommands);
+         this.pluginCopyCommands.putAll(cached.copyCommands);
       }
 
-      this.init_Map.keySet().retainAll(this.load_List);
-      this.load_Map.keySet().retainAll(this.load_List);
-      this.read_Map.keySet().retainAll(this.load_List);
-      this.open_Map.keySet().retainAll(this.load_List);
-      this.init_CacheEntry.jumpTo(0, 0);
-      this.sync_Str = null;
-      this.pop_Z = true;
+      this.pluginCommands.keySet().retainAll(this.detectedPlugins);
+      this.pluginChannels.keySet().retainAll(this.detectedPlugins);
+      this.pluginGuis.keySet().retainAll(this.detectedPlugins);
+      this.pluginCopyCommands.keySet().retainAll(this.detectedPlugins);
+      this.scroll.jumpTo(0, 0);
+      this.selectedPlugin = null;
+      this.scanDone = true;
       this.put_Z = false;
-      this.read_V_3("cache-load");
-      this.init_AutismServerInfoOv = this.init_AutismServerInfoOv_Str(cached.scanStatus);
-      if (this.init_AutismServerInfoOv == AutismServerInfoOverlay.ScanStatus.NONE) {
-         this.init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.COMPLETE;
+      this.cancelScan("cache-load");
+      this.scanStatus = this.parseScanStatus(cached.scanStatus);
+      if (this.scanStatus == AutismServerInfoOverlay.ScanStatus.NONE) {
+         this.scanStatus = AutismServerInfoOverlay.ScanStatus.COMPLETE;
       }
 
-      this.close_Str = this.init_AutismServerInfoOv == AutismServerInfoOverlay.ScanStatus.PARTIAL ? "Cached partial scan" : "";
+      this.scanIssue = this.scanStatus == AutismServerInfoOverlay.ScanStatus.PARTIAL ? "Cached partial scan" : "";
       this.queue = Math.max(0, cached.totalProbes);
       this.buffer = Math.max(0, cached.answeredProbes);
       this.entry = Math.max(0, cached.retriedProbes);
       this.node = Math.max(0, cached.failedProbes);
-      this.load_Set.clear();
-      this.update_Map.clear();
-      this.sync_Map.clear();
-      this.flush_Map.clear();
-      this.close_Map.clear();
+      this.observedCommandTokens.clear();
+      this.pluginEvidence.clear();
+      this.pluginCopyEvidence.clear();
+      this.pluginConfidence.clear();
+      this.pluginDetectionTypes.clear();
       this.poll_Map.clear();
-      this.push_Map.clear();
-      this.pop_Map.clear();
-      this.init_Deque.clear();
-      this.poll_Str = address;
-      this.pop_Str = this.init_Str_Str_6(cached.contextSignature);
+      this.legacyPluginEntries.clear();
+      this.userProbesById.clear();
+      this.commandHistory.clear();
+      this.scanAddress = address;
+      this.contextSignature = this.normalizeSignature(cached.contextSignature);
       Map<String, String> cachedEvidence = cached.evidence == null ? Map.of() : cached.evidence;
       Map<String, String> cachedCopyEvidence = cached.copyEvidence == null ? Map.of() : cached.copyEvidence;
       Map<String, String> cachedConfidence = cached.confidence == null ? Map.of() : cached.confidence;
 
-      for (String plugin : this.load_List) {
-         String key = this.load_Str_2(plugin);
-         this.update_Map.put(key, this.init_AutismServerInfoOv_Str_2(cachedEvidence.get(key)));
-         AutismServerInfoOverlay.EvidenceSource copyEvidence = this.init_AutismServerInfoOv_Str_2(cachedCopyEvidence.get(key));
+      for (String plugin : this.detectedPlugins) {
+         String key = this.pluginKey(plugin);
+         this.pluginEvidence.put(key, this.parseEvidenceSource(cachedEvidence.get(key)));
+         AutismServerInfoOverlay.EvidenceSource copyEvidence = this.parseEvidenceSource(cachedCopyEvidence.get(key));
          if (copyEvidence == AutismServerInfoOverlay.EvidenceSource.UNKNOWN) {
-            copyEvidence = this.init_AutismServerInfoOv_Str_AutismServerInfoOv_2(plugin, this.update_Map.get(key));
+            copyEvidence = this.copyEvidenceFor(plugin, this.pluginEvidence.get(key));
          }
 
-         this.sync_Map.put(key, copyEvidence);
-         this.flush_Map
+         this.pluginCopyEvidence.put(key, copyEvidence);
+         this.pluginConfidence
             .put(
                key,
-               this.init_AutismServerInfoOv_Str_AutismServerInfoOv(
-                  cachedConfidence.get(key), this.init_AutismServerInfoOv_AutismServerInfoOv(this.update_Map.get(key))
+               this.parseConfidence(
+                  cachedConfidence.get(key), this.confidenceForEvidence(this.pluginEvidence.get(key))
                )
             );
-         this.close_Map.put(key, this.init_AutismServerInfoOv_Str(plugin, this.update_Map.get(key), this.flush_Map.get(key)));
+         this.pluginDetectionTypes.put(key, this.detectionTypeFor(plugin, this.pluginEvidence.get(key), this.pluginConfidence.get(key)));
       }
 
-      this.sync_J = -1L;
+      this.catalogRevision = -1L;
       this.block_V_2();
-      this.a_V_2();
+      this.invalidateDetails();
       return true;
    }
 
-   private void level_V_2() {
-      if (this.poll_Str != null && !this.poll_Str.isBlank() && this.pop_Z && !this.tick_Z && !this.load_List.isEmpty()) {
+   private void saveScanToConfig() {
+      if (this.scanAddress != null && !this.scanAddress.isBlank() && this.scanDone && !this.tick_Z && !this.detectedPlugins.isEmpty()) {
          Map<String, String> evidenceSnapshot = new LinkedHashMap<>();
          Map<String, String> copyEvidenceSnapshot = new LinkedHashMap<>();
 
-         for (Entry<String, AutismServerInfoOverlay.EvidenceSource> entry : this.update_Map.entrySet()) {
+         for (Entry<String, AutismServerInfoOverlay.EvidenceSource> entry : this.pluginEvidence.entrySet()) {
             if (entry.getKey() != null && !entry.getKey().isBlank() && entry.getValue() != null) {
                evidenceSnapshot.put(entry.getKey(), entry.getValue().name());
             }
          }
 
-         for (Entry<String, AutismServerInfoOverlay.EvidenceSource> entry : this.sync_Map.entrySet()) {
+         for (Entry<String, AutismServerInfoOverlay.EvidenceSource> entry : this.pluginCopyEvidence.entrySet()) {
             if (entry.getKey() != null && !entry.getKey().isBlank() && entry.getValue() != null) {
                copyEvidenceSnapshot.put(entry.getKey(), entry.getValue().name());
             }
@@ -1528,81 +1528,81 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          Map<String, String> confidenceSnapshot = new LinkedHashMap<>();
 
-         for (Entry<String, AutismServerInfoOverlay.MatchConfidence> entry : this.flush_Map.entrySet()) {
+         for (Entry<String, AutismServerInfoOverlay.MatchConfidence> entry : this.pluginConfidence.entrySet()) {
             if (entry.getKey() != null && !entry.getKey().isBlank() && entry.getValue() != null) {
                confidenceSnapshot.put(entry.getKey(), entry.getValue().name());
             }
          }
 
-         ServerData current = init_Minecraft.getCurrentServer();
+         ServerData current = MC.getCurrentServer();
          String serverName = current != null && current.name != null ? current.name : "";
          AutismConfig.getGlobal()
             .putPluginScan(
-               this.poll_Str,
+               this.scanAddress,
                "",
-               this.load_List,
-               this.init_Map,
+               this.detectedPlugins,
+               this.pluginCommands,
                evidenceSnapshot,
-               this.load_Map,
-               this.read_Map,
+               this.pluginChannels,
+               this.pluginGuis,
                confidenceSnapshot,
                copyEvidenceSnapshot,
-               this.open_Map,
-               this.init_AutismServerInfoOv.name(),
+               this.pluginCopyCommands,
+               this.scanStatus.name(),
                this.queue,
                this.buffer,
                this.entry,
                this.node,
                serverName,
-               this.poll_Str
+               this.scanAddress
             );
       }
    }
 
-   private void frame_V_2() {
-      String currentAddress = this.load_Str_11();
+   private void syncServerContext() {
+      String currentAddress = this.normalizedServerAddress();
       if (!currentAddress.isEmpty()) {
-         if (!currentAddress.equals(this.push_Str)) {
-            this.push_Str = currentAddress;
+         if (!currentAddress.equals(this.lastSeenAddress)) {
+            this.lastSeenAddress = currentAddress;
          }
 
-         String currentContextSignature = this.read_Str_8();
-         boolean sameAddress = currentAddress.equals(this.poll_Str);
+         String currentContextSignature = this.computeContextSignature();
+         boolean sameAddress = currentAddress.equals(this.scanAddress);
          boolean hasCurrentSignature = !currentContextSignature.isEmpty();
-         boolean sameContext = sameAddress && currentContextSignature.equals(this.pop_Str);
-         AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
+         boolean sameContext = sameAddress && currentContextSignature.equals(this.contextSignature);
+         AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
          if (session != null && this.tick_Z) {
-            if (currentAddress.equals(session.init_Str)) {
-               session.load_Str = currentContextSignature;
-               this.pop_Str = currentContextSignature;
+            if (currentAddress.equals(session.serverAddress)) {
+               session.contextSignature = currentContextSignature;
+               this.contextSignature = currentContextSignature;
                return;
             }
 
-            this.read_V_3("server-changed");
+            this.cancelScan("server-changed");
          }
 
-         if (sameAddress && this.pop_Z && hasCurrentSignature && !sameContext) {
-            this.pop_Str = currentContextSignature;
-            this.level_V_2();
+         if (sameAddress && this.scanDone && hasCurrentSignature && !sameContext) {
+            this.contextSignature = currentContextSignature;
+            this.saveScanToConfig();
          } else if (!this.put_Z || !sameAddress || !sameContext && hasCurrentSignature) {
             if (!sameAddress || hasCurrentSignature && !sameContext) {
                this.put_Z = false;
             }
 
-            if ((!sameContext || !this.pop_Z && !this.tick_Z)
-               && (!sameAddress || hasCurrentSignature || !this.pop_Z && !this.tick_Z)
-               && !this.init_Z_Str_Str_3(currentAddress, currentContextSignature)) {
-               this.init_V_Str_Str_3(currentAddress, currentContextSignature);
+            if ((!sameContext || !this.scanDone && !this.tick_Z)
+               && (!sameAddress || hasCurrentSignature || !this.scanDone && !this.tick_Z)
+               && !this.loadCachedScan(currentAddress, currentContextSignature)) {
+               this.resetForServer(currentAddress, currentContextSignature);
             }
          }
       }
    }
 
-   private String load_Str_2(String plugin) {
+   private String pluginKey(String plugin) {
       return PluginSignatureCatalog.canonicalName(plugin);
    }
 
-   private int init_I_AutismServerInfoOv_3(AutismServerInfoOverlay.EvidenceSource evidence) {
+   private int evidenceRank(AutismServerInfoOverlay.EvidenceSource evidence) {
       byte var10000;
       switch (evidence) {
          case PAYLOAD_CHANNEL:
@@ -1648,7 +1648,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private int init_I_AutismServerInfoOv(AutismServerInfoOverlay.MatchConfidence confidence) {
+   private int confidenceRank(AutismServerInfoOverlay.MatchConfidence confidence) {
       byte var10000;
       switch (confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence) {
          case EXACT:
@@ -1670,7 +1670,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_3(
+   private AutismServerInfoOverlay.EvidenceSource mergeEvidence(
       AutismServerInfoOverlay.EvidenceSource current, AutismServerInfoOverlay.EvidenceSource candidate
    ) {
       if (current == null) {
@@ -1678,11 +1678,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       } else if (candidate == null) {
          return current;
       } else {
-         return this.init_I_AutismServerInfoOv_3(candidate) < this.init_I_AutismServerInfoOv_3(current) ? candidate : current;
+         return this.evidenceRank(candidate) < this.evidenceRank(current) ? candidate : current;
       }
    }
 
-   private int load_I(AutismServerInfoOverlay.EvidenceSource evidence) {
+   private int copyEvidenceRank(AutismServerInfoOverlay.EvidenceSource evidence) {
       byte var10000;
       switch (evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence) {
          case PAYLOAD_CHANNEL:
@@ -1720,7 +1720,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private AutismServerInfoOverlay.EvidenceSource load_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(
+   private AutismServerInfoOverlay.EvidenceSource mergeCopyEvidence(
       AutismServerInfoOverlay.EvidenceSource current, AutismServerInfoOverlay.EvidenceSource candidate
    ) {
       if (candidate == null) {
@@ -1728,7 +1728,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       } else if (current == null) {
          return candidate;
       } else {
-         return this.load_I(candidate) < this.load_I(current) ? candidate : current;
+         return this.copyEvidenceRank(candidate) < this.copyEvidenceRank(current) ? candidate : current;
       }
    }
 
@@ -1773,7 +1773,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(
+   private AutismServerInfoOverlay.MatchConfidence mergeConfidence(
       AutismServerInfoOverlay.MatchConfidence current, AutismServerInfoOverlay.MatchConfidence candidate
    ) {
       if (current == null) {
@@ -1781,11 +1781,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       } else if (candidate == null) {
          return current;
       } else {
-         return this.init_I_AutismServerInfoOv(candidate) < this.init_I_AutismServerInfoOv(current) ? candidate : current;
+         return this.confidenceRank(candidate) < this.confidenceRank(current) ? candidate : current;
       }
    }
 
-   private AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv_AutismServerInfoOv(AutismServerInfoOverlay.EvidenceSource evidence) {
+   private AutismServerInfoOverlay.MatchConfidence confidenceForEvidence(AutismServerInfoOverlay.EvidenceSource evidence) {
       AutismServerInfoOverlay.MatchConfidence var10000;
       switch (evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence) {
          case PAYLOAD_CHANNEL:
@@ -1839,35 +1839,35 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private boolean init_Z_AutismServerInfoOv_4(AutismServerInfoOverlay.PluginAccumulator entry) {
       return entry == null
          ? false
-         : entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.DetectionType.FEATURE || this.read(entry.init_AutismServerInfoOv_3);
+         : entry.resultKind == AutismServerInfoOverlay.DetectionType.FEATURE || this.read(entry.evidence);
    }
 
    private boolean load(AutismServerInfoOverlay.PluginAccumulator entry) {
       return entry != null
-         && entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.DetectionType.PLUGIN
-         && !this.read(entry.init_AutismServerInfoOv_3)
-         && entry.init_AutismServerInfoOv_3 != AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI;
+         && entry.resultKind == AutismServerInfoOverlay.DetectionType.PLUGIN
+         && !this.read(entry.evidence)
+         && entry.evidence != AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI;
    }
 
-   private int init_I_AutismServerInfoOv_5(AutismServerInfoOverlay.PluginAccumulator entry) {
+   private int entrySortScore(AutismServerInfoOverlay.PluginAccumulator entry) {
       if (entry == null) {
          return 2147483647;
       }
 
-      int score = this.init_I_AutismServerInfoOv_3(entry.init_AutismServerInfoOv_3) * 100 + this.init_I_AutismServerInfoOv(entry.init_AutismServerInfoOv) * 10;
-      if (entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.DetectionType.FEATURE) {
+      int score = this.evidenceRank(entry.evidence) * 100 + this.confidenceRank(entry.confidence) * 10;
+      if (entry.resultKind == AutismServerInfoOverlay.DetectionType.FEATURE) {
          score += 1000;
       }
 
-      if (this.read(entry.init_AutismServerInfoOv_3)) {
+      if (this.read(entry.evidence)) {
          score += 500;
       }
 
-      if (!entry.init_Z) {
+      if (!entry.commandBacked) {
          score += 25;
       }
 
-      String name = entry.init_Str == null ? "" : entry.init_Str.trim();
+      String name = entry.name == null ? "" : entry.name.trim();
       if (name.startsWith("/")) {
          score += 75;
       }
@@ -1875,7 +1875,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return score;
    }
 
-   private AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_Str_2(String value) {
+   private AutismServerInfoOverlay.EvidenceSource parseEvidenceSource(String value) {
       if (value != null && !value.isBlank()) {
          try {
             return AutismServerInfoOverlay.EvidenceSource.valueOf(value);
@@ -1887,7 +1887,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv_Str_AutismServerInfoOv(
+   private AutismServerInfoOverlay.MatchConfidence parseConfidence(
       String value, AutismServerInfoOverlay.MatchConfidence fallback
    ) {
       if (value != null && !value.isBlank()) {
@@ -1901,7 +1901,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private int init_I_AutismServerInfoOv_Z(AutismServerInfoOverlay.MatchConfidence confidence, boolean hovered) {
+   private int confidenceColor(AutismServerInfoOverlay.MatchConfidence confidence, boolean hovered) {
       if (hovered) {
          return UiColorPalette.softWhite();
       }
@@ -1918,7 +1918,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             var10000 = UiColorPalette.warningYellow();
             break;
          case UNKNOWN:
-            var10000 = this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
+            var10000 = this.theme.load(autismclient.gui.f.b.l.write);
             break;
          default:
             throw new MatchException(null, null);
@@ -1927,7 +1927,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private String init_Str_AutismServerInfoOv(AutismServerInfoOverlay.MatchConfidence confidence) {
+   private String confidenceLabel(AutismServerInfoOverlay.MatchConfidence confidence) {
       String var10000;
       switch (confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence) {
          case EXACT:
@@ -1949,40 +1949,40 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private Map<String, AutismServerInfoOverlay.PluginAccumulator> init_Map_3() {
+   private Map<String, AutismServerInfoOverlay.PluginAccumulator> snapshotPluginEntries() {
       Map<String, AutismServerInfoOverlay.PluginAccumulator> entries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-      for (String plugin : this.load_List) {
+      for (String plugin : this.detectedPlugins) {
          if (plugin != null && !plugin.isBlank()) {
-            List<String> existing = this.load_List(plugin);
-            AutismServerInfoOverlay.EvidenceSource evidence = this.update_Map
+            List<String> existing = this.commandsFor(plugin);
+            AutismServerInfoOverlay.EvidenceSource evidence = this.pluginEvidence
                .getOrDefault(
-                  this.load_Str_2(plugin),
+                  this.pluginKey(plugin),
                   existing != null && !existing.isEmpty() ? AutismServerInfoOverlay.EvidenceSource.ROOT_HINT : AutismServerInfoOverlay.EvidenceSource.UNKNOWN
                );
-            List<String> existingChannels = this.write_List_2(plugin);
-            List<String> existingGuis = this.read_List_2(plugin);
-            AutismServerInfoOverlay.MatchConfidence confidence = this.flush_Map
-               .getOrDefault(this.load_Str_2(plugin), this.init_AutismServerInfoOv_AutismServerInfoOv(evidence));
-            AutismServerInfoOverlay.DetectionType resultKind = this.init_AutismServerInfoOv_Str(plugin, evidence, confidence);
-            this.init_Z_Map(
+            List<String> existingChannels = this.observedChannelsFor(plugin);
+            List<String> existingGuis = this.guisFor(plugin);
+            AutismServerInfoOverlay.MatchConfidence confidence = this.pluginConfidence
+               .getOrDefault(this.pluginKey(plugin), this.confidenceForEvidence(evidence));
+            AutismServerInfoOverlay.DetectionType resultKind = this.detectionTypeFor(plugin, evidence, confidence);
+            this.mergePluginEntry(
                entries, null, plugin, existing, existingChannels, existingGuis, existing != null && !existing.isEmpty(), evidence, confidence, resultKind
             );
-            String key = this.load_Str_2(plugin);
+            String key = this.pluginKey(plugin);
             AutismServerInfoOverlay.PluginAccumulator entry = entries.get(key);
             if (entry != null) {
-               AutismServerInfoOverlay.EvidenceSource copyEvidence = this.sync_Map
-                  .getOrDefault(key, this.init_AutismServerInfoOv_Str_AutismServerInfoOv_2(plugin, evidence));
-               if (this.load_I(copyEvidence) < this.load_I(entry.load_AutismServerInfoOv)) {
-                  entry.load_Set.clear();
+               AutismServerInfoOverlay.EvidenceSource copyEvidence = this.pluginCopyEvidence
+                  .getOrDefault(key, this.copyEvidenceFor(plugin, evidence));
+               if (this.copyEvidenceRank(copyEvidence) < this.copyEvidenceRank(entry.copyEvidence)) {
+                  entry.copyCommands.clear();
                }
 
-               entry.load_AutismServerInfoOv = this.load_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(entry.load_AutismServerInfoOv, copyEvidence);
-               List<String> copyCommands = this.init_List_Map_Str(this.open_Map, plugin);
+               entry.copyEvidence = this.mergeCopyEvidence(entry.copyEvidence, copyEvidence);
+               List<String> copyCommands = this.lookupPluginList(this.pluginCopyCommands, plugin);
                if (copyCommands != null) {
                   for (String command : copyCommands) {
                      if (command != null && !command.isBlank()) {
-                        entry.load_Set.add(command.trim());
+                        entry.copyCommands.add(command.trim());
                      }
                   }
                }
@@ -1993,7 +1993,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return entries;
    }
 
-   private AutismServerInfoOverlay.ScanStatus init_AutismServerInfoOv_Str(String value) {
+   private AutismServerInfoOverlay.ScanStatus parseScanStatus(String value) {
       if (value != null && !value.isBlank()) {
          try {
             return AutismServerInfoOverlay.ScanStatus.valueOf(value.trim().toUpperCase(Locale.ROOT));
@@ -2005,19 +2005,19 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean init_Z_Map(
+   private boolean mergePluginEntry(
       Map<String, AutismServerInfoOverlay.PluginAccumulator> entries,
       String pluginName,
       Collection<String> commands,
       boolean commandBacked,
       AutismServerInfoOverlay.EvidenceSource evidence
    ) {
-      return this.init_Z_Map(
-         entries, null, pluginName, commands, List.of(), List.of(), commandBacked, evidence, this.init_AutismServerInfoOv_AutismServerInfoOv(evidence)
+      return this.mergePluginEntry(
+         entries, null, pluginName, commands, List.of(), List.of(), commandBacked, evidence, this.confidenceForEvidence(evidence)
       );
    }
 
-   private boolean init_Z_Map(
+   private boolean mergePluginEntry(
       Map<String, AutismServerInfoOverlay.PluginAccumulator> entries,
       String pluginName,
       Collection<String> commands,
@@ -2025,12 +2025,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       boolean commandBacked,
       AutismServerInfoOverlay.EvidenceSource evidence
    ) {
-      return this.init_Z_Map(
-         entries, null, pluginName, commands, channels, List.of(), commandBacked, evidence, this.init_AutismServerInfoOv_AutismServerInfoOv(evidence)
+      return this.mergePluginEntry(
+         entries, null, pluginName, commands, channels, List.of(), commandBacked, evidence, this.confidenceForEvidence(evidence)
       );
    }
 
-   private boolean init_Z_Map(
+   private boolean mergePluginEntry(
       Map<String, AutismServerInfoOverlay.PluginAccumulator> entries,
       String explicitKey,
       String pluginName,
@@ -2039,12 +2039,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       boolean commandBacked,
       AutismServerInfoOverlay.EvidenceSource evidence
    ) {
-      return this.init_Z_Map(
-         entries, explicitKey, pluginName, commands, channels, List.of(), commandBacked, evidence, this.init_AutismServerInfoOv_AutismServerInfoOv(evidence)
+      return this.mergePluginEntry(
+         entries, explicitKey, pluginName, commands, channels, List.of(), commandBacked, evidence, this.confidenceForEvidence(evidence)
       );
    }
 
-   private boolean init_Z_Map(
+   private boolean mergePluginEntry(
       Map<String, AutismServerInfoOverlay.PluginAccumulator> entries,
       String explicitKey,
       String pluginName,
@@ -2055,12 +2055,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       AutismServerInfoOverlay.EvidenceSource evidence,
       AutismServerInfoOverlay.MatchConfidence confidence
    ) {
-      return this.init_Z_Map(
+      return this.mergePluginEntry(
          entries, explicitKey, pluginName, commands, channels, guis, commandBacked, evidence, confidence, AutismServerInfoOverlay.DetectionType.PLUGIN
       );
    }
 
-   private boolean init_Z_Map(
+   private boolean mergePluginEntry(
       Map<String, AutismServerInfoOverlay.PluginAccumulator> entries,
       String explicitKey,
       String pluginName,
@@ -2074,8 +2074,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    ) {
       if (pluginName != null && !pluginName.isBlank()) {
          String cleanName = pluginName.trim();
-         String key = explicitKey != null && !explicitKey.isBlank() ? this.load_Str_2(explicitKey) : this.load_Str_2(cleanName);
-         if (!key.isEmpty() && (!sync_Set.contains(key) || evidence == AutismServerInfoOverlay.EvidenceSource.PAYLOAD_CHANNEL)) {
+         String key = explicitKey != null && !explicitKey.isBlank() ? this.pluginKey(explicitKey) : this.pluginKey(cleanName);
+         if (!key.isEmpty() && (!PLATFORM_NAMESPACES.contains(key) || evidence == AutismServerInfoOverlay.EvidenceSource.PAYLOAD_CHANNEL)) {
             AutismServerInfoOverlay.PluginAccumulator entry = entries.get(key);
             if (entry == null) {
                if (entries.size() >= 1000) {
@@ -2086,54 +2086,54 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                entries.put(key, entry);
             }
 
-            String beforeName = entry.init_Str;
-            boolean beforeBacked = entry.init_Z;
-            AutismServerInfoOverlay.EvidenceSource beforeEvidence = entry.init_AutismServerInfoOv_3;
-            AutismServerInfoOverlay.EvidenceSource beforeCopyEvidence = entry.load_AutismServerInfoOv;
-            AutismServerInfoOverlay.MatchConfidence beforeConfidence = entry.init_AutismServerInfoOv;
-            AutismServerInfoOverlay.DetectionType beforeKind = entry.init_AutismServerInfoOv_2;
-            int beforeCommandCount = entry.init_Set.size();
-            int beforeCopyCommandCount = entry.load_Set.size();
+            String beforeName = entry.name;
+            boolean beforeBacked = entry.commandBacked;
+            AutismServerInfoOverlay.EvidenceSource beforeEvidence = entry.evidence;
+            AutismServerInfoOverlay.EvidenceSource beforeCopyEvidence = entry.copyEvidence;
+            AutismServerInfoOverlay.MatchConfidence beforeConfidence = entry.confidence;
+            AutismServerInfoOverlay.DetectionType beforeKind = entry.resultKind;
+            int beforeCommandCount = entry.commands.size();
+            int beforeCopyCommandCount = entry.copyCommands.size();
             int beforeChannelCount = entry.read.size();
             int beforeGuiCount = entry.write.size();
-            boolean candidateHasBetterCopySource = this.load_I(evidence) < this.load_I(entry.load_AutismServerInfoOv);
-            boolean allowReadableRename = !this.load_Z(entry.load_AutismServerInfoOv) || candidateHasBetterCopySource;
+            boolean candidateHasBetterCopySource = this.copyEvidenceRank(evidence) < this.copyEvidenceRank(entry.copyEvidence);
+            boolean allowReadableRename = !this.load_Z(entry.copyEvidence) || candidateHasBetterCopySource;
             if (candidateHasBetterCopySource) {
-               entry.load_Set.clear();
+               entry.copyCommands.clear();
             }
 
-            if (entry.init_Str == null
-               || entry.init_Str.isBlank()
-               || commandBacked && !entry.init_Z
-               || allowReadableRename && this.load_Z_Str_Str_2(cleanName, entry.init_Str)) {
-               entry.init_Str = cleanName;
+            if (entry.name == null
+               || entry.name.isBlank()
+               || commandBacked && !entry.commandBacked
+               || allowReadableRename && this.load_Z_Str_Str_2(cleanName, entry.name)) {
+               entry.name = cleanName;
             }
 
-            entry.init_AutismServerInfoOv_2 = this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_2(entry.init_AutismServerInfoOv_2, resultKind);
+            entry.resultKind = this.mergeDetectionType(entry.resultKind, resultKind);
             if (commandBacked) {
-               entry.init_Z = true;
+               entry.commandBacked = true;
             }
 
-            entry.init_AutismServerInfoOv_3 = this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_3(entry.init_AutismServerInfoOv_3, evidence);
-            entry.load_AutismServerInfoOv = this.load_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(entry.load_AutismServerInfoOv, evidence);
-            entry.init_AutismServerInfoOv = this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(entry.init_AutismServerInfoOv, confidence);
-            this.update_Map.put(key, this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_3(this.update_Map.get(key), evidence));
-            this.sync_Map.put(key, this.load_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(this.sync_Map.get(key), evidence));
-            this.flush_Map.put(key, this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(this.flush_Map.get(key), confidence));
-            this.close_Map.put(key, this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_2(this.close_Map.get(key), resultKind));
+            entry.evidence = this.mergeEvidence(entry.evidence, evidence);
+            entry.copyEvidence = this.mergeCopyEvidence(entry.copyEvidence, evidence);
+            entry.confidence = this.mergeConfidence(entry.confidence, confidence);
+            this.pluginEvidence.put(key, this.mergeEvidence(this.pluginEvidence.get(key), evidence));
+            this.pluginCopyEvidence.put(key, this.mergeCopyEvidence(this.pluginCopyEvidence.get(key), evidence));
+            this.pluginConfidence.put(key, this.mergeConfidence(this.pluginConfidence.get(key), confidence));
+            this.pluginDetectionTypes.put(key, this.mergeDetectionType(this.pluginDetectionTypes.get(key), resultKind));
             if (commands != null) {
                for (String command : commands) {
                   if (command != null) {
                      String cleanCommand = command.trim();
-                     if (!cleanCommand.isEmpty() && (entry.init_Set.size() < 256 || entry.init_Set.contains(cleanCommand))) {
-                        entry.init_Set.add(cleanCommand);
+                     if (!cleanCommand.isEmpty() && (entry.commands.size() < 256 || entry.commands.contains(cleanCommand))) {
+                        entry.commands.add(cleanCommand);
                      }
 
                      if (!cleanCommand.isEmpty()
                         && this.init_Z_AutismServerInfoOv(evidence)
-                        && this.load_I(evidence) <= this.load_I(entry.load_AutismServerInfoOv)
-                        && (entry.load_Set.size() < 256 || entry.load_Set.contains(cleanCommand))) {
-                        entry.load_Set.add(cleanCommand);
+                        && this.copyEvidenceRank(evidence) <= this.copyEvidenceRank(entry.copyEvidence)
+                        && (entry.copyCommands.size() < 256 || entry.copyCommands.contains(cleanCommand))) {
+                        entry.copyCommands.add(cleanCommand);
                      }
                   }
                }
@@ -2161,14 +2161,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                }
             }
 
-            return !Objects.equals(beforeName, entry.init_Str)
-               || beforeBacked != entry.init_Z
-               || beforeEvidence != entry.init_AutismServerInfoOv_3
-               || beforeCopyEvidence != entry.load_AutismServerInfoOv
-               || beforeConfidence != entry.init_AutismServerInfoOv
-               || beforeKind != entry.init_AutismServerInfoOv_2
-               || beforeCommandCount != entry.init_Set.size()
-               || beforeCopyCommandCount != entry.load_Set.size()
+            return !Objects.equals(beforeName, entry.name)
+               || beforeBacked != entry.commandBacked
+               || beforeEvidence != entry.evidence
+               || beforeCopyEvidence != entry.copyEvidence
+               || beforeConfidence != entry.confidence
+               || beforeKind != entry.resultKind
+               || beforeCommandCount != entry.commands.size()
+               || beforeCopyCommandCount != entry.copyCommands.size()
                || beforeChannelCount != entry.read.size()
                || beforeGuiCount != entry.write.size();
          } else {
@@ -2179,47 +2179,47 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean init_Z_Map_2(
+   private boolean mergeAccumulator(
       Map<String, AutismServerInfoOverlay.PluginAccumulator> target, String explicitKey, AutismServerInfoOverlay.PluginAccumulator source
    ) {
-      if (target != null && source != null && source.init_Str != null && !source.init_Str.isBlank()) {
-         boolean changed = this.init_Z_Map(
+      if (target != null && source != null && source.name != null && !source.name.isBlank()) {
+         boolean changed = this.mergePluginEntry(
             target,
             explicitKey,
-            source.init_Str,
-            source.init_Set,
+            source.name,
+            source.commands,
             source.read,
             source.write,
-            source.init_Z,
-            source.init_AutismServerInfoOv_3,
-            source.init_AutismServerInfoOv,
-            source.init_AutismServerInfoOv_2
+            source.commandBacked,
+            source.evidence,
+            source.confidence,
+            source.resultKind
          );
-         String key = explicitKey != null && !explicitKey.isBlank() ? this.load_Str_2(explicitKey) : this.load_Str_2(source.init_Str);
+         String key = explicitKey != null && !explicitKey.isBlank() ? this.pluginKey(explicitKey) : this.pluginKey(source.name);
          AutismServerInfoOverlay.PluginAccumulator entry = target.get(key);
          if (entry != null) {
-            AutismServerInfoOverlay.EvidenceSource beforeCopyEvidence = entry.load_AutismServerInfoOv;
-            int beforeCopyCommandCount = entry.load_Set.size();
-            boolean betterCopySource = this.load_I(source.load_AutismServerInfoOv) < this.load_I(entry.load_AutismServerInfoOv);
+            AutismServerInfoOverlay.EvidenceSource beforeCopyEvidence = entry.copyEvidence;
+            int beforeCopyCommandCount = entry.copyCommands.size();
+            boolean betterCopySource = this.copyEvidenceRank(source.copyEvidence) < this.copyEvidenceRank(entry.copyEvidence);
             if (betterCopySource) {
-               entry.load_Set.clear();
+               entry.copyCommands.clear();
             }
 
-            entry.load_AutismServerInfoOv = this.load_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(
-               entry.load_AutismServerInfoOv, source.load_AutismServerInfoOv
+            entry.copyEvidence = this.mergeCopyEvidence(
+               entry.copyEvidence, source.copyEvidence
             );
-            Collection<String> sourceCopyCommands = source.load_Set.isEmpty() && this.init_Z_AutismServerInfoOv(source.load_AutismServerInfoOv)
-               ? source.init_Set
-               : source.load_Set;
-            if (sourceCopyCommands != null && this.load_I(source.load_AutismServerInfoOv) <= this.load_I(entry.load_AutismServerInfoOv)) {
+            Collection<String> sourceCopyCommands = source.copyCommands.isEmpty() && this.init_Z_AutismServerInfoOv(source.copyEvidence)
+               ? source.commands
+               : source.copyCommands;
+            if (sourceCopyCommands != null && this.copyEvidenceRank(source.copyEvidence) <= this.copyEvidenceRank(entry.copyEvidence)) {
                for (String command : sourceCopyCommands) {
                   if (command != null && !command.isBlank()) {
-                     entry.load_Set.add(command.trim());
+                     entry.copyCommands.add(command.trim());
                   }
                }
             }
 
-            changed |= beforeCopyEvidence != entry.load_AutismServerInfoOv || beforeCopyCommandCount != entry.load_Set.size();
+            changed |= beforeCopyEvidence != entry.copyEvidence || beforeCopyCommandCount != entry.copyCommands.size();
          }
 
          return changed;
@@ -2228,12 +2228,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean init_Z_Map_Map(Map<String, AutismServerInfoOverlay.PluginAccumulator> target, Map<String, AutismServerInfoOverlay.PluginAccumulator> source) {
+   private boolean mergeAccumulators(Map<String, AutismServerInfoOverlay.PluginAccumulator> target, Map<String, AutismServerInfoOverlay.PluginAccumulator> source) {
       if (target != null && source != null && !source.isEmpty()) {
          boolean changed = false;
 
          for (Entry<String, AutismServerInfoOverlay.PluginAccumulator> entry : source.entrySet()) {
-            changed |= this.init_Z_Map_2(target, entry.getKey(), entry.getValue());
+            changed |= this.mergeAccumulator(target, entry.getKey(), entry.getValue());
          }
 
          return changed;
@@ -2247,7 +2247,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          TreeSet<String> normalized = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
          for (String command : commands) {
-            String token = this.read_Str_3(command);
+            String token = this.normalizeCommandToken(command);
             if (!token.isBlank()) {
                normalized.add(token);
             }
@@ -2265,9 +2265,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String init_Str_Map_Str(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, String command) {
+   private String findOwnerKey(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, String command) {
       if (entries != null && !entries.isEmpty()) {
-         String token = this.read_Str_3(command);
+         String token = this.normalizeCommandToken(command);
          if (token.isBlank()) {
             return null;
          }
@@ -2277,8 +2277,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          for (Entry<String, AutismServerInfoOverlay.PluginAccumulator> mapEntry : new ArrayList<>(entries.entrySet())) {
             AutismServerInfoOverlay.PluginAccumulator entry = mapEntry.getValue();
-            if (entry != null && entry.init_Set != null && entry.init_Set.contains(token)) {
-               int score = this.init_I_AutismServerInfoOv_5(entry);
+            if (entry != null && entry.commands != null && entry.commands.contains(token)) {
+               int score = this.entrySortScore(entry);
                if (score < bestScore) {
                   bestScore = score;
                   bestKey = mapEntry.getKey();
@@ -2286,12 +2286,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             }
          }
 
-         String aliasedPlugin = tick_Map.get(token);
+         String aliasedPlugin = PLUGIN_ALIASES.get(token);
          if (aliasedPlugin != null && !aliasedPlugin.isBlank()) {
-            String aliasedKey = this.load_Str_2(aliasedPlugin);
+            String aliasedKey = this.pluginKey(aliasedPlugin);
             AutismServerInfoOverlay.PluginAccumulator aliasedEntry = entries.get(aliasedKey);
             if (this.load(aliasedEntry)) {
-               int score = this.init_I_AutismServerInfoOv_5(aliasedEntry);
+               int score = this.entrySortScore(aliasedEntry);
                if (bestKey == null || score <= bestScore || !this.load(entries.get(bestKey))) {
                   bestKey = aliasedKey;
                }
@@ -2304,16 +2304,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismServerInfoOverlay.PluginAccumulator init_AutismServerInfoOv_Str_4(String command) {
-      String token = this.read_Str_3(command);
+   private AutismServerInfoOverlay.PluginAccumulator createCommandAccumulator(String command) {
+      String token = this.normalizeCommandToken(command);
       AutismServerInfoOverlay.PluginAccumulator entry = new AutismServerInfoOverlay.PluginAccumulator();
-      entry.init_Str = "/" + token;
-      entry.init_Z = true;
-      entry.init_AutismServerInfoOv_2 = AutismServerInfoOverlay.DetectionType.PLUGIN;
-      entry.init_AutismServerInfoOv_3 = AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE;
-      entry.load_AutismServerInfoOv = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
-      entry.init_AutismServerInfoOv = AutismServerInfoOverlay.MatchConfidence.FEATURE;
-      entry.init_Set.add(token);
+      entry.name = "/" + token;
+      entry.commandBacked = true;
+      entry.resultKind = AutismServerInfoOverlay.DetectionType.PLUGIN;
+      entry.evidence = AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE;
+      entry.copyEvidence = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
+      entry.confidence = AutismServerInfoOverlay.MatchConfidence.FEATURE;
+      entry.commands.add(token);
       return entry;
    }
 
@@ -2323,23 +2323,23 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          for (AutismServerInfoOverlay.PluginAccumulator entry : entries.values()) {
             if (entry != null) {
-               changed |= this.init_Z_Set(entry.init_Set);
-               changed |= this.init_Z_Set(entry.load_Set);
+               changed |= this.init_Z_Set(entry.commands);
+               changed |= this.init_Z_Set(entry.copyCommands);
             }
          }
 
          TreeSet<String> allCommands = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
          for (AutismServerInfoOverlay.PluginAccumulator entry : entries.values()) {
-            if (entry != null && entry.init_Set != null) {
-               allCommands.addAll(entry.init_Set);
+            if (entry != null && entry.commands != null) {
+               allCommands.addAll(entry.commands);
             }
          }
 
          Map<String, String> ownerByCommand = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
          for (String command : allCommands) {
-            String ownerKey = this.init_Str_Map_Str(entries, command);
+            String ownerKey = this.findOwnerKey(entries, command);
             if (ownerKey != null && !ownerKey.isBlank()) {
                ownerByCommand.put(command, ownerKey);
             }
@@ -2348,17 +2348,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          for (Entry<String, AutismServerInfoOverlay.PluginAccumulator> mapEntry : new ArrayList<>(entries.entrySet())) {
             String key = mapEntry.getKey();
             AutismServerInfoOverlay.PluginAccumulator entry = mapEntry.getValue();
-            if (key != null && entry != null && !entry.init_Set.isEmpty()) {
-               for (String command : new ArrayList<>(entry.init_Set)) {
+            if (key != null && entry != null && !entry.commands.isEmpty()) {
+               for (String command : new ArrayList<>(entry.commands)) {
                   String ownerKey = ownerByCommand.get(command);
                   if (ownerKey != null && !ownerKey.equals(key)) {
                      AutismServerInfoOverlay.PluginAccumulator owner = entries.get(ownerKey);
                      if (owner != null) {
-                        if (owner.init_Set.add(command)) {
+                        if (owner.commands.add(command)) {
                            changed = true;
                         }
 
-                        if (this.init_Z_AutismServerInfoOv(owner.load_AutismServerInfoOv) && owner.load_Set.add(command)) {
+                        if (this.init_Z_AutismServerInfoOv(owner.copyEvidence) && owner.copyCommands.add(command)) {
                            changed = true;
                         }
 
@@ -2368,8 +2368,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                            changed |= beforeGuiCount != owner.write.size();
                         }
 
-                        entry.init_Set.remove(command);
-                        entry.load_Set.remove(command);
+                        entry.commands.remove(command);
+                        entry.copyCommands.remove(command);
                         changed = true;
                      }
                   }
@@ -2386,38 +2386,38 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             if (key == null || entry == null) {
                removeKeys.add(key);
             } else if (this.init_Z_AutismServerInfoOv_4(entry)) {
-               if (entry.init_Set.isEmpty()) {
+               if (entry.commands.isEmpty()) {
                   removeKeys.add(key);
-               } else if (entry.init_Set.size() == 1) {
-                  String command = entry.init_Set.iterator().next();
+               } else if (entry.commands.size() == 1) {
+                  String command = entry.commands.iterator().next();
                   String expectedName = "/" + command;
-                  if (!expectedName.equals(entry.init_Str)) {
-                     entry.init_Str = expectedName;
+                  if (!expectedName.equals(entry.name)) {
+                     entry.name = expectedName;
                      changed = true;
                   }
 
-                  if (entry.init_AutismServerInfoOv_2 != AutismServerInfoOverlay.DetectionType.PLUGIN) {
-                     entry.init_AutismServerInfoOv_2 = AutismServerInfoOverlay.DetectionType.PLUGIN;
+                  if (entry.resultKind != AutismServerInfoOverlay.DetectionType.PLUGIN) {
+                     entry.resultKind = AutismServerInfoOverlay.DetectionType.PLUGIN;
                      changed = true;
                   }
 
-                  if (entry.init_AutismServerInfoOv_3 != AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE) {
-                     entry.init_AutismServerInfoOv_3 = AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE;
+                  if (entry.evidence != AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE) {
+                     entry.evidence = AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE;
                      changed = true;
                   }
 
-                  if (entry.load_AutismServerInfoOv != AutismServerInfoOverlay.EvidenceSource.UNKNOWN) {
-                     entry.load_AutismServerInfoOv = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
-                     entry.load_Set.clear();
+                  if (entry.copyEvidence != AutismServerInfoOverlay.EvidenceSource.UNKNOWN) {
+                     entry.copyEvidence = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
+                     entry.copyCommands.clear();
                      changed = true;
                   }
 
-                  entry.init_AutismServerInfoOv = AutismServerInfoOverlay.MatchConfidence.FEATURE;
+                  entry.confidence = AutismServerInfoOverlay.MatchConfidence.FEATURE;
                } else {
-                  for (String command : entry.init_Set) {
-                     String hintKey = this.load_Str_2("command_" + command);
+                  for (String command : entry.commands) {
+                     String hintKey = this.pluginKey("command_" + command);
                      if (!entries.containsKey(hintKey) && !addEntries.containsKey(hintKey)) {
-                        addEntries.put(hintKey, this.init_AutismServerInfoOv_Str_4(command));
+                        addEntries.put(hintKey, this.createCommandAccumulator(command));
                      }
                   }
 
@@ -2449,7 +2449,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          int count = 0;
 
          for (AutismServerInfoOverlay.PluginAccumulator entry : entries.values()) {
-            if (entry != null && entry.init_Str != null && !entry.init_Str.isBlank()) {
+            if (entry != null && entry.name != null && !entry.name.isBlank()) {
                count++;
             }
          }
@@ -2460,14 +2460,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_AutismServerInfoOv_Str_2(AutismServerInfoOverlay.ActiveScanSession session, String message) {
-      if (clear_Z) {
-         String generation = session == null ? "-" : Long.toString(session.init_J);
+   private void trace(AutismServerInfoOverlay.ActiveScanSession session, String message) {
+      if (TRACE_PLUGIN_SCAN) {
+         String generation = session == null ? "-" : Long.toString(session.generation);
          System.out.println("[AUTISM][PluginScan][gen=" + generation + "] " + message);
       }
    }
 
-   private AutismServerInfoOverlay.DetectionType init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_2(
+   private AutismServerInfoOverlay.DetectionType mergeDetectionType(
       AutismServerInfoOverlay.DetectionType current, AutismServerInfoOverlay.DetectionType candidate
    ) {
       if (candidate == null) {
@@ -2481,11 +2481,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismServerInfoOverlay.DetectionType init_AutismServerInfoOv_Str(
+   private AutismServerInfoOverlay.DetectionType detectionTypeFor(
       String plugin, AutismServerInfoOverlay.EvidenceSource evidence, AutismServerInfoOverlay.MatchConfidence confidence
    ) {
-      String key = this.load_Str_2(plugin);
-      AutismServerInfoOverlay.DetectionType stored = this.close_Map.get(key);
+      String key = this.pluginKey(plugin);
+      AutismServerInfoOverlay.DetectionType stored = this.pluginDetectionTypes.get(key);
       if (stored != null) {
          return stored;
       }
@@ -2496,7 +2496,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             && evidence != AutismServerInfoOverlay.EvidenceSource.NAMESPACE) {
             String lower = plugin == null ? "" : plugin.trim().toLowerCase(Locale.ROOT);
 
-            for (String featureLabel : run_Map.values()) {
+            for (String featureLabel : FEATURE_KEYWORDS.values()) {
                if (lower.equals(featureLabel.toLowerCase(Locale.ROOT))) {
                   return AutismServerInfoOverlay.DetectionType.FEATURE;
                }
@@ -2511,11 +2511,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_Str_AutismServerInfoOv_2(
+   private AutismServerInfoOverlay.EvidenceSource copyEvidenceFor(
       String plugin, AutismServerInfoOverlay.EvidenceSource evidence
    ) {
       if (evidence == AutismServerInfoOverlay.EvidenceSource.UNKNOWN || evidence == null) {
-         List<String> commands = this.init_List_Map_Str(this.init_Map, plugin);
+         List<String> commands = this.lookupPluginList(this.pluginCommands, plugin);
          if (commands != null && !commands.isEmpty()) {
             return AutismServerInfoOverlay.EvidenceSource.ROOT_HINT;
          }
@@ -2524,17 +2524,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return this.load_Z(evidence) ? evidence : AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
    }
 
-   private List<String> init_List_Map_Str(Map<String, List<String>> map, String plugin) {
+   private List<String> lookupPluginList(Map<String, List<String>> map, String plugin) {
       if (map != null && !map.isEmpty() && plugin != null && !plugin.isBlank()) {
          List<String> direct = map.get(plugin);
          if (direct != null) {
             return direct;
          }
 
-         String key = this.load_Str_2(plugin);
+         String key = this.pluginKey(plugin);
 
          for (Entry<String, List<String>> entry : map.entrySet()) {
-            if (entry.getKey() != null && this.load_Str_2(entry.getKey()).equals(key)) {
+            if (entry.getKey() != null && this.pluginKey(entry.getKey()).equals(key)) {
                return entry.getValue();
             }
          }
@@ -2557,8 +2557,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             return false;
          }
 
-         String cKey = this.load_Str_2(c);
-         String oldKey = this.load_Str_2(old);
+         String cKey = this.pluginKey(c);
+         String oldKey = this.pluginKey(old);
          if (!cKey.equals(oldKey)) {
             return false;
          }
@@ -2573,73 +2573,73 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_Map_Z(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, boolean resetSelection) {
+   private void applyPluginEntries(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, boolean resetSelection) {
       Map<String, AutismServerInfoOverlay.PluginAccumulator> normalizedEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
       if (entries != null) {
          normalizedEntries.putAll(entries);
       }
 
       this.init_Z_Map(normalizedEntries);
-      this.load_List.clear();
-      this.init_Map.clear();
-      this.load_Map.clear();
-      this.read_Map.clear();
-      this.update_Map.clear();
-      this.sync_Map.clear();
-      this.open_Map.clear();
-      this.flush_Map.clear();
-      this.close_Map.clear();
+      this.detectedPlugins.clear();
+      this.pluginCommands.clear();
+      this.pluginChannels.clear();
+      this.pluginGuis.clear();
+      this.pluginEvidence.clear();
+      this.pluginCopyEvidence.clear();
+      this.pluginCopyCommands.clear();
+      this.pluginConfidence.clear();
+      this.pluginDetectionTypes.clear();
       List<AutismServerInfoOverlay.PluginAccumulator> sortedEntries = new ArrayList<>(normalizedEntries.values());
-      sortedEntries.removeIf(entryx -> entryx == null || entryx.init_Str == null || entryx.init_Str.isBlank());
-      sortedEntries.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.init_Str, b.init_Str));
+      sortedEntries.removeIf(entryx -> entryx == null || entryx.name == null || entryx.name.isBlank());
+      sortedEntries.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.name, b.name));
 
       for (AutismServerInfoOverlay.PluginAccumulator entry : sortedEntries) {
-         String plugin = entry.init_Str;
-         List<String> commands = new ArrayList<>(entry.init_Set);
+         String plugin = entry.name;
+         List<String> commands = new ArrayList<>(entry.commands);
          commands.removeIf(cmd -> cmd == null || cmd.isBlank());
          commands.sort(String.CASE_INSENSITIVE_ORDER);
-         this.load_List.add(plugin);
-         this.init_Map.put(plugin, commands);
-         this.load_Map.put(plugin, this.init_List_Collection(entry.read));
+         this.detectedPlugins.add(plugin);
+         this.pluginCommands.put(plugin, commands);
+         this.pluginChannels.put(plugin, this.distinctRows(entry.read));
          List<String> guis = new ArrayList<>(entry.write);
          guis.removeIf(gui -> gui == null || gui.isBlank());
          guis.sort(String.CASE_INSENSITIVE_ORDER);
-         this.read_Map.put(plugin, List.copyOf(guis));
-         this.update_Map
+         this.pluginGuis.put(plugin, List.copyOf(guis));
+         this.pluginEvidence
             .put(
-               this.load_Str_2(plugin), entry.init_AutismServerInfoOv_3 == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : entry.init_AutismServerInfoOv_3
+               this.pluginKey(plugin), entry.evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : entry.evidence
             );
-         this.sync_Map
-            .put(this.load_Str_2(plugin), entry.load_AutismServerInfoOv == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : entry.load_AutismServerInfoOv);
-         List<String> copyCommands = new ArrayList<>(entry.load_Set);
+         this.pluginCopyEvidence
+            .put(this.pluginKey(plugin), entry.copyEvidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : entry.copyEvidence);
+         List<String> copyCommands = new ArrayList<>(entry.copyCommands);
          copyCommands.removeIf(cmd -> cmd == null || cmd.isBlank());
          copyCommands.sort(String.CASE_INSENSITIVE_ORDER);
-         this.open_Map.put(plugin, List.copyOf(copyCommands));
-         this.flush_Map
+         this.pluginCopyCommands.put(plugin, List.copyOf(copyCommands));
+         this.pluginConfidence
             .put(
-               this.load_Str_2(plugin),
-               entry.init_AutismServerInfoOv == null
-                  ? this.init_AutismServerInfoOv_AutismServerInfoOv(entry.init_AutismServerInfoOv_3)
-                  : entry.init_AutismServerInfoOv
+               this.pluginKey(plugin),
+               entry.confidence == null
+                  ? this.confidenceForEvidence(entry.evidence)
+                  : entry.confidence
             );
-         this.close_Map
+         this.pluginDetectionTypes
             .put(
-               this.load_Str_2(plugin), entry.init_AutismServerInfoOv_2 == null ? AutismServerInfoOverlay.DetectionType.PLUGIN : entry.init_AutismServerInfoOv_2
+               this.pluginKey(plugin), entry.resultKind == null ? AutismServerInfoOverlay.DetectionType.PLUGIN : entry.resultKind
             );
       }
 
       if (resetSelection) {
-         this.init_CacheEntry.jumpTo(0, 0);
-         this.sync_Str = null;
-      } else if (this.sync_Str != null && !this.flush_Z_2(this.sync_Str)) {
-         this.sync_Str = null;
+         this.scroll.jumpTo(0, 0);
+         this.selectedPlugin = null;
+      } else if (this.selectedPlugin != null && !this.isDetected(this.selectedPlugin)) {
+         this.selectedPlugin = null;
       }
 
-      this.a_V_2();
+      this.invalidateDetails();
    }
 
-   private boolean init_Z_Str_6(String key) {
-      for (String namespace : load_StrArr) {
+   private boolean isProbedNamespace(String key) {
+      for (String namespace : PROBED_NAMESPACES) {
          if (namespace.equalsIgnoreCase(key)) {
             return true;
          }
@@ -2648,7 +2648,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return false;
    }
 
-   private String read_Str_3(String raw) {
+   private String normalizeCommandToken(String raw) {
       if (raw == null) {
          return "";
       }
@@ -2679,8 +2679,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          String clean = token.trim().toLowerCase(Locale.ROOT);
          if (clean.length() < 2) {
             return false;
-         } else if (!sync_Set.contains(clean) && !flush_Set.contains(clean)) {
-            return this.init_Set_3().contains(clean)
+         } else if (!PLATFORM_NAMESPACES.contains(clean) && !VANILLA_COMMANDS.contains(clean)) {
+            return this.knownPlayerNames().contains(clean)
                ? false
                : clean.chars().allMatch(ch -> Character.isLetterOrDigit(ch) || ch == 95 || ch == 45 || ch == 46 || ch == 58);
          } else {
@@ -2692,18 +2692,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private boolean init_Z_Map(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, String rawCommand, AutismServerInfoOverlay.EvidenceSource source) {
-      String token = this.read_Str_3(rawCommand);
+      String token = this.normalizeCommandToken(rawCommand);
       if (!this.load_Z_3(token)) {
          return false;
       }
 
-      this.load_V_3(token);
+      this.rememberCommandToken(token);
       if (token.contains(":")) {
          String[] parts = token.split(":", 2);
          String namespace = parts[0].trim().toLowerCase(Locale.ROOT);
          String command = parts.length > 1 ? parts[1].trim().toLowerCase(Locale.ROOT) : "";
-         return this.load_Z_3(namespace) && !sync_Set.contains(namespace)
-            ? this.init_Z_Map(
+         return this.load_Z_3(namespace) && !PLATFORM_NAMESPACES.contains(namespace)
+            ? this.mergePluginEntry(
                entries,
                namespace,
                namespace,
@@ -2720,32 +2720,32 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       String plugin = null;
       AutismServerInfoOverlay.MatchConfidence confidence = AutismServerInfoOverlay.MatchConfidence.FEATURE;
       AutismServerInfoOverlay.EvidenceSource evidence = source == null ? AutismServerInfoOverlay.EvidenceSource.FEATURE : source;
-      if (this.init_Z_Str_6(token)) {
+      if (this.isProbedNamespace(token)) {
          plugin = token;
          confidence = AutismServerInfoOverlay.MatchConfidence.EXACT;
          evidence = AutismServerInfoOverlay.EvidenceSource.NAMESPACE;
-      } else if (tick_Map.containsKey(token)) {
-         plugin = tick_Map.get(token);
+      } else if (PLUGIN_ALIASES.containsKey(token)) {
+         plugin = PLUGIN_ALIASES.get(token);
          confidence = AutismServerInfoOverlay.MatchConfidence.STRONG;
          evidence = AutismServerInfoOverlay.EvidenceSource.ROOT_HINT;
       }
 
       if (plugin != null && !plugin.isBlank()) {
-         return this.init_Z_Map(
+         return this.mergePluginEntry(
             entries, null, plugin, List.of(token), List.of(), List.of(), true, evidence, confidence, AutismServerInfoOverlay.DetectionType.PLUGIN
          );
       }
 
-      String ownerKey = this.init_Str_Map_Str(entries, token);
+      String ownerKey = this.findOwnerKey(entries, token);
       if (ownerKey != null) {
          AutismServerInfoOverlay.PluginAccumulator owner = entries.get(ownerKey);
          if (owner == null) {
             return false;
          }
 
-         boolean changed = owner.init_Set.add(token);
-         if (this.init_Z_AutismServerInfoOv(owner.load_AutismServerInfoOv)) {
-            changed |= owner.load_Set.add(token);
+         boolean changed = owner.commands.add(token);
+         if (this.init_Z_AutismServerInfoOv(owner.copyEvidence)) {
+            changed |= owner.copyCommands.add(token);
          }
 
          return changed;
@@ -2753,9 +2753,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          return source != AutismServerInfoOverlay.EvidenceSource.USER_AUTOCOMPLETE
                && source != AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI
                && source != AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE
-               && !run_Map.containsKey(token)
+               && !FEATURE_KEYWORDS.containsKey(token)
             ? false
-            : this.init_Z_Map(
+            : this.mergePluginEntry(
                entries,
                "command_" + token,
                "/" + token,
@@ -2772,20 +2772,20 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private Set<String> auditActiveKnownPlayers;
 
-   private Set<String> init_Set_3() {
+   private Set<String> knownPlayerNames() {
       if (this.auditActiveKnownPlayers != null) {
          return this.auditActiveKnownPlayers;
       }
 
       Set<String> names = new HashSet<>();
-      if (init_Minecraft != null) {
-         if (init_Minecraft.player != null && init_Minecraft.player.getGameProfile() != null) {
-            auditAddPlayerName(names, init_Minecraft.player.getGameProfile().name());
+      if (MC != null) {
+         if (MC.player != null && MC.player.getGameProfile() != null) {
+            auditAddPlayerName(names, MC.player.getGameProfile().name());
          }
 
          // Tab-list entries only: level players include NPCs whose names can match real commands.
-         if (init_Minecraft.getConnection() != null) {
-            for (PlayerInfo player : init_Minecraft.getConnection().getOnlinePlayers()) {
+         if (MC.getConnection() != null) {
+            for (PlayerInfo player : MC.getConnection().getOnlinePlayers()) {
                if (player != null && player.getProfile() != null) {
                   auditAddPlayerName(names, player.getProfile().name());
                }
@@ -2807,8 +2807,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private static String auditSelfPlayerNameLower() {
-      if (init_Minecraft != null && init_Minecraft.player != null && init_Minecraft.player.getGameProfile() != null) {
-         String name = init_Minecraft.player.getGameProfile().name();
+      if (MC != null && MC.player != null && MC.player.getGameProfile() != null) {
+         String name = MC.player.getGameProfile().name();
          if (name != null && !name.isBlank()) {
             return name.trim().toLowerCase(Locale.ROOT);
          }
@@ -2839,10 +2839,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (state == null) {
          return false;
       }
-      if (state.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.ROOT) {
+      if (state.kind == AutismServerInfoOverlay.ProbeKind.ROOT) {
          return true;
       }
-      String query = state.init_Str == null ? "" : state.init_Str.trim();
+      String query = state.query == null ? "" : state.query.trim();
       return query.startsWith("/") && query.length() <= 2;
    }
 
@@ -2873,8 +2873,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          if (knownPlayers.contains(lower) || knownPlayers.contains(stripped)) {
             playerMatches++;
          }
-         String key = this.load_Str_2(clean);
-         if (!key.isEmpty() && (tick_Map.containsKey(key) || this.init_Z_Str_6(key))) {
+         String key = this.pluginKey(clean);
+         if (!key.isEmpty() && (PLUGIN_ALIASES.containsKey(key) || this.isProbedNamespace(key))) {
             knownPluginMatches++;
          }
       }
@@ -2908,18 +2908,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          return false;
       } else {
          String clean = candidate.trim();
-         String key = this.load_Str_2(clean);
+         String key = this.pluginKey(clean);
          if (key.isEmpty()) {
             return false;
          } else if (key.length() < 2) {
             return false;
          } else if (clean.contains(" ") || clean.contains("/") || clean.contains(":")) {
             return false;
-         } else if (sync_Set.contains(key)) {
+         } else if (PLATFORM_NAMESPACES.contains(key)) {
             return false;
          }
 
-         Set<String> players = this.init_Set_3();
+         Set<String> players = this.knownPlayerNames();
          if (players.contains(key) || players.contains(clean.toLowerCase(Locale.ROOT))) {
             return false;
          } else {
@@ -2932,15 +2932,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_Str_11(String raw) {
-      String token = this.read_Str_3(raw);
+      String token = this.normalizeCommandToken(raw);
       if (this.load_Z_3(token)) {
-         this.load_V_3(token);
+         this.rememberCommandToken(token);
       }
    }
 
-   private void load_V_3(String token) {
-      if (this.load_Set.size() < 8192 || this.load_Set.contains(token)) {
-         this.load_Set.add(token);
+   private void rememberCommandToken(String token) {
+      if (this.observedCommandTokens.size() < 8192 || this.observedCommandTokens.contains(token)) {
+         this.observedCommandTokens.add(token);
       }
    }
 
@@ -2949,15 +2949,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void load_V(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
-      if (!this.load_Set.isEmpty()) {
+      if (!this.observedCommandTokens.isEmpty()) {
          Map<String, Set<String>> inferredMatches = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-         for (String command : this.load_Set) {
+         for (String command : this.observedCommandTokens) {
             String plugin = null;
-            if (this.init_Z_Str_6(command)) {
+            if (this.isProbedNamespace(command)) {
                plugin = command;
-            } else if (tick_Map.containsKey(command)) {
-               plugin = tick_Map.get(command);
+            } else if (PLUGIN_ALIASES.containsKey(command)) {
+               plugin = PLUGIN_ALIASES.get(command);
             }
 
             if (plugin != null && !plugin.isBlank()) {
@@ -2966,13 +2966,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
 
          for (Entry<String, Set<String>> entry : inferredMatches.entrySet()) {
-            this.init_Z_Map(entries, entry.getKey(), entry.getValue(), true, AutismServerInfoOverlay.EvidenceSource.ROOT_HINT);
+            this.mergePluginEntry(entries, entry.getKey(), entry.getValue(), true, AutismServerInfoOverlay.EvidenceSource.ROOT_HINT);
          }
       }
    }
 
    private boolean init_Z_Map_Str(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, String rawCommand) {
-      String token = this.read_Str_3(rawCommand);
+      String token = this.normalizeCommandToken(rawCommand);
       if (!this.read_Z_2(token)) {
          return false;
       }
@@ -2981,13 +2981,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      String ownerKey = this.init_Str_Map_Str(entries, token);
+      String ownerKey = this.findOwnerKey(entries, token);
       if (ownerKey != null) {
          AutismServerInfoOverlay.PluginAccumulator owner = entries.get(ownerKey);
-         if (owner != null && !owner.init_Set.contains(token)) {
-            owner.init_Set.add(token);
-            if (this.init_Z_AutismServerInfoOv(owner.load_AutismServerInfoOv)) {
-               owner.load_Set.add(token);
+         if (owner != null && !owner.commands.contains(token)) {
+            owner.commands.add(token);
+            if (this.init_Z_AutismServerInfoOv(owner.copyEvidence)) {
+               owner.copyCommands.add(token);
             }
 
             return true;
@@ -2995,7 +2995,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             return false;
          }
       } else {
-         return this.init_Z_Map(
+         return this.mergePluginEntry(
             entries,
             "command_" + token,
             "/" + token,
@@ -3017,26 +3017,26 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          String clean = token.trim().toLowerCase(Locale.ROOT);
          if (clean.length() < 3) {
             return false;
-         } else if (write_Set.contains(clean)) {
+         } else if (SERVER_META_COMMANDS.contains(clean)) {
             return false;
-         } else if (!sync_Set.contains(clean) && !flush_Set.contains(clean)) {
-            return run_Map.containsKey(clean) ? false : !tick_Map.containsKey(clean) && !this.init_Z_Str_6(clean);
+         } else if (!PLATFORM_NAMESPACES.contains(clean) && !VANILLA_COMMANDS.contains(clean)) {
+            return FEATURE_KEYWORDS.containsKey(clean) ? false : !PLUGIN_ALIASES.containsKey(clean) && !this.isProbedNamespace(clean);
          } else {
             return false;
          }
       }
    }
 
-   private boolean load_Z(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
-      String address = this.load_Str_11();
+   private boolean applyCatalogFingerprints(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
+      String address = this.normalizedServerAddress();
       if (address != null && !address.isBlank()) {
          boolean changed = false;
 
-         for (PluginSignatureCatalog.Inner_CachePool fingerprint : PluginSignatureCatalog.fingerprints(address, this.close_Str_2())) {
+         for (PluginSignatureCatalog.Inner_CachePool fingerprint : PluginSignatureCatalog.fingerprints(address, this.serverBrand())) {
             if (fingerprint != null && fingerprint.plugin() != null && !fingerprint.plugin().isBlank()) {
                changed |= this.init_Z_Map_bQ_CachePool(entries, fingerprint);
-               AutismServerInfoOverlay.MatchConfidence confidence = this.init_AutismServerInfoOv_bQ_CachePool(fingerprint);
-               changed |= this.init_Z_Map(
+               AutismServerInfoOverlay.MatchConfidence confidence = this.confidenceForFingerprint(fingerprint);
+               changed |= this.mergePluginEntry(
                   entries,
                   fingerprint.load(),
                   fingerprint.plugin(),
@@ -3056,14 +3056,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv_bQ_CachePool(PluginSignatureCatalog.Inner_CachePool fingerprint) {
+   private AutismServerInfoOverlay.MatchConfidence confidenceForFingerprint(PluginSignatureCatalog.Inner_CachePool fingerprint) {
       String basis = fingerprint == null ? "" : fingerprint.read();
       return "embedded".equalsIgnoreCase(basis) ? AutismServerInfoOverlay.MatchConfidence.STRONG : AutismServerInfoOverlay.MatchConfidence.EXACT;
    }
 
    private boolean init_Z_Map_bQ_CachePool(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, PluginSignatureCatalog.Inner_CachePool fingerprint) {
       if (entries != null && !entries.isEmpty() && fingerprint != null) {
-         Set<String> keywords = this.init_Set_bQ_CachePool(fingerprint);
+         Set<String> keywords = this.fingerprintKeywords(fingerprint);
          if (keywords.isEmpty()) {
             return false;
          }
@@ -3075,16 +3075,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             String key = mapEntry.getKey();
             AutismServerInfoOverlay.PluginAccumulator entry = mapEntry.getValue();
             if (key != null && key.startsWith("feature") && entry != null && this.init_Z_AutismServerInfoOv_Set(entry, keywords)) {
-               changed |= this.init_Z_Map(
+               changed |= this.mergePluginEntry(
                   entries,
                   fingerprint.load(),
                   fingerprint.plugin(),
-                  entry.init_Set,
+                  entry.commands,
                   fingerprint.channels(),
                   entry.write,
-                  entry.init_Z,
+                  entry.commandBacked,
                   AutismServerInfoOverlay.EvidenceSource.PAYLOAD_CHANNEL,
-                  this.init_AutismServerInfoOv_bQ_CachePool(fingerprint)
+                  this.confidenceForFingerprint(fingerprint)
                );
                removeKeys.add(key);
             }
@@ -3092,9 +3092,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          for (String key : removeKeys) {
             entries.remove(key);
-            this.update_Map.remove(key);
-            this.flush_Map.remove(key);
-            this.close_Map.remove(key);
+            this.pluginEvidence.remove(key);
+            this.pluginConfidence.remove(key);
+            this.pluginDetectionTypes.remove(key);
             changed = true;
          }
 
@@ -3104,13 +3104,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private Set<String> init_Set_bQ_CachePool(PluginSignatureCatalog.Inner_CachePool fingerprint) {
+   private Set<String> fingerprintKeywords(PluginSignatureCatalog.Inner_CachePool fingerprint) {
       LinkedHashSet<String> keywords = new LinkedHashSet<>();
-      this.init_V_Set_Str_3(keywords, fingerprint.plugin());
-      this.init_V_Set_Str_3(keywords, fingerprint.load());
+      this.addFeatureKeywords(keywords, fingerprint.plugin());
+      this.addFeatureKeywords(keywords, fingerprint.load());
       if (fingerprint.channels() != null) {
          for (String channel : fingerprint.channels()) {
-            this.init_V_Set_Str_3(keywords, channel);
+            this.addFeatureKeywords(keywords, channel);
          }
       }
 
@@ -3118,11 +3118,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return keywords;
    }
 
-   private void init_V_Set_Str_3(Set<String> out, String text) {
+   private void addFeatureKeywords(Set<String> out, String text) {
       if (out != null && text != null && !text.isBlank()) {
          String lower = text.toLowerCase(Locale.ROOT);
 
-         for (Entry<String, String> entry : run_Map.entrySet()) {
+         for (Entry<String, String> entry : FEATURE_KEYWORDS.entrySet()) {
             String key = entry.getKey().toLowerCase(Locale.ROOT);
             String label = entry.getValue().toLowerCase(Locale.ROOT);
             if (lower.contains(key) || lower.contains(label.replace(" ", "")) || lower.contains(label)) {
@@ -3136,8 +3136,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private boolean init_Z_AutismServerInfoOv_Set(AutismServerInfoOverlay.PluginAccumulator entry, Set<String> keywords) {
       if (entry != null && keywords != null && !keywords.isEmpty()) {
          List<String> evidenceText = new ArrayList<>();
-         evidenceText.add(entry.init_Str);
-         evidenceText.addAll(entry.init_Set);
+         evidenceText.add(entry.name);
+         evidenceText.addAll(entry.commands);
          evidenceText.addAll(entry.write);
 
          for (String text : evidenceText) {
@@ -3160,24 +3160,24 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void block_V_2() {
       if (this.tick_Z) {
-         if (this.load_Z(this.poll_Map)) {
+         if (this.applyCatalogFingerprints(this.poll_Map)) {
             this.init_Z_Map(this.poll_Map);
-            AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
+            AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
             if (session != null) {
-               session.read_J = System.currentTimeMillis();
+               session.lastResponseAt = System.currentTimeMillis();
             }
          }
-      } else if (this.pop_Z) {
-         String address = this.load_Str_11();
-         long revision = PluginSignatureCatalog.revision(address, this.close_Str_2());
-         if (revision != this.sync_J) {
-            this.sync_J = revision;
+      } else if (this.scanDone) {
+         String address = this.normalizedServerAddress();
+         long revision = PluginSignatureCatalog.revision(address, this.serverBrand());
+         if (revision != this.catalogRevision) {
+            this.catalogRevision = revision;
             if (revision > 0L) {
-               Map<String, AutismServerInfoOverlay.PluginAccumulator> entries = this.init_Map_3();
-               if (this.load_Z(entries)) {
-                  this.init_V_Map_Z(entries, false);
-                  if (this.pop_Z) {
-                     this.level_V_2();
+               Map<String, AutismServerInfoOverlay.PluginAccumulator> entries = this.snapshotPluginEntries();
+               if (this.applyCatalogFingerprints(entries)) {
+                  this.applyPluginEntries(entries, false);
+                  if (this.scanDone) {
+                     this.saveScanToConfig();
                   }
                }
             }
@@ -3185,7 +3185,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private int init_I_Map(
+   private int addProbes(
       Map<Integer, AutismServerInfoOverlay.ProbeSpec> probes,
       Set<String> seen,
       int nextId,
@@ -3195,22 +3195,22 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       for (String base : baseCommands) {
          if (base != null && !base.isBlank()) {
             String trimmed = base.trim();
-            nextId = this.init_I_Map(probes, seen, nextId, trimmed, kind, null);
-            nextId = this.init_I_Map(probes, seen, nextId, trimmed + " ", kind, null);
+            nextId = this.addProbe(probes, seen, nextId, trimmed, kind, null);
+            nextId = this.addProbe(probes, seen, nextId, trimmed + " ", kind, null);
          }
       }
 
       return nextId;
    }
 
-   private Map<Integer, AutismServerInfoOverlay.ProbeSpec> load_Map() {
+   private Map<Integer, AutismServerInfoOverlay.ProbeSpec> buildProbePlan() {
       Map<Integer, AutismServerInfoOverlay.ProbeSpec> probes = new LinkedHashMap<>();
       Set<String> seen = new HashSet<>();
-      int nextId = this.value_I_2();
-      nextId = this.init_I_Map(probes, seen, nextId, "/", AutismServerInfoOverlay.ProbeKind.ROOT, null);
-      nextId = this.init_I_Map(probes, seen, nextId, "/ ", AutismServerInfoOverlay.ProbeKind.ROOT, null);
-      nextId = this.init_I_Map(probes, seen, nextId, AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST, "/plugins", "/pl", "/bukkit:plugins", "/bukkit:pl");
-      nextId = this.init_I_Map(
+      int nextId = this.allocateProbeId();
+      nextId = this.addProbe(probes, seen, nextId, "/", AutismServerInfoOverlay.ProbeKind.ROOT, null);
+      nextId = this.addProbe(probes, seen, nextId, "/ ", AutismServerInfoOverlay.ProbeKind.ROOT, null);
+      nextId = this.addProbes(probes, seen, nextId, AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST, "/plugins", "/pl", "/bukkit:plugins", "/bukkit:pl");
+      nextId = this.addProbes(
          probes,
          seen,
          nextId,
@@ -3222,41 +3222,41 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          "/bukkit:ver",
          "/bukkit:version"
       );
-      nextId = this.init_I_Map(probes, seen, nextId, AutismServerInfoOverlay.ProbeKind.HELP, "/help", "/?", "/bukkit:help", "/minecraft:help");
+      nextId = this.addProbes(probes, seen, nextId, AutismServerInfoOverlay.ProbeKind.HELP, "/help", "/?", "/bukkit:help", "/minecraft:help");
 
       for (int i = 0; i < "abcdefghijklmnopqrstuvwxyz0123456789".length(); i++) {
          char prefix = "abcdefghijklmnopqrstuvwxyz0123456789".charAt(i);
          String rootProbe = "/" + prefix;
-         nextId = this.init_I_Map(probes, seen, nextId, rootProbe, AutismServerInfoOverlay.ProbeKind.ROOT, String.valueOf(prefix));
-         nextId = this.init_I_Map(probes, seen, nextId, "/help " + prefix, AutismServerInfoOverlay.ProbeKind.HELP, String.valueOf(prefix));
-         nextId = this.init_I_Map(probes, seen, nextId, "/? " + prefix, AutismServerInfoOverlay.ProbeKind.HELP, String.valueOf(prefix));
+         nextId = this.addProbe(probes, seen, nextId, rootProbe, AutismServerInfoOverlay.ProbeKind.ROOT, String.valueOf(prefix));
+         nextId = this.addProbe(probes, seen, nextId, "/help " + prefix, AutismServerInfoOverlay.ProbeKind.HELP, String.valueOf(prefix));
+         nextId = this.addProbe(probes, seen, nextId, "/? " + prefix, AutismServerInfoOverlay.ProbeKind.HELP, String.valueOf(prefix));
       }
 
-      for (String namespace : load_StrArr) {
-         nextId = this.init_I_Map(probes, seen, nextId, "/" + namespace + ":", AutismServerInfoOverlay.ProbeKind.NAMESPACE, namespace);
+      for (String namespace : PROBED_NAMESPACES) {
+         nextId = this.addProbe(probes, seen, nextId, "/" + namespace + ":", AutismServerInfoOverlay.ProbeKind.NAMESPACE, namespace);
       }
 
-      for (String plugin : sync_StrArr) {
-         nextId = this.init_I_Map(probes, seen, nextId, "/version " + plugin, AutismServerInfoOverlay.ProbeKind.VERSION, plugin);
-         nextId = this.init_I_Map(probes, seen, nextId, "/ver " + plugin, AutismServerInfoOverlay.ProbeKind.VERSION, plugin);
-         nextId = this.init_I_Map(probes, seen, nextId, "/help " + plugin, AutismServerInfoOverlay.ProbeKind.HELP, plugin);
+      for (String plugin : VERSION_PROBE_PLUGINS) {
+         nextId = this.addProbe(probes, seen, nextId, "/version " + plugin, AutismServerInfoOverlay.ProbeKind.VERSION, plugin);
+         nextId = this.addProbe(probes, seen, nextId, "/ver " + plugin, AutismServerInfoOverlay.ProbeKind.VERSION, plugin);
+         nextId = this.addProbe(probes, seen, nextId, "/help " + plugin, AutismServerInfoOverlay.ProbeKind.HELP, plugin);
       }
 
       return probes;
    }
 
-   private int value_I_2() {
-      return this.init_bR.init();
+   private int allocateProbeId() {
+      return this.scanIdAllocator.init();
    }
 
    public boolean hasServer() {
-      return init_Minecraft != null && init_Minecraft.getConnection() != null && !this.load_Str_11().isBlank();
+      return MC != null && MC.getConnection() != null && !this.normalizedServerAddress().isBlank();
    }
 
    public boolean hasCommandTree() {
       try {
-         if (init_Minecraft != null && init_Minecraft.getConnection() != null) {
-            CommandDispatcher<?> dispatcher = init_Minecraft.getConnection().getCommands();
+         if (MC != null && MC.getConnection() != null) {
+            CommandDispatcher<?> dispatcher = MC.getConnection().getCommands();
             return dispatcher != null && dispatcher.getRoot() != null && !dispatcher.getRoot().getChildren().isEmpty();
          } else {
             return false;
@@ -3270,23 +3270,23 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (!this.hasServer()) {
          return false;
       } else {
-         String address = this.load_Str_11();
-         String context = this.read_Str_8();
-         this.frame_V_2();
+         String address = this.normalizedServerAddress();
+         String context = this.computeContextSignature();
+         this.syncServerContext();
          if (this.tick_Z) {
             return true;
-         } else if (context.equals(this.open_Str) && this.pop_Z && this.init_AutismServerInfoOv == AutismServerInfoOverlay.ScanStatus.COMPLETE) {
+         } else if (context.equals(this.requestedScanContext) && this.scanDone && this.scanStatus == AutismServerInfoOverlay.ScanStatus.COMPLETE) {
             return true;
          } else {
             long cachedAt = AutismConfig.getGlobal().getPluginScanTimestampByAddress(address);
             boolean fresh = cachedAt > 0L && System.currentTimeMillis() - cachedAt < 5184000000L;
-            if (fresh && this.pop_Z && this.init_AutismServerInfoOv == AutismServerInfoOverlay.ScanStatus.COMPLETE) {
-               this.open_Str = context;
+            if (fresh && this.scanDone && this.scanStatus == AutismServerInfoOverlay.ScanStatus.COMPLETE) {
+               this.requestedScanContext = context;
                return true;
             } else {
-               this.open_Str = context;
+               this.requestedScanContext = context;
                AutismConfig.getGlobal().removePluginScan(address);
-               this.fill_V_2();
+               this.restartScan();
                this.scan_V_2();
                return this.tick_Z;
             }
@@ -3294,72 +3294,72 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void sync_V_18() {
-      this.open_Str = null;
+   public void clearRequestedScanContext() {
+      this.requestedScanContext = null;
    }
 
    public void resetForDisconnect() {
-      this.level_V_2();
-      this.open_Str = null;
-      this.init_V_Str_Str_3(null, "");
-      this.tick_Str = "";
-      this.run_Str = "";
-      this.get_Str = "";
-      this.push_Str = "";
-      this.prev_V_7();
+      this.saveScanToConfig();
+      this.requestedScanContext = null;
+      this.resetForServer(null, "");
+      this.signatureCacheAddress = "";
+      this.signatureCacheBrand = "";
+      this.cachedContextSignature = "";
+      this.lastSeenAddress = "";
+      this.requestLayoutRebuild();
    }
 
-   private void read_V_3(String reason) {
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
+   private void cancelScan(String reason) {
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
       if (session != null) {
-         session.init_bS.init();
-         this.init_V_AutismServerInfoOv_Str_2(session, "cancel reason=" + reason);
+         session.attemptTracker.init();
+         this.trace(session, "cancel reason=" + reason);
       }
 
-      this.init_AutismServerInfoOv_3 = null;
+      this.activeScan = null;
       this.tick_Z = false;
       this.write_List.clear();
-      this.update_List.clear();
-      this.run_Z = false;
+      this.pendingCommandEvidence.clear();
+      this.observationsDirty = false;
    }
 
-   private void init_V_AutismServerInfoOv(AutismServerInfoOverlay.ActiveScanSession session, String stage, Throwable error) {
-      if (session != null && !session.init_bS.load()) {
+   private void recordScanFailure(AutismServerInfoOverlay.ActiveScanSession session, String stage, Throwable error) {
+      if (session != null && !session.attemptTracker.load()) {
          session.sync++;
          String detail = error == null ? "unknown" : error.getClass().getSimpleName() + ": " + error.getMessage();
-         this.close_Str = stage + " failed";
-         this.init_V_AutismServerInfoOv_Str_2(session, "error stage=" + stage + " detail=" + detail);
-         init_Logger.warn("Plugin scan {} failed during {}", session.init_J, stage, error);
+         this.scanIssue = stage + " failed";
+         this.trace(session, "error stage=" + stage + " detail=" + detail);
+         LOGGER.warn("Plugin scan {} failed during {}", session.generation, stage, error);
       }
    }
 
-   private void chunk_V_2() {
-      this.init_V_AutismServerInfoOv_Str(null, "");
+   private void completeScan() {
+      this.finishScan(null, "");
    }
 
-   private void init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.ScanStatus requestedOutcome, String issue) {
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      if (session != null && session.init_bS.init()) {
+   private void finishScan(AutismServerInfoOverlay.ScanStatus requestedOutcome, String issue) {
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      if (session != null && session.attemptTracker.init()) {
          this.flush(true);
          Map<String, AutismServerInfoOverlay.PluginAccumulator> finalEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
          boolean processingFailed = false;
 
          try {
-            this.init_Z_Map_Map(finalEntries, this.push_Map);
-            this.init_Z_Map_Map(finalEntries, this.poll_Map);
-            this.load_Z(finalEntries);
+            this.mergeAccumulators(finalEntries, this.legacyPluginEntries);
+            this.mergeAccumulators(finalEntries, this.poll_Map);
+            this.applyCatalogFingerprints(finalEntries);
             this.init_Z_Map(finalEntries);
          } catch (RuntimeException error) {
             processingFailed = true;
             session.sync++;
-            this.close_Str = "Final processing failed";
-            init_Logger.warn("Plugin scan {} failed during final processing", session.init_J, error);
-            this.init_V_AutismServerInfoOv_Str_2(session, "error stage=final-processing detail=" + error.getClass().getSimpleName());
+            this.scanIssue = "Final processing failed";
+            LOGGER.warn("Plugin scan {} failed during final processing", session.generation, error);
+            this.trace(session, "error stage=final-processing detail=" + error.getClass().getSimpleName());
          }
 
          AutismServerInfoOverlay.ScanStatus outcome = requestedOutcome;
          if (outcome == null) {
-            outcome = !processingFailed && !session.init_bS.init(session.sync, session.update, session.init_Set.size())
+            outcome = !processingFailed && !session.attemptTracker.init(session.sync, session.update, session.pendingProbeIds.size())
                ? AutismServerInfoOverlay.ScanStatus.COMPLETE
                : AutismServerInfoOverlay.ScanStatus.PARTIAL;
          }
@@ -3368,13 +3368,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             outcome = AutismServerInfoOverlay.ScanStatus.FAILED;
          }
 
-         boolean infrastructureFailure = processingFailed || session.sync > 0 || session.update > 0 || !session.init_Set.isEmpty();
-         boolean restorePrevious = finalEntries.isEmpty() && infrastructureFailure && !session.init_Map.isEmpty();
+         boolean infrastructureFailure = processingFailed || session.sync > 0 || session.update > 0 || !session.pendingProbeIds.isEmpty();
+         boolean restorePrevious = finalEntries.isEmpty() && infrastructureFailure && !session.previousEntries.isEmpty();
          if (restorePrevious) {
             outcome = AutismServerInfoOverlay.ScanStatus.FAILED;
          }
 
-         this.init_V_AutismServerInfoOv_Str_2(
+         this.trace(
             session,
             "final roots="
                + session.flush
@@ -3383,15 +3383,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                + " suggestionEntries="
                + session.open
                + " sent="
-               + session.load_I
+               + session.sentCount
                + " answered="
-               + session.read_I
+               + session.replyCount
                + " retried="
-               + session.write_I
+               + session.retryCount
                + " failed="
                + session.update
                + " legacy="
-               + this.init_I_Map(this.push_Map)
+               + this.init_I_Map(this.legacyPluginEntries)
                + " working="
                + this.init_I_Map(this.poll_Map)
                + " final="
@@ -3402,85 +3402,85 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          try {
             if (restorePrevious) {
-               this.init_V_Map_Z(session.init_Map, false);
+               this.applyPluginEntries(session.previousEntries, false);
             } else if (outcome != AutismServerInfoOverlay.ScanStatus.FAILED || !finalEntries.isEmpty()) {
-               this.init_V_Map_Z(finalEntries, true);
+               this.applyPluginEntries(finalEntries, true);
             }
          } catch (RuntimeException error) {
             outcome = AutismServerInfoOverlay.ScanStatus.FAILED;
-            this.close_Str = "Could not publish results";
-            init_Logger.warn("Plugin scan {} could not publish results", session.init_J, error);
-            if (!session.init_Map.isEmpty()) {
+            this.scanIssue = "Could not publish results";
+            LOGGER.warn("Plugin scan {} could not publish results", session.generation, error);
+            if (!session.previousEntries.isEmpty()) {
                try {
-                  this.init_V_Map_Z(session.init_Map, false);
+                  this.applyPluginEntries(session.previousEntries, false);
                } catch (RuntimeException restoreError) {
-                  init_Logger.warn("Plugin scan {} could not restore previous results", session.init_J, restoreError);
+                  LOGGER.warn("Plugin scan {} could not restore previous results", session.generation, restoreError);
                }
             }
          }
 
-         session.load_Str = this.read_Str_8();
-         this.poll_Str = session.init_Str;
-         this.pop_Str = session.load_Str;
-         this.queue = session.init_I;
-         this.buffer = session.read_I;
-         this.entry = session.write_I;
+         session.contextSignature = this.computeContextSignature();
+         this.scanAddress = session.serverAddress;
+         this.contextSignature = session.contextSignature;
+         this.queue = session.totalProbes;
+         this.buffer = session.replyCount;
+         this.entry = session.retryCount;
          this.node = session.update;
-         this.init_AutismServerInfoOv_3 = null;
+         this.activeScan = null;
          this.tick_Z = false;
-         this.pop_Z = true;
-         this.init_AutismServerInfoOv = outcome;
+         this.scanDone = true;
+         this.scanStatus = outcome;
          if (issue != null && !issue.isBlank()) {
-            this.close_Str = issue;
+            this.scanIssue = issue;
          } else if (outcome == AutismServerInfoOverlay.ScanStatus.COMPLETE) {
-            this.close_Str = "";
-         } else if (this.close_Str.isBlank()) {
-            this.close_Str = outcome == AutismServerInfoOverlay.ScanStatus.PARTIAL ? "Some probes did not reply" : "Scan failed";
+            this.scanIssue = "";
+         } else if (this.scanIssue.isBlank()) {
+            this.scanIssue = outcome == AutismServerInfoOverlay.ScanStatus.PARTIAL ? "Some probes did not reply" : "Scan failed";
          }
 
-         this.load_Set.clear();
+         this.observedCommandTokens.clear();
          this.poll_Map.clear();
-         this.push_Map.clear();
+         this.legacyPluginEntries.clear();
          this.pool_V_2();
-         if (outcome != AutismServerInfoOverlay.ScanStatus.FAILED || !this.load_List.isEmpty()) {
-            this.level_V_2();
+         if (outcome != AutismServerInfoOverlay.ScanStatus.FAILED || !this.detectedPlugins.isEmpty()) {
+            this.saveScanToConfig();
          }
 
-         this.store_V_2();
+         this.announceCompletion();
          this.flags = this.state;
       }
    }
 
-   private void table_V_2() {
+   private void pumpProbes() {
       if (autismclient.modules.aD.read_Z()) {
          this.hardLock();
       } else {
-         AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-         if (this.tick_Z && session != null && !session.init_bS.load() && init_Minecraft.getConnection() != null) {
+         AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+         if (this.tick_Z && session != null && !session.attemptTracker.load() && MC.getConnection() != null) {
             long now = System.currentTimeMillis();
-            if (now >= session.write_J) {
-               AutismServerInfoOverlay.QueuedProbe request = session.init_Deque.pollFirst();
+            if (now >= session.nextProbeAt) {
+               AutismServerInfoOverlay.QueuedProbe request = session.probeQueue.pollFirst();
                if (request != null) {
                   try {
                      ServerboundCommandSuggestionPacket packet = new ServerboundCommandSuggestionPacket(
-                        request.init_I, request.init_AutismServerInfoOv.init_Str
+                        request.id, request.spec.query
                      );
-                     init_Minecraft.getConnection().send(packet);
-                     session.load_I++;
-                     session.write_J = now + this.flags;
+                     MC.getConnection().send(packet);
+                     session.sentCount++;
+                     session.nextProbeAt = now + this.flags;
                   } catch (Exception error) {
-                     session.write_J = now + this.flags;
-                     if (session.init_bS.init(request.load)) {
-                        session.write_I++;
-                        this.init_V_AutismServerInfoOv_Str_2(session, "retry probe=" + request.init_I + " reason=" + error.getClass().getSimpleName());
-                        init_Logger.warn("Plugin scan {} will retry probe {}", session.init_J, request.init_I, error);
-                        session.init_Deque
-                           .addLast(new AutismServerInfoOverlay.QueuedProbe(request.init_I, request.init_AutismServerInfoOv, request.load + 1));
+                     session.nextProbeAt = now + this.flags;
+                     if (session.attemptTracker.init(request.load)) {
+                        session.retryCount++;
+                        this.trace(session, "retry probe=" + request.id + " reason=" + error.getClass().getSimpleName());
+                        LOGGER.warn("Plugin scan {} will retry probe {}", session.generation, request.id, error);
+                        session.probeQueue
+                           .addLast(new AutismServerInfoOverlay.QueuedProbe(request.id, request.spec, request.load + 1));
                      } else {
                         session.update++;
-                        session.init_Set.remove(request.init_I);
-                        session.load_Map.remove(request.init_I);
-                        this.init_V_AutismServerInfoOv(session, "probe send", error);
+                        session.pendingProbeIds.remove(request.id);
+                        session.probesById.remove(request.id);
+                        this.recordScanFailure(session, "probe send", error);
                      }
                   }
                }
@@ -3489,36 +3489,36 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private int cache_I_2() {
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      return session == null ? 0 : Math.max(0, session.init_I);
+   private int totalProbeCount() {
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      return session == null ? 0 : Math.max(0, session.totalProbes);
    }
 
    private long init_J_2() {
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      int retryCount = session == null ? 0 : session.write_I;
-      return Math.max(this.flags, (long)(this.cache_I_2() + retryCount) * this.flags);
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      int retryCount = session == null ? 0 : session.retryCount;
+      return Math.max(this.flags, (long)(this.totalProbeCount() + retryCount) * this.flags);
    }
 
-   private long load_J() {
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      if (session == null || session.load_J <= 0L) {
+   private long finishedSendingAt() {
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      if (session == null || session.startedAt <= 0L) {
          return 0L;
       }
 
-      if (!session.init_Deque.isEmpty()) {
+      if (!session.probeQueue.isEmpty()) {
          return 0L;
       }
 
-      long candidate = session.write_J - this.flags;
-      return Math.max(session.load_J, candidate);
+      long candidate = session.nextProbeAt - this.flags;
+      return Math.max(session.startedAt, candidate);
    }
 
-   private long read_J() {
+   private long scanTimeoutMs() {
       return Math.max(12000L, this.init_J_2() + 1400L + 700L);
    }
 
-   private int init_I_I_2(int from, int to, float t) {
+   private int lerpColor(int from, int to, float t) {
       float clamped = Math.max(0.0F, Math.min(1.0F, t));
       int a1 = from >>> 24 & 0xFF;
       int r1 = from >>> 16 & 0xFF;
@@ -3535,39 +3535,39 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return a << 24 | r << 16 | g << 8 | b;
    }
 
-   private int state_I_2() {
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      int total = this.cache_I_2();
-      return session == null ? 0 : Math.max(0, Math.min(total, session.load_I));
+   private int sentProbeCount() {
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      int total = this.totalProbeCount();
+      return session == null ? 0 : Math.max(0, Math.min(total, session.sentCount));
    }
 
-   private int queue_I_2() {
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      int total = this.cache_I_2();
-      return session == null ? 0 : Math.max(0, Math.min(total, session.read_I));
+   private int replyProbeCount() {
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      int total = this.totalProbeCount();
+      return session == null ? 0 : Math.max(0, Math.min(total, session.replyCount));
    }
 
-   private float init_F_2() {
-      if (this.pop_Z) {
+   private float scanProgress() {
+      if (this.scanDone) {
          return 1.0F;
       }
 
-      int total = this.cache_I_2();
+      int total = this.totalProbeCount();
       if (total <= 0) {
          return 0.0F;
       }
 
-      float sentRatio = (float)this.state_I_2() / total;
-      float answeredRatio = (float)this.queue_I_2() / total;
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      if (session != null && !session.init_Deque.isEmpty()) {
+      float sentRatio = (float)this.sentProbeCount() / total;
+      float answeredRatio = (float)this.replyProbeCount() / total;
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      if (session != null && !session.probeQueue.isEmpty()) {
          float progress = 0.8F * sentRatio;
          progress += 0.05F * answeredRatio;
          return Math.max(0.0F, Math.min(0.85F, progress));
       }
 
       float progress = 0.85F;
-      long finishedSendingAt = this.load_J();
+      long finishedSendingAt = this.finishedSendingAt();
       long waitWindow = 1400L;
       if (finishedSendingAt > 0L && waitWindow > 0L) {
          long now = System.currentTimeMillis();
@@ -3579,38 +3579,38 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int buffer_I_2() {
-      return (int)this.poll_Map.values().stream().filter(entry -> entry != null && entry.init_Str != null && !entry.init_Str.isBlank()).count();
+      return (int)this.poll_Map.values().stream().filter(entry -> entry != null && entry.name != null && !entry.name.isBlank()).count();
    }
 
-   private int entry_I_2() {
-      return this.tick_Z ? this.buffer_I_2() : this.load_List.size();
+   private int foundCount() {
+      return this.tick_Z ? this.buffer_I_2() : this.detectedPlugins.size();
    }
 
-   private String write_Str_5() {
-      int foundCount = this.entry_I_2();
+   private String scanStatusText() {
+      int foundCount = this.foundCount();
       return foundCount > 0 ? "Scanning plugins | found " + foundCount : "Scanning plugins";
    }
 
-   private String update_Str_3() {
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      return session != null && !session.init_Deque.isEmpty() ? "Sending probes" : "Analyzing replies";
+   private String scanPhaseText() {
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      return session != null && !session.probeQueue.isEmpty() ? "Sending probes" : "Analyzing replies";
    }
 
-   private int node_I_2() {
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      return session != null && !session.init_Deque.isEmpty() ? UiColorPalette.warningYellow() : UiColorPalette.cyan();
+   private int scanPhaseColor() {
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      return session != null && !session.probeQueue.isEmpty() ? UiColorPalette.warningYellow() : UiColorPalette.cyan();
    }
 
-   private String sync_Str_2() {
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      int total = Math.max(1, this.cache_I_2());
-      return session != null && !session.init_Deque.isEmpty() ? this.state_I_2() + "/" + total : this.queue_I_2() + "/" + total;
+   private String scanDetailText() {
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      int total = Math.max(1, this.totalProbeCount());
+      return session != null && !session.probeQueue.isEmpty() ? this.sentProbeCount() + "/" + total : this.replyProbeCount() + "/" + total;
    }
 
-   private void store_V_2() {
-      if (!this.get_Z) {
-         this.get_Z = true;
-         int count = this.load_List.size();
+   private void announceCompletion() {
+      if (!this.completionAnnounced) {
+         this.completionAnnounced = true;
+         int count = this.detectedPlugins.size();
          if (count <= 0) {
             AutismClientMessaging.sendPrefixed("Plugin probing finished: no plugins found.");
          } else if (count == 1) {
@@ -3626,38 +3626,38 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    public boolean hasPendingWork() {
-      return this.write_Z || this.tick_Z || this.pop_Z || !this.load_List.isEmpty();
+      return this.overlayVisible || this.tick_Z || this.scanDone || !this.detectedPlugins.isEmpty();
    }
 
    public void renderProbeBanner(GuiGraphicsExtractor ctx) {
-      if (this.isScanRunning() && init_Minecraft != null && init_Minecraft.getWindow() != null && this.init_Font != null) {
-         autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
-         String status = this.write_Str_5();
-         String phase = this.update_Str_3();
-         String detail = this.sync_Str_2();
-         int progressPercent = Math.max(0, Math.min(100, Math.round(this.init_F_2() * 100.0F)));
+      if (this.isScanRunning() && MC != null && MC.getWindow() != null && this.textRenderer != null) {
+         autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
+         String status = this.scanStatusText();
+         String phase = this.scanPhaseText();
+         String detail = this.scanDetailText();
+         int progressPercent = Math.max(0, Math.min(100, Math.round(this.scanProgress() * 100.0F)));
          String percentComponent = progressPercent + "%";
          int screenW = Math.round(viewport.width());
          int statusWidth = autismclient.gui.f.b.k.init(
-            this.init_Font,
+            this.textRenderer,
             status,
-            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-            this.init_CharEncoder.load(autismclient.gui.f.b.l.write)
+            this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
+            this.theme.load(autismclient.gui.f.b.l.write)
          );
          int phaseWidth = autismclient.gui.f.b.k.init(
-            this.init_Font,
+            this.textRenderer,
             phase,
-            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-            this.init_CharEncoder.load(autismclient.gui.f.b.l.read)
+            this.theme.init_Identifier_l(autismclient.gui.f.b.l.read),
+            this.theme.load(autismclient.gui.f.b.l.read)
          );
          int detailWidth = autismclient.gui.f.b.k.init(
-            this.init_Font, detail, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write), this.node_I_2()
+            this.textRenderer, detail, this.theme.init_Identifier_l(autismclient.gui.f.b.l.write), this.scanPhaseColor()
          );
          int percentWidth = autismclient.gui.f.b.k.init(
-            this.init_Font,
+            this.textRenderer,
             percentComponent,
-            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-            this.init_CharEncoder.load(autismclient.gui.f.b.l.read)
+            this.theme.init_Identifier_l(autismclient.gui.f.b.l.read),
+            this.theme.load(autismclient.gui.f.b.l.read)
          );
          int contentW = Math.max(180, Math.max(statusWidth, Math.max(phaseWidth + 12 + detailWidth, percentWidth + 150)));
          int boxW = Math.max(1, Math.min(Math.max(1, screenW - 16), Math.max(236, contentW + 24)));
@@ -3672,60 +3672,60 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          try {
             autismclient.gui.ui.layout.LayoutContext bannerContext = new autismclient.gui.ui.layout.LayoutContext(
-               ctx, this.init_Font, viewport, this.init_CharEncoder, 0.0F, 0.0F, 0.0F
+               ctx, this.textRenderer, viewport, this.theme, 0.0F, 0.0F, 0.0F
             );
-            int border = this.init_CharEncoder.get();
-            int headerAccent = this.init_CharEncoder.run();
+            int border = this.theme.get();
+            int headerAccent = this.theme.run();
             autismclient.gui.f.PacketUtil.init(
                ctx,
                autismclient.gui.f.NetHelper.init(boxX, boxY, boxW, boxH),
                14,
-               bannerContext.applyAlpha(this.init_CharEncoder.poll()),
-               bannerContext.applyAlpha(this.init_CharEncoder.pop()),
-               bannerContext.applyAlpha(this.init_CharEncoder.poll()),
+               bannerContext.applyAlpha(this.theme.poll()),
+               bannerContext.applyAlpha(this.theme.pop()),
+               bannerContext.applyAlpha(this.theme.poll()),
                bannerContext.applyAlpha(border),
                bannerContext.applyAlpha(headerAccent),
                1.0F
             );
             autismclient.gui.f.b.k.init(
                ctx,
-               this.init_Font,
+               this.textRenderer,
                status,
-               this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-               this.init_CharEncoder.load(autismclient.gui.f.b.l.write),
+               this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
+               this.theme.load(autismclient.gui.f.b.l.write),
                innerX,
                boxY + 3,
                false
             );
             autismclient.gui.f.b.k.init(
                ctx,
-               this.init_Font,
+               this.textRenderer,
                percentComponent,
-               this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-               this.node_I_2(),
+               this.theme.init_Identifier_l(autismclient.gui.f.b.l.read),
+               this.scanPhaseColor(),
                boxX + boxW - 8 - percentWidth,
                boxY + 3,
                false
             );
             autismclient.gui.ui.widgets.ProgressBarRenderer.init(
-               autismclient.gui.f.UiHelper.init(ctx, this.init_Font, -1, -1), autismclient.gui.f.NetHelper.init(innerX, barY, barW, barH), this.init_F_2()
+               autismclient.gui.f.UiHelper.init(ctx, this.textRenderer, -1, -1), autismclient.gui.f.NetHelper.init(innerX, barY, barW, barH), this.scanProgress()
             );
             autismclient.gui.f.b.k.init(
                ctx,
-               this.init_Font,
+               this.textRenderer,
                phase,
-               this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-               this.init_CharEncoder.load(autismclient.gui.f.b.l.read),
+               this.theme.init_Identifier_l(autismclient.gui.f.b.l.read),
+               this.theme.load(autismclient.gui.f.b.l.read),
                innerX,
                barY + 13,
                false
             );
             autismclient.gui.f.b.k.init(
                ctx,
-               this.init_Font,
+               this.textRenderer,
                detail,
-               this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-               this.node_I_2(),
+               this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
+               this.scanPhaseColor(),
                boxX + boxW - 8 - detailWidth,
                barY + 13,
                false
@@ -3736,28 +3736,28 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void drain_V_2() {
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      if (this.tick_Z && session != null && !session.init_bS.load()) {
+   private void tickActiveScanSession() {
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      if (this.tick_Z && session != null && !session.attemptTracker.load()) {
          try {
-            this.table_V_2();
+            this.pumpProbes();
             long now = System.currentTimeMillis();
-            boolean allProbesSent = session.init_Deque.isEmpty();
-            boolean allResponsesReceived = session.init_Set.isEmpty();
-            long finishedSendingAt = this.load_J();
+            boolean allProbesSent = session.probeQueue.isEmpty();
+            boolean allResponsesReceived = session.pendingProbeIds.isEmpty();
+            long finishedSendingAt = this.finishedSendingAt();
             long settleWindow = allResponsesReceived ? 1400L : Math.max(1400L, 450L);
             boolean settledAfterSend = allProbesSent && finishedSendingAt > 0L && now - finishedSendingAt >= settleWindow;
-            boolean settledAfterLastResponse = session.read_J > 0L && now - session.read_J >= 700L;
-            boolean timedOut = now - session.load_J >= this.read_J();
+            boolean settledAfterLastResponse = session.lastResponseAt > 0L && now - session.lastResponseAt >= 700L;
+            boolean timedOut = now - session.startedAt >= this.scanTimeoutMs();
             if (allProbesSent && settledAfterSend && (!allResponsesReceived || settledAfterLastResponse) || timedOut) {
-               AutismServerInfoOverlay.ScanStatus outcome = !session.init_bS.init(session.sync, session.update, session.init_Set.size())
+               AutismServerInfoOverlay.ScanStatus outcome = !session.attemptTracker.init(session.sync, session.update, session.pendingProbeIds.size())
                   ? AutismServerInfoOverlay.ScanStatus.COMPLETE
                   : AutismServerInfoOverlay.ScanStatus.PARTIAL;
-               this.init_V_AutismServerInfoOv_Str(outcome, timedOut && !allResponsesReceived ? "Some probes timed out" : "");
+               this.finishScan(outcome, timedOut && !allResponsesReceived ? "Some probes timed out" : "");
             }
          } catch (RuntimeException error) {
-            this.init_V_AutismServerInfoOv(session, "lifecycle", error);
-            this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.ScanStatus.PARTIAL, "Scan recovered from an error");
+            this.recordScanFailure(session, "lifecycle", error);
+            this.finishScan(AutismServerInfoOverlay.ScanStatus.PARTIAL, "Scan recovered from an error");
          }
       }
    }
@@ -3765,33 +3765,33 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    public void tickScan() {
       try {
          this.flush(false);
-         this.frame_V_2();
+         this.syncServerContext();
          this.block_V_2();
          if (this.tick_Z) {
-            this.drain_V_2();
+            this.tickActiveScanSession();
          }
       } catch (Throwable error) {
-         AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
+         AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
          if (session != null) {
-            this.init_V_AutismServerInfoOv(session, "background tick", error);
-            this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.ScanStatus.PARTIAL, "Scan recovered from an error");
+            this.recordScanFailure(session, "background tick", error);
+            this.finishScan(AutismServerInfoOverlay.ScanStatus.PARTIAL, "Scan recovered from an error");
          } else {
-            init_Logger.warn("Plugin scanner background update failed", error);
+            LOGGER.warn("Plugin scanner background update failed", error);
          }
       }
    }
 
-   private void init_V_RootCommandNode(RootCommandNode<?> root) {
+   private void ingestCommandTree(RootCommandNode<?> root) {
       Map<String, AutismServerInfoOverlay.PluginAccumulator> entries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
       entries.putAll(this.poll_Map);
       Map<String, AutismServerInfoOverlay.PluginAccumulator> legacyEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-      legacyEntries.putAll(this.push_Map);
-      this.auditActiveKnownPlayers = this.init_Set_3();
+      legacyEntries.putAll(this.legacyPluginEntries);
+      this.auditActiveKnownPlayers = this.knownPlayerNames();
 
       try {
          for (CommandNode<?> child : root.getChildren()) {
             String name = child.getName();
-            AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
+            AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
             if (session != null) {
                session.flush++;
             }
@@ -3800,15 +3800,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                String[] parts = name.split(":", 2);
                String ns = parts[0].toLowerCase();
                String cmd = parts[1];
-               if (!sync_Set.contains(ns)) {
-                  this.init_Z_Map(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
+               if (!PLATFORM_NAMESPACES.contains(ns)) {
+                  this.mergePluginEntry(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
                   this.init_Z_Map(entries, ns + ":" + cmd, AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
                   this.init_V_Str_11(cmd);
                }
             } else {
                this.init_V_Str_11(name);
-               String token = this.read_Str_3(name);
-               if (run_Map.containsKey(token)) {
+               String token = this.normalizeCommandToken(name);
+               if (FEATURE_KEYWORDS.containsKey(token)) {
                   this.init_Z_Map(entries, name, AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
                }
             }
@@ -3816,76 +3816,76 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          this.load_V(legacyEntries);
          this.init_V_Map(entries);
-         this.init_Z_Map_Map(entries, legacyEntries);
+         this.mergeAccumulators(entries, legacyEntries);
          this.init_Z_Map(entries);
       } finally {
          this.auditActiveKnownPlayers = null;
       }
 
-      this.push_Map.clear();
-      this.push_Map.putAll(legacyEntries);
+      this.legacyPluginEntries.clear();
+      this.legacyPluginEntries.putAll(legacyEntries);
       this.poll_Map.clear();
       this.poll_Map.putAll(entries);
-      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-      this.init_V_AutismServerInfoOv_Str_2(
+      AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+      this.trace(
          session,
          "command tree roots="
             + (session == null ? 0 : session.flush)
             + " legacy="
-            + this.init_I_Map(this.push_Map)
+            + this.init_I_Map(this.legacyPluginEntries)
             + " working="
             + this.init_I_Map(this.poll_Map)
       );
    }
 
    public void clearSearch() {
-      this.init_V_Str_Str_3(null, "");
-      this.init_BitSetUtil.setValue("");
-      this.init_BitSetUtil.setFocused(false);
-      this.load_Str = null;
-      this.read_Str = null;
-      this.buffer_V_2();
+      this.resetForServer(null, "");
+      this.searchInput.setValue("");
+      this.searchInput.setFocused(false);
+      this.dnsResult = null;
+      this.dnsHost = null;
+      this.invalidateContextSignature();
    }
 
    public void hardLock() {
-      this.read_V_3("hard-lock");
+      this.cancelScan("hard-lock");
       this.poll_Map.clear();
-      this.push_Map.clear();
-      this.pop_Map.clear();
-      if (!this.load_List.isEmpty()) {
-         this.pop_Z = true;
+      this.legacyPluginEntries.clear();
+      this.userProbesById.clear();
+      if (!this.detectedPlugins.isEmpty()) {
+         this.scanDone = true;
       }
 
-      this.set_Z = true;
+      this.layoutDirty = true;
    }
 
-   private void fill_V_2() {
-      this.read_V_3("restart");
-      this.pop_Z = false;
+   private void restartScan() {
+      this.cancelScan("restart");
+      this.scanDone = false;
       this.put_Z = false;
-      this.get_Z = false;
-      this.init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.NONE;
-      this.close_Str = "";
-      this.load_Set.clear();
+      this.completionAnnounced = false;
+      this.scanStatus = AutismServerInfoOverlay.ScanStatus.NONE;
+      this.scanIssue = "";
+      this.observedCommandTokens.clear();
       this.poll_Map.clear();
-      this.push_Map.clear();
-      this.sync_Str = null;
-      this.init_BitSetUtil.setValue("");
-      this.init_BitSetUtil.setFocused(false);
-      this.init_CacheEntry.jumpTo(0, 0);
+      this.legacyPluginEntries.clear();
+      this.selectedPlugin = null;
+      this.searchInput.setValue("");
+      this.searchInput.setFocused(false);
+      this.scroll.jumpTo(0, 0);
    }
 
-   private void mark_V_2() {
-      if (!this.sync_Z && init_Minecraft.getConnection() != null) {
-         String address = this.load_Str_11();
+   private void rescan() {
+      if (!this.configurationOnly && MC.getConnection() != null) {
+         String address = this.normalizedServerAddress();
          AutismConfig.getGlobal().removePluginScan(address);
-         this.fill_V_2();
+         this.restartScan();
          this.read(true);
          this.saveState();
       }
    }
 
-   private int init_I_Map(
+   private int addProbe(
       Map<Integer, AutismServerInfoOverlay.ProbeSpec> probes,
       Set<String> seen,
       int nextId,
@@ -3911,60 +3911,60 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void read(boolean forceLive) {
-      if (!this.sync_Z && !autismclient.modules.aD.read_Z()) {
+      if (!this.configurationOnly && !autismclient.modules.aD.read_Z()) {
          if (!forceLive) {
-            this.frame_V_2();
+            this.syncServerContext();
          }
 
-         if ((forceLive || !this.pop_Z) && !this.tick_Z) {
-            if (init_Minecraft.getConnection() == null) {
-               this.pop_Z = true;
-               this.init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.FAILED;
-               this.close_Str = "Not connected";
+         if ((forceLive || !this.scanDone) && !this.tick_Z) {
+            if (MC.getConnection() == null) {
+               this.scanDone = true;
+               this.scanStatus = AutismServerInfoOverlay.ScanStatus.FAILED;
+               this.scanIssue = "Not connected";
             } else {
                this.flags = this.state;
-               this.poll_Str = this.load_Str_11();
-               this.pop_Str = this.read_Str_8();
+               this.scanAddress = this.normalizedServerAddress();
+               this.contextSignature = this.computeContextSignature();
                long startedAt = System.currentTimeMillis();
                AutismServerInfoOverlay.ActiveScanSession session = new AutismServerInfoOverlay.ActiveScanSession(
-                  this.read_J++, this.poll_Str, this.pop_Str, startedAt, this.init_Map_3()
+                  this.nextScanGeneration++, this.scanAddress, this.contextSignature, startedAt, this.snapshotPluginEntries()
                );
-               session.write_J = startedAt + this.flags;
-               this.init_AutismServerInfoOv_3 = session;
+               session.nextProbeAt = startedAt + this.flags;
+               this.activeScan = session;
                this.start = 1;
                this.tick_Z = true;
-               this.pop_Z = false;
-               this.load_Set.clear();
+               this.scanDone = false;
+               this.observedCommandTokens.clear();
                this.poll_Map.clear();
-               this.push_Map.clear();
-               this.init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.NONE;
-               this.close_Str = "";
+               this.legacyPluginEntries.clear();
+               this.scanStatus = AutismServerInfoOverlay.ScanStatus.NONE;
+               this.scanIssue = "";
                this.task_V_2();
 
                try {
-                  CommandDispatcher<?> dispatcher = init_Minecraft.getConnection().getCommands();
+                  CommandDispatcher<?> dispatcher = MC.getConnection().getCommands();
                   if (dispatcher != null) {
                      RootCommandNode<?> root = dispatcher.getRoot();
                      if (root != null && !root.getChildren().isEmpty()) {
-                        this.init_V_RootCommandNode(root);
+                        this.ingestCommandTree(root);
                      }
                   }
 
-                  this.load_Z(this.poll_Map);
-                  Map<Integer, AutismServerInfoOverlay.ProbeSpec> probes = this.load_Map();
-                  session.init_I = probes.size();
+                  this.applyCatalogFingerprints(this.poll_Map);
+                  Map<Integer, AutismServerInfoOverlay.ProbeSpec> probes = this.buildProbePlan();
+                  session.totalProbes = probes.size();
 
                   for (Entry<Integer, AutismServerInfoOverlay.ProbeSpec> probe : probes.entrySet()) {
-                     session.init_Set.add(probe.getKey());
-                     session.load_Map.put(probe.getKey(), probe.getValue());
-                     session.init_Deque.addLast(new AutismServerInfoOverlay.QueuedProbe(probe.getKey(), probe.getValue()));
+                     session.pendingProbeIds.add(probe.getKey());
+                     session.probesById.put(probe.getKey(), probe.getValue());
+                     session.probeQueue.addLast(new AutismServerInfoOverlay.QueuedProbe(probe.getKey(), probe.getValue()));
                   }
 
-                  this.init_V_AutismServerInfoOv_Str_2(session, "start probes=" + session.init_I + " delay=" + this.flags + "ms");
-                  this.drain_V_2();
+                  this.trace(session, "start probes=" + session.totalProbes + " delay=" + this.flags + "ms");
+                  this.tickActiveScanSession();
                } catch (Exception error) {
-                  this.init_V_AutismServerInfoOv(session, "startup", error);
-                  this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.ScanStatus.PARTIAL, "Scan recovered from a startup error");
+                  this.recordScanFailure(session, "startup", error);
+                  this.finishScan(AutismServerInfoOverlay.ScanStatus.PARTIAL, "Scan recovered from a startup error");
                }
             }
          }
@@ -3973,24 +3973,24 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    public void onOutgoingPacket(Packet<?> packet) {
       if (packet != null && !autismclient.modules.aD.init_Z() && "ServerboundCommandSuggestionPacket".equals(packet.getClass().getSimpleName())) {
-         int id = this.init_I_Obj(packet, -1, "getId", "id");
-         String command = this.init_Str_Obj_StrArr(packet, "getCommand", "command");
+         int id = this.invokeIntGetter(packet, -1, "getId", "id");
+         String command = this.invokeStringGetter(packet, "getCommand", "command");
          if (id >= 0 && command != null && !command.isBlank() && auditIsObservableCommandCompletion(command) && !CommandProbeIdAllocator.init(id)) {
-            init_Minecraft.execute(() -> {
+            MC.execute(() -> {
                try {
-                  AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-                  if (session != null && session.load_Map.containsKey(id)) {
+                  AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+                  if (session != null && session.probesById.containsKey(id)) {
                      return;
                   }
 
-                  this.pop_Map.put(id, new AutismServerInfoOverlay.ProbeSpec(command, AutismServerInfoOverlay.ProbeKind.USER, null));
+                  this.userProbesById.put(id, new AutismServerInfoOverlay.ProbeSpec(command, AutismServerInfoOverlay.ProbeKind.USER, null));
 
-                  while (this.pop_Map.size() > 256) {
-                     Integer first = this.pop_Map.keySet().iterator().next();
-                     this.pop_Map.remove(first);
+                  while (this.userProbesById.size() > 256) {
+                     Integer first = this.userProbesById.keySet().iterator().next();
+                     this.userProbesById.remove(first);
                   }
                } catch (Throwable t) {
-                  this.init_V_Str_Throwable("suggestion-request", t);
+                  this.reportStageFailure("suggestion-request", t);
                }
             });
          }
@@ -4002,24 +4002,24 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          String simple = packet.getClass().getSimpleName();
          String command = null;
          if ("ServerboundChatCommandPacket".equals(simple) || "ServerboundChatCommandSignedPacket".equals(simple)) {
-            command = this.init_Str_Obj_StrArr(packet, "command", "getCommand");
+            command = this.invokeStringGetter(packet, "command", "getCommand");
          } else if ("ServerboundChatPacket".equals(simple)) {
-            String message = this.init_Str_Obj_StrArr(packet, "message", "getMessage");
+            String message = this.invokeStringGetter(packet, "message", "getMessage");
             if (message != null && message.trim().startsWith("/")) {
                command = message.trim().substring(1);
             }
          }
 
          if (command != null && !command.isBlank()) {
-            String root = this.read_Str_3(command);
+            String root = this.normalizeCommandToken(command);
             if (this.load_Z_3(root)) {
                String fullCommand = command;
-               init_Minecraft.execute(() -> {
+               MC.execute(() -> {
                   try {
-                     this.load_V_Str_Str_2(root, fullCommand);
-                     this.init_V_Str_8(fullCommand, AutismServerInfoOverlay.EvidenceSource.USER_AUTOCOMPLETE, null);
+                     this.recordCommandHistory(root, fullCommand);
+                     this.observeLiveCommand(fullCommand, AutismServerInfoOverlay.EvidenceSource.USER_AUTOCOMPLETE, null);
                   } catch (Throwable t) {
-                     this.init_V_Str_Throwable("outgoing-command", t);
+                     this.reportStageFailure("outgoing-command", t);
                   }
                });
             }
@@ -4029,49 +4029,49 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    public void read(Packet<?> packet) {
       if (packet != null && !autismclient.modules.aD.init_Z() && "ClientboundOpenScreenPacket".equals(packet.getClass().getSimpleName())) {
-         String title = this.init_Str_Obj(this.init_Obj_Obj_StrArr(packet, "getTitle", "title"));
+         String title = this.componentText(this.invokeFirstGetter(packet, "getTitle", "title"));
          if (title != null && !title.isBlank()) {
-            init_Minecraft.execute(() -> {
+            MC.execute(() -> {
                try {
-                  AutismServerInfoOverlay.CommandHistoryEntry command = this.init_AutismServerInfoOv_J(System.currentTimeMillis());
+                  AutismServerInfoOverlay.CommandHistoryEntry command = this.findRecentCommand(System.currentTimeMillis());
                   if (command != null) {
-                     this.init_V_Str_8(command.load, AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI, title);
+                     this.observeLiveCommand(command.load, AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI, title);
                      return;
                   }
 
-                  String feature = this.write_Str_2(title);
+                  String feature = this.featureForGuiTitle(title);
                   if (feature == null || feature.isBlank()) {
                      return;
                   }
 
                   this.read_V_Str_Str_2(feature, title);
                } catch (Throwable t) {
-                  this.init_V_Str_Throwable("open-screen", t);
+                  this.reportStageFailure("open-screen", t);
                }
             });
          }
       }
    }
 
-   private void load_V_Str_Str_2(String root, String fullCommand) {
+   private void recordCommandHistory(String root, String fullCommand) {
       if (root != null && !root.isBlank()) {
-         this.init_Deque.addLast(new AutismServerInfoOverlay.CommandHistoryEntry(root, fullCommand == null ? root : fullCommand, System.currentTimeMillis()));
+         this.commandHistory.addLast(new AutismServerInfoOverlay.CommandHistoryEntry(root, fullCommand == null ? root : fullCommand, System.currentTimeMillis()));
 
-         while (this.init_Deque.size() > 24) {
-            this.init_Deque.removeFirst();
+         while (this.commandHistory.size() > 24) {
+            this.commandHistory.removeFirst();
          }
       }
    }
 
-   private AutismServerInfoOverlay.CommandHistoryEntry init_AutismServerInfoOv_J(long now) {
+   private AutismServerInfoOverlay.CommandHistoryEntry findRecentCommand(long now) {
       AutismServerInfoOverlay.CommandHistoryEntry best = null;
 
-      while (!this.init_Deque.isEmpty() && now - this.init_Deque.peekFirst().init_J > 1500L) {
-         this.init_Deque.removeFirst();
+      while (!this.commandHistory.isEmpty() && now - this.commandHistory.peekFirst().timestampMs > 1500L) {
+         this.commandHistory.removeFirst();
       }
 
-      for (AutismServerInfoOverlay.CommandHistoryEntry command : this.init_Deque) {
-         if (command != null && now - command.init_J <= 1500L) {
+      for (AutismServerInfoOverlay.CommandHistoryEntry command : this.commandHistory) {
+         if (command != null && now - command.timestampMs <= 1500L) {
             best = command;
          }
       }
@@ -4079,26 +4079,26 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return best;
    }
 
-   private void init_V_Str_8(String rawCommand, AutismServerInfoOverlay.EvidenceSource evidence, String guiTitle) {
+   private void observeLiveCommand(String rawCommand, AutismServerInfoOverlay.EvidenceSource evidence, String guiTitle) {
       if (rawCommand != null && !rawCommand.isBlank()) {
-         init_Minecraft.execute(() -> {
+         MC.execute(() -> {
             try {
-               if (init_Minecraft.getConnection() == null) {
+               if (MC.getConnection() == null) {
                   return;
                }
 
-               this.frame_V_2();
-               String root = this.read_Str_3(rawCommand);
+               this.syncServerContext();
+               String root = this.normalizeCommandToken(rawCommand);
                if (!this.write_Z_2(root)) {
                   return;
                }
 
-               this.load_V_Str_Str_2(root, rawCommand);
-               this.update_List.add(new AutismServerInfoOverlay.CommandEvidence(rawCommand, evidence, guiTitle));
-               this.run_Z = true;
+               this.recordCommandHistory(root, rawCommand);
+               this.pendingCommandEvidence.add(new AutismServerInfoOverlay.CommandEvidence(rawCommand, evidence, guiTitle));
+               this.observationsDirty = true;
                this.flush(false);
             } catch (Throwable t) {
-               this.init_V_Str_Throwable("live-command", t);
+               this.reportStageFailure("live-command", t);
             }
          });
       }
@@ -4106,7 +4106,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private boolean write_Z_2(String rootToken) {
       if (rootToken != null && !rootToken.isBlank()) {
-         ClientPacketListener connection = init_Minecraft.getConnection();
+         ClientPacketListener connection = MC.getConnection();
          CommandDispatcher<ClientSuggestionProvider> dispatcher = connection == null ? null : connection.getCommands();
          RootCommandNode<?> treeRoot = dispatcher == null ? null : dispatcher.getRoot();
          if (treeRoot == null) {
@@ -4128,9 +4128,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private boolean init_Z_Map_3(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, String rawCommand, String guiTitle) {
-      String token = this.read_Str_3(rawCommand);
+      String token = this.normalizeCommandToken(rawCommand);
       if (!token.isBlank() && guiTitle != null && !guiTitle.isBlank()) {
-         String ownerKey = this.init_Str_Map_Str(entries, token);
+         String ownerKey = this.findOwnerKey(entries, token);
          if (ownerKey == null) {
             return false;
          }
@@ -4146,21 +4146,21 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             entry.write.add(cleanTitle);
          }
 
-         if (!this.read(entry.init_AutismServerInfoOv_3)) {
-            entry.init_AutismServerInfoOv_3 = this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_3(
-               entry.init_AutismServerInfoOv_3, AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI
+         if (!this.read(entry.evidence)) {
+            entry.evidence = this.mergeEvidence(
+               entry.evidence, AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI
             );
          }
 
-         entry.init_AutismServerInfoOv = this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(
-            entry.init_AutismServerInfoOv, AutismServerInfoOverlay.MatchConfidence.FEATURE
+         entry.confidence = this.mergeConfidence(
+            entry.confidence, AutismServerInfoOverlay.MatchConfidence.FEATURE
          );
-         this.update_Map
-            .put(ownerKey, this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_3(this.update_Map.get(ownerKey), entry.init_AutismServerInfoOv_3));
-         this.flush_Map
+         this.pluginEvidence
+            .put(ownerKey, this.mergeEvidence(this.pluginEvidence.get(ownerKey), entry.evidence));
+         this.pluginConfidence
             .put(
                ownerKey,
-               this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(this.flush_Map.get(ownerKey), AutismServerInfoOverlay.MatchConfidence.FEATURE)
+               this.mergeConfidence(this.pluginConfidence.get(ownerKey), AutismServerInfoOverlay.MatchConfidence.FEATURE)
             );
          return before != entry.write.size();
       } else {
@@ -4169,32 +4169,32 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void read(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
-      this.load_Z(entries);
+      this.applyCatalogFingerprints(entries);
       this.init_Z_Map(entries);
       if (this.tick_Z) {
          this.poll_Map.clear();
          this.poll_Map.putAll(entries);
-         AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
+         AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
          if (session != null) {
-            session.read_J = System.currentTimeMillis();
+            session.lastResponseAt = System.currentTimeMillis();
          }
 
-         this.a_V_2();
-      } else if (this.pop_Z) {
-         this.poll_Str = this.load_Str_11();
-         this.pop_Str = this.read_Str_8();
-         this.pop_Z = true;
+         this.invalidateDetails();
+      } else if (this.scanDone) {
+         this.scanAddress = this.normalizedServerAddress();
+         this.contextSignature = this.computeContextSignature();
+         this.scanDone = true;
          this.tick_Z = false;
-         this.init_V_Map_Z(entries, false);
-         this.level_V_2();
+         this.applyPluginEntries(entries, false);
+         this.saveScanToConfig();
       }
    }
 
-   private String write_Str_2(String title) {
+   private String featureForGuiTitle(String title) {
       if (title != null && !title.isBlank()) {
          String clean = title.toLowerCase(Locale.ROOT).replaceAll("§.", "");
 
-         for (Entry<String, String> entry : run_Map.entrySet()) {
+         for (Entry<String, String> entry : FEATURE_KEYWORDS.entrySet()) {
             String key = entry.getKey();
             if (key.length() >= 3 && clean.contains(key)) {
                return entry.getValue();
@@ -4209,17 +4209,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    public void onCommandSuggestions(int id, ClientboundCommandSuggestionsPacket packet) {
       if (!CommandProbeIdAllocator.init(id)) {
-         init_Minecraft.execute(
+         MC.execute(
             () -> {
-               AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-               AutismServerInfoOverlay.ProbeSpec probe = session == null ? null : session.load_Map.get(id);
-               AutismServerInfoOverlay.ProbeSpec observed = this.pop_Map.remove(id);
-               boolean scanProbe = probe != null || session != null && session.init_Set.contains(id);
+               AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+               AutismServerInfoOverlay.ProbeSpec probe = session == null ? null : session.probesById.get(id);
+               AutismServerInfoOverlay.ProbeSpec observed = this.userProbesById.remove(id);
+               boolean scanProbe = probe != null || session != null && session.pendingProbeIds.contains(id);
                if (scanProbe || observed != null) {
-                  long capturedGeneration = scanProbe ? session.init_J : -1L;
+                  long capturedGeneration = scanProbe ? session.generation : -1L;
                   boolean liveObservation = !scanProbe;
                   if (!liveObservation) {
-                     String address = this.load_Str_11();
+                     String address = this.normalizedServerAddress();
                      if (!this.tick_Z || !session.init(capturedGeneration, address)) {
                         return;
                      }
@@ -4230,12 +4230,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                         ? packet.suggestions()
                         : List.of();
                      if (scanProbe && session != null) {
-                        if (session.init_Set.remove(id)) {
-                           session.read_I++;
+                        if (session.pendingProbeIds.remove(id)) {
+                           session.replyCount++;
                         }
 
-                        session.load_Map.remove(id);
-                        session.read_J = System.currentTimeMillis();
+                        session.probesById.remove(id);
+                        session.lastResponseAt = System.currentTimeMillis();
                         session.close++;
                         session.open = session.open + list.size();
                      }
@@ -4255,19 +4255,19 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                                  liveObservation ? -1L : capturedGeneration, liveObservation, probe, observed, tokens
                               )
                            );
-                        this.run_Z = true;
+                        this.observationsDirty = true;
                      }
 
                      this.flush(false);
                   } catch (Throwable error) {
-                     if (scanProbe && session != null && session.init(capturedGeneration, this.load_Str_11())) {
-                        session.init_Set.remove(id);
-                        session.load_Map.remove(id);
+                     if (scanProbe && session != null && session.init(capturedGeneration, this.normalizedServerAddress())) {
+                        session.pendingProbeIds.remove(id);
+                        session.probesById.remove(id);
                         session.update++;
-                        this.init_V_AutismServerInfoOv(session, "suggestion reply", error);
-                        this.drain_V_2();
+                        this.recordScanFailure(session, "suggestion reply", error);
+                        this.tickActiveScanSession();
                      } else {
-                        init_Logger.warn("Plugin autocomplete observation failed", error);
+                        LOGGER.warn("Plugin autocomplete observation failed", error);
                      }
                   }
                }
@@ -4277,16 +4277,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void flush(boolean force) {
-      if (this.run_Z) {
+      if (this.observationsDirty) {
          long now = System.currentTimeMillis();
-         if (force || now - this.update_J >= 250L) {
-            this.update_J = now;
-            this.run_Z = false;
+         if (force || now - this.lastObservationFlushMs >= 250L) {
+            this.lastObservationFlushMs = now;
+            this.observationsDirty = false;
 
             try {
                this.close(force);
             } catch (Throwable t) {
-               this.init_V_Str_Throwable("suggestion-maintenance", t);
+               this.reportStageFailure("suggestion-maintenance", t);
             }
          }
       }
@@ -4295,27 +4295,27 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private void close(boolean force) {
       List<AutismServerInfoOverlay.ProbeObservation> batch = new ArrayList<>(this.write_List);
       this.write_List.clear();
-      List<AutismServerInfoOverlay.CommandEvidence> liveBatch = new ArrayList<>(this.update_List);
-      this.update_List.clear();
+      List<AutismServerInfoOverlay.CommandEvidence> liveBatch = new ArrayList<>(this.pendingCommandEvidence);
+      this.pendingCommandEvidence.clear();
       if (!batch.isEmpty() || !liveBatch.isEmpty()) {
          Map<String, AutismServerInfoOverlay.PluginAccumulator> entries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
          if (this.tick_Z) {
             entries.putAll(this.poll_Map);
          } else {
-            entries.putAll(this.init_Map_3());
+            entries.putAll(this.snapshotPluginEntries());
          }
 
          Map<String, AutismServerInfoOverlay.PluginAccumulator> legacyEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-         legacyEntries.putAll(this.push_Map);
+         legacyEntries.putAll(this.legacyPluginEntries);
 
          boolean scanData = false;
-         Set<String> knownPlayers = this.init_Set_3();
+         Set<String> knownPlayers = this.knownPlayerNames();
          this.auditActiveKnownPlayers = knownPlayers;
          try {
             for (AutismServerInfoOverlay.CommandEvidence live : liveBatch) {
-               this.init_Z_Map(entries, live.init_Str, live.init_AutismServerInfoOv);
+               this.init_Z_Map(entries, live.command, live.evidence);
                if (live.load != null && !live.load.isBlank()) {
-                  this.init_Z_Map_3(entries, live.init_Str, live.load);
+                  this.init_Z_Map_3(entries, live.command, live.load);
                }
             }
 
@@ -4327,22 +4327,22 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   if (!var12.hasNext()) {
                      this.load_V(legacyEntries);
                      this.init_V_Map(entries);
-                     this.init_Z_Map_Map(entries, legacyEntries);
+                     this.mergeAccumulators(entries, legacyEntries);
                      this.init_Z_Map(entries);
                      if (!scanData && !this.tick_Z) {
                         this.read(entries);
                      } else {
-                        this.push_Map.clear();
-                        this.push_Map.putAll(legacyEntries);
+                        this.legacyPluginEntries.clear();
+                        this.legacyPluginEntries.putAll(legacyEntries);
                         this.poll_Map.clear();
                         this.poll_Map.putAll(entries);
-                        AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-                        this.init_V_AutismServerInfoOv_Str_2(
+                        AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+                        this.trace(
                            session,
-                           "suggestions batch=" + batch.size() + " legacy=" + this.init_I_Map(this.push_Map) + " working=" + this.init_I_Map(this.poll_Map)
+                           "suggestions batch=" + batch.size() + " legacy=" + this.init_I_Map(this.legacyPluginEntries) + " working=" + this.init_I_Map(this.poll_Map)
                         );
                         if (!force) {
-                           this.drain_V_2();
+                           this.tickActiveScanSession();
                         }
                      }
 
@@ -4350,33 +4350,33 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   }
 
                   reply = (AutismServerInfoOverlay.ProbeObservation)var12.next();
-                  if (reply.init_Z) {
+                  if (reply.liveObservation) {
                      break;
                   }
 
-                  AutismServerInfoOverlay.ActiveScanSession current = this.init_AutismServerInfoOv_3;
-                  if (this.tick_Z && current != null && current.init(reply.init_J, this.load_Str_11())) {
+                  AutismServerInfoOverlay.ActiveScanSession current = this.activeScan;
+                  if (this.tick_Z && current != null && current.init(reply.generation, this.normalizedServerAddress())) {
                      scanData = true;
                      break;
                   }
                }
 
-               boolean isArgCompletion = (reply.init_AutismServerInfoOv != null
-                     && (reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST
-                        || reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.VERSION
-                        || reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.HELP
-                        || (reply.init_AutismServerInfoOv.init_Str != null && reply.init_AutismServerInfoOv.init_Str.contains(" "))))
-                  || (reply.load != null && reply.load.init_Str != null && reply.load.init_Str.contains(" "));
-               boolean rootProbe = auditIsRootProbe(reply.init_AutismServerInfoOv) || auditIsRootProbe(reply.load);
-               boolean playerBatch = this.auditIsPlayerListBatch(reply.init_List, knownPlayers, isArgCompletion, rootProbe);
+               boolean isArgCompletion = (reply.probe != null
+                     && (reply.probe.kind == AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST
+                        || reply.probe.kind == AutismServerInfoOverlay.ProbeKind.VERSION
+                        || reply.probe.kind == AutismServerInfoOverlay.ProbeKind.HELP
+                        || (reply.probe.query != null && reply.probe.query.contains(" "))))
+                  || (reply.load != null && reply.load.query != null && reply.load.query.contains(" "));
+               boolean rootProbe = auditIsRootProbe(reply.probe) || auditIsRootProbe(reply.load);
+               boolean playerBatch = this.auditIsPlayerListBatch(reply.tokens, knownPlayers, isArgCompletion, rootProbe);
 
-               for (String text : reply.init_List) {
+               for (String text : reply.tokens) {
                   // Player names never contain ':', so namespaced commands survive a player-list batch.
                   if (playerBatch && !text.contains(":")) {
                      continue;
                   }
 
-                  this.init_V_Map(entries, legacyEntries, reply.init_AutismServerInfoOv, reply.load, reply.init_Z, text);
+                  this.init_V_Map(entries, legacyEntries, reply.probe, reply.load, reply.liveObservation, text);
                }
             }
          } finally {
@@ -4393,7 +4393,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       boolean liveObservation,
       String text
    ) {
-      String normalizedToken = this.read_Str_3(text);
+      String normalizedToken = this.normalizeCommandToken(text);
       if (!normalizedToken.isEmpty()) {
          this.init_V_Str_11(normalizedToken);
       }
@@ -4402,26 +4402,26 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          String[] parts = text.split(":", 2);
          String ns = parts[0].toLowerCase(Locale.ROOT);
          String cmd = parts.length > 1 ? parts[1] : "";
-         if (!sync_Set.contains(ns)) {
-            this.init_Z_Map(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
+         if (!PLATFORM_NAMESPACES.contains(ns)) {
+            this.mergePluginEntry(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
             this.init_V_Str_11(cmd);
          }
 
          this.init_Z_Map(entries, text, liveObservation ? AutismServerInfoOverlay.EvidenceSource.USER_AUTOCOMPLETE : AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
       } else if (probe != null) {
-         if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.NAMESPACE && probe.load != null && !normalizedToken.isEmpty()) {
-            this.init_Z_Map(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.NAMESPACE);
-            this.init_Z_Map(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.NAMESPACE);
-         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST
-            || probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.VERSION) {
+         if (probe.kind == AutismServerInfoOverlay.ProbeKind.NAMESPACE && probe.load != null && !normalizedToken.isEmpty()) {
+            this.mergePluginEntry(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.NAMESPACE);
+            this.mergePluginEntry(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.NAMESPACE);
+         } else if (probe.kind == AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST
+            || probe.kind == AutismServerInfoOverlay.ProbeKind.VERSION) {
             String pluginCandidate = text.trim();
-            String pluginKey = this.load_Str_2(pluginCandidate);
-            if (this.init_Z_Str_AutismServerInfoOv(pluginCandidate, probe.init_AutismServerInfoOv) && !tick_Map.containsKey(pluginKey)) {
-               AutismServerInfoOverlay.EvidenceSource candidateEvidence = probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST
+            String pluginKey = this.pluginKey(pluginCandidate);
+            if (this.init_Z_Str_AutismServerInfoOv(pluginCandidate, probe.kind) && !PLUGIN_ALIASES.containsKey(pluginKey)) {
+               AutismServerInfoOverlay.EvidenceSource candidateEvidence = probe.kind == AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST
                   ? AutismServerInfoOverlay.EvidenceSource.PLUGIN_LIST
                   : AutismServerInfoOverlay.EvidenceSource.VERSION_HINT;
-               AutismServerInfoOverlay.MatchConfidence candidateConfidence = this.init_AutismServerInfoOv_AutismServerInfoOv(candidateEvidence);
-               this.init_Z_Map(
+               AutismServerInfoOverlay.MatchConfidence candidateConfidence = this.confidenceForEvidence(candidateEvidence);
+               this.mergePluginEntry(
                   legacyEntries,
                   null,
                   pluginCandidate,
@@ -4433,7 +4433,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   candidateConfidence,
                   AutismServerInfoOverlay.DetectionType.PLUGIN
                );
-               this.init_Z_Map(
+               this.mergePluginEntry(
                   entries,
                   null,
                   pluginCandidate,
@@ -4446,10 +4446,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   AutismServerInfoOverlay.DetectionType.PLUGIN
                );
             }
-         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.HELP && probe.load != null && probe.load.length() >= 2 && !normalizedToken.isEmpty()) {
-            this.init_Z_Map(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.HELP_HINT);
-            this.init_Z_Map(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.HELP_HINT);
-         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.ROOT && !normalizedToken.isEmpty()) {
+         } else if (probe.kind == AutismServerInfoOverlay.ProbeKind.HELP && probe.load != null && probe.load.length() >= 2 && !normalizedToken.isEmpty()) {
+            this.mergePluginEntry(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.HELP_HINT);
+            this.mergePluginEntry(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.HELP_HINT);
+         } else if (probe.kind == AutismServerInfoOverlay.ProbeKind.ROOT && !normalizedToken.isEmpty()) {
             this.init_Z_Map_Str(entries, normalizedToken);
          }
       } else if (observed != null && !normalizedToken.isEmpty()) {
@@ -4458,82 +4458,82 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    public void onCommandTreeReceived() {
-      this.buffer_V_2();
-      init_Minecraft.execute(() -> {
+      this.invalidateContextSignature();
+      MC.execute(() -> {
          try {
-            this.parse_V_2();
+            this.onCommandTreeUpdate();
          } catch (Throwable t) {
-            this.init_V_Str_Throwable("command-tree", t);
+            this.reportStageFailure("command-tree", t);
          }
       });
    }
 
-   private void parse_V_2() {
-      String currentAddress = this.load_Str_11();
+   private void onCommandTreeUpdate() {
+      String currentAddress = this.normalizedServerAddress();
       if (!currentAddress.isEmpty()) {
-         String currentContextSignature = this.read_Str_8();
-         AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
-         if (session != null && this.tick_Z && currentAddress.equals(session.init_Str)) {
-            session.load_Str = currentContextSignature;
-            this.pop_Str = currentContextSignature;
+         String currentContextSignature = this.computeContextSignature();
+         AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
+         if (session != null && this.tick_Z && currentAddress.equals(session.serverAddress)) {
+            session.contextSignature = currentContextSignature;
+            this.contextSignature = currentContextSignature;
 
             try {
-               CommandDispatcher<ClientSuggestionProvider> dispatcher = init_Minecraft.getConnection() == null
+               CommandDispatcher<ClientSuggestionProvider> dispatcher = MC.getConnection() == null
                   ? null
-                  : init_Minecraft.getConnection().getCommands();
+                  : MC.getConnection().getCommands();
                if (dispatcher != null && dispatcher.getRoot() != null) {
-                  this.init_V_RootCommandNode(dispatcher.getRoot());
+                  this.ingestCommandTree(dispatcher.getRoot());
                }
             } catch (RuntimeException error) {
-               this.init_V_AutismServerInfoOv(session, "command tree update", error);
+               this.recordScanFailure(session, "command tree update", error);
             }
          } else {
             PluginSignatureCatalog.init();
-            this.sync_J = -1L;
-            if (currentAddress.equals(this.poll_Str) && this.pop_Z && AutismConfig.getGlobal().autoProbePlugins) {
-               this.fill_V_2();
+            this.catalogRevision = -1L;
+            if (currentAddress.equals(this.scanAddress) && this.scanDone && AutismConfig.getGlobal().autoProbePlugins) {
+               this.restartScan();
                this.read(true);
-            } else if (currentAddress.equals(this.poll_Str) && this.pop_Z) {
-               this.init_V_Str_Str_3(currentAddress, currentContextSignature);
+            } else if (currentAddress.equals(this.scanAddress) && this.scanDone) {
+               this.resetForServer(currentAddress, currentContextSignature);
             } else {
-               this.frame_V_2();
+               this.syncServerContext();
             }
          }
       }
    }
 
    public void onSignaturesChanged() {
-      this.sync_J = -1L;
-      this.a_V_2();
-      this.buffer_V_2();
+      this.catalogRevision = -1L;
+      this.invalidateDetails();
+      this.invalidateContextSignature();
    }
 
    public void showOverviewTab() {
       this.setVisible(true);
-      this.init_V_I_9(0);
+      this.onTabSelected(0);
    }
 
    public void showPluginsTab() {
       this.setVisible(true);
-      this.init_V_I_9(1);
+      this.onTabSelected(1);
    }
 
-   public void reset_V_7() {
-      this.setVisible(!this.write_Z);
+   public void toggleVisible() {
+      this.setVisible(!this.overlayVisible);
    }
 
    @Override
    public void setVisible(boolean v) {
-      this.write_Z = v;
+      this.overlayVisible = v;
       if (v) {
-         this.init_CharEncoder_2.setShowBody(!this.update_Z);
+         this.windowNode.setShowBody(!this.overlayCollapsed);
          OverlayManager.getInstance().bringToFront(this);
-         this.frame_V_2();
+         this.syncServerContext();
          if (this.start == 0) {
             this.count_V_2();
          } else if (this.tick_Z) {
             this.task_V_2();
-         } else if (!this.pop_Z) {
+         } else if (!this.scanDone) {
             this.node_V_2();
          } else {
             this.pool_V_2();
@@ -4545,26 +4545,26 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean isVisible() {
-      return this.write_Z;
+      return this.overlayVisible;
    }
 
    @Override
    public boolean isCollapsed() {
-      return this.update_Z;
+      return this.overlayCollapsed;
    }
 
    @Override
    public void setCollapsed(boolean c) {
-      if (this.update_Z != c) {
-         this.update_Z = c;
-         this.init_CharEncoder_2.setShowBody(!this.update_Z);
+      if (this.overlayCollapsed != c) {
+         this.overlayCollapsed = c;
+         this.windowNode.setShowBody(!this.overlayCollapsed);
          if (c) {
             this.clearFocusAndDismissMenu();
          } else if (this.start == 0) {
             this.count_V_2();
          } else if (this.tick_Z) {
             this.task_V_2();
-         } else if (!this.pop_Z) {
+         } else if (!this.scanDone) {
             this.node_V_2();
          } else {
             this.pool_V_2();
@@ -4586,56 +4586,56 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean containsPoint(double mx, double my) {
-      if (!this.write_Z) {
+      if (!this.overlayVisible) {
          return false;
       }
 
-      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       float uiX = viewport.toUiX(mx);
       float uiY = viewport.toUiY(my);
-      return uiX >= this.poll_I && uiX <= this.poll_I + this.pop_I && uiY >= this.push_I && uiY <= this.push_I + this.run_I;
+      return uiX >= this.overlayX && uiX <= this.overlayX + this.overlayWidth && uiY >= this.overlayY && uiY <= this.overlayY + this.overlayHeight;
    }
 
    @Override
    public boolean isOverHeader(double mx, double my) {
-      if (!this.write_Z) {
+      if (!this.overlayVisible) {
          return false;
       }
 
-      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       float uiX = viewport.toUiX(mx);
       float uiY = viewport.toUiY(my);
-      return this.init_Z_F_F_6(uiX, uiY) && !this.load_Z_F_F_5(uiX, uiY);
+      return this.isOverHeaderUi(uiX, uiY) && !this.isOverCloseButton(uiX, uiY);
    }
 
    @Override
    public boolean hasFocusedTextInput() {
-      return this.init_TextFormat.hasFocusedInput();
+      return this.layoutHost.hasFocusedInput();
    }
 
    @Override
    public OverlayBounds getBounds() {
-      return new OverlayBounds(this.poll_I, this.push_I, this.pop_I, this.run_I, this.write_Z, this.update_Z);
+      return new OverlayBounds(this.overlayX, this.overlayY, this.overlayWidth, this.overlayHeight, this.overlayVisible, this.overlayCollapsed);
    }
 
    @Override
    public void setBounds(OverlayBounds b) {
       if (b != null) {
-         OverlayBounds clamped = this.init_cH_cH_5(b);
-         this.poll_I = clamped.x;
-         this.push_I = clamped.y;
-         this.pop_I = clamped.width;
-         this.run_I = clamped.height;
-         this.write_Z = clamped.visible;
-         this.update_Z = clamped.collapsed;
-         this.init_CharEncoder_2.setShowBody(!this.update_Z);
-         this.flags_V_2();
+         OverlayBounds clamped = this.clampBounds(b);
+         this.overlayX = clamped.x;
+         this.overlayY = clamped.y;
+         this.overlayWidth = clamped.width;
+         this.overlayHeight = clamped.height;
+         this.overlayVisible = clamped.visible;
+         this.overlayCollapsed = clamped.collapsed;
+         this.windowNode.setShowBody(!this.overlayCollapsed);
+         this.saveTabSize();
       }
    }
 
    @Override
    public int getMinWidth() {
-      return this.get_I_20();
+      return this.computeMinWidth();
    }
 
    @Override
@@ -4644,7 +4644,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          if (this.tick_Z) {
             return this.prev_I_6();
          } else {
-            return !this.pop_Z ? this.next_I_7() : this.set_I_20();
+            return !this.scanDone ? this.next_I_7() : this.set_I_20();
          }
       } else {
          return this.size_I_3();
@@ -4653,63 +4653,63 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    @Override
    public void render(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
-      if (this.write_Z || this.isClosing()) {
+      if (this.overlayVisible || this.isClosing()) {
          try {
-            this.load_V_GuiGraphicsExtract(ctx, mx, my, delta);
+            this.renderContents(ctx, mx, my, delta);
          } catch (Throwable t) {
-            this.init_V_Str_Throwable("render", t);
+            this.reportStageFailure("render", t);
          }
       }
    }
 
-   private void load_V_GuiGraphicsExtract(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
-      this.frame_V_2();
+   private void renderContents(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
+      this.syncServerContext();
       this.block_V_2();
-      this.drain_V_2();
+      this.tickActiveScanSession();
       long nowMs = System.currentTimeMillis();
-      if (nowMs - this.init_J >= 100L && (this.set_Z || this.tick_Z)) {
-         this.init_List.clear();
-         this.next_V_7();
-         this.init_J = nowMs;
+      if (nowMs - this.lastLayoutRebuildMs >= 100L && (this.layoutDirty || this.tick_Z)) {
+         this.clickHotspots.clear();
+         this.rebuildLayout();
+         this.lastLayoutRebuildMs = nowMs;
       }
 
-      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       float uiMouseX = viewport.toUiX(mx);
       float uiMouseY = viewport.toUiY(my);
       boolean active = OverlayManager.getInstance().isFocused(this) || OverlayManager.getInstance().isTopmost(this);
-      boolean headerHovered = this.init_Z_F_F_6(uiMouseX, uiMouseY);
+      boolean headerHovered = this.isOverHeaderUi(uiMouseX, uiMouseY);
       autismclient.gui.ui.layout.LayoutContext metrics = new autismclient.gui.ui.layout.LayoutContext(
-         ctx, this.init_Font, viewport, this.init_CharEncoder, uiMouseX, uiMouseY, delta
+         ctx, this.textRenderer, viewport, this.theme, uiMouseX, uiMouseY, delta
       );
-      this.init_CharEncoder_2.setExpanded(!this.update_Z);
-      this.init_CharEncoder_2.setActive(active);
-      this.init_CharEncoder_2.setHeaderHovered(headerHovered);
-      int preferredHeight = Math.round(this.init_CharEncoder_2.measureHeight(metrics, this.pop_I));
-      if (this.update_Z) {
-         this.run_I = preferredHeight;
+      this.windowNode.setExpanded(!this.overlayCollapsed);
+      this.windowNode.setActive(active);
+      this.windowNode.setHeaderHovered(headerHovered);
+      int preferredHeight = Math.round(this.windowNode.measureHeight(metrics, this.overlayWidth));
+      if (this.overlayCollapsed) {
+         this.overlayHeight = preferredHeight;
       } else if (this.start == 0) {
-         this.run_I = this.stop_I_7();
+         this.overlayHeight = this.stop_I_7();
       } else if (this.tick_Z) {
-         this.run_I = this.prev_I_6();
-      } else if (!this.pop_Z) {
-         this.run_I = this.next_I_7();
+         this.overlayHeight = this.prev_I_6();
+      } else if (!this.scanDone) {
+         this.overlayHeight = this.next_I_7();
       } else {
-         this.run_I = this.tick_I_22();
+         this.overlayHeight = this.tick_I_22();
       }
 
-      this.pop_I = this.pop_I_24();
-      OverlayBounds clamped = this.init_cH_cH_5(new OverlayBounds(this.poll_I, this.push_I, this.pop_I, this.run_I, this.write_Z, this.update_Z));
-      this.poll_I = clamped.x;
-      this.push_I = clamped.y;
-      this.pop_I = clamped.width;
-      this.run_I = clamped.height;
-      this.init_CharEncoder_2.setBounds(this.poll_I, this.push_I, this.pop_I, this.run_I);
-      this.init_TextFormat.render(ctx, mx, my, delta);
-      if (this.init_CharEncoder_2.pushBodyClip(ctx)) {
+      this.overlayWidth = this.computeWidth();
+      OverlayBounds clamped = this.clampBounds(new OverlayBounds(this.overlayX, this.overlayY, this.overlayWidth, this.overlayHeight, this.overlayVisible, this.overlayCollapsed));
+      this.overlayX = clamped.x;
+      this.overlayY = clamped.y;
+      this.overlayWidth = clamped.width;
+      this.overlayHeight = clamped.height;
+      this.windowNode.setBounds(this.overlayX, this.overlayY, this.overlayWidth, this.overlayHeight);
+      this.layoutHost.render(ctx, mx, my, delta);
+      if (this.windowNode.pushBodyClip(ctx)) {
          try {
-            if (this.start == 1 && this.pop_Z && !this.tick_Z) {
-               this.init_List.clear();
-               this.init_V_GuiGraphicsExtract_11(ctx, viewport, uiMouseX, uiMouseY, delta);
+            if (this.start == 1 && this.scanDone && !this.tick_Z) {
+               this.clickHotspots.clear();
+               this.renderDetailList(ctx, viewport, uiMouseX, uiMouseY, delta);
             }
          } finally {
             autismclient.gui.ui.UiClipStack.getInstance().pop(ctx);
@@ -4717,19 +4717,19 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String init_Str_ServerData(ServerData entry) {
+   private String reportedVersion(ServerData entry) {
       return entry != null && entry.version != null ? entry.version.getString() : "--";
    }
 
-   private String flush_Str_2() {
-      String version = AutismSessionState.getInstance().getDetectedServerVersion(this.open_Str_2());
+   private String detectedVersion() {
+      String version = AutismSessionState.getInstance().getDetectedServerVersion(this.displayedAddress());
       if (version != null && !version.isBlank()) {
          return version;
       }
 
-      String brand = this.close_Str_2();
+      String brand = this.serverBrand();
       if (brand != null && !brand.isBlank() && !"--".equals(brand)) {
-         String extracted = this.update_Str_2(brand);
+         String extracted = this.softwareFromBrand(brand);
          if (extracted != null) {
             return extracted;
          }
@@ -4738,7 +4738,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return "--";
    }
 
-   private String update_Str_2(String brand) {
+   private String softwareFromBrand(String brand) {
       if (brand != null && !brand.isBlank()) {
          String lower = brand.toLowerCase(Locale.ROOT);
          int dashIdx = lower.indexOf(45);
@@ -4754,11 +4754,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_GuiGraphicsExtract_11(GuiGraphicsExtractor ctx, autismclient.gui.ui.layout.LayoutViewport viewport, float uiMouseX, float uiMouseY, float delta) {
-      int x = Math.round(this.init_BitSetUtil_2.x());
-      int y = Math.round(this.init_BitSetUtil_2.y());
-      int rowW = Math.round(this.init_BitSetUtil_2.width());
-      int viewH = this.init_I_BitSetUtil(this.init_BitSetUtil_2);
+   private void renderDetailList(GuiGraphicsExtractor ctx, autismclient.gui.ui.layout.LayoutViewport viewport, float uiMouseX, float uiMouseY, float delta) {
+      int x = Math.round(this.listViewportSpacer.x());
+      int y = Math.round(this.listViewportSpacer.y());
+      int rowW = Math.round(this.listViewportSpacer.width());
+      int viewH = this.visibleViewportHeight(this.listViewportSpacer);
       int listTop = y;
       int listBottom = listTop + viewH;
       if (rowW > 0 && viewH > 0) {
@@ -4766,28 +4766,28 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          int clipTop = listTop + 1;
          int clipRight = x + rowW - 1;
          int clipBottom = listBottom - 1;
-         int innerViewH = this.load_I_2(viewH);
+         int innerViewH = this.innerViewportHeight(viewH);
          if (innerViewH > 0) {
             int rowContentW = Math.max(48, clipRight - clipLeft);
-            List<AutismServerInfoOverlay.DetailRow> rows = this.init_List_Str_I(this.init_BitSetUtil.getValue(), rowContentW);
+            List<AutismServerInfoOverlay.DetailRow> rows = this.detailRowsFor(this.searchInput.getValue(), rowContentW);
             int estimatedContentHeight = this.load(rows);
             int maxScroll = Math.max(0, estimatedContentHeight - innerViewH);
-            int quantizedTarget = this.quantizeScrollOffset(this.init_CacheEntry.getOffset(), this.o(), maxScroll);
-            this.init_CacheEntry.setOffset(quantizedTarget, maxScroll);
-            int visualScroll = this.quantizeScrollOffset(this.init_CacheEntry.tickAndClamp(delta, maxScroll), this.o(), maxScroll);
+            int quantizedTarget = this.quantizeScrollOffset(this.scroll.getOffset(), this.o(), maxScroll);
+            this.scroll.setOffset(quantizedTarget, maxScroll);
+            int visualScroll = this.quantizeScrollOffset(this.scroll.tickAndClamp(delta, maxScroll), this.o(), maxScroll);
             this.value = estimatedContentHeight;
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.load_PoolEntry_DataUtil_I(x, listTop, rowW, viewH);
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.scrollbarMetrics(x, listTop, rowW, viewH);
             int scrolledRowContentW = Math.max(48, clipRight - clipLeft - (scrollbarMetrics.isScrollable() ? 10 : 0));
             if (scrolledRowContentW != rowContentW) {
                rowContentW = scrolledRowContentW;
-               rows = this.init_List_Str_I(this.init_BitSetUtil.getValue(), rowContentW);
+               rows = this.detailRowsFor(this.searchInput.getValue(), rowContentW);
                estimatedContentHeight = this.load(rows);
                maxScroll = Math.max(0, estimatedContentHeight - innerViewH);
-               quantizedTarget = this.quantizeScrollOffset(this.init_CacheEntry.getOffset(), this.o(), maxScroll);
-               this.init_CacheEntry.setOffset(quantizedTarget, maxScroll);
-               visualScroll = this.quantizeScrollOffset(this.init_CacheEntry.tickAndClamp(0.0F, maxScroll), this.o(), maxScroll);
+               quantizedTarget = this.quantizeScrollOffset(this.scroll.getOffset(), this.o(), maxScroll);
+               this.scroll.setOffset(quantizedTarget, maxScroll);
+               visualScroll = this.quantizeScrollOffset(this.scroll.tickAndClamp(0.0F, maxScroll), this.o(), maxScroll);
                this.value = estimatedContentHeight;
-               scrollbarMetrics = this.load_PoolEntry_DataUtil_I(x, listTop, rowW, viewH);
+               scrollbarMetrics = this.scrollbarMetrics(x, listTop, rowW, viewH);
             }
 
             boolean active = OverlayManager.getInstance().isFocused(this) || OverlayManager.getInstance().isTopmost(this);
@@ -4798,79 +4798,79 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                viewport.pushClip(ctx, clipLeft, clipTop, clipRight, clipBottom);
 
                try {
-                  int startIndex = this.read_I_List_I(rows, visualScroll);
+                  int startIndex = this.firstVisibleRow(rows, visualScroll);
                   int cy = clipTop - visualScroll + this.read(startIndex);
 
                   for (int rowIndex = startIndex; rowIndex < rows.size(); rowIndex++) {
                      AutismServerInfoOverlay.DetailRow row = rows.get(rowIndex);
                      int rowY = cy;
                      int rowTop = rowY;
-                     int rowBottom = rowY + row.init_I;
+                     int rowBottom = rowY + row.height;
                      boolean rowVisible = rowBottom > clipTop && rowTop < clipBottom;
                      if (row.init()) {
                         if (rowVisible) {
                            autismclient.gui.ui.widgets.PanelSurfaceHelper.drawSectionHeader(ctx, clipLeft, rowTop, clipRight - clipLeft, rowBottom - rowTop);
                            int headerTextY = UiLayoutMath.centerTextY(
-                              rowY, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()
+                              rowY, row.height, this.theme.init_I_l(autismclient.gui.f.b.l.write), this.theme.flush()
                            );
                            autismclient.gui.f.b.k.init(
                               ctx,
-                              this.init_Font,
-                              row.init_Str,
-                              this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-                              this.init_CharEncoder.load(autismclient.gui.f.b.l.write),
+                              this.textRenderer,
+                              row.title,
+                              this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
+                              this.theme.load(autismclient.gui.f.b.l.write),
                               clipLeft + this.n(),
                               headerTextY,
                               false
                            );
                         }
-                     } else if (row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.DetailRowKind.PLUGIN) {
-                        boolean standaloneCommandHint = this.init_Z_AutismServerInfoOv_2(row);
-                        boolean selected = !standaloneCommandHint && this.read_Z_Str_Str(row.load, this.sync_Str);
+                     } else if (row.type == AutismServerInfoOverlay.DetailRowKind.PLUGIN) {
+                        boolean standaloneCommandHint = this.isStandaloneCommandHint(row);
+                        boolean selected = !standaloneCommandHint && this.samePluginKey(row.load, this.selectedPlugin);
                         boolean hovered = rowVisible && uiMouseX >= clipLeft && uiMouseX < clipLeft + rowContentW && uiMouseY >= rowTop && uiMouseY < rowBottom;
                         if (rowVisible) {
                            autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, clipLeft, rowTop, rowContentW, rowBottom - rowTop, hovered, selected);
                         }
 
-                        int rowTextY = UiLayoutMath.centerTextY(rowY, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
+                        int rowTextY = UiLayoutMath.centerTextY(rowY, row.height, this.theme.init_I_l(autismclient.gui.f.b.l.read), this.theme.flush());
                         if (rowVisible && !standaloneCommandHint) {
                            int arrowColor = !hovered && !selected
-                              ? this.init_CharEncoder.load(autismclient.gui.f.b.l.write)
-                              : this.init_CharEncoder.load(autismclient.gui.f.b.l.read);
+                              ? this.theme.load(autismclient.gui.f.b.l.write)
+                              : this.theme.load(autismclient.gui.f.b.l.read);
                            autismclient.gui.f.PacketUtil.init(
                               ctx,
-                              autismclient.gui.f.NetHelper.init(clipLeft + 2, rowTextY, 9, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read)),
+                              autismclient.gui.f.NetHelper.init(clipLeft + 2, rowTextY, 9, this.theme.init_I_l(autismclient.gui.f.b.l.read)),
                               selected,
                               arrowColor
                            );
                         }
 
-                        boolean isAnticheat = row.load != null && update_Set.contains(row.load.toLowerCase(Locale.ROOT));
+                        boolean isAnticheat = row.load != null && ANTICHEAT_PLUGINS.contains(row.load.toLowerCase(Locale.ROOT));
                         int nameColor = isAnticheat
                            ? ThemePaletteManager.recolor(-43691, ThemePaletteManager.ColorRole.DANGER)
-                           : this.init_I_AutismServerInfoOv_Z(row.init_AutismServerInfoOv, hovered);
+                           : this.confidenceColor(row.confidence, hovered);
                         String label = isAnticheat ? "! " + row.load : row.load;
                         int labelX = clipLeft + (standaloneCommandHint ? 5 : 13);
                         int labelMaxWidth = Math.max(40, rowContentW - 18);
                         if (row.update != null && !row.update.isBlank()) {
                            int cw = autismclient.gui.f.b.k.init(
-                              this.init_Font,
+                              this.textRenderer,
                               row.update,
-                              this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-                              this.init_CharEncoder.load(autismclient.gui.f.b.l.write)
+                              this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
+                              this.theme.load(autismclient.gui.f.b.l.write)
                            );
                            int countX = clipLeft + rowContentW - cw - 4;
                            labelMaxWidth = Math.max(36, countX - labelX - 4);
                            int countTextY = UiLayoutMath.centerTextY(
-                              rowY, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()
+                              rowY, row.height, this.theme.init_I_l(autismclient.gui.f.b.l.write), this.theme.flush()
                            );
                            if (rowVisible) {
                               autismclient.gui.f.b.k.init(
                                  ctx,
-                                 this.init_Font,
+                                 this.textRenderer,
                                  row.update,
-                                 this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-                                 this.init_CharEncoder.load(autismclient.gui.f.b.l.write),
+                                 this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
+                                 this.theme.load(autismclient.gui.f.b.l.write),
                                  countX,
                                  countTextY,
                                  false
@@ -4880,13 +4880,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
                         if (rowVisible) {
                            String displayLabel = autismclient.gui.f.b.k.init(
-                              this.init_Font, label, labelMaxWidth, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), nameColor
+                              this.textRenderer, label, labelMaxWidth, this.theme.init_Identifier_l(autismclient.gui.f.b.l.read), nameColor
                            );
                            autismclient.gui.f.b.k.init(
                               ctx,
-                              this.init_Font,
+                              this.textRenderer,
                               displayLabel,
-                              this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
+                              this.theme.init_Identifier_l(autismclient.gui.f.b.l.read),
                               nameColor,
                               labelX,
                               rowTextY,
@@ -4896,29 +4896,29 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                               String clickedPlugin = row.load;
                               int hitTop = Math.max(rowTop, clipTop);
                               int hitBottom = Math.min(rowBottom, clipBottom);
-                              this.init_List
+                              this.clickHotspots
                                  .add(new AutismServerInfoOverlay.ClickHotspot(clipLeft, hitTop, rowContentW, Math.max(1, hitBottom - hitTop), () -> {
-                                    this.sync_Str = this.read_Z_Str_Str(clickedPlugin, this.sync_Str) ? null : clickedPlugin;
-                                    this.b_V_2();
+                                    this.selectedPlugin = this.samePluginKey(clickedPlugin, this.selectedPlugin) ? null : clickedPlugin;
+                                    this.invalidateDetailRows();
                                     this.saveState();
                                  }));
                            } else {
                               String hintCommand = row.load;
                               int hitTop = Math.max(rowTop, clipTop);
                               int hitBottom = Math.min(rowBottom, clipBottom);
-                              this.init_List
+                              this.clickHotspots
                                  .add(new AutismServerInfoOverlay.ClickHotspot(clipLeft, hitTop, rowContentW, Math.max(1, hitBottom - hitTop), () -> {
                                     this.clearInputFocus();
-                                    this.init_List.clear();
+                                    this.clickHotspots.clear();
                                     String fullCmd = hintCommand.startsWith("/") ? hintCommand : "/" + hintCommand;
                                     OverlayManager.getInstance().setHidden(this, true);
-                                    init_Minecraft.gui.setScreen(new ChatScreen(fullCmd, false));
+                                    MC.gui.setScreen(new ChatScreen(fullCmd, false));
                                  }));
                            }
                         }
                      } else {
-                        boolean commandRow = row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.DetailRowKind.COMMAND;
-                        boolean channelRow = row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.DetailRowKind.CHANNEL
+                        boolean commandRow = row.type == AutismServerInfoOverlay.DetailRowKind.COMMAND;
+                        boolean channelRow = row.type == AutismServerInfoOverlay.DetailRowKind.CHANNEL
                            && row.write != null
                            && !row.write.isBlank();
                         boolean clickableRow = commandRow || channelRow;
@@ -4929,25 +4929,25 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                            && uiMouseY >= rowTop
                            && uiMouseY < rowBottom;
                         if (rowVisible) {
-                           int detailColor = this.init_I_AutismServerInfoOv_4(row);
+                           int detailColor = this.detailRowColor(row);
                            autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, clipLeft + 5, rowTop, rowContentW - 9, rowBottom - rowTop, hovered, false);
                            autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(ctx, clipLeft + 5, rowTop, 1, rowBottom - rowTop, detailColor);
-                           int textColor = hovered ? this.init_CharEncoder.load(autismclient.gui.f.b.l.read) : detailColor;
+                           int textColor = hovered ? this.theme.load(autismclient.gui.f.b.l.read) : detailColor;
                            String detailLabel = autismclient.gui.f.b.k.init(
-                              this.init_Font,
+                              this.textRenderer,
                               row.read,
                               Math.max(20, rowContentW - 20),
-                              this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
+                              this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
                               textColor
                            );
                            int detailTextY = UiLayoutMath.centerTextY(
-                              rowY, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()
+                              rowY, row.height, this.theme.init_I_l(autismclient.gui.f.b.l.write), this.theme.flush()
                            );
                            autismclient.gui.f.b.k.init(
                               ctx,
-                              this.init_Font,
+                              this.textRenderer,
                               detailLabel,
-                              this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
+                              this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
                               textColor,
                               clipLeft + 11,
                               detailTextY,
@@ -4959,18 +4959,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                            String actionValue = row.write;
                            int hitTop = Math.max(rowTop, clipTop);
                            int hitBottom = Math.min(rowBottom, clipBottom);
-                           this.init_List
+                           this.clickHotspots
                               .add(
                                  new AutismServerInfoOverlay.ClickHotspot(
                                     clipLeft + 9, hitTop, Math.max(1, rowContentW - 15), Math.max(1, hitBottom - hitTop), () -> {
                                        this.clearInputFocus();
-                                       this.init_List.clear();
+                                       this.clickHotspots.clear();
                                        if (commandRow) {
                                           String fullCmd = actionValue.startsWith("/") ? actionValue : "/" + actionValue;
                                           OverlayManager.getInstance().setHidden(this, true);
-                                          init_Minecraft.gui.setScreen(new ChatScreen(fullCmd, false));
+                                          MC.gui.setScreen(new ChatScreen(fullCmd, false));
                                        } else {
-                                          this.write_V_3(actionValue);
+                                          this.openPayloadEditor(actionValue);
                                        }
                                     }
                                  )
@@ -4978,7 +4978,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                         }
                      }
 
-                     cy += row.init_I;
+                     cy += row.height;
                      if (cy > clipBottom + this.o()) {
                         break;
                      }
@@ -4987,7 +4987,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   viewport.popClip(ctx);
                }
 
-               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, scrollbarMetrics, scrollbarMetrics.containsTrack(uiMouseX, uiMouseY), this.open_Z);
+               autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, scrollbarMetrics, scrollbarMetrics.containsTrack(uiMouseX, uiMouseY), this.draggingScrollbar);
             } finally {
                viewport.popTransform(ctx);
             }
@@ -4995,16 +4995,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private int init_I_AutismServerInfoOv_4(AutismServerInfoOverlay.DetailRow row) {
+   private int detailRowColor(AutismServerInfoOverlay.DetailRow row) {
       if (row == null) {
-         return this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
+         return this.theme.load(autismclient.gui.f.b.l.write);
       }
 
       int var10000;
-      switch (row.init_AutismServerInfoOv_3) {
+      switch (row.type) {
          case HEADER:
          case PLUGIN:
-            var10000 = this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
+            var10000 = this.theme.load(autismclient.gui.f.b.l.write);
             break;
          case COMMAND:
             var10000 = -1716016;
@@ -5013,10 +5013,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             var10000 = UiColorPalette.warningYellow();
             break;
          case CHANNEL:
-            var10000 = this.read_I_4(row.read == null ? null : row.read.replaceFirst("^ch\\s+", ""));
+            var10000 = this.channelDetailColor(row.read == null ? null : row.read.replaceFirst("^ch\\s+", ""));
             break;
          case WHY:
-            var10000 = this.init_I_AutismServerInfoOv_Z(row.init_AutismServerInfoOv, false);
+            var10000 = this.confidenceColor(row.confidence, false);
             break;
          default:
             throw new MatchException(null, null);
@@ -5025,16 +5025,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private boolean init_Z_AutismServerInfoOv_2(AutismServerInfoOverlay.DetailRow row) {
+   private boolean isStandaloneCommandHint(AutismServerInfoOverlay.DetailRow row) {
       return row != null
-         && row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.DetailRowKind.PLUGIN
-         && row.init_AutismServerInfoOv_4 == AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE
+         && row.type == AutismServerInfoOverlay.DetailRowKind.PLUGIN
+         && row.evidence == AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE
          && row.load != null
          && row.load.startsWith("/");
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics load_PoolEntry_DataUtil_I(int x, int y, int width, int height) {
-      int innerHeight = this.load_I_2(height);
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics(int x, int y, int width, int height) {
+      int innerHeight = this.innerViewportHeight(height);
       int maxScroll = Math.max(0, this.value - innerHeight);
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
          this.value,
@@ -5043,11 +5043,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          y + 1,
          3,
          Math.max(1, innerHeight),
-         this.quantizeScrollOffset(this.init_CacheEntry.tickAndClamp(0.0F, maxScroll), this.o(), maxScroll)
+         this.quantizeScrollOffset(this.scroll.tickAndClamp(0.0F, maxScroll), this.o(), maxScroll)
       );
    }
 
-   private String init_Str_List(List<String> commands, List<String> guis, List<String> channels) {
+   private String countSummary(List<String> commands, List<String> guis, List<String> channels) {
       int commandCount = commands == null ? 0 : commands.size();
       int guiCount = guis == null ? 0 : guis.size();
       int observedChannelCount = 0;
@@ -5056,9 +5056,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (channels != null) {
          for (String channel : channels) {
             if (channel != null && !channel.isBlank()) {
-               if (this.update_Z_2(channel)) {
+               if (this.isNoChannel(channel)) {
                   noChannelObserved = true;
-               } else if (this.sync_Z_2(channel)) {
+               } else if (this.isUnobservedChannel(channel)) {
                   probableChannelCount++;
                } else {
                   observedChannelCount++;
@@ -5095,12 +5095,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return !parts.isEmpty() ? String.join("/", parts) : channelLabel;
    }
 
-   private String init_Str_List_List(List<String> commands, List<String> channels) {
-      return this.init_Str_List(commands, List.of(), channels);
+   private String countSummary(List<String> commands, List<String> channels) {
+      return this.countSummary(commands, List.of(), channels);
    }
 
-   private List<String> init_List_Str_3(String plugin) {
-      List<String> observed = this.write_List_2(plugin);
+   private List<String> channelsForPlugin(String plugin) {
+      List<String> observed = this.observedChannelsFor(plugin);
       if (observed != null && !observed.isEmpty()) {
          return observed;
       }
@@ -5115,7 +5115,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             }
          }
 
-         rows = this.init_List_Collection(rows);
+         rows = this.distinctRows(rows);
          if (!rows.isEmpty()) {
             return rows;
          }
@@ -5124,14 +5124,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return List.of("no channel");
    }
 
-   private int read_I_4(String detail) {
+   private int channelDetailColor(String detail) {
       if (detail == null) {
-         return this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
+         return this.theme.load(autismclient.gui.f.b.l.write);
       } else {
          String lower = detail.toLowerCase(Locale.ROOT);
-         if (this.update_Z_2(lower)) {
+         if (this.isNoChannel(lower)) {
             return -7371387;
-         } else if (this.sync_Z_2(lower)) {
+         } else if (this.isUnobservedChannel(lower)) {
             return -7371387;
          } else if (lower.contains("[registered")) {
             return UiColorPalette.mint();
@@ -5141,32 +5141,32 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String sync_Str_2(String detail) {
+   private String channelLabel(String detail) {
       if (detail == null || detail.isBlank()) {
          return "--";
-      } else if (this.update_Z_2(detail)) {
+      } else if (this.isNoChannel(detail)) {
          return "no channel";
       } else {
          String base = this.close(detail);
          if (base.isBlank()) {
             return "--";
          } else {
-            return this.sync_Z_2(detail) ? "? " + base : base;
+            return this.isUnobservedChannel(detail) ? "? " + base : base;
          }
       }
    }
 
-   private List<String> init_List_Collection(Collection<String> source) {
+   private List<String> distinctRows(Collection<String> source) {
       if (source != null && !source.isEmpty()) {
          Map<String, String> unique = new LinkedHashMap<>();
 
          for (String row : source) {
             if (row != null && !row.isBlank()) {
                String clean = row.trim();
-               String key = this.flush_Str_2(clean);
+               String key = this.channelKey(clean);
                if (!key.isBlank()) {
                   String existing = unique.get(key);
-                  if (existing == null || this.write_I_3(clean) > this.write_I_3(existing)) {
+                  if (existing == null || this.channelRank(clean) > this.channelRank(existing)) {
                      unique.put(key, clean);
                   }
                }
@@ -5174,15 +5174,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
 
          List<String> out = new ArrayList<>(unique.values());
-         out.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(this.sync_Str_2(a), this.sync_Str_2(b)));
+         out.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(this.channelLabel(a), this.channelLabel(b)));
          return out;
       } else {
          return List.of();
       }
    }
 
-   private String flush_Str_2(String detail) {
-      return this.update_Z_2(detail) ? "no-channel" : this.close(detail).toLowerCase(Locale.ROOT);
+   private String channelKey(String detail) {
+      return this.isNoChannel(detail) ? "no-channel" : this.close(detail).toLowerCase(Locale.ROOT);
    }
 
    private String close(String detail) {
@@ -5208,7 +5208,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private String open(String detail) {
-      if (detail != null && !this.update_Z_2(detail)) {
+      if (detail != null && !this.isNoChannel(detail)) {
          String base = this.close(detail);
          String channel = this.poll(base);
          return channel.isBlank() ? null : channel;
@@ -5277,7 +5277,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void write_V_3(String channel) {
+   private void openPayloadEditor(String channel) {
       String target = channel == null ? "" : channel.trim();
       if (!target.isBlank()) {
          ActionEditorOverlay existing = ActionEditorOverlay.getExisting();
@@ -5296,7 +5296,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean update_Z_2(String detail) {
+   private boolean isNoChannel(String detail) {
       if (detail == null) {
          return false;
       }
@@ -5305,7 +5305,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return lower.equals("no channel") || lower.startsWith("no client payload");
    }
 
-   private boolean sync_Z_2(String detail) {
+   private boolean isUnobservedChannel(String detail) {
       if (detail == null) {
          return false;
       }
@@ -5314,7 +5314,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return lower.startsWith("? ") || lower.contains("not observed") || lower.contains("[probable");
    }
 
-   private int write_I_3(String detail) {
+   private int channelRank(String detail) {
       if (detail == null) {
          return 0;
       } else {
@@ -5325,49 +5325,49 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             return 3;
          } else if (lower.contains("[embedded")) {
             return 2;
-         } else if (this.sync_Z_2(lower)) {
+         } else if (this.isUnobservedChannel(lower)) {
             return 1;
          } else {
-            return this.update_Z_2(lower) ? 0 : 3;
+            return this.isNoChannel(lower) ? 0 : 3;
          }
       }
    }
 
-   private String close_Str_2() {
-      if (init_Minecraft.getConnection() == null) {
+   private String serverBrand() {
+      if (MC.getConnection() == null) {
          return "--";
       }
 
-      String brand = init_Minecraft.getConnection().serverBrand();
+      String brand = MC.getConnection().serverBrand();
       return brand != null && !brand.isBlank() ? brand : "--";
    }
 
-   private boolean init_Z_F_F_6(float uiMouseX, float uiMouseY) {
-      return uiMouseX >= this.poll_I && uiMouseX < this.poll_I + this.pop_I && uiMouseY >= this.push_I && uiMouseY < this.push_I + this.init_CharEncoder.load();
+   private boolean isOverHeaderUi(float uiMouseX, float uiMouseY) {
+      return uiMouseX >= this.overlayX && uiMouseX < this.overlayX + this.overlayWidth && uiMouseY >= this.overlayY && uiMouseY < this.overlayY + this.theme.load();
    }
 
-   private boolean load_Z_F_F_5(float uiMouseX, float uiMouseY) {
+   private boolean isOverCloseButton(float uiMouseX, float uiMouseY) {
       return autismclient.gui.ui.widgets.WindowHeaderHelper.init(
-         autismclient.gui.f.NetHelper.init(this.poll_I, this.push_I, this.pop_I, Math.max(this.init_CharEncoder.load(), this.run_I)),
-         this.init_CharEncoder.load(),
+         autismclient.gui.f.NetHelper.init(this.overlayX, this.overlayY, this.overlayWidth, Math.max(this.theme.load(), this.overlayHeight)),
+         this.theme.load(),
          uiMouseX,
          uiMouseY
       );
    }
 
-   private int task_I_2() {
+   private int contentPadding() {
       return 4;
    }
 
-   private int pool_I_2() {
+   private int contentGap() {
       return 2;
    }
 
-   private int index_I_2() {
+   private int searchHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
-   private int count_I_2() {
+   private int buttonHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
@@ -5375,21 +5375,21 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return 2;
    }
 
-   private int level_I_2() {
-      return Math.max(autismclient.gui.ui.UiDensityMetrics.scaledHeight(13), this.init_CharEncoder.update());
+   private int tabBarHeight() {
+      return Math.max(autismclient.gui.ui.UiDensityMetrics.scaledHeight(13), this.theme.update());
    }
 
-   private int init_I_StrArr_2(String... labels) {
+   private int widestLabel(String... labels) {
       int widest = 0;
 
       for (String label : labels) {
          widest = Math.max(
             widest,
             autismclient.gui.f.b.k.init(
-               this.init_Font,
+               this.textRenderer,
                label,
-               this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-               this.init_CharEncoder.load(autismclient.gui.f.b.l.write)
+               this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
+               this.theme.load(autismclient.gui.f.b.l.write)
             )
          );
       }
@@ -5397,16 +5397,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return widest + 10;
    }
 
-   private int frame_I_2() {
-      return this.init_I_StrArr_2("Delay:");
+   private int delayLabelWidth() {
+      return this.widestLabel("Delay:");
    }
 
-   private int block_I_2() {
-      return this.init_I_StrArr_2("State:", "Sent:", "Replies:", "Retries:", "Failed:", "Found:", "Progress:");
+   private int progressLabelWidth() {
+      return this.widestLabel("State:", "Sent:", "Replies:", "Retries:", "Failed:", "Found:", "Progress:");
    }
 
-   private int chunk_I_2() {
-      return this.init_I_StrArr_2("Server:", "Alert:", "Error:");
+   private int statusLabelWidth() {
+      return this.widestLabel("Server:", "Alert:", "Error:");
    }
 
    private int table_I_2() {
@@ -5417,7 +5417,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(16);
    }
 
-   private int drain_I_2() {
+   private int minSearchWidth() {
       return 128;
    }
 
@@ -5425,7 +5425,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return 28;
    }
 
-   private float load_F() {
+   private float minViewportHeight() {
       return this.o() * 4 + 2;
    }
 
@@ -5446,7 +5446,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int a_I_2() {
-      return this.init_CharEncoder.load() + this.task_I_2() * 2 + this.level_I_2() + this.pool_I_2() * 2 + 48 + this.count_I_2();
+      return this.theme.load() + this.contentPadding() * 2 + this.tabBarHeight() + this.contentGap() * 2 + 48 + this.buttonHeight();
    }
 
    private int b_I_2() {
@@ -5462,7 +5462,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int e_I_2() {
-      return this.init_CharEncoder.load() + this.task_I_2() * 2 + 48;
+      return this.theme.load() + this.contentPadding() * 2 + 48;
    }
 
    private int f() {
@@ -5505,32 +5505,32 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return this.h();
    }
 
-   private int init_I_BitSetUtil(autismclient.gui.ui.layout.VerticalSpacerNode slot) {
-      int bodyBottom = this.push_I + this.run_I - this.task_I_2();
+   private int visibleViewportHeight(autismclient.gui.ui.layout.VerticalSpacerNode slot) {
+      int bodyBottom = this.overlayY + this.overlayHeight - this.contentPadding();
       int rawViewH = Math.max(0, Math.min(Math.round(slot.height()), bodyBottom - Math.round(slot.y())));
       return this.init_I_I_10(rawViewH);
    }
 
    private int init_I_I_10(int rawHeight) {
-      return rawHeight <= 0 ? 0 : Math.min(rawHeight, this.load_I_2(rawHeight) + 2);
+      return rawHeight <= 0 ? 0 : Math.min(rawHeight, this.innerViewportHeight(rawHeight) + 2);
    }
 
-   private int load_I_2(int viewHeight) {
+   private int innerViewportHeight(int viewHeight) {
       return Math.max(0, this.alignHeightToStep(Math.max(0, viewHeight - 2), this.o()));
    }
 
-   private OverlayBounds init_cH_cH_5(OverlayBounds bounds) {
-      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
+   private OverlayBounds clampBounds(OverlayBounds bounds) {
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       int viewportWidth = Math.round(viewport.width());
       int viewportHeight = Math.round(viewport.height());
       int margin = 4;
       int availableWidth = Math.max(1, viewportWidth - margin * 2);
-      int availableHeight = Math.max(this.init_CharEncoder.load(), viewportHeight - margin * 2);
+      int availableHeight = Math.max(this.theme.load(), viewportHeight - margin * 2);
       int minWidth = Math.min(this.getMinWidth(), availableWidth);
       int width = Math.max(minWidth, Math.min(bounds.width, availableWidth));
-      int minHeight = bounds.collapsed ? this.init_CharEncoder.load() : Math.min(this.getMinHeight(), availableHeight);
+      int minHeight = bounds.collapsed ? this.theme.load() : Math.min(this.getMinHeight(), availableHeight);
       int height = Math.max(minHeight, Math.min(bounds.height, availableHeight));
-      int renderedHeight = bounds.collapsed ? this.init_CharEncoder.load() : height;
+      int renderedHeight = bounds.collapsed ? this.theme.load() : height;
       int x = Math.max(margin, Math.min(bounds.x, Math.max(margin, viewportWidth - margin - width)));
       int y = Math.max(margin, Math.min(bounds.y, Math.max(margin, viewportHeight - margin - renderedHeight)));
       return new OverlayBounds(x, y, width, height, bounds.visible, bounds.collapsed);
@@ -5538,7 +5538,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private String load(ServerData entry) {
       LinkedHashSet<String> guesses = new LinkedHashSet<>();
-      String brand = this.close_Str_2().toLowerCase(Locale.ROOT);
+      String brand = this.serverBrand().toLowerCase(Locale.ROOT);
       if (brand.contains("purpur")) {
          guesses.add("Purpur");
       } else if (brand.contains("pufferfish")) {
@@ -5559,13 +5559,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          guesses.add("Bungee");
       }
 
-      if (this.load_List
+      if (this.detectedPlugins
          .stream()
          .anyMatch(plugin -> "viaversion".equalsIgnoreCase(plugin) || "viabackwards".equalsIgnoreCase(plugin) || "viarewind".equalsIgnoreCase(plugin))) {
          guesses.add("ViaVersion");
       }
 
-      if (this.load_List.stream().anyMatch(plugin -> "geysermc".equalsIgnoreCase(plugin) || "floodgate".equalsIgnoreCase(plugin))) {
+      if (this.detectedPlugins.stream().anyMatch(plugin -> "geysermc".equalsIgnoreCase(plugin) || "floodgate".equalsIgnoreCase(plugin))) {
          guesses.add("Bedrock Bridge");
       }
 
@@ -5573,8 +5573,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private String read(ServerData entry) {
-      String brand = this.close_Str_2();
-      String reportedVersion = this.init_Str_ServerData(entry);
+      String brand = this.serverBrand();
+      String reportedVersion = this.reportedVersion(entry);
       String brandLower = brand.toLowerCase(Locale.ROOT);
       String versionLower = reportedVersion.toLowerCase(Locale.ROOT);
       if (entry != null && entry.protocol == 0) {
@@ -5590,7 +5590,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             && (!brandLower.contains("purpur") || versionLower.contains("purpur"))
             && (!brandLower.contains("velocity") || versionLower.contains("velocity"))
             && (!brandLower.contains("bungee") || versionLower.contains("bungee"))) {
-         return this.load_List
+         return this.detectedPlugins
                .stream()
                .anyMatch(
                   plugin -> "viaversion".equalsIgnoreCase(plugin)
@@ -5605,14 +5605,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String open_Str_2() {
-      ServerData entry = init_Minecraft.getCurrentServer();
+   private String displayedAddress() {
+      ServerData entry = MC.getCurrentServer();
       if (entry != null && entry.ip != null && !entry.ip.isBlank()) {
          return entry.ip.trim();
       }
 
-      if (init_Minecraft.getConnection() != null && init_Minecraft.getConnection().getConnection() != null) {
-         SocketAddress address = init_Minecraft.getConnection().getConnection().getRemoteAddress();
+      if (MC.getConnection() != null && MC.getConnection().getConnection() != null) {
+         SocketAddress address = MC.getConnection().getConnection().getRemoteAddress();
          if (address instanceof InetSocketAddress inet) {
             String host = inet.getHostString();
             if ((host == null || host.isBlank()) && inet.getAddress() != null) {
@@ -5654,9 +5654,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String poll_Str_2() {
-      if (init_Minecraft.getConnection() != null && init_Minecraft.getConnection().getConnection() != null) {
-         if (init_Minecraft.getConnection().getConnection().getRemoteAddress() instanceof InetSocketAddress inet && inet.getAddress() != null) {
+   private String socketIp() {
+      if (MC.getConnection() != null && MC.getConnection().getConnection() != null) {
+         if (MC.getConnection().getConnection().getRemoteAddress() instanceof InetSocketAddress inet && inet.getAddress() != null) {
             String hostAddress = inet.getAddress().getHostAddress();
             return hostAddress == null ? "" : hostAddress.trim();
          } else {
@@ -5667,7 +5667,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private Integer init_Integer_Str_2(String rawAddress) {
+   private Integer parsePort(String rawAddress) {
       if (rawAddress != null && !rawAddress.isBlank() && !"--".equals(rawAddress)) {
          String trimmed = rawAddress.trim();
          if (trimmed.startsWith("[") && trimmed.contains("]")) {
@@ -5699,7 +5699,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String init_Str_Str_Integer(String host, Integer port) {
+   private String withPort(String host, Integer port) {
       if (host != null && !host.isBlank() && port != null) {
          return host.indexOf(58) >= 0 && !host.startsWith("[") && !host.endsWith("]") ? "[" + host + "]:" + port : host + ":" + port;
       } else {
@@ -5707,7 +5707,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private Object init_Obj_Obj_StrArr(Object target, String... names) {
+   private Object invokeFirstGetter(Object target, String... names) {
       if (target != null && names != null) {
          for (String name : names) {
             if (name != null && !name.isBlank()) {
@@ -5726,8 +5726,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String init_Str_Obj_StrArr(Object target, String... names) {
-      Object value = this.init_Obj_Obj_StrArr(target, names);
+   private String invokeStringGetter(Object target, String... names) {
+      Object value = this.invokeFirstGetter(target, names);
       if (value == null) {
          return "";
       } else {
@@ -5735,8 +5735,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private int init_I_Obj(Object target, int fallback, String... names) {
-      Object value = this.init_Obj_Obj_StrArr(target, names);
+   private int invokeIntGetter(Object target, int fallback, String... names) {
+      Object value = this.invokeFirstGetter(target, names);
       if (value instanceof Number number) {
          return number.intValue();
       } else {
@@ -5751,7 +5751,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String init_Str_Obj(Object value) {
+   private String componentText(Object value) {
       if (value instanceof Component component) {
          return component.getString();
       } else {
@@ -5759,34 +5759,34 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_Str_10(String value, String successMessage, String unavailableMessage) {
+   private void copyToClipboard(String value, String successMessage, String unavailableMessage) {
       String trimmed = value == null ? "" : value.trim();
       if (!trimmed.isEmpty() && !"--".equals(trimmed) && !"Resolving...".equalsIgnoreCase(trimmed) && !"Failed".equalsIgnoreCase(trimmed)) {
-         init_Minecraft.keyboardHandler.setClipboard(trimmed);
+         MC.keyboardHandler.setClipboard(trimmed);
          bi.init(successMessage);
       } else {
          bi.write(unavailableMessage);
       }
    }
 
-   private void bind_V_2() {
-      String displayedAddress = this.open_Str_2();
+   private void copyRealIp() {
+      String displayedAddress = this.displayedAddress();
       String realIp = this.pop(displayedAddress);
-      String resolvedWithPort = this.init_Str_Str_Integer(realIp, this.init_Integer_Str_2(displayedAddress));
-      this.init_V_Str_10(resolvedWithPort, "Real IP copied.", "Real IP unavailable.");
+      String resolvedWithPort = this.withPort(realIp, this.parsePort(displayedAddress));
+      this.copyToClipboard(resolvedWithPort, "Real IP copied.", "Real IP unavailable.");
    }
 
-   private void update_V_2(String rawAddress) {
+   private void resolveDnsAsync(String rawAddress) {
       String host = this.push(rawAddress);
       if (!host.isEmpty()) {
-         if (!host.equals(this.read_Str)) {
-            this.load_Str = null;
-            this.read_Str = host;
-            this.push_Z = this.auditDnsRunning.contains(host);
+         if (!host.equals(this.dnsHost)) {
+            this.dnsResult = null;
+            this.dnsHost = host;
+            this.dnsLookupRunning = this.auditDnsRunning.contains(host);
          }
 
-         if (this.load_Str == null && this.auditDnsRunning.add(host)) {
-            this.push_Z = true;
+         if (this.dnsResult == null && this.auditDnsRunning.add(host)) {
+            this.dnsLookupRunning = true;
             Thread t = new Thread(() -> {
                String result;
                try {
@@ -5796,9 +5796,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                }
 
                // A lookup for a host the overlay no longer shows must not overwrite the current one.
-               if (host.equals(this.read_Str)) {
-                  this.load_Str = result;
-                  this.push_Z = false;
+               if (host.equals(this.dnsHost)) {
+                  this.dnsResult = result;
+                  this.dnsLookupRunning = false;
                }
 
                this.auditDnsRunning.remove(host);
@@ -5810,32 +5810,32 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private String pop(String rawAddress) {
-      this.update_V_2(rawAddress);
-      String socketIp = this.poll_Str_2();
+      this.resolveDnsAsync(rawAddress);
+      String socketIp = this.socketIp();
       if (!socketIp.isBlank()) {
          return socketIp;
-      } else if (this.load_Str != null) {
-         return this.load_Str;
+      } else if (this.dnsResult != null) {
+         return this.dnsResult;
       } else {
-         return this.push_Z ? "Resolving..." : "--";
+         return this.dnsLookupRunning ? "Resolving..." : "--";
       }
    }
 
-   private List<String> init_List_13() {
-      return this.load_List
+   private List<String> detectedAnticheats() {
+      return this.detectedPlugins
          .stream()
          .filter(Objects::nonNull)
-         .filter(p -> update_Set.contains(p.toLowerCase(Locale.ROOT)))
+         .filter(p -> ANTICHEAT_PLUGINS.contains(p.toLowerCase(Locale.ROOT)))
          .sorted(String.CASE_INSENSITIVE_ORDER)
          .collect(Collectors.toList());
    }
 
-   private String push_Str_2() {
-      if (init_Minecraft.level == null) {
+   private String worldName() {
+      if (MC.level == null) {
          return "--";
       }
 
-      Identifier worldId = init_Minecraft.level.dimension().identifier();
+      Identifier worldId = MC.level.dimension().identifier();
       if (worldId == null) {
          return "--";
       }
@@ -5864,7 +5864,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private List<AutismServerInfoOverlay.DetailRow> init_List_List_Str_3(List<AutismServerInfoOverlay.DetectedPluginEntry> filteredPlugins, String query) {
+   private List<AutismServerInfoOverlay.DetailRow> buildDetailRows(List<AutismServerInfoOverlay.DetectedPluginEntry> filteredPlugins, String query) {
       String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
       boolean searchActive = !normalizedQuery.isBlank();
       Map<String, List<AutismServerInfoOverlay.DetailRow>> grouped = new LinkedHashMap<>();
@@ -5884,29 +5884,29 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       for (AutismServerInfoOverlay.DetectedPluginEntry detail : filteredPlugins) {
-         if (detail != null && !detail.init_Str.isBlank()) {
-            String plugin = detail.init_Str;
-            String groupTitle = this.init_Str_AutismServerInfoOv(
-               detail.init_AutismServerInfoOv_2, detail.init_AutismServerInfoOv, detail.init_AutismServerInfoOv_3
+         if (detail != null && !detail.displayName.isBlank()) {
+            String plugin = detail.displayName;
+            String groupTitle = this.groupTitle(
+               detail.resultKind, detail.confidence, detail.evidence
             );
-            boolean standaloneCommandHint = this.init_Z_AutismServerInfoOv_3(detail);
+            boolean standaloneCommandHint = this.isStandaloneCommandHintEntry(detail);
             grouped.computeIfAbsent(groupTitle, unused -> new ArrayList<>())
                .add(
                   AutismServerInfoOverlay.DetailRow.init(
                      plugin,
-                     detail.init_AutismServerInfoOv_2,
-                     detail.init_AutismServerInfoOv_3,
-                     detail.init_AutismServerInfoOv,
+                     detail.resultKind,
+                     detail.evidence,
+                     detail.confidence,
                      this.h(),
-                     standaloneCommandHint ? "" : detail.write_Str,
+                     standaloneCommandHint ? "" : detail.countLabel,
                      detail.update
                   )
                );
-            boolean selected = this.read_Z_Str_Str(plugin, this.sync_Str);
+            boolean selected = this.samePluginKey(plugin, this.selectedPlugin);
             boolean showDetails = !standaloneCommandHint && (selected || searchActive);
             if (showDetails) {
-               for (String command : detail.init_List) {
-                  if (!searchActive || this.init_Z_Str(normalizedQuery, plugin, "/" + command, detail.read_Str)) {
+               for (String command : detail.commands) {
+                  if (!searchActive || this.matchesQuery(normalizedQuery, plugin, "/" + command, detail.sourceLabel)) {
                      grouped.get(groupTitle)
                         .add(
                            AutismServerInfoOverlay.DetailRow.init(
@@ -5914,17 +5914,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                               plugin,
                               "cmd /" + command,
                               "/" + command,
-                              detail.init_AutismServerInfoOv_3,
-                              detail.init_AutismServerInfoOv,
+                              detail.evidence,
+                              detail.confidence,
                               this.i(),
-                              this.init_Str_StrArr(plugin, command, detail.read_Str)
+                              this.buildSearchText(plugin, command, detail.sourceLabel)
                            )
                         );
                   }
                }
 
-               for (String gui : detail.load_List) {
-                  if (!searchActive || this.init_Z_Str(normalizedQuery, plugin, gui, detail.read_Str)) {
+               for (String gui : detail.guis) {
+                  if (!searchActive || this.matchesQuery(normalizedQuery, plugin, gui, detail.sourceLabel)) {
                      grouped.get(groupTitle)
                         .add(
                            AutismServerInfoOverlay.DetailRow.init(
@@ -5932,18 +5932,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                               plugin,
                               "gui " + gui,
                               null,
-                              detail.init_AutismServerInfoOv_3,
-                              detail.init_AutismServerInfoOv,
+                              detail.evidence,
+                              detail.confidence,
                               this.i(),
-                              this.init_Str_StrArr(plugin, gui, detail.read_Str)
+                              this.buildSearchText(plugin, gui, detail.sourceLabel)
                            )
                         );
                   }
                }
 
-               for (String channel : detail.read_List.isEmpty() ? this.init_List_Str_3(plugin) : detail.read_List) {
-                  String label = this.sync_Str_2(channel);
-                  if (!searchActive || this.init_Z_Str(normalizedQuery, plugin, label, detail.read_Str)) {
+               for (String channel : detail.channels.isEmpty() ? this.channelsForPlugin(plugin) : detail.channels) {
+                  String label = this.channelLabel(channel);
+                  if (!searchActive || this.matchesQuery(normalizedQuery, plugin, label, detail.sourceLabel)) {
                      grouped.get(groupTitle)
                         .add(
                            AutismServerInfoOverlay.DetailRow.init(
@@ -5951,10 +5951,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                               plugin,
                               "ch " + label,
                               this.open(channel),
-                              detail.init_AutismServerInfoOv_3,
-                              detail.init_AutismServerInfoOv,
+                              detail.evidence,
+                              detail.confidence,
                               this.i(),
-                              this.init_Str_StrArr(plugin, label, detail.read_Str)
+                              this.buildSearchText(plugin, label, detail.sourceLabel)
                            )
                         );
                   }
@@ -5974,7 +5974,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      return byPlugin != 0
                         ? byPlugin
                         : Integer.compare(
-                           this.init_I_AutismServerInfoOv_2(a.init_AutismServerInfoOv_3), this.init_I_AutismServerInfoOv_2(b.init_AutismServerInfoOv_3)
+                           this.rowKindRank(a.type), this.rowKindRank(b.type)
                         );
                   }
                );
@@ -5986,7 +5986,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return rows;
    }
 
-   private int init_I_AutismServerInfoOv_2(AutismServerInfoOverlay.DetailRowKind type) {
+   private int rowKindRank(AutismServerInfoOverlay.DetailRowKind type) {
       byte var10000;
       switch (type == null ? AutismServerInfoOverlay.DetailRowKind.WHY : type) {
          case HEADER:
@@ -6014,20 +6014,20 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private boolean init_Z_AutismServerInfoOv_3(AutismServerInfoOverlay.DetectedPluginEntry detail) {
-      if (detail != null && detail.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE && detail.init_List.size() == 1) {
-         String command = detail.init_List.get(0);
-         return command != null && detail.init_Str.equalsIgnoreCase("/" + command);
+   private boolean isStandaloneCommandHintEntry(AutismServerInfoOverlay.DetectedPluginEntry detail) {
+      if (detail != null && detail.evidence == AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE && detail.commands.size() == 1) {
+         String command = detail.commands.get(0);
+         return command != null && detail.displayName.equalsIgnoreCase("/" + command);
       } else {
          return false;
       }
    }
 
-   private boolean init_Z_Str(String query, String plugin, String detail, String sourceLabel) {
-      return query != null && !query.isBlank() ? this.init_Str_StrArr(plugin, detail, sourceLabel).contains(query) : true;
+   private boolean matchesQuery(String query, String plugin, String detail, String sourceLabel) {
+      return query != null && !query.isBlank() ? this.buildSearchText(plugin, detail, sourceLabel).contains(query) : true;
    }
 
-   private String init_Str_AutismServerInfoOv(
+   private String groupTitle(
       AutismServerInfoOverlay.DetectionType resultKind, AutismServerInfoOverlay.MatchConfidence confidence, AutismServerInfoOverlay.EvidenceSource evidence
    ) {
       if (evidence == AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE) {
@@ -6079,7 +6079,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String init_Str_AutismServerInfoOv_2(
+   private String evidenceLabel(
       AutismServerInfoOverlay.DetectionType resultKind, AutismServerInfoOverlay.EvidenceSource evidence, AutismServerInfoOverlay.MatchConfidence confidence
    ) {
       if (resultKind == AutismServerInfoOverlay.DetectionType.FEATURE) {
@@ -6131,7 +6131,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private List<String> load_List_5() {
+   private List<String> groupOrder() {
       return List.of("Command Tree", "Command Root Hint", "Plugin Command Hint", "Version Command Hint", "Payload Channel");
    }
 
@@ -6140,9 +6140,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          return "Other";
       }
 
-      AutismServerInfoOverlay.EvidenceSource evidence = detail.load_AutismServerInfoOv == null
+      AutismServerInfoOverlay.EvidenceSource evidence = detail.copyEvidence == null
          ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN
-         : detail.load_AutismServerInfoOv;
+         : detail.copyEvidence;
       String var10000;
       switch (evidence) {
          case PAYLOAD_CHANNEL:
@@ -6178,8 +6178,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private int update_I(String title) {
-      List<String> order = this.load_List_5();
+   private int groupOrderIndex(String title) {
+      List<String> order = this.groupOrder();
       int index = order.indexOf(title);
       return index < 0 ? order.size() : index;
    }
@@ -6190,7 +6190,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       StringBuilder sb = new StringBuilder();
       sb.append(plugin == null ? "" : plugin)
          .append(' ')
-         .append(this.init_Str_AutismServerInfoOv(confidence))
+         .append(this.confidenceLabel(confidence))
          .append(' ')
          .append(sourceLabel == null ? "" : sourceLabel);
 
@@ -6203,13 +6203,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       for (String channel : channels) {
-         sb.append(' ').append(this.sync_Str_2(channel));
+         sb.append(' ').append(this.channelLabel(channel));
       }
 
       return sb.toString().toLowerCase(Locale.ROOT);
    }
 
-   private String init_Str_StrArr(String... parts) {
+   private String buildSearchText(String... parts) {
       StringBuilder sb = new StringBuilder();
       if (parts != null) {
          for (String part : parts) {
@@ -6233,7 +6233,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          for (String plugin : plugins) {
             if (plugin != null && !plugin.isBlank()) {
                String clean = plugin.trim();
-               String key = this.load_Str_2(clean);
+               String key = this.pluginKey(clean);
                if (!key.isBlank()) {
                   String existing = unique.get(key);
                   if (existing == null || this.load_Z_Str_Str_2(clean, existing)) {
@@ -6251,16 +6251,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean read_Z_Str_Str(String a, String b) {
-      return a != null && b != null ? this.load_Str_2(a).equals(this.load_Str_2(b)) : false;
+   private boolean samePluginKey(String a, String b) {
+      return a != null && b != null ? this.pluginKey(a).equals(this.pluginKey(b)) : false;
    }
 
-   private boolean flush_Z_2(String plugin) {
+   private boolean isDetected(String plugin) {
       if (plugin != null && !plugin.isBlank()) {
-         String key = this.load_Str_2(plugin);
+         String key = this.pluginKey(plugin);
 
-         for (String detected : this.load_List) {
-            if (detected != null && this.load_Str_2(detected).equals(key)) {
+         for (String detected : this.detectedPlugins) {
+            if (detected != null && this.pluginKey(detected).equals(key)) {
                return true;
             }
          }
@@ -6271,46 +6271,46 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private Collection<AutismServerInfoOverlay.DetectedPluginEntry> init_Collection() {
+   private Collection<AutismServerInfoOverlay.DetectedPluginEntry> rebuildPluginDetails() {
       if (this.data == this.prev) {
-         return this.write_Map.values();
+         return this.detectedPluginDetails.values();
       }
 
       Map<String, AutismServerInfoOverlay.NamespaceSummary> builders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-      for (String plugin : this.load((Collection<String>)this.load_List)) {
-         String key = this.load_Str_2(plugin);
+      for (String plugin : this.load((Collection<String>)this.detectedPlugins)) {
+         String key = this.pluginKey(plugin);
          if (!key.isBlank()) {
             AutismServerInfoOverlay.NamespaceSummary builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.NamespaceSummary());
-            if (builder.init_Str == null || builder.init_Str.isBlank() || this.load_Z_Str_Str_2(plugin, builder.init_Str)) {
-               builder.init_Str = plugin.trim();
+            if (builder.name == null || builder.name.isBlank() || this.load_Z_Str_Str_2(plugin, builder.name)) {
+               builder.name = plugin.trim();
             }
          }
       }
 
-      this.init_V_Map_Map(builders, this.init_Map);
-      this.load_V_Map_Map(builders, this.open_Map);
-      this.read_V_Map_Map(builders, this.read_Map);
-      this.write(builders, this.load_Map);
+      this.mergeCommands(builders, this.pluginCommands);
+      this.mergeCopyCommands(builders, this.pluginCopyCommands);
+      this.mergeGuis(builders, this.pluginGuis);
+      this.write(builders, this.pluginChannels);
       Map<String, AutismServerInfoOverlay.DetectedPluginEntry> details = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
       for (Entry<String, AutismServerInfoOverlay.NamespaceSummary> entry : builders.entrySet()) {
          String key = entry.getKey();
          AutismServerInfoOverlay.NamespaceSummary builder = entry.getValue();
          if (builder != null) {
-            String displayName = builder.init_Str != null && !builder.init_Str.isBlank() ? builder.init_Str.trim() : key;
-            List<String> commands = List.copyOf(builder.init_Set);
+            String displayName = builder.name != null && !builder.name.isBlank() ? builder.name.trim() : key;
+            List<String> commands = List.copyOf(builder.commands);
             List<String> copyCommands = builder.load.isEmpty() ? commands : List.copyOf(builder.load);
             List<String> guis = List.copyOf(builder.read);
-            List<String> channels = this.init_List_Collection(builder.init_List);
-            AutismServerInfoOverlay.EvidenceSource evidence = this.update_Map
+            List<String> channels = this.distinctRows(builder.channels);
+            AutismServerInfoOverlay.EvidenceSource evidence = this.pluginEvidence
                .getOrDefault(key, commands.isEmpty() ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : AutismServerInfoOverlay.EvidenceSource.ROOT_HINT);
-            AutismServerInfoOverlay.EvidenceSource copyEvidence = this.sync_Map
-               .getOrDefault(key, this.init_AutismServerInfoOv_Str_AutismServerInfoOv_2(displayName, evidence));
-            AutismServerInfoOverlay.MatchConfidence confidence = this.flush_Map.getOrDefault(key, this.init_AutismServerInfoOv_AutismServerInfoOv(evidence));
-            AutismServerInfoOverlay.DetectionType resultKind = this.init_AutismServerInfoOv_Str(displayName, evidence, confidence);
-            String sourceLabel = this.init_Str_AutismServerInfoOv_2(resultKind, evidence, confidence);
-            String countLabel = this.init_Str_List(commands, guis, channels);
+            AutismServerInfoOverlay.EvidenceSource copyEvidence = this.pluginCopyEvidence
+               .getOrDefault(key, this.copyEvidenceFor(displayName, evidence));
+            AutismServerInfoOverlay.MatchConfidence confidence = this.pluginConfidence.getOrDefault(key, this.confidenceForEvidence(evidence));
+            AutismServerInfoOverlay.DetectionType resultKind = this.detectionTypeFor(displayName, evidence, confidence);
+            String sourceLabel = this.evidenceLabel(resultKind, evidence, confidence);
+            String countLabel = this.countSummary(commands, guis, channels);
             String searchText = this.init_Str_Str(displayName, commands, guis, channels, sourceLabel, confidence);
             details.put(
                key,
@@ -6321,34 +6321,34 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
       }
 
-      this.write_Map = Collections.unmodifiableMap(new TreeMap<>(details));
+      this.detectedPluginDetails = Collections.unmodifiableMap(new TreeMap<>(details));
       this.data = this.prev;
-      return this.write_Map.values();
+      return this.detectedPluginDetails.values();
    }
 
-   private AutismServerInfoOverlay.DetectedPluginEntry init_AutismServerInfoOv_Str_3(String plugin) {
+   private AutismServerInfoOverlay.DetectedPluginEntry detailFor(String plugin) {
       if (plugin != null && !plugin.isBlank()) {
-         this.init_Collection();
-         return this.write_Map.get(this.load_Str_2(plugin));
+         this.rebuildPluginDetails();
+         return this.detectedPluginDetails.get(this.pluginKey(plugin));
       } else {
          return null;
       }
    }
 
-   private void init_V_Map_Map(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
+   private void mergeCommands(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
       if (source != null && !source.isEmpty()) {
          for (Entry<String, List<String>> entry : source.entrySet()) {
-            String key = this.load_Str_2(entry.getKey());
+            String key = this.pluginKey(entry.getKey());
             if (!key.isBlank()) {
                AutismServerInfoOverlay.NamespaceSummary builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.NamespaceSummary());
-               if ((builder.init_Str == null || builder.init_Str.isBlank()) && entry.getKey() != null) {
-                  builder.init_Str = entry.getKey().trim();
+               if ((builder.name == null || builder.name.isBlank()) && entry.getKey() != null) {
+                  builder.name = entry.getKey().trim();
                }
 
                if (entry.getValue() != null) {
                   for (String command : entry.getValue()) {
                      if (command != null && !command.isBlank()) {
-                        builder.init_Set.add(command.trim());
+                        builder.commands.add(command.trim());
                      }
                   }
                }
@@ -6357,14 +6357,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void load_V_Map_Map(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
+   private void mergeCopyCommands(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
       if (source != null && !source.isEmpty()) {
          for (Entry<String, List<String>> entry : source.entrySet()) {
-            String key = this.load_Str_2(entry.getKey());
+            String key = this.pluginKey(entry.getKey());
             if (!key.isBlank()) {
                AutismServerInfoOverlay.NamespaceSummary builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.NamespaceSummary());
-               if ((builder.init_Str == null || builder.init_Str.isBlank()) && entry.getKey() != null) {
-                  builder.init_Str = entry.getKey().trim();
+               if ((builder.name == null || builder.name.isBlank()) && entry.getKey() != null) {
+                  builder.name = entry.getKey().trim();
                }
 
                if (entry.getValue() != null) {
@@ -6379,14 +6379,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void read_V_Map_Map(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
+   private void mergeGuis(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
       if (source != null && !source.isEmpty()) {
          for (Entry<String, List<String>> entry : source.entrySet()) {
-            String key = this.load_Str_2(entry.getKey());
+            String key = this.pluginKey(entry.getKey());
             if (!key.isBlank()) {
                AutismServerInfoOverlay.NamespaceSummary builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.NamespaceSummary());
-               if ((builder.init_Str == null || builder.init_Str.isBlank()) && entry.getKey() != null) {
-                  builder.init_Str = entry.getKey().trim();
+               if ((builder.name == null || builder.name.isBlank()) && entry.getKey() != null) {
+                  builder.name = entry.getKey().trim();
                }
 
                if (entry.getValue() != null) {
@@ -6404,97 +6404,97 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private void write(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
       if (source != null && !source.isEmpty()) {
          for (Entry<String, List<String>> entry : source.entrySet()) {
-            String key = this.load_Str_2(entry.getKey());
+            String key = this.pluginKey(entry.getKey());
             if (!key.isBlank()) {
                AutismServerInfoOverlay.NamespaceSummary builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.NamespaceSummary());
-               if ((builder.init_Str == null || builder.init_Str.isBlank()) && entry.getKey() != null) {
-                  builder.init_Str = entry.getKey().trim();
+               if ((builder.name == null || builder.name.isBlank()) && entry.getKey() != null) {
+                  builder.name = entry.getKey().trim();
                }
 
                if (entry.getValue() != null) {
-                  builder.init_List.addAll(entry.getValue());
+                  builder.channels.addAll(entry.getValue());
                }
             }
          }
       }
    }
 
-   private List<String> load_List(String plugin) {
-      AutismServerInfoOverlay.DetectedPluginEntry detail = this.init_AutismServerInfoOv_Str_3(plugin);
-      return detail == null ? List.of() : detail.init_List;
+   private List<String> commandsFor(String plugin) {
+      AutismServerInfoOverlay.DetectedPluginEntry detail = this.detailFor(plugin);
+      return detail == null ? List.of() : detail.commands;
    }
 
-   private List<String> read_List_2(String plugin) {
-      AutismServerInfoOverlay.DetectedPluginEntry detail = this.init_AutismServerInfoOv_Str_3(plugin);
-      return detail == null ? List.of() : detail.load_List;
+   private List<String> guisFor(String plugin) {
+      AutismServerInfoOverlay.DetectedPluginEntry detail = this.detailFor(plugin);
+      return detail == null ? List.of() : detail.guis;
    }
 
-   private List<String> write_List_2(String plugin) {
-      AutismServerInfoOverlay.DetectedPluginEntry detail = this.init_AutismServerInfoOv_Str_3(plugin);
-      return detail == null ? List.of() : detail.read_List;
+   private List<String> observedChannelsFor(String plugin) {
+      AutismServerInfoOverlay.DetectedPluginEntry detail = this.detailFor(plugin);
+      return detail == null ? List.of() : detail.channels;
    }
 
-   private List<AutismServerInfoOverlay.DetailRow> init_List_Str_I(String queryText, int rowContentWidth) {
+   private List<AutismServerInfoOverlay.DetailRow> detailRowsFor(String queryText, int rowContentWidth) {
       String query = queryText == null ? "" : queryText.trim().toLowerCase(Locale.ROOT);
-      String selectedKey = this.sync_Str == null ? "" : this.load_Str_2(this.sync_Str);
-      if (this.size == this.valid && Objects.equals(this.write_Str, query) && Objects.equals(this.update_Str, selectedKey) && this.stop == rowContentWidth) {
-         return this.read_List;
+      String selectedKey = this.selectedPlugin == null ? "" : this.pluginKey(this.selectedPlugin);
+      if (this.size == this.valid && Objects.equals(this.detailRowsQuery, query) && Objects.equals(this.detailRowsSelectedKey, selectedKey) && this.stop == rowContentWidth) {
+         return this.detailRows;
       }
 
       List<AutismServerInfoOverlay.DetectedPluginEntry> filtered = new ArrayList<>();
 
-      for (AutismServerInfoOverlay.DetectedPluginEntry detail : this.init_Collection()) {
+      for (AutismServerInfoOverlay.DetectedPluginEntry detail : this.rebuildPluginDetails()) {
          if (detail != null && (query.isEmpty() || detail.update.contains(query))) {
             filtered.add(detail);
          }
       }
 
-      this.init_V_List_5(this.init_List_List_Str_3(filtered, query));
-      this.write_Str = query;
-      this.update_Str = selectedKey;
+      this.setDetailRows(this.buildDetailRows(filtered, query));
+      this.detailRowsQuery = query;
+      this.detailRowsSelectedKey = selectedKey;
       this.stop = rowContentWidth;
       this.size = this.valid;
-      return this.read_List;
+      return this.detailRows;
    }
 
    private boolean write(String plugin, String query) {
       if (plugin != null && query != null && !query.isBlank()) {
-         AutismServerInfoOverlay.DetectedPluginEntry detail = this.init_AutismServerInfoOv_Str_3(plugin);
+         AutismServerInfoOverlay.DetectedPluginEntry detail = this.detailFor(plugin);
          return detail != null && detail.update.contains(query);
       } else {
          return false;
       }
    }
 
-   private void a_V_2() {
+   private void invalidateDetails() {
       this.prev++;
       this.valid++;
       this.size = -1;
-      this.write_Str = null;
-      this.update_Str = null;
+      this.detailRowsQuery = null;
+      this.detailRowsSelectedKey = null;
       this.stop = -1;
-      this.read_List = List.of();
-      this.init_IArr = new int[0];
+      this.detailRows = List.of();
+      this.detailRowOffsets = new int[0];
       this.next = 0;
       this.data = -1;
-      this.write_Map = Map.of();
-      this.prev_V_7();
+      this.detectedPluginDetails = Map.of();
+      this.requestLayoutRebuild();
    }
 
-   private void b_V_2() {
+   private void invalidateDetailRows() {
       this.valid++;
       this.size = -1;
-      this.write_Str = null;
-      this.update_Str = null;
+      this.detailRowsQuery = null;
+      this.detailRowsSelectedKey = null;
       this.stop = -1;
-      this.read_List = List.of();
-      this.init_IArr = new int[0];
+      this.detailRows = List.of();
+      this.detailRowOffsets = new int[0];
       this.next = 0;
-      this.prev_V_7();
+      this.requestLayoutRebuild();
    }
 
    private int load(List<AutismServerInfoOverlay.DetailRow> rows) {
-      if (rows == this.read_List) {
+      if (rows == this.detailRows) {
          return this.next;
       }
 
@@ -6502,14 +6502,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       for (AutismServerInfoOverlay.DetailRow row : rows) {
          if (row != null) {
-            total += row.init_I;
+            total += row.height;
          }
       }
 
       return total;
    }
 
-   private void init_V_List_5(List<AutismServerInfoOverlay.DetailRow> rows) {
+   private void setDetailRows(List<AutismServerInfoOverlay.DetailRow> rows) {
       List<AutismServerInfoOverlay.DetailRow> safeRows = rows == null ? List.of() : List.copyOf(rows);
       int[] offsets = new int[safeRows.size()];
       int cursor = 0;
@@ -6517,28 +6517,28 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       for (int i = 0; i < safeRows.size(); i++) {
          offsets[i] = cursor;
          AutismServerInfoOverlay.DetailRow row = safeRows.get(i);
-         cursor += row == null ? 0 : row.init_I;
+         cursor += row == null ? 0 : row.height;
       }
 
-      this.read_List = safeRows;
-      this.init_IArr = offsets;
+      this.detailRows = safeRows;
+      this.detailRowOffsets = offsets;
       this.next = cursor;
    }
 
    private int read(int index) {
-      return index >= 0 && index < this.init_IArr.length ? this.init_IArr[index] : 0;
+      return index >= 0 && index < this.detailRowOffsets.length ? this.detailRowOffsets[index] : 0;
    }
 
-   private int read_I_List_I(List<AutismServerInfoOverlay.DetailRow> rows, int scrollOffset) {
-      if (rows != null && !rows.isEmpty() && this.init_IArr.length != 0 && scrollOffset > 0) {
-         int idx = Arrays.binarySearch(this.init_IArr, scrollOffset);
+   private int firstVisibleRow(List<AutismServerInfoOverlay.DetailRow> rows, int scrollOffset) {
+      if (rows != null && !rows.isEmpty() && this.detailRowOffsets.length != 0 && scrollOffset > 0) {
+         int idx = Arrays.binarySearch(this.detailRowOffsets, scrollOffset);
          if (idx < 0) {
             idx = Math.max(0, -idx - 2);
          }
 
          while (idx > 0) {
             AutismServerInfoOverlay.DetailRow row = rows.get(idx);
-            int rowBottom = this.init_IArr[idx] + (row == null ? 0 : row.init_I);
+            int rowBottom = this.detailRowOffsets[idx] + (row == null ? 0 : row.height);
             if (rowBottom <= scrollOffset) {
                break;
             }
@@ -6548,7 +6548,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          while (idx < rows.size()) {
             AutismServerInfoOverlay.DetailRow row = rows.get(idx);
-            int rowBottom = this.init_IArr[idx] + (row == null ? 0 : row.init_I);
+            int rowBottom = this.detailRowOffsets[idx] + (row == null ? 0 : row.height);
             if (rowBottom > scrollOffset) {
                break;
             }
@@ -6564,43 +6564,43 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean mouseClicked(double mx, double my, int button) {
-      if (!this.write_Z) {
+      if (!this.overlayVisible) {
          return false;
       }
 
       try {
          return this.read(mx, my, button);
       } catch (Throwable t) {
-         this.init_V_Str_Throwable("mouseClicked", t);
+         this.reportStageFailure("mouseClicked", t);
          return false;
       }
    }
 
    private boolean read(double mx, double my, int button) {
-      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       float uiMouseX = viewport.toUiX(mx);
       float uiMouseY = viewport.toUiY(my);
-      if (this.load_Z_F_F_5(uiMouseX, uiMouseY)) {
+      if (this.isOverCloseButton(uiMouseX, uiMouseY)) {
          this.setVisible(false);
-         this.flush_Z = false;
-         this.open_Z = false;
-         this.close_Z = false;
+         this.dragging = false;
+         this.draggingScrollbar = false;
+         this.dragMoved = false;
          return true;
       }
 
-      if (button == 0 && this.init_Z_F_F_6(uiMouseX, uiMouseY)) {
-         this.flush_Z = true;
-         this.close_Z = false;
-         this.init_D = uiMouseX - this.poll_I;
-         this.load_D = uiMouseY - this.push_I;
-         this.load_F = uiMouseX;
-         this.read_F = uiMouseY;
-         this.put_I = this.poll_I;
-         this.add_I = this.push_I;
+      if (button == 0 && this.isOverHeaderUi(uiMouseX, uiMouseY)) {
+         this.dragging = true;
+         this.dragMoved = false;
+         this.dragOffsetX = uiMouseX - this.overlayX;
+         this.dragOffsetY = uiMouseY - this.overlayY;
+         this.dragStartMouseX = uiMouseX;
+         this.dragStartMouseY = uiMouseY;
+         this.dragStartX = this.overlayX;
+         this.dragStartY = this.overlayY;
          return true;
       }
 
-      if (this.update_Z) {
+      if (this.overlayCollapsed) {
          return false;
       }
 
@@ -6608,97 +6608,97 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          return this.containsPoint(mx, my);
       }
 
-      if (this.start == 1 && this.pop_Z && !this.tick_Z) {
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.load_PoolEntry_DataUtil_I(
-            Math.round(this.init_BitSetUtil_2.x()),
-            Math.round(this.init_BitSetUtil_2.y()),
-            Math.round(this.init_BitSetUtil_2.width()),
-            this.init_I_BitSetUtil(this.init_BitSetUtil_2)
+      if (this.start == 1 && this.scanDone && !this.tick_Z) {
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.scrollbarMetrics(
+            Math.round(this.listViewportSpacer.x()),
+            Math.round(this.listViewportSpacer.y()),
+            Math.round(this.listViewportSpacer.width()),
+            this.visibleViewportHeight(this.listViewportSpacer)
          );
          if (scrollbarMetrics.isScrollable() && scrollbarMetrics.containsTrack(uiMouseX, uiMouseY)) {
-            this.open_Z = true;
-            this.clear_I = Math.max(0, Math.round(uiMouseY) - scrollbarMetrics.thumbY());
-            this.init_CacheEntry.dragToMouseYStepped(scrollbarMetrics, Math.round(uiMouseY), this.clear_I, this.o());
+            this.draggingScrollbar = true;
+            this.scrollbarGrabOffset = Math.max(0, Math.round(uiMouseY) - scrollbarMetrics.thumbY());
+            this.scroll.dragToMouseYStepped(scrollbarMetrics, Math.round(uiMouseY), this.scrollbarGrabOffset, this.o());
             this.saveState();
             return true;
          }
       }
 
-      if (this.start == 1 && this.pop_Z && !this.tick_Z) {
-         for (AutismServerInfoOverlay.ClickHotspot region : this.init_List) {
+      if (this.start == 1 && this.scanDone && !this.tick_Z) {
+         for (AutismServerInfoOverlay.ClickHotspot region : this.clickHotspots) {
             if (region.init(uiMouseX, uiMouseY)) {
-               this.init_TextFormat.clearFocus();
-               region.init_Runnable.run();
+               this.layoutHost.clearFocus();
+               region.action.run();
                return true;
             }
          }
       }
 
-      if (this.init_TextFormat.mouseClicked(mx, my, button)) {
+      if (this.layoutHost.mouseClicked(mx, my, button)) {
          return true;
       }
 
-      this.init_TextFormat.clearFocus();
+      this.layoutHost.clearFocus();
       return this.containsPoint(mx, my);
    }
 
    @Override
    public boolean mouseReleased(double mx, double my, int button) {
-      if (button == 0 && this.open_Z) {
-         this.open_Z = false;
+      if (button == 0 && this.draggingScrollbar) {
+         this.draggingScrollbar = false;
          this.saveState();
          return true;
-      } else if (this.flush_Z) {
-         this.flush_Z = false;
+      } else if (this.dragging) {
+         this.dragging = false;
          this.saveState();
          return true;
       } else {
-         return this.init_TextFormat.mouseReleased(mx, my, button);
+         return this.layoutHost.mouseReleased(mx, my, button);
       }
    }
 
    @Override
    public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
-      if (this.open_Z && button == 0) {
-         autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
+      if (this.draggingScrollbar && button == 0) {
+         autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
          float uiMouseY = viewport.toUiY(my);
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.load_PoolEntry_DataUtil_I(
-            Math.round(this.init_BitSetUtil_2.x()),
-            Math.round(this.init_BitSetUtil_2.y()),
-            Math.round(this.init_BitSetUtil_2.width()),
-            this.init_I_BitSetUtil(this.init_BitSetUtil_2)
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.scrollbarMetrics(
+            Math.round(this.listViewportSpacer.x()),
+            Math.round(this.listViewportSpacer.y()),
+            Math.round(this.listViewportSpacer.width()),
+            this.visibleViewportHeight(this.listViewportSpacer)
          );
-         this.init_CacheEntry.dragToMouseYStepped(scrollbarMetrics, Math.round(uiMouseY), this.clear_I, this.o());
+         this.scroll.dragToMouseYStepped(scrollbarMetrics, Math.round(uiMouseY), this.scrollbarGrabOffset, this.o());
          return true;
       }
 
-      if (!this.flush_Z) {
-         return this.init_TextFormat.mouseDragged(mx, my, button, dx, dy);
+      if (!this.dragging) {
+         return this.layoutHost.mouseDragged(mx, my, button, dx, dy);
       }
 
-      autismclient.gui.ui.layout.LayoutViewport viewport = this.init_TextFormat.createViewport();
+      autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       float uiMouseX = viewport.toUiX(mx);
       float uiMouseY = viewport.toUiY(my);
-      OverlayBounds clamped = this.init_cH_cH_5(
-         new OverlayBounds(Math.round(uiMouseX - (float)this.init_D), Math.round(uiMouseY - (float)this.load_D), this.pop_I, this.run_I, this.write_Z, this.update_Z)
+      OverlayBounds clamped = this.clampBounds(
+         new OverlayBounds(Math.round(uiMouseX - (float)this.dragOffsetX), Math.round(uiMouseY - (float)this.dragOffsetY), this.overlayWidth, this.overlayHeight, this.overlayVisible, this.overlayCollapsed)
       );
-      this.poll_I = clamped.x;
-      this.push_I = clamped.y;
-      this.close_Z = this.close_Z
-         || Math.abs(uiMouseX - this.load_F) >= 3.0F
-         || Math.abs(uiMouseY - this.read_F) >= 3.0F
-         || this.poll_I != this.put_I
-         || this.push_I != this.add_I;
+      this.overlayX = clamped.x;
+      this.overlayY = clamped.y;
+      this.dragMoved = this.dragMoved
+         || Math.abs(uiMouseX - this.dragStartMouseX) >= 3.0F
+         || Math.abs(uiMouseY - this.dragStartMouseY) >= 3.0F
+         || this.overlayX != this.dragStartX
+         || this.overlayY != this.dragStartY;
       return true;
    }
 
    @Override
    public boolean mouseScrolled(double mx, double my, double amount) {
-      if (this.write_Z && !this.update_Z && this.containsPoint(mx, my)) {
+      if (this.overlayVisible && !this.overlayCollapsed && this.containsPoint(mx, my)) {
          try {
-            return this.load_Z_D(mx, my, amount);
+            return this.scrollDetails(mx, my, amount);
          } catch (Throwable t) {
-            this.init_V_Str_Throwable("mouseScrolled", t);
+            this.reportStageFailure("mouseScrolled", t);
             return false;
          }
       } else {
@@ -6706,23 +6706,23 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean load_Z_D(double mx, double my, double amount) {
-      if (this.start == 1 && this.pop_Z && !this.tick_Z) {
-         int viewH = this.init_I_BitSetUtil(this.init_BitSetUtil_2);
-         int maxScroll = Math.max(0, this.value - this.load_I_2(viewH));
-         this.init_CacheEntry.scrollByWheel(amount, this.o(), maxScroll);
+   private boolean scrollDetails(double mx, double my, double amount) {
+      if (this.start == 1 && this.scanDone && !this.tick_Z) {
+         int viewH = this.visibleViewportHeight(this.listViewportSpacer);
+         int maxScroll = Math.max(0, this.value - this.innerViewportHeight(viewH));
+         this.scroll.scrollByWheel(amount, this.o(), maxScroll);
          return true;
       } else {
-         return this.init_TextFormat.mouseScrolled(mx, my, amount);
+         return this.layoutHost.mouseScrolled(mx, my, amount);
       }
    }
 
    @Override
    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
       try {
-         return this.write_Z && !this.update_Z && this.init_TextFormat.keyPressed(keyCode, scanCode, modifiers);
+         return this.overlayVisible && !this.overlayCollapsed && this.layoutHost.keyPressed(keyCode, scanCode, modifiers);
       } catch (Throwable t) {
-         this.init_V_Str_Throwable("keyPressed", t);
+         this.reportStageFailure("keyPressed", t);
          return false;
       }
    }
@@ -6730,19 +6730,19 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    @Override
    public boolean charTyped(char chr, int modifiers) {
       try {
-         return this.write_Z && !this.update_Z && this.init_TextFormat.charTyped(chr, modifiers);
+         return this.overlayVisible && !this.overlayCollapsed && this.layoutHost.charTyped(chr, modifiers);
       } catch (Throwable t) {
-         this.init_V_Str_Throwable("charTyped", t);
+         this.reportStageFailure("charTyped", t);
          return false;
       }
    }
 
-   private void d_V_2() {
+   private void copyServerInfo() {
       StringBuilder sb = new StringBuilder();
-      ServerData entry = init_Minecraft.getCurrentServer();
-      String ip = this.open_Str_2();
+      ServerData entry = MC.getCurrentServer();
+      String ip = this.displayedAddress();
       String realIp = this.pop(ip);
-      List<String> detectedAcs = this.init_List_13();
+      List<String> detectedAcs = this.detectedAnticheats();
       String software = this.load(entry);
       String versionNote = this.read(entry);
       sb.append("=== Server Info ===\n");
@@ -6751,15 +6751,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          sb.append("Real IP:    ").append(realIp).append("\n");
       }
 
-      sb.append("Version:    ").append(this.init_Str_ServerData(entry)).append("\n");
-      sb.append("RealVersion: ").append(this.flush_Str_2()).append("\n");
-      sb.append("Brand:      ").append(this.close_Str_2()).append("\n");
+      sb.append("Version:    ").append(this.reportedVersion(entry)).append("\n");
+      sb.append("RealVersion: ").append(this.detectedVersion()).append("\n");
+      sb.append("Brand:      ").append(this.serverBrand()).append("\n");
       if (!"--".equals(software)) {
          sb.append("Software:   ").append(software).append("\n");
       }
 
-      if (init_Minecraft.getConnection() != null) {
-         sb.append("Players:    ").append(init_Minecraft.getConnection().getListedOnlinePlayers().size());
+      if (MC.getConnection() != null) {
+         sb.append("Players:    ").append(MC.getConnection().getListedOnlinePlayers().size());
          if (entry != null && entry.players != null) {
             sb.append(" / ").append(entry.players.max());
          }
@@ -6774,11 +6774,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          sb.append("VersionNote: ").append(versionNote).append("\n");
       }
 
-      sb.append("Difficulty: ").append(init_Minecraft.level != null ? init_Minecraft.level.getDifficulty().getDisplayName().getString() : "--").append("\n");
-      sb.append("World:      ").append(this.push_Str_2()).append("\n");
-      if (init_Minecraft.level != null) {
-         long dayCount = init_Minecraft.level.getOverworldClockTime() / 24000L;
-         long timeOfDay = init_Minecraft.level.getOverworldClockTime() % 24000L;
+      sb.append("Difficulty: ").append(MC.level != null ? MC.level.getDifficulty().getDisplayName().getString() : "--").append("\n");
+      sb.append("World:      ").append(this.worldName()).append("\n");
+      if (MC.level != null) {
+         long dayCount = MC.level.getOverworldClockTime() / 24000L;
+         long timeOfDay = MC.level.getOverworldClockTime() % 24000L;
          int hours = (int)((timeOfDay / 1000L + 6L) % 24L);
          int minutes = (int)(timeOfDay % 1000L * 60L / 1000L);
          sb.append("Time:       Day ").append(dayCount).append(" (").append(String.format("%02d:%02d", hours, minutes)).append(")\n");
@@ -6788,7 +6788,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       if (this.tick_Z) {
          sb.append("AntiCheats: Scanning...\n");
-      } else if (!this.pop_Z) {
+      } else if (!this.scanDone) {
          sb.append("AntiCheats: Probe Plugins First\n");
       } else if (detectedAcs.isEmpty()) {
          sb.append("AntiCheats: None detected\n");
@@ -6796,34 +6796,34 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          sb.append("AntiCheats: ").append(String.join(", ", detectedAcs)).append("\n");
       }
 
-      init_Minecraft.keyboardHandler.setClipboard(sb.toString());
+      MC.keyboardHandler.setClipboard(sb.toString());
       bi.init("Server info copied.");
    }
 
-   private void e_V_2() {
-      if (this.load_List.isEmpty()) {
+   private void copyPlugins() {
+      if (this.detectedPlugins.isEmpty()) {
          bi.write("No plugins detected.");
       } else {
          Map<String, List<AutismServerInfoOverlay.DetectedPluginEntry>> grouped = new TreeMap<>((a, b) -> {
-            int rank = Integer.compare(this.update_I(a), this.update_I(b));
+            int rank = Integer.compare(this.groupOrderIndex(a), this.groupOrderIndex(b));
             return rank != 0 ? rank : String.CASE_INSENSITIVE_ORDER.compare(a, b);
          });
          int copyCount = 0;
 
-         for (String plugin : this.load((Collection<String>)this.load_List)) {
+         for (String plugin : this.load((Collection<String>)this.detectedPlugins)) {
             if (plugin != null && !plugin.isBlank()) {
-               AutismServerInfoOverlay.DetectedPluginEntry detail = this.init_AutismServerInfoOv_Str_3(plugin);
+               AutismServerInfoOverlay.DetectedPluginEntry detail = this.detailFor(plugin);
                if (detail != null
-                  && detail.load_AutismServerInfoOv != AutismServerInfoOverlay.EvidenceSource.HELP_HINT
-                  && detail.load_AutismServerInfoOv != AutismServerInfoOverlay.EvidenceSource.UNKNOWN) {
-                  String uiGroupTitle = this.init_Str_AutismServerInfoOv(
-                     detail.init_AutismServerInfoOv_2, detail.init_AutismServerInfoOv, detail.init_AutismServerInfoOv_3
+                  && detail.copyEvidence != AutismServerInfoOverlay.EvidenceSource.HELP_HINT
+                  && detail.copyEvidence != AutismServerInfoOverlay.EvidenceSource.UNKNOWN) {
+                  String uiGroupTitle = this.groupTitle(
+                     detail.resultKind, detail.confidence, detail.evidence
                   );
                   if (!"Command Hints".equals(uiGroupTitle)
                      && !"Other".equals(uiGroupTitle)
                      && (
-                        detail.init_AutismServerInfoOv_2 != AutismServerInfoOverlay.DetectionType.FEATURE
-                           || detail.load_AutismServerInfoOv == AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI
+                        detail.resultKind != AutismServerInfoOverlay.DetectionType.FEATURE
+                           || detail.copyEvidence == AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI
                      )) {
                      grouped.computeIfAbsent(this.init_Str_AutismServerInfoOv_2(detail), unused -> new ArrayList<>()).add(detail);
                      copyCount++;
@@ -6841,18 +6841,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             for (Entry<String, List<AutismServerInfoOverlay.DetectedPluginEntry>> group : grouped.entrySet()) {
                List<AutismServerInfoOverlay.DetectedPluginEntry> details = group.getValue();
                if (details != null && !details.isEmpty()) {
-                  details.sort(Comparator.comparing(detailx -> detailx.init_Str, String.CASE_INSENSITIVE_ORDER));
+                  details.sort(Comparator.comparing(detailx -> detailx.displayName, String.CASE_INSENSITIVE_ORDER));
                   sb.append("\n[").append(group.getKey()).append("]\n");
 
                   for (AutismServerInfoOverlay.DetectedPluginEntry detail : details) {
-                     boolean ac = update_Set.contains(detail.load_Str.toLowerCase(Locale.ROOT));
+                     boolean ac = ANTICHEAT_PLUGINS.contains(detail.key.toLowerCase(Locale.ROOT));
                      String groupTitle = this.init_Str_AutismServerInfoOv_2(detail);
-                     sb.append(ac ? "[AC] " : "- ").append(detail.init_Str);
-                     if (!detail.write_List.isEmpty()
+                     sb.append(ac ? "[AC] " : "- ").append(detail.displayName);
+                     if (!detail.copyCommands.isEmpty()
                         && !"Plugin Command Hint".equals(groupTitle)
                         && !"Version Command Hint".equals(groupTitle)
                         && !"Payload Channel".equals(groupTitle)) {
-                        sb.append(" (").append(detail.write_List.size()).append(" cmds)");
+                        sb.append(" (").append(detail.copyCommands.size()).append(" cmds)");
                      }
 
                      sb.append("\n");
@@ -6860,18 +6860,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                }
             }
 
-            init_Minecraft.keyboardHandler.setClipboard(sb.toString());
+            MC.keyboardHandler.setClipboard(sb.toString());
             bi.init("Plugin list copied.");
          }
       }
    }
 
    private static final class ProbeObservation {
-      final long init_J;
-      final boolean init_Z;
-      final AutismServerInfoOverlay.ProbeSpec init_AutismServerInfoOv;
+      final long generation;
+      final boolean liveObservation;
+      final AutismServerInfoOverlay.ProbeSpec probe;
       final AutismServerInfoOverlay.ProbeSpec load;
-      final List<String> init_List;
+      final List<String> tokens;
 
       ProbeObservation(
          long generation,
@@ -6880,11 +6880,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          AutismServerInfoOverlay.ProbeSpec observed,
          List<String> tokens
       ) {
-         this.init_J = generation;
-         this.init_Z = liveObservation;
-         this.init_AutismServerInfoOv = probe;
+         this.generation = generation;
+         this.liveObservation = liveObservation;
+         this.probe = probe;
          this.load = observed;
-         this.init_List = tokens;
+         this.tokens = tokens;
       }
    }
 
@@ -6896,13 +6896,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private static final class CommandEvidence {
-      final String init_Str;
-      final AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv;
+      final String command;
+      final AutismServerInfoOverlay.EvidenceSource evidence;
       final String load;
 
       CommandEvidence(String command, AutismServerInfoOverlay.EvidenceSource evidence, String guiTitle) {
-         this.init_Str = command;
-         this.init_AutismServerInfoOv = evidence;
+         this.command = command;
+         this.evidence = evidence;
          this.load = guiTitle;
       }
    }
@@ -6915,22 +6915,22 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private static class ClickHotspot {
-      final int init_I;
+      final int x;
       final int load;
       final int read;
       final int write;
-      final Runnable init_Runnable;
+      final Runnable action;
 
       ClickHotspot(int x, int y, int width, int height, Runnable action) {
-         this.init_I = x;
+         this.x = x;
          this.load = y;
          this.read = width;
          this.write = height;
-         this.init_Runnable = action;
+         this.action = action;
       }
 
       boolean init(double mx, double my) {
-         return mx >= this.init_I && mx < this.init_I + this.read && my >= this.load && my < this.load + this.write;
+         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
       }
    }
 
@@ -6995,29 +6995,29 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private static final class NamespaceSummary {
-      String init_Str;
-      final Set<String> init_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+      String name;
+      final Set<String> commands = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final Set<String> load = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final Set<String> read = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-      final List<String> init_List = new ArrayList<>();
+      final List<String> channels = new ArrayList<>();
    }
 
    private static final class ActiveScanSession {
-      final long init_J;
-      final String init_Str;
-      final ServerScanAttemptTracker init_bS;
-      String load_Str;
-      final long load_J;
-      final Map<String, AutismServerInfoOverlay.PluginAccumulator> init_Map;
-      long read_J;
-      long write_J;
-      final Set<Integer> init_Set = new HashSet<>();
-      final Map<Integer, AutismServerInfoOverlay.ProbeSpec> load_Map = new HashMap<>();
-      final Deque<AutismServerInfoOverlay.QueuedProbe> init_Deque = new ArrayDeque<>();
-      int init_I;
-      int load_I;
-      int read_I;
-      int write_I;
+      final long generation;
+      final String serverAddress;
+      final ServerScanAttemptTracker attemptTracker;
+      String contextSignature;
+      final long startedAt;
+      final Map<String, AutismServerInfoOverlay.PluginAccumulator> previousEntries;
+      long lastResponseAt;
+      long nextProbeAt;
+      final Set<Integer> pendingProbeIds = new HashSet<>();
+      final Map<Integer, AutismServerInfoOverlay.ProbeSpec> probesById = new HashMap<>();
+      final Deque<AutismServerInfoOverlay.QueuedProbe> probeQueue = new ArrayDeque<>();
+      int totalProbes;
+      int sentCount;
+      int replyCount;
+      int retryCount;
       int update;
       int sync;
       int flush;
@@ -7027,53 +7027,53 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       ActiveScanSession(
          long generation, String serverAddress, String contextSignature, long startedAt, Map<String, AutismServerInfoOverlay.PluginAccumulator> previousEntries
       ) {
-         this.init_J = generation;
-         this.init_Str = serverAddress == null ? "" : serverAddress;
-         this.init_bS = new ServerScanAttemptTracker(generation, this.init_Str);
-         this.load_Str = contextSignature == null ? "" : contextSignature;
-         this.load_J = startedAt;
-         this.init_Map = previousEntries == null ? Map.of() : Collections.unmodifiableMap(new TreeMap<>(previousEntries));
-         this.read_J = startedAt;
-         this.write_J = startedAt;
+         this.generation = generation;
+         this.serverAddress = serverAddress == null ? "" : serverAddress;
+         this.attemptTracker = new ServerScanAttemptTracker(generation, this.serverAddress);
+         this.contextSignature = contextSignature == null ? "" : contextSignature;
+         this.startedAt = startedAt;
+         this.previousEntries = previousEntries == null ? Map.of() : Collections.unmodifiableMap(new TreeMap<>(previousEntries));
+         this.lastResponseAt = startedAt;
+         this.nextProbeAt = startedAt;
       }
 
       boolean init(long expectedGeneration, String address) {
-         return this.init_bS.init(expectedGeneration, address);
+         return this.attemptTracker.init(expectedGeneration, address);
       }
    }
 
    private static final class ProbeSpec {
-      final String init_Str;
-      final AutismServerInfoOverlay.ProbeKind init_AutismServerInfoOv;
+      final String query;
+      final AutismServerInfoOverlay.ProbeKind kind;
       final String load;
 
       ProbeSpec(String query, AutismServerInfoOverlay.ProbeKind kind, String hint) {
-         this.init_Str = query;
-         this.init_AutismServerInfoOv = kind;
+         this.query = query;
+         this.kind = kind;
          this.load = hint;
       }
    }
 
    private static final class TabBarNode extends autismclient.gui.ui.layout.LayoutNode {
       private static final int init_I = 2;
-      private String[] init_StrArr = new String[0];
-      private int load_I = 0;
-      private IntConsumer init_IntConsumer;
+      private String[] tabs = new String[0];
+      private int activeIndex = 0;
+      private IntConsumer onSelect;
 
-      AutismServerInfoOverlay.TabBarNode init_AutismServerInfoOv_StrArr(String... tabs) {
-         this.init_StrArr = tabs == null ? new String[0] : (String[])tabs.clone();
-         this.init_AutismServerInfoOv_I(this.load_I);
+      AutismServerInfoOverlay.TabBarNode setTabs(String... tabs) {
+         this.tabs = tabs == null ? new String[0] : (String[])tabs.clone();
+         this.setActiveIndex(this.activeIndex);
          this.markLayoutDirty();
          return this;
       }
 
-      AutismServerInfoOverlay.TabBarNode init_AutismServerInfoOv_I(int activeIndex) {
-         this.load_I = Math.max(0, Math.min(Math.max(0, this.init_StrArr.length - 1), activeIndex));
+      AutismServerInfoOverlay.TabBarNode setActiveIndex(int activeIndex) {
+         this.activeIndex = Math.max(0, Math.min(Math.max(0, this.tabs.length - 1), activeIndex));
          return this;
       }
 
-      AutismServerInfoOverlay.TabBarNode init_AutismServerInfoOv_IntConsumer(IntConsumer onSelect) {
-         this.init_IntConsumer = onSelect;
+      AutismServerInfoOverlay.TabBarNode setOnSelect(IntConsumer onSelect) {
+         this.onSelect = onSelect;
          return this;
       }
 
@@ -7084,28 +7084,28 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       @Override
       public void render(autismclient.gui.ui.layout.LayoutContext context) {
-         if (this.nodeVisible && this.init_StrArr.length != 0) {
+         if (this.nodeVisible && this.tabs.length != 0) {
             autismclient.gui.f.SyncManager uiContext = autismclient.gui.f.UiHelper.init(
                context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
             );
 
-            for (int i = 0; i < this.init_StrArr.length; i++) {
-               autismclient.gui.f.NetHelper bounds = this.init_NetHelper_I(i);
-               boolean active = i == this.load_I;
-               TabStripRenderer.init(uiContext, bounds, this.init_StrArr[i], active);
+            for (int i = 0; i < this.tabs.length; i++) {
+               autismclient.gui.f.NetHelper bounds = this.tabBounds(i);
+               boolean active = i == this.activeIndex;
+               TabStripRenderer.init(uiContext, bounds, this.tabs[i], active);
             }
          }
       }
 
       @Override
       public boolean mouseClicked(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, int button) {
-         if (this.nodeVisible && this.nodeEnabled && button == 0 && this.init_StrArr.length != 0) {
-            for (int i = 0; i < this.init_StrArr.length; i++) {
-               if (this.init_NetHelper_I(i).init_Z(Math.round(mouseX), Math.round(mouseY))) {
-                  if (i != this.load_I) {
-                     this.init_AutismServerInfoOv_I(i);
-                     if (this.init_IntConsumer != null) {
-                        this.init_IntConsumer.accept(i);
+         if (this.nodeVisible && this.nodeEnabled && button == 0 && this.tabs.length != 0) {
+            for (int i = 0; i < this.tabs.length; i++) {
+               if (this.tabBounds(i).init_Z(Math.round(mouseX), Math.round(mouseY))) {
+                  if (i != this.activeIndex) {
+                     this.setActiveIndex(i);
+                     if (this.onSelect != null) {
+                        this.onSelect.accept(i);
                      }
                   }
 
@@ -7119,10 +7119,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
       }
 
-      private autismclient.gui.f.NetHelper init_NetHelper_I(int index) {
+      private autismclient.gui.f.NetHelper tabBounds(int index) {
          return TabStripRenderer.init(
             autismclient.gui.f.NetHelper.init(Math.round(this.nodeX), Math.round(this.nodeY), Math.round(this.nodeWidth), Math.round(this.nodeHeight)),
-            this.init_StrArr.length,
+            this.tabs.length,
             index,
             2
          );
@@ -7130,15 +7130,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private static final class DetailRow {
-      final AutismServerInfoOverlay.DetailRowKind init_AutismServerInfoOv_3;
-      final String init_Str;
+      final AutismServerInfoOverlay.DetailRowKind type;
+      final String title;
       final String load;
       final String read;
       final String write;
-      final AutismServerInfoOverlay.DetectionType init_AutismServerInfoOv_2;
-      final AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_4;
-      final AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv;
-      final int init_I;
+      final AutismServerInfoOverlay.DetectionType resultKind;
+      final AutismServerInfoOverlay.EvidenceSource evidence;
+      final AutismServerInfoOverlay.MatchConfidence confidence;
+      final int height;
       final String update;
       final String sync;
 
@@ -7155,15 +7155,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          String countLabel,
          String searchText
       ) {
-         this.init_AutismServerInfoOv_3 = type;
-         this.init_Str = title;
+         this.type = type;
+         this.title = title;
          this.load = plugin;
          this.read = label;
          this.write = actionCommand;
-         this.init_AutismServerInfoOv_2 = resultKind == null ? AutismServerInfoOverlay.DetectionType.PLUGIN : resultKind;
-         this.init_AutismServerInfoOv_4 = evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence;
-         this.init_AutismServerInfoOv = confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence;
-         this.init_I = Math.max(1, height);
+         this.resultKind = resultKind == null ? AutismServerInfoOverlay.DetectionType.PLUGIN : resultKind;
+         this.evidence = evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence;
+         this.confidence = confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence;
+         this.height = Math.max(1, height);
          this.update = countLabel == null ? "" : countLabel;
          this.sync = searchText == null ? "" : searchText;
       }
@@ -7214,7 +7214,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       boolean init() {
-         return this.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.DetailRowKind.HEADER;
+         return this.type == AutismServerInfoOverlay.DetailRowKind.HEADER;
       }
 
       private static String init(String text) {
@@ -7222,7 +7222,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private record CommandHistoryEntry(String init_Str, String load, long init_J) {
+   private record CommandHistoryEntry(String root, String load, long timestampMs) {
    }
 
    private enum ProbeKind {
@@ -7239,30 +7239,30 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       private float flush = 1.0F;
       private float close = 0.0F;
       private float open = 0.0F;
-      private boolean write_Z = false;
-      private Consumer<Float> init_Consumer;
+      private boolean dragging = false;
+      private Consumer<Float> onChange;
 
       SliderNode() {
          this.nodeHeight = 12.0F;
       }
 
-      AutismServerInfoOverlay.SliderNode init_AutismServerInfoOv(float min, float max) {
+      AutismServerInfoOverlay.SliderNode setRange(float min, float max) {
          this.sync = min;
          this.flush = Math.max(min, max);
-         return this.load_AutismServerInfoOv(this.close);
+         return this.setValue(this.close);
       }
 
-      AutismServerInfoOverlay.SliderNode init_AutismServerInfoOv(float step) {
+      AutismServerInfoOverlay.SliderNode setStep(float step) {
          this.open = Math.max(0.0F, step);
-         return this.load_AutismServerInfoOv(this.close);
+         return this.setValue(this.close);
       }
 
-      AutismServerInfoOverlay.SliderNode load_AutismServerInfoOv(float value) {
-         float snapped = this.load_F(this.init_F(value));
+      AutismServerInfoOverlay.SliderNode setValue(float value) {
+         float snapped = this.snapValue(this.clampValue(value));
          if (Math.abs(this.close - snapped) > 1.0E-4F) {
             this.close = snapped;
-            if (this.init_Consumer != null) {
-               this.init_Consumer.accept(this.close);
+            if (this.onChange != null) {
+               this.onChange.accept(this.close);
             }
          }
 
@@ -7270,7 +7270,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       AutismServerInfoOverlay.SliderNode init(Consumer<Float> onChange) {
-         this.init_Consumer = onChange;
+         this.onChange = onChange;
          return this;
       }
 
@@ -7288,15 +7288,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.SyncManager uiContext = autismclient.gui.f.UiHelper.init(
                context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
             );
-            SliderRenderer.init(uiContext, bounds, SliderRenderer.ratio(this.close, this.sync, this.flush), this.containsPoint(context.mouseX(), context.mouseY()) || this.write_Z);
+            SliderRenderer.init(uiContext, bounds, SliderRenderer.ratio(this.close, this.sync, this.flush), this.containsPoint(context.mouseX(), context.mouseY()) || this.dragging);
          }
       }
 
       @Override
       public boolean mouseClicked(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, int button) {
          if (button == 0 && this.containsPoint(mouseX, mouseY)) {
-            this.write_Z = true;
-            this.init_V(mouseX);
+            this.dragging = true;
+            this.setFromMouse(mouseX);
             return true;
          } else {
             return false;
@@ -7305,8 +7305,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       @Override
       public boolean mouseReleased(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, int button) {
-         if (button == 0 && this.write_Z) {
-            this.write_Z = false;
+         if (button == 0 && this.dragging) {
+            this.dragging = false;
             return true;
          } else {
             return false;
@@ -7315,42 +7315,42 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       @Override
       public boolean mouseDragged(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY, int button, float deltaX, float deltaY) {
-         if (this.write_Z && button == 0) {
-            this.init_V(mouseX);
+         if (this.dragging && button == 0) {
+            this.setFromMouse(mouseX);
             return true;
          } else {
             return false;
          }
       }
 
-      private void init_V(float mouseX) {
-         this.load_AutismServerInfoOv(
+      private void setFromMouse(float mouseX) {
+         this.setValue(
             (float)SliderRenderer.init(mouseX, Math.round(this.nodeX), Math.round(this.nodeWidth), this.sync, this.flush, this.open <= 0.0F ? 9.999999747378752E-5 : this.open)
          );
       }
 
-      private float init_F(float value) {
+      private float clampValue(float value) {
          return Math.max(this.sync, Math.min(this.flush, value));
       }
 
-      private float load_F(float value) {
+      private float snapValue(float value) {
          return this.open <= 0.0F ? value : this.sync + Math.round((value - this.sync) / this.open) * this.open;
       }
    }
 
    private static final class DetectedPluginEntry {
-      final String init_Str;
-      final String load_Str;
-      final List<String> init_List;
-      final List<String> load_List;
-      final List<String> read_List;
-      final AutismServerInfoOverlay.DetectionType init_AutismServerInfoOv_2;
-      final AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_3;
-      final AutismServerInfoOverlay.EvidenceSource load_AutismServerInfoOv;
-      final AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv;
-      final String read_Str;
-      final String write_Str;
-      final List<String> write_List;
+      final String displayName;
+      final String key;
+      final List<String> commands;
+      final List<String> guis;
+      final List<String> channels;
+      final AutismServerInfoOverlay.DetectionType resultKind;
+      final AutismServerInfoOverlay.EvidenceSource evidence;
+      final AutismServerInfoOverlay.EvidenceSource copyEvidence;
+      final AutismServerInfoOverlay.MatchConfidence confidence;
+      final String sourceLabel;
+      final String countLabel;
+      final List<String> copyCommands;
       final String update;
 
       DetectedPluginEntry(
@@ -7368,38 +7368,38 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          List<String> copyCommands,
          String searchText
       ) {
-         this.init_Str = displayName == null ? "" : displayName;
-         this.load_Str = key == null ? "" : key;
-         this.init_List = commands == null ? List.of() : commands;
-         this.load_List = guis == null ? List.of() : guis;
-         this.read_List = channels == null ? List.of() : channels;
-         this.init_AutismServerInfoOv_2 = resultKind == null ? AutismServerInfoOverlay.DetectionType.PLUGIN : resultKind;
-         this.init_AutismServerInfoOv_3 = evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence;
-         this.load_AutismServerInfoOv = copyEvidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : copyEvidence;
-         this.init_AutismServerInfoOv = confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence;
-         this.read_Str = sourceLabel == null ? "" : sourceLabel;
-         this.write_Str = countLabel == null ? "" : countLabel;
-         this.write_List = copyCommands == null ? List.of() : copyCommands;
+         this.displayName = displayName == null ? "" : displayName;
+         this.key = key == null ? "" : key;
+         this.commands = commands == null ? List.of() : commands;
+         this.guis = guis == null ? List.of() : guis;
+         this.channels = channels == null ? List.of() : channels;
+         this.resultKind = resultKind == null ? AutismServerInfoOverlay.DetectionType.PLUGIN : resultKind;
+         this.evidence = evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence;
+         this.copyEvidence = copyEvidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : copyEvidence;
+         this.confidence = confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence;
+         this.sourceLabel = sourceLabel == null ? "" : sourceLabel;
+         this.countLabel = countLabel == null ? "" : countLabel;
+         this.copyCommands = copyCommands == null ? List.of() : copyCommands;
          this.update = searchText == null ? "" : searchText;
       }
    }
 
    private static final class PluginAccumulator {
-      String init_Str;
-      boolean init_Z;
-      AutismServerInfoOverlay.DetectionType init_AutismServerInfoOv_2;
-      AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_3 = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
-      AutismServerInfoOverlay.EvidenceSource load_AutismServerInfoOv = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
-      AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv = AutismServerInfoOverlay.MatchConfidence.FEATURE;
-      final Set<String> init_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-      final Set<String> load_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+      String name;
+      boolean commandBacked;
+      AutismServerInfoOverlay.DetectionType resultKind;
+      AutismServerInfoOverlay.EvidenceSource evidence = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
+      AutismServerInfoOverlay.EvidenceSource copyEvidence = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
+      AutismServerInfoOverlay.MatchConfidence confidence = AutismServerInfoOverlay.MatchConfidence.FEATURE;
+      final Set<String> commands = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+      final Set<String> copyCommands = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final Set<String> read = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final Set<String> write = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
    }
 
    private static final class QueuedProbe {
-      final int init_I;
-      final AutismServerInfoOverlay.ProbeSpec init_AutismServerInfoOv;
+      final int id;
+      final AutismServerInfoOverlay.ProbeSpec spec;
       final int load;
 
       QueuedProbe(int id, AutismServerInfoOverlay.ProbeSpec spec) {
@@ -7407,8 +7407,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       QueuedProbe(int id, AutismServerInfoOverlay.ProbeSpec spec, int attempt) {
-         this.init_I = id;
-         this.init_AutismServerInfoOv = spec;
+         this.id = id;
+         this.spec = spec;
          this.load = attempt;
       }
    }

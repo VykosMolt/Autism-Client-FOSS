@@ -23,35 +23,35 @@ import net.minecraft.server.packs.PackResources.ResourceOutput;
 import net.minecraft.server.packs.resources.IoSupplier;
 
 public final class IsolatedResourcePack extends CompatAbstractPackResources implements IsolatedPackDownloader.Inner_BufferHelper {
-   private final IsolatedResourcePack.Inner_DataUtil init_JsonUtil_DataUtil;
-   private final String init_Str;
-   private final boolean init_Z;
-   private final IsolatedPackDownloader.Inner_ConfigStore init_EventBus_ConfigSto;
+   private final IsolatedResourcePack.Inner_DataUtil snapshot;
+   private final String prefix;
+   private final boolean metadataOnly;
+   private final IsolatedPackDownloader.Inner_ConfigStore isolation;
 
    private IsolatedResourcePack(PackLocationInfo location, IsolatedResourcePack.Inner_DataUtil snapshot, String prefix, boolean metadataOnly, IsolatedPackDownloader.Inner_ConfigStore isolation) {
       super(location);
-      this.init_JsonUtil_DataUtil = snapshot;
-      this.init_Str = prefix;
-      this.init_Z = metadataOnly;
-      this.init_EventBus_ConfigSto = isolation;
+      this.snapshot = snapshot;
+      this.prefix = prefix;
+      this.metadataOnly = metadataOnly;
+      this.isolation = isolation;
    }
 
    @Override
    public IsolatedPackDownloader.Inner_ConfigStore init() {
-      return this.init_EventBus_ConfigSto;
+      return this.isolation;
    }
 
    @Override
    public IoSupplier<InputStream> getRootResource(String... path) {
-      return this.init_Str.isEmpty() && path.length == 1 && "pack.mcmeta".equals(path[0]) && this.init_JsonUtil_DataUtil.init_BArr != null
-         ? init(this.init_JsonUtil_DataUtil.init_BArr)
+      return this.prefix.isEmpty() && path.length == 1 && "pack.mcmeta".equals(path[0]) && this.snapshot.packMetadata != null
+         ? init(this.snapshot.packMetadata)
          : null;
    }
 
    @Override
    public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
-      if (!this.init_Z && type == PackType.CLIENT_RESOURCES && init(location.getPath())) {
-         byte[] bytes = this.init_JsonUtil_DataUtil.init_Map.get(this.init(location.getNamespace(), location.getPath()));
+      if (!this.metadataOnly && type == PackType.CLIENT_RESOURCES && init(location.getPath())) {
+         byte[] bytes = this.snapshot.languages.get(this.init(location.getNamespace(), location.getPath()));
          return bytes == null ? null : init(bytes);
       } else {
          return null;
@@ -60,11 +60,11 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
 
    @Override
    public void listResources(PackType type, String namespace, String directory, ResourceOutput output) {
-      if (!this.init_Z && type == PackType.CLIENT_RESOURCES && init(directory) && Identifier.isValidNamespace(namespace)) {
-         String root = this.init_Str + type.getDirectory() + "/" + namespace + "/";
+      if (!this.metadataOnly && type == PackType.CLIENT_RESOURCES && init(directory) && Identifier.isValidNamespace(namespace)) {
+         String root = this.prefix + type.getDirectory() + "/" + namespace + "/";
          String directoryPrefix = root + directory + "/";
 
-         for (Entry<String, byte[]> entry : this.init_JsonUtil_DataUtil.init_Map.entrySet()) {
+         for (Entry<String, byte[]> entry : this.snapshot.languages.entrySet()) {
             String path = entry.getKey();
             if (path.startsWith(directoryPrefix)) {
                Identifier identifier = Identifier.tryBuild(namespace, path.substring(root.length()));
@@ -78,11 +78,11 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
 
    @Override
    public Set<String> getNamespaces(PackType type) {
-      if (!this.init_Z && type == PackType.CLIENT_RESOURCES) {
-         String root = this.init_Str + type.getDirectory() + "/";
+      if (!this.metadataOnly && type == PackType.CLIENT_RESOURCES) {
+         String root = this.prefix + type.getDirectory() + "/";
          Set<String> namespaces = new HashSet<>();
 
-         for (String path : this.init_JsonUtil_DataUtil.init_Map.keySet()) {
+         for (String path : this.snapshot.languages.keySet()) {
             if (path.startsWith(root)) {
                int end = path.indexOf(47, root.length());
                if (end >= 0) {
@@ -105,7 +105,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
    }
 
    private String init(String namespace, String path) {
-      return this.init_Str + PackType.CLIENT_RESOURCES.getDirectory() + "/" + namespace + "/" + path;
+      return this.prefix + PackType.CLIENT_RESOURCES.getDirectory() + "/" + namespace + "/" + path;
    }
 
    private static IoSupplier<InputStream> init(byte[] bytes) {
@@ -121,12 +121,12 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
       private static final int load = 8388608;
       private static final int read = 67108864;
       private static final int write = 4096;
-      private final byte[] init_BArr;
-      private final Map<String, byte[]> init_Map;
+      private final byte[] packMetadata;
+      private final Map<String, byte[]> languages;
 
       private Inner_DataUtil(byte[] packMetadata, Map<String, byte[]> languages) {
-         this.init_BArr = packMetadata;
-         this.init_Map = languages;
+         this.packMetadata = packMetadata;
+         this.languages = languages;
       }
 
       static IsolatedResourcePack.Inner_DataUtil init(Path path) {

@@ -15,7 +15,7 @@ public interface GuiWaitAware {
 
    void setGuiName(String var1);
 
-   default boolean update_Z() {
+   default boolean waitsForGui() {
       return this.waitsForGuiBefore() || this.waitsForGuiAfter();
    }
 

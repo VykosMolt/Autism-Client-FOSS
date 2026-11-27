@@ -29,15 +29,15 @@ import net.minecraft.world.phys.Vec3;
 
 public final class AiSchematicMachinePlan {
    static final AiSchematicMachinePlan EMPTY = new AiSchematicMachinePlan(Map.of(), List.of());
-   private final Map<Long, ListTag> init_Map;
-   private final List<AiSchematic.Inner_TaskQueue> init_List;
-   private final List<AiSchematic.Inner_StreamUtil> load_List;
-   private final Set<Long> init_Set;
-   private final Set<Long> load_Set;
-   private final Map<Long, BlockState> load_Map;
-   private final Map<Long, BlockState> read_Map;
+   private final Map<Long, ListTag> containerContents;
+   private final List<AiSchematic.Inner_TaskQueue> vehicles;
+   private final List<AiSchematic.Inner_StreamUtil> frames;
+   private final Set<Long> offRailCells;
+   private final Set<Long> hopperCells;
+   private final Map<Long, BlockState> containerStates;
+   private final Map<Long, BlockState> outcomes;
    private final Map<Long, BlockState> write;
-   private final Set<Long> read_Set;
+   private final Set<Long> clockSections;
 
    private AiSchematicMachinePlan(Map<Long, ListTag> contents, List<AiSchematic.Inner_TaskQueue> vehicles) {
       this(contents, vehicles, List.of());
@@ -60,15 +60,15 @@ public final class AiSchematicMachinePlan {
    ) {
       HashMap<Long, ListTag> copy = new HashMap<>();
       contents.forEach((key, value) -> copy.put(key, value.copy()));
-      this.init_Map = Map.copyOf(copy);
-      this.init_List = List.copyOf(vehicles);
-      this.load_List = List.copyOf(frames);
-      this.init_Set = Set.copyOf(offRailCells);
-      this.load_Set = Set.copyOf(hopperCells);
-      this.load_Map = Map.copyOf(containerStates);
-      this.read_Map = Map.copyOf(outcomes);
+      this.containerContents = Map.copyOf(copy);
+      this.vehicles = List.copyOf(vehicles);
+      this.frames = List.copyOf(frames);
+      this.offRailCells = Set.copyOf(offRailCells);
+      this.hopperCells = Set.copyOf(hopperCells);
+      this.containerStates = Map.copyOf(containerStates);
+      this.outcomes = Map.copyOf(outcomes);
       this.write = Map.copyOf(clockContext);
-      this.read_Set = Set.copyOf(clockSections);
+      this.clockSections = Set.copyOf(clockSections);
    }
 
    static AiSchematicMachinePlan fromSchematic(AiSchematic.Inner_BufferHelper source, AiBuilder.Blueprint selected) {
@@ -76,9 +76,9 @@ public final class AiSchematicMachinePlan {
       HashMap<Long, BlockState> outcomes = new HashMap<>();
       HashSet<Long> vehicleCells = new HashSet<>();
 
-      for (AiSchematic.Inner_TaskQueue vehicle : plan.init_List) {
+      for (AiSchematic.Inner_TaskQueue vehicle : plan.vehicles) {
          long key = vehicle.rail().asLong();
-         if (!plan.init_Set.contains(key)) {
+         if (!plan.offRailCells.contains(key)) {
             vehicleCells.add(key);
          }
       }
@@ -92,30 +92,30 @@ public final class AiSchematicMachinePlan {
             || cell.block().equals("minecraft:iron_door")
             || cell.block().equals("minecraft:note_block") && "true".equals(cell.properties().get("powered"))
             || vehicleCells.contains(key)
-            || plan.load_Set.contains(key)) {
+            || plan.hopperCells.contains(key)) {
             outcomes.put(key, AiBuilder.toBlockState(cell));
          }
       }
 
-      return new AiSchematicMachinePlan(plan.init_Map, plan.init_List, plan.init_Set, plan.load_Set, plan.load_Map, outcomes, plan.write, plan.read_Set, plan.load_List);
+      return new AiSchematicMachinePlan(plan.containerContents, plan.vehicles, plan.offRailCells, plan.hopperCells, plan.containerStates, outcomes, plan.write, plan.clockSections, plan.frames);
    }
 
    AiSchematicMachinePlan init(AiBuilder.Blueprint selected) {
-      if (this.init_Z()) {
+      if (this.isEmpty()) {
          return EMPTY;
       }
 
       HashSet<Long> vehicleCells = new HashSet<>();
 
-      for (AiSchematic.Inner_TaskQueue vehicle : this.init_List) {
+      for (AiSchematic.Inner_TaskQueue vehicle : this.vehicles) {
          vehicleCells.add(vehicle.rail().asLong());
       }
 
       HashSet<Long> cells = new HashSet<>();
       HashSet<Long> offRail = new HashSet<>();
       HashMap<Long, BlockState> selectedStates = new HashMap<>();
-      HashSet<Long> outcomeInputs = new HashSet<>(this.read_Map.keySet());
-      this.read_Map.forEach((key, state) -> {
+      HashSet<Long> outcomeInputs = new HashSet<>(this.outcomes.keySet());
+      this.outcomes.forEach((key, state) -> {
          if (state.is(Blocks.PISTON_HEAD)) {
             outcomeInputs.add(BlockPos.of(key).relative(state.getValue(PistonHeadBlock.FACING).getOpposite()).asLong());
          }
@@ -125,7 +125,7 @@ public final class AiSchematicMachinePlan {
       HashMap<Long, ListTag> kept = new HashMap<>();
       HashSet<Long> frameSupports = new HashSet<>();
 
-      for (AiSchematic.Inner_StreamUtil frame : this.load_List) {
+      for (AiSchematic.Inner_StreamUtil frame : this.frames) {
          frameSupports.add(frame.support().asLong());
       }
 
@@ -149,7 +149,7 @@ public final class AiSchematicMachinePlan {
             }
          }
 
-         ListTag saved = this.init_Map.get(key);
+         ListTag saved = this.containerContents.get(key);
          if (saved != null) {
             kept.put(key, saved);
             BlockState state = AiBuilder.toBlockState(cell);
@@ -163,9 +163,9 @@ public final class AiSchematicMachinePlan {
          }
       }
 
-      List<AiSchematic.Inner_TaskQueue> carts = this.init_List.stream().filter(vehicle -> cells.contains(vehicle.rail().asLong())).toList();
+      List<AiSchematic.Inner_TaskQueue> carts = this.vehicles.stream().filter(vehicle -> cells.contains(vehicle.rail().asLong())).toList();
       HashMap<Long, BlockState> selectedOutcomes = new HashMap<>();
-      this.read_Map.forEach((key, state) -> {
+      this.outcomes.forEach((key, state) -> {
          boolean keep = selectedStates.containsKey(key);
          if (!keep && state.is(Blocks.PISTON_HEAD)) {
             Direction facing = state.getValue(PistonHeadBlock.FACING);
@@ -208,46 +208,46 @@ public final class AiSchematicMachinePlan {
          });
       }
 
-      List<AiSchematic.Inner_StreamUtil> hung = this.load_List.stream().filter(frame -> supported.contains(frame.support().asLong())).toList();
+      List<AiSchematic.Inner_StreamUtil> hung = this.frames.stream().filter(frame -> supported.contains(frame.support().asLong())).toList();
       return kept.isEmpty() && carts.isEmpty() && selectedOutcomes.isEmpty() && hung.isEmpty()
          ? EMPTY
          : new AiSchematicMachinePlan(kept, carts, offRail, hoppers, storage, selectedOutcomes, context, sections, hung);
    }
 
-   boolean init_Z() {
-      return this.init_Map.isEmpty() && this.init_List.isEmpty() && this.read_Map.isEmpty() && this.load_List.isEmpty();
+   boolean isEmpty() {
+      return this.containerContents.isEmpty() && this.vehicles.isEmpty() && this.outcomes.isEmpty() && this.frames.isEmpty();
    }
 
    boolean hasActions() {
-      return !this.init_List.isEmpty() || !this.load_Map.isEmpty() || !this.read_Map.isEmpty() || !this.load_List.isEmpty();
+      return !this.vehicles.isEmpty() || !this.containerStates.isEmpty() || !this.outcomes.isEmpty() || !this.frames.isEmpty();
    }
 
-   Set<Long> init_Set() {
-      return this.load_Set;
+   Set<Long> hopperCells() {
+      return this.hopperCells;
    }
 
-   Set<Long> load_Set() {
-      return this.load_Map.keySet();
+   Set<Long> containerCells() {
+      return this.containerStates.keySet();
    }
 
-   int init_I() {
-      return this.init_List.size();
+   int vehicleCount() {
+      return this.vehicles.size();
    }
 
-   int load_I() {
-      return this.init_Map.size();
+   int containerCount() {
+      return this.containerContents.size();
    }
 
-   List<AiSchematicMachinePlan.ContainerPlan> init_List_BlockPos_HolderLookup_Provi(BlockPos origin, Provider registries) {
-      return this.init(origin, registries, this.init_Map.keySet());
+   List<AiSchematicMachinePlan.ContainerPlan> containerPlans(BlockPos origin, Provider registries) {
+      return this.init(origin, registries, this.containerContents.keySet());
    }
 
    List<AiSchematicMachinePlan.ContainerPlan> load(BlockPos origin, Provider registries) {
-      return this.init(origin, registries, this.load_Set);
+      return this.init(origin, registries, this.hopperCells);
    }
 
    List<AiSchematicMachinePlan.ContainerPlan> read(BlockPos origin, Provider registries) {
-      return this.init(origin, registries, this.load_Map.keySet());
+      return this.init(origin, registries, this.containerStates.keySet());
    }
 
    AiSchematicMachinePlan.MachineSpec machineSpec(BlockPos origin, Provider registries) {
@@ -256,20 +256,20 @@ public final class AiSchematicMachinePlan {
       }
 
       ArrayList<autismclient.ai.print.PrintSkippedContents> unavailable = new ArrayList<>();
-      List<AiSchematicMachinePlan.ContainerPlan> decoded = this.init(origin, registries, this.load_Map.keySet(), unavailable);
+      List<AiSchematicMachinePlan.ContainerPlan> decoded = this.init(origin, registries, this.containerStates.keySet(), unavailable);
       HashMap<BlockPos, BlockState> source = new HashMap<>();
       this.write.forEach((key, state) -> source.put(origin.offset(BlockPos.of(key)), state));
       List<autismclient.ai.print.PrintClockSpec> clocks = AiHopperClockPlan.init(
          source,
          decoded,
-         at -> this.read_Set.contains(SectionPos.asLong(at.getX() - origin.getX() >> 4, at.getY() - origin.getY() >> 4, at.getZ() - origin.getZ() >> 4))
+         at -> this.clockSections.contains(SectionPos.asLong(at.getX() - origin.getX() >> 4, at.getY() - origin.getY() >> 4, at.getZ() - origin.getZ() >> 4))
       );
       HashSet<BlockPos> grouped = new HashSet<>();
       clocks.forEach(clock -> grouped.addAll(clock.hoppers()));
       return new AiSchematicMachinePlan.MachineSpec(
-         this.init_List(origin),
+         this.railVehicles(origin),
          decoded.stream().filter(container -> !grouped.contains(container.position())).toList(),
-         this.init_Map(origin),
+         this.outcomeStates(origin),
          unavailable,
          clocks,
          this.write(origin, registries)
@@ -277,14 +277,14 @@ public final class AiSchematicMachinePlan {
    }
 
    List<autismclient.ai.print.PrintItemFrame.Inner_StreamUtil> write(BlockPos origin, Provider registries) {
-      if (this.load_List.isEmpty()) {
+      if (this.frames.isEmpty()) {
          return List.of();
       }
 
       RegistryOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
-      ArrayList<autismclient.ai.print.PrintItemFrame.Inner_StreamUtil> out = new ArrayList<>(this.load_List.size());
+      ArrayList<autismclient.ai.print.PrintItemFrame.Inner_StreamUtil> out = new ArrayList<>(this.frames.size());
 
-      for (AiSchematic.Inner_StreamUtil frame : this.load_List) {
+      for (AiSchematic.Inner_StreamUtil frame : this.frames) {
          ItemStack item = ItemStack.EMPTY;
          boolean undecodable = false;
          if (frame.item() != null) {
@@ -321,7 +321,7 @@ public final class AiSchematicMachinePlan {
       for (long key : keys) {
          AiBuilder.checkNotCancelled();
          HashMap<Integer, ItemStack> slots = new HashMap<>();
-         Iterator var11 = this.init_Map.get(key).iterator();
+         Iterator var11 = this.containerContents.get(key).iterator();
 
          while (true) {
             if (var11.hasNext()) {
@@ -345,8 +345,8 @@ public final class AiSchematicMachinePlan {
                unavailable.add(
                   new autismclient.ai.print.PrintSkippedContents(
                      position,
-                     this.load_Map.get(key),
-                     this.init_Map.get(key).size(),
+                     this.containerStates.get(key),
+                     this.containerContents.get(key).size(),
                      "Saved item in Slot " + slot + " cannot be decoded with this world's registry"
                   )
                );
@@ -354,7 +354,7 @@ public final class AiSchematicMachinePlan {
             }
 
             if (slots != null) {
-               result.add(new AiSchematicMachinePlan.ContainerPlan(origin.offset(BlockPos.of(key)), slots, this.load_Map.get(key)));
+               result.add(new AiSchematicMachinePlan.ContainerPlan(origin.offset(BlockPos.of(key)), slots, this.containerStates.get(key)));
             }
             break;
          }
@@ -368,23 +368,23 @@ public final class AiSchematicMachinePlan {
       return List.copyOf(result);
    }
 
-   List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> init_List(BlockPos origin) {
+   List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> railVehicles(BlockPos origin) {
       Vec3 offset = Vec3.atLowerCornerOf(origin);
-      return this.init_List
+      return this.vehicles
          .stream()
          .map(
-            value -> new autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil(value.id(), value.position().add(offset), !this.init_Set.contains(value.rail().asLong()))
+            value -> new autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil(value.id(), value.position().add(offset), !this.offRailCells.contains(value.rail().asLong()))
          )
          .toList();
    }
 
-   Map<BlockPos, BlockState> init_Map(BlockPos origin) {
-      if (this.read_Map.isEmpty()) {
+   Map<BlockPos, BlockState> outcomeStates(BlockPos origin) {
+      if (this.outcomes.isEmpty()) {
          return Map.of();
       }
 
       HashMap<BlockPos, BlockState> placed = new HashMap<>();
-      this.read_Map.forEach((key, state) -> placed.put(origin.offset(BlockPos.of(key)), state));
+      this.outcomes.forEach((key, state) -> placed.put(origin.offset(BlockPos.of(key)), state));
       return Map.copyOf(placed);
    }
 

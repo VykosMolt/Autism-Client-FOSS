@@ -24,21 +24,21 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
    private static final double read_D = 0.002;
    private static final double write_D = 0.002;
    private static volatile boolean init_Z;
-   private static HoleEspModule init_P;
-   private int init_I = -1;
+   private static HoleEspModule cachedInstance;
+   private int settingsRevision = -1;
    private boolean load_Z = true;
-   private boolean read_Z = true;
-   private boolean write_Z = true;
-   private int load_I = 32;
-   private int read_I = 8;
-   private double update_D = 0.3;
-   private double sync_D = 0.7;
-   private int write_I = 512;
-   private int update_I = -15089316;
-   private int sync_I = -575461;
+   private boolean fill = true;
+   private boolean outline = true;
+   private int horizontalDistance = 32;
+   private int verticalDistance = 8;
+   private double distanceFade = 0.3;
+   private double glowHeight = 0.7;
+   private int maxHoles = 512;
+   private int bedrockColor = -15089316;
+   private int defaultColor = -575461;
    private int flush = -13255988;
    private int close = -536805;
-   private boolean update_Z;
+   private boolean scannerRegistered;
 
    public HoleEspModule() {
       super("hole-esp", "HoleESP", ae.update, "Highlights safe holes.");
@@ -67,26 +67,26 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
 
    @Override
    public void onEnable() {
-      this.init_I = -1;
+      this.settingsRevision = -1;
       update();
-      this.load_V_9();
+      this.registerScanner();
    }
 
    @Override
    public void onDisable() {
-      this.init_I = -1;
+      this.settingsRevision = -1;
       this.read();
    }
 
    @Override
    public void onGameLeft() {
-      this.init_I = -1;
+      this.settingsRevision = -1;
       this.read();
    }
 
    @Override
    public void tick() {
-      this.load_V_9();
+      this.registerScanner();
       this.write();
       autismclient.util.PvpHoleScanner.load();
    }
@@ -99,54 +99,54 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
    @Override
    public int init_I_32() {
       this.write();
-      return this.load_I;
+      return this.horizontalDistance;
    }
 
    @Override
    public int load_I_17() {
       this.write();
-      return this.read_I;
+      return this.verticalDistance;
    }
 
-   private void load_V_9() {
-      if (!this.update_Z) {
+   private void registerScanner() {
+      if (!this.scannerRegistered) {
          autismclient.util.PvpHoleScanner.init(this);
-         this.update_Z = true;
+         this.scannerRegistered = true;
       }
    }
 
    private void read() {
-      if (this.update_Z) {
-         this.update_Z = false;
+      if (this.scannerRegistered) {
+         this.scannerRegistered = false;
          autismclient.util.PvpHoleScanner.load(this);
       }
    }
 
    private void write() {
       int revision = al.init_I();
-      if (revision != this.init_I) {
-         this.init_I = revision;
+      if (revision != this.settingsRevision) {
+         this.settingsRevision = revision;
          this.load_Z = !"Box".equals(this.choice("mode"));
-         this.read_Z = this.bool("fill");
-         this.write_Z = this.bool("outline");
-         this.load_I = this.integer("horizontal-distance");
-         this.read_I = this.integer("vertical-distance");
-         this.update_D = this.decimal("distance-fade");
-         this.sync_D = this.decimal("glow-height");
-         this.write_I = this.integer("max-holes");
-         this.update_I = am.init_I_Module(this, "color-1x1-bedrock", -15089316);
-         this.sync_I = am.init_I_Module(this, "color-1x1", -575461);
+         this.fill = this.bool("fill");
+         this.outline = this.bool("outline");
+         this.horizontalDistance = this.integer("horizontal-distance");
+         this.verticalDistance = this.integer("vertical-distance");
+         this.distanceFade = this.decimal("distance-fade");
+         this.glowHeight = this.decimal("glow-height");
+         this.maxHoles = this.integer("max-holes");
+         this.bedrockColor = am.init_I_Module(this, "color-1x1-bedrock", -15089316);
+         this.defaultColor = am.init_I_Module(this, "color-1x1", -575461);
          this.flush = am.init_I_Module(this, "color-1x2", -13255988);
          this.close = am.init_I_Module(this, "color-2x2", -536805);
       }
    }
 
-   private static HoleEspModule init_P() {
-      HoleEspModule cached = init_P;
+   private static HoleEspModule instance() {
+      HoleEspModule cached = cachedInstance;
       if (cached != null) {
          return cached;
       } else {
-         return al.init_Module_Str("hole-esp") instanceof HoleEspModule hole ? (init_P = hole) : null;
+         return al.init_Module_Str("hole-esp") instanceof HoleEspModule hole ? (cachedInstance = hole) : null;
       }
    }
 
@@ -157,7 +157,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
             .register(
                context -> {
                   try {
-                     HoleEspModule module = init_P();
+                     HoleEspModule module = instance();
                      if (module == null || !module.isEnabled()) {
                         return;
                      }
@@ -175,7 +175,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
                      }
 
                      module.write();
-                     if (!module.read_Z && !module.write_Z) {
+                     if (!module.fill && !module.outline) {
                         return;
                      }
 
@@ -186,7 +186,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
 
                      Vec3 camera = context.levelState().cameraRenderState.pos;
                      Vec3 player = MC.player.position();
-                     if (module.read_Z) {
+                     if (module.fill) {
                         context.submitNodeCollector()
                            .submitCustomGeometry(
                               context.poseStack(),
@@ -195,12 +195,12 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
                            );
                      }
 
-                     if (module.write_Z) {
+                     if (module.outline) {
                         context.submitNodeCollector()
                            .submitCustomGeometry(
                               context.poseStack(),
                               autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(),
-                              (pose, buffer) -> module.load_V_PoseStack_Pose(pose, buffer, holes, camera, player)
+                              (pose, buffer) -> module.renderHoles(pose, buffer, holes, camera, player)
                            );
                      }
                   } catch (Throwable var5) {
@@ -215,20 +215,20 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       int drawn = 0;
 
       for (autismclient.util.PvpHoleScanner.Inner_DataUtil hole : holes) {
-         if (drawn >= this.write_I) {
+         if (drawn >= this.maxHoles) {
             break;
          }
 
-         double fade = this.init_D_BlockPos_Vec3(hole.pos(), player);
+         double fade = this.fadeFactor(hole.pos(), player);
          if (!(fade <= 0.0)) {
             drawn++;
-            int color = init_I_I_D(this.init(hole.type()), 0.19607843137254902 * fade);
+            int color = scaleAlpha(this.init(hole.type()), 0.19607843137254902 * fade);
             if (color != 0) {
                AABB box = hole.box().move(-camera.x, -camera.y, -camera.z);
                if (this.load_Z) {
                   double floorY = box.minY + 0.002;
                   init(pose, buffer, box.minX, box.maxX, box.minZ, box.maxZ, floorY, color);
-                  if (this.sync_D > 0.0) {
+                  if (this.glowHeight > 0.0) {
                      this.init(pose, buffer, box, floorY, color);
                   }
                } else {
@@ -241,23 +241,23 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       bK.init("frame.holeEspFill", perf);
    }
 
-   private void load_V_PoseStack_Pose(Pose pose, VertexConsumer buffer, List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes, Vec3 camera, Vec3 player) {
+   private void renderHoles(Pose pose, VertexConsumer buffer, List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes, Vec3 camera, Vec3 player) {
       long perf = bK.load_J();
       int drawn = 0;
 
       for (autismclient.util.PvpHoleScanner.Inner_DataUtil hole : holes) {
-         if (drawn >= this.write_I) {
+         if (drawn >= this.maxHoles) {
             break;
          }
 
-         double fade = this.init_D_BlockPos_Vec3(hole.pos(), player);
+         double fade = this.fadeFactor(hole.pos(), player);
          if (!(fade <= 0.0)) {
             drawn++;
-            int color = init_I_I_D(this.init(hole.type()), 0.39215686274509803 * fade);
+            int color = scaleAlpha(this.init(hole.type()), 0.39215686274509803 * fade);
             if (color != 0) {
                AABB box = hole.box().move(-camera.x, -camera.y, -camera.z);
                if (this.load_Z) {
-                  load_V_PoseStack_Pose_2(pose, buffer, box, box.minY + 0.002, color);
+                  drawOutlineAt(pose, buffer, box, box.minY + 0.002, color);
                } else {
                   init(pose, buffer, box.inflate(0.002), color);
                }
@@ -272,10 +272,10 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       int var10000;
       switch (type) {
          case ONE_BY_ONE_BEDROCK:
-            var10000 = this.update_I;
+            var10000 = this.bedrockColor;
             break;
          case ONE_BY_ONE:
-            var10000 = this.sync_I;
+            var10000 = this.defaultColor;
             break;
          case ONE_BY_TWO:
             var10000 = this.flush;
@@ -290,25 +290,25 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       return var10000;
    }
 
-   private double init_D_BlockPos_Vec3(BlockPos pos, Vec3 player) {
+   private double fadeFactor(BlockPos pos, Vec3 player) {
       double dx = player.x - pos.getX();
       double dy = player.y - pos.getY();
       double dz = player.z - pos.getZ();
-      if (Math.abs(dy) > this.read_I || Math.abs(dx) > this.load_I || Math.abs(dz) > this.load_I) {
+      if (Math.abs(dy) > this.verticalDistance || Math.abs(dx) > this.horizontalDistance || Math.abs(dz) > this.horizontalDistance) {
          return 0.0;
       }
 
-      if (this.update_D <= 0.0) {
+      if (this.distanceFade <= 0.0) {
          return 1.0;
       }
 
-      double verticalFraction = Math.abs(dy) / this.read_I;
-      double horizontalFraction = Math.sqrt(dx * dx + dz * dz) / this.load_I;
-      double fade = (1.0 - Math.max(verticalFraction, horizontalFraction)) / this.update_D;
+      double verticalFraction = Math.abs(dy) / this.verticalDistance;
+      double horizontalFraction = Math.sqrt(dx * dx + dz * dz) / this.horizontalDistance;
+      double fade = (1.0 - Math.max(verticalFraction, horizontalFraction)) / this.distanceFade;
       return fade <= 0.0 ? 0.0 : Math.min(1.0, fade);
    }
 
-   private static int init_I_I_D(int argb, double multiplier) {
+   private static int scaleAlpha(int argb, double multiplier) {
       int alpha = (int)Math.round((argb >>> 24 & 0xFF) * multiplier);
       return alpha <= 0 ? 0 : Math.min(255, alpha) << 24 | argb & 16777215;
    }
@@ -320,7 +320,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
 
    private void init(Pose pose, VertexConsumer buffer, AABB box, double baseY, int color) {
       int top = color & 16777215;
-      double topY = baseY + this.sync_D;
+      double topY = baseY + this.glowHeight;
       init(pose, buffer, box.minX, box.minZ, box.maxX, box.minZ, baseY, topY, color, top);
       init(pose, buffer, box.maxX, box.minZ, box.maxX, box.maxZ, baseY, topY, color, top);
       init(pose, buffer, box.maxX, box.maxZ, box.minX, box.maxZ, baseY, topY, color, top);
@@ -332,7 +332,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       init(pose, buffer, x1, topY, z1, top, x2, topY, z2, top, x2, bottomY, z2, bottom, x1, bottomY, z1, bottom);
    }
 
-   private static void load_V_PoseStack_Pose_2(Pose pose, VertexConsumer buffer, AABB box, double y, int color) {
+   private static void drawOutlineAt(Pose pose, VertexConsumer buffer, AABB box, double y, int color) {
       WorldLineRenderer.init(pose, buffer, box.minX, y, box.minZ, box.maxX, y, box.minZ, color, 1.5F);
       WorldLineRenderer.init(pose, buffer, box.maxX, y, box.minZ, box.maxX, y, box.maxZ, color, 1.5F);
       WorldLineRenderer.init(pose, buffer, box.maxX, y, box.maxZ, box.minX, y, box.maxZ, color, 1.5F);

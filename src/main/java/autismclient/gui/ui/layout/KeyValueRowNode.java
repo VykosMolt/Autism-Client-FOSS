@@ -6,28 +6,28 @@ import autismclient.gui.f.b.l;
 import autismclient.util.ThemePaletteManager;
 
 public class KeyValueRowNode extends LayoutNode {
-   private String init_Str;
-   private String load_Str;
+   private String labelText;
+   private String valueText;
    private float sync = 76.0F;
-   private l init_l = l.write;
-   private l load_l = l.read;
-   private Integer init_Integer;
-   private int init_I = 0;
-   private Runnable init_Runnable;
+   private l labelTone = l.write;
+   private l valueTone = l.read;
+   private Integer valueColorOverride;
+   private int textYOffset = 0;
+   private Runnable onPress;
 
    public KeyValueRowNode(String label, String value) {
-      this.init_Str = label == null ? "" : label;
-      this.load_Str = value == null ? "--" : value;
+      this.labelText = label == null ? "" : label;
+      this.valueText = value == null ? "--" : value;
       this.nodeHeight = 12.0F;
    }
 
-   public KeyValueRowNode init_TaskQueue_Str(String label) {
-      this.init_Str = label == null ? "" : label;
+   public KeyValueRowNode label(String label) {
+      this.labelText = label == null ? "" : label;
       return this;
    }
 
    public KeyValueRowNode load(String value) {
-      this.load_Str = value == null ? "--" : value;
+      this.valueText = value == null ? "--" : value;
       return this;
    }
 
@@ -36,40 +36,40 @@ public class KeyValueRowNode extends LayoutNode {
       return this;
    }
 
-   public KeyValueRowNode init_TaskQueue_l(l labelTone) {
-      this.init_l = labelTone == null ? l.write : labelTone;
+   public KeyValueRowNode labelTone(l labelTone) {
+      this.labelTone = labelTone == null ? l.write : labelTone;
       return this;
    }
 
    public KeyValueRowNode load(l valueTone) {
-      this.load_l = valueTone == null ? l.read : valueTone;
+      this.valueTone = valueTone == null ? l.read : valueTone;
       return this;
    }
 
    public KeyValueRowNode setValueColor(Integer valueColorOverride) {
-      this.init_Integer = valueColorOverride;
+      this.valueColorOverride = valueColorOverride;
       return this;
    }
 
-   public KeyValueRowNode init_TaskQueue_I(int textYOffset) {
-      this.init_I = textYOffset;
+   public KeyValueRowNode textYOffset(int textYOffset) {
+      this.textYOffset = textYOffset;
       return this;
    }
 
    public KeyValueRowNode setOnPress(Runnable onPress) {
-      this.init_Runnable = onPress;
+      this.onPress = onPress;
       return this;
    }
 
-   private boolean init_Z_4() {
-      return this.init_Runnable != null && this.nodeEnabled;
+   private boolean isPressable() {
+      return this.onPress != null && this.nodeEnabled;
    }
 
    @Override
    public float measureHeight(LayoutContext context, float availableWidth) {
       int baselineHeight = 12;
-      int labelHeight = context.theme().init_I_l(this.init_l) + context.theme().load(3);
-      int valueHeight = context.theme().init_I_l(this.load_l) + context.theme().load(3);
+      int labelHeight = context.theme().init_I_l(this.labelTone) + context.theme().load(3);
+      int valueHeight = context.theme().init_I_l(this.valueTone) + context.theme().load(3);
       return Math.max(baselineHeight, Math.max(labelHeight, valueHeight));
    }
 
@@ -84,7 +84,7 @@ public class KeyValueRowNode extends LayoutNode {
          int labelW = Math.round(Math.min(this.sync, Math.max(minSegment, drawW - minSegment)));
          int valueX = drawX + labelW;
          int valueW = Math.max(1, drawW - labelW);
-         boolean clickable = this.init_Z_4();
+         boolean clickable = this.isPressable();
          boolean hovered = clickable && this.containsPoint(context.mouseX(), context.mouseY());
          if (hovered) {
             context.graphics()
@@ -92,34 +92,34 @@ public class KeyValueRowNode extends LayoutNode {
          }
 
          int labelColor = clickable && hovered
-            ? UiLayoutMath.lerpColor(context.theme().load(this.init_l), ThemePaletteManager.recolor(-791321, ThemePaletteManager.ColorRole.TEXT), 0.35F)
-            : context.theme().load(this.init_l);
-         int valueColor = this.init_Integer != null ? this.init_Integer : context.theme().load(this.load_l);
+            ? UiLayoutMath.lerpColor(context.theme().load(this.labelTone), ThemePaletteManager.recolor(-791321, ThemePaletteManager.ColorRole.TEXT), 0.35F)
+            : context.theme().load(this.labelTone);
+         int valueColor = this.valueColorOverride != null ? this.valueColorOverride : context.theme().load(this.valueTone);
          if (clickable && hovered) {
             valueColor = UiLayoutMath.lerpColor(valueColor, ThemePaletteManager.recolor(-2314, ThemePaletteManager.ColorRole.TEXT), 0.28F);
          }
 
-         int labelTextY = UiLayoutMath.centerTextY(drawY, drawH, context.theme().init_I_l(this.init_l), context.theme().flush() + this.init_I);
-         int valueTextY = UiLayoutMath.centerTextY(drawY, drawH, context.theme().init_I_l(this.load_l), context.theme().flush() + this.init_I);
+         int labelTextY = UiLayoutMath.centerTextY(drawY, drawH, context.theme().init_I_l(this.labelTone), context.theme().flush() + this.textYOffset);
+         int valueTextY = UiLayoutMath.centerTextY(drawY, drawH, context.theme().init_I_l(this.valueTone), context.theme().flush() + this.textYOffset);
          String displayLabel = k.init(
             context.font(),
-            this.init_Str,
+            this.labelText,
             Math.max(1, labelW - context.theme().load(4)),
-            context.theme().init_Identifier_l(this.init_l),
+            context.theme().init_Identifier_l(this.labelTone),
             labelColor
          );
          String displayValue = k.init(
             context.font(),
-            this.load_Str,
+            this.valueText,
             Math.max(1, valueW - context.theme().load(2)),
-            context.theme().init_Identifier_l(this.load_l),
+            context.theme().init_Identifier_l(this.valueTone),
             valueColor
          );
          k.init(
             context.graphics(),
             context.font(),
             displayLabel,
-            context.theme().init_Identifier_l(this.init_l),
+            context.theme().init_Identifier_l(this.labelTone),
             context.applyAlpha(labelColor),
             drawX,
             labelTextY,
@@ -129,7 +129,7 @@ public class KeyValueRowNode extends LayoutNode {
             context.graphics(),
             context.font(),
             displayValue,
-            context.theme().init_Identifier_l(this.load_l),
+            context.theme().init_Identifier_l(this.valueTone),
             context.applyAlpha(valueColor),
             valueX,
             valueTextY,
@@ -140,8 +140,8 @@ public class KeyValueRowNode extends LayoutNode {
 
    @Override
    public boolean mouseClicked(LayoutContext context, float mouseX, float mouseY, int button) {
-      if (button == 0 && this.init_Z_4() && this.containsPoint(mouseX, mouseY)) {
-         this.init_Runnable.run();
+      if (button == 0 && this.isPressable() && this.containsPoint(mouseX, mouseY)) {
+         this.onPress.run();
          return true;
       } else {
          return false;

@@ -16,13 +16,13 @@ public final class AutoFishMacroPresets {
       AutismMacro var10000;
       switch (preset == null ? AutoFishMacroPresets.Inner_DataUtil.CUSTOM : preset) {
          case FREE_SLOTS:
-            var10000 = init("AutoFish - Free Slots Stop", init_aH());
+            var10000 = init("AutoFish - Free Slots Stop", freeSlotsWait());
             break;
          case DURABILITY:
-            var10000 = init("AutoFish - Durability Stop", init_ar());
+            var10000 = init("AutoFish - Durability Stop", durabilityWait());
             break;
          case CUSTOM:
-            var10000 = init("AutoFish - Custom Stop", init_aH());
+            var10000 = init("AutoFish - Custom Stop", freeSlotsWait());
             break;
          default:
             throw new MatchException(null, null);
@@ -35,14 +35,14 @@ public final class AutoFishMacroPresets {
       return RaceEligibilityChecker.init(macro);
    }
 
-   public static boolean init_Z(String name) {
+   public static boolean isStopPreset(String name) {
       return name == null
          ? false
          : init(name, "AutoFish - Free Slots Stop") || init(name, "AutoFish - Durability Stop") || init(name, "AutoFish - Custom Stop");
    }
 
    public static boolean load(AutismMacro macro) {
-      return macro != null && init_Z(macro.name);
+      return macro != null && isStopPreset(macro.name);
    }
 
    public static AutoFishMacroPresets.Inner_DataUtil presetFor(String name) {
@@ -156,7 +156,7 @@ public final class AutoFishMacroPresets {
       }
    }
 
-   private static autismclient.util.macro.WaitFreeSlotsAction init_aH() {
+   private static autismclient.util.macro.WaitFreeSlotsAction freeSlotsWait() {
       autismclient.util.macro.WaitFreeSlotsAction action = new autismclient.util.macro.WaitFreeSlotsAction();
       action.countMode = autismclient.util.macro.WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS;
       action.comparison = autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST;
@@ -165,7 +165,7 @@ public final class AutoFishMacroPresets {
       return action;
    }
 
-   private static autismclient.util.macro.WaitDurabilityAction init_ar() {
+   private static autismclient.util.macro.WaitDurabilityAction durabilityWait() {
       autismclient.util.macro.WaitDurabilityAction action = new autismclient.util.macro.WaitDurabilityAction();
       action.targetMode = autismclient.util.macro.WaitDurabilityAction.Inner_CachePool.ITEM;
       action.itemName = "minecraft:fishing_rod";

@@ -10,16 +10,16 @@ import java.util.Set;
 
 final class AiEventLog {
    static final int init_I = 256;
-   private static final AiEventLog init_x = new AiEventLog();
-   private final ArrayDeque<AiEventLog.Inner_DataUtil> init_ArrayDeque = new ArrayDeque<>(256);
-   private long init_J;
+   private static final AiEventLog INSTANCE = new AiEventLog();
+   private final ArrayDeque<AiEventLog.Inner_DataUtil> events = new ArrayDeque<>(256);
+   private long sequence;
    private long load;
    private long read;
    private long auditLastEvictedSeq;
    private Object auditConnection;
 
    static AiEventLog getInstance() {
-      return init_x;
+      return INSTANCE;
    }
 
    private static long load() {
@@ -34,24 +34,24 @@ final class AiEventLog {
       }
 
       this.auditConnection = connection;
-      this.init_ArrayDeque.clear();
+      this.events.clear();
       this.load = 0L;
       this.auditLastEvictedSeq = 0L;
    }
 
    synchronized void init(String kind, JsonObject data) {
-      if (this.init_ArrayDeque.size() >= 256) {
-         this.auditLastEvictedSeq = this.init_ArrayDeque.pollFirst().seq();
+      if (this.events.size() >= 256) {
+         this.auditLastEvictedSeq = this.events.pollFirst().seq();
          this.load++;
       }
 
-      this.init_ArrayDeque.addLast(new AiEventLog.Inner_DataUtil(++this.init_J, load(), kind, data));
+      this.events.addLast(new AiEventLog.Inner_DataUtil(++this.sequence, load(), kind, data));
    }
 
    synchronized List<AiEventLog.Inner_DataUtil> read(long since, Set<String> kinds, int limit) {
-      List<AiEventLog.Inner_DataUtil> out = new ArrayList<>(Math.min(limit, this.init_ArrayDeque.size()));
+      List<AiEventLog.Inner_DataUtil> out = new ArrayList<>(Math.min(limit, this.events.size()));
 
-      for (AiEventLog.Inner_DataUtil event : this.init_ArrayDeque) {
+      for (AiEventLog.Inner_DataUtil event : this.events) {
          if (event.seq() > since && (kinds == null || kinds.isEmpty() || kinds.contains(event.kind()))) {
             if (out.size() >= limit) {
                break;
@@ -70,13 +70,13 @@ final class AiEventLog {
    }
 
    synchronized long nextSeq() {
-      return this.init_J;
+      return this.sequence;
    }
 
    synchronized int pendingCount() {
       int pending = 0;
 
-      for (AiEventLog.Inner_DataUtil event : this.init_ArrayDeque) {
+      for (AiEventLog.Inner_DataUtil event : this.events) {
          if (event.seq() > this.read) {
             pending++;
          }
@@ -85,14 +85,14 @@ final class AiEventLog {
       return pending;
    }
 
-   synchronized JsonObject init_JsonObject(long since, Set<String> kinds, int limit) {
+   synchronized JsonObject toJson(long since, Set<String> kinds, int limit) {
       JsonArray array = new JsonArray();
 
       for (AiEventLog.Inner_DataUtil event : this.read(since, kinds, limit)) {
          array.add(AiJson.objectOf("seq", event.seq(), "tick", event.tick(), "kind", event.kind(), "data", event.data()));
       }
 
-      return AiJson.objectOf("events", array, "latestSeq", this.init_J, "dropped", this.droppedSince(since));
+      return AiJson.objectOf("events", array, "latestSeq", this.sequence, "dropped", this.droppedSince(since));
    }
 
    static JsonObject readJson(JsonObject args) {
@@ -110,7 +110,7 @@ final class AiEventLog {
          }
       }
 
-      return init_x.init_JsonObject(since, kinds, limit);
+      return INSTANCE.toJson(since, kinds, limit);
    }
 
    record Inner_DataUtil(long seq, long tick, String kind, JsonObject data) {

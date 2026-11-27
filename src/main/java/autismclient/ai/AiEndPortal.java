@@ -143,25 +143,25 @@ final class AiEndPortal {
    static AiOperation placeEye(final BlockPos frame) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-         final Object init_Obj = mc.level;
-         final AiEndPortal.Inner_DataUtil init_t_DataUtil = new AiEndPortal.Inner_DataUtil();
+         final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+         final Object startLevel = mc.level;
+         final AiEndPortal.Inner_DataUtil eyePlacement = new AiEndPortal.Inner_DataUtil();
          int init_I;
          int load;
          BlockHitResult init_BlockHitResult;
 
          @Override
          public AiOperation.Result tick() {
-            if (mc.player != null && mc.level == this.init_Obj) {
+            if (mc.player != null && mc.level == this.startLevel) {
                BlockState state = mc.level.getBlockState(frame);
                if (!state.is(Blocks.END_PORTAL_FRAME)) {
                   return this.init(AiOperation.Status.FAILED, "Portal frame changed");
                }
 
-               if (this.init_t_DataUtil
+               if (this.eyePlacement
                   .init(state.getValue(EndPortalFrameBlock.HAS_EYE), AiCraft.countItem("minecraft:ender_eye"), AiServerEvidence.blockRevision(frame), AiServerEvidence.inventoryRevision())) {
                   return this.init(
-                     AiOperation.Status.SUCCEEDED, this.init_t_DataUtil.init() ? "Frame eye and one consumed Eye confirmed" : "Frame was already filled"
+                     AiOperation.Status.SUCCEEDED, this.eyePlacement.init() ? "Frame eye and one consumed Eye confirmed" : "Frame was already filled"
                   );
                }
 
@@ -175,7 +175,7 @@ final class AiEndPortal {
                   return this.init(AiOperation.Status.UNCERTAIN, "No frame-eye acknowledgement; reobserve before another insert");
                }
 
-               if (!this.init_t_DataUtil.init()) {
+               if (!this.eyePlacement.init()) {
                   if (this.init_BlockHitResult == null) {
                      this.init_BlockHitResult = AiEndPortal.init(mc, mc.player.getEyePosition(), frame, mc.player.blockInteractionRange() - 0.1);
                   }
@@ -189,11 +189,11 @@ final class AiEndPortal {
                      return this.init(AiOperation.Status.FAILED, "Frame insertion ray is obstructed");
                   }
 
-                  this.init_DataUtil.aimAt(this.init_BlockHitResult.getLocation());
-                  this.init_DataUtil.tick();
+                  this.aim.aimAt(this.init_BlockHitResult.getLocation());
+                  this.aim.tick();
                }
 
-               if (!this.init_t_DataUtil.init() && this.init_DataUtil.isSettled()) {
+               if (!this.eyePlacement.init() && this.aim.isSettled()) {
                   if (!mc.player.getMainHandItem().is(Items.ENDER_EYE)) {
                      return this.init(AiOperation.Status.FAILED, "No Eye held for insertion");
                   }
@@ -206,12 +206,12 @@ final class AiEndPortal {
                         : AiGameOperations.result(AiOperation.Status.RUNNING, "Aiming at another face of the frame", new JsonObject());
                   }
 
-                  this.init_t_DataUtil.init(AiCraft.countItem("minecraft:ender_eye"), AiServerEvidence.blockRevision(frame), AiServerEvidence.inventoryRevision());
+                  this.eyePlacement.init(AiCraft.countItem("minecraft:ender_eye"), AiServerEvidence.blockRevision(frame), AiServerEvidence.inventoryRevision());
                   mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, ray);
                }
 
                return AiGameOperations.result(
-                  AiOperation.Status.RUNNING, this.init_t_DataUtil.init() ? "Waiting for frame eye" : "Aiming at frame", new JsonObject()
+                  AiOperation.Status.RUNNING, this.eyePlacement.init() ? "Waiting for frame eye" : "Aiming at frame", new JsonObject()
                );
             } else {
                return this.init(AiOperation.Status.CANCELLED, "World changed during frame insertion");
@@ -219,66 +219,66 @@ final class AiEndPortal {
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
-            this.init_DataUtil.clear();
+            this.aim.clear();
             return AiGuardLayer.wrapPendingTermination(
-               this.init_t_DataUtil.load(),
+               this.eyePlacement.load(),
                AiGameOperations.result(
                   status,
                   message,
-                  AiJson.objectOf("frame", frame.toShortString(), "sent", this.init_t_DataUtil.init(), "acknowledged", !this.init_t_DataUtil.load())
+                  AiJson.objectOf("frame", frame.toShortString(), "sent", this.eyePlacement.init(), "acknowledged", !this.eyePlacement.load())
                )
             );
          }
 
          @Override
          public boolean canInterruptNow() {
-            return !this.init_t_DataUtil.load();
+            return !this.eyePlacement.load();
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_t_DataUtil.load();
+            return this.eyePlacement.load();
          }
 
          @Override
          public void cancel() {
-            this.init_DataUtil.clear();
+            this.aim.clear();
          }
       };
    }
 
    static final class Inner_DataUtil {
-      private int init_I;
-      private long init_J;
-      private long load_J;
-      private boolean init_Z;
-      private boolean load_Z;
+      private int eyesBefore;
+      private long blockRevision;
+      private long inventoryRevision;
+      private boolean sent;
+      private boolean confirmed;
 
       void init(int eyes, long blockRevision, long inventoryRevision) {
-         if (this.init_Z) {
+         if (this.sent) {
             throw new IllegalStateException("A frame insertion was already sent");
          }
 
-         this.init_I = eyes;
-         this.init_J = blockRevision;
-         this.load_J = inventoryRevision;
-         this.init_Z = true;
+         this.eyesBefore = eyes;
+         this.blockRevision = blockRevision;
+         this.inventoryRevision = inventoryRevision;
+         this.sent = true;
       }
 
       boolean init(boolean filled, int eyes, long blockRevision, long inventoryRevision) {
-         if (filled && (!this.init_Z || this.init_I - eyes == 1 && blockRevision > this.init_J && inventoryRevision > this.load_J)) {
-            this.load_Z = true;
+         if (filled && (!this.sent || this.eyesBefore - eyes == 1 && blockRevision > this.blockRevision && inventoryRevision > this.inventoryRevision)) {
+            this.confirmed = true;
          }
 
-         return this.load_Z;
+         return this.confirmed;
       }
 
       boolean init() {
-         return this.init_Z;
+         return this.sent;
       }
 
       boolean load() {
-         return this.init_Z && !this.load_Z;
+         return this.sent && !this.confirmed;
       }
    }
 

@@ -1,18 +1,18 @@
 package autismclient.gui.ui.layout;
 
 public class ColumnLayout extends LayoutContainer {
-   private EdgeInsets init_IoWorker;
+   private EdgeInsets padding;
    private int init_I;
 
    public ColumnLayout() {
-      this.init_IoWorker = EdgeInsets.ZERO;
+      this.padding = EdgeInsets.ZERO;
       this.init_I = 0;
    }
 
    public ColumnLayout init(EdgeInsets padding) {
       EdgeInsets next = padding == null ? EdgeInsets.ZERO : padding;
-      if (!this.init_IoWorker.equals(next)) {
-         this.init_IoWorker = next;
+      if (!this.padding.equals(next)) {
+         this.padding = next;
          this.markLayoutDirty();
       }
 
@@ -31,7 +31,7 @@ public class ColumnLayout extends LayoutContainer {
 
    @Override
    public float measureHeight(LayoutContext context, float availableWidth) {
-      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.padding);
       int scaledGap = context.theme().load(this.init_I);
       float innerWidth = Math.max(0.0F, availableWidth - scaledPadding.init_I());
       float total = scaledPadding.write() + scaledPadding.bottom();
@@ -53,7 +53,7 @@ public class ColumnLayout extends LayoutContainer {
 
    @Override
    protected void layoutChildren(LayoutContext context) {
-      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.padding);
       int scaledGap = context.theme().load(this.init_I);
       float innerX = this.nodeX + scaledPadding.read();
       float cursorY = this.nodeY + scaledPadding.write();

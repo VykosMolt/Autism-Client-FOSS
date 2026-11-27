@@ -35,16 +35,16 @@ import net.minecraft.world.level.levelgen.blending.Blender;
 public final class OreSimRegionGenerator {
    public static final int init_I = 2;
    private static final int load = 8;
-   private static final EnumSet<Types> init_EnumSet = EnumSet.of(Types.MOTION_BLOCKING, Types.MOTION_BLOCKING_NO_LEAVES, Types.OCEAN_FLOOR, Types.WORLD_SURFACE);
-   private final VanillaWorldGenBootstrap init_ConfigStore;
-   private final PalettedContainerFactory init_PalettedContainerF;
+   private static final EnumSet<Types> PRIMED_HEIGHTMAPS = EnumSet.of(Types.MOTION_BLOCKING, Types.MOTION_BLOCKING_NO_LEAVES, Types.OCEAN_FLOOR, Types.WORLD_SURFACE);
+   private final VanillaWorldGenBootstrap context;
+   private final PalettedContainerFactory paletteFactory;
 
    public OreSimRegionGenerator(VanillaWorldGenBootstrap context) {
-      this.init_ConfigStore = context;
-      this.init_PalettedContainerF = context.paletteFactory();
+      this.context = context;
+      this.paletteFactory = context.paletteFactory();
    }
 
-   public Map<Long, ChunkAccess> init_Map_I(int minChunkX, int minChunkZ, int size) {
+   public Map<Long, ChunkAccess> generateRegion(int minChunkX, int minChunkZ, int size) {
       return this.generateRegion(minChunkX, minChunkZ, size, () -> false);
    }
 
@@ -65,27 +65,27 @@ public final class OreSimRegionGenerator {
          for (int dz = -8; dz < size + 8; dz++) {
             init(cancelled);
             ChunkPos pos = new ChunkPos(minChunkX + dx, minChunkZ + dz);
-            chunks.put(pos.pack(), new ProtoChunk(pos, UpgradeData.EMPTY, this.init_ConfigStore.heightAccessor(), this.init_PalettedContainerF, null));
+            chunks.put(pos.pack(), new ProtoChunk(pos, UpgradeData.EMPTY, this.context.heightAccessor(), this.paletteFactory, null));
          }
       }
 
-      SyntheticWorldGenLevel level = new SyntheticWorldGenLevel(this.init_ConfigStore, chunks);
-      StructureManager structures = new StructureManager(level, new WorldOptions(this.init_ConfigStore.seed(), true, false), null);
+      SyntheticWorldGenLevel level = new SyntheticWorldGenLevel(this.context, chunks);
+      StructureManager structures = new StructureManager(level, new WorldOptions(this.context.seed(), true, false), null);
 
       for (int dx = -8; dx < size + 8; dx++) {
          for (int dz = -8; dz < size + 8; dz++) {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.init(chunk.getPos(), 0);
-            this.init_ConfigStore
+            this.context
                .chunkGenerator()
                .createStructures(
-                  this.init_ConfigStore.registryAccess(),
-                  this.init_ConfigStore.structureState(),
+                  this.context.registryAccess(),
+                  this.context.structureState(),
                   structures,
                   chunk,
-                  this.init_ConfigStore.structureTemplates(),
-                  this.init_ConfigStore.dimension()
+                  this.context.structureTemplates(),
+                  this.context.dimension()
                );
             init(chunk, ChunkStatus.STRUCTURE_STARTS);
          }
@@ -96,7 +96,7 @@ public final class OreSimRegionGenerator {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.init(chunk.getPos(), 0);
-            this.init_ConfigStore.chunkGenerator().createReferences(level, structures, chunk);
+            this.context.chunkGenerator().createReferences(level, structures, chunk);
             init(chunk, ChunkStatus.STRUCTURE_REFERENCES);
          }
       }
@@ -106,7 +106,7 @@ public final class OreSimRegionGenerator {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.init(chunk.getPos(), 0);
-            this.init_ConfigStore.chunkGenerator().createBiomes(this.init_ConfigStore.randomState(), Blender.empty(), structures, chunk).join();
+            this.context.chunkGenerator().createBiomes(this.context.randomState(), Blender.empty(), structures, chunk).join();
             init(chunk, ChunkStatus.BIOMES);
          }
       }
@@ -144,9 +144,9 @@ public final class OreSimRegionGenerator {
          for (int dz = 1; dz < size - 1; dz++) {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
-            Heightmap.primeHeightmaps(chunk, init_EnumSet);
+            Heightmap.primeHeightmaps(chunk, PRIMED_HEIGHTMAPS);
             level.init(chunk.getPos(), 1);
-            this.init_ConfigStore.chunkGenerator().applyBiomeDecoration(level, chunk, structures);
+            this.context.chunkGenerator().applyBiomeDecoration(level, chunk, structures);
             init(chunk, ChunkStatus.FEATURES);
          }
       }
@@ -177,7 +177,7 @@ public final class OreSimRegionGenerator {
    }
 
    private void init_V_WorldGenLevel(WorldGenLevel level, Map<Long, ChunkAccess> chunks, StructureManager structures, ChunkAccess chunk) {
-      new WorldGenerationContext(this.init_ConfigStore.chunkGenerator(), this.init_ConfigStore.heightAccessor());
+      new WorldGenerationContext(this.context.chunkGenerator(), this.context.heightAccessor());
       Set<Holder<Biome>> biomes = new HashSet<>();
       ChunkPos pos = chunk.getPos();
 
@@ -196,19 +196,19 @@ public final class OreSimRegionGenerator {
    }
 
    private void init(SyntheticWorldGenLevel level, Map<Long, ChunkAccess> chunks, StructureManager structures, ChunkAccess chunk, BooleanSupplier cancelled) {
-      NoiseBasedChunkGenerator generator = this.init_ConfigStore.noiseGenerator();
+      NoiseBasedChunkGenerator generator = this.context.noiseGenerator();
       BiomeManager biomeManager = level.getBiomeManager()
          .withDifferentSource(
-            (quartX, quartY, quartZ) -> this.init_ConfigStore
+            (quartX, quartY, quartZ) -> this.context
                .biomeSource()
-               .createCachingResolver(this.init_ConfigStore.randomState())
+               .createCachingResolver(this.context.randomState())
                .getNoiseBiome(quartX, quartY, quartZ)
          );
       new WorldgenRandom(new LegacyRandomSource(RandomSupport.generateUniqueSeed()));
       ChunkPos targetPos = chunk.getPos();
    }
 
-   public static void init_V_ChunkAccess(ChunkAccess chunk, Predicate<BlockState> wanted, OreSimRegionGenerator.Inner_DataUtil sink) {
+   public static void scanChunk(ChunkAccess chunk, Predicate<BlockState> wanted, OreSimRegionGenerator.Inner_DataUtil sink) {
       scanChunk(chunk, wanted, sink, () -> false);
    }
 
@@ -243,7 +243,7 @@ public final class OreSimRegionGenerator {
       }
    }
 
-   public static long init_J_I(int x, int y, int z) {
+   public static long packPos(int x, int y, int z) {
       return BlockPos.asLong(x, y, z);
    }
 

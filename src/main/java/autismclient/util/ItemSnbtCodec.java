@@ -34,7 +34,7 @@ public final class ItemSnbtCodec {
             Tag tag = ItemStack.CODEC.encodeStart(init.player.registryAccess().createSerializationContext(NbtOps.INSTANCE), stack).getOrThrow();
             return init(tag);
          } catch (Throwable t) {
-            return "{error:\"" + init_Str(t.getClass().getSimpleName()) + "\"}";
+            return "{error:\"" + escape(t.getClass().getSimpleName()) + "\"}";
          }
       } else {
          return "{}";
@@ -95,7 +95,7 @@ public final class ItemSnbtCodec {
       return tag == null ? "" : tag.toString();
    }
 
-   public static String init_Str(String text) {
+   public static String escape(String text) {
       return text == null ? "" : text.replace("\\", "\\\\").replace("\"", "\\\"");
    }
 

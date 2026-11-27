@@ -47,44 +47,44 @@ import net.minecraft.network.protocol.game.ServerboundChunkBatchReceivedPacket;
 import net.minecraft.server.RunningOnDifferentThreadException;
 
 public final class PingSpoofScheduler {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static volatile boolean init_Z;
-   private static volatile int init_I;
-   private static volatile boolean load_Z;
-   private static volatile boolean read_Z;
+   private static final Minecraft MINECRAFT = Minecraft.getInstance();
+   private static volatile boolean globalEnabled;
+   private static volatile int globalDelayMs;
+   private static volatile boolean globalRealIncoming;
+   private static volatile boolean globalRealOutgoing;
    private static volatile boolean write_Z;
    private static final long init_J = 0L;
-   private static final ConcurrentHashMap<Long, PingSpoofScheduler.Inner_StreamUtil> init_ConcurrentHashMap = new ConcurrentHashMap<>();
+   private static final ConcurrentHashMap<Long, PingSpoofScheduler.Inner_StreamUtil> runOverrides = new ConcurrentHashMap<>();
    private static final Queue<PingSpoofScheduler.Inner_DataUtil> init_Queue = new ConcurrentLinkedQueue<>();
    private static final Queue<PingSpoofScheduler.Inner_DataUtil> load_Queue = new ConcurrentLinkedQueue<>();
    // ConcurrentLinkedQueue.size() walks the whole queue, so the tick reads these counters instead.
    private static final AtomicInteger incomingQueued = new AtomicInteger();
    private static final AtomicInteger outgoingQueued = new AtomicInteger();
-   private static final Set<Packet<?>> init_Set = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
-   private static final AtomicInteger init_AtomicInteger = new AtomicInteger();
+   private static final Set<Packet<?>> ownPackets = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
+   private static final AtomicInteger ownPacketCount = new AtomicInteger();
    private static volatile boolean update_Z;
    private static final long load_J = 8000L;
    private static final int load_I = 8192;
    private static final int read_I = 1024;
    private static final int write_I = 256;
    private static final AtomicInteger load_AtomicInteger = new AtomicInteger();
-   private static volatile int update_I;
-   private static volatile ScheduledExecutorService init_ScheduledExecutorS;
+   private static volatile int scheduleEpoch;
+   private static volatile ScheduledExecutorService schedulerInstance;
    private static volatile long read_J;
    private static final long write_J = 5000L;
 
-   private static ScheduledExecutorService init_ScheduledExecutorS() {
-      ScheduledExecutorService local = init_ScheduledExecutorS;
+   private static ScheduledExecutorService scheduler() {
+      ScheduledExecutorService local = schedulerInstance;
       if (local == null) {
          synchronized (PingSpoofScheduler.class) {
-            local = init_ScheduledExecutorS;
+            local = schedulerInstance;
             if (local == null) {
                local = Executors.newSingleThreadScheduledExecutor(r -> {
                   Thread t = new Thread(r, "Autism-PingSpoof-Scheduler");
                   t.setDaemon(true);
                   return t;
                });
-               init_ScheduledExecutorS = local;
+               schedulerInstance = local;
             }
          }
       }
@@ -95,7 +95,7 @@ public final class PingSpoofScheduler {
    private PingSpoofScheduler() {
    }
 
-   public static void init_V_I(int delayMs, boolean realIncoming, boolean realOutgoing, long durationNanos) {
+   public static void enable(int delayMs, boolean realIncoming, boolean realOutgoing, long durationNanos) {
       init(0L, delayMs, realIncoming, realOutgoing, durationNanos);
    }
 
@@ -103,7 +103,7 @@ public final class PingSpoofScheduler {
       if (durationNanos <= 0L) {
          init(ownerRunId);
       } else {
-         init_ConcurrentHashMap.put(
+         runOverrides.put(
             ownerRunId, new PingSpoofScheduler.Inner_StreamUtil(Math.max(0, delayMs), realIncoming, realOutgoing, System.nanoTime() + durationNanos, false)
          );
          write_Z = true;
@@ -115,7 +115,7 @@ public final class PingSpoofScheduler {
    }
 
    public static void setRunOverride(long ownerRunId, int delayMs, boolean realIncoming, boolean realOutgoing) {
-      init_ConcurrentHashMap.put(ownerRunId, new PingSpoofScheduler.Inner_StreamUtil(Math.max(0, delayMs), realIncoming, realOutgoing, 0L, true));
+      runOverrides.put(ownerRunId, new PingSpoofScheduler.Inner_StreamUtil(Math.max(0, delayMs), realIncoming, realOutgoing, 0L, true));
       write_Z = true;
    }
 
@@ -124,63 +124,63 @@ public final class PingSpoofScheduler {
    }
 
    public static void init(long ownerRunId) {
-      init_ConcurrentHashMap.remove(ownerRunId);
+      runOverrides.remove(ownerRunId);
       flush();
    }
 
    public static void clearRunOverrides() {
-      init_ConcurrentHashMap.clear();
+      runOverrides.clear();
       flush();
    }
 
    public static void load(int delayMs, boolean realIncoming, boolean realOutgoing) {
-      init_I = Math.max(0, delayMs);
-      load_Z = realIncoming;
-      read_Z = realOutgoing;
-      init_Z = true;
+      globalDelayMs = Math.max(0, delayMs);
+      globalRealIncoming = realIncoming;
+      globalRealOutgoing = realOutgoing;
+      globalEnabled = true;
       write_Z = true;
    }
 
    public static void disable() {
-      init_Z = false;
+      globalEnabled = false;
       flush();
    }
 
-   public static int init_I() {
+   public static int effectiveDelayMs() {
       if (!write_Z) {
          return -1;
       }
 
       sync();
-      if (init_ConcurrentHashMap.isEmpty()) {
-         return init_Z ? init_I : -1;
+      if (runOverrides.isEmpty()) {
+         return globalEnabled ? globalDelayMs : -1;
       }
 
       int effective = 0;
 
-      for (PingSpoofScheduler.Inner_StreamUtil override : init_ConcurrentHashMap.values()) {
-         effective = Math.max(effective, override.init_I);
+      for (PingSpoofScheduler.Inner_StreamUtil override : runOverrides.values()) {
+         effective = Math.max(effective, override.delayMs);
       }
 
       return effective;
    }
 
-   public static boolean init_Z() {
+   public static boolean isRealIncomingActive() {
       if (!write_Z) {
          return false;
       }
 
       sync();
-      if (!init_ConcurrentHashMap.isEmpty()) {
-         for (PingSpoofScheduler.Inner_StreamUtil override : init_ConcurrentHashMap.values()) {
-            if (override.init_Z) {
+      if (!runOverrides.isEmpty()) {
+         for (PingSpoofScheduler.Inner_StreamUtil override : runOverrides.values()) {
+            if (override.realIncoming) {
                return true;
             }
          }
 
          return false;
       } else {
-         return init_Z && load_Z;
+         return globalEnabled && globalRealIncoming;
       }
    }
 
@@ -190,8 +190,8 @@ public final class PingSpoofScheduler {
       }
 
       sync();
-      if (!init_ConcurrentHashMap.isEmpty()) {
-         for (PingSpoofScheduler.Inner_StreamUtil override : init_ConcurrentHashMap.values()) {
+      if (!runOverrides.isEmpty()) {
+         for (PingSpoofScheduler.Inner_StreamUtil override : runOverrides.values()) {
             if (override.load) {
                return true;
             }
@@ -199,23 +199,23 @@ public final class PingSpoofScheduler {
 
          return false;
       } else {
-         return init_Z && read_Z;
+         return globalEnabled && globalRealOutgoing;
       }
    }
 
    public static boolean isActive() {
-      return init_I() >= 0;
+      return effectiveDelayMs() >= 0;
    }
 
    private static void sync() {
-      if (init_ConcurrentHashMap.isEmpty()) {
+      if (runOverrides.isEmpty()) {
          flush();
       } else {
          long now = System.nanoTime();
 
-         for (Entry<Long, PingSpoofScheduler.Inner_StreamUtil> entry : init_ConcurrentHashMap.entrySet()) {
+         for (Entry<Long, PingSpoofScheduler.Inner_StreamUtil> entry : runOverrides.entrySet()) {
             if (!entry.getValue().init(now)) {
-               init_ConcurrentHashMap.remove(entry.getKey(), entry.getValue());
+               runOverrides.remove(entry.getKey(), entry.getValue());
             }
          }
 
@@ -224,12 +224,12 @@ public final class PingSpoofScheduler {
    }
 
    private static void flush() {
-      write_Z = init_Z || !init_ConcurrentHashMap.isEmpty();
-      if (!write_Z && init_ScheduledExecutorS != null) {
+      write_Z = globalEnabled || !runOverrides.isEmpty();
+      if (!write_Z && schedulerInstance != null) {
          ScheduledExecutorService local;
          synchronized (PingSpoofScheduler.class) {
-            local = init_ScheduledExecutorS;
-            init_ScheduledExecutorS = null;
+            local = schedulerInstance;
+            schedulerInstance = null;
          }
 
          // Already scheduled keep-alives still run; the next delay recreates the scheduler.
@@ -244,10 +244,10 @@ public final class PingSpoofScheduler {
       load_Queue.clear();
       incomingQueued.set(0);
       outgoingQueued.set(0);
-      init_Set.clear();
-      init_AtomicInteger.set(0);
+      ownPackets.clear();
+      ownPacketCount.set(0);
       update_Z = false;
-      update_I++;
+      scheduleEpoch++;
       load_AtomicInteger.set(0);
    }
 
@@ -257,13 +257,13 @@ public final class PingSpoofScheduler {
          return false;
       } else if (!write_Z) {
          return false;
-      } else if (init_Minecraft == null || init_Minecraft.player == null) {
+      } else if (MINECRAFT == null || MINECRAFT.player == null) {
          return false;
       } else {
-         int delay = init_I();
+         int delay = effectiveDelayMs();
          if (delay <= 0) {
             return false;
-         } else if (!init_Z()) {
+         } else if (!isRealIncomingActive()) {
             return false;
          } else if (write(packet)) {
             return false;
@@ -281,7 +281,7 @@ public final class PingSpoofScheduler {
    }
 
    public static boolean interceptOutgoing(Packet<?> packet) {
-      if (read_Z(packet)) {
+      if (consumeOwnPacket(packet)) {
          return false;
       }
 
@@ -293,11 +293,11 @@ public final class PingSpoofScheduler {
          return false;
       }
 
-      if (init_Minecraft == null || init_Minecraft.player == null) {
+      if (MINECRAFT == null || MINECRAFT.player == null) {
          return false;
       }
 
-      int delay = init_I();
+      int delay = effectiveDelayMs();
       if (delay > 0 && packet instanceof ServerboundKeepAlivePacket) {
          init(packet, delay);
          return true;
@@ -317,7 +317,7 @@ public final class PingSpoofScheduler {
    }
 
    public static void update() {
-      if (init_Minecraft == null || init_Minecraft.getConnection() == null) {
+      if (MINECRAFT == null || MINECRAFT.getConnection() == null) {
          if (!init_Queue.isEmpty() || !load_Queue.isEmpty() || load_AtomicInteger.get() > 0) {
             write();
          }
@@ -327,35 +327,35 @@ public final class PingSpoofScheduler {
       } else {
          long now = System.currentTimeMillis();
          if (!init_Queue.isEmpty()) {
-            int delay = init_I();
-            boolean flushAll = update_Z || delay < 0 || !init_Z() || incomingQueued.get() >= 8192;
+            int delay = effectiveDelayMs();
+            boolean flushAll = update_Z || delay < 0 || !isRealIncomingActive() || incomingQueued.get() >= 8192;
             update_Z = false;
             long threshold = flushAll ? 0L : delay;
             int budget = flushAll ? 2147483647 : 1024;
 
             PingSpoofScheduler.Inner_DataUtil head;
-            while (budget-- > 0 && (head = init_Queue.peek()) != null && (flushAll || now - head.init_J() >= threshold || now - head.init_J() >= 8000L)) {
+            while (budget-- > 0 && (head = init_Queue.peek()) != null && (flushAll || now - head.queuedAtMs() >= threshold || now - head.queuedAtMs() >= 8000L)) {
                if (init_Queue.poll() != null) {
                   incomingQueued.updateAndGet(count -> Math.max(0, count - 1));
                }
 
-               init_V(head.init_Packet());
+               deliverIncoming(head.packet());
             }
          }
 
          if (!load_Queue.isEmpty()) {
-            int delay = init_I();
+            int delay = effectiveDelayMs();
             boolean flushAll = delay < 0 || !isRealOutgoing() || outgoingQueued.get() >= 8192;
             long threshold = flushAll ? 0L : delay;
             int budget = flushAll ? 2147483647 : 1024;
 
             PingSpoofScheduler.Inner_DataUtil head;
-            while (budget-- > 0 && (head = load_Queue.peek()) != null && (flushAll || now - head.init_J() >= threshold || now - head.init_J() >= 8000L)) {
+            while (budget-- > 0 && (head = load_Queue.peek()) != null && (flushAll || now - head.queuedAtMs() >= threshold || now - head.queuedAtMs() >= 8000L)) {
                if (load_Queue.poll() != null) {
                   outgoingQueued.updateAndGet(count -> Math.max(0, count - 1));
                }
 
-               load_V(head.init_Packet());
+               sendOutgoing(head.packet());
             }
          }
       }
@@ -363,14 +363,14 @@ public final class PingSpoofScheduler {
 
    private static void init(Packet<?> packet, int delayMs) {
       long wait = load_AtomicInteger.get() >= 256 ? 0L : Math.max(0L, Math.min(delayMs, 8000L));
-      int epoch = update_I;
+      int epoch = scheduleEpoch;
       if (wait <= 0L) {
          load(packet, epoch);
       } else {
          load_AtomicInteger.incrementAndGet();
 
          try {
-            init_ScheduledExecutorS().schedule(() -> {
+            scheduler().schedule(() -> {
                load_AtomicInteger.decrementAndGet();
                load(packet, epoch);
             }, wait, TimeUnit.MILLISECONDS);
@@ -382,24 +382,24 @@ public final class PingSpoofScheduler {
    }
 
    private static void load(Packet<?> packet, int epoch) {
-      if (epoch == update_I) {
-         ClientPacketListener connection = init_Minecraft == null ? null : init_Minecraft.getConnection();
+      if (epoch == scheduleEpoch) {
+         ClientPacketListener connection = MINECRAFT == null ? null : MINECRAFT.getConnection();
          if (connection != null) {
-            read_V(packet);
+            markOwnPacket(packet);
 
             try {
                connection.send(packet);
             } catch (Throwable t) {
                init("keepalive", packet, t);
             } finally {
-               read_Z(packet);
+               consumeOwnPacket(packet);
             }
          }
       }
    }
 
-   private static void init_V(Packet<?> packet) {
-      ClientPacketListener connection = init_Minecraft == null ? null : init_Minecraft.getConnection();
+   private static void deliverIncoming(Packet<?> packet) {
+      ClientPacketListener connection = MINECRAFT == null ? null : MINECRAFT.getConnection();
       if (connection != null) {
          try {
             Packet<ClientGamePacketListener> gamePacket = (Packet<ClientGamePacketListener>)packet;
@@ -411,37 +411,37 @@ public final class PingSpoofScheduler {
       }
    }
 
-   private static void load_V(Packet<?> packet) {
-      ClientPacketListener connection = init_Minecraft == null ? null : init_Minecraft.getConnection();
+   private static void sendOutgoing(Packet<?> packet) {
+      ClientPacketListener connection = MINECRAFT == null ? null : MINECRAFT.getConnection();
       if (connection != null) {
-         read_V(packet);
+         markOwnPacket(packet);
 
          try {
             connection.send(packet);
          } catch (Throwable t) {
             init("outgoing", packet, t);
          } finally {
-            read_Z(packet);
+            consumeOwnPacket(packet);
          }
       }
    }
 
-   private static void read_V(Packet<?> packet) {
-      if (packet != null && init_Set.add(packet)) {
-         init_AtomicInteger.incrementAndGet();
+   private static void markOwnPacket(Packet<?> packet) {
+      if (packet != null && ownPackets.add(packet)) {
+         ownPacketCount.incrementAndGet();
       }
    }
 
-   private static boolean read_Z(Packet<?> packet) {
-      if (init_AtomicInteger.get() == 0 || packet == null) {
+   private static boolean consumeOwnPacket(Packet<?> packet) {
+      if (ownPacketCount.get() == 0 || packet == null) {
          return false;
       }
 
-      if (!init_Set.remove(packet)) {
+      if (!ownPackets.remove(packet)) {
          return false;
       }
 
-      init_AtomicInteger.updateAndGet(count -> Math.max(0, count - 1));
+      ownPacketCount.updateAndGet(count -> Math.max(0, count - 1));
       return true;
    }
 
@@ -526,12 +526,12 @@ public final class PingSpoofScheduler {
          || packet instanceof ServerboundChunkBatchReceivedPacket;
    }
 
-   private record Inner_DataUtil(Packet<?> init_Packet, long init_J) {
+   private record Inner_DataUtil(Packet<?> packet, long queuedAtMs) {
    }
 
-   private record Inner_StreamUtil(int init_I, boolean init_Z, boolean load, long init_J, boolean read) {
+   private record Inner_StreamUtil(int delayMs, boolean realIncoming, boolean load, long expiresAtMs, boolean read) {
       boolean init(long now) {
-         return this.read || now - this.init_J < 0L;
+         return this.read || now - this.expiresAtMs < 0L;
       }
    }
 }

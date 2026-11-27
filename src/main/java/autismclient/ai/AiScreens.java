@@ -129,7 +129,7 @@ final class AiScreens {
 
    static JsonObject click(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
-      AiScreens.Inner_DataUtil live = init_bY_DataUtil(mc);
+      AiScreens.Inner_DataUtil live = captureScreen(mc);
       int position = init(live.infos(), args);
       AiScreens.Inner_CachePool target = live.infos().get(position);
       if (position >= live.widgets().size()) {
@@ -224,10 +224,10 @@ final class AiScreens {
    }
 
    static JsonObject write(JsonObject args) {
-      String text = init_Str(args);
+      String text = textArg(args);
       boolean append = AiJson.getBoolean(args, "append", false);
       Minecraft mc = Minecraft.getInstance();
-      AiScreens.Inner_DataUtil live = init_bY_DataUtil(mc);
+      AiScreens.Inner_DataUtil live = captureScreen(mc);
       int position = init(live.infos(), args);
       if (position < 0 || position >= live.widgets().size()) {
          throw new IllegalArgumentException("Widget " + position + " is not a standard text field");
@@ -315,7 +315,7 @@ final class AiScreens {
    }
 
    static AiOperation joinServer(JsonObject args) {
-      final String address = load_Str(args);
+      final String address = addressArg(args);
       String name = init(AiJson.getString(args, "name", "").trim(), 64);
       if (name.isEmpty()) {
          name = address;
@@ -337,7 +337,7 @@ final class AiScreens {
       Screen parent = mc.gui.screen() != null ? mc.gui.screen() : new TitleScreen();
       ConnectScreen.startConnecting(parent, mc, ServerAddress.parseString(address), data, false, null);
       return new AiOperation() {
-         final long init_J = System.nanoTime() + timeout * 1000000000L;
+         final long deadlineNanos = System.nanoTime() + timeout * 1000000000L;
          boolean init_Z;
 
          @Override
@@ -359,7 +359,7 @@ final class AiScreens {
                      "Connection to " + address + " rejected: " + AiScreens.init(reason, 256),
                      AiJson.objectOf("server", address, "reason", reason, "screen", "DisconnectedScreen")
                   );
-               } else if (System.nanoTime() > this.init_J) {
+               } else if (System.nanoTime() > this.deadlineNanos) {
                   this.cancel();
                   return AiGameOperations.result(
                      AiOperation.Status.TIMED_OUT,
@@ -436,7 +436,7 @@ final class AiScreens {
       }
    }
 
-   static String init_Str(JsonObject args) {
+   static String textArg(JsonObject args) {
       if (args.has("text") && !args.get("text").isJsonNull()) {
          String text = args.get("text").getAsString();
          if (text.length() > 256) {
@@ -449,7 +449,7 @@ final class AiScreens {
       }
    }
 
-   static String load_Str(JsonObject args) {
+   static String addressArg(JsonObject args) {
       String address = AiJson.getString(args, "address", "").trim();
       if (address.isEmpty()) {
          throw new IllegalArgumentException("address required (host or host:port)");
@@ -501,7 +501,7 @@ final class AiScreens {
       return labels.isEmpty() ? "(none)" : String.join(", ", labels);
    }
 
-   private static AiScreens.Inner_DataUtil init_bY_DataUtil(Minecraft mc) {
+   private static AiScreens.Inner_DataUtil captureScreen(Minecraft mc) {
       Screen screen = mc.gui.screen();
       if (screen == null) {
          throw new IllegalArgumentException("No screen is open; nothing to interact with");

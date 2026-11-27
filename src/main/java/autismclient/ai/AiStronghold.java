@@ -41,12 +41,12 @@ final class AiStronghold {
    static final int read_I = 640;
    static final int write_I = 12;
    static final long read_J = 600000000000L;
-   static final float[] init_FArr = new float[]{-25.0F, -45.0F, -65.0F, -85.0F};
+   static final float[] EYE_THROW_PITCHES = new float[]{-25.0F, -45.0F, -65.0F, -85.0F};
    static final int update = 120;
-   private static String init_Str = "";
-   private static Object init_Obj;
-   private static AiEyeNavigation init_z;
-   private static Vec3 init_Vec3;
+   private static String navigationWorld = "";
+   private static Object navigationConnection;
+   private static AiEyeNavigation navigation;
+   private static Vec3 savedBearing;
    private static int sync;
    private static long write_J;
    private static BlockPos init_BlockPos;
@@ -69,17 +69,17 @@ final class AiStronghold {
 
    private static AiEyeNavigation init(Minecraft mc) {
       String world = AiWorldIdentity.currentWorldKey(mc);
-      if (init_z == null || !world.equals(init_Str) || init_Obj != mc.getConnection()) {
-         init_Str = world;
-         init_Obj = mc.getConnection();
-         init_z = new AiEyeNavigation();
-         init_Vec3 = null;
+      if (navigation == null || !world.equals(navigationWorld) || navigationConnection != mc.getConnection()) {
+         navigationWorld = world;
+         navigationConnection = mc.getConnection();
+         navigation = new AiEyeNavigation();
+         savedBearing = null;
          sync = 0;
          write_J = 0L;
          init_BlockPos = null;
       }
 
-      return init_z;
+      return navigation;
    }
 
    static AiOperation init(JsonObject args) {
@@ -87,30 +87,30 @@ final class AiStronghold {
       if (mc.player != null && mc.level != null) {
          final int timeoutSeconds = Math.max(120, Math.min(5400, AiJson.getInt(args, "timeoutSeconds", 2400)));
          return new AiOperation() {
-            final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final JsonArray init_JsonArray = new JsonArray();
+            final long deadlineNanos = System.nanoTime() + timeoutSeconds * 1000000000L;
+            final JsonArray steps = new JsonArray();
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            final AiEyeNavigation init_z = AiStronghold.init(mc);
-            final AiStrongholdSearch.Inner_DataUtil init_cp_DataUtil = new AiStrongholdSearch.Inner_DataUtil();
-            final String init_Str = AiWorldIdentity.currentWorldKey(mc);
-            final Object init_Obj = mc.getConnection();
-            final UUID init_UUID = mc.player.getUUID();
-            final long load_J = AiServerEvidence.deathRevision();
-            BlockPos init_BlockPos;
+            final AiEyeNavigation navigation = AiStronghold.init(mc);
+            final AiStrongholdSearch.Inner_DataUtil search = new AiStrongholdSearch.Inner_DataUtil();
+            final String worldKey = AiWorldIdentity.currentWorldKey(mc);
+            final Object startConnection = mc.getConnection();
+            final UUID playerId = mc.player.getUUID();
+            final long startDeathRevision = AiServerEvidence.deathRevision();
+            BlockPos endEntrance;
             JsonObject init_JsonObject;
-            int init_I;
-            boolean init_Z;
+            int arrivalTicks;
+            boolean entryAuthorized;
             final Set<UUID> init_Set = new HashSet<>();
             final Set<Integer> load_Set = new HashSet<>();
             Vec3 init_Vec3;
             boolean load_Z;
             int load_I;
             int read_I;
-            AiOperation init_AiOperation;
-            final AiStronghold.Inner_DataUtil init_co_DataUtil = new AiStronghold.Inner_DataUtil();
+            AiOperation activeChild;
+            final AiStronghold.Inner_DataUtil childRunner = new AiStronghold.Inner_DataUtil();
             AiOperation.Result init_AiOperation_Result;
             String load_Str = "";
-            Vec3 load_Vec3;
+            Vec3 bearing;
             Vec3 read_Vec3;
             EyeOfEnder init_EyeOfEnder;
             AiStronghold.Inner_StreamUtil init_co_StreamUtil = new AiStronghold.Inner_StreamUtil();
@@ -118,7 +118,7 @@ final class AiStronghold {
             AiEyeNavigation.Inner_StreamUtil init_z_StreamUtil;
             int write_I;
             int update_I;
-            int sync_I;
+            int throwCount;
             int flush_I;
             int close;
             int open;
@@ -129,7 +129,7 @@ final class AiStronghold {
             long write_J;
             long update_J;
             BlockPos load_BlockPos;
-            final AiStronghold.Inner_CachePool init_co_CachePool = new AiStronghold.Inner_CachePool();
+            final AiStronghold.Inner_CachePool pearlSearch = new AiStronghold.Inner_CachePool();
             boolean write_Z;
             BlockPos read_BlockPos;
             long sync_J;
@@ -147,17 +147,17 @@ final class AiStronghold {
             int clear;
             int reset;
             int start;
-            BlockPos write_BlockPos;
+            BlockPos portalFrame;
             int stop;
             int next;
             int prev;
-            final AiGuardLayer init_Y;
-            long flush_J;
+            final AiGuardLayer guard;
+            long inventoryFullCheckNanos;
 
             {
-               this.load_Vec3 = AiStronghold.init_Vec3;
-               this.read_Vec3 = this.load_Vec3 == null ? null : mc.player.position();
-               this.sync_I = AiStronghold.sync;
+               this.bearing = AiStronghold.savedBearing;
+               this.read_Vec3 = this.bearing == null ? null : mc.player.position();
+               this.throwCount = AiStronghold.sync;
                this.read_J = AiStronghold.write_J;
                this.load_BlockPos = AiStronghold.init_BlockPos;
                this.load_AiOperation = new AiOperation() {
@@ -182,7 +182,7 @@ final class AiStronghold {
                      init_DataUtil.clear();
                   }
                };
-               this.init_Y = new AiGuardLayer(
+               this.guard = new AiGuardLayer(
                   AiGuard.GuardPolicy.standard()
                      .keeping(List.of("minecraft:blaze_rod", "minecraft:blaze_powder", "minecraft:ender_pearl", "minecraft:ender_eye")),
                   "stronghold"
@@ -269,7 +269,7 @@ final class AiStronghold {
                return best == null ? stance : best;
             }
 
-            boolean init_Z_2(int blocks) {
+            boolean isNearSurface(int blocks) {
                int top = mc.level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, mc.player.getBlockX(), mc.player.getBlockZ());
                return top - mc.player.getBlockY() <= blocks;
             }
@@ -277,53 +277,53 @@ final class AiStronghold {
             @Override
             public AiOperation.Result tick() {
                if (mc.player != null && mc.level != null) {
-                  if (!this.init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) || this.init_Obj != mc.getConnection()) {
+                  if (!this.worldKey.equals(AiWorldIdentity.currentWorldKey(mc)) || this.startConnection != mc.getConnection()) {
                      return this.init(AiOperation.Status.CANCELLED, "World or connection changed during stronghold navigation");
                   }
 
-                  if (!mc.player.getUUID().equals(this.init_UUID)) {
+                  if (!mc.player.getUUID().equals(this.playerId)) {
                      return this.init(AiOperation.Status.UNCERTAIN, "Player changed during stronghold navigation");
                   }
 
-                  if (mc.player.isAlive() && this.load_J == AiServerEvidence.deathRevision()) {
+                  if (mc.player.isAlive() && this.startDeathRevision == AiServerEvidence.deathRevision()) {
                      long timeOfDay = Math.floorMod(mc.level.getOverworldClockTime(), 24000);
-                     this.init_co_CachePool.init(System.nanoTime(), this.write_Z && mc.level.dimension() == Level.OVERWORLD && timeOfDay >= 12500L);
+                     this.pearlSearch.init(System.nanoTime(), this.write_Z && mc.level.dimension() == Level.OVERWORLD && timeOfDay >= 12500L);
                      if (mc.level.dimension() == Level.END) {
-                        this.init_V_28();
+                        this.releaseActiveChild();
                         this.init_DataUtil.clear();
-                        if (this.init_BlockPos == null || !this.init_Z) {
+                        if (this.endEntrance == null || !this.entryAuthorized) {
                            return this.init(AiOperation.Status.UNCERTAIN, "Entered the End outside a ready, verified portal traversal");
                         }
 
-                        if (++this.init_I < 20) {
+                        if (++this.arrivalTicks < 20) {
                            return this.load("Verifying loaded, supported End arrival");
                         }
 
                         String hazard = AiPortalLinks.arrivalHazard();
-                        AiPortalLinks.init("minecraft:overworld", this.init_BlockPos, "minecraft:the_end", mc.player.blockPosition(), hazard == null, this.init_JsonObject);
+                        AiPortalLinks.init("minecraft:overworld", this.endEntrance, "minecraft:the_end", mc.player.blockPosition(), hazard == null, this.init_JsonObject);
                         return this.init(
                            hazard == null ? AiOperation.Status.SUCCEEDED : AiOperation.Status.UNCERTAIN,
-                           hazard == null ? "Verified End arrival after " + this.sync_I + " throws" : "End arrival requires recovery: " + hazard
+                           hazard == null ? "Verified End arrival after " + this.throwCount + " throws" : "End arrival requires recovery: " + hazard
                         );
                      } else {
                         if (mc.level.dimension() != Level.OVERWORLD) {
                            return this.init(AiOperation.Status.UNCERTAIN, "Stronghold navigation requires the Overworld; unexpected dimension observed");
                         }
 
-                        if (System.nanoTime() > this.init_J) {
+                        if (System.nanoTime() > this.deadlineNanos) {
                            return this.init(
                               this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN, "Out of time finding the stronghold"
                            );
                         }
 
-                        AiOperation.Result g = this.init_Y
-                           .tick(this.sync_Z ? this.load_AiOperation : this.init_AiOperation, () -> {
+                        AiOperation.Result g = this.guard
+                           .tick(this.sync_Z ? this.load_AiOperation : this.activeChild, () -> {
                               if (this.sync_Z) {
                                  this.load_AiOperation.cancel();
                               } else {
-                                 this.init_V_28();
+                                 this.releaseActiveChild();
                               }
-                           }, () -> (int)Math.max(10L, (this.init_J - System.nanoTime()) / 1000000000L));
+                           }, () -> (int)Math.max(10L, (this.deadlineNanos - System.nanoTime()) / 1000000000L));
                         if (g != null) {
                            this.init_AiOperation_Result = g;
                            if (this.sync_Z) {
@@ -333,7 +333,7 @@ final class AiStronghold {
 
                            return g.terminal() ? this.init(g.status(), g.message(), g) : g;
                         } else {
-                           if (this.init_co_DataUtil.init()) {
+                           if (this.childRunner.init()) {
                               return this.init(AiOperation.Status.UNCERTAIN, "Interrupted Stronghold action needs observation before resuming");
                            }
 
@@ -341,16 +341,16 @@ final class AiStronghold {
                               return this.read();
                            }
 
-                           if (this.init_AiOperation != null) {
-                              AiOperation.Result r = this.init_co_DataUtil.init_AiOperation_Result(this.init_AiOperation);
+                           if (this.activeChild != null) {
+                              AiOperation.Result r = this.childRunner.tickChild(this.activeChild);
                               if (!r.terminal()) {
                                  return this.load(this.load_Str + ": " + r.message());
                               }
 
-                              r = AiGuardLayer.wrapPendingTermination(this.init_AiOperation.requiresReconciliationAfterEmergency(), r);
-                              this.init_V_28();
+                              r = AiGuardLayer.wrapPendingTermination(this.activeChild.requiresReconciliationAfterEmergency(), r);
+                              this.releaseActiveChild();
                               AiSpeedrun.log("[AI] stronghold step {}: {} - {}", r.status(), this.load_Str, AiSpeedrun.clip(r.message()));
-                              this.init_JsonArray
+                              this.steps
                                  .add(AiJson.objectOf("step", this.load_Str, "status", r.status().name(), "message", AiSpeedrun.clip(r.message())));
                               if (r.status() == AiOperation.Status.CANCELLED) {
                                  return this.init(AiOperation.Status.CANCELLED, "Cancelled at " + this.load_Str, r);
@@ -439,7 +439,7 @@ final class AiStronghold {
                      return this.init("cook safe travel food", cooking);
                   }
 
-                  if (!this.load_Z_2(5)) {
+                  if (!this.seesSkyNearby(5)) {
                      return this.init("up to the surface for travel food", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 120)));
                   }
 
@@ -448,7 +448,7 @@ final class AiStronghold {
                      return this.init(
                         "shelter until daylight for travel food",
                         AiBurrow.init(
-                           AiJson.objectOf("timeoutSeconds", Math.max(60L, Math.min(600L, (this.init_J - System.nanoTime()) / 1000000000L)))
+                           AiJson.objectOf("timeoutSeconds", Math.max(60L, Math.min(600L, (this.deadlineNanos - System.nanoTime()) / 1000000000L)))
                         )
                      );
                   }
@@ -492,12 +492,12 @@ final class AiStronghold {
                         return this.init(AiOperation.Status.UNCERTAIN, "End portal lacks a fully loaded inward-facing ring and nine active cells");
                      }
 
-                     this.init_BlockPos = portal.immutable();
+                     this.endEntrance = portal.immutable();
                      this.init_JsonObject = AiJson.objectOf(
                         "kind",
                         "end_portal",
                         "world",
-                        this.init_Str,
+                        this.worldKey,
                         "dimension",
                         "minecraft:overworld",
                         "center",
@@ -592,7 +592,7 @@ final class AiStronghold {
                            return this.init("forage the End kit before the portal (" + AiForage.kitSummary() + ")", errand);
                         }
 
-                        if (!this.load_Z_2(5)) {
+                        if (!this.seesSkyNearby(5)) {
                            return this.init("up to the surface for the End kit", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 120)));
                         }
 
@@ -696,11 +696,11 @@ final class AiStronghold {
 
                      BlockPos frame = AiWorldScan.findNearestBlock(s -> s.is(Blocks.END_PORTAL_FRAME), 12);
                      if (frame != null) {
-                        if (this.write_BlockPos == null) {
-                           AiSpeedrun.log("[AI] stronghold: portal frame seen at {} after {} throws", frame.toShortString(), this.sync_I);
+                        if (this.portalFrame == null) {
+                           AiSpeedrun.log("[AI] stronghold: portal frame seen at {} after {} throws", frame.toShortString(), this.throwCount);
                         }
 
-                        this.write_BlockPos = frame;
+                        this.portalFrame = frame;
                         AiEndPortal.Inner_StreamUtil ring = AiEndPortal.load(frame);
                         if (ring != null) {
                            this.stop = 0;
@@ -715,7 +715,7 @@ final class AiStronghold {
                               }
 
                               this.write_Z = true;
-                              if (this.init_co_CachePool.init(600000000000L)) {
+                              if (this.pearlSearch.init(600000000000L)) {
                                  return this.load_AiOperation_Result(empty.size() - eyes);
                               }
 
@@ -725,11 +725,11 @@ final class AiStronghold {
                                  return this.init("hunt an enderman for a pearl (" + empty.size() + " frames empty, " + eyes + " eyes)", AiForage.load(48.0));
                               }
 
-                              if (AiCraft.countItem("minecraft:blaze_powder") + AiCraft.countItem("minecraft:blaze_rod") <= 0 || this.init_co_CachePool.init(600000000000L)) {
+                              if (AiCraft.countItem("minecraft:blaze_powder") + AiCraft.countItem("minecraft:blaze_rod") <= 0 || this.pearlSearch.init(600000000000L)) {
                                  return this.init(AiOperation.Status.FAILED, empty.size() + " frames are empty and only " + eyes + " eyes can be made");
                               }
 
-                              if (!this.load_Z_2(5)) {
+                              if (!this.seesSkyNearby(5)) {
                                  return this.init("up to the surface for endermen", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 120)));
                               }
 
@@ -809,7 +809,7 @@ final class AiStronghold {
                                        : this.load("Waiting for the portal to open");
                                  }
 
-                                 if (!this.init_Z_5("minecraft:ender_eye")) {
+                                 if (!this.isHolding("minecraft:ender_eye")) {
                                     return this.init("hold an eye", AiEquip.init(AiJson.objectOf("what", "minecraft:ender_eye")));
                                  }
 
@@ -863,19 +863,19 @@ final class AiStronghold {
                            }
                         }
 
-                        AiEyeNavigation.Inner_DataUtil located = this.init_z.getLocated();
+                        AiEyeNavigation.Inner_DataUtil located = this.navigation.getLocated();
                         if (located != null && (located.uncertainty() >= 160.0 || this.next >= 2)) {
                            located = null;
                         }
 
                         int makeable = Math.min(AiCraft.countItem("minecraft:ender_pearl"), AiCraft.countItem("minecraft:blaze_powder") + 2 * AiCraft.countItem("minecraft:blaze_rod"));
                         boolean spareEye = AiCraft.countItem("minecraft:ender_eye") > 12 || makeable > 0;
-                        if (this.load_Vec3 == null || this.init_D_3() > 640.0 && located == null && spareEye) {
+                        if (this.bearing == null || this.init_D_3() > 640.0 && located == null && spareEye) {
                            if (AiCraft.countItem("minecraft:ender_eye") <= 12) {
                               int canMake = makeable;
                               if (canMake == 0) {
                                  this.write_Z = true;
-                                 if (this.init_co_CachePool.init(600000000000L)) {
+                                 if (this.pearlSearch.init(600000000000L)) {
                                     return this.load_AiOperation_Result(Math.max(1, 16 - AiCraft.countItem("minecraft:ender_eye")));
                                  }
 
@@ -884,8 +884,8 @@ final class AiStronghold {
                                        this.read_BlockPos = mc.player.blockPosition();
                                     }
 
-                                    if (!this.init_co_CachePool.init(600000000000L)) {
-                                       if (!this.load_Z_2(5)) {
+                                    if (!this.pearlSearch.init(600000000000L)) {
+                                       if (!this.seesSkyNearby(5)) {
                                           return this.init(
                                              "up to the surface for endermen", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 120))
                                           );
@@ -925,32 +925,32 @@ final class AiStronghold {
                               return this.init(AiOperation.Status.FAILED, "Navigation Eyes exhausted; the twelve activation Eyes remain reserved");
                            } else {
                               this.write_Z = false;
-                              if (!mc.level.canSeeSky(BlockPos.containing(mc.player.getEyePosition())) && this.reset < 2 && this.init_Z_2(24)) {
+                              if (!mc.level.canSeeSky(BlockPos.containing(mc.player.getEyePosition())) && this.reset < 2 && this.isNearSurface(24)) {
                                  return this.init("up to the sky for a throw", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 120)));
-                              } else if (this.clear >= 3 && this.load_Vec3 != null) {
+                              } else if (this.clear >= 3 && this.bearing != null) {
                                  this.clear = 0;
                                  Vec3 at = mc.player.position();
-                                 int tx = (int)Math.floor(at.x + this.load_Vec3.x * 12.0);
-                                 int tz = (int)Math.floor(at.z + this.load_Vec3.z * 12.0);
+                                 int tx = (int)Math.floor(at.x + this.bearing.x * 12.0);
+                                 int tz = (int)Math.floor(at.z + this.bearing.z * 12.0);
                                  return this.init(
                                     "step out from under the trees",
                                     AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.Inner_NetHelper(tx, tz, 3), 30))
                                  );
                               } else {
-                                 return !this.init_Z_5("minecraft:ender_eye")
+                                 return !this.isHolding("minecraft:ender_eye")
                                     ? this.init("hold an eye", AiEquip.init(AiJson.objectOf("what", "minecraft:ender_eye")))
                                     : this.load();
                               }
                            }
                         } else {
-                           if (!this.init_Z_2(12) && this.start < 3) {
+                           if (!this.isNearSurface(12) && this.start < 3) {
                               this.start++;
                               return this.init("up to the surface for the walk", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 180)));
                            }
 
                            Vec3 at = mc.player.position();
-                           if (this.init_D_3() < 32.0 && this.init_z.getLocated() == null && this.sync_I < 5) {
-                              Vec3 side = this.init_z.sidestepTarget(at, this.load_Vec3);
+                           if (this.init_D_3() < 32.0 && this.navigation.getLocated() == null && this.throwCount < 5) {
+                              Vec3 side = this.navigation.sidestepTarget(at, this.bearing);
                               if (side != null) {
                                  this.load_Z = true;
                                  this.read_Vec3 = null;
@@ -963,7 +963,7 @@ final class AiStronghold {
                               }
                            }
 
-                           AiEyeNavigation.Inner_DataUtil estimate = this.init_z.getLocated();
+                           AiEyeNavigation.Inner_DataUtil estimate = this.navigation.getLocated();
                            if (estimate != null && estimate.uncertainty() < 160.0) {
                               Vec3 toward = estimate.position().subtract(at);
                               double length = Math.hypot(toward.x, toward.z);
@@ -973,19 +973,19 @@ final class AiStronghold {
                                     "explore the observed stronghold corridors",
                                     AiStrongholdSearch.init(
                                        estimate.position(),
-                                       (int)Math.max(30L, Math.min(360L, (this.init_J - System.nanoTime()) / 1000000000L)),
-                                       this.init_cp_DataUtil
+                                       (int)Math.max(30L, Math.min(360L, (this.deadlineNanos - System.nanoTime()) / 1000000000L)),
+                                       this.search
                                     )
                                  );
                               }
 
                               if (length > 24.0) {
-                                 this.load_Vec3 = new Vec3(toward.x / length, 0.0, toward.z / length);
+                                 this.bearing = new Vec3(toward.x / length, 0.0, toward.z / length);
                               }
                            }
 
-                           int tx = (int)Math.floor(at.x + this.load_Vec3.x * 160.0);
-                           int tz = (int)Math.floor(at.z + this.load_Vec3.z * 160.0);
+                           int tx = (int)Math.floor(at.x + this.bearing.x * 160.0);
+                           int tz = (int)Math.floor(at.z + this.bearing.z * 160.0);
                            AiGoto.GotoOptions dry = new AiGoto.GotoOptions(true, true, 3, !this.read_Z, true, true);
                            this.read_Z = false;
                            return this.init(
@@ -1033,7 +1033,7 @@ final class AiStronghold {
             AiOperation.Result read() {
                this.update_I++;
                if (!this.flush_Z) {
-                  float pitch = AiStronghold.init_FArr[Math.min(AiStronghold.init_FArr.length - 1, (this.update_I - 1) / 6)];
+                  float pitch = AiStronghold.EYE_THROW_PITCHES[Math.min(AiStronghold.EYE_THROW_PITCHES.length - 1, (this.update_I - 1) / 6)];
                   this.init_DataUtil.setTargetRotation(new autismclient.util.RotationMath.Rotation(mc.player.getYRot(), pitch));
                   this.init_DataUtil.tick();
                   boolean clear = mc.hitResult == null
@@ -1042,7 +1042,7 @@ final class AiStronghold {
                         && mc.hitResult instanceof BlockHitResult blockHit
                         && !mc.level.getBlockState(blockHit.getBlockPos()).is(Blocks.END_PORTAL_FRAME);
                   if (this.update_I >= 4 && clear && Math.abs(mc.player.getXRot() - pitch) < 2.0F) {
-                     if (!this.init_Z_5("minecraft:ender_eye")) {
+                     if (!this.isHolding("minecraft:ender_eye")) {
                         this.sync_Z = false;
                         this.init_DataUtil.clear();
                         return this.load("Reequipping the Eye before its throw");
@@ -1069,12 +1069,12 @@ final class AiStronghold {
                      mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                      this.init_co_StreamUtil.init(prediction.currentSequence());
                      Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
-                     this.sync_I++;
+                     this.throwCount++;
                      this.flush_Z = true;
                      this.update_I = 6;
-                     AiSpeedrun.log("[AI] stronghold: throw {} at pitch {}", this.sync_I, pitch);
+                     AiSpeedrun.log("[AI] stronghold: throw {} at pitch {}", this.throwCount, pitch);
                      return this.load("Throwing an eye of ender");
-                  } else if (this.update_I > AiStronghold.init_FArr.length * 6) {
+                  } else if (this.update_I > AiStronghold.EYE_THROW_PITCHES.length * 6) {
                      this.sync_Z = false;
                      this.init_DataUtil.clear();
                      this.clear++;
@@ -1157,11 +1157,11 @@ final class AiStronghold {
 
                      if (moved >= 1.0) {
                         Vec3 line = fitted != null ? fitted : (moved >= 4.0 ? this.init_z_StreamUtil.fitLine() : null);
-                        this.load_Vec3 = line != null ? line : new Vec3((now.x - this.write_Vec3.x) / moved, 0.0, (now.z - this.write_Vec3.z) / moved);
+                        this.bearing = line != null ? line : new Vec3((now.x - this.write_Vec3.x) / moved, 0.0, (now.z - this.write_Vec3.z) / moved);
                         this.read_Vec3 = mc.player.position();
-                        AiStronghold.init_Vec3 = this.load_Vec3;
-                        AiStronghold.sync = this.sync_I;
-                        this.init_z
+                        AiStronghold.savedBearing = this.bearing;
+                        AiStronghold.sync = this.throwCount;
+                        this.navigation
                            .addThrow(
                               line != null ? this.init_z_StreamUtil.load() : this.write_Vec3,
                               line != null ? line.scale(Math.max(4.0, moved)) : now.subtract(this.write_Vec3)
@@ -1170,27 +1170,27 @@ final class AiStronghold {
                            "eye_bearing",
                            AiJson.objectOf(
                               "throw",
-                              this.sync_I,
+                              this.throwCount,
                               "origin",
                               this.init_Vec3.toString(),
                               "bearing",
-                              this.load_Vec3.toString(),
+                              this.bearing.toString(),
                               "navigation",
-                              this.init_z.statusJson()
+                              this.navigation.statusJson()
                            )
                         );
                         AiSpeedrun.log(
                            "[AI] stronghold: throw {} from {} points {} (yaw {})",
-                           this.sync_I,
+                           this.throwCount,
                            mc.player.blockPosition().toShortString(),
-                           String.format("%.3f, %.3f", this.load_Vec3.x, this.load_Vec3.z),
-                           Math.round(Math.toDegrees(Math.atan2(-this.load_Vec3.x, this.load_Vec3.z)))
+                           String.format("%.3f, %.3f", this.bearing.x, this.bearing.z),
+                           Math.round(Math.toDegrees(Math.atan2(-this.bearing.x, this.bearing.z)))
                         );
                      }
 
                      this.sync_Z = false;
                      this.init_DataUtil.clear();
-                     this.init_AiOperation = this.init_AiOperation_6();
+                     this.activeChild = this.init_AiOperation_6();
                      this.load_Str = "pick the eye back up";
                      return this.load("Bearing read");
                   }
@@ -1203,14 +1203,14 @@ final class AiStronghold {
                   .init(
                      AiCraft.countItem("minecraft:ender_eye"),
                      AiServerEvidence.inventoryRevision(),
-                     AiServerEvidence.minItemCountAfterReply(container, this.init_co_StreamUtil.load_J, "minecraft:ender_eye"),
+                     AiServerEvidence.minItemCountAfterReply(container, this.init_co_StreamUtil.repliesBefore, "minecraft:ender_eye"),
                      AiServerEvidence.containerReplyCount(container),
-                     autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(mc.level, this.init_co_StreamUtil.write_I),
+                     autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(mc.level, this.init_co_StreamUtil.sentSequence),
                      identity,
                      this.update_I - 6
                   );
-               return outcome == AiStronghold.Inner_BufferHelper.WAITING && this.init_co_StreamUtil.read_J >= 0L
-                  ? this.init_co_StreamUtil.init(AiServerEvidence.minItemCountAfterReply(container, this.init_co_StreamUtil.read_J, "minecraft:ender_eye"), this.update_I - 6)
+               return outcome == AiStronghold.Inner_BufferHelper.WAITING && this.init_co_StreamUtil.repliesAtAcknowledgement >= 0L
+                  ? this.init_co_StreamUtil.init(AiServerEvidence.minItemCountAfterReply(container, this.init_co_StreamUtil.repliesAtAcknowledgement, "minecraft:ender_eye"), this.update_I - 6)
                   : outcome;
             }
 
@@ -1304,8 +1304,8 @@ final class AiStronghold {
             }
 
             AiOperation.Result init_AiOperation_Result(int count) {
-               if (mc.player.getInventory().getFreeSlot() < 0 && AiCraft.countItem("minecraft:ender_eye") == 0 && System.nanoTime() - this.flush_J > 30000000000L) {
-                  this.flush_J = System.nanoTime();
+               if (mc.player.getInventory().getFreeSlot() < 0 && AiCraft.countItem("minecraft:ender_eye") == 0 && System.nanoTime() - this.inventoryFullCheckNanos > 30000000000L) {
+                  this.inventoryFullCheckNanos = System.nanoTime();
                   JsonArray keep = new JsonArray();
 
                   for (String id : List.of(
@@ -1334,7 +1334,7 @@ final class AiStronghold {
                }
             }
 
-            boolean load_Z_2(int radius) {
+            boolean seesSkyNearby(int radius) {
                BlockPos feet = mc.player.blockPosition();
 
                for (int dx = -radius; dx <= radius; dx++) {
@@ -1348,47 +1348,47 @@ final class AiStronghold {
                return false;
             }
 
-            boolean init_Z_5(String id) {
+            boolean isHolding(String id) {
                return BuiltInRegistries.ITEM.getKey(mc.player.getMainHandItem().getItem()).toString().equals(id);
             }
 
             AiOperation.Result init(String label, AiOperation op) {
-               this.init_Z = label.startsWith("into the end portal") || label.startsWith("onto the end portal");
+               this.entryAuthorized = label.startsWith("into the end portal") || label.startsWith("onto the end portal");
                this.load_Str = label;
                this.update_J = System.nanoTime();
                AiSpeedrun.log("[AI] stronghold: {}", label);
-               this.init_AiOperation = AiRunDiagnostics.trace("stronghold", label, op);
+               this.activeChild = AiRunDiagnostics.trace("stronghold", label, op);
                return this.load(label);
             }
 
-            JsonObject init_JsonObject_53() {
+            JsonObject evidence() {
                return AiJson.objectOf(
                   "throws",
-                  this.sync_I,
+                  this.throwCount,
                   "eyesLost",
                   this.flush_I,
                   "eyes",
                   AiCraft.countItem("minecraft:ender_eye"),
                   "bearing",
-                  this.load_Vec3 == null ? "" : String.format("%.3f,%.3f", this.load_Vec3.x, this.load_Vec3.z),
+                  this.bearing == null ? "" : String.format("%.3f,%.3f", this.bearing.x, this.bearing.z),
                   "frame",
-                  this.write_BlockPos == null ? "" : this.write_BlockPos.toShortString(),
+                  this.portalFrame == null ? "" : this.portalFrame.toShortString(),
                   "navigation",
-                  this.init_z.statusJson(),
+                  this.navigation.statusJson(),
                   "endEntrance",
-                  this.init_BlockPos == null ? "" : this.init_BlockPos.toShortString(),
+                  this.endEntrance == null ? "" : this.endEntrance.toShortString(),
                   "entryAuthorized",
-                  this.init_Z,
+                  this.entryAuthorized,
                   "arrivalTicks",
-                  this.init_I,
+                  this.arrivalTicks,
                   "resources",
                   AiRunResources.eyeBudget(16, 12, 0).data(),
                   "pearlSearchDarkSeconds",
-                  this.init_co_CachePool.init() / 1000000000L,
+                  this.pearlSearch.init() / 1000000000L,
                   "eyeThrow",
-                  this.init_co_StreamUtil.init_JsonObject(),
+                  this.init_co_StreamUtil.evidence(),
                   "steps",
-                  this.init_JsonArray
+                  this.steps
                );
             }
 
@@ -1403,7 +1403,7 @@ final class AiStronghold {
             }
 
             AiOperation.Result load(String message) {
-               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_53());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.evidence());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
@@ -1412,45 +1412,45 @@ final class AiStronghold {
 
             AiOperation.Result init(AiOperation.Status status, String message, AiOperation.Result child) {
                boolean pending = this.requiresReconciliationAfterEmergency();
-               this.init_co_DataUtil.init_V(this.init_AiOperation);
-               this.init_co_DataUtil.init(pending, child);
-               this.init_co_DataUtil.init(this.init_Y.requiresReconciliation(), this.init_AiOperation_Result);
-               AiOperation.Result result = this.init_co_DataUtil.init(status, message, this.init_JsonObject_53(), child);
-               this.init_V_28();
-               this.init_Y.cancel();
+               this.childRunner.init_V(this.activeChild);
+               this.childRunner.init(pending, child);
+               this.childRunner.init(this.guard.requiresReconciliation(), this.init_AiOperation_Result);
+               AiOperation.Result result = this.childRunner.init(status, message, this.evidence(), child);
+               this.releaseActiveChild();
+               this.guard.cancel();
                this.init_DataUtil.clear();
                return result;
             }
 
-            void init_V_28() {
-               if (this.init_AiOperation != null) {
-                  this.init_co_DataUtil.load(this.init_AiOperation);
-                  this.init_AiOperation = null;
+            void releaseActiveChild() {
+               if (this.activeChild != null) {
+                  this.childRunner.load(this.activeChild);
+                  this.activeChild = null;
                }
             }
 
             @Override
             public boolean canInterruptNow() {
-               return !this.init_co_DataUtil.init()
+               return !this.childRunner.init()
                   && !this.sync_Z
                   && !this.init_co_StreamUtil.init_Z()
-                  && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
-                  && this.init_Y.canInterruptNow();
+                  && (this.activeChild == null || this.activeChild.canInterruptNow())
+                  && this.guard.canInterruptNow();
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.init_co_DataUtil.init()
+               return this.childRunner.init()
                   || this.init_co_StreamUtil.init_Z()
-                  || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-                  || this.init_Y.requiresReconciliation();
+                  || this.activeChild != null && this.activeChild.requiresReconciliationAfterEmergency()
+                  || this.guard.requiresReconciliation();
             }
 
             @Override
             public void cancel() {
-               this.init_co_DataUtil.init(this.init_Y.requiresReconciliation(), this.init_AiOperation_Result);
-               this.init_V_28();
-               this.init_Y.cancel();
+               this.childRunner.init(this.guard.requiresReconciliation(), this.init_AiOperation_Result);
+               this.releaseActiveChild();
+               this.guard.cancel();
                this.init_DataUtil.clear();
             }
          };
@@ -1469,16 +1469,16 @@ final class AiStronghold {
    static final class Inner_CachePool {
       private long init_J = -9223372036854775808L;
       private long load;
-      private boolean init_Z;
+      private boolean darkSearch;
 
       void init(long now, boolean darkSearch) {
          if (this.init_J == -9223372036854775808L || now >= this.init_J) {
-            if (this.init_J != -9223372036854775808L && this.init_Z) {
+            if (this.init_J != -9223372036854775808L && this.darkSearch) {
                this.load = this.load + (now - this.init_J);
             }
 
             this.init_J = now;
-            this.init_Z = darkSearch;
+            this.darkSearch = darkSearch;
          }
       }
 
@@ -1492,35 +1492,35 @@ final class AiStronghold {
    }
 
    static final class Inner_DataUtil {
-      private AiOperation init_AiOperation;
-      private AiOperation.Result init_AiOperation_Result;
+      private AiOperation child;
+      private AiOperation.Result lastResult;
       private AiOperation.Result load;
       private boolean init_Z;
 
-      AiOperation.Result init_AiOperation_Result(AiOperation child) {
+      AiOperation.Result tickChild(AiOperation child) {
          boolean before = child.requiresReconciliationAfterEmergency();
-         this.init_AiOperation = child;
-         this.init_AiOperation_Result = child.tick();
-         if (this.init_AiOperation_Result.terminal()) {
-            JsonObject data = AiRunResources.parseEvidenceJson(this.init_AiOperation_Result.dataJson());
+         this.child = child;
+         this.lastResult = child.tick();
+         if (this.lastResult.terminal()) {
+            JsonObject data = AiRunResources.parseEvidenceJson(this.lastResult.dataJson());
             boolean needsObservation = child.requiresReconciliationAfterEmergency()
-               || this.init_AiOperation_Result.status() != AiOperation.Status.SUCCEEDED && before
+               || this.lastResult.status() != AiOperation.Status.SUCCEEDED && before
                || AiJson.getBoolean(data, "interruptedActionNeedsReconciliation", false)
                || AiJson.getBoolean(data, "reobserveBeforeResuming", false);
-            this.init_AiOperation_Result = AiGuardLayer.wrapPendingTermination(needsObservation, this.init_AiOperation_Result);
-            this.init(needsObservation, this.init_AiOperation_Result);
+            this.lastResult = AiGuardLayer.wrapPendingTermination(needsObservation, this.lastResult);
+            this.init(needsObservation, this.lastResult);
          }
 
-         return this.init_AiOperation_Result;
+         return this.lastResult;
       }
 
       void init_V(AiOperation child) {
          if (child != null) {
-            AiOperation.Result actual = this.init_AiOperation == child ? this.init_AiOperation_Result : null;
+            AiOperation.Result actual = this.child == child ? this.lastResult : null;
             this.init(child.requiresReconciliationAfterEmergency(), actual);
-            if (this.init_AiOperation != child) {
-               this.init_AiOperation = child;
-               this.init_AiOperation_Result = null;
+            if (this.child != child) {
+               this.child = child;
+               this.lastResult = null;
             }
          }
       }
@@ -1531,7 +1531,7 @@ final class AiStronghold {
             || AiJson.getBoolean(receipt, "interruptedActionNeedsReconciliation", false)
             || AiJson.getBoolean(receipt, "reobserveBeforeResuming", false)) {
             this.init_Z = true;
-            if (actual != null && (this.load == null || actual == this.init_AiOperation_Result)) {
+            if (actual != null && (this.load == null || actual == this.lastResult)) {
                this.load = actual;
             }
          }
@@ -1555,7 +1555,7 @@ final class AiStronghold {
          }
 
          if (actual == null) {
-            actual = this.init_AiOperation_Result != null ? this.init_AiOperation_Result : this.load;
+            actual = this.lastResult != null ? this.lastResult : this.load;
          }
 
          AiOperation.Result result = AiStronghold.init(status, message, data, this.init_Z, actual);
@@ -1564,64 +1564,64 @@ final class AiStronghold {
    }
 
    static final class Inner_StreamUtil {
-      int init_I;
-      int load_I;
-      int read_I;
-      int write_I = -1;
-      int update_I;
-      long init_J;
-      long load_J;
-      long read_J = -1L;
-      long write_J;
-      long update_J;
+      int beforeEyes;
+      int heldEyes;
+      int sequenceBefore;
+      int sentSequence = -1;
+      int observedEyes;
+      long inventoryBefore;
+      long repliesBefore;
+      long repliesAtAcknowledgement = -1L;
+      long observedInventoryRevision;
+      long observedContainerReplies;
       int sync = -1;
-      UUID init_UUID;
-      boolean init_Z;
+      UUID identity;
+      boolean sent;
       boolean load_Z;
       boolean read_Z;
       boolean write_Z;
-      boolean update_Z;
+      boolean acknowledged;
 
       void init(int eyes, int held, long inventory, long replies, int sequence) {
-         if (this.init_Z) {
+         if (this.sent) {
             throw new IllegalStateException("An Eye throw receipt cannot send another use");
          }
 
-         this.init_I = this.update_I = eyes;
-         this.load_I = held;
-         this.init_J = this.write_J = inventory;
-         this.load_J = this.update_J = replies;
-         this.read_I = sequence;
-         this.init_Z = true;
+         this.beforeEyes = this.observedEyes = eyes;
+         this.heldEyes = held;
+         this.inventoryBefore = this.observedInventoryRevision = inventory;
+         this.repliesBefore = this.observedContainerReplies = replies;
+         this.sequenceBefore = sequence;
+         this.sent = true;
       }
 
       void init(int sequence) {
-         if (sequence > this.read_I) {
-            this.write_I = sequence;
+         if (sequence > this.sequenceBefore) {
+            this.sentSequence = sequence;
          }
       }
 
       AiStronghold.Inner_BufferHelper init(int eyes, long inventory, OptionalInt snapshot, long replies, boolean acknowledged, UUID identity, int elapsedTicks) {
-         if (!this.init_Z) {
+         if (!this.sent) {
             return AiStronghold.Inner_BufferHelper.WAITING;
          }
 
-         this.update_I = eyes;
-         this.write_J = inventory;
-         this.update_J = replies;
-         boolean freshSnapshot = snapshot.isPresent() && replies > this.load_J;
+         this.observedEyes = eyes;
+         this.observedInventoryRevision = inventory;
+         this.observedContainerReplies = replies;
+         boolean freshSnapshot = snapshot.isPresent() && replies > this.repliesBefore;
          this.sync = freshSnapshot ? snapshot.getAsInt() : -1;
-         this.update_Z = this.update_Z | (acknowledged && this.write_I >= 0);
+         this.acknowledged = this.acknowledged | (acknowledged && this.sentSequence >= 0);
          if (identity != null) {
-            if (this.init_UUID == null) {
-               this.init_UUID = identity;
-            } else if (!this.init_UUID.equals(identity)) {
+            if (this.identity == null) {
+               this.identity = identity;
+            } else if (!this.identity.equals(identity)) {
                this.write_Z = true;
             }
          }
 
-         if (this.update_Z && this.read_J < 0L) {
-            this.read_J = replies;
+         if (this.acknowledged && this.repliesAtAcknowledgement < 0L) {
+            this.repliesAtAcknowledgement = replies;
          }
 
          if (this.write_Z) {
@@ -1632,12 +1632,12 @@ final class AiStronghold {
             return AiStronghold.Inner_BufferHelper.REJECTED;
          } else {
             int serverEyes = freshSnapshot ? Math.min(eyes, snapshot.getAsInt()) : eyes;
-            if (this.init_I - serverEyes > 1) {
+            if (this.beforeEyes - serverEyes > 1) {
                this.write_Z = true;
                return AiStronghold.Inner_BufferHelper.AMBIGUOUS;
-            } else if (this.init_I > 0
-               && this.load_I > 0
-               && (eyes == this.init_I - 1 && inventory > this.init_J || freshSnapshot && snapshot.getAsInt() == this.init_I - 1)) {
+            } else if (this.beforeEyes > 0
+               && this.heldEyes > 0
+               && (eyes == this.beforeEyes - 1 && inventory > this.inventoryBefore || freshSnapshot && snapshot.getAsInt() == this.beforeEyes - 1)) {
                this.load_Z = true;
                return AiStronghold.Inner_BufferHelper.CONSUMED;
             } else {
@@ -1653,15 +1653,15 @@ final class AiStronghold {
             return AiStronghold.Inner_BufferHelper.CONSUMED;
          } else if (this.read_Z) {
             return AiStronghold.Inner_BufferHelper.REJECTED;
-         } else if (this.init_Z
+         } else if (this.sent
             && elapsedTicks > 120
-            && this.update_Z
-            && this.read_J >= 0L
-            && this.update_J > this.read_J
+            && this.acknowledged
+            && this.repliesAtAcknowledgement >= 0L
+            && this.observedContainerReplies > this.repliesAtAcknowledgement
             && snapshotAfterAcknowledgement.isPresent()
-            && snapshotAfterAcknowledgement.getAsInt() == this.init_I
-            && this.update_I == this.init_I
-            && this.init_UUID == null) {
+            && snapshotAfterAcknowledgement.getAsInt() == this.beforeEyes
+            && this.observedEyes == this.beforeEyes
+            && this.identity == null) {
             this.read_Z = true;
             return AiStronghold.Inner_BufferHelper.REJECTED;
          } else {
@@ -1670,39 +1670,39 @@ final class AiStronghold {
       }
 
       boolean init_Z() {
-         return this.init_Z && (this.write_Z || !this.load_Z && !this.read_Z);
+         return this.sent && (this.write_Z || !this.load_Z && !this.read_Z);
       }
 
-      JsonObject init_JsonObject() {
+      JsonObject evidence() {
          return AiJson.objectOf(
             "sent",
-            this.init_Z,
+            this.sent,
             "beforeEyes",
-            this.init_I,
+            this.beforeEyes,
             "heldEyes",
-            this.load_I,
+            this.heldEyes,
             "observedEyes",
-            this.update_I,
+            this.observedEyes,
             "inventoryBefore",
-            this.init_J,
+            this.inventoryBefore,
             "repliesBefore",
-            this.load_J,
+            this.repliesBefore,
             "sequenceBefore",
-            this.read_I,
+            this.sequenceBefore,
             "sentSequence",
-            this.write_I,
+            this.sentSequence,
             "repliesAtAcknowledgement",
-            this.read_J,
+            this.repliesAtAcknowledgement,
             "observedInventoryRevision",
-            this.write_J,
+            this.observedInventoryRevision,
             "observedContainerReplies",
-            this.update_J,
+            this.observedContainerReplies,
             "serverEyeSnapshot",
             this.sync,
             "useAcknowledged",
-            this.update_Z,
+            this.acknowledged,
             "eyeIdentity",
-            this.init_UUID == null ? "" : this.init_UUID.toString(),
+            this.identity == null ? "" : this.identity.toString(),
             "consumed",
             this.load_Z,
             "rejected",

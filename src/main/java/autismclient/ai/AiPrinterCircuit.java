@@ -57,12 +57,12 @@ final class AiPrinterCircuit {
       return Collections.unmodifiableSet(inputs);
    }
 
-   static AiPrinterCircuit.Inner_ConfigStore init_bl_ConfigStore(BlockGetter world, BlockPos source, BlockPos target, boolean quasi) {
+   static AiPrinterCircuit.Inner_ConfigStore reachStatus(BlockGetter world, BlockPos source, BlockPos target, boolean quasi) {
       return init(world, source, target, quasi, 256);
    }
 
-   static boolean init_Z(BlockGetter world, BlockPos source, BlockPos target, boolean quasi) {
-      return init_bl_ConfigStore(world, source, target, quasi) == AiPrinterCircuit.Inner_ConfigStore.REACHES;
+   static boolean reaches(BlockGetter world, BlockPos source, BlockPos target, boolean quasi) {
+      return reachStatus(world, source, target, quasi) == AiPrinterCircuit.Inner_ConfigStore.REACHES;
    }
 
    static AiPrinterCircuit.Inner_ConfigStore init(BlockGetter world, BlockPos source, BlockPos target, boolean quasi, int budget) {
@@ -72,11 +72,11 @@ final class AiPrinterCircuit {
    }
 
    static Map<BlockPos, AiPrinterCircuit.Inner_ConfigStore> influences(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
-      return init_Map(world, source, targets, 256);
+      return reachStatuses(world, source, targets, 256);
    }
 
-   static Map<BlockPos, AiPrinterCircuit.Inner_ConfigStore> init_Map(BlockGetter world, BlockPos source, Set<BlockPos> targets, int budget) {
-      AiPrinterCircuit.Inner_JsonUtil trace = init_bl_JsonUtil(world, source, targets, budget);
+   static Map<BlockPos, AiPrinterCircuit.Inner_ConfigStore> reachStatuses(BlockGetter world, BlockPos source, Set<BlockPos> targets, int budget) {
+      AiPrinterCircuit.Inner_JsonUtil trace = traceAll(world, source, targets, budget);
       HashMap<BlockPos, AiPrinterCircuit.Inner_ConfigStore> result = new HashMap<>();
 
       for (BlockPos at : targets) {
@@ -87,10 +87,10 @@ final class AiPrinterCircuit {
    }
 
    static AiPrinterCircuit.Inner_JsonUtil trace(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
-      return init_bl_JsonUtil(world, source, targets, 256);
+      return traceAll(world, source, targets, 256);
    }
 
-   static AiPrinterCircuit.Inner_JsonUtil init_bl_JsonUtil(BlockGetter world, BlockPos source, Set<BlockPos> targets, int budget) {
+   static AiPrinterCircuit.Inner_JsonUtil traceAll(BlockGetter world, BlockPos source, Set<BlockPos> targets, int budget) {
       return init(world, source, targets, budget, false);
    }
 
@@ -100,11 +100,11 @@ final class AiPrinterCircuit {
 
    private static AiPrinterCircuit.Inner_JsonUtil init(BlockGetter world, BlockPos source, Set<BlockPos> targets, int budget, boolean unfinishedWire) {
       AiPrinterCircuit.Inner_TaskQueue search = new AiPrinterCircuit.Inner_TaskQueue(world, source.immutable(), BlockPos.ZERO, false, Math.max(0, budget));
-      search.load_Set = targets;
+      search.targets = targets;
       search.write = unfinishedWire;
       search.init();
-      search.read_Map.remove(source);
-      return new AiPrinterCircuit.Inner_JsonUtil(Map.copyOf(search.read_Map), search.read_Z ? AiPrinterCircuit.Inner_ConfigStore.UNKNOWN : AiPrinterCircuit.Inner_ConfigStore.NO_PATH);
+      search.results.remove(source);
+      return new AiPrinterCircuit.Inner_JsonUtil(Map.copyOf(search.results), search.read_Z ? AiPrinterCircuit.Inner_ConfigStore.UNKNOWN : AiPrinterCircuit.Inner_ConfigStore.NO_PATH);
    }
 
    private static AiPrinterCircuit.Inner_NetHelper init(AiPrinterCircuit.Inner_NetHelper a, AiPrinterCircuit.Inner_NetHelper b) {
@@ -164,29 +164,29 @@ final class AiPrinterCircuit {
    }
 
    private static final class Inner_TaskQueue {
-      final BlockGetter init_BlockGetter;
-      final BlockPos init_BlockPos;
-      final BlockPos load_BlockPos;
-      final boolean init_Z;
-      final int init_I;
-      final ArrayDeque<AiPrinterCircuit.Inner_CachePool> init_ArrayDeque = new ArrayDeque<>();
-      final Map<AiPrinterCircuit.Inner_DataUtil, Integer> init_Map = new HashMap<>();
-      final Map<AiPrinterCircuit.Inner_BufferHelper, AiPrinterCircuit.Inner_NetHelper> load_Map = new HashMap<>();
-      final Set<AiPrinterCircuit.Inner_BufferHelper> init_Set = new HashSet<>();
-      int load_I;
-      int read_I;
+      final BlockGetter world;
+      final BlockPos source;
+      final BlockPos target;
+      final boolean quasi;
+      final int budget;
+      final ArrayDeque<AiPrinterCircuit.Inner_CachePool> queue = new ArrayDeque<>();
+      final Map<AiPrinterCircuit.Inner_DataUtil, Integer> bestStrength = new HashMap<>();
+      final Map<AiPrinterCircuit.Inner_BufferHelper, AiPrinterCircuit.Inner_NetHelper> queryCache = new HashMap<>();
+      final Set<AiPrinterCircuit.Inner_BufferHelper> activeQueries = new HashSet<>();
+      int visitedCount;
+      int queryCount;
       boolean load_Z;
       boolean read_Z;
       boolean write;
-      Set<BlockPos> load_Set;
-      final Map<BlockPos, AiPrinterCircuit.Inner_ConfigStore> read_Map = new HashMap<>();
+      Set<BlockPos> targets;
+      final Map<BlockPos, AiPrinterCircuit.Inner_ConfigStore> results = new HashMap<>();
 
       Inner_TaskQueue(final BlockGetter original, BlockPos source, BlockPos target, boolean quasi, int budget) {
-         this.init_BlockPos = source;
-         this.load_BlockPos = target;
-         this.init_Z = quasi;
-         this.init_I = budget;
-         this.init_BlockGetter = new BlockGetter() {
+         this.source = source;
+         this.target = target;
+         this.quasi = quasi;
+         this.budget = budget;
+         this.world = new BlockGetter() {
             final Map<BlockPos, BlockState> init = new HashMap<>();
 
             @Override
@@ -217,27 +217,27 @@ final class AiPrinterCircuit {
       }
 
       AiPrinterCircuit.Inner_ConfigStore init() {
-         BlockState state = this.init_BlockGetter.getBlockState(this.init_BlockPos);
-         AiPrinterCircuit.Inner_NetHelper initial = state.getBlock() instanceof DiodeBlock ? this.init_bl_NetHelper(this.init_BlockPos) : AiPrinterCircuit.Inner_NetHelper.VARIABLE;
+         BlockState state = this.world.getBlockState(this.source);
+         AiPrinterCircuit.Inner_NetHelper initial = state.getBlock() instanceof DiodeBlock ? this.init_bl_NetHelper(this.source) : AiPrinterCircuit.Inner_NetHelper.VARIABLE;
          this.init(
-            this.init_BlockPos,
+            this.source,
             state.getBlock() instanceof PoweredRailBlock ? AiPrinterCircuit.Inner_StreamUtil.RAIL : AiPrinterCircuit.Inner_StreamUtil.OUTPUT,
             state.getBlock() instanceof PoweredRailBlock ? 9 : initial.high,
             false,
             initial.unknown
          );
 
-         while (!this.init_ArrayDeque.isEmpty()) {
-            AiPrinterCircuit.Inner_CachePool n = this.init_ArrayDeque.remove();
+         while (!this.queue.isEmpty()) {
+            AiPrinterCircuit.Inner_CachePool n = this.queue.remove();
             AiPrinterCircuit.Inner_DataUtil key = new AiPrinterCircuit.Inner_DataUtil(n.at, n.kind, n.wireFed, n.unknown);
-            if (this.init_Map.getOrDefault(key, 0) < n.strength) {
-               if (++this.load_I > this.init_I) {
+            if (this.bestStrength.getOrDefault(key, 0) < n.strength) {
+               if (++this.visitedCount > this.budget) {
                   this.read_Z = true;
                   return AiPrinterCircuit.Inner_ConfigStore.UNKNOWN;
                }
 
-               this.init_Map.put(key, n.strength);
-               state = this.init_BlockGetter.getBlockState(n.at);
+               this.bestStrength.put(key, n.strength);
+               state = this.world.getBlockState(n.at);
                boolean wire = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && state.getBlock() instanceof RedstoneWireBlock;
                boolean comparator = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && state.getBlock() instanceof ComparatorBlock;
                BlockState signal = AiPrinterCircuit.init(state, n.strength);
@@ -246,8 +246,8 @@ final class AiPrinterCircuit {
                   BlockPos next = n.at.relative(query.getOpposite());
                   int weak = n.kind == AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR
                      ? n.strength
-                     : (comparator ? (state.getValue(ComparatorBlock.FACING) == query ? n.strength : 0) : signal.getSignal(this.init_BlockGetter, n.at, query));
-                  int direct = n.kind == AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR ? 0 : (comparator ? weak : signal.getDirectSignal(this.init_BlockGetter, n.at, query));
+                     : (comparator ? (state.getValue(ComparatorBlock.FACING) == query ? n.strength : 0) : signal.getSignal(this.world, n.at, query));
+                  int direct = n.kind == AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR ? 0 : (comparator ? weak : signal.getDirectSignal(this.world, n.at, query));
                   boolean possibleConnection = this.write && wire && query.getAxis().isHorizontal() && weak == 0;
                   AiPrinterCircuit.Inner_CachePool output = n;
                   if (possibleConnection) {
@@ -256,7 +256,7 @@ final class AiPrinterCircuit {
                      output = new AiPrinterCircuit.Inner_CachePool(n.at, n.kind, n.strength, n.wireFed, true);
                   }
 
-                  boolean wireInput = this.init_Z(next);
+                  boolean wireInput = this.isWire(next);
                   boolean canFeed = !wireInput || !wire && (n.kind != AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR || !n.wireFed);
                   if (weak > 0 && canFeed && this.init_Z(next, query, output.unknown)) {
                      if (!output.unknown) {
@@ -267,7 +267,7 @@ final class AiPrinterCircuit {
                   }
 
                   this.init(output, next, query, weak, direct);
-                  if (direct > 0 && this.init_BlockGetter.getBlockState(next).isRedstoneConductor(this.init_BlockGetter, next)) {
+                  if (direct > 0 && this.world.getBlockState(next).isRedstoneConductor(this.world, next)) {
                      this.init(next, AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR, direct, wire, output.unknown);
                   }
                }
@@ -278,12 +278,12 @@ final class AiPrinterCircuit {
 
                      for (int dy = -1; dy <= 1; dy++) {
                         BlockPos receiver = adjacent.offset(0, dy, 0);
-                        if (this.init_Z(receiver) && this.load(receiver, n.at)) {
-                           if (this.load_Set != null) {
-                              if (this.load_Set.contains(receiver)) {
+                        if (this.isWire(receiver) && this.load(receiver, n.at)) {
+                           if (this.targets != null) {
+                              if (this.targets.contains(receiver)) {
                                  this.init(receiver, n.unknown);
                               }
-                           } else if (receiver.equals(this.load_BlockPos)) {
+                           } else if (receiver.equals(this.target)) {
                               if (!n.unknown) {
                                  return AiPrinterCircuit.Inner_ConfigStore.REACHES;
                               }
@@ -315,17 +315,17 @@ final class AiPrinterCircuit {
 
       void init(BlockPos at, AiPrinterCircuit.Inner_StreamUtil kind, int strength, boolean wireFed, boolean unknown) {
          if (strength > 0) {
-            this.init_ArrayDeque.add(new AiPrinterCircuit.Inner_CachePool(at.immutable(), kind, Math.min(15, strength), wireFed, unknown));
+            this.queue.add(new AiPrinterCircuit.Inner_CachePool(at.immutable(), kind, Math.min(15, strength), wireFed, unknown));
          }
       }
 
-      boolean init_Z(BlockPos p) {
-         return this.init_BlockGetter.getBlockState(p).getBlock() instanceof RedstoneWireBlock;
+      boolean isWire(BlockPos p) {
+         return this.world.getBlockState(p).getBlock() instanceof RedstoneWireBlock;
       }
 
       boolean init(BlockPos receiver, BlockPos emitter) {
-         BlockState rail = this.init_BlockGetter.getBlockState(receiver);
-         BlockState feed = this.init_BlockGetter.getBlockState(emitter);
+         BlockState rail = this.world.getBlockState(receiver);
+         BlockState feed = this.world.getBlockState(emitter);
          if (rail.getBlock() instanceof PoweredRailBlock && feed.is(rail.getBlock())) {
             RailShape shape = rail.getValue(PoweredRailBlock.SHAPE);
             RailShape feedShape = feed.getValue(PoweredRailBlock.SHAPE);
@@ -394,8 +394,8 @@ final class AiPrinterCircuit {
                return true;
             }
 
-            boolean solid = this.init_BlockGetter.getBlockState(next).isRedstoneConductor(this.init_BlockGetter, next);
-            if (solid && !this.init_BlockGetter.getBlockState(receiver.above()).isRedstoneConductor(this.init_BlockGetter, receiver.above())) {
+            boolean solid = this.world.getBlockState(next).isRedstoneConductor(this.world, next);
+            if (solid && !this.world.getBlockState(receiver.above()).isRedstoneConductor(this.world, receiver.above())) {
                if (next.above().equals(emitter)) {
                   return true;
                }
@@ -408,30 +408,30 @@ final class AiPrinterCircuit {
       }
 
       boolean init_Z(BlockPos cell, Direction query, boolean unknown) {
-         if (this.load_Set != null) {
+         if (this.targets != null) {
             for (BlockPos at : new BlockPos[]{cell, cell.below(), cell.above()}) {
-               if (this.load_Set.contains(at) && this.init(at, AiPrinterCircuit.init(this.init_BlockGetter.getBlockState(at)), cell, query)) {
+               if (this.targets.contains(at) && this.init(at, AiPrinterCircuit.init(this.world.getBlockState(at)), cell, query)) {
                   this.init(at, unknown);
                }
             }
 
             return false;
          } else {
-            return this.init(this.load_BlockPos, this.init_Z, cell, query);
+            return this.init(this.target, this.quasi, cell, query);
          }
       }
 
       private void init(BlockPos at, boolean unknown) {
-         if (!at.equals(this.init_BlockPos)) {
+         if (!at.equals(this.source)) {
             AiPrinterCircuit.Inner_ConfigStore result = unknown ? AiPrinterCircuit.Inner_ConfigStore.UNKNOWN : AiPrinterCircuit.Inner_ConfigStore.REACHES;
-            if (this.read_Map.get(at) != AiPrinterCircuit.Inner_ConfigStore.REACHES) {
-               this.read_Map.put(at.immutable(), result);
+            if (this.results.get(at) != AiPrinterCircuit.Inner_ConfigStore.REACHES) {
+               this.results.put(at.immutable(), result);
             }
          }
       }
 
       boolean init(BlockPos target, boolean quasi, BlockPos cell, Direction query) {
-         BlockState receiver = this.init_BlockGetter.getBlockState(target);
+         BlockState receiver = this.world.getBlockState(target);
          if (cell.equals(target)) {
             return !(receiver.getBlock() instanceof PistonBaseBlock) || receiver.getValue(PistonBaseBlock.FACING) != query;
          }
@@ -447,7 +447,7 @@ final class AiPrinterCircuit {
       }
 
       void init(AiPrinterCircuit.Inner_CachePool n, BlockPos at, Direction input, int weak, int direct) {
-         BlockState state = this.init_BlockGetter.getBlockState(at);
+         BlockState state = this.world.getBlockState(at);
          Block block = state.getBlock();
          if (block instanceof ObserverBlock) {
             if ((n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT || n.kind == AiPrinterCircuit.Inner_StreamUtil.RAIL) && at.relative(state.getValue(ObserverBlock.FACING)).equals(n.at)) {
@@ -464,13 +464,13 @@ final class AiPrinterCircuit {
             }
          } else if (block instanceof RedstoneWireBlock) {
             if (weak > 0
-               && !(this.init_BlockGetter.getBlockState(n.at).getBlock() instanceof RedstoneWireBlock)
+               && !(this.world.getBlockState(n.at).getBlock() instanceof RedstoneWireBlock)
                && (n.kind != AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR || !n.wireFed)) {
                this.init(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, weak, false, n.unknown);
             }
          } else if (block instanceof DiodeBlock) {
             Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
-            boolean rawDust = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && this.init_BlockGetter.getBlockState(n.at).getBlock() instanceof RedstoneWireBlock;
+            boolean rawDust = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && this.world.getBlockState(n.at).getBlock() instanceof RedstoneWireBlock;
             if (input == facing) {
                int strength = Math.max(weak, rawDust ? n.strength : 0);
                if (strength <= 0) {
@@ -479,12 +479,12 @@ final class AiPrinterCircuit {
 
                if (block instanceof ComparatorBlock) {
                   AiPrinterCircuit.Inner_NetHelper side = this.load(at, state);
-                  BlockState emitter = this.init_BlockGetter.getBlockState(n.at);
+                  BlockState emitter = this.world.getBlockState(n.at);
                   boolean analog = emitter.hasAnalogOutputSignal();
                   if (n.kind == AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR) {
                      BlockPos beyond = n.at.relative(facing);
-                     BlockState farther = this.init_BlockGetter.getBlockState(beyond);
-                     analog |= farther.hasAnalogOutputSignal() || !farther.isRedstoneConductor(this.init_BlockGetter, beyond);
+                     BlockState farther = this.world.getBlockState(beyond);
+                     analog |= farther.hasAnalogOutputSignal() || !farther.isRedstoneConductor(this.world, beyond);
                   }
 
                   int rear = analog ? 15 : strength;
@@ -494,7 +494,7 @@ final class AiPrinterCircuit {
                   this.init(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, 15, false, n.unknown);
                }
             } else if (input.getAxis().isHorizontal() && input.getAxis() != facing.getAxis()) {
-               BlockState emitter = this.init_BlockGetter.getBlockState(n.at);
+               BlockState emitter = this.world.getBlockState(n.at);
                boolean diode = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && emitter.getBlock() instanceof DiodeBlock;
                int control = block instanceof ComparatorBlock
                   ? (rawDust || emitter.is(Blocks.REDSTONE_BLOCK) ? n.strength : (n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && emitter.isSignalSource() ? direct : 0))
@@ -527,7 +527,7 @@ final class AiPrinterCircuit {
       }
 
       AiPrinterCircuit.Inner_NetHelper init_bl_NetHelper(BlockPos at) {
-         BlockState state = this.init_BlockGetter.getBlockState(at);
+         BlockState state = this.world.getBlockState(at);
          AiPrinterCircuit.Inner_NetHelper rear = this.init(at, state);
          if (state.getBlock() instanceof ComparatorBlock) {
             AiPrinterCircuit.Inner_NetHelper side = this.load(at, state);
@@ -554,7 +554,7 @@ final class AiPrinterCircuit {
       AiPrinterCircuit.Inner_NetHelper init(BlockPos at, BlockState diode) {
          Direction direction = diode.getValue(BlockStateProperties.HORIZONTAL_FACING);
          BlockPos rearPos = at.relative(direction);
-         BlockState rear = this.init_BlockGetter.getBlockState(rearPos);
+         BlockState rear = this.world.getBlockState(rearPos);
          AiPrinterCircuit.Inner_NetHelper supply = this.load(rearPos, direction, false);
          if (rear.getBlock() instanceof RedstoneWireBlock) {
             supply = AiPrinterCircuit.init(supply, AiPrinterCircuit.Inner_NetHelper.VARIABLE);
@@ -565,9 +565,9 @@ final class AiPrinterCircuit {
                return AiPrinterCircuit.Inner_NetHelper.UNKNOWN;
             }
 
-            if (rear.isRedstoneConductor(this.init_BlockGetter, rearPos) && supply.high < 15) {
-               BlockState farther = this.init_BlockGetter.getBlockState(rearPos.relative(direction));
-               if (farther.hasAnalogOutputSignal() || !farther.isRedstoneConductor(this.init_BlockGetter, rearPos.relative(direction))) {
+            if (rear.isRedstoneConductor(this.world, rearPos) && supply.high < 15) {
+               BlockState farther = this.world.getBlockState(rearPos.relative(direction));
+               if (farther.hasAnalogOutputSignal() || !farther.isRedstoneConductor(this.world, rearPos.relative(direction))) {
                   return AiPrinterCircuit.Inner_NetHelper.UNKNOWN;
                }
             }
@@ -584,7 +584,7 @@ final class AiPrinterCircuit {
       }
 
       AiPrinterCircuit.Inner_NetHelper init_bl_NetHelper(BlockPos at, Direction direction, boolean onlyDiodes) {
-         BlockState state = this.init_BlockGetter.getBlockState(at);
+         BlockState state = this.world.getBlockState(at);
          if (onlyDiodes) {
             return state.getBlock() instanceof DiodeBlock ? this.load(at, direction, true) : AiPrinterCircuit.Inner_NetHelper.ZERO;
          } else if (state.is(Blocks.REDSTONE_BLOCK)) {
@@ -598,31 +598,31 @@ final class AiPrinterCircuit {
 
       AiPrinterCircuit.Inner_NetHelper load(BlockPos at, Direction direction, boolean direct) {
          AiPrinterCircuit.Inner_BufferHelper query = new AiPrinterCircuit.Inner_BufferHelper(at, direction, direct);
-         AiPrinterCircuit.Inner_NetHelper saved = this.load_Map.get(query);
+         AiPrinterCircuit.Inner_NetHelper saved = this.queryCache.get(query);
          if (saved != null) {
             return saved;
          }
 
-         if (this.init_Set.size() < 16 && this.read_I < 512 && this.init_Set.add(query)) {
-            this.read_I++;
-            BlockState state = this.init_BlockGetter.getBlockState(at);
+         if (this.activeQueries.size() < 16 && this.queryCount < 512 && this.activeQueries.add(query)) {
+            this.queryCount++;
+            BlockState state = this.world.getBlockState(at);
             AiPrinterCircuit.Inner_NetHelper result;
             if (state.getBlock() instanceof DiodeBlock) {
                result = state.getValue(BlockStateProperties.HORIZONTAL_FACING) == direction ? this.init_bl_NetHelper(at) : AiPrinterCircuit.Inner_NetHelper.ZERO;
             } else {
                BlockState on = AiPrinterCircuit.init(state, 15);
-               int high = direct ? on.getDirectSignal(this.init_BlockGetter, at, direction) : on.getSignal(this.init_BlockGetter, at, direction);
+               int high = direct ? on.getDirectSignal(this.world, at, direction) : on.getSignal(this.world, at, direction);
                result = new AiPrinterCircuit.Inner_NetHelper(state.is(Blocks.REDSTONE_BLOCK) ? high : 0, high, false);
             }
 
-            if (!direct && state.isRedstoneConductor(this.init_BlockGetter, at)) {
+            if (!direct && state.isRedstoneConductor(this.world, at)) {
                for (Direction side : Direction.values()) {
                   result = AiPrinterCircuit.init(result, this.load(at.relative(side), side, true));
                }
             }
 
-            this.init_Set.remove(query);
-            this.load_Map.put(query, result);
+            this.activeQueries.remove(query);
+            this.queryCache.put(query, result);
             return result;
          } else {
             return AiPrinterCircuit.Inner_NetHelper.UNKNOWN;

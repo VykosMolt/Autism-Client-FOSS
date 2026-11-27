@@ -19,75 +19,75 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class PrintRailVehicle implements PrintMachineJob {
-   private final PrintEnv init_EventBus;
-   private final PrintRailVehicle.Inner_StreamUtil init_MethodUtil_StreamU;
-   private final Object init_Obj;
-   private final Item init_Item;
-   private final EntityType<?> init_EntityType;
-   private Set<UUID> init_Set = Set.of();
-   private UUID init_UUID;
-   private PrintMachineJob.JobStatus init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.PREPARING;
-   private long init_J;
+   private final PrintEnv env;
+   private final PrintRailVehicle.Inner_StreamUtil spec;
+   private final Object worldToken;
+   private final Item item;
+   private final EntityType<?> entityType;
+   private Set<UUID> existingIds = Set.of();
+   private UUID vehicleId;
+   private PrintMachineJob.JobStatus status = PrintMachineJob.JobStatus.PREPARING;
+   private long dispatchNanos;
    private long load = -9223372036854775808L;
-   private Vec3 init_Vec3;
-   private AABB init_AABB;
-   private String init_Str = "Waiting for observed rail and entity state";
+   private Vec3 targetPosition;
+   private AABB bounds;
+   private String failure = "Waiting for observed rail and entity state";
 
    public PrintRailVehicle(PrintEnv env, PrintRailVehicle.Inner_StreamUtil spec) {
-      this.init_EventBus = env;
-      this.init_MethodUtil_StreamU = spec;
-      this.init_Obj = env.worldToken();
+      this.env = env;
+      this.spec = spec;
+      this.worldToken = env.worldToken();
       Identifier id = Identifier.tryParse(spec.entityId());
-      this.init_Item = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
-      this.init_EntityType = id == null ? null : BuiltInRegistries.ENTITY_TYPE.getOptional(id).orElse(null);
-      if (!(this.init_Item instanceof MinecartItem) || this.init_EntityType == null) {
+      this.item = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
+      this.entityType = id == null ? null : BuiltInRegistries.ENTITY_TYPE.getOptional(id).orElse(null);
+      if (!(this.item instanceof MinecartItem) || this.entityType == null) {
          throw new IllegalArgumentException("Saved rail vehicle has no native placeable minecart item: " + spec.entityId());
       }
    }
 
    public PrintRailVehicle.Inner_StreamUtil getSpec() {
-      return this.init_MethodUtil_StreamU;
+      return this.spec;
    }
 
    @Override
    public BlockPos position() {
-      return this.init_MethodUtil_StreamU.rail();
+      return this.spec.rail();
    }
 
    @Override
    public String description() {
-      return this.init_MethodUtil_StreamU.railPlacement() ? "rail vehicle" : "off-rail minecart";
+      return this.spec.railPlacement() ? "rail vehicle" : "off-rail minecart";
    }
 
    @Override
    public Item item() {
-      return this.init_MethodUtil_StreamU.railPlacement() ? this.init_Item : Items.AIR;
+      return this.spec.railPlacement() ? this.item : Items.AIR;
    }
 
-   public PrintMachineJob.JobStatus load_BitSetUtil_DataUti() {
-      return this.init_BitSetUtil_DataUti;
+   public PrintMachineJob.JobStatus status() {
+      return this.status;
    }
 
    @Override
    public String detail() {
-      return this.init_Str;
+      return this.failure;
    }
 
-   public UUID init_UUID() {
-      return this.init_UUID;
+   public UUID vehicleId() {
+      return this.vehicleId;
    }
 
-   public AABB init_AABB() {
-      return this.init_AABB;
+   public AABB bounds() {
+      return this.bounds;
    }
 
    public BlockPos firstUnloadedCell() {
-      BlockPos rail = this.init_MethodUtil_StreamU.rail();
+      BlockPos rail = this.spec.rail();
 
       for (int x = rail.getX() - 2 >> 4; x <= rail.getX() + 2 >> 4; x++) {
          for (int z = rail.getZ() - 2 >> 4; z <= rail.getZ() + 2 >> 4; z++) {
             BlockPos at = new BlockPos(x << 4, rail.getY(), z << 4);
-            if (!this.init_EventBus.hasChunkAt(at)) {
+            if (!this.env.hasChunkAt(at)) {
                return at;
             }
          }
@@ -98,7 +98,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
 
    @Override
    public boolean matchesSource(BlockState source) {
-      if (!this.init_MethodUtil_StreamU.railPlacement()) {
+      if (!this.spec.railPlacement()) {
          return !source.isAir() && !(source.getBlock() instanceof BaseRailBlock);
       } else {
          return !(source.getBlock() instanceof BaseRailBlock) ? false : !source.is(Blocks.DETECTOR_RAIL) || source.getValue(BlockStateProperties.POWERED);
@@ -106,14 +106,14 @@ public final class PrintRailVehicle implements PrintMachineJob {
    }
 
    private boolean open() {
-      return this.init_Obj != null && this.init_Obj == this.init_EventBus.worldToken();
+      return this.worldToken != null && this.worldToken == this.env.worldToken();
    }
 
    private boolean init(PrintRailVehicle.Inner_DataUtil observed) {
-      if (observed.uuid() != null && this.init_MethodUtil_StreamU.entityId().equals(observed.entityId()) && observed.position() != null) {
-         return this.init_MethodUtil_StreamU.railPlacement()
-            ? observed.position().distanceToSqr(this.init_Vec3) <= 0.25
-            : this.init_MethodUtil_StreamU.matchesSavedPosition(observed.position(), observed.bounds());
+      if (observed.uuid() != null && this.spec.entityId().equals(observed.entityId()) && observed.position() != null) {
+         return this.spec.railPlacement()
+            ? observed.position().distanceToSqr(this.targetPosition) <= 0.25
+            : this.spec.matchesSavedPosition(observed.position(), observed.bounds());
       } else {
          return false;
       }
@@ -126,45 +126,45 @@ public final class PrintRailVehicle implements PrintMachineJob {
 
    @Override
    public PrintMachineJob.JobStatus prepare() {
-      if (this.init_BitSetUtil_DataUti != PrintMachineJob.JobStatus.PREPARING && this.init_BitSetUtil_DataUti != PrintMachineJob.JobStatus.READY) {
-         return this.init_BitSetUtil_DataUti;
+      if (this.status != PrintMachineJob.JobStatus.PREPARING && this.status != PrintMachineJob.JobStatus.READY) {
+         return this.status;
       }
 
       if (!this.open()) {
-         this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.CONFLICT;
-         this.init_Str = "World changed before vehicle placement";
-         return this.init_BitSetUtil_DataUti;
+         this.status = PrintMachineJob.JobStatus.CONFLICT;
+         this.failure = "World changed before vehicle placement";
+         return this.status;
       }
 
-      if (!this.init_EventBus.hasChunkAt(this.init_MethodUtil_StreamU.rail())) {
-         this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.PREPARING;
-         return this.init_BitSetUtil_DataUti;
+      if (!this.env.hasChunkAt(this.spec.rail())) {
+         this.status = PrintMachineJob.JobStatus.PREPARING;
+         return this.status;
       }
 
-      BlockState rail = this.init_EventBus.getBlockState(this.init_MethodUtil_StreamU.rail());
-      if (this.init_MethodUtil_StreamU.railPlacement()) {
+      BlockState rail = this.env.getBlockState(this.spec.rail());
+      if (this.spec.railPlacement()) {
          if (!(rail.getBlock() instanceof BaseRailBlock block)) {
-            this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.CONFLICT;
-            this.init_Str = "The saved vehicle's native rail is absent";
-            return this.init_BitSetUtil_DataUti;
+            this.status = PrintMachineJob.JobStatus.CONFLICT;
+            this.failure = "The saved vehicle's native rail is absent";
+            return this.status;
          }
 
-         this.init_Vec3 = init(this.init_MethodUtil_StreamU.rail(), rail, block);
+         this.targetPosition = init(this.spec.rail(), rail, block);
       } else {
          if (!this.matchesSource(rail)) {
-            this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.CONFLICT;
-            this.init_Str = "The off-rail minecart's saved block is absent";
-            return this.init_BitSetUtil_DataUti;
+            this.status = PrintMachineJob.JobStatus.CONFLICT;
+            this.failure = "The off-rail minecart's saved block is absent";
+            return this.status;
          }
 
-         this.init_Vec3 = this.init_MethodUtil_StreamU.position();
+         this.targetPosition = this.spec.position();
       }
 
-      this.init_AABB = this.init_EntityType.getDimensions().makeBoundingBox(this.init_Vec3);
-      List<PrintRailVehicle.Inner_DataUtil> observations = this.init_EventBus.nearbyMinecarts(this.init_MethodUtil_StreamU.rail());
+      this.bounds = this.entityType.getDimensions().makeBoundingBox(this.targetPosition);
+      List<PrintRailVehicle.Inner_DataUtil> observations = this.env.nearbyMinecarts(this.spec.rail());
       if (observations == null) {
-         this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.PREPARING;
-         return this.init_BitSetUtil_DataUti;
+         this.status = PrintMachineJob.JobStatus.PREPARING;
+         return this.status;
       }
 
       HashSet<UUID> ids = new HashSet<>();
@@ -172,56 +172,56 @@ public final class PrintRailVehicle implements PrintMachineJob {
 
       for (PrintRailVehicle.Inner_DataUtil observed : observations) {
          if (observed.uuid() == null || observed.position() == null || observed.bounds() == null) {
-            this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.PREPARING;
-            return this.init_BitSetUtil_DataUti;
+            this.status = PrintMachineJob.JobStatus.PREPARING;
+            return this.status;
          }
 
          ids.add(observed.uuid());
          if (this.init(observed)) {
             if (existing != null) {
-               this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.CONFLICT;
-               this.init_Str = "Multiple matching vehicles already occupy the saved position";
-               return this.init_BitSetUtil_DataUti;
+               this.status = PrintMachineJob.JobStatus.CONFLICT;
+               this.failure = "Multiple matching vehicles already occupy the saved position";
+               return this.status;
             }
 
             existing = observed;
-         } else if (observed.bounds().intersects(this.init_AABB)) {
-            this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.CONFLICT;
-            this.init_Str = "Another vehicle occupies the placement space";
-            return this.init_BitSetUtil_DataUti;
+         } else if (observed.bounds().intersects(this.bounds)) {
+            this.status = PrintMachineJob.JobStatus.CONFLICT;
+            this.failure = "Another vehicle occupies the placement space";
+            return this.status;
          }
       }
 
-      this.init_Set = Set.copyOf(ids);
+      this.existingIds = Set.copyOf(ids);
       if (existing != null) {
-         this.init_UUID = existing.uuid();
-         this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.SUCCEEDED;
-         this.init_Str = "Existing native vehicle verified";
-         return this.init_BitSetUtil_DataUti;
-      } else if (!this.init_MethodUtil_StreamU.railPlacement()) {
-         this.init_Str = "Saved off-rail minecart not placed at " + this.init_MethodUtil_StreamU.rail().toShortString() + "; native assembly required";
-         return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.CONFLICT;
+         this.vehicleId = existing.uuid();
+         this.status = PrintMachineJob.JobStatus.SUCCEEDED;
+         this.failure = "Existing native vehicle verified";
+         return this.status;
+      } else if (!this.spec.railPlacement()) {
+         this.failure = "Saved off-rail minecart not placed at " + this.spec.rail().toShortString() + "; native assembly required";
+         return this.status = PrintMachineJob.JobStatus.CONFLICT;
       } else {
-         this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.READY;
-         this.init_Str = "Native vehicle placement is ready";
-         return this.init_BitSetUtil_DataUti;
+         this.status = PrintMachineJob.JobStatus.READY;
+         this.failure = "Native vehicle placement is ready";
+         return this.status;
       }
    }
 
    @Override
    public boolean beginDispatch() {
-      if (this.init_MethodUtil_StreamU.railPlacement() && this.prepare() == PrintMachineJob.JobStatus.READY) {
-         if (this.init_AABB.intersects(this.init_EventBus.serverPlayerBox())
-            || this.init_AABB.intersects(this.init_EventBus.playerMotionState().box(this.init_EventBus.isServerSneaking()))) {
-            this.init_Str = "Worker must leave the vehicle's native spawn space";
+      if (this.spec.railPlacement() && this.prepare() == PrintMachineJob.JobStatus.READY) {
+         if (this.bounds.intersects(this.env.serverPlayerBox())
+            || this.bounds.intersects(this.env.playerMotionState().box(this.env.isServerSneaking()))) {
+            this.failure = "Worker must leave the vehicle's native spawn space";
             return false;
-         } else if (!this.init_EventBus.getInventoryItem(this.init_EventBus.getSelectedHotbarSlot()).is(this.init_Item)) {
-            this.init_Str = "The native vehicle item is not held";
+         } else if (!this.env.getInventoryItem(this.env.getSelectedHotbarSlot()).is(this.item)) {
+            this.failure = "The native vehicle item is not held";
             return false;
          } else {
-            this.init_J = this.init_EventBus.nanoTime();
-            this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.SENT;
-            this.init_Str = "Waiting for a fresh native vehicle identity";
+            this.dispatchNanos = this.env.nanoTime();
+            this.status = PrintMachineJob.JobStatus.SENT;
+            this.failure = "Waiting for a fresh native vehicle identity";
             return true;
          }
       } else {
@@ -231,25 +231,25 @@ public final class PrintRailVehicle implements PrintMachineJob {
 
    @Override
    public PrintMachineJob.JobStatus pollStatus() {
-      if (this.init_BitSetUtil_DataUti != PrintMachineJob.JobStatus.SENT) {
-         return this.init_BitSetUtil_DataUti;
+      if (this.status != PrintMachineJob.JobStatus.SENT) {
+         return this.status;
       }
 
       if (!this.open()) {
-         this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.UNCERTAIN;
-         this.init_Str = "World changed after the vehicle attempt; do not repeat it";
-         return this.init_BitSetUtil_DataUti;
+         this.status = PrintMachineJob.JobStatus.UNCERTAIN;
+         this.failure = "World changed after the vehicle attempt; do not repeat it";
+         return this.status;
       }
 
-      List<PrintRailVehicle.Inner_DataUtil> observations = this.init_EventBus.nearbyMinecarts(this.init_MethodUtil_StreamU.rail());
+      List<PrintRailVehicle.Inner_DataUtil> observations = this.env.nearbyMinecarts(this.spec.rail());
       PrintRailVehicle.Inner_DataUtil created = null;
       if (observations != null) {
          for (PrintRailVehicle.Inner_DataUtil observed : observations) {
-            if (this.init(observed) && !this.init_Set.contains(observed.uuid())) {
+            if (this.init(observed) && !this.existingIds.contains(observed.uuid())) {
                if (created != null) {
-                  this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.UNCERTAIN;
-                  this.init_Str = "Ambiguous native vehicle receipt; do not repeat the attempt";
-                  return this.init_BitSetUtil_DataUti;
+                  this.status = PrintMachineJob.JobStatus.UNCERTAIN;
+                  this.failure = "Ambiguous native vehicle receipt; do not repeat the attempt";
+                  return this.status;
                }
 
                created = observed;
@@ -258,29 +258,29 @@ public final class PrintRailVehicle implements PrintMachineJob {
       }
 
       if (created != null) {
-         this.init_UUID = created.uuid();
-         this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.SUCCEEDED;
-         this.init_Str = "Fresh native vehicle identity verified";
-         return this.init_BitSetUtil_DataUti;
+         this.vehicleId = created.uuid();
+         this.status = PrintMachineJob.JobStatus.SUCCEEDED;
+         this.failure = "Fresh native vehicle identity verified";
+         return this.status;
       }
 
-      if (this.init_EventBus.nanoTime() - this.init_J >= 5000000000L) {
-         this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.UNCERTAIN;
-         this.init_Str = "No fresh vehicle receipt; do not repeat the attempt";
+      if (this.env.nanoTime() - this.dispatchNanos >= 5000000000L) {
+         this.status = PrintMachineJob.JobStatus.UNCERTAIN;
+         this.failure = "No fresh vehicle receipt; do not repeat the attempt";
       }
 
-      return this.init_BitSetUtil_DataUti;
+      return this.status;
    }
 
    @Override
    public PrintMachineJob.JobStatus verifyStatus() {
-      if (this.init_BitSetUtil_DataUti != PrintMachineJob.JobStatus.SUCCEEDED) {
-         return this.init_BitSetUtil_DataUti;
+      if (this.status != PrintMachineJob.JobStatus.SUCCEEDED) {
+         return this.status;
       }
 
       if (!this.open()) {
-         this.init_Str = "World changed before final vehicle verification";
-         return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.UNCERTAIN;
+         this.failure = "World changed before final vehicle verification";
+         return this.status = PrintMachineJob.JobStatus.UNCERTAIN;
       }
 
       if (this.firstUnloadedCell() != null) {
@@ -288,43 +288,43 @@ public final class PrintRailVehicle implements PrintMachineJob {
          return PrintMachineJob.JobStatus.PREPARING;
       }
 
-      List<PrintRailVehicle.Inner_DataUtil> observations = this.init_EventBus.nearbyMinecarts(this.init_MethodUtil_StreamU.rail());
+      List<PrintRailVehicle.Inner_DataUtil> observations = this.env.nearbyMinecarts(this.spec.rail());
       if (observations != null) {
          for (PrintRailVehicle.Inner_DataUtil observed : observations) {
-            if (this.init_UUID.equals(observed.uuid())) {
+            if (this.vehicleId.equals(observed.uuid())) {
                if (!this.init(observed)) {
-                  this.init_Str = "The verified vehicle left its saved placement at " + this.init_MethodUtil_StreamU.rail().toShortString();
-                  return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.CONFLICT;
+                  this.failure = "The verified vehicle left its saved placement at " + this.spec.rail().toShortString();
+                  return this.status = PrintMachineJob.JobStatus.CONFLICT;
                }
 
                this.load = -9223372036854775808L;
-               this.init_Str = "Native vehicle identity reverified after access recovery";
+               this.failure = "Native vehicle identity reverified after access recovery";
                return PrintMachineJob.JobStatus.SUCCEEDED;
             }
          }
       }
 
       if (this.load == -9223372036854775808L) {
-         this.load = this.init_EventBus.nanoTime();
+         this.load = this.env.nanoTime();
       }
 
-      if (this.init_EventBus.nanoTime() - this.load >= 5000000000L) {
-         this.init_Str = "The verified vehicle is unavailable at " + this.init_MethodUtil_StreamU.rail().toShortString() + "; do not repeat placement";
-         return this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.UNCERTAIN;
+      if (this.env.nanoTime() - this.load >= 5000000000L) {
+         this.failure = "The verified vehicle is unavailable at " + this.spec.rail().toShortString() + "; do not repeat placement";
+         return this.status = PrintMachineJob.JobStatus.UNCERTAIN;
       } else {
-         this.init_Str = "Waiting for the verified vehicle's loaded identity at " + this.init_MethodUtil_StreamU.rail().toShortString();
+         this.failure = "Waiting for the verified vehicle's loaded identity at " + this.spec.rail().toShortString();
          return PrintMachineJob.JobStatus.PREPARING;
       }
    }
 
    @Override
    public void cancel() {
-      if (this.init_BitSetUtil_DataUti == PrintMachineJob.JobStatus.SENT) {
-         this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.UNCERTAIN;
-         this.init_Str = "Vehicle attempt cancelled without a receipt; do not repeat it";
-      } else if (this.init_BitSetUtil_DataUti == PrintMachineJob.JobStatus.PREPARING || this.init_BitSetUtil_DataUti == PrintMachineJob.JobStatus.READY) {
-         this.init_BitSetUtil_DataUti = PrintMachineJob.JobStatus.CONFLICT;
-         this.init_Str = "Vehicle placement cancelled before dispatch";
+      if (this.status == PrintMachineJob.JobStatus.SENT) {
+         this.status = PrintMachineJob.JobStatus.UNCERTAIN;
+         this.failure = "Vehicle attempt cancelled without a receipt; do not repeat it";
+      } else if (this.status == PrintMachineJob.JobStatus.PREPARING || this.status == PrintMachineJob.JobStatus.READY) {
+         this.status = PrintMachineJob.JobStatus.CONFLICT;
+         this.failure = "Vehicle placement cancelled before dispatch";
       }
    }
 

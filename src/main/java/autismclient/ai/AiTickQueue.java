@@ -6,18 +6,18 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 final class AiTickQueue {
-   private final ConcurrentLinkedQueue<Runnable> init_ConcurrentLinkedQu = new ConcurrentLinkedQueue<>();
-   private volatile Thread init_Thread;
+   private final ConcurrentLinkedQueue<Runnable> pending = new ConcurrentLinkedQueue<>();
+   private volatile Thread drainThread;
 
    boolean init() {
-      return this.init_Thread == Thread.currentThread();
+      return this.drainThread == Thread.currentThread();
    }
 
    void execute(Runnable action) {
       if (this.init()) {
          action.run();
       } else {
-         this.init_ConcurrentLinkedQu.add(action);
+         this.pending.add(action);
       }
    }
 
@@ -36,17 +36,17 @@ final class AiTickQueue {
    }
 
    void init(Runnable tick, Consumer<Throwable> failure) {
-      if (this.init_Thread != null) {
+      if (this.drainThread != null) {
          throw new IllegalStateException("AI tick phase is already running");
       }
 
-      this.init_Thread = Thread.currentThread();
+      this.drainThread = Thread.currentThread();
 
       try {
-         int remaining = this.init_ConcurrentLinkedQu.size();
+         int remaining = this.pending.size();
 
          while (remaining-- > 0) {
-            Runnable action = this.init_ConcurrentLinkedQu.poll();
+            Runnable action = this.pending.poll();
             if (action == null) {
                break;
             }
@@ -64,7 +64,7 @@ final class AiTickQueue {
             failure.accept(error);
          }
       } finally {
-         this.init_Thread = null;
+         this.drainThread = null;
       }
    }
 }

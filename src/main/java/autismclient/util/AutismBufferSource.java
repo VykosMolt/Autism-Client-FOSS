@@ -11,8 +11,8 @@ import net.minecraft.client.renderer.StagedVertexBuffer.ExecuteInfo;
 import net.minecraft.client.renderer.rendertype.RenderType;
 
 public final class AutismBufferSource implements AutoCloseable {
-   private final StagedVertexBuffer init_StagedVertexBuffer;
-   private final List<Draw> init_List = new ArrayList<>();
+   private final StagedVertexBuffer stagedBuffer;
+   private final List<Draw> draws = new ArrayList<>();
    private final List<RenderType> load = new ArrayList<>();
 
    public AutismBufferSource() {
@@ -20,64 +20,64 @@ public final class AutismBufferSource implements AutoCloseable {
    }
 
    public AutismBufferSource(int bufferSize) {
-      this.init_StagedVertexBuffer = new StagedVertexBuffer(() -> "AutismBufferSource", bufferSize);
+      this.stagedBuffer = new StagedVertexBuffer(() -> "AutismBufferSource", bufferSize);
    }
 
    public VertexConsumer init(RenderType renderType) {
       if (!this.load.isEmpty() && this.load.getLast() == renderType && renderType.canConsolidateConsecutiveGeometry()) {
-         return this.init_StagedVertexBuffer.getVertexBuilder(this.init_List.getLast());
+         return this.stagedBuffer.getVertexBuilder(this.draws.getLast());
       }
 
-      Draw draw = this.init_StagedVertexBuffer
+      Draw draw = this.stagedBuffer
          .appendDraw(renderType.format(), renderType.primitiveTopology(), renderType.sortOnUpload() ? RenderSystem.getProjectionType().vertexSorting() : null);
-      this.init_List.add(draw);
+      this.draws.add(draw);
       this.load.add(renderType);
-      return this.init_StagedVertexBuffer.getVertexBuilder(draw);
+      return this.stagedBuffer.getVertexBuilder(draw);
    }
 
    public void init() {
       try {
-         if (this.init_List.isEmpty()) {
+         if (this.draws.isEmpty()) {
             return;
          }
 
-         this.init_StagedVertexBuffer.upload();
+         this.stagedBuffer.upload();
 
-         for (int i = 0; i < this.init_List.size(); i++) {
-            this.init(this.load.get(i), this.init_List.get(i));
+         for (int i = 0; i < this.draws.size(); i++) {
+            this.init(this.load.get(i), this.draws.get(i));
          }
       } finally {
-         this.init_List.clear();
+         this.draws.clear();
          this.load.clear();
-         this.init_StagedVertexBuffer.endFrame();
+         this.stagedBuffer.endFrame();
       }
    }
 
    @Override
    public void close() {
-      this.init_StagedVertexBuffer.close();
+      this.stagedBuffer.close();
    }
 
    private void init(RenderType type, Draw draw) {
-      ExecuteInfo info = this.init_StagedVertexBuffer.getExecuteInfo(draw);
+      ExecuteInfo info = this.stagedBuffer.getExecuteInfo(draw);
       if (info != null) {
          Compat263.drawFromBuffer(type.prepare(), info);
       }
    }
 
    public static final class Inner_DataUtil {
-      private final int init_I;
-      private AutismBufferSource init_c;
+      private final int bufferSize;
+      private AutismBufferSource current;
 
       public Inner_DataUtil(int bufferSize) {
-         this.init_I = bufferSize;
+         this.bufferSize = bufferSize;
       }
 
       public AutismBufferSource init() {
-         AutismBufferSource current = this.init_c;
+         AutismBufferSource current = this.current;
          if (current == null) {
-            current = new AutismBufferSource(this.init_I);
-            this.init_c = current;
+            current = new AutismBufferSource(this.bufferSize);
+            this.current = current;
          }
 
          return current;

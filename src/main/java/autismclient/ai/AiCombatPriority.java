@@ -28,7 +28,7 @@ final class AiCombatPriority {
       return killed >= requested || untilClear && noThreatsObserved;
    }
 
-   static boolean init_Z_D(double standingGap, double jumpGap, double reach, boolean seen, double horizontal) {
+   static boolean canReach(double standingGap, double jumpGap, double reach, boolean seen, double horizontal) {
       return seen && (standingGap <= reach || horizontal < 3.5 && jumpGap <= reach);
    }
 
@@ -76,11 +76,11 @@ final class AiCombatPriority {
       }
 
       if (halfCone > 0.0 && halfCone < 90.0 && Float.isFinite(current) && !shots.stream().anyMatch(yaw -> yaw == null || !Float.isFinite(yaw))) {
-         if (preferred != null && Float.isFinite(preferred) && init_Z_F(preferred, shots, halfCone)) {
+         if (preferred != null && Float.isFinite(preferred) && coversAll(preferred, shots, halfCone)) {
             return preferred;
          }
 
-         if (init_Z_F(current, shots, halfCone)) {
+         if (coversAll(current, shots, halfCone)) {
             return current;
          }
 
@@ -150,7 +150,7 @@ final class AiCombatPriority {
       }
    }
 
-   static boolean init_Z_F(float yaw, List<Float> shots, double halfCone) {
+   static boolean coversAll(float yaw, List<Float> shots, double halfCone) {
       for (float shot : shots) {
          if (Math.abs(init(shot - yaw)) > halfCone + 1.0E-5) {
             return false;

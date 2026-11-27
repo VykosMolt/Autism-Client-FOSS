@@ -51,7 +51,7 @@ final class AiPreparationReceipt {
 
    static AiOperation awaitSupportedHandoff(final AiOperation child, final BooleanSupplier supported, final BooleanSupplier valid, final long deadline, final LongSupplier now) {
       return new AiOperation() {
-         final AiPreparationReceipt init_bb = new AiPreparationReceipt();
+         final AiPreparationReceipt receipt = new AiPreparationReceipt();
          AiOperation.Result init_AiOperation_Result;
          AiOperation.Result load;
          boolean init_Z;
@@ -75,12 +75,12 @@ final class AiPreparationReceipt {
             }
 
             if (this.init_AiOperation_Result == null) {
-               AiOperation.Result result = this.init_bb.tickChild(child);
+               AiOperation.Result result = this.receipt.tickChild(child);
                if (!result.terminal()) {
                   return result;
                }
 
-               this.init_bb.cancelChild(child);
+               this.receipt.cancelChild(child);
                if (result.status() != AiOperation.Status.SUCCEEDED) {
                   return this.init(result);
                }
@@ -88,7 +88,7 @@ final class AiPreparationReceipt {
                this.init_AiOperation_Result = result;
             }
 
-            return supported.getAsBoolean() && !this.init_bb.requiresReconciliation(child)
+            return supported.getAsBoolean() && !this.receipt.requiresReconciliation(child)
                ? this.init(this.init_AiOperation_Result)
                : new AiOperation.Result(
                   AiOperation.Status.RUNNING,
@@ -99,25 +99,25 @@ final class AiPreparationReceipt {
          }
 
          AiOperation.Result init(AiOperation.Result result) {
-            this.load = this.init_bb.finalizeResult(result, this.init_bb.requiresReconciliation(child));
-            this.init_bb.cancelChild(child);
+            this.load = this.receipt.finalizeResult(result, this.receipt.requiresReconciliation(child));
+            this.receipt.cancelChild(child);
             return this.load;
          }
 
          @Override
          public boolean canInterruptNow() {
-            return !this.init_bb.requiresReconciliation(child)
+            return !this.receipt.requiresReconciliation(child)
                && (this.load != null || (this.init_AiOperation_Result == null ? child.canInterruptNow() : supported.getAsBoolean()));
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_bb.requiresReconciliation(child);
+            return this.receipt.requiresReconciliation(child);
          }
 
          @Override
          public void cancel() {
-            this.init_bb.cancelChild(child);
+            this.receipt.cancelChild(child);
             this.init_Z = true;
          }
       };

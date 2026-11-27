@@ -11,25 +11,25 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.EntityHitResult;
 
 public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final List<KeyClickOutput> init_List = new ArrayList<>();
-   private static long init_J;
-   private final boolean init_Z;
+   private static final Minecraft MINECRAFT = Minecraft.getInstance();
+   private static final List<KeyClickOutput> OUTPUTS = new ArrayList<>();
+   private static long generation;
+   private final boolean useKey;
    private boolean load_Z;
    private boolean read_Z;
-   private long load_J = -9223372036854775808L;
+   private long releaseAtNanos = -9223372036854775808L;
    private static final long read_J = 50000000L;
-   private long write_J = -9223372036854775808L;
+   private long pressNanos = -9223372036854775808L;
    private long update = -9223372036854775808L;
    private long sync = -9223372036854775808L;
-   private int init_I;
-   private int load_I;
+   private int pendingClicks;
+   private int consumedClicks;
    private boolean write_Z;
 
    private KeyClickOutput(boolean useKey) {
-      this.init_Z = useKey;
-      synchronized (init_List) {
-         init_List.add(this);
+      this.useKey = useKey;
+      synchronized (OUTPUTS) {
+         OUTPUTS.add(this);
       }
    }
 
@@ -42,9 +42,9 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    }
 
    public static boolean isAnyPressed(boolean useKey) {
-      synchronized (init_List) {
-         for (KeyClickOutput output : init_List) {
-            if (output.init_Z == useKey && output.load_Z) {
+      synchronized (OUTPUTS) {
+         for (KeyClickOutput output : OUTPUTS) {
+            if (output.useKey == useKey && output.load_Z) {
                return true;
             }
          }
@@ -54,7 +54,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    }
 
    public void init_V() {
-      this.sync = init_J;
+      this.sync = generation;
    }
 
    public void setOwnsKey(boolean owns) {
@@ -66,20 +66,20 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    }
 
    public boolean isPhysicallyDown() {
-      KeyMapping mapping = this.init_KeyMapping();
+      KeyMapping mapping = this.mapping();
       return mapping != null && !mapping.isUnbound() && KeyMappingControl.of(mapping).autism$isActuallyDown();
    }
 
    @Override
    public boolean init_Z_J(long now) {
-      if (!this.load_Z && read_Z()) {
-         KeyMapping mapping = this.init_KeyMapping();
+      if (!this.load_Z && canClick()) {
+         KeyMapping mapping = this.mapping();
          if (mapping != null && !mapping.isUnbound()) {
             KeyMappingControl.of(mapping).autism$simulatePress(true);
             this.update = System.nanoTime();
             this.load_Z = true;
-            if (!this.init_Z) {
-               this.init_I++;
+            if (!this.useKey) {
+               this.pendingClicks++;
             }
 
             return true;
@@ -100,11 +100,11 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    public void init_V_J(long now) {
       if (this.load_Z) {
          this.load_Z = false;
-         this.load_J = -9223372036854775808L;
-         KeyMapping mapping = this.init_KeyMapping();
+         this.releaseAtNanos = -9223372036854775808L;
+         KeyMapping mapping = this.mapping();
          if (mapping != null) {
             KeyMappingControl bridge = KeyMappingControl.of(mapping);
-            if (!read_Z()) {
+            if (!canClick()) {
                bridge.autism$resetPressedState();
             } else if (!this.read_Z && bridge.autism$isActuallyDown()) {
                bridge.autism$resetPressedState();
@@ -118,11 +118,11 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    @Override
    public void onClick(long now) {
       this.load_Z = true;
-      this.load_J = -9223372036854775808L;
+      this.releaseAtNanos = -9223372036854775808L;
    }
 
    public boolean init(long now, long holdNanos) {
-      if (this.write_J != -9223372036854775808L && now - this.write_J < 50000000L) {
+      if (this.pressNanos != -9223372036854775808L && now - this.pressNanos < 50000000L) {
          return false;
       }
 
@@ -130,13 +130,13 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
          return false;
       }
 
-      this.write_J = this.earliestClickNanos(now);
-      this.load_J = this.write_J + Math.max(1000000L, holdNanos);
+      this.pressNanos = this.earliestClickNanos(now);
+      this.releaseAtNanos = this.pressNanos + Math.max(1000000L, holdNanos);
       return true;
    }
 
    public void read(long now) {
-      if (this.load_Z && this.load_J != -9223372036854775808L && now >= this.load_J) {
+      if (this.load_Z && this.releaseAtNanos != -9223372036854775808L && now >= this.releaseAtNanos) {
          this.init_V_J(now);
       }
    }
@@ -149,88 +149,88 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    }
 
    public static void flushAll() {
-      synchronized (init_List) {
-         for (KeyClickOutput output : init_List) {
+      synchronized (OUTPUTS) {
+         for (KeyClickOutput output : OUTPUTS) {
             output.flush();
          }
       }
    }
 
    public static void write() {
-      synchronized (init_List) {
-         for (KeyClickOutput output : init_List) {
+      synchronized (OUTPUTS) {
+         for (KeyClickOutput output : OUTPUTS) {
             output.close();
          }
       }
    }
 
    private void flush() {
-      this.load_I = 0;
-      KeyMapping mapping = this.init_KeyMapping();
-      if (this.init_Z || this.init_I <= 0 || mapping == null || init_Minecraft.player == null) {
+      this.consumedClicks = 0;
+      KeyMapping mapping = this.mapping();
+      if (this.useKey || this.pendingClicks <= 0 || mapping == null || MINECRAFT.player == null) {
          this.write_Z = false;
       } else if (this.write_Z) {
          this.write_Z = false;
-         if (!(init_Minecraft.hitResult instanceof EntityHitResult)) {
-            while (this.init_I > 0 && mapping.consumeClick()) {
-               this.init_I--;
+         if (!(MINECRAFT.hitResult instanceof EntityHitResult)) {
+            while (this.pendingClicks > 0 && mapping.consumeClick()) {
+               this.pendingClicks--;
             }
 
-            this.init_I = 0;
+            this.pendingClicks = 0;
          }
-      } else if (init_Minecraft.hitResult instanceof EntityHitResult hit
+      } else if (MINECRAFT.hitResult instanceof EntityHitResult hit
          && hit.getEntity() instanceof Player
          && SprintStateTracker.read()
-         && !(init_Minecraft.player.getAttackStrengthScale(0.5F) <= 0.9F)) {
-         while (this.load_I < this.init_I && mapping.consumeClick()) {
-            this.load_I++;
+         && !(MINECRAFT.player.getAttackStrengthScale(0.5F) <= 0.9F)) {
+         while (this.consumedClicks < this.pendingClicks && mapping.consumeClick()) {
+            this.consumedClicks++;
          }
       }
    }
 
    private void close() {
-      KeyMapping mapping = this.init_KeyMapping();
+      KeyMapping mapping = this.mapping();
       if (mapping != null) {
-         for (int i = 0; i < this.load_I; i++) {
+         for (int i = 0; i < this.consumedClicks; i++) {
             KeyMappingControl.of(mapping).autism$countClick();
          }
       }
 
-      this.init_I = this.load_I;
-      this.write_Z = this.load_I > 0;
-      this.load_I = 0;
+      this.pendingClicks = this.consumedClicks;
+      this.write_Z = this.consumedClicks > 0;
+      this.consumedClicks = 0;
    }
 
    public static void update() {
-      init_J++;
+      generation++;
    }
 
    public static void sync() {
-      synchronized (init_List) {
-         for (KeyClickOutput output : init_List) {
-            if (output.load_Z && (!read_Z() || output.sync != init_J)) {
+      synchronized (OUTPUTS) {
+         for (KeyClickOutput output : OUTPUTS) {
+            if (output.load_Z && (!canClick() || output.sync != generation)) {
                output.release();
             }
          }
       }
    }
 
-   private KeyMapping init_KeyMapping() {
-      if (init_Minecraft != null && init_Minecraft.options != null) {
-         return this.init_Z ? init_Minecraft.options.keyUse : init_Minecraft.options.keyAttack;
+   private KeyMapping mapping() {
+      if (MINECRAFT != null && MINECRAFT.options != null) {
+         return this.useKey ? MINECRAFT.options.keyUse : MINECRAFT.options.keyAttack;
       } else {
          return null;
       }
    }
 
-   private static boolean read_Z() {
-      return init_Minecraft != null
-         && init_Minecraft.player != null
-         && init_Minecraft.level != null
-         && init_Minecraft.options != null
-         && init_Minecraft.getWindow() != null
-         && init_Minecraft.gui.screen() == null
-         && init_Minecraft.gui.overlay() == null
+   private static boolean canClick() {
+      return MINECRAFT != null
+         && MINECRAFT.player != null
+         && MINECRAFT.level != null
+         && MINECRAFT.options != null
+         && MINECRAFT.getWindow() != null
+         && MINECRAFT.gui.screen() == null
+         && MINECRAFT.gui.overlay() == null
          && !aD.init_Z();
    }
 }

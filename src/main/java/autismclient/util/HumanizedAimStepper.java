@@ -15,8 +15,8 @@ public final class HumanizedAimStepper {
    private static final double poll = 0.12;
    private static final double push = 20.0;
    private static final double pop = 0.96;
-   private final Random init_Random;
-   private final HumanHandProfile init_am;
+   private final Random random;
+   private final HumanHandProfile hand;
    private boolean init_Z;
    private double tick;
    private double run;
@@ -44,8 +44,8 @@ public final class HumanizedAimStepper {
    private double buffer;
 
    public HumanizedAimStepper(HumanHandProfile hand, Random random) {
-      this.init_am = hand;
-      this.init_Random = random;
+      this.hand = hand;
+      this.random = random;
    }
 
    public static HumanizedAimStepper create() {
@@ -53,8 +53,8 @@ public final class HumanizedAimStepper {
       return new HumanizedAimStepper(HumanHandProfile.shared().forSession(random), random);
    }
 
-   public HumanHandProfile init_am() {
-      return this.init_am;
+   public HumanHandProfile hand() {
+      return this.hand;
    }
 
    public void setHandBack(boolean on) {
@@ -100,8 +100,8 @@ public final class HumanizedAimStepper {
       double errYaw = goalYaw - this.tick;
       double errPitch = goalPitchDeg - this.run;
       if (move) {
-         this.tick = this.tick + this.init_am.poll() * this.put;
-         this.run = this.run + this.init_am.poll() * this.add;
+         this.tick = this.tick + this.hand.poll() * this.put;
+         this.run = this.run + this.hand.poll() * this.add;
          if (this.read_Z) {
             this.load();
          } else if (this.init_I > 0) {
@@ -110,8 +110,8 @@ public final class HumanizedAimStepper {
             this.init(errYaw, errPitch, tolerance, maxYawStep, maxPitchStep);
             this.load();
          } else {
-            this.tick = this.tick + this.init_am.push() * errYaw;
-            this.run = this.run + this.init_am.push() * errPitch * this.init_am.set();
+            this.tick = this.tick + this.hand.push() * errYaw;
+            this.run = this.run + this.hand.push() * errPitch * this.hand.set();
          }
       }
 
@@ -139,7 +139,7 @@ public final class HumanizedAimStepper {
    }
 
    private double load(double tolerance) {
-      return Math.max(this.init_am.pop(), 0.35 * tolerance);
+      return Math.max(this.hand.pop(), 0.35 * tolerance);
    }
 
    private void init(double goalYaw, double goalPitch) {
@@ -163,21 +163,21 @@ public final class HumanizedAimStepper {
    private void init(double errYaw, double errPitch, double tolerance, double maxYawStep, double maxPitchStep) {
       double distance = Math.hypot(errYaw, errPitch);
       double gain = this.write_Z
-         ? 0.96 + 0.040000000000000036 * this.init_Random.nextDouble()
-         : init(this.init_am.read() + this.init_am.write() * this.init_D(), 0.8, 1.06);
+         ? 0.96 + 0.040000000000000036 * this.random.nextDouble()
+         : init(this.hand.read() + this.hand.write() * this.clampedGaussian(), 0.8, 1.06);
       double ny = -errPitch / distance;
       double np = errYaw / distance;
-      double lateral = this.init_am.update() * distance * this.init_D();
+      double lateral = this.hand.update() * distance * this.clampedGaussian();
       this.clear = errYaw * gain + ny * lateral;
-      this.reset = errPitch * gain * this.init_am.set() + np * lateral;
+      this.reset = errPitch * gain * this.hand.set() + np * lateral;
       double length = Math.hypot(this.clear, this.reset);
       this.start = length > 1.0E-9 ? -this.reset / length : 0.0;
       this.stop = length > 1.0E-9 ? this.clear / length : 0.0;
-      this.next = (this.init_am.sync() + this.init_am.flush() * init(this.init_D(), -2.5, 2.5)) * length;
-      this.size = init(this.init_am.close() * (1.0 + 0.05 * this.init_D()), 0.75, 1.0);
+      this.next = (this.hand.sync() + this.hand.flush() * init(this.clampedGaussian(), -2.5, 2.5)) * length;
+      this.size = init(this.hand.close() * (1.0 + 0.05 * this.clampedGaussian()), 0.75, 1.0);
       double width = Math.max(1.0, 2.0 * tolerance);
-      double fittsMs = this.init_am.fittsIntercept() + this.init_am.fittsSlope() * (Math.log(1.0 + length / width) / Math.log(2.0));
-      double ticks = this.write_Z ? 0.0 : fittsMs / 50.0 * Math.exp(this.init_am.open() * this.init_D());
+      double fittsMs = this.hand.fittsIntercept() + this.hand.fittsSlope() * (Math.log(1.0 + length / width) / Math.log(2.0));
+      double ticks = this.write_Z ? 0.0 : fittsMs / 50.0 * Math.exp(this.hand.open() * this.clampedGaussian());
       ticks = Math.max(ticks, Math.sqrt(5.7735 * length / ((this.write_Z ? 20.0 : 14.0) * this.size * this.size)));
       if (maxYawStep > 0.0) {
          ticks = Math.max(ticks, 1.875 * Math.abs(this.clear) / maxYawStep);
@@ -187,7 +187,7 @@ public final class HumanizedAimStepper {
          ticks = Math.max(ticks, 1.875 * Math.abs(this.reset) / maxPitchStep);
       }
 
-      this.prev = Math.max(2.0, ticks) * (this.write_Z ? 1.0 + 0.12 * this.init_Random.nextDouble() : 1.0);
+      this.prev = Math.max(2.0, ticks) * (this.write_Z ? 1.0 + 0.12 * this.random.nextDouble() : 1.0);
       this.valid = 0.0;
       this.data = 0.0;
       this.value = 0.0;
@@ -209,8 +209,8 @@ public final class HumanizedAimStepper {
       if (s >= 1.0) {
          this.read_Z = false;
          this.init_I = this.write_Z
-            ? this.init_Random.nextInt(2)
-            : this.init_am.init_I() + this.init_Random.nextInt(Math.max(1, this.init_am.load_I() - this.init_am.init_I() + 1));
+            ? this.random.nextInt(2)
+            : this.hand.init_I() + this.random.nextInt(Math.max(1, this.hand.load_I() - this.hand.init_I() + 1));
       }
    }
 
@@ -221,14 +221,14 @@ public final class HumanizedAimStepper {
 
    private void read() {
       double innovation = Math.sqrt(0.8775000000000001);
-      this.cache = 0.35 * this.cache + this.init_am.tick() * innovation * this.init_D();
-      this.state = 0.35 * this.state + this.init_am.tick() * innovation * this.init_D();
-      this.queue = this.queue + (-this.init_am.get() * this.queue + this.init_am.run() * this.init_D());
-      this.buffer = this.buffer + (-this.init_am.get() * this.buffer + this.init_am.run() * this.init_D());
+      this.cache = 0.35 * this.cache + this.hand.tick() * innovation * this.clampedGaussian();
+      this.state = 0.35 * this.state + this.hand.tick() * innovation * this.clampedGaussian();
+      this.queue = this.queue + (-this.hand.get() * this.queue + this.hand.run() * this.clampedGaussian());
+      this.buffer = this.buffer + (-this.hand.get() * this.buffer + this.hand.run() * this.clampedGaussian());
    }
 
-   private double init_D() {
-      return init(this.init_Random.nextGaussian(), -3.0, 3.0);
+   private double clampedGaussian() {
+      return init(this.random.nextGaussian(), -3.0, 3.0);
    }
 
    private static double init(double v, double lo, double hi) {

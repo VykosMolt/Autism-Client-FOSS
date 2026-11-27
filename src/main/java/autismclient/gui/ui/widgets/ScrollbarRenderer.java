@@ -44,7 +44,7 @@ public final class ScrollbarRenderer {
             context.init_GuiGraphicsExtract(),
             autismclient.gui.f.NetHelper.init(x, thumb.write(), width, thumb.sync()),
             (width + 1) / 2,
-            init_I_I(-6578008, -3551788, activeT)
+            lerpColor(-6578008, -3551788, activeT)
          );
       }
    }
@@ -59,7 +59,7 @@ public final class ScrollbarRenderer {
       }
    }
 
-   private static int init_I_I(int from, int to, float t) {
+   private static int lerpColor(int from, int to, float t) {
       int ar = from >> 16 & 0xFF;
       int ag = from >> 8 & 0xFF;
       int ab = from & 0xFF;

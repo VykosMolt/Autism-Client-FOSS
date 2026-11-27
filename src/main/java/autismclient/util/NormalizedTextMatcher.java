@@ -20,8 +20,8 @@ public final class NormalizedTextMatcher {
          while (offset < decomposed.length()) {
             int codePoint = decomposed.codePointAt(offset);
             offset += Character.charCount(codePoint);
-            if (!init_Z(codePoint) && !load(codePoint)) {
-               int folded = init_I(codePoint);
+            if (!isCombiningMark(codePoint) && !load(codePoint)) {
+               int folded = foldConfusable(codePoint);
                if ((folded < 97 || folded > 122) && (folded < 48 || folded > 57)) {
                   if (!spaced) {
                      out.append(' ');
@@ -49,7 +49,7 @@ public final class NormalizedTextMatcher {
       String normalized = normalize(text);
       String normalizedName = normalize(playerName);
       if (!normalizedName.isBlank()) {
-         normalized = init_Str(normalized, normalizedName);
+         normalized = removePhrase(normalized, normalizedName);
       }
 
       String matchMode = mode == null ? "Contains" : mode;
@@ -151,7 +151,7 @@ public final class NormalizedTextMatcher {
          || text.contains(prefix + "logged out ");
    }
 
-   public static boolean init_Z(String name) {
+   public static boolean isPlausibleName(String name) {
       if (name == null) {
          return false;
       }
@@ -169,13 +169,13 @@ public final class NormalizedTextMatcher {
       return text.equals(phrase) ? true : (" " + text + " ").contains(" " + phrase + " ");
    }
 
-   private static String init_Str(String text, String phrase) {
+   private static String removePhrase(String text, String phrase) {
       String padded = " " + text + " ";
       String needle = " " + phrase + " ";
       return padded.replace(needle, " ").trim().replaceAll("\\s+", " ");
    }
 
-   private static boolean init_Z(int codePoint) {
+   private static boolean isCombiningMark(int codePoint) {
       int type = Character.getType(codePoint);
       return type == 6 || type == 8 || type == 7;
    }
@@ -207,7 +207,7 @@ public final class NormalizedTextMatcher {
       }
    }
 
-   private static int init_I(int codePoint) {
+   private static int foldConfusable(int codePoint) {
       int var10000;
       switch (codePoint) {
          case 593:

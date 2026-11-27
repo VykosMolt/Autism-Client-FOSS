@@ -19,9 +19,9 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 
 public final class ContainerItemNameArgumentType implements ArgumentType<String> {
-   private static AbstractContainerMenu init_AbstractContainerM;
-   private static int init_I = -2147483648;
-   private static List<ContainerItemNameArgumentType.Inner_DataUtil> init_List = List.of();
+   private static AbstractContainerMenu cachedMenu;
+   private static int cachedRevision = -2147483648;
+   private static List<ContainerItemNameArgumentType.Inner_DataUtil> cachedItems = List.of();
 
    private ContainerItemNameArgumentType() {
    }
@@ -35,10 +35,10 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
    }
 
    public String parse(StringReader reader) throws CommandSyntaxException {
-      return this.init_Str_StringReader(reader);
+      return this.readName(reader);
    }
 
-   public String init_Str_StringReader(StringReader reader) throws CommandSyntaxException {
+   public String readName(StringReader reader) throws CommandSyntaxException {
       return reader.readString();
    }
 
@@ -51,7 +51,7 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
 
       Minecraft mc = Minecraft.getInstance();
 
-      for (ContainerItemNameArgumentType.Inner_DataUtil candidate : init_List_Minecraft(mc)) {
+      for (ContainerItemNameArgumentType.Inner_DataUtil candidate : containerItems(mc)) {
          if (candidate.load().startsWith(remaining)) {
             builder.suggest(StringArgumentType.escapeIfRequired(candidate.init()));
          }
@@ -60,11 +60,11 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
       return builder.buildFuture();
    }
 
-   private static List<ContainerItemNameArgumentType.Inner_DataUtil> init_List_Minecraft(Minecraft mc) {
+   private static List<ContainerItemNameArgumentType.Inner_DataUtil> containerItems(Minecraft mc) {
       AbstractContainerMenu menu = mc.player == null ? null : mc.player.containerMenu;
       int revision = menu == null ? -1 : menu.getStateId();
-      if (menu == init_AbstractContainerM && revision == init_I) {
-         return init_List;
+      if (menu == cachedMenu && revision == cachedRevision) {
+         return cachedItems;
       }
 
       Set<String> names = new LinkedHashSet<>();
@@ -72,7 +72,7 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
          for (int slot = 0; slot < menu.slots.size(); slot++) {
             ItemStack stack = menu.slots.get(slot).getItem();
             if (!stack.isEmpty()) {
-               String displayName = init_Str_Str(stack.getHoverName().getString());
+               String displayName = normalize(stack.getHoverName().getString());
                if (!displayName.isEmpty()) {
                   names.add(displayName);
                }
@@ -86,13 +86,13 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
          rebuilt.add(new ContainerItemNameArgumentType.Inner_DataUtil(name, name.toLowerCase(Locale.ROOT)));
       }
 
-      init_AbstractContainerM = menu;
-      init_I = revision;
-      init_List = List.copyOf(rebuilt);
-      return init_List;
+      cachedMenu = menu;
+      cachedRevision = revision;
+      cachedItems = List.copyOf(rebuilt);
+      return cachedItems;
    }
 
-   private static String init_Str_Str(String input) {
+   private static String normalize(String input) {
       if (input != null && !input.isBlank()) {
          StringBuilder out = new StringBuilder(input.length());
          boolean pendingSpace = false;

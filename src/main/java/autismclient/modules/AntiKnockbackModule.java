@@ -16,13 +16,13 @@ import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.Vec3;
 
 public final class AntiKnockbackModule extends Module {
-   private final KnockbackCounterStrafe init_ab = new KnockbackCounterStrafe();
+   private final KnockbackCounterStrafe counterStrafe = new KnockbackCounterStrafe();
    private int init_I = -2147483648;
    private int load_I = -2147483648;
-   private Vec3 init_Vec3 = Vec3.ZERO;
+   private Vec3 preHitMotion = Vec3.ZERO;
    private int read_I = -2147483648;
    private boolean init_Z;
-   private boolean load_Z;
+   private boolean counterMovement;
    private boolean read_Z;
    private long init_J;
    private long load_J;
@@ -48,15 +48,15 @@ public final class AntiKnockbackModule extends Module {
       );
    }
 
-   private static AntiKnockbackModule init_StateCache() {
+   private static AntiKnockbackModule activeInstance() {
       return al.init_Module_Str("anti-knockback") instanceof AntiKnockbackModule m && m.isEnabled() ? m : null;
    }
 
-   private int init_I_10() {
+   private int clientTick() {
       return AutismSessionState.getInstance().getClientTick();
    }
 
-   private boolean init_Z_17() {
+   private boolean canAct() {
       return MC.player != null
          && MC.level != null
          && MC.player.isAlive()
@@ -73,29 +73,29 @@ public final class AntiKnockbackModule extends Module {
    }
 
    public static void onDamageEvent(ClientboundDamageEventPacket packet) {
-      AntiKnockbackModule m = init_StateCache();
-      if (m != null && m.init_Z_17() && packet.entityId() == MC.player.getId()) {
+      AntiKnockbackModule m = activeInstance();
+      if (m != null && m.canAct() && packet.entityId() == MC.player.getId()) {
          DamageSource source = packet.getSource(MC.level);
          Entity attacker = source.getEntity();
          boolean projectile = source.is(DamageTypes.ARROW) || source.is(DamageTypes.TRIDENT);
          if (attacker != MC.player && (attacker instanceof LivingEntity || projectile)) {
-            m.init_I = m.init_I_10();
+            m.init_I = m.clientTick();
             boolean reset = "JumpReset".equals(m.choice("mode"));
             m.init_Z = !reset || ThreadLocalRandom.current().nextInt(100) < m.integer("chance");
-            m.load_Z = !reset || m.bool("counter-movement");
-            boolean motionReady = m.init_Z_I_5(m.load_I);
+            m.counterMovement = !reset || m.bool("counter-movement");
+            boolean motionReady = m.isRecent(m.load_I);
             m.read_Z = reset && projectile && !motionReady;
-            m.init_ab.reset();
+            m.counterStrafe.reset();
             if (m.init_Z) {
                if (!m.read_Z) {
-                  m.init_ab.init(motionReady ? m.init_Vec3 : Vec3.ZERO, reset, motionReady && m.load_Z, m.integer("counter-ticks"));
-                  m.read_I = m.init_I_10();
+                  m.counterStrafe.init(motionReady ? m.preHitMotion : Vec3.ZERO, reset, motionReady && m.counterMovement, m.integer("counter-ticks"));
+                  m.read_I = m.clientTick();
                }
 
                m.init_J++;
             }
 
-            if (m.init_Z_I_5(m.load_I)) {
+            if (m.isRecent(m.load_I)) {
                m.init_I = m.load_I = -2147483648;
             }
          }
@@ -103,19 +103,19 @@ public final class AntiKnockbackModule extends Module {
    }
 
    public static void init_V_I_7(int entityId) {
-      AntiKnockbackModule m = init_StateCache();
-      if (m != null && m.init_Z_17() && entityId == MC.player.getId()) {
-         m.load_I = m.init_I_10();
-         m.init_Vec3 = MC.player.getDeltaMovement();
-         if (m.init_Z_I_5(m.init_I)) {
+      AntiKnockbackModule m = activeInstance();
+      if (m != null && m.canAct() && entityId == MC.player.getId()) {
+         m.load_I = m.clientTick();
+         m.preHitMotion = MC.player.getDeltaMovement();
+         if (m.isRecent(m.init_I)) {
             if (m.init_Z) {
                if (m.read_Z) {
-                  m.init_ab.init(m.init_Vec3, true, m.load_Z, m.integer("counter-ticks"));
+                  m.counterStrafe.init(m.preHitMotion, true, m.counterMovement, m.integer("counter-ticks"));
                } else {
-                  m.init_ab.init(m.init_Vec3, m.load_Z, m.integer("counter-ticks"));
+                  m.counterStrafe.init(m.preHitMotion, m.counterMovement, m.integer("counter-ticks"));
                }
 
-               m.read_I = m.init_I_10();
+               m.read_I = m.clientTick();
             }
 
             m.read_Z = false;
@@ -124,23 +124,23 @@ public final class AntiKnockbackModule extends Module {
       }
    }
 
-   private boolean init_Z_I_5(int tick) {
-      int age = this.init_I_10() - tick;
+   private boolean isRecent(int tick) {
+      int age = this.clientTick() - tick;
       return age >= 0 && age <= 2;
    }
 
    public static Input filterInput(Input original) {
-      AntiKnockbackModule m = init_StateCache();
+      AntiKnockbackModule m = activeInstance();
       if (m == null || original == null) {
          return original;
       }
 
-      if (m.init_Z_17() && !ClutchModule.read_Z_20() && !DangerModule.sync_Z_12() && !ScaffoldModule.write_Z_5() && !ScaffoldModule.update_Z_5() && !AutoTotemModule.init_Z_6() && !AutoArmorModule.init_Z_20()) {
-         int age = m.init_I_10() - m.read_I;
+      if (m.canAct() && !ClutchModule.read_Z_20() && !DangerModule.sync_Z_12() && !ScaffoldModule.write_Z_5() && !ScaffoldModule.update_Z_5() && !AutoTotemModule.init_Z_6() && !AutoArmorModule.init_Z_20()) {
+         int age = m.clientTick() - m.read_I;
          if (m.read_I != -2147483648 && age >= 0 && age <= 6) {
             boolean ground = MC.player.onGround() && ((AutismLivingEntityAccessor)MC.player).autism$getNoJumpDelay() == 0;
-            boolean braking = m.init_ab.init_I() > 0;
-            Input result = m.init_ab.init(original, MC.player.getDeltaMovement(), SilentMovementCoordinator.getMovementYaw(MC.player), ground);
+            boolean braking = m.counterStrafe.init_I() > 0;
+            Input result = m.counterStrafe.init(original, MC.player.getDeltaMovement(), SilentMovementCoordinator.getMovementYaw(MC.player), ground);
             if (result.jump() && !original.jump()) {
                m.load_J++;
             }
@@ -151,34 +151,34 @@ public final class AntiKnockbackModule extends Module {
 
             return result;
          } else {
-            m.init_ab.reset();
+            m.counterStrafe.reset();
             m.read_I = -2147483648;
-            if (!m.init_Z_I_5(m.init_I)) {
+            if (!m.isRecent(m.init_I)) {
                m.init_I = -2147483648;
             }
 
-            if (!m.init_Z_I_5(m.load_I)) {
+            if (!m.isRecent(m.load_I)) {
                m.load_I = -2147483648;
             }
 
             return original;
          }
       } else {
-         m.load_V_13();
+         m.resetState();
          return original;
       }
    }
 
-   private void load_V_13() {
-      this.init_ab.reset();
+   private void resetState() {
+      this.counterStrafe.reset();
       this.init_I = this.load_I = this.read_I = -2147483648;
-      this.init_Z = this.load_Z = this.read_Z = false;
+      this.init_Z = this.counterMovement = this.read_Z = false;
    }
 
    public static void init_V_16() {
-      AntiKnockbackModule m = init_StateCache();
+      AntiKnockbackModule m = activeInstance();
       if (m != null) {
-         m.load_V_13();
+         m.resetState();
       }
    }
 
@@ -196,23 +196,23 @@ public final class AntiKnockbackModule extends Module {
 
    @Override
    public void onEnable() {
-      this.load_V_13();
+      this.resetState();
       this.init_J = this.load_J = this.read_J = 0L;
    }
 
    @Override
    public void onDisable() {
-      this.load_V_13();
+      this.resetState();
    }
 
    @Override
    public void onGameLeft() {
-      this.load_V_13();
+      this.resetState();
    }
 
    @Override
    public void onOptionValueChanged(String id) {
-      this.load_V_13();
+      this.resetState();
    }
 
    private enum Inner_DataUtil {

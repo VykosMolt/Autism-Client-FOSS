@@ -20,10 +20,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class AiPlacementContext extends BlockPlaceContext {
-   private final float init_F;
+   private final float yaw;
    private final float load;
    private final float read;
-   private final boolean init_Z;
+   private final boolean secondaryUse;
 
    static boolean init(Item item, PlacementGoal.PlaceConstraint constraint, BlockPos target, Function<BlockPos, BlockState> states) {
       if (constraint == null) {
@@ -54,10 +54,10 @@ public final class AiPlacementContext extends BlockPlaceContext {
    AiPlacementContext(Player player, ItemStack stack, BlockHitResult hit, Vec3 eye) {
       super(player, InteractionHand.MAIN_HAND, stack, hit);
       Vec3 ray = hit.getLocation().subtract(eye);
-      this.init_F = (float)(Math.toDegrees(Math.atan2(ray.z, ray.x)) - 90.0);
+      this.yaw = (float)(Math.toDegrees(Math.atan2(ray.z, ray.x)) - 90.0);
       this.load = (float)(-Math.toDegrees(Math.atan2(ray.y, Math.hypot(ray.x, ray.z))));
-      this.read = this.init_F;
-      this.init_Z = true;
+      this.read = this.yaw;
+      this.secondaryUse = true;
    }
 
    public AiPlacementContext(Player player, ItemStack stack, BlockHitResult hit, float yaw, float pitch, boolean secondary) {
@@ -66,20 +66,20 @@ public final class AiPlacementContext extends BlockPlaceContext {
 
    public AiPlacementContext(Player player, ItemStack stack, BlockHitResult hit, float yaw, float headYaw, float pitch, boolean secondary) {
       super(player, InteractionHand.MAIN_HAND, stack, hit);
-      this.init_F = yaw;
+      this.yaw = yaw;
       this.read = headYaw;
       this.load = pitch;
-      this.init_Z = secondary;
+      this.secondaryUse = secondary;
    }
 
    @Override
    public Direction getHorizontalDirection() {
-      return Direction.fromYRot(this.init_F);
+      return Direction.fromYRot(this.yaw);
    }
 
    @Override
    public float getRotation() {
-      return this.init_F;
+      return this.yaw;
    }
 
    @Override
@@ -94,7 +94,7 @@ public final class AiPlacementContext extends BlockPlaceContext {
 
    @Override
    public boolean isSecondaryUseActive() {
-      return this.init_Z;
+      return this.secondaryUse;
    }
 
    @Override

@@ -10,7 +10,7 @@ public final class ResizeGripRenderer {
    private static final float init_F = 2.3F;
    private static final float load = 0.7F;
    private static final float read = 4.5F;
-   private static CursorType init_CursorType;
+   private static CursorType resizeCursor;
 
    private ResizeGripRenderer() {
    }
@@ -60,14 +60,14 @@ public final class ResizeGripRenderer {
    }
 
    private static CursorType init() {
-      if (init_CursorType == null) {
+      if (resizeCursor == null) {
          try {
-            init_CursorType = CursorType.createStandardCursor(221191, "resize_nwse", CursorTypes.RESIZE_ALL);
+            resizeCursor = CursorType.createStandardCursor(221191, "resize_nwse", CursorTypes.RESIZE_ALL);
          } catch (Throwable t) {
-            init_CursorType = CursorTypes.RESIZE_ALL;
+            resizeCursor = CursorTypes.RESIZE_ALL;
          }
       }
 
-      return init_CursorType;
+      return resizeCursor;
    }
 }

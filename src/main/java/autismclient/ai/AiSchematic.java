@@ -58,12 +58,12 @@ final class AiSchematic {
    static final long init_J = 66049L;
    private static final int update_I = 2097152;
    static final String[] EXTENSIONS = new String[]{".schem", ".schematic", ".litematic"};
-   private static final String[] load_StrArr = new String[]{
+   private static final String[] DYE_COLORS = new String[]{
       "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"
    };
-   private static final String[] read_StrArr = new String[]{"oak", "spruce", "birch", "jungle", "acacia", "dark_oak"};
-   private static final String[] write_StrArr = new String[]{"east", "west", "south", "north"};
-   private static final String[] update_StrArr = new String[]{"south", "west", "north", "east"};
+   private static final String[] WOOD_TYPES = new String[]{"oak", "spruce", "birch", "jungle", "acacia", "dark_oak"};
+   private static final String[] TORCH_FACINGS = new String[]{"east", "west", "south", "north"};
+   private static final String[] HORIZONTAL_FACINGS = new String[]{"south", "west", "north", "east"};
    private static final String[] sync = new String[]{"east", "south", "west", "north"};
    private static final String[] flush = new String[]{"north", "south", "west", "east"};
    private static final String[] close = new String[]{"west", "north", "east", "south"};
@@ -178,7 +178,7 @@ final class AiSchematic {
       }
    }
 
-   private static List<AiSchematic.Inner_StreamUtil> init_List(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
+   private static List<AiSchematic.Inner_StreamUtil> itemFrames(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
       if (decoded.itemFrames().isEmpty()) {
          return List.of();
       }
@@ -227,7 +227,7 @@ final class AiSchematic {
       return List.copyOf(out);
    }
 
-   static void init_V_List_Map(List<Tag> list, Map<String, Integer> into) {
+   static void countEntities(List<Tag> list, Map<String, Integer> into) {
       for (Tag entry : list) {
          if (entry instanceof CompoundTag entity) {
             String id = entity.getString("id").or(() -> entity.getString("Id")).orElse("unknown");
@@ -291,21 +291,21 @@ final class AiSchematic {
    }
 
    static AiBuilder.Blueprint init(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown) {
-      return init_TableIndex_DataUti(file, origin, rotation, mirror, skipUnknown, 2097152);
+      return loadBlueprint(file, origin, rotation, mirror, skipUnknown, 2097152);
    }
 
-   static AiBuilder.Blueprint init_TableIndex_DataUti(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells) {
+   static AiBuilder.Blueprint loadBlueprint(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells) {
       return load(file, origin, rotation, mirror, skipUnknown, maxCells).blueprint();
    }
 
-   static AiBuilder.Blueprint init_TableIndex_DataUti(
+   static AiBuilder.Blueprint loadBlueprint(
       Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells, int maxOffset
    ) {
-      return init_bP_BufferHelper(file, origin, rotation, mirror, skipUnknown, maxCells, maxOffset).blueprint();
+      return loadSchematic(file, origin, rotation, mirror, skipUnknown, maxCells, maxOffset).blueprint();
    }
 
    static AiSchematic.Inner_BufferHelper load(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells) {
-      AiSchematic.Inner_BufferHelper loaded = init_bP_BufferHelper(file, origin, rotation, mirror, skipUnknown, maxCells, 1023);
+      AiSchematic.Inner_BufferHelper loaded = loadSchematic(file, origin, rotation, mirror, skipUnknown, maxCells, 1023);
       init(loaded.blueprint().cells());
       return loaded;
    }
@@ -347,7 +347,7 @@ final class AiSchematic {
       }
    }
 
-   static AiSchematic.Inner_BufferHelper init_bP_BufferHelper(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells, int maxOffset) {
+   static AiSchematic.Inner_BufferHelper loadSchematic(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells, int maxOffset) {
       AiSchematic.Inner_DataUtil decoded = decodeFile(file, skipUnknown);
       List<AiBuilder.CellSpec> cells = AiBuilder.transformCells(decoded.cells(), rotation, mirror);
       if (cells.isEmpty()) {
@@ -357,11 +357,11 @@ final class AiSchematic {
       BlockPos minimum = AiBuilder.minCellOffset(cells);
       return new AiSchematic.Inner_BufferHelper(
          new AiBuilder.Blueprint(origin, AiBuilder.normalizeCells(cells, maxCells, maxOffset, minimum)),
-         init_Map(decoded, rotation, mirror, minimum),
+         signTexts(decoded, rotation, mirror, minimum),
          decoded.entities(),
-         load_Map(decoded, rotation, mirror, minimum),
-         load_List(decoded, rotation, mirror, minimum),
-         init_List(decoded, rotation, mirror, minimum)
+         containerContents(decoded, rotation, mirror, minimum),
+         railVehicles(decoded, rotation, mirror, minimum),
+         itemFrames(decoded, rotation, mirror, minimum)
       );
    }
 
@@ -428,7 +428,7 @@ final class AiSchematic {
       }
    }
 
-   static AiSchematic.Inner_DataUtil init_bP_DataUtil(CompoundTag root) {
+   static AiSchematic.Inner_DataUtil decode(CompoundTag root) {
       return init_bP_DataUtil(root, false);
    }
 
@@ -436,9 +436,9 @@ final class AiSchematic {
       root = root.getCompound("Schematic").orElse(root);
       int version = root.getIntOr("Version", 1);
       if (version >= 1 && version <= 3) {
-         int width = init_I_CompoundTag_Str(root, "Width");
-         int height = init_I_CompoundTag_Str(root, "Height");
-         int length = init_I_CompoundTag_Str(root, "Length");
+         int width = requiredDimension(root, "Width");
+         int height = requiredDimension(root, "Height");
+         int length = requiredDimension(root, "Length");
          CompoundTag blocks = version == 3
             ? root.getCompound("Blocks").orElseThrow(() -> new IllegalArgumentException("Sponge v3 schematic has no Blocks compound"))
             : root;
@@ -514,7 +514,7 @@ final class AiSchematic {
 
                   if (state == null) {
                      unknownCells++;
-                  } else if (init_Z(state.block())) {
+                  } else if (isAir(state.block())) {
                      air++;
                   } else {
                      if (cells.size() >= 2097152) {
@@ -544,10 +544,10 @@ final class AiSchematic {
             if (entry instanceof CompoundTag entity) {
                int[] pos = entity.getIntArray("Pos").orElse(null);
                if (pos != null && pos.length == 3) {
-                  String text = init_Str(entity.getCompound("Data").orElse(entity));
+                  String text = signText(entity.getCompound("Data").orElse(entity));
                   ListTag items = entity.getCompound("Data").orElse(entity).getListOrEmpty("Items");
                   if (!items.isEmpty()) {
-                     contents.put(BlockPos.asLong(offset[0] + pos[0], offset[1] + pos[1], offset[2] + pos[2]), init_ListTag_ListTag_I(items, dataVersion));
+                     contents.put(BlockPos.asLong(offset[0] + pos[0], offset[1] + pos[1], offset[2] + pos[2]), upgradeItems(items, dataVersion));
                   }
 
                   if (text != null) {
@@ -558,7 +558,7 @@ final class AiSchematic {
          }
 
          TreeMap<String, Integer> entities = new TreeMap<>();
-         init_V_List_Map(root.getListOrEmpty("Entities"), entities);
+         countEntities(root.getListOrEmpty("Entities"), entities);
          ArrayList<AiSchematic.Inner_TaskQueue> vehicles = new ArrayList<>();
          init(root.getListOrEmpty("Entities"), offset[0], offset[1], offset[2], vehicles);
          ArrayList<AiSchematic.Inner_StreamUtil> frames = new ArrayList<>();
@@ -588,7 +588,7 @@ final class AiSchematic {
       }
    }
 
-   private static int init_I_CompoundTag_Str(CompoundTag root, String key) {
+   private static int requiredDimension(CompoundTag root, String key) {
       int value = root.getShortOr(key, (short)0) & '\uffff';
       if (value == 0) {
          throw new IllegalArgumentException("Schematic is missing its " + key + " tag");
@@ -713,7 +713,7 @@ final class AiSchematic {
       return Map.copyOf(resolved);
    }
 
-   static String init_Str(CompoundTag entity) {
+   static String signText(CompoundTag entity) {
       ArrayList<String> lines = new ArrayList<>();
       Optional<CompoundTag> front = entity.getCompound("front_text");
       if (front.isPresent()) {
@@ -755,13 +755,13 @@ final class AiSchematic {
       }
    }
 
-   static Map<Long, String> init_Map(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror) {
+   static Map<Long, String> signTexts(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror) {
       return decoded.signText().isEmpty()
          ? Map.of()
-         : init_Map(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
+         : signTexts(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
    }
 
-   private static Map<Long, String> init_Map(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
+   private static Map<Long, String> signTexts(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
       if (decoded.signText().isEmpty()) {
          return Map.of();
       }
@@ -785,10 +785,10 @@ final class AiSchematic {
    static Map<Long, ListTag> load(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror) {
       return decoded.containerContents().isEmpty()
          ? Map.of()
-         : load_Map(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
+         : containerContents(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
    }
 
-   private static Map<Long, ListTag> load_Map(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
+   private static Map<Long, ListTag> containerContents(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
       if (decoded.containerContents().isEmpty()) {
          return Map.of();
       }
@@ -809,7 +809,7 @@ final class AiSchematic {
       return Map.copyOf(out);
    }
 
-   static ListTag init_ListTag_ListTag_I(ListTag source, int sourceVersion) {
+   static ListTag upgradeItems(ListTag source, int sourceVersion) {
       int current = SharedConstants.getCurrentVersion().dataVersion().version();
       ListTag result = new ListTag();
       HashSet<Integer> slots = new HashSet<>();
@@ -844,13 +844,13 @@ final class AiSchematic {
       return result;
    }
 
-   static List<AiSchematic.Inner_TaskQueue> init_List(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror) {
+   static List<AiSchematic.Inner_TaskQueue> railVehicles(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror) {
       return decoded.railVehicles().isEmpty()
          ? List.of()
-         : load_List(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
+         : railVehicles(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
    }
 
-   private static List<AiSchematic.Inner_TaskQueue> load_List(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
+   private static List<AiSchematic.Inner_TaskQueue> railVehicles(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
       if (decoded.railVehicles().isEmpty()) {
          return List.of();
       }
@@ -886,7 +886,7 @@ final class AiSchematic {
       return List.copyOf(out);
    }
 
-   private static boolean init_Z(String blockId) {
+   private static boolean isAir(String blockId) {
       return blockId.equals("minecraft:air") || blockId.equals("minecraft:cave_air") || blockId.equals("minecraft:void_air");
    }
 
@@ -899,9 +899,9 @@ final class AiSchematic {
    }
 
    static AiSchematic.Inner_DataUtil decodeSponge(CompoundTag root, boolean skipUnknown) {
-      int width = init_I_CompoundTag_Str(root, "Width");
-      int height = init_I_CompoundTag_Str(root, "Height");
-      int length = init_I_CompoundTag_Str(root, "Length");
+      int width = requiredDimension(root, "Width");
+      int height = requiredDimension(root, "Height");
+      int length = requiredDimension(root, "Length");
       byte[] blocks = root.getByteArray("Blocks").orElseThrow(() -> new IllegalArgumentException("Legacy schematic has no Blocks array"));
       byte[] data = root.getByteArray("Data").orElse(new byte[0]);
       byte[] add = root.getByteArray("AddBlocks").orElse(new byte[0]);
@@ -936,14 +936,14 @@ final class AiSchematic {
             int key = id << 8 | meta;
             AiBuilder.CellSpec template = mapped.get(key);
             if (template == null) {
-               AiSchematic.Inner_CachePool state = init_bP_CachePool_I_I(id, meta);
+               AiSchematic.Inner_CachePool state = legacyBlock(id, meta);
                if (state == null) {
                   unmapped.add(id);
                   unknownCells++;
                   continue;
                }
 
-               if (init_Z(state.block())) {
+               if (isAir(state.block())) {
                   air++;
                   continue;
                }
@@ -980,7 +980,7 @@ final class AiSchematic {
       }
 
       TreeMap<String, Integer> entities = new TreeMap<>();
-      init_V_List_Map(root.getListOrEmpty("Entities"), entities);
+      countEntities(root.getListOrEmpty("Entities"), entities);
       ArrayList<AiSchematic.Inner_TaskQueue> vehicles = new ArrayList<>();
       init(root.getListOrEmpty("Entities"), offsetX, offsetY, offsetZ, vehicles);
       return new AiSchematic.Inner_DataUtil(
@@ -1092,18 +1092,18 @@ final class AiSchematic {
                }
 
                boxes.add(box);
-               init_V_List_Map(region.getListOrEmpty("Entities"), entities);
+               countEntities(region.getListOrEmpty("Entities"), entities);
                init(region.getListOrEmpty("Entities"), px, py, pz, vehicles);
                init(region.getListOrEmpty("Entities"), px, py, pz, dataVersion, frames);
 
                for (Tag entry : region.getListOrEmpty("TileEntities")) {
                   if (entry instanceof CompoundTag entity) {
-                     String text = init_Str(entity);
+                     String text = signText(entity);
                      ListTag items = entity.getListOrEmpty("Items");
                      if (!items.isEmpty()) {
                         contents.put(
                            BlockPos.asLong(minX + entity.getIntOr("x", 0), minY + entity.getIntOr("y", 0), minZ + entity.getIntOr("z", 0)),
-                           init_ListTag_ListTag_I(items, dataVersion)
+                           upgradeItems(items, dataVersion)
                         );
                      }
 
@@ -1136,7 +1136,7 @@ final class AiSchematic {
                   int x = rest % ax;
                   if (state == null) {
                      unknownCells++;
-                  } else if (init_Z(state.block())) {
+                  } else if (isAir(state.block())) {
                      air++;
                   } else {
                      if (cells.size() >= 2097152) {
@@ -1166,12 +1166,12 @@ final class AiSchematic {
       }
    }
 
-   private static String init_Str(int data) {
+   private static String legacyFacing(int data) {
       String facing = open[Math.min(data & 7, 5)];
       return facing == null ? "north" : facing;
    }
 
-   private static AiSchematic.Inner_CachePool init_bP_CachePool(String block) {
+   private static AiSchematic.Inner_CachePool simpleBlock(String block) {
       return new AiSchematic.Inner_CachePool("minecraft:" + block, Map.of());
    }
 
@@ -1187,9 +1187,9 @@ final class AiSchematic {
       return new AiSchematic.Inner_CachePool("minecraft:" + block, Map.of(k1, v1, k2, v2, k3, v3));
    }
 
-   static AiSchematic.Inner_CachePool init_bP_CachePool_I_I(int id, int data) {
-      String color = load_StrArr[data & 15];
-      String wood = read_StrArr[Math.min(data & 7, 5)];
+   static AiSchematic.Inner_CachePool legacyBlock(int id, int data) {
+      String color = DYE_COLORS[data & 15];
+      String wood = WOOD_TYPES[Math.min(data & 7, 5)];
       AiSchematic.Inner_CachePool var10000;
       switch (id) {
          case 1:
@@ -1217,25 +1217,25 @@ final class AiSchematic {
                   var10 = "stone";
             }
 
-            var10000 = init_bP_CachePool(var10);
+            var10000 = simpleBlock(var10);
             break;
          case 2:
-            var10000 = init_bP_CachePool("grass_block");
+            var10000 = simpleBlock("grass_block");
             break;
          case 3:
-            var10000 = init_bP_CachePool(data == 1 ? "coarse_dirt" : (data == 2 ? "podzol" : "dirt"));
+            var10000 = simpleBlock(data == 1 ? "coarse_dirt" : (data == 2 ? "podzol" : "dirt"));
             break;
          case 4:
-            var10000 = init_bP_CachePool("cobblestone");
+            var10000 = simpleBlock("cobblestone");
             break;
          case 5:
-            var10000 = init_bP_CachePool(read_StrArr[Math.min(data & 7, 5)] + "_planks");
+            var10000 = simpleBlock(WOOD_TYPES[Math.min(data & 7, 5)] + "_planks");
             break;
          case 6:
-            var10000 = init(read_StrArr[Math.min(data & 7, 5)] + "_sapling", "stage", String.valueOf(data >> 3 & 1));
+            var10000 = init(WOOD_TYPES[Math.min(data & 7, 5)] + "_sapling", "stage", String.valueOf(data >> 3 & 1));
             break;
          case 7:
-            var10000 = init_bP_CachePool("bedrock");
+            var10000 = simpleBlock("bedrock");
             break;
          case 8:
          case 9:
@@ -1246,49 +1246,49 @@ final class AiSchematic {
             var10000 = init("lava", "level", String.valueOf(data & 15));
             break;
          case 12:
-            var10000 = init_bP_CachePool(data == 1 ? "red_sand" : "sand");
+            var10000 = simpleBlock(data == 1 ? "red_sand" : "sand");
             break;
          case 13:
-            var10000 = init_bP_CachePool("gravel");
+            var10000 = simpleBlock("gravel");
             break;
          case 14:
-            var10000 = init_bP_CachePool("gold_ore");
+            var10000 = simpleBlock("gold_ore");
             break;
          case 15:
-            var10000 = init_bP_CachePool("iron_ore");
+            var10000 = simpleBlock("iron_ore");
             break;
          case 16:
-            var10000 = init_bP_CachePool("coal_ore");
+            var10000 = simpleBlock("coal_ore");
             break;
          case 17:
-            var10000 = init_bP_CachePool_Str_I(read_StrArr[data & 3], data);
+            var10000 = legacyLog(WOOD_TYPES[data & 3], data);
             break;
          case 18:
-            var10000 = init(read_StrArr[data & 3] + "_leaves", "persistent", (data & 4) != 0 ? "true" : "false");
+            var10000 = init(WOOD_TYPES[data & 3] + "_leaves", "persistent", (data & 4) != 0 ? "true" : "false");
             break;
          case 19:
-            var10000 = init_bP_CachePool(data == 1 ? "wet_sponge" : "sponge");
+            var10000 = simpleBlock(data == 1 ? "wet_sponge" : "sponge");
             break;
          case 20:
-            var10000 = init_bP_CachePool("glass");
+            var10000 = simpleBlock("glass");
             break;
          case 21:
-            var10000 = init_bP_CachePool("lapis_ore");
+            var10000 = simpleBlock("lapis_ore");
             break;
          case 22:
-            var10000 = init_bP_CachePool("lapis_block");
+            var10000 = simpleBlock("lapis_block");
             break;
          case 23:
             var10000 = init("dispenser", "facing", poll[Math.min(data & 7, 5)]);
             break;
          case 24:
-            var10000 = init_bP_CachePool(data == 1 ? "chiseled_sandstone" : (data == 2 ? "cut_sandstone" : "sandstone"));
+            var10000 = simpleBlock(data == 1 ? "chiseled_sandstone" : (data == 2 ? "cut_sandstone" : "sandstone"));
             break;
          case 25:
-            var10000 = init_bP_CachePool("note_block");
+            var10000 = simpleBlock("note_block");
             break;
          case 26:
-            var10000 = init("red_bed", "facing", update_StrArr[data & 3], "part", (data & 8) != 0 ? "head" : "foot");
+            var10000 = init("red_bed", "facing", HORIZONTAL_FACINGS[data & 3], "part", (data & 8) != 0 ? "head" : "foot");
             break;
          case 27:
             var10000 = sync("powered_rail", data);
@@ -1300,13 +1300,13 @@ final class AiSchematic {
             var10000 = init("sticky_piston", "facing", poll[Math.min(data & 7, 5)]);
             break;
          case 30:
-            var10000 = init_bP_CachePool("cobweb");
+            var10000 = simpleBlock("cobweb");
             break;
          case 31:
-            var10000 = init_bP_CachePool(data == 2 ? "fern" : "short_grass");
+            var10000 = simpleBlock(data == 2 ? "fern" : "short_grass");
             break;
          case 32:
-            var10000 = init_bP_CachePool("dead_bush");
+            var10000 = simpleBlock("dead_bush");
             break;
          case 33:
             var10000 = init("piston", "facing", poll[Math.min(data & 7, 5)]);
@@ -1315,13 +1315,13 @@ final class AiSchematic {
             var10000 = init("piston_head", "type", (data & 1) != 0 ? "sticky" : "normal");
             break;
          case 35:
-            var10000 = init_bP_CachePool(color + "_wool");
+            var10000 = simpleBlock(color + "_wool");
             break;
          case 36:
-            var10000 = init_bP_CachePool("moving_piston");
+            var10000 = simpleBlock("moving_piston");
             break;
          case 37:
-            var10000 = init_bP_CachePool("dandelion");
+            var10000 = simpleBlock("dandelion");
             break;
          case 38:
             String var9;
@@ -1354,67 +1354,67 @@ final class AiSchematic {
                   var9 = "poppy";
             }
 
-            var10000 = init_bP_CachePool(var9);
+            var10000 = simpleBlock(var9);
             break;
          case 39:
-            var10000 = init_bP_CachePool("brown_mushroom");
+            var10000 = simpleBlock("brown_mushroom");
             break;
          case 40:
-            var10000 = init_bP_CachePool("red_mushroom");
+            var10000 = simpleBlock("red_mushroom");
             break;
          case 41:
-            var10000 = init_bP_CachePool("gold_block");
+            var10000 = simpleBlock("gold_block");
             break;
          case 42:
-            var10000 = init_bP_CachePool("iron_block");
+            var10000 = simpleBlock("iron_block");
             break;
          case 43:
             var10000 = load(data, false);
             break;
          case 44:
-            var10000 = init_bP_CachePool_I_Z(data, false);
+            var10000 = legacySlab(data, false);
             break;
          case 45:
-            var10000 = init_bP_CachePool("bricks");
+            var10000 = simpleBlock("bricks");
             break;
          case 46:
             var10000 = init("tnt", "unstable", (data & 1) != 0 ? "true" : "false");
             break;
          case 47:
-            var10000 = init_bP_CachePool("bookshelf");
+            var10000 = simpleBlock("bookshelf");
             break;
          case 48:
-            var10000 = init_bP_CachePool("mossy_cobblestone");
+            var10000 = simpleBlock("mossy_cobblestone");
             break;
          case 49:
-            var10000 = init_bP_CachePool("obsidian");
+            var10000 = simpleBlock("obsidian");
             break;
          case 50:
-            var10000 = data == 5 ? init_bP_CachePool("torch") : init("wall_torch", "facing", write_StrArr[Math.min(Math.max(data - 1, 0), 3)]);
+            var10000 = data == 5 ? simpleBlock("torch") : init("wall_torch", "facing", TORCH_FACINGS[Math.min(Math.max(data - 1, 0), 3)]);
             break;
          case 51:
-            var10000 = init_bP_CachePool("fire");
+            var10000 = simpleBlock("fire");
             break;
          case 52:
-            var10000 = init_bP_CachePool("spawner");
+            var10000 = simpleBlock("spawner");
             break;
          case 53:
             var10000 = load("oak_stairs", data);
             break;
          case 54:
-            var10000 = init("chest", "facing", init_Str(data));
+            var10000 = init("chest", "facing", legacyFacing(data));
             break;
          case 55:
             var10000 = init("redstone_wire", "power", String.valueOf(data & 15));
             break;
          case 56:
-            var10000 = init_bP_CachePool("diamond_ore");
+            var10000 = simpleBlock("diamond_ore");
             break;
          case 57:
-            var10000 = init_bP_CachePool("diamond_block");
+            var10000 = simpleBlock("diamond_block");
             break;
          case 58:
-            var10000 = init_bP_CachePool("crafting_table");
+            var10000 = simpleBlock("crafting_table");
             break;
          case 59:
             var10000 = init("wheat", "age", String.valueOf(data & 7));
@@ -1423,10 +1423,10 @@ final class AiSchematic {
             var10000 = init("farmland", "moisture", String.valueOf(data & 7));
             break;
          case 61:
-            var10000 = init("furnace", "facing", init_Str(data));
+            var10000 = init("furnace", "facing", legacyFacing(data));
             break;
          case 62:
-            var10000 = init("furnace", "facing", init_Str(data), "lit", "true");
+            var10000 = init("furnace", "facing", legacyFacing(data), "lit", "true");
             break;
          case 63:
             var10000 = init("oak_sign", "rotation", String.valueOf(data & 15));
@@ -1435,7 +1435,7 @@ final class AiSchematic {
             var10000 = read("oak_door", data);
             break;
          case 65:
-            var10000 = init("ladder", "facing", init_Str(data));
+            var10000 = init("ladder", "facing", legacyFacing(data));
             break;
          case 66:
             var10000 = sync("rail", data);
@@ -1444,22 +1444,22 @@ final class AiSchematic {
             var10000 = load("cobblestone_stairs", data);
             break;
          case 68:
-            var10000 = init("oak_wall_sign", "facing", init_Str(data));
+            var10000 = init("oak_wall_sign", "facing", legacyFacing(data));
             break;
          case 69:
-            var10000 = init_bP_CachePool(data);
+            var10000 = legacyLever(data);
             break;
          case 70:
-            var10000 = init_bP_CachePool("stone_pressure_plate");
+            var10000 = simpleBlock("stone_pressure_plate");
             break;
          case 71:
             var10000 = read("iron_door", data);
             break;
          case 72:
-            var10000 = init_bP_CachePool("oak_pressure_plate");
+            var10000 = simpleBlock("oak_pressure_plate");
             break;
          case 73:
-            var10000 = init_bP_CachePool("redstone_ore");
+            var10000 = simpleBlock("redstone_ore");
             break;
          case 74:
             var10000 = init("redstone_ore", "lit", "true");
@@ -1467,12 +1467,12 @@ final class AiSchematic {
          case 75:
             var10000 = data == 5
                ? init("redstone_torch", "lit", "false")
-               : init("redstone_wall_torch", "facing", write_StrArr[Math.min(Math.max(data - 1, 0), 3)], "lit", "false");
+               : init("redstone_wall_torch", "facing", TORCH_FACINGS[Math.min(Math.max(data - 1, 0), 3)], "lit", "false");
             break;
          case 76:
             var10000 = data == 5
-               ? init_bP_CachePool("redstone_torch")
-               : init("redstone_wall_torch", "facing", write_StrArr[Math.min(Math.max(data - 1, 0), 3)]);
+               ? simpleBlock("redstone_torch")
+               : init("redstone_wall_torch", "facing", TORCH_FACINGS[Math.min(Math.max(data - 1, 0), 3)]);
             break;
          case 77:
             var10000 = update("stone_button", data);
@@ -1481,55 +1481,55 @@ final class AiSchematic {
             var10000 = init("snow", "layers", String.valueOf(Math.min((data & 7) + 1, 8)));
             break;
          case 79:
-            var10000 = init_bP_CachePool("ice");
+            var10000 = simpleBlock("ice");
             break;
          case 80:
-            var10000 = init_bP_CachePool("snow_block");
+            var10000 = simpleBlock("snow_block");
             break;
          case 81:
             var10000 = init("cactus", "age", String.valueOf(data & 15));
             break;
          case 82:
-            var10000 = init_bP_CachePool("clay");
+            var10000 = simpleBlock("clay");
             break;
          case 83:
             var10000 = init("sugar_cane", "age", String.valueOf(data & 15));
             break;
          case 84:
-            var10000 = init_bP_CachePool("jukebox");
+            var10000 = simpleBlock("jukebox");
             break;
          case 85:
-            var10000 = init_bP_CachePool("oak_fence");
+            var10000 = simpleBlock("oak_fence");
             break;
          case 86:
-            var10000 = init_bP_CachePool("pumpkin");
+            var10000 = simpleBlock("pumpkin");
             break;
          case 87:
-            var10000 = init_bP_CachePool("netherrack");
+            var10000 = simpleBlock("netherrack");
             break;
          case 88:
-            var10000 = init_bP_CachePool("soul_sand");
+            var10000 = simpleBlock("soul_sand");
             break;
          case 89:
-            var10000 = init_bP_CachePool("glowstone");
+            var10000 = simpleBlock("glowstone");
             break;
          case 90:
             var10000 = init("nether_portal", "axis", (data & 3) == 2 ? "z" : "x");
             break;
          case 91:
-            var10000 = init("jack_o_lantern", "facing", update_StrArr[data & 3]);
+            var10000 = init("jack_o_lantern", "facing", HORIZONTAL_FACINGS[data & 3]);
             break;
          case 92:
             var10000 = init("cake", "bites", String.valueOf(Math.min(data & 7, 6)));
             break;
          case 93:
-            var10000 = init("repeater", "facing", update_StrArr[data & 3], "delay", String.valueOf((data >> 2 & 3) + 1), "powered", "false");
+            var10000 = init("repeater", "facing", HORIZONTAL_FACINGS[data & 3], "delay", String.valueOf((data >> 2 & 3) + 1), "powered", "false");
             break;
          case 94:
-            var10000 = init("repeater", "facing", update_StrArr[data & 3], "delay", String.valueOf((data >> 2 & 3) + 1), "powered", "true");
+            var10000 = init("repeater", "facing", HORIZONTAL_FACINGS[data & 3], "delay", String.valueOf((data >> 2 & 3) + 1), "powered", "true");
             break;
          case 95:
-            var10000 = init_bP_CachePool(color + "_stained_glass");
+            var10000 = simpleBlock(color + "_stained_glass");
             break;
          case 96:
             var10000 = init("oak_trapdoor", "facing", flush[data & 3], "half", (data & 8) != 0 ? "top" : "bottom", "open", (data & 4) != 0 ? "true" : "false");
@@ -1556,7 +1556,7 @@ final class AiSchematic {
                   var8 = "infested_stone";
             }
 
-            var10000 = init_bP_CachePool(var8);
+            var10000 = simpleBlock(var8);
             break;
          case 98:
             String var7;
@@ -1574,22 +1574,22 @@ final class AiSchematic {
                   var7 = "stone_bricks";
             }
 
-            var10000 = init_bP_CachePool(var7);
+            var10000 = simpleBlock(var7);
             break;
          case 99:
-            var10000 = init_bP_CachePool("brown_mushroom_block");
+            var10000 = simpleBlock("brown_mushroom_block");
             break;
          case 100:
-            var10000 = init_bP_CachePool("red_mushroom_block");
+            var10000 = simpleBlock("red_mushroom_block");
             break;
          case 101:
-            var10000 = init_bP_CachePool("iron_bars");
+            var10000 = simpleBlock("iron_bars");
             break;
          case 102:
-            var10000 = init_bP_CachePool("glass_pane");
+            var10000 = simpleBlock("glass_pane");
             break;
          case 103:
-            var10000 = init_bP_CachePool("melon");
+            var10000 = simpleBlock("melon");
             break;
          case 104:
             var10000 = init("pumpkin_stem", "age", String.valueOf(data & 7));
@@ -1610,16 +1610,16 @@ final class AiSchematic {
             var10000 = load("stone_brick_stairs", data);
             break;
          case 110:
-            var10000 = init_bP_CachePool("mycelium");
+            var10000 = simpleBlock("mycelium");
             break;
          case 111:
-            var10000 = init_bP_CachePool("lily_pad");
+            var10000 = simpleBlock("lily_pad");
             break;
          case 112:
-            var10000 = init_bP_CachePool("nether_bricks");
+            var10000 = simpleBlock("nether_bricks");
             break;
          case 113:
-            var10000 = init_bP_CachePool("nether_brick_fence");
+            var10000 = simpleBlock("nether_brick_fence");
             break;
          case 114:
             var10000 = load("nether_brick_stairs", data);
@@ -1628,28 +1628,28 @@ final class AiSchematic {
             var10000 = init("nether_wart", "age", String.valueOf(data & 3));
             break;
          case 116:
-            var10000 = init_bP_CachePool("enchanting_table");
+            var10000 = simpleBlock("enchanting_table");
             break;
          case 117:
-            var10000 = init_bP_CachePool("brewing_stand");
+            var10000 = simpleBlock("brewing_stand");
             break;
          case 118:
-            var10000 = (data & 3) == 0 ? init_bP_CachePool("cauldron") : init("water_cauldron", "level", String.valueOf(Math.min(data & 3, 3)));
+            var10000 = (data & 3) == 0 ? simpleBlock("cauldron") : init("water_cauldron", "level", String.valueOf(Math.min(data & 3, 3)));
             break;
          case 119:
-            var10000 = init_bP_CachePool("end_portal");
+            var10000 = simpleBlock("end_portal");
             break;
          case 120:
-            var10000 = init("end_portal_frame", "facing", update_StrArr[data & 3], "eye", (data & 4) != 0 ? "true" : "false");
+            var10000 = init("end_portal_frame", "facing", HORIZONTAL_FACINGS[data & 3], "eye", (data & 4) != 0 ? "true" : "false");
             break;
          case 121:
-            var10000 = init_bP_CachePool("end_stone");
+            var10000 = simpleBlock("end_stone");
             break;
          case 122:
-            var10000 = init_bP_CachePool("dragon_egg");
+            var10000 = simpleBlock("dragon_egg");
             break;
          case 123:
-            var10000 = init_bP_CachePool("redstone_lamp");
+            var10000 = simpleBlock("redstone_lamp");
             break;
          case 124:
             var10000 = init("redstone_lamp", "lit", "true");
@@ -1658,25 +1658,25 @@ final class AiSchematic {
             var10000 = load(data, true);
             break;
          case 126:
-            var10000 = init_bP_CachePool_I_Z(data, true);
+            var10000 = legacySlab(data, true);
             break;
          case 127:
-            var10000 = init("cocoa", "age", String.valueOf(Math.min(data >> 2 & 3, 2)), "facing", update_StrArr[data & 3]);
+            var10000 = init("cocoa", "age", String.valueOf(Math.min(data >> 2 & 3, 2)), "facing", HORIZONTAL_FACINGS[data & 3]);
             break;
          case 128:
             var10000 = load("sandstone_stairs", data);
             break;
          case 129:
-            var10000 = init_bP_CachePool("emerald_ore");
+            var10000 = simpleBlock("emerald_ore");
             break;
          case 130:
-            var10000 = init("ender_chest", "facing", init_Str(data));
+            var10000 = init("ender_chest", "facing", legacyFacing(data));
             break;
          case 131:
             var10000 = init(
                "tripwire_hook",
                "facing",
-               update_StrArr[data & 3],
+               HORIZONTAL_FACINGS[data & 3],
                "attached",
                (data & 4) != 0 ? "true" : "false",
                "powered",
@@ -1684,10 +1684,10 @@ final class AiSchematic {
             );
             break;
          case 132:
-            var10000 = init_bP_CachePool("tripwire");
+            var10000 = simpleBlock("tripwire");
             break;
          case 133:
-            var10000 = init_bP_CachePool("emerald_block");
+            var10000 = simpleBlock("emerald_block");
             break;
          case 134:
             var10000 = load("spruce_stairs", data);
@@ -1702,13 +1702,13 @@ final class AiSchematic {
             var10000 = init("command_block", "facing", poll[Math.min(data & 7, 5)]);
             break;
          case 138:
-            var10000 = init_bP_CachePool("beacon");
+            var10000 = simpleBlock("beacon");
             break;
          case 139:
-            var10000 = init_bP_CachePool(data == 1 ? "mossy_cobblestone_wall" : "cobblestone_wall");
+            var10000 = simpleBlock(data == 1 ? "mossy_cobblestone_wall" : "cobblestone_wall");
             break;
          case 140:
-            var10000 = init_bP_CachePool("flower_pot");
+            var10000 = simpleBlock("flower_pot");
             break;
          case 141:
             var10000 = init("carrots", "age", String.valueOf(data & 7));
@@ -1741,7 +1741,7 @@ final class AiSchematic {
                   var6 = "skeleton_skull";
             }
 
-            var10000 = init_bP_CachePool(var6);
+            var10000 = simpleBlock(var6);
             break;
          case 145:
             String var5;
@@ -1759,7 +1759,7 @@ final class AiSchematic {
             var10000 = init(var5, "facing", close[data & 3]);
             break;
          case 146:
-            var10000 = init("trapped_chest", "facing", init_Str(data));
+            var10000 = init("trapped_chest", "facing", legacyFacing(data));
             break;
          case 147:
             var10000 = init("light_weighted_pressure_plate", "power", String.valueOf(data & 15));
@@ -1768,19 +1768,19 @@ final class AiSchematic {
             var10000 = init("heavy_weighted_pressure_plate", "power", String.valueOf(data & 15));
             break;
          case 149:
-            var10000 = init("comparator", "facing", update_StrArr[data & 3], "powered", "false");
+            var10000 = init("comparator", "facing", HORIZONTAL_FACINGS[data & 3], "powered", "false");
             break;
          case 150:
-            var10000 = init("comparator", "facing", update_StrArr[data & 3], "powered", "true");
+            var10000 = init("comparator", "facing", HORIZONTAL_FACINGS[data & 3], "powered", "true");
             break;
          case 151:
-            var10000 = init_bP_CachePool("daylight_detector");
+            var10000 = simpleBlock("daylight_detector");
             break;
          case 152:
-            var10000 = init_bP_CachePool("redstone_block");
+            var10000 = simpleBlock("redstone_block");
             break;
          case 153:
-            var10000 = init_bP_CachePool("nether_quartz_ore");
+            var10000 = simpleBlock("nether_quartz_ore");
             break;
          case 154:
             var10000 = init("hopper", "facing", (data & 7) == 1 ? "down" : poll[Math.min(data & 7, 5)]);
@@ -1788,7 +1788,7 @@ final class AiSchematic {
          case 155:
             switch (data) {
                case 1:
-                  return init_bP_CachePool("chiseled_quartz_block");
+                  return simpleBlock("chiseled_quartz_block");
                case 2:
                   return init("quartz_pillar", "axis", "y");
                case 3:
@@ -1796,7 +1796,7 @@ final class AiSchematic {
                case 4:
                   return init("quartz_pillar", "axis", "z");
                default:
-                  return init_bP_CachePool("quartz_block");
+                  return simpleBlock("quartz_block");
             }
          case 156:
             var10000 = load("quartz_stairs", data);
@@ -1808,16 +1808,16 @@ final class AiSchematic {
             var10000 = init("dropper", "facing", poll[Math.min(data & 7, 5)]);
             break;
          case 159:
-            var10000 = init_bP_CachePool(color + "_terracotta");
+            var10000 = simpleBlock(color + "_terracotta");
             break;
          case 160:
-            var10000 = init_bP_CachePool(color + "_stained_glass_pane");
+            var10000 = simpleBlock(color + "_stained_glass_pane");
             break;
          case 161:
             var10000 = init((data & 1) != 0 ? "dark_oak_leaves" : "acacia_leaves", "persistent", (data & 4) != 0 ? "true" : "false");
             break;
          case 162:
-            var10000 = init_bP_CachePool_Str_I((data & 1) != 0 ? "dark_oak" : "acacia", data);
+            var10000 = legacyLog((data & 1) != 0 ? "dark_oak" : "acacia", data);
             break;
          case 163:
             var10000 = load("acacia_stairs", data);
@@ -1826,10 +1826,10 @@ final class AiSchematic {
             var10000 = load("dark_oak_stairs", data);
             break;
          case 165:
-            var10000 = init_bP_CachePool("slime_block");
+            var10000 = simpleBlock("slime_block");
             break;
          case 166:
-            var10000 = init_bP_CachePool("barrier");
+            var10000 = simpleBlock("barrier");
             break;
          case 167:
             var10000 = init("iron_trapdoor", "facing", flush[data & 3], "half", (data & 8) != 0 ? "top" : "bottom", "open", (data & 4) != 0 ? "true" : "false");
@@ -1847,10 +1847,10 @@ final class AiSchematic {
                   var4 = "prismarine";
             }
 
-            var10000 = init_bP_CachePool(var4);
+            var10000 = simpleBlock(var4);
             break;
          case 169:
-            var10000 = init_bP_CachePool("sea_lantern");
+            var10000 = simpleBlock("sea_lantern");
             break;
          case 170:
             String var12;
@@ -1868,16 +1868,16 @@ final class AiSchematic {
             var10000 = init("hay_block", "axis", var12);
             break;
          case 171:
-            var10000 = init_bP_CachePool(color + "_carpet");
+            var10000 = simpleBlock(color + "_carpet");
             break;
          case 172:
-            var10000 = init_bP_CachePool("terracotta");
+            var10000 = simpleBlock("terracotta");
             break;
          case 173:
-            var10000 = init_bP_CachePool("coal_block");
+            var10000 = simpleBlock("coal_block");
             break;
          case 174:
-            var10000 = init_bP_CachePool("packed_ice");
+            var10000 = simpleBlock("packed_ice");
             break;
          case 175:
             var10000 = read(data);
@@ -1886,13 +1886,13 @@ final class AiSchematic {
             var10000 = init("white_banner", "rotation", String.valueOf(data & 15));
             break;
          case 177:
-            var10000 = init("white_wall_banner", "facing", init_Str(data));
+            var10000 = init("white_wall_banner", "facing", legacyFacing(data));
             break;
          case 178:
             var10000 = init("daylight_detector", "inverted", "true");
             break;
          case 179:
-            var10000 = init_bP_CachePool(data == 1 ? "chiseled_red_sandstone" : (data == 2 ? "cut_red_sandstone" : "red_sandstone"));
+            var10000 = simpleBlock(data == 1 ? "chiseled_red_sandstone" : (data == 2 ? "cut_red_sandstone" : "red_sandstone"));
             break;
          case 180:
             var10000 = load("red_sandstone_stairs", data);
@@ -1919,19 +1919,19 @@ final class AiSchematic {
             var10000 = write("acacia_fence_gate", data);
             break;
          case 188:
-            var10000 = init_bP_CachePool("spruce_fence");
+            var10000 = simpleBlock("spruce_fence");
             break;
          case 189:
-            var10000 = init_bP_CachePool("birch_fence");
+            var10000 = simpleBlock("birch_fence");
             break;
          case 190:
-            var10000 = init_bP_CachePool("jungle_fence");
+            var10000 = simpleBlock("jungle_fence");
             break;
          case 191:
-            var10000 = init_bP_CachePool("dark_oak_fence");
+            var10000 = simpleBlock("dark_oak_fence");
             break;
          case 192:
-            var10000 = init_bP_CachePool("acacia_fence");
+            var10000 = simpleBlock("acacia_fence");
             break;
          case 193:
             var10000 = read("spruce_door", data);
@@ -1952,13 +1952,13 @@ final class AiSchematic {
             var10000 = init("end_rod", "facing", poll[Math.min(data & 7, 5)]);
             break;
          case 199:
-            var10000 = init_bP_CachePool("chorus_plant");
+            var10000 = simpleBlock("chorus_plant");
             break;
          case 200:
             var10000 = init("chorus_flower", "age", String.valueOf(Math.min(data & 7, 5)));
             break;
          case 201:
-            var10000 = init_bP_CachePool("purpur_block");
+            var10000 = simpleBlock("purpur_block");
             break;
          case 202:
             String var11;
@@ -1985,16 +1985,16 @@ final class AiSchematic {
             var10000 = init("purpur_slab", "type", (data & 8) != 0 ? "top" : "bottom");
             break;
          case 206:
-            var10000 = init_bP_CachePool("end_stone_bricks");
+            var10000 = simpleBlock("end_stone_bricks");
             break;
          case 207:
             var10000 = init("beetroots", "age", String.valueOf(data & 3));
             break;
          case 208:
-            var10000 = init_bP_CachePool("dirt_path");
+            var10000 = simpleBlock("dirt_path");
             break;
          case 209:
-            var10000 = init_bP_CachePool("end_gateway");
+            var10000 = simpleBlock("end_gateway");
             break;
          case 210:
             var10000 = init("repeating_command_block", "facing", poll[Math.min(data & 7, 5)]);
@@ -2006,13 +2006,13 @@ final class AiSchematic {
             var10000 = init("frosted_ice", "age", String.valueOf(data & 3));
             break;
          case 213:
-            var10000 = init_bP_CachePool("magma_block");
+            var10000 = simpleBlock("magma_block");
             break;
          case 214:
-            var10000 = init_bP_CachePool("nether_wart_block");
+            var10000 = simpleBlock("nether_wart_block");
             break;
          case 215:
-            var10000 = init_bP_CachePool("red_nether_bricks");
+            var10000 = simpleBlock("red_nether_bricks");
             break;
          case 216:
             String var10002;
@@ -2030,7 +2030,7 @@ final class AiSchematic {
             var10000 = init("bone_block", "axis", var10002);
             break;
          case 217:
-            var10000 = init_bP_CachePool("structure_void");
+            var10000 = simpleBlock("structure_void");
             break;
          case 218:
             var10000 = init("observer", "facing", poll[Math.min(data & 7, 5)]);
@@ -2051,7 +2051,7 @@ final class AiSchematic {
          case 232:
          case 233:
          case 234:
-            var10000 = init(load_StrArr[id - 219] + "_shulker_box", "facing", poll[Math.min(data & 7, 5)]);
+            var10000 = init(DYE_COLORS[id - 219] + "_shulker_box", "facing", poll[Math.min(data & 7, 5)]);
             break;
          case 235:
          case 236:
@@ -2069,13 +2069,13 @@ final class AiSchematic {
          case 248:
          case 249:
          case 250:
-            var10000 = init(load_StrArr[id - 235] + "_glazed_terracotta", "facing", update_StrArr[data & 3]);
+            var10000 = init(DYE_COLORS[id - 235] + "_glazed_terracotta", "facing", HORIZONTAL_FACINGS[data & 3]);
             break;
          case 251:
-            var10000 = init_bP_CachePool(color + "_concrete");
+            var10000 = simpleBlock(color + "_concrete");
             break;
          case 252:
-            var10000 = init_bP_CachePool(color + "_concrete_powder");
+            var10000 = simpleBlock(color + "_concrete_powder");
             break;
          case 253:
          case 254:
@@ -2083,13 +2083,13 @@ final class AiSchematic {
             var10000 = null;
             break;
          case 255:
-            var10000 = init_bP_CachePool("structure_block");
+            var10000 = simpleBlock("structure_block");
       }
 
       return var10000;
    }
 
-   private static AiSchematic.Inner_CachePool init_bP_CachePool_Str_I(String type, int data) {
+   private static AiSchematic.Inner_CachePool legacyLog(String type, int data) {
       AiSchematic.Inner_CachePool var10000;
       switch (data & 12) {
          case 4:
@@ -2099,7 +2099,7 @@ final class AiSchematic {
             var10000 = init(type + "_log", "axis", "z");
             break;
          case 12:
-            var10000 = init_bP_CachePool(type + "_wood");
+            var10000 = simpleBlock(type + "_wood");
             break;
          default:
             var10000 = init(type + "_log", "axis", "y");
@@ -2109,14 +2109,14 @@ final class AiSchematic {
    }
 
    private static AiSchematic.Inner_CachePool load(String block, int data) {
-      return init(block, "facing", write_StrArr[data & 3], "half", (data & 4) != 0 ? "top" : "bottom");
+      return init(block, "facing", TORCH_FACINGS[data & 3], "half", (data & 4) != 0 ? "top" : "bottom");
    }
 
-   private static AiSchematic.Inner_CachePool init_bP_CachePool_I_Z(int data, boolean wooden) {
+   private static AiSchematic.Inner_CachePool legacySlab(int data, boolean wooden) {
       String[] stone = new String[]{
          "stone_slab", "sandstone_slab", "petrified_oak_slab", "cobblestone_slab", "brick_slab", "stone_brick_slab", "nether_brick_slab", "quartz_slab"
       };
-      String block = wooden ? read_StrArr[Math.min(data & 7, 5)] + "_slab" : stone[data & 7];
+      String block = wooden ? WOOD_TYPES[Math.min(data & 7, 5)] + "_slab" : stone[data & 7];
       return init(block, "type", (data & 8) != 0 ? "top" : "bottom");
    }
 
@@ -2134,12 +2134,12 @@ final class AiSchematic {
                var10000 = "smooth_stone";
          }
 
-         return init_bP_CachePool(var10000);
+         return simpleBlock(var10000);
       } else {
          String[] stone = new String[]{
             "stone_slab", "sandstone_slab", "petrified_oak_slab", "cobblestone_slab", "brick_slab", "stone_brick_slab", "nether_brick_slab", "quartz_slab"
          };
-         String block = wooden ? read_StrArr[Math.min(data & 7, 5)] + "_slab" : stone[data & 7];
+         String block = wooden ? WOOD_TYPES[Math.min(data & 7, 5)] + "_slab" : stone[data & 7];
          return init(block, "type", "double");
       }
    }
@@ -2151,10 +2151,10 @@ final class AiSchematic {
    }
 
    private static AiSchematic.Inner_CachePool write(String block, int data) {
-      return init(block, "facing", update_StrArr[data & 3], "open", (data & 4) != 0 ? "true" : "false");
+      return init(block, "facing", HORIZONTAL_FACINGS[data & 3], "open", (data & 4) != 0 ? "true" : "false");
    }
 
-   private static AiSchematic.Inner_CachePool init_bP_CachePool(int data) {
+   private static AiSchematic.Inner_CachePool legacyLever(int data) {
       String powered = (data & 8) != 0 ? "true" : "false";
       AiSchematic.Inner_CachePool var10000;
       switch (data & 7) {

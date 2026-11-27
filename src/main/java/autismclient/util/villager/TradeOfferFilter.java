@@ -11,25 +11,25 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.trading.MerchantOffer;
 
-public record TradeOfferFilter(int init_I, List<String> init_List, List<String> load_List, List<TradeOfferFilter.Inner_DataUtil> read, boolean init_Z, int load_I) {
+public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<String> costIds, List<TradeOfferFilter.Inner_DataUtil> read, boolean init_Z, int maxPrice) {
    public TradeOfferFilter {
-      init_List = List.copyOf(init_List);
-      load_List = List.copyOf(load_List);
+      resultIds = List.copyOf(resultIds);
+      costIds = List.copyOf(costIds);
       read = List.copyOf(read);
    }
 
    public boolean matches(MerchantOffer offer, int index) {
-      if (offer != null && (this.init_I <= 0 || index + 1 == this.init_I)) {
-         if (!this.init_List.isEmpty() && !init_Z_List_ItemStack(this.init_List, offer.getResult())) {
+      if (offer != null && (this.tradeIndex <= 0 || index + 1 == this.tradeIndex)) {
+         if (!this.resultIds.isEmpty() && !matchesAny(this.resultIds, offer.getResult())) {
             return false;
          }
 
-         if (!this.load_List.isEmpty() && !init_Z_List_ItemStack(this.load_List, offer.getCostA()) && !init_Z_List_ItemStack(this.load_List, offer.getCostB())) {
+         if (!this.costIds.isEmpty() && !matchesAny(this.costIds, offer.getCostA()) && !matchesAny(this.costIds, offer.getCostB())) {
             return false;
          }
 
          int price = init(offer);
-         if (!init_Z_I_I(price, this.load_I)) {
+         if (!withinPriceLimit(price, this.maxPrice)) {
             return false;
          }
 
@@ -47,7 +47,7 @@ public record TradeOfferFilter(int init_I, List<String> init_List, List<String> 
             String key = enchantment.unwrapKey().map(k -> k.identifier().toString()).orElse("");
 
             for (TradeOfferFilter.Inner_DataUtil book : this.read) {
-               if (key.equals(book.init_Str()) && init(enchants.getLevel(enchantment), book.init_I(), this.init_Z) && init_Z_I_I(price, book.load())) {
+               if (key.equals(book.enchantment()) && init(enchants.getLevel(enchantment), book.minLevel(), this.init_Z) && withinPriceLimit(price, book.load())) {
                   return true;
                }
             }
@@ -63,7 +63,7 @@ public record TradeOfferFilter(int init_I, List<String> init_List, List<String> 
       return exact ? actual == wanted : actual >= wanted;
    }
 
-   public static boolean init_Z_I_I(int price, int limit) {
+   public static boolean withinPriceLimit(int price, int limit) {
       return limit == 0 || price <= limit;
    }
 
@@ -79,7 +79,7 @@ public record TradeOfferFilter(int init_I, List<String> init_List, List<String> 
       return stack.is(Items.EMERALD) ? stack.getCount() : 0;
    }
 
-   private static boolean init_Z_List_ItemStack(List<String> ids, ItemStack stack) {
+   private static boolean matchesAny(List<String> ids, ItemStack stack) {
       if (stack.isEmpty()) {
          return false;
       }
@@ -97,12 +97,12 @@ public record TradeOfferFilter(int init_I, List<String> init_List, List<String> 
       }
    }
 
-   public record Inner_DataUtil(String init_Str, int init_I, int load) {
-      public Inner_DataUtil(String init_Str, int init_I, int load) {
-         init_Str = TradeOfferFilter.init(init_Str);
-         if (!init_Str.isBlank() && init_I >= 1 && init_I <= 255 && load >= 0 && load <= 128) {
-            this.init_Str = init_Str;
-            this.init_I = init_I;
+   public record Inner_DataUtil(String enchantment, int minLevel, int load) {
+      public Inner_DataUtil(String enchantment, int minLevel, int load) {
+         enchantment = TradeOfferFilter.init(enchantment);
+         if (!enchantment.isBlank() && minLevel >= 1 && minLevel <= 255 && load >= 0 && load <= 128) {
+            this.enchantment = enchantment;
+            this.minLevel = minLevel;
             this.load = load;
          } else {
             throw new IllegalArgumentException("Book format: enchantment level [price]");

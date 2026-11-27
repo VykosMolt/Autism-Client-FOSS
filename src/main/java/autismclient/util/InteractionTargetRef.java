@@ -11,22 +11,22 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class InteractionTargetRef {
-   private final InteractionTargetRef.Inner_DataUtil init_E_DataUtil;
-   private final BlockPos init_BlockPos;
-   private final String init_Str;
-   private final InteractionHand init_InteractionHand;
-   private final Vec3 init_Vec3;
-   private final Direction init_Direction;
-   private final boolean init_Z;
+   private final InteractionTargetRef.Inner_DataUtil kind;
+   private final BlockPos blockPos;
+   private final String entityRef;
+   private final InteractionHand hand;
+   private final Vec3 hitPos;
+   private final Direction blockSide;
+   private final boolean insideBlock;
 
    private InteractionTargetRef(InteractionTargetRef.Inner_DataUtil kind, BlockPos blockPos, String entityRef, InteractionHand hand, Vec3 hitPos, Direction blockSide, boolean insideBlock) {
-      this.init_E_DataUtil = kind;
-      this.init_BlockPos = blockPos == null ? null : blockPos.immutable();
-      this.init_Str = entityRef == null ? "" : entityRef;
-      this.init_InteractionHand = hand == null ? InteractionHand.MAIN_HAND : hand;
-      this.init_Vec3 = hitPos;
-      this.init_Direction = blockSide;
-      this.init_Z = insideBlock;
+      this.kind = kind;
+      this.blockPos = blockPos == null ? null : blockPos.immutable();
+      this.entityRef = entityRef == null ? "" : entityRef;
+      this.hand = hand == null ? InteractionHand.MAIN_HAND : hand;
+      this.hitPos = hitPos;
+      this.blockSide = blockSide;
+      this.insideBlock = insideBlock;
    }
 
    public static InteractionTargetRef ofBlock(BlockPos pos) {
@@ -64,20 +64,20 @@ public final class InteractionTargetRef {
       return "~" + uuid + "~" + typeId + "~" + displayName;
    }
 
-   public InteractionTargetRef.Inner_DataUtil init_E_DataUtil() {
-      return this.init_E_DataUtil;
+   public InteractionTargetRef.Inner_DataUtil kind() {
+      return this.kind;
    }
 
    public BlockPos blockPos() {
-      return this.init_BlockPos;
+      return this.blockPos;
    }
 
-   public String init_Str() {
-      return this.init_Str;
+   public String entityRef() {
+      return this.entityRef;
    }
 
    public boolean isBlock() {
-      return this.init_E_DataUtil == InteractionTargetRef.Inner_DataUtil.BLOCK;
+      return this.kind == InteractionTargetRef.Inner_DataUtil.BLOCK;
    }
 
    public boolean interact(Minecraft mc) {
@@ -89,29 +89,29 @@ public final class InteractionTargetRef {
          return false;
       }
 
-      if (this.init_E_DataUtil != InteractionTargetRef.Inner_DataUtil.BLOCK) {
-         Entity entity = this.load_Entity(mc);
+      if (this.kind != InteractionTargetRef.Inner_DataUtil.BLOCK) {
+         Entity entity = this.lookupEntity(mc);
          if (entity == null) {
             return false;
-         } else if (this.init_E_DataUtil == InteractionTargetRef.Inner_DataUtil.ENTITY_INTERACT_AT && this.init_Vec3 != null) {
-            mc.getConnection().send(new ServerboundInteractPacket(entity.getId(), this.init_InteractionHand, this.init_Vec3, mc.player.isShiftKeyDown()));
+         } else if (this.kind == InteractionTargetRef.Inner_DataUtil.ENTITY_INTERACT_AT && this.hitPos != null) {
+            mc.getConnection().send(new ServerboundInteractPacket(entity.getId(), this.hand, this.hitPos, mc.player.isShiftKeyDown()));
             return true;
          } else {
-            mc.getConnection().send(new ServerboundInteractPacket(entity.getId(), this.init_InteractionHand, Vec3.ZERO, mc.player.isShiftKeyDown()));
+            mc.getConnection().send(new ServerboundInteractPacket(entity.getId(), this.hand, Vec3.ZERO, mc.player.isShiftKeyDown()));
             return true;
          }
       } else {
-         if (this.init_BlockPos == null) {
+         if (this.blockPos == null) {
             return false;
          }
 
          if (mc.player != null && mc.gameMode != null) {
-            BlockHitResult hitResult = this.init_BlockHitResult_Minecraft(mc);
+            BlockHitResult hitResult = this.blockHit(mc);
             if (hitResult == null) {
                return false;
             }
 
-            mc.gameMode.useItemOn(mc.player, this.init_InteractionHand, hitResult);
+            mc.gameMode.useItemOn(mc.player, this.hand, hitResult);
             return true;
          } else {
             return false;
@@ -122,25 +122,25 @@ public final class InteractionTargetRef {
    public boolean isPresent(Minecraft mc) {
       if (mc == null || mc.player == null) {
          return false;
-      } else if (this.init_E_DataUtil != InteractionTargetRef.Inner_DataUtil.BLOCK) {
-         Entity entity = this.load_Entity(mc);
+      } else if (this.kind != InteractionTargetRef.Inner_DataUtil.BLOCK) {
+         Entity entity = this.lookupEntity(mc);
          return init(mc, entity);
       } else {
-         return this.init_BlockPos != null && isInReach(mc, this.init_BlockPos) && this.init_BlockHitResult_Minecraft(mc) != null;
+         return this.blockPos != null && isInReach(mc, this.blockPos) && this.blockHit(mc) != null;
       }
    }
 
    public Entity resolveEntity(Minecraft mc) {
-      return this.init_E_DataUtil == InteractionTargetRef.Inner_DataUtil.BLOCK ? null : this.load_Entity(mc);
+      return this.kind == InteractionTargetRef.Inner_DataUtil.BLOCK ? null : this.lookupEntity(mc);
    }
 
-   private BlockHitResult init_BlockHitResult_Minecraft(Minecraft mc) {
-      return this.init_Direction != null && this.init_Vec3 != null
-         ? new BlockHitResult(this.init_Vec3, this.init_Direction, this.init_BlockPos, this.init_Z)
-         : init_BlockHitResult(mc, this.init_BlockPos);
+   private BlockHitResult blockHit(Minecraft mc) {
+      return this.blockSide != null && this.hitPos != null
+         ? new BlockHitResult(this.hitPos, this.blockSide, this.blockPos, this.insideBlock)
+         : syntheticBlockHit(mc, this.blockPos);
    }
 
-   public static BlockHitResult init_BlockHitResult(Minecraft mc, BlockPos blockPos) {
+   public static BlockHitResult syntheticBlockHit(Minecraft mc, BlockPos blockPos) {
       if (blockPos == null) {
          return null;
       } else {
@@ -184,12 +184,12 @@ public final class InteractionTargetRef {
       }
    }
 
-   private Entity load_Entity(Minecraft mc) {
+   private Entity lookupEntity(Minecraft mc) {
       if (mc != null && mc.level != null) {
          String uuid = "";
-         String typeId = this.init_Str;
-         if (this.init_Str.startsWith("~")) {
-            String[] parts = this.init_Str.split("~", 4);
+         String typeId = this.entityRef;
+         if (this.entityRef.startsWith("~")) {
+            String[] parts = this.entityRef.split("~", 4);
             uuid = parts.length >= 2 ? parts[1] : "";
             typeId = parts.length >= 3 ? parts[2] : "";
          }

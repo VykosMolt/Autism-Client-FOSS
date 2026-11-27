@@ -39,8 +39,8 @@ final class AiHazardEscape {
       final Object player = mc.player;
       final Object connection = mc.getConnection();
       return new AiOperation() {
-         final AiGuardLayer init_Y = new AiGuardLayer(new AiGuard.GuardPolicy(false, false, false, 16.0F, 7.0F, 14, false, Set.of()), "hazard escape");
-         final long init_J = System.nanoTime() + seconds * 1000000000L;
+         final AiGuardLayer guard = new AiGuardLayer(new AiGuard.GuardPolicy(false, false, false, 16.0F, 7.0F, 14, false, Set.of()), "hazard escape");
+         final long deadlineNanos = System.nanoTime() + seconds * 1000000000L;
          boolean init_Z;
          String init_Str = "";
 
@@ -50,12 +50,12 @@ final class AiHazardEscape {
                return this.init(AiOperation.Status.CANCELLED, "Hazard escape context changed");
             }
 
-            if (System.nanoTime() >= this.init_J) {
+            if (System.nanoTime() >= this.deadlineNanos) {
                return this.init(AiOperation.Status.TIMED_OUT, "Hazard escape deadline reached: " + this.init_Str);
             }
 
             String next = AiHazardEscape.init(mc);
-            if (next == null && !this.init_Y.isActive()) {
+            if (next == null && !this.guard.isActive()) {
                return this.init(AiOperation.Status.SUCCEEDED, "Immediate environmental danger cleared");
             }
 
@@ -63,11 +63,11 @@ final class AiHazardEscape {
                this.init_Str = next;
             }
 
-            AiOperation.Result result = this.init_Y
-               .tick(null, () -> {}, () -> Math.max(1, (int)((this.init_J - System.nanoTime()) / 1000000000L)));
+            AiOperation.Result result = this.guard
+               .tick(null, () -> {}, () -> Math.max(1, (int)((this.deadlineNanos - System.nanoTime()) / 1000000000L)));
             if (result != null) {
                if (result.terminal()) {
-                  this.init_Y.cancel();
+                  this.guard.cancel();
                }
 
                return result;
@@ -77,8 +77,8 @@ final class AiHazardEscape {
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
-            boolean pending = this.init_Y.requiresReconciliation();
-            this.init_Y.cancel();
+            boolean pending = this.guard.requiresReconciliation();
+            this.guard.cancel();
             return AiGuardLayer.wrapPendingTermination(
                pending, AiGameOperations.result(status, message, AiJson.objectOf("hazard", this.init_Str, "reobserveBeforeResuming", true))
             );
@@ -86,18 +86,18 @@ final class AiHazardEscape {
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_Y.canInterruptNow();
+            return this.guard.canInterruptNow();
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_Y.requiresReconciliation();
+            return this.guard.requiresReconciliation();
          }
 
          @Override
          public void cancel() {
             this.init_Z = true;
-            this.init_Y.cancel();
+            this.guard.cancel();
          }
       };
    }

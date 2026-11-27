@@ -30,13 +30,13 @@ public final class AiChatLedger {
    private static final int read = 512;
    private static final int write = 16;
    private static final int update = 256;
-   private static final Pattern init_Pattern = Pattern.compile("^<([^<>\\s][^<>]{0,63})>\\s");
-   private static final Set<String> init_Set = Set.of(
+   private static final Pattern SENDER_PATTERN = Pattern.compile("^<([^<>\\s][^<>]{0,63})>\\s");
+   private static final Set<String> IGNORED_SENDERS = Set.of(
       "chat", "say", "msg", "team_msg", "emote", "say_command", "msg_command", "team_msg_command", "emote_command", "whisper"
    );
-   private static final Object init_Obj = new Object();
-   private static final Deque<AiChatLedger.ChatEntry> init_Deque = new ArrayDeque<>();
-   private static long init_J;
+   private static final Object LOCK = new Object();
+   private static final Deque<AiChatLedger.ChatEntry> ledger = new ArrayDeque<>();
+   private static long sequence;
 
    private AiChatLedger() {
    }
@@ -52,17 +52,17 @@ public final class AiChatLedger {
          String hover = init(component, clicks);
          if (!text.isBlank() || !clicks.isEmpty()) {
             String candidate = sender == null ? "" : sender.trim();
-            if (candidate.isBlank() || init_Set.contains(candidate.toLowerCase(Locale.ROOT))) {
-               candidate = init_Str(text);
+            if (candidate.isBlank() || IGNORED_SENDERS.contains(candidate.toLowerCase(Locale.ROOT))) {
+               candidate = senderFromText(text);
             }
 
             String resolvedSource = source == null ? "SERVER" : source;
             String resolvedSender = candidate;
-            synchronized (init_Obj) {
-               init_Deque.addFirst(new AiChatLedger.ChatEntry(System.currentTimeMillis(), ++init_J, resolvedSource, resolvedSender, text, clicks, hover));
+            synchronized (LOCK) {
+               ledger.addFirst(new AiChatLedger.ChatEntry(System.currentTimeMillis(), ++sequence, resolvedSource, resolvedSender, text, clicks, hover));
 
-               while (init_Deque.size() > 64) {
-                  init_Deque.removeLast();
+               while (ledger.size() > 64) {
+                  ledger.removeLast();
                }
             }
          }
@@ -74,16 +74,16 @@ public final class AiChatLedger {
    }
 
    public static void init(Component component, UUID senderId, String chatType) {
-      init(component, init_Z(chatType) ? "PLAYER" : "PLAYER_PRIVATE", init(senderId));
+      init(component, isPublicChat(chatType) ? "PLAYER" : "PLAYER_PRIVATE", init(senderId));
    }
 
-   static boolean init_Z(String chatType) {
+   static boolean isPublicChat(String chatType) {
       String type = chatType == null ? "" : chatType.toLowerCase(Locale.ROOT);
       return !type.contains("msg") && !type.contains("team") && !type.contains("whisper");
    }
 
    public static void load(Component component, String chatType) {
-      init(component, init_Z(chatType) ? "DISGUISED" : "PLAYER_PRIVATE", "");
+      init(component, isPublicChat(chatType) ? "DISGUISED" : "PLAYER_PRIVATE", "");
    }
 
    static String init(UUID senderId) {
@@ -118,10 +118,10 @@ public final class AiChatLedger {
    }
 
    public static List<AiChatLedger.ChatEntry> recent(int n) {
-      synchronized (init_Obj) {
-         List<AiChatLedger.ChatEntry> out = new ArrayList<>(Math.min(n, init_Deque.size()));
+      synchronized (LOCK) {
+         List<AiChatLedger.ChatEntry> out = new ArrayList<>(Math.min(n, ledger.size()));
 
-         for (AiChatLedger.ChatEntry entry : init_Deque) {
+         for (AiChatLedger.ChatEntry entry : ledger) {
             if (out.size() >= n) {
                break;
             }
@@ -134,44 +134,44 @@ public final class AiChatLedger {
    }
 
    public static AiChatLedger.ChatEntry entry(int index) {
-      synchronized (init_Obj) {
-         if (index >= 0 && index < init_Deque.size()) {
+      synchronized (LOCK) {
+         if (index >= 0 && index < ledger.size()) {
             int i = 0;
 
-            for (AiChatLedger.ChatEntry entry : init_Deque) {
+            for (AiChatLedger.ChatEntry entry : ledger) {
                if (i++ == index) {
                   return entry;
                }
             }
 
-            throw new IndexOutOfBoundsException("Chat ledger index " + index + " out of " + init_Deque.size() + " entries");
+            throw new IndexOutOfBoundsException("Chat ledger index " + index + " out of " + ledger.size() + " entries");
          } else {
-            throw new IndexOutOfBoundsException("Chat ledger index " + index + " out of " + init_Deque.size() + " entries");
+            throw new IndexOutOfBoundsException("Chat ledger index " + index + " out of " + ledger.size() + " entries");
          }
       }
    }
 
    public static int size() {
-      synchronized (init_Obj) {
-         return init_Deque.size();
+      synchronized (LOCK) {
+         return ledger.size();
       }
    }
 
    public static long revision() {
-      synchronized (init_Obj) {
-         return init_J;
+      synchronized (LOCK) {
+         return sequence;
       }
    }
 
    public static void clear() {
-      synchronized (init_Obj) {
-         init_Deque.clear();
-         init_J++;
+      synchronized (LOCK) {
+         ledger.clear();
+         sequence++;
       }
    }
 
-   private static String init_Str(String text) {
-      Matcher matcher = init_Pattern.matcher(text);
+   private static String senderFromText(String text) {
+      Matcher matcher = SENDER_PATTERN.matcher(text);
       return matcher.find() ? matcher.group(1) : "";
    }
 

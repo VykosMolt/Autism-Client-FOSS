@@ -19,11 +19,11 @@ public class NbtCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         init_V_2();
+         inspectHeld();
          return 1;
       });
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("get").executes(ctx -> {
-         init_V_2();
+         inspectHeld();
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("copy").executes(ctx -> {
@@ -32,7 +32,7 @@ public class NbtCommand extends Command {
       }));
    }
 
-   private static ItemStack init_ItemStack() {
+   private static ItemStack heldStack() {
       Minecraft mc = Minecraft.getInstance();
       Player player = mc == null ? null : mc.player;
       if (player == null) {
@@ -43,8 +43,8 @@ public class NbtCommand extends Command {
       return !main.isEmpty() ? main : player.getOffhandItem();
    }
 
-   private static void init_V_2() {
-      ItemStack stack = init_ItemStack();
+   private static void inspectHeld() {
+      ItemStack stack = heldStack();
       if (stack.isEmpty()) {
          AutismClientMessaging.sendPrefixed("§cHold an item in either hand first.");
       } else if (!AutismItemNbtInspectOverlay.inspectStack(stack)) {
@@ -63,7 +63,7 @@ public class NbtCommand extends Command {
    }
 
    private static void load() {
-      ItemStack stack = init_ItemStack();
+      ItemStack stack = heldStack();
       if (stack.isEmpty()) {
          AutismClientMessaging.sendPrefixed("§cHold an item in either hand first.");
       } else {

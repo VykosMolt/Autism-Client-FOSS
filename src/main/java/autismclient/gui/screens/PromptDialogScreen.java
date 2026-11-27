@@ -17,43 +17,43 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
    private static final int load_I = 5;
    private static final int read = 7;
    private static final int write = 16;
-   private final List<String> init_List;
-   private final List<PromptDialogScreen.Inner_DataUtil> load_List;
-   private final Runnable init_Runnable;
-   private ThemedTextInputBox init_k;
-   private final String init_Str;
-   private final Consumer<String> init_Consumer;
-   private boolean init_Z;
+   private final List<String> lines;
+   private final List<PromptDialogScreen.Inner_DataUtil> choices;
+   private final Runnable onDismiss;
+   private ThemedTextInputBox input;
+   private final String initialValue;
+   private final Consumer<String> onRename;
+   private boolean closed;
 
    public PromptDialogScreen(String title, List<String> lines, List<PromptDialogScreen.Inner_DataUtil> choices, Runnable dismissed) {
       super(Component.literal(title));
-      this.init_List = List.copyOf(lines);
-      this.load_List = List.copyOf(choices);
-      this.init_Runnable = dismissed;
-      this.init_Str = null;
-      this.init_Consumer = null;
+      this.lines = List.copyOf(lines);
+      this.choices = List.copyOf(choices);
+      this.onDismiss = dismissed;
+      this.initialValue = null;
+      this.onRename = null;
    }
 
    public PromptDialogScreen(String title, String value, Consumer<String> rename) {
       super(Component.literal(title));
-      this.init_Consumer = rename;
-      this.init_List = List.of();
-      this.init_Runnable = () -> {};
-      this.init_Str = value;
-      this.load_List = List.of(
+      this.onRename = rename;
+      this.lines = List.of();
+      this.onDismiss = () -> {};
+      this.initialValue = value;
+      this.choices = List.of(
          new PromptDialogScreen.Inner_DataUtil("Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::onClose),
-         new PromptDialogScreen.Inner_DataUtil("Rename", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, this::load_V_17)
+         new PromptDialogScreen.Inner_DataUtil("Rename", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, this::submitRename)
       );
    }
 
    @Override
    protected void init() {
-      if (this.init_Str != null && this.init_k == null) {
-         this.init_k = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 100, 16, false);
-         this.init_k.setMaxLength(240);
-         this.init_k.setValue(this.init_Str);
-         this.init_k.setFocused(true);
-         this.init_k.keyPressed(Compat263.newGlfwKeyEvent(65, 0, 2));
+      if (this.initialValue != null && this.input == null) {
+         this.input = new ThemedTextInputBox(this.minecraft, this.font, 0, 0, 100, 16, false);
+         this.input.setMaxLength(240);
+         this.input.setValue(this.initialValue);
+         this.input.setFocused(true);
+         this.input.keyPressed(Compat263.newGlfwKeyEvent(65, 0, 2));
       }
    }
 
@@ -62,17 +62,17 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
       return false;
    }
 
-   private autismclient.gui.f.NetHelper init_NetHelper_2() {
-      int width = Math.max(1, Math.min(this.init_Str == null ? 268 : 220, this.virtualWidth() - 12));
-      int height = 52 + (this.init_Str == null ? this.init_List.size() * 12 : 16);
+   private autismclient.gui.f.NetHelper panelBounds() {
+      int width = Math.max(1, Math.min(this.initialValue == null ? 268 : 220, this.virtualWidth() - 12));
+      int height = 52 + (this.initialValue == null ? this.lines.size() * 12 : 16);
       return autismclient.gui.f.NetHelper.init((this.virtualWidth() - width) / 2, (this.virtualHeight() - height) / 2, width, height);
    }
 
    private autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper panel, int index) {
-      int space = panel.update() - 14 - (this.load_List.size() - 1) * 5;
-      int left = panel.read() + 7 + space * index / this.load_List.size() + index * 5;
+      int space = panel.update() - 14 - (this.choices.size() - 1) * 5;
+      int left = panel.read() + 7 + space * index / this.choices.size() + index * 5;
       return autismclient.gui.f.NetHelper.init(
-         left, panel.write() + panel.sync() - 7 - 16, space * (index + 1) / this.load_List.size() - space * index / this.load_List.size(), 16
+         left, panel.write() + panel.sync() - 7 - 16, space * (index + 1) / this.choices.size() - space * index / this.choices.size(), 16
       );
    }
 
@@ -84,29 +84,29 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
 
       try {
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(g, this.font, mx, my);
-         autismclient.gui.f.NetHelper p = this.init_NetHelper_2();
+         autismclient.gui.f.NetHelper p = this.panelBounds();
          autismclient.gui.ui.widgets.DialogFrameRenderer.init(ui, p, 17, this.getTitle().getString(), false);
          int top = p.write() + 17 + 7;
 
-         for (int i = 0; i < this.init_List.size(); i++) {
-            String line = ui.init_PoolEntry().trimToWidth(this.init_List.get(i), p.update() - 14);
+         for (int i = 0; i < this.lines.size(); i++) {
+            String line = ui.init_PoolEntry().trimToWidth(this.lines.get(i), p.update() - 14);
             ui.init_PoolEntry()
                .draw(
                   g, line, p.read() + 7, top + 12 * i, i == 0 ? ui.init_TableIndex().colors().textPrimary : ui.init_TableIndex().colors().textSecondary
                );
          }
 
-         if (this.init_k != null) {
-            this.init_k.setX(p.read() + 7);
-            this.init_k.setY(top);
-            this.init_k.setWidth(p.update() - 14);
-            this.init_k.render(g, mx, my, delta);
+         if (this.input != null) {
+            this.input.setX(p.read() + 7);
+            this.input.setY(top);
+            this.input.setWidth(p.update() - 14);
+            this.input.render(g, mx, my, delta);
          }
 
-         for (int i = 0; i < this.load_List.size(); i++) {
-            PromptDialogScreen.Inner_DataUtil choice = this.load_List.get(i);
+         for (int i = 0; i < this.choices.size(); i++) {
+            PromptDialogScreen.Inner_DataUtil choice = this.choices.get(i);
             autismclient.gui.f.NetHelper bounds = this.init(p, i);
-            autismclient.gui.f.b.CachePool.init(ui, bounds, choice.init_Str(), choice.init_CachePool_DataUtil(), bounds.init_Z(mx, my), false);
+            autismclient.gui.f.b.CachePool.init(ui, bounds, choice.label(), choice.style(), bounds.init_Z(mx, my), false);
          }
       } finally {
          cA.load_V_GuiGraphicsExtract(g);
@@ -120,32 +120,32 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
       }
 
       MouseButtonEvent mouse = toVirtual(event);
-      autismclient.gui.f.NetHelper p = this.init_NetHelper_2();
+      autismclient.gui.f.NetHelper p = this.panelBounds();
       if (autismclient.gui.ui.widgets.DialogFrameRenderer.init(p, 17, (int)mouse.x(), (int)mouse.y())) {
          this.onClose();
          return true;
       }
 
-      for (int i = 0; i < this.load_List.size(); i++) {
+      for (int i = 0; i < this.choices.size(); i++) {
          if (this.init(p, i).init_Z((int)mouse.x(), (int)mouse.y())) {
-            this.load_List.get(i).init_Runnable().run();
+            this.choices.get(i).action().run();
             return true;
          }
       }
 
-      return this.init_k != null && this.init_k.mouseClicked(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse));
+      return this.input != null && this.input.mouseClicked(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse));
    }
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
       MouseButtonEvent mouse = toVirtual(event);
-      return this.init_k != null && this.init_k.mouseReleased(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse));
+      return this.input != null && this.input.mouseReleased(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse));
    }
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       MouseButtonEvent mouse = toVirtual(event);
-      return this.init_k != null && this.init_k.mouseDragged(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse), cA.init_D_D(dx), cA.init_D_D(dy));
+      return this.input != null && this.input.mouseDragged(mouse.x(), mouse.y(), Compat263.mouseEventGlfwButton(mouse), cA.init_D_D(dx), cA.init_D_D(dy));
    }
 
    @Override
@@ -155,35 +155,35 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
          return true;
       }
 
-      if (this.init_k == null) {
+      if (this.input == null) {
          return false;
       }
 
       if (Compat263.keyEventGlfwKey(event) != 257 && Compat263.keyEventGlfwKey(event) != 335) {
-         return this.init_k.keyPressed(event);
+         return this.input.keyPressed(event);
       }
 
-      this.load_V_17();
+      this.submitRename();
       return true;
    }
 
    @Override
    public boolean charTyped(CharacterEvent event) {
-      return this.init_k != null && this.init_k.charTyped(event);
+      return this.input != null && this.input.charTyped(event);
    }
 
-   private void load_V_17() {
-      String value = this.init_k.getValue().strip();
+   private void submitRename() {
+      String value = this.input.getValue().strip();
       if (!value.isEmpty()) {
-         this.init_V_Runnable(() -> this.init_Consumer.accept(value));
+         this.init_V_Runnable(() -> this.onRename.accept(value));
       }
    }
 
    public void init_V_Runnable(Runnable action) {
-      if (!this.init_Z) {
-         this.init_Z = true;
-         if (this.init_k != null) {
-            this.init_k.setFocused(false);
+      if (!this.closed) {
+         this.closed = true;
+         if (this.input != null) {
+            this.input.setFocused(false);
          }
 
          OverlayScreenController.closeModalScreen(this.minecraft, this);
@@ -193,22 +193,22 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
 
    @Override
    public void onClose() {
-      this.init_V_Runnable(this.init_Runnable);
+      this.init_V_Runnable(this.onDismiss);
    }
 
    @Override
    public void removed() {
       OverlayScreenController.discardModalScreen(this);
-      if (this.init_k != null) {
-         this.init_k.setFocused(false);
+      if (this.input != null) {
+         this.input.setFocused(false);
       }
 
-      if (!this.init_Z) {
-         this.init_Z = true;
-         this.init_Runnable.run();
+      if (!this.closed) {
+         this.closed = true;
+         this.onDismiss.run();
       }
    }
 
-   public record Inner_DataUtil(String init_Str, autismclient.gui.f.b.CachePool.Inner_DataUtil init_CachePool_DataUtil, Runnable init_Runnable) {
+   public record Inner_DataUtil(String label, autismclient.gui.f.b.CachePool.Inner_DataUtil style, Runnable action) {
    }
 }

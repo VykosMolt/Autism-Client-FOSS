@@ -19,45 +19,45 @@ import org.joml.Vector3fc;
 
 public final class OreGhostModelCache {
    public static final int init_I = 5;
-   private static final RandomSource init_RandomSource = RandomSource.create(42L);
-   private static final Map<BlockState, OreGhostModelCache.Inner_StreamUtil> init_Map = new LinkedHashMap<BlockState, OreGhostModelCache.Inner_StreamUtil>(128, 0.75F, true) {
+   private static final RandomSource RANDOM = RandomSource.create(42L);
+   private static final Map<BlockState, OreGhostModelCache.Inner_StreamUtil> MODELS = new LinkedHashMap<BlockState, OreGhostModelCache.Inner_StreamUtil>(128, 0.75F, true) {
       @Override
       protected boolean removeEldestEntry(Entry<BlockState, OreGhostModelCache.Inner_StreamUtil> eldest) {
          return this.size() > 4096;
       }
    };
-   private static final List<BlockStateModelPart> init_List = new ArrayList<>();
-   private static Object init_Obj;
+   private static final List<BlockStateModelPart> PARTS = new ArrayList<>();
+   private static Object modelSet;
 
    private OreGhostModelCache() {
    }
 
    public static void init() {
-      init_Map.clear();
-      init_Obj = null;
+      MODELS.clear();
+      modelSet = null;
    }
 
    public static OreGhostModelCache.Inner_StreamUtil init(BlockState state) {
       if (state == null) {
-         return OreGhostModelCache.Inner_StreamUtil.init_DataUtil_StreamUti;
+         return OreGhostModelCache.Inner_StreamUtil.EMPTY;
       }
 
       Minecraft mc = Minecraft.getInstance();
       if (mc == null) {
-         return OreGhostModelCache.Inner_StreamUtil.init_DataUtil_StreamUti;
+         return OreGhostModelCache.Inner_StreamUtil.EMPTY;
       }
 
       BlockStateModelSet set = mc.getModelManager().getBlockStateModelSet();
       if (set == null) {
-         return OreGhostModelCache.Inner_StreamUtil.init_DataUtil_StreamUti;
+         return OreGhostModelCache.Inner_StreamUtil.EMPTY;
       }
 
-      if (set != init_Obj) {
-         init_Map.clear();
-         init_Obj = set;
+      if (set != modelSet) {
+         MODELS.clear();
+         modelSet = set;
       }
 
-      OreGhostModelCache.Inner_StreamUtil cached = init_Map.get(state);
+      OreGhostModelCache.Inner_StreamUtil cached = MODELS.get(state);
       if (cached != null) {
          return cached;
       }
@@ -67,20 +67,20 @@ public final class OreGhostModelCache {
          built = init(set, state);
       } catch (Throwable error) {
          AutismClientAddon.LOG.debug("OreSim ghost model build failed", error);
-         built = OreGhostModelCache.Inner_StreamUtil.init_DataUtil_StreamUti;
+         built = OreGhostModelCache.Inner_StreamUtil.EMPTY;
       }
 
-      init_Map.put(state, built);
+      MODELS.put(state, built);
       return built;
    }
 
    private static OreGhostModelCache.Inner_StreamUtil init(BlockStateModelSet set, BlockState state) {
-      init_List.clear();
-      init_RandomSource.setSeed(42L);
-      set.get(state).collectParts(init_RandomSource, init_List);
+      PARTS.clear();
+      RANDOM.setSeed(42L);
+      set.get(state).collectParts(RANDOM, PARTS);
       List<OreGhostModelCache.Inner_DataUtil> faces = new ArrayList<>();
 
-      for (BlockStateModelPart part : init_List) {
+      for (BlockStateModelPart part : PARTS) {
          for (Direction direction : Direction.values()) {
             init(part.getQuads(direction), direction, faces);
          }
@@ -88,8 +88,8 @@ public final class OreGhostModelCache {
          init(part.getQuads(null), null, faces);
       }
 
-      init_List.clear();
-      return faces.isEmpty() ? OreGhostModelCache.Inner_StreamUtil.init_DataUtil_StreamUti : new OreGhostModelCache.Inner_StreamUtil(List.copyOf(faces));
+      PARTS.clear();
+      return faces.isEmpty() ? OreGhostModelCache.Inner_StreamUtil.EMPTY : new OreGhostModelCache.Inner_StreamUtil(List.copyOf(faces));
    }
 
    private static void init(List<BakedQuad> quads, Direction cull, List<OreGhostModelCache.Inner_DataUtil> out) {
@@ -118,6 +118,6 @@ public final class OreGhostModelCache {
    }
 
    public record Inner_StreamUtil(List<OreGhostModelCache.Inner_DataUtil> faces) {
-      static final OreGhostModelCache.Inner_StreamUtil init_DataUtil_StreamUti = new OreGhostModelCache.Inner_StreamUtil(List.of());
+      static final OreGhostModelCache.Inner_StreamUtil EMPTY = new OreGhostModelCache.Inner_StreamUtil(List.of());
    }
 }

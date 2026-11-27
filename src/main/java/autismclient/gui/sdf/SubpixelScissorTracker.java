@@ -9,18 +9,18 @@ import org.joml.Matrix3x2fc;
 import org.joml.Vector2f;
 
 public final class SubpixelScissorTracker {
-   private static final Map<ScreenRectangle, int[]> init_Map = new IdentityHashMap<>();
+   private static final Map<ScreenRectangle, int[]> exactRects = new IdentityHashMap<>();
    public static int init_I;
 
    private SubpixelScissorTracker() {
    }
 
    public static int[] init(ScreenRectangle rectangle) {
-      return rectangle != null && !init_Map.isEmpty() ? init_Map.get(rectangle) : null;
+      return rectangle != null && !exactRects.isEmpty() ? exactRects.get(rectangle) : null;
    }
 
    public static void init() {
-      init_Map.clear();
+      exactRects.clear();
    }
 
    public static boolean init_Z_GuiGraphicsExtract(ScissorStack stack, Matrix3x2fc pose, int x0, int y0, int x1, int y1) {
@@ -43,14 +43,14 @@ public final class SubpixelScissorTracker {
       stack.push(new ScreenRectangle(outward[0], outward[1], outward[2] - outward[0], outward[3] - outward[1]));
       ScreenRectangle top = stack.peek();
       if (top != null && top != ScreenRectangle.empty()) {
-         init_Map.put(top, init(exact, parentExact));
+         exactRects.put(top, init(exact, parentExact));
       }
 
       return true;
    }
 
    private static int[] init(ScreenRectangle rectangle, int guiScale) {
-      int[] known = init_Map.get(rectangle);
+      int[] known = exactRects.get(rectangle);
       return known != null
          ? known
          : new int[]{rectangle.left() * guiScale, rectangle.top() * guiScale, rectangle.right() * guiScale, rectangle.bottom() * guiScale};

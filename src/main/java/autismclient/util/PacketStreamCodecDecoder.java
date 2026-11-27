@@ -63,18 +63,18 @@ public final class PacketStreamCodecDecoder {
                   Object decoded = candidate.init(buffer);
                   if (!(decoded instanceof Packet<?> packet)) {
                      throw new IllegalArgumentException(
-                        "Codec " + candidate.init_Str + " returned " + (decoded == null ? "null" : decoded.getClass().getName()) + ", not a packet."
+                        "Codec " + candidate.name + " returned " + (decoded == null ? "null" : decoded.getClass().getName()) + ", not a packet."
                      );
                   }
 
                   if (!packetClass.isInstance(packet)) {
                      throw new IllegalArgumentException(
-                        "Codec " + candidate.init_Str + " returned " + packet.getClass().getName() + ", expected " + packetClass.getName() + "."
+                        "Codec " + candidate.name + " returned " + packet.getClass().getName() + ", expected " + packetClass.getName() + "."
                      );
                   }
 
                   if (buffer.readableBytes() > 0) {
-                     throw new IllegalArgumentException("Codec " + candidate.init_Str + " left " + buffer.readableBytes() + " trailing byte(s).");
+                     throw new IllegalArgumentException("Codec " + candidate.name + " left " + buffer.readableBytes() + " trailing byte(s).");
                   }
 
                   return packet;
@@ -128,7 +128,7 @@ public final class PacketStreamCodecDecoder {
       }
 
       String phase = protocolPhase == null ? "" : protocolPhase.toLowerCase(Locale.ROOT);
-      candidates.sort(Comparator.comparingInt(candidate -> init(candidate.init_Str, phase)));
+      candidates.sort(Comparator.comparingInt(candidate -> init(candidate.name, phase)));
       return candidates;
    }
 
@@ -248,9 +248,9 @@ public final class PacketStreamCodecDecoder {
       ByteBuf create();
    }
 
-   private record Inner_StreamUtil(String init_Str, StreamCodec<ByteBuf, ?> init_StreamCodec) {
+   private record Inner_StreamUtil(String name, StreamCodec<ByteBuf, ?> codec) {
       Object init(ByteBuf buffer) {
-         return this.init_StreamCodec.decode(buffer);
+         return this.codec.decode(buffer);
       }
    }
 }

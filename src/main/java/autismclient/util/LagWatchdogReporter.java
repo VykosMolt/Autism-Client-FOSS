@@ -15,19 +15,19 @@ import net.minecraft.client.gui.screens.Screen;
 public final class LagWatchdogReporter {
    private static final int init_I = 20;
    private static final int load_I = 200;
-   private static final boolean init_Z = Boolean.getBoolean("autism.lagtest");
-   private static final long init_J = init_Z ? 3000L : 15000L;
-   private static final long load_J = init_Z ? 30000L : 300000L;
-   private static final int read_I = init_Z ? 5 : 30;
-   private static int write_I;
-   private static double init_D = -1.0;
-   private static int update_I;
-   private static long read_J;
-   private static long write_J;
+   private static final boolean LAG_TEST = Boolean.getBoolean("autism.lagtest");
+   private static final long LOW_FPS_HOLD_MS = LAG_TEST ? 3000L : 15000L;
+   private static final long REPORT_INTERVAL_MS = LAG_TEST ? 30000L : 300000L;
+   private static final int LOW_FPS_SAMPLES = LAG_TEST ? 5 : 30;
+   private static int tickCounter;
+   private static double baselineFps = -1.0;
+   private static int lowFpsSamples;
+   private static long lowFpsSince;
+   private static long lastReportMs;
    private static boolean load_Z;
-   private static Map<String, long[]> init_Map;
+   private static Map<String, long[]> perfSnapshot;
    private static int sync;
-   private static long update_J;
+   private static long lastPollMs;
 
    private LagWatchdogReporter() {
    }
@@ -40,54 +40,54 @@ public final class LagWatchdogReporter {
             read(client);
          }
 
-         if (++write_I % 20 != 0) {
+         if (++tickCounter % 20 != 0) {
             return;
          }
 
          load(client);
       } catch (Throwable t) {
          long now = System.currentTimeMillis();
-         if (now - update_J >= 5000L) {
-            update_J = now;
+         if (now - lastPollMs >= 5000L) {
+            lastPollMs = now;
             AutismClientAddon.LOG.warn("[Autism] lag watchdog failed; isolated to protect the tick", t);
          }
       }
    }
 
    public static void init() {
-      init_D = -1.0;
-      update_I = 0;
-      read_J = 0L;
+      baselineFps = -1.0;
+      lowFpsSamples = 0;
+      lowFpsSince = 0L;
       load_Z = false;
-      init_Map = null;
+      perfSnapshot = null;
    }
 
    private static void load(Minecraft client) {
       if (client == null || client.level == null) {
          init();
       } else if (client.getWindow() == null || !client.getWindow().isFocused()) {
-         read_J = 0L;
+         lowFpsSince = 0L;
       } else if (autismclient.util.macro.MacroFpsOverrideManager.isActive()) {
-         read_J = 0L;
+         lowFpsSince = 0L;
       } else {
          int fps = client.getFps();
          long now = System.currentTimeMillis();
          if (fps > 0 && auditLow(fps, client.gui.screen() != null, now)) {
-            if (!load_Z && now - write_J >= load_J) {
-               write_J = now;
+            if (!load_Z && now - lastReportMs >= REPORT_INTERVAL_MS) {
+               lastReportMs = now;
                sync = fps;
                if (!bK.read_Z()) {
                   AutismClientAddon.LOG
-                     .warn("[AutismLagReport] sustained low fps detected (fps={} baseline={})", fps, String.format(Locale.ROOT, "%.1f", init_D));
+                     .warn("[AutismLagReport] sustained low fps detected (fps={} baseline={})", fps, String.format(Locale.ROOT, "%.1f", baselineFps));
                } else {
-                  init_Map = bK.init_Map();
+                  perfSnapshot = bK.init_Map();
                   bK.init(200);
                   load_Z = true;
                   AutismClientAddon.LOG
                      .warn(
                         "[AutismLagReport] sustained low fps detected (fps={} baseline={}); sampling frame time for 10s...",
                         fps,
-                        String.format(Locale.ROOT, "%.1f", init_D)
+                        String.format(Locale.ROOT, "%.1f", baselineFps)
                      );
                }
             }
@@ -98,25 +98,25 @@ public final class LagWatchdogReporter {
    // True once fps has stayed below half the baseline for init_J ms. Menu frame rates must not enter the baseline.
    static boolean auditLow(int fps, boolean screenOpen, long now) {
       if (screenOpen) {
-         read_J = 0L;
+         lowFpsSince = 0L;
          return false;
       }
 
-      if (init_D < 0.0) {
-         init_D = fps;
+      if (baselineFps < 0.0) {
+         baselineFps = fps;
       }
 
-      double alpha = fps > init_D ? 0.2 : 0.02;
-      init_D = init_D + alpha * (fps - init_D);
-      if (update_I < read_I) {
-         update_I++;
-         read_J = 0L;
-      } else if (fps >= Math.max(15.0, init_D * 0.5)) {
-         read_J = 0L;
-      } else if (read_J == 0L) {
-         read_J = now;
+      double alpha = fps > baselineFps ? 0.2 : 0.02;
+      baselineFps = baselineFps + alpha * (fps - baselineFps);
+      if (lowFpsSamples < LOW_FPS_SAMPLES) {
+         lowFpsSamples++;
+         lowFpsSince = 0L;
+      } else if (fps >= Math.max(15.0, baselineFps * 0.5)) {
+         lowFpsSince = 0L;
+      } else if (lowFpsSince == 0L) {
+         lowFpsSince = now;
       } else {
-         return now - read_J >= init_J;
+         return now - lowFpsSince >= LOW_FPS_HOLD_MS;
       }
 
       return false;
@@ -127,7 +127,7 @@ public final class LagWatchdogReporter {
       sb.append("===== lag census — paste this whole block when reporting =====");
       long heapUsedMb = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() >> 20;
       long heapMaxMb = Runtime.getRuntime().maxMemory() >> 20;
-      long lowForMs = read_J == 0L ? 0L : System.currentTimeMillis() - read_J;
+      long lowForMs = lowFpsSince == 0L ? 0L : System.currentTimeMillis() - lowFpsSince;
       init(
          sb,
          "fps="
@@ -135,7 +135,7 @@ public final class LagWatchdogReporter {
             + " atTrigger="
             + sync
             + " baseline="
-            + String.format(Locale.ROOT, "%.1f", init_D)
+            + String.format(Locale.ROOT, "%.1f", baselineFps)
             + " lowForMs="
             + lowForMs
             + " heapMB="
@@ -179,7 +179,7 @@ public final class LagWatchdogReporter {
          "frame sections (10s window, window-total desc, avg/max* ms, n)",
          () -> {
             StringBuilder sections = new StringBuilder();
-            Map<String, long[]> before = init_Map;
+            Map<String, long[]> before = perfSnapshot;
             List<long[]> rows = new ArrayList<>();
             List<String> names = new ArrayList<>();
 
@@ -213,7 +213,7 @@ public final class LagWatchdogReporter {
          }
       );
       init(sb, "===== end lag census =====");
-      init_Map = null;
+      perfSnapshot = null;
       AutismClientAddon.LOG.warn("[AutismLagReport] {}", sb);
    }
 

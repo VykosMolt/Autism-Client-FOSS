@@ -26,34 +26,34 @@ import net.minecraft.network.protocol.common.ServerboundResourcePackPacket.Actio
 public final class ResourcePackSessionTracker {
    static final int init_I = 32;
    static final int load_I = 64;
-   private static final Object init_Obj = new Object();
-   private static final Map<ConnectionPrivacyRegistry.ConnectionSession, ResourcePackSessionTracker.PackSession> init_Map = new IdentityHashMap<>();
-   private static final Map<Object, ResourcePackSessionTracker.PackSession> load_Map = new IdentityHashMap<>();
-   private static final Supplier<Executor> init_Supplier = () -> {
+   private static final Object LOCK = new Object();
+   private static final Map<ConnectionPrivacyRegistry.ConnectionSession, ResourcePackSessionTracker.PackSession> sessionsByContext = new IdentityHashMap<>();
+   private static final Map<Object, ResourcePackSessionTracker.PackSession> sessionsBySource = new IdentityHashMap<>();
+   private static final Supplier<Executor> DEFAULT_GAME_THREAD_EXECUTOR = () -> {
       Minecraft minecraft = Minecraft.getInstance();
       return minecraft == null ? null : minecraft::execute;
    };
-   private static final Executor load_Executor = Executors.newSingleThreadExecutor(runnable -> {
+   private static final Executor WORKER = Executors.newSingleThreadExecutor(runnable -> {
       Thread thread = new Thread(runnable, "autism-pack-response-drain");
       thread.setDaemon(true);
       return thread;
    });
-   static final Executor init_Executor = command -> {
-      Executor gameThread = ResourcePackSessionTracker.load_Supplier.get();
+   static final Executor DEFAULT_DRAIN_EXECUTOR = command -> {
+      Executor gameThread = ResourcePackSessionTracker.gameThreadExecutor.get();
       if (gameThread != null) {
          gameThread.execute(command);
       } else {
-         load_Executor.execute(command);
+         WORKER.execute(command);
       }
    };
-   private static long init_J;
+   private static long nextSessionId;
    private static boolean init_Z;
    private static boolean load_Z;
    private static boolean read_Z;
    private static boolean write;
-   private static BiConsumer<ConnectionPrivacyRegistry.ConnectionSession, ServerboundResourcePackPacket> init_BiConsumer;
-   private static Executor read_Executor = init_Executor;
-   private static Supplier<Executor> load_Supplier = init_Supplier;
+   private static BiConsumer<ConnectionPrivacyRegistry.ConnectionSession, ServerboundResourcePackPacket> responseOutput;
+   private static Executor drainExecutor = DEFAULT_DRAIN_EXECUTOR;
+   private static Supplier<Executor> gameThreadExecutor = DEFAULT_GAME_THREAD_EXECUTOR;
 
    private ResourcePackSessionTracker() {
    }
@@ -65,26 +65,26 @@ public final class ResourcePackSessionTracker {
 
       List<ResourcePackSessionTracker.PackSession> replaced = new ArrayList<>(2);
       ResourcePackSessionTracker.PackSession session;
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          Object resolvedManager = manager != null ? manager : context.serverPackManager();
-         session = init_Map.get(context);
+         session = sessionsByContext.get(context);
          if (session != null && session.load_Z && init(session, source, resolvedManager)) {
-            if (session.init_Obj == null && source != null) {
-               ResourcePackSessionTracker.PackSession sourceOwner = load_Map.get(source);
+            if (session.source == null && source != null) {
+               ResourcePackSessionTracker.PackSession sourceOwner = sessionsBySource.get(source);
                if (sourceOwner != null && sourceOwner != session) {
                   replaced.add(sourceOwner);
                }
 
-               session.init_Obj = source;
-               load_Map.put(source, session);
+               session.source = source;
+               sessionsBySource.put(source, session);
             }
 
-            if (session.load_Obj == null && resolvedManager != null) {
-               session.load_Obj = resolvedManager;
+            if (session.manager == null && resolvedManager != null) {
+               session.manager = resolvedManager;
             }
 
             if (disconnectHandler != null) {
-               session.init_Runnable = disconnectHandler;
+               session.disconnectHandler = disconnectHandler;
             }
          } else {
             if (session != null) {
@@ -92,16 +92,16 @@ public final class ResourcePackSessionTracker {
             }
 
             if (source != null) {
-               ResourcePackSessionTracker.PackSession sourceOwner = load_Map.get(source);
+               ResourcePackSessionTracker.PackSession sourceOwner = sessionsBySource.get(source);
                if (sourceOwner != null && sourceOwner != session) {
                   replaced.add(sourceOwner);
                }
             }
 
-            session = new ResourcePackSessionTracker.PackSession(++init_J, context, source, resolvedManager, disconnectHandler);
-            init_Map.put(context, session);
+            session = new ResourcePackSessionTracker.PackSession(++nextSessionId, context, source, resolvedManager, disconnectHandler);
+            sessionsByContext.put(context, session);
             if (source != null) {
-               load_Map.put(source, session);
+               sessionsBySource.put(source, session);
             }
          }
       }
@@ -111,13 +111,13 @@ public final class ResourcePackSessionTracker {
    }
 
    private static boolean init(ResourcePackSessionTracker.PackSession session, Object source, Object manager) {
-      ConnectionPrivacyRegistry.ConnectionSession context = session.init_BufferHelper_Strea;
-      return (source == null || session.init_Obj == null || session.init_Obj == source)
-         && (manager == null || session.load_Obj == null || session.load_Obj == manager)
-         && session.load_J == context.lifecycleId()
-         && session.init_PacketListener == context.packetListener()
-         && Objects.equals(session.init_BufferHelper_DataU, context.accountIdentity())
-         && Objects.equals(session.init_BufferHelper_Buffe, context.serverEndpoint())
+      ConnectionPrivacyRegistry.ConnectionSession context = session.context;
+      return (source == null || session.source == null || session.source == source)
+         && (manager == null || session.manager == null || session.manager == manager)
+         && session.lifecycleId == context.lifecycleId()
+         && session.packetListener == context.packetListener()
+         && Objects.equals(session.accountIdentity, context.accountIdentity())
+         && Objects.equals(session.serverEndpoint, context.serverEndpoint())
          && session.read == context.downloadGeneration();
    }
 
@@ -132,8 +132,8 @@ public final class ResourcePackSessionTracker {
          return null;
       }
 
-      synchronized (init_Obj) {
-         ResourcePackSessionTracker.PackSession session = init_Map.get(context);
+      synchronized (LOCK) {
+         ResourcePackSessionTracker.PackSession session = sessionsByContext.get(context);
          return session != null && session.load_Z ? session : null;
       }
    }
@@ -143,25 +143,25 @@ public final class ResourcePackSessionTracker {
          return null;
       }
 
-      synchronized (init_Obj) {
-         ResourcePackSessionTracker.PackSession session = load_Map.get(source);
+      synchronized (LOCK) {
+         ResourcePackSessionTracker.PackSession session = sessionsBySource.get(source);
          return session != null && session.load_Z ? session : null;
       }
    }
 
    public static boolean isActive(ResourcePackSessionTracker.PackSession session) {
       if (session != null && session.load_Z) {
-         synchronized (init_Obj) {
-            ConnectionPrivacyRegistry.ConnectionSession context = session.init_BufferHelper_Strea;
+         synchronized (LOCK) {
+            ConnectionPrivacyRegistry.ConnectionSession context = session.context;
             return session.load_Z
-               && init_Map.get(context) == session
+               && sessionsByContext.get(context) == session
                && ConnectionPrivacyRegistry.isActive(context)
-               && session.load_J == context.lifecycleId()
-               && session.init_PacketListener == context.packetListener()
-               && Objects.equals(session.init_BufferHelper_DataU, context.accountIdentity())
-               && Objects.equals(session.init_BufferHelper_Buffe, context.serverEndpoint())
+               && session.lifecycleId == context.lifecycleId()
+               && session.packetListener == context.packetListener()
+               && Objects.equals(session.accountIdentity, context.accountIdentity())
+               && Objects.equals(session.serverEndpoint, context.serverEndpoint())
                && session.read == context.downloadGeneration()
-               && session.load_Obj == context.serverPackManager();
+               && session.manager == context.serverPackManager();
          }
       } else {
          return false;
@@ -170,9 +170,9 @@ public final class ResourcePackSessionTracker {
 
    public static boolean isCurrent(ResourcePackSessionTracker.PackSession session, UUID packId, long generation) {
       if (isActive(session) && packId != null) {
-         synchronized (init_Obj) {
-            ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
-            return push != null && !push.pop && push.init_J == generation;
+         synchronized (LOCK) {
+            ResourcePackSessionTracker.PackEntry push = session.packs.get(packId);
+            return push != null && !push.pop && push.generation == generation;
          }
       } else {
          return false;
@@ -184,13 +184,13 @@ public final class ResourcePackSessionTracker {
          return false;
       }
 
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          return session.init_Z;
       }
    }
 
    static long revision(ResourcePackSessionTracker.PackSession session) {
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          return isActive(session) ? session.update : -1L;
       }
    }
@@ -205,8 +205,8 @@ public final class ResourcePackSessionTracker {
          boolean tracked = true;
          List<ResourcePackSessionTracker.PendingWait> waits;
          long generation;
-         synchronized (init_Obj) {
-            ResourcePackSessionTracker.PackEntry previous = session.init_Map.get(packId);
+         synchronized (LOCK) {
+            ResourcePackSessionTracker.PackEntry previous = session.packs.get(packId);
             session.update++;
             generation = ++session.write;
             if (policy != ResourcePackSessionTracker.PackPolicy.FULL) {
@@ -214,15 +214,15 @@ public final class ResourcePackSessionTracker {
             }
 
             ResourcePackSessionTracker.PackEntry push = new ResourcePackSessionTracker.PackEntry(packId, generation, policy);
-            if (policy != ResourcePackSessionTracker.PackPolicy.FULL && !init_Z(previous) && init_I(session) >= 32) {
+            if (policy != ResourcePackSessionTracker.PackPolicy.FULL && !isPendingPack(previous) && pendingPackCount(session) >= 32) {
                push.pop = true;
                tracked = false;
             }
 
-            session.init_Map.remove(packId);
-            session.init_Map.put(packId, push);
-            read_V(session);
-            waits = init_List(session, packId);
+            session.packs.remove(packId);
+            session.packs.put(packId, push);
+            pruneTerminalPacks(session);
+            waits = takeWaits(session, packId);
          }
 
          load(waits);
@@ -234,15 +234,15 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   private static boolean init_Z(ResourcePackSessionTracker.PackEntry push) {
-      return push != null && push.init_FileCache_DataUtil != ResourcePackSessionTracker.PackPolicy.FULL && !push.pop && !push.push;
+   private static boolean isPendingPack(ResourcePackSessionTracker.PackEntry push) {
+      return push != null && push.policy != ResourcePackSessionTracker.PackPolicy.FULL && !push.pop && !push.push;
    }
 
-   private static int init_I(ResourcePackSessionTracker.PackSession session) {
+   private static int pendingPackCount(ResourcePackSessionTracker.PackSession session) {
       int count = 0;
 
-      for (ResourcePackSessionTracker.PackEntry push : session.init_Map.values()) {
-         if (init_Z(push)) {
+      for (ResourcePackSessionTracker.PackEntry push : session.packs.values()) {
+         if (isPendingPack(push)) {
             count++;
          }
       }
@@ -251,20 +251,20 @@ public final class ResourcePackSessionTracker {
    }
 
    private static boolean load(ResourcePackSessionTracker.PackEntry push) {
-      return push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.FULL || push.pop || push.push;
+      return push.policy == ResourcePackSessionTracker.PackPolicy.FULL || push.pop || push.push;
    }
 
-   private static void read_V(ResourcePackSessionTracker.PackSession session) {
+   private static void pruneTerminalPacks(ResourcePackSessionTracker.PackSession session) {
       int terminal = 0;
 
-      for (ResourcePackSessionTracker.PackEntry push : session.init_Map.values()) {
+      for (ResourcePackSessionTracker.PackEntry push : session.packs.values()) {
          if (load(push)) {
             terminal++;
          }
       }
 
       if (terminal > 64) {
-         Iterator<Entry<UUID, ResourcePackSessionTracker.PackEntry>> iterator = session.init_Map.entrySet().iterator();
+         Iterator<Entry<UUID, ResourcePackSessionTracker.PackEntry>> iterator = session.packs.entrySet().iterator();
 
          while (iterator.hasNext() && terminal > 64) {
             if (load(iterator.next().getValue())) {
@@ -277,9 +277,9 @@ public final class ResourcePackSessionTracker {
 
    public static ResourcePackSessionTracker.PackPolicy policyFor(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null && packId != null) {
-         synchronized (init_Obj) {
-            ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
-            return push == null ? null : push.init_FileCache_DataUtil;
+         synchronized (LOCK) {
+            ResourcePackSessionTracker.PackEntry push = session.packs.get(packId);
+            return push == null ? null : push.policy;
          }
       } else {
          return null;
@@ -288,9 +288,9 @@ public final class ResourcePackSessionTracker {
 
    public static long generation(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null && packId != null) {
-         synchronized (init_Obj) {
-            ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
-            return push == null ? -1L : push.init_J;
+         synchronized (LOCK) {
+            ResourcePackSessionTracker.PackEntry push = session.packs.get(packId);
+            return push == null ? -1L : push.generation;
          }
       } else {
          return -1L;
@@ -299,7 +299,7 @@ public final class ResourcePackSessionTracker {
 
    public static boolean init_Z(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null && packId != null) {
-         synchronized (init_Obj) {
+         synchronized (LOCK) {
             return session.init_Z;
          }
       } else {
@@ -311,17 +311,17 @@ public final class ResourcePackSessionTracker {
       if (session != null && packId != null) {
          boolean progress = false;
          long generation;
-         synchronized (init_Obj) {
-            ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
+         synchronized (LOCK) {
+            ResourcePackSessionTracker.PackEntry push = session.packs.get(packId);
             if (push == null) {
                return session.init_Z ? -1L : 0L;
             }
 
-            if (push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.FULL) {
+            if (push.policy == ResourcePackSessionTracker.PackPolicy.FULL) {
                return 0L;
             }
 
-            if (!isCurrent(session, packId, push.init_J) || push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.DECLINE || push.close || push.push) {
+            if (!isCurrent(session, packId, push.generation) || push.policy == ResourcePackSessionTracker.PackPolicy.DECLINE || push.close || push.push) {
                return -1L;
             }
 
@@ -331,7 +331,7 @@ public final class ResourcePackSessionTracker {
                progress = push.update;
             }
 
-            generation = push.init_J;
+            generation = push.generation;
          }
 
          if (progress) {
@@ -351,16 +351,16 @@ public final class ResourcePackSessionTracker {
    public static boolean init(ResourcePackSessionTracker.PackSession session, UUID packId, Update update, PackLoadFeedback vanilla) {
       if (session != null && packId != null && update != null && vanilla != null) {
          boolean progress = false;
-         synchronized (init_Obj) {
-            ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
-            if (push == null || push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.FULL || !isCurrent(session, packId, push.init_J)) {
+         synchronized (LOCK) {
+            ResourcePackSessionTracker.PackEntry push = session.packs.get(packId);
+            if (push == null || push.policy == ResourcePackSessionTracker.PackPolicy.FULL || !isCurrent(session, packId, push.generation)) {
                return false;
             }
 
-            push.init_PackLoadFeedback = vanilla;
+            push.feedback = vanilla;
             if (!push.close && !push.push) {
                if (update == Update.ACCEPTED) {
-                  if (!push.init_Z && push.init_FileCache_DataUtil != ResourcePackSessionTracker.PackPolicy.DECLINE) {
+                  if (!push.init_Z && push.policy != ResourcePackSessionTracker.PackPolicy.DECLINE) {
                      push.init_Z = true;
                      push.read_J++;
                      progress = true;
@@ -386,13 +386,13 @@ public final class ResourcePackSessionTracker {
    public static boolean init(ResourcePackSessionTracker.PackSession session, UUID packId, FinalResult result, PackLoadFeedback vanilla) {
       if (session != null && packId != null && result != null && vanilla != null) {
          boolean progress = false;
-         synchronized (init_Obj) {
-            ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
-            if (push == null || push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.FULL || !isCurrent(session, packId, push.init_J)) {
+         synchronized (LOCK) {
+            ResourcePackSessionTracker.PackEntry push = session.packs.get(packId);
+            if (push == null || push.policy == ResourcePackSessionTracker.PackPolicy.FULL || !isCurrent(session, packId, push.generation)) {
                return false;
             }
 
-            push.init_PackLoadFeedback = vanilla;
+            push.feedback = vanilla;
             if (!push.close && !push.push) {
                switch (result) {
                   case APPLIED:
@@ -454,7 +454,7 @@ public final class ResourcePackSessionTracker {
    }
 
    public static void read() {
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          if (!write) {
             return;
          }
@@ -466,11 +466,11 @@ public final class ResourcePackSessionTracker {
    }
 
    private static void write_V(ResourcePackSessionTracker.PackSession session) {
-      init(!session.init_BufferHelper_Strea.isMultiConnection());
+      init(!session.context.isMultiConnection());
    }
 
    private static void init(boolean includePrimary) {
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          if (init_Z) {
             load_Z = true;
             read_Z |= includePrimary;
@@ -485,8 +485,8 @@ public final class ResourcePackSessionTracker {
 
    private static void load(boolean includePrimary) {
       try {
-         if (read_Executor == init_Executor) {
-            Executor gameThread = load_Supplier.get();
+         if (drainExecutor == DEFAULT_DRAIN_EXECUTOR) {
+            Executor gameThread = gameThreadExecutor.get();
             if (includePrimary) {
                if (gameThread == null) {
                   sync();
@@ -497,13 +497,13 @@ public final class ResourcePackSessionTracker {
             } else if (gameThread != null) {
                gameThread.execute(() -> read(false));
             } else {
-               init_Executor.execute(() -> read(false));
+               DEFAULT_DRAIN_EXECUTOR.execute(() -> read(false));
             }
          } else {
-            read_Executor.execute(() -> read(includePrimary));
+            drainExecutor.execute(() -> read(includePrimary));
          }
       } catch (Throwable rejected) {
-         synchronized (init_Obj) {
+         synchronized (LOCK) {
             init_Z = false;
             write = true;
          }
@@ -511,7 +511,7 @@ public final class ResourcePackSessionTracker {
    }
 
    private static void sync() {
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          init_Z = false;
          load_Z = false;
          read_Z = false;
@@ -524,7 +524,7 @@ public final class ResourcePackSessionTracker {
       try {
          write(includePrimary);
       } finally {
-         synchronized (init_Obj) {
+         synchronized (LOCK) {
             init_Z = false;
             followUp = load_Z;
             followUpPrimary = read_Z;
@@ -540,15 +540,15 @@ public final class ResourcePackSessionTracker {
 
    private static void write(boolean includePrimary) {
       List<ResourcePackSessionTracker.ResponseEvent> sends = new ArrayList<>();
-      synchronized (init_Obj) {
-         for (ResourcePackSessionTracker.PackSession session : init_Map.values()) {
-            if ((includePrimary || session.init_BufferHelper_Strea.isMultiConnection()) && isActive(session)) {
-               for (ResourcePackSessionTracker.PackEntry push : session.init_Map.values()) {
-                  Action action = init_ServerboundResourc(push);
+      synchronized (LOCK) {
+         for (ResourcePackSessionTracker.PackSession session : sessionsByContext.values()) {
+            if ((includePrimary || session.context.isMultiConnection()) && isActive(session)) {
+               for (ResourcePackSessionTracker.PackEntry push : session.packs.values()) {
+                  Action action = nextResponseAction(push);
                   if (action != null) {
-                     push.init_ServerboundResourc = action;
+                     push.pendingAction = action;
                      sends.add(
-                        new ResourcePackSessionTracker.ResponseEvent(session, push.init_UUID, push.init_J, action, push.init_PackLoadFeedback, push.load_J, push.read_J)
+                        new ResourcePackSessionTracker.ResponseEvent(session, push.id, push.generation, action, push.feedback, push.load_J, push.read_J)
                      );
                   }
                }
@@ -561,12 +561,12 @@ public final class ResourcePackSessionTracker {
 
          while (send != null) {
             boolean sent = false;
-            if (init_Z(send)) {
+            if (isResponseCurrent(send)) {
                try {
-                  init_V(send);
+                  deliverResponse(send);
                   sent = true;
                } catch (Throwable ignored) {
-                  synchronized (init_Obj) {
+                  synchronized (LOCK) {
                      write = true;
                   }
                }
@@ -578,27 +578,27 @@ public final class ResourcePackSessionTracker {
    }
 
    private static ResourcePackSessionTracker.ResponseEvent init(ResourcePackSessionTracker.ResponseEvent send, boolean sent) {
-      synchronized (init_Obj) {
-         ResourcePackSessionTracker.PackEntry push = send.init_FileCache_BufferHe.init_Map.get(send.init_UUID);
-         if (push != null && push.init_J == send.init_J && push.init_ServerboundResourc == send.init_ServerboundResourc) {
-            push.init_ServerboundResourc = null;
+      synchronized (LOCK) {
+         ResourcePackSessionTracker.PackEntry push = send.session.packs.get(send.packId);
+         if (push != null && push.generation == send.generation && push.pendingAction == send.action) {
+            push.pendingAction = null;
             if (!sent) {
                return null;
             }
 
-            init(send.init_FileCache_BufferHe, push, send.init_ServerboundResourc);
+            init(send.session, push, send.action);
             if (push.read_J != send.read) {
                return null;
             }
 
-            Action next = init_ServerboundResourc(push);
+            Action next = nextResponseAction(push);
             if (next == null) {
                return null;
             }
 
-            push.init_ServerboundResourc = next;
+            push.pendingAction = next;
             return new ResourcePackSessionTracker.ResponseEvent(
-               send.init_FileCache_BufferHe, push.init_UUID, push.init_J, next, push.init_PackLoadFeedback, push.load_J, push.read_J
+               send.session, push.id, push.generation, next, push.feedback, push.load_J, push.read_J
             );
          } else {
             return null;
@@ -606,58 +606,58 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   private static void init_V(ResourcePackSessionTracker.ResponseEvent send) {
-      Objects.requireNonNull(send.init_PackLoadFeedback, "Missing vanilla resource-pack feedback");
-      if (init_BiConsumer != null) {
-         init_BiConsumer.accept(
-            send.init_FileCache_BufferHe.init_BufferHelper_Strea, new ServerboundResourcePackPacket(send.init_UUID, send.init_ServerboundResourc)
+   private static void deliverResponse(ResourcePackSessionTracker.ResponseEvent send) {
+      Objects.requireNonNull(send.feedback, "Missing vanilla resource-pack feedback");
+      if (responseOutput != null) {
+         responseOutput.accept(
+            send.session.context, new ServerboundResourcePackPacket(send.packId, send.action)
          );
       }
 
-      switch (send.init_ServerboundResourc) {
+      switch (send.action) {
          case ACCEPTED:
-            send.init_PackLoadFeedback.reportUpdate(send.init_UUID, Update.ACCEPTED);
+            send.feedback.reportUpdate(send.packId, Update.ACCEPTED);
             break;
          case DOWNLOADED:
-            send.init_PackLoadFeedback.reportUpdate(send.init_UUID, Update.DOWNLOADED);
+            send.feedback.reportUpdate(send.packId, Update.DOWNLOADED);
             break;
          case DECLINED:
-            send.init_PackLoadFeedback.reportFinalResult(send.init_UUID, FinalResult.DECLINED);
+            send.feedback.reportFinalResult(send.packId, FinalResult.DECLINED);
             break;
          case DISCARDED:
-            send.init_PackLoadFeedback.reportFinalResult(send.init_UUID, FinalResult.DISCARDED);
+            send.feedback.reportFinalResult(send.packId, FinalResult.DISCARDED);
             break;
          case FAILED_DOWNLOAD:
-            send.init_PackLoadFeedback.reportFinalResult(send.init_UUID, FinalResult.DOWNLOAD_FAILED);
+            send.feedback.reportFinalResult(send.packId, FinalResult.DOWNLOAD_FAILED);
             break;
          case SUCCESSFULLY_LOADED:
-            send.init_PackLoadFeedback.reportFinalResult(send.init_UUID, FinalResult.APPLIED);
+            send.feedback.reportFinalResult(send.packId, FinalResult.APPLIED);
             break;
          case FAILED_RELOAD:
-            send.init_PackLoadFeedback.reportFinalResult(send.init_UUID, FinalResult.ACTIVATION_FAILED);
+            send.feedback.reportFinalResult(send.packId, FinalResult.ACTIVATION_FAILED);
             break;
          default:
-            throw new IllegalStateException("Unexpected resource-pack response " + send.init_ServerboundResourc);
+            throw new IllegalStateException("Unexpected resource-pack response " + send.action);
       }
    }
 
-   private static boolean init_Z(ResourcePackSessionTracker.ResponseEvent send) {
-      synchronized (init_Obj) {
-         if (!isCurrent(send.init_FileCache_BufferHe, send.init_UUID, send.init_J)) {
+   private static boolean isResponseCurrent(ResourcePackSessionTracker.ResponseEvent send) {
+      synchronized (LOCK) {
+         if (!isCurrent(send.session, send.packId, send.generation)) {
             return false;
          }
 
-         ResourcePackSessionTracker.PackEntry push = send.init_FileCache_BufferHe.init_Map.get(send.init_UUID);
-         if (push == null || push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.FULL || push.init_ServerboundResourc != send.init_ServerboundResourc) {
+         ResourcePackSessionTracker.PackEntry push = send.session.packs.get(send.packId);
+         if (push == null || push.policy == ResourcePackSessionTracker.PackPolicy.FULL || push.pendingAction != send.action) {
             return false;
          }
 
-         if (push.close && send.init_ServerboundResourc != Action.DISCARDED && send.load != push.load_J) {
+         if (push.close && send.action != Action.DISCARDED && send.load != push.load_J) {
             return false;
          }
 
          boolean var10000;
-         switch (send.init_ServerboundResourc) {
+         switch (send.action) {
             case ACCEPTED:
                var10000 = !push.open && !push.push;
                break;
@@ -681,8 +681,8 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   private static Action init_ServerboundResourc(ResourcePackSessionTracker.PackEntry push) {
-      if (push.init_FileCache_DataUtil == ResourcePackSessionTracker.PackPolicy.FULL || push.pop || push.push || push.init_ServerboundResourc != null) {
+   private static Action nextResponseAction(ResourcePackSessionTracker.PackEntry push) {
+      if (push.policy == ResourcePackSessionTracker.PackPolicy.FULL || push.pop || push.push || push.pendingAction != null) {
          return null;
       }
 
@@ -733,16 +733,16 @@ public final class ResourcePackSessionTracker {
             push.push = true;
       }
 
-      read_V(session);
+      pruneTerminalPacks(session);
    }
 
    public static void init(ResourcePackSessionTracker.PackSession session, UUID packId, long generation, CompletableFuture<?> future, Runnable restore) {
       if (session != null && packId != null && future != null && restore != null) {
          boolean current;
-         synchronized (init_Obj) {
+         synchronized (LOCK) {
             current = isCurrent(session, packId, generation);
             if (current) {
-               session.init_List.add(new ResourcePackSessionTracker.PendingWait(session, packId, generation, future, restore));
+               session.waits.add(new ResourcePackSessionTracker.PendingWait(session, packId, generation, future, restore));
             }
          }
 
@@ -755,8 +755,8 @@ public final class ResourcePackSessionTracker {
 
    public static void init_V(ResourcePackSessionTracker.PackSession session, UUID packId, long generation) {
       if (session != null && packId != null) {
-         synchronized (init_Obj) {
-            session.init_List.removeIf(wait -> wait.init_FileCache_BufferHe == session && wait.init_UUID.equals(packId) && wait.init_J == generation);
+         synchronized (LOCK) {
+            session.waits.removeIf(wait -> wait.session == session && wait.packId.equals(packId) && wait.generation == generation);
          }
       }
    }
@@ -764,18 +764,18 @@ public final class ResourcePackSessionTracker {
    public static void init_V(ResourcePackSessionTracker.PackSession session) {
       if (session != null) {
          List<ResourcePackSessionTracker.PendingWait> waits;
-         synchronized (init_Obj) {
-            waits = init_List(session, null);
+         synchronized (LOCK) {
+            waits = takeWaits(session, null);
          }
 
          load(waits);
       }
    }
 
-   private static List<ResourcePackSessionTracker.PendingWait> init_List(ResourcePackSessionTracker.PackSession session, UUID packId) {
+   private static List<ResourcePackSessionTracker.PendingWait> takeWaits(ResourcePackSessionTracker.PackSession session, UUID packId) {
       List<ResourcePackSessionTracker.PendingWait> taken = new ArrayList<>();
-      session.init_List.removeIf(wait -> {
-         if (packId != null && !packId.equals(wait.init_UUID)) {
+      session.waits.removeIf(wait -> {
+         if (packId != null && !packId.equals(wait.packId)) {
             return false;
          }
 
@@ -787,10 +787,10 @@ public final class ResourcePackSessionTracker {
 
    private static void load(List<ResourcePackSessionTracker.PendingWait> waits) {
       for (ResourcePackSessionTracker.PendingWait wait : waits) {
-         wait.init_CompletableFuture.cancel(false);
+         wait.future.cancel(false);
 
          try {
-            wait.init_Runnable.run();
+            wait.restore.run();
          } catch (Throwable var4) {
          }
       }
@@ -806,21 +806,21 @@ public final class ResourcePackSessionTracker {
    public static void init_V(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null) {
          List<ResourcePackSessionTracker.PendingWait> waits;
-         synchronized (init_Obj) {
+         synchronized (LOCK) {
             session.update++;
             if (packId == null) {
-               for (ResourcePackSessionTracker.PackEntry push : session.init_Map.values()) {
+               for (ResourcePackSessionTracker.PackEntry push : session.packs.values()) {
                   push.pop = true;
                }
             } else {
-               ResourcePackSessionTracker.PackEntry push = session.init_Map.get(packId);
+               ResourcePackSessionTracker.PackEntry push = session.packs.get(packId);
                if (push != null) {
                   push.pop = true;
                }
             }
 
-            read_V(session);
-            waits = init_List(session, packId);
+            pruneTerminalPacks(session);
+            waits = takeWaits(session, packId);
          }
 
          load(waits);
@@ -837,19 +837,19 @@ public final class ResourcePackSessionTracker {
       if (session != null) {
          Runnable handler;
          List<ResourcePackSessionTracker.PendingWait> waits;
-         synchronized (init_Obj) {
+         synchronized (LOCK) {
             if (!session.load_Z) {
                return;
             }
 
             session.load_Z = false;
-            init_Map.remove(session.init_BufferHelper_Strea, session);
-            if (session.init_Obj != null) {
-               load_Map.remove(session.init_Obj, session);
+            sessionsByContext.remove(session.context, session);
+            if (session.source != null) {
+               sessionsBySource.remove(session.source, session);
             }
 
-            waits = init_List(session, null);
-            handler = session.init_Runnable;
+            waits = takeWaits(session, null);
+            handler = session.disconnectHandler;
          }
 
          load(waits);
@@ -866,8 +866,8 @@ public final class ResourcePackSessionTracker {
 
    public static void write() {
       List<ResourcePackSessionTracker.PackSession> sessions;
-      synchronized (init_Obj) {
-         sessions = new ArrayList<>(init_Map.values());
+      synchronized (LOCK) {
+         sessions = new ArrayList<>(sessionsByContext.values());
       }
 
       for (ResourcePackSessionTracker.PackSession session : sessions) {
@@ -875,10 +875,10 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static boolean init_Z() {
-      synchronized (init_Obj) {
-         for (ResourcePackSessionTracker.PackSession session : init_Map.values()) {
-            if (write_Z(session)) {
+   public static boolean anyPendingPack() {
+      synchronized (LOCK) {
+         for (ResourcePackSessionTracker.PackSession session : sessionsByContext.values()) {
+            if (hasPendingPackLocked(session)) {
                return true;
             }
          }
@@ -887,19 +887,19 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static boolean read_Z(ResourcePackSessionTracker.PackSession session) {
-      synchronized (init_Obj) {
-         return write_Z(session);
+   public static boolean hasPendingPack(ResourcePackSessionTracker.PackSession session) {
+      synchronized (LOCK) {
+         return hasPendingPackLocked(session);
       }
    }
 
-   private static boolean write_Z(ResourcePackSessionTracker.PackSession session) {
+   private static boolean hasPendingPackLocked(ResourcePackSessionTracker.PackSession session) {
       if (!isActive(session)) {
          return false;
       }
 
-      for (ResourcePackSessionTracker.PackEntry push : session.init_Map.values()) {
-         if (init_Z(push)) {
+      for (ResourcePackSessionTracker.PackEntry push : session.packs.values()) {
+         if (isPendingPack(push)) {
             return true;
          }
       }
@@ -918,7 +918,7 @@ public final class ResourcePackSessionTracker {
       ResourcePackSessionTracker.DelayScheduler scheduler,
       Executor drains
    ) {
-      init(clock, random, output, scheduler, drains, init_Supplier);
+      init(clock, random, output, scheduler, drains, DEFAULT_GAME_THREAD_EXECUTOR);
    }
 
    static void init(
@@ -929,90 +929,90 @@ public final class ResourcePackSessionTracker {
       Executor drains,
       Supplier<Executor> gameThread
    ) {
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          init_Z = false;
          load_Z = false;
          read_Z = false;
          write = false;
-         init_BiConsumer = output;
-         read_Executor = drains;
-         load_Supplier = gameThread;
+         responseOutput = output;
+         drainExecutor = drains;
+         gameThreadExecutor = gameThread;
       }
    }
 
    static void update() {
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          init_Z = false;
          load_Z = false;
          read_Z = false;
          write = false;
-         init_BiConsumer = null;
-         read_Executor = init_Executor;
-         load_Supplier = init_Supplier;
+         responseOutput = null;
+         drainExecutor = DEFAULT_DRAIN_EXECUTOR;
+         gameThreadExecutor = DEFAULT_GAME_THREAD_EXECUTOR;
       }
    }
 
    public static final class PackSession {
-      private final long init_J;
-      private final ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea;
-      private final long load_J;
-      private final PacketListener init_PacketListener;
-      private final ConnectionPrivacyRegistry.AccountIdentity init_BufferHelper_DataU;
-      private final ConnectionPrivacyRegistry.ServerEndpoint init_BufferHelper_Buffe;
+      private final long id;
+      private final ConnectionPrivacyRegistry.ConnectionSession context;
+      private final long lifecycleId;
+      private final PacketListener packetListener;
+      private final ConnectionPrivacyRegistry.AccountIdentity accountIdentity;
+      private final ConnectionPrivacyRegistry.ServerEndpoint serverEndpoint;
       private final long read;
-      private final Map<UUID, ResourcePackSessionTracker.PackEntry> init_Map = new LinkedHashMap<>();
-      private final List<ResourcePackSessionTracker.PendingWait> init_List = new ArrayList<>();
+      private final Map<UUID, ResourcePackSessionTracker.PackEntry> packs = new LinkedHashMap<>();
+      private final List<ResourcePackSessionTracker.PendingWait> waits = new ArrayList<>();
       private long write;
       private long update;
-      private Object init_Obj;
-      private Object load_Obj;
-      private Runnable init_Runnable;
+      private Object source;
+      private Object manager;
+      private Runnable disconnectHandler;
       private boolean init_Z;
       private boolean load_Z = true;
 
       private PackSession(long id, ConnectionPrivacyRegistry.ConnectionSession context, Object source, Object manager, Runnable disconnectHandler) {
-         this.init_J = id;
-         this.init_BufferHelper_Strea = context;
-         this.load_J = context.lifecycleId();
-         this.init_PacketListener = context.packetListener();
-         this.init_BufferHelper_DataU = context.accountIdentity();
-         this.init_BufferHelper_Buffe = context.serverEndpoint();
+         this.id = id;
+         this.context = context;
+         this.lifecycleId = context.lifecycleId();
+         this.packetListener = context.packetListener();
+         this.accountIdentity = context.accountIdentity();
+         this.serverEndpoint = context.serverEndpoint();
          this.read = context.downloadGeneration();
-         this.init_Obj = source;
-         this.load_Obj = manager;
-         this.init_Runnable = disconnectHandler;
+         this.source = source;
+         this.manager = manager;
+         this.disconnectHandler = disconnectHandler;
       }
 
-      public long init_J() {
-         return this.init_J;
+      public long id() {
+         return this.id;
       }
 
       public ConnectionPrivacyRegistry.ConnectionSession context() {
-         return this.init_BufferHelper_Strea;
+         return this.context;
       }
 
-      public Object init_Obj() {
-         return this.init_Obj;
+      public Object source() {
+         return this.source;
       }
 
       public Object load() {
-         return this.load_Obj;
+         return this.manager;
       }
    }
 
    private record ResponseEvent(
-      ResourcePackSessionTracker.PackSession init_FileCache_BufferHe,
-      UUID init_UUID,
-      long init_J,
-      Action init_ServerboundResourc,
-      PackLoadFeedback init_PackLoadFeedback,
+      ResourcePackSessionTracker.PackSession session,
+      UUID packId,
+      long generation,
+      Action action,
+      PackLoadFeedback feedback,
       long load,
       long read
    ) {
    }
 
    private record PendingWait(
-      ResourcePackSessionTracker.PackSession init_FileCache_BufferHe, UUID init_UUID, long init_J, CompletableFuture<?> init_CompletableFuture, Runnable init_Runnable
+      ResourcePackSessionTracker.PackSession session, UUID packId, long generation, CompletableFuture<?> future, Runnable restore
    ) {
    }
 
@@ -1028,10 +1028,10 @@ public final class ResourcePackSessionTracker {
    }
 
    private static final class PackEntry {
-      private final UUID init_UUID;
-      private final long init_J;
-      private final ResourcePackSessionTracker.PackPolicy init_FileCache_DataUtil;
-      private PackLoadFeedback init_PackLoadFeedback;
+      private final UUID id;
+      private final long generation;
+      private final ResourcePackSessionTracker.PackPolicy policy;
+      private PackLoadFeedback feedback;
       private boolean init_Z;
       private boolean load_Z;
       private boolean read_Z;
@@ -1046,12 +1046,12 @@ public final class ResourcePackSessionTracker {
       private boolean poll;
       private boolean push;
       private boolean pop;
-      private Action init_ServerboundResourc;
+      private Action pendingAction;
 
       private PackEntry(UUID id, long generation, ResourcePackSessionTracker.PackPolicy policy) {
-         this.init_UUID = id;
-         this.init_J = generation;
-         this.init_FileCache_DataUtil = policy;
+         this.id = id;
+         this.generation = generation;
+         this.policy = policy;
       }
    }
 

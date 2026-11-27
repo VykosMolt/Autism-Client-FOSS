@@ -94,7 +94,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       }
    }
 
-   private BlockHitResult init_BlockHitResult_Minecraft(Minecraft mc) {
+   private BlockHitResult targetHit(Minecraft mc) {
       return init(mc, this.blockPos, this.manualDirection, this.direction);
    }
 
@@ -120,7 +120,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       }
    }
 
-   public void init_V_Minecraft(Minecraft mc) {
+   public void captureCrosshair(Minecraft mc) {
       if (mc != null && mc.hitResult instanceof BlockHitResult blockHit) {
          this.blockPos = blockHit.getBlockPos();
       }
@@ -255,7 +255,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       int z = tag.getIntOr("blockZ", 0);
       this.blockPos = new BlockPos(x, y, z);
       this.manualDirection = tag.getBooleanOr("manualDirection", false);
-      this.direction = this.manualDirection ? init_Direction_CompoundTag(tag) : Direction.UP;
+      this.direction = this.manualDirection ? readDirection(tag) : Direction.UP;
       this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
       this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       this.waitForItem = tag.getBooleanOr("waitForItem", true);
@@ -271,7 +271,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 
-   private static Direction init_Direction_CompoundTag(CompoundTag tag) {
+   private static Direction readDirection(CompoundTag tag) {
       if (!tag.contains("direction")) {
          return Direction.UP;
       }

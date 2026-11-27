@@ -7,15 +7,15 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.BlockHitResult;
 
 public final class SilentMiningCoordinator {
-   private static String init_Str;
-   private static SilentMiningCoordinator.Inner_DataUtil init_aY_DataUtil;
+   private static String owner;
+   private static SilentMiningCoordinator.Inner_DataUtil pendingStop;
 
    private SilentMiningCoordinator() {
    }
 
    public static boolean init(String requester, BlockHitResult ray) {
       if (requester != null && ClientInteractionOverride.queueHoldAttack(ray)) {
-         init_Str = requester;
+         owner = requester;
          return true;
       } else {
          return false;
@@ -24,7 +24,7 @@ public final class SilentMiningCoordinator {
 
    public static boolean init(String requester, BlockHitResult ray, InteractionHand hand) {
       if (requester != null && ClientInteractionOverride.queueHoldUse(ray, hand)) {
-         init_Str = requester;
+         owner = requester;
          return true;
       } else {
          return false;
@@ -32,7 +32,7 @@ public final class SilentMiningCoordinator {
    }
 
    public static boolean isOwner(String requester) {
-      return requester != null && requester.equals(init_Str);
+      return requester != null && requester.equals(owner);
    }
 
    public static void release(String requester) {
@@ -42,7 +42,7 @@ public final class SilentMiningCoordinator {
    }
 
    static void init() {
-      init_Str = null;
+      owner = null;
    }
 
    public static boolean init(String requester, RotationMath.Rotation current, RotationMath.Rotation target) {
@@ -72,19 +72,19 @@ public final class SilentMiningCoordinator {
    public static void load(BlockPos block) {
       Minecraft mc = Minecraft.getInstance();
       if (block != null && mc.player != null && mc.gameMode != null) {
-         init_aY_DataUtil = new SilentMiningCoordinator.Inner_DataUtil(mc.player, mc.level, mc.gameMode, block.immutable());
+         pendingStop = new SilentMiningCoordinator.Inner_DataUtil(mc.player, mc.level, mc.gameMode, block.immutable());
       }
    }
 
    public static void load() {
-      SilentMiningCoordinator.Inner_DataUtil stop = init_aY_DataUtil;
-      init_aY_DataUtil = null;
+      SilentMiningCoordinator.Inner_DataUtil stop = pendingStop;
+      pendingStop = null;
       Minecraft mc = Minecraft.getInstance();
-      if (stop != null && mc.player == stop.init_Obj && mc.level == stop.load && mc.gameMode == stop.read) {
-         init(stop.init_BlockPos);
+      if (stop != null && mc.player == stop.player && mc.level == stop.load && mc.gameMode == stop.read) {
+         init(stop.pos);
       }
    }
 
-   private record Inner_DataUtil(Object init_Obj, Object load, Object read, BlockPos init_BlockPos) {
+   private record Inner_DataUtil(Object player, Object load, Object read, BlockPos pos) {
    }
 }

@@ -5,9 +5,9 @@ import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.Vec3;
 
 final class StrafeInputCorrector {
-   private Vec3 init_Vec3;
-   private float init_F;
-   private int init_I = -2147483648;
+   private Vec3 lastPosition;
+   private float lastWantedYaw;
+   private int lastTick = -2147483648;
    private int load = -2147483648;
    private int read;
 
@@ -20,18 +20,18 @@ final class StrafeInputCorrector {
       }
 
       float wantedWorld = cameraYaw - (float)Math.toDegrees(Math.atan2(s, f));
-      if (this.init_Vec3 == null || now != this.init_I + 1 || Math.abs(Mth.wrapDegrees(wantedWorld - this.init_F)) > 3.0F) {
-         this.init_Vec3 = position;
-         this.init_F = wantedWorld;
+      if (this.lastPosition == null || now != this.lastTick + 1 || Math.abs(Mth.wrapDegrees(wantedWorld - this.lastWantedYaw)) > 3.0F) {
+         this.lastPosition = position;
+         this.lastWantedYaw = wantedWorld;
          this.load = -2147483648;
          this.read = 0;
       }
 
-      this.init_I = now;
+      this.lastTick = now;
       double a = Math.toRadians(wantedWorld);
       double px = Math.cos(a);
       double pz = Math.sin(a);
-      double error = (position.x - this.init_Vec3.x) * px + (position.z - this.init_Vec3.z) * pz;
+      double error = (position.x - this.lastPosition.x) * px + (position.z - this.lastPosition.z) * pz;
       double relative = Mth.wrapDegrees(aimYaw - wantedWorld) / 45.0;
       int low = (int)Math.floor(relative);
       int high = low + 1;
@@ -69,8 +69,8 @@ final class StrafeInputCorrector {
    }
 
    void init() {
-      this.init_Vec3 = null;
-      this.init_I = -2147483648;
+      this.lastPosition = null;
+      this.lastTick = -2147483648;
       this.load = -2147483648;
       this.read = 0;
    }

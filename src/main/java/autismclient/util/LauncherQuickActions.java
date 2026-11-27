@@ -11,7 +11,7 @@ import net.minecraft.world.inventory.Slot;
 
 public final class LauncherQuickActions {
    public static final String INPUT_PLACEHOLDER = "Type message or /command...";
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Minecraft MINECRAFT = Minecraft.getInstance();
 
    private LauncherQuickActions() {
    }
@@ -40,17 +40,17 @@ public final class LauncherQuickActions {
    }
 
    public static void update() {
-      GuiDesyncHelper.load(init_Minecraft, false);
+      GuiDesyncHelper.load(MINECRAFT, false);
    }
 
    public static void sync() {
-      if (!GuiDesyncHelper.load(init_Minecraft)) {
+      if (!GuiDesyncHelper.load(MINECRAFT)) {
          AutismClientMessaging.sendPrefixed("Failed to desync: no open networked GUI.");
       }
    }
 
    public static void flush() {
-      GuiDesyncHelper.init(init_Minecraft);
+      GuiDesyncHelper.init(MINECRAFT);
    }
 
    public static void close() {
@@ -68,9 +68,9 @@ public final class LauncherQuickActions {
    public static void poll() {
       if (!autismclient.modules.aD.read_Z()) {
          autismclient.modules.ModuleRuntimeManager.getInstance().setDelayGuiPackets(false);
-         if (init_Minecraft.getConnection() != null) {
-            AutismSessionState.getInstance().flushDelayedPackets(init_Minecraft.getConnection());
-            init_Minecraft.getConnection().getConnection().disconnect(Component.literal("Disconnecting (Autism)"));
+         if (MINECRAFT.getConnection() != null) {
+            AutismSessionState.getInstance().flushDelayedPackets(MINECRAFT.getConnection());
+            MINECRAFT.getConnection().getConnection().disconnect(Component.literal("Disconnecting (Autism)"));
          }
       }
    }
@@ -97,14 +97,14 @@ public final class LauncherQuickActions {
                autismclient.commands.CommandManager.execute(body);
             }
          } else {
-            if (init_Minecraft.getConnection() == null) {
+            if (MINECRAFT.getConnection() == null) {
                return null;
             }
 
             if (message.startsWith("/") && message.length() > 1) {
-               init_Minecraft.getConnection().sendCommand(message.substring(1));
+               MINECRAFT.getConnection().sendCommand(message.substring(1));
             } else {
-               init_Minecraft.getConnection().sendChat(message);
+               MINECRAFT.getConnection().sendChat(message);
             }
          }
 
@@ -117,8 +117,8 @@ public final class LauncherQuickActions {
 
    public static String lastSentMessage() {
       try {
-         if (init_Minecraft.gui != null && init_Minecraft.gui.hud.getChat() != null) {
-            ArrayListDeque<String> recent = init_Minecraft.gui.hud.getChat().getRecentChat();
+         if (MINECRAFT.gui != null && MINECRAFT.gui.hud.getChat() != null) {
+            ArrayListDeque<String> recent = MINECRAFT.gui.hud.getChat().getRecentChat();
             return recent == null ? null : recent.peekLast();
          } else {
             return null;
@@ -133,10 +133,10 @@ public final class LauncherQuickActions {
       return last != null && !last.isBlank() ? last : "Type message or /command...";
    }
 
-   public static List<String> init_List() {
+   public static List<String> recentChat() {
       try {
-         if (init_Minecraft.gui != null && init_Minecraft.gui.hud.getChat() != null) {
-            ArrayListDeque<String> recent = init_Minecraft.gui.hud.getChat().getRecentChat();
+         if (MINECRAFT.gui != null && MINECRAFT.gui.hud.getChat() != null) {
+            ArrayListDeque<String> recent = MINECRAFT.gui.hud.getChat().getRecentChat();
             return recent == null ? List.of() : new ArrayList<>(recent);
          } else {
             return List.of();
@@ -150,13 +150,13 @@ public final class LauncherQuickActions {
       String revision = "--";
       String syncId = "--";
       String slot = "--";
-      if (init_Minecraft.player != null && init_Minecraft.player.containerMenu != null) {
-         revision = Integer.toString(init_Minecraft.player.containerMenu.getStateId());
-         syncId = Integer.toString(init_Minecraft.player.containerMenu.containerId);
-         if (init_Minecraft.gui.screen() instanceof AbstractContainerScreen<?> handledScreen) {
+      if (MINECRAFT.player != null && MINECRAFT.player.containerMenu != null) {
+         revision = Integer.toString(MINECRAFT.player.containerMenu.getStateId());
+         syncId = Integer.toString(MINECRAFT.player.containerMenu.containerId);
+         if (MINECRAFT.gui.screen() instanceof AbstractContainerScreen<?> handledScreen) {
             Slot focused = ((AutismHandledScreenAccessor)handledScreen).getFocusedSlot();
             if (focused != null) {
-               slot = Integer.toString(InventorySlotHelper.toVisibleSlot(init_Minecraft, focused.index));
+               slot = Integer.toString(InventorySlotHelper.toVisibleSlot(MINECRAFT, focused.index));
             }
          }
       }
